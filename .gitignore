@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-marketing/
 apps/web/dist/
 apps/api/dist/
 .env

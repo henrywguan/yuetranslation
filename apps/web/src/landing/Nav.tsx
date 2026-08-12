@@ -1,4 +1,4 @@
-import { navigate } from '../lib/useHashRoute'
+import { openApp, openHome, openPricing } from '../lib/siteLinks'
 
 type NavProps = {
   /** Called when "Features" is clicked; defaults to navigating home. */
@@ -11,7 +11,7 @@ export function Nav({ onFeatures }: NavProps) {
       <button
         type="button"
         className="ln-brand ln-brand-btn"
-        onClick={() => navigate('home')}
+        onClick={() => openHome()}
         aria-label="Yue home"
       >
         <span className="ln-brand-mark" aria-hidden="true">
@@ -20,13 +20,13 @@ export function Nav({ onFeatures }: NavProps) {
         <span className="ln-brand-name">Yue</span>
       </button>
       <div className="ln-nav-links">
-        <button type="button" onClick={() => (onFeatures ? onFeatures() : navigate('home'))}>
+        <button type="button" onClick={() => (onFeatures ? onFeatures() : openHome())}>
           Features
         </button>
-        <button type="button" onClick={() => navigate('pricing')}>
+        <button type="button" onClick={() => openPricing()}>
           Pricing
         </button>
-        <button type="button" className="ln-nav-cta" onClick={() => navigate('app')}>
+        <button type="button" className="ln-nav-cta" onClick={() => openApp()}>
           Launch app
         </button>
       </div>

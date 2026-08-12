@@ -28,4 +28,10 @@ npm run build:web:wp
 
 Upload `wordpress/yue-translator` and follow [docs/bluehost-launch.md](docs/bluehost-launch.md).
 
+**Hybrid (static marketing + Bricks translator):** [docs/hybrid-bluehost.md](docs/hybrid-bluehost.md)
+
+```bash
+npm run build:web:marketing   # → dist-marketing/ for Bluehost folder/subdomain
+```
+
 Entitlement design: [docs/entitlements.md](docs/entitlements.md).

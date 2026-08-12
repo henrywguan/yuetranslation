@@ -7,7 +7,7 @@ import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
 import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
-import { navigate } from '../lib/useHashRoute'
+import { openApp, openPricing } from '../lib/siteLinks'
 import './landing.css'
 
 // three.js is heavy — code-split it so it never blocks first paint.
@@ -73,7 +73,7 @@ export function Landing() {
             live on your website, fast enough for a real conversation.
           </p>
           <div className="ln-hero-cta">
-            <MagneticButton className="btn-primary" onClick={() => navigate('app')}>
+            <MagneticButton className="btn-primary" onClick={() => openApp()}>
               Launch translator
             </MagneticButton>
             <MagneticButton className="btn-ghost" onClick={() => scrollToId('demo')}>
@@ -139,7 +139,7 @@ export function Landing() {
             This runs against the real translation API. Type anything or tap a sample and watch the
             Cantonese — with Jyutping — appear underneath.
           </p>
-          <MagneticButton className="btn-primary" onClick={() => navigate('app')}>
+          <MagneticButton className="btn-primary" onClick={() => openApp()}>
             Open the full app
           </MagneticButton>
         </Reveal>
@@ -166,7 +166,7 @@ export function Landing() {
               <li>Jyutping on every line</li>
               <li>Solo, Face‑to‑face & Text modes</li>
             </ul>
-            <MagneticButton className="btn-ghost full" onClick={() => navigate('app')}>
+            <MagneticButton className="btn-ghost full" onClick={() => openApp()}>
               Get started
             </MagneticButton>
           </article>
@@ -183,14 +183,14 @@ export function Landing() {
               <li>Priority, natural Cantonese quality</li>
               <li>Everything in Free</li>
             </ul>
-            <MagneticButton className="btn-primary full" onClick={() => navigate('app')}>
+            <MagneticButton className="btn-primary full" onClick={() => openPricing()}>
               Go Pro
             </MagneticButton>
           </article>
         </Reveal>
 
         <Reveal className="ln-price-more">
-          <button type="button" className="ln-textlink" onClick={() => navigate('pricing')}>
+          <button type="button" className="ln-textlink" onClick={() => openPricing()}>
             Compare all plans →
           </button>
         </Reveal>
@@ -200,7 +200,7 @@ export function Landing() {
         <Reveal>
           <h2 className="ln-h2">Ready to be understood?</h2>
           <p className="ln-p">Open Yue and have your first bilingual conversation in seconds.</p>
-          <MagneticButton className="btn-primary" onClick={() => navigate('app')}>
+          <MagneticButton className="btn-primary" onClick={() => openApp()}>
             Launch translator
           </MagneticButton>
         </Reveal>
