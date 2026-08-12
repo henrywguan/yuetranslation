@@ -27,7 +27,13 @@ npm run build:web:wp
 5. Set **Upgrade URL** to your pricing / MemberPress checkout page.
 6. Add shortcodes:
    - `[yue_translator]` — translator (forces `view=app` in a phone-sized iframe)
-   - `[yue_splash]` — marketing landing (full-bleed iframe)
+   - `[yue_splash]` — marketing landing (full-bleed iframe; optional if you host marketing as static files)
+
+## Recommended: hybrid marketing + Bricks
+
+For a Bluehost launch where the marketing site is a pasted static build and the app lives on a Bricks page, follow **[hybrid-bluehost.md](./hybrid-bluehost.md)**.
+
+Summary: upload `dist-marketing/` as static files, create a Bricks page with `[yue_translator]`, and set `translatorUrl` / `pricingUrl` in that folder’s `site-config.json`.
 
 ## Entitlement model
 

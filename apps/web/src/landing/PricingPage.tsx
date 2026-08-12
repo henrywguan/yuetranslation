@@ -6,7 +6,7 @@ import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { useSmoothScroll } from './useSmoothScroll'
-import { navigate } from '../lib/useHashRoute'
+import { openApp, openHome } from '../lib/siteLinks'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
@@ -113,7 +113,7 @@ export function PricingPage() {
     <div className="landing pricing-page">
       <ScrollProgress />
       <ShaderBackground />
-      <Nav onFeatures={() => navigate('home')} />
+      <Nav onFeatures={() => openHome()} />
 
       <header className="pp-hero">
         <motion.div
@@ -171,7 +171,7 @@ export function PricingPage() {
               </ul>
               <MagneticButton
                 className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                onClick={() => navigate('app')}
+                onClick={() => openApp()}
               >
                 {plan.cta}
               </MagneticButton>
@@ -231,14 +231,14 @@ export function PricingPage() {
         <Reveal>
           <h2 className="ln-h2">Start talking today</h2>
           <p className="ln-p">Free to try. Upgrade only when you need more live minutes.</p>
-          <MagneticButton className="btn-primary" onClick={() => navigate('app')}>
+          <MagneticButton className="btn-primary" onClick={() => openApp()}>
             Launch translator
           </MagneticButton>
         </Reveal>
       </section>
 
       <footer className="ln-footer">
-        <button type="button" className="ln-brand ln-brand-btn" onClick={() => navigate('home')}>
+        <button type="button" className="ln-brand ln-brand-btn" onClick={() => openHome()}>
           <span className="ln-brand-mark" aria-hidden="true">
             粵
           </span>

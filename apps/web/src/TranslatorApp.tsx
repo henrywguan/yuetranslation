@@ -7,7 +7,8 @@ import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
 import { useYueStore } from './lib/store'
-import { isEmbeddedAppView, navigate } from './lib/useHashRoute'
+import { isEmbeddedAppView } from './lib/useHashRoute'
+import { openHome } from './lib/siteLinks'
 import './App.css'
 
 export function TranslatorApp() {
@@ -39,7 +40,7 @@ export function TranslatorApp() {
             <button
               type="button"
               className="brand-mark brand-mark-link"
-              onClick={() => navigate('home')}
+              onClick={() => openHome()}
               aria-label="Back to Yue home"
             >
               粵

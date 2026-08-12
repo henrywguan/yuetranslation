@@ -12,7 +12,9 @@ English ↔ Cantonese live translator PWA with freemium entitlements (Azure Spee
 
 Shortcodes:
 - `[yue_translator]` — phone-sized translator (`?view=app`)
-- `[yue_splash]` — full-bleed marketing landing
+- `[yue_splash]` — full-bleed marketing landing (optional if marketing is hosted as static files)
+
+Hybrid static marketing + Bricks: see repo docs/hybrid-bluehost.md (`site-config.json` links CTAs to your translator page).
 
 Settings → Yue Translator for Azure/OpenAI keys and plan limits.
 Build the app with `npm run build:web:wp` before uploading.
@@ -21,5 +23,6 @@ Build the app with `npm run build:web:wp` before uploading.
 
 1. Run `npm run build:web:wp` from the Yue monorepo.
 2. Upload the `yue-translator` folder to `/wp-content/plugins/`.
-3. Activate and configure API keys.
-4. Place `[yue_translator]` on a translator page and/or `[yue_splash]` on a marketing page.
+3. Activate and configure API keys (set Upgrade URL to your checkout page).
+4. Place `[yue_translator]` on a Bricks/WP translator page.
+5. Optionally host `npm run build:web:marketing` output as static files and edit `site-config.json`.
