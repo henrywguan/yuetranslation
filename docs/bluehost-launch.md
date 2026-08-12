@@ -53,9 +53,9 @@ Summary: upload `dist-marketing/` as static files, create a Bricks page with `[y
 
 ### Plan resolution order
 
-1. Filter `yue_user_plan`
-2. Capability `yue_pro` (admins also count as pro unless meta/filter overrides)
-3. User meta `yue_plan` = `free` | `pro`
+1. Capability `yue_pro` (admins/`manage_options` also count as pro)
+2. User meta `yue_plan` = `free` | `pro`
+3. Filter `yue_user_plan` (runs last — can override)
 4. Default `free` / `guest`
 
 MemberPress / WooMemberships example:

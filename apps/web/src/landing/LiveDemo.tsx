@@ -16,7 +16,7 @@ export function LiveDemo() {
     setLoading(true)
     setError(null)
     try {
-      const res = await translateText(trimmed, 'en', 'yue', 'auto')
+      const res = await translateText(trimmed, 'en', 'yue')
       setResult(res.text)
     } catch {
       setError('Live API not reachable from here — this runs against your deployed backend.')

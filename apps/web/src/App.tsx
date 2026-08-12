@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react'
-import { Landing } from './landing/Landing'
-import { PricingPage } from './landing/PricingPage'
-import { TranslatorApp } from './TranslatorApp'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useRoute } from './lib/useHashRoute'
+
+const Landing = lazy(() => import('./landing/Landing').then((m) => ({ default: m.Landing })))
+const PricingPage = lazy(() =>
+  import('./landing/PricingPage').then((m) => ({ default: m.PricingPage })),
+)
+const TranslatorApp = lazy(() =>
+  import('./TranslatorApp').then((m) => ({ default: m.TranslatorApp })),
+)
 
 export default function App() {
   const route = useRoute()
@@ -16,7 +21,9 @@ export default function App() {
   // Avoid flashing in-app hash routes before site-config.json resolves.
   if (!ready) return null
 
-  if (route === 'app') return <TranslatorApp />
-  if (route === 'pricing') return <PricingPage />
-  return <Landing />
+  let page = <Landing />
+  if (route === 'app') page = <TranslatorApp />
+  else if (route === 'pricing') page = <PricingPage />
+
+  return <Suspense fallback={null}>{page}</Suspense>
 }

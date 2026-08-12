@@ -1,4 +1,4 @@
-import type { Entitlement, Lang, Prefer } from './types'
+import type { Entitlement, Lang } from './types'
 
 function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -44,12 +44,6 @@ export async function fetchHealth(): Promise<{
   return res.json()
 }
 
-export async function fetchEntitlement(): Promise<Entitlement> {
-  const res = await apiFetch('/entitlement')
-  if (!res.ok) throw new Error('entitlement failed')
-  return res.json()
-}
-
 export async function fetchSpeechToken(): Promise<{ token: string; region: string } | null> {
   const res = await apiFetch('/speech-token')
   if (res.status === 401 || res.status === 402) {
@@ -67,11 +61,10 @@ export async function translateText(
   text: string,
   from: Lang,
   to: Lang,
-  prefer: Prefer = 'auto',
 ): Promise<{ text: string; engine: string }> {
   const res = await apiFetch('/translate', {
     method: 'POST',
-    body: JSON.stringify({ text, from, to, prefer }),
+    body: JSON.stringify({ text, from, to }),
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
@@ -100,5 +93,3 @@ export async function fetchTtsAudio(text: string, lang: Lang): Promise<Blob | nu
   if (!res.ok) return null
   return res.blob()
 }
-
-export { API_BASE }
