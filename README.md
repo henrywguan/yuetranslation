@@ -1,62 +1,31 @@
-# yuetranslation
+# Yue — English ↔ Cantonese
 
-粵譯 · **YueTranslation** — convert Chinese text into Cantonese **Jyutping** romanization
-and **IPA** pronunciation. The conversion runs fully offline using the
-[`to-jyutping`](https://www.npmjs.com/package/to-jyutping) engine, so no API keys or
-external services are required.
+Face-to-face live translator PWA with WordPress freemium entitlements for Bluehost launch.
 
-## Stack
+**Stack (launch):** Azure Speech (`zh-HK` STT/TTS) + OpenAI (colloquial 粵語) + WP plugin metering.
 
-- **client/** — Vite + React + TypeScript + Tailwind CSS single-page app (port `5173`)
-- **server/** — Express + TypeScript JSON API (port `3001`)
-- npm workspaces monorepo
+## Apps
 
-## Getting started
+- `apps/web` — React/Vite PWA (solo, face-to-face, text + Jyutping)
+- `apps/api` — Express cloud proxy for local testing
+- `wordpress/yue-translator` — Bluehost plugin (REST + entitlements + shortcode)
+
+## Quick start (local)
 
 ```bash
-npm install        # install all workspace dependencies
-npm run dev        # start API (3001) and web (5173) together
+cp apps/api/.env.example apps/api/.env
+npm install --prefix apps/api
+npm install --prefix apps/web
+npm run dev:api
+npm run dev:web
 ```
 
-Then open http://localhost:5173. The Vite dev server proxies `/api/*` to the backend.
+## WordPress package
 
-### Useful scripts
-
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Run API + web dev servers concurrently |
-| `npm run dev:server` | Run only the API dev server |
-| `npm run dev:client` | Run only the web dev server |
-| `npm run build` | Build both server and client for production |
-| `npm run typecheck` | Type-check both workspaces |
-
-## API
-
-### `GET /api/health`
-
-Returns service status.
-
-### `POST /api/translate`
-
-Request:
-
-```json
-{ "text": "香港人講廣東話" }
+```bash
+npm run build:web:wp
 ```
 
-Response:
+Upload `wordpress/yue-translator` and follow [docs/bluehost-launch.md](docs/bluehost-launch.md).
 
-```json
-{
-  "input": "香港人講廣東話",
-  "romanization": "hoeng1 gong2 jan4 gong2 gwong2 dung1 waa2",
-  "tokens": [
-    { "char": "香", "jyutping": "hoeng1", "ipa": "hœːŋ˥" }
-  ]
-}
-```
-
-## Cloud Agent environment
-
-`.cursor/environment.json` installs dependencies with `npm install` and launches the
-`api` and `web` dev servers as persistent terminals.
+Entitlement design: [docs/entitlements.md](docs/entitlements.md).

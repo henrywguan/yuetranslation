@@ -1,14 +1,14 @@
 {
   "name": "yuetranslation",
-  "install": "npm install",
+  "install": "npm install --prefix apps/web && npm install --prefix apps/api",
   "terminals": [
     {
       "name": "api",
-      "command": "npm run dev:server"
+      "command": "npm run dev:api"
     },
     {
       "name": "web",
-      "command": "npm run dev:client"
+      "command": "npm run dev:web"
     }
   ]
 }

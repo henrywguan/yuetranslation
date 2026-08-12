@@ -1,24 +1,13 @@
 {
-  "name": "yuetranslation",
-  "version": "0.1.0",
+  "name": "yue",
   "private": true,
-  "description": "Cantonese (Yue) romanization and pronunciation tool",
-  "workspaces": [
-    "server",
-    "client"
-  ],
+  "version": "0.2.0",
+  "description": "Yue — English ↔ Cantonese live translator (PWA + WordPress)",
   "scripts": {
-    "dev": "concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:server": "npm run dev --workspace server",
-    "dev:client": "npm run dev --workspace client",
-    "build": "npm run build --workspace server && npm run build --workspace client",
-    "start": "npm run start --workspace server",
-    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace client"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.0"
-  },
-  "engines": {
-    "node": ">=20"
+    "dev:web": "npm run dev --prefix apps/web",
+    "dev:api": "npm run dev --prefix apps/api",
+    "build:web": "node scripts/generate-icons.mjs && npm run build --prefix apps/web",
+    "build:web:wp": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf wordpress/yue-translator/app && mkdir -p wordpress/yue-translator/app && cp -R apps/web/dist/. wordpress/yue-translator/app/",
+    "icons": "node scripts/generate-icons.mjs"
   }
 }
