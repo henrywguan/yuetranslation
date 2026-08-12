@@ -1,12 +1,19 @@
+import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { ShaderBackground } from './ShaderBackground'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
+import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { navigate } from '../lib/useHashRoute'
 import './landing.css'
+
+// three.js is heavy — code-split it so it never blocks first paint.
+const HeroObject = lazy(() =>
+  import('./HeroObject').then((m) => ({ default: m.HeroObject })),
+)
 
 const MODES = [
   {
@@ -45,27 +52,12 @@ export function Landing() {
       <ScrollProgress />
       <ShaderBackground />
 
-      <nav className="ln-nav">
-        <a className="ln-brand" href="#/" aria-label="Yue home">
-          <span className="ln-brand-mark" aria-hidden="true">
-            粵
-          </span>
-          <span className="ln-brand-name">Yue</span>
-        </a>
-        <div className="ln-nav-links">
-          <button type="button" onClick={() => scrollToId('features')}>
-            Features
-          </button>
-          <button type="button" onClick={() => scrollToId('pricing')}>
-            Pricing
-          </button>
-          <button type="button" className="ln-nav-cta" onClick={() => navigate('app')}>
-            Launch app
-          </button>
-        </div>
-      </nav>
+      <Nav onFeatures={() => scrollToId('features')} />
 
       <header className="ln-hero">
+        <Suspense fallback={null}>
+          <HeroObject />
+        </Suspense>
         <motion.div
           className="ln-hero-inner"
           initial={{ opacity: 0, y: 22 }}
@@ -195,6 +187,12 @@ export function Landing() {
               Go Pro
             </MagneticButton>
           </article>
+        </Reveal>
+
+        <Reveal className="ln-price-more">
+          <button type="button" className="ln-textlink" onClick={() => navigate('pricing')}>
+            Compare all plans →
+          </button>
         </Reveal>
       </section>
 
