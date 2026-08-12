@@ -91,7 +91,7 @@ final class Yue_Settings
         ?>
         <div class="wrap">
             <h1>Yue Translator</h1>
-            <p>Bluehost launch stack: Azure Speech (STT/TTS) + OpenAI (Cantonese MT) + freemium entitlements. Shortcode: <code>[yue_translator]</code></p>
+            <p>Bluehost launch stack: Azure Speech (STT/TTS) + OpenAI (Cantonese MT) + freemium entitlements. Shortcodes: <code>[yue_translator]</code> (app), <code>[yue_splash]</code> (marketing).</p>
             <form method="post" action="options.php">
                 <?php settings_fields('yue_translator'); ?>
                 <h2>Cloud APIs</h2>

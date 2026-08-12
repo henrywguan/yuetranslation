@@ -25,7 +25,9 @@ npm run build:web:wp
 3. Activate **Yue Translator**.
 4. Settings → Yue Translator: paste Azure Speech key/region and OpenAI key.
 5. Set **Upgrade URL** to your pricing / MemberPress checkout page.
-6. Add shortcode `[yue_translator]` to a page.
+6. Add shortcodes:
+   - `[yue_translator]` — translator (forces `view=app` in a phone-sized iframe)
+   - `[yue_splash]` — marketing landing (full-bleed iframe)
 
 ## Entitlement model
 

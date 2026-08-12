@@ -10,7 +10,9 @@ English ↔ Cantonese live translator PWA with freemium entitlements (Azure Spee
 
 == Description ==
 
-Shortcode: [yue_translator]
+Shortcodes:
+- `[yue_translator]` — phone-sized translator (`?view=app`)
+- `[yue_splash]` — full-bleed marketing landing
 
 Settings → Yue Translator for Azure/OpenAI keys and plan limits.
 Build the app with `npm run build:web:wp` before uploading.
@@ -20,4 +22,4 @@ Build the app with `npm run build:web:wp` before uploading.
 1. Run `npm run build:web:wp` from the Yue monorepo.
 2. Upload the `yue-translator` folder to `/wp-content/plugins/`.
 3. Activate and configure API keys.
-4. Place `[yue_translator]` on a page.
+4. Place `[yue_translator]` on a translator page and/or `[yue_splash]` on a marketing page.
