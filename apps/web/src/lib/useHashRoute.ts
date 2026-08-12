@@ -11,17 +11,24 @@ function getSnapshot() {
   return window.location.hash
 }
 
-/** True when the app is embedded (WordPress shortcode passes ?view=app). */
+function viewParam(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get('view')
+}
+
+/** True when the app is embedded via `[yue_translator]` (`?view=app`). */
 export function isEmbeddedAppView(): boolean {
-  if (typeof window === 'undefined') return false
-  return new URLSearchParams(window.location.search).get('view') === 'app'
+  return viewParam() === 'app'
 }
 
 export function useRoute(): Route {
   const hash = useSyncExternalStore(subscribe, getSnapshot, () => '')
   const normalized = hash.replace(/^#\/?/, '')
-  if (normalized === 'app' || isEmbeddedAppView()) return 'app'
+  // Hash wins after the user navigates inside an embed (e.g. splash → #/app).
+  if (normalized === 'app') return 'app'
   if (normalized === 'pricing') return 'pricing'
+  if (isEmbeddedAppView()) return 'app'
+  if (viewParam() === 'pricing') return 'pricing'
   return 'home'
 }
 
