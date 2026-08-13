@@ -1,6 +1,6 @@
 # Yue UI demos (current stage)
 
-Captured from the local Vite build on branch `cursor/iridescent-theme-5ab9` (iridescent bubble UI + dark/light themes).
+Captured from the local Vite build on branch `cursor/iridescent-theme-5ab9` (refractive jade glass + dark/light themes).
 
 | # | Screen | File |
 | --- | --- | --- |
