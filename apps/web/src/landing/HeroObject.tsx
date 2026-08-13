@@ -1,9 +1,13 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { useTheme } from '../lib/theme'
 
-/** Glass iridescent bubble cluster for the hero — theme-aware jade/ink sheen. */
+/**
+ * Precious jade-glass hero bubbles with real transmission / refraction
+ * via MeshPhysicalMaterial + PMREM RoomEnvironment.
+ */
 export function HeroObject() {
   const mountRef = useRef<HTMLDivElement>(null)
   const reduced = useReducedMotion()
@@ -17,84 +21,131 @@ export function HeroObject() {
     const height = mount.clientHeight
     const light = theme === 'light'
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+    })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75))
     renderer.setSize(width, height)
+    renderer.setClearColor(0x000000, 0)
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = light ? 1.05 : 0.92
+    renderer.outputColorSpace = THREE.SRGBColorSpace
     mount.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100)
-    camera.position.z = 5.2
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100)
+    camera.position.set(0, 0.1, 5.6)
+
+    // Studio environment for real refraction / reflections
+    const pmrem = new THREE.PMREMGenerator(renderer)
+    pmrem.compileEquirectangularShader()
+    const envScene = new RoomEnvironment()
+    const envTex = pmrem.fromScene(envScene, 0.04).texture
+    scene.environment = envTex
+    scene.environmentIntensity = light ? 0.85 : 1.15
 
     const group = new THREE.Group()
     scene.add(group)
 
-    const jade = new THREE.Color(light ? '#1f9f8a' : '#3dcfb6')
-    const ink = new THREE.Color(light ? '#4a7a9a' : '#e8f4ff')
-    const deep = new THREE.Color(light ? '#0f6b5d' : '#1f8f7a')
+    const jade = new THREE.Color(light ? '#5ecfb8' : '#6ad9c4')
+    const cool = new THREE.Color(light ? '#a8c5d4' : '#1a3040')
+
+    // Soft colored backdrop so refraction has something beautiful to bend
+    const back = new THREE.Mesh(
+      new THREE.SphereGeometry(8, 32, 32),
+      new THREE.MeshBasicMaterial({
+        color: cool,
+        side: THREE.BackSide,
+        transparent: true,
+        opacity: light ? 0.35 : 0.55,
+      }),
+    )
+    scene.add(back)
+
+    // Structured light panels behind glass — transmission needs contrast to read
+    const panelMats: THREE.Material[] = []
+    const panels = new THREE.Group()
+    panels.position.z = -1.35
+    const panelSpecs = [
+      { w: 2.6, h: 0.32, x: -0.55, y: 0.85, color: light ? '#2ab89d' : '#3dcfb6', op: light ? 0.7 : 0.75 },
+      { w: 2.0, h: 0.26, x: 0.9, y: 0.1, color: light ? '#7eb8d0' : '#5eb0d0', op: light ? 0.65 : 0.7 },
+      { w: 2.3, h: 0.3, x: -0.15, y: -0.7, color: light ? '#147a6a' : '#1a9f88', op: light ? 0.55 : 0.65 },
+      { w: 1.0, h: 1.8, x: 1.45, y: 0.15, color: light ? '#b8d4e4' : '#2a5060', op: light ? 0.5 : 0.55 },
+      { w: 0.35, h: 2.2, x: -1.1, y: 0.0, color: light ? '#e8f6f2' : '#9af0de', op: light ? 0.55 : 0.45 },
+    ]
+    for (const p of panelSpecs) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(p.color),
+        transparent: true,
+        opacity: p.op,
+        depthWrite: false,
+      })
+      panelMats.push(mat)
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(p.w, p.h), mat)
+      mesh.position.set(p.x, p.y, 0)
+      panels.add(mesh)
+    }
+    group.add(panels)
+
+    const key = new THREE.DirectionalLight(0xffffff, light ? 1.4 : 1.1)
+    key.position.set(-3, 4, 5)
+    scene.add(key)
+    const fill = new THREE.PointLight(jade.getHex(), light ? 0.7 : 1.1, 16)
+    fill.position.set(2.5, -0.5, 3.5)
+    scene.add(fill)
+    const rim = new THREE.PointLight(0xb8d4e8, light ? 0.4 : 0.65, 14)
+    rim.position.set(-2, 1.5, -2)
+    scene.add(rim)
+    scene.add(new THREE.AmbientLight(light ? 0xd8e8f0 : 0x0c1c28, light ? 0.45 : 0.25))
 
     const bubbles: THREE.Mesh[] = []
-    const specs: { r: number; pos: THREE.Vector3; speed: number }[] = [
-      { r: 1.15, pos: new THREE.Vector3(0.15, 0.1, 0), speed: 0.16 },
-      { r: 0.55, pos: new THREE.Vector3(-1.35, 0.65, 0.4), speed: 0.22 },
-      { r: 0.42, pos: new THREE.Vector3(1.2, -0.55, 0.55), speed: 0.28 },
-      { r: 0.28, pos: new THREE.Vector3(0.85, 0.95, -0.2), speed: 0.34 },
+    const specs = [
+      { r: 1.2, pos: new THREE.Vector3(0.4, 0.05, 0), speed: 0.1 },
+      { r: 0.5, pos: new THREE.Vector3(-1.2, 0.55, 0.55), speed: 0.16 },
+      { r: 0.38, pos: new THREE.Vector3(1.15, -0.48, 0.65), speed: 0.2 },
+      { r: 0.24, pos: new THREE.Vector3(-0.4, -0.72, 0.35), speed: 0.24 },
     ]
 
     for (const s of specs) {
-      const geo = new THREE.SphereGeometry(s.r, 48, 48)
       const mat = new THREE.MeshPhysicalMaterial({
-        color: jade,
-        metalness: 0.18,
-        roughness: 0.12,
+        color: new THREE.Color('#f4fffc'),
+        metalness: 0,
+        roughness: 0.01,
+        transmission: 1,
+        thickness: 1.65,
+        ior: 1.48,
         transparent: true,
-        opacity: light ? 0.42 : 0.38,
+        opacity: 1,
         clearcoat: 1,
-        clearcoatRoughness: 0.06,
-        sheen: 1,
-        sheenRoughness: 0.35,
-        sheenColor: ink,
-        emissive: deep,
-        emissiveIntensity: light ? 0.08 : 0.18,
+        clearcoatRoughness: 0.02,
+        attenuationColor: new THREE.Color(light ? '#3dcfb6' : '#2ab89d'),
+        attenuationDistance: light ? 5.5 : 4.2,
+        specularIntensity: 1,
+        envMapIntensity: light ? 1.4 : 1.85,
+        sheen: 0.15,
+        sheenRoughness: 0.25,
+        sheenColor: jade,
       })
-      const mesh = new THREE.Mesh(geo, mat)
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(s.r, 96, 96), mat)
       mesh.position.copy(s.pos)
       group.add(mesh)
       bubbles.push(mesh)
     }
 
-    const count = 160
-    const positions = new Float32Array(count * 3)
-    for (let i = 0; i < count; i++) {
-      const r = 1.8 + Math.random() * 2.2
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
-      positions[i * 3 + 2] = r * Math.cos(phi)
-    }
-    const pGeo = new THREE.BufferGeometry()
-    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    const points = new THREE.Points(
-      pGeo,
-      new THREE.PointsMaterial({
+    // Soft jade bloom sphere behind hero bubble (caught by refraction)
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(1.8, 32, 32),
+      new THREE.MeshBasicMaterial({
         color: jade,
-        size: 0.028,
         transparent: true,
-        opacity: light ? 0.45 : 0.65,
-        blending: THREE.AdditiveBlending,
+        opacity: light ? 0.1 : 0.16,
         depthWrite: false,
       }),
     )
-    scene.add(points)
-
-    const key = new THREE.DirectionalLight(0xffffff, light ? 1.1 : 0.85)
-    key.position.set(-2.5, 3.5, 4)
-    scene.add(key)
-    scene.add(new THREE.AmbientLight(light ? 0xd8e8f0 : 0x1a3040, light ? 0.85 : 0.55))
-    const fill = new THREE.PointLight(jade.getHex(), light ? 0.55 : 0.9, 12)
-    fill.position.set(2, -1, 3)
-    scene.add(fill)
+    glow.position.set(0.4, 0.05, -1.1)
+    group.add(glow)
 
     const pointer = { x: 0, y: 0 }
     const onPointer = (e: PointerEvent) => {
@@ -113,18 +164,20 @@ export function HeroObject() {
     window.addEventListener('resize', resize)
 
     let raf = 0
-    const clock = new THREE.Clock()
+    const t0 = performance.now()
 
     const renderFrame = () => {
-      const t = clock.getElapsedTime()
-      group.rotation.y = t * 0.12 + pointer.x * 0.2
-      group.rotation.x = Math.sin(t * 0.25) * 0.12 + pointer.y * 0.12
+      const t = (performance.now() - t0) / 1000
+      group.rotation.y = t * 0.07 + pointer.x * 0.14
+      group.rotation.x = Math.sin(t * 0.18) * 0.07 + pointer.y * 0.09
       bubbles.forEach((mesh, i) => {
         const s = specs[i]
-        mesh.position.y = s.pos.y + Math.sin(t * s.speed * 4 + i) * 0.08
-        mesh.position.x = s.pos.x + Math.cos(t * s.speed * 3 + i) * 0.05
+        mesh.position.y = s.pos.y + Math.sin(t * s.speed * 3.2 + i) * 0.05
+        mesh.position.x = s.pos.x + Math.cos(t * s.speed * 2.6 + i) * 0.035
       })
-      points.rotation.y = -t * 0.04
+      back.rotation.y = t * 0.02
+      panels.rotation.z = Math.sin(t * 0.12) * 0.04
+      panels.position.x = Math.sin(t * 0.08) * 0.08
       renderer.render(scene, camera)
     }
 
@@ -159,8 +212,19 @@ export function HeroObject() {
         mesh.geometry.dispose()
         ;(mesh.material as THREE.Material).dispose()
       })
-      pGeo.dispose()
-      ;(points.material as THREE.Material).dispose()
+      glow.geometry.dispose()
+      ;(glow.material as THREE.Material).dispose()
+      back.geometry.dispose()
+      ;(back.material as THREE.Material).dispose()
+      panels.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose()
+        }
+      })
+      panelMats.forEach((m) => m.dispose())
+      envTex.dispose()
+      envScene.dispose()
+      pmrem.dispose()
       renderer.dispose()
       if (renderer.domElement.parentNode === mount) {
         mount.removeChild(renderer.domElement)

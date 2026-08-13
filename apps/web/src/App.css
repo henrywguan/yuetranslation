@@ -18,83 +18,156 @@
   z-index: 0;
   overflow: hidden;
   background:
-    radial-gradient(55% 45% at 15% 18%, color-mix(in srgb, var(--jade) 28%, transparent) 0%, transparent 60%),
-    radial-gradient(50% 40% at 85% 30%, color-mix(in srgb, var(--harbor-blue) 40%, transparent) 0%, transparent 62%),
-    radial-gradient(45% 35% at 55% 85%, color-mix(in srgb, var(--harbor-teal) 32%, transparent) 0%, transparent 58%),
-    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 45%, var(--harbor-deep) 100%);
+    radial-gradient(50% 42% at 18% 20%, color-mix(in srgb, var(--jade-deep) 32%, transparent) 0%, transparent 70%),
+    radial-gradient(48% 40% at 82% 28%, color-mix(in srgb, var(--harbor-blue) 38%, transparent) 0%, transparent 68%),
+    radial-gradient(40% 36% at 58% 82%, color-mix(in srgb, var(--harbor-teal) 28%, transparent) 0%, transparent 65%),
+    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 48%, var(--harbor-deep) 100%);
 }
+
+.fluid-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(50% 42% at 18% 20%, color-mix(in srgb, var(--jade-deep) 32%, transparent) 0%, transparent 70%),
+    radial-gradient(48% 40% at 82% 28%, color-mix(in srgb, var(--harbor-blue) 38%, transparent) 0%, transparent 68%),
+    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 48%, var(--harbor-deep) 100%);
+}
+
+.fluid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 
 .fluid-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(48px);
-  opacity: 0.55;
+  filter: blur(56px);
+  opacity: 0.42;
   will-change: transform;
 }
 
 .blob-a {
-  width: 58vmax;
-  height: 58vmax;
-  left: -18%;
-  top: -14%;
-  background: radial-gradient(circle at 40% 40%, color-mix(in srgb, var(--jade) 55%, transparent), transparent 68%);
+  width: 52vmax;
+  height: 52vmax;
+  left: -16%;
+  top: -12%;
+  background: radial-gradient(circle at 42% 40%, color-mix(in srgb, var(--jade) 42%, transparent), transparent 70%);
 }
 
 .blob-b {
-  width: 52vmax;
-  height: 52vmax;
-  right: -22%;
-  bottom: 0%;
-  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--harbor-blue) 55%, transparent), transparent 70%);
+  width: 46vmax;
+  height: 46vmax;
+  right: -18%;
+  bottom: 2%;
+  background: radial-gradient(circle at 48% 42%, color-mix(in srgb, var(--harbor-blue) 48%, transparent), transparent 72%);
 }
 
 .blob-c {
-  width: 36vmax;
-  height: 36vmax;
-  left: 35%;
-  top: 40%;
-  opacity: 0.35;
-  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--mint) 40%, transparent), transparent 70%);
+  width: 30vmax;
+  height: 30vmax;
+  left: 38%;
+  top: 42%;
+  opacity: 0.28;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--jade-deep) 36%, transparent), transparent 72%);
 }
 
+/* Layered jade-glass orbs — deep core, cool rim, crescent highlight */
 .fluid-bubble {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid var(--glass-shine);
-  background:
-    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.45), transparent 28%),
-    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--jade) 35%, transparent), transparent 55%),
-    color-mix(in srgb, var(--surface-strong) 40%, transparent);
-  box-shadow:
-    inset 0 -10px 30px color-mix(in srgb, var(--jade) 18%, transparent),
-    0 20px 50px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(2px);
   pointer-events: none;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 58%,
+      color-mix(in srgb, var(--jade) 22%, transparent) 0%,
+      color-mix(in srgb, var(--jade-deep) 48%, transparent) 38%,
+      color-mix(in srgb, var(--harbor-blue) 32%, transparent) 62%,
+      transparent 76%);
+  box-shadow:
+    0 30px 70px color-mix(in srgb, var(--harbor) 40%, transparent),
+    0 0 60px color-mix(in srgb, var(--jade) 16%, transparent);
+}
+
+.fluid-bubble-sheen {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.18) 10%, transparent 26%),
+    radial-gradient(circle at 68% 72%, color-mix(in srgb, var(--harbor-blue) 40%, transparent) 0%, transparent 42%);
+  box-shadow:
+    inset 0 -22px 40px color-mix(in srgb, var(--jade-deep) 40%, transparent),
+    inset 0 14px 26px rgba(255, 255, 255, 0.08);
+  -webkit-mask-image: radial-gradient(circle, #000 58%, transparent 74%);
+  mask-image: radial-gradient(circle, #000 58%, transparent 74%);
+}
+
+.fluid-bubble-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 210deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--jade-bright) 35%, transparent) 40deg,
+    transparent 95deg,
+    color-mix(in srgb, var(--ink) 12%, transparent) 180deg,
+    transparent 240deg,
+    color-mix(in srgb, var(--harbor-blue) 28%, transparent) 300deg,
+    transparent 360deg
+  );
+  -webkit-mask-image: radial-gradient(circle, transparent 58%, #000 66%, #000 72%, transparent 78%);
+  mask-image: radial-gradient(circle, transparent 58%, #000 66%, #000 72%, transparent 78%);
+  opacity: 0.85;
+  mix-blend-mode: screen;
+}
+
+[data-theme='light'] .fluid-bubble {
+  background:
+    radial-gradient(circle at 50% 55%,
+      color-mix(in srgb, var(--jade-bright) 30%, transparent) 0%,
+      color-mix(in srgb, var(--jade) 42%, transparent) 40%,
+      color-mix(in srgb, var(--harbor-teal) 30%, transparent) 64%,
+      transparent 78%);
+  box-shadow:
+    0 24px 50px color-mix(in srgb, var(--harbor-blue) 16%, transparent),
+    0 0 40px color-mix(in srgb, var(--jade) 12%, transparent);
+}
+
+[data-theme='light'] .fluid-bubble-rim {
+  mix-blend-mode: multiply;
+  opacity: 0.55;
 }
 
 .bubble-1 {
-  width: min(42vw, 280px);
-  height: min(42vw, 280px);
-  right: 6%;
-  top: 12%;
-  animation: bubble-float 18s ease-in-out infinite;
+  width: min(38vw, 240px);
+  height: min(38vw, 240px);
+  right: 8%;
+  top: 14%;
+  opacity: 0.95;
+  animation: bubble-float 22s ease-in-out infinite;
 }
 
 .bubble-2 {
-  width: min(28vw, 160px);
-  height: min(28vw, 160px);
-  left: 8%;
-  bottom: 18%;
-  animation: bubble-float 22s ease-in-out infinite reverse;
+  width: min(24vw, 140px);
+  height: min(24vw, 140px);
+  left: 10%;
+  bottom: 20%;
+  opacity: 0.8;
+  animation: bubble-float 26s ease-in-out infinite reverse;
 }
 
 .bubble-3 {
-  width: min(18vw, 100px);
-  height: min(18vw, 100px);
-  left: 42%;
-  top: 22%;
-  opacity: 0.7;
-  animation: bubble-float 14s ease-in-out infinite;
+  width: min(14vw, 88px);
+  height: min(14vw, 88px);
+  left: 44%;
+  top: 24%;
+  opacity: 0.6;
+  animation: bubble-float 18s ease-in-out infinite;
 }
 
 @keyframes bubble-float {
@@ -118,13 +191,13 @@
 .fluid-grain {
   position: absolute;
   inset: 0;
-  opacity: 0.05;
+  opacity: 0.035;
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 [data-theme='light'] .fluid-grain {
-  opacity: 0.035;
+  opacity: 0.025;
   mix-blend-mode: multiply;
 }
 
