@@ -49,8 +49,7 @@ export function HeroObject() {
     const group = new THREE.Group()
     scene.add(group)
 
-    const jade = new THREE.Color(light ? '#2ab89d' : '#3dcfb6')
-    const deep = new THREE.Color(light ? '#0f6b5d' : '#147a6a')
+    const jade = new THREE.Color(light ? '#5ecfb8' : '#6ad9c4')
     const cool = new THREE.Color(light ? '#a8c5d4' : '#1a3040')
 
     // Soft colored backdrop so refraction has something beautiful to bend
@@ -68,12 +67,13 @@ export function HeroObject() {
     // Structured light panels behind glass — transmission needs contrast to read
     const panelMats: THREE.Material[] = []
     const panels = new THREE.Group()
-    panels.position.z = -1.6
+    panels.position.z = -1.35
     const panelSpecs = [
-      { w: 2.4, h: 0.28, x: -0.6, y: 0.9, color: light ? '#7ec8b5' : '#3dcfb6', op: light ? 0.45 : 0.55 },
-      { w: 1.8, h: 0.22, x: 0.85, y: 0.15, color: light ? '#a8c5d4' : '#6eb8d0', op: light ? 0.4 : 0.5 },
-      { w: 2.1, h: 0.26, x: -0.2, y: -0.75, color: light ? '#1f9f8a' : '#147a6a', op: light ? 0.35 : 0.48 },
-      { w: 0.9, h: 1.6, x: 1.4, y: 0.2, color: light ? '#c5dce8' : '#1a4050', op: light ? 0.3 : 0.4 },
+      { w: 2.6, h: 0.32, x: -0.55, y: 0.85, color: light ? '#2ab89d' : '#3dcfb6', op: light ? 0.7 : 0.75 },
+      { w: 2.0, h: 0.26, x: 0.9, y: 0.1, color: light ? '#7eb8d0' : '#5eb0d0', op: light ? 0.65 : 0.7 },
+      { w: 2.3, h: 0.3, x: -0.15, y: -0.7, color: light ? '#147a6a' : '#1a9f88', op: light ? 0.55 : 0.65 },
+      { w: 1.0, h: 1.8, x: 1.45, y: 0.15, color: light ? '#b8d4e4' : '#2a5060', op: light ? 0.5 : 0.55 },
+      { w: 0.35, h: 2.2, x: -1.1, y: 0.0, color: light ? '#e8f6f2' : '#9af0de', op: light ? 0.55 : 0.45 },
     ]
     for (const p of panelSpecs) {
       const mat = new THREE.MeshBasicMaterial({
@@ -110,23 +110,23 @@ export function HeroObject() {
 
     for (const s of specs) {
       const mat = new THREE.MeshPhysicalMaterial({
-        color: jade,
+        color: new THREE.Color('#f4fffc'),
         metalness: 0,
-        roughness: 0.04,
+        roughness: 0.01,
         transmission: 1,
-        thickness: 2.1,
-        ior: 1.5,
+        thickness: 1.65,
+        ior: 1.48,
         transparent: true,
         opacity: 1,
         clearcoat: 1,
-        clearcoatRoughness: 0.03,
-        attenuationColor: deep,
-        attenuationDistance: light ? 2.2 : 1.55,
+        clearcoatRoughness: 0.02,
+        attenuationColor: new THREE.Color(light ? '#3dcfb6' : '#2ab89d'),
+        attenuationDistance: light ? 5.5 : 4.2,
         specularIntensity: 1,
-        envMapIntensity: light ? 1.15 : 1.5,
-        sheen: 0.28,
-        sheenRoughness: 0.35,
-        sheenColor: new THREE.Color(light ? '#7ec8b5' : '#9af0de'),
+        envMapIntensity: light ? 1.4 : 1.85,
+        sheen: 0.15,
+        sheenRoughness: 0.25,
+        sheenColor: jade,
       })
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(s.r, 96, 96), mat)
       mesh.position.copy(s.pos)
@@ -164,10 +164,10 @@ export function HeroObject() {
     window.addEventListener('resize', resize)
 
     let raf = 0
-    const clock = new THREE.Clock()
+    const t0 = performance.now()
 
     const renderFrame = () => {
-      const t = clock.getElapsedTime()
+      const t = (performance.now() - t0) / 1000
       group.rotation.y = t * 0.07 + pointer.x * 0.14
       group.rotation.x = Math.sin(t * 0.18) * 0.07 + pointer.y * 0.09
       bubbles.forEach((mesh, i) => {

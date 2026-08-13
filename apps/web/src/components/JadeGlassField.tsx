@@ -22,19 +22,20 @@ uniform float u_light;
 float hash(float n) { return fract(sin(n) * 43758.5453123); }
 
 vec3 harborCol(float light) {
-  return mix(vec3(0.027, 0.075, 0.122), vec3(0.933, 0.961, 0.973), light);
+  // Mist still needs structure — slightly cooler base so glass can read
+  return mix(vec3(0.027, 0.075, 0.122), vec3(0.90, 0.945, 0.965), light);
 }
 vec3 harborMid(float light) {
-  return mix(vec3(0.071, 0.196, 0.290), vec3(0.72, 0.84, 0.90), light);
+  return mix(vec3(0.071, 0.196, 0.290), vec3(0.62, 0.78, 0.86), light);
 }
 vec3 jadeCol(float light) {
-  return mix(vec3(0.239, 0.812, 0.714), vec3(0.122, 0.624, 0.541), light);
+  return mix(vec3(0.239, 0.812, 0.714), vec3(0.10, 0.55, 0.48), light);
 }
 vec3 jadeDeep(float light) {
-  return mix(vec3(0.10, 0.48, 0.42), vec3(0.06, 0.40, 0.34), light);
+  return mix(vec3(0.10, 0.48, 0.42), vec3(0.05, 0.36, 0.32), light);
 }
 vec3 inkCool(float light) {
-  return mix(vec3(0.62, 0.78, 0.88), vec3(0.32, 0.48, 0.58), light);
+  return mix(vec3(0.62, 0.78, 0.88), vec3(0.28, 0.44, 0.54), light);
 }
 
 // Structured atmosphere — refraction needs contrast to read as glass
@@ -44,9 +45,9 @@ vec3 sceneColor(vec2 uv, float t, float light) {
   float wash1 = exp(-dot(w1 - vec2(-0.38, 0.28), w1 - vec2(-0.38, 0.28)) * 1.7);
   float wash2 = exp(-dot(w1 - vec2(0.58, -0.22), w1 - vec2(0.58, -0.22)) * 1.35);
   float wash3 = exp(-dot(w1 - vec2(0.05, 0.55), w1 - vec2(0.05, 0.55)) * 2.2);
-  bg = mix(bg, harborMid(light), wash1 * 0.48);
-  bg = mix(bg, jadeDeep(light), wash2 * 0.34);
-  bg = mix(bg, jadeCol(light), wash3 * 0.16);
+  bg = mix(bg, harborMid(light), wash1 * mix(0.48, 0.55, light));
+  bg = mix(bg, jadeDeep(light), wash2 * mix(0.34, 0.42, light));
+  bg = mix(bg, jadeCol(light), wash3 * mix(0.16, 0.28, light));
 
   // Soft caustic ribbons — high-contrast structure for the lens to bend
   float ribbons = 0.0;
@@ -58,7 +59,8 @@ vec3 sceneColor(vec2 uv, float t, float light) {
     stripe = pow(0.5 + 0.5 * stripe, 3.5);
     ribbons += stripe * (0.55 - fk * 0.08);
   }
-  bg += mix(jadeCol(light), inkCool(light), 0.35) * ribbons * (0.10 + 0.06 * light);
+  // Light theme needs stronger ribbon contrast so refraction isn't washed out
+  bg += mix(jadeCol(light), inkCool(light), 0.35) * ribbons * mix(0.12, 0.32, light);
 
   // Luminous pools that drift — gives orbs something precious to magnify
   for (int j = 0; j < 4; j++) {
@@ -69,12 +71,12 @@ vec3 sceneColor(vec2 uv, float t, float light) {
     );
     float soft = exp(-dot(uv - c, uv - c) * (1.6 + fj * 0.55));
     vec3 pool = mix(jadeDeep(light), mix(jadeCol(light), inkCool(light), 0.4), 0.55);
-    bg = mix(bg, pool, soft * 0.28);
+    bg = mix(bg, pool, soft * mix(0.28, 0.38, light));
   }
 
   // Gentle vertical shaft — classic studio glass cue
-  float shaft = exp(-pow((uv.x + 0.12 + 0.08 * sin(t * 0.12)) * 2.4, 2.0)) * 0.22;
-  bg += mix(inkCool(light), vec3(1.0), light * 0.4) * shaft;
+  float shaft = exp(-pow((uv.x + 0.12 + 0.08 * sin(t * 0.12)) * 2.4, 2.0)) * mix(0.22, 0.34, light);
+  bg += mix(inkCool(light), vec3(1.0), light * 0.35) * shaft;
 
   return bg;
 }
@@ -148,9 +150,10 @@ vec4 refractOrb(vec2 uv, vec2 c, float rad, float depth, float light, float t, f
   // Soft limb alpha — denser near rim where glass reads
   float body = smoothstep(1.12, 0.78, sqrt(d2));
   float rimBoost = smoothstep(0.55, 0.95, sqrt(d2));
-  float alpha = body * mix(0.72, 0.35, depth);
-  alpha = mix(alpha, min(alpha + 0.2, 0.92), rimBoost * fres);
-  alpha *= mix(0.95, 0.78, light);
+  float alpha = body * mix(0.78, 0.42, depth);
+  alpha = mix(alpha, min(alpha + 0.22, 0.94), rimBoost * fres);
+  // Keep light-theme glass denser so it doesn't disappear on mist
+  alpha *= mix(0.96, 0.9, light);
   alpha *= smoothstep(1.2, 0.7, sqrt(d2));
 
   return vec4(col, alpha);
@@ -204,8 +207,13 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
   if (!shader) return null
   gl.shaderSource(shader, src)
   gl.compileShader(shader)
+  const log = gl.getShaderInfoLog(shader)?.trim()
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.warn('[JadeGlassField]', gl.getShaderInfoLog(shader))
+    console.warn(
+      '[JadeGlassField] compile failed',
+      type === gl.VERTEX_SHADER ? 'vertex' : 'fragment',
+      log || '(no log)',
+    )
     gl.deleteShader(shader)
     return null
   }
@@ -231,8 +239,10 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
       antialias: true,
       alpha: false,
       powerPreference: 'high-performance',
+      // Preserve so React Strict Mode remount can reuse the same canvas.
+      preserveDrawingBuffer: true,
     })
-    if (!gl) return
+    if (!gl || gl.isContextLost()) return
 
     const vert = compile(gl, gl.VERTEX_SHADER, VERT)
     const frag = compile(gl, gl.FRAGMENT_SHADER, FRAG)
@@ -250,7 +260,10 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
     gl.useProgram(program)
     canvas.classList.add('is-live')
     const fallback = canvas.parentElement?.querySelector('.shader-fallback, .fluid-fallback')
-    if (fallback instanceof HTMLElement) fallback.style.opacity = '0'
+    if (fallback instanceof HTMLElement) {
+      fallback.style.opacity = '0'
+      fallback.style.pointerEvents = 'none'
+    }
 
     const buffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
@@ -316,7 +329,12 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVisibility)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
+      // Do not call WEBGL_lose_context — React Strict Mode remounts effects and
+      // permanently kills the canvas context if we lose it here.
+      gl.deleteProgram(program)
+      gl.deleteShader(vert)
+      gl.deleteShader(frag)
+      gl.deleteBuffer(buffer)
     }
   }, [reduced, theme])
 
