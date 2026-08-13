@@ -10,8 +10,8 @@ void main() {
 `
 
 /**
- * Iridescent bubble field — soft SDF spheres with fresnel sheen,
- * tinted harbor / jade / ink. u_light switches dark ↔ light bases.
+ * Elegant jade / harbor glass orbs — soft depth, crescent highlights,
+ * restrained palette (no rainbow film). u_light = light theme.
  */
 const FRAG = `
 precision highp float;
@@ -21,103 +21,136 @@ uniform float u_light;
 
 float hash(float n) { return fract(sin(n) * 43758.5453123); }
 
-vec3 palette(float t, float light) {
-  vec3 harbor = mix(vec3(0.027, 0.075, 0.122), vec3(0.93, 0.96, 0.97), light);
-  vec3 jade   = mix(vec3(0.239, 0.812, 0.714), vec3(0.12, 0.62, 0.54), light);
-  vec3 ink    = mix(vec3(0.91, 0.96, 1.0), vec3(0.15, 0.32, 0.48), light);
-  vec3 mint   = mix(vec3(0.604, 0.941, 0.871), vec3(0.24, 0.72, 0.64), light);
-  vec3 a = mix(harbor, jade, smoothstep(0.0, 0.55, t));
-  vec3 b = mix(a, ink, smoothstep(0.35, 0.9, t));
-  return mix(b, mint, smoothstep(0.7, 1.0, t) * 0.55);
+vec3 harborCol(float light) {
+  return mix(vec3(0.027, 0.075, 0.122), vec3(0.933, 0.961, 0.973), light);
+}
+vec3 harborMid(float light) {
+  return mix(vec3(0.071, 0.196, 0.290), vec3(0.72, 0.84, 0.90), light);
+}
+vec3 jadeCol(float light) {
+  return mix(vec3(0.239, 0.812, 0.714), vec3(0.122, 0.624, 0.541), light);
+}
+vec3 jadeDeep(float light) {
+  return mix(vec3(0.122, 0.561, 0.478), vec3(0.06, 0.42, 0.36), light);
+}
+vec3 inkCool(float light) {
+  return mix(vec3(0.55, 0.72, 0.82), vec3(0.25, 0.42, 0.52), light);
+}
+
+// Soft 2D glass disc with depth / elegance
+vec4 glassOrb(vec2 uv, vec2 c, float r, float depth, float light, float t, float seed) {
+  vec2 p = (uv - c) / r;
+  float d = length(p);
+  if (d > 1.35) return vec4(0.0);
+
+  // soft limb (not a hard plastic edge)
+  float body = smoothstep(1.12, 0.62, d);
+  float rim = smoothstep(0.98, 0.72, d) * smoothstep(0.45, 0.92, d);
+  float core = smoothstep(0.75, 0.0, d);
+
+  // crescent specular — elegant, small, cool
+  vec2 hl = normalize(vec2(-0.45, 0.72));
+  float crescent = pow(max(dot(normalize(p + 0.001), hl), 0.0), 18.0);
+  crescent *= smoothstep(0.95, 0.15, d);
+  float spark = pow(max(1.0 - length(p - hl * 0.42), 0.0), 40.0);
+
+  // slow inner caustic drift (subtle, jade-only)
+  float caustic = 0.5 + 0.5 * sin(p.x * 5.0 + p.y * 4.0 + t * 0.35 + seed);
+  caustic *= smoothstep(0.85, 0.1, d) * 0.18;
+
+  vec3 jade = jadeCol(light);
+  vec3 deep = jadeDeep(light);
+  vec3 cool = inkCool(light);
+  vec3 mid = harborMid(light);
+
+  // volume: deep jade center → cooler harbor rim (stone / seawater, not rainbow)
+  vec3 col = mix(deep, jade, core * 0.85 + caustic);
+  col = mix(col, mix(cool, mid, 0.4), rim * 0.75);
+  col += vec3(0.92, 0.97, 1.0) * (crescent * 0.55 + spark * 0.9);
+  col += jade * (0.08 + 0.12 * (1.0 - light)) * body;
+
+  // further orbs are softer / dimmer
+  float alpha = body * mix(0.55, 0.22, clamp(depth, 0.0, 1.0));
+  alpha *= mix(0.92, 0.7, light);
+  // feather outer haze
+  alpha *= smoothstep(1.3, 0.55, d);
+
+  return vec4(col, alpha);
 }
 
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.x, u_res.y);
-  float t = u_time;
+  float t = u_time * 0.22;
+  float light = u_light;
 
-  vec3 ro = vec3(0.0, 0.0, 3.2);
-  vec3 rd = normalize(vec3(uv, -1.35));
-
-  float minD = 1e5;
-  vec3 hitN = vec3(0.0, 0.0, 1.0);
-  float hitId = 0.0;
-
-  // Soft cluster of drifting bubbles
-  for (int i = 0; i < 7; i++) {
-    float fi = float(i);
-    float ang = fi * 2.399963 + t * (0.08 + 0.02 * fi);
-    float rad = 0.55 + 0.35 * hash(fi + 1.7);
-    vec3 c = vec3(
-      cos(ang) * (0.35 + 0.55 * hash(fi + 3.1)),
-      sin(ang * 0.85 + fi) * (0.25 + 0.4 * hash(fi + 5.9)) + 0.1 * sin(t * 0.4 + fi),
-      -0.2 - 0.55 * hash(fi + 8.2) + 0.15 * sin(t * 0.25 + fi * 0.7)
-    );
-    // gentle orbit
-    c.xy += 0.12 * vec2(sin(t * 0.3 + fi), cos(t * 0.22 + fi * 1.3));
-
-    vec3 oc = ro - c;
-    float b = dot(oc, rd);
-    float h = b * b - dot(oc, oc) + rad * rad;
-    if (h >= 0.0) {
-      float dist = -b - sqrt(h);
-      if (dist > 0.0 && dist < minD) {
-        minD = dist;
-        vec3 p = ro + rd * dist;
-        hitN = normalize(p - c);
-        hitId = fi + 1.0;
-      }
-    }
-  }
-
-  vec3 bgDark = vec3(0.027, 0.075, 0.122);
-  vec3 bgLight = vec3(0.933, 0.961, 0.973);
-  vec3 bg = mix(bgDark, bgLight, u_light);
-
-  // soft atmospheric wash behind bubbles
-  float wash = length(uv * vec2(1.1, 0.9));
-  vec3 haze = palette(0.35 + 0.25 * sin(t * 0.15 + wash * 2.0), u_light);
-  bg = mix(bg, haze, 0.35 * smoothstep(1.2, 0.1, wash));
+  vec3 bg = harborCol(light);
+  // quiet atmosphere — two large soft washes, not speckles
+  vec2 w1 = uv * vec2(0.9, 1.05) + vec2(0.15 * sin(t * 0.3), -0.08);
+  float wash1 = exp(-dot(w1 - vec2(-0.35, 0.25), w1 - vec2(-0.35, 0.25)) * 1.8);
+  float wash2 = exp(-dot(w1 - vec2(0.55, -0.2), w1 - vec2(0.55, -0.2)) * 1.4);
+  bg = mix(bg, harborMid(light), wash1 * 0.35);
+  bg = mix(bg, jadeDeep(light), wash2 * 0.22);
 
   vec3 col = bg;
 
-  if (hitId > 0.0) {
-    float fres = pow(1.0 - max(dot(hitN, -rd), 0.0), 2.2);
-    float band = 0.5 + 0.5 * sin(hitN.x * 4.0 + hitN.y * 3.0 + t * 0.6 + hitId);
-    vec3 film = palette(band, u_light);
-    vec3 jade = mix(vec3(0.239, 0.812, 0.714), vec3(0.12, 0.62, 0.54), u_light);
-
-    // glass body — see-through with tinted rim
-    vec3 glass = mix(bg, film, 0.22 + 0.35 * fres);
-    glass += jade * fres * 0.55;
-    glass += vec3(1.0) * pow(fres, 6.0) * (0.55 + 0.25 * u_light);
-
-    // specular hotspot
-    vec3 ldir = normalize(vec3(-0.4, 0.7, 0.5));
-    float spec = pow(max(dot(reflect(rd, hitN), ldir), 0.0), 48.0);
-    glass += vec3(0.95, 0.98, 1.0) * spec * (0.65 - 0.15 * u_light);
-
-    // soft contact shadow-ish darkening under sphere
-    glass *= 0.92 + 0.08 * hitN.y;
-
-    col = mix(bg, glass, 0.88);
-  }
-
-  // floating out-of-focus orbs (2D)
-  for (int j = 0; j < 5; j++) {
+  // Far soft orbs (atmosphere)
+  for (int j = 0; j < 4; j++) {
     float fj = float(j);
-    vec2 c2 = vec2(
-      sin(t * 0.12 + fj * 1.7) * 0.85,
-      cos(t * 0.09 + fj * 2.1) * 0.55
+    vec2 c = vec2(
+      sin(t * 0.31 + fj * 1.9) * 0.95,
+      cos(t * 0.24 + fj * 2.3) * 0.55 + 0.05
     );
-    float r2 = 0.18 + 0.12 * hash(fj + 11.0);
-    float d2 = length(uv - c2) / r2;
-    float soft = smoothstep(1.0, 0.2, d2);
-    vec3 blob = palette(0.4 + 0.3 * hash(fj + 2.2), u_light);
-    col = mix(col, blob, soft * (0.12 + 0.08 * u_light));
+    float r = 0.42 + 0.22 * hash(fj + 3.0);
+    float d = length(uv - c) / r;
+    float soft = exp(-d * d * 1.6);
+    vec3 haze = mix(jadeDeep(light), harborMid(light), hash(fj + 1.1));
+    col = mix(col, haze, soft * mix(0.14, 0.1, light));
   }
 
-  float vig = smoothstep(1.35, 0.2, length(uv));
-  col *= mix(0.78, 1.0, vig);
+  // Primary glass orbs — fewer, larger, layered back → front
+  // depth 1 = far, 0 = near
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i);
+    float ang = fi * 1.2566 + t * (0.12 + 0.03 * fi);
+    float rad = mix(0.55, 0.28, fi / 4.0) + 0.06 * hash(fi + 2.2);
+    float depth = fi / 4.0;
+    vec2 c = vec2(
+      cos(ang) * (0.15 + 0.55 * depth) + 0.08 * sin(t * 0.4 + fi),
+      sin(ang * 0.9) * (0.12 + 0.35 * depth) + 0.06 * cos(t * 0.35 + fi * 0.7)
+    );
+    // bias composition: one hero orb right-of-center
+    if (i == 0) {
+      c = vec2(0.42 + 0.04 * sin(t * 0.5), 0.08 + 0.03 * cos(t * 0.4));
+      rad = 0.62;
+      depth = 0.15;
+    } else if (i == 1) {
+      c = vec2(-0.55 + 0.03 * cos(t * 0.35), 0.32);
+      rad = 0.34;
+      depth = 0.45;
+    } else if (i == 2) {
+      c = vec2(0.15, -0.42 + 0.03 * sin(t * 0.45));
+      rad = 0.26;
+      depth = 0.55;
+    } else if (i == 3) {
+      c = vec2(-0.2 + 0.02 * sin(t), 0.55);
+      rad = 0.18;
+      depth = 0.7;
+    } else {
+      c = vec2(0.72, -0.28);
+      rad = 0.16;
+      depth = 0.8;
+    }
+
+    vec4 orb = glassOrb(uv, c, rad, depth, light, t * 4.0, fi * 7.1);
+    col = mix(col, orb.rgb, orb.a);
+  }
+
+  // gentle vignette — salon lighting, not heavy
+  float vig = smoothstep(1.45, 0.25, length(uv * vec2(1.05, 1.0)));
+  col *= mix(0.88, 1.0, vig);
+
+  // lift midtones slightly in dark theme for jade richness
+  col += jadeCol(light) * (0.02 * (1.0 - light));
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -129,6 +162,7 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
   gl.shaderSource(shader, src)
   gl.compileShader(shader)
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.warn(gl.getShaderInfoLog(shader))
     gl.deleteShader(shader)
     return null
   }
@@ -144,7 +178,7 @@ export function ShaderBackground() {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const gl = canvas.getContext('webgl', { antialias: false, alpha: false })
+    const gl = canvas.getContext('webgl', { antialias: true, alpha: false })
     if (!gl) return
 
     const vert = compile(gl, gl.VERTEX_SHADER, VERT)
@@ -171,7 +205,7 @@ export function ShaderBackground() {
     const lightLoc = gl.getUniformLocation(program, 'u_light')
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.75)
       const w = Math.floor(canvas.clientWidth * dpr)
       const h = Math.floor(canvas.clientHeight * dpr)
       if (canvas.width !== w || canvas.height !== h) {
@@ -209,7 +243,7 @@ export function ShaderBackground() {
     resize()
     gl.uniform1f(lightLoc, light)
     if (reduced) {
-      gl.uniform1f(timeLoc, 14.0)
+      gl.uniform1f(timeLoc, 18.0)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
     } else {
       raf = requestAnimationFrame(render)

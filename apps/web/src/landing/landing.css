@@ -18,10 +18,10 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(60% 50% at 18% 22%, color-mix(in srgb, var(--jade) 35%, transparent) 0%, transparent 60%),
-    radial-gradient(55% 45% at 82% 28%, color-mix(in srgb, var(--harbor-blue) 45%, transparent) 0%, transparent 62%),
-    radial-gradient(50% 40% at 60% 78%, color-mix(in srgb, var(--harbor-teal) 40%, transparent) 0%, transparent 58%),
-    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 45%, var(--harbor-deep) 100%);
+    radial-gradient(42% 38% at 72% 42%, color-mix(in srgb, var(--jade) 28%, transparent) 0%, transparent 70%),
+    radial-gradient(36% 32% at 18% 28%, color-mix(in srgb, var(--jade-deep) 30%, transparent) 0%, transparent 68%),
+    radial-gradient(40% 36% at 40% 78%, color-mix(in srgb, var(--harbor-blue) 34%, transparent) 0%, transparent 70%),
+    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 48%, var(--harbor-deep) 100%);
 }
 
 .shader-canvas {
@@ -35,14 +35,14 @@
 .shader-grain {
   position: absolute;
   inset: 0;
-  opacity: 0.045;
+  opacity: 0.03;
   pointer-events: none;
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 [data-theme='light'] .shader-grain {
-  opacity: 0.03;
+  opacity: 0.025;
   mix-blend-mode: multiply;
 }
 
@@ -134,6 +134,15 @@
   border-radius: 999px;
   color: var(--on-jade) !important;
   background: linear-gradient(135deg, var(--jade), var(--jade-mid));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--jade) 28%, transparent);
+}
+
+[data-theme='light'] .ln-nav-links button {
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+[data-theme='light'] .ln-nav-cta {
+  color: #f4fffc !important;
 }
 
 /* ---------- Buttons ---------- */
@@ -233,7 +242,7 @@
   letter-spacing: -0.04em;
   margin: 0 0 22px;
   text-wrap: balance;
-  overflow-wrap: anywhere;
+  hyphens: none;
   max-width: 100%;
 }
 

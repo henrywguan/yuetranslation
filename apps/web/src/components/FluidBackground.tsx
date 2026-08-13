@@ -1,6 +1,15 @@
 import { motion, useReducedMotion } from 'framer-motion'
 
-/** Soft iridescent orbs for the translator shell (CSS twin of the landing shader). */
+function GlassOrb({ className }: { className: string }) {
+  return (
+    <div className={`fluid-bubble ${className}`} aria-hidden="true">
+      <span className="fluid-bubble-sheen" />
+      <span className="fluid-bubble-rim" />
+    </div>
+  )
+}
+
+/** Soft jade/harbor glass orbs for the translator shell. */
 export function FluidBackground() {
   const reduced = useReducedMotion()
 
@@ -11,31 +20,31 @@ export function FluidBackground() {
         animate={
           reduced
             ? undefined
-            : { x: [0, 48, -24, 0], y: [0, -36, 22, 0], scale: [1, 1.12, 0.94, 1] }
+            : { x: [0, 40, -20, 0], y: [0, -28, 18, 0], scale: [1, 1.08, 0.96, 1] }
         }
-        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
         className="fluid-blob blob-b"
         animate={
           reduced
             ? undefined
-            : { x: [0, -56, 28, 0], y: [0, 42, -28, 0], scale: [1, 0.9, 1.14, 1] }
+            : { x: [0, -44, 22, 0], y: [0, 32, -22, 0], scale: [1, 0.94, 1.1, 1] }
         }
-        transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
         className="fluid-blob blob-c"
         animate={
           reduced
             ? undefined
-            : { x: [0, 30, -40, 0], y: [0, 20, -30, 0], scale: [1, 1.08, 0.96, 1] }
+            : { x: [0, 24, -32, 0], y: [0, 16, -24, 0], scale: [1, 1.06, 0.97, 1] }
         }
-        transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 32, repeat: Infinity, ease: 'easeInOut' }}
       />
-      <div className="fluid-bubble bubble-1" />
-      <div className="fluid-bubble bubble-2" />
-      <div className="fluid-bubble bubble-3" />
+      <GlassOrb className="bubble-1" />
+      <GlassOrb className="bubble-2" />
+      <GlassOrb className="bubble-3" />
       <div className="fluid-grain" />
     </div>
   )
