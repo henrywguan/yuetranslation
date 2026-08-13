@@ -1,4 +1,5 @@
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 type NavProps = {
   /** Called when "Features" is clicked; defaults to navigating home. */
@@ -26,6 +27,7 @@ export function Nav({ onFeatures }: NavProps) {
         <button type="button" onClick={() => openPricing()}>
           Pricing
         </button>
+        <ThemeToggle />
         <button type="button" className="ln-nav-cta" onClick={() => openApp()}>
           Launch app
         </button>

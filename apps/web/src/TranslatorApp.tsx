@@ -6,6 +6,7 @@ import { FluidBackground } from './components/FluidBackground'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
+import { ThemeToggle } from './components/ThemeToggle'
 import { useYueStore } from './lib/store'
 import { isEmbeddedAppView } from './lib/useHashRoute'
 import { openHome } from './lib/siteLinks'
@@ -51,7 +52,10 @@ export function TranslatorApp() {
             <p className="brand-tag">English ↔ Cantonese</p>
           </div>
         </motion.div>
-        <PlanChip />
+        <div className="brand-bar-actions">
+          <ThemeToggle />
+          <PlanChip />
+        </div>
       </header>
 
       <main className="main">
