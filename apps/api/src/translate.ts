@@ -23,6 +23,9 @@ const DEMO: Record<string, string> = {
   早晨: 'Good morning',
   地鐵喺邊度: 'Where is the MTR?',
   呢個幾錢: 'How much is this?',
+  今日天氣好好呀: 'The weather is really nice today.',
+  我想食茶餐廳: 'I want to eat at a cha chaan teng.',
+  呢度去尖沙咀點樣行: 'How do I walk to Tsim Sha Tsui from here?',
 }
 
 export async function translate(input: unknown) {
