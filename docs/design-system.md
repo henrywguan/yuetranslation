@@ -9,6 +9,17 @@ Brand tokens for matching the Yue marketing site and translator when building **
 3. Branch: `main`, folder: **`/docs`**
 4. After deploy, open `https://<user>.github.io/<repo>/brand/`
 
+## Themes
+
+| Theme | Primary surface | Text | Accent |
+| --- | --- | --- | --- |
+| **Dark** (default) | Harbor `#07131f` | Ink `#e8f4ff` | Jade `#3dcfb6` |
+| **Light** | Mist `#eef5f8` | Harbor `#07131f` | Jade `#1f9f8a` |
+
+Toggle lives in the marketing nav and translator header. Preference is stored as `localStorage.yue-theme` and respects `prefers-color-scheme` on first visit.
+
+Background: iridescent glass bubbles (WebGL on marketing, CSS orbs in the translator) mixed from Harbor / Jade / Ink.
+
 ## Brand hierarchy
 
 | Role | Name | Hex | Use |
