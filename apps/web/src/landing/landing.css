@@ -243,6 +243,7 @@
   margin: 0 0 22px;
   text-wrap: balance;
   hyphens: none;
+  overflow-wrap: anywhere;
   max-width: 100%;
 }
 
