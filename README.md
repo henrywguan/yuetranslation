@@ -4,6 +4,8 @@ Face-to-face live translator PWA with WordPress freemium entitlements for Blueho
 
 **Stack (launch):** Azure Speech (`zh-HK` STT/TTS) + OpenAI (colloquial 粵語) + WP plugin metering.
 
+**Design tokens (Bricks matching):** [docs/design-system.md](docs/design-system.md) · visual page [docs/brand/index.html](docs/brand/index.html)
+
 ## Apps
 
 - `apps/web` — React/Vite PWA (solo, face-to-face, text + Jyutping)

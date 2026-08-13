@@ -1,4 +1,4 @@
-import { navigate, type Route } from './useHashRoute'
+import { navigate } from './useHashRoute'
 
 export type SiteConfig = {
   /** Absolute URL of the Bricks (or WP) page that embeds `[yue_translator]`. */
@@ -105,10 +105,4 @@ export function openHome() {
     return
   }
   navigate('home')
-}
-
-export function openRoute(route: Route) {
-  if (route === 'app') openApp()
-  else if (route === 'pricing') openPricing()
-  else openHome()
 }

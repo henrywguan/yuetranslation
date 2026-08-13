@@ -13,9 +13,9 @@
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(120% 80% at 10% 0%, #12324a 0%, transparent 55%),
-    radial-gradient(90% 70% at 100% 20%, #0b3d36 0%, transparent 50%),
-    linear-gradient(165deg, #07131f 0%, #0a1c2c 45%, #081820 100%);
+    radial-gradient(120% 80% at 10% 0%, var(--harbor-blue) 0%, transparent 55%),
+    radial-gradient(90% 70% at 100% 20%, var(--harbor-teal) 0%, transparent 50%),
+    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 45%, var(--harbor-deep) 100%);
 }
 
 .fluid-blob {
@@ -76,9 +76,9 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: linear-gradient(145deg, #3dcfb6, #1f8f7a);
-  color: #041018;
-  font-family: 'Noto Sans HK', sans-serif;
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+  color: var(--on-jade);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 1.55rem;
   box-shadow: 0 10px 30px rgba(61, 207, 182, 0.25);
@@ -86,7 +86,7 @@
 
 .brand-name {
   margin: 0;
-  font-family: Syne, sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(2rem, 8vw, 2.6rem);
   letter-spacing: -0.04em;
@@ -118,7 +118,7 @@
 
 .plan-chip.plan-pro {
   background: rgba(61, 207, 182, 0.2);
-  color: #9af0de;
+  color: var(--mint);
 }
 
 .plan-chip.muted {
@@ -177,11 +177,11 @@
 }
 
 .solo-translation {
-  font-family: 'Noto Sans HK', sans-serif;
+  font-family: var(--font-body);
   font-size: clamp(1.55rem, 6.5vw, 2.15rem);
   line-height: 1.35;
   font-weight: 600;
-  color: #e8fff8;
+  color: var(--ink-bright);
   min-height: 2.6em;
 }
 
@@ -203,7 +203,7 @@
 }
 
 .jyutping {
-  font-family: Syne, sans-serif;
+  font-family: var(--font-display);
   font-size: 0.55em;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -251,7 +251,7 @@
 
 .pane header h2 {
   margin: 0;
-  font-family: Syne, sans-serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
 }
 
@@ -282,7 +282,7 @@
 
 .pane .said {
   margin: 0;
-  font-family: 'Noto Sans HK', sans-serif;
+  font-family: var(--font-body);
   font-size: clamp(1.25rem, 5vw, 1.7rem);
   font-weight: 600;
 }
@@ -292,7 +292,7 @@
   place-items: center;
   height: 36px;
   color: var(--jade);
-  font-family: 'Noto Sans HK', sans-serif;
+  font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: 0.2em;
   opacity: 0.7;
@@ -320,7 +320,7 @@
   color: var(--muted);
   padding: 10px 8px;
   border-radius: 10px;
-  font-family: Syne, sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
@@ -328,7 +328,7 @@
 
 .mode-tabs button.active {
   background: rgba(61, 207, 182, 0.16);
-  color: #e8fff8;
+  color: var(--ink-bright);
 }
 
 .live-row {
@@ -344,16 +344,16 @@
   border: 0;
   border-radius: 16px;
   padding: 16px 18px;
-  font-family: Syne, sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
-  color: #041018;
-  background: linear-gradient(135deg, #3dcfb6, #2aa88f);
+  color: var(--on-jade);
+  background: linear-gradient(135deg, var(--jade), var(--jade-mid));
 }
 
 .live-btn.on {
-  background: linear-gradient(135deg, #e36b6b, #c44d4d);
+  background: linear-gradient(135deg, var(--danger), var(--danger-deep));
   color: #fff;
 }
 
@@ -433,11 +433,11 @@
 
 .banner.error {
   background: rgba(227, 107, 107, 0.16);
-  color: #ffd0d0;
+  color: var(--danger-ink);
 }
 
 .banner a {
-  color: #9af0de;
+  color: var(--mint);
 }
 
 .text-mode {
@@ -457,7 +457,7 @@
   border: 0;
   border-radius: 12px;
   padding: 12px 14px;
-  font-family: Syne, sans-serif;
+  font-family: var(--font-display);
   font-weight: 650;
   cursor: pointer;
 }
@@ -469,7 +469,7 @@
 
 .text-dirs button.active {
   background: rgba(61, 207, 182, 0.18);
-  color: #e8fff8;
+  color: var(--ink-bright);
 }
 
 .text-mode textarea {
@@ -485,8 +485,8 @@
 }
 
 .text-mode .primary {
-  background: linear-gradient(135deg, #3dcfb6, #2aa88f);
-  color: #041018;
+  background: linear-gradient(135deg, var(--jade), var(--jade-mid));
+  color: var(--on-jade);
 }
 
 .text-result .result-text {

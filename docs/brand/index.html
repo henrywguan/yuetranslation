@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yue — Brand & design tokens</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --harbor: #07131f;
+        --harbor-mid: #0a1c2c;
+        --harbor-deep: #081820;
+        --harbor-blue: #12324a;
+        --harbor-teal: #0b3d36;
+        --jade: #3dcfb6;
+        --jade-mid: #2aa88f;
+        --jade-deep: #1f8f7a;
+        --jade-bright: #7ef0dc;
+        --on-jade: #041018;
+        --ink: #e8f4ff;
+        --ink-bright: #e8fff8;
+        --muted: rgba(232, 244, 255, 0.58);
+        --mint: #9af0de;
+        --danger: #e36b6b;
+        --danger-deep: #c44d4d;
+        --danger-ink: #ffd0d0;
+        --font-display: Syne, 'Noto Sans HK', sans-serif;
+        --font-body: 'Noto Sans HK', Syne, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: var(--font-body);
+        color: var(--ink);
+        background:
+          radial-gradient(120% 80% at 10% 0%, var(--harbor-blue) 0%, transparent 55%),
+          radial-gradient(90% 70% at 100% 20%, var(--harbor-teal) 0%, transparent 50%),
+          linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 45%, var(--harbor-deep) 100%);
+        line-height: 1.45;
+      }
+      main {
+        width: min(960px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 3rem 0 4rem;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+      }
+      .mark {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.9rem;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.35rem;
+        background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+        color: var(--on-jade);
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0.35rem 0 0;
+        max-width: 36rem;
+      }
+      h2 {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1.15rem;
+        margin: 2.5rem 0 1rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--mint);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.85rem;
+      }
+      .swatch {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 1rem;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .swatch .chip {
+        height: 5.5rem;
+      }
+      .swatch .meta {
+        padding: 0.75rem 0.85rem 0.95rem;
+      }
+      .swatch strong {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+      }
+      .swatch code {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .tier {
+        display: inline-block;
+        margin-top: 0.35rem;
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--jade);
+      }
+      .row {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 1.1rem;
+        padding: 1.15rem 1.2rem;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .card h3 {
+        margin: 0 0 0.4rem;
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+      }
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 1rem;
+        padding: 0.7rem 1.25rem;
+        border: 0;
+        border-radius: 999px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--jade), var(--jade-mid));
+        color: var(--on-jade);
+        text-decoration: none;
+      }
+      .ghost {
+        background: transparent;
+        color: var(--ink);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        margin-left: 0.5rem;
+      }
+      .type-sample {
+        margin: 0.35rem 0;
+      }
+      .type-sample.display {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.75rem;
+      }
+      .type-sample.body {
+        font-size: 1.05rem;
+      }
+      .type-sample.muted {
+        color: var(--muted);
+      }
+      .type-sample.mint {
+        color: var(--mint);
+        font-size: 0.95rem;
+      }
+      .assets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+      }
+      .assets img {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      footer {
+        margin-top: 3rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      footer a {
+        color: var(--jade);
+      }
+      .copy {
+        cursor: pointer;
+        user-select: all;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark" aria-hidden="true">粵</div>
+        <div>
+          <h1>Yue design tokens</h1>
+          <p class="sub">
+            Primary Harbor, secondary Jade, tertiary Ink — for matching Bricks pages to the product.
+          </p>
+        </div>
+      </header>
+
+      <h2>Primary · Harbor</h2>
+      <div class="grid" id="harbor"></div>
+
+      <h2>Secondary · Jade</h2>
+      <div class="grid" id="jade"></div>
+
+      <h2>Tertiary · Ink &amp; mint</h2>
+      <div class="grid" id="ink"></div>
+
+      <h2>Danger</h2>
+      <div class="grid" id="danger"></div>
+
+      <h2>Typography</h2>
+      <div class="row">
+        <div class="card">
+          <h3>Syne — display</h3>
+          <p class="type-sample display">Speak. See. Understand.</p>
+          <p class="muted">Weights 500–800 · headlines, buttons, brand</p>
+        </div>
+        <div class="card">
+          <h3>Noto Sans HK — body</h3>
+          <p class="type-sample body">你好嗎 · English ↔ 廣東話</p>
+          <p class="type-sample mint">nei5 hou2 maa3 · Jyutping</p>
+          <p class="muted">Weights 400–700 · body &amp; Cantonese</p>
+        </div>
+      </div>
+
+      <h2>Components</h2>
+      <div class="card">
+        <h3>Primary CTA</h3>
+        <p>Jade gradient on Harbor · on-jade text</p>
+        <a class="btn" href="#">Launch translator</a>
+        <a class="btn ghost" href="#">Ghost</a>
+      </div>
+
+      <h2>Assets</h2>
+      <div class="assets card">
+        <img src="./favicon.svg" alt="Yue favicon" width="64" height="64" />
+        <img src="./pwa-192.png" alt="Yue PWA icon 192" width="64" height="64" />
+        <div>
+          <strong style="font-family: var(--font-display)">粵 mark + PWA icon</strong>
+          <p class="muted" style="margin: 0.25rem 0 0">
+            Logo in product UI is the CSS 粵 glyph — recreate with the mark gradient.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        Full reference:
+        <a href="../design-system.md">design-system.md</a>
+        · CSS source of truth in
+        <code>apps/web/src/index.css</code>
+      </footer>
+    </main>
+    <script>
+      const groups = {
+        harbor: [
+          ['Harbor', '#07131f', 'Primary'],
+          ['Harbor mid', '#0a1c2c', 'Primary'],
+          ['Harbor deep', '#081820', 'Primary'],
+          ['Harbor blue', '#12324a', 'Primary'],
+          ['Harbor teal', '#0b3d36', 'Primary'],
+        ],
+        jade: [
+          ['Jade', '#3dcfb6', 'Secondary'],
+          ['Jade mid', '#2aa88f', 'Secondary'],
+          ['Jade deep', '#1f8f7a', 'Secondary'],
+          ['Jade bright', '#7ef0dc', 'Secondary'],
+          ['On jade', '#041018', 'Secondary'],
+        ],
+        ink: [
+          ['Ink', '#e8f4ff', 'Tertiary'],
+          ['Ink bright', '#e8fff8', 'Tertiary'],
+          ['Mint', '#9af0de', 'Tertiary'],
+          ['Muted', 'rgba(232,244,255,0.58)', 'Tertiary'],
+        ],
+        danger: [
+          ['Danger', '#e36b6b', 'System'],
+          ['Danger deep', '#c44d4d', 'System'],
+          ['Danger ink', '#ffd0d0', 'System'],
+        ],
+      }
+
+      function render(id, items) {
+        const root = document.getElementById(id)
+        root.innerHTML = items
+          .map(
+            ([name, hex, tier]) => `
+          <article class="swatch" title="Click hex to select">
+            <div class="chip" style="background:${hex}"></div>
+            <div class="meta">
+              <strong>${name}</strong>
+              <code class="copy">${hex}</code>
+              <span class="tier">${tier}</span>
+            </div>
+          </article>`,
+          )
+          .join('')
+      }
+
+      Object.entries(groups).forEach(([id, items]) => render(id, items))
+    </script>
+  </body>
+</html>

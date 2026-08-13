@@ -9,7 +9,6 @@ import type {
   Lang,
   LiveSession,
   Mode,
-  Prefer,
   SpeakDirection,
 } from './types'
 
@@ -19,9 +18,7 @@ type State = {
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
   autoSpeak: boolean
-  prefer: Prefer
   entitlement: Entitlement | null
-  engines: Record<string, boolean> | null
   error: string | null
   enInterim: string
   yueInterim: string
@@ -32,7 +29,6 @@ type State = {
   setMode: (mode: Mode) => void
   setSpeakDirection: (d: SpeakDirection) => void
   setAutoSpeak: (v: boolean) => void
-  setPrefer: (v: Prefer) => void
   loadBootstrap: () => Promise<void>
   toggleLive: () => Promise<void>
   translateTyped: (text: string, from: Lang) => Promise<void>
@@ -87,8 +83,7 @@ async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   try {
-    const prefer = isFinal ? get().prefer : 'fast'
-    const result = await translateText(text, lang, to, prefer)
+    const result = await translateText(text, lang, to)
     if (pending.get(lang) !== seq && !isFinal) return
     if (lang === 'en') {
       set({
@@ -152,9 +147,7 @@ export const useYueStore = create<State>((set, get) => ({
   live: false,
   status: 'idle',
   autoSpeak: true,
-  prefer: 'natural',
   entitlement: null,
-  engines: null,
   error: null,
   enInterim: '',
   yueInterim: '',
@@ -174,7 +167,6 @@ export const useYueStore = create<State>((set, get) => ({
   },
   setSpeakDirection: (speakDirection) => set({ speakDirection }),
   setAutoSpeak: (autoSpeak) => set({ autoSpeak }),
-  setPrefer: (prefer) => set({ prefer }),
 
   loadBootstrap: async () => {
     try {
@@ -184,13 +176,11 @@ export const useYueStore = create<State>((set, get) => ({
         ent.upgradeUrl = getUpgradeUrl()
       }
       set({
-        engines: data.engines,
         entitlement: ent,
         autoSpeak: Boolean(ent.allowed.autoSpeak),
       })
     } catch {
       set({
-        engines: { demo: true, azureSpeech: false, openai: false },
         entitlement: null,
       })
     }
@@ -294,7 +284,7 @@ export const useYueStore = create<State>((set, get) => ({
     const to: Lang = from === 'en' ? 'yue' : 'en'
     set({ error: null })
     try {
-      const result = await translateText(trimmed, from, to, get().prefer)
+      const result = await translateText(trimmed, from, to)
       if (from === 'en') {
         set({
           enInterim: trimmed,

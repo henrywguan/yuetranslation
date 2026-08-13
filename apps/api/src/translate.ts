@@ -6,9 +6,6 @@ const Body = z.object({
   text: z.string().min(1).max(2000),
   from: z.enum(['en', 'yue']).default('en'),
   to: z.enum(['en', 'yue']),
-  prefer: z.enum(['auto', 'fast', 'natural']).optional(),
-  sourceLang: z.enum(['en', 'yue', 'auto']).optional(),
-  targetLang: z.enum(['en', 'yue']).optional(),
 })
 
 const DEMO: Record<string, string> = {
@@ -30,8 +27,8 @@ const DEMO: Record<string, string> = {
 
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
-  const from = parsed.from || (parsed.sourceLang === 'yue' ? 'yue' : 'en')
-  const to = parsed.to || parsed.targetLang || 'yue'
+  const from = parsed.from
+  const to = parsed.to
   const text = parsed.text.trim()
 
   if (from === to) {

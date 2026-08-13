@@ -10,9 +10,6 @@ let startedAt = 0
 export function isTtsPlaying() {
   return playing
 }
-export function getPlaybackStartedAt() {
-  return startedAt
-}
 
 export function stopSpeaking() {
   gen += 1

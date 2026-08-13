@@ -1,11 +1,35 @@
 :root {
+  /* Primary — deep harbor (surfaces / page) */
   --harbor: #07131f;
-  --ink: #e8f4ff;
-  --muted: rgba(232, 244, 255, 0.58);
+  --harbor-mid: #0a1c2c;
+  --harbor-deep: #081820;
+  --harbor-blue: #12324a;
+  --harbor-teal: #0b3d36;
+
+  /* Secondary — jade accent (CTAs, marks, focus) */
   --jade: #3dcfb6;
+  --jade-mid: #2aa88f;
   --jade-deep: #1f8f7a;
+  --jade-bright: #7ef0dc;
+  --on-jade: #041018;
+
+  /* Tertiary — ink / mint text */
+  --ink: #e8f4ff;
+  --ink-bright: #e8fff8;
+  --muted: rgba(232, 244, 255, 0.58);
+  --mint: #9af0de;
+
+  /* Danger */
+  --danger: #e36b6b;
+  --danger-deep: #c44d4d;
+  --danger-ink: #ffd0d0;
+
+  /* Typography */
+  --font-display: Syne, 'Noto Sans HK', sans-serif;
+  --font-body: 'Noto Sans HK', Syne, sans-serif;
+
   color-scheme: dark;
-  font-family: 'Noto Sans HK', Syne, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.4;
   font-weight: 400;
   color: var(--ink);
@@ -42,4 +66,10 @@ textarea {
 
 a {
   color: var(--jade);
+}
+
+.brand-mark-link {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
 }

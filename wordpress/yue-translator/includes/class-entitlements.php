@@ -8,9 +8,9 @@ if (!defined('ABSPATH')) {
  * Freemium entitlements for Yue.
  *
  * Resolution order for plan:
- * 1) filter `yue_user_plan`
- * 2) capability `yue_pro` => pro
- * 3) user meta `yue_plan` (free|pro)
+ * 1) capability `yue_pro` (or `manage_options`) => pro
+ * 2) user meta `yue_plan` (free|pro)
+ * 3) filter `yue_user_plan` (last — can override)
  * 4) default free (or guest)
  */
 final class Yue_Entitlements
