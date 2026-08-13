@@ -891,8 +891,12 @@
     gap: 10px;
   }
 
-  .ln-nav-links button:not(.ln-nav-cta) {
+  .ln-nav-links > button:not(.ln-nav-cta) {
     display: none;
+  }
+
+  .ln-nav-links .theme-toggle {
+    display: inline-flex;
   }
 
   .ln-nav-cta {
