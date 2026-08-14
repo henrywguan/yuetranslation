@@ -21,6 +21,9 @@ export type PostProcessMeta = {
   dictionaryHit: boolean
   scrubbed: boolean
   colloquialScore: number
+  /** Share of Han chars covered by CC-Canto/seed headwords (finals). */
+  attestationCoverage?: number
   rewritten: boolean
   notes: string[]
 }
+
