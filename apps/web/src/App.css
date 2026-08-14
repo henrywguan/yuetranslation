@@ -872,10 +872,15 @@
 
 .result-with-def-gloss {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   line-height: 1.35;
   color: var(--muted);
   font-weight: 450;
+}
+
+.result-with-def .result-text,
+.result-with-def .cantonese-block {
+  margin-top: 2px;
 }
 
 .result-with-def--compact .result-with-def-gloss {
