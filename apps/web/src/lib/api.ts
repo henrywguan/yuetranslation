@@ -61,8 +61,21 @@ export async function translateText(
   text: string,
   from: Lang,
   to: Lang,
-  opts?: { includeAlternatives?: boolean },
-): Promise<{ text: string; alternatives?: string[]; engine: string }> {
+  opts?: { includeAlternatives?: boolean; stage?: 'interim' | 'final' },
+): Promise<{
+  text: string
+  alternatives?: string[]
+  engine: string
+  stage?: string
+  meta?: {
+    dictionaryHit: boolean
+    scrubbed: boolean
+    colloquialScore: number
+    rewritten: boolean
+    notes: string[]
+  }
+}> {
+  const stage = opts?.stage ?? 'final'
   const res = await apiFetch('/translate', {
     method: 'POST',
     body: JSON.stringify({
@@ -70,6 +83,7 @@ export async function translateText(
       from,
       to,
       includeAlternatives: Boolean(opts?.includeAlternatives),
+      stage,
     }),
   })
   if (!res.ok) throw new Error(await res.text())

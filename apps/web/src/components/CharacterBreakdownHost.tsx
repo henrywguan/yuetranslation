@@ -14,7 +14,8 @@ function mergeMeanings(local: CharBreakdown[], remote: CharBreakdown[]): CharBre
     if (!hit) return row
     return {
       char: row.char,
-      jyutping: row.jyutping || hit.jyutping,
+      // Local to-jyutping library is the pronunciation source of truth.
+      jyutping: row.jyutping,
       meaning: hit.meaning?.trim() || row.meaning,
     }
   })

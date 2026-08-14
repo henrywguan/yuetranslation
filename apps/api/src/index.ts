@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { cloudReady, env } from './env.js'
+import { dictionaryStats } from './canto/index.js'
 import { localEntitlement } from './entitlements.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
@@ -21,7 +22,10 @@ app.get('/api/health', (_req, res) => {
       azureSpeech: Boolean(env.azureSpeechKey),
       openai: Boolean(env.openaiApiKey),
       demo: !env.openaiApiKey,
+      dictionary: true,
     },
+    dictionary: dictionaryStats(),
+    openaiBaseUrl: Boolean(env.openaiBaseUrl),
     entitlement: localEntitlement(),
   })
 })

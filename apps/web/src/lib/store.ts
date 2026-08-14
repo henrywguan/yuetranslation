@@ -93,6 +93,7 @@ async function runTranslation(
   try {
     const result = await translateText(text, lang, to, {
       includeAlternatives: isFinal && lang === 'en',
+      stage: isFinal ? 'final' : 'interim',
     })
     const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq && !isFinal) return
@@ -302,6 +303,7 @@ export const useYueStore = create<State>((set, get) => ({
     try {
       const result = await translateText(trimmed, from, to, {
         includeAlternatives: from === 'en',
+        stage: 'final',
       })
       const alternatives = result.alternatives || []
       if (from === 'en') {

@@ -26,7 +26,10 @@ export function LiveDemo() {
     setLoading(true)
     setError(null)
     try {
-      const res = await translateText(trimmed, 'en', 'yue', { includeAlternatives: true })
+      const res = await translateText(trimmed, 'en', 'yue', {
+        includeAlternatives: true,
+        stage: 'final',
+      })
       setResult(res.text)
       setAlternatives(res.alternatives || [])
     } catch {

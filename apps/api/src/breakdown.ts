@@ -142,7 +142,10 @@ export async function breakdown(input: unknown) {
     return { characters: fallback, engine: 'demo' as const }
   }
 
-  const client = new OpenAI({ apiKey: env.openaiApiKey })
+  const client = new OpenAI({
+    apiKey: env.openaiApiKey,
+    ...(env.openaiBaseUrl ? { baseURL: env.openaiBaseUrl } : {}),
+  })
   const system = [
     'You explain Hong Kong Cantonese (口語粵語) character-by-character for language learners.',
     'Given a Cantonese phrase, return ONLY valid JSON:',
@@ -151,7 +154,7 @@ export async function breakdown(input: unknown) {
     '- Include every character in order (skip spaces).',
     '- For punctuation, jyutping null and a brief meaning like “question mark”.',
     '- Meanings must fit THIS phrase (particles, aspect markers).',
-    '- Jyutping with tone numbers (e.g. nei5).',
+    '- Jyutping with tone numbers (e.g. nei5) — optional; client library is authoritative.',
     '- No markdown.',
   ].join('\n')
 
