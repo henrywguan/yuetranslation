@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { z } from 'zod'
-import { env } from './env.js'
+import { env, openaiConfigured } from './env.js'
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -28,6 +28,14 @@ const DEMO: Record<string, string> = {
   呢度去尖沙咀點樣行: 'How do I walk to Tsim Sha Tsui from here?',
 }
 
+function createChatClient() {
+  return new OpenAI({
+    // Ollama ignores the key but the SDK requires a non-empty string.
+    apiKey: env.openaiApiKey || 'ollama',
+    ...(env.openaiBaseUrl ? { baseURL: env.openaiBaseUrl } : {}),
+  })
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -38,7 +46,7 @@ export async function translate(input: unknown) {
     return { text, engine: 'identity', from, to }
   }
 
-  if (!env.openaiApiKey) {
+  if (!openaiConfigured()) {
     const key = text.toLowerCase()
     const hit = DEMO[key] || DEMO[text]
     return {
@@ -49,7 +57,7 @@ export async function translate(input: unknown) {
     }
   }
 
-  const client = new OpenAI({ apiKey: env.openaiApiKey })
+  const client = createChatClient()
   const toYue = to === 'yue'
   const system = toYue
     ? [
@@ -75,7 +83,7 @@ export async function translate(input: unknown) {
 
   return {
     text: completion.choices[0]?.message?.content?.trim() || text,
-    engine: 'openai',
+    engine: env.openaiBaseUrl ? 'openai-compatible' : 'openai',
     from,
     to,
   }

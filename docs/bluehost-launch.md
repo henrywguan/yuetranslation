@@ -80,6 +80,10 @@ The shortcode passes `api=` and `nonce=` (WP REST nonce). The PWA sends `credent
 ```bash
 cp apps/api/.env.example apps/api/.env
 # add keys; YUE_OPEN_MODE=1 for unrestricted local use
+# Optional Ollama:
+#   OPENAI_API_KEY=ollama
+#   OPENAI_BASE_URL=http://127.0.0.1:11434/v1
+#   OPENAI_MODEL=<name from `ollama list`>
 npm run dev:api
 npm run dev:web
 ```
