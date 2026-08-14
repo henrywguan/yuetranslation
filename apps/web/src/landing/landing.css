@@ -579,6 +579,8 @@
 
 .demo-result-row {
   margin-top: 6px;
+  flex-direction: row !important;
+  align-items: flex-start;
 }
 
 .demo-result-row .demo-output-text,
@@ -591,10 +593,17 @@
 
 .demo-result-row .result-with-def-side {
   min-width: 7.5rem;
+  max-width: 42%;
+  flex: 0 1 42%;
+  padding-left: 14px;
+  padding-top: 0 !important;
+  border-left: 1px solid var(--glass-border);
+  border-top: 0 !important;
 }
 
 .demo-jyutping {
-  color: rgba(154, 240, 222, 0.8) !important;
+  color: var(--mint) !important;
+  opacity: 0.9;
 }
 
 /* Shared result + definition layout (also used outside TranslatorApp) */

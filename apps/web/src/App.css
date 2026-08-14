@@ -366,10 +366,11 @@
 
 .jyutping {
   font-family: var(--font-display);
-  font-size: 0.55em;
+  font-size: 0.58em;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: rgba(154, 240, 222, 0.75);
+  color: var(--mint);
+  opacity: 0.9;
 }
 
 .history {
