@@ -10,6 +10,7 @@ import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { ui } from '../lib/uiCopy'
+import { LANDING_PLANS } from './plans'
 import './landing.css'
 
 // three.js is heavy — code-split it so it never blocks first paint.
@@ -64,7 +65,7 @@ export function Landing() {
             </span>{' '}
             <BiText copy={ui.heroTitleUnderstand} size="lg" />
           </h1>
-          <BiText className="ln-sub" copy={ui.heroSub} layout="stack" size="md" as="p" />
+          <BiText className="ln-sub" copy={ui.heroSub} size="md" as="p" />
           <div className="ln-hero-cta">
             <MagneticButton className="btn-primary" onClick={() => openApp()}>
               <BiText copy={ui.launchTranslator} size="sm" />
@@ -76,15 +77,15 @@ export function Landing() {
           <div className="ln-hero-stats">
             <div>
               <strong>2</strong>
-              <BiText copy={ui.statLangs} layout="stack" size="sm" />
+              <BiText copy={ui.statLangs} size="sm" />
             </div>
             <div>
               <strong>3</strong>
-              <BiText copy={ui.statModes} layout="stack" size="sm" />
+              <BiText copy={ui.statModes} size="sm" />
             </div>
             <div>
               <strong>粵</strong>
-              <BiText copy={ui.statJyutping} layout="stack" size="sm" />
+              <BiText copy={ui.statJyutping} size="sm" />
             </div>
           </div>
         </motion.div>
@@ -99,7 +100,7 @@ export function Landing() {
             <BiText copy={ui.modesKicker} size="sm" />
           </span>
           <h2 className="ln-h2">
-            <BiText copy={ui.modesTitle} layout="stack" size="lg" />
+            <BiText copy={ui.modesTitle} size="lg" />
           </h2>
         </Reveal>
 
@@ -109,7 +110,7 @@ export function Landing() {
               <h3>
                 <BiText copy={m.title} size="md" />
               </h3>
-              <BiText copy={m.desc} layout="stack" size="sm" as="p" />
+              <BiText copy={m.desc} size="sm" as="p" />
             </article>
           ))}
         </Reveal>
@@ -122,7 +123,7 @@ export function Landing() {
                 <h4>
                   <BiText copy={f.title} size="md" />
                 </h4>
-                <BiText copy={f.desc} layout="stack" size="sm" as="p" />
+                <BiText copy={f.desc} size="sm" as="p" />
               </div>
             </div>
           ))}
@@ -135,9 +136,9 @@ export function Landing() {
             <BiText copy={ui.demoKicker} size="sm" />
           </span>
           <h2 className="ln-h2">
-            <BiText copy={ui.demoTitle} layout="stack" size="lg" />
+            <BiText copy={ui.demoTitle} size="lg" />
           </h2>
-          <BiText className="ln-p" copy={ui.demoBody} layout="stack" size="sm" as="p" />
+          <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
           <MagneticButton className="btn-primary" onClick={() => openApp()}>
             <BiText copy={ui.openFullApp} size="sm" />
           </MagneticButton>
@@ -153,71 +154,42 @@ export function Landing() {
             <BiText copy={ui.pricingKicker} size="sm" />
           </span>
           <h2 className="ln-h2">
-            <BiText copy={ui.pricingTitle} layout="stack" size="lg" />
+            <BiText copy={ui.pricingTitle} size="lg" />
           </h2>
         </Reveal>
 
         <Reveal className="ln-price-grid" stagger={0.12} y={34}>
-          <article className="ln-price-card">
-            <h3>
-              <BiText copy={ui.planFree} size="md" />
-            </h3>
-            <p className="ln-price">
-              $0
-              <span>
-                <BiText copy={ui.perMonth} size="sm" hideJp />
-              </span>
-            </p>
-            <ul>
-              <li>
-                <BiText copy={ui.freeFeatLive20} layout="stack" size="sm" />
-              </li>
-              <li>
-                <BiText copy={ui.freeFeatText} layout="stack" size="sm" />
-              </li>
-              <li>
-                <BiText copy={ui.freeFeatJp} layout="stack" size="sm" />
-              </li>
-              <li>
-                <BiText copy={ui.freeFeatModes} layout="stack" size="sm" />
-              </li>
-            </ul>
-            <MagneticButton className="btn-ghost full" onClick={() => openApp()}>
-              <BiText copy={ui.getStarted} size="sm" />
-            </MagneticButton>
-          </article>
-
-          <article className="ln-price-card featured">
-            <span className="ln-price-badge">
-              <BiText copy={ui.mostPopular} size="sm" />
-            </span>
-            <h3>
-              <BiText copy={ui.planPro} size="md" />
-            </h3>
-            <p className="ln-price">
-              $9
-              <span>
-                <BiText copy={ui.perMonth} size="sm" hideJp />
-              </span>
-            </p>
-            <ul>
-              <li>
-                <BiText copy={ui.proFeatLive10} layout="stack" size="sm" />
-              </li>
-              <li>
-                <BiText copy={ui.proFeatTts} layout="stack" size="sm" />
-              </li>
-              <li>
-                <BiText copy={ui.proFeatQuality} layout="stack" size="sm" />
-              </li>
-              <li>
-                <BiText copy={ui.proFeatEverything} layout="stack" size="sm" />
-              </li>
-            </ul>
-            <MagneticButton className="btn-primary full" onClick={() => openPricing()}>
-              <BiText copy={ui.goPro} size="sm" />
-            </MagneticButton>
-          </article>
+          {LANDING_PLANS.map((plan) => (
+            <article key={plan.id} className={`ln-price-card${plan.featured ? ' featured' : ''}`}>
+              {plan.featured ? (
+                <span className="ln-price-badge">
+                  <BiText copy={ui.mostPopular} size="sm" />
+                </span>
+              ) : null}
+              <h3>
+                <BiText copy={plan.name} size="md" />
+              </h3>
+              <p className="ln-price">
+                ${plan.monthly}
+                <span>
+                  <BiText copy={ui.perMonth} size="sm" hideJp />
+                </span>
+              </p>
+              <ul>
+                {plan.features.map((f) => (
+                  <li key={f.en}>
+                    <BiText copy={f} size="sm" />
+                  </li>
+                ))}
+              </ul>
+              <MagneticButton
+                className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
+                onClick={() => (plan.ctaOpens === 'app' ? openApp() : openPricing())}
+              >
+                <BiText copy={plan.cta} size="sm" />
+              </MagneticButton>
+            </article>
+          ))}
         </Reveal>
 
         <Reveal className="ln-price-more">
@@ -230,9 +202,9 @@ export function Landing() {
       <section className="ln-cta-band">
         <Reveal>
           <h2 className="ln-h2">
-            <BiText copy={ui.ctaReady} layout="stack" size="lg" />
+            <BiText copy={ui.ctaReady} size="lg" />
           </h2>
-          <BiText className="ln-p" copy={ui.ctaBody} layout="stack" size="sm" as="p" />
+          <BiText className="ln-p" copy={ui.ctaBody} size="sm" as="p" />
           <MagneticButton className="btn-primary" onClick={() => openApp()}>
             <BiText copy={ui.launchTranslator} size="sm" />
           </MagneticButton>
@@ -246,7 +218,7 @@ export function Landing() {
           </span>
           <span className="ln-brand-name">Jyut</span>
         </div>
-        <BiText copy={ui.footerTag} layout="stack" size="sm" as="p" />
+        <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>
     </div>
   )

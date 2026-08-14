@@ -121,17 +121,17 @@ final class Yue_Translate
             'yes' => ['係', 'yes'],
             'no' => ['唔係', 'no'],
             '你好' => ['Hello', 'hello; hi'],
-            '多謝' => ['Thank you', 'thank you'],
-            '唔該' => ['Thanks', 'thanks'],
+            '唔該' => ['Thank you', 'thank you'],
+            '多謝' => ['Thanks', 'thanks'],
             '早晨' => ['Good morning', 'good morning'],
-            '你好嗎？' => ['How are you?', 'how are you?'],
+            '你好嗎' => ['How are you?', 'how are you?'],
             '地鐵喺邊度' => ['Where is the MTR?', 'where is the MTR?'],
             '呢個幾錢' => ['How much is this?', 'how much is this?'],
             '係' => ['Yes', 'yes'],
             '唔係' => ['No', 'no'],
         ];
-        $key = strtolower(trim($text));
-        $hit = $map[$key] ?? $map[trim($text)] ?? null;
+        $key = self::demo_lookup_key($text);
+        $hit = $map[$key] ?? null;
         if ($hit) {
             return [
                 'text' => $hit[0],
@@ -142,5 +142,13 @@ final class Yue_Translate
             'text' => $to === 'yue' ? "（示範）{$text}" : "(demo) {$text}",
             'definition' => $from === 'en' && $to === 'yue' ? $text : '',
         ];
+    }
+
+    private static function demo_lookup_key(string $text): string
+    {
+        $key = mb_strtolower(trim($text), 'UTF-8');
+        $key = preg_replace('/[?!.,;:。？！，、…]+$/u', '', $key) ?? $key;
+        $key = preg_replace('/\s+/u', ' ', $key) ?? $key;
+        return trim($key);
     }
 }

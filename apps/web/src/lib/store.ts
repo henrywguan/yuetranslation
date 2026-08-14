@@ -87,6 +87,7 @@ async function runTranslation(
   lang: Lang,
   text: string,
   isFinal: boolean,
+  keepSource = !isFinal,
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
@@ -95,40 +96,28 @@ async function runTranslation(
     const result = await translateText(text, lang, to)
     if (pending.get(lang) !== seq && !isFinal) return
     const definition = result.definition || (lang === 'en' ? text : '')
+    const history = isFinal
+      ? nextHistory(get, {
+          from: lang,
+          to,
+          source: text,
+          translation: result.text,
+          definition,
+          engine: result.engine,
+        })
+      : undefined
     if (lang === 'en') {
       set({
-        enInterim: isFinal ? '' : text,
+        enInterim: keepSource ? text : '',
         yueTranslation: result.text,
         yueDefinition: result.definition || (isFinal ? text : get().yueDefinition),
-        ...(isFinal
-          ? {
-              history: nextHistory(get, {
-                from: lang,
-                to,
-                source: text,
-                translation: result.text,
-                definition,
-                engine: result.engine,
-              }),
-            }
-          : {}),
+        ...(history ? { history } : {}),
       })
     } else {
       set({
-        yueInterim: isFinal ? '' : text,
+        yueInterim: keepSource ? text : '',
         enTranslation: result.text,
-        ...(isFinal
-          ? {
-              history: nextHistory(get, {
-                from: lang,
-                to,
-                source: text,
-                translation: result.text,
-                definition,
-                engine: result.engine,
-              }),
-            }
-          : {}),
+        ...(history ? { history } : {}),
       })
     }
     if (isFinal) await speakFinal(get, set, result.text, to)
@@ -285,43 +274,8 @@ export const useYueStore = create<State>((set, get) => ({
   translateTyped: async (text, from) => {
     const trimmed = text.trim()
     if (!trimmed) return
-    const to: Lang = from === 'en' ? 'yue' : 'en'
     set({ error: null })
-    try {
-      const result = await translateText(trimmed, from, to)
-      const definition = result.definition || (from === 'en' ? trimmed : '')
-      if (from === 'en') {
-        set({
-          enInterim: trimmed,
-          yueTranslation: result.text,
-          yueDefinition: definition,
-          history: nextHistory(get, {
-            from,
-            to,
-            source: trimmed,
-            translation: result.text,
-            definition,
-            engine: result.engine,
-          }),
-        })
-      } else {
-        set({
-          yueInterim: trimmed,
-          enTranslation: result.text,
-          history: nextHistory(get, {
-            from,
-            to,
-            source: trimmed,
-            translation: result.text,
-            definition,
-            engine: result.engine,
-          }),
-        })
-      }
-      await speakFinal(get, set, result.text, to)
-    } catch (e) {
-      set({ error: String(e) })
-    }
+    await runTranslation(get, set, from, trimmed, true, true)
   },
 
   clearHistory: () => {

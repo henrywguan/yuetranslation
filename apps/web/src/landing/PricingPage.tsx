@@ -6,54 +6,13 @@ import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { useSmoothScroll } from './useSmoothScroll'
-import { openApp, openHome } from '../lib/siteLinks'
+import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
+import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
-
-type Plan = {
-  id: string
-  name: Bi
-  monthly: number
-  annual: number
-  tagline: Bi
-  cta: Bi
-  featured?: boolean
-  features: Bi[]
-}
-
-const PLANS: Plan[] = [
-  {
-    id: 'free',
-    name: ui.planFree,
-    monthly: 0,
-    annual: 0,
-    tagline: ui.tagFree,
-    cta: ui.getStarted,
-    features: [ui.freeFeatLive20, ui.freeFeatText, ui.freeFeatJp, ui.freeFeatModes],
-  },
-  {
-    id: 'pro',
-    name: ui.planPro,
-    monthly: 9,
-    annual: 7,
-    tagline: ui.tagPro,
-    cta: ui.goPro,
-    featured: true,
-    features: [ui.proFeatLive10, ui.proFeatTts, ui.proFeatQuality, ui.proFeatEverything],
-  },
-  {
-    id: 'team',
-    name: ui.planTeam,
-    monthly: 29,
-    annual: 24,
-    tagline: ui.tagTeam,
-    cta: ui.contactUs,
-    features: [ui.teamFeatUnlimited, ui.teamFeatSeats, ui.teamFeatBilling, ui.teamFeatSupport],
-  },
-]
 
 type Row = { label: Bi; values: [Bi, Bi, Bi] }
 
@@ -89,7 +48,7 @@ const FAQ = [
   { q: ui.faq4q, a: ui.faq4a },
 ]
 
-function price(plan: Plan, billing: Billing): string {
+function price(plan: MarketingPlan, billing: Billing): string {
   const value = billing === 'annual' ? plan.annual : plan.monthly
   return `$${value}`
 }
@@ -115,9 +74,9 @@ export function PricingPage() {
             <BiText copy={ui.ppEyebrow} size="sm" />
           </span>
           <h1 className="ln-title pp-title">
-            <BiText copy={ui.ppTitle} layout="stack" size="lg" />
+            <BiText copy={ui.ppTitle} size="lg" />
           </h1>
-          <BiText className="ln-sub" copy={ui.ppSub} layout="stack" size="md" as="p" />
+          <BiText className="ln-sub" copy={ui.ppSub} size="md" as="p" />
 
           <div className="pp-toggle" role="group" aria-label={biPlain(ui.monthly)}>
             <button
@@ -143,7 +102,7 @@ export function PricingPage() {
 
       <section className="ln-section pp-plans-section">
         <Reveal className="pp-plans" stagger={0.1} y={32}>
-          {PLANS.map((plan) => (
+          {MARKETING_PLANS.map((plan) => (
             <article key={plan.id} className={`ln-price-card ${plan.featured ? 'featured' : ''}`}>
               {plan.featured ? (
                 <span className="ln-price-badge">
@@ -154,7 +113,7 @@ export function PricingPage() {
                 <BiText copy={plan.name} size="md" />
               </h3>
               <p className="pp-tagline">
-                <BiText copy={plan.tagline} layout="stack" size="sm" />
+                <BiText copy={plan.tagline} size="sm" />
               </p>
               <p className="ln-price">
                 {price(plan, billing)}
@@ -170,13 +129,13 @@ export function PricingPage() {
               <ul>
                 {plan.features.map((f) => (
                   <li key={f.en}>
-                    <BiText copy={f} layout="stack" size="sm" />
+                    <BiText copy={f} size="sm" />
                   </li>
                 ))}
               </ul>
               <MagneticButton
                 className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                onClick={() => openApp()}
+                onClick={() => (plan.ctaOpens === 'app' ? openApp() : openPricing())}
               >
                 <BiText copy={plan.cta} size="sm" />
               </MagneticButton>
@@ -191,7 +150,7 @@ export function PricingPage() {
             <BiText copy={ui.compareKicker} size="sm" />
           </span>
           <h2 className="ln-h2">
-            <BiText copy={ui.compareTitle} layout="stack" size="lg" />
+            <BiText copy={ui.compareTitle} size="lg" />
           </h2>
         </Reveal>
 
@@ -215,23 +174,23 @@ export function PricingPage() {
               {COMPARISON.map((row) => (
                 <tr key={row.label.en}>
                   <th scope="row">
-                    <BiText copy={row.label} layout="stack" size="sm" />
+                    <BiText copy={row.label} size="sm" />
                   </th>
                   <td>
-                    <BiText copy={row.values[0]} size="sm" hideJp={!row.values[0].jp} />
+                    <BiText copy={row.values[0]} size="sm" />
                   </td>
                   <td className="pp-col-featured">
-                    <BiText copy={row.values[1]} size="sm" hideJp={!row.values[1].jp} />
+                    <BiText copy={row.values[1]} size="sm" />
                   </td>
                   <td>
-                    <BiText copy={row.values[2]} size="sm" hideJp={!row.values[2].jp} />
+                    <BiText copy={row.values[2]} size="sm" />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p className="pp-note">
-            <BiText copy={ui.fairUseNote} layout="stack" size="sm" />
+            <BiText copy={ui.fairUseNote} size="sm" />
           </p>
         </Reveal>
       </section>
@@ -242,7 +201,7 @@ export function PricingPage() {
             <BiText copy={ui.faqKicker} size="sm" />
           </span>
           <h2 className="ln-h2">
-            <BiText copy={ui.faqTitle} layout="stack" size="lg" />
+            <BiText copy={ui.faqTitle} size="lg" />
           </h2>
         </Reveal>
 
@@ -250,9 +209,9 @@ export function PricingPage() {
           {FAQ.map((item) => (
             <div className="pp-faq-item" key={item.q.en}>
               <h3>
-                <BiText copy={item.q} layout="stack" size="md" />
+                <BiText copy={item.q} size="md" />
               </h3>
-              <BiText copy={item.a} layout="stack" size="sm" as="p" />
+              <BiText copy={item.a} size="sm" as="p" />
             </div>
           ))}
         </Reveal>
@@ -261,9 +220,9 @@ export function PricingPage() {
       <section className="ln-cta-band">
         <Reveal>
           <h2 className="ln-h2">
-            <BiText copy={ui.stillQuestions} layout="stack" size="lg" />
+            <BiText copy={ui.stillQuestions} size="lg" />
           </h2>
-          <BiText className="ln-p" copy={ui.stillBody} layout="stack" size="sm" as="p" />
+          <BiText className="ln-p" copy={ui.stillBody} size="sm" as="p" />
           <MagneticButton className="btn-primary" onClick={() => openApp()}>
             <BiText copy={ui.backToApp} size="sm" />
           </MagneticButton>
@@ -277,7 +236,7 @@ export function PricingPage() {
           </span>
           <span className="ln-brand-name">Jyut</span>
         </button>
-        <BiText copy={ui.footerTag} layout="stack" size="sm" as="p" />
+        <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>
     </div>
   )

@@ -5,12 +5,10 @@ import { ensureJyutping, hasHan, toJyutpingCached } from '../lib/jyutping'
 export function CantoneseText({
   text,
   className,
-  jyutpingClassName = 'jyutping',
   placeholder,
 }: {
   text: string
   className?: string
-  jyutpingClassName?: string
   placeholder?: ReactNode
 }) {
   const trimmed = text.trim()
@@ -41,7 +39,7 @@ export function CantoneseText({
     <span className="cantonese-block">
       <span className={className}>{trimmed}</span>
       {jp ? (
-        <span className={jyutpingClassName} lang="en">
+        <span className="jyutping" lang="en">
           {jp}
         </span>
       ) : null}

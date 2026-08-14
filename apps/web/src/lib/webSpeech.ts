@@ -77,10 +77,3 @@ export function createWebSpeechSession(
     },
   }
 }
-
-declare global {
-  interface Window {
-    SpeechRecognition?: typeof SpeechRecognition
-    webkitSpeechRecognition?: typeof SpeechRecognition
-  }
-}

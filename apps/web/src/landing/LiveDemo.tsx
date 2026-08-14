@@ -92,7 +92,7 @@ export function LiveDemo() {
           />
         {error ? (
           <p className="demo-error">
-            <BiText copy={ui.demoApiError} layout="stack" size="sm" />
+            <BiText copy={ui.demoApiError} size="sm" />
           </p>
         ) : null}
       </div>

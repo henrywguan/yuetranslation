@@ -222,7 +222,6 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
 
 type Props = {
   className?: string
-  /** Extra CSS class for the outer wrapper (e.g. fluid-bg vs shader-bg). */
   variant?: 'marketing' | 'app'
 }
 
@@ -259,7 +258,7 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
     }
     gl.useProgram(program)
     canvas.classList.add('is-live')
-    const fallback = canvas.parentElement?.querySelector('.shader-fallback, .fluid-fallback')
+    const fallback = canvas.parentElement?.querySelector('.jg-fallback')
     if (fallback instanceof HTMLElement) {
       fallback.style.opacity = '0'
       fallback.style.pointerEvents = 'none'
@@ -338,14 +337,13 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
     }
   }, [reduced, theme])
 
-  const wrapClass =
-    variant === 'app' ? `fluid-bg jade-glass-field ${className}` : `shader-bg jade-glass-field ${className}`
+  const wrapClass = `jade-glass-field jade-glass-field--${variant} ${className}`
 
   return (
     <div className={wrapClass.trim()} aria-hidden="true">
-      <div className={variant === 'app' ? 'fluid-fallback' : 'shader-fallback'} />
-      <canvas ref={canvasRef} className={variant === 'app' ? 'fluid-canvas' : 'shader-canvas'} />
-      <div className={variant === 'app' ? 'fluid-grain' : 'shader-grain'} />
+      <div className="jg-fallback" />
+      <canvas ref={canvasRef} className="jg-canvas" />
+      <div className="jg-grain" />
     </div>
   )
 }
