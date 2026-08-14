@@ -28,6 +28,8 @@ export type ConversationTurn = {
   to: Lang
   source: string
   translation: string
+  /** Other colloquial EN→粵 renderings when the API found meaningful variants. */
+  alternatives?: string[]
   at: number
   engine?: string
 }

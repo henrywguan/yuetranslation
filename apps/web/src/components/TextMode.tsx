@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CantoneseText } from './CantoneseText'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import type { Lang } from '../lib/types'
 
@@ -41,6 +42,9 @@ export function TextMode() {
           ) : (
             <p className="result-text">{latest.translation}</p>
           )}
+          {latest.to === 'yue' ? (
+            <TranslationAlternatives alternatives={latest.alternatives || []} />
+          ) : null}
         </div>
       ) : null}
     </div>

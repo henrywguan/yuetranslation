@@ -24,6 +24,8 @@ type State = {
   yueInterim: string
   enTranslation: string
   yueTranslation: string
+  /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
+  yueAlternatives: string[]
   history: ConversationTurn[]
   session: LiveSession | null
   setMode: (mode: Mode) => void
@@ -83,12 +85,16 @@ async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   try {
-    const result = await translateText(text, lang, to)
+    const result = await translateText(text, lang, to, {
+      includeAlternatives: isFinal && lang === 'en',
+    })
+    const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq && !isFinal) return
     if (lang === 'en') {
       set({
         enInterim: isFinal ? '' : text,
         yueTranslation: result.text,
+        yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
         ...(isFinal
           ? {
               history: [
@@ -98,6 +104,7 @@ async function runTranslation(
                   to,
                   source: text,
                   translation: result.text,
+                  alternatives,
                   at: Date.now(),
                   engine: result.engine,
                 },
@@ -110,6 +117,7 @@ async function runTranslation(
       set({
         yueInterim: isFinal ? '' : text,
         enTranslation: result.text,
+        yueAlternatives: isFinal ? [] : get().yueAlternatives,
         ...(isFinal
           ? {
               history: [
@@ -153,6 +161,7 @@ export const useYueStore = create<State>((set, get) => ({
   yueInterim: '',
   enTranslation: '',
   yueTranslation: '',
+  yueAlternatives: [],
   history: [],
   session: null,
 
@@ -284,11 +293,15 @@ export const useYueStore = create<State>((set, get) => ({
     const to: Lang = from === 'en' ? 'yue' : 'en'
     set({ error: null })
     try {
-      const result = await translateText(trimmed, from, to)
+      const result = await translateText(trimmed, from, to, {
+        includeAlternatives: from === 'en',
+      })
+      const alternatives = result.alternatives || []
       if (from === 'en') {
         set({
           enInterim: trimmed,
           yueTranslation: result.text,
+          yueAlternatives: alternatives,
           history: [
             {
               id: crypto.randomUUID(),
@@ -296,6 +309,7 @@ export const useYueStore = create<State>((set, get) => ({
               to,
               source: trimmed,
               translation: result.text,
+              alternatives,
               at: Date.now(),
               engine: result.engine,
             },
@@ -306,6 +320,7 @@ export const useYueStore = create<State>((set, get) => ({
         set({
           yueInterim: trimmed,
           enTranslation: result.text,
+          yueAlternatives: [],
           history: [
             {
               id: crypto.randomUUID(),
@@ -335,6 +350,7 @@ export const useYueStore = create<State>((set, get) => ({
       yueInterim: '',
       enTranslation: '',
       yueTranslation: '',
+      yueAlternatives: [],
     })
   },
 }))

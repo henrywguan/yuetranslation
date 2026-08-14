@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 
 export function SoloView() {
@@ -7,6 +8,7 @@ export function SoloView() {
   const yueInterim = useYueStore((s) => s.yueInterim)
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
+  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
@@ -15,12 +17,27 @@ export function SoloView() {
   const sourceIsYue = Boolean(yueInterim)
   const translation = sourceIsYue ? enTranslation : yueTranslation
   const latest = history[0]
+  const alts = sourceIsYue
+    ? []
+    : yueAlternatives.length
+      ? yueAlternatives
+      : latest?.alternatives || []
 
   return (
     <div className="solo">
       <motion.div
         className={`solo-stage ${live ? 'live' : ''} status-${status}`}
-        animate={live ? { boxShadow: ['0 0 0 0 rgba(61,207,182,0)', '0 0 0 12px rgba(61,207,182,0.08)', '0 0 0 0 rgba(61,207,182,0)'] } : {}}
+        animate={
+          live
+            ? {
+                boxShadow: [
+                  '0 0 0 0 rgba(61,207,182,0)',
+                  '0 0 0 12px rgba(61,207,182,0.08)',
+                  '0 0 0 0 rgba(61,207,182,0)',
+                ],
+              }
+            : {}
+        }
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
         <p className="solo-label">{sourceIsYue ? '粵語' : 'English'}</p>
@@ -33,7 +50,10 @@ export function SoloView() {
             exit={{ opacity: 0 }}
           >
             {sourceIsYue ? (
-              <CantoneseText text={source} placeholder={<span className="placeholder">Speak to translate</span>} />
+              <CantoneseText
+                text={source}
+                placeholder={<span className="placeholder">Speak to translate</span>}
+              />
             ) : (
               source || <span className="placeholder">Speak to translate</span>
             )}
@@ -52,13 +72,15 @@ export function SoloView() {
             exit={{ opacity: 0 }}
           >
             {sourceIsYue ? (
-              translation || latest?.translation || <span className="placeholder">Translation appears here</span>
+              translation ||
+              latest?.translation || <span className="placeholder">Translation appears here</span>
             ) : (
               <CantoneseText
                 text={translation || latest?.translation || ''}
                 placeholder={<span className="placeholder">Translation appears here</span>}
               />
             )}
+            <TranslationAlternatives alternatives={alts} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
@@ -67,7 +89,9 @@ export function SoloView() {
         <ul className="history">
           {history.slice(1, 6).map((t) => (
             <li key={t.id}>
-              <span className="h-src">{t.from === 'yue' ? <CantoneseText text={t.source} /> : t.source}</span>
+              <span className="h-src">
+                {t.from === 'yue' ? <CantoneseText text={t.source} /> : t.source}
+              </span>
               <span className="h-arrow">→</span>
               <span className="h-tr">
                 {t.to === 'yue' ? <CantoneseText text={t.translation} /> : t.translation}

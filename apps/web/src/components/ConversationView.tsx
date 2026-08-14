@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 
 export function ConversationView() {
@@ -7,6 +8,7 @@ export function ConversationView() {
   const yueInterim = useYueStore((s) => s.yueInterim)
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
+  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -29,6 +31,7 @@ export function ConversationView() {
               text={yueTranslation}
               placeholder={<span className="placeholder">粵語 translation</span>}
             />
+            <TranslationAlternatives alternatives={yueAlternatives} />
           </div>
         </div>
       </motion.section>

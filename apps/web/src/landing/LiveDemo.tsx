@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { translateText } from '../lib/api'
 import { CantoneseText } from '../components/CantoneseText'
+import { TranslationAlternatives } from '../components/TranslationAlternatives'
 
 const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
 
 export function LiveDemo() {
   const [text, setText] = useState('good morning')
   const [result, setResult] = useState('早晨')
+  const [alternatives, setAlternatives] = useState<string[]>(['早安'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -16,8 +18,9 @@ export function LiveDemo() {
     setLoading(true)
     setError(null)
     try {
-      const res = await translateText(trimmed, 'en', 'yue')
+      const res = await translateText(trimmed, 'en', 'yue', { includeAlternatives: true })
       setResult(res.text)
+      setAlternatives(res.alternatives || [])
     } catch {
       setError('Live API not reachable from here — this runs against your deployed backend.')
     } finally {
@@ -79,6 +82,7 @@ export function LiveDemo() {
         <div className="demo-output">
           <CantoneseText text={result} jyutpingClassName="jyutping demo-jyutping" />
         </div>
+        <TranslationAlternatives alternatives={alternatives} className="demo-alts" />
         {error ? <p className="demo-error">{error}</p> : null}
       </div>
     </div>
