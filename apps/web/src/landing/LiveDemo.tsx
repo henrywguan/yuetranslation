@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { translateText } from '../lib/api'
+import { BiText } from '../components/BiText'
 import { CantoneseText } from '../components/CantoneseText'
+import { ui } from '../lib/uiCopy'
 
 const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
 
@@ -19,7 +21,7 @@ export function LiveDemo() {
       const res = await translateText(trimmed, 'en', 'yue')
       setResult(res.text)
     } catch {
-      setError('Live API not reachable from here — this runs against your deployed backend.')
+      setError('api')
     } finally {
       setLoading(false)
     }
@@ -31,11 +33,13 @@ export function LiveDemo() {
         <span className="demo-dot" />
         <span className="demo-dot" />
         <span className="demo-dot" />
-        <span className="demo-window-label">Yue · live</span>
+        <span className="demo-window-label">
+          <BiText copy={ui.demoLive} size="sm" hideJp />
+        </span>
       </div>
 
       <label className="demo-label" htmlFor="demo-input">
-        Type English
+        <BiText copy={ui.demoTypeEn} size="sm" />
       </label>
       <div className="demo-input-row">
         <input
@@ -46,7 +50,7 @@ export function LiveDemo() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') void run(text)
           }}
-          placeholder="Say something…"
+          placeholder={`${ui.demoPlaceholder.en} / ${ui.demoPlaceholder.zh}`}
         />
         <button
           type="button"
@@ -54,7 +58,7 @@ export function LiveDemo() {
           onClick={() => void run(text)}
           disabled={loading}
         >
-          {loading ? '…' : 'Translate'}
+          {loading ? '…' : <BiText copy={ui.translate} size="sm" hideJp />}
         </button>
       </div>
 
@@ -75,11 +79,17 @@ export function LiveDemo() {
       </div>
 
       <div className="demo-result">
-        <span className="demo-label">廣東話 · Cantonese</span>
+        <span className="demo-label">
+          <BiText copy={ui.demoCantonese} size="sm" />
+        </span>
         <div className="demo-output">
           <CantoneseText text={result} jyutpingClassName="jyutping demo-jyutping" />
         </div>
-        {error ? <p className="demo-error">{error}</p> : null}
+        {error ? (
+          <p className="demo-error">
+            <BiText copy={ui.demoApiError} layout="stack" size="sm" />
+          </p>
+        ) : null}
       </div>
     </div>
   )

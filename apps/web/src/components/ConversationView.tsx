@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
+import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
 import { useYueStore } from '../lib/store'
+import { ui } from '../lib/uiCopy'
 
 export function ConversationView() {
   const enInterim = useYueStore((s) => s.enInterim)
@@ -19,15 +21,21 @@ export function ConversationView() {
         transition={{ duration: 0.45 }}
       >
         <header>
-          <h2>English</h2>
-          <p>Hold phone facing you</p>
+          <h2>
+            <BiText copy={ui.english} size="md" />
+          </h2>
+          <p>
+            <BiText copy={ui.holdFacingYou} size="sm" layout="stack" />
+          </p>
         </header>
         <div className="pane-body">
-          <p className="heard">{enInterim || <span className="placeholder">Listening…</span>}</p>
+          <p className="heard">
+            {enInterim || <BiText className="placeholder" copy={ui.listening} size="sm" />}
+          </p>
           <div className="said">
             <CantoneseText
               text={yueTranslation}
-              placeholder={<span className="placeholder">粵語 translation</span>}
+              placeholder={<BiText className="placeholder" copy={ui.yueTranslation} size="sm" />}
             />
           </div>
         </div>
@@ -45,13 +53,22 @@ export function ConversationView() {
       >
         <div className="pane-body flipped">
           <p className="heard">
-            <CantoneseText text={yueInterim} placeholder={<span className="placeholder">聽緊…</span>} />
+            <CantoneseText
+              text={yueInterim}
+              placeholder={<BiText className="placeholder" copy={ui.listening} size="sm" />}
+            />
           </p>
-          <p className="said">{enTranslation || <span className="placeholder">English translation</span>}</p>
+          <p className="said">
+            {enTranslation || <BiText className="placeholder" copy={ui.enTranslation} size="sm" />}
+          </p>
         </div>
         <header>
-          <h2>粵語</h2>
-          <p>對面朋友望住呢度</p>
+          <h2>
+            <BiText copy={ui.cantonese} size="md" />
+          </h2>
+          <p>
+            <BiText copy={ui.friendLooksHere} size="sm" layout="stack" />
+          </p>
         </header>
       </motion.section>
     </div>

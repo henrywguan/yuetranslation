@@ -1,5 +1,6 @@
+import { MotionConfig, motion } from 'framer-motion'
 import { useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { BiText } from './components/BiText'
 import { Controls } from './components/Controls'
 import { ConversationView } from './components/ConversationView'
 import { FluidBackground } from './components/FluidBackground'
@@ -8,8 +9,9 @@ import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
 import { ThemeToggle } from './components/ThemeToggle'
 import { useYueStore } from './lib/store'
-import { isEmbeddedAppView } from './lib/useHashRoute'
 import { openHome } from './lib/siteLinks'
+import { ui, biPlain } from './lib/uiCopy'
+import { isEmbeddedAppView } from './lib/useHashRoute'
 import './App.css'
 
 export function TranslatorApp() {
@@ -24,63 +26,67 @@ export function TranslatorApp() {
   }, [loadBootstrap])
 
   return (
-    <div className="app-shell">
-      <FluidBackground />
-      <header className="brand-bar">
-        <motion.div
-          className="brand"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {embedded ? (
-            <span className="brand-mark" aria-hidden="true">
-              粵
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="brand-mark brand-mark-link"
-              onClick={() => openHome()}
-              aria-label="Back to Yue home"
-            >
-              粵
-            </button>
-          )}
-          <div>
-            <h1 className="brand-name">Yue</h1>
-            <p className="brand-tag">English ↔ Cantonese</p>
+    <MotionConfig reducedMotion="user">
+      <div className="app-shell">
+        <FluidBackground />
+        <header className="brand-bar">
+          <motion.div
+            className="brand"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {embedded ? (
+              <span className="brand-mark" aria-hidden="true">
+                粵
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="brand-mark brand-mark-link"
+                onClick={() => openHome()}
+                aria-label={biPlain(ui.backHome)}
+              >
+                粵
+              </button>
+            )}
+            <div>
+              <h1 className="brand-name">Jyut</h1>
+              <p className="brand-tag">
+                <BiText copy={ui.brandTag} size="sm" />
+              </p>
+            </div>
+          </motion.div>
+          <div className="brand-bar-actions">
+            <ThemeToggle />
+            <PlanChip />
           </div>
-        </motion.div>
-        <div className="brand-bar-actions">
-          <ThemeToggle />
-          <PlanChip />
-        </div>
-      </header>
+        </header>
 
-      <main className="main">
-        {mode === 'solo' ? <SoloView /> : null}
-        {mode === 'conversation' ? <ConversationView /> : null}
-        {mode === 'text' ? <TextMode /> : null}
-      </main>
+        <main className="main">
+          {mode === 'solo' ? <SoloView /> : null}
+          {mode === 'conversation' ? <ConversationView /> : null}
+          {mode === 'text' ? <TextMode /> : null}
+        </main>
 
-      {error ? (
-        <div className="banner error" role="alert">
-          <span>{error}</span>
-          {entitlement?.reason === 'login_required' && entitlement.loginUrl ? (
-            <a href={entitlement.loginUrl} target="_top" rel="noreferrer">
-              Log in
-            </a>
-          ) : null}
-          {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
-            <a href={entitlement.upgradeUrl} target="_top" rel="noreferrer">
-              Upgrade
-            </a>
-          ) : null}
-        </div>
-      ) : null}
+        {error ? (
+          <div className="banner error" role="alert">
+            <span>{error}</span>
+            {entitlement?.reason === 'login_required' && entitlement.loginUrl ? (
+              <a href={entitlement.loginUrl} target="_top" rel="noreferrer">
+                <BiText copy={ui.logIn} size="sm" />
+              </a>
+            ) : null}
+            {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
+              <a href={entitlement.upgradeUrl} target="_top" rel="noreferrer">
+                <BiText copy={ui.upgrade} size="sm" />
+              </a>
+            ) : null}
+          </div>
+        ) : null}
 
-      <Controls />
-    </div>
+        <Controls />
+      </div>
+    </MotionConfig>
   )
 }

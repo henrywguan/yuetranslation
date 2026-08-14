@@ -985,3 +985,151 @@
     animation: none;
   }
 }
+
+/* ---------- Bilingual UI (EN + 粵 + Jyutping) ---------- */
+.landing .bi {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5em;
+  max-width: 100%;
+  text-align: start;
+  line-height: 1.25;
+}
+
+.landing .bi--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.landing .bi-zh-col {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1em;
+  min-width: 0;
+}
+
+.landing .bi-zh {
+  font-family: var(--font-body);
+  font-weight: 560;
+}
+
+.landing .bi-jp {
+  font-family: var(--font-body);
+  font-weight: 450;
+  color: var(--mint);
+  opacity: 0.85;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.landing .bi--sm .bi-jp {
+  font-size: 0.62em;
+}
+
+.landing .bi--md .bi-jp {
+  font-size: 0.7em;
+}
+
+.landing .bi--lg .bi-jp {
+  font-size: 0.55em;
+}
+
+.landing .bi--stack .bi-zh-col {
+  width: 100%;
+}
+
+.ln-nav-links .bi {
+  align-items: center;
+}
+
+.ln-nav-cta .bi {
+  color: inherit;
+}
+
+.ln-nav-cta .bi-jp {
+  color: color-mix(in srgb, var(--on-jade) 78%, transparent);
+  opacity: 1;
+}
+
+.ln-eyebrow .bi,
+.ln-kicker .bi {
+  align-items: center;
+}
+
+.ln-title .bi-en {
+  display: inline;
+}
+
+.ln-hero-inner .ln-sub.bi--stack,
+.ln-p.bi--stack {
+  max-width: min(620px, 100%);
+}
+
+.ln-hero-stats .bi--stack {
+  gap: 0.2rem;
+}
+
+.ln-hero-stats .bi-en {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.ln-mode-card .ln-mode-zh {
+  display: none; /* replaced by BiText beside title */
+}
+
+.ln-mode-card h3 .bi,
+.ln-feature h4 .bi {
+  align-items: baseline;
+}
+
+.ln-mode-card p .bi--stack,
+.ln-feature p .bi--stack {
+  width: 100%;
+}
+
+.ln-price-card h3 .bi,
+.ln-price-badge .bi,
+.ln-price-card li .bi--stack {
+  width: 100%;
+}
+
+.ln-price span .bi {
+  font-size: 0.95rem;
+}
+
+.demo-label .bi {
+  width: 100%;
+}
+
+.demo-go .bi {
+  justify-content: center;
+}
+
+.pp-toggle .bi {
+  align-items: center;
+}
+
+.pp-table th .bi--stack,
+.pp-table td .bi {
+  font-size: 0.92em;
+}
+
+.pp-faq-item h3 .bi--stack,
+.pp-faq-item p .bi--stack {
+  width: 100%;
+}
+
+.btn-primary .bi,
+.btn-ghost .bi {
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-primary .bi-jp {
+  color: color-mix(in srgb, var(--on-jade) 80%, transparent);
+  opacity: 1;
+}

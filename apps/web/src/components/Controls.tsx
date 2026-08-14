@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion'
+import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
+import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode, SpeakDirection } from '../lib/types'
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: 'solo', label: 'Solo' },
-  { id: 'conversation', label: 'Face to face' },
-  { id: 'text', label: 'Text' },
+const MODES: { id: Mode; copy: typeof ui.modeSolo }[] = [
+  { id: 'solo', copy: ui.modeSolo },
+  { id: 'conversation', copy: ui.modeFace },
+  { id: 'text', copy: ui.modeText },
 ]
 
 const DIRS: { id: SpeakDirection; label: string }[] = [
-  { id: 'auto', label: 'Auto' },
+  { id: 'auto', label: biPlain(ui.dirAuto) },
   { id: 'en', label: 'EN → 粵' },
   { id: 'yue', label: '粵 → EN' },
 ]
@@ -30,9 +32,15 @@ export function Controls() {
   const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
 
+  const liveCopy = live
+    ? status === 'speaking'
+      ? ui.speaking
+      : ui.listeningStop
+    : ui.startListening
+
   return (
     <div className="controls">
-      <div className="mode-tabs" role="tablist" aria-label="Mode">
+      <div className="mode-tabs" role="tablist" aria-label={biPlain(ui.modeTablist)}>
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -42,7 +50,7 @@ export function Controls() {
             className={mode === m.id ? 'active' : ''}
             onClick={() => setMode(m.id)}
           >
-            {m.label}
+            <BiText copy={m.copy} size="sm" />
           </button>
         ))}
       </div>
@@ -55,9 +63,10 @@ export function Controls() {
             onClick={() => void toggleLive()}
             whileTap={{ scale: 0.97 }}
             disabled={!live && !canLive}
+            aria-label={biPlain(liveCopy)}
           >
             <span className="live-dot" />
-            {live ? (status === 'speaking' ? 'Speaking…' : 'Listening — tap to stop') : 'Start listening'}
+            <BiText copy={liveCopy} size="sm" />
           </motion.button>
         </div>
       ) : null}
@@ -65,10 +74,11 @@ export function Controls() {
       <div className="opt-row">
         {mode !== 'text' ? (
           <label className="opt">
-            Direction
+            <BiText copy={ui.direction} size="sm" />
             <select
               value={speakDirection}
               onChange={(e) => setSpeakDirection(e.target.value as SpeakDirection)}
+              aria-label={biPlain(ui.direction)}
             >
               {DIRS.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -85,10 +95,10 @@ export function Controls() {
             disabled={!canAutoSpeak}
             onChange={(e) => setAutoSpeak(e.target.checked)}
           />
-          Auto-speak{!canAutoSpeak ? ' (Pro)' : ''}
+          <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
         </label>
         <button type="button" className="text-btn" onClick={clearHistory}>
-          Clear
+          <BiText copy={ui.clear} size="sm" />
         </button>
       </div>
     </div>

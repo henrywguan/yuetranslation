@@ -1,5 +1,7 @@
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { BiText } from '../components/BiText'
+import { biPlain, ui } from '../lib/uiCopy'
 
 type NavProps = {
   /** Called when "Features" is clicked; defaults to navigating home. */
@@ -13,23 +15,23 @@ export function Nav({ onFeatures }: NavProps) {
         type="button"
         className="ln-brand ln-brand-btn"
         onClick={() => openHome()}
-        aria-label="Yue home"
+        aria-label={biPlain(ui.backHome)}
       >
         <span className="ln-brand-mark" aria-hidden="true">
           粵
         </span>
-        <span className="ln-brand-name">Yue</span>
+        <span className="ln-brand-name">Jyut</span>
       </button>
       <div className="ln-nav-links">
         <button type="button" onClick={() => (onFeatures ? onFeatures() : openHome())}>
-          Features
+          <BiText copy={ui.navFeatures} size="sm" />
         </button>
         <button type="button" onClick={() => openPricing()}>
-          Pricing
+          <BiText copy={ui.navPricing} size="sm" />
         </button>
         <ThemeToggle />
         <button type="button" className="ln-nav-cta" onClick={() => openApp()}>
-          Launch app
+          <BiText copy={ui.navLaunch} size="sm" />
         </button>
       </div>
     </nav>

@@ -664,6 +664,149 @@
   font-size: 0.8rem;
 }
 
+/* ---------- Bilingual UI (EN + 粵 + Jyutping) ---------- */
+.bi {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.45em;
+  max-width: 100%;
+  text-align: start;
+  line-height: 1.25;
+}
+
+.bi--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28rem;
+}
+
+.bi-en {
+  flex: 0 1 auto;
+}
+
+.bi-zh-col {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.08em;
+  min-width: 0;
+}
+
+.bi-zh {
+  font-family: var(--font-body);
+  font-weight: 560;
+  letter-spacing: 0.01em;
+}
+
+.bi-jp {
+  font-family: var(--font-body);
+  font-weight: 450;
+  letter-spacing: 0.01em;
+  color: var(--mint);
+  opacity: 0.82;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.bi--sm {
+  gap: 0.35em;
+  font-size: inherit;
+}
+
+.bi--sm .bi-jp {
+  font-size: 0.62em;
+}
+
+.bi--md .bi-jp {
+  font-size: 0.68em;
+}
+
+.bi--lg .bi-jp {
+  font-size: 0.58em;
+}
+
+.bi--stack .bi-zh-col {
+  width: 100%;
+}
+
+.solo-label .bi {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.82rem;
+}
+
+.solo-label .bi-en {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.mode-tabs button {
+  line-height: 1.15;
+  min-height: 2.75rem;
+}
+
+.mode-tabs .bi {
+  justify-content: center;
+  width: 100%;
+}
+
+.mode-tabs .bi-zh-col {
+  align-items: center;
+}
+
+.live-btn .bi {
+  align-items: center;
+}
+
+.opt .bi {
+  margin-bottom: 4px;
+}
+
+.opt select {
+  min-width: 7.5rem;
+}
+
+.plan-chip .bi,
+.plan-remain .bi,
+.plan-link .bi {
+  text-transform: none;
+  letter-spacing: 0;
+  align-items: center;
+}
+
+.plan-chip .bi-en {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+}
+
+.plan-chip .bi-zh {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.plan-chip .bi-jp {
+  font-size: 0.55em;
+}
+
+.text-dirs .bi,
+.text-mode .primary .bi {
+  justify-content: center;
+}
+
+.placeholder.bi,
+.placeholder .bi {
+  color: var(--muted);
+  font-weight: 450;
+}
+
+.banner .bi {
+  align-items: center;
+}
+
 @media (max-width: 719px) {
   .brand-name {
     font-size: clamp(1.55rem, 7vw, 2rem);
