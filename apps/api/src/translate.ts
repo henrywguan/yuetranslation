@@ -19,12 +19,16 @@ const DEMO: Record<string, DemoEntry> = {
   'how are you': { text: '你好嗎', definition: 'how are you?' },
   'where is the mtr': { text: '地鐵喺邊度', definition: 'where is the MTR / subway?' },
   'how much is this': { text: '呢個幾錢', definition: 'how much is this?' },
+  yes: { text: '係', definition: 'yes' },
+  no: { text: '唔係', definition: 'no' },
   你好: { text: 'Hello', definition: 'hello; hi' },
   唔該: { text: 'Thank you', definition: 'thank you' },
   多謝: { text: 'Thanks', definition: 'thanks' },
   早晨: { text: 'Good morning', definition: 'good morning' },
   地鐵喺邊度: { text: 'Where is the MTR?', definition: 'where is the MTR?' },
   呢個幾錢: { text: 'How much is this?', definition: 'how much is this?' },
+  係: { text: 'Yes', definition: 'yes' },
+  唔係: { text: 'No', definition: 'no' },
 }
 
 function demoLookupKey(text: string) {

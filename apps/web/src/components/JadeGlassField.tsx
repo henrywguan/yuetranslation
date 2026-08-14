@@ -1,6 +1,6 @@
 /**
  * Shared jade/harbor glass field with screen-space refraction.
- * Used by marketing ShaderBackground and translator FluidBackground.
+ * Used by marketing pages and the translator shell (`variant`).
  */
 import { useEffect, useRef } from 'react'
 import { useReducedMotion } from '../lib/useReducedMotion'

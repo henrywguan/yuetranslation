@@ -33,7 +33,7 @@ export function PlanChip() {
         </span>
       ) : entitlement.loginUrl && !entitlement.loggedIn ? (
         <a className="plan-link" href={entitlement.loginUrl} target="_top" rel="noreferrer">
-          <BiText copy={ui.logIn} size="sm" />
+          <BiText copy={ui.signIn} size="sm" />
         </a>
       ) : entitlement.upgradeUrl ? (
         <a className="plan-link" href={entitlement.upgradeUrl} target="_top" rel="noreferrer">

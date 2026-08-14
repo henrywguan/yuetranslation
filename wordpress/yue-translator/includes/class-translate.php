@@ -116,6 +116,8 @@ final class Yue_Translate
             'thanks' => ['多謝', 'thanks; many thanks'],
             'good morning' => ['早晨', 'good morning'],
             'how are you' => ['你好嗎', 'how are you?'],
+            'where is the mtr' => ['地鐵喺邊度', 'where is the MTR / subway?'],
+            'how much is this' => ['呢個幾錢', 'how much is this?'],
             'yes' => ['係', 'yes'],
             'no' => ['唔係', 'no'],
             '你好' => ['Hello', 'hello; hi'],
@@ -123,6 +125,8 @@ final class Yue_Translate
             '唔該' => ['Thanks', 'thanks'],
             '早晨' => ['Good morning', 'good morning'],
             '你好嗎？' => ['How are you?', 'how are you?'],
+            '地鐵喺邊度' => ['Where is the MTR?', 'where is the MTR?'],
+            '呢個幾錢' => ['How much is this?', 'how much is this?'],
             '係' => ['Yes', 'yes'],
             '唔係' => ['No', 'no'],
         ];

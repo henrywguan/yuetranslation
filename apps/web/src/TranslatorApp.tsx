@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { BiText } from './components/BiText'
 import { Controls } from './components/Controls'
 import { ConversationView } from './components/ConversationView'
-import { FluidBackground } from './components/FluidBackground'
+import { JadeGlassField } from './components/JadeGlassField'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
@@ -28,7 +28,7 @@ export function TranslatorApp() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="app-shell">
-        <FluidBackground />
+        <JadeGlassField variant="app" />
         <header className="brand-bar">
           <motion.div
             className="brand"
@@ -74,7 +74,7 @@ export function TranslatorApp() {
             <span>{error}</span>
             {entitlement?.reason === 'login_required' && entitlement.loginUrl ? (
               <a href={entitlement.loginUrl} target="_top" rel="noreferrer">
-                <BiText copy={ui.logIn} size="sm" />
+                <BiText copy={ui.signIn} size="sm" />
               </a>
             ) : null}
             {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (

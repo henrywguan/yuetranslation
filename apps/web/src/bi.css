@@ -1,0 +1,134 @@
+/* Shared bilingual + Jyutping popup (app + landing) */
+
+.cantonese-block {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+.cantonese-block--hint {
+  cursor: help;
+}
+
+.cantonese-block--hint:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.jp-pop {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  max-width: min(18rem, 80vw);
+  padding: 7px 11px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  color: var(--ink-bright);
+  background: color-mix(in srgb, var(--harbor-mid) 88%, transparent);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--harbor) 35%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  pointer-events: none;
+  white-space: normal;
+  word-break: break-word;
+}
+
+[data-theme='light'] .jp-pop {
+  background: color-mix(in srgb, #ffffff 92%, transparent);
+  color: var(--ink);
+  box-shadow: 0 12px 28px rgba(7, 19, 31, 0.12);
+}
+
+.bi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  max-width: 100%;
+  text-align: start;
+  line-height: 1.25;
+}
+
+.bi--inline {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.4em;
+}
+
+.bi-en {
+  font-weight: 600;
+}
+
+.bi-zh-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+}
+
+.bi-zh-wrap--hint {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.bi-zh-wrap--hint:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.bi-zh {
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--ink) 78%, transparent);
+}
+
+.bi--sm {
+  font-size: inherit;
+  gap: 0.08rem;
+}
+
+.bi--sm .bi-zh {
+  font-size: 0.92em;
+}
+
+.bi--lg .bi-en {
+  font-weight: 750;
+}
+
+.bi--lg .bi-zh {
+  font-size: 0.55em;
+  font-weight: 560;
+  opacity: 0.85;
+}
+
+.result-with-def {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.result-with-def-gloss {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--muted);
+  font-weight: 450;
+}
+
+.result-with-def .result-text,
+.result-with-def .cantonese-block {
+  margin-top: 2px;
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Nav } from './Nav'
-import { ShaderBackground } from './ShaderBackground'
+import { JadeGlassField } from '../components/JadeGlassField'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
@@ -101,7 +101,7 @@ export function PricingPage() {
   return (
     <div className="landing pricing-page">
       <ScrollProgress />
-      <ShaderBackground />
+      <JadeGlassField variant="marketing" />
       <Nav onFeatures={() => openHome()} />
 
       <header className="pp-hero">

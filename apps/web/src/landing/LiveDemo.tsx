@@ -84,13 +84,12 @@ export function LiveDemo() {
         <span className="demo-label">
           <BiText copy={ui.demoCantonese} size="sm" />
         </span>
-        <ResultWithDefinition
-          text={result}
-          definition={definition}
-          className="demo-result-row"
-          textClassName="demo-output-text"
-          jyutpingClassName="jyutping demo-jyutping"
-        />
+          <ResultWithDefinition
+            text={result}
+            definition={definition}
+            className="demo-result-row"
+            textClassName="demo-output-text"
+          />
         {error ? (
           <p className="demo-error">
             <BiText copy={ui.demoApiError} layout="stack" size="sm" />

@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { ShaderBackground } from './ShaderBackground'
+import { JadeGlassField } from '../components/JadeGlassField'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
@@ -40,7 +40,7 @@ export function Landing() {
   return (
     <div className="landing">
       <ScrollProgress />
-      <ShaderBackground />
+      <JadeGlassField variant="marketing" />
 
       <Nav onFeatures={() => scrollToId('features')} />
 

@@ -6,10 +6,9 @@ type Props = {
   onClick?: () => void
   className?: string
   strength?: number
-  ariaLabel?: string
 }
 
-export function MagneticButton({ children, onClick, className, strength = 0.28, ariaLabel }: Props) {
+export function MagneticButton({ children, onClick, className, strength = 0.28 }: Props) {
   const ref = useRef<HTMLButtonElement>(null)
   const reduced = useReducedMotion()
 
@@ -37,7 +36,6 @@ export function MagneticButton({ children, onClick, className, strength = 0.28, 
       onPointerMove={onMove}
       onPointerLeave={reset}
       onPointerUp={reset}
-      aria-label={ariaLabel}
     >
       {children}
     </button>

@@ -74,6 +74,13 @@ async function speakFinal(
   }
 }
 
+function nextHistory(
+  get: () => State,
+  turn: Omit<ConversationTurn, 'id' | 'at'>,
+): ConversationTurn[] {
+  return [{ id: crypto.randomUUID(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
+}
+
 async function runTranslation(
   get: () => State,
   set: (p: Partial<State>) => void,
@@ -87,6 +94,7 @@ async function runTranslation(
   try {
     const result = await translateText(text, lang, to)
     if (pending.get(lang) !== seq && !isFinal) return
+    const definition = result.definition || (lang === 'en' ? text : '')
     if (lang === 'en') {
       set({
         enInterim: isFinal ? '' : text,
@@ -94,19 +102,14 @@ async function runTranslation(
         yueDefinition: result.definition || (isFinal ? text : get().yueDefinition),
         ...(isFinal
           ? {
-              history: [
-                {
-                  id: crypto.randomUUID(),
-                  from: lang,
-                  to,
-                  source: text,
-                  translation: result.text,
-                  definition: result.definition || text,
-                  at: Date.now(),
-                  engine: result.engine,
-                },
-                ...get().history,
-              ].slice(0, 80),
+              history: nextHistory(get, {
+                from: lang,
+                to,
+                source: text,
+                translation: result.text,
+                definition,
+                engine: result.engine,
+              }),
             }
           : {}),
       })
@@ -116,19 +119,14 @@ async function runTranslation(
         enTranslation: result.text,
         ...(isFinal
           ? {
-              history: [
-                {
-                  id: crypto.randomUUID(),
-                  from: lang,
-                  to,
-                  source: text,
-                  translation: result.text,
-                  definition: result.definition || '',
-                  at: Date.now(),
-                  engine: result.engine,
-                },
-                ...get().history,
-              ].slice(0, 80),
+              history: nextHistory(get, {
+                from: lang,
+                to,
+                source: text,
+                translation: result.text,
+                definition,
+                engine: result.engine,
+              }),
             }
           : {}),
       })
@@ -291,42 +289,33 @@ export const useYueStore = create<State>((set, get) => ({
     set({ error: null })
     try {
       const result = await translateText(trimmed, from, to)
+      const definition = result.definition || (from === 'en' ? trimmed : '')
       if (from === 'en') {
         set({
           enInterim: trimmed,
           yueTranslation: result.text,
-          yueDefinition: result.definition || trimmed,
-          history: [
-            {
-              id: crypto.randomUUID(),
-              from,
-              to,
-              source: trimmed,
-              translation: result.text,
-              definition: result.definition || trimmed,
-              at: Date.now(),
-              engine: result.engine,
-            },
-            ...get().history,
-          ].slice(0, 80),
+          yueDefinition: definition,
+          history: nextHistory(get, {
+            from,
+            to,
+            source: trimmed,
+            translation: result.text,
+            definition,
+            engine: result.engine,
+          }),
         })
       } else {
         set({
           yueInterim: trimmed,
           enTranslation: result.text,
-          history: [
-            {
-              id: crypto.randomUUID(),
-              from,
-              to,
-              source: trimmed,
-              translation: result.text,
-              definition: result.definition || '',
-              at: Date.now(),
-              engine: result.engine,
-            },
-            ...get().history,
-          ].slice(0, 80),
+          history: nextHistory(get, {
+            from,
+            to,
+            source: trimmed,
+            translation: result.text,
+            definition,
+            engine: result.engine,
+          }),
         })
       }
       await speakFinal(get, set, result.text, to)

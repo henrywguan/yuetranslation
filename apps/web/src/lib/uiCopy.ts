@@ -49,7 +49,6 @@ export const ui = {
   planPro: { en: 'Pro', zh: '專業版', jp: 'zyun1 jip6 baan2' },
   planGuest: { en: 'Guest', zh: '訪客', jp: 'fong2 haak3' },
   signIn: { en: 'Sign in', zh: '登入', jp: 'dang1 jap6' },
-  logIn: { en: 'Log in', zh: '登入', jp: 'dang1 jap6' },
   upgrade: { en: 'Upgrade', zh: '升級', jp: 'sing1 kap1' },
   hoursLeft: (n: number): Bi => ({
     en: `${n}h left`,

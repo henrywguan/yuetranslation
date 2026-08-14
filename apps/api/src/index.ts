@@ -12,8 +12,8 @@ app.use(express.json({ limit: '1mb' }))
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
-    product: 'yue',
-    service: 'yue-api',
+    product: 'jyut',
+    service: 'jyut-api',
     mode: 'cloud',
     cloudReady: cloudReady(),
     engines: {
@@ -26,6 +26,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.get('/api/entitlement', (_req, res) => {
+  // Convenience alias for /health.entitlement — kept for WP/local tooling.
   res.json(localEntitlement())
 })
 
@@ -95,6 +96,6 @@ app.post('/api/usage/heartbeat', (req, res) => {
 })
 
 app.listen(env.port, () => {
-  console.log(`Yue API on http://localhost:${env.port}`)
+  console.log(`Jyut API on http://localhost:${env.port}`)
   console.log(`Cloud ready: ${cloudReady()} (openMode=${env.openMode})`)
 })
