@@ -6,6 +6,8 @@ Face-to-face live translator PWA with WordPress freemium entitlements for Blueho
 
 **Design tokens (Bricks matching):** [docs/design-system.md](docs/design-system.md) · visual page [docs/brand/index.html](docs/brand/index.html)
 
+**Jyutping:** [LSHK scheme](https://jyutping.org/en/jyutping/) · in-repo notes [docs/jyutping.md](docs/jyutping.md)
+
 ## Apps
 
 - `apps/web` — React/Vite PWA (solo, face-to-face, text + Jyutping)
