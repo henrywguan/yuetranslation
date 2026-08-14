@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { CantoneseText } from '../components/CantoneseText'
 import { Nav } from './Nav'
 import { ShaderBackground } from './ShaderBackground'
 import { ScrollProgress } from './ScrollProgress'
@@ -240,7 +241,7 @@ export function PricingPage() {
       <footer className="ln-footer">
         <button type="button" className="ln-brand ln-brand-btn" onClick={() => openHome()}>
           <span className="ln-brand-mark" aria-hidden="true">
-            粵
+            <CantoneseText text="粵" />
           </span>
           <span className="ln-brand-name">Yue</span>
         </button>

@@ -27,14 +27,18 @@ export function ConversationView() {
           <div className="said">
             <CantoneseText
               text={yueTranslation}
-              placeholder={<span className="placeholder">粵語 translation</span>}
+              placeholder={
+                <span className="placeholder">
+                  <CantoneseText text="粵語 translation" />
+                </span>
+              }
             />
           </div>
         </div>
       </motion.section>
 
       <div className="conversation-gutter" aria-hidden="true">
-        <span>粵</span>
+        <CantoneseText text="粵" />
       </div>
 
       <motion.section
@@ -45,13 +49,24 @@ export function ConversationView() {
       >
         <div className="pane-body flipped">
           <p className="heard">
-            <CantoneseText text={yueInterim} placeholder={<span className="placeholder">聽緊…</span>} />
+            <CantoneseText
+              text={yueInterim}
+              placeholder={
+                <span className="placeholder">
+                  <CantoneseText text="聽緊…" />
+                </span>
+              }
+            />
           </p>
           <p className="said">{enTranslation || <span className="placeholder">English translation</span>}</p>
         </div>
         <header>
-          <h2>粵語</h2>
-          <p>對面朋友望住呢度</p>
+          <h2>
+            <CantoneseText text="粵語" />
+          </h2>
+          <p>
+            <CantoneseText text="對面朋友望住呢度" />
+          </p>
         </header>
       </motion.section>
     </div>

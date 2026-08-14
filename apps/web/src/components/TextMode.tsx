@@ -14,10 +14,10 @@ export function TextMode() {
     <div className="text-mode">
       <div className="text-dirs">
         <button type="button" className={from === 'en' ? 'active' : ''} onClick={() => setFrom('en')}>
-          EN → 粵
+          EN → <CantoneseText text="粵" />
         </button>
         <button type="button" className={from === 'yue' ? 'active' : ''} onClick={() => setFrom('yue')}>
-          粵 → EN
+          <CantoneseText text="粵" /> → EN
         </button>
       </div>
       <textarea
@@ -36,11 +36,7 @@ export function TextMode() {
       {latest ? (
         <div className="text-result">
           <p className="muted">Result</p>
-          {latest.to === 'yue' ? (
-            <CantoneseText text={latest.translation} className="result-text" />
-          ) : (
-            <p className="result-text">{latest.translation}</p>
-          )}
+          <CantoneseText text={latest.translation} className="result-text" />
         </div>
       ) : null}
     </div>

@@ -578,7 +578,7 @@
 }
 
 .demo-jyutping {
-  color: rgba(154, 240, 222, 0.8) !important;
+  color: var(--jyutping) !important;
 }
 
 .demo-error {

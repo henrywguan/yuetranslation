@@ -19,6 +19,7 @@
   --ink-bright: #e8fff8;
   --muted: rgba(232, 244, 255, 0.58);
   --mint: #9af0de;
+  --jyutping: rgba(154, 240, 222, 0.82);
 
   /* Surfaces / glass */
   --surface: rgba(232, 244, 255, 0.05);
@@ -58,6 +59,7 @@
   --ink-bright: #0a1c2c;
   --muted: rgba(7, 19, 31, 0.58);
   --mint: #178574;
+  --jyutping: rgba(15, 107, 93, 0.72);
 
   --surface: rgba(255, 255, 255, 0.55);
   --surface-strong: rgba(255, 255, 255, 0.72);
@@ -72,6 +74,56 @@
   --danger-ink: #7a2020;
 
   color-scheme: light;
+}
+
+.cantonese-block {
+  display: inline;
+  line-height: 1.55;
+}
+
+.cantonese-ruby {
+  ruby-align: center;
+  ruby-position: under;
+}
+
+.cantonese-ruby rt,
+.jyutping {
+  font-family: var(--font-display);
+  font-size: 0.42em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: var(--jyutping, rgba(154, 240, 222, 0.78));
+  user-select: none;
+}
+
+.cantonese-plain {
+  white-space: pre-wrap;
+}
+
+@supports not (ruby-position: under) {
+  .cantonese-ruby {
+    display: inline-flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    vertical-align: bottom;
+    margin-inline: 0.04em;
+  }
+
+  .cantonese-ruby rt,
+  .jyutping {
+    display: block;
+    font-size: 0.38em;
+  }
+}
+
+.brand-mark .cantonese-ruby rt,
+.brand-mark .jyutping,
+.ln-brand-mark .cantonese-ruby rt,
+.ln-brand .cantonese-ruby rt,
+.conversation-gutter .cantonese-ruby rt {
+  font-size: 0.32em;
+  color: color-mix(in srgb, var(--on-jade) 75%, transparent);
 }
 
 html {

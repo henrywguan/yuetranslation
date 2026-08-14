@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
+import { CantoneseText } from '../components/CantoneseText'
 import { ShaderBackground } from './ShaderBackground'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
@@ -34,7 +35,7 @@ const MODES = [
 ]
 
 const FEATURES = [
-  { title: 'Jyutping built in', desc: 'Romanization under every Cantonese line so you can say it, not just read it.' },
+  { title: 'Jyutping built in', desc: 'Romanization under every Chinese character so you can say it, not just read it.' },
   { title: 'Hong Kong Cantonese', desc: 'Tuned for colloquial 粵語 (係, 唔, 喺, 咗) — not Mandarin or formal written Chinese.' },
   { title: 'Fast & fluid', desc: 'Interim results while you speak, refined finals when you pause.' },
   { title: 'Yours to host', desc: 'Runs on WordPress with cloud speech, or fully self‑hosted when you want.' },
@@ -64,7 +65,9 @@ export function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="ln-eyebrow">English ↔ 廣東話 · live translator</span>
+          <span className="ln-eyebrow">
+            English ↔ <CantoneseText text="廣東話" /> · live translator
+          </span>
           <h1 className="ln-title">
             Speak. <span className="ln-title-accent">See.</span> Understand.
           </h1>
@@ -90,8 +93,10 @@ export function Landing() {
               <span>modes</span>
             </div>
             <div>
-              <strong>粵</strong>
-              <span>Jyutping on every line</span>
+              <strong>
+                <CantoneseText text="粵" />
+              </strong>
+              <span>Jyutping on every character</span>
             </div>
           </div>
         </motion.div>
@@ -110,7 +115,7 @@ export function Landing() {
           {MODES.map((m) => (
             <article className="ln-mode-card" key={m.title}>
               <span className="ln-mode-zh" aria-hidden="true">
-                {m.zh}
+                <CantoneseText text={m.zh} />
               </span>
               <h3>{m.title}</h3>
               <p>{m.desc}</p>
@@ -124,7 +129,9 @@ export function Landing() {
               <span className="ln-feature-dot" aria-hidden="true" />
               <div>
                 <h4>{f.title}</h4>
-                <p>{f.desc}</p>
+                <p>
+                  <CantoneseText text={f.desc} />
+                </p>
               </div>
             </div>
           ))}
@@ -209,7 +216,7 @@ export function Landing() {
       <footer className="ln-footer">
         <div className="ln-brand">
           <span className="ln-brand-mark" aria-hidden="true">
-            粵
+            <CantoneseText text="粵" />
           </span>
           <span className="ln-brand-name">Yue</span>
         </div>

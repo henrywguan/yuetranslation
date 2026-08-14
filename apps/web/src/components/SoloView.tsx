@@ -23,7 +23,9 @@ export function SoloView() {
         animate={live ? { boxShadow: ['0 0 0 0 rgba(61,207,182,0)', '0 0 0 12px rgba(61,207,182,0.08)', '0 0 0 0 rgba(61,207,182,0)'] } : {}}
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
-        <p className="solo-label">{sourceIsYue ? '粵語' : 'English'}</p>
+        <p className="solo-label">
+          {sourceIsYue ? <CantoneseText text="粵語" /> : 'English'}
+        </p>
         <AnimatePresence mode="wait">
           <motion.p
             key={source || 'empty-src'}
@@ -32,17 +34,18 @@ export function SoloView() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            {sourceIsYue ? (
-              <CantoneseText text={source} placeholder={<span className="placeholder">Speak to translate</span>} />
-            ) : (
-              source || <span className="placeholder">Speak to translate</span>
-            )}
+            <CantoneseText
+              text={source}
+              placeholder={<span className="placeholder">Speak to translate</span>}
+            />
           </motion.p>
         </AnimatePresence>
 
         <div className="solo-divider" />
 
-        <p className="solo-label">{sourceIsYue ? 'English' : '粵語'}</p>
+        <p className="solo-label">
+          {sourceIsYue ? 'English' : <CantoneseText text="粵語" />}
+        </p>
         <AnimatePresence mode="wait">
           <motion.div
             key={translation || latest?.translation || 'empty-tr'}
@@ -51,14 +54,10 @@ export function SoloView() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            {sourceIsYue ? (
-              translation || latest?.translation || <span className="placeholder">Translation appears here</span>
-            ) : (
-              <CantoneseText
-                text={translation || latest?.translation || ''}
-                placeholder={<span className="placeholder">Translation appears here</span>}
-              />
-            )}
+            <CantoneseText
+              text={translation || latest?.translation || ''}
+              placeholder={<span className="placeholder">Translation appears here</span>}
+            />
           </motion.div>
         </AnimatePresence>
       </motion.div>
@@ -67,10 +66,12 @@ export function SoloView() {
         <ul className="history">
           {history.slice(1, 6).map((t) => (
             <li key={t.id}>
-              <span className="h-src">{t.from === 'yue' ? <CantoneseText text={t.source} /> : t.source}</span>
+              <span className="h-src">
+                <CantoneseText text={t.source} />
+              </span>
               <span className="h-arrow">→</span>
               <span className="h-tr">
-                {t.to === 'yue' ? <CantoneseText text={t.translation} /> : t.translation}
+                <CantoneseText text={t.translation} />
               </span>
             </li>
           ))}

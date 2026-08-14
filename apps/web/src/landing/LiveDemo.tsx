@@ -75,7 +75,9 @@ export function LiveDemo() {
       </div>
 
       <div className="demo-result">
-        <span className="demo-label">廣東話 · Cantonese</span>
+        <span className="demo-label">
+          <CantoneseText text="廣東話" /> · Cantonese
+        </span>
         <div className="demo-output">
           <CantoneseText text={result} jyutpingClassName="jyutping demo-jyutping" />
         </div>

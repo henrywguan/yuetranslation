@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { CantoneseText } from './components/CantoneseText'
 import { Controls } from './components/Controls'
 import { ConversationView } from './components/ConversationView'
 import { FluidBackground } from './components/FluidBackground'
@@ -35,7 +36,7 @@ export function TranslatorApp() {
         >
           {embedded ? (
             <span className="brand-mark" aria-hidden="true">
-              粵
+              <CantoneseText text="粵" />
             </span>
           ) : (
             <button
@@ -44,7 +45,7 @@ export function TranslatorApp() {
               onClick={() => openHome()}
               aria-label="Back to Yue home"
             >
-              粵
+              <CantoneseText text="粵" />
             </button>
           )}
           <div>

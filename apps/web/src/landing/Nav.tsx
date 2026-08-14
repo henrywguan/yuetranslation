@@ -1,5 +1,6 @@
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { CantoneseText } from '../components/CantoneseText'
 
 type NavProps = {
   /** Called when "Features" is clicked; defaults to navigating home. */
@@ -16,7 +17,7 @@ export function Nav({ onFeatures }: NavProps) {
         aria-label="Yue home"
       >
         <span className="ln-brand-mark" aria-hidden="true">
-          粵
+          <CantoneseText text="粵" />
         </span>
         <span className="ln-brand-name">Yue</span>
       </button>
