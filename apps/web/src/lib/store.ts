@@ -24,6 +24,8 @@ type State = {
   yueInterim: string
   enTranslation: string
   yueTranslation: string
+  /** English gloss for the current Cantonese translation (clarity). */
+  yueDefinition: string
   history: ConversationTurn[]
   session: LiveSession | null
   setMode: (mode: Mode) => void
@@ -89,6 +91,7 @@ async function runTranslation(
       set({
         enInterim: isFinal ? '' : text,
         yueTranslation: result.text,
+        yueDefinition: result.definition || (isFinal ? text : get().yueDefinition),
         ...(isFinal
           ? {
               history: [
@@ -98,6 +101,7 @@ async function runTranslation(
                   to,
                   source: text,
                   translation: result.text,
+                  definition: result.definition || text,
                   at: Date.now(),
                   engine: result.engine,
                 },
@@ -119,6 +123,7 @@ async function runTranslation(
                   to,
                   source: text,
                   translation: result.text,
+                  definition: result.definition || '',
                   at: Date.now(),
                   engine: result.engine,
                 },
@@ -153,6 +158,7 @@ export const useYueStore = create<State>((set, get) => ({
   yueInterim: '',
   enTranslation: '',
   yueTranslation: '',
+  yueDefinition: '',
   history: [],
   session: null,
 
@@ -289,6 +295,7 @@ export const useYueStore = create<State>((set, get) => ({
         set({
           enInterim: trimmed,
           yueTranslation: result.text,
+          yueDefinition: result.definition || trimmed,
           history: [
             {
               id: crypto.randomUUID(),
@@ -296,6 +303,7 @@ export const useYueStore = create<State>((set, get) => ({
               to,
               source: trimmed,
               translation: result.text,
+              definition: result.definition || trimmed,
               at: Date.now(),
               engine: result.engine,
             },
@@ -313,6 +321,7 @@ export const useYueStore = create<State>((set, get) => ({
               to,
               source: trimmed,
               translation: result.text,
+              definition: result.definition || '',
               at: Date.now(),
               engine: result.engine,
             },
@@ -335,6 +344,7 @@ export const useYueStore = create<State>((set, get) => ({
       yueInterim: '',
       enTranslation: '',
       yueTranslation: '',
+      yueDefinition: '',
     })
   },
 }))

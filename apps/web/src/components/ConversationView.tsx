@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
+import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -9,6 +10,7 @@ export function ConversationView() {
   const yueInterim = useYueStore((s) => s.yueInterim)
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
+  const yueDefinition = useYueStore((s) => s.yueDefinition)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -33,10 +35,18 @@ export function ConversationView() {
             {enInterim || <BiText className="placeholder" copy={ui.listening} size="sm" />}
           </p>
           <div className="said">
-            <CantoneseText
-              text={yueTranslation}
-              placeholder={<BiText className="placeholder" copy={ui.yueTranslation} size="sm" />}
-            />
+            {yueTranslation ? (
+              <ResultWithDefinition
+                text={yueTranslation}
+                definition={yueDefinition || enInterim}
+                className="result-with-def--compact"
+              />
+            ) : (
+              <CantoneseText
+                text=""
+                placeholder={<BiText className="placeholder" copy={ui.yueTranslation} size="sm" />}
+              />
+            )}
           </div>
         </div>
       </motion.section>

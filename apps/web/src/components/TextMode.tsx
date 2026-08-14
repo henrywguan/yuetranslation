@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BiText } from './BiText'
-import { CantoneseText } from './CantoneseText'
+import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
@@ -38,11 +38,11 @@ export function TextMode() {
           <p className="muted">
             <BiText copy={ui.result} size="sm" />
           </p>
-          {latest.to === 'yue' ? (
-            <CantoneseText text={latest.translation} className="result-text" />
-          ) : (
-            <p className="result-text">{latest.translation}</p>
-          )}
+          <ResultWithDefinition
+            text={latest.translation}
+            definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
+            cantonese={latest.to === 'yue'}
+          />
         </div>
       ) : null}
     </div>

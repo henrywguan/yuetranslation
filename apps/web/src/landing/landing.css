@@ -577,8 +577,75 @@
   color: var(--ink-bright);
 }
 
+.demo-result-row {
+  margin-top: 6px;
+}
+
+.demo-result-row .demo-output-text,
+.demo-result-row .cantonese-block {
+  font-family: var(--font-body);
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+.demo-result-row .result-with-def-side {
+  min-width: 7.5rem;
+}
+
 .demo-jyutping {
   color: rgba(154, 240, 222, 0.8) !important;
+}
+
+/* Shared result + definition layout (also used outside TranslatorApp) */
+.landing .result-with-def {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.landing .result-with-def-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.landing .result-with-def-side {
+  flex: 0 1 44%;
+  max-width: 13rem;
+  padding-left: 16px;
+  border-left: 1px solid var(--glass-border);
+  min-width: 0;
+}
+
+.landing .result-with-def-label {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.landing .result-with-def-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+@media (max-width: 520px) {
+  .landing .result-with-def {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .landing .result-with-def-side {
+    max-width: none;
+    width: 100%;
+    padding-left: 0;
+    padding-top: 10px;
+    border-left: 0;
+    border-top: 1px solid var(--glass-border);
+  }
 }
 
 .demo-error {

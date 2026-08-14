@@ -812,6 +812,88 @@
   align-items: center;
 }
 
+/* Result + definition (Cantonese left, gloss right) */
+.result-with-def {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+}
+
+.result-with-def-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.result-with-def-side {
+  flex: 0 1 42%;
+  max-width: 12.5rem;
+  padding-left: 14px;
+  border-left: 1px solid var(--glass-border);
+  min-width: 0;
+}
+
+.result-with-def-label {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.result-with-def-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.result-with-def--compact .result-with-def-side {
+  max-width: 9.5rem;
+  padding-left: 10px;
+}
+
+.result-with-def--compact .result-with-def-body {
+  font-size: 0.82rem;
+}
+
+.solo-tr-text {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.h-tr {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.h-def {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 450;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .result-with-def {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .result-with-def-side {
+    max-width: none;
+    width: 100%;
+    padding-left: 0;
+    padding-top: 8px;
+    border-left: 0;
+    border-top: 1px solid var(--glass-border);
+  }
+}
+
 @media (max-width: 719px) {
   .brand-name {
     font-size: clamp(1.55rem, 7vw, 2rem);

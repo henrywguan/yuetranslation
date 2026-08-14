@@ -42,6 +42,7 @@ export const ui = {
   typeCantonese: { en: 'Type Cantonese…', zh: '輸入粵語…', jp: 'syu1 jap6 jyut6 jyu5…' },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
   result: { en: 'Result', zh: '結果', jp: 'git3 gwo2' },
+  definition: { en: 'Definition', zh: '釋義', jp: 'sik1 ji6' },
 
   connecting: { en: 'Connecting…', zh: '連接中…', jp: 'lin4 zip3 zung1…' },
   planFree: { en: 'Free', zh: '免費', jp: 'min5 fai3' },

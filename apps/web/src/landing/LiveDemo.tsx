@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { translateText } from '../lib/api'
 import { BiText } from '../components/BiText'
-import { CantoneseText } from '../components/CantoneseText'
+import { ResultWithDefinition } from '../components/ResultWithDefinition'
 import { ui } from '../lib/uiCopy'
 
 const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
@@ -9,6 +9,7 @@ const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
 export function LiveDemo() {
   const [text, setText] = useState('good morning')
   const [result, setResult] = useState('早晨')
+  const [definition, setDefinition] = useState('good morning')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -20,6 +21,7 @@ export function LiveDemo() {
     try {
       const res = await translateText(trimmed, 'en', 'yue')
       setResult(res.text)
+      setDefinition(res.definition || trimmed)
     } catch {
       setError('api')
     } finally {
@@ -82,9 +84,13 @@ export function LiveDemo() {
         <span className="demo-label">
           <BiText copy={ui.demoCantonese} size="sm" />
         </span>
-        <div className="demo-output">
-          <CantoneseText text={result} jyutpingClassName="jyutping demo-jyutping" />
-        </div>
+        <ResultWithDefinition
+          text={result}
+          definition={definition}
+          className="demo-result-row"
+          textClassName="demo-output-text"
+          jyutpingClassName="jyutping demo-jyutping"
+        />
         {error ? (
           <p className="demo-error">
             <BiText copy={ui.demoApiError} layout="stack" size="sm" />

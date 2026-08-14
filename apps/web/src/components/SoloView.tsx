@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
+import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -9,6 +10,7 @@ export function SoloView() {
   const yueInterim = useYueStore((s) => s.yueInterim)
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
+  const yueDefinition = useYueStore((s) => s.yueDefinition)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
@@ -17,6 +19,8 @@ export function SoloView() {
   const sourceIsYue = Boolean(yueInterim)
   const translation = sourceIsYue ? enTranslation : yueTranslation
   const latest = history[0]
+  const yueText = translation || latest?.translation || ''
+  const yueDef = yueDefinition || latest?.definition || latest?.source || ''
 
   return (
     <div className="solo">
@@ -64,7 +68,7 @@ export function SoloView() {
         </p>
         <AnimatePresence mode="wait">
           <motion.div
-            key={translation || latest?.translation || 'empty-tr'}
+            key={yueText || enTranslation || 'empty-tr'}
             className="solo-translation"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -73,11 +77,10 @@ export function SoloView() {
             {sourceIsYue ? (
               translation ||
               latest?.translation || <BiText className="placeholder" copy={ui.translationHere} size="sm" />
+            ) : yueText ? (
+              <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
             ) : (
-              <CantoneseText
-                text={translation || latest?.translation || ''}
-                placeholder={<BiText className="placeholder" copy={ui.translationHere} size="sm" />}
-              />
+              <BiText className="placeholder" copy={ui.translationHere} size="sm" />
             )}
           </motion.div>
         </AnimatePresence>
@@ -91,6 +94,11 @@ export function SoloView() {
               <span className="h-arrow">→</span>
               <span className="h-tr">
                 {t.to === 'yue' ? <CantoneseText text={t.translation} /> : t.translation}
+                {t.to === 'yue' && t.definition ? (
+                  <span className="h-def" title={t.definition}>
+                    {t.definition}
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}
