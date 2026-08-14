@@ -550,6 +550,14 @@
   font-size: 0.78em;
 }
 
+/* Keep Jyutping chips visible above bottom chrome */
+.controls .jp-pop {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .live-btn .bi {
   align-items: center;
 }

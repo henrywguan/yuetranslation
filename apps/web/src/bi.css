@@ -32,23 +32,34 @@
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
-  z-index: 30;
-  padding: 6px 12px;
-  border-radius: 8px;
+  z-index: 40;
+  padding: 7px 12px;
+  border-radius: 9px;
   font-family: var(--font-body);
   font-size: 0.74rem;
   font-weight: 600;
-  letter-spacing: 0.045em;
-  line-height: 1.2;
+  letter-spacing: 0.05em;
+  line-height: 1.15;
   color: var(--on-jade);
-  background: linear-gradient(145deg, var(--jade) 0%, var(--jade-mid) 100%);
-  border: 1px solid color-mix(in srgb, var(--jade-bright) 50%, transparent);
+  background: linear-gradient(145deg, var(--jade) 0%, var(--jade-deep) 100%);
+  border: 1px solid color-mix(in srgb, var(--jade-bright) 62%, transparent);
   box-shadow:
-    0 1px 0 color-mix(in srgb, #ffffff 26%, transparent) inset,
-    0 14px 36px rgba(7, 19, 31, 0.52),
-    0 4px 12px rgba(7, 19, 31, 0.32);
+    0 1px 0 color-mix(in srgb, #ffffff 30%, transparent) inset,
+    0 16px 40px rgba(7, 19, 31, 0.55),
+    0 6px 16px rgba(7, 19, 31, 0.38);
   pointer-events: none;
   white-space: nowrap;
+}
+
+[data-theme='light'] .jp-pop {
+  /* Keep chip vivid against light glass surfaces */
+  background: linear-gradient(145deg, var(--jade-bright) 0%, var(--jade) 55%, var(--jade-mid) 100%);
+  color: #041018;
+  border-color: color-mix(in srgb, var(--jade-deep) 28%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #ffffff 45%, transparent) inset,
+    0 16px 40px rgba(7, 19, 31, 0.28),
+    0 6px 14px rgba(7, 19, 31, 0.18);
 }
 
 .bi {

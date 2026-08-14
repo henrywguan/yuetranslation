@@ -1,6 +1,5 @@
 import type { ElementType } from 'react'
 import type { Bi } from '../lib/uiCopy'
-import { biPlain } from '../lib/uiCopy'
 import { useJpPopup } from '../lib/useJpPopup'
 import { JpPop } from './JpPop'
 
@@ -28,7 +27,7 @@ export function BiText({
   const { tipId, show, bind } = useJpPopup(canJp)
 
   return (
-    <Tag className={`bi bi--${layout} bi--${size} ${className}`.trim()} title={biPlain(copy)}>
+    <Tag className={`bi bi--${layout} bi--${size} ${className}`.trim()}>
       <span className="bi-en">{copy.en}</span>
       <span
         {...bind}
