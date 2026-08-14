@@ -542,6 +542,47 @@
   max-width: min(16rem, 46%);
 }
 
+.demo-alts {
+  margin-top: 14px;
+}
+
+.translation-alts-label {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.translation-alts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.translation-alts-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.demo-alts .translation-alts-label {
+  color: var(--muted);
+}
+
+.demo-alts .translation-alts-list li {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-color: var(--glass-border);
+  font-size: 1rem;
+}
+
 .demo-error {
   margin: 10px 0 0;
   font-size: 0.82rem;

@@ -3,6 +3,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { PaneParticles } from './PaneParticles'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -17,6 +18,7 @@ export function ConversationView() {
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueDefinition = useYueStore((s) => s.yueDefinition)
+  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -74,6 +76,7 @@ export function ConversationView() {
                 definition={yueDefinition}
                 placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
               />
+              <TranslationAlternatives alternatives={yueAlternatives} />
             </InkSettle>
           </div>
         </div>

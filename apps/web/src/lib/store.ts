@@ -26,6 +26,8 @@ type State = {
   yueTranslation: string
   /** English gloss for the current Cantonese translation (clarity). */
   yueDefinition: string
+  /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
+  yueAlternatives: string[]
   history: ConversationTurn[]
   session: LiveSession | null
   setMode: (mode: Mode) => void
@@ -92,7 +94,10 @@ async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   try {
-    const result = await translateText(text, lang, to)
+    const result = await translateText(text, lang, to, {
+      includeAlternatives: isFinal && lang === 'en',
+    })
+    const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq && !isFinal) return
     const definition = result.definition || (lang === 'en' ? text : '')
     const history = isFinal
@@ -102,6 +107,7 @@ async function runTranslation(
           source: text,
           translation: result.text,
           definition,
+          alternatives: lang === 'en' ? alternatives : undefined,
           engine: result.engine,
         })
       : undefined
@@ -112,6 +118,7 @@ async function runTranslation(
         enTranslation: '',
         yueTranslation: result.text,
         yueDefinition: result.definition || (isFinal ? text : ''),
+        yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
         ...(history ? { history } : {}),
       })
     } else {
@@ -121,6 +128,7 @@ async function runTranslation(
         yueTranslation: '',
         enTranslation: result.text,
         yueDefinition: result.definition || '',
+        yueAlternatives: isFinal ? [] : get().yueAlternatives,
         ...(history ? { history } : {}),
       })
     }
@@ -150,6 +158,7 @@ export const useYueStore = create<State>((set, get) => ({
   enTranslation: '',
   yueTranslation: '',
   yueDefinition: '',
+  yueAlternatives: [],
   history: [],
   session: null,
 
@@ -217,6 +226,7 @@ export const useYueStore = create<State>((set, get) => ({
             enTranslation: '',
             yueTranslation: '',
             yueDefinition: '',
+            yueAlternatives: [],
             status: 'listening',
           })
         } else {
@@ -226,6 +236,7 @@ export const useYueStore = create<State>((set, get) => ({
             enTranslation: '',
             yueTranslation: '',
             yueDefinition: '',
+            yueAlternatives: [],
             status: 'listening',
           })
         }
@@ -309,6 +320,7 @@ export const useYueStore = create<State>((set, get) => ({
       enTranslation: '',
       yueTranslation: '',
       yueDefinition: '',
+      yueAlternatives: [],
     })
   },
 }))

@@ -3,6 +3,7 @@ import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
@@ -47,6 +48,9 @@ export function TextMode() {
               definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
               cantonese={latest.to === 'yue'}
             />
+            {latest.to === 'yue' ? (
+              <TranslationAlternatives alternatives={latest.alternatives || []} />
+            ) : null}
           </InkSettle>
         ) : null}
       </div>

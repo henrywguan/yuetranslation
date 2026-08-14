@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { translateText } from '../lib/api'
 import { BiText } from '../components/BiText'
 import { ResultWithDefinition } from '../components/ResultWithDefinition'
+import { TranslationAlternatives } from '../components/TranslationAlternatives'
 import { ui } from '../lib/uiCopy'
 
 const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
@@ -10,6 +11,7 @@ export function LiveDemo() {
   const [text, setText] = useState('good morning')
   const [result, setResult] = useState('早晨')
   const [definition, setDefinition] = useState('good morning')
+  const [alternatives, setAlternatives] = useState<string[]>(['早安'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,9 +21,10 @@ export function LiveDemo() {
     setLoading(true)
     setError(null)
     try {
-      const res = await translateText(trimmed, 'en', 'yue')
+      const res = await translateText(trimmed, 'en', 'yue', { includeAlternatives: true })
       setResult(res.text)
       setDefinition(res.definition || trimmed)
+      setAlternatives(res.alternatives || [])
     } catch {
       setError('api')
     } finally {
@@ -84,12 +87,13 @@ export function LiveDemo() {
         <span className="demo-label">
           <BiText copy={ui.demoCantonese} size="sm" />
         </span>
-          <ResultWithDefinition
-            text={result}
-            definition={definition}
-            className="demo-result-row"
-            textClassName="demo-output-text"
-          />
+        <ResultWithDefinition
+          text={result}
+          definition={definition}
+          className="demo-result-row"
+          textClassName="demo-output-text"
+        />
+        <TranslationAlternatives alternatives={alternatives} className="demo-alts" />
         {error ? (
           <p className="demo-error">
             <BiText copy={ui.demoApiError} size="sm" />

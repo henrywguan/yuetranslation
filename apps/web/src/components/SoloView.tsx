@@ -4,6 +4,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -13,6 +14,7 @@ export function SoloView() {
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueDefinition = useYueStore((s) => s.yueDefinition)
+  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
@@ -27,6 +29,12 @@ export function SoloView() {
     yueTranslation ||
     (latest ? (latest.from === 'yue' ? latest.source : latest.translation) : '')
   const yueDef = yueDefinition || latest?.definition || ''
+  const alts =
+    yueAlternatives.length
+      ? yueAlternatives
+      : latest?.to === 'yue'
+        ? latest.alternatives || []
+        : []
   const enLive = Boolean(enInterim)
   const yueLive = Boolean(yueInterim)
 
@@ -73,7 +81,10 @@ export function SoloView() {
             interim={yueLive}
           >
             {yueText ? (
-              <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
+              <>
+                <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
+                <TranslationAlternatives alternatives={alts} />
+              </>
             ) : (
               <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
             )}

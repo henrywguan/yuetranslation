@@ -837,6 +837,43 @@
   font-weight: 600;
 }
 
+.translation-alts {
+  margin-top: 12px;
+}
+
+.translation-alts-label {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.translation-alts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.translation-alts-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.solo-translation .translation-alts,
+.said .translation-alts {
+  font-size: 0.72em;
+  font-weight: 500;
+}
+
 .muted {
   color: var(--muted);
   font-size: 0.8rem;

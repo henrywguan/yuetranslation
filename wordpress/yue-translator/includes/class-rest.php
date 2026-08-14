@@ -72,7 +72,8 @@ final class Yue_REST
         $text = (string) $request->get_param('text');
         $from = $request->get_param('from') === 'yue' ? 'yue' : 'en';
         $to = $request->get_param('to') === 'yue' ? 'yue' : 'en';
-        $result = Yue_Translate::translate($text, $from, $to);
+        $include_alternatives = (bool) $request->get_param('includeAlternatives');
+        $result = Yue_Translate::translate($text, $from, $to, $include_alternatives);
         if (is_wp_error($result)) {
             return $result;
         }

@@ -61,10 +61,16 @@ export async function translateText(
   text: string,
   from: Lang,
   to: Lang,
-): Promise<{ text: string; engine: string; definition?: string }> {
+  opts?: { includeAlternatives?: boolean },
+): Promise<{ text: string; definition?: string; alternatives?: string[]; engine: string }> {
   const res = await apiFetch('/translate', {
     method: 'POST',
-    body: JSON.stringify({ text, from, to }),
+    body: JSON.stringify({
+      text,
+      from,
+      to,
+      includeAlternatives: Boolean(opts?.includeAlternatives),
+    }),
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
