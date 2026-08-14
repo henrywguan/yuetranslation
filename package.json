@@ -2,7 +2,7 @@
   "name": "yue",
   "private": true,
   "version": "0.2.0",
-  "description": "Yue — English ↔ Cantonese live translator (PWA + WordPress)",
+  "description": "Jyut — English ↔ Cantonese live translator (PWA + WordPress)",
   "scripts": {
     "dev:web": "npm run dev --prefix apps/web",
     "dev:api": "npm run dev --prefix apps/api",

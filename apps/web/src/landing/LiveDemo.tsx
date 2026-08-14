@@ -58,7 +58,7 @@ export function LiveDemo() {
         <span className="demo-dot" />
         <span className="demo-dot" />
         <span className="demo-dot" />
-        <span className="demo-window-label">Yue · live</span>
+        <span className="demo-window-label">Jyut · live</span>
       </div>
 
       <label className="demo-label" htmlFor="demo-input">

@@ -15,7 +15,7 @@ final class Yue_Settings
 
     public static function admin_menu(): void
     {
-        add_options_page('Yue Translator', 'Yue Translator', 'manage_options', 'yue-translator', [self::class, 'render']);
+        add_options_page('Jyut Translator', 'Jyut Translator', 'manage_options', 'yue-translator', [self::class, 'render']);
     }
 
     /** Unchecked checkboxes are omitted from POST — force false. */
@@ -90,7 +90,7 @@ final class Yue_Settings
         }
         ?>
         <div class="wrap">
-            <h1>Yue Translator</h1>
+            <h1>Jyut Translator</h1>
             <p>Bluehost launch stack: Azure Speech (STT/TTS) + OpenAI (Cantonese MT) + freemium entitlements. Shortcodes: <code>[yue_translator]</code> (app), <code>[yue_splash]</code> (marketing).</p>
             <form method="post" action="options.php">
                 <?php settings_fields('yue_translator'); ?>

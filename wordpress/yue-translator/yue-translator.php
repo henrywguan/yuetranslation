@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: Yue Translator
+ * Plugin Name: Jyut Translator
  * Description: English ↔ Cantonese live translator PWA with freemium entitlements, Azure Speech, and OpenAI translation for Bluehost/WordPress launch.
  * Version: 2.0.0
- * Author: Yue
+ * Author: Jyut
  * Text Domain: yue-translator
  */
 
@@ -45,7 +45,7 @@ final class Yue_Translator_Plugin
         }
 
         return '<div class="yue-translator-embed" style="position:relative;width:100%;max-width:480px;margin:0 auto;height:min(86vh,820px);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)">'
-            . '<iframe title="Yue Translator" src="' . esc_url($src) . '" style="border:0;width:100%;height:100%;" allow="microphone; autoplay" loading="lazy"></iframe>'
+            . '<iframe title="Jyut Translator" src="' . esc_url($src) . '" style="border:0;width:100%;height:100%;" allow="microphone; autoplay" loading="lazy"></iframe>'
             . '</div>';
     }
 
@@ -58,7 +58,7 @@ final class Yue_Translator_Plugin
         }
 
         return '<div class="yue-splash-embed" style="position:relative;width:100%;min-height:100vh;margin:0;overflow:hidden">'
-            . '<iframe title="Yue" src="' . esc_url($src) . '" style="border:0;width:100%;min-height:100vh;height:100vh;" allow="microphone; autoplay" loading="lazy"></iframe>'
+            . '<iframe title="Jyut" src="' . esc_url($src) . '" style="border:0;width:100%;min-height:100vh;height:100vh;" allow="microphone; autoplay" loading="lazy"></iframe>'
             . '</div>';
     }
 
@@ -90,7 +90,7 @@ final class Yue_Translator_Plugin
 
     private static function missing_app_notice(): string
     {
-        return '<div class="yue-translator-missing"><p>Yue app build missing. Run <code>npm run build:web:wp</code> and keep files in <code>app/</code>.</p></div>';
+        return '<div class="yue-translator-missing"><p>Jyut app build missing. Run <code>npm run build:web:wp</code> and keep files in <code>app/</code>.</p></div>';
     }
 
     public static function user_plan_field(WP_User $user): void
@@ -100,7 +100,7 @@ final class Yue_Translator_Plugin
         }
         $plan = get_user_meta($user->ID, 'yue_plan', true) ?: 'free';
         ?>
-        <h2>Yue Translator</h2>
+        <h2>Jyut Translator</h2>
         <table class="form-table" role="presentation">
             <tr>
                 <th><label for="yue_plan">Plan</label></th>

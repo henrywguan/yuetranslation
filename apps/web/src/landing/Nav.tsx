@@ -13,12 +13,12 @@ export function Nav({ onFeatures }: NavProps) {
         type="button"
         className="ln-brand ln-brand-btn"
         onClick={() => openHome()}
-        aria-label="Yue home"
+        aria-label="Jyut home"
       >
         <span className="ln-brand-mark" aria-hidden="true">
           粵
         </span>
-        <span className="ln-brand-name">Yue</span>
+        <span className="ln-brand-name">Jyut</span>
       </button>
       <div className="ln-nav-links">
         <button type="button" onClick={() => (onFeatures ? onFeatures() : openHome())}>

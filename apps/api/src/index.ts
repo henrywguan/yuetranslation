@@ -16,7 +16,7 @@ app.use(express.json({ limit: '1mb' }))
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
-    product: 'yue',
+    product: 'jyut',
     service: 'yue-api',
     mode: 'cloud',
     cloudReady: cloudReady(),
@@ -116,6 +116,6 @@ app.post('/api/usage/heartbeat', (req, res) => {
 })
 
 app.listen(env.port, () => {
-  console.log(`Yue API on http://localhost:${env.port}`)
+  console.log(`Jyut API on http://localhost:${env.port}`)
   console.log(`Cloud ready: ${cloudReady()} (openMode=${env.openMode})`)
 })

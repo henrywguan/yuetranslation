@@ -92,7 +92,7 @@ const FAQ = [
   },
   {
     q: 'Can I run it on my own server?',
-    a: 'Yes — Yue can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs. Team plans include setup guidance.',
+    a: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs. Team plans include setup guidance.',
   },
   {
     q: 'Can I cancel anytime?',
@@ -242,7 +242,7 @@ export function PricingPage() {
           <span className="ln-brand-mark" aria-hidden="true">
             粵
           </span>
-          <span className="ln-brand-name">Yue</span>
+          <span className="ln-brand-name">Jyut</span>
         </button>
         <p>English ↔ Cantonese, done beautifully.</p>
       </footer>

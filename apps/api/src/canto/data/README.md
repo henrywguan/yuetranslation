@@ -1,6 +1,6 @@
 # Local Cantonese dictionaries
 
-Yue uses three layers:
+Jyut uses three layers:
 
 1. **Phrase memory** — `phrases.json` (exact EN↔粵 on the live hot path)
 2. **CC-Canto** — open gloss + **verification** (attest LLM output is real Cantonese)
@@ -26,7 +26,7 @@ Import tooling and a license gate remain for later:
 - `YUE_ALLOW_NONCOMMERCIAL_DICTS=1` + `YUE_ENABLE_WORDSHK=1`  
 - `npm run import:wordshk` after placing a CSV under `vendor/`
 
-Default: both flags **off**. Paid Yue should stay on CC-Canto only until licensed.
+Default: both flags **off**. Paid Jyut should stay on CC-Canto only until licensed.
 
 ## Import commands
 

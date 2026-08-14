@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Freemium entitlements for Yue.
+ * Freemium entitlements for Jyut.
  *
  * Resolution order for plan:
  * 1) capability `yue_pro` (or `manage_options`) => pro
