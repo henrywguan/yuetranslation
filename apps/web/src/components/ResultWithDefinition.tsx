@@ -1,9 +1,8 @@
-import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
 import { ui } from '../lib/uiCopy'
 
 /**
- * Cantonese (or English) result on the left; short English definition on the right.
+ * Minimal result: Chinese (Jyutping on hover/tap), quiet English gloss below.
  */
 export function ResultWithDefinition({
   text,
@@ -26,24 +25,19 @@ export function ResultWithDefinition({
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
-      <div className="result-with-def-main">
-        {cantonese ? (
-          <CantoneseText
-            text={trimmed}
-            className={textClassName || 'result-text'}
-            jyutpingClassName={jyutpingClassName}
-          />
-        ) : (
-          <p className={textClassName || 'result-text'}>{trimmed}</p>
-        )}
-      </div>
+      {cantonese ? (
+        <CantoneseText
+          text={trimmed}
+          className={textClassName || 'result-text'}
+          jyutpingClassName={jyutpingClassName}
+        />
+      ) : (
+        <p className={textClassName || 'result-text'}>{trimmed}</p>
+      )}
       {def ? (
-        <aside className="result-with-def-side" aria-label={ui.definition.en}>
-          <p className="result-with-def-label">
-            <BiText copy={ui.definition} size="sm" />
-          </p>
-          <p className="result-with-def-body">{def}</p>
-        </aside>
+        <p className="result-with-def-gloss" aria-label={ui.definition.en}>
+          {def}
+        </p>
       ) : null}
     </div>
   )

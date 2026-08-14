@@ -578,9 +578,7 @@
 }
 
 .demo-result-row {
-  margin-top: 6px;
-  flex-direction: row !important;
-  align-items: flex-start;
+  margin-top: 8px;
 }
 
 .demo-result-row .demo-output-text,
@@ -591,70 +589,64 @@
   color: var(--ink-bright);
 }
 
-.demo-result-row .result-with-def-side {
-  min-width: 7.5rem;
-  max-width: 42%;
-  flex: 0 1 42%;
-  padding-left: 14px;
-  padding-top: 0 !important;
-  border-left: 1px solid var(--glass-border);
-  border-top: 0 !important;
+.demo-result-row .result-with-def-gloss {
+  font-size: 1rem;
+  margin-top: 2px;
 }
 
-.demo-jyutping {
-  color: var(--mint) !important;
-  opacity: 0.9;
-}
-
-/* Shared result + definition layout (also used outside TranslatorApp) */
 .landing .result-with-def {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: 6px;
   width: 100%;
 }
 
-.landing .result-with-def-main {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.landing .result-with-def-side {
-  flex: 0 1 44%;
-  max-width: 13rem;
-  padding-left: 16px;
-  border-left: 1px solid var(--glass-border);
-  min-width: 0;
-}
-
-.landing .result-with-def-label {
-  margin: 0 0 6px;
-  font-size: 0.72rem;
-  color: var(--muted);
-}
-
-.landing .result-with-def-body {
+.landing .result-with-def-gloss {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.4;
-  color: var(--ink);
-  font-weight: 500;
+  color: var(--muted);
+  font-weight: 450;
 }
 
-@media (max-width: 520px) {
-  .landing .result-with-def {
-    flex-direction: column;
-    gap: 12px;
-  }
+.landing .jp-pop {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  max-width: min(18rem, 80vw);
+  padding: 7px 11px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  color: var(--ink-bright);
+  background: color-mix(in srgb, var(--harbor-mid) 88%, transparent);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--harbor) 35%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  pointer-events: none;
+}
 
-  .landing .result-with-def-side {
-    max-width: none;
-    width: 100%;
-    padding-left: 0;
-    padding-top: 10px;
-    border-left: 0;
-    border-top: 1px solid var(--glass-border);
-  }
+[data-theme='light'] .landing .jp-pop {
+  background: color-mix(in srgb, #ffffff 92%, transparent);
+  color: var(--ink);
+  box-shadow: 0 12px 28px rgba(7, 19, 31, 0.12);
+}
+
+.landing .cantonese-block {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.landing .cantonese-block--hint {
+  cursor: help;
 }
 
 .demo-error {
@@ -1062,150 +1054,107 @@
   }
 }
 
-/* ---------- Bilingual UI (EN + 粵 + Jyutping) ---------- */
+/* ---------- Bilingual UI: EN above ZH, Jyutping on hover/tap ---------- */
 .landing .bi {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 0.5em;
-  max-width: 100%;
-  text-align: start;
-  line-height: 1.25;
-}
-
-.landing .bi--stack {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.35rem;
+  gap: 0.14rem;
+  max-width: 100%;
+  text-align: start;
+  line-height: 1.3;
 }
 
-.landing .bi-zh-col {
+.landing .bi--inline {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.45em;
+}
+
+.landing .bi-en {
+  font-weight: 600;
+}
+
+.landing .bi-zh-wrap {
+  position: relative;
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1em;
-  min-width: 0;
+  max-width: 100%;
+}
+
+.landing .bi-zh-wrap--hint {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--muted) 50%, transparent);
 }
 
 .landing .bi-zh {
   font-family: var(--font-body);
-  font-weight: 560;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--ink) 76%, transparent);
 }
 
-.landing .bi-jp {
-  font-family: var(--font-body);
-  font-weight: 450;
-  color: var(--mint);
-  opacity: 0.85;
-  line-height: 1.25;
-  word-break: break-word;
+.landing .bi--sm .bi-zh {
+  font-size: 0.9em;
 }
 
-.landing .bi--sm .bi-jp {
-  font-size: 0.62em;
+.landing .bi--lg .bi-en {
+  font-weight: 750;
 }
 
-.landing .bi--md .bi-jp {
-  font-size: 0.7em;
-}
-
-.landing .bi--lg .bi-jp {
-  font-size: 0.55em;
-}
-
-.landing .bi--stack .bi-zh-col {
-  width: 100%;
+.landing .bi--lg .bi-zh {
+  font-size: 0.48em;
+  letter-spacing: 0.02em;
 }
 
 .ln-nav-links .bi {
   align-items: center;
+  gap: 0.08rem;
 }
 
 .ln-nav-cta .bi {
   color: inherit;
-}
-
-.ln-nav-cta .bi-jp {
-  color: color-mix(in srgb, var(--on-jade) 78%, transparent);
-  opacity: 1;
-}
-
-.ln-eyebrow .bi,
-.ln-kicker .bi {
   align-items: center;
 }
 
-.ln-title .bi-en {
-  display: inline;
+.ln-nav-cta .bi-zh {
+  color: color-mix(in srgb, var(--on-jade) 88%, transparent);
 }
 
-.ln-hero-inner .ln-sub.bi--stack,
-.ln-p.bi--stack {
+.ln-title .bi {
+  display: inline-flex;
+  vertical-align: baseline;
+  margin-right: 0.15em;
+}
+
+.ln-hero-inner .ln-sub.bi,
+.ln-p.bi {
   max-width: min(620px, 100%);
-}
-
-.ln-hero-stats .bi--stack {
-  gap: 0.2rem;
 }
 
 .ln-hero-stats .bi-en {
   color: var(--muted);
   font-size: 0.92rem;
+  font-weight: 500;
 }
 
 .ln-mode-card .ln-mode-zh {
-  display: none; /* replaced by BiText beside title */
+  display: none;
 }
 
-.ln-mode-card h3 .bi,
-.ln-feature h4 .bi {
-  align-items: baseline;
-}
-
-.ln-mode-card p .bi--stack,
-.ln-feature p .bi--stack {
+.ln-mode-card p .bi,
+.ln-feature p .bi,
+.ln-price-card li .bi,
+.pp-faq-item h3 .bi,
+.pp-faq-item p .bi {
   width: 100%;
 }
 
-.ln-price-card h3 .bi,
-.ln-price-badge .bi,
-.ln-price-card li .bi--stack {
-  width: 100%;
-}
-
-.ln-price span .bi {
-  font-size: 0.95rem;
-}
-
-.demo-label .bi {
-  width: 100%;
-}
-
-.demo-go .bi {
-  justify-content: center;
+.demo-label .bi,
+.demo-go .bi,
+.btn-primary .bi,
+.btn-ghost .bi {
+  align-items: center;
 }
 
 .pp-toggle .bi {
   align-items: center;
-}
-
-.pp-table th .bi--stack,
-.pp-table td .bi {
-  font-size: 0.92em;
-}
-
-.pp-faq-item h3 .bi--stack,
-.pp-faq-item p .bi--stack {
-  width: 100%;
-}
-
-.btn-primary .bi,
-.btn-ghost .bi {
-  justify-content: center;
-  align-items: center;
-}
-
-.btn-primary .bi-jp {
-  color: color-mix(in srgb, var(--on-jade) 80%, transparent);
-  opacity: 1;
 }
