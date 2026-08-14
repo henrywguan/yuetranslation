@@ -2,6 +2,7 @@ import { MotionConfig, motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { BiText } from './components/BiText'
 import { BrandTag } from './components/BrandTag'
+import { CharacterBreakdownHost } from './components/CharacterBreakdownHost'
 import { Controls } from './components/Controls'
 import { JyutLogo } from './components/JyutLogo'
 import { ConversationView } from './components/ConversationView'
@@ -87,6 +88,7 @@ export function TranslatorApp() {
         ) : null}
 
         <Controls />
+        <CharacterBreakdownHost />
       </div>
     </MotionConfig>
   )

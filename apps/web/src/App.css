@@ -868,10 +868,166 @@
   color: var(--ink);
 }
 
+.cantonese-activate {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cantonese-activate:hover,
+.cantonese-activate:focus-visible {
+  background: color-mix(in srgb, var(--jade) 12%, transparent);
+  outline: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 35%, transparent);
+}
+
+.translation-alts-list .cantonese-activate {
+  text-align: left;
+}
+
 .solo-translation .translation-alts,
 .said .translation-alts {
   font-size: 0.72em;
   font-weight: 500;
+}
+
+.breakdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: color-mix(in srgb, #061018 55%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.breakdown-frame {
+  position: fixed;
+  z-index: 81;
+  left: 12px;
+  right: 12px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  margin: 0 auto;
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(78vh, 640px);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 14px;
+  border-radius: 22px 22px 18px 18px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface) 92%, var(--jade) 8%),
+      color-mix(in srgb, var(--surface) 88%, transparent)
+    );
+  box-shadow:
+    0 24px 60px color-mix(in srgb, #000 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.breakdown-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.breakdown-kicker {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.breakdown-phrase {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1.35;
+  font-family: var(--font-canto, inherit);
+}
+
+.breakdown-close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.breakdown-close:hover,
+.breakdown-close:focus-visible {
+  background: color-mix(in srgb, var(--jade) 18%, transparent);
+  outline: none;
+}
+
+.breakdown-loading {
+  margin: 8px 0 12px;
+}
+
+.breakdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.breakdown-char {
+  font-size: 1.55rem;
+  font-weight: 650;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.breakdown-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.breakdown-jp {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--jade-mid, var(--jade)) 80%, var(--ink));
+}
+
+.breakdown-meaning {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .muted {

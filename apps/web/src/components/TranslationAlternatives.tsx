@@ -4,9 +4,12 @@ import { CantoneseText } from './CantoneseText'
 export function TranslationAlternatives({
   alternatives,
   className = '',
+  onSelect,
 }: {
   alternatives: string[]
   className?: string
+  /** Selecting a variation promotes it and opens its character breakdown. */
+  onSelect?: (phrase: string) => void
 }) {
   if (!alternatives.length) return null
   return (
@@ -15,7 +18,15 @@ export function TranslationAlternatives({
       <ul className="translation-alts-list">
         {alternatives.map((alt) => (
           <li key={alt}>
-            <CantoneseText text={alt} />
+            {onSelect ? (
+              <CantoneseText
+                text={alt}
+                onActivate={onSelect}
+                activateLabel={`Use variation ${alt} and open breakdown`}
+              />
+            ) : (
+              <CantoneseText text={alt} />
+            )}
           </li>
         ))}
       </ul>

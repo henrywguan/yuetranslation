@@ -19,6 +19,12 @@ const DEMO: Record<string, DemoEntry> = {
   thanks: { text: '多謝', definition: 'thanks; many thanks', alternatives: ['唔該'] },
   'good morning': { text: '早晨', definition: 'good morning', alternatives: ['早安'] },
   'how are you': { text: '你好嗎', definition: 'how are you?', alternatives: ['最近點呀', '你幾好嗎'] },
+  'what are you doing': {
+    text: '你做緊咩呀？',
+    definition: 'what are you doing?',
+    alternatives: ['你而家做緊咩？', '做緊咩呀你？', '你喺度做緊乜嘢？'],
+  },
+  "what's up": { text: '點呀？', definition: "what's up?", alternatives: ['最近點？', '有咩事？'] },
   'where is the mtr': {
     text: '地鐵喺邊度',
     definition: 'where is the MTR / subway?',
@@ -35,12 +41,15 @@ const DEMO: Record<string, DemoEntry> = {
   唔該: { text: 'Thank you', definition: 'thank you' },
   多謝: { text: 'Thanks', definition: 'thanks' },
   早晨: { text: 'Good morning', definition: 'good morning' },
+  你做緊咩呀: { text: 'What are you doing?', definition: 'what are you doing?' },
+  '你做緊咩呀？': { text: 'What are you doing?', definition: 'what are you doing?' },
   地鐵喺邊度: { text: 'Where is the MTR?', definition: 'where is the MTR?' },
   呢個幾錢: { text: 'How much is this?', definition: 'how much is this?' },
   係: { text: 'Yes', definition: 'yes' },
   唔係: { text: 'No', definition: 'no' },
 }
 
+/** Normalize for demo lookup: lowercase, collapse space, strip trailing punctuation. */
 function demoLookupKey(text: string) {
   return text
     .toLowerCase()
@@ -156,9 +165,10 @@ export async function translate(input: unknown) {
       'Return ONLY valid JSON with this shape:',
       '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
       'Rules for alternatives:',
-      '- Include 0–3 alternatives that meaningfully differ (wording, particles, politeness).',
+      '- For everyday conversational questions (e.g. “what are you doing?”), prefer 2–3 natural spoken variants.',
+      '- Variants should meaningfully differ (word order, particles, politeness, 而家 vs bare progressive).',
       '- Do not repeat the primary or near-duplicates.',
-      '- If there is no useful variation, return "alternatives": [].',
+      '- If there is truly no useful variation, return "alternatives": [].',
       '- definition should help a learner: brief, clear, natural English.',
       '- No markdown, no explanation.',
     ].join('\n')

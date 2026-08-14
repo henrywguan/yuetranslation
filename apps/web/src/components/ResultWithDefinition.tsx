@@ -8,12 +8,14 @@ export function ResultWithDefinition({
   cantonese = true,
   className = '',
   textClassName = '',
+  onActivate,
 }: {
   text: string
   definition?: string
   cantonese?: boolean
   className?: string
   textClassName?: string
+  onActivate?: (text: string) => void
 }) {
   const trimmed = text.trim()
   const def = definition?.trim() || ''
@@ -27,6 +29,7 @@ export function ResultWithDefinition({
             text={trimmed}
             definition={def}
             className={textClassName || 'result-text'}
+            onActivate={onActivate}
           />
         ) : (
           <p className={textClassName || 'result-text'}>{trimmed}</p>

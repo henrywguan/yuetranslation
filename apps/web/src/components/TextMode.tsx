@@ -12,6 +12,8 @@ export function TextMode() {
   const [text, setText] = useState('')
   const [from, setFrom] = useState<Lang>('en')
   const translateTyped = useYueStore((s) => s.translateTyped)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
   const latest = history[0]
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
@@ -47,9 +49,13 @@ export function TextMode() {
               text={latest.translation}
               definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
               cantonese={latest.to === 'yue'}
+              onActivate={latest.to === 'yue' ? openBreakdown : undefined}
             />
             {latest.to === 'yue' ? (
-              <TranslationAlternatives alternatives={latest.alternatives || []} />
+              <TranslationAlternatives
+                alternatives={latest.alternatives || []}
+                onSelect={selectYueVariation}
+              />
             ) : null}
           </InkSettle>
         ) : null}

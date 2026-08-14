@@ -18,11 +18,19 @@ export function CantoneseText({
   definition = '',
   className,
   placeholder,
+  onActivate,
+  activateLabel,
 }: {
   text: string
   definition?: string
   className?: string
   placeholder?: ReactNode
+  /**
+   * When set without character drills available, the whole phrase is clickable
+   * (opens breakdown / selects variation). Character taps still win when drills exist.
+   */
+  onActivate?: (text: string) => void
+  activateLabel?: string
 }) {
   const trimmed = text.trim()
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
@@ -58,7 +66,10 @@ export function CantoneseText({
     setDetail({ ...seg, phrase: trimmed, definition: phraseDef })
   }
 
-  return (
+  const drillable = segs.some((seg) => Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char)))
+  const phraseActivate = Boolean(onActivate) && !drillable
+
+  const body = (
     <span className="cantonese-block">
       <span className={className}>
         {segs.length
@@ -85,12 +96,37 @@ export function CantoneseText({
           : trimmed}
       </span>
       {jp ? (
-        <span {...bind} className="jyutping jyutping--hint ink-in" lang="en">
-          {jp}
-          <JpPop show={show} id={tipId} text={jp} />
-        </span>
+        onActivate && drillable ? (
+          <button
+            type="button"
+            className="jyutping jyutping--hint jyutping--activate ink-in"
+            lang="en"
+            onClick={() => onActivate(trimmed)}
+            aria-label={activateLabel || `Open character breakdown for ${trimmed}`}
+          >
+            {jp}
+          </button>
+        ) : (
+          <span {...bind} className="jyutping jyutping--hint ink-in" lang="en">
+            {jp}
+            <JpPop show={show} id={tipId} text={jp} />
+          </span>
+        )
       ) : null}
       <CharDetailSheet detail={detail} onClose={() => setDetail(null)} />
     </span>
+  )
+
+  if (!phraseActivate) return body
+
+  return (
+    <button
+      type="button"
+      className="cantonese-activate"
+      onClick={() => onActivate?.(trimmed)}
+      aria-label={activateLabel || `Open character breakdown for ${trimmed}`}
+    >
+      {body}
+    </button>
   )
 }

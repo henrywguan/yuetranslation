@@ -15,6 +15,8 @@ export function SoloView() {
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueDefinition = useYueStore((s) => s.yueDefinition)
   const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
@@ -82,8 +84,13 @@ export function SoloView() {
           >
             {yueText ? (
               <>
-                <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
-                <TranslationAlternatives alternatives={alts} />
+                <ResultWithDefinition
+                  text={yueText}
+                  definition={yueDef}
+                  textClassName="solo-tr-text"
+                  onActivate={openBreakdown}
+                />
+                <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
               </>
             ) : (
               <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
@@ -97,12 +104,16 @@ export function SoloView() {
           {history.slice(1, 6).map((t) => (
             <li key={t.id}>
               <span className="h-src">
-                {t.from === 'yue' ? <CantoneseText text={t.source} definition={t.definition} /> : t.source}
+                {t.from === 'yue' ? (
+                  <CantoneseText text={t.source} definition={t.definition} onActivate={openBreakdown} />
+                ) : (
+                  t.source
+                )}
               </span>
               <span className="h-arrow">→</span>
               <span className="h-tr">
                 {t.to === 'yue' ? (
-                  <CantoneseText text={t.translation} definition={t.definition} />
+                  <CantoneseText text={t.translation} definition={t.definition} onActivate={openBreakdown} />
                 ) : (
                   t.translation
                 )}

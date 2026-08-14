@@ -10,7 +10,7 @@ final class Yue_Translate
 
     private const SYSTEM_EN = 'You are an expert Hong Kong Cantonese translator for live conversation. Translate TO natural conversational English. Return ONLY valid JSON: {"translation":"<English>","definition":""}.';
 
-    private const SYSTEM_YUE_ALTS = 'You are a Hong Kong Cantonese interpreter. Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese. Prefer characters such as 係、唔、喺、咗、緊、㗎、喇、喎. Return ONLY valid JSON: {"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}. Include 0–3 alternatives that meaningfully differ (wording, particles, politeness). Do not repeat the primary. If none, use "alternatives": []. Definition should help a learner. No markdown.';
+    private const SYSTEM_YUE_ALTS = 'You are a Hong Kong Cantonese interpreter. Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese. Prefer characters such as 係、唔、喺、咗、緊、㗎、喇、喎. Return ONLY valid JSON: {"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}. For everyday questions (e.g. what are you doing?), prefer 2–3 natural spoken variants that differ in wording or particles. Do not repeat the primary. If none, use "alternatives": []. Definition should help a learner. No markdown.';
 
     public static function openai_configured(): bool
     {
@@ -193,6 +193,8 @@ final class Yue_Translate
             'thanks' => ['多謝', 'thanks; many thanks', ['唔該']],
             'good morning' => ['早晨', 'good morning', ['早安']],
             'how are you' => ['你好嗎', 'how are you?', ['最近點呀', '你幾好嗎']],
+            'what are you doing' => ['你做緊咩呀？', 'what are you doing?', ['你而家做緊咩？', '做緊咩呀你？', '你喺度做緊乜嘢？']],
+            "what's up" => ['點呀？', "what's up?", ['最近點？', '有咩事？']],
             'where is the mtr' => ['地鐵喺邊度', 'where is the MTR / subway?', ['港鐵喺邊呀', '地鐵站喺邊']],
             'how much is this' => ['呢個幾錢', 'how much is this?', ['呢樣幾多錢', '請問賣幾錢']],
             'yes' => ['係', 'yes', []],
@@ -202,6 +204,8 @@ final class Yue_Translate
             '多謝' => ['Thanks', 'thanks', []],
             '早晨' => ['Good morning', 'good morning', []],
             '你好嗎' => ['How are you?', 'how are you?', []],
+            '你做緊咩呀' => ['What are you doing?', 'what are you doing?', []],
+            '你做緊咩呀？' => ['What are you doing?', 'what are you doing?', []],
             '地鐵喺邊度' => ['Where is the MTR?', 'where is the MTR?', []],
             '呢個幾錢' => ['How much is this?', 'how much is this?', []],
             '係' => ['Yes', 'yes', []],

@@ -1,19 +1,27 @@
 import { useState } from 'react'
 import { translateText } from '../lib/api'
 import { BiText } from '../components/BiText'
+import { CharacterBreakdownFrame } from '../components/CharacterBreakdownFrame'
 import { ResultWithDefinition } from '../components/ResultWithDefinition'
 import { TranslationAlternatives } from '../components/TranslationAlternatives'
+import { buildLocalBreakdown, type CharBreakdown } from '../lib/jyutping'
 import { ui } from '../lib/uiCopy'
 
-const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
+const SAMPLES = ['hello', 'thank you', 'good morning', 'what are you doing?']
 
 export function LiveDemo() {
-  const [text, setText] = useState('good morning')
-  const [result, setResult] = useState('早晨')
-  const [definition, setDefinition] = useState('good morning')
-  const [alternatives, setAlternatives] = useState<string[]>(['早安'])
+  const [text, setText] = useState('what are you doing?')
+  const [result, setResult] = useState('你做緊咩呀？')
+  const [definition, setDefinition] = useState('what are you doing?')
+  const [alternatives, setAlternatives] = useState<string[]>([
+    '你而家做緊咩？',
+    '做緊咩呀你？',
+    '你喺度做緊乜嘢？',
+  ])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [breakdown, setBreakdown] = useState<string | null>(null)
+  const [rows, setRows] = useState<CharBreakdown[]>([])
 
   async function run(value: string) {
     const trimmed = value.trim()
@@ -30,6 +38,19 @@ export function LiveDemo() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function openPhrase(phrase: string, promote: boolean) {
+    const chosen = phrase.trim()
+    if (!chosen) return
+    if (promote && chosen !== result) {
+      setAlternatives((prev) =>
+        [result, ...prev].filter((s) => s && s !== chosen).filter((s, i, a) => a.indexOf(s) === i).slice(0, 3),
+      )
+      setResult(chosen)
+    }
+    setBreakdown(chosen)
+    setRows(await buildLocalBreakdown(chosen))
   }
 
   return (
@@ -92,14 +113,27 @@ export function LiveDemo() {
           definition={definition}
           className="demo-result-row"
           textClassName="demo-output-text"
+          onActivate={(p) => void openPhrase(p, false)}
         />
-        <TranslationAlternatives alternatives={alternatives} className="demo-alts" />
+        <TranslationAlternatives
+          alternatives={alternatives}
+          className="demo-alts"
+          onSelect={(p) => void openPhrase(p, true)}
+        />
         {error ? (
           <p className="demo-error">
             <BiText copy={ui.demoApiError} size="sm" />
           </p>
         ) : null}
       </div>
+
+      {breakdown ? (
+        <CharacterBreakdownFrame
+          phrase={breakdown}
+          rows={rows}
+          onClose={() => setBreakdown(null)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -76,6 +76,17 @@ export async function translateText(
   return res.json()
 }
 
+export async function fetchBreakdown(
+  text: string,
+): Promise<{ characters: { char: string; jyutping: string | null; meaning: string }[]; engine: string }> {
+  const res = await apiFetch('/breakdown', {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
 export async function postHeartbeat(seconds = 15): Promise<Entitlement> {
   const res = await apiFetch('/usage/heartbeat', {
     method: 'POST',
