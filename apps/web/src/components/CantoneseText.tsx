@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { ensureJyutping, hasHan, toJyutpingCached } from '../lib/jyutping'
+import { useJpPopup } from '../lib/useJpPopup'
+import { JpPop } from './JpPop'
 
-/** Cantonese translation line with Jyutping always shown underneath. */
+/** Cantonese translation line with compact Jyutping underneath; tone letters on hover/tap. */
 export function CantoneseText({
   text,
   className,
@@ -13,6 +15,7 @@ export function CantoneseText({
 }) {
   const trimmed = text.trim()
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
+  const { tipId, show, bind } = useJpPopup(Boolean(jp))
 
   useEffect(() => {
     let cancelled = false
@@ -39,8 +42,9 @@ export function CantoneseText({
     <span className="cantonese-block">
       <span className={className}>{trimmed}</span>
       {jp ? (
-        <span className="jyutping" lang="en">
+        <span {...bind} className="jyutping jyutping--hint" lang="en">
           {jp}
+          <JpPop show={show} id={tipId} text={jp} />
         </span>
       ) : null}
     </span>

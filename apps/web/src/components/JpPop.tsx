@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { expandJyutping } from '../lib/jyutping'
 
 export function JpPop({
   show,
@@ -12,6 +13,7 @@ export function JpPop({
   className?: string
 }) {
   const reduce = useReducedMotion()
+  const detailed = expandJyutping(text)
   return (
     <AnimatePresence>
       {show ? (
@@ -25,7 +27,7 @@ export function JpPop({
           exit={reduce ? undefined : { opacity: 0, y: 4, scale: 0.98 }}
           transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
         >
-          {text}
+          {detailed}
         </motion.span>
       ) : null}
     </AnimatePresence>

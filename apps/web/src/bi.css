@@ -10,6 +10,7 @@
 }
 
 .jyutping {
+  position: relative;
   font-family: var(--font-body);
   font-size: 0.58em;
   font-weight: 500;
@@ -18,8 +19,17 @@
   color: color-mix(in srgb, var(--mint) 62%, transparent);
 }
 
+.jyutping--hint {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--mint) 40%, transparent);
+}
+
 [data-theme='light'] .jyutping {
   color: color-mix(in srgb, var(--jade-deep) 58%, transparent);
+}
+
+[data-theme='light'] .jyutping--hint {
+  border-bottom-color: color-mix(in srgb, var(--jade-deep) 35%, transparent);
 }
 
 .result-with-def .jyutping {
