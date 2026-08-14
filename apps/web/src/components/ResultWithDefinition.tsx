@@ -25,6 +25,11 @@ export function ResultWithDefinition({
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
+      {def ? (
+        <p className="result-with-def-gloss" aria-label={ui.definition.en}>
+          {def}
+        </p>
+      ) : null}
       {cantonese ? (
         <CantoneseText
           text={trimmed}
@@ -34,11 +39,6 @@ export function ResultWithDefinition({
       ) : (
         <p className={textClassName || 'result-text'}>{trimmed}</p>
       )}
-      {def ? (
-        <p className="result-with-def-gloss" aria-label={ui.definition.en}>
-          {def}
-        </p>
-      ) : null}
     </div>
   )
 }
