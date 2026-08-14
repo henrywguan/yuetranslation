@@ -581,6 +581,8 @@
 
 .demo-result-row .result-with-def-gloss {
   font-size: 1rem;
+  max-width: min(16rem, 46%);
+  padding-top: 0.45em;
 }
 
 .demo-error {

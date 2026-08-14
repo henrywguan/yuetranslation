@@ -124,21 +124,32 @@
 
 .result-with-def {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 0.35rem 1.1rem;
   width: 100%;
 }
 
+.result-with-def-main {
+  flex: 1 1 auto;
+  min-width: min(100%, 8rem);
+}
+
 .result-with-def-gloss {
+  flex: 0 1 auto;
   margin: 0;
+  max-width: min(14rem, 42%);
+  padding-top: 0.28em;
   font-size: 0.95rem;
   line-height: 1.35;
   color: var(--muted);
   font-weight: 450;
+  text-align: end;
 }
 
 .result-with-def .result-text,
 .result-with-def .cantonese-block {
-  margin-top: 2px;
+  margin-top: 0;
 }

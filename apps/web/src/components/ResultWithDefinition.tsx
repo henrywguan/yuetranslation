@@ -1,7 +1,7 @@
 import { CantoneseText } from './CantoneseText'
 import { ui } from '../lib/uiCopy'
 
-/** English gloss above Cantonese; Jyutping via hover/tap on characters. */
+/** Cantonese (with Jyutping under) on the left; English gloss on the right. */
 export function ResultWithDefinition({
   text,
   definition,
@@ -21,16 +21,18 @@ export function ResultWithDefinition({
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
+      <div className="result-with-def-main">
+        {cantonese ? (
+          <CantoneseText text={trimmed} className={textClassName || 'result-text'} />
+        ) : (
+          <p className={textClassName || 'result-text'}>{trimmed}</p>
+        )}
+      </div>
       {def ? (
         <p className="result-with-def-gloss" aria-label={ui.definition.en}>
           {def}
         </p>
       ) : null}
-      {cantonese ? (
-        <CantoneseText text={trimmed} className={textClassName || 'result-text'} />
-      ) : (
-        <p className={textClassName || 'result-text'}>{trimmed}</p>
-      )}
     </div>
   )
 }
