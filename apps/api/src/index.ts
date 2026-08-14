@@ -3,6 +3,7 @@ import express from 'express'
 import { cloudReady, env } from './env.js'
 import { localEntitlement } from './entitlements.js'
 import { issueSpeechToken, synthesize } from './azure.js'
+import { breakdown } from './breakdown.js'
 import { translate } from './translate.js'
 
 const app = express()
@@ -54,6 +55,14 @@ app.post('/api/translate', async (req, res) => {
     res.json(await translate(req.body))
   } catch (e) {
     res.status(400).json({ message: e instanceof Error ? e.message : 'Translate error' })
+  }
+})
+
+app.post('/api/breakdown', async (req, res) => {
+  try {
+    res.json(await breakdown(req.body))
+  } catch (e) {
+    res.status(400).json({ message: e instanceof Error ? e.message : 'Breakdown error' })
   }
 })
 

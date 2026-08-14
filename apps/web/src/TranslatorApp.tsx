@@ -7,6 +7,7 @@ import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
 import { ThemeToggle } from './components/ThemeToggle'
+import { CharacterBreakdownHost } from './components/CharacterBreakdownHost'
 import { useYueStore } from './lib/store'
 import { isEmbeddedAppView } from './lib/useHashRoute'
 import { openHome } from './lib/siteLinks'
@@ -81,6 +82,7 @@ export function TranslatorApp() {
       ) : null}
 
       <Controls />
+      <CharacterBreakdownHost />
     </div>
   )
 }

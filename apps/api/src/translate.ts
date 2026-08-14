@@ -19,14 +19,31 @@ const DEMO: Record<string, DemoEntry> = {
   thanks: { text: '多謝', alternatives: ['唔該'] },
   'good morning': { text: '早晨', alternatives: ['早安'] },
   'how are you': { text: '你好嗎', alternatives: ['最近點呀', '你幾好嗎'] },
+  'what are you doing': {
+    text: '你做緊咩呀？',
+    alternatives: ['你而家做緊咩？', '做緊咩呀你？', '你喺度做緊乜嘢？'],
+  },
+  "what's up": { text: '點呀？', alternatives: ['最近點？', '有咩事？'] },
   'where is the mtr': { text: '地鐵喺邊度', alternatives: ['港鐵喺邊呀', '地鐵站喺邊'] },
   'how much is this': { text: '呢個幾錢', alternatives: ['呢樣幾多錢', '請問賣幾錢'] },
   你好: { text: 'Hello' },
   唔該: { text: 'Thank you' },
   多謝: { text: 'Thanks' },
   早晨: { text: 'Good morning' },
+  你做緊咩呀: { text: 'What are you doing?' },
+  '你做緊咩呀？': { text: 'What are you doing?' },
   地鐵喺邊度: { text: 'Where is the MTR?' },
   呢個幾錢: { text: 'How much is this?' },
+}
+
+/** Normalize for demo lookup: lowercase, collapse space, strip trailing punctuation. */
+function demoLookupKey(text: string) {
+  return text
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[?!.,;:。？！，、…]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function uniqAlternatives(primary: string, alts: string[]): string[] {
@@ -76,8 +93,8 @@ export async function translate(input: unknown) {
   }
 
   if (!env.openaiApiKey) {
-    const key = text.toLowerCase()
-    const hit = DEMO[key] || DEMO[text]
+    const key = demoLookupKey(text)
+    const hit = DEMO[key] || DEMO[text] || DEMO[demoLookupKey(text)]
     const primary = hit?.text || (to === 'yue' ? `（示範）${text}` : `(demo) ${text}`)
     const alternatives =
       wantAlts && hit?.alternatives ? uniqAlternatives(primary, hit.alternatives) : []
@@ -101,9 +118,10 @@ export async function translate(input: unknown) {
       'Return ONLY valid JSON with this shape:',
       '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."]}',
       'Rules for alternatives:',
-      '- Include 0–3 alternatives that meaningfully differ (wording, particles, politeness).',
+      '- For everyday conversational questions (e.g. “what are you doing?”), prefer 2–3 natural spoken variants.',
+      '- Variants should meaningfully differ (word order, particles, politeness, 而家/而家 vs bare progressive).',
       '- Do not repeat the primary or near-duplicates.',
-      '- If there is no useful variation, return "alternatives": [].',
+      '- If there is truly no useful variation, return "alternatives": [].',
       '- No markdown, no explanation.',
     ].join('\n')
 

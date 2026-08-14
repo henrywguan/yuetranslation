@@ -9,6 +9,8 @@ export function ConversationView() {
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -30,8 +32,12 @@ export function ConversationView() {
             <CantoneseText
               text={yueTranslation}
               placeholder={<span className="placeholder">粵語 translation</span>}
+              onActivate={openBreakdown}
             />
-            <TranslationAlternatives alternatives={yueAlternatives} />
+            <TranslationAlternatives
+              alternatives={yueAlternatives}
+              onSelect={selectYueVariation}
+            />
           </div>
         </div>
       </motion.section>
@@ -48,7 +54,11 @@ export function ConversationView() {
       >
         <div className="pane-body flipped">
           <p className="heard">
-            <CantoneseText text={yueInterim} placeholder={<span className="placeholder">聽緊…</span>} />
+            <CantoneseText
+              text={yueInterim}
+              placeholder={<span className="placeholder">聽緊…</span>}
+              onActivate={openBreakdown}
+            />
           </p>
           <p className="said">{enTranslation || <span className="placeholder">English translation</span>}</p>
         </div>

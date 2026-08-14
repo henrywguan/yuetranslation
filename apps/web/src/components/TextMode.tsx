@@ -8,6 +8,8 @@ export function TextMode() {
   const [text, setText] = useState('')
   const [from, setFrom] = useState<Lang>('en')
   const translateTyped = useYueStore((s) => s.translateTyped)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
   const latest = history[0]
 
@@ -38,12 +40,20 @@ export function TextMode() {
         <div className="text-result">
           <p className="muted">Result</p>
           {latest.to === 'yue' ? (
-            <CantoneseText text={latest.translation} className="result-text" />
+            <CantoneseText
+              text={latest.translation}
+              className="result-text"
+              onActivate={openBreakdown}
+              activateLabel="Open character breakdown"
+            />
           ) : (
             <p className="result-text">{latest.translation}</p>
           )}
           {latest.to === 'yue' ? (
-            <TranslationAlternatives alternatives={latest.alternatives || []} />
+            <TranslationAlternatives
+              alternatives={latest.alternatives || []}
+              onSelect={selectYueVariation}
+            />
           ) : null}
         </div>
       ) : null}

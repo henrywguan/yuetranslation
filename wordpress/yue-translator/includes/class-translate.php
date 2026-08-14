@@ -8,7 +8,7 @@ final class Yue_Translate
 {
     private const SYSTEM = 'You are an expert Hong Kong Cantonese ↔ English translator for live conversation. When translating TO Cantonese use spoken Hong Kong 粵語 with Traditional Chinese characters (係、唔、喺、咗、緊、啲、嘅). When translating TO English use natural conversational English. Return ONLY the translation.';
 
-    private const SYSTEM_YUE_ALTS = 'You are a Hong Kong Cantonese interpreter. Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese. Prefer characters such as 係、唔、喺、咗、緊、㗎、喇、喎. Return ONLY valid JSON: {"primary":"<best translation>","alternatives":["<other natural variant>", "..."]}. Include 0–3 alternatives that meaningfully differ (wording, particles, politeness). Do not repeat the primary. If none, use "alternatives": []. No markdown.';
+    private const SYSTEM_YUE_ALTS = 'You are a Hong Kong Cantonese interpreter. Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese. Prefer characters such as 係、唔、喺、咗、緊、㗎、喇、喎. Return ONLY valid JSON: {"primary":"<best translation>","alternatives":["<other natural variant>", "..."]}. For everyday questions (e.g. what are you doing?), prefer 2–3 natural spoken variants that differ in wording or particles. Do not repeat the primary. If none, use "alternatives": []. No markdown.';
 
     public static function openai_configured(): bool
     {
@@ -145,16 +145,24 @@ final class Yue_Translate
             'thank you' => ['text' => '唔該', 'alternatives' => ['多謝']],
             'thanks' => ['text' => '多謝', 'alternatives' => ['唔該']],
             'how are you' => ['text' => '你好嗎？', 'alternatives' => ['最近點呀']],
+            'what are you doing' => [
+                'text' => '你做緊咩呀？',
+                'alternatives' => ['你而家做緊咩？', '做緊咩呀你？', '你喺度做緊乜嘢？'],
+            ],
+            "what's up" => ['text' => '點呀？', 'alternatives' => ['最近點？', '有咩事？']],
             'yes' => ['text' => '係', 'alternatives' => ['係呀']],
             'no' => ['text' => '唔係', 'alternatives' => ['唔係呀']],
             '你好' => ['text' => 'Hello', 'alternatives' => []],
             '多謝' => ['text' => 'Thank you', 'alternatives' => []],
             '唔該' => ['text' => 'Thanks', 'alternatives' => []],
             '你好嗎？' => ['text' => 'How are you?', 'alternatives' => []],
+            '你做緊咩呀？' => ['text' => 'What are you doing?', 'alternatives' => []],
             '係' => ['text' => 'Yes', 'alternatives' => []],
             '唔係' => ['text' => 'No', 'alternatives' => []],
         ];
         $key = strtolower(trim($text));
+        $key = preg_replace('/[?!.,;:。？！，、…]+$/u', '', $key) ?? $key;
+        $key = preg_replace('/\s+/u', ' ', trim($key)) ?? $key;
         $hit = $map[$key] ?? $map[trim($text)] ?? null;
         if ($hit) {
             return [

@@ -6,11 +6,16 @@ export function CantoneseText({
   className,
   jyutpingClassName = 'jyutping',
   placeholder,
+  onActivate,
+  activateLabel,
 }: {
   text: string
   className?: string
   jyutpingClassName?: string
   placeholder?: ReactNode
+  /** When set, the phrase is clickable (opens breakdown / selects variation). */
+  onActivate?: (text: string) => void
+  activateLabel?: string
 }) {
   const trimmed = text.trim()
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
@@ -32,11 +37,26 @@ export function CantoneseText({
       cancelled = true
     }
   }, [trimmed])
+
   if (!trimmed) return placeholder ? <>{placeholder}</> : null
-  return (
+
+  const body = (
     <span className="cantonese-block">
       <span className={className}>{trimmed}</span>
       {jp ? <span className={jyutpingClassName}>{jp}</span> : null}
     </span>
+  )
+
+  if (!onActivate) return body
+
+  return (
+    <button
+      type="button"
+      className="cantonese-activate"
+      onClick={() => onActivate(trimmed)}
+      aria-label={activateLabel || `Open character breakdown for ${trimmed}`}
+    >
+      {body}
+    </button>
   )
 }

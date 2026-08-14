@@ -26,6 +26,8 @@ type State = {
   yueTranslation: string
   /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
   yueAlternatives: string[]
+  /** Active Cantonese phrase shown in the character-breakdown frame (null = closed). */
+  breakdownPhrase: string | null
   history: ConversationTurn[]
   session: LiveSession | null
   setMode: (mode: Mode) => void
@@ -34,6 +36,10 @@ type State = {
   loadBootstrap: () => Promise<void>
   toggleLive: () => Promise<void>
   translateTyped: (text: string, from: Lang) => Promise<void>
+  openBreakdown: (phrase: string) => void
+  closeBreakdown: () => void
+  /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
+  selectYueVariation: (phrase: string) => void
   clearHistory: () => void
 }
 
@@ -162,6 +168,7 @@ export const useYueStore = create<State>((set, get) => ({
   enTranslation: '',
   yueTranslation: '',
   yueAlternatives: [],
+  breakdownPhrase: null,
   history: [],
   session: null,
 
@@ -341,6 +348,47 @@ export const useYueStore = create<State>((set, get) => ({
     }
   },
 
+  openBreakdown: (phrase) => {
+    const trimmed = phrase.trim()
+    if (!trimmed) return
+    set({ breakdownPhrase: trimmed })
+  },
+
+  closeBreakdown: () => set({ breakdownPhrase: null }),
+
+  selectYueVariation: (phrase) => {
+    const chosen = phrase.trim()
+    if (!chosen) return
+    const current = get().yueTranslation.trim()
+    const prevAlts = get().yueAlternatives
+    const nextAlts = [current, ...prevAlts]
+      .map((s) => s.trim())
+      .filter((s) => s && s !== chosen)
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .slice(0, 3)
+
+    const history = get().history
+    const latest = history[0]
+    const nextHistory =
+      latest && latest.to === 'yue'
+        ? [
+            {
+              ...latest,
+              translation: chosen,
+              alternatives: nextAlts,
+            },
+            ...history.slice(1),
+          ]
+        : history
+
+    set({
+      yueTranslation: chosen,
+      yueAlternatives: nextAlts,
+      history: nextHistory,
+      breakdownPhrase: chosen,
+    })
+  },
+
   clearHistory: () => {
     speakToken += 1
     stopSpeaking()
@@ -351,6 +399,7 @@ export const useYueStore = create<State>((set, get) => ({
       enTranslation: '',
       yueTranslation: '',
       yueAlternatives: [],
+      breakdownPhrase: null,
     })
   },
 }))

@@ -9,6 +9,8 @@ export function SoloView() {
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
@@ -22,6 +24,7 @@ export function SoloView() {
     : yueAlternatives.length
       ? yueAlternatives
       : latest?.alternatives || []
+  const yuePhrase = translation || latest?.translation || ''
 
   return (
     <div className="solo">
@@ -53,6 +56,7 @@ export function SoloView() {
               <CantoneseText
                 text={source}
                 placeholder={<span className="placeholder">Speak to translate</span>}
+                onActivate={openBreakdown}
               />
             ) : (
               source || <span className="placeholder">Speak to translate</span>
@@ -76,11 +80,12 @@ export function SoloView() {
               latest?.translation || <span className="placeholder">Translation appears here</span>
             ) : (
               <CantoneseText
-                text={translation || latest?.translation || ''}
+                text={yuePhrase}
                 placeholder={<span className="placeholder">Translation appears here</span>}
+                onActivate={openBreakdown}
               />
             )}
-            <TranslationAlternatives alternatives={alts} />
+            <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
@@ -94,7 +99,11 @@ export function SoloView() {
               </span>
               <span className="h-arrow">→</span>
               <span className="h-tr">
-                {t.to === 'yue' ? <CantoneseText text={t.translation} /> : t.translation}
+                {t.to === 'yue' ? (
+                  <CantoneseText text={t.translation} onActivate={openBreakdown} />
+                ) : (
+                  t.translation
+                )}
               </span>
             </li>
           ))}
