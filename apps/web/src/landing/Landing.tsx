@@ -199,7 +199,7 @@ export function Landing() {
       <section className="ln-cta-band">
         <Reveal>
           <h2 className="ln-h2">Ready to be understood?</h2>
-          <p className="ln-p">Open Yue and have your first bilingual conversation in seconds.</p>
+          <p className="ln-p">Open Jyut and have your first bilingual conversation in seconds.</p>
           <MagneticButton className="btn-primary" onClick={() => openApp()}>
             Launch translator
           </MagneticButton>
@@ -211,7 +211,7 @@ export function Landing() {
           <span className="ln-brand-mark" aria-hidden="true">
             粵
           </span>
-          <span className="ln-brand-name">Yue</span>
+          <span className="ln-brand-name">Jyut</span>
         </div>
         <p>English ↔ Cantonese, done beautifully.</p>
       </footer>

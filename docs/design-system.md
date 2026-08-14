@@ -1,6 +1,6 @@
-# Yue design system
+# Jyut design system
 
-Brand tokens for matching the Yue marketing site and translator when building **Bricks** (or any WordPress) pages.
+Brand tokens for matching the Jyut marketing site and translator when building **Bricks** (or any WordPress) pages.
 
 **Visual swatches:** open [`brand/index.html`](./brand/index.html) locally, or enable GitHub Pages:
 

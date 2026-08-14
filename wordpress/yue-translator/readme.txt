@@ -1,4 +1,4 @@
-=== Yue Translator ===
+=== Jyut Translator ===
 Contributors: yue
 Requires at least: 6.0
 Tested up to: 6.7
@@ -16,12 +16,12 @@ Shortcodes:
 
 Hybrid static marketing + Bricks: see repo docs/hybrid-bluehost.md (`site-config.json` links CTAs to your translator page).
 
-Settings → Yue Translator for Azure/OpenAI keys and plan limits.
+Settings → Jyut Translator for Azure/OpenAI keys and plan limits.
 Build the app with `npm run build:web:wp` before uploading.
 
 == Installation ==
 
-1. Run `npm run build:web:wp` from the Yue monorepo.
+1. Run `npm run build:web:wp` from the Jyut monorepo.
 2. Upload the `yue-translator` folder to `/wp-content/plugins/`.
 3. Activate and configure API keys (set Upgrade URL to your checkout page).
 4. Place `[yue_translator]` on a Bricks/WP translator page.

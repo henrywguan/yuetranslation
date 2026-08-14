@@ -1,4 +1,4 @@
-# Yue UI demos (current stage)
+# Jyut UI demos (current stage)
 
 Captured from the local Vite build on branch `cursor/iridescent-theme-5ab9` (refractive jade glass + dark/light themes).
 

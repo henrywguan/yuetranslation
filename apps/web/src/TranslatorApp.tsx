@@ -42,13 +42,13 @@ export function TranslatorApp() {
               type="button"
               className="brand-mark brand-mark-link"
               onClick={() => openHome()}
-              aria-label="Back to Yue home"
+              aria-label="Back to Jyut home"
             >
               粵
             </button>
           )}
           <div>
-            <h1 className="brand-name">Yue</h1>
+            <h1 className="brand-name">Jyut</h1>
             <p className="brand-tag">English ↔ Cantonese</p>
           </div>
         </motion.div>
