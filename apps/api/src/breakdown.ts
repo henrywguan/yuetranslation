@@ -74,12 +74,12 @@ const GLOSS: Record<string, string> = {
   得: 'get / can (result)',
   唔該: 'thanks / excuse me',
   多謝: 'thank you (grateful)',
-  ？: 'question mark',
-  ！: 'exclamation mark',
-  。: 'full stop',
-  ，: 'comma',
-  、: 'enumeration comma',
-  …: 'ellipsis',
+  '？': 'question mark',
+  '！': 'exclamation mark',
+  '。': 'full stop',
+  '，': 'comma',
+  '、': 'enumeration comma',
+  '…': 'ellipsis',
 }
 
 export type BreakdownChar = {
