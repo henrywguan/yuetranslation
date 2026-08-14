@@ -12,6 +12,7 @@ export function ConversationView() {
   const yueInterim = useYueStore((s) => s.yueInterim)
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
+  const yueDefinition = useYueStore((s) => s.yueDefinition)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -32,6 +33,7 @@ export function ConversationView() {
           <div className="said">
             <CantoneseText
               text={yueTranslation}
+              definition={yueDefinition}
               placeholder={<span className="placeholder">{ui.yueTranslation.en}</span>}
             />
           </div>

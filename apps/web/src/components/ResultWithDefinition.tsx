@@ -23,7 +23,11 @@ export function ResultWithDefinition({
     <div className={`result-with-def ${className}`.trim()}>
       <div className="result-with-def-main">
         {cantonese ? (
-          <CantoneseText text={trimmed} className={textClassName || 'result-text'} />
+          <CantoneseText
+            text={trimmed}
+            definition={def}
+            className={textClassName || 'result-text'}
+          />
         ) : (
           <p className={textClassName || 'result-text'}>{trimmed}</p>
         )}

@@ -29,6 +29,7 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 ## Compact vs detailed
 
 - **Compact** (always-visible translation line): `zou2 san4`
-- **Detailed expansion** (hover / tap): `zou2 ˧˥  san4 ˨˩`
+- **Detailed expansion** (hover / tap Jyutping): `zou2 ˧˥  san4 ˨˩`
+- **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao letters, character sense, and the phrase gloss
 
 Implemented in `apps/web/src/lib/jyutping.ts` as `expandJyutping()`.

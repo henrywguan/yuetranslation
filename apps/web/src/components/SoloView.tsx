@@ -53,6 +53,7 @@ export function SoloView() {
             {sourceIsYue ? (
               <CantoneseText
                 text={source}
+                definition={latest?.from === 'yue' ? latest.definition : ''}
                 placeholder={<BiText className="placeholder" copy={ui.speakToTranslate} size="sm" />}
               />
             ) : (
@@ -90,10 +91,16 @@ export function SoloView() {
         <ul className="history">
           {history.slice(1, 6).map((t) => (
             <li key={t.id}>
-              <span className="h-src">{t.from === 'yue' ? <CantoneseText text={t.source} /> : t.source}</span>
+              <span className="h-src">
+                {t.from === 'yue' ? <CantoneseText text={t.source} definition={t.definition} /> : t.source}
+              </span>
               <span className="h-arrow">→</span>
               <span className="h-tr">
-                {t.to === 'yue' ? <CantoneseText text={t.translation} /> : t.translation}
+                {t.to === 'yue' ? (
+                  <CantoneseText text={t.translation} definition={t.definition} />
+                ) : (
+                  t.translation
+                )}
                 {t.to === 'yue' && t.definition ? (
                   <span className="h-def" title={t.definition}>
                     {t.definition}
