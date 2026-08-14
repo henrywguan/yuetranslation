@@ -53,7 +53,7 @@ export function TranslatorApp() {
             <div>
               <h1 className="brand-name">Jyut</h1>
               <p className="brand-tag">
-                <BiText copy={ui.brandTag} size="sm" />
+                <BiText copy={ui.brandTag} size="sm" layout="stack" />
               </p>
             </div>
           </motion.div>

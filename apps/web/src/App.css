@@ -797,6 +797,11 @@
   justify-content: center;
 }
 
+.text-mode .primary .bi-jp {
+  color: color-mix(in srgb, var(--on-jade) 82%, transparent);
+  opacity: 1;
+}
+
 .placeholder.bi,
 .placeholder .bi {
   color: var(--muted);

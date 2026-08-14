@@ -165,7 +165,7 @@ export function Landing() {
             <p className="ln-price">
               $0
               <span>
-                <BiText copy={ui.perMonth} size="sm" />
+                <BiText copy={ui.perMonth} size="sm" hideJp />
               </span>
             </p>
             <ul>
@@ -197,7 +197,7 @@ export function Landing() {
             <p className="ln-price">
               $9
               <span>
-                <BiText copy={ui.perMonth} size="sm" />
+                <BiText copy={ui.perMonth} size="sm" hideJp />
               </span>
             </p>
             <ul>
