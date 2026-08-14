@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { useYueStore } from '../lib/store'
 import type { Lang } from '../lib/types'
+
+const ease = [0.22, 1, 0.36, 1] as const
 
 export function TextMode() {
   const [text, setText] = useState('')
@@ -9,6 +12,7 @@ export function TextMode() {
   const translateTyped = useYueStore((s) => s.translateTyped)
   const history = useYueStore((s) => s.history)
   const latest = history[0]
+  const reduce = useReducedMotion()
 
   return (
     <div className="text-mode">
@@ -33,16 +37,25 @@ export function TextMode() {
       >
         Translate
       </button>
-      {latest ? (
-        <div className="text-result">
-          <p className="muted">Result</p>
-          {latest.to === 'yue' ? (
-            <CantoneseText text={latest.translation} className="result-text" />
-          ) : (
-            <p className="result-text">{latest.translation}</p>
-          )}
-        </div>
-      ) : null}
+      <AnimatePresence mode="wait">
+        {latest ? (
+          <motion.div
+            key={latest.id}
+            className="text-result reading-plane"
+            initial={reduce ? false : { opacity: 0, y: 12, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={reduce ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.45, ease }}
+          >
+            <p className="muted">Result</p>
+            {latest.to === 'yue' ? (
+              <CantoneseText text={latest.translation} className="result-text" />
+            ) : (
+              <p className="result-text">{latest.translation}</p>
+            )}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

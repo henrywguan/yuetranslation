@@ -20,6 +20,19 @@
   --muted: rgba(232, 244, 255, 0.58);
   --mint: #9af0de;
 
+  /* Reading / translation hierarchy */
+  --placeholder: rgba(232, 244, 255, 0.38);
+  --jyutping: rgba(154, 240, 222, 0.88);
+  --heard: rgba(232, 244, 255, 0.72);
+  --reading-frost: color-mix(in srgb, var(--harbor) 58%, transparent);
+  --reading-frost-edge: color-mix(in srgb, var(--jade) 22%, transparent);
+  --hero-scrim: radial-gradient(
+    70% 65% at 38% 42%,
+    color-mix(in srgb, var(--harbor) 72%, transparent) 0%,
+    color-mix(in srgb, var(--harbor) 28%, transparent) 55%,
+    transparent 78%
+  );
+
   /* Surfaces / glass */
   --surface: rgba(232, 244, 255, 0.05);
   --surface-strong: rgba(232, 244, 255, 0.09);
@@ -56,8 +69,20 @@
 
   --ink: #07131f;
   --ink-bright: #0a1c2c;
-  --muted: rgba(7, 19, 31, 0.58);
+  --muted: rgba(7, 19, 31, 0.62);
   --mint: #178574;
+
+  --placeholder: rgba(7, 19, 31, 0.4);
+  --jyutping: color-mix(in srgb, var(--jade-deep) 82%, #041018);
+  --heard: rgba(7, 19, 31, 0.68);
+  --reading-frost: color-mix(in srgb, #ffffff 62%, transparent);
+  --reading-frost-edge: color-mix(in srgb, var(--jade) 18%, transparent);
+  --hero-scrim: radial-gradient(
+    70% 65% at 38% 42%,
+    color-mix(in srgb, var(--harbor) 78%, transparent) 0%,
+    color-mix(in srgb, var(--harbor) 35%, transparent) 55%,
+    transparent 78%
+  );
 
   --surface: rgba(255, 255, 255, 0.55);
   --surface-strong: rgba(255, 255, 255, 0.72);
@@ -173,4 +198,11 @@ html[data-theme='light'] {
 }
 html[data-theme='dark'] {
   color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solo-stage.live::after,
+  .pane.live-breath::after {
+    animation: none !important;
+  }
 }

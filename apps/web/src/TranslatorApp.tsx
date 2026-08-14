@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { MotionConfig, motion } from 'framer-motion'
 import { Controls } from './components/Controls'
 import { ConversationView } from './components/ConversationView'
 import { FluidBackground } from './components/FluidBackground'
@@ -24,7 +24,8 @@ export function TranslatorApp() {
   }, [loadBootstrap])
 
   return (
-    <div className="app-shell">
+    <MotionConfig reducedMotion="user">
+      <div className="app-shell">
       <FluidBackground />
       <header className="brand-bar">
         <motion.div
@@ -81,6 +82,7 @@ export function TranslatorApp() {
       ) : null}
 
       <Controls />
-    </div>
+      </div>
+    </MotionConfig>
   )
 }

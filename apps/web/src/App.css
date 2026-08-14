@@ -318,8 +318,35 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 4px 16px;
+  gap: 10px;
+  padding: 18px 16px 20px;
+  border-radius: 22px;
+  position: relative;
+}
+
+.reading-plane {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--reading-frost) 92%, var(--jade) 8%),
+      var(--reading-frost)
+    );
+  border: 1px solid color-mix(in srgb, var(--glass-border) 85%, var(--reading-frost-edge));
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine),
+    0 18px 40px color-mix(in srgb, #000 18%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.solo-stage.live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--jade) 28%, transparent);
+  opacity: 0.85;
 }
 
 .solo-label {
@@ -336,52 +363,86 @@
   line-height: 1.35;
   font-weight: 500;
   min-height: 2.4em;
+  color: var(--ink);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--harbor) 25%, transparent);
 }
 
 .solo-translation {
   font-family: var(--font-body);
   font-size: clamp(1.55rem, 6.5vw, 2.15rem);
   line-height: 1.35;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink-bright);
   min-height: 2.6em;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 12px color-mix(in srgb, var(--harbor) 35%, transparent);
 }
 
 .solo-divider {
   height: 1px;
-  margin: 10px 0;
-  background: linear-gradient(90deg, transparent, rgba(61, 207, 182, 0.45), transparent);
+  margin: 12px 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--jade) 55%, transparent),
+    transparent
+  );
+  transform-origin: center;
+  animation: solo-divider-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes solo-divider-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solo-divider {
+    animation: none;
+  }
 }
 
 .placeholder {
-  color: rgba(232, 244, 255, 0.28);
+  color: var(--placeholder);
   font-weight: 400;
 }
 
 .cantonese-block {
   display: inline-flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  align-items: flex-start;
 }
 
 .jyutping {
   font-family: var(--font-display);
   font-size: 0.55em;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  color: rgba(154, 240, 222, 0.75);
+  letter-spacing: 0.03em;
+  color: var(--jyutping);
 }
 
 .history {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   max-height: 22vh;
   overflow: auto;
-  opacity: 0.75;
+  opacity: 0.92;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--reading-frost) 70%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
 }
 
 .history li {
@@ -400,7 +461,7 @@
   flex: 1;
   display: grid;
   grid-template-rows: 1fr auto 1fr;
-  gap: 0;
+  gap: 8px;
   min-height: 0;
 }
 
@@ -408,7 +469,14 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 8px 4px;
+  padding: 14px 14px 16px;
+  border-radius: 20px;
+}
+
+.pane.live-breath {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--jade) 20%, transparent),
+    0 16px 36px color-mix(in srgb, #000 14%, transparent);
 }
 
 .pane header h2 {
@@ -428,7 +496,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
 }
 
@@ -439,14 +507,19 @@
 .pane .heard {
   margin: 0;
   font-size: 1.05rem;
-  color: rgba(232, 244, 255, 0.7);
+  color: var(--heard);
+  font-style: italic;
+  font-weight: 450;
 }
 
 .pane .said {
   margin: 0;
   font-family: var(--font-body);
   font-size: clamp(1.25rem, 5vw, 1.7rem);
-  font-weight: 600;
+  font-weight: 650;
+  color: var(--ink-bright);
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
 }
 
 .conversation-gutter {
@@ -457,7 +530,7 @@
   font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: 0.2em;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .controls {
@@ -656,7 +729,13 @@
 .text-result .result-text {
   margin: 4px 0 0;
   font-size: 1.35rem;
-  font-weight: 600;
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.text-mode .text-result.reading-plane {
+  margin-top: 8px;
+  padding: 14px 14px 16px;
 }
 
 .muted {
