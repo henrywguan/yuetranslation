@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { attestAgainstLexicon, ATTESTATION_REWRITE_THRESHOLD } from './attest.js'
 import { colloquialScore, COLLOQUIAL_REWRITE_THRESHOLD } from './colloquialScore.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { uniqStrings } from './normalize.js'
@@ -14,7 +15,7 @@ export type HardenResult = {
 /**
  * Harden a model (or demo) Cantonese string for live use.
  * - interim: light Mandarin scrub only
- * - final: scrub → 口語 score → optional one-shot rewrite if still Mandarin-leaning
+ * - final: scrub → 口語 score → CC-Canto attestation → optional rewrite
  */
 export async function hardenYueOutput(opts: {
   text: string
@@ -37,12 +38,15 @@ export async function hardenYueOutput(opts: {
   }
 
   let score = colloquialScore(text)
+  let attestation = attestAgainstLexicon(text)
   let rewritten = false
 
+  const looksMandarinish =
+    score < COLLOQUIAL_REWRITE_THRESHOLD || /[们們什么什麼怎么怎麼吗嗎正在]/.test(text)
+  const weaklyAttested = attestation.coverage < ATTESTATION_REWRITE_THRESHOLD
+
   const shouldRewrite =
-    opts.stage === 'final' &&
-    Boolean(opts.client) &&
-    (score < COLLOQUIAL_REWRITE_THRESHOLD || /[们們什么什麼怎么怎麼吗嗎正在]/.test(text))
+    opts.stage === 'final' && Boolean(opts.client) && (looksMandarinish || weaklyAttested)
 
   if (shouldRewrite && opts.client) {
     try {
@@ -50,13 +54,14 @@ export async function hardenYueOutput(opts: {
       if (rewrittenText && rewrittenText !== text) {
         text = rewrittenText
         rewritten = true
-        notes.push('rewrite')
+        notes.push(weaklyAttested && !looksMandarinish ? 'rewrite-attest' : 'rewrite')
         const scrub2 = scrubMandarinToYue(text)
         if (scrub2.changed) {
           text = scrub2.text
           notes.push('scrub-after-rewrite')
         }
         score = colloquialScore(text)
+        attestation = attestAgainstLexicon(text)
         alternatives = uniqStrings(text, alternatives)
       }
     } catch {
@@ -64,12 +69,12 @@ export async function hardenYueOutput(opts: {
     }
   }
 
-  // Scrub alternatives on finals too.
   if (opts.stage === 'final') {
     alternatives = uniqStrings(
       text,
       alternatives.map((a) => scrubMandarinToYue(a).text),
     )
+    notes.push(`attest:${attestation.coverage.toFixed(2)}`)
   }
 
   return {
@@ -77,8 +82,9 @@ export async function hardenYueOutput(opts: {
     alternatives: opts.stage === 'final' ? alternatives : [],
     meta: {
       dictionaryHit: false,
-      scrubbed: notes.includes('scrub') || notes.includes('scrub-after-rewrite'),
+      scrubbed: notes.some((n) => n.startsWith('scrub')),
       colloquialScore: score,
+      attestationCoverage: attestation.coverage,
       rewritten,
       notes,
     },
