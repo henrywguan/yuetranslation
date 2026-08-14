@@ -5,17 +5,27 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 4px;
   max-width: 100%;
 }
 
-.cantonese-block--hint {
-  cursor: help;
+.jyutping {
+  font-family: var(--font-body);
+  font-size: 0.58em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  color: var(--mint);
+  opacity: 0.92;
 }
 
-.cantonese-block--hint:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
-  outline-offset: 3px;
-  border-radius: 6px;
+[data-theme='light'] .jyutping {
+  color: var(--jade-deep);
+  opacity: 1;
+}
+
+.result-with-def .jyutping {
+  font-size: 0.72em;
 }
 
 .jp-pop {
