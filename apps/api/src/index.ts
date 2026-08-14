@@ -2,6 +2,8 @@ import cors from 'cors'
 import express from 'express'
 import { cloudReady, env } from './env.js'
 import { dictionaryStats } from './canto/index.js'
+import { glossStats } from './canto/gloss.js'
+import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { localEntitlement } from './entitlements.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
@@ -25,6 +27,12 @@ app.get('/api/health', (_req, res) => {
       dictionary: true,
     },
     dictionary: dictionaryStats(),
+    gloss: glossStats(),
+    licenseGate: {
+      allowNoncommercialDicts: env.allowNoncommercialDicts,
+      wordshkEnabled: wordshkEnabled(),
+      activeSources: activeGlossSources(),
+    },
     openaiBaseUrl: Boolean(env.openaiBaseUrl),
     entitlement: localEntitlement(),
   })

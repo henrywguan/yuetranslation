@@ -1,7 +1,9 @@
 import { colloquialScore } from './colloquialScore.js'
 import { dictionaryTranslate } from './dictionary.js'
+import { glossStats, lookupGloss } from './gloss.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { hardenYueOutput } from './postProcess.js'
+import { wordshkEnabled } from './licenseGate.js'
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg)
@@ -32,6 +34,17 @@ const interim = await hardenYueOutput({
 assert(interim.alternatives.length === 0, 'interim should drop alts')
 assert(interim.meta.rewritten === false, 'interim must not rewrite')
 
+const gloss你好 = lookupGloss('你好')
+assert(gloss你好?.gloss, 'seed gloss for 你好 missing')
+const gloss地鐵 = lookupGloss('地鐵')
+assert(gloss地鐵?.source === 'cc-canto', `expected cc-canto for 地鐵, got ${gloss地鐵?.source}`)
+const gloss你 = lookupGloss('你')
+assert(gloss你?.gloss === 'you' || Boolean(gloss你?.gloss), 'char gloss missing')
+
+const stats = glossStats()
+assert(stats.ccCanto > 1000, `expected CC-Canto pack loaded, got ${stats.ccCanto}`)
+assert(wordshkEnabled() === false, 'wordshk should be gated off by default')
+
 console.log(
   JSON.stringify(
     {
@@ -40,6 +53,9 @@ console.log(
       scrubbed: scrubbed.text,
       scores: { good, bad },
       interim: interim.text,
+      gloss: { 你好: gloss你好, 地鐵: gloss地鐵, 你: gloss你 },
+      glossStats: stats,
+      wordshkEnabled: wordshkEnabled(),
     },
     null,
     2,
