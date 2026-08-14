@@ -4,8 +4,9 @@ import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
 /**
- * Face-to-face: each pane speaks one language in its chrome.
- * English side → English labels only. Cantonese side → Chinese labels only.
+ * Face-to-face: two language-pure cards on a shared phone.
+ * English card stays upright for you. Cantonese card is rotated 180°
+ * so the person across the table reads it the right way up.
  */
 export function ConversationView() {
   const enInterim = useYueStore((s) => s.enInterim)
@@ -30,18 +31,16 @@ export function ConversationView() {
         </header>
         <div className="pane-body">
           <p className="heard">{enInterim || <span className="placeholder">{ui.listening.en}</span>}</p>
-          <div className="said">
-            <CantoneseText
-              text={yueTranslation}
-              definition={yueDefinition}
-              placeholder={<span className="placeholder">{ui.yueTranslation.en}</span>}
-            />
-          </div>
+          <p className="said">
+            {enTranslation || <span className="placeholder">{ui.enTranslation.en}</span>}
+          </p>
         </div>
       </motion.section>
 
       <div className="conversation-gutter" aria-hidden="true">
-        <span>粵</span>
+        <span className="conversation-gutter-line" />
+        <span className="conversation-gutter-mark">粵</span>
+        <span className="conversation-gutter-line" />
       </div>
 
       <motion.section
@@ -50,21 +49,27 @@ export function ConversationView() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.05 }}
       >
-        <div className="pane-body flipped">
-          <p className="heard">
-            <CantoneseText
-              text={yueInterim}
-              placeholder={<span className="placeholder">{ui.listening.zh}</span>}
-            />
-          </p>
-          <p className="said">
-            {enTranslation || <span className="placeholder">{ui.enTranslation.zh}</span>}
-          </p>
+        <div className="pane-face">
+          <header>
+            <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
+            <p lang="zh-HK">{ui.holdFacingYou.zh}</p>
+          </header>
+          <div className="pane-body">
+            <p className="heard">
+              <CantoneseText
+                text={yueInterim}
+                placeholder={<span className="placeholder">{ui.listening.zh}</span>}
+              />
+            </p>
+            <div className="said">
+              <CantoneseText
+                text={yueTranslation}
+                definition={yueDefinition}
+                placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
+              />
+            </div>
+          </div>
         </div>
-        <header>
-          <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
-          <p lang="zh-HK">{ui.friendLooksHere.zh}</p>
-        </header>
       </motion.section>
     </div>
   )

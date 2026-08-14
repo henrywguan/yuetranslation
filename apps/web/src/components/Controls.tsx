@@ -31,6 +31,7 @@ export function Controls() {
 
   const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
+  const speakOn = autoSpeak && canAutoSpeak
 
   const liveCopy = live
     ? status === 'speaking'
@@ -71,10 +72,12 @@ export function Controls() {
         </div>
       ) : null}
 
-      <div className="opt-row">
+      <div className={`opt-row${mode === 'text' ? ' opt-row--compact' : ''}`}>
         {mode !== 'text' ? (
-          <label className="opt">
-            <BiText copy={ui.direction} size="sm" />
+          <label className="opt-cell opt-dir">
+            <span className="opt-kicker">
+              <BiText copy={ui.direction} size="sm" />
+            </span>
             <select
               value={speakDirection}
               onChange={(e) => setSpeakDirection(e.target.value as SpeakDirection)}
@@ -88,17 +91,29 @@ export function Controls() {
             </select>
           </label>
         ) : null}
-        <label className={`opt toggle ${!canAutoSpeak ? 'disabled' : ''}`}>
-          <input
-            type="checkbox"
-            checked={autoSpeak && canAutoSpeak}
-            disabled={!canAutoSpeak}
-            onChange={(e) => setAutoSpeak(e.target.checked)}
-          />
-          <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
+
+        <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
+          <span className="opt-kicker">
+            <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
+          </span>
+          <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
+            <input
+              type="checkbox"
+              checked={speakOn}
+              disabled={!canAutoSpeak}
+              onChange={(e) => setAutoSpeak(e.target.checked)}
+            />
+            <span className="speak-switch-ui" aria-hidden="true">
+              <span className="speak-switch-thumb" />
+            </span>
+          </span>
         </label>
-        <button type="button" className="text-btn" onClick={clearHistory}>
-          <BiText copy={ui.clear} size="sm" />
+
+        <button type="button" className="opt-cell opt-clear" onClick={clearHistory}>
+          <span className="opt-kicker">
+            <BiText copy={ui.clear} size="sm" />
+          </span>
+          <span className="opt-clear-chip">{ui.clear.zh}</span>
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { MotionConfig, motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { BiText } from './components/BiText'
+import { BrandTag } from './components/BrandTag'
 import { Controls } from './components/Controls'
 import { ConversationView } from './components/ConversationView'
 import { JadeGlassField } from './components/JadeGlassField'
@@ -52,9 +53,7 @@ export function TranslatorApp() {
             )}
             <div>
               <h1 className="brand-name">Jyut</h1>
-              <p className="brand-tag">
-                <BiText copy={ui.brandTag} size="sm" />
-              </p>
+              <BrandTag />
             </div>
           </motion.div>
           <div className="brand-bar-actions">

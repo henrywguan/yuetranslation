@@ -46,7 +46,7 @@ HTTP **401** = login required; **402** = quota / plan block. Error payload inclu
 - Bootstrap from `/health`.
 - Disable Start when `!allowed.live`; show Log in / Upgrade.
 - Heartbeat every 15s while live; stop session when exhausted.
-- Auto-speak checkbox disabled when `!allowed.autoSpeak`.
+- Auto-speak toggle disabled when `!allowed.autoSpeak`.
 
 ## Storage
 
