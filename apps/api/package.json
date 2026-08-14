@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "smoke:canto": "tsx src/canto/smoke.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
