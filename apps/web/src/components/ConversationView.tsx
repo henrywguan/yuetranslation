@@ -1,16 +1,17 @@
 import { motion } from 'framer-motion'
-import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
-import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
+/**
+ * Face-to-face: each pane speaks one language in its chrome.
+ * English side → English labels only. Cantonese side → Chinese labels only.
+ */
 export function ConversationView() {
   const enInterim = useYueStore((s) => s.enInterim)
   const yueInterim = useYueStore((s) => s.yueInterim)
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
-  const yueDefinition = useYueStore((s) => s.yueDefinition)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -23,30 +24,16 @@ export function ConversationView() {
         transition={{ duration: 0.45 }}
       >
         <header>
-          <h2>
-            <BiText copy={ui.english} size="md" />
-          </h2>
-          <p>
-            <BiText copy={ui.holdFacingYou} size="sm" layout="stack" />
-          </p>
+          <h2>{ui.english.en}</h2>
+          <p>{ui.holdFacingYou.en}</p>
         </header>
         <div className="pane-body">
-          <p className="heard">
-            {enInterim || <BiText className="placeholder" copy={ui.listening} size="sm" />}
-          </p>
+          <p className="heard">{enInterim || <span className="placeholder">{ui.listening.en}</span>}</p>
           <div className="said">
-            {yueTranslation ? (
-              <ResultWithDefinition
-                text={yueTranslation}
-                definition={yueDefinition || enInterim}
-                className="result-with-def--compact"
-              />
-            ) : (
-              <CantoneseText
-                text=""
-                placeholder={<BiText className="placeholder" copy={ui.yueTranslation} size="sm" />}
-              />
-            )}
+            <CantoneseText
+              text={yueTranslation}
+              placeholder={<span className="placeholder">{ui.yueTranslation.en}</span>}
+            />
           </div>
         </div>
       </motion.section>
@@ -65,20 +52,16 @@ export function ConversationView() {
           <p className="heard">
             <CantoneseText
               text={yueInterim}
-              placeholder={<BiText className="placeholder" copy={ui.listening} size="sm" />}
+              placeholder={<span className="placeholder">{ui.listening.zh}</span>}
             />
           </p>
           <p className="said">
-            {enTranslation || <BiText className="placeholder" copy={ui.enTranslation} size="sm" />}
+            {enTranslation || <span className="placeholder">{ui.enTranslation.zh}</span>}
           </p>
         </div>
         <header>
-          <h2>
-            <BiText copy={ui.cantonese} size="md" />
-          </h2>
-          <p>
-            <BiText copy={ui.friendLooksHere} size="sm" layout="stack" />
-          </p>
+          <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
+          <p lang="zh-HK">{ui.friendLooksHere.zh}</p>
         </header>
       </motion.section>
     </div>

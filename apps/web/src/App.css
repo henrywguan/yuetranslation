@@ -458,6 +458,16 @@
   font-size: 1.1rem;
 }
 
+.pane-en header h2 {
+  letter-spacing: -0.02em;
+}
+
+.pane-yue header h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .pane header p {
   margin: 2px 0 0;
   font-size: 0.78rem;
