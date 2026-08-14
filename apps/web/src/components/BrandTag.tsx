@@ -15,20 +15,20 @@ export function BrandTag() {
 
   return (
     <p className="brand-tag">
-      <span className="brand-pair">
-        <span className="bp-side bp-end">{en.left}</span>
-        <span className="bp-arrow" aria-hidden="true">
-          ↔
-        </span>
-        <span className="bp-side">{en.right}</span>
-        <span className="bp-zh" lang="zh-HK" {...bind}>
+      <span className="brand-tag-inner" {...bind}>
+        <span className="brand-pair">
+          <span className="bp-side bp-end">{en.left}</span>
+          <span className="bp-arrow" aria-hidden="true">
+            ↔
+          </span>
+          <span className="bp-side">{en.right}</span>
           <span className="bp-side bp-end">{zh.left}</span>
           <span className="bp-arrow" aria-hidden="true">
             ↔
           </span>
           <span className="bp-side">{zh.right}</span>
-          <JpPop show={show} id={tipId} text={ui.brandTag.jp} />
         </span>
+        <JpPop show={show} id={tipId} text={ui.brandTag.jp} />
       </span>
     </p>
   )
