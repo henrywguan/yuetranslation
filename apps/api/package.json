@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "smoke:canto": "tsx src/canto/smoke.ts"
+    "smoke:canto": "tsx src/canto/smoke.ts",
+    "import:cc-canto": "tsx scripts/import-cc-canto.ts",
+    "import:wordshk": "tsx scripts/import-wordshk.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

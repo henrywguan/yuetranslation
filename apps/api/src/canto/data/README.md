@@ -1,36 +1,60 @@
-# Local Cantonese dictionaries (import guide)
+# Local Cantonese dictionaries
 
-Yue keeps a small **phrase memory** in `phrases.json` on the hot path (exact match → skip the model).
-Larger lexicons should be imported offline into the same schema (`sourceLang`, `targetLang`, `source`, `text`, `alternatives`, `register`).
+Yue uses three layers:
+
+1. **Phrase memory** — `phrases.json` (exact EN↔粵 lines on the live hot path)
+2. **Gloss packs** — CC-Canto (default) + optional words.hk (gated)
+3. **`to-jyutping`** (web) — pronunciation truth
+
+## What the license gate affects
+
+| Setting | Effect |
+|---|---|
+| `YUE_ALLOW_NONCOMMERCIAL_DICTS=0` (default) | **Commercial-safe mode.** Only CC-Canto + seed glosses + your phrase memory. words.hk pack is never loaded even if the file exists. |
+| `YUE_ALLOW_NONCOMMERCIAL_DICTS=1` | You assert this deployment is allowed to use non-commercial lexicons (hobby, research, eligible small personal use, or you have a separate words.hk license). |
+| `YUE_ENABLE_WORDSHK=1` (also requires the gate above) | Load `wordshk-gloss.json.gz` for breakdown / gloss lookup. |
+
+### Why this matters for Yue
+
+words.hk’s Non-Commercial Open Data License **forbids commercial use** of that data (including selling a service that uses it as a value-add, ads on a site that uses it, etc.) unless you get a separate agreement or another exception applies. See https://words.hk/base/hoifong/
+
+So for a **paid Pro / monetized** Yue:
+
+- Keep the gate **off**
+- Ship **CC-Canto** (CC-BY-SA — attribution required; ShareAlike if you redistribute adapted data)
+- Keep **`to-jyutping`** for readings
+- Use your curated `phrases.json` for conversation lines
+- Optionally negotiate a commercial words.hk license later, then flip the gate
+
+The gate does **not** block:
+
+- LLM translation (DeepSeek/OpenAI)
+- Mandarin→粵 scrub / 口語 scoring
+- Phrase memory you wrote yourself
+- CC-Canto glosses
+- Client Jyutping
+
+It only controls **loading words.hk-derived files** into the API process.
+
+## Import commands
+
+```bash
+cd apps/api
+npm run import:cc-canto          # downloads + builds cc-canto-gloss.json.gz
+# optional:
+# place vendor/wordshk.csv then:
+npm run import:wordshk
+```
 
 ## Recommended sources
 
-### 1. words.hk (粵典) — best for HK spoken Cantonese
-- **Why:** Hand-built HK Cantonese, Jyutping, English glosses, usage tags; strongest “is this real 口語?” signal.
-- **Size:** ~50k+ entries.
-- **License:** Non-commercial / request-based CSV ([request data](https://words.hk/faiman/request_data/)); research dump notes in the [ACL paper](https://aclanthology.org/2022.dclrl-1.7/).
-- **Tooling:** [wordshk-tools](https://github.com/AlienKevin/wordshk-tools), [words-hk-parse](https://github.com/MarvNC/words-hk-parse).
-- **Use in Yue:** gloss + character breakdown meanings; optional fuzzy phrase hints. **Not** drop-in free commercial redistributable without checking their license for your product.
+### 1. CC-Canto — default open import
+- CC-BY-SA 3.0 · https://cccanto.org/
+- Bundled as `cc-canto-gloss.json.gz`
 
-### 2. CC-Canto (+ CC-CEDICT Cantonese readings) — best open import start
-- **Why:** Open CC-BY-SA 3.0; Traditional + Jyutping `{...}` in CEDICT-like lines; ~22k Canto-specific entries plus readings for CEDICT.
-- **Download:** [cccanto.org/download](https://cccanto.org/download.html), mirror [amadeusine/cc-canto-data](https://github.com/amadeusine/cc-canto-data), JSON helpers [poliwhirl555/cc-canto-cedict-jsons](https://github.com/poliwhirl555/cc-canto-cedict-jsons).
-- **Use in Yue:** word-level EN↔粵 gloss table and Jyutping cross-check alongside `to-jyutping`. Attribute CC-BY-SA if you ship the data.
+### 2. words.hk — best HK 口語 (gated)
+- Request CSV: https://words.hk/faiman/request_data/
+- Non-commercial unless separately licensed
 
-### 3. `to-jyutping` (already in the web app)
-- **Why:** Fast, local, LSHK Jyutping labeling — **source of truth for pronunciation in the UI**.
-- **Use in Yue:** always overwrite model Jyutping; do not trust DeepSeek/OpenAI for tones.
-
-### 4. Later: Mandarin (`targetLang: "cmn"`)
-- **CC-CEDICT** for EN↔普通話 phrase/word memory and pinyin.
-- Keep **separate** post-filters (no Canto particle scorer on `cmn`).
-
-## Suggested import policy for live speech
-
-| Data | Hot path (interim/final) | Breakdown / text |
-|---|---|---|
-| High-frequency EN↔粵 utterances | In-memory exact match (`phrases.json`) | yes |
-| Full CC-Canto / words.hk | **No** full scan per interim | gloss lookup by character/word |
-| Jyutping | `to-jyutping` only | same |
-
-Keep the live path to **O(1) exact keys** (+ light Mandarin scrub). Build richer indexes offline if you add fuzzy/embedding search later.
+### 3. `to-jyutping`
+- Already in `apps/web` — UI pronunciation authority
