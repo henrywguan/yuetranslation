@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
-import { PaneParticles } from './PaneParticles'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -55,7 +54,6 @@ export function ConversationView() {
       </div>
 
       <section className="pane pane-yue">
-        <PaneParticles />
         <div className="pane-face">
           <header>
             <h2 lang="zh-HK">{ui.cantonese.zh}</h2>

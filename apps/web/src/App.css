@@ -310,42 +310,6 @@
   min-height: 0;
 }
 
-.pane-particles {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.pane-particle {
-  position: absolute;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 28%, color-mix(in srgb, #fff 70%, transparent), transparent 46%),
-    color-mix(in srgb, var(--jade-bright) 55%, transparent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--jade) 28%, transparent);
-  animation: particle-breathe 5.4s ease-in-out infinite;
-}
-
-[data-theme='light'] .pane-particle {
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.85), transparent 48%),
-    color-mix(in srgb, var(--jade) 38%, transparent);
-}
-
-@keyframes particle-breathe {
-  0%,
-  100% {
-    opacity: 0.22;
-    transform: scale(0.88);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scale(1.12);
-  }
-}
-
 .pane-yue .pane-face {
   transform: rotate(180deg);
 }
@@ -718,10 +682,6 @@
   .speak-switch-thumb {
     transition: none;
   }
-
-  .pane-particle {
-    animation: none;
-  }
 }
 
 .speak-switch input:focus-visible + .speak-switch-ui {
@@ -784,7 +744,7 @@
 }
 
 .text-lower .text-result,
-.solo-lower > :not(.pane-particles) {
+.solo-lower > * {
   position: relative;
   z-index: 1;
 }
