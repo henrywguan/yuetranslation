@@ -80,10 +80,10 @@ export const CHAR_GLOSS: Record<string, string> = {
   同埋: 'and also',
   真: 'really',
   係咪: 'is it?',
-  ？: 'question mark',
-  ！: 'exclamation',
-  。: 'full stop',
-  ，: 'comma',
+  '？': 'question mark',
+  '！': 'exclamation',
+  '。': 'full stop',
+  '，': 'comma',
 }
 
 export function glossForChar(char: string): string {
