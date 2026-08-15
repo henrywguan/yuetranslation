@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
+import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -50,7 +51,14 @@ export function ConversationView() {
               className="pane-hero pane-hero--en"
               interim={enLive}
             >
-              {enText || <span className="placeholder">{ui.enTranslation.en}</span>}
+              {enText ? (
+                <span className="spoken-line">
+                  <span className="spoken-line-text">{enText}</span>
+                  {face.enTranslation ? <SpeakButton text={face.enTranslation} lang="en" /> : null}
+                </span>
+              ) : (
+                <span className="placeholder">{ui.enTranslation.en}</span>
+              )}
             </InkSettle>
           )}
         </div>
@@ -78,12 +86,17 @@ export function ConversationView() {
                 interim={yueLive}
               >
                 {yueText ? (
-                  <CantoneseText
-                    text={yueText}
-                    definition={face.yueDefinition}
-                    className="pane-hero-canto"
-                    onActivate={openBreakdown}
-                  />
+                  <span className="spoken-line">
+                    <CantoneseText
+                      text={yueText}
+                      definition={face.yueDefinition}
+                      className="pane-hero-canto"
+                      onActivate={openBreakdown}
+                    />
+                    {face.yueTranslation ? (
+                      <SpeakButton text={face.yueTranslation} lang="yue" />
+                    ) : null}
+                  </span>
                 ) : (
                   <span className="placeholder">{ui.yueTranslation.zh}</span>
                 )}

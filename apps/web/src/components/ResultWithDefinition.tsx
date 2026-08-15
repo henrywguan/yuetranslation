@@ -1,5 +1,7 @@
 import { CantoneseText } from './CantoneseText'
+import { SpeakButton } from './SpeakButton'
 import { ui } from '../lib/uiCopy'
+import type { Lang } from '../lib/types'
 
 /** Cantonese (with Jyutping under) on the left; English gloss on the right. */
 export function ResultWithDefinition({
@@ -9,6 +11,7 @@ export function ResultWithDefinition({
   className = '',
   textClassName = '',
   onActivate,
+  speakLang,
 }: {
   text: string
   definition?: string
@@ -16,6 +19,8 @@ export function ResultWithDefinition({
   className?: string
   textClassName?: string
   onActivate?: (text: string) => void
+  /** When set, show a tap-to-speak control for this line. */
+  speakLang?: Lang
 }) {
   const trimmed = text.trim()
   const def = definition?.trim() || ''
@@ -24,16 +29,19 @@ export function ResultWithDefinition({
   return (
     <div className={`result-with-def ${className}`.trim()}>
       <div className="result-with-def-main">
-        {cantonese ? (
-          <CantoneseText
-            text={trimmed}
-            definition={def}
-            className={textClassName || 'result-text'}
-            onActivate={onActivate}
-          />
-        ) : (
-          <p className={textClassName || 'result-text'}>{trimmed}</p>
-        )}
+        <div className="result-with-def-line">
+          {cantonese ? (
+            <CantoneseText
+              text={trimmed}
+              definition={def}
+              className={textClassName || 'result-text'}
+              onActivate={onActivate}
+            />
+          ) : (
+            <p className={textClassName || 'result-text'}>{trimmed}</p>
+          )}
+          {speakLang && trimmed ? <SpeakButton text={trimmed} lang={speakLang} /> : null}
+        </div>
       </div>
       {def ? (
         <p className="result-with-def-gloss ink-in" aria-label={ui.definition.en}>

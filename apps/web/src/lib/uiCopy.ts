@@ -19,6 +19,9 @@ export const ui = {
   dirAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakPro: { en: 'Auto-speak (Pro)', zh: '自動朗讀（專業版）', jp: 'zi6 dung6 long5 duk6 (zyun1 jip6 baan2)' },
+  speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
+  stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },
+  speakPro: { en: 'Voice playback (Pro)', zh: '語音播放（專業版）', jp: 'jyu5 jam1 bo3 fong3 (zyun1 jip6 baan2)' },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },

@@ -60,6 +60,8 @@ type State = {
   setMode: (mode: Mode) => void
   setSpeakDirection: (d: SpeakDirection) => void
   setAutoSpeak: (v: boolean) => void
+  /** Play (or stop) TTS for a line — does not require auto-speak. */
+  speakManual: (text: string, lang: Lang) => Promise<void>
   loadBootstrap: () => Promise<void>
   toggleLive: () => Promise<void>
   translateTyped: (text: string, from: Lang) => Promise<void>
@@ -99,15 +101,12 @@ function formatMinutes(seconds: number) {
   return Math.max(0, Math.ceil(seconds / 60))
 }
 
-async function speakFinal(
+async function runSpeak(
   get: () => State,
   set: (p: Partial<State>) => void,
   text: string,
   lang: Lang,
 ) {
-  const ent = get().entitlement
-  const allowed = Boolean(ent?.allowed.autoSpeak && get().autoSpeak)
-  if (!allowed) return
   const token = ++speakToken
   get().session?.setPlaybackActive(true)
   set({ status: 'speaking' })
@@ -118,6 +117,19 @@ async function speakFinal(
     get().session?.setPlaybackActive(false)
     set({ status: get().live ? 'listening' : 'idle' })
   }
+}
+
+async function speakFinal(
+  get: () => State,
+  set: (p: Partial<State>) => void,
+  text: string,
+  lang: Lang,
+) {
+  const ent = get().entitlement
+  // Auto-speak only when the user opted in (default is off).
+  const allowed = Boolean(ent?.allowed.autoSpeak && get().autoSpeak)
+  if (!allowed) return
+  await runSpeak(get, set, text, lang)
 }
 
 function nextHistory(
@@ -229,7 +241,7 @@ export const useYueStore = create<State>((set, get) => ({
   speakDirection: 'auto',
   live: false,
   status: 'idle',
-  autoSpeak: true,
+  autoSpeak: false,
   entitlement: null,
   error: null,
   enInterim: '',
@@ -257,6 +269,30 @@ export const useYueStore = create<State>((set, get) => ({
   setSpeakDirection: (speakDirection) => set({ speakDirection }),
   setAutoSpeak: (autoSpeak) => set({ autoSpeak }),
 
+  speakManual: async (text, lang) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const ent = get().entitlement
+    if (ent && !ent.allowed.tts) {
+      set({
+        error:
+          ent.reason === 'login_required'
+            ? 'Log in to play voice.'
+            : 'Voice playback needs Pro (or remaining TTS quota).',
+      })
+      return
+    }
+    if (get().status === 'speaking') {
+      speakToken += 1
+      stopSpeaking()
+      get().session?.setPlaybackActive(false)
+      set({ status: get().live ? 'listening' : 'idle', error: null })
+      return
+    }
+    set({ error: null })
+    await runSpeak(get, set, trimmed, lang)
+  },
+
   loadBootstrap: async () => {
     try {
       const data = await fetchHealth()
@@ -264,10 +300,8 @@ export const useYueStore = create<State>((set, get) => ({
       if (!ent.upgradeUrl && getUpgradeUrl()) {
         ent.upgradeUrl = getUpgradeUrl()
       }
-      set({
-        entitlement: ent,
-        autoSpeak: Boolean(ent.allowed.autoSpeak),
-      })
+      // Do not force autoSpeak on — keep the user's preference (default off).
+      set({ entitlement: ent })
     } catch {
       set({
         entitlement: null,

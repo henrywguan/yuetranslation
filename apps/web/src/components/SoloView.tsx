@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
@@ -72,7 +73,14 @@ export function SoloView() {
               className="solo-source"
               interim={enLive}
             >
-              {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
+              {enText ? (
+                <span className="spoken-line">
+                  <span className="spoken-line-text">{enText}</span>
+                  <SpeakButton text={enText} lang="en" />
+                </span>
+              ) : (
+                <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />
+              )}
             </InkSettle>
           )}
         </div>
@@ -98,6 +106,7 @@ export function SoloView() {
                     definition={yueDef}
                     textClassName="solo-tr-text"
                     onActivate={openBreakdown}
+                    speakLang="yue"
                   />
                   <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
                 </>
