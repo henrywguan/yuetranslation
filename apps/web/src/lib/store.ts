@@ -107,8 +107,8 @@ let holdSideLock: Lang | null = null
 let tapSilenceTimer: ReturnType<typeof setTimeout> | null = null
 let tapMaxTimer: ReturnType<typeof setTimeout> | null = null
 
-/** After a final in tap mode, wait this long with no new speech before translating. */
-const TAP_SILENCE_MS = 950
+/** After a finalized utterance in tap mode, wait this long with no new speech → auto-stop. */
+const TAP_SENTENCE_END_MS = 650
 /** Safety cap so tap mode cannot run forever. */
 const TAP_MAX_MS = 45000
 
@@ -127,14 +127,17 @@ function clearTapTimers() {
   }
 }
 
-function scheduleTapSilenceEnd(get: () => State) {
+/** Sticky tap: sentence/utterance ended — auto-stop unless the user keeps talking. */
+function scheduleTapSentenceEnd(get: () => State) {
   if (!tapSticky) return
   if (tapSilenceTimer) clearTimeout(tapSilenceTimer)
   tapSilenceTimer = setTimeout(() => {
     tapSilenceTimer = null
     if (!tapSticky) return
+    // Only auto-stop once we actually captured speech.
+    if (!holdFinals.length && !holdInterim.trim()) return
     void get().endHold()
-  }, TAP_SILENCE_MS)
+  }, TAP_SENTENCE_END_MS)
 }
 
 /** Drop in-flight translate results so a new hold cannot be overwritten. */
@@ -543,8 +546,8 @@ export const useYueStore = create<State>((set, get) => ({
         holdLang = lang
         holdInterim = text
         applyHoldSource(get, set, lang, holdSourceText())
-        // Still talking — restart pause clock so auto-end waits for real silence.
-        if (tapSticky) scheduleTapSilenceEnd(get)
+        // Still talking — restart sentence-end clock so auto-stop waits for real silence.
+        if (tapSticky) scheduleTapSentenceEnd(get)
       },
       onFinal: (detected: Lang, text: string) => {
         // Accumulate STT while live — translate only when the turn ends (option A).
@@ -556,7 +559,8 @@ export const useYueStore = create<State>((set, get) => ({
         holdFinals.push(trimmed)
         holdInterim = ''
         applyHoldSource(get, set, lang, holdSourceText())
-        if (tapSticky) scheduleTapSilenceEnd(get)
+        // Sticky tap mode 1: utterance finalized → auto-stop after a short pause.
+        if (tapSticky) scheduleTapSentenceEnd(get)
       },
       onBargeIn: () => {
         speakToken += 1
@@ -647,12 +651,12 @@ export const useYueStore = create<State>((set, get) => ({
   },
 
   armTapMode: () => {
+    // Modes 1–2: short press released — keep mic on until sentence end or second tap.
     if (!holding && !startingHold && !get().live) return
     if (flushingHold) return
     holding = false
     tapSticky = true
     set({ liveInteraction: 'tap' })
-    // Keep the max-listen cap; restart silence clock if we already have speech.
     if (tapMaxTimer) {
       clearTimeout(tapMaxTimer)
       tapMaxTimer = null
@@ -661,7 +665,8 @@ export const useYueStore = create<State>((set, get) => ({
       clearTimeout(tapSilenceTimer)
       tapSilenceTimer = null
     }
-    if (holdFinals.length || holdInterim.trim()) scheduleTapSilenceEnd(get)
+    // If speech already landed during the press, start the sentence-end clock.
+    if (holdFinals.length || holdInterim.trim()) scheduleTapSentenceEnd(get)
     tapMaxTimer = setTimeout(() => {
       tapMaxTimer = null
       if (tapSticky) void get().endHold()

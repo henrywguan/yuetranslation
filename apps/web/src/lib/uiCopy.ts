@@ -20,10 +20,11 @@ export const ui = {
     zh: '聽緊——鬆手就翻譯',
     jp: 'teng1 gan2 — sung1 sau2 zau6 faan1 jik6',
   },
-  tapToStop: {
-    en: 'Listening — tap to stop',
-    zh: '聽緊——再撳一下停',
-    jp: 'teng1 gan2 — zoi3 gam2 jat1 haa5 ting4',
+  /** Sticky tap: auto-stops after a sentence pause, or tap again to finish now. */
+  tapListening: {
+    en: 'Listening — pause or tap to stop',
+    zh: '聽緊——停頓或再撳停',
+    jp: 'teng1 gan2 — ting4 dyun6 waak6 zoi3 gam2 ting4',
   },
   speaking: { en: 'Speaking…', zh: '講緊…', jp: 'gong2 gan2…' },
   translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },

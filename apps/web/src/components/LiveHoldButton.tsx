@@ -5,8 +5,12 @@ import { useYueStore } from '../lib/store'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
-/** Below this → tap (sticky listen). Above → hold-to-speak. */
-const TAP_MS = 320
+/**
+ * Press shorter than this → sticky tap (keep listening after release).
+ * Press longer → hold-to-speak (release ends the turn).
+ * Slightly forgiving so normal taps aren’t treated as hold-releases.
+ */
+const HOLD_THRESHOLD_MS = 520
 
 type Props = {
   /** Face panes pass en|yue to lock that speaker’s language for the turn. */
@@ -23,7 +27,12 @@ function pickLabel(copy: Bi, labelLang: Props['labelLang']): string {
 }
 
 /**
- * Shared hold/tap mic control — used by Solo dock and each Face-to-face pane.
+ * Shared mic control — Solo dock + each Face-to-face pane.
+ *
+ * Modes:
+ * 1) Tap → speak → sentence pause auto-stops → translate
+ * 2) Tap → speak → tap again to stop → translate
+ * 3) Hold → speak → release → translate
  */
 export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props) {
   const live = useYueStore((s) => s.live)
@@ -39,35 +48,44 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const activePointer = useRef<number | null>(null)
   const downAt = useRef(0)
   const keyDownAt = useRef(0)
+  /** True after a sticky-tap “stop” press so pointerup doesn’t re-arm. */
+  const stopTapRef = useRef(false)
 
   const canLive = !entitlement || entitlement.allowed.live
   const isThisSide = !side || !liveSide || liveSide === side
-  const activeHere = live && isThisSide
   const otherSideBusy = Boolean(side && live && liveSide && liveSide !== side)
-  // Face: show thinking on the pane that will receive the translation.
+  // Keep the button “on” while sticky tap is armed even before `live` flips true.
+  const armedHere =
+    isThisSide && (liveInteraction === 'hold' || liveInteraction === 'tap' || (live && isThisSide))
+  const stickyHere = isThisSide && liveInteraction === 'tap'
+  const holdHere = isThisSide && liveInteraction === 'hold'
+
+  // Face: initiating pane’s button shows translating while the other pane gets the loader.
   const thinkingHere = side
     ? translating && translatingTo === (side === 'en' ? 'yue' : 'en')
     : translating
 
   const liveCopy: Bi = thinkingHere
     ? ui.translating
-    : activeHere || (status === 'listening' && isThisSide)
-      ? status === 'speaking'
-        ? ui.speaking
-        : liveInteraction === 'tap'
-          ? ui.tapToStop
+    : stickyHere
+      ? ui.tapListening
+      : holdHere || (armedHere && status === 'listening')
+        ? status === 'speaking'
+          ? ui.speaking
           : ui.releaseWhenDone
-      : ui.holdOrTapToSpeak
+        : ui.holdOrTapToSpeak
 
   const label = pickLabel(liveCopy, labelLang)
   const aria = labelLang === 'bi' ? biPlain(liveCopy) : label
 
   const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return
-    if ((!canLive && !live) || otherSideBusy) return
+    if ((!canLive && !live && !stickyHere) || otherSideBusy) return
     if (activePointer.current != null) return
 
-    if (liveInteraction === 'tap' && isThisSide) {
+    // Mode 2: second tap while sticky-listening → stop + translate.
+    if (stickyHere) {
+      stopTapRef.current = true
       activePointer.current = e.pointerId
       e.currentTarget.setPointerCapture(e.pointerId)
       downAt.current = 0
@@ -75,6 +93,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
       return
     }
 
+    stopTapRef.current = false
     activePointer.current = e.pointerId
     downAt.current = performance.now()
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -87,23 +106,34 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
+    if (stopTapRef.current) {
+      stopTapRef.current = false
+      return
+    }
     if (!downAt.current) return
     const heldFor = performance.now() - downAt.current
     downAt.current = 0
-    if (heldFor < TAP_MS) armTapMode()
-    else void endHold()
+    if (heldFor < HOLD_THRESHOLD_MS) {
+      // Modes 1–2: sticky tap — keep listening after release.
+      armTapMode()
+    } else {
+      // Mode 3: hold-to-speak — release ends the turn.
+      void endHold()
+    }
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key !== ' ' && e.key !== 'Enter') return
     if (e.repeat) return
     e.preventDefault()
-    if ((!canLive && !live) || otherSideBusy) return
-    if (liveInteraction === 'tap' && isThisSide) {
+    if ((!canLive && !live && !stickyHere) || otherSideBusy) return
+    if (stickyHere) {
+      stopTapRef.current = true
       keyDownAt.current = 0
       void endHold()
       return
     }
+    stopTapRef.current = false
     keyDownAt.current = performance.now()
     void startHold(side)
   }
@@ -111,17 +141,21 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const onKeyUp = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key !== ' ' && e.key !== 'Enter') return
     e.preventDefault()
+    if (stopTapRef.current) {
+      stopTapRef.current = false
+      return
+    }
     if (!keyDownAt.current) return
     const heldFor = performance.now() - keyDownAt.current
     keyDownAt.current = 0
-    if (heldFor < TAP_MS) armTapMode()
+    if (heldFor < HOLD_THRESHOLD_MS) armTapMode()
     else void endHold()
   }
 
   return (
     <motion.button
       type="button"
-      className={`live-btn ${activeHere ? 'on' : ''} ${activeHere && liveInteraction === 'tap' ? 'tap' : ''} ${thinkingHere ? 'thinking' : ''} ${!canLive && !live ? 'blocked' : ''} ${otherSideBusy ? 'dimmed' : ''} ${className}`.trim()}
+      className={`live-btn ${armedHere ? 'on' : ''} ${stickyHere ? 'tap' : ''} ${thinkingHere ? 'thinking' : ''} ${!canLive && !live && !stickyHere ? 'blocked' : ''} ${otherSideBusy ? 'dimmed' : ''} ${className}`.trim()}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
@@ -129,9 +163,9 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
       onKeyUp={onKeyUp}
       onContextMenu={(e) => e.preventDefault()}
       whileTap={{ scale: otherSideBusy ? 1 : 0.97 }}
-      disabled={(!live && !canLive) || otherSideBusy}
+      disabled={(!live && !canLive && !stickyHere) || otherSideBusy}
       aria-label={aria}
-      aria-pressed={activeHere}
+      aria-pressed={armedHere}
     >
       <span className="live-dot" />
       {labelLang === 'bi' ? (
