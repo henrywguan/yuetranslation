@@ -1,9 +1,10 @@
 import { ui, type Bi } from '../lib/uiCopy'
 
 export type MarketingPlan = {
-  id: 'free' | 'pro' | 'team'
+  id: 'free' | 'pro' | 'max'
   name: Bi
   monthly: number
+  /** Effective $/mo when billed annually (shown on the pricing toggle). */
   annual: number
   tagline: Bi
   cta: Bi
@@ -13,6 +14,7 @@ export type MarketingPlan = {
   features: Bi[]
 }
 
+/** Prices from DeepSeek V4-Pro + Azure live-speech COGS (Pro $14 / Max $35). */
 export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'free',
@@ -27,8 +29,8 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'pro',
     name: ui.planPro,
-    monthly: 9,
-    annual: 7,
+    monthly: 14,
+    annual: 11,
     tagline: ui.tagPro,
     cta: ui.goPro,
     featured: true,
@@ -36,15 +38,15 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     features: [ui.proFeatLive10, ui.proFeatTts, ui.proFeatQuality, ui.proFeatEverything],
   },
   {
-    id: 'team',
-    name: ui.planTeam,
-    monthly: 29,
-    annual: 24,
-    tagline: ui.tagTeam,
-    cta: ui.contactUs,
+    id: 'max',
+    name: ui.planMax,
+    monthly: 35,
+    annual: 28,
+    tagline: ui.tagMax,
+    cta: ui.goMax,
     ctaOpens: 'pricing',
-    features: [ui.teamFeatUnlimited, ui.teamFeatSeats, ui.teamFeatBilling, ui.teamFeatSupport],
+    features: [ui.maxFeatLive40, ui.maxFeatPower, ui.maxFeatEverything, ui.maxFeatSupport],
   },
 ]
 
-export const LANDING_PLANS = MARKETING_PLANS.filter((p) => p.id !== 'team')
+export const LANDING_PLANS = MARKETING_PLANS.filter((p) => p.id !== 'max')

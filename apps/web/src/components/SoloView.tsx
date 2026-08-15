@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
-import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -19,6 +19,8 @@ export function SoloView() {
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
+  const translating = useYueStore((s) => s.translating)
+  const translatingTo = useYueStore((s) => s.translatingTo)
 
   const latest = history[0]
   const enText =
@@ -38,6 +40,8 @@ export function SoloView() {
         : []
   const enLive = Boolean(enInterim)
   const yueLive = Boolean(yueInterim)
+  const enThinking = translating && translatingTo === 'en'
+  const yueThinking = translating && translatingTo === 'yue'
 
   return (
     <div className="solo">
@@ -60,41 +64,48 @@ export function SoloView() {
           <p className="solo-label">
             <BiText copy={ui.english} size="sm" only="en" />
           </p>
-          <InkSettle
-            id={enLive ? 'en-live' : enText || 'en-empty'}
-            className="solo-source"
-            interim={enLive}
-          >
-            {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
-          </InkSettle>
+          {enThinking ? (
+            <TranslateThinking className="solo-thinking" />
+          ) : (
+            <InkSettle
+              id={enLive ? 'en-live' : enText || 'en-empty'}
+              className="solo-source"
+              interim={enLive}
+            >
+              {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
+            </InkSettle>
+          )}
         </div>
 
         <div className="solo-divider" />
 
         <div className="solo-lower">
-          <PaneParticles />
           <p className="solo-label">
             <BiText copy={ui.cantonese} size="sm" only="zh" />
           </p>
-          <InkSettle
-            id={yueLive ? 'yue-live' : yueText || 'yue-empty'}
-            className="solo-translation"
-            interim={yueLive}
-          >
-            {yueText ? (
-              <>
-                <ResultWithDefinition
-                  text={yueText}
-                  definition={yueDef}
-                  textClassName="solo-tr-text"
-                  onActivate={openBreakdown}
-                />
-                <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
-              </>
-            ) : (
-              <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
-            )}
-          </InkSettle>
+          {yueThinking ? (
+            <TranslateThinking className="solo-thinking" />
+          ) : (
+            <InkSettle
+              id={yueLive ? 'yue-live' : yueText || 'yue-empty'}
+              className="solo-translation"
+              interim={yueLive}
+            >
+              {yueText ? (
+                <>
+                  <ResultWithDefinition
+                    text={yueText}
+                    definition={yueDef}
+                    textClassName="solo-tr-text"
+                    onActivate={openBreakdown}
+                  />
+                  <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
+                </>
+              ) : (
+                <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
+              )}
+            </InkSettle>
+          )}
         </div>
       </motion.div>
     </div>

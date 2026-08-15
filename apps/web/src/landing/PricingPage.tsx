@@ -18,7 +18,7 @@ type Billing = 'monthly' | 'annual'
 type Row = { label: Bi; values: [Bi, Bi, Bi] }
 
 const COMPARISON: Row[] = [
-  { label: ui.cmpLive, values: [ui.val20m, ui.val10h, ui.valUnlimited] },
+  { label: ui.cmpLive, values: [ui.val20m, ui.val10h, ui.val40h] },
   { label: ui.cmpText, values: [ui.valUnlimitedPlain, ui.valUnlimitedPlain, ui.valUnlimitedPlain] },
   { label: ui.cmpJp, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
@@ -36,7 +36,7 @@ const COMPARISON: Row[] = [
     values: [
       { en: '1', zh: '1', jp: '' },
       { en: '1', zh: '1', jp: '' },
-      ui.valUpTo20,
+      { en: '1', zh: '1', jp: '' },
     ],
   },
   { label: ui.cmpSupport, values: [ui.valCommunity, ui.valEmail, ui.valPriority] },
@@ -167,7 +167,7 @@ export function PricingPage() {
                   <BiText copy={ui.planPro} size="sm" />
                 </th>
                 <th>
-                  <BiText copy={ui.planTeam} size="sm" />
+                  <BiText copy={ui.planMax} size="sm" />
                 </th>
               </tr>
             </thead>

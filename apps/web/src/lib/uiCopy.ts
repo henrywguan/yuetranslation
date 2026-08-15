@@ -3,7 +3,7 @@ export type Bi = { en: string; zh: string; jp: string }
 
 export const ui = {
   brandTag: { en: 'English ↔ Cantonese', zh: '英文 ↔ 粵語', jp: 'jing1 man2 ↔ jyut6 jyu5' },
-  backHome: { en: 'Back to Jyut home', zh: '返 Jyut 首頁', jp: 'faan1 Jyut sau2 jap6' },
+  backHome: { en: 'Back to JyutTranslate home', zh: '返 JyutTranslate 首頁', jp: 'faan1 JyutTranslate sau2 jap6' },
 
   modeSolo: { en: 'Solo', zh: '獨白', jp: 'duk6 baak6' },
   modeFace: { en: 'Face to face', zh: '面對面', jp: 'min6 deoi3 min6' },
@@ -13,6 +13,7 @@ export const ui = {
   startListening: { en: 'Start listening', zh: '開始聽', jp: 'hoi1 ci2 teng1' },
   listeningStop: { en: 'Listening — tap to stop', zh: '聽緊——撳一下停', jp: 'teng1 gan2 — gam2 jat1 haa5 ting4' },
   speaking: { en: 'Speaking…', zh: '講緊…', jp: 'gong2 gan2…' },
+  translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },
 
   direction: { en: 'Direction', zh: '方向', jp: 'fong1 hoeng3' },
   dirAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
@@ -58,6 +59,11 @@ export const ui = {
   typeEnglish: { en: 'Type English…', zh: '輸入英文…', jp: 'syu1 jap6 jing1 man2…' },
   typeCantonese: { en: 'Type Cantonese…', zh: '輸入粵語…', jp: 'syu1 jap6 jyut6 jyu5…' },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
+  autoTranslateHint: {
+    en: 'Translation appears as you type',
+    zh: '打字就會自動翻譯',
+    jp: 'daa2 zi6 zau6 wui5 zi6 dung6 faan1 jik6',
+  },
   result: { en: 'Result', zh: '結果', jp: 'git3 gwo2' },
   definition: { en: 'Definition', zh: '釋義', jp: 'sik1 ji6' },
   close: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
@@ -113,21 +119,31 @@ export const ui = {
   navLaunch: { en: 'Launch app', zh: '開啟應用', jp: 'hoi1 kai2 jing3 jung6' },
 
   heroEyebrow: {
-    en: 'English ↔ Cantonese · live translator',
-    zh: '英文 ↔ 廣東話 · 實時翻譯器',
-    jp: 'jing1 man2 ↔ gwong2 dung1 waa2 · sat6 si4 faan1 jik6 hei3',
+    enLang: 'English',
+    zhLang: '英文',
+    enYue: 'Cantonese',
+    zhYue: '廣東話',
+    enLive: 'Live translator',
+    zhLive: '實時翻譯器',
+    jp: 'jing1 man2 ↔ gwong2 dung1 waa2 sat6 si4 faan1 jik6 hei3',
   },
-  heroTitleSpeak: { en: 'Speak.', zh: '講。', jp: 'gong2.' },
-  heroTitleSee: { en: 'See.', zh: '睇。', jp: 'tai2.' },
-  heroTitleUnderstand: { en: 'Understand.', zh: '明。', jp: 'ming4.' },
+  heroTitle: {
+    en: 'JyutTranslate',
+    zh: '口語粵語／英文翻譯器',
+    jp: 'hau2 jyu5 jyut6 jyu5 / jing1 man2 faan1 jik6 hei3',
+  },
   heroSub: {
-    en: 'Real-time English and Cantonese translation with Jyutping — beautiful enough to live on your website, fast enough for a real conversation.',
-    zh: '即時英文同粵語翻譯，連粵拼——靚到可以放喺你網站，快到可以真係傾計。',
-    jp: 'zik1 si4 jing1 man2 tung4 jyut6 jyu5 faan1 jik6, lin4 jyut6 ping3 — leng3 dou3 ho2 ji5 fong3 hai2 nei5 mong5 zaam6, faai3 dou3 ho2 ji5 zan1 hai6 king1 gai2.',
+    en: 'Live English/Cantonese translation with Jyutping — with conversation mode to help you bridge the communication!',
+    zh: '即時英粵翻譯連粵拼——對話模式幫你打通溝通橋梁！',
+    jp: 'zik1 si4 jing1 jyut6 faan1 jik6 lin4 jyut6 ping3 — deoi3 waa6 mou4 sik1 bong1 nei5 daa2 tung1 kau3 tung1 kiu4 loeng4!',
   },
   launchTranslator: { en: 'Launch translator', zh: '開啟翻譯器', jp: 'hoi1 kai2 faan1 jik6 hei3' },
   tryDemo: { en: 'Try the demo ↓', zh: '試用示範 ↓', jp: 'si3 jung6 si6 faan6 ↓' },
-  statLangs: { en: 'languages, done well', zh: '兩種語言，認真做好', jp: 'loeng5 zung2 jyu5 jin4, jing6 zan1 zou6 hou2' },
+  statDeepseek: {
+    en: 'Powered by DeepSeek AI',
+    zh: '由 DeepSeek AI 驅動',
+    jp: 'jau4 DeepSeek AI keoi1 dung6',
+  },
   statModes: { en: 'modes', zh: '種模式', jp: 'zung2 mou4 sik1' },
   statJyutping: { en: 'Jyutping on every line', zh: '每句都有粵拼', jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3' },
 
@@ -192,7 +208,7 @@ export const ui = {
   openFullApp: { en: 'Open the full app', zh: '開啟完整應用', jp: 'hoi1 kai2 jyun4 zing2 jing3 jung6' },
   demoTypeEn: { en: 'Type English', zh: '打英文', jp: 'daa2 jing1 man2' },
   demoPlaceholder: { en: 'Say something…', zh: '講啲咩…', jp: 'gong2 di1 me1…' },
-  demoLive: { en: 'Jyut · live', zh: 'Jyut · 即時', jp: 'Jyut · zik1 si4' },
+  demoLive: { en: 'JyutTranslate · live', zh: 'JyutTranslate · 即時', jp: 'JyutTranslate · zik1 si4' },
   demoCantonese: { en: 'Cantonese', zh: '廣東話', jp: 'gwong2 dung1 waa2' },
   demoApiError: {
     en: 'Live API not reachable from here — this runs against your deployed backend.',
@@ -200,11 +216,11 @@ export const ui = {
     jp: 'zik1 si4 API hai2 dou6 lin4 m4 dou3 — ni1 go3 jiu3 deoi3 zyu6 nei5 bou3 syu2 ge3 hau6 dyun1 sin1 dak1.',
   },
 
-  pricingKicker: { en: 'Simple pricing', zh: '簡單價錢', jp: 'gaan2 daan1 gaa3 cin4' },
+  pricingKicker: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   pricingTitle: {
-    en: 'Start free. Upgrade when you talk more.',
-    zh: '免費開始，傾多再升級',
-    jp: 'min5 fai3 hoi1 ci2, king1 do1 zoi3 sing1 kap1',
+    en: 'Start free. Upgrade for more talk-time.',
+    zh: '免費開始。升級享更多通話時間。',
+    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 tung1 waa6 si4 gaan3.',
   },
   mostPopular: { en: 'Most popular', zh: '最受歡迎', jp: 'zeoi3 sau6 fun1 jing4' },
   perMonth: { en: '/month', zh: '/月', jp: '/jyut6' },
@@ -259,9 +275,9 @@ export const ui = {
     jp: 'zeon2 bei6 hou2 bei2 jan4 teng1 ming4 mei6?',
   },
   ctaBody: {
-    en: 'Open Jyut and have your first bilingual conversation in seconds.',
-    zh: '開啟 Jyut，幾秒之內就可以開始雙語對話。',
-    jp: 'hoi1 kai2 Jyut, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
+    en: 'Open JyutTranslate and have your first bilingual conversation in seconds.',
+    zh: '開啟 JyutTranslate，幾秒之內就可以開始雙語對話。',
+    jp: 'hoi1 kai2 JyutTranslate, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
   },
   footerTag: {
     en: 'English ↔ Cantonese, done beautifully.',
@@ -276,35 +292,40 @@ export const ui = {
     jp: 'gaa3 cin4 gan1 zyu6 nei5 ge3 deoi3 waa6 zang1 zoeng2',
   },
   ppSub: {
-    en: 'Start free. Upgrade when you talk more. Text translation and Jyutping are always included.',
-    zh: '免費開始。傾多再升級。文字翻譯同粵拼永遠包喺入面。',
-    jp: 'min5 fai3 hoi1 ci2. king1 do1 zoi3 sing1 kap1. man4 zi6 faan1 jik6 tung4 jyut6 ping3 wing5 jyun5 bau1 hai2 jap6 min6.',
+    en: 'Start free. Upgrade for more talk-time. Text translation and Jyutping are always included.',
+    zh: '免費開始。升級享更多通話時間。文字翻譯同粵拼永遠包喺入面。',
+    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 tung1 waa6 si4 gaan3. man4 zi6 faan1 jik6 tung4 jyut6 ping3 wing5 jyun5 bau1 hai2 jap6 min6.',
   },
   monthly: { en: 'Monthly', zh: '月費', jp: 'jyut6 fai3' },
   annual: { en: 'Annual', zh: '年費', jp: 'nin4 fai3' },
   save20: { en: 'save ~20%', zh: '慳大約兩成', jp: 'haan1 daai6 joek3 loeng5 sing4' },
   billedAnnually: { en: 'billed annually', zh: '按年收費', jp: 'on3 nin4 sau1 fai3' },
-  planTeam: { en: 'Team', zh: '團隊', jp: 'tyun4 deoi2' },
+  planMax: { en: 'Max', zh: '旗艦版', jp: 'kei4 gaam3 baan2' },
   tagFree: { en: 'For trying it out', zh: '試用啱啱好', jp: 'si3 jung6 aam1 aam1 hou2' },
   tagPro: { en: 'For regular conversations', zh: '日常傾計用', jp: 'jat6 soeng4 king1 gai2 jung6' },
-  tagTeam: { en: 'For classes & businesses', zh: '課堂同商業用', jp: 'fo3 tong4 tung4 soeng1 jip6 jung6' },
+  tagMax: {
+    en: 'For long sessions & heavy live use',
+    zh: '長時間、高用量即時翻譯',
+    jp: 'coeng4 si4 gaan3, gou1 jung6 loeng6 zik1 si4 faan1 jik6',
+  },
+  goMax: { en: 'Go Max', zh: '升級旗艦版', jp: 'sing1 kap1 kei4 gaam3 baan2' },
   contactUs: { en: 'Contact us', zh: '聯絡我哋', jp: 'lyun4 lok3 ngo5 dei6' },
-  teamFeatUnlimited: {
-    en: 'Unlimited live translation (fair use)',
-    zh: '無限即時翻譯（合理使用）',
-    jp: 'mou4 haan6 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
+  maxFeatLive40: {
+    en: '~40 hours of live translation / month (fair use)',
+    zh: '每月大約四十小時即時翻譯（合理使用）',
+    jp: 'mui5 jyut6 daai6 joek3 sei3 sap6 siu2 si4 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
   },
-  teamFeatSeats: {
-    en: 'Up to 20 seats',
-    zh: '最多二十個座位',
-    jp: 'zeoi3 do1 ji6 sap6 go3 zo6 wai2',
+  maxFeatPower: {
+    en: 'Headroom for Face-to-face & long talks',
+    zh: '面對面同長對話有足夠空間',
+    jp: 'min6 deoi3 min6 tung4 coeng4 deoi3 waa6 jau5 kau3 gau3 hung1 gaan1',
   },
-  teamFeatBilling: {
-    en: 'Shared billing & admin',
-    zh: '共用帳單同管理',
-    jp: 'gung6 jung6 zoeng3 daan1 tung4 gun2 lei5',
+  maxFeatEverything: {
+    en: 'Everything in Pro',
+    zh: '包含專業版全部功能',
+    jp: 'bau1 ham4 zyun1 jip6 baan2 cyun4 bou6 gung1 nang4',
   },
-  teamFeatSupport: {
+  maxFeatSupport: {
     en: 'Priority support',
     zh: '優先支援',
     jp: 'jau4 sin1 zi1 wun4',
@@ -326,6 +347,7 @@ export const ui = {
   cmpSupport: { en: 'Support', zh: '支援', jp: 'zi1 wun4' },
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
   val10h: { en: '10 hours', zh: '十小時', jp: 'sap6 siu2 si4' },
+  val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valUnlimited: { en: 'Unlimited*', zh: '無限*', jp: 'mou4 haan6*' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
@@ -334,9 +356,9 @@ export const ui = {
   valEmail: { en: 'Email', zh: '電郵', jp: 'din6 jau4' },
   valUpTo20: { en: 'Up to 20', zh: '最多二十', jp: 'zeoi3 do1 ji6 sap6' },
   fairUseNote: {
-    en: '* Unlimited under fair-use limits.',
-    zh: '* 無限受合理使用限制。',
-    jp: '* mou4 haan6 sau6 hap6 lei5 si2 jung6 haan6 zai3.',
+    en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable.',
+    zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。',
+    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6.',
   },
 
   faqKicker: { en: 'FAQ', zh: '常見問題', jp: 'soeng4 gin3 man6 tai4' },
@@ -367,9 +389,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 hai2 zi6 gei2 si1 fuk6 hei3 paau2?',
   },
   faq3a: {
-    en: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs. Team plans include setup guidance.',
-    zh: '可以——Jyut 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。團隊計劃包括設定指引。',
-    jp: 'ho2 ji5 — Jyut ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API. tyun4 deoi2 gai3 waak6 bau1 kut3 cit3 ding6 zi2 jan5.',
+    en: 'Yes — JyutTranslate can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs.',
+    zh: '可以——JyutTranslate 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。',
+    jp: 'ho2 ji5 — JyutTranslate ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API.',
   },
   faq4q: {
     en: 'Can I cancel anytime?',

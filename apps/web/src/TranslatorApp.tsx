@@ -56,7 +56,7 @@ export function TranslatorApp() {
                   <JyutLogo />
                 </button>
               )}
-              <h1 className="visually-hidden">Jyut</h1>
+              <h1 className="visually-hidden">JyutTranslate</h1>
               <BrandTag />
             </div>
           </motion.div>

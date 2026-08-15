@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { motion } from 'framer-motion'
+import { MotionConfig, motion } from 'framer-motion'
 import { JadeGlassField } from '../components/JadeGlassField'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
@@ -9,12 +9,12 @@ import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
+import { DeepSeekMark } from '../components/DeepSeekMark'
 import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
+import { HeroEyebrow } from './HeroEyebrow'
 import { LANDING_PLANS } from './plans'
 import './landing.css'
-
-// three.js is heavy — code-split it so it never blocks first paint.
 const HeroObject = lazy(() =>
   import('./HeroObject').then((m) => ({ default: m.HeroObject })),
 )
@@ -40,6 +40,7 @@ export function Landing() {
   useSmoothScroll(true)
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="landing">
       <ScrollProgress />
       <JadeGlassField variant="marketing" />
@@ -56,15 +57,9 @@ export function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="ln-eyebrow">
-            <BiText copy={ui.heroEyebrow} size="sm" />
-          </span>
+          <HeroEyebrow />
           <h1 className="ln-title">
-            <BiText copy={ui.heroTitleSpeak} size="lg" />{' '}
-            <span className="ln-title-accent">
-              <BiText copy={ui.heroTitleSee} size="lg" />
-            </span>{' '}
-            <BiText copy={ui.heroTitleUnderstand} size="lg" />
+            <BiText copy={ui.heroTitle} size="lg" />
           </h1>
           <BiText className="ln-sub" copy={ui.heroSub} size="md" as="p" />
           <div className="ln-hero-cta">
@@ -76,15 +71,15 @@ export function Landing() {
             </MagneticButton>
           </div>
           <div className="ln-hero-stats">
-            <div>
-              <strong>2</strong>
-              <BiText copy={ui.statLangs} size="sm" />
+            <div className="ln-hero-stat ln-hero-stat--deepseek">
+              <DeepSeekMark className="ln-deepseek-mark" />
+              <BiText copy={ui.statDeepseek} size="sm" />
             </div>
-            <div>
+            <div className="ln-hero-stat">
               <strong>3</strong>
               <BiText copy={ui.statModes} size="sm" />
             </div>
-            <div>
+            <div className="ln-hero-stat">
               <strong>粵</strong>
               <BiText copy={ui.statJyutping} size="sm" />
             </div>
@@ -219,5 +214,6 @@ export function Landing() {
         <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>
     </div>
+    </MotionConfig>
   )
 }
