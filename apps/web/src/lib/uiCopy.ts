@@ -59,7 +59,6 @@ export const ui = {
   typeEnglish: { en: 'Type English…', zh: '輸入英文…', jp: 'syu1 jap6 jing1 man2…' },
   typeCantonese: { en: 'Type Cantonese…', zh: '輸入粵語…', jp: 'syu1 jap6 jyut6 jyu5…' },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
-  translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },
   autoTranslateHint: {
     en: 'Translation appears as you type',
     zh: '打字就會自動翻譯',
