@@ -397,7 +397,7 @@
   flex-direction: column;
   gap: 0;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 16px 16px 0 0;
   border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
   box-shadow:
     0 16px 36px color-mix(in srgb, var(--harbor) 28%, transparent),
