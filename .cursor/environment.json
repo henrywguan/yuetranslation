@@ -1,6 +1,6 @@
 {
   "name": "yuetranslation",
-  "install": "npm install --prefix apps/web && npm install --prefix apps/api",
+  "install": "npm ci --prefix apps/web\nnpm ci --prefix apps/api",
   "terminals": [
     {
       "name": "api",

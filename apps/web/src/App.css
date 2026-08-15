@@ -42,29 +42,6 @@
   gap: 12px;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
-  color: var(--on-jade);
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 1.55rem;
-  box-shadow: 0 10px 30px rgba(61, 207, 182, 0.25);
-}
-
-.brand-name {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(2rem, 8vw, 2.6rem);
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
 .brand-tag {
   margin: 2px 0 0;
   font-size: 0.85rem;
@@ -764,19 +741,6 @@
   flex: 1;
   height: 1px;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--jade) 55%, transparent), transparent);
-}
-
-.conversation-gutter-mark {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 0.82rem;
-  letter-spacing: 0;
-  color: var(--on-jade);
-  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--jade) 28%, transparent);
 }
 
 .conversation-gutter-logo {
@@ -1497,17 +1461,6 @@
 }
 
 @media (max-width: 719px) {
-  .brand-name {
-    font-size: clamp(1.55rem, 7vw, 2rem);
-  }
-
-  .brand-mark {
-    width: 44px;
-    height: 44px;
-    font-size: 1.3rem;
-    border-radius: 14px;
-  }
-
   .mode-tabs button {
     padding: 9px 4px;
     font-size: 0.75rem;

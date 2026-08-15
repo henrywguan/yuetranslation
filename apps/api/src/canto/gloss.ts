@@ -158,7 +158,7 @@ export function lookupGloss(token: string): GlossHit | null {
 
 /**
  * Greedy longest-match glosses over a Cantonese string (max 4 chars).
- * Used by breakdown to prefer word senses when available.
+ * Used by offline lexicon translate for segmented 粵→EN coverage.
  */
 export function segmentGlosses(text: string): Array<{ surface: string; hit: GlossHit | null }> {
   const chars = Array.from(text.trim())
@@ -185,3 +185,4 @@ export function segmentGlosses(text: string): Array<{ surface: string; hit: Glos
   }
   return out
 }
+

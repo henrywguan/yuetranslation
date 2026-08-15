@@ -7,7 +7,7 @@ import {
   toJyutpingCached,
   type JyutSeg,
 } from '../lib/jyutping'
-import { charSense } from '../lib/charSense'
+import { charSense } from '../lib/charGloss'
 import { useJpPopup } from '../lib/useJpPopup'
 import { CharDetailSheet, type CharDetail } from './CharDetailSheet'
 import { JpPop } from './JpPop'
