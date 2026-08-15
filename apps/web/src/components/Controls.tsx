@@ -1,7 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
 import { BiText } from './BiText'
-import { DockConstellation } from './DockConstellation'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode, SpeakDirection } from '../lib/types'
@@ -34,7 +32,6 @@ export function Controls() {
   const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
   const speakOn = autoSpeak && canAutoSpeak
-  const [pointerX, setPointerX] = useState(0.5)
 
   const liveCopy = live
     ? status === 'speaking'
@@ -44,16 +41,7 @@ export function Controls() {
 
   return (
     <div className="controls">
-      <div
-        className="dock-wrap"
-        onPointerMove={(e) => {
-          const r = e.currentTarget.getBoundingClientRect()
-          if (r.width > 0) setPointerX((e.clientX - r.left) / r.width)
-        }}
-        onPointerLeave={() => setPointerX(0.5)}
-      >
-        {mode !== 'text' ? <DockConstellation pointerX={pointerX} /> : null}
-        <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
+      <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
         <div className="mode-tabs" role="tablist" aria-label={biPlain(ui.modeTablist)}>
           {MODES.map((m) => (
             <button
@@ -126,7 +114,6 @@ export function Controls() {
               <BiText copy={ui.clear} size="sm" />
             </span>
           </button>
-        </div>
         </div>
       </div>
     </div>

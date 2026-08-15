@@ -2,8 +2,8 @@ import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
+import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
-import { tideTransition, tideY } from '../lib/motion'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -37,48 +37,48 @@ export function SoloView() {
         animate={
           live
             ? {
-                y: 0,
                 boxShadow: [
                   '0 0 0 0 rgba(61,207,182,0)',
                   '0 0 0 12px rgba(61,207,182,0.08)',
                   '0 0 0 0 rgba(61,207,182,0)',
                 ],
               }
-            : { y: tideY, boxShadow: '0 0 0 0 rgba(61,207,182,0)' }
+            : { boxShadow: '0 0 0 0 rgba(61,207,182,0)' }
         }
-        transition={
-          live
-            ? { duration: 2.4, repeat: Infinity, boxShadow: { duration: 2.4, repeat: Infinity } }
-            : tideTransition
-        }
+        transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
-        <p className="solo-label">
-          <BiText copy={ui.english} size="sm" only="en" />
-        </p>
-        <InkSettle
-          id={enLive ? 'en-live' : enText || 'en-empty'}
-          className="solo-source"
-          interim={enLive}
-        >
-          {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
-        </InkSettle>
+        <div className="solo-upper">
+          <p className="solo-label">
+            <BiText copy={ui.english} size="sm" only="en" />
+          </p>
+          <InkSettle
+            id={enLive ? 'en-live' : enText || 'en-empty'}
+            className="solo-source"
+            interim={enLive}
+          >
+            {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
+          </InkSettle>
+        </div>
 
         <div className="solo-divider" />
 
-        <p className="solo-label">
-          <BiText copy={ui.cantonese} size="sm" only="zh" />
-        </p>
-        <InkSettle
-          id={yueLive ? 'yue-live' : yueText || 'yue-empty'}
-          className="solo-translation"
-          interim={yueLive}
-        >
-          {yueText ? (
-            <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
-          ) : (
-            <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
-          )}
-        </InkSettle>
+        <div className="solo-lower">
+          <PaneParticles />
+          <p className="solo-label">
+            <BiText copy={ui.cantonese} size="sm" only="zh" />
+          </p>
+          <InkSettle
+            id={yueLive ? 'yue-live' : yueText || 'yue-empty'}
+            className="solo-translation"
+            interim={yueLive}
+          >
+            {yueText ? (
+              <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
+            ) : (
+              <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
+            )}
+          </InkSettle>
+        </div>
       </motion.div>
 
       {history.length > 1 ? (

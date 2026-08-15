@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
-import { tideTransition, tideY } from '../lib/motion'
+import { PaneParticles } from './PaneParticles'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -24,9 +24,9 @@ export function ConversationView() {
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
       <motion.section
         className="pane pane-en"
-        initial={{ opacity: 0, y: -12 }}
-        animate={live ? { opacity: 1, y: 0 } : { opacity: 1, y: tideY }}
-        transition={live ? { duration: 0.4 } : { ...tideTransition, delay: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35 }}
       >
         <header>
           <h2>{ui.english.en}</h2>
@@ -50,12 +50,8 @@ export function ConversationView() {
         <span className="conversation-gutter-line" />
       </div>
 
-      <motion.section
-        className="pane pane-yue"
-        initial={{ opacity: 0, y: 12 }}
-        animate={live ? { opacity: 1, y: 0 } : { opacity: 1, y: [0, 2.5, 0] }}
-        transition={live ? { duration: 0.4 } : { ...tideTransition, delay: -2.2 }}
-      >
+      <section className="pane pane-yue">
+        <PaneParticles />
         <div className="pane-face">
           <header>
             <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
@@ -81,7 +77,7 @@ export function ConversationView() {
             </InkSettle>
           </div>
         </div>
-      </motion.section>
+      </section>
     </div>
   )
 }

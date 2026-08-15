@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
+import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -34,18 +35,21 @@ export function TextMode() {
       <button type="button" className="primary" onClick={() => void translateTyped(text, from)}>
         <BiText copy={ui.translate} size="sm" />
       </button>
-      {latest ? (
-        <InkSettle id={latest.id} className="text-result">
-          <p className="muted">
-            <BiText copy={ui.result} size="sm" />
-          </p>
-          <ResultWithDefinition
-            text={latest.translation}
-            definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
-            cantonese={latest.to === 'yue'}
-          />
-        </InkSettle>
-      ) : null}
+      <div className="text-lower">
+        <PaneParticles />
+        {latest ? (
+          <InkSettle id={latest.id} className="text-result">
+            <p className="muted">
+              <BiText copy={ui.result} size="sm" />
+            </p>
+            <ResultWithDefinition
+              text={latest.translation}
+              definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
+              cantonese={latest.to === 'yue'}
+            />
+          </InkSettle>
+        ) : null}
+      </div>
     </div>
   )
 }
