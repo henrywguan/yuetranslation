@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { BiText } from './BiText'
+import { InkSettle } from './InkSettle'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -34,7 +35,7 @@ export function TextMode() {
         <BiText copy={ui.translate} size="sm" />
       </button>
       {latest ? (
-        <div className="text-result">
+        <InkSettle id={latest.id} className="text-result">
           <p className="muted">
             <BiText copy={ui.result} size="sm" />
           </p>
@@ -43,7 +44,7 @@ export function TextMode() {
             definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
             cantonese={latest.to === 'yue'}
           />
-        </div>
+        </InkSettle>
       ) : null}
     </div>
   )

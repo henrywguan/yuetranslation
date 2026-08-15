@@ -33,7 +33,7 @@ export function ResultWithDefinition({
         )}
       </div>
       {def ? (
-        <p className="result-with-def-gloss" aria-label={ui.definition.en}>
+        <p className="result-with-def-gloss ink-in" aria-label={ui.definition.en}>
           {def}
         </p>
       ) : null}

@@ -18,6 +18,7 @@ import './App.css'
 
 export function TranslatorApp() {
   const mode = useYueStore((s) => s.mode)
+  const live = useYueStore((s) => s.live)
   const error = useYueStore((s) => s.error)
   const entitlement = useYueStore((s) => s.entitlement)
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
@@ -30,7 +31,7 @@ export function TranslatorApp() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="app-shell">
-        <JadeGlassField variant="app" />
+        <JadeGlassField variant="app" className={live ? 'is-listening' : ''} />
         <header className="brand-bar">
           <motion.div
             className="brand"

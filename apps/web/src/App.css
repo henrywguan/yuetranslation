@@ -392,6 +392,42 @@
   gap: 10px;
 }
 
+.dock-wrap {
+  position: relative;
+}
+
+.dock-constellation {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -22px;
+  height: 86px;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+.dock-dot {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.85), transparent 46%),
+    var(--jade-bright);
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--jade) 55%, transparent),
+    0 0 18px color-mix(in srgb, var(--mint) 28%, transparent);
+  will-change: transform, opacity;
+}
+
+[data-theme='light'] .dock-dot {
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.9), transparent 48%),
+    var(--jade);
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--jade) 40%, transparent),
+    0 0 16px color-mix(in srgb, var(--jade-deep) 18%, transparent);
+}
+
 .dock {
   display: flex;
   flex-direction: column;
@@ -647,6 +683,11 @@
   .speak-switch-ui,
   .speak-switch-thumb {
     transition: none;
+  }
+
+  .dock-constellation,
+  .dock-dot {
+    display: none;
   }
 }
 

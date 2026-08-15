@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { BiText } from './BiText'
+import { DockConstellation } from './DockConstellation'
 import { useYueStore } from '../lib/store'
+import { tideTransition, tideY } from '../lib/motion'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode, SpeakDirection } from '../lib/types'
 
@@ -32,6 +35,7 @@ export function Controls() {
   const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
   const speakOn = autoSpeak && canAutoSpeak
+  const [pointerX, setPointerX] = useState(0.5)
 
   const liveCopy = live
     ? status === 'speaking'
@@ -56,7 +60,18 @@ export function Controls() {
         ))}
       </div>
 
-      <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
+      <motion.div
+        className="dock-wrap"
+        onPointerMove={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          if (r.width > 0) setPointerX((e.clientX - r.left) / r.width)
+        }}
+        onPointerLeave={() => setPointerX(0.5)}
+        animate={live ? { y: 0 } : { y: tideY }}
+        transition={live ? { duration: 0.35 } : tideTransition}
+      >
+        {mode !== 'text' ? <DockConstellation pointerX={pointerX} /> : null}
+        <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
         {mode !== 'text' ? (
           <div className="live-row">
             <motion.button
@@ -116,7 +131,8 @@ export function Controls() {
             </span>
           </button>
         </div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   )
 }

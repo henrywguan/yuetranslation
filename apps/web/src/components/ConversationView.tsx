@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
+import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
+import { tideTransition, tideY } from '../lib/motion'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -23,8 +25,8 @@ export function ConversationView() {
       <motion.section
         className="pane pane-en"
         initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
+        animate={live ? { opacity: 1, y: 0 } : { opacity: 1, y: tideY }}
+        transition={live ? { duration: 0.4 } : { ...tideTransition, delay: 0 }}
       >
         <header>
           <h2>{ui.english.en}</h2>
@@ -32,9 +34,13 @@ export function ConversationView() {
         </header>
         <div className="pane-body">
           <p className="heard">{enInterim || <span className="placeholder">{ui.listening.en}</span>}</p>
-          <p className="said">
+          <InkSettle
+            id={enTranslation || 'en-empty'}
+            className="said"
+            interim={Boolean(enInterim) && !enTranslation}
+          >
             {enTranslation || <span className="placeholder">{ui.enTranslation.en}</span>}
-          </p>
+          </InkSettle>
         </div>
       </motion.section>
 
@@ -47,8 +53,8 @@ export function ConversationView() {
       <motion.section
         className="pane pane-yue"
         initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.05 }}
+        animate={live ? { opacity: 1, y: 0 } : { opacity: 1, y: [0, 2.5, 0] }}
+        transition={live ? { duration: 0.4 } : { ...tideTransition, delay: -2.2 }}
       >
         <div className="pane-face">
           <header>
@@ -62,13 +68,17 @@ export function ConversationView() {
                 placeholder={<span className="placeholder">{ui.listening.zh}</span>}
               />
             </p>
-            <div className="said">
+            <InkSettle
+              id={yueTranslation || 'yue-empty'}
+              className="said"
+              interim={Boolean(yueInterim) && !yueTranslation}
+            >
               <CantoneseText
                 text={yueTranslation}
                 definition={yueDefinition}
                 placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
               />
-            </div>
+            </InkSettle>
           </div>
         </div>
       </motion.section>

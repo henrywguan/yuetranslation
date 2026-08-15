@@ -275,6 +275,33 @@ html[data-theme='dark'] {
     linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 48%, var(--harbor-deep) 100%);
 }
 
+.jade-glass-field--app .jg-canvas,
+.jade-glass-field--app .jg-fallback {
+  animation: field-tide 8s ease-in-out infinite;
+}
+
+.jade-glass-field--app.is-listening .jg-canvas,
+.jade-glass-field--app.is-listening .jg-fallback {
+  animation-play-state: paused;
+}
+
+@keyframes field-tide {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0) scale(1.022);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jade-glass-field--app .jg-canvas,
+  .jade-glass-field--app .jg-fallback {
+    animation: none;
+  }
+}
+
 .jade-glass-field--marketing {
   z-index: -2;
 }
