@@ -1,6 +1,6 @@
 import cors from 'cors'
 import express from 'express'
-import { cloudReady, env } from './env.js'
+import { cloudReady, env, openaiConfigured } from './env.js'
 import { localEntitlement } from './entitlements.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { translate } from './translate.js'
@@ -18,8 +18,8 @@ app.get('/api/health', (_req, res) => {
     cloudReady: cloudReady(),
     engines: {
       azureSpeech: Boolean(env.azureSpeechKey),
-      openai: Boolean(env.openaiApiKey),
-      demo: !env.openaiApiKey,
+      openai: openaiConfigured(),
+      demo: !openaiConfigured(),
     },
     entitlement: localEntitlement(),
   })

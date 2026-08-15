@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { z } from 'zod'
-import { env } from './env.js'
+import { env, openaiConfigured } from './env.js'
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -78,7 +78,7 @@ export async function translate(input: unknown) {
 
   const fallbackDefinition = from === 'en' ? text : ''
 
-  if (!env.openaiApiKey) {
+  if (!openaiConfigured()) {
     const key = demoLookupKey(text)
     const hit = DEMO[key] || DEMO[text]
     const primary = hit?.text || (to === 'yue' ? `（示範）${text}` : `(demo) ${text}`)
@@ -95,7 +95,8 @@ export async function translate(input: unknown) {
   }
 
   const client = new OpenAI({
-    apiKey: env.openaiApiKey,
+    apiKey: env.openaiApiKey || 'ollama',
+    ...(env.openaiBaseUrl ? { baseURL: env.openaiBaseUrl } : {}),
   })
   const toYue = to === 'yue'
   const system = toYue
@@ -129,7 +130,7 @@ export async function translate(input: unknown) {
   return {
     text: payload.text,
     definition: toYue ? payload.definition || fallbackDefinition : payload.definition,
-    engine: 'openai',
+    engine: env.openaiBaseUrl ? 'openai-compatible' : 'openai',
     from,
     to,
   }
