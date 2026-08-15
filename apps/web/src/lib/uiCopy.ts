@@ -262,27 +262,32 @@ export const ui = {
   annual: { en: 'Annual', zh: '年費', jp: 'nin4 fai3' },
   save20: { en: 'save ~20%', zh: '慳大約兩成', jp: 'haan1 daai6 joek3 loeng5 sing4' },
   billedAnnually: { en: 'billed annually', zh: '按年收費', jp: 'on3 nin4 sau1 fai3' },
-  planTeam: { en: 'Team', zh: '團隊', jp: 'tyun4 deoi2' },
+  planMax: { en: 'Max', zh: '旗艦版', jp: 'kei4 gaam3 baan2' },
   tagFree: { en: 'For trying it out', zh: '試用啱啱好', jp: 'si3 jung6 aam1 aam1 hou2' },
   tagPro: { en: 'For regular conversations', zh: '日常傾計用', jp: 'jat6 soeng4 king1 gai2 jung6' },
-  tagTeam: { en: 'For classes & businesses', zh: '課堂同商業用', jp: 'fo3 tong4 tung4 soeng1 jip6 jung6' },
+  tagMax: {
+    en: 'For long sessions & heavy live use',
+    zh: '長時間、高用量即時翻譯',
+    jp: 'coeng4 si4 gaan3, gou1 jung6 loeng6 zik1 si4 faan1 jik6',
+  },
+  goMax: { en: 'Go Max', zh: '升級旗艦版', jp: 'sing1 kap1 kei4 gaam3 baan2' },
   contactUs: { en: 'Contact us', zh: '聯絡我哋', jp: 'lyun4 lok3 ngo5 dei6' },
-  teamFeatUnlimited: {
-    en: 'Unlimited live translation (fair use)',
-    zh: '無限即時翻譯（合理使用）',
-    jp: 'mou4 haan6 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
+  maxFeatLive40: {
+    en: '~40 hours of live translation / month (fair use)',
+    zh: '每月大約四十小時即時翻譯（合理使用）',
+    jp: 'mui5 jyut6 daai6 joek3 sei3 sap6 siu2 si4 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
   },
-  teamFeatSeats: {
-    en: 'Up to 20 seats',
-    zh: '最多二十個座位',
-    jp: 'zeoi3 do1 ji6 sap6 go3 zo6 wai2',
+  maxFeatPower: {
+    en: 'Headroom for Face-to-face & long talks',
+    zh: '面對面同長對話有足夠空間',
+    jp: 'min6 deoi3 min6 tung4 coeng4 deoi3 waa6 jau5 kau3 gau3 hung1 gaan1',
   },
-  teamFeatBilling: {
-    en: 'Shared billing & admin',
-    zh: '共用帳單同管理',
-    jp: 'gung6 jung6 zoeng3 daan1 tung4 gun2 lei5',
+  maxFeatEverything: {
+    en: 'Everything in Pro',
+    zh: '包含專業版全部功能',
+    jp: 'bau1 ham4 zyun1 jip6 baan2 cyun4 bou6 gung1 nang4',
   },
-  teamFeatSupport: {
+  maxFeatSupport: {
     en: 'Priority support',
     zh: '優先支援',
     jp: 'jau4 sin1 zi1 wun4',
@@ -304,6 +309,7 @@ export const ui = {
   cmpSupport: { en: 'Support', zh: '支援', jp: 'zi1 wun4' },
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
   val10h: { en: '10 hours', zh: '十小時', jp: 'sap6 siu2 si4' },
+  val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valUnlimited: { en: 'Unlimited*', zh: '無限*', jp: 'mou4 haan6*' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
@@ -312,9 +318,9 @@ export const ui = {
   valEmail: { en: 'Email', zh: '電郵', jp: 'din6 jau4' },
   valUpTo20: { en: 'Up to 20', zh: '最多二十', jp: 'zeoi3 do1 ji6 sap6' },
   fairUseNote: {
-    en: '* Unlimited under fair-use limits.',
-    zh: '* 無限受合理使用限制。',
-    jp: '* mou4 haan6 sau6 hap6 lei5 si2 jung6 haan6 zai3.',
+    en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable.',
+    zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。',
+    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6.',
   },
 
   faqKicker: { en: 'FAQ', zh: '常見問題', jp: 'soeng4 gin3 man6 tai4' },
@@ -345,9 +351,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 hai2 zi6 gei2 si1 fuk6 hei3 paau2?',
   },
   faq3a: {
-    en: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs. Team plans include setup guidance.',
-    zh: '可以——Jyut 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。團隊計劃包括設定指引。',
-    jp: 'ho2 ji5 — Jyut ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API. tyun4 deoi2 gai3 waak6 bau1 kut3 cit3 ding6 zi2 jan5.',
+    en: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs.',
+    zh: '可以——Jyut 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。',
+    jp: 'ho2 ji5 — Jyut ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API.',
   },
   faq4q: {
     en: 'Can I cancel anytime?',
