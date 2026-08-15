@@ -298,9 +298,17 @@
 .history-panel-kicker {
   margin: 0 0 2px;
   font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.history-panel-kicker .bi-en {
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+}
+
+.history-panel-kicker .bi-zh {
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .history-panel-title {
@@ -509,9 +517,17 @@
   display: block;
   margin: 0 0 4px;
   font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.history-card-detail-label .bi-en {
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
+}
+
+.history-card-detail-label .bi-zh {
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .history-card-def {

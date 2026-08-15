@@ -112,6 +112,19 @@
   line-height: 1.25;
 }
 
+.bi--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.4em;
+  row-gap: 0.08rem;
+}
+
+.bi--inline .bi-zh {
+  font-size: 0.95em;
+  font-weight: 550;
+}
+
 .bi--en,
 .bi--zh {
   gap: 0;
