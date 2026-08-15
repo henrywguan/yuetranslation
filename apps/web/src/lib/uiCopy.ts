@@ -20,11 +20,6 @@ export const ui = {
     zh: '聽緊——鬆手就翻譯',
     jp: 'teng1 gan2 — sung1 sau2 zau6 faan1 jik6',
   },
-  tapListening: {
-    en: 'Listening — pauses when you finish',
-    zh: '聽緊——講完會自動停',
-    jp: 'teng1 gan2 — gong2 jyun4 wui5 zi6 dung6 ting4',
-  },
   tapToStop: {
     en: 'Listening — tap to stop',
     zh: '聽緊——再撳一下停',

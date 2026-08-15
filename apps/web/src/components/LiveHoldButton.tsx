@@ -55,7 +55,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
       ? status === 'speaking'
         ? ui.speaking
         : liveInteraction === 'tap'
-          ? ui.tapListening
+          ? ui.tapToStop
           : ui.releaseWhenDone
       : ui.holdOrTapToSpeak
 

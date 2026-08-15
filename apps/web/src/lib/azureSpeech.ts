@@ -23,6 +23,8 @@ function isUnknownSpeaker(id: string): boolean {
 /**
  * Lock to the first diarized speaker in this listening turn.
  * Other Guest-* voices are ignored until the session ends.
+ * Unknown/empty ids are still accepted after lock — Azure often
+ * re-labels the same talker as Unknown mid-utterance.
  */
 function createSpeakerGate() {
   let locked: string | null = null
@@ -34,7 +36,7 @@ function createSpeakerGate() {
         // Before a concrete Guest-* id exists, still accept so solo speech works.
         return true
       }
-      if (isUnknownSpeaker(id)) return false
+      if (isUnknownSpeaker(id)) return true
       return id === locked
     },
     reset() {

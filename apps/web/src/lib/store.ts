@@ -137,6 +137,12 @@ function scheduleTapSilenceEnd(get: () => State) {
   }, TAP_SILENCE_MS)
 }
 
+/** Drop in-flight translate results so a new hold cannot be overwritten. */
+function invalidatePendingTranslations() {
+  translateSeq += 1
+  pending.clear()
+}
+
 function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
   if (holdSideLock) return holdSideLock
   return resolveSourceLang(detected, direction)
@@ -377,7 +383,7 @@ function applyHoldSource(
 async function tearDownLive(
   get: () => State,
   set: (p: Partial<State>) => void,
-  opts?: { clearInterim?: boolean },
+  opts?: { clearInterim?: boolean; clearSideLock?: boolean },
 ) {
   speakToken += 1
   stopSpeaking()
@@ -386,7 +392,10 @@ async function tearDownLive(
   holding = false
   tapSticky = false
   startingHold = false
-  holdSideLock = null
+  // Keep face pane language lock through STT flush unless explicitly cleared.
+  if (opts?.clearSideLock !== false) {
+    holdSideLock = null
+  }
   const session = get().session
   if (session) {
     try {
@@ -400,7 +409,7 @@ async function tearDownLive(
     live: false,
     session: null,
     liveInteraction: null,
-    liveSide: null,
+    liveSide: opts?.clearSideLock === false ? get().liveSide : null,
     status: get().translating ? get().status : 'idle',
     ...(clearInterim
       ? {
@@ -517,7 +526,15 @@ export const useYueStore = create<State>((set, get) => ({
     holdSideLock = side ?? null
     clearTapTimers()
     resetHoldCapture()
-    set({ error: null, liveInteraction: 'hold', liveSide: side ?? null })
+    // Invalidate any in-flight translate from a previous turn.
+    invalidatePendingTranslations()
+    set({
+      error: null,
+      liveInteraction: 'hold',
+      liveSide: side ?? null,
+      translating: false,
+      translatingTo: null,
+    })
 
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
@@ -526,13 +543,8 @@ export const useYueStore = create<State>((set, get) => ({
         holdLang = lang
         holdInterim = text
         applyHoldSource(get, set, lang, holdSourceText())
-        if (tapSticky) {
-          // Still talking — push auto-end out.
-          if (tapSilenceTimer) {
-            clearTimeout(tapSilenceTimer)
-            tapSilenceTimer = null
-          }
-        }
+        // Still talking — restart pause clock so auto-end waits for real silence.
+        if (tapSticky) scheduleTapSilenceEnd(get)
       },
       onFinal: (detected: Lang, text: string) => {
         // Accumulate STT while live — translate only when the turn ends (option A).
@@ -640,9 +652,16 @@ export const useYueStore = create<State>((set, get) => ({
     holding = false
     tapSticky = true
     set({ liveInteraction: 'tap' })
-    clearTapTimers()
-    // If we already captured a final before the short release, start the pause clock.
-    if (holdFinals.length) scheduleTapSilenceEnd(get)
+    // Keep the max-listen cap; restart silence clock if we already have speech.
+    if (tapMaxTimer) {
+      clearTimeout(tapMaxTimer)
+      tapMaxTimer = null
+    }
+    if (tapSilenceTimer) {
+      clearTimeout(tapSilenceTimer)
+      tapSilenceTimer = null
+    }
+    if (holdFinals.length || holdInterim.trim()) scheduleTapSilenceEnd(get)
     tapMaxTimer = setTimeout(() => {
       tapMaxTimer = null
       if (tapSticky) void get().endHold()
@@ -650,24 +669,31 @@ export const useYueStore = create<State>((set, get) => ({
   },
 
   endHold: async () => {
-    if (!holding && !startingHold && !get().live && !flushingHold && !tapSticky) return
+    // Prevent concurrent teardown/translate (double release / double tap).
+    if (flushingHold) return
+    if (!holding && !startingHold && !get().live && !tapSticky) return
     const gen = holdGen
     holding = false
     tapSticky = false
     clearTapTimers()
     flushingHold = true
     // Stop recognizer first so Azure/WebSpeech can flush a final transcript.
-    await tearDownLive(get, set, { clearInterim: false })
+    // Keep holdSideLock until after the flush window so late finals stay on-pane.
+    await tearDownLive(get, set, { clearInterim: false, clearSideLock: false })
     await new Promise((r) => setTimeout(r, 160))
     if (gen !== holdGen) {
       flushingHold = false
+      holdSideLock = null
+      set({ liveSide: null })
       return
     }
 
     const lang = holdLang
     const text = holdSourceText()
     resetHoldCapture()
+    holdSideLock = null
     flushingHold = false
+    set({ liveSide: null })
 
     if (lang && text) {
       // Existing TranslateThinking loader via translating / translatingTo.
