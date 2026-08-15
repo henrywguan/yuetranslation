@@ -113,7 +113,6 @@ export function Controls() {
           <span className="opt-kicker">
             <BiText copy={ui.clear} size="sm" />
           </span>
-          <span className="opt-clear-chip">{ui.clear.zh}</span>
         </button>
       </div>
     </div>
