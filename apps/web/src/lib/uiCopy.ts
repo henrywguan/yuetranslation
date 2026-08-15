@@ -10,8 +10,22 @@ export const ui = {
   modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
 
-  startListening: { en: 'Start listening', zh: '開始聽', jp: 'hoi1 ci2 teng1' },
-  listeningStop: { en: 'Listening — tap to stop', zh: '聽緊——撳一下停', jp: 'teng1 gan2 — gam2 jat1 haa5 ting4' },
+  holdOrTapToSpeak: {
+    en: 'Hold or tap to speak',
+    zh: '按住或輕按講',
+    jp: 'on3 zyu6 waak6 hing1 on3 gong2',
+  },
+  releaseWhenDone: {
+    en: 'Listening — release when done',
+    zh: '聽緊——鬆手就翻譯',
+    jp: 'teng1 gan2 — sung1 sau2 zau6 faan1 jik6',
+  },
+  /** Sticky tap: auto-stops after a sentence pause, or tap again to finish now. */
+  tapListening: {
+    en: 'Listening — pause or tap to stop',
+    zh: '聽緊——停頓或再撳停',
+    jp: 'teng1 gan2 — ting4 dyun6 waak6 zoi3 gam2 ting4',
+  },
   speaking: { en: 'Speaking…', zh: '講緊…', jp: 'gong2 gan2…' },
   translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },
 
@@ -48,7 +62,11 @@ export const ui = {
 
   english: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   cantonese: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
-  speakToTranslate: { en: 'Speak to translate', zh: '講嘢嚟翻譯', jp: 'gong2 je5 lai4 faan1 jik6' },
+  speakToTranslate: {
+    en: 'Hold or tap the button and speak',
+    zh: '按住或輕按掣講嘢',
+    jp: 'on3 zyu6 waak6 hing1 on3 zai3 gong2 je5',
+  },
   listening: { en: 'Listening…', zh: '聽緊…', jp: 'teng1 gan2…' },
   holdFacingYou: { en: 'Hold phone facing you', zh: '手機對住自己', jp: 'sau2 gei1 deoi3 zyu6 zi6 gei2' },
   friendLooksHere: {

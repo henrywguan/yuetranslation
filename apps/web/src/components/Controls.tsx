@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
 import { BiText } from './BiText'
+import { LiveHoldButton } from './LiveHoldButton'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode, SpeakDirection } from '../lib/types'
@@ -19,9 +19,6 @@ const DIRS: { id: SpeakDirection; label: string }[] = [
 export function Controls() {
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
-  const live = useYueStore((s) => s.live)
-  const status = useYueStore((s) => s.status)
-  const toggleLive = useYueStore((s) => s.toggleLive)
   const speakDirection = useYueStore((s) => s.speakDirection)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
@@ -29,15 +26,11 @@ export function Controls() {
   const entitlement = useYueStore((s) => s.entitlement)
   const clearHistory = useYueStore((s) => s.clearHistory)
 
-  const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
   const speakOn = autoSpeak && canAutoSpeak
-
-  const liveCopy = live
-    ? status === 'speaking'
-      ? ui.speaking
-      : ui.listeningStop
-    : ui.startListening
+  const faceMode = mode === 'conversation'
+  const showLiveDock = mode !== 'text' && !faceMode
+  const showDirection = mode !== 'text' && !faceMode
 
   return (
     <div className="controls">
@@ -56,24 +49,16 @@ export function Controls() {
             </button>
           ))}
         </div>
-        {mode !== 'text' ? (
+        {showLiveDock ? (
           <div className="live-row">
-            <motion.button
-              type="button"
-              className={`live-btn ${live ? 'on' : ''} ${!canLive && !live ? 'blocked' : ''}`}
-              onClick={() => void toggleLive()}
-              whileTap={{ scale: 0.97 }}
-              disabled={!live && !canLive}
-              aria-label={biPlain(liveCopy)}
-            >
-              <span className="live-dot" />
-              <BiText copy={liveCopy} size="sm" layout="inline" />
-            </motion.button>
+            <LiveHoldButton />
           </div>
         ) : null}
 
-        <div className={`opt-row${mode === 'text' ? ' opt-row--compact' : ''}`}>
-          {mode !== 'text' ? (
+        <div
+          className={`opt-row${mode === 'text' || faceMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
+        >
+          {showDirection ? (
             <label className="opt-cell opt-dir">
               <span className="opt-kicker">
                 <BiText copy={ui.direction} size="sm" layout="inline" />

@@ -36,9 +36,14 @@ export type ConversationTurn = {
   engine?: string
 }
 
+export type SpeechMeta = {
+  /** Azure conversation diarization id (e.g. Guest-1), when available. */
+  speakerId?: string
+}
+
 export type SpeechEventHandlers = {
-  onInterim: (lang: Lang, text: string) => void
-  onFinal: (lang: Lang, text: string) => void
+  onInterim: (lang: Lang, text: string, meta?: SpeechMeta) => void
+  onFinal: (lang: Lang, text: string, meta?: SpeechMeta) => void
   onError: (message: string) => void
   onStatus: (status: 'listening' | 'idle' | 'speaking') => void
   onBargeIn?: () => void

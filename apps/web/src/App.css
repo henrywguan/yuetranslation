@@ -628,6 +628,61 @@
   transform: rotate(180deg);
 }
 
+.pane-live {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+.live-btn--pane {
+  width: 100%;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.92rem;
+}
+
+.live-btn--en {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--harbor-blue) 88%, #0a1a28),
+    color-mix(in srgb, var(--harbor-blue) 55%, var(--jade-mid))
+  );
+}
+
+.live-btn--yue {
+  background: linear-gradient(135deg, var(--jade), var(--jade-mid));
+}
+
+.live-btn.dimmed,
+.live-btn.dimmed:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.pane.is-listening {
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--jade-bright) 55%, transparent),
+    0 16px 36px rgba(7, 19, 31, 0.16);
+}
+
+.pane-en.is-listening {
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--harbor-blue) 70%, transparent),
+    0 16px 36px rgba(7, 19, 31, 0.16);
+}
+
+.pane.is-thinking .pane-body--hero {
+  justify-content: center;
+}
+
+.live-btn-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.opt-row--face {
+  grid-template-columns: 1fr 1fr;
+}
+
 .pane header h2 {
   margin: 0;
   font-family: var(--font-display);
@@ -840,11 +895,23 @@
   cursor: pointer;
   color: var(--on-jade);
   background: linear-gradient(135deg, var(--jade), var(--jade-mid));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .live-btn.on {
   background: linear-gradient(135deg, var(--danger), var(--danger-deep));
   color: #fff;
+}
+
+.live-btn.on.tap {
+  background: linear-gradient(135deg, var(--jade-mid), var(--danger));
+}
+
+.live-btn.thinking {
+  background: linear-gradient(135deg, var(--jade-mid), var(--jade));
+  color: var(--on-jade);
 }
 
 .live-btn.blocked,
