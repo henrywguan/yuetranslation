@@ -57,7 +57,7 @@ export function HistoryCard({
           </span>
           {isLatest ? (
             <span className="history-card-badge">
-              <BiText copy={ui.historyLatest} size="sm" />
+              <BiText copy={ui.historyLatest} size="sm" hideJp />
             </span>
           ) : null}
         </div>
@@ -68,7 +68,7 @@ export function HistoryCard({
           aria-controls={`history-detail-${turn.id}`}
           onClick={onToggle}
         >
-          <BiText copy={expanded ? ui.historyCollapse : ui.historyExpand} size="sm" />
+          <BiText copy={expanded ? ui.historyCollapse : ui.historyExpand} size="sm" hideJp />
           <span className="history-card-chevron" aria-hidden="true">
             {expanded ? '▾' : '▸'}
           </span>

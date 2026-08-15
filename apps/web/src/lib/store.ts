@@ -374,3 +374,7 @@ export const useYueStore = create<State>((set, get) => ({
     })
   },
 }))
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  ;(window as unknown as { __yueStore?: typeof useYueStore }).__yueStore = useYueStore
+}

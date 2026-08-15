@@ -57,7 +57,7 @@ export function TranslationHistory() {
         aria-expanded={sheetOpen}
         aria-label={biPlain(ui.historyTitle)}
       >
-        <BiText copy={ui.historyTitle} size="sm" />
+        <BiText copy={ui.historyTitle} size="sm" hideJp />
         {count ? <span className="history-open-count">{count}</span> : null}
       </button>
 
