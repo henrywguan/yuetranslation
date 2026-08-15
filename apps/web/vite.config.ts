@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Jyut — English ↔ Cantonese',
-        short_name: 'Jyut',
+        name: 'JyutTranslate — English ↔ Cantonese',
+        short_name: 'JyutTranslate',
         theme_color: '#07131f',
         background_color: '#07131f',
         display: 'standalone',

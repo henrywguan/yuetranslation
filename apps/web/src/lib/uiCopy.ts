@@ -3,7 +3,7 @@ export type Bi = { en: string; zh: string; jp: string }
 
 export const ui = {
   brandTag: { en: 'English ↔ Cantonese', zh: '英文 ↔ 粵語', jp: 'jing1 man2 ↔ jyut6 jyu5' },
-  backHome: { en: 'Back to Jyut home', zh: '返 Jyut 首頁', jp: 'faan1 Jyut sau2 jap6' },
+  backHome: { en: 'Back to JyutTranslate home', zh: '返 JyutTranslate 首頁', jp: 'faan1 JyutTranslate sau2 jap6' },
 
   modeSolo: { en: 'Solo', zh: '獨白', jp: 'duk6 baak6' },
   modeFace: { en: 'Face to face', zh: '面對面', jp: 'min6 deoi3 min6' },
@@ -176,7 +176,7 @@ export const ui = {
   openFullApp: { en: 'Open the full app', zh: '開啟完整應用', jp: 'hoi1 kai2 jyun4 zing2 jing3 jung6' },
   demoTypeEn: { en: 'Type English', zh: '打英文', jp: 'daa2 jing1 man2' },
   demoPlaceholder: { en: 'Say something…', zh: '講啲咩…', jp: 'gong2 di1 me1…' },
-  demoLive: { en: 'Jyut · live', zh: 'Jyut · 即時', jp: 'Jyut · zik1 si4' },
+  demoLive: { en: 'JyutTranslate · live', zh: 'JyutTranslate · 即時', jp: 'JyutTranslate · zik1 si4' },
   demoCantonese: { en: 'Cantonese', zh: '廣東話', jp: 'gwong2 dung1 waa2' },
   demoApiError: {
     en: 'Live API not reachable from here — this runs against your deployed backend.',
@@ -184,11 +184,11 @@ export const ui = {
     jp: 'zik1 si4 API hai2 dou6 lin4 m4 dou3 — ni1 go3 jiu3 deoi3 zyu6 nei5 bou3 syu2 ge3 hau6 dyun1 sin1 dak1.',
   },
 
-  pricingKicker: { en: 'Simple pricing', zh: '簡單價錢', jp: 'gaan2 daan1 gaa3 cin4' },
+  pricingKicker: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   pricingTitle: {
-    en: 'Start free. Upgrade when you talk more.',
-    zh: '免費開始，傾多再升級',
-    jp: 'min5 fai3 hoi1 ci2, king1 do1 zoi3 sing1 kap1',
+    en: 'Start free. Upgrade for more talk-time.',
+    zh: '免費開始。升級享更多通話時間。',
+    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 tung1 waa6 si4 gaan3.',
   },
   mostPopular: { en: 'Most popular', zh: '最受歡迎', jp: 'zeoi3 sau6 fun1 jing4' },
   perMonth: { en: '/month', zh: '/月', jp: '/jyut6' },
@@ -243,9 +243,9 @@ export const ui = {
     jp: 'zeon2 bei6 hou2 bei2 jan4 teng1 ming4 mei6?',
   },
   ctaBody: {
-    en: 'Open Jyut and have your first bilingual conversation in seconds.',
-    zh: '開啟 Jyut，幾秒之內就可以開始雙語對話。',
-    jp: 'hoi1 kai2 Jyut, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
+    en: 'Open JyutTranslate and have your first bilingual conversation in seconds.',
+    zh: '開啟 JyutTranslate，幾秒之內就可以開始雙語對話。',
+    jp: 'hoi1 kai2 JyutTranslate, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
   },
   footerTag: {
     en: 'English ↔ Cantonese, done beautifully.',
@@ -260,9 +260,9 @@ export const ui = {
     jp: 'gaa3 cin4 gan1 zyu6 nei5 ge3 deoi3 waa6 zang1 zoeng2',
   },
   ppSub: {
-    en: 'Start free. Upgrade when you talk more. Text translation and Jyutping are always included.',
-    zh: '免費開始。傾多再升級。文字翻譯同粵拼永遠包喺入面。',
-    jp: 'min5 fai3 hoi1 ci2. king1 do1 zoi3 sing1 kap1. man4 zi6 faan1 jik6 tung4 jyut6 ping3 wing5 jyun5 bau1 hai2 jap6 min6.',
+    en: 'Start free. Upgrade for more talk-time. Text translation and Jyutping are always included.',
+    zh: '免費開始。升級享更多通話時間。文字翻譯同粵拼永遠包喺入面。',
+    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 tung1 waa6 si4 gaan3. man4 zi6 faan1 jik6 tung4 jyut6 ping3 wing5 jyun5 bau1 hai2 jap6 min6.',
   },
   monthly: { en: 'Monthly', zh: '月費', jp: 'jyut6 fai3' },
   annual: { en: 'Annual', zh: '年費', jp: 'nin4 fai3' },
@@ -351,9 +351,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 hai2 zi6 gei2 si1 fuk6 hei3 paau2?',
   },
   faq3a: {
-    en: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs. Team plans include setup guidance.',
-    zh: '可以——Jyut 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。團隊計劃包括設定指引。',
-    jp: 'ho2 ji5 — Jyut ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API. tyun4 deoi2 gai3 waak6 bau1 kut3 cit3 ding6 zi2 jan5.',
+    en: 'Yes — JyutTranslate can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs.',
+    zh: '可以——JyutTranslate 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。',
+    jp: 'ho2 ji5 — JyutTranslate ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API.',
   },
   faq4q: {
     en: 'Can I cancel anytime?',

@@ -1,4 +1,4 @@
-=== Yue Translator ===
+=== JyutTranslate ===
 Contributors: yue
 Requires at least: 6.0
 Tested up to: 6.7
@@ -16,7 +16,7 @@ Shortcodes:
 
 Hybrid static marketing + Bricks: see repo docs/hybrid-bluehost.md (`site-config.json` links CTAs to your translator page).
 
-Settings → Yue Translator for Azure/OpenAI keys and plan limits.
+Settings → JyutTranslate for Azure/OpenAI keys and plan limits.
 Build the app with `npm run build:web:wp` before uploading.
 
 == Installation ==

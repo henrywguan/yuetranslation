@@ -140,7 +140,7 @@ a {
 }
 
 .jyut-logo--lockup {
-  width: clamp(9.4rem, 42vw, 11.6rem);
+  width: clamp(11.5rem, 52vw, 15.5rem);
   height: auto;
 }
 
