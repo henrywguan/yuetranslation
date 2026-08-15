@@ -1,4 +1,4 @@
-# Yue — Bluehost launch guide
+# JyutTranslate — Bluehost launch guide
 
 Launchable freemium product: **WordPress plugin hosts the PWA**; **Azure Speech** (zh-HK STT/TTS) and **OpenAI** (colloquial 粵語 MT) run via plugin REST proxies.
 
@@ -22,8 +22,8 @@ npm run build:web:wp
 ```
 
 2. Upload `wordpress/yue-translator/` to `wp-content/plugins/yue-translator/`.
-3. Activate **Yue Translator**.
-4. Settings → Yue Translator: paste Azure Speech key/region and OpenAI key.
+3. Activate **JyutTranslate**.
+4. Settings → JyutTranslate: paste Azure Speech key/region and OpenAI key.
 5. Set **Upgrade URL** to your pricing / MemberPress checkout page.
 6. Add shortcodes:
    - `[yue_translator]` — translator (forces `view=app` in a phone-sized iframe)
@@ -69,7 +69,7 @@ add_filter('yue_user_plan', function ($plan, $user_id) {
 }, 10, 2);
 ```
 
-Or set user meta in wp-admin (Users → Profile → Yue Translator plan).
+Or set user meta in wp-admin (Users → Profile → JyutTranslate plan).
 
 ## Cookie auth in the iframe
 

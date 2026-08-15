@@ -1,20 +1,20 @@
 import { useId } from 'react'
 
 type JyutLogoProps = {
-  /** Full Jyut wordmark, or the J+粵 monogram alone. */
+  /** Full JyutTranslate wordmark, or the J+粵 monogram alone. */
   variant?: 'lockup' | 'mark'
   className?: string
   title?: string
 }
 
 /**
- * Jyut lockup: Syne “Jyut” with 粵 seated in the J.
+ * JyutTranslate lockup: Syne “JyutTranslate” with 粵 seated in the J.
  * 粵 is the character whose Jyutping is “jyut” — one name, two scripts.
  */
 export function JyutLogo({
   variant = 'lockup',
   className = '',
-  title = 'Jyut',
+  title = 'JyutTranslate',
 }: JyutLogoProps) {
   const rawId = useId().replace(/:/g, '')
   const jadeId = `jyut-jade-${rawId}`
@@ -61,7 +61,7 @@ export function JyutLogo({
   return (
     <svg
       className={`jyut-logo jyut-logo--lockup ${className}`.trim()}
-      viewBox="0 0 168 56"
+      viewBox="0 0 340 56"
       role="img"
       aria-label={title}
     >
@@ -73,21 +73,21 @@ export function JyutLogo({
           <stop offset="1" stopColor="var(--jade-deep)" />
         </linearGradient>
       </defs>
-      <text className="jyut-logo-latin" x="0" y="46" fontSize="46">
+      <text className="jyut-logo-latin" x="0" y="42" fontSize="36">
         J
       </text>
       <text
         className="jyut-logo-yue"
-        x="16.5"
-        y="33"
+        x="14"
+        y="30"
         textAnchor="middle"
-        fontSize="17"
+        fontSize="14"
         fill={`url(#${jadeId})`}
       >
         粵
       </text>
-      <text className="jyut-logo-latin" x="34" y="46" fontSize="46">
-        yut
+      <text className="jyut-logo-latin" x="28" y="42" fontSize="36">
+        yutTranslate
       </text>
     </svg>
   )

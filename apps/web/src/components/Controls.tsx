@@ -52,7 +52,7 @@ export function Controls() {
               className={mode === m.id ? 'active' : ''}
               onClick={() => setMode(m.id)}
             >
-              <BiText copy={m.copy} size="sm" />
+              <BiText copy={m.copy} size="sm" layout="inline" />
             </button>
           ))}
         </div>
@@ -67,7 +67,7 @@ export function Controls() {
               aria-label={biPlain(liveCopy)}
             >
               <span className="live-dot" />
-              <BiText copy={liveCopy} size="sm" />
+              <BiText copy={liveCopy} size="sm" layout="inline" />
             </motion.button>
           </div>
         ) : null}
@@ -76,7 +76,7 @@ export function Controls() {
           {mode !== 'text' ? (
             <label className="opt-cell opt-dir">
               <span className="opt-kicker">
-                <BiText copy={ui.direction} size="sm" />
+                <BiText copy={ui.direction} size="sm" layout="inline" />
               </span>
               <select
                 value={speakDirection}
@@ -94,7 +94,7 @@ export function Controls() {
 
           <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
             <span className="opt-kicker">
-              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
+              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" layout="inline" />
             </span>
             <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
               <input
@@ -111,7 +111,7 @@ export function Controls() {
 
           <button type="button" className="opt-cell opt-clear" onClick={clearHistory}>
             <span className="opt-kicker">
-              <BiText copy={ui.clear} size="sm" />
+              <BiText copy={ui.clear} size="sm" layout="inline" />
             </span>
           </button>
         </div>

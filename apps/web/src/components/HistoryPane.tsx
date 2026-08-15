@@ -1,0 +1,58 @@
+import { useEffect, useState } from 'react'
+import { HistoryCard } from './HistoryCard'
+import { BiText } from './BiText'
+import { useYueStore } from '../lib/store'
+import type { ConversationTurn } from '../lib/types'
+import { ui } from '../lib/uiCopy'
+
+export function HistoryPane({
+  turns,
+  className = '',
+  onOpenBreakdown,
+}: {
+  turns: ConversationTurn[]
+  className?: string
+  /** Optional hook when a breakdown opens (e.g. close mobile sheet). */
+  onOpenBreakdown?: () => void
+}) {
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const latestId = turns[0]?.id ?? null
+  const [expandedId, setExpandedId] = useState<string | null>(latestId)
+
+  useEffect(() => {
+    if (latestId) setExpandedId(latestId)
+  }, [latestId])
+
+  const handleBreakdown = (phrase: string) => {
+    openBreakdown(phrase)
+    onOpenBreakdown?.()
+  }
+
+  if (!turns.length) {
+    return (
+      <div className={`history-pane history-pane--empty ${className}`.trim()}>
+        <p className="history-empty">
+          <BiText copy={ui.historyEmpty} size="sm" layout="inline" />
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`history-pane ${className}`.trim()}>
+      <div className="history-card-list" role="list">
+        {turns.map((turn, i) => (
+          <div key={turn.id} role="listitem">
+            <HistoryCard
+              turn={turn}
+              isLatest={i === 0}
+              expanded={expandedId === turn.id}
+              onToggle={() => setExpandedId((id) => (id === turn.id ? null : turn.id))}
+              onBreakdown={handleBreakdown}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

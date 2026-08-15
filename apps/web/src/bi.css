@@ -5,18 +5,40 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
   max-width: 100%;
+  overflow: visible;
 }
 
 .jyutping {
   position: relative;
+  display: inline-block;
+  max-width: 100%;
   font-family: var(--font-body);
   font-size: 0.58em;
   font-weight: 500;
   letter-spacing: 0.02em;
-  line-height: 1.3;
+  /* Tall digits / punctuation were clipping under tight line-boxes + button UA styles. */
+  line-height: 1.45;
+  padding: 0.18em 0 0.06em;
+  overflow: visible;
   color: color-mix(in srgb, var(--mint) 62%, transparent);
+  white-space: nowrap;
+  overflow: visible;
+}
+
+button.jyutping,
+button.jyutping--activate {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  overflow: visible;
 }
 
 .jyutping--hint {
@@ -31,11 +53,10 @@
 @keyframes ink-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    /* Opacity-only: translateY was getting clipped by overflow:hidden ancestors. */
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -61,7 +82,7 @@
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
-  z-index: 40;
+  z-index: 90;
   padding: 7px 12px;
   border-radius: 10px;
   font-family: var(--font-body);
@@ -84,7 +105,70 @@
   backdrop-filter: blur(22px) saturate(1.35);
   -webkit-backdrop-filter: blur(22px) saturate(1.35);
   pointer-events: none;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
   white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.jp-pop--ruby {
+  padding: 8px 10px 9px;
+  letter-spacing: 0;
+  white-space: normal;
+  max-width: min(92vw, 36rem);
+}
+
+.jp-pop-ruby {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.35rem 0.55rem;
+}
+
+.jp-pop-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  min-width: 1.1em;
+}
+
+.jp-pop-han {
+  font-size: 0.95rem;
+  font-weight: 620;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--ink) 92%, transparent);
+}
+
+.jp-pop-syl {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  color: color-mix(in srgb, var(--mint) 78%, transparent);
+  text-transform: none;
+}
+
+.jp-pop-fallback {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.jp-pop-han-line {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--ink) 90%, transparent);
+}
+
+.jp-pop-syl-line {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
 }
 
 [data-theme='light'] .jp-pop {
@@ -102,6 +186,14 @@
     0 12px 28px rgba(7, 19, 31, 0.1);
 }
 
+[data-theme='light'] .jp-pop-han {
+  color: color-mix(in srgb, var(--ink) 88%, transparent);
+}
+
+[data-theme='light'] .jp-pop-syl {
+  color: color-mix(in srgb, var(--jade-deep) 72%, transparent);
+}
+
 .bi {
   display: flex;
   flex-direction: column;
@@ -110,6 +202,19 @@
   max-width: 100%;
   text-align: start;
   line-height: 1.25;
+}
+
+.bi--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.4em;
+  row-gap: 0.08rem;
+}
+
+.bi--inline .bi-zh {
+  font-size: 0.95em;
+  font-weight: 550;
 }
 
 .bi--en,
@@ -126,6 +231,7 @@
   display: inline-flex;
   align-items: baseline;
   max-width: 100%;
+  overflow: visible;
 }
 
 .bi-zh-wrap--hint {

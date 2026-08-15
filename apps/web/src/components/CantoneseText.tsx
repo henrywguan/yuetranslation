@@ -109,7 +109,7 @@ export function CantoneseText({
         ) : (
           <span {...bind} className="jyutping jyutping--hint ink-in" lang="en">
             {jp}
-            <JpPop show={show} id={tipId} text={jp} />
+            <JpPop show={show} id={tipId} text={jp} han={trimmed} />
           </span>
         )
       ) : null}

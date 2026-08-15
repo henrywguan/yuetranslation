@@ -99,6 +99,32 @@ function loadPacked(basename: string): PackedDict | null {
 const ccCanto = loadPacked('cc-canto-gloss')
 const wordshk = wordshkEnabled() ? loadPacked('wordshk-gloss') : null
 
+export type LexiconEntry = {
+  trad: string
+  gloss: string
+  jyutping: string | null
+  source: 'seed' | 'cc-canto' | 'wordshk'
+}
+
+/** Walk seed + optional words.hk + CC-Canto for offline lexicon indexing. */
+export function eachLexiconEntry(fn: (entry: LexiconEntry) => void) {
+  for (const [trad, gloss] of Object.entries(SEED)) {
+    fn({ trad, gloss, jyutping: null, source: 'seed' })
+  }
+  if (wordshk) {
+    for (const [trad, e] of Object.entries(wordshk.entries)) {
+      if (SEED[trad]) continue
+      fn({ trad, gloss: e.gloss, jyutping: e.jyutping, source: 'wordshk' })
+    }
+  }
+  if (ccCanto) {
+    for (const [trad, e] of Object.entries(ccCanto.entries)) {
+      if (SEED[trad]) continue
+      fn({ trad, gloss: e.gloss, jyutping: e.jyutping, source: 'cc-canto' })
+    }
+  }
+}
+
 export function glossStats() {
   return {
     seed: Object.keys(SEED).length,
@@ -128,5 +154,35 @@ export function lookupGloss(token: string): GlossHit | null {
     return { gloss: e.gloss, jyutping: e.jyutping, source: 'cc-canto' }
   }
   return null
+}
+
+/**
+ * Greedy longest-match glosses over a Cantonese string (max 4 chars).
+ * Used by offline lexicon translate for segmented 粵→EN coverage.
+ */
+export function segmentGlosses(text: string): Array<{ surface: string; hit: GlossHit | null }> {
+  const chars = Array.from(text.trim())
+  const out: Array<{ surface: string; hit: GlossHit | null }> = []
+  let i = 0
+  while (i < chars.length) {
+    let matched: GlossHit | null = null
+    let len = 1
+    const max = Math.min(4, chars.length - i)
+    for (let L = max; L >= 1; L--) {
+      const surface = chars.slice(i, i + L).join('')
+      const hit = lookupGloss(surface)
+      if (hit) {
+        matched = hit
+        len = L
+        out.push({ surface, hit })
+        break
+      }
+    }
+    if (!matched) {
+      out.push({ surface: chars[i], hit: null })
+    }
+    i += len
+  }
+  return out
 }
 
