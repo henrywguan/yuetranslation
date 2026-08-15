@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "license": "App seed data (not CC-Canto / words.hk). Replace or extend via import scripts — see README.md.",
+  "entries": [
+    {
+      "id": "en-hello",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hello",
+      "text": "你好",
+      "alternatives": ["哈囉", "嗨"],
+      "register": "colloquial",
+      "tags": ["greeting"]
+    },
+    {
+      "id": "en-hi",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hi",
+      "text": "嗨",
+      "alternatives": ["你好", "哈囉"],
+      "register": "colloquial",
+      "tags": ["greeting"]
+    },
+    {
+      "id": "en-thank-you",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "thank you",
+      "text": "唔該",
+      "alternatives": ["多謝"],
+      "register": "colloquial",
+      "tags": ["courtesy"]
+    },
+    {
+      "id": "en-thanks",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "thanks",
+      "text": "多謝",
+      "alternatives": ["唔該"],
+      "register": "colloquial",
+      "tags": ["courtesy"]
+    },
+    {
+      "id": "en-good-morning",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "good morning",
+      "text": "早晨",
+      "alternatives": ["早安"],
+      "register": "colloquial",
+      "tags": ["greeting"]
+    },
+    {
+      "id": "en-how-are-you",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "how are you",
+      "text": "你好嗎",
+      "alternatives": ["最近點呀", "你幾好嗎"],
+      "register": "colloquial",
+      "tags": ["conversation"]
+    },
+    {
+      "id": "en-what-are-you-doing",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "what are you doing",
+      "text": "你做緊咩呀？",
+      "alternatives": ["你而家做緊咩？", "做緊咩呀你？", "你喺度做緊乜嘢？"],
+      "register": "colloquial",
+      "tags": ["conversation"]
+    },
+    {
+      "id": "en-whats-up",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "what's up",
+      "text": "點呀？",
+      "alternatives": ["最近點？", "有咩事？"],
+      "register": "colloquial",
+      "tags": ["conversation"]
+    },
+    {
+      "id": "en-where-is-the-mtr",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "where is the mtr",
+      "text": "地鐵喺邊度",
+      "alternatives": ["港鐵喺邊呀", "地鐵站喺邊"],
+      "register": "colloquial",
+      "tags": ["travel"]
+    },
+    {
+      "id": "en-how-much-is-this",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "how much is this",
+      "text": "呢個幾錢",
+      "alternatives": ["呢樣幾多錢", "請問賣幾錢"],
+      "register": "colloquial",
+      "tags": ["shopping"]
+    },
+    {
+      "id": "en-yes",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "yes",
+      "text": "係",
+      "alternatives": ["係呀"],
+      "register": "colloquial",
+      "tags": ["conversation"]
+    },
+    {
+      "id": "en-no",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "no",
+      "text": "唔係",
+      "alternatives": ["唔係呀"],
+      "register": "colloquial",
+      "tags": ["conversation"]
+    },
+    {
+      "id": "yue-nei-hou",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "你好",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": ["greeting"]
+    },
+    {
+      "id": "yue-m4-goi",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "唔該",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": ["courtesy"]
+    },
+    {
+      "id": "yue-do1-ze6",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "多謝",
+      "text": "Thanks",
+      "register": "colloquial",
+      "tags": ["courtesy"]
+    },
+    {
+      "id": "yue-zou2-san4",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "早晨",
+      "text": "Good morning",
+      "register": "colloquial",
+      "tags": ["greeting"]
+    },
+    {
+      "id": "yue-what-doing",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "你做緊咩呀？",
+      "text": "What are you doing?",
+      "register": "colloquial",
+      "tags": ["conversation"]
+    },
+    {
+      "id": "yue-mtr",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "地鐵喺邊度",
+      "text": "Where is the MTR?",
+      "register": "colloquial",
+      "tags": ["travel"]
+    },
+    {
+      "id": "yue-how-much",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "呢個幾錢",
+      "text": "How much is this?",
+      "register": "colloquial",
+      "tags": ["shopping"]
+    }
+  ]
+}

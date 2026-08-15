@@ -102,6 +102,7 @@ async function runTranslation(
   try {
     const result = await translateText(text, lang, to, {
       includeAlternatives: isFinal && lang === 'en',
+      stage: isFinal ? 'final' : 'interim',
     })
     const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq && !isFinal) return
