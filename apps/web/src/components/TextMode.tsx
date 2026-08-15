@@ -3,6 +3,7 @@ import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -15,6 +16,7 @@ export function TextMode() {
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
+  const translating = useYueStore((s) => s.translating)
   const latest = history[0]
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
 
@@ -35,12 +37,23 @@ export function TextMode() {
         placeholder={`${placeholder.en} / ${placeholder.zh}`}
         aria-label={biPlain(placeholder)}
       />
-      <button type="button" className="primary" onClick={() => void translateTyped(text, from)}>
-        <BiText copy={ui.translate} size="sm" />
+      <button
+        type="button"
+        className="primary"
+        disabled={translating || !text.trim()}
+        onClick={() => void translateTyped(text, from)}
+      >
+        {translating ? (
+          <BiText copy={ui.translating} size="sm" hideJp />
+        ) : (
+          <BiText copy={ui.translate} size="sm" />
+        )}
       </button>
       <div className="text-lower">
         <PaneParticles />
-        {latest ? (
+        {translating ? (
+          <TranslateThinking className="text-thinking" />
+        ) : latest ? (
           <InkSettle id={latest.id} className="text-result">
             <p className="muted">
               <BiText copy={ui.result} size="sm" />

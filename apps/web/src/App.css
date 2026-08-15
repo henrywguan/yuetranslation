@@ -1185,3 +1185,10 @@
     margin: 0 auto;
   }
 }
+
+.solo-thinking,
+.pane-thinking,
+.text-thinking {
+  position: relative;
+  z-index: 1;
+}

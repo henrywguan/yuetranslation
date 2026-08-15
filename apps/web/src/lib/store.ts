@@ -30,6 +30,10 @@ type State = {
   yueAlternatives: string[]
   /** Active Cantonese phrase shown in the character-breakdown frame (null = closed). */
   breakdownPhrase: string | null
+  /** True while any translate request is in flight. */
+  translating: boolean
+  /** Target language of the in-flight translation (for pane placement). */
+  translatingTo: Lang | null
   history: ConversationTurn[]
   session: LiveSession | null
   setMode: (mode: Mode) => void
@@ -50,6 +54,19 @@ const pending = new Map<Lang, number>()
 const timers = new Map<Lang, ReturnType<typeof setTimeout>>()
 let speakToken = 0
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+let translateInFlight = 0
+
+function beginTranslate(set: (p: Partial<State>) => void, to: Lang) {
+  translateInFlight += 1
+  set({ translating: true, translatingTo: to })
+}
+
+function endTranslate(set: (p: Partial<State>) => void) {
+  translateInFlight = Math.max(0, translateInFlight - 1)
+  if (translateInFlight === 0) {
+    set({ translating: false, translatingTo: null })
+  }
+}
 
 function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
@@ -99,6 +116,8 @@ async function runTranslation(
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
   pending.set(lang, seq)
+  beginTranslate(set, to)
+  let speak: { text: string; lang: Lang } | null = null
   try {
     const result = await translateText(text, lang, to, {
       includeAlternatives: isFinal && lang === 'en',
@@ -139,10 +158,13 @@ async function runTranslation(
         ...(history ? { history } : {}),
       })
     }
-    if (isFinal) await speakFinal(get, set, result.text, to)
+    if (isFinal) speak = { text: result.text, lang: to }
   } catch (e) {
     set({ error: String(e) })
+  } finally {
+    endTranslate(set)
   }
+  if (speak) await speakFinal(get, set, speak.text, speak.lang)
 }
 
 function stopHeartbeat() {
@@ -167,6 +189,8 @@ export const useYueStore = create<State>((set, get) => ({
   yueDefinition: '',
   yueAlternatives: [],
   breakdownPhrase: null,
+  translating: false,
+  translatingTo: null,
   history: [],
   session: null,
 
@@ -371,6 +395,8 @@ export const useYueStore = create<State>((set, get) => ({
       yueDefinition: '',
       yueAlternatives: [],
       breakdownPhrase: null,
+      translating: false,
+      translatingTo: null,
     })
   },
 }))

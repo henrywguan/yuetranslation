@@ -13,6 +13,7 @@ export const ui = {
   startListening: { en: 'Start listening', zh: '開始聽', jp: 'hoi1 ci2 teng1' },
   listeningStop: { en: 'Listening — tap to stop', zh: '聽緊——撳一下停', jp: 'teng1 gan2 — gam2 jat1 haa5 ting4' },
   speaking: { en: 'Speaking…', zh: '講緊…', jp: 'gong2 gan2…' },
+  translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },
 
   direction: { en: 'Direction', zh: '方向', jp: 'fong1 hoeng3' },
   dirAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
