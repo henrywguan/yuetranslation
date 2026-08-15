@@ -831,11 +831,6 @@
   font: inherit;
 }
 
-.text-mode .primary {
-  background: linear-gradient(135deg, var(--jade), var(--jade-mid));
-  color: var(--on-jade);
-}
-
 .text-result .result-text {
   margin: 4px 0 0;
   font-size: 1.35rem;

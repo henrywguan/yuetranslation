@@ -1,5 +1,5 @@
 /** Character glosses for demo phrases and common spoken particles. */
-export const CHAR_SENSE: Record<string, string> = {
+const CHAR_SENSE: Record<string, string> = {
   你: 'you',
   好: 'good; well',
   嗎: 'question particle',

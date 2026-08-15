@@ -41,7 +41,7 @@ export function Controls() {
 
   return (
     <div className="controls">
-      <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
+      <div className="dock">
         <div className="mode-tabs" role="tablist" aria-label={biPlain(ui.modeTablist)}>
           {MODES.map((m) => (
             <button

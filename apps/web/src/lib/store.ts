@@ -87,7 +87,6 @@ async function runTranslation(
   lang: Lang,
   text: string,
   isFinal: boolean,
-  keepSource = !isFinal,
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
@@ -108,15 +107,20 @@ async function runTranslation(
       : undefined
     if (lang === 'en') {
       set({
-        enInterim: keepSource ? text : '',
+        enInterim: text,
+        yueInterim: '',
+        enTranslation: '',
         yueTranslation: result.text,
-        yueDefinition: result.definition || (isFinal ? text : get().yueDefinition),
+        yueDefinition: result.definition || (isFinal ? text : ''),
         ...(history ? { history } : {}),
       })
     } else {
       set({
-        yueInterim: keepSource ? text : '',
+        yueInterim: text,
+        enInterim: '',
+        yueTranslation: '',
         enTranslation: result.text,
+        yueDefinition: result.definition || '',
         ...(history ? { history } : {}),
       })
     }
@@ -206,8 +210,25 @@ export const useYueStore = create<State>((set, get) => ({
         const lang = resolveSourceLang(detected, get().speakDirection)
         stopSpeaking()
         get().session?.setPlaybackActive(false)
-        if (lang === 'en') set({ enInterim: text, yueInterim: '', status: 'listening' })
-        else set({ yueInterim: text, enInterim: '', status: 'listening' })
+        if (lang === 'en') {
+          set({
+            enInterim: text,
+            yueInterim: '',
+            enTranslation: '',
+            yueTranslation: '',
+            yueDefinition: '',
+            status: 'listening',
+          })
+        } else {
+          set({
+            yueInterim: text,
+            enInterim: '',
+            enTranslation: '',
+            yueTranslation: '',
+            yueDefinition: '',
+            status: 'listening',
+          })
+        }
         const t = timers.get(lang)
         if (t) clearTimeout(t)
         timers.set(
@@ -275,7 +296,7 @@ export const useYueStore = create<State>((set, get) => ({
     const trimmed = text.trim()
     if (!trimmed) return
     set({ error: null })
-    await runTranslation(get, set, from, trimmed, true, true)
+    await runTranslation(get, set, from, trimmed, true)
   },
 
   clearHistory: () => {

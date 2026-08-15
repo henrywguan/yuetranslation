@@ -55,7 +55,7 @@ export function ConversationView() {
         <div className="pane-face">
           <header>
             <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
-            <p lang="zh-HK">{ui.holdFacingYou.zh}</p>
+            <p lang="zh-HK">{ui.friendLooksHere.zh}</p>
           </header>
           <div className="pane-body">
             <p className="heard">

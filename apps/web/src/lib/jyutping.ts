@@ -7,7 +7,7 @@ export function hasHan(text: string) {
  * LSHK Jyutping §4 Chao tone letters.
  * @see https://jyutping.org/en/jyutping/
  */
-export const TONE_LETTERS: Record<string, string> = {
+const TONE_LETTERS: Record<string, string> = {
   '1': '˥',
   '2': '˧˥',
   '3': '˧',

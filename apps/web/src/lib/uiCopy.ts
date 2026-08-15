@@ -23,11 +23,6 @@ export const ui = {
   english: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   cantonese: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   speakToTranslate: { en: 'Speak to translate', zh: '講嘢嚟翻譯', jp: 'gong2 je5 lai4 faan1 jik6' },
-  translationHere: {
-    en: 'Translation appears here',
-    zh: '翻譯會喺呢度出現',
-    jp: 'faan1 jik6 wui5 hai2 nei1 dou6 ceot1 jin6',
-  },
   listening: { en: 'Listening…', zh: '聽緊…', jp: 'teng1 gan2…' },
   holdFacingYou: { en: 'Hold phone facing you', zh: '手機對住自己', jp: 'sau2 gei1 deoi3 zyu6 zi6 gei2' },
   friendLooksHere: {
