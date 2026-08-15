@@ -840,11 +840,19 @@
   cursor: pointer;
   color: var(--on-jade);
   background: linear-gradient(135deg, var(--jade), var(--jade-mid));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .live-btn.on {
   background: linear-gradient(135deg, var(--danger), var(--danger-deep));
   color: #fff;
+}
+
+.live-btn.thinking {
+  background: linear-gradient(135deg, var(--jade-mid), var(--jade));
+  color: var(--on-jade);
 }
 
 .live-btn.blocked,

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -21,23 +22,60 @@ export function Controls() {
   const setMode = useYueStore((s) => s.setMode)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
-  const toggleLive = useYueStore((s) => s.toggleLive)
+  const translating = useYueStore((s) => s.translating)
+  const startHold = useYueStore((s) => s.startHold)
+  const endHold = useYueStore((s) => s.endHold)
   const speakDirection = useYueStore((s) => s.speakDirection)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const setAutoSpeak = useYueStore((s) => s.setAutoSpeak)
   const entitlement = useYueStore((s) => s.entitlement)
   const clearHistory = useYueStore((s) => s.clearHistory)
+  const activePointer = useRef<number | null>(null)
 
   const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
   const speakOn = autoSpeak && canAutoSpeak
 
-  const liveCopy = live
-    ? status === 'speaking'
-      ? ui.speaking
-      : ui.listeningStop
-    : ui.startListening
+  const liveCopy = translating
+    ? ui.translating
+    : live || status === 'listening'
+      ? status === 'speaking'
+        ? ui.speaking
+        : ui.releaseWhenDone
+      : ui.holdToSpeak
+
+  const onHoldPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return
+    if (!canLive && !live) return
+    if (activePointer.current != null) return
+    activePointer.current = e.pointerId
+    e.currentTarget.setPointerCapture(e.pointerId)
+    void startHold()
+  }
+
+  const onHoldPointerUp = (e: PointerEvent<HTMLButtonElement>) => {
+    if (activePointer.current !== e.pointerId) return
+    activePointer.current = null
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    void endHold()
+  }
+
+  const onHoldKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== ' ' && e.key !== 'Enter') return
+    if (e.repeat) return
+    e.preventDefault()
+    if (!canLive && !live) return
+    void startHold()
+  }
+
+  const onHoldKeyUp = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== ' ' && e.key !== 'Enter') return
+    e.preventDefault()
+    void endHold()
+  }
 
   return (
     <div className="controls">
@@ -60,11 +98,17 @@ export function Controls() {
           <div className="live-row">
             <motion.button
               type="button"
-              className={`live-btn ${live ? 'on' : ''} ${!canLive && !live ? 'blocked' : ''}`}
-              onClick={() => void toggleLive()}
+              className={`live-btn ${live ? 'on' : ''} ${translating ? 'thinking' : ''} ${!canLive && !live ? 'blocked' : ''}`}
+              onPointerDown={onHoldPointerDown}
+              onPointerUp={onHoldPointerUp}
+              onPointerCancel={onHoldPointerUp}
+              onKeyDown={onHoldKeyDown}
+              onKeyUp={onHoldKeyUp}
+              onContextMenu={(e) => e.preventDefault()}
               whileTap={{ scale: 0.97 }}
               disabled={!live && !canLive}
               aria-label={biPlain(liveCopy)}
+              aria-pressed={live}
             >
               <span className="live-dot" />
               <BiText copy={liveCopy} size="sm" layout="inline" />

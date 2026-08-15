@@ -63,7 +63,12 @@ type State = {
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
   loadBootstrap: () => Promise<void>
-  toggleLive: () => Promise<void>
+  /** Press-and-hold: start mic + STT (no translate yet). */
+  startHold: () => Promise<void>
+  /** Release: stop mic, then one final translate (shows TranslateThinking). */
+  endHold: () => Promise<void>
+  /** Cancel live without translating (mode switch / quota). */
+  stopLive: () => Promise<void>
   translateTyped: (text: string, from: Lang) => Promise<void>
   openBreakdown: (phrase: string) => void
   closeBreakdown: () => void
@@ -74,10 +79,25 @@ type State = {
 
 let translateSeq = 0
 const pending = new Map<Lang, number>()
-const timers = new Map<Lang, ReturnType<typeof setTimeout>>()
 let speakToken = 0
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let translateInFlight = 0
+/** True while the user is pressing the live button. */
+let holding = false
+/** Accept late STT finals briefly after release while the recognizer stops. */
+let flushingHold = false
+/** Monotonic id so a late release cannot translate a newer hold. */
+let holdGen = 0
+/** Finalized STT segments accumulated during the current hold. */
+let holdFinals: string[] = []
+let holdLang: Lang | null = null
+let holdInterim = ''
+/** Prevent overlapping startHold calls. */
+let startingHold = false
+
+function holdActive(gen: number) {
+  return gen === holdGen && (holding || flushingHold)
+}
 
 function beginTranslate(set: (p: Partial<State>) => void, to: Lang) {
   translateInFlight += 1
@@ -145,6 +165,7 @@ async function runTranslation(
   lang: Lang,
   text: string,
   isFinal: boolean,
+  opts?: { lean?: boolean },
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
@@ -152,9 +173,11 @@ async function runTranslation(
   beginTranslate(set, to)
   let speak: { text: string; lang: Lang } | null = null
   const isFace = get().mode === 'conversation'
+  const lean = Boolean(opts?.lean) || isFace
   try {
     const result = await translateText(text, lang, to, {
-      includeAlternatives: isFinal && lang === 'en' && !isFace,
+      // Live hold-to-speak skips variation fan-out for lower latency.
+      includeAlternatives: isFinal && lang === 'en' && !lean,
       stage: isFinal ? 'final' : 'interim',
     })
     const alternatives = result.alternatives || []
@@ -236,6 +259,112 @@ function stopHeartbeat() {
   }
 }
 
+function resetHoldCapture() {
+  holdFinals = []
+  holdLang = null
+  holdInterim = ''
+}
+
+function holdSourceText() {
+  const parts = [...holdFinals]
+  const interim = holdInterim.trim()
+  if (interim) parts.push(interim)
+  return parts.join(' ').replace(/\s+/g, ' ').trim()
+}
+
+function applyHoldSource(
+  get: () => State,
+  set: (p: Partial<State>) => void,
+  lang: Lang,
+  text: string,
+) {
+  stopSpeaking()
+  get().session?.setPlaybackActive(false)
+  const isFace = get().mode === 'conversation'
+  if (isFace) {
+    const face = get().face
+    if (lang === 'en') {
+      set({
+        face: {
+          ...face,
+          enInterim: text,
+          yueInterim: '',
+          enTranslation: '',
+          yueTranslation: '',
+          yueDefinition: '',
+        },
+        status: 'listening',
+      })
+    } else {
+      set({
+        face: {
+          ...face,
+          yueInterim: text,
+          enInterim: '',
+          enTranslation: '',
+          yueTranslation: '',
+          yueDefinition: '',
+        },
+        status: 'listening',
+      })
+    }
+  } else if (lang === 'en') {
+    set({
+      enInterim: text,
+      yueInterim: '',
+      enTranslation: '',
+      yueTranslation: '',
+      yueDefinition: '',
+      yueAlternatives: [],
+      status: 'listening',
+    })
+  } else {
+    set({
+      yueInterim: text,
+      enInterim: '',
+      enTranslation: '',
+      yueTranslation: '',
+      yueDefinition: '',
+      yueAlternatives: [],
+      status: 'listening',
+    })
+  }
+}
+
+async function tearDownLive(
+  get: () => State,
+  set: (p: Partial<State>) => void,
+  opts?: { clearInterim?: boolean },
+) {
+  speakToken += 1
+  stopSpeaking()
+  stopHeartbeat()
+  holding = false
+  startingHold = false
+  const session = get().session
+  if (session) {
+    try {
+      await session.stop()
+    } catch {
+      /* ignore */
+    }
+  }
+  const clearInterim = opts?.clearInterim !== false
+  set({
+    live: false,
+    session: null,
+    status: get().translating ? get().status : 'idle',
+    ...(clearInterim
+      ? {
+          enInterim: '',
+          yueInterim: '',
+          face: { ...get().face, enInterim: '', yueInterim: '' },
+        }
+      : {}),
+  })
+  void get().loadBootstrap()
+}
+
 export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
   speakDirection: 'auto',
@@ -258,9 +387,9 @@ export const useYueStore = create<State>((set, get) => ({
   session: null,
 
   setMode: (mode) => {
-    if (get().live) {
+    if (get().live || startingHold || holding) {
       void get()
-        .toggleLive()
+        .stopLive()
         .then(() => set({ mode }))
       return
     }
@@ -309,25 +438,16 @@ export const useYueStore = create<State>((set, get) => ({
     }
   },
 
-  toggleLive: async () => {
-    const { live, session, entitlement } = get()
-    if (live && session) {
-      speakToken += 1
-      stopSpeaking()
-      stopHeartbeat()
-      await session.stop()
-      set({
-        live: false,
-        session: null,
-        status: 'idle',
-        enInterim: '',
-        yueInterim: '',
-        face: { ...get().face, enInterim: '', yueInterim: '' },
-      })
-      void get().loadBootstrap()
-      return
-    }
+  stopLive: async () => {
+    resetHoldCapture()
+    flushingHold = false
+    holdGen += 1
+    await tearDownLive(get, set, { clearInterim: true })
+  },
 
+  startHold: async () => {
+    if (holding || startingHold || flushingHold || get().live) return
+    const { entitlement } = get()
     if (entitlement && !entitlement.allowed.live) {
       const msg =
         entitlement.reason === 'login_required'
@@ -337,92 +457,42 @@ export const useYueStore = create<State>((set, get) => ({
       return
     }
 
+    const gen = ++holdGen
+    holding = true
+    flushingHold = false
+    startingHold = true
+    resetHoldCapture()
     set({ error: null })
+
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
+        if (!holdActive(gen)) return
         const lang = resolveSourceLang(detected, get().speakDirection)
-        stopSpeaking()
-        get().session?.setPlaybackActive(false)
-        const isFace = get().mode === 'conversation'
-        if (isFace) {
-          const face = get().face
-          if (lang === 'en') {
-            set({
-              face: {
-                ...face,
-                enInterim: text,
-                yueInterim: '',
-                enTranslation: '',
-                yueTranslation: '',
-                yueDefinition: '',
-              },
-              status: 'listening',
-            })
-          } else {
-            set({
-              face: {
-                ...face,
-                yueInterim: text,
-                enInterim: '',
-                enTranslation: '',
-                yueTranslation: '',
-                yueDefinition: '',
-              },
-              status: 'listening',
-            })
-          }
-        } else if (lang === 'en') {
-          set({
-            enInterim: text,
-            yueInterim: '',
-            enTranslation: '',
-            yueTranslation: '',
-            yueDefinition: '',
-            yueAlternatives: [],
-            status: 'listening',
-          })
-        } else {
-          set({
-            yueInterim: text,
-            enInterim: '',
-            enTranslation: '',
-            yueTranslation: '',
-            yueDefinition: '',
-            yueAlternatives: [],
-            status: 'listening',
-          })
-        }
-        const t = timers.get(lang)
-        if (t) clearTimeout(t)
-        timers.set(
-          lang,
-          setTimeout(() => void runTranslation(get, set, lang, text, false), 220),
-        )
+        holdLang = lang
+        holdInterim = text
+        applyHoldSource(get, set, lang, holdSourceText())
       },
       onFinal: (detected: Lang, text: string) => {
+        // Accumulate STT while held — translate only on release (option A).
+        if (!holdActive(gen)) return
         const lang = resolveSourceLang(detected, get().speakDirection)
-        const t = timers.get(lang)
-        if (t) clearTimeout(t)
-        speakToken += 1
-        stopSpeaking()
-        if (get().mode === 'conversation') {
-          const face = get().face
-          if (lang === 'en') set({ face: { ...face, enInterim: text } })
-          else set({ face: { ...face, yueInterim: text } })
-        } else if (lang === 'en') {
-          set({ enInterim: text })
-        } else {
-          set({ yueInterim: text })
-        }
-        void runTranslation(get, set, lang, text, true)
+        const trimmed = text.trim()
+        if (!trimmed) return
+        holdLang = lang
+        holdFinals.push(trimmed)
+        holdInterim = ''
+        applyHoldSource(get, set, lang, holdSourceText())
       },
       onBargeIn: () => {
-        // Kept for future intentional interrupt; echo is ignored in the speech sessions instead.
         speakToken += 1
         if (get().live) set({ status: 'listening' })
       },
-      onError: (message: string) => set({ error: message }),
+      onError: (message: string) => {
+        if (gen !== holdGen) return
+        set({ error: message })
+      },
       onStatus: (status: 'listening' | 'idle' | 'speaking') => {
+        if (gen !== holdGen) return
         if (get().status === 'speaking' && status === 'listening') return
         if (status !== 'speaking') set({ status })
       },
@@ -433,12 +503,35 @@ export const useYueStore = create<State>((set, get) => ({
       const d = get().speakDirection
       next = createWebSpeechSession(handlers, d === 'en' || d === 'yue' ? d : undefined)
     }
+    if (gen !== holdGen || !holding) {
+      startingHold = false
+      if (next) {
+        try {
+          await next.stop()
+        } catch {
+          /* ignore */
+        }
+      }
+      return
+    }
     if (!next) {
+      holding = false
+      startingHold = false
       set({ error: 'Speech unavailable. Configure Azure Speech or use Chromium.' })
       return
     }
     try {
       await next.start()
+      if (gen !== holdGen || !holding) {
+        startingHold = false
+        try {
+          await next.stop()
+        } catch {
+          /* ignore */
+        }
+        return
+      }
+      startingHold = false
       set({ live: true, session: next, status: 'listening' })
       stopHeartbeat()
       heartbeatTimer = setInterval(() => {
@@ -446,19 +539,52 @@ export const useYueStore = create<State>((set, get) => ({
           .then((ent) => {
             set({ entitlement: ent })
             if (!ent.allowed.live) {
-              void get().toggleLive()
+              void get().stopLive()
               set({ error: 'Live minutes exhausted for this month.' })
             }
           })
           .catch((err) => {
             if (err?.code === 401 || err?.code === 402) {
-              void get().toggleLive()
+              void get().stopLive()
               set({ error: err.message, entitlement: err.entitlement || get().entitlement })
             }
           })
       }, 15000)
     } catch (e) {
+      holding = false
+      startingHold = false
       set({ error: String(e), live: false, session: null })
+    }
+  },
+
+  endHold: async () => {
+    if (!holding && !startingHold && !get().live && !flushingHold) return
+    const gen = holdGen
+    holding = false
+    flushingHold = true
+    // Stop recognizer first so Azure/WebSpeech can flush a final transcript.
+    await tearDownLive(get, set, { clearInterim: false })
+    await new Promise((r) => setTimeout(r, 160))
+    if (gen !== holdGen) {
+      flushingHold = false
+      return
+    }
+
+    const lang = holdLang
+    const text = holdSourceText()
+    resetHoldCapture()
+    flushingHold = false
+
+    if (lang && text) {
+      // Existing TranslateThinking loader via translating / translatingTo.
+      await runTranslation(get, set, lang, text, true, { lean: true })
+    } else {
+      set({
+        status: 'idle',
+        enInterim: '',
+        yueInterim: '',
+        face: { ...get().face, enInterim: '', yueInterim: '' },
+      })
     }
   },
 
