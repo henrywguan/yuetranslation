@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Yue — English ↔ Cantonese',
-        short_name: 'Yue',
+        name: 'Jyut — English ↔ Cantonese',
+        short_name: 'Jyut',
         theme_color: '#07131f',
         background_color: '#07131f',
         display: 'standalone',

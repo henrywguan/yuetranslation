@@ -1,6 +1,6 @@
 import cors from 'cors'
 import express from 'express'
-import { cloudReady, env } from './env.js'
+import { cloudReady, env, openaiConfigured } from './env.js'
 import { localEntitlement } from './entitlements.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { translate } from './translate.js'
@@ -12,20 +12,21 @@ app.use(express.json({ limit: '1mb' }))
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
-    product: 'yue',
-    service: 'yue-api',
+    product: 'jyut',
+    service: 'jyut-api',
     mode: 'cloud',
     cloudReady: cloudReady(),
     engines: {
       azureSpeech: Boolean(env.azureSpeechKey),
-      openai: Boolean(env.openaiApiKey),
-      demo: !env.openaiApiKey,
+      openai: openaiConfigured(),
+      demo: !openaiConfigured(),
     },
     entitlement: localEntitlement(),
   })
 })
 
 app.get('/api/entitlement', (_req, res) => {
+  // Convenience alias for /health.entitlement — kept for WP/local tooling.
   res.json(localEntitlement())
 })
 
@@ -95,6 +96,6 @@ app.post('/api/usage/heartbeat', (req, res) => {
 })
 
 app.listen(env.port, () => {
-  console.log(`Yue API on http://localhost:${env.port}`)
+  console.log(`Jyut API on http://localhost:${env.port}`)
   console.log(`Cloud ready: ${cloudReady()} (openMode=${env.openMode})`)
 })

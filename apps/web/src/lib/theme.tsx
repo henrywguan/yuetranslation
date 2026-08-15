@@ -14,7 +14,6 @@ const STORAGE_KEY = 'yue-theme'
 
 type ThemeContextValue = {
   theme: Theme
-  setTheme: (theme: Theme) => void
   toggleTheme: () => void
 }
 
@@ -31,7 +30,7 @@ function readStoredTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
 
-export function applyTheme(theme: Theme) {
+function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme
   document.documentElement.style.colorScheme = theme
 }
@@ -50,16 +49,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (meta) meta.setAttribute('content', theme === 'light' ? '#eef5f8' : '#07131f')
   }, [theme])
 
-  const setTheme = useCallback((next: Theme) => setThemeState(next), [])
   const toggleTheme = useCallback(
     () => setThemeState((t) => (t === 'dark' ? 'light' : 'dark')),
     [],
   )
 
-  const value = useMemo(
-    () => ({ theme, setTheme, toggleTheme }),
-    [theme, setTheme, toggleTheme],
-  )
+  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

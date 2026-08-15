@@ -61,7 +61,7 @@ export async function translateText(
   text: string,
   from: Lang,
   to: Lang,
-): Promise<{ text: string; engine: string }> {
+): Promise<{ text: string; engine: string; definition?: string }> {
   const res = await apiFetch('/translate', {
     method: 'POST',
     body: JSON.stringify({ text, from, to }),

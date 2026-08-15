@@ -6,46 +6,6 @@
   font-family: var(--font-body);
 }
 
-/* ---------- Shader background ---------- */
-.shader-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  overflow: hidden;
-}
-
-.shader-fallback {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(42% 38% at 72% 42%, color-mix(in srgb, var(--jade) 28%, transparent) 0%, transparent 70%),
-    radial-gradient(36% 32% at 18% 28%, color-mix(in srgb, var(--jade-deep) 30%, transparent) 0%, transparent 68%),
-    radial-gradient(40% 36% at 40% 78%, color-mix(in srgb, var(--harbor-blue) 34%, transparent) 0%, transparent 70%),
-    linear-gradient(165deg, var(--harbor) 0%, var(--harbor-mid) 48%, var(--harbor-deep) 100%);
-}
-
-.shader-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.shader-grain {
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  pointer-events: none;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-[data-theme='light'] .shader-grain {
-  opacity: 0.025;
-  mix-blend-mode: multiply;
-}
-
 /* ---------- Scroll progress ---------- */
 .scroll-progress {
   position: fixed;
@@ -107,6 +67,11 @@
   font-weight: 800;
   font-size: 1.5rem;
   letter-spacing: -0.03em;
+}
+
+.ln-brand-logo {
+  width: 7.6rem;
+  height: auto;
 }
 
 .ln-nav-links {
@@ -401,16 +366,6 @@
     0 0 0 1px color-mix(in srgb, var(--jade) 18%, transparent);
 }
 
-.ln-mode-zh {
-  position: absolute;
-  top: -10px;
-  right: 6px;
-  font-size: 5.5rem;
-  font-weight: 700;
-  color: color-mix(in srgb, var(--jade) 12%, transparent);
-  pointer-events: none;
-}
-
 .ln-mode-card h3 {
   font-family: var(--font-display);
   font-size: 1.4rem;
@@ -570,15 +525,21 @@
   padding-top: 18px;
 }
 
-.demo-output {
+.demo-result-row {
+  margin-top: 8px;
+}
+
+.demo-result-row .demo-output-text,
+.demo-result-row .cantonese-block {
   font-family: var(--font-body);
   font-size: clamp(1.6rem, 4vw, 2.2rem);
   font-weight: 600;
   color: var(--ink-bright);
 }
 
-.demo-jyutping {
-  color: rgba(154, 240, 222, 0.8) !important;
+.demo-result-row .result-with-def-gloss {
+  font-size: 1rem;
+  max-width: min(16rem, 46%);
 }
 
 .demo-error {
@@ -984,4 +945,57 @@
   .ln-scroll-hint span {
     animation: none;
   }
+}
+
+/* ---------- Bilingual overrides (landing chrome) ---------- */
+.landing .bi--lg .bi-zh {
+  font-size: 0.48em;
+  letter-spacing: 0.02em;
+}
+
+.ln-nav-links .bi {
+  align-items: center;
+  gap: 0.08rem;
+}
+
+.ln-nav-cta .bi {
+  color: inherit;
+  align-items: center;
+}
+
+.ln-nav-cta .bi-zh {
+  color: color-mix(in srgb, var(--on-jade) 88%, transparent);
+}
+
+.ln-title .bi {
+  display: inline-flex;
+  vertical-align: baseline;
+  margin-right: 0.15em;
+}
+
+.ln-hero-inner .ln-sub.bi,
+.ln-p.bi {
+  max-width: min(620px, 100%);
+}
+
+.ln-hero-stats .bi-en {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.ln-mode-card p .bi,
+.ln-feature p .bi,
+.ln-price-card li .bi,
+.pp-faq-item h3 .bi,
+.pp-faq-item p .bi {
+  width: 100%;
+}
+
+.demo-label .bi,
+.demo-go .bi,
+.btn-primary .bi,
+.btn-ghost .bi,
+.pp-toggle .bi {
+  align-items: center;
 }

@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { translateText } from '../lib/api'
-import { CantoneseText } from '../components/CantoneseText'
+import { BiText } from '../components/BiText'
+import { ResultWithDefinition } from '../components/ResultWithDefinition'
+import { ui } from '../lib/uiCopy'
 
 const SAMPLES = ['hello', 'thank you', 'good morning', 'how are you']
 
 export function LiveDemo() {
   const [text, setText] = useState('good morning')
   const [result, setResult] = useState('早晨')
+  const [definition, setDefinition] = useState('good morning')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -18,8 +21,9 @@ export function LiveDemo() {
     try {
       const res = await translateText(trimmed, 'en', 'yue')
       setResult(res.text)
+      setDefinition(res.definition || trimmed)
     } catch {
-      setError('Live API not reachable from here — this runs against your deployed backend.')
+      setError('api')
     } finally {
       setLoading(false)
     }
@@ -31,11 +35,13 @@ export function LiveDemo() {
         <span className="demo-dot" />
         <span className="demo-dot" />
         <span className="demo-dot" />
-        <span className="demo-window-label">Yue · live</span>
+        <span className="demo-window-label">
+          <BiText copy={ui.demoLive} size="sm" hideJp />
+        </span>
       </div>
 
       <label className="demo-label" htmlFor="demo-input">
-        Type English
+        <BiText copy={ui.demoTypeEn} size="sm" />
       </label>
       <div className="demo-input-row">
         <input
@@ -46,7 +52,7 @@ export function LiveDemo() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') void run(text)
           }}
-          placeholder="Say something…"
+          placeholder={`${ui.demoPlaceholder.en} / ${ui.demoPlaceholder.zh}`}
         />
         <button
           type="button"
@@ -54,7 +60,7 @@ export function LiveDemo() {
           onClick={() => void run(text)}
           disabled={loading}
         >
-          {loading ? '…' : 'Translate'}
+          {loading ? '…' : <BiText copy={ui.translate} size="sm" hideJp />}
         </button>
       </div>
 
@@ -75,11 +81,20 @@ export function LiveDemo() {
       </div>
 
       <div className="demo-result">
-        <span className="demo-label">廣東話 · Cantonese</span>
-        <div className="demo-output">
-          <CantoneseText text={result} jyutpingClassName="jyutping demo-jyutping" />
-        </div>
-        {error ? <p className="demo-error">{error}</p> : null}
+        <span className="demo-label">
+          <BiText copy={ui.demoCantonese} size="sm" />
+        </span>
+          <ResultWithDefinition
+            text={result}
+            definition={definition}
+            className="demo-result-row"
+            textClassName="demo-output-text"
+          />
+        {error ? (
+          <p className="demo-error">
+            <BiText copy={ui.demoApiError} size="sm" />
+          </p>
+        ) : null}
       </div>
     </div>
   )

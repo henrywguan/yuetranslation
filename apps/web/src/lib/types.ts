@@ -28,6 +28,8 @@ export type ConversationTurn = {
   to: Lang
   source: string
   translation: string
+  /** Short English gloss for clarity (esp. beside Cantonese results). */
+  definition?: string
   at: number
   engine?: string
 }

@@ -106,10 +106,10 @@ background:
 
 | Asset | Path | Notes |
 | --- | --- | --- |
-| Favicon / mark | [`apps/web/public/favicon.svg`](../apps/web/public/favicon.svg) | 粵 glyph on jade → harbor |
+| Favicon / mark | [`apps/web/public/favicon.svg`](../apps/web/public/favicon.svg) | Glass jade cabochon with carved 粵 |
 | PWA 192 | [`apps/web/public/pwa-192.png`](../apps/web/public/pwa-192.png) | |
 | PWA 512 | [`apps/web/public/pwa-512.png`](../apps/web/public/pwa-512.png) | |
-| Logo in UI | CSS text **粵** | No separate logo file — recreate with Syne/Noto + jade gradient |
+| Logo in UI | [`JyutLogo`](../apps/web/src/components/JyutLogo.tsx) | Syne “Jyut” with 粵 seated in the J |
 
 Theme / manifest color: `#07131f`.
 

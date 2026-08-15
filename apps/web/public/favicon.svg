@@ -1,11 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#07131f"/>
-  <circle cx="32" cy="32" r="22" fill="url(#g)"/>
-  <text x="32" y="40" text-anchor="middle" font-family="Noto Sans HK, sans-serif" font-size="28" font-weight="700" fill="#041018">粵</text>
   <defs>
-    <linearGradient id="g" x1="12" y1="10" x2="52" y2="54" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3dcfb6"/>
-      <stop offset="1" stop-color="#1f8f7a"/>
+    <clipPath id="tile">
+      <rect width="64" height="64" rx="18"/>
+    </clipPath>
+    <radialGradient id="stone" cx="36%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#6ee8d4"/>
+      <stop offset="0.42" stop-color="#2aa88f"/>
+      <stop offset="0.8" stop-color="#14564b"/>
+      <stop offset="1" stop-color="#082824"/>
+    </radialGradient>
+    <radialGradient id="orbA" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.88"/>
+      <stop offset="0.28" stop-color="#d4fff6" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#3dcfb6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orbB" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#7ef0dc" stop-opacity="0.85"/>
+      <stop offset="0.42" stop-color="#3dcfb6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#3dcfb6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orbC" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#f4fffc" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="#9af0de" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="8" y1="2" x2="38" y2="30" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="12" y1="2" x2="52" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f4fffc" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#041018" stop-opacity="0.4"/>
     </linearGradient>
   </defs>
+
+  <g clip-path="url(#tile)">
+    <rect width="64" height="64" fill="url(#stone)"/>
+    <circle cx="15" cy="13" r="20" fill="url(#orbA)"/>
+    <circle cx="54" cy="18" r="17" fill="url(#orbB)"/>
+    <circle cx="46" cy="52" r="22" fill="url(#orbC)"/>
+    <circle cx="8" cy="48" r="14" fill="url(#orbB)"/>
+    <circle cx="36" cy="6" r="11" fill="url(#orbA)"/>
+    <circle cx="28" cy="40" r="8" fill="url(#orbC)"/>
+    <path d="M9 9c11-5 24-3 30 7" stroke="url(#sheen)" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <rect x="2.25" y="2.25" width="59.5" height="59.5" rx="16.5" stroke="url(#rim)" stroke-width="1.5"/>
+
+  <text
+    x="32"
+    y="41.5"
+    text-anchor="middle"
+    font-family="Noto Sans HK, 'PingFang HK', sans-serif"
+    font-size="30"
+    font-weight="800"
+    fill="#07131f"
+  >粵</text>
 </svg>

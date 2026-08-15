@@ -67,7 +67,7 @@ export function loadSiteConfig(): Promise<SiteConfig> {
   return loadPromise
 }
 
-export function getSiteConfig(): SiteConfig {
+function getSiteConfig(): SiteConfig {
   return cached ?? merge(fromEnv(), fromQuery())
 }
 

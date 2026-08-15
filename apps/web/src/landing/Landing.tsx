@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { ShaderBackground } from './ShaderBackground'
+import { JadeGlassField } from '../components/JadeGlassField'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
@@ -8,6 +8,10 @@ import { LiveDemo } from './LiveDemo'
 import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
+import { BiText } from '../components/BiText'
+import { JyutLogo } from '../components/JyutLogo'
+import { ui } from '../lib/uiCopy'
+import { LANDING_PLANS } from './plans'
 import './landing.css'
 
 // three.js is heavy — code-split it so it never blocks first paint.
@@ -16,28 +20,16 @@ const HeroObject = lazy(() =>
 )
 
 const MODES = [
-  {
-    title: 'Solo',
-    zh: '獨白',
-    desc: 'Speak English or Cantonese and watch the translation appear full‑screen, instantly.',
-  },
-  {
-    title: 'Face to face',
-    zh: '面對面',
-    desc: 'One phone between two people — a split, mirrored view so each side reads their language.',
-  },
-  {
-    title: 'Text',
-    zh: '文字',
-    desc: 'Type either direction. Perfect for menus, signs, and messages you want to get right.',
-  },
+  { title: ui.modeSolo, desc: ui.soloDesc },
+  { title: ui.modeFace, desc: ui.faceDesc },
+  { title: ui.modeText, desc: ui.textDesc },
 ]
 
 const FEATURES = [
-  { title: 'Jyutping built in', desc: 'Romanization under every Cantonese line so you can say it, not just read it.' },
-  { title: 'Hong Kong Cantonese', desc: 'Tuned for colloquial 粵語 (係, 唔, 喺, 咗) — not Mandarin or formal written Chinese.' },
-  { title: 'Fast & fluid', desc: 'Interim results while you speak, refined finals when you pause.' },
-  { title: 'Yours to host', desc: 'Runs on WordPress with cloud speech, or fully self‑hosted when you want.' },
+  { title: ui.featJpTitle, desc: ui.featJpDesc },
+  { title: ui.featHkTitle, desc: ui.featHkDesc },
+  { title: ui.featFastTitle, desc: ui.featFastDesc },
+  { title: ui.featHostTitle, desc: ui.featHostDesc },
 ]
 
 function scrollToId(id: string) {
@@ -50,7 +42,7 @@ export function Landing() {
   return (
     <div className="landing">
       <ScrollProgress />
-      <ShaderBackground />
+      <JadeGlassField variant="marketing" />
 
       <Nav onFeatures={() => scrollToId('features')} />
 
@@ -64,34 +56,37 @@ export function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="ln-eyebrow">English ↔ 廣東話 · live translator</span>
+          <span className="ln-eyebrow">
+            <BiText copy={ui.heroEyebrow} size="sm" />
+          </span>
           <h1 className="ln-title">
-            Speak. <span className="ln-title-accent">See.</span> Understand.
+            <BiText copy={ui.heroTitleSpeak} size="lg" />{' '}
+            <span className="ln-title-accent">
+              <BiText copy={ui.heroTitleSee} size="lg" />
+            </span>{' '}
+            <BiText copy={ui.heroTitleUnderstand} size="lg" />
           </h1>
-          <p className="ln-sub">
-            Real‑time English and Cantonese translation with Jyutping — beautiful enough to
-            live on your website, fast enough for a real conversation.
-          </p>
+          <BiText className="ln-sub" copy={ui.heroSub} size="md" as="p" />
           <div className="ln-hero-cta">
             <MagneticButton className="btn-primary" onClick={() => openApp()}>
-              Launch translator
+              <BiText copy={ui.launchTranslator} size="sm" />
             </MagneticButton>
             <MagneticButton className="btn-ghost" onClick={() => scrollToId('demo')}>
-              Try the demo ↓
+              <BiText copy={ui.tryDemo} size="sm" />
             </MagneticButton>
           </div>
           <div className="ln-hero-stats">
             <div>
               <strong>2</strong>
-              <span>languages, done well</span>
+              <BiText copy={ui.statLangs} size="sm" />
             </div>
             <div>
               <strong>3</strong>
-              <span>modes</span>
+              <BiText copy={ui.statModes} size="sm" />
             </div>
             <div>
               <strong>粵</strong>
-              <span>Jyutping on every line</span>
+              <BiText copy={ui.statJyutping} size="sm" />
             </div>
           </div>
         </motion.div>
@@ -102,29 +97,34 @@ export function Landing() {
 
       <section className="ln-section" id="features">
         <Reveal className="ln-section-head">
-          <span className="ln-kicker">Three ways to talk</span>
-          <h2 className="ln-h2">One app, every conversation</h2>
+          <span className="ln-kicker">
+            <BiText copy={ui.modesKicker} size="sm" />
+          </span>
+          <h2 className="ln-h2">
+            <BiText copy={ui.modesTitle} size="lg" />
+          </h2>
         </Reveal>
 
         <Reveal className="ln-mode-grid" stagger={0.12} y={34}>
           {MODES.map((m) => (
-            <article className="ln-mode-card" key={m.title}>
-              <span className="ln-mode-zh" aria-hidden="true">
-                {m.zh}
-              </span>
-              <h3>{m.title}</h3>
-              <p>{m.desc}</p>
+            <article className="ln-mode-card" key={m.title.en}>
+              <h3>
+                <BiText copy={m.title} size="md" />
+              </h3>
+              <BiText copy={m.desc} size="sm" as="p" />
             </article>
           ))}
         </Reveal>
 
         <Reveal className="ln-feature-grid" stagger={0.08} y={24}>
           {FEATURES.map((f) => (
-            <div className="ln-feature" key={f.title}>
+            <div className="ln-feature" key={f.title.en}>
               <span className="ln-feature-dot" aria-hidden="true" />
               <div>
-                <h4>{f.title}</h4>
-                <p>{f.desc}</p>
+                <h4>
+                  <BiText copy={f.title} size="md" />
+                </h4>
+                <BiText copy={f.desc} size="sm" as="p" />
               </div>
             </div>
           ))}
@@ -133,14 +133,15 @@ export function Landing() {
 
       <section className="ln-section ln-demo" id="demo">
         <Reveal className="ln-demo-copy">
-          <span className="ln-kicker">Try it now</span>
-          <h2 className="ln-h2">Translate a phrase, live</h2>
-          <p className="ln-p">
-            This runs against the real translation API. Type anything or tap a sample and watch the
-            Cantonese — with Jyutping — appear underneath.
-          </p>
+          <span className="ln-kicker">
+            <BiText copy={ui.demoKicker} size="sm" />
+          </span>
+          <h2 className="ln-h2">
+            <BiText copy={ui.demoTitle} size="lg" />
+          </h2>
+          <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
           <MagneticButton className="btn-primary" onClick={() => openApp()}>
-            Open the full app
+            <BiText copy={ui.openFullApp} size="sm" />
           </MagneticButton>
         </Reveal>
         <Reveal className="ln-demo-stage" y={40}>
@@ -150,70 +151,72 @@ export function Landing() {
 
       <section className="ln-section" id="pricing">
         <Reveal className="ln-section-head">
-          <span className="ln-kicker">Simple pricing</span>
-          <h2 className="ln-h2">Start free. Upgrade when you talk more.</h2>
+          <span className="ln-kicker">
+            <BiText copy={ui.pricingKicker} size="sm" />
+          </span>
+          <h2 className="ln-h2">
+            <BiText copy={ui.pricingTitle} size="lg" />
+          </h2>
         </Reveal>
 
         <Reveal className="ln-price-grid" stagger={0.12} y={34}>
-          <article className="ln-price-card">
-            <h3>Free</h3>
-            <p className="ln-price">
-              $0<span>/month</span>
-            </p>
-            <ul>
-              <li>~20 minutes of live translation / month</li>
-              <li>Unlimited text translation</li>
-              <li>Jyutping on every line</li>
-              <li>Solo, Face‑to‑face & Text modes</li>
-            </ul>
-            <MagneticButton className="btn-ghost full" onClick={() => openApp()}>
-              Get started
-            </MagneticButton>
-          </article>
-
-          <article className="ln-price-card featured">
-            <span className="ln-price-badge">Most popular</span>
-            <h3>Pro</h3>
-            <p className="ln-price">
-              $9<span>/month</span>
-            </p>
-            <ul>
-              <li>~10 hours of live translation / month</li>
-              <li>Voice playback (auto‑speak)</li>
-              <li>Priority, natural Cantonese quality</li>
-              <li>Everything in Free</li>
-            </ul>
-            <MagneticButton className="btn-primary full" onClick={() => openPricing()}>
-              Go Pro
-            </MagneticButton>
-          </article>
+          {LANDING_PLANS.map((plan) => (
+            <article key={plan.id} className={`ln-price-card${plan.featured ? ' featured' : ''}`}>
+              {plan.featured ? (
+                <span className="ln-price-badge">
+                  <BiText copy={ui.mostPopular} size="sm" />
+                </span>
+              ) : null}
+              <h3>
+                <BiText copy={plan.name} size="md" />
+              </h3>
+              <p className="ln-price">
+                ${plan.monthly}
+                <span>
+                  <BiText copy={ui.perMonth} size="sm" hideJp />
+                </span>
+              </p>
+              <ul>
+                {plan.features.map((f) => (
+                  <li key={f.en}>
+                    <BiText copy={f} size="sm" />
+                  </li>
+                ))}
+              </ul>
+              <MagneticButton
+                className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
+                onClick={() => (plan.ctaOpens === 'app' ? openApp() : openPricing())}
+              >
+                <BiText copy={plan.cta} size="sm" />
+              </MagneticButton>
+            </article>
+          ))}
         </Reveal>
 
         <Reveal className="ln-price-more">
           <button type="button" className="ln-textlink" onClick={() => openPricing()}>
-            Compare all plans →
+            <BiText copy={ui.comparePlans} size="sm" />
           </button>
         </Reveal>
       </section>
 
       <section className="ln-cta-band">
         <Reveal>
-          <h2 className="ln-h2">Ready to be understood?</h2>
-          <p className="ln-p">Open Yue and have your first bilingual conversation in seconds.</p>
+          <h2 className="ln-h2">
+            <BiText copy={ui.ctaReady} size="lg" />
+          </h2>
+          <BiText className="ln-p" copy={ui.ctaBody} size="sm" as="p" />
           <MagneticButton className="btn-primary" onClick={() => openApp()}>
-            Launch translator
+            <BiText copy={ui.launchTranslator} size="sm" />
           </MagneticButton>
         </Reveal>
       </section>
 
       <footer className="ln-footer">
         <div className="ln-brand">
-          <span className="ln-brand-mark" aria-hidden="true">
-            粵
-          </span>
-          <span className="ln-brand-name">Yue</span>
+          <JyutLogo className="ln-brand-logo" />
         </div>
-        <p>English ↔ Cantonese, done beautifully.</p>
+        <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>
     </div>
   )

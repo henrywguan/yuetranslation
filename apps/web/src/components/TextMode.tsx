@@ -1,6 +1,10 @@
 import { useState } from 'react'
-import { CantoneseText } from './CantoneseText'
+import { BiText } from './BiText'
+import { InkSettle } from './InkSettle'
+import { PaneParticles } from './PaneParticles'
+import { ResultWithDefinition } from './ResultWithDefinition'
 import { useYueStore } from '../lib/store'
+import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
 export function TextMode() {
@@ -9,6 +13,7 @@ export function TextMode() {
   const translateTyped = useYueStore((s) => s.translateTyped)
   const history = useYueStore((s) => s.history)
   const latest = history[0]
+  const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
 
   return (
     <div className="text-mode">
@@ -24,25 +29,27 @@ export function TextMode() {
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
-        placeholder={from === 'en' ? 'Type English…' : '輸入粵語…'}
+        placeholder={`${placeholder.en} / ${placeholder.zh}`}
+        aria-label={biPlain(placeholder)}
       />
-      <button
-        type="button"
-        className="primary"
-        onClick={() => void translateTyped(text, from)}
-      >
-        Translate
+      <button type="button" className="primary" onClick={() => void translateTyped(text, from)}>
+        <BiText copy={ui.translate} size="sm" />
       </button>
-      {latest ? (
-        <div className="text-result">
-          <p className="muted">Result</p>
-          {latest.to === 'yue' ? (
-            <CantoneseText text={latest.translation} className="result-text" />
-          ) : (
-            <p className="result-text">{latest.translation}</p>
-          )}
-        </div>
-      ) : null}
+      <div className="text-lower">
+        <PaneParticles />
+        {latest ? (
+          <InkSettle id={latest.id} className="text-result">
+            <p className="muted">
+              <BiText copy={ui.result} size="sm" />
+            </p>
+            <ResultWithDefinition
+              text={latest.translation}
+              definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
+              cantonese={latest.to === 'yue'}
+            />
+          </InkSettle>
+        ) : null}
+      </div>
     </div>
   )
 }

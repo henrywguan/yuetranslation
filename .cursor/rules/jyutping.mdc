@@ -1,0 +1,16 @@
+---
+description: LSHK Jyutping scheme — tones and romanization
+globs: apps/web/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+Jyutping follows the Linguistic Society of Hong Kong scheme:
+
+https://jyutping.org/en/jyutping/
+
+In-repo summary (especially §4 tones): `docs/jyutping.md`
+
+- Compact UI: ASCII tone numbers after each syllable (`zou2 san4`)
+- Detailed expansions: add Chao tone letters from §4 (`zou2 ˧˥  san4 ˨˩`)
+  - 1 ˥ · 2 ˧˥ · 3 ˧ · 4 ˨˩ · 5 ˩˧ · 6 ˨
+- Do not superscript the tone numbers
