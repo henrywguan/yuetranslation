@@ -593,6 +593,7 @@
   text-align: inherit;
   cursor: pointer;
   border-radius: 10px;
+  overflow: visible;
 }
 
 .cantonese-activate:hover,

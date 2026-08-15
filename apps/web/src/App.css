@@ -795,6 +795,13 @@
   margin: 4px 0 0;
   font-size: 1.35rem;
   font-weight: 600;
+  line-height: 1.35;
+}
+
+.text-result,
+.text-result .cantonese-block,
+.text-result .jyutping {
+  overflow: visible;
 }
 
 .translation-alts {
@@ -840,6 +847,7 @@
   text-align: inherit;
   cursor: pointer;
   border-radius: 10px;
+  overflow: visible;
   transition: background 0.18s ease, box-shadow 0.18s ease;
 }
 
