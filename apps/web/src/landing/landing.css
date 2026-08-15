@@ -202,7 +202,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   /* Floor must fit ~320–390px viewports; old 2.8rem min overflowed. */
-  font-size: clamp(2.15rem, 7.2vw + 0.6rem, 6rem);
+  font-size: clamp(2.15rem, 7.2vw + 0.6rem, 5.4rem);
   line-height: 1.05;
   letter-spacing: -0.04em;
   margin: 0 0 22px;
@@ -223,7 +223,7 @@
   font-size: clamp(1rem, 2.2vw + 0.55rem, 1.35rem);
   line-height: 1.55;
   color: var(--muted);
-  max-width: min(620px, 100%);
+  max-width: min(640px, 100%);
   margin: 0 auto 34px;
 }
 
@@ -239,19 +239,40 @@
   flex-wrap: wrap;
   gap: clamp(20px, 6vw, 56px);
   justify-content: center;
+  align-items: flex-start;
   margin-top: 56px;
+  text-align: center;
 }
 
-.ln-hero-stats div {
+.ln-hero-stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: min(9.5rem, 28vw);
 }
 
-.ln-hero-stats strong {
+.ln-hero-stat strong {
   font-family: var(--font-display);
   font-size: 2rem;
+  line-height: 1;
   color: var(--ink);
+}
+
+.ln-hero-stat--deepseek {
+  gap: 10px;
+}
+
+.ln-deepseek-mark {
+  width: 44px;
+  height: 33px;
+  color: #4d6bfe;
+  flex: none;
+}
+
+[data-theme='light'] .ln-deepseek-mark {
+  color: #4d6bfe;
 }
 
 .ln-hero-stats span {
@@ -1093,8 +1114,17 @@
     margin-top: 36px;
   }
 
-  .ln-hero-stats strong {
+  .ln-hero-stat {
+    min-width: min(8.5rem, 42vw);
+  }
+
+  .ln-hero-stat strong {
     font-size: 1.55rem;
+  }
+
+  .ln-deepseek-mark {
+    width: 38px;
+    height: 28px;
   }
 
   .ln-demo {
@@ -1144,20 +1174,49 @@
 }
 
 .ln-title .bi {
-  display: inline-flex;
-  vertical-align: baseline;
-  margin-right: 0.15em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28em;
+  width: 100%;
+  margin: 0;
+}
+
+.ln-title .bi-en {
+  background: linear-gradient(120deg, var(--jade), var(--jade-bright) 55%, #b8ead0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ln-title .bi-zh {
+  font-size: clamp(0.95rem, 2.4vw + 0.45rem, 1.45rem);
+  font-weight: 560;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
 }
 
 .ln-hero-inner .ln-sub.bi,
 .ln-p.bi {
-  max-width: min(620px, 100%);
+  max-width: min(640px, 100%);
+  align-items: center;
+  text-align: center;
+}
+
+.ln-hero-stats .bi {
+  align-items: center;
+  text-align: center;
+  width: 100%;
 }
 
 .ln-hero-stats .bi-en {
   color: var(--muted);
   font-size: 0.92rem;
   font-weight: 500;
+}
+
+.ln-hero-stats .bi-zh {
+  text-align: center;
 }
 
 .ln-mode-card p .bi,

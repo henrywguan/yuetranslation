@@ -9,6 +9,7 @@ import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
+import { DeepSeekMark } from '../components/DeepSeekMark'
 import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
 import { LANDING_PLANS } from './plans'
@@ -60,11 +61,7 @@ export function Landing() {
             <BiText copy={ui.heroEyebrow} size="sm" />
           </span>
           <h1 className="ln-title">
-            <BiText copy={ui.heroTitleSpeak} size="lg" />{' '}
-            <span className="ln-title-accent">
-              <BiText copy={ui.heroTitleSee} size="lg" />
-            </span>{' '}
-            <BiText copy={ui.heroTitleUnderstand} size="lg" />
+            <BiText copy={ui.heroTitle} size="lg" />
           </h1>
           <BiText className="ln-sub" copy={ui.heroSub} size="md" as="p" />
           <div className="ln-hero-cta">
@@ -76,15 +73,15 @@ export function Landing() {
             </MagneticButton>
           </div>
           <div className="ln-hero-stats">
-            <div>
-              <strong>2</strong>
-              <BiText copy={ui.statLangs} size="sm" />
+            <div className="ln-hero-stat ln-hero-stat--deepseek">
+              <DeepSeekMark className="ln-deepseek-mark" />
+              <BiText copy={ui.statDeepseek} size="sm" />
             </div>
-            <div>
+            <div className="ln-hero-stat">
               <strong>3</strong>
               <BiText copy={ui.statModes} size="sm" />
             </div>
-            <div>
+            <div className="ln-hero-stat">
               <strong>粵</strong>
               <BiText copy={ui.statJyutping} size="sm" />
             </div>
