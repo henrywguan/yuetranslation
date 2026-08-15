@@ -2,7 +2,10 @@
   position: relative;
   min-height: 100dvh;
   color: var(--ink);
-  overflow-x: hidden;
+  /* clip (not hidden) so we don't create a nested vertical scrollport that
+     chops the pricing table / Jyutping popups at the bottom. */
+  overflow-x: clip;
+  overflow-y: visible;
   font-family: var(--font-body);
   padding-bottom: 15px;
 }
@@ -34,8 +37,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px clamp(16px, 5vw, 56px);
-  backdrop-filter: blur(18px) saturate(1.35);
-  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   background: var(--nav-scrim);
   border-bottom: 1px solid var(--glass-border);
 }
@@ -137,9 +140,8 @@
 
 .btn-ghost {
   color: var(--ink);
-  background: var(--surface);
+  background: var(--surface-strong);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
 }
 
 .btn-ghost:hover {
@@ -417,11 +419,9 @@
   position: relative;
   padding: 30px 26px;
   border-radius: 26px;
-  background: var(--glass);
+  background: color-mix(in srgb, var(--harbor) 82%, transparent);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
   overflow: hidden;
   transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
@@ -495,10 +495,8 @@
 .demo-card {
   padding: 22px;
   border-radius: 28px;
-  background: var(--glass);
+  background: color-mix(in srgb, var(--harbor) 86%, transparent);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px) saturate(1.25);
-  -webkit-backdrop-filter: blur(20px) saturate(1.25);
   box-shadow: var(--shadow);
 }
 
@@ -663,6 +661,7 @@
   text-align: inherit;
   cursor: pointer;
   border-radius: 10px;
+  overflow: visible;
 }
 
 .cantonese-activate:hover,
@@ -805,11 +804,9 @@
   position: relative;
   padding: 32px 28px;
   border-radius: 28px;
-  background: var(--glass);
+  background: color-mix(in srgb, var(--harbor) 84%, transparent);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
   display: flex;
   flex-direction: column;
 }
@@ -889,10 +886,9 @@
   margin: 0 auto;
   padding: clamp(60px, 10vw, 110px) clamp(20px, 5vw, 40px);
   border-radius: 32px;
-  background: var(--glass);
+  background: color-mix(in srgb, var(--harbor) 84%, transparent);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(16px);
 }
 
 .ln-cta-band .ln-p {
@@ -1019,30 +1015,36 @@
   color: var(--muted);
 }
 
-/* Comparison table */
+/* Comparison table — fluid width, no nested scroll (keeps Jyutping popups visible). */
 .pp-table-wrap {
   max-width: 900px;
   margin: 0 auto;
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .pp-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 620px;
+  table-layout: fixed;
 }
 
 .pp-table th,
 .pp-table td {
-  padding: 15px 18px;
+  padding: 14px clamp(8px, 1.8vw, 18px);
   text-align: center;
+  vertical-align: top;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: visible;
 }
 
 .pp-table thead th {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: clamp(0.95rem, 2.4vw, 1.1rem);
   color: var(--ink);
+}
+
+.pp-table thead th:first-child {
+  width: 30%;
 }
 
 .pp-table tbody th {
@@ -1051,8 +1053,23 @@
   font-weight: 500;
 }
 
+.pp-table tbody th .bi {
+  width: 100%;
+}
+
 .pp-table td {
   color: var(--ink);
+}
+
+.pp-table td .bi {
+  align-items: center;
+  width: 100%;
+}
+
+/* Room under the last rows so hover Jyutping tips aren't flush-clipped. */
+.pp-table tbody tr:last-child th,
+.pp-table tbody tr:last-child td {
+  padding-bottom: 28px;
 }
 
 .pp-col-featured {
@@ -1063,9 +1080,36 @@
 
 .pp-note {
   margin-top: 14px;
+  margin-bottom: 8px;
   font-size: 0.8rem;
   color: var(--muted);
   text-align: center;
+}
+
+.pp-note .bi {
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .pp-table thead th:first-child {
+    width: 36%;
+  }
+
+  .pp-table th,
+  .pp-table td {
+    padding: 12px 6px;
+  }
+
+  .pp-table tbody th .bi-en,
+  .pp-table td .bi-en {
+    font-size: 0.88em;
+  }
+
+  .pp-table tbody th .bi-zh,
+  .pp-table td .bi-zh {
+    font-size: 0.84em;
+  }
 }
 
 /* FAQ */
@@ -1080,13 +1124,12 @@
 .pp-faq-item {
   padding: 24px;
   border-radius: 18px;
-  background: rgba(9, 22, 34, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
+  background: var(--surface-strong);
+  border: 1px solid var(--glass-border);
 }
 
 .pp-faq-item h3 {
-  margin: 0 0 10px;
+  margin: 0 0 14px;
   font-size: 1.05rem;
 }
 
@@ -1094,6 +1137,49 @@
   margin: 0;
   color: var(--muted);
   line-height: 1.55;
+}
+
+/* ~15px between EN / 粵, with a soft jade hairline in the gap. */
+.pp-faq-item h3 .bi,
+.pp-faq-item p .bi {
+  gap: 15px;
+}
+
+.pp-faq-item .bi:not(.bi--en):not(.bi--zh) > .bi-en {
+  position: relative;
+  padding-bottom: 1px;
+}
+
+.pp-faq-item .bi:not(.bi--en):not(.bi--zh) > .bi-en::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: calc(-15px / 2 - 0.5px);
+  width: min(2.75rem, 42%);
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--jade-bright) 85%, transparent),
+    color-mix(in srgb, var(--jade) 45%, transparent) 55%,
+    transparent
+  );
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--jade) 70%, transparent),
+    0 0 14px color-mix(in srgb, var(--jade-bright) 35%, transparent);
+  pointer-events: none;
+}
+
+[data-theme='light'] .pp-faq-item .bi:not(.bi--en):not(.bi--zh) > .bi-en::after {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--jade-deep) 70%, transparent),
+    color-mix(in srgb, var(--jade) 40%, transparent) 55%,
+    transparent
+  );
+  box-shadow:
+    0 0 5px color-mix(in srgb, var(--jade) 45%, transparent),
+    0 0 12px color-mix(in srgb, var(--jade) 22%, transparent);
 }
 
 /* ---------- Responsive ---------- */

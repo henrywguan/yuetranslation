@@ -105,7 +105,7 @@ async function runTranslation(
       stage: isFinal ? 'final' : 'interim',
     })
     const alternatives = result.alternatives || []
-    if (pending.get(lang) !== seq && !isFinal) return
+    if (pending.get(lang) !== seq) return
     const definition = result.definition || (lang === 'en' ? text : '')
     const history = isFinal
       ? nextHistory(get, {
@@ -266,8 +266,8 @@ export const useYueStore = create<State>((set, get) => ({
         void runTranslation(get, set, lang, text, true)
       },
       onBargeIn: () => {
+        // Kept for future intentional interrupt; echo is ignored in the speech sessions instead.
         speakToken += 1
-        get().session?.setPlaybackActive(false)
         if (get().live) set({ status: 'listening' })
       },
       onError: (message: string) => set({ error: message }),
@@ -374,3 +374,7 @@ export const useYueStore = create<State>((set, get) => ({
     })
   },
 }))
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  ;(window as unknown as { __yueStore?: typeof useYueStore }).__yueStore = useYueStore
+}

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { motion } from 'framer-motion'
+import { MotionConfig, motion } from 'framer-motion'
 import { JadeGlassField } from '../components/JadeGlassField'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
@@ -40,6 +40,7 @@ export function Landing() {
   useSmoothScroll(true)
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="landing">
       <ScrollProgress />
       <JadeGlassField variant="marketing" />
@@ -213,5 +214,6 @@ export function Landing() {
         <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>
     </div>
+    </MotionConfig>
   )
 }

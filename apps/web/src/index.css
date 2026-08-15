@@ -344,7 +344,7 @@ html[data-theme='dark'] {
 }
 
 .jade-glass-field--marketing .jg-grain {
-  opacity: 0.03;
+  display: none;
 }
 
 [data-theme='light'] .jg-grain {

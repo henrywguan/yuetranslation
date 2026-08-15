@@ -11,6 +11,7 @@ import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
 import { ThemeToggle } from './components/ThemeToggle'
+import { TranslationHistory } from './components/TranslationHistory'
 import { useYueStore } from './lib/store'
 import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
@@ -88,6 +89,7 @@ export function TranslatorApp() {
         ) : null}
 
         <Controls />
+        <TranslationHistory />
         <CharacterBreakdownHost />
       </div>
     </MotionConfig>

@@ -7,6 +7,9 @@ import { useTheme } from '../lib/theme'
 /**
  * Precious jade-glass hero bubbles with real transmission / refraction
  * via MeshPhysicalMaterial + PMREM RoomEnvironment.
+ *
+ * Perf notes: only the hero orb uses full transmission; satellites are cheaper
+ * glass. RAF pauses when offscreen / tab hidden and is capped ~30fps.
  */
 export function HeroObject() {
   const mountRef = useRef<HTMLDivElement>(null)
@@ -22,11 +25,11 @@ export function HeroObject() {
     const light = theme === 'light'
 
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: false,
       alpha: true,
       powerPreference: 'high-performance',
     })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
     renderer.setSize(width, height)
     renderer.setClearColor(0x000000, 0)
     renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -54,7 +57,7 @@ export function HeroObject() {
 
     // Soft colored backdrop so refraction has something beautiful to bend
     const back = new THREE.Mesh(
-      new THREE.SphereGeometry(8, 32, 32),
+      new THREE.SphereGeometry(8, 24, 24),
       new THREE.MeshBasicMaterial({
         color: cool,
         side: THREE.BackSide,
@@ -102,33 +105,47 @@ export function HeroObject() {
 
     const bubbles: THREE.Mesh[] = []
     const specs = [
-      { r: 1.2, pos: new THREE.Vector3(0.4, 0.05, 0), speed: 0.1 },
-      { r: 0.5, pos: new THREE.Vector3(-1.2, 0.55, 0.55), speed: 0.16 },
-      { r: 0.38, pos: new THREE.Vector3(1.15, -0.48, 0.65), speed: 0.2 },
-      { r: 0.24, pos: new THREE.Vector3(-0.4, -0.72, 0.35), speed: 0.24 },
+      { r: 1.2, pos: new THREE.Vector3(0.4, 0.05, 0), speed: 0.1, transmit: true, segs: 48 },
+      { r: 0.5, pos: new THREE.Vector3(-1.2, 0.55, 0.55), speed: 0.16, transmit: false, segs: 28 },
+      { r: 0.38, pos: new THREE.Vector3(1.15, -0.48, 0.65), speed: 0.2, transmit: false, segs: 24 },
+      { r: 0.24, pos: new THREE.Vector3(-0.4, -0.72, 0.35), speed: 0.24, transmit: false, segs: 20 },
     ]
 
     for (const s of specs) {
-      const mat = new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color('#f4fffc'),
-        metalness: 0,
-        roughness: 0.01,
-        transmission: 1,
-        thickness: 1.65,
-        ior: 1.48,
-        transparent: true,
-        opacity: 1,
-        clearcoat: 1,
-        clearcoatRoughness: 0.02,
-        attenuationColor: new THREE.Color(light ? '#3dcfb6' : '#2ab89d'),
-        attenuationDistance: light ? 5.5 : 4.2,
-        specularIntensity: 1,
-        envMapIntensity: light ? 1.4 : 1.85,
-        sheen: 0.15,
-        sheenRoughness: 0.25,
-        sheenColor: jade,
-      })
-      const mesh = new THREE.Mesh(new THREE.SphereGeometry(s.r, 96, 96), mat)
+      const mat = s.transmit
+        ? new THREE.MeshPhysicalMaterial({
+            color: new THREE.Color('#f4fffc'),
+            metalness: 0,
+            roughness: 0.02,
+            transmission: 1,
+            thickness: 1.65,
+            ior: 1.48,
+            transparent: true,
+            opacity: 1,
+            clearcoat: 1,
+            clearcoatRoughness: 0.04,
+            attenuationColor: new THREE.Color(light ? '#3dcfb6' : '#2ab89d'),
+            attenuationDistance: light ? 5.5 : 4.2,
+            specularIntensity: 1,
+            envMapIntensity: light ? 1.4 : 1.85,
+            sheen: 0.12,
+            sheenRoughness: 0.28,
+            sheenColor: jade,
+          })
+        : new THREE.MeshPhysicalMaterial({
+            // Satellites: reflective glass shell without transmission (big GPU save).
+            color: new THREE.Color('#eefaf7'),
+            metalness: 0,
+            roughness: 0.08,
+            transmission: 0,
+            transparent: true,
+            opacity: light ? 0.55 : 0.62,
+            clearcoat: 0.85,
+            clearcoatRoughness: 0.08,
+            envMapIntensity: light ? 1.1 : 1.4,
+            depthWrite: false,
+          })
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(s.r, s.segs, s.segs), mat)
       mesh.position.copy(s.pos)
       group.add(mesh)
       bubbles.push(mesh)
@@ -136,7 +153,7 @@ export function HeroObject() {
 
     // Soft jade bloom sphere behind hero bubble (caught by refraction)
     const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(1.8, 32, 32),
+      new THREE.SphereGeometry(1.8, 24, 24),
       new THREE.MeshBasicMaterial({
         color: jade,
         transparent: true,
@@ -164,10 +181,14 @@ export function HeroObject() {
     window.addEventListener('resize', resize)
 
     let raf = 0
+    let running = false
+    let inView = true
+    let lastDraw = 0
     const t0 = performance.now()
+    const frameMs = 33
 
-    const renderFrame = () => {
-      const t = (performance.now() - t0) / 1000
+    const renderFrame = (now = performance.now()) => {
+      const t = (now - t0) / 1000
       group.rotation.y = t * 0.07 + pointer.x * 0.14
       group.rotation.x = Math.sin(t * 0.18) * 0.07 + pointer.y * 0.09
       bubbles.forEach((mesh, i) => {
@@ -181,30 +202,59 @@ export function HeroObject() {
       renderer.render(scene, camera)
     }
 
-    let running = true
-    const loop = () => {
+    const loop = (now: number) => {
       if (!running) return
-      renderFrame()
+      if (now - lastDraw >= frameMs) {
+        lastDraw = now
+        renderFrame(now)
+      }
       raf = requestAnimationFrame(loop)
+    }
+
+    const startLoop = () => {
+      if (reduced || document.hidden || !inView || running) return
+      running = true
+      lastDraw = 0
+      raf = requestAnimationFrame(loop)
+    }
+
+    const stopLoop = () => {
+      running = false
+      cancelAnimationFrame(raf)
     }
 
     const onVisibility = () => {
       if (document.hidden) {
-        running = false
-        cancelAnimationFrame(raf)
-      } else if (!reduced && !running) {
-        running = true
-        loop()
+        stopLoop()
+      } else {
+        startLoop()
+        if (!running) renderFrame()
       }
     }
     document.addEventListener('visibilitychange', onVisibility)
 
+    const io =
+      typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver(
+            ([entry]) => {
+              inView = entry.isIntersecting && entry.intersectionRatio > 0.05
+              if (inView) startLoop()
+              else {
+                stopLoop()
+                renderFrame()
+              }
+            },
+            { threshold: [0, 0.05, 0.2] },
+          )
+        : null
+    io?.observe(mount)
+
     if (reduced) renderFrame()
-    else loop()
+    else startLoop()
 
     return () => {
-      running = false
-      cancelAnimationFrame(raf)
+      stopLoop()
+      io?.disconnect()
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', onPointer)
       document.removeEventListener('visibilitychange', onVisibility)
