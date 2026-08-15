@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
+/** Thin top progress bar — updates via DOM, no React re-renders on scroll. */
 export function ScrollProgress() {
-  const [progress, setProgress] = useState(0)
+  const barRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let raf = 0
     const update = () => {
       const doc = document.documentElement
       const max = doc.scrollHeight - window.innerHeight
-      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0)
+      const progress = max > 0 ? Math.min(1, window.scrollY / max) : 0
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${progress})`
+      }
       raf = 0
     }
     const onScroll = () => {
@@ -26,7 +30,7 @@ export function ScrollProgress() {
 
   return (
     <div className="scroll-progress" aria-hidden="true">
-      <div className="scroll-progress-bar" style={{ transform: `scaleX(${progress})` }} />
+      <div ref={barRef} className="scroll-progress-bar" />
     </div>
   )
 }

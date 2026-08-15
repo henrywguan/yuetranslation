@@ -109,7 +109,7 @@ background:
 | Favicon / mark | [`apps/web/public/favicon.svg`](../apps/web/public/favicon.svg) | Glass jade cabochon with carved 粵 |
 | PWA 192 | [`apps/web/public/pwa-192.png`](../apps/web/public/pwa-192.png) | |
 | PWA 512 | [`apps/web/public/pwa-512.png`](../apps/web/public/pwa-512.png) | |
-| Logo in UI | [`JyutLogo`](../apps/web/src/components/JyutLogo.tsx) | Syne “Jyut” with 粵 seated in the J |
+| Logo in UI | [`JyutLogo`](../apps/web/src/components/JyutLogo.tsx) | Syne “JyutTranslate” with 粵 seated in the J |
 
 Theme / manifest color: `#07131f`.
 
