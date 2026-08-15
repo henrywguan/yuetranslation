@@ -99,6 +99,32 @@ function loadPacked(basename: string): PackedDict | null {
 const ccCanto = loadPacked('cc-canto-gloss')
 const wordshk = wordshkEnabled() ? loadPacked('wordshk-gloss') : null
 
+export type LexiconEntry = {
+  trad: string
+  gloss: string
+  jyutping: string | null
+  source: 'seed' | 'cc-canto' | 'wordshk'
+}
+
+/** Walk seed + optional words.hk + CC-Canto for offline lexicon indexing. */
+export function eachLexiconEntry(fn: (entry: LexiconEntry) => void) {
+  for (const [trad, gloss] of Object.entries(SEED)) {
+    fn({ trad, gloss, jyutping: null, source: 'seed' })
+  }
+  if (wordshk) {
+    for (const [trad, e] of Object.entries(wordshk.entries)) {
+      if (SEED[trad]) continue
+      fn({ trad, gloss: e.gloss, jyutping: e.jyutping, source: 'wordshk' })
+    }
+  }
+  if (ccCanto) {
+    for (const [trad, e] of Object.entries(ccCanto.entries)) {
+      if (SEED[trad]) continue
+      fn({ trad, gloss: e.gloss, jyutping: e.jyutping, source: 'cc-canto' })
+    }
+  }
+}
+
 export function glossStats() {
   return {
     seed: Object.keys(SEED).length,
@@ -132,7 +158,7 @@ export function lookupGloss(token: string): GlossHit | null {
 
 /**
  * Greedy longest-match glosses over a Cantonese string (max 4 chars).
- * Used by breakdown to prefer word senses when available.
+ * Used by offline lexicon translate for segmented 粵→EN coverage.
  */
 export function segmentGlosses(text: string): Array<{ surface: string; hit: GlossHit | null }> {
   const chars = Array.from(text.trim())
@@ -159,3 +185,4 @@ export function segmentGlosses(text: string): Array<{ surface: string; hit: Glos
   }
   return out
 }
+

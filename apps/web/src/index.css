@@ -116,12 +116,6 @@ a {
   color: var(--jade);
 }
 
-.brand-mark-link {
-  border: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -140,7 +134,7 @@ a {
 }
 
 .jyut-logo--lockup {
-  width: clamp(9.4rem, 42vw, 11.6rem);
+  width: clamp(11.5rem, 52vw, 15.5rem);
   height: auto;
 }
 
@@ -344,7 +338,7 @@ html[data-theme='dark'] {
 }
 
 .jade-glass-field--marketing .jg-grain {
-  opacity: 0.03;
+  display: none;
 }
 
 [data-theme='light'] .jg-grain {

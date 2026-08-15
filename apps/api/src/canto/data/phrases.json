@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "license": "App seed data (not CC-Canto / words.hk). Replace or extend via import scripts — see README.md.",
   "entries": [
     {
@@ -8,9 +8,14 @@
       "targetLang": "yue",
       "source": "hello",
       "text": "你好",
-      "alternatives": ["哈囉", "嗨"],
+      "alternatives": [
+        "哈囉",
+        "嗨"
+      ],
       "register": "colloquial",
-      "tags": ["greeting"]
+      "tags": [
+        "greeting"
+      ]
     },
     {
       "id": "en-hi",
@@ -18,9 +23,14 @@
       "targetLang": "yue",
       "source": "hi",
       "text": "嗨",
-      "alternatives": ["你好", "哈囉"],
+      "alternatives": [
+        "你好",
+        "哈囉"
+      ],
       "register": "colloquial",
-      "tags": ["greeting"]
+      "tags": [
+        "greeting"
+      ]
     },
     {
       "id": "en-thank-you",
@@ -28,9 +38,13 @@
       "targetLang": "yue",
       "source": "thank you",
       "text": "唔該",
-      "alternatives": ["多謝"],
+      "alternatives": [
+        "多謝"
+      ],
       "register": "colloquial",
-      "tags": ["courtesy"]
+      "tags": [
+        "courtesy"
+      ]
     },
     {
       "id": "en-thanks",
@@ -38,9 +52,13 @@
       "targetLang": "yue",
       "source": "thanks",
       "text": "多謝",
-      "alternatives": ["唔該"],
+      "alternatives": [
+        "唔該"
+      ],
       "register": "colloquial",
-      "tags": ["courtesy"]
+      "tags": [
+        "courtesy"
+      ]
     },
     {
       "id": "en-good-morning",
@@ -48,9 +66,13 @@
       "targetLang": "yue",
       "source": "good morning",
       "text": "早晨",
-      "alternatives": ["早安"],
+      "alternatives": [
+        "早安"
+      ],
       "register": "colloquial",
-      "tags": ["greeting"]
+      "tags": [
+        "greeting"
+      ]
     },
     {
       "id": "en-how-are-you",
@@ -58,9 +80,14 @@
       "targetLang": "yue",
       "source": "how are you",
       "text": "你好嗎",
-      "alternatives": ["最近點呀", "你幾好嗎"],
+      "alternatives": [
+        "最近點呀",
+        "你幾好嗎"
+      ],
       "register": "colloquial",
-      "tags": ["conversation"]
+      "tags": [
+        "conversation"
+      ]
     },
     {
       "id": "en-what-are-you-doing",
@@ -68,9 +95,15 @@
       "targetLang": "yue",
       "source": "what are you doing",
       "text": "你做緊咩呀？",
-      "alternatives": ["你而家做緊咩？", "做緊咩呀你？", "你喺度做緊乜嘢？"],
+      "alternatives": [
+        "你而家做緊咩？",
+        "做緊咩呀你？",
+        "你喺度做緊乜嘢？"
+      ],
       "register": "colloquial",
-      "tags": ["conversation"]
+      "tags": [
+        "conversation"
+      ]
     },
     {
       "id": "en-whats-up",
@@ -78,9 +111,14 @@
       "targetLang": "yue",
       "source": "what's up",
       "text": "點呀？",
-      "alternatives": ["最近點？", "有咩事？"],
+      "alternatives": [
+        "最近點？",
+        "有咩事？"
+      ],
       "register": "colloquial",
-      "tags": ["conversation"]
+      "tags": [
+        "conversation"
+      ]
     },
     {
       "id": "en-where-is-the-mtr",
@@ -88,9 +126,14 @@
       "targetLang": "yue",
       "source": "where is the mtr",
       "text": "地鐵喺邊度",
-      "alternatives": ["港鐵喺邊呀", "地鐵站喺邊"],
+      "alternatives": [
+        "港鐵喺邊呀",
+        "地鐵站喺邊"
+      ],
       "register": "colloquial",
-      "tags": ["travel"]
+      "tags": [
+        "travel"
+      ]
     },
     {
       "id": "en-how-much-is-this",
@@ -98,9 +141,14 @@
       "targetLang": "yue",
       "source": "how much is this",
       "text": "呢個幾錢",
-      "alternatives": ["呢樣幾多錢", "請問賣幾錢"],
+      "alternatives": [
+        "呢樣幾多錢",
+        "請問賣幾錢"
+      ],
       "register": "colloquial",
-      "tags": ["shopping"]
+      "tags": [
+        "shopping"
+      ]
     },
     {
       "id": "en-yes",
@@ -108,9 +156,13 @@
       "targetLang": "yue",
       "source": "yes",
       "text": "係",
-      "alternatives": ["係呀"],
+      "alternatives": [
+        "係呀"
+      ],
       "register": "colloquial",
-      "tags": ["conversation"]
+      "tags": [
+        "conversation"
+      ]
     },
     {
       "id": "en-no",
@@ -118,9 +170,13 @@
       "targetLang": "yue",
       "source": "no",
       "text": "唔係",
-      "alternatives": ["唔係呀"],
+      "alternatives": [
+        "唔係呀"
+      ],
       "register": "colloquial",
-      "tags": ["conversation"]
+      "tags": [
+        "conversation"
+      ]
     },
     {
       "id": "yue-nei-hou",
@@ -129,7 +185,9 @@
       "source": "你好",
       "text": "Hello",
       "register": "colloquial",
-      "tags": ["greeting"]
+      "tags": [
+        "greeting"
+      ]
     },
     {
       "id": "yue-m4-goi",
@@ -138,7 +196,9 @@
       "source": "唔該",
       "text": "Thank you",
       "register": "colloquial",
-      "tags": ["courtesy"]
+      "tags": [
+        "courtesy"
+      ]
     },
     {
       "id": "yue-do1-ze6",
@@ -147,7 +207,9 @@
       "source": "多謝",
       "text": "Thanks",
       "register": "colloquial",
-      "tags": ["courtesy"]
+      "tags": [
+        "courtesy"
+      ]
     },
     {
       "id": "yue-zou2-san4",
@@ -156,7 +218,9 @@
       "source": "早晨",
       "text": "Good morning",
       "register": "colloquial",
-      "tags": ["greeting"]
+      "tags": [
+        "greeting"
+      ]
     },
     {
       "id": "yue-what-doing",
@@ -165,7 +229,9 @@
       "source": "你做緊咩呀？",
       "text": "What are you doing?",
       "register": "colloquial",
-      "tags": ["conversation"]
+      "tags": [
+        "conversation"
+      ]
     },
     {
       "id": "yue-mtr",
@@ -174,7 +240,9 @@
       "source": "地鐵喺邊度",
       "text": "Where is the MTR?",
       "register": "colloquial",
-      "tags": ["travel"]
+      "tags": [
+        "travel"
+      ]
     },
     {
       "id": "yue-how-much",
@@ -183,7 +251,3371 @@
       "source": "呢個幾錢",
       "text": "How much is this?",
       "register": "colloquial",
-      "tags": ["shopping"]
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-apple",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "apple",
+      "text": "蘋果",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-apple",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "蘋果",
+      "text": "Apple",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-banana",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "banana",
+      "text": "香蕉",
+      "alternatives": [
+        "香牙蕉"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-banana",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "香蕉",
+      "text": "Banana",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-orange-fruit",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "orange",
+      "text": "橙",
+      "alternatives": [
+        "橘子"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-orange-fruit",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "橙",
+      "text": "Orange",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-water",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "water",
+      "text": "水",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-water",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "水",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-tea",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "tea",
+      "text": "茶",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-tea",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "茶",
+      "text": "Tea",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-coffee",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "coffee",
+      "text": "咖啡",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-coffee",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "咖啡",
+      "text": "Coffee",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-rice",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "rice",
+      "text": "飯",
+      "alternatives": [
+        "白飯"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-rice",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "飯",
+      "text": "Rice",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-noodles",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "noodles",
+      "text": "麵",
+      "alternatives": [
+        "粉"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-noodles",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "麵",
+      "text": "Noodles",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-beer",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "beer",
+      "text": "啤酒",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-beer",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "啤酒",
+      "text": "Beer",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-milk",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "milk",
+      "text": "牛奶",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-milk",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "牛奶",
+      "text": "Milk",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-bread",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "bread",
+      "text": "麵包",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-bread",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "麵包",
+      "text": "Bread",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-egg",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "egg",
+      "text": "蛋",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-egg",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "蛋",
+      "text": "Egg",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-chicken",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "chicken",
+      "text": "雞",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-chicken",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "雞",
+      "text": "Chicken",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-fish",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "fish",
+      "text": "魚",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-fish",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "魚",
+      "text": "Fish",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-vegetables",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "vegetables",
+      "text": "蔬菜",
+      "alternatives": [
+        "菜"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-vegetables",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "蔬菜",
+      "text": "Vegetables",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-fruit",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "fruit",
+      "text": "生果",
+      "alternatives": [
+        "水果"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-fruit",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "生果",
+      "text": "Fruit",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-delicious",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "delicious",
+      "text": "好食",
+      "alternatives": [
+        "好味"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-delicious",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "好食",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-hungry",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hungry",
+      "text": "肚餓",
+      "alternatives": [
+        "餓"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-hungry",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "肚餓",
+      "text": "Hungry",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-thirsty",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "thirsty",
+      "text": "口渴",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-thirsty",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "口渴",
+      "text": "Thirsty",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-eat",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "eat",
+      "text": "食",
+      "alternatives": [
+        "食嘢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-eat",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "食",
+      "text": "Eat",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-drink",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "drink",
+      "text": "飲",
+      "alternatives": [
+        "飲嘢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-drink",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "飲",
+      "text": "Drink",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-go",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "go",
+      "text": "去",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-go",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "去",
+      "text": "Go",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-come",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "come",
+      "text": "嚟",
+      "alternatives": [
+        "來"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-come",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "嚟",
+      "text": "Come",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-want",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "want",
+      "text": "想要",
+      "alternatives": [
+        "要"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-want",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "想要",
+      "text": "Want",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-need",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "need",
+      "text": "需要",
+      "alternatives": [
+        "要"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-need",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "需要",
+      "text": "Need",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-like",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "like",
+      "text": "鍾意",
+      "alternatives": [
+        "喜歡"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-like",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "鍾意",
+      "text": "Like",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-love",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "love",
+      "text": "愛",
+      "alternatives": [
+        "鍾意"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-love",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "愛",
+      "text": "Love",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-know",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "know",
+      "text": "知",
+      "alternatives": [
+        "知道"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-know",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "知",
+      "text": "Know",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-see",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "see",
+      "text": "睇",
+      "alternatives": [
+        "見到"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-see",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "睇",
+      "text": "See",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-hear",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hear",
+      "text": "聽",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-hear",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "聽",
+      "text": "Hear",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-speak",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "speak",
+      "text": "講",
+      "alternatives": [
+        "講嘢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-speak",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "講",
+      "text": "Speak",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-help",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "help",
+      "text": "幫手",
+      "alternatives": [
+        "幫"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-help",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "幫手",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-wait",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "wait",
+      "text": "等",
+      "alternatives": [
+        "等陣"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-wait",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "等",
+      "text": "Wait",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-buy",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "buy",
+      "text": "買",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-buy",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "買",
+      "text": "Buy",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-sell",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "sell",
+      "text": "賣",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-sell",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "賣",
+      "text": "Sell",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-open",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "open",
+      "text": "開",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-open",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "開",
+      "text": "Open",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-close",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "close",
+      "text": "關",
+      "alternatives": [
+        "閂"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "yue-close",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "關",
+      "text": "Close",
+      "register": "colloquial",
+      "tags": [
+        "verb"
+      ]
+    },
+    {
+      "id": "en-sorry",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "sorry",
+      "text": "對唔住",
+      "alternatives": [
+        "唔好意思"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "yue-sorry",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "對唔住",
+      "text": "Sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-excuse-me",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "excuse me",
+      "text": "唔好意思",
+      "alternatives": [
+        "唔該"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "yue-excuse-me",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "唔好意思",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-please",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "please",
+      "text": "唔該",
+      "alternatives": [
+        "請"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "yue-please",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "唔該",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-goodbye",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "goodbye",
+      "text": "拜拜",
+      "alternatives": [
+        "再見"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-goodbye",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "拜拜",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-bye",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "bye",
+      "text": "拜拜",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-bye",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "拜拜",
+      "text": "Bye",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-good-night",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "good night",
+      "text": "早唞",
+      "alternatives": [
+        "晚安"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-good-night",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "早唞",
+      "text": "Good night",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-good-afternoon",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "good afternoon",
+      "text": "午安",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-good-afternoon",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "午安",
+      "text": "Good afternoon",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-welcome",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "welcome",
+      "text": "歡迎",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-welcome",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "歡迎",
+      "text": "Welcome",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-ok",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "okay",
+      "text": "好",
+      "alternatives": [
+        "OK",
+        "得"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-ok",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "好",
+      "text": "Okay",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-ok2",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "ok",
+      "text": "好",
+      "alternatives": [
+        "OK"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-ok2",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "好",
+      "text": "Ok",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-i",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "i",
+      "text": "我",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-i",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "我",
+      "text": "I",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-you",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "you",
+      "text": "你",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-you",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "你",
+      "text": "You",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-he",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "he",
+      "text": "佢",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-he",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "佢",
+      "text": "He",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-she",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "she",
+      "text": "佢",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-she",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "佢",
+      "text": "She",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-we",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "we",
+      "text": "我哋",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-we",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "我哋",
+      "text": "We",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-they",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "they",
+      "text": "佢哋",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-they",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "佢哋",
+      "text": "They",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-this",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "this",
+      "text": "呢個",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-this",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "呢個",
+      "text": "This",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-that",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "that",
+      "text": "嗰個",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "yue-that",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "嗰個",
+      "text": "That",
+      "register": "colloquial",
+      "tags": [
+        "pronoun"
+      ]
+    },
+    {
+      "id": "en-here",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "here",
+      "text": "呢度",
+      "register": "colloquial",
+      "tags": [
+        "place"
+      ]
+    },
+    {
+      "id": "yue-here",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "呢度",
+      "text": "Here",
+      "register": "colloquial",
+      "tags": [
+        "place"
+      ]
+    },
+    {
+      "id": "en-there",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "there",
+      "text": "嗰度",
+      "register": "colloquial",
+      "tags": [
+        "place"
+      ]
+    },
+    {
+      "id": "yue-there",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "嗰度",
+      "text": "There",
+      "register": "colloquial",
+      "tags": [
+        "place"
+      ]
+    },
+    {
+      "id": "en-where",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "where",
+      "text": "邊度",
+      "alternatives": [
+        "邊喥"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "yue-where",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "邊度",
+      "text": "Where",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-what",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "what",
+      "text": "咩",
+      "alternatives": [
+        "乜嘢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "yue-what",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "咩",
+      "text": "What",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-who",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "who",
+      "text": "邊個",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "yue-who",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "邊個",
+      "text": "Who",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-when",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "when",
+      "text": "幾時",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "yue-when",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "幾時",
+      "text": "When",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-why",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "why",
+      "text": "點解",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "yue-why",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "點解",
+      "text": "Why",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-how",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "how",
+      "text": "點樣",
+      "alternatives": [
+        "點"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "yue-how",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "點樣",
+      "text": "How",
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-how-much",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "how much",
+      "text": "幾多錢",
+      "alternatives": [
+        "幾錢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "question"
+      ]
+    },
+    {
+      "id": "en-today",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "today",
+      "text": "今日",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-today",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "今日",
+      "text": "Today",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-tomorrow",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "tomorrow",
+      "text": "聽日",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-tomorrow",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "聽日",
+      "text": "Tomorrow",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-yesterday",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "yesterday",
+      "text": "尋日",
+      "alternatives": [
+        "噚日"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-yesterday",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "尋日",
+      "text": "Yesterday",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-now",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "now",
+      "text": "而家",
+      "alternatives": [
+        "依家"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-now",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "而家",
+      "text": "Now",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-later",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "later",
+      "text": "陣間",
+      "alternatives": [
+        "遲啲"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-later",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "陣間",
+      "text": "Later",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-morning",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "morning",
+      "text": "朝早",
+      "alternatives": [
+        "早上"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-morning",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "朝早",
+      "text": "Morning",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-night",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "night",
+      "text": "夜晚",
+      "alternatives": [
+        "晚上"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "yue-night",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "夜晚",
+      "text": "Night",
+      "register": "colloquial",
+      "tags": [
+        "time"
+      ]
+    },
+    {
+      "id": "en-money",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "money",
+      "text": "錢",
+      "alternatives": [
+        "銀紙"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-money",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "錢",
+      "text": "Money",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-expensive",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "expensive",
+      "text": "貴",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-expensive",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "貴",
+      "text": "Expensive",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-cheap",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "cheap",
+      "text": "平",
+      "alternatives": [
+        "便宜"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-cheap",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "平",
+      "text": "Cheap",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-bill",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "bill",
+      "text": "埋單",
+      "alternatives": [
+        "買單"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-bill",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "埋單",
+      "text": "Bill",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-menu",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "menu",
+      "text": "餐牌",
+      "alternatives": [
+        "菜單"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-menu",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "餐牌",
+      "text": "Menu",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-receipt",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "receipt",
+      "text": "收據",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-receipt",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "收據",
+      "text": "Receipt",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-hot",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hot",
+      "text": "熱",
+      "alternatives": [
+        "燙"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-hot",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "熱",
+      "text": "Hot",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-cold",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "cold",
+      "text": "凍",
+      "alternatives": [
+        "冷"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-cold",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "凍",
+      "text": "Cold",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-big",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "big",
+      "text": "大",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-big",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "大",
+      "text": "Big",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-small",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "small",
+      "text": "細",
+      "alternatives": [
+        "小"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-small",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "細",
+      "text": "Small",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-good",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "good",
+      "text": "好",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-good",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "好",
+      "text": "Good",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-bad",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "bad",
+      "text": "唔好",
+      "alternatives": [
+        "壞"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-bad",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "唔好",
+      "text": "Bad",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-fast",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "fast",
+      "text": "快",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-fast",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "快",
+      "text": "Fast",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-slow",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "slow",
+      "text": "慢",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "yue-slow",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "慢",
+      "text": "Slow",
+      "register": "colloquial",
+      "tags": [
+        "adj"
+      ]
+    },
+    {
+      "id": "en-left",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "left",
+      "text": "左",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "yue-left",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "左",
+      "text": "Left",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "en-right",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "right",
+      "text": "右",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "yue-right",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "右",
+      "text": "Right",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "en-straight",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "straight",
+      "text": "直行",
+      "alternatives": [
+        "直去"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "yue-straight",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "直行",
+      "text": "Straight",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "en-near",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "near",
+      "text": "近",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "yue-near",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "近",
+      "text": "Near",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "en-far",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "far",
+      "text": "遠",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "yue-far",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "遠",
+      "text": "Far",
+      "register": "colloquial",
+      "tags": [
+        "direction"
+      ]
+    },
+    {
+      "id": "en-mtr",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "mtr",
+      "text": "地鐵",
+      "alternatives": [
+        "港鐵"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-subway",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "subway",
+      "text": "地鐵",
+      "alternatives": [
+        "地下鐵"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-subway",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "地鐵",
+      "text": "Subway",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-train",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "train",
+      "text": "火車",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-train",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "火車",
+      "text": "Train",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-bus",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "bus",
+      "text": "巴士",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-bus",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "巴士",
+      "text": "Bus",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-taxi",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "taxi",
+      "text": "的士",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-taxi",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "的士",
+      "text": "Taxi",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-airport",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "airport",
+      "text": "機場",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-airport",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "機場",
+      "text": "Airport",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-hotel",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hotel",
+      "text": "酒店",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-hotel",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "酒店",
+      "text": "Hotel",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-station",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "station",
+      "text": "車站",
+      "alternatives": [
+        "站"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-station",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "車站",
+      "text": "Station",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-toilet",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "toilet",
+      "text": "廁所",
+      "alternatives": [
+        "洗手間"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-toilet",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "廁所",
+      "text": "Toilet",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-bathroom",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "bathroom",
+      "text": "廁所",
+      "alternatives": [
+        "洗手間"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-bathroom",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "廁所",
+      "text": "Bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-restaurant",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "restaurant",
+      "text": "餐廳",
+      "alternatives": [
+        "酒樓"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-restaurant",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "餐廳",
+      "text": "Restaurant",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-hospital",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hospital",
+      "text": "醫院",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-hospital",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "醫院",
+      "text": "Hospital",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-police",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "police",
+      "text": "警察",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-police",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "警察",
+      "text": "Police",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-friend",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "friend",
+      "text": "朋友",
+      "register": "colloquial",
+      "tags": [
+        "people"
+      ]
+    },
+    {
+      "id": "yue-friend",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "朋友",
+      "text": "Friend",
+      "register": "colloquial",
+      "tags": [
+        "people"
+      ]
+    },
+    {
+      "id": "en-family",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "family",
+      "text": "屋企人",
+      "alternatives": [
+        "家人"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "people"
+      ]
+    },
+    {
+      "id": "yue-family",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "屋企人",
+      "text": "Family",
+      "register": "colloquial",
+      "tags": [
+        "people"
+      ]
+    },
+    {
+      "id": "en-name",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "name",
+      "text": "名",
+      "alternatives": [
+        "名字"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "people"
+      ]
+    },
+    {
+      "id": "yue-name",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "名",
+      "text": "Name",
+      "register": "colloquial",
+      "tags": [
+        "people"
+      ]
+    },
+    {
+      "id": "en-phone",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "phone",
+      "text": "電話",
+      "alternatives": [
+        "手機"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "tech"
+      ]
+    },
+    {
+      "id": "yue-phone",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "電話",
+      "text": "Phone",
+      "register": "colloquial",
+      "tags": [
+        "tech"
+      ]
+    },
+    {
+      "id": "en-wifi",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "wifi",
+      "text": "WiFi",
+      "alternatives": [
+        "無線上網"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "tech"
+      ]
+    },
+    {
+      "id": "yue-wifi",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "WiFi",
+      "text": "Wifi",
+      "register": "colloquial",
+      "tags": [
+        "tech"
+      ]
+    },
+    {
+      "id": "en-internet",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "internet",
+      "text": "互聯網",
+      "alternatives": [
+        "上網"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "tech"
+      ]
+    },
+    {
+      "id": "yue-internet",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "互聯網",
+      "text": "Internet",
+      "register": "colloquial",
+      "tags": [
+        "tech"
+      ]
+    },
+    {
+      "id": "en-yes-please",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "yes please",
+      "text": "好呀，唔該",
+      "alternatives": [
+        "係，唔該"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "yue-yes-please",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "好呀，唔該",
+      "text": "Yes please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-no-thanks",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "no thanks",
+      "text": "唔使喇，多謝",
+      "alternatives": [
+        "唔使，唔該"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "yue-no-thanks",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "唔使喇，多謝",
+      "text": "No thanks",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-i-dont-understand",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "i don't understand",
+      "text": "我唔明",
+      "alternatives": [
+        "我聽唔明"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-i-dont-understand",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "我唔明",
+      "text": "I don't understand",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-do-you-speak-english",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you speak english",
+      "text": "你識唔識講英文",
+      "alternatives": [
+        "你講唔講得英文"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-do-you-speak-english",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "你識唔識講英文",
+      "text": "Do you speak english",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-speak-slowly",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "speak slowly",
+      "text": "講慢啲",
+      "alternatives": [
+        "請講慢少少"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-speak-slowly",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "講慢啲",
+      "text": "Speak slowly",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-one-more-time",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "one more time",
+      "text": "再說一次",
+      "alternatives": [
+        "再講一次"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-one-more-time",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "再說一次",
+      "text": "One more time",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-i-am-lost",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "i'm lost",
+      "text": "我蕩失路",
+      "alternatives": [
+        "我迷路"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-i-am-lost",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "我蕩失路",
+      "text": "I'm lost",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-how-do-i-get-to",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "how do i get to",
+      "text": "去…點樣行",
+      "alternatives": [
+        "點樣去"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "yue-how-do-i-get-to",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "去…點樣行",
+      "text": "How do i get to",
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-check-please",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "check please",
+      "text": "唔該埋單",
+      "alternatives": [
+        "埋單唔該"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-check-please",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "唔該埋單",
+      "text": "Check please",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-too-expensive",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "too expensive",
+      "text": "太貴喇",
+      "alternatives": [
+        "貴得滯"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "yue-too-expensive",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "太貴喇",
+      "text": "Too expensive",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-can-you-help-me",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "can you help me",
+      "text": "可唔可以幫我",
+      "alternatives": [
+        "唔該幫幫手"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-can-you-help-me",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "可唔可以幫我",
+      "text": "Can you help me",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-what-is-your-name",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "what is your name",
+      "text": "你叫咩名",
+      "alternatives": [
+        "請問點稱呼"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-what-is-your-name",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "你叫咩名",
+      "text": "What is your name",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "nice to meet you",
+      "text": "好開心認識你",
+      "alternatives": [
+        "幸会"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-nice-to-meet-you",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "好開心認識你",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-see-you-tomorrow",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "see you tomorrow",
+      "text": "聽日見",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-see-you-tomorrow",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "聽日見",
+      "text": "See you tomorrow",
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-i-love-you",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "i love you",
+      "text": "我愛你",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-i-love-you",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "我愛你",
+      "text": "I love you",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-good-luck",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "good luck",
+      "text": "祝你好運",
+      "alternatives": [
+        "加油"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "yue-good-luck",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "祝你好運",
+      "text": "Good luck",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-cheers",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "cheers",
+      "text": "飲勝",
+      "alternatives": [
+        "乾杯"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "yue-cheers",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "飲勝",
+      "text": "Cheers",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-one",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "one",
+      "text": "一",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-one",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "一",
+      "text": "One",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-two",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "two",
+      "text": "二",
+      "alternatives": [
+        "兩"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-two",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "二",
+      "text": "Two",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-three",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "three",
+      "text": "三",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-three",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "三",
+      "text": "Three",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-four",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "four",
+      "text": "四",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-four",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "四",
+      "text": "Four",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-five",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "five",
+      "text": "五",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-five",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "五",
+      "text": "Five",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-six",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "six",
+      "text": "六",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-six",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "六",
+      "text": "Six",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-seven",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "seven",
+      "text": "七",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-seven",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "七",
+      "text": "Seven",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-eight",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "eight",
+      "text": "八",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-eight",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "八",
+      "text": "Eight",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-nine",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "nine",
+      "text": "九",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-nine",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "九",
+      "text": "Nine",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-ten",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "ten",
+      "text": "十",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-ten",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "十",
+      "text": "Ten",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-hundred",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hundred",
+      "text": "百",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-hundred",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "百",
+      "text": "Hundred",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-thousand",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "thousand",
+      "text": "千",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "yue-thousand",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "千",
+      "text": "Thousand",
+      "register": "colloquial",
+      "tags": [
+        "number"
+      ]
+    },
+    {
+      "id": "en-good-evening",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "good evening",
+      "text": "晚安",
+      "alternatives": [
+        "晚上好"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-long-time-no-see",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "long time no see",
+      "text": "好耐冇見",
+      "alternatives": [],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "where is the bathroom",
+      "text": "廁所喺邊度",
+      "alternatives": [
+        "洗手間喺邊"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-where-is-the-toilet",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "where is the toilet",
+      "text": "廁所喺邊度",
+      "alternatives": [],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-i-want-this",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "i want this",
+      "text": "我要呢個",
+      "alternatives": [
+        "我要呢樣"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-how-much-does-it-cost",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "how much does it cost",
+      "text": "呢個幾錢",
+      "alternatives": [
+        "賣幾多錢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-do-you-accept-cash",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you accept cash",
+      "text": "收唔收現金",
+      "alternatives": [],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-do-you-accept-octopus",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you accept octopus",
+      "text": "收唔收八達通",
+      "alternatives": [],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-i-need-a-doctor",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "i need a doctor",
+      "text": "我要睇醫生",
+      "alternatives": [],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-call-the-police",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "call the police",
+      "text": "叫警察",
+      "alternatives": [],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
     }
   ]
 }

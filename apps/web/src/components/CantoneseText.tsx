@@ -7,7 +7,7 @@ import {
   toJyutpingCached,
   type JyutSeg,
 } from '../lib/jyutping'
-import { charSense } from '../lib/charSense'
+import { charSense } from '../lib/charGloss'
 import { useJpPopup } from '../lib/useJpPopup'
 import { CharDetailSheet, type CharDetail } from './CharDetailSheet'
 import { JpPop } from './JpPop'
@@ -109,7 +109,7 @@ export function CantoneseText({
         ) : (
           <span {...bind} className="jyutping jyutping--hint ink-in" lang="en">
             {jp}
-            <JpPop show={show} id={tipId} text={jp} />
+            <JpPop show={show} id={tipId} text={jp} han={trimmed} />
           </span>
         )
       ) : null}

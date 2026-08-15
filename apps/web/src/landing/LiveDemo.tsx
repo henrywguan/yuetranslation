@@ -3,6 +3,7 @@ import { translateText } from '../lib/api'
 import { BiText } from '../components/BiText'
 import { CharacterBreakdownFrame } from '../components/CharacterBreakdownFrame'
 import { ResultWithDefinition } from '../components/ResultWithDefinition'
+import { TranslateThinking } from '../components/TranslateThinking'
 import { TranslationAlternatives } from '../components/TranslationAlternatives'
 import { buildLocalBreakdown, type CharBreakdown } from '../lib/jyutping'
 import { ui } from '../lib/uiCopy'
@@ -87,7 +88,11 @@ export function LiveDemo() {
           onClick={() => void run(text)}
           disabled={loading}
         >
-          {loading ? '…' : <BiText copy={ui.translate} size="sm" hideJp />}
+          {loading ? (
+            <BiText copy={ui.translating} size="sm" hideJp />
+          ) : (
+            <BiText copy={ui.translate} size="sm" hideJp />
+          )}
         </button>
       </div>
 
@@ -111,18 +116,24 @@ export function LiveDemo() {
         <span className="demo-label">
           <BiText copy={ui.demoCantonese} size="sm" />
         </span>
-        <ResultWithDefinition
-          text={result}
-          definition={definition}
-          className="demo-result-row"
-          textClassName="demo-output-text"
-          onActivate={(p) => void openPhrase(p, false)}
-        />
-        <TranslationAlternatives
-          alternatives={alternatives}
-          className="demo-alts"
-          onSelect={(p) => void openPhrase(p, true)}
-        />
+        {loading ? (
+          <TranslateThinking className="demo-thinking" />
+        ) : (
+          <>
+            <ResultWithDefinition
+              text={result}
+              definition={definition}
+              className="demo-result-row"
+              textClassName="demo-output-text"
+              onActivate={(p) => void openPhrase(p, false)}
+            />
+            <TranslationAlternatives
+              alternatives={alternatives}
+              className="demo-alts"
+              onSelect={(p) => void openPhrase(p, true)}
+            />
+          </>
+        )}
         {error ? (
           <p className="demo-error">
             <BiText copy={ui.demoApiError} size="sm" />

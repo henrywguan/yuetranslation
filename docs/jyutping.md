@@ -2,7 +2,7 @@
 
 Canonical scheme: [Jyutping: The Linguistic Society of Hong Kong Cantonese Romanization Scheme](https://jyutping.org/en/jyutping/).
 
-Use this page as the source of truth for romanization in Jyut. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions may add the Chao tone letters from **§4 Tone**.
+Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions may add the Chao tone letters from **§4 Tone**.
 
 ## 4. Tone
 
@@ -29,7 +29,7 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 ## Compact vs detailed
 
 - **Compact** (always-visible translation line): `zou2 san4`
-- **Detailed expansion** (hover / tap Jyutping): `zou2 ˧˥  san4 ˨˩`
+- **Detailed expansion** (hover / tap Jyutping): Chinese character above each syllable, e.g. `早` / `zou2 ˧˥` · `晨` / `san4 ˨˩`
 - **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao letters, character sense, and the phrase gloss
 
-Implemented in `apps/web/src/lib/jyutping.ts` as `expandJyutping()`.
+Implemented in `apps/web/src/lib/jyutping.ts` (`expandJyutping`, `ensureJyutpingSegs`) and `apps/web/src/components/JpPop.tsx`.

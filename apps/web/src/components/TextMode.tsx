@@ -1,22 +1,68 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
-import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
+const AUTO_TRANSLATE_MS = 450
+
 export function TextMode() {
   const [text, setText] = useState('')
   const [from, setFrom] = useState<Lang>('en')
+  const [busy, setBusy] = useState(false)
+  const reqId = useRef(0)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
+  const translating = useYueStore((s) => s.translating)
+  const trimmed = text.trim()
   const latest = history[0]
+  const match =
+    latest && latest.from === from && latest.source === trimmed ? latest : null
+  const showThinking = busy || translating
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
+  const fromRef = useRef(from)
+  const translateRef = useRef(translateTyped)
+  fromRef.current = from
+  translateRef.current = translateTyped
+
+  const runTranslate = (value: string, delay: number) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    const next = value.trim()
+    if (!next) {
+      setBusy(false)
+      return
+    }
+    const id = ++reqId.current
+    setBusy(true)
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      void translateRef.current(next, fromRef.current).finally(() => {
+        if (reqId.current === id) setBusy(false)
+      })
+    }, delay)
+  }
+
+  useEffect(() => {
+    runTranslate(text, AUTO_TRANSLATE_MS)
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    }
+    // Intentionally only re-debounce when the typed text or direction changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runTranslate closes over latest refs
+  }, [text, from])
 
   return (
     <div className="text-mode">
@@ -31,30 +77,38 @@ export function TextMode() {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || e.shiftKey) return
+          e.preventDefault()
+          runTranslate(text, 0)
+        }}
         rows={4}
         placeholder={`${placeholder.en} / ${placeholder.zh}`}
         aria-label={biPlain(placeholder)}
       />
-      <button type="button" className="primary" onClick={() => void translateTyped(text, from)}>
-        <BiText copy={ui.translate} size="sm" />
-      </button>
+      <p className="text-auto-status" aria-live="polite">
+        {showThinking || trimmed ? null : (
+          <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
+        )}
+      </p>
       <div className="text-lower">
-        <PaneParticles />
-        {latest ? (
-          <InkSettle id={latest.id} className="text-result">
+        {showThinking ? (
+          <TranslateThinking className="text-thinking" />
+        ) : match ? (
+          <InkSettle id={match.id} className="text-result">
             <p className="muted">
-              <BiText copy={ui.result} size="sm" />
+              <BiText copy={ui.result} size="sm" layout="inline" />
             </p>
             <ResultWithDefinition
-              text={latest.translation}
-              definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
-              cantonese={latest.to === 'yue'}
-              onActivate={latest.to === 'yue' ? openBreakdown : undefined}
-              speakLang={latest.to}
+              text={match.translation}
+              definition={match.to === 'yue' ? match.definition || match.source : match.definition}
+              cantonese={match.to === 'yue'}
+              onActivate={match.to === 'yue' ? openBreakdown : undefined}
+              speakLang={match.to}
             />
-            {latest.to === 'yue' ? (
+            {match.to === 'yue' ? (
               <TranslationAlternatives
-                alternatives={latest.alternatives || []}
+                alternatives={match.alternatives || []}
                 onSelect={selectYueVariation}
               />
             ) : null}
