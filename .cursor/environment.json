@@ -1,14 +1,15 @@
 {
   "name": "yuetranslation",
-  "install": "npm ci --prefix apps/web\nnpm ci --prefix apps/api",
+  "install": "./scripts/cloud-agent-install.sh",
+  "start": "./scripts/cloud-agent-start.sh",
   "terminals": [
     {
       "name": "api",
-      "command": "npm run dev:api"
+      "command": "PORT=8787 npm run dev --prefix apps/api"
     },
     {
       "name": "web",
-      "command": "npm run dev:web"
+      "command": "npm run dev --prefix apps/web -- --host 0.0.0.0 --port 5173"
     }
   ]
 }
