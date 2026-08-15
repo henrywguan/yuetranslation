@@ -394,14 +394,15 @@
 
 .dock-wrap {
   position: relative;
+  overflow: visible;
 }
 
 .dock-constellation {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: -22px;
-  height: 86px;
+  left: 8px;
+  right: 8px;
+  top: -18px;
+  height: 36px;
   pointer-events: none;
   z-index: 2;
   overflow: visible;
@@ -411,21 +412,21 @@
   position: absolute;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.85), transparent 46%),
-    var(--jade-bright);
+    radial-gradient(circle at 30% 28%, color-mix(in srgb, var(--jade-bright) 55%, #fff), transparent 52%),
+    var(--harbor);
   box-shadow:
-    0 0 10px color-mix(in srgb, var(--jade) 55%, transparent),
-    0 0 18px color-mix(in srgb, var(--mint) 28%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--jade) 40%, transparent),
+    0 0 12px color-mix(in srgb, var(--jade) 48%, transparent);
   will-change: transform, opacity;
 }
 
 [data-theme='light'] .dock-dot {
   background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.9), transparent 48%),
-    var(--jade);
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.55), transparent 50%),
+    var(--harbor);
   box-shadow:
-    0 0 10px color-mix(in srgb, var(--jade) 40%, transparent),
-    0 0 16px color-mix(in srgb, var(--jade-deep) 18%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--jade) 35%, transparent),
+    0 0 10px color-mix(in srgb, var(--jade) 32%, transparent);
 }
 
 .dock {

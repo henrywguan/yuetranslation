@@ -11,16 +11,14 @@ type Dot = {
 }
 
 const DOTS: Dot[] = [
-  { left: '7%', top: '18%', size: 5, delay: 0, pull: 0.08 },
-  { left: '16%', top: '8%', size: 3, delay: 0.45, pull: 0.14 },
-  { left: '27%', top: '28%', size: 4, delay: 1.1, pull: 0.1 },
-  { left: '41%', top: '6%', size: 3.4, delay: 0.2, pull: 0.16 },
-  { left: '54%', top: '22%', size: 5.2, delay: 0.85, pull: 0.09 },
-  { left: '66%', top: '4%', size: 2.8, delay: 1.4, pull: 0.18 },
-  { left: '78%', top: '20%', size: 4.2, delay: 0.55, pull: 0.12 },
-  { left: '90%', top: '10%', size: 3.2, delay: 1.7, pull: 0.15 },
-  { left: '4%', top: '62%', size: 2.6, delay: 1.15, pull: 0.06 },
-  { left: '96%', top: '58%', size: 2.6, delay: 0.35, pull: 0.06 },
+  { left: '6%', top: '38%', size: 6, delay: 0, pull: 0.1 },
+  { left: '17%', top: '18%', size: 4, delay: 0.45, pull: 0.14 },
+  { left: '29%', top: '48%', size: 5, delay: 1.1, pull: 0.1 },
+  { left: '42%', top: '12%', size: 3.6, delay: 0.2, pull: 0.16 },
+  { left: '55%', top: '36%', size: 6.2, delay: 0.85, pull: 0.09 },
+  { left: '67%', top: '8%', size: 3.2, delay: 1.4, pull: 0.18 },
+  { left: '79%', top: '42%', size: 5, delay: 0.55, pull: 0.12 },
+  { left: '91%', top: '16%', size: 4, delay: 1.7, pull: 0.15 },
 ]
 
 function useSpeechEnergy() {
@@ -88,7 +86,7 @@ export function DockConstellation({
               x: settle ? 0 : toward + gather,
               y: settle ? 8 : [0, -drift, 0],
               scale: settle ? 0.62 : listening ? 1 + energy * 0.55 : 1,
-              opacity: settle ? 0.1 : listening ? 0.42 + energy * 0.5 : 0.3,
+              opacity: settle ? 0.14 : listening ? 0.62 + energy * 0.38 : 0.52,
             }}
             transition={{
               x: { duration: 0.45, ease: 'easeOut' },
