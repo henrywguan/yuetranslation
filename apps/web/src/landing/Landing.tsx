@@ -12,10 +12,9 @@ import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
+import { HeroEyebrow } from './HeroEyebrow'
 import { LANDING_PLANS } from './plans'
 import './landing.css'
-
-// three.js is heavy — code-split it so it never blocks first paint.
 const HeroObject = lazy(() =>
   import('./HeroObject').then((m) => ({ default: m.HeroObject })),
 )
@@ -57,9 +56,7 @@ export function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="ln-eyebrow">
-            <BiText copy={ui.heroEyebrow} size="sm" />
-          </span>
+          <HeroEyebrow />
           <h1 className="ln-title">
             <BiText copy={ui.heroTitle} size="lg" />
           </h1>

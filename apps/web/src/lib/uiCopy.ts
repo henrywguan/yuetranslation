@@ -91,9 +91,13 @@ export const ui = {
   navLaunch: { en: 'Launch app', zh: '開啟應用', jp: 'hoi1 kai2 jing3 jung6' },
 
   heroEyebrow: {
-    en: 'English ↔ Cantonese · live translator',
-    zh: '英文 ↔ 廣東話 · 實時翻譯器',
-    jp: 'jing1 man2 ↔ gwong2 dung1 waa2 · sat6 si4 faan1 jik6 hei3',
+    enLang: 'English',
+    zhLang: '英文',
+    enYue: 'Cantonese',
+    zhYue: '廣東話',
+    enLive: 'Live translator',
+    zhLive: '實時翻譯器',
+    jp: 'jing1 man2 ↔ gwong2 dung1 waa2 sat6 si4 faan1 jik6 hei3',
   },
   heroTitle: {
     en: 'JyutTranslate',

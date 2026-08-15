@@ -71,7 +71,7 @@
 }
 
 .ln-brand-logo {
-  width: 7.6rem;
+  width: clamp(10.5rem, 36vw, 13.5rem);
   height: auto;
 }
 
@@ -184,19 +184,65 @@
 }
 
 .ln-eyebrow {
-  display: inline-block;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.82rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--jade);
   border: 1px solid color-mix(in srgb, var(--jade) 35%, transparent);
-  padding: 7px 14px;
+  padding: 8px 16px;
   border-radius: 999px;
   margin-bottom: 26px;
   background: color-mix(in srgb, var(--jade) 12%, transparent);
   backdrop-filter: blur(10px);
   max-width: 100%;
   box-sizing: border-box;
+  cursor: help;
+}
+
+.ln-eyebrow-row {
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.42em;
+  max-width: 100%;
+}
+
+.ln-eyebrow-stack,
+.ln-eyebrow-arrow-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.ln-eyebrow-arrow-stack {
+  flex: none;
+  gap: 0.18rem;
+}
+
+.ln-eyebrow-live {
+  margin-left: 0.2em;
+}
+
+.ln-eyebrow-en {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.ln-eyebrow-zh {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 500;
+  font-size: 0.92em;
+  line-height: 1.25;
+  border-bottom: 1px dotted color-mix(in srgb, var(--jade) 45%, transparent);
 }
 
 .ln-title {
@@ -1084,9 +1130,16 @@
 
   .ln-eyebrow {
     font-size: 0.68rem;
-    letter-spacing: 0.1em;
     padding: 6px 10px;
     margin-bottom: 18px;
+  }
+
+  .ln-eyebrow-en {
+    letter-spacing: 0.08em;
+  }
+
+  .ln-eyebrow-row {
+    gap: 0.28em;
   }
 
   .ln-title {
