@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
-import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
@@ -98,35 +97,6 @@ export function SoloView() {
           </InkSettle>
         </div>
       </motion.div>
-
-      {history.length > 1 ? (
-        <ul className="history">
-          {history.slice(1, 6).map((t) => (
-            <li key={t.id}>
-              <span className="h-src">
-                {t.from === 'yue' ? (
-                  <CantoneseText text={t.source} definition={t.definition} onActivate={openBreakdown} />
-                ) : (
-                  t.source
-                )}
-              </span>
-              <span className="h-arrow">→</span>
-              <span className="h-tr">
-                {t.to === 'yue' ? (
-                  <CantoneseText text={t.translation} definition={t.definition} onActivate={openBreakdown} />
-                ) : (
-                  t.translation
-                )}
-                {t.to === 'yue' && t.definition ? (
-                  <span className="h-def" title={t.definition}>
-                    {t.definition}
-                  </span>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   )
 }

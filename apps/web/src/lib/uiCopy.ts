@@ -20,6 +20,28 @@ export const ui = {
   autoSpeakPro: { en: 'Auto-speak (Pro)', zh: '自動朗讀（專業版）', jp: 'zi6 dung6 long5 duk6 (zyun1 jip6 baan2)' },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
+  historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
+  historyKicker: { en: 'Translations', zh: '翻譯', jp: 'faan1 jik6' },
+  historyEmpty: {
+    en: 'Past translations will show up here as cards.',
+    zh: '以前嘅翻譯會喺呢度以卡片顯示。',
+    jp: 'ji5 cin4 ge3 faan1 jik6 wui5 hai2 ni1 dou6 ji5 kaa1 pin3 hin2 si6.',
+  },
+  historyLatest: { en: 'Latest', zh: '最新', jp: 'zeoi3 san1' },
+  historyExpand: { en: 'Expand', zh: '展開', jp: 'zin2 hoi1' },
+  historyCollapse: { en: 'Collapse', zh: '收起', jp: 'sau1 hei2' },
+  historyVariations: { en: 'Other variations', zh: '其他講法', jp: 'kei4 taa1 gong2 faat3' },
+  historyBreakdown: {
+    en: 'Character breakdown',
+    zh: '逐字拆解',
+    jp: 'zuk6 zi6 caak3 gaai2',
+  },
+  historyNoDetails: {
+    en: 'No extra details for this turn.',
+    zh: '呢輪冇額外詳情。',
+    jp: 'ni1 leon4 mou5 ngoi6 ngoi6 coeng4 cing4.',
+  },
+
   english: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   cantonese: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   speakToTranslate: { en: 'Speak to translate', zh: '講嘢嚟翻譯', jp: 'gong2 je5 lai4 faan1 jik6' },
