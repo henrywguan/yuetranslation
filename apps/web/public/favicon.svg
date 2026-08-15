@@ -1,17 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="g" x1="12" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+    <linearGradient id="chop" x1="10" y1="6" x2="58" y2="60" gradientUnits="userSpaceOnUse">
       <stop stop-color="#7ef0dc"/>
-      <stop offset="0.45" stop-color="#3dcfb6"/>
+      <stop offset="0.42" stop-color="#3dcfb6"/>
       <stop offset="1" stop-color="#1f8f7a"/>
     </linearGradient>
-    <radialGradient id="s" cx="32%" cy="26%" r="70%">
-      <stop stop-color="rgba(255,255,255,0.42)"/>
+    <radialGradient id="shine" cx="30%" cy="24%" r="72%">
+      <stop stop-color="rgba(255,255,255,0.4)"/>
       <stop offset="1" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
   </defs>
-  <rect width="64" height="64" rx="18" fill="url(#g)"/>
-  <rect width="64" height="64" rx="18" fill="url(#s)"/>
-  <text x="10" y="50" font-family="Syne, Noto Sans HK, sans-serif" font-size="46" font-weight="800" fill="#041018">J</text>
-  <text x="38" y="41" text-anchor="middle" font-family="Noto Sans HK, sans-serif" font-size="18" font-weight="700" fill="#041018">粵</text>
+  <rect width="64" height="64" rx="16" fill="url(#chop)"/>
+  <rect width="64" height="64" rx="16" fill="url(#shine)"/>
+  <rect x="5" y="5" width="54" height="54" rx="12" stroke="#041018" stroke-width="2.2"/>
+  <text
+    x="32"
+    y="38"
+    text-anchor="middle"
+    font-family="Noto Sans HK, sans-serif"
+    font-size="28"
+    font-weight="700"
+    fill="#041018"
+  >粵</text>
+  <text
+    x="32"
+    y="54"
+    text-anchor="middle"
+    font-family="Syne, Noto Sans HK, sans-serif"
+    font-size="9"
+    font-weight="800"
+    letter-spacing="0.12em"
+    fill="#041018"
+  >Jyut</text>
 </svg>
