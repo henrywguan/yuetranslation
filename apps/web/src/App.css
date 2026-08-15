@@ -283,7 +283,7 @@
     0 24px 60px color-mix(in srgb, #000 35%, transparent),
     inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
   color: var(--ink);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .history-panel-header {
@@ -298,9 +298,17 @@
 .history-panel-kicker {
   margin: 0 0 2px;
   font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.history-panel-kicker .bi-en {
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+}
+
+.history-panel-kicker .bi-zh {
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .history-panel-title {
@@ -375,7 +383,7 @@
   border: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   box-shadow: 0 8px 22px color-mix(in srgb, #000 10%, transparent);
-  overflow: hidden;
+  overflow: visible;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -509,9 +517,17 @@
   display: block;
   margin: 0 0 4px;
   font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.history-card-detail-label .bi-en {
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted);
+}
+
+.history-card-detail-label .bi-zh {
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .history-card-def {

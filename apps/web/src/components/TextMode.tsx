@@ -88,7 +88,7 @@ export function TextMode() {
       />
       <p className="text-auto-status" aria-live="polite">
         {showThinking || trimmed ? null : (
-          <BiText copy={ui.autoTranslateHint} size="sm" />
+          <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
         )}
       </p>
       <div className="text-lower">
@@ -97,7 +97,7 @@ export function TextMode() {
         ) : match ? (
           <InkSettle id={match.id} className="text-result">
             <p className="muted">
-              <BiText copy={ui.result} size="sm" />
+              <BiText copy={ui.result} size="sm" layout="inline" />
             </p>
             <ResultWithDefinition
               text={match.translation}

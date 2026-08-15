@@ -42,7 +42,15 @@ export function useJpPopup(enabled: boolean) {
     onBlur: () => setOpen(false),
     onClick: (e: MouseEvent) => {
       if (!enabled) return
-      if ((e.currentTarget as HTMLElement).closest('button, a')) return
+      const inControl = Boolean(
+        (e.currentTarget as HTMLElement).closest('button, a, [role="button"]'),
+      )
+      // Inside controls: reveal Jyutping but don't block the control action.
+      // Elsewhere: toggle and keep the click from bubbling to parents.
+      if (inControl) {
+        setOpen(true)
+        return
+      }
       e.stopPropagation()
       setOpen((v) => !v)
     },

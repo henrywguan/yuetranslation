@@ -12,9 +12,14 @@ type BiTextProps = {
   hideJp?: boolean
   /** Language-pure: English only, or Chinese (+ Jyutping) only. */
   only?: 'en' | 'zh'
+  /**
+   * `stack` (default): English above Chinese.
+   * `inline`: English and Chinese on one line (panel chrome / compact labels).
+   */
+  layout?: 'stack' | 'inline'
 }
 
-/** English above Chinese; Jyutping on hover / focus / tap. */
+/** Bilingual UI copy; Jyutping on hover / focus / tap for Chinese. */
 export function BiText({
   copy,
   size = 'md',
@@ -22,9 +27,11 @@ export function BiText({
   as: Tag = 'span',
   hideJp = false,
   only,
+  layout = 'stack',
 }: BiTextProps) {
   const canJp = !hideJp && only !== 'en' && Boolean(copy.jp)
   const { tipId, show, bind } = useJpPopup(canJp)
+  const inline = layout === 'inline' && !only
   const zh = (
     <span
       {...bind}
@@ -37,7 +44,9 @@ export function BiText({
   )
 
   return (
-    <Tag className={`bi bi--${size}${only ? ` bi--${only}` : ''} ${className}`.trim()}>
+    <Tag
+      className={`bi bi--${size}${only ? ` bi--${only}` : ''}${inline ? ' bi--inline' : ''} ${className}`.trim()}
+    >
       {only === 'zh' ? zh : <span className="bi-en">{copy.en}</span>}
       {only ? null : zh}
     </Tag>

@@ -57,7 +57,7 @@ export function HistoryCard({
           </span>
           {isLatest ? (
             <span className="history-card-badge">
-              <BiText copy={ui.historyLatest} size="sm" hideJp />
+              <BiText copy={ui.historyLatest} size="sm" layout="inline" />
             </span>
           ) : null}
         </div>
@@ -68,7 +68,7 @@ export function HistoryCard({
           aria-controls={`history-detail-${turn.id}`}
           onClick={onToggle}
         >
-          <BiText copy={expanded ? ui.historyCollapse : ui.historyExpand} size="sm" hideJp />
+          <BiText copy={expanded ? ui.historyCollapse : ui.historyExpand} size="sm" layout="inline" />
           <span className="history-card-chevron" aria-hidden="true">
             {expanded ? '▾' : '▸'}
           </span>
@@ -139,7 +139,7 @@ export function HistoryCard({
           {turn.definition?.trim() ? (
             <p className="history-card-def">
               <span className="history-card-detail-label">
-                <BiText copy={ui.definition} size="sm" />
+                <BiText copy={ui.definition} size="sm" layout="inline" />
               </span>
               <span>{turn.definition.trim()}</span>
             </p>
@@ -148,7 +148,7 @@ export function HistoryCard({
           {turn.alternatives?.length ? (
             <div className="history-card-alts">
               <p className="history-card-detail-label">
-                <BiText copy={ui.historyVariations} size="sm" />
+                <BiText copy={ui.historyVariations} size="sm" layout="inline" />
               </p>
               <ul>
                 {turn.alternatives.map((alt) => (
@@ -170,13 +170,13 @@ export function HistoryCard({
               className="history-card-drill"
               onClick={() => onBreakdown(yuePhrase)}
             >
-              <BiText copy={ui.historyBreakdown} size="sm" />
+              <BiText copy={ui.historyBreakdown} size="sm" layout="inline" />
             </button>
           ) : null}
 
           {!hasDetails && !hasDrill ? (
             <p className="history-card-empty-detail muted">
-              <BiText copy={ui.historyNoDetails} size="sm" />
+              <BiText copy={ui.historyNoDetails} size="sm" layout="inline" />
             </p>
           ) : null}
         </div>

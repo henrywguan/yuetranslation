@@ -23,6 +23,8 @@
   padding: 0.18em 0 0.06em;
   overflow: visible;
   color: color-mix(in srgb, var(--mint) 62%, transparent);
+  white-space: nowrap;
+  overflow: visible;
 }
 
 button.jyutping,
@@ -80,7 +82,7 @@ button.jyutping--activate {
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
-  z-index: 40;
+  z-index: 90;
   padding: 7px 12px;
   border-radius: 10px;
   font-family: var(--font-body);
@@ -103,7 +105,12 @@ button.jyutping--activate {
   backdrop-filter: blur(22px) saturate(1.35);
   -webkit-backdrop-filter: blur(22px) saturate(1.35);
   pointer-events: none;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
   white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .jp-pop--ruby {
@@ -197,6 +204,19 @@ button.jyutping--activate {
   line-height: 1.25;
 }
 
+.bi--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.4em;
+  row-gap: 0.08rem;
+}
+
+.bi--inline .bi-zh {
+  font-size: 0.95em;
+  font-weight: 550;
+}
+
 .bi--en,
 .bi--zh {
   gap: 0;
@@ -211,6 +231,7 @@ button.jyutping--activate {
   display: inline-flex;
   align-items: baseline;
   max-width: 100%;
+  overflow: visible;
 }
 
 .bi-zh-wrap--hint {
