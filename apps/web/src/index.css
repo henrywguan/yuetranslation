@@ -116,12 +116,6 @@ a {
   color: var(--jade);
 }
 
-.brand-mark-link {
-  border: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
 .visually-hidden {
   position: absolute;
   width: 1px;

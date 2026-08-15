@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
-import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
@@ -73,7 +72,6 @@ export function SoloView() {
         <div className="solo-divider" />
 
         <div className="solo-lower">
-          <PaneParticles />
           <p className="solo-label">
             <BiText copy={ui.cantonese} size="sm" only="zh" />
           </p>
