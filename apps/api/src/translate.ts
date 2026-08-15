@@ -4,6 +4,7 @@ import { env, openaiConfigured } from './env.js'
 import {
   dictionaryTranslate,
   hardenYueOutput,
+  lexiconTranslate,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
@@ -89,9 +90,58 @@ export async function translate(input: unknown) {
     }
   }
 
+  // 2) Full lexicon fallback (seed + CC-Canto) — reliable offline / no-API-key path.
+  const lexHit = lexiconTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (lexHit) {
+    if (to === 'yue') {
+      const hardened = await hardenYueOutput({
+        text: lexHit.text,
+        alternatives: wantAlts ? lexHit.alternatives : [],
+        stage,
+        sourceEn: from === 'en' ? text : undefined,
+        client: null,
+      })
+      return {
+        text: hardened.text,
+        definition: lexHit.definition || fallbackDefinition,
+        alternatives: wantAlts ? hardened.alternatives : [],
+        engine: 'lexicon',
+        from,
+        to,
+        stage,
+        meta: {
+          ...hardened.meta,
+          dictionaryHit: true,
+          notes: [...lexHit.notes, ...hardened.meta.notes],
+        },
+      }
+    }
+    return {
+      text: lexHit.text,
+      definition: lexHit.definition,
+      alternatives: [],
+      engine: 'lexicon',
+      from,
+      to,
+      stage,
+      meta: {
+        dictionaryHit: true,
+        scrubbed: false,
+        colloquialScore: 0,
+        rewritten: false,
+        notes: lexHit.notes,
+      },
+    }
+  }
+
   const client = openaiClient()
 
-  // 2) Demo fallback when no model key.
+  // 3) Demo fallback when no model key and lexicon miss.
   if (!client) {
     const primary = to === 'yue' ? `（示範）${text}` : `(demo) ${text}`
     if (toYueSafe(to)) {
@@ -125,7 +175,7 @@ export async function translate(input: unknown) {
     }
   }
 
-  // 3) Model translate
+  // 4) Model translate
   const toYue = to === 'yue'
   let primary = text
   let alternatives: string[] = []
@@ -194,7 +244,7 @@ export async function translate(input: unknown) {
     definition = toYue ? payload.definition || fallbackDefinition : payload.definition
   }
 
-  // 4) Harden Cantonese outputs (scrub / score / optional rewrite on final).
+  // 5) Harden Cantonese outputs (scrub / score / optional rewrite on final).
   if (toYue) {
     const hardened = await hardenYueOutput({
       text: primary,

@@ -64,7 +64,7 @@ You can also bake URLs at build time via `apps/web/.env` (`VITE_TRANSLATOR_URL`,
 ## 4. WordPress plugin + Bricks page
 
 1. Upload `wordpress/yue-translator/` to `wp-content/plugins/`.
-2. Activate **Yue Translator** and set Azure/OpenAI keys.
+2. Activate **JyutTranslate** and set Azure/OpenAI keys.
 3. Set **Upgrade URL** to the same checkout URL as `pricingUrl`.
 4. Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`.
 
