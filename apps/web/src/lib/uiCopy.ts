@@ -351,9 +351,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 hai2 zi6 gei2 si1 fuk6 hei3 paau2?',
   },
   faq3a: {
-    en: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs. Max includes priority help if you get stuck.',
-    zh: '可以——Jyut 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。旗艦版包括優先支援。',
-    jp: 'ho2 ji5 — Jyut ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API. kei4 gaam3 baan2 bau1 kut3 jau4 sin1 zi1 wun4.',
+    en: 'Yes — Jyut can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs.',
+    zh: '可以——Jyut 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。',
+    jp: 'ho2 ji5 — Jyut ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API.',
   },
   faq4q: {
     en: 'Can I cancel anytime?',
