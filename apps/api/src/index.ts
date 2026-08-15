@@ -1,7 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { cloudReady, env, openaiConfigured } from './env.js'
-import { dictionaryStats } from './canto/index.js'
+import { dictionaryStats, lexiconStats } from './canto/index.js'
 import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { localEntitlement } from './entitlements.js'
@@ -25,8 +25,10 @@ app.get('/api/health', (_req, res) => {
       openai: openaiConfigured(),
       demo: !openaiConfigured(),
       dictionary: true,
+      lexicon: true,
     },
     dictionary: dictionaryStats(),
+    lexicon: lexiconStats(),
     gloss: glossStats(),
     licenseGate: {
       allowNoncommercialDicts: env.allowNoncommercialDicts,

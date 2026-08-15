@@ -1,6 +1,9 @@
 import { fetchSpeechToken } from './api'
-import { isTtsPlaying, notifyBargeIn } from './tts'
+import { isTtsPlaying } from './tts'
 import type { Lang, LiveSession, SpeechEventHandlers } from './types'
+
+/** Ignore mic while TTS plays and briefly after — blocks speaker echo becoming a new turn. */
+const ECHO_TAIL_MS = 600
 
 function localeToLang(locale: string): Lang {
   const l = locale.toLowerCase()
@@ -24,10 +27,16 @@ export async function createAzureLiveSession(
   const SpeechSDK = await import('microsoft-cognitiveservices-speech-sdk')
   let recognizer: import('microsoft-cognitiveservices-speech-sdk').SpeechRecognizer | null = null
   let playbackActive = false
+  let ignoreUntil = 0
+
+  function shouldIgnoreMic() {
+    return playbackActive || isTtsPlaying() || Date.now() < ignoreUntil
+  }
 
   return {
     setPlaybackActive(active) {
       playbackActive = active
+      if (!active) ignoreUntil = Date.now() + ECHO_TAIL_MS
     },
     async start() {
       const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
@@ -43,11 +52,8 @@ export async function createAzureLiveSession(
       recognizer = SpeechSDK.SpeechRecognizer.FromConfig(speechConfig, autoDetect, audioConfig)
 
       recognizer.recognizing = (_s, e) => {
-        if (playbackActive || isTtsPlaying()) {
-          notifyBargeIn()
-          handlers.onBargeIn?.()
-          return
-        }
+        // Never barge-in on TTS echo — that used to clear the gate and accept the echo as a new phrase.
+        if (shouldIgnoreMic()) return
         if (e.result.reason !== SpeechSDK.ResultReason.RecognizingSpeech) return
         const text = e.result.text?.trim()
         if (!text) return
@@ -57,7 +63,7 @@ export async function createAzureLiveSession(
         handlers.onInterim(lang, text)
       }
       recognizer.recognized = (_s, e) => {
-        if (playbackActive || isTtsPlaying()) return
+        if (shouldIgnoreMic()) return
         if (e.result.reason !== SpeechSDK.ResultReason.RecognizedSpeech) return
         const text = e.result.text?.trim()
         if (!text) return

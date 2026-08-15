@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
-import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
@@ -92,7 +91,6 @@ export function TextMode() {
         )}
       </p>
       <div className="text-lower">
-        <PaneParticles />
         {match ? (
           <InkSettle id={match.id} className="text-result">
             <p className="muted">

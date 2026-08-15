@@ -99,6 +99,32 @@ function loadPacked(basename: string): PackedDict | null {
 const ccCanto = loadPacked('cc-canto-gloss')
 const wordshk = wordshkEnabled() ? loadPacked('wordshk-gloss') : null
 
+export type LexiconEntry = {
+  trad: string
+  gloss: string
+  jyutping: string | null
+  source: 'seed' | 'cc-canto' | 'wordshk'
+}
+
+/** Walk seed + optional words.hk + CC-Canto for offline lexicon indexing. */
+export function eachLexiconEntry(fn: (entry: LexiconEntry) => void) {
+  for (const [trad, gloss] of Object.entries(SEED)) {
+    fn({ trad, gloss, jyutping: null, source: 'seed' })
+  }
+  if (wordshk) {
+    for (const [trad, e] of Object.entries(wordshk.entries)) {
+      if (SEED[trad]) continue
+      fn({ trad, gloss: e.gloss, jyutping: e.jyutping, source: 'wordshk' })
+    }
+  }
+  if (ccCanto) {
+    for (const [trad, e] of Object.entries(ccCanto.entries)) {
+      if (SEED[trad]) continue
+      fn({ trad, gloss: e.gloss, jyutping: e.jyutping, source: 'cc-canto' })
+    }
+  }
+}
+
 export function glossStats() {
   return {
     seed: Object.keys(SEED).length,
