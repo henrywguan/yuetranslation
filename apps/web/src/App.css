@@ -392,6 +392,18 @@
   gap: 10px;
 }
 
+.dock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  box-shadow:
+    0 16px 36px color-mix(in srgb, var(--harbor) 28%, transparent),
+    inset 0 1px 0 var(--glass-shine);
+}
+
 .mode-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -431,7 +443,7 @@
   justify-content: center;
   gap: 10px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 0;
   padding: 16px 18px;
   font-family: var(--font-display);
   font-weight: 700;
@@ -478,11 +490,15 @@
   grid-template-columns: 1fr 1fr 1fr;
   align-items: stretch;
   gap: 0;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  backdrop-filter: blur(14px);
-  box-shadow: inset 0 1px 0 var(--glass-shine);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--harbor-mid) 72%, transparent),
+      color-mix(in srgb, var(--harbor) 48%, transparent)
+    );
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--jade) 32%, var(--glass-border));
 }
 
 .opt-row--compact {
@@ -750,7 +766,7 @@
   gap: 0.1rem;
 }
 
-.solo-label .bi-en {
+.solo-label .bi--en .bi-en {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.7rem;
@@ -758,8 +774,12 @@
   font-weight: 600;
 }
 
-.solo-label .bi-zh {
-  font-size: 0.78rem;
+.solo-label .bi--zh {
+  font-size: 0.82rem;
+}
+
+.solo-label .bi--zh .bi-zh {
+  font-size: 0.92rem;
   color: var(--muted);
 }
 

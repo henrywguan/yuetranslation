@@ -15,12 +15,16 @@ export function SoloView() {
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
 
-  const source = enInterim || yueInterim
-  const sourceIsYue = Boolean(yueInterim)
-  const translation = sourceIsYue ? enTranslation : yueTranslation
   const latest = history[0]
-  const yueText = translation || latest?.translation || ''
-  const yueDef = yueDefinition || latest?.definition || latest?.source || ''
+  const enText =
+    enInterim ||
+    enTranslation ||
+    (latest ? (latest.from === 'en' ? latest.source : latest.translation) : '')
+  const yueText =
+    yueInterim ||
+    yueTranslation ||
+    (latest ? (latest.from === 'yue' ? latest.source : latest.translation) : '')
+  const yueDef = yueDefinition || latest?.definition || ''
 
   return (
     <div className="solo">
@@ -40,48 +44,37 @@ export function SoloView() {
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
         <p className="solo-label">
-          <BiText copy={sourceIsYue ? ui.cantonese : ui.english} size="sm" />
+          <BiText copy={ui.english} size="sm" only="en" />
         </p>
         <AnimatePresence mode="wait">
           <motion.p
-            key={source || 'empty-src'}
+            key={enText || 'empty-en'}
             className="solo-source"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            {sourceIsYue ? (
-              <CantoneseText
-                text={source}
-                definition={latest?.from === 'yue' ? latest.definition : ''}
-                placeholder={<BiText className="placeholder" copy={ui.speakToTranslate} size="sm" />}
-              />
-            ) : (
-              source || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" />
-            )}
+            {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
           </motion.p>
         </AnimatePresence>
 
         <div className="solo-divider" />
 
         <p className="solo-label">
-          <BiText copy={sourceIsYue ? ui.english : ui.cantonese} size="sm" />
+          <BiText copy={ui.cantonese} size="sm" only="zh" />
         </p>
         <AnimatePresence mode="wait">
           <motion.div
-            key={yueText || enTranslation || 'empty-tr'}
+            key={yueText || 'empty-yue'}
             className="solo-translation"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            {sourceIsYue ? (
-              translation ||
-              latest?.translation || <BiText className="placeholder" copy={ui.translationHere} size="sm" />
-            ) : yueText ? (
+            {yueText ? (
               <ResultWithDefinition text={yueText} definition={yueDef} textClassName="solo-tr-text" />
             ) : (
-              <BiText className="placeholder" copy={ui.translationHere} size="sm" />
+              <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
             )}
           </motion.div>
         </AnimatePresence>

@@ -56,64 +56,66 @@ export function Controls() {
         ))}
       </div>
 
-      {mode !== 'text' ? (
-        <div className="live-row">
-          <motion.button
-            type="button"
-            className={`live-btn ${live ? 'on' : ''} ${!canLive && !live ? 'blocked' : ''}`}
-            onClick={() => void toggleLive()}
-            whileTap={{ scale: 0.97 }}
-            disabled={!live && !canLive}
-            aria-label={biPlain(liveCopy)}
-          >
-            <span className="live-dot" />
-            <BiText copy={liveCopy} size="sm" />
-          </motion.button>
-        </div>
-      ) : null}
-
-      <div className={`opt-row${mode === 'text' ? ' opt-row--compact' : ''}`}>
+      <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
         {mode !== 'text' ? (
-          <label className="opt-cell opt-dir">
-            <span className="opt-kicker">
-              <BiText copy={ui.direction} size="sm" />
-            </span>
-            <select
-              value={speakDirection}
-              onChange={(e) => setSpeakDirection(e.target.value as SpeakDirection)}
-              aria-label={biPlain(ui.direction)}
+          <div className="live-row">
+            <motion.button
+              type="button"
+              className={`live-btn ${live ? 'on' : ''} ${!canLive && !live ? 'blocked' : ''}`}
+              onClick={() => void toggleLive()}
+              whileTap={{ scale: 0.97 }}
+              disabled={!live && !canLive}
+              aria-label={biPlain(liveCopy)}
             >
-              {DIRS.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              <span className="live-dot" />
+              <BiText copy={liveCopy} size="sm" />
+            </motion.button>
+          </div>
         ) : null}
 
-        <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
-          <span className="opt-kicker">
-            <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
-          </span>
-          <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
-            <input
-              type="checkbox"
-              checked={speakOn}
-              disabled={!canAutoSpeak}
-              onChange={(e) => setAutoSpeak(e.target.checked)}
-            />
-            <span className="speak-switch-ui" aria-hidden="true">
-              <span className="speak-switch-thumb" />
-            </span>
-          </span>
-        </label>
+        <div className={`opt-row${mode === 'text' ? ' opt-row--compact' : ''}`}>
+          {mode !== 'text' ? (
+            <label className="opt-cell opt-dir">
+              <span className="opt-kicker">
+                <BiText copy={ui.direction} size="sm" />
+              </span>
+              <select
+                value={speakDirection}
+                onChange={(e) => setSpeakDirection(e.target.value as SpeakDirection)}
+                aria-label={biPlain(ui.direction)}
+              >
+                {DIRS.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
-        <button type="button" className="opt-cell opt-clear" onClick={clearHistory}>
-          <span className="opt-kicker">
-            <BiText copy={ui.clear} size="sm" />
-          </span>
-        </button>
+          <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
+            <span className="opt-kicker">
+              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
+            </span>
+            <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
+              <input
+                type="checkbox"
+                checked={speakOn}
+                disabled={!canAutoSpeak}
+                onChange={(e) => setAutoSpeak(e.target.checked)}
+              />
+              <span className="speak-switch-ui" aria-hidden="true">
+                <span className="speak-switch-thumb" />
+              </span>
+            </span>
+          </label>
+
+          <button type="button" className="opt-cell opt-clear" onClick={clearHistory}>
+            <span className="opt-kicker">
+              <BiText copy={ui.clear} size="sm" />
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -10,6 +10,8 @@ type BiTextProps = {
   as?: ElementType
   /** Skip Jyutping popup entirely */
   hideJp?: boolean
+  /** Language-pure: English only, or Chinese (+ Jyutping) only. */
+  only?: 'en' | 'zh'
 }
 
 /** English above Chinese; Jyutping on hover / focus / tap. */
@@ -19,21 +21,25 @@ export function BiText({
   className = '',
   as: Tag = 'span',
   hideJp = false,
+  only,
 }: BiTextProps) {
-  const canJp = !hideJp && Boolean(copy.jp)
+  const canJp = !hideJp && only !== 'en' && Boolean(copy.jp)
   const { tipId, show, bind } = useJpPopup(canJp)
+  const zh = (
+    <span
+      {...bind}
+      className={`bi-zh-wrap${canJp ? ' bi-zh-wrap--hint' : ''}`}
+      lang="zh-HK"
+    >
+      <span className="bi-zh">{copy.zh}</span>
+      {canJp ? <JpPop show={show} id={tipId} text={copy.jp} /> : null}
+    </span>
+  )
 
   return (
-    <Tag className={`bi bi--${size} ${className}`.trim()}>
-      <span className="bi-en">{copy.en}</span>
-      <span
-        {...bind}
-        className={`bi-zh-wrap${canJp ? ' bi-zh-wrap--hint' : ''}`}
-        lang="zh-HK"
-      >
-        <span className="bi-zh">{copy.zh}</span>
-        {canJp ? <JpPop show={show} id={tipId} text={copy.jp} /> : null}
-      </span>
+    <Tag className={`bi bi--${size}${only ? ` bi--${only}` : ''} ${className}`.trim()}>
+      {only === 'zh' ? zh : <span className="bi-en">{copy.en}</span>}
+      {only ? null : zh}
     </Tag>
   )
 }

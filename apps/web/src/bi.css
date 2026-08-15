@@ -91,6 +91,11 @@
   line-height: 1.25;
 }
 
+.bi--en,
+.bi--zh {
+  gap: 0;
+}
+
 .bi-en {
   font-weight: 600;
 }
