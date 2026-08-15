@@ -3,6 +3,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { PaneParticles } from './PaneParticles'
+import { SpeakButton } from './SpeakButton'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -43,7 +44,14 @@ export function ConversationView() {
             className="said"
             interim={Boolean(enInterim) && !enTranslation}
           >
-            {enTranslation || <span className="placeholder">{ui.enTranslation.en}</span>}
+            {enTranslation ? (
+              <span className="spoken-line">
+                <span className="spoken-line-text">{enTranslation}</span>
+                <SpeakButton text={enTranslation} lang="en" />
+              </span>
+            ) : (
+              <span className="placeholder">{ui.enTranslation.en}</span>
+            )}
           </InkSettle>
         </div>
       </motion.section>
@@ -74,12 +82,21 @@ export function ConversationView() {
               className="said"
               interim={Boolean(yueInterim) && !yueTranslation}
             >
-              <CantoneseText
-                text={yueTranslation}
-                definition={yueDefinition}
-                placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
-                onActivate={openBreakdown}
-              />
+              {yueTranslation ? (
+                <span className="spoken-line">
+                  <CantoneseText
+                    text={yueTranslation}
+                    definition={yueDefinition}
+                    onActivate={openBreakdown}
+                  />
+                  <SpeakButton text={yueTranslation} lang="yue" />
+                </span>
+              ) : (
+                <CantoneseText
+                  text=""
+                  placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
+                />
+              )}
               <TranslationAlternatives
                 alternatives={yueAlternatives}
                 onSelect={selectYueVariation}

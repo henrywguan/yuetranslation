@@ -4,6 +4,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { PaneParticles } from './PaneParticles'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { SpeakButton } from './SpeakButton'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -66,7 +67,14 @@ export function SoloView() {
             className="solo-source"
             interim={enLive}
           >
-            {enText || <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />}
+            {enText ? (
+              <span className="spoken-line">
+                <span className="spoken-line-text">{enText}</span>
+                <SpeakButton text={enText} lang="en" />
+              </span>
+            ) : (
+              <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />
+            )}
           </InkSettle>
         </div>
 
@@ -89,6 +97,7 @@ export function SoloView() {
                   definition={yueDef}
                   textClassName="solo-tr-text"
                   onActivate={openBreakdown}
+                  speakLang="yue"
                 />
                 <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
               </>

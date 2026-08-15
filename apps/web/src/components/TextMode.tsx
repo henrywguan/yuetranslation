@@ -50,6 +50,7 @@ export function TextMode() {
               definition={latest.to === 'yue' ? latest.definition || latest.source : latest.definition}
               cantonese={latest.to === 'yue'}
               onActivate={latest.to === 'yue' ? openBreakdown : undefined}
+              speakLang={latest.to}
             />
             {latest.to === 'yue' ? (
               <TranslationAlternatives

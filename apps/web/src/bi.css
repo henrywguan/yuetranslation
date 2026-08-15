@@ -180,6 +180,103 @@
   min-width: min(100%, 8rem);
 }
 
+.result-with-def-line,
+.spoken-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.result-with-def-line > :first-child,
+.spoken-line-text,
+.spoken-line .cantonese-block {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.speak-btn {
+  flex: none;
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.12rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--jade) 18%, transparent),
+      color-mix(in srgb, var(--jade-deep) 8%, transparent)
+    ),
+    color-mix(in srgb, var(--surface) 72%, transparent);
+  color: color-mix(in srgb, var(--mint) 88%, var(--ink));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--glass-shine) 70%, transparent),
+    0 6px 16px color-mix(in srgb, #000 12%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.speak-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--jade) 48%, var(--glass-border));
+  color: var(--ink-bright);
+  transform: translateY(-1px);
+}
+
+.speak-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.speak-btn:disabled,
+.speak-btn.is-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.speak-btn.is-speaking {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+  border-color: color-mix(in srgb, var(--jade-bright) 40%, transparent);
+}
+
+.speak-btn-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.speak-btn.is-speaking .speak-btn-wave {
+  animation: speak-wave 1s ease-in-out infinite;
+}
+
+.speak-btn.is-speaking .speak-btn-wave--2 {
+  animation-delay: 0.18s;
+}
+
+@keyframes speak-wave {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speak-btn.is-speaking .speak-btn-wave {
+    animation: none;
+  }
+}
+
 .result-with-def-gloss {
   flex: 0 1 auto;
   margin: 0;
