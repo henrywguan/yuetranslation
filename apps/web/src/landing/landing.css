@@ -2,7 +2,10 @@
   position: relative;
   min-height: 100dvh;
   color: var(--ink);
-  overflow-x: hidden;
+  /* clip (not hidden) so we don't create a nested vertical scrollport that
+     chops the pricing table / Jyutping popups at the bottom. */
+  overflow-x: clip;
+  overflow-y: visible;
   font-family: var(--font-body);
 }
 
@@ -951,30 +954,36 @@
   color: var(--muted);
 }
 
-/* Comparison table */
+/* Comparison table — fluid width, no nested scroll (keeps Jyutping popups visible). */
 .pp-table-wrap {
   max-width: 900px;
   margin: 0 auto;
-  overflow-x: auto;
+  overflow: visible;
 }
 
 .pp-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 620px;
+  table-layout: fixed;
 }
 
 .pp-table th,
 .pp-table td {
-  padding: 15px 18px;
+  padding: 14px clamp(8px, 1.8vw, 18px);
   text-align: center;
+  vertical-align: top;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: visible;
 }
 
 .pp-table thead th {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: clamp(0.95rem, 2.4vw, 1.1rem);
   color: var(--ink);
+}
+
+.pp-table thead th:first-child {
+  width: 30%;
 }
 
 .pp-table tbody th {
@@ -983,8 +992,23 @@
   font-weight: 500;
 }
 
+.pp-table tbody th .bi {
+  width: 100%;
+}
+
 .pp-table td {
   color: var(--ink);
+}
+
+.pp-table td .bi {
+  align-items: center;
+  width: 100%;
+}
+
+/* Room under the last rows so hover Jyutping tips aren't flush-clipped. */
+.pp-table tbody tr:last-child th,
+.pp-table tbody tr:last-child td {
+  padding-bottom: 28px;
 }
 
 .pp-col-featured {
@@ -995,9 +1019,36 @@
 
 .pp-note {
   margin-top: 14px;
+  margin-bottom: 8px;
   font-size: 0.8rem;
   color: var(--muted);
   text-align: center;
+}
+
+.pp-note .bi {
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .pp-table thead th:first-child {
+    width: 36%;
+  }
+
+  .pp-table th,
+  .pp-table td {
+    padding: 12px 6px;
+  }
+
+  .pp-table tbody th .bi-en,
+  .pp-table td .bi-en {
+    font-size: 0.88em;
+  }
+
+  .pp-table tbody th .bi-zh,
+  .pp-table td .bi-zh {
+    font-size: 0.84em;
+  }
 }
 
 /* FAQ */
