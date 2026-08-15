@@ -1,4 +1,4 @@
-# Yue — English ↔ Cantonese
+# JyutTranslate — English ↔ Cantonese
 
 Face-to-face live translator PWA with WordPress freemium entitlements for Bluehost launch.
 

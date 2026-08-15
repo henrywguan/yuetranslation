@@ -2,7 +2,7 @@
 
 Canonical scheme: [Jyutping: The Linguistic Society of Hong Kong Cantonese Romanization Scheme](https://jyutping.org/en/jyutping/).
 
-Use this page as the source of truth for romanization in Jyut. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions may add the Chao tone letters from **§4 Tone**.
+Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions may add the Chao tone letters from **§4 Tone**.
 
 ## 4. Tone
 

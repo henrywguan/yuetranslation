@@ -119,6 +119,6 @@ app.post('/api/usage/heartbeat', (req, res) => {
 })
 
 app.listen(env.port, () => {
-  console.log(`Jyut API on http://localhost:${env.port}`)
+  console.log(`JyutTranslate API on http://localhost:${env.port}`)
   console.log(`Cloud ready: ${cloudReady()} (openMode=${env.openMode})`)
 })
