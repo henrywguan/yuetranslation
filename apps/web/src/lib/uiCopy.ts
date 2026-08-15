@@ -36,6 +36,12 @@ export const ui = {
   typeEnglish: { en: 'Type English…', zh: '輸入英文…', jp: 'syu1 jap6 jing1 man2…' },
   typeCantonese: { en: 'Type Cantonese…', zh: '輸入粵語…', jp: 'syu1 jap6 jyut6 jyu5…' },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
+  translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },
+  autoTranslateHint: {
+    en: 'Translation appears as you type',
+    zh: '打字就會自動翻譯',
+    jp: 'daa2 zi6 zau6 wui5 zi6 dung6 faan1 jik6',
+  },
   result: { en: 'Result', zh: '結果', jp: 'git3 gwo2' },
   definition: { en: 'Definition', zh: '釋義', jp: 'sik1 ji6' },
   close: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },

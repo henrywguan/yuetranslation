@@ -105,7 +105,7 @@ async function runTranslation(
       stage: isFinal ? 'final' : 'interim',
     })
     const alternatives = result.alternatives || []
-    if (pending.get(lang) !== seq && !isFinal) return
+    if (pending.get(lang) !== seq) return
     const definition = result.definition || (lang === 'en' ? text : '')
     const history = isFinal
       ? nextHistory(get, {
