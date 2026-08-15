@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
+import { LiveHoldButton } from './LiveHoldButton'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
@@ -12,16 +13,19 @@ import { ui } from '../lib/uiCopy'
  * English card stays upright for you. Cantonese card is rotated 180°
  * so the person across the table reads it the right way up.
  *
- * Results live in `face` store state only — never shared with Solo/Text,
- * and never accumulate history or “other variations” lists.
+ * Each pane has its own hold/tap mic button and thinking loader.
+ * Results live in `face` store state only — never shared with Solo/Text.
  */
 export function ConversationView() {
   const face = useYueStore((s) => s.face)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const live = useYueStore((s) => s.live)
+  const liveSide = useYueStore((s) => s.liveSide)
   const status = useYueStore((s) => s.status)
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
+
+  // Independent loaders: each pane shows thinking when it is receiving a translation.
   const enThinking = translating && translatingTo === 'en'
   const yueThinking = translating && translatingTo === 'yue'
 
@@ -29,11 +33,13 @@ export function ConversationView() {
   const yueText = face.yueTranslation || face.yueInterim
   const enLive = Boolean(face.enInterim) && !face.enTranslation
   const yueLive = Boolean(face.yueInterim) && !face.yueTranslation
+  const enListening = live && liveSide === 'en'
+  const yueListening = live && liveSide === 'yue'
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
       <motion.section
-        className="pane pane-en"
+        className={`pane pane-en${enListening ? ' is-listening' : ''}${enThinking ? ' is-thinking' : ''}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.35 }}
@@ -44,7 +50,7 @@ export function ConversationView() {
         </header>
         <div className="pane-body pane-body--hero">
           {enThinking ? (
-            <TranslateThinking className="pane-thinking" size="sm" />
+            <TranslateThinking className="pane-thinking" size="sm" label={false} />
           ) : (
             <InkSettle
               id={enLive ? 'face-en-live' : enText || 'face-en-empty'}
@@ -62,6 +68,9 @@ export function ConversationView() {
             </InkSettle>
           )}
         </div>
+        <div className="pane-live">
+          <LiveHoldButton side="en" labelLang="en" className="live-btn--pane live-btn--en" />
+        </div>
       </motion.section>
 
       <div className="conversation-gutter" aria-hidden="true">
@@ -70,7 +79,9 @@ export function ConversationView() {
         <span className="conversation-gutter-line" />
       </div>
 
-      <section className="pane pane-yue">
+      <section
+        className={`pane pane-yue${yueListening ? ' is-listening' : ''}${yueThinking ? ' is-thinking' : ''}`}
+      >
         <div className="pane-face">
           <header>
             <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
@@ -78,7 +89,7 @@ export function ConversationView() {
           </header>
           <div className="pane-body pane-body--hero">
             {yueThinking ? (
-              <TranslateThinking className="pane-thinking" size="sm" />
+              <TranslateThinking className="pane-thinking" size="sm" label={false} />
             ) : (
               <InkSettle
                 id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}
@@ -102,6 +113,9 @@ export function ConversationView() {
                 )}
               </InkSettle>
             )}
+          </div>
+          <div className="pane-live">
+            <LiveHoldButton side="yue" labelLang="zh" className="live-btn--pane live-btn--yue" />
           </div>
         </div>
       </section>

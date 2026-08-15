@@ -1,6 +1,5 @@
-import { motion } from 'framer-motion'
-import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { BiText } from './BiText'
+import { LiveHoldButton } from './LiveHoldButton'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode, SpeakDirection } from '../lib/types'
@@ -17,100 +16,21 @@ const DIRS: { id: SpeakDirection; label: string }[] = [
   { id: 'yue', label: '粵 → EN' },
 ]
 
-/** Below this → tap (sticky listen). Above → hold-to-speak. */
-const TAP_MS = 320
-
 export function Controls() {
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
-  const live = useYueStore((s) => s.live)
-  const status = useYueStore((s) => s.status)
-  const translating = useYueStore((s) => s.translating)
-  const liveInteraction = useYueStore((s) => s.liveInteraction)
-  const startHold = useYueStore((s) => s.startHold)
-  const armTapMode = useYueStore((s) => s.armTapMode)
-  const endHold = useYueStore((s) => s.endHold)
   const speakDirection = useYueStore((s) => s.speakDirection)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const setAutoSpeak = useYueStore((s) => s.setAutoSpeak)
   const entitlement = useYueStore((s) => s.entitlement)
   const clearHistory = useYueStore((s) => s.clearHistory)
-  const activePointer = useRef<number | null>(null)
-  const downAt = useRef(0)
-  const keyDownAt = useRef(0)
 
-  const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
   const speakOn = autoSpeak && canAutoSpeak
-
-  const liveCopy = translating
-    ? ui.translating
-    : live || status === 'listening'
-      ? status === 'speaking'
-        ? ui.speaking
-        : liveInteraction === 'tap'
-          ? ui.tapListening
-          : ui.releaseWhenDone
-      : ui.holdOrTapToSpeak
-
-  const onHoldPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return
-    if (!canLive && !live) return
-    if (activePointer.current != null) return
-
-    // Second tap while sticky-listening → finish early and translate.
-    if (liveInteraction === 'tap') {
-      activePointer.current = e.pointerId
-      e.currentTarget.setPointerCapture(e.pointerId)
-      downAt.current = 0
-      void endHold()
-      return
-    }
-
-    activePointer.current = e.pointerId
-    downAt.current = performance.now()
-    e.currentTarget.setPointerCapture(e.pointerId)
-    void startHold()
-  }
-
-  const onHoldPointerUp = (e: PointerEvent<HTMLButtonElement>) => {
-    if (activePointer.current !== e.pointerId) return
-    activePointer.current = null
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    }
-    // Early finish already handled on pointerdown for tap mode.
-    if (!downAt.current) return
-    const heldFor = performance.now() - downAt.current
-    downAt.current = 0
-    if (heldFor < TAP_MS) armTapMode()
-    else void endHold()
-  }
-
-  const onHoldKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key !== ' ' && e.key !== 'Enter') return
-    if (e.repeat) return
-    e.preventDefault()
-    if (!canLive && !live) return
-    if (liveInteraction === 'tap') {
-      keyDownAt.current = 0
-      void endHold()
-      return
-    }
-    keyDownAt.current = performance.now()
-    void startHold()
-  }
-
-  const onHoldKeyUp = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key !== ' ' && e.key !== 'Enter') return
-    e.preventDefault()
-    if (!keyDownAt.current) return
-    const heldFor = performance.now() - keyDownAt.current
-    keyDownAt.current = 0
-    if (heldFor < TAP_MS) armTapMode()
-    else void endHold()
-  }
+  const faceMode = mode === 'conversation'
+  const showLiveDock = mode !== 'text' && !faceMode
+  const showDirection = mode !== 'text' && !faceMode
 
   return (
     <div className="controls">
@@ -129,30 +49,16 @@ export function Controls() {
             </button>
           ))}
         </div>
-        {mode !== 'text' ? (
+        {showLiveDock ? (
           <div className="live-row">
-            <motion.button
-              type="button"
-              className={`live-btn ${live ? 'on' : ''} ${liveInteraction === 'tap' ? 'tap' : ''} ${translating ? 'thinking' : ''} ${!canLive && !live ? 'blocked' : ''}`}
-              onPointerDown={onHoldPointerDown}
-              onPointerUp={onHoldPointerUp}
-              onPointerCancel={onHoldPointerUp}
-              onKeyDown={onHoldKeyDown}
-              onKeyUp={onHoldKeyUp}
-              onContextMenu={(e) => e.preventDefault()}
-              whileTap={{ scale: 0.97 }}
-              disabled={!live && !canLive}
-              aria-label={biPlain(liveCopy)}
-              aria-pressed={live}
-            >
-              <span className="live-dot" />
-              <BiText copy={liveCopy} size="sm" layout="inline" />
-            </motion.button>
+            <LiveHoldButton />
           </div>
         ) : null}
 
-        <div className={`opt-row${mode === 'text' ? ' opt-row--compact' : ''}`}>
-          {mode !== 'text' ? (
+        <div
+          className={`opt-row${mode === 'text' || faceMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
+        >
+          {showDirection ? (
             <label className="opt-cell opt-dir">
               <span className="opt-kicker">
                 <BiText copy={ui.direction} size="sm" layout="inline" />

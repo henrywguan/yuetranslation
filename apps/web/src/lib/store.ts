@@ -59,14 +59,16 @@ type State = {
   session: LiveSession | null
   /** How the current live turn was armed — drives button copy. */
   liveInteraction: 'hold' | 'tap' | null
+  /** Face-to-face: which pane owns the active mic turn. */
+  liveSide: Lang | null
   setMode: (mode: Mode) => void
   setSpeakDirection: (d: SpeakDirection) => void
   setAutoSpeak: (v: boolean) => void
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
   loadBootstrap: () => Promise<void>
-  /** Press/tap start: mic + STT (no translate yet). */
-  startHold: () => Promise<void>
+  /** Press/tap start: mic + STT (no translate yet). Optional side locks Face pane language. */
+  startHold: (side?: Lang) => Promise<void>
   /** Short tap release: keep listening until speech pauses, then auto-translate. */
   armTapMode: () => void
   /** End listening + one final translate (shows TranslateThinking). */
@@ -100,6 +102,8 @@ let holdLang: Lang | null = null
 let holdInterim = ''
 /** Prevent overlapping startHold calls. */
 let startingHold = false
+/** Face pane language lock for the active turn (ignores auto-detect flips). */
+let holdSideLock: Lang | null = null
 let tapSilenceTimer: ReturnType<typeof setTimeout> | null = null
 let tapMaxTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -131,6 +135,11 @@ function scheduleTapSilenceEnd(get: () => State) {
     if (!tapSticky) return
     void get().endHold()
   }, TAP_SILENCE_MS)
+}
+
+function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
+  if (holdSideLock) return holdSideLock
+  return resolveSourceLang(detected, direction)
 }
 
 function beginTranslate(set: (p: Partial<State>) => void, to: Lang) {
@@ -377,6 +386,7 @@ async function tearDownLive(
   holding = false
   tapSticky = false
   startingHold = false
+  holdSideLock = null
   const session = get().session
   if (session) {
     try {
@@ -390,6 +400,7 @@ async function tearDownLive(
     live: false,
     session: null,
     liveInteraction: null,
+    liveSide: null,
     status: get().translating ? get().status : 'idle',
     ...(clearInterim
       ? {
@@ -423,6 +434,7 @@ export const useYueStore = create<State>((set, get) => ({
   history: [],
   session: null,
   liveInteraction: null,
+  liveSide: null,
 
   setMode: (mode) => {
     if (get().live || startingHold || holding || tapSticky) {
@@ -485,7 +497,7 @@ export const useYueStore = create<State>((set, get) => ({
     await tearDownLive(get, set, { clearInterim: true })
   },
 
-  startHold: async () => {
+  startHold: async (side) => {
     if (holding || startingHold || flushingHold || tapSticky || get().live) return
     const { entitlement } = get()
     if (entitlement && !entitlement.allowed.live) {
@@ -502,14 +514,15 @@ export const useYueStore = create<State>((set, get) => ({
     tapSticky = false
     flushingHold = false
     startingHold = true
+    holdSideLock = side ?? null
     clearTapTimers()
     resetHoldCapture()
-    set({ error: null, liveInteraction: 'hold' })
+    set({ error: null, liveInteraction: 'hold', liveSide: side ?? null })
 
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
         if (!holdActive(gen)) return
-        const lang = resolveSourceLang(detected, get().speakDirection)
+        const lang = resolveHoldLang(detected, get().speakDirection)
         holdLang = lang
         holdInterim = text
         applyHoldSource(get, set, lang, holdSourceText())
@@ -524,7 +537,7 @@ export const useYueStore = create<State>((set, get) => ({
       onFinal: (detected: Lang, text: string) => {
         // Accumulate STT while live — translate only when the turn ends (option A).
         if (!holdActive(gen)) return
-        const lang = resolveSourceLang(detected, get().speakDirection)
+        const lang = resolveHoldLang(detected, get().speakDirection)
         const trimmed = text.trim()
         if (!trimmed) return
         holdLang = lang
@@ -550,8 +563,12 @@ export const useYueStore = create<State>((set, get) => ({
 
     let next = await createAzureLiveSession(handlers)
     if (!next) {
+      const lock = holdSideLock
       const d = get().speakDirection
-      next = createWebSpeechSession(handlers, d === 'en' || d === 'yue' ? d : undefined)
+      next = createWebSpeechSession(
+        handlers,
+        lock || (d === 'en' || d === 'yue' ? d : undefined),
+      )
     }
     if (gen !== holdGen || (!holding && !tapSticky)) {
       startingHold = false
@@ -566,8 +583,15 @@ export const useYueStore = create<State>((set, get) => ({
     }
     if (!next) {
       holding = false
+      tapSticky = false
       startingHold = false
-      set({ error: 'Speech unavailable. Configure Azure Speech or use Chromium.', liveInteraction: null })
+      holdSideLock = null
+      clearTapTimers()
+      set({
+        error: 'Speech unavailable. Configure Azure Speech or use Chromium.',
+        liveInteraction: null,
+        liveSide: null,
+      })
       return
     }
     try {
@@ -602,8 +626,11 @@ export const useYueStore = create<State>((set, get) => ({
       }, 15000)
     } catch (e) {
       holding = false
+      tapSticky = false
       startingHold = false
-      set({ error: String(e), live: false, session: null, liveInteraction: null })
+      holdSideLock = null
+      clearTapTimers()
+      set({ error: String(e), live: false, session: null, liveInteraction: null, liveSide: null })
     }
   },
 
