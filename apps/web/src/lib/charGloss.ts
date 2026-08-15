@@ -1,5 +1,5 @@
 /** English glosses for common Hong Kong colloquial characters (offline / demo). */
-export const CHAR_GLOSS: Record<string, string> = {
+const CHAR_GLOSS: Record<string, string> = {
   你: 'you',
   我: 'I / me',
   佢: 'he / she / they',
@@ -80,6 +80,7 @@ export const CHAR_GLOSS: Record<string, string> = {
   同埋: 'and also',
   真: 'really',
   係咪: 'is it?',
+  哋: 'plural (we / they)',
   '？': 'question mark',
   '！': 'exclamation',
   '。': 'full stop',
@@ -88,6 +89,11 @@ export const CHAR_GLOSS: Record<string, string> = {
 
 export function glossForChar(char: string): string {
   return CHAR_GLOSS[char] || (isHanChar(char) ? 'Cantonese character' : '')
+}
+
+/** Known-character sense only (empty when unknown — used for drill gating). */
+export function charSense(char: string) {
+  return CHAR_GLOSS[char]?.trim() || ''
 }
 
 export function isHanChar(ch: string) {

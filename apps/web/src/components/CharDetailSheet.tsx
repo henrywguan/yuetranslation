@@ -10,7 +10,7 @@ import {
   toneNumber,
   type JyutSeg,
 } from '../lib/jyutping'
-import { charSense } from '../lib/charSense'
+import { charSense } from '../lib/charGloss'
 import { translateText } from '../lib/api'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 

@@ -1,6 +1,4 @@
 export type Lang = 'en' | 'yue'
-/** Reserved for future Mandarin support in shared translate/dictionary schemas. */
-export type FutureLang = Lang | 'cmn'
 export type Mode = 'solo' | 'conversation' | 'text'
 export type SpeakDirection = 'auto' | 'en' | 'yue'
 
