@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { BiText } from './BiText'
 import { DockConstellation } from './DockConstellation'
 import { useYueStore } from '../lib/store'
-import { tideTransition, tideY } from '../lib/motion'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode, SpeakDirection } from '../lib/types'
 
@@ -45,33 +44,30 @@ export function Controls() {
 
   return (
     <div className="controls">
-      <div className="mode-tabs" role="tablist" aria-label={biPlain(ui.modeTablist)}>
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            role="tab"
-            aria-selected={mode === m.id}
-            className={mode === m.id ? 'active' : ''}
-            onClick={() => setMode(m.id)}
-          >
-            <BiText copy={m.copy} size="sm" />
-          </button>
-        ))}
-      </div>
-
-      <motion.div
+      <div
         className="dock-wrap"
         onPointerMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect()
           if (r.width > 0) setPointerX((e.clientX - r.left) / r.width)
         }}
         onPointerLeave={() => setPointerX(0.5)}
-        animate={live ? { y: 0 } : { y: tideY }}
-        transition={live ? { duration: 0.35 } : tideTransition}
       >
         {mode !== 'text' ? <DockConstellation pointerX={pointerX} /> : null}
         <div className={`dock${mode === 'text' ? ' dock--compact' : ''}`}>
+        <div className="mode-tabs" role="tablist" aria-label={biPlain(ui.modeTablist)}>
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              role="tab"
+              aria-selected={mode === m.id}
+              className={mode === m.id ? 'active' : ''}
+              onClick={() => setMode(m.id)}
+            >
+              <BiText copy={m.copy} size="sm" />
+            </button>
+          ))}
+        </div>
         {mode !== 'text' ? (
           <div className="live-row">
             <motion.button
@@ -132,7 +128,7 @@ export function Controls() {
           </button>
         </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
