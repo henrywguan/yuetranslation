@@ -49,9 +49,9 @@ vec3 sceneColor(vec2 uv, float t, float light) {
   bg = mix(bg, jadeDeep(light), wash2 * mix(0.34, 0.42, light));
   bg = mix(bg, jadeCol(light), wash3 * mix(0.16, 0.28, light));
 
-  // Soft caustic ribbons — high-contrast structure for the lens to bend
+  // Soft caustic ribbons — keep light for the lens, but fewer loops for FPS.
   float ribbons = 0.0;
-  for (int k = 0; k < 4; k++) {
+  for (int k = 0; k < 2; k++) {
     float fk = float(k);
     float phase = t * (0.18 + fk * 0.03) + fk * 1.7;
     vec2 dir = normalize(vec2(0.65 + 0.2 * sin(fk), 0.35 + 0.15 * cos(fk * 1.3)));
@@ -59,11 +59,10 @@ vec3 sceneColor(vec2 uv, float t, float light) {
     stripe = pow(0.5 + 0.5 * stripe, 3.5);
     ribbons += stripe * (0.55 - fk * 0.08);
   }
-  // Light theme needs stronger ribbon contrast so refraction isn't washed out
-  bg += mix(jadeCol(light), inkCool(light), 0.35) * ribbons * mix(0.12, 0.32, light);
+  bg += mix(jadeCol(light), inkCool(light), 0.35) * ribbons * mix(0.14, 0.34, light);
 
   // Luminous pools that drift — gives orbs something precious to magnify
-  for (int j = 0; j < 4; j++) {
+  for (int j = 0; j < 2; j++) {
     float fj = float(j);
     vec2 c = vec2(
       sin(t * 0.19 + fj * 2.15) * 0.95,
@@ -71,7 +70,7 @@ vec3 sceneColor(vec2 uv, float t, float light) {
     );
     float soft = exp(-dot(uv - c, uv - c) * (1.6 + fj * 0.55));
     vec3 pool = mix(jadeDeep(light), mix(jadeCol(light), inkCool(light), 0.4), 0.55);
-    bg = mix(bg, pool, soft * mix(0.28, 0.38, light));
+    bg = mix(bg, pool, soft * mix(0.32, 0.42, light));
   }
 
   // Gentle vertical shaft — classic studio glass cue
@@ -118,12 +117,8 @@ vec4 refractOrb(vec2 uv, vec2 c, float rad, float depth, float light, float t, f
   float thickness = 0.38 + 0.85 * z;
   vec2 sampleUV = uv + refrDir.xy * thickness * rad * (1.35 - 0.25 * depth);
 
-  // Subtle cool/jade chromatic split (glass, not soap)
-  float aberr = 0.014 * rad * (0.55 + 0.55 * z);
-  vec3 refracted;
-  refracted.r = sceneColor(sampleUV + vec2(aberr, aberr * 0.15), t, light).r;
-  refracted.g = sceneColor(sampleUV, t, light).g;
-  refracted.b = sceneColor(sampleUV - vec2(aberr * 0.75, aberr * 0.35), t, light).b;
+  // Single-sample refraction (chromatic split was ~3× sceneColor cost per orb).
+  vec3 refracted = sceneColor(sampleUV, t, light);
 
   // Jade volume attenuation
   float path = 1.0 - z;
@@ -177,7 +172,7 @@ void main() {
     col = mix(col, mix(jadeDeep(light), harborMid(light), 0.5), soft * 0.12);
   }
 
-  // Refractive glass orbs — back to front
+  // Refractive glass orbs — keep the large lenses; drop tiny satellites for FPS.
   // ior ~1.42 (crown glass / jade-like)
   vec4 o0 = refractOrb(uv, vec2(0.44 + 0.03 * sin(t * 0.45), 0.06 + 0.025 * cos(t * 0.35)), 0.58, 0.08, light, t, 1.42);
   col = mix(col, o0.rgb, o0.a);
@@ -187,12 +182,6 @@ void main() {
 
   vec4 o2 = refractOrb(uv, vec2(0.12, -0.40 + 0.03 * sin(t * 0.4)), 0.24, 0.45, light, t, 1.45);
   col = mix(col, o2.rgb, o2.a);
-
-  vec4 o3 = refractOrb(uv, vec2(-0.18 + 0.02 * sin(t), 0.52), 0.16, 0.6, light, t, 1.38);
-  col = mix(col, o3.rgb, o3.a);
-
-  vec4 o4 = refractOrb(uv, vec2(0.70, -0.26), 0.14, 0.7, light, t, 1.48);
-  col = mix(col, o4.rgb, o4.a);
 
   float vig = smoothstep(1.5, 0.22, length(uv * vec2(1.05, 1.0)));
   col *= mix(0.9, 1.0, vig);
@@ -235,7 +224,7 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
     if (!canvas) return
 
     const gl = canvas.getContext('webgl', {
-      antialias: true,
+      antialias: false,
       alpha: false,
       powerPreference: 'high-performance',
       // Preserve so React Strict Mode remount can reuse the same canvas.
@@ -276,7 +265,8 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
     const lightLoc = gl.getUniformLocation(program, 'u_light')
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.75)
+      // Cap DPR — marketing + app already have a second WebGL hero on homepage.
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25)
       const w = Math.floor(canvas.clientWidth * dpr)
       const h = Math.floor(canvas.clientHeight * dpr)
       if (canvas.width !== w || canvas.height !== h) {
@@ -289,15 +279,24 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
 
     let raf = 0
     let running = true
+    let lastDraw = 0
     const start = performance.now()
     const light = theme === 'light' ? 1 : 0
+    // ~30fps is enough for a soft field and halves GPU load vs uncapped RAF.
+    const frameMs = variant === 'marketing' ? 33 : 28
 
-    const render = (now: number) => {
-      if (!running) return
-      resize()
+    const draw = (now: number) => {
       gl.uniform1f(timeLoc, (now - start) / 1000)
       gl.uniform1f(lightLoc, light)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
+    }
+
+    const render = (now: number) => {
+      if (!running) return
+      if (now - lastDraw >= frameMs) {
+        lastDraw = now
+        draw(now)
+      }
       if (!reduced) raf = requestAnimationFrame(render)
     }
 
@@ -307,6 +306,7 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
         cancelAnimationFrame(raf)
       } else if (!reduced) {
         running = true
+        lastDraw = 0
         raf = requestAnimationFrame(render)
       }
     }
@@ -335,7 +335,7 @@ export function JadeGlassField({ className = '', variant = 'marketing' }: Props)
       gl.deleteShader(frag)
       gl.deleteBuffer(buffer)
     }
-  }, [reduced, theme])
+  }, [reduced, theme, variant])
 
   const wrapClass = `jade-glass-field jade-glass-field--${variant} ${className}`
 
