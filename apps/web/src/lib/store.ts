@@ -266,8 +266,8 @@ export const useYueStore = create<State>((set, get) => ({
         void runTranslation(get, set, lang, text, true)
       },
       onBargeIn: () => {
+        // Kept for future intentional interrupt; echo is ignored in the speech sessions instead.
         speakToken += 1
-        get().session?.setPlaybackActive(false)
         if (get().live) set({ status: 'listening' })
       },
       onError: (message: string) => set({ error: message }),
