@@ -87,6 +87,64 @@
   white-space: nowrap;
 }
 
+.jp-pop--ruby {
+  padding: 8px 10px 9px;
+  letter-spacing: 0;
+  white-space: normal;
+  max-width: min(92vw, 36rem);
+}
+
+.jp-pop-ruby {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.35rem 0.55rem;
+}
+
+.jp-pop-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  min-width: 1.1em;
+}
+
+.jp-pop-han {
+  font-size: 0.95rem;
+  font-weight: 620;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--ink) 92%, transparent);
+}
+
+.jp-pop-syl {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  color: color-mix(in srgb, var(--mint) 78%, transparent);
+  text-transform: none;
+}
+
+.jp-pop-fallback {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.jp-pop-han-line {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--ink) 90%, transparent);
+}
+
+.jp-pop-syl-line {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
 [data-theme='light'] .jp-pop {
   color: color-mix(in srgb, var(--jade-deep) 72%, transparent);
   background:
@@ -100,6 +158,14 @@
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.55) inset,
     0 12px 28px rgba(7, 19, 31, 0.1);
+}
+
+[data-theme='light'] .jp-pop-han {
+  color: color-mix(in srgb, var(--ink) 88%, transparent);
+}
+
+[data-theme='light'] .jp-pop-syl {
+  color: color-mix(in srgb, var(--jade-deep) 72%, transparent);
 }
 
 .bi {
