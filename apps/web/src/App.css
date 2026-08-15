@@ -666,6 +666,56 @@
   min-height: 0;
 }
 
+.pane-body--hero {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0;
+  padding: 8px 4px 12px;
+}
+
+.pane-hero {
+  margin: 0;
+  width: 100%;
+  max-width: 22rem;
+  font-family: var(--font-body);
+  font-size: clamp(1.55rem, 6.8vw, 2.35rem);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--ink-bright, var(--ink));
+  text-wrap: balance;
+}
+
+.pane-hero--en {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.pane-hero--yue,
+.pane-hero-canto {
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.pane-hero .cantonese-block,
+.pane-hero .cantonese-activate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.pane-hero .jyutping {
+  font-size: 0.55em;
+  font-weight: 550;
+}
+
+.pane-hero .placeholder {
+  font-size: 0.92em;
+  font-weight: 450;
+}
+
 .pane .heard {
   margin: 0;
   font-size: 1.05rem;

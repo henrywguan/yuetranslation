@@ -12,6 +12,25 @@ import type {
   SpeakDirection,
 } from './types'
 
+/** Isolated live lines for Face-to-face — never shared with Solo/Text. */
+export type FaceLive = {
+  enInterim: string
+  yueInterim: string
+  enTranslation: string
+  yueTranslation: string
+  yueDefinition: string
+}
+
+export function emptyFaceLive(): FaceLive {
+  return {
+    enInterim: '',
+    yueInterim: '',
+    enTranslation: '',
+    yueTranslation: '',
+    yueDefinition: '',
+  }
+}
+
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
@@ -28,6 +47,8 @@ type State = {
   yueDefinition: string
   /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
   yueAlternatives: string[]
+  /** Face-to-face panes only — separate from Solo/Text results. */
+  face: FaceLive
   /** Active Cantonese phrase shown in the character-breakdown frame (null = closed). */
   breakdownPhrase: string | null
   /** True while any translate request is in flight. */
@@ -118,45 +139,74 @@ async function runTranslation(
   pending.set(lang, seq)
   beginTranslate(set, to)
   let speak: { text: string; lang: Lang } | null = null
+  const isFace = get().mode === 'conversation'
   try {
     const result = await translateText(text, lang, to, {
-      includeAlternatives: isFinal && lang === 'en',
+      includeAlternatives: isFinal && lang === 'en' && !isFace,
       stage: isFinal ? 'final' : 'interim',
     })
     const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq) return
     const definition = result.definition || (lang === 'en' ? text : '')
-    const history = isFinal
-      ? nextHistory(get, {
-          from: lang,
-          to,
-          source: text,
-          translation: result.text,
-          definition,
-          alternatives: lang === 'en' ? alternatives : undefined,
-          engine: result.engine,
+
+    if (isFace) {
+      const face = get().face
+      if (lang === 'en') {
+        set({
+          face: {
+            ...face,
+            enInterim: text,
+            yueInterim: '',
+            enTranslation: '',
+            yueTranslation: result.text,
+            yueDefinition: result.definition || (isFinal ? text : ''),
+          },
         })
-      : undefined
-    if (lang === 'en') {
-      set({
-        enInterim: text,
-        yueInterim: '',
-        enTranslation: '',
-        yueTranslation: result.text,
-        yueDefinition: result.definition || (isFinal ? text : ''),
-        yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
-        ...(history ? { history } : {}),
-      })
+      } else {
+        set({
+          face: {
+            ...face,
+            yueInterim: text,
+            enInterim: '',
+            yueTranslation: '',
+            enTranslation: result.text,
+            yueDefinition: result.definition || '',
+          },
+        })
+      }
     } else {
-      set({
-        yueInterim: text,
-        enInterim: '',
-        yueTranslation: '',
-        enTranslation: result.text,
-        yueDefinition: result.definition || '',
-        yueAlternatives: isFinal ? [] : get().yueAlternatives,
-        ...(history ? { history } : {}),
-      })
+      const history = isFinal
+        ? nextHistory(get, {
+            from: lang,
+            to,
+            source: text,
+            translation: result.text,
+            definition,
+            alternatives: lang === 'en' ? alternatives : undefined,
+            engine: result.engine,
+          })
+        : undefined
+      if (lang === 'en') {
+        set({
+          enInterim: text,
+          yueInterim: '',
+          enTranslation: '',
+          yueTranslation: result.text,
+          yueDefinition: result.definition || (isFinal ? text : ''),
+          yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
+          ...(history ? { history } : {}),
+        })
+      } else {
+        set({
+          yueInterim: text,
+          enInterim: '',
+          yueTranslation: '',
+          enTranslation: result.text,
+          yueDefinition: result.definition || '',
+          yueAlternatives: isFinal ? [] : get().yueAlternatives,
+          ...(history ? { history } : {}),
+        })
+      }
     }
     if (isFinal) speak = { text: result.text, lang: to }
   } catch (e) {
@@ -188,6 +238,7 @@ export const useYueStore = create<State>((set, get) => ({
   yueTranslation: '',
   yueDefinition: '',
   yueAlternatives: [],
+  face: emptyFaceLive(),
   breakdownPhrase: null,
   translating: false,
   translatingTo: null,
@@ -231,7 +282,14 @@ export const useYueStore = create<State>((set, get) => ({
       stopSpeaking()
       stopHeartbeat()
       await session.stop()
-      set({ live: false, session: null, status: 'idle', enInterim: '', yueInterim: '' })
+      set({
+        live: false,
+        session: null,
+        status: 'idle',
+        enInterim: '',
+        yueInterim: '',
+        face: { ...get().face, enInterim: '', yueInterim: '' },
+      })
       void get().loadBootstrap()
       return
     }
@@ -251,7 +309,35 @@ export const useYueStore = create<State>((set, get) => ({
         const lang = resolveSourceLang(detected, get().speakDirection)
         stopSpeaking()
         get().session?.setPlaybackActive(false)
-        if (lang === 'en') {
+        const isFace = get().mode === 'conversation'
+        if (isFace) {
+          const face = get().face
+          if (lang === 'en') {
+            set({
+              face: {
+                ...face,
+                enInterim: text,
+                yueInterim: '',
+                enTranslation: '',
+                yueTranslation: '',
+                yueDefinition: '',
+              },
+              status: 'listening',
+            })
+          } else {
+            set({
+              face: {
+                ...face,
+                yueInterim: text,
+                enInterim: '',
+                enTranslation: '',
+                yueTranslation: '',
+                yueDefinition: '',
+              },
+              status: 'listening',
+            })
+          }
+        } else if (lang === 'en') {
           set({
             enInterim: text,
             yueInterim: '',
@@ -285,8 +371,15 @@ export const useYueStore = create<State>((set, get) => ({
         if (t) clearTimeout(t)
         speakToken += 1
         stopSpeaking()
-        if (lang === 'en') set({ enInterim: text })
-        else set({ yueInterim: text })
+        if (get().mode === 'conversation') {
+          const face = get().face
+          if (lang === 'en') set({ face: { ...face, enInterim: text } })
+          else set({ face: { ...face, yueInterim: text } })
+        } else if (lang === 'en') {
+          set({ enInterim: text })
+        } else {
+          set({ yueInterim: text })
+        }
         void runTranslation(get, set, lang, text, true)
       },
       onBargeIn: () => {
@@ -386,6 +479,15 @@ export const useYueStore = create<State>((set, get) => ({
   clearHistory: () => {
     speakToken += 1
     stopSpeaking()
+    if (get().mode === 'conversation') {
+      set({
+        face: emptyFaceLive(),
+        breakdownPhrase: null,
+        translating: false,
+        translatingTo: null,
+      })
+      return
+    }
     set({
       history: [],
       enInterim: '',

@@ -3,7 +3,6 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { TranslateThinking } from './TranslateThinking'
-import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -11,22 +10,24 @@ import { ui } from '../lib/uiCopy'
  * Face-to-face: two language-pure cards on a shared phone.
  * English card stays upright for you. Cantonese card is rotated 180°
  * so the person across the table reads it the right way up.
+ *
+ * Results live in `face` store state only — never shared with Solo/Text,
+ * and never accumulate history or “other variations” lists.
  */
 export function ConversationView() {
-  const enInterim = useYueStore((s) => s.enInterim)
-  const yueInterim = useYueStore((s) => s.yueInterim)
-  const enTranslation = useYueStore((s) => s.enTranslation)
-  const yueTranslation = useYueStore((s) => s.yueTranslation)
-  const yueDefinition = useYueStore((s) => s.yueDefinition)
-  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const face = useYueStore((s) => s.face)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
-  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
   const enThinking = translating && translatingTo === 'en'
   const yueThinking = translating && translatingTo === 'yue'
+
+  const enText = face.enTranslation || face.enInterim
+  const yueText = face.yueTranslation || face.yueInterim
+  const enLive = Boolean(face.enInterim) && !face.enTranslation
+  const yueLive = Boolean(face.yueInterim) && !face.yueTranslation
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
@@ -40,17 +41,16 @@ export function ConversationView() {
           <h2>{ui.english.en}</h2>
           <p>{ui.holdFacingYou.en}</p>
         </header>
-        <div className="pane-body">
-          <p className="heard">{enInterim || <span className="placeholder">{ui.listening.en}</span>}</p>
+        <div className="pane-body pane-body--hero">
           {enThinking ? (
             <TranslateThinking className="pane-thinking" size="sm" />
           ) : (
             <InkSettle
-              id={enTranslation || 'en-empty'}
-              className="said"
-              interim={Boolean(enInterim) && !enTranslation}
+              id={enLive ? 'face-en-live' : enText || 'face-en-empty'}
+              className="pane-hero pane-hero--en"
+              interim={enLive}
             >
-              {enTranslation || <span className="placeholder">{ui.enTranslation.en}</span>}
+              {enText || <span className="placeholder">{ui.enTranslation.en}</span>}
             </InkSettle>
           )}
         </div>
@@ -68,32 +68,25 @@ export function ConversationView() {
             <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
             <p lang="zh-HK">{ui.friendLooksHere.zh}</p>
           </header>
-          <div className="pane-body">
-            <p className="heard">
-              <CantoneseText
-                text={yueInterim}
-                placeholder={<span className="placeholder">{ui.listening.zh}</span>}
-                onActivate={openBreakdown}
-              />
-            </p>
+          <div className="pane-body pane-body--hero">
             {yueThinking ? (
               <TranslateThinking className="pane-thinking" size="sm" />
             ) : (
               <InkSettle
-                id={yueTranslation || 'yue-empty'}
-                className="said"
-                interim={Boolean(yueInterim) && !yueTranslation}
+                id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}
+                className="pane-hero pane-hero--yue"
+                interim={yueLive}
               >
-                <CantoneseText
-                  text={yueTranslation}
-                  definition={yueDefinition}
-                  placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
-                  onActivate={openBreakdown}
-                />
-                <TranslationAlternatives
-                  alternatives={yueAlternatives}
-                  onSelect={selectYueVariation}
-                />
+                {yueText ? (
+                  <CantoneseText
+                    text={yueText}
+                    definition={face.yueDefinition}
+                    className="pane-hero-canto"
+                    onActivate={openBreakdown}
+                  />
+                ) : (
+                  <span className="placeholder">{ui.yueTranslation.zh}</span>
+                )}
               </InkSettle>
             )}
           </div>
