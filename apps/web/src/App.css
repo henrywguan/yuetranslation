@@ -1469,6 +1469,13 @@
   }
 }
 
+.solo-thinking,
+.pane-thinking,
+.text-thinking {
+  position: relative;
+  z-index: 1;
+}
+
 /* Monitors: history rail occupies the blank space to the right of the phone column */
 @media (min-width: 960px) {
   .app-shell {

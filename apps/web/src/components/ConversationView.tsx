@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
+import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -22,6 +23,10 @@ export function ConversationView() {
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
+  const translating = useYueStore((s) => s.translating)
+  const translatingTo = useYueStore((s) => s.translatingTo)
+  const enThinking = translating && translatingTo === 'en'
+  const yueThinking = translating && translatingTo === 'yue'
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
@@ -37,13 +42,17 @@ export function ConversationView() {
         </header>
         <div className="pane-body">
           <p className="heard">{enInterim || <span className="placeholder">{ui.listening.en}</span>}</p>
-          <InkSettle
-            id={enTranslation || 'en-empty'}
-            className="said"
-            interim={Boolean(enInterim) && !enTranslation}
-          >
-            {enTranslation || <span className="placeholder">{ui.enTranslation.en}</span>}
-          </InkSettle>
+          {enThinking ? (
+            <TranslateThinking className="pane-thinking" size="sm" />
+          ) : (
+            <InkSettle
+              id={enTranslation || 'en-empty'}
+              className="said"
+              interim={Boolean(enInterim) && !enTranslation}
+            >
+              {enTranslation || <span className="placeholder">{ui.enTranslation.en}</span>}
+            </InkSettle>
+          )}
         </div>
       </motion.section>
 
@@ -67,22 +76,26 @@ export function ConversationView() {
                 onActivate={openBreakdown}
               />
             </p>
-            <InkSettle
-              id={yueTranslation || 'yue-empty'}
-              className="said"
-              interim={Boolean(yueInterim) && !yueTranslation}
-            >
-              <CantoneseText
-                text={yueTranslation}
-                definition={yueDefinition}
-                placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
-                onActivate={openBreakdown}
-              />
-              <TranslationAlternatives
-                alternatives={yueAlternatives}
-                onSelect={selectYueVariation}
-              />
-            </InkSettle>
+            {yueThinking ? (
+              <TranslateThinking className="pane-thinking" size="sm" />
+            ) : (
+              <InkSettle
+                id={yueTranslation || 'yue-empty'}
+                className="said"
+                interim={Boolean(yueInterim) && !yueTranslation}
+              >
+                <CantoneseText
+                  text={yueTranslation}
+                  definition={yueDefinition}
+                  placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
+                  onActivate={openBreakdown}
+                />
+                <TranslationAlternatives
+                  alternatives={yueAlternatives}
+                  onSelect={selectYueVariation}
+                />
+              </InkSettle>
+            )}
           </div>
         </div>
       </section>

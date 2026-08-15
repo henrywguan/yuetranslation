@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { ResultWithDefinition } from './ResultWithDefinition'
+import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -19,10 +20,12 @@ export function TextMode() {
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
+  const translating = useYueStore((s) => s.translating)
   const trimmed = text.trim()
   const latest = history[0]
   const match =
     latest && latest.from === from && latest.source === trimmed ? latest : null
+  const showThinking = busy || translating
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
   const fromRef = useRef(from)
   const translateRef = useRef(translateTyped)
@@ -84,14 +87,14 @@ export function TextMode() {
         aria-label={biPlain(placeholder)}
       />
       <p className="text-auto-status" aria-live="polite">
-        {busy ? (
-          <BiText copy={ui.translating} size="sm" />
-        ) : trimmed ? null : (
+        {showThinking || trimmed ? null : (
           <BiText copy={ui.autoTranslateHint} size="sm" />
         )}
       </p>
       <div className="text-lower">
-        {match ? (
+        {showThinking ? (
+          <TranslateThinking className="text-thinking" />
+        ) : match ? (
           <InkSettle id={match.id} className="text-result">
             <p className="muted">
               <BiText copy={ui.result} size="sm" />
