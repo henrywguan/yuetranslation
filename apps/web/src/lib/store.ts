@@ -57,15 +57,19 @@ type State = {
   translatingTo: Lang | null
   history: ConversationTurn[]
   session: LiveSession | null
+  /** How the current live turn was armed — drives button copy. */
+  liveInteraction: 'hold' | 'tap' | null
   setMode: (mode: Mode) => void
   setSpeakDirection: (d: SpeakDirection) => void
   setAutoSpeak: (v: boolean) => void
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
   loadBootstrap: () => Promise<void>
-  /** Press-and-hold: start mic + STT (no translate yet). */
+  /** Press/tap start: mic + STT (no translate yet). */
   startHold: () => Promise<void>
-  /** Release: stop mic, then one final translate (shows TranslateThinking). */
+  /** Short tap release: keep listening until speech pauses, then auto-translate. */
+  armTapMode: () => void
+  /** End listening + one final translate (shows TranslateThinking). */
   endHold: () => Promise<void>
   /** Cancel live without translating (mode switch / quota). */
   stopLive: () => Promise<void>
@@ -82,8 +86,10 @@ const pending = new Map<Lang, number>()
 let speakToken = 0
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let translateInFlight = 0
-/** True while the user is pressing the live button. */
+/** True while the user is pressing the live button (hold mode). */
 let holding = false
+/** Short-tap sticky listen — auto-ends after speech pause. */
+let tapSticky = false
 /** Accept late STT finals briefly after release while the recognizer stops. */
 let flushingHold = false
 /** Monotonic id so a late release cannot translate a newer hold. */
@@ -94,9 +100,37 @@ let holdLang: Lang | null = null
 let holdInterim = ''
 /** Prevent overlapping startHold calls. */
 let startingHold = false
+let tapSilenceTimer: ReturnType<typeof setTimeout> | null = null
+let tapMaxTimer: ReturnType<typeof setTimeout> | null = null
+
+/** After a final in tap mode, wait this long with no new speech before translating. */
+const TAP_SILENCE_MS = 950
+/** Safety cap so tap mode cannot run forever. */
+const TAP_MAX_MS = 45000
 
 function holdActive(gen: number) {
-  return gen === holdGen && (holding || flushingHold)
+  return gen === holdGen && (holding || flushingHold || tapSticky)
+}
+
+function clearTapTimers() {
+  if (tapSilenceTimer) {
+    clearTimeout(tapSilenceTimer)
+    tapSilenceTimer = null
+  }
+  if (tapMaxTimer) {
+    clearTimeout(tapMaxTimer)
+    tapMaxTimer = null
+  }
+}
+
+function scheduleTapSilenceEnd(get: () => State) {
+  if (!tapSticky) return
+  if (tapSilenceTimer) clearTimeout(tapSilenceTimer)
+  tapSilenceTimer = setTimeout(() => {
+    tapSilenceTimer = null
+    if (!tapSticky) return
+    void get().endHold()
+  }, TAP_SILENCE_MS)
 }
 
 function beginTranslate(set: (p: Partial<State>) => void, to: Lang) {
@@ -339,7 +373,9 @@ async function tearDownLive(
   speakToken += 1
   stopSpeaking()
   stopHeartbeat()
+  clearTapTimers()
   holding = false
+  tapSticky = false
   startingHold = false
   const session = get().session
   if (session) {
@@ -353,6 +389,7 @@ async function tearDownLive(
   set({
     live: false,
     session: null,
+    liveInteraction: null,
     status: get().translating ? get().status : 'idle',
     ...(clearInterim
       ? {
@@ -385,9 +422,10 @@ export const useYueStore = create<State>((set, get) => ({
   translatingTo: null,
   history: [],
   session: null,
+  liveInteraction: null,
 
   setMode: (mode) => {
-    if (get().live || startingHold || holding) {
+    if (get().live || startingHold || holding || tapSticky) {
       void get()
         .stopLive()
         .then(() => set({ mode }))
@@ -441,12 +479,14 @@ export const useYueStore = create<State>((set, get) => ({
   stopLive: async () => {
     resetHoldCapture()
     flushingHold = false
+    tapSticky = false
+    clearTapTimers()
     holdGen += 1
     await tearDownLive(get, set, { clearInterim: true })
   },
 
   startHold: async () => {
-    if (holding || startingHold || flushingHold || get().live) return
+    if (holding || startingHold || flushingHold || tapSticky || get().live) return
     const { entitlement } = get()
     if (entitlement && !entitlement.allowed.live) {
       const msg =
@@ -459,10 +499,12 @@ export const useYueStore = create<State>((set, get) => ({
 
     const gen = ++holdGen
     holding = true
+    tapSticky = false
     flushingHold = false
     startingHold = true
+    clearTapTimers()
     resetHoldCapture()
-    set({ error: null })
+    set({ error: null, liveInteraction: 'hold' })
 
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
@@ -471,9 +513,16 @@ export const useYueStore = create<State>((set, get) => ({
         holdLang = lang
         holdInterim = text
         applyHoldSource(get, set, lang, holdSourceText())
+        if (tapSticky) {
+          // Still talking — push auto-end out.
+          if (tapSilenceTimer) {
+            clearTimeout(tapSilenceTimer)
+            tapSilenceTimer = null
+          }
+        }
       },
       onFinal: (detected: Lang, text: string) => {
-        // Accumulate STT while held — translate only on release (option A).
+        // Accumulate STT while live — translate only when the turn ends (option A).
         if (!holdActive(gen)) return
         const lang = resolveSourceLang(detected, get().speakDirection)
         const trimmed = text.trim()
@@ -482,6 +531,7 @@ export const useYueStore = create<State>((set, get) => ({
         holdFinals.push(trimmed)
         holdInterim = ''
         applyHoldSource(get, set, lang, holdSourceText())
+        if (tapSticky) scheduleTapSilenceEnd(get)
       },
       onBargeIn: () => {
         speakToken += 1
@@ -503,7 +553,7 @@ export const useYueStore = create<State>((set, get) => ({
       const d = get().speakDirection
       next = createWebSpeechSession(handlers, d === 'en' || d === 'yue' ? d : undefined)
     }
-    if (gen !== holdGen || !holding) {
+    if (gen !== holdGen || (!holding && !tapSticky)) {
       startingHold = false
       if (next) {
         try {
@@ -517,12 +567,12 @@ export const useYueStore = create<State>((set, get) => ({
     if (!next) {
       holding = false
       startingHold = false
-      set({ error: 'Speech unavailable. Configure Azure Speech or use Chromium.' })
+      set({ error: 'Speech unavailable. Configure Azure Speech or use Chromium.', liveInteraction: null })
       return
     }
     try {
       await next.start()
-      if (gen !== holdGen || !holding) {
+      if (gen !== holdGen || (!holding && !tapSticky)) {
         startingHold = false
         try {
           await next.stop()
@@ -553,14 +603,31 @@ export const useYueStore = create<State>((set, get) => ({
     } catch (e) {
       holding = false
       startingHold = false
-      set({ error: String(e), live: false, session: null })
+      set({ error: String(e), live: false, session: null, liveInteraction: null })
     }
   },
 
+  armTapMode: () => {
+    if (!holding && !startingHold && !get().live) return
+    if (flushingHold) return
+    holding = false
+    tapSticky = true
+    set({ liveInteraction: 'tap' })
+    clearTapTimers()
+    // If we already captured a final before the short release, start the pause clock.
+    if (holdFinals.length) scheduleTapSilenceEnd(get)
+    tapMaxTimer = setTimeout(() => {
+      tapMaxTimer = null
+      if (tapSticky) void get().endHold()
+    }, TAP_MAX_MS)
+  },
+
   endHold: async () => {
-    if (!holding && !startingHold && !get().live && !flushingHold) return
+    if (!holding && !startingHold && !get().live && !flushingHold && !tapSticky) return
     const gen = holdGen
     holding = false
+    tapSticky = false
+    clearTapTimers()
     flushingHold = true
     // Stop recognizer first so Azure/WebSpeech can flush a final transcript.
     await tearDownLive(get, set, { clearInterim: false })

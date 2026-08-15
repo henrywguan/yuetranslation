@@ -850,6 +850,10 @@
   color: #fff;
 }
 
+.live-btn.on.tap {
+  background: linear-gradient(135deg, var(--jade-mid), var(--danger));
+}
+
 .live-btn.thinking {
   background: linear-gradient(135deg, var(--jade-mid), var(--jade));
   color: var(--on-jade);

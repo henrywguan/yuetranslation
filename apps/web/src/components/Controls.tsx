@@ -17,13 +17,18 @@ const DIRS: { id: SpeakDirection; label: string }[] = [
   { id: 'yue', label: '粵 → EN' },
 ]
 
+/** Below this → tap (sticky listen). Above → hold-to-speak. */
+const TAP_MS = 320
+
 export function Controls() {
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const translating = useYueStore((s) => s.translating)
+  const liveInteraction = useYueStore((s) => s.liveInteraction)
   const startHold = useYueStore((s) => s.startHold)
+  const armTapMode = useYueStore((s) => s.armTapMode)
   const endHold = useYueStore((s) => s.endHold)
   const speakDirection = useYueStore((s) => s.speakDirection)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
@@ -32,6 +37,8 @@ export function Controls() {
   const entitlement = useYueStore((s) => s.entitlement)
   const clearHistory = useYueStore((s) => s.clearHistory)
   const activePointer = useRef<number | null>(null)
+  const downAt = useRef(0)
+  const keyDownAt = useRef(0)
 
   const canLive = !entitlement || entitlement.allowed.live
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
@@ -42,14 +49,27 @@ export function Controls() {
     : live || status === 'listening'
       ? status === 'speaking'
         ? ui.speaking
-        : ui.releaseWhenDone
-      : ui.holdToSpeak
+        : liveInteraction === 'tap'
+          ? ui.tapListening
+          : ui.releaseWhenDone
+      : ui.holdOrTapToSpeak
 
   const onHoldPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return
     if (!canLive && !live) return
     if (activePointer.current != null) return
+
+    // Second tap while sticky-listening → finish early and translate.
+    if (liveInteraction === 'tap') {
+      activePointer.current = e.pointerId
+      e.currentTarget.setPointerCapture(e.pointerId)
+      downAt.current = 0
+      void endHold()
+      return
+    }
+
     activePointer.current = e.pointerId
+    downAt.current = performance.now()
     e.currentTarget.setPointerCapture(e.pointerId)
     void startHold()
   }
@@ -60,7 +80,12 @@ export function Controls() {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
-    void endHold()
+    // Early finish already handled on pointerdown for tap mode.
+    if (!downAt.current) return
+    const heldFor = performance.now() - downAt.current
+    downAt.current = 0
+    if (heldFor < TAP_MS) armTapMode()
+    else void endHold()
   }
 
   const onHoldKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -68,13 +93,23 @@ export function Controls() {
     if (e.repeat) return
     e.preventDefault()
     if (!canLive && !live) return
+    if (liveInteraction === 'tap') {
+      keyDownAt.current = 0
+      void endHold()
+      return
+    }
+    keyDownAt.current = performance.now()
     void startHold()
   }
 
   const onHoldKeyUp = (e: KeyboardEvent<HTMLButtonElement>) => {
     if (e.key !== ' ' && e.key !== 'Enter') return
     e.preventDefault()
-    void endHold()
+    if (!keyDownAt.current) return
+    const heldFor = performance.now() - keyDownAt.current
+    keyDownAt.current = 0
+    if (heldFor < TAP_MS) armTapMode()
+    else void endHold()
   }
 
   return (
@@ -98,7 +133,7 @@ export function Controls() {
           <div className="live-row">
             <motion.button
               type="button"
-              className={`live-btn ${live ? 'on' : ''} ${translating ? 'thinking' : ''} ${!canLive && !live ? 'blocked' : ''}`}
+              className={`live-btn ${live ? 'on' : ''} ${liveInteraction === 'tap' ? 'tap' : ''} ${translating ? 'thinking' : ''} ${!canLive && !live ? 'blocked' : ''}`}
               onPointerDown={onHoldPointerDown}
               onPointerUp={onHoldPointerUp}
               onPointerCancel={onHoldPointerUp}
