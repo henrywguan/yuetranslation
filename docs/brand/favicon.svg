@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#07131f"/>
-  <circle cx="32" cy="32" r="22" fill="url(#g)"/>
-  <text x="32" y="40" text-anchor="middle" font-family="Noto Sans HK, sans-serif" font-size="28" font-weight="700" fill="#041018">粵</text>
   <defs>
-    <linearGradient id="g" x1="12" y1="10" x2="52" y2="54" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3dcfb6"/>
+    <linearGradient id="g" x1="12" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7ef0dc"/>
+      <stop offset="0.45" stop-color="#3dcfb6"/>
       <stop offset="1" stop-color="#1f8f7a"/>
     </linearGradient>
+    <radialGradient id="s" cx="32%" cy="26%" r="70%">
+      <stop stop-color="rgba(255,255,255,0.42)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
   </defs>
+  <rect width="64" height="64" rx="18" fill="url(#g)"/>
+  <rect width="64" height="64" rx="18" fill="url(#s)"/>
+  <text x="10" y="50" font-family="Syne, Noto Sans HK, sans-serif" font-size="46" font-weight="800" fill="#041018">J</text>
+  <text x="38" y="41" text-anchor="middle" font-family="Noto Sans HK, sans-serif" font-size="18" font-weight="700" fill="#041018">粵</text>
 </svg>

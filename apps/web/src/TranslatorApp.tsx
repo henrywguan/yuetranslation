@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { BiText } from './components/BiText'
 import { BrandTag } from './components/BrandTag'
 import { Controls } from './components/Controls'
+import { JyutLogo } from './components/JyutLogo'
 import { ConversationView } from './components/ConversationView'
 import { JadeGlassField } from './components/JadeGlassField'
 import { PlanChip } from './components/PlanChip'
@@ -37,22 +38,22 @@ export function TranslatorApp() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           >
-            {embedded ? (
-              <span className="brand-mark" aria-hidden="true">
-                粵
-              </span>
-            ) : (
-              <button
-                type="button"
-                className="brand-mark brand-mark-link"
-                onClick={() => openHome()}
-                aria-label={biPlain(ui.backHome)}
-              >
-                粵
-              </button>
-            )}
-            <div>
-              <h1 className="brand-name">Jyut</h1>
+            <div className="brand-lockup-stack">
+              {embedded ? (
+                <span className="brand-lockup">
+                  <JyutLogo />
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="brand-lockup"
+                  onClick={() => openHome()}
+                  aria-label={biPlain(ui.backHome)}
+                >
+                  <JyutLogo />
+                </button>
+              )}
+              <h1 className="visually-hidden">Jyut</h1>
               <BrandTag />
             </div>
           </motion.div>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
+import { JyutLogo } from './JyutLogo'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -39,7 +40,7 @@ export function ConversationView() {
 
       <div className="conversation-gutter" aria-hidden="true">
         <span className="conversation-gutter-line" />
-        <span className="conversation-gutter-mark">粵</span>
+        <JyutLogo variant="mark" className="conversation-gutter-logo" />
         <span className="conversation-gutter-line" />
       </div>
 

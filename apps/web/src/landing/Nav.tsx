@@ -1,5 +1,6 @@
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { JyutLogo } from '../components/JyutLogo'
 import { BiText } from '../components/BiText'
 import { biPlain, ui } from '../lib/uiCopy'
 
@@ -17,10 +18,7 @@ export function Nav({ onFeatures }: NavProps) {
         onClick={() => openHome()}
         aria-label={biPlain(ui.backHome)}
       >
-        <span className="ln-brand-mark" aria-hidden="true">
-          粵
-        </span>
-        <span className="ln-brand-name">Jyut</span>
+        <JyutLogo className="ln-brand-logo" />
       </button>
       <div className="ln-nav-links">
         <button type="button" onClick={() => (onFeatures ? onFeatures() : openHome())}>

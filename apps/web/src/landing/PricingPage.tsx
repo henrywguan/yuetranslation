@@ -8,6 +8,7 @@ import { MagneticButton } from './MagneticButton'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
+import { JyutLogo } from '../components/JyutLogo'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import './landing.css'
@@ -231,10 +232,7 @@ export function PricingPage() {
 
       <footer className="ln-footer">
         <button type="button" className="ln-brand ln-brand-btn" onClick={() => openHome()}>
-          <span className="ln-brand-mark" aria-hidden="true">
-            粵
-          </span>
-          <span className="ln-brand-name">Jyut</span>
+          <JyutLogo className="ln-brand-logo" />
         </button>
         <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>

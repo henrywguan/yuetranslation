@@ -378,6 +378,13 @@
   box-shadow: 0 6px 16px color-mix(in srgb, var(--jade) 28%, transparent);
 }
 
+.conversation-gutter-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--jade) 28%, transparent);
+}
+
 .controls {
   margin-top: 8px;
   display: flex;

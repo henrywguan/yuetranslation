@@ -69,6 +69,11 @@
   letter-spacing: -0.03em;
 }
 
+.ln-brand-logo {
+  width: 7.6rem;
+  height: auto;
+}
+
 .ln-nav-links {
   display: flex;
   align-items: center;

@@ -122,6 +122,90 @@ a {
   font: inherit;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.jyut-logo {
+  display: block;
+  overflow: visible;
+}
+
+.jyut-logo--lockup {
+  width: clamp(9.4rem, 42vw, 11.6rem);
+  height: auto;
+}
+
+.jyut-logo--mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 18px;
+  box-shadow:
+    0 8px 22px color-mix(in srgb, var(--jade) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.jyut-logo-latin,
+.jyut-logo-mark-j {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  fill: currentColor;
+  color: var(--ink-bright);
+}
+
+.jyut-logo-mark-j {
+  fill: var(--on-jade);
+}
+
+.jyut-logo-yue {
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.jyut-logo-yue--on-jade {
+  fill: var(--on-jade);
+}
+
+.brand-lockup-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.brand-lockup,
+.ln-brand-btn.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.brand-lockup:hover .jyut-logo-yue,
+.ln-brand:hover .jyut-logo-yue {
+  filter: brightness(1.08);
+}
+
+.brand-lockup:focus-visible,
+.ln-brand-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
 /* Theme toggle */
 .theme-toggle {
   border: 0;

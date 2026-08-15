@@ -9,6 +9,7 @@ import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
+import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
 import { LANDING_PLANS } from './plans'
 import './landing.css'
@@ -213,10 +214,7 @@ export function Landing() {
 
       <footer className="ln-footer">
         <div className="ln-brand">
-          <span className="ln-brand-mark" aria-hidden="true">
-            粵
-          </span>
-          <span className="ln-brand-name">Jyut</span>
+          <JyutLogo className="ln-brand-logo" />
         </div>
         <BiText copy={ui.footerTag} size="sm" as="p" />
       </footer>
