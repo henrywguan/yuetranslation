@@ -26,6 +26,10 @@ type State = {
   yueTranslation: string
   /** English gloss for the current Cantonese translation (clarity). */
   yueDefinition: string
+  /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
+  yueAlternatives: string[]
+  /** Active Cantonese phrase shown in the character-breakdown frame (null = closed). */
+  breakdownPhrase: string | null
   history: ConversationTurn[]
   session: LiveSession | null
   setMode: (mode: Mode) => void
@@ -34,6 +38,10 @@ type State = {
   loadBootstrap: () => Promise<void>
   toggleLive: () => Promise<void>
   translateTyped: (text: string, from: Lang) => Promise<void>
+  openBreakdown: (phrase: string) => void
+  closeBreakdown: () => void
+  /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
+  selectYueVariation: (phrase: string) => void
   clearHistory: () => void
 }
 
@@ -92,7 +100,10 @@ async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   try {
-    const result = await translateText(text, lang, to)
+    const result = await translateText(text, lang, to, {
+      includeAlternatives: isFinal && lang === 'en',
+    })
+    const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq && !isFinal) return
     const definition = result.definition || (lang === 'en' ? text : '')
     const history = isFinal
@@ -102,6 +113,7 @@ async function runTranslation(
           source: text,
           translation: result.text,
           definition,
+          alternatives: lang === 'en' ? alternatives : undefined,
           engine: result.engine,
         })
       : undefined
@@ -112,6 +124,7 @@ async function runTranslation(
         enTranslation: '',
         yueTranslation: result.text,
         yueDefinition: result.definition || (isFinal ? text : ''),
+        yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
         ...(history ? { history } : {}),
       })
     } else {
@@ -121,6 +134,7 @@ async function runTranslation(
         yueTranslation: '',
         enTranslation: result.text,
         yueDefinition: result.definition || '',
+        yueAlternatives: isFinal ? [] : get().yueAlternatives,
         ...(history ? { history } : {}),
       })
     }
@@ -150,6 +164,8 @@ export const useYueStore = create<State>((set, get) => ({
   enTranslation: '',
   yueTranslation: '',
   yueDefinition: '',
+  yueAlternatives: [],
+  breakdownPhrase: null,
   history: [],
   session: null,
 
@@ -217,6 +233,7 @@ export const useYueStore = create<State>((set, get) => ({
             enTranslation: '',
             yueTranslation: '',
             yueDefinition: '',
+            yueAlternatives: [],
             status: 'listening',
           })
         } else {
@@ -226,6 +243,7 @@ export const useYueStore = create<State>((set, get) => ({
             enTranslation: '',
             yueTranslation: '',
             yueDefinition: '',
+            yueAlternatives: [],
             status: 'listening',
           })
         }
@@ -299,6 +317,47 @@ export const useYueStore = create<State>((set, get) => ({
     await runTranslation(get, set, from, trimmed, true)
   },
 
+  openBreakdown: (phrase) => {
+    const trimmed = phrase.trim()
+    if (!trimmed) return
+    set({ breakdownPhrase: trimmed })
+  },
+
+  closeBreakdown: () => set({ breakdownPhrase: null }),
+
+  selectYueVariation: (phrase) => {
+    const chosen = phrase.trim()
+    if (!chosen) return
+    const current = get().yueTranslation.trim()
+    const prevAlts = get().yueAlternatives
+    const nextAlts = [current, ...prevAlts]
+      .map((s) => s.trim())
+      .filter((s) => s && s !== chosen)
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .slice(0, 3)
+
+    const history = get().history
+    const latest = history[0]
+    const nextHistory =
+      latest && latest.to === 'yue'
+        ? [
+            {
+              ...latest,
+              translation: chosen,
+              alternatives: nextAlts,
+            },
+            ...history.slice(1),
+          ]
+        : history
+
+    set({
+      yueTranslation: chosen,
+      yueAlternatives: nextAlts,
+      history: nextHistory,
+      breakdownPhrase: chosen,
+    })
+  },
+
   clearHistory: () => {
     speakToken += 1
     stopSpeaking()
@@ -309,6 +368,8 @@ export const useYueStore = create<State>((set, get) => ({
       enTranslation: '',
       yueTranslation: '',
       yueDefinition: '',
+      yueAlternatives: [],
+      breakdownPhrase: null,
     })
   },
 }))

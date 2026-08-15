@@ -3,6 +3,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { PaneParticles } from './PaneParticles'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
@@ -17,6 +18,9 @@ export function ConversationView() {
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueDefinition = useYueStore((s) => s.yueDefinition)
+  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
 
@@ -62,6 +66,7 @@ export function ConversationView() {
               <CantoneseText
                 text={yueInterim}
                 placeholder={<span className="placeholder">{ui.listening.zh}</span>}
+                onActivate={openBreakdown}
               />
             </p>
             <InkSettle
@@ -73,6 +78,11 @@ export function ConversationView() {
                 text={yueTranslation}
                 definition={yueDefinition}
                 placeholder={<span className="placeholder">{ui.yueTranslation.zh}</span>}
+                onActivate={openBreakdown}
+              />
+              <TranslationAlternatives
+                alternatives={yueAlternatives}
+                onSelect={selectYueVariation}
               />
             </InkSettle>
           </div>

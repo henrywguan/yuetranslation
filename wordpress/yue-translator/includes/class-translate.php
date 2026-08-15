@@ -10,44 +10,74 @@ final class Yue_Translate
 
     private const SYSTEM_EN = 'You are an expert Hong Kong Cantonese translator for live conversation. Translate TO natural conversational English. Return ONLY valid JSON: {"translation":"<English>","definition":""}.';
 
+    private const SYSTEM_YUE_ALTS = 'You are a Hong Kong Cantonese interpreter. Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese. Prefer characters such as 係、唔、喺、咗、緊、㗎、喇、喎. Return ONLY valid JSON: {"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}. For everyday questions (e.g. what are you doing?), prefer 2–3 natural spoken variants that differ in wording or particles. Do not repeat the primary. If none, use "alternatives": []. Definition should help a learner. No markdown.';
+
     public static function openai_configured(): bool
     {
         return (bool) get_option('yue_openai_key');
     }
 
-    /** @return array{text:string,definition?:string,engine:string}|WP_Error */
-    public static function translate(string $text, string $from, string $to)
+    /**
+     * @return array{text:string,definition?:string,alternatives?:array<int,string>,engine:string}|WP_Error
+     */
+    public static function translate(string $text, string $from, string $to, bool $include_alternatives = false)
     {
         $text = trim($text);
         if ($text === '') {
             return new WP_Error('yue_translate', 'text is required', ['status' => 400]);
         }
         if ($from === $to) {
-            return ['text' => $text, 'definition' => '', 'engine' => 'identity'];
+            return ['text' => $text, 'definition' => '', 'alternatives' => [], 'engine' => 'identity'];
         }
 
+        $want_alts = $include_alternatives && $from === 'en' && $to === 'yue';
+
         if (self::openai_configured()) {
-            $out = self::openai($text, $from, $to);
+            $out = self::openai($text, $from, $to, $want_alts);
             if (!is_wp_error($out)) {
                 return $out;
             }
         }
 
-        $demo = self::demo($text, $from, $to);
+        $demo = self::demo($text, $from, $to, $want_alts);
         return [
             'text' => $demo['text'],
             'definition' => $demo['definition'],
+            'alternatives' => $demo['alternatives'],
             'engine' => 'demo',
         ];
     }
 
-    /** @return array{text:string,definition:string}|WP_Error */
-    private static function openai(string $text, string $from, string $to)
+    /**
+     * @return array{text:string,definition:string,alternatives:array<int,string>}|WP_Error
+     */
+    private static function openai(string $text, string $from, string $to, bool $want_alts)
     {
         $key = (string) get_option('yue_openai_key');
         $model = (string) get_option('yue_openai_model', 'gpt-4o-mini');
-        $system = $to === 'yue' ? self::SYSTEM_YUE : self::SYSTEM_EN;
         $fallback_def = $from === 'en' ? $text : '';
+
+        if ($want_alts) {
+            $body = [
+                'model' => $model,
+                'temperature' => 0.35,
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    ['role' => 'system', 'content' => self::SYSTEM_YUE_ALTS],
+                    ['role' => 'user', 'content' => $text],
+                ],
+            ];
+        } else {
+            $system = $to === 'yue' ? self::SYSTEM_YUE : self::SYSTEM_EN;
+            $body = [
+                'model' => $model,
+                'temperature' => 0.2,
+                'messages' => [
+                    ['role' => 'system', 'content' => $system],
+                    ['role' => 'user', 'content' => $text],
+                ],
+            ];
+        }
 
         $response = wp_remote_post('https://api.openai.com/v1/chat/completions', [
             'headers' => [
@@ -55,14 +85,7 @@ final class Yue_Translate
                 'Content-Type' => 'application/json',
             ],
             'timeout' => 30,
-            'body' => wp_json_encode([
-                'model' => $model,
-                'temperature' => 0.2,
-                'messages' => [
-                    ['role' => 'system', 'content' => $system],
-                    ['role' => 'user', 'content' => $text],
-                ],
-            ]),
+            'body' => wp_json_encode($body),
         ]);
         if (is_wp_error($response)) {
             return $response;
@@ -73,10 +96,21 @@ final class Yue_Translate
             return new WP_Error('yue_translate', 'Empty OpenAI response', ['status' => 502]);
         }
 
+        if ($want_alts) {
+            $parsed = self::parse_yue_payload($raw, $text, $fallback_def);
+            return [
+                'text' => $parsed['text'],
+                'definition' => $parsed['definition'],
+                'alternatives' => $parsed['alternatives'],
+                'engine' => 'openai',
+            ];
+        }
+
         $parsed = self::parse_json_payload($raw, $text, $fallback_def);
         return [
             'text' => $parsed['text'],
             'definition' => $to === 'yue' ? ($parsed['definition'] ?: $fallback_def) : $parsed['definition'],
+            'alternatives' => [],
             'engine' => 'openai',
         ];
     }
@@ -106,29 +140,76 @@ final class Yue_Translate
         return ['text' => $cleaned !== '' ? $cleaned : $fallback_text, 'definition' => $fallback_def];
     }
 
-    /** @return array{text:string,definition:string} */
-    private static function demo(string $text, string $from, string $to): array
+    /**
+     * @return array{text:string,definition:string,alternatives:array<int,string>}
+     */
+    private static function parse_yue_payload(string $raw, string $fallback, string $fallback_def): array
+    {
+        $cleaned = trim($raw);
+        $cleaned = preg_replace('/^```(?:json)?\s*/i', '', $cleaned) ?? $cleaned;
+        $cleaned = preg_replace('/\s*```$/', '', $cleaned) ?? $cleaned;
+        $parsed = json_decode(trim($cleaned), true);
+        if (!is_array($parsed)) {
+            return [
+                'text' => trim($raw) !== '' ? trim($raw) : $fallback,
+                'definition' => $fallback_def,
+                'alternatives' => [],
+            ];
+        }
+        $primary = isset($parsed['primary']) && is_string($parsed['primary']) && trim($parsed['primary']) !== ''
+            ? trim($parsed['primary'])
+            : $fallback;
+        $definition = (!empty($parsed['definition']) && is_string($parsed['definition']))
+            ? trim($parsed['definition'])
+            : $fallback_def;
+        $alts = [];
+        if (isset($parsed['alternatives']) && is_array($parsed['alternatives'])) {
+            foreach ($parsed['alternatives'] as $alt) {
+                if (!is_string($alt)) {
+                    continue;
+                }
+                $v = trim($alt);
+                if ($v === '' || $v === $primary || in_array($v, $alts, true)) {
+                    continue;
+                }
+                $alts[] = $v;
+                if (count($alts) >= 3) {
+                    break;
+                }
+            }
+        }
+        return ['text' => $primary, 'definition' => $definition, 'alternatives' => $alts];
+    }
+
+    /**
+     * @return array{text:string,definition:string,alternatives:array<int,string>}
+     */
+    private static function demo(string $text, string $from, string $to, bool $want_alts): array
     {
         $map = [
-            'hello' => ['你好', 'hello; hi (greeting)'],
-            'hi' => ['嗨', 'hi; hey'],
-            'thank you' => ['唔該', 'thank you (for a service / favor)'],
-            'thanks' => ['多謝', 'thanks; many thanks'],
-            'good morning' => ['早晨', 'good morning'],
-            'how are you' => ['你好嗎', 'how are you?'],
-            'where is the mtr' => ['地鐵喺邊度', 'where is the MTR / subway?'],
-            'how much is this' => ['呢個幾錢', 'how much is this?'],
-            'yes' => ['係', 'yes'],
-            'no' => ['唔係', 'no'],
-            '你好' => ['Hello', 'hello; hi'],
-            '唔該' => ['Thank you', 'thank you'],
-            '多謝' => ['Thanks', 'thanks'],
-            '早晨' => ['Good morning', 'good morning'],
-            '你好嗎' => ['How are you?', 'how are you?'],
-            '地鐵喺邊度' => ['Where is the MTR?', 'where is the MTR?'],
-            '呢個幾錢' => ['How much is this?', 'how much is this?'],
-            '係' => ['Yes', 'yes'],
-            '唔係' => ['No', 'no'],
+            'hello' => ['你好', 'hello; hi (greeting)', ['哈囉', '嗨']],
+            'hi' => ['嗨', 'hi; hey', ['你好', '哈囉']],
+            'thank you' => ['唔該', 'thank you (for a service / favor)', ['多謝']],
+            'thanks' => ['多謝', 'thanks; many thanks', ['唔該']],
+            'good morning' => ['早晨', 'good morning', ['早安']],
+            'how are you' => ['你好嗎', 'how are you?', ['最近點呀', '你幾好嗎']],
+            'what are you doing' => ['你做緊咩呀？', 'what are you doing?', ['你而家做緊咩？', '做緊咩呀你？', '你喺度做緊乜嘢？']],
+            "what's up" => ['點呀？', "what's up?", ['最近點？', '有咩事？']],
+            'where is the mtr' => ['地鐵喺邊度', 'where is the MTR / subway?', ['港鐵喺邊呀', '地鐵站喺邊']],
+            'how much is this' => ['呢個幾錢', 'how much is this?', ['呢樣幾多錢', '請問賣幾錢']],
+            'yes' => ['係', 'yes', []],
+            'no' => ['唔係', 'no', []],
+            '你好' => ['Hello', 'hello; hi', []],
+            '唔該' => ['Thank you', 'thank you', []],
+            '多謝' => ['Thanks', 'thanks', []],
+            '早晨' => ['Good morning', 'good morning', []],
+            '你好嗎' => ['How are you?', 'how are you?', []],
+            '你做緊咩呀' => ['What are you doing?', 'what are you doing?', []],
+            '你做緊咩呀？' => ['What are you doing?', 'what are you doing?', []],
+            '地鐵喺邊度' => ['Where is the MTR?', 'where is the MTR?', []],
+            '呢個幾錢' => ['How much is this?', 'how much is this?', []],
+            '係' => ['Yes', 'yes', []],
+            '唔係' => ['No', 'no', []],
         ];
         $key = self::demo_lookup_key($text);
         $hit = $map[$key] ?? null;
@@ -136,11 +217,13 @@ final class Yue_Translate
             return [
                 'text' => $hit[0],
                 'definition' => $to === 'yue' ? $hit[1] : ($hit[1] ?? ''),
+                'alternatives' => ($want_alts && $to === 'yue') ? $hit[2] : [],
             ];
         }
         return [
             'text' => $to === 'yue' ? "（示範）{$text}" : "(demo) {$text}",
             'definition' => $from === 'en' && $to === 'yue' ? $text : '',
+            'alternatives' => [],
         ];
     }
 
