@@ -123,7 +123,7 @@ export function CharDetailSheet({
           >
             <div className="char-sheet-bar">
               <p id={titleId} className="char-sheet-kicker">
-                <BiText copy={ui.charDetail} size="sm" layout="inline" hideJp />
+                <BiText copy={ui.charDetail} size="sm" layout="inline" />
               </p>
               <button
                 ref={closeRef}
@@ -132,7 +132,7 @@ export function CharDetailSheet({
                 onClick={onClose}
                 aria-label={biPlain(ui.close)}
               >
-                <BiText copy={ui.close} size="sm" layout="inline" hideJp />
+                <BiText copy={ui.close} size="sm" layout="inline" />
               </button>
             </div>
 
@@ -149,16 +149,16 @@ export function CharDetailSheet({
             {tone && TONE_NAME[tone] ? (
               <section className="char-sheet-block">
                 <h3>
-                  <BiText copy={ui.tone} size="sm" layout="inline" hideJp /> {tone}
+                  <BiText copy={ui.tone} size="sm" layout="inline" /> {tone}
                 </h3>
                 <p>
-                  <BiText copy={TONE_NAME[tone]} size="sm" layout="inline" hideJp />
+                  <BiText copy={TONE_NAME[tone]} size="sm" layout="inline" />
                   <span className="char-sheet-sep"> · </span>
-                  <BiText copy={TONE_CUE[tone]} size="sm" layout="inline" hideJp />
+                  <BiText copy={TONE_CUE[tone]} size="sm" layout="inline" />
                 </p>
                 {entering ? (
                   <p className="char-sheet-note">
-                    <BiText copy={ui.enteringTone} size="sm" layout="inline" hideJp />
+                    <BiText copy={ui.enteringTone} size="sm" layout="inline" />
                   </p>
                 ) : null}
               </section>
@@ -167,7 +167,7 @@ export function CharDetailSheet({
             {charDef ? (
               <section className="char-sheet-block">
                 <h3>
-                  <BiText copy={ui.thisCharacter} size="sm" layout="inline" hideJp />
+                  <BiText copy={ui.thisCharacter} size="sm" layout="inline" />
                 </h3>
                 <p>{charDef}</p>
               </section>
@@ -176,7 +176,7 @@ export function CharDetailSheet({
             {isValidDefinition(detail.definition) ? (
               <section className="char-sheet-block">
                 <h3>
-                  <BiText copy={ui.inThisPhrase} size="sm" layout="inline" hideJp />
+                  <BiText copy={ui.inThisPhrase} size="sm" layout="inline" />
                 </h3>
                 <p lang="zh-HK">{detail.phrase}</p>
                 <p className="char-sheet-gloss">{detail.definition}</p>

@@ -32,7 +32,7 @@ export function HistoryPane({
     return (
       <div className={`history-pane history-pane--empty ${className}`.trim()}>
         <p className="history-empty">
-          <BiText copy={ui.historyEmpty} size="sm" layout="inline" hideJp />
+          <BiText copy={ui.historyEmpty} size="sm" layout="inline" />
         </p>
       </div>
     )

@@ -34,10 +34,10 @@ export function TranslationHistory() {
         <header className="history-panel-header">
           <div>
             <p className="history-panel-kicker">
-              <BiText copy={ui.historyKicker} size="sm" layout="inline" hideJp />
+              <BiText copy={ui.historyKicker} size="sm" layout="inline" />
             </p>
             <h2 id="history-rail-title" className="history-panel-title">
-              <BiText copy={ui.historyTitle} size="md" layout="inline" hideJp />
+              <BiText copy={ui.historyTitle} size="md" layout="inline" />
             </h2>
           </div>
           {count ? (
@@ -57,7 +57,7 @@ export function TranslationHistory() {
         aria-expanded={sheetOpen}
         aria-label={biPlain(ui.historyTitle)}
       >
-        <BiText copy={ui.historyTitle} size="sm" layout="inline" hideJp />
+        <BiText copy={ui.historyTitle} size="sm" layout="inline" />
         {count ? <span className="history-open-count">{count}</span> : null}
       </button>
 
@@ -88,10 +88,10 @@ export function TranslationHistory() {
               <header className="history-panel-header history-sheet-header">
                 <div>
                   <p className="history-panel-kicker">
-                    <BiText copy={ui.historyKicker} size="sm" layout="inline" hideJp />
+                    <BiText copy={ui.historyKicker} size="sm" layout="inline" />
                   </p>
                   <h2 id={titleId} className="history-panel-title">
-                    <BiText copy={ui.historyTitle} size="md" layout="inline" hideJp />
+                    <BiText copy={ui.historyTitle} size="md" layout="inline" />
                   </h2>
                 </div>
                 <button

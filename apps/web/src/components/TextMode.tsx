@@ -36,14 +36,14 @@ export function TextMode() {
         aria-label={biPlain(placeholder)}
       />
       <button type="button" className="primary" onClick={() => void translateTyped(text, from)}>
-        <BiText copy={ui.translate} size="sm" layout="inline" hideJp />
+        <BiText copy={ui.translate} size="sm" layout="inline" />
       </button>
       <div className="text-lower">
         <PaneParticles />
         {latest ? (
           <InkSettle id={latest.id} className="text-result">
             <p className="muted">
-              <BiText copy={ui.result} size="sm" layout="inline" hideJp />
+              <BiText copy={ui.result} size="sm" layout="inline" />
             </p>
             <ResultWithDefinition
               text={latest.translation}
