@@ -40,6 +40,8 @@ type State = {
   status: 'idle' | 'listening' | 'speaking'
   autoSpeak: boolean
   entitlement: Entitlement | null
+  /** True when /api/health reports demo engine (no model key loaded). */
+  demoMode: boolean
   error: string | null
   enInterim: string
   yueInterim: string
@@ -437,6 +439,7 @@ export const useYueStore = create<State>((set, get) => ({
   status: 'idle',
   autoSpeak: false,
   entitlement: null,
+  demoMode: false,
   error: null,
   enInterim: '',
   yueInterim: '',
@@ -497,10 +500,14 @@ export const useYueStore = create<State>((set, get) => ({
         ent.upgradeUrl = getUpgradeUrl()
       }
       // Do not force autoSpeak on — keep the user's preference (default off).
-      set({ entitlement: ent })
+      set({
+        entitlement: ent,
+        demoMode: Boolean(data.engines?.demo),
+      })
     } catch {
       set({
         entitlement: null,
+        demoMode: false,
       })
     }
   },

@@ -80,7 +80,7 @@ Cloudflare **quick tunnels** are free for this local-dev use. You do not need a 
 
 ## Troubleshooting
 
-- **Results show `（示範）…`** — see [Real translate vs demo](#real-translate-vs-示範-demo) above.
+- **Results show `（示範）…` / Jyutping `si6 faan6`** — that is the demo prefix (示範), not a real translation. See [Real translate vs demo](#real-translate-vs-示範-demo). Common causes: keys not in `apps/api/.env`, API not restarted, empty system `OPENAI_API_KEY` blocking the file (fixed by restarting after pull), or `.env` saved with a UTF-8 BOM from Notepad.
 - **“Blocked request. This host … is not allowed”** — Vite must allow tunnel hostnames. This repo already sets `server.allowedHosts` for `.trycloudflare.com` (and ngrok). **Restart** `npm run dev:web` after pulling that change, then start a fresh `npm run dev:tunnel` and use the new URL.
 - **Tunnel starts but phone can’t translate** — make sure `npm run dev:api` is still running on the computer.
 - **Mic still blocked** — confirm the phone address bar shows `https://`, not `http://` or a raw `192.168.…` IP.
