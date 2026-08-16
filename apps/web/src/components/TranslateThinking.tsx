@@ -4,6 +4,7 @@ import { BiText } from './BiText'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui } from '../lib/uiCopy'
 import './TranslateThinking.css'
+import { inkEase } from '../lib/motion'
 
 type Props = {
   className?: string
@@ -47,7 +48,7 @@ export function TranslateThinking({
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.28, ease: inkEase }}
         >
           <div className={`tt-stage${reduce ? ' is-reduced' : ''}`} aria-hidden="true">
             <span className="tt-glow" />

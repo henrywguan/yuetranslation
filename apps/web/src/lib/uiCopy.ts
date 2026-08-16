@@ -67,7 +67,6 @@ export const ui = {
     zh: '按住或輕按掣講嘢',
     jp: 'on3 zyu6 waak6 hing1 on3 zai3 gong2 je5',
   },
-  listening: { en: 'Listening…', zh: '聽緊…', jp: 'teng1 gan2…' },
   holdFacingYou: { en: 'Hold phone facing you', zh: '手機對住自己', jp: 'sau2 gei1 deoi3 zyu6 zi6 gei2' },
   friendLooksHere: {
     en: 'Friend faces this side',
@@ -300,11 +299,6 @@ export const ui = {
     zh: '開啟 JyutTranslate，幾秒之內就可以開始雙語對話。',
     jp: 'hoi1 kai2 JyutTranslate, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
   },
-  footerTag: {
-    en: 'English ↔ Cantonese',
-    zh: '英文 ↔ 粵語',
-    jp: 'jing1 man2 ↔ jyut6 jyu5',
-  },
   footerEnLang: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   footerYueLang: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
 
@@ -332,7 +326,6 @@ export const ui = {
     jp: 'coeng4 si4 gaan3, gou1 jung6 loeng6 zik1 si4 faan1 jik6',
   },
   goMax: { en: 'Go Max', zh: '升級旗艦版', jp: 'sing1 kap1 kei4 gaam3 baan2' },
-  contactUs: { en: 'Contact us', zh: '聯絡我哋', jp: 'lyun4 lok3 ngo5 dei6' },
   maxFeatLive40: {
     en: '~40 hours of live translation / month (fair use)',
     zh: '每月大約四十小時即時翻譯（合理使用）',
@@ -377,7 +370,6 @@ export const ui = {
   valPriority: { en: 'Priority', zh: '優先', jp: 'jau4 sin1' },
   valCommunity: { en: 'Community', zh: '社區', jp: 'se5 keoi1' },
   valEmail: { en: 'Email', zh: '電郵', jp: 'din6 jau4' },
-  valUpTo20: { en: 'Up to 20', zh: '最多二十', jp: 'zeoi3 do1 ji6 sap6' },
   fairUseNote: {
     en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable.',
     zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。',

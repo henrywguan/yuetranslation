@@ -772,19 +772,6 @@
   font-weight: 450;
 }
 
-.pane .heard {
-  margin: 0;
-  font-size: 1.05rem;
-  color: color-mix(in srgb, var(--ink) 70%, transparent);
-}
-
-.pane .said {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: clamp(1.25rem, 5vw, 1.7rem);
-  font-weight: 600;
-}
-
 .conversation-gutter {
   display: flex;
   align-items: center;
@@ -1321,8 +1308,7 @@
   text-align: left;
 }
 
-.solo-translation .translation-alts,
-.said .translation-alts {
+.solo-translation .translation-alts {
   font-size: 0.72em;
   font-weight: 500;
 }

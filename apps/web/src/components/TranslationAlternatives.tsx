@@ -1,4 +1,6 @@
 import { CantoneseText } from './CantoneseText'
+import { BiText } from './BiText'
+import { ui } from '../lib/uiCopy'
 
 /** Secondary colloquial EN→粵 renderings when the API found meaningful variants. */
 export function TranslationAlternatives({
@@ -14,7 +16,9 @@ export function TranslationAlternatives({
   if (!alternatives.length) return null
   return (
     <div className={['translation-alts', className].filter(Boolean).join(' ')}>
-      <p className="translation-alts-label">Other variations</p>
+      <p className="translation-alts-label">
+        <BiText copy={ui.historyVariations} size="sm" />
+      </p>
       <ul className="translation-alts-list">
         {alternatives.map((alt) => (
           <li key={alt}>

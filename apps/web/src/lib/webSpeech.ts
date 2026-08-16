@@ -1,8 +1,6 @@
-import { isTtsPlaying, stopSpeaking } from './tts'
+import { stopSpeaking } from './tts'
+import { createEchoGuard } from './echoGuard'
 import type { Lang, LiveSession, SpeechEventHandlers } from './types'
-
-/** Ignore mic while TTS plays and briefly after — blocks speaker echo becoming a new turn. */
-const ECHO_TAIL_MS = 600
 
 export function createWebSpeechSession(
   handlers: SpeechEventHandlers,
@@ -13,12 +11,7 @@ export function createWebSpeechSession(
   let recognition: SpeechRecognition | null = null
   let stopped = true
   let activeLang: Lang = lockLang || 'en'
-  let playbackActive = false
-  let ignoreUntil = 0
-
-  function shouldIgnoreMic() {
-    return playbackActive || isTtsPlaying() || Date.now() < ignoreUntil
-  }
+  const echo = createEchoGuard()
 
   const startOne = () => {
     if (stopped) return
@@ -36,7 +29,7 @@ export function createWebSpeechSession(
         if (r.isFinal) finalText += t
         else interim += t
       }
-      if (shouldIgnoreMic()) return
+      if (echo.shouldIgnoreMic()) return
       if (interim.trim()) handlers.onInterim(activeLang, interim.trim())
       if (finalText.trim()) {
         handlers.onFinal(activeLang, finalText.trim())
@@ -65,8 +58,7 @@ export function createWebSpeechSession(
 
   return {
     setPlaybackActive(a) {
-      playbackActive = a
-      if (!a) ignoreUntil = Date.now() + ECHO_TAIL_MS
+      echo.setPlaybackActive(a)
     },
     async start() {
       stopped = false

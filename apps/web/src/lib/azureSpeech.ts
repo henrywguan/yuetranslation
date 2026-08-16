@@ -1,10 +1,7 @@
 import { fetchSpeechToken } from './api'
 import { canUseMicrophone, micBlockedMessage } from './mediaAccess'
-import { isTtsPlaying } from './tts'
+import { createEchoGuard } from './echoGuard'
 import type { Lang, LiveSession, SpeechEventHandlers, SpeechMeta } from './types'
-
-/** Ignore mic while TTS plays and briefly after — blocks speaker echo becoming a new turn. */
-const ECHO_TAIL_MS = 600
 
 function localeToLang(locale: string): Lang {
   const l = locale.toLowerCase()
@@ -68,13 +65,8 @@ export async function createAzureLiveSession(
   let transcriber: import('microsoft-cognitiveservices-speech-sdk').ConversationTranscriber | null =
     null
   let recognizer: import('microsoft-cognitiveservices-speech-sdk').SpeechRecognizer | null = null
-  let playbackActive = false
-  let ignoreUntil = 0
+  const echo = createEchoGuard()
   const gate = createSpeakerGate()
-
-  function shouldIgnoreMic() {
-    return playbackActive || isTtsPlaying() || Date.now() < ignoreUntil
-  }
 
   function buildSpeechConfig() {
     const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
@@ -99,7 +91,7 @@ export async function createAzureLiveSession(
     const next = SpeechSDK.ConversationTranscriber.FromConfig(speechConfig, autoDetect, audioConfig)
 
     next.transcribing = (_s, e) => {
-      if (shouldIgnoreMic()) return
+      if (echo.shouldIgnoreMic()) return
       if (e.result.reason !== SpeechSDK.ResultReason.RecognizingSpeech) return
       const text = e.result.text?.trim()
       if (!text) return
@@ -109,7 +101,7 @@ export async function createAzureLiveSession(
       handlers.onInterim(lang, text, metaFromSpeaker(speakerId))
     }
     next.transcribed = (_s, e) => {
-      if (shouldIgnoreMic()) return
+      if (echo.shouldIgnoreMic()) return
       if (e.result.reason !== SpeechSDK.ResultReason.RecognizedSpeech) return
       const text = e.result.text?.trim()
       if (!text) return
@@ -143,7 +135,7 @@ export async function createAzureLiveSession(
     const next = SpeechSDK.SpeechRecognizer.FromConfig(speechConfig, autoDetect, audioConfig)
 
     next.recognizing = (_s, e) => {
-      if (shouldIgnoreMic()) return
+      if (echo.shouldIgnoreMic()) return
       if (e.result.reason !== SpeechSDK.ResultReason.RecognizingSpeech) return
       const text = e.result.text?.trim()
       if (!text) return
@@ -155,7 +147,7 @@ export async function createAzureLiveSession(
       handlers.onInterim(lang, text, metaFromSpeaker(speakerId))
     }
     next.recognized = (_s, e) => {
-      if (shouldIgnoreMic()) return
+      if (echo.shouldIgnoreMic()) return
       if (e.result.reason !== SpeechSDK.ResultReason.RecognizedSpeech) return
       const text = e.result.text?.trim()
       if (!text) return
@@ -185,8 +177,7 @@ export async function createAzureLiveSession(
 
   return {
     setPlaybackActive(active) {
-      playbackActive = active
-      if (!active) ignoreUntil = Date.now() + ECHO_TAIL_MS
+      echo.setPlaybackActive(active)
     },
     async start() {
       gate.reset()

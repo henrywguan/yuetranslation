@@ -13,6 +13,7 @@ import {
 import { charSense } from '../lib/charGloss'
 import { translateText } from '../lib/api'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
+import { inkEase } from '../lib/motion'
 
 const TONE_NAME: Record<string, Bi> = {
   '1': ui.tone1,
@@ -118,7 +119,7 @@ export function CharDetailSheet({
             initial={reduce ? false : { opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduce ? undefined : { opacity: 0, y: 16 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: inkEase }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="char-sheet-bar">
