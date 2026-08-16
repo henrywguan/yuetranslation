@@ -1,4 +1,5 @@
 import { fetchSpeechToken } from './api'
+import { canUseMicrophone, micBlockedMessage } from './mediaAccess'
 import { isTtsPlaying } from './tts'
 import type { Lang, LiveSession, SpeechEventHandlers, SpeechMeta } from './types'
 
@@ -189,12 +190,18 @@ export async function createAzureLiveSession(
     },
     async start() {
       gate.reset()
+      if (!canUseMicrophone()) {
+        throw new Error(micBlockedMessage() || 'Microphone unavailable.')
+      }
       try {
         await startWithTranscriber()
-      } catch {
+      } catch (err) {
         // Diarization endpoint unavailable — fall back to plain recognition (no speaker lock).
         transcriber = null
         gate.reset()
+        if (!canUseMicrophone()) {
+          throw err instanceof Error ? err : new Error(String(err))
+        }
         await startWithRecognizer()
       }
     },
