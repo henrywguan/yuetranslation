@@ -301,6 +301,31 @@ button.jyutping--activate {
   min-width: 0;
 }
 
+button.spoken-line-text--action {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+button.spoken-line-text--action:hover,
+button.spoken-line-text--action:focus-visible {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--jade) 45%, transparent);
+  text-underline-offset: 0.18em;
+  outline: none;
+}
+
+button.spoken-line-text--action:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--jade) 45%, transparent);
+}
+
 .speak-btn {
   flex: none;
   appearance: none;

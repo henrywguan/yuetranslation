@@ -56,6 +56,10 @@ type State = {
   face: FaceLive
   /** Active Cantonese phrase shown in the character-breakdown frame (null = closed). */
   breakdownPhrase: string | null
+  /** Optional translation shown above the breakdown (Conversation drill-down). */
+  breakdownTranslation: string | null
+  /** Optional sense / definition for the breakdown panel. */
+  breakdownDefinition: string | null
   /** True while any translate request is in flight. */
   translating: boolean
   /** Target language of the in-flight translation (for pane placement). */
@@ -81,7 +85,10 @@ type State = {
   /** Cancel live without translating (mode switch / quota). */
   stopLive: () => Promise<void>
   translateTyped: (text: string, from: Lang) => Promise<void>
-  openBreakdown: (phrase: string) => void
+  openBreakdown: (
+    phrase: string,
+    opts?: { translation?: string; definition?: string },
+  ) => void
   closeBreakdown: () => void
   /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
   selectYueVariation: (phrase: string) => void
@@ -471,6 +478,8 @@ export const useYueStore = create<State>((set, get) => ({
   yueAlternatives: [],
   face: emptyFaceLive(),
   breakdownPhrase: null,
+  breakdownTranslation: null,
+  breakdownDefinition: null,
   translating: false,
   translatingTo: null,
   history: [],
@@ -848,13 +857,22 @@ export const useYueStore = create<State>((set, get) => ({
     await runTranslation(get, set, from, trimmed, true)
   },
 
-  openBreakdown: (phrase) => {
+  openBreakdown: (phrase, opts) => {
     const trimmed = phrase.trim()
     if (!trimmed) return
-    set({ breakdownPhrase: trimmed })
+    set({
+      breakdownPhrase: trimmed,
+      breakdownTranslation: opts?.translation?.trim() || null,
+      breakdownDefinition: opts?.definition?.trim() || null,
+    })
   },
 
-  closeBreakdown: () => set({ breakdownPhrase: null }),
+  closeBreakdown: () =>
+    set({
+      breakdownPhrase: null,
+      breakdownTranslation: null,
+      breakdownDefinition: null,
+    }),
 
   selectYueVariation: (phrase) => {
     const chosen = phrase.trim()
@@ -886,6 +904,8 @@ export const useYueStore = create<State>((set, get) => ({
       yueAlternatives: nextAlts,
       history: nextHistory,
       breakdownPhrase: chosen,
+      breakdownTranslation: null,
+      breakdownDefinition: get().yueDefinition || null,
     })
   },
 
@@ -896,6 +916,8 @@ export const useYueStore = create<State>((set, get) => ({
       set({
         face: emptyFaceLive(),
         breakdownPhrase: null,
+        breakdownTranslation: null,
+        breakdownDefinition: null,
         translating: false,
         translatingTo: null,
       })
@@ -910,6 +932,8 @@ export const useYueStore = create<State>((set, get) => ({
       yueDefinition: '',
       yueAlternatives: [],
       breakdownPhrase: null,
+      breakdownTranslation: null,
+      breakdownDefinition: null,
       translating: false,
       translatingTo: null,
     })
