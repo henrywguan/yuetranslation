@@ -90,24 +90,6 @@ export function toJyutpingCached(text: string) {
   return cache.get(t) || ''
 }
 
-export async function ensureJyutping(text: string) {
-  const t = text.trim()
-  if (!t || !hasHan(t)) return ''
-  if (cache.has(t)) return cache.get(t) || ''
-  try {
-    const api = await load()
-    const jp = api.getJyutpingText(t).trim()
-    cache.set(t, jp)
-    const list = api.getJyutpingList(t)
-    listCache.set(t, list)
-    if (!segCache.has(t)) segCache.set(t, segsFromList(list))
-    return jp
-  } catch {
-    cache.set(t, '')
-    return ''
-  }
-}
-
 export async function ensureJyutpingSegs(text: string): Promise<JyutSeg[]> {
   const t = text.trim()
   if (!t || !hasHan(t)) return []

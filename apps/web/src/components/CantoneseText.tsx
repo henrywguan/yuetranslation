@@ -35,7 +35,7 @@ export function CantoneseText({
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
   const [segs, setSegs] = useState<JyutSeg[]>([])
   const [detail, setDetail] = useState<CharDetail | null>(null)
-  const { tipId, show, bind } = useJpPopup(Boolean(jp))
+  const { tipId, show, bind, wrapRef } = useJpPopup(Boolean(jp))
   const phraseDef = isValidDefinition(definition) ? definition.trim() : ''
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export function CantoneseText({
         ) : (
           <span {...bind} className="jyutping jyutping--hint ink-in" lang="en">
             {jp}
-            <JpPop show={show} id={tipId} text={jp} han={trimmed} />
+            <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
           </span>
         )
       ) : null}

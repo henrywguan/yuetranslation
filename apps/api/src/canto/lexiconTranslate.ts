@@ -77,7 +77,7 @@ export function glossLemmas(gloss: string): string[] {
   const cleaned = gloss
     .replace(/^\((?:noun|verb|adj|adverb|phrase|slang|interjection|classifier|particle)\)\s*/i, '')
     .replace(/\([^)]*\)/g, ' ')
-    .replace(/\[[^\]]*]/g, ' ')
+    .replace(/\[[^\]]*\]/g, ' ')
     .replace(/[./]+$/g, '')
     .trim()
   if (!cleaned) return []
@@ -142,7 +142,9 @@ function buildEnIndex() {
         trad: entry.trad,
         gloss: entry.gloss,
         source: entry.source,
-        exactLemma: lemma === normalizeLookupKey(entry.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0] || ''),
+        exactLemma:
+          lemma ===
+          normalizeLookupKey(entry.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0] || ''),
       })
       enIndex.set(lemma, list)
     }
@@ -216,7 +218,7 @@ function yueToEn(source: string): LexiconTranslateHit | null {
   if (!trimmed) return null
 
   // Whole-string lexicon headword only — segmented gloss joins are never
-  // natural translations (e.g. “1. obvious … question mark”).
+  // natural translations (e.g. “greeting word … full stop”).
   const whole = lookupGloss(trimmed)
   if (!whole) return null
   const def = cleanGlossSense(whole.gloss)
@@ -234,15 +236,36 @@ function yueToEn(source: string): LexiconTranslateHit | null {
 export function looksLikeGlossDump(text: string): boolean {
   const t = text.trim()
   if (!t) return true
+  if (/^(（示範）|\(demo\))/i.test(t)) return true
   if (/^\d+\.\s/.test(t)) return true
   if (/\[[^\]]+\]/.test(t)) return true
-  if (/\([^)]*\)/.test(t)) return true
+  // Parenthetical sense notes: "(of answering phone calls) hello"
+  if (/\([^)]{2,}\)/.test(t)) return true
   if (/\s\/\s/.test(t)) return true
-  if (/\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial)\b/i.test(t)) {
+  // Dictionary frames: "It is a greeting word, 'hi everybody' full stop"
+  if (/\bit is a\b.+\bword\b/i.test(t)) return true
+  if (/\b(greeting word|dictionary|literally means|used to mean)\b/i.test(t)) return true
+  if (
+    /\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial|softening|classifier|measure word|variant of|same as|see also|archaic|literary|written)\b/i.test(
+      t,
+    )
+  ) {
     return true
   }
-  // Long space-joined lemma lists are almost never a spoken translation.
-  if (t.split(/\s+/).length >= 6) return true
+  if ((t.match(/;/g) || []).length >= 2) return true
+  // Mixed "you 聽 not 聽" gloss joins
+  if (/[A-Za-z]{2,}.+[一-龥].+[A-Za-z]{2,}/.test(t) && t.split(/\s+/).length >= 3) {
+    return true
+  }
+  // Long space-joined lemma lists — but allow natural English sentences.
+  const words = t.split(/\s+/).filter(Boolean)
+  if (words.length >= 6) {
+    const looksSentence =
+      /[.?!…]$/.test(t) ||
+      (/^[A-Z“"]/.test(t) && /[.?!…]$/.test(t)) ||
+      (/^[A-Z]/.test(t) && words.length <= 16 && !/\s\/\s/.test(t) && (t.match(/;/g) || []).length < 2)
+    if (!looksSentence) return true
+  }
   return false
 }
 

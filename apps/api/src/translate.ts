@@ -17,8 +17,8 @@ const Body = z.object({
   /** When true and EN→粵, also return colloquial alternatives if they exist. */
   includeAlternatives: z.boolean().optional().default(false),
   /**
-   * Live speech: interim = fast path (no alts, light scrub only).
-   * final = dictionary/scrub/score (+ optional rewrite). Text mode should use final.
+   * Translations are always final-quality. Legacy clients may still send
+   * `interim`; it is coerced to `final` (no partial/MT streaming path).
    */
   stage: z.enum(['interim', 'final']).optional().default('final'),
 })
@@ -46,10 +46,9 @@ export async function translate(input: unknown) {
   const from = parsed.from
   const to = parsed.to
   const text = parsed.text.trim()
-  const stage: TranslateStage = parsed.stage
-  const wantAlts = Boolean(
-    parsed.includeAlternatives && from === 'en' && to === 'yue' && stage === 'final',
-  )
+  // No interim translations anywhere — always run the full final pipeline.
+  const stage: TranslateStage = 'final'
+  const wantAlts = Boolean(parsed.includeAlternatives && from === 'en' && to === 'yue')
   const fallbackDefinition = from === 'en' ? text : ''
 
   if (from === to) {
@@ -65,7 +64,7 @@ export async function translate(input: unknown) {
     }
   }
 
-  // 1) Phrase memory — O(1), both interim and final (best latency + reliability).
+  // 1) Phrase memory — O(1) (best latency + reliability for live after capture).
   const dictHit = dictionaryTranslate({
     sourceLang: from,
     targetLang: to,
@@ -99,13 +98,9 @@ export async function translate(input: unknown) {
     source: text,
     wantAlternatives: wantAlts,
   })
-  const lexTextOk =
-    Boolean(lexHit) &&
-    (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
+  const lexTextOk = Boolean(lexHit) && (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
   const useLexicon = Boolean(
-    lexHit &&
-      lexTextOk &&
-      (!openaiConfigured() || lexHit.kind === 'exact'),
+    lexHit && lexTextOk && (!openaiConfigured() || lexHit.kind === 'exact'),
   )
   if (lexHit && useLexicon) {
     if (to === 'yue') {
@@ -154,7 +149,7 @@ export async function translate(input: unknown) {
   // 3) Demo fallback when no model key and lexicon miss.
   if (!client) {
     const primary = to === 'yue' ? `（示範）${text}` : `(demo) ${text}`
-    if (toYueSafe(to)) {
+    if (to === 'yue') {
       const hardened = await hardenYueOutput({
         text: primary,
         alternatives: [],
@@ -254,7 +249,7 @@ export async function translate(input: unknown) {
     definition = toYue ? payload.definition || fallbackDefinition : payload.definition
   }
 
-  // 5) Harden Cantonese outputs (scrub / score / optional rewrite on final).
+  // 5) Harden Cantonese outputs (scrub / score / optional rewrite).
   if (toYue) {
     const hardened = await hardenYueOutput({
       text: primary,
@@ -275,6 +270,20 @@ export async function translate(input: unknown) {
     }
   }
 
+  // 6) 粵→EN: never ship dictionary gloss dumps from the model path.
+  if (looksLikeGlossDump(primary)) {
+    return {
+      text: '',
+      definition: '',
+      alternatives: [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta(['gloss-dump-blocked']),
+    }
+  }
+
   return {
     text: primary,
     definition,
@@ -285,10 +294,6 @@ export async function translate(input: unknown) {
     stage,
     meta: emptyMeta(),
   }
-}
-
-function toYueSafe(to: string) {
-  return to === 'yue'
 }
 
 function parsePayload(

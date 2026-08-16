@@ -11,7 +11,7 @@ function splitPair(line: string) {
 export function BrandTag() {
   const en = splitPair(ui.brandTag.en)
   const zh = splitPair(ui.brandTag.zh)
-  const { tipId, show, bind } = useJpPopup(Boolean(ui.brandTag.jp))
+  const { tipId, show, bind, wrapRef } = useJpPopup(Boolean(ui.brandTag.jp))
 
   return (
     <p className="brand-tag">
@@ -28,7 +28,7 @@ export function BrandTag() {
           </span>
           <span className="bp-side">{zh.right}</span>
         </span>
-        <JpPop show={show} id={tipId} text={ui.brandTag.jp} />
+        <JpPop show={show} id={tipId} text={ui.brandTag.jp} anchorRef={wrapRef} />
       </span>
     </p>
   )

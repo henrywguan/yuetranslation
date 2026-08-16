@@ -24,11 +24,18 @@ export function HeroObject() {
     const height = mount.clientHeight
     const light = theme === 'light'
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      alpha: true,
-      powerPreference: 'high-performance',
-    })
+    let renderer: THREE.WebGLRenderer
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: true,
+        powerPreference: 'high-performance',
+      })
+    } catch {
+      // Headless / no-GPU environments (docs screenshots, some CI) — skip 3D hero.
+      return
+    }
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
     renderer.setSize(width, height)
     renderer.setClearColor(0x000000, 0)

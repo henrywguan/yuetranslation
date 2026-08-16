@@ -65,5 +65,5 @@ export function useJpPopup(enabled: boolean) {
     },
   }
 
-  return { tipId, show, bind }
+  return { tipId, show, bind, wrapRef }
 }

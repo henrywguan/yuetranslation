@@ -33,6 +33,36 @@
       ]
     },
     {
+      "id": "en-hi-everybody",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hi everybody",
+      "text": "大家好",
+      "alternatives": [
+        "大家好呀",
+        "各位好"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-daai-gaa-hou",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "大家好",
+      "text": "Hi everybody",
+      "alternatives": [
+        "Hello everyone",
+        "Hi everyone"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
       "id": "en-thank-you",
       "sourceLang": "en",
       "targetLang": "yue",

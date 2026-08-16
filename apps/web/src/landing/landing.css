@@ -885,6 +885,7 @@
   position: absolute;
   top: -12px;
   right: 22px;
+  z-index: 2;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -893,6 +894,11 @@
   background: linear-gradient(135deg, var(--jade), var(--jade-bright));
   padding: 5px 12px;
   border-radius: 999px;
+  overflow: visible;
+}
+
+.ln-price-badge .bi-zh-wrap {
+  overflow: visible;
 }
 
 .ln-price-card h3 {

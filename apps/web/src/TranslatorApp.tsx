@@ -7,6 +7,7 @@ import { Controls } from './components/Controls'
 import { JyutLogo } from './components/JyutLogo'
 import { ConversationView } from './components/ConversationView'
 import { JadeGlassField } from './components/JadeGlassField'
+import { PanelDock } from './components/PanelDock'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
@@ -99,6 +100,7 @@ export function TranslatorApp() {
         <TranslationHistory />
         <Controls />
         <CharacterBreakdownHost />
+        <PanelDock />
       </div>
     </MotionConfig>
   )

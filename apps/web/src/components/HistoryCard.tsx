@@ -25,6 +25,18 @@ function LangLine({
       />
     )
   }
+  if (onBreakdown) {
+    return (
+      <button
+        type="button"
+        className="history-card-line history-card-en spoken-line-text--action"
+        onClick={() => onBreakdown(text)}
+        aria-label="Open translation details"
+      >
+        {text}
+      </button>
+    )
+  }
   return <p className="history-card-line history-card-en">{text}</p>
 }
 
@@ -106,7 +118,7 @@ export function HistoryCard({
                 lang={turn.from}
                 text={turn.source}
                 definition={turn.definition}
-                onBreakdown={turn.from === 'yue' ? onBreakdown : undefined}
+                onBreakdown={onBreakdown}
               />
             </div>
           </div>
@@ -127,7 +139,7 @@ export function HistoryCard({
                 lang={turn.to}
                 text={turn.translation}
                 definition={turn.definition}
-                onBreakdown={turn.to === 'yue' ? onBreakdown : undefined}
+                onBreakdown={onBreakdown}
               />
             </div>
           </div>

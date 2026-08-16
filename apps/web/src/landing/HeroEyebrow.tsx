@@ -5,12 +5,12 @@ import { JpPop } from '../components/JpPop'
 /** One Chinese phrase with a single Jyutping popup for the whole stack. */
 function EyebrowZhPhrase({ zh, jp }: { zh: string; jp: string }) {
   const enabled = Boolean(jp.trim())
-  const { tipId, show, bind } = useJpPopup(enabled)
+  const { tipId, show, bind, wrapRef } = useJpPopup(enabled)
 
   return (
     <span {...bind} className={`ln-eyebrow-zh${enabled ? ' is-hint' : ''}`} lang="zh-HK">
       {zh}
-      {enabled ? <JpPop show={show} id={tipId} text={jp} han={zh} /> : null}
+      {enabled ? <JpPop show={show} id={tipId} text={jp} han={zh} anchorRef={wrapRef} /> : null}
     </span>
   )
 }
