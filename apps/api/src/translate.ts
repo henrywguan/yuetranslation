@@ -153,7 +153,7 @@ export async function translate(input: unknown) {
   // 3) Demo fallback when no model key and lexicon miss.
   if (!client) {
     const primary = to === 'yue' ? `（示範）${text}` : `(demo) ${text}`
-    if (toYueSafe(to)) {
+    if (to === 'yue') {
       const hardened = await hardenYueOutput({
         text: primary,
         alternatives: [],
@@ -253,7 +253,7 @@ export async function translate(input: unknown) {
     definition = toYue ? payload.definition || fallbackDefinition : payload.definition
   }
 
-  // 5) Harden Cantonese outputs (scrub / score / optional rewrite on final).
+  // 5) Harden Cantonese outputs (scrub / score / optional rewrite).
   if (toYue) {
     const hardened = await hardenYueOutput({
       text: primary,
@@ -284,10 +284,6 @@ export async function translate(input: unknown) {
     stage,
     meta: emptyMeta(),
   }
-}
-
-function toYueSafe(to: string) {
-  return to === 'yue'
 }
 
 function parsePayload(

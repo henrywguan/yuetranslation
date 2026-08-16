@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { MotionConfig, motion } from 'framer-motion'
 import { JadeGlassField } from '../components/JadeGlassField'
+import { SoftErrorBoundary } from '../components/SoftErrorBoundary'
 import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
@@ -51,7 +52,9 @@ export function Landing() {
 
       <header className="ln-hero">
         <Suspense fallback={null}>
-          <HeroObject />
+          <SoftErrorBoundary>
+            <HeroObject />
+          </SoftErrorBoundary>
         </Suspense>
         <motion.div
           className="ln-hero-inner"
