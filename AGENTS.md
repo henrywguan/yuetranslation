@@ -9,7 +9,7 @@ Use the environment terminals (or these exact commands). **Do not** start extra 
 | Service | URL | Command |
 | --- | --- | --- |
 | Web (Vite) | http://localhost:5173 | `npm run dev --prefix apps/web -- --host 0.0.0.0 --port 5173` |
-| API | http://localhost:8787 | `PORT=8787 npm run dev --prefix apps/api` |
+| API | http://localhost:8787 | `npm run dev:api` (defaults to port 8787) |
 
 Smoke without a browser:
 

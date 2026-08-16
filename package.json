@@ -5,7 +5,7 @@
   "description": "JyutTranslate — English ↔ Cantonese live translator (PWA + WordPress)",
   "scripts": {
     "dev:web": "npm run dev --prefix apps/web -- --host 0.0.0.0 --port 5173",
-    "dev:api": "PORT=8787 npm run dev --prefix apps/api",
+    "dev:api": "npm run dev --prefix apps/api",
     "cloud:install": "./scripts/cloud-agent-install.sh",
     "cloud:start": "./scripts/cloud-agent-start.sh",
     "build:web": "node scripts/generate-icons.mjs && npm run build --prefix apps/web",
