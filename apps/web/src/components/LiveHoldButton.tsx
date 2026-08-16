@@ -169,7 +169,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     >
       <span className="live-dot" />
       {labelLang === 'bi' ? (
-        <BiText copy={liveCopy} size="sm" layout="inline" />
+        <BiText copy={liveCopy} size="sm" />
       ) : (
         <span className="live-btn-label" lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
           {label}

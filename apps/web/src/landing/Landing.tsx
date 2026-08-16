@@ -13,6 +13,7 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
+import { FooterLangPair } from './FooterLangPair'
 import { LANDING_PLANS } from './plans'
 import './landing.css'
 const HeroObject = lazy(() =>
@@ -72,15 +73,21 @@ export function Landing() {
           </div>
           <div className="ln-hero-stats">
             <div className="ln-hero-stat ln-hero-stat--deepseek">
-              <DeepSeekMark className="ln-deepseek-mark" />
+              <span className="ln-hero-stat-icon" aria-hidden="true">
+                <DeepSeekMark className="ln-deepseek-mark" />
+              </span>
               <BiText copy={ui.statDeepseek} size="sm" />
             </div>
             <div className="ln-hero-stat">
-              <strong>3</strong>
+              <span className="ln-hero-stat-icon" aria-hidden="true">
+                <strong>3</strong>
+              </span>
               <BiText copy={ui.statModes} size="sm" />
             </div>
             <div className="ln-hero-stat">
-              <strong>粵</strong>
+              <span className="ln-hero-stat-icon" aria-hidden="true">
+                <strong>粵</strong>
+              </span>
               <BiText copy={ui.statJyutping} size="sm" />
             </div>
           </div>
@@ -196,7 +203,9 @@ export function Landing() {
       </section>
 
       <section className="ln-cta-band">
-        <Reveal>
+        <Reveal className="ln-cta-inner">
+          <div className="ln-cta-glow" aria-hidden="true" />
+          <JyutLogo variant="mark" className="ln-cta-mark" />
           <h2 className="ln-h2">
             <BiText copy={ui.ctaReady} size="lg" />
           </h2>
@@ -211,7 +220,7 @@ export function Landing() {
         <div className="ln-brand">
           <JyutLogo className="ln-brand-logo" />
         </div>
-        <BiText copy={ui.footerTag} size="sm" as="p" />
+        <FooterLangPair />
       </footer>
     </div>
     </MotionConfig>

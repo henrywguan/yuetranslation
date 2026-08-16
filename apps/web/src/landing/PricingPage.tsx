@@ -11,6 +11,7 @@ import { BiText } from '../components/BiText'
 import { JyutLogo } from '../components/JyutLogo'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
+import { FooterLangPair } from './FooterLangPair'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
@@ -219,7 +220,9 @@ export function PricingPage() {
       </section>
 
       <section className="ln-cta-band">
-        <Reveal>
+        <Reveal className="ln-cta-inner">
+          <div className="ln-cta-glow" aria-hidden="true" />
+          <JyutLogo variant="mark" className="ln-cta-mark" />
           <h2 className="ln-h2">
             <BiText copy={ui.stillQuestions} size="lg" />
           </h2>
@@ -234,7 +237,7 @@ export function PricingPage() {
         <button type="button" className="ln-brand ln-brand-btn" onClick={() => openHome()}>
           <JyutLogo className="ln-brand-logo" />
         </button>
-        <BiText copy={ui.footerTag} size="sm" as="p" />
+        <FooterLangPair />
       </footer>
     </div>
   )
