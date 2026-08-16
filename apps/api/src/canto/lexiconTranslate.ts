@@ -234,15 +234,26 @@ function yueToEn(source: string): LexiconTranslateHit | null {
 export function looksLikeGlossDump(text: string): boolean {
   const t = text.trim()
   if (!t) return true
+  if (/^(（示範）|\(demo\))/i.test(t)) return true
   if (/^\d+\.\s/.test(t)) return true
   if (/\[[^\]]+\]/.test(t)) return true
-  if (/\([^)]*\)/.test(t)) return true
+  // Parenthetical sense notes: "(of answering phone calls) hello"
+  if (/\([^)]{2,}\)/.test(t)) return true
   if (/\s\/\s/.test(t)) return true
-  if (/\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial)\b/i.test(t)) {
+  if (
+    /\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial|softening|classifier|measure word|variant of|same as|see also|archaic|literary|written)\b/i.test(
+      t,
+    )
+  ) {
     return true
   }
+  if ((t.match(/;/g) || []).length >= 2) return true
   // Long space-joined lemma lists are almost never a spoken translation.
   if (t.split(/\s+/).length >= 6) return true
+  // Mixed "you 聽 not 聽" gloss joins
+  if (/[A-Za-z]{2,}.+[一-龥].+[A-Za-z]{2,}/.test(t) && t.split(/\s+/).length >= 3) {
+    return true
+  }
   return false
 }
 

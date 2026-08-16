@@ -37,6 +37,15 @@ export function ResultWithDefinition({
               className={textClassName || 'result-text'}
               onActivate={onActivate}
             />
+          ) : onActivate ? (
+            <button
+              type="button"
+              className={`${textClassName || 'result-text'} spoken-line-text--action`}
+              onClick={() => onActivate(trimmed)}
+              aria-label="Open translation details"
+            >
+              {trimmed}
+            </button>
           ) : (
             <p className={textClassName || 'result-text'}>{trimmed}</p>
           )}

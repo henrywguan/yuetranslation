@@ -2,14 +2,15 @@ import { useCallback, useEffect, useId, useRef, useState, type PointerEvent as R
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { HistoryPane } from './HistoryPane'
+import { usePanelDock } from '../lib/panelDock'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 
 const PANEL_KEY = 'yue-history-panel-v1'
+const DOCK_ID = 'history'
 const MIN_W = 260
 const MIN_H = 200
-const MINIMIZED_H = 52
 
 type PanelGeom = {
   x: number
@@ -50,11 +51,9 @@ function clampGeom(g: PanelGeom): PanelGeom {
   const maxW = Math.max(MIN_W, window.innerWidth - 16)
   const maxH = Math.max(MIN_H, window.innerHeight - 16)
   const w = Math.min(Math.max(g.w, MIN_W), maxW)
-  // Keep stored height as the expanded size even while minimized.
   const h = Math.min(Math.max(g.h, MIN_H), maxH)
-  const displayH = g.minimized ? MINIMIZED_H : h
   const x = Math.min(Math.max(8, g.x), window.innerWidth - Math.min(w, 120))
-  const y = Math.min(Math.max(8, g.y), window.innerHeight - Math.min(displayH, 48))
+  const y = Math.min(Math.max(8, g.y), window.innerHeight - Math.min(h, 48))
   return { ...g, x, y, w, h }
 }
 
@@ -74,6 +73,8 @@ export function TranslationHistory() {
     sw: number
     sh: number
   } | null>(null)
+  const dockUpsert = usePanelDock((s) => s.upsert)
+  const dockRemove = usePanelDock((s) => s.remove)
   const count = history.length
 
   const persist = useCallback((next: PanelGeom) => {
@@ -90,6 +91,37 @@ export function TranslationHistory() {
     const onResize = () => setGeom((g) => clampGeom(g))
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  useEffect(() => {
+    if (!geom.minimized) {
+      dockRemove(DOCK_ID)
+      return
+    }
+    dockUpsert({
+      id: DOCK_ID,
+      title: count ? `History (${count})` : 'History',
+      subtitle: '紀錄',
+    })
+    return () => dockRemove(DOCK_ID)
+  }, [geom.minimized, count, dockUpsert, dockRemove])
+
+  useEffect(() => {
+    const onRestore = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail
+      if (id !== DOCK_ID) return
+      setGeom((g) => {
+        const next = clampGeom({ ...g, minimized: false })
+        try {
+          localStorage.setItem(PANEL_KEY, JSON.stringify(next))
+        } catch {
+          /* ignore */
+        }
+        return next
+      })
+    }
+    window.addEventListener('yue-dock-restore', onRestore as EventListener)
+    return () => window.removeEventListener('yue-dock-restore', onRestore as EventListener)
   }, [])
 
   useEffect(() => {
@@ -112,7 +144,7 @@ export function TranslationHistory() {
     const target = e.target as HTMLElement
     if (mode === 'move' && target.closest('button')) return
     e.preventDefault()
-    const start = {
+    dragRef.current = {
       mode,
       ox: e.clientX,
       oy: e.clientY,
@@ -121,7 +153,6 @@ export function TranslationHistory() {
       sw: geom.w,
       sh: geom.h,
     }
-    dragRef.current = start
 
     const onMove = (ev: PointerEvent) => {
       const d = dragRef.current
@@ -132,13 +163,7 @@ export function TranslationHistory() {
         setGeom((g) => clampGeom({ ...g, x: d.sx + dx, y: d.sy + dy }))
         return
       }
-      setGeom((g) =>
-        clampGeom({
-          ...g,
-          w: d.sw + dx,
-          h: d.sh + dy,
-        }),
-      )
+      setGeom((g) => clampGeom({ ...g, w: d.sw + dx, h: d.sh + dy }))
     }
     const onUp = () => {
       dragRef.current = null
@@ -160,61 +185,54 @@ export function TranslationHistory() {
     window.addEventListener('pointercancel', onUp)
   }
 
-  const toggleMinimized = () => {
-    persist({ ...geom, minimized: !geom.minimized })
-  }
-
   return (
     <>
-      <aside
-        className={`history-rail${geom.minimized ? ' is-minimized' : ''}`}
-        aria-labelledby="history-rail-title"
-        style={{
-          left: geom.x,
-          top: geom.y,
-          width: geom.w,
-          height: geom.minimized ? MINIMIZED_H : geom.h,
-        }}
-      >
-        <header
-          className="history-panel-header history-rail-chrome"
-          onPointerDown={(e) => onDragPointerDown(e, 'move')}
+      {!geom.minimized ? (
+        <aside
+          className="history-rail"
+          aria-labelledby="history-rail-title"
+          style={{
+            left: geom.x,
+            top: geom.y,
+            width: geom.w,
+            height: geom.h,
+          }}
         >
-          <div className="history-rail-title-wrap">
-            <h2 id="history-rail-title" className="history-panel-title">
-              <BiText copy={ui.historyTitle} size="md" />
-            </h2>
-            {count ? (
-              <span className="history-count" aria-label={`${count}`}>
-                {count}
-              </span>
-            ) : null}
-          </div>
-          <div className="history-rail-actions">
-            <button
-              type="button"
-              className="history-rail-btn"
-              onClick={toggleMinimized}
-              aria-label={biPlain(geom.minimized ? ui.historyExpand : ui.historyCollapse)}
-              title={biPlain(geom.minimized ? ui.historyExpand : ui.historyCollapse)}
-            >
-              {geom.minimized ? '▢' : '–'}
-            </button>
-          </div>
-        </header>
-        {!geom.minimized ? (
-          <>
-            <HistoryPane turns={history} />
-            <div
-              className="history-resize-handle"
-              aria-hidden="true"
-              onPointerDown={(e) => onDragPointerDown(e, 'resize')}
-            />
-          </>
-        ) : null}
-      </aside>
+          <header
+            className="history-panel-header history-rail-chrome"
+            onPointerDown={(e) => onDragPointerDown(e, 'move')}
+          >
+            <div className="history-rail-title-wrap">
+              <h2 id="history-rail-title" className="history-panel-title">
+                <BiText copy={ui.historyTitle} size="md" />
+              </h2>
+              {count ? (
+                <span className="history-count" aria-label={`${count}`}>
+                  {count}
+                </span>
+              ) : null}
+            </div>
+            <div className="history-rail-actions">
+              <button
+                type="button"
+                className="history-rail-btn"
+                onClick={() => persist({ ...geom, minimized: true })}
+                aria-label={biPlain(ui.historyCollapse)}
+                title={biPlain(ui.historyCollapse)}
+              >
+                –
+              </button>
+            </div>
+          </header>
+          <HistoryPane turns={history} />
+          <div
+            className="history-resize-handle"
+            aria-hidden="true"
+            onPointerDown={(e) => onDragPointerDown(e, 'resize')}
+          />
+        </aside>
+      ) : null}
 
-      {/* In-flow above controls on mobile — avoids covering mode tabs / mic. */}
       <div className="history-mobile-row">
         <button
           type="button"

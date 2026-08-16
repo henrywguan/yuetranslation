@@ -1,0 +1,310 @@
+/* Floating details panel + shared desktop dock */
+
+.detail-panel-rail {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .detail-panel-rail {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: 82;
+    margin: 0;
+    padding: 0;
+    border-radius: 18px;
+    border: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--harbor-mid) 92%, transparent);
+    box-shadow: var(--shadow), 0 0 0 1px color-mix(in srgb, var(--jade) 12%, transparent);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    min-width: 280px;
+    min-height: 240px;
+  }
+}
+
+.detail-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.detail-panel-header.is-draggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.detail-panel-header.is-draggable:active {
+  cursor: grabbing;
+}
+
+.detail-panel-titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-panel-kicker {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-panel-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink-bright);
+  word-break: break-word;
+}
+
+.detail-panel-jp {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+  color: var(--jade-bright);
+}
+
+.detail-panel-ipa {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.detail-panel-translation {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.detail-panel-definition {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.detail-panel-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.detail-panel-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.detail-panel-btn:hover,
+.detail-panel-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 45%, transparent);
+  color: var(--jade-bright);
+}
+
+.detail-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 10px 14px;
+  min-height: 0;
+}
+
+.detail-panel-loading {
+  margin: 12px 8px;
+}
+
+.detail-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-panel-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--surface);
+  color: inherit;
+  cursor: default;
+}
+
+.detail-panel-row.is-drillable {
+  cursor: pointer;
+}
+
+.detail-panel-row.is-drillable:hover,
+.detail-panel-row.is-drillable:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 40%, transparent);
+  background: color-mix(in srgb, var(--jade) 10%, var(--surface));
+}
+
+.detail-panel-row:disabled {
+  opacity: 0.72;
+}
+
+.detail-panel-char {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detail-panel-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.detail-panel-row-jp {
+  font-size: 0.82rem;
+  color: var(--jade-bright);
+}
+
+.detail-panel-meaning {
+  font-size: 0.9rem;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.detail-panel-chevron {
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.detail-panel-char-view section {
+  margin: 0 0 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.detail-panel-char-view h3 {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-panel-char-view p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.detail-resize-handle {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 50%,
+      color-mix(in srgb, var(--jade) 55%, transparent) 50%
+    );
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.detail-panel-sheet {
+  display: flex;
+  flex-direction: column;
+  max-height: min(78vh, 640px);
+}
+
+.detail-panel-sheet .detail-panel-body {
+  flex: 1;
+  overflow: auto;
+}
+
+/* —— Virtual desktop dock for minimized panels —— */
+
+.panel-dock {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .panel-dock {
+    display: flex;
+    position: fixed;
+    z-index: 90;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    gap: 8px;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--harbor-deep) 88%, transparent);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+    max-width: min(920px, calc(100vw - 32px));
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+.panel-dock-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 108px;
+  max-width: 180px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
+  background: color-mix(in srgb, var(--jade) 12%, var(--surface));
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.panel-dock-chip:hover,
+.panel-dock-chip:focus-visible {
+  border-color: var(--jade);
+  background: color-mix(in srgb, var(--jade) 22%, var(--surface));
+}
+
+.panel-dock-chip-sub {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panel-dock-chip-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}

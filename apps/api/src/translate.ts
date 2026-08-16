@@ -274,6 +274,20 @@ export async function translate(input: unknown) {
     }
   }
 
+  // 6) 粵→EN: never ship dictionary gloss dumps from the model path.
+  if (looksLikeGlossDump(primary)) {
+    return {
+      text: '',
+      definition: '',
+      alternatives: [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta(['gloss-dump-blocked']),
+    }
+  }
+
   return {
     text: primary,
     definition,

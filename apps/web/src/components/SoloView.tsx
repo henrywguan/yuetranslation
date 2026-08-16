@@ -91,7 +91,26 @@ export function SoloView() {
             >
               {enText ? (
                 <span className="spoken-line">
-                  <span className="spoken-line-text">{enText}</span>
+                  {!enLive && (enTranslation || yueTranslation) ? (
+                    <button
+                      type="button"
+                      className="spoken-line-text spoken-line-text--action"
+                      onClick={() => {
+                        const yue = (yueTranslation || yueInterim || yueText).trim()
+                        const en = enText.trim()
+                        if (!yue && !en) return
+                        openBreakdown(yue || en, {
+                          translation: en,
+                          definition: yueDef || undefined,
+                        })
+                      }}
+                      aria-label="Open translation details"
+                    >
+                      {enText}
+                    </button>
+                  ) : (
+                    <span className="spoken-line-text">{enText}</span>
+                  )}
                   <SpeakButton text={enText} lang="en" />
                 </span>
               ) : (
@@ -121,7 +140,12 @@ export function SoloView() {
                     text={yueText}
                     definition={yueDef}
                     textClassName="solo-tr-text"
-                    onActivate={openBreakdown}
+                    onActivate={(phrase) =>
+                      openBreakdown(phrase, {
+                        translation: (enTranslation || enText).trim() || undefined,
+                        definition: yueDef || undefined,
+                      })
+                    }
                     speakLang="yue"
                   />
                   <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
