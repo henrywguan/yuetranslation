@@ -24,6 +24,16 @@ npm run dev:api
 npm run dev:web
 ```
 
+### Phone / microphone on your LAN
+
+Browsers block the mic on `http://192.168.x.x`. Use a free HTTPS tunnel while `dev:api` + `dev:web` are running:
+
+```bash
+npm run dev:tunnel
+```
+
+Open the printed `https://….trycloudflare.com` URL on your phone. Full steps: [docs/local-phone-testing.md](docs/local-phone-testing.md).
+
 ## WordPress package
 
 ```bash

@@ -4,6 +4,7 @@ import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage } from './mediaAccess'
+import { newId } from './id'
 import type {
   ConversationTurn,
   Entitlement,
@@ -209,7 +210,7 @@ function nextHistory(
   get: () => State,
   turn: Omit<ConversationTurn, 'id' | 'at'>,
 ): ConversationTurn[] {
-  return [{ id: crypto.randomUUID(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
+  return [{ id: newId(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
 }
 
 async function runTranslation(
