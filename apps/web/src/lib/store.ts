@@ -24,6 +24,7 @@ type FaceLive = {
   enTranslation: string
   yueTranslation: string
   yueDefinition: string
+  yueDefinitions: string[]
 }
 
 function emptyFaceLive(): FaceLive {
@@ -33,6 +34,7 @@ function emptyFaceLive(): FaceLive {
     enTranslation: '',
     yueTranslation: '',
     yueDefinition: '',
+    yueDefinitions: [],
   }
 }
 
@@ -52,6 +54,8 @@ type State = {
   yueTranslation: string
   /** English gloss for the current Cantonese translation (clarity). */
   yueDefinition: string
+  /** Multiple English senses for the current Cantonese phrase. */
+  yueDefinitions: string[]
   /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
   yueAlternatives: string[]
   /** Face-to-face panes only — separate from Solo/Text results. */
@@ -91,7 +95,12 @@ type State = {
   translateTyped: (text: string, from: Lang) => Promise<void>
   openBreakdown: (
     phrase: string,
-    opts?: { translation?: string; definition?: string },
+    opts?: {
+      translation?: string
+      definition?: string
+      definitions?: string[]
+      alternatives?: string[]
+    },
   ) => void
   pushDetail: (layer: DetailLayer) => void
   popDetail: () => void
@@ -289,6 +298,7 @@ async function runTranslation(
     }
     const alternatives = (result.alternatives || []).filter((a) => Boolean(sanitizeTranslationText(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
+    const definitions = (result.definitions || []).filter((d) => Boolean(d?.trim()))
 
     if (isFace) {
       const face = get().face
@@ -301,6 +311,7 @@ async function runTranslation(
             enTranslation: '',
             yueTranslation: clean,
             yueDefinition: result.definition || text,
+            yueDefinitions: definitions,
           },
         })
       } else {
@@ -312,6 +323,7 @@ async function runTranslation(
             yueTranslation: '',
             enTranslation: clean,
             yueDefinition: result.definition || '',
+            yueDefinitions: definitions,
           },
         })
       }
@@ -322,6 +334,7 @@ async function runTranslation(
         source: text,
         translation: clean,
         definition,
+        definitions: definitions.length ? definitions : undefined,
         alternatives: lang === 'en' ? alternatives : undefined,
         engine: result.engine,
       })
@@ -332,6 +345,7 @@ async function runTranslation(
           enTranslation: '',
           yueTranslation: clean,
           yueDefinition: result.definition || text,
+          yueDefinitions: definitions,
           yueAlternatives: alternatives,
           history,
         })
@@ -342,6 +356,7 @@ async function runTranslation(
           yueTranslation: '',
           enTranslation: clean,
           yueDefinition: result.definition || '',
+          yueDefinitions: definitions,
           yueAlternatives: [],
           history,
         })
@@ -422,6 +437,7 @@ function applyHoldSource(
       enTranslation: '',
       yueTranslation: '',
       yueDefinition: '',
+      yueDefinitions: [],
       yueAlternatives: [],
       status: 'listening',
     })
@@ -432,6 +448,7 @@ function applyHoldSource(
       enTranslation: '',
       yueTranslation: '',
       yueDefinition: '',
+      yueDefinitions: [],
       yueAlternatives: [],
       status: 'listening',
     })
@@ -522,6 +539,7 @@ export const useYueStore = create<State>((set, get) => ({
   enTranslation: '',
   yueTranslation: '',
   yueDefinition: '',
+  yueDefinitions: [],
   yueAlternatives: [],
   face: emptyFaceLive(),
   detailStack: [],
@@ -644,6 +662,7 @@ export const useYueStore = create<State>((set, get) => ({
       enTranslation: '',
       yueTranslation: '',
       yueDefinition: '',
+      yueDefinitions: [],
       yueAlternatives: [],
       face: emptyFaceLive(),
     })
@@ -921,11 +940,15 @@ export const useYueStore = create<State>((set, get) => ({
   openBreakdown: (phrase, opts) => {
     const trimmed = phrase.trim()
     if (!trimmed) return
+    const defs = (opts?.definitions || []).map((d) => d.trim()).filter(Boolean)
+    const alts = (opts?.alternatives || []).map((a) => a.trim()).filter(Boolean)
     const layer: DetailLayer = {
       kind: 'phrase',
       phrase: trimmed,
       translation: opts?.translation?.trim() || undefined,
       definition: opts?.definition?.trim() || undefined,
+      definitions: defs.length ? defs : undefined,
+      alternatives: alts.length ? alts : undefined,
     }
     set({
       ...detailMirror([layer]),
@@ -1028,6 +1051,7 @@ export const useYueStore = create<State>((set, get) => ({
       enTranslation: '',
       yueTranslation: '',
       yueDefinition: '',
+      yueDefinitions: [],
       yueAlternatives: [],
       ...detailMirror([]),
       detailMinimized: false,

@@ -5,6 +5,10 @@ export type DetailLayer =
       phrase: string
       translation?: string
       definition?: string
+      /** Multiple English senses listed in the details pane / drawer. */
+      definitions?: string[]
+      /** Other Cantonese renderings when known. */
+      alternatives?: string[]
     }
   | {
       kind: 'char'

@@ -7,11 +7,13 @@ function LangLine({
   lang,
   text,
   definition,
+  definitions,
   onBreakdown,
 }: {
   lang: ConversationTurn['from']
   text: string
   definition?: string
+  definitions?: string[]
   onBreakdown?: (phrase: string) => void
 }) {
   if (lang === 'yue') {
@@ -19,6 +21,7 @@ function LangLine({
       <CantoneseText
         text={text}
         definition={definition}
+        definitions={definitions}
         className="history-card-line"
         onActivate={onBreakdown}
         activateLabel={biPlain(ui.charDetail)}
@@ -54,8 +57,12 @@ export function HistoryCard({
   isLatest?: boolean
 }) {
   const yuePhrase = turn.to === 'yue' ? turn.translation : turn.from === 'yue' ? turn.source : ''
+  const yueDefs = (turn.definitions || []).map((d) => d.trim()).filter(Boolean)
   const hasDrill = Boolean(yuePhrase.trim())
-  const hasDetails = Boolean(turn.definition?.trim()) || Boolean(turn.alternatives?.length)
+  const hasDetails =
+    Boolean(turn.definition?.trim()) ||
+    Boolean(turn.alternatives?.length) ||
+    yueDefs.length > 1
 
   return (
     <article
@@ -118,6 +125,7 @@ export function HistoryCard({
                 lang={turn.from}
                 text={turn.source}
                 definition={turn.definition}
+                definitions={turn.from === 'yue' ? yueDefs : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -139,6 +147,7 @@ export function HistoryCard({
                 lang={turn.to}
                 text={turn.translation}
                 definition={turn.definition}
+                definitions={turn.to === 'yue' ? yueDefs : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -148,7 +157,18 @@ export function HistoryCard({
 
       {expanded ? (
         <div className="history-card-detail" id={`history-detail-${turn.id}`}>
-          {turn.definition?.trim() ? (
+          {yueDefs.length > 1 ? (
+            <div className="history-card-defs">
+              <p className="history-card-detail-label">
+                <BiText copy={ui.definition} size="sm" layout="inline" />
+              </p>
+              <ul>
+                {yueDefs.map((def, i) => (
+                  <li key={`hist-def-${i}`}>{def}</li>
+                ))}
+              </ul>
+            </div>
+          ) : turn.definition?.trim() ? (
             <p className="history-card-def">
               <span className="history-card-detail-label">
                 <BiText copy={ui.definition} size="sm" layout="inline" />

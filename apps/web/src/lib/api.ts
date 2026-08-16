@@ -65,6 +65,7 @@ export async function translateText(
 ): Promise<{
   text: string
   definition?: string
+  definitions?: string[]
   alternatives?: string[]
   engine: string
   stage?: string

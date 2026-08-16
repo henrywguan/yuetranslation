@@ -6,6 +6,7 @@ import {
   hardenYueOutput,
   lexiconTranslate,
   looksLikeGlossDump,
+  englishDefinitionsForYue,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
@@ -41,6 +42,44 @@ function emptyMeta(notes: string[] = []) {
   }
 }
 
+function mergeDefinitions(...parts: Array<string | string[] | undefined | null>): string[] {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const part of parts.flat()) {
+    const s = (part || '').trim()
+    if (!s || looksLikeGlossDump(s)) continue
+    const key = s.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(s)
+    if (out.length >= 8) break
+  }
+  return out
+}
+
+type TranslateResult = {
+  text: string
+  definition: string
+  alternatives: string[]
+  engine: string
+  from: 'en' | 'yue'
+  to: 'en' | 'yue'
+  stage: TranslateStage
+  meta: ReturnType<typeof emptyMeta> & Record<string, unknown>
+  definitions?: string[]
+}
+
+/** Attach lexicon English senses for the Cantonese phrase in this turn. */
+function withYueDefinitions(result: TranslateResult, sourceText: string): TranslateResult {
+  const yuePhrase =
+    result.to === 'yue' ? result.text : result.from === 'yue' ? sourceText : ''
+  const senses = yuePhrase ? englishDefinitionsForYue(yuePhrase) : []
+  return {
+    ...result,
+    definitions: mergeDefinitions(result.definition, senses),
+  }
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -52,16 +91,19 @@ export async function translate(input: unknown) {
   const fallbackDefinition = from === 'en' ? text : ''
 
   if (from === to) {
-    return {
+    return withYueDefinitions(
+      {
+        text,
+        definition: '',
+        alternatives: [],
+        engine: 'identity',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['identity']),
+      },
       text,
-      definition: '',
-      alternatives: [],
-      engine: 'identity',
-      from,
-      to,
-      stage,
-      meta: emptyMeta(['identity']),
-    }
+    )
   }
 
   // 1) Phrase memory — O(1) (best latency + reliability for live after capture).
@@ -72,22 +114,25 @@ export async function translate(input: unknown) {
     wantAlternatives: wantAlts,
   })
   if (dictHit) {
-    return {
-      text: dictHit.text,
-      definition: to === 'yue' ? fallbackDefinition : '',
-      alternatives: wantAlts ? dictHit.alternatives : [],
-      engine: 'dictionary',
-      from,
-      to,
-      stage,
-      meta: {
-        dictionaryHit: true,
-        scrubbed: false,
-        colloquialScore: to === 'yue' ? 8 : 0,
-        rewritten: false,
-        notes: [`dict:${dictHit.entry.id}`],
+    return withYueDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'yue' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: to === 'yue' ? 8 : 0,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`],
+        },
       },
-    }
+      text,
+    )
   }
 
   // 2) Lexicon fallback (seed + CC-Canto).
@@ -111,37 +156,43 @@ export async function translate(input: unknown) {
         sourceEn: from === 'en' ? text : undefined,
         client: null,
       })
-      return {
-        text: hardened.text,
-        definition: lexHit.definition || fallbackDefinition,
-        alternatives: wantAlts ? hardened.alternatives : [],
+      return withYueDefinitions(
+        {
+          text: hardened.text,
+          definition: lexHit.definition || fallbackDefinition,
+          alternatives: wantAlts ? hardened.alternatives : [],
+          engine: 'lexicon',
+          from,
+          to,
+          stage,
+          meta: {
+            ...hardened.meta,
+            dictionaryHit: true,
+            notes: [...lexHit.notes, ...hardened.meta.notes],
+          },
+        },
+        text,
+      )
+    }
+    return withYueDefinitions(
+      {
+        text: lexHit.text,
+        definition: lexHit.definition,
+        alternatives: [],
         engine: 'lexicon',
         from,
         to,
         stage,
         meta: {
-          ...hardened.meta,
           dictionaryHit: true,
-          notes: [...lexHit.notes, ...hardened.meta.notes],
+          scrubbed: false,
+          colloquialScore: 0,
+          rewritten: false,
+          notes: lexHit.notes,
         },
-      }
-    }
-    return {
-      text: lexHit.text,
-      definition: lexHit.definition,
-      alternatives: [],
-      engine: 'lexicon',
-      from,
-      to,
-      stage,
-      meta: {
-        dictionaryHit: true,
-        scrubbed: false,
-        colloquialScore: 0,
-        rewritten: false,
-        notes: lexHit.notes,
       },
-    }
+      text,
+    )
   }
 
   const client = openaiClient()
@@ -157,27 +208,33 @@ export async function translate(input: unknown) {
         sourceEn: from === 'en' ? text : undefined,
         client: null,
       })
-      return {
-        text: hardened.text,
-        definition: fallbackDefinition,
-        alternatives: wantAlts ? hardened.alternatives : [],
+      return withYueDefinitions(
+        {
+          text: hardened.text,
+          definition: fallbackDefinition,
+          alternatives: wantAlts ? hardened.alternatives : [],
+          engine: 'demo',
+          from,
+          to,
+          stage,
+          meta: hardened.meta,
+        },
+        text,
+      )
+    }
+    return withYueDefinitions(
+      {
+        text: primary,
+        definition: '',
+        alternatives: [],
         engine: 'demo',
         from,
         to,
         stage,
-        meta: hardened.meta,
-      }
-    }
-    return {
-      text: primary,
-      definition: '',
-      alternatives: [],
-      engine: 'demo',
-      from,
-      to,
-      stage,
-      meta: emptyMeta(['demo']),
-    }
+        meta: emptyMeta(['demo']),
+      },
+      text,
+    )
   }
 
   // 4) Model translate
@@ -258,42 +315,51 @@ export async function translate(input: unknown) {
       sourceEn: from === 'en' ? text : undefined,
       client,
     })
-    return {
-      text: hardened.text,
-      definition,
-      alternatives: wantAlts ? hardened.alternatives : [],
-      engine,
-      from,
-      to,
-      stage,
-      meta: hardened.meta,
-    }
+    return withYueDefinitions(
+      {
+        text: hardened.text,
+        definition,
+        alternatives: wantAlts ? hardened.alternatives : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: hardened.meta,
+      },
+      text,
+    )
   }
 
   // 6) 粵→EN: never ship dictionary gloss dumps from the model path.
   if (looksLikeGlossDump(primary)) {
-    return {
-      text: '',
-      definition: '',
+    return withYueDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['gloss-dump-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withYueDefinitions(
+    {
+      text: primary,
+      definition,
       alternatives: [],
       engine,
       from,
       to,
       stage,
-      meta: emptyMeta(['gloss-dump-blocked']),
-    }
-  }
-
-  return {
-    text: primary,
-    definition,
-    alternatives: [],
-    engine,
-    from,
-    to,
-    stage,
-    meta: emptyMeta(),
-  }
+      meta: emptyMeta(),
+    },
+    text,
+  )
 }
 
 function parsePayload(

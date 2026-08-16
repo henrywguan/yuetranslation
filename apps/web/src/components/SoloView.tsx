@@ -14,6 +14,7 @@ export function SoloView() {
   const enTranslation = useYueStore((s) => s.enTranslation)
   const yueTranslation = useYueStore((s) => s.yueTranslation)
   const yueDefinition = useYueStore((s) => s.yueDefinition)
+  const yueDefinitions = useYueStore((s) => s.yueDefinitions)
   const yueAlternatives = useYueStore((s) => s.yueAlternatives)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
@@ -47,6 +48,11 @@ export function SoloView() {
   const yueDef = turnActive
     ? yueDefinition
     : yueDefinition || latest?.definition || ''
+  const yueDefs = turnActive
+    ? yueDefinitions
+    : yueDefinitions.length
+      ? yueDefinitions
+      : latest?.definitions || []
   const alts = turnActive
     ? yueAlternatives
     : yueAlternatives.length
@@ -102,6 +108,8 @@ export function SoloView() {
                         openBreakdown(yue || en, {
                           translation: en,
                           definition: yueDef || undefined,
+                          definitions: yueDefs,
+                          alternatives: alts,
                         })
                       }}
                       aria-label="Open translation details"
@@ -139,11 +147,14 @@ export function SoloView() {
                   <ResultWithDefinition
                     text={yueText}
                     definition={yueDef}
+                    definitions={yueDefs}
                     textClassName="solo-tr-text"
                     onActivate={(phrase) =>
                       openBreakdown(phrase, {
                         translation: (enTranslation || enText).trim() || undefined,
                         definition: yueDef || undefined,
+                        definitions: yueDefs,
+                        alternatives: alts,
                       })
                     }
                     speakLang="yue"
