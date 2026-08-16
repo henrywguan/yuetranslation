@@ -3,6 +3,7 @@ import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
+import { micBlockedMessage } from './mediaAccess'
 import type {
   ConversationTurn,
   Entitlement,
@@ -518,6 +519,13 @@ export const useYueStore = create<State>((set, get) => ({
           ? 'Log in to use live translation.'
           : `Free live minutes used (${formatMinutes(entitlement.usage.liveSeconds)} minutes this month). Upgrade for more.`
       set({ error: msg })
+      return
+    }
+
+    // iOS Safari over http://192.168.x.x has no mediaDevices — fail before Azure crashes.
+    const micBlock = micBlockedMessage()
+    if (micBlock) {
+      set({ error: micBlock })
       return
     }
 

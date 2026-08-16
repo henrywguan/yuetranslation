@@ -88,8 +88,8 @@ export function TranslatorApp() {
           </div>
         ) : null}
 
-        <Controls />
         <TranslationHistory />
+        <Controls />
         <CharacterBreakdownHost />
       </div>
     </MotionConfig>

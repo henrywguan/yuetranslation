@@ -49,17 +49,20 @@ export function TranslationHistory() {
         <HistoryPane turns={history} />
       </aside>
 
-      <button
-        type="button"
-        className="history-open-btn"
-        onClick={() => setSheetOpen(true)}
-        aria-haspopup="dialog"
-        aria-expanded={sheetOpen}
-        aria-label={biPlain(ui.historyTitle)}
-      >
-        <BiText copy={ui.historyTitle} size="sm" layout="inline" />
-        {count ? <span className="history-open-count">{count}</span> : null}
-      </button>
+      {/* In-flow above controls on mobile — avoids covering mode tabs / mic. */}
+      <div className="history-mobile-row">
+        <button
+          type="button"
+          className="history-open-btn"
+          onClick={() => setSheetOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={sheetOpen}
+          aria-label={biPlain(ui.historyTitle)}
+        >
+          <BiText copy={ui.historyTitle} size="sm" layout="inline" />
+          {count ? <span className="history-open-count">{count}</span> : null}
+        </button>
+      </div>
 
       <AnimatePresence>
         {sheetOpen ? (
