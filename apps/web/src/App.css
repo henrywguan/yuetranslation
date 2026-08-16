@@ -1239,6 +1239,12 @@
   color: var(--danger-ink);
 }
 
+.banner.warn {
+  background: color-mix(in srgb, #e0a106 16%, var(--surface));
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, #e0a106 35%, var(--glass-border));
+}
+
 .banner a {
   color: var(--mint);
 }

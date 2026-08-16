@@ -234,6 +234,11 @@ export const ui = {
     zh: '即時 API 喺度連唔到——呢個要對住你部署嘅後端先得。',
     jp: 'zik1 si4 API hai2 dou6 lin4 m4 dou3 — ni1 go3 jiu3 deoi3 zyu6 nei5 bou3 syu2 ge3 hau6 dyun1 sin1 dak1.',
   },
+  demoModeBanner: {
+    en: 'Demo mode: no model key loaded. Add OPENAI_API_KEY (and OPENAI_BASE_URL if needed) to apps/api/.env, then restart npm run dev:api.',
+    zh: '示範模式：未載入翻譯密鑰。喺 apps/api/.env 加 OPENAI_API_KEY（同埋需要嘅 OPENAI_BASE_URL），再重啟 npm run dev:api。',
+    jp: 'si6 faan6 mou4 sik1: mei6 zoi3 jap6 faan1 jik6 mat6 joek6. hai2 apps/api/.env gaa1 OPENAI_API_KEY (tung4 maai4 seoi1 jiu3 ge3 OPENAI_BASE_URL), zoi3 cung4 hei2 npm run dev:api.',
+  },
 
   pricingKicker: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   pricingTitle: {
