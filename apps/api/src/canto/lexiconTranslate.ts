@@ -219,12 +219,24 @@ function yueToEn(source: string): LexiconTranslateHit | null {
 
   const pieces = segs.map((s) => {
     if (!s.hit) return s.surface
+    // Skip punctuation / particle meta labels in joined “translations”.
+    if (/^(question mark|exclamation mark|full stop|comma)$/i.test(s.hit.gloss.trim())) {
+      return s.surface === '？' || s.surface === '?' ? '?' : ''
+    }
     const sense = s.hit.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0]?.trim()
     return sense || s.surface
   })
 
+  const text = pieces.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+  // Reject learner-dump joins: leftover Han, slash sense lists, or punctuation words.
+  if (!text) return null
+  if (/\p{Script=Han}/u.test(text)) return null
+  if (/\b(question mark|full stop|exclamation mark|comma)\b/i.test(text)) return null
+  if ((text.match(/\s\/\s/g) || []).length >= 1) return null
+  if (coverage < 0.85) return null
+
   return {
-    text: pieces.join(' ').replace(/\s+/g, ' ').trim(),
+    text,
     definition: '',
     alternatives: [],
     notes: [`lexicon:yue:segmented`, `coverage:${coverage.toFixed(2)}`],

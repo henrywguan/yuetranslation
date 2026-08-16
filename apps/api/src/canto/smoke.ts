@@ -84,6 +84,23 @@ const lexSeg = lexiconTranslate({
 })
 assert(/mtr/i.test(lexSeg?.text || ''), `lexicon 地鐵 failed: ${lexSeg?.text}`)
 
+// Segmented gloss joins must not ship as “translations” (live mic junk).
+const lexJunk = lexiconTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '你聽唔聽到我？',
+})
+assert(
+  !lexJunk || lexJunk.kind === 'exact',
+  `segmented 粵→EN junk should be rejected: ${JSON.stringify(lexJunk)}`,
+)
+const hearMe = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '你聽唔聽到我？',
+})
+assert(/hear me/i.test(hearMe?.text || ''), `phrase 你聽唔聽到我？ failed: ${hearMe?.text}`)
+
 // End-to-end offline path (dictionary / lexicon — no model required for these hits).
 const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
 assert(

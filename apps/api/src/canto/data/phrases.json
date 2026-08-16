@@ -190,6 +190,51 @@
       ]
     },
     {
+      "id": "yue-teng1-m4-teng1-dou3",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "你聽唔聽到我？",
+      "text": "Can you hear me?",
+      "alternatives": [
+        "Can you hear me",
+        "Do you hear me?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "check"
+      ]
+    },
+    {
+      "id": "en-can-you-hear-me",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "can you hear me",
+      "text": "你聽唔聽到我？",
+      "alternatives": [
+        "聽唔聽到我呀？",
+        "你聽唔聽到？"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "check"
+      ]
+    },
+    {
+      "id": "en-can-you-hear-me-q",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "can you hear me?",
+      "text": "你聽唔聽到我？",
+      "alternatives": [
+        "聽唔聽到我呀？",
+        "你聽唔聽到？"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "check"
+      ]
+    },
+    {
       "id": "yue-m4-goi",
       "sourceLang": "yue",
       "targetLang": "en",
