@@ -7,15 +7,27 @@ export function CharacterBreakdownFrame({
   phrase,
   rows,
   loading,
+  translation,
+  definition,
   onClose,
 }: {
   phrase: string
   rows: CharBreakdown[]
   loading?: boolean
+  /** Natural translation for this phrase (Conversation drill-down). */
+  translation?: string | null
+  /** Extra sense note — only shown when it differs from the translation. */
+  definition?: string | null
   onClose: () => void
 }) {
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
+  const translationText = translation?.trim() || ''
+  const definitionText = definition?.trim() || ''
+  const showDefinition =
+    Boolean(definitionText) &&
+    definitionText.toLowerCase() !== translationText.toLowerCase() &&
+    definitionText.toLowerCase() !== phrase.trim().toLowerCase()
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -54,17 +66,27 @@ export function CharacterBreakdownFrame({
       >
         <header className="breakdown-header">
           <div>
-            <p className="breakdown-kicker">Character breakdown</p>
-            <h2 id={titleId} className="breakdown-phrase">
+            <p className="breakdown-kicker">{translationText ? 'Details' : 'Character breakdown'}</p>
+            <h2 id={titleId} className="breakdown-phrase" lang="zh-HK">
               {phrase}
             </h2>
+            {translationText ? (
+              <p className="breakdown-translation" lang="en">
+                {translationText}
+              </p>
+            ) : null}
+            {showDefinition ? (
+              <p className="breakdown-definition" lang="en">
+                {definitionText}
+              </p>
+            ) : null}
           </div>
           <button
             ref={closeRef}
             type="button"
             className="breakdown-close"
             onClick={onClose}
-            aria-label="Close breakdown"
+            aria-label="Close details"
           >
             ×
           </button>

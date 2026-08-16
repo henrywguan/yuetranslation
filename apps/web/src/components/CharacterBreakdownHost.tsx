@@ -24,6 +24,8 @@ function mergeMeanings(local: CharBreakdown[], remote: CharBreakdown[]): CharBre
 /** Global closable frame for the active Cantonese phrase breakdown. */
 export function CharacterBreakdownHost() {
   const phrase = useYueStore((s) => s.breakdownPhrase)
+  const translation = useYueStore((s) => s.breakdownTranslation)
+  const definition = useYueStore((s) => s.breakdownDefinition)
   const closeBreakdown = useYueStore((s) => s.closeBreakdown)
   const [rows, setRows] = useState<CharBreakdown[]>([])
   const [loading, setLoading] = useState(false)
@@ -63,6 +65,8 @@ export function CharacterBreakdownHost() {
       phrase={phrase}
       rows={rows}
       loading={loading}
+      translation={translation}
+      definition={definition}
       onClose={closeBreakdown}
     />
   )
