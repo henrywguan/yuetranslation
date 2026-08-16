@@ -5,6 +5,7 @@ import {
   dictionaryTranslate,
   hardenYueOutput,
   lexiconTranslate,
+  looksLikeGlossDump,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
@@ -91,15 +92,21 @@ export async function translate(input: unknown) {
   }
 
   // 2) Lexicon fallback (seed + CC-Canto).
-  // When a model is configured, only trust exact headword hits — segmented gloss
-  // joins produce learner dumps like "you 聽 not 聽 reach I / me question mark".
+  // When a model is configured, only trust exact headword hits — never gloss dumps.
   const lexHit = lexiconTranslate({
     sourceLang: from,
     targetLang: to,
     source: text,
     wantAlternatives: wantAlts,
   })
-  const useLexicon = Boolean(lexHit && (!openaiConfigured() || lexHit.kind === 'exact'))
+  const lexTextOk =
+    Boolean(lexHit) &&
+    (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
+  const useLexicon = Boolean(
+    lexHit &&
+      lexTextOk &&
+      (!openaiConfigured() || lexHit.kind === 'exact'),
+  )
   if (lexHit && useLexicon) {
     if (to === 'yue') {
       const hardened = await hardenYueOutput({
