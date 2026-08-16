@@ -1,4 +1,4 @@
-import { eachLexiconEntry, lookupGloss, segmentGlosses } from './gloss.js'
+import { eachLexiconEntry, lookupGloss } from './gloss.js'
 import { normalizeLookupKey, uniqStrings } from './normalize.js'
 import type { TargetLang } from './types.js'
 
@@ -215,65 +215,35 @@ function yueToEn(source: string): LexiconTranslateHit | null {
   const trimmed = source.trim()
   if (!trimmed) return null
 
-  // Whole-string lexicon headword.
+  // Whole-string lexicon headword only — segmented gloss joins are never
+  // natural translations (e.g. “1. obvious … question mark”).
   const whole = lookupGloss(trimmed)
-  if (whole) {
-    const def = cleanGlossSense(whole.gloss)
-    if (!def || isMetaSense(def)) return null
-    return {
-      text: def,
-      definition: '',
-      alternatives: [],
-      notes: [`lexicon:yue:${whole.source}`],
-      kind: 'exact',
-    }
-  }
-
-  const segs = segmentGlosses(trimmed)
-  if (!segs.length) return null
-
-  const hanChars = Array.from(trimmed).filter((ch) => /\p{Script=Han}/u.test(ch))
-  const covered = segs
-    .filter((s) => s.hit)
-    .reduce((n, s) => n + Array.from(s.surface).filter((ch) => /\p{Script=Han}/u.test(ch)).length, 0)
-  if (!hanChars.length) return null
-  const coverage = covered / hanChars.length
-  if (coverage < 0.55) return null
-
-  const pieces: string[] = []
-  for (const s of segs) {
-    if (!s.hit) {
-      // Keep unknown Han; drop bare punctuation surfaces.
-      if (/\p{Script=Han}/u.test(s.surface)) pieces.push(s.surface)
-      continue
-    }
-    const raw = s.hit.gloss.trim()
-    if (/^(question mark|exclamation mark|full stop|comma)$/i.test(raw)) continue
-    const sense = cleanGlossSense(raw)
-    if (isMetaSense(sense)) continue
-    pieces.push(sense)
-  }
-
-  const text = pieces.join(' ').replace(/\s+/g, ' ').trim()
-  // Reject learner-dump joins: leftover Han, slash sense lists, punctuation, or thin joins.
-  if (!text) return null
-  if (/\p{Script=Han}/u.test(text)) return null
-  if (/\b(question mark|full stop|exclamation mark|comma|particle|interjection)\b/i.test(text)) {
-    return null
-  }
-  if (/\([^)]*\)/.test(text)) return null
-  if ((text.match(/\s\/\s/g) || []).length >= 1) return null
-  if (coverage < 0.85) return null
-  // Multi-word segmented dumps are almost never natural translations.
-  if (text.split(/\s+/).length >= 3) return null
-
+  if (!whole) return null
+  const def = cleanGlossSense(whole.gloss)
+  if (!def || isMetaSense(def) || looksLikeGlossDump(def)) return null
   return {
-    text,
+    text: def,
     definition: '',
     alternatives: [],
-    notes: [`lexicon:yue:segmented`, `coverage:${coverage.toFixed(2)}`],
-    kind: 'segmented',
+    notes: [`lexicon:yue:${whole.source}`],
+    kind: 'exact',
   }
+}
+
+/** True when a string still looks like a dictionary dump, not conversational English. */
+export function looksLikeGlossDump(text: string): boolean {
+  const t = text.trim()
+  if (!t) return true
+  if (/^\d+\.\s/.test(t)) return true
+  if (/\[[^\]]+\]/.test(t)) return true
+  if (/\([^)]*\)/.test(t)) return true
+  if (/\s\/\s/.test(t)) return true
+  if (/\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial)\b/i.test(t)) {
+    return true
+  }
+  // Long space-joined lemma lists are almost never a spoken translation.
+  if (t.split(/\s+/).length >= 6) return true
+  return false
 }
 
 /**
