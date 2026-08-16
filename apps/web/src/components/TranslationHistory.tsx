@@ -7,7 +7,7 @@ import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 
-const PANEL_KEY = 'yue-history-panel-v2'
+const PANEL_KEY = 'yue-history-panel-v3'
 const DOCK_ID = 'history'
 const MIN_W = 260
 const MIN_H = 200
@@ -27,8 +27,8 @@ function defaultGeom(): PanelGeom {
   const w = 320
   const h = Math.min(560, window.innerHeight - 48)
   return {
-    // Open beside the left taskbar (minimized tabs live there too).
-    x: PANEL_TASKBAR_W + 16,
+    // Open on the right; minimize still docks to the left taskbar.
+    x: Math.max(PANEL_TASKBAR_W + 16, window.innerWidth - w - 24),
     y: 24,
     w,
     h,
