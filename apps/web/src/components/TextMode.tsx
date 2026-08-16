@@ -103,7 +103,20 @@ export function TextMode() {
               text={match.translation}
               definition={match.to === 'yue' ? match.definition || match.source : match.definition}
               cantonese={match.to === 'yue'}
-              onActivate={match.to === 'yue' ? openBreakdown : undefined}
+              onActivate={(phrase) => {
+                if (match.to === 'yue') {
+                  openBreakdown(phrase, {
+                    translation: match.source,
+                    definition: match.definition || undefined,
+                  })
+                  return
+                }
+                // EN result: open the Yue source with EN translation
+                openBreakdown(match.source, {
+                  translation: match.translation,
+                  definition: match.definition || undefined,
+                })
+              }}
               speakLang={match.to}
             />
             {match.to === 'yue' ? (

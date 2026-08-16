@@ -6,6 +6,8 @@ import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { prefetchSpeechToken, peekSpeechToken } from './speechToken'
 import { newId } from './id'
+import { sanitizeTranslationText } from './translationGuard'
+import type { DetailLayer } from './detailTypes'
 import type {
   ConversationTurn,
   Entitlement,
@@ -54,11 +56,13 @@ type State = {
   yueAlternatives: string[]
   /** Face-to-face panes only — separate from Solo/Text results. */
   face: FaceLive
-  /** Active Cantonese phrase shown in the character-breakdown frame (null = closed). */
+  /** Drill-down details stack (phrase → character → …). Empty = closed. */
+  detailStack: DetailLayer[]
+  /** When true, details panel lives in the shared dock. */
+  detailMinimized: boolean
+  /** @deprecated derived — prefer detailStack; kept for gradual call-site updates */
   breakdownPhrase: string | null
-  /** Optional translation shown above the breakdown (Conversation drill-down). */
   breakdownTranslation: string | null
-  /** Optional sense / definition for the breakdown panel. */
   breakdownDefinition: string | null
   /** True while any translate request is in flight. */
   translating: boolean
@@ -89,7 +93,11 @@ type State = {
     phrase: string,
     opts?: { translation?: string; definition?: string },
   ) => void
+  pushDetail: (layer: DetailLayer) => void
+  popDetail: () => void
   closeBreakdown: () => void
+  minimizeDetail: () => void
+  restoreDetail: () => void
   /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
   selectYueVariation: (phrase: string) => void
   clearHistory: () => void
@@ -265,8 +273,16 @@ async function runTranslation(
     const result = await translateText(text, lang, to, {
       includeAlternatives: lang === 'en' && !lean,
     })
-    const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq) return
+    const clean = sanitizeTranslationText(result.text)
+    if (!clean) {
+      set({
+        error:
+          'Translation looked like a dictionary dump and was blocked. Try another phrasing, or check OPENAI_API_KEY.',
+      })
+      return
+    }
+    const alternatives = (result.alternatives || []).filter((a) => Boolean(sanitizeTranslationText(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
 
     if (isFace) {
@@ -278,7 +294,7 @@ async function runTranslation(
             enInterim: text,
             yueInterim: '',
             enTranslation: '',
-            yueTranslation: result.text,
+            yueTranslation: clean,
             yueDefinition: result.definition || text,
           },
         })
@@ -289,7 +305,7 @@ async function runTranslation(
             yueInterim: text,
             enInterim: '',
             yueTranslation: '',
-            enTranslation: result.text,
+            enTranslation: clean,
             yueDefinition: result.definition || '',
           },
         })
@@ -299,7 +315,7 @@ async function runTranslation(
         from: lang,
         to,
         source: text,
-        translation: result.text,
+        translation: clean,
         definition,
         alternatives: lang === 'en' ? alternatives : undefined,
         engine: result.engine,
@@ -309,7 +325,7 @@ async function runTranslation(
           enInterim: text,
           yueInterim: '',
           enTranslation: '',
-          yueTranslation: result.text,
+          yueTranslation: clean,
           yueDefinition: result.definition || text,
           yueAlternatives: alternatives,
           history,
@@ -319,14 +335,14 @@ async function runTranslation(
           yueInterim: text,
           enInterim: '',
           yueTranslation: '',
-          enTranslation: result.text,
+          enTranslation: clean,
           yueDefinition: result.definition || '',
           yueAlternatives: [],
           history,
         })
       }
     }
-    speak = { text: result.text, lang: to }
+    speak = { text: clean, lang: to }
   } catch (e) {
     set({ error: String(e) })
   } finally {
@@ -461,6 +477,32 @@ async function tearDownLive(
   void get().loadBootstrap()
 }
 
+function detailMirror(stack: DetailLayer[]) {
+  const top = stack[stack.length - 1]
+  if (!top) {
+    return {
+      detailStack: [] as DetailLayer[],
+      breakdownPhrase: null as string | null,
+      breakdownTranslation: null as string | null,
+      breakdownDefinition: null as string | null,
+    }
+  }
+  if (top.kind === 'phrase') {
+    return {
+      detailStack: stack,
+      breakdownPhrase: top.phrase,
+      breakdownTranslation: top.translation?.trim() || null,
+      breakdownDefinition: top.definition?.trim() || null,
+    }
+  }
+  return {
+    detailStack: stack,
+    breakdownPhrase: top.char,
+    breakdownTranslation: top.sense?.trim() || null,
+    breakdownDefinition: top.definition?.trim() || null,
+  }
+}
+
 export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
   speakDirection: 'auto',
@@ -477,6 +519,8 @@ export const useYueStore = create<State>((set, get) => ({
   yueDefinition: '',
   yueAlternatives: [],
   face: emptyFaceLive(),
+  detailStack: [],
+  detailMinimized: false,
   breakdownPhrase: null,
   breakdownTranslation: null,
   breakdownDefinition: null,
@@ -872,19 +916,53 @@ export const useYueStore = create<State>((set, get) => ({
   openBreakdown: (phrase, opts) => {
     const trimmed = phrase.trim()
     if (!trimmed) return
+    const layer: DetailLayer = {
+      kind: 'phrase',
+      phrase: trimmed,
+      translation: opts?.translation?.trim() || undefined,
+      definition: opts?.definition?.trim() || undefined,
+    }
     set({
-      breakdownPhrase: trimmed,
-      breakdownTranslation: opts?.translation?.trim() || null,
-      breakdownDefinition: opts?.definition?.trim() || null,
+      ...detailMirror([layer]),
+      detailMinimized: false,
     })
+  },
+
+  pushDetail: (layer) => {
+    const stack = [...get().detailStack, layer]
+    set({
+      ...detailMirror(stack),
+      detailMinimized: false,
+    })
+  },
+
+  popDetail: () => {
+    const stack = get().detailStack
+    if (stack.length <= 1) {
+      set({
+        ...detailMirror([]),
+        detailMinimized: false,
+      })
+      return
+    }
+    set(detailMirror(stack.slice(0, -1)))
   },
 
   closeBreakdown: () =>
     set({
-      breakdownPhrase: null,
-      breakdownTranslation: null,
-      breakdownDefinition: null,
+      ...detailMirror([]),
+      detailMinimized: false,
     }),
+
+  minimizeDetail: () => {
+    if (!get().detailStack.length) return
+    set({ detailMinimized: true })
+  },
+
+  restoreDetail: () => {
+    if (!get().detailStack.length) return
+    set({ detailMinimized: false })
+  },
 
   selectYueVariation: (phrase) => {
     const chosen = phrase.trim()
@@ -911,13 +989,17 @@ export const useYueStore = create<State>((set, get) => ({
           ]
         : history
 
+    const layer: DetailLayer = {
+      kind: 'phrase',
+      phrase: chosen,
+      definition: get().yueDefinition || undefined,
+    }
     set({
       yueTranslation: chosen,
       yueAlternatives: nextAlts,
       history: nextHistory,
-      breakdownPhrase: chosen,
-      breakdownTranslation: null,
-      breakdownDefinition: get().yueDefinition || null,
+      ...detailMirror([layer]),
+      detailMinimized: false,
     })
   },
 
@@ -927,9 +1009,8 @@ export const useYueStore = create<State>((set, get) => ({
     if (get().mode === 'conversation') {
       set({
         face: emptyFaceLive(),
-        breakdownPhrase: null,
-        breakdownTranslation: null,
-        breakdownDefinition: null,
+        ...detailMirror([]),
+        detailMinimized: false,
         translating: false,
         translatingTo: null,
       })
@@ -943,9 +1024,8 @@ export const useYueStore = create<State>((set, get) => ({
       yueTranslation: '',
       yueDefinition: '',
       yueAlternatives: [],
-      breakdownPhrase: null,
-      breakdownTranslation: null,
-      breakdownDefinition: null,
+      ...detailMirror([]),
+      detailMinimized: false,
       translating: false,
       translatingTo: null,
     })
