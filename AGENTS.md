@@ -44,7 +44,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
 npm run smoke:canto
 ```
 
-Do **not** run `npm run test:translate` (or any live translate/STT/TTS that can hit DeepSeek/Azure) unless Henry approved that run.
+Do **not** run `npm run test:translate`, `npm run test:translate:live`, or any live translate/STT/TTS that can hit DeepSeek/Azure unless Henry approved that run.
 
 In DEV, `window.__yueStore` is exposed for seeding UI state from the console.
 

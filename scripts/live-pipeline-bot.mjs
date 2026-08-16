@@ -106,43 +106,54 @@ async function runAzureSuite(health) {
     return
   }
 
-  const token = await apiJson('/api/speech-token')
-  if (!token.token || !token.region) {
-    fail(`speech-token missing fields: ${JSON.stringify(token).slice(0, 120)}`)
-  } else {
-    ok(`speech-token issued (region=${token.region}, expiresIn=${token.expiresIn ?? '?'})`)
+  try {
+    const token = await apiJson('/api/speech-token')
+    if (!token.token || !token.region) {
+      fail(`speech-token missing fields: ${JSON.stringify(token).slice(0, 120)}`)
+    } else {
+      ok(`speech-token issued (region=${token.region}, expiresIn=${token.expiresIn ?? '?'})`)
+    }
+  } catch (e) {
+    fail(`speech-token: ${e?.message || e}`)
   }
 
   for (const { lang, text } of [
     { lang: 'en', text: 'Can you hear me?' },
     { lang: 'yue', text: '你聽唔聽到我？' },
   ]) {
-    const res = await fetch(`${API}/api/tts`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text, lang }),
-    })
-    const buf = Buffer.from(await res.arrayBuffer())
-    const ctype = res.headers.get('content-type') || ''
-    if (!res.ok) {
-      fail(`tts ${lang}: HTTP ${res.status} ${buf.toString('utf8').slice(0, 160)}`)
-      continue
+    try {
+      const res = await fetch(`${API}/api/tts`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text, lang }),
+      })
+      const buf = Buffer.from(await res.arrayBuffer())
+      const ctype = res.headers.get('content-type') || ''
+      if (!res.ok) {
+        fail(`tts ${lang}: HTTP ${res.status} ${buf.toString('utf8').slice(0, 160)}`)
+        continue
+      }
+      if (!ctype.includes('audio') || buf.length < 800) {
+        fail(`tts ${lang}: bad audio (ctype=${ctype}, bytes=${buf.length})`)
+        continue
+      }
+      ok(`tts ${lang}: ${buf.length} bytes audio/mpeg`)
+    } catch (e) {
+      fail(`tts ${lang}: ${e?.message || e}`)
     }
-    if (!ctype.includes('audio') || buf.length < 800) {
-      fail(`tts ${lang}: bad audio (ctype=${ctype}, bytes=${buf.length})`)
-      continue
-    }
-    ok(`tts ${lang}: ${buf.length} bytes audio/mpeg`)
   }
 
-  // Soft live meter used by mic sessions
-  const hb = await apiJson('/api/usage/heartbeat', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ seconds: 1 }),
-  })
-  if (hb?.allowed?.live) ok('usage/heartbeat accepts live session tick')
-  else fail(`usage/heartbeat unexpected: ${JSON.stringify(hb).slice(0, 160)}`)
+  try {
+    const hb = await apiJson('/api/usage/heartbeat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ seconds: 1 }),
+    })
+    if (hb?.allowed?.live) ok('usage/heartbeat accepts live session tick')
+    else fail(`usage/heartbeat unexpected: ${JSON.stringify(hb).slice(0, 160)}`)
+  } catch (e) {
+    fail(`usage/heartbeat: ${e?.message || e}`)
+  }
 }
 
 async function runDeepSeekSuite() {
@@ -233,10 +244,13 @@ async function runUiSuite() {
       fail(`UI ${c.id}: bad pane ${JSON.stringify(snap.translation)}`)
       return
     }
-    const pure = snap.yueTranslation && !snap.enTranslation && Boolean(snap.source)
+    const pure =
+      c.from === 'en'
+        ? Boolean(snap.yueTranslation) && !snap.enTranslation && Boolean(snap.source)
+        : Boolean(snap.enTranslation) && !snap.yueTranslation && Boolean(snap.source)
     if (!pure) {
       fail(
-        `UI ${c.id}: impure store yue=${JSON.stringify(snap.yueTranslation)} en=${JSON.stringify(snap.enTranslation)}`,
+        `UI ${c.id}: impure store yue=${JSON.stringify(snap.yueTranslation)} en=${JSON.stringify(snap.enTranslation)} src=${JSON.stringify(snap.source)}`,
       )
       return
     }
@@ -266,7 +280,7 @@ async function main() {
   if (!health.engines?.azureSpeech) {
     fail('engines.azureSpeech=false — Azure Speech key required for this bot')
   } else {
-    ok('Azure Speech engine ready')
+    ok('Azure Speech key present in env (will validate via token + TTS)')
   }
 
   if (failures.length) {
