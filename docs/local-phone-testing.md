@@ -47,6 +47,29 @@ Open **that** URL on your phone (same Wi‑Fi is not required — any network wo
 
 Vite already proxies `/api` to the local API, so you only tunnel port **5173**.
 
+## Real translate vs `（示範）` demo
+
+If results look like `（示範）Can you hear me?`, the API is in **demo mode** — it did not load an OpenAI-compatible key. The PRO badge can still show (entitlements are separate).
+
+1. Put keys in **`apps/api/.env`** (not under `apps/web`):
+
+```bash
+OPENAI_API_KEY=sk-...
+# Optional DeepSeek / compatible host:
+# OPENAI_BASE_URL=https://api.deepseek.com/v1
+# OPENAI_MODEL=deepseek-chat
+```
+
+2. **Restart** `npm run dev:api` (env is only read at startup).
+
+3. Check:
+
+```bash
+curl -s http://localhost:8787/api/health
+```
+
+Need `"openai": true` and `"demo": false`.
+
 ## Stop
 
 Press `Ctrl+C` in the tunnel terminal. The public URL stops working immediately.
@@ -57,6 +80,8 @@ Cloudflare **quick tunnels** are free for this local-dev use. You do not need a 
 
 ## Troubleshooting
 
+- **Results show `（示範）…`** — see [Real translate vs demo](#real-translate-vs-示範-demo) above.
+- **“Blocked request. This host … is not allowed”** — Vite must allow tunnel hostnames. This repo already sets `server.allowedHosts` for `.trycloudflare.com` (and ngrok). **Restart** `npm run dev:web` after pulling that change, then start a fresh `npm run dev:tunnel` and use the new URL.
 - **Tunnel starts but phone can’t translate** — make sure `npm run dev:api` is still running on the computer.
 - **Mic still blocked** — confirm the phone address bar shows `https://`, not `http://` or a raw `192.168.…` IP.
 - **Old tunnel URL 404s** — each `npm run dev:tunnel` creates a **new** URL; use the latest one printed in the terminal.

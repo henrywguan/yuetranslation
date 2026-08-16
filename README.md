@@ -24,6 +24,14 @@ npm run dev:api
 npm run dev:web
 ```
 
+Confirm the API sees your model key (after editing `apps/api/.env`, restart `dev:api`):
+
+```bash
+curl -s http://localhost:8787/api/health
+```
+
+`"openai": true` / `"demo": false` means real translation. `"demo": true` means keys were not loaded — results will be prefixed with `（示範）`.
+
 ### Phone / microphone on your LAN
 
 Browsers block the mic on `http://192.168.x.x`. Use a free HTTPS tunnel while `dev:api` + `dev:web` are running:
