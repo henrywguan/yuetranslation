@@ -2,20 +2,22 @@
 
 ## Cursor Cloud specific instructions
 
-### Paid / external API usage (mandatory)
+### Paid / external API usage (cloud testing only)
 
-Henry’s DeepSeek (`OPENAI_*` / `OPENAI_BASE_URL`) and Azure Speech keys are **metered**.
+This rule applies **only to Cursor Cloud agent testing** in this remote environment. It does **not** restrict Henry’s own local laptop/phone use of DeepSeek or Azure.
 
-**Do not** call DeepSeek, Azure Speech, or any other paid/external inference/STT/TTS provider unless Henry has **explicitly allowed that specific request** in the current turn.
+Henry’s DeepSeek (`OPENAI_*` / `OPENAI_BASE_URL`) and Azure Speech keys are metered. Cloud agents must **not** burn that quota on automated testing.
 
-Before each outbound call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon and hit the model, `/api/tts`, `/api/speech-token`, live mic STT, quality-bot cases that require OpenAI, etc.):
+**Do not** call DeepSeek, Azure Speech, or any other paid/external inference/STT/TTS provider from the cloud agent unless Henry has **explicitly allowed that specific request** in the current turn.
+
+Before each outbound cloud-agent call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon and hit the model, `/api/tts`, `/api/speech-token`, live mic STT, quality-bot cases that require OpenAI, etc.):
 
 1. Ask Henry for confirmation
 2. Name the exact endpoint / action and why
 3. Wait for a clear yes for **that** request
 4. Do not batch “blanket forever” permission — ask again for the next call
 
-Allowed without asking:
+Allowed without asking (cloud):
 
 - `/api/health` (readiness only)
 - Offline `npm run smoke:canto`
@@ -23,7 +25,7 @@ Allowed without asking:
 - Local Vite / Express process management
 - Lint / `tsc`
 
-If unsure whether a command would bill DeepSeek or Azure — **ask first**.
+If unsure whether a cloud command would bill DeepSeek or Azure — **ask first**.
 
 ### Dev servers (fixed ports)
 
