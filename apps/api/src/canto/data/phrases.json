@@ -268,6 +268,66 @@
       ]
     },
     {
+      "id": "yue-wai3-zou2-san4-aa3-stop",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "喂，早晨呀。",
+      "text": "Hey, good morning.",
+      "alternatives": [
+        "Hello, good morning.",
+        "Hey, good morning!"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-wai3-zou2-san4-aa3",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "喂，早晨呀",
+      "text": "Hey, good morning",
+      "alternatives": [
+        "Hello, good morning",
+        "Hey, good morning."
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-hey-good-morning",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hey good morning",
+      "text": "喂，早晨呀。",
+      "alternatives": [
+        "早晨呀。",
+        "喂，早晨。"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-hey-good-morning-q",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "hey, good morning",
+      "text": "喂，早晨呀。",
+      "alternatives": [
+        "早晨呀。",
+        "喂，早晨。"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
       "id": "yue-what-doing",
       "sourceLang": "yue",
       "targetLang": "en",
@@ -2918,6 +2978,66 @@
       "targetLang": "en",
       "source": "我唔明",
       "text": "I don't understand",
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-ming4-m4-ming4-baak6",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "明唔明白我講乜嘢？",
+      "text": "Do you understand what I'm saying?",
+      "alternatives": [
+        "Do you understand what I mean?",
+        "Are you following what I'm saying?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-ming4-m4-ming4-baak6-bare",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "明唔明白我講乜嘢",
+      "text": "Do you understand what I'm saying?",
+      "alternatives": [
+        "Do you understand what I mean?",
+        "Are you following what I'm saying?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-do-you-understand-what-im-saying",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you understand what i'm saying",
+      "text": "明唔明白我講乜嘢？",
+      "alternatives": [
+        "你明唔明白我講咩？",
+        "聽唔聽得明我講乜？"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-do-you-understand-what-im-saying-q",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you understand what i'm saying?",
+      "text": "明唔明白我講乜嘢？",
+      "alternatives": [
+        "你明唔明白我講咩？",
+        "聽唔聽得明我講乜？"
+      ],
       "register": "colloquial",
       "tags": [
         "conversation"

@@ -101,6 +101,58 @@ const hearMe = dictionaryTranslate({
 })
 assert(/hear me/i.test(hearMe?.text || ''), `phrase 你聽唔聽到我？ failed: ${hearMe?.text}`)
 
+const morningJunk = lexiconTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '喂，早晨呀。',
+})
+assert(
+  !morningJunk || !/particle|comma|full stop|answering phone/i.test(morningJunk.text),
+  `morning greeting lexicon junk: ${JSON.stringify(morningJunk)}`,
+)
+const morningPhrase = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '喂，早晨呀。',
+})
+assert(
+  /good morning|hello/i.test(morningPhrase?.text || ''),
+  `phrase 喂，早晨呀。 failed: ${morningPhrase?.text}`,
+)
+
+const understandJunk = lexiconTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '明唔明白我講乜嘢？',
+})
+assert(
+  !understandJunk || understandJunk.kind === 'exact',
+  `understand lexicon should not segment: ${JSON.stringify(understandJunk)}`,
+)
+const understandPhrase = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '明唔明白我講乜嘢？',
+})
+assert(
+  /understand what i'?m saying/i.test(understandPhrase?.text || ''),
+  `phrase 明唔明白我講乜嘢？ failed: ${understandPhrase?.text}`,
+)
+const understandTranslate = await translate({
+  text: '明唔明白我講乜嘢？',
+  from: 'yue',
+  to: 'en',
+  stage: 'final',
+})
+assert(
+  !/obvious|question mark|colloquial|I \/ me/i.test(understandTranslate.text),
+  `translate still dumped gloss: ${understandTranslate.text}`,
+)
+assert(
+  /understand/i.test(understandTranslate.text) || understandTranslate.engine === 'demo',
+  `expected natural EN or demo, got ${understandTranslate.engine}: ${understandTranslate.text}`,
+)
+
 // End-to-end offline path (dictionary / lexicon — no model required for these hits).
 const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
 assert(
