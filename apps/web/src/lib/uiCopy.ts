@@ -39,7 +39,6 @@ export const ui = {
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
-  historyKicker: { en: 'Translations', zh: '翻譯', jp: 'faan1 jik6' },
   historyEmpty: {
     en: 'Past translations will show up here as cards.',
     zh: '以前嘅翻譯會喺呢度以卡片顯示。',
