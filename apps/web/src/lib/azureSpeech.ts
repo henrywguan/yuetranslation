@@ -9,6 +9,10 @@ function localeToLang(locale: string): Lang {
   return 'en'
 }
 
+function langToLocale(lang: Lang): string {
+  return lang === 'yue' ? 'zh-HK' : 'en-US'
+}
+
 function normalizeSpeakerId(speakerId?: string | null): string {
   return (speakerId || '').trim()
 }
@@ -63,6 +67,8 @@ function buildAudioConfig(
 export async function createAzureLiveSession(
   handlers: SpeechEventHandlers,
   mediaStream?: MediaStream | null,
+  /** Solo direction or Conversation pane — skip auto-detect so Cantonese isn’t heard as English. */
+  lockLang?: Lang,
 ): Promise<LiveSession | null> {
   let tokenPayload: { token: string; region: string }
   try {
@@ -81,20 +87,28 @@ export async function createAzureLiveSession(
   const echo = createEchoGuard()
   const gate = createSpeakerGate()
 
-  function buildSpeechConfig() {
+  function buildSpeechConfig(fixedLang?: Lang) {
     const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
       tokenPayload.token,
       tokenPayload.region,
     )
-    speechConfig.setProperty(
-      SpeechSDK.PropertyId.SpeechServiceConnection_LanguageIdMode,
-      'Continuous',
-    )
+    if (fixedLang) {
+      speechConfig.speechRecognitionLanguage = langToLocale(fixedLang)
+    } else {
+      speechConfig.setProperty(
+        SpeechSDK.PropertyId.SpeechServiceConnection_LanguageIdMode,
+        'Continuous',
+      )
+    }
     speechConfig.setProperty(
       SpeechSDK.PropertyId.SpeechServiceResponse_DiarizeIntermediateResults,
       'true',
     )
     return speechConfig
+  }
+
+  function emitLang(detectedLocale: string): Lang {
+    return lockLang || localeToLang(detectedLocale)
   }
 
   async function startWithTranscriber(): Promise<boolean> {
@@ -110,8 +124,7 @@ export async function createAzureLiveSession(
       if (!text) return
       const speakerId = e.result.speakerId
       if (!gate.accept(speakerId)) return
-      const lang = localeToLang(e.result.language || 'en-US')
-      handlers.onInterim(lang, text, metaFromSpeaker(speakerId))
+      handlers.onInterim(emitLang(e.result.language || 'en-US'), text, metaFromSpeaker(speakerId))
     }
     next.transcribed = (_s, e) => {
       if (echo.shouldIgnoreMic()) return
@@ -120,8 +133,7 @@ export async function createAzureLiveSession(
       if (!text) return
       const speakerId = e.result.speakerId
       if (!gate.accept(speakerId)) return
-      const lang = localeToLang(e.result.language || 'en-US')
-      handlers.onFinal(lang, text, metaFromSpeaker(speakerId))
+      handlers.onFinal(emitLang(e.result.language || 'en-US'), text, metaFromSpeaker(speakerId))
     }
     next.canceled = (_s, e) => {
       if (e.errorDetails) handlers.onError(e.errorDetails)
@@ -142,10 +154,15 @@ export async function createAzureLiveSession(
   }
 
   async function startWithRecognizer(): Promise<void> {
-    const speechConfig = buildSpeechConfig()
-    const autoDetect = SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(['en-US', 'zh-HK'])
+    const speechConfig = buildSpeechConfig(lockLang)
     const audioConfig = buildAudioConfig(SpeechSDK, mediaStream)
-    const next = SpeechSDK.SpeechRecognizer.FromConfig(speechConfig, autoDetect, audioConfig)
+    const next = lockLang
+      ? new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig)
+      : SpeechSDK.SpeechRecognizer.FromConfig(
+          speechConfig,
+          SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(['en-US', 'zh-HK']),
+          audioConfig,
+        )
 
     next.recognizing = (_s, e) => {
       if (echo.shouldIgnoreMic()) return
@@ -154,10 +171,10 @@ export async function createAzureLiveSession(
       if (!text) return
       const speakerId = e.result.speakerId
       if (!gate.accept(speakerId)) return
-      const lang = localeToLang(
-        SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result).language || 'en-US',
-      )
-      handlers.onInterim(lang, text, metaFromSpeaker(speakerId))
+      const detected = lockLang
+        ? langToLocale(lockLang)
+        : SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result).language || 'en-US'
+      handlers.onInterim(emitLang(detected), text, metaFromSpeaker(speakerId))
     }
     next.recognized = (_s, e) => {
       if (echo.shouldIgnoreMic()) return
@@ -166,10 +183,10 @@ export async function createAzureLiveSession(
       if (!text) return
       const speakerId = e.result.speakerId
       if (!gate.accept(speakerId)) return
-      const lang = localeToLang(
-        SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result).language || 'en-US',
-      )
-      handlers.onFinal(lang, text, metaFromSpeaker(speakerId))
+      const detected = lockLang
+        ? langToLocale(lockLang)
+        : SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result).language || 'en-US'
+      handlers.onFinal(emitLang(detected), text, metaFromSpeaker(speakerId))
     }
     next.canceled = (_s, e) => {
       if (e.errorDetails) handlers.onError(e.errorDetails)
@@ -196,6 +213,12 @@ export async function createAzureLiveSession(
       gate.reset()
       if (!canUseMicrophone()) {
         throw new Error(micBlockedMessage() || 'Microphone unavailable.')
+      }
+      // Fixed Solo/Conversation language: skip multilingual diarization — auto-detect
+      // often turns Cantonese into English gibberish and parks it in the 粵語 pane.
+      if (lockLang) {
+        await startWithRecognizer()
+        return
       }
       try {
         await startWithTranscriber()
