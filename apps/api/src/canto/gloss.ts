@@ -156,33 +156,3 @@ export function lookupGloss(token: string): GlossHit | null {
   return null
 }
 
-/**
- * Greedy longest-match glosses over a Cantonese string (max 4 chars).
- * Used by offline lexicon translate for segmented 粵→EN coverage.
- */
-export function segmentGlosses(text: string): Array<{ surface: string; hit: GlossHit | null }> {
-  const chars = Array.from(text.trim())
-  const out: Array<{ surface: string; hit: GlossHit | null }> = []
-  let i = 0
-  while (i < chars.length) {
-    let matched: GlossHit | null = null
-    let len = 1
-    const max = Math.min(4, chars.length - i)
-    for (let L = max; L >= 1; L--) {
-      const surface = chars.slice(i, i + L).join('')
-      const hit = lookupGloss(surface)
-      if (hit) {
-        matched = hit
-        len = L
-        out.push({ surface, hit })
-        break
-      }
-    }
-    if (!matched) {
-      out.push({ surface: chars[i], hit: null })
-    }
-    i += len
-  }
-  return out
-}
-

@@ -2,7 +2,7 @@ import { attestAgainstLexicon } from './attest.js'
 import { colloquialScore } from './colloquialScore.js'
 import { dictionaryTranslate } from './dictionary.js'
 import { glossStats, lookupGloss } from './gloss.js'
-import { lexiconTranslate, lexiconStats } from './lexiconTranslate.js'
+import { lexiconTranslate, lexiconStats, looksLikeGlossDump } from './lexiconTranslate.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
@@ -43,6 +43,15 @@ const interim = await hardenYueOutput({
 })
 assert(interim.alternatives.length === 0, 'interim should drop alts')
 assert(interim.meta.rewritten === false, 'interim must not rewrite')
+
+// App translate API always coerces to final (no interim MT path).
+const coerced = await translate({
+  text: 'apple',
+  from: 'en',
+  to: 'yue',
+  stage: 'interim',
+})
+assert(coerced.stage === 'final', `interim request must coerce to final, got ${coerced.stage}`)
 
 const finalOk = await hardenYueOutput({
   text: '你做緊咩呀？',
@@ -110,6 +119,19 @@ assert(
   !morningJunk || !/particle|comma|full stop|answering phone/i.test(morningJunk.text),
   `morning greeting lexicon junk: ${JSON.stringify(morningJunk)}`,
 )
+
+// Stronger gloss-dump detector
+assert(looksLikeGlossDump('(of answering phone calls) hello'), 'parenthetical sense should dump')
+assert(looksLikeGlossDump('you 聽 not 聽 reach I'), 'mixed gloss join should dump')
+assert(looksLikeGlossDump('softening particle hello'), 'meta particle dump')
+assert(looksLikeGlossDump('obvious to not understand colloquial I me speak'), 'lemma list dump')
+assert(!looksLikeGlossDump('Can you hear me?'), 'natural EN must pass')
+assert(!looksLikeGlossDump('Hey, good morning'), 'short greeting must pass')
+assert(
+  !looksLikeGlossDump("Do you understand what I'm saying?"),
+  'natural 6+ word question must pass',
+)
+
 const morningPhrase = dictionaryTranslate({
   sourceLang: 'yue',
   targetLang: 'en',

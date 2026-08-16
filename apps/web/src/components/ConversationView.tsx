@@ -13,8 +13,8 @@ import { ui } from '../lib/uiCopy'
  * English card stays upright for you. Cantonese card is rotated 180°
  * so the person across the table reads it the right way up.
  *
- * Each pane has its own hold/tap mic button and thinking loader.
- * Results live in `face` store state only — never shared with Solo/Text.
+ * Pipeline: mic → STT source preview on the speaking side → after capture
+ * ends, one final translation on the other side (no interim MT).
  * Tap a finished translation to open details (definition + character breakdown).
  */
 export function ConversationView() {
@@ -32,8 +32,11 @@ export function ConversationView() {
 
   const enText = face.enTranslation || face.enInterim
   const yueText = face.yueTranslation || face.yueInterim
-  const enLive = Boolean(face.enInterim) && !face.enTranslation
-  const yueLive = Boolean(face.yueInterim) && !face.yueTranslation
+  // Live = STT source preview only, before the post-capture translation lands.
+  const enLive =
+    Boolean(face.enInterim) && !face.enTranslation && !face.yueTranslation
+  const yueLive =
+    Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
   const enListening = live && liveSide === 'en'
   const yueListening = live && liveSide === 'yue'
 
@@ -70,7 +73,7 @@ export function ConversationView() {
         </header>
         <div className="pane-body pane-body--hero">
           {enThinking ? (
-            <TranslateThinking className="pane-thinking" size="sm" label={false} />
+            <TranslateThinking className="pane-thinking" size="md" />
           ) : (
             <InkSettle
               id={enLive ? 'face-en-live' : enText || 'face-en-empty'}
@@ -120,7 +123,7 @@ export function ConversationView() {
           </header>
           <div className="pane-body pane-body--hero">
             {yueThinking ? (
-              <TranslateThinking className="pane-thinking" size="sm" label={false} />
+              <TranslateThinking className="pane-thinking" size="md" />
             ) : (
               <InkSettle
                 id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}

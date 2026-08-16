@@ -61,7 +61,7 @@ export async function translateText(
   text: string,
   from: Lang,
   to: Lang,
-  opts?: { includeAlternatives?: boolean; stage?: 'interim' | 'final' },
+  opts?: { includeAlternatives?: boolean },
 ): Promise<{
   text: string
   definition?: string
@@ -76,7 +76,7 @@ export async function translateText(
     notes: string[]
   }
 }> {
-  const stage = opts?.stage ?? 'final'
+  // Always final — the app never requests interim machine translations.
   const res = await apiFetch('/translate', {
     method: 'POST',
     body: JSON.stringify({
@@ -84,7 +84,7 @@ export async function translateText(
       from,
       to,
       includeAlternatives: Boolean(opts?.includeAlternatives),
-      stage,
+      stage: 'final',
     }),
   })
   if (!res.ok) throw new Error(await res.text())

@@ -23,8 +23,15 @@ export function HistoryPane({
     if (latestId) setExpandedId(latestId)
   }, [latestId])
 
-  const handleBreakdown = (phrase: string) => {
-    openBreakdown(phrase)
+  const handleBreakdown = (phrase: string, turn: ConversationTurn) => {
+    const canto =
+      turn.to === 'yue' ? turn.translation : turn.from === 'yue' ? turn.source : phrase
+    const english =
+      turn.from === 'en' ? turn.source : turn.to === 'en' ? turn.translation : ''
+    openBreakdown(canto.trim() || phrase, {
+      translation: english.trim() || undefined,
+      definition: turn.definition || undefined,
+    })
     onOpenBreakdown?.()
   }
 
@@ -48,7 +55,7 @@ export function HistoryPane({
               isLatest={i === 0}
               expanded={expandedId === turn.id}
               onToggle={() => setExpandedId((id) => (id === turn.id ? null : turn.id))}
-              onBreakdown={handleBreakdown}
+              onBreakdown={(phrase) => handleBreakdown(phrase, turn)}
             />
           </div>
         ))}
