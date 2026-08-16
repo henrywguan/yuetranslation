@@ -32,7 +32,6 @@ export function LiveDemo() {
     try {
       const res = await translateText(trimmed, 'en', 'yue', {
         includeAlternatives: true,
-        stage: 'final',
       })
       setResult(res.text)
       setDefinition(res.definition || trimmed)
