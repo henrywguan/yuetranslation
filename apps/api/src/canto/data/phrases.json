@@ -2984,6 +2984,66 @@
       ]
     },
     {
+      "id": "yue-ming4-m4-ming4-baak6",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "明唔明白我講乜嘢？",
+      "text": "Do you understand what I'm saying?",
+      "alternatives": [
+        "Do you understand what I mean?",
+        "Are you following what I'm saying?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "yue-ming4-m4-ming4-baak6-bare",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "明唔明白我講乜嘢",
+      "text": "Do you understand what I'm saying?",
+      "alternatives": [
+        "Do you understand what I mean?",
+        "Are you following what I'm saying?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-do-you-understand-what-im-saying",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you understand what i'm saying",
+      "text": "明唔明白我講乜嘢？",
+      "alternatives": [
+        "你明唔明白我講咩？",
+        "聽唔聽得明我講乜？"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
+      "id": "en-do-you-understand-what-im-saying-q",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "do you understand what i'm saying?",
+      "text": "明唔明白我講乜嘢？",
+      "alternatives": [
+        "你明唔明白我講咩？",
+        "聽唔聽得明我講乜？"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "conversation"
+      ]
+    },
+    {
       "id": "en-do-you-speak-english",
       "sourceLang": "en",
       "targetLang": "yue",
