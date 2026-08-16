@@ -12,6 +12,12 @@
     "build:web": "node scripts/generate-icons.mjs && npm run build --prefix apps/web",
     "build:web:marketing": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf dist-marketing && mkdir -p dist-marketing && cp -R apps/web/dist/. dist-marketing/",
     "build:web:wp": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf wordpress/yue-translator/app && mkdir -p wordpress/yue-translator/app && cp -R apps/web/dist/. wordpress/yue-translator/app/",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "smoke:canto": "npm run smoke:canto --prefix apps/api",
+    "test:translate": "node scripts/translation-quality-bot.mjs",
+    "docs:screenshots": "node scripts/capture-docs-screenshots.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.0.0"
   }
 }
