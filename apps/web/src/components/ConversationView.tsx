@@ -15,6 +15,7 @@ import { ui } from '../lib/uiCopy'
  *
  * Each pane has its own hold/tap mic button and thinking loader.
  * Results live in `face` store state only — never shared with Solo/Text.
+ * Tap a finished translation to open details (definition + character breakdown).
  */
 export function ConversationView() {
   const face = useYueStore((s) => s.face)
@@ -35,6 +36,25 @@ export function ConversationView() {
   const yueLive = Boolean(face.yueInterim) && !face.yueTranslation
   const enListening = live && liveSide === 'en'
   const yueListening = live && liveSide === 'yue'
+
+  const openEnDetails = () => {
+    const source = (face.yueInterim || face.yueTranslation).trim()
+    const translation = face.enTranslation.trim()
+    if (!source || !translation) return
+    openBreakdown(source, {
+      translation,
+      definition: face.yueDefinition || undefined,
+    })
+  }
+
+  const openYueDetails = (phrase: string) => {
+    const source = phrase.trim()
+    if (!source) return
+    openBreakdown(source, {
+      translation: face.enTranslation.trim() || undefined,
+      definition: face.yueDefinition || undefined,
+    })
+  }
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
@@ -59,7 +79,18 @@ export function ConversationView() {
             >
               {enText ? (
                 <span className="spoken-line">
-                  <span className="spoken-line-text">{enText}</span>
+                  {face.enTranslation && !enLive ? (
+                    <button
+                      type="button"
+                      className="spoken-line-text spoken-line-text--action"
+                      onClick={openEnDetails}
+                      aria-label={`${ui.enTranslation.en}. Open details.`}
+                    >
+                      {enText}
+                    </button>
+                  ) : (
+                    <span className="spoken-line-text">{enText}</span>
+                  )}
                   {face.enTranslation ? <SpeakButton text={face.enTranslation} lang="en" /> : null}
                 </span>
               ) : (
@@ -102,7 +133,7 @@ export function ConversationView() {
                       text={yueText}
                       definition={face.yueDefinition}
                       className="pane-hero-canto"
-                      onActivate={openBreakdown}
+                      onActivate={openYueDetails}
                     />
                     {face.yueTranslation ? (
                       <SpeakButton text={face.yueTranslation} lang="yue" />
