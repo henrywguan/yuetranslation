@@ -263,13 +263,6 @@
   max-width: 100%;
 }
 
-.ln-title-accent {
-  background: linear-gradient(120deg, var(--jade), var(--jade-bright) 55%, #b8ead0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 .ln-sub {
   font-size: clamp(1rem, 2.2vw + 0.55rem, 1.35rem);
   line-height: 1.55;

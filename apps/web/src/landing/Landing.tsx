@@ -15,6 +15,7 @@ import { ui } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
 import { FooterLangPair } from './FooterLangPair'
 import { LANDING_PLANS } from './plans'
+import { inkEase } from '../lib/motion'
 import './landing.css'
 const HeroObject = lazy(() =>
   import('./HeroObject').then((m) => ({ default: m.HeroObject })),
@@ -56,7 +57,7 @@ export function Landing() {
           className="ln-hero-inner"
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.9, ease: inkEase }}
         >
           <HeroEyebrow />
           <h1 className="ln-title">

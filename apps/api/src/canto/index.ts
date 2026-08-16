@@ -1,5 +1,5 @@
-export { dictionaryStats, dictionaryTranslate, lookupPhrase } from './dictionary.js'
-export { lexiconTranslate, lexiconStats, glossLemmas } from './lexiconTranslate.js'
+export { dictionaryStats, dictionaryTranslate } from './dictionary.js'
+export { lexiconTranslate, lexiconStats } from './lexiconTranslate.js'
 export { hardenYueOutput } from './postProcess.js'
 export { scrubMandarinToYue } from './scrub.js'
 export { colloquialScore } from './colloquialScore.js'

@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import {
-  ensureJyutping,
   ensureJyutpingSegs,
   hasHan,
   isValidDefinition,
@@ -48,10 +47,10 @@ export function CantoneseText({
     }
     const cached = toJyutpingCached(trimmed)
     if (cached) setJp(cached)
-    void Promise.all([ensureJyutping(trimmed), ensureJyutpingSegs(trimmed)]).then(([nextJp, nextSegs]) => {
+    void ensureJyutpingSegs(trimmed).then((nextSegs) => {
       if (cancelled) return
-      setJp(nextJp)
       setSegs(nextSegs)
+      setJp(toJyutpingCached(trimmed))
     })
     return () => {
       cancelled = true

@@ -5,7 +5,6 @@ let audio: HTMLAudioElement | null = null
 let url: string | null = null
 let gen = 0
 let playing = false
-let startedAt = 0
 
 export function isTtsPlaying() {
   return playing
@@ -27,12 +26,6 @@ export function stopSpeaking() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 }
 
-export function notifyBargeIn() {
-  if (!playing) return
-  if (Date.now() - startedAt < 280) return
-  stopSpeaking()
-}
-
 function browserSpeak(text: string, lang: Lang, g: number) {
   return new Promise<void>((resolve) => {
     if (!('speechSynthesis' in window)) {
@@ -51,7 +44,6 @@ function browserSpeak(text: string, lang: Lang, g: number) {
       resolve()
     }
     playing = true
-    startedAt = Date.now()
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(u)
   })
@@ -63,7 +55,6 @@ export async function speakText(text: string, lang: Lang) {
   stopSpeaking()
   const g = gen
   playing = true
-  startedAt = Date.now()
   const blob = await fetchTtsAudio(trimmed, lang)
   if (g !== gen) return
   if (blob && blob.size > 0) {
