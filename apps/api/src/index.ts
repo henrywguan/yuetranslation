@@ -1,6 +1,6 @@
 import cors from 'cors'
 import express from 'express'
-import { cloudReady, env, openaiConfigured } from './env.js'
+import { cloudReady, env, openaiStatus } from './env.js'
 import { dictionaryStats, lexiconStats } from './canto/index.js'
 import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
@@ -14,6 +14,7 @@ app.use(cors({ origin: true, credentials: true }))
 app.use(express.json({ limit: '1mb' }))
 
 app.get('/api/health', (_req, res) => {
+  const openai = openaiStatus()
   res.json({
     ok: true,
     product: 'jyut',
@@ -22,11 +23,12 @@ app.get('/api/health', (_req, res) => {
     cloudReady: cloudReady(),
     engines: {
       azureSpeech: Boolean(env.azureSpeechKey),
-      openai: openaiConfigured(),
-      demo: !openaiConfigured(),
+      openai: openai.configured,
+      demo: !openai.configured,
       dictionary: true,
       lexicon: true,
     },
+    openai,
     dictionary: dictionaryStats(),
     lexicon: lexiconStats(),
     gloss: glossStats(),
@@ -35,7 +37,7 @@ app.get('/api/health', (_req, res) => {
       wordshkEnabled: wordshkEnabled(),
       activeSources: activeGlossSources(),
     },
-    openaiBaseUrl: Boolean(env.openaiBaseUrl),
+    openaiBaseUrl: openai.hasBaseUrl,
     entitlement: localEntitlement(),
   })
 })
@@ -119,6 +121,11 @@ app.post('/api/usage/heartbeat', (req, res) => {
 })
 
 app.listen(env.port, () => {
+  const openai = openaiStatus()
   console.log(`JyutTranslate API on http://localhost:${env.port}`)
+  console.log(
+    `Model: configured=${openai.configured} hasApiKey=${openai.hasApiKey} hasBaseUrl=${openai.hasBaseUrl} model=${openai.model} demo=${!openai.configured}`,
+  )
+  console.log(`Env file: ${openai.envFile}`)
   console.log(`Cloud ready: ${cloudReady()} (openMode=${env.openMode})`)
 })

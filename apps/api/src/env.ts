@@ -1,11 +1,28 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 
-// Always load apps/api/.env (not process.cwd()) so keys work from monorepo root or IDE runners.
-dotenv.config({
-  path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env'),
-})
+const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env')
+
+/** Load apps/api/.env, overriding empty shell vars and stripping a UTF-8 BOM if present. */
+function loadApiEnv() {
+  if (!fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath })
+    return
+  }
+  const raw = fs.readFileSync(envPath)
+  // Windows editors sometimes save with a BOM; dotenv then misses OPENAI_API_KEY.
+  const text = raw.toString('utf8').replace(/^\uFEFF/, '')
+  dotenv.config({ path: envPath, override: true })
+  // Re-parse BOM-stripped contents so keys always win over empty system env.
+  const parsed = dotenv.parse(text)
+  for (const [key, value] of Object.entries(parsed)) {
+    process.env[key] = value
+  }
+}
+
+loadApiEnv()
 
 function trimUrl(value: string): string {
   return value.trim().replace(/\/+$/, '')
@@ -13,12 +30,12 @@ function trimUrl(value: string): string {
 
 export const env = {
   port: Number(process.env.PORT || 8787),
-  azureSpeechKey: process.env.AZURE_SPEECH_KEY || '',
-  azureSpeechRegion: process.env.AZURE_SPEECH_REGION || 'eastasia',
-  openaiApiKey: process.env.OPENAI_API_KEY || '',
+  azureSpeechKey: (process.env.AZURE_SPEECH_KEY || '').trim(),
+  azureSpeechRegion: (process.env.AZURE_SPEECH_REGION || 'eastasia').trim(),
+  openaiApiKey: (process.env.OPENAI_API_KEY || '').trim(),
   /** OpenAI-compatible base URL (e.g. https://api.deepseek.com/v1). Empty = official OpenAI. */
   openaiBaseUrl: trimUrl(process.env.OPENAI_BASE_URL || ''),
-  openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  openaiModel: (process.env.OPENAI_MODEL || 'gpt-4o-mini').trim(),
   /**
    * Allow loading dictionaries under non-commercial licenses (words.hk).
    * Keep off for paid/ad-supported commercial deployments unless you have a separate license.
@@ -33,10 +50,24 @@ export const env = {
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
 }
 
+/** True when we can create a model client. */
 export function openaiConfigured() {
-  return Boolean(env.openaiApiKey || env.openaiBaseUrl)
+  if (env.openaiApiKey) return true
+  // Local Ollama / LM Studio often need no real key — base URL alone is enough.
+  if (env.openaiBaseUrl && /localhost|127\.0\.0\.1/i.test(env.openaiBaseUrl)) return true
+  return false
 }
 
 export function cloudReady() {
   return Boolean(env.azureSpeechKey && openaiConfigured())
+}
+
+export function openaiStatus() {
+  return {
+    configured: openaiConfigured(),
+    hasApiKey: Boolean(env.openaiApiKey),
+    hasBaseUrl: Boolean(env.openaiBaseUrl),
+    model: env.openaiModel,
+    envFile: envPath,
+  }
 }

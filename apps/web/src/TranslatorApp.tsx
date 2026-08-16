@@ -23,6 +23,7 @@ export function TranslatorApp() {
   const mode = useYueStore((s) => s.mode)
   const live = useYueStore((s) => s.live)
   const error = useYueStore((s) => s.error)
+  const demoMode = useYueStore((s) => s.demoMode)
   const entitlement = useYueStore((s) => s.entitlement)
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
   const embedded = isEmbeddedAppView()
@@ -72,6 +73,12 @@ export function TranslatorApp() {
           {mode === 'conversation' ? <ConversationView /> : null}
           {mode === 'text' ? <TextMode /> : null}
         </main>
+
+        {demoMode ? (
+          <div className="banner warn" role="status">
+            <BiText copy={ui.demoModeBanner} size="sm" />
+          </div>
+        ) : null}
 
         {error ? (
           <div className="banner error" role="alert">
