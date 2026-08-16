@@ -107,10 +107,20 @@ button.jyutping--activate {
   pointer-events: none;
   display: inline-block;
   width: max-content;
-  max-width: none;
+  max-width: min(92vw, 36rem);
   white-space: nowrap;
   word-break: keep-all;
   overflow-wrap: normal;
+  box-sizing: border-box;
+}
+
+/* Portaled to document.body — fixed + JS clamp keeps tips on-screen on mobile. */
+.jp-pop--portal {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 400;
+  margin: 0;
 }
 
 .jp-pop--ruby {
