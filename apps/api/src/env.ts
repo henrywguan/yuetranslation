@@ -1,4 +1,11 @@
-import 'dotenv/config'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import dotenv from 'dotenv'
+
+// Always load apps/api/.env (not process.cwd()) so keys work from monorepo root or IDE runners.
+dotenv.config({
+  path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env'),
+})
 
 function trimUrl(value: string): string {
   return value.trim().replace(/\/+$/, '')
