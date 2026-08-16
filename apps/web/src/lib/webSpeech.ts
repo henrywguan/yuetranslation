@@ -1,5 +1,6 @@
 import { stopSpeaking } from './tts'
 import { createEchoGuard } from './echoGuard'
+import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang, LiveSession, SpeechEventHandlers } from './types'
 
 export function createWebSpeechSession(
@@ -12,13 +13,16 @@ export function createWebSpeechSession(
   let stopped = true
   let activeLang: Lang = lockLang || 'en'
   const echo = createEchoGuard()
+  // iOS WebKit: continuous mode often yields zero results; use short sessions + restart.
+  const apple = isAppleTouchDevice()
 
   const startOne = () => {
     if (stopped) return
     const rec = new SR()
     recognition = rec
-    rec.continuous = true
+    rec.continuous = !apple
     rec.interimResults = true
+    rec.maxAlternatives = 1
     rec.lang = activeLang === 'yue' ? 'zh-HK' : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
@@ -33,11 +37,17 @@ export function createWebSpeechSession(
       if (interim.trim()) handlers.onInterim(activeLang, interim.trim())
       if (finalText.trim()) {
         handlers.onFinal(activeLang, finalText.trim())
-        if (!lockLang) activeLang = activeLang === 'en' ? 'yue' : 'en'
+        // Don't flip languages mid-turn on mobile — it drops the next utterance.
+        if (!lockLang && !apple) activeLang = activeLang === 'en' ? 'yue' : 'en'
       }
     }
     rec.onerror = (e) => {
-      if (e.error !== 'no-speech' && e.error !== 'aborted') handlers.onError(e.error)
+      if (e.error === 'no-speech' || e.error === 'aborted') return
+      if (e.error === 'not-allowed') {
+        handlers.onError('Microphone permission denied. Allow mic access and try again.')
+        return
+      }
+      handlers.onError(e.error)
     }
     rec.onend = () => {
       if (!stopped) {
@@ -67,7 +77,11 @@ export function createWebSpeechSession(
     async stop() {
       stopped = true
       stopSpeaking()
-      recognition?.stop()
+      try {
+        recognition?.stop()
+      } catch {
+        /* ignore */
+      }
       recognition = null
       handlers.onStatus('idle')
     },

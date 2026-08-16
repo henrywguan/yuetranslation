@@ -1,6 +1,6 @@
-import { fetchSpeechToken } from './api'
 import { canUseMicrophone, micBlockedMessage } from './mediaAccess'
 import { createEchoGuard } from './echoGuard'
+import { getSpeechToken } from './speechToken'
 import type { Lang, LiveSession, SpeechEventHandlers, SpeechMeta } from './types'
 
 function localeToLang(locale: string): Lang {
@@ -53,7 +53,7 @@ export async function createAzureLiveSession(
 ): Promise<LiveSession | null> {
   let tokenPayload: { token: string; region: string }
   try {
-    const t = await fetchSpeechToken()
+    const t = await getSpeechToken()
     if (!t) return null
     tokenPayload = t
   } catch (err) {

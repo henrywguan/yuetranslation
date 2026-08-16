@@ -3,7 +3,8 @@ import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking, isTtsPlaying } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
-import { micBlockedMessage } from './mediaAccess'
+import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
+import { prefetchSpeechToken } from './speechToken'
 import { newId } from './id'
 import type {
   ConversationTurn,
@@ -115,6 +116,17 @@ let tapMaxTimer: ReturnType<typeof setTimeout> | null = null
 const TAP_SENTENCE_END_MS = 650
 /** Safety cap so tap mode cannot run forever. */
 const TAP_MAX_MS = 45000
+/** If STT produces nothing, hint about mic / Azure / permissions. */
+const NO_SPEECH_HINT_MS = 5000
+
+let noSpeechTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearNoSpeechTimer() {
+  if (noSpeechTimer) {
+    clearTimeout(noSpeechTimer)
+    noSpeechTimer = null
+  }
+}
 
 function holdActive(gen: number) {
   return gen === holdGen && (holding || flushingHold || tapSticky)
@@ -129,6 +141,7 @@ function clearTapTimers() {
     clearTimeout(tapMaxTimer)
     tapMaxTimer = null
   }
+  clearNoSpeechTimer()
 }
 
 /** Sticky tap: sentence/utterance ended — auto-stop unless the user keeps talking. */
@@ -504,6 +517,7 @@ export const useYueStore = create<State>((set, get) => ({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
       })
+      prefetchSpeechToken()
     } catch {
       set({
         entitlement: null,
@@ -561,6 +575,7 @@ export const useYueStore = create<State>((set, get) => ({
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
         if (!holdActive(gen)) return
+        clearNoSpeechTimer()
         const lang = resolveHoldLang(detected, get().speakDirection)
         holdLang = lang
         holdInterim = text
@@ -571,6 +586,7 @@ export const useYueStore = create<State>((set, get) => ({
       onFinal: (detected: Lang, text: string) => {
         // Accumulate STT while live — translate only when the turn ends (option A).
         if (!holdActive(gen)) return
+        clearNoSpeechTimer()
         const lang = resolveHoldLang(detected, get().speakDirection)
         const trimmed = text.trim()
         if (!trimmed) return
@@ -592,15 +608,49 @@ export const useYueStore = create<State>((set, get) => ({
       },
     }
 
-    let next = await createAzureLiveSession(handlers)
-    if (!next) {
+    const webSpeechLock = () => {
       const lock = holdSideLock
       const d = get().speakDirection
-      next = createWebSpeechSession(
-        handlers,
-        lock || (d === 'en' || d === 'yue' ? d : undefined),
-      )
+      return lock || (d === 'en' || d === 'yue' ? d : undefined)
     }
+
+    // Unlock mic inside this call stack (from pointerdown) before any network awaits.
+    const primed = await unlockMicrophone()
+    if (!primed) {
+      holding = false
+      tapSticky = false
+      startingHold = false
+      holdSideLock = null
+      clearTapTimers()
+      set({
+        error: 'Microphone permission denied. Allow mic access for this site and try again.',
+        liveInteraction: null,
+        liveSide: null,
+      })
+      return
+    }
+    // Permission is granted for this origin; Azure/WebSpeech open their own streams.
+    stopMediaStream(primed)
+
+    if (gen !== holdGen || (!holding && !tapSticky)) {
+      startingHold = false
+      return
+    }
+
+    const apple = isAppleTouchDevice()
+    let next = null as LiveSession | null
+
+    // iPhone/iPad: Web Speech first — Azure token + SDK import often lose the user gesture.
+    if (apple) {
+      next = createWebSpeechSession(handlers, webSpeechLock())
+    }
+    if (!next) {
+      next = await createAzureLiveSession(handlers)
+    }
+    if (!next) {
+      next = createWebSpeechSession(handlers, webSpeechLock())
+    }
+
     if (gen !== holdGen || (!holding && !tapSticky)) {
       startingHold = false
       if (next) {
@@ -619,14 +669,26 @@ export const useYueStore = create<State>((set, get) => ({
       holdSideLock = null
       clearTapTimers()
       set({
-        error: 'Speech unavailable. Configure Azure Speech or use Chromium.',
+        error: 'Speech unavailable. Set AZURE_SPEECH_KEY or use a browser with speech recognition.',
         liveInteraction: null,
         liveSide: null,
       })
       return
     }
     try {
-      await next.start()
+      try {
+        await next.start()
+      } catch (startErr) {
+        // Azure may create a session then fail getUserMedia on iOS — fall back.
+        try {
+          await next.stop()
+        } catch {
+          /* ignore */
+        }
+        next = createWebSpeechSession(handlers, webSpeechLock())
+        if (!next) throw startErr
+        await next.start()
+      }
       if (gen !== holdGen || (!holding && !tapSticky)) {
         startingHold = false
         try {
@@ -637,7 +699,17 @@ export const useYueStore = create<State>((set, get) => ({
         return
       }
       startingHold = false
-      set({ live: true, session: next, status: 'listening' })
+      set({ live: true, session: next, status: 'listening', error: null })
+      clearNoSpeechTimer()
+      noSpeechTimer = setTimeout(() => {
+        noSpeechTimer = null
+        if (!holdActive(gen)) return
+        if (holdFinals.length || holdInterim.trim()) return
+        set({
+          error:
+            'No speech detected yet. Check mic permission, speak closer to the phone, and ensure AZURE_SPEECH_KEY is set in apps/api/.env (or use Safari/Chrome speech).',
+        })
+      }, NO_SPEECH_HINT_MS)
       stopHeartbeat()
       heartbeatTimer = setInterval(() => {
         void postHeartbeat(15)
