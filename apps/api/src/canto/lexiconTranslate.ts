@@ -77,7 +77,7 @@ export function glossLemmas(gloss: string): string[] {
   const cleaned = gloss
     .replace(/^\((?:noun|verb|adj|adverb|phrase|slang|interjection|classifier|particle)\)\s*/i, '')
     .replace(/\([^)]*\)/g, ' ')
-    .replace(/\[[^\]]*]/g, ' ')
+    .replace(/\[[^\]]*\]/g, ' ')
     .replace(/[./]+$/g, '')
     .trim()
   if (!cleaned) return []
@@ -142,7 +142,9 @@ function buildEnIndex() {
         trad: entry.trad,
         gloss: entry.gloss,
         source: entry.source,
-        exactLemma: lemma === normalizeLookupKey(entry.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0] || ''),
+        exactLemma:
+          lemma ===
+          normalizeLookupKey(entry.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0] || ''),
       })
       enIndex.set(lemma, list)
     }
@@ -216,7 +218,7 @@ function yueToEn(source: string): LexiconTranslateHit | null {
   if (!trimmed) return null
 
   // Whole-string lexicon headword only — segmented gloss joins are never
-  // natural translations (e.g. “1. obvious … question mark”).
+  // natural translations (e.g. “greeting word … full stop”).
   const whole = lookupGloss(trimmed)
   if (!whole) return null
   const def = cleanGlossSense(whole.gloss)
@@ -240,6 +242,9 @@ export function looksLikeGlossDump(text: string): boolean {
   // Parenthetical sense notes: "(of answering phone calls) hello"
   if (/\([^)]{2,}\)/.test(t)) return true
   if (/\s\/\s/.test(t)) return true
+  // Dictionary frames: "It is a greeting word, 'hi everybody' full stop"
+  if (/\bit is a\b.+\bword\b/i.test(t)) return true
+  if (/\b(greeting word|dictionary|literally means|used to mean)\b/i.test(t)) return true
   if (
     /\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial|softening|classifier|measure word|variant of|same as|see also|archaic|literary|written)\b/i.test(
       t,

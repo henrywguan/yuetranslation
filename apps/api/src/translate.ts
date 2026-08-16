@@ -98,13 +98,9 @@ export async function translate(input: unknown) {
     source: text,
     wantAlternatives: wantAlts,
   })
-  const lexTextOk =
-    Boolean(lexHit) &&
-    (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
+  const lexTextOk = Boolean(lexHit) && (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
   const useLexicon = Boolean(
-    lexHit &&
-      lexTextOk &&
-      (!openaiConfigured() || lexHit.kind === 'exact'),
+    lexHit && lexTextOk && (!openaiConfigured() || lexHit.kind === 'exact'),
   )
   if (lexHit && useLexicon) {
     if (to === 'yue') {

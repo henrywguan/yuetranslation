@@ -6,7 +6,7 @@
 const DEMO_RE = /^(（示範）|\(demo\))/i
 
 const META_WORD_RE =
-  /\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial|softening|classifier|measure word|variant of|same as|see also|archaic|literary|written)\b/i
+  /\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial|softening|classifier|measure word|variant of|same as|see also|archaic|literary|written|greeting word|literally means|used to mean)\b/i
 
 /** True when a string still looks like a dictionary dump, not a conversational translation. */
 export function looksLikeGlossDump(text: string): boolean {
@@ -18,6 +18,8 @@ export function looksLikeGlossDump(text: string): boolean {
   // Parenthetical sense notes: "(of answering phone calls) hello"
   if (/\([^)]{2,}\)/.test(t)) return true
   if (/\s\/\s/.test(t)) return true
+  // Dictionary frames: "It is a greeting word, 'hi everybody' full stop"
+  if (/\bit is a\b.+\bword\b/i.test(t)) return true
   if (META_WORD_RE.test(t)) return true
   // Lemma lists joined with " / " already covered; also "foo; bar; baz" dumps
   if ((t.match(/;/g) || []).length >= 2) return true
