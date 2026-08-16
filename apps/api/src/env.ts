@@ -30,7 +30,8 @@ function trimUrl(value: string): string {
 
 export const env = {
   port: Number(process.env.PORT || 8787),
-  azureSpeechKey: (process.env.AZURE_SPEECH_KEY || '').trim(),
+  // Strip internal whitespace — Windows editors often wrap long keys with a space.
+  azureSpeechKey: (process.env.AZURE_SPEECH_KEY || '').replace(/\s+/g, ''),
   azureSpeechRegion: (process.env.AZURE_SPEECH_REGION || 'eastasia').trim(),
   openaiApiKey: (process.env.OPENAI_API_KEY || '').trim(),
   /** OpenAI-compatible base URL (e.g. https://api.deepseek.com/v1). Empty = official OpenAI. */

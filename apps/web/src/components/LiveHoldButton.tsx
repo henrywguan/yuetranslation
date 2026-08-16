@@ -97,6 +97,8 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     activePointer.current = e.pointerId
     downAt.current = performance.now()
     e.currentTarget.setPointerCapture(e.pointerId)
+    // startHold must own getUserMedia + recognition.start() in this gesture turn.
+    // Do not unlock+stop a competing stream here — that races and leaves STT silent.
     void startHold(side)
   }
 

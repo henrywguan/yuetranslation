@@ -13,6 +13,42 @@ export function canUseMicrophone(): boolean {
   }
 }
 
+/** iPhone / iPad (including Chrome on iOS — all use WebKit). */
+export function isAppleTouchDevice(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  if (/iPhone|iPad|iPod/i.test(ua)) return true
+  // iPadOS 13+ desktop UA
+  return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+}
+
+/**
+ * Request mic access inside a user gesture (pointerdown).
+ * Critical on iOS: later awaits (Azure token / SDK import) lose the gesture,
+ * and getUserMedia / Web Speech then fail silently.
+ */
+export async function unlockMicrophone(): Promise<MediaStream | null> {
+  if (!canUseMicrophone()) return null
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+      },
+    })
+  } catch {
+    return null
+  }
+}
+
+export function stopMediaStream(stream: MediaStream | null | undefined) {
+  try {
+    stream?.getTracks().forEach((t) => t.stop())
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Friendly copy when the mic API is missing — common on iPhone over
  * http://192.168.x.x (non-secure context). Returns null when mic looks OK.
