@@ -27,6 +27,8 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+    // Cloudflare / ngrok quick tunnels (phone HTTPS for mic testing)
+    allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.ngrok.io'],
     proxy: { '/api': { target: 'http://localhost:8787', changeOrigin: true } },
   },
 })
