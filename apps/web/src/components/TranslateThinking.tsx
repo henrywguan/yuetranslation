@@ -61,7 +61,8 @@ export function TranslateThinking({
   className = '',
   size = 'md',
   label: _label = true,
-  appearAfterMs = 120,
+  /** Paint immediately so Solo / demo always show the bounce (dictionary can still finish fast). */
+  appearAfterMs = 0,
 }: Props) {
   const reduce = useReducedMotion()
   const [visible, setVisible] = useState(appearAfterMs <= 0)
