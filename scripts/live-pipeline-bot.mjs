@@ -114,7 +114,13 @@ async function runAzureSuite(health) {
       ok(`speech-token issued (region=${token.region}, expiresIn=${token.expiresIn ?? '?'})`)
     }
   } catch (e) {
-    fail(`speech-token: ${e?.message || e}`)
+    const msg = String(e?.message || e)
+    fail(`speech-token: ${msg}`)
+    if (/401/.test(msg)) {
+      console.error(
+        '  ℹ Azure 401 usually means AZURE_SPEECH_KEY is wrong or AZURE_SPEECH_REGION does not match the Speech resource. Keys are typically 32-char hex (Keys and Endpoint → KEY 1 / KEY 2).',
+      )
+    }
   }
 
   for (const { lang, text } of [
