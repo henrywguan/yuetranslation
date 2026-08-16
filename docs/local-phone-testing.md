@@ -49,7 +49,7 @@ Vite already proxies `/api` to the local API, so you only tunnel port **5173**.
 
 ## Real translate vs `（示範）` demo
 
-If results look like `（示範）Can you hear me?`, the API is in **demo mode** — it did not load an OpenAI-compatible key. The PRO badge can still show (entitlements are separate).
+If results look like `（示範）Can you hear me?`, the API fell back to **demo echo** — no OpenAI-compatible key **and** no phrase/lexicon hit. Curated phrases (e.g. “what are you doing?”) still translate via dictionary without a key. The PRO badge can still show (entitlements are separate).
 
 1. Put keys in **`apps/api/.env`** (not under `apps/web`):
 
@@ -68,7 +68,9 @@ OPENAI_API_KEY=sk-...
 curl -s http://localhost:8787/api/health
 ```
 
-Need `"openai": true` and `"demo": false`.
+Need `"openai": true` and `"demo": false` for the **model** path. Dictionary/lexicon can still return real text when `"demo": true`.
+
+Automated checks: [testing.md](./testing.md) (`npm run test:translate`).
 
 ## Stop
 

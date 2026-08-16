@@ -9,9 +9,9 @@ Launchable freemium product: **WordPress plugin hosts the PWA**; **Azure Speech*
 | UI / PWA | `wordpress/yue-translator/app/` (built assets) |
 | Entitlements + usage | Plugin PHP (`Yue_Entitlements`, `Yue_Usage`) |
 | Speech token + TTS | Plugin → Azure |
-| Translate | Plugin → OpenAI |
+| Translate | Plugin → OpenAI (no local phrase/lexicon harden — prefer OpenAI key in production) |
 
-Shared hosting does **not** run FunASR/Ollama/Piper. Keep those for a later self-hosted tier.
+Shared hosting does **not** run FunASR/Ollama/Piper. Those are not in this repo; treat them as a possible future self-hosted tier only.
 
 ## Install
 
