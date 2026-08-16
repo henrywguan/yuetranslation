@@ -24,23 +24,39 @@ export function SoloView() {
   const translatingTo = useYueStore((s) => s.translatingTo)
 
   const latest = history[0]
+  // While capturing or translating, never fall back to a prior turn’s translation
+  // (that reads as an interim / stale MT result).
+  const turnActive =
+    live || translating || Boolean(enInterim) || Boolean(yueInterim)
   const enText =
     enInterim ||
     enTranslation ||
-    (latest ? (latest.from === 'en' ? latest.source : latest.translation) : '')
+    (!turnActive && latest
+      ? latest.from === 'en'
+        ? latest.source
+        : latest.translation
+      : '')
   const yueText =
     yueInterim ||
     yueTranslation ||
-    (latest ? (latest.from === 'yue' ? latest.source : latest.translation) : '')
-  const yueDef = yueDefinition || latest?.definition || ''
-  const alts =
-    yueAlternatives.length
+    (!turnActive && latest
+      ? latest.from === 'yue'
+        ? latest.source
+        : latest.translation
+      : '')
+  const yueDef = turnActive
+    ? yueDefinition
+    : yueDefinition || latest?.definition || ''
+  const alts = turnActive
+    ? yueAlternatives
+    : yueAlternatives.length
       ? yueAlternatives
       : latest?.to === 'yue'
         ? latest.alternatives || []
         : []
-  const enLive = Boolean(enInterim)
-  const yueLive = Boolean(yueInterim)
+  // Live STT preview of the source pane only (not a machine translation).
+  const enLive = Boolean(enInterim) && !enTranslation && !yueTranslation
+  const yueLive = Boolean(yueInterim) && !enTranslation && !yueTranslation
   const enThinking = translating && translatingTo === 'en'
   const yueThinking = translating && translatingTo === 'yue'
 
