@@ -242,12 +242,15 @@ function nextHistory(
   return [{ id: newId(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
 }
 
+/**
+ * One-shot translation after capture (or typed submit).
+ * Never call mid-utterance — there is no interim translate path.
+ */
 async function runTranslation(
   get: () => State,
   set: (p: Partial<State>) => void,
   lang: Lang,
   text: string,
-  isFinal: boolean,
   opts?: { lean?: boolean },
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
@@ -256,12 +259,11 @@ async function runTranslation(
   beginTranslate(set, to)
   let speak: { text: string; lang: Lang } | null = null
   const isFace = get().mode === 'conversation'
+  // Live mic + Conversation: skip EN→粵 variation fan-out for lower latency.
   const lean = Boolean(opts?.lean) || isFace
   try {
     const result = await translateText(text, lang, to, {
-      // Live hold-to-speak skips variation fan-out for lower latency.
-      includeAlternatives: isFinal && lang === 'en' && !lean,
-      stage: isFinal ? 'final' : 'interim',
+      includeAlternatives: lang === 'en' && !lean,
     })
     const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq) return
@@ -277,7 +279,7 @@ async function runTranslation(
             yueInterim: '',
             enTranslation: '',
             yueTranslation: result.text,
-            yueDefinition: result.definition || (isFinal ? text : ''),
+            yueDefinition: result.definition || text,
           },
         })
       } else {
@@ -293,26 +295,24 @@ async function runTranslation(
         })
       }
     } else {
-      const history = isFinal
-        ? nextHistory(get, {
-            from: lang,
-            to,
-            source: text,
-            translation: result.text,
-            definition,
-            alternatives: lang === 'en' ? alternatives : undefined,
-            engine: result.engine,
-          })
-        : undefined
+      const history = nextHistory(get, {
+        from: lang,
+        to,
+        source: text,
+        translation: result.text,
+        definition,
+        alternatives: lang === 'en' ? alternatives : undefined,
+        engine: result.engine,
+      })
       if (lang === 'en') {
         set({
           enInterim: text,
           yueInterim: '',
           enTranslation: '',
           yueTranslation: result.text,
-          yueDefinition: result.definition || (isFinal ? text : ''),
-          yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
-          ...(history ? { history } : {}),
+          yueDefinition: result.definition || text,
+          yueAlternatives: alternatives,
+          history,
         })
       } else {
         set({
@@ -321,12 +321,12 @@ async function runTranslation(
           yueTranslation: '',
           enTranslation: result.text,
           yueDefinition: result.definition || '',
-          yueAlternatives: isFinal ? [] : get().yueAlternatives,
-          ...(history ? { history } : {}),
+          yueAlternatives: [],
+          history,
         })
       }
     }
-    if (isFinal) speak = { text: result.text, lang: to }
+    speak = { text: result.text, lang: to }
   } catch (e) {
     set({ error: String(e) })
   } finally {
@@ -582,16 +582,26 @@ export const useYueStore = create<State>((set, get) => ({
     resetHoldCapture()
     // Invalidate any in-flight translate from a previous turn.
     invalidatePendingTranslations()
+    // Pipeline: mic on → STT source only → translate after capture ends.
+    // Clear prior translations so nothing looks like an interim MT result.
     set({
       error: null,
       liveInteraction: 'hold',
       liveSide: side ?? null,
       translating: false,
       translatingTo: null,
+      enInterim: '',
+      yueInterim: '',
+      enTranslation: '',
+      yueTranslation: '',
+      yueDefinition: '',
+      yueAlternatives: [],
+      face: emptyFaceLive(),
     })
 
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
+        // Live STT preview of the source only — never translate here.
         if (!holdActive(gen)) return
         clearNoSpeechTimer()
         const lang = resolveHoldLang(detected, get().speakDirection)
@@ -602,7 +612,7 @@ export const useYueStore = create<State>((set, get) => ({
         if (tapSticky) scheduleTapSentenceEnd(get)
       },
       onFinal: (detected: Lang, text: string) => {
-        // Accumulate STT while live — translate only when the turn ends (option A).
+        // Accumulate STT while live — translate only in endHold after capture finishes.
         if (!holdActive(gen)) return
         clearNoSpeechTimer()
         const lang = resolveHoldLang(detected, get().speakDirection)
@@ -819,10 +829,12 @@ export const useYueStore = create<State>((set, get) => ({
     tapSticky = false
     clearTapTimers()
     flushingHold = true
+    // Already have committed STT finals → shorter flush (latency). Else wait for late finals.
+    const committedBeforeStop = holdFinals.length > 0 && !holdInterim.trim()
     // Stop recognizer first so Azure/WebSpeech can flush a final transcript.
     // Keep holdSideLock until after the flush window so late finals stay on-pane.
     await tearDownLive(get, set, { clearInterim: false, clearSideLock: false })
-    await new Promise((r) => setTimeout(r, 160))
+    await new Promise((r) => setTimeout(r, committedBeforeStop ? 70 : 160))
     if (gen !== holdGen) {
       flushingHold = false
       holdSideLock = null
@@ -838,8 +850,8 @@ export const useYueStore = create<State>((set, get) => ({
     set({ liveSide: null })
 
     if (lang && text) {
-      // Existing TranslateThinking loader via translating / translatingTo.
-      await runTranslation(get, set, lang, text, true, { lean: true })
+      // Capture finished → single final translate (lean = no alt fan-out).
+      await runTranslation(get, set, lang, text, { lean: true })
     } else {
       set({
         status: 'idle',
@@ -854,7 +866,7 @@ export const useYueStore = create<State>((set, get) => ({
     const trimmed = text.trim()
     if (!trimmed) return
     set({ error: null })
-    await runTranslation(get, set, from, trimmed, true)
+    await runTranslation(get, set, from, trimmed)
   },
 
   openBreakdown: (phrase, opts) => {
