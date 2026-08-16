@@ -13,8 +13,14 @@ export function createEchoGuard() {
       return playbackActive || isTtsPlaying() || Date.now() < ignoreUntil
     },
     setPlaybackActive(active: boolean) {
-      playbackActive = active
-      if (!active) ignoreUntil = Date.now() + ECHO_TAIL_MS
+      // Only arm the post-TTS mute when playback actually ends (true → false).
+      // Calling setPlaybackActive(false) on every STT update must NOT mute the mic.
+      if (!active) {
+        if (playbackActive) ignoreUntil = Date.now() + ECHO_TAIL_MS
+        playbackActive = false
+        return
+      }
+      playbackActive = true
     },
   }
 }

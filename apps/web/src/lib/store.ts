@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
-import { speakText, stopSpeaking } from './tts'
+import { speakText, stopSpeaking, isTtsPlaying } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage } from './mediaAccess'
 import { newId } from './id'
@@ -332,8 +332,11 @@ function applyHoldSource(
   lang: Lang,
   text: string,
 ) {
-  stopSpeaking()
-  get().session?.setPlaybackActive(false)
+  // Only barge in on real TTS — do not mute the mic on every STT interim/final.
+  if (isTtsPlaying() || get().status === 'speaking') {
+    stopSpeaking()
+    get().session?.setPlaybackActive(false)
+  }
   const isFace = get().mode === 'conversation'
   if (isFace) {
     const face = get().face
