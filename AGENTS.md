@@ -16,6 +16,8 @@ Smoke without a browser:
 ```bash
 curl -s http://localhost:8787/api/health
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
+npm run smoke:canto
+npm run test:translate   # needs API + web; SKIP_UI=1 for API-only
 ```
 
 In DEV, `window.__yueStore` is exposed for seeding UI state from the console.
@@ -29,10 +31,10 @@ Henry runs a local copy of this repo and refreshes the browser himself.
 Prefer:
 
 - Push the branch / update the PR efficiently
-- Rely on lint/typecheck (and automated tests when relevant)
+- Rely on lint/typecheck and `npm run test:translate` / `smoke:canto`
 - Brief confirmation of what changed so he can refresh locally
 
-Exception: only capture screenshots/videos when he specifically requests visual proof, or when a bug cannot be verified any other way and he has asked for help debugging it.
+Exception: only capture screenshots/videos when he specifically requests visual proof, or when a bug cannot be verified any other way and he has asked for help debugging it. For docs screenshots: `npm run docs:screenshots`.
 
 Computer-use / GUI screenshots are especially slow in this Cloud VM (software WebGL). Prefer terminal checks unless visuals were requested.
 
