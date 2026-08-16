@@ -265,6 +265,7 @@ async function runTranslation(
   const seq = ++translateSeq
   pending.set(lang, seq)
   beginTranslate(set, to)
+  const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
   const isFace = get().mode === 'conversation'
   // Live mic + Conversation: skip EN→粵 variation fan-out for lower latency.
@@ -273,6 +274,10 @@ async function runTranslation(
     const result = await translateText(text, lang, to, {
       includeAlternatives: lang === 'en' && !lean,
     })
+    if (pending.get(lang) !== seq) return
+    // Hold the bilingual bounce loader long enough to read, even on dictionary hits.
+    const hold = 900 - (Date.now() - startedAt)
+    if (hold > 0) await new Promise((r) => setTimeout(r, hold))
     if (pending.get(lang) !== seq) return
     const clean = sanitizeTranslationText(result.text)
     if (!clean) {

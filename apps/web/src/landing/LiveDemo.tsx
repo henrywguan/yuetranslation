@@ -29,6 +29,7 @@ export function LiveDemo() {
     if (!trimmed) return
     setLoading(true)
     setError(null)
+    const started = Date.now()
     try {
       const res = await translateText(trimmed, 'en', 'yue', {
         includeAlternatives: true,
@@ -39,6 +40,11 @@ export function LiveDemo() {
     } catch {
       setError('api')
     } finally {
+      // Keep the wow bounce on screen long enough to read, even on dictionary hits.
+      const elapsed = Date.now() - started
+      if (elapsed < 1100) {
+        await new Promise((r) => setTimeout(r, 1100 - elapsed))
+      }
       setLoading(false)
     }
   }
