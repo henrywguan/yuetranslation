@@ -140,11 +140,13 @@ export const ui = {
   heroEyebrow: {
     enLang: 'English',
     zhLang: '英文',
+    jpLang: 'jing1 man4',
     enYue: 'Cantonese',
     zhYue: '廣東話',
+    jpYue: 'gwong2 dung1 waa2',
     enLive: 'Live translator',
     zhLive: '實時翻譯器',
-    jp: 'jing1 man2 ↔ gwong2 dung1 waa2 sat6 si4 faan1 jik6 hei3',
+    jpLive: 'sat6 si4 faan1 jik6 hei3',
   },
   heroTitle: {
     en: 'JyutTranslate',
