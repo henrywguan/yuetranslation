@@ -675,7 +675,7 @@ export const useYueStore = create<State>((set, get) => ({
         return
       }
 
-      next = await createAzureLiveSession(handlers, primed)
+      next = await createAzureLiveSession(handlers, primed, webSpeechLock())
       if (!next) {
         // Free the exclusive mic lock so Web Speech can open its own input.
         releaseHeldMic()

@@ -17,9 +17,14 @@ export function createWebSpeechSession(
   let activeLang: Lang = lockLang || 'en'
   let emptyRestarts = 0
   let heardSpeech = false
+  let yueLocaleIndex = 0
   const echo = createEchoGuard()
   // iOS WebKit: continuous mode often yields zero results; use short sessions + restart.
   const apple = isAppleTouchDevice()
+  // zh-HK is primary; rotate fallbacks if iOS rejects / ignores Cantonese.
+  const yueLocales = apple ? ['zh-HK', 'yue-HK', 'yue-Hant-HK'] : ['zh-HK']
+
+  const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
 
   const startOne = () => {
     if (stopped) return
@@ -28,7 +33,7 @@ export function createWebSpeechSession(
     rec.continuous = !apple
     rec.interimResults = true
     rec.maxAlternatives = 1
-    rec.lang = activeLang === 'yue' ? 'zh-HK' : 'en-US'
+    rec.lang = activeLang === 'yue' ? yueLocale() : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -56,6 +61,14 @@ export function createWebSpeechSession(
         // iOS often fires no-speech then onend; restart is handled in onend.
         return
       }
+      if (
+        e.error === 'language-not-supported' &&
+        activeLang === 'yue' &&
+        yueLocaleIndex < yueLocales.length - 1
+      ) {
+        yueLocaleIndex += 1
+        return
+      }
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
@@ -71,6 +84,9 @@ export function createWebSpeechSession(
       // Without an initial user-gesture, iOS restarts produce zero audio — cap them.
       if (!heardSpeech) {
         emptyRestarts += 1
+        if (activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {
+          yueLocaleIndex += 1
+        }
         if (emptyRestarts > MAX_EMPTY_RESTARTS) {
           stopped = true
           recognition = null
@@ -108,6 +124,7 @@ export function createWebSpeechSession(
       stopped = false
       emptyRestarts = 0
       heardSpeech = false
+      yueLocaleIndex = 0
       startOne()
     },
     async stop() {
