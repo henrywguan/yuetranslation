@@ -1,12 +1,12 @@
-# WordPress entitlement checks (sketch → implementation)
-
-## Goal
+# WordPress entitlement checks
 
 Meter **live minutes** and **TTS** for freemium launch; keep text + Jyutping available.
 
+Implemented in the local Express API (`apps/api`) and the WordPress plugin (`wordpress/yue-translator`).
+
 ## Snapshot shape
 
-Returned by `/health` and `/entitlement`:
+Returned by `/api/health` and `/api/entitlement`:
 
 ```json
 {
@@ -34,21 +34,9 @@ Returned by `/health` and `/entitlement`:
 
 | Endpoint | Gate |
 | --- | --- |
-| `GET /speech-token` | `Yue_Entitlements::assert_can_live()` |
-| `POST /usage/heartbeat` | `assert_can_live()` then add seconds |
-| `POST /tts` | `assert_can_tts()` then add char usage |
+| `GET /speech-token` | live entitlement |
+| `POST /usage/heartbeat` | live entitlement, then add seconds |
+| `POST /tts` | TTS entitlement, then add char usage |
 | `POST /translate` | `allowed.textTranslate` only |
 
-HTTP **401** = login required; **402** = quota / plan block. Error payload includes `entitlement` for UI refresh.
-
-## Frontend behavior
-
-- Bootstrap from `/health`.
-- Disable Start when `!allowed.live`; show Log in / Upgrade.
-- Heartbeat every 15s while live; stop session when exhausted.
-- Auto-speak toggle disabled when `!allowed.autoSpeak`.
-
-## Storage
-
-- Logged-in: user meta `yue_usage_YYYY_mm`
-- Guest (if allowed): transient keyed by IP hash + month
+Local open mode (`YUE_OPEN_MODE=1`) grants generous Pro-like limits for development — see `apps/api/.env.example`.
