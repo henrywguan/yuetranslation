@@ -41,3 +41,7 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 - Install: `./scripts/cloud-agent-install.sh` (`npm ci` for web + api, icons)
 - Start: `./scripts/cloud-agent-start.sh` (frees stale 5173/8787 only)
 - Config: `.cursor/environment.json`
+
+### Phone mic testing (Henry’s machine)
+
+For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.
