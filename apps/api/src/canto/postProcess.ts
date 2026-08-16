@@ -14,7 +14,8 @@ export type HardenResult = {
 
 /**
  * Harden a model (or demo) Cantonese string for live use.
- * - interim: light Mandarin scrub only
+ * The live app only requests final translations (after mic capture ends).
+ * - interim (legacy/tests): light Mandarin scrub only
  * - final: scrub → 口語 score → CC-Canto attestation → optional rewrite
  */
 export async function hardenYueOutput(opts: {
