@@ -7,7 +7,7 @@ import { JpPop } from '../components/JpPop'
 /** One Chinese character with its own Jyutping popup (char above romanization). */
 function EyebrowZhChar({ char, jp }: { char: string; jp: string }) {
   const enabled = Boolean(jp.trim())
-  const { tipId, show, bind } = useJpPopup(enabled)
+  const { tipId, show, bind, wrapRef } = useJpPopup(enabled)
 
   return (
     <span
@@ -16,7 +16,9 @@ function EyebrowZhChar({ char, jp }: { char: string; jp: string }) {
       lang="zh-HK"
     >
       {char}
-      {enabled ? <JpPop show={show} id={tipId} text={jp} han={char} /> : null}
+      {enabled ? (
+        <JpPop show={show} id={tipId} text={jp} han={char} anchorRef={wrapRef} />
+      ) : null}
     </span>
   )
 }

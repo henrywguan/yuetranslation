@@ -30,7 +30,7 @@ export function BiText({
   layout = 'stack',
 }: BiTextProps) {
   const canJp = !hideJp && only !== 'en' && Boolean(copy.jp)
-  const { tipId, show, bind } = useJpPopup(canJp)
+  const { tipId, show, bind, wrapRef } = useJpPopup(canJp)
   const inline = layout === 'inline' && !only
   const zh = (
     <span
@@ -39,7 +39,9 @@ export function BiText({
       lang="zh-HK"
     >
       <span className="bi-zh">{copy.zh}</span>
-      {canJp ? <JpPop show={show} id={tipId} text={copy.jp} han={copy.zh} /> : null}
+      {canJp ? (
+        <JpPop show={show} id={tipId} text={copy.jp} han={copy.zh} anchorRef={wrapRef} />
+      ) : null}
     </span>
   )
 

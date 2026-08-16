@@ -16,7 +16,13 @@ export function FooterLangPair() {
           <span className="ln-footer-lang-en">{en.en}</span>
           <span className="ln-footer-lang-zh" lang="zh-HK" {...enJp.bind}>
             {en.zh}
-            <JpPop show={enJp.show} id={enJp.tipId} text={en.jp} han={en.zh} />
+            <JpPop
+              show={enJp.show}
+              id={enJp.tipId}
+              text={en.jp}
+              han={en.zh}
+              anchorRef={enJp.wrapRef}
+            />
           </span>
         </span>
         <span className="ln-footer-lang-arrow-stack" aria-hidden="true">
@@ -27,7 +33,13 @@ export function FooterLangPair() {
           <span className="ln-footer-lang-en">{yue.en}</span>
           <span className="ln-footer-lang-zh" lang="zh-HK" {...yueJp.bind}>
             {yue.zh}
-            <JpPop show={yueJp.show} id={yueJp.tipId} text={yue.jp} han={yue.zh} />
+            <JpPop
+              show={yueJp.show}
+              id={yueJp.tipId}
+              text={yue.jp}
+              han={yue.zh}
+              anchorRef={yueJp.wrapRef}
+            />
           </span>
         </span>
       </span>
