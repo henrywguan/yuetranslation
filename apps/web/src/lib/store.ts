@@ -16,7 +16,7 @@ import type {
 } from './types'
 
 /** Isolated live lines for Face-to-face — never shared with Solo/Text. */
-export type FaceLive = {
+type FaceLive = {
   enInterim: string
   yueInterim: string
   enTranslation: string
@@ -24,7 +24,7 @@ export type FaceLive = {
   yueDefinition: string
 }
 
-export function emptyFaceLive(): FaceLive {
+function emptyFaceLive(): FaceLive {
   return {
     enInterim: '',
     yueInterim: '',
