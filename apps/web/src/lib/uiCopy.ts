@@ -27,7 +27,7 @@ export const ui = {
     jp: 'teng1 gan2 — ting4 dyun6 waak6 zoi3 gam2 ting4',
   },
   speaking: { en: 'Speaking…', zh: '講緊…', jp: 'gong2 gan2…' },
-  translating: { en: 'Translating…', zh: '翻譯緊…', jp: 'faan1 jik6 gan2…' },
+  translating: { en: 'Translating', zh: '翻譯緊', jp: 'faan1 jik6 gan2' },
 
   direction: { en: 'Direction', zh: '方向', jp: 'fong1 hoeng3' },
   dirAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
