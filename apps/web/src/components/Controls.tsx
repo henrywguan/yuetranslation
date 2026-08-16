@@ -45,7 +45,7 @@ export function Controls() {
               className={mode === m.id ? 'active' : ''}
               onClick={() => setMode(m.id)}
             >
-              <BiText copy={m.copy} size="sm" layout="inline" />
+              <BiText copy={m.copy} size="sm" />
             </button>
           ))}
         </div>
@@ -61,7 +61,7 @@ export function Controls() {
           {showDirection ? (
             <label className="opt-cell opt-dir">
               <span className="opt-kicker">
-                <BiText copy={ui.direction} size="sm" layout="inline" />
+                <BiText copy={ui.direction} size="sm" />
               </span>
               <select
                 value={speakDirection}
@@ -79,7 +79,7 @@ export function Controls() {
 
           <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
             <span className="opt-kicker">
-              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" layout="inline" />
+              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
             </span>
             <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
               <input
@@ -96,7 +96,7 @@ export function Controls() {
 
           <button type="button" className="opt-cell opt-clear" onClick={clearHistory}>
             <span className="opt-kicker">
-              <BiText copy={ui.clear} size="sm" layout="inline" />
+              <BiText copy={ui.clear} size="sm" />
             </span>
           </button>
         </div>

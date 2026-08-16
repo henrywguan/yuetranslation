@@ -872,6 +872,10 @@
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .mode-tabs button + button {
@@ -999,12 +1003,30 @@
 .opt-kicker .bi,
 .opt-clear .bi {
   align-items: center;
+  justify-content: center;
   width: 100%;
   text-align: center;
-  gap: 0.04rem;
+  gap: 0.08rem;
 }
 
-.opt-kicker .bi-zh {
+.opt-kicker .bi-en,
+.opt-clear .bi-en {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.opt-kicker .bi-zh-wrap,
+.opt-clear .bi-zh-wrap {
+  display: inline-flex;
+  justify-content: center;
+  margin-inline: auto;
+  max-width: 100%;
+}
+
+.opt-kicker .bi-zh,
+.opt-clear .bi-zh {
+  text-align: center;
   font-size: 0.88em;
 }
 
@@ -1473,12 +1495,29 @@
 
 .mode-tabs .bi {
   align-items: center;
+  justify-content: center;
   width: 100%;
   gap: 0.15rem;
+  text-align: center;
+}
+
+.mode-tabs .bi-en {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.mode-tabs .bi-zh-wrap {
+  display: inline-flex;
+  justify-content: center;
+  margin-inline: auto;
+  max-width: 100%;
 }
 
 .mode-tabs .bi-zh {
   font-size: 0.78em;
+  text-align: center;
 }
 
 /* Keep Jyutping chips visible above bottom chrome */
@@ -1489,6 +1528,26 @@
 
 .live-btn .bi {
   align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.live-btn .bi-en {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.live-btn .bi-zh-wrap {
+  display: inline-flex;
+  justify-content: center;
+  margin-inline: auto;
+}
+
+.live-btn .bi-zh {
+  text-align: center;
 }
 
 .opt-dir select {

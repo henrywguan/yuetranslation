@@ -6,7 +6,7 @@ export const ui = {
   backHome: { en: 'Back to JyutTranslate home', zh: '返 JyutTranslate 首頁', jp: 'faan1 JyutTranslate sau2 jap6' },
 
   modeSolo: { en: 'Solo', zh: '獨白', jp: 'duk6 baak6' },
-  modeFace: { en: 'Face to face', zh: '面對面', jp: 'min6 deoi3 min6' },
+  modeFace: { en: 'Conversation Mode', zh: '對話模式', jp: 'deoi3 waa6 mou4 sik1' },
   modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
 
@@ -154,9 +154,9 @@ export const ui = {
     jp: 'hau2 jyu5 jyut6 jyu5 / jing1 man2 faan1 jik6 hei3',
   },
   heroSub: {
-    en: 'Live English/Cantonese translation with Jyutping — with conversation mode to help you bridge the communication!',
-    zh: '即時英粵翻譯連粵拼——對話模式幫你打通溝通橋梁！',
-    jp: 'zik1 si4 jing1 jyut6 faan1 jik6 lin4 jyut6 ping3 — deoi3 waa6 mou4 sik1 bong1 nei5 daa2 tung1 kau3 tung1 kiu4 loeng4!',
+    en: 'Live English/Cantonese translation with Jyutping — Use Conversation mode to help you bridge the communication!',
+    zh: '即時英粵翻譯連粵拼——用對話模式幫你打通溝通橋梁！',
+    jp: 'zik1 si4 jing1 jyut6 faan1 jik6 lin4 jyut6 ping3 — jung6 deoi3 waa6 mou4 sik1 bong1 nei5 daa2 tung1 kau3 tung1 kiu4 loeng4!',
   },
   launchTranslator: { en: 'Launch translator', zh: '開啟翻譯器', jp: 'hoi1 kai2 faan1 jik6 hei3' },
   tryDemo: { en: 'Try the demo ↓', zh: '試用示範 ↓', jp: 'si3 jung6 si6 faan6 ↓' },
@@ -168,11 +168,11 @@ export const ui = {
   statModes: { en: 'modes', zh: '種模式', jp: 'zung2 mou4 sik1' },
   statJyutping: { en: 'Jyutping on every line', zh: '每句都有粵拼', jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3' },
 
-  modesKicker: { en: 'Three ways to talk', zh: '三種傾計方式', jp: 'saam1 zung2 king1 gai2 fong1 sik1' },
+  modesKicker: { en: '3 Modes', zh: '三種模式', jp: 'saam1 zung2 mou4 sik1' },
   modesTitle: {
-    en: 'One app, every conversation',
-    zh: '一個應用，所有對話',
-    jp: 'jat1 go3 jing3 jung6, so2 jau5 deoi3 waa6',
+    en: 'One app, 3 translation methods',
+    zh: '一個應用，三種翻譯方式',
+    jp: 'jat1 go3 jing3 jung6, saam1 zung2 faan1 jik6 fong1 sik1',
   },
   soloDesc: {
     en: 'Speak English or Cantonese and watch the translation appear full-screen, instantly.',
@@ -202,17 +202,17 @@ export const ui = {
     zh: '專為口語粵語調校（係、唔、喺、咗）——唔係普通話，亦唔係書面語。',
     jp: 'zyun1 wai6 hau2 jyu5 jyut6 jyu5 tiu4 gaau3 (hai6, m4, hai2, zo2) — m4 hai6 pou2 tung1 waa2, jik6 m4 hai6 syu1 min2 jyu5.',
   },
-  featFastTitle: { en: 'Fast & fluid', zh: '快速流暢', jp: 'faai3 cuk1 lau4 coeng3' },
+  featFastTitle: { en: 'Speak, then translate', zh: '講完先翻譯', jp: 'gong2 jyun4 sin1 faan1 jik6' },
   featFastDesc: {
-    en: 'Interim results while you speak, refined finals when you pause.',
-    zh: '你講緊就有即時結果，停低就會精修定稿。',
-    jp: 'nei5 gong2 gan2 zau6 jau5 zik1 si4 git3 gwo2, ting4 dai1 zau6 wui5 zing1 sau1 ding6 gou2.',
+    en: 'Hold or tap the mic, finish your thought, then get one polished line — with Jyutping — when you’re done.',
+    zh: '按住或輕按咪高峰，講完先出一句精修翻譯——連粵拼一齊出現。',
+    jp: 'on3 zyu6 waak6 hing1 on3 mai1 gou1 fung1, gong2 jyun4 sin1 ceot1 jat1 geoi3 zing1 sau1 faan1 jik6 — lin4 jyut6 ping3 jat1 cai4 ceot1 jin6.',
   },
   featHostTitle: { en: 'Yours to host', zh: '自己托管', jp: 'zi6 gei2 tok3 gun2' },
   featHostDesc: {
-    en: 'Runs on WordPress with cloud speech, or fully self-hosted when you want.',
-    zh: '可以用 WordPress 加雲端語音，又或者完全自己托管。',
-    jp: 'ho2 ji5 jung6 WordPress gaa1 wan4 dyun1 jyu5 jam1, jau6 waak6 ze2 jyun4 cyun4 zi6 gei2 tok3 gun2.',
+    en: 'Built to run on WordPress or fully self-hosted. You will need your own API keys!',
+    zh: '可以跑喺 WordPress，又或者完全自己托管。你需要自己嘅 API 密鑰！',
+    jp: 'ho2 ji5 paau2 hai2 WordPress, jau6 waak6 ze2 jyun4 cyun4 zi6 gei2 tok3 gun2. nei5 seoi1 jiu3 zi6 gei2 ge3 API mat6 joek6!',
   },
 
   demoKicker: { en: 'Try it now', zh: '而家試吓', jp: 'ji4 gaa1 si3 haa5' },
@@ -222,9 +222,9 @@ export const ui = {
     jp: 'faan1 jik6 jat1 geoi3, zik1 si4 gin3',
   },
   demoBody: {
-    en: 'This runs against the real translation API. Type anything or tap a sample and watch the Cantonese — with Jyutping — appear underneath.',
-    zh: '對住真正翻譯 API。打任何嘢或者撳樣本，睇粵語——連粵拼——即刻出現。',
-    jp: 'deoi3 zyu6 zan1 zing3 faan1 jik6 API. daa2 jam6 ho4 je5 waak6 ze2 gam2 joeng6 bun2, tai2 jyut6 jyu5 — lin4 jyut6 ping3 — zik1 hak1 ceot1 jin6.',
+    en: 'Play with our demo! Type anything or tap a sample.',
+    zh: '玩吓我哋嘅示範！打任何嘢或者撳樣本。',
+    jp: 'waan2 haa5 ngo5 dei6 ge3 si6 faan6! daa2 jam6 ho4 je5 waak6 ze2 gam2 joeng6 bun2.',
   },
   openFullApp: { en: 'Open the full app', zh: '開啟完整應用', jp: 'hoi1 kai2 jyun4 zing2 jing3 jung6' },
   demoTypeEn: { en: 'Type English', zh: '打英文', jp: 'daa2 jing1 man2' },
@@ -265,9 +265,9 @@ export const ui = {
     jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3',
   },
   freeFeatModes: {
-    en: 'Solo, Face-to-face & Text modes',
-    zh: '獨白、面對面同文字模式',
-    jp: 'duk6 baak6, min6 deoi3 min6 tung4 man4 zi6 mou4 sik1',
+    en: 'Solo, Conversation Mode & Text',
+    zh: '獨白、對話模式同文字',
+    jp: 'duk6 baak6, deoi3 waa6 mou4 sik1 tung4 man4 zi6',
   },
   proFeatLive10: {
     en: '~10 hours of live translation / month',
@@ -301,10 +301,12 @@ export const ui = {
     jp: 'hoi1 kai2 JyutTranslate, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
   },
   footerTag: {
-    en: 'English ↔ Cantonese, done beautifully.',
-    zh: '英文 ↔ 粵語，做得靚。',
-    jp: 'jing1 man2 ↔ jyut6 jyu5, zou6 dak1 leng3.',
+    en: 'English ↔ Cantonese',
+    zh: '英文 ↔ 粵語',
+    jp: 'jing1 man2 ↔ jyut6 jyu5',
   },
+  footerEnLang: { en: 'English', zh: '英文', jp: 'jing1 man2' },
+  footerYueLang: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
 
   ppEyebrow: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   ppTitle: {
@@ -337,9 +339,9 @@ export const ui = {
     jp: 'mui5 jyut6 daai6 joek3 sei3 sap6 siu2 si4 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
   },
   maxFeatPower: {
-    en: 'Headroom for Face-to-face & long talks',
-    zh: '面對面同長對話有足夠空間',
-    jp: 'min6 deoi3 min6 tung4 coeng4 deoi3 waa6 jau5 kau3 gau3 hung1 gaan1',
+    en: 'Headroom for Conversation Mode & long talks',
+    zh: '對話模式同長對話有足夠空間',
+    jp: 'deoi3 waa6 mou4 sik1 tung4 coeng4 deoi3 waa6 jau5 kau3 gau3 hung1 gaan1',
   },
   maxFeatEverything: {
     en: 'Everything in Pro',
@@ -361,7 +363,7 @@ export const ui = {
   cmpLive: { en: 'Live translation / month', zh: '每月即時翻譯', jp: 'mui5 jyut6 zik1 si4 faan1 jik6' },
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
-  cmpModes: { en: 'Solo · Face-to-face · Text', zh: '獨白 · 面對面 · 文字', jp: 'duk6 baak6 · min6 deoi3 min6 · man4 zi6' },
+  cmpModes: { en: 'Solo · Conversation Mode · Text', zh: '獨白 · 對話模式 · 文字', jp: 'duk6 baak6 · deoi3 waa6 mou4 sik1 · man4 zi6' },
   cmpTts: { en: 'Voice playback (auto-speak)', zh: '語音播放（自動朗讀）', jp: 'jyu5 jam1 bo3 fong3 (zi6 dung6 long5 duk6)' },
   cmpQuality: { en: 'Cantonese quality', zh: '粵語質素', jp: 'jyut6 jyu5 zat1 sou3' },
   cmpSeats: { en: 'Seats', zh: '座位', jp: 'zo6 wai2' },
@@ -400,9 +402,9 @@ export const ui = {
     jp: 'me1 giu3 zou6 “zik1 si4 fan1 zung1”?',
   },
   faq2a: {
-    en: 'Time the microphone is actively listening in Solo or Face-to-face mode. Text translation never uses live minutes.',
-    zh: '喺獨白或者面對面模式，咪高峰開啟聽緊嘅時間。文字翻譯唔計即時分鐘。',
-    jp: 'hai2 duk6 baak6 waak6 ze2 min6 deoi3 min6 mou4 sik1, mai1 gou1 fung1 hoi1 kai2 teng1 gan2 ge3 si4 gaan3. man4 zi6 faan1 jik6 m4 gai3 zik1 si4 fan1 zung1.',
+    en: 'Time the microphone is actively listening in Solo or Conversation Mode. Text translation never uses live minutes.',
+    zh: '喺獨白或者對話模式，咪高峰開啟聽緊嘅時間。文字翻譯唔計即時分鐘。',
+    jp: 'hai2 duk6 baak6 waak6 ze2 deoi3 waa6 mou4 sik1, mai1 gou1 fung1 hoi1 kai2 teng1 gan2 ge3 si4 gaan3. man4 zi6 faan1 jik6 m4 gai3 zik1 si4 fan1 zung1.',
   },
   faq3q: {
     en: 'Can I run it on my own server?',
