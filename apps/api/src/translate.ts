@@ -5,6 +5,7 @@ import {
   dictionaryTranslate,
   hardenYueOutput,
   lexiconTranslate,
+  looksLikeGlossDump,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
@@ -90,14 +91,19 @@ export async function translate(input: unknown) {
     }
   }
 
-  // 2) Full lexicon fallback (seed + CC-Canto) — reliable offline / no-API-key path.
+  // 2) Lexicon fallback (seed + CC-Canto).
+  // When a model is configured, only trust exact headword hits — never gloss dumps.
   const lexHit = lexiconTranslate({
     sourceLang: from,
     targetLang: to,
     source: text,
     wantAlternatives: wantAlts,
   })
-  if (lexHit) {
+  const lexTextOk = Boolean(lexHit) && (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
+  const useLexicon = Boolean(
+    lexHit && lexTextOk && (!openaiConfigured() || lexHit.kind === 'exact'),
+  )
+  if (lexHit && useLexicon) {
     if (to === 'yue') {
       const hardened = await hardenYueOutput({
         text: lexHit.text,
@@ -262,6 +268,20 @@ export async function translate(input: unknown) {
       to,
       stage,
       meta: hardened.meta,
+    }
+  }
+
+  // 6) 粵→EN: never ship dictionary gloss dumps from the model path.
+  if (looksLikeGlossDump(primary)) {
+    return {
+      text: '',
+      definition: '',
+      alternatives: [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta(['gloss-dump-blocked']),
     }
   }
 

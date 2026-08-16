@@ -1,9 +1,8 @@
 import { CantoneseText } from './CantoneseText'
 import { SpeakButton } from './SpeakButton'
-import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
-/** Cantonese (with Jyutping under) on the left; English gloss on the right. */
+/** Translation line only — gloss definitions stay out of the pane (details/drill-down only). */
 export function ResultWithDefinition({
   text,
   definition,
@@ -14,6 +13,7 @@ export function ResultWithDefinition({
   speakLang,
 }: {
   text: string
+  /** Kept for character-detail drill-down; not rendered in the pane. */
   definition?: string
   cantonese?: boolean
   className?: string
@@ -24,7 +24,7 @@ export function ResultWithDefinition({
 }) {
   const trimmed = text.trim()
   const def = definition?.trim() || ''
-  if (!trimmed && !def) return null
+  if (!trimmed) return null
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -43,11 +43,6 @@ export function ResultWithDefinition({
           {speakLang && trimmed ? <SpeakButton text={trimmed} lang={speakLang} /> : null}
         </div>
       </div>
-      {def ? (
-        <p className="result-with-def-gloss ink-in" aria-label={ui.definition.en}>
-          {def}
-        </p>
-      ) : null}
     </div>
   )
 }

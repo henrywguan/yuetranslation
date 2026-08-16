@@ -2,7 +2,7 @@ import { attestAgainstLexicon } from './attest.js'
 import { colloquialScore } from './colloquialScore.js'
 import { dictionaryTranslate } from './dictionary.js'
 import { glossStats, lookupGloss } from './gloss.js'
-import { lexiconTranslate, lexiconStats } from './lexiconTranslate.js'
+import { lexiconTranslate, lexiconStats, looksLikeGlossDump } from './lexiconTranslate.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
@@ -103,6 +103,35 @@ assert(stats.ccCanto > 1000, `expected CC-Canto pack loaded, got ${stats.ccCanto
 assert(wordshkEnabled() === false, 'wordshk should stay gated off')
 const lex = lexiconStats()
 assert(lex.enKeys > 1000, `expected EN reverse index, got ${lex.enKeys}`)
+
+// 大家好 must never paint dictionary gloss dumps into the EN pane.
+const helloAll = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '大家好。',
+})
+assert(/everybody|everyone|hi|hello/i.test(helloAll?.text || ''), `大家好 phrase: ${helloAll?.text}`)
+assert(
+  !/greeting word|full stop/i.test(helloAll?.text || ''),
+  `大家好 must not be a gloss dump: ${helloAll?.text}`,
+)
+assert(
+  looksLikeGlossDump('It is a greeting word, "hi everybody" full stop'),
+  'greeting-word dump must be detected',
+)
+assert(
+  looksLikeGlossDump('It is a greeting word, "hi everybody"'),
+  'greeting-word dump without full stop must be detected',
+)
+const helloLex = lexiconTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '大家好。',
+})
+assert(
+  !helloLex || !looksLikeGlossDump(helloLex.text),
+  `lexicon must not return dump for 大家好: ${JSON.stringify(helloLex)}`,
+)
 
 console.log(
   JSON.stringify(

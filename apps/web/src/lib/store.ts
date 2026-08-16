@@ -6,6 +6,7 @@ import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { prefetchSpeechToken, peekSpeechToken } from './speechToken'
 import { newId } from './id'
+import { sanitizeTranslationText } from './translationGuard'
 import type {
   ConversationTurn,
   Entitlement,
@@ -256,8 +257,16 @@ async function runTranslation(
       includeAlternatives: isFinal && lang === 'en' && !lean,
       stage: isFinal ? 'final' : 'interim',
     })
-    const alternatives = result.alternatives || []
     if (pending.get(lang) !== seq) return
+    const clean = sanitizeTranslationText(result.text)
+    if (!clean) {
+      set({
+        error:
+          'Translation looked like a dictionary dump and was blocked. Try another phrasing, or check OPENAI_API_KEY.',
+      })
+      return
+    }
+    const alternatives = (result.alternatives || []).filter((a) => Boolean(sanitizeTranslationText(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
 
     if (isFace) {
@@ -269,7 +278,7 @@ async function runTranslation(
             enInterim: text,
             yueInterim: '',
             enTranslation: '',
-            yueTranslation: result.text,
+            yueTranslation: clean,
             yueDefinition: result.definition || (isFinal ? text : ''),
           },
         })
@@ -280,7 +289,7 @@ async function runTranslation(
             yueInterim: text,
             enInterim: '',
             yueTranslation: '',
-            enTranslation: result.text,
+            enTranslation: clean,
             yueDefinition: result.definition || '',
           },
         })
@@ -291,7 +300,7 @@ async function runTranslation(
             from: lang,
             to,
             source: text,
-            translation: result.text,
+            translation: clean,
             definition,
             alternatives: lang === 'en' ? alternatives : undefined,
             engine: result.engine,
@@ -302,7 +311,7 @@ async function runTranslation(
           enInterim: text,
           yueInterim: '',
           enTranslation: '',
-          yueTranslation: result.text,
+          yueTranslation: clean,
           yueDefinition: result.definition || (isFinal ? text : ''),
           yueAlternatives: isFinal ? alternatives : get().yueAlternatives,
           ...(history ? { history } : {}),
@@ -312,14 +321,14 @@ async function runTranslation(
           yueInterim: text,
           enInterim: '',
           yueTranslation: '',
-          enTranslation: result.text,
+          enTranslation: clean,
           yueDefinition: result.definition || '',
           yueAlternatives: isFinal ? [] : get().yueAlternatives,
           ...(history ? { history } : {}),
         })
       }
     }
-    if (isFinal) speak = { text: result.text, lang: to }
+    if (isFinal) speak = { text: clean, lang: to }
   } catch (e) {
     set({ error: String(e) })
   } finally {
