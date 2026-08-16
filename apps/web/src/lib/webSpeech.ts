@@ -3,6 +3,9 @@ import { createEchoGuard } from './echoGuard'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang, LiveSession, SpeechEventHandlers } from './types'
 
+/** After this many silent no-speech ends, stop instead of restarting forever. */
+const MAX_EMPTY_RESTARTS = 2
+
 export function createWebSpeechSession(
   handlers: SpeechEventHandlers,
   lockLang?: Lang,
@@ -12,6 +15,8 @@ export function createWebSpeechSession(
   let recognition: SpeechRecognition | null = null
   let stopped = true
   let activeLang: Lang = lockLang || 'en'
+  let emptyRestarts = 0
+  let heardSpeech = false
   const echo = createEchoGuard()
   // iOS WebKit: continuous mode often yields zero results; use short sessions + restart.
   const apple = isAppleTouchDevice()
@@ -34,6 +39,10 @@ export function createWebSpeechSession(
         else interim += t
       }
       if (echo.shouldIgnoreMic()) return
+      if (interim.trim() || finalText.trim()) {
+        heardSpeech = true
+        emptyRestarts = 0
+      }
       if (interim.trim()) handlers.onInterim(activeLang, interim.trim())
       if (finalText.trim()) {
         handlers.onFinal(activeLang, finalText.trim())
@@ -42,21 +51,42 @@ export function createWebSpeechSession(
       }
     }
     rec.onerror = (e) => {
-      if (e.error === 'no-speech' || e.error === 'aborted') return
+      if (e.error === 'aborted') return
+      if (e.error === 'no-speech') {
+        // iOS often fires no-speech then onend; restart is handled in onend.
+        return
+      }
       if (e.error === 'not-allowed') {
+        stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
         return
       }
       handlers.onError(e.error)
     }
     rec.onend = () => {
-      if (!stopped) {
-        try {
-          startOne()
-        } catch {
+      if (stopped) {
+        handlers.onStatus('idle')
+        return
+      }
+      // Without an initial user-gesture, iOS restarts produce zero audio — cap them.
+      if (!heardSpeech) {
+        emptyRestarts += 1
+        if (emptyRestarts > MAX_EMPTY_RESTARTS) {
+          stopped = true
+          recognition = null
+          handlers.onError(
+            'No speech detected. Tap the mic again, speak closer to the phone, and check mic permission.',
+          )
           handlers.onStatus('idle')
+          return
         }
-      } else handlers.onStatus('idle')
+      }
+      try {
+        startOne()
+      } catch {
+        stopped = true
+        handlers.onStatus('idle')
+      }
     }
     try {
       rec.start()
@@ -70,8 +100,14 @@ export function createWebSpeechSession(
     setPlaybackActive(a) {
       echo.setPlaybackActive(a)
     },
+    /**
+     * Starts recognition. On Apple devices this MUST run in the same turn as a
+     * user gesture (before any await) or Safari starts “listening” with no audio.
+     */
     async start() {
       stopped = false
+      emptyRestarts = 0
+      heardSpeech = false
       startOne()
     },
     async stop() {

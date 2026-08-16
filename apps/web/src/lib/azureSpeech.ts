@@ -48,8 +48,21 @@ function metaFromSpeaker(speakerId?: string | null): SpeechMeta | undefined {
   return id ? { speakerId: id } : undefined
 }
 
+function buildAudioConfig(
+  SpeechSDK: typeof import('microsoft-cognitiveservices-speech-sdk'),
+  mediaStream?: MediaStream | null,
+) {
+  // Prefer a stream opened in the user-gesture turn — iOS often blocks a second
+  // fromDefaultMicrophoneInput() after awaits (token fetch / dynamic import).
+  if (mediaStream && mediaStream.getAudioTracks().some((t) => t.readyState === 'live')) {
+    return SpeechSDK.AudioConfig.fromStreamInput(mediaStream)
+  }
+  return SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+}
+
 export async function createAzureLiveSession(
   handlers: SpeechEventHandlers,
+  mediaStream?: MediaStream | null,
 ): Promise<LiveSession | null> {
   let tokenPayload: { token: string; region: string }
   try {
@@ -87,7 +100,7 @@ export async function createAzureLiveSession(
   async function startWithTranscriber(): Promise<boolean> {
     const speechConfig = buildSpeechConfig()
     const autoDetect = SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(['en-US', 'zh-HK'])
-    const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+    const audioConfig = buildAudioConfig(SpeechSDK, mediaStream)
     const next = SpeechSDK.ConversationTranscriber.FromConfig(speechConfig, autoDetect, audioConfig)
 
     next.transcribing = (_s, e) => {
@@ -131,7 +144,7 @@ export async function createAzureLiveSession(
   async function startWithRecognizer(): Promise<void> {
     const speechConfig = buildSpeechConfig()
     const autoDetect = SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(['en-US', 'zh-HK'])
-    const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+    const audioConfig = buildAudioConfig(SpeechSDK, mediaStream)
     const next = SpeechSDK.SpeechRecognizer.FromConfig(speechConfig, autoDetect, audioConfig)
 
     next.recognizing = (_s, e) => {

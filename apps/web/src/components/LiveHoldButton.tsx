@@ -3,7 +3,6 @@ import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
-import { unlockMicrophone, stopMediaStream } from '../lib/mediaAccess'
 import type { Lang } from '../lib/types'
 
 /**
@@ -98,10 +97,8 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     activePointer.current = e.pointerId
     downAt.current = performance.now()
     e.currentTarget.setPointerCapture(e.pointerId)
-    // Kick mic permission in this gesture before startHold's awaits (iOS).
-    void unlockMicrophone().then((stream) => {
-      stopMediaStream(stream)
-    })
+    // startHold must own getUserMedia + recognition.start() in this gesture turn.
+    // Do not unlock+stop a competing stream here — that races and leaves STT silent.
     void startHold(side)
   }
 
