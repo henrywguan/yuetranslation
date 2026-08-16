@@ -101,6 +101,25 @@ const hearMe = dictionaryTranslate({
 })
 assert(/hear me/i.test(hearMe?.text || ''), `phrase 你聽唔聽到我？ failed: ${hearMe?.text}`)
 
+const morningJunk = lexiconTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '喂，早晨呀。',
+})
+assert(
+  !morningJunk || !/particle|comma|full stop|answering phone/i.test(morningJunk.text),
+  `morning greeting lexicon junk: ${JSON.stringify(morningJunk)}`,
+)
+const morningPhrase = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '喂，早晨呀。',
+})
+assert(
+  /good morning|hello/i.test(morningPhrase?.text || ''),
+  `phrase 喂，早晨呀。 failed: ${morningPhrase?.text}`,
+)
+
 // End-to-end offline path (dictionary / lexicon — no model required for these hits).
 const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
 assert(

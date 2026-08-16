@@ -50,6 +50,28 @@ const SKIP_EN = new Set([
 const META_GLOSS =
   /^(variant of|see also|see |archaic|surname|used in|abbr\.|particle|interjection|classifier|measure word|radical)/i
 
+/** Dictionary sense labels that must never appear as “translations”. */
+const META_SENSE =
+  /^(softening particle|assertive particle|change-of-state particle|hearsay(?:\s*\/\s*soft particle)?|progressive(?:\s*\(-ing\))?|perfective(?:\s*\(already done\))?|plural marker(?:[^a-z].*)?|possessive(?:\s*\/\s*relative)?|relative|classifier|question particle|comma|full stop|exclamation mark|question mark|interjection)\b/i
+
+/** Strip stacked CC-Canto labels: (interjection) (of …) hello → hello */
+export function cleanGlossSense(gloss: string): string {
+  let s = gloss.trim()
+  while (/^\([^)]*\)\s*/.test(s)) {
+    s = s.replace(/^\([^)]*\)\s*/, '')
+  }
+  return s.split(/[;／]/)[0]?.trim() || ''
+}
+
+function isMetaSense(sense: string): boolean {
+  const s = sense.trim()
+  if (!s) return true
+  if (META_SENSE.test(s)) return true
+  if (/\bparticle\b/i.test(s)) return true
+  if (/^\(of\b/i.test(s)) return true
+  return false
+}
+
 /** Strip POS tags / noise and split CC-Canto gloss senses into EN lemmas. */
 export function glossLemmas(gloss: string): string[] {
   const cleaned = gloss
@@ -156,7 +178,7 @@ function pickEnHits(query: string, wantAlternatives: boolean): LexiconTranslateH
 
   return {
     text: best.trad,
-    definition: best.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0]?.trim() || query,
+    definition: cleanGlossSense(best.gloss) || query,
     alternatives: alts,
     notes: [`lexicon:en:${best.source}`],
     kind: 'exact',
@@ -196,7 +218,8 @@ function yueToEn(source: string): LexiconTranslateHit | null {
   // Whole-string lexicon headword.
   const whole = lookupGloss(trimmed)
   if (whole) {
-    const def = whole.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0]?.trim() || whole.gloss
+    const def = cleanGlossSense(whole.gloss)
+    if (!def || isMetaSense(def)) return null
     return {
       text: def,
       definition: '',
@@ -217,23 +240,32 @@ function yueToEn(source: string): LexiconTranslateHit | null {
   const coverage = covered / hanChars.length
   if (coverage < 0.55) return null
 
-  const pieces = segs.map((s) => {
-    if (!s.hit) return s.surface
-    // Skip punctuation / particle meta labels in joined “translations”.
-    if (/^(question mark|exclamation mark|full stop|comma)$/i.test(s.hit.gloss.trim())) {
-      return s.surface === '？' || s.surface === '?' ? '?' : ''
+  const pieces: string[] = []
+  for (const s of segs) {
+    if (!s.hit) {
+      // Keep unknown Han; drop bare punctuation surfaces.
+      if (/\p{Script=Han}/u.test(s.surface)) pieces.push(s.surface)
+      continue
     }
-    const sense = s.hit.gloss.replace(/^\([^)]*\)\s*/g, '').split(/[;／]/)[0]?.trim()
-    return sense || s.surface
-  })
+    const raw = s.hit.gloss.trim()
+    if (/^(question mark|exclamation mark|full stop|comma)$/i.test(raw)) continue
+    const sense = cleanGlossSense(raw)
+    if (isMetaSense(sense)) continue
+    pieces.push(sense)
+  }
 
-  const text = pieces.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
-  // Reject learner-dump joins: leftover Han, slash sense lists, or punctuation words.
+  const text = pieces.join(' ').replace(/\s+/g, ' ').trim()
+  // Reject learner-dump joins: leftover Han, slash sense lists, punctuation, or thin joins.
   if (!text) return null
   if (/\p{Script=Han}/u.test(text)) return null
-  if (/\b(question mark|full stop|exclamation mark|comma)\b/i.test(text)) return null
+  if (/\b(question mark|full stop|exclamation mark|comma|particle|interjection)\b/i.test(text)) {
+    return null
+  }
+  if (/\([^)]*\)/.test(text)) return null
   if ((text.match(/\s\/\s/g) || []).length >= 1) return null
   if (coverage < 0.85) return null
+  // Multi-word segmented dumps are almost never natural translations.
+  if (text.split(/\s+/).length >= 3) return null
 
   return {
     text,
