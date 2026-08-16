@@ -500,13 +500,38 @@
   grid-template-columns: 1fr 1fr;
   gap: clamp(28px, 5vw, 60px);
   align-items: center;
+  /* Grid items default to min-width:auto and can force >100vw overflow. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ln-demo-copy,
+.ln-demo-stage {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ln-demo-copy .ln-h2,
+.ln-demo-copy .ln-p,
+.ln-demo-copy .bi,
+.ln-demo-copy .bi-en,
+.ln-demo-copy .bi-zh-wrap,
+.ln-demo-copy .bi-zh {
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .ln-demo-copy .btn-primary {
   margin-top: 26px;
+  max-width: 100%;
 }
 
 .demo-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 22px;
   border-radius: 28px;
   background: color-mix(in srgb, var(--harbor) 86%, transparent);
@@ -546,10 +571,14 @@
 .demo-input-row {
   display: flex;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .demo-input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   border-radius: 14px;
   border: 1px solid var(--glass-border);
   background: var(--surface);
@@ -563,6 +592,7 @@
 }
 
 .demo-go {
+  flex: none;
   border: 0;
   border-radius: 12px;
   padding: 0 18px;
@@ -570,6 +600,7 @@
   color: var(--on-jade);
   background: linear-gradient(135deg, var(--jade), var(--jade-mid));
   cursor: pointer;
+  max-width: 100%;
 }
 
 .demo-go:disabled {
@@ -582,6 +613,8 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: 14px 0 20px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .demo-chip {
@@ -593,6 +626,10 @@
   font-size: 0.85rem;
   cursor: pointer;
   transition: color 0.2s ease, border-color 0.2s ease;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .demo-chip:hover {
@@ -603,18 +640,30 @@
 .demo-result {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 18px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .demo-result-row {
   margin-top: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .demo-result-row .demo-output-text,
 .demo-result-row .cantonese-block {
   font-family: var(--font-body);
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-size: clamp(1.35rem, 4vw, 2.2rem);
   font-weight: 600;
   color: var(--ink-bright);
+  max-width: 100%;
+}
+
+.demo-result-row .jyutping {
+  /* Avoid forcing the demo card wider than the phone. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .demo-result-row .result-with-def-gloss {
@@ -1394,6 +1443,39 @@
 
   .ln-demo {
     grid-template-columns: 1fr;
+  }
+
+  .ln-demo-copy .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .demo-card {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .demo-input-row {
+    flex-direction: column;
+  }
+
+  .demo-go {
+    width: 100%;
+    padding: 12px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .demo-result-row.result-with-def {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.55rem;
+  }
+
+  .demo-result-row .result-with-def-gloss {
+    max-width: 100%;
+    text-align: start;
   }
 
   .magnetic {
