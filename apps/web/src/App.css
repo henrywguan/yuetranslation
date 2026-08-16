@@ -1716,6 +1716,7 @@
 .text-thinking {
   position: relative;
   z-index: 1;
+  width: 100%;
 }
 
 /* Monitors: floating History panel (drag / resize / minimize) */

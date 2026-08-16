@@ -73,7 +73,7 @@ export function ConversationView() {
         </header>
         <div className="pane-body pane-body--hero">
           {enThinking ? (
-            <TranslateThinking className="pane-thinking" size="sm" label={false} />
+            <TranslateThinking className="pane-thinking" size="md" />
           ) : (
             <InkSettle
               id={enLive ? 'face-en-live' : enText || 'face-en-empty'}
@@ -123,7 +123,7 @@ export function ConversationView() {
           </header>
           <div className="pane-body pane-body--hero">
             {yueThinking ? (
-              <TranslateThinking className="pane-thinking" size="sm" label={false} />
+              <TranslateThinking className="pane-thinking" size="md" />
             ) : (
               <InkSettle
                 id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}
