@@ -22,6 +22,16 @@ Useful env flags:
 | `REQUIRE_OPENAI=1` | Fail if `/api/health` has `engines.openai=false` |
 | `API_BASE` / `WEB_BASE` | Override defaults |
 
+### Live DeepSeek + Azure pipeline
+
+When keys are configured and you want to verify the paid paths (speech token, TTS, model MT, Solo UI):
+
+```bash
+npm run test:translate:live
+```
+
+Uses novel phrases so DeepSeek is actually hit (not phrase memory). Cloud agents must only run this when Henry explicitly approves that request.
+
 ## Cantonese smoke
 
 ```bash

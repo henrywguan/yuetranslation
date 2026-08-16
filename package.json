@@ -15,6 +15,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "smoke:canto": "npm run smoke:canto --prefix apps/api",
     "test:translate": "node scripts/translation-quality-bot.mjs",
+    "test:translate:live": "node scripts/live-pipeline-bot.mjs",
     "docs:screenshots": "node scripts/capture-docs-screenshots.mjs"
   },
   "devDependencies": {
