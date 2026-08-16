@@ -570,10 +570,6 @@ export const useYueStore = create<State>((set, get) => ({
         // Sticky tap mode 1: utterance finalized → auto-stop after a short pause.
         if (tapSticky) scheduleTapSentenceEnd(get)
       },
-      onBargeIn: () => {
-        speakToken += 1
-        if (get().live) set({ status: 'listening' })
-      },
       onError: (message: string) => {
         if (gen !== holdGen) return
         set({ error: message })

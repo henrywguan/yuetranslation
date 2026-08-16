@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ensureJyutpingSegs, expandJyutping, type JyutSeg } from '../lib/jyutping'
+import { inkEase } from '../lib/motion'
 
 function RubyRow({ segs }: { segs: JyutSeg[] }) {
   return (
@@ -75,7 +76,7 @@ export function JpPop({
           initial={reduce ? false : { opacity: 0, y: 6, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={reduce ? undefined : { opacity: 0, y: 4, scale: 0.98 }}
-          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.22, ease: inkEase }}
         >
           {body}
         </motion.span>

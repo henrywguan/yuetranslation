@@ -9,10 +9,6 @@ import { env } from '../env.js'
 
 export type DictSourceId = 'seed' | 'cc-canto' | 'wordshk'
 
-export function nonCommercialDictsAllowed() {
-  return env.allowNoncommercialDicts
-}
-
 export function wordshkEnabled() {
   return env.enableWordshk && env.allowNoncommercialDicts
 }

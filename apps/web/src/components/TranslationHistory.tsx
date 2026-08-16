@@ -4,6 +4,7 @@ import { BiText } from './BiText'
 import { HistoryPane } from './HistoryPane'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
+import { inkEase } from '../lib/motion'
 
 /** Desktop right rail + mobile history button / closable sheet. */
 export function TranslationHistory() {
@@ -86,7 +87,7 @@ export function TranslationHistory() {
               initial={{ opacity: 0, y: 36 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.28, ease: inkEase }}
             >
               <header className="history-panel-header history-sheet-header">
                 <div>

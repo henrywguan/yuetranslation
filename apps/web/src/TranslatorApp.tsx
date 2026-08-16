@@ -17,6 +17,7 @@ import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
 import { isEmbeddedAppView } from './lib/useHashRoute'
 import './App.css'
+import { inkEase } from './lib/motion'
 
 export function TranslatorApp() {
   const mode = useYueStore((s) => s.mode)
@@ -39,7 +40,7 @@ export function TranslatorApp() {
             className="brand"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.55, ease: inkEase }}
           >
             <div className="brand-lockup-stack">
               {embedded ? (

@@ -46,7 +46,6 @@ export type SpeechEventHandlers = {
   onFinal: (lang: Lang, text: string, meta?: SpeechMeta) => void
   onError: (message: string) => void
   onStatus: (status: 'listening' | 'idle' | 'speaking') => void
-  onBargeIn?: () => void
 }
 
 export type LiveSession = {

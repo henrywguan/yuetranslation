@@ -12,6 +12,7 @@ import { JyutLogo } from '../components/JyutLogo'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import { FooterLangPair } from './FooterLangPair'
+import { inkEase } from '../lib/motion'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
@@ -70,7 +71,7 @@ export function PricingPage() {
           className="pp-hero-inner"
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.85, ease: inkEase }}
         >
           <span className="ln-eyebrow">
             <BiText copy={ui.ppEyebrow} size="sm" />
