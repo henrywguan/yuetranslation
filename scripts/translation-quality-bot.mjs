@@ -158,6 +158,10 @@ async function runApiSuite() {
       continue
     }
     nonDemo += 1
+    if (result.engine === 'demo') {
+      fail(`${c.id}: unexpected demo engine`)
+      continue
+    }
     ok(`${c.id}: ${c.from}→${c.to} via ${result.engine} → ${result.text}`)
   }
 
@@ -274,10 +278,14 @@ async function runUiSuite() {
         continue
       }
 
-      // Pane purity: target translation only (source must not overwrite target).
+      // Pane purity (store): translation only in the target pane; no junk / demo.
+      // Solo Yue pane may also show an English definition gloss + variations — that is OK.
       const purity = await page.evaluate(
         (mode, from, expected) => {
           const s = window.__yueStore.getState()
+          const junk =
+            /(（示範）|\(demo\)|question mark|full stop|\bparticle\b|\bcolloquial\b|\s\/\s|^\d+\.\s)/i
+
           if (mode === 'conversation') {
             const face = s.face
             if (from === 'en') {
@@ -285,35 +293,46 @@ async function runUiSuite() {
                 ok:
                   face.yueTranslation === expected &&
                   !face.enTranslation &&
-                  Boolean(face.enInterim),
-                face,
+                  Boolean(face.enInterim) &&
+                  !junk.test(face.yueTranslation) &&
+                  !junk.test(face.enInterim),
               }
             }
             return {
               ok:
                 face.enTranslation === expected &&
                 !face.yueTranslation &&
-                Boolean(face.yueInterim),
-              face,
+                Boolean(face.yueInterim) &&
+                !junk.test(face.enTranslation) &&
+                !junk.test(face.yueInterim),
             }
           }
+
           if (from === 'en') {
+            const yueDom = document.querySelector('.solo-translation')?.textContent || ''
             return {
-              ok: s.yueTranslation === expected && !s.enTranslation && Boolean(s.enInterim),
-              solo: {
-                enInterim: s.enInterim,
-                yueTranslation: s.yueTranslation,
-                enTranslation: s.enTranslation,
-              },
+              ok:
+                s.yueTranslation === expected &&
+                !s.enTranslation &&
+                Boolean(s.enInterim) &&
+                !junk.test(s.yueTranslation) &&
+                !junk.test(s.enInterim) &&
+                yueDom.includes(expected) &&
+                !yueDom.includes('（示範）') &&
+                !yueDom.includes('(demo)'),
             }
           }
+
+          const enDom = document.querySelector('.solo-source')?.textContent || ''
           return {
-            ok: s.enTranslation === expected && !s.yueTranslation && Boolean(s.yueInterim),
-            solo: {
-              yueInterim: s.yueInterim,
-              enTranslation: s.enTranslation,
-              yueTranslation: s.yueTranslation,
-            },
+            ok:
+              s.enTranslation === expected &&
+              !s.yueTranslation &&
+              Boolean(s.yueInterim) &&
+              !junk.test(s.enTranslation) &&
+              enDom.includes(expected.slice(0, 12)) &&
+              !enDom.includes('（示範）') &&
+              !enDom.includes('(demo)'),
           }
         },
         c.mode,
@@ -325,7 +344,7 @@ async function runUiSuite() {
         fail(`UI ${c.mode}/${c.id}: pane layout impure ${JSON.stringify(purity)}`)
         continue
       }
-      ok(`UI ${c.mode}/${c.id}: spoke + translated → ${snap.translation}`)
+      ok(`UI ${c.mode}/${c.id}: translation-only panes → ${snap.translation}`)
     }
   } finally {
     await browser.close()

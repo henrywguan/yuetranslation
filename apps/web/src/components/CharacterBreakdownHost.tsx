@@ -10,13 +10,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
 import { charSense } from '../lib/charGloss'
 import { buildLocalBreakdown, expandJyutping, ensureIpa, type CharBreakdown } from '../lib/jyutping'
-import { usePanelDock } from '../lib/panelDock'
+import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
 import { useYueStore } from '../lib/store'
 import type { DetailLayer } from '../lib/detailTypes'
 import { inkEase } from '../lib/motion'
 import './DetailPanel.css'
 
-const PANEL_KEY = 'yue-details-panel-v1'
+const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
 const MIN_W = 280
 const MIN_H = 240
@@ -28,8 +28,9 @@ function defaultGeom(): Geom {
   const w = 360
   const h = Math.min(560, window.innerHeight - 96)
   return {
-    x: Math.max(16, Math.round(window.innerWidth / 2 - w / 2)),
-    y: Math.max(48, Math.round(window.innerHeight / 2 - h / 2)),
+    // Open beside the left taskbar so restored panels stay left-aligned.
+    x: PANEL_TASKBAR_W + 16,
+    y: 48,
     w,
     h,
   }
@@ -47,9 +48,12 @@ function loadGeom(): Geom {
 
 function clampGeom(g: Geom): Geom {
   if (typeof window === 'undefined') return g
-  const w = Math.min(Math.max(g.w, MIN_W), window.innerWidth - 16)
+  const w = Math.min(Math.max(g.w, MIN_W), window.innerWidth - 16 - PANEL_TASKBAR_W)
   const h = Math.min(Math.max(g.h, MIN_H), window.innerHeight - 16)
-  const x = Math.min(Math.max(8, g.x), window.innerWidth - Math.min(w, 120))
+  const x = Math.min(
+    Math.max(PANEL_TASKBAR_W + 12, g.x),
+    window.innerWidth - Math.min(w, 120),
+  )
   const y = Math.min(Math.max(8, g.y), window.innerHeight - Math.min(h, 48))
   return { x, y, w, h }
 }
@@ -134,11 +138,13 @@ export function CharacterBreakdownHost() {
       dockRemove(DOCK_ID)
       return
     }
-    const title = top.kind === 'phrase' ? top.phrase : top.char
+    const phrase = top.kind === 'phrase' ? top.phrase : top.char
+    const short = phrase.length > 10 ? `${phrase.slice(0, 10)}…` : phrase
     dockUpsert({
       id: DOCK_ID,
-      title: title.slice(0, 12) + (title.length > 12 ? '…' : ''),
-      subtitle: 'Details',
+      title: 'Details',
+      subtitle: short,
+      kind: 'details',
     })
     return () => dockRemove(DOCK_ID)
   }, [top, minimized, dockUpsert, dockRemove])

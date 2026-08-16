@@ -74,4 +74,4 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 
 For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.
 
-Live STT on phone is most reliable with `AZURE_SPEECH_KEY` (+ region) in `apps/api/.env`. Without it, iOS falls back to Web Speech, which must start inside the tap gesture and is flaky. Restart `dev:api` after changing speech env vars; open the app over the HTTPS tunnel and allow mic when prompted. Agents must still get Henry’s OK before triggering Azure STT/TTS from the cloud environment.
+Live STT on phone is most reliable with `AZURE_SPEECH_KEY` (+ region) in `apps/api/.env`. Without it, iOS falls back to Web Speech, which must start inside the tap gesture and is flaky. Restart `dev:api` after changing speech env vars; open the app over the HTTPS tunnel and allow mic when prompted. Cloud agents must still get Henry’s OK before triggering Azure STT/TTS **from this cloud testing environment** (local use is unrestricted).

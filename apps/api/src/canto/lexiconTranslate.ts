@@ -248,11 +248,18 @@ export function looksLikeGlossDump(text: string): boolean {
     return true
   }
   if ((t.match(/;/g) || []).length >= 2) return true
-  // Long space-joined lemma lists are almost never a spoken translation.
-  if (t.split(/\s+/).length >= 6) return true
   // Mixed "you 聽 not 聽" gloss joins
   if (/[A-Za-z]{2,}.+[一-龥].+[A-Za-z]{2,}/.test(t) && t.split(/\s+/).length >= 3) {
     return true
+  }
+  // Long space-joined lemma lists — but allow natural English sentences.
+  const words = t.split(/\s+/).filter(Boolean)
+  if (words.length >= 6) {
+    const looksSentence =
+      /[.?!…]$/.test(t) ||
+      (/^[A-Z“"]/.test(t) && /[.?!…]$/.test(t)) ||
+      (/^[A-Z]/.test(t) && words.length <= 16 && !/\s\/\s/.test(t) && (t.match(/;/g) || []).length < 2)
+    if (!looksSentence) return true
   }
   return false
 }

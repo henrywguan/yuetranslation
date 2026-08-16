@@ -2,12 +2,12 @@ import { useCallback, useEffect, useId, useRef, useState, type PointerEvent as R
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { HistoryPane } from './HistoryPane'
-import { usePanelDock } from '../lib/panelDock'
+import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 
-const PANEL_KEY = 'yue-history-panel-v1'
+const PANEL_KEY = 'yue-history-panel-v2'
 const DOCK_ID = 'history'
 const MIN_W = 260
 const MIN_H = 200
@@ -27,7 +27,8 @@ function defaultGeom(): PanelGeom {
   const w = 320
   const h = Math.min(560, window.innerHeight - 48)
   return {
-    x: Math.max(16, window.innerWidth - w - 24),
+    // Open beside the left taskbar (minimized tabs live there too).
+    x: PANEL_TASKBAR_W + 16,
     y: 24,
     w,
     h,
@@ -48,11 +49,14 @@ function loadGeom(): PanelGeom {
 
 function clampGeom(g: PanelGeom): PanelGeom {
   if (typeof window === 'undefined') return g
-  const maxW = Math.max(MIN_W, window.innerWidth - 16)
+  const maxW = Math.max(MIN_W, window.innerWidth - 16 - PANEL_TASKBAR_W)
   const maxH = Math.max(MIN_H, window.innerHeight - 16)
   const w = Math.min(Math.max(g.w, MIN_W), maxW)
   const h = Math.min(Math.max(g.h, MIN_H), maxH)
-  const x = Math.min(Math.max(8, g.x), window.innerWidth - Math.min(w, 120))
+  const x = Math.min(
+    Math.max(PANEL_TASKBAR_W + 12, g.x),
+    window.innerWidth - Math.min(w, 120),
+  )
   const y = Math.min(Math.max(8, g.y), window.innerHeight - Math.min(h, 48))
   return { ...g, x, y, w, h }
 }
@@ -100,8 +104,9 @@ export function TranslationHistory() {
     }
     dockUpsert({
       id: DOCK_ID,
-      title: count ? `History (${count})` : 'History',
-      subtitle: '紀錄',
+      title: 'History',
+      subtitle: count ? `紀錄 · ${count}` : '紀錄',
+      kind: 'history',
     })
     return () => dockRemove(DOCK_ID)
   }, [geom.minimized, count, dockUpsert, dockRemove])

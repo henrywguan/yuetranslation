@@ -124,8 +124,13 @@ assert(
 assert(looksLikeGlossDump('(of answering phone calls) hello'), 'parenthetical sense should dump')
 assert(looksLikeGlossDump('you 聽 not 聽 reach I'), 'mixed gloss join should dump')
 assert(looksLikeGlossDump('softening particle hello'), 'meta particle dump')
+assert(looksLikeGlossDump('obvious to not understand colloquial I me speak'), 'lemma list dump')
 assert(!looksLikeGlossDump('Can you hear me?'), 'natural EN must pass')
 assert(!looksLikeGlossDump('Hey, good morning'), 'short greeting must pass')
+assert(
+  !looksLikeGlossDump("Do you understand what I'm saying?"),
+  'natural 6+ word question must pass',
+)
 
 const morningPhrase = dictionaryTranslate({
   sourceLang: 'yue',
