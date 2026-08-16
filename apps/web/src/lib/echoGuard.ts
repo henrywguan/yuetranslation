@@ -1,7 +1,7 @@
 import { isTtsPlaying } from './tts'
 
 /** Ignore mic while TTS plays and briefly after — blocks speaker echo becoming a new turn. */
-export const ECHO_TAIL_MS = 600
+const ECHO_TAIL_MS = 600
 
 /** Shared echo-guard for Azure + Web Speech live sessions. */
 export function createEchoGuard() {
