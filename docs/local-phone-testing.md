@@ -57,6 +57,7 @@ Cloudflare **quick tunnels** are free for this local-dev use. You do not need a 
 
 ## Troubleshooting
 
+- **“Blocked request. This host … is not allowed”** — Vite must allow tunnel hostnames. This repo already sets `server.allowedHosts` for `.trycloudflare.com` (and ngrok). **Restart** `npm run dev:web` after pulling that change, then start a fresh `npm run dev:tunnel` and use the new URL.
 - **Tunnel starts but phone can’t translate** — make sure `npm run dev:api` is still running on the computer.
 - **Mic still blocked** — confirm the phone address bar shows `https://`, not `http://` or a raw `192.168.…` IP.
 - **Old tunnel URL 404s** — each `npm run dev:tunnel` creates a **new** URL; use the latest one printed in the terminal.
