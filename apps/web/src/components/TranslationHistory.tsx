@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { HistoryPane } from './HistoryPane'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
+import { useFloatingPanel } from '../lib/useFloatingPanel'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 
 const PANEL_KEY = 'yue-history-panel-v3'
 const DOCK_ID = 'history'
-const MIN_W = 260
-const MIN_H = 200
 
 type PanelGeom = {
   x: number
@@ -36,66 +35,21 @@ function defaultGeom(): PanelGeom {
   }
 }
 
-function loadGeom(): PanelGeom {
-  try {
-    const raw = localStorage.getItem(PANEL_KEY)
-    if (!raw) return defaultGeom()
-    const parsed = JSON.parse(raw) as Partial<PanelGeom>
-    return { ...defaultGeom(), ...parsed }
-  } catch {
-    return defaultGeom()
-  }
-}
-
-function clampGeom(g: PanelGeom): PanelGeom {
-  if (typeof window === 'undefined') return g
-  const maxW = Math.max(MIN_W, window.innerWidth - 16 - PANEL_TASKBAR_W)
-  const maxH = Math.max(MIN_H, window.innerHeight - 16)
-  const w = Math.min(Math.max(g.w, MIN_W), maxW)
-  const h = Math.min(Math.max(g.h, MIN_H), maxH)
-  const x = Math.min(
-    Math.max(PANEL_TASKBAR_W + 12, g.x),
-    window.innerWidth - Math.min(w, 120),
-  )
-  const y = Math.min(Math.max(8, g.y), window.innerHeight - Math.min(h, 48))
-  return { ...g, x, y, w, h }
-}
-
 /** Desktop floating panel + mobile history button / closable sheet. */
 export function TranslationHistory() {
   const history = useYueStore((s) => s.history)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [geom, setGeom] = useState<PanelGeom>(() => clampGeom(loadGeom()))
+  const { geom, persist, update, onDragPointerDown } = useFloatingPanel<PanelGeom>({
+    storageKey: PANEL_KEY,
+    minW: 260,
+    minH: 200,
+    defaultGeom,
+  })
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
-  const dragRef = useRef<{
-    mode: 'move' | 'resize'
-    ox: number
-    oy: number
-    sx: number
-    sy: number
-    sw: number
-    sh: number
-  } | null>(null)
   const dockUpsert = usePanelDock((s) => s.upsert)
   const dockRemove = usePanelDock((s) => s.remove)
   const count = history.length
-
-  const persist = useCallback((next: PanelGeom) => {
-    const clamped = clampGeom(next)
-    setGeom(clamped)
-    try {
-      localStorage.setItem(PANEL_KEY, JSON.stringify(clamped))
-    } catch {
-      /* ignore quota */
-    }
-  }, [])
-
-  useEffect(() => {
-    const onResize = () => setGeom((g) => clampGeom(g))
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
 
   useEffect(() => {
     if (!geom.minimized) {
@@ -115,19 +69,11 @@ export function TranslationHistory() {
     const onRestore = (e: Event) => {
       const id = (e as CustomEvent<string>).detail
       if (id !== DOCK_ID) return
-      setGeom((g) => {
-        const next = clampGeom({ ...g, minimized: false })
-        try {
-          localStorage.setItem(PANEL_KEY, JSON.stringify(next))
-        } catch {
-          /* ignore */
-        }
-        return next
-      })
+      update((g) => ({ ...g, minimized: false }))
     }
     window.addEventListener('yue-dock-restore', onRestore as EventListener)
     return () => window.removeEventListener('yue-dock-restore', onRestore as EventListener)
-  }, [])
+  }, [update])
 
   useEffect(() => {
     if (!sheetOpen) return
@@ -143,52 +89,6 @@ export function TranslationHistory() {
       window.removeEventListener('keydown', onKey)
     }
   }, [sheetOpen])
-
-  const onDragPointerDown = (e: ReactPointerEvent, mode: 'move' | 'resize') => {
-    if (e.button !== 0) return
-    const target = e.target as HTMLElement
-    if (mode === 'move' && target.closest('button')) return
-    e.preventDefault()
-    dragRef.current = {
-      mode,
-      ox: e.clientX,
-      oy: e.clientY,
-      sx: geom.x,
-      sy: geom.y,
-      sw: geom.w,
-      sh: geom.h,
-    }
-
-    const onMove = (ev: PointerEvent) => {
-      const d = dragRef.current
-      if (!d) return
-      const dx = ev.clientX - d.ox
-      const dy = ev.clientY - d.oy
-      if (d.mode === 'move') {
-        setGeom((g) => clampGeom({ ...g, x: d.sx + dx, y: d.sy + dy }))
-        return
-      }
-      setGeom((g) => clampGeom({ ...g, w: d.sw + dx, h: d.sh + dy }))
-    }
-    const onUp = () => {
-      dragRef.current = null
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      window.removeEventListener('pointercancel', onUp)
-      setGeom((g) => {
-        const clamped = clampGeom(g)
-        try {
-          localStorage.setItem(PANEL_KEY, JSON.stringify(clamped))
-        } catch {
-          /* ignore */
-        }
-        return clamped
-      })
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    window.addEventListener('pointercancel', onUp)
-  }
 
   return (
     <>

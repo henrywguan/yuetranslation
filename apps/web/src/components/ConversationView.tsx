@@ -9,7 +9,7 @@ import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 
 /**
- * Face-to-face: two language-pure cards on a shared phone.
+ * Conversation: two language-pure cards on a shared phone.
  * English card stays upright for you. Cantonese card is rotated 180°
  * so the person across the table reads it the right way up.
  *
@@ -75,7 +75,7 @@ export function ConversationView() {
         </header>
         <div className="pane-body pane-body--hero">
           {enThinking ? (
-            <TranslateThinking className="pane-thinking" size="md" />
+            <TranslateThinking className="pane-thinking" />
           ) : (
             <InkSettle
               id={enLive ? 'face-en-live' : enText || 'face-en-empty'}
@@ -125,7 +125,7 @@ export function ConversationView() {
           </header>
           <div className="pane-body pane-body--hero">
             {yueThinking ? (
-              <TranslateThinking className="pane-thinking" size="md" />
+              <TranslateThinking className="pane-thinking" />
             ) : (
               <InkSettle
                 id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}

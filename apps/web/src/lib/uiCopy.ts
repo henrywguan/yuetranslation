@@ -370,7 +370,6 @@ export const ui = {
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
   val10h: { en: '10 hours', zh: '十小時', jp: 'sap6 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
-  valUnlimited: { en: 'Unlimited*', zh: '無限*', jp: 'mou4 haan6*' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
   valPriority: { en: 'Priority', zh: '優先', jp: 'jau4 sin1' },

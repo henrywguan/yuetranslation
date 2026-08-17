@@ -14,7 +14,6 @@ type DockState = {
   items: DockItem[]
   upsert: (item: DockItem) => void
   remove: (id: string) => void
-  clear: () => void
 }
 
 /** Minimized floating panels collect on the left vertical taskbar. */
@@ -25,7 +24,6 @@ export const usePanelDock = create<DockState>((set, get) => ({
     set({ items: [...rest, item] })
   },
   remove: (id) => set({ items: get().items.filter((x) => x.id !== id) }),
-  clear: () => set({ items: [] }),
 }))
 
 /** Left taskbar width — keep floating panels clear of this strip. */

@@ -362,26 +362,30 @@ export async function translate(input: unknown) {
   )
 }
 
+function stripJsonFence(raw: string) {
+  return raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
+}
+
+function asTrimmedString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
 function parsePayload(
   raw: string,
   fallbackText: string,
   fallbackDefinition: string,
 ): { text: string; definition: string } {
-  const cleaned = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim()
+  const cleaned = stripJsonFence(raw)
   try {
     const parsed = JSON.parse(cleaned) as { translation?: unknown; definition?: unknown; text?: unknown }
-    const textCandidate =
-      (typeof parsed.translation === 'string' && parsed.translation.trim()) ||
-      (typeof parsed.text === 'string' && parsed.text.trim()) ||
-      ''
-    const defCandidate = typeof parsed.definition === 'string' ? parsed.definition.trim() : ''
+    const textCandidate = asTrimmedString(parsed.translation) || asTrimmedString(parsed.text)
     return {
       text: textCandidate || fallbackText,
-      definition: defCandidate || fallbackDefinition,
+      definition: asTrimmedString(parsed.definition) || fallbackDefinition,
     }
   } catch {
     return { text: cleaned || fallbackText, definition: fallbackDefinition }
@@ -392,29 +396,22 @@ function parseYuePayload(
   raw: string,
   fallback: string,
 ): { text: string; alternatives: string[]; definition: string } {
-  const cleaned = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim()
+  const cleaned = stripJsonFence(raw)
   try {
     const parsed = JSON.parse(cleaned) as {
       primary?: unknown
       alternatives?: unknown
       definition?: unknown
     }
-    const primary =
-      typeof parsed.primary === 'string' && parsed.primary.trim()
-        ? parsed.primary.trim()
-        : fallback
+    const primary = asTrimmedString(parsed.primary) || fallback
     const alts = Array.isArray(parsed.alternatives)
       ? parsed.alternatives.filter((x): x is string => typeof x === 'string')
       : []
-    const definition =
-      typeof parsed.definition === 'string' && parsed.definition.trim()
-        ? parsed.definition.trim()
-        : ''
-    return { text: primary, alternatives: uniqStrings(primary, alts), definition }
+    return {
+      text: primary,
+      alternatives: uniqStrings(primary, alts),
+      definition: asTrimmedString(parsed.definition),
+    }
   } catch {
     return { text: cleaned || fallback, alternatives: [], definition: '' }
   }

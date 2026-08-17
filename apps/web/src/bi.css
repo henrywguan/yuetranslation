@@ -452,17 +452,6 @@ button.spoken-line-text--action:focus-visible {
   }
 }
 
-.result-with-def-gloss {
-  flex: 0 1 auto;
-  margin: 0;
-  max-width: min(14rem, 42%);
-  font-size: 0.95rem;
-  line-height: 1.35;
-  color: var(--muted);
-  font-weight: 450;
-  text-align: end;
-}
-
 .result-with-def .result-text,
 .result-with-def .cantonese-block {
   margin-top: 0;

@@ -1,16 +1,15 @@
 import {
-  useCallback,
   useEffect,
   useId,
   useRef,
   useState,
-  type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
 import { charSense } from '../lib/charGloss'
 import { buildLocalBreakdown, expandJyutping, ensureIpa, type CharBreakdown } from '../lib/jyutping'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
+import { useFloatingPanel, type PanelBox } from '../lib/useFloatingPanel'
 import { useYueStore } from '../lib/store'
 import type { DetailLayer } from '../lib/detailTypes'
 import { inkEase } from '../lib/motion'
@@ -18,12 +17,8 @@ import './DetailPanel.css'
 
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
-const MIN_W = 280
-const MIN_H = 240
 
-type Geom = { x: number; y: number; w: number; h: number }
-
-function defaultGeom(): Geom {
+function defaultGeom(): PanelBox {
   if (typeof window === 'undefined') return { x: 48, y: 72, w: 360, h: 520 }
   const w = 360
   const h = Math.min(560, window.innerHeight - 96)
@@ -34,28 +29,6 @@ function defaultGeom(): Geom {
     w,
     h,
   }
-}
-
-function loadGeom(): Geom {
-  try {
-    const raw = localStorage.getItem(PANEL_KEY)
-    if (!raw) return defaultGeom()
-    return { ...defaultGeom(), ...(JSON.parse(raw) as Partial<Geom>) }
-  } catch {
-    return defaultGeom()
-  }
-}
-
-function clampGeom(g: Geom): Geom {
-  if (typeof window === 'undefined') return g
-  const w = Math.min(Math.max(g.w, MIN_W), window.innerWidth - 16 - PANEL_TASKBAR_W)
-  const h = Math.min(Math.max(g.h, MIN_H), window.innerHeight - 16)
-  const x = Math.min(
-    Math.max(PANEL_TASKBAR_W + 12, g.x),
-    window.innerWidth - Math.min(w, 120),
-  )
-  const y = Math.min(Math.max(8, g.y), window.innerHeight - Math.min(h, 48))
-  return { x, y, w, h }
 }
 
 function mergeMeanings(local: CharBreakdown[], remote: CharBreakdown[]): CharBreakdown[] {
@@ -74,10 +47,6 @@ function mergeMeanings(local: CharBreakdown[], remote: CharBreakdown[]): CharBre
   })
 }
 
-function isDesktop() {
-  return typeof window !== 'undefined' && window.matchMedia('(min-width: 960px)').matches
-}
-
 /** Floating / sheet details with drill-down stack, back, minimize → dock, resize. */
 export function CharacterBreakdownHost() {
   const stack = useYueStore((s) => s.detailStack)
@@ -94,45 +63,15 @@ export function CharacterBreakdownHost() {
   const [rows, setRows] = useState<CharBreakdown[]>([])
   const [loading, setLoading] = useState(false)
   const [ipa, setIpa] = useState('')
-  const [geom, setGeom] = useState<Geom>(() => clampGeom(loadGeom()))
-  const [desktop, setDesktop] = useState(isDesktop)
+  const { geom, desktop, onDragPointerDown } = useFloatingPanel({
+    storageKey: PANEL_KEY,
+    minW: 280,
+    minH: 240,
+    defaultGeom,
+  })
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
-  const dragRef = useRef<{
-    mode: 'move' | 'resize'
-    ox: number
-    oy: number
-    sx: number
-    sy: number
-    sw: number
-    sh: number
-  } | null>(null)
 
-  const persist = useCallback((next: Geom) => {
-    const clamped = clampGeom(next)
-    setGeom(clamped)
-    try {
-      localStorage.setItem(PANEL_KEY, JSON.stringify(clamped))
-    } catch {
-      /* ignore */
-    }
-  }, [])
-
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 960px)')
-    const sync = () => setDesktop(mq.matches)
-    sync()
-    mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
-  }, [])
-
-  useEffect(() => {
-    const onResize = () => setGeom((g) => clampGeom(g))
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-
-  // Dock chip while minimized
   useEffect(() => {
     if (!top || !minimized) {
       dockRemove(DOCK_ID)
@@ -213,49 +152,6 @@ export function CharacterBreakdownHost() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [top, minimized, stack.length, popDetail, closeBreakdown])
-
-  const onDragPointerDown = (e: ReactPointerEvent, mode: 'move' | 'resize') => {
-    if (e.button !== 0) return
-    const target = e.target as HTMLElement
-    if (mode === 'move' && target.closest('button')) return
-    e.preventDefault()
-    dragRef.current = {
-      mode,
-      ox: e.clientX,
-      oy: e.clientY,
-      sx: geom.x,
-      sy: geom.y,
-      sw: geom.w,
-      sh: geom.h,
-    }
-    const onMove = (ev: PointerEvent) => {
-      const d = dragRef.current
-      if (!d) return
-      const dx = ev.clientX - d.ox
-      const dy = ev.clientY - d.oy
-      if (d.mode === 'move') {
-        setGeom((g) => clampGeom({ ...g, x: d.sx + dx, y: d.sy + dy }))
-        return
-      }
-      setGeom((g) => clampGeom({ ...g, w: d.sw + dx, h: d.sh + dy }))
-    }
-    const onUp = () => {
-      dragRef.current = null
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      setGeom((g) => {
-        const clamped = clampGeom(g)
-        try {
-          localStorage.setItem(PANEL_KEY, JSON.stringify(clamped))
-        } catch {
-          /* ignore */
-        }
-        return clamped
-      })
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-  }
 
   const openChar = (row: CharBreakdown) => {
     const sense = row.meaning?.trim() || charSense(row.char) || ''

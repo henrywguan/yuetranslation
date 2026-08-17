@@ -455,8 +455,3 @@
 [data-theme='light'] .panel-taskbar-tab-sub {
   color: var(--jade-deep);
 }
-
-/* Legacy class kept empty so old references don’t flash a bottom dock */
-.panel-dock {
-  display: none !important;
-}

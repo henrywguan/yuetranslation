@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
   index.set(keyFor(entry.sourceLang, entry.targetLang, entry.source), entry)
 }
 
-export function lookupPhrase(opts: {
+function lookupPhrase(opts: {
   sourceLang: 'en' | 'yue' | 'cmn'
   targetLang: TargetLang
   source: string

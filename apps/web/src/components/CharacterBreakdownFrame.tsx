@@ -14,7 +14,7 @@ export function CharacterBreakdownFrame({
   phrase: string
   rows: CharBreakdown[]
   loading?: boolean
-  /** Natural translation for this phrase (Conversation drill-down). */
+  /** Natural translation for this phrase. */
   translation?: string | null
   /** Extra sense note — only shown when it differs from the translation. */
   definition?: string | null

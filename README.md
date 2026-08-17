@@ -72,12 +72,4 @@ npm run test:translate   # EN↔粵 bot: API + Solo/Conversation panes (needs se
 npm run build:web:wp
 ```
 
-Upload `wordpress/yue-translator` and follow [docs/bluehost-launch.md](docs/bluehost-launch.md).
-
-**Hybrid (static marketing + Bricks translator):** [docs/hybrid-bluehost.md](docs/hybrid-bluehost.md)
-
-```bash
-npm run build:web:marketing   # → dist-marketing/ for Bluehost folder/subdomain
-```
-
-Entitlements: [docs/entitlements.md](docs/entitlements.md).
+Upload `wordpress/yue-translator` and follow [docs/bluehost-launch.md](docs/bluehost-launch.md) (plugin + hybrid static marketing / Bricks).
