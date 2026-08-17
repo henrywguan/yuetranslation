@@ -47,6 +47,7 @@ export function ConversationView() {
     openBreakdown(source, {
       translation,
       definition: face.yueDefinition || undefined,
+      definitions: face.yueDefinitions,
     })
   }
 
@@ -56,6 +57,7 @@ export function ConversationView() {
     openBreakdown(source, {
       translation: face.enTranslation.trim() || undefined,
       definition: face.yueDefinition || undefined,
+      definitions: face.yueDefinitions,
     })
   }
 
@@ -135,6 +137,7 @@ export function ConversationView() {
                     <CantoneseText
                       text={yueText}
                       definition={face.yueDefinition}
+                      definitions={face.yueDefinitions}
                       className="pane-hero-canto"
                       onActivate={openYueDetails}
                     />

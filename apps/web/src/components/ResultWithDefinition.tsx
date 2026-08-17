@@ -6,6 +6,7 @@ import type { Lang } from '../lib/types'
 export function ResultWithDefinition({
   text,
   definition,
+  definitions,
   cantonese = true,
   className = '',
   textClassName = '',
@@ -15,6 +16,8 @@ export function ResultWithDefinition({
   text: string
   /** Kept for character-detail drill-down; not rendered in the pane. */
   definition?: string
+  /** Multiple English senses — triggers dotted underline + details open. */
+  definitions?: string[]
   cantonese?: boolean
   className?: string
   textClassName?: string
@@ -34,6 +37,7 @@ export function ResultWithDefinition({
             <CantoneseText
               text={trimmed}
               definition={def}
+              definitions={definitions}
               className={textClassName || 'result-text'}
               onActivate={onActivate}
             />

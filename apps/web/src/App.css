@@ -603,6 +603,34 @@
   color: var(--ink);
 }
 
+.history-card-defs ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-card-defs li {
+  position: relative;
+  padding-left: 12px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.history-card-defs li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mint) 65%, transparent);
+}
+
 .history-card-alts ul {
   list-style: none;
   margin: 0;

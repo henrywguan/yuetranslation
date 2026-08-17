@@ -102,12 +102,15 @@ export function TextMode() {
             <ResultWithDefinition
               text={match.translation}
               definition={match.to === 'yue' ? match.definition || match.source : match.definition}
+              definitions={match.definitions}
               cantonese={match.to === 'yue'}
               onActivate={(phrase) => {
                 if (match.to === 'yue') {
                   openBreakdown(phrase, {
                     translation: match.source,
                     definition: match.definition || undefined,
+                    definitions: match.definitions,
+                    alternatives: match.alternatives,
                   })
                   return
                 }
@@ -115,6 +118,7 @@ export function TextMode() {
                 openBreakdown(match.source, {
                   translation: match.translation,
                   definition: match.definition || undefined,
+                  definitions: match.definitions,
                 })
               }}
               speakLang={match.to}

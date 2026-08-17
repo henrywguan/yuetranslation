@@ -276,8 +276,17 @@ export function CharacterBreakdownHost() {
     top.kind === 'phrase' ? top.translation?.trim() || '' : top.sense?.trim() || ''
   const definitionText =
     top.kind === 'phrase' ? top.definition?.trim() || '' : top.definition?.trim() || ''
+  const definitions =
+    top.kind === 'phrase'
+      ? (top.definitions || []).map((d) => d.trim()).filter(Boolean)
+      : []
+  const alternatives =
+    top.kind === 'phrase'
+      ? (top.alternatives || []).map((a) => a.trim()).filter(Boolean)
+      : []
   const showDefinition =
     Boolean(definitionText) &&
+    definitions.length <= 1 &&
     definitionText.toLowerCase() !== translationText.toLowerCase() &&
     definitionText.toLowerCase() !== (top.kind === 'phrase' ? top.phrase : top.char).toLowerCase()
 
@@ -348,43 +357,65 @@ export function CharacterBreakdownHost() {
 
       <div className="detail-panel-body">
         {top.kind === 'phrase' ? (
-          loading && !rows.length ? (
-            <p className="detail-panel-loading muted">Loading…</p>
-          ) : rows.length ? (
-            <ul className="detail-panel-list">
-              {rows.map((row, i) => {
-                const canDrill = Boolean(row.meaning?.trim() || charSense(row.char) || row.jyutping)
-                return (
-                  <li key={`${row.char}-${i}`}>
-                    <button
-                      type="button"
-                      className={`detail-panel-row${canDrill ? ' is-drillable' : ''}`}
-                      disabled={!canDrill}
-                      onClick={() => openChar(row)}
-                      aria-label={
-                        canDrill
-                          ? `Open details for ${row.char}`
-                          : `${row.char}: no further details`
-                      }
-                    >
-                      <span className="detail-panel-char" lang="zh-HK">
-                        {row.char}
-                      </span>
-                      <span className="detail-panel-meta">
-                        <span className="detail-panel-row-jp">{row.jyutping || '—'}</span>
-                        <span className="detail-panel-meaning">
-                          {row.meaning || (loading ? '…' : '—')}
+          <>
+            {definitions.length > 1 || alternatives.length > 0 ? (
+              <div className="detail-panel-extra">
+                {definitions.length > 1 ? (
+                  <section className="detail-panel-defs" aria-label="English meanings">
+                    <h3>English meanings</h3>
+                    <ul>
+                      {definitions.map((def, i) => (
+                        <li key={`def-${i}`}>{def}</li>
+                      ))}
+                    </ul>
+                  </section>
+                ) : null}
+                {alternatives.length > 0 ? (
+                  <section className="detail-panel-alts" aria-label="Also said as">
+                    <h3>Also said as</h3>
+                    <p lang="zh-HK">{alternatives.join(' · ')}</p>
+                  </section>
+                ) : null}
+              </div>
+            ) : null}
+            {loading && !rows.length ? (
+              <p className="detail-panel-loading muted">Loading…</p>
+            ) : rows.length ? (
+              <ul className="detail-panel-list">
+                {rows.map((row, i) => {
+                  const canDrill = Boolean(row.meaning?.trim() || charSense(row.char) || row.jyutping)
+                  return (
+                    <li key={`${row.char}-${i}`}>
+                      <button
+                        type="button"
+                        className={`detail-panel-row${canDrill ? ' is-drillable' : ''}`}
+                        disabled={!canDrill}
+                        onClick={() => openChar(row)}
+                        aria-label={
+                          canDrill
+                            ? `Open details for ${row.char}`
+                            : `${row.char}: no further details`
+                        }
+                      >
+                        <span className="detail-panel-char" lang="zh-HK">
+                          {row.char}
                         </span>
-                      </span>
-                      {canDrill ? <span className="detail-panel-chevron">›</span> : null}
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
-            <p className="detail-panel-loading muted">No character details available.</p>
-          )
+                        <span className="detail-panel-meta">
+                          <span className="detail-panel-row-jp">{row.jyutping || '—'}</span>
+                          <span className="detail-panel-meaning">
+                            {row.meaning || (loading ? '…' : '—')}
+                          </span>
+                        </span>
+                        {canDrill ? <span className="detail-panel-chevron">›</span> : null}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <p className="detail-panel-loading muted">No character details available.</p>
+            )}
+          </>
         ) : (
           <div className="detail-panel-char-view">
             {top.sense ? (

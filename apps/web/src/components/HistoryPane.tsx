@@ -31,6 +31,8 @@ export function HistoryPane({
     openBreakdown(canto.trim() || phrase, {
       translation: english.trim() || undefined,
       definition: turn.definition || undefined,
+      definitions: turn.definitions,
+      alternatives: turn.alternatives,
     })
     onOpenBreakdown?.()
   }

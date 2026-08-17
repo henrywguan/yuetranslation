@@ -63,6 +63,51 @@ export function cleanGlossSense(gloss: string): string {
   return s.split(/[;／]/)[0]?.trim() || ''
 }
 
+/**
+ * All usable English sense strings from a CC-Canto / seed gloss
+ * (split on ; ／ and " / ").
+ */
+export function allGlossSenses(gloss: string): string[] {
+  let s = gloss.trim()
+  while (/^\([^)]*\)\s*/.test(s)) {
+    s = s.replace(/^\([^)]*\)\s*/, '')
+  }
+  if (!s) return []
+  const parts = s
+    .split(/[;／]/)
+    .flatMap((chunk) => chunk.split(/\s+\/\s+/))
+    .map((p) =>
+      p
+        .replace(/^\d+\.\s*/, '')
+        .replace(/^\([^)]*\)\s*/g, '')
+        .trim(),
+    )
+    .filter(Boolean)
+
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const part of parts) {
+    if (isMetaSense(part) || looksLikeGlossDump(part)) continue
+    // Skip tiny fragments and dictionary scaffolding
+    if (part.length < 2 || part.length > 120) continue
+    if (/^(literal meaning|cantonese slang|derived from)\b/i.test(part)) continue
+    const key = part.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(part)
+  }
+  return out
+}
+
+/** English dictionary senses for a Cantonese headword / phrase (exact lookup). */
+export function englishDefinitionsForYue(yue: string): string[] {
+  const trimmed = yue.trim().replace(/[。？！，、….!?,]+$/g, '')
+  if (!trimmed) return []
+  const whole = lookupGloss(trimmed)
+  if (!whole) return []
+  return allGlossSenses(whole.gloss)
+}
+
 function isMetaSense(sense: string): boolean {
   const s = sense.trim()
   if (!s) return true

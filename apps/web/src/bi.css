@@ -46,6 +46,27 @@ button.jyutping--activate {
   border-bottom: 1px dotted color-mix(in srgb, var(--mint) 40%, transparent);
 }
 
+/* Multi-sense Cantonese: dotted underline signals tap → definitions pane */
+.cantonese-multi-def {
+  border-bottom: 1.5px dotted color-mix(in srgb, var(--mint) 55%, transparent);
+  padding-bottom: 0.05em;
+  text-decoration: none;
+}
+
+.cantonese-activate--multi-def .cantonese-multi-def,
+.cantonese-block--multi-def .cantonese-multi-def {
+  cursor: pointer;
+}
+
+.jyutping--multi-def {
+  border-bottom-color: color-mix(in srgb, var(--mint) 55%, transparent);
+}
+
+.cantonese-activate--multi-def:hover .cantonese-multi-def,
+.cantonese-activate--multi-def:focus-visible .cantonese-multi-def {
+  border-bottom-color: color-mix(in srgb, var(--mint) 85%, transparent);
+}
+
 .ink-in {
   animation: ink-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -72,6 +93,19 @@ button.jyutping--activate {
 
 [data-theme='light'] .jyutping--hint {
   border-bottom-color: color-mix(in srgb, var(--jade-deep) 35%, transparent);
+}
+
+[data-theme='light'] .cantonese-multi-def {
+  border-bottom-color: color-mix(in srgb, var(--jade-deep) 48%, transparent);
+}
+
+[data-theme='light'] .jyutping--multi-def {
+  border-bottom-color: color-mix(in srgb, var(--jade-deep) 48%, transparent);
+}
+
+[data-theme='light'] .cantonese-activate--multi-def:hover .cantonese-multi-def,
+[data-theme='light'] .cantonese-activate--multi-def:focus-visible .cantonese-multi-def {
+  border-bottom-color: color-mix(in srgb, var(--jade-deep) 72%, transparent);
 }
 
 .result-with-def .jyutping {

@@ -11,10 +11,11 @@ import { useJpPopup } from '../lib/useJpPopup'
 import { CharDetailSheet, type CharDetail } from './CharDetailSheet'
 import { JpPop } from './JpPop'
 
-/** Cantonese line: compact Jyutping under Han; tap a character to open details when a definition exists. */
+/** Cantonese line: compact Jyutping under Han; multi-def phrases get a dotted underline. */
 export function CantoneseText({
   text,
   definition = '',
+  definitions,
   className,
   placeholder,
   onActivate,
@@ -22,6 +23,8 @@ export function CantoneseText({
 }: {
   text: string
   definition?: string
+  /** When 2+ English senses exist, Han gets a dotted underline + tap opens details. */
+  definitions?: string[]
   className?: string
   placeholder?: ReactNode
   /**
@@ -37,6 +40,8 @@ export function CantoneseText({
   const [detail, setDetail] = useState<CharDetail | null>(null)
   const { tipId, show, bind, wrapRef } = useJpPopup(Boolean(jp))
   const phraseDef = isValidDefinition(definition) ? definition.trim() : ''
+  const multiDefs = (definitions || []).map((d) => d.trim()).filter(Boolean)
+  const hasMultiDef = multiDefs.length > 1
 
   useEffect(() => {
     let cancelled = false
@@ -66,14 +71,19 @@ export function CantoneseText({
   }
 
   const drillable = segs.some((seg) => Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char)))
-  const phraseActivate = Boolean(onActivate) && !drillable
+  // Multi-def phrases open the details pane as a whole (char drills live inside that pane).
+  const phraseActivate = Boolean(onActivate) && (hasMultiDef || !drillable)
+  const allowCharDrill = drillable && !hasMultiDef
+
+  const hanClass = `${className || ''}${hasMultiDef ? ' cantonese-multi-def' : ''}`.trim()
 
   const body = (
-    <span className="cantonese-block">
-      <span className={className}>
+    <span className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}`}>
+      <span className={hanClass}>
         {segs.length
           ? segs.map((seg, i) => {
-              const canDrill = Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
+              const canDrill =
+                allowCharDrill && Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
               if (!canDrill) {
                 return <span key={`${seg.char}-${i}`}>{seg.char}</span>
               }
@@ -95,20 +105,31 @@ export function CantoneseText({
           : trimmed}
       </span>
       {jp ? (
-        onActivate && drillable ? (
+        onActivate && (drillable || hasMultiDef) && !phraseActivate ? (
           <button
             type="button"
-            className="jyutping jyutping--hint jyutping--activate ink-in"
+            className={`jyutping jyutping--hint jyutping--activate ink-in${hasMultiDef ? ' jyutping--multi-def' : ''}`}
             lang="en"
             onClick={() => onActivate(trimmed)}
-            aria-label={activateLabel || `Open character breakdown for ${trimmed}`}
+            aria-label={
+              activateLabel ||
+              (hasMultiDef
+                ? `Open definitions for ${trimmed}`
+                : `Open character breakdown for ${trimmed}`)
+            }
           >
             {jp}
           </button>
         ) : (
-          <span {...bind} className="jyutping jyutping--hint ink-in" lang="en">
+          <span
+            {...(phraseActivate ? {} : bind)}
+            className={`jyutping jyutping--hint ink-in${hasMultiDef ? ' jyutping--multi-def' : ''}`}
+            lang="en"
+          >
             {jp}
-            <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
+            {!phraseActivate ? (
+              <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
+            ) : null}
           </span>
         )
       ) : null}
@@ -121,9 +142,12 @@ export function CantoneseText({
   return (
     <button
       type="button"
-      className="cantonese-activate"
+      className={`cantonese-activate${hasMultiDef ? ' cantonese-activate--multi-def' : ''}`}
       onClick={() => onActivate?.(trimmed)}
-      aria-label={activateLabel || `Open character breakdown for ${trimmed}`}
+      aria-label={
+        activateLabel ||
+        (hasMultiDef ? `Open definitions for ${trimmed}` : `Open character breakdown for ${trimmed}`)
+      }
     >
       {body}
     </button>

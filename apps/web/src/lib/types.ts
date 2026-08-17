@@ -30,6 +30,8 @@ export type ConversationTurn = {
   translation: string
   /** Short English gloss for clarity (esp. beside Cantonese results). */
   definition?: string
+  /** Multiple English senses for the Cantonese phrase (details pane). */
+  definitions?: string[]
   /** Other colloquial EN→粵 renderings when the API found meaningful variants. */
   alternatives?: string[]
   at: number
