@@ -1,39 +1,54 @@
 # JyutTranslate — Bluehost launch guide
+# 粤译 — Bluehost 上线指南
 
-Freemium launch: **WordPress plugin hosts the PWA**; **Azure Speech** (`zh-HK` STT/TTS) and **OpenAI** (colloquial 粵語) run through plugin REST.
+Freemium launch: **WordPress plugin hosts the PWA**; **Azure Speech** (`zh-HK` STT/TTS) and **OpenAI** (colloquial 粤语) run through plugin REST.
+
+免费增值上线方式：**WordPress 插件托管 PWA**；**Azure Speech**（`zh-HK` 语音识别/合成）与 **OpenAI**（口语粤语）经由插件 REST 转发。
 
 Shared hosting does not run a local STT / MT / TTS stack — keys live in the plugin settings.
 
-## What Bluehost hosts
+共享主机不运行本地语音识别 / 机器翻译 / 语音合成服务 — 密钥写在插件设置里。
 
-| Layer | Where |
+## What Bluehost hosts / Bluehost 托管内容
+
+| Layer / 层级 | Where / 位置 |
 | --- | --- |
-| UI / PWA | `wordpress/yue-translator/app/` (built assets) |
-| Entitlements + usage | Plugin PHP (`Yue_Entitlements`, `Yue_Usage`) |
-| Speech token + TTS | Plugin → Azure |
-| Translate | Plugin → OpenAI (no local phrase/lexicon harden — keep an OpenAI key in production) |
+| UI / PWA | `wordpress/yue-translator/app/` (built assets / 构建产物) |
+| Entitlements + usage / 权益与用量 | Plugin PHP (`Yue_Entitlements`, `Yue_Usage`) |
+| Speech token + TTS / 语音令牌与朗读 | Plugin → Azure |
+| Translate / 翻译 | Plugin → OpenAI (no local phrase/lexicon harden — keep an OpenAI key in production / 生产环境请配置 OpenAI 密钥，插件侧无本地短语词库加固) |
 
 Plan snapshot and gate table: [entitlements.md](./entitlements.md).
 
-## Install
+套餐快照与闸门表见 [entitlements.md](./entitlements.md)。
+
+## Install / 安装
 
 ```bash
 npm run build:web:wp
 ```
 
-1. Upload `wordpress/yue-translator/` to `wp-content/plugins/yue-translator/`.
-2. Activate **JyutTranslate**.
-3. Settings → JyutTranslate: Azure Speech key/region + OpenAI key.
-4. Set **Upgrade URL** to your pricing / MemberPress checkout page.
-5. Shortcodes:
-   - `[yue_translator]` — translator (`view=app` in a phone-sized iframe)
-   - `[yue_splash]` — marketing landing (optional if marketing is static files)
+1. Upload `wordpress/yue-translator/` to `wp-content/plugins/yue-translator/`.  
+   将 `wordpress/yue-translator/` 上传到 `wp-content/plugins/yue-translator/`。
+2. Activate **JyutTranslate**.  
+   启用 **JyutTranslate（粤译）**。
+3. Settings → JyutTranslate: Azure Speech key/region + OpenAI key.  
+   设置 → JyutTranslate：填写 Azure Speech 密钥/区域以及 OpenAI 密钥。
+4. Set **Upgrade URL** to your pricing / MemberPress checkout page.  
+   将 **Upgrade URL（升级链接）** 设为定价页或 MemberPress 结账页。
+5. Shortcodes / 短代码:
+   - `[yue_translator]` — translator (`view=app` in a phone-sized iframe) / 翻译器（手机尺寸 iframe，`view=app`）
+   - `[yue_splash]` — marketing landing (optional if marketing is static files) / 营销首页（若营销站已是静态文件则可省略）
 
 The shortcode passes `api=` and `nonce=` (WP REST nonce). The PWA sends `credentials: 'include'` and `X-WP-Nonce`.
 
-## Hybrid marketing + Bricks translator
+短代码会传入 `api=` 与 `nonce=`（WordPress REST nonce）。PWA 请求带 `credentials: 'include'` 与 `X-WP-Nonce`。
+
+## Hybrid marketing + Bricks translator / 静态营销站 + Bricks 翻译页
 
 Recommended: **static marketing files** for the brand site, and a **Bricks (or WP) page** with `[yue_translator]`.
+
+推荐做法：品牌站用**静态营销文件**，产品页用 **Bricks（或 WordPress）页面** 放入 `[yue_translator]`。
 
 ```bash
 npm run build:web:marketing   # → dist-marketing/
@@ -42,7 +57,11 @@ npm run build:web:wp          # → wordpress/yue-translator/app/
 
 Copy `dist-marketing/` onto Bluehost (subdirectory or subdomain). Do **not** overwrite WordPress’s root `index.php`.
 
+将 `dist-marketing/` 复制到 Bluehost（子目录或子域名）。**不要**覆盖 WordPress 根目录的 `index.php`。
+
 Edit `site-config.json` next to that `index.html` (no rebuild):
+
+在该 `index.html` 旁编辑 `site-config.json`（无需重新构建）：
 
 ```json
 {
@@ -54,25 +73,33 @@ Edit `site-config.json` next to that `index.html` (no rebuild):
 
 Leave a field empty to keep in-app hash routes (`#/app`, `#/pricing`) — useful for local `npm run dev:web`. Query params `?translator=` / `?pricing=` override for testing.
 
+某字段留空则继续使用应用内哈希路由（`#/app`、`#/pricing`）— 适合本地 `npm run dev:web`。查询参数 `?translator=` / `?pricing=` 可在测试时覆盖。
+
 Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **Upgrade URL** to `pricingUrl`.
 
-| Piece | When to refresh |
+新建 Bricks 页面（例如 `/translate`）并放入 `[yue_translator]`。插件里的 **Upgrade URL** 应与 `pricingUrl` 一致。
+
+| Piece / 部分 | When to refresh / 何时更新 |
 | --- | --- |
-| Static marketing folder | Landing redesign → `build:web:marketing` and re-upload |
-| Plugin `app/` | Translator UI changes → `build:web:wp` and re-upload plugin |
-| `site-config.json` | URL changes on the static host |
+| Static marketing folder / 静态营销目录 | Landing redesign → `build:web:marketing` and re-upload / 首页改版后重新构建并上传 |
+| Plugin `app/` / 插件 `app/` | Translator UI changes → `build:web:wp` and re-upload plugin / 翻译界面改动后重新构建并上传插件 |
+| `site-config.json` | URL changes on the static host / 静态站点上的网址变更时 |
 
-## Entitlement model
+## Entitlement model / 权益模型
 
-| Plan | Live mic | TTS / auto-speak | Text + Jyutping |
+| Plan / 套餐 | Live mic / 实时麦克风 | TTS / auto-speak / 朗读 | Text + Jyutping / 文字 + 粤拼 |
 | --- | --- | --- | --- |
-| Guest (login required) | Blocked | Blocked | Allowed |
-| Free | ~20 min/mo (configurable) | Off by default | Allowed |
-| Pro | ~600 min/mo | On | Allowed |
+| Guest (login required) / 访客（需登录） | Blocked / 不可用 | Blocked / 不可用 | Allowed / 可用 |
+| Free / 免费 | ~20 min/mo (configurable) / 约每月 20 分钟（可配置） | Off by default / 默认关闭 | Allowed / 可用 |
+| Pro / 专业版 | ~600 min/mo / 约每月 600 分钟 | On / 开启 | Allowed / 可用 |
 
 Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for auto-speak. Text mode uses `POST /translate` (not gated by live minutes).
 
+运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 自动朗读调用 `POST /tts`。文字模式走 `POST /translate`（不受实时分钟数限制）。
+
 Plan resolution: capability `yue_pro` → user meta `yue_plan` → filter `yue_user_plan` → default `free` / `guest`.
+
+套餐判定顺序：能力 `yue_pro` → 用户元数据 `yue_plan` → 过滤器 `yue_user_plan` → 默认 `free` / `guest`。
 
 ```php
 add_filter('yue_user_plan', function ($plan, $user_id) {
@@ -83,13 +110,16 @@ add_filter('yue_user_plan', function ($plan, $user_id) {
 }, 10, 2);
 ```
 
-## Local cloud testing (no WordPress)
+## Local cloud testing (no WordPress) / 本地云测试（无需 WordPress）
 
 ```bash
 cp apps/api/.env.example apps/api/.env
 # add keys; YUE_OPEN_MODE=1 for unrestricted local use
+# 填写密钥；YUE_OPEN_MODE=1 可在本地放开限额
 npm run dev:api
 npm run dev:web
 ```
 
 Open `http://localhost:5173` — Vite proxies `/api` to Express. Phone mic needs HTTPS: [local-phone-testing.md](./local-phone-testing.md).
+
+打开 `http://localhost:5173` — Vite 将 `/api` 代理到 Express。手机麦克风需要 HTTPS：见 [local-phone-testing.md](./local-phone-testing.md)。
