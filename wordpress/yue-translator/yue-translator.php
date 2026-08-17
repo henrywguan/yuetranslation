@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: JyutTranslate
- * Description: English ↔ Cantonese live translator PWA with freemium entitlements (Azure Speech + OpenAI). 英语↔粤语即时翻译 PWA，含免费增值权益（Azure Speech + OpenAI）。
+ * Description: English ↔ Cantonese live translator PWA with freemium entitlements, Azure Speech, and OpenAI translation for Bluehost/WordPress launch.
  * Version: 2.0.0
  * Author: JyutTranslate
  * Text Domain: yue-translator
