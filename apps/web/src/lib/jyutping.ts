@@ -109,7 +109,7 @@ export async function ensureJyutpingSegs(text: string): Promise<JyutSeg[]> {
   }
 }
 
-export async function ensureJyutpingList(text: string): Promise<[string, string | null][]> {
+async function ensureJyutpingList(text: string): Promise<[string, string | null][]> {
   const t = text.trim()
   if (!t) return []
   if (listCache.has(t)) return listCache.get(t) || []

@@ -19,8 +19,3 @@ export type DetailLayer =
       /** Sense for this character when known. */
       sense?: string
     }
-
-export function detailTitle(layer: DetailLayer): string {
-  if (layer.kind === 'phrase') return layer.phrase
-  return layer.char
-}

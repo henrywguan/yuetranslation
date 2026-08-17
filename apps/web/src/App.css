@@ -361,22 +361,6 @@
     );
 }
 
-.history-panel-kicker {
-  margin: 0 0 2px;
-  font-size: 0.68rem;
-  color: var(--muted);
-}
-
-.history-panel-kicker .bi-en {
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.history-panel-kicker .bi-zh {
-  letter-spacing: 0.02em;
-  text-transform: none;
-}
-
 .history-panel-title {
   margin: 0;
   font-size: 1.05rem;
@@ -1771,10 +1755,6 @@
     box-shadow: 0 16px 40px color-mix(in srgb, #000 18%, transparent);
     overflow: hidden;
     min-height: 0;
-  }
-
-  .history-rail.is-minimized {
-    padding-bottom: 12px;
   }
 
   .history-rail .history-pane {

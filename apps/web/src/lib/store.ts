@@ -17,7 +17,7 @@ import type {
   SpeakDirection,
 } from './types'
 
-/** Isolated live lines for Face-to-face — never shared with Solo/Text. */
+/** Isolated live lines for Conversation mode — never shared with Solo/Text. */
 type FaceLive = {
   enInterim: string
   yueInterim: string
@@ -58,16 +58,12 @@ type State = {
   yueDefinitions: string[]
   /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
   yueAlternatives: string[]
-  /** Face-to-face panes only — separate from Solo/Text results. */
+  /** Conversation panes only — separate from Solo/Text results. */
   face: FaceLive
   /** Drill-down details stack (phrase → character → …). Empty = closed. */
   detailStack: DetailLayer[]
   /** When true, details panel lives in the shared dock. */
   detailMinimized: boolean
-  /** @deprecated derived — prefer detailStack; kept for gradual call-site updates */
-  breakdownPhrase: string | null
-  breakdownTranslation: string | null
-  breakdownDefinition: string | null
   /** True while any translate request is in flight. */
   translating: boolean
   /** Target language of the in-flight translation (for pane placement). */
@@ -76,7 +72,7 @@ type State = {
   session: LiveSession | null
   /** How the current live turn was armed — drives button copy. */
   liveInteraction: 'hold' | 'tap' | null
-  /** Face-to-face: which pane owns the active mic turn. */
+  /** Conversation: which pane owns the active mic turn. */
   liveSide: Lang | null
   setMode: (mode: Mode) => void
   setSpeakDirection: (d: SpeakDirection) => void
@@ -84,7 +80,7 @@ type State = {
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
   loadBootstrap: () => Promise<void>
-  /** Press/tap start: mic + STT (no translate yet). Optional side locks Face pane language. */
+  /** Press/tap start: mic + STT (no translate yet). Optional side locks Conversation pane language. */
   startHold: (side?: Lang) => Promise<void>
   /** Short tap release: keep listening until speech pauses, then auto-translate. */
   armTapMode: () => void
@@ -336,7 +332,6 @@ async function runTranslation(
         definition,
         definitions: definitions.length ? definitions : undefined,
         alternatives: lang === 'en' ? alternatives : undefined,
-        engine: result.engine,
       })
       if (lang === 'en') {
         set({
@@ -499,32 +494,6 @@ async function tearDownLive(
   void get().loadBootstrap()
 }
 
-function detailMirror(stack: DetailLayer[]) {
-  const top = stack[stack.length - 1]
-  if (!top) {
-    return {
-      detailStack: [] as DetailLayer[],
-      breakdownPhrase: null as string | null,
-      breakdownTranslation: null as string | null,
-      breakdownDefinition: null as string | null,
-    }
-  }
-  if (top.kind === 'phrase') {
-    return {
-      detailStack: stack,
-      breakdownPhrase: top.phrase,
-      breakdownTranslation: top.translation?.trim() || null,
-      breakdownDefinition: top.definition?.trim() || null,
-    }
-  }
-  return {
-    detailStack: stack,
-    breakdownPhrase: top.char,
-    breakdownTranslation: top.sense?.trim() || null,
-    breakdownDefinition: top.definition?.trim() || null,
-  }
-}
-
 export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
   speakDirection: 'auto',
@@ -544,9 +513,6 @@ export const useYueStore = create<State>((set, get) => ({
   face: emptyFaceLive(),
   detailStack: [],
   detailMinimized: false,
-  breakdownPhrase: null,
-  breakdownTranslation: null,
-  breakdownDefinition: null,
   translating: false,
   translatingTo: null,
   history: [],
@@ -951,7 +917,7 @@ export const useYueStore = create<State>((set, get) => ({
       alternatives: alts.length ? alts : undefined,
     }
     set({
-      ...detailMirror([layer]),
+      detailStack: [layer],
       detailMinimized: false,
     })
   },
@@ -959,7 +925,7 @@ export const useYueStore = create<State>((set, get) => ({
   pushDetail: (layer) => {
     const stack = [...get().detailStack, layer]
     set({
-      ...detailMirror(stack),
+      detailStack: stack,
       detailMinimized: false,
     })
   },
@@ -968,17 +934,17 @@ export const useYueStore = create<State>((set, get) => ({
     const stack = get().detailStack
     if (stack.length <= 1) {
       set({
-        ...detailMirror([]),
+        detailStack: [],
         detailMinimized: false,
       })
       return
     }
-    set(detailMirror(stack.slice(0, -1)))
+    set({ detailStack: stack.slice(0, -1) })
   },
 
   closeBreakdown: () =>
     set({
-      ...detailMirror([]),
+      detailStack: [],
       detailMinimized: false,
     }),
 
@@ -1026,7 +992,7 @@ export const useYueStore = create<State>((set, get) => ({
       yueTranslation: chosen,
       yueAlternatives: nextAlts,
       history: nextHistory,
-      ...detailMirror([layer]),
+      detailStack: [layer],
       detailMinimized: false,
     })
   },
@@ -1037,7 +1003,7 @@ export const useYueStore = create<State>((set, get) => ({
     if (get().mode === 'conversation') {
       set({
         face: emptyFaceLive(),
-        ...detailMirror([]),
+        detailStack: [],
         detailMinimized: false,
         translating: false,
         translatingTo: null,
@@ -1053,7 +1019,7 @@ export const useYueStore = create<State>((set, get) => ({
       yueDefinition: '',
       yueDefinitions: [],
       yueAlternatives: [],
-      ...detailMirror([]),
+      detailStack: [],
       detailMinimized: false,
       translating: false,
       translatingTo: null,

@@ -35,7 +35,6 @@ export type ConversationTurn = {
   /** Other colloquial EN→粵 renderings when the API found meaningful variants. */
   alternatives?: string[]
   at: number
-  engine?: string
 }
 
 export type SpeechMeta = {

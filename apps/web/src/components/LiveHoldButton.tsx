@@ -13,9 +13,9 @@ import type { Lang } from '../lib/types'
 const HOLD_THRESHOLD_MS = 520
 
 type Props = {
-  /** Face panes pass en|yue to lock that speaker’s language for the turn. */
+  /** Conversation panes pass en|yue to lock that speaker’s language for the turn. */
   side?: Lang
-  /** Face panes are language-pure; Solo dock stays bilingual. */
+  /** Conversation panes are language-pure; Solo dock stays bilingual. */
   labelLang?: 'bi' | 'en' | 'zh'
   className?: string
 }
@@ -27,7 +27,7 @@ function pickLabel(copy: Bi, labelLang: Props['labelLang']): string {
 }
 
 /**
- * Shared mic control — Solo dock + each Face-to-face pane.
+ * Shared mic control — Solo dock + each Conversation pane.
  *
  * Modes:
  * 1) Tap → speak → sentence pause auto-stops → translate

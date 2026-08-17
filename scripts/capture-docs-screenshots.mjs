@@ -68,13 +68,6 @@ async function main() {
       console.log('wrote', dest)
       await page.close()
     }
-    try {
-      const { unlink } = await import('node:fs/promises')
-      await unlink(path.join(OUT, '08-app-facetoface-dark.png'))
-      console.log('removed obsolete 08-app-facetoface-dark.png')
-    } catch {
-      /* ok */
-    }
   } finally {
     await browser.close()
   }

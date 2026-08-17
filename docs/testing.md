@@ -38,7 +38,7 @@ Uses novel phrases so DeepSeek is actually hit (not phrase memory). Cloud agents
 npm run smoke:canto
 ```
 
-Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, and interim→final coerce.
+Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, and `stage: interim` coerced to final.
 
 ## Manual mic check
 

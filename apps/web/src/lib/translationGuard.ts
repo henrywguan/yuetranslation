@@ -9,7 +9,7 @@ const META_WORD_RE =
   /\b(question mark|full stop|exclamation mark|comma|particle|interjection|colloquial|softening|classifier|measure word|variant of|same as|see also|archaic|literary|written|greeting word|literally means|used to mean)\b/i
 
 /** True when a string still looks like a dictionary dump, not a conversational translation. */
-export function looksLikeGlossDump(text: string): boolean {
+function looksLikeGlossDump(text: string): boolean {
   const t = text.trim()
   if (!t) return true
   if (DEMO_RE.test(t)) return true
