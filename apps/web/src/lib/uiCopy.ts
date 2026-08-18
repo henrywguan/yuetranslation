@@ -422,9 +422,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 ceoi4 si4 ceoi2 siu1?',
   },
   faq4a: {
-    en: 'Absolutely. Plans are month-to-month (or annual for a discount) and you can cancel whenever you like.',
-    zh: '當然。計劃係按月（或者年費有折扣），你隨時可以取消。',
-    jp: 'dong1 jin4. gai3 waak6 hai6 on3 jyut6 (waak6 ze2 nin4 fai3 jau5 zit3 kau3), nei5 ceoi4 si4 ho2 ji5 ceoi2 siu1.',
+    en: 'Yes, but refunds are up to my discretion. No refunds guaranteed.',
+    zh: '可以，不過退款由我決定，唔保證退款。',
+    jp: 'ho2 ji5, bat1 gwo3 teoi3 fun2 jau4 ngo5 kyut3 ding6, m4 bou2 zing3 teoi3 fun2.',
   },
   stillQuestions: { en: 'Still have questions?', zh: '仍然有問題？', jp: 'jing4 jin4 jau5 man6 tai4?' },
   stillBody: {
