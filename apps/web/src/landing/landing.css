@@ -280,9 +280,6 @@
   line-height: 1.05;
   letter-spacing: -0.04em;
   margin: 0 0 22px;
-  text-wrap: balance;
-  hyphens: none;
-  overflow-wrap: anywhere;
   max-width: 100%;
 }
 
@@ -1555,6 +1552,9 @@
 }
 
 .ln-title .bi-en {
+  display: block;
+  white-space: nowrap;
+  font-size: clamp(1.72rem, 7.6vw, 5.4rem);
   background: linear-gradient(120deg, var(--jade), var(--jade-bright) 55%, #b8ead0);
   -webkit-background-clip: text;
   background-clip: text;
