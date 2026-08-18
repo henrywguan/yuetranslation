@@ -210,6 +210,7 @@ function endTranslate(set: (p: Partial<State>) => void) {
 function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
   if (direction === 'yue') return 'yue'
+  // `cmn` is reserved for later Mandarin STT — treat as auto-detect until then.
   return detected
 }
 
@@ -496,7 +497,7 @@ async function tearDownLive(
 
 export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
-  speakDirection: 'auto',
+  speakDirection: 'en',
   live: false,
   status: 'idle',
   autoSpeak: false,

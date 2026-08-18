@@ -31,6 +31,9 @@ export const ui = {
 
   direction: { en: 'Direction', zh: '方向', jp: 'fong1 hoeng3' },
   dirAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
+  dirEnglish: { en: 'English', zh: '英文', jp: 'jing1 man2' },
+  dirJyutjyu: { en: 'JyutJyu', zh: '粵語', jp: 'jyut6 jyu5' },
+  dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakPro: { en: 'Auto-speak (Pro)', zh: '自動朗讀（專業版）', jp: 'zi6 dung6 long5 duk6 (zyun1 jip6 baan2)' },
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },

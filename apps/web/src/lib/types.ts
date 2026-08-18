@@ -1,6 +1,6 @@
 export type Lang = 'en' | 'yue'
 export type Mode = 'solo' | 'conversation' | 'text'
-export type SpeakDirection = 'auto' | 'en' | 'yue'
+export type SpeakDirection = 'auto' | 'en' | 'yue' | 'cmn'
 
 export type Entitlement = {
   loggedIn: boolean
