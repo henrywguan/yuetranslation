@@ -11,7 +11,7 @@ import { useJpPopup } from '../lib/useJpPopup'
 import { CharDetailSheet, type CharDetail } from './CharDetailSheet'
 import { JpPop } from './JpPop'
 
-/** Cantonese line: compact Jyutping under Han; multi-def phrases get a dotted underline. */
+/** Cantonese line: compact Jyutping under Han, or popup-on-hint for tight cards. */
 export function CantoneseText({
   text,
   definition = '',
@@ -20,6 +20,7 @@ export function CantoneseText({
   placeholder,
   onActivate,
   activateLabel,
+  jpMode = 'inline',
 }: {
   text: string
   definition?: string
@@ -33,6 +34,11 @@ export function CantoneseText({
    */
   onActivate?: (text: string) => void
   activateLabel?: string
+  /**
+   * `inline` — Jyutping under the Han (Solo / Conversation / Text).
+   * `popup` — hide the line; dotted underline + hover/tap reveals Jyutping (History).
+   */
+  jpMode?: 'inline' | 'popup'
 }) {
   const trimmed = text.trim()
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
@@ -71,40 +77,61 @@ export function CantoneseText({
   }
 
   const drillable = segs.some((seg) => Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char)))
-  // Multi-def phrases open the details pane as a whole (char drills live inside that pane).
-  const phraseActivate = Boolean(onActivate) && (hasMultiDef || !drillable)
-  const allowCharDrill = drillable && !hasMultiDef
+  const popupJp = jpMode === 'popup' && Boolean(jp)
+  // Popup lines keep Jyutping on the Han hint — don't nest a phrase button over it.
+  const phraseActivate = Boolean(onActivate) && !popupJp && (hasMultiDef || !drillable)
+  const allowCharDrill = drillable && !hasMultiDef && !popupJp
 
-  const hanClass = `${className || ''}${hasMultiDef ? ' cantonese-multi-def' : ''}`.trim()
+  const hanClass = [
+    className || '',
+    hasMultiDef ? 'cantonese-multi-def' : '',
+    popupJp ? 'cantonese-jp-hint' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const hanChars = segs.length
+    ? segs.map((seg, i) => {
+        const canDrill =
+          allowCharDrill && Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
+        if (!canDrill) {
+          return <span key={`${seg.char}-${i}`}>{seg.char}</span>
+        }
+        return (
+          <button
+            key={`${seg.char}-${i}`}
+            type="button"
+            className="han-drill"
+            aria-haspopup="dialog"
+            onClick={(e) => {
+              e.stopPropagation()
+              openSeg(seg)
+            }}
+          >
+            {seg.char}
+          </button>
+        )
+      })
+    : trimmed
+
+  const han = popupJp ? (
+    <span
+      {...bind}
+      className={hanClass}
+      lang="zh-HK"
+      aria-label={`Jyutping for ${trimmed}`}
+    >
+      {hanChars}
+      <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
+    </span>
+  ) : (
+    <span className={hanClass}>{hanChars}</span>
+  )
 
   const body = (
-    <span className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}`}>
-      <span className={hanClass}>
-        {segs.length
-          ? segs.map((seg, i) => {
-              const canDrill =
-                allowCharDrill && Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
-              if (!canDrill) {
-                return <span key={`${seg.char}-${i}`}>{seg.char}</span>
-              }
-              return (
-                <button
-                  key={`${seg.char}-${i}`}
-                  type="button"
-                  className="han-drill"
-                  aria-haspopup="dialog"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    openSeg(seg)
-                  }}
-                >
-                  {seg.char}
-                </button>
-              )
-            })
-          : trimmed}
-      </span>
-      {jp ? (
+    <span className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}`}>
+      {han}
+      {jp && !popupJp ? (
         onActivate && (drillable || hasMultiDef) && !phraseActivate ? (
           <button
             type="button"

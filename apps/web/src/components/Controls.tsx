@@ -10,11 +10,20 @@ const MODES: { id: Mode; copy: typeof ui.modeSolo }[] = [
   { id: 'text', copy: ui.modeText },
 ]
 
-const DIRS: { id: SpeakDirection; label: string }[] = [
-  { id: 'auto', label: biPlain(ui.dirAuto) },
-  { id: 'en', label: 'EN → 粵' },
-  { id: 'yue', label: '粵 → EN' },
+const DIR_SWITCH: {
+  id: SpeakDirection
+  copy: typeof ui.dirEnglish
+  /** Hidden until Mandarin STT is wired. */
+  hidden?: boolean
+}[] = [
+  { id: 'en', copy: ui.dirEnglish },
+  { id: 'yue', copy: ui.dirJyutjyu },
+  { id: 'cmn', copy: ui.dirMandarin, hidden: true },
 ]
+
+function visibleDirection(d: SpeakDirection): 'en' | 'yue' {
+  return d === 'yue' ? 'yue' : 'en'
+}
 
 export function Controls() {
   const mode = useYueStore((s) => s.mode)
@@ -31,6 +40,7 @@ export function Controls() {
   const faceMode = mode === 'conversation'
   const showLiveDock = mode !== 'text' && !faceMode
   const showDirection = mode !== 'text' && !faceMode
+  const dirValue = visibleDirection(speakDirection)
 
   return (
     <div className="controls">
@@ -59,22 +69,40 @@ export function Controls() {
           className={`opt-row${mode === 'text' || faceMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
         >
           {showDirection ? (
-            <label className="opt-cell opt-dir">
+            <div className="opt-cell opt-dir">
               <span className="opt-kicker">
                 <BiText copy={ui.direction} size="sm" />
               </span>
-              <select
-                value={speakDirection}
-                onChange={(e) => setSpeakDirection(e.target.value as SpeakDirection)}
+              {/* Radio switch adapted from Uiverse.io by Yaya12085 (MIT). */}
+              <div
+                className="dir-switch"
+                role="radiogroup"
                 aria-label={biPlain(ui.direction)}
               >
-                {DIRS.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label}
-                  </option>
+                {DIR_SWITCH.map((d) => (
+                  <label
+                    key={d.id}
+                    className={`dir-switch-opt${d.hidden ? ' is-pending' : ''}`}
+                    hidden={d.hidden}
+                  >
+                    <input
+                      type="radio"
+                      name="yue-speak-direction"
+                      value={d.id}
+                      checked={!d.hidden && dirValue === d.id}
+                      disabled={d.hidden}
+                      onChange={() => {
+                        if (d.hidden) return
+                        setSpeakDirection(d.id)
+                      }}
+                    />
+                    <span className="dir-switch-name">
+                      <BiText copy={d.copy} size="sm" />
+                    </span>
+                  </label>
                 ))}
-              </select>
-            </label>
+              </div>
+            </div>
           ) : null}
 
           <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>

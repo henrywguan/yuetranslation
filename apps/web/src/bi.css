@@ -15,16 +15,16 @@
   display: inline-block;
   max-width: 100%;
   font-family: var(--font-body);
-  font-size: 0.58em;
+  font-size: clamp(0.68rem, 2.35vw, 0.82rem);
   font-weight: 500;
   letter-spacing: 0.02em;
   /* Tall digits / punctuation were clipping under tight line-boxes + button UA styles. */
   line-height: 1.45;
   padding: 0.18em 0 0.06em;
-  overflow: visible;
   color: color-mix(in srgb, var(--mint) 62%, transparent);
-  white-space: nowrap;
-  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 button.jyutping,
@@ -65,6 +65,29 @@ button.jyutping--activate {
 .cantonese-activate--multi-def:hover .cantonese-multi-def,
 .cantonese-activate--multi-def:focus-visible .cantonese-multi-def {
   border-bottom-color: color-mix(in srgb, var(--mint) 85%, transparent);
+}
+
+/* History / tight cards: Jyutping lives in the hover-tap popup */
+.cantonese-jp-hint {
+  border-bottom: 1.5px dotted color-mix(in srgb, var(--mint) 55%, transparent);
+  padding-bottom: 0.05em;
+  cursor: help;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cantonese-block--jp-popup {
+  gap: 0;
+}
+
+.cantonese-jp-hint:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+[data-theme='light'] .cantonese-jp-hint {
+  border-bottom-color: color-mix(in srgb, var(--jade-deep) 48%, transparent);
 }
 
 .ink-in {
@@ -109,7 +132,7 @@ button.jyutping--activate {
 }
 
 .result-with-def .jyutping {
-  font-size: 0.72em;
+  font-size: clamp(0.68rem, 2.35vw, 0.82rem);
 }
 
 .jp-pop {
@@ -343,6 +366,8 @@ button.jyutping--activate {
 .spoken-line .cantonese-block {
   flex: 1 1 auto;
   min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 button.spoken-line-text--action {

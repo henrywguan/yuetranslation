@@ -160,19 +160,27 @@
 
 .solo-source {
   margin: 0;
-  font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+  font-size: clamp(1.15rem, 4.6vw, 1.85rem);
   line-height: 1.35;
   font-weight: 500;
   min-height: 2.4em;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .solo-translation {
   font-family: var(--font-body);
-  font-size: clamp(1.55rem, 6.5vw, 2.15rem);
+  font-size: clamp(1.2rem, 5.2vw, 2.15rem);
   line-height: 1.35;
   font-weight: 600;
   color: var(--ink-bright);
   min-height: 2.6em;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .solo-divider {
@@ -526,10 +534,13 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 
 .history-card-block {
   min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .history-card-label {
@@ -543,14 +554,23 @@
 .history-card-line,
 .history-card-en {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: clamp(0.82rem, 1.7vw, 0.98rem);
   line-height: 1.4;
   font-weight: 550;
   color: var(--ink-bright, var(--ink));
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .history-card-line-wrap {
   min-width: 0;
+  max-width: 100%;
+}
+
+.history-card-line-wrap .cantonese-block,
+.history-card-line-wrap .cantonese-jp-hint {
+  max-width: 100%;
 }
 
 .history-card-detail {
@@ -828,11 +848,13 @@
   width: 100%;
   max-width: 22rem;
   font-family: var(--font-body);
-  font-size: clamp(1.55rem, 6.8vw, 2.35rem);
+  font-size: clamp(1.25rem, 5.4vw, 2.15rem);
   font-weight: 650;
   line-height: 1.35;
   color: var(--ink-bright, var(--ink));
   text-wrap: balance;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .pane-hero--en {
@@ -856,8 +878,9 @@
 }
 
 .pane-hero .jyutping {
-  font-size: 0.55em;
+  font-size: clamp(0.68rem, 2.35vw, 0.82rem);
   font-weight: 550;
+  white-space: normal;
 }
 
 .pane-hero .placeholder {
@@ -1074,6 +1097,88 @@
   background: color-mix(in srgb, var(--jade) 6%, transparent);
 }
 
+/* Direction radio — adapted from Uiverse.io by Yaya12085 (MIT)
+   https://uiverse.io/Yaya12085/rude-mouse-79 */
+.dir-switch {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 11.5rem;
+  padding: 0.18rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--harbor-mid) 72%, var(--surface));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  font-size: 0.72rem;
+}
+
+.dir-switch-opt {
+  flex: 1 1 0;
+  text-align: center;
+  min-width: 0;
+}
+
+.dir-switch-opt.is-pending,
+.dir-switch-opt[hidden] {
+  display: none;
+}
+
+.dir-switch-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dir-switch-name {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.45rem;
+  border: 0;
+  padding: 0.32rem 0.15rem;
+  color: var(--muted);
+  transition:
+    background 0.15s ease-in-out,
+    color 0.15s ease-in-out;
+}
+
+.dir-switch-name .bi {
+  align-items: center;
+  gap: 0.02rem;
+}
+
+.dir-switch-name .bi-en {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.dir-switch-name .bi-zh {
+  font-size: 0.72em;
+}
+
+.dir-switch-opt input:checked + .dir-switch-name {
+  background: color-mix(in srgb, var(--jade) 22%, var(--surface-strong));
+  color: var(--ink-bright, var(--ink));
+  font-weight: 600;
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--jade) 18%, transparent);
+}
+
+.dir-switch-opt input:focus-visible + .dir-switch-name {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 1px;
+}
+
+[data-theme='light'] .dir-switch {
+  background: color-mix(in srgb, var(--harbor-mid) 55%, #fff);
+}
+
+[data-theme='light'] .dir-switch-opt input:checked + .dir-switch-name {
+  background: color-mix(in srgb, var(--jade) 28%, #fff);
+}
+
 .opt-kicker {
   display: flex;
   justify-content: center;
@@ -1108,28 +1213,6 @@
 .opt-clear .bi-zh {
   text-align: center;
   font-size: 0.88em;
-}
-
-.opt-dir select {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  max-width: 7.4rem;
-  background-color: transparent;
-  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 10px) calc(50% - 2px),
-    calc(100% - 5px) calc(50% - 2px);
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  color: var(--ink);
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
-  border-radius: 0;
-  padding: 2px 16px 3px 4px;
-  text-align: center;
-  text-align-last: center;
 }
 
 .opt-cell.disabled {
@@ -1338,9 +1421,11 @@
 
 .text-result .result-text {
   margin: 4px 0 0;
-  font-size: 1.35rem;
+  font-size: clamp(1.1rem, 4vw, 1.35rem);
   font-weight: 600;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .text-result,
@@ -1651,10 +1736,6 @@
   text-align: center;
 }
 
-.opt-dir select {
-  min-width: 0;
-}
-
 .plan-chip .bi,
 .plan-remain .bi,
 .plan-link .bi {
@@ -1710,9 +1791,8 @@
     padding: 6px 6px 7px;
   }
 
-  .opt-dir select {
-    max-width: 6.8rem;
-    font-size: 0.7rem;
+  .dir-switch {
+    max-width: 100%;
   }
 }
 
@@ -1773,7 +1853,7 @@
 
   .history-card-pair {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 12px;
   }
 }

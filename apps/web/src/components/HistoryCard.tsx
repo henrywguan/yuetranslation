@@ -23,8 +23,7 @@ function LangLine({
         definition={definition}
         definitions={definitions}
         className="history-card-line"
-        onActivate={onBreakdown}
-        activateLabel={biPlain(ui.charDetail)}
+        jpMode="popup"
       />
     )
   }
@@ -62,7 +61,7 @@ export function HistoryCard({
   const hasDetails =
     Boolean(turn.definition?.trim()) ||
     Boolean(turn.alternatives?.length) ||
-    yueDefs.length > 1
+    yueDefs.length > 0
 
   return (
     <article
@@ -157,7 +156,7 @@ export function HistoryCard({
 
       {expanded ? (
         <div className="history-card-detail" id={`history-detail-${turn.id}`}>
-          {yueDefs.length > 1 ? (
+          {yueDefs.length ? (
             <div className="history-card-defs">
               <p className="history-card-detail-label">
                 <BiText copy={ui.definition} size="sm" layout="inline" />
@@ -187,6 +186,7 @@ export function HistoryCard({
                   <li key={alt}>
                     <CantoneseText
                       text={alt}
+                      jpMode="popup"
                       onActivate={onBreakdown}
                       activateLabel={biPlain(ui.charDetail)}
                     />
