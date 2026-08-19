@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { BiText } from './BiText'
+import { GoogleIcon } from './GoogleIcon'
 import {
   closeAuthScreen,
   getSession,
@@ -11,7 +12,7 @@ import {
   signUp,
   supabaseEnabled,
 } from '../lib/auth'
-import { ui } from '../lib/uiCopy'
+import { biPlain, ui } from '../lib/uiCopy'
 
 type Props = {
   onAuthChange?: () => void
@@ -99,12 +100,18 @@ export function AuthPanel({ onAuthChange }: Props) {
           </button>
         </div>
 
-        <button type="button" className="auth-google full" disabled={busy} onClick={() => void googleSignIn()}>
-          <span className="auth-google-mark" aria-hidden="true">
-            G
-          </span>
-          <BiText copy={ui.signInGoogle} size="sm" />
-        </button>
+        <div className="auth-google-wrap">
+          <button
+            type="button"
+            className="auth-google"
+            disabled={busy}
+            aria-label={biPlain(ui.signInGoogle)}
+            title={biPlain(ui.signInGoogle)}
+            onClick={() => void googleSignIn()}
+          >
+            <GoogleIcon size={22} />
+          </button>
+        </div>
 
         <p className="auth-divider">
           <BiText copy={ui.signInOr} size="sm" />
