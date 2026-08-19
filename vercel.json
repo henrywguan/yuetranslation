@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build:vercel",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "npm ci && npm ci --prefix apps/web && npm ci --prefix apps/api",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60,
+      "includeFiles": "apps/api/src/canto/data/**"
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
+import { openAuthScreen, supabaseEnabled } from '../lib/auth'
+import { openBillingPortal, openUpgrade } from '../lib/billing'
 import { ui } from '../lib/uiCopy'
 
 function remainCopy(seconds: number) {
@@ -8,8 +10,17 @@ function remainCopy(seconds: number) {
   return ui.secsLeft(seconds)
 }
 
+function planLabel(plan: string, requireLogin: boolean) {
+  if (plan === 'pro') return ui.planPro
+  if (plan === 'max') return ui.planMax
+  if (plan === 'free') return ui.planFree
+  return requireLogin ? ui.signIn : ui.planGuest
+}
+
 export function PlanChip() {
   const entitlement = useYueStore((s) => s.entitlement)
+  const loadBootstrap = useYueStore((s) => s.loadBootstrap)
+
   if (!entitlement) {
     return (
       <span className="plan-chip muted">
@@ -19,8 +30,23 @@ export function PlanChip() {
   }
 
   const plan = entitlement.plan
-  const label =
-    plan === 'pro' ? ui.planPro : plan === 'free' ? ui.planFree : entitlement.requireLogin ? ui.signIn : ui.planGuest
+  const label = planLabel(plan, entitlement.requireLogin)
+
+  const onSignIn = (event: React.MouseEvent) => {
+    if (!supabaseEnabled()) return
+    event.preventDefault()
+    openAuthScreen()
+  }
+
+  const onUpgrade = (event: React.MouseEvent) => {
+    event.preventDefault()
+    void openUpgrade('pro', 'month').catch(() => loadBootstrap())
+  }
+
+  const onBilling = (event: React.MouseEvent) => {
+    event.preventDefault()
+    void openBillingPortal().catch(() => loadBootstrap())
+  }
 
   return (
     <div className="plan-chip-row">
@@ -32,13 +58,24 @@ export function PlanChip() {
           <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" />
         </span>
       ) : entitlement.loginUrl && !entitlement.loggedIn ? (
-        <a className="plan-link" href={entitlement.loginUrl} target="_top" rel="noreferrer">
-          <BiText copy={ui.signIn} size="sm" />
-        </a>
+        supabaseEnabled() ? (
+          <button type="button" className="plan-link" onClick={onSignIn}>
+            <BiText copy={ui.signIn} size="sm" />
+          </button>
+        ) : (
+          <a className="plan-link" href={entitlement.loginUrl} target="_top" rel="noreferrer">
+            <BiText copy={ui.signIn} size="sm" />
+          </a>
+        )
       ) : entitlement.upgradeUrl ? (
-        <a className="plan-link" href={entitlement.upgradeUrl} target="_top" rel="noreferrer">
+        <button type="button" className="plan-link" onClick={onUpgrade}>
           <BiText copy={ui.upgrade} size="sm" />
-        </a>
+        </button>
+      ) : null}
+      {entitlement.loggedIn && (plan === 'pro' || plan === 'max') ? (
+        <button type="button" className="plan-link" onClick={onBilling}>
+          <BiText copy={ui.manageBilling} size="sm" />
+        </button>
       ) : null}
     </div>
   )

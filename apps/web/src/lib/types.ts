@@ -5,7 +5,7 @@ export type SpeakDirection = 'auto' | 'en' | 'yue' | 'cmn'
 export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean
-  plan: 'guest' | 'free' | 'pro'
+  plan: 'guest' | 'free' | 'pro' | 'max'
   limits: {
     plan: string
     live_minutes: number

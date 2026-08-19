@@ -115,6 +115,156 @@
 .plan-link {
   color: var(--jade);
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+}
+
+.auth-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(0 0 0 / 45%);
+  cursor: pointer;
+}
+
+.auth-panel {
+  position: relative;
+  z-index: 1;
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  display: grid;
+  gap: 14px;
+}
+
+.auth-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.auth-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  color: inherit;
+}
+
+.auth-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mint);
+}
+
+.auth-switch button,
+.auth-signout {
+  border: 0;
+  background: transparent;
+  color: var(--jade);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.auth-signout {
+  color: var(--muted);
+  justify-self: start;
+}
+
+.auth-oauth-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.auth-oauth-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, #fff 12%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.auth-oauth-btn--apple {
+  border-color: rgb(0 0 0 / 55%);
+  background: #000;
+  color: #fff;
+}
+
+.auth-oauth-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
+  background: color-mix(in srgb, var(--surface) 78%, #fff 22%);
+}
+
+.auth-oauth-btn--apple:hover:not(:disabled) {
+  border-color: rgb(0 0 0 / 75%);
+  background: #111;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 28%);
+}
+
+.auth-oauth-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-oauth-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.auth-divider {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.plan-chip.plan-max {
+  background: color-mix(in srgb, var(--gold, #d4a853) 22%, transparent);
+  color: var(--gold, #e8c878);
+  border-color: color-mix(in srgb, var(--gold, #d4a853) 35%, transparent);
 }
 
 .main {

@@ -14,6 +14,8 @@ import { TextMode } from './components/TextMode'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
 import { useYueStore } from './lib/store'
+import { openAuthScreen, onAuthChange, supabaseEnabled } from './lib/auth'
+import { openUpgrade } from './lib/billing'
 import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
 import { isEmbeddedAppView } from './lib/useHashRoute'
@@ -31,6 +33,9 @@ export function TranslatorApp() {
 
   useEffect(() => {
     void loadBootstrap()
+    return onAuthChange(() => {
+      void loadBootstrap()
+    })
   }, [loadBootstrap])
 
   return (
@@ -85,14 +90,20 @@ export function TranslatorApp() {
           <div className="banner error" role="alert">
             <span>{error}</span>
             {entitlement?.reason === 'login_required' && entitlement.loginUrl ? (
-              <a href={entitlement.loginUrl} target="_top" rel="noreferrer">
-                <BiText copy={ui.signIn} size="sm" />
-              </a>
+              supabaseEnabled() ? (
+                <button type="button" onClick={() => openAuthScreen()}>
+                  <BiText copy={ui.signIn} size="sm" />
+                </button>
+              ) : (
+                <a href={entitlement.loginUrl} target="_top" rel="noreferrer">
+                  <BiText copy={ui.signIn} size="sm" />
+                </a>
+              )
             ) : null}
             {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
-              <a href={entitlement.upgradeUrl} target="_top" rel="noreferrer">
+              <button type="button" onClick={() => void openUpgrade('pro', 'month')}>
                 <BiText copy={ui.upgrade} size="sm" />
-              </a>
+              </button>
             ) : null}
           </div>
         ) : null}
