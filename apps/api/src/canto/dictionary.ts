@@ -1,13 +1,12 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
+import { cantoDataDir } from './dataDir.js'
 import { normalizeLookupKey, uniqStrings } from './normalize.js'
 import type { PhraseEntry, TargetLang } from './types.js'
 
 type PhrasesFile = { version: number; entries: PhraseEntry[] }
 
-const dir = dirname(fileURLToPath(import.meta.url))
-const raw = JSON.parse(readFileSync(join(dir, 'data/phrases.json'), 'utf8')) as PhrasesFile
+const raw = JSON.parse(readFileSync(join(cantoDataDir(), 'phrases.json'), 'utf8')) as PhrasesFile
 
 type IndexKey = string
 
