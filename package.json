@@ -10,6 +10,7 @@
     "cloud:install": "./scripts/cloud-agent-install.sh",
     "cloud:start": "./scripts/cloud-agent-start.sh",
     "build:web": "node scripts/generate-icons.mjs && npm run build --prefix apps/web",
+    "build:vercel": "node scripts/generate-icons.mjs && npm run build --prefix apps/web",
     "build:web:marketing": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf dist-marketing && mkdir -p dist-marketing && cp -R apps/web/dist/. dist-marketing/",
     "build:web:wp": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf wordpress/yue-translator/app && mkdir -p wordpress/yue-translator/app && cp -R apps/web/dist/. wordpress/yue-translator/app/",
     "icons": "node scripts/generate-icons.mjs",

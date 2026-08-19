@@ -180,11 +180,12 @@ export function CharacterBreakdownHost() {
     top.kind === 'phrase'
       ? (top.alternatives || []).map((a) => a.trim()).filter(Boolean)
       : []
+  const topLabel = top.kind === 'phrase' ? top.phrase : top.char
   const showDefinition =
     Boolean(definitionText) &&
     definitions.length <= 1 &&
     definitionText.toLowerCase() !== translationText.toLowerCase() &&
-    definitionText.toLowerCase() !== (top.kind === 'phrase' ? top.phrase : top.char).toLowerCase()
+    definitionText.toLowerCase() !== topLabel.toLowerCase()
 
   const body = (
     <>
@@ -196,8 +197,8 @@ export function CharacterBreakdownHost() {
           <p className="detail-panel-kicker">
             {stack.length > 1 ? `Details · ${stack.length} deep` : translationText ? 'Details' : 'Character breakdown'}
           </p>
-          <h2 id={titleId} className="detail-panel-title" lang={top.kind === 'char' || /[一-龥]/.test(top.kind === 'phrase' ? top.phrase : top.char) ? 'zh-HK' : 'en'}>
-            {top.kind === 'phrase' ? top.phrase : top.char}
+          <h2 id={titleId} className="detail-panel-title" lang={top.kind === 'char' || /[一-龥]/.test(topLabel) ? 'zh-HK' : 'en'}>
+            {topLabel}
           </h2>
           {top.kind === 'char' && top.jp ? (
             <p className="detail-panel-jp" lang="en">

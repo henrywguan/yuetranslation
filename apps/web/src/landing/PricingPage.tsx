@@ -7,6 +7,8 @@ import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
+import { startCheckout } from '../lib/billing'
+import { getAccessToken, openAuthScreen, supabaseEnabled } from '../lib/auth'
 import { BiText } from '../components/BiText'
 import { JyutLogo } from '../components/JyutLogo'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
@@ -54,6 +56,27 @@ const FAQ = [
 function price(plan: MarketingPlan, billing: Billing): string {
   const value = billing === 'annual' ? plan.annual : plan.monthly
   return `$${value}`
+}
+
+async function onPlanCta(plan: MarketingPlan, billing: Billing) {
+  if (plan.ctaOpens === 'app') {
+    openApp()
+    return
+  }
+  if (!supabaseEnabled()) {
+    openPricing()
+    return
+  }
+  const token = await getAccessToken()
+  if (!token) {
+    openAuthScreen()
+    return
+  }
+  if (plan.id === 'pro' || plan.id === 'max') {
+    await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
+    return
+  }
+  openPricing()
 }
 
 export function PricingPage() {
@@ -138,7 +161,7 @@ export function PricingPage() {
               </ul>
               <MagneticButton
                 className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                onClick={() => (plan.ctaOpens === 'app' ? openApp() : openPricing())}
+                onClick={() => void onPlanCta(plan, billing)}
               >
                 <BiText copy={plan.cta} size="sm" />
               </MagneticButton>

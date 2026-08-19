@@ -116,6 +116,10 @@ export const ui = {
   planPro: { en: 'Pro', zh: '專業版', jp: 'zyun1 jip6 baan2' },
   planGuest: { en: 'Guest', zh: '訪客', jp: 'fong2 haak3' },
   signIn: { en: 'Sign in', zh: '登入', jp: 'dang1 jap6' },
+  register: { en: 'Create account', zh: '註冊', jp: 'zyu3 caak1' },
+  createAccount: { en: 'Need an account? Register', zh: '未有帳戶？註冊', jp: 'mei6 jau5 zoeng3 wu6？zyu3 caak1' },
+  signOut: { en: 'Sign out', zh: '登出', jp: 'dang1 ceot1' },
+  manageBilling: { en: 'Billing', zh: '帳單', jp: 'zoeng3 daan1' },
   upgrade: { en: 'Upgrade', zh: '升級', jp: 'sing1 kap1' },
   hoursLeft: (n: number): Bi => ({
     en: `${n}h left`,

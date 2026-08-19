@@ -1,4 +1,5 @@
 import type { Entitlement, Lang } from './types'
+import { getAccessToken } from './auth'
 
 function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -27,9 +28,11 @@ async function apiFetch(path: string, init: RequestInit = {}) {
     ...((init.headers as Record<string, string>) || {}),
   }
   if (WP_NONCE) headers['X-WP-Nonce'] = WP_NONCE
+  const token = await getAccessToken()
+  if (token) headers.Authorization = `Bearer ${token}`
 
   return fetch(`${API_BASE}${path}`, {
-    credentials: 'include',
+    credentials: WP_NONCE ? 'include' : 'same-origin',
     ...init,
     headers,
   })

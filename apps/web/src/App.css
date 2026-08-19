@@ -115,6 +115,97 @@
 .plan-link {
   color: var(--jade);
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+}
+
+.auth-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(0 0 0 / 45%);
+  cursor: pointer;
+}
+
+.auth-panel {
+  position: relative;
+  z-index: 1;
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  display: grid;
+  gap: 14px;
+}
+
+.auth-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.auth-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  color: inherit;
+}
+
+.auth-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mint);
+}
+
+.auth-switch button,
+.auth-signout {
+  border: 0;
+  background: transparent;
+  color: var(--jade);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.auth-signout {
+  color: var(--muted);
+  justify-self: start;
+}
+
+.plan-chip.plan-max {
+  background: color-mix(in srgb, var(--gold, #d4a853) 22%, transparent);
+  color: var(--gold, #e8c878);
+  border-color: color-mix(in srgb, var(--gold, #d4a853) 35%, transparent);
 }
 
 .main {
