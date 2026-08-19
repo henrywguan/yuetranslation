@@ -117,7 +117,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
     }
     const azureLang = lang === 'en' || lang === 'en-US' ? 'en' : 'zh-HK'
     const audio = await synthesize(text, azureLang)
-    if (req.auth?.userId) {
+    if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
     }
     res.setHeader('Content-Type', 'audio/mpeg')
@@ -140,7 +140,7 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
     return
   }
   const seconds = Math.max(0, Math.min(120, Number(req.body?.seconds || 0)))
-  if (req.auth?.userId && seconds > 0) {
+  if (!env.openMode && req.auth?.userId && seconds > 0) {
     await addLiveSeconds(req.auth.userId, seconds)
   }
   res.json(await entitlementFor(req))
