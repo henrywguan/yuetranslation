@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { AppleIcon } from './AppleIcon'
 import { BiText } from './BiText'
 import { GoogleIcon } from './GoogleIcon'
 import {
@@ -7,6 +8,7 @@ import {
   isAuthScreenOpen,
   onAuthChange as subscribeAuthChange,
   signIn,
+  signInWithApple,
   signInWithGoogle,
   signOut,
   signUp,
@@ -76,13 +78,15 @@ export function AuthPanel({ onAuthChange }: Props) {
     }
   }
 
-  const googleSignIn = async () => {
+  const oauthSignIn = async (provider: 'google' | 'apple') => {
     setBusy(true)
     setMessage(null)
     try {
-      await signInWithGoogle()
+      if (provider === 'google') await signInWithGoogle()
+      else await signInWithApple()
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Google sign-in failed')
+      const label = provider === 'google' ? 'Google' : 'Apple'
+      setMessage(e instanceof Error ? e.message : `${label} sign-in failed`)
       setBusy(false)
     }
   }
@@ -100,16 +104,26 @@ export function AuthPanel({ onAuthChange }: Props) {
           </button>
         </div>
 
-        <div className="auth-google-wrap">
+        <div className="auth-oauth-row">
           <button
             type="button"
-            className="auth-google"
+            className="auth-oauth-btn"
             disabled={busy}
             aria-label={biPlain(ui.signInGoogle)}
             title={biPlain(ui.signInGoogle)}
-            onClick={() => void googleSignIn()}
+            onClick={() => void oauthSignIn('google')}
           >
             <GoogleIcon size={22} />
+          </button>
+          <button
+            type="button"
+            className="auth-oauth-btn auth-oauth-btn--apple"
+            disabled={busy}
+            aria-label={biPlain(ui.signInApple)}
+            title={biPlain(ui.signInApple)}
+            onClick={() => void oauthSignIn('apple')}
+          >
+            <AppleIcon size={22} />
           </button>
         </div>
 

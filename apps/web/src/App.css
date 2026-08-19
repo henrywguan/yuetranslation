@@ -202,12 +202,13 @@
   justify-self: start;
 }
 
-.auth-google-wrap {
+.auth-oauth-row {
   display: flex;
   justify-content: center;
+  gap: 0.75rem;
 }
 
-.auth-google {
+.auth-oauth-btn {
   display: inline-grid;
   place-items: center;
   width: 3rem;
@@ -225,18 +226,30 @@
     background 0.18s ease;
 }
 
-.auth-google:hover:not(:disabled) {
+.auth-oauth-btn--apple {
+  border-color: rgb(0 0 0 / 55%);
+  background: #000;
+  color: #fff;
+}
+
+.auth-oauth-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--jade) 28%, var(--glass-border));
   box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
   background: color-mix(in srgb, var(--surface) 78%, #fff 22%);
 }
 
-.auth-google:active:not(:disabled) {
+.auth-oauth-btn--apple:hover:not(:disabled) {
+  border-color: rgb(0 0 0 / 75%);
+  background: #111;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 28%);
+}
+
+.auth-oauth-btn:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.auth-google:disabled {
+.auth-oauth-btn:disabled {
   opacity: 0.55;
   cursor: wait;
 }

@@ -62,10 +62,18 @@ export function oauthRedirectUrl(): string {
 }
 
 export async function signInWithGoogle() {
+  await signInWithOAuthProvider('google')
+}
+
+export async function signInWithApple() {
+  await signInWithOAuthProvider('apple')
+}
+
+async function signInWithOAuthProvider(provider: 'google' | 'apple') {
   const sb = getSupabase()
   if (!sb) throw new Error('Auth is not configured.')
   const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
+    provider,
     options: { redirectTo: oauthRedirectUrl() },
   })
   if (error) throw error

@@ -117,6 +117,7 @@ export const ui = {
   planGuest: { en: 'Guest', zh: '訪客', jp: 'fong2 haak3' },
   signIn: { en: 'Sign in', zh: '登入', jp: 'dang1 jap6' },
   signInGoogle: { en: 'Continue with Google', zh: '使用 Google 登入', jp: 'jau6 Google dang1 jap6' },
+  signInApple: { en: 'Continue with Apple', zh: '使用 Apple 登入', jp: 'jau6 Apple dang1 jap6' },
   signInOr: { en: 'or', zh: '或', jp: 'waak6' },
   register: { en: 'Create account', zh: '註冊', jp: 'zyu3 caak1' },
   createAccount: { en: 'Need an account? Register', zh: '未有帳戶？註冊', jp: 'mei6 jau5 zoeng3 wu6？zyu3 caak1' },
