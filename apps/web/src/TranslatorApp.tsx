@@ -7,6 +7,7 @@ import { Controls } from './components/Controls'
 import { JyutLogo } from './components/JyutLogo'
 import { ConversationView } from './components/ConversationView'
 import { JadeGlassField } from './components/JadeGlassField'
+import { AppClothBg } from './components/AppClothBg'
 import { PanelDock } from './components/PanelDock'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
@@ -37,6 +38,7 @@ export function TranslatorApp() {
     <MotionConfig reducedMotion="user">
       <div className="app-shell">
         <JadeGlassField variant="app" className={live ? 'is-listening' : ''} />
+        <AppClothBg listening={live} />
         <header className="brand-bar">
           <motion.div
             className="brand"

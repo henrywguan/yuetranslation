@@ -4,6 +4,7 @@ import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking, isTtsPlaying } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
+import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
 import { prefetchSpeechToken, peekSpeechToken } from './speechToken'
 import { newId } from './id'
 import { sanitizeTranslationText } from './translationGuard'
@@ -151,6 +152,7 @@ function clearNoSpeechTimer() {
 }
 
 function releaseHeldMic() {
+  disconnectMicAnalyser()
   stopMediaStream(heldMicStream)
   heldMicStream = null
 }
@@ -722,6 +724,7 @@ export const useYueStore = create<State>((set, get) => ({
         return
       }
       heldMicStream = primed
+      connectMicAnalyser(primed)
 
       if (gen !== holdGen || (!holding && !tapSticky)) {
         releaseHeldMic()

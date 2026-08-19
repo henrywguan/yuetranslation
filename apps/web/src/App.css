@@ -12,6 +12,27 @@
   box-sizing: border-box;
 }
 
+/* Three.js cloth behind the translator app */
+.app-cloth-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.app-cloth-bg canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-cloth-bg canvas {
+    animation: none;
+  }
+}
+
 .brand-bar,
 .main,
 .controls,
