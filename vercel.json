@@ -4,8 +4,8 @@
   "outputDirectory": "apps/web/dist",
   "installCommand": "npm ci && npm ci --prefix api && npm ci --prefix apps/web && npm ci --prefix apps/api",
   "env": {
-    "YUE_OPEN_MODE": "1",
-    "YUE_REQUIRE_LOGIN": "0"
+    "YUE_OPEN_MODE": "0",
+    "YUE_REQUIRE_LOGIN": "1"
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },

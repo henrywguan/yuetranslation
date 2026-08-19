@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
+import { AppLoginGate } from './components/AppLoginGate'
 import { bootstrapAuthSession } from './lib/auth'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
@@ -26,7 +27,11 @@ export default function App() {
   if (!ready) return null
 
   let page = <Landing />
-  if (route === 'app') page = <TranslatorApp />
+  if (route === 'app') page = (
+    <AppLoginGate>
+      <TranslatorApp />
+    </AppLoginGate>
+  )
   else if (route === 'pricing') page = <PricingPage />
 
   return (

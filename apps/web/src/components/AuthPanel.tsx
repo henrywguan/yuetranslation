@@ -18,9 +18,11 @@ import { biPlain, ui } from '../lib/uiCopy'
 
 type Props = {
   onAuthChange?: () => void
+  /** When true, auth cannot be dismissed until the user signs in. */
+  required?: boolean
 }
 
-export function AuthPanel({ onAuthChange }: Props) {
+export function AuthPanel({ onAuthChange, required = false }: Props) {
   const [open, setOpen] = useState(isAuthScreenOpen())
   const [mode, setMode] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
@@ -40,20 +42,30 @@ export function AuthPanel({ onAuthChange }: Props) {
     return subscribeAuthChange((session) => {
       setSignedIn(Boolean(session))
       if (session) {
-        closeAuthScreen()
+        if (!required) closeAuthScreen()
         setOpen(false)
         onAuthChange?.()
       }
     })
-  }, [onAuthChange])
+  }, [onAuthChange, required])
 
-  if (!supabaseEnabled() || !open) return null
+  if (!supabaseEnabled()) return null
+  if (!required && !open) return null
+  if (required && signedIn) return null
 
   const close = () => {
+    if (required) return
     closeAuthScreen()
     setOpen(false)
     setMessage(null)
   }
+
+  const backdrop =
+    required ? (
+      <div className="auth-backdrop auth-backdrop--locked" aria-hidden />
+    ) : (
+      <button type="button" className="auth-backdrop" aria-label="Close" onClick={close} />
+    )
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -93,15 +105,17 @@ export function AuthPanel({ onAuthChange }: Props) {
 
   return (
     <div className="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-      <button type="button" className="auth-backdrop" aria-label="Close" onClick={close} />
+      {backdrop}
       <form className="auth-panel" onSubmit={submit}>
         <div className="auth-head">
           <h2 id="auth-title">
             <BiText copy={mode === 'signin' ? ui.signIn : ui.register} size="md" />
           </h2>
-          <button type="button" className="auth-close" onClick={close} aria-label="Close">
-            ×
-          </button>
+          {!required ? (
+            <button type="button" className="auth-close" onClick={close} aria-label="Close">
+              ×
+            </button>
+          ) : null}
         </div>
 
         <div className="auth-oauth-row">
@@ -167,7 +181,7 @@ export function AuthPanel({ onAuthChange }: Props) {
             </button>
           )}
         </p>
-        {signedIn ? (
+        {signedIn && !required ? (
           <button
             type="button"
             className="auth-signout"

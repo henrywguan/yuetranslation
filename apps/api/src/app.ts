@@ -84,7 +84,13 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
 app.post('/api/translate', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
-    res.status(402).json({ message: 'Translation not allowed on your plan.', entitlement: ent })
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message:
+        ent.reason === 'login_required'
+          ? 'Please log in to use translation.'
+          : 'Translation not allowed on your plan.',
+      entitlement: ent,
+    })
     return
   }
   try {
@@ -94,7 +100,18 @@ app.post('/api/translate', async (req: AuthedRequest, res) => {
   }
 })
 
-app.post('/api/breakdown', async (req, res) => {
+app.post('/api/breakdown', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.textTranslate) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message:
+        ent.reason === 'login_required'
+          ? 'Please log in to use character breakdown.'
+          : 'Character breakdown is not available on your plan.',
+      entitlement: ent,
+    })
+    return
+  }
   try {
     res.json(await breakdown(req.body))
   } catch (e) {

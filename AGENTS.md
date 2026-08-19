@@ -70,7 +70,12 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 - Start: `./scripts/cloud-agent-start.sh` (frees stale 5173/8787 only)
 - Config: `.cursor/environment.json`
 
-### Phone mic testing (Henry’s machine)
+### Production auth & metering (Vercel)
+
+Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests hitting `#/app` see a required sign-in gate; live/TTS usage is persisted to Supabase when open mode is off and the user has a JWT.
+
+Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Run `supabase/migrations/001_profiles_usage.sql` in the Supabase SQL editor before launch. Override `YUE_OPEN_MODE=1` in the Vercel dashboard only for private testing.
+
 
 For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.
 
