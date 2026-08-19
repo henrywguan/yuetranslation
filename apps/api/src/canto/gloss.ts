@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { gunzipSync } from 'node:zlib'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
+import { cantoDataDir } from './dataDir.js'
 import { wordshkEnabled } from './licenseGate.js'
 
 export type GlossHit = {
@@ -19,7 +19,7 @@ type PackedDict = {
   entries: Record<string, { jyutping: string | null; gloss: string; simplified?: string | null }>
 }
 
-const dir = dirname(fileURLToPath(import.meta.url))
+const dataDir = cantoDataDir()
 
 /** Hand-tuned HK colloquial particles / high-frequency chars (overrides imports). */
 const SEED: Record<string, string> = {
@@ -80,8 +80,8 @@ const SEED: Record<string, string> = {
 }
 
 function loadPacked(basename: string): PackedDict | null {
-  const gz = join(dir, 'data', `${basename}.json.gz`)
-  const plain = join(dir, 'data', `${basename}.json`)
+  const gz = join(dataDir, `${basename}.json.gz`)
+  const plain = join(dataDir, `${basename}.json`)
   try {
     if (existsSync(gz)) {
       const buf = gunzipSync(readFileSync(gz))
@@ -155,4 +155,3 @@ export function lookupGloss(token: string): GlossHit | null {
   }
   return null
 }
-
