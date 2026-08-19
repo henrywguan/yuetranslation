@@ -3,6 +3,10 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "apps/web/dist",
   "installCommand": "npm ci && npm ci --prefix apps/web && npm ci --prefix apps/api",
+  "env": {
+    "YUE_OPEN_MODE": "1",
+    "YUE_REQUIRE_LOGIN": "0"
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
