@@ -1,6 +1,5 @@
 import { MotionConfig, motion } from 'framer-motion'
 import { useEffect } from 'react'
-import { AuthPanel } from './components/AuthPanel'
 import { BiText } from './components/BiText'
 import { BrandTag } from './components/BrandTag'
 import { CharacterBreakdownHost } from './components/CharacterBreakdownHost'
@@ -113,7 +112,6 @@ export function TranslatorApp() {
         <Controls />
         <CharacterBreakdownHost />
         <PanelDock />
-        <AuthPanel onAuthChange={() => void loadBootstrap()} />
       </div>
     </MotionConfig>
   )

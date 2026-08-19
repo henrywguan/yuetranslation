@@ -1,5 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { AuthPanel } from './components/AuthPanel'
+import { bootstrapAuthSession } from './lib/auth'
 import { loadSiteConfig } from './lib/siteLinks'
+import { useYueStore } from './lib/store'
 import { useRoute } from './lib/useHashRoute'
 
 const Landing = lazy(() => import('./landing/Landing').then((m) => ({ default: m.Landing })))
@@ -13,9 +16,10 @@ const TranslatorApp = lazy(() =>
 export default function App() {
   const route = useRoute()
   const [ready, setReady] = useState(false)
+  const loadBootstrap = useYueStore((s) => s.loadBootstrap)
 
   useEffect(() => {
-    void loadSiteConfig().finally(() => setReady(true))
+    void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => setReady(true))
   }, [])
 
   // Avoid flashing in-app hash routes before site-config.json resolves.
@@ -25,5 +29,10 @@ export default function App() {
   if (route === 'app') page = <TranslatorApp />
   else if (route === 'pricing') page = <PricingPage />
 
-  return <Suspense fallback={null}>{page}</Suspense>
+  return (
+    <>
+      <Suspense fallback={null}>{page}</Suspense>
+      <AuthPanel onAuthChange={() => void loadBootstrap()} />
+    </>
+  )
 }

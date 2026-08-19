@@ -51,6 +51,34 @@ export async function signIn(email: string, password: string) {
   if (error) throw error
 }
 
+/** OAuth redirect target — preserves hash route; strips transient auth modal flag. */
+export function oauthRedirectUrl(): string {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('auth')
+  if (!url.hash || url.hash === '#/' || url.hash === '#') {
+    url.hash = '#/app'
+  }
+  return url.href
+}
+
+export async function signInWithGoogle() {
+  const sb = getSupabase()
+  if (!sb) throw new Error('Auth is not configured.')
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: oauthRedirectUrl() },
+  })
+  if (error) throw error
+}
+
+/** Call on app boot so PKCE / implicit OAuth callbacks restore the session. */
+export async function bootstrapAuthSession(): Promise<Session | null> {
+  const sb = getSupabase()
+  if (!sb) return null
+  const { data } = await sb.auth.getSession()
+  return data.session
+}
+
 export async function signUp(email: string, password: string) {
   const sb = getSupabase()
   if (!sb) throw new Error('Auth is not configured.')

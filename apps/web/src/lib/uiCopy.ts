@@ -116,6 +116,8 @@ export const ui = {
   planPro: { en: 'Pro', zh: '專業版', jp: 'zyun1 jip6 baan2' },
   planGuest: { en: 'Guest', zh: '訪客', jp: 'fong2 haak3' },
   signIn: { en: 'Sign in', zh: '登入', jp: 'dang1 jap6' },
+  signInGoogle: { en: 'Continue with Google', zh: '使用 Google 登入', jp: 'jau6 Google dang1 jap6' },
+  signInOr: { en: 'or', zh: '或', jp: 'waak6' },
   register: { en: 'Create account', zh: '註冊', jp: 'zyu3 caak1' },
   createAccount: { en: 'Need an account? Register', zh: '未有帳戶？註冊', jp: 'mei6 jau5 zoeng3 wu6？zyu3 caak1' },
   signOut: { en: 'Sign out', zh: '登出', jp: 'dang1 ceot1' },

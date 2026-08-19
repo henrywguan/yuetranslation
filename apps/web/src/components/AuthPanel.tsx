@@ -1,6 +1,16 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { BiText } from './BiText'
-import { closeAuthScreen, isAuthScreenOpen, signIn, signOut, signUp, supabaseEnabled } from '../lib/auth'
+import {
+  closeAuthScreen,
+  getSession,
+  isAuthScreenOpen,
+  onAuthChange as subscribeAuthChange,
+  signIn,
+  signInWithGoogle,
+  signOut,
+  signUp,
+  supabaseEnabled,
+} from '../lib/auth'
 import { ui } from '../lib/uiCopy'
 
 type Props = {
@@ -14,12 +24,25 @@ export function AuthPanel({ onAuthChange }: Props) {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [signedIn, setSignedIn] = useState(false)
 
   useEffect(() => {
     const sync = () => setOpen(isAuthScreenOpen())
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
   }, [])
+
+  useEffect(() => {
+    void getSession().then((session) => setSignedIn(Boolean(session)))
+    return subscribeAuthChange((session) => {
+      setSignedIn(Boolean(session))
+      if (session) {
+        closeAuthScreen()
+        setOpen(false)
+        onAuthChange?.()
+      }
+    })
+  }, [onAuthChange])
 
   if (!supabaseEnabled() || !open) return null
 
@@ -52,6 +75,17 @@ export function AuthPanel({ onAuthChange }: Props) {
     }
   }
 
+  const googleSignIn = async () => {
+    setBusy(true)
+    setMessage(null)
+    try {
+      await signInWithGoogle()
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Google sign-in failed')
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <button type="button" className="auth-backdrop" aria-label="Close" onClick={close} />
@@ -64,6 +98,18 @@ export function AuthPanel({ onAuthChange }: Props) {
             ×
           </button>
         </div>
+
+        <button type="button" className="auth-google full" disabled={busy} onClick={() => void googleSignIn()}>
+          <span className="auth-google-mark" aria-hidden="true">
+            G
+          </span>
+          <BiText copy={ui.signInGoogle} size="sm" />
+        </button>
+
+        <p className="auth-divider">
+          <BiText copy={ui.signInOr} size="sm" />
+        </p>
+
         <label className="auth-field">
           <span>Email</span>
           <input
@@ -100,17 +146,20 @@ export function AuthPanel({ onAuthChange }: Props) {
             </button>
           )}
         </p>
-        <button
-          type="button"
-          className="auth-signout"
-          onClick={async () => {
-            await signOut()
-            onAuthChange?.()
-            close()
-          }}
-        >
-          <BiText copy={ui.signOut} size="sm" />
-        </button>
+        {signedIn ? (
+          <button
+            type="button"
+            className="auth-signout"
+            onClick={async () => {
+              await signOut()
+              setSignedIn(false)
+              onAuthChange?.()
+              close()
+            }}
+          >
+            <BiText copy={ui.signOut} size="sm" />
+          </button>
+        ) : null}
       </form>
     </div>
   )

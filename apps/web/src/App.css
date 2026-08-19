@@ -202,6 +202,46 @@
   justify-self: start;
 }
 
+.auth-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-google:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth-google-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #4285f4;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.auth-divider {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .plan-chip.plan-max {
   background: color-mix(in srgb, var(--gold, #d4a853) 22%, transparent);
   color: var(--gold, #e8c878);
