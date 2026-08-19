@@ -147,20 +147,19 @@ button.jyutping--activate {
   font-weight: 600;
   letter-spacing: 0.05em;
   line-height: 1.15;
-  color: color-mix(in srgb, var(--mint) 78%, transparent);
+  color: var(--mint);
   background:
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--jade) 12%, transparent),
-      color-mix(in srgb, var(--jade-deep) 4%, transparent)
-    ),
-    color-mix(in srgb, var(--harbor-mid) 38%, transparent);
-  border: 1px solid color-mix(in srgb, var(--jade-bright) 18%, var(--glass-border));
+      color-mix(in srgb, var(--harbor-mid) 96%, var(--harbor)),
+      color-mix(in srgb, var(--harbor-deep) 94%, var(--harbor-mid))
+    );
+  border: 1px solid color-mix(in srgb, var(--jade-bright) 24%, var(--glass-border));
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--glass-shine) 55%, transparent) inset,
-    0 12px 28px rgba(7, 19, 31, 0.22);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    0 12px 28px rgba(7, 19, 31, 0.38);
+  backdrop-filter: blur(32px) saturate(1.45);
+  -webkit-backdrop-filter: blur(32px) saturate(1.45);
   pointer-events: none;
   display: inline-block;
   width: max-content;
@@ -207,7 +206,7 @@ button.jyutping--activate {
   font-weight: 620;
   line-height: 1.1;
   letter-spacing: 0;
-  color: color-mix(in srgb, var(--ink) 92%, transparent);
+  color: var(--ink);
 }
 
 .jp-pop-syl {
@@ -215,7 +214,7 @@ button.jyutping--activate {
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.15;
-  color: color-mix(in srgb, var(--mint) 78%, transparent);
+  color: color-mix(in srgb, var(--mint) 92%, var(--ink));
   text-transform: none;
 }
 
@@ -230,7 +229,7 @@ button.jyutping--activate {
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--ink) 90%, transparent);
+  color: var(--ink);
 }
 
 .jp-pop-syl-line {
@@ -239,26 +238,27 @@ button.jyutping--activate {
 }
 
 [data-theme='light'] .jp-pop {
-  color: color-mix(in srgb, var(--jade-deep) 72%, transparent);
+  color: color-mix(in srgb, var(--jade-deep) 90%, var(--ink));
   background:
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--jade) 10%, transparent),
-      color-mix(in srgb, var(--jade-bright) 6%, transparent)
-    ),
-    color-mix(in srgb, #ffffff 42%, transparent);
-  border-color: color-mix(in srgb, var(--jade) 16%, var(--glass-border));
+      color-mix(in srgb, #ffffff 96%, var(--harbor-mid)),
+      color-mix(in srgb, var(--harbor-mid) 92%, #ffffff)
+    );
+  border-color: color-mix(in srgb, var(--jade) 22%, var(--glass-border));
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.55) inset,
-    0 12px 28px rgba(7, 19, 31, 0.1);
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 12px 28px rgba(7, 19, 31, 0.14);
+  backdrop-filter: blur(32px) saturate(1.35);
+  -webkit-backdrop-filter: blur(32px) saturate(1.35);
 }
 
 [data-theme='light'] .jp-pop-han {
-  color: color-mix(in srgb, var(--ink) 88%, transparent);
+  color: var(--ink);
 }
 
 [data-theme='light'] .jp-pop-syl {
-  color: color-mix(in srgb, var(--jade-deep) 72%, transparent);
+  color: color-mix(in srgb, var(--jade-deep) 88%, var(--ink));
 }
 
 .bi {
