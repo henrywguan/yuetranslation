@@ -10,6 +10,7 @@ import {
   type JyutSeg,
 } from '../lib/jyutping'
 import { charSense } from '../lib/charGloss'
+import { rememberLearnedGloss } from '../lib/learnedGloss'
 import { translateText } from '../lib/api'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
@@ -91,7 +92,15 @@ export function CharDetailSheet({
         : isValidDefinition(res.text)
           ? res.text
           : ''
-      if (sense && sense !== detail.char) setCharDef(sense)
+      if (sense && sense !== detail.char) {
+        setCharDef(sense)
+        rememberLearnedGloss(detail.char, {
+          gloss: sense,
+          jyutping: detail.jp || null,
+          phrase: detail.phrase,
+          source: 'translate',
+        })
+      }
     })
     return () => {
       cancelled = true
