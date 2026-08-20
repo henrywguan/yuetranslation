@@ -409,20 +409,37 @@
   font: inherit;
 }
 
+/* Static rounded frame — only this 2px ring reveals the spinning glow. */
+.glow-rotate-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  overflow: hidden;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
 .glow-rotate-spin {
   position: absolute;
-  inset: -80%;
+  inset: -120%;
   background: conic-gradient(
     from 0deg,
     transparent 0 38%,
-    color-mix(in srgb, var(--jade) 35%, transparent) 44%,
+    color-mix(in srgb, var(--jade) 45%, transparent) 44%,
     var(--jade) 48%,
     var(--jade-bright) 52%,
     var(--jade-mid) 56%,
     transparent 62% 100%
   );
   animation: glow-rotate-spin 2.6s linear infinite;
-  pointer-events: none;
 }
 
 .glow-rotate-inner {
@@ -434,7 +451,7 @@
   min-height: 2.4rem;
   padding: 0.45rem 1rem;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-strong) 55%, var(--jade) 18%);
+  background: color-mix(in srgb, var(--harbor-mid) 92%, var(--jade) 8%);
   color: var(--ink);
   box-shadow: inset 0 1px 0 var(--glass-shine);
   pointer-events: none;
@@ -442,7 +459,7 @@
 
 .glow-rotate:hover .glow-rotate-inner,
 .glow-rotate:focus-visible .glow-rotate-inner {
-  background: color-mix(in srgb, var(--mint) 22%, var(--surface-strong) 78%);
+  background: color-mix(in srgb, var(--harbor-mid) 82%, var(--mint) 18%);
   color: var(--ink-bright);
 }
 
