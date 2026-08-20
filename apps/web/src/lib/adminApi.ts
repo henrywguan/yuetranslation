@@ -1,12 +1,5 @@
 import { getAccessToken } from './auth'
-
-function resolveApiBase(): string {
-  if (typeof window !== 'undefined') {
-    const fromQuery = new URLSearchParams(window.location.search).get('api')
-    if (fromQuery) return fromQuery.replace(/\/$/, '')
-  }
-  return (import.meta.env.VITE_API_BASE as string) || '/api'
-}
+import { resolveApiBase } from './api'
 
 async function adminFetch(path: string, init: RequestInit = {}) {
   const headers: Record<string, string> = {

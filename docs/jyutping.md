@@ -45,6 +45,6 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 - **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao letters, character sense, and the phrase gloss  
   **单字下钻**：有释义时可点按汉字 → 弹出可关闭面板，含调型、调值字母、字义与短语释义
 
-Implemented in `apps/web/src/lib/jyutping.ts` (`expandJyutping`, `ensureJyutpingSegs`) and `apps/web/src/components/JpPop.tsx`.
+Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
 
-实现于 `apps/web/src/lib/jyutping.ts`（`expandJyutping`、`ensureJyutpingSegs`）与 `apps/web/src/components/JpPop.tsx`。
+实现于 `apps/web/src/lib/jyutping.ts`（`rubyJpSyllable`、`ensureJyutpingSegs`）与 `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`。

@@ -24,11 +24,6 @@ const TONE_LETTERS: Record<string, string> = {
   '6': '˨',
 }
 
-/** Compact `zou2 san4` → detailed `zou2 ˧˥  san4 ˨˩`. */
-export function expandJyutping(jp: string) {
-  return jp.replace(/([A-Za-z]+)([1-6])/g, (_, syl: string, n: string) => `${syl}${n}\u00a0${TONE_LETTERS[n]}`)
-}
-
 /** One syllable for ruby cells: `zou2` → `zou2˧˥` (tone digit + Chao letter). */
 export function rubyJpSyllable(jp: string) {
   const t = jp.trim()

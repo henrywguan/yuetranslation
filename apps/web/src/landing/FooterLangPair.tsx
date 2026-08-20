@@ -19,7 +19,6 @@ export function FooterLangPair() {
             <JpPop
               show={enJp.show}
               id={enJp.tipId}
-              text={en.jp}
               han={en.zh}
               anchorRef={enJp.wrapRef}
             />
@@ -36,7 +35,6 @@ export function FooterLangPair() {
             <JpPop
               show={yueJp.show}
               id={yueJp.tipId}
-              text={yue.jp}
               han={yue.zh}
               anchorRef={yueJp.wrapRef}
             />

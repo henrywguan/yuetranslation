@@ -96,7 +96,7 @@ export function openaiConfigured() {
 }
 
 /** DeepSeek V4 enables thinking by default; reasoning tokens can exhaust max_tokens. */
-export function usesDeepSeekThinking() {
+function usesDeepSeekThinking() {
   return /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel}`)
 }
 

@@ -40,7 +40,7 @@ export function BiText({
     >
       <span className="bi-zh">{copy.zh}</span>
       {canJp ? (
-        <JpPop show={show} id={tipId} text={copy.jp} han={copy.zh} anchorRef={wrapRef} />
+        <JpPop show={show} id={tipId} han={copy.zh} anchorRef={wrapRef} />
       ) : null}
     </span>
   )

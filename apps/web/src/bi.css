@@ -41,11 +41,6 @@ button.jyutping--activate {
   overflow: visible;
 }
 
-.jyutping--hint {
-  cursor: help;
-  border-bottom: 1px dotted color-mix(in srgb, var(--mint) 40%, transparent);
-}
-
 /* Multi-sense Cantonese: dotted underline signals tap → definitions pane */
 .cantonese-multi-def {
   border-bottom: 1.5px dotted color-mix(in srgb, var(--mint) 55%, transparent);
@@ -56,10 +51,6 @@ button.jyutping--activate {
 .cantonese-activate--multi-def .cantonese-multi-def,
 .cantonese-block--multi-def .cantonese-multi-def {
   cursor: pointer;
-}
-
-.jyutping--multi-def {
-  border-bottom-color: color-mix(in srgb, var(--mint) 55%, transparent);
 }
 
 .cantonese-activate--multi-def:hover .cantonese-multi-def,
@@ -139,10 +130,6 @@ button.jyutping--activate {
   font-size: 0.62rem;
 }
 
-.jyut-ruby--sm .jyut-ruby-syl {
-  font-size: 0.56rem;
-}
-
 .jyut-syllable {
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -164,39 +151,11 @@ button.jyutping--activate {
   border-bottom-color: color-mix(in srgb, var(--jade-deep) 48%, transparent);
 }
 
-.ink-in {
-  animation: ink-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes ink-in {
-  from {
-    opacity: 0;
-    /* Opacity-only: translateY was getting clipped by overflow:hidden ancestors. */
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ink-in {
-    animation: none;
-  }
-}
-
 [data-theme='light'] .jyutping {
   color: color-mix(in srgb, var(--jade-deep) 58%, transparent);
 }
 
-[data-theme='light'] .jyutping--hint {
-  border-bottom-color: color-mix(in srgb, var(--jade-deep) 35%, transparent);
-}
-
 [data-theme='light'] .cantonese-multi-def {
-  border-bottom-color: color-mix(in srgb, var(--jade-deep) 48%, transparent);
-}
-
-[data-theme='light'] .jyutping--multi-def {
   border-bottom-color: color-mix(in srgb, var(--jade-deep) 48%, transparent);
 }
 
@@ -305,28 +264,6 @@ button.jyutping--activate {
   color: var(--ink);
 }
 
-.jp-pop-fallback {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.28rem;
-}
-
-.jp-pop-han-line {
-  font-size: 1rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-}
-
-.jp-pop-syl-line {
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  color: color-mix(in srgb, var(--mint) 88%, var(--ink));
-}
-
 [data-theme='light'] .jp-pop {
   color: color-mix(in srgb, var(--jade-deep) 90%, var(--ink));
   background:
@@ -360,8 +297,7 @@ button.jyutping--activate {
   color: var(--ink);
 }
 
-[data-theme='light'] .jp-pop-syl,
-[data-theme='light'] .jp-pop-syl-line {
+[data-theme='light'] .jp-pop-syl {
   color: color-mix(in srgb, var(--jade-deep) 82%, var(--ink));
 }
 

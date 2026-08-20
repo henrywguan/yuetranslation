@@ -1,7 +1,7 @@
 import type { Entitlement, Lang } from './types'
 import { getAccessToken } from './auth'
 
-function resolveApiBase(): string {
+export function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
     const fromQuery = new URLSearchParams(window.location.search).get('api')
     if (fromQuery) return fromQuery.replace(/\/$/, '')

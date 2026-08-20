@@ -123,7 +123,7 @@ export function CantoneseText({
             <span key={`${seg.char}-${i}`}>{seg.char}</span>
           ))
         : trimmed}
-      <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
+      <JpPop show={show} id={tipId} han={trimmed} anchorRef={wrapRef} />
     </span>
   ) : null
 
@@ -138,7 +138,7 @@ export function CantoneseText({
           renderChar={renderChar}
         />
         {!phraseActivate ? (
-          <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
+          <JpPop show={show} id={tipId} han={trimmed} anchorRef={wrapRef} />
         ) : null}
       </span>
     ) : (

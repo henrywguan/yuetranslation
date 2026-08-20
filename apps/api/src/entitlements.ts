@@ -181,7 +181,7 @@ function buildSnapshot(
 }
 
 /** Local-dev soft entitlements (pro-like when YUE_OPEN_MODE=1). */
-export function localEntitlement(): Entitlement {
+function localEntitlement(): Entitlement {
   const month = new Date().toISOString().slice(0, 7).replace('-', '_')
 
   if (env.openMode) {
