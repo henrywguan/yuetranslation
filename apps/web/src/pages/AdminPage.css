@@ -249,77 +249,101 @@
   word-break: break-word;
 }
 
-/* Admin plan badge — rotating border glow (modern-husky-6 inspired) + crown */
+/* Admin plan badge — uiverse modern-husky-6 structure, Jyut palette */
 .admin-plan-badge {
-  --admin-badge-radius: 999px;
-  position: relative;
-  isolation: isolate;
+  /* Neo-brutalist stack in Jyut colors (not yellow/stone) */
+  --admin-edge: #07131f;
+  --admin-rim: color-mix(in srgb, var(--mint, #9af0de) 42%, #ffffff);
+  --admin-fill: var(--jade, #3dcfb6);
+  --admin-ink: #07131f;
+
   display: inline-flex;
-  padding: 1.5px;
-  border-radius: var(--admin-badge-radius);
-  overflow: visible;
   vertical-align: middle;
-  color: #f6e7b2;
+  position: relative;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 1px;
+  transform: translate(-2px, -2px);
+  outline: 2px solid transparent;
+  outline-offset: 4px;
+  border-radius: 9999px;
+  background-color: var(--admin-edge);
+  color: var(--admin-ink);
+  text-align: center;
+  box-shadow:
+    0.5px 0.5px 0 0 var(--admin-edge),
+    1px 1px 0 0 var(--admin-edge),
+    1.5px 1.5px 0 0 var(--admin-edge),
+    2px 2px 0 0 var(--admin-edge),
+    2.5px 2.5px 0 0 var(--admin-edge),
+    3px 3px 0 0 var(--admin-edge),
+    0 0 0 2px var(--admin-rim),
+    0.5px 0.5px 0 2px var(--admin-rim),
+    1px 1px 0 2px var(--admin-rim),
+    1.5px 1.5px 0 2px var(--admin-rim),
+    2px 2px 0 2px var(--admin-rim),
+    2.5px 2.5px 0 2px var(--admin-rim),
+    3px 3px 0 2px var(--admin-rim),
+    3.5px 3.5px 0 2px var(--admin-rim),
+    4px 4px 0 2px var(--admin-rim);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 
-.admin-plan-badge-ring {
+.admin-plan-badge:hover {
+  transform: translate(0, 0);
+  box-shadow: 0 0 0 2px var(--admin-rim);
+}
+
+.admin-plan-badge-face {
+  position: relative;
+  pointer-events: none;
+  background-color: var(--admin-fill);
+  border: 2px solid color-mix(in srgb, #ffffff 35%, transparent);
+  border-radius: 9999px;
+}
+
+.admin-plan-badge-face::before {
+  content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  pointer-events: none;
-  overflow: hidden;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  border-radius: 9999px;
+  opacity: 0.45;
+  background-image:
+    radial-gradient(rgb(255 255 255 / 80%) 20%, transparent 20%),
+    radial-gradient(rgb(255 255 255 / 100%) 20%, transparent 20%);
+  background-position:
+    0 0,
+    4px 4px;
+  background-size: 8px 8px;
+  mix-blend-mode: hard-light;
+  animation: admin-plan-dots 0.5s infinite linear;
 }
 
-.admin-plan-badge-spin {
-  position: absolute;
-  inset: -180%;
-  background: conic-gradient(
-    from 0deg,
-    #ffd76a 0deg,
-    #fff4c2 40deg,
-    #7fd4ff 90deg,
-    #c9a0ff 150deg,
-    #ff9ad5 210deg,
-    #ffe08a 270deg,
-    #ffffff 310deg,
-    #ffd76a 360deg
-  );
-  animation: admin-plan-spin 2.4s linear infinite;
-}
-
-.admin-plan-badge-inner {
+.admin-plan-badge-label {
   position: relative;
   z-index: 1;
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.08rem;
-  min-height: 1.85rem;
-  min-width: 3.4rem;
-  padding: 0.22rem 0.7rem 0.28rem;
-  border-radius: inherit;
-  background: linear-gradient(180deg, #2a2418 0%, #15120e 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent);
-  overflow: visible;
+  padding: 0.28rem 0.72rem 0.32rem;
+  gap: 0.1rem;
+  filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.25));
+}
+
+.admin-plan-word {
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
 }
 
 .admin-plan-crown {
   position: relative;
   width: 1.05rem;
   height: 0.65rem;
-  color: #ffe6a0;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, #ffd76a 55%, transparent));
-  pointer-events: none;
+  color: var(--admin-ink);
   line-height: 0;
 }
 
@@ -329,24 +353,10 @@
   height: 100%;
 }
 
-.admin-plan-label {
-  position: relative;
-  z-index: 1;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: lowercase;
-  line-height: 1;
-  background: linear-gradient(180deg, #fff6d4 0%, #e8c56a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 .admin-plan-star {
   position: absolute;
-  width: 0.32rem;
-  height: 0.32rem;
+  width: 0.28rem;
+  height: 0.28rem;
   background: #fff;
   clip-path: polygon(
     50% 0%,
@@ -358,7 +368,7 @@
     0% 50%,
     38% 38%
   );
-  filter: drop-shadow(0 0 3px #ffd76a);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--mint, #9af0de) 70%, #fff));
   animation: admin-plan-twinkle 1.4s ease-in-out infinite;
 }
 
@@ -370,7 +380,7 @@
 
 .admin-plan-star--b {
   left: 50%;
-  top: -0.28rem;
+  top: -0.26rem;
   width: 0.22rem;
   height: 0.22rem;
   margin-left: -0.11rem;
@@ -383,16 +393,23 @@
   animation-delay: 0.7s;
 }
 
-@keyframes admin-plan-spin {
-  to {
-    transform: rotate(360deg);
+@keyframes admin-plan-dots {
+  0% {
+    background-position:
+      0 0,
+      4px 4px;
+  }
+  100% {
+    background-position:
+      8px 0,
+      12px 4px;
   }
 }
 
 @keyframes admin-plan-twinkle {
   0%,
   100% {
-    opacity: 0.25;
+    opacity: 0.3;
     transform: scale(0.65);
   }
   50% {
@@ -402,12 +419,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-plan-badge-spin,
+  .admin-plan-badge-face::before,
   .admin-plan-star {
     animation: none;
   }
   .admin-plan-star {
-    opacity: 0.8;
+    opacity: 0.85;
   }
 }
 
