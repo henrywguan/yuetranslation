@@ -1442,6 +1442,14 @@
   font-size: 0.92rem;
 }
 
+.pane-live .live-btn-host {
+  width: 100%;
+}
+
+.pane-live .live-btn-lock {
+  border-radius: 14px;
+}
+
 .live-btn--en {
   background: linear-gradient(
     135deg,
@@ -1676,6 +1684,68 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--jade) 22%, var(--glass-border));
 }
 
+.live-btn-host {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.live-btn-host .live-btn {
+  width: 100%;
+}
+
+.live-btn-lock {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, #07131f 42%, transparent);
+  cursor: pointer;
+}
+
+.live-btn-lock-tip {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid) 92%, var(--jade) 8%),
+      color-mix(in srgb, var(--harbor-mid) 88%, transparent)
+    );
+  box-shadow:
+    0 10px 28px color-mix(in srgb, #000 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  color: var(--ink);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.live-btn-lock-tip .bi {
+  align-items: center;
+  text-align: center;
+  gap: 0.12rem;
+}
+
+.live-btn-lock-tip .bi-en {
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.live-btn-lock-tip .bi-zh {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .live-btn {
   flex: 1;
   display: flex;
@@ -1714,6 +1784,14 @@
 .live-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.live-btn.locked-signin,
+.live-btn.locked-signin:disabled {
+  filter: grayscale(1);
+  opacity: 0.5;
+  background: linear-gradient(135deg, #6d7679, #4e575b);
+  color: #d5dbde;
 }
 
 .live-dot {

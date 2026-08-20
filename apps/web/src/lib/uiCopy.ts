@@ -15,6 +15,11 @@ export const ui = {
     zh: '按住或輕按講',
     jp: 'on3 zyu6 waak6 hing1 on3 gong2',
   },
+  liveMicSignIn: {
+    en: 'Sign in required for live mic',
+    zh: '即時咪高峰需要登入',
+    jp: 'zik1 si4 mai1 gou1 fung1 seoi1 jiu3 dang1 jap6',
+  },
   releaseWhenDone: {
     en: 'Listening — release when done',
     zh: '聽緊——鬆手就翻譯',
