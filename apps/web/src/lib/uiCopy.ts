@@ -357,6 +357,11 @@ export const ui = {
     jp: 'coeng4 si4 gaan3, gou1 jung6 loeng6 zik1 si4 faan1 jik6',
   },
   goMax: { en: 'Go Max', zh: '升級旗艦版', jp: 'sing1 kap1 kei4 gaam3 baan2' },
+  maxPlanUnavailable: {
+    en: "We're sorry, the MAX plan is currently not available",
+    zh: '抱歉，MAX 計劃暫時未能提供',
+    jp: 'm4 goi1, MAX gai3 waak6 zaam6 si6 mut6 nang4 tai4 gung1',
+  },
   maxFeatLive40: {
     en: '~40 hours of live translation / month (fair use)',
     zh: '每月大約四十小時即時翻譯（合理使用）',

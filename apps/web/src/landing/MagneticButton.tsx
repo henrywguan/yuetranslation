@@ -6,14 +6,15 @@ type Props = {
   onClick?: () => void
   className?: string
   strength?: number
+  disabled?: boolean
 }
 
-export function MagneticButton({ children, onClick, className, strength = 0.28 }: Props) {
+export function MagneticButton({ children, onClick, className, strength = 0.28, disabled }: Props) {
   const ref = useRef<HTMLButtonElement>(null)
   const reduced = useReducedMotion()
 
   function onMove(e: PointerEvent<HTMLButtonElement>) {
-    if (reduced || e.pointerType === 'touch') return
+    if (disabled || reduced || e.pointerType === 'touch') return
     const el = ref.current
     if (!el) return
     const r = el.getBoundingClientRect()
@@ -32,6 +33,7 @@ export function MagneticButton({ children, onClick, className, strength = 0.28 }
       ref={ref}
       type="button"
       className={`magnetic ${className ?? ''}`}
+      disabled={disabled}
       onClick={onClick}
       onPointerMove={onMove}
       onPointerLeave={reset}

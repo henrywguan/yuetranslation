@@ -9,6 +9,8 @@ export type MarketingPlan = {
   tagline: Bi
   cta: Bi
   featured?: boolean
+  /** Shown greyed out with a tooltip; CTA disabled. */
+  unavailable?: boolean
   /** Where the plan CTA should go. */
   ctaOpens: 'app' | 'pricing'
   features: Bi[]
@@ -45,6 +47,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     tagline: ui.tagMax,
     cta: ui.goMax,
     ctaOpens: 'pricing',
+    unavailable: true,
     features: [ui.maxFeatLive40, ui.maxFeatPower, ui.maxFeatEverything, ui.maxFeatSupport],
   },
 ]
