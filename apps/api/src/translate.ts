@@ -263,6 +263,7 @@ export async function translate(input: unknown) {
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.35,
+      max_tokens: 220,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: text },
@@ -295,6 +296,7 @@ export async function translate(input: unknown) {
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.2,
+      max_tokens: 160,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: text },

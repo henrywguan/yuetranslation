@@ -1819,6 +1819,24 @@
   align-items: flex-start;
 }
 
+.text-breakdown-link {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--jade);
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.text-breakdown-hint,
+.text-alts-loading {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+}
+
 .text-mode textarea {
   width: 100%;
   resize: vertical;

@@ -59,6 +59,8 @@ type State = {
   yueDefinitions: string[]
   /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
   yueAlternatives: string[]
+  /** True while a background request is loading text-mode EN→粵 alternatives. */
+  altsLoading: boolean
   /** Conversation panes only — separate from Solo/Text results. */
   face: FaceLive
   /** Drill-down details stack (phrase → character → …). Empty = closed. */
@@ -114,6 +116,8 @@ const pending = new Map<Lang, number>()
 let speakToken = 0
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let translateInFlight = 0
+/** Aborts the previous /api/translate when a newer Text request starts. */
+let translateAbort: AbortController | null = null
 /** True while the user is pressing the live button (hold mode). */
 let holding = false
 /** Short-tap sticky listen — auto-ends after speech pause. */
@@ -190,6 +194,8 @@ function scheduleTapSentenceEnd(get: () => State) {
 function invalidatePendingTranslations() {
   translateSeq += 1
   pending.clear()
+  translateAbort?.abort()
+  translateAbort = null
 }
 
 function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
@@ -259,6 +265,102 @@ function nextHistory(
 }
 
 /**
+ * After a lean Text EN→粵 primary lands, fetch alternatives/definitions in the
+ * background so the first paint stays fast.
+ */
+async function enrichTextAlternatives(
+  get: () => State,
+  set: (p: Partial<State>) => void,
+  sourceEn: string,
+  primaryYue: string,
+  seq: number,
+  signal: AbortSignal,
+) {
+  set({ altsLoading: true })
+  try {
+    const result = await translateText(sourceEn, 'en', 'yue', {
+      includeAlternatives: true,
+      signal,
+    })
+    if (pending.get('en') !== seq || signal.aborted) return
+
+    const latest = get().history[0]
+    if (!latest || latest.from !== 'en' || latest.to !== 'yue' || latest.source !== sourceEn) {
+      return
+    }
+
+    const currentPrimary = latest.translation.trim()
+    const enrichPrimary = sanitizeTranslationText(result.text)
+    const fromResult = (result.alternatives || [])
+      .map((a) => sanitizeTranslationText(a))
+      .filter(Boolean) as string[]
+    const extras: string[] = []
+    if (enrichPrimary && enrichPrimary !== currentPrimary) extras.push(enrichPrimary)
+    // Keep the lean primary as an alt if enrich returned a different preferred line.
+    if (primaryYue && primaryYue !== currentPrimary && primaryYue !== enrichPrimary) {
+      extras.push(primaryYue)
+    }
+    const alternatives = [...extras, ...fromResult]
+      .map((s) => s.trim())
+      .filter((s) => s && s !== currentPrimary)
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .slice(0, 4)
+
+    const definitions = (result.definitions || [])
+      .map((d) => d.trim())
+      .filter(Boolean)
+    const mergedDefs = [
+      ...(latest.definitions || []),
+      ...definitions,
+      ...(result.definition ? [result.definition] : []),
+    ]
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .filter((d, i, arr) => arr.findIndex((x) => x.toLowerCase() === d.toLowerCase()) === i)
+      .slice(0, 8)
+
+    const nextLatest = {
+      ...latest,
+      alternatives: alternatives.length ? alternatives : latest.alternatives,
+      definitions: mergedDefs.length ? mergedDefs : latest.definitions,
+      definition: latest.definition || result.definition || sourceEn,
+    }
+
+    const stack = get().detailStack
+    const top = stack[0]
+    const nextStack =
+      top?.kind === 'phrase' &&
+      (top.phrase === currentPrimary || top.phrase === primaryYue || top.phrase === enrichPrimary)
+        ? [
+            {
+              ...top,
+              phrase: currentPrimary,
+              translation: sourceEn,
+              definition: nextLatest.definition,
+              definitions: nextLatest.definitions,
+              alternatives: nextLatest.alternatives,
+            },
+            ...stack.slice(1),
+          ]
+        : stack
+
+    set({
+      yueAlternatives: nextLatest.alternatives || [],
+      yueDefinitions: nextLatest.definitions || [],
+      yueDefinition: nextLatest.definition || get().yueDefinition,
+      history: [nextLatest, ...get().history.slice(1)],
+      detailStack: nextStack,
+    })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') return
+    if (e instanceof Error && e.name === 'AbortError') return
+    // Soft-fail: primary already shown.
+  } finally {
+    if (pending.get('en') === seq) set({ altsLoading: false })
+  }
+}
+
+/**
  * One-shot translation after capture (or typed submit).
  * Never call mid-utterance — there is no interim translate path.
  */
@@ -267,7 +369,7 @@ async function runTranslation(
   set: (p: Partial<State>) => void,
   lang: Lang,
   text: string,
-  opts?: { lean?: boolean },
+  opts?: { lean?: boolean; minThinkingMs?: number },
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
@@ -276,17 +378,26 @@ async function runTranslation(
   const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
   const isFace = get().mode === 'conversation'
-  // Live mic + Conversation: skip EN→粵 variation fan-out for lower latency.
-  const lean = Boolean(opts?.lean) || isFace
+  const isText = get().mode === 'text'
+  // Live mic + Conversation + Text: skip EN→粵 variation fan-out for lower latency.
+  // Text still paints a primary result quickly; alternatives come from enrichTextAlternatives.
+  const lean = Boolean(opts?.lean) || isFace || isText
+  // Text should feel snappy — only a short floor so the loader does not flash.
+  const minThinkingMs =
+    opts?.minThinkingMs ?? (isText ? 120 : 900)
+  translateAbort?.abort()
+  translateAbort = new AbortController()
+  const signal = translateAbort.signal
+  if (isText) set({ altsLoading: false })
   try {
     const result = await translateText(text, lang, to, {
       includeAlternatives: lang === 'en' && !lean,
+      signal,
     })
-    if (pending.get(lang) !== seq) return
-    // Hold the bilingual bounce loader long enough to read, even on dictionary hits.
-    const hold = 900 - (Date.now() - startedAt)
+    if (pending.get(lang) !== seq || signal.aborted) return
+    const hold = minThinkingMs - (Date.now() - startedAt)
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
-    if (pending.get(lang) !== seq) return
+    if (pending.get(lang) !== seq || signal.aborted) return
     const clean = sanitizeTranslationText(result.text)
     if (!clean) {
       set({
@@ -361,7 +472,14 @@ async function runTranslation(
       }
     }
     speak = { text: clean, lang: to }
+
+    // Text EN→粵: paint primary first, then enrich alternatives without blocking TTS/UI.
+    if (isText && lang === 'en' && lean && !signal.aborted && pending.get(lang) === seq) {
+      void enrichTextAlternatives(get, set, text, clean, seq, signal)
+    }
   } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') return
+    if (e instanceof Error && e.name === 'AbortError') return
     set({ error: String(e) })
   } finally {
     endTranslate(set)
@@ -513,6 +631,7 @@ export const useYueStore = create<State>((set, get) => ({
   yueDefinition: '',
   yueDefinitions: [],
   yueAlternatives: [],
+  altsLoading: false,
   face: emptyFaceLive(),
   detailStack: [],
   detailMinimized: false,
@@ -904,7 +1023,8 @@ export const useYueStore = create<State>((set, get) => ({
     const trimmed = text.trim()
     if (!trimmed) return
     set({ error: null })
-    await runTranslation(get, set, from, trimmed)
+    // Lean = no alternatives fan-out (faster primary). Enter still uses the same path.
+    await runTranslation(get, set, from, trimmed, { lean: true, minThinkingMs: 120 })
   },
 
   openBreakdown: (phrase, opts) => {
@@ -987,16 +1107,24 @@ export const useYueStore = create<State>((set, get) => ({
           ]
         : history
 
-    const layer: DetailLayer = {
-      kind: 'phrase',
-      phrase: chosen,
-      definition: get().yueDefinition || undefined,
-    }
+    const sourceEn =
+      (latest && latest.to === 'yue' ? latest.source : '') || get().enInterim || ''
+    const definition = get().yueDefinition || undefined
+    const definitions = get().yueDefinitions
     set({
       yueTranslation: chosen,
       yueAlternatives: nextAlts,
       history: nextHistory,
-      detailStack: [layer],
+      detailStack: [
+        {
+          kind: 'phrase',
+          phrase: chosen,
+          translation: sourceEn || undefined,
+          definition,
+          definitions: definitions.length ? definitions : undefined,
+          alternatives: nextAlts.length ? nextAlts : undefined,
+        },
+      ],
       detailMinimized: false,
     })
   },
@@ -1011,6 +1139,7 @@ export const useYueStore = create<State>((set, get) => ({
         detailMinimized: false,
         translating: false,
         translatingTo: null,
+        altsLoading: false,
       })
       return
     }
@@ -1023,6 +1152,7 @@ export const useYueStore = create<State>((set, get) => ({
       yueDefinition: '',
       yueDefinitions: [],
       yueAlternatives: [],
+      altsLoading: false,
       detailStack: [],
       detailMinimized: false,
       translating: false,

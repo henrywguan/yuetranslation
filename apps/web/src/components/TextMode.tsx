@@ -8,7 +8,19 @@ import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
-const AUTO_TRANSLATE_MS = 450
+const AUTO_TRANSLATE_MS = 700
+
+function isWorthAutoTranslate(value: string, from: Lang): boolean {
+  const t = value.trim()
+  if (!t) return false
+  if (from === 'yue') {
+    // At least one CJK ideograph, or a short Latin transliteration.
+    return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
+  }
+  // Skip single-letter / mid-word fragments like "h", "he", "wha".
+  const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
+  return letters.length >= 3 || t.split(/\s+/).filter(Boolean).length >= 2
+}
 
 export function TextMode() {
   const [text, setText] = useState('')
@@ -21,24 +33,54 @@ export function TextMode() {
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
   const translating = useYueStore((s) => s.translating)
+  const altsLoading = useYueStore((s) => s.altsLoading)
   const trimmed = text.trim()
   const latest = history[0]
   const match =
     latest && latest.from === from && latest.source === trimmed ? latest : null
   const showThinking = busy || translating
+
+  const openMatchBreakdown = (phrase: string) => {
+    if (!match) return
+    if (match.to === 'yue') {
+      openBreakdown(phrase, {
+        translation: match.source,
+        definition: match.definition || undefined,
+        definitions: match.definitions,
+        alternatives: match.alternatives,
+      })
+      return
+    }
+    openBreakdown(match.source, {
+      translation: match.translation,
+      definition: match.definition || undefined,
+      definitions: match.definitions,
+    })
+  }
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
   const fromRef = useRef(from)
   const translateRef = useRef(translateTyped)
+  const historyRef = useRef(history)
   fromRef.current = from
   translateRef.current = translateTyped
+  historyRef.current = history
 
-  const runTranslate = (value: string, delay: number) => {
+  const runTranslate = (value: string, delay: number, force = false) => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
     const next = value.trim()
     if (!next) {
+      setBusy(false)
+      return
+    }
+    if (!force && !isWorthAutoTranslate(next, fromRef.current)) {
+      setBusy(false)
+      return
+    }
+    const top = historyRef.current[0]
+    if (top && top.from === fromRef.current && top.source === next) {
       setBusy(false)
       return
     }
@@ -80,7 +122,7 @@ export function TextMode() {
         onKeyDown={(e) => {
           if (e.key !== 'Enter' || e.shiftKey) return
           e.preventDefault()
-          runTranslate(text, 0)
+          runTranslate(text, 0, true)
         }}
         rows={4}
         placeholder={`${placeholder.en} / ${placeholder.zh}`}
@@ -104,30 +146,32 @@ export function TextMode() {
               definition={match.to === 'yue' ? match.definition || match.source : match.definition}
               definitions={match.definitions}
               cantonese={match.to === 'yue'}
-              onActivate={(phrase) => {
-                if (match.to === 'yue') {
-                  openBreakdown(phrase, {
-                    translation: match.source,
-                    definition: match.definition || undefined,
-                    definitions: match.definitions,
-                    alternatives: match.alternatives,
-                  })
-                  return
-                }
-                // EN result: open the Yue source with EN translation
-                openBreakdown(match.source, {
-                  translation: match.translation,
-                  definition: match.definition || undefined,
-                  definitions: match.definitions,
-                })
-              }}
+              onActivate={openMatchBreakdown}
               speakLang={match.to}
             />
             {match.to === 'yue' ? (
-              <TranslationAlternatives
-                alternatives={match.alternatives || []}
-                onSelect={selectYueVariation}
-              />
+              <>
+                <button
+                  type="button"
+                  className="text-breakdown-link"
+                  onClick={() => openMatchBreakdown(match.translation)}
+                >
+                  <BiText copy={ui.historyBreakdown} size="sm" />
+                </button>
+                <p className="text-breakdown-hint muted">
+                  <BiText copy={ui.tapForBreakdown} size="sm" />
+                </p>
+                {altsLoading && !(match.alternatives && match.alternatives.length) ? (
+                  <p className="text-alts-loading muted" aria-live="polite">
+                    <BiText copy={ui.loadingVariations} size="sm" />
+                  </p>
+                ) : (
+                  <TranslationAlternatives
+                    alternatives={match.alternatives || []}
+                    onSelect={selectYueVariation}
+                  />
+                )}
+              </>
             ) : null}
           </InkSettle>
         ) : null}

@@ -56,6 +56,16 @@ export const ui = {
     zh: '逐字拆解',
     jp: 'zuk6 zi6 caak3 gaai2',
   },
+  loadingVariations: {
+    en: 'Loading other variations…',
+    zh: '載入其他講法…',
+    jp: 'zoi3 jap6 kei4 taa1 gong2 faat3…',
+  },
+  tapForBreakdown: {
+    en: 'Tap Jyutping for character tones & meanings',
+    zh: '撳粵拼睇逐字聲調同意思',
+    jp: 'gam2 jyut6 ping3 tai2 zuk6 zi6 sing1 diu6 tung4 ji3 si1',
+  },
   historyNoDetails: {
     en: 'No extra details for this turn.',
     zh: '呢輪冇額外詳情。',
