@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { z } from 'zod'
-import { env } from './env.js'
+import { env, llmChatExtras } from './env.js'
 import { lookupGloss } from './canto/gloss.js'
 import { scrubMandarinToYue } from './canto/scrub.js'
 
@@ -102,11 +102,13 @@ export async function breakdown(input: unknown) {
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.2,
+      max_tokens: 600,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: trimmed },
       ],
       response_format: { type: 'json_object' },
+      ...llmChatExtras(),
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
     // Prefer model contextual meaning, but keep local gloss if model blank.

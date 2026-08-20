@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { z } from 'zod'
-import { env, openaiConfigured } from './env.js'
+import { env, openaiConfigured, llmChatExtras } from './env.js'
 import {
   dictionaryTranslate,
   hardenYueOutput,
@@ -260,6 +260,7 @@ export async function translate(input: unknown) {
       'You are a Hong Kong Cantonese interpreter.',
       'Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese.',
       'Prefer Hong Kong characters such as 係, 唔, 喺, 咗, 緊, 㗎, 喇, 喎.',
+      'Translate conversational speech faithfully, including slang and informal wording.',
       'Return ONLY valid JSON with this shape:',
       '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
       'Rules for alternatives:',
@@ -274,12 +275,13 @@ export async function translate(input: unknown) {
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.35,
-      max_tokens: 220,
+      max_tokens: 400,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: text },
       ],
       response_format: { type: 'json_object' },
+      ...llmChatExtras(),
     })
 
     const raw = completion.choices[0]?.message?.content?.trim() || ''
@@ -293,6 +295,7 @@ export async function translate(input: unknown) {
           'You are a Hong Kong Cantonese interpreter.',
           'Translate into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese.',
           'Prefer Hong Kong characters such as 係, 唔, 喺, 咗, 緊, 㗎, 喇, 喎.',
+          'Translate conversational speech faithfully, including slang and informal wording.',
           'Return ONLY valid JSON:',
           '{"translation":"<Cantonese>","definition":"<short English gloss of what the Cantonese means>"}',
           'The definition should help a learner: brief, clear, natural English (not a dictionary dump).',
@@ -300,6 +303,7 @@ export async function translate(input: unknown) {
       : [
           'You are a Hong Kong Cantonese interpreter.',
           'Translate Cantonese into natural English for face-to-face conversation.',
+          'Translate conversational speech faithfully, including slang and informal wording.',
           'Return ONLY valid JSON:',
           '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
         ].join('\n')
@@ -307,11 +311,12 @@ export async function translate(input: unknown) {
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.2,
-      max_tokens: 160,
+      max_tokens: 400,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: text },
       ],
+      ...llmChatExtras(),
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
     const payload = parsePayload(raw, toYue ? text : '', fallbackDefinition, toYue)

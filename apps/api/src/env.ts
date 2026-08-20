@@ -79,6 +79,21 @@ export function openaiConfigured() {
   return false
 }
 
+/** DeepSeek V4 enables thinking by default; reasoning tokens can exhaust max_tokens. */
+export function usesDeepSeekThinking() {
+  return /deepseek/i.test(`${env.openaiBaseUrl} ${env.openaiModel}`)
+}
+
+/**
+ * Extra Chat Completions fields for our translation models.
+ * DeepSeek V4 thinking is on by default; put `thinking` on the JSON body
+ * (Node SDK has no Python-style extra_body merge).
+ */
+export function llmChatExtras(): Record<string, unknown> {
+  if (!usesDeepSeekThinking()) return {}
+  return { thinking: { type: 'disabled' } }
+}
+
 export function cloudReady() {
   return Boolean(env.azureSpeechKey && openaiConfigured())
 }
