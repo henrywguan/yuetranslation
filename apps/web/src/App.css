@@ -1831,12 +1831,6 @@
   text-align: start;
 }
 
-.text-breakdown-hint,
-.text-alts-loading {
-  margin: 4px 0 0;
-  font-size: 0.8rem;
-}
-
 .text-mode textarea {
   width: 100%;
   resize: vertical;

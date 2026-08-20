@@ -42,6 +42,12 @@ function emptyMeta(notes: string[] = []) {
   }
 }
 
+const HAN = /[\u3400-\u9fff\uf900-\ufaff]/
+
+function hasHan(text: string) {
+  return HAN.test(text.trim())
+}
+
 function mergeDefinitions(...parts: Array<string | string[] | undefined | null>): string[] {
   const out: string[] = []
   const seen = new Set<string>()
@@ -144,8 +150,13 @@ export async function translate(input: unknown) {
     wantAlternatives: wantAlts,
   })
   const lexTextOk = Boolean(lexHit) && (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
+  const lexHasHan = Boolean(lexHit && to === 'yue' && hasHan(lexHit.text))
   const useLexicon = Boolean(
-    lexHit && lexTextOk && (!openaiConfigured() || lexHit.kind === 'exact'),
+    lexHit &&
+      lexTextOk &&
+      (!openaiConfigured() ||
+        lexHit.kind === 'exact' ||
+        (lexHit.kind === 'composed' && lexHasHan)),
   )
   if (lexHit && useLexicon) {
     if (to === 'yue') {
@@ -271,8 +282,8 @@ export async function translate(input: unknown) {
       response_format: { type: 'json_object' },
     })
 
-    const raw = completion.choices[0]?.message?.content?.trim() || text
-    const parsedYue = parseYuePayload(raw, text)
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedYue = parseYuePayload(raw, text, true)
     primary = parsedYue.text
     alternatives = parsedYue.alternatives
     if (parsedYue.definition) definition = parsedYue.definition
@@ -303,9 +314,45 @@ export async function translate(input: unknown) {
       ],
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
-    const payload = parsePayload(raw, text, fallbackDefinition)
+    const payload = parsePayload(raw, toYue ? text : '', fallbackDefinition, toYue)
     primary = payload.text
     definition = toYue ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (from === 'yue' && to === 'en' && (!primary.trim() || hasHan(primary))) {
+    const dictHit = dictionaryTranslate({
+      sourceLang: 'yue',
+      targetLang: 'en',
+      source: text,
+    })
+    if (dictHit && !looksLikeGlossDump(dictHit.text)) {
+      primary = dictHit.text
+    } else {
+      const lexHit = lexiconTranslate({
+        sourceLang: 'yue',
+        targetLang: 'en',
+        source: text,
+      })
+      if (lexHit && !looksLikeGlossDump(lexHit.text)) {
+        primary = lexHit.text
+      } else {
+        primary = ''
+      }
+    }
+  }
+
+  if (toYue && from === 'en' && !hasHan(primary)) {
+    const offline = lexiconTranslate({
+      sourceLang: 'en',
+      targetLang: 'yue',
+      source: text,
+      wantAlternatives: wantAlts,
+    })
+    if (offline && hasHan(offline.text)) {
+      primary = offline.text
+      if (!definition) definition = fallbackDefinition
+      alternatives = wantAlts ? offline.alternatives : alternatives
+    }
   }
 
   // 5) Harden Cantonese outputs (scrub / score / optional rewrite).
@@ -317,23 +364,27 @@ export async function translate(input: unknown) {
       sourceEn: from === 'en' ? text : undefined,
       client,
     })
+    const outText = hasHan(hardened.text) ? hardened.text : ''
     return withYueDefinitions(
       {
-        text: hardened.text,
+        text: outText,
         definition,
-        alternatives: wantAlts ? hardened.alternatives : [],
+        alternatives: wantAlts ? hardened.alternatives.filter((a) => hasHan(a)) : [],
         engine,
         from,
         to,
         stage,
-        meta: hardened.meta,
+        meta: {
+          ...hardened.meta,
+          notes: outText ? hardened.meta.notes : [...hardened.meta.notes, 'no-yue-output'],
+        },
       },
       text,
     )
   }
 
-  // 6) 粵→EN: never ship dictionary gloss dumps from the model path.
-  if (looksLikeGlossDump(primary)) {
+  // 6) 粵→EN: never ship dictionary gloss dumps or source-language echo from the model path.
+  if (looksLikeGlossDump(primary) || (from === 'yue' && hasHan(primary))) {
     return withYueDefinitions(
       {
         text: '',
@@ -343,7 +394,7 @@ export async function translate(input: unknown) {
         from,
         to,
         stage,
-        meta: emptyMeta(['gloss-dump-blocked']),
+        meta: emptyMeta(['yue-echo-blocked']),
       },
       text,
     )
@@ -380,23 +431,33 @@ function parsePayload(
   raw: string,
   fallbackText: string,
   fallbackDefinition: string,
+  requireHan = false,
 ): { text: string; definition: string } {
   const cleaned = stripJsonFence(raw)
   try {
     const parsed = JSON.parse(cleaned) as { translation?: unknown; definition?: unknown; text?: unknown }
     const textCandidate = asTrimmedString(parsed.translation) || asTrimmedString(parsed.text)
+    const text =
+      textCandidate && (!requireHan || hasHan(textCandidate))
+        ? textCandidate
+        : requireHan
+          ? ''
+          : fallbackText
     return {
-      text: textCandidate || fallbackText,
+      text,
       definition: asTrimmedString(parsed.definition) || fallbackDefinition,
     }
   } catch {
-    return { text: cleaned || fallbackText, definition: fallbackDefinition }
+    const text =
+      cleaned && (!requireHan || hasHan(cleaned)) ? cleaned : requireHan ? '' : fallbackText
+    return { text, definition: fallbackDefinition }
   }
 }
 
 function parseYuePayload(
   raw: string,
   fallback: string,
+  requireHan = false,
 ): { text: string; alternatives: string[]; definition: string } {
   const cleaned = stripJsonFence(raw)
   try {
@@ -405,16 +466,26 @@ function parseYuePayload(
       alternatives?: unknown
       definition?: unknown
     }
-    const primary = asTrimmedString(parsed.primary) || fallback
+    const primary = asTrimmedString(parsed.primary)
+    const text =
+      primary && (!requireHan || hasHan(primary))
+        ? primary
+        : requireHan
+          ? ''
+          : hasHan(fallback)
+            ? fallback
+            : ''
     const alts = Array.isArray(parsed.alternatives)
       ? parsed.alternatives.filter((x): x is string => typeof x === 'string')
       : []
     return {
-      text: primary,
-      alternatives: uniqStrings(primary, alts),
+      text,
+      alternatives: uniqStrings(text, alts),
       definition: asTrimmedString(parsed.definition),
     }
   } catch {
-    return { text: cleaned || fallback, alternatives: [], definition: '' }
+    const text =
+      cleaned && (!requireHan || hasHan(cleaned)) ? cleaned : requireHan ? '' : fallback
+    return { text, alternatives: [], definition: '' }
   }
 }

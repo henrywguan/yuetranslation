@@ -3,7 +3,6 @@ import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { TranslateThinking } from './TranslateThinking'
-import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
@@ -30,10 +29,8 @@ export function TextMode() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
-  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
   const translating = useYueStore((s) => s.translating)
-  const altsLoading = useYueStore((s) => s.altsLoading)
   const trimmed = text.trim()
   const latest = history[0]
   const match =
@@ -150,28 +147,13 @@ export function TextMode() {
               speakLang={match.to}
             />
             {match.to === 'yue' ? (
-              <>
-                <button
-                  type="button"
-                  className="text-breakdown-link"
-                  onClick={() => openMatchBreakdown(match.translation)}
-                >
-                  <BiText copy={ui.historyBreakdown} size="sm" />
-                </button>
-                <p className="text-breakdown-hint muted">
-                  <BiText copy={ui.tapForBreakdown} size="sm" />
-                </p>
-                {altsLoading && !(match.alternatives && match.alternatives.length) ? (
-                  <p className="text-alts-loading muted" aria-live="polite">
-                    <BiText copy={ui.loadingVariations} size="sm" />
-                  </p>
-                ) : (
-                  <TranslationAlternatives
-                    alternatives={match.alternatives || []}
-                    onSelect={selectYueVariation}
-                  />
-                )}
-              </>
+              <button
+                type="button"
+                className="text-breakdown-link"
+                onClick={() => openMatchBreakdown(match.translation)}
+              >
+                <BiText copy={ui.historyBreakdown} size="sm" />
+              </button>
             ) : null}
           </InkSettle>
         ) : null}

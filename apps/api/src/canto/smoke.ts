@@ -175,6 +175,28 @@ assert(
   `expected natural EN or demo, got ${understandTranslate.engine}: ${understandTranslate.text}`,
 )
 
+const sttVariant = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '明明白我講乜嘢？',
+})
+assert(
+  /understand what i'?m saying/i.test(sttVariant?.text || ''),
+  `STT variant 明明白 should repair to phrase memory: ${sttVariant?.text}`,
+)
+
+const sttTranslate = await translate({
+  text: '明明白我講乜嘢？',
+  from: 'yue',
+  to: 'en',
+  stage: 'final',
+})
+assert(
+  /understand/i.test(sttTranslate.text),
+  `粵→EN STT variant failed: ${sttTranslate.engine} ${sttTranslate.text}`,
+)
+assert(!/[\u4e00-\u9fff]/.test(sttTranslate.text), `粵→EN must not echo Han: ${sttTranslate.text}`)
+
 // End-to-end offline path (dictionary / lexicon — no model required for these hits).
 const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
 assert(
@@ -187,6 +209,27 @@ const offlineWhere = await translate({ text: 'where', from: 'en', to: 'yue', sta
 assert(
   offlineWhere.engine === 'dictionary' || offlineWhere.engine === 'lexicon',
   `offline where engine=${offlineWhere.engine} text=${offlineWhere.text}`,
+)
+
+const offlinePhrase = lexiconTranslate({
+  sourceLang: 'en',
+  targetLang: 'yue',
+  source: 'we love apples and bananas',
+})
+assert(
+  offlinePhrase?.kind === 'composed' && /[\u4e00-\u9fff]/.test(offlinePhrase.text),
+  `composed EN phrase failed: ${JSON.stringify(offlinePhrase)}`,
+)
+
+const offlineSentence = await translate({
+  text: 'we love apples and bananas',
+  from: 'en',
+  to: 'yue',
+  stage: 'final',
+})
+assert(
+  /[\u4e00-\u9fff]/.test(offlineSentence.text),
+  `translate we love apples failed: ${offlineSentence.engine} ${offlineSentence.text}`,
 )
 
 const stats = glossStats()

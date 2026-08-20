@@ -7,7 +7,7 @@ import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevic
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
 import { prefetchSpeechToken, peekSpeechToken } from './speechToken'
 import { newId } from './id'
-import { sanitizeTranslationText } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type {
   ConversationTurn,
@@ -290,9 +290,9 @@ async function enrichTextAlternatives(
     }
 
     const currentPrimary = latest.translation.trim()
-    const enrichPrimary = sanitizeTranslationText(result.text)
+    const enrichPrimary = sanitizeYueTranslation(result.text)
     const fromResult = (result.alternatives || [])
-      .map((a) => sanitizeTranslationText(a))
+      .map((a) => sanitizeYueTranslation(a))
       .filter(Boolean) as string[]
     const extras: string[] = []
     if (enrichPrimary && enrichPrimary !== currentPrimary) extras.push(enrichPrimary)
@@ -398,15 +398,24 @@ async function runTranslation(
     const hold = minThinkingMs - (Date.now() - startedAt)
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
     if (pending.get(lang) !== seq || signal.aborted) return
-    const clean = sanitizeTranslationText(result.text)
+    const clean =
+      to === 'yue'
+        ? sanitizeYueTranslation(result.text)
+        : sanitizeEnTranslation(result.text, lang === 'yue' ? text : undefined)
     if (!clean) {
       set({
         error:
-          'Translation looked like a dictionary dump and was blocked. Try another phrasing, or check OPENAI_API_KEY.',
+          to === 'yue'
+            ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+            : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return
     }
-    const alternatives = (result.alternatives || []).filter((a) => Boolean(sanitizeTranslationText(a)))
+    const altSanitize =
+      to === 'yue'
+        ? sanitizeYueTranslation
+        : (value: string | null | undefined) => sanitizeEnTranslation(value, lang === 'yue' ? text : undefined)
+    const alternatives = (result.alternatives || []).filter((a) => Boolean(altSanitize(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
     const definitions = (result.definitions || []).filter((d) => Boolean(d?.trim()))
 

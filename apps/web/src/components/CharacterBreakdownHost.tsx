@@ -13,6 +13,9 @@ import { useFloatingPanel, type PanelBox } from '../lib/useFloatingPanel'
 import { useYueStore } from '../lib/store'
 import type { DetailLayer } from '../lib/detailTypes'
 import { inkEase } from '../lib/motion'
+import { TranslationAlternatives } from './TranslationAlternatives'
+import { BiText } from './BiText'
+import { ui } from '../lib/uiCopy'
 import './DetailPanel.css'
 
 const PANEL_KEY = 'yue-details-panel-v2'
@@ -56,6 +59,8 @@ export function CharacterBreakdownHost() {
   const closeBreakdown = useYueStore((s) => s.closeBreakdown)
   const minimizeDetail = useYueStore((s) => s.minimizeDetail)
   const restoreDetail = useYueStore((s) => s.restoreDetail)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
+  const altsLoading = useYueStore((s) => s.altsLoading)
   const dockUpsert = usePanelDock((s) => s.upsert)
   const dockRemove = usePanelDock((s) => s.remove)
 
@@ -255,7 +260,7 @@ export function CharacterBreakdownHost() {
       <div className="detail-panel-body">
         {top.kind === 'phrase' ? (
           <>
-            {definitions.length > 1 || alternatives.length > 0 ? (
+            {definitions.length > 1 || alternatives.length > 0 || altsLoading ? (
               <div className="detail-panel-extra">
                 {definitions.length > 1 ? (
                   <section className="detail-panel-defs" aria-label="English meanings">
@@ -267,10 +272,21 @@ export function CharacterBreakdownHost() {
                     </ul>
                   </section>
                 ) : null}
-                {alternatives.length > 0 ? (
-                  <section className="detail-panel-alts" aria-label="Also said as">
-                    <h3>Also said as</h3>
-                    <p lang="zh-HK">{alternatives.join(' · ')}</p>
+                {altsLoading && alternatives.length === 0 ? (
+                  <section className="detail-panel-alts" aria-live="polite">
+                    <h3>
+                      <BiText copy={ui.historyVariations} size="sm" />
+                    </h3>
+                    <p className="muted">
+                      <BiText copy={ui.loadingVariations} size="sm" />
+                    </p>
+                  </section>
+                ) : alternatives.length > 0 ? (
+                  <section className="detail-panel-alts" aria-label="Other variations">
+                    <TranslationAlternatives
+                      alternatives={alternatives}
+                      onSelect={selectYueVariation}
+                    />
                   </section>
                 ) : null}
               </div>
