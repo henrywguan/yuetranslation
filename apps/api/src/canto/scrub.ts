@@ -69,6 +69,6 @@ export function scrubMandarinToYue(input: string): { text: string; changed: bool
 }
 
 /** Heuristic: presence of common Mandarin-only / written markers. */
-export function looksMandarinHeavy(text: string) {
+function looksMandarinHeavy(text: string) {
   return /[们們什么什麼怎么怎麼吗嗎这這那哪没有沒有的了和给給]/.test(text)
 }

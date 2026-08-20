@@ -56,7 +56,7 @@ const META_SENSE =
   /^(softening particle|assertive particle|change-of-state particle|hearsay(?:\s*\/\s*soft particle)?|progressive(?:\s*\(-ing\))?|perfective(?:\s*\(already done\))?|plural marker(?:[^a-z].*)?|possessive(?:\s*\/\s*relative)?|relative|classifier|question particle|comma|full stop|exclamation mark|question mark|interjection)\b/i
 
 /** Strip stacked CC-Canto labels: (interjection) (of …) hello → hello */
-export function cleanGlossSense(gloss: string): string {
+function cleanGlossSense(gloss: string): string {
   let s = gloss.trim()
   while (/^\([^)]*\)\s*/.test(s)) {
     s = s.replace(/^\([^)]*\)\s*/, '')
@@ -68,7 +68,7 @@ export function cleanGlossSense(gloss: string): string {
  * All usable English sense strings from a CC-Canto / seed gloss
  * (split on ; ／ and " / ").
  */
-export function allGlossSenses(gloss: string): string[] {
+function allGlossSenses(gloss: string): string[] {
   let s = gloss.trim()
   while (/^\([^)]*\)\s*/.test(s)) {
     s = s.replace(/^\([^)]*\)\s*/, '')
@@ -119,7 +119,7 @@ function isMetaSense(sense: string): boolean {
 }
 
 /** Strip POS tags / noise and split CC-Canto gloss senses into EN lemmas. */
-export function glossLemmas(gloss: string): string[] {
+function glossLemmas(gloss: string): string[] {
   const cleaned = gloss
     .replace(/^\((?:noun|verb|adj|adverb|phrase|slang|interjection|classifier|particle)\)\s*/i, '')
     .replace(/\([^)]*\)/g, ' ')

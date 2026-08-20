@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import {
   ensureIpa,
@@ -14,6 +14,7 @@ import { rememberLearnedGloss } from '../lib/learnedGloss'
 import { translateText } from '../lib/api'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
+import { useReducedMotion } from '../lib/useReducedMotion'
 import { JyutRuby } from './JyutRuby'
 
 const TONE_NAME: Record<string, Bi> = {

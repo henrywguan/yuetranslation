@@ -4,7 +4,7 @@ import { ensureJyutpingSegs, hasHan, rubyJpSyllable, type JyutSeg } from '../lib
 type JyutRubyProps = {
   han: string
   segs?: JyutSeg[]
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'md' | 'lg'
   className?: string
   /** Popup tips reuse the same cell markup with `.jp-pop-*` classes. */
   variant?: 'inline' | 'pop'

@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ensureJyutpingSegs, hasHan, type JyutSeg } from '../lib/jyutping'
+import { useReducedMotion } from '../lib/useReducedMotion'
 import { inkEase } from '../lib/motion'
 import { JyutRuby } from './JyutRuby'
 import type { RefObject } from 'react'
@@ -41,14 +42,12 @@ function clampPopToViewport(pop: HTMLElement, anchor: HTMLElement) {
 export function JpPop({
   show,
   id,
-  text: _text,
   han = '',
   className = '',
   anchorRef,
 }: {
   show: boolean
   id: string
-  text: string
   han?: string
   className?: string
   anchorRef?: RefObject<HTMLElement | null>

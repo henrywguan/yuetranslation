@@ -1,13 +1,5 @@
 import { getAccessToken } from './auth'
-import { getUpgradeUrl } from './api'
-
-function resolveApiBase(): string {
-  if (typeof window !== 'undefined') {
-    const fromQuery = new URLSearchParams(window.location.search).get('api')
-    if (fromQuery) return fromQuery.replace(/\/$/, '')
-  }
-  return (import.meta.env.VITE_API_BASE as string) || '/api'
-}
+import { getUpgradeUrl, resolveApiBase } from './api'
 
 async function billingFetch(path: string, body: Record<string, string>) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }

@@ -95,9 +95,9 @@ const CHAR_GLOSS: Record<string, string> = {
   蕉: 'banana',
 }
 
-export const GENERIC_CHAR_GLOSS = 'Cantonese character'
+const GENERIC_CHAR_GLOSS = 'Cantonese character'
 
-export function isGenericCharGloss(gloss: string | null | undefined): boolean {
+function isGenericCharGloss(gloss: string | null | undefined): boolean {
   return (gloss || '').trim() === GENERIC_CHAR_GLOSS
 }
 
@@ -115,19 +115,18 @@ export function hasStaticGloss(token: string): boolean {
   return Boolean(t && CHAR_GLOSS[t])
 }
 
+/** Offline gloss: static seed, then learned localStorage cache. */
 export function glossForChar(char: string): string {
   const staticGloss = CHAR_GLOSS[char]?.trim() || ''
   if (staticGloss) return staticGloss
   return lookupLearned(char)
 }
 
-/** Known-character sense only (empty when unknown — used for drill gating). */
-export function charSense(char: string) {
-  const staticGloss = CHAR_GLOSS[char]?.trim() || ''
-  if (staticGloss) return staticGloss
-  return lookupLearned(char)
-}
+/** Alias for drill gating / sense lookups. */
+export const charSense = glossForChar
 
 export function isHanChar(ch: string) {
   return /[\u3400-\u9fff\uf900-\ufaff]/.test(ch)
 }
+
+export { GENERIC_CHAR_GLOSS }

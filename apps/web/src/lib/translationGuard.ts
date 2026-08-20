@@ -42,7 +42,7 @@ function looksLikeGlossDump(text: string): boolean {
  * Accept only clean translation text for pane display.
  * Returns null when the string must not be shown as a translation.
  */
-export function sanitizeTranslationText(text: string | null | undefined): string | null {
+function sanitizeTranslationText(text: string | null | undefined): string | null {
   const t = (text || '').trim()
   if (!t) return null
   if (looksLikeGlossDump(t)) return null

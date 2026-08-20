@@ -7,7 +7,7 @@ let client: SupabaseClient | null = null
 let authPanelOpen = false
 let configLoad: Promise<void> | null = null
 
-export const AUTH_SCREEN_EVENT = 'yue-auth-screen'
+const AUTH_SCREEN_EVENT = 'yue-auth-screen'
 
 export function supabaseEnabled(): boolean {
   return Boolean(supabaseUrl && supabaseAnonKey)
@@ -136,14 +136,14 @@ export async function signIn(email: string, password: string) {
  * OAuth / email-confirm return URL. Keep this on the current origin so preview
  * and production deployments each redirect back to themselves.
  */
-export function oauthRedirectUrl(): string {
+function oauthRedirectUrl(): string {
   const url = new URL(window.location.origin)
   url.pathname = window.location.pathname || '/'
   return url.toString()
 }
 
 /** True when this page load is a Supabase auth callback (OAuth or magic link). */
-export function isAuthCallback(): boolean {
+function isAuthCallback(): boolean {
   if (typeof window === 'undefined') return false
   const q = new URLSearchParams(window.location.search)
   if (q.has('code') || (q.has('error') && q.has('error_description'))) return true

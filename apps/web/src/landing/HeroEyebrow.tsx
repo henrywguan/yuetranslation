@@ -31,7 +31,6 @@ function EyebrowStack({
         <JpPop
           show={show}
           id={tipId}
-          text={jp}
           han={zh}
           anchorRef={wrapRef}
         />

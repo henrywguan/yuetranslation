@@ -1,5 +1,5 @@
 import { isValidDefinition } from './jyutping'
-import { hasStaticGloss } from './charGloss'
+import { GENERIC_CHAR_GLOSS, hasStaticGloss } from './charGloss'
 
 const STORAGE_KEY = 'yue-learned-gloss-v1'
 const MAX_ENTRIES = 1500
@@ -18,8 +18,6 @@ export type LearnedGlossEntry = {
 type LearnedStore = Record<string, LearnedGlossEntry>
 
 let memory: LearnedStore | null = null
-
-const GENERIC = 'Cantonese character'
 
 function loadStore(): LearnedStore {
   if (memory) return memory
@@ -52,10 +50,10 @@ function normalizeToken(token: string) {
 }
 
 /** True when a gloss is worth persisting for offline reuse. */
-export function isStorableLearnedGloss(gloss: string): boolean {
+function isStorableLearnedGloss(gloss: string): boolean {
   const t = gloss.trim()
   if (!t) return false
-  if (t === GENERIC) return false
+  if (t === GENERIC_CHAR_GLOSS) return false
   if (!isValidDefinition(t)) return false
   if (t.toLowerCase() === 'cantonese character') return false
   return true
@@ -66,12 +64,6 @@ export function learnedGloss(token: string): string {
   const key = normalizeToken(token)
   if (!key) return ''
   return loadStore()[key]?.gloss?.trim() || ''
-}
-
-export function learnedEntry(token: string): LearnedGlossEntry | null {
-  const key = normalizeToken(token)
-  if (!key) return null
-  return loadStore()[key] || null
 }
 
 /** Save a resolved gloss locally so the next offline lookup hits immediately. */
