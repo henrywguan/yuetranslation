@@ -189,6 +189,27 @@ assert(
   `offline where engine=${offlineWhere.engine} text=${offlineWhere.text}`,
 )
 
+const offlinePhrase = lexiconTranslate({
+  sourceLang: 'en',
+  targetLang: 'yue',
+  source: 'we love apples and bananas',
+})
+assert(
+  offlinePhrase?.kind === 'composed' && /[\u4e00-\u9fff]/.test(offlinePhrase.text),
+  `composed EN phrase failed: ${JSON.stringify(offlinePhrase)}`,
+)
+
+const offlineSentence = await translate({
+  text: 'we love apples and bananas',
+  from: 'en',
+  to: 'yue',
+  stage: 'final',
+})
+assert(
+  /[\u4e00-\u9fff]/.test(offlineSentence.text),
+  `translate we love apples failed: ${offlineSentence.engine} ${offlineSentence.text}`,
+)
+
 const stats = glossStats()
 assert(stats.ccCanto > 1000, `expected CC-Canto pack loaded, got ${stats.ccCanto}`)
 assert(wordshkEnabled() === false, 'wordshk should stay gated off')

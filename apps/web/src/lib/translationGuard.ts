@@ -48,3 +48,13 @@ export function sanitizeTranslationText(text: string | null | undefined): string
   if (looksLikeGlossDump(t)) return null
   return t
 }
+
+const HAN = /[\u3400-\u9fff\uf900-\ufaff]/
+
+/** Reject EN→粵 payloads that never produced Cantonese characters. */
+export function sanitizeYueTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (!HAN.test(t)) return null
+  return t
+}

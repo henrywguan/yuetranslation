@@ -1,4 +1,5 @@
 import { eachLexiconEntry, lookupGloss } from './gloss.js'
+import { dictionaryTranslate } from './dictionary.js'
 import { normalizeLookupKey, uniqStrings } from './normalize.js'
 import type { TargetLang } from './types.js'
 
@@ -232,19 +233,73 @@ function pickEnHits(query: string, wantAlternatives: boolean): LexiconTranslateH
   }
 }
 
+function singularEnToken(tok: string): string | null {
+  if (tok.endsWith('ies') && tok.length > 4) return `${tok.slice(0, -3)}y`
+  // -es plurals (boxes, watches) — not plain -s words like "apples" → "apple".
+  if (tok.endsWith('es') && tok.length > 4) {
+    const stem = tok.slice(0, -2)
+    if (/[sxz]$|[cs]h$/.test(stem) || stem.endsWith('o')) return stem
+  }
+  if (tok.endsWith('s') && tok.length > 3 && !tok.endsWith('ss')) return tok.slice(0, -1)
+  return null
+}
+
+/** Resolve one English content word to Cantonese via lexicon headword or phrase memory. */
+function resolveEnToken(tok: string): LexiconTranslateHit | null {
+  const hit = pickEnHits(tok, false)
+  if (hit) return hit
+
+  const dict = dictionaryTranslate({
+    sourceLang: 'en',
+    targetLang: 'yue',
+    source: tok,
+  })
+  if (dict) {
+    return {
+      text: dict.text,
+      definition: tok,
+      alternatives: [],
+      notes: [`dict:${dict.entry.id}`],
+      kind: 'exact',
+    }
+  }
+
+  const singular = singularEnToken(tok)
+  if (singular && singular !== tok) {
+    const fromSingular = pickEnHits(singular, false)
+    if (fromSingular) return fromSingular
+    const dictSingular = dictionaryTranslate({
+      sourceLang: 'en',
+      targetLang: 'yue',
+      source: singular,
+    })
+    if (dictSingular) {
+      return {
+        text: dictSingular.text,
+        definition: singular,
+        alternatives: [],
+        notes: [`dict:${dictSingular.entry.id}`],
+        kind: 'exact',
+      }
+    }
+  }
+
+  return null
+}
+
 function composeEnToYue(query: string): LexiconTranslateHit | null {
   buildEnIndex()
   const key = normalizeLookupKey(query)
   const tokens = key.split(/\s+/).filter(Boolean)
-  if (tokens.length < 2 || tokens.length > 4) return null
+  if (tokens.length < 2 || tokens.length > 10) return null
 
   const content = tokens.filter((t) => !SKIP_EN.has(t))
-  if (!content.length || content.length > 3) return null
+  if (!content.length || content.length > 8) return null
 
   const parts: string[] = []
   const notes: string[] = ['lexicon:en:composed']
   for (const tok of content) {
-    const hit = pickEnHits(tok, false)
+    const hit = resolveEnToken(tok)
     if (!hit) return null
     parts.push(hit.text)
     notes.push(...hit.notes)

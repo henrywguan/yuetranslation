@@ -17,7 +17,7 @@ export type AttestationResult = {
 export function attestAgainstLexicon(text: string): AttestationResult {
   const chars = Array.from(text.trim()).filter((ch) => HAN.test(ch))
   if (!chars.length) {
-    return { coverage: 1, hanChars: 0, attestedChars: 0, unknownSpans: [] }
+    return { coverage: 0, hanChars: 0, attestedChars: 0, unknownSpans: [] }
   }
 
   let attested = 0
