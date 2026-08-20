@@ -30,6 +30,7 @@ export type AdminUser = {
   displayName: string | null
   createdAt: string | null
   plan: 'free' | 'pro' | 'max'
+  isAdmin: boolean
   disabled: boolean
   bannedUntil: string | null
   stripeCustomerId: string | null
