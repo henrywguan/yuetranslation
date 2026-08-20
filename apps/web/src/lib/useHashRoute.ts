@@ -16,6 +16,13 @@ function viewParam(): string | null {
   return new URLSearchParams(window.location.search).get('view')
 }
 
+/** Path inside the hash (`#/app?auth=1` → `app`). Auth-token hashes are not routes. */
+export function hashPath(hash = typeof window === 'undefined' ? '' : window.location.hash): string {
+  const raw = hash.replace(/^#/, '')
+  if (!raw.startsWith('/')) return ''
+  return raw.replace(/^\//, '').split('?')[0] || ''
+}
+
 /** True when the app is embedded via `[yue_translator]` (`?view=app`). */
 export function isEmbeddedAppView(): boolean {
   return viewParam() === 'app'
@@ -23,10 +30,10 @@ export function isEmbeddedAppView(): boolean {
 
 export function useRoute(): Route {
   const hash = useSyncExternalStore(subscribe, getSnapshot, () => '')
-  const normalized = hash.replace(/^#\/?/, '')
+  const path = hashPath(hash)
   // Hash wins after the user navigates inside an embed (e.g. splash → #/app).
-  if (normalized === 'app') return 'app'
-  if (normalized === 'pricing') return 'pricing'
+  if (path === 'app') return 'app'
+  if (path === 'pricing') return 'pricing'
   if (isEmbeddedAppView()) return 'app'
   if (viewParam() === 'pricing') return 'pricing'
   return 'home'

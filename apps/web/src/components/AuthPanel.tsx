@@ -3,8 +3,10 @@ import { AppleIcon } from './AppleIcon'
 import { BiText } from './BiText'
 import { GoogleIcon } from './GoogleIcon'
 import {
+  AUTH_SCREEN_EVENT,
   closeAuthScreen,
   getSession,
+  goToAppAfterAuth,
   isAuthScreenOpen,
   onAuthChange as subscribeAuthChange,
   signIn,
@@ -34,7 +36,11 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
   useEffect(() => {
     const sync = () => setOpen(isAuthScreenOpen())
     window.addEventListener('popstate', sync)
-    return () => window.removeEventListener('popstate', sync)
+    window.addEventListener(AUTH_SCREEN_EVENT, sync)
+    return () => {
+      window.removeEventListener('popstate', sync)
+      window.removeEventListener(AUTH_SCREEN_EVENT, sync)
+    }
   }, [])
 
   useEffect(() => {
@@ -74,6 +80,7 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
     try {
       if (mode === 'signin') {
         await signIn(email.trim(), password)
+        goToAppAfterAuth()
       } else {
         await signUp(email.trim(), password)
         setMessage('Check your email to confirm your account, then sign in.')
