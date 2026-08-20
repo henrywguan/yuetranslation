@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, useSyncExternalStore } from 'react
 import { AppleIcon } from './AppleIcon'
 import { BiText } from './BiText'
 import { GoogleIcon } from './GoogleIcon'
+import { GlowRotateButton } from './GlowRotateButton'
 import {
   closeAuthScreen,
   getSession,
@@ -20,13 +21,13 @@ import { biPlain, ui } from '../lib/uiCopy'
 
 type Props = {
   onAuthChange?: () => void
-  /** When true, auth cannot be dismissed until the user signs in. */
-  required?: boolean
 }
 
-export function AuthPanel({ onAuthChange, required = false }: Props) {
+type Mode = 'signin' | 'register'
+
+export function AuthPanel({ onAuthChange }: Props) {
   const open = useSyncExternalStore(subscribeAuthScreen, isAuthScreenOpen, () => false)
-  const [mode, setMode] = useState<'signin' | 'register'>('signin')
+  const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -38,35 +39,37 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
     return subscribeAuthChange((session) => {
       setSignedIn(Boolean(session))
       if (session) {
-        if (!required) closeAuthScreen()
+        closeAuthScreen()
         onAuthChange?.()
       }
     })
-  }, [onAuthChange, required])
+  }, [onAuthChange])
 
-  if (!supabaseEnabled()) return null
-  if (!required && !open) return null
-  if (required && signedIn) return null
+  useEffect(() => {
+    if (!open) {
+      setMode('signin')
+      setMessage(null)
+      setBusy(false)
+    }
+  }, [open])
+
+  if (!open) return null
 
   const close = () => {
-    if (required) return
     closeAuthScreen()
     setMessage(null)
   }
 
-  const backdrop =
-    required ? (
-      <div className="auth-backdrop auth-backdrop--locked" aria-hidden />
-    ) : (
-      <button type="button" className="auth-backdrop" aria-label="Close" onClick={close} />
-    )
-
-  const submit = async (event: FormEvent) => {
+  const submit = async (event: FormEvent, next: Mode) => {
     event.preventDefault()
+    if (!supabaseEnabled()) {
+      setMessage('Auth is not configured on this deploy.')
+      return
+    }
     setBusy(true)
     setMessage(null)
     try {
-      if (mode === 'signin') {
+      if (next === 'signin') {
         await signIn(email.trim(), password)
         goToAppAfterAuth()
       } else {
@@ -86,6 +89,10 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
   }
 
   const oauthSignIn = async (provider: 'google' | 'apple') => {
+    if (!supabaseEnabled()) {
+      setMessage('Auth is not configured on this deploy.')
+      return
+    }
     setBusy(true)
     setMessage(null)
     try {
@@ -98,99 +105,141 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
     }
   }
 
+  const oauthRow = (
+    <div className="auth-oauth-row">
+      <button
+        type="button"
+        className="auth-oauth-btn"
+        disabled={busy}
+        aria-label={biPlain(ui.signInGoogle)}
+        title={biPlain(ui.signInGoogle)}
+        onClick={() => void oauthSignIn('google')}
+      >
+        <GoogleIcon size={20} />
+      </button>
+      <button
+        type="button"
+        className="auth-oauth-btn auth-oauth-btn--apple"
+        disabled={busy}
+        aria-label={biPlain(ui.signInApple)}
+        title={biPlain(ui.signInApple)}
+        onClick={() => void oauthSignIn('apple')}
+      >
+        <AppleIcon size={20} />
+      </button>
+    </div>
+  )
+
   return (
     <div className="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-      {backdrop}
-      <form className="auth-panel" onSubmit={submit}>
-        <div className="auth-head">
-          <h2 id="auth-title">
-            <BiText copy={mode === 'signin' ? ui.signIn : ui.register} size="md" />
-          </h2>
-          {!required ? (
+      <button type="button" className="auth-backdrop" aria-label="Close" onClick={close} />
+      <div className="auth-stage">
+        <div className={`auth-flip${mode === 'register' ? ' is-flipped' : ''}`}>
+          <form className="auth-face auth-face--front" onSubmit={(e) => void submit(e, 'signin')}>
             <button type="button" className="auth-close" onClick={close} aria-label="Close">
               ×
             </button>
-          ) : null}
-        </div>
+            <h2 id="auth-title" className="auth-title">
+              <BiText copy={ui.signIn} size="md" />
+            </h2>
+            {oauthRow}
+            <p className="auth-divider">
+              <BiText copy={ui.signInOr} size="sm" />
+            </p>
+            <label className="auth-float">
+              <input
+                type="email"
+                autoComplete="email"
+                required
+                placeholder=" "
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <span>Email</span>
+            </label>
+            <label className="auth-float">
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                minLength={8}
+                placeholder=" "
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <span>Password</span>
+            </label>
+            {message && mode === 'signin' ? <p className="auth-message">{message}</p> : null}
+            <GlowRotateButton type="submit" className="auth-submit" disabled={busy}>
+              <BiText copy={ui.signIn} size="sm" layout="inline" />
+            </GlowRotateButton>
+            <p className="auth-switch">
+              <button type="button" onClick={() => setMode('register')}>
+                <BiText copy={ui.createAccount} size="sm" />
+              </button>
+            </p>
+            {signedIn ? (
+              <button
+                type="button"
+                className="auth-signout"
+                onClick={async () => {
+                  await signOut()
+                  setSignedIn(false)
+                  onAuthChange?.()
+                  close()
+                }}
+              >
+                <BiText copy={ui.signOut} size="sm" />
+              </button>
+            ) : null}
+          </form>
 
-        <div className="auth-oauth-row">
-          <button
-            type="button"
-            className="auth-oauth-btn"
-            disabled={busy}
-            aria-label={biPlain(ui.signInGoogle)}
-            title={biPlain(ui.signInGoogle)}
-            onClick={() => void oauthSignIn('google')}
-          >
-            <GoogleIcon size={22} />
-          </button>
-          <button
-            type="button"
-            className="auth-oauth-btn auth-oauth-btn--apple"
-            disabled={busy}
-            aria-label={biPlain(ui.signInApple)}
-            title={biPlain(ui.signInApple)}
-            onClick={() => void oauthSignIn('apple')}
-          >
-            <AppleIcon size={22} />
-          </button>
-        </div>
-
-        <p className="auth-divider">
-          <BiText copy={ui.signInOr} size="sm" />
-        </p>
-
-        <label className="auth-field">
-          <span>Email</span>
-          <input
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <label className="auth-field">
-          <span>Password</span>
-          <input
-            type="password"
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {message ? <p className="auth-message">{message}</p> : null}
-        <button type="submit" className="btn-primary full" disabled={busy}>
-          <BiText copy={mode === 'signin' ? ui.signIn : ui.register} size="sm" />
-        </button>
-        <p className="auth-switch">
-          {mode === 'signin' ? (
-            <button type="button" onClick={() => setMode('register')}>
-              <BiText copy={ui.createAccount} size="sm" />
+          <form className="auth-face auth-face--back" onSubmit={(e) => void submit(e, 'register')}>
+            <button type="button" className="auth-close" onClick={close} aria-label="Close">
+              ×
             </button>
-          ) : (
-            <button type="button" onClick={() => setMode('signin')}>
-              <BiText copy={ui.signIn} size="sm" />
-            </button>
-          )}
-        </p>
-        {signedIn && !required ? (
-          <button
-            type="button"
-            className="auth-signout"
-            onClick={async () => {
-              await signOut()
-              setSignedIn(false)
-              onAuthChange?.()
-              close()
-            }}
-          >
-            <BiText copy={ui.signOut} size="sm" />
-          </button>
-        ) : null}
-      </form>
+            <h2 className="auth-title">
+              <BiText copy={ui.register} size="md" />
+            </h2>
+            {oauthRow}
+            <p className="auth-divider">
+              <BiText copy={ui.signInOr} size="sm" />
+            </p>
+            <label className="auth-float">
+              <input
+                type="email"
+                autoComplete="email"
+                required
+                placeholder=" "
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <span>Email</span>
+            </label>
+            <label className="auth-float">
+              <input
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                placeholder=" "
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <span>Password</span>
+            </label>
+            {message && mode === 'register' ? <p className="auth-message">{message}</p> : null}
+            <GlowRotateButton type="submit" className="auth-submit" disabled={busy}>
+              <BiText copy={ui.register} size="sm" layout="inline" />
+            </GlowRotateButton>
+            <p className="auth-switch">
+              <button type="button" onClick={() => setMode('signin')}>
+                <BiText copy={ui.signIn} size="sm" />
+              </button>
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }
