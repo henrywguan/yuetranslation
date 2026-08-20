@@ -46,7 +46,7 @@ export function PlanChip() {
   if (showSignIn) {
     return (
       <GlowRotateButton className="plan-sign-in" onClick={() => openAuthScreen()}>
-        <BiText copy={ui.signIn} size="sm" layout="inline" />
+        <BiText copy={ui.signIn} size="sm" />
       </GlowRotateButton>
     )
   }

@@ -182,14 +182,16 @@
   min-height: 2.4rem;
   padding: 0.45rem 1rem;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--harbor-mid) 88%, var(--jade) 12%);
+  background: color-mix(in srgb, var(--surface-strong) 55%, var(--jade) 18%);
+  color: var(--ink);
   box-shadow: inset 0 1px 0 var(--glass-shine);
   pointer-events: none;
 }
 
 .glow-rotate:hover .glow-rotate-inner,
 .glow-rotate:focus-visible .glow-rotate-inner {
-  background: color-mix(in srgb, var(--harbor-mid) 72%, var(--jade) 28%);
+  background: color-mix(in srgb, var(--mint) 22%, var(--surface-strong) 78%);
+  color: var(--ink-bright);
 }
 
 .glow-rotate:disabled {
@@ -202,11 +204,28 @@
 }
 
 .plan-sign-in .glow-rotate-inner {
-  min-width: 6.5rem;
+  min-width: 0;
+  padding: 0.35rem 0.7rem 0.4rem;
+  min-height: 0;
 }
 
-.plan-sign-in .bi--inline {
-  gap: 0.4em;
+.plan-sign-in .bi {
+  align-items: center;
+  text-align: center;
+  gap: 0.08rem;
+  line-height: 1.15;
+}
+
+.plan-sign-in .bi-en {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--jade-bright) 70%, var(--ink));
+}
+
+.plan-sign-in .bi-zh {
+  font-size: 0.68rem;
+  font-weight: 550;
+  color: var(--mint);
 }
 
 @keyframes glow-rotate-spin {
