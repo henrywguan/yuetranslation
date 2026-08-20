@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent, useSyncExternalStore } from 'react
 import { AppleIcon } from './AppleIcon'
 import { BiText } from './BiText'
 import { GoogleIcon } from './GoogleIcon'
-import { GlowRotateButton } from './GlowRotateButton'
 import {
   closeAuthScreen,
   getSession,
@@ -144,7 +143,8 @@ export function AuthPanel({ onAuthChange }: Props) {
             </h2>
             {oauthRow}
             <p className="auth-divider">
-              <BiText copy={ui.signInOr} size="sm" />
+              <span className="auth-divider-en">{ui.signInOr.en}</span>
+              <BiText className="auth-divider-zh" copy={ui.signInOr} size="sm" only="zh" />
             </p>
             <label className="auth-float">
               <input
@@ -170,9 +170,9 @@ export function AuthPanel({ onAuthChange }: Props) {
               <span>Password</span>
             </label>
             {message && mode === 'signin' ? <p className="auth-message">{message}</p> : null}
-            <GlowRotateButton type="submit" className="auth-submit" disabled={busy}>
-              <BiText copy={ui.signIn} size="sm" layout="inline" />
-            </GlowRotateButton>
+            <button type="submit" className="auth-submit" disabled={busy}>
+              <BiText copy={ui.signIn} size="sm" />
+            </button>
             <p className="auth-switch">
               <button type="button" onClick={() => setMode('register')}>
                 <BiText copy={ui.createAccount} size="sm" />
@@ -203,7 +203,8 @@ export function AuthPanel({ onAuthChange }: Props) {
             </h2>
             {oauthRow}
             <p className="auth-divider">
-              <BiText copy={ui.signInOr} size="sm" />
+              <span className="auth-divider-en">{ui.signInOr.en}</span>
+              <BiText className="auth-divider-zh" copy={ui.signInOr} size="sm" only="zh" />
             </p>
             <label className="auth-float">
               <input
@@ -229,9 +230,9 @@ export function AuthPanel({ onAuthChange }: Props) {
               <span>Password</span>
             </label>
             {message && mode === 'register' ? <p className="auth-message">{message}</p> : null}
-            <GlowRotateButton type="submit" className="auth-submit" disabled={busy}>
-              <BiText copy={ui.register} size="sm" layout="inline" />
-            </GlowRotateButton>
+            <button type="submit" className="auth-submit" disabled={busy}>
+              <BiText copy={ui.register} size="sm" />
+            </button>
             <p className="auth-switch">
               <button type="button" onClick={() => setMode('signin')}>
                 <BiText copy={ui.signIn} size="sm" />
