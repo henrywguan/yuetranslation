@@ -24,7 +24,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     tagline: ui.tagFree,
     cta: ui.getStarted,
     ctaOpens: 'app',
-    features: [ui.freeFeatLive20, ui.freeFeatText, ui.freeFeatJp, ui.freeFeatModes],
+    features: [ui.freeFeatLive20, ui.freeFeatTts, ui.freeFeatText, ui.freeFeatJp, ui.freeFeatModes],
   },
   {
     id: 'pro',

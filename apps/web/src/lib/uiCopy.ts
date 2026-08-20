@@ -35,10 +35,18 @@ export const ui = {
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
-  autoSpeakPro: { en: 'Auto-speak (Pro)', zh: '自動朗讀（專業版）', jp: 'zi6 dung6 long5 duk6 (zyun1 jip6 baan2)' },
+  autoSpeakPro: {
+    en: 'Auto-speak (unavailable)',
+    zh: '自動朗讀（不可用）',
+    jp: 'zi6 dung6 long5 duk6 (bat1 ho2 jung6)',
+  },
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
   stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },
-  speakPro: { en: 'Voice playback (Pro)', zh: '語音播放（專業版）', jp: 'jyu5 jam1 bo3 fong3 (zyun1 jip6 baan2)' },
+  speakPro: {
+    en: 'Voice playback (unavailable)',
+    zh: '語音播放（不可用）',
+    jp: 'jyu5 jam1 bo3 fong3 (bat1 ho2 jung6)',
+  },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
@@ -304,6 +312,11 @@ export const ui = {
     zh: '獨白、對話模式同文字',
     jp: 'duk6 baak6, deoi3 waa6 mou4 sik1 tung4 man4 zi6',
   },
+  freeFeatTts: {
+    en: '~30k characters of voice playback / month',
+    zh: '每月大約三萬字語音播放',
+    jp: 'mui5 jyut6 daai6 joek3 saam1 maan6 zi6 jyu5 jam1 bo3 fong3',
+  },
   proFeatLive10: {
     en: '~10 hours of live translation / month',
     zh: '每月大約十小時即時翻譯',
@@ -398,6 +411,7 @@ export const ui = {
   cmpSeats: { en: 'Seats', zh: '座位', jp: 'zo6 wai2' },
   cmpSupport: { en: 'Support', zh: '支援', jp: 'zi1 wun4' },
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
+  val30kTts: { en: '~30k chars', zh: '約三萬字', jp: 'joek3 saam1 maan6 zi6' },
   val10h: { en: '10 hours', zh: '十小時', jp: 'sap6 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },

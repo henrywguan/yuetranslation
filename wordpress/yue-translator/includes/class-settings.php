@@ -75,9 +75,9 @@ final class Yue_Settings
             'yue_require_login' => true,
             'yue_free_live_minutes' => 20,
             'yue_pro_live_minutes' => 600,
-            'yue_free_tts_chars' => 0,
+            'yue_free_tts_chars' => 30000,
             'yue_pro_tts_chars' => 200000,
-            'yue_free_auto_speak' => false,
+            'yue_free_auto_speak' => true,
             'yue_pro_auto_speak' => true,
             'yue_guest_live_minutes' => 0,
         ];
@@ -134,7 +134,7 @@ final class Yue_Settings
                     </tr>
                     <tr>
                         <th>Free TTS characters / month</th>
-                        <td><input type="number" min="0" name="yue_free_tts_chars" value="<?php echo esc_attr((string) get_option('yue_free_tts_chars', 0)); ?>" /> <span class="description">0 = auto-speak disabled on Free.</span></td>
+                        <td><input type="number" min="0" name="yue_free_tts_chars" value="<?php echo esc_attr((string) get_option('yue_free_tts_chars', 30000)); ?>" /> <span class="description">Monthly TTS character quota on Free (0 disables voice playback).</span></td>
                     </tr>
                     <tr>
                         <th>Pro TTS characters / month</th>
@@ -142,7 +142,7 @@ final class Yue_Settings
                     </tr>
                     <tr>
                         <th>Free auto-speak</th>
-                        <td><label><input type="checkbox" name="yue_free_auto_speak" value="1" <?php checked((bool) get_option('yue_free_auto_speak', false)); ?> /></label></td>
+                        <td><label><input type="checkbox" name="yue_free_auto_speak" value="1" <?php checked((bool) get_option('yue_free_auto_speak', true)); ?> /></label></td>
                     </tr>
                     <tr>
                         <th>Pro auto-speak</th>

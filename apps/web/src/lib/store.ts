@@ -663,7 +663,7 @@ export const useYueStore = create<State>((set, get) => ({
         error:
           ent.reason === 'login_required'
             ? 'Log in to play voice.'
-            : 'Voice playback needs Pro (or remaining TTS quota).',
+            : 'Voice playback needs remaining TTS quota or a higher plan.',
       })
       return
     }

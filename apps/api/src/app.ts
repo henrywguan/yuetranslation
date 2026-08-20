@@ -75,7 +75,7 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
       message:
         ent.reason === 'login_required'
           ? 'Please log in to use live translation.'
-          : 'Live listening requires a Pro plan or free minutes.',
+          : 'Live listening quota used or not available on your plan.',
       entitlement: ent,
     })
     return
@@ -132,7 +132,10 @@ app.post('/api/breakdown', async (req: AuthedRequest, res) => {
 app.post('/api/tts', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.tts) {
-    res.status(402).json({ message: 'Voice playback is a Pro feature.', entitlement: ent })
+    res.status(402).json({
+      message: 'Voice playback quota used or not available on your plan.',
+      entitlement: ent,
+    })
     return
   }
   try {

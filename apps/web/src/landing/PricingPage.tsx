@@ -29,7 +29,7 @@ const COMPARISON: Row[] = [
   {
     label: ui.cmpTts,
     values: [
-      { en: '—', zh: '—', jp: '' },
+      ui.val30kTts,
       { en: '✓', zh: '✓', jp: '' },
       { en: '✓', zh: '✓', jp: '' },
     ],

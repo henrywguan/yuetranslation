@@ -22,14 +22,14 @@ Returned by `/api/health` and `/api/entitlement`:
   "limits": {
     "plan": "free",
     "live_minutes": 20,
-    "tts_chars": 0,
-    "auto_speak": false,
+    "tts_chars": 30000,
+    "auto_speak": true,
     "can_live": true,
     "text_translate": true
   },
   "usage": { "month": "2026_08", "liveSeconds": 120, "ttsChars": 0, "translateCount": 3 },
-  "remaining": { "liveSeconds": 1080, "ttsChars": 0 },
-  "allowed": { "live": true, "autoSpeak": false, "textTranslate": true, "tts": false },
+  "remaining": { "liveSeconds": 1080, "ttsChars": 30000 },
+  "allowed": { "live": true, "autoSpeak": true, "textTranslate": true, "tts": true },
   "upgradeUrl": "https://example.com/pricing",
   "loginUrl": "https://example.com/wp-login.php",
   "reason": null
@@ -46,9 +46,9 @@ Returned by `/api/health` and `/api/entitlement`:
 | `POST /translate` | `allowed.textTranslate` (always true for guests) / 文字翻译权限（访客可用） |
 | `POST /breakdown` | same as translate / 同文字翻译 |
 
-Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use text mode at `#/app`; live mic prompts sign-in via the Plan chip and API 401.
+Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, `YUE_FREE_ALLOW_TTS=1`, `YUE_FREE_TTS_CHARS=30000`. Guests can use text mode at `#/app`; live mic and voice playback require sign-in and count against the free monthly quotas.
 
-生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`。访客可在 `#/app` 使用文字模式；实时麦克风通过 Plan 芯片与 API 401 提示登录。
+生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`、`YUE_FREE_ALLOW_TTS=1`、`YUE_FREE_TTS_CHARS=30000`。访客可在 `#/app` 使用文字模式；实时麦克风与语音播放须登录并按免费月度配额计量。
 
 Local open mode (`YUE_OPEN_MODE=1`) grants generous Pro-like limits for development — see `apps/api/.env.example`.
 
