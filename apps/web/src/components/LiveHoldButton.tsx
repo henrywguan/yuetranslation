@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
+import { openAuthScreen } from '../lib/auth'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
@@ -52,6 +53,9 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const stopTapRef = useRef(false)
 
   const canLive = !entitlement || entitlement.allowed.live
+  const needsLogin = Boolean(
+    entitlement && !entitlement.loggedIn && (entitlement.requireLogin || entitlement.reason === 'login_required'),
+  )
   const isThisSide = !side || !liveSide || liveSide === side
   const otherSideBusy = Boolean(side && live && liveSide && liveSide !== side)
   // Keep the button “on” while sticky tap is armed even before `live` flips true.
@@ -80,7 +84,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
 
   const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return
-    if ((!canLive && !live && !stickyHere) || otherSideBusy) return
+    if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) return
     if (activePointer.current != null) return
 
     // Mode 2: second tap while sticky-listening → stop + translate.
@@ -128,7 +132,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     if (e.key !== ' ' && e.key !== 'Enter') return
     if (e.repeat) return
     e.preventDefault()
-    if ((!canLive && !live && !stickyHere) || otherSideBusy) return
+    if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) return
     if (stickyHere) {
       stopTapRef.current = true
       keyDownAt.current = 0
@@ -155,28 +159,48 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   }
 
   return (
-    <motion.button
-      type="button"
-      className={`live-btn ${armedHere ? 'on' : ''} ${stickyHere ? 'tap' : ''} ${thinkingHere ? 'thinking' : ''} ${!canLive && !live && !stickyHere ? 'blocked' : ''} ${otherSideBusy ? 'dimmed' : ''} ${className}`.trim()}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onKeyDown={onKeyDown}
-      onKeyUp={onKeyUp}
-      onContextMenu={(e) => e.preventDefault()}
-      whileTap={{ scale: otherSideBusy ? 1 : 0.97 }}
-      disabled={(!live && !canLive && !stickyHere) || otherSideBusy}
-      aria-label={aria}
-      aria-pressed={armedHere}
-    >
-      <span className="live-dot" />
-      {labelLang === 'bi' ? (
-        <BiText copy={liveCopy} size="sm" />
-      ) : (
-        <span className="live-btn-label" lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
-          {label}
-        </span>
-      )}
-    </motion.button>
+    <div className={`live-btn-host${needsLogin ? ' is-locked' : ''}`}>
+      <motion.button
+        type="button"
+        className={`live-btn ${armedHere ? 'on' : ''} ${stickyHere ? 'tap' : ''} ${thinkingHere ? 'thinking' : ''} ${needsLogin || (!canLive && !live && !stickyHere) ? 'blocked' : ''} ${needsLogin ? 'locked-signin' : ''} ${otherSideBusy ? 'dimmed' : ''} ${className}`.trim()}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onKeyDown={onKeyDown}
+        onKeyUp={onKeyUp}
+        onContextMenu={(e) => e.preventDefault()}
+        whileTap={{ scale: otherSideBusy || needsLogin ? 1 : 0.97 }}
+        disabled={needsLogin || (!live && !canLive && !stickyHere) || otherSideBusy}
+        aria-label={needsLogin ? biPlain(ui.liveMicSignIn) : aria}
+        aria-pressed={armedHere}
+      >
+        <span className="live-dot" />
+        {labelLang === 'bi' ? (
+          <BiText copy={liveCopy} size="sm" />
+        ) : (
+          <span className="live-btn-label" lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
+            {label}
+          </span>
+        )}
+      </motion.button>
+      {needsLogin ? (
+        <button
+          type="button"
+          className="live-btn-lock"
+          onClick={() => openAuthScreen()}
+          aria-label={biPlain(ui.liveMicSignIn)}
+        >
+          <span className="live-btn-lock-tip" role="tooltip">
+            {labelLang === 'bi' ? (
+              <BiText copy={ui.liveMicSignIn} size="sm" />
+            ) : (
+              <span lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
+                {labelLang === 'zh' ? ui.liveMicSignIn.zh : ui.liveMicSignIn.en}
+              </span>
+            )}
+          </span>
+        </button>
+      ) : null}
+    </div>
   )
 }
