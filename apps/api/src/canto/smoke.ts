@@ -175,6 +175,28 @@ assert(
   `expected natural EN or demo, got ${understandTranslate.engine}: ${understandTranslate.text}`,
 )
 
+const sttVariant = dictionaryTranslate({
+  sourceLang: 'yue',
+  targetLang: 'en',
+  source: '明明白我講乜嘢？',
+})
+assert(
+  /understand what i'?m saying/i.test(sttVariant?.text || ''),
+  `STT variant 明明白 should repair to phrase memory: ${sttVariant?.text}`,
+)
+
+const sttTranslate = await translate({
+  text: '明明白我講乜嘢？',
+  from: 'yue',
+  to: 'en',
+  stage: 'final',
+})
+assert(
+  /understand/i.test(sttTranslate.text),
+  `粵→EN STT variant failed: ${sttTranslate.engine} ${sttTranslate.text}`,
+)
+assert(!/[\u4e00-\u9fff]/.test(sttTranslate.text), `粵→EN must not echo Han: ${sttTranslate.text}`)
+
 // End-to-end offline path (dictionary / lexicon — no model required for these hits).
 const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
 assert(

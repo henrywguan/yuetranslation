@@ -7,7 +7,7 @@ import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevic
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
 import { prefetchSpeechToken, peekSpeechToken } from './speechToken'
 import { newId } from './id'
-import { sanitizeTranslationText, sanitizeYueTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type {
   ConversationTurn,
@@ -399,17 +399,22 @@ async function runTranslation(
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
     if (pending.get(lang) !== seq || signal.aborted) return
     const clean =
-      to === 'yue' ? sanitizeYueTranslation(result.text) : sanitizeTranslationText(result.text)
+      to === 'yue'
+        ? sanitizeYueTranslation(result.text)
+        : sanitizeEnTranslation(result.text, lang === 'yue' ? text : undefined)
     if (!clean) {
       set({
         error:
           to === 'yue'
             ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-            : 'Translation looked like a dictionary dump and was blocked. Try another phrasing, or check OPENAI_API_KEY.',
+            : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return
     }
-    const altSanitize = to === 'yue' ? sanitizeYueTranslation : sanitizeTranslationText
+    const altSanitize =
+      to === 'yue'
+        ? sanitizeYueTranslation
+        : (value: string | null | undefined) => sanitizeEnTranslation(value, lang === 'yue' ? text : undefined)
     const alternatives = (result.alternatives || []).filter((a) => Boolean(altSanitize(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
     const definitions = (result.definitions || []).filter((d) => Boolean(d?.trim()))

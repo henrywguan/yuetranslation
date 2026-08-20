@@ -25,7 +25,23 @@ function lookupPhrase(opts: {
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
-  return index.get(keyFor(opts.sourceLang, opts.targetLang, opts.source)) || null
+  const sources =
+    opts.sourceLang === 'yue' ? yueSttVariants(opts.source) : [opts.source.trim()]
+  for (const source of sources) {
+    const hit = index.get(keyFor(opts.sourceLang, opts.targetLang, source))
+    if (hit) return hit
+  }
+  return null
+}
+
+/** Common Cantonese STT repairs before phrase-memory lookup. */
+function yueSttVariants(source: string): string[] {
+  const trimmed = source.trim()
+  const out = [trimmed]
+  // Dropped 唔 between repeated syllables: 明明白 → 明唔明白
+  const repaired = trimmed.replace(/([\u3400-\u9fff])\1/g, '$1唔$1')
+  if (repaired !== trimmed) out.push(repaired)
+  return out
 }
 
 export function dictionaryTranslate(opts: {

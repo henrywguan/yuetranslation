@@ -314,9 +314,31 @@ export async function translate(input: unknown) {
       ],
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
-    const payload = parsePayload(raw, text, fallbackDefinition, true)
+    const payload = parsePayload(raw, toYue ? text : '', fallbackDefinition, toYue)
     primary = payload.text
     definition = toYue ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (from === 'yue' && to === 'en' && (!primary.trim() || hasHan(primary))) {
+    const dictHit = dictionaryTranslate({
+      sourceLang: 'yue',
+      targetLang: 'en',
+      source: text,
+    })
+    if (dictHit && !looksLikeGlossDump(dictHit.text)) {
+      primary = dictHit.text
+    } else {
+      const lexHit = lexiconTranslate({
+        sourceLang: 'yue',
+        targetLang: 'en',
+        source: text,
+      })
+      if (lexHit && !looksLikeGlossDump(lexHit.text)) {
+        primary = lexHit.text
+      } else {
+        primary = ''
+      }
+    }
   }
 
   if (toYue && from === 'en' && !hasHan(primary)) {
@@ -361,8 +383,8 @@ export async function translate(input: unknown) {
     )
   }
 
-  // 6) 粵→EN: never ship dictionary gloss dumps from the model path.
-  if (looksLikeGlossDump(primary)) {
+  // 6) 粵→EN: never ship dictionary gloss dumps or source-language echo from the model path.
+  if (looksLikeGlossDump(primary) || (from === 'yue' && hasHan(primary))) {
     return withYueDefinitions(
       {
         text: '',
@@ -372,7 +394,7 @@ export async function translate(input: unknown) {
         from,
         to,
         stage,
-        meta: emptyMeta(['gloss-dump-blocked']),
+        meta: emptyMeta(['yue-echo-blocked']),
       },
       text,
     )
