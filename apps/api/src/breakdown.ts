@@ -20,20 +20,98 @@ function isHan(ch: string) {
   return /[\u3400-\u9fff\uf900-\ufaff]/.test(ch)
 }
 
-function localBreakdown(text: string): BreakdownChar[] {
-  const chars = Array.from(text.trim())
-  return chars
-    .filter((ch) => ch.trim() !== '')
-    .filter((ch) => isHan(ch) || /[？！。，、…]/.test(ch))
-    .map((ch) => {
-      const hit = lookupGloss(ch)
-      return {
-        char: ch,
-        jyutping: hit?.jyutping || null,
-        meaning: hit?.gloss || (isHan(ch) ? 'Cantonese character' : ''),
-        glossSource: hit?.source,
+const GENERIC_CHAR_GLOSS = 'Cantonese character'
+
+function isGenericCharGloss(gloss: string | null | undefined): boolean {
+  return (gloss || '').trim() === GENERIC_CHAR_GLOSS
+}
+
+function pickMeaning(...candidates: (string | null | undefined)[]): string {
+  for (const raw of candidates) {
+    const t = (raw || '').trim()
+    if (t && !isGenericCharGloss(t)) return t
+  }
+  return (candidates.find((c) => (c || '').trim()) || '').trim()
+}
+
+/** First learner-friendly sense from CC-Canto-style gloss strings. */
+function firstSense(gloss: string): string {
+  const t = gloss.trim()
+  if (!t) return ''
+  return t.replace(/^\([^)]+\)\s*/, '').split(/;\s*/)[0]?.trim() || t
+}
+
+type WordSpan = { start: number; end: number; word: string; gloss: string }
+
+/** Longest-match known words (CC-Canto / seed) for phrase-aware char glosses. */
+function findWordSpans(text: string): WordSpan[] {
+  const chars = [...text]
+  const spans: WordSpan[] = []
+  let i = 0
+  while (i < chars.length) {
+    if (!isHan(chars[i]!)) {
+      i += 1
+      continue
+    }
+    let matched: { len: number; word: string; gloss: string } | null = null
+    for (let len = Math.min(6, chars.length - i); len >= 2; len -= 1) {
+      const word = chars.slice(i, i + len).join('')
+      const hit = lookupGloss(word)
+      if (hit?.gloss) {
+        matched = { len, word, gloss: firstSense(hit.gloss) }
+        break
       }
+    }
+    if (matched) {
+      spans.push({
+        start: i,
+        end: i + matched.len,
+        word: matched.word,
+        gloss: matched.gloss,
+      })
+      i += matched.len
+    } else {
+      i += 1
+    }
+  }
+  return spans
+}
+
+function meaningInWordSpan(index: number, spans: WordSpan[]): string {
+  const span = spans.find((s) => index >= s.start && index < s.end)
+  if (!span) return ''
+  if (span.end - span.start === 1) return span.gloss
+  return `in ${span.word} (${span.gloss})`
+}
+
+function localBreakdown(text: string): BreakdownChar[] {
+  const trimmed = text.trim()
+  const chars = [...trimmed]
+  const spans = findWordSpans(trimmed)
+  const rows: BreakdownChar[] = []
+
+  for (let i = 0; i < chars.length; i += 1) {
+    const ch = chars[i]!
+    if (ch.trim() === '') continue
+    if (!isHan(ch) && !/[？！。，、…]/.test(ch)) continue
+
+    const hit = lookupGloss(ch)
+    let meaning = hit?.gloss ? firstSense(hit.gloss) : ''
+    if (!meaning && isHan(ch)) {
+      meaning = meaningInWordSpan(i, spans)
+    }
+    if (!meaning && !isHan(ch)) {
+      meaning = ch === '？' ? 'question mark' : ch === '！' ? 'exclamation mark' : ch === '。' ? 'full stop' : 'comma'
+    }
+
+    rows.push({
+      char: ch,
+      jyutping: hit?.jyutping || null,
+      meaning,
+      glossSource: hit?.source,
     })
+  }
+  return rows
 }
 
 function parseBreakdownPayload(raw: string, fallback: BreakdownChar[]): BreakdownChar[] {
@@ -119,8 +197,8 @@ export async function breakdown(input: unknown) {
         ...row,
         // Never trust model Jyutping over local lexicon when present.
         jyutping: fb.jyutping || row.jyutping,
-        meaning: row.meaning || fb.meaning,
-        glossSource: row.meaning ? row.glossSource || 'model' : fb.glossSource,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource: row.meaning && !isGenericCharGloss(row.meaning) ? row.glossSource || 'model' : fb.glossSource,
       }
     })
     return {
