@@ -920,6 +920,64 @@
     0 24px 60px color-mix(in srgb, var(--jade) 18%, transparent);
 }
 
+.ln-price-card.is-unavailable {
+  filter: saturate(0.35) brightness(0.76);
+  cursor: not-allowed;
+}
+
+.ln-price-card.is-unavailable:hover,
+.ln-price-card.is-unavailable:focus-within {
+  z-index: 4;
+}
+
+.ln-price-card.is-unavailable .magnetic:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.ln-price-card__tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(6px);
+  z-index: 6;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 48px));
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--ink-bright);
+  background: color-mix(in srgb, var(--harbor-deep) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  box-shadow: 0 12px 32px rgba(7, 19, 31, 0.42);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.ln-price-card__tip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: color-mix(in srgb, var(--harbor-deep) 92%, transparent);
+}
+
+.ln-price-card.is-unavailable:hover .ln-price-card__tip,
+.ln-price-card.is-unavailable:focus-within .ln-price-card__tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
 .ln-price-badge {
   position: absolute;
   top: -12px;
@@ -1220,6 +1278,7 @@
   max-width: 1000px;
   margin: 0 auto;
   align-items: stretch;
+  overflow: visible;
 }
 
 .pp-tagline {
@@ -1295,6 +1354,14 @@
   background: rgba(61, 207, 182, 0.08);
   border-left: 1px solid rgba(61, 207, 182, 0.25);
   border-right: 1px solid rgba(61, 207, 182, 0.25);
+}
+
+.pp-col-max.is-unavailable,
+.pp-table th.pp-col-max.is-unavailable,
+.pp-table td.pp-col-max.is-unavailable {
+  opacity: 0.58;
+  filter: saturate(0.42);
+  cursor: help;
 }
 
 .pp-note {
