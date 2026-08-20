@@ -1,4 +1,6 @@
 /** English glosses for common Hong Kong colloquial characters (offline / demo). */
+import { learnedGloss as lookupLearned } from './learnedGloss'
+
 const CHAR_GLOSS: Record<string, string> = {
   你: 'you',
   我: 'I / me',
@@ -108,13 +110,22 @@ export function pickCharGloss(...candidates: (string | null | undefined)[]): str
   return ''
 }
 
+export function hasStaticGloss(token: string): boolean {
+  const t = token.trim()
+  return Boolean(t && CHAR_GLOSS[t])
+}
+
 export function glossForChar(char: string): string {
-  return CHAR_GLOSS[char] || ''
+  const staticGloss = CHAR_GLOSS[char]?.trim() || ''
+  if (staticGloss) return staticGloss
+  return lookupLearned(char)
 }
 
 /** Known-character sense only (empty when unknown — used for drill gating). */
 export function charSense(char: string) {
-  return CHAR_GLOSS[char]?.trim() || ''
+  const staticGloss = CHAR_GLOSS[char]?.trim() || ''
+  if (staticGloss) return staticGloss
+  return lookupLearned(char)
 }
 
 export function isHanChar(ch: string) {

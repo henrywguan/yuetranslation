@@ -7,6 +7,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
 import { charSense, pickCharGloss } from '../lib/charGloss'
+import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, ensureIpa, type CharBreakdown } from '../lib/jyutping'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
@@ -120,7 +121,9 @@ export function CharacterBreakdownHost() {
       try {
         const remote = await fetchBreakdown(phrase)
         if (cancelled) return
-        setRows(mergeMeanings(local, remote.characters || []))
+        const merged = mergeMeanings(local, remote.characters || [])
+        rememberBreakdownRows(merged, phrase)
+        setRows(merged)
       } catch {
         /* local enough */
       } finally {
