@@ -299,6 +299,11 @@ export const ui = {
     zh: '獨白、對話模式同文字',
     jp: 'duk6 baak6, deoi3 waa6 mou4 sik1 tung4 man4 zi6',
   },
+  freeFeatTts: {
+    en: 'Tap to play voice (~30k chars / month)',
+    zh: '撳喇叭播語音（每月大約三萬字）',
+    jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 (mui5 jyut6 daai6 joek3 saam1 maan6 zi6)',
+  },
   proFeatLive10: {
     en: '~10 hours of live translation / month',
     zh: '每月大約十小時即時翻譯',
@@ -388,7 +393,8 @@ export const ui = {
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
   cmpModes: { en: 'Solo · Conversation Mode · Text', zh: '獨白 · 對話模式 · 文字', jp: 'duk6 baak6 · deoi3 waa6 mou4 sik1 · man4 zi6' },
-  cmpTts: { en: 'Voice playback (auto-speak)', zh: '語音播放（自動朗讀）', jp: 'jyu5 jam1 bo3 fong3 (zi6 dung6 long5 duk6)' },
+  cmpTts: { en: 'Tap-to-play voice', zh: '撳喇叭播語音', jp: 'gam2 laa3 baa1 bo3 jyu5 jam1' },
+  cmpAutoSpeak: { en: 'Auto-speak after translate', zh: '翻譯後自動朗讀', jp: 'faan1 jik6 hau6 zi6 dung6 long5 duk6' },
   cmpQuality: { en: 'Cantonese quality', zh: '粵語質素', jp: 'jyut6 jyu5 zat1 sou3' },
   cmpSeats: { en: 'Seats', zh: '座位', jp: 'zo6 wai2' },
   cmpSupport: { en: 'Support', zh: '支援', jp: 'zi1 wun4' },

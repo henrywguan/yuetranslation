@@ -68,7 +68,7 @@ final class Yue_Entitlements
         return [
             'plan' => 'free',
             'live_minutes' => (int) get_option('yue_free_live_minutes', 20),
-            'tts_chars' => (int) get_option('yue_free_tts_chars', 0),
+            'tts_chars' => (int) get_option('yue_free_tts_chars', 30000),
             'auto_speak' => (bool) get_option('yue_free_auto_speak', false),
             'can_live' => true,
             'text_translate' => true,
@@ -115,7 +115,7 @@ final class Yue_Entitlements
         $tts_remaining = max(0, $tts_limit - (int) $usage['ttsChars']);
 
         $can_live = !empty($limits['can_live']) && $live_remaining > 0;
-        $can_tts = !empty($limits['auto_speak']) && $tts_remaining > 0;
+        $can_tts = $tts_limit > 0 && $tts_remaining > 0;
 
         return [
             'loggedIn' => $logged_in,
@@ -131,7 +131,7 @@ final class Yue_Entitlements
             'loginUrl' => wp_login_url(get_permalink() ?: home_url('/')),
             'allowed' => [
                 'live' => $can_live,
-                'autoSpeak' => $can_tts,
+                'autoSpeak' => !empty($limits['auto_speak']) && $can_tts,
                 'textTranslate' => !empty($limits['text_translate']),
                 'tts' => $can_tts,
             ],

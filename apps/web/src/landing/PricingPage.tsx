@@ -29,6 +29,14 @@ const COMPARISON: Row[] = [
   {
     label: ui.cmpTts,
     values: [
+      { en: '✓', zh: '✓', jp: '' },
+      { en: '✓', zh: '✓', jp: '' },
+      { en: '✓', zh: '✓', jp: '' },
+    ],
+  },
+  {
+    label: ui.cmpAutoSpeak,
+    values: [
       { en: '—', zh: '—', jp: '' },
       { en: '✓', zh: '✓', jp: '' },
       { en: '✓', zh: '✓', jp: '' },
