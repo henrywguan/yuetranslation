@@ -75,7 +75,7 @@ final class Yue_Settings
             'yue_require_login' => true,
             'yue_free_live_minutes' => 20,
             'yue_pro_live_minutes' => 600,
-            'yue_free_tts_chars' => 0,
+            'yue_free_tts_chars' => 30000,
             'yue_pro_tts_chars' => 200000,
             'yue_free_auto_speak' => false,
             'yue_pro_auto_speak' => true,
@@ -134,7 +134,7 @@ final class Yue_Settings
                     </tr>
                     <tr>
                         <th>Free TTS characters / month</th>
-                        <td><input type="number" min="0" name="yue_free_tts_chars" value="<?php echo esc_attr((string) get_option('yue_free_tts_chars', 0)); ?>" /> <span class="description">0 = auto-speak disabled on Free.</span></td>
+                        <td><input type="number" min="0" name="yue_free_tts_chars" value="<?php echo esc_attr((string) get_option('yue_free_tts_chars', 30000)); ?>" /> <span class="description">0 = tap-to-play speaker disabled on Free. Auto-speak stays a Pro setting.</span></td>
                     </tr>
                     <tr>
                         <th>Pro TTS characters / month</th>

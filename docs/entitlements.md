@@ -1,8 +1,8 @@
 # Entitlements & usage metering
 
-Meter **live minutes** and **TTS** per plan. **Text translation** (and character breakdown) stay available without sign-in; live mic and voice playback require login + plan quota when `YUE_REQUIRE_LOGIN=1`.
+Meter **live minutes** and **TTS** per plan. **Text translation** (and character breakdown) stay available without sign-in; live mic requires login + plan quota when `YUE_REQUIRE_LOGIN=1`. Signed-in **free** users can tap the speaker for TTS (~30k chars/month). **Auto-speak** stays on Pro/Max.
 
-按方案计量**实时分钟**与**朗读**。**文字翻译**（及逐字拆解）无需登录；当 `YUE_REQUIRE_LOGIN=1` 时，实时麦克风与语音播放须登录并受方案配额限制。
+按方案计量**实时分钟**与**朗读**。**文字翻译**（及逐字拆解）无需登录；当 `YUE_REQUIRE_LOGIN=1` 时，实时麦克风须登录并受方案配额限制。已登录的**免费**用户可点喇叭播放语音（每月约 3 万字）。**自动朗读**仍属专业版／旗舰版。
 
 Implemented in the local Express API (`apps/api`) and the WordPress plugin (`wordpress/yue-translator`).
 
@@ -22,14 +22,14 @@ Returned by `/api/health` and `/api/entitlement`:
   "limits": {
     "plan": "free",
     "live_minutes": 20,
-    "tts_chars": 0,
+    "tts_chars": 30000,
     "auto_speak": false,
     "can_live": true,
     "text_translate": true
   },
   "usage": { "month": "2026_08", "liveSeconds": 120, "ttsChars": 0, "translateCount": 3 },
-  "remaining": { "liveSeconds": 1080, "ttsChars": 0 },
-  "allowed": { "live": true, "autoSpeak": false, "textTranslate": true, "tts": false },
+  "remaining": { "liveSeconds": 1080, "ttsChars": 30000 },
+  "allowed": { "live": true, "autoSpeak": false, "textTranslate": true, "tts": true },
   "upgradeUrl": "https://example.com/pricing",
   "loginUrl": "https://example.com/wp-login.php",
   "reason": null

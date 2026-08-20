@@ -70,14 +70,23 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       text_translate: true,
     }
   }
+  const ttsChars = env.freeAllowTts ? env.freeTtsChars : 0
   return {
     plan: 'free',
     live_minutes: env.freeLiveMinutes,
-    tts_chars: env.freeTtsChars,
-    auto_speak: env.freeAllowTts && env.freeTtsChars > 0,
+    tts_chars: ttsChars,
+    // Auto-speak remains Pro/Max; free gets tap-to-play via tts_chars.
+    auto_speak: false,
     can_live: env.freeAllowLive,
     text_translate: true,
   }
+}
+
+/** Tap-to-play TTS vs auto-speak: quota unlocks the speaker; auto-speak is a plan flag. */
+export function voiceAccess(ttsLimit: number, ttsUsed: number, autoSpeakPlan: boolean) {
+  const ttsRemaining = Math.max(0, ttsLimit - ttsUsed)
+  const tts = ttsLimit > 0 && ttsRemaining > 0
+  return { tts, autoSpeak: autoSpeakPlan && tts, ttsRemaining }
 }
 
 function buildSnapshot(
@@ -112,9 +121,8 @@ function buildSnapshot(
   const liveLimit = Math.max(0, limits.live_minutes) * 60
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
-  const ttsRemaining = Math.max(0, ttsLimit - usage.ttsChars)
+  const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak)
   const canLive = limits.can_live && liveRemaining > 0
-  const canTts = limits.auto_speak && ttsRemaining > 0
 
   return {
     loggedIn,
@@ -122,14 +130,14 @@ function buildSnapshot(
     plan,
     limits,
     usage,
-    remaining: { liveSeconds: liveRemaining, ttsChars: ttsRemaining },
+    remaining: { liveSeconds: liveRemaining, ttsChars: voice.ttsRemaining },
     upgradeUrl: upgradeUrl(),
     loginUrl: loginUrl(),
     allowed: {
       live: canLive,
-      autoSpeak: canTts,
+      autoSpeak: voice.autoSpeak,
       textTranslate: limits.text_translate,
-      tts: canTts,
+      tts: voice.tts,
     },
     reason: !canLive ? (liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted') : null,
   }

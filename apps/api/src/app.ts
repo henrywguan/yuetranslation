@@ -132,7 +132,13 @@ app.post('/api/breakdown', async (req: AuthedRequest, res) => {
 app.post('/api/tts', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.tts) {
-    res.status(402).json({ message: 'Voice playback is a Pro feature.', entitlement: ent })
+    res.status(402).json({
+      message:
+        ent.reason === 'login_required'
+          ? 'Log in to play voice.'
+          : 'Voice playback needs remaining TTS quota.',
+      entitlement: ent,
+    })
     return
   }
   try {

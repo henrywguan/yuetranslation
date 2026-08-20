@@ -45,9 +45,11 @@ export const env = {
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
   freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 20),
-  freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 0),
+  /** Tap-to-play TTS quota for signed-in free users (0 disables the speaker). */
+  freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
-  freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '0') === '1',
+  /** Tap-to-play voice for free. Auto-speak stays a paid-plan flag. */
+  freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
