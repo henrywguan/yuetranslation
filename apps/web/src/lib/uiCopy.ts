@@ -118,7 +118,7 @@ export const ui = {
   toneCue2: { en: 'Rises toward the top', zh: '由中升到高', jp: 'jau4 zung1 sing1 dou3 gou1' },
   toneCue3: { en: 'Level in the middle', zh: '中平', jp: 'zung1 ping4' },
   toneCue4: { en: 'Low, slightly falling', zh: '低而微降', jp: 'dai1 ji4 mei4 gong3' },
-  toneCue5: { en: 'Rises from low to low-mid', zh: '由低升到中低', jp: 'jau4 dai1 sing1 dou3 zung1 dai1' },
+  toneCue5: { en: 'Rises from low to mid', zh: '由低升到中', jp: 'jau4 dai1 sing1 dou3 zung1' },
   toneCue6: { en: 'Low and steady', zh: '低而平', jp: 'dai1 ji4 ping4' },
 
   connecting: { en: 'Connecting…', zh: '連接中…', jp: 'lin4 zip3 zung1…' },

@@ -11,7 +11,6 @@ https://jyutping.org/en/jyutping/
 In-repo summary (especially §4 tones): `docs/jyutping.md`
 
 - Compact UI: ASCII tone numbers after each syllable (`zou2 san4`)
-- Ruby / detailed expansions: cantonese.ca Chao letters only (`zou˧˥`, `mai˨˧` — no digit)
-  - 1 ˥ · 2 ˧˥ · 3 ˧ · 4 ˨˩ · 5 ˨˧ · 6 ˨
-  - https://cantonese.ca/tones.php
+- Detailed expansions: add Chao tone letters from §4 (`zou2 ˧˥  san4 ˨˩`)
+  - 1 ˥ · 2 ˧˥ · 3 ˧ · 4 ˨˩ · 5 ˩˧ · 6 ˨
 - Do not superscript the tone numbers

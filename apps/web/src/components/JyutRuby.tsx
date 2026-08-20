@@ -77,7 +77,7 @@ export function JyutRuby({
   )
 }
 
-/** Single syllable with Chao tone letter (compact metadata rows). */
+/** Single syllable with tone digit + Chao letter (compact metadata rows). */
 export function JyutSyllable({ jp, className = '' }: { jp: string; className?: string }) {
   return (
     <span className={`jyut-syllable ${className}`.trim()} lang="en">

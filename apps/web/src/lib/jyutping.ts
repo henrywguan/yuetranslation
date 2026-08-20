@@ -12,33 +12,31 @@ export function hasHan(text: string) {
 }
 
 /**
- * Chao tone letters matching cantonese.ca contours (digit still LSHK 1–6 internally).
- * Displayed UI uses letters only: `mai˨˧`, not `mai5˨˧`.
- * Tone 5 is ˨˧ (low → low-mid), not the older LSHK ˩˧ spelling.
- * @see https://cantonese.ca/tones.php
+ * LSHK Jyutping §4 Chao tone letters.
+ * @see https://jyutping.org/en/jyutping/
  */
 const TONE_LETTERS: Record<string, string> = {
   '1': '˥',
   '2': '˧˥',
   '3': '˧',
   '4': '˨˩',
-  '5': '˨˧',
+  '5': '˩˧',
   '6': '˨',
 }
 
-/** Compact `zou2 san4` → cantonese.ca style `zou˧˥ san˨˩` (Chao letters, no digit). */
+/** Compact `zou2 san4` → detailed `zou2 ˧˥  san4 ˨˩`. */
 export function expandJyutping(jp: string) {
-  return jp.replace(/([A-Za-z]+)([1-6])/g, (_, syl: string, n: string) => `${syl}${TONE_LETTERS[n]}`)
+  return jp.replace(/([A-Za-z]+)([1-6])/g, (_, syl: string, n: string) => `${syl}${n}\u00a0${TONE_LETTERS[n]}`)
 }
 
-/** One syllable for ruby cells: `zou2` → `zou˧˥` (Chao letter only, like cantonese.ca). */
+/** One syllable for ruby cells: `zou2` → `zou2˧˥` (tone digit + Chao letter). */
 export function rubyJpSyllable(jp: string) {
   const t = jp.trim()
   if (!t) return '\u00a0'
   const m = t.match(/^([A-Za-z]+)([1-6])$/)
   if (!m) return t
   const [, syl, n] = m
-  return `${syl}${TONE_LETTERS[n]}`
+  return `${syl}${n}${TONE_LETTERS[n]}`
 }
 
 type Api = {
