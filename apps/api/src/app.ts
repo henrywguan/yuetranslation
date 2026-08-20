@@ -10,7 +10,17 @@ import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
 import { translate } from './translate.js'
-import { addLiveSeconds, addTtsChars } from './usage.js'
+import { addLiveSeconds, addTtsChars, addTranslateCount } from './usage.js'
+import {
+  adminExportUsersCsv,
+  adminListAudit,
+  adminListUsers,
+  adminMe,
+  adminResetUsage,
+  adminSetDisabled,
+  adminSetPlan,
+  adminUserUsage,
+} from './admin.js'
 
 export const app = express()
 app.use(cors({ origin: true, credentials: true }))
@@ -75,7 +85,9 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
       message:
         ent.reason === 'login_required'
           ? 'Please log in to use live translation.'
-          : 'Live listening requires a Pro plan or free minutes.',
+          : ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : 'Live listening requires a Pro plan or free minutes.',
       entitlement: ent,
     })
     return
@@ -94,17 +106,25 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
 app.post('/api/translate', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
-      message:
-        ent.reason === 'login_required'
-          ? 'Please log in to use translation.'
-          : 'Translation not allowed on your plan.',
-      entitlement: ent,
-    })
+    res
+      .status(ent.reason === 'login_required' ? 401 : ent.reason === 'account_disabled' ? 403 : 402)
+      .json({
+        message:
+          ent.reason === 'login_required'
+            ? 'Please log in to use translation.'
+            : ent.reason === 'account_disabled'
+              ? 'This account has been disabled.'
+              : 'Translation not allowed on your plan.',
+        entitlement: ent,
+      })
     return
   }
   try {
-    res.json(await translate(req.body))
+    const result = await translate(req.body)
+    if (!env.openMode && req.auth?.userId) {
+      await addTranslateCount(req.auth.userId, 1)
+    }
+    res.json(result)
   } catch (e) {
     res.status(400).json({ message: e instanceof Error ? e.message : 'Translate error' })
   }
@@ -113,13 +133,17 @@ app.post('/api/translate', async (req: AuthedRequest, res) => {
 app.post('/api/breakdown', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
-      message:
-        ent.reason === 'login_required'
-          ? 'Please log in to use character breakdown.'
-          : 'Character breakdown is not available on your plan.',
-      entitlement: ent,
-    })
+    res
+      .status(ent.reason === 'login_required' ? 401 : ent.reason === 'account_disabled' ? 403 : 402)
+      .json({
+        message:
+          ent.reason === 'login_required'
+            ? 'Please log in to use character breakdown.'
+            : ent.reason === 'account_disabled'
+              ? 'This account has been disabled.'
+              : 'Character breakdown is not available on your plan.',
+        entitlement: ent,
+      })
     return
   }
   try {
@@ -136,7 +160,9 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       message:
         ent.reason === 'login_required'
           ? 'Log in to play voice.'
-          : 'Voice playback needs remaining TTS quota.',
+          : ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : 'Voice playback needs remaining TTS quota.',
       entitlement: ent,
     })
     return
@@ -167,7 +193,9 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
       message:
         ent.reason === 'login_required'
           ? 'Please log in to use live translation.'
-          : 'Live minutes exhausted for this month.',
+          : ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : 'Live minutes exhausted for this month.',
       entitlement: ent,
     })
     return
@@ -181,5 +209,14 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
 
 app.post('/api/billing/checkout', startCheckout)
 app.post('/api/billing/portal', startPortal)
+
+app.get('/api/admin/me', adminMe)
+app.get('/api/admin/users', adminListUsers)
+app.get('/api/admin/users.csv', adminExportUsersCsv)
+app.get('/api/admin/users/:userId/usage', adminUserUsage)
+app.patch('/api/admin/users/:userId/plan', adminSetPlan)
+app.post('/api/admin/users/:userId/reset-usage', adminResetUsage)
+app.patch('/api/admin/users/:userId/disabled', adminSetDisabled)
+app.get('/api/admin/audit', adminListAudit)
 
 export default app

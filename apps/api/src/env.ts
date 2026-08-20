@@ -71,6 +71,20 @@ export const env = {
   stripePriceProYear: (process.env.STRIPE_PRICE_PRO_YEAR || '').trim(),
   stripePriceMaxMonth: (process.env.STRIPE_PRICE_MAX_MONTH || '').trim(),
   stripePriceMaxYear: (process.env.STRIPE_PRICE_MAX_YEAR || '').trim(),
+  /**
+   * Comma-separated admin emails (case-insensitive).
+   * Only these accounts can call /api/admin/* and see #/admin.
+   */
+  adminEmails: (process.env.YUE_ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
+}
+
+/** True when this email is on the YUE_ADMIN_EMAILS allowlist. */
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email || !env.adminEmails.length) return false
+  return env.adminEmails.includes(email.trim().toLowerCase())
 }
 
 /** True when we can create a model client. */
