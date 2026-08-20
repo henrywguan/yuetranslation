@@ -122,8 +122,9 @@ button.jyutping--activate {
 }
 
 .jyut-ruby--lg .jyut-ruby-han {
-  font-size: inherit;
-  font-weight: inherit;
+  /* Keep Jyutping (syl) on absolute rem; enlarge Han relative to the line. */
+  font-size: 1.22em;
+  font-weight: 700;
 }
 
 .jyut-ruby--md .jyut-ruby-syl {

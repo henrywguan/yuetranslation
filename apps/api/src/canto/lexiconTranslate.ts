@@ -168,7 +168,9 @@ function scoreCandidate(c: EnCandidate, query: string): number {
   else if (len === 3) score += 1
   else if (len >= 5) score -= 2
   if (/written|classical|mandarin|literary/i.test(c.gloss)) score -= 6
-  if (/^\(slang\)/i.test(c.gloss) && !/slang/.test(query)) score -= 2
+  // Dated / slang euphemisms (e.g. 牛一 for birthday) lose to modern seed/phrase hits.
+  if (/\bdated\b|archaic|obsolete|euphemism/i.test(c.gloss)) score -= 10
+  if (/slang/i.test(c.gloss) && !/slang/.test(query)) score -= 4
   // Prefer gloss that starts with the query lemma.
   const g = normalizeLookupKey(c.gloss.replace(/^\([^)]*\)\s*/g, ''))
   if (g === query) score += 6

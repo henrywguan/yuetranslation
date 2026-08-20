@@ -1515,7 +1515,7 @@
   width: 100%;
   max-width: 22rem;
   font-family: var(--font-body);
-  font-size: clamp(1.25rem, 5.4vw, 2.15rem);
+  font-size: clamp(1.45rem, 6.2vw, 2.45rem);
   font-weight: 650;
   line-height: 1.35;
   color: var(--ink-bright, var(--ink));
@@ -2161,8 +2161,8 @@
 
 .text-result .result-text {
   margin: 4px 0 0;
-  font-size: clamp(1.1rem, 4vw, 1.35rem);
-  font-weight: 600;
+  font-size: clamp(1.45rem, 5.6vw, 1.95rem);
+  font-weight: 650;
   line-height: 1.35;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -2357,8 +2357,8 @@
 }
 
 .breakdown-char {
-  font-size: 1.55rem;
-  font-weight: 650;
+  font-size: 1.85rem;
+  font-weight: 700;
   text-align: center;
   line-height: 1.1;
 }
