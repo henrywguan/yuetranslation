@@ -1,6 +1,7 @@
 import { BiText } from './BiText'
+import { GlowRotateButton } from './GlowRotateButton'
 import { useYueStore } from '../lib/store'
-import { openAuthScreen, supabaseEnabled } from '../lib/auth'
+import { openAuthScreen } from '../lib/auth'
 import { openBillingPortal, openUpgrade } from '../lib/billing'
 import { ui } from '../lib/uiCopy'
 
@@ -10,11 +11,11 @@ function remainCopy(seconds: number) {
   return ui.secsLeft(seconds)
 }
 
-function planLabel(plan: string, requireLogin: boolean) {
+function planLabel(plan: string) {
   if (plan === 'pro') return ui.planPro
   if (plan === 'max') return ui.planMax
   if (plan === 'free') return ui.planFree
-  return requireLogin ? ui.signIn : ui.planGuest
+  return ui.planGuest
 }
 
 export function PlanChip() {
@@ -30,13 +31,7 @@ export function PlanChip() {
   }
 
   const plan = entitlement.plan
-  const label = planLabel(plan, entitlement.requireLogin)
-
-  const onSignIn = (event: React.MouseEvent) => {
-    if (!supabaseEnabled()) return
-    event.preventDefault()
-    openAuthScreen()
-  }
+  const showSignIn = !entitlement.loggedIn && entitlement.requireLogin
 
   const onUpgrade = (event: React.MouseEvent) => {
     event.preventDefault()
@@ -48,21 +43,23 @@ export function PlanChip() {
     void openBillingPortal().catch(() => loadBootstrap())
   }
 
+  if (showSignIn) {
+    return (
+      <GlowRotateButton className="plan-sign-in" onClick={() => openAuthScreen()}>
+        <BiText copy={ui.signIn} size="sm" layout="inline" />
+      </GlowRotateButton>
+    )
+  }
+
   return (
     <div className="plan-chip-row">
       <span className={`plan-chip plan-${plan}`}>
-        <BiText copy={label} size="sm" />
+        <BiText copy={planLabel(plan)} size="sm" />
       </span>
       {entitlement.allowed.live ? (
         <span className="plan-remain">
           <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" />
         </span>
-      ) : !entitlement.loggedIn && entitlement.requireLogin ? (
-        supabaseEnabled() ? (
-          <button type="button" className="plan-link" onClick={onSignIn}>
-            <BiText copy={ui.signIn} size="sm" />
-          </button>
-        ) : null
       ) : entitlement.upgradeUrl ? (
         <button type="button" className="plan-link" onClick={onUpgrade}>
           <BiText copy={ui.upgrade} size="sm" />

@@ -9,6 +9,7 @@ import { ConversationView } from './components/ConversationView'
 import { JadeGlassField } from './components/JadeGlassField'
 import { AppClothBg } from './components/AppClothBg'
 import { PanelDock } from './components/PanelDock'
+import { GlowRotateButton } from './components/GlowRotateButton'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
@@ -92,9 +93,9 @@ export function TranslatorApp() {
           <div className="banner error" role="alert">
             <span>{error}</span>
             {entitlement?.reason === 'login_required' && !entitlement.loggedIn ? (
-              <button type="button" onClick={() => openAuthScreen()}>
-                <BiText copy={ui.signIn} size="sm" />
-              </button>
+              <GlowRotateButton onClick={() => openAuthScreen()}>
+                <BiText copy={ui.signIn} size="sm" layout="inline" />
+              </GlowRotateButton>
             ) : null}
             {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
               <button type="button" onClick={() => void openUpgrade('pro', 'month')}>
