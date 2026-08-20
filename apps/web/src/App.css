@@ -1562,14 +1562,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   width: 100%;
 }
 
-.pane-hero .jyutping {
-  font-size: clamp(0.68rem, 2.35vw, 0.82rem);
-  font-weight: 550;
-  white-space: normal;
+.pane-hero .jyut-ruby {
+  justify-content: center;
+  text-align: center;
+}
+
+.pane-hero .jyut-ruby-syl {
+  color: color-mix(in srgb, var(--mint) 78%, transparent);
 }
 
 .pane-hero .placeholder {

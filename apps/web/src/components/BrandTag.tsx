@@ -28,7 +28,7 @@ export function BrandTag() {
           </span>
           <span className="bp-side">{zh.right}</span>
         </span>
-        <JpPop show={show} id={tipId} text={ui.brandTag.jp} anchorRef={wrapRef} />
+        <JpPop show={show} id={tipId} text={ui.brandTag.jp} han={ui.brandTag.zh} anchorRef={wrapRef} />
       </span>
     </p>
   )

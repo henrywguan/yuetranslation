@@ -80,6 +80,80 @@ button.jyutping--activate {
   gap: 0;
 }
 
+.cantonese-block--ruby {
+  gap: 0;
+}
+
+/* Inline / pane ruby (shared cell geometry with popup tips) */
+.jyut-ruby {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: inherit;
+  gap: 0.06rem 0.12rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.jyut-ruby-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.05rem;
+  min-width: 1.1em;
+}
+
+.jyut-ruby-syl {
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
+  color: color-mix(in srgb, var(--mint) 72%, transparent);
+  white-space: nowrap;
+}
+
+.jyut-ruby-han {
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+
+.jyut-ruby--hint {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--mint) 40%, transparent);
+  padding-bottom: 0.04em;
+}
+
+.jyut-ruby--lg .jyut-ruby-syl {
+  font-size: clamp(0.52rem, 2.1vw, 0.72rem);
+}
+
+.jyut-ruby--lg .jyut-ruby-han {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.jyut-ruby--md .jyut-ruby-syl {
+  font-size: 0.62rem;
+}
+
+.jyut-ruby--sm .jyut-ruby-syl {
+  font-size: 0.56rem;
+}
+
+.jyut-syllable {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--mint) 88%, var(--ink));
+}
+
+[data-theme='light'] .jyut-ruby-syl,
+[data-theme='light'] .jyut-syllable {
+  color: color-mix(in srgb, var(--jade-deep) 82%, var(--ink));
+}
+
 .cantonese-jp-hint:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
   outline-offset: 2px;

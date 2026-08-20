@@ -7,7 +7,8 @@ import {
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
 import { charSense } from '../lib/charGloss'
-import { buildLocalBreakdown, expandJyutping, ensureIpa, type CharBreakdown } from '../lib/jyutping'
+import { buildLocalBreakdown, ensureIpa, type CharBreakdown } from '../lib/jyutping'
+import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
 import { useFloatingPanel, type PanelBox } from '../lib/useFloatingPanel'
 import { useYueStore } from '../lib/store'
@@ -207,7 +208,11 @@ export function CharacterBreakdownHost() {
           </h2>
           {top.kind === 'char' && top.jp ? (
             <p className="detail-panel-jp" lang="en">
-              {expandJyutping(top.jp)}
+              <JyutRuby
+                han={top.char}
+                segs={[{ char: top.char, jp: top.jp }]}
+                size="md"
+              />
               {ipa ? <span className="detail-panel-ipa">[{ipa}]</span> : null}
             </p>
           ) : null}
@@ -315,7 +320,7 @@ export function CharacterBreakdownHost() {
                         </span>
                         <span className="detail-panel-meta">
                           <span className="detail-panel-row-jp">
-                            {row.jyutping ? expandJyutping(row.jyutping) : '—'}
+                            {row.jyutping ? <JyutSyllable jp={row.jyutping} /> : '—'}
                           </span>
                           <span className="detail-panel-meaning">
                             {row.meaning || (loading ? '…' : '—')}

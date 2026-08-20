@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { BiText } from './BiText'
 import {
-  expandJyutping,
   ensureIpa,
   isEnteringTone,
   isValidDefinition,
@@ -14,6 +13,7 @@ import { charSense } from '../lib/charGloss'
 import { translateText } from '../lib/api'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
+import { JyutRuby } from './JyutRuby'
 
 const TONE_NAME: Record<string, Bi> = {
   '1': ui.tone1,
@@ -142,7 +142,11 @@ export function CharDetailSheet({
             </p>
             {detail.jp ? (
               <p className="char-sheet-jp" lang="en">
-                {expandJyutping(detail.jp)}
+                <JyutRuby
+                  han={detail.char}
+                  segs={[{ char: detail.char, jp: detail.jp }]}
+                  size="md"
+                />
                 {ipa ? <span className="char-sheet-ipa">[{ipa}]</span> : null}
               </p>
             ) : null}
