@@ -10,7 +10,7 @@
 let ctx: AudioContext | null = null
 let analyser: AnalyserNode | null = null
 let source: MediaStreamAudioSourceNode | null = null
-let data: Uint8Array | null = null
+let data: Uint8Array<ArrayBuffer> | null = null
 
 export function connectMicAnalyser(stream: MediaStream) {
   disconnectMicAnalyser()
@@ -21,7 +21,7 @@ export function connectMicAnalyser(stream: MediaStream) {
     analyser.smoothingTimeConstant = 0.82
     source = ctx.createMediaStreamSource(stream)
     source.connect(analyser)
-    data = new Uint8Array(analyser.frequencyBinCount)
+    data = new Uint8Array(analyser.frequencyBinCount) as Uint8Array<ArrayBuffer>
   } catch {
     disconnectMicAnalyser()
   }
