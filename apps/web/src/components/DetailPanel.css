@@ -176,12 +176,22 @@
   background: color-mix(in srgb, var(--mint) 70%, transparent);
 }
 
-.detail-panel-alts p {
+.detail-panel-alts .translation-alts {
   margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.45;
-  color: var(--ink-bright);
-  word-break: break-word;
+}
+
+.detail-panel-alts .translation-alts-label {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-panel-alts .translation-alts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .detail-panel-list {
