@@ -6,7 +6,7 @@ import {
 } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
-import { charSense } from '../lib/charGloss'
+import { charSense, pickCharGloss } from '../lib/charGloss'
 import { buildLocalBreakdown, expandJyutping, ensureIpa, type CharBreakdown } from '../lib/jyutping'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
 import { useFloatingPanel, type PanelBox } from '../lib/useFloatingPanel'
@@ -45,7 +45,7 @@ function mergeMeanings(local: CharBreakdown[], remote: CharBreakdown[]): CharBre
     return {
       char: row.char,
       jyutping: row.jyutping,
-      meaning: hit.meaning?.trim() || row.meaning,
+      meaning: pickCharGloss(hit.meaning, row.meaning),
     }
   })
 }
@@ -159,7 +159,7 @@ export function CharacterBreakdownHost() {
   }, [top, minimized, stack.length, popDetail, closeBreakdown])
 
   const openChar = (row: CharBreakdown) => {
-    const sense = row.meaning?.trim() || charSense(row.char) || ''
+    const sense = pickCharGloss(row.meaning, charSense(row.char))
     if (!sense && !row.jyutping) return
     pushDetail({
       kind: 'char',
@@ -174,7 +174,9 @@ export function CharacterBreakdownHost() {
   if (!top || minimized) return null
 
   const translationText =
-    top.kind === 'phrase' ? top.translation?.trim() || '' : top.sense?.trim() || ''
+    top.kind === 'phrase'
+      ? top.translation?.trim() || ''
+      : pickCharGloss(top.sense)
   const definitionText =
     top.kind === 'phrase' ? top.definition?.trim() || '' : top.definition?.trim() || ''
   const definitions =
@@ -296,7 +298,8 @@ export function CharacterBreakdownHost() {
             ) : rows.length ? (
               <ul className="detail-panel-list">
                 {rows.map((row, i) => {
-                  const canDrill = Boolean(row.meaning?.trim() || charSense(row.char) || row.jyutping)
+                  const meaning = pickCharGloss(row.meaning)
+                  const canDrill = Boolean(meaning || charSense(row.char) || row.jyutping)
                   return (
                     <li key={`${row.char}-${i}`}>
                       <button
@@ -318,7 +321,7 @@ export function CharacterBreakdownHost() {
                             {row.jyutping ? expandJyutping(row.jyutping) : '—'}
                           </span>
                           <span className="detail-panel-meaning">
-                            {row.meaning || (loading ? '…' : '—')}
+                            {meaning || (loading ? '…' : 'No entry yet')}
                           </span>
                         </span>
                         {canDrill ? <span className="detail-panel-chevron">›</span> : null}
