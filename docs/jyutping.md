@@ -4,9 +4,9 @@ Canonical scheme: [Jyutping: The Linguistic Society of Hong Kong Cantonese Roman
 
 规范方案：[粤拼：香港语言学学会粤语拼音方案](https://jyutping.org/en/jyutping/)。
 
-Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions add Chao tone letters with the same contours as [cantonese.ca/tones](https://cantonese.ca/tones.php) (tone 5 = ˨˧).
+Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Ruby / detailed expansions show **Chao letters only** in the cantonese.ca style (`mai˨˧`, not `mai5˨˧`).
 
-粤译以本页为罗马化依据。紧凑界面按学会规定，在每个音节后使用 ASCII 声调**数字**（1–6）。展开详情时的赵元任调值字母与 [cantonese.ca/tones](https://cantonese.ca/tones.php) 一致（第 5 调为 ˨˧）。
+粤译以本页为罗马化依据。紧凑界面按学会规定，在每个音节后使用 ASCII 声调**数字**（1–6）。注音／展开详情按 [cantonese.ca](https://cantonese.ca/tones.php) 只显示调值字母（`mai˨˧`，不要 `mai5˨˧`）。
 
 ## 4. Tone / 4. 声调
 
@@ -40,8 +40,8 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 
 - **Compact** (always-visible translation line): `zou2 san4`  
   **紧凑**（翻译行始终可见）：`zou2 san4`
-- **Detailed expansion** (hover / tap Jyutping): Chinese character above each syllable, e.g. `早` / `zou2 ˧˥` · `晨` / `san4 ˨˩`  
-  **详细展开**（悬停或点按粤拼）：每个音节上方显示汉字，例如 `早` / `zou2 ˧˥` · `晨` / `san4 ˨˩`
+- **Detailed expansion** (hover / tap Jyutping): Chinese character with Chao ruby, e.g. `早` / `zou˧˥` · `晨` / `san˨˩`  
+  **详细展开**（悬停或点按粤拼）：汉字上方注音用调值字母，例如 `早` / `zou˧˥` · `晨` / `san˨˩`
 - **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao letters, character sense, and the phrase gloss  
   **单字下钻**：有释义时可点按汉字 → 弹出可关闭面板，含调型、调值字母、字义与短语释义
 
