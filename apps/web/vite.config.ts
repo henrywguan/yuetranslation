@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const base = process.env.VITE_BASE_PATH || '/'
+const appBuild = '2026-08-20-text-hint-rm'
 
 export default defineConfig({
   base,
@@ -10,7 +11,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'app-build.txt'],
+      workbox: {
+        cleanupOutdatedCaches: true,
+        additionalManifestEntries: [{ url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild }],
+      },
       manifest: {
         name: 'JyutTranslate — English ↔ Cantonese',
         short_name: 'JyutTranslate',

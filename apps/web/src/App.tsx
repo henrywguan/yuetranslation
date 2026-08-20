@@ -23,6 +23,9 @@ export default function App() {
       consumeAuthScreenDeepLink()
       setReady(true)
     })
+    if ('serviceWorker' in navigator) {
+      void navigator.serviceWorker.getRegistration().then((reg) => reg?.update())
+    }
   }, [])
 
   // Avoid flashing in-app hash routes before site-config.json resolves.

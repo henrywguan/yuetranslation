@@ -1819,18 +1819,6 @@
   align-items: flex-start;
 }
 
-.text-breakdown-link {
-  display: inline-flex;
-  margin-top: 8px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--jade);
-  cursor: pointer;
-  font: inherit;
-  text-align: start;
-}
-
 .text-mode textarea {
   width: 100%;
   resize: vertical;

@@ -146,15 +146,6 @@ export function TextMode() {
               onActivate={openMatchBreakdown}
               speakLang={match.to}
             />
-            {match.to === 'yue' ? (
-              <button
-                type="button"
-                className="text-breakdown-link"
-                onClick={() => openMatchBreakdown(match.translation)}
-              >
-                <BiText copy={ui.historyBreakdown} size="sm" />
-              </button>
-            ) : null}
           </InkSettle>
         ) : null}
       </div>
