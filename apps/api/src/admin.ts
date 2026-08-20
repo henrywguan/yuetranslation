@@ -26,6 +26,7 @@ export type AdminUserRow = {
   displayName: string | null
   createdAt: string | null
   plan: 'free' | 'pro' | 'max'
+  isAdmin: boolean
   disabled: boolean
   bannedUntil: string | null
   stripeCustomerId: string | null
@@ -85,6 +86,7 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       displayName: u.displayName,
       createdAt: u.createdAt,
       plan,
+      isAdmin: isAdminEmail(u.email),
       disabled: Boolean(profile?.disabled) || Boolean(u.bannedUntil),
       bannedUntil: u.bannedUntil,
       stripeCustomerId: profile?.stripe_customer_id ?? null,
@@ -204,6 +206,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'email',
       'displayName',
       'plan',
+      'isAdmin',
       'disabled',
       'createdAt',
       'month',
@@ -224,6 +227,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.email,
           r.displayName,
           r.plan,
+          r.isAdmin,
           r.disabled,
           r.createdAt,
           r.month,

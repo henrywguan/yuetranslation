@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AdminPlanBadge } from '../components/AdminPlanBadge'
 import {
   adminResetUsage,
   adminSetDisabled,
@@ -375,18 +376,22 @@ export function AdminPage() {
                       </button>
                     </td>
                     <td>
-                      <select
-                        value={u.plan}
-                        disabled={busy || u.disabled}
-                        onChange={(e) =>
-                          void onSetPlan(u, e.target.value as 'free' | 'pro' | 'max')
-                        }
-                        aria-label={`Plan for ${u.email || u.id}`}
-                      >
-                        <option value="free">free</option>
-                        <option value="pro">pro</option>
-                        <option value="max">max</option>
-                      </select>
+                      {u.isAdmin ? (
+                        <AdminPlanBadge />
+                      ) : (
+                        <select
+                          value={u.plan}
+                          disabled={busy || u.disabled}
+                          onChange={(e) =>
+                            void onSetPlan(u, e.target.value as 'free' | 'pro' | 'max')
+                          }
+                          aria-label={`Plan for ${u.email || u.id}`}
+                        >
+                          <option value="free">free</option>
+                          <option value="pro">pro</option>
+                          <option value="max">max</option>
+                        </select>
+                      )}
                     </td>
                     <td title={`${u.liveSeconds} / ${u.liveLimitSeconds} s`}>
                       {formatLiveSeconds(u.liveSeconds)}

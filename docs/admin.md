@@ -25,7 +25,7 @@ Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a s
 
 | Feature | Notes |
 | --- | --- |
-| User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count |
+| User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count. Allowlisted emails show an animated **admin** badge (crown) instead of the plan dropdown. |
 | Search / filter | Email/name/id, plan, over-quota, banned |
 | Sort | Email, plan, live, TTS, translate, joined |
 | Change plan | `free` / `pro` / `max` |
