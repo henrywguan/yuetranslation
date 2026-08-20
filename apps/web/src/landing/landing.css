@@ -1162,8 +1162,8 @@
 }
 
 .pp-title {
-  font-size: clamp(2.2rem, 6vw, 3.6rem);
   margin-bottom: 20px;
+  line-height: 1.12;
 }
 
 .pp-toggle {
@@ -1533,6 +1533,10 @@
   .ln-h2 {
     font-size: clamp(1.7rem, 7vw, 2.2rem);
   }
+
+  .ln-title.pp-title .bi-en {
+    font-size: clamp(1.45rem, 6.2vw + 0.2rem, 2.15rem);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1578,6 +1582,17 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Pricing hero is a full sentence — wrap instead of clipping under overflow-x: clip. */
+.ln-title.pp-title .bi-en {
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  max-width: 100%;
+  line-height: 1.12;
+  padding-block: 0.04em 0.08em;
+  font-size: clamp(1.55rem, 4.6vw + 0.4rem, 3.15rem);
 }
 
 .ln-title .bi-zh {
