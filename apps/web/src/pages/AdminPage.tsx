@@ -51,6 +51,7 @@ export function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [count, setCount] = useState(0)
   const [selected, setSelected] = useState<AdminUser | null>(null)
+  const [editingPlanUserId, setEditingPlanUserId] = useState<string | null>(null)
   const [usageMonths, setUsageMonths] = useState<
     { month: string; liveSeconds: number; ttsChars: number; translateCount: number }[]
   >([])
@@ -137,12 +138,16 @@ export function AdminPage() {
   }
 
   const onSetPlan = async (user: AdminUser, next: 'free' | 'pro' | 'max') => {
-    if (next === user.plan) return
+    if (next === user.plan) {
+      setEditingPlanUserId(null)
+      return
+    }
     if (!window.confirm(`Set ${user.email || user.id} to ${next}?`)) return
     setBusy(true)
     setError('')
     try {
       await adminSetPlan(user.id, next)
+      setEditingPlanUserId(null)
       await reloadUsers()
       if (selected?.id === user.id) {
         setSelected({ ...user, plan: next })
@@ -376,21 +381,38 @@ export function AdminPage() {
                       </button>
                     </td>
                     <td>
-                      {u.isAdmin ? (
-                        <AdminPlanBadge />
+                      {u.isAdmin && editingPlanUserId !== u.id ? (
+                        <AdminPlanBadge
+                          plan={u.plan}
+                          onClick={() => setEditingPlanUserId(u.id)}
+                        />
                       ) : (
-                        <select
-                          value={u.plan}
-                          disabled={busy || u.disabled}
-                          onChange={(e) =>
-                            void onSetPlan(u, e.target.value as 'free' | 'pro' | 'max')
-                          }
-                          aria-label={`Plan for ${u.email || u.id}`}
-                        >
-                          <option value="free">free</option>
-                          <option value="pro">pro</option>
-                          <option value="max">max</option>
-                        </select>
+                        <span className="admin-plan-edit">
+                          {u.isAdmin ? (
+                            <button
+                              type="button"
+                              className="admin-plan-edit-cancel"
+                              onClick={() => setEditingPlanUserId(null)}
+                              aria-label="Cancel plan edit"
+                              title="Back to admin badge"
+                            >
+                              ←
+                            </button>
+                          ) : null}
+                          <select
+                            value={u.plan}
+                            disabled={busy || u.disabled}
+                            autoFocus={u.isAdmin && editingPlanUserId === u.id}
+                            onChange={(e) =>
+                              void onSetPlan(u, e.target.value as 'free' | 'pro' | 'max')
+                            }
+                            aria-label={`Plan for ${u.email || u.id}`}
+                          >
+                            <option value="free">free</option>
+                            <option value="pro">pro</option>
+                            <option value="max">max</option>
+                          </select>
+                        </span>
                       )}
                     </td>
                     <td title={`${u.liveSeconds} / ${u.liveLimitSeconds} s`}>

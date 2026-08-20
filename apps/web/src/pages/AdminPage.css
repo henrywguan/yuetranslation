@@ -338,6 +338,54 @@
     box-shadow 150ms ease;
 }
 
+.admin-plan-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.admin-plan-badge--btn {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-plan-badge--btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mint, #3dcfb6) 75%, transparent);
+  outline-offset: 4px;
+}
+
+.admin-plan-current {
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-plan-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-plan-edit-cancel {
+  appearance: none;
+  margin: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
 .admin-plan-badge:hover {
   transform: translate(0, 0);
   box-shadow: 0 0 0 2px var(--admin-rim);
