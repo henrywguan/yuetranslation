@@ -4,9 +4,9 @@ Canonical scheme: [Jyutping: The Linguistic Society of Hong Kong Cantonese Roman
 
 规范方案：[粤拼：香港语言学学会粤语拼音方案](https://jyutping.org/en/jyutping/)。
 
-Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions may add the Chao tone letters from **§4 Tone**.
+Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions add Chao tone letters with the same contours as [cantonese.ca/tones](https://cantonese.ca/tones.php) (tone 5 = ˨˧).
 
-粤译以本页为罗马化依据。紧凑界面按学会规定，在每个音节后使用 ASCII 声调**数字**（1–6）。展开详情时可加上 **§4 声调**中的赵元任调值字母。
+粤译以本页为罗马化依据。紧凑界面按学会规定，在每个音节后使用 ASCII 声调**数字**（1–6）。展开详情时的赵元任调值字母与 [cantonese.ca/tones](https://cantonese.ca/tones.php) 一致（第 5 调为 ˨˧）。
 
 ## 4. Tone / 4. 声调
 
@@ -17,7 +17,7 @@ Tone marks appear at the end of the syllable. Examples: `fu1` 夫, `fu2` 虎, `f
 | | 平 | 上 | 去 | 入 |
 | --- | --- | --- | --- | --- |
 | 陰 | 1 [˥] 詩 | 2 [˧˥] 史 | 3 [˧] 試 | 1 [˥] 識 · 3 [˧] 洩 |
-| 陽 | 4 [˨˩] 時 | 5 [˩˧] 市 | 6 [˨] 事 | 6 [˨] 蝕 |
+| 陽 | 4 [˨˩] 時 | 5 [˨˧] 市 | 6 [˨] 事 | 6 [˨] 蝕 |
 
 | Number / 数字 | Contour / 调型 | Chao letters / 调值字母 | Cue / 提示 |
 | --- | --- | --- | --- |
@@ -25,7 +25,7 @@ Tone marks appear at the end of the syllable. Examples: `fu1` 夫, `fu2` 虎, `f
 | 2 | high rising / 高升 | ˧˥ | rises toward the top / 升向高处 |
 | 3 | mid level / 中平 | ˧ | level in the middle / 中段持平 |
 | 4 | low falling / 低降 | ˨˩ | low, slightly falling / 偏低并略降 |
-| 5 | low rising / 低升 | ˩˧ | rises from low to mid / 由低升至中 |
+| 5 | low rising / 低升 | ˨˧ | rises from low to low-mid / 由低升到中低 |
 | 6 | low level / 低平 | ˨ | low and steady / 低而平稳 |
 
 Entering tones (syllables ending in `-p` `-t` `-k`) reuse 1, 3, and 6 — they do not get extra numbers.

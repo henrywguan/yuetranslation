@@ -12,15 +12,16 @@ export function hasHan(text: string) {
 }
 
 /**
- * LSHK Jyutping §4 Chao tone letters.
- * @see https://jyutping.org/en/jyutping/
+ * Chao tone letters matching cantonese.ca contours (digit still LSHK 1–6).
+ * Tone 5 is ˨˧ (low → low-mid), not the older LSHK ˩˧ spelling.
+ * @see https://cantonese.ca/tones.php
  */
 const TONE_LETTERS: Record<string, string> = {
   '1': '˥',
   '2': '˧˥',
   '3': '˧',
   '4': '˨˩',
-  '5': '˩˧',
+  '5': '˨˧',
   '6': '˨',
 }
 
