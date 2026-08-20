@@ -6,12 +6,16 @@ JyutTranslate uses four layers for translation reliability:
 
 1. **Phrase memory / 短语记忆** — `phrases.json` (exact EN↔粵 on the live hot path; curated conversation + daily vocab)  
    实时热路径上的精确英↔粤（精选会话与日常词汇）
-2. **Lexicon offline MT / 词库离线翻译** — seed + **CC-Canto** exact headword hits (used when phrase memory misses; critical for **no API key** mode)  
-   种子词 + **CC-Canto** 精确词头命中（短语未命中时使用；**无密钥**模式尤其重要）
-3. **Demo echo / 演示回声** — only if phrase + lexicon both miss and no model is configured (`（示範）…`)  
+2. **Model / 模型** — OpenAI / compatible when a key is configured (primary accuracy path online)  
+   配置密钥时走 OpenAI 或兼容接口（线上准确度主路径）
+3. **Lexicon offline MT / 词库离线翻译** — seed + **CC-Canto** exact headword hits (**only when no model key**)  
+   种子词 + **CC-Canto** 精确词头命中（**仅无模型密钥时**）
+4. **Demo echo / 演示回声** — only if phrase + lexicon both miss and no model is configured (`（示範）…`)  
    仅当短语与词库都未命中、且未配置模型时（`（示範）…`）
-4. **Model / 模型** — OpenAI / compatible, then scrub + **CC-Canto attestation** on every translation  
-   OpenAI 或兼容接口，随后每次翻译都做书面语清洗 + **CC-Canto 核验**
+
+Online deploys never use CC-Canto as a **translation source**. CC-Canto still helps **attest** model Cantonese and supply learner gloss senses.
+
+线上部署**不会**用 CC-Canto 作为翻译来源；仍可用于**核验**模型粤语输出，以及提供学习释义。
 
 Pronunciation on the web client remains **`to-jyutping`**.
 
@@ -32,6 +36,17 @@ Legacy clients may still send `stage: "interim"`; the API **coerces to `final`**
 
 旧客户端仍可能发送 `stage: "interim"`；接口会**强制改为 `final`**。
 
+## Online (model key) / 线上（有密钥）
+
+```
+exact phrases.json → model → scrub + CC-Canto attestation
+精确 phrases.json → 模型 → 清洗 + CC-Canto 核验
+```
+
+Phrase memory stays first for zero-latency hits on curated speech. Everything else goes to the model.
+
+短语记忆仍优先命中精选口语；其余一律走模型。
+
 ## Offline / no API key / 离线 / 无密钥
 
 When `OPENAI_API_KEY` (and `OPENAI_BASE_URL`) are unset:
@@ -48,9 +63,9 @@ exact phrases.json → CC-Canto/seed exact lexicon → demo prefix
 - 粵→EN lexicon: **whole-headword gloss only** — segmented gloss joins are disabled (they produced junk like `question mark` / lemma dumps)  
   粤→英词库：**仅整词词头释义** — 已关闭切分后拼接（否则会出现 `question mark` 一类垃圾）
 
-Prefer growing `phrases.json` for spoken phrases; lexicon covers the long tail of dictionary words.
+Prefer growing `phrases.json` for spoken phrases; lexicon covers the long tail of dictionary words offline.
 
-口语短语请优先扩充 `phrases.json`；词库覆盖词典长尾词。
+口语短语请优先扩充 `phrases.json`；离线时长尾词由词库覆盖。
 
 ## Verification (with a model key) / 核验（有模型密钥时）
 

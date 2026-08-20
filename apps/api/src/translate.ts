@@ -112,7 +112,7 @@ export async function translate(input: unknown) {
     )
   }
 
-  // 1) Phrase memory — O(1) (best latency + reliability for live after capture).
+  // 1) Phrase memory — O(1) curated EN↔粵 (always on: accurate + lowest latency).
   const dictHit = dictionaryTranslate({
     sourceLang: from,
     targetLang: to,
@@ -141,79 +141,72 @@ export async function translate(input: unknown) {
     )
   }
 
-  // 2) Lexicon fallback (seed + CC-Canto).
-  // When a model is configured, only trust exact headword hits — never gloss dumps.
-  const lexHit = lexiconTranslate({
-    sourceLang: from,
-    targetLang: to,
-    source: text,
-    wantAlternatives: wantAlts,
-  })
-  const lexTextOk = Boolean(lexHit) && (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
-  const lexHasHan = Boolean(lexHit && to === 'yue' && hasHan(lexHit.text))
-  const useLexicon = Boolean(
-    lexHit &&
-      lexTextOk &&
-      (!openaiConfigured() ||
-        lexHit.kind === 'exact' ||
-        (lexHit.kind === 'composed' && lexHasHan)),
-  )
-  if (lexHit && useLexicon) {
-    if (to === 'yue') {
-      const hardened = await hardenYueOutput({
-        text: lexHit.text,
-        alternatives: wantAlts ? lexHit.alternatives : [],
-        stage,
-        sourceEn: from === 'en' ? text : undefined,
-        client: null,
-      })
+  const client = openaiClient()
+
+  // 2) Lexicon / CC-Canto MT — offline only (no model key).
+  // Online deploys skip this so dated slang / composed dictionary junk never
+  // beats the LLM for accuracy.
+  if (!client) {
+    const lexHit = lexiconTranslate({
+      sourceLang: from,
+      targetLang: to,
+      source: text,
+      wantAlternatives: wantAlts,
+    })
+    const lexTextOk = Boolean(lexHit) && (to !== 'en' || !looksLikeGlossDump(lexHit!.text))
+    if (lexHit && lexTextOk) {
+      if (to === 'yue') {
+        const hardened = await hardenYueOutput({
+          text: lexHit.text,
+          alternatives: wantAlts ? lexHit.alternatives : [],
+          stage,
+          sourceEn: from === 'en' ? text : undefined,
+          client: null,
+        })
+        return withYueDefinitions(
+          {
+            text: hardened.text,
+            definition: lexHit.definition || fallbackDefinition,
+            alternatives: wantAlts ? hardened.alternatives : [],
+            engine: 'lexicon',
+            from,
+            to,
+            stage,
+            meta: {
+              ...hardened.meta,
+              dictionaryHit: true,
+              notes: [...lexHit.notes, ...hardened.meta.notes],
+            },
+          },
+          text,
+        )
+      }
       return withYueDefinitions(
         {
-          text: hardened.text,
-          definition: lexHit.definition || fallbackDefinition,
-          alternatives: wantAlts ? hardened.alternatives : [],
+          text: lexHit.text,
+          definition: lexHit.definition,
+          alternatives: [],
           engine: 'lexicon',
           from,
           to,
           stage,
           meta: {
-            ...hardened.meta,
             dictionaryHit: true,
-            notes: [...lexHit.notes, ...hardened.meta.notes],
+            scrubbed: false,
+            colloquialScore: 0,
+            rewritten: false,
+            notes: lexHit.notes,
           },
         },
         text,
       )
     }
-    return withYueDefinitions(
-      {
-        text: lexHit.text,
-        definition: lexHit.definition,
-        alternatives: [],
-        engine: 'lexicon',
-        from,
-        to,
-        stage,
-        meta: {
-          dictionaryHit: true,
-          scrubbed: false,
-          colloquialScore: 0,
-          rewritten: false,
-          notes: lexHit.notes,
-        },
-      },
-      text,
-    )
-  }
 
-  const client = openaiClient()
-
-  // 3) Demo fallback when no model key and lexicon miss.
-  if (!client) {
-    const primary = to === 'yue' ? `（示範）${text}` : `(demo) ${text}`
+    // 3) Demo fallback when no model key and lexicon miss.
+    const demoPrimary = to === 'yue' ? `（示範）${text}` : `(demo) ${text}`
     if (to === 'yue') {
       const hardened = await hardenYueOutput({
-        text: primary,
+        text: demoPrimary,
         alternatives: [],
         stage,
         sourceEn: from === 'en' ? text : undefined,
@@ -235,7 +228,7 @@ export async function translate(input: unknown) {
     }
     return withYueDefinitions(
       {
-        text: primary,
+        text: demoPrimary,
         definition: '',
         alternatives: [],
         engine: 'demo',
@@ -248,7 +241,7 @@ export async function translate(input: unknown) {
     )
   }
 
-  // 4) Model translate
+  // 4) Model translate (online path).
   const toYue = to === 'yue'
   let primary = text
   let alternatives: string[] = []
@@ -324,43 +317,33 @@ export async function translate(input: unknown) {
     definition = toYue ? payload.definition || fallbackDefinition : payload.definition
   }
 
+  // If the model failed to produce usable text, recover with phrase memory only
+  // (never CC-Canto lexicon while online).
   if (from === 'yue' && to === 'en' && (!primary.trim() || hasHan(primary))) {
-    const dictHit = dictionaryTranslate({
+    const rescue = dictionaryTranslate({
       sourceLang: 'yue',
       targetLang: 'en',
       source: text,
     })
-    if (dictHit && !looksLikeGlossDump(dictHit.text)) {
-      primary = dictHit.text
-    } else {
-      const lexHit = lexiconTranslate({
-        sourceLang: 'yue',
-        targetLang: 'en',
-        source: text,
-      })
-      if (lexHit && !looksLikeGlossDump(lexHit.text)) {
-        primary = lexHit.text
-      } else {
-        primary = ''
-      }
-    }
+    primary = rescue && !looksLikeGlossDump(rescue.text) ? rescue.text : ''
   }
 
   if (toYue && from === 'en' && !hasHan(primary)) {
-    const offline = lexiconTranslate({
+    const rescue = dictionaryTranslate({
       sourceLang: 'en',
       targetLang: 'yue',
       source: text,
       wantAlternatives: wantAlts,
     })
-    if (offline && hasHan(offline.text)) {
-      primary = offline.text
+    if (rescue && hasHan(rescue.text)) {
+      primary = rescue.text
       if (!definition) definition = fallbackDefinition
-      alternatives = wantAlts ? offline.alternatives : alternatives
+      alternatives = wantAlts ? rescue.alternatives : alternatives
     }
   }
 
   // 5) Harden Cantonese outputs (scrub / score / optional rewrite).
+  // CC-Canto is used here only for attestation of model output, not as MT.
   if (toYue) {
     const hardened = await hardenYueOutput({
       text: primary,

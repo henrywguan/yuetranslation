@@ -225,31 +225,54 @@ assert(
 assert(!/[\u4e00-\u9fff]/.test(sttTranslate.text), `粵→EN must not echo Han: ${sttTranslate.text}`)
 
 if (openaiConfigured()) {
-  const modelYue = await translate({
-    text: 'Do you wanna Margarita?',
+  // Live model calls are opt-in — smoke:canto must stay offline-safe for Cloud agents.
+  if (process.env.YUE_SMOKE_LIVE === '1') {
+    const modelYue = await translate({
+      text: 'Do you wanna Margarita?',
+      from: 'en',
+      to: 'yue',
+      stage: 'final',
+    })
+    assert(
+      /[\u4e00-\u9fff]/.test(modelYue.text),
+      `model EN→粵 should return Cantonese, got ${modelYue.engine} "${modelYue.text}" notes=${JSON.stringify(modelYue.meta?.notes)}`,
+    )
+    assert(
+      modelYue.engine === 'openai' || modelYue.engine === 'openai-compatible',
+      `online misses must use the model, got ${modelYue.engine}`,
+    )
+  }
+} else {
+  // End-to-end offline path (dictionary / lexicon — no model configured).
+  const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
+  assert(
+    offlineApple.engine === 'dictionary' || offlineApple.engine === 'lexicon',
+    `offline apple engine=${offlineApple.engine}`,
+  )
+  assert(offlineApple.text.includes('蘋') || offlineApple.text.includes('果'), offlineApple.text)
+
+  const offlineWhere = await translate({ text: 'where', from: 'en', to: 'yue', stage: 'final' })
+  assert(
+    offlineWhere.engine === 'dictionary' || offlineWhere.engine === 'lexicon',
+    `offline where engine=${offlineWhere.engine} text=${offlineWhere.text}`,
+  )
+
+  const offlineSentence = await translate({
+    text: 'we love apples and bananas',
     from: 'en',
     to: 'yue',
     stage: 'final',
   })
   assert(
-    /[\u4e00-\u9fff]/.test(modelYue.text),
-    `model EN→粵 should return Cantonese, got ${modelYue.engine} "${modelYue.text}" notes=${JSON.stringify(modelYue.meta?.notes)}`,
+    /[\u4e00-\u9fff]/.test(offlineSentence.text),
+    `translate we love apples failed: ${offlineSentence.engine} ${offlineSentence.text}`,
   )
 }
 
-// End-to-end offline path (dictionary / lexicon — no model required for these hits).
-const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
-assert(
-  offlineApple.engine === 'dictionary' || offlineApple.engine === 'lexicon',
-  `offline apple engine=${offlineApple.engine}`,
-)
-assert(offlineApple.text.includes('蘋') || offlineApple.text.includes('果'), offlineApple.text)
-
-const offlineWhere = await translate({ text: 'where', from: 'en', to: 'yue', stage: 'final' })
-assert(
-  offlineWhere.engine === 'dictionary' || offlineWhere.engine === 'lexicon',
-  `offline where engine=${offlineWhere.engine} text=${offlineWhere.text}`,
-)
+// Phrase-memory hits stay dictionary even when a model key is present (zero-latency).
+const onlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
+assert(onlineApple.engine === 'dictionary', `apple must stay phrase memory, got ${onlineApple.engine}`)
+assert(onlineApple.text.includes('蘋') || onlineApple.text.includes('果'), onlineApple.text)
 
 const offlinePhrase = lexiconTranslate({
   sourceLang: 'en',
@@ -259,17 +282,6 @@ const offlinePhrase = lexiconTranslate({
 assert(
   offlinePhrase?.kind === 'composed' && /[\u4e00-\u9fff]/.test(offlinePhrase.text),
   `composed EN phrase failed: ${JSON.stringify(offlinePhrase)}`,
-)
-
-const offlineSentence = await translate({
-  text: 'we love apples and bananas',
-  from: 'en',
-  to: 'yue',
-  stage: 'final',
-})
-assert(
-  /[\u4e00-\u9fff]/.test(offlineSentence.text),
-  `translate we love apples failed: ${offlineSentence.engine} ${offlineSentence.text}`,
 )
 
 const stats = glossStats()
@@ -323,7 +335,7 @@ console.log(
       apple: apple?.text,
       lexWhere: lexWhere?.text,
       lexSorry: lexSorry?.text,
-      offline: { apple: offlineApple, where: offlineWhere },
+      offline: { apple: onlineApple.text, engine: onlineApple.engine, composed: offlinePhrase?.text },
       scrubbed: scrubbed.text,
       scores: { good, bad },
       attestation: { good: attestGood, bad: attestBad },
