@@ -2174,6 +2174,14 @@
   overflow: visible;
 }
 
+.text-result .translation-alts {
+  margin-top: 14px;
+}
+
+.text-alts-loading {
+  margin: 10px 0 0;
+}
+
 .translation-alts {
   margin-top: 12px;
 }
