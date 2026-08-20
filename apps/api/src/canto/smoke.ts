@@ -30,6 +30,31 @@ const apple = dictionaryTranslate({
 })
 assert(apple?.text === '蘋果', `phrase apple failed: ${apple?.text}`)
 
+const birthday = dictionaryTranslate({
+  sourceLang: 'en',
+  targetLang: 'yue',
+  source: 'birthday',
+})
+assert(birthday?.text === '生日', `birthday phrase failed: ${birthday?.text}`)
+
+const happyBirthday = dictionaryTranslate({
+  sourceLang: 'en',
+  targetLang: 'yue',
+  source: 'happy birthday',
+})
+assert(happyBirthday?.text === '生日快樂', `happy birthday phrase failed: ${happyBirthday?.text}`)
+
+// Offline translate must prefer phrase memory over dated CC-Canto slang (牛一).
+const offlineBirthday = await translate({ text: 'Birthday', from: 'en', to: 'yue' })
+assert(offlineBirthday.text === '生日', `offline birthday: ${offlineBirthday.text}`)
+assert(
+  offlineBirthday.engine === 'dictionary',
+  `birthday should be phrase memory, got ${offlineBirthday.engine}`,
+)
+
+const offlineHappyBday = await translate({ text: 'happy birthday', from: 'en', to: 'yue' })
+assert(offlineHappyBday.text === '生日快樂', `offline happy birthday: ${offlineHappyBday.text}`)
+
 const scrubbed = scrubMandarinToYue('你们在做什么？')
 assert(scrubbed.changed, 'scrub should change Mandarin')
 assert(!/们|什么/.test(scrubbed.text), `scrub left Mandarin: ${scrubbed.text}`)

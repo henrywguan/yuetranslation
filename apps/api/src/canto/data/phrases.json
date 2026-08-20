@@ -105,6 +105,95 @@
       ]
     },
     {
+      "id": "en-birthday",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "birthday",
+      "text": "生日",
+      "alternatives": [
+        "牛一"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "daily"
+      ]
+    },
+    {
+      "id": "yue-birthday",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "生日",
+      "text": "birthday",
+      "alternatives": [
+        "Birthday"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "daily"
+      ]
+    },
+    {
+      "id": "en-happy-birthday",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "happy birthday",
+      "text": "生日快樂",
+      "alternatives": [
+        "祝你生日快樂",
+        "生日開心"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "yue-happy-birthday",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "生日快樂",
+      "text": "Happy birthday",
+      "alternatives": [
+        "Happy Birthday"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-happy",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "happy",
+      "text": "開心",
+      "alternatives": [
+        "快樂",
+        "高興"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "daily"
+      ]
+    },
+    {
+      "id": "yue-happy",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "開心",
+      "text": "happy",
+      "alternatives": [
+        "glad",
+        "cheerful"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "daily"
+      ]
+    },
+    {
       "id": "en-how-are-you",
       "sourceLang": "en",
       "targetLang": "yue",

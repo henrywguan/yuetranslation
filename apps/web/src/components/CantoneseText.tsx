@@ -30,8 +30,9 @@ export function CantoneseText({
   className?: string
   placeholder?: ReactNode
   /**
-   * When set without character drills available, the whole phrase is clickable
-   * (opens breakdown / selects variation). Character taps still win when drills exist.
+   * When set, the whole phrase is clickable (opens phrase breakdown / selects
+   * variation). Per-character drills stay in the Details panel — tapping Han
+   * on the result line must not skip straight into a single-character sheet.
    */
   onActivate?: (text: string) => void
   activateLabel?: string
@@ -79,8 +80,10 @@ export function CantoneseText({
 
   const drillable = segs.some((seg) => Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char)))
   const popupJp = jpMode === 'popup' && Boolean(jp)
-  const phraseActivate = Boolean(onActivate) && !popupJp && (hasMultiDef || !drillable)
-  const allowCharDrill = drillable && !hasMultiDef && !popupJp
+  // Prefer phrase → Details breakdown whenever the parent wired onActivate.
+  const phraseActivate = Boolean(onActivate) && !popupJp
+  // Only allow inline char sheets when there is no phrase-level activate handler.
+  const allowCharDrill = drillable && !hasMultiDef && !popupJp && !onActivate
 
   const hanClass = [
     className || '',
