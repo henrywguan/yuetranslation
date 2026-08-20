@@ -3,8 +3,7 @@ import { ui } from '../lib/uiCopy'
 import { JpPop } from '../components/JpPop'
 
 /**
- * One kicker stack = one Jyutping popup for the whole Chinese phrase
- * (never per-character tips).
+ * One kicker stack = one Jyutping ruby popup for the whole Chinese phrase.
  */
 function EyebrowStack({
   en,
@@ -33,7 +32,7 @@ function EyebrowStack({
           show={show}
           id={tipId}
           text={jp}
-          /* Phrase tip only — do not pass `han` (that enables per-char ruby cells). */
+          han={zh}
           anchorRef={wrapRef}
         />
       ) : null}

@@ -10,8 +10,9 @@ import { charSense } from '../lib/charGloss'
 import { useJpPopup } from '../lib/useJpPopup'
 import { CharDetailSheet, type CharDetail } from './CharDetailSheet'
 import { JpPop } from './JpPop'
+import { JyutRuby } from './JyutRuby'
 
-/** Cantonese line: compact Jyutping under Han, or popup-on-hint for tight cards. */
+/** Cantonese line: ruby Jyutping above Han, or popup-on-hint for tight cards. */
 export function CantoneseText({
   text,
   definition = '',
@@ -35,7 +36,7 @@ export function CantoneseText({
   onActivate?: (text: string) => void
   activateLabel?: string
   /**
-   * `inline` — Jyutping under the Han (Solo / Conversation / Text).
+   * `inline` — ruby Jyutping above each Han character (Solo / Conversation / Text).
    * `popup` — hide the line; dotted underline + hover/tap reveals Jyutping (History).
    */
   jpMode?: 'inline' | 'popup'
@@ -78,7 +79,6 @@ export function CantoneseText({
 
   const drillable = segs.some((seg) => Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char)))
   const popupJp = jpMode === 'popup' && Boolean(jp)
-  // Popup lines keep Jyutping on the Han hint — don't nest a phrase button over it.
   const phraseActivate = Boolean(onActivate) && !popupJp && (hasMultiDef || !drillable)
   const allowCharDrill = drillable && !hasMultiDef && !popupJp
 
@@ -90,76 +90,66 @@ export function CantoneseText({
     .filter(Boolean)
     .join(' ')
 
-  const hanChars = segs.length
-    ? segs.map((seg, i) => {
-        const canDrill =
-          allowCharDrill && Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
-        if (!canDrill) {
-          return <span key={`${seg.char}-${i}`}>{seg.char}</span>
+  const renderChar =
+    allowCharDrill && segs.length
+      ? (seg: JyutSeg, _i: number) => {
+          const canDrill = Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
+          if (!canDrill) return seg.char
+          return (
+            <button
+              type="button"
+              className="han-drill"
+              aria-haspopup="dialog"
+              onClick={(e) => {
+                e.stopPropagation()
+                openSeg(seg)
+              }}
+            >
+              {seg.char}
+            </button>
+          )
         }
-        return (
-          <button
-            key={`${seg.char}-${i}`}
-            type="button"
-            className="han-drill"
-            aria-haspopup="dialog"
-            onClick={(e) => {
-              e.stopPropagation()
-              openSeg(seg)
-            }}
-          >
-            {seg.char}
-          </button>
-        )
-      })
-    : trimmed
+      : undefined
 
-  const han = popupJp ? (
+  const popupHan = popupJp ? (
     <span
       {...bind}
       className={hanClass}
       lang="zh-HK"
       aria-label={`Jyutping for ${trimmed}`}
     >
-      {hanChars}
+      {segs.length
+        ? segs.map((seg, i) => (
+            <span key={`${seg.char}-${i}`}>{seg.char}</span>
+          ))
+        : trimmed}
       <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
     </span>
-  ) : (
-    <span className={hanClass}>{hanChars}</span>
-  )
+  ) : null
+
+  const inlineHan =
+    jp && !popupJp ? (
+      <span {...(phraseActivate ? {} : bind)} className={hanClass || undefined}>
+        <JyutRuby
+          han={trimmed}
+          segs={segs}
+          size="lg"
+          className={phraseActivate || hasMultiDef ? 'jyut-ruby--phrase' : 'jyut-ruby--hint'}
+          renderChar={renderChar}
+        />
+        {!phraseActivate ? (
+          <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
+        ) : null}
+      </span>
+    ) : (
+      <span className={hanClass || undefined}>{trimmed}</span>
+    )
 
   const body = (
-    <span className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}`}>
-      {han}
-      {jp && !popupJp ? (
-        onActivate && (drillable || hasMultiDef) && !phraseActivate ? (
-          <button
-            type="button"
-            className={`jyutping jyutping--hint jyutping--activate ink-in${hasMultiDef ? ' jyutping--multi-def' : ''}`}
-            lang="en"
-            onClick={() => onActivate(trimmed)}
-            aria-label={
-              activateLabel ||
-              (hasMultiDef
-                ? `Open definitions for ${trimmed}`
-                : `Open character breakdown for ${trimmed}`)
-            }
-          >
-            {jp}
-          </button>
-        ) : (
-          <span
-            {...(phraseActivate ? {} : bind)}
-            className={`jyutping jyutping--hint ink-in${hasMultiDef ? ' jyutping--multi-def' : ''}`}
-            lang="en"
-          >
-            {jp}
-            {!phraseActivate ? (
-              <JpPop show={show} id={tipId} text={jp} han={trimmed} anchorRef={wrapRef} />
-            ) : null}
-          </span>
-        )
-      ) : null}
+    <span
+      className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}${jp && !popupJp ? ' cantonese-block--ruby' : ''}`}
+    >
+      {popupJp ? popupHan : inlineHan}
       <CharDetailSheet detail={detail} onClose={() => setDetail(null)} />
     </span>
   )

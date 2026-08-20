@@ -80,6 +80,80 @@ button.jyutping--activate {
   gap: 0;
 }
 
+.cantonese-block--ruby {
+  gap: 0;
+}
+
+/* Inline / pane ruby (shared cell geometry with popup tips) */
+.jyut-ruby {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: inherit;
+  gap: 0.06rem 0.12rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.jyut-ruby-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.05rem;
+  min-width: 1.1em;
+}
+
+.jyut-ruby-syl {
+  font-size: 0.58em;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
+  color: color-mix(in srgb, var(--mint) 72%, transparent);
+  white-space: nowrap;
+}
+
+.jyut-ruby-han {
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+
+.jyut-ruby--hint {
+  cursor: help;
+  border-bottom: 1px dotted color-mix(in srgb, var(--mint) 40%, transparent);
+  padding-bottom: 0.04em;
+}
+
+.jyut-ruby--lg .jyut-ruby-syl {
+  font-size: clamp(0.52rem, 2.1vw, 0.72rem);
+}
+
+.jyut-ruby--lg .jyut-ruby-han {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.jyut-ruby--md .jyut-ruby-syl {
+  font-size: 0.62rem;
+}
+
+.jyut-ruby--sm .jyut-ruby-syl {
+  font-size: 0.56rem;
+}
+
+.jyut-syllable {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--mint) 88%, var(--ink));
+}
+
+[data-theme='light'] .jyut-ruby-syl,
+[data-theme='light'] .jyut-syllable {
+  color: color-mix(in srgb, var(--jade-deep) 82%, var(--ink));
+}
+
 .cantonese-jp-hint:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
   outline-offset: 2px;
@@ -180,61 +254,77 @@ button.jyutping--activate {
 }
 
 .jp-pop--ruby {
-  padding: 8px 10px 9px;
+  padding: 6px 8px 7px;
   letter-spacing: 0;
   white-space: normal;
   max-width: min(92vw, 36rem);
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--harbor-mid) 92%, transparent),
+      color-mix(in srgb, var(--harbor-deep) 88%, transparent)
+    );
+  border-color: color-mix(in srgb, var(--jade-bright) 18%, var(--glass-border));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--glass-shine) 40%, transparent) inset,
+    0 8px 22px rgba(7, 19, 31, 0.28);
 }
 
 .jp-pop-ruby {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.35rem 0.55rem;
+  gap: 0.08rem 0.12rem;
 }
 
 .jp-pop-cell {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.18rem;
-  min-width: 1.1em;
-}
-
-.jp-pop-han {
-  font-size: 0.95rem;
-  font-weight: 620;
-  line-height: 1.1;
-  letter-spacing: 0;
-  color: var(--ink);
+  justify-content: flex-end;
+  gap: 0.04rem;
+  min-width: 1.35em;
+  max-width: 2.75em;
 }
 
 .jp-pop-syl {
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.15;
-  color: color-mix(in srgb, var(--mint) 92%, var(--ink));
+  letter-spacing: 0;
+  line-height: 1.05;
+  color: color-mix(in srgb, var(--mint) 88%, var(--ink));
   text-transform: none;
+  white-space: nowrap;
+}
+
+.jp-pop-han {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  color: var(--ink);
 }
 
 .jp-pop-fallback {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.2rem;
+  gap: 0.28rem;
 }
 
 .jp-pop-han-line {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink);
 }
 
 .jp-pop-syl-line {
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--mint) 88%, var(--ink));
 }
 
 [data-theme='light'] .jp-pop {
@@ -253,12 +343,26 @@ button.jyutping--activate {
   -webkit-backdrop-filter: blur(32px) saturate(1.35);
 }
 
+[data-theme='light'] .jp-pop--ruby {
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, #ffffff 94%, var(--harbor-mid)),
+      color-mix(in srgb, var(--harbor-mid) 86%, #ffffff)
+    );
+  border-color: color-mix(in srgb, var(--jade) 16%, var(--glass-border));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 8px 20px rgba(7, 19, 31, 0.1);
+}
+
 [data-theme='light'] .jp-pop-han {
   color: var(--ink);
 }
 
-[data-theme='light'] .jp-pop-syl {
-  color: color-mix(in srgb, var(--jade-deep) 88%, var(--ink));
+[data-theme='light'] .jp-pop-syl,
+[data-theme='light'] .jp-pop-syl-line {
+  color: color-mix(in srgb, var(--jade-deep) 82%, var(--ink));
 }
 
 .bi {

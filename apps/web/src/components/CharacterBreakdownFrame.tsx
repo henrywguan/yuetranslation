@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { CharBreakdown } from '../lib/jyutping'
+import { JyutSyllable } from './JyutRuby'
 import { inkEase } from '../lib/motion'
 
 export function CharacterBreakdownFrame({
@@ -102,7 +103,9 @@ export function CharacterBreakdownFrame({
                   {row.char}
                 </span>
                 <span className="breakdown-meta">
-                  <span className="breakdown-jp">{row.jyutping || '—'}</span>
+                  <span className="breakdown-jp">
+                    {row.jyutping ? <JyutSyllable jp={row.jyutping} /> : '—'}
+                  </span>
                   <span className="breakdown-meaning">
                     {row.meaning || (loading ? '…' : '—')}
                   </span>
