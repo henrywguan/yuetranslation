@@ -1,9 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, useSyncExternalStore } from 'react'
 import { AppleIcon } from './AppleIcon'
 import { BiText } from './BiText'
 import { GoogleIcon } from './GoogleIcon'
 import {
-  AUTH_SCREEN_EVENT,
   closeAuthScreen,
   getSession,
   goToAppAfterAuth,
@@ -14,6 +13,7 @@ import {
   signInWithGoogle,
   signOut,
   signUp,
+  subscribeAuthScreen,
   supabaseEnabled,
 } from '../lib/auth'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -25,7 +25,7 @@ type Props = {
 }
 
 export function AuthPanel({ onAuthChange, required = false }: Props) {
-  const [open, setOpen] = useState(isAuthScreenOpen())
+  const open = useSyncExternalStore(subscribeAuthScreen, isAuthScreenOpen, () => false)
   const [mode, setMode] = useState<'signin' | 'register'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -34,22 +34,11 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
   const [signedIn, setSignedIn] = useState(false)
 
   useEffect(() => {
-    const sync = () => setOpen(isAuthScreenOpen())
-    window.addEventListener('popstate', sync)
-    window.addEventListener(AUTH_SCREEN_EVENT, sync)
-    return () => {
-      window.removeEventListener('popstate', sync)
-      window.removeEventListener(AUTH_SCREEN_EVENT, sync)
-    }
-  }, [])
-
-  useEffect(() => {
     void getSession().then((session) => setSignedIn(Boolean(session)))
     return subscribeAuthChange((session) => {
       setSignedIn(Boolean(session))
       if (session) {
         if (!required) closeAuthScreen()
-        setOpen(false)
         onAuthChange?.()
       }
     })
@@ -62,7 +51,6 @@ export function AuthPanel({ onAuthChange, required = false }: Props) {
   const close = () => {
     if (required) return
     closeAuthScreen()
-    setOpen(false)
     setMessage(null)
   }
 

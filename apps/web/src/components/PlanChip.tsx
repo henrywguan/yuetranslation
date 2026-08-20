@@ -57,16 +57,12 @@ export function PlanChip() {
         <span className="plan-remain">
           <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" />
         </span>
-      ) : entitlement.loginUrl && !entitlement.loggedIn ? (
+      ) : !entitlement.loggedIn && entitlement.requireLogin ? (
         supabaseEnabled() ? (
           <button type="button" className="plan-link" onClick={onSignIn}>
             <BiText copy={ui.signIn} size="sm" />
           </button>
-        ) : (
-          <a className="plan-link" href={entitlement.loginUrl} target="_top" rel="noreferrer">
-            <BiText copy={ui.signIn} size="sm" />
-          </a>
-        )
+        ) : null
       ) : entitlement.upgradeUrl ? (
         <button type="button" className="plan-link" onClick={onUpgrade}>
           <BiText copy={ui.upgrade} size="sm" />
