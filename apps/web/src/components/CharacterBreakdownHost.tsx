@@ -298,7 +298,9 @@ export function CharacterBreakdownHost() {
                           {row.char}
                         </span>
                         <span className="detail-panel-meta">
-                          <span className="detail-panel-row-jp">{row.jyutping || '—'}</span>
+                          <span className="detail-panel-row-jp">
+                            {row.jyutping ? expandJyutping(row.jyutping) : '—'}
+                          </span>
                           <span className="detail-panel-meaning">
                             {row.meaning || (loading ? '…' : '—')}
                           </span>

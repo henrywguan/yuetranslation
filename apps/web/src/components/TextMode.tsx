@@ -33,11 +33,30 @@ export function TextMode() {
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
   const translating = useYueStore((s) => s.translating)
+  const altsLoading = useYueStore((s) => s.altsLoading)
   const trimmed = text.trim()
   const latest = history[0]
   const match =
     latest && latest.from === from && latest.source === trimmed ? latest : null
   const showThinking = busy || translating
+
+  const openMatchBreakdown = (phrase: string) => {
+    if (!match) return
+    if (match.to === 'yue') {
+      openBreakdown(phrase, {
+        translation: match.source,
+        definition: match.definition || undefined,
+        definitions: match.definitions,
+        alternatives: match.alternatives,
+      })
+      return
+    }
+    openBreakdown(match.source, {
+      translation: match.translation,
+      definition: match.definition || undefined,
+      definitions: match.definitions,
+    })
+  }
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
   const fromRef = useRef(from)
   const translateRef = useRef(translateTyped)
@@ -127,30 +146,32 @@ export function TextMode() {
               definition={match.to === 'yue' ? match.definition || match.source : match.definition}
               definitions={match.definitions}
               cantonese={match.to === 'yue'}
-              onActivate={(phrase) => {
-                if (match.to === 'yue') {
-                  openBreakdown(phrase, {
-                    translation: match.source,
-                    definition: match.definition || undefined,
-                    definitions: match.definitions,
-                    alternatives: match.alternatives,
-                  })
-                  return
-                }
-                // EN result: open the Yue source with EN translation
-                openBreakdown(match.source, {
-                  translation: match.translation,
-                  definition: match.definition || undefined,
-                  definitions: match.definitions,
-                })
-              }}
+              onActivate={openMatchBreakdown}
               speakLang={match.to}
             />
             {match.to === 'yue' ? (
-              <TranslationAlternatives
-                alternatives={match.alternatives || []}
-                onSelect={selectYueVariation}
-              />
+              <>
+                <button
+                  type="button"
+                  className="text-breakdown-link"
+                  onClick={() => openMatchBreakdown(match.translation)}
+                >
+                  <BiText copy={ui.historyBreakdown} size="sm" />
+                </button>
+                <p className="text-breakdown-hint muted">
+                  <BiText copy={ui.tapForBreakdown} size="sm" />
+                </p>
+                {altsLoading && !(match.alternatives && match.alternatives.length) ? (
+                  <p className="text-alts-loading muted" aria-live="polite">
+                    <BiText copy={ui.loadingVariations} size="sm" />
+                  </p>
+                ) : (
+                  <TranslationAlternatives
+                    alternatives={match.alternatives || []}
+                    onSelect={selectYueVariation}
+                  />
+                )}
+              </>
             ) : null}
           </InkSettle>
         ) : null}
