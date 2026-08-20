@@ -66,7 +66,8 @@ Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, and `stag
 | --- | --- |
 | `（示範）…` | No model key **and** phrase/lexicon miss / 没有模型密钥**且**未命中短语或词库 |
 | Clean phrase like `你做緊咩呀？` without OpenAI / 没有 OpenAI 也能得到干净句子 | Phrase memory / lexicon (still not demo) / 短语记忆或词库（仍非演示） |
-| Health `"demo": true` | OpenAI not configured — model path offline; dictionary still works / 未配置 OpenAI，模型通路关闭；词典仍可用 |
+| Health `"demo": true` | OpenAI not configured — model path offline; dictionary + lexicon still work / 未配置 OpenAI，模型通路关闭；短语与词库仍可用 |
+| Online with OpenAI | Phrase memory first, then **model only** (CC-Canto is attestation, not MT) / 有密钥时先短语记忆，其余**只走模型**（CC-Canto 仅核验，不作翻译源） |
 
 ## Screenshots for docs / 文档截图
 
