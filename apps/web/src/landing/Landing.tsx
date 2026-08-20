@@ -6,6 +6,7 @@ import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
+import { DemoFluidGrid } from './DemoFluidGrid'
 import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
@@ -138,6 +139,7 @@ export function Landing() {
       </section>
 
       <section className="ln-section ln-demo" id="demo">
+        <DemoFluidGrid />
         <Reveal className="ln-demo-copy">
           <span className="ln-kicker">
             <BiText copy={ui.demoKicker} size="sm" />
