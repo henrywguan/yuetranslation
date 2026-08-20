@@ -1,8 +1,8 @@
 # Entitlements & usage metering
 
-Meter **live minutes** and **TTS** per plan; guests must **sign in** when `YUE_REQUIRE_LOGIN=1` before using the app (live, text, breakdown, TTS).
+Meter **live minutes** and **TTS** per plan. **Text translation** (and character breakdown) stay available without sign-in; live mic and voice playback require login + plan quota when `YUE_REQUIRE_LOGIN=1`.
 
-按方案计量**实时分钟**与**朗读**；当 `YUE_REQUIRE_LOGIN=1` 时，访客须**登录**后才可使用应用（实时、文字、拆解、朗读）。
+按方案计量**实时分钟**与**朗读**。**文字翻译**（及逐字拆解）无需登录；当 `YUE_REQUIRE_LOGIN=1` 时，实时麦克风与语音播放须登录并受方案配额限制。
 
 Implemented in the local Express API (`apps/api`) and the WordPress plugin (`wordpress/yue-translator`).
 
@@ -43,12 +43,12 @@ Returned by `/api/health` and `/api/entitlement`:
 | `GET /speech-token` | live entitlement / 实时权益 |
 | `POST /usage/heartbeat` | live entitlement, then add seconds / 先检查实时权益，再累加秒数 |
 | `POST /tts` | TTS entitlement, then add char usage / 先检查朗读权益，再累加字数 |
-| `POST /translate` | `allowed.textTranslate` (401 when login required) / 文字翻译权限（未登录返回 401） |
+| `POST /translate` | `allowed.textTranslate` (always true for guests) / 文字翻译权限（访客可用） |
 | `POST /breakdown` | same as translate / 同文字翻译 |
 
-Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. The web app gate at `#/app` shows sign-in before the translator when Supabase is configured.
+Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use text mode at `#/app`; live mic prompts sign-in via the Plan chip and API 401.
 
-生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`。配置了 Supabase 时，`#/app` 会先显示登录再进入翻译器。
+生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`。访客可在 `#/app` 使用文字模式；实时麦克风通过 Plan 芯片与 API 401 提示登录。
 
 Local open mode (`YUE_OPEN_MODE=1`) grants generous Pro-like limits for development — see `apps/api/.env.example`.
 

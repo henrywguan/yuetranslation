@@ -89,7 +89,6 @@ function buildSnapshot(
   if (requireLogin && !loggedIn) {
     const limits = limitsForPlan('guest')
     limits.can_live = false
-    limits.text_translate = false
     return {
       loggedIn: false,
       requireLogin: true,
@@ -102,7 +101,7 @@ function buildSnapshot(
       allowed: {
         live: false,
         autoSpeak: false,
-        textTranslate: false,
+        textTranslate: true,
         tts: false,
       },
       reason: 'login_required',

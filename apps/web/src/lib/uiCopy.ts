@@ -122,9 +122,9 @@ export const ui = {
     jp: 'dang1 jap6 sin1 ho2 ji5 jung6 JyutTranslate',
   },
   signInRequiredBody: {
-    en: 'Create a free account or sign in to translate, listen, and track your monthly usage.',
-    zh: '註冊免費帳戶或登入，先可以翻譯、聽講同睇每月用量。',
-    jp: 'zyu3 caak1 min5 fai3 zoeng3 wu6 waak6 dang1 jap6，sin1 ho2 ji5 faan1 jik6、teng1 gong2 tung4 tai2 mui5 jyut6 jung6 loeng6.',
+    en: 'Sign in for live translation, voice playback, and monthly usage tracking. Text translate works without an account.',
+    zh: '登入先可以用即時翻譯、語音播放同每月用量。文字翻譯唔使帳戶。',
+    jp: 'dang1 jap6 sin1 ho2 ji5 jik6 si4 faan1 jik6、jyu5 jam1 bo3 fong3 tung4 mui5 jyut6 jung6 loeng6. man4 zi6 faan1 jik6 m5 sai2 zoeng3 wu6.',
   },
   signInGoogle: { en: 'Continue with Google', zh: '使用 Google 登入', jp: 'jau6 Google dang1 jap6' },
   signInApple: { en: 'Continue with Apple', zh: '使用 Apple 登入', jp: 'jau6 Apple dang1 jap6' },
