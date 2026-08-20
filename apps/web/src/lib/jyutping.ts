@@ -29,6 +29,16 @@ export function expandJyutping(jp: string) {
   return jp.replace(/([A-Za-z]+)([1-6])/g, (_, syl: string, n: string) => `${syl}${n}\u00a0${TONE_LETTERS[n]}`)
 }
 
+/** One syllable for ruby cells: `zou2` → `zou2˧˥` (tone digit + Chao letter). */
+export function rubyJpSyllable(jp: string) {
+  const t = jp.trim()
+  if (!t) return '\u00a0'
+  const m = t.match(/^([A-Za-z]+)([1-6])$/)
+  if (!m) return t
+  const [, syl, n] = m
+  return `${syl}${n}${TONE_LETTERS[n]}`
+}
+
 type Api = {
   getJyutpingText: (t: string) => string
   getJyutpingList: (t: string) => [string, string | null][]
