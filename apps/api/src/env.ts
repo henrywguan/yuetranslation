@@ -59,8 +59,10 @@ export const env = {
     process.env.YUE_APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173'),
   ),
-  supabaseUrl: trimUrl(process.env.SUPABASE_URL || ''),
+  supabaseUrl: trimUrl(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || ''),
   supabaseServiceRole: (process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
+  /** Public anon key — safe to expose to the browser (RLS still applies). */
+  supabaseAnonKey: (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim(),
   stripeSecretKey: (process.env.STRIPE_SECRET_KEY || '').trim(),
   stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || '').trim(),
   stripePriceProMonth: (process.env.STRIPE_PRICE_PRO_MONTH || '').trim(),
