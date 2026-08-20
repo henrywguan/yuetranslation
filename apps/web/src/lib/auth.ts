@@ -5,6 +5,9 @@ const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
 const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || ''
 
 let client: SupabaseClient | null = null
+let authPanelOpen = false
+
+export const AUTH_SCREEN_EVENT = 'yue-auth-screen'
 
 export function supabaseEnabled(): boolean {
   return Boolean(url && anonKey)
@@ -22,6 +25,54 @@ export function getSupabase(): SupabaseClient | null {
     })
   }
   return client
+}
+
+export function subscribeAuthScreen(callback: () => void) {
+  window.addEventListener(AUTH_SCREEN_EVENT, callback)
+  return () => window.removeEventListener(AUTH_SCREEN_EVENT, callback)
+}
+
+export function isAuthScreenOpen(): boolean {
+  return authPanelOpen
+}
+
+/** Open the in-app auth modal without changing route or reloading. */
+export function openAuthScreen() {
+  authPanelOpen = true
+  window.dispatchEvent(new Event(AUTH_SCREEN_EVENT))
+}
+
+export function closeAuthScreen() {
+  authPanelOpen = false
+  stripAuthQueryParam()
+  window.dispatchEvent(new Event(AUTH_SCREEN_EVENT))
+}
+
+function stripAuthQueryParam() {
+  const url = new URL(window.location.href)
+  if (!url.searchParams.has('auth')) return
+  url.searchParams.delete('auth')
+  window.history.replaceState({}, '', url.toString())
+}
+
+/**
+ * Legacy deep links used `/?auth=1#/app`. Open the modal once, then strip the
+ * query param so we never navigate to the API loginUrl host.
+ */
+export function consumeAuthScreenDeepLink(): boolean {
+  const url = new URL(window.location.href)
+  const hashAuth =
+    url.hash.includes('?') &&
+    new URLSearchParams(url.hash.slice(url.hash.indexOf('?') + 1)).get('auth') === '1'
+  if (url.searchParams.get('auth') !== '1' && !hashAuth) return false
+  url.searchParams.delete('auth')
+  if (hashAuth) {
+    const [path] = url.hash.replace(/^#/, '').split('?')
+    url.hash = path ? `#/${path.replace(/^\//, '')}` : '#/'
+  }
+  window.history.replaceState({}, '', url.toString())
+  authPanelOpen = true
+  return true
 }
 
 export async function getAccessToken(): Promise<string | null> {
@@ -53,8 +104,8 @@ export async function signIn(email: string, password: string) {
 }
 
 /**
- * OAuth / email-confirm return URL. Keep this on the origin root so it matches
- * the Supabase Site URL. After the session is restored we send the user to `#/app`.
+ * OAuth / email-confirm return URL. Keep this on the current origin so preview
+ * and production deployments each redirect back to themselves.
  */
 export function oauthRedirectUrl(): string {
   const url = new URL(window.location.origin)
@@ -81,7 +132,7 @@ function stripAuthCallbackParams() {
   window.history.replaceState({}, '', url.toString())
 }
 
-/** After a successful sign-in, always open the translator (not the marketing home). */
+/** After a successful sign-in, open the translator if the user is not already there. */
 export function goToAppAfterAuth() {
   if (hashPath() !== 'app') navigate('app')
 }
@@ -136,31 +187,4 @@ export async function signOut() {
   const sb = getSupabase()
   if (!sb) return
   await sb.auth.signOut()
-}
-
-export const AUTH_SCREEN_EVENT = 'yue-auth-screen'
-
-export function openAuthScreen() {
-  const url = new URL(window.location.href)
-  url.searchParams.set('auth', '1')
-  if (hashPath(url.hash) !== 'app') url.hash = '#/app'
-  window.history.replaceState({}, '', url.toString())
-  window.dispatchEvent(new Event(AUTH_SCREEN_EVENT))
-  window.dispatchEvent(new HashChangeEvent('hashchange'))
-}
-
-export function closeAuthScreen() {
-  const url = new URL(window.location.href)
-  url.searchParams.delete('auth')
-  window.history.replaceState({}, '', url.toString())
-  window.dispatchEvent(new Event(AUTH_SCREEN_EVENT))
-}
-
-export function isAuthScreenOpen(): boolean {
-  const search = new URLSearchParams(window.location.search)
-  if (search.get('auth') === '1') return true
-  const hash = window.location.hash.replace(/^#/, '')
-  const qIndex = hash.indexOf('?')
-  if (qIndex === -1) return false
-  return new URLSearchParams(hash.slice(qIndex + 1)).get('auth') === '1'
 }

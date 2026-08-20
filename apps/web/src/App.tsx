@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
-import { bootstrapAuthSession } from './lib/auth'
+import { bootstrapAuthSession, consumeAuthScreenDeepLink } from './lib/auth'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
 import { useRoute } from './lib/useHashRoute'
@@ -19,7 +19,10 @@ export default function App() {
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
 
   useEffect(() => {
-    void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => setReady(true))
+    void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
+      consumeAuthScreenDeepLink()
+      setReady(true)
+    })
   }, [])
 
   // Avoid flashing in-app hash routes before site-config.json resolves.

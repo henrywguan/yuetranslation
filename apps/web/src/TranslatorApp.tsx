@@ -15,7 +15,7 @@ import { TextMode } from './components/TextMode'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
 import { useYueStore } from './lib/store'
-import { openAuthScreen, onAuthChange, supabaseEnabled } from './lib/auth'
+import { openAuthScreen, onAuthChange } from './lib/auth'
 import { openUpgrade } from './lib/billing'
 import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
@@ -91,16 +91,10 @@ export function TranslatorApp() {
         {error ? (
           <div className="banner error" role="alert">
             <span>{error}</span>
-            {entitlement?.reason === 'login_required' && entitlement.loginUrl ? (
-              supabaseEnabled() ? (
-                <button type="button" onClick={() => openAuthScreen()}>
-                  <BiText copy={ui.signIn} size="sm" />
-                </button>
-              ) : (
-                <a href={entitlement.loginUrl} target="_top" rel="noreferrer">
-                  <BiText copy={ui.signIn} size="sm" />
-                </a>
-              )
+            {entitlement?.reason === 'login_required' && !entitlement.loggedIn ? (
+              <button type="button" onClick={() => openAuthScreen()}>
+                <BiText copy={ui.signIn} size="sm" />
+              </button>
             ) : null}
             {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
               <button type="button" onClick={() => void openUpgrade('pro', 'month')}>
