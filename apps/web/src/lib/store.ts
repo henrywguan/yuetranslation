@@ -114,6 +114,8 @@ const pending = new Map<Lang, number>()
 let speakToken = 0
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let translateInFlight = 0
+/** Aborts the previous /api/translate when a newer Text request starts. */
+let translateAbort: AbortController | null = null
 /** True while the user is pressing the live button (hold mode). */
 let holding = false
 /** Short-tap sticky listen — auto-ends after speech pause. */
@@ -190,6 +192,8 @@ function scheduleTapSentenceEnd(get: () => State) {
 function invalidatePendingTranslations() {
   translateSeq += 1
   pending.clear()
+  translateAbort?.abort()
+  translateAbort = null
 }
 
 function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
@@ -267,7 +271,7 @@ async function runTranslation(
   set: (p: Partial<State>) => void,
   lang: Lang,
   text: string,
-  opts?: { lean?: boolean },
+  opts?: { lean?: boolean; minThinkingMs?: number },
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
@@ -276,17 +280,25 @@ async function runTranslation(
   const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
   const isFace = get().mode === 'conversation'
-  // Live mic + Conversation: skip EN→粵 variation fan-out for lower latency.
-  const lean = Boolean(opts?.lean) || isFace
+  const isText = get().mode === 'text'
+  // Live mic + Conversation + Text: skip EN→粵 variation fan-out for lower latency.
+  // Text still paints a primary result quickly; alternatives can come from a later request.
+  const lean = Boolean(opts?.lean) || isFace || isText
+  // Text should feel snappy — only a short floor so the loader does not flash.
+  const minThinkingMs =
+    opts?.minThinkingMs ?? (isText ? 120 : 900)
+  translateAbort?.abort()
+  translateAbort = new AbortController()
+  const signal = translateAbort.signal
   try {
     const result = await translateText(text, lang, to, {
       includeAlternatives: lang === 'en' && !lean,
+      signal,
     })
-    if (pending.get(lang) !== seq) return
-    // Hold the bilingual bounce loader long enough to read, even on dictionary hits.
-    const hold = 900 - (Date.now() - startedAt)
+    if (pending.get(lang) !== seq || signal.aborted) return
+    const hold = minThinkingMs - (Date.now() - startedAt)
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
-    if (pending.get(lang) !== seq) return
+    if (pending.get(lang) !== seq || signal.aborted) return
     const clean = sanitizeTranslationText(result.text)
     if (!clean) {
       set({
@@ -362,6 +374,8 @@ async function runTranslation(
     }
     speak = { text: clean, lang: to }
   } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') return
+    if (e instanceof Error && e.name === 'AbortError') return
     set({ error: String(e) })
   } finally {
     endTranslate(set)
@@ -904,7 +918,8 @@ export const useYueStore = create<State>((set, get) => ({
     const trimmed = text.trim()
     if (!trimmed) return
     set({ error: null })
-    await runTranslation(get, set, from, trimmed)
+    // Lean = no alternatives fan-out (faster primary). Enter still uses the same path.
+    await runTranslation(get, set, from, trimmed, { lean: true, minThinkingMs: 120 })
   },
 
   openBreakdown: (phrase, opts) => {

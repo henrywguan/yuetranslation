@@ -107,6 +107,7 @@ async function constrainedYueRewrite(client: OpenAI, draft: string, sourceEn?: s
   const completion = await client.chat.completions.create({
     model: env.openaiModel,
     temperature: 0.2,
+    max_tokens: 120,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },

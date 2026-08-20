@@ -60,12 +60,7 @@ export async function fetchSpeechToken(): Promise<{ token: string; region: strin
   return res.json()
 }
 
-export async function translateText(
-  text: string,
-  from: Lang,
-  to: Lang,
-  opts?: { includeAlternatives?: boolean },
-): Promise<{
+type TranslateResponse = {
   text: string
   definition?: string
   definitions?: string[]
@@ -79,20 +74,48 @@ export async function translateText(
     rewritten: boolean
     notes: string[]
   }
-}> {
+}
+
+const TRANSLATE_CACHE_MAX = 64
+const translateCache = new Map<string, TranslateResponse>()
+
+function rememberTranslate(key: string, value: TranslateResponse) {
+  if (translateCache.has(key)) translateCache.delete(key)
+  translateCache.set(key, value)
+  while (translateCache.size > TRANSLATE_CACHE_MAX) {
+    const oldest = translateCache.keys().next().value
+    if (oldest === undefined) break
+    translateCache.delete(oldest)
+  }
+}
+
+export async function translateText(
+  text: string,
+  from: Lang,
+  to: Lang,
+  opts?: { includeAlternatives?: boolean; signal?: AbortSignal },
+): Promise<TranslateResponse> {
+  const alts = Boolean(opts?.includeAlternatives)
+  const cacheKey = `${from}|${to}|${alts ? 1 : 0}|${text.trim()}`
+  const cached = translateCache.get(cacheKey)
+  if (cached) return cached
+
   // Always final — the app never requests interim machine translations.
   const res = await apiFetch('/translate', {
     method: 'POST',
+    signal: opts?.signal,
     body: JSON.stringify({
       text,
       from,
       to,
-      includeAlternatives: Boolean(opts?.includeAlternatives),
+      includeAlternatives: alts,
       stage: 'final',
     }),
   })
   if (!res.ok) throw new Error(await res.text())
-  return res.json()
+  const data = (await res.json()) as TranslateResponse
+  rememberTranslate(cacheKey, data)
+  return data
 }
 
 export async function fetchBreakdown(

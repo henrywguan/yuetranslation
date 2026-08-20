@@ -8,7 +8,19 @@ import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
-const AUTO_TRANSLATE_MS = 450
+const AUTO_TRANSLATE_MS = 700
+
+function isWorthAutoTranslate(value: string, from: Lang): boolean {
+  const t = value.trim()
+  if (!t) return false
+  if (from === 'yue') {
+    // At least one CJK ideograph, or a short Latin transliteration.
+    return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
+  }
+  // Skip single-letter / mid-word fragments like "h", "he", "wha".
+  const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
+  return letters.length >= 3 || t.split(/\s+/).filter(Boolean).length >= 2
+}
 
 export function TextMode() {
   const [text, setText] = useState('')
@@ -29,16 +41,27 @@ export function TextMode() {
   const placeholder = from === 'en' ? ui.typeEnglish : ui.typeCantonese
   const fromRef = useRef(from)
   const translateRef = useRef(translateTyped)
+  const historyRef = useRef(history)
   fromRef.current = from
   translateRef.current = translateTyped
+  historyRef.current = history
 
-  const runTranslate = (value: string, delay: number) => {
+  const runTranslate = (value: string, delay: number, force = false) => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
     const next = value.trim()
     if (!next) {
+      setBusy(false)
+      return
+    }
+    if (!force && !isWorthAutoTranslate(next, fromRef.current)) {
+      setBusy(false)
+      return
+    }
+    const top = historyRef.current[0]
+    if (top && top.from === fromRef.current && top.source === next) {
       setBusy(false)
       return
     }
@@ -80,7 +103,7 @@ export function TextMode() {
         onKeyDown={(e) => {
           if (e.key !== 'Enter' || e.shiftKey) return
           e.preventDefault()
-          runTranslate(text, 0)
+          runTranslate(text, 0, true)
         }}
         rows={4}
         placeholder={`${placeholder.en} / ${placeholder.zh}`}
