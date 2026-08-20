@@ -3,6 +3,7 @@ import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { TranslateThinking } from './TranslateThinking'
+import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
@@ -29,13 +30,23 @@ export function TextMode() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const history = useYueStore((s) => s.history)
   const translating = useYueStore((s) => s.translating)
+  const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const altsLoading = useYueStore((s) => s.altsLoading)
   const trimmed = text.trim()
   const latest = history[0]
   const match =
     latest && latest.from === from && latest.source === trimmed ? latest : null
   const showThinking = busy || translating
+  const showYueAlts = Boolean(match && match.to === 'yue')
+  // Prefer this turn’s history alts so a prior Solo result cannot leak in.
+  const alts = showYueAlts
+    ? match!.alternatives?.length
+      ? match!.alternatives
+      : yueAlternatives
+    : []
 
   const openMatchBreakdown = (phrase: string) => {
     if (!match) return
@@ -44,7 +55,7 @@ export function TextMode() {
         translation: match.source,
         definition: match.definition || undefined,
         definitions: match.definitions,
-        alternatives: match.alternatives,
+        alternatives: alts,
       })
       return
     }
@@ -146,6 +157,14 @@ export function TextMode() {
               onActivate={openMatchBreakdown}
               speakLang={match.to}
             />
+            {showYueAlts && altsLoading && alts.length === 0 ? (
+              <p className="text-alts-loading muted" aria-live="polite">
+                <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
+              </p>
+            ) : null}
+            {showYueAlts && alts.length > 0 ? (
+              <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
+            ) : null}
           </InkSettle>
         ) : null}
       </div>
