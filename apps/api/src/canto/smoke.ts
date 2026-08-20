@@ -8,6 +8,7 @@ import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
 import { openaiConfigured } from '../env.js'
 import { translate } from '../translate.js'
+import { breakdown } from '../breakdown.js'
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg)
@@ -279,6 +280,14 @@ const helloLex = lexiconTranslate({
 assert(
   !helloLex || !looksLikeGlossDump(helloLex.text),
   `lexicon must not return dump for 大家好: ${JSON.stringify(helloLex)}`,
+)
+
+const fruitBreakdown = await breakdown({ text: '我哋愛蘋果香牙蕉' })
+const ngaaRow = fruitBreakdown.characters.find((c) => c.char === '牙')
+assert(ngaaRow, 'breakdown missing 牙')
+assert(
+  ngaaRow!.meaning && !/Cantonese character/i.test(ngaaRow!.meaning),
+  `expected contextual gloss for 牙, got ${JSON.stringify(ngaaRow!.meaning)}`,
 )
 
 console.log(

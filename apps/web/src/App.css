@@ -144,14 +144,20 @@
 }
 
 .account-hub-backdrop {
-  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, #061018 40%, transparent);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
 }
 
 .account-hub-shell {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  z-index: 72;
+  position: fixed;
+  z-index: 111;
   width: min(320px, calc(100vw - 24px));
 }
 
@@ -339,20 +345,11 @@
 
 @media (max-width: 959px) {
   .account-hub-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 71;
-    margin: 0;
-    padding: 0;
-    border: 0;
     background: color-mix(in srgb, #061018 55%, transparent);
     backdrop-filter: blur(6px);
-    cursor: pointer;
   }
 
   .account-hub-shell {
-    position: fixed;
     top: auto;
     right: 12px;
     left: 12px;
@@ -360,7 +357,6 @@
     width: auto;
     margin: 0 auto;
     max-width: 420px;
-    z-index: 72;
   }
 
   .account-hub {

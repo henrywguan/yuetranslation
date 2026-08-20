@@ -85,10 +85,31 @@ const CHAR_GLOSS: Record<string, string> = {
   '！': 'exclamation',
   '。': 'full stop',
   '，': 'comma',
+  愛: 'love',
+  蘋: 'apple (in 蘋果)',
+  果: 'fruit (in 蘋果)',
+  香: 'fragrant; in 香蕉 (banana)',
+  牙: 'tooth; in 香牙蕉 (banana)',
+  蕉: 'banana',
+}
+
+export const GENERIC_CHAR_GLOSS = 'Cantonese character'
+
+export function isGenericCharGloss(gloss: string | null | undefined): boolean {
+  return (gloss || '').trim() === GENERIC_CHAR_GLOSS
+}
+
+/** Prefer a real gloss over the generic placeholder. */
+export function pickCharGloss(...candidates: (string | null | undefined)[]): string {
+  for (const raw of candidates) {
+    const t = (raw || '').trim()
+    if (t && !isGenericCharGloss(t)) return t
+  }
+  return ''
 }
 
 export function glossForChar(char: string): string {
-  return CHAR_GLOSS[char] || (isHanChar(char) ? 'Cantonese character' : '')
+  return CHAR_GLOSS[char] || ''
 }
 
 /** Known-character sense only (empty when unknown — used for drill gating). */

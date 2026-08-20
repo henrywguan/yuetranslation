@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
@@ -7,6 +8,8 @@ import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade } from '../lib/billing'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
+
+const HUB_SHEET_MQ = '(max-width: 959px)'
 
 function remainCopy(seconds: number): Bi {
   if (seconds >= 3600) return ui.hoursLeft(Math.floor(seconds / 3600))
@@ -47,7 +50,10 @@ export function PlanChip() {
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
+  const [hubPos, setHubPos] = useState<{ top: number; right: number } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const hubRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const titleId = useId()
 
@@ -65,15 +71,41 @@ export function PlanChip() {
     }
   }, [entitlement?.loggedIn, entitlement?.plan])
 
+  useLayoutEffect(() => {
+    if (!open) return
+    const layout = () => {
+      if (window.matchMedia(HUB_SHEET_MQ).matches) {
+        setHubPos(null)
+        return
+      }
+      const el = triggerRef.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      setHubPos({
+        top: r.bottom + 10,
+        right: Math.max(12, window.innerWidth - r.right),
+      })
+    }
+    layout()
+    window.addEventListener('resize', layout)
+    window.addEventListener('scroll', layout, true)
+    return () => {
+      window.removeEventListener('resize', layout)
+      window.removeEventListener('scroll', layout, true)
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    const onPointer = (e: MouseEvent | PointerEvent) => {
-      const el = rootRef.current
-      if (!el) return
-      if (e.target instanceof Node && !el.contains(e.target)) setOpen(false)
+    const onPointer = (e: PointerEvent) => {
+      const target = e.target
+      if (!(target instanceof Node)) return
+      if (rootRef.current?.contains(target)) return
+      if (hubRef.current?.contains(target)) return
+      setOpen(false)
     }
     window.addEventListener('keydown', onKey)
     window.addEventListener('pointerdown', onPointer)
@@ -99,7 +131,7 @@ export function PlanChip() {
   if (showSignIn) {
     return (
       <GlowRotateButton className="plan-sign-in" onClick={() => openAuthScreen()}>
-        <BiText copy={ui.signIn} size="sm" />
+        <BiText copy={ui.signIn} size="sm" hideJp />
       </GlowRotateButton>
     )
   }
@@ -157,7 +189,7 @@ export function PlanChip() {
             <BiText copy={ui.accountPlan} size="sm" />
           </p>
           <span className={`plan-chip plan-${plan} account-hub-plan-pill`}>
-            <BiText copy={planLabel(plan)} size="sm" />
+            <BiText copy={planLabel(plan)} size="sm" hideJp />
           </span>
         </section>
 
@@ -219,6 +251,7 @@ export function PlanChip() {
     <div className={`plan-chip-wrap${open ? ' is-open' : ''}`} ref={rootRef}>
       <button
         type="button"
+        ref={triggerRef}
         className={`plan-chip-trigger plan-${plan}${open ? ' is-open' : ''}`}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -226,42 +259,47 @@ export function PlanChip() {
         onClick={() => setOpen((v) => !v)}
       >
         <span className={`plan-chip plan-${plan}`}>
-          <BiText copy={planLabel(plan)} size="sm" />
+          <BiText copy={planLabel(plan)} size="sm" hideJp />
         </span>
         {entitlement.allowed.live ? (
           <span className="plan-remain">
-            <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" />
+            <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" hideJp />
           </span>
         ) : null}
       </button>
 
-      <AnimatePresence>
-        {open ? (
-          <>
-            <motion.button
-              type="button"
-              key="account-hub-backdrop"
-              className="account-hub-backdrop"
-              aria-label={biPlain(ui.accountClose)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              key="account-hub-panel"
-              className="account-hub-shell"
-              initial={{ opacity: 0, y: -8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: inkEase }}
-            >
-              {panel}
-            </motion.div>
-          </>
-        ) : null}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {open ? (
+            <>
+              <motion.button
+                type="button"
+                key="account-hub-backdrop"
+                className="account-hub-backdrop"
+                aria-label={biPlain(ui.accountClose)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                onClick={() => setOpen(false)}
+              />
+              <motion.div
+                key="account-hub-panel"
+                ref={hubRef}
+                className="account-hub-shell"
+                style={hubPos ? { top: hubPos.top, right: hubPos.right } : undefined}
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: inkEase }}
+              >
+                {panel}
+              </motion.div>
+            </>
+          ) : null}
+        </AnimatePresence>,
+        document.body,
+      )}
     </div>
   )
 }
