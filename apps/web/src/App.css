@@ -105,6 +105,32 @@
   gap: 4px;
 }
 
+.plan-chip-wrap {
+  position: relative;
+  z-index: 70;
+}
+
+.plan-chip-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: end;
+}
+
+.plan-chip-trigger:hover .plan-chip,
+.plan-chip-trigger.is-open .plan-chip {
+  border-color: color-mix(in srgb, var(--jade) 45%, var(--glass-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 18%, transparent);
+}
+
 .plan-chip {
   font-size: 0.72rem;
   font-weight: 600;
@@ -115,6 +141,232 @@
   background: var(--surface);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(10px);
+}
+
+.account-hub-backdrop {
+  display: none;
+}
+
+.account-hub-shell {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 72;
+  width: min(320px, calc(100vw - 24px));
+}
+
+.account-hub {
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid) 94%, var(--jade) 6%),
+      color-mix(in srgb, var(--harbor-mid) 92%, transparent)
+    );
+  box-shadow:
+    var(--shadow),
+    0 0 0 1px color-mix(in srgb, var(--jade) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  backdrop-filter: blur(16px);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.account-hub-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.account-hub-titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.account-hub-kicker {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-hub-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink-bright, var(--ink));
+  word-break: break-word;
+}
+
+.account-hub-email {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.account-hub-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.account-hub-close:hover,
+.account-hub-close:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+  color: var(--jade-bright, var(--jade));
+}
+
+.account-hub-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 14px 14px;
+}
+
+.account-hub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-hub-label {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-hub-plan-pill {
+  align-self: flex-start;
+}
+
+.account-hub-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-hub-stats li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.account-hub-stat-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.account-hub-stat-value {
+  font-weight: 650;
+  color: var(--ink-bright, var(--ink));
+  text-align: end;
+}
+
+.account-hub-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-hub-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+.account-hub-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.account-hub-btn--primary {
+  background: color-mix(in srgb, var(--jade) 28%, transparent);
+  border-color: color-mix(in srgb, var(--jade) 45%, var(--glass-border));
+  color: var(--ink-bright, var(--ink));
+}
+
+.account-hub-btn--primary:hover,
+.account-hub-btn--primary:focus-visible {
+  background: color-mix(in srgb, var(--jade) 38%, transparent);
+}
+
+.account-hub-btn--ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.account-hub-btn--ghost:hover,
+.account-hub-btn--ghost:focus-visible {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 22%, var(--glass-border));
+}
+
+@media (max-width: 959px) {
+  .account-hub-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 71;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: color-mix(in srgb, #061018 55%, transparent);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+  }
+
+  .account-hub-shell {
+    position: fixed;
+    top: auto;
+    right: 12px;
+    left: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: auto;
+    margin: 0 auto;
+    max-width: 420px;
+    z-index: 72;
+  }
+
+  .account-hub {
+    border-radius: 22px 22px 18px 18px;
+    max-height: min(78vh, 560px);
+  }
 }
 
 .plan-chip.plan-pro {

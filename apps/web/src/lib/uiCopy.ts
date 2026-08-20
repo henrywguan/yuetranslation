@@ -139,6 +139,17 @@ export const ui = {
   signOut: { en: 'Sign out', zh: '登出', jp: 'dang1 ceot1' },
   manageBilling: { en: 'Billing', zh: '帳單', jp: 'zoeng3 daan1' },
   upgrade: { en: 'Upgrade', zh: '升級', jp: 'sing1 kap1' },
+  accountHub: { en: 'Account', zh: '帳戶', jp: 'zoeng3 wu6' },
+  accountClose: { en: 'Close account', zh: '關閉帳戶', jp: 'gwaan1 bai3 zoeng3 wu6' },
+  accountPlan: { en: 'Plan', zh: '計劃', jp: 'gai3 waak6' },
+  accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },
+  accountLive: { en: 'Live time left', zh: '即時剩餘', jp: 'zik1 si4 ceoi4 jyu4' },
+  accountVoice: { en: 'Voice left', zh: '語音剩餘', jp: 'jyu5 jam1 ceoi4 jyu4' },
+  charsLeft: (formatted: string): Bi => ({
+    en: `${formatted} chars`,
+    zh: `${formatted} 字`,
+    jp: `${formatted} zi6`,
+  }),
   hoursLeft: (n: number): Bi => ({
     en: `${n}h left`,
     zh: `剩 ${n} 小時`,
