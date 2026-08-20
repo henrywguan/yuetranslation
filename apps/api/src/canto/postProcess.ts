@@ -4,7 +4,7 @@ import { colloquialScore, COLLOQUIAL_REWRITE_THRESHOLD } from './colloquialScore
 import { scrubMandarinToYue } from './scrub.js'
 import { uniqStrings } from './normalize.js'
 import type { PostProcessMeta, TranslateStage } from './types.js'
-import { env } from '../env.js'
+import { env, llmChatExtras } from '../env.js'
 
 export type HardenResult = {
   text: string
@@ -107,11 +107,12 @@ async function constrainedYueRewrite(client: OpenAI, draft: string, sourceEn?: s
   const completion = await client.chat.completions.create({
     model: env.openaiModel,
     temperature: 0.2,
-    max_tokens: 120,
+    max_tokens: 240,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: user },
     ],
+    ...llmChatExtras(),
   })
   return completion.choices[0]?.message?.content?.trim() || ''
 }

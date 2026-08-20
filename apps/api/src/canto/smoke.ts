@@ -6,6 +6,7 @@ import { lexiconTranslate, lexiconStats, looksLikeGlossDump } from './lexiconTra
 import { scrubMandarinToYue } from './scrub.js'
 import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
+import { openaiConfigured } from '../env.js'
 import { translate } from '../translate.js'
 
 function assert(cond: unknown, msg: string) {
@@ -196,6 +197,19 @@ assert(
   `粵→EN STT variant failed: ${sttTranslate.engine} ${sttTranslate.text}`,
 )
 assert(!/[\u4e00-\u9fff]/.test(sttTranslate.text), `粵→EN must not echo Han: ${sttTranslate.text}`)
+
+if (openaiConfigured()) {
+  const modelYue = await translate({
+    text: 'Do you wanna Margarita?',
+    from: 'en',
+    to: 'yue',
+    stage: 'final',
+  })
+  assert(
+    /[\u4e00-\u9fff]/.test(modelYue.text),
+    `model EN→粵 should return Cantonese, got ${modelYue.engine} "${modelYue.text}" notes=${JSON.stringify(modelYue.meta?.notes)}`,
+  )
+}
 
 // End-to-end offline path (dictionary / lexicon — no model required for these hits).
 const offlineApple = await translate({ text: 'apple', from: 'en', to: 'yue', stage: 'final' })
