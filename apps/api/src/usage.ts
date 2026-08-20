@@ -8,48 +8,66 @@ export type UsageRow = {
   translate_count: number
 }
 
+export type UsageSnapshot = {
+  month: string
+  liveSeconds: number
+  ttsChars: number
+  translateCount: number
+}
+
+function asInt(value: unknown): number {
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0
+}
+
 export function currentMonthKey(): string {
   return new Date().toISOString().slice(0, 7).replace('-', '_')
 }
 
-export function emptyUsage(month = currentMonthKey()) {
+export function emptyUsage(month = currentMonthKey()): UsageSnapshot {
   return { month, liveSeconds: 0, ttsChars: 0, translateCount: 0 }
 }
 
-export async function getUsage(userId: string, month = currentMonthKey()) {
+function rowToSnapshot(row: UsageRow): UsageSnapshot {
+  return {
+    month: row.month,
+    liveSeconds: asInt(row.live_seconds),
+    ttsChars: asInt(row.tts_chars),
+    translateCount: asInt(row.translate_count),
+  }
+}
+
+export async function getUsage(userId: string, month = currentMonthKey()): Promise<UsageSnapshot> {
   const client = getAdmin()
   if (!client) return emptyUsage(month)
-  const { data } = await client
+  const { data, error } = await client
     .from('usage_months')
     .select('*')
     .eq('user_id', userId)
     .eq('month', month)
     .maybeSingle()
-  if (!data) return emptyUsage(month)
-  const row = data as UsageRow
-  return {
-    month: row.month,
-    liveSeconds: row.live_seconds,
-    ttsChars: row.tts_chars,
-    translateCount: row.translate_count,
+  if (error) {
+    console.error('[usage] getUsage failed', error.message)
+    return emptyUsage(month)
   }
+  if (!data) return emptyUsage(month)
+  return rowToSnapshot(data as UsageRow)
 }
 
 /** All usage months for one user (newest first). */
-export async function listUsageMonths(userId: string) {
+export async function listUsageMonths(userId: string): Promise<UsageSnapshot[]> {
   const client = getAdmin()
   if (!client) return []
-  const { data } = await client
+  const { data, error } = await client
     .from('usage_months')
     .select('*')
     .eq('user_id', userId)
     .order('month', { ascending: false })
-  return ((data as UsageRow[]) || []).map((row) => ({
-    month: row.month,
-    liveSeconds: row.live_seconds,
-    ttsChars: row.tts_chars,
-    translateCount: row.translate_count,
-  }))
+  if (error) {
+    console.error('[usage] listUsageMonths failed', error.message)
+    return []
+  }
+  return ((data as UsageRow[]) || []).map(rowToSnapshot)
 }
 
 /** Usage rows for many users in one month. */
@@ -57,64 +75,105 @@ export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<s
   const client = getAdmin()
   const map = new Map<string, UsageRow>()
   if (!client) return map
-  const { data } = await client.from('usage_months').select('*').eq('month', month)
+  const { data, error } = await client.from('usage_months').select('*').eq('month', month)
+  if (error) {
+    console.error('[usage] getUsageForMonth failed', error.message)
+    return map
+  }
   for (const row of (data as UsageRow[]) || []) {
-    map.set(row.user_id, row)
+    map.set(row.user_id, {
+      ...row,
+      live_seconds: asInt(row.live_seconds),
+      tts_chars: asInt(row.tts_chars),
+      translate_count: asInt(row.translate_count),
+    })
   }
   return map
 }
 
-async function upsertUsage(userId: string, patch: Partial<UsageRow>) {
+/**
+ * Prefer atomic Postgres RPC so concurrent TTS / live / translate cannot wipe
+ * each other. Falls back to a single-column upsert if the migration is not applied.
+ */
+async function incrementUsage(
+  userId: string,
+  delta: { liveSeconds?: number; ttsChars?: number; translateCount?: number },
+) {
   const client = getAdmin()
   if (!client) return
-  const month = patch.month ?? currentMonthKey()
-  const { data: existing } = await client
-    .from('usage_months')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('month', month)
-    .maybeSingle()
+  const liveSeconds = asInt(delta.liveSeconds)
+  const ttsChars = asInt(delta.ttsChars)
+  const translateCount = asInt(delta.translateCount)
+  if (liveSeconds + ttsChars + translateCount <= 0) return
 
-  const base: UsageRow = existing
-    ? (existing as UsageRow)
-    : { user_id: userId, month, live_seconds: 0, tts_chars: 0, translate_count: 0 }
+  const month = currentMonthKey()
+  const { error: rpcError } = await client.rpc('increment_usage', {
+    p_user_id: userId,
+    p_month: month,
+    p_live_seconds: liveSeconds,
+    p_tts_chars: ttsChars,
+    p_translate_count: translateCount,
+  })
+  if (!rpcError) return
 
-  await client.from('usage_months').upsert(
-    {
-      user_id: userId,
-      month,
-      live_seconds: patch.live_seconds ?? base.live_seconds,
-      tts_chars: patch.tts_chars ?? base.tts_chars,
-      translate_count: patch.translate_count ?? base.translate_count,
-    },
-    { onConflict: 'user_id,month' },
+  // Migration not applied yet — only patch the counters we are changing so a
+  // stale read cannot reset sibling metrics to 0.
+  console.warn('[usage] increment_usage RPC unavailable, using column upsert:', rpcError.message)
+  const usage = await getUsage(userId, month)
+  const patch: Record<string, string | number> = { user_id: userId, month }
+  if (liveSeconds) patch.live_seconds = usage.liveSeconds + liveSeconds
+  if (ttsChars) patch.tts_chars = usage.ttsChars + ttsChars
+  if (translateCount) patch.translate_count = usage.translateCount + translateCount
+
+  // Ensure a profiles row exists (FK) before first usage write.
+  const { error: profileError } = await client.from('profiles').upsert(
+    { id: userId, plan: 'free' },
+    { onConflict: 'id', ignoreDuplicates: true },
   )
+  if (profileError) {
+    console.error('[usage] ensure profile failed', profileError.message)
+  }
+
+  const { error: upsertError } = await client
+    .from('usage_months')
+    .upsert(patch, { onConflict: 'user_id,month' })
+  if (upsertError) {
+    console.error('[usage] upsert failed', upsertError.message, patch)
+  }
 }
 
 export async function addLiveSeconds(userId: string, seconds: number) {
-  const month = currentMonthKey()
-  const usage = await getUsage(userId, month)
-  await upsertUsage(userId, { month, live_seconds: usage.liveSeconds + seconds })
+  await incrementUsage(userId, { liveSeconds: seconds })
 }
 
 export async function addTtsChars(userId: string, chars: number) {
-  const month = currentMonthKey()
-  const usage = await getUsage(userId, month)
-  await upsertUsage(userId, { month, tts_chars: usage.ttsChars + chars })
+  await incrementUsage(userId, { ttsChars: chars })
 }
 
 export async function addTranslateCount(userId: string, count = 1) {
-  const month = currentMonthKey()
-  const usage = await getUsage(userId, month)
-  await upsertUsage(userId, { month, translate_count: usage.translateCount + count })
+  await incrementUsage(userId, { translateCount: count })
 }
 
 /** Zero live / TTS / translate counters for a month (default: current). */
 export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
-  await upsertUsage(userId, {
-    month,
-    live_seconds: 0,
-    tts_chars: 0,
-    translate_count: 0,
-  })
+  const client = getAdmin()
+  if (!client) return
+  const { error: profileError } = await client.from('profiles').upsert(
+    { id: userId, plan: 'free' },
+    { onConflict: 'id', ignoreDuplicates: true },
+  )
+  if (profileError) {
+    console.error('[usage] ensure profile failed', profileError.message)
+  }
+  const { error } = await client.from('usage_months').upsert(
+    {
+      user_id: userId,
+      month,
+      live_seconds: 0,
+      tts_chars: 0,
+      translate_count: 0,
+    },
+    { onConflict: 'user_id,month' },
+  )
+  if (error) console.error('[usage] resetUsageMonth failed', error.message)
 }

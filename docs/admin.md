@@ -14,10 +14,10 @@ Matching is case-insensitive. Only signed-in users whose email is on this list c
 
 ## Database migration
 
-Run `supabase/migrations/002_admin_disabled_audit.sql` in the Supabase SQL editor (or `supabase db push`):
+Run these in the Supabase SQL editor (or `supabase db push`), in order:
 
-- `profiles.disabled` — ban flag (also forces plan to `free` when banning)
-- `admin_audit_log` — who changed plan / reset usage / ban / unban
+1. `supabase/migrations/002_admin_disabled_audit.sql` — `profiles.disabled` + `admin_audit_log`
+2. `supabase/migrations/003_usage_increment.sql` — ensures `translate_count`, adds atomic `increment_usage()` so live / TTS / translate cannot wipe each other under concurrency
 
 Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a session.
 

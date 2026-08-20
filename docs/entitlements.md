@@ -46,6 +46,10 @@ Returned by `/api/health` and `/api/entitlement`:
 | `POST /translate` | `allowed.textTranslate` (always true for guests); increments `translate_count` when metered / 文字翻译权限（访客可用）；计量开启时累加翻译次数 |
 | `POST /breakdown` | same as translate / 同文字翻译 |
 
+Usage writes go through `increment_usage` (migration `003_usage_increment.sql`) so concurrent TTS / live / translate updates cannot overwrite sibling counters. The web client also flushes elapsed live seconds when a mic session ends (not only every 15s), so short hold/tap turns are counted.
+
+用量写入走 `increment_usage`（迁移 `003_usage_increment.sql`），避免并发朗读／实时／翻译互相覆盖。网页端在麦克风会话结束时也会冲刷已用秒数（不只每 15 秒一次），短按／点按也会计入。
+
 Admin panel (`#/admin`, allowlist `YUE_ADMIN_EMAILS`): see `docs/admin.md`.
 
 管理后台（`#/admin`，邮箱白名单 `YUE_ADMIN_EMAILS`）：见 `docs/admin.md`。

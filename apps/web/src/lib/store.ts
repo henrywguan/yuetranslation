@@ -115,6 +115,15 @@ let translateSeq = 0
 const pending = new Map<Lang, number>()
 let speakToken = 0
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+/** Wall-clock start of the current live meter window (ms). */
+let liveMeterStartedAt = 0
+/** Seconds already reported to /usage/heartbeat for this window. */
+let liveMeterReportedSec = 0
+/** Store accessors for async meter callbacks. */
+let liveMeterCtl: {
+  get: () => State
+  set: (p: Partial<State>) => void
+} | null = null
 let translateInFlight = 0
 /** Aborts the previous /api/translate when a newer Text request starts. */
 let translateAbort: AbortController | null = null
@@ -496,11 +505,56 @@ async function runTranslation(
   if (speak) await speakFinal(get, set, speak.text, speak.lang)
 }
 
+function flushLiveMeter() {
+  if (!liveMeterStartedAt) return
+  const startedAt = liveMeterStartedAt
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
+  const delta = Math.min(120, elapsedSec - liveMeterReportedSec)
+  if (delta <= 0) return
+  liveMeterReportedSec += delta
+  const ctl = liveMeterCtl
+  void postHeartbeat(delta)
+    .then((ent) => {
+      ctl?.set({ entitlement: ent })
+      if (!ent.allowed.live) {
+        void ctl?.get().stopLive()
+        ctl?.set({ error: 'Live minutes exhausted for this month.' })
+      }
+    })
+    .catch((err) => {
+      if (liveMeterStartedAt === startedAt) {
+        liveMeterReportedSec = Math.max(0, liveMeterReportedSec - delta)
+      }
+      if (err?.code === 401 || err?.code === 402) {
+        void ctl?.get().stopLive()
+        ctl?.set({
+          error: err.message,
+          entitlement: err.entitlement || ctl.get().entitlement,
+        })
+      }
+    })
+}
+
+function startHeartbeat(get: () => State, set: (p: Partial<State>) => void) {
+  stopHeartbeat()
+  liveMeterCtl = { get, set }
+  liveMeterStartedAt = Date.now()
+  liveMeterReportedSec = 0
+  heartbeatTimer = setInterval(() => {
+    flushLiveMeter()
+  }, 15000)
+}
+
 function stopHeartbeat() {
+  // Charge remaining seconds before clearing — short hold/tap sessions never
+  // reached the 15s interval, so live usage previously stayed at 0.
+  flushLiveMeter()
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer)
     heartbeatTimer = null
   }
+  liveMeterStartedAt = 0
+  liveMeterReportedSec = 0
 }
 
 function resetHoldCapture() {
@@ -935,23 +989,7 @@ export const useYueStore = create<State>((set, get) => ({
         // Sticky tap previously stayed “listening” forever with silence — auto-stop.
         void get().endHold()
       }, NO_SPEECH_HINT_MS)
-      stopHeartbeat()
-      heartbeatTimer = setInterval(() => {
-        void postHeartbeat(15)
-          .then((ent) => {
-            set({ entitlement: ent })
-            if (!ent.allowed.live) {
-              void get().stopLive()
-              set({ error: 'Live minutes exhausted for this month.' })
-            }
-          })
-          .catch((err) => {
-            if (err?.code === 401 || err?.code === 402) {
-              void get().stopLive()
-              set({ error: err.message, entitlement: err.entitlement || get().entitlement })
-            }
-          })
-      }, 15000)
+      startHeartbeat(get, set)
     } catch (e) {
       holding = false
       tapSticky = false
