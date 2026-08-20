@@ -1,22 +1,51 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js'
 import { hashPath, navigate } from './useHashRoute'
 
-const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || ''
-const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || ''
-
+let supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || ''
+let supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || ''
 let client: SupabaseClient | null = null
 let authPanelOpen = false
+let configLoad: Promise<void> | null = null
 
 export const AUTH_SCREEN_EVENT = 'yue-auth-screen'
 
 export function supabaseEnabled(): boolean {
-  return Boolean(url && anonKey)
+  return Boolean(supabaseUrl && supabaseAnonKey)
+}
+
+/**
+ * Vite only bakes VITE_* at build time. On Vercel the keys are often added
+ * after the last frontend build — load them from the API at runtime.
+ */
+export async function loadAuthConfig(): Promise<void> {
+  if (supabaseEnabled()) return
+  if (!configLoad) {
+    configLoad = (async () => {
+      try {
+        const base = (import.meta.env.VITE_API_BASE as string | undefined)?.trim() || '/api'
+        const res = await fetch(`${base.replace(/\/$/, '')}/auth-config`)
+        if (!res.ok) return
+        const data = (await res.json()) as { url?: string | null; anonKey?: string | null }
+        const nextUrl = data.url?.trim() || ''
+        const nextKey = data.anonKey?.trim() || ''
+        if (nextUrl && nextKey) {
+          supabaseUrl = nextUrl
+          supabaseAnonKey = nextKey
+          client = null
+        }
+      } catch {
+        /* keep build-time values */
+      }
+    })()
+  }
+  await configLoad
+  if (!supabaseEnabled()) configLoad = null
 }
 
 export function getSupabase(): SupabaseClient | null {
   if (!supabaseEnabled()) return null
   if (!client) {
-    client = createClient(url, anonKey, {
+    client = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -157,6 +186,7 @@ async function signInWithOAuthProvider(provider: 'google' | 'apple') {
 
 /** Call on app boot so PKCE / implicit OAuth callbacks restore the session. */
 export async function bootstrapAuthSession(): Promise<Session | null> {
+  await loadAuthConfig()
   const sb = getSupabase()
   if (!sb) return null
   const fromCallback = isAuthCallback()

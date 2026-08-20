@@ -58,6 +58,16 @@ app.get('/api/entitlement', async (req: AuthedRequest, res) => {
   res.json(await entitlementFor(req))
 })
 
+app.get('/api/auth-config', (_req, res) => {
+  const url = env.supabaseUrl
+  const anonKey = env.supabaseAnonKey
+  res.json({
+    enabled: Boolean(url && anonKey),
+    url: url || null,
+    anonKey: url && anonKey ? anonKey : null,
+  })
+})
+
 app.get('/api/speech-token', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.live) {

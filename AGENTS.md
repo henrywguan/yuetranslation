@@ -76,7 +76,7 @@ Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`.
 
 OAuth / confirm-email returns to the site origin (Supabase Site URL). The web app then routes to `#/app`. Login links must be `/?auth=1#/app` (query before hash). In Supabase → Authentication → URL configuration, Site URL should be the production origin; extra Redirect URLs can include `http://localhost:5173/**` and the production origin.
 
-Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and **`YUE_APP_URL=https://your-production-domain`** (so API upgrade/login links never point at preview deployment hostnames). Sign-in in the web UI opens an in-app modal via `openAuthScreen()` — do not link to API `loginUrl` from the SPA.
+Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (or `SUPABASE_ANON_KEY` — the web app also loads public keys from `GET /api/auth-config` at runtime, so Google/Apple still work if Vite keys were added after the last frontend build), and **`YUE_APP_URL=https://your-production-domain`**. Sign-in in the web UI opens an in-app modal via `openAuthScreen()` — do not link to API `loginUrl` from the SPA. Enable the Google (and Apple) provider in Supabase → Authentication → Providers.
 
 ### Phone mic testing (Henry’s machine)
 

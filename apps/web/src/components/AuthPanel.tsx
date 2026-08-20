@@ -9,6 +9,7 @@ import {
   goToAppAfterAuth,
   isAuthScreenOpen,
   onAuthChange as subscribeAuthChange,
+  loadAuthConfig,
   signIn,
   signInWithApple,
   signInWithGoogle,
@@ -62,6 +63,7 @@ export function AuthPanel({ onAuthChange }: Props) {
 
   const submit = async (event: FormEvent, next: Mode) => {
     event.preventDefault()
+    await loadAuthConfig()
     if (!supabaseEnabled()) {
       setMessage('Auth is not configured on this deploy.')
       return
@@ -89,6 +91,7 @@ export function AuthPanel({ onAuthChange }: Props) {
   }
 
   const oauthSignIn = async (provider: 'google' | 'apple') => {
+    await loadAuthConfig()
     if (!supabaseEnabled()) {
       setMessage('Auth is not configured on this deploy.')
       return
