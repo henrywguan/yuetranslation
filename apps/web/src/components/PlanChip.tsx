@@ -6,6 +6,7 @@ import { GlowRotateButton } from './GlowRotateButton'
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade } from '../lib/billing'
+import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 
@@ -223,6 +224,18 @@ export function PlanChip() {
         </section>
 
         <div className="account-hub-actions">
+          {entitlement.isAdmin ? (
+            <button
+              type="button"
+              className="account-hub-btn account-hub-btn--ghost"
+              onClick={() => {
+                setOpen(false)
+                navigate('admin')
+              }}
+            >
+              Admin
+            </button>
+          ) : null}
           {!paid ? (
             <button type="button" className="account-hub-btn account-hub-btn--primary" onClick={onUpgrade}>
               <BiText copy={ui.upgrade} size="sm" />

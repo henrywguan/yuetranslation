@@ -1,4 +1,4 @@
-import { env } from './env.js'
+import { env, isAdminEmail } from './env.js'
 import type { AuthContext } from './auth.js'
 import { getProfile, supabaseConfigured } from './supabase.js'
 import { emptyUsage, getUsage } from './usage.js'
@@ -7,6 +7,8 @@ export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean
   plan: 'guest' | 'free' | 'pro' | 'max'
+  isAdmin: boolean
+  disabled: boolean
   limits: {
     plan: string
     live_minutes: number
@@ -93,8 +95,39 @@ function buildSnapshot(
   plan: PlanKey,
   loggedIn: boolean,
   usage: Entitlement['usage'],
+  opts: { isAdmin?: boolean; disabled?: boolean } = {},
 ): Entitlement {
+  const isAdmin = Boolean(opts.isAdmin)
+  const disabled = Boolean(opts.disabled)
   const requireLogin = env.requireLogin
+
+  if (disabled && loggedIn) {
+    const limits = limitsForPlan('free')
+    limits.can_live = false
+    limits.tts_chars = 0
+    limits.auto_speak = false
+    limits.text_translate = false
+    return {
+      loggedIn: true,
+      requireLogin,
+      plan: 'free',
+      isAdmin,
+      disabled: true,
+      limits,
+      usage,
+      remaining: { liveSeconds: 0, ttsChars: 0 },
+      upgradeUrl: upgradeUrl(),
+      loginUrl: loginUrl(),
+      allowed: {
+        live: false,
+        autoSpeak: false,
+        textTranslate: false,
+        tts: false,
+      },
+      reason: 'account_disabled',
+    }
+  }
+
   if (requireLogin && !loggedIn) {
     const limits = limitsForPlan('guest')
     limits.can_live = false
@@ -102,6 +135,8 @@ function buildSnapshot(
       loggedIn: false,
       requireLogin: true,
       plan: 'guest',
+      isAdmin: false,
+      disabled: false,
       limits,
       usage,
       remaining: { liveSeconds: 0, ttsChars: 0 },
@@ -128,6 +163,8 @@ function buildSnapshot(
     loggedIn,
     requireLogin,
     plan,
+    isAdmin,
+    disabled: false,
     limits,
     usage,
     remaining: { liveSeconds: liveRemaining, ttsChars: voice.ttsRemaining },
@@ -152,6 +189,8 @@ export function localEntitlement(): Entitlement {
       loggedIn: true,
       requireLogin: false,
       plan: 'pro',
+      isAdmin: false,
+      disabled: false,
       limits: {
         plan: 'pro',
         live_minutes: 9999,
@@ -186,5 +225,8 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
   const profile = await getProfile(auth.userId)
   const plan = (profile?.plan ?? 'free') as PlanKey
   const usage = await getUsage(auth.userId)
-  return buildSnapshot(plan, true, usage)
+  return buildSnapshot(plan, true, usage, {
+    isAdmin: isAdminEmail(auth.email),
+    disabled: Boolean(profile?.disabled),
+  })
 }

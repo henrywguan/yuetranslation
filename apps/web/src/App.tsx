@@ -12,6 +12,7 @@ const PricingPage = lazy(() =>
 const TranslatorApp = lazy(() =>
   import('./TranslatorApp').then((m) => ({ default: m.TranslatorApp })),
 )
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 
 export default function App() {
   const route = useRoute()
@@ -34,6 +35,7 @@ export default function App() {
   let page = <Landing />
   if (route === 'app') page = <TranslatorApp />
   else if (route === 'pricing') page = <PricingPage />
+  else if (route === 'admin') page = <AdminPage />
 
   return (
     <>

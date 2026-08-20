@@ -35,6 +35,35 @@ export async function getUsage(userId: string, month = currentMonthKey()) {
   }
 }
 
+/** All usage months for one user (newest first). */
+export async function listUsageMonths(userId: string) {
+  const client = getAdmin()
+  if (!client) return []
+  const { data } = await client
+    .from('usage_months')
+    .select('*')
+    .eq('user_id', userId)
+    .order('month', { ascending: false })
+  return ((data as UsageRow[]) || []).map((row) => ({
+    month: row.month,
+    liveSeconds: row.live_seconds,
+    ttsChars: row.tts_chars,
+    translateCount: row.translate_count,
+  }))
+}
+
+/** Usage rows for many users in one month. */
+export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<string, UsageRow>> {
+  const client = getAdmin()
+  const map = new Map<string, UsageRow>()
+  if (!client) return map
+  const { data } = await client.from('usage_months').select('*').eq('month', month)
+  for (const row of (data as UsageRow[]) || []) {
+    map.set(row.user_id, row)
+  }
+  return map
+}
+
 async function upsertUsage(userId: string, patch: Partial<UsageRow>) {
   const client = getAdmin()
   if (!client) return
@@ -72,4 +101,20 @@ export async function addTtsChars(userId: string, chars: number) {
   const month = currentMonthKey()
   const usage = await getUsage(userId, month)
   await upsertUsage(userId, { month, tts_chars: usage.ttsChars + chars })
+}
+
+export async function addTranslateCount(userId: string, count = 1) {
+  const month = currentMonthKey()
+  const usage = await getUsage(userId, month)
+  await upsertUsage(userId, { month, translate_count: usage.translateCount + count })
+}
+
+/** Zero live / TTS / translate counters for a month (default: current). */
+export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
+  await upsertUsage(userId, {
+    month,
+    live_seconds: 0,
+    tts_chars: 0,
+    translate_count: 0,
+  })
 }

@@ -43,8 +43,12 @@ Returned by `/api/health` and `/api/entitlement`:
 | `GET /speech-token` | live entitlement / 实时权益 |
 | `POST /usage/heartbeat` | live entitlement, then add seconds / 先检查实时权益，再累加秒数 |
 | `POST /tts` | TTS entitlement, then add char usage / 先检查朗读权益，再累加字数 |
-| `POST /translate` | `allowed.textTranslate` (always true for guests) / 文字翻译权限（访客可用） |
+| `POST /translate` | `allowed.textTranslate` (always true for guests); increments `translate_count` when metered / 文字翻译权限（访客可用）；计量开启时累加翻译次数 |
 | `POST /breakdown` | same as translate / 同文字翻译 |
+
+Admin panel (`#/admin`, allowlist `YUE_ADMIN_EMAILS`): see `docs/admin.md`.
+
+管理后台（`#/admin`，邮箱白名单 `YUE_ADMIN_EMAILS`）：见 `docs/admin.md`。
 
 Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use text mode at `#/app`; live mic prompts sign-in via the Plan chip and API 401.
 
