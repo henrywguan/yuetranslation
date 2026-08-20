@@ -74,7 +74,11 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 
 Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests hitting `#/app` see a required sign-in gate; live/TTS usage is persisted to Supabase when open mode is off and the user has a JWT.
 
+OAuth / confirm-email returns to the site origin (Supabase Site URL). The web app then routes to `#/app`. Login links must be `/?auth=1#/app` (query before hash). In Supabase → Authentication → URL configuration, Site URL should be the production origin; extra Redirect URLs can include `http://localhost:5173/**` and the production origin.
+
 Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Run `supabase/migrations/001_profiles_usage.sql` in the Supabase SQL editor before launch. Override `YUE_OPEN_MODE=1` in the Vercel dashboard only for private testing.
+
+### Phone mic testing (Henry’s machine)
 
 
 For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.

@@ -1,4 +1,5 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js'
+import { hashPath, navigate } from './useHashRoute'
 
 const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || ''
 const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || ''
@@ -51,14 +52,38 @@ export async function signIn(email: string, password: string) {
   if (error) throw error
 }
 
-/** OAuth redirect target — preserves hash route; strips transient auth modal flag. */
+/**
+ * OAuth / email-confirm return URL. Keep this on the origin root so it matches
+ * the Supabase Site URL. After the session is restored we send the user to `#/app`.
+ */
 export function oauthRedirectUrl(): string {
+  const url = new URL(window.location.origin)
+  url.pathname = window.location.pathname || '/'
+  return url.toString()
+}
+
+/** True when this page load is a Supabase auth callback (OAuth or magic link). */
+export function isAuthCallback(): boolean {
+  if (typeof window === 'undefined') return false
+  const q = new URLSearchParams(window.location.search)
+  if (q.has('code') || (q.has('error') && q.has('error_description'))) return true
+  const hash = window.location.hash.replace(/^#/, '')
+  if (hash.startsWith('/')) return false
+  const hp = new URLSearchParams(hash)
+  return hp.has('access_token') || hp.has('refresh_token') || hp.has('error')
+}
+
+function stripAuthCallbackParams() {
   const url = new URL(window.location.href)
-  url.searchParams.delete('auth')
-  if (!url.hash || url.hash === '#/' || url.hash === '#') {
-    url.hash = '#/app'
+  for (const key of ['code', 'error', 'error_description', 'error_code', 'state']) {
+    url.searchParams.delete(key)
   }
-  return url.href
+  window.history.replaceState({}, '', url.toString())
+}
+
+/** After a successful sign-in, always open the translator (not the marketing home). */
+export function goToAppAfterAuth() {
+  if (hashPath() !== 'app') navigate('app')
 }
 
 export async function signInWithGoogle() {
@@ -83,14 +108,27 @@ async function signInWithOAuthProvider(provider: 'google' | 'apple') {
 export async function bootstrapAuthSession(): Promise<Session | null> {
   const sb = getSupabase()
   if (!sb) return null
-  const { data } = await sb.auth.getSession()
-  return data.session
+  const fromCallback = isAuthCallback()
+  let session = (await sb.auth.getSession()).data.session
+  if (fromCallback && !session) {
+    await new Promise((r) => setTimeout(r, 400))
+    session = (await sb.auth.getSession()).data.session
+  }
+  if (fromCallback) {
+    stripAuthCallbackParams()
+    if (session) goToAppAfterAuth()
+  }
+  return session
 }
 
 export async function signUp(email: string, password: string) {
   const sb = getSupabase()
   if (!sb) throw new Error('Auth is not configured.')
-  const { error } = await sb.auth.signUp({ email, password })
+  const { error } = await sb.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: oauthRedirectUrl() },
+  })
   if (error) throw error
 }
 
@@ -100,18 +138,29 @@ export async function signOut() {
   await sb.auth.signOut()
 }
 
+export const AUTH_SCREEN_EVENT = 'yue-auth-screen'
+
 export function openAuthScreen() {
   const url = new URL(window.location.href)
   url.searchParams.set('auth', '1')
+  if (hashPath(url.hash) !== 'app') url.hash = '#/app'
   window.history.replaceState({}, '', url.toString())
+  window.dispatchEvent(new Event(AUTH_SCREEN_EVENT))
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
 }
 
 export function closeAuthScreen() {
   const url = new URL(window.location.href)
   url.searchParams.delete('auth')
   window.history.replaceState({}, '', url.toString())
+  window.dispatchEvent(new Event(AUTH_SCREEN_EVENT))
 }
 
 export function isAuthScreenOpen(): boolean {
-  return new URLSearchParams(window.location.search).get('auth') === '1'
+  const search = new URLSearchParams(window.location.search)
+  if (search.get('auth') === '1') return true
+  const hash = window.location.hash.replace(/^#/, '')
+  const qIndex = hash.indexOf('?')
+  if (qIndex === -1) return false
+  return new URLSearchParams(hash.slice(qIndex + 1)).get('auth') === '1'
 }

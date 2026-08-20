@@ -30,7 +30,8 @@ function appBaseUrl(): string {
 }
 
 function loginUrl(): string {
-  return `${appBaseUrl()}/#/app?auth=1`
+  // Query must come before the hash or the router treats `#/app?auth=1` as home.
+  return `${appBaseUrl()}/?auth=1#/app`
 }
 
 function upgradeUrl(): string {
