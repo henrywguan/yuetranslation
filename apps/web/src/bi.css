@@ -301,6 +301,40 @@ button.jyutping {
   color: color-mix(in srgb, var(--jade-deep) 82%, var(--ink));
 }
 
+/* Large Details title reveal — roomy Jyutping + Chao, Chinese still anchors */
+.jp-pop--lg {
+  padding: 12px 14px 14px;
+  max-width: min(94vw, 28rem);
+  border-radius: 14px;
+}
+
+.jp-pop--lg .jp-pop-ruby {
+  gap: 0.22rem 0.28rem;
+}
+
+.jp-pop--lg .jp-pop-cell {
+  gap: 0.2rem;
+  min-width: 1.55em;
+  max-width: none;
+}
+
+.jp-pop--lg .jp-pop-syl {
+  font-size: clamp(0.82rem, 3.4vw, 1.02rem);
+  font-weight: 650;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--mint) 92%, var(--ink));
+}
+
+.jp-pop--lg .jp-pop-han {
+  font-size: clamp(1.2rem, 4.6vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+[data-theme='light'] .jp-pop--lg .jp-pop-syl {
+  color: color-mix(in srgb, var(--jade-deep) 88%, var(--ink));
+}
+
 .bi {
   display: flex;
   flex-direction: column;

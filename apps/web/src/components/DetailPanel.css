@@ -82,36 +82,21 @@
   flex-shrink: 0;
 }
 
-/* Details panel: Jyutping sits above Han and reads larger than the characters. */
-.detail-panel-title-ruby.jyut-ruby,
-.detail-panel-title .jyut-ruby {
+/* Title ruby matches Solo / Conversation / Text (Chinese dominant, quiet JP). */
+.detail-panel-title-jp {
+  display: inline-block;
+  max-width: 100%;
+  cursor: help;
+  border-radius: 6px;
+}
+
+.detail-panel-title-jp:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.detail-panel-title-ruby.jyut-ruby {
   align-items: flex-end;
-}
-
-.detail-panel-title-ruby .jyut-ruby-syl,
-.detail-panel-title .jyut-ruby-syl {
-  font-size: 1.35rem !important;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--jade-bright);
-}
-
-.detail-panel-title-ruby .jyut-ruby-han,
-.detail-panel-title .jyut-ruby-han {
-  font-size: 1.15rem !important;
-  font-weight: 700;
-  line-height: 1.15;
-}
-
-.detail-panel-alts .jyut-ruby-syl {
-  font-size: 1.12rem !important;
-  font-weight: 700;
-  color: var(--jade-bright);
-}
-
-.detail-panel-alts .jyut-ruby-han {
-  font-size: 0.95rem !important;
-  font-weight: 700;
 }
 
 .detail-panel-ipa-line {
