@@ -10,6 +10,8 @@ import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss
 import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
+import { JpPop } from './JpPop'
+import { useJpPopup } from '../lib/useJpPopup'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
 import { useFloatingPanel, type PanelBox } from '../lib/useFloatingPanel'
 import { useYueStore } from '../lib/store'
@@ -84,6 +86,10 @@ export function CharacterBreakdownHost() {
   })
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
+  const titlePhrase = top ? (top.kind === 'phrase' ? top.phrase : top.char) : ''
+  const titleJpEnabled = Boolean(top && !minimized && hasHan(titlePhrase))
+  const { tipId: titleJpTipId, show: titleJpShow, bind: titleJpBind, wrapRef: titleJpRef } =
+    useJpPopup(titleJpEnabled)
 
   useEffect(() => {
     if (!top || !minimized) {
@@ -228,12 +234,27 @@ export function CharacterBreakdownHost() {
               lang={top.kind === 'char' || showRubyTitle ? 'zh-HK' : 'en'}
             >
               {showRubyTitle ? (
-                <JyutRuby
-                  han={topLabel}
-                  segs={titleSegs}
-                  size="lg"
-                  className="detail-panel-title-ruby"
-                />
+                <span
+                  {...titleJpBind}
+                  className="detail-panel-title-jp"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  aria-label={`Show Jyutping for ${topLabel}`}
+                >
+                  <JyutRuby
+                    han={topLabel}
+                    segs={titleSegs}
+                    size="lg"
+                    className="detail-panel-title-ruby jyut-ruby--hint"
+                  />
+                  <JpPop
+                    show={titleJpShow}
+                    id={titleJpTipId}
+                    han={topLabel}
+                    segs={titleSegs}
+                    size="lg"
+                    anchorRef={titleJpRef}
+                  />
+                </span>
               ) : (
                 topLabel
               )}

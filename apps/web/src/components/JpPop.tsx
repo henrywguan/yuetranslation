@@ -45,16 +45,21 @@ export function JpPop({
   han = '',
   className = '',
   anchorRef,
+  size = 'md',
+  segs: segsProp,
 }: {
   show: boolean
   id: string
   han?: string
   className?: string
   anchorRef?: RefObject<HTMLElement | null>
+  /** `lg` — roomier Details / study reveal. */
+  size?: 'md' | 'lg'
+  segs?: JyutSeg[]
 }) {
   const reduce = useReducedMotion()
   const popRef = useRef<HTMLSpanElement | null>(null)
-  const [segs, setSegs] = useState<JyutSeg[]>([])
+  const [segs, setSegs] = useState<JyutSeg[]>(segsProp || [])
   const phrase = han.trim()
   const [mounted, setMounted] = useState(false)
 
@@ -63,6 +68,10 @@ export function JpPop({
   }, [])
 
   useEffect(() => {
+    if (segsProp?.length) {
+      setSegs(segsProp)
+      return
+    }
     if (!show || !phrase) {
       setSegs([])
       return
@@ -74,7 +83,7 @@ export function JpPop({
     return () => {
       cancelled = true
     }
-  }, [show, phrase])
+  }, [show, phrase, segsProp])
 
   useLayoutEffect(() => {
     if (!show) return
@@ -94,7 +103,7 @@ export function JpPop({
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
     }
-  }, [show, segs, phrase, anchorRef])
+  }, [show, segs, phrase, anchorRef, size])
 
   if (!phrase || !hasHan(phrase)) return null
 
@@ -105,14 +114,14 @@ export function JpPop({
           ref={popRef}
           id={id}
           role="tooltip"
-          className={`jp-pop jp-pop--portal jp-pop--ruby ${className}`.trim()}
+          className={`jp-pop jp-pop--portal jp-pop--ruby${size === 'lg' ? ' jp-pop--lg' : ''}${className ? ` ${className}` : ''}`.trim()}
           lang="en"
           initial={reduce ? false : { opacity: 0, y: 6, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={reduce ? undefined : { opacity: 0, y: 4, scale: 0.98 }}
           transition={{ duration: 0.22, ease: inkEase }}
         >
-          <JyutRuby han={phrase} segs={segs} size="md" variant="pop" />
+          <JyutRuby han={phrase} segs={segs} size={size} variant="pop" />
         </motion.span>
       ) : null}
     </AnimatePresence>
