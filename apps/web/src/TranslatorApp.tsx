@@ -10,6 +10,7 @@ import { JadeGlassField } from './components/JadeGlassField'
 import { AppClothBg } from './components/AppClothBg'
 import { PanelDock } from './components/PanelDock'
 import { GlowRotateButton } from './components/GlowRotateButton'
+import { IosHomescreenTip } from './components/IosHomescreenGuide'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
 import { TextMode } from './components/TextMode'
@@ -76,6 +77,8 @@ export function TranslatorApp() {
             <PlanChip />
           </div>
         </header>
+
+        <IosHomescreenTip />
 
         <main className="main">
           {mode === 'solo' ? <SoloView /> : null}
