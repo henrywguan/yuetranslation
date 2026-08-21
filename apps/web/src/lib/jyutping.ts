@@ -1,4 +1,4 @@
-import { glossForChar, isHanChar } from './charGloss'
+import { glossForChar, hasHan, isHanChar } from './charGloss'
 
 export type CharBreakdown = {
   char: string
@@ -6,10 +6,7 @@ export type CharBreakdown = {
   meaning: string
 }
 
-const HAN = /[\u3400-\u9fff\uf900-\ufaff]/
-export function hasHan(text: string) {
-  return HAN.test(text)
-}
+export { hasHan }
 
 /**
  * LSHK Jyutping §4 Chao tone letters.
@@ -62,15 +59,6 @@ export function isValidDefinition(def?: string) {
   if (!d) return false
   if (/^（示範）/.test(d) || /^\(demo\)/i.test(d)) return false
   return true
-}
-
-export function toneNumber(jp: string) {
-  const m = jp.trim().match(/([1-6])$/)
-  return m ? m[1] : ''
-}
-
-export function isEnteringTone(jp: string) {
-  return /[ptk][136]$/i.test(jp.trim())
 }
 
 function segsFromList(list: [string, string | null][]): JyutSeg[] {

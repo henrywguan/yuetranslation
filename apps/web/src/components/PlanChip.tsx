@@ -284,7 +284,7 @@ export function PlanChip() {
       <button
         type="button"
         ref={triggerRef}
-        className={`plan-chip-trigger plan-${plan}${open ? ' is-open' : ''}`}
+        className={`plan-chip-trigger${open ? ' is-open' : ''}`}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-controls={open ? panelId : undefined}

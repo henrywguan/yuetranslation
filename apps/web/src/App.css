@@ -1559,8 +1559,7 @@
   letter-spacing: -0.02em;
 }
 
-.pane-hero--yue,
-.pane-hero-canto {
+.pane-hero--yue {
   font-family: var(--font-body);
   font-weight: 700;
 }

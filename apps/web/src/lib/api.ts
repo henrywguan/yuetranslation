@@ -65,15 +65,6 @@ type TranslateResponse = {
   definition?: string
   definitions?: string[]
   alternatives?: string[]
-  engine: string
-  stage?: string
-  meta?: {
-    dictionaryHit: boolean
-    scrubbed: boolean
-    colloquialScore: number
-    rewritten: boolean
-    notes: string[]
-  }
 }
 
 const TRANSLATE_CACHE_MAX = 64
@@ -100,7 +91,7 @@ export async function translateText(
   const cached = translateCache.get(cacheKey)
   if (cached) return cached
 
-  // Always final — the app never requests interim machine translations.
+  // API defaults/coerces to final — never request interim MT.
   const res = await apiFetch('/translate', {
     method: 'POST',
     signal: opts?.signal,
@@ -109,7 +100,6 @@ export async function translateText(
       from,
       to,
       includeAlternatives: alts,
-      stage: 'final',
     }),
   })
   if (!res.ok) throw new Error(await res.text())

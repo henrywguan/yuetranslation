@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import { z } from 'zod'
 import { env, llmChatExtras } from './env.js'
 import { lookupGloss } from './canto/gloss.js'
+import { isHanChar } from './canto/han.js'
 import { scrubMandarinToYue } from './canto/scrub.js'
 
 const Body = z.object({
@@ -14,10 +15,6 @@ export type BreakdownChar = {
   jyutping: string | null
   meaning: string
   glossSource?: string
-}
-
-function isHan(ch: string) {
-  return /[\u3400-\u9fff\uf900-\ufaff]/.test(ch)
 }
 
 const GENERIC_CHAR_GLOSS = 'Cantonese character'
@@ -49,7 +46,7 @@ function findWordSpans(text: string): WordSpan[] {
   const spans: WordSpan[] = []
   let i = 0
   while (i < chars.length) {
-    if (!isHan(chars[i]!)) {
+    if (!isHanChar(chars[i]!)) {
       i += 1
       continue
     }
@@ -93,14 +90,14 @@ function localBreakdown(text: string): BreakdownChar[] {
   for (let i = 0; i < chars.length; i += 1) {
     const ch = chars[i]!
     if (ch.trim() === '') continue
-    if (!isHan(ch) && !/[？！。，、…]/.test(ch)) continue
+    if (!isHanChar(ch) && !/[？！。，、…]/.test(ch)) continue
 
     const hit = lookupGloss(ch)
     let meaning = hit?.gloss ? firstSense(hit.gloss) : ''
-    if (!meaning && isHan(ch)) {
+    if (!meaning && isHanChar(ch)) {
       meaning = meaningInWordSpan(i, spans)
     }
-    if (!meaning && !isHan(ch)) {
+    if (!meaning && !isHanChar(ch)) {
       meaning = ch === '？' ? 'question mark' : ch === '！' ? 'exclamation mark' : ch === '。' ? 'full stop' : 'comma'
     }
 

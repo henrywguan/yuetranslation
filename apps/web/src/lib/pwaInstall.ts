@@ -14,7 +14,7 @@ function isForcePreview(): boolean {
   return false
 }
 
-export function isDisplayStandalone(): boolean {
+function isDisplayStandalone(): boolean {
   if (typeof window === 'undefined') return false
   if (window.matchMedia('(display-mode: standalone)').matches) return true
   const nav = window.navigator as Navigator & { standalone?: boolean }
@@ -22,7 +22,7 @@ export function isDisplayStandalone(): boolean {
 }
 
 /** iPhone / iPad (incl. iPadOS desktop UA with touch). */
-export function isIosDevice(): boolean {
+function isIosDevice(): boolean {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent || ''
   if (/iPad|iPhone|iPod/.test(ua)) return true

@@ -86,9 +86,7 @@ const CHAR_GLOSS: Record<string, string> = {
   再: 'again',
   都: 'also / all',
   同: 'and / with',
-  同埋: 'and also',
   真: 'really',
-  係咪: 'is it?',
   哋: 'plural (we / they)',
   '？': 'question mark',
   '！': 'exclamation',
@@ -129,11 +127,15 @@ export function glossForChar(char: string): string {
   return lookupLearned(char)
 }
 
-/** Alias for drill gating / sense lookups. */
-export const charSense = glossForChar
+const HAN_RE = /[\u3400-\u9fff\uf900-\ufaff]/
 
 export function isHanChar(ch: string) {
-  return /[\u3400-\u9fff\uf900-\ufaff]/.test(ch)
+  return HAN_RE.test(ch)
+}
+
+/** True when the string contains any Han character. */
+export function hasHan(text: string) {
+  return HAN_RE.test(text)
 }
 
 export { GENERIC_CHAR_GLOSS }

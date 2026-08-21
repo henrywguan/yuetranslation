@@ -10,6 +10,7 @@ import {
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
+import { hasHan } from './canto/han.js'
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -40,12 +41,6 @@ function emptyMeta(notes: string[] = []) {
     rewritten: false,
     notes,
   }
-}
-
-const HAN = /[\u3400-\u9fff\uf900-\ufaff]/
-
-function hasHan(text: string) {
-  return HAN.test(text.trim())
 }
 
 function mergeDefinitions(...parts: Array<string | string[] | undefined | null>): string[] {

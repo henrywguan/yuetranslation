@@ -1,6 +1,5 @@
 import { lookupGloss } from './gloss.js'
-
-const HAN = /[\u3400-\u9fff\uf900-\ufaff]/
+import { isHanChar } from './han.js'
 
 export type AttestationResult = {
   /** 0–1 share of Han characters covered by known CC-Canto/seed tokens. */
@@ -15,7 +14,7 @@ export type AttestationResult = {
  * Used as a reference layer on finals — not shown to users as definitions.
  */
 export function attestAgainstLexicon(text: string): AttestationResult {
-  const chars = Array.from(text.trim()).filter((ch) => HAN.test(ch))
+  const chars = Array.from(text.trim()).filter((ch) => isHanChar(ch))
   if (!chars.length) {
     return { coverage: 0, hanChars: 0, attestedChars: 0, unknownSpans: [] }
   }
@@ -27,7 +26,7 @@ export function attestAgainstLexicon(text: string): AttestationResult {
   let fi = 0
   while (fi < full.length) {
     const ch = full[fi]
-    if (!HAN.test(ch)) {
+    if (!isHanChar(ch)) {
       fi++
       continue
     }
@@ -35,7 +34,7 @@ export function attestAgainstLexicon(text: string): AttestationResult {
     const max = Math.min(4, full.length - fi)
     for (let L = max; L >= 1; L--) {
       const slice = full.slice(fi, fi + L)
-      if (!slice.every((c) => HAN.test(c))) continue
+      if (!slice.every((c) => isHanChar(c))) continue
       const surface = slice.join('')
       if (lookupGloss(surface)) {
         matchedLen = L
