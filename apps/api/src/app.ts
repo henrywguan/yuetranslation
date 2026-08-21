@@ -158,11 +158,11 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
   if (!ent.allowed.tts) {
     res.status(402).json({
       message:
-        ent.reason === 'login_required'
-          ? 'Log in to play voice.'
-          : ent.reason === 'account_disabled'
-            ? 'This account has been disabled.'
-            : 'Voice playback needs remaining TTS quota.',
+        ent.reason === 'account_disabled'
+          ? 'This account has been disabled.'
+          : ent.reason === 'tts_quota_exhausted' || ent.reason === 'no_tts_quota'
+            ? 'Voice playback needs remaining TTS quota.'
+            : 'Voice playback is not available.',
       entitlement: ent,
     })
     return
@@ -176,6 +176,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
     }
     const azureLang = lang === 'en' || lang === 'en-US' ? 'en' : 'zh-HK'
     const audio = await synthesize(text, azureLang)
+    // Meter signed-in usage for Free (hard cap) and Pro/Max (unlimited).
     if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
     }

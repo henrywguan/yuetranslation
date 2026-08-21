@@ -34,6 +34,19 @@ function formatChars(n: number): string {
   return String(Math.max(0, Math.round(n)))
 }
 
+function voiceCopy(entitlement: {
+  ttsUnlimited?: boolean
+  plan: string
+  usage: { ttsChars: number }
+  remaining: { ttsChars: number }
+}): Bi {
+  const unlimited = Boolean(
+    entitlement.ttsUnlimited || entitlement.plan === 'pro' || entitlement.plan === 'max',
+  )
+  if (unlimited) return ui.charsUsedUnlimited(formatChars(entitlement.usage.ttsChars))
+  return ui.charsLeft(formatChars(entitlement.remaining.ttsChars))
+}
+
 function displayNameFromSession(email: string | undefined, meta: Record<string, unknown> | undefined) {
   const full =
     (typeof meta?.full_name === 'string' && meta.full_name.trim()) ||
@@ -129,7 +142,8 @@ export function PlanChip() {
   const plan = entitlement.plan
   const showSignIn = !entitlement.loggedIn && entitlement.requireLogin
   const paid = plan === 'pro' || plan === 'max'
-  const showVoiceQuota = entitlement.limits.tts_chars > 0
+  const ttsUnlimited = Boolean(entitlement.ttsUnlimited || paid)
+  const showVoiceQuota = entitlement.loggedIn && (ttsUnlimited || entitlement.limits.tts_chars > 0)
 
   if (showSignIn) {
     return (
@@ -215,10 +229,7 @@ export function PlanChip() {
                   <BiText copy={ui.accountVoice} size="sm" />
                 </span>
                 <span className="account-hub-stat-value">
-                  <BiText
-                    copy={ui.charsLeft(formatChars(entitlement.remaining.ttsChars))}
-                    size="sm"
-                  />
+                  <BiText copy={voiceCopy(entitlement)} size="sm" />
                 </span>
               </li>
             ) : null}
@@ -282,9 +293,17 @@ export function PlanChip() {
         <span className={`plan-chip plan-${plan}`}>
           <BiText copy={planLabel(plan)} size="sm" hideJp />
         </span>
-        {entitlement.allowed.live ? (
+        {paid && showVoiceQuota ? (
+          <span className="plan-remain">
+            <BiText copy={voiceCopy(entitlement)} size="sm" hideJp />
+          </span>
+        ) : entitlement.allowed.live ? (
           <span className="plan-remain">
             <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" hideJp />
+          </span>
+        ) : showVoiceQuota ? (
+          <span className="plan-remain">
+            <BiText copy={voiceCopy(entitlement)} size="sm" hideJp />
           </span>
         ) : null}
       </button>

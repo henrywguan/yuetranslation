@@ -87,15 +87,15 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 
 ## Entitlement model / 权益模型
 
-| Plan / 套餐 | Live mic / 实时麦克风 | TTS / auto-speak / 朗读 | Text + Jyutping / 文字 + 粤拼 |
-| --- | --- | --- | --- |
-| Guest (login required) / 访客（需登录） | Blocked / 不可用 | Blocked / 不可用 | Allowed / 可用 |
-| Free / 免费 | ~20 min/mo (configurable) / 约每月 20 分钟（可配置） | Off by default / 默认关闭 | Allowed / 可用 |
-| Pro / 专业版 | ~600 min/mo / 约每月 600 分钟 | On / 开启 | Allowed / 可用 |
+| Plan / 套餐 | Live mic / 实时麦克风 | Tap-to-play TTS / 点击朗读 | Auto-speak / 自动朗读 | Text + Jyutping / 文字 + 粤拼 |
+| --- | --- | --- | --- | --- |
+| Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
+| Free / 免费 | ~20 min/mo (configurable) / 约每月 20 分钟（可配置） | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
+| Pro / 专业版 | ~600 min/mo / 约每月 600 分钟 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
 
-Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for auto-speak. Text mode uses `POST /translate` (not gated by live minutes).
+Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Text mode uses `POST /translate` (not gated by live minutes).
 
-运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 自动朗读调用 `POST /tts`。文字模式走 `POST /translate`（不受实时分钟数限制）。
+运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 点击朗读／自动朗读调用 `POST /tts`。文字模式走 `POST /translate`（不受实时分钟数限制）。
 
 Plan resolution: capability `yue_pro` → user meta `yue_plan` → filter `yue_user_plan` → default `free` / `guest`.
 

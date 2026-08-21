@@ -728,9 +728,11 @@ export const useYueStore = create<State>((set, get) => ({
     if (ent && !ent.allowed.tts) {
       set({
         error:
-          ent.reason === 'login_required'
-            ? 'Log in to play voice.'
-            : 'Voice playback needs remaining TTS quota.',
+          ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : ent.reason === 'tts_quota_exhausted' || ent.reason === 'no_tts_quota'
+              ? 'Voice playback needs remaining TTS quota.'
+              : 'Voice playback is not available.',
       })
       return
     }
