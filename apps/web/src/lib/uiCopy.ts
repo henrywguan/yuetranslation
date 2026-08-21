@@ -161,9 +161,9 @@ export const ui = {
     jp: 'zoeng1 JyutTranslate gaa1 dou3 zyu2 waa2 min6',
   },
   iosHomescreenTipBody: {
-    en: 'Install like an app — open faster next time. Takes a few taps in Safari.',
-    zh: '裝成應用——下次開得更快。Safari 撳幾下就得。',
-    jp: 'zong1 sing4 jing3 jung6 — haa6 ci3 hoi1 dak1 gang3 faai3. Safari gam2 gei2 haa5 zau6 dak1.',
+    en: 'Install JyutTranslate to your Home Screen — Open like any other app!',
+    zh: '將 JyutTranslate 裝到主畫面——好似其他應用咁開！',
+    jp: 'zoeng1 JyutTranslate zong1 dou3 zyu2 waa2 min6 — hou2 ci5 kei4 taa1 jing3 jung6 gam2 hoi1!',
   },
   iosHomescreenShowSteps: {
     en: 'How',
@@ -204,6 +204,11 @@ export const ui = {
     en: 'Install on iPhone',
     zh: '裝到 iPhone',
     jp: 'zong1 dou3 iPhone',
+  },
+  iosHomescreenFooterHint: {
+    en: 'Safari · like an app',
+    zh: 'Safari · 裝成應用',
+    jp: 'Safari · zong1 sing4 jing3 jung6',
   },
   charsLeft: (formatted: string): Bi => ({
     en: `${formatted} chars`,
