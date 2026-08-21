@@ -7,8 +7,25 @@ export const ui = {
 
   modeSolo: { en: 'Solo', zh: '獨白', jp: 'duk6 baak6' },
   modeFace: { en: 'Conversation Mode', zh: '對話模式', jp: 'deoi3 waa6 mou4 sik1' },
+  /** Short label for landing modes stage tabs. */
+  modeFaceShort: { en: 'Conversation', zh: '對話', jp: 'deoi3 waa6' },
   modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
+  modeSoloLine: {
+    en: 'Hold to speak. Your line lands in both languages.',
+    zh: '按住說話，雙語同時落地。',
+    jp: 'on3 zyu6 gong2 waa6, soeng1 jyu5 tung4 si4 lok6 dei6.',
+  },
+  modeFaceLine: {
+    en: 'One phone. Two faces of language — talking to each other.',
+    zh: '一部手機，兩種語言面對面交談。',
+    jp: 'jat1 bou6 sau2 gei1, loeng5 zung2 jyu5 jin4 min6 deoi3 min6 gaau1 taam4.',
+  },
+  modeTextLine: {
+    en: 'Type, pause — translation settles in.',
+    zh: '輸入、停頓，譯文自然落下。',
+    jp: 'jyu5 jap6, ting4 dyun6, jik6 man4 zi6 jin4 lok6 haa6.',
+  },
 
   holdOrTapToSpeak: {
     en: 'Hold or tap to speak',
