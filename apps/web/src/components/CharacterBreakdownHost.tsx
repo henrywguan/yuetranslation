@@ -17,11 +17,17 @@ import type { DetailLayer } from '../lib/detailTypes'
 import { inkEase } from '../lib/motion'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { BiText } from './BiText'
+import { SpeakButton } from './SpeakButton'
 import { ui } from '../lib/uiCopy'
+import type { Lang } from '../lib/types'
 import './DetailPanel.css'
 
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
+
+function speakLangFor(text: string): Lang {
+  return /[一-龥]/.test(text) ? 'yue' : 'en'
+}
 
 function defaultGeom(): PanelBox {
   if (typeof window === 'undefined') return { x: 48, y: 72, w: 360, h: 520 }
@@ -208,9 +214,16 @@ export function CharacterBreakdownHost() {
           <p className="detail-panel-kicker">
             {stack.length > 1 ? `Details · ${stack.length} deep` : translationText ? 'Details' : 'Character breakdown'}
           </p>
-          <h2 id={titleId} className="detail-panel-title" lang={top.kind === 'char' || /[一-龥]/.test(topLabel) ? 'zh-HK' : 'en'}>
-            {topLabel}
-          </h2>
+          <div className="detail-panel-title-row">
+            <h2 id={titleId} className="detail-panel-title" lang={top.kind === 'char' || /[一-龥]/.test(topLabel) ? 'zh-HK' : 'en'}>
+              {topLabel}
+            </h2>
+            <SpeakButton
+              text={topLabel}
+              lang={speakLangFor(topLabel)}
+              className="detail-panel-speak"
+            />
+          </div>
           {top.kind === 'char' && top.jp ? (
             <p className="detail-panel-jp" lang="en">
               <JyutRuby
@@ -308,8 +321,9 @@ export function CharacterBreakdownHost() {
                 {rows.map((row, i) => {
                   const meaning = pickCharGloss(row.meaning)
                   const canDrill = Boolean(meaning || charSense(row.char) || row.jyutping)
+                  const canSpeak = /[一-龥]/.test(row.char)
                   return (
-                    <li key={`${row.char}-${i}`}>
+                    <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
                         type="button"
                         className={`detail-panel-row${canDrill ? ' is-drillable' : ''}`}
@@ -334,6 +348,13 @@ export function CharacterBreakdownHost() {
                         </span>
                         {canDrill ? <span className="detail-panel-chevron">›</span> : null}
                       </button>
+                      {canSpeak ? (
+                        <SpeakButton
+                          text={row.char}
+                          lang="yue"
+                          className="detail-panel-row-speak"
+                        />
+                      ) : null}
                     </li>
                   )
                 })}

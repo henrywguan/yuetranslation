@@ -15,9 +15,10 @@ export function SpeakButton({
   const trimmed = text.trim()
   const speakManual = useYueStore((s) => s.speakManual)
   const status = useYueStore((s) => s.status)
+  const speakingText = useYueStore((s) => s.speakingText)
   const entitlement = useYueStore((s) => s.entitlement)
   const canTts = !entitlement || entitlement.allowed.tts
-  const speaking = status === 'speaking'
+  const speaking = status === 'speaking' && speakingText === trimmed
 
   if (!trimmed) return null
 
