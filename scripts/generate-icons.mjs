@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Regenerates PWA PNG icons to match public/favicon.svg:
- * glow-jade radial harbor background + centered 粵.
+ * Regenerates PWA / Home Screen PNG icons to match public/favicon.svg:
+ * glow-jade radial harbor background + centered 粵
+ * (pwa-192.png, pwa-512.png, apple-touch-icon.png).
  *
  * Prefers Python + Pillow (scripts/generate-icons.py). If those aren't
  * available (e.g. Vercel build images), keep the committed PNGs and exit 0
@@ -16,13 +17,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const outDir = path.resolve(__dirname, '../apps/web/public')
 const pyPath = path.join(__dirname, 'generate-icons.py')
 
+const ICON_FILES = ['pwa-192.png', 'pwa-512.png', 'apple-touch-icon.png']
+
 fs.mkdirSync(outDir, { recursive: true })
 
 function hasCommittedIcons() {
-  return (
-    fs.existsSync(path.join(outDir, 'pwa-192.png')) &&
-    fs.existsSync(path.join(outDir, 'pwa-512.png'))
-  )
+  return ICON_FILES.every((name) => fs.existsSync(path.join(outDir, name)))
 }
 
 try {
@@ -32,7 +32,7 @@ try {
 } catch (err) {
   if (hasCommittedIcons()) {
     console.warn(
-      'icons: Python/Pillow unavailable — using committed pwa-192.png / pwa-512.png',
+      'icons: Python/Pillow unavailable — using committed pwa-192.png / pwa-512.png / apple-touch-icon.png',
     )
     console.log('icons ok (committed)')
     process.exit(0)

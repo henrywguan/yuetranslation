@@ -311,6 +311,38 @@
   background: color-mix(in srgb, var(--jade) 38%, transparent);
 }
 
+/* Step 3 — Home Screen icon preview (matches apple-touch / favicon) */
+.ios-hs-home-preview {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 10px 14px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--harbor-mid, var(--harbor)) 88%, transparent);
+}
+
+.ios-hs-home-preview-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 11px;
+  display: block;
+  object-fit: cover;
+  box-shadow: 0 4px 12px color-mix(in srgb, #000 28%, transparent);
+}
+
+.ios-hs-home-preview-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  max-width: 5.5rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
 /* Landing footer — compact but noticeable install chip */
 .ios-hs-footer-card {
   position: relative;
