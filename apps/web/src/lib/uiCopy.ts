@@ -150,6 +150,56 @@ export const ui = {
   accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },
   accountLive: { en: 'Live time left', zh: '即時剩餘', jp: 'zik1 si4 ceoi4 jyu4' },
   accountVoice: { en: 'Voice left', zh: '語音剩餘', jp: 'jyu5 jam1 ceoi4 jyu4' },
+  addToHomeScreen: {
+    en: 'Add to Home Screen',
+    zh: '加到主畫面',
+    jp: 'gaa1 dou3 zyu2 waa2 min6',
+  },
+  iosHomescreenTipTitle: {
+    en: 'Keep JyutTranslate on your Home Screen',
+    zh: '將 JyutTranslate 放喺主畫面',
+    jp: 'zoeng1 JyutTranslate fong3 hai2 zyu2 waa2 min6',
+  },
+  iosHomescreenTipBody: {
+    en: 'Install like an app — open faster next time. Takes a few taps in Safari.',
+    zh: '裝成應用——下次開得更快。Safari 撳幾下就得。',
+    jp: 'zong1 sing4 jing3 jung6 — haa6 ci3 hoi1 dak1 gang3 faai3. Safari gam2 gei2 haa5 zau6 dak1.',
+  },
+  iosHomescreenShowSteps: {
+    en: 'How',
+    zh: '點樣',
+    jp: 'dim2 joeng2',
+  },
+  iosHomescreenGotIt: {
+    en: 'Got it',
+    zh: '知道喇',
+    jp: 'zi1 dou3 laa3',
+  },
+  iosHomescreenDismiss: {
+    en: 'Dismiss Home Screen tip',
+    zh: '關閉主畫面提示',
+    jp: 'gwaan1 bai3 zyu2 waa2 min6 tai4 si6',
+  },
+  iosHomescreenStep1: {
+    en: 'Tap Share in the Safari toolbar (box with an arrow up).',
+    zh: '喺 Safari 工具列撳「分享」（方框向上箭嘴）。',
+    jp: 'hai2 Safari gung1 geoi6 lit6 gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
+  },
+  iosHomescreenStep2: {
+    en: 'Scroll and choose Add to Home Screen.',
+    zh: '向下撳，揀「加到主畫面」。',
+    jp: 'hoeng3 haa6 gam2, gaan2 “gaa1 dou3 zyu2 waa2 min6”.',
+  },
+  iosHomescreenStep3: {
+    en: 'Confirm Add — JyutTranslate appears on your Home Screen.',
+    zh: '確認「加入」——JyutTranslate 就會出現喺主畫面。',
+    jp: 'kok3 jing6 “gaa1 jap6” — JyutTranslate zau6 wui5 ceot1 jin6 hai2 zyu2 waa2 min6.',
+  },
+  iosHomescreenGuideTitle: {
+    en: 'Install on iPhone',
+    zh: '裝到 iPhone',
+    jp: 'zong1 dou3 iPhone',
+  },
   charsLeft: (formatted: string): Bi => ({
     en: `${formatted} chars`,
     zh: `${formatted} 字`,

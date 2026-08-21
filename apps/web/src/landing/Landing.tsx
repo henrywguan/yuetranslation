@@ -16,6 +16,7 @@ import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
 import { FooterLangPair } from './FooterLangPair'
+import { IosHomescreenFooterLink } from '../components/IosHomescreenGuide'
 import { LANDING_PLANS } from './plans'
 import { inkEase } from '../lib/motion'
 import './landing.css'
@@ -226,6 +227,7 @@ export function Landing() {
         <div className="ln-brand">
           <JyutLogo className="ln-brand-logo" />
         </div>
+        <IosHomescreenFooterLink />
         <FooterLangPair />
       </footer>
     </div>

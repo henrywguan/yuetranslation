@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
+import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade } from '../lib/billing'
@@ -48,6 +49,7 @@ export function PlanChip() {
   const entitlement = useYueStore((s) => s.entitlement)
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
   const [open, setOpen] = useState(false)
+  const [homescreenOpen, setHomescreenOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -245,6 +247,12 @@ export function PlanChip() {
               <BiText copy={ui.manageBilling} size="sm" />
             </button>
           )}
+          <IosHomescreenHubButton
+            onOpen={() => {
+              setOpen(false)
+              setHomescreenOpen(true)
+            }}
+          />
           {entitlement.loggedIn ? (
             <button
               type="button"
@@ -313,6 +321,8 @@ export function PlanChip() {
         </AnimatePresence>,
         document.body,
       )}
+
+      <IosHomescreenGuideDialog open={homescreenOpen} onClose={() => setHomescreenOpen(false)} />
     </div>
   )
 }
