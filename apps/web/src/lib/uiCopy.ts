@@ -293,9 +293,14 @@ export const ui = {
 
   featJpTitle: { en: 'Jyutping built in', zh: '內建粵拼', jp: 'noi6 gin3 jyut6 ping3' },
   featJpDesc: {
-    en: 'Romanization under every Cantonese line so you can say it, not just read it.',
-    zh: '每句粵語下面都有粵拼，唔單止睇得明，仲講得出。',
-    jp: 'mui5 geoi3 jyut6 jyu5 haa6 min6 dou1 jau5 jyut6 ping3, m4 daan1 zi2 tai2 dak1 ming4, zung6 gong2 dak1 ceot1.',
+    en: 'Romanization and chao tones under every Cantonese line, so you can learn as you speak.',
+    zh: '每句粵語下面都有粵拼同聲調，一邊講一邊學。',
+    jp: 'mui5 geoi3 jyut6 jyu5 haa6 min6 dou1 jau5 jyut6 ping3 tung4 sing1 diu6, jat1 bin1 gong2 jat1 bin1 hok6.',
+  },
+  featJpAside: {
+    en: '(And for my ABC’s)',
+    zh: '（同埋我啲 ABC）',
+    jp: '(tung4 maai4 ngo5 di1 ABC)',
   },
   featHkTitle: { en: 'Hong Kong Cantonese', zh: '香港粵語', jp: 'hoeng1 gong2 jyut6 jyu5' },
   featHkDesc: {

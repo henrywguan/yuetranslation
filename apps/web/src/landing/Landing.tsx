@@ -30,7 +30,7 @@ const MODES = [
 ]
 
 const FEATURES = [
-  { title: ui.featJpTitle, desc: ui.featJpDesc },
+  { title: ui.featJpTitle, desc: ui.featJpDesc, aside: ui.featJpAside },
   { title: ui.featHkTitle, desc: ui.featHkDesc },
   { title: ui.featFastTitle, desc: ui.featFastDesc },
   { title: ui.featHostTitle, desc: ui.featHostDesc },
@@ -130,29 +130,34 @@ export function Landing() {
                 <BiText copy={f.title} size="md" />
               </h4>
               <BiText copy={f.desc} size="sm" as="p" />
+              {'aside' in f && f.aside ? (
+                <BiText className="ln-feature-aside" copy={f.aside} size="sm" as="p" hideJp />
+              ) : null}
             </div>
           ))}
         </Reveal>
       </section>
 
       <section className="ln-demo-band" id="demo">
-        <div className="ln-demo-band-wash" aria-hidden="true" />
-        <div className="ln-demo-band-inner">
-          <Reveal className="ln-demo-copy">
-            <span className="ln-kicker">
-              <BiText copy={ui.demoKicker} size="sm" />
-            </span>
-            <h2 className="ln-h2">
-              <BiText copy={ui.demoTitle} size="lg" />
-            </h2>
-            <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
-            <MagneticButton className="btn-primary" onClick={() => openApp()}>
-              <BiText copy={ui.openFullApp} size="sm" />
-            </MagneticButton>
-          </Reveal>
-          <Reveal className="ln-demo-stage" y={36}>
-            <LiveDemo />
-          </Reveal>
+        <div className="ln-demo-band-frame">
+          <div className="ln-demo-band-wash" aria-hidden="true" />
+          <div className="ln-demo-band-inner">
+            <Reveal className="ln-demo-copy">
+              <span className="ln-kicker">
+                <BiText copy={ui.demoKicker} size="sm" />
+              </span>
+              <h2 className="ln-h2">
+                <BiText copy={ui.demoTitle} size="lg" />
+              </h2>
+              <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
+              <MagneticButton className="btn-primary" onClick={() => openApp()}>
+                <BiText copy={ui.openFullApp} size="sm" />
+              </MagneticButton>
+            </Reveal>
+            <Reveal className="ln-demo-stage" y={36}>
+              <LiveDemo />
+            </Reveal>
+          </div>
         </div>
       </section>
 

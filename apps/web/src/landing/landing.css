@@ -522,6 +522,21 @@
   font-size: 0.98rem;
 }
 
+.ln-feature-aside {
+  margin: 8px 0 0 !important;
+  font-size: 0.78rem !important;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
+  opacity: 0.85;
+}
+
+.ln-feature-aside .bi-en,
+.ln-feature-aside .bi-zh {
+  font-size: inherit;
+  font-weight: 450;
+  color: inherit;
+}
+
 /* ---------- Live demo — mid-page stage ---------- */
 .ln-demo-band {
   position: relative;
@@ -532,9 +547,16 @@
   overflow: hidden;
 }
 
+.ln-demo-band-frame {
+  position: relative;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: clamp(40px, 5.5vw, 64px) clamp(32px, 4.5vw, 56px);
+}
+
 .ln-demo-band-wash {
   position: absolute;
-  inset: 8% 4% 10%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   border-radius: 36px;
@@ -561,7 +583,8 @@
   flex-direction: column;
   align-items: center;
   gap: clamp(28px, 4vw, 44px);
-  max-width: 820px;
+  width: 100%;
+  max-width: 720px;
   margin: 0 auto;
   text-align: center;
 }
@@ -1605,8 +1628,11 @@
     padding: clamp(56px, 12vw, 88px) 18px;
   }
 
+  .ln-demo-band-frame {
+    padding: 28px 18px 32px;
+  }
+
   .ln-demo-band-wash {
-    inset: 4% 2% 6%;
     border-radius: 28px;
   }
 
