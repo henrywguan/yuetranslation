@@ -125,6 +125,10 @@
 }
 
 .plan-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -871,12 +875,16 @@
 
 .history-open-btn {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0;
   position: relative;
   z-index: 2;
-  padding: 8px 12px;
+  box-sizing: border-box;
+  min-width: 4.6rem;
+  min-height: 4.6rem;
+  padding: 10px 12px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--surface) 88%, var(--jade) 12%);
@@ -885,6 +893,8 @@
   backdrop-filter: blur(12px);
   cursor: pointer;
   font: inherit;
+  text-align: center;
+  line-height: 1.15;
 }
 
 .history-open-btn:hover,
@@ -893,7 +903,26 @@
   outline: none;
 }
 
+.history-open-btn .bi {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.12rem;
+  max-width: 100%;
+}
+
+.history-open-btn .bi-en,
+.history-open-btn .bi-zh,
+.history-open-btn .bi-zh-wrap {
+  text-align: center;
+  width: 100%;
+  justify-content: center;
+}
+
 .history-open-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
   min-width: 1.4em;
   padding: 2px 7px;
   border-radius: 999px;
@@ -901,6 +930,7 @@
   font-weight: 700;
   background: color-mix(in srgb, var(--jade) 28%, transparent);
   color: var(--ink-bright, var(--ink));
+  line-height: 1.2;
 }
 
 .history-sheet-backdrop {
@@ -2484,12 +2514,30 @@
   text-align: center;
 }
 
-.plan-chip .bi,
+.plan-chip .bi {
+  text-transform: none;
+  letter-spacing: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.05rem;
+  width: 100%;
+}
+
 .plan-remain .bi {
   text-transform: none;
   letter-spacing: 0;
   align-items: flex-end;
+  text-align: end;
   gap: 0.05rem;
+}
+
+.plan-chip .bi-en,
+.plan-chip .bi-zh,
+.plan-chip .bi-zh-wrap {
+  text-align: center;
+  width: 100%;
+  justify-content: center;
 }
 
 .plan-chip .bi-en {
