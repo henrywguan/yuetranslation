@@ -156,9 +156,9 @@ export const ui = {
     jp: 'gaa1 dou3 zyu2 waa2 min6',
   },
   iosHomescreenTipTitle: {
-    en: 'Keep JyutTranslate on your Home Screen',
-    zh: '將 JyutTranslate 放喺主畫面',
-    jp: 'zoeng1 JyutTranslate fong3 hai2 zyu2 waa2 min6',
+    en: 'Add JyutTranslate to your Home Screen',
+    zh: '將 JyutTranslate 加到主畫面',
+    jp: 'zoeng1 JyutTranslate gaa1 dou3 zyu2 waa2 min6',
   },
   iosHomescreenTipBody: {
     en: 'Install like an app — open faster next time. Takes a few taps in Safari.',
@@ -186,9 +186,14 @@ export const ui = {
     jp: 'hai2 Safari gung1 geoi6 lit6 gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
   },
   iosHomescreenStep2: {
-    en: 'Scroll and choose Add to Home Screen.',
-    zh: '向下撳，揀「加到主畫面」。',
-    jp: 'hoeng3 haa6 gam2, gaan2 “gaa1 dou3 zyu2 waa2 min6”.',
+    en: 'Select Add to Home Screen.',
+    zh: '揀「加到主畫面」。',
+    jp: 'gaan2 “gaa1 dou3 zyu2 waa2 min6”.',
+  },
+  iosHomescreenSheetHint: {
+    en: 'Look for this row in the share sheet',
+    zh: '喺分享清單搵呢一行',
+    jp: 'hai2 fan1 hoeng2 cing1 daan1 wan2 ni1 jat1 hong4',
   },
   iosHomescreenStep3: {
     en: 'Confirm Add — JyutTranslate appears on your Home Screen.',
