@@ -2198,23 +2198,27 @@
   word-break: break-word;
 }
 
-/* Focused jade result: centered block, left-aligned text inset from the edge */
-.text-result .result-with-def {
+/* Focused jade result (Text + Solo): centered block, left-aligned text inset from the edge */
+.text-result .result-with-def,
+.solo-translation .result-with-def {
   justify-content: center;
 }
 
-.text-result .result-with-def-main {
+.text-result .result-with-def-main,
+.solo-translation .result-with-def-main {
   flex: 0 1 auto;
   width: auto;
   max-width: 100%;
 }
 
-.text-result .result-with-def-line {
+.text-result .result-with-def-line,
+.solo-translation .result-with-def-line {
   width: fit-content;
   max-width: 100%;
 }
 
-.text-result .cantonese-activate {
+.text-result .cantonese-activate,
+.solo-translation .cantonese-activate {
   width: fit-content;
   max-width: 100%;
   box-sizing: border-box;
