@@ -146,8 +146,9 @@ let holdSideLock: Lang | null = null
 let tapSilenceTimer: ReturnType<typeof setTimeout> | null = null
 let tapMaxTimer: ReturnType<typeof setTimeout> | null = null
 
-/** After a finalized utterance in tap mode, wait this long with no new speech → auto-stop. */
-const TAP_SENTENCE_END_MS = 650
+/** After a finalized utterance in tap mode, wait this long with no new speech → auto-stop.
+ *  Keep this generous: short pauses while thinking / mid-phrase were cutting people off at 650ms. */
+const TAP_SENTENCE_END_MS = 2000
 /** Safety cap so tap mode cannot run forever. */
 const TAP_MAX_MS = 45000
 /** If STT produces nothing, stop listening and surface a mic hint. */
