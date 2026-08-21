@@ -3,6 +3,7 @@ import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
 import { openAuthScreen } from '../lib/auth'
+import { unlockTtsPlayback } from '../lib/tts'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
@@ -101,6 +102,8 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     activePointer.current = e.pointerId
     downAt.current = performance.now()
     e.currentTarget.setPointerCapture(e.pointerId)
+    // Unlock TTS in this gesture turn so Solo auto-speak can play after async translate (iOS).
+    unlockTtsPlayback()
     // startHold must own getUserMedia + recognition.start() in this gesture turn.
     // Do not unlock+stop a competing stream here — that races and leaves STT silent.
     void startHold(side)
@@ -141,6 +144,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     }
     stopTapRef.current = false
     keyDownAt.current = performance.now()
+    unlockTtsPlayback()
     void startHold(side)
   }
 

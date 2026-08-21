@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
-import { speakText, stopSpeaking, isTtsPlaying } from './tts'
+import { speakText, stopSpeaking, isTtsPlaying, unlockTtsPlayback } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
@@ -915,6 +915,17 @@ export const useYueStore = create<State>((set, get) => ({
       return
     }
 
+    // Sync unlock before any await — iOS needs a gesture-time play() so later
+    // auto-speak (after STT + translate) can use the same HTMLAudioElement.
+    unlockTtsPlayback()
+    // #region agent log
+    agentLog('E', 'store.ts:startHold', 'tts unlock called (pre-await)', {
+      side: side ?? null,
+      autoSpeak: get().autoSpeak,
+      entAuto: Boolean(get().entitlement?.allowed.autoSpeak),
+    })
+    // #endregion
+
     const gen = ++holdGen
     holding = true
     tapSticky = false
@@ -1339,6 +1350,8 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     __yueLearnedGloss?: unknown
     /** Offline Solo auto-speak path probe (sets __yueDebugSkipTts — no Azure TTS). */
     __yueProbeAutoSpeak?: () => Promise<unknown>
+    /** Offline TTS unlock probe — no Azure/DeepSeek. */
+    __yueProbeTtsUnlock?: () => Promise<unknown>
     __yueDebugSkipTts?: boolean
     __agentDebugLogs?: unknown[]
   }
@@ -1417,6 +1430,28 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     const logs = w.__agentDebugLogs || []
     agentLog('F', 'probe', 'probe complete', { logCount: logs.length })
     return logs
+  }
+
+  w.__yueProbeTtsUnlock = async () => {
+    w.__agentDebugLogs = []
+    const { unlockTtsPlayback, isTtsPlaybackUnlocked, stopSpeaking } = await import('./tts')
+    stopSpeaking()
+    agentLog('E', 'probe', 'tts unlock before', {
+      unlocked: isTtsPlaybackUnlocked(),
+    })
+    unlockTtsPlayback()
+    // Allow silent play() promise to settle.
+    await new Promise((r) => setTimeout(r, 50))
+    const after = isTtsPlaybackUnlocked()
+    agentLog('E', 'probe', 'tts unlock after', { unlocked: after })
+    // Simulate startHold calling unlock pre-await (idempotent warm path).
+    unlockTtsPlayback()
+    await new Promise((r) => setTimeout(r, 20))
+    agentLog('E', 'probe', 'tts unlock complete', {
+      unlocked: isTtsPlaybackUnlocked(),
+      ok: isTtsPlaybackUnlocked() === true,
+    })
+    return w.__agentDebugLogs || []
   }
   // #endregion
   import('./learnedGloss').then((m) => {
