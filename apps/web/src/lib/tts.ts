@@ -55,9 +55,66 @@ export async function speakText(text: string, lang: Lang) {
   stopSpeaking()
   const g = gen
   playing = true
+  // #region agent log
+  try {
+    const w = window as unknown as { __agentDebugLogs?: unknown[] }
+    const payload = {
+      hypothesisId: 'E',
+      location: 'tts.ts:speakText',
+      message: 'speakText start',
+      data: { lang, textLen: trimmed.length },
+      timestamp: Date.now(),
+    }
+    w.__agentDebugLogs = w.__agentDebugLogs || []
+    w.__agentDebugLogs.push(payload)
+    fetch('http://127.0.0.1:7242/ingest/solo-autospeak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {})
+  } catch {
+    /* ignore */
+  }
+  // #endregion
   const blob = await fetchTtsAudio(trimmed, lang)
-  if (g !== gen) return
+  if (g !== gen) {
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7242/ingest/solo-autospeak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hypothesisId: 'E',
+          location: 'tts.ts:speakText',
+          message: 'speakText aborted (gen mismatch)',
+          data: { lang },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {})
+    } catch {
+      /* ignore */
+    }
+    // #endregion
+    return
+  }
   if (blob && blob.size > 0) {
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7242/ingest/solo-autospeak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hypothesisId: 'E',
+          location: 'tts.ts:speakText',
+          message: 'speakText azure blob ok',
+          data: { lang, size: blob.size },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {})
+    } catch {
+      /* ignore */
+    }
+    // #endregion
     const objectUrl = URL.createObjectURL(blob)
     url = objectUrl
     const el = new Audio(objectUrl)
@@ -78,5 +135,22 @@ export async function speakText(text: string, lang: Lang) {
     })
     return
   }
+  // #region agent log
+  try {
+    fetch('http://127.0.0.1:7242/ingest/solo-autospeak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hypothesisId: 'E',
+        location: 'tts.ts:speakText',
+        message: 'speakText fallback browserSpeak',
+        data: { lang, textLen: trimmed.length, blobNull: !blob },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {})
+  } catch {
+    /* ignore */
+  }
+  // #endregion
   await browserSpeak(trimmed, lang, g)
 }
