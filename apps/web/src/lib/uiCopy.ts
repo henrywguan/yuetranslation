@@ -91,9 +91,9 @@ export const ui = {
   typeCantonese: { en: 'Type Cantonese…', zh: '輸入粵語…', jp: 'syu1 jap6 jyut6 jyu5…' },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
   autoTranslateHint: {
-    en: 'Translation appears as you type',
-    zh: '打字就會自動翻譯',
-    jp: 'daa2 zi6 zau6 wui5 zi6 dung6 faan1 jik6',
+    en: 'Pauses 2 seconds after you stop typing — or press Enter',
+    zh: '停打兩秒就翻譯——或者撳 Enter',
+    jp: 'ting4 daa2 loeng5 miu5 zau6 faan1 jik6 — waak6 ze2 gam2 Enter',
   },
   result: { en: 'Result', zh: '結果', jp: 'git3 gwo2' },
   definition: { en: 'Definition', zh: '釋義', jp: 'sik1 ji6' },
