@@ -6,7 +6,6 @@ import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
-import { DemoFluidGrid } from './DemoFluidGrid'
 import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
@@ -124,42 +123,41 @@ export function Landing() {
           ))}
         </Reveal>
 
-        <Reveal className="ln-feature-grid" stagger={0.08} y={24}>
+        <Reveal className="ln-feature-strip" stagger={0.1} y={22}>
           {FEATURES.map((f) => (
-            <div className="ln-feature" key={f.title.en}>
-              <span className="ln-feature-dot" aria-hidden="true" />
-              <div>
-                <h4>
-                  <BiText copy={f.title} size="md" />
-                </h4>
-                <BiText copy={f.desc} size="sm" as="p" />
-              </div>
+            <div className="ln-feature-row" key={f.title.en}>
+              <h4>
+                <BiText copy={f.title} size="md" />
+              </h4>
+              <BiText copy={f.desc} size="sm" as="p" />
             </div>
           ))}
         </Reveal>
       </section>
 
-      <section className="ln-section ln-demo" id="demo">
-        <DemoFluidGrid />
-        <Reveal className="ln-demo-copy">
-          <span className="ln-kicker">
-            <BiText copy={ui.demoKicker} size="sm" />
-          </span>
-          <h2 className="ln-h2">
-            <BiText copy={ui.demoTitle} size="lg" />
-          </h2>
-          <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
-          <MagneticButton className="btn-primary" onClick={() => openApp()}>
-            <BiText copy={ui.openFullApp} size="sm" />
-          </MagneticButton>
-        </Reveal>
-        <Reveal className="ln-demo-stage" y={40}>
-          <LiveDemo />
-        </Reveal>
+      <section className="ln-demo-band" id="demo">
+        <div className="ln-demo-band-wash" aria-hidden="true" />
+        <div className="ln-demo-band-inner">
+          <Reveal className="ln-demo-copy">
+            <span className="ln-kicker">
+              <BiText copy={ui.demoKicker} size="sm" />
+            </span>
+            <h2 className="ln-h2">
+              <BiText copy={ui.demoTitle} size="lg" />
+            </h2>
+            <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
+            <MagneticButton className="btn-primary" onClick={() => openApp()}>
+              <BiText copy={ui.openFullApp} size="sm" />
+            </MagneticButton>
+          </Reveal>
+          <Reveal className="ln-demo-stage" y={36}>
+            <LiveDemo />
+          </Reveal>
+        </div>
       </section>
 
-      <section className="ln-section" id="pricing">
-        <Reveal className="ln-section-head">
+      <section className="ln-section ln-pricing" id="pricing">
+        <Reveal className="ln-section-head ln-section-head--airy">
           <span className="ln-kicker">
             <BiText copy={ui.pricingKicker} size="sm" />
           </span>
