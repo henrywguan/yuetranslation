@@ -484,3 +484,12 @@
     inset 0 1px 0 color-mix(in srgb, #fff 9%, transparent),
     0 0 0 2px color-mix(in srgb, var(--jade) 40%, transparent);
 }
+
+/* Account hub — full-width chip matching the action column */
+.ios-hs-footer-card--hub {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: 42px;
+  justify-content: center;
+}
