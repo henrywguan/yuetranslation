@@ -6,6 +6,7 @@ import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
+import { ModesStage } from './ModesStage'
 import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
 import { openApp, openPricing } from '../lib/siteLinks'
@@ -22,12 +23,6 @@ import './landing.css'
 const HeroObject = lazy(() =>
   import('./HeroObject').then((m) => ({ default: m.HeroObject })),
 )
-
-const MODES = [
-  { title: ui.modeSolo, desc: ui.soloDesc },
-  { title: ui.modeFace, desc: ui.faceDesc },
-  { title: ui.modeText, desc: ui.textDesc },
-]
 
 const FEATURES = [
   { title: ui.featJpTitle, desc: ui.featJpDesc, aside: ui.featJpAside },
@@ -112,15 +107,8 @@ export function Landing() {
           </h2>
         </Reveal>
 
-        <Reveal className="ln-mode-grid" stagger={0.12} y={34}>
-          {MODES.map((m) => (
-            <article className="ln-mode-card" key={m.title.en}>
-              <h3>
-                <BiText copy={m.title} size="md" />
-              </h3>
-              <BiText copy={m.desc} size="sm" as="p" />
-            </article>
-          ))}
+        <Reveal className="ln-modes-stage-wrap" y={28}>
+          <ModesStage />
         </Reveal>
 
         <Reveal className="ln-feature-strip" stagger={0.1} y={22}>
