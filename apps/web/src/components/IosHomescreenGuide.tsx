@@ -272,7 +272,36 @@ export function IosHomescreenTip() {
   )
 }
 
-/** Quiet button that opens the guide when iOS Home Screen install is relevant. */
+/** Shared install chip — homepage footer + account hub. */
+function IosHomescreenInstallChip({
+  onClick,
+  className,
+}: {
+  onClick: () => void
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      className={['ios-hs-footer-card', className].filter(Boolean).join(' ')}
+      onClick={onClick}
+      aria-label={biPlain(ui.addToHomeScreen)}
+    >
+      <span className="ios-hs-footer-card-glow" aria-hidden="true" />
+      <span className="ios-hs-footer-card-icon" aria-hidden="true">
+        <IosShareGlyph />
+      </span>
+      <span className="ios-hs-footer-card-copy">
+        <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
+      </span>
+      <span className="ios-hs-footer-card-chevron" aria-hidden="true">
+        ›
+      </span>
+    </button>
+  )
+}
+
+/** Account hub — same chip as the landing footer. */
 export function IosHomescreenHubButton({ onOpen }: { onOpen: () => void }) {
   const [show, setShow] = useState(false)
 
@@ -282,11 +311,7 @@ export function IosHomescreenHubButton({ onOpen }: { onOpen: () => void }) {
 
   if (!show) return null
 
-  return (
-    <button type="button" className="account-hub-btn account-hub-btn--ghost" onClick={onOpen}>
-      <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
-    </button>
-  )
+  return <IosHomescreenInstallChip className="ios-hs-footer-card--hub" onClick={onOpen} />
 }
 
 /**
@@ -305,23 +330,7 @@ export function IosHomescreenFooterLink() {
 
   return (
     <>
-      <button
-        type="button"
-        className="ios-hs-footer-card"
-        onClick={() => setOpen(true)}
-        aria-label={biPlain(ui.addToHomeScreen)}
-      >
-        <span className="ios-hs-footer-card-glow" aria-hidden="true" />
-        <span className="ios-hs-footer-card-icon" aria-hidden="true">
-          <IosShareGlyph />
-        </span>
-        <span className="ios-hs-footer-card-copy">
-          <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
-        </span>
-        <span className="ios-hs-footer-card-chevron" aria-hidden="true">
-          ›
-        </span>
-      </button>
+      <IosHomescreenInstallChip onClick={() => setOpen(true)} />
       <IosHomescreenGuideDialog open={open} onClose={() => setOpen(false)} />
     </>
   )
