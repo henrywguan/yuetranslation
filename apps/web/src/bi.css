@@ -442,7 +442,7 @@ button.spoken-line-text--action:focus-visible {
   place-items: center;
   width: 2rem;
   height: 2rem;
-  margin-top: 0.12rem;
+  margin: 0;
   padding: 0;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
