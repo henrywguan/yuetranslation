@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render pwa-192.png / pwa-512.png: glow-jade radial + centered 粵."""
+"""Render pwa-192.png / pwa-512.png / apple-touch-icon.png: glow-jade radial + centered 粵."""
 
 from __future__ import annotations
 
@@ -115,9 +115,15 @@ def render(size: int) -> Image.Image:
 def main() -> None:
     out_dir = Path(sys.argv[1] if len(sys.argv) > 1 else "apps/web/public")
     out_dir.mkdir(parents=True, exist_ok=True)
-    for size in (192, 512):
+    # PWA manifest icons + iOS Home Screen (Safari uses apple-touch-icon, not SVG favicon).
+    targets = (
+        (192, "pwa-192.png"),
+        (512, "pwa-512.png"),
+        (180, "apple-touch-icon.png"),
+    )
+    for size, name in targets:
         img = render(size)
-        path = out_dir / f"pwa-{size}.png"
+        path = out_dir / name
         img.save(path, format="PNG", optimize=True)
         print(f"wrote {path}")
 

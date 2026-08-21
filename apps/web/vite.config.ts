@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const base = process.env.VITE_BASE_PATH || '/'
-const appBuild = '2026-08-21-icon-harbor-quiet'
+const appBuild = '2026-08-21-apple-touch-favicon'
 
 export default defineConfig({
   base,
@@ -11,7 +11,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'app-build.txt'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'app-build.txt'],
       workbox: {
         cleanupOutdatedCaches: true,
         additionalManifestEntries: [{ url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild }],
@@ -26,6 +26,7 @@ export default defineConfig({
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
         ],
       },
     }),

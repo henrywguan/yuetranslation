@@ -115,6 +115,16 @@ function HomescreenSteps() {
         </span>
         <div className="ios-hs-step-body">
           <BiText copy={ui.iosHomescreenStep3} size="sm" hideJp />
+          <div className="ios-hs-home-preview" aria-hidden="true">
+            <img
+              className="ios-hs-home-preview-icon"
+              src={`${import.meta.env.BASE_URL}apple-touch-icon.png`.replace(/\/{2,}/g, '/')}
+              alt=""
+              width={48}
+              height={48}
+            />
+            <span className="ios-hs-home-preview-label">JyutTranslate</span>
+          </div>
         </div>
       </li>
     </ol>

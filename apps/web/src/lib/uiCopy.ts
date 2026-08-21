@@ -165,9 +165,9 @@ export const ui = {
     jp: 'hai2 fan1 hoeng2 cing1 daan1 wan2 ni1 jat1 hong4',
   },
   iosHomescreenStep3: {
-    en: 'Confirm Add — JyutTranslate appears on your Home Screen.',
-    zh: '確認「加入」——JyutTranslate 就會出現喺主畫面。',
-    jp: 'kok3 jing6 “gaa1 jap6” — JyutTranslate zau6 wui5 ceot1 jin6 hai2 zyu2 waa2 min6.',
+    en: 'Confirm Add — JyutTranslate appears on your Home Screen with this icon.',
+    zh: '確認「加入」——JyutTranslate 會用呢個圖示出現喺主畫面。',
+    jp: 'kok3 jing6 “gaa1 jap6” — JyutTranslate wui5 jung6 ni1 go3 tou4 si6 ceot1 jin6 hai2 zyu2 waa2 min6.',
   },
   iosHomescreenGuideTitle: {
     en: 'Install on iPhone',
