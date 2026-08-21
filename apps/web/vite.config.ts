@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const base = process.env.VITE_BASE_PATH || '/'
-const appBuild = '2026-08-21-glow-jade-icon'
+const appBuild = '2026-08-21-icon-harbor-quiet'
 
 export default defineConfig({
   base,

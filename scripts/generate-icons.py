@@ -7,19 +7,19 @@ import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
-# Glow jade → dark harbor (aligned with favicon.svg + brand tokens)
+# Mostly dark harbor; tiny soft jade kiss under the glyph only
 STOPS = (
-    (0.00, (184, 255, 240)),  # #b8fff0 — luminous jade core
-    (0.18, (126, 240, 220)),  # #7ef0dc
-    (0.38, (61, 207, 182)),  # #3dcfb6
-    (0.58, (31, 143, 122)),  # #1f8f7a
-    (0.78, (11, 61, 54)),  # #0b3d36
-    (1.00, (7, 19, 31)),  # #07131f
+    (0.00, (20, 86, 75)),  # #14564b
+    (0.18, (11, 61, 54)),  # #0b3d36
+    (0.40, (8, 24, 32)),  # #081820
+    (0.70, (7, 19, 31)),  # #07131f
+    (1.00, (5, 14, 22)),  # #050e16
 )
 GLYPH = "粵"
 JADE = (126, 240, 220)  # #7ef0dc
+JADE_EDGE = (61, 207, 182)  # #3dcfb6
 FONT_CANDIDATES = (
     Path.home() / ".local/share/fonts/NotoSansHK-Bold.ttf",
     Path("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"),
@@ -66,8 +66,8 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
 
 def render(size: int) -> Image.Image:
     cx = cy = (size - 1) / 2
-    # Match SVG r≈72% of half-diagonal feel; use radius relative to half-size.
-    radius = size * 0.72
+    # Wider falloff so dark harbor fills more of the tile.
+    radius = size * 0.48
     px = Image.new("RGB", (size, size))
     data = px.load()
     for y in range(size):
@@ -75,40 +75,33 @@ def render(size: int) -> Image.Image:
             d = math.hypot(x - cx, y - cy) / radius
             data[x, y] = sample(d)
 
-    # Soft jade bloom behind the glyph.
-    glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    gdraw = ImageDraw.Draw(glow)
-    font = load_font(int(size * 0.58))
+    font = load_font(int(size * 0.54))
     anchor = (cx, cy + size * 0.015)
-    gdraw.text(anchor, GLYPH, font=font, fill=(*JADE, 230), anchor="mm")
-    glow = glow.filter(ImageFilter.GaussianBlur(radius=max(3, size * 0.045)))
 
     glyph = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(glyph)
-    # Stroke underlay thickens CJK strokes so 粵 reads at favicon sizes.
-    stroke_w = max(2, size // 64)
+    stroke_w = max(1, size // 96)
     draw.text(
         anchor,
         GLYPH,
         font=font,
-        fill=(*JADE, 255),
+        fill=(*JADE, 245),
         anchor="mm",
         stroke_width=stroke_w,
-        stroke_fill=(*JADE, 255),
+        stroke_fill=(*JADE_EDGE, 220),
     )
 
     base = px.convert("RGBA")
-    base = Image.alpha_composite(base, glow)
+    # No bloom layer — glyph sits clean on harbor so the field reads clearly.
     base = Image.alpha_composite(base, glyph)
 
-    # Subtle rim highlight.
     rim = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     rdraw = ImageDraw.Draw(rim)
     inset = max(1, size // 64)
     rdraw.rounded_rectangle(
         (inset, inset, size - 1 - inset, size - 1 - inset),
         radius=size * 0.22,
-        outline=(184, 255, 240, 90),
+        outline=(126, 240, 220, 55),
         width=max(1, size // 128),
     )
     base = Image.alpha_composite(base, rim)
