@@ -238,65 +238,16 @@ function formatMinutes(seconds: number) {
   return Math.max(0, Math.ceil(seconds / 60))
 }
 
-// #region agent log
-function agentLog(
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  const payload = { hypothesisId, location, message, data, timestamp: Date.now() }
-  try {
-    const w = window as unknown as { __agentDebugLogs?: unknown[] }
-    w.__agentDebugLogs = w.__agentDebugLogs || []
-    w.__agentDebugLogs.push(payload)
-  } catch {
-    /* ignore */
-  }
-  try {
-    fetch('http://127.0.0.1:7242/ingest/solo-autospeak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }).catch(() => {})
-  } catch {
-    /* ignore */
-  }
-}
-// #endregion
-
 async function runSpeak(
   get: () => State,
   set: (p: Partial<State>) => void,
   text: string,
   lang: Lang,
 ) {
-  // #region agent log
-  const skipTts =
-    typeof window !== 'undefined' &&
-    Boolean((window as unknown as { __yueDebugSkipTts?: boolean }).__yueDebugSkipTts)
-  agentLog('E', 'store.ts:runSpeak', 'runSpeak enter', {
-    lang,
-    textLen: text.length,
-    mode: get().mode,
-    status: get().status,
-    skipTts,
-    hasSession: Boolean(get().session),
-  })
-  // #endregion
   const token = ++speakToken
   get().session?.setPlaybackActive(true)
   set({ status: 'speaking', speakingText: text })
   try {
-    // #region agent log
-    if (skipTts) {
-      agentLog('E', 'store.ts:runSpeak', 'runSpeak skipped TTS (debug)', {
-        lang,
-        textLen: text.length,
-      })
-      return
-    }
-    // #endregion
     await speakText(text, lang)
   } finally {
     if (token !== speakToken) return
@@ -316,27 +267,7 @@ async function speakFinal(
   const autoSpeakFlag = get().autoSpeak
   const entAuto = Boolean(ent?.allowed.autoSpeak)
   const allowed = Boolean(entAuto && autoSpeakFlag)
-  // #region agent log
-  agentLog('A', 'store.ts:speakFinal', 'speakFinal gate', {
-    lang,
-    textLen: text.length,
-    mode: get().mode,
-    autoSpeakFlag,
-    entAuto,
-    allowed,
-    hasEntitlement: Boolean(ent),
-    plan: ent?.plan ?? null,
-    reason: ent?.reason ?? null,
-  })
-  // #endregion
   if (!allowed) return
-  // #region agent log
-  agentLog('B', 'store.ts:speakFinal', 'speakFinal calling runSpeak', {
-    lang,
-    textLen: text.length,
-    mode: get().mode,
-  })
-  // #endregion
   await runSpeak(get, set, text, lang)
 }
 
@@ -576,28 +507,7 @@ async function runTranslation(
   } finally {
     endTranslate(set)
   }
-  // #region agent log
-  agentLog('B', 'store.ts:runTranslation', 'post-translate speak decision', {
-    mode: get().mode,
-    isFace,
-    isText,
-    hasSpeak: Boolean(speak),
-    speakLang: speak?.lang ?? null,
-    speakTextLen: speak?.text.length ?? 0,
-    sourceLang: lang,
-    autoSpeak: get().autoSpeak,
-    entAuto: Boolean(get().entitlement?.allowed.autoSpeak),
-  })
-  // #endregion
   if (speak) await speakFinal(get, set, speak.text, speak.lang)
-  // #region agent log
-  else {
-    agentLog('B', 'store.ts:runTranslation', 'no speak payload (translate failed/aborted)', {
-      mode: get().mode,
-      sourceLang: lang,
-    })
-  }
-  // #endregion
 }
 
 function flushLiveMeter() {
@@ -811,17 +721,7 @@ export const useYueStore = create<State>((set, get) => ({
     set({ mode })
   },
   setSpeakDirection: (speakDirection) => set({ speakDirection }),
-  setAutoSpeak: (autoSpeak) => {
-    // #region agent log
-    agentLog('A', 'store.ts:setAutoSpeak', 'autoSpeak toggled', {
-      autoSpeak,
-      prev: get().autoSpeak,
-      entAuto: Boolean(get().entitlement?.allowed.autoSpeak),
-      mode: get().mode,
-    })
-    // #endregion
-    set({ autoSpeak })
-  },
+  setAutoSpeak: (autoSpeak) => set({ autoSpeak }),
 
   speakManual: async (text, lang) => {
     const trimmed = text.trim()
@@ -859,27 +759,12 @@ export const useYueStore = create<State>((set, get) => ({
         ent.upgradeUrl = getUpgradeUrl()
       }
       // Do not force autoSpeak on — keep the user's preference (default off).
-      // #region agent log
-      agentLog('C', 'store.ts:loadBootstrap', 'entitlement loaded', {
-        plan: ent?.plan ?? null,
-        reason: ent?.reason ?? null,
-        entAuto: Boolean(ent?.allowed?.autoSpeak),
-        autoSpeakFlag: get().autoSpeak,
-        live: Boolean(ent?.allowed?.live),
-        tts: Boolean(ent?.allowed?.tts),
-      })
-      // #endregion
       set({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
       })
       prefetchSpeechToken()
     } catch {
-      // #region agent log
-      agentLog('C', 'store.ts:loadBootstrap', 'bootstrap failed', {
-        autoSpeakFlag: get().autoSpeak,
-      })
-      // #endregion
       set({
         entitlement: null,
         demoMode: false,
@@ -918,13 +803,6 @@ export const useYueStore = create<State>((set, get) => ({
     // Sync unlock before any await — iOS needs a gesture-time play() so later
     // auto-speak (after STT + translate) can use the same HTMLAudioElement.
     unlockTtsPlayback()
-    // #region agent log
-    agentLog('E', 'store.ts:startHold', 'tts unlock called (pre-await)', {
-      side: side ?? null,
-      autoSpeak: get().autoSpeak,
-      entAuto: Boolean(get().entitlement?.allowed.autoSpeak),
-    })
-    // #endregion
 
     const gen = ++holdGen
     holding = true
@@ -1348,112 +1226,8 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
   const w = window as unknown as {
     __yueStore?: typeof useYueStore
     __yueLearnedGloss?: unknown
-    /** Offline Solo auto-speak path probe (sets __yueDebugSkipTts — no Azure TTS). */
-    __yueProbeAutoSpeak?: () => Promise<unknown>
-    /** Offline TTS unlock probe — no Azure/DeepSeek. */
-    __yueProbeTtsUnlock?: () => Promise<unknown>
-    __yueDebugSkipTts?: boolean
-    __agentDebugLogs?: unknown[]
   }
   w.__yueStore = useYueStore
-  // #region agent log
-  w.__yueProbeAutoSpeak = async () => {
-    w.__yueDebugSkipTts = true
-    w.__agentDebugLogs = []
-    const store = useYueStore
-    const setPartial = (p: Partial<State>) => store.setState(p)
-    const get = () => store.getState()
-
-    const maxEnt = (autoSpeakAllowed: boolean): Entitlement => ({
-      loggedIn: true,
-      requireLogin: false,
-      plan: 'max',
-      limits: {
-        plan: 'max',
-        live_minutes: -1,
-        tts_chars: -1,
-        auto_speak: autoSpeakAllowed,
-        can_live: true,
-        text_translate: true,
-      },
-      usage: { month: '2026-08', liveSeconds: 0, ttsChars: 0, translateCount: 0 },
-      remaining: { liveSeconds: -1, ttsChars: -1 },
-      ttsUnlimited: true,
-      upgradeUrl: '',
-      loginUrl: '',
-      allowed: {
-        live: true,
-        autoSpeak: autoSpeakAllowed,
-        textTranslate: true,
-        tts: true,
-      },
-      reason: null,
-    })
-
-    store.getState().setMode('solo')
-
-    // Case 1: default autoSpeak=false, Max entitlement → should SKIP
-    store.setState({ autoSpeak: false, entitlement: maxEnt(true) })
-    agentLog('A', 'probe', 'case1 default-off + max ent', {
-      autoSpeak: get().autoSpeak,
-      entAuto: get().entitlement?.allowed.autoSpeak,
-    })
-    await speakFinal(get, setPartial, '你好', 'yue')
-
-    // Case 2: autoSpeak=true, entitlement autoSpeak=false → should SKIP
-    store.setState({ autoSpeak: true, entitlement: maxEnt(false) })
-    agentLog('C', 'probe', 'case2 on + ent denied', {
-      autoSpeak: get().autoSpeak,
-      entAuto: get().entitlement?.allowed.autoSpeak,
-    })
-    await speakFinal(get, setPartial, 'Hello', 'en')
-
-    // Case 3: autoSpeak=true, Max entitlement → should CALL runSpeak (skip TTS)
-    store.setState({ autoSpeak: true, entitlement: maxEnt(true) })
-    agentLog('B', 'probe', 'case3 on + max ent', {
-      autoSpeak: get().autoSpeak,
-      entAuto: get().entitlement?.allowed.autoSpeak,
-      mode: get().mode,
-    })
-    await speakFinal(get, setPartial, '早晨', 'yue')
-
-    // Case 4: simulate Solo post-translate path with speak payload (no paid translate)
-    agentLog('F', 'probe', 'case4 solo post-translate speakFinal en→yue', {
-      mode: get().mode,
-    })
-    await speakFinal(get, setPartial, '唔該', 'yue')
-    agentLog('F', 'probe', 'case4 solo post-translate speakFinal yue→en', {
-      mode: get().mode,
-    })
-    await speakFinal(get, setPartial, 'Thank you', 'en')
-
-    const logs = w.__agentDebugLogs || []
-    agentLog('F', 'probe', 'probe complete', { logCount: logs.length })
-    return logs
-  }
-
-  w.__yueProbeTtsUnlock = async () => {
-    w.__agentDebugLogs = []
-    const { unlockTtsPlayback, isTtsPlaybackUnlocked, stopSpeaking } = await import('./tts')
-    stopSpeaking()
-    agentLog('E', 'probe', 'tts unlock before', {
-      unlocked: isTtsPlaybackUnlocked(),
-    })
-    unlockTtsPlayback()
-    // Allow silent play() promise to settle.
-    await new Promise((r) => setTimeout(r, 50))
-    const after = isTtsPlaybackUnlocked()
-    agentLog('E', 'probe', 'tts unlock after', { unlocked: after })
-    // Simulate startHold calling unlock pre-await (idempotent warm path).
-    unlockTtsPlayback()
-    await new Promise((r) => setTimeout(r, 20))
-    agentLog('E', 'probe', 'tts unlock complete', {
-      unlocked: isTtsPlaybackUnlocked(),
-      ok: isTtsPlaybackUnlocked() === true,
-    })
-    return w.__agentDebugLogs || []
-  }
-  // #endregion
   import('./learnedGloss').then((m) => {
     w.__yueLearnedGloss = m.learnedGlossStats
   })

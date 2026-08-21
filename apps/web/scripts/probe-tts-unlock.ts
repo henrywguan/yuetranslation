@@ -3,26 +3,10 @@
  *
  * Mocks HTMLAudioElement, stubs fetchTtsAudio via a tiny in-memory module graph.
  */
-import { appendFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
-
-const LOG = '/opt/cursor/logs/debug.log'
-mkdirSync('/opt/cursor/logs', { recursive: true })
-
-function log(hypothesisId: string, location: string, message: string, data: Record<string, unknown>) {
-  const payload = {
-    hypothesisId,
-    location,
-    message,
-    data,
-    timestamp: Date.now(),
-    runId: 'tts-unlock-probe',
-  }
-  appendFileSync(LOG, JSON.stringify(payload) + '\n')
-  console.log(`[${hypothesisId}] ${message}`, JSON.stringify(data))
-}
 
 type FakeEl = {
   src: string
@@ -106,14 +90,14 @@ async function main() {
 
   const tts = await import(pathToFileURL(join(dir, 'tts.ts')).href)
 
-  log('E', 'probe', 'instances before unlock', { count: instances.length })
+  console.log('instances before unlock', { count: instances.length })
 
   blockPlay = false
   tts.unlockTtsPlayback()
   await new Promise((r) => setTimeout(r, 40))
 
   const unlocked = tts.isTtsPlaybackUnlocked() as boolean
-  log('E', 'probe', 'after unlock', {
+  console.log('after unlock', {
     unlocked,
     instanceCount: instances.length,
     playCount: instances[0]?.playCount ?? 0,
@@ -122,7 +106,7 @@ async function main() {
   if (instances.length !== 1) throw new Error(`expected 1 shared Audio, got ${instances.length}`)
 
   tts.stopSpeaking()
-  log('E', 'probe', 'after stopSpeaking', { instanceCount: instances.length })
+  console.log('after stopSpeaking', { instanceCount: instances.length })
   if (instances.length !== 1) throw new Error('stopSpeaking must keep shared Audio')
 
   const beforeSpeak = instances.length
@@ -131,7 +115,7 @@ async function main() {
   instances[0]?.onended?.()
   await speakPromise
 
-  log('E', 'probe', 'after delayed speakText', {
+  console.log('after delayed speakText', {
     instanceCount: instances.length,
     beforeSpeak,
     playCount: instances[0]?.playCount ?? 0,
@@ -147,12 +131,12 @@ async function main() {
   const blocked = tts.speakText('blocked', 'en') as Promise<void>
   await new Promise((r) => setTimeout(r, 40))
   await blocked
-  log('E', 'probe', 'blocked play path exercised', {
+  console.log('blocked play path exercised', {
     instanceCount: instances.length,
     playCount: instances[0]?.playCount ?? 0,
   })
 
-  log('E', 'probe', 'tts unlock probe PASS', {
+  console.log('tts unlock probe PASS', {
     unlocked: tts.isTtsPlaybackUnlocked(),
     sharedInstances: instances.length,
   })
@@ -162,6 +146,5 @@ async function main() {
 
 main().catch((err) => {
   console.error('FAIL', err)
-  log('E', 'probe', 'tts unlock probe FAIL', { error: String(err) })
   process.exit(1)
 })

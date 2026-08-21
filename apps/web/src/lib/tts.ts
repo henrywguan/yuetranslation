@@ -11,29 +11,8 @@ let gen = 0
 let playing = false
 /** True after a successful gesture-time unlock play on the shared element. */
 let unlocked = false
-
-function agentTtsLog(
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown>,
-) {
-  // #region agent log
-  try {
-    const w = window as unknown as { __agentDebugLogs?: unknown[] }
-    const payload = { hypothesisId, location, message, data, timestamp: Date.now() }
-    w.__agentDebugLogs = w.__agentDebugLogs || []
-    w.__agentDebugLogs.push(payload)
-    fetch('http://127.0.0.1:7242/ingest/solo-autospeak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    }).catch(() => {})
-  } catch {
-    /* ignore */
-  }
-  // #endregion
-}
+/** Prevent overlapping silent unlock plays from LiveHoldButton + startHold. */
+let unlockInFlight = false
 
 function ensureSharedAudio(): HTMLAudioElement {
   if (!audio) {
@@ -58,9 +37,6 @@ export function isTtsPlaybackUnlocked() {
  * so later async auto-speak `audio.play()` is allowed on iOS Safari/PWA.
  * Reuses one shared HTMLAudioElement for all TTS playback.
  */
-/** Prevent overlapping silent unlock plays from LiveHoldButton + startHold. */
-let unlockInFlight = false
-
 export function unlockTtsPlayback(): void {
   if (typeof window === 'undefined') return
   const el = ensureSharedAudio()
@@ -71,14 +47,7 @@ export function unlockTtsPlayback(): void {
     /* ignore */
   }
   // Already unlocked / unlock in progress — keep the shared element warm.
-  if (unlocked || unlockInFlight) {
-    agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock already warm', {
-      unlocked,
-      unlockInFlight,
-      playing,
-    })
-    return
-  }
+  if (unlocked || unlockInFlight) return
   unlockInFlight = true
   try {
     el.pause()
@@ -89,10 +58,6 @@ export function unlockTtsPlayback(): void {
   el.volume = 0.01
   el.muted = false
   const playResult = el.play()
-  agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play started', {
-    hasPlayPromise: Boolean(playResult && typeof playResult.then === 'function'),
-    wasUnlocked: unlocked,
-  })
   if (playResult && typeof playResult.then === 'function') {
     void playResult
       .then(() => {
@@ -113,20 +78,14 @@ export function unlockTtsPlayback(): void {
             /* ignore */
           }
         }
-        agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play ok', { unlocked: true })
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         unlockInFlight = false
-        agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play rejected', {
-          name: err instanceof Error ? err.name : 'unknown',
-          message: err instanceof Error ? err.message : String(err),
-        })
       })
   } else {
     // Older engines may return undefined from play().
     unlocked = true
     unlockInFlight = false
-    agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play sync ok', { unlocked: true })
   }
 }
 
@@ -185,23 +144,9 @@ export async function speakText(text: string, lang: Lang) {
   stopSpeaking()
   const g = gen
   playing = true
-  agentTtsLog('E', 'tts.ts:speakText', 'speakText start', {
-    lang,
-    textLen: trimmed.length,
-    unlocked,
-    reusedAudio: Boolean(audio),
-  })
   const blob = await fetchTtsAudio(trimmed, lang)
-  if (g !== gen) {
-    agentTtsLog('E', 'tts.ts:speakText', 'speakText aborted (gen mismatch)', { lang })
-    return
-  }
+  if (g !== gen) return
   if (blob && blob.size > 0) {
-    agentTtsLog('E', 'tts.ts:speakText', 'speakText azure blob ok', {
-      lang,
-      size: blob.size,
-      unlocked,
-    })
     const objectUrl = URL.createObjectURL(blob)
     url = objectUrl
     // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
@@ -216,27 +161,11 @@ export async function speakText(text: string, lang: Lang) {
       }
       el.onerror = () => {
         if (g === gen) playing = false
-        agentTtsLog('E', 'tts.ts:speakText', 'speakText audio element error', {
-          lang,
-          unlocked,
-        })
         resolve()
       }
       void el.play().then(
+        () => {},
         () => {
-          agentTtsLog('E', 'tts.ts:speakText', 'speakText play ok', {
-            lang,
-            unlocked,
-          })
-        },
-        (err: unknown) => {
-          // H-E: iOS autoplay block — previously swallowed silently.
-          agentTtsLog('E', 'tts.ts:speakText', 'speakText play rejected', {
-            lang,
-            unlocked,
-            name: err instanceof Error ? err.name : 'unknown',
-            message: err instanceof Error ? err.message : String(err),
-          })
           if (g === gen) playing = false
           resolve()
         },
@@ -244,11 +173,5 @@ export async function speakText(text: string, lang: Lang) {
     })
     return
   }
-  agentTtsLog('E', 'tts.ts:speakText', 'speakText fallback browserSpeak', {
-    lang,
-    textLen: trimmed.length,
-    blobNull: !blob,
-    unlocked,
-  })
   await browserSpeak(trimmed, lang, g)
 }
