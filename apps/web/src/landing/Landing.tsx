@@ -13,7 +13,7 @@ import { openApp, openPricing } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { JyutLogo } from '../components/JyutLogo'
-import { ui } from '../lib/uiCopy'
+import { ui, type Bi } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
 import { FooterLangPair } from './FooterLangPair'
 import { IosHomescreenFooterLink } from '../components/IosHomescreenGuide'
@@ -24,12 +24,27 @@ const HeroObject = lazy(() =>
   import('./HeroObject').then((m) => ({ default: m.HeroObject })),
 )
 
-const FEATURES = [
+const FEATURES_LEFT: { title: Bi; desc: Bi; aside?: Bi }[] = [
   { title: ui.featJpTitle, desc: ui.featJpDesc, aside: ui.featJpAside },
   { title: ui.featHkTitle, desc: ui.featHkDesc },
+]
+
+const FEATURES_RIGHT: { title: Bi; desc: Bi }[] = [
   { title: ui.featFastTitle, desc: ui.featFastDesc },
   { title: ui.featHostTitle, desc: ui.featHostDesc },
 ]
+
+function FeatureFlankItem({ title, desc, aside }: { title: Bi; desc: Bi; aside?: Bi }) {
+  return (
+    <article className="ln-modes-feat">
+      <h3>
+        <BiText copy={title} size="md" />
+      </h3>
+      <BiText copy={desc} size="sm" as="p" />
+      {aside ? <BiText className="ln-feature-aside" copy={aside} size="sm" as="p" only="en" /> : null}
+    </article>
+  )
+}
 
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -107,23 +122,23 @@ export function Landing() {
           </h2>
         </Reveal>
 
-        <Reveal className="ln-modes-stage-wrap" y={28}>
-          <ModesStage />
-        </Reveal>
+        <div className="ln-modes-compose">
+          <Reveal className="ln-modes-flank ln-modes-flank--left" x={-48} y={18} stagger={0.14}>
+            {FEATURES_LEFT.map((f) => (
+              <FeatureFlankItem key={f.title.en} {...f} />
+            ))}
+          </Reveal>
 
-        <Reveal className="ln-feature-strip" stagger={0.1} y={22}>
-          {FEATURES.map((f) => (
-            <div className="ln-feature-row" key={f.title.en}>
-              <h4>
-                <BiText copy={f.title} size="md" />
-              </h4>
-              <BiText copy={f.desc} size="sm" as="p" />
-              {'aside' in f && f.aside ? (
-                <BiText className="ln-feature-aside" copy={f.aside} size="sm" as="p" only="en" />
-              ) : null}
-            </div>
-          ))}
-        </Reveal>
+          <Reveal className="ln-modes-stage-wrap" y={28}>
+            <ModesStage />
+          </Reveal>
+
+          <Reveal className="ln-modes-flank ln-modes-flank--right" x={48} y={18} stagger={0.14} delay={0.06}>
+            {FEATURES_RIGHT.map((f) => (
+              <FeatureFlankItem key={f.title.en} {...f} />
+            ))}
+          </Reveal>
+        </div>
       </section>
 
       <section className="ln-demo-band" id="demo">
