@@ -13,36 +13,19 @@ import './iosHomescreen.css'
 
 const TIP_DELAY_MS = 4500
 
-/** iOS Share — arrow up out of an open tray (not download). */
+/** iOS Share (square.and.arrow.up) — arrow rises out of the tray, not into it. */
 function IosShareGlyph({ className }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg className={className} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      {/* Arrow up */}
       <path
-        d="M12 14.2V4.2"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
+        fill="currentColor"
+        d="M12 2.6c.28 0 .54.11.73.31l3.55 3.55a1.03 1.03 0 1 1-1.46 1.46L13.03 5.83v8.02a1.03 1.03 0 1 1-2.06 0V5.83L9.18 7.92a1.03 1.03 0 1 1-1.46-1.46l3.55-3.55c.19-.2.45-.31.73-.31Z"
       />
+      {/* Open tray */}
       <path
-        d="M8.2 7.6 12 3.8l3.8 3.8"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M5.6 11.4v6.1A2.3 2.3 0 0 0 7.9 19.8h8.2a2.3 2.3 0 0 0 2.3-2.3v-6.1"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fill="currentColor"
+        d="M5.35 12.15c.57 0 1.03.46 1.03 1.03v4.05c0 .4.33.72.72.72h9.8c.4 0 .72-.32.72-.72v-4.05a1.03 1.03 0 1 1 2.06 0v4.05A2.78 2.78 0 0 1 16.9 20H7.1a2.78 2.78 0 0 1-2.78-2.77v-4.05c0-.57.46-1.03 1.03-1.03Z"
       />
     </svg>
   )
@@ -114,7 +97,7 @@ function HomescreenSteps() {
           <IosShareGlyph />
         </span>
         <div className="ios-hs-step-body">
-          <BiText copy={ui.iosHomescreenStep1} size="sm" />
+          <BiText copy={ui.iosHomescreenStep1} size="sm" hideJp />
         </div>
       </li>
       <li className="ios-hs-step ios-hs-step--with-sheet">
@@ -122,7 +105,7 @@ function HomescreenSteps() {
           2
         </span>
         <div className="ios-hs-step-body">
-          <BiText copy={ui.iosHomescreenStep2} size="sm" />
+          <BiText copy={ui.iosHomescreenStep2} size="sm" hideJp />
           <ShareSheetAddRow />
         </div>
       </li>
@@ -131,7 +114,7 @@ function HomescreenSteps() {
           3
         </span>
         <div className="ios-hs-step-body">
-          <BiText copy={ui.iosHomescreenStep3} size="sm" />
+          <BiText copy={ui.iosHomescreenStep3} size="sm" hideJp />
         </div>
       </li>
     </ol>
@@ -184,7 +167,7 @@ export function IosHomescreenGuideDialog({ open, onClose }: GuideDialogProps) {
           >
             <header className="ios-hs-dialog-header">
               <h2 id={titleId} className="ios-hs-dialog-title">
-                <BiText copy={ui.iosHomescreenGuideTitle} size="md" />
+                <BiText copy={ui.iosHomescreenGuideTitle} size="md" hideJp />
               </h2>
               <button
                 type="button"
@@ -196,11 +179,11 @@ export function IosHomescreenGuideDialog({ open, onClose }: GuideDialogProps) {
               </button>
             </header>
             <p className="ios-hs-dialog-lead">
-              <BiText copy={ui.iosHomescreenTipBody} size="sm" />
+              <BiText copy={ui.iosHomescreenTipBody} size="sm" hideJp />
             </p>
             <HomescreenSteps />
             <button type="button" className="ios-hs-dialog-done" onClick={onClose}>
-              <BiText copy={ui.iosHomescreenGotIt} size="sm" />
+              <BiText copy={ui.iosHomescreenGotIt} size="sm" hideJp />
             </button>
           </motion.div>
         </>
@@ -250,11 +233,11 @@ export function IosHomescreenTip() {
           <div className="ios-hs-tip-main">
             <div className="ios-hs-tip-copy">
               <p id={tipId} className="ios-hs-tip-title">
-                <BiText copy={ui.iosHomescreenTipTitle} size="sm" />
+                <BiText copy={ui.iosHomescreenTipTitle} size="sm" hideJp />
               </p>
               {!expanded ? (
                 <p className="ios-hs-tip-body">
-                  <BiText copy={ui.iosHomescreenTipBody} size="sm" />
+                  <BiText copy={ui.iosHomescreenTipBody} size="sm" hideJp />
                 </p>
               ) : null}
             </div>
