@@ -301,12 +301,15 @@ export function IosHomescreenHubButton({ onOpen }: { onOpen: () => void }) {
 
   return (
     <button type="button" className="account-hub-btn account-hub-btn--ghost" onClick={onOpen}>
-      <BiText copy={ui.addToHomeScreen} size="sm" />
+      <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
     </button>
   )
 }
 
-/** Landing / footer text link — same eligibility as the hub button. */
+/**
+ * Landing footer cue — quiet mini share-sheet chip (centered, no Jyutping popup).
+ * Opens the same install guide as the in-app tip.
+ */
 export function IosHomescreenFooterLink() {
   const [show, setShow] = useState(false)
   const [open, setOpen] = useState(false)
@@ -319,8 +322,25 @@ export function IosHomescreenFooterLink() {
 
   return (
     <>
-      <button type="button" className="ln-textlink ios-hs-footer-link" onClick={() => setOpen(true)}>
-        <BiText copy={ui.addToHomeScreen} size="sm" />
+      <button
+        type="button"
+        className="ios-hs-footer-card"
+        onClick={() => setOpen(true)}
+        aria-label={biPlain(ui.addToHomeScreen)}
+      >
+        <span className="ios-hs-footer-card-glow" aria-hidden="true" />
+        <span className="ios-hs-footer-card-icon" aria-hidden="true">
+          <AddToHomeIcon />
+        </span>
+        <span className="ios-hs-footer-card-copy">
+          <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
+          <span className="ios-hs-footer-card-hint">
+            <BiText copy={ui.iosHomescreenFooterHint} size="sm" hideJp />
+          </span>
+        </span>
+        <span className="ios-hs-footer-card-chevron" aria-hidden="true">
+          ›
+        </span>
       </button>
       <IosHomescreenGuideDialog open={open} onClose={() => setOpen(false)} />
     </>

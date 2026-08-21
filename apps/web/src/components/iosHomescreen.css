@@ -311,6 +311,137 @@
   background: color-mix(in srgb, var(--jade) 38%, transparent);
 }
 
-.ios-hs-footer-link {
+/* Landing footer — quiet mini install cue (centered, no Jyutping chrome) */
+.ios-hs-footer-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: min(100%, 320px);
+  margin: 2px auto 0;
+  padding: 12px 14px 12px 12px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--jade) 20%, var(--glass-border));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid, var(--harbor)) 88%, var(--jade) 6%),
+      color-mix(in srgb, var(--harbor-mid, var(--harbor)) 94%, transparent)
+    );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ios-hs-footer-card-glow {
+  position: absolute;
+  inset: -30% 10% auto;
+  height: 70%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    color-mix(in srgb, var(--jade) 14%, transparent),
+    transparent 70%
+  );
+  opacity: 0.85;
+}
+
+.ios-hs-footer-card-icon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--jade) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  color: color-mix(in srgb, var(--mint, var(--jade)) 75%, #7eb6ff);
+}
+
+.ios-hs-footer-card-copy {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.ios-hs-footer-card-copy .bi {
+  align-items: center;
+  text-align: center;
+}
+
+.ios-hs-footer-card-copy .bi-en {
   font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--ink-bright, var(--ink));
+}
+
+.ios-hs-footer-card-copy .bi-zh {
+  font-size: 0.82rem;
+  font-weight: 550;
+  color: color-mix(in srgb, var(--ink) 78%, var(--muted));
+}
+
+.ios-hs-footer-card-hint {
+  margin-top: 2px;
+  opacity: 0.78;
+}
+
+.ios-hs-footer-card-hint .bi {
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+.ios-hs-footer-card-hint .bi-en,
+.ios-hs-footer-card-hint .bi-zh {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+.ios-hs-footer-card-chevron {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+  opacity: 0.85;
+}
+
+.ios-hs-footer-card:hover,
+.ios-hs-footer-card:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 38%, var(--glass-border));
+  outline: none;
+}
+
+.ios-hs-footer-card:hover {
+  transform: translateY(-1px);
+}
+
+.ios-hs-footer-card:focus-visible {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--jade) 35%, transparent);
 }
