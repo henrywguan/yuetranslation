@@ -66,6 +66,22 @@
   word-break: break-word;
 }
 
+.detail-panel-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-panel-title-row .detail-panel-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-panel-speak {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
 .detail-panel-jp {
   margin: 6px 0 0;
   font-size: 0.92rem;
@@ -201,6 +217,22 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.detail-panel-row-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-panel-row-wrap .detail-panel-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-panel-row-speak {
+  flex-shrink: 0;
+  margin-top: 0;
 }
 
 .detail-panel-row {

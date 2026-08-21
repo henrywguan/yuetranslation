@@ -44,6 +44,8 @@ type State = {
   speakDirection: SpeakDirection
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
+  /** Text currently playing via manual/auto TTS (for per-button speaking state). */
+  speakingText: string | null
   autoSpeak: boolean
   entitlement: Entitlement | null
   /** True when /api/health reports demo engine (no model key loaded). */
@@ -243,13 +245,13 @@ async function runSpeak(
 ) {
   const token = ++speakToken
   get().session?.setPlaybackActive(true)
-  set({ status: 'speaking' })
+  set({ status: 'speaking', speakingText: text })
   try {
     await speakText(text, lang)
   } finally {
     if (token !== speakToken) return
     get().session?.setPlaybackActive(false)
-    set({ status: get().live ? 'listening' : 'idle' })
+    set({ status: get().live ? 'listening' : 'idle', speakingText: null })
   }
 }
 
@@ -683,6 +685,7 @@ export const useYueStore = create<State>((set, get) => ({
   speakDirection: 'en',
   live: false,
   status: 'idle',
+  speakingText: null,
   autoSpeak: false,
   entitlement: null,
   demoMode: false,
@@ -731,11 +734,13 @@ export const useYueStore = create<State>((set, get) => ({
       return
     }
     if (get().status === 'speaking') {
+      const same = get().speakingText === trimmed
       speakToken += 1
       stopSpeaking()
       get().session?.setPlaybackActive(false)
-      set({ status: get().live ? 'listening' : 'idle', error: null })
-      return
+      set({ status: get().live ? 'listening' : 'idle', speakingText: null, error: null })
+      // Same utterance → stop; different text → fall through and play the new one.
+      if (same) return
     }
     set({ error: null })
     await runSpeak(get, set, trimmed, lang)
