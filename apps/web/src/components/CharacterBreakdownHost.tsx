@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
 import { charSense, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
-import { buildLocalBreakdown, ensureIpa, type CharBreakdown } from '../lib/jyutping'
+import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
 import { useFloatingPanel, type PanelBox } from '../lib/useFloatingPanel'
@@ -198,6 +198,13 @@ export function CharacterBreakdownHost() {
       ? (top.alternatives || []).map((a) => a.trim()).filter(Boolean)
       : []
   const topLabel = top.kind === 'phrase' ? top.phrase : top.char
+  const showRubyTitle = /[一-龥]/.test(topLabel)
+  const titleSegs: JyutSeg[] | undefined =
+    top.kind === 'char' && top.jp
+      ? [{ char: top.char, jp: top.jp }]
+      : top.kind === 'phrase' && rows.some((r) => r.jyutping)
+        ? rows.map((r) => ({ char: r.char, jp: r.jyutping || '' }))
+        : undefined
   const showDefinition =
     Boolean(definitionText) &&
     definitions.length <= 1 &&
@@ -215,8 +222,21 @@ export function CharacterBreakdownHost() {
             {stack.length > 1 ? `Details · ${stack.length} deep` : translationText ? 'Details' : 'Character breakdown'}
           </p>
           <div className="detail-panel-title-row">
-            <h2 id={titleId} className="detail-panel-title" lang={top.kind === 'char' || /[一-龥]/.test(topLabel) ? 'zh-HK' : 'en'}>
-              {topLabel}
+            <h2
+              id={titleId}
+              className="detail-panel-title"
+              lang={top.kind === 'char' || showRubyTitle ? 'zh-HK' : 'en'}
+            >
+              {showRubyTitle ? (
+                <JyutRuby
+                  han={topLabel}
+                  segs={titleSegs}
+                  size="lg"
+                  className="detail-panel-title-ruby"
+                />
+              ) : (
+                topLabel
+              )}
             </h2>
             <SpeakButton
               text={topLabel}
@@ -224,14 +244,9 @@ export function CharacterBreakdownHost() {
               className="detail-panel-speak"
             />
           </div>
-          {top.kind === 'char' && top.jp ? (
-            <p className="detail-panel-jp" lang="en">
-              <JyutRuby
-                han={top.char}
-                segs={[{ char: top.char, jp: top.jp }]}
-                size="md"
-              />
-              {ipa ? <span className="detail-panel-ipa">[{ipa}]</span> : null}
+          {ipa ? (
+            <p className="detail-panel-ipa-line" lang="en">
+              [{ipa}]
             </p>
           ) : null}
           {translationText ? (
@@ -335,13 +350,13 @@ export function CharacterBreakdownHost() {
                             : `${row.char}: no further details`
                         }
                       >
-                        <span className="detail-panel-char" lang="zh-HK">
-                          {row.char}
-                        </span>
-                        <span className="detail-panel-meta">
+                        <span className="detail-panel-char-stack" lang="zh-HK">
                           <span className="detail-panel-row-jp">
                             {row.jyutping ? <JyutSyllable jp={row.jyutping} /> : '—'}
                           </span>
+                          <span className="detail-panel-char">{row.char}</span>
+                        </span>
+                        <span className="detail-panel-meta">
                           <span className="detail-panel-meaning">
                             {meaning || (loading ? '…' : 'No entry yet')}
                           </span>
