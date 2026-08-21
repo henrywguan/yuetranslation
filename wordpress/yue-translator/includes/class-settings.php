@@ -73,8 +73,8 @@ final class Yue_Settings
             'yue_openai_model' => 'gpt-4o-mini',
             'yue_upgrade_url' => '',
             'yue_require_login' => true,
-            'yue_free_live_minutes' => 20,
-            'yue_pro_live_minutes' => 600,
+            'yue_free_live_minutes' => 5,
+            'yue_pro_live_minutes' => 20,
             'yue_free_tts_chars' => 30000,
             'yue_pro_tts_chars' => 200000,
             'yue_free_auto_speak' => false,
@@ -126,11 +126,11 @@ final class Yue_Settings
                     </tr>
                     <tr>
                         <th>Free live minutes / month</th>
-                        <td><input type="number" min="0" name="yue_free_live_minutes" value="<?php echo esc_attr((string) get_option('yue_free_live_minutes', 20)); ?>" /></td>
+                        <td><input type="number" min="0" name="yue_free_live_minutes" value="<?php echo esc_attr((string) get_option('yue_free_live_minutes', 5)); ?>" /></td>
                     </tr>
                     <tr>
                         <th>Pro live minutes / month</th>
-                        <td><input type="number" min="0" name="yue_pro_live_minutes" value="<?php echo esc_attr((string) get_option('yue_pro_live_minutes', 600)); ?>" /></td>
+                        <td><input type="number" min="0" name="yue_pro_live_minutes" value="<?php echo esc_attr((string) get_option('yue_pro_live_minutes', 20)); ?>" /></td>
                     </tr>
                     <tr>
                         <th>Free TTS characters / month</th>

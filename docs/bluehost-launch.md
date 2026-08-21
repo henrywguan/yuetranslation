@@ -90,8 +90,8 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 | Plan / 套餐 | Live mic / 实时麦克风 | Tap-to-play TTS / 点击朗读 | Auto-speak / 自动朗读 | Text + Jyutping / 文字 + 粤拼 |
 | --- | --- | --- | --- | --- |
 | Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
-| Free / 免费 | ~20 min/mo (configurable) / 约每月 20 分钟（可配置） | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
-| Pro / 专业版 | ~600 min/mo / 约每月 600 分钟 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
+| Free / 免费 | ~5 min/mo (configurable) / 约每月 5 分钟（可配置） | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
+| Pro / 专业版 | ~20 min/mo / 约每月 20 分钟 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
 
 Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Text mode uses `POST /translate` (not gated by live minutes).
 

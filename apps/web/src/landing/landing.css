@@ -1052,6 +1052,10 @@
   top: 18px;
   right: 22px;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   font-size: 0.68rem;
   font-weight: 650;
   letter-spacing: 0.14em;
@@ -1059,9 +1063,28 @@
   color: color-mix(in srgb, var(--jade-bright, var(--jade)) 90%, var(--ink));
   background: color-mix(in srgb, var(--jade) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--jade) 35%, var(--glass-border));
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 8px;
   overflow: visible;
+  min-height: 1.85em;
+  line-height: 1.15;
+}
+
+.ln-price-badge .bi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.12em;
+  margin: 0;
+  width: 100%;
+}
+
+.ln-price-badge .bi-en,
+.ln-price-badge .bi-zh,
+.ln-price-badge .bi-zh-wrap {
+  text-align: center;
 }
 
 .ln-price-badge .bi-zh-wrap {
