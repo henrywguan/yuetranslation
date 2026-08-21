@@ -2,6 +2,10 @@
 /**
  * Regenerates PWA PNG icons to match public/favicon.svg:
  * glow-jade radial harbor background + centered 粵.
+ *
+ * Prefers Python + Pillow (scripts/generate-icons.py). If those aren't
+ * available (e.g. Vercel build images), keep the committed PNGs and exit 0
+ * so builds still succeed.
  */
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -13,5 +17,27 @@ const outDir = path.resolve(__dirname, '../apps/web/public')
 const pyPath = path.join(__dirname, 'generate-icons.py')
 
 fs.mkdirSync(outDir, { recursive: true })
-execFileSync('python3', [pyPath, outDir], { stdio: 'inherit' })
-console.log('icons ok')
+
+function hasCommittedIcons() {
+  return (
+    fs.existsSync(path.join(outDir, 'pwa-192.png')) &&
+    fs.existsSync(path.join(outDir, 'pwa-512.png'))
+  )
+}
+
+try {
+  execFileSync('python3', ['-c', 'from PIL import Image'], { stdio: 'ignore' })
+  execFileSync('python3', [pyPath, outDir], { stdio: 'inherit' })
+  console.log('icons ok (python)')
+} catch (err) {
+  if (hasCommittedIcons()) {
+    console.warn(
+      'icons: Python/Pillow unavailable — using committed pwa-192.png / pwa-512.png',
+    )
+    console.log('icons ok (committed)')
+    process.exit(0)
+  }
+  console.error('icons: failed to generate and no committed PNGs found')
+  console.error(err instanceof Error ? err.message : err)
+  process.exit(1)
+}
