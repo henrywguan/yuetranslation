@@ -44,7 +44,7 @@ export const env = {
   allowNoncommercialDicts: (process.env.YUE_ALLOW_NONCOMMERCIAL_DICTS || '0') === '1',
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
-  freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 20),
+  freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 5),
   /** Soft analytics default for Free; Pro/Max TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
@@ -53,7 +53,7 @@ export const env = {
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
-  proLiveMinutes: Number(process.env.YUE_PRO_LIVE_MINUTES || 600),
+  proLiveMinutes: Number(process.env.YUE_PRO_LIVE_MINUTES || 20),
   proTtsChars: Number(process.env.YUE_PRO_TTS_CHARS || 200000),
   maxLiveMinutes: Number(process.env.YUE_MAX_LIVE_MINUTES || 2400),
   maxTtsChars: Number(process.env.YUE_MAX_TTS_CHARS || 500000),

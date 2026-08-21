@@ -361,9 +361,9 @@ export const ui = {
   comparePlans: { en: 'Compare all plans →', zh: '比較全部計劃 →', jp: 'bei2 gaau3 cyun4 bou6 gai3 waak6 →' },
 
   freeFeatLive20: {
-    en: '~20 minutes of live translation / month',
-    zh: '每月大約廿分鐘即時翻譯',
-    jp: 'mui5 jyut6 daai6 joek3 jaa6 fan1 zung1 zik1 si4 faan1 jik6',
+    en: '~5 minutes of live translation / month',
+    zh: '每月大約五分鐘即時翻譯',
+    jp: 'mui5 jyut6 daai6 joek3 ng5 fan1 zung1 zik1 si4 faan1 jik6',
   },
   freeFeatText: {
     en: 'Unlimited text translation',
@@ -381,14 +381,14 @@ export const ui = {
     jp: 'duk6 baak6, deoi3 waa6 mou4 sik1 tung4 man4 zi6',
   },
   freeFeatTts: {
-    en: 'Tap-to-play voice — metered on Free',
-    zh: '撳喇叭播語音——免費版有字數上限',
-    jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 — min5 fai3 baan2 jau5 zi6 sou3 soeng6 haan6',
+    en: 'Tap-to-play voice — free with limitations',
+    zh: '撳喇叭播語音——免費但有限制',
+    jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 — min5 fai3 daan6 jau5 haan6 zai3',
   },
   proFeatLive10: {
-    en: '~10 hours of live translation / month',
-    zh: '每月大約十小時即時翻譯',
-    jp: 'mui5 jyut6 daai6 joek3 sap6 siu2 si4 zik1 si4 faan1 jik6',
+    en: '~20 minutes of live translation / month',
+    zh: '每月大約廿分鐘即時翻譯',
+    jp: 'mui5 jyut6 daai6 joek3 jaa6 fan1 zung1 zik1 si4 faan1 jik6',
   },
   proFeatTts: {
     en: 'Unlimited tap-to-play + auto-speak',
@@ -485,6 +485,7 @@ export const ui = {
   cmpSeats: { en: 'Seats', zh: '座位', jp: 'zo6 wai2' },
   cmpSupport: { en: 'Support', zh: '支援', jp: 'zi1 wun4' },
   valMetered: { en: 'Metered', zh: '有上限', jp: 'jau5 soeng6 haan6' },
+  val5m: { en: '5 minutes', zh: '五分鐘', jp: 'ng5 fan1 zung1' },
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
   val10h: { en: '10 hours', zh: '十小時', jp: 'sap6 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },

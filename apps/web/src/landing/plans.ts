@@ -16,7 +16,7 @@ export type MarketingPlan = {
   features: Bi[]
 }
 
-/** Prices from DeepSeek V4-Pro + Azure live-speech COGS (Pro $14 / Max $35). */
+/** Prices from DeepSeek V4-Pro + Azure live-speech COGS (Pro $15 / Max $35). */
 export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'free',
@@ -31,8 +31,8 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'pro',
     name: ui.planPro,
-    monthly: 14,
-    annual: 11,
+    monthly: 15,
+    annual: 12,
     tagline: ui.tagPro,
     cta: ui.goPro,
     featured: true,

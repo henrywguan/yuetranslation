@@ -21,7 +21,7 @@ Returned by `/api/health` and `/api/entitlement`:
   "plan": "free",
   "limits": {
     "plan": "free",
-    "live_minutes": 20,
+    "live_minutes": 5,
     "tts_chars": 30000,
     "auto_speak": false,
     "can_live": true,
