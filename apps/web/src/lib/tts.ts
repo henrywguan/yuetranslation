@@ -58,6 +58,9 @@ export function isTtsPlaybackUnlocked() {
  * so later async auto-speak `audio.play()` is allowed on iOS Safari/PWA.
  * Reuses one shared HTMLAudioElement for all TTS playback.
  */
+/** Prevent overlapping silent unlock plays from LiveHoldButton + startHold. */
+let unlockInFlight = false
+
 export function unlockTtsPlayback(): void {
   if (typeof window === 'undefined') return
   const el = ensureSharedAudio()
@@ -67,14 +70,16 @@ export function unlockTtsPlayback(): void {
   } catch {
     /* ignore */
   }
-  // Already unlocked and idle — keep the shared element warm without re-playing silence.
-  if (unlocked && !playing && !el.src) {
+  // Already unlocked / unlock in progress — keep the shared element warm.
+  if (unlocked || unlockInFlight) {
     agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock already warm', {
       unlocked,
+      unlockInFlight,
       playing,
     })
     return
   }
+  unlockInFlight = true
   try {
     el.pause()
   } catch {
@@ -92,6 +97,7 @@ export function unlockTtsPlayback(): void {
     void playResult
       .then(() => {
         unlocked = true
+        unlockInFlight = false
         try {
           el.pause()
           el.currentTime = 0
@@ -110,6 +116,7 @@ export function unlockTtsPlayback(): void {
         agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play ok', { unlocked: true })
       })
       .catch((err: unknown) => {
+        unlockInFlight = false
         agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play rejected', {
           name: err instanceof Error ? err.name : 'unknown',
           message: err instanceof Error ? err.message : String(err),
@@ -118,6 +125,7 @@ export function unlockTtsPlayback(): void {
   } else {
     // Older engines may return undefined from play().
     unlocked = true
+    unlockInFlight = false
     agentTtsLog('E', 'tts.ts:unlockTtsPlayback', 'unlock play sync ok', { unlocked: true })
   }
 }
