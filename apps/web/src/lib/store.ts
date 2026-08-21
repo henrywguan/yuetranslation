@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
-import { speakText, stopSpeaking, isTtsPlaying } from './tts'
+import { speakText, stopSpeaking, isTtsPlaying, unlockTtsPlayback } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
@@ -264,7 +264,9 @@ async function speakFinal(
 ) {
   const ent = get().entitlement
   // Auto-speak only when the user opted in (default is off).
-  const allowed = Boolean(ent?.allowed.autoSpeak && get().autoSpeak)
+  const autoSpeakFlag = get().autoSpeak
+  const entAuto = Boolean(ent?.allowed.autoSpeak)
+  const allowed = Boolean(entAuto && autoSpeakFlag)
   if (!allowed) return
   await runSpeak(get, set, text, lang)
 }
@@ -798,6 +800,10 @@ export const useYueStore = create<State>((set, get) => ({
       return
     }
 
+    // Sync unlock before any await — iOS needs a gesture-time play() so later
+    // auto-speak (after STT + translate) can use the same HTMLAudioElement.
+    unlockTtsPlayback()
+
     const gen = ++holdGen
     holding = true
     tapSticky = false
@@ -1217,9 +1223,12 @@ export const useYueStore = create<State>((set, get) => ({
 }))
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
-  ;(window as unknown as { __yueStore?: typeof useYueStore }).__yueStore = useYueStore
+  const w = window as unknown as {
+    __yueStore?: typeof useYueStore
+    __yueLearnedGloss?: unknown
+  }
+  w.__yueStore = useYueStore
   import('./learnedGloss').then((m) => {
-    ;(window as unknown as { __yueLearnedGloss?: typeof m.learnedGlossStats }).__yueLearnedGloss =
-      m.learnedGlossStats
+    w.__yueLearnedGloss = m.learnedGlossStats
   })
 }
