@@ -8,7 +8,7 @@ import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
-const AUTO_TRANSLATE_MS = 700
+const AUTO_TRANSLATE_MS = 2000
 
 function isWorthAutoTranslate(value: string, from: Lang): boolean {
   const t = value.trim()
@@ -93,13 +93,20 @@ export function TextMode() {
       return
     }
     const id = ++reqId.current
-    setBusy(true)
-    timerRef.current = setTimeout(() => {
+    const start = () => {
       timerRef.current = null
+      setBusy(true)
       void translateRef.current(next, fromRef.current).finally(() => {
         if (reqId.current === id) setBusy(false)
       })
-    }, delay)
+    }
+    // Enter / force: translate immediately. Otherwise wait for idle typing.
+    if (delay <= 0) {
+      start()
+      return
+    }
+    setBusy(false)
+    timerRef.current = setTimeout(start, delay)
   }
 
   useEffect(() => {
