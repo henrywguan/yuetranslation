@@ -1738,6 +1738,14 @@
   color: transparent;
 }
 
+/* Light mode: match the header lockup — dark harbor ink, not pale mint gradient. */
+[data-theme='light'] .ln-hero .ln-title .bi-en {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: var(--ink);
+}
+
 /* Pricing hero is a full sentence — wrap instead of clipping under overflow-x: clip. */
 .ln-title.pp-title .bi-en {
   white-space: normal;
