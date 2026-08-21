@@ -18,6 +18,8 @@ export type Entitlement = {
   }
   usage: { month: string; liveSeconds: number; ttsChars: number; translateCount: number }
   remaining: { liveSeconds: number; ttsChars: number }
+  /** Pro/Max: usage tracked, never gates the speaker. */
+  ttsUnlimited?: boolean
   upgradeUrl: string
   loginUrl: string
   allowed: { live: boolean; autoSpeak: boolean; textTranslate: boolean; tts: boolean }

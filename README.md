@@ -7,9 +7,9 @@ Live translator PWA with WordPress freemium entitlements for Bluehost launch.
 
 **Stack (launch) / 上线技术栈：** Azure Speech (`zh-HK` STT/TTS) + OpenAI (colloquial 粤语) + WP plugin metering.
 
-**Free for everyone / 人人免费：** text translate, Jyutping, and tap-to-play voice. Live mic is metered; auto-speak is Pro/Max.
+**Free for everyone / 人人可用：** text translate, Jyutping, and guest tap-to-play voice. **Free** TTS is metered (hard char cap); **Pro/Max** TTS is unlimited (usage tracked). Live mic is metered; auto-speak is Pro/Max.
 
-**人人免费：** 文字翻译、粤拼、点击喇叭朗读。实时麦克风计量；自动朗读属专业版／旗舰版。
+**人人可用：** 文字翻译、粤拼、访客点击朗读。**免费版** TTS 有字数硬上限；**专业版／旗舰版** TTS 无限（仍计数）。实时麦克风计量；自动朗读属专业版／旗舰版。
 
 **Modes / 模式：** Solo · Conversation · Text (+ Jyutping)  
 独白 · 对话 · 文字（含粤拼）

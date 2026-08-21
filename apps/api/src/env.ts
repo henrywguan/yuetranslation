@@ -45,10 +45,10 @@ export const env = {
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
   freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 20),
-  /** Soft-metered TTS chars for analytics (does not gate tap-to-play). */
+  /** Soft analytics default for Free; Pro/Max TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
-  /** Kept for config compat; tap-to-play is always on. Auto-speak stays a paid-plan flag. */
+  /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',

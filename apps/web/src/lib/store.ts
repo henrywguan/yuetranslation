@@ -730,7 +730,9 @@ export const useYueStore = create<State>((set, get) => ({
         error:
           ent.reason === 'account_disabled'
             ? 'This account has been disabled.'
-            : 'Voice playback is not available.',
+            : ent.reason === 'tts_quota_exhausted' || ent.reason === 'no_tts_quota'
+              ? 'Voice playback needs remaining TTS quota.'
+              : 'Voice playback is not available.',
       })
       return
     }

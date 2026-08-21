@@ -160,7 +160,9 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       message:
         ent.reason === 'account_disabled'
           ? 'This account has been disabled.'
-          : 'Voice playback is not available.',
+          : ent.reason === 'tts_quota_exhausted' || ent.reason === 'no_tts_quota'
+            ? 'Voice playback needs remaining TTS quota.'
+            : 'Voice playback is not available.',
       entitlement: ent,
     })
     return
@@ -174,7 +176,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
     }
     const azureLang = lang === 'en' || lang === 'en-US' ? 'en' : 'zh-HK'
     const audio = await synthesize(text, azureLang)
-    // Soft metering for signed-in users only — never blocks tap-to-play.
+    // Meter signed-in usage for Free (hard cap) and Pro/Max (unlimited).
     if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
     }

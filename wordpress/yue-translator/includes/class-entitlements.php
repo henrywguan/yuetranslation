@@ -48,7 +48,8 @@ final class Yue_Entitlements
             return [
                 'plan' => 'pro',
                 'live_minutes' => (int) get_option('yue_pro_live_minutes', 600),
-                'tts_chars' => (int) get_option('yue_pro_tts_chars', 200000),
+                // Unlimited TTS — usage still metered; 0 means no hard cap.
+                'tts_chars' => 0,
                 'auto_speak' => (bool) get_option('yue_pro_auto_speak', true),
                 'can_live' => true,
                 'text_translate' => true,
@@ -94,12 +95,14 @@ final class Yue_Entitlements
                     'liveSeconds' => 0,
                     'ttsChars' => 0,
                 ],
+                'ttsUnlimited' => false,
                 'upgradeUrl' => (string) get_option('yue_upgrade_url', ''),
                 'loginUrl' => wp_login_url(get_permalink() ?: home_url('/')),
                 'allowed' => [
                     'live' => false,
                     'autoSpeak' => false,
                     'textTranslate' => true,
+                    // Guests may tap-to-play without signing in (no persistent meter).
                     'tts' => true,
                 ],
                 'reason' => 'login_required',
@@ -110,13 +113,21 @@ final class Yue_Entitlements
         $limits = self::limits_for_plan($plan);
         $usage = Yue_Usage::for_user($user_id);
         $live_limit = max(0, $limits['live_minutes']) * 60;
+        $tts_unlimited = ($plan === 'pro');
         $tts_limit = max(0, $limits['tts_chars']);
         $live_remaining = max(0, $live_limit - (int) $usage['liveSeconds']);
-        $tts_remaining = max(0, $tts_limit - (int) $usage['ttsChars']);
+        $tts_remaining = $tts_unlimited ? 0 : max(0, $tts_limit - (int) $usage['ttsChars']);
 
         $can_live = !empty($limits['can_live']) && $live_remaining > 0;
-        // Tap-to-play TTS is free for everyone; auto-speak stays a plan flag.
-        $can_tts = true;
+        $can_tts = $tts_unlimited || ($tts_limit > 0 && $tts_remaining > 0);
+        $can_auto_speak = !empty($limits['auto_speak']) && $can_tts;
+
+        $reason = null;
+        if (!$can_live) {
+            $reason = $live_limit <= 0 ? 'no_live_quota' : 'live_quota_exhausted';
+        } elseif (!$can_tts) {
+            $reason = $tts_limit <= 0 ? 'no_tts_quota' : 'tts_quota_exhausted';
+        }
 
         return [
             'loggedIn' => $logged_in,
@@ -128,15 +139,16 @@ final class Yue_Entitlements
                 'liveSeconds' => $live_remaining,
                 'ttsChars' => $tts_remaining,
             ],
+            'ttsUnlimited' => $tts_unlimited,
             'upgradeUrl' => (string) get_option('yue_upgrade_url', ''),
             'loginUrl' => wp_login_url(get_permalink() ?: home_url('/')),
             'allowed' => [
                 'live' => $can_live,
-                'autoSpeak' => !empty($limits['auto_speak']),
+                'autoSpeak' => $can_auto_speak,
                 'textTranslate' => !empty($limits['text_translate']),
                 'tts' => $can_tts,
             ],
-            'reason' => !$can_live ? ($live_limit <= 0 ? 'no_live_quota' : 'live_quota_exhausted') : null,
+            'reason' => $reason,
         ];
     }
 
@@ -163,7 +175,9 @@ final class Yue_Entitlements
         if (empty($snap['allowed']['tts'])) {
             return new WP_Error(
                 'yue_entitlement',
-                'Voice playback is not available.',
+                ($snap['reason'] ?? '') === 'tts_quota_exhausted' || ($snap['reason'] ?? '') === 'no_tts_quota'
+                    ? 'Voice playback needs remaining TTS quota.'
+                    : 'Voice playback is not available.',
                 ['status' => 402, 'entitlement' => $snap]
             );
         }

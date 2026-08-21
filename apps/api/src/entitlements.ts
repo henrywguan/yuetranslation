@@ -12,6 +12,7 @@ export type Entitlement = {
   limits: {
     plan: string
     live_minutes: number
+    /** 0 when TTS is unlimited (Pro/Max) or disabled. */
     tts_chars: number
     auto_speak: boolean
     can_live: boolean
@@ -19,6 +20,8 @@ export type Entitlement = {
   }
   usage: { month: string; liveSeconds: number; ttsChars: number; translateCount: number }
   remaining: { liveSeconds: number; ttsChars: number }
+  /** Pro/Max: usage is tracked but never gates the speaker. */
+  ttsUnlimited: boolean
   upgradeUrl: string
   loginUrl: string
   allowed: { live: boolean; autoSpeak: boolean; textTranslate: boolean; tts: boolean }
@@ -45,7 +48,8 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     return {
       plan: 'pro',
       live_minutes: env.proLiveMinutes,
-      tts_chars: env.proTtsChars,
+      // Unlimited TTS — usage is still metered; 0 means no hard cap.
+      tts_chars: 0,
       auto_speak: true,
       can_live: true,
       text_translate: true,
@@ -55,7 +59,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     return {
       plan: 'max',
       live_minutes: env.maxLiveMinutes,
-      tts_chars: env.maxTtsChars,
+      tts_chars: 0,
       auto_speak: true,
       can_live: true,
       text_translate: true,
@@ -66,7 +70,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     return {
       plan: 'guest',
       live_minutes: mins,
-      // Tap-to-play TTS is free for guests; char counters stay informational only.
+      // Guests can tap-to-play without an account (no persistent meter).
       tts_chars: 0,
       auto_speak: false,
       can_live: mins > 0 && !env.requireLogin,
@@ -76,19 +80,31 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
   return {
     plan: 'free',
     live_minutes: env.freeLiveMinutes,
-    // Metering may still record chars; tap-to-play is never quota-gated.
     tts_chars: env.freeAllowTts ? env.freeTtsChars : 0,
-    // Auto-speak remains Pro/Max; free + guests get unlimited tap-to-play.
     auto_speak: false,
     can_live: env.freeAllowLive,
     text_translate: true,
   }
 }
 
-/** Tap-to-play TTS is free for everyone; auto-speak stays a plan flag. */
-export function voiceAccess(ttsLimit: number, ttsUsed: number, autoSpeakPlan: boolean) {
-  const ttsRemaining = ttsLimit > 0 ? Math.max(0, ttsLimit - ttsUsed) : 0
-  return { tts: true, autoSpeak: autoSpeakPlan, ttsRemaining }
+/**
+ * Tap-to-play TTS access.
+ * - Free: hard char quota.
+ * - Pro/Max (`unlimited`): always on; usage still counted separately.
+ * - Auto-speak follows the plan flag (and still requires TTS access).
+ */
+export function voiceAccess(
+  ttsLimit: number,
+  ttsUsed: number,
+  autoSpeakPlan: boolean,
+  unlimited = false,
+) {
+  if (unlimited) {
+    return { tts: true, autoSpeak: autoSpeakPlan, ttsRemaining: -1, unlimited: true }
+  }
+  const ttsRemaining = Math.max(0, ttsLimit - ttsUsed)
+  const tts = ttsLimit > 0 && ttsRemaining > 0
+  return { tts, autoSpeak: autoSpeakPlan && tts, ttsRemaining, unlimited: false }
 }
 
 function buildSnapshot(
@@ -116,6 +132,7 @@ function buildSnapshot(
       limits,
       usage,
       remaining: { liveSeconds: 0, ttsChars: 0 },
+      ttsUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
@@ -140,12 +157,14 @@ function buildSnapshot(
       limits,
       usage,
       remaining: { liveSeconds: 0, ttsChars: 0 },
+      ttsUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
         live: false,
         autoSpeak: false,
         textTranslate: true,
+        // Guests may tap-to-play without signing in (no persistent meter).
         tts: true,
       },
       reason: 'login_required',
@@ -154,10 +173,15 @@ function buildSnapshot(
 
   const limits = limitsForPlan(plan)
   const liveLimit = Math.max(0, limits.live_minutes) * 60
+  const ttsUnlimited = plan === 'pro' || plan === 'max'
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
-  const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak)
+  const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
   const canLive = limits.can_live && liveRemaining > 0
+
+  let reason: string | null = null
+  if (!canLive) reason = liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted'
+  else if (!voice.tts) reason = ttsLimit <= 0 ? 'no_tts_quota' : 'tts_quota_exhausted'
 
   return {
     loggedIn,
@@ -167,7 +191,8 @@ function buildSnapshot(
     disabled: false,
     limits,
     usage,
-    remaining: { liveSeconds: liveRemaining, ttsChars: voice.ttsRemaining },
+    remaining: { liveSeconds: liveRemaining, ttsChars: Math.max(0, voice.ttsRemaining) },
+    ttsUnlimited,
     upgradeUrl: upgradeUrl(),
     loginUrl: loginUrl(),
     allowed: {
@@ -176,7 +201,7 @@ function buildSnapshot(
       textTranslate: limits.text_translate,
       tts: voice.tts,
     },
-    reason: !canLive ? (liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted') : null,
+    reason,
   }
 }
 
@@ -201,6 +226,7 @@ function localEntitlement(): Entitlement {
       },
       usage: { month, liveSeconds: 0, ttsChars: 0, translateCount: 0 },
       remaining: { liveSeconds: 9999 * 60, ttsChars: 999999 },
+      ttsUnlimited: true,
       upgradeUrl: '',
       loginUrl: '',
       allowed: { live: true, autoSpeak: true, textTranslate: true, tts: true },

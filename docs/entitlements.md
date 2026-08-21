@@ -1,8 +1,8 @@
 # Entitlements & usage metering
 
-Meter **live minutes** per plan. **Text translation**, character breakdown, and **tap-to-play voice (TTS)** are free for guests and all signed-in users when `YUE_REQUIRE_LOGIN=1`. Live mic still requires login + plan quota. **Auto-speak** stays on Pro/Max.
+Meter **live minutes** per plan. **Text translation** and character breakdown stay free for guests. **Tap-to-play voice (TTS)** is available to guests without login; **Free** is metered with a hard monthly char cap; **Pro/Max** are metered but **unlimited**. **Auto-speak** stays on Pro/Max. Live mic still requires login + plan quota.
 
-按方案计量**实时分钟**。**文字翻译**、逐字拆解与**点击喇叭朗读（TTS）**对访客与所有登录用户免费。实时麦克风仍须登录并受方案配额限制。**自动朗读**仍属专业版／旗舰版。
+按方案计量**实时分钟**。**文字翻译**与逐字拆解对访客免费。**点击喇叭朗读（TTS）**访客可不登录试用；**免费版**按月字数硬上限计量；**专业版／旗舰版**计量但**无限**。**自动朗读**仍属专业版／旗舰版。实时麦克风仍须登录并受方案配额限制。
 
 Implemented in the local Express API (`apps/api`) and the WordPress plugin (`wordpress/yue-translator`).
 
@@ -29,6 +29,7 @@ Returned by `/api/health` and `/api/entitlement`:
   },
   "usage": { "month": "2026_08", "liveSeconds": 120, "ttsChars": 0, "translateCount": 3 },
   "remaining": { "liveSeconds": 1080, "ttsChars": 30000 },
+  "ttsUnlimited": false,
   "allowed": { "live": true, "autoSpeak": false, "textTranslate": true, "tts": true },
   "upgradeUrl": "https://example.com/pricing",
   "loginUrl": "https://example.com/wp-login.php",
@@ -36,9 +37,9 @@ Returned by `/api/health` and `/api/entitlement`:
 }
 ```
 
-`allowed.tts` is always `true` except for disabled accounts. `tts_chars` / remaining values may still be recorded for analytics but do **not** gate the speaker.
+Pro/Max snapshots set `ttsUnlimited: true` and `limits.tts_chars: 0`. The plan chip shows `{used} used / unlimited` for voice; Free shows chars left and locks the speaker when remaining hits 0.
 
-除已停用账户外，`allowed.tts` 恒为 `true`。`tts_chars`／剩余值仍可作分析记录，但**不会**锁喇叭。
+专业版／旗舰版快照带 `ttsUnlimited: true` 且 `limits.tts_chars: 0`。计划芯片语音显示 `{已用} used / unlimited`；免费版显示剩余字数，用尽后锁喇叭。
 
 ## Gate points / 闸门
 
@@ -46,7 +47,7 @@ Returned by `/api/health` and `/api/entitlement`:
 | --- | --- |
 | `GET /speech-token` | live entitlement / 实时权益 |
 | `POST /usage/heartbeat` | live entitlement, then add seconds / 先检查实时权益，再累加秒数 |
-| `POST /tts` | always allowed (except disabled); soft-meters chars when signed in / 除停用外一律可用；登录后软计量字数 |
+| `POST /tts` | Free: char quota; Pro/Max: always (usage counted); guests: allowed / 免费版字数；专业版无限（仍计数）；访客可用 |
 | `POST /translate` | `allowed.textTranslate` (always true for guests); increments `translate_count` when metered / 文字翻译权限（访客可用）；计量开启时累加翻译次数 |
 | `POST /breakdown` | same as translate / 同文字翻译 |
 
@@ -58,6 +59,6 @@ Admin panel (`#/admin`, allowlist `YUE_ADMIN_EMAILS`): see `docs/admin.md`.
 
 管理后台（`#/admin`，邮箱白名单 `YUE_ADMIN_EMAILS`）：见 `docs/admin.md`。
 
-Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use text mode and tap-to-play voice at `#/app`; live mic prompts sign-in via the Plan chip and API 401.
+Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use text mode and tap-to-play voice at `#/app`; live mic prompts sign-in via the Plan chip and API 401. Free users are TTS-capped; Pro/Max are unlimited.
 
-生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`。访客可在 `#/app` 使用文字模式与点击朗读；实时麦克风通过 Plan 芯片与 API 401 提示登录。
+生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`。访客可在 `#/app` 使用文字模式与点击朗读；实时麦克风通过 Plan 芯片与 API 401 提示登录。免费版有 TTS 上限；专业版／旗舰版无限。
