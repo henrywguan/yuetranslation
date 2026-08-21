@@ -2,20 +2,16 @@ import { useEffect, useState, type ReactNode } from 'react'
 import {
   ensureJyutpingSegs,
   hasHan,
-  isValidDefinition,
   toJyutpingCached,
   type JyutSeg,
 } from '../lib/jyutping'
-import { charSense } from '../lib/charGloss'
 import { useJpPopup } from '../lib/useJpPopup'
-import { CharDetailSheet, type CharDetail } from './CharDetailSheet'
 import { JpPop } from './JpPop'
 import { JyutRuby } from './JyutRuby'
 
 /** Cantonese line: ruby Jyutping above Han, or popup-on-hint for tight cards. */
 export function CantoneseText({
   text,
-  definition = '',
   definitions,
   className,
   placeholder,
@@ -24,6 +20,7 @@ export function CantoneseText({
   jpMode = 'inline',
 }: {
   text: string
+  /** Kept for call-site compatibility; glosses live in the Details panel. */
   definition?: string
   /** When 2+ English senses exist, Han gets a dotted underline + tap opens details. */
   definitions?: string[]
@@ -31,8 +28,7 @@ export function CantoneseText({
   placeholder?: ReactNode
   /**
    * When set, the whole phrase is clickable (opens phrase breakdown / selects
-   * variation). Per-character drills stay in the Details panel — tapping Han
-   * on the result line must not skip straight into a single-character sheet.
+   * variation). Per-character drills stay in the Details panel.
    */
   onActivate?: (text: string) => void
   activateLabel?: string
@@ -45,9 +41,7 @@ export function CantoneseText({
   const trimmed = text.trim()
   const [jp, setJp] = useState(() => toJyutpingCached(trimmed))
   const [segs, setSegs] = useState<JyutSeg[]>([])
-  const [detail, setDetail] = useState<CharDetail | null>(null)
   const { tipId, show, bind, wrapRef } = useJpPopup(Boolean(jp))
-  const phraseDef = isValidDefinition(definition) ? definition.trim() : ''
   const multiDefs = (definitions || []).map((d) => d.trim()).filter(Boolean)
   const hasMultiDef = multiDefs.length > 1
 
@@ -72,18 +66,9 @@ export function CantoneseText({
 
   if (!trimmed) return placeholder ? <>{placeholder}</> : null
 
-  function openSeg(seg: JyutSeg) {
-    const own = charSense(seg.char)
-    if (!phraseDef && !own) return
-    setDetail({ ...seg, phrase: trimmed, definition: phraseDef })
-  }
-
-  const drillable = segs.some((seg) => Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char)))
   const popupJp = jpMode === 'popup' && Boolean(jp)
   // Prefer phrase → Details breakdown whenever the parent wired onActivate.
   const phraseActivate = Boolean(onActivate) && !popupJp
-  // Only allow inline char sheets when there is no phrase-level activate handler.
-  const allowCharDrill = drillable && !hasMultiDef && !popupJp && !onActivate
 
   const hanClass = [
     className || '',
@@ -92,27 +77,6 @@ export function CantoneseText({
   ]
     .filter(Boolean)
     .join(' ')
-
-  const renderChar =
-    allowCharDrill && segs.length
-      ? (seg: JyutSeg, _i: number) => {
-          const canDrill = Boolean(seg.jp) && Boolean(phraseDef || charSense(seg.char))
-          if (!canDrill) return seg.char
-          return (
-            <button
-              type="button"
-              className="han-drill"
-              aria-haspopup="dialog"
-              onClick={(e) => {
-                e.stopPropagation()
-                openSeg(seg)
-              }}
-            >
-              {seg.char}
-            </button>
-          )
-        }
-      : undefined
 
   const popupHan = popupJp ? (
     <span
@@ -137,8 +101,7 @@ export function CantoneseText({
           han={trimmed}
           segs={segs}
           size="lg"
-          className={phraseActivate || hasMultiDef ? 'jyut-ruby--phrase' : 'jyut-ruby--hint'}
-          renderChar={renderChar}
+          className="jyut-ruby--hint"
         />
         {!phraseActivate ? (
           <JpPop show={show} id={tipId} han={trimmed} anchorRef={wrapRef} />
@@ -153,7 +116,6 @@ export function CantoneseText({
       className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}${jp && !popupJp ? ' cantonese-block--ruby' : ''}`}
     >
       {popupJp ? popupHan : inlineHan}
-      <CharDetailSheet detail={detail} onClose={() => setDetail(null)} />
     </span>
   )
 

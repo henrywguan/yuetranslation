@@ -42,7 +42,7 @@ export async function loadAuthConfig(): Promise<void> {
   if (!supabaseEnabled()) configLoad = null
 }
 
-export function getSupabase(): SupabaseClient | null {
+function getSupabase(): SupabaseClient | null {
   if (!supabaseEnabled()) return null
   if (!client) {
     client = createClient(supabaseUrl, supabaseAnonKey, {

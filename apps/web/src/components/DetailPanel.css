@@ -120,17 +120,7 @@
   color: var(--muted);
 }
 
-.detail-panel-jp {
-  margin: 6px 0 0;
-  font-size: 0.92rem;
-  color: var(--jade-bright);
-}
 
-.detail-panel-ipa {
-  margin-left: 8px;
-  color: var(--muted);
-  font-size: 0.85em;
-}
 
 .detail-panel-translation {
   margin: 8px 0 0;

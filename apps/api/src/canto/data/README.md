@@ -78,19 +78,19 @@ On EN→粵 translations, the API:
 3. **Attests** the string against **CC-Canto (+ seed) headwords** / 用 **CC-Canto（+ 种子）词头**核验字符串
 4. If still Mandarin-leaning or weakly attested → one constrained rewrite (when a model key is set) / 若仍偏普通话或核验偏弱 → 在有密钥时做一次受限改写
 
-## words.hk (future / optional) / 粤典（未来 / 可选）
+## words.hk (optional / license-gated) / 粤典（可选 / 许可闸门）
 
-Import tooling and a license gate remain for later:
+Import tooling exists but stays **off** unless both flags are set (non-commercial license only):
 
-导入工具与许可闸门留待以后：
+导入工具已就绪，但默认关闭；仅在两个开关都打开时加载（限非商业许可）：
 
 - `YUE_ALLOW_NONCOMMERCIAL_DICTS=1` + `YUE_ENABLE_WORDSHK=1`
 - `npm run import:wordshk` after placing a CSV under `vendor/`  
   将 CSV 放到 `vendor/` 后运行 `npm run import:wordshk`
 
-Default: both flags **off**. Paid deploys should stay on CC-Canto only until licensed.
+Paid / commercial deploys should stay on CC-Canto only until licensed.
 
-默认：两个开关都**关闭**。付费部署在获得许可前应只用 CC-Canto。
+付费／商业部署在获得许可前应只用 CC-Canto。
 
 ## Import commands / 导入命令
 

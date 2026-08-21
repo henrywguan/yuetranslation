@@ -1,6 +1,5 @@
 import { app } from './app.js'
-import { env, openaiStatus } from './env.js'
-import { cloudReady } from './env.js'
+import { cloudReady, env, openaiStatus } from './env.js'
 
 app.listen(env.port, () => {
   const openai = openaiStatus()

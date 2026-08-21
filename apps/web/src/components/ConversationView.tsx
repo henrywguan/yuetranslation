@@ -138,7 +138,7 @@ export function ConversationView() {
                       text={yueText}
                       definition={face.yueDefinition}
                       definitions={face.yueDefinitions}
-                      className="pane-hero-canto"
+                      className="pane-hero--yue"
                       onActivate={openYueDetails}
                     />
                     {face.yueTranslation ? (

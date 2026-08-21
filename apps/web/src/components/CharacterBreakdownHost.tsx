@@ -6,7 +6,7 @@ import {
 } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
-import { charSense, pickCharGloss } from '../lib/charGloss'
+import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
@@ -26,7 +26,7 @@ const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
 
 function speakLangFor(text: string): Lang {
-  return /[一-龥]/.test(text) ? 'yue' : 'en'
+  return hasHan(text) ? 'yue' : 'en'
 }
 
 function defaultGeom(): PanelBox {
@@ -169,7 +169,7 @@ export function CharacterBreakdownHost() {
   }, [top, minimized, stack.length, popDetail, closeBreakdown])
 
   const openChar = (row: CharBreakdown) => {
-    const sense = pickCharGloss(row.meaning, charSense(row.char))
+    const sense = pickCharGloss(row.meaning, glossForChar(row.char))
     if (!sense && !row.jyutping) return
     pushDetail({
       kind: 'char',
@@ -198,7 +198,7 @@ export function CharacterBreakdownHost() {
       ? (top.alternatives || []).map((a) => a.trim()).filter(Boolean)
       : []
   const topLabel = top.kind === 'phrase' ? top.phrase : top.char
-  const showRubyTitle = /[一-龥]/.test(topLabel)
+  const showRubyTitle = hasHan(topLabel)
   const titleSegs: JyutSeg[] | undefined =
     top.kind === 'char' && top.jp
       ? [{ char: top.char, jp: top.jp }]
@@ -335,8 +335,8 @@ export function CharacterBreakdownHost() {
               <ul className="detail-panel-list">
                 {rows.map((row, i) => {
                   const meaning = pickCharGloss(row.meaning)
-                  const canDrill = Boolean(meaning || charSense(row.char) || row.jyutping)
-                  const canSpeak = /[一-龥]/.test(row.char)
+                  const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
+                  const canSpeak = isHanChar(row.char)
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
