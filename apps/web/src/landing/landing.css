@@ -88,6 +88,13 @@
   color: var(--on-jade);
 }
 
+/* Keep the day/night switch intact — nav button styles reset padding/color. */
+.ln-nav-links > .theme-toggle {
+  padding: 0;
+  color: inherit;
+  flex: none;
+}
+
 [data-theme='light'] .ln-nav-links button {
   color: color-mix(in srgb, var(--ink) 72%, transparent);
 }
@@ -1478,11 +1485,11 @@
     gap: 10px;
   }
 
-  .ln-nav-links > button:not(.ln-nav-cta) {
+  .ln-nav-links > button:not(.ln-nav-cta):not(.theme-toggle) {
     display: none;
   }
 
-  .ln-nav-links .theme-toggle {
+  .ln-nav-links > .theme-toggle {
     display: inline-flex;
   }
 
