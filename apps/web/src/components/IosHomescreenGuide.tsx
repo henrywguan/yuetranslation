@@ -13,29 +13,127 @@ import './iosHomescreen.css'
 
 const TIP_DELAY_MS = 4500
 
-function ShareIcon({ className }: { className?: string }) {
+/** iOS Share — arrow up out of an open tray (not download). */
+function IosShareGlyph({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
-        fill="currentColor"
-        d="M12 3.2a.9.9 0 0 1 .9.9v8.2l2.3-2.3a.9.9 0 1 1 1.3 1.3l-3.9 3.9a.9.9 0 0 1-1.3 0l-3.9-3.9a.9.9 0 1 1 1.3-1.3l2.3 2.3V4.1a.9.9 0 0 1 .9-.9Zm-6.5 11a.9.9 0 0 1 .9.9v3.2c0 .4.3.7.7.7h10.8c.4 0 .7-.3.7-.7V15a.9.9 0 1 1 1.8 0v3.2a2.5 2.5 0 0 1-2.5 2.5H7.1A2.5 2.5 0 0 1 4.6 18.2V15a.9.9 0 0 1 .9-.9Z"
+        d="M12 14.2V4.2"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.2 7.6 12 3.8l3.8 3.8"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.6 11.4v6.1A2.3 2.3 0 0 0 7.9 19.8h8.2a2.3 2.3 0 0 0 2.3-2.3v-6.1"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
 }
 
-function HomescreenSteps({ numbered }: { numbered?: boolean }) {
-  const steps = [ui.iosHomescreenStep1, ui.iosHomescreenStep2, ui.iosHomescreenStep3]
+/** iOS “Add to Home Screen” action icon — rounded square with plus. */
+function AddToHomeIcon({ className }: { className?: string }) {
   return (
-    <ol className={`ios-hs-steps${numbered ? '' : ' ios-hs-steps--plain'}`}>
-      {steps.map((step, i) => (
-        <li key={step.en} className="ios-hs-step">
-          <span className="ios-hs-step-num" aria-hidden="true">
-            {i === 0 ? <ShareIcon /> : i + 1}
+    <svg className={className} viewBox="0 0 28 28" width="22" height="22" aria-hidden="true">
+      <rect
+        x="3.5"
+        y="3.5"
+        width="21"
+        height="21"
+        rx="5.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+      />
+      <path
+        fill="currentColor"
+        d="M14 8.2a.9.9 0 0 1 .9.9v3.1h3.1a.9.9 0 1 1 0 1.8h-3.1v3.1a.9.9 0 1 1-1.8 0v-3.1H9.9a.9.9 0 1 1 0-1.8h3.1V9.1a.9.9 0 0 1 .9-.9Z"
+      />
+    </svg>
+  )
+}
+
+/**
+ * Compact share-sheet row mock — teaches recognition of the real iOS control
+ * without embedding a full-device screenshot (theme-safe, bilingual, small).
+ */
+function ShareSheetAddRow() {
+  return (
+    <figure className="ios-hs-sheet" aria-label={biPlain(ui.iosHomescreenSheetHint)}>
+      <figcaption className="ios-hs-sheet-caption">
+        <BiText copy={ui.iosHomescreenSheetHint} size="sm" hideJp />
+      </figcaption>
+      <div className="ios-hs-sheet-stage">
+        <div className="ios-hs-sheet-row" role="presentation">
+          <span className="ios-hs-sheet-icon" aria-hidden="true">
+            <AddToHomeIcon />
           </span>
-          <BiText copy={step} size="sm" />
-        </li>
-      ))}
+          <span className="ios-hs-sheet-label">
+            <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
+          </span>
+        </div>
+        <span className="ios-hs-sheet-pointer" aria-hidden="true">
+          <svg viewBox="0 0 40 28" width="36" height="24">
+            <path
+              d="M34 6C22 6 14 12 10 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+            <path d="M6 12.5 10.2 19.8 17 15.2" fill="currentColor" />
+          </svg>
+        </span>
+      </div>
+    </figure>
+  )
+}
+
+function HomescreenSteps() {
+  return (
+    <ol className="ios-hs-steps">
+      <li className="ios-hs-step">
+        <span className="ios-hs-step-num" aria-hidden="true">
+          <IosShareGlyph />
+        </span>
+        <div className="ios-hs-step-body">
+          <BiText copy={ui.iosHomescreenStep1} size="sm" />
+        </div>
+      </li>
+      <li className="ios-hs-step ios-hs-step--with-sheet">
+        <span className="ios-hs-step-num" aria-hidden="true">
+          2
+        </span>
+        <div className="ios-hs-step-body">
+          <BiText copy={ui.iosHomescreenStep2} size="sm" />
+          <ShareSheetAddRow />
+        </div>
+      </li>
+      <li className="ios-hs-step">
+        <span className="ios-hs-step-num" aria-hidden="true">
+          3
+        </span>
+        <div className="ios-hs-step-body">
+          <BiText copy={ui.iosHomescreenStep3} size="sm" />
+        </div>
+      </li>
     </ol>
   )
 }
@@ -100,7 +198,7 @@ export function IosHomescreenGuideDialog({ open, onClose }: GuideDialogProps) {
             <p className="ios-hs-dialog-lead">
               <BiText copy={ui.iosHomescreenTipBody} size="sm" />
             </p>
-            <HomescreenSteps numbered />
+            <HomescreenSteps />
             <button type="button" className="ios-hs-dialog-done" onClick={onClose}>
               <BiText copy={ui.iosHomescreenGotIt} size="sm" />
             </button>
@@ -184,7 +282,7 @@ export function IosHomescreenTip() {
               </button>
             </div>
           </div>
-          {expanded ? <HomescreenSteps numbered /> : null}
+          {expanded ? <HomescreenSteps /> : null}
         </motion.aside>
       ) : null}
     </AnimatePresence>
