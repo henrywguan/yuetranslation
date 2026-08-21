@@ -74,11 +74,13 @@ g.window = globalThis
 g.Audio = function Audio(_src?: string) {
   return makeEl(_src || '')
 }
-g.URL = {
-  createObjectURL: () => 'blob:probe-tts',
-  revokeObjectURL: () => {},
+// Keep the real URL constructor; only stub object-URL helpers used by tts.ts.
+const RealURL = globalThis.URL
+g.URL = class extends RealURL {
+  static createObjectURL = () => 'blob:probe-tts'
+  static revokeObjectURL = () => {}
 }
-g.fetch = async () => ({ ok: true, catch() { return this } })
+g.fetch = async () => ({ ok: true })
 g.speechSynthesis = {
   resume() {},
   cancel() {},
