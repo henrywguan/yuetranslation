@@ -317,9 +317,6 @@ export function IosHomescreenFooterLink() {
         </span>
         <span className="ios-hs-footer-card-copy">
           <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
-          <span className="ios-hs-footer-card-hint">
-            <BiText copy={ui.iosHomescreenFooterHint} size="sm" hideJp />
-          </span>
         </span>
         <span className="ios-hs-footer-card-chevron" aria-hidden="true">
           ›
