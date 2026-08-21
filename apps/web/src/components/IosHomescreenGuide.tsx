@@ -313,7 +313,7 @@ export function IosHomescreenFooterLink() {
       >
         <span className="ios-hs-footer-card-glow" aria-hidden="true" />
         <span className="ios-hs-footer-card-icon" aria-hidden="true">
-          <AddToHomeIcon />
+          <IosShareGlyph />
         </span>
         <span className="ios-hs-footer-card-copy">
           <BiText copy={ui.addToHomeScreen} size="sm" hideJp />
