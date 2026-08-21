@@ -131,7 +131,7 @@ export function Landing() {
               </h4>
               <BiText copy={f.desc} size="sm" as="p" />
               {'aside' in f && f.aside ? (
-                <BiText className="ln-feature-aside" copy={f.aside} size="sm" as="p" hideJp />
+                <BiText className="ln-feature-aside" copy={f.aside} size="sm" as="p" only="en" />
               ) : null}
             </div>
           ))}

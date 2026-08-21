@@ -267,9 +267,9 @@ export const ui = {
     jp: 'mui5 geoi3 jyut6 jyu5 haa6 min6 dou1 jau5 jyut6 ping3 tung4 sing1 diu6, jat1 bin1 gong2 jat1 bin1 hok6.',
   },
   featJpAside: {
-    en: '(And for my ABC’s)',
-    zh: '（同埋我啲 ABC）',
-    jp: '(tung4 maai4 ngo5 di1 ABC)',
+    en: "(And for my ABC's)",
+    zh: '',
+    jp: '',
   },
   featHkTitle: { en: 'Hong Kong Cantonese', zh: '香港粵語', jp: 'hoeng1 gong2 jyut6 jyu5' },
   featHkDesc: {
