@@ -12,19 +12,19 @@ export const ui = {
   modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
   modeSoloLine: {
-    en: 'Hold to speak. Your line lands in both languages.',
-    zh: '按住說話，雙語同時落地。',
-    jp: 'on3 zyu6 gong2 waa6, soeng1 jyu5 tung4 si4 lok6 dei6.',
+    en: 'Tap/Hold to speak — translations appear in both languages.',
+    zh: '輕按或按住說話——雙語譯文即時出現。',
+    jp: 'hing1 on3 waak6 on3 zyu6 gong2 waa6 — soeng1 jyu5 jik6 man4 zik1 si4 ceot1 jin6.',
   },
   modeFaceLine: {
-    en: 'One phone. Two faces of language — talking to each other.',
-    zh: '一部手機，兩種語言面對面交談。',
-    jp: 'jat1 bou6 sau2 gei1, loeng5 zung2 jyu5 jin4 min6 deoi3 min6 gaau1 taam4.',
+    en: 'One phone. Two languages, split screen — perfect for conversations!',
+    zh: '一部手機，雙語分屏——最適合對話！',
+    jp: 'jat1 bou6 sau2 gei1, soeng1 jyu5 fan1 ping4 — zeoi3 sik1 hap6 deoi3 waa6!',
   },
   modeTextLine: {
-    en: 'Type, pause — translation settles in.',
-    zh: '輸入、停頓，譯文自然落下。',
-    jp: 'jyu5 jap6, ting4 dyun6, jik6 man4 zi6 jin4 lok6 haa6.',
+    en: 'Type and wait for translation to appear',
+    zh: '輸入後稍等，譯文就會出現',
+    jp: 'jyu5 jap6 hau6 siu2 dang2, jik6 man4 zau6 wui5 ceot1 jin6',
   },
 
   holdOrTapToSpeak: {

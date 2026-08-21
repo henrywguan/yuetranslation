@@ -843,60 +843,17 @@
   }
 }
 
-.ln-micro-pause {
-  color: var(--muted);
-  letter-spacing: 0.12em;
-  animation: ln-micro-pause-fade 1.2s ease-in-out infinite;
-}
-
-@keyframes ln-micro-pause-fade {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-
-.ln-micro-keys {
+.ln-micro-thinking {
   display: flex;
-  gap: 6px;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  width: 100%;
+  min-height: 4.5rem;
 }
 
-.ln-micro-keys[data-active='true'] {
-  opacity: 1;
-}
-
-.ln-micro-key {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 32px;
-  border-radius: 7px;
-  font-size: 0.75rem;
-  font-weight: 650;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--harbor) 60%, transparent);
-  border: 1px solid color-mix(in srgb, var(--glass-border) 75%, transparent);
-  animation: ln-micro-key-tap 1.6s ease-in-out infinite;
-}
-
-@keyframes ln-micro-key-tap {
-  0%,
-  100% {
-    transform: translateY(0);
-    color: var(--muted);
-  }
-  30% {
-    transform: translateY(2px);
-    color: var(--ink);
-    background: color-mix(in srgb, var(--jade) 14%, transparent);
-  }
+.ln-micro-tt.translate-thinking,
+.ln-micro-tt {
+  transform: scale(0.78);
+  transform-origin: center top;
 }
 
 .ln-micro--text .ln-micro-yue {
@@ -924,8 +881,6 @@
   .ln-micro-mic.is-active .ln-micro-mic-ring,
   .ln-micro-speak.is-active,
   .ln-micro-caret,
-  .ln-micro-pause,
-  .ln-micro-key,
   .ln-micro-thumb {
     animation: none !important;
   }
