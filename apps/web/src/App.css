@@ -2214,6 +2214,7 @@
 .solo-translation .result-with-def-line {
   width: fit-content;
   max-width: 100%;
+  align-items: center;
 }
 
 .text-result .cantonese-activate,
