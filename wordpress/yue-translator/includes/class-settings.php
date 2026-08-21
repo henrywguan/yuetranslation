@@ -134,11 +134,11 @@ final class Yue_Settings
                     </tr>
                     <tr>
                         <th>Free TTS characters / month</th>
-                        <td><input type="number" min="0" name="yue_free_tts_chars" value="<?php echo esc_attr((string) get_option('yue_free_tts_chars', 30000)); ?>" /> <span class="description">0 = tap-to-play speaker disabled on Free. Auto-speak stays a Pro setting.</span></td>
+                        <td><input type="number" min="0" name="yue_free_tts_chars" value="<?php echo esc_attr((string) get_option('yue_free_tts_chars', 30000)); ?>" /> <span class="description">Informational metering only — tap-to-play TTS is free for guests and all plans. Auto-speak stays a Pro setting.</span></td>
                     </tr>
                     <tr>
                         <th>Pro TTS characters / month</th>
-                        <td><input type="number" min="0" name="yue_pro_tts_chars" value="<?php echo esc_attr((string) get_option('yue_pro_tts_chars', 200000)); ?>" /></td>
+                        <td><input type="number" min="0" name="yue_pro_tts_chars" value="<?php echo esc_attr((string) get_option('yue_pro_tts_chars', 200000)); ?>" /> <span class="description">Informational metering only — does not gate the speaker.</span></td>
                     </tr>
                     <tr>
                         <th>Free auto-speak</th>
@@ -162,7 +162,7 @@ final class Yue_Settings
                 <li><code>GET /wp-json/yue/v1/health</code> — engines + entitlement snapshot</li>
                 <li><code>GET /speech-token</code> — gated by <code>assert_can_live()</code></li>
                 <li><code>POST /usage/heartbeat</code> — meters live seconds every ~15s; stops when exhausted</li>
-                <li><code>POST /tts</code> — gated by <code>assert_can_tts()</code></li>
+                <li><code>POST /tts</code> — tap-to-play free for everyone (<code>assert_can_tts()</code> only blocks when voice is unavailable)</li>
                 <li><code>POST /translate</code> — text path (Jyutping stays client-side / free)</li>
             </ol>
 

@@ -129,7 +129,8 @@ export function PlanChip() {
   const plan = entitlement.plan
   const showSignIn = !entitlement.loggedIn && entitlement.requireLogin
   const paid = plan === 'pro' || plan === 'max'
-  const showVoiceQuota = entitlement.limits.tts_chars > 0
+  // Tap-to-play TTS is free for everyone — don't surface a voice quota meter.
+  const showVoiceQuota = false
 
   if (showSignIn) {
     return (

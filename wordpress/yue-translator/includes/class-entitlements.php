@@ -100,7 +100,7 @@ final class Yue_Entitlements
                     'live' => false,
                     'autoSpeak' => false,
                     'textTranslate' => true,
-                    'tts' => false,
+                    'tts' => true,
                 ],
                 'reason' => 'login_required',
             ];
@@ -115,7 +115,8 @@ final class Yue_Entitlements
         $tts_remaining = max(0, $tts_limit - (int) $usage['ttsChars']);
 
         $can_live = !empty($limits['can_live']) && $live_remaining > 0;
-        $can_tts = $tts_limit > 0 && $tts_remaining > 0;
+        // Tap-to-play TTS is free for everyone; auto-speak stays a plan flag.
+        $can_tts = true;
 
         return [
             'loggedIn' => $logged_in,
@@ -131,7 +132,7 @@ final class Yue_Entitlements
             'loginUrl' => wp_login_url(get_permalink() ?: home_url('/')),
             'allowed' => [
                 'live' => $can_live,
-                'autoSpeak' => !empty($limits['auto_speak']) && $can_tts,
+                'autoSpeak' => !empty($limits['auto_speak']),
                 'textTranslate' => !empty($limits['text_translate']),
                 'tts' => $can_tts,
             ],
@@ -162,7 +163,7 @@ final class Yue_Entitlements
         if (empty($snap['allowed']['tts'])) {
             return new WP_Error(
                 'yue_entitlement',
-                'Text-to-speech is not available on your plan or TTS quota is exhausted.',
+                'Voice playback is not available.',
                 ['status' => 402, 'entitlement' => $snap]
             );
         }

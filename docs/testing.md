@@ -29,9 +29,9 @@ Useful env flags / 常用环境变量：
 
 ### Live DeepSeek + Azure pipeline / 付费 DeepSeek + Azure 通路
 
-When keys are configured and you want to verify the paid paths (speech token, TTS, model MT, Solo UI):
+When keys are configured and you want to verify Azure/model paths (speech token, free tap-to-play TTS, model MT, Solo UI):
 
-密钥已配置、需要核验付费通路（语音令牌、朗读、模型翻译、独白界面）时：
+密钥已配置、需要核验 Azure／模型通路（语音令牌、人人免费的点击朗读、模型翻译、独白界面）时：
 
 ```bash
 npm run test:translate:live

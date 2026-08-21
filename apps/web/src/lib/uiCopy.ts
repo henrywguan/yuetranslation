@@ -43,7 +43,7 @@ export const ui = {
   autoSpeakPro: { en: 'Auto-speak (Pro)', zh: '自動朗讀（專業版）', jp: 'zi6 dung6 long5 duk6 (zyun1 jip6 baan2)' },
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
   stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },
-  speakPro: { en: 'Voice playback (Pro)', zh: '語音播放（專業版）', jp: 'jyu5 jam1 bo3 fong3 (zyun1 jip6 baan2)' },
+  speakPro: { en: 'Voice playback', zh: '語音播放', jp: 'jyu5 jam1 bo3 fong3' },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
@@ -132,9 +132,9 @@ export const ui = {
     jp: 'dang1 jap6 sin1 ho2 ji5 jung6 JyutTranslate',
   },
   signInRequiredBody: {
-    en: 'Sign in for live translation, voice playback, and monthly usage tracking. Text translate works without an account.',
-    zh: '登入先可以用即時翻譯、語音播放同每月用量。文字翻譯唔使帳戶。',
-    jp: 'dang1 jap6 sin1 ho2 ji5 jik6 si4 faan1 jik6、jyu5 jam1 bo3 fong3 tung4 mui5 jyut6 jung6 loeng6. man4 zi6 faan1 jik6 m5 sai2 zoeng3 wu6.',
+    en: 'Sign in for live translation and monthly usage tracking. Text translate and tap-to-play voice work without an account.',
+    zh: '登入先可以用即時翻譯同每月用量追蹤。文字翻譯同撳喇叭播語音唔使帳戶。',
+    jp: 'dang1 jap6 sin1 ho2 ji5 jik6 si4 faan1 jik6 tung4 mui5 jyut6 jung6 loeng6 zeoi1 zung1. man4 zi6 faan1 jik6 tung4 gam2 laa3 baa1 bo3 jyu5 jam1 m5 sai2 zoeng3 wu6.',
   },
   signInGoogle: { en: 'Continue with Google', zh: '使用 Google 登入', jp: 'jau6 Google dang1 jap6' },
   signInApple: { en: 'Continue with Apple', zh: '使用 Apple 登入', jp: 'jau6 Apple dang1 jap6' },
@@ -371,9 +371,9 @@ export const ui = {
     jp: 'duk6 baak6, deoi3 waa6 mou4 sik1 tung4 man4 zi6',
   },
   freeFeatTts: {
-    en: 'Tap to play voice (~30k chars / month)',
-    zh: '撳喇叭播語音（每月大約三萬字）',
-    jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 (mui5 jyut6 daai6 joek3 saam1 maan6 zi6)',
+    en: 'Tap-to-play voice — free for everyone',
+    zh: '撳喇叭播語音——人人免費',
+    jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 — jan4 jan4 min5 fai3',
   },
   proFeatLive10: {
     en: '~10 hours of live translation / month',
@@ -381,9 +381,9 @@ export const ui = {
     jp: 'mui5 jyut6 daai6 joek3 sap6 siu2 si4 zik1 si4 faan1 jik6',
   },
   proFeatTts: {
-    en: 'Voice playback (auto-speak)',
-    zh: '語音播放（自動朗讀）',
-    jp: 'jyu5 jam1 bo3 fong3 (zi6 dung6 long5 duk6)',
+    en: 'Auto-speak after each translation',
+    zh: '每次翻譯後自動朗讀',
+    jp: 'mui5 ci3 faan1 jik6 hau6 zi6 dung6 long5 duk6',
   },
   proFeatQuality: {
     en: 'Priority, natural Cantonese quality',
@@ -416,9 +416,9 @@ export const ui = {
     jp: 'gaa3 cin4 gan1 zyu6 nei5 ge3 deoi3 waa6 zang1 zoeng2',
   },
   ppSub: {
-    en: 'Start free. Upgrade for more talk-time. Text translation and Jyutping are always included.',
-    zh: '免費開始。升級享更多通話時間。文字翻譯同粵拼永遠包喺入面。',
-    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 tung1 waa6 si4 gaan3. man4 zi6 faan1 jik6 tung4 jyut6 ping3 wing5 jyun5 bau1 hai2 jap6 min6.',
+    en: 'Start free. Upgrade for more live talk-time. Text translation, Jyutping, and tap-to-play voice are free for everyone.',
+    zh: '免費開始。升級享更多即時通話時間。文字翻譯、粵拼同撳喇叭播語音人人免費。',
+    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 zik1 si4 tung1 waa6 si4 gaan3. man4 zi6 faan1 jik6, jyut6 ping3 tung4 gam2 laa3 baa1 bo3 jyu5 jam1 jan4 jan4 min5 fai3.',
   },
   monthly: { en: 'Monthly', zh: '月費', jp: 'jyut6 fai3' },
   annual: { en: 'Annual', zh: '年費', jp: 'nin4 fai3' },
@@ -469,7 +469,7 @@ export const ui = {
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
   cmpModes: { en: 'Solo · Conversation Mode · Text', zh: '獨白 · 對話模式 · 文字', jp: 'duk6 baak6 · deoi3 waa6 mou4 sik1 · man4 zi6' },
-  cmpTts: { en: 'Tap-to-play voice', zh: '撳喇叭播語音', jp: 'gam2 laa3 baa1 bo3 jyu5 jam1' },
+  cmpTts: { en: 'Tap-to-play voice (free)', zh: '撳喇叭播語音（免費）', jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 (min5 fai3)' },
   cmpAutoSpeak: { en: 'Auto-speak after translate', zh: '翻譯後自動朗讀', jp: 'faan1 jik6 hau6 zi6 dung6 long5 duk6' },
   cmpQuality: { en: 'Cantonese quality', zh: '粵語質素', jp: 'jyut6 jyu5 zat1 sou3' },
   cmpSeats: { en: 'Seats', zh: '座位', jp: 'zo6 wai2' },
@@ -496,9 +496,9 @@ export const ui = {
     jp: 'ngo5 seoi1 m4 seoi1 jiu3 zi6 gei2 ge3 API mat6 joek6?',
   },
   faq1a: {
-    en: 'No. Paid plans include Cantonese speech and translation. If you self-host, you can plug in your own Azure/OpenAI keys instead.',
-    zh: '唔使。付費計劃已經包括粵語語音同翻譯。如果自己托管，可以改用你嘅 Azure／OpenAI 密鑰。',
-    jp: 'm4 sai2. fu6 fai3 gai3 waak6 ji5 ging1 bau1 kut3 jyut6 jyu5 jyu5 jam1 tung4 faan1 jik6. jyu4 gwo2 zi6 gei2 tok3 gun2, ho2 ji5 goi2 jung6 nei5 ge3 Azure / OpenAI mat6 joek6.',
+    en: 'No. Tap-to-play voice, text translation, and Jyutping are free for everyone. Paid plans add more live mic time and auto-speak. If you self-host, you can plug in your own Azure/OpenAI keys instead.',
+    zh: '唔使。撳喇叭播語音、文字翻譯同粵拼人人免費。付費計劃加多啲即時咪高峰時間同自動朗讀。如果自己托管，可以改用你嘅 Azure／OpenAI 密鑰。',
+    jp: 'm4 sai2. gam2 laa3 baa1 bo3 jyu5 jam1, man4 zi6 faan1 jik6 tung4 jyut6 ping3 jan4 jan4 min5 fai3. fu6 fai3 gai3 waak6 gaa1 do1 di1 zik1 si4 mai1 gou1 fung1 si4 gaan3 tung4 zi6 dung6 long5 duk6. jyu4 gwo2 zi6 gei2 tok3 gun2, ho2 ji5 goi2 jung6 nei5 ge3 Azure / OpenAI mat6 joek6.',
   },
   faq2q: {
     en: 'What counts as a “live minute”?',
