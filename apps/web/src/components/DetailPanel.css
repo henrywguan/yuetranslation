@@ -78,8 +78,46 @@
 }
 
 .detail-panel-speak {
-  margin-top: 0.2rem;
+  margin-top: 0.35rem;
   flex-shrink: 0;
+}
+
+/* Details panel: Jyutping sits above Han and reads larger than the characters. */
+.detail-panel-title-ruby.jyut-ruby,
+.detail-panel-title .jyut-ruby {
+  align-items: flex-end;
+}
+
+.detail-panel-title-ruby .jyut-ruby-syl,
+.detail-panel-title .jyut-ruby-syl {
+  font-size: 1.35rem !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--jade-bright);
+}
+
+.detail-panel-title-ruby .jyut-ruby-han,
+.detail-panel-title .jyut-ruby-han {
+  font-size: 1.15rem !important;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.detail-panel-alts .jyut-ruby-syl {
+  font-size: 1.12rem !important;
+  font-weight: 700;
+  color: var(--jade-bright);
+}
+
+.detail-panel-alts .jyut-ruby-han {
+  font-size: 0.95rem !important;
+  font-weight: 700;
+}
+
+.detail-panel-ipa-line {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .detail-panel-jp {
@@ -264,8 +302,17 @@
   opacity: 0.72;
 }
 
+.detail-panel-char-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  min-width: 2.4rem;
+}
+
 .detail-panel-char {
-  font-size: 1.85rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.1;
 }
@@ -278,8 +325,11 @@
 }
 
 .detail-panel-row-jp {
-  font-size: 0.82rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.1;
   color: var(--jade-bright);
+  white-space: nowrap;
 }
 
 .detail-panel-meaning {
