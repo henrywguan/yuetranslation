@@ -205,11 +205,6 @@ export const ui = {
     zh: '裝到 iPhone',
     jp: 'zong1 dou3 iPhone',
   },
-  iosHomescreenFooterHint: {
-    en: 'Safari · like an app',
-    zh: 'Safari · 裝成應用',
-    jp: 'Safari · zong1 sing4 jing3 jung6',
-  },
   charsLeft: (formatted: string): Bi => ({
     en: `${formatted} chars`,
     zh: `${formatted} 字`,
