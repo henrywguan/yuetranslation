@@ -24,7 +24,7 @@ export function Nav({ onFeatures }: NavProps) {
         <button type="button" onClick={() => (onFeatures ? onFeatures() : openHome())}>
           <BiText copy={ui.navFeatures} size="sm" />
         </button>
-        <button type="button" className="ln-nav-keep" onClick={() => openTones()}>
+        <button type="button" onClick={() => openTones()}>
           <BiText copy={ui.navTones} size="sm" />
         </button>
         <button type="button" onClick={() => openPricing()}>

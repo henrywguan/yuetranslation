@@ -237,6 +237,11 @@ export const ui = {
     jp: 'tung4 jat1 go3 jam1, m4 tung4 sing1 diu6.',
   },
   tonesTap: { en: 'Tap a box to hear it', zh: '撳盒仔聽聲', jp: 'gam2 hap6 zai2 teng1 sing1' },
+  modesTonesChip: {
+    en: '6 tones →',
+    zh: '六個聲調 →',
+    jp: 'luk6 go3 sing1 diu6 →',
+  },
   tonesTwinsTitle: {
     en: 'One letter apart. Worlds apart.',
     zh: '差一個聲調，意思完全唔同。',
@@ -326,11 +331,11 @@ export const ui = {
     zh: '專為口語粵語調校（係、唔、喺、咗）——唔係普通話，亦唔係書面語。',
     jp: 'zyun1 wai6 hau2 jyu5 jyut6 jyu5 tiu4 gaau3 (hai6, m4, hai2, zo2) — m4 hai6 pou2 tung1 waa2, jik6 m4 hai6 syu1 min2 jyu5.',
   },
-  featFastTitle: { en: 'Speak, then translate', zh: '講完先翻譯', jp: 'gong2 jyun4 sin1 faan1 jik6' },
+  featFastTitle: { en: 'Character breakdown', zh: '逐字拆解', jp: 'zuk6 zi6 caak3 gaai2' },
   featFastDesc: {
-    en: 'Hold or tap the mic, finish your thought, then get one polished line — with Jyutping — when you’re done.',
-    zh: '按住或輕按咪高峰，講完先出一句精修翻譯——連粵拼一齊出現。',
-    jp: 'on3 zyu6 waak6 hing1 on3 mai1 gou1 fung1, gong2 jyun4 sin1 ceot1 jat1 geoi3 zing1 sau1 faan1 jik6 — lin4 jyut6 ping3 jat1 cai4 ceot1 jin6.',
+    en: 'Click on results to open a detailed character breakdown. Learn how to say every word.',
+    zh: '撳結果就可以打開詳細拆字，學識點講每一個字。',
+    jp: 'gam2 git3 gwo2 zau6 ho2 ji5 daa2 hoi1 coeng4 sai3 caak3 zi6, hok6 sik1 dim2 gong2 mui5 jat1 go3 zi6.',
   },
   featHostTitle: { en: 'Yours to host', zh: '自己托管', jp: 'zi6 gei2 tok3 gun2' },
   featHostDesc: {

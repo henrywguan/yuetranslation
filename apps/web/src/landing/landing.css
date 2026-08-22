@@ -495,6 +495,32 @@
   max-width: 17.5rem;
 }
 
+.ln-modes-feat--link {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: color 0.2s ease;
+}
+
+.ln-modes-feat--link:hover h3,
+.ln-modes-feat--link:focus-visible h3 {
+  color: color-mix(in srgb, var(--jade) 72%, var(--ink));
+}
+
+.ln-modes-feat--link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 50%, transparent);
+  outline-offset: 6px;
+}
+
 .ln-modes-feat h3 {
   margin: 0 0 8px;
   font-family: var(--font-display);
@@ -503,6 +529,7 @@
   letter-spacing: -0.02em;
   color: var(--ink-bright, var(--ink));
   line-height: 1.2;
+  transition: color 0.2s ease;
 }
 
 .ln-modes-feat p {
@@ -622,6 +649,38 @@
   line-height: 1.45;
   max-width: 28rem;
   min-height: 2.8em;
+}
+
+.ln-modes-tones-chip {
+  appearance: none;
+  margin: -10px 0 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 38%, transparent);
+  background: color-mix(in srgb, var(--jade) 10%, transparent);
+  color: color-mix(in srgb, var(--jade) 78%, var(--ink));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.ln-modes-tones-chip .bi {
+  align-items: center;
+  text-align: center;
+}
+
+.ln-modes-tones-chip:hover,
+.ln-modes-tones-chip:focus-visible {
+  background: color-mix(in srgb, var(--jade) 18%, transparent);
+  border-color: color-mix(in srgb, var(--jade) 55%, transparent);
+  color: var(--ink-bright, var(--ink));
+  transform: translateY(-1px);
+}
+
+.ln-modes-tones-chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 50%, transparent);
+  outline-offset: 3px;
 }
 
 /* Micro demos inside the phone */
@@ -2111,7 +2170,7 @@
     gap: 10px;
   }
 
-  .ln-nav-links > button:not(.ln-nav-cta):not(.theme-toggle):not(.ln-nav-keep) {
+  .ln-nav-links > button:not(.ln-nav-cta):not(.theme-toggle) {
     display: none;
   }
 

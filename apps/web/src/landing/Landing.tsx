@@ -9,7 +9,7 @@ import { LiveDemo } from './LiveDemo'
 import { ModesStage } from './ModesStage'
 import { Nav } from './Nav'
 import { useSmoothScroll } from './useSmoothScroll'
-import { openApp, openPricing } from '../lib/siteLinks'
+import { openApp, openPricing, openTones } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { JyutLogo } from '../components/JyutLogo'
@@ -25,8 +25,8 @@ const HeroObject = lazy(() =>
   import('./HeroObject').then((m) => ({ default: m.HeroObject })),
 )
 
-const FEATURES_LEFT: { title: Bi; desc: Bi; aside?: Bi }[] = [
-  { title: ui.featJpTitle, desc: ui.featJpDesc, aside: ui.featJpAside },
+const FEATURES_LEFT: { title: Bi; desc: Bi; aside?: Bi; href?: 'tones' }[] = [
+  { title: ui.featJpTitle, desc: ui.featJpDesc, aside: ui.featJpAside, href: 'tones' },
   { title: ui.featHkTitle, desc: ui.featHkDesc },
 ]
 
@@ -35,16 +35,36 @@ const FEATURES_RIGHT: { title: Bi; desc: Bi }[] = [
   { title: ui.featHostTitle, desc: ui.featHostDesc },
 ]
 
-function FeatureFlankItem({ title, desc, aside }: { title: Bi; desc: Bi; aside?: Bi }) {
-  return (
-    <article className="ln-modes-feat">
+function FeatureFlankItem({
+  title,
+  desc,
+  aside,
+  href,
+}: {
+  title: Bi
+  desc: Bi
+  aside?: Bi
+  href?: 'tones'
+}) {
+  const inner = (
+    <>
       <h3>
         <BiText copy={title} size="md" />
       </h3>
       <BiText copy={desc} size="sm" as="p" />
       {aside ? <BiText className="ln-feature-aside" copy={aside} size="sm" as="p" only="en" /> : null}
-    </article>
+    </>
   )
+
+  if (href === 'tones') {
+    return (
+      <button type="button" className="ln-modes-feat ln-modes-feat--link" onClick={() => openTones()}>
+        {inner}
+      </button>
+    )
+  }
+
+  return <article className="ln-modes-feat">{inner}</article>
 }
 
 function scrollToId(id: string) {
