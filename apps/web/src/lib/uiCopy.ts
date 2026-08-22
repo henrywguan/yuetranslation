@@ -229,7 +229,7 @@ export const ui = {
 
   tonesKicker: { en: 'Cantonese tones', zh: '粵語聲調', jp: 'jyut6 jyu5 sing1 diu6' },
   tonesHeroTitle: {
-    en: '6 Cantonese tones',
+    en: 'Refresher on the 6 tones',
     zh: '六個粵語聲調',
     jp: 'luk6 go3 jyut6 jyu5 sing1 diu6',
   },
