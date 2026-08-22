@@ -19,7 +19,8 @@ import type { DetailLayer } from '../lib/detailTypes'
 import { inkEase } from '../lib/motion'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { BiText } from './BiText'
-import { SpeakButton } from './SpeakButton'
+import { CopyButton } from './CopyButton'
+import { ResultActions } from './ResultActions'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 import './DetailPanel.css'
@@ -259,7 +260,7 @@ export function CharacterBreakdownHost() {
                 topLabel
               )}
             </h2>
-            <SpeakButton
+            <ResultActions
               text={topLabel}
               lang={speakLangFor(topLabel)}
               className="detail-panel-speak"
@@ -271,8 +272,11 @@ export function CharacterBreakdownHost() {
             </p>
           ) : null}
           {translationText ? (
-            <p className="detail-panel-translation" lang="en">
-              {translationText}
+            <p className="detail-panel-translation-row">
+              <span className="detail-panel-translation" lang="en">
+                {translationText}
+              </span>
+              <CopyButton text={translationText} lang="en" className="detail-panel-inline-copy" />
             </p>
           ) : null}
           {showDefinition ? (
@@ -326,7 +330,10 @@ export function CharacterBreakdownHost() {
                     <h3>English meanings</h3>
                     <ul>
                       {definitions.map((def, i) => (
-                        <li key={`def-${i}`}>{def}</li>
+                        <li key={`def-${i}`}>
+                          <span>{def}</span>
+                          <CopyButton text={def} lang="en" className="detail-panel-inline-copy" />
+                        </li>
                       ))}
                     </ul>
                   </section>
@@ -385,7 +392,7 @@ export function CharacterBreakdownHost() {
                         {canDrill ? <span className="detail-panel-chevron">›</span> : null}
                       </button>
                       {canSpeak ? (
-                        <SpeakButton
+                        <ResultActions
                           text={row.char}
                           lang="yue"
                           className="detail-panel-row-speak"

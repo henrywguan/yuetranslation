@@ -82,6 +82,24 @@
   flex-shrink: 0;
 }
 
+.detail-panel-translation-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 6px 0 0;
+}
+
+.detail-panel-translation-row .detail-panel-translation {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.detail-panel-inline-copy {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
 /* Title ruby matches Solo / Conversation / Text (Chinese dominant, quiet JP). */
 .detail-panel-title-jp {
   display: inline-block;
@@ -187,11 +205,19 @@
 }
 
 .detail-panel-defs li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   position: relative;
   padding: 2px 0 2px 14px;
   font-size: 0.95rem;
   line-height: 1.4;
   color: var(--ink);
+}
+
+.detail-panel-defs li > span:first-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .detail-panel-defs li::before {
@@ -234,7 +260,7 @@
 
 .detail-panel-row-wrap {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
 }
 

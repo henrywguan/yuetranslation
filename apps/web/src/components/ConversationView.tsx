@@ -3,7 +3,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { LiveHoldButton } from './LiveHoldButton'
-import { ResultActions } from './ResultActions'
+import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
@@ -90,7 +90,7 @@ export function ConversationView() {
                       onActivate={openYueDetails}
                     />
                     {face.yueTranslation ? (
-                      <ResultActions text={face.yueTranslation} lang="yue" />
+                      <SpeakButton text={face.yueTranslation} lang="yue" />
                     ) : null}
                   </span>
                 ) : (
@@ -144,7 +144,7 @@ export function ConversationView() {
                   ) : (
                     <span className="spoken-line-text">{enText}</span>
                   )}
-                  {face.enTranslation ? <ResultActions text={face.enTranslation} lang="en" /> : null}
+                  {face.enTranslation ? <SpeakButton text={face.enTranslation} lang="en" /> : null}
                 </span>
               ) : (
                 <span className="placeholder">{ui.enTranslation.en}</span>

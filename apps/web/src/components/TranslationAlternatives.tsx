@@ -1,4 +1,5 @@
 import { CantoneseText } from './CantoneseText'
+import { CopyButton } from './CopyButton'
 import { BiText } from './BiText'
 import { ui } from '../lib/uiCopy'
 
@@ -22,11 +23,14 @@ export function TranslationAlternatives({
       <ul className="translation-alts-list">
         {alternatives.map((alt) => (
           <li key={alt}>
-            <CantoneseText
-              text={alt}
-              onActivate={onSelect}
-              activateLabel={`Use variation ${alt} and open breakdown`}
-            />
+            <div className="translation-alt-row">
+              <CantoneseText
+                text={alt}
+                onActivate={onSelect}
+                activateLabel={`Use variation ${alt} and open breakdown`}
+              />
+              <CopyButton text={alt} lang="yue" className="translation-alt-copy" />
+            </div>
           </li>
         ))}
       </ul>
