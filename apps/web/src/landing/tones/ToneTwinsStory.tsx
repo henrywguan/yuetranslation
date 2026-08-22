@@ -23,7 +23,7 @@ const STORY = {
     toneN: TONE_TWINS.buy.n,
     head: ui.tonesStoryBuyHead,
     line: ui.tonesStoryBuyLine,
-    scene: ui.tonesStoryBuyScene,
+    beat: ui.tonesStoryBuyScene,
   },
   sell: {
     han: TONE_TWINS.sell.han,
@@ -33,11 +33,11 @@ const STORY = {
     toneN: TONE_TWINS.sell.n,
     head: ui.tonesStorySellHead,
     line: ui.tonesStorySellLine,
-    scene: ui.tonesStorySellScene,
+    beat: ui.tonesStorySellScene,
   },
 } as const
 
-/** Full-width flip-story: same syllable, two tones — swipe or arrow through buy vs sell. */
+/** Full-bleed flip-story — title flows into an open stage, no card container. */
 export function ToneTwinsStory() {
   const reduce = useReducedMotion()
   const speakManual = useYueStore((s) => s.speakManual)
@@ -78,118 +78,123 @@ export function ToneTwinsStory() {
   }
 
   return (
-    <section className="tones-story" aria-label={ui.tonesTwinsTitle.en}>
-      <div className="tones-story-intro">
+    <section
+      className={`tones-story tones-story--${side}${speaking ? ' is-speaking' : ''}`}
+      aria-label={ui.tonesTwinsTitle.en}
+    >
+      <div className="tones-story-ambient" aria-hidden="true" />
+
+      <div className="tones-story-flow">
         <h2 className="tones-story-title">
           <BiText copy={ui.tonesTwinsTitle} size="lg" />
         </h2>
-      </div>
 
-      <div className="tones-story-stage">
-        <button
-          type="button"
-          className="tones-story-nav tones-story-nav--prev"
-          aria-label={ui.tonesStoryPrev.en}
-          onClick={() => step(-1)}
-        >
-          ←
-        </button>
+        <div className="tones-story-stage">
+          <button
+            type="button"
+            className="tones-story-nav tones-story-nav--prev"
+            aria-label={ui.tonesStoryPrev.en}
+            onClick={() => step(-1)}
+          >
+            ←
+          </button>
 
-        <div
-          className="tones-story-viewport"
-          onPointerDown={(e) => {
-            dragStart.current = e.clientX
-          }}
-          onPointerUp={(e) => {
-            if (dragStart.current == null) return
-            const dx = e.clientX - dragStart.current
-            dragStart.current = null
-            if (Math.abs(dx) < 48) return
-            step(dx < 0 ? 1 : -1)
-          }}
-          onPointerCancel={() => {
-            dragStart.current = null
-          }}
-        >
-          <AnimatePresence mode="wait" custom={dir}>
-            <motion.div
-              key={side}
-              className={`tones-story-panel tones-story-panel--${side}${speaking ? ' is-speaking' : ''}`}
-              custom={dir}
-              initial={
-                reduce
-                  ? false
-                  : { opacity: 0, x: dir > 0 ? 120 : -120, rotateY: dir > 0 ? 18 : -18, scale: 0.94 }
-              }
-              animate={{ opacity: 1, x: 0, rotateY: 0, scale: 1 }}
-              exit={
-                reduce
-                  ? undefined
-                  : { opacity: 0, x: dir > 0 ? -120 : 120, rotateY: dir > 0 ? -18 : 18, scale: 0.94 }
-              }
-              transition={{ duration: 0.55, ease: inkEase }}
-              style={{ transformPerspective: 900 }}
-            >
-              <motion.p
-                className="tones-story-headline"
-                aria-hidden="true"
-                initial={reduce ? false : { opacity: 0, y: 24, scale: 0.88 }}
-                animate={{ opacity: 0.14, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.08, ease: inkEase }}
+          <div
+            className="tones-story-canvas"
+            onPointerDown={(e) => {
+              dragStart.current = e.clientX
+            }}
+            onPointerUp={(e) => {
+              if (dragStart.current == null) return
+              const dx = e.clientX - dragStart.current
+              dragStart.current = null
+              if (Math.abs(dx) < 48) return
+              step(dx < 0 ? 1 : -1)
+            }}
+            onPointerCancel={() => {
+              dragStart.current = null
+            }}
+          >
+            <AnimatePresence mode="wait" custom={dir}>
+              <motion.div
+                key={side}
+                className="tones-story-slide"
+                custom={dir}
+                initial={
+                  reduce
+                    ? false
+                    : { opacity: 0, x: dir > 0 ? 90 : -90, rotateY: dir > 0 ? 10 : -10 }
+                }
+                animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                exit={
+                  reduce
+                    ? undefined
+                    : { opacity: 0, x: dir > 0 ? -90 : 90, rotateY: dir > 0 ? -10 : 10 }
+                }
+                transition={{ duration: 0.5, ease: inkEase }}
+                style={{ transformPerspective: 1000 }}
               >
-                <BiText copy={active.head} size="lg" only="en" />
-              </motion.p>
+                <motion.p
+                  className="tones-story-watermark"
+                  aria-hidden="true"
+                  initial={reduce ? false : { opacity: 0, y: 18 }}
+                  animate={{ opacity: 0.11, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.06, ease: inkEase }}
+                >
+                  <BiText copy={active.head} size="lg" only="en" />
+                </motion.p>
 
-              <div className="tones-story-panel-inner">
-                <span className="tones-story-tone-tag">Tone {active.toneN}</span>
-                <p className="tones-story-scene">
-                  <BiText copy={active.scene} size="sm" />
-                </p>
-                <button type="button" className="tones-story-glyph" onClick={onPlay}>
-                  <ToneRuby han={active.han} jp={active.jp} size="lg" />
-                  <span className="tones-story-chao">{active.chao}</span>
-                </button>
-                <p className="tones-story-line">
-                  <BiText copy={active.line} size="md" />
-                </p>
-                <ToneContour
-                  points={active.contour}
-                  active={!reduce}
-                  speaking={speaking}
-                />
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                <div className="tones-story-focus">
+                  <span className="tones-story-tone-tag">Tone {active.toneN}</span>
+                  <p className="tones-story-beat">
+                    <BiText copy={active.beat} size="sm" />
+                  </p>
+                  <button type="button" className="tones-story-glyph" onClick={onPlay}>
+                    <ToneRuby han={active.han} jp={active.jp} size="lg" />
+                    <span className="tones-story-chao">{active.chao}</span>
+                  </button>
+                  <p className="tones-story-line">
+                    <BiText copy={active.line} size="md" />
+                  </p>
+                  <ToneContour
+                    points={active.contour}
+                    active={!reduce}
+                    speaking={speaking}
+                  />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <button
+            type="button"
+            className="tones-story-nav tones-story-nav--next"
+            aria-label={ui.tonesStoryNext.en}
+            onClick={() => step(1)}
+          >
+            →
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="tones-story-nav tones-story-nav--next"
-          aria-label={ui.tonesStoryNext.en}
-          onClick={() => step(1)}
-        >
-          →
-        </button>
-      </div>
-
-      <div className="tones-story-footer">
-        <div className="tones-story-dots" role="tablist" aria-label={ui.tonesTwinsTitle.en}>
-          {SIDES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={s === side}
-              className={`tones-story-dot${s === side ? ' is-active' : ''}`}
-              onClick={() => go(s)}
-            >
-              <BiText copy={s === 'buy' ? ui.tonesBuy : ui.tonesSell} size="sm" hideJp />
-            </button>
-          ))}
+        <div className="tones-story-footer">
+          <div className="tones-story-dots" role="tablist" aria-label={ui.tonesTwinsTitle.en}>
+            {SIDES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                role="tab"
+                aria-selected={s === side}
+                className={`tones-story-dot${s === side ? ' is-active' : ''}`}
+                onClick={() => go(s)}
+              >
+                <BiText copy={s === 'buy' ? ui.tonesBuy : ui.tonesSell} size="sm" hideJp />
+              </button>
+            ))}
+          </div>
+          <p className="tones-story-hint">
+            <BiText copy={ui.tonesStoryHint} size="sm" hideJp />
+          </p>
         </div>
-        <p className="tones-story-hint">
-          <BiText copy={ui.tonesStoryHint} size="sm" hideJp />
-        </p>
       </div>
     </section>
   )
