@@ -1,24 +1,33 @@
-import type { CSSProperties } from 'react'
+import { useCallback, useRef, useState, type CSSProperties } from 'react'
 import { BiText } from '../components/BiText'
-import { openTones } from '../lib/siteLinks'
+import { useYueStore } from '../lib/store'
+import { unlockTtsPlayback } from '../lib/tts'
 import { ui, type Bi } from '../lib/uiCopy'
+import { FeatureInfoPanel } from './FeatureInfoPanel'
+import { TONES } from './tones/tonesData'
+
+const HK_COLLOQUIAL: { han: string; jp: string; gloss: Bi }[] = [
+  { han: '係', jp: 'hai6', gloss: ui.featHkExHai },
+  { han: '唔', jp: 'm4', gloss: ui.featHkExM },
+  { han: '喺', jp: 'hai2', gloss: ui.featHkExHai2 },
+  { han: '咗', jp: 'zo2', gloss: ui.featHkExZo },
+]
 
 type BentoCard = {
   title: Bi
   tag: Bi
   visual: 'jyutping' | 'hk' | 'breakdown' | 'host'
-  href?: 'tones'
   span?: 'hero' | 'wide'
 }
 
 const CARDS: BentoCard[] = [
-  { title: ui.featJpTitle, tag: ui.featJpTag, visual: 'jyutping', href: 'tones', span: 'hero' },
+  { title: ui.featJpTitle, tag: ui.featJpTag, visual: 'jyutping', span: 'hero' },
   { title: ui.featHkTitle, tag: ui.featHkTag, visual: 'hk' },
   { title: ui.featFastTitle, tag: ui.featFastTag, visual: 'breakdown' },
   { title: ui.featHostTitle, tag: ui.featHostTag, visual: 'host', span: 'wide' },
 ]
 
-function JyutpingVisual() {
+function JyutpingVisual({ activeTone }: { activeTone: number | null }) {
   return (
     <div className="ln-feat-vis ln-feat-vis--jp" aria-hidden="true">
       <div className="ln-feat-ruby ln-feat-ruby--a">
@@ -34,12 +43,11 @@ function JyutpingVisual() {
         </span>
       </div>
       <div className="ln-feat-tone-ring">
-        <span>1</span>
-        <span>2</span>
-        <span>3</span>
-        <span>4</span>
-        <span>5</span>
-        <span>6</span>
+        {TONES.map((tone) => (
+          <span key={tone.n} className={activeTone === tone.n ? 'is-active' : ''}>
+            {tone.n}
+          </span>
+        ))}
       </div>
     </div>
   )
@@ -99,10 +107,16 @@ function HostVisual() {
   )
 }
 
-function FeatureVisual({ kind }: { kind: BentoCard['visual'] }) {
+function FeatureVisual({
+  kind,
+  activeTone,
+}: {
+  kind: BentoCard['visual']
+  activeTone?: number | null
+}) {
   switch (kind) {
     case 'jyutping':
-      return <JyutpingVisual />
+      return <JyutpingVisual activeTone={activeTone ?? null} />
     case 'hk':
       return <HkVisual />
     case 'breakdown':
@@ -112,10 +126,107 @@ function FeatureVisual({ kind }: { kind: BentoCard['visual'] }) {
   }
 }
 
-function BentoCardBody({ card }: { card: BentoCard }) {
+function JyutpingBentoCard({ card }: { card: BentoCard }) {
+  const speakManual = useYueStore((s) => s.speakManual)
+  const [activeTone, setActiveTone] = useState<number | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const playingRef = useRef(false)
+
+  const playAllTones = useCallback(async () => {
+    if (playingRef.current) return
+    unlockTtsPlayback()
+    playingRef.current = true
+    setPlaying(true)
+    try {
+      for (const tone of TONES) {
+        setActiveTone(tone.n)
+        await speakManual(tone.han, 'yue')
+      }
+    } finally {
+      setActiveTone(null)
+      setPlaying(false)
+      playingRef.current = false
+    }
+  }, [speakManual])
+
   const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''
-  const inner = (
+
+  return (
+    <button
+      type="button"
+      className={`ln-feat-card ln-feat-card--link ln-feat-card--tones${playing ? ' is-speaking' : ''}${spanClass}`}
+      onClick={() => void playAllTones()}
+      aria-label={`${ui.featJpTitle.en} — play si in six tones`}
+      aria-busy={playing}
+    >
+      <FeatureVisual kind="jyutping" activeTone={activeTone} />
+      <div className="ln-feat-card-copy">
+        <h3>
+          <BiText copy={card.title} size="md" hideJp />
+        </h3>
+        <BiText className="ln-feat-card-tag" copy={card.tag} size="sm" as="p" hideJp />
+      </div>
+    </button>
+  )
+}
+
+function HkBentoCard({ card }: { card: BentoCard }) {
+  const [open, setOpen] = useState(false)
+  const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''
+
+  return (
     <>
+      <button
+        type="button"
+        className={`ln-feat-card ln-feat-card--link ln-feat-card--hk${spanClass}`}
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+      >
+        <FeatureVisual kind="hk" />
+        <div className="ln-feat-card-copy">
+          <h3>
+            <BiText copy={card.title} size="md" hideJp />
+          </h3>
+          <BiText className="ln-feat-card-tag" copy={card.tag} size="sm" as="p" hideJp />
+        </div>
+      </button>
+
+      <FeatureInfoPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        title={ui.featHkTitle}
+        kicker={ui.featHkTag}
+      >
+        <BiText className="ln-feat-panel-lead" copy={ui.featHkDesc} size="sm" as="p" />
+        <ul className="ln-feat-panel-hk-list">
+          {HK_COLLOQUIAL.map((item) => (
+            <li key={item.han}>
+              <span className="ln-feat-panel-hk-glyph" lang="zh-HK">
+                <span className="ln-feat-ruby-jp">{item.jp}</span>
+                <span className="ln-feat-ruby-han">{item.han}</span>
+              </span>
+              <BiText className="ln-feat-panel-hk-gloss" copy={item.gloss} size="sm" hideJp />
+            </li>
+          ))}
+        </ul>
+      </FeatureInfoPanel>
+    </>
+  )
+}
+
+function BentoCardBody({ card }: { card: BentoCard }) {
+  if (card.visual === 'jyutping') {
+    return <JyutpingBentoCard card={card} />
+  }
+
+  if (card.visual === 'hk') {
+    return <HkBentoCard card={card} />
+  }
+
+  const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''
+  return (
+    <article className={`ln-feat-card${spanClass}`}>
       <FeatureVisual kind={card.visual} />
       <div className="ln-feat-card-copy">
         <h3>
@@ -123,22 +234,8 @@ function BentoCardBody({ card }: { card: BentoCard }) {
         </h3>
         <BiText className="ln-feat-card-tag" copy={card.tag} size="sm" as="p" hideJp />
       </div>
-    </>
+    </article>
   )
-
-  if (card.href === 'tones') {
-    return (
-      <button
-        type="button"
-        className={`ln-feat-card ln-feat-card--link${spanClass}`}
-        onClick={() => openTones()}
-      >
-        {inner}
-      </button>
-    )
-  }
-
-  return <article className={`ln-feat-card${spanClass}`}>{inner}</article>
 }
 
 /** Mobile bento feature grid — visual cards, minimal copy. */
