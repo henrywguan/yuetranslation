@@ -83,9 +83,6 @@ export function ToneTwinsStory() {
         <h2 className="tones-story-title">
           <BiText copy={ui.tonesTwinsTitle} size="lg" />
         </h2>
-        <p className="tones-story-syllable">
-          <BiText copy={ui.tonesStorySame} size="sm" hideJp />
-        </p>
       </div>
 
       <div className="tones-story-stage">
@@ -176,7 +173,7 @@ export function ToneTwinsStory() {
       </div>
 
       <div className="tones-story-footer">
-        <div className="tones-story-dots" role="tablist" aria-label={ui.tonesStorySame.en}>
+        <div className="tones-story-dots" role="tablist" aria-label={ui.tonesTwinsTitle.en}>
           {SIDES.map((s) => (
             <button
               key={s}

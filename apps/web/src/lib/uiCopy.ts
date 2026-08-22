@@ -251,11 +251,6 @@ export const ui = {
   },
   tonesBuy: { en: 'buy', zh: '買', jp: 'maai5' },
   tonesSell: { en: 'sell', zh: '賣', jp: 'maai6' },
-  tonesStorySame: {
-    en: 'Same syllable · maai',
-    zh: '同一個音 · maai',
-    jp: 'tung4 jat1 go3 jam1 · maai',
-  },
   tonesStoryHint: {
     en: 'Swipe or tap the arrows',
     zh: '左右滑動或撳箭咀',
