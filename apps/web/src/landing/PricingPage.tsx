@@ -14,6 +14,7 @@ import { JyutLogo } from '../components/JyutLogo'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import { FooterLangPair } from './FooterLangPair'
+import { FooterMeta } from './FooterMeta'
 import { inkEase } from '../lib/motion'
 import './landing.css'
 
@@ -284,6 +285,7 @@ export function PricingPage() {
           <JyutLogo className="ln-brand-logo" />
         </button>
         <FooterLangPair />
+        <FooterMeta />
       </footer>
     </div>
   )

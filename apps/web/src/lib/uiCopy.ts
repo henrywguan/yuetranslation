@@ -404,6 +404,12 @@ export const ui = {
   },
   footerEnLang: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   footerYueLang: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
+  footerCopyright: {
+    en: 'JyutTranslate © 2026',
+    zh: 'JyutTranslate © 2026',
+    jp: '',
+  },
+  footerContact: { en: 'Contact', zh: '聯絡', jp: 'lyun4 lok3' },
 
   ppEyebrow: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   ppTitle: {

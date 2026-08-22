@@ -16,6 +16,7 @@ import { JyutLogo } from '../components/JyutLogo'
 import { ui } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
 import { FooterLangPair } from './FooterLangPair'
+import { FooterMeta } from './FooterMeta'
 import { IosHomescreenFooterLink } from '../components/IosHomescreenGuide'
 import { LANDING_PLANS } from './plans'
 import { inkEase } from '../lib/motion'
@@ -220,6 +221,7 @@ export function Landing() {
         </div>
         <IosHomescreenFooterLink />
         <FooterLangPair />
+        <FooterMeta />
       </footer>
     </div>
     </MotionConfig>
