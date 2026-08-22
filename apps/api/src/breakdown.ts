@@ -1,6 +1,6 @@
-import OpenAI from 'openai'
 import { z } from 'zod'
 import { env, llmChatExtras } from './env.js'
+import { openaiClientWithKey } from './openaiClient.js'
 import { lookupGloss } from './canto/gloss.js'
 import { isHanChar } from './canto/han.js'
 import { scrubMandarinToYue } from './canto/scrub.js'
@@ -17,6 +17,7 @@ export type BreakdownChar = {
   glossSource?: string
 }
 
+// Keep GENERIC_CHAR_GLOSS in sync with apps/web/src/lib/charGloss.ts.
 const GENERIC_CHAR_GLOSS = 'Cantonese character'
 
 function isGenericCharGloss(gloss: string | null | undefined): boolean {
@@ -157,10 +158,7 @@ export async function breakdown(input: unknown) {
     return { characters: fallback, engine: 'dictionary' as const }
   }
 
-  const client = new OpenAI({
-    apiKey: env.openaiApiKey,
-    ...(env.openaiBaseUrl ? { baseURL: env.openaiBaseUrl } : {}),
-  })
+  const client = openaiClientWithKey()
   const system = [
     'You explain Hong Kong Cantonese (口語粵語) character-by-character for language learners.',
     'Given a Cantonese phrase, return ONLY valid JSON:',

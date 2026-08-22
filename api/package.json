@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "_comment": "Keep dependencies in sync with apps/api/package.json.",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",

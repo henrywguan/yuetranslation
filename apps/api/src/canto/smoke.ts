@@ -71,14 +71,13 @@ const interim = await hardenYueOutput({
 assert(interim.alternatives.length === 0, 'interim should drop alts')
 assert(interim.meta.rewritten === false, 'interim must not rewrite')
 
-// App translate API always coerces to final (no interim MT path).
-const coerced = await translate({
+// App translate API always returns final (no interim MT path).
+const finalOnly = await translate({
   text: 'apple',
   from: 'en',
   to: 'yue',
-  stage: 'interim',
 })
-assert(coerced.stage === 'final', `interim request must coerce to final, got ${coerced.stage}`)
+assert(finalOnly.stage === 'final', `translate must be final, got ${finalOnly.stage}`)
 
 const finalOk = await hardenYueOutput({
   text: '你做緊咩呀？',

@@ -1,6 +1,6 @@
-import OpenAI from 'openai'
 import { z } from 'zod'
-import { env, openaiConfigured, llmChatExtras } from './env.js'
+import { env, llmChatExtras } from './env.js'
+import { openaiClient } from './openaiClient.js'
 import {
   dictionaryTranslate,
   hardenYueOutput,
@@ -18,20 +18,7 @@ const Body = z.object({
   to: z.enum(['en', 'yue']),
   /** When true and EN→粵, also return colloquial alternatives if they exist. */
   includeAlternatives: z.boolean().optional().default(false),
-  /**
-   * Translations are always final-quality. Legacy clients may still send
-   * `interim`; it is coerced to `final` (no partial/MT streaming path).
-   */
-  stage: z.enum(['interim', 'final']).optional().default('final'),
 })
-
-function openaiClient() {
-  if (!openaiConfigured()) return null
-  return new OpenAI({
-    apiKey: env.openaiApiKey || 'ollama',
-    ...(env.openaiBaseUrl ? { baseURL: env.openaiBaseUrl } : {}),
-  })
-}
 
 function emptyMeta(notes: string[] = []) {
   return {
