@@ -18,7 +18,7 @@ export function ResultActions({
   return (
     <div className={`result-actions ${className}`.trim()}>
       <SpeakButton text={trimmed} lang={lang} />
-      <CopyButton text={trimmed} lang={lang} />
+      {lang === 'yue' ? <CopyButton text={trimmed} lang={lang} /> : null}
     </div>
   )
 }
