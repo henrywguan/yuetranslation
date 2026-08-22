@@ -42,9 +42,7 @@ export function TonesPage() {
         </Reveal>
       </section>
 
-      <Reveal className="tones-act tones-act--story" y={36}>
-        <ToneTwinsStory />
-      </Reveal>
+      <ToneTwinsStory />
 
       <MarketingCtaBand
         className="tones-cta"

@@ -245,17 +245,12 @@ export const ui = {
     jp: 'luk6 go3 sing1 diu6 →',
   },
   tonesTwinsTitle: {
-    en: 'Buy. Sell. Same word. Different tone.',
+    en: 'The importance of using the right tone',
     zh: '差一個聲調，意思完全唔同。',
     jp: 'caa1 jat1 go3 sing1 diu6, ji3 si1 jyun4 cyun4 m4 tung4.',
   },
   tonesBuy: { en: 'buy', zh: '買', jp: 'maai5' },
   tonesSell: { en: 'sell', zh: '賣', jp: 'maai6' },
-  tonesStorySame: {
-    en: 'Same syllable · maai',
-    zh: '同一個音 · maai',
-    jp: 'tung4 jat1 go3 jam1 · maai',
-  },
   tonesStoryHint: {
     en: 'Swipe or tap the arrows',
     zh: '左右滑動或撳箭咀',
