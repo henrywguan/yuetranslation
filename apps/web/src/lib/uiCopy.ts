@@ -251,6 +251,40 @@ export const ui = {
   },
   tonesBuy: { en: 'buy', zh: '買', jp: 'maai5' },
   tonesSell: { en: 'sell', zh: '賣', jp: 'maai6' },
+  tonesStorySame: {
+    en: 'Same syllable · maai',
+    zh: '同一個音 · maai',
+    jp: 'tung4 jat1 go3 jam1 · maai',
+  },
+  tonesStoryHint: {
+    en: 'Swipe or tap the arrows',
+    zh: '左右滑動或撳箭咀',
+    jp: 'jau6 zo2 waat6 dung6 waak6 gam2 zin3 jin3 zeoi2',
+  },
+  tonesStoryPrev: { en: 'Previous tone story', zh: '上一個聲調故事', jp: 'soeng6 jat1 go3 sing1 diu6 gu3 si6' },
+  tonesStoryNext: { en: 'Next tone story', zh: '下一個聲調故事', jp: 'haa6 jat1 go3 sing1 diu6 gu3 si6' },
+  tonesStoryBuyHead: { en: 'BUY', zh: '買', jp: 'maai5' },
+  tonesStorySellHead: { en: 'SELL', zh: '賣', jp: 'maai6' },
+  tonesStoryBuyScene: {
+    en: 'You walk up to the stall…',
+    zh: '你行近個檔口……',
+    jp: 'nei5 haang4 gan6 go3 dong2 hau2…',
+  },
+  tonesStorySellScene: {
+    en: 'Now you’re on the other side…',
+    zh: '而家換你喺檔口嗰邊……',
+    jp: 'ji4 gaa1 wun6 nei5 hai2 dong2 hau2 go2 bin1…',
+  },
+  tonesStoryBuyLine: {
+    en: 'Tone 5 climbs — soft rise on 買',
+    zh: '第五聲向上——買字輕輕升',
+    jp: 'dai6 ng5 sing1 hoeng3 soeng6 — maai5 zi6 hing1 hing1 sing1',
+  },
+  tonesStorySellLine: {
+    en: 'Tone 6 stays low — flat 賣',
+    zh: '第六聲低平——賣字沉底',
+    jp: 'dai6 luk6 sing1 dai1 ping4 — maai6 zi6 cam4 dai2',
+  },
   tonesCtaTitle: {
     en: 'Hear tones while you speak',
     zh: '一邊講一邊聽到聲調',
