@@ -245,7 +245,7 @@ export const ui = {
     jp: 'luk6 go3 sing1 diu6 →',
   },
   tonesTwinsTitle: {
-    en: 'Buy. Sell. Same word. Different tone.',
+    en: 'The importance of using the right tone',
     zh: '差一個聲調，意思完全唔同。',
     jp: 'caa1 jat1 go3 sing1 diu6, ji3 si1 jyun4 cyun4 m4 tung4.',
   },
