@@ -1,23 +1,18 @@
 import { lazy, Suspense } from 'react'
-import { MotionConfig, motion } from 'framer-motion'
-import { JadeGlassField } from '../components/JadeGlassField'
+import { motion } from 'framer-motion'
 import { SoftErrorBoundary } from '../components/SoftErrorBoundary'
-import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
 import { ModesStage } from './ModesStage'
-import { Nav } from './Nav'
-import { useSmoothScroll } from './useSmoothScroll'
+import { MarketingCtaBand } from './MarketingCtaBand'
+import { MarketingFooter } from './MarketingFooter'
+import { MarketingPageShell } from './MarketingPageShell'
 import { openApp, openPricing, openTones } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
-import { JyutLogo } from '../components/JyutLogo'
 import { ui, type Bi } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
-import { FooterLangPair } from './FooterLangPair'
-import { FooterMeta } from './FooterMeta'
-import { IosHomescreenFooterLink } from '../components/IosHomescreenGuide'
 import { LANDING_PLANS } from './plans'
 import { inkEase } from '../lib/motion'
 import './landing.css'
@@ -72,16 +67,8 @@ function scrollToId(id: string) {
 }
 
 export function Landing() {
-  useSmoothScroll(true)
-
   return (
-    <MotionConfig reducedMotion="user">
-    <div className="landing">
-      <ScrollProgress />
-      <JadeGlassField variant="marketing" />
-
-      <Nav onFeatures={() => scrollToId('features')} />
-
+    <MarketingPageShell onFeatures={() => scrollToId('features')}>
       <header className="ln-hero">
         <Suspense fallback={null}>
           <SoftErrorBoundary>
@@ -236,29 +223,14 @@ export function Landing() {
         </Reveal>
       </section>
 
-      <section className="ln-cta-band">
-        <Reveal className="ln-cta-inner">
-          <div className="ln-cta-glow" aria-hidden="true" />
-          <JyutLogo variant="mark" className="ln-cta-mark" />
-          <h2 className="ln-h2">
-            <BiText copy={ui.ctaReady} size="lg" />
-          </h2>
-          <BiText className="ln-p" copy={ui.ctaBody} size="sm" as="p" />
-          <MagneticButton className="btn-primary" onClick={() => openApp()}>
-            <BiText copy={ui.launchTranslator} size="sm" />
-          </MagneticButton>
-        </Reveal>
-      </section>
+      <MarketingCtaBand
+        title={ui.ctaReady}
+        body={ui.ctaBody}
+        button={ui.launchTranslator}
+        onClick={() => openApp()}
+      />
 
-      <footer className="ln-footer">
-        <div className="ln-brand">
-          <JyutLogo className="ln-brand-logo" />
-        </div>
-        <IosHomescreenFooterLink />
-        <FooterLangPair />
-        <FooterMeta />
-      </footer>
-    </div>
-    </MotionConfig>
+      <MarketingFooter showHomescreen />
+    </MarketingPageShell>
   )
 }

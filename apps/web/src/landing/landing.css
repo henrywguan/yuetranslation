@@ -254,27 +254,27 @@
   border-bottom: 0;
 }
 
-.ln-eyebrow-stack.is-hint {
+.ln-eyebrow-stack.is-hint,
+.ln-eyebrow-zh.is-hint {
   cursor: help;
-  border-radius: 8px;
 }
 
-.ln-eyebrow-stack.is-hint .ln-eyebrow-zh {
+.ln-eyebrow-stack.is-hint .ln-eyebrow-zh,
+.ln-eyebrow-zh.is-hint {
   border-bottom: 1px dotted color-mix(in srgb, var(--jade) 45%, transparent);
 }
 
-.ln-eyebrow-stack.is-hint:focus-visible {
+.ln-eyebrow-stack.is-hint:focus-visible,
+.ln-eyebrow-zh.is-hint:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
   outline-offset: 3px;
 }
 
-.ln-eyebrow-zh.is-hint {
-  cursor: help;
-  border-bottom: 1px dotted color-mix(in srgb, var(--jade) 45%, transparent);
+.ln-eyebrow-stack.is-hint {
+  border-radius: 8px;
 }
 
 .ln-eyebrow-zh.is-hint:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
   outline-offset: 2px;
   border-radius: 3px;
 }

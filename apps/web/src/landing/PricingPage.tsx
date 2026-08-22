@@ -1,20 +1,16 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Nav } from './Nav'
-import { JadeGlassField } from '../components/JadeGlassField'
-import { ScrollProgress } from './ScrollProgress'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
-import { useSmoothScroll } from './useSmoothScroll'
+import { MarketingCtaBand } from './MarketingCtaBand'
+import { MarketingFooter } from './MarketingFooter'
+import { MarketingPageShell } from './MarketingPageShell'
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { startCheckout } from '../lib/billing'
 import { getAccessToken, openAuthScreen, supabaseEnabled } from '../lib/auth'
 import { BiText } from '../components/BiText'
-import { JyutLogo } from '../components/JyutLogo'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
-import { FooterLangPair } from './FooterLangPair'
-import { FooterMeta } from './FooterMeta'
 import { inkEase } from '../lib/motion'
 import './landing.css'
 
@@ -86,15 +82,10 @@ async function onPlanCta(plan: MarketingPlan, billing: Billing) {
 }
 
 export function PricingPage() {
-  useSmoothScroll(true)
   const [billing, setBilling] = useState<Billing>('monthly')
 
   return (
-    <div className="landing pricing-page">
-      <ScrollProgress />
-      <JadeGlassField variant="marketing" />
-      <Nav onFeatures={() => openHome()} />
-
+    <MarketingPageShell className="pricing-page" onFeatures={() => openHome()}>
       <header className="pp-hero">
         <motion.div
           className="pp-hero-inner"
@@ -266,27 +257,14 @@ export function PricingPage() {
         </Reveal>
       </section>
 
-      <section className="ln-cta-band">
-        <Reveal className="ln-cta-inner">
-          <div className="ln-cta-glow" aria-hidden="true" />
-          <JyutLogo variant="mark" className="ln-cta-mark" />
-          <h2 className="ln-h2">
-            <BiText copy={ui.stillQuestions} size="lg" />
-          </h2>
-          <BiText className="ln-p" copy={ui.stillBody} size="sm" as="p" />
-          <MagneticButton className="btn-primary" onClick={() => openApp()}>
-            <BiText copy={ui.backToApp} size="sm" />
-          </MagneticButton>
-        </Reveal>
-      </section>
+      <MarketingCtaBand
+        title={ui.stillQuestions}
+        body={ui.stillBody}
+        button={ui.backToApp}
+        onClick={() => openApp()}
+      />
 
-      <footer className="ln-footer">
-        <button type="button" className="ln-brand ln-brand-btn" onClick={() => openHome()}>
-          <JyutLogo className="ln-brand-logo" />
-        </button>
-        <FooterLangPair />
-        <FooterMeta />
-      </footer>
-    </div>
+      <MarketingFooter />
+    </MarketingPageShell>
   )
 }

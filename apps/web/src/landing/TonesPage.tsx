@@ -1,6 +1,4 @@
-import { MotionConfig, motion } from 'framer-motion'
-import { JadeGlassField } from '../components/JadeGlassField'
-import { JyutLogo } from '../components/JyutLogo'
+import { motion } from 'framer-motion'
 import { BiText } from '../components/BiText'
 import { openApp, openHome } from '../lib/siteLinks'
 import { inkEase } from '../lib/motion'
@@ -8,13 +6,10 @@ import { useYueStore } from '../lib/store'
 import { unlockTtsPlayback } from '../lib/tts'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui } from '../lib/uiCopy'
-import { FooterLangPair } from './FooterLangPair'
-import { FooterMeta } from './FooterMeta'
-import { MagneticButton } from './MagneticButton'
-import { Nav } from './Nav'
+import { MarketingCtaBand } from './MarketingCtaBand'
+import { MarketingFooter } from './MarketingFooter'
+import { MarketingPageShell } from './MarketingPageShell'
 import { Reveal } from './Reveal'
-import { ScrollProgress } from './ScrollProgress'
-import { useSmoothScroll } from './useSmoothScroll'
 import { ToneContour } from './tones/ToneContour'
 import { ToneRuby, ToneTheater } from './tones/ToneTheater'
 import { TONE_TWINS } from './tones/tonesData'
@@ -23,16 +18,10 @@ import './tones.css'
 
 /** Cinematic ELI5 explainer for the six Cantonese tones. */
 export function TonesPage() {
-  useSmoothScroll(true)
   const reduce = useReducedMotion()
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="landing tones-page">
-        <ScrollProgress />
-        <JadeGlassField variant="marketing" />
-        <Nav onFeatures={() => openHome()} />
-
+    <MarketingPageShell className="tones-page" onFeatures={() => openHome()}>
         <header className="tones-hero tones-hero--compact">
           <div className="tones-hero-wash" aria-hidden="true" />
           <motion.div
@@ -90,29 +79,16 @@ export function TonesPage() {
           </Reveal>
         </section>
 
-        <section className="ln-cta-band tones-cta">
-          <Reveal className="ln-cta-inner">
-            <div className="ln-cta-glow" aria-hidden="true" />
-            <JyutLogo variant="mark" className="ln-cta-mark" />
-            <h2 className="ln-h2">
-              <BiText copy={ui.tonesCtaTitle} size="lg" />
-            </h2>
-            <BiText className="ln-p" copy={ui.tonesCtaBody} size="sm" as="p" />
-            <MagneticButton className="btn-primary" onClick={() => openApp()}>
-              <BiText copy={ui.tonesOpenApp} size="sm" />
-            </MagneticButton>
-          </Reveal>
-        </section>
+        <MarketingCtaBand
+          className="tones-cta"
+          title={ui.tonesCtaTitle}
+          body={ui.tonesCtaBody}
+          button={ui.tonesOpenApp}
+          onClick={() => openApp()}
+        />
 
-        <footer className="ln-footer">
-          <button type="button" className="ln-brand ln-brand-btn" onClick={() => openHome()}>
-            <JyutLogo className="ln-brand-logo" />
-          </button>
-          <FooterLangPair />
-          <FooterMeta />
-        </footer>
-      </div>
-    </MotionConfig>
+        <MarketingFooter />
+    </MarketingPageShell>
   )
 }
 

@@ -100,6 +100,7 @@ const CHAR_GLOSS: Record<string, string> = {
   蕉: 'banana',
 }
 
+// Keep GENERIC_CHAR_GLOSS in sync with apps/api/src/breakdown.ts.
 const GENERIC_CHAR_GLOSS = 'Cantonese character'
 
 function isGenericCharGloss(gloss: string | null | undefined): boolean {
