@@ -161,6 +161,7 @@
 .account-hub {
   display: flex;
   flex-direction: column;
+  max-height: min(78vh, 560px);
   border-radius: 18px;
   border: 1px solid var(--glass-border);
   background:
@@ -179,6 +180,7 @@
 }
 
 .account-hub-header {
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -239,8 +241,13 @@
 .account-hub-body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 14px;
-  padding: 12px 14px 14px;
+  padding: 12px 14px max(14px, env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .account-hub-section {
@@ -358,7 +365,6 @@
 
   .account-hub {
     border-radius: 22px 22px 18px 18px;
-    max-height: min(78vh, 560px);
   }
 }
 

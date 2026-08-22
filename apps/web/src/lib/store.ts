@@ -250,9 +250,10 @@ async function runSpeak(
   try {
     await speakText(text, lang)
   } finally {
-    if (token !== speakToken) return
     get().session?.setPlaybackActive(false)
-    set({ status: get().live ? 'listening' : 'idle', speakingText: null })
+    if (token === speakToken) {
+      set({ status: get().live ? 'listening' : 'idle', speakingText: null })
+    }
   }
 }
 
