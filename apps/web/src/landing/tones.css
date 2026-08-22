@@ -10,7 +10,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(48px, 9vw, 96px) clamp(20px, 5vw, 40px) 20px;
+  /* Match landing .ln-hero gap under sticky nav */
+  padding: 40px clamp(20px, 5vw, 40px) 20px;
   overflow: clip;
 }
 
@@ -632,11 +633,13 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 760px) {
   .tones-hero {
-    padding-top: 110px;
+    padding: 28px 16px 16px;
   }
+}
 
+@media (max-width: 560px) {
   .tones-story-stage {
     min-height: min(72vh, 480px);
   }
