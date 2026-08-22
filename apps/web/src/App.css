@@ -2197,27 +2197,54 @@
   word-break: break-word;
 }
 
-/* Focused jade result (Text + Solo): centered block, left-aligned text inset from the edge */
-.text-result .result-with-def,
+/* Focused jade result — Text primary line matches Other Variations boxes */
+.text-result .result-with-def {
+  justify-content: flex-start;
+  width: 100%;
+}
+
 .solo-translation .result-with-def {
   justify-content: center;
 }
 
-.text-result .result-with-def-main,
+.text-result .result-with-def-main {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+}
+
 .solo-translation .result-with-def-main {
   flex: 0 1 auto;
   width: auto;
   max-width: 100%;
 }
 
-.text-result .result-with-def-line,
+.text-result .result-with-def-line {
+  width: 100%;
+  max-width: 100%;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
 .solo-translation .result-with-def-line {
   width: fit-content;
   max-width: 100%;
   align-items: center;
 }
 
-.text-result .cantonese-activate,
+.text-result .cantonese-activate {
+  width: auto;
+  flex: 1 1 auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  text-align: left;
+}
+
 .solo-translation .cantonese-activate {
   width: fit-content;
   max-width: 100%;

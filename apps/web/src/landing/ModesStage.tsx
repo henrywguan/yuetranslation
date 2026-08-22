@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from '../components/BiText'
 import { TranslateThinking } from '../components/TranslateThinking'
 import { inkEase } from '../lib/motion'
+import { openTones } from '../lib/siteLinks'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui, type Bi } from '../lib/uiCopy'
 
@@ -81,6 +82,9 @@ export function ModesStage() {
       <p className="ln-modes-line">
         <BiText copy={active.line} size="sm" hideJp />
       </p>
+      <button type="button" className="ln-modes-tones-chip" onClick={() => openTones()}>
+        <BiText copy={ui.modesTonesChip} size="sm" hideJp />
+      </button>
     </div>
   )
 }

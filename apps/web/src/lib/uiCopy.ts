@@ -237,6 +237,11 @@ export const ui = {
     jp: 'tung4 jat1 go3 jam1, m4 tung4 sing1 diu6.',
   },
   tonesTap: { en: 'Tap a box to hear it', zh: '撳盒仔聽聲', jp: 'gam2 hap6 zai2 teng1 sing1' },
+  modesTonesChip: {
+    en: '6 tones →',
+    zh: '六個聲調 →',
+    jp: 'luk6 go3 sing1 diu6 →',
+  },
   tonesTwinsTitle: {
     en: 'One letter apart. Worlds apart.',
     zh: '差一個聲調，意思完全唔同。',
