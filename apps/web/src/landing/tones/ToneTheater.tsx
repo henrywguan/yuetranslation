@@ -1,39 +1,51 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
 import { BiText } from '../../components/BiText'
+import { SpeakButton } from '../../components/SpeakButton'
 import { inkEase } from '../../lib/motion'
+import { useYueStore } from '../../lib/store'
+import { unlockTtsPlayback } from '../../lib/tts'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import { ui } from '../../lib/uiCopy'
-import { humContour } from './humTone'
 import { ToneContour } from './ToneContour'
 import { TONES, type ToneDef } from './tonesData'
 
-/** Interactive six-tone theater — pick a tone, watch the pitch draw, hum the shape. */
+/** Jyutping stacked above Han — same cell geometry as app ruby. */
+export function ToneRuby({
+  han,
+  jp,
+  size = 'md',
+}: {
+  han: string
+  jp: string
+  size?: 'sm' | 'md' | 'lg'
+}) {
+  return (
+    <span className={`tone-ruby tone-ruby--${size}`}>
+      <span className="tone-ruby-jp">{jp}</span>
+      <span className="tone-ruby-han" lang="zh-HK">
+        {han}
+      </span>
+    </span>
+  )
+}
+
+/** Interactive six-tone theater — shape labels, ruby Jyutping, real TTS on tap. */
 export function ToneTheater() {
   const reduce = useReducedMotion()
+  const speakManual = useYueStore((s) => s.speakManual)
+  const speakingText = useYueStore((s) => s.speakingText)
+  const status = useYueStore((s) => s.status)
   const [active, setActive] = useState<ToneDef>(TONES[0]!)
-  const [humming, setHumming] = useState(false)
 
-  const select = useCallback(
+  const playTone = useCallback(
     (tone: ToneDef) => {
+      unlockTtsPlayback()
       setActive(tone)
-      if (reduce) return
-      void humContour(tone.freqs).catch(() => {})
+      void speakManual(tone.han, 'yue')
     },
-    [reduce],
+    [speakManual],
   )
-
-  const hum = useCallback(async () => {
-    if (humming) return
-    setHumming(true)
-    try {
-      await humContour(active.freqs, 820)
-    } catch {
-      /* ignore autoplay / audio errors */
-    } finally {
-      window.setTimeout(() => setHumming(false), 200)
-    }
-  }, [active, humming])
 
   return (
     <div className="tone-theater">
@@ -46,22 +58,20 @@ export function ToneTheater() {
           <motion.div
             key={active.n}
             className="tone-theater-focus"
-            initial={reduce ? false : { opacity: 0, y: 18, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={reduce ? undefined : { opacity: 0, y: -12, filter: 'blur(4px)' }}
-            transition={{ duration: 0.45, ease: inkEase }}
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? undefined : { opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: inkEase }}
           >
             <div className="tone-theater-num" aria-hidden="true">
               {active.n}
             </div>
             <div className="tone-theater-glyph">
-              <span className="tone-theater-han" lang="zh-HK">
-                {active.han}
-              </span>
+              <ToneRuby han={active.han} jp={active.jp} size="lg" />
               <span className="tone-theater-meta">
-                <span className="tone-theater-jp">{active.jp}</span>
                 <span className="tone-theater-chao">{active.chao}</span>
                 <span className="tone-theater-gloss">{active.meaningEn}</span>
+                <SpeakButton text={active.han} lang="yue" className="tone-speak" />
               </span>
             </div>
             <div className="tone-theater-shape">
@@ -70,38 +80,32 @@ export function ToneTheater() {
                 {active.shapeZh}
               </span>
             </div>
-            <ToneContour points={active.contour} active={!reduce} />
+            <ToneContour
+              points={active.contour}
+              active={!reduce || status === 'speaking'}
+              speaking={status === 'speaking' && speakingText === active.han}
+            />
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <button
-        type="button"
-        className={`tone-hum${humming ? ' is-on' : ''}`}
-        onClick={() => void hum()}
-        aria-pressed={humming}
-      >
-        <span className="tone-hum-wave" aria-hidden="true" />
-        <BiText copy={ui.tonesHum} size="sm" hideJp />
-      </button>
-
       <div className="tone-dial" role="tablist" aria-label={ui.navTones.en}>
         {TONES.map((tone) => {
           const on = tone.n === active.n
+          const speaking = status === 'speaking' && speakingText === tone.han
           return (
             <button
               key={tone.n}
               type="button"
               role="tab"
               aria-selected={on}
-              className={`tone-dial-btn${on ? ' is-active' : ''}`}
-              onClick={() => select(tone)}
+              className={`tone-dial-btn${on ? ' is-active' : ''}${speaking ? ' is-speaking' : ''}`}
+              onClick={() => playTone(tone)}
             >
               <span className="tone-dial-n">{tone.n}</span>
-              <span className="tone-dial-han" lang="zh-HK">
-                {tone.han}
-              </span>
-              <ToneContour points={tone.contour} compact active={on && !reduce} />
+              <ToneRuby han={tone.han} jp={tone.jp} size="sm" />
+              <span className="tone-dial-shape">{tone.shapeEn}</span>
+              <ToneContour points={tone.contour} compact active={on && !reduce} speaking={speaking} />
             </button>
           )
         })}

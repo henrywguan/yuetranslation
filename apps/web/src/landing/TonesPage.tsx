@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
 import { MotionConfig, motion } from 'framer-motion'
 import { JadeGlassField } from '../components/JadeGlassField'
 import { JyutLogo } from '../components/JyutLogo'
 import { BiText } from '../components/BiText'
 import { openApp, openHome } from '../lib/siteLinks'
 import { inkEase } from '../lib/motion'
+import { useYueStore } from '../lib/store'
+import { unlockTtsPlayback } from '../lib/tts'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui } from '../lib/uiCopy'
 import { FooterLangPair } from './FooterLangPair'
@@ -14,10 +15,9 @@ import { Nav } from './Nav'
 import { Reveal } from './Reveal'
 import { ScrollProgress } from './ScrollProgress'
 import { useSmoothScroll } from './useSmoothScroll'
-import { humContour } from './tones/humTone'
 import { ToneContour } from './tones/ToneContour'
-import { ToneTheater } from './tones/ToneTheater'
-import { TONE_TWINS, TONES } from './tones/tonesData'
+import { ToneRuby, ToneTheater } from './tones/ToneTheater'
+import { TONE_TWINS } from './tones/tonesData'
 import './landing.css'
 import './tones.css'
 
@@ -25,17 +25,6 @@ import './tones.css'
 export function TonesPage() {
   useSmoothScroll(true)
   const reduce = useReducedMotion()
-  const [heroTone, setHeroTone] = useState(0)
-
-  useEffect(() => {
-    if (reduce) return
-    const id = window.setInterval(() => {
-      setHeroTone((n) => (n + 1) % TONES.length)
-    }, 2200)
-    return () => window.clearInterval(id)
-  }, [reduce])
-
-  const hero = TONES[heroTone]!
 
   return (
     <MotionConfig reducedMotion="user">
@@ -44,13 +33,13 @@ export function TonesPage() {
         <JadeGlassField variant="marketing" />
         <Nav onFeatures={() => openHome()} />
 
-        <header className="tones-hero">
+        <header className="tones-hero tones-hero--compact">
           <div className="tones-hero-wash" aria-hidden="true" />
           <motion.div
             className="tones-hero-inner"
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.95, ease: inkEase }}
+            transition={{ duration: 0.85, ease: inkEase }}
           >
             <span className="ln-kicker">
               <BiText copy={ui.tonesKicker} size="sm" />
@@ -61,55 +50,11 @@ export function TonesPage() {
             <p className="tones-hero-sub">
               <BiText copy={ui.tonesHeroSub} size="md" hideJp />
             </p>
-
-            <div className="tones-hero-orb" aria-hidden="true">
-              <AnimateHeroTone toneIndex={heroTone} reduce={reduce} />
-              <div className="tones-hero-orb-copy">
-                <span className="tones-hero-orb-n">{hero.n}</span>
-                <span className="tones-hero-orb-han" lang="zh-HK">
-                  {hero.han}
-                </span>
-              </div>
-              <ToneContour points={hero.contour} active={!reduce} />
-            </div>
           </motion.div>
-          <div className="ln-scroll-hint" aria-hidden="true">
-            <span />
-          </div>
         </header>
 
-        <section className="tones-act tones-act--eli5" aria-label="Same letters">
-          <Reveal className="tones-eli5" y={32}>
-            <div className="tones-eli5-row">
-              {TONES.map((t, i) => (
-                <motion.button
-                  key={t.n}
-                  type="button"
-                  className="tones-eli5-chip"
-                  initial={reduce ? false : { opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ delay: i * 0.06, duration: 0.5, ease: inkEase }}
-                  onClick={() => {
-                    if (!reduce) void humContour(t.freqs).catch(() => {})
-                  }}
-                >
-                  <span className="tones-eli5-han" lang="zh-HK">
-                    {t.han}
-                  </span>
-                  <ToneContour points={t.contour} compact active={!reduce} />
-                  <span className="tones-eli5-n">{t.n}</span>
-                </motion.button>
-              ))}
-            </div>
-            <p className="tones-eli5-caption">
-              <BiText copy={ui.tonesHeroSub} size="sm" hideJp />
-            </p>
-          </Reveal>
-        </section>
-
         <section className="tones-act tones-act--theater" aria-label={ui.navTones.en}>
-          <Reveal y={40}>
+          <Reveal y={36}>
             <ToneTheater />
           </Reveal>
         </section>
@@ -127,7 +72,6 @@ export function TonesPage() {
                 chao={TONE_TWINS.buy.chao}
                 label={ui.tonesBuy}
                 contour={TONE_TWINS.buy.contour}
-                freqs={TONE_TWINS.buy.freqs}
                 reduce={reduce}
               />
               <div className="tones-twins-vs" aria-hidden="true">
@@ -140,7 +84,6 @@ export function TonesPage() {
                 chao={TONE_TWINS.sell.chao}
                 label={ui.tonesSell}
                 contour={TONE_TWINS.sell.contour}
-                freqs={TONE_TWINS.sell.freqs}
                 reduce={reduce}
               />
             </div>
@@ -173,18 +116,6 @@ export function TonesPage() {
   )
 }
 
-function AnimateHeroTone({ toneIndex, reduce }: { toneIndex: number; reduce: boolean }) {
-  return (
-    <motion.div
-      key={toneIndex}
-      className="tones-hero-pulse"
-      initial={reduce ? false : { scale: 0.92, opacity: 0.5 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.7, ease: inkEase }}
-    />
-  )
-}
-
 function TwinCard({
   side,
   han,
@@ -192,7 +123,6 @@ function TwinCard({
   chao,
   label,
   contour,
-  freqs,
   reduce,
 }: {
   side: 'buy' | 'sell'
@@ -201,28 +131,28 @@ function TwinCard({
   chao: string
   label: (typeof ui)['tonesBuy']
   contour: (typeof TONE_TWINS.buy)['contour']
-  freqs: number[]
   reduce: boolean
 }) {
+  const speakManual = useYueStore((s) => s.speakManual)
+  const speakingText = useYueStore((s) => s.speakingText)
+  const status = useYueStore((s) => s.status)
+  const speaking = status === 'speaking' && speakingText === han
+
   return (
     <button
       type="button"
-      className={`tones-twin tones-twin--${side}`}
+      className={`tones-twin tones-twin--${side}${speaking ? ' is-speaking' : ''}`}
       onClick={() => {
-        if (!reduce) void humContour(freqs).catch(() => {})
+        unlockTtsPlayback()
+        void speakManual(han, 'yue')
       }}
     >
-      <span className="tones-twin-han" lang="zh-HK">
-        {han}
-      </span>
+      <ToneRuby han={han} jp={jp} size="lg" />
       <span className="tones-twin-label">
         <BiText copy={label} size="sm" hideJp />
       </span>
-      <span className="tones-twin-jp">
-        {jp}
-        <span className="tones-twin-chao">{chao}</span>
-      </span>
-      <ToneContour points={contour} compact active={!reduce} />
+      <span className="tones-twin-chao">{chao}</span>
+      <ToneContour points={contour} compact active={!reduce} speaking={speaking} />
     </button>
   )
 }

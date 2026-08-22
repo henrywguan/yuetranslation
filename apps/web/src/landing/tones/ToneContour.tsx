@@ -7,11 +7,18 @@ type ToneContourProps = {
   points: TonePoint[]
   active?: boolean
   compact?: boolean
+  speaking?: boolean
   className?: string
 }
 
 /** Animated pitch ribbon for one Cantonese tone. */
-export function ToneContour({ points, active = true, compact = false, className = '' }: ToneContourProps) {
+export function ToneContour({
+  points,
+  active = true,
+  compact = false,
+  speaking = false,
+  className = '',
+}: ToneContourProps) {
   const uid = useId().replace(/:/g, '')
   const width = compact ? 168 : 360
   const height = compact ? 78 : 156
@@ -23,7 +30,7 @@ export function ToneContour({ points, active = true, compact = false, className 
 
   return (
     <svg
-      className={`tone-contour${active ? ' is-active' : ''} ${className}`.trim()}
+      className={`tone-contour${active ? ' is-active' : ''}${speaking ? ' is-speaking' : ''} ${className}`.trim()}
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-hidden="true"
