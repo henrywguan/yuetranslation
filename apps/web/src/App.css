@@ -2304,6 +2304,23 @@
   color: var(--ink);
 }
 
+.translation-alt-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.translation-alt-row .cantonese-block,
+.translation-alt-row .cantonese-activate {
+  flex: 1;
+  min-width: 0;
+}
+
+.translation-alt-copy {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
 .cantonese-activate {
   display: block;
   width: 100%;

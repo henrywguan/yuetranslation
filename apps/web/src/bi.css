@@ -430,9 +430,64 @@ button.jyutping {
 .result-with-def-line,
 .spoken-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.45rem;
   min-width: 0;
+}
+
+.result-actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.05rem;
+}
+
+.copy-btn {
+  flex: none;
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--glass-shine) 55%, transparent),
+    0 4px 12px color-mix(in srgb, #000 10%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.copy-btn:hover {
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+  color: var(--ink-bright);
+  transform: translateY(-1px);
+}
+
+.copy-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.copy-btn.is-copied {
+  color: var(--on-jade);
+  background: linear-gradient(145deg, var(--jade), var(--jade-deep));
+  border-color: color-mix(in srgb, var(--jade-bright) 40%, transparent);
+}
+
+.copy-btn-icon {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .result-with-def-line > :first-child,

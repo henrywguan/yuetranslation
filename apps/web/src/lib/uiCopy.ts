@@ -60,6 +60,8 @@ export const ui = {
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
   stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },
   speakPro: { en: 'Voice playback', zh: '語音播放', jp: 'jyu5 jam1 bo3 fong3' },
+  copyText: { en: 'Copy text', zh: '複製文字', jp: 'fuk6 zai3 man4 zi6' },
+  copied: { en: 'Copied', zh: '已複製', jp: 'ji5 fuk6 zai3' },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },

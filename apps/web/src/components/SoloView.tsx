@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { InkSettle } from './InkSettle'
 import { ResultWithDefinition } from './ResultWithDefinition'
-import { SpeakButton } from './SpeakButton'
+import { ResultActions } from './ResultActions'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
@@ -119,7 +119,7 @@ export function SoloView() {
                   ) : (
                     <span className="spoken-line-text">{enText}</span>
                   )}
-                  <SpeakButton text={enText} lang="en" />
+                  <ResultActions text={enText} lang="en" />
                 </span>
               ) : (
                 <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />
