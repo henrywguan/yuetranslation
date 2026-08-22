@@ -1,4 +1,4 @@
-import { openApp, openHome, openPricing } from '../lib/siteLinks'
+import { openApp, openHome, openPricing, openTones } from '../lib/siteLinks'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { JyutLogo } from '../components/JyutLogo'
 import { BiText } from '../components/BiText'
@@ -23,6 +23,9 @@ export function Nav({ onFeatures }: NavProps) {
       <div className="ln-nav-links">
         <button type="button" onClick={() => (onFeatures ? onFeatures() : openHome())}>
           <BiText copy={ui.navFeatures} size="sm" />
+        </button>
+        <button type="button" className="ln-nav-keep" onClick={() => openTones()}>
+          <BiText copy={ui.navTones} size="sm" />
         </button>
         <button type="button" onClick={() => openPricing()}>
           <BiText copy={ui.navPricing} size="sm" />

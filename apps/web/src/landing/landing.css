@@ -2111,7 +2111,7 @@
     gap: 10px;
   }
 
-  .ln-nav-links > button:not(.ln-nav-cta):not(.theme-toggle) {
+  .ln-nav-links > button:not(.ln-nav-cta):not(.theme-toggle):not(.ln-nav-keep) {
     display: none;
   }
 
