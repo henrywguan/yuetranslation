@@ -243,9 +243,9 @@ export const ui = {
     jp: 'luk6 go3 sing1 diu6 →',
   },
   tonesTwinsTitle: {
-    en: 'One letter apart. Worlds apart.',
-    zh: '差一個聲調，意思完全唔同。',
-    jp: 'caa1 jat1 go3 sing1 diu6, ji3 si1 jyun4 cyun4 m4 tung4.',
+    en: 'Buy. Sell. Same word. Different tone.',
+    zh: '買。賣。同一個音，唔同聲調。',
+    jp: 'maai5. maai6. tung4 jat1 go3 jam1, m4 tung4 sing1 diu6.',
   },
   tonesBuy: { en: 'buy', zh: '買', jp: 'maai5' },
   tonesSell: { en: 'sell', zh: '賣', jp: 'maai6' },
