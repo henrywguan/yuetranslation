@@ -1,5 +1,5 @@
 import { CantoneseText } from './CantoneseText'
-import { SpeakButton } from './SpeakButton'
+import { ResultActions } from './ResultActions'
 import type { Lang } from '../lib/types'
 
 /** Translation line only — gloss definitions stay out of the pane (details/drill-down only). */
@@ -44,7 +44,7 @@ export function ResultWithDefinition({
           ) : (
             <p className={textClassName || 'result-text'}>{trimmed}</p>
           )}
-          {speakLang && trimmed ? <SpeakButton text={trimmed} lang={speakLang} /> : null}
+          {speakLang && trimmed ? <ResultActions text={trimmed} lang={speakLang} /> : null}
         </div>
       </div>
     </div>
