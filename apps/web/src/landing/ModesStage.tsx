@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from '../components/BiText'
+import { TranslateThinking } from '../components/TranslateThinking'
 import { inkEase } from '../lib/motion'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui, type Bi } from '../lib/uiCopy'
@@ -157,7 +158,7 @@ function SoloMicro({ reduce }: { reduce: boolean }) {
               initial={false}
               animate={{ opacity: holding ? 0.6 : 0.38 }}
             >
-              {holding ? 'Listening…' : 'Hold to speak'}
+              {holding ? 'Listening…' : 'Tap/Hold to speak'}
             </motion.p>
           )}
         </AnimatePresence>
@@ -284,31 +285,31 @@ function ConversationMicro({ reduce }: { reduce: boolean }) {
   )
 }
 
-/** Text: keyboard tap → ~2s idle pause → result with Jyutping. */
+/** Text: type → TranslateThinking (same loader as the app) → result with Jyutping. */
 const TEXT_SAMPLE = 'Calligraphy'
 
 function TextMicro({ reduce }: { reduce: boolean }) {
   const [chars, setChars] = useState(reduce ? TEXT_SAMPLE.length : 0)
-  const [phase, setPhase] = useState<'type' | 'pause' | 'result'>(reduce ? 'result' : 'type')
+  const [phase, setPhase] = useState<'type' | 'thinking' | 'result'>(reduce ? 'result' : 'type')
 
   useEffect(() => {
     if (reduce) return
     setChars(0)
     setPhase('type')
     let i = 0
-    let pauseTimer = 0
+    let thinkTimer = 0
     const typeId = window.setInterval(() => {
       i += 1
       setChars(i)
       if (i >= TEXT_SAMPLE.length) {
         window.clearInterval(typeId)
-        setPhase('pause')
-        pauseTimer = window.setTimeout(() => setPhase('result'), 2000)
+        setPhase('thinking')
+        thinkTimer = window.setTimeout(() => setPhase('result'), 2000)
       }
     }, 95)
     return () => {
       window.clearInterval(typeId)
-      window.clearTimeout(pauseTimer)
+      window.clearTimeout(thinkTimer)
     }
   }, [reduce])
 
@@ -319,16 +320,20 @@ function TextMicro({ reduce }: { reduce: boolean }) {
           {TEXT_SAMPLE.slice(0, chars)}
           {phase === 'type' ? <span className="ln-micro-caret" /> : null}
         </span>
-        {phase === 'pause' ? <span className="ln-micro-pause">…</span> : null}
       </div>
-      <div className="ln-micro-keys" data-active={phase === 'type' ? 'true' : 'false'} aria-hidden="true">
-        {['C', 'a', 'l', 'l'].map((k, idx) => (
-          <span key={`${k}-${idx}`} className="ln-micro-key" style={{ animationDelay: `${idx * 0.11}s` }}>
-            {k}
-          </span>
-        ))}
-      </div>
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
+        {phase === 'thinking' ? (
+          <motion.div
+            key="thinking"
+            className="ln-micro-thinking"
+            initial={reduce ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.28, ease: inkEase }}
+          >
+            <TranslateThinking className="ln-micro-tt" />
+          </motion.div>
+        ) : null}
         {phase === 'result' ? (
           <motion.div
             key="result"
