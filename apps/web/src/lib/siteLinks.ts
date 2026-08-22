@@ -106,3 +106,8 @@ export function openHome() {
   }
   navigate('home')
 }
+
+/** Open the cinematic Cantonese tones explainer (`#/tones`). */
+export function openTones() {
+  navigate('tones')
+}

@@ -221,8 +221,41 @@ export const ui = {
   darkTheme: { en: 'Dark', zh: '深色', jp: 'sam1 sik1' },
 
   navFeatures: { en: 'Features', zh: '功能', jp: 'gung1 nang4' },
+  navTones: { en: 'Tones', zh: '聲調', jp: 'sing1 diu6' },
   navPricing: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   navLaunch: { en: 'Launch app', zh: '開啟應用', jp: 'hoi1 kai2 jing3 jung6' },
+
+  tonesKicker: { en: 'Cantonese tones', zh: '粵語聲調', jp: 'jyut6 jyu5 sing1 diu6' },
+  tonesHeroTitle: {
+    en: 'Six shapes your voice can draw',
+    zh: '六種聲音可以畫嘅形狀',
+    jp: 'luk6 zung2 sing1 jam1 ho2 ji5 waak6 ge3 jing4 zong6',
+  },
+  tonesHeroSub: {
+    en: 'Same letters. Different height.',
+    zh: '一樣嘅字，唔同嘅高低。',
+    jp: 'jat1 joeng6 ge3 zi6, m4 tung4 ge3 gou1 dai1.',
+  },
+  tonesHum: { en: 'Hum the shape', zh: '哼出呢個形', jp: 'hang1 ceot1 ni1 go3 jing4' },
+  tonesTap: { en: 'Tap a tone', zh: '撳一個聲調', jp: 'gam2 jat1 go3 sing1 diu6' },
+  tonesTwinsTitle: {
+    en: 'One letter apart. Worlds apart.',
+    zh: '差一個聲調，意思完全唔同。',
+    jp: 'caa1 jat1 go3 sing1 diu6, ji3 si1 jyun4 cyun4 m4 tung4.',
+  },
+  tonesBuy: { en: 'buy', zh: '買', jp: 'maai5' },
+  tonesSell: { en: 'sell', zh: '賣', jp: 'maai6' },
+  tonesCtaTitle: {
+    en: 'Hear tones while you speak',
+    zh: '一邊講一邊聽到聲調',
+    jp: 'jat1 bin1 gong2 jat1 bin1 teng1 dou2 sing1 diu6',
+  },
+  tonesCtaBody: {
+    en: 'JyutTranslate draws Jyutping under every Cantonese line.',
+    zh: 'JyutTranslate 會喺每句粵語下面畫出粵拼。',
+    jp: 'JyutTranslate wui5 hai2 mui5 geoi3 jyut6 jyu5 haa6 min6 waak6 ceot1 jyut6 ping3.',
+  },
+  tonesOpenApp: { en: 'Open translator', zh: '開啟翻譯器', jp: 'hoi1 kai2 faan1 jik6 hei3' },
 
   heroEyebrow: {
     enLang: 'English',
