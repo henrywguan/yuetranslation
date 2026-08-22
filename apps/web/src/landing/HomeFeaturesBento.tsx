@@ -3,7 +3,15 @@ import { BiText } from '../components/BiText'
 import { useYueStore } from '../lib/store'
 import { unlockTtsPlayback } from '../lib/tts'
 import { ui, type Bi } from '../lib/uiCopy'
+import { FeatureInfoPanel } from './FeatureInfoPanel'
 import { TONES } from './tones/tonesData'
+
+const HK_COLLOQUIAL: { han: string; jp: string; gloss: Bi }[] = [
+  { han: '係', jp: 'hai6', gloss: ui.featHkExHai },
+  { han: '唔', jp: 'm4', gloss: ui.featHkExM },
+  { han: '喺', jp: 'hai2', gloss: ui.featHkExHai2 },
+  { han: '咗', jp: 'zo2', gloss: ui.featHkExZo },
+]
 
 type BentoCard = {
   title: Bi
@@ -162,9 +170,58 @@ function JyutpingBentoCard({ card }: { card: BentoCard }) {
   )
 }
 
+function HkBentoCard({ card }: { card: BentoCard }) {
+  const [open, setOpen] = useState(false)
+  const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`ln-feat-card ln-feat-card--link ln-feat-card--hk${spanClass}`}
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+      >
+        <FeatureVisual kind="hk" />
+        <div className="ln-feat-card-copy">
+          <h3>
+            <BiText copy={card.title} size="md" hideJp />
+          </h3>
+          <BiText className="ln-feat-card-tag" copy={card.tag} size="sm" as="p" hideJp />
+        </div>
+      </button>
+
+      <FeatureInfoPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        title={ui.featHkTitle}
+        kicker={ui.featHkTag}
+      >
+        <BiText className="ln-feat-panel-lead" copy={ui.featHkDesc} size="sm" as="p" />
+        <ul className="ln-feat-panel-hk-list">
+          {HK_COLLOQUIAL.map((item) => (
+            <li key={item.han}>
+              <span className="ln-feat-panel-hk-glyph" lang="zh-HK">
+                <span className="ln-feat-ruby-jp">{item.jp}</span>
+                <span className="ln-feat-ruby-han">{item.han}</span>
+              </span>
+              <BiText className="ln-feat-panel-hk-gloss" copy={item.gloss} size="sm" hideJp />
+            </li>
+          ))}
+        </ul>
+      </FeatureInfoPanel>
+    </>
+  )
+}
+
 function BentoCardBody({ card }: { card: BentoCard }) {
   if (card.visual === 'jyutping') {
     return <JyutpingBentoCard card={card} />
+  }
+
+  if (card.visual === 'hk') {
+    return <HkBentoCard card={card} />
   }
 
   const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''

@@ -884,6 +884,169 @@
   border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
 }
 
+/* Feature info panel (HK card, etc.) */
+.ln-feat-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, #061018 48%, transparent);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+}
+
+.ln-feat-panel {
+  position: fixed;
+  z-index: 121;
+  left: 12px;
+  right: 12px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  margin: 0 auto;
+  width: min(420px, calc(100vw - 24px));
+  padding: 18px 18px 14px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 90%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid) 94%, var(--jade) 6%),
+      color-mix(in srgb, var(--harbor-mid) 92%, transparent)
+    );
+  box-shadow:
+    var(--shadow),
+    0 0 0 1px color-mix(in srgb, var(--jade) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  backdrop-filter: blur(16px);
+  color: var(--ink);
+}
+
+.ln-feat-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ln-feat-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ln-feat-panel-kicker {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--jade) 72%, var(--muted));
+}
+
+.ln-feat-panel-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.ln-feat-panel-close {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  margin: -4px -4px 0 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--harbor) 55%, transparent);
+  color: var(--muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ln-feat-panel-close:hover,
+.ln-feat-panel-close:focus-visible {
+  background: color-mix(in srgb, var(--jade) 14%, transparent);
+  color: var(--ink-bright, var(--ink));
+}
+
+.ln-feat-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ln-feat-panel-lead {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.ln-feat-panel-hk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ln-feat-panel-hk-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--harbor) 62%, transparent);
+  border: 1px solid color-mix(in srgb, var(--glass-border) 75%, transparent);
+}
+
+.ln-feat-panel-hk-glyph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.ln-feat-panel-hk-glyph .ln-feat-ruby-han {
+  font-size: 1.45rem;
+}
+
+.ln-feat-panel-hk-gloss {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.ln-feat-panel-done {
+  appearance: none;
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--jade) 32%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--jade) 12%, transparent);
+  color: var(--ink-bright, var(--ink));
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ln-feat-panel-done:hover,
+.ln-feat-panel-done:focus-visible {
+  background: color-mix(in srgb, var(--jade) 20%, transparent);
+  border-color: color-mix(in srgb, var(--jade) 48%, transparent);
+}
+
 .ln-modes-stage {
   display: flex;
   flex-direction: column;

@@ -371,6 +371,10 @@ export const ui = {
   featHostTitle: { en: 'Yours to host', zh: '自己托管', jp: 'zi6 gei2 tok3 gun2' },
   featJpTag: { en: 'Learn as you speak', zh: '邊講邊學', jp: 'jat1 bin1 gong2 jat1 bin1 hok6' },
   featHkTag: { en: 'Colloquial 粵語', zh: '口語粵語', jp: 'hau2 jyu5 jyut6 jyu5' },
+  featHkExHai: { en: 'is / yes', zh: '係／肯定', jp: 'hai6' },
+  featHkExM: { en: 'not', zh: '否定', jp: 'm4' },
+  featHkExHai2: { en: 'at / in', zh: '喺度', jp: 'hai2' },
+  featHkExZo: { en: 'past tense marker', zh: '完成語氣', jp: 'zo2' },
   featFastTag: { en: 'Tap any word', zh: '撳字詳解', jp: 'gam2 zi6 coeng4 gaai2' },
   featHostTag: { en: 'Your keys, your stack', zh: '自己密鑰托管', jp: 'zi6 gei2 mat6 joek6 tok3 gun2' },
   featHostDesc: {
