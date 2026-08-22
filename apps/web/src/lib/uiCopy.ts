@@ -227,17 +227,16 @@ export const ui = {
 
   tonesKicker: { en: 'Cantonese tones', zh: '粵語聲調', jp: 'jyut6 jyu5 sing1 diu6' },
   tonesHeroTitle: {
-    en: 'Six shapes your voice can draw',
-    zh: '六種聲音可以畫嘅形狀',
-    jp: 'luk6 zung2 sing1 jam1 ho2 ji5 waak6 ge3 jing4 zong6',
+    en: '6 Cantonese tones',
+    zh: '六個粵語聲調',
+    jp: 'luk6 go3 jyut6 jyu5 sing1 diu6',
   },
   tonesHeroSub: {
-    en: 'Same letters. Different height.',
-    zh: '一樣嘅字，唔同嘅高低。',
-    jp: 'jat1 joeng6 ge3 zi6, m4 tung4 ge3 gou1 dai1.',
+    en: 'Same word. Different tone.',
+    zh: '同一個音，唔同聲調。',
+    jp: 'tung4 jat1 go3 jam1, m4 tung4 sing1 diu6.',
   },
-  tonesHum: { en: 'Hum the shape', zh: '哼出呢個形', jp: 'hang1 ceot1 ni1 go3 jing4' },
-  tonesTap: { en: 'Tap a tone', zh: '撳一個聲調', jp: 'gam2 jat1 go3 sing1 diu6' },
+  tonesTap: { en: 'Tap a box to hear it', zh: '撳盒仔聽聲', jp: 'gam2 hap6 zai2 teng1 sing1' },
   tonesTwinsTitle: {
     en: 'One letter apart. Worlds apart.',
     zh: '差一個聲調，意思完全唔同。',
