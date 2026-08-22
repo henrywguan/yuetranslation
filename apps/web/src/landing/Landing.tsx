@@ -4,6 +4,7 @@ import { SoftErrorBoundary } from '../components/SoftErrorBoundary'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
+import { HomeFeaturesBento } from './HomeFeaturesBento'
 import { ModesStage } from './ModesStage'
 import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
@@ -131,7 +132,7 @@ export function Landing() {
         </Reveal>
 
         <div className="ln-modes-compose">
-          <Reveal className="ln-modes-flank ln-modes-flank--left" x={-48} y={18} stagger={0.14}>
+          <Reveal className="ln-modes-flank ln-modes-flank--left ln-modes-flank--desktop" x={-48} y={18} stagger={0.14}>
             {FEATURES_LEFT.map((f) => (
               <FeatureFlankItem key={f.title.en} {...f} />
             ))}
@@ -141,10 +142,14 @@ export function Landing() {
             <ModesStage />
           </Reveal>
 
-          <Reveal className="ln-modes-flank ln-modes-flank--right" x={48} y={18} stagger={0.14} delay={0.06}>
+          <Reveal className="ln-modes-flank ln-modes-flank--right ln-modes-flank--desktop" x={48} y={18} stagger={0.14} delay={0.06}>
             {FEATURES_RIGHT.map((f) => (
               <FeatureFlankItem key={f.title.en} {...f} />
             ))}
+          </Reveal>
+
+          <Reveal className="ln-feat-bento-wrap" y={24} stagger={0.08}>
+            <HomeFeaturesBento />
           </Reveal>
         </div>
       </section>

@@ -369,6 +369,10 @@ export const ui = {
     jp: 'gam2 git3 gwo2 zau6 ho2 ji5 daa2 hoi1 coeng4 sai3 caak3 zi6, hok6 sik1 dim2 gong2 mui5 jat1 go3 zi6.',
   },
   featHostTitle: { en: 'Yours to host', zh: '自己托管', jp: 'zi6 gei2 tok3 gun2' },
+  featJpTag: { en: 'Learn as you speak', zh: '邊講邊學', jp: 'jat1 bin1 gong2 jat1 bin1 hok6' },
+  featHkTag: { en: 'Colloquial 粵語', zh: '口語粵語', jp: 'hau2 jyu5 jyut6 jyu5' },
+  featFastTag: { en: 'Tap any word', zh: '撳字詳解', jp: 'gam2 zi6 coeng4 gaai2' },
+  featHostTag: { en: 'Your keys, your stack', zh: '自己密鑰托管', jp: 'zi6 gei2 mat6 joek6 tok3 gun2' },
   featHostDesc: {
     en: 'Built to run on WordPress or fully self-hosted. You will need your own API keys!',
     zh: '可以跑喺 WordPress，又或者完全自己托管。你需要自己嘅 API 密鑰！',
