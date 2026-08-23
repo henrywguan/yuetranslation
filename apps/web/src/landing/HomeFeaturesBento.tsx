@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { BiText } from '../components/BiText'
-import { setTtsPlaybackRate, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
+import { setTtsPlaybackRate, speakTextSequence, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
 import { ui, type Bi } from '../lib/uiCopy'
 import { FeatureInfoPanel } from './FeatureInfoPanel'
 import { TONES } from './tones/tonesData'
@@ -131,12 +131,9 @@ function JyutpingBentoCard({ card }: { card: BentoCard }) {
   const [activeTone, setActiveTone] = useState<number | null>(null)
   const [playing, setPlaying] = useState(false)
   const playingRef = useRef(false)
-  const timersRef = useRef<number[]>([])
 
   useEffect(() => {
     return () => {
-      for (const id of timersRef.current) window.clearTimeout(id)
-      timersRef.current = []
       stopSpeaking()
       setTtsPlaybackRate(1)
     }
@@ -147,31 +144,19 @@ function JyutpingBentoCard({ card }: { card: BentoCard }) {
     unlockTtsPlayback()
     playingRef.current = true
     setPlaying(true)
-    setTtsPlaybackRate(1.45)
 
-    const slotMs = TONE_DEMO_MS / TONES.length
-    const timers: number[] = []
-
-    TONES.forEach((tone, i) => {
-      const startId = window.setTimeout(() => {
-        stopSpeaking()
-        setActiveTone(tone.n)
-        void speakText(tone.han, 'yue')
-      }, i * slotMs)
-      timers.push(startId)
-    })
-
-    const endId = window.setTimeout(() => {
-      stopSpeaking()
-      setTtsPlaybackRate(1)
+    void speakTextSequence(
+      TONES.map((tone) => tone.han),
+      {
+        totalMs: TONE_DEMO_MS,
+        rate: 1.45,
+        onStep: (index) => setActiveTone(TONES[index]?.n ?? null),
+      },
+    ).finally(() => {
       setActiveTone(null)
       setPlaying(false)
       playingRef.current = false
-      timersRef.current = []
-    }, TONE_DEMO_MS)
-    timers.push(endId)
-
-    timersRef.current = timers
+    })
   }, [])
 
   const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''
