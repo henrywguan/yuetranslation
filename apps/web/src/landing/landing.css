@@ -1702,10 +1702,6 @@
   margin: 16px auto 0;
 }
 
-.ln-demo-copy .btn-primary {
-  margin-top: 26px;
-}
-
 .ln-demo-stage {
   width: 100%;
   max-width: 720px;
@@ -2833,11 +2829,6 @@
 
   .ln-demo-band-wash {
     border-radius: 28px;
-  }
-
-  .ln-demo-copy .btn-primary {
-    width: 100%;
-    justify-content: center;
   }
 
   .ln-price-card.featured {

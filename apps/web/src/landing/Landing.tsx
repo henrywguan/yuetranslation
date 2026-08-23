@@ -166,9 +166,6 @@ export function Landing() {
                 <BiText copy={ui.demoTitle} size="lg" />
               </h2>
               <BiText className="ln-p" copy={ui.demoBody} size="sm" as="p" />
-              <MagneticButton className="btn-primary" onClick={() => openApp()}>
-                <BiText copy={ui.openFullApp} size="sm" />
-              </MagneticButton>
             </Reveal>
             <Reveal className="ln-demo-stage" y={36}>
               <LiveDemo />
