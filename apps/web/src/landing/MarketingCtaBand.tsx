@@ -8,8 +8,9 @@ import type { Bi } from '../lib/uiCopy'
 import { MagneticButton } from './MagneticButton'
 import { Reveal } from './Reveal'
 
-const MESH_DARK = ['#07131f', '#0a1c2c', '#0b3d36', '#12324a', '#1f8f7a', '#3dcfb6']
-const MESH_LIGHT = ['#eef5f8', '#e4eef4', '#9fd6cb', '#b7d4e8', '#1f9f8a', '#3dcfb6']
+/* Harbor-weighted so the mesh eases in from the page field instead of a teal wall. */
+const MESH_DARK = ['#07131f', '#07131f', '#0a1c2c', '#0b3d36', '#12324a', '#1f8f7a']
+const MESH_LIGHT = ['#eef5f8', '#eef5f8', '#e4eef4', '#d7e6ee', '#9fd6cb', '#1f9f8a']
 
 /**
  * Closing CTA for marketing pages.
@@ -59,11 +60,11 @@ export function MarketingCtaBand({
           <MeshGradient
             className="ln-cta-mesh"
             colors={theme === 'light' ? MESH_LIGHT : MESH_DARK}
-            speed={0.28}
-            distortion={0.7}
-            swirl={0.35}
-            grainMixer={0.12}
-            grainOverlay={0.08}
+            speed={0.22}
+            distortion={0.55}
+            swirl={0.28}
+            grainMixer={0.08}
+            grainOverlay={0.05}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           />
         ) : null}
@@ -71,6 +72,9 @@ export function MarketingCtaBand({
         <div className="ln-cta-orb ln-cta-orb--a" />
         <div className="ln-cta-orb ln-cta-orb--b" />
         <div className="ln-cta-orb ln-cta-orb--c" />
+        {/* Harbor veils beat mask-alone for mix-blend meshes — soft crossfade in/out. */}
+        <div className="ln-cta-veil ln-cta-veil--top" />
+        <div className="ln-cta-veil ln-cta-veil--bottom" />
       </div>
 
       <div className="ln-cta-inner">
