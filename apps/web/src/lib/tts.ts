@@ -14,6 +14,7 @@ let unlocked = false
 /** Prevent overlapping silent unlock plays from LiveHoldButton + startHold. */
 let unlockInFlight = false
 let playbackRate = 1
+let sequenceId = 0
 
 function ensureSharedAudio(): HTMLAudioElement {
   if (!audio) {
@@ -96,6 +97,7 @@ export function setTtsPlaybackRate(rate: number) {
 }
 
 export function stopSpeaking() {
+  sequenceId += 1
   gen += 1
   playing = false
   if (audio) {
@@ -181,4 +183,97 @@ export async function speakText(text: string, lang: Lang) {
     return
   }
   await browserSpeak(trimmed, lang, g)
+}
+
+/** Play a pre-fetched blob without bumping the speak generation (for rapid sequences). */
+export function playTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang) {
+  if (audio) {
+    audio.onended = null
+    audio.onerror = null
+    try {
+      audio.pause()
+    } catch {
+      /* ignore */
+    }
+  }
+  if (url) {
+    URL.revokeObjectURL(url)
+    url = null
+  }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+
+  const g = gen
+  playing = true
+
+  if (blob && blob.size > 0) {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    const el = ensureSharedAudio()
+    el.playbackRate = playbackRate
+    el.src = objectUrl
+    el.volume = 1
+    el.muted = false
+    el.onended = () => {
+      if (g === gen) playing = false
+    }
+    el.onerror = () => {
+      if (g === gen) playing = false
+    }
+    void el.play().catch(() => {
+      if (g === gen) playing = false
+    })
+    return
+  }
+
+  void browserSpeak(fallbackText, lang, g)
+}
+
+/**
+ * Prefetch TTS then play each clip on a fixed schedule (~totalMs for the full run).
+ * Safe for rapid tone demos — avoids fetch latency cancelling playback via stopSpeaking().
+ */
+export async function speakTextSequence(
+  texts: string[],
+  options: {
+    totalMs: number
+    lang?: Lang
+    rate?: number
+    onStep?: (index: number, text: string) => void
+  },
+): Promise<void> {
+  const lang = options.lang ?? 'yue'
+  const items = texts.map((t) => t.trim()).filter(Boolean)
+  if (!items.length) return
+
+  stopSpeaking()
+  const id = sequenceId
+  setTtsPlaybackRate(options.rate ?? 1.45)
+
+  const blobs = await Promise.all(items.map((text) => fetchTtsAudio(text, lang)))
+  if (id !== sequenceId) return
+
+  const slotMs = options.totalMs / items.length
+
+  await new Promise<void>((resolve) => {
+    const timers: number[] = []
+
+    items.forEach((text, i) => {
+      timers.push(
+        window.setTimeout(() => {
+          if (id !== sequenceId) return
+          options.onStep?.(i, text)
+          playTtsBlob(blobs[i] ?? null, text, lang)
+        }, i * slotMs),
+      )
+    })
+
+    timers.push(
+      window.setTimeout(() => {
+        if (id !== sequenceId) return
+        stopSpeaking()
+        setTtsPlaybackRate(1)
+        resolve()
+      }, options.totalMs),
+    )
+  })
 }
