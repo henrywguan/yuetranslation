@@ -1144,6 +1144,53 @@
     color-mix(in srgb, var(--harbor) 55%, #0a1211);
 }
 
+.ln-modes-phone-tap {
+  position: absolute;
+  top: 12%;
+  bottom: 10%;
+  width: 36%;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ln-modes-phone-tap--prev {
+  left: 0;
+  border-radius: 28px 0 0 28px;
+}
+
+.ln-modes-phone-tap--next {
+  right: 0;
+  border-radius: 0 28px 28px 0;
+}
+
+.ln-modes-phone-tap:hover,
+.ln-modes-phone-tap:focus-visible {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--jade) 10%, transparent),
+    transparent 55%
+  );
+}
+
+.ln-modes-phone-tap--next:hover,
+.ln-modes-phone-tap--next:focus-visible {
+  background: linear-gradient(
+    270deg,
+    color-mix(in srgb, var(--jade) 10%, transparent),
+    transparent 55%
+  );
+}
+
+.ln-modes-phone-tap:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 45%, transparent);
+  outline-offset: -3px;
+}
+
 .ln-modes-scene {
   height: 100%;
   min-height: 100%;

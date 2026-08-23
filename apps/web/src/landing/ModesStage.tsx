@@ -24,6 +24,11 @@ export function ModesStage() {
   const [paused, setPaused] = useState(false)
   const active = MODES.find((m) => m.id === mode) || MODES[0]
 
+  const stepMode = (delta: 1 | -1) => {
+    const i = MODES.findIndex((m) => m.id === mode)
+    setMode(MODES[(i + delta + MODES.length) % MODES.length]!.id)
+  }
+
   useEffect(() => {
     if (reduce || paused) return
     const t = window.setTimeout(() => {
@@ -76,6 +81,18 @@ export function ModesStage() {
               </motion.div>
             </AnimatePresence>
           </div>
+          <button
+            type="button"
+            className="ln-modes-phone-tap ln-modes-phone-tap--prev"
+            aria-label={`Previous mode: ${MODES[(MODES.findIndex((m) => m.id === mode) - 1 + MODES.length) % MODES.length]!.title.en}`}
+            onClick={() => stepMode(-1)}
+          />
+          <button
+            type="button"
+            className="ln-modes-phone-tap ln-modes-phone-tap--next"
+            aria-label={`Next mode: ${MODES[(MODES.findIndex((m) => m.id === mode) + 1) % MODES.length]!.title.en}`}
+            onClick={() => stepMode(1)}
+          />
         </div>
       </div>
 
