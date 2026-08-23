@@ -187,6 +187,10 @@ export async function speakText(text: string, lang: Lang) {
 
 /** Play a pre-fetched blob without bumping the speak generation (for rapid sequences). */
 export function playTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang) {
+  void playTtsBlobAndWait(blob, fallbackText, lang, Number.POSITIVE_INFINITY)
+}
+
+function swapTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang): HTMLAudioElement | null {
   if (audio) {
     audio.onended = null
     audio.onerror = null
@@ -202,7 +206,6 @@ export function playTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang)
   }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 
-  const g = gen
   playing = true
 
   if (blob && blob.size > 0) {
@@ -213,31 +216,51 @@ export function playTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang)
     el.src = objectUrl
     el.volume = 1
     el.muted = false
-    el.onended = () => {
-      if (g === gen) playing = false
-    }
-    el.onerror = () => {
-      if (g === gen) playing = false
-    }
-    void el.play().catch(() => {
-      if (g === gen) playing = false
-    })
-    return
+    return el
   }
 
-  void browserSpeak(fallbackText, lang, g)
+  void browserSpeak(fallbackText, lang, gen)
+  return null
+}
+
+function playTtsBlobAndWait(
+  blob: Blob | null,
+  fallbackText: string,
+  lang: Lang,
+  maxMs: number,
+): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timer)
+      resolve()
+    }
+    const timer = window.setTimeout(finish, maxMs)
+
+    const el = swapTtsBlob(blob, fallbackText, lang)
+    if (!el) {
+      finish()
+      return
+    }
+
+    el.onended = finish
+    el.onerror = finish
+    void el.play().catch(finish)
+  })
 }
 
 /**
- * Prefetch TTS then play each clip on a fixed schedule (~totalMs for the full run).
- * Safe for rapid tone demos — avoids fetch latency cancelling playback via stopSpeaking().
+ * Prefetch TTS then play each clip in order — one full syllable at a time.
+ * Uses maxMsPerItem as a ceiling so the demo stays snappy without chopping mid-tone.
  */
 export async function speakTextSequence(
   texts: string[],
   options: {
-    totalMs: number
     lang?: Lang
     rate?: number
+    maxMsPerItem?: number
     onStep?: (index: number, text: string) => void
   },
 ): Promise<void> {
@@ -247,33 +270,21 @@ export async function speakTextSequence(
 
   stopSpeaking()
   const id = sequenceId
-  setTtsPlaybackRate(options.rate ?? 1.45)
+  const maxMs = options.maxMsPerItem ?? 950
+  setTtsPlaybackRate(options.rate ?? 1.15)
 
   const blobs = await Promise.all(items.map((text) => fetchTtsAudio(text, lang)))
   if (id !== sequenceId) return
 
-  const slotMs = options.totalMs / items.length
+  for (let i = 0; i < items.length; i++) {
+    if (id !== sequenceId) return
+    const text = items[i]!
+    options.onStep?.(i, text)
+    await playTtsBlobAndWait(blobs[i] ?? null, text, lang, maxMs)
+  }
 
-  await new Promise<void>((resolve) => {
-    const timers: number[] = []
-
-    items.forEach((text, i) => {
-      timers.push(
-        window.setTimeout(() => {
-          if (id !== sequenceId) return
-          options.onStep?.(i, text)
-          playTtsBlob(blobs[i] ?? null, text, lang)
-        }, i * slotMs),
-      )
-    })
-
-    timers.push(
-      window.setTimeout(() => {
-        if (id !== sequenceId) return
-        stopSpeaking()
-        setTtsPlaybackRate(1)
-        resolve()
-      }, options.totalMs),
-    )
-  })
+  if (id === sequenceId) {
+    stopSpeaking()
+    setTtsPlaybackRate(1)
+  }
 }
