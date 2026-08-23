@@ -2073,9 +2073,11 @@
 
 /* ---------- Pricing ---------- */
 .ln-pricing {
+  position: relative;
+  z-index: 1;
   padding-top: clamp(88px, 14vw, 148px);
-  /* Tighter bottom so the CTA atmosphere can blend up without a hard gap */
-  padding-bottom: clamp(40px, 7vw, 72px);
+  /* Extra room so the CTA veil can rise under “Compare all plans” */
+  padding-bottom: clamp(28px, 5vw, 48px);
 }
 
 .ln-section-head--airy {
@@ -2273,42 +2275,44 @@
 }
 
 /* ---------- CTA band + footer ---------- */
-/* Full-bleed, cardless — sits in the page glass field and blends up from pricing. */
+/* Full-bleed, cardless — overlaps pricing/footer so the mesh crossfades, not cuts. */
 .ln-cta-band {
   position: relative;
+  z-index: 0;
   text-align: center;
   width: 100%;
   max-width: none;
-  margin: 0;
+  /* Pull up under pricing so harbor→shader is a long dissolve, not a seam */
+  margin: clamp(-56px, -8vw, -36px) 0 clamp(-40px, -6vw, -24px);
   padding:
-    clamp(64px, 10vw, 120px)
+    clamp(110px, 16vw, 180px)
     clamp(24px, 5vw, 48px)
-    clamp(56px, 9vw, 100px);
+    clamp(100px, 14vw, 160px);
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ln-cta-atmosphere {
   position: absolute;
-  inset: -8% 0;
+  inset: -12% 0 -18%;
   pointer-events: none;
   z-index: 0;
-  /* Soft edges so the wash dissolves into pricing above and footer below */
+  /* Very long feather — mesh should be invisible at the section edges */
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 16%,
-    #000 84%,
+    #000 32%,
+    #000 68%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 16%,
-    #000 84%,
+    #000 32%,
+    #000 68%,
     transparent 100%
   );
 }
@@ -2318,41 +2322,96 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.42;
+  opacity: 0.28;
   mix-blend-mode: screen;
 }
 
 [data-theme='light'] .ln-cta-mesh {
-  opacity: 0.55;
+  opacity: 0.38;
   mix-blend-mode: multiply;
+}
+
+/* Opaque-to-clear harbor ramps — reliable with blend modes where masks alone fail */
+.ln-cta-veil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ln-cta-veil--top {
+  top: 0;
+  height: min(48%, 280px);
+  background: linear-gradient(
+    to bottom,
+    var(--harbor) 0%,
+    color-mix(in srgb, var(--harbor) 88%, transparent) 28%,
+    color-mix(in srgb, var(--harbor) 42%, transparent) 62%,
+    transparent 100%
+  );
+}
+
+.ln-cta-veil--bottom {
+  bottom: 0;
+  height: min(46%, 260px);
+  background: linear-gradient(
+    to top,
+    var(--harbor) 0%,
+    color-mix(in srgb, var(--harbor) 88%, transparent) 30%,
+    color-mix(in srgb, var(--harbor) 40%, transparent) 64%,
+    transparent 100%
+  );
+}
+
+[data-theme='light'] .ln-cta-veil--top {
+  background: linear-gradient(
+    to bottom,
+    var(--harbor) 0%,
+    color-mix(in srgb, var(--harbor) 90%, transparent) 32%,
+    color-mix(in srgb, var(--harbor) 45%, transparent) 66%,
+    transparent 100%
+  );
+}
+
+[data-theme='light'] .ln-cta-veil--bottom {
+  background: linear-gradient(
+    to top,
+    var(--harbor) 0%,
+    color-mix(in srgb, var(--harbor) 90%, transparent) 32%,
+    color-mix(in srgb, var(--harbor) 45%, transparent) 66%,
+    transparent 100%
+  );
 }
 
 .ln-cta-wash {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
     radial-gradient(
-      70% 55% at 50% 42%,
-      color-mix(in srgb, var(--jade) 18%, transparent),
-      transparent 68%
-    ),
-    radial-gradient(
-      48% 40% at 18% 58%,
-      color-mix(in srgb, var(--harbor-teal) 28%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      44% 38% at 82% 38%,
-      color-mix(in srgb, var(--jade-bright, #7ef0dc) 12%, transparent),
+      58% 48% at 50% 48%,
+      color-mix(in srgb, var(--jade) 14%, transparent),
       transparent 72%
+    ),
+    radial-gradient(
+      40% 36% at 22% 58%,
+      color-mix(in srgb, var(--harbor-teal) 22%, transparent),
+      transparent 74%
+    ),
+    radial-gradient(
+      36% 32% at 78% 42%,
+      color-mix(in srgb, var(--jade-bright, #7ef0dc) 8%, transparent),
+      transparent 76%
     );
 }
 
 .ln-cta-orb {
   position: absolute;
+  z-index: 1;
   border-radius: 50%;
   filter: blur(48px);
-  opacity: 0.55;
+  opacity: 0.45;
   will-change: transform;
 }
 
@@ -2360,9 +2419,9 @@
   width: min(52vw, 420px);
   height: min(52vw, 420px);
   left: 50%;
-  top: 38%;
+  top: 48%;
   translate: -50% -50%;
-  background: color-mix(in srgb, var(--jade) 32%, transparent);
+  background: color-mix(in srgb, var(--jade) 28%, transparent);
   animation: ln-cta-drift-a 18s ease-in-out infinite;
 }
 
@@ -2370,8 +2429,8 @@
   width: min(36vw, 280px);
   height: min(36vw, 280px);
   left: 18%;
-  top: 62%;
-  background: color-mix(in srgb, var(--harbor-blue) 36%, transparent);
+  top: 58%;
+  background: color-mix(in srgb, var(--harbor-blue) 30%, transparent);
   animation: ln-cta-drift-b 22s ease-in-out infinite;
 }
 
@@ -2379,8 +2438,8 @@
   width: min(30vw, 240px);
   height: min(30vw, 240px);
   right: 14%;
-  top: 28%;
-  background: color-mix(in srgb, var(--jade-bright, #7ef0dc) 22%, transparent);
+  top: 44%;
+  background: color-mix(in srgb, var(--jade-bright, #7ef0dc) 16%, transparent);
   animation: ln-cta-drift-c 16s ease-in-out infinite;
 }
 
@@ -2510,19 +2569,19 @@
 [data-theme='light'] .ln-cta-wash {
   background:
     radial-gradient(
-      70% 55% at 50% 42%,
-      color-mix(in srgb, var(--jade) 14%, transparent),
-      transparent 68%
-    ),
-    radial-gradient(
-      48% 40% at 22% 60%,
-      color-mix(in srgb, var(--harbor-teal) 22%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      44% 38% at 80% 36%,
-      color-mix(in srgb, var(--jade-bright) 16%, transparent),
+      58% 48% at 50% 48%,
+      color-mix(in srgb, var(--jade) 11%, transparent),
       transparent 72%
+    ),
+    radial-gradient(
+      40% 36% at 22% 58%,
+      color-mix(in srgb, var(--harbor-teal) 18%, transparent),
+      transparent 74%
+    ),
+    radial-gradient(
+      36% 32% at 78% 42%,
+      color-mix(in srgb, var(--jade-bright) 12%, transparent),
+      transparent 76%
     );
 }
 
@@ -2547,16 +2606,24 @@
 }
 
 .ln-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   margin-top: 0;
-  padding: 28px 20px max(15px, env(safe-area-inset-bottom, 0px));
-  /* Soft seam instead of a hard rule under the seamless CTA */
-  border-top: 1px solid color-mix(in srgb, var(--glass-border) 55%, transparent);
+  padding: clamp(36px, 6vw, 56px) 20px max(15px, env(safe-area-inset-bottom, 0px));
+  /* No hairline — CTA bottom veil already dissolves into harbor */
+  border-top: none;
   color: var(--muted);
   text-align: center;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--harbor) 55%, transparent) 28%,
+    var(--harbor) 72%
+  );
 }
 
 .ln-footer-meta {
@@ -3071,7 +3138,8 @@
   }
 
   .ln-cta-band {
-    padding: 56px 22px 48px;
+    margin: -40px 0 -28px;
+    padding: 96px 22px 88px;
   }
 
   .pp-hero h1,
