@@ -1842,6 +1842,26 @@
   max-width: 100%;
 }
 
+.demo-result-row .result-with-def-line {
+  align-items: center;
+  width: 100%;
+}
+
+.demo-result-row .result-actions {
+  align-self: center;
+  margin-top: 0;
+}
+
+.demo-alts .translation-alt-row {
+  align-items: center;
+}
+
+.demo-alts .translation-alt-speak {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 0;
+}
+
 .demo-result-row .demo-output-text,
 .demo-result-row .cantonese-block {
   font-family: var(--font-body);

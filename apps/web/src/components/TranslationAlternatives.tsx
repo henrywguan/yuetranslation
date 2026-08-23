@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { CopyButton } from './CopyButton'
+import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
 import { ui } from '../lib/uiCopy'
 
@@ -8,11 +9,15 @@ export function TranslationAlternatives({
   alternatives,
   className = '',
   onSelect,
+  showCopy = true,
+  showSpeak = false,
 }: {
   alternatives: string[]
   className?: string
   /** Selecting a variation promotes it and opens its character breakdown. */
   onSelect: (phrase: string) => void
+  showCopy?: boolean
+  showSpeak?: boolean
 }) {
   if (!alternatives.length) return null
   return (
@@ -29,7 +34,8 @@ export function TranslationAlternatives({
                 onActivate={onSelect}
                 activateLabel={`Use variation ${alt} and open breakdown`}
               />
-              <CopyButton text={alt} lang="yue" className="translation-alt-copy" />
+              {showSpeak ? <SpeakButton text={alt} lang="yue" className="translation-alt-speak" /> : null}
+              {showCopy ? <CopyButton text={alt} lang="yue" className="translation-alt-copy" /> : null}
             </div>
           </li>
         ))}
