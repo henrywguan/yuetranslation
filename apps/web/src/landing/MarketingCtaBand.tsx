@@ -5,6 +5,7 @@ import { BiText } from '../components/BiText'
 import { useTheme } from '../lib/theme'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import type { Bi } from '../lib/uiCopy'
+import { gsap, ScrollTrigger } from './gsap'
 import { MagneticButton } from './MagneticButton'
 import { Reveal } from './Reveal'
 
@@ -16,6 +17,7 @@ const MESH_LIGHT = ['#eef5f8', '#eef5f8', '#e4eef4', '#d7e6ee', '#9fd6cb', '#1f9
  * Closing CTA for marketing pages.
  * Full-bleed and cardless so it blends into the page glass field;
  * Paper mesh atmosphere + staggered copy + pulsing jade mark.
+ * Atmosphere opacity is scroll-linked: fades in on approach, out on leave.
  */
 export function MarketingCtaBand({
   title,
@@ -33,28 +35,64 @@ export function MarketingCtaBand({
   const { theme } = useTheme()
   const reduced = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
-  const [inView, setInView] = useState(false)
+  const [near, setNear] = useState(false)
 
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) setInView(true)
+        if (entry?.isIntersecting) setNear(true)
       },
-      { rootMargin: '120px 0px', threshold: 0.05 },
+      { rootMargin: '40% 0px', threshold: 0 },
     )
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  const showMesh = inView && !reduced
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    if (reduced) {
+      el.style.setProperty('--ln-cta-atm', '1')
+      return
+    }
+
+    el.style.setProperty('--ln-cta-atm', '0')
+
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 0.45,
+        onUpdate: (self) => {
+          const p = self.progress
+          // Ease in through the first third, hold, ease out through the last third.
+          let opacity = 1
+          if (p < 0.32) opacity = p / 0.32
+          else if (p > 0.68) opacity = (1 - p) / 0.32
+          el.style.setProperty('--ln-cta-atm', String(Math.max(0, Math.min(1, opacity))))
+        },
+      })
+    }, sectionRef)
+
+    ScrollTrigger.refresh()
+    return () => ctx.revert()
+  }, [reduced])
+
+  const showMesh = near && !reduced
 
   return (
     <section
       ref={sectionRef}
       className={className ? `ln-cta-band ${className}` : 'ln-cta-band'}
+      style={{ ['--ln-cta-atm' as string]: reduced ? 1 : 0 }}
     >
+      {/* Soft jade haze that bleeds into the section above (pricing / FAQ / tones). */}
+      <div className="ln-cta-prelude" aria-hidden="true" />
+
       <div className="ln-cta-atmosphere" aria-hidden="true">
         {showMesh ? (
           <MeshGradient
