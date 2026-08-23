@@ -13,6 +13,7 @@ let playing = false
 let unlocked = false
 /** Prevent overlapping silent unlock plays from LiveHoldButton + startHold. */
 let unlockInFlight = false
+let playbackRate = 1
 
 function ensureSharedAudio(): HTMLAudioElement {
   if (!audio) {
@@ -89,6 +90,11 @@ export function unlockTtsPlayback(): void {
   }
 }
 
+export function setTtsPlaybackRate(rate: number) {
+  playbackRate = Math.max(0.5, Math.min(rate, 3))
+  if (audio) audio.playbackRate = playbackRate
+}
+
 export function stopSpeaking() {
   gen += 1
   playing = false
@@ -151,6 +157,7 @@ export async function speakText(text: string, lang: Lang) {
     url = objectUrl
     // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
     const el = ensureSharedAudio()
+    el.playbackRate = playbackRate
     el.src = objectUrl
     el.volume = 1
     el.muted = false
