@@ -125,7 +125,7 @@ function FeatureVisual({
   }
 }
 
-const TONE_DEMO_MS = 3000
+const TONE_MAX_MS = 950
 
 function JyutpingBentoCard({ card }: { card: BentoCard }) {
   const [activeTone, setActiveTone] = useState<number | null>(null)
@@ -148,8 +148,8 @@ function JyutpingBentoCard({ card }: { card: BentoCard }) {
     void speakTextSequence(
       TONES.map((tone) => tone.han),
       {
-        totalMs: TONE_DEMO_MS,
-        rate: 1.45,
+        maxMsPerItem: TONE_MAX_MS,
+        rate: 1.15,
         onStep: (index) => setActiveTone(TONES[index]?.n ?? null),
       },
     ).finally(() => {
