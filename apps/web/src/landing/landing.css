@@ -2078,6 +2078,57 @@
   padding-top: clamp(88px, 14vw, 148px);
   /* Extra room so the CTA veil can rise under “Compare all plans” */
   padding-bottom: clamp(28px, 5vw, 48px);
+  overflow: visible;
+}
+
+/* Soft jade haze under the pricing block so CTA doesn’t feel like a new scene */
+.ln-pricing::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: clamp(-48px, -6vw, -28px);
+  translate: -50% 0;
+  width: min(920px, 100%);
+  height: clamp(140px, 28vw, 240px);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      70% 85% at 50% 100%,
+      color-mix(in srgb, var(--jade) 16%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      48% 70% at 28% 90%,
+      color-mix(in srgb, var(--harbor-teal) 18%, transparent),
+      transparent 75%
+    ),
+    radial-gradient(
+      44% 65% at 74% 88%,
+      color-mix(in srgb, var(--jade-bright, #7ef0dc) 8%, transparent),
+      transparent 78%
+    );
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 35%, #000 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 35%, #000 75%, transparent 100%);
+}
+
+[data-theme='light'] .ln-pricing::after {
+  background:
+    radial-gradient(
+      70% 85% at 50% 100%,
+      color-mix(in srgb, var(--jade) 12%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      48% 70% at 28% 90%,
+      color-mix(in srgb, var(--harbor-teal) 14%, transparent),
+      transparent 75%
+    ),
+    radial-gradient(
+      44% 65% at 74% 88%,
+      color-mix(in srgb, var(--jade-bright) 10%, transparent),
+      transparent 78%
+    );
 }
 
 .ln-section-head--airy {
@@ -2085,6 +2136,8 @@
 }
 
 .ln-price-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 28px;
@@ -2293,6 +2346,47 @@
   background: transparent;
   box-shadow: none;
   overflow: visible;
+  --ln-cta-atm: 0;
+}
+
+/* Shared haze that reaches into the section above the CTA (pricing / FAQ / tones). */
+.ln-cta-prelude {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  translate: -50% -55%;
+  width: min(880px, 112%);
+  height: clamp(130px, 24vw, 220px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: calc(0.35 + (var(--ln-cta-atm, 0) * 0.65));
+  background:
+    radial-gradient(
+      65% 80% at 50% 70%,
+      color-mix(in srgb, var(--jade) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40% 55% at 30% 60%,
+      color-mix(in srgb, var(--harbor-teal) 16%, transparent),
+      transparent 75%
+    );
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%, #000 70%, transparent);
+}
+
+[data-theme='light'] .ln-cta-prelude {
+  background:
+    radial-gradient(
+      65% 80% at 50% 70%,
+      color-mix(in srgb, var(--jade) 11%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40% 55% at 30% 60%,
+      color-mix(in srgb, var(--harbor-teal) 12%, transparent),
+      transparent 75%
+    );
 }
 
 .ln-cta-atmosphere {
@@ -2300,6 +2394,8 @@
   inset: -12% 0 -18%;
   pointer-events: none;
   z-index: 0;
+  opacity: var(--ln-cta-atm, 0);
+  will-change: opacity;
   /* Very long feather — mesh should be invisible at the section edges */
   -webkit-mask-image: linear-gradient(
     to bottom,
@@ -2590,6 +2686,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ln-cta-band {
+    --ln-cta-atm: 1;
+  }
+
+  .ln-cta-atmosphere {
+    will-change: auto;
+  }
+
   .ln-cta-orb--a,
   .ln-cta-orb--b,
   .ln-cta-orb--c,
@@ -2725,6 +2829,8 @@
 
 /* ---------- Landing pricing teaser link ---------- */
 .ln-price-more {
+  position: relative;
+  z-index: 1;
   text-align: center;
   margin-top: 28px;
 }
