@@ -4,6 +4,11 @@ import type { Bi } from '../lib/uiCopy'
 import { MagneticButton } from './MagneticButton'
 import { Reveal } from './Reveal'
 
+/**
+ * Closing CTA for marketing pages.
+ * Full-bleed and cardless so it blends into the page glass field;
+ * copy reveals in staggered beats on scroll.
+ */
 export function MarketingCtaBand({
   title,
   body,
@@ -19,17 +24,26 @@ export function MarketingCtaBand({
 }) {
   return (
     <section className={className ? `ln-cta-band ${className}` : 'ln-cta-band'}>
-      <Reveal className="ln-cta-inner">
-        <div className="ln-cta-glow" aria-hidden="true" />
-        <JyutLogo variant="mark" className="ln-cta-mark" />
-        <h2 className="ln-h2">
-          <BiText copy={title} size="lg" />
-        </h2>
-        <BiText className="ln-p" copy={body} size="sm" as="p" />
-        <MagneticButton className="btn-primary" onClick={onClick}>
-          <BiText copy={button} size="sm" />
-        </MagneticButton>
-      </Reveal>
+      <div className="ln-cta-atmosphere" aria-hidden="true">
+        <div className="ln-cta-wash" />
+        <div className="ln-cta-orb ln-cta-orb--a" />
+        <div className="ln-cta-orb ln-cta-orb--b" />
+        <div className="ln-cta-orb ln-cta-orb--c" />
+      </div>
+
+      <div className="ln-cta-inner">
+        <Reveal className="ln-cta-stack" stagger={0.14} y={22}>
+          <JyutLogo variant="mark" className="ln-cta-mark" />
+          <h2 className="ln-h2 ln-cta-title">
+            <BiText copy={title} size="lg" />
+          </h2>
+          <BiText className="ln-p ln-cta-body" copy={body} size="sm" as="p" />
+          <div className="ln-cta-rule" />
+          <MagneticButton className="btn-primary" onClick={onClick}>
+            <BiText copy={button} size="sm" />
+          </MagneticButton>
+        </Reveal>
+      </div>
     </section>
   )
 }
