@@ -131,7 +131,6 @@ export function LiveDemo() {
               className="demo-result-row"
               textClassName="demo-output-text"
               speakLang="yue"
-              showCopy={false}
               onActivate={(p) => void openPhrase(p, false)}
             />
             <TranslationAlternatives
