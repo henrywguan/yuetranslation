@@ -1842,6 +1842,40 @@
   max-width: 100%;
 }
 
+.demo-result-row .result-with-def-line {
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+.demo-result-row .result-actions {
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.demo-result-row .cantonese-activate {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+.demo-alts .translation-alt-row {
+  align-items: center;
+}
+
+.demo-alts .translation-alt-speak {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 0;
+}
+
 .demo-result-row .demo-output-text,
 .demo-result-row .cantonese-block {
   font-family: var(--font-body);

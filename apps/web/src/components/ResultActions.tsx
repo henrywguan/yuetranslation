@@ -7,10 +7,12 @@ export function ResultActions({
   text,
   lang,
   className = '',
+  showCopy = true,
 }: {
   text: string
   lang: Lang
   className?: string
+  showCopy?: boolean
 }) {
   const trimmed = text.trim()
   if (!trimmed) return null
@@ -18,7 +20,7 @@ export function ResultActions({
   return (
     <div className={`result-actions ${className}`.trim()}>
       <SpeakButton text={trimmed} lang={lang} />
-      {lang === 'yue' ? <CopyButton text={trimmed} lang={lang} /> : null}
+      {lang === 'yue' && showCopy ? <CopyButton text={trimmed} lang={lang} /> : null}
     </div>
   )
 }

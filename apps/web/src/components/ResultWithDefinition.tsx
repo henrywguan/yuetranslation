@@ -13,6 +13,7 @@ export function ResultWithDefinition({
   textClassName = '',
   onActivate,
   speakLang,
+  showCopy = true,
 }: {
   text: string
   /** Kept for character-detail drill-down; not rendered in the pane. */
@@ -25,6 +26,8 @@ export function ResultWithDefinition({
   onActivate?: (text: string) => void
   /** When set, show a tap-to-speak control for this line. */
   speakLang?: Lang
+  /** Show copy beside speak (Cantonese only). */
+  showCopy?: boolean
 }) {
   const trimmed = text.trim()
   const def = definition?.trim() || ''
@@ -47,7 +50,7 @@ export function ResultWithDefinition({
           )}
           {speakLang && trimmed ? (
             speakLang === 'yue' ? (
-              <ResultActions text={trimmed} lang={speakLang} />
+              <ResultActions text={trimmed} lang={speakLang} showCopy={showCopy} />
             ) : (
               <SpeakButton text={trimmed} lang={speakLang} />
             )

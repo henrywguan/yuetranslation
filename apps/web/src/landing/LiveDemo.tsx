@@ -130,11 +130,14 @@ export function LiveDemo() {
               definition={definition}
               className="demo-result-row"
               textClassName="demo-output-text"
+              speakLang="yue"
               onActivate={(p) => void openPhrase(p, false)}
             />
             <TranslationAlternatives
               alternatives={alternatives}
               className="demo-alts"
+              showCopy={false}
+              showSpeak
               onSelect={(p) => void openPhrase(p, true)}
             />
           </>
