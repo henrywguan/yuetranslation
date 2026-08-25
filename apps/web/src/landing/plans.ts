@@ -52,4 +52,4 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   },
 ]
 
-export const LANDING_PLANS = MARKETING_PLANS.filter((p) => p.id !== 'max')
+/** Homepage Free/Pro teaser lives in `landingPlans.ts` (compact duo + demos). */

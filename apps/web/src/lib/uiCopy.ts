@@ -468,6 +468,44 @@ export const ui = {
     jp: 'bau1 ham4 min5 fai3 baan2 cyun4 bou6 gung1 nang4',
   },
 
+  /** Compact homepage pricing teaser (3 lines max). */
+  landFreeLive: {
+    en: '~5 min live / month',
+    zh: '每月約五分鐘即時',
+    jp: 'mui5 jyut6 joek3 ng5 fan1 zung1 zik1 si4',
+  },
+  landFreeText: {
+    en: 'Unlimited text',
+    zh: '無限文字翻譯',
+    jp: 'mou4 haan6 man4 zi6 faan1 jik6',
+  },
+  landFreeModes: {
+    en: 'Solo · Conversation · Text',
+    zh: '獨白 · 對話 · 文字',
+    jp: 'duk6 baak6 · deoi3 waa6 · man4 zi6',
+  },
+  landProLive: {
+    en: '~20 min live / month',
+    zh: '每月約廿分鐘即時',
+    jp: 'mui5 jyut6 joek3 jaa6 fan1 zung1 zik1 si4',
+  },
+  landProSpeak: {
+    en: 'Auto-speak + unlimited voice',
+    zh: '自動朗讀＋無限語音',
+    jp: 'zi6 dung6 long5 duk6 + mou4 haan6 jyu5 jam1',
+  },
+  landProQuality: {
+    en: 'Priority Cantonese quality',
+    zh: '優先粵語質素',
+    jp: 'jau4 sin1 jyut6 jyu5 zat1 sou3',
+  },
+  landDemoHello: { en: 'Hello', zh: '你好', jp: 'nei5 hou2' },
+  landAnnualHint: {
+    en: 'from $12/mo billed yearly',
+    zh: '年繳低至 $12／月',
+    jp: 'nin4 gaau2 dai1 zi3 $12／jyut6',
+  },
+
   ctaReady: {
     en: 'Ready to be understood?',
     zh: '準備好俾人聽明未？',
