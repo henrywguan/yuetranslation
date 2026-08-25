@@ -35,39 +35,20 @@ export function HomePricingDuo() {
               <h3>
                 <BiText copy={plan.name} size="md" />
               </h3>
-              <p className="ln-price-tagline">
-                <BiText copy={plan.tagline} size="sm" />
-              </p>
+              <div className="ln-price-block">
+                <p className="ln-price">${plan.monthly}</p>
+                <p className="ln-price-period">
+                  /month<span className="ln-price-period-zh">(月)</span>
+                </p>
+                {plan.id === 'pro' ? (
+                  <p className="ln-price-annual">
+                    <BiText copy={ui.landAnnualHint} size="sm" hideJp />
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <PriceDemo kind={plan.demo} />
-
-            <p className="ln-price">
-              {plan.monthly === 0 ? (
-                <>
-                  $0
-                  <span>
-                    <BiText copy={ui.perMonth} size="sm" hideJp />
-                  </span>
-                </>
-              ) : (
-                <>
-                  ${plan.monthly}
-                  <span>
-                    <BiText copy={ui.perMonth} size="sm" hideJp />
-                  </span>
-                </>
-              )}
-            </p>
-            {plan.id === 'pro' ? (
-              <p className="ln-price-annual">
-                <BiText copy={ui.landAnnualHint} size="sm" hideJp />
-              </p>
-            ) : (
-              <p className="ln-price-annual ln-price-annual--spacer" aria-hidden="true">
-                &nbsp;
-              </p>
-            )}
 
             <ul className="ln-price-feats">
               {plan.teaserFeatures.map((f, i) => (
