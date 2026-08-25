@@ -2142,6 +2142,10 @@
     margin-top: 0;
     align-self: stretch;
   }
+
+  .ln-price-grid--duo > .ln-price-card--spotlight.featured {
+    transform: none;
+  }
 }
 
 .ln-price-card {
