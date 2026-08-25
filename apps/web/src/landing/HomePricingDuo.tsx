@@ -47,7 +47,11 @@ export function HomePricingDuo() {
                   <p className="ln-price-annual">
                     <BiText copy={ui.landAnnualHint} size="sm" hideJp />
                   </p>
-                ) : null}
+                ) : (
+                  <p className="ln-price-annual ln-price-annual--spacer" aria-hidden="true">
+                    {'\u00A0'}
+                  </p>
+                )}
               </div>
               <div className="ln-price-top-spacer" aria-hidden="true" />
             </div>
