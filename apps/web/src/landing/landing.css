@@ -2190,28 +2190,53 @@
   position: relative;
   z-index: 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
+  align-items: stretch;
+  gap: 14px;
   margin-bottom: 12px;
 }
 
-.ln-price-name-row {
+.ln-price-name {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.45em 0.65em;
-  width: 100%;
+  align-items: center;
 }
 
-.ln-price-card--spotlight.featured .ln-price-name-row {
-  padding-right: 4.5rem; /* room for “Most popular” badge */
+.ln-price-card--spotlight.featured .ln-price-name {
+  padding-right: 0.25rem;
 }
 
 .ln-price-card-top h3 {
-  flex: 0 1 auto;
-  min-width: 0;
   margin: 0;
+}
+
+.ln-price-rule {
+  flex: 0 0 1px;
+  width: 1px;
+  align-self: stretch;
+  min-height: 2.6em;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--jade) 55%, transparent) 18%,
+    color-mix(in srgb, var(--jade) 70%, transparent) 50%,
+    color-mix(in srgb, var(--jade) 55%, transparent) 82%,
+    transparent 100%
+  );
+}
+
+.ln-price-block {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  line-height: 1.05;
+  max-width: 42%;
+}
+
+.ln-price-card--spotlight.featured .ln-price-block {
+  padding-right: 0.15rem;
 }
 
 .ln-price-period {
@@ -2220,6 +2245,7 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .ln-price-period-zh {
@@ -2494,7 +2520,7 @@
   font-size: 0.72rem;
   line-height: 1.3;
   color: color-mix(in srgb, var(--muted) 92%, transparent);
-  max-width: 11rem;
+  max-width: 8.5rem;
 }
 
 .ln-price-card ul {
