@@ -32,20 +32,23 @@ export function HomePricingDuo() {
             ) : null}
 
             <div className="ln-price-card-top">
-              <div className="ln-price-name-row">
+              <div className="ln-price-name">
                 <h3>
                   <BiText copy={plan.name} size="md" />
                 </h3>
-                <p className="ln-price">${plan.monthly}</p>
               </div>
-              <p className="ln-price-period">
-                /month<span className="ln-price-period-zh">(月)</span>
-              </p>
-              {plan.id === 'pro' ? (
-                <p className="ln-price-annual">
-                  <BiText copy={ui.landAnnualHint} size="sm" hideJp />
+              <div className="ln-price-rule" aria-hidden="true" />
+              <div className="ln-price-block">
+                <p className="ln-price">${plan.monthly}</p>
+                <p className="ln-price-period">
+                  /month<span className="ln-price-period-zh">(月)</span>
                 </p>
-              ) : null}
+                {plan.id === 'pro' ? (
+                  <p className="ln-price-annual">
+                    <BiText copy={ui.landAnnualHint} size="sm" hideJp />
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <PriceDemo kind={plan.demo} />
