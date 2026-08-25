@@ -5,16 +5,16 @@ import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
 import { HomeFeaturesBento } from './HomeFeaturesBento'
+import { HomePricingDuo } from './HomePricingDuo'
 import { ModesStage } from './ModesStage'
 import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
-import { openApp, openPricing, openTones } from '../lib/siteLinks'
+import { openApp, openTones } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { ui, type Bi } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
-import { LANDING_PLANS } from './plans'
 import { inkEase } from '../lib/motion'
 import './landing.css'
 const HeroObject = lazy(() =>
@@ -174,56 +174,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="ln-section ln-pricing" id="pricing">
-        <Reveal className="ln-section-head ln-section-head--airy">
-          <span className="ln-kicker">
-            <BiText copy={ui.pricingKicker} size="sm" />
-          </span>
-          <h2 className="ln-h2">
-            <BiText copy={ui.pricingTitle} size="lg" />
-          </h2>
-        </Reveal>
-
-        <Reveal className="ln-price-grid" stagger={0.12} y={34}>
-          {LANDING_PLANS.map((plan) => (
-            <article key={plan.id} className={`ln-price-card${plan.featured ? ' featured' : ''}`}>
-              {plan.featured ? (
-                <span className="ln-price-badge">
-                  <BiText copy={ui.mostPopular} size="sm" />
-                </span>
-              ) : null}
-              <h3>
-                <BiText copy={plan.name} size="md" />
-              </h3>
-              <p className="ln-price">
-                ${plan.monthly}
-                <span>
-                  <BiText copy={ui.perMonth} size="sm" hideJp />
-                </span>
-              </p>
-              <ul>
-                {plan.features.map((f) => (
-                  <li key={f.en}>
-                    <BiText copy={f} size="sm" />
-                  </li>
-                ))}
-              </ul>
-              <MagneticButton
-                className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                onClick={() => (plan.ctaOpens === 'app' ? openApp() : openPricing())}
-              >
-                <BiText copy={plan.cta} size="sm" />
-              </MagneticButton>
-            </article>
-          ))}
-        </Reveal>
-
-        <Reveal className="ln-price-more">
-          <button type="button" className="ln-textlink" onClick={() => openPricing()}>
-            <BiText copy={ui.comparePlans} size="sm" />
-          </button>
-        </Reveal>
-      </section>
+      <HomePricingDuo />
 
       <MarketingCtaBand
         title={ui.ctaReady}
