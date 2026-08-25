@@ -2076,59 +2076,7 @@
   position: relative;
   z-index: 1;
   padding-top: clamp(88px, 14vw, 148px);
-  /* Extra room so the CTA veil can rise under “Compare all plans” */
   padding-bottom: clamp(28px, 5vw, 48px);
-  overflow: visible;
-}
-
-/* Soft jade haze under the pricing block so CTA doesn’t feel like a new scene */
-.ln-pricing::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: clamp(-48px, -6vw, -28px);
-  translate: -50% 0;
-  width: min(920px, 100%);
-  height: clamp(140px, 28vw, 240px);
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(
-      70% 85% at 50% 100%,
-      color-mix(in srgb, var(--jade) 16%, transparent),
-      transparent 72%
-    ),
-    radial-gradient(
-      48% 70% at 28% 90%,
-      color-mix(in srgb, var(--harbor-teal) 18%, transparent),
-      transparent 75%
-    ),
-    radial-gradient(
-      44% 65% at 74% 88%,
-      color-mix(in srgb, var(--jade-bright, #7ef0dc) 8%, transparent),
-      transparent 78%
-    );
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 35%, #000 75%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 35%, #000 75%, transparent 100%);
-}
-
-[data-theme='light'] .ln-pricing::after {
-  background:
-    radial-gradient(
-      70% 85% at 50% 100%,
-      color-mix(in srgb, var(--jade) 12%, transparent),
-      transparent 72%
-    ),
-    radial-gradient(
-      48% 70% at 28% 90%,
-      color-mix(in srgb, var(--harbor-teal) 14%, transparent),
-      transparent 75%
-    ),
-    radial-gradient(
-      44% 65% at 74% 88%,
-      color-mix(in srgb, var(--jade-bright) 10%, transparent),
-      transparent 78%
-    );
 }
 
 .ln-section-head--airy {
@@ -2136,8 +2084,6 @@
 }
 
 .ln-price-grid {
-  position: relative;
-  z-index: 1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 28px;
@@ -2566,8 +2512,6 @@
 
 /* ---------- Landing pricing teaser link ---------- */
 .ln-price-more {
-  position: relative;
-  z-index: 1;
   text-align: center;
   margin-top: 28px;
 }
