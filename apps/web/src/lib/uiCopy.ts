@@ -6,7 +6,7 @@ export const ui = {
   backHome: { en: 'Back to JyutTranslate home', zh: '返 JyutTranslate 首頁', jp: 'faan1 JyutTranslate sau2 jap6' },
 
   modeSolo: { en: 'Solo', zh: '獨白', jp: 'duk6 baak6' },
-  modeFace: { en: 'Conversation Mode', zh: '對話模式', jp: 'deoi3 waa6 mou4 sik1' },
+  modeFace: { en: 'Conversation', zh: '對話', jp: 'deoi3 waa6' },
   /** Short label for landing modes stage tabs. */
   modeFaceShort: { en: 'Conversation', zh: '對話', jp: 'deoi3 waa6' },
   modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
