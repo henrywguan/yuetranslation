@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
+import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
 import { captureFrame, estimateShift, sampleVideoImageData } from '../lib/camera/geometry'
+import {
+  clampPan,
+  clampZoom,
+  touchDistance,
+  touchMidpoint,
+  type ZoomTransform,
+} from '../lib/camera/pinchZoom'
 import {
   drawCornerBrackets,
   drawGlassPanel,
@@ -29,26 +37,55 @@ type Props = {
 
 type HitRect = { id: string; x: number; y: number; w: number; h: number }
 
+const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
+
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
   const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const reduce = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
+  const frameRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
+  const zoomLayerRef = useRef<HTMLDivElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const boxesRef = useRef<EditableBox[]>([])
   const hitsRef = useRef<HitRect[]>([])
   const appearAtRef = useRef<Map<string, number>>(new Map())
   const prevSample = useRef<ImageData | null>(null)
   const scanning = useRef(false)
+  const stillUrlRef = useRef<string | null>(null)
+  const zoomRef = useRef<ZoomTransform>(IDENTITY_ZOOM)
+  const pinchRef = useRef<{
+    mode: 'pinch' | 'pan' | null
+    startDist: number
+    startScale: number
+    startX: number
+    startY: number
+    lastMidX: number
+    lastMidY: number
+    lastX: number
+    lastY: number
+  } | null>(null)
+
   const [boxes, setBoxes] = useState<EditableBox[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  /** Frozen capture — live preview is hidden while this is set. */
+  const [stillUrl, setStillUrl] = useState<string | null>(null)
+  const [zoom, setZoom] = useState<ZoomTransform>(IDENTITY_ZOOM)
 
   useEffect(() => {
     boxesRef.current = boxes
   }, [boxes])
+
+  useEffect(() => {
+    stillUrlRef.current = stillUrl
+  }, [stillUrl])
+
+  useEffect(() => {
+    zoomRef.current = zoom
+  }, [zoom])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -61,11 +98,11 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   }, [])
 
   const paintOverlay = useCallback(() => {
-    const video = videoRef.current
+    const frame = frameRef.current
     const canvas = overlayRef.current
-    if (!video || !canvas) return
-    const w = video.clientWidth
-    const h = video.clientHeight
+    if (!frame || !canvas) return
+    const w = frame.clientWidth
+    const h = frame.clientHeight
     if (!w || !h) return
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w
@@ -146,7 +183,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
   useEffect(() => {
     paintOverlay()
-  }, [boxes, paintOverlay, selectedId])
+  }, [boxes, paintOverlay, selectedId, stillUrl, zoom])
 
   useEffect(() => {
     let cancelled = false
@@ -183,11 +220,15 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     }
   }, [meter])
 
-  // Track existing overlays with the camera — no Vision calls.
+  // Live overlay tracking — paused once the capture is frozen to a still.
   useEffect(() => {
     let raf = 0
     const tick = () => {
       raf = requestAnimationFrame(tick)
+      if (stillUrlRef.current) {
+        paintOverlay()
+        return
+      }
       const video = videoRef.current
       if (!video || video.readyState < 2) {
         paintOverlay()
@@ -220,6 +261,17 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     return () => cancelAnimationFrame(raf)
   }, [paintOverlay])
 
+  const resumeLive = useCallback(() => {
+    setStillUrl(null)
+    setZoom(IDENTITY_ZOOM)
+    zoomRef.current = IDENTITY_ZOOM
+    prevSample.current = null
+    const video = videoRef.current
+    if (video && video.paused) {
+      void video.play().catch(() => undefined)
+    }
+  }, [])
+
   const runCapture = async () => {
     const video = videoRef.current
     if (!video || scanning.current) return
@@ -227,9 +279,24 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setBusy(true)
     setError(null)
     setSelectedId(null)
+    boxesRef.current = []
+    hitsRef.current = []
+    appearAtRef.current = new Map()
+    setBoxes([])
+    setZoom(IDENTITY_ZOOM)
+    zoomRef.current = IDENTITY_ZOOM
+
     try {
+      // Always grab from the live stream (kept warm under the still).
+      if (video.paused) {
+        await video.play().catch(() => undefined)
+      }
       const image = captureFrame(video, 1280, 0.72)
       if (!image) throw new Error('Could not capture frame')
+      setStillUrl(image)
+      stillUrlRef.current = image
+      video.pause()
+
       const result = await cameraScan({
         image,
         target: target === 'auto' ? undefined : target,
@@ -267,7 +334,146 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setBoxes([])
     setSelectedId(null)
     setError(null)
+    resumeLive()
     paintOverlay()
+  }
+
+  const onZoomTouchStart = useCallback((e: TouchEvent) => {
+    if (!stillUrlRef.current) return
+    const touches = e.touches
+    if (touches.length === 2) {
+      e.preventDefault()
+      const a = touches[0]!
+      const b = touches[1]!
+      const mid = touchMidpoint(a, b)
+      const z = zoomRef.current
+      pinchRef.current = {
+        mode: 'pinch',
+        startDist: Math.max(1, touchDistance(a, b)),
+        startScale: z.scale,
+        startX: z.x,
+        startY: z.y,
+        lastMidX: mid.x,
+        lastMidY: mid.y,
+        lastX: mid.x,
+        lastY: mid.y,
+      }
+    } else if (touches.length === 1 && zoomRef.current.scale > 1.01) {
+      const t = touches[0]!
+      pinchRef.current = {
+        mode: 'pan',
+        startDist: 0,
+        startScale: zoomRef.current.scale,
+        startX: zoomRef.current.x,
+        startY: zoomRef.current.y,
+        lastMidX: t.clientX,
+        lastMidY: t.clientY,
+        lastX: t.clientX,
+        lastY: t.clientY,
+      }
+    } else {
+      pinchRef.current = null
+    }
+  }, [])
+
+  const onZoomTouchMove = useCallback((e: TouchEvent) => {
+    if (!stillUrlRef.current || !pinchRef.current) return
+    const state = pinchRef.current
+    const frame = frameRef.current
+    const apply = (next: ZoomTransform) => {
+      const clamped = frame
+        ? clampPan(next, frame.clientWidth, frame.clientHeight)
+        : { ...next, scale: clampZoom(next.scale) }
+      zoomRef.current = clamped
+      setZoom(clamped)
+    }
+    if (state.mode === 'pinch' && e.touches.length === 2) {
+      e.preventDefault()
+      const a = e.touches[0]!
+      const b = e.touches[1]!
+      const dist = Math.max(1, touchDistance(a, b))
+      const mid = touchMidpoint(a, b)
+      const scale = clampZoom(state.startScale * (dist / state.startDist))
+      apply({
+        scale,
+        x: state.startX + (mid.x - state.lastX),
+        y: state.startY + (mid.y - state.lastY),
+      })
+    } else if (state.mode === 'pan' && e.touches.length === 1) {
+      e.preventDefault()
+      const t = e.touches[0]!
+      apply({
+        scale: state.startScale,
+        x: state.startX + (t.clientX - state.lastX),
+        y: state.startY + (t.clientY - state.lastY),
+      })
+    }
+  }, [])
+
+  const onZoomTouchEnd = useCallback((e: TouchEvent) => {
+    if (e.touches.length === 0) {
+      pinchRef.current = null
+      return
+    }
+    if (e.touches.length === 1 && stillUrlRef.current && zoomRef.current.scale > 1.01) {
+      const t = e.touches[0]!
+      const z = zoomRef.current
+      pinchRef.current = {
+        mode: 'pan',
+        startDist: 0,
+        startScale: z.scale,
+        startX: z.x,
+        startY: z.y,
+        lastMidX: t.clientX,
+        lastMidY: t.clientY,
+        lastX: t.clientX,
+        lastY: t.clientY,
+      }
+    } else if (e.touches.length >= 2 && stillUrlRef.current) {
+      const a = e.touches[0]!
+      const b = e.touches[1]!
+      const mid = touchMidpoint(a, b)
+      const z = zoomRef.current
+      pinchRef.current = {
+        mode: 'pinch',
+        startDist: Math.max(1, touchDistance(a, b)),
+        startScale: z.scale,
+        startX: z.x,
+        startY: z.y,
+        lastMidX: mid.x,
+        lastMidY: mid.y,
+        lastX: mid.x,
+        lastY: mid.y,
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const el = zoomLayerRef.current
+    if (!el || !stillUrl) return
+    el.addEventListener('touchstart', onZoomTouchStart, { passive: false })
+    el.addEventListener('touchmove', onZoomTouchMove, { passive: false })
+    el.addEventListener('touchend', onZoomTouchEnd)
+    el.addEventListener('touchcancel', onZoomTouchEnd)
+    return () => {
+      el.removeEventListener('touchstart', onZoomTouchStart)
+      el.removeEventListener('touchmove', onZoomTouchMove)
+      el.removeEventListener('touchend', onZoomTouchEnd)
+      el.removeEventListener('touchcancel', onZoomTouchEnd)
+    }
+  }, [stillUrl, onZoomTouchStart, onZoomTouchMove, onZoomTouchEnd])
+
+  const onOverlayClick = (e: ReactMouseEvent<HTMLCanvasElement>) => {
+    if (busy) return
+    const canvas = overlayRef.current
+    if (!canvas) return
+    const r = canvas.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width
+    const y = (e.clientY - r.top) / r.height
+    const hit = [...hitsRef.current].reverse().find(
+      (b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h,
+    )
+    setSelectedId(hit?.id || null)
   }
 
   const selected = boxes.find((b) => b.id === selectedId) || null
@@ -277,6 +483,10 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     const { phrase, translation } = boxDetailArgs(selected)
     if (!phrase) return
     openBreakdown(phrase, { translation })
+  }
+
+  const zoomStyle = {
+    transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`,
   }
 
   return createPortal(
@@ -318,28 +528,36 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         ))}
       </div>
 
-      <div className="cam-ar-frame cam-ar-frame--fs">
-        <video ref={videoRef} className="cam-video" playsInline muted autoPlay />
-        <canvas
-          ref={overlayRef}
-          className="cam-overlay-canvas"
-          onClick={(e) => {
-            const canvas = overlayRef.current
-            if (!canvas) return
-            const r = canvas.getBoundingClientRect()
-            const x = (e.clientX - r.left) / r.width
-            const y = (e.clientY - r.top) / r.height
-            const hit = [...hitsRef.current].reverse().find(
-              (b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h,
-            )
-            setSelectedId(hit?.id || null)
-          }}
-        />
+      <div
+        className={`cam-ar-frame cam-ar-frame--fs${stillUrl ? ' is-still' : ''}`}
+        ref={frameRef}
+      >
+        <div
+          className="cam-ar-zoom"
+          ref={zoomLayerRef}
+          style={zoomStyle}
+        >
+          <video
+            ref={videoRef}
+            className={`cam-video${stillUrl ? ' is-hidden' : ''}`}
+            playsInline
+            muted
+            autoPlay
+          />
+          {stillUrl ? (
+            <img src={stillUrl} alt="" className="cam-still" draggable={false} />
+          ) : null}
+          <canvas
+            ref={overlayRef}
+            className="cam-overlay-canvas"
+            onClick={onOverlayClick}
+          />
+        </div>
       </div>
 
       {busy ? (
-        <div className="cam-ar-busy" role="status">
-          <BiText copy={ui.camScanning} size="sm" />
+        <div className="cam-ar-busy cam-ar-busy--thinking" role="status">
+          <TranslateThinking className="cam-ar-thinking" />
         </div>
       ) : null}
 
@@ -349,7 +567,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         </p>
       ) : null}
 
-      {!busy && !boxes.length && !error ? (
+      {!busy && !boxes.length && !error && !stillUrl ? (
         <p className="cam-ar-toast">
           <BiText copy={ui.camCaptureHint} size="sm" />
         </p>
@@ -379,7 +597,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           <button
             type="button"
             className="cam-ar-clear"
-            disabled={busy || boxes.length === 0}
+            disabled={busy || (!boxes.length && !stillUrl)}
             onClick={clearOverlays}
             aria-label={biPlain(ui.camClearOverlays)}
           >
@@ -397,7 +615,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         </div>
       </div>
 
-      {selected ? (
+      {selected && !busy ? (
         <div className="cam-ar-sheet" role="region" aria-label={biPlain(ui.camDetailTitle)}>
           <button
             type="button"
