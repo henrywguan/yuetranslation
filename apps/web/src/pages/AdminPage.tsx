@@ -53,7 +53,14 @@ export function AdminPage() {
   const [selected, setSelected] = useState<AdminUser | null>(null)
   const [editingPlanUserId, setEditingPlanUserId] = useState<string | null>(null)
   const [usageMonths, setUsageMonths] = useState<
-    { month: string; liveSeconds: number; ttsChars: number; translateCount: number }[]
+    {
+      month: string
+      liveSeconds: number
+      ttsChars: number
+      translateCount: number
+      cameraSeconds: number
+      cameraTranslateCount: number
+    }[]
   >([])
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
 
@@ -167,7 +174,7 @@ export function AdminPage() {
     try {
       await adminResetUsage(user.id, month)
       await reloadUsers()
-      if (selected?.id === user.id) await openUser({ ...user, liveSeconds: 0, ttsChars: 0, translateCount: 0 })
+      if (selected?.id === user.id) await openUser({ ...user, liveSeconds: 0, ttsChars: 0, translateCount: 0, cameraSeconds: 0, cameraTranslateCount: 0 })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Reset failed')
     } finally {
@@ -360,6 +367,11 @@ export function AdminPage() {
                     </button>
                   </th>
                   <th>
+                    <button type="button" className="admin-sort" onClick={() => onSort('cameraSeconds')}>
+                      Cam{sort === 'cameraSeconds' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                  <th>
                     <button type="button" className="admin-sort" onClick={() => onSort('createdAt')}>
                       Joined{sort === 'createdAt' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
                     </button>
@@ -423,6 +435,21 @@ export function AdminPage() {
                       <span className="admin-sub"> / {u.ttsLimitChars.toLocaleString()}</span>
                     </td>
                     <td>{u.translateCount.toLocaleString()}</td>
+                    <td
+                      title={
+                        u.cameraLimitSeconds > 0
+                          ? `${u.cameraSeconds} / ${u.cameraLimitSeconds} s · ${u.cameraTranslateCount} scans`
+                          : `${u.cameraSeconds} s · ${u.cameraTranslateCount} scans`
+                      }
+                    >
+                      {formatLiveSeconds(u.cameraSeconds)}
+                      {u.cameraLimitSeconds > 0 ? (
+                        <span className="admin-sub"> / {formatLiveSeconds(u.cameraLimitSeconds)}</span>
+                      ) : null}
+                      {u.cameraTranslateCount > 0 ? (
+                        <span className="admin-sub"> · {u.cameraTranslateCount} scan{u.cameraTranslateCount === 1 ? '' : 's'}</span>
+                      ) : null}
+                    </td>
                     <td>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
                     <td className="admin-actions">
                       {u.stripeDashboardUrl ? (
@@ -456,7 +483,7 @@ export function AdminPage() {
                 ))}
                 {!users.length && !busy ? (
                   <tr>
-                    <td colSpan={7} className="admin-muted">
+                    <td colSpan={8} className="admin-muted">
                       No users match these filters.
                     </td>
                   </tr>
@@ -484,6 +511,12 @@ export function AdminPage() {
                       <span>Live {formatLiveSeconds(m.liveSeconds)}</span>
                       <span>TTS {m.ttsChars.toLocaleString()}</span>
                       <span>Translate {m.translateCount.toLocaleString()}</span>
+                      <span>
+                        Cam {formatLiveSeconds(m.cameraSeconds)}
+                        {m.cameraTranslateCount
+                          ? ` · ${m.cameraTranslateCount} scan${m.cameraTranslateCount === 1 ? '' : 's'}`
+                          : ''}
+                      </span>
                     </li>
                   ))
                 ) : (

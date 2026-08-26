@@ -280,7 +280,7 @@
 
 .admin-usage-list li {
   display: grid;
-  grid-template-columns: 6rem repeat(3, minmax(0, 1fr));
+  grid-template-columns: 6rem repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   padding: 0.45rem 0;
   border-bottom: 1px solid var(--glass-border);

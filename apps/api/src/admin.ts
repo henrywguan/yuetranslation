@@ -36,8 +36,12 @@ export type AdminUserRow = {
   liveSeconds: number
   ttsChars: number
   translateCount: number
+  cameraSeconds: number
+  cameraTranslateCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
+  /** Hard cap seconds for Free; 0 means unlimited (Pro/Max) or disabled. */
+  cameraLimitSeconds: number
   overQuota: boolean
 }
 
@@ -51,6 +55,11 @@ function ttsLimitChars(plan: ProfileRow['plan']): number {
   if (plan === 'pro') return env.proTtsChars
   if (plan === 'max') return env.maxTtsChars
   return env.freeAllowTts ? env.freeTtsChars : 0
+}
+
+function cameraLimitSeconds(plan: ProfileRow['plan']): number {
+  if (plan === 'pro' || plan === 'max') return 0
+  return env.freeAllowCamera ? env.freeCameraMinutes * 60 : 0
 }
 
 function stripeDashboardUrl(customerId: string | null): string | null {
@@ -75,10 +84,15 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
     const liveSeconds = usage?.live_seconds ?? 0
     const ttsChars = usage?.tts_chars ?? 0
     const translateCount = usage?.translate_count ?? 0
+    const cameraSeconds = usage?.camera_seconds ?? 0
+    const cameraTranslateCount = usage?.camera_translate_count ?? 0
     const liveLim = liveLimitSeconds(plan)
     const ttsLim = ttsLimitChars(plan)
+    const camLim = cameraLimitSeconds(plan)
     const overQuota =
-      (liveLim > 0 && liveSeconds >= liveLim) || (ttsLim > 0 && ttsChars >= ttsLim)
+      (liveLim > 0 && liveSeconds >= liveLim) ||
+      (ttsLim > 0 && ttsChars >= ttsLim) ||
+      (camLim > 0 && cameraSeconds >= camLim)
 
     return {
       id: u.id,
@@ -96,14 +110,24 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       liveSeconds,
       ttsChars,
       translateCount,
+      cameraSeconds,
+      cameraTranslateCount,
       liveLimitSeconds: liveLim,
       ttsLimitChars: ttsLim,
+      cameraLimitSeconds: camLim,
       overQuota,
     }
   })
 }
 
-type SortKey = 'email' | 'plan' | 'createdAt' | 'liveSeconds' | 'ttsChars' | 'translateCount'
+type SortKey =
+  | 'email'
+  | 'plan'
+  | 'createdAt'
+  | 'liveSeconds'
+  | 'ttsChars'
+  | 'translateCount'
+  | 'cameraSeconds'
 
 function sortUsers(rows: AdminUserRow[], sort: SortKey, dir: 'asc' | 'desc') {
   const mul = dir === 'asc' ? 1 : -1
@@ -176,6 +200,7 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
       'liveSeconds',
       'ttsChars',
       'translateCount',
+      'cameraSeconds',
     ]
     const sortKey = allowedSort.includes(sort) ? sort : 'createdAt'
 
@@ -213,8 +238,11 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'liveSeconds',
       'ttsChars',
       'translateCount',
+      'cameraSeconds',
+      'cameraTranslateCount',
       'liveLimitSeconds',
       'ttsLimitChars',
+      'cameraLimitSeconds',
       'overQuota',
       'stripeCustomerId',
       'stripeDashboardUrl',
@@ -234,8 +262,11 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.liveSeconds,
           r.ttsChars,
           r.translateCount,
+          r.cameraSeconds,
+          r.cameraTranslateCount,
           r.liveLimitSeconds,
           r.ttsLimitChars,
+          r.cameraLimitSeconds,
           r.overQuota,
           r.stripeCustomerId,
           r.stripeDashboardUrl,
