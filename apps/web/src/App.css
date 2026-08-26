@@ -2378,14 +2378,15 @@
 .breakdown-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  background: color-mix(in srgb, #061018 55%, transparent);
-  backdrop-filter: blur(6px);
+  /* Above Cam AR fullscreen (z 100) so Details stays readable */
+  z-index: 200;
+  background: rgba(4, 16, 24, 0.92);
+  backdrop-filter: blur(10px);
 }
 
 .breakdown-frame {
   position: fixed;
-  z-index: 101;
+  z-index: 201;
   left: 12px;
   right: 12px;
   bottom: max(16px, env(safe-area-inset-bottom));
@@ -2397,17 +2398,19 @@
   padding: 18px 18px 14px;
   border-radius: 22px 22px 18px 18px;
   border: 1px solid var(--glass-border);
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--surface) 92%, var(--jade) 8%),
-      color-mix(in srgb, var(--surface) 88%, transparent)
-    );
+  /* Fully opaque — never use --surface glass over live camera */
+  background: var(--harbor-mid);
+  background-image: linear-gradient(
+    165deg,
+    var(--harbor-mid) 0%,
+    var(--harbor-deep) 100%
+  );
   box-shadow:
-    0 24px 60px color-mix(in srgb, #000 35%, transparent),
+    0 24px 60px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
   color: var(--ink);
   overflow: hidden;
+  isolation: isolate;
 }
 
 .breakdown-header {

@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown } from '../lib/api'
 import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
@@ -91,6 +92,15 @@ export function CharacterBreakdownHost() {
   const titleJpEnabled = Boolean(top && !minimized && hasHan(titlePhrase))
   const { tipId: titleJpTipId, show: titleJpShow, bind: titleJpBind, wrapRef: titleJpRef } =
     useJpPopup(titleJpEnabled)
+
+  useEffect(() => {
+    if (!top || minimized) {
+      document.body.classList.remove('yue-details-open')
+      return
+    }
+    document.body.classList.add('yue-details-open')
+    return () => document.body.classList.remove('yue-details-open')
+  }, [top, minimized])
 
   useEffect(() => {
     if (!top || !minimized) {
@@ -434,7 +444,7 @@ export function CharacterBreakdownHost() {
   )
 
   if (desktop) {
-    return (
+    return createPortal(
       <aside
         className="detail-panel-rail"
         role="dialog"
@@ -443,11 +453,12 @@ export function CharacterBreakdownHost() {
         style={{ left: geom.x, top: geom.y, width: geom.w, height: geom.h }}
       >
         {body}
-      </aside>
+      </aside>,
+      document.body,
     )
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         className="breakdown-backdrop"
@@ -470,6 +481,7 @@ export function CharacterBreakdownHost() {
       >
         {body}
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
