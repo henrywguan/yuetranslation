@@ -45,3 +45,22 @@ export function clampBox(box: CameraBox): CameraBox {
   const h = Math.min(1 - y, Math.max(0.02, box.h))
   return { x, y, w, h }
 }
+
+const HAN_RE = /[\u3400-\u9fff]/
+
+/** Pick Cantonese/Chinese + English sides for the shared character breakdown panel. */
+export function boxDetailArgs(box: EditableBox): { phrase: string; translation?: string } {
+  const zhByDir = box.to === 'zh' ? box.translated : box.from === 'zh' ? box.text : ''
+  const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
+  const zh =
+    zhByDir.trim() ||
+    (HAN_RE.test(box.text) ? box.text : '') ||
+    (HAN_RE.test(box.translated) ? box.translated : '')
+  const en =
+    enByDir.trim() ||
+    (!HAN_RE.test(box.text) ? box.text : '') ||
+    (!HAN_RE.test(box.translated) ? box.translated : '')
+  const phrase = (zh || box.text || box.translated).trim()
+  const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
+  return { phrase, translation }
+}

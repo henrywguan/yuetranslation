@@ -73,6 +73,12 @@ export const ui = {
   },
   camClearOverlays: { en: 'Clear translations', zh: '清除翻譯', jp: 'cing1 ceoi4 faan1 jik6' },
   camDetailTitle: { en: 'Translation detail', zh: '翻譯詳情', jp: 'faan1 jik6 coeng4 cing4' },
+  camOpenDetails: { en: 'Details', zh: '詳情', jp: 'coeng4 cing4' },
+  camOpenDetailsHint: {
+    en: 'Tap translation for character details',
+    zh: '撳翻譯睇單字詳情',
+    jp: 'gam2 faan1 jik6 tai2 daan1 zi6 coeng4 cing4',
+  },
   camNoTextFound: {
     en: 'No text found — try again closer or with better light',
     zh: '未偵測到文字——靠近一點或改善光線再試',

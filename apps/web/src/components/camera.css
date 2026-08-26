@@ -288,16 +288,24 @@
 .cam-box-tr,
 .cam-box-src {
   display: block;
-  padding: 3px 5px;
-  font-size: clamp(0.65rem, 2.2vw, 0.9rem);
-  line-height: 1.2;
+  padding: 4px 6px;
+  font-size: clamp(0.85rem, 3.2vw, 1.2rem);
+  line-height: 1.25;
+  font-weight: 600;
   color: #e8fff6;
   pointer-events: none;
   word-break: break-word;
 }
 
 .cam-box-src {
-  color: color-mix(in srgb, #e8fff6 70%, var(--muted));
+  font-size: clamp(0.75rem, 2.6vw, 1.05rem);
+  font-weight: 500;
+  color: color-mix(in srgb, #e8fff6 78%, var(--muted));
+}
+
+.cam-box-tr {
+  font-size: clamp(0.92rem, 3.5vw, 1.28rem);
+  letter-spacing: -0.01em;
 }
 
 .cam-handle {
@@ -557,7 +565,46 @@
   border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
 }
 
+.cam-detail-open {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 0 28px 0 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.cam-detail-open:hover,
+.cam-detail-open:focus-visible {
+  background: color-mix(in srgb, var(--jade) 8%, transparent);
+  outline: none;
+}
+
+.cam-detail-open .cam-detail-src,
+.cam-detail-open .cam-detail-tr {
+  padding-right: 0;
+}
+
+.cam-detail-open .cam-detail-tr {
+  margin-bottom: 4px;
+}
+
+.cam-detail-open-hint {
+  display: block;
+  margin-top: 2px;
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+
 .cam-detail-src {
+  display: block;
   margin: 0 0 4px;
   padding-right: 24px;
   color: var(--muted);
@@ -565,6 +612,7 @@
 }
 
 .cam-detail-tr {
+  display: block;
   margin: 0 0 10px;
   padding-right: 24px;
   color: var(--ink-bright);
@@ -574,6 +622,7 @@
 
 .cam-detail-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

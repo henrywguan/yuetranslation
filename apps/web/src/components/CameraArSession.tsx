@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { BiText } from './BiText'
 import { cameraScan } from '../lib/api'
 import { captureFrame, estimateShift, sampleVideoImageData } from '../lib/camera/geometry'
-import { regionToEditable, type CameraTarget, type EditableBox } from '../lib/camera/types'
+import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -23,6 +23,7 @@ type HitRect = { id: string; x: number; y: number; w: number; h: number }
 
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
   const speakManual = useYueStore((s) => s.speakManual)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -70,27 +71,27 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       const obh = Math.max(8, b.box.h * h)
       const label = b.translated || b.text
       const pad = 6
-      let fontSize = Math.max(12, Math.min(24, obh * 0.7))
+      let fontSize = Math.max(16, Math.min(34, obh * 0.88))
       let textW = 0
       let drawW = obw
       let drawX = ox
       const selected = b.id === selectedId
 
       if (label) {
-        const minFont = 10
+        const minFont = 14
         for (; fontSize >= minFont; fontSize -= 0.5) {
-          ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+          ctx.font = `650 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
           textW = ctx.measureText(label).width
           if (textW + pad * 2 <= Math.max(obw, w * 0.95)) break
         }
-        ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+        ctx.font = `650 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
         textW = ctx.measureText(label).width
         drawW = Math.min(w, Math.max(obw, textW + pad * 2))
         drawX = ox
         if (drawX + drawW > w) drawX = Math.max(0, w - drawW)
       }
 
-      const drawH = Math.max(obh, label ? fontSize + pad * 2 : obh)
+      const drawH = Math.max(obh, label ? fontSize + pad * 2.2 : obh)
       const drawY = Math.min(oy, Math.max(0, h - drawH))
 
       ctx.fillStyle = selected ? 'rgba(8, 36, 32, 0.88)' : 'rgba(8, 24, 36, 0.78)'
@@ -111,7 +112,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       ctx.fillStyle = '#e8fff6'
       ctx.textBaseline = 'middle'
       ctx.textAlign = 'left'
-      ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+      ctx.font = `650 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
       ctx.fillText(label, drawX + pad, drawY + drawH / 2, Math.max(8, drawW - pad * 2))
     }
 
@@ -241,6 +242,13 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
   const selected = boxes.find((b) => b.id === selectedId) || null
 
+  const openSelectedDetails = () => {
+    if (!selected) return
+    const { phrase, translation } = boxDetailArgs(selected)
+    if (!phrase) return
+    openBreakdown(phrase, { translation })
+  }
+
   return (
     <div className="cam-ar-fs" role="dialog" aria-modal="true" aria-label={biPlain(ui.camChoiceAr)}>
       <button
@@ -369,9 +377,26 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           >
             ×
           </button>
-          {selected.text ? <p className="cam-detail-src">{selected.text}</p> : null}
-          {selected.translated ? <p className="cam-detail-tr">{selected.translated}</p> : null}
+          <button
+            type="button"
+            className="cam-detail-open"
+            onClick={openSelectedDetails}
+            aria-label={biPlain(ui.camOpenDetails)}
+          >
+            {selected.text ? <span className="cam-detail-src">{selected.text}</span> : null}
+            {selected.translated ? <span className="cam-detail-tr">{selected.translated}</span> : null}
+            <span className="cam-detail-open-hint">
+              <BiText copy={ui.camOpenDetailsHint} size="sm" />
+            </span>
+          </button>
           <div className="cam-detail-actions">
+            <button
+              type="button"
+              className="cam-tool-btn cam-tool-btn--primary"
+              onClick={openSelectedDetails}
+            >
+              <BiText copy={ui.camOpenDetails} size="sm" />
+            </button>
             <button
               type="button"
               className="cam-tool-btn"
