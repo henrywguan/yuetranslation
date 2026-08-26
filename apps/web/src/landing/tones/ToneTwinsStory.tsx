@@ -7,6 +7,7 @@ import { unlockTtsPlayback } from '../../lib/tts'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import { ui } from '../../lib/uiCopy'
 import { ToneContour } from './ToneContour'
+import { ToneMarketChart } from './ToneMarketChart'
 import { ToneRuby } from './ToneTheater'
 import { TONE_TWINS } from './tonesData'
 
@@ -82,7 +83,18 @@ export function ToneTwinsStory() {
       className={`tones-story tones-story--${side}${speaking ? ' is-speaking' : ''}`}
       aria-label={ui.tonesTwinsTitle.en}
     >
-      <div className="tones-story-ambient" aria-hidden="true" />
+      <AnimatePresence mode="sync">
+        <motion.div
+          key={side}
+          className="tones-story-ambient-wrap"
+          initial={reduce ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={reduce ? undefined : { opacity: 0 }}
+          transition={{ duration: 0.55, ease: inkEase }}
+        >
+          <ToneMarketChart side={side} reduce={reduce} />
+        </motion.div>
+      </AnimatePresence>
 
       <div className="tones-story-flow">
         <h2 className="tones-story-title">
@@ -120,19 +132,10 @@ export function ToneTwinsStory() {
                 key={side}
                 className="tones-story-slide"
                 custom={dir}
-                initial={
-                  reduce
-                    ? false
-                    : { opacity: 0, x: dir > 0 ? 90 : -90, rotateY: dir > 0 ? 10 : -10 }
-                }
-                animate={{ opacity: 1, x: 0, rotateY: 0 }}
-                exit={
-                  reduce
-                    ? undefined
-                    : { opacity: 0, x: dir > 0 ? -90 : 90, rotateY: dir > 0 ? -10 : 10 }
-                }
-                transition={{ duration: 0.5, ease: inkEase }}
-                style={{ transformPerspective: 1000 }}
+                initial={reduce ? false : { opacity: 0, x: dir > 0 ? 72 : -72 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={reduce ? undefined : { opacity: 0, x: dir > 0 ? -72 : 72 }}
+                transition={{ duration: 0.45, ease: inkEase }}
               >
                 <motion.p
                   className="tones-story-watermark"
