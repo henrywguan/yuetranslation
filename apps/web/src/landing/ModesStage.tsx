@@ -18,7 +18,7 @@ const MODES: { id: ModeId; title: Bi; line: Bi }[] = [
 
 const AUTO_MS = 6800
 
-/** Cinematic modes stage — one phone preview, three quiet selectors, almost no copy. */
+/** Cinematic modes stage — one phone preview, four quiet selectors, almost no copy. */
 export function ModesStage() {
   const reduce = useReducedMotion()
   const [mode, setMode] = useState<ModeId>('solo')

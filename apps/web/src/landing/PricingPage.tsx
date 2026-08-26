@@ -24,6 +24,10 @@ const COMPARISON: Row[] = [
   { label: ui.cmpJp, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   {
+    label: ui.cmpCamera,
+    values: [ui.val5m, ui.valUnlimitedPlain, ui.valUnlimitedPlain],
+  },
+  {
     label: ui.cmpTts,
     values: [ui.valMetered, ui.valUnlimitedPlain, ui.valUnlimitedPlain],
   },

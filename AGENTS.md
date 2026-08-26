@@ -6,11 +6,11 @@
 
 This rule applies **only to Cursor Cloud agent testing** in this remote environment. It does **not** restrict Henry’s own local laptop/phone use of DeepSeek or Azure.
 
-Henry’s DeepSeek (`OPENAI_*` / `OPENAI_BASE_URL`) and Azure Speech keys are metered. Cloud agents must **not** burn that quota on automated testing.
+Henry’s DeepSeek (`OPENAI_*` / `OPENAI_BASE_URL`) and Azure Speech / Vision keys are metered. Cloud agents must **not** burn that quota on automated testing.
 
-**Do not** call DeepSeek, Azure Speech, or any other paid/external inference/STT/TTS provider from the cloud agent unless Henry has **explicitly allowed that specific request** in the current turn.
+**Do not** call DeepSeek, Azure Speech, Azure Vision, or any other paid/external inference/STT/TTS/OCR provider from the cloud agent unless Henry has **explicitly allowed that specific request** in the current turn.
 
-Before each outbound cloud-agent call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon and hit the model, `/api/tts`, `/api/speech-token`, live mic STT, quality-bot cases that require OpenAI, etc.):
+Before each outbound cloud-agent call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon and hit the model, `/api/tts`, `/api/speech-token`, `/api/camera/scan`, live mic STT, quality-bot cases that require OpenAI, etc.):
 
 1. Ask Henry for confirmation
 2. Name the exact endpoint / action and why

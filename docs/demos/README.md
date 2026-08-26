@@ -1,8 +1,8 @@
 # JyutTranslate UI demos / 粤译界面演示
 
-Fresh snapshots from the local Vite app (`npm run docs:screenshots`). Modes: **Solo**, **Conversation**, **Text**.
+Fresh snapshots from the local Vite app (`npm run docs:screenshots`). Modes: **Solo**, **Conversation**, **Text**, **Cam**.
 
-来自本地 Vite 应用的最新截图（`npm run docs:screenshots`）。模式：**独白**、**对话**、**文字**。
+来自本地 Vite 应用的最新截图（`npm run docs:screenshots`）。模式：**独白**、**对话**、**文字**、**相机**。
 
 | # | Screen / 画面 | Preview / 预览 |
 | --- | --- | --- |
