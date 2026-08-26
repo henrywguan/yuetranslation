@@ -188,29 +188,6 @@ export function PricingPage() {
         </Reveal>
       </section>
 
-      <section className="ln-section pp-cam-card-section" aria-labelledby="pp-cam-card-title">
-        <Reveal className="pp-cam-card" y={28}>
-          <div className="pp-cam-card-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="28" height="28">
-              <path
-                d="M9 7l1.2-2h3.6L15 7h3a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h3z"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinejoin="round"
-              />
-              <circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
-            </svg>
-          </div>
-          <div className="pp-cam-card-copy">
-            <h2 id="pp-cam-card-title" className="pp-cam-card-title">
-              <BiText copy={ui.camMinutesCardTitle} size="md" />
-            </h2>
-            <BiText className="pp-cam-card-body" copy={ui.camMinutesCardBody} size="sm" as="p" />
-          </div>
-        </Reveal>
-      </section>
-
       <section className="ln-section pp-compare">
         <Reveal className="ln-section-head">
           <span className="ln-kicker">
@@ -259,6 +236,29 @@ export function PricingPage() {
           <p className="pp-note">
             <BiText copy={ui.fairUseNote} size="sm" />
           </p>
+        </Reveal>
+      </section>
+
+      <section className="ln-section pp-cam-card-section" aria-labelledby="pp-cam-card-title">
+        <Reveal className="pp-cam-card" y={28}>
+          <div className="pp-cam-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28">
+              <path
+                d="M9 7l1.2-2h3.6L15 7h3a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h3z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+            </svg>
+          </div>
+          <div className="pp-cam-card-copy">
+            <h2 id="pp-cam-card-title" className="pp-cam-card-title">
+              <BiText copy={ui.camMinutesCardTitle} size="md" />
+            </h2>
+            <BiText className="pp-cam-card-body" copy={ui.camMinutesCardBody} size="sm" as="p" />
+          </div>
         </Reveal>
       </section>
 
