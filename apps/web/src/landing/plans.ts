@@ -48,7 +48,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     cta: ui.goMax,
     ctaOpens: 'pricing',
     unavailable: true,
-    features: [ui.maxFeatLive40, ui.maxFeatPower, ui.maxFeatEverything, ui.maxFeatSupport],
+    features: [ui.maxFeatLive40, ui.proFeatCamera, ui.maxFeatPower, ui.maxFeatEverything, ui.maxFeatSupport],
   },
 ]
 
