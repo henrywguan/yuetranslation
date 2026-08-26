@@ -272,9 +272,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
   const selected = boxes.find((b) => b.id === selectedId) || null
 
-<<<<<<< HEAD
-  return createPortal(
-=======
   const openSelectedDetails = () => {
     if (!selected) return
     const { phrase, translation } = boxDetailArgs(selected)
@@ -282,8 +279,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     openBreakdown(phrase, { translation })
   }
 
-  return (
->>>>>>> d48eedb (Bigger Cam OCR text; open details from translation card)
+  return createPortal(
     <div className="cam-ar-fs" role="dialog" aria-modal="true" aria-label={biPlain(ui.camChoiceAr)}>
       <button
         type="button"
