@@ -118,14 +118,14 @@ export const ui = {
     jp: 'to1 jai6 waak6 kwaang1 · to1 sau2 bing2 tiu4 zing2 daai6 siu2',
   },
   camMinutesLeft: (formatted: string): Bi => ({
-    en: `${formatted} camera left`,
-    zh: `相機剩餘 ${formatted}`,
-    jp: `soeng1 gei1 sang1 jyu4 ${formatted}`,
+    en: `${formatted} left`,
+    zh: `剩餘 ${formatted}`,
+    jp: `sang1 jyu4 ${formatted}`,
   }),
   camMinutesUsedUnlimited: (formatted: string): Bi => ({
-    en: `${formatted} camera used / unlimited`,
-    zh: `相機已用 ${formatted}／無限`,
-    jp: `soeng1 gei1 ji5 jung6 ${formatted} / mou4 haan6`,
+    en: `${formatted} used / unlimited`,
+    zh: `已用 ${formatted}／無限`,
+    jp: `ji5 jung6 ${formatted} / mou4 haan6`,
   }),
   holdOrTapToSpeak: {
     en: 'Hold or tap to speak',
