@@ -94,10 +94,11 @@ export async function cameraScan(input: unknown): Promise<{
   regions: CameraScanRegion[]
   engine: string
   visionConfigured: boolean
+  visionAuthFailed?: boolean
   translateMisses: number
 }> {
   const parsed = Body.parse(input)
-  const { regions: ocrRegions, engine } = await ocrImage(parsed.image)
+  const { regions: ocrRegions, engine, authFailed: visionAuthFailed } = await ocrImage(parsed.image)
 
   const baseRegions: OcrRegion[] =
     parsed.boxes && parsed.boxes.length > 0
@@ -118,6 +119,7 @@ export async function cameraScan(input: unknown): Promise<{
       })),
       engine,
       visionConfigured: visionConfigured(),
+      visionAuthFailed,
       translateMisses: 0,
     }
   }
@@ -160,6 +162,7 @@ export async function cameraScan(input: unknown): Promise<{
     regions: out,
     engine,
     visionConfigured: visionConfigured(),
+    visionAuthFailed,
     translateMisses,
   }
 }

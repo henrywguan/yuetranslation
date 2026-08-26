@@ -28,9 +28,9 @@ export const ui = {
     jp: 'jyu5 jap6 hau6 siu2 dang2, jik6 man4 zau6 wui5 ceot1 jin6',
   },
   modeCameraLine: {
-    en: 'Point or upload — translate signs and menus in view.',
-    zh: '對準或上載——即場翻譯路牌同菜單。',
-    jp: 'deoi3 zeon2 waak6 soeng5 zoi3 — zik1 coeng4 faan1 jik6 lou6 paai4 tung4 coi3 daan1.',
+    en: 'Point or upload -- translate signs and documents quickly!',
+    zh: '對準或上載——快速翻譯路牌同文件！',
+    jp: 'deoi3 zeon2 waak6 soeng5 zoi3 -- faai3 cuk1 faan1 jik6 lou6 paai4 tung4 man4 gin2!',
   },
 
   camChoiceTitle: {
@@ -67,10 +67,27 @@ export const ui = {
   camBack: { en: 'Back', zh: '返回', jp: 'faan1 wui4' },
   camPause: { en: 'Pause', zh: '暫停', jp: 'zaam6 ting4' },
   camResume: { en: 'Resume', zh: '繼續', jp: 'gai3 zuk6' },
+  camCapture: { en: 'Capture & translate', zh: '拍攝並翻譯', jp: 'paak3 sip3 bing6 faan1 jik6' },
+  camCaptureHint: {
+    en: 'Point at text, then tap the camera to translate',
+    zh: '對準文字，再輕按相機翻譯',
+    jp: 'deoi3 zeon1 man4 zi6, zoi3 hing1 on3 soeng1 gei1 faan1 jik6',
+  },
+  camClearOverlays: { en: 'Clear translations', zh: '清除翻譯', jp: 'cing1 ceoi4 faan1 jik6' },
+  camDetailTitle: { en: 'Translation detail', zh: '翻譯詳情', jp: 'faan1 jik6 coeng4 cing4' },
+  camNoTextFound: {
+    en: 'No text found — try again closer or with better light',
+    zh: '未偵測到文字——靠近一點或改善光線再試',
+    jp: 'mei6 zing1 caak1 dou2 man4 zi6 — kao3 gan6 jat1 dim2 waak6 goi2 sin6 gwong1 sin3 zoi3 si3',
+  },
+  camRateLimited: {
+    en: 'OCR is rate-limited — wait a few seconds, then capture again',
+    zh: 'OCR 請求過頻——請稍候幾秒再拍攝',
+    jp: 'OCR cing2 kau4 gwo3 pan4 — cing2 siu2 hau6 gei2 miu5 zoi3 paak3 sip3',
+  },
   camTranslate: { en: 'Translate boxes', zh: '翻譯選框', jp: 'faan1 jik6 syun2 kwaang1' },
   camAutoDetect: { en: 'Auto-detect', zh: '自動偵測', jp: 'zi6 dung6 zing1 caak1' },
   camDeleteBox: { en: 'Delete box', zh: '刪除選框', jp: 'saan1 ceoi4 syun2 kwaang1' },
-  camClearBoxes: { en: 'Clear boxes', zh: '清空選框', jp: 'cing1 hung1 syun2 kwaang1' },
   camTargetEn: { en: 'To English', zh: '譯成英文', jp: 'jik6 sing4 jing1 man2' },
   camTargetZh: { en: 'To 中文', zh: '譯成中文', jp: 'jik6 sing4 zung1 man2' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
@@ -79,6 +96,11 @@ export const ui = {
     en: 'OCR not configured — draw boxes and we’ll still try translate when text is detected.',
     zh: '未設定 OCR——可手動畫框；偵測到文字後仍會翻譯。',
     jp: 'mei6 cit3 ding6 OCR — ho2 sau2 dung6 waak6 kwaang1; zing1 caak1 dou2 man4 zi6 hau6 jing4 wui5 faan1 jik6.',
+  },
+  camVisionAuthFailed: {
+    en: 'OCR credentials invalid — set AZURE_VISION_KEY and AZURE_VISION_ENDPOINT on the server. Draw boxes manually for now.',
+    zh: 'OCR 憑證無效——請在伺服器設定 AZURE_VISION_KEY 與 AZURE_VISION_ENDPOINT。可先手動畫框。',
+    jp: 'OCR pang4 zing3 mou4 siu6 — cing2 bei6 fu6 kei4 cit3 ding6 AZURE_VISION_KEY tung4 AZURE_VISION_ENDPOINT. ho2 sin1 sau2 dung6 waak6 kwaang1.',
   },
   camQuota: {
     en: 'Camera minutes used up this month.',
@@ -403,26 +425,11 @@ export const ui = {
   statModes: { en: 'modes', zh: '種模式', jp: 'zung2 mou4 sik1' },
   statJyutping: { en: 'Jyutping on every line', zh: '每句都有粵拼', jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3' },
 
-  modesKicker: { en: '3 Modes', zh: '三種模式', jp: 'saam1 zung2 mou4 sik1' },
+  modesKicker: { en: '4 Modes', zh: '四種模式', jp: 'sei3 zung2 mou4 sik1' },
   modesTitle: {
-    en: 'One app, 3 translation methods',
-    zh: '一個應用，三種翻譯方式',
-    jp: 'jat1 go3 jing3 jung6, saam1 zung2 faan1 jik6 fong1 sik1',
-  },
-  soloDesc: {
-    en: 'Speak English or Cantonese and watch the translation appear full-screen, instantly.',
-    zh: '講英文或者粵語，翻譯即刻全螢幕出現。',
-    jp: 'gong2 jing1 man2 waak6 ze2 jyut6 jyu5, faan1 jik6 zik1 hak1 cyun4 jing4 mok6 ceot1 jin6.',
-  },
-  faceDesc: {
-    en: 'One phone between two people — a split, mirrored view so each side reads their language.',
-    zh: '一部手機兩個人用——上下對分，各自睇自己嘅語言。',
-    jp: 'jat1 bou6 sau2 gei1 loeng5 go3 jan4 jung6 — soeng6 haa6 deoi3 fan1, gok3 zi6 tai2 zi6 gei2 ge3 jyu5 jin4.',
-  },
-  textDesc: {
-    en: 'Type either direction. Perfect for menus, signs, and messages you want to get right.',
-    zh: '雙向打字。睇餐牌、路牌、訊息都啱用。',
-    jp: 'soeng1 hoeng3 daa2 zi6. tai2 caan1 paai2, lou6 paai2, seon3 sik1 dou1 aam1 jung6.',
+    en: 'One app, 4 translation methods',
+    zh: '一個應用，四種翻譯方式',
+    jp: 'jat1 go3 jing3 jung6, sei3 zung2 faan1 jik6 fong1 sik1',
   },
 
   featJpTitle: { en: 'Jyutping built in', zh: '內建粵拼', jp: 'noi6 gin3 jyut6 ping3' },
@@ -448,7 +455,7 @@ export const ui = {
     zh: '撳結果就可以打開詳細拆字，學識點講每一個字。',
     jp: 'gam2 git3 gwo2 zau6 ho2 ji5 daa2 hoi1 coeng4 sai3 caak3 zi6, hok6 sik1 dim2 gong2 mui5 jat1 go3 zi6.',
   },
-  featHostTitle: { en: 'Yours to host', zh: '自己托管', jp: 'zi6 gei2 tok3 gun2' },
+  featHostTitle: { en: 'AR Camera translation', zh: 'AR 相機翻譯', jp: 'AR soeng1 gei1 faan1 jik6' },
   featJpTag: { en: 'Learn as you speak', zh: '邊講邊學', jp: 'jat1 bin1 gong2 jat1 bin1 hok6' },
   featHkTag: { en: 'Colloquial 粵語', zh: '口語粵語', jp: 'hau2 jyu5 jyut6 jyu5' },
   featHkExHai: { en: 'is / yes', zh: '係／肯定', jp: 'hai6' },
@@ -456,11 +463,11 @@ export const ui = {
   featHkExHai2: { en: 'at / in', zh: '喺度', jp: 'hai2' },
   featHkExZo: { en: 'past tense marker', zh: '完成語氣', jp: 'zo2' },
   featFastTag: { en: 'Tap any word', zh: '撳字詳解', jp: 'gam2 zi6 coeng4 gaai2' },
-  featHostTag: { en: 'Your keys, your stack', zh: '自己密鑰托管', jp: 'zi6 gei2 mat6 joek6 tok3 gun2' },
+  featHostTag: { en: 'Live AR overlay', zh: '即時 AR 覆蓋', jp: 'zik1 si4 AR fuk1 goi3' },
   featHostDesc: {
-    en: 'Built to run on WordPress or fully self-hosted. You will need your own API keys!',
-    zh: '可以跑喺 WordPress，又或者完全自己托管。你需要自己嘅 API 密鑰！',
-    jp: 'ho2 ji5 paau2 hai2 WordPress, jau6 waak6 ze2 jyun4 cyun4 zi6 gei2 tok3 gun2. nei5 seoi1 jiu3 zi6 gei2 ge3 API mat6 joek6!',
+    en: 'Point the camera and watch the translations update live!',
+    zh: '對準相機，睇住譯文即時更新！',
+    jp: 'deoi3 zeon1 soeng1 gei1, tai2 zyu6 jik6 man4 zik1 si4 gang1 san1!',
   },
 
   demoKicker: { en: 'Try it now', zh: '而家試吓', jp: 'ji4 gaa1 si3 haa5' },
@@ -474,7 +481,6 @@ export const ui = {
     zh: '玩吓我哋嘅示範！打任何嘢或者撳樣本。',
     jp: 'waan2 haa5 ngo5 dei6 ge3 si6 faan6! daa2 jam6 ho4 je5 waak6 ze2 gam2 joeng6 bun2.',
   },
-  openFullApp: { en: 'Open the full app', zh: '開啟完整應用', jp: 'hoi1 kai2 jyun4 zing2 jing3 jung6' },
   demoTypeEn: { en: 'Type English', zh: '打英文', jp: 'daa2 jing1 man2' },
   demoPlaceholder: { en: 'Say something…', zh: '講啲咩…', jp: 'gong2 di1 me1…' },
   demoLive: { en: 'JyutTranslate · live', zh: 'JyutTranslate · 即時', jp: 'JyutTranslate · zik1 si4' },
@@ -497,7 +503,6 @@ export const ui = {
     jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 tung1 waa6 si4 gaan3.',
   },
   mostPopular: { en: 'Most popular', zh: '最受歡迎', jp: 'zeoi3 sau6 fun1 jing4' },
-  perMonth: { en: '/month', zh: '/月', jp: '/jyut6' },
   getStarted: { en: 'Get started', zh: '立即開始', jp: 'laap6 zik1 hoi1 ci2' },
   goPro: { en: 'Go Pro', zh: '升級專業版', jp: 'sing1 kap1 zyun1 jip6 baan2' },
   comparePlans: { en: 'Compare all plans →', zh: '比較全部計劃 →', jp: 'bei2 gaau3 cyun4 bou6 gai3 waak6 →' },
@@ -511,11 +516,6 @@ export const ui = {
     en: 'Unlimited text translation',
     zh: '無限文字翻譯',
     jp: 'mou4 haan6 man4 zi6 faan1 jik6',
-  },
-  freeFeatJp: {
-    en: 'Jyutping on every line',
-    zh: '每句都有粵拼',
-    jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3',
   },
   freeFeatModes: {
     en: 'Solo, Conversation, Text & Camera',
@@ -570,9 +570,9 @@ export const ui = {
     jp: 'mou4 haan6 man4 zi6 faan1 jik6',
   },
   landFreeModes: {
-    en: 'Solo · Conversation · Text',
-    zh: '獨白 · 對話 · 文字',
-    jp: 'duk6 baak6 · deoi3 waa6 · man4 zi6',
+    en: 'Solo · Conversation · Text · Cam',
+    zh: '獨白 · 對話 · 文字 · 相機',
+    jp: 'duk6 baak6 · deoi3 waa6 · man4 zi6 · soeng1 gei1',
   },
   landProLive: {
     en: '~20 min live / month',
@@ -589,7 +589,6 @@ export const ui = {
     zh: '優先粵語質素',
     jp: 'jau4 sin1 jyut6 jyu5 zat1 sou3',
   },
-  landDemoHello: { en: 'Hello', zh: '你好', jp: 'nei5 hou2' },
   landAnnualHint: {
     en: 'from $12/mo billed yearly',
     zh: '年繳低至 $12／月',
@@ -674,7 +673,12 @@ export const ui = {
   cmpLive: { en: 'Live translation / month', zh: '每月即時翻譯', jp: 'mui5 jyut6 zik1 si4 faan1 jik6' },
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
-  cmpModes: { en: 'Solo · Conversation Mode · Text', zh: '獨白 · 對話模式 · 文字', jp: 'duk6 baak6 · deoi3 waa6 mou4 sik1 · man4 zi6' },
+  cmpModes: {
+    en: 'Solo · Conversation · Text · Cam',
+    zh: '獨白 · 對話 · 文字 · 相機',
+    jp: 'duk6 baak6 · deoi3 waa6 · man4 zi6 · soeng1 gei1',
+  },
+  cmpCamera: { en: 'Camera translation', zh: '相機翻譯', jp: 'soeng1 gei1 faan1 jik6' },
   cmpTts: { en: 'Tap-to-play voice', zh: '撳喇叭播語音', jp: 'gam2 laa3 baa1 bo3 jyu5 jam1' },
   cmpAutoSpeak: { en: 'Auto-speak after translate', zh: '翻譯後自動朗讀', jp: 'faan1 jik6 hau6 zi6 dung6 long5 duk6' },
   cmpQuality: { en: 'Cantonese quality', zh: '粵語質素', jp: 'jyut6 jyu5 zat1 sou3' },
@@ -683,7 +687,6 @@ export const ui = {
   valMetered: { en: 'Metered', zh: '有上限', jp: 'jau5 soeng6 haan6' },
   val5m: { en: '5 minutes', zh: '五分鐘', jp: 'ng5 fan1 zung1' },
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
-  val10h: { en: '10 hours', zh: '十小時', jp: 'sap6 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
@@ -714,9 +717,9 @@ export const ui = {
     jp: 'me1 giu3 zou6 “zik1 si4 fan1 zung1”?',
   },
   faq2a: {
-    en: 'Time the microphone is actively listening in Solo or Conversation Mode. Text translation never uses live minutes.',
-    zh: '喺獨白或者對話模式，咪高峰開啟聽緊嘅時間。文字翻譯唔計即時分鐘。',
-    jp: 'hai2 duk6 baak6 waak6 ze2 deoi3 waa6 mou4 sik1, mai1 gou1 fung1 hoi1 kai2 teng1 gan2 ge3 si4 gaan3. man4 zi6 faan1 jik6 m4 gai3 zik1 si4 fan1 zung1.',
+    en: 'Time the microphone is actively listening in Solo or Conversation Mode. Text and Camera never use live minutes (Camera has its own monthly minutes).',
+    zh: '喺獨白或者對話模式，咪高峰開啟聽緊嘅時間。文字同相機唔計即時分鐘（相機有自己嘅每月分鐘）。',
+    jp: 'hai2 duk6 baak6 waak6 ze2 deoi3 waa6 mou4 sik1, mai1 gou1 fung1 hoi1 kai2 teng1 gan2 ge3 si4 gaan3. man4 zi6 tung4 soeng1 gei1 m4 gai3 zik1 si4 fan1 zung1 (soeng1 gei1 jau5 zi6 gei2 ge3 mui5 jyut6 fan1 zung1).',
   },
   faq3q: {
     en: 'Can I run it on my own server?',
@@ -724,9 +727,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 hai2 zi6 gei2 si1 fuk6 hei3 paau2?',
   },
   faq3a: {
-    en: 'Yes — JyutTranslate can run fully self-hosted (open-source speech + translation) or on WordPress with cloud APIs.',
-    zh: '可以——JyutTranslate 可以完全自己托管（開源語音同翻譯），又或者用 WordPress 加雲端 API。',
-    jp: 'ho2 ji5 — JyutTranslate ho2 ji5 jyun4 cyun4 zi6 gei2 tok3 gun2 (hoi1 jyun4 jyu5 jam1 tung4 faan1 jik6), jau6 waak6 ze2 jung6 WordPress gaa1 wan4 dyun1 API.',
+    en: 'Yes — you can self-host the Vite app + Express API (or the WordPress plugin) with your own Azure Speech, Azure Vision, and OpenAI/DeepSeek keys.',
+    zh: '可以——你可以自己托管 Vite 應用＋Express 接口（或者 WordPress 插件），並使用你自己嘅 Azure Speech、Azure Vision 同 OpenAI／DeepSeek 密鑰。',
+    jp: 'ho2 ji5 — nei5 ho2 ji5 zi6 gei2 tok3 gun2 Vite jing3 jung6 + Express zip3 hau2 (waak6 ze2 WordPress caa1 gin6), bing6 si2 jung6 nei5 zi6 gei2 ge3 Azure Speech, Azure Vision tung4 OpenAI / DeepSeek mat6 joek6.',
   },
   faq4q: {
     en: 'Can I cancel anytime?',

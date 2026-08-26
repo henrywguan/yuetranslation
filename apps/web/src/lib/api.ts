@@ -151,6 +151,7 @@ export type CameraScanResult = {
   regions: CameraScanRegion[]
   engine: string
   visionConfigured: boolean
+  visionAuthFailed?: boolean
   translateMisses: number
   entitlement?: Entitlement
 }
