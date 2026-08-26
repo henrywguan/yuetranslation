@@ -160,3 +160,54 @@ export function measureOverlayLabel(
   }
   return ctx.measureText(text).width
 }
+
+/**
+ * Google Translate–style cover: opaque fill matching the source background,
+ * then translation ink in the sampled (or contrast) foreground color.
+ */
+export function drawMatchedPanel(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  opts: { bg: string; selected: boolean; radius?: number },
+) {
+  const radius = opts.radius ?? Math.min(4, h * 0.12)
+  ctx.save()
+  roundedRectPath(ctx, x, y, w, h, radius)
+  ctx.fillStyle = opts.bg
+  ctx.fill()
+  if (opts.selected) {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)'
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+    roundedRectPath(ctx, x + 1.25, y + 1.25, w - 2.5, h - 2.5, Math.max(0, radius - 1))
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+  }
+  ctx.restore()
+}
+
+export function drawMatchedLabel(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  fontSize: number,
+  opts: { fg: string },
+) {
+  const family = '"Noto Sans HK", "Noto Sans TC", "PingFang TC", "Syne", sans-serif'
+  ctx.save()
+  ctx.font = `600 ${fontSize}px ${family}`
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'left'
+  if ('letterSpacing' in ctx) {
+    ;(ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '-0.01em'
+  }
+  ctx.fillStyle = opts.fg
+  ctx.fillText(text, x, y, maxWidth)
+  ctx.restore()
+}
