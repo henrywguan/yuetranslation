@@ -128,7 +128,6 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
         ref={fileRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="cam-file-input"
         onChange={(e) => {
           onFile(e.target.files?.[0])
