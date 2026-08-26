@@ -748,33 +748,39 @@
   z-index: 6;
   padding: 16px 16px 14px;
   border-radius: 18px;
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--harbor-mid, #0a1c24) 98%, var(--jade) 2%),
-      var(--harbor-deep, #081820)
-    );
+  background: var(--harbor-mid, #0a1c2c);
+  background-image: linear-gradient(
+    165deg,
+    var(--harbor-mid, #0a1c2c),
+    var(--harbor-deep, #081820)
+  );
   border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border, #2a4a4a));
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   animation: cam-sheet-in 0.22s ease;
+  isolation: isolate;
 }
 
-/* Details panel must sit above the AR portal (z 100) with solid fill */
+/* Details (portaled) must fully cover AR chrome — solid, high z-index */
 body.cam-ar-open .breakdown-backdrop {
-  z-index: 130;
-  background: color-mix(in srgb, #041018 80%, transparent);
+  z-index: 220;
+  background: rgba(4, 16, 24, 0.94);
+  backdrop-filter: blur(12px);
 }
 
 body.cam-ar-open .breakdown-frame,
 body.cam-ar-open .detail-panel-rail {
-  z-index: 131;
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--harbor-mid) 98%, var(--jade) 2%),
-      var(--harbor-deep)
-    );
+  z-index: 221;
+  background: #0a1c2c;
+  background-image: linear-gradient(165deg, #0a1c2c, #07131f);
   backdrop-filter: none;
+  opacity: 1;
+}
+
+body.cam-ar-open.yue-details-open .cam-ar-sheet,
+body.cam-ar-open.yue-details-open .cam-ar-dock,
+body.cam-ar-open.yue-details-open .cam-overlay-canvas {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .cam-ar-sheet-close {
