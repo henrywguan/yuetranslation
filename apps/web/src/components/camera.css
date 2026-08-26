@@ -337,15 +337,18 @@
   max-height: min(62vh, 560px);
 }
 
-/* Fullscreen AR capture mode */
+/* Fullscreen AR capture mode — portaled to body so it covers mode tabs */
 .cam-ar-fs {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   background: #030a10;
   color: var(--ink-bright);
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
 }
 
 .cam-ar-frame--fs {

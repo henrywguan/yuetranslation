@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { cameraScan } from '../lib/api'
 import { captureFrame, estimateShift, sampleVideoImageData } from '../lib/camera/geometry'
@@ -42,8 +43,10 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    document.body.classList.add('cam-ar-open')
     return () => {
       document.body.style.overflow = prev
+      document.body.classList.remove('cam-ar-open')
     }
   }, [])
 
@@ -241,7 +244,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
   const selected = boxes.find((b) => b.id === selectedId) || null
 
-  return (
+  return createPortal(
     <div className="cam-ar-fs" role="dialog" aria-modal="true" aria-label={biPlain(ui.camChoiceAr)}>
       <button
         type="button"
@@ -396,6 +399,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           </div>
         </div>
       ) : null}
-    </div>
+    </div>,
+    document.body,
   )
 }
