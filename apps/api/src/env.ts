@@ -34,17 +34,14 @@ export const env = {
   azureSpeechKey: (process.env.AZURE_SPEECH_KEY || '').replace(/\s+/g, ''),
   azureSpeechRegion: (process.env.AZURE_SPEECH_REGION || 'eastasia').trim(),
   /**
-   * Azure AI Vision (Read/OCR). Falls back to speech key + region when unset
-   * (same multi-service Cognitive resource).
+   * Azure AI Vision Read (OCR). Requires a dedicated Vision / multi-service key —
+   * the Speech key alone does not grant OCR access.
    */
-  azureVisionKey: (process.env.AZURE_VISION_KEY || process.env.AZURE_SPEECH_KEY || '').replace(
-    /\s+/g,
-    '',
-  ),
+  azureVisionKey: (process.env.AZURE_VISION_KEY || '').replace(/\s+/g, ''),
   azureVisionEndpoint: trimUrl(
     process.env.AZURE_VISION_ENDPOINT ||
-      (process.env.AZURE_SPEECH_REGION
-        ? `https://${process.env.AZURE_SPEECH_REGION.trim()}.api.cognitive.microsoft.com`
+      (process.env.AZURE_VISION_KEY
+        ? `https://${(process.env.AZURE_VISION_REGION || process.env.AZURE_SPEECH_REGION || 'eastasia').trim()}.api.cognitive.microsoft.com`
         : ''),
   ),
   openaiApiKey: (process.env.OPENAI_API_KEY || '').trim(),
