@@ -103,6 +103,11 @@ export async function ocrImage(imageBase64: string): Promise<{
 
   if (!startRes.ok) {
     const detail = await startRes.text().catch(() => '')
+    if (startRes.status === 429) {
+      throw new Error(
+        `Azure Vision OCR rate limited (429). Wait a few seconds and capture again. ${detail.slice(0, 120)}`,
+      )
+    }
     throw new Error(`Azure Vision OCR start failed: ${startRes.status} ${detail.slice(0, 200)}`)
   }
 

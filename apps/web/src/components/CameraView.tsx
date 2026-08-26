@@ -136,7 +136,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
         }}
       />
 
-      {path !== 'choice' ? (
+      {path !== 'choice' && path !== 'ar' ? (
         <div className="cam-target-row" role="radiogroup" aria-label="Translate target">
           {(
             [
@@ -161,6 +161,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
       {path === 'ar' ? (
         <CameraArSession
           target={target}
+          onTargetChange={setTarget}
           onBack={backToChoice}
           onEntitlement={setEntitlement}
           meter={meter}
