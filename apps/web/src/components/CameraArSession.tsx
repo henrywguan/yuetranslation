@@ -104,12 +104,30 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     const w = frame.clientWidth
     const h = frame.clientHeight
     if (!w || !h) return
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w
-      canvas.height = h
+
+    // Paint in screen space (canvas sits above the CSS-zoomed still) so glyph
+    // size tracks pinch zoom and stays sharp instead of bitmap-upscaling.
+    const z = zoomRef.current
+    const scale = z.scale
+    const cx = w / 2
+    const cy = h / 2
+    const mapX = (px: number) => (px - cx) * scale + cx + z.x
+    const mapY = (py: number) => (py - cy) * scale + cy + z.y
+
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+    const buf = Math.min(3, Math.max(1, dpr))
+    const bw = Math.round(w * buf)
+    const bh = Math.round(h * buf)
+    if (canvas.width !== bw || canvas.height !== bh) {
+      canvas.width = bw
+      canvas.height = bh
     }
+    canvas.style.width = `${w}px`
+    canvas.style.height = `${h}px`
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+    ctx.setTransform(buf, 0, 0, buf, 0, 0)
     ctx.clearRect(0, 0, w, h)
     const hits: HitRect[] = []
     const now = performance.now()
@@ -123,30 +141,35 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       const selected = b.id === selectedId
       const matched = Boolean(b.bg && b.fg)
 
-      // Google Translate–style: cover the source box with sampled fill; fit text inside.
+      // Layout box → screen via current pinch pan/zoom.
       const inflateX = matched ? obw * 0.05 : 0
       const inflateY = matched ? obh * 0.1 : 0
-      let drawX = Math.max(0, ox - inflateX)
-      let drawY = Math.max(0, oy - inflateY)
-      let drawW = Math.min(w - drawX, obw + inflateX * 2)
-      let drawH = Math.min(h - drawY, obh + inflateY * 2)
+      const lx0 = ox - inflateX
+      const ly0 = oy - inflateY
+      const lx1 = ox + obw + inflateX
+      const ly1 = oy + obh + inflateY
+      let drawX = mapX(lx0)
+      let drawY = mapY(ly0)
+      let drawW = Math.max(8, mapX(lx1) - drawX)
+      let drawH = Math.max(8, mapY(ly1) - drawY)
+
       const padX = matched ? Math.max(4, drawW * 0.04) : 10
       const padY = matched ? Math.max(3, drawH * 0.08) : 8
-      let fontSize = Math.max(matched ? 11 : 16, Math.min(matched ? 32 : 34, drawH * 0.78))
+      // Font tracks zoomed box height so text grows as the user pinches in.
+      const maxFont = matched ? Math.min(56, 28 + scale * 14) : Math.min(64, 32 + scale * 16)
+      let fontSize = Math.max(matched ? 11 : 16, Math.min(maxFont, drawH * 0.78))
       let textW = 0
 
       if (label) {
-        const minFont = matched ? 9 : 14
+        const minFont = matched ? Math.max(9, 8 + scale * 2) : Math.max(14, 12 + scale * 2)
         for (; fontSize >= minFont; fontSize -= 0.5) {
           textW = measureOverlayLabel(ctx, label, fontSize)
           if (textW + padX * 2 <= drawW) break
         }
         textW = measureOverlayLabel(ctx, label, fontSize)
         if (!matched) {
-          drawW = Math.min(w - drawX, Math.max(drawW, textW + padX * 2))
-          if (drawX + drawW > w) drawX = Math.max(0, w - drawW)
+          drawW = Math.max(drawW, textW + padX * 2)
           drawH = Math.max(drawH, fontSize + padY * 2.15)
-          drawY = Math.min(drawY, Math.max(0, h - drawH))
         }
       }
 
@@ -475,17 +498,17 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   }, [])
 
   useEffect(() => {
-    const el = zoomLayerRef.current
+    const el = frameRef.current
     if (!el || !stillUrl) return
-    el.addEventListener('touchstart', onZoomTouchStart, { passive: false })
-    el.addEventListener('touchmove', onZoomTouchMove, { passive: false })
-    el.addEventListener('touchend', onZoomTouchEnd)
-    el.addEventListener('touchcancel', onZoomTouchEnd)
+    el.addEventListener('touchstart', onZoomTouchStart, { passive: false, capture: true })
+    el.addEventListener('touchmove', onZoomTouchMove, { passive: false, capture: true })
+    el.addEventListener('touchend', onZoomTouchEnd, { capture: true })
+    el.addEventListener('touchcancel', onZoomTouchEnd, { capture: true })
     return () => {
-      el.removeEventListener('touchstart', onZoomTouchStart)
-      el.removeEventListener('touchmove', onZoomTouchMove)
-      el.removeEventListener('touchend', onZoomTouchEnd)
-      el.removeEventListener('touchcancel', onZoomTouchEnd)
+      el.removeEventListener('touchstart', onZoomTouchStart, true)
+      el.removeEventListener('touchmove', onZoomTouchMove, true)
+      el.removeEventListener('touchend', onZoomTouchEnd, true)
+      el.removeEventListener('touchcancel', onZoomTouchEnd, true)
     }
   }, [stillUrl, onZoomTouchStart, onZoomTouchMove, onZoomTouchEnd])
 
@@ -573,12 +596,12 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           {stillUrl ? (
             <img src={stillUrl} alt="" className="cam-still" draggable={false} />
           ) : null}
-          <canvas
-            ref={overlayRef}
-            className="cam-overlay-canvas"
-            onClick={onOverlayClick}
-          />
         </div>
+        <canvas
+          ref={overlayRef}
+          className="cam-overlay-canvas"
+          onClick={onOverlayClick}
+        />
       </div>
 
       {busy ? (
