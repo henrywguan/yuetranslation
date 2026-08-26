@@ -2378,14 +2378,15 @@
 .breakdown-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  background: color-mix(in srgb, #061018 55%, transparent);
-  backdrop-filter: blur(6px);
+  /* Above Cam AR fullscreen (z 100) so Details stays readable */
+  z-index: 120;
+  background: color-mix(in srgb, #041018 72%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 .breakdown-frame {
   position: fixed;
-  z-index: 101;
+  z-index: 121;
   left: 12px;
   right: 12px;
   bottom: max(16px, env(safe-area-inset-bottom));
@@ -2400,11 +2401,11 @@
   background:
     linear-gradient(
       165deg,
-      color-mix(in srgb, var(--surface) 92%, var(--jade) 8%),
-      color-mix(in srgb, var(--surface) 88%, transparent)
+      color-mix(in srgb, var(--harbor-mid) 96%, var(--jade) 4%),
+      var(--harbor-deep)
     );
   box-shadow:
-    0 24px 60px color-mix(in srgb, #000 35%, transparent),
+    0 24px 60px color-mix(in srgb, #000 45%, transparent),
     inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
   color: var(--ink);
   overflow: hidden;

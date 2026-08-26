@@ -748,11 +748,33 @@
   z-index: 6;
   padding: 16px 16px 14px;
   border-radius: 18px;
-  background: color-mix(in srgb, var(--harbor-deep, #0a1c24) 88%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid, #0a1c24) 98%, var(--jade) 2%),
+      var(--harbor-deep, #081820)
+    );
   border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border, #2a4a4a));
-  backdrop-filter: blur(14px) saturate(1.1);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   animation: cam-sheet-in 0.22s ease;
+}
+
+/* Details panel must sit above the AR portal (z 100) with solid fill */
+body.cam-ar-open .breakdown-backdrop {
+  z-index: 130;
+  background: color-mix(in srgb, #041018 80%, transparent);
+}
+
+body.cam-ar-open .breakdown-frame,
+body.cam-ar-open .detail-panel-rail {
+  z-index: 131;
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid) 98%, var(--jade) 2%),
+      var(--harbor-deep)
+    );
+  backdrop-filter: none;
 }
 
 .cam-ar-sheet-close {
