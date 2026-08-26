@@ -1551,37 +1551,25 @@
   max-height: 220px;
   border-radius: 14px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   background:
     linear-gradient(160deg, #1a3344 0%, #0a1822 55%, #071018 100%);
   border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
 }
 
 .ln-micro-cam-sign {
-  position: absolute;
-  left: 16%;
-  top: 32%;
-  width: min(28%, 72px);
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 75%;
+  max-width: 75%;
   height: auto;
   display: block;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
-}
-
-.ln-micro-cam-box {
-  position: absolute;
-  left: 12%;
-  top: 28%;
-  width: 46%;
-  height: 22%;
-  display: grid;
-  place-items: center;
-}
-
-.ln-micro-cam-cover {
-  position: absolute;
-  inset: 0;
-  background: color-mix(in srgb, #071820 78%, transparent);
-  border: 1.5px solid color-mix(in srgb, var(--jade) 70%, transparent);
-  border-radius: 4px;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4));
 }
 
 .ln-micro-cam-tr {
@@ -1589,8 +1577,9 @@
   z-index: 1;
   font-family: var(--font-display);
   font-weight: 650;
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 4.5vw, 1.25rem);
   color: #e8fff6;
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 520px) {
