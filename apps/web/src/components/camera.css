@@ -387,6 +387,36 @@
   }
 }
 
+/* Desktop upload: show image at natural size inside a wider shell */
+@media (min-width: 960px) {
+  .cam-root:has(.cam-session--upload) {
+    flex: 1;
+    min-height: min(78vh, 920px);
+  }
+
+  .cam-session--upload {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .cam-session--upload .cam-stage-wrap {
+    flex: 1;
+    max-height: none;
+    min-height: 360px;
+  }
+
+  .cam-session--upload .cam-stage {
+    max-width: none;
+    display: block;
+  }
+
+  .cam-session--upload .cam-image {
+    max-width: none;
+    width: auto;
+    height: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cam-choice-btn:hover {
     transform: none;
