@@ -210,6 +210,12 @@
   color: var(--ink-bright);
 }
 
+.cam-tool-btn.is-on {
+  border-color: color-mix(in srgb, var(--jade) 55%, var(--glass-border));
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+  color: var(--ink-bright);
+}
+
 .cam-zoom {
   margin-left: auto;
   display: flex;
@@ -246,6 +252,12 @@
   border: 1px solid color-mix(in srgb, var(--glass-border) 85%, transparent);
   background: #061018;
   max-height: min(58vh, 520px);
+  /* Allow vertical scroll by default; draw mode locks gestures to the stage. */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cam-stage-wrap.is-draw {
   touch-action: none;
 }
 
@@ -254,7 +266,7 @@
   display: inline-block;
   max-width: 100%;
   line-height: 0;
-  touch-action: none;
+  touch-action: inherit;
   user-select: none;
 }
 
@@ -268,6 +280,9 @@
 .cam-box {
   position: absolute;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
   border-radius: 12px;
   background:
@@ -384,27 +399,30 @@
   position: relative;
   z-index: 1;
   display: block;
-  padding: 7px 10px;
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 6px 8px;
   font-family: var(--font-display), 'Noto Sans HK', sans-serif;
-  font-size: clamp(0.85rem, 3.2vw, 1.2rem);
-  line-height: 1.28;
+  font-size: 1rem;
+  line-height: 1.2;
   font-weight: 650;
   letter-spacing: -0.015em;
+  text-align: center;
   color: #e8fff6;
   pointer-events: none;
+  overflow-wrap: anywhere;
   word-break: break-word;
   text-shadow: 0 1px 2px rgba(4, 16, 24, 0.45);
 }
 
 .cam-box-src {
-  font-size: clamp(0.75rem, 2.6vw, 1.05rem);
   font-weight: 500;
   letter-spacing: 0;
   color: color-mix(in srgb, #e8fff6 78%, var(--muted));
 }
 
 .cam-box-tr {
-  font-size: clamp(0.95rem, 3.6vw, 1.32rem);
   background: linear-gradient(
     105deg,
     #e8fff6 0%,
@@ -713,10 +731,35 @@
 }
 
 .cam-detail {
-  padding: 12px 14px;
+  flex: none;
+  padding: 12px 14px 14px;
   border-radius: 14px;
   background: color-mix(in srgb, var(--harbor-deep) 60%, transparent);
   border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
+}
+
+.cam-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cam-detail-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cam-detail-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .cam-detail-open {
@@ -724,7 +767,7 @@
   display: block;
   width: 100%;
   margin: 0 0 10px;
-  padding: 0 28px 0 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
