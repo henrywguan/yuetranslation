@@ -1661,7 +1661,7 @@
 
 .mode-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   background: transparent;
   border: 0;
@@ -2651,8 +2651,13 @@
 
 @media (max-width: 719px) {
   .mode-tabs button {
-    padding: 9px 4px;
-    font-size: 0.75rem;
+    padding: 8px 2px;
+    font-size: 0.68rem;
+    min-height: 2.65rem;
+  }
+
+  .mode-tabs .bi-zh {
+    font-size: 0.72em;
   }
 
   .live-btn {
