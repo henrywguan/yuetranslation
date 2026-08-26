@@ -12,11 +12,11 @@ import {
   type ZoomTransform,
 } from '../lib/camera/pinchZoom'
 import {
-  drawCornerBrackets,
-  drawGlassPanel,
-  drawOverlayLabel,
+  drawMatchedLabel,
+  drawMatchedPanel,
   measureOverlayLabel,
 } from '../lib/camera/overlayPaint'
+import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
 import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
@@ -113,8 +113,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     ctx.clearRect(0, 0, w, h)
     const hits: HitRect[] = []
     const now = performance.now()
-    const shimmerT = reduce ? 0.35 : (Math.sin(now / 900) + 1) / 2
-    const pulse = reduce ? 1 : 0.82 + 0.18 * Math.sin(now / 700)
 
     for (const b of boxesRef.current) {
       const ox = b.box.x * w
@@ -122,44 +120,61 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       const obw = Math.max(8, b.box.w * w)
       const obh = Math.max(8, b.box.h * h)
       const label = b.translated || b.text
-      const padX = 10
-      const padY = 8
-      let fontSize = Math.max(16, Math.min(34, obh * 0.88))
-      let textW = 0
-      let drawW = obw
-      let drawX = ox
       const selected = b.id === selectedId
+      const matched = Boolean(b.bg && b.fg)
+
+      // Google Translate–style: cover the source box with sampled fill; fit text inside.
+      const inflateX = matched ? obw * 0.05 : 0
+      const inflateY = matched ? obh * 0.1 : 0
+      let drawX = Math.max(0, ox - inflateX)
+      let drawY = Math.max(0, oy - inflateY)
+      let drawW = Math.min(w - drawX, obw + inflateX * 2)
+      let drawH = Math.min(h - drawY, obh + inflateY * 2)
+      const padX = matched ? Math.max(4, drawW * 0.04) : 10
+      const padY = matched ? Math.max(3, drawH * 0.08) : 8
+      let fontSize = Math.max(matched ? 11 : 16, Math.min(matched ? 32 : 34, drawH * 0.78))
+      let textW = 0
 
       if (label) {
-        const minFont = 14
+        const minFont = matched ? 9 : 14
         for (; fontSize >= minFont; fontSize -= 0.5) {
           textW = measureOverlayLabel(ctx, label, fontSize)
-          if (textW + padX * 2 <= Math.max(obw, w * 0.95)) break
+          if (textW + padX * 2 <= drawW) break
         }
         textW = measureOverlayLabel(ctx, label, fontSize)
-        drawW = Math.min(w, Math.max(obw, textW + padX * 2))
-        drawX = ox
-        if (drawX + drawW > w) drawX = Math.max(0, w - drawW)
+        if (!matched) {
+          drawW = Math.min(w - drawX, Math.max(drawW, textW + padX * 2))
+          if (drawX + drawW > w) drawX = Math.max(0, w - drawW)
+          drawH = Math.max(drawH, fontSize + padY * 2.15)
+          drawY = Math.min(drawY, Math.max(0, h - drawH))
+        }
       }
-
-      const drawH = Math.max(obh, label ? fontSize + padY * 2.15 : obh)
-      let drawY = Math.min(oy, Math.max(0, h - drawH))
 
       const born = appearAtRef.current.get(b.id) ?? now
       const age = now - born
-      const enter = reduce ? 1 : Math.min(1, age / 420)
+      const enter = reduce ? 1 : Math.min(1, age / 360)
       const ease = 1 - Math.pow(1 - enter, 3)
-      const lift = reduce ? 0 : (1 - ease) * 10
-      drawY += lift
 
       ctx.save()
-      ctx.globalAlpha = 0.22 + 0.78 * ease
+      ctx.globalAlpha = 0.15 + 0.85 * ease
 
-      drawGlassPanel(ctx, drawX, drawY, drawW, drawH, { selected })
-      drawCornerBrackets(ctx, drawX, drawY, drawW, drawH, {
-        selected,
-        pulse: selected ? pulse : 0.9,
-      })
+      if (matched && b.bg && b.fg) {
+        drawMatchedPanel(ctx, drawX, drawY, drawW, drawH, {
+          bg: rgbCss(b.bg),
+          selected,
+        })
+        if (label) {
+          drawMatchedLabel(
+            ctx,
+            label,
+            drawX + padX,
+            drawY + drawH / 2,
+            Math.max(8, drawW - padX * 2),
+            fontSize,
+            { fg: rgbCss(b.fg) },
+          )
+        }
+      }
 
       hits.push({
         id: b.id,
@@ -168,13 +183,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         w: drawW / w,
         h: drawH / h,
       })
-
-      if (label) {
-        drawOverlayLabel(ctx, label, drawX + padX, drawY + drawH / 2, Math.max(8, drawW - padX * 2), fontSize, {
-          selected,
-          shimmer: selected ? 0.25 + shimmerT * 0.5 : 0.2 + shimmerT * 0.25,
-        })
-      }
       ctx.restore()
     }
 
@@ -302,7 +310,25 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         target: target === 'auto' ? undefined : target,
       })
       if (result.entitlement) onEntitlement(result.entitlement)
-      const next = result.regions.map(regionToEditable)
+      let next = result.regions.map(regionToEditable)
+      try {
+        const colors = await sampleColorsFromImageUrl(
+          image,
+          next.map((b) => b.box),
+        )
+        next = next.map((b, i) => ({
+          ...b,
+          bg: colors[i]?.bg,
+          fg: colors[i]?.fg,
+        }))
+      } catch {
+        // Fall back to high-contrast covers if decode/sample fails.
+        next = next.map((b) => ({
+          ...b,
+          bg: { r: 245, g: 245, b: 240 },
+          fg: { r: 18, g: 18, b: 20 },
+        }))
+      }
       const born = performance.now()
       const appear = new Map<string, number>()
       next.forEach((box, i) => appear.set(box.id, born + i * 45))

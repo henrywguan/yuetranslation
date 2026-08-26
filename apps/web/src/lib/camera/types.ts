@@ -1,4 +1,5 @@
 import type { CameraBox, CameraScanRegion } from '../api'
+import type { Rgb } from './sampleRegionColors'
 
 export type CamPath = 'choice' | 'ar' | 'upload'
 
@@ -10,6 +11,10 @@ export type EditableBox = {
   from: 'en' | 'zh'
   to: 'en' | 'zh'
   dirty: boolean
+  /** Sampled source background (AR matched overlays). */
+  bg?: Rgb
+  /** Sampled source ink / contrast text color (AR matched overlays). */
+  fg?: Rgb
 }
 
 export type CameraTarget = 'auto' | 'en' | 'zh'
