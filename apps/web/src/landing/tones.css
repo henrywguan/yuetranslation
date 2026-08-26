@@ -326,10 +326,8 @@
   max-width: 100%;
 }
 
-/* —— Buy / sell flip story (full-bleed, no card) —— */
+/* —— Buy / sell flip story (full-bleed market chart ambient) —— */
 .tones-story {
-  --story-wash-buy: color-mix(in srgb, var(--jade) 16%, transparent);
-  --story-wash-sell: color-mix(in srgb, var(--harbor-blue) 22%, transparent);
   position: relative;
   width: 100%;
   margin: 0;
@@ -337,45 +335,215 @@
   overflow: clip;
 }
 
-.tones-story-ambient {
+.tones-story-ambient-wrap {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(
-      180deg,
-      transparent 0%,
-      color-mix(in srgb, var(--harbor) 35%, transparent) 18%,
-      color-mix(in srgb, var(--harbor-mid) 45%, transparent) 55%,
-      transparent 100%
-    );
-  transition: background 0.65s ease;
+  z-index: 0;
 }
 
-.tones-story--buy .tones-story-ambient {
-  background:
-    linear-gradient(
-      180deg,
-      transparent 0%,
-      var(--story-wash-buy) 22%,
-      color-mix(in srgb, var(--harbor-mid) 42%, transparent) 58%,
-      transparent 100%
-    );
+.tones-mkt {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
-.tones-story--sell .tones-story-ambient {
+.tones-mkt-wash {
+  position: absolute;
+  inset: 0;
+  transition: background 0.5s ease;
+}
+
+.tones-mkt--buy .tones-mkt-wash {
   background:
+    radial-gradient(ellipse 80% 55% at 70% 30%, color-mix(in srgb, var(--jade) 28%, transparent), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 20% 80%, color-mix(in srgb, #2a9f8c 18%, transparent), transparent 55%),
     linear-gradient(
       180deg,
       transparent 0%,
-      var(--story-wash-sell) 22%,
-      color-mix(in srgb, var(--harbor-blue) 18%, var(--harbor-mid) 40%) 58%,
+      color-mix(in srgb, var(--harbor-mid) 40%, transparent) 40%,
       transparent 100%
     );
 }
 
-.tones-story.is-speaking .tones-story-ambient {
-  filter: brightness(1.04);
+.tones-mkt--sell .tones-mkt-wash {
+  background:
+    radial-gradient(ellipse 80% 55% at 70% 70%, color-mix(in srgb, #e07070 22%, transparent), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 18% 25%, color-mix(in srgb, #c44a4a 14%, transparent), transparent 55%),
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--harbor-mid) 42%, transparent) 42%,
+      transparent 100%
+    );
+}
+
+.tones-mkt-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+}
+
+.tones-mkt-grid {
+  stroke: color-mix(in srgb, var(--ink) 8%, transparent);
+  stroke-width: 0.15;
+}
+
+.tones-mkt--buy .tones-mkt-line {
+  stroke: var(--jade-bright, var(--jade));
+  stroke-width: 0.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tones-mkt--sell .tones-mkt-line {
+  stroke: #f08a8a;
+  stroke-width: 0.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tones-mkt-line {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: tones-mkt-draw 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.tones-mkt-area {
+  opacity: 0;
+  animation: tones-mkt-fade 1s ease 0.25s forwards;
+}
+
+.tones-mkt-candle line {
+  stroke-width: 0.2;
+}
+
+.tones-mkt-candle rect {
+  opacity: 0.85;
+}
+
+.tones-mkt--buy .tones-mkt-candle.is-up line,
+.tones-mkt--buy .tones-mkt-candle.is-up rect {
+  stroke: var(--jade);
+  fill: color-mix(in srgb, var(--jade) 70%, transparent);
+}
+
+.tones-mkt--buy .tones-mkt-candle.is-down line,
+.tones-mkt--buy .tones-mkt-candle.is-down rect {
+  stroke: color-mix(in srgb, var(--jade) 45%, #888);
+  fill: color-mix(in srgb, var(--jade) 25%, transparent);
+}
+
+.tones-mkt--sell .tones-mkt-candle.is-down line,
+.tones-mkt--sell .tones-mkt-candle.is-down rect {
+  stroke: #e07070;
+  fill: color-mix(in srgb, #e07070 65%, transparent);
+}
+
+.tones-mkt--sell .tones-mkt-candle.is-up line,
+.tones-mkt--sell .tones-mkt-candle.is-up rect {
+  stroke: color-mix(in srgb, #e07070 40%, #888);
+  fill: color-mix(in srgb, #e07070 22%, transparent);
+}
+
+.tones-mkt-tip {
+  fill: var(--ink-bright, #fff);
+  opacity: 0.85;
+}
+
+.tones-mkt--buy .tones-mkt-tip {
+  fill: var(--jade-bright, var(--jade));
+}
+
+.tones-mkt--sell .tones-mkt-tip {
+  fill: #f0a0a0;
+}
+
+.tones-mkt.is-static .tones-mkt-line {
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+.tones-mkt.is-static .tones-mkt-area {
+  opacity: 1;
+  animation: none;
+}
+
+.tones-mkt.is-static .tones-mkt-tip {
+  display: none;
+}
+
+.tones-mkt-ticker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  display: flex;
+  gap: clamp(28px, 8vw, 64px);
+  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 1.6vw, 0.9rem);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  opacity: 0.45;
+  animation: tones-mkt-ticker 18s linear infinite;
+}
+
+.tones-mkt--buy .tones-mkt-ticker {
+  color: var(--jade-bright, var(--jade));
+}
+
+.tones-mkt--sell .tones-mkt-ticker {
+  color: #f0a0a0;
+}
+
+.tones-mkt.is-static .tones-mkt-ticker {
+  animation: none;
+}
+
+@keyframes tones-mkt-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes tones-mkt-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tones-mkt-ticker {
+  from {
+    transform: translateX(8%);
+  }
+  to {
+    transform: translateX(-8%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tones-mkt-line,
+  .tones-mkt-area,
+  .tones-mkt-ticker {
+    animation: none;
+  }
+
+  .tones-mkt-line {
+    stroke-dashoffset: 0;
+  }
+
+  .tones-mkt-area {
+    opacity: 1;
+  }
+}
+
+.tones-story.is-speaking .tones-mkt-wash {
+  filter: brightness(1.06);
 }
 
 .tones-story-flow {
