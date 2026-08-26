@@ -67,13 +67,18 @@ function decodeDataUrl(imageBase64: string): Buffer {
   return Buffer.from(b64, 'base64')
 }
 
+function authFailed(status: number) {
+  return status === 401 || status === 403
+}
+
 /**
  * Azure AI Vision Read (OCR) 3.2 / 4.0 style analyze.
- * Uses Computer Vision Read API when configured; otherwise returns [].
+ * Uses Computer Vision Read API when AZURE_VISION_KEY is configured.
  */
 export async function ocrImage(imageBase64: string): Promise<{
   regions: OcrRegion[]
   engine: 'azure-vision' | 'demo'
+  authFailed?: boolean
 }> {
   if (!visionConfigured()) {
     return { regions: [], engine: 'demo' }
@@ -89,7 +94,6 @@ export async function ocrImage(imageBase64: string): Promise<{
   }
 
   const endpoint = env.azureVisionEndpoint.replace(/\/+$/, '')
-  // Prefer Read 3.2 (widely available on multi-service resources).
   const startUrl = `${endpoint}/vision/v3.2/read/analyze`
 
   const startRes = await fetch(startUrl, {
@@ -102,6 +106,10 @@ export async function ocrImage(imageBase64: string): Promise<{
   })
 
   if (!startRes.ok) {
+    if (authFailed(startRes.status)) {
+      console.warn('[vision] OCR auth failed — check AZURE_VISION_KEY and AZURE_VISION_ENDPOINT')
+      return { regions: [], engine: 'demo', authFailed: true }
+    }
     const detail = await startRes.text().catch(() => '')
     throw new Error(`Azure Vision OCR start failed: ${startRes.status} ${detail.slice(0, 200)}`)
   }
@@ -119,6 +127,10 @@ export async function ocrImage(imageBase64: string): Promise<{
       headers: { 'Ocp-Apim-Subscription-Key': env.azureVisionKey },
     })
     if (!poll.ok) {
+      if (authFailed(poll.status)) {
+        console.warn('[vision] OCR poll auth failed')
+        return { regions: [], engine: 'demo', authFailed: true }
+      }
       throw new Error(`Azure Vision OCR poll failed: ${poll.status}`)
     }
     const json = (await poll.json()) as {
