@@ -378,9 +378,9 @@ function TextMicro({ reduce }: { reduce: boolean }) {
   )
 }
 
-/** Camera: viewfinder + AR box overlay micro. */
+/** Camera: viewfinder with large STOP sign + translation reveal (no box chrome). */
 function CameraMicro({ reduce }: { reduce: boolean }) {
-  const step = useLoopStep(3, 1600, reduce)
+  const step = useLoopStep(2, 1800, reduce)
   return (
     <div className="ln-micro ln-micro--camera" aria-hidden="true">
       <div className="ln-micro-cam-view">
@@ -388,23 +388,19 @@ function CameraMicro({ reduce }: { reduce: boolean }) {
           className="ln-micro-cam-sign"
           src={`${import.meta.env.BASE_URL}assets/stop-sign.svg`}
           alt=""
-          width={72}
-          height={72}
+          width={180}
+          height={180}
           draggable={false}
         />
         {step >= 1 ? (
           <motion.span
-            className="ln-micro-cam-box"
-            initial={reduce ? false : { opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className="ln-micro-cam-tr"
+            lang="zh-HK"
+            initial={reduce ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: inkEase }}
           >
-            <span className="ln-micro-cam-cover" />
-            {step >= 2 ? (
-              <span className="ln-micro-cam-tr" lang="zh-HK">
-                停止
-              </span>
-            ) : null}
+            停止
           </motion.span>
         ) : null}
       </div>

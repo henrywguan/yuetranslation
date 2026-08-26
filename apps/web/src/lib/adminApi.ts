@@ -33,8 +33,11 @@ export type AdminUser = {
   liveSeconds: number
   ttsChars: number
   translateCount: number
+  cameraSeconds: number
+  cameraTranslateCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
+  cameraLimitSeconds: number
   overQuota: boolean
 }
 
@@ -96,7 +99,14 @@ export async function fetchAdminUsers(params: AdminListQuery = {}): Promise<{
 
 export async function fetchAdminUserUsage(userId: string): Promise<{
   user: { id: string; email: string | null } | null
-  months: { month: string; liveSeconds: number; ttsChars: number; translateCount: number }[]
+  months: {
+    month: string
+    liveSeconds: number
+    ttsChars: number
+    translateCount: number
+    cameraSeconds: number
+    cameraTranslateCount: number
+  }[]
 }> {
   const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/usage`)
   if (!res.ok) {
