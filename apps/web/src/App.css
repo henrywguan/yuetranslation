@@ -2378,14 +2378,14 @@
 .breakdown-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 100;
   background: color-mix(in srgb, #061018 55%, transparent);
   backdrop-filter: blur(6px);
 }
 
 .breakdown-frame {
   position: fixed;
-  z-index: 81;
+  z-index: 101;
   left: 12px;
   right: 12px;
   bottom: max(16px, env(safe-area-inset-bottom));
