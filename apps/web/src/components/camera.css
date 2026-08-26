@@ -268,36 +268,194 @@
 .cam-box {
   position: absolute;
   box-sizing: border-box;
-  border: 1.5px dashed color-mix(in srgb, var(--jade) 55%, #fff);
-  background: color-mix(in srgb, #071820 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, #0a2834 72%, transparent) 0%,
+      color-mix(in srgb, #061820 86%, transparent) 100%
+    );
+  box-shadow:
+    0 10px 28px color-mix(in srgb, #000 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #e8fff6 12%, transparent);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
   overflow: hidden;
   pointer-events: none;
+  isolation: isolate;
+}
+
+.cam-box::before,
+.cam-box::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--jade-bright, var(--jade)) 75%, #fff);
+  border-style: solid;
+  opacity: 0.75;
+  z-index: 2;
+}
+
+.cam-box::before {
+  top: 4px;
+  left: 4px;
+  border-width: 2px 0 0 2px;
+  border-radius: 3px 0 0 0;
+}
+
+.cam-box::after {
+  right: 4px;
+  bottom: 4px;
+  border-width: 0 2px 2px 0;
+  border-radius: 0 0 3px 0;
+}
+
+.cam-box-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--jade-bright, var(--jade)) 75%, #fff);
+  border-style: solid;
+  opacity: 0.75;
+  z-index: 2;
+}
+
+.cam-box-corner--ne {
+  top: 4px;
+  right: 4px;
+  border-width: 2px 2px 0 0;
+  border-radius: 0 3px 0 0;
+}
+
+.cam-box-corner--sw {
+  left: 4px;
+  bottom: 4px;
+  border-width: 0 0 2px 2px;
+  border-radius: 0 0 0 3px;
+}
+
+.cam-box.is-selected .cam-box-corner {
+  opacity: 1;
+  width: 16px;
+  height: 16px;
 }
 
 .cam-box.is-selected {
-  border-style: solid;
-  border-color: var(--jade);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 40%, transparent);
+  border-color: color-mix(in srgb, var(--jade-bright, var(--jade)) 65%, transparent);
+  box-shadow:
+    0 14px 36px color-mix(in srgb, #000 32%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--jade) 28%, transparent),
+    0 0 24px color-mix(in srgb, var(--jade) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #e8fff6 16%, transparent);
+}
+
+.cam-box.is-selected::before,
+.cam-box.is-selected::after {
+  opacity: 1;
+  width: 16px;
+  height: 16px;
 }
 
 .cam-box.has-tr {
-  background: color-mix(in srgb, #071820 78%, transparent);
   border-style: solid;
+  animation: cam-box-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cam-box:not(.has-tr) {
+  border: 1.5px dashed color-mix(in srgb, var(--jade) 55%, #fff);
+  border-radius: 8px;
+  background: color-mix(in srgb, #071820 35%, transparent);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.cam-box:not(.has-tr)::before,
+.cam-box:not(.has-tr)::after {
+  display: none;
 }
 
 .cam-box-tr,
 .cam-box-src {
+  position: relative;
+  z-index: 1;
   display: block;
-  padding: 3px 5px;
-  font-size: clamp(0.65rem, 2.2vw, 0.9rem);
-  line-height: 1.2;
+  padding: 7px 10px;
+  font-family: var(--font-display), 'Noto Sans HK', sans-serif;
+  font-size: clamp(0.85rem, 3.2vw, 1.2rem);
+  line-height: 1.28;
+  font-weight: 650;
+  letter-spacing: -0.015em;
   color: #e8fff6;
   pointer-events: none;
   word-break: break-word;
+  text-shadow: 0 1px 2px rgba(4, 16, 24, 0.45);
 }
 
 .cam-box-src {
-  color: color-mix(in srgb, #e8fff6 70%, var(--muted));
+  font-size: clamp(0.75rem, 2.6vw, 1.05rem);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: color-mix(in srgb, #e8fff6 78%, var(--muted));
+}
+
+.cam-box-tr {
+  font-size: clamp(0.95rem, 3.6vw, 1.32rem);
+  background: linear-gradient(
+    105deg,
+    #e8fff6 0%,
+    #9af0de 35%,
+    #e8fff8 55%,
+    #7ef0dc 78%,
+    #e8fff6 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cam-text-shimmer 5.5s ease-in-out infinite;
+}
+
+@keyframes cam-box-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes cam-text-shimmer {
+  0%,
+  18% {
+    background-position: 100% 50%;
+  }
+  45%,
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cam-box.has-tr,
+  .cam-box-tr {
+    animation: none;
+  }
+
+  .cam-box-tr {
+    color: #e8fff6;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
 }
 
 .cam-handle {
@@ -308,6 +466,7 @@
   background: var(--jade);
   border: 1px solid #041018;
   pointer-events: none;
+  z-index: 3;
 }
 
 .cam-handle--nw {
@@ -560,7 +719,46 @@
   border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
 }
 
+.cam-detail-open {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 0 28px 0 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.cam-detail-open:hover,
+.cam-detail-open:focus-visible {
+  background: color-mix(in srgb, var(--jade) 8%, transparent);
+  outline: none;
+}
+
+.cam-detail-open .cam-detail-src,
+.cam-detail-open .cam-detail-tr {
+  padding-right: 0;
+}
+
+.cam-detail-open .cam-detail-tr {
+  margin-bottom: 4px;
+}
+
+.cam-detail-open-hint {
+  display: block;
+  margin-top: 2px;
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+}
+
 .cam-detail-src {
+  display: block;
   margin: 0 0 4px;
   padding-right: 24px;
   color: var(--muted);
@@ -568,6 +766,7 @@
 }
 
 .cam-detail-tr {
+  display: block;
   margin: 0 0 10px;
   padding-right: 24px;
   color: var(--ink-bright);
@@ -577,6 +776,7 @@
 
 .cam-detail-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

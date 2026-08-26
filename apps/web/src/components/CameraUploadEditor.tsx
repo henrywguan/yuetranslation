@@ -8,9 +8,9 @@ import {
 import { BiText } from './BiText'
 import { cameraScan, type CameraBox } from '../lib/api'
 import { applyHandle, hitTest, type Handle } from '../lib/camera/geometry'
-import { clampBox, newBox, regionToEditable, type CameraTarget, type EditableBox } from '../lib/camera/types'
+import { clampBox, newBox, regionToEditable, boxDetailArgs, type CameraTarget, type EditableBox } from '../lib/camera/types'
 import { useYueStore } from '../lib/store'
-import { ui } from '../lib/uiCopy'
+import { biPlain, ui } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
 
 type Props = {
@@ -23,6 +23,7 @@ type Props = {
 
 export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, meter }: Props) {
   const speakManual = useYueStore((s) => s.speakManual)
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
   const imgRef = useRef<HTMLImageElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const fileToDataUrl = useRef(imageUrl)
@@ -185,6 +186,13 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
 
   const selected = boxes.find((b) => b.id === selectedId) || null
 
+  const openSelectedDetails = () => {
+    if (!selected) return
+    const { phrase, translation } = boxDetailArgs(selected)
+    if (!phrase) return
+    openBreakdown(phrase, { translation })
+  }
+
   return (
     <div className="cam-session cam-session--upload">
       <div className="cam-toolbar">
@@ -277,6 +285,12 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
               ) : b.text ? (
                 <span className="cam-box-src">{b.text}</span>
               ) : null}
+              {b.translated ? (
+                <>
+                  <i className="cam-box-corner cam-box-corner--ne" aria-hidden="true" />
+                  <i className="cam-box-corner cam-box-corner--sw" aria-hidden="true" />
+                </>
+              ) : null}
               {b.id === selectedId
                 ? (['nw', 'ne', 'sw', 'se'] as const).map((h) => (
                     <i key={h} className={`cam-handle cam-handle--${h}`} />
@@ -289,9 +303,26 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
 
       {selected?.translated || selected?.text ? (
         <div className="cam-detail">
-          {selected.text ? <p className="cam-detail-src">{selected.text}</p> : null}
-          {selected.translated ? <p className="cam-detail-tr">{selected.translated}</p> : null}
+          <button
+            type="button"
+            className="cam-detail-open"
+            onClick={openSelectedDetails}
+            aria-label={biPlain(ui.camOpenDetails)}
+          >
+            {selected.text ? <span className="cam-detail-src">{selected.text}</span> : null}
+            {selected.translated ? <span className="cam-detail-tr">{selected.translated}</span> : null}
+            <span className="cam-detail-open-hint">
+              <BiText copy={ui.camOpenDetailsHint} size="sm" />
+            </span>
+          </button>
           <div className="cam-detail-actions">
+            <button
+              type="button"
+              className="cam-tool-btn cam-tool-btn--primary"
+              onClick={openSelectedDetails}
+            >
+              <BiText copy={ui.camOpenDetails} size="sm" />
+            </button>
             <button
               type="button"
               className="cam-tool-btn"
