@@ -80,6 +80,11 @@ export const ui = {
     zh: '未設定 OCR——可手動畫框；偵測到文字後仍會翻譯。',
     jp: 'mei6 cit3 ding6 OCR — ho2 sau2 dung6 waak6 kwaang1; zing1 caak1 dou2 man4 zi6 hau6 jing4 wui5 faan1 jik6.',
   },
+  camVisionAuthFailed: {
+    en: 'OCR credentials invalid — set AZURE_VISION_KEY and AZURE_VISION_ENDPOINT on the server. Draw boxes manually for now.',
+    zh: 'OCR 憑證無效——請在伺服器設定 AZURE_VISION_KEY 與 AZURE_VISION_ENDPOINT。可先手動畫框。',
+    jp: 'OCR pang4 zing3 mou4 siu6 — cing2 bei6 fu6 kei4 cit3 ding6 AZURE_VISION_KEY tung4 AZURE_VISION_ENDPOINT. ho2 sin1 sau2 dung6 waak6 kwaang1.',
+  },
   camQuota: {
     en: 'Camera minutes used up this month.',
     zh: '本月相機分鐘已用完。',
