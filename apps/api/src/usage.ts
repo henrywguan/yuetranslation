@@ -6,6 +6,8 @@ export type UsageRow = {
   live_seconds: number
   tts_chars: number
   translate_count: number
+  camera_seconds?: number
+  camera_translate_count?: number
 }
 
 export type UsageSnapshot = {
@@ -13,6 +15,8 @@ export type UsageSnapshot = {
   liveSeconds: number
   ttsChars: number
   translateCount: number
+  cameraSeconds: number
+  cameraTranslateCount: number
 }
 
 function asInt(value: unknown): number {
@@ -25,7 +29,14 @@ export function currentMonthKey(): string {
 }
 
 export function emptyUsage(month = currentMonthKey()): UsageSnapshot {
-  return { month, liveSeconds: 0, ttsChars: 0, translateCount: 0 }
+  return {
+    month,
+    liveSeconds: 0,
+    ttsChars: 0,
+    translateCount: 0,
+    cameraSeconds: 0,
+    cameraTranslateCount: 0,
+  }
 }
 
 function rowToSnapshot(row: UsageRow): UsageSnapshot {
@@ -34,6 +45,8 @@ function rowToSnapshot(row: UsageRow): UsageSnapshot {
     liveSeconds: asInt(row.live_seconds),
     ttsChars: asInt(row.tts_chars),
     translateCount: asInt(row.translate_count),
+    cameraSeconds: asInt(row.camera_seconds),
+    cameraTranslateCount: asInt(row.camera_translate_count),
   }
 }
 
@@ -86,25 +99,35 @@ export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<s
       live_seconds: asInt(row.live_seconds),
       tts_chars: asInt(row.tts_chars),
       translate_count: asInt(row.translate_count),
+      camera_seconds: asInt(row.camera_seconds),
+      camera_translate_count: asInt(row.camera_translate_count),
     })
   }
   return map
 }
 
 /**
- * Prefer atomic Postgres RPC so concurrent TTS / live / translate cannot wipe
+ * Prefer atomic Postgres RPC so concurrent TTS / live / translate / camera cannot wipe
  * each other. Falls back to a single-column upsert if the migration is not applied.
  */
 async function incrementUsage(
   userId: string,
-  delta: { liveSeconds?: number; ttsChars?: number; translateCount?: number },
+  delta: {
+    liveSeconds?: number
+    ttsChars?: number
+    translateCount?: number
+    cameraSeconds?: number
+    cameraTranslateCount?: number
+  },
 ) {
   const client = getAdmin()
   if (!client) return
   const liveSeconds = asInt(delta.liveSeconds)
   const ttsChars = asInt(delta.ttsChars)
   const translateCount = asInt(delta.translateCount)
-  if (liveSeconds + ttsChars + translateCount <= 0) return
+  const cameraSeconds = asInt(delta.cameraSeconds)
+  const cameraTranslateCount = asInt(delta.cameraTranslateCount)
+  if (liveSeconds + ttsChars + translateCount + cameraSeconds + cameraTranslateCount <= 0) return
 
   const month = currentMonthKey()
   const { error: rpcError } = await client.rpc('increment_usage', {
@@ -113,6 +136,8 @@ async function incrementUsage(
     p_live_seconds: liveSeconds,
     p_tts_chars: ttsChars,
     p_translate_count: translateCount,
+    p_camera_seconds: cameraSeconds,
+    p_camera_translate_count: cameraTranslateCount,
   })
   if (!rpcError) return
 
@@ -124,8 +149,11 @@ async function incrementUsage(
   if (liveSeconds) patch.live_seconds = usage.liveSeconds + liveSeconds
   if (ttsChars) patch.tts_chars = usage.ttsChars + ttsChars
   if (translateCount) patch.translate_count = usage.translateCount + translateCount
+  if (cameraSeconds) patch.camera_seconds = usage.cameraSeconds + cameraSeconds
+  if (cameraTranslateCount) {
+    patch.camera_translate_count = usage.cameraTranslateCount + cameraTranslateCount
+  }
 
-  // Ensure a profiles row exists (FK) before first usage write.
   const { error: profileError } = await client.from('profiles').upsert(
     { id: userId, plan: 'free' },
     { onConflict: 'id', ignoreDuplicates: true },
@@ -154,7 +182,15 @@ export async function addTranslateCount(userId: string, count = 1) {
   await incrementUsage(userId, { translateCount: count })
 }
 
-/** Zero live / TTS / translate counters for a month (default: current). */
+export async function addCameraSeconds(userId: string, seconds: number) {
+  await incrementUsage(userId, { cameraSeconds: seconds })
+}
+
+export async function addCameraTranslateCount(userId: string, count = 1) {
+  await incrementUsage(userId, { cameraTranslateCount: count })
+}
+
+/** Zero live / TTS / translate / camera counters for a month (default: current). */
 export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
   const client = getAdmin()
   if (!client) return
@@ -172,6 +208,8 @@ export async function resetUsageMonth(userId: string, month = currentMonthKey())
       live_seconds: 0,
       tts_chars: 0,
       translate_count: 0,
+      camera_seconds: 0,
+      camera_translate_count: 0,
     },
     { onConflict: 'user_id,month' },
   )

@@ -26,7 +26,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     tagline: ui.tagFree,
     cta: ui.getStarted,
     ctaOpens: 'app',
-    features: [ui.freeFeatLive20, ui.freeFeatText, ui.freeFeatJp, ui.freeFeatTts, ui.freeFeatModes],
+    features: [ui.freeFeatLive20, ui.freeFeatText, ui.freeFeatCamera, ui.freeFeatTts, ui.freeFeatModes],
   },
   {
     id: 'pro',
@@ -37,7 +37,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     cta: ui.goPro,
     featured: true,
     ctaOpens: 'pricing',
-    features: [ui.proFeatLive10, ui.proFeatTts, ui.proFeatQuality, ui.proFeatEverything],
+    features: [ui.proFeatLive10, ui.proFeatCamera, ui.proFeatTts, ui.proFeatQuality, ui.proFeatEverything],
   },
   {
     id: 'max',

@@ -1,7 +1,8 @@
 import { MotionConfig, motion } from 'framer-motion'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BiText } from './components/BiText'
 import { BrandTag } from './components/BrandTag'
+import { CameraView } from './components/CameraView'
 import { CharacterBreakdownHost } from './components/CharacterBreakdownHost'
 import { Controls } from './components/Controls'
 import { JyutLogo } from './components/JyutLogo'
@@ -27,12 +28,14 @@ import { inkEase } from './lib/motion'
 
 export function TranslatorApp() {
   const mode = useYueStore((s) => s.mode)
+  const setMode = useYueStore((s) => s.setMode)
   const live = useYueStore((s) => s.live)
   const error = useYueStore((s) => s.error)
   const demoMode = useYueStore((s) => s.demoMode)
   const entitlement = useYueStore((s) => s.entitlement)
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
   const embedded = isEmbeddedAppView()
+  const [camChoiceOpen, setCamChoiceOpen] = useState(true)
 
   useEffect(() => {
     void loadBootstrap()
@@ -40,6 +43,10 @@ export function TranslatorApp() {
       void loadBootstrap()
     })
   }, [loadBootstrap])
+
+  useEffect(() => {
+    if (mode === 'camera') setCamChoiceOpen(true)
+  }, [mode])
 
   return (
     <MotionConfig reducedMotion="user">
@@ -84,6 +91,13 @@ export function TranslatorApp() {
           {mode === 'solo' ? <SoloView /> : null}
           {mode === 'conversation' ? <ConversationView /> : null}
           {mode === 'text' ? <TextMode /> : null}
+          {mode === 'camera' ? (
+            <CameraView
+              choiceOpen={camChoiceOpen}
+              onChoiceOpenChange={setCamChoiceOpen}
+              onLeaveCamera={() => setMode('solo')}
+            />
+          ) : null}
         </main>
 
         {demoMode ? (
@@ -108,7 +122,7 @@ export function TranslatorApp() {
           </div>
         ) : null}
 
-        <TranslationHistory />
+        {mode !== 'camera' ? <TranslationHistory /> : null}
         <Controls />
         <CharacterBreakdownHost />
         <PanelDock />

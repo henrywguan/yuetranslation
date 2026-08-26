@@ -7,12 +7,13 @@ import { openTones } from '../lib/siteLinks'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui, type Bi } from '../lib/uiCopy'
 
-type ModeId = 'solo' | 'conversation' | 'text'
+type ModeId = 'solo' | 'conversation' | 'text' | 'camera'
 
 const MODES: { id: ModeId; title: Bi; line: Bi }[] = [
   { id: 'solo', title: ui.modeSolo, line: ui.modeSoloLine },
   { id: 'conversation', title: ui.modeFaceShort, line: ui.modeFaceLine },
   { id: 'text', title: ui.modeText, line: ui.modeTextLine },
+  { id: 'camera', title: ui.modeCamera, line: ui.modeCameraLine },
 ]
 
 const AUTO_MS = 6800
@@ -78,6 +79,7 @@ export function ModesStage() {
                 {mode === 'solo' ? <SoloMicro reduce={reduce} /> : null}
                 {mode === 'conversation' ? <ConversationMicro reduce={reduce} /> : null}
                 {mode === 'text' ? <TextMicro reduce={reduce} /> : null}
+                {mode === 'camera' ? <CameraMicro reduce={reduce} /> : null}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -372,6 +374,35 @@ function TextMicro({ reduce }: { reduce: boolean }) {
           </motion.div>
         ) : null}
       </AnimatePresence>
+    </div>
+  )
+}
+
+/** Camera: viewfinder + AR box overlay micro. */
+function CameraMicro({ reduce }: { reduce: boolean }) {
+  const step = useLoopStep(3, 1600, reduce)
+  return (
+    <div className="ln-micro ln-micro--camera" aria-hidden="true">
+      <div className="ln-micro-cam-view">
+        <span className="ln-micro-cam-sign" lang="en">
+          EXIT
+        </span>
+        {step >= 1 ? (
+          <motion.span
+            className="ln-micro-cam-box"
+            initial={reduce ? false : { opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, ease: inkEase }}
+          >
+            <span className="ln-micro-cam-cover" />
+            {step >= 2 ? (
+              <span className="ln-micro-cam-tr" lang="zh-HK">
+                出口
+              </span>
+            ) : null}
+          </motion.span>
+        ) : null}
+      </div>
     </div>
   )
 }

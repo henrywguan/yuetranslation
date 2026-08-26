@@ -1537,6 +1537,63 @@
   margin-top: 4px;
 }
 
+/* Camera micro */
+.ln-micro--camera {
+  justify-content: center;
+  align-items: center;
+  padding: 28px 18px 18px;
+}
+
+.ln-micro-cam-view {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(160deg, #1a3344 0%, #0a1822 55%, #071018 100%);
+  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
+}
+
+.ln-micro-cam-sign {
+  position: absolute;
+  left: 18%;
+  top: 38%;
+  font-family: var(--font-display);
+  font-weight: 750;
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, #fff 88%, transparent);
+}
+
+.ln-micro-cam-box {
+  position: absolute;
+  left: 14%;
+  top: 34%;
+  width: 42%;
+  height: 16%;
+  display: grid;
+  place-items: center;
+}
+
+.ln-micro-cam-cover {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #071820 78%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--jade) 70%, transparent);
+  border-radius: 4px;
+}
+
+.ln-micro-cam-tr {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.1rem;
+  color: #e8fff6;
+}
+
 @media (max-width: 520px) {
   .ln-modes-tab {
     padding: 9px 12px;

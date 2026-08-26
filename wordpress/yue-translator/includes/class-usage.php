@@ -23,6 +23,8 @@ final class Yue_Usage
             'liveSeconds' => 0,
             'ttsChars' => 0,
             'translateCount' => 0,
+            'cameraSeconds' => 0,
+            'cameraTranslateCount' => 0,
         ];
     }
 
@@ -41,6 +43,8 @@ final class Yue_Usage
             'liveSeconds' => (int) ($raw['liveSeconds'] ?? 0),
             'ttsChars' => (int) ($raw['ttsChars'] ?? 0),
             'translateCount' => (int) ($raw['translateCount'] ?? 0),
+            'cameraSeconds' => (int) ($raw['cameraSeconds'] ?? 0),
+            'cameraTranslateCount' => (int) ($raw['cameraTranslateCount'] ?? 0),
         ];
     }
 
@@ -61,6 +65,8 @@ final class Yue_Usage
             'liveSeconds' => (int) ($raw['liveSeconds'] ?? 0),
             'ttsChars' => (int) ($raw['ttsChars'] ?? 0),
             'translateCount' => (int) ($raw['translateCount'] ?? 0),
+            'cameraSeconds' => (int) ($raw['cameraSeconds'] ?? 0),
+            'cameraTranslateCount' => (int) ($raw['cameraTranslateCount'] ?? 0),
         ];
     }
 

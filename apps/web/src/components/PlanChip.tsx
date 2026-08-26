@@ -47,6 +47,27 @@ function voiceCopy(entitlement: {
   return ui.charsLeft(formatChars(entitlement.remaining.ttsChars))
 }
 
+function formatCameraSeconds(seconds: number): string {
+  if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h`
+  if (seconds >= 60) return `${Math.ceil(seconds / 60)}m`
+  return `${Math.max(0, Math.round(seconds))}s`
+}
+
+function cameraCopy(entitlement: {
+  cameraUnlimited?: boolean
+  plan: string
+  usage: { cameraSeconds?: number }
+  remaining: { cameraSeconds?: number }
+}): Bi {
+  const unlimited = Boolean(
+    entitlement.cameraUnlimited || entitlement.plan === 'pro' || entitlement.plan === 'max',
+  )
+  const used = entitlement.usage.cameraSeconds ?? 0
+  if (unlimited) return ui.camMinutesUsedUnlimited(formatCameraSeconds(used))
+  const left = Math.max(0, entitlement.remaining.cameraSeconds ?? 0)
+  return ui.camMinutesLeft(formatCameraSeconds(left))
+}
+
 function displayNameFromSession(email: string | undefined, meta: Record<string, unknown> | undefined) {
   const full =
     (typeof meta?.full_name === 'string' && meta.full_name.trim()) ||
@@ -230,6 +251,16 @@ export function PlanChip() {
                 </span>
                 <span className="account-hub-stat-value">
                   <BiText copy={voiceCopy(entitlement)} size="sm" />
+                </span>
+              </li>
+            ) : null}
+            {entitlement.loggedIn ? (
+              <li>
+                <span className="account-hub-stat-label">
+                  <BiText copy={ui.modeCamera} size="sm" />
+                </span>
+                <span className="account-hub-stat-value">
+                  <BiText copy={cameraCopy(entitlement)} size="sm" />
                 </span>
               </li>
             ) : null}

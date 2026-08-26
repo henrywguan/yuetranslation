@@ -33,6 +33,20 @@ export const env = {
   // Strip internal whitespace — Windows editors often wrap long keys with a space.
   azureSpeechKey: (process.env.AZURE_SPEECH_KEY || '').replace(/\s+/g, ''),
   azureSpeechRegion: (process.env.AZURE_SPEECH_REGION || 'eastasia').trim(),
+  /**
+   * Azure AI Vision (Read/OCR). Falls back to speech key + region when unset
+   * (same multi-service Cognitive resource).
+   */
+  azureVisionKey: (process.env.AZURE_VISION_KEY || process.env.AZURE_SPEECH_KEY || '').replace(
+    /\s+/g,
+    '',
+  ),
+  azureVisionEndpoint: trimUrl(
+    process.env.AZURE_VISION_ENDPOINT ||
+      (process.env.AZURE_SPEECH_REGION
+        ? `https://${process.env.AZURE_SPEECH_REGION.trim()}.api.cognitive.microsoft.com`
+        : ''),
+  ),
   openaiApiKey: (process.env.OPENAI_API_KEY || '').trim(),
   /** OpenAI-compatible base URL (e.g. https://api.deepseek.com/v1). Empty = official OpenAI. */
   openaiBaseUrl: trimUrl(process.env.OPENAI_BASE_URL || ''),
@@ -47,9 +61,12 @@ export const env = {
   freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 5),
   /** Soft analytics default for Free; Pro/Max TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
+  /** Free camera hard cap (minutes / month). Pro/Max unlimited but counted. */
+  freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 5),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
   /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',
+  freeAllowCamera: (process.env.YUE_FREE_ALLOW_CAMERA || '1') === '1',
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
@@ -112,6 +129,10 @@ export function llmChatExtras(): Record<string, unknown> {
 
 export function cloudReady() {
   return Boolean(env.azureSpeechKey && openaiConfigured())
+}
+
+export function visionConfigured() {
+  return Boolean(env.azureVisionKey && env.azureVisionEndpoint)
 }
 
 export function openaiStatus() {

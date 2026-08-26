@@ -1,4 +1,4 @@
-/** Microphone / secure-context helpers for live speech. */
+/** Microphone / camera / secure-context helpers. */
 
 export function canUseMicrophone(): boolean {
   try {
@@ -11,6 +11,10 @@ export function canUseMicrophone(): boolean {
   } catch {
     return false
   }
+}
+
+export function canUseCamera(): boolean {
+  return canUseMicrophone()
 }
 
 /** iPhone / iPad (including Chrome on iOS — all use WebKit). */
@@ -38,6 +42,30 @@ export async function unlockMicrophone(): Promise<MediaStream | null> {
     })
   } catch {
     return null
+  }
+}
+
+/** Rear-facing camera when available (phone); user-facing fallback on desktop. */
+export async function unlockCamera(): Promise<MediaStream | null> {
+  if (!canUseCamera()) return null
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    })
+  } catch {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: true,
+      })
+    } catch {
+      return null
+    }
   }
 }
 
@@ -74,4 +102,11 @@ export function micBlockedMessage(): string | null {
   }
 
   return 'Microphone is unavailable in this browser.'
+}
+
+export function cameraBlockedMessage(): string | null {
+  if (canUseCamera()) return null
+  const mic = micBlockedMessage()
+  if (mic) return mic.replace(/Microphone/g, 'Camera').replace(/mic/g, 'camera')
+  return 'Camera is unavailable in this browser.'
 }

@@ -14,17 +14,35 @@ export type Entitlement = {
     live_minutes: number
     /** 0 when TTS is unlimited (Pro/Max) or disabled. */
     tts_chars: number
+    /** 0 when camera is unlimited (Pro/Max) or disabled. */
+    camera_minutes: number
     auto_speak: boolean
     can_live: boolean
+    can_camera: boolean
     text_translate: boolean
   }
-  usage: { month: string; liveSeconds: number; ttsChars: number; translateCount: number }
-  remaining: { liveSeconds: number; ttsChars: number }
+  usage: {
+    month: string
+    liveSeconds: number
+    ttsChars: number
+    translateCount: number
+    cameraSeconds: number
+    cameraTranslateCount: number
+  }
+  remaining: { liveSeconds: number; ttsChars: number; cameraSeconds: number }
   /** Pro/Max: usage is tracked but never gates the speaker. */
   ttsUnlimited: boolean
+  /** Pro/Max: usage is tracked but never gates camera. */
+  cameraUnlimited: boolean
   upgradeUrl: string
   loginUrl: string
-  allowed: { live: boolean; autoSpeak: boolean; textTranslate: boolean; tts: boolean }
+  allowed: {
+    live: boolean
+    autoSpeak: boolean
+    textTranslate: boolean
+    tts: boolean
+    camera: boolean
+  }
   reason: string | null
 }
 
@@ -48,10 +66,12 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     return {
       plan: 'pro',
       live_minutes: env.proLiveMinutes,
-      // Unlimited TTS — usage is still metered; 0 means no hard cap.
+      // Unlimited TTS / camera — usage is still metered; 0 means no hard cap.
       tts_chars: 0,
+      camera_minutes: 0,
       auto_speak: true,
       can_live: true,
+      can_camera: true,
       text_translate: true,
     }
   }
@@ -60,8 +80,10 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       plan: 'max',
       live_minutes: env.maxLiveMinutes,
       tts_chars: 0,
+      camera_minutes: 0,
       auto_speak: true,
       can_live: true,
+      can_camera: true,
       text_translate: true,
     }
   }
@@ -72,8 +94,10 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       live_minutes: mins,
       // Guests can tap-to-play without an account (no persistent meter).
       tts_chars: 0,
+      camera_minutes: 0,
       auto_speak: false,
       can_live: mins > 0 && !env.requireLogin,
+      can_camera: false,
       text_translate: true,
     }
   }
@@ -81,8 +105,10 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     plan: 'free',
     live_minutes: env.freeLiveMinutes,
     tts_chars: env.freeAllowTts ? env.freeTtsChars : 0,
+    camera_minutes: env.freeAllowCamera ? env.freeCameraMinutes : 0,
     auto_speak: false,
     can_live: env.freeAllowLive,
+    can_camera: env.freeAllowCamera,
     text_translate: true,
   }
 }
@@ -107,6 +133,15 @@ export function voiceAccess(
   return { tts, autoSpeak: autoSpeakPlan && tts, ttsRemaining, unlimited: false }
 }
 
+export function cameraAccess(cameraLimitSeconds: number, cameraUsed: number, unlimited = false) {
+  if (unlimited) {
+    return { camera: true, cameraRemaining: -1, unlimited: true }
+  }
+  const cameraRemaining = Math.max(0, cameraLimitSeconds - cameraUsed)
+  const camera = cameraLimitSeconds > 0 && cameraRemaining > 0
+  return { camera, cameraRemaining, unlimited: false }
+}
+
 function buildSnapshot(
   plan: PlanKey,
   loggedIn: boolean,
@@ -120,7 +155,9 @@ function buildSnapshot(
   if (disabled && loggedIn) {
     const limits = limitsForPlan('free')
     limits.can_live = false
+    limits.can_camera = false
     limits.tts_chars = 0
+    limits.camera_minutes = 0
     limits.auto_speak = false
     limits.text_translate = false
     return {
@@ -131,8 +168,9 @@ function buildSnapshot(
       disabled: true,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0 },
+      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0 },
       ttsUnlimited: false,
+      cameraUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
@@ -140,6 +178,7 @@ function buildSnapshot(
         autoSpeak: false,
         textTranslate: false,
         tts: false,
+        camera: false,
       },
       reason: 'account_disabled',
     }
@@ -148,6 +187,7 @@ function buildSnapshot(
   if (requireLogin && !loggedIn) {
     const limits = limitsForPlan('guest')
     limits.can_live = false
+    limits.can_camera = false
     return {
       loggedIn: false,
       requireLogin: true,
@@ -156,8 +196,9 @@ function buildSnapshot(
       disabled: false,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0 },
+      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0 },
       ttsUnlimited: false,
+      cameraUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
@@ -166,6 +207,7 @@ function buildSnapshot(
         textTranslate: true,
         // Guests may tap-to-play without signing in (no persistent meter).
         tts: true,
+        camera: false,
       },
       reason: 'login_required',
     }
@@ -173,15 +215,22 @@ function buildSnapshot(
 
   const limits = limitsForPlan(plan)
   const liveLimit = Math.max(0, limits.live_minutes) * 60
+  const cameraLimit = Math.max(0, limits.camera_minutes) * 60
   const ttsUnlimited = plan === 'pro' || plan === 'max'
+  const cameraUnlimited = plan === 'pro' || plan === 'max'
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
   const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
+  const cam = cameraAccess(cameraLimit, usage.cameraSeconds, cameraUnlimited)
   const canLive = limits.can_live && liveRemaining > 0
+  const canCamera = limits.can_camera && (cameraUnlimited || cam.camera)
 
   let reason: string | null = null
   if (!canLive) reason = liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted'
   else if (!voice.tts) reason = ttsLimit <= 0 ? 'no_tts_quota' : 'tts_quota_exhausted'
+  else if (!canCamera && loggedIn) {
+    reason = cameraLimit <= 0 ? 'no_camera_quota' : 'camera_quota_exhausted'
+  }
 
   return {
     loggedIn,
@@ -191,8 +240,13 @@ function buildSnapshot(
     disabled: false,
     limits,
     usage,
-    remaining: { liveSeconds: liveRemaining, ttsChars: Math.max(0, voice.ttsRemaining) },
+    remaining: {
+      liveSeconds: liveRemaining,
+      ttsChars: Math.max(0, voice.ttsRemaining),
+      cameraSeconds: cameraUnlimited ? -1 : Math.max(0, cam.cameraRemaining),
+    },
     ttsUnlimited,
+    cameraUnlimited,
     upgradeUrl: upgradeUrl(),
     loginUrl: loginUrl(),
     allowed: {
@@ -200,6 +254,7 @@ function buildSnapshot(
       autoSpeak: voice.autoSpeak,
       textTranslate: limits.text_translate,
       tts: voice.tts,
+      camera: canCamera,
     },
     reason,
   }
@@ -220,16 +275,26 @@ function localEntitlement(): Entitlement {
         plan: 'pro',
         live_minutes: 9999,
         tts_chars: 999999,
+        camera_minutes: 0,
         auto_speak: true,
         can_live: true,
+        can_camera: true,
         text_translate: true,
       },
-      usage: { month, liveSeconds: 0, ttsChars: 0, translateCount: 0 },
-      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999 },
+      usage: {
+        month,
+        liveSeconds: 0,
+        ttsChars: 0,
+        translateCount: 0,
+        cameraSeconds: 0,
+        cameraTranslateCount: 0,
+      },
+      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1 },
       ttsUnlimited: true,
+      cameraUnlimited: true,
       upgradeUrl: '',
       loginUrl: '',
-      allowed: { live: true, autoSpeak: true, textTranslate: true, tts: true },
+      allowed: { live: true, autoSpeak: true, textTranslate: true, tts: true, camera: true },
       reason: null,
     }
   }

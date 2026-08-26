@@ -1,0 +1,49 @@
+import { BiText } from './BiText'
+import { biPlain, ui } from '../lib/uiCopy'
+
+type Props = {
+  open: boolean
+  onClose: () => void
+  onAr: () => void
+  onUpload: () => void
+}
+
+/** Floating modal: AR translation vs upload image. */
+export function CameraChoiceModal({ open, onClose, onAr, onUpload }: Props) {
+  if (!open) return null
+
+  return (
+    <div className="cam-overlay" role="dialog" aria-modal="true" aria-labelledby="cam-choice-title">
+      <button type="button" className="cam-backdrop" aria-label={biPlain(ui.camChoiceClose)} onClick={onClose} />
+      <div className="cam-choice-card">
+        <button type="button" className="cam-choice-close" onClick={onClose} aria-label={biPlain(ui.camChoiceClose)}>
+          ×
+        </button>
+        <h2 id="cam-choice-title" className="cam-choice-title">
+          <BiText copy={ui.camChoiceTitle} size="md" />
+        </h2>
+        <p className="cam-choice-body">
+          <BiText copy={ui.camChoiceBody} size="sm" />
+        </p>
+        <div className="cam-choice-actions">
+          <button type="button" className="cam-choice-btn cam-choice-btn--ar" onClick={onAr}>
+            <span className="cam-choice-btn-label">
+              <BiText copy={ui.camChoiceAr} size="md" />
+            </span>
+            <span className="cam-choice-btn-hint">
+              <BiText copy={ui.camChoiceArHint} size="sm" />
+            </span>
+          </button>
+          <button type="button" className="cam-choice-btn cam-choice-btn--upload" onClick={onUpload}>
+            <span className="cam-choice-btn-label">
+              <BiText copy={ui.camChoiceUpload} size="md" />
+            </span>
+            <span className="cam-choice-btn-hint">
+              <BiText copy={ui.camChoiceUploadHint} size="sm" />
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

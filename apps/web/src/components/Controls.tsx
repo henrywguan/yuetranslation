@@ -8,6 +8,7 @@ const MODES: { id: Mode; copy: typeof ui.modeSolo }[] = [
   { id: 'solo', copy: ui.modeSolo },
   { id: 'conversation', copy: ui.modeFace },
   { id: 'text', copy: ui.modeText },
+  { id: 'camera', copy: ui.modeCamera },
 ]
 
 const DIR_SWITCH: {
@@ -38,8 +39,9 @@ export function Controls() {
   const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
   const speakOn = autoSpeak && canAutoSpeak
   const faceMode = mode === 'conversation'
-  const showLiveDock = mode !== 'text' && !faceMode
-  const showDirection = mode !== 'text' && !faceMode
+  const cameraMode = mode === 'camera'
+  const showLiveDock = mode !== 'text' && !faceMode && !cameraMode
+  const showDirection = mode !== 'text' && !faceMode && !cameraMode
   const dirValue = visibleDirection(speakDirection)
 
   return (
@@ -66,7 +68,7 @@ export function Controls() {
         ) : null}
 
         <div
-          className={`opt-row${mode === 'text' || faceMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
+          className={`opt-row${mode === 'text' || faceMode || cameraMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
         >
           {showDirection ? (
             <div className="opt-cell opt-dir">
