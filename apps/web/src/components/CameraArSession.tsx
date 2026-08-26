@@ -63,31 +63,49 @@ export function CameraArSession({ target, onBack, onEntitlement, meter }: Props)
     if (!ctx) return
     ctx.clearRect(0, 0, w, h)
     for (const b of boxesRef.current) {
-      const x = b.box.x * w
-      const y = b.box.y * h
-      const bw = b.box.w * w
-      const bh = b.box.h * h
-      // Cover original
-      ctx.fillStyle = 'rgba(8, 24, 36, 0.72)'
-      ctx.fillRect(x, y, bw, bh)
+      const ox = b.box.x * w
+      const oy = b.box.y * h
+      const obw = b.box.w * w
+      const obh = b.box.h * h
+      const label = b.translated || b.text
+      const pad = 6
+      let fontSize = Math.max(12, Math.min(24, obh * 0.7))
+      let textW = 0
+      let drawW = obw
+      let drawX = ox
+
+      if (label) {
+        // Fit the whole translation on one line: shrink font, then widen the cover.
+        const minFont = 10
+        for (; fontSize >= minFont; fontSize -= 0.5) {
+          ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+          textW = ctx.measureText(label).width
+          if (textW + pad * 2 <= Math.max(obw, w * 0.95)) break
+        }
+        ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+        textW = ctx.measureText(label).width
+        drawW = Math.min(w, Math.max(obw, textW + pad * 2))
+        // Prefer expanding right; clamp to frame, spill left if needed.
+        drawX = ox
+        if (drawX + drawW > w) drawX = Math.max(0, w - drawW)
+      }
+
+      const drawH = Math.max(obh, label ? fontSize + pad * 2 : obh)
+      const drawY = Math.min(oy, Math.max(0, h - drawH))
+
+      // Cover original (may be wider than OCR box so text stays one line)
+      ctx.fillStyle = 'rgba(8, 24, 36, 0.78)'
+      ctx.fillRect(drawX, drawY, drawW, drawH)
       ctx.strokeStyle = 'rgba(62, 196, 160, 0.85)'
       ctx.lineWidth = 1.5
-      ctx.strokeRect(x, y, bw, bh)
-      const label = b.translated || b.text
+      ctx.strokeRect(drawX, drawY, drawW, drawH)
       if (!label) continue
-      const fontSize = Math.max(11, Math.min(22, bh * 0.45))
-      ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
       ctx.fillStyle = '#e8fff6'
       ctx.textBaseline = 'middle'
-      const pad = 4
-      const lines = wrapText(ctx, label, bw - pad * 2)
-      const lineH = fontSize * 1.15
-      const totalH = lines.length * lineH
-      let ty = y + Math.max(pad + lineH / 2, (bh - totalH) / 2 + lineH / 2)
-      for (const line of lines) {
-        ctx.fillText(line, x + pad, ty, bw - pad * 2)
-        ty += lineH
-      }
+      ctx.textAlign = 'left'
+      ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+      // Always one line; compress only if still wider than the frame.
+      ctx.fillText(label, drawX + pad, drawY + drawH / 2, Math.max(8, drawW - pad * 2))
     }
   }, [])
 
@@ -306,22 +324,4 @@ export function CameraArSession({ target, onBack, onEntitlement, meter }: Props)
       ) : null}
     </div>
   )
-}
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  if (maxWidth <= 8) return [text]
-  const chars = [...text]
-  const lines: string[] = []
-  let line = ''
-  for (const ch of chars) {
-    const next = line + ch
-    if (ctx.measureText(next).width > maxWidth && line) {
-      lines.push(line)
-      line = ch
-    } else {
-      line = next
-    }
-  }
-  if (line) lines.push(line)
-  return lines.slice(0, 4)
 }

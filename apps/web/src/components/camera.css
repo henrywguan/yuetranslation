@@ -293,7 +293,9 @@
   line-height: 1.2;
   color: #e8fff6;
   pointer-events: none;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cam-box-src {
