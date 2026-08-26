@@ -10,6 +10,7 @@ export const ui = {
   /** Short label for landing modes stage tabs. */
   modeFaceShort: { en: 'Conversation', zh: '對話', jp: 'deoi3 waa6' },
   modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
+  modeCamera: { en: 'Cam', zh: '相機', jp: 'soeng1 gei1' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
   modeSoloLine: {
     en: 'Tap/Hold to speak — translations appear in both languages.',
@@ -26,7 +27,86 @@ export const ui = {
     zh: '輸入後稍等，譯文就會出現',
     jp: 'jyu5 jap6 hau6 siu2 dang2, jik6 man4 zau6 wui5 ceot1 jin6',
   },
+  modeCameraLine: {
+    en: 'Point or upload — translate signs and menus in view.',
+    zh: '對準或上載——即場翻譯路牌同菜單。',
+    jp: 'deoi3 zeon2 waak6 soeng5 zoi3 — zik1 coeng4 faan1 jik6 lou6 paai4 tung4 coi3 daan1.',
+  },
 
+  camChoiceTitle: {
+    en: 'Camera translation',
+    zh: '相機翻譯',
+    jp: 'soeng1 gei1 faan1 jik6',
+  },
+  camChoiceBody: {
+    en: 'Live AR overlay, or upload a photo and draw boxes.',
+    zh: '即時 AR 覆蓋，或上載相片再框選文字。',
+    jp: 'zik1 si4 AR fuk1 goi3, waak6 soeng5 zoi3 soeng2 pin3 zoi3 kwaang1 syun2 man4 zi6.',
+  },
+  camChoiceAr: {
+    en: 'AR translation',
+    zh: 'AR 翻譯',
+    jp: 'AR faan1 jik6',
+  },
+  camChoiceArHint: {
+    en: 'Live camera · overlay on signs',
+    zh: '即時鏡頭 · 覆蓋路牌文字',
+    jp: 'zik1 si4 geng3 tau4 · fuk1 goi3 lou6 paai4 man4 zi6',
+  },
+  camChoiceUpload: {
+    en: 'Upload image',
+    zh: '上載相片',
+    jp: 'soeng5 zoi3 soeng2 pin3',
+  },
+  camChoiceUploadHint: {
+    en: 'Draw and adjust boxes',
+    zh: '手動畫框再翻譯',
+    jp: 'sau2 dung6 waak6 kwaang1 zoi3 faan1 jik6',
+  },
+  camChoiceClose: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
+  camBack: { en: 'Back', zh: '返回', jp: 'faan1 wui4' },
+  camPause: { en: 'Pause', zh: '暫停', jp: 'zaam6 ting4' },
+  camResume: { en: 'Resume', zh: '繼續', jp: 'gai3 zuk6' },
+  camTranslate: { en: 'Translate boxes', zh: '翻譯選框', jp: 'faan1 jik6 syun2 kwaang1' },
+  camAutoDetect: { en: 'Auto-detect', zh: '自動偵測', jp: 'zi6 dung6 zing1 caak1' },
+  camDeleteBox: { en: 'Delete box', zh: '刪除選框', jp: 'saan1 ceoi4 syun2 kwaang1' },
+  camClearBoxes: { en: 'Clear boxes', zh: '清空選框', jp: 'cing1 hung1 syun2 kwaang1' },
+  camTargetEn: { en: 'To English', zh: '譯成英文', jp: 'jik6 sing4 jing1 man2' },
+  camTargetZh: { en: 'To 中文', zh: '譯成中文', jp: 'jik6 sing4 zung1 man2' },
+  camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
+  camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
+  camNoVision: {
+    en: 'OCR not configured — draw boxes and we’ll still try translate when text is detected.',
+    zh: '未設定 OCR——可手動畫框；偵測到文字後仍會翻譯。',
+    jp: 'mei6 cit3 ding6 OCR — ho2 sau2 dung6 waak6 kwaang1; zing1 caak1 dou2 man4 zi6 hau6 jing4 wui5 faan1 jik6.',
+  },
+  camQuota: {
+    en: 'Camera minutes used up this month.',
+    zh: '本月相機分鐘已用完。',
+    jp: 'bun2 jyut6 soeng1 gei1 fan1 zung1 ji5 jung6 jyun4.',
+  },
+  camSignIn: {
+    en: 'Sign in to use camera translation',
+    zh: '登入後使用相機翻譯',
+    jp: 'dang1 jap6 hau6 si2 jung6 soeng1 gei1 faan1 jik6',
+  },
+  camSaveSnapshot: { en: 'Save snapshot', zh: '儲存截圖', jp: 'cou5 cyun4 zit3 tou4' },
+  camCopy: { en: 'Copy', zh: '複製', jp: 'fuk1 zai3' },
+  camDrawHint: {
+    en: 'Drag to draw a box · drag handles to resize',
+    zh: '拖曳畫框 · 拖手柄調整大小',
+    jp: 'to1 jai6 waak6 kwaang1 · to1 sau2 bing2 tiu4 zing2 daai6 siu2',
+  },
+  camMinutesLeft: (formatted: string): Bi => ({
+    en: `${formatted} camera left`,
+    zh: `相機剩餘 ${formatted}`,
+    jp: `soeng1 gei1 sang1 jyu4 ${formatted}`,
+  }),
+  camMinutesUsedUnlimited: (formatted: string): Bi => ({
+    en: `${formatted} camera used / unlimited`,
+    zh: `相機已用 ${formatted}／無限`,
+    jp: `soeng1 gei1 ji5 jung6 ${formatted} / mou4 haan6`,
+  }),
   holdOrTapToSpeak: {
     en: 'Hold or tap to speak',
     zh: '按住或輕按講',
@@ -438,9 +518,14 @@ export const ui = {
     jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3',
   },
   freeFeatModes: {
-    en: 'Solo, Conversation Mode & Text',
-    zh: '獨白、對話模式同文字',
-    jp: 'duk6 baak6, deoi3 waa6 mou4 sik1 tung4 man4 zi6',
+    en: 'Solo, Conversation, Text & Camera',
+    zh: '獨白、對話、文字同相機',
+    jp: 'duk6 baak6, deoi3 waa6, man4 zi6 tung4 soeng1 gei1',
+  },
+  freeFeatCamera: {
+    en: '~5 minutes camera translation / month',
+    zh: '每月大約五分鐘相機翻譯',
+    jp: 'mui5 jyut6 daai6 joek3 ng5 fan1 zung1 soeng1 gei1 faan1 jik6',
   },
   freeFeatTts: {
     en: 'Tap-to-play voice — free with limitations',
@@ -451,6 +536,11 @@ export const ui = {
     en: '~20 minutes of live translation / month',
     zh: '每月大約廿分鐘即時翻譯',
     jp: 'mui5 jyut6 daai6 joek3 jaa6 fan1 zung1 zik1 si4 faan1 jik6',
+  },
+  proFeatCamera: {
+    en: 'Unlimited camera translation (metered)',
+    zh: '無限相機翻譯（仍會計量）',
+    jp: 'mou4 haan6 soeng1 gei1 faan1 jik6 (jing4 wui5 gai3 loeng4)',
   },
   proFeatTts: {
     en: 'Unlimited tap-to-play + auto-speak',

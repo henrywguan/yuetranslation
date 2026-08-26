@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
-import { cloudReady, env, openaiStatus } from './env.js'
+import { ZodError } from 'zod'
+import { cloudReady, env, openaiStatus, visionConfigured } from './env.js'
 import { dictionaryStats, lexiconStats } from './canto/index.js'
 import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
@@ -10,7 +11,14 @@ import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
 import { translate } from './translate.js'
-import { addLiveSeconds, addTtsChars, addTranslateCount } from './usage.js'
+import { cameraScan } from './cameraScan.js'
+import {
+  addCameraSeconds,
+  addCameraTranslateCount,
+  addLiveSeconds,
+  addTtsChars,
+  addTranslateCount,
+} from './usage.js'
 import {
   adminExportUsersCsv,
   adminListAudit,
@@ -28,7 +36,7 @@ app.use(cors({ origin: true, credentials: true }))
 // Stripe webhook must read the raw body before JSON parsing.
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleBillingWebhook)
 
-app.use(express.json({ limit: '1mb' }))
+app.use(express.json({ limit: '6mb' }))
 app.use(attachAuth)
 
 async function entitlementFor(req: AuthedRequest) {
@@ -45,6 +53,7 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
     cloudReady: cloudReady(),
     engines: {
       azureSpeech: Boolean(env.azureSpeechKey),
+      azureVision: visionConfigured(),
       openai: openai.configured,
       demo: !openai.configured,
       dictionary: true,
@@ -204,6 +213,61 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
   const seconds = Math.max(0, Math.min(120, Number(req.body?.seconds || 0)))
   if (!env.openMode && req.auth?.userId && seconds > 0) {
     await addLiveSeconds(req.auth.userId, seconds)
+  }
+  res.json(await entitlementFor(req))
+})
+
+app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.camera) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message:
+        ent.reason === 'login_required'
+          ? 'Please sign in to use camera translation.'
+          : ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : ent.reason === 'camera_quota_exhausted' || ent.reason === 'no_camera_quota'
+              ? 'Camera minutes exhausted for this month.'
+              : 'Camera translation is not available.',
+      entitlement: ent,
+    })
+    return
+  }
+  try {
+    const result = await cameraScan(req.body)
+    if (!env.openMode && req.auth?.userId && result.translateMisses > 0) {
+      await addCameraTranslateCount(req.auth.userId, result.translateMisses)
+    }
+    res.json({ ...result, entitlement: await entitlementFor(req) })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Camera scan failed'
+    const status =
+      e instanceof ZodError
+        ? 400
+        : /too large/i.test(message)
+          ? 413
+          : 500
+    res.status(status).json({ message })
+  }
+})
+
+app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.camera) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message:
+        ent.reason === 'login_required'
+          ? 'Please sign in to use camera translation.'
+          : ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : 'Camera minutes exhausted for this month.',
+      entitlement: ent,
+    })
+    return
+  }
+  const seconds = Math.max(0, Math.min(120, Number(req.body?.seconds || 0)))
+  if (!env.openMode && req.auth?.userId && seconds > 0) {
+    await addCameraSeconds(req.auth.userId, seconds)
   }
   res.json(await entitlementFor(req))
 })

@@ -1,5 +1,6 @@
 export type Lang = 'en' | 'yue'
-export type Mode = 'solo' | 'conversation' | 'text'
+export type CameraLang = 'en' | 'zh'
+export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
 export type SpeakDirection = 'en' | 'yue' | 'cmn'
 
 export type Entitlement = {
@@ -12,17 +13,34 @@ export type Entitlement = {
     plan: string
     live_minutes: number
     tts_chars: number
+    camera_minutes?: number
     auto_speak: boolean
     can_live: boolean
+    can_camera?: boolean
     text_translate: boolean
   }
-  usage: { month: string; liveSeconds: number; ttsChars: number; translateCount: number }
-  remaining: { liveSeconds: number; ttsChars: number }
+  usage: {
+    month: string
+    liveSeconds: number
+    ttsChars: number
+    translateCount: number
+    cameraSeconds?: number
+    cameraTranslateCount?: number
+  }
+  remaining: { liveSeconds: number; ttsChars: number; cameraSeconds?: number }
   /** Pro/Max: usage tracked, never gates the speaker. */
   ttsUnlimited?: boolean
+  /** Pro/Max: usage tracked, never gates camera. */
+  cameraUnlimited?: boolean
   upgradeUrl: string
   loginUrl: string
-  allowed: { live: boolean; autoSpeak: boolean; textTranslate: boolean; tts: boolean }
+  allowed: {
+    live: boolean
+    autoSpeak: boolean
+    textTranslate: boolean
+    tts: boolean
+    camera?: boolean
+  }
   reason: string | null
 }
 

@@ -1,0 +1,165 @@
+import { z } from 'zod'
+import { visionConfigured } from './env.js'
+import { ocrImage, detectScript, type OcrBox, type OcrRegion } from './azureVision.js'
+import { translateCameraText, type CameraLang } from './translateCamera.js'
+
+const BoxSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  w: z.number().min(0.002).max(1),
+  h: z.number().min(0.002).max(1),
+})
+
+const Body = z.object({
+  /** data URL or raw base64 image */
+  image: z.string().min(32).max(5_500_000),
+  /**
+   * Optional client boxes (normalized). When present, OCR still runs on the
+   * full image and text is assigned to overlapping boxes; empty-text boxes
+   * keep geometry for manual fill.
+   */
+  boxes: z.array(BoxSchema).max(64).optional(),
+  /** Preferred output language. Auto flips per-region from script when omitted. */
+  target: z.enum(['en', 'zh']).optional(),
+  /** When true, skip translation and only return OCR regions. */
+  ocrOnly: z.boolean().optional().default(false),
+})
+
+export type CameraScanRegion = {
+  id: string
+  text: string
+  translated: string
+  from: CameraLang
+  to: CameraLang
+  box: OcrBox
+  script: OcrRegion['script']
+  cacheHit: boolean
+}
+
+function iou(a: OcrBox, b: OcrBox): number {
+  const ax2 = a.x + a.w
+  const ay2 = a.y + a.h
+  const bx2 = b.x + b.w
+  const by2 = b.y + b.h
+  const ix1 = Math.max(a.x, b.x)
+  const iy1 = Math.max(a.y, b.y)
+  const ix2 = Math.min(ax2, bx2)
+  const iy2 = Math.min(ay2, by2)
+  const iw = Math.max(0, ix2 - ix1)
+  const ih = Math.max(0, iy2 - iy1)
+  const inter = iw * ih
+  if (inter <= 0) return 0
+  const union = a.w * a.h + b.w * b.h - inter
+  return union > 0 ? inter / union : 0
+}
+
+function pickTarget(script: OcrRegion['script'], preferred?: CameraLang): {
+  from: CameraLang
+  to: CameraLang
+} {
+  const looksChinese = script === 'cjk' || script === 'mixed'
+  if (preferred === 'en') {
+    return looksChinese ? { from: 'zh', to: 'en' } : { from: 'en', to: 'en' }
+  }
+  if (preferred === 'zh') {
+    return looksChinese ? { from: 'zh', to: 'zh' } : { from: 'en', to: 'zh' }
+  }
+  // Auto: Latin → Chinese, CJK → English
+  return looksChinese ? { from: 'zh', to: 'en' } : { from: 'en', to: 'zh' }
+}
+
+function assignTextToBoxes(ocr: OcrRegion[], boxes: OcrBox[]): Array<OcrRegion & { box: OcrBox }> {
+  return boxes.map((box) => {
+    const hits = ocr
+      .map((r) => ({ r, score: iou(box, r.box) }))
+      .filter((h) => h.score > 0.05)
+      .sort((a, b) => b.score - a.score)
+    if (!hits.length) {
+      return { text: '', box, script: 'other' as const }
+    }
+    // Merge overlapping OCR lines into one region text (top-to-bottom).
+    const merged = hits
+      .map((h) => h.r)
+      .sort((a, b) => a.box.y - b.box.y || a.box.x - b.box.x)
+    const text = merged
+      .map((m) => m.text)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    return { text, box, script: detectScript(text) }
+  })
+}
+
+export async function cameraScan(input: unknown): Promise<{
+  regions: CameraScanRegion[]
+  engine: string
+  visionConfigured: boolean
+  translateMisses: number
+}> {
+  const parsed = Body.parse(input)
+  const { regions: ocrRegions, engine } = await ocrImage(parsed.image)
+
+  const baseRegions: OcrRegion[] =
+    parsed.boxes && parsed.boxes.length > 0
+      ? assignTextToBoxes(ocrRegions, parsed.boxes)
+      : ocrRegions
+
+  if (parsed.ocrOnly) {
+    return {
+      regions: baseRegions.map((r, i) => ({
+        id: `r${i}`,
+        text: r.text,
+        translated: '',
+        from: 'en',
+        to: 'zh',
+        box: r.box,
+        script: r.script,
+        cacheHit: false,
+      })),
+      engine,
+      visionConfigured: visionConfigured(),
+      translateMisses: 0,
+    }
+  }
+
+  const out: CameraScanRegion[] = []
+  let translateMisses = 0
+
+  for (let i = 0; i < baseRegions.length; i++) {
+    const r = baseRegions[i]!
+    const text = r.text.trim()
+    if (!text) {
+      out.push({
+        id: `r${i}`,
+        text: '',
+        translated: '',
+        from: 'en',
+        to: 'zh',
+        box: r.box,
+        script: r.script,
+        cacheHit: false,
+      })
+      continue
+    }
+    const { from, to } = pickTarget(r.script, parsed.target)
+    const result = await translateCameraText(text, from, to)
+    if (!result.cacheHit) translateMisses += 1
+    out.push({
+      id: `r${i}`,
+      text,
+      translated: result.text,
+      from,
+      to,
+      box: r.box,
+      script: r.script,
+      cacheHit: result.cacheHit,
+    })
+  }
+
+  return {
+    regions: out,
+    engine,
+    visionConfigured: visionConfigured(),
+    translateMisses,
+  }
+}

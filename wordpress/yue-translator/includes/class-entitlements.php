@@ -48,10 +48,12 @@ final class Yue_Entitlements
             return [
                 'plan' => 'pro',
                 'live_minutes' => (int) get_option('yue_pro_live_minutes', 20),
-                // Unlimited TTS — usage still metered; 0 means no hard cap.
+                // Unlimited TTS / camera — usage still metered; 0 means no hard cap.
                 'tts_chars' => 0,
+                'camera_minutes' => 0,
                 'auto_speak' => (bool) get_option('yue_pro_auto_speak', true),
                 'can_live' => true,
+                'can_camera' => true,
                 'text_translate' => true,
             ];
         }
@@ -61,8 +63,10 @@ final class Yue_Entitlements
                 'plan' => 'guest',
                 'live_minutes' => $mins,
                 'tts_chars' => 0,
+                'camera_minutes' => 0,
                 'auto_speak' => false,
                 'can_live' => $mins > 0 && !get_option('yue_require_login', true),
+                'can_camera' => false,
                 'text_translate' => true,
             ];
         }
@@ -70,8 +74,10 @@ final class Yue_Entitlements
             'plan' => 'free',
             'live_minutes' => (int) get_option('yue_free_live_minutes', 5),
             'tts_chars' => (int) get_option('yue_free_tts_chars', 30000),
+            'camera_minutes' => (int) get_option('yue_free_camera_minutes', 5),
             'auto_speak' => (bool) get_option('yue_free_auto_speak', false),
             'can_live' => true,
+            'can_camera' => true,
             'text_translate' => true,
         ];
     }
@@ -94,8 +100,10 @@ final class Yue_Entitlements
                 'remaining' => [
                     'liveSeconds' => 0,
                     'ttsChars' => 0,
+                    'cameraSeconds' => 0,
                 ],
                 'ttsUnlimited' => false,
+                'cameraUnlimited' => false,
                 'upgradeUrl' => (string) get_option('yue_upgrade_url', ''),
                 'loginUrl' => wp_login_url(get_permalink() ?: home_url('/')),
                 'allowed' => [
@@ -104,6 +112,7 @@ final class Yue_Entitlements
                     'textTranslate' => true,
                     // Guests may tap-to-play without signing in (no persistent meter).
                     'tts' => true,
+                    'camera' => false,
                 ],
                 'reason' => 'login_required',
             ];
@@ -113,20 +122,27 @@ final class Yue_Entitlements
         $limits = self::limits_for_plan($plan);
         $usage = Yue_Usage::for_user($user_id);
         $live_limit = max(0, $limits['live_minutes']) * 60;
+        $camera_limit = max(0, $limits['camera_minutes'] ?? 0) * 60;
         $tts_unlimited = ($plan === 'pro');
+        $camera_unlimited = ($plan === 'pro');
         $tts_limit = max(0, $limits['tts_chars']);
         $live_remaining = max(0, $live_limit - (int) $usage['liveSeconds']);
         $tts_remaining = $tts_unlimited ? 0 : max(0, $tts_limit - (int) $usage['ttsChars']);
+        $camera_used = (int) ($usage['cameraSeconds'] ?? 0);
+        $camera_remaining = $camera_unlimited ? -1 : max(0, $camera_limit - $camera_used);
 
         $can_live = !empty($limits['can_live']) && $live_remaining > 0;
         $can_tts = $tts_unlimited || ($tts_limit > 0 && $tts_remaining > 0);
         $can_auto_speak = !empty($limits['auto_speak']) && $can_tts;
+        $can_camera = !empty($limits['can_camera']) && ($camera_unlimited || $camera_remaining > 0);
 
         $reason = null;
         if (!$can_live) {
             $reason = $live_limit <= 0 ? 'no_live_quota' : 'live_quota_exhausted';
         } elseif (!$can_tts) {
             $reason = $tts_limit <= 0 ? 'no_tts_quota' : 'tts_quota_exhausted';
+        } elseif (!$can_camera && $logged_in) {
+            $reason = $camera_limit <= 0 ? 'no_camera_quota' : 'camera_quota_exhausted';
         }
 
         return [
@@ -138,8 +154,10 @@ final class Yue_Entitlements
             'remaining' => [
                 'liveSeconds' => $live_remaining,
                 'ttsChars' => $tts_remaining,
+                'cameraSeconds' => $camera_remaining,
             ],
             'ttsUnlimited' => $tts_unlimited,
+            'cameraUnlimited' => $camera_unlimited,
             'upgradeUrl' => (string) get_option('yue_upgrade_url', ''),
             'loginUrl' => wp_login_url(get_permalink() ?: home_url('/')),
             'allowed' => [
@@ -147,6 +165,7 @@ final class Yue_Entitlements
                 'autoSpeak' => $can_auto_speak,
                 'textTranslate' => !empty($limits['text_translate']),
                 'tts' => $can_tts,
+                'camera' => $can_camera,
             ],
             'reason' => $reason,
         ];

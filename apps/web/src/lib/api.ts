@@ -134,6 +134,62 @@ export async function postHeartbeat(seconds = 15): Promise<Entitlement> {
   return res.json()
 }
 
+export type CameraBox = { x: number; y: number; w: number; h: number }
+
+export type CameraScanRegion = {
+  id: string
+  text: string
+  translated: string
+  from: 'en' | 'zh'
+  to: 'en' | 'zh'
+  box: CameraBox
+  script: 'latin' | 'cjk' | 'mixed' | 'other'
+  cacheHit: boolean
+}
+
+export type CameraScanResult = {
+  regions: CameraScanRegion[]
+  engine: string
+  visionConfigured: boolean
+  translateMisses: number
+  entitlement?: Entitlement
+}
+
+export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
+  const res = await apiFetch('/usage/camera-heartbeat', {
+    method: 'POST',
+    body: JSON.stringify({ seconds }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw Object.assign(new Error(data.message || 'Camera heartbeat failed'), {
+      code: res.status,
+      entitlement: data.data?.entitlement || data.entitlement,
+    })
+  }
+  return res.json()
+}
+
+export async function cameraScan(opts: {
+  image: string
+  boxes?: CameraBox[]
+  target?: 'en' | 'zh'
+  ocrOnly?: boolean
+}): Promise<CameraScanResult> {
+  const res = await apiFetch('/camera/scan', {
+    method: 'POST',
+    body: JSON.stringify(opts),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw Object.assign(new Error(data.message || 'Camera scan failed'), {
+      code: res.status,
+      entitlement: data.entitlement,
+    })
+  }
+  return res.json()
+}
+
 export async function fetchTtsAudio(text: string, lang: Lang): Promise<Blob | null> {
   const res = await apiFetch('/tts', {
     method: 'POST',
