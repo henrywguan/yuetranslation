@@ -30,7 +30,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [visionOk, setVisionOk] = useState(true)
+  const [visionNotice, setVisionNotice] = useState<'ok' | 'unconfigured' | 'authFailed'>('ok')
   const [scale, setScale] = useState(1)
   const drag = useRef<{
     id: string
@@ -86,7 +86,13 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
         target: target === 'auto' ? undefined : target,
         ocrOnly: opts.ocrOnly,
       })
-      setVisionOk(result.visionConfigured)
+      if (result.visionAuthFailed) {
+        setVisionNotice('authFailed')
+      } else if (!result.visionConfigured) {
+        setVisionNotice('unconfigured')
+      } else {
+        setVisionNotice('ok')
+      }
       if (result.entitlement) onEntitlement(result.entitlement)
       if (opts.boxes && opts.boxes.length) {
         setBoxes((prev) =>
@@ -228,9 +234,14 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       <p className="cam-hint">
         <BiText copy={ui.camDrawHint} size="sm" />
       </p>
-      {!visionOk ? (
+      {visionNotice === 'unconfigured' ? (
         <p className="cam-hint cam-hint--warn">
           <BiText copy={ui.camNoVision} size="sm" />
+        </p>
+      ) : null}
+      {visionNotice === 'authFailed' ? (
+        <p className="cam-hint cam-hint--warn">
+          <BiText copy={ui.camVisionAuthFailed} size="sm" />
         </p>
       ) : null}
       {error ? (
