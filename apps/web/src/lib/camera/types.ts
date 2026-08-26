@@ -1,4 +1,4 @@
-import type { CameraBox, CameraScanRegion } from '../lib/api'
+import type { CameraBox, CameraScanRegion } from '../api'
 
 export type CamPath = 'choice' | 'ar' | 'upload'
 
