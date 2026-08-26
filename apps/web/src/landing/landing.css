@@ -1558,21 +1558,20 @@
 
 .ln-micro-cam-sign {
   position: absolute;
-  left: 18%;
-  top: 38%;
-  font-family: var(--font-display);
-  font-weight: 750;
-  font-size: 1.35rem;
-  letter-spacing: 0.12em;
-  color: color-mix(in srgb, #fff 88%, transparent);
+  left: 16%;
+  top: 32%;
+  width: min(28%, 72px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
 }
 
 .ln-micro-cam-box {
   position: absolute;
-  left: 14%;
-  top: 34%;
-  width: 42%;
-  height: 16%;
+  left: 12%;
+  top: 28%;
+  width: 46%;
+  height: 22%;
   display: grid;
   place-items: center;
 }
@@ -2959,9 +2958,90 @@
 }
 
 /* ---------- Pricing page ---------- */
+.pricing-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.pricing-page > *:not(.orbital-sphere-wash):not(.orbital-sphere-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-page .orbital-sphere-bg--page {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.88;
+}
+
+.pricing-page .orbital-sphere-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
 .pp-hero {
   text-align: center;
   padding: clamp(48px, 9vw, 96px) clamp(20px, 6vw, 40px) 20px;
+}
+
+.pp-cam-card-section {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.pp-cam-card {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--harbor-mid, #0a3040) 55%, transparent),
+      color-mix(in srgb, var(--surface) 72%, transparent)
+    );
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow: 0 16px 40px color-mix(in srgb, #000 18%, transparent);
+}
+
+.pp-cam-card-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--jade-bright, var(--jade));
+  background: color-mix(in srgb, var(--jade) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jade) 35%, transparent);
+}
+
+.pp-cam-card-title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--ink-bright);
+}
+
+.pp-cam-card-body {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pp-table tr.pp-row-camera th,
+.pp-table tr.pp-row-camera td {
+  background: color-mix(in srgb, var(--jade) 8%, transparent);
+}
+
+.pp-table tr.pp-row-camera th {
+  color: var(--ink-bright);
 }
 
 .pp-hero-inner {
