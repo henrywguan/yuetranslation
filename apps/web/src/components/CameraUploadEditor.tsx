@@ -285,6 +285,12 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
               ) : b.text ? (
                 <span className="cam-box-src">{b.text}</span>
               ) : null}
+              {b.translated ? (
+                <>
+                  <i className="cam-box-corner cam-box-corner--ne" aria-hidden="true" />
+                  <i className="cam-box-corner cam-box-corner--sw" aria-hidden="true" />
+                </>
+              ) : null}
               {b.id === selectedId
                 ? (['nw', 'ne', 'sw', 'se'] as const).map((h) => (
                     <i key={h} className={`cam-handle cam-handle--${h}`} />
