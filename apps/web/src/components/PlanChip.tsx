@@ -118,15 +118,25 @@ export function PlanChip() {
       const el = triggerRef.current
       if (!el) return
       const r = el.getBoundingClientRect()
-      setHubPos({
-        top: r.bottom + 10,
-        right: Math.max(12, window.innerWidth - r.right),
-      })
+      const right = Math.max(12, window.innerWidth - r.right)
+      let top = r.bottom + 10
+      const hub = hubRef.current
+      if (hub) {
+        const hh = hub.getBoundingClientRect().height
+        const maxTop = window.innerHeight - hh - 12
+        if (Number.isFinite(hh) && hh > 0 && maxTop < top) {
+          top = Math.max(12, maxTop)
+        }
+      }
+      setHubPos({ top, right })
     }
     layout()
+    // Re-measure after the hub paints at full content height (no max-height scroll).
+    const raf = window.requestAnimationFrame(layout)
     window.addEventListener('resize', layout)
     window.addEventListener('scroll', layout, true)
     return () => {
+      window.cancelAnimationFrame(raf)
       window.removeEventListener('resize', layout)
       window.removeEventListener('scroll', layout, true)
     }
