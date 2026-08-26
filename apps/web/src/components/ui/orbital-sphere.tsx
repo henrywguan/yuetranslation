@@ -81,5 +81,3 @@ export function OrbitalSphereBackground({
     </div>
   )
 }
-
-export default OrbitalSphereBackground

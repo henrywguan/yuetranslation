@@ -16,8 +16,6 @@ type Props = {
   meter: {
     start: () => void
     stop: () => Promise<void>
-    pause: () => Promise<void>
-    resume: () => void
   }
 }
 

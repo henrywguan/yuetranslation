@@ -65,8 +65,6 @@ export const ui = {
   },
   camChoiceClose: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
   camBack: { en: 'Back', zh: '返回', jp: 'faan1 wui4' },
-  camPause: { en: 'Pause', zh: '暫停', jp: 'zaam6 ting4' },
-  camResume: { en: 'Resume', zh: '繼續', jp: 'gai3 zuk6' },
   camCapture: { en: 'Capture & translate', zh: '拍攝並翻譯', jp: 'paak3 sip3 bing6 faan1 jik6' },
   camCaptureHint: {
     en: 'Point at text, then tap the camera to translate',
