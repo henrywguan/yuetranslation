@@ -99,7 +99,6 @@ function HostVisual() {
         </span>
       </div>
       <div className="ln-feat-host-badges">
-        <span>AR</span>
         <span>CAM</span>
       </div>
     </div>
