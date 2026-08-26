@@ -118,10 +118,12 @@ export const ui = {
   },
   camSaveSnapshot: { en: 'Save snapshot', zh: '儲存截圖', jp: 'cou5 cyun4 zit3 tou4' },
   camCopy: { en: 'Copy', zh: '複製', jp: 'fuk1 zai3' },
+  camResults: { en: 'Results', zh: '結果', jp: 'git3 gwo2' },
+  camDrawMode: { en: 'Draw box', zh: '畫框', jp: 'waak6 kwaang1' },
   camDrawHint: {
-    en: 'Drag to draw a box · drag handles to resize',
-    zh: '拖曳畫框 · 拖手柄調整大小',
-    jp: 'to1 jai6 waak6 kwaang1 · to1 sau2 bing2 tiu4 zing2 daai6 siu2',
+    en: 'Scroll freely · turn on Draw box to add a region · drag handles to resize',
+    zh: '可自由捲動 · 開啟「畫框」再加選區 · 拖手柄調整大小',
+    jp: 'ho2 zi6 jau4 gu2 dung6 · hoi1 kai2「waak6 kwaang1」zoi3 gaa1 syun2 keoi1 · to1 sau2 bing2 tiu4 zing2 daai6 siu2',
   },
   camMinutesLeft: (formatted: string): Bi => ({
     en: `${formatted} left`,

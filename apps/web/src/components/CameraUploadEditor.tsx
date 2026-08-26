@@ -6,12 +6,22 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { BiText } from './BiText'
+import { CamFitText } from './CamFitText'
+import { CopyButton } from './CopyButton'
+import { SpeakButton } from './SpeakButton'
 import { cameraScan, type CameraBox } from '../lib/api'
 import { applyHandle, hitTest, type Handle } from '../lib/camera/geometry'
-import { clampBox, newBox, regionToEditable, boxDetailArgs, type CameraTarget, type EditableBox } from '../lib/camera/types'
+import {
+  clampBox,
+  newBox,
+  regionToEditable,
+  boxDetailArgs,
+  type CameraTarget,
+  type EditableBox,
+} from '../lib/camera/types'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
-import type { Entitlement } from '../lib/types'
+import type { Entitlement, Lang } from '../lib/types'
 
 type Props = {
   imageUrl: string
@@ -21,11 +31,13 @@ type Props = {
   meter: { start: () => void; stop: () => Promise<void> }
 }
 
+const DRAW_SLOP_PX = 12
+
 export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, meter }: Props) {
-  const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const imgRef = useRef<HTMLImageElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
   const fileToDataUrl = useRef(imageUrl)
   const [boxes, setBoxes] = useState<EditableBox[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -33,6 +45,8 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   const [error, setError] = useState<string | null>(null)
   const [visionNotice, setVisionNotice] = useState<'ok' | 'unconfigured' | 'authFailed'>('ok')
   const [scale, setScale] = useState(1)
+  /** Explicit draw mode — off by default so scroll/pan doesn’t spawn boxes. */
+  const [drawMode, setDrawMode] = useState(false)
   const drag = useRef<{
     id: string
     handle: Handle
@@ -40,6 +54,13 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
     lastY: number
   } | null>(null)
   const drawing = useRef<{ x0: number; y0: number; id: string } | null>(null)
+  const pendingDraw = useRef<{
+    pointerId: number
+    startClientX: number
+    startClientY: number
+    x0: number
+    y0: number
+  } | null>(null)
 
   useEffect(() => {
     meter.start()
@@ -60,13 +81,20 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
     }
   }, [])
 
+  const selectResult = useCallback((id: string | null) => {
+    setSelectedId(id)
+    if (!id) return
+    window.requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    })
+  }, [])
+
   const runScan = async (opts: { boxes?: CameraBox[]; ocrOnly?: boolean }) => {
     const img = imgRef.current
     if (!img) return
     setBusy(true)
     setError(null)
     try {
-      // Prefer original data URL when available; else canvas from rendered image.
       let image = fileToDataUrl.current
       if (!image.startsWith('data:')) {
         const canvas = document.createElement('canvas')
@@ -96,10 +124,12 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       }
       if (result.entitlement) onEntitlement(result.entitlement)
       if (opts.boxes && opts.boxes.length) {
+        let firstId: string | null = null
         setBoxes((prev) =>
           prev.map((b, i) => {
             const r = result.regions[i]
             if (!r) return b
+            if (!firstId && (r.translated || r.text)) firstId = b.id
             return {
               ...b,
               text: r.text || b.text,
@@ -110,8 +140,16 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
             }
           }),
         )
+        if (firstId) {
+          selectResult(firstId)
+          setDrawMode(false)
+        }
       } else {
-        setBoxes(result.regions.map(regionToEditable))
+        const next = result.regions.map(regionToEditable)
+        setBoxes(next)
+        const first = next.find((b) => b.translated || b.text)
+        selectResult(first?.id ?? null)
+        setDrawMode(false)
       }
     } catch (e) {
       const err = e as { message?: string; entitlement?: Entitlement }
@@ -125,32 +163,52 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   const onPointerDown = (e: ReactPointerEvent) => {
     const p = toNorm(e.clientX, e.clientY)
     if (!p) return
-    ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
 
-    // Hit selected / any box handles first
     const ordered = selectedId
       ? [...boxes].sort((a, b) => (a.id === selectedId ? -1 : b.id === selectedId ? 1 : 0))
       : boxes
     for (const b of ordered) {
       const h = hitTest(p.x, p.y, b.box)
       if (h) {
-        setSelectedId(b.id)
+        ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+        selectResult(b.id)
         drag.current = { id: b.id, handle: h, lastX: p.x, lastY: p.y }
+        pendingDraw.current = null
         return
       }
     }
 
-    // Start drawing a new box
-    const box = clampBox({ x: p.x, y: p.y, w: 0.02, h: 0.02 })
-    const created = newBox(box)
-    drawing.current = { x0: p.x, y0: p.y, id: created.id }
-    setBoxes((prev) => [...prev, created])
-    setSelectedId(created.id)
+    // Empty space: only prepare a draw when Draw box is on (scroll otherwise).
+    if (!drawMode) {
+      selectResult(null)
+      return
+    }
+
+    ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+    pendingDraw.current = {
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      x0: p.x,
+      y0: p.y,
+    }
   }
 
   const onPointerMove = (e: ReactPointerEvent) => {
     const p = toNorm(e.clientX, e.clientY)
     if (!p) return
+
+    if (pendingDraw.current && !drawing.current) {
+      const pending = pendingDraw.current
+      const dist = Math.hypot(e.clientX - pending.startClientX, e.clientY - pending.startClientY)
+      if (dist < DRAW_SLOP_PX) return
+      const box = clampBox({ x: pending.x0, y: pending.y0, w: 0.02, h: 0.02 })
+      const created = newBox(box)
+      drawing.current = { x0: pending.x0, y0: pending.y0, id: created.id }
+      pendingDraw.current = null
+      setBoxes((prev) => [...prev, created])
+      selectResult(created.id)
+    }
 
     if (drawing.current) {
       const { x0, y0, id } = drawing.current
@@ -180,18 +238,35 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   }
 
   const onPointerUp = () => {
+    pendingDraw.current = null
     drawing.current = null
     drag.current = null
   }
 
   const selected = boxes.find((b) => b.id === selectedId) || null
+  const resultBox =
+    selected?.translated || selected?.text
+      ? selected
+      : boxes.find((b) => b.translated || b.text) || null
 
   const openSelectedDetails = () => {
-    if (!selected) return
-    const { phrase, translation } = boxDetailArgs(selected)
+    if (!resultBox) return
+    const { phrase, translation } = boxDetailArgs(resultBox)
     if (!phrase) return
     openBreakdown(phrase, { translation })
   }
+
+  const resultLang: Lang = resultBox
+    ? resultBox.to === 'zh'
+      ? 'yue'
+      : resultBox.to === 'en'
+        ? 'en'
+        : /[\u3400-\u9fff]/.test(resultBox.translated || resultBox.text)
+          ? 'yue'
+          : 'en'
+    : 'en'
+  const speakText = resultBox?.translated || resultBox?.text || ''
+  const copyText = resultBox?.translated || resultBox?.text || ''
 
   return (
     <div className="cam-session cam-session--upload">
@@ -214,6 +289,14 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
           onClick={() => void runScan({ boxes: boxes.map((b) => b.box) })}
         >
           <BiText copy={busy ? ui.camScanning : ui.camTranslate} size="sm" />
+        </button>
+        <button
+          type="button"
+          className={`cam-tool-btn${drawMode ? ' is-on' : ''}`}
+          aria-pressed={drawMode}
+          onClick={() => setDrawMode((v) => !v)}
+        >
+          <BiText copy={ui.camDrawMode} size="sm" />
         </button>
         <button
           type="button"
@@ -258,7 +341,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
         </p>
       ) : null}
 
-      <div className="cam-stage-wrap">
+      <div className={`cam-stage-wrap${drawMode ? ' is-draw' : ''}`}>
         <div
           className="cam-stage"
           ref={stageRef}
@@ -272,7 +355,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
           {boxes.map((b) => (
             <div
               key={b.id}
-              className={`cam-box${b.id === selectedId ? ' is-selected' : ''}${b.translated ? ' has-tr' : ''}`}
+              className={`cam-box${b.id === selectedId ? ' is-selected' : ''}${b.translated ? ' has-tr' : ''}${b.text && !b.translated ? ' has-src' : ''}`}
               style={{
                 left: `${b.box.x * 100}%`,
                 top: `${b.box.y * 100}%`,
@@ -281,9 +364,9 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
               }}
             >
               {b.translated ? (
-                <span className="cam-box-tr">{b.translated}</span>
+                <CamFitText text={b.translated} className="cam-box-tr" />
               ) : b.text ? (
-                <span className="cam-box-src">{b.text}</span>
+                <CamFitText text={b.text} className="cam-box-src" />
               ) : null}
               {b.translated ? (
                 <>
@@ -301,16 +384,27 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
         </div>
       </div>
 
-      {selected?.translated || selected?.text ? (
-        <div className="cam-detail">
+      {resultBox ? (
+        <div className="cam-detail" ref={detailRef} aria-label={biPlain(ui.camResults)}>
+          <div className="cam-detail-head">
+            <h3 className="cam-detail-title">
+              <BiText copy={ui.camResults} size="sm" />
+            </h3>
+            <div className="cam-detail-icons">
+              <CopyButton text={copyText} lang={resultLang} />
+              {speakText ? <SpeakButton text={speakText} lang={resultLang} /> : null}
+            </div>
+          </div>
           <button
             type="button"
             className="cam-detail-open"
             onClick={openSelectedDetails}
             aria-label={biPlain(ui.camOpenDetails)}
           >
-            {selected.text ? <span className="cam-detail-src">{selected.text}</span> : null}
-            {selected.translated ? <span className="cam-detail-tr">{selected.translated}</span> : null}
+            {resultBox.text ? <span className="cam-detail-src">{resultBox.text}</span> : null}
+            {resultBox.translated ? (
+              <span className="cam-detail-tr">{resultBox.translated}</span>
+            ) : null}
             <span className="cam-detail-open-hint">
               <BiText copy={ui.camOpenDetailsHint} size="sm" />
             </span>
@@ -323,27 +417,6 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
             >
               <BiText copy={ui.camOpenDetails} size="sm" />
             </button>
-            <button
-              type="button"
-              className="cam-tool-btn"
-              onClick={() => {
-                const t = selected.translated || selected.text
-                if (t) void navigator.clipboard?.writeText(t)
-              }}
-            >
-              <BiText copy={ui.camCopy} size="sm" />
-            </button>
-            {selected.translated ? (
-              <button
-                type="button"
-                className="cam-tool-btn"
-                onClick={() =>
-                  void speakManual(selected.translated, selected.to === 'zh' ? 'yue' : 'en')
-                }
-              >
-                <BiText copy={ui.speak} size="sm" />
-              </button>
-            ) : null}
           </div>
         </div>
       ) : null}
