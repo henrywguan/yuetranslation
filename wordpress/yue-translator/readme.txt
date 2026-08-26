@@ -6,13 +6,15 @@ Requires PHP: 8.0
 Stable tag: 2.0.0
 License: GPLv2 or later
 
-English ↔ Cantonese live translator PWA with freemium entitlements (Azure Speech + OpenAI).
+English ↔ Cantonese live translator PWA with freemium entitlements (Azure Speech + Vision + OpenAI).
 
 == Description ==
 
 Shortcodes:
 - `[yue_translator]` — phone-sized translator (`?view=app`)
 - `[yue_splash]` — full-bleed marketing landing (optional if marketing is hosted as static files)
+
+Modes: Solo, Conversation, Text, Cam (AR capture + upload).
 
 Hybrid static marketing + Bricks: see repo docs/hybrid-bluehost.md (`site-config.json` links CTAs to your translator page).
 

@@ -99,8 +99,8 @@ function HostVisual() {
         </span>
       </div>
       <div className="ln-feat-host-badges">
-        <span>WP</span>
-        <span>API</span>
+        <span>AR</span>
+        <span>CAM</span>
       </div>
     </div>
   )

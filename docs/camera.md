@@ -27,11 +27,13 @@ Speech Solo/Conversation remain EN↔粵 only.
 | Free | Yes | `YUE_FREE_CAMERA_MINUTES` (default 5) hard cap | `cameraSeconds` |
 | Pro / Max | Yes | Unlimited | Yes (`cameraUnlimited`) |
 
-Heartbeat: `POST /api/usage/camera-heartbeat` while AR scanning or upload editor is active. Pause/back flushes seconds.
+Heartbeat: `POST /api/usage/camera-heartbeat` while the AR fullscreen session or upload editor is open. Exit / back flushes seconds.
 
 Analytics: `camera_translate_count` increments on OCR→translate cache misses (`POST /api/camera/scan`).
 
 Apply Supabase migration `004_camera_usage.sql`.
+
+**Mobile upload:** the file picker does **not** use `capture=` — gallery / files open on phones. Use AR for live camera.
 
 ## API / 接口
 
