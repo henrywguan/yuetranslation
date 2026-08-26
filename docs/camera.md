@@ -6,7 +6,7 @@ Sign-in-only mode for AR live overlay and upload-with-boxes translation (English
 
 ## Paths / 路徑
 
-1. **AR translation** — rear camera, sparse OCR (~1 fps), cover + paint overlay, coarse box tracking between scans.
+1. **AR translation** — fullscreen camera; tap the shutter to OCR + translate once (no continuous polling). Overlays track camera motion locally. Tap a result for details. Clear resets overlays. X exits to the AR / Upload choice modal.
 2. **Upload image** — still photo; draw / resize / delete boxes; auto-detect optional; translate crops.
 
 Entry: **Cam** tab → floating modal (AR vs Upload). Guests see sign-in first.
