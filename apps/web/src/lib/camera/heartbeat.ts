@@ -4,13 +4,11 @@ import type { Entitlement } from '../types'
 type HeartbeatCtl = {
   start: () => void
   stop: () => Promise<void>
-  pause: () => Promise<void>
-  resume: () => void
 }
 
 /**
  * Meters cameraSeconds while an AR or upload session is active.
- * Flushes on pause/stop so short sessions still count.
+ * Flushes on stop so short sessions still count.
  */
 export function createCameraHeartbeat(
   onEntitlement: (ent: Entitlement) => void,
@@ -60,24 +58,6 @@ export function createCameraHeartbeat(
       active = false
       startedAt = 0
       reported = 0
-    },
-    async pause() {
-      if (!active) return
-      if (timer) {
-        clearInterval(timer)
-        timer = null
-      }
-      await flush()
-      active = false
-    },
-    resume() {
-      if (active) return
-      active = true
-      startedAt = Date.now()
-      reported = 0
-      timer = setInterval(() => {
-        void flush()
-      }, 15000)
     },
   }
 }

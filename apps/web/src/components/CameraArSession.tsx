@@ -1,52 +1,51 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BiText } from './BiText'
 import { cameraScan } from '../lib/api'
-import {
-  captureFrame,
-  estimateShift,
-  frameChangeScore,
-  sampleVideoImageData,
-} from '../lib/camera/geometry'
+import { captureFrame, estimateShift, sampleVideoImageData } from '../lib/camera/geometry'
 import { regionToEditable, type CameraTarget, type EditableBox } from '../lib/camera/types'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
-import { ui } from '../lib/uiCopy'
+import { biPlain, ui } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
 
 type Props = {
   target: CameraTarget
+  onTargetChange: (t: CameraTarget) => void
   onBack: () => void
   onEntitlement: (ent: Entitlement) => void
   meter: {
     start: () => void
     stop: () => Promise<void>
-    pause: () => Promise<void>
-    resume: () => void
   }
 }
 
-export function CameraArSession({ target, onBack, onEntitlement, meter }: Props) {
+type HitRect = { id: string; x: number; y: number; w: number; h: number }
+
+export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
   const speakManual = useYueStore((s) => s.speakManual)
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const boxesRef = useRef<EditableBox[]>([])
+  const hitsRef = useRef<HitRect[]>([])
   const prevSample = useRef<ImageData | null>(null)
   const scanning = useRef(false)
-  const [paused, setPaused] = useState(false)
   const [boxes, setBoxes] = useState<EditableBox[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const pausedRef = useRef(false)
 
   useEffect(() => {
     boxesRef.current = boxes
   }, [boxes])
 
   useEffect(() => {
-    pausedRef.current = paused
-  }, [paused])
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
 
   const paintOverlay = useCallback(() => {
     const video = videoRef.current
@@ -62,38 +61,66 @@ export function CameraArSession({ target, onBack, onEntitlement, meter }: Props)
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.clearRect(0, 0, w, h)
+    const hits: HitRect[] = []
+
     for (const b of boxesRef.current) {
-      const x = b.box.x * w
-      const y = b.box.y * h
-      const bw = b.box.w * w
-      const bh = b.box.h * h
-      // Cover original
-      ctx.fillStyle = 'rgba(8, 24, 36, 0.72)'
-      ctx.fillRect(x, y, bw, bh)
-      ctx.strokeStyle = 'rgba(62, 196, 160, 0.85)'
-      ctx.lineWidth = 1.5
-      ctx.strokeRect(x, y, bw, bh)
+      const ox = b.box.x * w
+      const oy = b.box.y * h
+      const obw = Math.max(8, b.box.w * w)
+      const obh = Math.max(8, b.box.h * h)
       const label = b.translated || b.text
+      const pad = 6
+      let fontSize = Math.max(12, Math.min(24, obh * 0.7))
+      let textW = 0
+      let drawW = obw
+      let drawX = ox
+      const selected = b.id === selectedId
+
+      if (label) {
+        const minFont = 10
+        for (; fontSize >= minFont; fontSize -= 0.5) {
+          ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+          textW = ctx.measureText(label).width
+          if (textW + pad * 2 <= Math.max(obw, w * 0.95)) break
+        }
+        ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+        textW = ctx.measureText(label).width
+        drawW = Math.min(w, Math.max(obw, textW + pad * 2))
+        drawX = ox
+        if (drawX + drawW > w) drawX = Math.max(0, w - drawW)
+      }
+
+      const drawH = Math.max(obh, label ? fontSize + pad * 2 : obh)
+      const drawY = Math.min(oy, Math.max(0, h - drawH))
+
+      ctx.fillStyle = selected ? 'rgba(8, 36, 32, 0.88)' : 'rgba(8, 24, 36, 0.78)'
+      ctx.fillRect(drawX, drawY, drawW, drawH)
+      ctx.strokeStyle = selected ? 'rgba(120, 230, 190, 1)' : 'rgba(62, 196, 160, 0.85)'
+      ctx.lineWidth = selected ? 2.25 : 1.5
+      ctx.strokeRect(drawX, drawY, drawW, drawH)
+
+      hits.push({
+        id: b.id,
+        x: drawX / w,
+        y: drawY / h,
+        w: drawW / w,
+        h: drawH / h,
+      })
+
       if (!label) continue
-      const fontSize = Math.max(11, Math.min(22, bh * 0.45))
-      ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
       ctx.fillStyle = '#e8fff6'
       ctx.textBaseline = 'middle'
-      const pad = 4
-      const lines = wrapText(ctx, label, bw - pad * 2)
-      const lineH = fontSize * 1.15
-      const totalH = lines.length * lineH
-      let ty = y + Math.max(pad + lineH / 2, (bh - totalH) / 2 + lineH / 2)
-      for (const line of lines) {
-        ctx.fillText(line, x + pad, ty, bw - pad * 2)
-        ty += lineH
-      }
+      ctx.textAlign = 'left'
+      ctx.font = `600 ${fontSize}px "Noto Sans TC", "PingFang TC", sans-serif`
+      ctx.fillText(label, drawX + pad, drawY + drawH / 2, Math.max(8, drawW - pad * 2))
     }
-  }, [])
+
+    hitsRef.current = hits
+  }, [selectedId])
 
   useEffect(() => {
     paintOverlay()
-  }, [boxes, paintOverlay])
+  }, [boxes, paintOverlay, selectedId])
 
   useEffect(() => {
     let cancelled = false
@@ -130,129 +157,130 @@ export function CameraArSession({ target, onBack, onEntitlement, meter }: Props)
     }
   }, [meter])
 
-  // Live sample loop
+  // Track existing overlays with the camera — no Vision calls.
   useEffect(() => {
     let raf = 0
-    let lastScan = 0
-
-    const tick = async (now: number) => {
+    const tick = () => {
       raf = requestAnimationFrame(tick)
-      if (pausedRef.current) return
       const video = videoRef.current
-      if (!video || video.readyState < 2) return
-
-      const sample = sampleVideoImageData(video, 48)
-      if (sample) {
-        const shift = estimateShift(prevSample.current, sample)
-        if (Math.abs(shift.dx) + Math.abs(shift.dy) > 0.002 && boxesRef.current.length) {
-          boxesRef.current = boxesRef.current.map((b) => ({
-            ...b,
-            box: {
-              x: Math.min(0.98, Math.max(0, b.box.x + shift.dx)),
-              y: Math.min(0.98, Math.max(0, b.box.y + shift.dy)),
-              w: b.box.w,
-              h: b.box.h,
-            },
-          }))
-          setBoxes([...boxesRef.current])
-        }
-        const { score, data } = frameChangeScore(prevSample.current, sample)
-        prevSample.current = data
-
-        const due = now - lastScan > 900
-        const changed = score > 0.04
-        if (due && changed && !scanning.current) {
-          lastScan = now
-          scanning.current = true
-          setBusy(true)
-          try {
-            const image = captureFrame(video, 960, 0.65)
-            if (image) {
-              const result = await cameraScan({
-                image,
-                target: target === 'auto' ? undefined : target,
-              })
-              if (result.entitlement) onEntitlement(result.entitlement)
-              if (!pausedRef.current) {
-                setBoxes(result.regions.map(regionToEditable))
-              }
-            }
-          } catch (e) {
-            const err = e as { message?: string; entitlement?: Entitlement }
-            if (err.entitlement) onEntitlement(err.entitlement)
-            if (err.message) setError(err.message)
-          } finally {
-            scanning.current = false
-            setBusy(false)
+      if (!video || video.readyState < 2) {
+        paintOverlay()
+        return
+      }
+      if (boxesRef.current.length) {
+        const sample = sampleVideoImageData(video, 48)
+        if (sample) {
+          const shift = estimateShift(prevSample.current, sample)
+          prevSample.current = sample
+          if (Math.abs(shift.dx) + Math.abs(shift.dy) > 0.002) {
+            boxesRef.current = boxesRef.current.map((b) => ({
+              ...b,
+              box: {
+                x: Math.min(0.98, Math.max(0, b.box.x + shift.dx)),
+                y: Math.min(0.98, Math.max(0, b.box.y + shift.dy)),
+                w: b.box.w,
+                h: b.box.h,
+              },
+            }))
+            setBoxes([...boxesRef.current])
           }
         }
+      } else {
+        prevSample.current = null
       }
       paintOverlay()
     }
-
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [meter, onEntitlement, paintOverlay, target])
+  }, [paintOverlay])
+
+  const runCapture = async () => {
+    const video = videoRef.current
+    if (!video || scanning.current) return
+    scanning.current = true
+    setBusy(true)
+    setError(null)
+    setSelectedId(null)
+    try {
+      const image = captureFrame(video, 1280, 0.72)
+      if (!image) throw new Error('Could not capture frame')
+      const result = await cameraScan({
+        image,
+        target: target === 'auto' ? undefined : target,
+      })
+      if (result.entitlement) onEntitlement(result.entitlement)
+      const next = result.regions.map(regionToEditable)
+      boxesRef.current = next
+      setBoxes(next)
+      if (!next.length) {
+        setError(biPlain(ui.camNoTextFound))
+      }
+    } catch (e) {
+      const err = e as { message?: string; entitlement?: Entitlement }
+      if (err.entitlement) onEntitlement(err.entitlement)
+      const msg = err.message || 'Scan failed'
+      if (/429|rate limit|call rate/i.test(msg)) {
+        setError(biPlain(ui.camRateLimited))
+      } else {
+        setError(msg)
+      }
+    } finally {
+      scanning.current = false
+      setBusy(false)
+    }
+  }
+
+  const clearOverlays = () => {
+    boxesRef.current = []
+    hitsRef.current = []
+    setBoxes([])
+    setSelectedId(null)
+    setError(null)
+    paintOverlay()
+  }
 
   const selected = boxes.find((b) => b.id === selectedId) || null
 
-  const saveSnapshot = () => {
-    const video = videoRef.current
-    const overlay = overlayRef.current
-    if (!video) return
-    const w = video.videoWidth || video.clientWidth
-    const h = video.videoHeight || video.clientHeight
-    const canvas = document.createElement('canvas')
-    canvas.width = w
-    canvas.height = h
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.drawImage(video, 0, 0, w, h)
-    if (overlay) ctx.drawImage(overlay, 0, 0, w, h)
-    const a = document.createElement('a')
-    a.href = canvas.toDataURL('image/jpeg', 0.92)
-    a.download = `jyut-camera-${Date.now()}.jpg`
-    a.click()
-  }
-
   return (
-    <div className="cam-session cam-session--ar">
-      <div className="cam-toolbar">
-        <button type="button" className="cam-tool-btn" onClick={onBack}>
-          <BiText copy={ui.camBack} size="sm" />
-        </button>
-        <button
-          type="button"
-          className="cam-tool-btn"
-          onClick={() => {
-            if (paused) {
-              setPaused(false)
-              meter.resume()
-            } else {
-              setPaused(true)
-              void meter.pause()
-            }
-          }}
-        >
-          <BiText copy={paused ? ui.camResume : ui.camPause} size="sm" />
-        </button>
-        <button type="button" className="cam-tool-btn" onClick={saveSnapshot}>
-          <BiText copy={ui.camSaveSnapshot} size="sm" />
-        </button>
-        {busy ? (
-          <span className="cam-busy">
-            <BiText copy={ui.camScanning} size="sm" />
-          </span>
-        ) : null}
+    <div className="cam-ar-fs" role="dialog" aria-modal="true" aria-label={biPlain(ui.camChoiceAr)}>
+      <button
+        type="button"
+        className="cam-ar-close"
+        onClick={onBack}
+        aria-label={biPlain(ui.camChoiceClose)}
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+
+      <div className="cam-ar-target-row" role="radiogroup" aria-label="Translate target">
+        {(
+          [
+            ['auto', ui.camTargetAuto],
+            ['en', ui.camTargetEn],
+            ['zh', ui.camTargetZh],
+          ] as const
+        ).map(([id, copy]) => (
+          <label key={id} className={`cam-target-opt${target === id ? ' is-on' : ''}`}>
+            <input
+              type="radio"
+              name="cam-ar-target"
+              checked={target === id}
+              onChange={() => onTargetChange(id)}
+            />
+            <BiText copy={copy} size="sm" />
+          </label>
+        ))}
       </div>
 
-      {error ? (
-        <p className="cam-hint cam-hint--error" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="cam-ar-frame">
+      <div className="cam-ar-frame cam-ar-frame--fs">
         <video ref={videoRef} className="cam-video" playsInline muted autoPlay />
         <canvas
           ref={overlayRef}
@@ -263,20 +291,84 @@ export function CameraArSession({ target, onBack, onEntitlement, meter }: Props)
             const r = canvas.getBoundingClientRect()
             const x = (e.clientX - r.left) / r.width
             const y = (e.clientY - r.top) / r.height
-            const hit = [...boxes].reverse().find(
-              (b) =>
-                x >= b.box.x &&
-                x <= b.box.x + b.box.w &&
-                y >= b.box.y &&
-                y <= b.box.y + b.box.h,
+            const hit = [...hitsRef.current].reverse().find(
+              (b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h,
             )
             setSelectedId(hit?.id || null)
           }}
         />
       </div>
 
+      {busy ? (
+        <div className="cam-ar-busy" role="status">
+          <BiText copy={ui.camScanning} size="sm" />
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="cam-ar-toast cam-ar-toast--error" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {!busy && !boxes.length && !error ? (
+        <p className="cam-ar-toast">
+          <BiText copy={ui.camCaptureHint} size="sm" />
+        </p>
+      ) : null}
+
+      <div className="cam-ar-dock">
+        <div className="cam-ar-dock-cluster">
+          <button
+            type="button"
+            className="cam-ar-shutter"
+            disabled={busy}
+            onClick={() => void runCapture()}
+            aria-label={biPlain(ui.camCapture)}
+          >
+            <span className="cam-ar-shutter-ring" aria-hidden="true" />
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+              <path
+                d="M9 7l1.2-2h3.6L15 7h3a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h3z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="cam-ar-clear"
+            disabled={busy || boxes.length === 0}
+            onClick={clearOverlays}
+            aria-label={biPlain(ui.camClearOverlays)}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       {selected ? (
-        <div className="cam-detail">
+        <div className="cam-ar-sheet" role="region" aria-label={biPlain(ui.camDetailTitle)}>
+          <button
+            type="button"
+            className="cam-ar-sheet-close"
+            onClick={() => setSelectedId(null)}
+            aria-label={biPlain(ui.camChoiceClose)}
+          >
+            ×
+          </button>
           {selected.text ? <p className="cam-detail-src">{selected.text}</p> : null}
           {selected.translated ? <p className="cam-detail-tr">{selected.translated}</p> : null}
           <div className="cam-detail-actions">
@@ -306,22 +398,4 @@ export function CameraArSession({ target, onBack, onEntitlement, meter }: Props)
       ) : null}
     </div>
   )
-}
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  if (maxWidth <= 8) return [text]
-  const chars = [...text]
-  const lines: string[] = []
-  let line = ''
-  for (const ch of chars) {
-    const next = line + ch
-    if (ctx.measureText(next).width > maxWidth && line) {
-      lines.push(line)
-      line = ch
-    } else {
-      line = next
-    }
-  }
-  if (line) lines.push(line)
-  return lines.slice(0, 4)
 }

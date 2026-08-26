@@ -87,15 +87,15 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 
 ## Entitlement model / 权益模型
 
-| Plan / 套餐 | Live mic / 实时麦克风 | Tap-to-play TTS / 点击朗读 | Auto-speak / 自动朗读 | Text + Jyutping / 文字 + 粤拼 |
-| --- | --- | --- | --- | --- |
-| Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
-| Free / 免费 | ~5 min/mo (configurable) / 约每月 5 分钟（可配置） | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
-| Pro / 专业版 | ~20 min/mo / 约每月 20 分钟 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
+| Plan / 套餐 | Live mic / 实时麦克风 | Camera / 相机 | Tap-to-play TTS / 点击朗读 | Auto-speak / 自动朗读 | Text + Jyutping / 文字 + 粤拼 |
+| --- | --- | --- | --- | --- | --- |
+| Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Blocked / 不可用 | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
+| Free / 免费 | ~5 min/mo (configurable) / 约每月 5 分钟（可配置） | ~5 min/mo camera / 约每月 5 分钟相机 | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
+| Pro / 专业版 | ~20 min/mo / 约每月 20 分钟 | Unlimited (metered) / 无限（仍计数） | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
 
-Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Text mode uses `POST /translate` (not gated by live minutes).
+Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Text mode uses `POST /translate` (not gated by live minutes). Camera uses `POST /camera/scan` + `POST /usage/camera-heartbeat` (see [camera.md](./camera.md)).
 
-运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 点击朗读／自动朗读调用 `POST /tts`。文字模式走 `POST /translate`（不受实时分钟数限制）。
+运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 点击朗读／自动朗读调用 `POST /tts`。文字模式走 `POST /translate`（不受实时分钟数限制）。相机走 `POST /camera/scan` 与 `POST /usage/camera-heartbeat`（见 [camera.md](./camera.md)）。
 
 Plan resolution: capability `yue_pro` → user meta `yue_plan` → filter `yue_user_plan` → default `free` / `guest`.
 

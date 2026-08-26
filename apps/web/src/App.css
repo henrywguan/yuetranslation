@@ -2698,6 +2698,11 @@
     margin: 0 auto;
   }
 
+  .app-shell:has(.cam-session--upload) {
+    max-width: min(1280px, calc(100vw - 64px));
+    width: 100%;
+  }
+
   .history-rail {
     display: flex;
     flex-direction: column;
