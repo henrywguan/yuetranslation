@@ -384,9 +384,14 @@ function CameraMicro({ reduce }: { reduce: boolean }) {
   return (
     <div className="ln-micro ln-micro--camera" aria-hidden="true">
       <div className="ln-micro-cam-view">
-        <span className="ln-micro-cam-sign" lang="en">
-          EXIT
-        </span>
+        <img
+          className="ln-micro-cam-sign"
+          src={`${import.meta.env.BASE_URL}assets/stop-sign.svg`}
+          alt=""
+          width={72}
+          height={72}
+          draggable={false}
+        />
         {step >= 1 ? (
           <motion.span
             className="ln-micro-cam-box"
@@ -397,7 +402,7 @@ function CameraMicro({ reduce }: { reduce: boolean }) {
             <span className="ln-micro-cam-cover" />
             {step >= 2 ? (
               <span className="ln-micro-cam-tr" lang="zh-HK">
-                出口
+                停止
               </span>
             ) : null}
           </motion.span>
