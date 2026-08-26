@@ -16,7 +16,7 @@ export type MarketingPlan = {
   features: Bi[]
 }
 
-/** Prices from DeepSeek V4-Pro + Azure live-speech COGS (Pro $15 / Max $35). */
+/** Marketing prices (Stripe Price IDs hold the billed amounts). */
 export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'free',
@@ -31,8 +31,8 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'pro',
     name: ui.planPro,
-    monthly: 15,
-    annual: 12,
+    monthly: 10,
+    annual: 8.99,
     tagline: ui.tagPro,
     cta: ui.goPro,
     featured: true,
@@ -42,13 +42,13 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: 'max',
     name: ui.planMax,
-    monthly: 35,
-    annual: 28,
+    monthly: 20,
+    annual: 15,
     tagline: ui.tagMax,
     cta: ui.goMax,
     ctaOpens: 'pricing',
     unavailable: true,
-    features: [ui.maxFeatLive40, ui.proFeatCamera, ui.maxFeatPower, ui.maxFeatEverything, ui.maxFeatSupport],
+    features: [ui.maxFeatLive40, ui.maxFeatCamera, ui.maxFeatPower, ui.maxFeatEverything, ui.maxFeatSupport],
   },
 ]
 

@@ -33,10 +33,17 @@ assert(camFree.cameraRemaining === 300, 'free camera remaining 300s')
 const camExhausted = cameraAccess(5 * 60, 5 * 60, false)
 assert(camExhausted.camera === false, 'exhausted camera should lock')
 
-const camPro = cameraAccess(0, 999, true)
-assert(camPro.camera === true, 'pro camera unlimited')
-assert(camPro.cameraRemaining === -1, 'pro camera remaining sentinel')
+const camPro = cameraAccess(5 * 60 * 60, 999, false)
+assert(camPro.camera === true, 'pro camera within 5hr cap')
+assert(camPro.cameraRemaining === 5 * 60 * 60 - 999, 'pro camera remaining')
+
+const camProExhausted = cameraAccess(5 * 60 * 60, 5 * 60 * 60, false)
+assert(camProExhausted.camera === false, 'pro camera exhausted at 5hr')
+
+const camMax = cameraAccess(0, 999, true)
+assert(camMax.camera === true, 'max camera unlimited')
+assert(camMax.cameraRemaining === -1, 'max camera remaining sentinel')
 
 console.log(
-  JSON.stringify({ ok: true, free, pro, exhausted, heavyPro, guest, camFree, camExhausted, camPro }),
+  JSON.stringify({ ok: true, free, pro, exhausted, heavyPro, guest, camFree, camExhausted, camPro, camProExhausted, camMax }),
 )

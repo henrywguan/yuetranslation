@@ -91,7 +91,7 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 | --- | --- | --- | --- | --- | --- |
 | Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Blocked / 不可用 | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
 | Free / 免费 | ~5 min/mo (configurable) / 约每月 5 分钟（可配置） | ~5 min/mo camera / 约每月 5 分钟相机 | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
-| Pro / 专业版 | ~20 min/mo / 约每月 20 分钟 | Unlimited (metered) / 无限（仍计数） | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
+| Pro / 专业版 | ~20 min/mo / 约每月 20 分钟 | 5 hr/mo camera / 每月 5 小时相机 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
 
 Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Text mode uses `POST /translate` (not gated by live minutes). Camera uses `POST /camera/scan` + `POST /usage/camera-heartbeat` (see [camera.md](./camera.md)).
 

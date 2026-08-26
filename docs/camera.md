@@ -25,7 +25,8 @@ Speech Solo/Conversation remain EN↔粵 only.
 | --- | --- | --- | --- |
 | Guest | No | — | — |
 | Free | Yes | `YUE_FREE_CAMERA_MINUTES` (default 5) hard cap | `cameraSeconds` |
-| Pro / Max | Yes | Unlimited | Yes (`cameraUnlimited`) |
+| Pro | Yes | `YUE_PRO_CAMERA_MINUTES` (default 300 = 5 hr) hard cap | `cameraSeconds` |
+| Max | Yes | Unlimited | Yes (`cameraUnlimited`) |
 
 Heartbeat: `POST /api/usage/camera-heartbeat` while the AR fullscreen session or upload editor is open. Exit / back flushes seconds.
 
@@ -49,6 +50,7 @@ OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are 
 ## Env / 環境變數
 
 - `YUE_FREE_CAMERA_MINUTES` (default 5)
+- `YUE_PRO_CAMERA_MINUTES` (default 300)
 - `YUE_FREE_ALLOW_CAMERA` (default 1)
 - `AZURE_VISION_KEY` — subscription key from a Vision / multi-service resource (optional for manual box mode)
 - `AZURE_VISION_ENDPOINT` — e.g. `https://<resource-name>.cognitiveservices.azure.com` from the Azure portal (recommended). If omitted but key is set, falls back to `https://{AZURE_VISION_REGION|AZURE_SPEECH_REGION}.api.cognitive.microsoft.com`

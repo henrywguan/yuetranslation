@@ -1,8 +1,8 @@
 # Entitlements & usage metering
 
-Meter **live minutes** per plan. **Text translation** and character breakdown stay free for guests. **Tap-to-play voice (TTS)** is available to guests without login; **Free** is metered with a hard monthly char cap; **Pro/Max** are metered but **unlimited**. **Auto-speak** stays on Pro/Max. Live mic still requires login + plan quota. **Camera translation** requires login: Free has a hard monthly **camera minutes** cap (`YUE_FREE_CAMERA_MINUTES`, default 5); Pro/Max are unlimited but counted — see `docs/camera.md`.
+Meter **live minutes** per plan. **Text translation** and character breakdown stay free for guests. **Tap-to-play voice (TTS)** is available to guests without login; **Free** is metered with a hard monthly char cap; **Pro/Max** are metered but **unlimited**. **Auto-speak** stays on Pro/Max. Live mic still requires login + plan quota. **Camera translation** requires login: Free has a hard monthly **camera minutes** cap (`YUE_FREE_CAMERA_MINUTES`, default 5); Pro has a 5 hr/mo cap (`YUE_PRO_CAMERA_MINUTES`, default 300); Max is unlimited but counted — see `docs/camera.md`.
 
-按方案计量**实时分钟**。**文字翻译**与逐字拆解对访客免费。**点击喇叭朗读（TTS）**访客可不登录试用；**免费版**按月字数硬上限计量；**专业版／旗舰版**计量但**无限**。**自动朗读**仍属专业版／旗舰版。实时麦克风仍须登录并受方案配额限制。**相机翻译**须登录：免费版有每月**相机分钟**硬上限（`YUE_FREE_CAMERA_MINUTES`，默认 5）；专业版／旗舰版无限但仍计数 — 见 `docs/camera.md`。
+按方案计量**实时分钟**。**文字翻译**与逐字拆解对访客免费。**点击喇叭朗读（TTS）**访客可不登录试用；**免费版**按月字数硬上限计量；**专业版／旗舰版**计量但**无限**。**自动朗读**仍属专业版／旗舰版。实时麦克风仍须登录并受方案配额限制。**相机翻译**须登录：免费版有每月**相机分钟**硬上限（`YUE_FREE_CAMERA_MINUTES`，默认 5）；专业版每月 5 小时（`YUE_PRO_CAMERA_MINUTES`，默认 300）；旗舰版无限但仍计数 — 见 `docs/camera.md`。
 
 Implemented in the local Express API (`apps/api`) and the WordPress plugin (`wordpress/yue-translator`).
 
@@ -40,9 +40,9 @@ Returned by `/api/health` and `/api/entitlement`:
 }
 ```
 
-Pro/Max snapshots set `ttsUnlimited: true`, `cameraUnlimited: true`, and `limits.tts_chars` / `limits.camera_minutes: 0`. The plan chip shows `{used} used / unlimited` for voice and camera; Free shows time/chars left.
+Pro/Max snapshots set `ttsUnlimited: true` and `limits.tts_chars: 0`. Max also sets `cameraUnlimited: true` with `limits.camera_minutes: 0`. Pro uses `camera_minutes: 300` (5 hr) and `cameraUnlimited: false`. The plan chip shows `{used} used / unlimited` for voice on Pro/Max and for camera on Max; Free and Pro show time/chars left.
 
-专业版／旗舰版快照带 `ttsUnlimited: true`、`cameraUnlimited: true`，且 `limits.tts_chars`／`limits.camera_minutes` 为 0。计划芯片语音与相机显示 `{已用} used / unlimited`；免费版显示剩余。
+专业版／旗舰版快照带 `ttsUnlimited: true` 且 `limits.tts_chars: 0`。旗舰版另设 `cameraUnlimited: true` 与 `limits.camera_minutes: 0`。专业版为 `camera_minutes: 300`（5 小时）且 `cameraUnlimited: false`。计划芯片上 Pro/Max 语音显示 `{已用} used / unlimited`；Max 相机亦同；免费版与专业版显示剩余。
 
 ## Gate points / 闸门
 

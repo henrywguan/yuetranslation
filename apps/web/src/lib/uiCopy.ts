@@ -544,9 +544,9 @@ export const ui = {
     jp: 'mui5 jyut6 daai6 joek3 jaa6 fan1 zung1 zik1 si4 faan1 jik6',
   },
   proFeatCamera: {
-    en: 'Unlimited camera translation (metered)',
-    zh: '無限相機翻譯（仍會計量）',
-    jp: 'mou4 haan6 soeng1 gei1 faan1 jik6 (jing4 wui5 gai3 loeng4)',
+    en: '5 hours camera translation / month',
+    zh: '每月五小時相機翻譯',
+    jp: 'mui5 jyut6 ng5 siu2 si4 soeng1 gei1 faan1 jik6',
   },
   proFeatTts: {
     en: 'Unlimited tap-to-play + auto-speak',
@@ -596,9 +596,9 @@ export const ui = {
     jp: 'jau4 sin1 jyut6 jyu5 zat1 sou3',
   },
   landAnnualHint: {
-    en: 'from $12/mo billed yearly',
-    zh: '年繳低至 $12／月',
-    jp: 'nin4 gaau2 dai1 zi3 $12／jyut6',
+    en: 'from $8.99/mo billed yearly',
+    zh: '年繳低至 $8.99／月',
+    jp: 'nin4 gaau2 dai1 zi3 $8.99／jyut6',
   },
 
   ctaReady: {
@@ -654,6 +654,11 @@ export const ui = {
     zh: '每月大約四十小時即時翻譯（合理使用）',
     jp: 'mui5 jyut6 daai6 joek3 sei3 sap6 siu2 si4 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
   },
+  maxFeatCamera: {
+    en: 'Unlimited camera translation (metered)',
+    zh: '無限相機翻譯（仍會計量）',
+    jp: 'mou4 haan6 soeng1 gei1 faan1 jik6 (jing4 wui5 gai3 loeng4)',
+  },
   maxFeatPower: {
     en: 'Headroom for Conversation Mode & long talks',
     zh: '對話模式同長對話有足夠空間',
@@ -695,7 +700,8 @@ export const ui = {
   val20m: { en: '20 minutes', zh: '廿分鐘', jp: 'jaa6 fan1 zung1' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valCamFree: { en: '5 cam min / mo', zh: '每月五分鐘相機', jp: 'mui5 jyut6 ng5 fan1 zung1 soeng1 gei1' },
-  valCamPro: { en: 'Unlimited (metered)', zh: '無限（仍計量）', jp: 'mou4 haan6 (jing4 gai3 loeng4)' },
+  valCamPro: { en: '5 hr / mo', zh: '每月五小時', jp: 'mui5 jyut6 ng5 siu2 si4' },
+  valCamMax: { en: 'Unlimited (metered)', zh: '無限（仍計量）', jp: 'mou4 haan6 (jing4 gai3 loeng4)' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
   valPriority: { en: 'Priority', zh: '優先', jp: 'jau4 sin1' },
@@ -707,14 +713,14 @@ export const ui = {
     jp: 'me1 hai6 soeng1 gei1 fan1 zung1?',
   },
   camMinutesCardBody: {
-    en: 'Camera minutes count time spent in Cam — fullscreen AR preview or the upload editor — separate from live mic minutes. Free includes about 5 minutes per month. Pro and Max are unlimited but still tracked. Each shutter capture uses Azure Vision OCR once (not continuous polling).',
-    zh: '相機分鐘計算你喺「相機」模式嘅時間——全屏 AR 預覽或者上載編輯器——同即時咪高峰分鐘分開計。免費版大約每月五分鐘。專業版同旗艦版無限但仍會計量。每次快門只用一次 Azure Vision OCR（唔會持續輪詢）。',
-    jp: 'soeng1 gei1 fan1 zung1 hai6 gai3 syun3 nei5 hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 pin1 cap1 hei3 — tung4 zik1 si4 mai1 gou1 fung1 fan1 zung1 fan1 hoi1 gai3. min5 fai3 baan2 daai6 joek3 mui5 jyut6 ng5 fan1 zung1. zyun1 jip6 tung4 kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4. mui5 ci3 faai3 mun4 zi2 jung6 jat1 ci3 Azure Vision OCR (m4 wui5 ci4 zuk6 leon4 seon2).',
+    en: 'Camera minutes count time spent in Cam — fullscreen AR preview or the upload editor — separate from live mic minutes. Free includes about 5 minutes per month. Pro includes 5 hours per month. Max is unlimited but still tracked. Each shutter capture uses Azure Vision OCR once (not continuous polling).',
+    zh: '相機分鐘計算你喺「相機」模式嘅時間——全屏 AR 預覽或者上載編輯器——同即時咪高峰分鐘分開計。免費版大約每月五分鐘。專業版每月五小時。旗艦版無限但仍會計量。每次快門只用一次 Azure Vision OCR（唔會持續輪詢）。',
+    jp: 'soeng1 gei1 fan1 zung1 hai6 gai3 syun3 nei5 hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 pin1 cap1 hei3 — tung4 zik1 si4 mai1 gou1 fung1 fan1 zung1 fan1 hoi1 gai3. min5 fai3 baan2 daai6 joek3 mui5 jyut6 ng5 fan1 zung1. zyun1 jip6 baan2 mui5 jyut6 ng5 siu2 si4. kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4. mui5 ci3 faai3 mun4 zi2 jung6 jat1 ci3 Azure Vision OCR (m4 wui5 ci4 zuk6 leon4 seon2).',
   },
   fairUseNote: {
-    en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Camera minutes on Pro/Max are unlimited but counted.',
-    zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。專業版／旗艦版相機分鐘無限但仍會計量。',
-    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6. zyun1 jip6 / kei4 gaam3 baan2 soeng1 gei1 fan1 zung1 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
+    en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Pro camera is capped at 5 hr/mo; Max camera is unlimited but counted.',
+    zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。專業版相機每月五小時；旗艦版相機無限但仍會計量。',
+    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6. zyun1 jip6 baan2 soeng1 gei1 mui5 jyut6 ng5 siu2 si4; kei4 gaam3 baan2 soeng1 gei1 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
   },
 
   faqKicker: { en: 'FAQ', zh: '常見問題', jp: 'soeng4 gin3 man6 tai4' },

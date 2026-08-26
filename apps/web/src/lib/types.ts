@@ -30,7 +30,7 @@ export type Entitlement = {
   remaining: { liveSeconds: number; ttsChars: number; cameraSeconds?: number }
   /** Pro/Max: usage tracked, never gates the speaker. */
   ttsUnlimited?: boolean
-  /** Pro/Max: usage tracked, never gates camera. */
+  /** Max: usage tracked, never gates camera. */
   cameraUnlimited?: boolean
   upgradeUrl: string
   loginUrl: string

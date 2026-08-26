@@ -25,7 +25,7 @@ const COMPARISON: Row[] = [
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   {
     label: ui.cmpCamera,
-    values: [ui.valCamFree, ui.valCamPro, ui.valCamPro],
+    values: [ui.valCamFree, ui.valCamPro, ui.valCamMax],
   },
   {
     label: ui.cmpTts,
