@@ -90,7 +90,7 @@ export const ui = {
     jp: 'OCR cing2 kau4 gwo3 pan4 — cing2 siu2 hau6 gei2 miu5 zoi3 paak3 sip3',
   },
   camTranslate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
-  camAutoDetect: { en: 'Auto-detect', zh: '自動偵測', jp: 'zi6 dung6 zing1 caak1' },
+  camAutoDetect: { en: 'Translate all', zh: '全部翻譯', jp: 'cyun4 bou6 faan1 jik6' },
   camDeleteBox: { en: 'Delete box', zh: '刪除選框', jp: 'saan1 ceoi4 syun2 kwaang1' },
   camTargetEn: { en: 'To English', zh: '譯成英文', jp: 'jik6 sing4 jing1 man2' },
   camTargetZh: { en: 'To 中文', zh: '譯成中文', jp: 'jik6 sing4 zung1 man2' },
