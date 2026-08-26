@@ -38,7 +38,7 @@ const STORY = {
   },
 } as const
 
-/** Full-bleed flip-story — title flows into an open stage, no card container. */
+/** Full-bleed flip-story — chart ambient behind a frosted focus panel. */
 export function ToneTwinsStory() {
   const reduce = useReducedMotion()
   const speakManual = useYueStore((s) => s.speakManual)
@@ -141,7 +141,7 @@ export function ToneTwinsStory() {
                   className="tones-story-watermark"
                   aria-hidden="true"
                   initial={reduce ? false : { opacity: 0, y: 18 }}
-                  animate={{ opacity: 0.11, y: 0 }}
+                  animate={{ opacity: 0.055, y: 0 }}
                   transition={{ duration: 0.45, delay: 0.06, ease: inkEase }}
                 >
                   <BiText copy={active.head} size="lg" only="en" />
