@@ -121,9 +121,9 @@ export const ui = {
   camResults: { en: 'Results', zh: '結果', jp: 'git3 gwo2' },
   camDrawMode: { en: 'Draw box', zh: '畫框', jp: 'waak6 kwaang1' },
   camDrawHint: {
-    en: 'Scroll to zoom · Draw box to add a region · placed boxes stay fixed',
-    zh: '捲動縮放 · 開啟畫框加選區 · 放好後選框固定不動',
-    jp: 'gu2 dung6 suok1 fong3 · hoi1 kai2 waak6 kwaang1 gaa1 syun2 keoi1 · fong3 hou2 hau6 syun2 kwaang1 gu3 ding6',
+    en: 'Pinch or scroll to zoom · Draw box to add · drag boxes until Translate locks them',
+    zh: '雙指或捲動縮放 · 畫框加選區 · 翻譯前可拖動，翻譯後鎖定',
+    jp: 'soeng1 zi2 waak6 gu2 dung6 suok1 fong3 · waak6 kwaang1 gaa1 syun2 keoi1 · faan1 jik6 cin4 ho2 to1 dung6 · faan1 jik6 hau6 so2 ding6',
   },
   camMinutesLeft: (formatted: string): Bi => ({
     en: `${formatted} left`,
