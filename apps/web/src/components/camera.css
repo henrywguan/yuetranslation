@@ -257,6 +257,45 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.cam-stage-wrap--zoom {
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  min-height: 240px;
+}
+
+.cam-upload-frame {
+  position: relative;
+  width: 100%;
+  height: min(58vh, 520px);
+  min-height: 240px;
+  overflow: hidden;
+  background: #061018;
+}
+
+.cam-upload-zoom {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  will-change: transform;
+  display: grid;
+  place-items: center;
+}
+
+.cam-image--fit {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.cam-overlay-canvas--upload {
+  z-index: 3;
+  touch-action: none;
+  cursor: crosshair;
+}
+
 .cam-stage-wrap.is-draw {
   touch-action: none;
 }
@@ -920,6 +959,108 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
   gap: 8px;
 }
 
+.cam-results-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  margin-left: 0.45em;
+  padding: 0 0.35em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+  color: var(--jade-bright, var(--jade));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+.cam-results-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  max-height: min(28vh, 220px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cam-results-item {
+  appearance: none;
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--harbor-mid, var(--harbor)) 55%, transparent);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.cam-results-item:hover,
+.cam-results-item:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 45%, transparent);
+  outline: none;
+}
+
+.cam-results-item.is-selected {
+  border-color: color-mix(in srgb, var(--jade) 65%, transparent);
+  background: color-mix(in srgb, var(--jade) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--jade) 25%, transparent);
+}
+
+.cam-results-index {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jade) 18%, transparent);
+  color: var(--jade-bright, var(--jade));
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex: none;
+}
+
+.cam-results-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cam-results-body .cam-detail-src,
+.cam-results-body .cam-detail-tr {
+  margin: 0;
+  padding: 0;
+}
+
+.cam-results--ar {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.cam-ar-sheet--results {
+  max-height: min(42vh, 360px);
+  overflow: auto;
+}
+
+.cam-ar-sheet--results .cam-results-list {
+  max-height: min(22vh, 180px);
+}
+
 @media (max-width: 760px) {
   .cam-ar-frame:not(.cam-ar-frame--fs) {
     max-height: min(55vh, 480px);
@@ -948,15 +1089,14 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
     min-height: 360px;
   }
 
-  .cam-session--upload .cam-stage {
-    max-width: none;
-    display: block;
+  .cam-session--upload .cam-upload-frame {
+    height: 100%;
+    min-height: 360px;
   }
 
-  .cam-session--upload .cam-image {
-    max-width: none;
-    width: auto;
-    height: auto;
+  .cam-session--upload .cam-image--fit {
+    max-width: 100%;
+    max-height: 100%;
   }
 }
 

@@ -166,3 +166,63 @@ export function estimateShift(
   }
   return { dx: bestDx / w, dy: bestDy / h }
 }
+
+/** How an image/video is laid out inside a frame with object-fit: cover|contain. */
+export type MediaFitLayout = {
+  offsetX: number
+  offsetY: number
+  dispW: number
+  dispH: number
+}
+
+export function mediaFitLayout(
+  frameW: number,
+  frameH: number,
+  mediaW: number,
+  mediaH: number,
+  mode: 'cover' | 'contain' = 'contain',
+): MediaFitLayout {
+  if (!frameW || !frameH || !mediaW || !mediaH) {
+    return { offsetX: 0, offsetY: 0, dispW: frameW || 0, dispH: frameH || 0 }
+  }
+  const scale =
+    mode === 'cover'
+      ? Math.max(frameW / mediaW, frameH / mediaH)
+      : Math.min(frameW / mediaW, frameH / mediaH)
+  const dispW = mediaW * scale
+  const dispH = mediaH * scale
+  return {
+    offsetX: (frameW - dispW) / 2,
+    offsetY: (frameH - dispH) / 2,
+    dispW,
+    dispH,
+  }
+}
+
+/** Image-normalized (0–1) → frame pixels for a cover/contain layout. */
+export function normToFitPx(
+  nx: number,
+  ny: number,
+  layout: MediaFitLayout,
+): { x: number; y: number } {
+  return {
+    x: layout.offsetX + nx * layout.dispW,
+    y: layout.offsetY + ny * layout.dispH,
+  }
+}
+
+/** Frame client point → image-normalized (0–1), or null if outside the media. */
+export function clientToNormOnFit(
+  clientX: number,
+  clientY: number,
+  frameRect: DOMRect,
+  layout: MediaFitLayout,
+): { x: number; y: number } | null {
+  const lx = clientX - frameRect.left
+  const ly = clientY - frameRect.top
+  if (layout.dispW <= 0 || layout.dispH <= 0) return null
+  const x = (lx - layout.offsetX) / layout.dispW
+  const y = (ly - layout.offsetY) / layout.dispH
+  if (x < 0 || y < 0 || x > 1 || y > 1) return null
+  return { x, y }
+}

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
+import { CamResultsList } from './CamResultsList'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
-import { captureFrame, estimateShift, sampleVideoImageData } from '../lib/camera/geometry'
+import { captureFrame, estimateShift, mediaFitLayout, sampleVideoImageData } from '../lib/camera/geometry'
 import {
   clampPan,
   clampZoom,
@@ -40,7 +41,6 @@ type HitRect = { id: string; x: number; y: number; w: number; h: number }
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
-  const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const reduce = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -55,6 +55,8 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   const scanning = useRef(false)
   const stillUrlRef = useRef<string | null>(null)
   const zoomRef = useRef<ZoomTransform>(IDENTITY_ZOOM)
+  const mediaSizeRef = useRef({ w: 0, h: 0 })
+  const detailRef = useRef<HTMLDivElement>(null)
   const pinchRef = useRef<{
     mode: 'pinch' | 'pan' | null
     startDist: number
@@ -105,6 +107,12 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     const h = frame.clientHeight
     if (!w || !h) return
 
+    const video = videoRef.current
+    const mw = mediaSizeRef.current.w || video?.videoWidth || w
+    const mh = mediaSizeRef.current.h || video?.videoHeight || h
+    // Match object-fit: cover so full-frame OCR boxes land on the cropped view.
+    const layout = mediaFitLayout(w, h, mw, mh, 'cover')
+
     // Paint in screen space (canvas sits above the CSS-zoomed still) so glyph
     // size tracks pinch zoom and stays sharp instead of bitmap-upscaling.
     const z = zoomRef.current
@@ -133,10 +141,10 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     const now = performance.now()
 
     for (const b of boxesRef.current) {
-      const ox = b.box.x * w
-      const oy = b.box.y * h
-      const obw = Math.max(8, b.box.w * w)
-      const obh = Math.max(8, b.box.h * h)
+      const ox = layout.offsetX + b.box.x * layout.dispW
+      const oy = layout.offsetY + b.box.y * layout.dispH
+      const obw = Math.max(8, b.box.w * layout.dispW)
+      const obh = Math.max(8, b.box.h * layout.dispH)
       const label = b.translated || b.text
       const selected = b.id === selectedId
       const matched = Boolean(b.bg && b.fg)
@@ -199,12 +207,13 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         }
       }
 
+      const slop = 6
       hits.push({
         id: b.id,
-        x: drawX / w,
-        y: drawY / h,
-        w: drawW / w,
-        h: drawH / h,
+        x: (drawX - slop) / w,
+        y: (drawY - slop) / h,
+        w: (drawW + slop * 2) / w,
+        h: (drawH + slop * 2) / h,
       })
       ctx.restore()
     }
@@ -324,6 +333,10 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       }
       const image = captureFrame(video, 1280, 0.72)
       if (!image) throw new Error('Could not capture frame')
+      mediaSizeRef.current = {
+        w: video.videoWidth || video.clientWidth,
+        h: video.videoHeight || video.clientHeight,
+      }
       setStillUrl(image)
       stillUrlRef.current = image
       video.pause()
@@ -358,6 +371,8 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       appearAtRef.current = appear
       boxesRef.current = next
       setBoxes(next)
+      const first = next.find((b) => b.translated || b.text)
+      setSelectedId(first?.id ?? null)
       if (!next.length) {
         setError(biPlain(ui.camNoTextFound))
       }
@@ -504,11 +519,39 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     el.addEventListener('touchmove', onZoomTouchMove, { passive: false, capture: true })
     el.addEventListener('touchend', onZoomTouchEnd, { capture: true })
     el.addEventListener('touchcancel', onZoomTouchEnd, { capture: true })
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const z = zoomRef.current
+      const nextScale = clampZoom(z.scale * (e.deltaY > 0 ? 0.92 : 1.08))
+      if (Math.abs(nextScale - z.scale) < 0.001) return
+      const r = el.getBoundingClientRect()
+      const px = e.clientX - r.left
+      const py = e.clientY - r.top
+      const cx = r.width / 2
+      const cy = r.height / 2
+      const worldX = (px - cx - z.x) / z.scale
+      const worldY = (py - cy - z.y) / z.scale
+      const next = clampPan(
+        {
+          scale: nextScale,
+          x: px - cx - worldX * nextScale,
+          y: py - cy - worldY * nextScale,
+        },
+        r.width,
+        r.height,
+      )
+      zoomRef.current = next
+      setZoom(next)
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+
     return () => {
       el.removeEventListener('touchstart', onZoomTouchStart, true)
       el.removeEventListener('touchmove', onZoomTouchMove, true)
       el.removeEventListener('touchend', onZoomTouchEnd, true)
       el.removeEventListener('touchcancel', onZoomTouchEnd, true)
+      el.removeEventListener('wheel', onWheel)
     }
   }, [stillUrl, onZoomTouchStart, onZoomTouchMove, onZoomTouchEnd])
 
@@ -525,13 +568,17 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setSelectedId(hit?.id || null)
   }
 
-  const selected = boxes.find((b) => b.id === selectedId) || null
-
-  const openSelectedDetails = () => {
-    if (!selected) return
-    const { phrase, translation } = boxDetailArgs(selected)
+  const openBoxDetails = (box: EditableBox) => {
+    const { phrase, translation } = boxDetailArgs(box)
     if (!phrase) return
     openBreakdown(phrase, { translation })
+  }
+
+  const selectResult = (id: string) => {
+    setSelectedId(id)
+    window.requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    })
   }
 
   const zoomStyle = {
@@ -664,8 +711,8 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         </div>
       </div>
 
-      {selected && !busy ? (
-        <div className="cam-ar-sheet" role="region" aria-label={biPlain(ui.camDetailTitle)}>
+      {boxes.some((b) => b.translated || b.text) && !busy ? (
+        <div className="cam-ar-sheet cam-ar-sheet--results" role="region" aria-label={biPlain(ui.camResults)}>
           <button
             type="button"
             className="cam-ar-sheet-close"
@@ -674,48 +721,14 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           >
             ×
           </button>
-          <button
-            type="button"
-            className="cam-detail-open"
-            onClick={openSelectedDetails}
-            aria-label={biPlain(ui.camOpenDetails)}
-          >
-            {selected.text ? <span className="cam-detail-src">{selected.text}</span> : null}
-            {selected.translated ? <span className="cam-detail-tr">{selected.translated}</span> : null}
-            <span className="cam-detail-open-hint">
-              <BiText copy={ui.camOpenDetailsHint} size="sm" />
-            </span>
-          </button>
-          <div className="cam-detail-actions">
-            <button
-              type="button"
-              className="cam-tool-btn cam-tool-btn--primary"
-              onClick={openSelectedDetails}
-            >
-              <BiText copy={ui.camOpenDetails} size="sm" />
-            </button>
-            <button
-              type="button"
-              className="cam-tool-btn"
-              onClick={() => {
-                const t = selected.translated || selected.text
-                if (t) void navigator.clipboard?.writeText(t)
-              }}
-            >
-              <BiText copy={ui.camCopy} size="sm" />
-            </button>
-            {selected.translated ? (
-              <button
-                type="button"
-                className="cam-tool-btn"
-                onClick={() =>
-                  void speakManual(selected.translated, selected.to === 'zh' ? 'yue' : 'en')
-                }
-              >
-                <BiText copy={ui.speak} size="sm" />
-              </button>
-            ) : null}
-          </div>
+          <CamResultsList
+            boxes={boxes}
+            selectedId={selectedId}
+            onSelect={selectResult}
+            onOpenDetails={openBoxDetails}
+            panelRef={detailRef}
+            className="cam-results--ar"
+          />
         </div>
       ) : null}
     </div>,
