@@ -20,6 +20,7 @@ import {
 import { nudgeOverlappingRects, preferredChipRect, type LayoutRect } from '../lib/camera/overlayLayout'
 import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
 import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
+import { unwrapTranslationText } from '../lib/camera/unwrapTranslation'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
 import { useReducedMotion } from '../lib/useReducedMotion'
@@ -164,7 +165,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       const oy = layout.offsetY + b.box.y * layout.dispH
       const obw = Math.max(8, b.box.w * layout.dispW)
       const obh = Math.max(8, b.box.h * layout.dispH)
-      const label = b.translated || b.text
+      const label = unwrapTranslationText(b.translated || b.text)
       const selected = b.id === selectedId
       const matched = Boolean(b.bg && b.fg)
 
