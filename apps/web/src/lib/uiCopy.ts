@@ -345,11 +345,6 @@ export const ui = {
     zh: `已用 ${used} · 剩 ${left}`,
     jp: `ji5 jung6 ${used} · sing6 ${left}`,
   }),
-  liveUsedUnlimited: (used: string): Bi => ({
-    en: `${used} used / unlimited`,
-    zh: `已用 ${used}／無限`,
-    jp: `ji5 jung6 ${used} / mou4 haan6`,
-  }),
 
   lightTheme: { en: 'Light', zh: '淺色', jp: 'cin2 sik1' },
   darkTheme: { en: 'Dark', zh: '深色', jp: 'sam1 sik1' },
