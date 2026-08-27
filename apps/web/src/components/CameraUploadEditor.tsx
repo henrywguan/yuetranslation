@@ -250,19 +250,45 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
     paintOverlay()
   }, [boxes, paintOverlay, selectedId, zoom, imgReady])
 
+  /** Size/position the photo to fully fit the frame (same math as overlay paint). */
+  const applyImageFit = useCallback(() => {
+    const frame = frameRef.current
+    const img = imgRef.current
+    const { w: mw, h: mh } = mediaSizeRef.current
+    if (!frame || !img || !mw || !mh) return
+    const fw = frame.clientWidth
+    const fh = frame.clientHeight
+    if (!fw || !fh) return
+    const layout = mediaFitLayout(fw, fh, mw, mh, 'contain')
+    img.style.position = 'absolute'
+    img.style.left = `${layout.offsetX}px`
+    img.style.top = `${layout.offsetY}px`
+    img.style.width = `${layout.dispW}px`
+    img.style.height = `${layout.dispH}px`
+    img.style.maxWidth = 'none'
+    img.style.maxHeight = 'none'
+    img.style.objectFit = 'fill'
+  }, [])
+
   useEffect(() => {
     const frame = frameRef.current
     if (!frame) return
-    const ro = new ResizeObserver(() => paintOverlay())
+    const sync = () => {
+      applyImageFit()
+      paintOverlay()
+    }
+    const ro = new ResizeObserver(sync)
     ro.observe(frame)
+    sync()
     return () => ro.disconnect()
-  }, [paintOverlay])
+  }, [applyImageFit, paintOverlay, imgReady])
 
   const onImgLoad = () => {
     const img = imgRef.current
     if (!img) return
     mediaSizeRef.current = { w: img.naturalWidth, h: img.naturalHeight }
     setImgReady(true)
+    applyImageFit()
     paintOverlay()
   }
 

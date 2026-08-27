@@ -195,9 +195,8 @@
 }
 
 .cam-session--upload .cam-stage-wrap--zoom {
-  /* Flex child needs a definite height so absolute upload layers + img can size. */
-  flex: 1 1 auto;
-  min-height: 240px;
+  /* Same element as .cam-stage-wrap — keep the tall floor for the stage. */
+  min-height: min(42vh, 320px);
 }
 
 .cam-toolbar {
@@ -286,8 +285,11 @@
 .cam-upload-frame {
   position: relative;
   flex: 1 1 auto;
+  align-self: stretch;
   width: 100%;
+  height: 100%;
   min-height: 240px;
+  min-width: 0;
   overflow: hidden;
   background: #061018;
 }
@@ -297,8 +299,6 @@
   inset: 0;
   transform-origin: center center;
   will-change: transform;
-  display: grid;
-  place-items: center;
 }
 
 .cam-overlay-canvas--upload {
@@ -331,13 +331,15 @@
   pointer-events: none;
 }
 
-/* Must follow `.cam-image` so fit sizing wins over height:auto. */
+/* Must follow `.cam-image` so fit sizing wins over height:auto.
+   JS (applyImageFit) sets exact pixel box via mediaFitLayout; this is the fallback. */
 .cam-image.cam-image--fit {
   display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: contain;
   object-position: center;
 }
@@ -1112,6 +1114,10 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
   .cam-session--upload .cam-stage-wrap {
     flex: 1;
     max-height: none;
+    min-height: 360px;
+  }
+
+  .cam-session--upload .cam-stage-wrap--zoom {
     min-height: 360px;
   }
 
