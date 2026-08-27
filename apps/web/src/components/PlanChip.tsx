@@ -7,17 +7,24 @@ import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescree
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade, type BillingError } from '../lib/billing'
+import {
+  readBadgeUsageMetric,
+  writeBadgeUsageMetric,
+  type BadgeUsageMetric,
+} from '../lib/badgeUsagePref'
 import { openPricing } from '../lib/siteLinks'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
+import type { Entitlement } from '../lib/types'
 
 const HUB_SHEET_MQ = '(max-width: 959px)'
 
-function remainCopy(seconds: number): Bi {
-  if (seconds >= 3600) return ui.hoursLeft(Math.floor(seconds / 3600))
-  if (seconds >= 60) return ui.minsLeft(Math.ceil(seconds / 60))
-  return ui.secsLeft(seconds)
+function formatDuration(seconds: number): string {
+  const s = Math.max(0, Math.round(seconds))
+  if (s >= 3600) return `${Math.floor(s / 3600)}h`
+  if (s >= 60) return `${Math.ceil(s / 60)}m`
+  return `${s}s`
 }
 
 function planLabel(plan: string): Bi {
@@ -35,12 +42,7 @@ function formatChars(n: number): string {
   return String(Math.max(0, Math.round(n)))
 }
 
-function voiceCopy(entitlement: {
-  ttsUnlimited?: boolean
-  plan: string
-  usage: { ttsChars: number }
-  remaining: { ttsChars: number }
-}): Bi {
+function voiceCopy(entitlement: Entitlement): Bi {
   const unlimited = Boolean(
     entitlement.ttsUnlimited || entitlement.plan === 'pro' || entitlement.plan === 'max',
   )
@@ -48,23 +50,18 @@ function voiceCopy(entitlement: {
   return ui.charsLeft(formatChars(entitlement.remaining.ttsChars))
 }
 
-function formatCameraSeconds(seconds: number): string {
-  if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h`
-  if (seconds >= 60) return `${Math.ceil(seconds / 60)}m`
-  return `${Math.max(0, Math.round(seconds))}s`
+function liveCopy(entitlement: Entitlement): Bi {
+  const used = entitlement.usage.liveSeconds ?? 0
+  const left = Math.max(0, entitlement.remaining.liveSeconds ?? 0)
+  return ui.liveUsedRemaining(formatDuration(used), formatDuration(left))
 }
 
-function cameraCopy(entitlement: {
-  cameraUnlimited?: boolean
-  plan: string
-  usage: { cameraSeconds?: number }
-  remaining: { cameraSeconds?: number }
-}): Bi {
+function cameraCopy(entitlement: Entitlement): Bi {
   const unlimited = Boolean(entitlement.cameraUnlimited)
   const used = entitlement.usage.cameraSeconds ?? 0
-  if (unlimited) return ui.camMinutesUsedUnlimited(formatCameraSeconds(used))
+  if (unlimited) return ui.camMinutesUsedUnlimited(formatDuration(used))
   const left = Math.max(0, entitlement.remaining.cameraSeconds ?? 0)
-  return ui.camMinutesLeft(formatCameraSeconds(left))
+  return ui.camMinutesLeft(formatDuration(left))
 }
 
 function displayNameFromSession(email: string | undefined, meta: Record<string, unknown> | undefined) {
@@ -77,6 +74,32 @@ function displayNameFromSession(email: string | undefined, meta: Record<string, 
   return email.split('@')[0] || email
 }
 
+function canShowMetric(metric: BadgeUsageMetric, entitlement: Entitlement, showVoiceQuota: boolean): boolean {
+  if (metric === 'live') return Boolean(entitlement.allowed.live) || entitlement.loggedIn
+  if (metric === 'voice') return showVoiceQuota
+  if (metric === 'camera') return entitlement.loggedIn
+  return false
+}
+
+function resolveBadgeMetric(
+  preferred: BadgeUsageMetric,
+  entitlement: Entitlement,
+  showVoiceQuota: boolean,
+): BadgeUsageMetric | null {
+  if (canShowMetric(preferred, entitlement, showVoiceQuota)) return preferred
+  const order: BadgeUsageMetric[] = ['live', 'voice', 'camera']
+  return order.find((m) => canShowMetric(m, entitlement, showVoiceQuota)) ?? null
+}
+
+function badgeCopyFor(
+  metric: BadgeUsageMetric,
+  entitlement: Entitlement,
+): Bi {
+  if (metric === 'voice') return voiceCopy(entitlement)
+  if (metric === 'camera') return cameraCopy(entitlement)
+  return liveCopy(entitlement)
+}
+
 /** Plan indicator that expands into an account hub (plan, usage, upgrade, sign out). */
 export function PlanChip() {
   const entitlement = useYueStore((s) => s.entitlement)
@@ -87,11 +110,13 @@ export function PlanChip() {
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState(false)
   const [hubPos, setHubPos] = useState<{ top: number; right: number } | null>(null)
+  const [badgeMetric, setBadgeMetric] = useState<BadgeUsageMetric>(() => readBadgeUsageMetric())
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const hubRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const titleId = useId()
+  const badgePrefId = useId()
 
   useEffect(() => {
     let cancelled = false
@@ -130,7 +155,6 @@ export function PlanChip() {
       setHubPos({ top, right })
     }
     layout()
-    // Re-measure after the hub paints at full content height (no max-height scroll).
     const raf = window.requestAnimationFrame(layout)
     window.addEventListener('resize', layout)
     window.addEventListener('scroll', layout, true)
@@ -139,7 +163,7 @@ export function PlanChip() {
       window.removeEventListener('resize', layout)
       window.removeEventListener('scroll', layout, true)
     }
-  }, [open])
+  }, [open, badgeMetric])
 
   useEffect(() => {
     if (!open) return
@@ -201,7 +225,6 @@ export function PlanChip() {
         billingErr?.status === 400 ||
         /no stripe billing account|upgrade first/i.test(billingErr?.message || '')
       if (noCustomer) {
-        // Plan may be Pro/Max via admin without a Stripe customer — send them to subscribe.
         useYueStore.setState({
           error: billingErr.message || 'No Stripe billing account yet. Open Pricing to subscribe.',
         })
@@ -227,6 +250,22 @@ export function PlanChip() {
       setBusy(false)
     }
   }
+
+  const onBadgeMetricChange = (metric: BadgeUsageMetric) => {
+    setBadgeMetric(metric)
+    writeBadgeUsageMetric(metric)
+  }
+
+  const activeBadgeMetric = resolveBadgeMetric(badgeMetric, entitlement, showVoiceQuota)
+  const badgeOptions: Array<{ id: BadgeUsageMetric; copy: Bi; available: boolean }> = [
+    { id: 'live', copy: ui.accountBadgeLive, available: canShowMetric('live', entitlement, showVoiceQuota) },
+    { id: 'voice', copy: ui.accountBadgeVoice, available: canShowMetric('voice', entitlement, showVoiceQuota) },
+    {
+      id: 'camera',
+      copy: ui.accountBadgeCamera,
+      available: canShowMetric('camera', entitlement, showVoiceQuota),
+    },
+  ]
 
   const panel = (
     <div className="account-hub" id={panelId} role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -272,7 +311,7 @@ export function PlanChip() {
                 <BiText copy={ui.accountLive} size="sm" />
               </span>
               <span className="account-hub-stat-value">
-                <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" />
+                <BiText copy={liveCopy(entitlement)} size="sm" />
               </span>
             </li>
             {showVoiceQuota ? (
@@ -297,6 +336,35 @@ export function PlanChip() {
             ) : null}
           </ul>
         </section>
+
+        {badgeOptions.some((o) => o.available) ? (
+          <section className="account-hub-section" aria-labelledby={badgePrefId}>
+            <p className="account-hub-label" id={badgePrefId}>
+              <BiText copy={ui.accountBadgeDisplay} size="sm" />
+            </p>
+            <p className="account-hub-hint">
+              <BiText copy={ui.accountBadgeHint} size="sm" />
+            </p>
+            <div className="account-hub-seg" role="radiogroup" aria-labelledby={badgePrefId}>
+              {badgeOptions.map((opt) =>
+                opt.available ? (
+                  <label
+                    key={opt.id}
+                    className={`account-hub-seg-opt${badgeMetric === opt.id ? ' is-on' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="badge-usage-metric"
+                      checked={badgeMetric === opt.id}
+                      onChange={() => onBadgeMetricChange(opt.id)}
+                    />
+                    <BiText copy={opt.copy} size="sm" hideJp />
+                  </label>
+                ) : null,
+              )}
+            </div>
+          </section>
+        ) : null}
 
         <div className="account-hub-actions">
           {entitlement.isAdmin ? (
@@ -355,17 +423,9 @@ export function PlanChip() {
         <span className={`plan-chip plan-${plan}`}>
           <BiText copy={planLabel(plan)} size="sm" hideJp />
         </span>
-        {paid && showVoiceQuota ? (
+        {activeBadgeMetric ? (
           <span className="plan-remain">
-            <BiText copy={voiceCopy(entitlement)} size="sm" hideJp />
-          </span>
-        ) : entitlement.allowed.live ? (
-          <span className="plan-remain">
-            <BiText copy={remainCopy(entitlement.remaining.liveSeconds)} size="sm" hideJp />
-          </span>
-        ) : showVoiceQuota ? (
-          <span className="plan-remain">
-            <BiText copy={voiceCopy(entitlement)} size="sm" hideJp />
+            <BiText copy={badgeCopyFor(activeBadgeMetric, entitlement)} size="sm" hideJp />
           </span>
         ) : null}
       </button>

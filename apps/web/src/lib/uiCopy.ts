@@ -244,8 +244,21 @@ export const ui = {
   accountClose: { en: 'Close account', zh: '關閉帳戶', jp: 'gwaan1 bai3 zoeng3 wu6' },
   accountPlan: { en: 'Plan', zh: '計劃', jp: 'gai3 waak6' },
   accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },
-  accountLive: { en: 'Live time left', zh: '即時剩餘', jp: 'zik1 si4 ceoi4 jyu4' },
+  accountLive: { en: 'Live mic', zh: '即時咪', jp: 'zik1 si4 mai1' },
   accountVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },
+  accountBadgeDisplay: {
+    en: 'Badge shows',
+    zh: '角標顯示',
+    jp: 'gok3 biu1 hin2 si6',
+  },
+  accountBadgeLive: { en: 'Live mic', zh: '即時咪', jp: 'zik1 si4 mai1' },
+  accountBadgeVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },
+  accountBadgeCamera: { en: 'Camera', zh: '相機', jp: 'soeng1 gei1' },
+  accountBadgeHint: {
+    en: 'Choose what appears under your plan badge',
+    zh: '選擇計劃角標下方顯示的用量',
+    jp: 'syun2 zaak6 gai3 waak6 gok3 biu1 haa6 fong1 hin2 si6 dik1 jung6 loeng6',
+  },
   addToHomeScreen: {
     en: 'Add to Home Screen',
     zh: '加到主畫面',
@@ -325,6 +338,17 @@ export const ui = {
     en: `${n}s left`,
     zh: `剩 ${n} 秒`,
     jp: `sing6 ${n} miu5`,
+  }),
+  /** Compact live mic: used + remaining, e.g. "3m used · 17m left". */
+  liveUsedRemaining: (used: string, left: string): Bi => ({
+    en: `${used} used · ${left} left`,
+    zh: `已用 ${used} · 剩 ${left}`,
+    jp: `ji5 jung6 ${used} · sing6 ${left}`,
+  }),
+  liveUsedUnlimited: (used: string): Bi => ({
+    en: `${used} used / unlimited`,
+    zh: `已用 ${used}／無限`,
+    jp: `ji5 jung6 ${used} / mou4 haan6`,
   }),
 
   lightTheme: { en: 'Light', zh: '淺色', jp: 'cin2 sik1' },
