@@ -9,6 +9,7 @@ import { BiText } from './BiText'
 import { CamResultsList } from './CamResultsList'
 import { cameraScan, type CameraBox } from '../lib/api'
 import { mediaFitLayout } from '../lib/camera/geometry'
+import { nudgeOverlappingRects, type LayoutRect } from '../lib/camera/overlayLayout'
 import {
   drawCornerBrackets,
   drawGlassPanel,
@@ -171,6 +172,18 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
     ctx.clearRect(0, 0, fw, fh)
     const hits: HitRect[] = []
 
+    type Planned = {
+      id: string
+      label: string
+      selected: boolean
+      fontSize: number
+      padX: number
+      pref: LayoutRect
+    }
+
+    const planned: Planned[] = []
+    const prefs: LayoutRect[] = []
+
     for (const b of boxesRef.current) {
       const ox = layout.offsetX + b.box.x * layout.dispW
       const oy = layout.offsetY + b.box.y * layout.dispH
@@ -179,46 +192,63 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       const label = b.translated || b.text
       const selected = b.id === selectedId
 
-      // Lock panel to the placed / OCR word region (slight pad so ink is covered).
+      // Preferred panel locked to the placed / OCR word region (jade glass + collision nudge).
       const inflateX = obw * 0.05
       const inflateY = obh * 0.1
-      const lx0 = ox - inflateX
-      const ly0 = oy - inflateY
-      const lx1 = ox + obw + inflateX
-      const ly1 = oy + obh + inflateY
-      const drawX = mapX(lx0)
-      const drawY = mapY(ly0)
-      const drawW = Math.max(8, mapX(lx1) - drawX)
-      const drawH = Math.max(8, mapY(ly1) - drawY)
+      const drawX = mapX(ox - inflateX)
+      const drawY = mapY(oy - inflateY)
+      const drawW = Math.max(8, mapX(ox + obw + inflateX) - drawX)
+      const drawH = Math.max(8, mapY(oy + obh + inflateY) - drawY)
 
       const padX = Math.max(4, drawW * 0.04)
       const maxFont = Math.min(64, 32 + scale * 16)
       let fontSize = Math.max(11, Math.min(maxFont, drawH * 0.78))
-      let textW = 0
-
       if (label) {
         const minFont = Math.max(9, 8 + scale * 2)
         for (; fontSize >= minFont; fontSize -= 0.5) {
-          textW = measureOverlayLabel(ctx, label, fontSize)
+          const textW = measureOverlayLabel(ctx, label, fontSize)
           if (textW + padX * 2 <= drawW) break
         }
       }
 
-      drawGlassPanel(ctx, drawX, drawY, drawW, drawH, { selected })
-      drawCornerBrackets(ctx, drawX, drawY, drawW, drawH, { selected })
-      if (label) {
-        drawOverlayLabel(ctx, label, drawX + padX, drawY + drawH / 2, Math.max(8, drawW - padX * 2), fontSize, {
-          selected,
-        })
+      const pref: LayoutRect = { id: b.id, x: drawX, y: drawY, w: drawW, h: drawH }
+      prefs.push(pref)
+      planned.push({ id: b.id, label, selected, fontSize, padX, pref })
+    }
+
+    const nudged = nudgeOverlappingRects(prefs, {
+      gap: 6,
+      iterations: 10,
+      homePull: 0.12,
+      preferVertical: true,
+      bounds: { x: 2, y: 2, w: fw - 4, h: fh - 4 },
+    })
+    const byId = new Map(nudged.map((r) => [r.id, r]))
+
+    const paintOrder = [...planned].sort((a, b) => Number(a.selected) - Number(b.selected))
+    for (const p of paintOrder) {
+      const rect = byId.get(p.id) || p.pref
+      drawGlassPanel(ctx, rect.x, rect.y, rect.w, rect.h, { selected: p.selected })
+      drawCornerBrackets(ctx, rect.x, rect.y, rect.w, rect.h, { selected: p.selected })
+      if (p.label) {
+        drawOverlayLabel(
+          ctx,
+          p.label,
+          rect.x + p.padX,
+          rect.y + rect.h / 2,
+          Math.max(8, rect.w - p.padX * 2),
+          p.fontSize,
+          { selected: p.selected },
+        )
       }
 
       const slop = 4
       hits.push({
-        id: b.id,
-        x: (drawX - slop) / fw,
-        y: (drawY - slop) / fh,
-        w: (drawW + slop * 2) / fw,
-        h: (drawH + slop * 2) / fh,
+        id: p.id,
+        x: (rect.x - slop) / fw,
+        y: (rect.y - slop) / fh,
+        w: (rect.w + slop * 2) / fw,
+        h: (rect.h + slop * 2) / fh,
       })
     }
 
