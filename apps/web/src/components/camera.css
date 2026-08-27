@@ -298,17 +298,6 @@
   place-items: center;
 }
 
-/* Fill the frame; contain keeps the whole photo visible (no bottom crop). */
-.cam-image--fit {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  object-fit: contain;
-  object-position: center;
-}
-
 .cam-overlay-canvas--upload {
   z-index: 3;
   touch-action: none;
@@ -337,6 +326,16 @@
   max-width: 100%;
   height: auto;
   pointer-events: none;
+}
+
+/* Must follow `.cam-image` so height:100% + contain wins over height:auto. */
+.cam-image.cam-image--fit {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
 }
 
 .cam-box {
