@@ -293,7 +293,7 @@
 .cam-overlay-canvas--upload {
   z-index: 3;
   touch-action: none;
-  cursor: crosshair;
+  cursor: pointer;
 }
 
 .cam-stage-wrap.is-draw {
