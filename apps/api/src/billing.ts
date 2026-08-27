@@ -85,16 +85,28 @@ export async function startPortal(req: AuthedRequest, res: Response) {
 
   const profile = await getProfile(auth.userId)
   if (!profile?.stripe_customer_id) {
-    res.status(400).json({ message: 'No billing account yet. Upgrade first.' })
+    res.status(400).json({
+      message: 'No Stripe billing account yet. Subscribe from Pricing first.',
+      code: 'no_stripe_customer',
+    })
     return
   }
 
-  const session = await client.billingPortal.sessions.create({
-    customer: profile.stripe_customer_id,
-    return_url: `${appUrl(req)}/#/app`,
-  })
-
-  res.json({ url: session.url })
+  try {
+    const session = await client.billingPortal.sessions.create({
+      customer: profile.stripe_customer_id,
+      return_url: `${appUrl(req)}/#/app`,
+    })
+    res.json({ url: session.url })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Could not open billing portal'
+    const portalHint =
+      /customer portal|billing portal|configuration/i.test(msg)
+        ? ' Activate Customer Portal in Stripe Dashboard → Settings → Billing → Customer portal.'
+        : ''
+    console.error('Stripe billing portal error', e)
+    res.status(502).json({ message: `${msg}${portalHint}`, code: 'portal_failed' })
+  }
 }
 
 async function setPlanForUser(userId: string, plan: 'free' | 'pro' | 'max', customerId?: string, subscriptionId?: string) {
