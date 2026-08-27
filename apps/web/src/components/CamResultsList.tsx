@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { BiText } from './BiText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -30,7 +30,22 @@ export function CamResultsList({
   panelRef,
   className,
 }: Props) {
+  const itemRefs = useRef(new Map<string, HTMLButtonElement>())
   const results = boxes.filter((b) => Boolean(b.translated || b.text))
+
+  // When an overlay (or list) selects a region, scroll that row into view and focus it.
+  useEffect(() => {
+    if (!selectedId) return
+    const el = itemRefs.current.get(selectedId)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    // Defer focus so smooth scroll isn’t cancelled by focus scrolling.
+    const t = window.setTimeout(() => {
+      el.focus({ preventScroll: true })
+    }, 120)
+    return () => window.clearTimeout(t)
+  }, [selectedId])
+
   if (!results.length) return null
 
   const selected = results.find((b) => b.id === selectedId) || results[0]!
@@ -64,6 +79,11 @@ export function CamResultsList({
                 type="button"
                 role="option"
                 aria-selected={active}
+                data-result-id={b.id}
+                ref={(node) => {
+                  if (node) itemRefs.current.set(b.id, node)
+                  else itemRefs.current.delete(b.id)
+                }}
                 className={`cam-results-item${active ? ' is-selected' : ''}`}
                 onClick={() => onSelect(b.id)}
               >

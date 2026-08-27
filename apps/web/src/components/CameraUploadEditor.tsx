@@ -131,6 +131,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   const selectResult = useCallback((id: string | null) => {
     setSelectedId(id)
     if (!id) return
+    // Bring the Results panel on-screen; CamResultsList scrolls the matching row.
     window.requestAnimationFrame(() => {
       detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     })
