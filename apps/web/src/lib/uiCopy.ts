@@ -635,6 +635,11 @@ export const ui = {
   annual: { en: 'Annual', zh: '年費', jp: 'nin4 fai3' },
   save20: { en: 'save ~20%', zh: '慳大約兩成', jp: 'haan1 daai6 joek3 loeng5 sing4' },
   billedAnnually: { en: 'billed annually', zh: '按年收費', jp: 'on3 nin4 sau1 fai3' },
+  billedAnnuallyTotal: (total: string): Bi => ({
+    en: `$${total} billed annually`,
+    zh: `年繳 $${total}`,
+    jp: `nin4 gaau2 $${total}`,
+  }),
   planMax: { en: 'Max', zh: '旗艦版', jp: 'kei4 gaam3 baan2' },
   tagFree: { en: 'For trying it out', zh: '試用啱啱好', jp: 'si3 jung6 aam1 aam1 hou2' },
   tagPro: { en: 'For regular conversations', zh: '日常傾計用', jp: 'jat6 soeng4 king1 gai2 jung6' },

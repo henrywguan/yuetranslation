@@ -63,6 +63,12 @@ function price(plan: MarketingPlan, billing: Billing): string {
   return `$${value}`
 }
 
+/** Yearly charge shown under the effective $/mo on annual cards. */
+function annualTotalLabel(plan: MarketingPlan): string {
+  const total = Math.round(plan.annual * 12 * 100) / 100
+  return Number.isInteger(total) ? String(total) : total.toFixed(2)
+}
+
 async function onPlanCta(plan: MarketingPlan, billing: Billing) {
   if (plan.unavailable) return
   if (plan.ctaOpens === 'app') {
@@ -164,7 +170,7 @@ export function PricingPage() {
               </p>
               {billing === 'annual' && plan.annual > 0 ? (
                 <p className="pp-billed">
-                  <BiText copy={ui.billedAnnually} size="sm" />
+                  <BiText copy={ui.billedAnnuallyTotal(annualTotalLabel(plan))} size="sm" />
                 </p>
               ) : (
                 <p className="pp-billed">&nbsp;</p>
