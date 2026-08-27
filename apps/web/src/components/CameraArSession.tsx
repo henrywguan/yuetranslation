@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
-import { captureFrame, estimateShift, mediaFitLayout, sampleVideoImageData } from '../lib/camera/geometry'
+import { captureFrame, mediaFitLayout } from '../lib/camera/geometry'
 import {
   clampPan,
   clampZoom,
@@ -51,7 +51,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   const boxesRef = useRef<EditableBox[]>([])
   const hitsRef = useRef<HitRect[]>([])
   const appearAtRef = useRef<Map<string, number>>(new Map())
-  const prevSample = useRef<ImageData | null>(null)
   const scanning = useRef(false)
   const stillUrlRef = useRef<string | null>(null)
   const zoomRef = useRef<ZoomTransform>(IDENTITY_ZOOM)
@@ -161,7 +160,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       let drawH = Math.max(8, mapY(ly1) - drawY)
 
       const padX = matched ? Math.max(4, drawW * 0.04) : 10
-      const padY = matched ? Math.max(3, drawH * 0.08) : 8
       // Font tracks zoomed box height so text grows as the user pinches in.
       const maxFont = matched ? Math.min(56, 28 + scale * 14) : Math.min(64, 32 + scale * 16)
       let fontSize = Math.max(matched ? 11 : 16, Math.min(maxFont, drawH * 0.78))
@@ -174,10 +172,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           if (textW + padX * 2 <= drawW) break
         }
         textW = measureOverlayLabel(ctx, label, fontSize)
-        if (!matched) {
-          drawW = Math.max(drawW, textW + padX * 2)
-          drawH = Math.max(drawH, fontSize + padY * 2.15)
-        }
       }
 
       const born = appearAtRef.current.get(b.id) ?? now
@@ -259,42 +253,12 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     }
   }, [meter])
 
-  // Live overlay tracking — paused once the capture is frozen to a still.
+  // Repaint while overlays are visible (enter animation + zoom sync).
   useEffect(() => {
     let raf = 0
     const tick = () => {
       raf = requestAnimationFrame(tick)
-      if (stillUrlRef.current) {
-        paintOverlay()
-        return
-      }
-      const video = videoRef.current
-      if (!video || video.readyState < 2) {
-        paintOverlay()
-        return
-      }
-      if (boxesRef.current.length) {
-        const sample = sampleVideoImageData(video, 48)
-        if (sample) {
-          const shift = estimateShift(prevSample.current, sample)
-          prevSample.current = sample
-          if (Math.abs(shift.dx) + Math.abs(shift.dy) > 0.002) {
-            boxesRef.current = boxesRef.current.map((b) => ({
-              ...b,
-              box: {
-                x: Math.min(0.98, Math.max(0, b.box.x + shift.dx)),
-                y: Math.min(0.98, Math.max(0, b.box.y + shift.dy)),
-                w: b.box.w,
-                h: b.box.h,
-              },
-            }))
-            setBoxes([...boxesRef.current])
-          }
-        }
-      } else {
-        prevSample.current = null
-      }
-      paintOverlay()
+      if (boxesRef.current.length) paintOverlay()
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
@@ -304,7 +268,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setStillUrl(null)
     setZoom(IDENTITY_ZOOM)
     zoomRef.current = IDENTITY_ZOOM
-    prevSample.current = null
     const video = videoRef.current
     if (video && video.paused) {
       void video.play().catch(() => undefined)
