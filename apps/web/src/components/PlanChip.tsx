@@ -59,9 +59,7 @@ function cameraCopy(entitlement: {
   usage: { cameraSeconds?: number }
   remaining: { cameraSeconds?: number }
 }): Bi {
-  const unlimited = Boolean(
-    entitlement.cameraUnlimited || entitlement.plan === 'pro' || entitlement.plan === 'max',
-  )
+  const unlimited = Boolean(entitlement.cameraUnlimited)
   const used = entitlement.usage.cameraSeconds ?? 0
   if (unlimited) return ui.camMinutesUsedUnlimited(formatCameraSeconds(used))
   const left = Math.max(0, entitlement.remaining.cameraSeconds ?? 0)

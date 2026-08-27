@@ -25,7 +25,7 @@ const COMPARISON: Row[] = [
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   {
     label: ui.cmpCamera,
-    values: [ui.valCamFree, ui.valCamPro, ui.valCamPro],
+    values: [ui.valCamFree, ui.valCamPro, ui.valCamMax],
   },
   {
     label: ui.cmpTts,
@@ -209,7 +209,7 @@ export function PricingPage() {
                 <th className="pp-col-featured">
                   <BiText copy={ui.planPro} size="sm" />
                 </th>
-                <th className="pp-col-max is-unavailable" title={ui.maxPlanUnavailable.en}>
+                <th className="pp-col-max">
                   <BiText copy={ui.planMax} size="sm" />
                 </th>
               </tr>
@@ -226,7 +226,7 @@ export function PricingPage() {
                   <td className="pp-col-featured">
                     <BiText copy={row.values[1]} size="sm" />
                   </td>
-                  <td className="pp-col-max is-unavailable">
+                  <td className="pp-col-max">
                     <BiText copy={row.values[2]} size="sm" />
                   </td>
                 </tr>

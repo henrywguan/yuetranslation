@@ -58,7 +58,8 @@ function ttsLimitChars(plan: ProfileRow['plan']): number {
 }
 
 function cameraLimitSeconds(plan: ProfileRow['plan']): number {
-  if (plan === 'pro' || plan === 'max') return 0
+  if (plan === 'max') return 0
+  if (plan === 'pro') return env.proCameraMinutes * 60
   return env.freeAllowCamera ? env.freeCameraMinutes * 60 : 0
 }
 

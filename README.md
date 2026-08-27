@@ -7,7 +7,7 @@ Live translator PWA with freemium entitlements (Supabase + Stripe on Vercel, opt
 
 **Stack / 技术栈：** Azure Speech (`zh-HK` STT/TTS) + Azure Vision (camera OCR) + OpenAI-compatible LLM (colloquial 粤语, e.g. DeepSeek).
 
-**Free for everyone / 人人可用：** text translate, Jyutping, and guest tap-to-play voice. **Free** TTS is metered (hard char cap); **Pro/Max** TTS is unlimited (usage tracked). Live mic is metered; auto-speak is Pro/Max. Camera translation requires sign-in (Free camera minutes cap).
+**Free for everyone / 人人可用：** text translate, Jyutping, and guest tap-to-play voice. **Free** TTS is metered (hard char cap); **Pro/Max** TTS is unlimited (usage tracked). Live mic is metered; auto-speak is Pro/Max. Camera translation requires sign-in (Free 5 min/mo; Pro 5 hr/mo; Max unlimited).
 
 **人人可用：** 文字翻译、粤拼、访客点击朗读。**免费版** TTS 有字数硬上限；**专业版／旗舰版** TTS 无限（仍计数）。实时麦克风计量；自动朗读属专业版／旗舰版。相机翻译须登录（免费版有相机分钟上限）。
 

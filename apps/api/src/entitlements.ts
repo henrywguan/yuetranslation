@@ -14,7 +14,7 @@ export type Entitlement = {
     live_minutes: number
     /** 0 when TTS is unlimited (Pro/Max) or disabled. */
     tts_chars: number
-    /** 0 when camera is unlimited (Pro/Max) or disabled. */
+    /** 0 when camera is unlimited (Max) or disabled. */
     camera_minutes: number
     auto_speak: boolean
     can_live: boolean
@@ -32,7 +32,7 @@ export type Entitlement = {
   remaining: { liveSeconds: number; ttsChars: number; cameraSeconds: number }
   /** Pro/Max: usage is tracked but never gates the speaker. */
   ttsUnlimited: boolean
-  /** Pro/Max: usage is tracked but never gates camera. */
+  /** Max: usage is tracked but never gates camera. */
   cameraUnlimited: boolean
   upgradeUrl: string
   loginUrl: string
@@ -66,9 +66,9 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     return {
       plan: 'pro',
       live_minutes: env.proLiveMinutes,
-      // Unlimited TTS / camera — usage is still metered; 0 means no hard cap.
+      // Unlimited TTS — usage is still metered; 0 means no hard cap.
       tts_chars: 0,
-      camera_minutes: 0,
+      camera_minutes: env.proCameraMinutes,
       auto_speak: true,
       can_live: true,
       can_camera: true,
@@ -217,7 +217,7 @@ function buildSnapshot(
   const liveLimit = Math.max(0, limits.live_minutes) * 60
   const cameraLimit = Math.max(0, limits.camera_minutes) * 60
   const ttsUnlimited = plan === 'pro' || plan === 'max'
-  const cameraUnlimited = plan === 'pro' || plan === 'max'
+  const cameraUnlimited = plan === 'max'
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
   const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
