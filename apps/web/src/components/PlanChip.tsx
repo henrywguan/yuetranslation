@@ -6,7 +6,8 @@ import { GlowRotateButton } from './GlowRotateButton'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
-import { openBillingPortal, openUpgrade } from '../lib/billing'
+import { openBillingPortal, openUpgrade, type BillingError } from '../lib/billing'
+import { openPricing } from '../lib/siteLinks'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
@@ -184,12 +185,34 @@ export function PlanChip() {
 
   const onUpgrade = () => {
     setOpen(false)
-    void openUpgrade('pro', 'month').catch(() => loadBootstrap())
+    void openUpgrade('pro', 'month').catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : 'Upgrade failed'
+      useYueStore.setState({ error: message })
+      void loadBootstrap()
+    })
   }
 
   const onBilling = () => {
     setOpen(false)
-    void openBillingPortal().catch(() => loadBootstrap())
+    void openBillingPortal().catch((err: unknown) => {
+      const billingErr = err as BillingError
+      const noCustomer =
+        billingErr?.code === 'no_stripe_customer' ||
+        billingErr?.status === 400 ||
+        /no stripe billing account|upgrade first/i.test(billingErr?.message || '')
+      if (noCustomer) {
+        // Plan may be Pro/Max via admin without a Stripe customer — send them to subscribe.
+        useYueStore.setState({
+          error: billingErr.message || 'No Stripe billing account yet. Open Pricing to subscribe.',
+        })
+        openPricing()
+        return
+      }
+      useYueStore.setState({
+        error: billingErr?.message || 'Could not open billing portal',
+      })
+      void loadBootstrap()
+    })
   }
 
   const onSignOut = async () => {
