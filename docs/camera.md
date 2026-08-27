@@ -7,7 +7,7 @@ Sign-in-only mode for AR live overlay and upload-with-boxes translation (English
 ## Paths / 路徑
 
 1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Overlays cover each source word region with a fill sampled from that region’s background (Google Translate–style), with contrasting ink — not the jade glass used in upload. Overlays stay locked to OCR positions (no drift). Pinch-zoom or mouse-wheel the still (overlay type scales up sharply with zoom). Tap an overlay to open its detail sheet. Clear resumes the live preview. X exits to the AR / Upload choice modal.
-2. **Upload image** — still photo; auto-detect or **Translate all** on OCR regions. Jade/glass overlays locked to each detected word (not draggable). Mouse-wheel zoom (and slider); overlay text scales in screen space so it stays crisp. Selectable Results list for every region.
+2. **Upload image** — still photo; draw boxes and/or auto-detect; **Translate all** optional. Jade/glass overlays lock to each placed/OCR word region (not draggable after placement). Mouse-wheel zoom (and slider); overlay text scales in screen space so it stays crisp. Selectable Results list for every region.
 
 Entry: **Cam** tab → floating modal (AR vs Upload). Guests see sign-in first.
 
@@ -45,14 +45,14 @@ Apply Supabase migration `004_camera_usage.sql`.
 
 Scan body: `{ image: dataUrl|base64, boxes?: [{x,y,w,h}], target?: 'en'|'zh', ocrOnly?: boolean }`.
 
-OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are set. Requires a **Vision or multi-service Cognitive Services** resource — the Speech key alone does not grant OCR access. Without Vision, engine is `demo` (empty OCR). Invalid credentials return `visionAuthFailed: true` instead of a 500 error.
+OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are set. Requires a **Vision or multi-service Cognitive Services** resource — the Speech key alone does not grant OCR access. Without Vision, engine is `demo` (empty OCR — draw boxes manually). Invalid credentials return `visionAuthFailed: true` instead of a 500 error.
 
 ## Env / 環境變數
 
 - `YUE_FREE_CAMERA_MINUTES` (default 5)
 - `YUE_PRO_CAMERA_MINUTES` (default 300)
 - `YUE_FREE_ALLOW_CAMERA` (default 1)
-- `AZURE_VISION_KEY` — subscription key from a Vision / multi-service resource (optional)
+- `AZURE_VISION_KEY` — subscription key from a Vision / multi-service resource (optional for manual box mode)
 - `AZURE_VISION_ENDPOINT` — e.g. `https://<resource-name>.cognitiveservices.azure.com` from the Azure portal (recommended). If omitted but key is set, falls back to `https://{AZURE_VISION_REGION|AZURE_SPEECH_REGION}.api.cognitive.microsoft.com`
 
 ## Mobile / 手機

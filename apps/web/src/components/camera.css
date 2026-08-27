@@ -300,6 +300,10 @@
   touch-action: none;
 }
 
+.cam-stage-wrap.is-draw .cam-overlay-canvas--upload {
+  cursor: crosshair;
+}
+
 .cam-stage {
   position: relative;
   display: inline-block;
