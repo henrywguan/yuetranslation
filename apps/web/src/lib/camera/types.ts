@@ -44,6 +44,11 @@ export function newBox(box: CameraBox): EditableBox {
   }
 }
 
+/** After Translate / Auto-detect fills a translation, the overlay stays pinned. */
+export function isOverlayLocked(box: EditableBox): boolean {
+  return Boolean(box.translated.trim())
+}
+
 export function clampBox(box: CameraBox): CameraBox {
   const x = Math.min(0.98, Math.max(0, box.x))
   const y = Math.min(0.98, Math.max(0, box.y))

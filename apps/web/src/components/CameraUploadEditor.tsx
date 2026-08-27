@@ -18,12 +18,15 @@ import {
 import {
   clampPan,
   clampZoom,
+  touchDistance,
+  touchMidpoint,
   ZOOM_MAX,
   ZOOM_MIN,
   type ZoomTransform,
 } from '../lib/camera/pinchZoom'
 import {
   clampBox,
+  isOverlayLocked,
   newBox,
   regionToEditable,
   boxDetailArgs,
@@ -84,6 +87,28 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
     startX: number
     startY: number
   } | null>(null)
+  const boxDrag = useRef<{
+    id: string
+    startNormX: number
+    startNormY: number
+    originBox: CameraBox
+  } | null>(null)
+  const pinchRef = useRef<{
+    mode: 'pinch' | 'pan' | null
+    startDist: number
+    startScale: number
+    startX: number
+    startY: number
+    lastX: number
+    lastY: number
+  } | null>(null)
+
+  const clearPointerGestures = () => {
+    pendingDraw.current = null
+    drawing.current = null
+    panDrag.current = null
+    boxDrag.current = null
+  }
 
   useEffect(() => {
     boxesRef.current = boxes
@@ -368,11 +393,80 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
 
   useEffect(() => {
     const wrap = frameRef.current?.parentElement
-    if (!wrap) return
+    const frame = frameRef.current
+    if (!wrap || !frame || !imgReady) return
+
+    const apply = (next: ZoomTransform) => {
+      const clamped = clampPan(next, frame.clientWidth, frame.clientHeight)
+      zoomRef.current = clamped
+      setZoom(clamped)
+    }
+
+    const onZoomTouchStart = (e: TouchEvent) => {
+      const touches = e.touches
+      if (touches.length === 2) {
+        e.preventDefault()
+        clearPointerGestures()
+        const a = touches[0]!
+        const b = touches[1]!
+        const mid = touchMidpoint(a, b)
+        const z = zoomRef.current
+        pinchRef.current = {
+          mode: 'pinch',
+          startDist: Math.max(1, touchDistance(a, b)),
+          startScale: z.scale,
+          startX: z.x,
+          startY: z.y,
+          lastX: mid.x,
+          lastY: mid.y,
+        }
+      } else if (touches.length === 1 && zoomRef.current.scale > 1.01) {
+        // Let single-finger pan fall through to pointer handlers when not pinching.
+        pinchRef.current = null
+      } else {
+        pinchRef.current = null
+      }
+    }
+
+    const onZoomTouchMove = (e: TouchEvent) => {
+      const state = pinchRef.current
+      if (!state || state.mode !== 'pinch' || e.touches.length !== 2) return
+      e.preventDefault()
+      clearPointerGestures()
+      const a = e.touches[0]!
+      const b = e.touches[1]!
+      const dist = Math.max(1, touchDistance(a, b))
+      const mid = touchMidpoint(a, b)
+      const scale = clampZoom(state.startScale * (dist / state.startDist))
+      apply({
+        scale,
+        x: state.startX + (mid.x - state.lastX),
+        y: state.startY + (mid.y - state.lastY),
+      })
+    }
+
+    const onZoomTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length >= 2) {
+        const a = e.touches[0]!
+        const b = e.touches[1]!
+        const mid = touchMidpoint(a, b)
+        const z = zoomRef.current
+        pinchRef.current = {
+          mode: 'pinch',
+          startDist: Math.max(1, touchDistance(a, b)),
+          startScale: z.scale,
+          startX: z.x,
+          startY: z.y,
+          lastX: mid.x,
+          lastY: mid.y,
+        }
+        return
+      }
+      pinchRef.current = null
+    }
+
     const onWheelNative = (e: WheelEvent) => {
       e.preventDefault()
-      const frame = frameRef.current
-      if (!frame) return
       const fr = frame.getBoundingClientRect()
       const z = zoomRef.current
       const nextScale = clampZoom(z.scale * (e.deltaY > 0 ? 0.92 : 1.08))
@@ -383,15 +477,26 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       const cy = fr.height / 2
       const worldX = (px - cx - z.x) / z.scale
       const worldY = (py - cy - z.y) / z.scale
-      applyZoom({
+      apply({
         scale: nextScale,
         x: px - cx - worldX * nextScale,
         y: py - cy - worldY * nextScale,
       })
     }
+
+    wrap.addEventListener('touchstart', onZoomTouchStart, { passive: false, capture: true })
+    wrap.addEventListener('touchmove', onZoomTouchMove, { passive: false, capture: true })
+    wrap.addEventListener('touchend', onZoomTouchEnd, { capture: true })
+    wrap.addEventListener('touchcancel', onZoomTouchEnd, { capture: true })
     wrap.addEventListener('wheel', onWheelNative, { passive: false })
-    return () => wrap.removeEventListener('wheel', onWheelNative)
-  }, [applyZoom, imgReady])
+    return () => {
+      wrap.removeEventListener('touchstart', onZoomTouchStart, true)
+      wrap.removeEventListener('touchmove', onZoomTouchMove, true)
+      wrap.removeEventListener('touchend', onZoomTouchEnd, true)
+      wrap.removeEventListener('touchcancel', onZoomTouchEnd, true)
+      wrap.removeEventListener('wheel', onWheelNative)
+    }
+  }, [imgReady])
 
   const hitFromClient = (clientX: number, clientY: number): string | null => {
     const canvas = overlayRef.current
@@ -406,18 +511,32 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   }
 
   const onPointerDown = (e: ReactPointerEvent) => {
+    if (pinchRef.current?.mode === 'pinch') return
     const p = toNorm(e.clientX, e.clientY)
     if (!p) return
     ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
 
-    // Existing boxes: select only — never drag / resize after placement.
     const painted = hitFromClient(e.clientX, e.clientY)
     if (painted) {
       selectResult(painted)
       pendingDraw.current = null
       panDrag.current = null
+      const box = boxesRef.current.find((b) => b.id === painted)
+      // Draft / pre-translate boxes can be dragged; translated OCR overlays stay locked.
+      if (box && !isOverlayLocked(box)) {
+        boxDrag.current = {
+          id: painted,
+          startNormX: p.x,
+          startNormY: p.y,
+          originBox: { ...box.box },
+        }
+      } else {
+        boxDrag.current = null
+      }
       return
     }
+
+    boxDrag.current = null
 
     if (drawMode) {
       pendingDraw.current = {
@@ -444,6 +563,30 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   }
 
   const onPointerMove = (e: ReactPointerEvent) => {
+    if (pinchRef.current?.mode === 'pinch') return
+
+    if (boxDrag.current) {
+      const p = toNorm(e.clientX, e.clientY)
+      if (!p) return
+      const drag = boxDrag.current
+      const dx = p.x - drag.startNormX
+      const dy = p.y - drag.startNormY
+      const nextBox = clampBox({
+        x: drag.originBox.x + dx,
+        y: drag.originBox.y + dy,
+        w: drag.originBox.w,
+        h: drag.originBox.h,
+      })
+      setBoxes((prev) => {
+        const next = prev.map((b) =>
+          b.id === drag.id ? { ...b, box: nextBox, dirty: true } : b,
+        )
+        boxesRef.current = next
+        return next
+      })
+      return
+    }
+
     if (panDrag.current) {
       const pan = panDrag.current
       applyZoom({
@@ -490,9 +633,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   }
 
   const onPointerUp = () => {
-    pendingDraw.current = null
-    drawing.current = null
-    panDrag.current = null
+    clearPointerGestures()
   }
 
   const openBoxDetails = (box: EditableBox) => {
