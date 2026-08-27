@@ -6,8 +6,8 @@ Sign-in-only mode for AR live overlay and upload-with-boxes translation (English
 
 ## Paths / 路徑
 
-1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Overlays cover each source word region with a fill sampled from that region’s background (Google Translate–style), with contrasting ink — not the jade glass used in upload. Overlays stay locked to OCR positions (no drift). Pinch-zoom or mouse-wheel the still (overlay type scales up sharply with zoom). Tap an overlay to open its detail sheet. Clear resumes the live preview. X exits to the AR / Upload choice modal.
-2. **Upload image** — still photo; draw boxes and/or auto-detect; **Translate all** optional. Jade/glass overlays lock to each placed/OCR word region (not draggable after placement). Mouse-wheel zoom (and slider); overlay text scales in screen space so it stays crisp. Selectable Results list for every region.
+1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Each region gets a tight source cover plus a floating translation chip (Google-style); unselected regions stay soft/outlined so dense packing stays distinct, and the selected region gets a full opaque cover. Chips use collision nudging so they don’t clip into each other. Pinch-zoom or mouse-wheel the still. Tap a chip/cover to open its detail sheet. Clear resumes the live preview. X exits to the AR / Upload choice modal.
+2. **Upload image** — still photo; draw boxes and/or auto-detect; **Translate all** optional. Jade/glass overlays lock to each placed/OCR word region (not draggable after placement), with the same collision nudge so overlapping panels separate slightly. Mouse-wheel zoom (and slider); overlay text scales in screen space so it stays crisp. Selectable Results list for every region.
 
 Entry: **Cam** tab → floating modal (AR vs Upload). Guests see sign-in first.
 

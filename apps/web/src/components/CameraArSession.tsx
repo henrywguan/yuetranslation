@@ -12,10 +12,12 @@ import {
   type ZoomTransform,
 } from '../lib/camera/pinchZoom'
 import {
-  drawMatchedLabel,
+  drawFloatChip,
   drawMatchedPanel,
+  drawSourceOutline,
   measureOverlayLabel,
 } from '../lib/camera/overlayPaint'
+import { nudgeOverlappingRects, preferredChipRect, type LayoutRect } from '../lib/camera/overlayLayout'
 import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
 import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
@@ -138,6 +140,25 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     const hits: HitRect[] = []
     const now = performance.now()
 
+    type Planned = {
+      id: string
+      label: string
+      selected: boolean
+      matched: boolean
+      bg?: { r: number; g: number; b: number }
+      fg?: { r: number; g: number; b: number }
+      coverX: number
+      coverY: number
+      coverW: number
+      coverH: number
+      fontSize: number
+      ease: number
+      chipPref: LayoutRect
+    }
+
+    const planned: Planned[] = []
+    const chipPrefs: LayoutRect[] = []
+
     for (const b of boxesRef.current) {
       const ox = layout.offsetX + b.box.x * layout.dispW
       const oy = layout.offsetY + b.box.y * layout.dispH
@@ -147,66 +168,145 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       const selected = b.id === selectedId
       const matched = Boolean(b.bg && b.fg)
 
-      // Layout box → screen via current pinch pan/zoom.
-      const inflateX = matched ? obw * 0.05 : 0
-      const inflateY = matched ? obh * 0.1 : 0
-      const lx0 = ox - inflateX
-      const ly0 = oy - inflateY
-      const lx1 = ox + obw + inflateX
-      const ly1 = oy + obh + inflateY
-      let drawX = mapX(lx0)
-      let drawY = mapY(ly0)
-      let drawW = Math.max(8, mapX(lx1) - drawX)
-      let drawH = Math.max(8, mapY(ly1) - drawY)
-
-      const padX = matched ? Math.max(4, drawW * 0.04) : 10
-      // Font tracks zoomed box height so text grows as the user pinches in.
-      const maxFont = matched ? Math.min(56, 28 + scale * 14) : Math.min(64, 32 + scale * 16)
-      let fontSize = Math.max(matched ? 11 : 16, Math.min(maxFont, drawH * 0.78))
-      let textW = 0
-
-      if (label) {
-        const minFont = matched ? Math.max(9, 8 + scale * 2) : Math.max(14, 12 + scale * 2)
-        for (; fontSize >= minFont; fontSize -= 0.5) {
-          textW = measureOverlayLabel(ctx, label, fontSize)
-          if (textW + padX * 2 <= drawW) break
-        }
-        textW = measureOverlayLabel(ctx, label, fontSize)
-      }
+      // Tight cover on the source glyphs (no heavy inflate — chips float separately).
+      const inflateX = 1
+      const inflateY = 1
+      const coverX = mapX(ox - inflateX)
+      const coverY = mapY(oy - inflateY)
+      const coverW = Math.max(8, mapX(ox + obw + inflateX) - coverX)
+      const coverH = Math.max(8, mapY(oy + obh + inflateY) - coverY)
 
       const born = appearAtRef.current.get(b.id) ?? now
       const age = now - born
       const enter = reduce ? 1 : Math.min(1, age / 360)
       const ease = 1 - Math.pow(1 - enter, 3)
 
-      ctx.save()
-      ctx.globalAlpha = 0.15 + 0.85 * ease
-
-      if (matched && b.bg && b.fg) {
-        drawMatchedPanel(ctx, drawX, drawY, drawW, drawH, {
-          bg: rgbCss(b.bg),
-          selected,
-        })
-        if (label) {
-          drawMatchedLabel(
-            ctx,
-            label,
-            drawX + padX,
-            drawY + drawH / 2,
-            Math.max(8, drawW - padX * 2),
-            fontSize,
-            { fg: rgbCss(b.fg) },
-          )
+      let fontSize = selected
+        ? Math.max(13, Math.min(28, 14 + scale * 8))
+        : Math.max(11, Math.min(22, 12 + scale * 6))
+      let textW = label ? measureOverlayLabel(ctx, label, fontSize) : 0
+      if (label) {
+        const maxChipW = Math.min(w * 0.72, Math.max(coverW * 1.4, 72))
+        const padX = Math.max(7, fontSize * 0.45)
+        for (; fontSize >= 10; fontSize -= 0.5) {
+          textW = measureOverlayLabel(ctx, label, fontSize)
+          if (textW + padX * 2 <= maxChipW) break
         }
+        textW = measureOverlayLabel(ctx, label, fontSize)
+        const chipPadX = Math.max(7, fontSize * 0.45)
+        const chipPadY = Math.max(5, fontSize * 0.32)
+        const chipW = Math.min(maxChipW, Math.max(28, textW + chipPadX * 2))
+        const chipH = Math.max(22, fontSize + chipPadY * 2)
+        const pref = preferredChipRect(
+          { x: coverX, y: coverY, w: coverW, h: coverH },
+          chipW,
+          chipH,
+          { gap: 8, frameW: w, frameH: h },
+        )
+        const chipPref: LayoutRect = { id: b.id, ...pref }
+        chipPrefs.push(chipPref)
+        planned.push({
+          id: b.id,
+          label,
+          selected,
+          matched,
+          bg: b.bg,
+          fg: b.fg,
+          coverX,
+          coverY,
+          coverW,
+          coverH,
+          fontSize,
+          ease,
+          chipPref,
+        })
+      } else {
+        planned.push({
+          id: b.id,
+          label: '',
+          selected,
+          matched,
+          bg: b.bg,
+          fg: b.fg,
+          coverX,
+          coverY,
+          coverW,
+          coverH,
+          fontSize,
+          ease,
+          chipPref: { id: b.id, x: coverX, y: coverY, w: coverW, h: coverH },
+        })
+      }
+    }
+
+    const nudgedChips = nudgeOverlappingRects(chipPrefs, {
+      gap: 8,
+      iterations: 12,
+      homePull: 0.1,
+      preferVertical: true,
+      bounds: { x: 4, y: 4, w: w - 8, h: h - 8 },
+    })
+    const chipById = new Map(nudgedChips.map((r) => [r.id, r]))
+
+    // Selected on top for both paint and hit order.
+    const paintOrder = [...planned].sort((a, b) => Number(a.selected) - Number(b.selected))
+
+    for (const p of paintOrder) {
+      ctx.save()
+      ctx.globalAlpha = 0.2 + 0.8 * p.ease
+
+      if (p.matched && p.bg && p.fg) {
+        if (p.selected) {
+          // Selection-first: full opaque cover only on the active region.
+          drawMatchedPanel(ctx, p.coverX, p.coverY, p.coverW, p.coverH, {
+            bg: rgbCss(p.bg),
+            selected: true,
+          })
+        } else {
+          // Soft tint + outline so neighboring regions stay visually distinct.
+          ctx.save()
+          ctx.globalAlpha *= 0.42
+          drawMatchedPanel(ctx, p.coverX, p.coverY, p.coverW, p.coverH, {
+            bg: rgbCss(p.bg),
+            selected: false,
+          })
+          ctx.restore()
+          drawSourceOutline(ctx, p.coverX, p.coverY, p.coverW, p.coverH, {
+            selected: false,
+          })
+        }
+      } else {
+        drawSourceOutline(ctx, p.coverX, p.coverY, p.coverW, p.coverH, {
+          selected: p.selected,
+        })
       }
 
-      const slop = 6
+      const chip = chipById.get(p.id) || p.chipPref
+      if (p.label && p.bg && p.fg) {
+        drawFloatChip(ctx, chip.x, chip.y, chip.w, chip.h, {
+          bg: rgbCss(p.bg),
+          fg: rgbCss(p.fg),
+          selected: p.selected,
+          label: p.label,
+          fontSize: p.fontSize,
+        })
+      }
+
+      // Prefer chip hit; also allow tapping the source cover.
+      const slop = 5
       hits.push({
-        id: b.id,
-        x: (drawX - slop) / w,
-        y: (drawY - slop) / h,
-        w: (drawW + slop * 2) / w,
-        h: (drawH + slop * 2) / h,
+        id: p.id,
+        x: (chip.x - slop) / w,
+        y: (chip.y - slop) / h,
+        w: (chip.w + slop * 2) / w,
+        h: (chip.h + slop * 2) / h,
+      })
+      hits.push({
+        id: p.id,
+        x: (p.coverX - slop) / w,
+        y: (p.coverY - slop) / h,
+        w: (p.coverW + slop * 2) / w,
+        h: (p.coverH + slop * 2) / h,
       })
       ctx.restore()
     }
