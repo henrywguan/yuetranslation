@@ -312,6 +312,56 @@
   text-align: end;
 }
 
+.account-hub-hint {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.account-hub-seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.account-hub-seg-opt {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.account-hub-seg-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.account-hub-seg-opt.is-on {
+  border-color: color-mix(in srgb, var(--jade) 55%, transparent);
+  background: color-mix(in srgb, var(--jade) 14%, transparent);
+  color: var(--ink-bright, var(--ink));
+  font-weight: 650;
+}
+
+.account-hub-seg-opt:hover,
+.account-hub-seg-opt:focus-within {
+  border-color: color-mix(in srgb, var(--jade) 40%, transparent);
+}
+
 .account-hub-actions {
   display: flex;
   flex-direction: column;
