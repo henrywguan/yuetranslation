@@ -1,5 +1,6 @@
 import type { CameraBox, CameraScanRegion } from '../api'
 import type { Rgb } from './sampleRegionColors'
+import { unwrapTranslationText } from './unwrapTranslation'
 
 export type CamPath = 'choice' | 'ar' | 'upload'
 
@@ -24,7 +25,7 @@ export function regionToEditable(r: CameraScanRegion): EditableBox {
     id: r.id,
     box: { ...r.box },
     text: r.text,
-    translated: r.translated,
+    translated: unwrapTranslationText(r.translated),
     from: r.from,
     to: r.to,
     dirty: false,

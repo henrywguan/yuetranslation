@@ -9,7 +9,6 @@ import { BiText } from './BiText'
 import { CamResultsList } from './CamResultsList'
 import { cameraScan, type CameraBox } from '../lib/api'
 import { mediaFitLayout } from '../lib/camera/geometry'
-import { nudgeOverlappingRects, type LayoutRect } from '../lib/camera/overlayLayout'
 import {
   drawCornerBrackets,
   drawGlassPanel,
@@ -31,6 +30,7 @@ import {
   type CameraTarget,
   type EditableBox,
 } from '../lib/camera/types'
+import { unwrapTranslationText } from '../lib/camera/unwrapTranslation'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
@@ -44,6 +44,7 @@ type Props = {
 }
 
 type HitRect = { id: string; x: number; y: number; w: number; h: number }
+type PanelRect = { id: string; x: number; y: number; w: number; h: number }
 
 const DRAW_SLOP_PX = 12
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
@@ -178,21 +179,21 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       selected: boolean
       fontSize: number
       padX: number
-      pref: LayoutRect
+      pref: PanelRect
     }
 
     const planned: Planned[] = []
-    const prefs: LayoutRect[] = []
 
     for (const b of boxesRef.current) {
       const ox = layout.offsetX + b.box.x * layout.dispW
       const oy = layout.offsetY + b.box.y * layout.dispH
       const obw = Math.max(8, b.box.w * layout.dispW)
       const obh = Math.max(8, b.box.h * layout.dispH)
-      const label = b.translated || b.text
+      const label = unwrapTranslationText(b.translated || b.text)
       const selected = b.id === selectedId
 
-      // Preferred panel locked to the placed / OCR word region (jade glass + collision nudge).
+      // Lock panel to the OCR word region — do not collision-nudge upload overlays
+      // (dense menus cascade into letterbox space above/below the image).
       const inflateX = obw * 0.05
       const inflateY = obh * 0.1
       const drawX = mapX(ox - inflateX)
@@ -211,23 +212,13 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
         }
       }
 
-      const pref: LayoutRect = { id: b.id, x: drawX, y: drawY, w: drawW, h: drawH }
-      prefs.push(pref)
+      const pref: PanelRect = { id: b.id, x: drawX, y: drawY, w: drawW, h: drawH }
       planned.push({ id: b.id, label, selected, fontSize, padX, pref })
     }
 
-    const nudged = nudgeOverlappingRects(prefs, {
-      gap: 6,
-      iterations: 10,
-      homePull: 0.12,
-      preferVertical: true,
-      bounds: { x: 2, y: 2, w: fw - 4, h: fh - 4 },
-    })
-    const byId = new Map(nudged.map((r) => [r.id, r]))
-
     const paintOrder = [...planned].sort((a, b) => Number(a.selected) - Number(b.selected))
     for (const p of paintOrder) {
-      const rect = byId.get(p.id) || p.pref
+      const rect = p.pref
       drawGlassPanel(ctx, rect.x, rect.y, rect.w, rect.h, { selected: p.selected })
       drawCornerBrackets(ctx, rect.x, rect.y, rect.w, rect.h, { selected: p.selected })
       if (p.label) {
@@ -319,7 +310,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
             return {
               ...b,
               text: r.text || b.text,
-              translated: r.translated,
+              translated: unwrapTranslationText(r.translated),
               from: r.from,
               to: r.to,
               dirty: false,

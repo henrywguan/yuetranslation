@@ -18,15 +18,41 @@ function remember(key: string, value: string) {
 }
 
 function parseTranslation(raw: string, fallback: string): string {
-  const trimmed = raw.trim()
+  let trimmed = raw.trim()
   if (!trimmed) return fallback
-  try {
-    const json = JSON.parse(trimmed) as { translation?: string; text?: string }
-    const t = (json.translation || json.text || '').trim()
-    if (t) return t
-  } catch {
-    /* plain text */
+  // Strip accidental markdown fences from some OpenAI-compatible backends.
+  trimmed = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const json = JSON.parse(trimmed) as unknown
+      if (typeof json === 'string') {
+        trimmed = json.trim()
+        continue
+      }
+      if (json && typeof json === 'object') {
+        const obj = json as { translation?: unknown; text?: unknown }
+        const t =
+          (typeof obj.translation === 'string' && obj.translation.trim()) ||
+          (typeof obj.text === 'string' && obj.text.trim()) ||
+          ''
+        if (t) return t
+      }
+      break
+    } catch {
+      break
+    }
   }
+
+  const m = trimmed.match(/"translation"\s*:\s*"((?:\\.|[^"\\])*)"/)
+  if (m?.[1]) {
+    try {
+      return JSON.parse(`"${m[1]}"`) as string
+    } catch {
+      return m[1]
+    }
+  }
+
   return trimmed.replace(/^["']|["']$/g, '').trim() || fallback
 }
 
