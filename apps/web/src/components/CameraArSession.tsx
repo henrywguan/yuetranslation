@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
-import { CamResultsList } from './CamResultsList'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
 import { captureFrame, estimateShift, mediaFitLayout, sampleVideoImageData } from '../lib/camera/geometry'
@@ -41,6 +40,7 @@ type HitRect = { id: string; x: number; y: number; w: number; h: number }
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
+  const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const reduce = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -56,7 +56,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   const stillUrlRef = useRef<string | null>(null)
   const zoomRef = useRef<ZoomTransform>(IDENTITY_ZOOM)
   const mediaSizeRef = useRef({ w: 0, h: 0 })
-  const detailRef = useRef<HTMLDivElement>(null)
   const pinchRef = useRef<{
     mode: 'pinch' | 'pan' | null
     startDist: number
@@ -371,8 +370,6 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       appearAtRef.current = appear
       boxesRef.current = next
       setBoxes(next)
-      const first = next.find((b) => b.translated || b.text)
-      setSelectedId(first?.id ?? null)
       if (!next.length) {
         setError(biPlain(ui.camNoTextFound))
       }
@@ -568,17 +565,13 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setSelectedId(hit?.id || null)
   }
 
-  const openBoxDetails = (box: EditableBox) => {
-    const { phrase, translation } = boxDetailArgs(box)
+  const selected = boxes.find((b) => b.id === selectedId) || null
+
+  const openSelectedDetails = () => {
+    if (!selected) return
+    const { phrase, translation } = boxDetailArgs(selected)
     if (!phrase) return
     openBreakdown(phrase, { translation })
-  }
-
-  const selectResult = (id: string) => {
-    setSelectedId(id)
-    window.requestAnimationFrame(() => {
-      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    })
   }
 
   const zoomStyle = {
@@ -711,8 +704,8 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         </div>
       </div>
 
-      {boxes.some((b) => b.translated || b.text) && !busy ? (
-        <div className="cam-ar-sheet cam-ar-sheet--results" role="region" aria-label={biPlain(ui.camResults)}>
+      {selected && !busy ? (
+        <div className="cam-ar-sheet" role="region" aria-label={biPlain(ui.camDetailTitle)}>
           <button
             type="button"
             className="cam-ar-sheet-close"
@@ -721,14 +714,48 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           >
             ×
           </button>
-          <CamResultsList
-            boxes={boxes}
-            selectedId={selectedId}
-            onSelect={selectResult}
-            onOpenDetails={openBoxDetails}
-            panelRef={detailRef}
-            className="cam-results--ar"
-          />
+          <button
+            type="button"
+            className="cam-detail-open"
+            onClick={openSelectedDetails}
+            aria-label={biPlain(ui.camOpenDetails)}
+          >
+            {selected.text ? <span className="cam-detail-src">{selected.text}</span> : null}
+            {selected.translated ? <span className="cam-detail-tr">{selected.translated}</span> : null}
+            <span className="cam-detail-open-hint">
+              <BiText copy={ui.camOpenDetailsHint} size="sm" />
+            </span>
+          </button>
+          <div className="cam-detail-actions">
+            <button
+              type="button"
+              className="cam-tool-btn cam-tool-btn--primary"
+              onClick={openSelectedDetails}
+            >
+              <BiText copy={ui.camOpenDetails} size="sm" />
+            </button>
+            <button
+              type="button"
+              className="cam-tool-btn"
+              onClick={() => {
+                const t = selected.translated || selected.text
+                if (t) void navigator.clipboard?.writeText(t)
+              }}
+            >
+              <BiText copy={ui.camCopy} size="sm" />
+            </button>
+            {selected.translated ? (
+              <button
+                type="button"
+                className="cam-tool-btn"
+                onClick={() =>
+                  void speakManual(selected.translated, selected.to === 'zh' ? 'yue' : 'en')
+                }
+              >
+                <BiText copy={ui.speak} size="sm" />
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>,

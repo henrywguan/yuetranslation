@@ -6,7 +6,7 @@ Sign-in-only mode for AR live overlay and upload-with-boxes translation (English
 
 ## Paths / 路徑
 
-1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Overlays cover each source region with a fill sampled from that region’s background (Google Translate–style), with contrasting ink — not the jade glass used in upload. Pinch-zoom or mouse-wheel the still (overlay type scales up sharply with zoom). All regions appear in a selectable Results list. Clear resumes the live preview. X exits to the AR / Upload choice modal.
+1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Overlays cover each source region with a fill sampled from that region’s background (Google Translate–style), with contrasting ink — not the jade glass used in upload. Pinch-zoom or mouse-wheel the still (overlay type scales up sharply with zoom). Tap an overlay to open its detail sheet. Clear resumes the live preview. X exits to the AR / Upload choice modal.
 2. **Upload image** — still photo; draw / resize / delete boxes; **Translate all** optional; translate crops. Jade/glass overlays (not matched background). Mouse-wheel zoom (and slider); overlay text scales in screen space so it stays crisp. Selectable Results list for every region.
 
 Entry: **Cam** tab → floating modal (AR vs Upload). Guests see sign-in first.
