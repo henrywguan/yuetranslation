@@ -189,6 +189,19 @@
   border-bottom: 1px solid var(--glass-border);
 }
 
+.account-hub-header-aside {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.account-hub-header-role {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .account-hub-titles {
   min-width: 0;
   flex: 1;
@@ -265,11 +278,22 @@
   align-self: flex-start;
 }
 
-.account-hub-plan-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem;
+.account-hub-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.account-hub-meta-col {
+  min-width: 0;
+}
+
+.account-hub-role-empty {
+  align-self: flex-start;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--muted);
+  padding: 0.35rem 0;
 }
 
 .account-hub-stats {
