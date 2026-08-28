@@ -394,13 +394,15 @@ export function PlanChip() {
           {entitlement.isAdmin ? (
             <button
               type="button"
-              className="account-hub-btn account-hub-btn--ghost"
+              className="account-hub-btn account-hub-btn--admin"
               onClick={() => {
                 setOpen(false)
                 navigate('admin')
               }}
             >
-              Admin
+              <span className="account-hub-admin-shimmer" aria-hidden="true" />
+              <span className="account-hub-admin-glow" aria-hidden="true" />
+              <span className="account-hub-admin-label">Admin</span>
             </button>
           ) : null}
           {!paid ? (

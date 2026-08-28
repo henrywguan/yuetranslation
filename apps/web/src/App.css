@@ -454,6 +454,85 @@
   border-color: color-mix(in srgb, var(--ink) 22%, var(--glass-border));
 }
 
+/* Admin hub CTA — uiverse wise-wombat-45 shimmer (gold, fixed size) */
+.account-hub-btn--admin {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #d4a017 22%, transparent),
+    color-mix(in srgb, var(--harbor-mid) 90%, #3d2a08 10%)
+  );
+  border-color: color-mix(in srgb, #ffd700 36%, var(--glass-border));
+  color: color-mix(in srgb, #ffe566 88%, var(--ink));
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 24px -14px color-mix(in srgb, #d4a017 55%, transparent);
+  transition:
+    border-color 500ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 500ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-hub-btn--admin:hover,
+.account-hub-btn--admin:focus-visible {
+  border-color: color-mix(in srgb, #ffd700 58%, var(--glass-border));
+  color: #ffe566;
+  box-shadow: 0 14px 28px -12px color-mix(in srgb, #ffd700 45%, transparent);
+}
+
+.account-hub-admin-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, #ffd700 38%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 1000ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.account-hub-btn--admin:hover .account-hub-admin-shimmer,
+.account-hub-btn--admin:focus-visible .account-hub-admin-shimmer {
+  transform: translateX(100%);
+}
+
+.account-hub-admin-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #b8860b 14%, transparent),
+    color-mix(in srgb, #ffd700 24%, transparent),
+    color-mix(in srgb, #b8860b 14%, transparent)
+  );
+  opacity: 0;
+  transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.account-hub-btn--admin:hover .account-hub-admin-glow,
+.account-hub-btn--admin:focus-visible .account-hub-admin-glow {
+  opacity: 1;
+}
+
+.account-hub-admin-label {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-hub-admin-shimmer {
+    display: none;
+  }
+}
+
 @media (max-width: 959px) {
   .account-hub-backdrop {
     background: color-mix(in srgb, #061018 55%, transparent);
