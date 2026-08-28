@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AdminPlanBadge } from '../components/AdminPlanBadge'
+import { RoleBadge } from '../components/RoleBadge'
+import '../components/RoleBadge.css'
 import { AdminResetUsageModal } from '../components/AdminResetUsageModal'
 import {
   adminResetUsage,
   adminSetDisabled,
   adminSetPlan,
+  adminSetRole,
   downloadAdminUsersCsv,
   fetchAdminAudit,
   fetchAdminMe,
@@ -18,6 +20,7 @@ import {
 } from '../lib/adminApi'
 import { openAuthScreen } from '../lib/auth'
 import { navigate } from '../lib/useHashRoute'
+import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
 
 type Tab = 'users' | 'audit'
@@ -53,7 +56,7 @@ export function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [count, setCount] = useState(0)
   const [selected, setSelected] = useState<AdminUser | null>(null)
-  const [editingPlanUserId, setEditingPlanUserId] = useState<string | null>(null)
+  const [editingRoleUserId, setEditingRoleUserId] = useState<string | null>(null)
   const [usageMonths, setUsageMonths] = useState<
     {
       month: string
@@ -149,22 +152,41 @@ export function AdminPage() {
   }
 
   const onSetPlan = async (user: AdminUser, next: 'free' | 'pro' | 'max') => {
-    if (next === user.plan) {
-      setEditingPlanUserId(null)
-      return
-    }
+    if (next === user.plan) return
     if (!window.confirm(`Set ${user.email || user.id} to ${next}?`)) return
     setBusy(true)
     setError('')
     try {
       await adminSetPlan(user.id, next)
-      setEditingPlanUserId(null)
       await reloadUsers()
       if (selected?.id === user.id) {
         setSelected({ ...user, plan: next })
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Plan update failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onSetRole = async (user: AdminUser, next: UserRole | null) => {
+    if (next === user.role) {
+      setEditingRoleUserId(null)
+      return
+    }
+    const label = next ? USER_ROLE_OPTIONS.find((o) => o.value === next)?.label ?? next : 'None'
+    if (!window.confirm(`Set role for ${user.email || user.id} to ${label}?`)) return
+    setBusy(true)
+    setError('')
+    try {
+      await adminSetRole(user.id, next)
+      setEditingRoleUserId(null)
+      await reloadUsers()
+      if (selected?.id === user.id) {
+        setSelected({ ...user, role: next })
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Role update failed')
     } finally {
       setBusy(false)
     }
@@ -398,6 +420,11 @@ export function AdminPage() {
                     </button>
                   </th>
                   <th>
+                    <button type="button" className="admin-sort" onClick={() => onSort('role')}>
+                      Role{sort === 'role' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                  <th>
                     <button type="button" className="admin-sort" onClick={() => onSort('liveSeconds')}>
                       Live{sort === 'liveSeconds' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
                     </button>
@@ -443,36 +470,52 @@ export function AdminPage() {
                       </button>
                     </td>
                     <td>
-                      {u.isAdmin && editingPlanUserId !== u.id ? (
-                        <AdminPlanBadge
-                          plan={u.plan}
-                          onClick={() => setEditingPlanUserId(u.id)}
-                        />
+                      <select
+                        value={u.plan}
+                        disabled={busy || u.disabled}
+                        onChange={(e) =>
+                          void onSetPlan(u, e.target.value as 'free' | 'pro' | 'max')
+                        }
+                        aria-label={`Plan for ${u.email || u.id}`}
+                      >
+                        <option value="free">free</option>
+                        <option value="pro">pro</option>
+                        <option value="max">max</option>
+                      </select>
+                    </td>
+                    <td className="admin-role-cell">
+                      {u.role && editingRoleUserId !== u.id ? (
+                        <RoleBadge role={u.role} onClick={() => setEditingRoleUserId(u.id)} />
                       ) : (
-                        <span className="admin-plan-edit">
-                          {u.isAdmin ? (
+                        <span className="admin-role-edit">
+                          {editingRoleUserId === u.id ? (
                             <button
                               type="button"
                               className="admin-plan-edit-cancel"
-                              onClick={() => setEditingPlanUserId(null)}
-                              aria-label="Cancel plan edit"
-                              title="Back to admin badge"
+                              onClick={() => setEditingRoleUserId(null)}
+                              aria-label="Cancel role edit"
                             >
                               ←
                             </button>
                           ) : null}
                           <select
-                            value={u.plan}
-                            disabled={busy || u.disabled}
-                            autoFocus={u.isAdmin && editingPlanUserId === u.id}
-                            onChange={(e) =>
-                              void onSetPlan(u, e.target.value as 'free' | 'pro' | 'max')
-                            }
-                            aria-label={`Plan for ${u.email || u.id}`}
+                            value={u.role ?? ''}
+                            disabled={busy}
+                            autoFocus={editingRoleUserId === u.id}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              void onSetRole(
+                                u,
+                                value === '' ? null : (value as UserRole),
+                              )
+                            }}
+                            aria-label={`Role for ${u.email || u.id}`}
                           >
-                            <option value="free">free</option>
-                            <option value="pro">pro</option>
-                            <option value="max">max</option>
+                            {USER_ROLE_OPTIONS.map((opt) => (
+                              <option key={opt.label} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
                           </select>
                         </span>
                       )}
@@ -535,7 +578,7 @@ export function AdminPage() {
                 ))}
                 {!users.length && !busy ? (
                   <tr>
-                    <td colSpan={8} className="admin-muted">
+                    <td colSpan={9} className="admin-muted">
                       No users match these filters.
                     </td>
                   </tr>

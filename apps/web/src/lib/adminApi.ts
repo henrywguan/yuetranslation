@@ -23,6 +23,7 @@ export type AdminUser = {
   displayName: string | null
   createdAt: string | null
   plan: 'free' | 'pro' | 'max'
+  role: 'admin' | 'family' | null
   isAdmin: boolean
   disabled: boolean
   bannedUntil: string | null
@@ -124,6 +125,18 @@ export async function adminSetPlan(userId: string, plan: 'free' | 'pro' | 'max')
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
     throw new Error(data.message || 'Failed to set plan')
+  }
+  return res.json()
+}
+
+export async function adminSetRole(userId: string, role: 'admin' | 'family' | null) {
+  const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to set role')
   }
   return res.json()
 }

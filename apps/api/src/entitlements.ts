@@ -8,6 +8,8 @@ export type Entitlement = {
   requireLogin: boolean
   plan: 'guest' | 'free' | 'pro' | 'max'
   isAdmin: boolean
+  /** Assignable profile role shown as a badge (admin or 家). */
+  role: 'admin' | 'family' | null
   disabled: boolean
   limits: {
     plan: string
@@ -146,9 +148,10 @@ function buildSnapshot(
   plan: PlanKey,
   loggedIn: boolean,
   usage: Entitlement['usage'],
-  opts: { isAdmin?: boolean; disabled?: boolean } = {},
+  opts: { isAdmin?: boolean; disabled?: boolean; role?: 'admin' | 'family' | null } = {},
 ): Entitlement {
   const isAdmin = Boolean(opts.isAdmin)
+  const role = opts.role ?? null
   const disabled = Boolean(opts.disabled)
   const requireLogin = env.requireLogin
 
@@ -165,6 +168,7 @@ function buildSnapshot(
       requireLogin,
       plan: 'free',
       isAdmin,
+      role,
       disabled: true,
       limits,
       usage,
@@ -193,6 +197,7 @@ function buildSnapshot(
       requireLogin: true,
       plan: 'guest',
       isAdmin: false,
+      role: null,
       disabled: false,
       limits,
       usage,
@@ -237,6 +242,7 @@ function buildSnapshot(
     requireLogin,
     plan,
     isAdmin,
+    role,
     disabled: false,
     limits,
     usage,
@@ -270,6 +276,7 @@ function localEntitlement(): Entitlement {
       requireLogin: false,
       plan: 'pro',
       isAdmin: false,
+      role: null,
       disabled: false,
       limits: {
         plan: 'pro',
@@ -315,9 +322,11 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
 
   const profile = await getProfile(auth.userId)
   const plan = (profile?.plan ?? 'free') as PlanKey
+  const role = profile?.role ?? null
   const usage = await getUsage(auth.userId)
   return buildSnapshot(plan, true, usage, {
-    isAdmin: isAdminEmail(auth.email),
+    isAdmin: isAdminEmail(auth.email) || role === 'admin',
+    role,
     disabled: Boolean(profile?.disabled),
   })
 }

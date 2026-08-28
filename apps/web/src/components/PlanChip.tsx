@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
+import { RoleBadge } from './RoleBadge'
+import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
@@ -296,9 +298,12 @@ export function PlanChip() {
           <p className="account-hub-label">
             <BiText copy={ui.accountPlan} size="sm" />
           </p>
-          <span className={`plan-chip plan-${plan} account-hub-plan-pill`}>
-            <BiText copy={planLabel(plan)} size="sm" hideJp />
-          </span>
+          <div className="account-hub-plan-row">
+            <span className={`plan-chip plan-${plan} account-hub-plan-pill`}>
+              <BiText copy={planLabel(plan)} size="sm" hideJp />
+            </span>
+            {entitlement.role ? <RoleBadge role={entitlement.role} /> : null}
+          </div>
         </section>
 
         <section className="account-hub-section" aria-label={biPlain(ui.accountUsage)}>

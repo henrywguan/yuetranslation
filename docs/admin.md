@@ -10,7 +10,18 @@ Set a comma-separated allowlist on the **API** (Vercel env / `apps/api/.env`):
 YUE_ADMIN_EMAILS=you@example.com,other@example.com
 ```
 
-Matching is case-insensitive. Only signed-in users whose email is on this list can call `/api/admin/*`. The account hub shows an **Admin** link when `entitlement.isAdmin` is true.
+Matching is case-insensitive. Signed-in users on this list **or** with an assigned **admin** role (see below) can call `/api/admin/*`. The account hub shows an **Admin** link when `entitlement.isAdmin` is true.
+
+## User roles (assignable badges)
+
+Optional roles are stored on `profiles.role` and can be assigned in `#/admin`:
+
+| Role | Badge | Notes |
+|------|-------|-------|
+| `admin` | blue **admin** crown badge | Grants admin panel access (same as allowlist) |
+| `family` | gold **家** crown badge | Display badge only (no extra entitlements yet) |
+
+Apply migration `supabase/migrations/005_user_roles.sql` on your Supabase project. Assign via the **Role** column in the admin user table (`PATCH /api/admin/users/:userId/role` with `{ "role": "admin" \| "family" \| null }`).
 
 ## Admin email notifications (Resend)
 

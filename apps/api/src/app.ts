@@ -29,6 +29,7 @@ import {
   adminResetUsage,
   adminSetDisabled,
   adminSetPlan,
+  adminSetRole,
   adminSyncResendAudience,
   adminUserUsage,
 } from './admin.js'
@@ -294,6 +295,7 @@ app.get('/api/admin/users', adminListUsers)
 app.get('/api/admin/users.csv', adminExportUsersCsv)
 app.get('/api/admin/users/:userId/usage', adminUserUsage)
 app.patch('/api/admin/users/:userId/plan', adminSetPlan)
+app.patch('/api/admin/users/:userId/role', adminSetRole)
 app.post('/api/admin/users/:userId/reset-usage', adminResetUsage)
 app.patch('/api/admin/users/:userId/disabled', adminSetDisabled)
 app.get('/api/admin/audit', adminListAudit)

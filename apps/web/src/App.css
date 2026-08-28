@@ -265,6 +265,13 @@
   align-self: flex-start;
 }
 
+.account-hub-plan-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
 .account-hub-stats {
   list-style: none;
   margin: 0;

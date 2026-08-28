@@ -2,7 +2,7 @@ import type { Response } from 'express'
 import { z } from 'zod'
 import { env, isAdminEmail } from './env.js'
 import type { AuthedRequest } from './auth.js'
-import { requireAdmin } from './auth.js'
+import { requireAdmin, userHasAdminAccess } from './auth.js'
 import {
   getAuthUserById,
   getProfile,
@@ -29,6 +29,7 @@ export type AdminUserRow = {
   displayName: string | null
   createdAt: string | null
   plan: 'free' | 'pro' | 'max'
+  role: 'admin' | 'family' | null
   isAdmin: boolean
   disabled: boolean
   bannedUntil: string | null
@@ -104,7 +105,8 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       displayName: u.displayName,
       createdAt: u.createdAt,
       plan,
-      isAdmin: isAdminEmail(u.email),
+      role: profile?.role ?? null,
+      isAdmin: isAdminEmail(u.email) || profile?.role === 'admin',
       disabled: Boolean(profile?.disabled) || Boolean(u.bannedUntil),
       bannedUntil: u.bannedUntil,
       stripeCustomerId: profile?.stripe_customer_id ?? null,
@@ -127,6 +129,7 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
 type SortKey =
   | 'email'
   | 'plan'
+  | 'role'
   | 'createdAt'
   | 'liveSeconds'
   | 'ttsChars'
@@ -176,7 +179,7 @@ function csvEscape(value: string | number | boolean | null | undefined): string 
 }
 
 export async function adminMe(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   res.json({
     ok: true,
@@ -187,7 +190,7 @@ export async function adminMe(req: AuthedRequest, res: Response) {
 }
 
 export async function adminListUsers(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   try {
     const month = String(req.query.month || currentMonthKey())
@@ -200,6 +203,7 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
     const allowedSort: SortKey[] = [
       'email',
       'plan',
+      'role',
       'createdAt',
       'liveSeconds',
       'ttsChars',
@@ -220,7 +224,7 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
 }
 
 export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   try {
     const month = String(req.query.month || currentMonthKey())
@@ -235,6 +239,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'email',
       'displayName',
       'plan',
+      'role',
       'isAdmin',
       'disabled',
       'createdAt',
@@ -259,6 +264,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.email,
           r.displayName,
           r.plan,
+          r.role,
           r.isAdmin,
           r.disabled,
           r.createdAt,
@@ -288,7 +294,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
 }
 
 export async function adminUserUsage(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   const userId = String(req.params.userId || '')
   if (!userId) {
@@ -308,7 +314,7 @@ const PlanBody = z.object({
 })
 
 export async function adminSetPlan(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   const userId = String(req.params.userId || '')
   const parsed = PlanBody.safeParse(req.body)
@@ -346,6 +352,45 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
   }
 }
 
+const RoleBody = z.object({
+  role: z.union([z.literal('admin'), z.literal('family'), z.null()]),
+})
+
+export async function adminSetRole(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const userId = String(req.params.userId || '')
+  const parsed = RoleBody.safeParse(req.body)
+  if (!userId || !parsed.success) {
+    res.status(400).json({ message: 'role must be admin, family, or null' })
+    return
+  }
+  if (userId === auth.userId && parsed.data.role !== 'admin') {
+    const selfAllowed = await userHasAdminAccess(auth.userId, auth.email)
+    if (selfAllowed) {
+      res.status(400).json({ message: 'You cannot remove your own admin access.' })
+      return
+    }
+  }
+  try {
+    const target = await getAuthUserById(userId)
+    const profile = await getProfile(userId)
+    const previous = profile?.role ?? null
+    await upsertProfilePlan(userId, { role: parsed.data.role })
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'set_role',
+      targetUserId: userId,
+      targetEmail: target?.email,
+      detail: { role: parsed.data.role, previous },
+    })
+    res.json({ ok: true, userId, role: parsed.data.role })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to set role' })
+  }
+}
+
 const ResetBody = z
   .object({
     month: z
@@ -365,7 +410,7 @@ const ResetBody = z
   )
 
 export async function adminResetUsage(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   const userId = String(req.params.userId || '')
   const parsed = ResetBody.safeParse(req.body ?? {})
@@ -397,7 +442,7 @@ const BanBody = z.object({
 })
 
 export async function adminSetDisabled(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   const userId = String(req.params.userId || '')
   const parsed = BanBody.safeParse(req.body)
@@ -411,8 +456,12 @@ export async function adminSetDisabled(req: AuthedRequest, res: Response) {
   }
   try {
     const target = await getAuthUserById(userId)
-    if (target?.email && isAdminEmail(target.email) && parsed.data.disabled) {
-      res.status(400).json({ message: 'Cannot ban another admin allowlist email.' })
+    const profile = await getProfile(userId)
+    if (
+      parsed.data.disabled &&
+      (isAdminEmail(target?.email) || profile?.role === 'admin')
+    ) {
+      res.status(400).json({ message: 'Cannot ban an admin user.' })
       return
     }
     await upsertProfilePlan(userId, {
@@ -435,7 +484,7 @@ export async function adminSetDisabled(req: AuthedRequest, res: Response) {
 }
 
 export async function adminListAudit(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   try {
     const limit = Number(req.query.limit || 100)
@@ -448,7 +497,7 @@ export async function adminListAudit(req: AuthedRequest, res: Response) {
 
 /** One-time / on-demand: sync every Supabase Auth email into the Resend Audience. */
 export async function adminSyncResendAudience(req: AuthedRequest, res: Response) {
-  const auth = requireAdmin(req, res)
+  const auth = await requireAdmin(req, res)
   if (!auth) return
   try {
     const result = await backfillResendAudience()

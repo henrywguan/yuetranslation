@@ -31,6 +31,7 @@ export type ProfileRow = {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   disabled: boolean
+  role: 'admin' | 'family' | null
   updated_at: string
 }
 
@@ -39,13 +40,19 @@ export async function getProfile(userId: string): Promise<ProfileRow | null> {
   if (!client) return null
   const { data, error } = await client.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (error || !data) return null
-  const row = data as ProfileRow & { disabled?: boolean }
-  return { ...row, disabled: Boolean(row.disabled) }
+  const row = data as ProfileRow & { disabled?: boolean; role?: ProfileRow['role'] }
+  return {
+    ...row,
+    disabled: Boolean(row.disabled),
+    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
+  }
 }
 
 export async function upsertProfilePlan(
   userId: string,
-  patch: Partial<Pick<ProfileRow, 'plan' | 'stripe_customer_id' | 'stripe_subscription_id' | 'disabled'>>,
+  patch: Partial<
+    Pick<ProfileRow, 'plan' | 'stripe_customer_id' | 'stripe_subscription_id' | 'disabled' | 'role'>
+  >,
 ): Promise<void> {
   const client = getAdmin()
   if (!client) return
@@ -63,8 +70,12 @@ export async function findProfileByStripeCustomer(customerId: string): Promise<P
     .eq('stripe_customer_id', customerId)
     .maybeSingle()
   if (!data) return null
-  const row = data as ProfileRow & { disabled?: boolean }
-  return { ...row, disabled: Boolean(row.disabled) }
+  const row = data as ProfileRow & { disabled?: boolean; role?: ProfileRow['role'] }
+  return {
+    ...row,
+    disabled: Boolean(row.disabled),
+    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
+  }
 }
 
 export async function findProfileByStripeSubscription(subscriptionId: string): Promise<ProfileRow | null> {
@@ -76,8 +87,12 @@ export async function findProfileByStripeSubscription(subscriptionId: string): P
     .eq('stripe_subscription_id', subscriptionId)
     .maybeSingle()
   if (!data) return null
-  const row = data as ProfileRow & { disabled?: boolean }
-  return { ...row, disabled: Boolean(row.disabled) }
+  const row = data as ProfileRow & { disabled?: boolean; role?: ProfileRow['role'] }
+  return {
+    ...row,
+    disabled: Boolean(row.disabled),
+    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
+  }
 }
 
 export type AuthUserSummary = {
@@ -125,7 +140,11 @@ export async function listProfiles(): Promise<ProfileRow[]> {
   if (!client) return []
   const { data, error } = await client.from('profiles').select('*')
   if (error || !data) return []
-  return (data as ProfileRow[]).map((row) => ({ ...row, disabled: Boolean(row.disabled) }))
+  return (data as ProfileRow[]).map((row) => ({
+    ...row,
+    disabled: Boolean(row.disabled),
+    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
+  }))
 }
 
 export async function getAuthUserById(userId: string): Promise<AuthUserSummary | null> {
@@ -159,6 +178,7 @@ export async function setAuthBanned(userId: string, banned: boolean): Promise<vo
 
 export type AuditAction =
   | 'set_plan'
+  | 'set_role'
   | 'reset_usage'
   | 'ban'
   | 'unban'

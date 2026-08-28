@@ -519,6 +519,16 @@
   color: var(--muted);
 }
 
+.admin-role-cell {
+  min-width: 5.5rem;
+}
+
+.admin-role-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .admin-plan-edit {
   display: inline-flex;
   align-items: center;
