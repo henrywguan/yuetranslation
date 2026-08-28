@@ -109,7 +109,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 - **User flow:** Account hub → **Report a bug**, error banner link (when signed in), or marketing footer link (when signed in). One-tap issue type + optional note; client attaches route, mode, entitlement snapshot, recent events, and env — **not** translation text, audio, or images.
 - **API:** `POST /api/bug-report` (Bearer JWT, rate limit 10/hour per user)
 - **Admin:** `#/admin` → **Reports** tab opens a self-diagnostic dashboard (interpreted findings, confidence, next steps, timeline). Raw JSON remains behind **Show technical payload**.
-- **Email:** Resend admin notify on each new report (same env as sign-up alerts)
+- **Email:** React Email + Resend — rich admin notify with issue summary, plan/route/mode, last error, note, recent trail, and **inline screenshot** (CID attachment) when the user opts in
 
 ## Features
 

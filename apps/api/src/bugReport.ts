@@ -76,6 +76,8 @@ export async function submitBugReport(req: AuthedRequest, res: Response) {
       userId: auth.userId,
       route,
       mode,
+      client,
+      context,
     })
 
     res.json({ ok: true, reportId: row.id })
