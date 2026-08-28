@@ -1,7 +1,7 @@
 .admin-page {
   min-height: 100dvh;
   padding: 1.25rem clamp(1rem, 3vw, 2rem) 3rem;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   color: var(--ink);
   background:
