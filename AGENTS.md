@@ -72,7 +72,7 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 
 ### Production auth & metering (Vercel)
 
-Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use **text translate** and **tap-to-play voice** at `#/app` without signing in; Free TTS is metered with a hard char cap; Pro/Max TTS is unlimited (usage still counted). Live mic still requires login and is metered. Auto-speak remains Pro/Max.
+Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use **Solo text translate** and **tap-to-play voice** at `#/app` without signing in; Free TTS is metered with a hard char cap; Pro/Max TTS is unlimited (usage still counted). Live mic still requires login and is metered. Auto-speak remains Pro/Max.
 
 OAuth / confirm-email returns to the site origin (Supabase Site URL). The web app then routes to `#/app`. Login links must be `/?auth=1#/app` (query before hash). In Supabase → Authentication → URL configuration, Site URL should be the production origin; extra Redirect URLs can include `http://localhost:5173/**` and the production origin.
 

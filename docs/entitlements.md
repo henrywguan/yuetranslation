@@ -64,6 +64,6 @@ Admin panel (`#/admin`, allowlist `YUE_ADMIN_EMAILS`): see `docs/admin.md`.
 
 管理后台（`#/admin`，邮箱白名单 `YUE_ADMIN_EMAILS`）：见 `docs/admin.md`。
 
-Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use text mode and tap-to-play voice at `#/app`; live mic prompts sign-in via the Plan chip and API 401. Free users are TTS-capped; Pro/Max are unlimited.
+Production Vercel defaults in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use Solo text translate and tap-to-play voice at `#/app`; live mic prompts sign-in via the Plan chip and API 401. Free users are TTS-capped; Pro/Max are unlimited.
 
 生产环境 Vercel 默认（`vercel.json`）：`YUE_OPEN_MODE=0`、`YUE_REQUIRE_LOGIN=1`。访客可在 `#/app` 使用文字模式与点击朗读；实时麦克风通过 Plan 芯片与 API 401 提示登录。免费版有 TTS 上限；专业版／旗舰版无限。

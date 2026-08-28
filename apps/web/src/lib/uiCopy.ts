@@ -13,9 +13,9 @@ export const ui = {
   modeCamera: { en: 'Cam', zh: '相機', jp: 'soeng1 gei1' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
   modeSoloLine: {
-    en: 'Tap/Hold to speak — translations appear in both languages.',
-    zh: '輕按或按住說話——雙語譯文即時出現。',
-    jp: 'hing1 on3 waak6 on3 zyu6 gong2 waa6 — soeng1 jyu5 jik6 man4 zik1 si4 ceot1 jin6.',
+    en: 'Type or speak — English and Cantonese side by side.',
+    zh: '打字或說話——英文同粵語並排顯示。',
+    jp: 'daa2 zi6 waak6 gong2 waa6 — jing1 man2 tung4 jyut6 jyu5 bing6 paai4 hin2 si6.',
   },
   modeFaceLine: {
     en: 'One phone. Two languages, split screen — perfect for conversations!',

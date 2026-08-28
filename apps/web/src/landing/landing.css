@@ -1300,6 +1300,21 @@
   justify-content: center;
   padding: 8px 4px 0;
   min-height: 0;
+  gap: 4px;
+}
+
+.ln-micro-solo-label {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ln-micro-solo-rule {
+  height: 1px;
+  margin: 8px 0;
+  background: linear-gradient(90deg, transparent, rgba(61, 207, 182, 0.4), transparent);
 }
 
 .ln-micro-dock {
