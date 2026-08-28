@@ -512,22 +512,24 @@ export function AdminPage() {
                           Stripe
                         </a>
                       ) : null}
-                      <button
-                        type="button"
-                        className="admin-action-btn"
-                        disabled={busy}
-                        onClick={() => setResetUser(u)}
-                      >
-                        Reset
-                      </button>
-                      <button
-                        type="button"
-                        className={`admin-action-btn${u.disabled ? '' : ' admin-action-btn--danger'}`}
-                        disabled={busy}
-                        onClick={() => void onToggleBan(u)}
-                      >
-                        {u.disabled ? 'Unban' : 'Ban'}
-                      </button>
+                      <div className="admin-action-group">
+                        <button
+                          type="button"
+                          className="admin-action-btn"
+                          disabled={busy}
+                          onClick={() => setResetUser(u)}
+                        >
+                          Reset
+                        </button>
+                        <button
+                          type="button"
+                          className={`admin-action-btn${u.disabled ? '' : ' admin-action-btn--danger'}`}
+                          disabled={busy}
+                          onClick={() => void onToggleBan(u)}
+                        >
+                          {u.disabled ? 'Unban' : 'Ban'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
