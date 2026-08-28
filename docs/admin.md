@@ -25,7 +25,7 @@ Apply migration `supabase/migrations/005_user_roles.sql` on your Supabase projec
 
 ## Admin email notifications (Resend)
 
-The API can email admins when someone **signs up** or **upgrades** (Stripe checkout or manual plan change in `#/admin`).
+The API can email admins when someone **signs up** or **upgrades** (Stripe checkout or manual plan change in `#/admin`). Sign-up, upgrade, and bug-report notifies are **React Email** templates that share a branded shell (harbor + jade colors, Syne / Noto Sans HK fonts, and the JyutTranslate logo mark as a CID attachment).
 
 ### 1. Vercel / API env
 

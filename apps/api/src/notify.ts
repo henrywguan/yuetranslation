@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { render } from '@react-email/render'
-import { createElement } from 'react'
+import { createElement, type ReactElement } from 'react'
 import { Resend } from 'resend'
 import { env } from './env.js'
 import {
@@ -8,8 +11,12 @@ import {
   shortReportId,
   type BugReportEmailProps,
 } from './emails/BugReportEmail.js'
+import { EMAIL_LOGO_CID } from './emails/brand.js'
+import { SignupEmail } from './emails/SignupEmail.js'
+import { UpgradeEmail } from './emails/UpgradeEmail.js'
 
 let client: Resend | null = null
+let logoBuffer: Buffer | null | undefined
 
 function getResend(): Resend | null {
   if (!env.resendApiKey) return null
@@ -26,12 +33,8 @@ function adminLink(path = '/#/admin'): string {
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+function appPublicUrl(): string {
+  return env.appUrl.replace(/\/+$/, '') || 'https://jyuttranslate.com'
 }
 
 type EmailAttachment = {
@@ -39,6 +42,40 @@ type EmailAttachment = {
   content: Buffer
   contentId?: string
   contentType?: string
+}
+
+function loadLogoBuffer(): Buffer | null {
+  if (logoBuffer !== undefined) return logoBuffer
+  try {
+    const here = dirname(fileURLToPath(import.meta.url))
+    logoBuffer = readFileSync(join(here, 'emails/assets/jyut-logo.png'))
+  } catch (e) {
+    console.warn('[notify] logo asset missing — emails will use public icon URL fallback', e)
+    logoBuffer = null
+  }
+  return logoBuffer
+}
+
+/** Always attach the brand mark as CID so clients that block remote images still show it. */
+function brandAttachments(extra?: EmailAttachment[]): EmailAttachment[] {
+  const out: EmailAttachment[] = []
+  const logo = loadLogoBuffer()
+  if (logo) {
+    out.push({
+      filename: 'jyut-logo.png',
+      content: logo,
+      contentId: EMAIL_LOGO_CID,
+      contentType: 'image/png',
+    })
+  }
+  if (extra?.length) out.push(...extra)
+  return out
+}
+
+function logoSrcForTemplate(): string | undefined {
+  // Prefer CID when we successfully loaded the PNG; otherwise absolute public icon.
+  if (loadLogoBuffer()) return `cid:${EMAIL_LOGO_CID}`
+  return `${appPublicUrl()}/apple-touch-icon.png`
 }
 
 async function sendAdminEmail(
@@ -63,13 +100,22 @@ async function sendAdminEmail(
   }
 }
 
-/** Fire-and-forget admin email — never throw to callers (webhooks must stay 200). */
-export function queueAdminEmail(
+async function renderAndSend(
   subject: string,
-  html: string,
-  attachments?: EmailAttachment[],
+  element: ReactElement,
+  extraAttachments?: EmailAttachment[],
+): Promise<void> {
+  const html = await render(element)
+  await sendAdminEmail(subject, html, brandAttachments(extraAttachments))
+}
+
+/** Fire-and-forget React Email — never throw to callers (webhooks must stay 200). */
+function queueReactEmail(
+  subject: string,
+  element: ReactElement,
+  extraAttachments?: EmailAttachment[],
 ): void {
-  void sendAdminEmail(subject, html, attachments).catch((e) => {
+  void renderAndSend(subject, element, extraAttachments).catch((e) => {
     console.error('[notify] send failed', e)
   })
 }
@@ -81,18 +127,19 @@ export function notifyNewSignup(input: {
   emailConfirmed?: boolean
 }): void {
   const label = input.email || input.userId
-  const provider = input.provider || 'email'
-  const confirmed = input.emailConfirmed ? 'Yes' : 'Pending'
-  queueAdminEmail(
+  const when = new Date().toISOString()
+  queueReactEmail(
     `JyutTranslate · New sign-up: ${label}`,
-    `<p>A new user signed up on JyutTranslate.</p>
-<ul>
-  <li><strong>Email:</strong> ${escapeHtml(input.email || '—')}</li>
-  <li><strong>User ID:</strong> <code>${escapeHtml(input.userId)}</code></li>
-  <li><strong>Provider:</strong> ${escapeHtml(provider)}</li>
-  <li><strong>Email confirmed:</strong> ${confirmed}</li>
-</ul>
-<p><a href="${adminLink()}">Open admin panel</a></p>`,
+    createElement(SignupEmail, {
+      email: input.email || '—',
+      userId: input.userId,
+      provider: input.provider || 'email',
+      emailConfirmed: input.emailConfirmed ? 'Yes' : 'Pending',
+      createdAt: when,
+      adminUrl: adminLink(),
+      appUrl: appPublicUrl(),
+      logoSrc: logoSrcForTemplate(),
+    }),
   )
 }
 
@@ -109,21 +156,22 @@ export function notifyUserUpgrade(input: {
 
   const label = input.email || input.userId
   const via = input.source === 'stripe' ? 'Stripe checkout' : 'Admin panel'
-  const stripeLine = input.stripeCustomerId
-    ? `<li><strong>Stripe customer:</strong> <code>${escapeHtml(input.stripeCustomerId)}</code></li>`
-    : ''
+  const when = new Date().toISOString()
 
-  queueAdminEmail(
+  queueReactEmail(
     `JyutTranslate · Upgrade: ${label} → ${input.plan}`,
-    `<p>A user upgraded on JyutTranslate.</p>
-<ul>
-  <li><strong>Email:</strong> ${escapeHtml(input.email || '—')}</li>
-  <li><strong>User ID:</strong> <code>${escapeHtml(input.userId)}</code></li>
-  <li><strong>Plan:</strong> ${escapeHtml(input.previousPlan)} → <strong>${escapeHtml(input.plan)}</strong></li>
-  <li><strong>Source:</strong> ${escapeHtml(via)}</li>
-  ${stripeLine}
-</ul>
-<p><a href="${adminLink()}">Open admin panel</a></p>`,
+    createElement(UpgradeEmail, {
+      email: input.email || '—',
+      userId: input.userId,
+      fromPlan: input.previousPlan,
+      toPlan: input.plan,
+      source: via,
+      when,
+      stripeCustomerId: input.stripeCustomerId || null,
+      adminUrl: adminLink(),
+      appUrl: appPublicUrl(),
+      logoSrc: logoSrcForTemplate(),
+    }),
   )
 }
 
@@ -215,28 +263,24 @@ export function notifyBugReport(input: BugReportNotifyInput): void {
     visionConfigured: typeof server.azureVision === 'boolean' ? server.azureVision : null,
     recentEvents: recentEventLines(clientPayload),
     adminUrl: adminLink('/#/admin'),
+    appUrl: appPublicUrl(),
+    logoSrc: logoSrcForTemplate(),
     hasScreenshot: Boolean(parsedShot),
   }
 
   const label = input.email || input.userId
   const subject = `JyutTranslate · ${props.issueLabel} (${props.shortId}) · ${label}`
 
-  void (async () => {
-    try {
-      const html = await render(createElement(BugReportEmail, props))
-      const attachments: EmailAttachment[] | undefined = parsedShot
-        ? [
-            {
-              filename: `bug-screenshot.${parsedShot.ext}`,
-              content: Buffer.from(parsedShot.base64, 'base64'),
-              contentId: 'bug-screenshot',
-              contentType: parsedShot.contentType,
-            },
-          ]
-        : undefined
-      await sendAdminEmail(subject, html, attachments)
-    } catch (e) {
-      console.error('[notify] bug report email failed', e)
-    }
-  })()
+  const shotAttachment: EmailAttachment[] | undefined = parsedShot
+    ? [
+        {
+          filename: `bug-screenshot.${parsedShot.ext}`,
+          content: Buffer.from(parsedShot.base64, 'base64'),
+          contentId: 'bug-screenshot',
+          contentType: parsedShot.contentType,
+        },
+      ]
+    : undefined
+
+  queueReactEmail(subject, createElement(BugReportEmail, props), shotAttachment)
 }
