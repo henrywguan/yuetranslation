@@ -989,6 +989,23 @@
   font-size: 0.85rem;
 }
 
+.solo-edit-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 8px 0 0;
+  text-align: left;
+}
+
+.solo-edit-link:hover,
+.solo-edit-link:focus-visible {
+  color: var(--ink-bright);
+}
+
 .solo-source {
   margin: 0;
   font-size: clamp(1.15rem, 4.6vw, 1.85rem);
