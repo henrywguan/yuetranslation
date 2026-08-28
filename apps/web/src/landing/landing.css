@@ -1816,6 +1816,36 @@
   margin-bottom: 8px;
 }
 
+.demo-solo {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.demo-solo-pane {
+  min-width: 0;
+}
+
+.demo-solo-rule {
+  height: 1px;
+  margin: 16px 0;
+  background: linear-gradient(90deg, transparent, rgba(61, 207, 182, 0.4), transparent);
+}
+
+.demo-input--solo {
+  width: 100%;
+  min-height: 3.25rem;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.demo-hint {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .demo-input-row {
   display: flex;
   gap: 8px;
@@ -1860,7 +1890,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 14px 0 20px;
+  margin: 12px 0 0;
   min-width: 0;
   max-width: 100%;
 }

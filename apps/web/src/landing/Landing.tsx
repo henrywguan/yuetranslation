@@ -104,7 +104,7 @@ export function Landing() {
             </div>
             <div className="ln-hero-stat">
               <span className="ln-hero-stat-icon" aria-hidden="true">
-                <strong>4</strong>
+                <strong>3</strong>
               </span>
               <BiText copy={ui.statModes} size="sm" />
             </div>

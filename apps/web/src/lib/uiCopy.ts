@@ -461,11 +461,11 @@ export const ui = {
   statModes: { en: 'modes', zh: '種模式', jp: 'zung2 mou4 sik1' },
   statJyutping: { en: 'Jyutping on every line', zh: '每句都有粵拼', jp: 'mui5 geoi3 dou1 jau5 jyut6 ping3' },
 
-  modesKicker: { en: '4 Modes', zh: '四種模式', jp: 'sei3 zung2 mou4 sik1' },
+  modesKicker: { en: '3 Modes', zh: '三種模式', jp: 'saam1 zung2 mou4 sik1' },
   modesTitle: {
-    en: 'One app, 4 translation methods',
-    zh: '一個應用，四種翻譯方式',
-    jp: 'jat1 go3 jing3 jung6, sei3 zung2 faan1 jik6 fong1 sik1',
+    en: 'One app, 3 translation methods',
+    zh: '一個應用，三種翻譯方式',
+    jp: 'jat1 go3 jing3 jung6, saam1 zung2 faan1 jik6 fong1 sik1',
   },
 
   featJpTitle: { en: 'Jyutping built in', zh: '內建粵拼', jp: 'noi6 gin3 jyut6 ping3' },
@@ -508,18 +508,18 @@ export const ui = {
 
   demoKicker: { en: 'Try it now', zh: '而家試吓', jp: 'ji4 gaa1 si3 haa5' },
   demoTitle: {
-    en: 'Translate a phrase, live',
-    zh: '翻譯一句，即時見',
-    jp: 'faan1 jik6 jat1 geoi3, zik1 si4 gin3',
+    en: 'Try Solo mode, live',
+    zh: '試用獨白模式，即時見',
+    jp: 'si3 jung6 duk6 baak6 mou4 sik1, zik1 si4 gin3',
   },
   demoBody: {
-    en: 'Play with our demo! Type anything or tap a sample.',
-    zh: '玩吓我哋嘅示範！打任何嘢或者撳樣本。',
-    jp: 'waan2 haa5 ngo5 dei6 ge3 si6 faan6! daa2 jam6 ho4 je5 waak6 ze2 gam2 joeng6 bun2.',
+    en: 'Type in English — the Cantonese line updates below. Tap a sample to start.',
+    zh: '打英文——粵語會喺下面更新。撳樣本試吓。',
+    jp: 'daa2 jing1 man2 — jyut6 jyu5 wui5 hai2 haa6 min6 gang1 san1. gam2 joeng6 bun2 si3 haa5.',
   },
   demoTypeEn: { en: 'Type English', zh: '打英文', jp: 'daa2 jing1 man2' },
   demoPlaceholder: { en: 'Say something…', zh: '講啲咩…', jp: 'gong2 di1 me1…' },
-  demoLive: { en: 'JyutTranslate · live', zh: 'JyutTranslate · 即時', jp: 'JyutTranslate · zik1 si4' },
+  demoLive: { en: 'Solo mode', zh: '獨白模式', jp: 'duk6 baak6 mou4 sik1' },
   demoCantonese: { en: 'Cantonese', zh: '廣東話', jp: 'gwong2 dung1 waa2' },
   demoApiError: {
     en: 'Live API not reachable from here — this runs against your deployed backend.',
@@ -554,9 +554,9 @@ export const ui = {
     jp: 'mou4 haan6 man4 zi6 faan1 jik6',
   },
   freeFeatModes: {
-    en: 'Solo, Conversation, Text & Camera',
-    zh: '獨白、對話、文字同相機',
-    jp: 'duk6 baak6, deoi3 waa6, man4 zi6 tung4 soeng1 gei1',
+    en: 'Solo, Conversation & Camera',
+    zh: '獨白、對話同相機',
+    jp: 'duk6 baak6, deoi3 waa6 tung4 soeng1 gei1',
   },
   freeFeatCamera: {
     en: '~5 minutes camera translation / month',
@@ -606,9 +606,9 @@ export const ui = {
     jp: 'mou4 haan6 man4 zi6 faan1 jik6',
   },
   landFreeModes: {
-    en: 'Solo · Conversation · Text · Cam',
-    zh: '獨白 · 對話 · 文字 · 相機',
-    jp: 'duk6 baak6 · deoi3 waa6 · man4 zi6 · soeng1 gei1',
+    en: 'Solo · Conversation · Cam',
+    zh: '獨白 · 對話 · 相機',
+    jp: 'duk6 baak6 · deoi3 waa6 · soeng1 gei1',
   },
   landProLive: {
     en: '~20 min live / month',
@@ -720,9 +720,9 @@ export const ui = {
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
   cmpModes: {
-    en: 'Solo · Conversation · Text · Cam',
-    zh: '獨白 · 對話 · 文字 · 相機',
-    jp: 'duk6 baak6 · deoi3 waa6 · man4 zi6 · soeng1 gei1',
+    en: 'Solo · Conversation · Cam',
+    zh: '獨白 · 對話 · 相機',
+    jp: 'duk6 baak6 · deoi3 waa6 · soeng1 gei1',
   },
   cmpCamera: { en: 'Camera translation', zh: '相機翻譯', jp: 'soeng1 gei1 faan1 jik6' },
   cmpTts: { en: 'Tap-to-play voice', zh: '撳喇叭播語音', jp: 'gam2 laa3 baa1 bo3 jyu5 jam1' },
