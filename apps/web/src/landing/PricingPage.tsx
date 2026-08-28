@@ -19,7 +19,7 @@ type Billing = 'monthly' | 'annual'
 type Row = { label: Bi; values: [Bi, Bi, Bi] }
 
 const COMPARISON: Row[] = [
-  { label: ui.cmpLive, values: [ui.val5m, ui.val20m, ui.val40h] },
+  { label: ui.cmpLive, values: [ui.val5m, ui.val1h, ui.val40h] },
   { label: ui.cmpText, values: [ui.valUnlimitedPlain, ui.valUnlimitedPlain, ui.valUnlimitedPlain] },
   { label: ui.cmpJp, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
