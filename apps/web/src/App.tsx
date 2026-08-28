@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
+import { BugReportModal } from './components/BugReportModal'
 import { bootstrapAuthSession, consumeAuthScreenDeepLink } from './lib/auth'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
@@ -43,6 +44,7 @@ export default function App() {
     <>
       <Suspense fallback={null}>{page}</Suspense>
       <AuthPanel onAuthChange={() => void loadBootstrap()} />
+      <BugReportModal />
     </>
   )
 }

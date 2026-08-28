@@ -2350,6 +2350,16 @@
   color: var(--mint);
 }
 
+.banner-link {
+  border: 0;
+  background: transparent;
+  color: var(--mint);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .text-mode {
   display: flex;
   flex-direction: column;

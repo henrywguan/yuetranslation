@@ -2913,6 +2913,14 @@
   border-bottom-color: color-mix(in srgb, var(--jade) 55%, transparent);
 }
 
+.ln-footer-report {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 .ln-footer-langs {
   margin: 0;
   position: relative;

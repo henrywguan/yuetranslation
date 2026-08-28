@@ -8,8 +8,10 @@ import {
   getProfile,
   listAuditLog,
   listAuthUsers,
+  listBugReports,
   listProfiles,
   setAuthBanned,
+  updateBugReportStatus,
   upsertProfilePlan,
   writeAuditLog,
   type ProfileRow,
@@ -492,6 +494,45 @@ export async function adminListAudit(req: AuthedRequest, res: Response) {
     res.json({ entries })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load audit log' })
+  }
+}
+
+export async function adminListBugReports(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const limit = Number(req.query.limit || 100)
+    const reports = await listBugReports(limit)
+    res.json({ reports })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load bug reports' })
+  }
+}
+
+const BugReportStatus = z.enum(['open', 'triaged', 'closed'])
+
+export async function adminPatchBugReportStatus(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const reportId = String(req.params.reportId || '').trim()
+  if (!reportId) {
+    res.status(400).json({ message: 'reportId required' })
+    return
+  }
+  const parsed = z.object({ status: BugReportStatus }).safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'status must be open, triaged, or closed' })
+    return
+  }
+  try {
+    const row = await updateBugReportStatus(reportId, parsed.data.status)
+    if (!row) {
+      res.status(404).json({ message: 'Report not found' })
+      return
+    }
+    res.json({ ok: true, report: row })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to update report' })
   }
 }
 

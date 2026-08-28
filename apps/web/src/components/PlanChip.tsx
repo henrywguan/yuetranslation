@@ -9,6 +9,7 @@ import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescree
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade, type BillingError } from '../lib/billing'
+import { openBugReportOrAuth } from '../lib/bugReport'
 import {
   readBadgeUsageMetric,
   writeBadgeUsageMetric,
@@ -417,6 +418,18 @@ export function PlanChip() {
               setHomescreenOpen(true)
             }}
           />
+          {entitlement.loggedIn ? (
+            <button
+              type="button"
+              className="account-hub-btn account-hub-btn--ghost"
+              onClick={() => {
+                setOpen(false)
+                void openBugReportOrAuth()
+              }}
+            >
+              <BiText copy={ui.bugReportLink} size="sm" />
+            </button>
+          ) : null}
           {entitlement.loggedIn ? (
             <button
               type="button"

@@ -447,6 +447,16 @@
   color: var(--muted);
 }
 
+.admin-detail-pre {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  overflow: auto;
+  max-height: 420px;
+  white-space: pre-wrap;
+}
+
 /* Admin plan badge — uiverse modern-husky-6 structure, Jyut palette */
 .admin-plan-badge {
   /* Neo-brutalist stack in Jyut colors (not yellow/stone) */

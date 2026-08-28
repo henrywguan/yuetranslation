@@ -3,18 +3,21 @@ import { RoleBadge } from '../components/RoleBadge'
 import '../components/RoleBadge.css'
 import { AdminResetUsageModal } from '../components/AdminResetUsageModal'
 import {
+  adminPatchBugReportStatus,
   adminResetUsage,
   adminSetDisabled,
   adminSetPlan,
   adminSetRole,
   downloadAdminUsersCsv,
   fetchAdminAudit,
+  fetchAdminBugReports,
   fetchAdminMe,
   fetchAdminUserUsage,
   fetchAdminUsers,
   formatLiveSeconds,
   syncResendAudience,
   type AdminAuditEntry,
+  type AdminBugReport,
   type AdminListQuery,
   type AdminUser,
 } from '../lib/adminApi'
@@ -23,7 +26,7 @@ import { navigate } from '../lib/useHashRoute'
 import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
 
-type Tab = 'users' | 'audit'
+type Tab = 'users' | 'audit' | 'reports'
 
 function currentMonthInput(): string {
   return new Date().toISOString().slice(0, 7)
@@ -68,6 +71,8 @@ export function AdminPage() {
     }[]
   >([])
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
+  const [reports, setReports] = useState<AdminBugReport[]>([])
+  const [selectedReport, setSelectedReport] = useState<AdminBugReport | null>(null)
   const [resendSyncMsg, setResendSyncMsg] = useState('')
   const [resetUser, setResetUser] = useState<AdminUser | null>(null)
 
@@ -133,11 +138,25 @@ export function AdminPage() {
     }
   }, [])
 
+  const reloadReports = useCallback(async () => {
+    setBusy(true)
+    setError('')
+    try {
+      const data = await fetchAdminBugReports(150)
+      setReports(data.reports)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load bug reports')
+    } finally {
+      setBusy(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (gate !== 'ok') return
     if (tab === 'users') void reloadUsers()
-    else void reloadAudit()
-  }, [gate, tab, reloadUsers, reloadAudit])
+    else if (tab === 'audit') void reloadAudit()
+    else void reloadReports()
+  }, [gate, tab, reloadUsers, reloadAudit, reloadReports])
 
   const openUser = async (user: AdminUser) => {
     setSelected(user)
@@ -273,6 +292,23 @@ export function AdminPage() {
     }
   }
 
+  const onSetReportStatus = async (report: AdminBugReport, status: AdminBugReport['status']) => {
+    if (status === report.status) return
+    setBusy(true)
+    setError('')
+    try {
+      await adminPatchBugReportStatus(report.id, status)
+      await reloadReports()
+      if (selectedReport?.id === report.id) {
+        setSelectedReport({ ...report, status })
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update report')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const onSort = (key: NonNullable<AdminListQuery['sort']>) => {
     if (sort === key) setDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else {
@@ -334,6 +370,15 @@ export function AdminPage() {
             onClick={() => setTab('audit')}
           >
             Audit log
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'reports'}
+            className={`admin-tab${tab === 'reports' ? ' is-active' : ''}`}
+            onClick={() => setTab('reports')}
+          >
+            Reports
           </button>
         </div>
       </header>
@@ -629,6 +674,88 @@ export function AdminPage() {
             onClose={() => setResetUser(null)}
             onSubmit={(patch) => void onSubmitResetUsage(patch)}
           />
+        </>
+      ) : tab === 'reports' ? (
+        <>
+          <p className="admin-muted">
+            {busy ? 'Loading…' : `${reports.length} report${reports.length === 1 ? '' : 's'}`} · signed-in users only
+          </p>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Type</th>
+                  <th>User</th>
+                  <th>Route</th>
+                  <th>Mode</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((r) => (
+                  <tr key={r.id}>
+                    <td>{new Date(r.created_at).toLocaleString()}</td>
+                    <td>{r.issue_type}</td>
+                    <td>
+                      <button type="button" className="admin-user-btn" onClick={() => setSelectedReport(r)}>
+                        {r.email || r.user_id.slice(0, 8)}
+                      </button>
+                    </td>
+                    <td>{r.route || '—'}</td>
+                    <td>{r.mode || '—'}</td>
+                    <td>
+                      <select
+                        value={r.status}
+                        disabled={busy}
+                        onChange={(e) =>
+                          void onSetReportStatus(r, e.target.value as AdminBugReport['status'])
+                        }
+                        aria-label={`Status for report ${r.id}`}
+                      >
+                        <option value="open">open</option>
+                        <option value="triaged">triaged</option>
+                        <option value="closed">closed</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+                {!reports.length && !busy ? (
+                  <tr>
+                    <td colSpan={6} className="admin-muted">
+                      No bug reports yet.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+
+          {selectedReport ? (
+            <aside className="admin-detail" aria-label="Bug report detail">
+              <header className="admin-detail-header">
+                <div>
+                  <h2>{selectedReport.issue_type}</h2>
+                  <p className="admin-muted">
+                    {selectedReport.email || selectedReport.user_id} · {selectedReport.id}
+                  </p>
+                </div>
+                <button type="button" className="admin-link-btn" onClick={() => setSelectedReport(null)}>
+                  Close
+                </button>
+              </header>
+              <pre className="admin-detail-json admin-detail-pre">
+                {JSON.stringify(
+                  {
+                    client: selectedReport.client,
+                    context: selectedReport.context,
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </aside>
+          ) : null}
         </>
       ) : (
         <div className="admin-table-wrap">

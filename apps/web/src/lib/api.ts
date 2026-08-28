@@ -1,5 +1,6 @@
 import type { Entitlement, Lang } from './types'
 import { getAccessToken } from './auth'
+import { captureDiagnostic } from './diagnostics'
 
 export function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -31,11 +32,15 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   const token = await getAccessToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
-  return fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     credentials: WP_NONCE ? 'include' : 'same-origin',
     ...init,
     headers,
   })
+  if (!res.ok) {
+    captureDiagnostic('api_error', `${path} ${res.status}`, res.status)
+  }
+  return res
 }
 
 export async function fetchHealth(): Promise<{

@@ -18,6 +18,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
 import { useYueStore } from './lib/store'
 import { openAuthScreen, onAuthChange } from './lib/auth'
+import { openBugReportOrAuth } from './lib/bugReport'
 import { openUpgrade } from './lib/billing'
 import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
@@ -107,6 +108,11 @@ export function TranslatorApp() {
         {error ? (
           <div className="banner error" role="alert">
             <span>{error}</span>
+            {entitlement?.loggedIn ? (
+              <button type="button" className="banner-link" onClick={() => void openBugReportOrAuth()}>
+                <BiText copy={ui.bugReportLink} size="sm" layout="inline" />
+              </button>
+            ) : null}
             {entitlement?.reason === 'login_required' && !entitlement.loggedIn ? (
               <GlowRotateButton onClick={() => openAuthScreen()}>
                 <BiText copy={ui.signIn} size="sm" layout="inline" />

@@ -102,3 +102,34 @@ export function notifyUserUpgrade(input: {
 <p><a href="${adminLink()}">Open admin panel</a></p>`,
   )
 }
+
+export function notifyBugReport(input: {
+  reportId: string
+  issueType: string
+  email: string | null
+  userId: string
+  route: string | null
+  mode: string | null
+}): void {
+  const label = input.email || input.userId
+  const routeLine = input.route
+    ? `<li><strong>Route:</strong> <code>${escapeHtml(input.route)}</code></li>`
+    : ''
+  const modeLine = input.mode
+    ? `<li><strong>Mode:</strong> ${escapeHtml(input.mode)}</li>`
+    : ''
+
+  queueAdminEmail(
+    `JyutTranslate · Bug report: ${input.issueType} (${label})`,
+    `<p>A signed-in user submitted a bug report.</p>
+<ul>
+  <li><strong>Type:</strong> ${escapeHtml(input.issueType)}</li>
+  <li><strong>Email:</strong> ${escapeHtml(input.email || '—')}</li>
+  <li><strong>User ID:</strong> <code>${escapeHtml(input.userId)}</code></li>
+  <li><strong>Report ID:</strong> <code>${escapeHtml(input.reportId)}</code></li>
+  ${routeLine}
+  ${modeLine}
+</ul>
+<p><a href="${adminLink('/#/admin')}">Open admin panel</a></p>`,
+  )
+}

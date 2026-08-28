@@ -97,8 +97,19 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 1. `supabase/migrations/002_admin_disabled_audit.sql` — `profiles.disabled` + `admin_audit_log`
 2. `supabase/migrations/003_usage_increment.sql` — ensures `translate_count`, adds atomic `increment_usage()` so live / TTS / translate cannot wipe each other under concurrency
 3. `supabase/migrations/004_camera_usage.sql` — `camera_seconds` + `camera_translate_count`, extends `increment_usage()` for cam metering
+4. `supabase/migrations/005_user_roles.sql` — optional `profiles.role` (`admin` | `family`)
+5. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
 
 Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a session.
+
+## Bug reports (signed-in users only)
+
+Users must be logged in to submit reports. Guests see no footer link; the API returns `401` without a JWT.
+
+- **User flow:** Account hub → **Report a bug**, error banner link (when signed in), or marketing footer link (when signed in). One-tap issue type + optional note; client attaches route, mode, entitlement snapshot, recent events, and env — **not** translation text, audio, or images.
+- **API:** `POST /api/bug-report` (Bearer JWT, rate limit 10/hour per user)
+- **Admin:** `#/admin` → **Reports** tab; `GET /api/admin/bug-reports`, `PATCH /api/admin/bug-reports/:reportId/status`
+- **Email:** Resend admin notify on each new report (same env as sign-up alerts)
 
 ## Features
 
@@ -112,6 +123,7 @@ Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a s
 | Stripe link | Opens Dashboard customer page when `stripe_customer_id` exists |
 | Ban / unban | Profile flag + Auth ban; blocked entitlements (`account_disabled`) |
 | Audit log | Tab with recent admin actions |
+| Bug reports | Tab listing user reports with status triage |
 | CSV export | Current filters + month (includes camera fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | `POST /api/usage/camera-heartbeat` → `camera_seconds`; `POST /api/camera/scan` → `camera_translate_count` |
@@ -128,3 +140,5 @@ All routes require Bearer JWT + allowlisted email:
 - `POST /api/admin/users/:userId/reset-usage`
 - `PATCH /api/admin/users/:userId/disabled`
 - `GET /api/admin/audit`
+- `GET /api/admin/bug-reports`
+- `PATCH /api/admin/bug-reports/:reportId/status`
