@@ -162,12 +162,13 @@ export type AuditAction =
   | 'reset_usage'
   | 'ban'
   | 'unban'
+  | 'resend_audience_sync'
 
 export async function writeAuditLog(entry: {
   actorId: string
   actorEmail: string | null
   action: AuditAction
-  targetUserId: string
+  targetUserId?: string | null
   targetEmail?: string | null
   detail?: Record<string, unknown>
 }): Promise<void> {

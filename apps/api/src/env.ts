@@ -97,6 +97,11 @@ export const env = {
     .filter(Boolean),
   /** Resend API key for admin notification emails. */
   resendApiKey: (process.env.RESEND_API_KEY || '').trim(),
+  /**
+   * Resend Audience ID — new sign-ins are synced as contacts automatically.
+   * Resend Dashboard → Audiences → copy the audience id (seg_… or uuid).
+   */
+  resendAudienceId: (process.env.RESEND_AUDIENCE_ID || '').trim(),
   /** From address — must be a verified domain in Resend (or onboarding@resend.dev for tests). */
   notifyFromEmail: (process.env.YUE_NOTIFY_FROM || '').trim(),
   /**

@@ -15,6 +15,7 @@ import {
   type ProfileRow,
 } from './supabase.js'
 import { notifyUserUpgrade } from './notify.js'
+import { backfillResendAudience } from './resendAudience.js'
 import {
   currentMonthKey,
   getUsageForMonth,
@@ -427,5 +428,23 @@ export async function adminListAudit(req: AuthedRequest, res: Response) {
     res.json({ entries })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load audit log' })
+  }
+}
+
+/** One-time / on-demand: sync every Supabase Auth email into the Resend Audience. */
+export async function adminSyncResendAudience(req: AuthedRequest, res: Response) {
+  const auth = requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const result = await backfillResendAudience()
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'resend_audience_sync',
+      detail: result,
+    })
+    res.json({ ok: true, ...result })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Resend audience sync failed' })
   }
 }

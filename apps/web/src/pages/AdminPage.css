@@ -132,6 +132,10 @@
   cursor: not-allowed;
 }
 
+.admin-btn--secondary {
+  background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+}
+
 .admin-link-btn {
   text-decoration: underline;
   text-underline-offset: 2px;

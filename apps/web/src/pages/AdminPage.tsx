@@ -10,6 +10,7 @@ import {
   fetchAdminUserUsage,
   fetchAdminUsers,
   formatLiveSeconds,
+  syncResendAudience,
   type AdminAuditEntry,
   type AdminListQuery,
   type AdminUser,
@@ -63,6 +64,7 @@ export function AdminPage() {
     }[]
   >([])
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
+  const [resendSyncMsg, setResendSyncMsg] = useState('')
 
   useEffect(() => {
     const t = window.setTimeout(() => setQDebounced(q.trim()), 250)
@@ -211,6 +213,30 @@ export function AdminPage() {
     }
   }
 
+  const onSyncResendAudience = async () => {
+    if (
+      !window.confirm(
+        'Scan all Supabase users and add their emails to your Resend Audience? This may take a minute.',
+      )
+    ) {
+      return
+    }
+    setBusy(true)
+    setError('')
+    setResendSyncMsg('')
+    try {
+      const result = await syncResendAudience()
+      setResendSyncMsg(
+        `Resend: ${result.synced} synced, ${result.skipped} skipped (no email), ${result.failed} failed (${result.scanned} scanned).`,
+      )
+      if (tab === 'audit') void reloadAudit()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Resend sync failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const onSort = (key: NonNullable<AdminListQuery['sort']>) => {
     if (sort === key) setDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else {
@@ -326,7 +352,17 @@ export function AdminPage() {
             <button type="button" className="admin-btn" disabled={busy} onClick={() => void onExport()}>
               Export CSV
             </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--secondary"
+              disabled={busy}
+              onClick={() => void onSyncResendAudience()}
+            >
+              Sync Resend audience
+            </button>
           </section>
+
+          {resendSyncMsg ? <p className="admin-muted">{resendSyncMsg}</p> : null}
 
           <p className="admin-muted">
             {busy ? 'Loading…' : `${count} user${count === 1 ? '' : 's'}`} · month{' '}

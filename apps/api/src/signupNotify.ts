@@ -3,6 +3,7 @@ import { Webhook } from 'standardwebhooks'
 import type { AuthedRequest } from './auth.js'
 import { env } from './env.js'
 import { notifyNewSignup } from './notify.js'
+import { queueResendAudienceContact } from './resendAudience.js'
 
 type SupabaseAuthUserRecord = {
   id?: string
@@ -10,6 +11,7 @@ type SupabaseAuthUserRecord = {
   email_confirmed_at?: string | null
   raw_app_meta_data?: { provider?: string } | null
   app_metadata?: { provider?: string } | null
+  user_metadata?: { full_name?: string; name?: string } | null
 }
 
 type SupabaseDbWebhookBody = {
@@ -34,15 +36,31 @@ function providerFromUser(user: SupabaseAuthUserRecord): string {
   return user.raw_app_meta_data?.provider || user.app_metadata?.provider || 'email'
 }
 
+function displayNameFromUser(user: SupabaseAuthUserRecord): string | null {
+  const meta = user.user_metadata
+  if (typeof meta?.full_name === 'string' && meta.full_name.trim()) return meta.full_name.trim()
+  if (typeof meta?.name === 'string' && meta.name.trim()) return meta.name.trim()
+  return null
+}
+
 function notifyFromUser(user: SupabaseAuthUserRecord): boolean {
   const userId = user.id?.trim()
   if (!userId) return false
+  const email = user.email?.trim() || null
   notifyNewSignup({
-    email: user.email ?? null,
+    email,
     userId,
     provider: providerFromUser(user),
     emailConfirmed: Boolean(user.email_confirmed_at),
   })
+  if (email) {
+    queueResendAudienceContact({
+      email,
+      userId,
+      displayName: displayNameFromUser(user),
+      provider: providerFromUser(user),
+    })
+  }
   return true
 }
 
