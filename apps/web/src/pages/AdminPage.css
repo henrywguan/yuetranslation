@@ -247,8 +247,17 @@
 .admin-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
   white-space: nowrap;
+  min-width: 9.5rem;
+}
+
+.admin-action-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .admin-action-btn {
@@ -261,6 +270,7 @@
   color: var(--ink);
   font-size: 0.82rem;
   line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .admin-action-btn:hover,
