@@ -190,8 +190,13 @@ export async function addCameraTranslateCount(userId: string, count = 1) {
   await incrementUsage(userId, { cameraTranslateCount: count })
 }
 
-/** Zero live / TTS / translate / camera counters for a month (default: current). */
-export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
+export type UsagePatch = {
+  liveSeconds?: number
+  ttsChars?: number
+  cameraSeconds?: number
+}
+
+async function ensureUsageProfile(userId: string) {
   const client = getAdmin()
   if (!client) return
   const { error: profileError } = await client.from('profiles').upsert(
@@ -201,6 +206,38 @@ export async function resetUsageMonth(userId: string, month = currentMonthKey())
   if (profileError) {
     console.error('[usage] ensure profile failed', profileError.message)
   }
+}
+
+/** Set selected usage counters for a month (default: current). */
+export async function setUsageMonth(
+  userId: string,
+  month = currentMonthKey(),
+  patch: UsagePatch,
+) {
+  const client = getAdmin()
+  if (!client) return
+  await ensureUsageProfile(userId)
+
+  const current = await getUsage(userId, month)
+  const row = {
+    user_id: userId,
+    month,
+    live_seconds: patch.liveSeconds ?? current.liveSeconds,
+    tts_chars: patch.ttsChars ?? current.ttsChars,
+    translate_count: current.translateCount,
+    camera_seconds: patch.cameraSeconds ?? current.cameraSeconds,
+    camera_translate_count: current.cameraTranslateCount,
+  }
+
+  const { error } = await client.from('usage_months').upsert(row, { onConflict: 'user_id,month' })
+  if (error) console.error('[usage] setUsageMonth failed', error.message)
+}
+
+/** Zero live / TTS / translate / camera counters for a month (default: current). */
+export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
+  const client = getAdmin()
+  if (!client) return
+  await ensureUsageProfile(userId)
   const { error } = await client.from('usage_months').upsert(
     {
       user_id: userId,
