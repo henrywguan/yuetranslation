@@ -899,6 +899,88 @@
   color: var(--muted);
 }
 
+.solo-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.solo-pane-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.solo-details-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.solo-details-btn:hover,
+.solo-details-btn:focus-visible {
+  color: var(--ink-bright);
+}
+
+.solo-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink-bright);
+  padding: 4px 0 8px;
+  font: inherit;
+  line-height: 1.35;
+  min-height: 2.8em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.solo-input--en {
+  font-size: clamp(1.15rem, 4.6vw, 1.85rem);
+  font-weight: 500;
+}
+
+.solo-input--yue {
+  font-family: var(--font-body);
+  font-size: clamp(1.2rem, 5.2vw, 2.15rem);
+  font-weight: 600;
+}
+
+.solo-input::placeholder {
+  color: color-mix(in srgb, var(--muted) 72%, transparent);
+  font-weight: 400;
+}
+
+.solo-input:disabled {
+  opacity: 0.85;
+}
+
+.solo-input:focus-visible {
+  outline: none;
+}
+
+.solo-auto-hint {
+  margin: 4px 2px 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.solo-alts-loading {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
 .solo-source {
   margin: 0;
   font-size: clamp(1.15rem, 4.6vw, 1.85rem);

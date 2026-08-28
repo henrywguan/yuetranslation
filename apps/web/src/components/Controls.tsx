@@ -7,7 +7,6 @@ import type { Mode, SpeakDirection } from '../lib/types'
 const MODES: { id: Mode; copy: typeof ui.modeSolo }[] = [
   { id: 'solo', copy: ui.modeSolo },
   { id: 'conversation', copy: ui.modeFace },
-  { id: 'text', copy: ui.modeText },
   { id: 'camera', copy: ui.modeCamera },
 ]
 
@@ -40,8 +39,8 @@ export function Controls() {
   const speakOn = autoSpeak && canAutoSpeak
   const faceMode = mode === 'conversation'
   const cameraMode = mode === 'camera'
-  const showLiveDock = mode !== 'text' && !faceMode && !cameraMode
-  const showDirection = mode !== 'text' && !faceMode && !cameraMode
+  const showLiveDock = !faceMode && !cameraMode
+  const showDirection = !faceMode && !cameraMode
   const dirValue = visibleDirection(speakDirection)
 
   return (
@@ -68,7 +67,7 @@ export function Controls() {
         ) : null}
 
         <div
-          className={`opt-row${mode === 'text' || faceMode || cameraMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
+          className={`opt-row${faceMode || cameraMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
         >
           {showDirection ? (
             <div className="opt-cell opt-dir">

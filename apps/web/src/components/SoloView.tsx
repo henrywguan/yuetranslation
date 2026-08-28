@@ -1,12 +1,24 @@
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
-import { InkSettle } from './InkSettle'
-import { ResultWithDefinition } from './ResultWithDefinition'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
-import { ui } from '../lib/uiCopy'
+import { biPlain, ui } from '../lib/uiCopy'
+import type { Lang } from '../lib/types'
+
+const AUTO_TRANSLATE_MS = 2000
+
+function isWorthAutoTranslate(value: string, from: Lang): boolean {
+  const t = value.trim()
+  if (!t) return false
+  if (from === 'yue') {
+    return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
+  }
+  const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
+  return letters.length >= 3 || t.split(/\s+/).filter(Boolean).length >= 2
+}
 
 export function SoloView() {
   const enInterim = useYueStore((s) => s.enInterim)
@@ -16,20 +28,31 @@ export function SoloView() {
   const yueDefinition = useYueStore((s) => s.yueDefinition)
   const yueDefinitions = useYueStore((s) => s.yueDefinitions)
   const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const altsLoading = useYueStore((s) => s.altsLoading)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
+  const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
+  const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
   const history = useYueStore((s) => s.history)
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
 
+  const [enDraft, setEnDraft] = useState('')
+  const [yueDraft, setYueDraft] = useState('')
+  const [typedBusy, setTypedBusy] = useState(false)
+  const editingRef = useRef<'en' | 'yue' | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const reqId = useRef(0)
+  const translateRef = useRef(translateTyped)
+  const historyRef = useRef(history)
+  translateRef.current = translateTyped
+  historyRef.current = history
+
   const latest = history[0]
-  // While capturing or translating, never fall back to a prior turn’s translation
-  // (that reads as an interim / stale MT result).
-  const turnActive =
-    live || translating || Boolean(enInterim) || Boolean(yueInterim)
-  const enText =
+  const turnActive = live || translating || Boolean(enInterim) || Boolean(yueInterim)
+  const storeEn =
     enInterim ||
     enTranslation ||
     (!turnActive && latest
@@ -37,7 +60,7 @@ export function SoloView() {
         ? latest.source
         : latest.translation
       : '')
-  const yueText =
+  const storeYue =
     yueInterim ||
     yueTranslation ||
     (!turnActive && latest
@@ -60,11 +83,85 @@ export function SoloView() {
       : latest?.to === 'yue'
         ? latest.alternatives || []
         : []
-  // Live STT preview of the source pane only (not a machine translation).
-  const enLive = Boolean(enInterim) && !enTranslation && !yueTranslation
-  const yueLive = Boolean(yueInterim) && !enTranslation && !yueTranslation
-  const enThinking = translating && translatingTo === 'en'
-  const yueThinking = translating && translatingTo === 'yue'
+
+  // Mirror speech / translate results into the panes the user is not editing.
+  useEffect(() => {
+    if (editingRef.current !== 'en') setEnDraft(storeEn)
+  }, [storeEn])
+
+  useEffect(() => {
+    if (editingRef.current !== 'yue') setYueDraft(storeYue)
+  }, [storeYue])
+
+  const runTranslate = (value: string, from: Lang, delay: number, force = false) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    const next = value.trim()
+    if (!next) {
+      setTypedBusy(false)
+      return
+    }
+    if (!force && !isWorthAutoTranslate(next, from)) {
+      setTypedBusy(false)
+      return
+    }
+    const top = historyRef.current[0]
+    if (top && top.from === from && top.source === next) {
+      setTypedBusy(false)
+      return
+    }
+    const id = ++reqId.current
+    const start = () => {
+      timerRef.current = null
+      setTypedBusy(true)
+      void translateRef.current(next, from).finally(() => {
+        if (reqId.current === id) setTypedBusy(false)
+      })
+    }
+    if (delay <= 0) {
+      start()
+      return
+    }
+    setTypedBusy(false)
+    timerRef.current = setTimeout(start, delay)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
+  const onEnChange = (value: string) => {
+    editingRef.current = 'en'
+    setEnDraft(value)
+    runTranslate(value, 'en', AUTO_TRANSLATE_MS)
+  }
+
+  const onYueChange = (value: string) => {
+    editingRef.current = 'yue'
+    setYueDraft(value)
+    runTranslate(value, 'yue', AUTO_TRANSLATE_MS)
+  }
+
+  const openDetails = () => {
+    const yue = (yueDraft || storeYue).trim()
+    const en = (enDraft || storeEn).trim()
+    if (!yue && !en) return
+    openBreakdown(yue || en, {
+      translation: en || undefined,
+      definition: yueDef || undefined,
+      definitions: yueDefs,
+      alternatives: alts,
+    })
+  }
+
+  const enThinking = (translating && translatingTo === 'en') || (typedBusy && editingRef.current === 'yue')
+  const yueThinking = (translating && translatingTo === 'yue') || (typedBusy && editingRef.current === 'en')
+  const showHint = !live && !translating && !typedBusy && !enDraft.trim() && !yueDraft.trim()
+  const inputLocked = live
 
   return (
     <div className="solo">
@@ -84,89 +181,100 @@ export function SoloView() {
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
         <div className="solo-upper">
-          <p className="solo-label">
-            <BiText copy={ui.english} size="sm" only="en" />
-          </p>
+          <div className="solo-pane-head">
+            <p className="solo-label">
+              <BiText copy={ui.english} size="sm" only="en" />
+            </p>
+            {enDraft.trim() ? <SpeakButton text={enDraft} lang="en" /> : null}
+          </div>
           {enThinking ? (
             <TranslateThinking className="solo-thinking" />
           ) : (
-            <InkSettle
-              id={enLive ? 'en-live' : enText || 'en-empty'}
-              className="solo-source"
-              interim={enLive}
-            >
-              {enText ? (
-                <span className="spoken-line">
-                  {!enLive && (enTranslation || yueTranslation) ? (
-                    <button
-                      type="button"
-                      className="spoken-line-text spoken-line-text--action"
-                      onClick={() => {
-                        const yue = (yueTranslation || yueInterim || yueText).trim()
-                        const en = enText.trim()
-                        if (!yue && !en) return
-                        openBreakdown(yue || en, {
-                          translation: en,
-                          definition: yueDef || undefined,
-                          definitions: yueDefs,
-                          alternatives: alts,
-                        })
-                      }}
-                      aria-label="Open translation details"
-                    >
-                      {enText}
-                    </button>
-                  ) : (
-                    <span className="spoken-line-text">{enText}</span>
-                  )}
-                  <SpeakButton text={enText} lang="en" />
-                </span>
-              ) : (
-                <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="en" />
-              )}
-            </InkSettle>
+            <textarea
+              className="solo-input solo-input--en"
+              value={enDraft}
+              rows={3}
+              disabled={inputLocked}
+              placeholder={`${ui.typeEnglish.en} / ${ui.typeEnglish.zh}`}
+              aria-label={biPlain(ui.typeEnglish)}
+              onFocus={() => {
+                editingRef.current = 'en'
+                setSpeakDirection('en')
+              }}
+              onBlur={() => {
+                if (editingRef.current === 'en') editingRef.current = null
+              }}
+              onChange={(e) => onEnChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' || e.shiftKey) return
+                e.preventDefault()
+                runTranslate(enDraft, 'en', 0, true)
+              }}
+            />
           )}
         </div>
 
         <div className="solo-divider" />
 
         <div className="solo-lower">
-          <p className="solo-label">
-            <BiText copy={ui.cantonese} size="sm" only="zh" />
-          </p>
+          <div className="solo-pane-head">
+            <p className="solo-label">
+              <BiText copy={ui.cantonese} size="sm" only="zh" />
+            </p>
+            {yueDraft.trim() ? (
+              <div className="solo-pane-actions">
+                <button
+                  type="button"
+                  className="solo-details-btn"
+                  onClick={openDetails}
+                  aria-label={biPlain(ui.charDetail)}
+                >
+                  <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
+                </button>
+                <SpeakButton text={yueDraft} lang="yue" />
+              </div>
+            ) : null}
+          </div>
           {yueThinking ? (
             <TranslateThinking className="solo-thinking" />
           ) : (
-            <InkSettle
-              id={yueLive ? 'yue-live' : yueText || 'yue-empty'}
-              className="solo-translation"
-              interim={yueLive}
-            >
-              {yueText ? (
-                <>
-                  <ResultWithDefinition
-                    text={yueText}
-                    definition={yueDef}
-                    definitions={yueDefs}
-                    textClassName="solo-tr-text"
-                    onActivate={(phrase) =>
-                      openBreakdown(phrase, {
-                        translation: (enTranslation || enText).trim() || undefined,
-                        definition: yueDef || undefined,
-                        definitions: yueDefs,
-                        alternatives: alts,
-                      })
-                    }
-                    speakLang="yue"
-                  />
-                  <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
-                </>
-              ) : (
-                <BiText className="placeholder" copy={ui.speakToTranslate} size="sm" only="zh" />
-              )}
-            </InkSettle>
+            <textarea
+              className="solo-input solo-input--yue"
+              value={yueDraft}
+              rows={3}
+              disabled={inputLocked}
+              placeholder={`${ui.typeCantonese.en} / ${ui.typeCantonese.zh}`}
+              aria-label={biPlain(ui.typeCantonese)}
+              onFocus={() => {
+                editingRef.current = 'yue'
+                setSpeakDirection('yue')
+              }}
+              onBlur={() => {
+                if (editingRef.current === 'yue') editingRef.current = null
+              }}
+              onChange={(e) => onYueChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' || e.shiftKey) return
+                e.preventDefault()
+                runTranslate(yueDraft, 'yue', 0, true)
+              }}
+            />
           )}
+          {altsLoading && alts.length === 0 && yueDraft.trim() ? (
+            <p className="solo-alts-loading muted" aria-live="polite">
+              <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
+            </p>
+          ) : null}
+          {alts.length > 0 ? (
+            <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
+          ) : null}
         </div>
+
+        {showHint ? (
+          <p className="solo-auto-hint" aria-live="polite">
+            <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
+          </p>
+        ) : null}
       </motion.div>
     </div>
   )

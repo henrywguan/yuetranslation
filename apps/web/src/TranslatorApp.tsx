@@ -14,7 +14,6 @@ import { GlowRotateButton } from './components/GlowRotateButton'
 import { IosHomescreenTip } from './components/IosHomescreenGuide'
 import { PlanChip } from './components/PlanChip'
 import { SoloView } from './components/SoloView'
-import { TextMode } from './components/TextMode'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
 import { useYueStore } from './lib/store'
@@ -88,9 +87,8 @@ export function TranslatorApp() {
         <IosHomescreenTip />
 
         <main className="main">
-          {mode === 'solo' ? <SoloView /> : null}
+          {mode === 'solo' || mode === 'text' ? <SoloView /> : null}
           {mode === 'conversation' ? <ConversationView /> : null}
-          {mode === 'text' ? <TextMode /> : null}
           {mode === 'camera' ? (
             <CameraView
               choiceOpen={camChoiceOpen}

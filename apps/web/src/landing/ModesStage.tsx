@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from '../components/BiText'
-import { TranslateThinking } from '../components/TranslateThinking'
 import { inkEase } from '../lib/motion'
 import { openTones } from '../lib/siteLinks'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { ui, type Bi } from '../lib/uiCopy'
 
-type ModeId = 'solo' | 'conversation' | 'text' | 'camera'
+type ModeId = 'solo' | 'conversation' | 'camera'
 
 const MODES: { id: ModeId; title: Bi; line: Bi }[] = [
   { id: 'solo', title: ui.modeSolo, line: ui.modeSoloLine },
   { id: 'conversation', title: ui.modeFaceShort, line: ui.modeFaceLine },
-  { id: 'text', title: ui.modeText, line: ui.modeTextLine },
   { id: 'camera', title: ui.modeCamera, line: ui.modeCameraLine },
 ]
 
@@ -78,7 +76,6 @@ export function ModesStage() {
               >
                 {mode === 'solo' ? <SoloMicro reduce={reduce} /> : null}
                 {mode === 'conversation' ? <ConversationMicro reduce={reduce} /> : null}
-                {mode === 'text' ? <TextMicro reduce={reduce} /> : null}
                 {mode === 'camera' ? <CameraMicro reduce={reduce} /> : null}
               </motion.div>
             </AnimatePresence>
@@ -152,7 +149,7 @@ function SpeakGlyph({ active }: { active?: boolean }) {
   )
 }
 
-/** Solo: thumb holds mic → English → Cantonese + quiet Jyutping. */
+/** Solo: dual text panes (type or speak) — English + Cantonese. */
 function SoloMicro({ reduce }: { reduce: boolean }) {
   const step = useLoopStep(5, 1200, reduce)
   const holding = step === 1
@@ -162,6 +159,7 @@ function SoloMicro({ reduce }: { reduce: boolean }) {
   return (
     <div className="ln-micro ln-micro--solo">
       <div className="ln-micro-solo-body">
+        <p className="ln-micro-solo-label">English</p>
         <AnimatePresence mode="wait">
           {showEn ? (
             <motion.p
@@ -181,10 +179,14 @@ function SoloMicro({ reduce }: { reduce: boolean }) {
               initial={false}
               animate={{ opacity: holding ? 0.6 : 0.38 }}
             >
-              {holding ? 'Listening…' : 'Tap/Hold to speak'}
+              {holding ? 'Listening…' : 'Type English…'}
             </motion.p>
           )}
         </AnimatePresence>
+        <div className="ln-micro-solo-rule" aria-hidden="true" />
+        <p className="ln-micro-solo-label" lang="zh-HK">
+          粵語
+        </p>
         <AnimatePresence>
           {showYue ? (
             <motion.div
@@ -201,7 +203,17 @@ function SoloMicro({ reduce }: { reduce: boolean }) {
                 zou2 san4
               </span>
             </motion.div>
-          ) : null}
+          ) : (
+            <motion.p
+              key="yue-hint"
+              className="ln-micro-hint"
+              lang="zh-HK"
+              initial={false}
+              animate={{ opacity: 0.38 }}
+            >
+              輸入粵語…
+            </motion.p>
+          )}
         </AnimatePresence>
       </div>
       <div className="ln-micro-dock">
@@ -304,76 +316,6 @@ function ConversationMicro({ reduce }: { reduce: boolean }) {
           <SpeakGlyph active={youSpeaking} />
         </div>
       </div>
-    </div>
-  )
-}
-
-/** Text: type → TranslateThinking (same loader as the app) → result with Jyutping. */
-const TEXT_SAMPLE = 'Calligraphy'
-
-function TextMicro({ reduce }: { reduce: boolean }) {
-  const [chars, setChars] = useState(reduce ? TEXT_SAMPLE.length : 0)
-  const [phase, setPhase] = useState<'type' | 'thinking' | 'result'>(reduce ? 'result' : 'type')
-
-  useEffect(() => {
-    if (reduce) return
-    setChars(0)
-    setPhase('type')
-    let i = 0
-    let thinkTimer = 0
-    const typeId = window.setInterval(() => {
-      i += 1
-      setChars(i)
-      if (i >= TEXT_SAMPLE.length) {
-        window.clearInterval(typeId)
-        setPhase('thinking')
-        thinkTimer = window.setTimeout(() => setPhase('result'), 2000)
-      }
-    }, 95)
-    return () => {
-      window.clearInterval(typeId)
-      window.clearTimeout(thinkTimer)
-    }
-  }, [reduce])
-
-  return (
-    <div className="ln-micro ln-micro--text">
-      <div className="ln-micro-input" aria-hidden="true">
-        <span className="ln-micro-input-text">
-          {TEXT_SAMPLE.slice(0, chars)}
-          {phase === 'type' ? <span className="ln-micro-caret" /> : null}
-        </span>
-      </div>
-      <AnimatePresence mode="wait">
-        {phase === 'thinking' ? (
-          <motion.div
-            key="thinking"
-            className="ln-micro-thinking"
-            initial={reduce ? false : { opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.28, ease: inkEase }}
-          >
-            <TranslateThinking className="ln-micro-tt" />
-          </motion.div>
-        ) : null}
-        {phase === 'result' ? (
-          <motion.div
-            key="result"
-            className="ln-micro-yue"
-            initial={reduce ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: inkEase }}
-          >
-            <span className="ln-micro-han" lang="zh-HK">
-              書法
-            </span>
-            <span className="ln-micro-jp" lang="en">
-              syu1 faat3
-            </span>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   )
 }

@@ -384,7 +384,7 @@ async function runTranslation(
   set: (p: Partial<State>) => void,
   lang: Lang,
   text: string,
-  opts?: { lean?: boolean; minThinkingMs?: number },
+  opts?: { lean?: boolean; minThinkingMs?: number; enrichAlts?: boolean },
 ) {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
@@ -393,17 +393,14 @@ async function runTranslation(
   const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
   const isFace = get().mode === 'conversation'
-  const isText = get().mode === 'text'
-  // Live mic + Conversation + Text: skip EN→粵 variation fan-out for lower latency.
-  // Text still paints a primary result quickly; alternatives come from enrichTextAlternatives.
-  const lean = Boolean(opts?.lean) || isFace || isText
-  // Text should feel snappy — only a short floor so the loader does not flash.
-  const minThinkingMs =
-    opts?.minThinkingMs ?? (isText ? 120 : 900)
+  // Live mic + Conversation: skip EN→粵 variation fan-out for lower latency.
+  // Typed Solo paints a primary first; alternatives enrich in the background when asked.
+  const lean = Boolean(opts?.lean) || isFace
+  const minThinkingMs = opts?.minThinkingMs ?? 900
   translateAbort?.abort()
   translateAbort = new AbortController()
   const signal = translateAbort.signal
-  if (isText) set({ altsLoading: false })
+  if (opts?.enrichAlts) set({ altsLoading: false })
   try {
     const result = await translateText(text, lang, to, {
       includeAlternatives: lang === 'en' && !lean,
@@ -497,8 +494,14 @@ async function runTranslation(
     }
     speak = { text: clean, lang: to }
 
-    // Text EN→粵: paint primary first, then enrich alternatives without blocking TTS/UI.
-    if (isText && lang === 'en' && lean && !signal.aborted && pending.get(lang) === seq) {
+    // Typed Solo EN→粵: paint primary first, then enrich alternatives without blocking TTS/UI.
+    if (
+      opts?.enrichAlts &&
+      lang === 'en' &&
+      lean &&
+      !signal.aborted &&
+      pending.get(lang) === seq
+    ) {
       void enrichTextAlternatives(get, set, text, clean, seq, signal)
     }
   } catch (e) {
@@ -713,13 +716,15 @@ export const useYueStore = create<State>((set, get) => ({
   liveSide: null,
 
   setMode: (mode) => {
+    // Text tab folded into Solo — keep legacy 'text' values working.
+    const next = mode === 'text' ? 'solo' : mode
     if (get().live || startingHold || holding || tapSticky) {
       void get()
         .stopLive()
-        .then(() => set({ mode }))
+        .then(() => set({ mode: next }))
       return
     }
-    set({ mode })
+    set({ mode: next })
   },
   setSpeakDirection: (speakDirection) => set({ speakDirection }),
   setAutoSpeak: (autoSpeak) => set({ autoSpeak }),
@@ -1086,7 +1091,11 @@ export const useYueStore = create<State>((set, get) => ({
     if (!trimmed) return
     set({ error: null })
     // Lean = no alternatives fan-out (faster primary). Enter still uses the same path.
-    await runTranslation(get, set, from, trimmed, { lean: true, minThinkingMs: 120 })
+    await runTranslation(get, set, from, trimmed, {
+      lean: true,
+      minThinkingMs: 120,
+      enrichAlts: true,
+    })
   },
 
   openBreakdown: (phrase, opts) => {
