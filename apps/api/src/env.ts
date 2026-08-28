@@ -95,6 +95,22 @@ export const env = {
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
+  /** Resend API key for admin notification emails. */
+  resendApiKey: (process.env.RESEND_API_KEY || '').trim(),
+  /** From address — must be a verified domain in Resend (or onboarding@resend.dev for tests). */
+  notifyFromEmail: (process.env.YUE_NOTIFY_FROM || '').trim(),
+  /**
+   * Admin inboxes for sign-up / upgrade alerts. Falls back to YUE_ADMIN_EMAILS when unset.
+   */
+  adminNotifyEmails: (() => {
+    const raw = (process.env.YUE_ADMIN_NOTIFY_EMAILS || process.env.YUE_ADMIN_EMAILS || '')
+      .split(',')
+      .map((e) => e.trim())
+      .filter(Boolean)
+    return raw
+  })(),
+  /** Shared secret for POST /api/internal/signup-notify (Supabase Database Webhook). */
+  notifyWebhookSecret: (process.env.YUE_NOTIFY_WEBHOOK_SECRET || '').trim(),
 }
 
 /** True when this email is on the YUE_ADMIN_EMAILS allowlist. */

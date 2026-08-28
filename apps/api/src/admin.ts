@@ -5,6 +5,7 @@ import type { AuthedRequest } from './auth.js'
 import { requireAdmin } from './auth.js'
 import {
   getAuthUserById,
+  getProfile,
   listAuditLog,
   listAuthUsers,
   listProfiles,
@@ -13,6 +14,7 @@ import {
   writeAuditLog,
   type ProfileRow,
 } from './supabase.js'
+import { notifyUserUpgrade } from './notify.js'
 import {
   currentMonthKey,
   getUsageForMonth,
@@ -315,6 +317,8 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
   }
   try {
     const target = await getAuthUserById(userId)
+    const profile = await getProfile(userId)
+    const previous = profile?.plan ?? 'free'
     await upsertProfilePlan(userId, { plan: parsed.data.plan })
     await writeAuditLog({
       actorId: auth.userId,
@@ -324,6 +328,17 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
       targetEmail: target?.email,
       detail: { plan: parsed.data.plan },
     })
+    const plan = parsed.data.plan
+    if (plan !== previous && (plan === 'pro' || plan === 'max')) {
+      notifyUserUpgrade({
+        email: target?.email ?? null,
+        userId,
+        plan,
+        previousPlan: previous,
+        source: 'admin',
+        stripeCustomerId: profile?.stripe_customer_id ?? null,
+      })
+    }
     res.json({ ok: true, userId, plan: parsed.data.plan })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to set plan' })
