@@ -229,9 +229,9 @@ export const ui = {
   },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
   autoTranslateHint: {
-    en: 'Pauses 2 seconds after you stop typing — or press Enter',
-    zh: '停打兩秒就翻譯——或者撳 Enter',
-    jp: 'ting4 daa2 loeng5 miu5 zau6 faan1 jik6 — waak6 ze2 gam2 Enter',
+    en: 'Translations start after 2 second pause — or press Enter',
+    zh: '停打兩秒後開始翻譯——或者撳 Enter',
+    jp: 'ting4 daa2 loeng5 miu5 hau6 hoi1 ci2 faan1 jik6 — waak6 ze2 gam2 Enter',
   },
   result: { en: 'Result', zh: '結果', jp: 'git3 gwo2' },
   definition: { en: 'Definition', zh: '釋義', jp: 'sik1 ji6' },

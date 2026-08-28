@@ -971,9 +971,17 @@
 }
 
 .solo-auto-hint {
-  margin: 4px 2px 0;
+  margin: 0;
+  padding: 0 8px 10px 0;
   color: var(--muted);
   font-size: 0.82rem;
+  text-align: left;
+  max-width: min(100%, 16rem);
+  line-height: 1.35;
+}
+
+.solo-auto-hint .bi {
+  align-items: flex-start;
 }
 
 .solo-alts-loading {
@@ -1025,12 +1033,20 @@
 
 .history-mobile-row {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
   flex: none;
   padding: 0 0 8px;
   position: relative;
   z-index: 2;
+}
+
+.history-mobile-leading {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
 }
 
 .history-open-btn {

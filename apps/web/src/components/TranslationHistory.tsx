@@ -38,6 +38,8 @@ function defaultGeom(): PanelGeom {
 /** Desktop floating panel + mobile history button / closable sheet. */
 export function TranslationHistory() {
   const history = useYueStore((s) => s.history)
+  const mode = useYueStore((s) => s.mode)
+  const soloShowAutoHint = useYueStore((s) => s.soloShowAutoHint)
   const [sheetOpen, setSheetOpen] = useState(false)
   const { geom, persist, update, onDragPointerDown } = useFloatingPanel<PanelGeom>({
     storageKey: PANEL_KEY,
@@ -50,6 +52,7 @@ export function TranslationHistory() {
   const dockUpsert = usePanelDock((s) => s.upsert)
   const dockRemove = usePanelDock((s) => s.remove)
   const count = history.length
+  const showSoloHint = (mode === 'solo' || mode === 'text') && soloShowAutoHint
 
   useEffect(() => {
     if (!geom.minimized) {
@@ -139,6 +142,13 @@ export function TranslationHistory() {
       ) : null}
 
       <div className="history-mobile-row">
+        <div className="history-mobile-leading">
+          {showSoloHint ? (
+            <p className="solo-auto-hint" aria-live="polite">
+              <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
+            </p>
+          ) : null}
+        </div>
         <button
           type="button"
           className="history-open-btn"

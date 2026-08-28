@@ -32,6 +32,7 @@ export function SoloView() {
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
+  const setSoloShowAutoHint = useYueStore((s) => s.setSoloShowAutoHint)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
@@ -161,6 +162,11 @@ export function SoloView() {
   const enThinking = (translating && translatingTo === 'en') || (typedBusy && editingRef.current === 'yue')
   const yueThinking = (translating && translatingTo === 'yue') || (typedBusy && editingRef.current === 'en')
   const showHint = !live && !translating && !typedBusy && !enDraft.trim() && !yueDraft.trim()
+  useEffect(() => {
+    setSoloShowAutoHint(showHint)
+    return () => setSoloShowAutoHint(false)
+  }, [showHint, setSoloShowAutoHint])
+
   const inputLocked = live
 
   return (
@@ -269,12 +275,6 @@ export function SoloView() {
             <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
           ) : null}
         </div>
-
-        {showHint ? (
-          <p className="solo-auto-hint" aria-live="polite">
-            <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
-          </p>
-        ) : null}
       </motion.div>
     </div>
   )
