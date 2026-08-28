@@ -73,81 +73,80 @@ export function LiveDemo() {
         </span>
       </div>
 
-      <label className="demo-label" htmlFor="demo-input">
-        <BiText copy={ui.demoTypeEn} size="sm" />
-      </label>
-      <div className="demo-input-row">
-        <input
-          id="demo-input"
-          className="demo-input"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void run(text)
-          }}
-          placeholder={`${ui.demoPlaceholder.en} / ${ui.demoPlaceholder.zh}`}
-        />
-        <button
-          type="button"
-          className="demo-go"
-          onClick={() => void run(text)}
-          disabled={loading}
-        >
-          {loading ? (
-            <BiText copy={ui.translating} size="sm" hideJp />
-          ) : (
-            <BiText copy={ui.translate} size="sm" hideJp />
-          )}
-        </button>
-      </div>
-
-      <div className="demo-samples">
-        {SAMPLES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            className="demo-chip"
-            onClick={() => {
-              setText(s)
-              void run(s)
+      <div className="demo-solo">
+        <div className="demo-solo-pane">
+          <span className="demo-label">
+            <BiText copy={ui.english} size="sm" only="en" />
+          </span>
+          <textarea
+            id="demo-input"
+            className="demo-input demo-input--solo"
+            value={text}
+            rows={2}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' || e.shiftKey) return
+              e.preventDefault()
+              void run(text)
             }}
-          >
-            {s}
-          </button>
-        ))}
+            placeholder={`${ui.typeEnglish.en} / ${ui.typeEnglish.zh}`}
+          />
+          <div className="demo-samples">
+            {SAMPLES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className="demo-chip"
+                onClick={() => {
+                  setText(s)
+                  void run(s)
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="demo-solo-rule" aria-hidden="true" />
+
+        <div className="demo-solo-pane">
+          <span className="demo-label">
+            <BiText copy={ui.cantonese} size="sm" only="zh" />
+          </span>
+          {loading ? (
+            <TranslateThinking className="demo-thinking" />
+          ) : (
+            <>
+              <ResultWithDefinition
+                text={result}
+                definition={definition}
+                className="demo-result-row"
+                textClassName="demo-output-text"
+                speakLang="yue"
+                onActivate={(p) => void openPhrase(p, false)}
+              />
+              <TranslationAlternatives
+                alternatives={alternatives}
+                className="demo-alts"
+                showCopy={false}
+                showSpeak
+                onSelect={(p) => void openPhrase(p, true)}
+              />
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="demo-result">
-        <span className="demo-label">
-          <BiText copy={ui.demoCantonese} size="sm" />
-        </span>
-        {loading ? (
-          <TranslateThinking className="demo-thinking" />
-        ) : (
-          <>
-            <ResultWithDefinition
-              text={result}
-              definition={definition}
-              className="demo-result-row"
-              textClassName="demo-output-text"
-              speakLang="yue"
-              onActivate={(p) => void openPhrase(p, false)}
-            />
-            <TranslationAlternatives
-              alternatives={alternatives}
-              className="demo-alts"
-              showCopy={false}
-              showSpeak
-              onSelect={(p) => void openPhrase(p, true)}
-            />
-          </>
-        )}
-        {error ? (
-          <p className="demo-error">
-            <BiText copy={ui.demoApiError} size="sm" />
-          </p>
-        ) : null}
-      </div>
+      <p className="demo-hint">
+        <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" hideJp />
+      </p>
+
+      {error ? (
+        <p className="demo-error">
+          <BiText copy={ui.demoApiError} size="sm" />
+        </p>
+      ) : null}
 
       {breakdown ? (
         <CharacterBreakdownFrame
