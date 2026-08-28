@@ -204,6 +204,88 @@ export async function writeAuditLog(entry: {
   })
 }
 
+export type BugReportRow = {
+  id: string
+  created_at: string
+  issue_type: string
+  user_id: string
+  email: string | null
+  route: string | null
+  mode: string | null
+  client: Record<string, unknown>
+  context: Record<string, unknown>
+  status: 'open' | 'triaged' | 'closed'
+}
+
+export async function insertBugReport(entry: {
+  issueType: string
+  userId: string
+  email: string | null
+  route: string | null
+  mode: string | null
+  client: Record<string, unknown>
+  context: Record<string, unknown>
+}): Promise<BugReportRow> {
+  const client = getAdmin()
+  if (!client) throw new Error('Database not configured')
+  const { data, error } = await client
+    .from('bug_reports')
+    .insert({
+      issue_type: entry.issueType,
+      user_id: entry.userId,
+      email: entry.email,
+      route: entry.route,
+      mode: entry.mode,
+      client: entry.client,
+      context: entry.context,
+    })
+    .select('*')
+    .single()
+  if (error || !data) throw new Error(error?.message || 'Failed to insert bug report')
+  return data as BugReportRow
+}
+
+export async function countRecentBugReports(userId: string, minutes: number): Promise<number> {
+  const client = getAdmin()
+  if (!client) return 0
+  const since = new Date(Date.now() - minutes * 60_000).toISOString()
+  const { count, error } = await client
+    .from('bug_reports')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', since)
+  if (error) throw new Error(error.message)
+  return count ?? 0
+}
+
+export async function listBugReports(limit = 100): Promise<BugReportRow[]> {
+  const client = getAdmin()
+  if (!client) return []
+  const { data, error } = await client
+    .from('bug_reports')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(Math.min(500, Math.max(1, limit)))
+  if (error || !data) return []
+  return data as BugReportRow[]
+}
+
+export async function updateBugReportStatus(
+  reportId: string,
+  status: 'open' | 'triaged' | 'closed',
+): Promise<BugReportRow | null> {
+  const client = getAdmin()
+  if (!client) return null
+  const { data, error } = await client
+    .from('bug_reports')
+    .update({ status })
+    .eq('id', reportId)
+    .select('*')
+    .single()
+  if (error || !data) return null
+  return data as BugReportRow
+}
+
 export async function listAuditLog(limit = 100): Promise<
   {
     id: number

@@ -21,11 +21,14 @@ import {
   addTtsChars,
   addTranslateCount,
 } from './usage.js'
+import { submitBugReport } from './bugReport.js'
 import {
   adminExportUsersCsv,
   adminListAudit,
+  adminListBugReports,
   adminListUsers,
   adminMe,
+  adminPatchBugReportStatus,
   adminResetUsage,
   adminSetDisabled,
   adminSetPlan,
@@ -290,6 +293,8 @@ app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
 app.post('/api/billing/checkout', startCheckout)
 app.post('/api/billing/portal', startPortal)
 
+app.post('/api/bug-report', submitBugReport)
+
 app.get('/api/admin/me', adminMe)
 app.get('/api/admin/users', adminListUsers)
 app.get('/api/admin/users.csv', adminExportUsersCsv)
@@ -299,6 +304,8 @@ app.patch('/api/admin/users/:userId/role', adminSetRole)
 app.post('/api/admin/users/:userId/reset-usage', adminResetUsage)
 app.patch('/api/admin/users/:userId/disabled', adminSetDisabled)
 app.get('/api/admin/audit', adminListAudit)
+app.get('/api/admin/bug-reports', adminListBugReports)
+app.patch('/api/admin/bug-reports/:reportId/status', adminPatchBugReportStatus)
 app.post('/api/admin/resend-audience/sync', adminSyncResendAudience)
 
 export default app

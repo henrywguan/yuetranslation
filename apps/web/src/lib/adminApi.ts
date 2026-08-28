@@ -53,6 +53,19 @@ export type AdminAuditEntry = {
   created_at: string
 }
 
+export type AdminBugReport = {
+  id: string
+  created_at: string
+  issue_type: string
+  user_id: string
+  email: string | null
+  route: string | null
+  mode: string | null
+  client: Record<string, unknown>
+  context: Record<string, unknown>
+  status: 'open' | 'triaged' | 'closed'
+}
+
 export type AdminListQuery = {
   month?: string
   q?: string
@@ -177,6 +190,30 @@ export async function fetchAdminAudit(limit = 100): Promise<{ entries: AdminAudi
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
     throw new Error(data.message || 'Failed to load audit log')
+  }
+  return res.json()
+}
+
+export async function fetchAdminBugReports(limit = 100): Promise<{ reports: AdminBugReport[] }> {
+  const res = await adminFetch(`/admin/bug-reports?limit=${limit}`)
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to load bug reports')
+  }
+  return res.json()
+}
+
+export async function adminPatchBugReportStatus(
+  reportId: string,
+  status: 'open' | 'triaged' | 'closed',
+) {
+  const res = await adminFetch(`/admin/bug-reports/${encodeURIComponent(reportId)}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to update report')
   }
   return res.json()
 }
