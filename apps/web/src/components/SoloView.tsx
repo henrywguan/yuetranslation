@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
+import { ResultWithDefinition } from './ResultWithDefinition'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
@@ -42,8 +43,10 @@ export function SoloView() {
 
   const [enDraft, setEnDraft] = useState('')
   const [yueDraft, setYueDraft] = useState('')
+  const [yueEditing, setYueEditing] = useState(false)
   const [typedBusy, setTypedBusy] = useState(false)
   const editingRef = useRef<'en' | 'yue' | null>(null)
+  const yueInputRef = useRef<HTMLTextAreaElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqId = useRef(0)
   const translateRef = useRef(translateTyped)
@@ -168,6 +171,24 @@ export function SoloView() {
   }, [showHint, setSoloShowAutoHint])
 
   const inputLocked = live
+  const showYueRuby = Boolean(yueDraft.trim()) && !yueEditing && !inputLocked
+
+  const enterYueEdit = () => {
+    editingRef.current = 'yue'
+    setYueEditing(true)
+    setSpeakDirection('yue')
+    queueMicrotask(() => yueInputRef.current?.focus())
+  }
+
+  const openYueDetails = (phrase: string) => {
+    const en = (enDraft || storeEn).trim()
+    openBreakdown(phrase, {
+      translation: en || undefined,
+      definition: yueDef || undefined,
+      definitions: yueDefs,
+      alternatives: alts,
+    })
+  }
 
   return (
     <div className="solo">
@@ -243,8 +264,31 @@ export function SoloView() {
           </div>
           {yueThinking ? (
             <TranslateThinking className="solo-thinking" />
+          ) : showYueRuby ? (
+            <div className="solo-translation">
+              <ResultWithDefinition
+                text={yueDraft}
+                definition={yueDef}
+                definitions={yueDefs}
+                textClassName="solo-tr-text"
+                onActivate={openYueDetails}
+                speakLang="yue"
+              />
+              {altsLoading && alts.length === 0 ? (
+                <p className="solo-alts-loading muted" aria-live="polite">
+                  <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
+                </p>
+              ) : null}
+              {alts.length > 0 ? (
+                <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
+              ) : null}
+              <button type="button" className="solo-edit-link" onClick={enterYueEdit}>
+                {ui.soloTapTypeChinese.zh}
+              </button>
+            </div>
           ) : (
             <textarea
+              ref={yueInputRef}
               className="solo-input solo-input--yue"
               value={yueDraft}
               rows={3}
@@ -253,10 +297,12 @@ export function SoloView() {
               aria-label={ui.soloTapTypeChinese.zh}
               onFocus={() => {
                 editingRef.current = 'yue'
+                setYueEditing(true)
                 setSpeakDirection('yue')
               }}
               onBlur={() => {
                 if (editingRef.current === 'yue') editingRef.current = null
+                setYueEditing(false)
               }}
               onChange={(e) => onYueChange(e.target.value)}
               onKeyDown={(e) => {
@@ -266,12 +312,12 @@ export function SoloView() {
               }}
             />
           )}
-          {altsLoading && alts.length === 0 && yueDraft.trim() ? (
+          {!showYueRuby && altsLoading && alts.length === 0 && yueDraft.trim() ? (
             <p className="solo-alts-loading muted" aria-live="polite">
               <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
             </p>
           ) : null}
-          {alts.length > 0 ? (
+          {!showYueRuby && alts.length > 0 ? (
             <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
           ) : null}
         </div>
