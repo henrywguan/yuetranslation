@@ -20,7 +20,7 @@ import {
   currentMonthKey,
   getUsageForMonth,
   listUsageMonths,
-  resetUsageMonth,
+  setUsageMonth,
 } from './usage.js'
 
 export type AdminUserRow = {
@@ -346,9 +346,23 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
   }
 }
 
-const ResetBody = z.object({
-  month: z.string().regex(/^\d{4}_\d{2}$/).optional(),
-})
+const ResetBody = z
+  .object({
+    month: z
+      .string()
+      .regex(/^\d{4}_\d{2}$/)
+      .optional(),
+    liveSeconds: z.number().int().min(0).optional(),
+    ttsChars: z.number().int().min(0).optional(),
+    cameraSeconds: z.number().int().min(0).optional(),
+  })
+  .refine(
+    (data) =>
+      data.liveSeconds !== undefined ||
+      data.ttsChars !== undefined ||
+      data.cameraSeconds !== undefined,
+    { message: 'At least one usage field is required' },
+  )
 
 export async function adminResetUsage(req: AuthedRequest, res: Response) {
   const auth = requireAdmin(req, res)
@@ -360,18 +374,19 @@ export async function adminResetUsage(req: AuthedRequest, res: Response) {
     return
   }
   const month = parsed.data.month || currentMonthKey()
+  const { liveSeconds, ttsChars, cameraSeconds } = parsed.data
   try {
     const target = await getAuthUserById(userId)
-    await resetUsageMonth(userId, month)
+    await setUsageMonth(userId, month, { liveSeconds, ttsChars, cameraSeconds })
     await writeAuditLog({
       actorId: auth.userId,
       actorEmail: auth.email,
       action: 'reset_usage',
       targetUserId: userId,
       targetEmail: target?.email,
-      detail: { month },
+      detail: { month, liveSeconds, ttsChars, cameraSeconds },
     })
-    res.json({ ok: true, userId, month })
+    res.json({ ok: true, userId, month, liveSeconds, ttsChars, cameraSeconds })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to reset usage' })
   }

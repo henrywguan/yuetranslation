@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AdminPlanBadge } from '../components/AdminPlanBadge'
+import { AdminResetUsageModal } from '../components/AdminResetUsageModal'
 import {
   adminResetUsage,
   adminSetDisabled,
@@ -65,6 +66,7 @@ export function AdminPage() {
   >([])
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
   const [resendSyncMsg, setResendSyncMsg] = useState('')
+  const [resetUser, setResetUser] = useState<AdminUser | null>(null)
 
   useEffect(() => {
     const t = window.setTimeout(() => setQDebounced(q.trim()), 250)
@@ -168,15 +170,27 @@ export function AdminPage() {
     }
   }
 
-  const onResetUsage = async (user: AdminUser) => {
+  const onSubmitResetUsage = async (patch: {
+    liveSeconds?: number
+    ttsChars?: number
+    cameraSeconds?: number
+  }) => {
+    if (!resetUser) return
     const month = monthKeyFromInput(monthInput)
-    if (!window.confirm(`Reset usage for ${user.email || user.id} in ${month}?`)) return
     setBusy(true)
     setError('')
     try {
-      await adminResetUsage(user.id, month)
+      await adminResetUsage(resetUser.id, { month, ...patch })
+      setResetUser(null)
       await reloadUsers()
-      if (selected?.id === user.id) await openUser({ ...user, liveSeconds: 0, ttsChars: 0, translateCount: 0, cameraSeconds: 0, cameraTranslateCount: 0 })
+      if (selected?.id === resetUser.id) {
+        await openUser({
+          ...resetUser,
+          liveSeconds: patch.liveSeconds ?? resetUser.liveSeconds,
+          ttsChars: patch.ttsChars ?? resetUser.ttsChars,
+          cameraSeconds: patch.cameraSeconds ?? resetUser.cameraSeconds,
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Reset failed')
     } finally {
@@ -500,15 +514,15 @@ export function AdminPage() {
                       ) : null}
                       <button
                         type="button"
-                        className="admin-link-btn"
+                        className="admin-action-btn"
                         disabled={busy}
-                        onClick={() => void onResetUsage(u)}
+                        onClick={() => setResetUser(u)}
                       >
                         Reset
                       </button>
                       <button
                         type="button"
-                        className="admin-link-btn"
+                        className={`admin-action-btn${u.disabled ? '' : ' admin-action-btn--danger'}`}
                         disabled={busy}
                         onClick={() => void onToggleBan(u)}
                       >
@@ -561,6 +575,15 @@ export function AdminPage() {
               </ul>
             </aside>
           ) : null}
+
+          <AdminResetUsageModal
+            open={Boolean(resetUser)}
+            user={resetUser}
+            monthLabel={monthKeyFromInput(monthInput)}
+            busy={busy}
+            onClose={() => setResetUser(null)}
+            onSubmit={(patch) => void onSubmitResetUsage(patch)}
+          />
         </>
       ) : (
         <div className="admin-table-wrap">

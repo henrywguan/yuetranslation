@@ -128,10 +128,17 @@ export async function adminSetPlan(userId: string, plan: 'free' | 'pro' | 'max')
   return res.json()
 }
 
-export async function adminResetUsage(userId: string, month?: string) {
+export type AdminUsageReset = {
+  month?: string
+  liveSeconds?: number
+  ttsChars?: number
+  cameraSeconds?: number
+}
+
+export async function adminResetUsage(userId: string, patch: AdminUsageReset) {
   const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/reset-usage`, {
     method: 'POST',
-    body: JSON.stringify(month ? { month } : {}),
+    body: JSON.stringify(patch),
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
