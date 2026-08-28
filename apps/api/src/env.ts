@@ -59,9 +59,9 @@ export const env = {
   /** Soft analytics default for Free; Pro/Max TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   /** Free camera hard cap (minutes / month). */
-  freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 5),
+  freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 60),
   /** Pro camera hard cap (minutes / month). Max is unlimited but counted. */
-  proCameraMinutes: Number(process.env.YUE_PRO_CAMERA_MINUTES || 300),
+  proCameraMinutes: Number(process.env.YUE_PRO_CAMERA_MINUTES || 480),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
   /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',
@@ -69,7 +69,7 @@ export const env = {
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
-  proLiveMinutes: Number(process.env.YUE_PRO_LIVE_MINUTES || 20),
+  proLiveMinutes: Number(process.env.YUE_PRO_LIVE_MINUTES || 60),
   proTtsChars: Number(process.env.YUE_PRO_TTS_CHARS || 200000),
   maxLiveMinutes: Number(process.env.YUE_MAX_LIVE_MINUTES || 2400),
   maxTtsChars: Number(process.env.YUE_MAX_TTS_CHARS || 500000),

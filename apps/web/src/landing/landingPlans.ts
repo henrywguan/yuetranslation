@@ -14,11 +14,11 @@ export const LANDING_PLANS: LandingPlan[] = [
   {
     ...MARKETING_PLANS.find((p) => p.id === 'free')!,
     demo: 'text',
-    teaserFeatures: [ui.landFreeLive, ui.landFreeText, ui.landFreeModes],
+    teaserFeatures: [ui.landFreeLive, ui.landFreeText, ui.landFreeCam],
   },
   {
     ...MARKETING_PLANS.find((p) => p.id === 'pro')!,
     demo: 'speak',
-    teaserFeatures: [ui.landProLive, ui.landProSpeak, ui.landProQuality],
+    teaserFeatures: [ui.landProLive, ui.landProCam, ui.landProSpeak],
   },
 ]
