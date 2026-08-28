@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { env } from './env.js'
+import { listAuthUsers } from './supabase.js'
 
 let client: Resend | null = null
 
@@ -68,4 +69,63 @@ export function queueResendAudienceContact(input: ResendContactInput): void {
   void syncResendAudienceContact(input).catch((e) => {
     console.error('[resend-audience] sync failed', e)
   })
+}
+
+export type ResendBackfillResult = {
+  scanned: number
+  synced: number
+  skipped: number
+  failed: number
+  errors: { email: string; message: string }[]
+}
+
+const BACKFILL_ERROR_CAP = 25
+const BACKFILL_DELAY_MS = 120
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Scan all Supabase Auth users and upsert each email into the Resend Audience. */
+export async function backfillResendAudience(): Promise<ResendBackfillResult> {
+  if (!env.resendApiKey || !env.resendAudienceId) {
+    throw new Error('Resend audience is not configured (RESEND_API_KEY + RESEND_AUDIENCE_ID).')
+  }
+
+  const users = await listAuthUsers()
+  const result: ResendBackfillResult = {
+    scanned: users.length,
+    synced: 0,
+    skipped: 0,
+    failed: 0,
+    errors: [],
+  }
+
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i]!
+    const email = user.email?.trim()
+    if (!email) {
+      result.skipped += 1
+      continue
+    }
+    try {
+      await syncResendAudienceContact({
+        email,
+        userId: user.id,
+        displayName: user.displayName,
+      })
+      result.synced += 1
+    } catch (e) {
+      result.failed += 1
+      if (result.errors.length < BACKFILL_ERROR_CAP) {
+        result.errors.push({
+          email,
+          message: e instanceof Error ? e.message : 'Sync failed',
+        })
+      }
+    }
+    if (i < users.length - 1) await sleep(BACKFILL_DELAY_MS)
+  }
+
+  return result
 }

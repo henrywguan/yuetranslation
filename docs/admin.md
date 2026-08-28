@@ -44,6 +44,8 @@ RESEND_AUDIENCE_ID=your-audience-id-here
 
 Uses the same `RESEND_API_KEY`. Existing contacts are updated, not duplicated.
 
+**Backfill existing users:** In `#/admin`, click **Sync Resend audience** (or `POST /api/admin/resend-audience/sync` as an admin). This scans every Supabase Auth user and upserts their email into the audience. Users without an email are skipped.
+
 ### 2. Upgrade alerts (automatic)
 
 Once `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set, **Stripe** `checkout.session.completed` sends an email when a user moves to `pro` or `max`. Manual upgrades in `#/admin` also notify when the plan changes to a paid tier.

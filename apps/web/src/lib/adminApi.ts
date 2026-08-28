@@ -177,6 +177,25 @@ export async function downloadAdminUsersCsv(params: AdminListQuery = {}) {
   URL.revokeObjectURL(url)
 }
 
+export type ResendAudienceSyncResult = {
+  ok: boolean
+  scanned: number
+  synced: number
+  skipped: number
+  failed: number
+  errors: { email: string; message: string }[]
+}
+
+/** Scan all auth users and upsert emails into the configured Resend Audience. */
+export async function syncResendAudience(): Promise<ResendAudienceSyncResult> {
+  const res = await adminFetch('/admin/resend-audience/sync', { method: 'POST' })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'Resend audience sync failed')
+  }
+  return data as ResendAudienceSyncResult
+}
+
 /** Format integer seconds as `1h 02m 03s` (always shows seconds). */
 export function formatLiveSeconds(total: number): string {
   const s = Math.max(0, Math.floor(total))

@@ -29,6 +29,7 @@ import {
   adminResetUsage,
   adminSetDisabled,
   adminSetPlan,
+  adminSyncResendAudience,
   adminUserUsage,
 } from './admin.js'
 
@@ -296,5 +297,6 @@ app.patch('/api/admin/users/:userId/plan', adminSetPlan)
 app.post('/api/admin/users/:userId/reset-usage', adminResetUsage)
 app.patch('/api/admin/users/:userId/disabled', adminSetDisabled)
 app.get('/api/admin/audit', adminListAudit)
+app.post('/api/admin/resend-audience/sync', adminSyncResendAudience)
 
 export default app
