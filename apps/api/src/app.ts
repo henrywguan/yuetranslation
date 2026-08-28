@@ -8,6 +8,7 @@ import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
+import { handleSignupNotify } from './signupNotify.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
 import { translate } from './translate.js'
@@ -38,6 +39,8 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), hand
 
 app.use(express.json({ limit: '6mb' }))
 app.use(attachAuth)
+
+app.post('/api/internal/signup-notify', handleSignupNotify)
 
 async function entitlementFor(req: AuthedRequest) {
   return resolveEntitlement(req.auth)

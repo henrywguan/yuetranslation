@@ -5,9 +5,11 @@ import { env } from './env.js'
 import {
   findProfileByStripeCustomer,
   findProfileByStripeSubscription,
+  getAuthUserById,
   getProfile,
   upsertProfilePlan,
 } from './supabase.js'
+import { notifyUserUpgrade } from './notify.js'
 
 let stripe: Stripe | null = null
 
@@ -148,7 +150,19 @@ export async function handleBillingWebhook(req: AuthedRequest, res: Response) {
           typeof session.subscription === 'string' ? session.subscription : session.subscription?.id
         const plan = (session.metadata?.plan as 'pro' | 'max' | undefined) ?? 'pro'
         if (userId) {
+          const previous = (await getProfile(userId))?.plan ?? 'free'
           await setPlanForUser(userId, plan, customerId ?? undefined, subscriptionId ?? undefined)
+          if (previous !== plan && (plan === 'pro' || plan === 'max')) {
+            const user = await getAuthUserById(userId)
+            notifyUserUpgrade({
+              email: user?.email ?? session.customer_email ?? null,
+              userId,
+              plan,
+              previousPlan: previous,
+              source: 'stripe',
+              stripeCustomerId: customerId ?? null,
+            })
+          }
         }
         break
       }
