@@ -195,8 +195,8 @@ export function SoloView() {
               value={enDraft}
               rows={3}
               disabled={inputLocked}
-              placeholder={`${ui.typeEnglish.en} / ${ui.typeEnglish.zh}`}
-              aria-label={biPlain(ui.typeEnglish)}
+              placeholder={ui.soloTapTypeEnglish.en}
+              aria-label={ui.soloTapTypeEnglish.en}
               onFocus={() => {
                 editingRef.current = 'en'
                 setSpeakDirection('en')
@@ -243,8 +243,8 @@ export function SoloView() {
               value={yueDraft}
               rows={3}
               disabled={inputLocked}
-              placeholder={`${ui.typeCantonese.en} / ${ui.typeCantonese.zh}`}
-              aria-label={biPlain(ui.typeCantonese)}
+              placeholder={ui.soloTapTypeChinese.zh}
+              aria-label={ui.soloTapTypeChinese.zh}
               onFocus={() => {
                 editingRef.current = 'yue'
                 setSpeakDirection('yue')

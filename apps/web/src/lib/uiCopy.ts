@@ -216,6 +216,17 @@ export const ui = {
 
   typeEnglish: { en: 'Type English…', zh: '輸入英文…', jp: 'syu1 jap6 jing1 man2…' },
   typeCantonese: { en: 'Type Cantonese…', zh: '輸入粵語…', jp: 'syu1 jap6 jyut6 jyu5…' },
+  /** Solo text fields — single-language placeholders (Apple-style). */
+  soloTapTypeEnglish: {
+    en: 'Tap to type in English',
+    zh: 'Tap to type in English',
+    jp: 'dim2 jik6 syu1 jap6 jing1 man2',
+  },
+  soloTapTypeChinese: {
+    en: '輕按輸入中文',
+    zh: '輕按輸入中文',
+    jp: 'hing1 on3 syu1 jap6 zung1 man2',
+  },
   translate: { en: 'Translate', zh: '翻譯', jp: 'faan1 jik6' },
   autoTranslateHint: {
     en: 'Pauses 2 seconds after you stop typing — or press Enter',
