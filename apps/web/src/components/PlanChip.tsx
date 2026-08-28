@@ -276,28 +276,28 @@ export function PlanChip() {
           <p className="account-hub-kicker">
             <BiText copy={ui.accountHub} size="sm" />
           </p>
-          <h2 id={titleId} className="account-hub-title">
-            {displayName || email || biPlain(planLabel(plan))}
-          </h2>
+          <div className="account-hub-title-row">
+            <h2 id={titleId} className="account-hub-title">
+              {displayName || email || biPlain(planLabel(plan))}
+            </h2>
+            {entitlement.role ? (
+              <div className="account-hub-header-role">
+                <RoleBadge role={entitlement.role} />
+              </div>
+            ) : null}
+          </div>
           {email && displayName && displayName !== email ? (
             <p className="account-hub-email">{email}</p>
           ) : null}
         </div>
-        <div className="account-hub-header-aside">
-          <button
-            type="button"
-            className="account-hub-close"
-            aria-label={biPlain(ui.accountClose)}
-            onClick={() => setOpen(false)}
-          >
-            ×
-          </button>
-          {entitlement.role ? (
-            <div className="account-hub-header-role" aria-hidden="true">
-              <RoleBadge role={entitlement.role} />
-            </div>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          className="account-hub-close"
+          aria-label={biPlain(ui.accountClose)}
+          onClick={() => setOpen(false)}
+        >
+          ×
+        </button>
       </header>
 
       <div className="account-hub-body">
@@ -315,7 +315,9 @@ export function PlanChip() {
               <BiText copy={ui.accountRole} size="sm" />
             </p>
             {entitlement.role ? (
-              <RoleBadge role={entitlement.role} />
+              <div className="account-hub-role-slot">
+                <RoleBadge role={entitlement.role} />
+              </div>
             ) : (
               <span className="account-hub-role-empty">—</span>
             )}
@@ -441,9 +443,13 @@ export function PlanChip() {
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={`plan-chip plan-${plan}`}>
-          <BiText copy={planLabel(plan)} size="sm" hideJp />
-        </span>
+        {entitlement.role ? (
+          <RoleBadge role={entitlement.role} />
+        ) : (
+          <span className={`plan-chip plan-${plan}`}>
+            <BiText copy={planLabel(plan)} size="sm" hideJp />
+          </span>
+        )}
         {activeBadgeMetric ? (
           <span className="plan-remain">
             <BiText copy={badgeCopyFor(activeBadgeMetric, entitlement)} size="sm" hideJp />
