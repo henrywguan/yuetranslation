@@ -394,13 +394,15 @@ export function PlanChip() {
           {entitlement.isAdmin ? (
             <button
               type="button"
-              className="account-hub-btn account-hub-btn--ghost"
+              className="account-hub-btn account-hub-btn--admin"
               onClick={() => {
                 setOpen(false)
                 navigate('admin')
               }}
             >
-              Admin
+              <span className="account-hub-admin-shimmer" aria-hidden="true" />
+              <span className="account-hub-admin-glow" aria-hidden="true" />
+              <span className="account-hub-admin-label">Admin</span>
             </button>
           ) : null}
           {!paid ? (
@@ -421,13 +423,39 @@ export function PlanChip() {
           {entitlement.loggedIn ? (
             <button
               type="button"
-              className="account-hub-btn account-hub-btn--ghost"
+              className="account-hub-btn account-hub-btn--bug"
               onClick={() => {
                 setOpen(false)
                 void openBugReportOrAuth()
               }}
             >
-              <BiText copy={ui.bugReportLink} size="sm" />
+              <span className="account-hub-bug-shimmer" aria-hidden="true" />
+              <span className="account-hub-bug-glow" aria-hidden="true" />
+              <span className="account-hub-bug-label">
+                <svg
+                  className="account-hub-bug-icon"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M8 9V7a4 4 0 0 1 8 0v2" />
+                  <rect x="7" y="9" width="10" height="10" rx="3" />
+                  <path d="M12 13v3" />
+                  <path d="M5 12H3" />
+                  <path d="M21 12h-2" />
+                  <path d="M6.5 8.5 4.5 6.5" />
+                  <path d="M17.5 8.5l2-2" />
+                  <path d="M6.5 17.5 4.5 19.5" />
+                  <path d="M17.5 17.5l2 2" />
+                </svg>
+                <BiText copy={ui.bugReportLink} size="sm" />
+              </span>
             </button>
           ) : null}
           {entitlement.loggedIn ? (
