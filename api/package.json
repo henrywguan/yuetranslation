@@ -8,6 +8,7 @@
     "express": "^4.21.2",
     "openai": "^4.77.0",
     "resend": "^4.8.0",
+    "standardwebhooks": "^1.0.0",
     "stripe": "^17.7.0",
     "zod": "^3.24.1"
   }
