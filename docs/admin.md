@@ -32,9 +32,27 @@ YUE_NOTIFY_WEBHOOK_SECRET=<long-random-secret>
 
 Once `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set, **Stripe** `checkout.session.completed` sends an email when a user moves to `pro` or `max`. Manual upgrades in `#/admin` also notify when the plan changes to a paid tier.
 
-### 3. Sign-up alerts (Supabase webhook)
+### 3. Sign-up alerts (Supabase Auth Hook — recommended)
 
-Sign-up still happens in Supabase Auth, so add a **Database Webhook** in the Supabase dashboard:
+Many Supabase projects **cannot** use Database Webhooks (`schema "supabase_functions" does not exist`). Use an **Auth Hook** instead:
+
+1. **Supabase Dashboard → Authentication → Hooks**
+2. Hook: **Before user created**
+3. Type: **HTTP**
+4. URL: `https://<your-api-host>/api/internal/signup-notify`
+5. Copy the hook **secret** Supabase shows (format `v1,whsec_…`) into Vercel:
+
+```bash
+SUPABASE_AUTH_HOOK_SECRET=v1,whsec_...
+```
+
+Redeploy the API. New sign-ups will email admins. The hook must return HTTP 200 (the API responds with `{}`).
+
+**Do not** add `X-Notify-Secret` for Auth Hooks — Supabase signs requests with Standard Webhooks headers instead.
+
+#### Database Webhook fallback (optional)
+
+Only if your project supports Database Webhooks (no `supabase_functions` error):
 
 | Field | Value |
 | --- | --- |
@@ -42,8 +60,6 @@ Sign-up still happens in Supabase Auth, so add a **Database Webhook** in the Sup
 | Events | Insert |
 | URL | `https://<your-api-host>/api/internal/signup-notify` |
 | HTTP header | `X-Notify-Secret: <same as YUE_NOTIFY_WEBHOOK_SECRET>` |
-
-The route validates the secret and emails admins with email, provider, and user id.
 
 ## Database migration
 

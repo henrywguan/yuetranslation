@@ -36,11 +36,14 @@ app.use(cors({ origin: true, credentials: true }))
 
 // Stripe webhook must read the raw body before JSON parsing.
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleBillingWebhook)
+app.post(
+  '/api/internal/signup-notify',
+  express.raw({ type: 'application/json' }),
+  handleSignupNotify,
+)
 
 app.use(express.json({ limit: '6mb' }))
 app.use(attachAuth)
-
-app.post('/api/internal/signup-notify', handleSignupNotify)
 
 async function entitlementFor(req: AuthedRequest) {
   return resolveEntitlement(req.auth)

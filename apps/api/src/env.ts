@@ -109,8 +109,13 @@ export const env = {
       .filter(Boolean)
     return raw
   })(),
-  /** Shared secret for POST /api/internal/signup-notify (Supabase Database Webhook). */
+  /** Shared secret for POST /api/internal/signup-notify (Database Webhook fallback). */
   notifyWebhookSecret: (process.env.YUE_NOTIFY_WEBHOOK_SECRET || '').trim(),
+  /**
+   * Supabase Auth Hook secret from Authentication → Hooks (Standard Webhooks `whsec_…`).
+   * Preferred for sign-up alerts when Database Webhooks are unavailable.
+   */
+  supabaseAuthHookSecret: (process.env.SUPABASE_AUTH_HOOK_SECRET || '').trim(),
 }
 
 /** True when this email is on the YUE_ADMIN_EMAILS allowlist. */
