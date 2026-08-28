@@ -254,6 +254,7 @@ export const ui = {
   accountHub: { en: 'Account', zh: '帳戶', jp: 'zoeng3 wu6' },
   accountClose: { en: 'Close account', zh: '關閉帳戶', jp: 'gwaan1 bai3 zoeng3 wu6' },
   accountPlan: { en: 'Plan', zh: '計劃', jp: 'gai3 waak6' },
+  accountRole: { en: 'Role', zh: '角色', jp: 'gok3 sik1' },
   accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },
   accountLive: { en: 'Live mic', zh: '即時咪', jp: 'zik1 si4 mai1' },
   accountVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },

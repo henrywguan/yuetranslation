@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
+import { RoleBadge } from './RoleBadge'
+import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
@@ -281,25 +283,44 @@ export function PlanChip() {
             <p className="account-hub-email">{email}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          className="account-hub-close"
-          aria-label={biPlain(ui.accountClose)}
-          onClick={() => setOpen(false)}
-        >
-          ×
-        </button>
+        <div className="account-hub-header-aside">
+          <button
+            type="button"
+            className="account-hub-close"
+            aria-label={biPlain(ui.accountClose)}
+            onClick={() => setOpen(false)}
+          >
+            ×
+          </button>
+          {entitlement.role ? (
+            <div className="account-hub-header-role" aria-hidden="true">
+              <RoleBadge role={entitlement.role} />
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <div className="account-hub-body">
-        <section className="account-hub-section" aria-label={biPlain(ui.accountPlan)}>
-          <p className="account-hub-label">
-            <BiText copy={ui.accountPlan} size="sm" />
-          </p>
-          <span className={`plan-chip plan-${plan} account-hub-plan-pill`}>
-            <BiText copy={planLabel(plan)} size="sm" hideJp />
-          </span>
-        </section>
+        <div className="account-hub-meta-grid">
+          <section className="account-hub-section account-hub-meta-col" aria-label={biPlain(ui.accountPlan)}>
+            <p className="account-hub-label">
+              <BiText copy={ui.accountPlan} size="sm" />
+            </p>
+            <span className={`plan-chip plan-${plan} account-hub-plan-pill`}>
+              <BiText copy={planLabel(plan)} size="sm" hideJp />
+            </span>
+          </section>
+          <section className="account-hub-section account-hub-meta-col" aria-label={biPlain(ui.accountRole)}>
+            <p className="account-hub-label">
+              <BiText copy={ui.accountRole} size="sm" />
+            </p>
+            {entitlement.role ? (
+              <RoleBadge role={entitlement.role} />
+            ) : (
+              <span className="account-hub-role-empty">—</span>
+            )}
+          </section>
+        </div>
 
         <section className="account-hub-section" aria-label={biPlain(ui.accountUsage)}>
           <p className="account-hub-label">

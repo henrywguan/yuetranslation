@@ -8,6 +8,7 @@ export type Entitlement = {
   requireLogin: boolean
   plan: 'guest' | 'free' | 'pro' | 'max'
   isAdmin?: boolean
+  role?: 'admin' | 'family' | null
   disabled?: boolean
   limits: {
     plan: string
