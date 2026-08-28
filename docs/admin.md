@@ -28,6 +28,22 @@ YUE_NOTIFY_WEBHOOK_SECRET=<long-random-secret>
 - `YUE_ADMIN_NOTIFY_EMAILS` is optional — defaults to `YUE_ADMIN_EMAILS`.
 - For Resend testing before domain verification, use `YUE_NOTIFY_FROM=JyutTranslate <onboarding@resend.dev>` (Resend’s sandbox sender).
 
+### Resend Audience (automatic contact sync)
+
+When `RESEND_AUDIENCE_ID` is set, signed-in users with an email are added to that Resend Audience:
+
+- **New sign-up** — Supabase Auth Hook (`/api/internal/signup-notify`)
+- **Returning sign-in** — first `/api/health` or `/api/entitlement` call each session
+- **Paid upgrade** — Stripe checkout completion (ensures payer is in the audience)
+
+Find the id in **Resend Dashboard → Audiences** (may be labeled Segment in newer UI). Add to Vercel:
+
+```bash
+RESEND_AUDIENCE_ID=your-audience-id-here
+```
+
+Uses the same `RESEND_API_KEY`. Existing contacts are updated, not duplicated.
+
 ### 2. Upgrade alerts (automatic)
 
 Once `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set, **Stripe** `checkout.session.completed` sends an email when a user moves to `pro` or `max`. Manual upgrades in `#/admin` also notify when the plan changes to a paid tier.

@@ -10,6 +10,7 @@ import {
   upsertProfilePlan,
 } from './supabase.js'
 import { notifyUserUpgrade } from './notify.js'
+import { queueResendAudienceContact } from './resendAudience.js'
 
 let stripe: Stripe | null = null
 
@@ -162,6 +163,14 @@ export async function handleBillingWebhook(req: AuthedRequest, res: Response) {
               source: 'stripe',
               stripeCustomerId: customerId ?? null,
             })
+            const email = user?.email ?? session.customer_email ?? null
+            if (email) {
+              queueResendAudienceContact({
+                email,
+                userId,
+                displayName: user?.displayName ?? null,
+              })
+            }
           }
         }
         break

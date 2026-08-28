@@ -7,6 +7,7 @@ import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
+import { queueResendAudienceContact } from './resendAudience.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
 import { handleSignupNotify } from './signupNotify.js'
 import { issueSpeechToken, synthesize } from './azure.js'
@@ -46,6 +47,12 @@ app.use(express.json({ limit: '6mb' }))
 app.use(attachAuth)
 
 async function entitlementFor(req: AuthedRequest) {
+  if (req.auth?.email) {
+    queueResendAudienceContact({
+      email: req.auth.email,
+      userId: req.auth.userId,
+    })
+  }
   return resolveEntitlement(req.auth)
 }
 
