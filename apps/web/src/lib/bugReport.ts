@@ -73,7 +73,11 @@ export async function submitBugReport(
     translating: boolean
     entitlement: Entitlement | null
   },
-  note?: string,
+  opts?: {
+    note?: string
+    allowScreenshot?: boolean
+    screenshot?: string
+  },
 ): Promise<{ reportId: string }> {
   const token = await getAccessToken()
   if (!token) {
@@ -81,6 +85,13 @@ export async function submitBugReport(
   }
 
   const client = buildReportClientPayload(snapshot)
+  if (opts?.allowScreenshot) {
+    ;(client as Record<string, unknown>).screenshotAllowed = true
+    if (opts.screenshot) {
+      ;(client as Record<string, unknown>).screenshot = opts.screenshot
+    }
+  }
+
   const res = await fetch(`${resolveApiBase()}/bug-report`, {
     method: 'POST',
     credentials: 'same-origin',
@@ -88,7 +99,11 @@ export async function submitBugReport(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ issueType, client, note: note?.trim() || undefined }),
+    body: JSON.stringify({
+      issueType,
+      client,
+      note: opts?.note?.trim() || undefined,
+    }),
   })
 
   const data = await res.json().catch(() => ({}))

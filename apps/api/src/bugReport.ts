@@ -23,6 +23,17 @@ const Body = z.object({
   note: z.string().max(2000).optional(),
 })
 
+/** Drop oversized screenshots so a bad capture cannot blow the row. */
+function sanitizeClient(client: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...client }
+  const shot = next.screenshot
+  if (typeof shot === 'string' && shot.length > 600_000) {
+    delete next.screenshot
+    next.screenshotOmitted = 'too_large'
+  }
+  return next
+}
+
 const RATE_LIMIT_PER_HOUR = 10
 
 export async function submitBugReport(req: AuthedRequest, res: Response) {
@@ -43,7 +54,7 @@ export async function submitBugReport(req: AuthedRequest, res: Response) {
     }
 
     const user = await getAuthUserById(auth.userId)
-    const clientPayload = parsed.data.client as Record<string, unknown>
+    const clientPayload = sanitizeClient(parsed.data.client as Record<string, unknown>)
     const note = parsed.data.note?.trim()
     const client = note ? { ...clientPayload, note } : clientPayload
     const mode = typeof client.mode === 'string' ? client.mode : null

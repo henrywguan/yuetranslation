@@ -279,9 +279,14 @@ export const ui = {
   },
   bugReportAddNote: { en: 'Add a note (optional)', zh: '補充說明（可選）', jp: 'bou2 cung1 syut6 ming4' },
   bugReportNotePlaceholder: {
-    en: 'Anything else we should know…',
-    zh: '有其他想補充…',
-    jp: 'jau5 keoi4 ta1 soeng2 bou2 cung1…',
+    en: 'Add a note (optional)',
+    zh: '補充說明（可選）',
+    jp: 'bou2 cung1 syut6 ming4',
+  },
+  bugReportAllowScreenshot: {
+    en: 'Allow send screenshot',
+    zh: '允許附上截圖',
+    jp: 'jeung5 heoi2 fu6 soeng5 zit3 tou4',
   },
   bugReportSend: { en: 'Send report', zh: '送出回報', jp: 'seon3 ceot1 wui4 bou3' },
   bugReportSending: { en: 'Sending…', zh: '送出中…', jp: 'seon3 ceot1 zung1…' },
