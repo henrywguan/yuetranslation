@@ -124,6 +124,10 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 18%, transparent);
 }
 
+.plan-chip-trigger .role-badge {
+  flex: none;
+}
+
 .plan-chip {
   display: inline-flex;
   align-items: center;
@@ -189,17 +193,17 @@
   border-bottom: 1px solid var(--glass-border);
 }
 
-.account-hub-header-aside {
-  flex: none;
+.account-hub-title-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.65rem;
 }
 
 .account-hub-header-role {
+  flex: none;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
 }
 
 .account-hub-titles {
@@ -286,6 +290,15 @@
 
 .account-hub-meta-col {
   min-width: 0;
+  align-items: flex-start;
+}
+
+.account-hub-role-slot {
+  align-self: flex-start;
+}
+
+.account-hub-role-slot .role-badge-wrap {
+  align-items: flex-start;
 }
 
 .account-hub-role-empty {
