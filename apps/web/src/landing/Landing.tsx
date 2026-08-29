@@ -1,6 +1,4 @@
-import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { SoftErrorBoundary } from '../components/SoftErrorBoundary'
 import { Reveal } from './Reveal'
 import { MagneticButton } from './MagneticButton'
 import { LiveDemo } from './LiveDemo'
@@ -17,9 +15,6 @@ import { ui, type Bi } from '../lib/uiCopy'
 import { HeroEyebrow } from './HeroEyebrow'
 import { inkEase } from '../lib/motion'
 import './landing.css'
-const HeroObject = lazy(() =>
-  import('./HeroObject').then((m) => ({ default: m.HeroObject })),
-)
 
 const FEATURES_LEFT: { title: Bi; desc: Bi; aside?: Bi; href?: 'tones' }[] = [
   { title: ui.featJpTitle, desc: ui.featJpDesc, aside: ui.featJpAside, href: 'tones' },
@@ -69,13 +64,8 @@ function scrollToId(id: string) {
 
 export function Landing() {
   return (
-    <MarketingPageShell onFeatures={() => scrollToId('features')}>
+    <MarketingPageShell background="orbital" onFeatures={() => scrollToId('features')}>
       <header className="ln-hero">
-        <Suspense fallback={null}>
-          <SoftErrorBoundary>
-            <HeroObject />
-          </SoftErrorBoundary>
-        </Suspense>
         <motion.div
           className="ln-hero-inner"
           initial={{ opacity: 0, y: 22 }}

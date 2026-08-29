@@ -3209,22 +3209,27 @@
   isolation: isolate;
 }
 
-.pricing-page > *:not(.orbital-sphere-wash):not(.orbital-sphere-bg) {
+/* Fixed orbital stage — homepage + pricing: bg stays put, only foreground scrolls */
+.landing .orbital-sphere-bg--page {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.92;
+}
+
+.landing .orbital-sphere-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.landing:has(.orbital-sphere-bg--page) > *:not(.orbital-sphere-wash):not(.orbital-sphere-bg) {
   position: relative;
   z-index: 1;
 }
 
 .pricing-page .orbital-sphere-bg--page {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
   opacity: 0.88;
-}
-
-.pricing-page .orbital-sphere-wash {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
 }
 
 .pp-hero {
