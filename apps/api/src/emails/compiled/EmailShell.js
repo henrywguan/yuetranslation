@@ -14,7 +14,6 @@ import {
 } from "@react-email/components";
 import {
   EMAIL_FONTS_CSS,
-  EMAIL_LOGO_CID,
   EMAIL_LOGO_SIZE,
   emailBrand,
   emailStyles
@@ -27,7 +26,8 @@ function EmailShell({
   logoSrc,
   appUrl = "https://jyuttranslate.com"
 }) {
-  const imgSrc = logoSrc?.trim() || `cid:${EMAIL_LOGO_CID}`;
+  const base = appUrl.replace(/\/+$/, "") || "https://jyuttranslate.com";
+  const imgSrc = logoSrc?.trim() || `${base}/apple-touch-icon.png`;
   return /* @__PURE__ */ jsxs(Html, { lang: "en", children: [
     /* @__PURE__ */ jsxs(Head, { children: [
       /* @__PURE__ */ jsx("link", { rel: "stylesheet", href: EMAIL_FONTS_CSS }),

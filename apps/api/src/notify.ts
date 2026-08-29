@@ -8,17 +8,12 @@
  * “Connecting…”. Templates are compiled to plain JS under `emails/compiled/`
  * and loaded only when sending.
  */
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type { ReactElement } from 'react'
-import { Resend } from 'resend'
+import { Resend, type Attachment } from 'resend'
 import { env } from './env.js'
-import { EMAIL_LOGO_CID } from './emails/brand.js'
 import { issueTypeLabel, shortReportId } from './emails/bugReportMeta.js'
 
 let client: Resend | null = null
-let logoBuffer: Buffer | null | undefined
 
 function getResend(): Resend | null {
   if (!env.resendApiKey) return null
@@ -39,51 +34,35 @@ function appPublicUrl(): string {
   return env.appUrl.replace(/\/+$/, '') || 'https://jyuttranslate.com'
 }
 
-type EmailAttachment = {
-  filename: string
-  content: Buffer
-  contentId?: string
-  contentType?: string
-}
-
-function loadLogoBuffer(): Buffer | null {
-  if (logoBuffer !== undefined) return logoBuffer
-  try {
-    const here = dirname(fileURLToPath(import.meta.url))
-    logoBuffer = readFileSync(join(here, 'emails/assets/jyut-logo.png'))
-  } catch (e) {
-    console.warn('[notify] logo asset missing — emails will use public icon URL fallback', e)
-    logoBuffer = null
-  }
-  return logoBuffer
-}
-
-/** Always attach the brand mark as CID so clients that block remote images still show it. */
-function brandAttachments(extra?: EmailAttachment[]): EmailAttachment[] {
-  const out: EmailAttachment[] = []
-  const logo = loadLogoBuffer()
-  if (logo) {
-    out.push({
-      filename: 'jyut-logo.png',
-      content: logo,
-      contentId: EMAIL_LOGO_CID,
-      contentType: 'image/png',
-    })
-  }
-  if (extra?.length) out.push(...extra)
-  return out
-}
-
-function logoSrcForTemplate(): string | undefined {
-  // Prefer CID when we successfully loaded the PNG; otherwise absolute public icon.
-  if (loadLogoBuffer()) return `cid:${EMAIL_LOGO_CID}`
+/** Absolute logo URL — more reliable in Gmail than CID for a stable brand mark. */
+function logoSrcForTemplate(): string {
   return `${appPublicUrl()}/apple-touch-icon.png`
+}
+
+/**
+ * Resend v4 maps `inlineContentId` → API `inline_content_id`.
+ * Passing `contentId` is silently ignored — images show as downloads only.
+ * Local binary content should be a Base64 string (not a raw Buffer) for the JSON API.
+ */
+function inlineImageAttachment(input: {
+  filename: string
+  contentType: string
+  inlineContentId: string
+  /** Raw bytes — encoded to Base64 for Resend. */
+  bytes: Buffer
+}): Attachment {
+  return {
+    filename: input.filename,
+    contentType: input.contentType,
+    content: input.bytes.toString('base64'),
+    inlineContentId: input.inlineContentId,
+  }
 }
 
 async function sendAdminEmail(
   subject: string,
   html: string,
-  attachments?: EmailAttachment[],
+  attachments?: Attachment[],
 ): Promise<void> {
   const resend = getResend()
   if (!resend || !env.adminNotifyEmails.length || !env.notifyFromEmail) {
@@ -105,23 +84,23 @@ async function sendAdminEmail(
 async function renderAndSend(
   subject: string,
   loadElement: () => Promise<ReactElement>,
-  extraAttachments?: EmailAttachment[],
+  attachments?: Attachment[],
 ): Promise<void> {
   const [{ render }, element] = await Promise.all([
     import('@react-email/render'),
     loadElement(),
   ])
   const html = await render(element)
-  await sendAdminEmail(subject, html, brandAttachments(extraAttachments))
+  await sendAdminEmail(subject, html, attachments)
 }
 
 /** Fire-and-forget React Email — never throw to callers (webhooks must stay 200). */
 function queueReactEmail(
   subject: string,
   loadElement: () => Promise<ReactElement>,
-  extraAttachments?: EmailAttachment[],
+  attachments?: Attachment[],
 ): void {
-  void renderAndSend(subject, loadElement, extraAttachments).catch((e) => {
+  void renderAndSend(subject, loadElement, attachments).catch((e) => {
     console.error('[notify] send failed', e)
   })
 }
@@ -283,26 +262,22 @@ export function notifyBugReport(input: BugReportNotifyInput): void {
   const label = input.email || input.userId
   const subject = `JyutTranslate · ${props.issueLabel} (${props.shortId}) · ${label}`
 
-  const shotAttachment: EmailAttachment[] | undefined = parsedShot
+  const attachments: Attachment[] | undefined = parsedShot
     ? [
-        {
+        inlineImageAttachment({
           filename: `bug-screenshot.${parsedShot.ext}`,
-          content: Buffer.from(parsedShot.base64, 'base64'),
-          contentId: 'bug-screenshot',
           contentType: parsedShot.contentType,
-        },
+          inlineContentId: 'bug-screenshot',
+          bytes: Buffer.from(parsedShot.base64, 'base64'),
+        }),
       ]
     : undefined
 
-  queueReactEmail(
-    subject,
-    async () => {
-      const [{ createElement }, { BugReportEmail }] = await Promise.all([
-        import('react'),
-        import('./emails/compiled/BugReportEmail.js'),
-      ])
-      return createElement(BugReportEmail, props)
-    },
-    shotAttachment,
-  )
+  queueReactEmail(subject, async () => {
+    const [{ createElement }, { BugReportEmail }] = await Promise.all([
+      import('react'),
+      import('./emails/compiled/BugReportEmail.js'),
+    ])
+    return createElement(BugReportEmail, props)
+  }, attachments)
 }
