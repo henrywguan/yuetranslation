@@ -14,7 +14,6 @@ import {
 import type { ReactNode } from "react";
 import {
   EMAIL_FONTS_CSS,
-  EMAIL_LOGO_CID,
   EMAIL_LOGO_SIZE,
   emailBrand,
   emailStyles,
@@ -27,8 +26,9 @@ type EmailShellProps = {
   eyebrow?: string;
   children: ReactNode;
   /**
-   * Logo image src. Prefer `cid:jyut-logo` (attached PNG).
-   * Pass an absolute https URL as fallback when CID is unavailable.
+   * Logo image src. Prefer an absolute https URL (e.g. `/apple-touch-icon.png`)
+   * — Gmail/webmail reliably load hosted images; CID is reserved for one-off
+   * screenshots that cannot be hosted.
    */
   logoSrc?: string;
   appUrl?: string;
@@ -46,7 +46,8 @@ export function EmailShell({
   logoSrc,
   appUrl = "https://jyuttranslate.com",
 }: EmailShellProps) {
-  const imgSrc = logoSrc?.trim() || `cid:${EMAIL_LOGO_CID}`;
+  const base = appUrl.replace(/\/+$/, "") || "https://jyuttranslate.com";
+  const imgSrc = logoSrc?.trim() || `${base}/apple-touch-icon.png`;
 
   return (
     <Html lang="en">
