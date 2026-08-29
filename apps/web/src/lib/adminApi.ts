@@ -362,14 +362,32 @@ export async function sendAdminEmail(input: {
   fields: CampaignFields
   emails?: string[]
   confirm: true
-}): Promise<{ ok: boolean; mode: string; sent?: number; broadcastId?: string }> {
+}): Promise<{
+  ok: boolean
+  mode: string
+  sent?: number
+  failed?: number
+  attempted?: number
+  broadcastId?: string
+  errors?: { email: string; message: string }[]
+  hint?: string | null
+}> {
   const res = await adminFetch('/admin/email/send', {
     method: 'POST',
     body: JSON.stringify(input),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error((data as { message?: string }).message || 'Send failed')
-  return data as { ok: boolean; mode: string; sent?: number; broadcastId?: string }
+  return data as {
+    ok: boolean
+    mode: string
+    sent?: number
+    failed?: number
+    attempted?: number
+    broadcastId?: string
+    errors?: { email: string; message: string }[]
+    hint?: string | null
+  }
 }
 
 /** Format integer seconds as `1h 02m 03s` (always shows seconds). */

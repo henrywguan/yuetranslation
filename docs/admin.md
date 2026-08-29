@@ -37,7 +37,7 @@ YUE_NOTIFY_WEBHOOK_SECRET=<long-random-secret>
 ```
 
 - `YUE_ADMIN_NOTIFY_EMAILS` is optional — defaults to `YUE_ADMIN_EMAILS`.
-- For Resend testing before domain verification, use `YUE_NOTIFY_FROM=JyutTranslate <onboarding@resend.dev>` (Resend’s sandbox sender).
+- For Resend testing before domain verification, use `YUE_NOTIFY_FROM=JyutTranslate <onboarding@resend.dev>` (Resend’s sandbox sender). **Important:** `*.resend.dev` can only deliver to the Resend account owner email — other recipients fail at send time. To email contacts/audience, verify a domain at [resend.com/domains](https://resend.com/domains) and set `YUE_NOTIFY_FROM` to an address on that domain.
 
 ### Resend Audience (automatic contact sync)
 
@@ -110,9 +110,12 @@ Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a s
 - **Templates** — built-in layouts (announcement, product update, feature spotlight, newsletter, welcome, plain) with thumbnail + list views; save custom drafts to Supabase
 - **Compose** — subject, preview text, eyebrow, headline, body, CTA, sign-off; live HTML preview (desktop/mobile)
 - **Recipients** — pick contacts from the Resend audience, or broadcast to the **full audience** (`RESEND_AUDIENCE_ID`)
+- **Send results** — after Send, a closable popup shows sent/failed counts, per-recipient errors, and a domain hint when Resend rejects non-owner addresses on a test sender
 - **APIs:** `GET/POST /api/admin/email/templates`, `DELETE /api/admin/email/templates/:id`, `GET /api/admin/email/contacts`, `POST /api/admin/email/preview`, `POST /api/admin/email/send`
 
 Apply migration `007_email_hub.sql` on Supabase before saving custom templates (built-ins work without it).
+
+**Domain required for multi-recipient sends:** With `onboarding@resend.dev` (or any unverified test domain), only your Resend account email succeeds — e.g. 4 checked contacts → “1 sent, 3 failed.” Verify the sending domain and update `YUE_NOTIFY_FROM` before broadcasting.
 
 ## Bug reports (signed-in users only)
 
