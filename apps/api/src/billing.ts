@@ -68,6 +68,8 @@ export async function startCheckout(req: AuthedRequest, res: Response) {
     customer_email: profile?.stripe_customer_id ? undefined : auth.email ?? undefined,
     client_reference_id: auth.userId,
     line_items: [{ price: priceId, quantity: 1 }],
+    // Lets shoppers enter a Stripe Promotion Code on Checkout (e.g. JyutTester1023).
+    allow_promotion_codes: true,
     success_url: `${base}/#/app?checkout=success`,
     cancel_url: `${base}/#/pricing?checkout=cancel`,
     metadata: { user_id: auth.userId, plan },
