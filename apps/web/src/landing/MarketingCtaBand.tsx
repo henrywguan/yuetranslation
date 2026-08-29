@@ -1,6 +1,7 @@
 import { JyutLogo } from '../components/JyutLogo'
 import { BiText } from '../components/BiText'
 import type { Bi } from '../lib/uiCopy'
+import { SectionWash } from './SectionWash'
 import { WavyBackground } from './WavyBackground'
 
 /**
@@ -21,7 +22,8 @@ export function MarketingCtaBand({
   className?: string
 }) {
   return (
-    <section className={className ? `ln-cta-band ${className}` : 'ln-cta-band'}>
+    <section className={className ? `ln-cta-band ln-section--atmosphere ${className}` : 'ln-cta-band ln-section--atmosphere'}>
+      <SectionWash tone="deep" />
       <WavyBackground className="ln-cta-wavy" blur={12} waveOpacity={0.42} waveWidth={48}>
         <div className="ln-cta-inner">
           <JyutLogo variant="mark" className="ln-cta-mark" />

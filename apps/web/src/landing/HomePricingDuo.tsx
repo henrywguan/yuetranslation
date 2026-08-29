@@ -5,11 +5,13 @@ import { LANDING_PLANS } from './landingPlans'
 import { MagneticButton } from './MagneticButton'
 import { PriceDemo, PriceFeatIcon } from './PriceDemos'
 import { Reveal } from './Reveal'
+import { SectionWash } from './SectionWash'
 
 /** Compact Free / Pro duo with micro-demos — studio teaser, not a full table. */
 export function HomePricingDuo() {
   return (
-    <section className="ln-section ln-pricing" id="pricing">
+    <section className="ln-section ln-pricing ln-section--atmosphere" id="pricing">
+      <SectionWash tone="blue" />
       <Reveal className="ln-section-head ln-section-head--tight">
         <span className="ln-kicker">
           <BiText copy={ui.pricingKicker} size="sm" />
