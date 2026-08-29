@@ -135,6 +135,10 @@
     );
 }
 
+.cam-choice-btn--docs {
+  border-color: color-mix(in srgb, var(--mint, #9af0de) 35%, var(--glass-border));
+}
+
 .cam-choice-btn-label {
   font-family: var(--font-display);
   font-weight: 650;
@@ -1124,6 +1128,144 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
   .cam-session--upload .cam-upload-frame {
     min-height: 360px;
   }
+}
+
+.cam-session--docs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.35rem 0.15rem 1rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cam-docs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cam-docs-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--ink-bright);
+}
+
+.cam-docs-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.cam-docs-dir {
+  display: flex;
+  align-items: end;
+  gap: 0.55rem;
+}
+
+.cam-docs-dir label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.cam-docs-dir select {
+  font: inherit;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--harbor-mid, #0c1f2e);
+  color: var(--ink);
+}
+
+.cam-docs-swap {
+  border: 0;
+  background: transparent;
+  color: var(--jade-bright, var(--jade));
+  font-size: 1.1rem;
+  padding: 0.45rem 0.35rem;
+  cursor: pointer;
+}
+
+.cam-docs-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.35rem 1rem;
+  border-radius: 16px;
+  border: 1.5px dashed color-mix(in srgb, var(--jade) 45%, var(--glass-border));
+  background: color-mix(in srgb, var(--jade) 8%, transparent);
+  cursor: pointer;
+  text-align: center;
+}
+
+.cam-docs-drop.is-busy {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.cam-docs-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.cam-docs-drop-title {
+  font-family: var(--font-display);
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.cam-docs-drop-hint,
+.cam-docs-status,
+.cam-docs-privacy,
+.cam-docs-result-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.cam-docs-status {
+  margin: 0;
+}
+
+.cam-docs-error {
+  margin: 0;
+  color: var(--danger-ink, #f0a0a8);
+  font-size: 0.86rem;
+}
+
+.cam-docs-result {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.cam-docs-result-name {
+  margin: 0;
+  font-weight: 650;
+  color: var(--ink-bright);
+  word-break: break-all;
+}
+
+.cam-docs-result-note {
+  margin: 0;
+}
+
+.cam-docs-privacy {
+  margin: 0.25rem 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

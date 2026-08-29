@@ -2,7 +2,7 @@ import type { CameraBox, CameraScanRegion } from '../api'
 import type { Rgb } from './sampleRegionColors'
 import { unwrapTranslationText } from './unwrapTranslation'
 
-export type CamPath = 'choice' | 'ar' | 'upload'
+export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
 export type EditableBox = {
   id: string

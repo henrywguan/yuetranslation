@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CameraArSession } from './CameraArSession'
 import { CameraChoiceModal } from './CameraChoiceModal'
+import { CameraDocSession } from './CameraDocSession'
 import { CameraUploadEditor } from './CameraUploadEditor'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
@@ -88,6 +89,18 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
     fileRef.current?.click()
   }
 
+  const startDocs = () => {
+    if (!canCamera) {
+      useYueStore.setState({
+        error: entitlement?.reason === 'login_required' ? biPlain(ui.camSignIn) : biPlain(ui.camQuota),
+      })
+      if (!loggedIn) openAuthScreen()
+      return
+    }
+    onChoiceOpenChange(false)
+    setPath('docs')
+  }
+
   const onFile = (file: File | undefined) => {
     if (!file) return
     if (uploadUrl?.startsWith('blob:')) URL.revokeObjectURL(uploadUrl)
@@ -135,7 +148,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
         }}
       />
 
-      {path !== 'choice' && path !== 'ar' ? (
+      {path !== 'choice' && path !== 'ar' && path !== 'docs' ? (
         <div className="cam-target-row" role="radiogroup" aria-label="Translate target">
           {(
             [
@@ -177,11 +190,16 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
         />
       ) : null}
 
+      {path === 'docs' ? (
+        <CameraDocSession onBack={backToChoice} onEntitlement={setEntitlement} />
+      ) : null}
+
       <CameraChoiceModal
         open={choiceOpen && path === 'choice'}
         onClose={closeChoice}
         onAr={startAr}
         onUpload={startUploadPick}
+        onDocs={startDocs}
       />
     </div>
   )

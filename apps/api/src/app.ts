@@ -22,6 +22,7 @@ import {
   addTranslateCount,
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
+import { translateDocumentFile, translateDocSegments } from './docs/handler.js'
 import {
   adminArchiveEmailTemplate,
   adminExportUsersCsv,
@@ -54,7 +55,7 @@ app.post(
   handleSignupNotify,
 )
 
-app.use(express.json({ limit: '6mb' }))
+app.use(express.json({ limit: '12mb' }))
 app.use(attachAuth)
 
 async function entitlementFor(req: AuthedRequest) {
@@ -272,6 +273,56 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
           ? 413
           : 500
     res.status(status).json({ message })
+  }
+})
+
+/** Office / TXT layout-preserving document translate (Cam → Documents). */
+app.post('/api/docs/translate', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.camera) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message:
+        ent.reason === 'login_required'
+          ? 'Please sign in to translate documents.'
+          : ent.reason === 'account_disabled'
+            ? 'This account has been disabled.'
+            : 'Document translation requires camera plan access.',
+      entitlement: ent,
+    })
+    return
+  }
+  try {
+    const result = await translateDocumentFile(req.body)
+    if (!env.openMode && req.auth?.userId) {
+      await addCameraTranslateCount(req.auth.userId, Math.max(1, result.segments))
+    }
+    res.json({ ...result, entitlement: await entitlementFor(req) })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Document translation failed'
+    const status = e instanceof ZodError ? 400 : /too large/i.test(message) ? 413 : 500
+    res.status(status).json({ message })
+  }
+})
+
+/** Batch text segments for PDF hybrid (extract → translate → paint). */
+app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.camera) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message: 'Please sign in to translate documents.',
+      entitlement: ent,
+    })
+    return
+  }
+  try {
+    const result = await translateDocSegments(req.body)
+    if (!env.openMode && req.auth?.userId && result.translations.length) {
+      await addCameraTranslateCount(req.auth.userId, result.translations.length)
+    }
+    res.json({ ...result, entitlement: await entitlementFor(req) })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Segment translation failed'
+    res.status(e instanceof ZodError ? 400 : 500).json({ message })
   }
 })
 
