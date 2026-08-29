@@ -17,6 +17,17 @@ type GalleryView = 'thumbnails' | 'list'
 type RecipientMode = 'recipients' | 'audience'
 type PreviewWidth = 'desktop' | 'mobile'
 
+type SendNotice = {
+  tone: 'ok' | 'warn' | 'error'
+  title: string
+  summary: string
+  hint?: string | null
+  errors?: { email: string; message: string }[]
+  sent?: number
+  failed?: number
+  attempted?: number
+}
+
 const FIELD_LABELS: { key: keyof CampaignFields; label: string; multiline?: boolean; hint?: string }[] = [
   { key: 'subject', label: 'Subject' },
   { key: 'preview', label: 'Preview text', hint: 'Inbox snippet under the subject' },
@@ -75,6 +86,7 @@ export function AdminEmailHub() {
   const [previewBusy, setPreviewBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [sendNotice, setSendNotice] = useState<SendNotice | null>(null)
   const [saveName, setSaveName] = useState('')
   const [confirmAudience, setConfirmAudience] = useState(false)
 
@@ -222,6 +234,7 @@ export function AdminEmailHub() {
   const onSend = async () => {
     setError('')
     setMessage('')
+    setSendNotice(null)
     if (!fields.subject.trim()) {
       setError('Subject is required.')
       return
@@ -258,17 +271,58 @@ export function AdminEmailHub() {
         confirm: true,
       })
       if (result.mode === 'audience') {
-        setMessage(`Broadcast queued (${result.broadcastId || 'ok'}).`)
+        const summary = `Broadcast queued${result.broadcastId ? ` (${result.broadcastId})` : ''}.`
+        setMessage(summary)
         setConfirmAudience(false)
+        setSendNotice({
+          tone: 'ok',
+          title: 'Broadcast queued',
+          summary,
+        })
       } else {
-        setMessage(`Sent to ${result.sent ?? selectedEmails.size} recipient(s).`)
+        const sent = result.sent ?? 0
+        const failed = result.failed ?? 0
+        const attempted = result.attempted ?? selectedEmails.size
+        const tone: SendNotice['tone'] = failed > 0 ? (sent > 0 ? 'warn' : 'error') : 'ok'
+        const title =
+          failed > 0
+            ? sent > 0
+              ? 'Partially sent'
+              : 'Send failed'
+            : 'Email sent'
+        const summary =
+          failed > 0
+            ? `Sent ${sent} of ${attempted}. ${failed} failed.`
+            : `Sent to ${sent} recipient${sent === 1 ? '' : 's'}.`
+        setMessage(summary)
+        setSendNotice({
+          tone,
+          title,
+          summary,
+          hint: result.hint,
+          errors: result.errors,
+          sent,
+          failed,
+          attempted,
+        })
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Send failed')
+      const msg = e instanceof Error ? e.message : 'Send failed'
+      setError(msg)
+      setSendNotice({
+        tone: 'error',
+        title: 'Send failed',
+        summary: msg,
+        hint: /resend\.dev|verify a domain|own email|testing emails/i.test(msg)
+          ? 'Resend test domains (e.g. onboarding@resend.dev) can only deliver to your Resend account email. Verify a domain and set YUE_NOTIFY_FROM to an address on that domain to email all contacts.'
+          : null,
+      })
     } finally {
       setBusy(false)
     }
   }
+
+  const closeSendNotice = () => setSendNotice(null)
 
   return (
     <div className="email-hub">
@@ -552,6 +606,57 @@ export function AdminEmailHub() {
           </button>
         </section>
       </div>
+
+      {sendNotice ? (
+        <div
+          className="email-hub-notice-overlay"
+          role="presentation"
+          onClick={closeSendNotice}
+        >
+          <div
+            className={`email-hub-notice email-hub-notice--${sendNotice.tone}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="email-hub-notice-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="email-hub-notice-header">
+              <h3 id="email-hub-notice-title">{sendNotice.title}</h3>
+              <button
+                type="button"
+                className="admin-btn admin-btn--secondary email-hub-notice-close"
+                onClick={closeSendNotice}
+                aria-label="Close"
+              >
+                Close
+              </button>
+            </header>
+            <p className="email-hub-notice-summary">{sendNotice.summary}</p>
+            {sendNotice.attempted != null && sendNotice.failed != null && sendNotice.failed > 0 ? (
+              <p className="email-hub-notice-counts">
+                {sendNotice.sent ?? 0} sent · {sendNotice.failed} failed · {sendNotice.attempted}{' '}
+                attempted
+              </p>
+            ) : null}
+            {sendNotice.hint ? <p className="email-hub-notice-hint">{sendNotice.hint}</p> : null}
+            {sendNotice.errors && sendNotice.errors.length > 0 ? (
+              <ul className="email-hub-notice-errors">
+                {sendNotice.errors.slice(0, 12).map((err) => (
+                  <li key={err.email}>
+                    <span className="email-hub-notice-err-email">{err.email}</span>
+                    <span className="email-hub-notice-err-msg">{err.message}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <footer className="email-hub-notice-footer">
+              <button type="button" className="admin-btn" onClick={closeSendNotice}>
+                Got it
+              </button>
+            </footer>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

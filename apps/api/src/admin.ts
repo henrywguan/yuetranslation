@@ -735,7 +735,15 @@ export async function adminSendEmail(req: AuthedRequest, res: Response) {
       actorId: auth.userId,
       actorEmail: auth.email,
       action: 'email_send_recipients',
-      detail: { sent: result.sent, subject: parsed.data.fields.subject, templateKey: parsed.data.templateKey },
+      detail: {
+        sent: result.sent,
+        failed: result.failed,
+        attempted: result.attempted,
+        subject: parsed.data.fields.subject,
+        templateKey: parsed.data.templateKey,
+        errors: result.errors.slice(0, 20),
+        hint: result.hint,
+      },
     })
     res.json({ ok: true, mode: 'recipients', ...result })
   } catch (e) {
