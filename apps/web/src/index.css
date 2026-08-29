@@ -354,3 +354,55 @@ html.is-bug-capturing *::after {
   transition: none !important;
   caret-color: transparent !important;
 }
+
+/* Effects SVG foreignObject clones paint incorrectly → overlaps / double text. */
+html.is-bug-capturing *,
+html.is-bug-capturing *::before,
+html.is-bug-capturing *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  text-shadow: none !important;
+}
+
+html.is-bug-capturing .app-shell {
+  background: var(--harbor-deep, #07131f) !important;
+}
+
+html.is-bug-capturing .jade-glass-field,
+html.is-bug-capturing .app-cloth-bg,
+html.is-bug-capturing .jg-grain,
+html.is-bug-capturing .jp-pop {
+  display: none !important;
+}
+
+/* Keep Direction / dock cells stacked so labels don’t collide in the clone. */
+html.is-bug-capturing .opt-cell,
+html.is-bug-capturing .opt-dir {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+  transform: none !important;
+}
+
+html.is-bug-capturing .dir-switch {
+  position: relative !important;
+  display: flex !important;
+  transform: none !important;
+}
+
+html.is-bug-capturing .dir-switch-opt {
+  position: relative !important;
+}
+
+html.is-bug-capturing .dir-switch-opt input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  inset: 0 auto auto 0 !important;
+}
