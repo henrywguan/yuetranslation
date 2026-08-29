@@ -8,3 +8,6 @@ apps/api/.env
 .DS_Store
 *.log
 .vite/
+
+.agents/
+skills-lock.json

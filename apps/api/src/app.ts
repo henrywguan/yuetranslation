@@ -23,13 +23,19 @@ import {
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
 import {
+  adminArchiveEmailTemplate,
   adminExportUsersCsv,
   adminListAudit,
   adminListBugReports,
+  adminListEmailContacts,
+  adminListEmailTemplates,
   adminListUsers,
   adminMe,
   adminPatchBugReportStatus,
+  adminPreviewEmail,
   adminResetUsage,
+  adminSaveEmailTemplate,
+  adminSendEmail,
   adminSetDisabled,
   adminSetPlan,
   adminSetRole,
@@ -307,5 +313,11 @@ app.get('/api/admin/audit', adminListAudit)
 app.get('/api/admin/bug-reports', adminListBugReports)
 app.patch('/api/admin/bug-reports/:reportId/status', adminPatchBugReportStatus)
 app.post('/api/admin/resend-audience/sync', adminSyncResendAudience)
+app.get('/api/admin/email/templates', adminListEmailTemplates)
+app.post('/api/admin/email/templates', adminSaveEmailTemplate)
+app.delete('/api/admin/email/templates/:templateId', adminArchiveEmailTemplate)
+app.get('/api/admin/email/contacts', adminListEmailContacts)
+app.post('/api/admin/email/preview', adminPreviewEmail)
+app.post('/api/admin/email/send', adminSendEmail)
 
 export default app

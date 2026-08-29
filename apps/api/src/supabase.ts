@@ -183,6 +183,9 @@ export type AuditAction =
   | 'ban'
   | 'unban'
   | 'resend_audience_sync'
+  | 'email_send_recipients'
+  | 'email_send_audience'
+  | 'email_template_save'
 
 export async function writeAuditLog(entry: {
   actorId: string
