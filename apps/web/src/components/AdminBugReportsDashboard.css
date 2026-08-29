@@ -386,6 +386,159 @@
   color: var(--mint);
 }
 
+.brd-test-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--jade-bright) 85%, var(--ink));
+  border: 1px solid color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+  background: color-mix(in srgb, var(--jade) 14%, transparent);
+}
+
+.brd-test-pill--card {
+  justify-self: start;
+  margin-top: 0.05rem;
+}
+
+.brd-ai-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.brd-ai-head h3 {
+  margin: 0;
+}
+
+.brd-ai-intro {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.brd-ai-error {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: var(--danger-ink);
+}
+
+.brd-ai-empty {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.brd-ai-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--harbor-mid) 75%, transparent);
+}
+
+.brd-ai-card--test {
+  border-color: color-mix(in srgb, var(--jade) 45%, var(--glass-border));
+  background: color-mix(in srgb, var(--jade) 10%, var(--harbor-mid));
+}
+
+.brd-ai-card--real {
+  border-color: color-mix(in srgb, #e0a106 40%, var(--glass-border));
+}
+
+.brd-ai-card--unclear {
+  border-color: color-mix(in srgb, var(--muted) 35%, var(--glass-border));
+}
+
+.brd-ai-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.brd-ai-verdict {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+}
+
+.brd-ai-verdict--test {
+  color: color-mix(in srgb, var(--jade-bright) 85%, var(--ink));
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+  background: color-mix(in srgb, var(--jade) 14%, transparent);
+}
+
+.brd-ai-verdict--real {
+  color: color-mix(in srgb, #e0a106 85%, var(--ink));
+  border-color: color-mix(in srgb, #e0a106 40%, var(--glass-border));
+  background: color-mix(in srgb, #e0a106 12%, transparent);
+}
+
+.brd-ai-verdict--unclear {
+  color: var(--muted);
+}
+
+.brd-ai-headline {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--ink-bright);
+  line-height: 1.35;
+}
+
+.brd-ai-analysis {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.brd-ai-cause {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.brd-ai-cause strong {
+  color: var(--ink-bright);
+  margin-right: 0.35rem;
+}
+
+.brd-ai-steps {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.brd-ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.brd-ai-model {
+  font-size: 0.72rem;
+}
+
 .brd-close {
   border: 0;
   background: transparent;

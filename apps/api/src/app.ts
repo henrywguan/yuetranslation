@@ -24,6 +24,7 @@ import {
 import { submitBugReport } from './bugReport.js'
 import {
   adminArchiveEmailTemplate,
+  adminBugReportAiAnswer,
   adminExportUsersCsv,
   adminListAudit,
   adminListBugReports,
@@ -312,6 +313,7 @@ app.patch('/api/admin/users/:userId/disabled', adminSetDisabled)
 app.get('/api/admin/audit', adminListAudit)
 app.get('/api/admin/bug-reports', adminListBugReports)
 app.patch('/api/admin/bug-reports/:reportId/status', adminPatchBugReportStatus)
+app.post('/api/admin/bug-reports/:reportId/ai-answer', adminBugReportAiAnswer)
 app.post('/api/admin/resend-audience/sync', adminSyncResendAudience)
 app.get('/api/admin/email/templates', adminListEmailTemplates)
 app.post('/api/admin/email/templates', adminSaveEmailTemplate)

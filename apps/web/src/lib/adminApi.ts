@@ -218,6 +218,33 @@ export async function adminPatchBugReportStatus(
   return res.json()
 }
 
+export type BugReportAiAnswer = {
+  verdict: 'test' | 'real' | 'unclear'
+  suggestedStatus: 'open' | 'triaged' | 'closed'
+  headline: string
+  analysis: string
+  likelyCause: string | null
+  nextSteps: string[]
+  confidence: number
+  heuristics: { likelyTest: boolean; reasons: string[] }
+  model: string
+  generatedAt: string
+}
+
+export async function fetchBugReportAiAnswer(
+  reportId: string,
+): Promise<{ ok: boolean; answer: BugReportAiAnswer }> {
+  const res = await adminFetch(`/admin/bug-reports/${encodeURIComponent(reportId)}/ai-answer`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'AI answer failed')
+  }
+  return data as { ok: boolean; answer: BugReportAiAnswer }
+}
+
 /** Download CSV using the current admin session. */
 export async function downloadAdminUsersCsv(params: AdminListQuery = {}) {
   const res = await adminFetch(`/admin/users.csv${toQuery(params)}`)

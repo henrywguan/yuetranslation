@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import type { AdminBugReport } from '../lib/adminApi'
+import type { AdminBugReport, BugReportAiAnswer } from '../lib/adminApi'
+import { fetchBugReportAiAnswer } from '../lib/adminApi'
 import {
   diagnoseBugReport,
   formatReportAge,
@@ -99,6 +100,10 @@ function DiagnosisPanel({
   onStatusChange,
   onClose,
   panelRef,
+  aiAnswer,
+  aiBusy,
+  aiError,
+  onGenerateAi,
 }: {
   report: AdminBugReport
   diagnosis: ReportDiagnosis
@@ -106,6 +111,10 @@ function DiagnosisPanel({
   onStatusChange: (report: AdminBugReport, status: ReportStatus) => void
   onClose: () => void
   panelRef: RefObject<HTMLElement | null>
+  aiAnswer: BugReportAiAnswer | null
+  aiBusy: boolean
+  aiError: string
+  onGenerateAi: () => void
 }) {
   const [showRaw, setShowRaw] = useState(false)
   const confidencePct = Math.round(diagnosis.confidence * 100)
@@ -123,6 +132,7 @@ function DiagnosisPanel({
       <header className="brd-detail-head">
         <div className="brd-detail-kicker">
           <span className={severityClass(diagnosis.severity)}>{diagnosis.severity}</span>
+          {diagnosis.likelyTest ? <span className="brd-test-pill">Likely test</span> : null}
           <span className="brd-id">{shortReportId(report.id)}</span>
           <span className="brd-muted">{formatReportAge(report.created_at)}</span>
         </div>
@@ -176,6 +186,73 @@ function DiagnosisPanel({
           <strong>{report.email || report.user_id.slice(0, 8)}</strong>
         </div>
       </div>
+
+      <section className="brd-section brd-ai">
+        <div className="brd-ai-head">
+          <h3>AI answer</h3>
+          <button
+            type="button"
+            className="admin-btn admin-btn--secondary"
+            disabled={busy || aiBusy}
+            onClick={onGenerateAi}
+          >
+            {aiBusy ? 'Thinking…' : aiAnswer ? 'Regenerate' : 'Generate'}
+          </button>
+        </div>
+        <p className="brd-ai-intro">
+          On-demand triage from diagnostics + note. Flags smoke tests to close; for real reports
+          (e.g. a mistranslated “happy birthday”) explains what likely went wrong — without inventing
+          phrases that weren’t in the report.
+        </p>
+        {aiError ? <p className="brd-ai-error">{aiError}</p> : null}
+        {aiAnswer ? (
+          <div className={`brd-ai-card brd-ai-card--${aiAnswer.verdict}`}>
+            <div className="brd-ai-card-top">
+              <span className={`brd-ai-verdict brd-ai-verdict--${aiAnswer.verdict}`}>
+                {aiAnswer.verdict === 'test'
+                  ? 'Test report'
+                  : aiAnswer.verdict === 'real'
+                    ? 'Real issue'
+                    : 'Unclear'}
+              </span>
+              <span className="brd-muted">
+                Suggests {aiAnswer.suggestedStatus} · {Math.round(aiAnswer.confidence * 100)}%
+              </span>
+            </div>
+            <p className="brd-ai-headline">{aiAnswer.headline}</p>
+            <p className="brd-ai-analysis">{aiAnswer.analysis}</p>
+            {aiAnswer.likelyCause ? (
+              <p className="brd-ai-cause">
+                <strong>Likely cause</strong> {aiAnswer.likelyCause}
+              </p>
+            ) : null}
+            {aiAnswer.nextSteps.length ? (
+              <ul className="brd-ai-steps">
+                {aiAnswer.nextSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ul>
+            ) : null}
+            <div className="brd-ai-actions">
+              <button
+                type="button"
+                className="admin-btn"
+                disabled={busy || report.status === aiAnswer.suggestedStatus}
+                onClick={() => onStatusChange(report, aiAnswer.suggestedStatus)}
+              >
+                Apply “{aiAnswer.suggestedStatus}”
+              </button>
+              <span className="brd-muted brd-ai-model">via {aiAnswer.model}</span>
+            </div>
+          </div>
+        ) : !aiBusy ? (
+          <p className="brd-muted brd-ai-empty">
+            {diagnosis.likelyTest
+              ? 'Heuristics already flag this as a likely test — Generate for a full AI write-up, or mark closed.'
+              : 'Generate an AI write-up when you want a second opinion.'}
+          </p>
+        ) : null}
+      </section>
 
       <section className="brd-section">
         <h3>Findings</h3>
@@ -291,6 +368,9 @@ export function AdminBugReportsDashboard({
   const [q, setQ] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
+  const [aiCache, setAiCache] = useState<Record<string, BugReportAiAnswer>>({})
+  const [aiBusyId, setAiBusyId] = useState<string | null>(null)
+  const [aiError, setAiError] = useState('')
   const detailRef = useRef<HTMLElement | null>(null)
   const longPressRef = useRef<{
     id: string
@@ -437,6 +517,19 @@ export function AdminBugReportsDashboard({
     setSelectMode(true)
     setSelectedIds(new Set(filtered.map((r) => r.id)))
     onSelect(null)
+  }
+
+  const generateAi = async (reportId: string) => {
+    setAiBusyId(reportId)
+    setAiError('')
+    try {
+      const { answer } = await fetchBugReportAiAnswer(reportId)
+      setAiCache((prev) => ({ ...prev, [reportId]: answer }))
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : 'AI answer failed')
+    } finally {
+      setAiBusyId(null)
+    }
   }
 
   return (
@@ -586,6 +679,7 @@ export function AdminBugReportsDashboard({
                     </span>
                     <span className={`brd-status brd-status--${r.status}`}>{r.status}</span>
                   </div>
+                  {d.likelyTest ? <span className="brd-test-pill brd-test-pill--card">Likely test</span> : null}
                   <p className="brd-card-title">{d.title}</p>
                   <p className="brd-card-meta">
                     <span>{r.email || r.user_id.slice(0, 8)}</span>
@@ -615,6 +709,10 @@ export function AdminBugReportsDashboard({
               onStatusChange={onStatusChange}
               onClose={() => onSelect(null)}
               panelRef={detailRef}
+              aiAnswer={aiCache[selected.id] || null}
+              aiBusy={aiBusyId === selected.id}
+              aiError={aiError}
+              onGenerateAi={() => void generateAi(selected.id)}
             />
           ) : null}
         </AnimatePresence>
