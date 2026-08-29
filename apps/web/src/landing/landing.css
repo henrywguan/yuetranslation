@@ -35,14 +35,22 @@
 .ln-parallax-layer--far {
   background:
     radial-gradient(
-      ellipse 58% 42% at 18% 22%,
-      color-mix(in srgb, var(--harbor-blue) 34%, transparent),
-      transparent 68%
+      ellipse 70% 55% at 16% 18%,
+      color-mix(in srgb, var(--harbor-blue) 28%, transparent),
+      transparent 72%
     ),
     radial-gradient(
-      ellipse 48% 38% at 86% 68%,
-      color-mix(in srgb, var(--jade-deep) 18%, transparent),
-      transparent 70%
+      ellipse 60% 50% at 88% 72%,
+      color-mix(in srgb, var(--jade-deep) 14%, transparent),
+      transparent 74%
+    ),
+    /* Soft vertical continuity so mid-page never reads as a flat strip */
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--harbor-mid) 12%, transparent) 42%,
+      color-mix(in srgb, var(--harbor-blue) 10%, transparent) 68%,
+      transparent 100%
     );
   opacity: 0.95;
 }
@@ -50,48 +58,48 @@
 .ln-parallax-layer--mid {
   background:
     radial-gradient(
-      ellipse 42% 36% at 72% 18%,
-      color-mix(in srgb, var(--jade) 20%, transparent),
-      transparent 64%
+      ellipse 52% 44% at 74% 16%,
+      color-mix(in srgb, var(--jade) 16%, transparent),
+      transparent 70%
     ),
     radial-gradient(
-      ellipse 50% 44% at 28% 78%,
-      color-mix(in srgb, var(--harbor-teal) 26%, transparent),
-      transparent 66%
-    ),
-    radial-gradient(
-      ellipse 36% 28% at 52% 48%,
-      color-mix(in srgb, var(--harbor-mid) 22%, transparent),
+      ellipse 58% 52% at 24% 80%,
+      color-mix(in srgb, var(--harbor-teal) 20%, transparent),
       transparent 72%
+    ),
+    radial-gradient(
+      ellipse 48% 40% at 50% 46%,
+      color-mix(in srgb, var(--harbor-mid) 16%, transparent),
+      transparent 76%
     );
-  opacity: 0.9;
+  opacity: 0.88;
 }
 
 .ln-parallax-layer--near {
   background:
     radial-gradient(
-      ellipse 28% 22% at 12% 58%,
-      color-mix(in srgb, var(--jade-bright) 14%, transparent),
-      transparent 70%
+      ellipse 34% 28% at 10% 56%,
+      color-mix(in srgb, var(--jade-bright) 11%, transparent),
+      transparent 74%
     ),
     radial-gradient(
-      ellipse 32% 26% at 88% 32%,
-      color-mix(in srgb, var(--harbor-blue) 16%, transparent),
-      transparent 68%
+      ellipse 38% 32% at 90% 30%,
+      color-mix(in srgb, var(--harbor-blue) 12%, transparent),
+      transparent 72%
     );
-  opacity: 0.85;
+  opacity: 0.8;
 }
 
 [data-theme='light'] .ln-parallax-layer--far {
-  opacity: 0.72;
+  opacity: 0.55;
 }
 
 [data-theme='light'] .ln-parallax-layer--mid {
-  opacity: 0.65;
+  opacity: 0.48;
 }
 
 [data-theme='light'] .ln-parallax-layer--near {
-  opacity: 0.55;
+  opacity: 0.4;
 }
 
 .ln-atmosphere-grain {
@@ -1854,11 +1862,10 @@
 /* ---------- Live demo — mid-page stage ---------- */
 .ln-demo-band {
   position: relative;
-  isolation: isolate;
   width: 100%;
   margin: 0 auto;
   padding: clamp(72px, 11vw, 128px) clamp(20px, 5vw, 40px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ln-demo-band-frame {

@@ -45,10 +45,13 @@ export function LandingAtmosphere() {
     const apply = () => {
       ticking = false
       const y = latest
-      // Depth parallax — farther layers move less; continuous across the page.
-      far.style.transform = `translate3d(0, ${y * -0.12}px, 0)`
-      mid.style.transform = `translate3d(0, ${y * -0.28}px, 0)`
-      near.style.transform = `translate3d(0, ${y * -0.48}px, 0)`
+      // Cap travel so oversized layers never flash empty edges mid-page.
+      const farY = Math.max(-180, Math.min(180, y * -0.1))
+      const midY = Math.max(-320, Math.min(320, y * -0.24))
+      const nearY = Math.max(-480, Math.min(480, y * -0.4))
+      far.style.transform = `translate3d(0, ${farY}px, 0)`
+      mid.style.transform = `translate3d(0, ${midY}px, 0)`
+      near.style.transform = `translate3d(0, ${nearY}px, 0)`
     }
 
     const onScroll = () => {
