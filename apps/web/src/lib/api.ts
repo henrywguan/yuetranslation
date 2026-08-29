@@ -181,6 +181,8 @@ export async function cameraScan(opts: {
   boxes?: CameraBox[]
   target?: 'en' | 'zh'
   ocrOnly?: boolean
+  /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
+  forDocs?: boolean
 }): Promise<CameraScanResult> {
   const res = await apiFetch('/camera/scan', {
     method: 'POST',

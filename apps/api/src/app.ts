@@ -17,11 +17,13 @@ import { cameraScan } from './cameraScan.js'
 import {
   addCameraSeconds,
   addCameraTranslateCount,
+  addDocsPages,
   addLiveSeconds,
   addTtsChars,
   addTranslateCount,
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
+import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -55,7 +57,7 @@ app.post(
   handleSignupNotify,
 )
 
-app.use(express.json({ limit: '6mb' }))
+app.use(express.json({ limit: '12mb' }))
 app.use(attachAuth)
 
 async function entitlementFor(req: AuthedRequest) {
@@ -243,15 +245,28 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
+  const forDocs = Boolean(req.body?.forDocs)
   const ent = await entitlementFor(req)
-  if (!ent.allowed.camera) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
-      message:
-        ent.reason === 'login_required'
-          ? 'Please sign in to use camera translation.'
-          : ent.reason === 'account_disabled'
-            ? 'This account has been disabled.'
-            : ent.reason === 'camera_quota_exhausted' || ent.reason === 'no_camera_quota'
+  const allowed = forDocs ? ent.allowed.docs : ent.allowed.camera
+  if (!allowed) {
+    const login = ent.reason === 'login_required'
+    const disabled = ent.reason === 'account_disabled'
+    const docsQuota =
+      ent.reason === 'docs_quota_exhausted' || ent.reason === 'no_docs_quota'
+    const camQuota =
+      ent.reason === 'camera_quota_exhausted' || ent.reason === 'no_camera_quota'
+    res.status(login ? 401 : 402).json({
+      message: login
+        ? forDocs
+          ? 'Please sign in to translate documents.'
+          : 'Please sign in to use camera translation.'
+        : disabled
+          ? 'This account has been disabled.'
+          : forDocs
+            ? docsQuota
+              ? 'Document page quota exhausted for this month.'
+              : 'Document translation is not available.'
+            : camQuota
               ? 'Camera minutes exhausted for this month.'
               : 'Camera translation is not available.',
       entitlement: ent,
@@ -260,7 +275,8 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
   }
   try {
     const result = await cameraScan(req.body)
-    if (!env.openMode && req.auth?.userId && result.translateMisses > 0) {
+    // Docs hybrid vision: no camera translate metering (pages billed on /docs/commit).
+    if (!forDocs && !env.openMode && req.auth?.userId && result.translateMisses > 0) {
       await addCameraTranslateCount(req.auth.userId, result.translateMisses)
     }
     res.json({ ...result, entitlement: await entitlementFor(req) })
@@ -274,6 +290,111 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
           : 500
     res.status(status).json({ message })
   }
+})
+
+function docsDeniedMessage(ent: Awaited<ReturnType<typeof entitlementFor>>) {
+  if (ent.reason === 'login_required') return 'Please sign in to translate documents.'
+  if (ent.reason === 'account_disabled') return 'This account has been disabled.'
+  if (ent.reason === 'docs_quota_exhausted' || ent.reason === 'no_docs_quota') {
+    return 'Document page quota exhausted for this month.'
+  }
+  return 'Document translation is not available.'
+}
+
+function docsPagesRemainingOk(
+  ent: Awaited<ReturnType<typeof entitlementFor>>,
+  pages: number,
+): boolean {
+  if (ent.docsUnlimited) return true
+  if (!ent.allowed.docs) return false
+  const remaining = ent.remaining.docsPages
+  if (remaining < 0) return true
+  return pages <= remaining
+}
+
+/** Office / TXT layout-preserving document translate (Cam → Documents). */
+app.post('/api/docs/translate', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.docs) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message: docsDeniedMessage(ent),
+      entitlement: ent,
+    })
+    return
+  }
+  try {
+    const peek = await peekDocPages(req.body)
+    if (!docsPagesRemainingOk(ent, peek.pages)) {
+      res.status(402).json({
+        message: `Not enough document pages remaining (need ~${peek.pages}).`,
+        entitlement: ent,
+        pagesNeeded: peek.pages,
+      })
+      return
+    }
+    const result = await translateDocumentFile(req.body)
+    // Bill only on success — never on thrown errors above.
+    if (!env.openMode && req.auth?.userId && result.pages > 0) {
+      await addDocsPages(req.auth.userId, result.pages)
+    }
+    res.json({ ...result, entitlement: await entitlementFor(req) })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Document translation failed'
+    const status = e instanceof ZodError ? 400 : /too large/i.test(message) ? 413 : 500
+    res.status(status).json({ message })
+  }
+})
+
+/** Batch text segments for PDF hybrid (extract → translate → paint). No page billing. */
+app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.docs) {
+    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+      message: docsDeniedMessage(ent),
+      entitlement: ent,
+    })
+    return
+  }
+  try {
+    const result = await translateDocSegments(req.body)
+    res.json({ ...result, entitlement: await entitlementFor(req) })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Segment translation failed'
+    res.status(e instanceof ZodError ? 400 : 500).json({ message })
+  }
+})
+
+/**
+ * Commit PDF hybrid page usage after a successful client job.
+ * Failed / abandoned jobs never call this — so they are not billed.
+ */
+app.post('/api/docs/commit', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.loggedIn) {
+    res.status(401).json({ message: docsDeniedMessage(ent), entitlement: ent })
+    return
+  }
+  if (ent.disabled || !ent.limits.can_docs) {
+    res.status(402).json({ message: docsDeniedMessage(ent), entitlement: ent })
+    return
+  }
+  const pages = Math.max(0, Math.min(500, Math.floor(Number(req.body?.pages) || 0)))
+  if (pages <= 0) {
+    res.status(400).json({ message: 'pages must be a positive integer' })
+    return
+  }
+  if (!docsPagesRemainingOk(ent, pages)) {
+    res.status(402).json({
+      message: `Not enough document pages remaining (need ${pages}).`,
+      entitlement: ent,
+      pagesNeeded: pages,
+    })
+    return
+  }
+  if (!env.openMode && req.auth?.userId) {
+    await addDocsPages(req.auth.userId, pages)
+  }
+  res.json({ ok: true, pages, entitlement: await entitlementFor(req) })
 })
 
 app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {

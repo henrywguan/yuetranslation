@@ -21,6 +21,7 @@ type Props = {
     liveSeconds?: number
     ttsChars?: number
     cameraSeconds?: number
+    docsPages?: number
   }) => void
 }
 
@@ -69,6 +70,8 @@ export function AdminResetUsageModal({ open, user, monthLabel, busy, onClose, on
   const [live, setLive] = useState<MetricState>(emptyMetric)
   const [tts, setTts] = useState<MetricState>(emptyMetric)
   const [cam, setCam] = useState<MetricState>(emptyMetric)
+  const [docsEnabled, setDocsEnabled] = useState(false)
+  const [docsPages, setDocsPages] = useState('0')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -76,6 +79,8 @@ export function AdminResetUsageModal({ open, user, monthLabel, busy, onClose, on
     setLive(metricFromUser(user, 'live'))
     setTts(metricFromUser(user, 'tts'))
     setCam(metricFromUser(user, 'cam'))
+    setDocsEnabled(false)
+    setDocsPages(String(user.docsPages ?? 0))
     setError('')
   }, [open, user])
 
@@ -92,12 +97,18 @@ export function AdminResetUsageModal({ open, user, monthLabel, busy, onClose, on
   }
 
   const submit = () => {
-    const patch: { liveSeconds?: number; ttsChars?: number; cameraSeconds?: number } = {}
+    const patch: {
+      liveSeconds?: number
+      ttsChars?: number
+      cameraSeconds?: number
+      docsPages?: number
+    } = {}
     if (live.enabled) patch.liveSeconds = secondsFromParts(live.hours, live.minutes, live.seconds)
     if (tts.enabled) patch.ttsChars = Math.max(0, parseInt(tts.chars, 10) || 0)
     if (cam.enabled) patch.cameraSeconds = secondsFromParts(cam.hours, cam.minutes, cam.seconds)
+    if (docsEnabled) patch.docsPages = Math.max(0, parseInt(docsPages, 10) || 0)
 
-    if (!live.enabled && !tts.enabled && !cam.enabled) {
+    if (!live.enabled && !tts.enabled && !cam.enabled && !docsEnabled) {
       setError('Select at least one usage type to update.')
       return
     }
@@ -221,6 +232,45 @@ export function AdminResetUsageModal({ open, user, monthLabel, busy, onClose, on
         </fieldset>
 
         {renderTimeMetric('cam', 'Cam', user.cameraSeconds, cam, setCam)}
+
+        <fieldset className="admin-reset-field">
+          <label className="admin-reset-check">
+            <input
+              type="checkbox"
+              checked={docsEnabled}
+              onChange={(e) => setDocsEnabled(e.target.checked)}
+            />
+            <span>
+              <strong>Docs pages</strong>
+              <span className="admin-sub">
+                Current: {(user.docsPages ?? 0).toLocaleString()} pages
+              </span>
+            </span>
+          </label>
+          {docsEnabled ? (
+            <div className="admin-reset-inputs">
+              <label className="admin-reset-grow">
+                Pages
+                <input
+                  type="number"
+                  min={0}
+                  value={docsPages}
+                  onChange={(e) => setDocsPages(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="admin-btn admin-btn--secondary"
+                onClick={() => {
+                  setDocsEnabled(true)
+                  setDocsPages('0')
+                }}
+              >
+                Reset to 0
+              </button>
+            </div>
+          ) : null}
+        </fieldset>
 
         {error ? <p className="admin-error admin-reset-error">{error}</p> : null}
 

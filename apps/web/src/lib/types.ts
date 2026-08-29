@@ -15,9 +15,11 @@ export type Entitlement = {
     live_minutes: number
     tts_chars: number
     camera_minutes?: number
+    docs_pages?: number
     auto_speak: boolean
     can_live: boolean
     can_camera?: boolean
+    can_docs?: boolean
     text_translate: boolean
   }
   usage: {
@@ -27,12 +29,21 @@ export type Entitlement = {
     translateCount: number
     cameraSeconds?: number
     cameraTranslateCount?: number
+    docsPages?: number
   }
-  remaining: { liveSeconds: number; ttsChars: number; cameraSeconds?: number }
+  remaining: {
+    liveSeconds: number
+    ttsChars: number
+    cameraSeconds?: number
+    /** -1 when unlimited (Max). */
+    docsPages?: number
+  }
   /** Pro/Max: usage tracked, never gates the speaker. */
   ttsUnlimited?: boolean
   /** Max: usage tracked, never gates camera. */
   cameraUnlimited?: boolean
+  /** Max: usage tracked, never gates documents. */
+  docsUnlimited?: boolean
   upgradeUrl: string
   loginUrl: string
   allowed: {
@@ -41,6 +52,7 @@ export type Entitlement = {
     textTranslate: boolean
     tts: boolean
     camera?: boolean
+    docs?: boolean
   }
   reason: string | null
 }

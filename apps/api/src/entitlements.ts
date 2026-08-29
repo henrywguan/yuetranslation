@@ -18,9 +18,12 @@ export type Entitlement = {
     tts_chars: number
     /** 0 when camera is unlimited (Max) or disabled. */
     camera_minutes: number
+    /** 0 when docs are unlimited (Max) or disabled. */
+    docs_pages: number
     auto_speak: boolean
     can_live: boolean
     can_camera: boolean
+    can_docs: boolean
     text_translate: boolean
   }
   usage: {
@@ -30,12 +33,20 @@ export type Entitlement = {
     translateCount: number
     cameraSeconds: number
     cameraTranslateCount: number
+    docsPages: number
   }
-  remaining: { liveSeconds: number; ttsChars: number; cameraSeconds: number }
+  remaining: {
+    liveSeconds: number
+    ttsChars: number
+    cameraSeconds: number
+    docsPages: number
+  }
   /** Pro/Max: usage is tracked but never gates the speaker. */
   ttsUnlimited: boolean
   /** Max: usage is tracked but never gates camera. */
   cameraUnlimited: boolean
+  /** Max: usage is tracked but never gates documents. */
+  docsUnlimited: boolean
   upgradeUrl: string
   loginUrl: string
   allowed: {
@@ -44,6 +55,7 @@ export type Entitlement = {
     textTranslate: boolean
     tts: boolean
     camera: boolean
+    docs: boolean
   }
   reason: string | null
 }
@@ -71,9 +83,11 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       // Unlimited TTS — usage is still metered; 0 means no hard cap.
       tts_chars: 0,
       camera_minutes: env.proCameraMinutes,
+      docs_pages: env.proDocsPages,
       auto_speak: true,
       can_live: true,
       can_camera: true,
+      can_docs: true,
       text_translate: true,
     }
   }
@@ -83,9 +97,11 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       live_minutes: env.maxLiveMinutes,
       tts_chars: 0,
       camera_minutes: 0,
+      docs_pages: 0,
       auto_speak: true,
       can_live: true,
       can_camera: true,
+      can_docs: true,
       text_translate: true,
     }
   }
@@ -97,9 +113,11 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       // Guests can tap-to-play without an account (no persistent meter).
       tts_chars: 0,
       camera_minutes: 0,
+      docs_pages: 0,
       auto_speak: false,
       can_live: mins > 0 && !env.requireLogin,
       can_camera: false,
+      can_docs: false,
       text_translate: true,
     }
   }
@@ -108,9 +126,11 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     live_minutes: env.freeLiveMinutes,
     tts_chars: env.freeAllowTts ? env.freeTtsChars : 0,
     camera_minutes: env.freeAllowCamera ? env.freeCameraMinutes : 0,
+    docs_pages: env.freeAllowCamera ? env.freeDocsPages : 0,
     auto_speak: false,
     can_live: env.freeAllowLive,
     can_camera: env.freeAllowCamera,
+    can_docs: env.freeAllowCamera,
     text_translate: true,
   }
 }
@@ -144,6 +164,15 @@ export function cameraAccess(cameraLimitSeconds: number, cameraUsed: number, unl
   return { camera, cameraRemaining, unlimited: false }
 }
 
+export function docsAccess(docsLimit: number, docsUsed: number, unlimited = false) {
+  if (unlimited) {
+    return { docs: true, docsRemaining: -1, unlimited: true }
+  }
+  const docsRemaining = Math.max(0, docsLimit - docsUsed)
+  const docs = docsLimit > 0 && docsRemaining > 0
+  return { docs, docsRemaining, unlimited: false }
+}
+
 function buildSnapshot(
   plan: PlanKey,
   loggedIn: boolean,
@@ -159,8 +188,10 @@ function buildSnapshot(
     const limits = limitsForPlan('free')
     limits.can_live = false
     limits.can_camera = false
+    limits.can_docs = false
     limits.tts_chars = 0
     limits.camera_minutes = 0
+    limits.docs_pages = 0
     limits.auto_speak = false
     limits.text_translate = false
     return {
@@ -172,9 +203,10 @@ function buildSnapshot(
       disabled: true,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0 },
+      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0, docsPages: 0 },
       ttsUnlimited: false,
       cameraUnlimited: false,
+      docsUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
@@ -183,6 +215,7 @@ function buildSnapshot(
         textTranslate: false,
         tts: false,
         camera: false,
+        docs: false,
       },
       reason: 'account_disabled',
     }
@@ -192,6 +225,7 @@ function buildSnapshot(
     const limits = limitsForPlan('guest')
     limits.can_live = false
     limits.can_camera = false
+    limits.can_docs = false
     return {
       loggedIn: false,
       requireLogin: true,
@@ -201,9 +235,10 @@ function buildSnapshot(
       disabled: false,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0 },
+      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0, docsPages: 0 },
       ttsUnlimited: false,
       cameraUnlimited: false,
+      docsUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
@@ -213,6 +248,7 @@ function buildSnapshot(
         // Guests may tap-to-play without signing in (no persistent meter).
         tts: true,
         camera: false,
+        docs: false,
       },
       reason: 'login_required',
     }
@@ -221,20 +257,26 @@ function buildSnapshot(
   const limits = limitsForPlan(plan)
   const liveLimit = Math.max(0, limits.live_minutes) * 60
   const cameraLimit = Math.max(0, limits.camera_minutes) * 60
+  const docsLimit = Math.max(0, limits.docs_pages)
   const ttsUnlimited = plan === 'pro' || plan === 'max'
   const cameraUnlimited = plan === 'max'
+  const docsUnlimited = plan === 'max'
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
   const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
   const cam = cameraAccess(cameraLimit, usage.cameraSeconds, cameraUnlimited)
+  const docs = docsAccess(docsLimit, usage.docsPages, docsUnlimited)
   const canLive = limits.can_live && liveRemaining > 0
   const canCamera = limits.can_camera && (cameraUnlimited || cam.camera)
+  const canDocs = limits.can_docs && (docsUnlimited || docs.docs)
 
   let reason: string | null = null
   if (!canLive) reason = liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted'
   else if (!voice.tts) reason = ttsLimit <= 0 ? 'no_tts_quota' : 'tts_quota_exhausted'
   else if (!canCamera && loggedIn) {
     reason = cameraLimit <= 0 ? 'no_camera_quota' : 'camera_quota_exhausted'
+  } else if (!canDocs && loggedIn) {
+    reason = docsLimit <= 0 ? 'no_docs_quota' : 'docs_quota_exhausted'
   }
 
   return {
@@ -250,9 +292,11 @@ function buildSnapshot(
       liveSeconds: liveRemaining,
       ttsChars: Math.max(0, voice.ttsRemaining),
       cameraSeconds: cameraUnlimited ? -1 : Math.max(0, cam.cameraRemaining),
+      docsPages: docsUnlimited ? -1 : Math.max(0, docs.docsRemaining),
     },
     ttsUnlimited,
     cameraUnlimited,
+    docsUnlimited,
     upgradeUrl: upgradeUrl(),
     loginUrl: loginUrl(),
     allowed: {
@@ -261,6 +305,7 @@ function buildSnapshot(
       textTranslate: limits.text_translate,
       tts: voice.tts,
       camera: canCamera,
+      docs: canDocs,
     },
     reason,
   }
@@ -283,9 +328,11 @@ function localEntitlement(): Entitlement {
         live_minutes: 9999,
         tts_chars: 999999,
         camera_minutes: 0,
+        docs_pages: 0,
         auto_speak: true,
         can_live: true,
         can_camera: true,
+        can_docs: true,
         text_translate: true,
       },
       usage: {
@@ -295,13 +342,22 @@ function localEntitlement(): Entitlement {
         translateCount: 0,
         cameraSeconds: 0,
         cameraTranslateCount: 0,
+        docsPages: 0,
       },
-      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1 },
+      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1, docsPages: -1 },
       ttsUnlimited: true,
       cameraUnlimited: true,
+      docsUnlimited: true,
       upgradeUrl: '',
       loginUrl: '',
-      allowed: { live: true, autoSpeak: true, textTranslate: true, tts: true, camera: true },
+      allowed: {
+        live: true,
+        autoSpeak: true,
+        textTranslate: true,
+        tts: true,
+        camera: true,
+        docs: true,
+      },
       reason: null,
     }
   }

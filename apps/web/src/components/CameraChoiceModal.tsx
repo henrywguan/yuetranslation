@@ -6,10 +6,11 @@ type Props = {
   onClose: () => void
   onAr: () => void
   onUpload: () => void
+  onDocs: () => void
 }
 
-/** Floating modal: AR translation vs upload image. */
-export function CameraChoiceModal({ open, onClose, onAr, onUpload }: Props) {
+/** Floating modal: AR / upload image / documents. */
+export function CameraChoiceModal({ open, onClose, onAr, onUpload, onDocs }: Props) {
   if (!open) return null
 
   return (
@@ -40,6 +41,14 @@ export function CameraChoiceModal({ open, onClose, onAr, onUpload }: Props) {
             </span>
             <span className="cam-choice-btn-hint">
               <BiText copy={ui.camChoiceUploadHint} size="sm" />
+            </span>
+          </button>
+          <button type="button" className="cam-choice-btn cam-choice-btn--docs" onClick={onDocs}>
+            <span className="cam-choice-btn-label">
+              <BiText copy={ui.camChoiceDocs} size="md" />
+            </span>
+            <span className="cam-choice-btn-hint">
+              <BiText copy={ui.camChoiceDocsHint} size="sm" />
             </span>
           </button>
         </div>

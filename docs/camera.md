@@ -8,8 +8,9 @@ Sign-in-only mode for AR live overlay and upload-with-boxes translation (English
 
 1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Each region gets a tight source cover plus a floating translation chip (Google-style); unselected regions stay soft/outlined so dense packing stays distinct, and the selected region gets a full opaque cover. Chips use collision nudging so they don’t clip into each other. Pinch-zoom or mouse-wheel the still. Tap a chip/cover to open its detail sheet. Clear resumes the live preview. X exits to the AR / Upload choice modal.
 2. **Upload image** — still photo; draw boxes and/or auto-detect; **Translate** / **Translate all**. Jade/glass overlays stay locked to each OCR/translated word region (not collision-nudged so dense menus stay on-word). **Drawn boxes can be dragged until Translate**; after translation they lock over the source text. Pinch-zoom (mobile), mouse-wheel, or slider; overlay text scales in screen space so it stays crisp. Selectable Results list for every region.
+3. **Documents** — translate PDF / DOCX / PPTX / XLSX / TXT with layout kept. Office files rewrite OOXML text in place. PDFs use **hybrid C+B**: extract the text layer when present (C), always rasterize the page as the visual base (B), paint translations at source positions; scanned pages fall back to Azure Vision via `/api/camera/scan`. Uses your Cantonese translate pipeline (not DeepL).
 
-Entry: **Cam** tab → floating modal (AR vs Upload). Guests see sign-in first.
+Entry: **Cam** tab → floating modal (AR / Upload / Documents). Guests see sign-in first.
 
 ## Languages / 語言
 
@@ -21,6 +22,8 @@ Speech Solo/Conversation remain EN↔粵 only.
 
 ## Metering / 計量
 
+### Camera (AR + Upload)
+
 | Plan | Camera | Cap | Counted |
 | --- | --- | --- | --- |
 | Guest | No | — | — |
@@ -30,9 +33,27 @@ Speech Solo/Conversation remain EN↔粵 only.
 
 Heartbeat: `POST /api/usage/camera-heartbeat` while the AR fullscreen session or upload editor is open. Exit / back flushes seconds.
 
-Analytics: `camera_translate_count` increments on OCR→translate cache misses (`POST /api/camera/scan`).
+Analytics: `camera_translate_count` increments on OCR→translate cache misses (`POST /api/camera/scan`) — **not** when `forDocs: true` (Documents PDF hybrid).
 
 Apply Supabase migration `004_camera_usage.sql`.
+
+### Documents (separate meter)
+
+Same **access gate** as camera (signed-in + plan `can_camera` / `can_docs`). Usage is **not** shared with camera minutes.
+
+| Plan | Documents | Cap | Counted |
+| --- | --- | --- | --- |
+| Guest | No | — | — |
+| Free | Yes | `YUE_FREE_DOCS_PAGES` (default 40) hard cap | `docs_pages` |
+| Pro | Yes | `YUE_PRO_DOCS_PAGES` (default 400) hard cap | `docs_pages` |
+| Max | Yes | Unlimited | Yes (`docsUnlimited`) — still metered |
+
+Billing rules:
+
+- **Success only** — failed / abandoned jobs are not billed.
+- Office/TXT: bill estimated pages after `POST /api/docs/translate` succeeds.
+- PDF hybrid: bill exact page count via `POST /api/docs/commit` only after the full client job succeeds. Mid-job `/docs/segments` and `/camera/scan?forDocs` do **not** increment docs or camera translate meters.
+- Apply Supabase migration `008_docs_pages.sql`.
 
 **Mobile upload:** the file picker does **not** use `capture=` — gallery / files open on phones. Use AR for live camera.
 
@@ -40,10 +61,15 @@ Apply Supabase migration `004_camera_usage.sql`.
 
 | Endpoint | Gate |
 | --- | --- |
-| `POST /api/camera/scan` | `allowed.camera` |
+| `POST /api/camera/scan` | `allowed.camera` (or `allowed.docs` when `forDocs: true`) |
+| `POST /api/docs/translate` | `allowed.docs` — Office/TXT layout-keep; bills pages on success |
+| `POST /api/docs/segments` | `allowed.docs` — PDF text-layer batch; no page bill |
+| `POST /api/docs/commit` | signed-in + `can_docs` — bill PDF pages after success |
 | `POST /api/usage/camera-heartbeat` | `allowed.camera` |
 
-Scan body: `{ image: dataUrl|base64, boxes?: [{x,y,w,h}], target?: 'en'|'zh', ocrOnly?: boolean }`.
+Scan body: `{ image: dataUrl|base64, boxes?: [{x,y,w,h}], target?: 'en'|'zh', ocrOnly?: boolean, forDocs?: boolean }`.
+
+Docs translate body: `{ filename, data: dataUrl|base64, from: 'en'|'yue', to: 'en'|'yue' }` (max ~8 MB). PDF is handled in the client hybrid path; commit with `{ pages }`.
 
 OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are set. Requires a **Vision or multi-service Cognitive Services** resource — the Speech key alone does not grant OCR access. Without Vision, engine is `demo` (empty OCR — draw boxes manually). Invalid credentials return `visionAuthFailed: true` instead of a 500 error.
 
@@ -51,7 +77,9 @@ OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are 
 
 - `YUE_FREE_CAMERA_MINUTES` (default 60)
 - `YUE_PRO_CAMERA_MINUTES` (default 480)
-- `YUE_FREE_ALLOW_CAMERA` (default 1)
+- `YUE_FREE_ALLOW_CAMERA` (default 1) — also gates documents
+- `YUE_FREE_DOCS_PAGES` (default 40)
+- `YUE_PRO_DOCS_PAGES` (default 400)
 - `AZURE_VISION_KEY` — subscription key from a Vision / multi-service resource (optional for manual box mode)
 - `AZURE_VISION_ENDPOINT` — e.g. `https://<resource-name>.cognitiveservices.azure.com` from the Azure portal (recommended). If omitted but key is set, falls back to `https://{AZURE_VISION_REGION|AZURE_SPEECH_REGION}.api.cognitive.microsoft.com`
 

@@ -39,9 +39,9 @@ export const ui = {
     jp: 'soeng1 gei1 faan1 jik6',
   },
   camChoiceBody: {
-    en: 'Live AR overlay, or upload a photo and draw boxes.',
-    zh: '即時 AR 覆蓋，或上載相片再框選文字。',
-    jp: 'zik1 si4 AR fuk1 goi3, waak6 soeng5 zoi3 soeng2 pin3 zoi3 kwaang1 syun2 man4 zi6.',
+    en: 'Live AR, upload a photo, or translate a document with layout kept.',
+    zh: '即時 AR、上載相片，或翻譯文件並盡量保留排版。',
+    jp: 'zik1 si4 AR, soeng5 zoi3 soeng2 pin3, waak6 faan1 jik6 man4 gin2 bing6 zeon6 loeng4 bou2 lau4 paai4 baan2.',
   },
   camChoiceAr: {
     en: 'AR translation',
@@ -63,7 +63,79 @@ export const ui = {
     zh: '手動畫框再翻譯',
     jp: 'sau2 dung6 waak6 kwaang1 zoi3 faan1 jik6',
   },
+  camChoiceDocs: {
+    en: 'Documents',
+    zh: '文件',
+    jp: 'man4 gin2',
+  },
+  camChoiceDocsHint: {
+    en: 'PDF · Word · Excel · PowerPoint · text',
+    zh: 'PDF · Word · Excel · PowerPoint · 文字',
+    jp: 'PDF · Word · Excel · PowerPoint · man4 zi6',
+  },
   camChoiceClose: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
+  camDocLead: {
+    en: 'Office files keep structure in place. PDFs use hybrid layout: text layer when present, vision OCR for scans — translations painted where they belong.',
+    zh: 'Office 文件會喺原位改字。PDF 用混合方式：有文字層就抽字，掃描頁用視覺辨識，譯文畫返原位。',
+    jp: 'Office man4 gin2 wui5 hai2 jyun4 wai6 goi2 zi6. PDF jung6 wan6 hap6 fong1 sik1.',
+  },
+  camDocFrom: { en: 'From', zh: '原文', jp: 'jyun4 man4' },
+  camDocTo: { en: 'To', zh: '譯文', jp: 'jik6 man4' },
+  camDocPick: {
+    en: 'Choose a document',
+    zh: '選擇文件',
+    jp: 'syun2 zaak6 man4 gin2',
+  },
+  camDocFormats: {
+    en: 'PDF, DOCX, PPTX, XLSX, TXT · max 8 MB',
+    zh: 'PDF、DOCX、PPTX、XLSX、TXT · 最⼤ 8 MB',
+    jp: 'PDF, DOCX, PPTX, XLSX, TXT · zeoi3 daai6 8 MB',
+  },
+  camDocWorking: {
+    en: 'Translating document…',
+    zh: '正在翻譯文件…',
+    jp: 'zing3 zoi6 faan1 jik6 man4 gin2…',
+  },
+  camDocOffice: {
+    en: 'Preserving layout…',
+    zh: '保留排版中…',
+    jp: 'bou2 lau4 paai4 baan2 zung1…',
+  },
+  camDocDone: {
+    en: 'Ready to download',
+    zh: '可以下載',
+    jp: 'ho2 ji5 haa6 zoi3',
+  },
+  camDocDownload: {
+    en: 'Download translation',
+    zh: '下載譯文',
+    jp: 'haa6 zoi3 jik6 man4',
+  },
+  camDocPrivacy: {
+    en: 'Files are processed to translate, then not kept in bug reports. Avoid medical PHI unless your org has a compliant plan.',
+    zh: '文件只用於翻譯，唔會寫入錯誤回報。醫療私隱資料請只喺合規方案下上載。',
+    jp: 'man4 gin2 zi2 jung6 jyu1 faan1 jik6.',
+  },
+  camDocRemaining: {
+    en: 'Pages left this month',
+    zh: '本月剩餘頁數',
+    jp: 'bun2 jyut6 sing4 jyu4 jip6 sou3',
+  },
+  camDocUnlimited: {
+    en: 'Unlimited pages (usage still counted)',
+    zh: '頁數無上限（仍會計量）',
+    jp: 'jip6 sou3 mou4 soeng6 haan6',
+  },
+  camDocQuota: {
+    en: 'Document page quota exhausted. Upgrade for more pages.',
+    zh: '文件頁數已用完。升級可加頁數。',
+    jp: 'man4 gin2 jip6 sou3 ji5 jung6 jyun4.',
+  },
+  camDocNeedPages: {
+    en: 'Not enough pages left for this PDF.',
+    zh: '剩餘頁數唔夠呢份 PDF。',
+    jp: 'sing4 jyu4 jip6 sou3 m4 gau3.',
+  },
   camBack: { en: 'Back', zh: '返回', jp: 'faan1 wui4' },
   camCapture: { en: 'Capture & translate', zh: '拍攝並翻譯', jp: 'paak3 sip3 bing6 faan1 jik6' },
   camCaptureHint: {
