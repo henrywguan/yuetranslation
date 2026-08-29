@@ -36,6 +36,7 @@ YUE_ADMIN_NOTIFY_EMAILS=you@example.com
 YUE_NOTIFY_WEBHOOK_SECRET=<long-random-secret>
 ```
 
+- `YUE_NOTIFY_FROM` must be a real email: `Name <local@domain.com>` or `local@domain.com`. A domain alone (`noreply.jyuttranslate.com` inside `<>`) fails Resend’s `from` validation — use `noreply@jyuttranslate.com`. If you verified the `noreply` subdomain in Resend, use e.g. `JyutTranslate <hello@noreply.jyuttranslate.com>`.
 - `YUE_ADMIN_NOTIFY_EMAILS` is optional — defaults to `YUE_ADMIN_EMAILS`.
 - For Resend testing before domain verification, use `YUE_NOTIFY_FROM=JyutTranslate <onboarding@resend.dev>` (Resend’s sandbox sender). **Important:** `*.resend.dev` can only deliver to the Resend account owner email — other recipients fail at send time. To email contacts/audience, verify a domain at [resend.com/domains](https://resend.com/domains) and set `YUE_NOTIFY_FROM` to an address on that domain.
 

@@ -35,96 +35,100 @@
 .ln-parallax-layer--far {
   background:
     radial-gradient(
-      ellipse 70% 55% at 16% 18%,
-      color-mix(in srgb, var(--harbor-blue) 28%, transparent),
-      transparent 72%
+      ellipse 72% 56% at 14% 16%,
+      color-mix(in srgb, var(--harbor-blue) 42%, transparent),
+      transparent 70%
     ),
     radial-gradient(
-      ellipse 60% 50% at 88% 72%,
-      color-mix(in srgb, var(--jade-deep) 14%, transparent),
-      transparent 74%
+      ellipse 62% 52% at 90% 74%,
+      color-mix(in srgb, var(--jade-deep) 22%, transparent),
+      transparent 72%
     ),
-    /* Soft vertical continuity so mid-page never reads as a flat strip */
     linear-gradient(
       180deg,
       transparent 0%,
-      color-mix(in srgb, var(--harbor-mid) 12%, transparent) 42%,
-      color-mix(in srgb, var(--harbor-blue) 10%, transparent) 68%,
+      color-mix(in srgb, var(--harbor-mid) 18%, transparent) 40%,
+      color-mix(in srgb, var(--harbor-blue) 14%, transparent) 66%,
       transparent 100%
     );
-  opacity: 0.95;
+  opacity: 1;
 }
 
 .ln-parallax-layer--mid {
   background:
     radial-gradient(
-      ellipse 52% 44% at 74% 16%,
-      color-mix(in srgb, var(--jade) 16%, transparent),
+      ellipse 54% 46% at 76% 14%,
+      color-mix(in srgb, var(--jade) 28%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 60% 54% at 22% 82%,
+      color-mix(in srgb, var(--harbor-teal) 32%, transparent),
       transparent 70%
     ),
     radial-gradient(
-      ellipse 58% 52% at 24% 80%,
-      color-mix(in srgb, var(--harbor-teal) 20%, transparent),
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 48% 40% at 50% 46%,
-      color-mix(in srgb, var(--harbor-mid) 16%, transparent),
-      transparent 76%
+      ellipse 50% 42% at 48% 44%,
+      color-mix(in srgb, var(--harbor-mid) 24%, transparent),
+      transparent 74%
     );
-  opacity: 0.88;
+  opacity: 0.95;
 }
 
 .ln-parallax-layer--near {
   background:
     radial-gradient(
-      ellipse 34% 28% at 10% 56%,
-      color-mix(in srgb, var(--jade-bright) 11%, transparent),
-      transparent 74%
+      ellipse 36% 30% at 8% 54%,
+      color-mix(in srgb, var(--jade-bright) 20%, transparent),
+      transparent 72%
     ),
     radial-gradient(
-      ellipse 38% 32% at 90% 30%,
-      color-mix(in srgb, var(--harbor-blue) 12%, transparent),
-      transparent 72%
+      ellipse 40% 34% at 92% 28%,
+      color-mix(in srgb, var(--harbor-blue) 20%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 26% 22% at 58% 62%,
+      color-mix(in srgb, var(--jade) 14%, transparent),
+      transparent 68%
     );
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 [data-theme='light'] .ln-parallax-layer--far {
-  opacity: 0.55;
+  opacity: 0.78;
 }
 
 [data-theme='light'] .ln-parallax-layer--mid {
-  opacity: 0.48;
+  opacity: 0.7;
 }
 
 [data-theme='light'] .ln-parallax-layer--near {
-  opacity: 0.4;
+  opacity: 0.62;
 }
 
 .ln-atmosphere-grain {
   position: absolute;
   inset: 0;
-  opacity: 0.045;
+  opacity: 0.055;
   mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
 }
 
 [data-theme='light'] .ln-atmosphere-grain {
-  opacity: 0.035;
+  opacity: 0.048;
   mix-blend-mode: multiply;
 }
 
 .ln-atmosphere-sweep {
   position: absolute;
   inset: -20%;
-  opacity: 0.22;
+  opacity: 0.34;
   background: radial-gradient(
-    ellipse 42% 28% at var(--ln-sweep-x, 18%) var(--ln-sweep-y, 22%),
-    color-mix(in srgb, var(--jade-bright) 22%, transparent),
-    color-mix(in srgb, var(--harbor-blue) 10%, transparent) 42%,
-    transparent 70%
+    ellipse 46% 32% at var(--ln-sweep-x, 18%) var(--ln-sweep-y, 22%),
+    color-mix(in srgb, var(--jade-bright) 34%, transparent),
+    color-mix(in srgb, var(--harbor-blue) 14%, transparent) 40%,
+    transparent 68%
   );
   will-change: background;
 }
@@ -132,17 +136,52 @@
 .ln-atmosphere-sweep.is-static {
   --ln-sweep-x: 22%;
   --ln-sweep-y: 18%;
-  opacity: 0.16;
+  opacity: 0.22;
 }
 
 [data-theme='light'] .ln-atmosphere-sweep {
-  opacity: 0.18;
+  opacity: 0.28;
   background: radial-gradient(
-    ellipse 44% 30% at var(--ln-sweep-x, 18%) var(--ln-sweep-y, 22%),
-    color-mix(in srgb, var(--jade) 16%, transparent),
-    color-mix(in srgb, var(--harbor-blue) 8%, transparent) 45%,
-    transparent 72%
+    ellipse 48% 34% at var(--ln-sweep-x, 18%) var(--ln-sweep-y, 22%),
+    color-mix(in srgb, var(--jade) 26%, transparent),
+    color-mix(in srgb, var(--harbor-blue) 12%, transparent) 42%,
+    transparent 70%
   );
+}
+
+/* Slow diagonal sheen — extra life without competing with content */
+.ln-atmosphere-sheen {
+  position: absolute;
+  inset: -30%;
+  opacity: 0.16;
+  background: linear-gradient(
+    118deg,
+    transparent 28%,
+    color-mix(in srgb, var(--jade-bright) 18%, transparent) 46%,
+    color-mix(in srgb, var(--harbor-blue) 12%, transparent) 52%,
+    transparent 68%
+  );
+  animation: ln-sheen-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.ln-atmosphere-sheen.is-static {
+  animation: none;
+  opacity: 0.1;
+  transform: translate3d(-4%, 2%, 0);
+}
+
+[data-theme='light'] .ln-atmosphere-sheen {
+  opacity: 0.14;
+}
+
+@keyframes ln-sheen-drift {
+  0% {
+    transform: translate3d(-6%, 3%, 0) rotate(-2deg);
+  }
+  100% {
+    transform: translate3d(7%, -4%, 0) rotate(2deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -154,6 +193,10 @@
   .ln-parallax-layer {
     will-change: auto;
     transform: none !important;
+  }
+
+  .ln-atmosphere-sheen {
+    animation: none;
   }
 }
 
@@ -3166,22 +3209,27 @@
   isolation: isolate;
 }
 
-.pricing-page > *:not(.orbital-sphere-wash):not(.orbital-sphere-bg) {
+/* Fixed orbital stage — homepage + pricing: bg stays put, only foreground scrolls */
+.landing .orbital-sphere-bg--page {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.92;
+}
+
+.landing .orbital-sphere-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.landing:has(.orbital-sphere-bg--page) > *:not(.orbital-sphere-wash):not(.orbital-sphere-bg) {
   position: relative;
   z-index: 1;
 }
 
 .pricing-page .orbital-sphere-bg--page {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
   opacity: 0.88;
-}
-
-.pricing-page .orbital-sphere-wash {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
 }
 
 .pp-hero {

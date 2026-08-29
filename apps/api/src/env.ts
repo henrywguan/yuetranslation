@@ -106,8 +106,12 @@ export const env = {
    * Resend Dashboard → Audiences → copy the audience id (seg_… or uuid).
    */
   resendAudienceId: (process.env.RESEND_AUDIENCE_ID || '').trim(),
-  /** From address — must be a verified domain in Resend (or onboarding@resend.dev for tests). */
-  notifyFromEmail: (process.env.YUE_NOTIFY_FROM || '').trim(),
+  /**
+   * From address — must be a verified domain in Resend (or onboarding@resend.dev for tests).
+   * Accepts `email@domain.com` or `Name <email@domain.com>`.
+   * Common mistake `Name <noreply.domain.com>` (missing @) is normalized when possible.
+   */
+  notifyFromEmail: normalizeNotifyFrom(process.env.YUE_NOTIFY_FROM || ''),
   /**
    * Admin inboxes for sign-up / upgrade alerts. Falls back to YUE_ADMIN_EMAILS when unset.
    */
@@ -125,6 +129,43 @@ export const env = {
    * Preferred for sign-up alerts when Database Webhooks are unavailable.
    */
   supabaseAuthHookSecret: (process.env.SUPABASE_AUTH_HOOK_SECRET || '').trim(),
+}
+
+/**
+ * Normalize Resend `from` to `email@domain` or `Name <email@domain>`.
+ * Fixes the common Vercel typo `JyutTranslate <noreply.jyuttranslate.com>` (domain without @).
+ */
+export function normalizeNotifyFrom(raw: string): string {
+  const s = raw.trim().replace(/^["']|["']$/g, '')
+  if (!s) return ''
+
+  const named = s.match(/^(.+?)\s*<([^<>]+)>\s*$/)
+  if (named) {
+    const display = named[1]!.trim()
+    const addr = coerceEmailAddress(named[2]!.trim())
+    if (!addr) return ''
+    return `${display} <${addr}>`
+  }
+
+  return coerceEmailAddress(s) || ''
+}
+
+/** Turn `noreply.example.com` into `noreply@example.com` when @ is missing. */
+function coerceEmailAddress(value: string): string | null {
+  const v = value.trim()
+  if (!v) return null
+  if (v.includes('@')) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? v : null
+  }
+  // noreply.jyuttranslate.com → noreply@jyuttranslate.com
+  const parts = v.split('.')
+  if (parts.length >= 3 && parts.every((p) => /^[a-zA-Z0-9-]+$/.test(p))) {
+    const local = parts[0]!
+    const domain = parts.slice(1).join('.')
+    const email = `${local}@${domain}`
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null
+  }
+  return null
 }
 
 /** True when this email is on the YUE_ADMIN_EMAILS allowlist. */
