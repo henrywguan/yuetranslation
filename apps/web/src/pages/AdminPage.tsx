@@ -70,6 +70,7 @@ export function AdminPage() {
       translateCount: number
       cameraSeconds: number
       cameraTranslateCount: number
+      docsPages: number
     }[]
   >([])
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
