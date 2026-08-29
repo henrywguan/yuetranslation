@@ -25,7 +25,7 @@ Apply migration `supabase/migrations/005_user_roles.sql` on your Supabase projec
 
 ## Admin email notifications (Resend)
 
-The API can email admins when someone **signs up** or **upgrades** (Stripe checkout or manual plan change in `#/admin`).
+The API can email admins when someone **signs up** or **upgrades** (Stripe checkout or manual plan change in `#/admin`). Sign-up, upgrade, and bug-report notifies are **React Email** templates that share a branded shell (harbor + jade colors, Syne / Noto Sans HK fonts, and the JyutTranslate logo mark as a CID attachment).
 
 ### 1. Vercel / API env
 
@@ -108,8 +108,8 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 - **User flow:** Account hub → **Report a bug**, error banner link (when signed in), or marketing footer link (when signed in). One-tap issue type + optional note; client attaches route, mode, entitlement snapshot, recent events, and env — **not** translation text, audio, or images.
 - **API:** `POST /api/bug-report` (Bearer JWT, rate limit 10/hour per user)
-- **Admin:** `#/admin` → **Reports** tab; `GET /api/admin/bug-reports`, `PATCH /api/admin/bug-reports/:reportId/status`
-- **Email:** Resend admin notify on each new report (same env as sign-up alerts)
+- **Admin:** `#/admin` → **Reports** tab opens a self-diagnostic dashboard (interpreted findings, confidence, next steps, timeline). Raw JSON remains behind **Show technical payload**.
+- **Email:** React Email + Resend — rich admin notify with issue summary, plan/route/mode, last error, note, recent trail, and **inline screenshot** (CID attachment) when the user opts in
 
 ## Features
 
