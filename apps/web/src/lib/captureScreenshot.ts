@@ -1,4 +1,14 @@
-/** Best-effort viewport capture for optional bug-report screenshots. */
+/**
+ * Best-effort viewport capture for optional bug-report screenshots.
+ *
+ * Uses `modern-screenshot` (not html-to-image’s SVG foreignObject clone), which
+ * produces a much closer pixel capture of the live UI on mobile Safari.
+ */
+
+function isAppleWebKit(): boolean {
+  if (typeof navigator === 'undefined') return false
+  return /AppleWebKit/i.test(navigator.userAgent) && !/Chrom(e|ium)|CriOS|Edg/i.test(navigator.userAgent)
+}
 
 function hideBugUiForCapture(): Array<() => void> {
   const restores: Array<() => void> = []
@@ -14,67 +24,143 @@ function hideBugUiForCapture(): Array<() => void> {
   return restores
 }
 
+function markCapturing(): () => void {
+  const root = document.documentElement
+  root.classList.add('is-bug-capturing')
+  return () => root.classList.remove('is-bug-capturing')
+}
+
+function waitFrames(n = 2): Promise<void> {
+  return new Promise((resolve) => {
+    const step = (left: number) => {
+      if (left <= 0) resolve()
+      else requestAnimationFrame(() => step(left - 1))
+    }
+    step(n)
+  })
+}
+
+async function compressJpegDataUrl(dataUrl: string, maxChars: number): Promise<string | null> {
+  if (dataUrl.length <= maxChars) return dataUrl
+  // Re-encode at lower quality / scale until under budget.
+  const img = new Image()
+  img.decoding = 'async'
+  const loaded = new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = () => reject(new Error('image load failed'))
+  })
+  img.src = dataUrl
+  await loaded
+
+  const canvas = document.createElement('canvas')
+  let scale = 1
+  let quality = 0.72
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const w = Math.max(1, Math.round(img.naturalWidth * scale))
+    const h = Math.max(1, Math.round(img.naturalHeight * scale))
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.fillStyle = '#07131f'
+    ctx.fillRect(0, 0, w, h)
+    ctx.drawImage(img, 0, 0, w, h)
+    const next = canvas.toDataURL('image/jpeg', quality)
+    if (next.length <= maxChars) return next
+    quality = Math.max(0.45, quality - 0.1)
+    scale = Math.max(0.45, scale * 0.85)
+  }
+  return null
+}
+
 /**
- * Capture what the user actually sees: the layout viewport of `.app-shell`
- * (or `#root`), not a scrolled full-document dump. Tuned for mobile Safari
- * where html-to-image often washes out or crops incorrectly.
+ * Capture the visible app viewport as a JPEG data URL.
+ * Avoids forcing clone layout styles (those made captures look like a “redraw”).
  */
 export async function captureAppScreenshot(): Promise<string | null> {
   if (typeof document === 'undefined' || typeof window === 'undefined') return null
 
   const restores = hideBugUiForCapture()
+  const unmark = markCapturing()
 
   try {
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-    })
+    await waitFrames(2)
+    // Let Safari paint after hiding the modal.
+    if (isAppleWebKit()) await new Promise((r) => setTimeout(r, 50))
 
-    const { toJpeg } = await import('html-to-image')
+    const { domToJpeg } = await import('modern-screenshot')
     const target =
       (document.querySelector('.app-shell') as HTMLElement | null) ||
       (document.getElementById('root') as HTMLElement | null) ||
       document.body
 
-    const width = Math.max(1, Math.round(window.innerWidth || target.clientWidth || 390))
-    const height = Math.max(1, Math.round(window.innerHeight || target.clientHeight || 844))
+    const width = Math.max(1, Math.round(window.innerWidth))
+    const height = Math.max(1, Math.round(window.innerHeight))
     const bg =
       getComputedStyle(document.body).backgroundColor ||
       getComputedStyle(target).backgroundColor ||
       '#07131f'
 
-    const dataUrl = await toJpeg(target, {
-      quality: 0.72,
-      pixelRatio: Math.min(2, window.devicePixelRatio || 1),
-      cacheBust: true,
-      // Keep webfonts when possible so Cantonese glyphs match the live UI.
-      skipFonts: false,
+    const opts = {
+      quality: 0.88,
+      scale: Math.min(2, window.devicePixelRatio || 1),
       width,
       height,
-      canvasWidth: width,
-      canvasHeight: height,
       backgroundColor: bg,
-      style: {
-        // Pin capture to the visible viewport (avoids tall scrolled clones).
-        width: `${width}px`,
-        height: `${height}px`,
-        overflow: 'hidden',
-        transform: 'none',
-      },
-      filter: (node) => {
+      filter: (node: Node) => {
         if (!(node instanceof HTMLElement)) return true
         if (node.classList.contains('bug-report-overlay')) return false
         if (node.classList.contains('bug-report-panel')) return false
         if (node.classList.contains('bug-report-backdrop')) return false
         return true
       },
-    })
+    }
 
-    // Cap payload size (~450KB encoded) — drop if still too large.
-    if (dataUrl.length > 600_000) return null
-    return dataUrl
+    // Safari often returns an incomplete first paint — warm up, then capture.
+    if (isAppleWebKit()) {
+      try {
+        await domToJpeg(target, opts)
+      } catch {
+        /* warm-up only */
+      }
+      await waitFrames(1)
+    }
+
+    const raw = await domToJpeg(target, opts)
+    if (!raw || raw.length < 2_000) return null
+
+    // Cap payload (~450KB encoded) for API body limits.
+    return compressJpegDataUrl(raw, 600_000)
   } catch {
-    return null
+    // Fallback: previous html-to-image path without layout-breaking style overrides.
+    try {
+      const { toJpeg } = await import('html-to-image')
+      const target =
+        (document.querySelector('.app-shell') as HTMLElement | null) ||
+        (document.getElementById('root') as HTMLElement | null) ||
+        document.body
+      const bg =
+        getComputedStyle(document.body).backgroundColor ||
+        getComputedStyle(target).backgroundColor ||
+        '#07131f'
+      const raw = await toJpeg(target, {
+        quality: 0.8,
+        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+        cacheBust: true,
+        skipFonts: true,
+        backgroundColor: bg,
+        filter: (node) => {
+          if (!(node instanceof HTMLElement)) return true
+          return !node.classList.contains('bug-report-overlay')
+        },
+      })
+      if (!raw || raw.length < 2_000) return null
+      return compressJpegDataUrl(raw, 600_000)
+    } catch {
+      return null
+    }
   } finally {
+    unmark()
     for (const restore of restores) restore()
   }
 }

@@ -558,16 +558,25 @@
 .brd-shot {
   display: block;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--harbor) 55%, transparent);
+  max-height: min(80vh, 920px);
 }
 
 .brd-shot img {
   display: block;
   width: 100%;
-  max-height: 240px;
-  object-fit: cover;
-  object-position: top;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  object-position: top center;
+}
+
+.brd-shot-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 
 .brd-raw-toggle {

@@ -345,3 +345,12 @@ html[data-theme='dark'] {
   opacity: 0.025;
   mix-blend-mode: multiply;
 }
+
+/* Stabilize paint while capturing a bug-report screenshot (no layout rewrite). */
+html.is-bug-capturing *,
+html.is-bug-capturing *::before,
+html.is-bug-capturing *::after {
+  animation: none !important;
+  transition: none !important;
+  caret-color: transparent !important;
+}
