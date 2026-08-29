@@ -8,6 +8,7 @@ export type UsageRow = {
   translate_count: number
   camera_seconds?: number
   camera_translate_count?: number
+  docs_pages?: number
 }
 
 export type UsageSnapshot = {
@@ -17,6 +18,7 @@ export type UsageSnapshot = {
   translateCount: number
   cameraSeconds: number
   cameraTranslateCount: number
+  docsPages: number
 }
 
 function asInt(value: unknown): number {
@@ -36,6 +38,7 @@ export function emptyUsage(month = currentMonthKey()): UsageSnapshot {
     translateCount: 0,
     cameraSeconds: 0,
     cameraTranslateCount: 0,
+    docsPages: 0,
   }
 }
 
@@ -47,6 +50,7 @@ function rowToSnapshot(row: UsageRow): UsageSnapshot {
     translateCount: asInt(row.translate_count),
     cameraSeconds: asInt(row.camera_seconds),
     cameraTranslateCount: asInt(row.camera_translate_count),
+    docsPages: asInt(row.docs_pages),
   }
 }
 
@@ -101,6 +105,7 @@ export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<s
       translate_count: asInt(row.translate_count),
       camera_seconds: asInt(row.camera_seconds),
       camera_translate_count: asInt(row.camera_translate_count),
+      docs_pages: asInt(row.docs_pages),
     })
   }
   return map
@@ -118,6 +123,7 @@ async function incrementUsage(
     translateCount?: number
     cameraSeconds?: number
     cameraTranslateCount?: number
+    docsPages?: number
   },
 ) {
   const client = getAdmin()
@@ -127,7 +133,13 @@ async function incrementUsage(
   const translateCount = asInt(delta.translateCount)
   const cameraSeconds = asInt(delta.cameraSeconds)
   const cameraTranslateCount = asInt(delta.cameraTranslateCount)
-  if (liveSeconds + ttsChars + translateCount + cameraSeconds + cameraTranslateCount <= 0) return
+  const docsPages = asInt(delta.docsPages)
+  if (
+    liveSeconds + ttsChars + translateCount + cameraSeconds + cameraTranslateCount + docsPages <=
+    0
+  ) {
+    return
+  }
 
   const month = currentMonthKey()
   const { error: rpcError } = await client.rpc('increment_usage', {
@@ -138,11 +150,10 @@ async function incrementUsage(
     p_translate_count: translateCount,
     p_camera_seconds: cameraSeconds,
     p_camera_translate_count: cameraTranslateCount,
+    p_docs_pages: docsPages,
   })
   if (!rpcError) return
 
-  // Migration not applied yet — only patch the counters we are changing so a
-  // stale read cannot reset sibling metrics to 0.
   console.warn('[usage] increment_usage RPC unavailable, using column upsert:', rpcError.message)
   const usage = await getUsage(userId, month)
   const patch: Record<string, string | number> = { user_id: userId, month }
@@ -153,6 +164,7 @@ async function incrementUsage(
   if (cameraTranslateCount) {
     patch.camera_translate_count = usage.cameraTranslateCount + cameraTranslateCount
   }
+  if (docsPages) patch.docs_pages = usage.docsPages + docsPages
 
   const { error: profileError } = await client.from('profiles').upsert(
     { id: userId, plan: 'free' },
@@ -190,10 +202,16 @@ export async function addCameraTranslateCount(userId: string, count = 1) {
   await incrementUsage(userId, { cameraTranslateCount: count })
 }
 
+/** Bill document pages only after a successful job. */
+export async function addDocsPages(userId: string, pages = 1) {
+  await incrementUsage(userId, { docsPages: pages })
+}
+
 export type UsagePatch = {
   liveSeconds?: number
   ttsChars?: number
   cameraSeconds?: number
+  docsPages?: number
 }
 
 async function ensureUsageProfile(userId: string) {
@@ -227,13 +245,14 @@ export async function setUsageMonth(
     translate_count: current.translateCount,
     camera_seconds: patch.cameraSeconds ?? current.cameraSeconds,
     camera_translate_count: current.cameraTranslateCount,
+    docs_pages: patch.docsPages ?? current.docsPages,
   }
 
   const { error } = await client.from('usage_months').upsert(row, { onConflict: 'user_id,month' })
   if (error) console.error('[usage] setUsageMonth failed', error.message)
 }
 
-/** Zero live / TTS / translate / camera counters for a month (default: current). */
+/** Zero live / TTS / translate / camera / docs counters for a month (default: current). */
 export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
   const client = getAdmin()
   if (!client) return
@@ -247,6 +266,7 @@ export async function resetUsageMonth(userId: string, month = currentMonthKey())
       translate_count: 0,
       camera_seconds: 0,
       camera_translate_count: 0,
+      docs_pages: 0,
     },
     { onConflict: 'user_id,month' },
   )

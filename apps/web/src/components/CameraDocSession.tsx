@@ -7,7 +7,7 @@ import {
   translateDocumentFile,
   type DocLang,
 } from '../lib/docsApi'
-import { translatePdfHybrid } from '../lib/pdfDocTranslate'
+import { translatePdfHybrid, getPdfPageCount } from '../lib/pdfDocTranslate'
 import type { Entitlement } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
 import './camera.css'
@@ -15,12 +15,23 @@ import './camera.css'
 type Props = {
   onBack: () => void
   onEntitlement: (ent: Entitlement) => void
+  entitlement?: Entitlement | null
 }
 
 const ACCEPT =
   '.pdf,.docx,.pptx,.xlsx,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/csv'
 
-export function CameraDocSession({ onBack, onEntitlement }: Props) {
+function docsRemainingLabel(ent: Entitlement | null | undefined): string | null {
+  if (!ent?.loggedIn) return null
+  if (ent.docsUnlimited || (ent.remaining.docsPages ?? 0) < 0) {
+    return biPlain(ui.camDocUnlimited)
+  }
+  const left = ent.remaining.docsPages
+  if (left === undefined) return null
+  return `${biPlain(ui.camDocRemaining)}: ${left}`
+}
+
+export function CameraDocSession({ onBack, onEntitlement, entitlement }: Props) {
   const [from, setFrom] = useState<DocLang>('en')
   const [to, setTo] = useState<DocLang>('yue')
   const [busy, setBusy] = useState(false)
@@ -33,6 +44,9 @@ export function CameraDocSession({ onBack, onEntitlement }: Props) {
     note: string
   } | null>(null)
 
+  const canDocs = Boolean(entitlement?.allowed.docs)
+  const remainingHint = docsRemainingLabel(entitlement)
+
   const swap = () => {
     setFrom(to)
     setTo(from)
@@ -40,6 +54,10 @@ export function CameraDocSession({ onBack, onEntitlement }: Props) {
 
   const onPick = async (file: File | undefined) => {
     if (!file || busy) return
+    if (!canDocs) {
+      setError(biPlain(ui.camDocQuota))
+      return
+    }
     setError('')
     setResult(null)
     setBusy(true)
@@ -48,7 +66,25 @@ export function CameraDocSession({ onBack, onEntitlement }: Props) {
       const name = file.name || 'document'
       const isPdf = /\.pdf$/i.test(name) || file.type === 'application/pdf'
       if (isPdf) {
-        const out = await translatePdfHybrid(file, from, to, (msg) => setStatus(msg))
+        const pageCount = await getPdfPageCount(file)
+        const rem = entitlement?.remaining.docsPages
+        if (
+          !entitlement?.docsUnlimited &&
+          typeof rem === 'number' &&
+          rem >= 0 &&
+          pageCount > rem
+        ) {
+          throw new Error(
+            `${biPlain(ui.camDocNeedPages)} (${pageCount} needed, ${rem} left)`,
+          )
+        }
+        const out = await translatePdfHybrid(
+          file,
+          from,
+          to,
+          (msg) => setStatus(msg),
+          onEntitlement,
+        )
         setResult({
           filename: out.filename,
           mime: out.mime,
@@ -69,7 +105,7 @@ export function CameraDocSession({ onBack, onEntitlement }: Props) {
           filename: out.filename,
           mime: out.mime,
           dataBase64: out.dataBase64,
-          note: `Layout-keep · ${out.engine.toUpperCase()}`,
+          note: `Layout-keep · ${out.engine.toUpperCase()} · ${out.pages} page(s)`,
         })
       }
       setStatus(biPlain(ui.camDocDone))
@@ -98,6 +134,8 @@ export function CameraDocSession({ onBack, onEntitlement }: Props) {
         <BiText copy={ui.camDocLead} size="sm" />
       </p>
 
+      {remainingHint ? <p className="cam-docs-meter">{remainingHint}</p> : null}
+
       <div className="cam-docs-dir" role="group" aria-label={biPlain(ui.direction)}>
         <label>
           <span className="cam-docs-dir-label">
@@ -105,39 +143,48 @@ export function CameraDocSession({ onBack, onEntitlement }: Props) {
           </span>
           <select
             value={from}
-            disabled={busy}
+            disabled={busy || !canDocs}
             onChange={(e) => setFrom(e.target.value as DocLang)}
           >
             <option value="en">English</option>
             <option value="yue">粵語</option>
           </select>
         </label>
-        <button type="button" className="cam-docs-swap" onClick={swap} disabled={busy}>
+        <button
+          type="button"
+          className="cam-docs-swap"
+          onClick={swap}
+          disabled={busy || !canDocs}
+        >
           ↔
         </button>
         <label>
           <span className="cam-docs-dir-label">
             <BiText copy={ui.camDocTo} size="sm" />
           </span>
-          <select value={to} disabled={busy} onChange={(e) => setTo(e.target.value as DocLang)}>
+          <select
+            value={to}
+            disabled={busy || !canDocs}
+            onChange={(e) => setTo(e.target.value as DocLang)}
+          >
             <option value="yue">粵語</option>
             <option value="en">English</option>
           </select>
         </label>
       </div>
 
-      <label className={`cam-docs-drop${busy ? ' is-busy' : ''}`}>
+      <label className={`cam-docs-drop${busy ? ' is-busy' : ''}${!canDocs ? ' is-disabled' : ''}`}>
         <input
           type="file"
           accept={ACCEPT}
-          disabled={busy}
+          disabled={busy || !canDocs}
           onChange={(e) => {
             void onPick(e.target.files?.[0])
             e.target.value = ''
           }}
         />
         <span className="cam-docs-drop-title">
-          <BiText copy={busy ? ui.camDocWorking : ui.camDocPick} size="md" />
+          <BiText copy={!canDocs ? ui.camDocQuota : busy ? ui.camDocWorking : ui.camDocPick} size="md" />
         </span>
         <span className="cam-docs-drop-hint">
           <BiText copy={ui.camDocFormats} size="sm" />

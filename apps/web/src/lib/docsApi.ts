@@ -10,6 +10,7 @@ export type DocFileResult = {
   dataBase64: string
   engine: 'txt' | 'docx' | 'pptx' | 'xlsx'
   segments: number
+  pages: number
   entitlement?: Entitlement
 }
 
@@ -49,6 +50,19 @@ export async function translateDocSegments(input: {
 }): Promise<{ translations: string[]; entitlement?: Entitlement }> {
   return (await docsFetch('/docs/segments', input)) as {
     translations: string[]
+    entitlement?: Entitlement
+  }
+}
+
+/** Bill PDF pages only after a successful hybrid job. */
+export async function commitDocPages(pages: number): Promise<{
+  ok: boolean
+  pages: number
+  entitlement?: Entitlement
+}> {
+  return (await docsFetch('/docs/commit', { pages })) as {
+    ok: boolean
+    pages: number
     entitlement?: Entitlement
   }
 }

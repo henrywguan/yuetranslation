@@ -32,6 +32,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
 
   const loggedIn = Boolean(entitlement?.loggedIn)
   const canCamera = Boolean(entitlement?.allowed.camera)
+  const canDocs = Boolean(entitlement?.allowed.docs)
 
   const meter = useMemo(
     () =>
@@ -90,9 +91,12 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   }
 
   const startDocs = () => {
-    if (!canCamera) {
+    if (!canDocs) {
       useYueStore.setState({
-        error: entitlement?.reason === 'login_required' ? biPlain(ui.camSignIn) : biPlain(ui.camQuota),
+        error:
+          entitlement?.reason === 'login_required'
+            ? biPlain(ui.camSignIn)
+            : biPlain(ui.camDocQuota),
       })
       if (!loggedIn) openAuthScreen()
       return
@@ -191,7 +195,11 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
       ) : null}
 
       {path === 'docs' ? (
-        <CameraDocSession onBack={backToChoice} onEntitlement={setEntitlement} />
+        <CameraDocSession
+          onBack={backToChoice}
+          onEntitlement={setEntitlement}
+          entitlement={entitlement}
+        />
       ) : null}
 
       <CameraChoiceModal

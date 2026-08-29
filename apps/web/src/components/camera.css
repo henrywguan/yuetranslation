@@ -1160,6 +1160,13 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
   line-height: 1.45;
 }
 
+.cam-docs-meter {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
 .cam-docs-dir {
   display: flex;
   align-items: end;
@@ -1210,6 +1217,11 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
 .cam-docs-drop.is-busy {
   opacity: 0.72;
   pointer-events: none;
+}
+
+.cam-docs-drop.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .cam-docs-drop input {

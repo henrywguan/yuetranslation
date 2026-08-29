@@ -7,7 +7,8 @@
 import { PDFDocument } from 'pdf-lib'
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { cameraScan } from './api'
-import { translateDocSegments, type DocLang } from './docsApi'
+import { commitDocPages, translateDocSegments, type DocLang } from './docsApi'
+import type { Entitlement } from './types'
 
 export type PdfProgress = (msg: string, page: number, total: number) => void
 
@@ -25,6 +26,14 @@ async function loadPdfJs() {
   const pdfjs = await import('pdfjs-dist')
   pdfjs.GlobalWorkerOptions.workerSrc = workerSrc
   return pdfjs
+}
+
+/** Exact page count for quota pre-check (no translation). */
+export async function getPdfPageCount(file: File): Promise<number> {
+  const pdfjs = await loadPdfJs()
+  const data = new Uint8Array(await file.arrayBuffer())
+  const pdf = await pdfjs.getDocument({ data }).promise
+  return pdf.numPages
 }
 
 function paintTranslations(
@@ -58,6 +67,7 @@ export async function translatePdfHybrid(
   from: DocLang,
   to: DocLang,
   onProgress?: PdfProgress,
+  onEntitlement?: (ent: Entitlement) => void,
 ): Promise<{ filename: string; mime: string; dataBase64: string; pages: number }> {
   const pdfjs = await loadPdfJs()
   const data = new Uint8Array(await file.arrayBuffer())
@@ -111,11 +121,12 @@ export async function translatePdfHybrid(
     if (charCount >= TEXT_CHAR_THRESHOLD) {
       onProgress?.(`Page ${pageNum} · translating text layer`, pageNum, total)
       const slice = items.slice(0, 120)
-      const { translations } = await translateDocSegments({
+      const { translations, entitlement } = await translateDocSegments({
         segments: slice.map((i) => i.text),
         from,
         to,
       })
+      if (entitlement) onEntitlement?.(entitlement)
       paintTranslations(
         ctx,
         canvas,
@@ -130,7 +141,8 @@ export async function translatePdfHybrid(
     } else {
       onProgress?.(`Page ${pageNum} · vision OCR`, pageNum, total)
       const dataUrl = canvas.toDataURL('image/jpeg', 0.84)
-      const scan = await cameraScan({ image: dataUrl, target })
+      const scan = await cameraScan({ image: dataUrl, target, forDocs: true })
+      if (scan.entitlement) onEntitlement?.(scan.entitlement as Entitlement)
       paintTranslations(
         ctx,
         canvas,
@@ -171,6 +183,10 @@ export async function translatePdfHybrid(
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
   }
   const base = file.name.replace(/\.pdf$/i, '') || 'document'
+  // Bill only after the full PDF hybrid job succeeds.
+  onProgress?.(`Saving · ${total} page(s)`, total, total)
+  const committed = await commitDocPages(total)
+  if (committed.entitlement) onEntitlement?.(committed.entitlement)
   return {
     filename: `${base}.${to}.pdf`,
     mime: 'application/pdf',

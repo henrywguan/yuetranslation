@@ -36,9 +36,11 @@ export type AdminUser = {
   translateCount: number
   cameraSeconds: number
   cameraTranslateCount: number
+  docsPages: number
   liveLimitSeconds: number
   ttsLimitChars: number
   cameraLimitSeconds: number
+  docsLimitPages: number
   overQuota: boolean
 }
 
@@ -120,6 +122,7 @@ export async function fetchAdminUserUsage(userId: string): Promise<{
     translateCount: number
     cameraSeconds: number
     cameraTranslateCount: number
+    docsPages: number
   }[]
 }> {
   const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/usage`)
@@ -159,6 +162,7 @@ export type AdminUsageReset = {
   liveSeconds?: number
   ttsChars?: number
   cameraSeconds?: number
+  docsPages?: number
 }
 
 export async function adminResetUsage(userId: string, patch: AdminUsageReset) {

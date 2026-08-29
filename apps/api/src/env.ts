@@ -62,6 +62,10 @@ export const env = {
   freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 60),
   /** Pro camera hard cap (minutes / month). Max is unlimited but counted. */
   proCameraMinutes: Number(process.env.YUE_PRO_CAMERA_MINUTES || 480),
+  /** Free document pages / month (Cam → Documents). */
+  freeDocsPages: Number(process.env.YUE_FREE_DOCS_PAGES || 40),
+  /** Pro document pages / month. Max is unlimited but counted. */
+  proDocsPages: Number(process.env.YUE_PRO_DOCS_PAGES || 400),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
   /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',

@@ -217,6 +217,7 @@ export function AdminPage() {
     liveSeconds?: number
     ttsChars?: number
     cameraSeconds?: number
+    docsPages?: number
   }) => {
     if (!resetUser) return
     const month = monthKeyFromInput(monthInput)
@@ -232,6 +233,7 @@ export function AdminPage() {
           liveSeconds: patch.liveSeconds ?? resetUser.liveSeconds,
           ttsChars: patch.ttsChars ?? resetUser.ttsChars,
           cameraSeconds: patch.cameraSeconds ?? resetUser.cameraSeconds,
+          docsPages: patch.docsPages ?? resetUser.docsPages,
         })
       }
     } catch (e) {
@@ -505,6 +507,11 @@ export function AdminPage() {
                     </button>
                   </th>
                   <th>
+                    <button type="button" className="admin-sort" onClick={() => onSort('docsPages')}>
+                      Docs{sort === 'docsPages' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                  <th>
                     <button type="button" className="admin-sort" onClick={() => onSort('createdAt')}>
                       Joined{sort === 'createdAt' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
                     </button>
@@ -599,6 +606,18 @@ export function AdminPage() {
                         <span className="admin-sub"> · {u.cameraTranslateCount} scan{u.cameraTranslateCount === 1 ? '' : 's'}</span>
                       ) : null}
                     </td>
+                    <td
+                      title={
+                        u.docsLimitPages > 0
+                          ? `${u.docsPages} / ${u.docsLimitPages} pages`
+                          : `${u.docsPages} pages (unlimited)`
+                      }
+                    >
+                      {(u.docsPages ?? 0).toLocaleString()}
+                      {u.docsLimitPages > 0 ? (
+                        <span className="admin-sub"> / {u.docsLimitPages.toLocaleString()}</span>
+                      ) : null}
+                    </td>
                     <td>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
                     <td className="admin-actions">
                       {u.stripeDashboardUrl ? (
@@ -668,6 +687,7 @@ export function AdminPage() {
                           ? ` · ${m.cameraTranslateCount} scan${m.cameraTranslateCount === 1 ? '' : 's'}`
                           : ''}
                       </span>
+                      <span>Docs {(m.docsPages ?? 0).toLocaleString()} pages</span>
                     </li>
                   ))
                 ) : (

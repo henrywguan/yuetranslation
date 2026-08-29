@@ -23,6 +23,11 @@ const Body = z.object({
   target: z.enum(['en', 'zh']).optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
+  /**
+   * When true, this scan is part of Cam → Documents (PDF hybrid).
+   * Gated/metered as docs, not camera translate counts.
+   */
+  forDocs: z.boolean().optional().default(false),
 })
 
 export type CameraScanRegion = {

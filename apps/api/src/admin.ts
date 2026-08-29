@@ -44,10 +44,12 @@ export type AdminUserRow = {
   translateCount: number
   cameraSeconds: number
   cameraTranslateCount: number
+  docsPages: number
   liveLimitSeconds: number
   ttsLimitChars: number
   /** Hard cap seconds for Free; 0 means unlimited (Pro/Max) or disabled. */
   cameraLimitSeconds: number
+  docsLimitPages: number
   overQuota: boolean
 }
 
@@ -67,6 +69,12 @@ function cameraLimitSeconds(plan: ProfileRow['plan']): number {
   if (plan === 'max') return 0
   if (plan === 'pro') return env.proCameraMinutes * 60
   return env.freeAllowCamera ? env.freeCameraMinutes * 60 : 0
+}
+
+function docsLimitPages(plan: ProfileRow['plan']): number {
+  if (plan === 'max') return 0
+  if (plan === 'pro') return env.proDocsPages
+  return env.freeAllowCamera ? env.freeDocsPages : 0
 }
 
 function stripeDashboardUrl(customerId: string | null): string | null {
@@ -93,13 +101,16 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
     const translateCount = usage?.translate_count ?? 0
     const cameraSeconds = usage?.camera_seconds ?? 0
     const cameraTranslateCount = usage?.camera_translate_count ?? 0
+    const docsPages = usage?.docs_pages ?? 0
     const liveLim = liveLimitSeconds(plan)
     const ttsLim = ttsLimitChars(plan)
     const camLim = cameraLimitSeconds(plan)
+    const docsLim = docsLimitPages(plan)
     const overQuota =
       (liveLim > 0 && liveSeconds >= liveLim) ||
       (ttsLim > 0 && ttsChars >= ttsLim) ||
-      (camLim > 0 && cameraSeconds >= camLim)
+      (camLim > 0 && cameraSeconds >= camLim) ||
+      (docsLim > 0 && docsPages >= docsLim)
 
     return {
       id: u.id,
@@ -120,9 +131,11 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       translateCount,
       cameraSeconds,
       cameraTranslateCount,
+      docsPages,
       liveLimitSeconds: liveLim,
       ttsLimitChars: ttsLim,
       cameraLimitSeconds: camLim,
+      docsLimitPages: docsLim,
       overQuota,
     }
   })
@@ -137,6 +150,7 @@ type SortKey =
   | 'ttsChars'
   | 'translateCount'
   | 'cameraSeconds'
+  | 'docsPages'
 
 function sortUsers(rows: AdminUserRow[], sort: SortKey, dir: 'asc' | 'desc') {
   const mul = dir === 'asc' ? 1 : -1
@@ -211,6 +225,7 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
       'ttsChars',
       'translateCount',
       'cameraSeconds',
+      'docsPages',
     ]
     const sortKey = allowedSort.includes(sort) ? sort : 'createdAt'
 
@@ -251,9 +266,11 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'translateCount',
       'cameraSeconds',
       'cameraTranslateCount',
+      'docsPages',
       'liveLimitSeconds',
       'ttsLimitChars',
       'cameraLimitSeconds',
+      'docsLimitPages',
       'overQuota',
       'stripeCustomerId',
       'stripeDashboardUrl',
@@ -276,9 +293,11 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.translateCount,
           r.cameraSeconds,
           r.cameraTranslateCount,
+          r.docsPages,
           r.liveLimitSeconds,
           r.ttsLimitChars,
           r.cameraLimitSeconds,
+          r.docsLimitPages,
           r.overQuota,
           r.stripeCustomerId,
           r.stripeDashboardUrl,
@@ -402,12 +421,14 @@ const ResetBody = z
     liveSeconds: z.number().int().min(0).optional(),
     ttsChars: z.number().int().min(0).optional(),
     cameraSeconds: z.number().int().min(0).optional(),
+    docsPages: z.number().int().min(0).optional(),
   })
   .refine(
     (data) =>
       data.liveSeconds !== undefined ||
       data.ttsChars !== undefined ||
-      data.cameraSeconds !== undefined,
+      data.cameraSeconds !== undefined ||
+      data.docsPages !== undefined,
     { message: 'At least one usage field is required' },
   )
 
@@ -421,19 +442,19 @@ export async function adminResetUsage(req: AuthedRequest, res: Response) {
     return
   }
   const month = parsed.data.month || currentMonthKey()
-  const { liveSeconds, ttsChars, cameraSeconds } = parsed.data
+  const { liveSeconds, ttsChars, cameraSeconds, docsPages } = parsed.data
   try {
     const target = await getAuthUserById(userId)
-    await setUsageMonth(userId, month, { liveSeconds, ttsChars, cameraSeconds })
+    await setUsageMonth(userId, month, { liveSeconds, ttsChars, cameraSeconds, docsPages })
     await writeAuditLog({
       actorId: auth.userId,
       actorEmail: auth.email,
       action: 'reset_usage',
       targetUserId: userId,
       targetEmail: target?.email,
-      detail: { month, liveSeconds, ttsChars, cameraSeconds },
+      detail: { month, liveSeconds, ttsChars, cameraSeconds, docsPages },
     })
-    res.json({ ok: true, userId, month, liveSeconds, ttsChars, cameraSeconds })
+    res.json({ ok: true, userId, month, liveSeconds, ttsChars, cameraSeconds, docsPages })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to reset usage' })
   }

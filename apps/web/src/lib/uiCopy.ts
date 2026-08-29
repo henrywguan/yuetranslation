@@ -116,6 +116,26 @@ export const ui = {
     zh: '文件只用於翻譯，唔會寫入錯誤回報。醫療私隱資料請只喺合規方案下上載。',
     jp: 'man4 gin2 zi2 jung6 jyu1 faan1 jik6.',
   },
+  camDocRemaining: {
+    en: 'Pages left this month',
+    zh: '本月剩餘頁數',
+    jp: 'bun2 jyut6 sing4 jyu4 jip6 sou3',
+  },
+  camDocUnlimited: {
+    en: 'Unlimited pages (usage still counted)',
+    zh: '頁數無上限（仍會計量）',
+    jp: 'jip6 sou3 mou4 soeng6 haan6',
+  },
+  camDocQuota: {
+    en: 'Document page quota exhausted. Upgrade for more pages.',
+    zh: '文件頁數已用完。升級可加頁數。',
+    jp: 'man4 gin2 jip6 sou3 ji5 jung6 jyun4.',
+  },
+  camDocNeedPages: {
+    en: 'Not enough pages left for this PDF.',
+    zh: '剩餘頁數唔夠呢份 PDF。',
+    jp: 'sing4 jyu4 jip6 sou3 m4 gau3.',
+  },
   camBack: { en: 'Back', zh: '返回', jp: 'faan1 wui4' },
   camCapture: { en: 'Capture & translate', zh: '拍攝並翻譯', jp: 'paak3 sip3 bing6 faan1 jik6' },
   camCaptureHint: {

@@ -11,6 +11,7 @@ import {
 } from './shared.js'
 import { translateTxtFile } from './txtEngine.js'
 import { translateDocx, translatePptx, translateXlsx } from './ooxmlEngine.js'
+import { estimateDocPages } from './pages.js'
 
 const Lang = z.enum(['en', 'yue'])
 
@@ -36,6 +37,8 @@ export type DocTranslateResult = {
   dataBase64: string
   engine: 'txt' | 'docx' | 'pptx' | 'xlsx'
   segments: number
+  /** Billable pages (estimated for Office/TXT). */
+  pages: number
 }
 
 function mimeFor(ext: string): string {
@@ -72,6 +75,7 @@ export async function translateDocumentFile(input: unknown): Promise<DocTranslat
   let out: Buffer
   let engine: DocTranslateResult['engine']
   let segments = 0
+  const pages = await estimateDocPages(ext || 'txt', buf)
 
   if (ext === 'txt' || ext === 'md' || ext === 'csv') {
     out = await translateTxtFile(buf, parsed.from, parsed.to)
@@ -103,7 +107,22 @@ export async function translateDocumentFile(input: unknown): Promise<DocTranslat
     dataBase64: toBase64(out),
     engine,
     segments,
+    pages,
   }
+}
+
+/** Peek billable pages before running a translate (quota pre-check). */
+export async function peekDocPages(input: unknown): Promise<{ pages: number; ext: string }> {
+  const parsed = FileBody.parse(input)
+  const buf = decodeDataUrlOrBase64(parsed.data)
+  if (buf.byteLength > MAX_BYTES) {
+    throw new Error('File too large (max 8 MB).')
+  }
+  const ext = extOf(parsed.filename) || 'txt'
+  if (ext === 'pdf') {
+    throw new Error('PDF page count comes from the client after a successful hybrid job.')
+  }
+  return { pages: await estimateDocPages(ext, buf), ext }
 }
 
 export async function translateDocSegments(input: unknown): Promise<{
