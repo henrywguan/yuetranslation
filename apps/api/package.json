@@ -5,8 +5,11 @@
   "type": "module",
   "_comment": "Keep dependencies in sync with /api/package.json (Vercel serverless bundle).",
   "scripts": {
+    "predev": "node ../../scripts/compile-api-emails.mjs",
+    "prestart": "node ../../scripts/compile-api-emails.mjs",
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
+    "compile:emails": "node ../../scripts/compile-api-emails.mjs",
     "smoke:canto": "tsx src/canto/smoke.ts",
     "smoke:entitlements": "tsx src/entitlements.smoke.ts",
     "smoke:usage": "tsx src/usage.smoke.ts",

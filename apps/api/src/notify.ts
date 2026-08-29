@@ -1,19 +1,21 @@
+/**
+ * Admin notify emails via Resend + React Email.
+ *
+ * IMPORTANT: Do not statically import `.tsx` email sources or `@react-email/*`
+ * at module top-level. Vercel’s Node function loads `apps/api` with type
+ * stripping (no JSX transform). Eager `.tsx` imports crash the whole API
+ * (`FUNCTION_INVOCATION_FAILED`), which leaves the web app stuck on
+ * “Connecting…”. Templates are compiled to plain JS under `emails/compiled/`
+ * and loaded only when sending.
+ */
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { render } from '@react-email/render'
-import { createElement, type ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import { Resend } from 'resend'
 import { env } from './env.js'
-import {
-  BugReportEmail,
-  issueTypeLabel,
-  shortReportId,
-  type BugReportEmailProps,
-} from './emails/BugReportEmail.js'
 import { EMAIL_LOGO_CID } from './emails/brand.js'
-import { SignupEmail } from './emails/SignupEmail.js'
-import { UpgradeEmail } from './emails/UpgradeEmail.js'
+import { issueTypeLabel, shortReportId } from './emails/bugReportMeta.js'
 
 let client: Resend | null = null
 let logoBuffer: Buffer | null | undefined
@@ -102,9 +104,13 @@ async function sendAdminEmail(
 
 async function renderAndSend(
   subject: string,
-  element: ReactElement,
+  loadElement: () => Promise<ReactElement>,
   extraAttachments?: EmailAttachment[],
 ): Promise<void> {
+  const [{ render }, element] = await Promise.all([
+    import('@react-email/render'),
+    loadElement(),
+  ])
   const html = await render(element)
   await sendAdminEmail(subject, html, brandAttachments(extraAttachments))
 }
@@ -112,10 +118,10 @@ async function renderAndSend(
 /** Fire-and-forget React Email — never throw to callers (webhooks must stay 200). */
 function queueReactEmail(
   subject: string,
-  element: ReactElement,
+  loadElement: () => Promise<ReactElement>,
   extraAttachments?: EmailAttachment[],
 ): void {
-  void renderAndSend(subject, element, extraAttachments).catch((e) => {
+  void renderAndSend(subject, loadElement, extraAttachments).catch((e) => {
     console.error('[notify] send failed', e)
   })
 }
@@ -128,9 +134,12 @@ export function notifyNewSignup(input: {
 }): void {
   const label = input.email || input.userId
   const when = new Date().toISOString()
-  queueReactEmail(
-    `JyutTranslate · New sign-up: ${label}`,
-    createElement(SignupEmail, {
+  queueReactEmail(`JyutTranslate · New sign-up: ${label}`, async () => {
+    const [{ createElement }, { SignupEmail }] = await Promise.all([
+      import('react'),
+      import('./emails/compiled/SignupEmail.js'),
+    ])
+    return createElement(SignupEmail, {
       email: input.email || '—',
       userId: input.userId,
       provider: input.provider || 'email',
@@ -139,8 +148,8 @@ export function notifyNewSignup(input: {
       adminUrl: adminLink(),
       appUrl: appPublicUrl(),
       logoSrc: logoSrcForTemplate(),
-    }),
-  )
+    })
+  })
 }
 
 export function notifyUserUpgrade(input: {
@@ -158,9 +167,12 @@ export function notifyUserUpgrade(input: {
   const via = input.source === 'stripe' ? 'Stripe checkout' : 'Admin panel'
   const when = new Date().toISOString()
 
-  queueReactEmail(
-    `JyutTranslate · Upgrade: ${label} → ${input.plan}`,
-    createElement(UpgradeEmail, {
+  queueReactEmail(`JyutTranslate · Upgrade: ${label} → ${input.plan}`, async () => {
+    const [{ createElement }, { UpgradeEmail }] = await Promise.all([
+      import('react'),
+      import('./emails/compiled/UpgradeEmail.js'),
+    ])
+    return createElement(UpgradeEmail, {
       email: input.email || '—',
       userId: input.userId,
       fromPlan: input.previousPlan,
@@ -171,8 +183,8 @@ export function notifyUserUpgrade(input: {
       adminUrl: adminLink(),
       appUrl: appPublicUrl(),
       logoSrc: logoSrcForTemplate(),
-    }),
-  )
+    })
+  })
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -237,7 +249,7 @@ export function notifyBugReport(input: BugReportNotifyInput): void {
     typeof clientPayload.screenshot === 'string' ? clientPayload.screenshot : null
   const parsedShot = screenshotRaw ? parseDataUrl(screenshotRaw) : null
 
-  const props: BugReportEmailProps = {
+  const props = {
     reportId: input.reportId,
     shortId: shortReportId(input.reportId),
     issueType: input.issueType,
@@ -282,5 +294,15 @@ export function notifyBugReport(input: BugReportNotifyInput): void {
       ]
     : undefined
 
-  queueReactEmail(subject, createElement(BugReportEmail, props), shotAttachment)
+  queueReactEmail(
+    subject,
+    async () => {
+      const [{ createElement }, { BugReportEmail }] = await Promise.all([
+        import('react'),
+        import('./emails/compiled/BugReportEmail.js'),
+      ])
+      return createElement(BugReportEmail, props)
+    },
+    shotAttachment,
+  )
 }
