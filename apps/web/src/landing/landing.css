@@ -10,13 +10,88 @@
   padding-bottom: 15px;
 }
 
-/* ---------- Atmosphere (grain + light sweep) — option E ---------- */
+/* ---------- Atmosphere (grain + light sweep + parallax depth) ---------- */
 .ln-atmosphere {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+/* Continuous depth field — scrolls slower than content (no section cutoffs). */
+.ln-parallax-layer {
+  position: absolute;
+  /* Tall enough that parallax travel never shows empty edges. */
+  inset: -35% -20%;
+  will-change: transform;
+}
+
+.ln-parallax-layer.is-static {
+  will-change: auto;
+  transform: none !important;
+}
+
+.ln-parallax-layer--far {
+  background:
+    radial-gradient(
+      ellipse 58% 42% at 18% 22%,
+      color-mix(in srgb, var(--harbor-blue) 34%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 48% 38% at 86% 68%,
+      color-mix(in srgb, var(--jade-deep) 18%, transparent),
+      transparent 70%
+    );
+  opacity: 0.95;
+}
+
+.ln-parallax-layer--mid {
+  background:
+    radial-gradient(
+      ellipse 42% 36% at 72% 18%,
+      color-mix(in srgb, var(--jade) 20%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(
+      ellipse 50% 44% at 28% 78%,
+      color-mix(in srgb, var(--harbor-teal) 26%, transparent),
+      transparent 66%
+    ),
+    radial-gradient(
+      ellipse 36% 28% at 52% 48%,
+      color-mix(in srgb, var(--harbor-mid) 22%, transparent),
+      transparent 72%
+    );
+  opacity: 0.9;
+}
+
+.ln-parallax-layer--near {
+  background:
+    radial-gradient(
+      ellipse 28% 22% at 12% 58%,
+      color-mix(in srgb, var(--jade-bright) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 32% 26% at 88% 32%,
+      color-mix(in srgb, var(--harbor-blue) 16%, transparent),
+      transparent 68%
+    );
+  opacity: 0.85;
+}
+
+[data-theme='light'] .ln-parallax-layer--far {
+  opacity: 0.72;
+}
+
+[data-theme='light'] .ln-parallax-layer--mid {
+  opacity: 0.65;
+}
+
+[data-theme='light'] .ln-parallax-layer--near {
+  opacity: 0.55;
 }
 
 .ln-atmosphere-grain {
@@ -62,6 +137,18 @@
   );
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .ln-atmosphere-sweep {
+    --ln-sweep-x: 22%;
+    --ln-sweep-y: 18%;
+  }
+
+  .ln-parallax-layer {
+    will-change: auto;
+    transform: none !important;
+  }
+}
+
 /* Keep marketing chrome above the atmosphere veil */
 .landing > .ln-nav,
 .landing > .scroll-progress,
@@ -73,94 +160,6 @@
 .landing > .ln-footer {
   position: relative;
   z-index: 1;
-}
-
-/* ---------- Alternating section washes — option A ---------- */
-.ln-section--atmosphere {
-  position: relative;
-  isolation: isolate;
-  overflow: clip;
-}
-
-.ln-section-wash {
-  position: absolute;
-  inset: -18% -8%;
-  z-index: 0;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.ln-section--atmosphere > :not(.ln-section-wash) {
-  position: relative;
-  z-index: 1;
-}
-
-.ln-section-wash--jade {
-  background:
-    radial-gradient(
-      ellipse 70% 55% at 12% 28%,
-      color-mix(in srgb, var(--jade) 16%, transparent),
-      transparent 62%
-    ),
-    radial-gradient(
-      ellipse 55% 50% at 88% 72%,
-      color-mix(in srgb, var(--harbor-teal) 22%, transparent),
-      transparent 65%
-    );
-}
-
-.ln-section-wash--blue {
-  background:
-    radial-gradient(
-      ellipse 65% 60% at 82% 22%,
-      color-mix(in srgb, var(--harbor-blue) 28%, transparent),
-      transparent 64%
-    ),
-    radial-gradient(
-      ellipse 50% 45% at 18% 78%,
-      color-mix(in srgb, var(--jade-deep) 14%, transparent),
-      transparent 60%
-    );
-}
-
-.ln-section-wash--cool {
-  background:
-    radial-gradient(
-      ellipse 80% 50% at 50% 0%,
-      color-mix(in srgb, var(--harbor-mid) 40%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 55% at 70% 85%,
-      color-mix(in srgb, var(--jade) 10%, transparent),
-      transparent 62%
-    );
-}
-
-.ln-section-wash--deep {
-  background:
-    radial-gradient(
-      ellipse 75% 55% at 40% 40%,
-      color-mix(in srgb, var(--harbor-deep) 55%, transparent),
-      transparent 68%
-    ),
-    radial-gradient(
-      ellipse 45% 40% at 90% 20%,
-      color-mix(in srgb, var(--jade-mid) 12%, transparent),
-      transparent 58%
-    );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ln-atmosphere-sweep {
-    --ln-sweep-x: 22%;
-    --ln-sweep-y: 18%;
-  }
-
-  .ln-section-wash {
-    will-change: auto;
-    transform: none !important;
-  }
 }
 
 /* ---------- Scroll progress ---------- */
@@ -1871,24 +1870,26 @@
 
 .ln-demo-band-wash {
   position: absolute;
-  inset: 0;
+  inset: -12% -8%;
   z-index: 0;
   pointer-events: none;
-  border-radius: 36px;
+  border-radius: 48px;
   background:
     radial-gradient(
       ellipse 70% 60% at 50% 35%,
-      color-mix(in srgb, var(--jade) 14%, transparent),
+      color-mix(in srgb, var(--jade) 12%, transparent),
       transparent 68%
     ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--harbor) 35%, transparent),
-      transparent 55%,
-      color-mix(in srgb, var(--harbor) 28%, transparent)
+    radial-gradient(
+      ellipse 90% 70% at 50% 50%,
+      color-mix(in srgb, var(--harbor) 22%, transparent),
+      transparent 72%
     );
-  border: 1px solid color-mix(in srgb, var(--glass-border) 40%, transparent);
-  opacity: 0.9;
+  /* Soft edge so the demo stage blends into the page field */
+  -webkit-mask-image: radial-gradient(ellipse 78% 72% at 50% 48%, #000 42%, transparent 78%);
+  mask-image: radial-gradient(ellipse 78% 72% at 50% 48%, #000 42%, transparent 78%);
+  opacity: 0.95;
+  border: none;
 }
 
 .ln-demo-band-inner {
@@ -3587,7 +3588,8 @@
   }
 
   .ln-demo-band-wash {
-    border-radius: 28px;
+    border-radius: 40px;
+    inset: -10% -6%;
   }
 
   .ln-price-card.featured {
