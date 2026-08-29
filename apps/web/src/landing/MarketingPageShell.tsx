@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { JadeGlassField } from '../components/JadeGlassField'
 import { OrbitalSphereBackground } from '../components/ui/orbital-sphere'
+import { LandingAtmosphere } from './LandingAtmosphere'
 import { Nav } from './Nav'
 import { ScrollProgress } from './ScrollProgress'
 import { useSmoothScroll } from './useSmoothScroll'
@@ -31,7 +32,10 @@ export function MarketingPageShell({
           <OrbitalSphereBackground className="orbital-sphere-bg--page" />
         </>
       ) : (
-        <JadeGlassField variant="marketing" />
+        <>
+          <JadeGlassField variant="marketing" />
+          <LandingAtmosphere />
+        </>
       )}
       <Nav onFeatures={onFeatures} />
       {children}

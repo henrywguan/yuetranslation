@@ -10,6 +10,7 @@ import { ModesStage } from './ModesStage'
 import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
+import { SectionWash } from './SectionWash'
 import { openApp, openTones } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
@@ -121,7 +122,8 @@ export function Landing() {
         </div>
       </header>
 
-      <section className="ln-section" id="features">
+      <section className="ln-section ln-section--atmosphere" id="features">
+        <SectionWash tone="jade" />
         <Reveal className="ln-section-head">
           <span className="ln-kicker">
             <BiText copy={ui.modesKicker} size="sm" />
@@ -154,7 +156,8 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="ln-demo-band" id="demo">
+      <section className="ln-demo-band ln-section--atmosphere" id="demo">
+        <SectionWash tone="cool" />
         <div className="ln-demo-band-frame">
           <div className="ln-demo-band-wash" aria-hidden="true" />
           <div className="ln-demo-band-inner">

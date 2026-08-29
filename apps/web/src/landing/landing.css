@@ -10,6 +10,159 @@
   padding-bottom: 15px;
 }
 
+/* ---------- Atmosphere (grain + light sweep) — option E ---------- */
+.ln-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ln-atmosphere-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.045;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+[data-theme='light'] .ln-atmosphere-grain {
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+}
+
+.ln-atmosphere-sweep {
+  position: absolute;
+  inset: -20%;
+  opacity: 0.22;
+  background: radial-gradient(
+    ellipse 42% 28% at var(--ln-sweep-x, 18%) var(--ln-sweep-y, 22%),
+    color-mix(in srgb, var(--jade-bright) 22%, transparent),
+    color-mix(in srgb, var(--harbor-blue) 10%, transparent) 42%,
+    transparent 70%
+  );
+  will-change: background;
+}
+
+.ln-atmosphere-sweep.is-static {
+  --ln-sweep-x: 22%;
+  --ln-sweep-y: 18%;
+  opacity: 0.16;
+}
+
+[data-theme='light'] .ln-atmosphere-sweep {
+  opacity: 0.18;
+  background: radial-gradient(
+    ellipse 44% 30% at var(--ln-sweep-x, 18%) var(--ln-sweep-y, 22%),
+    color-mix(in srgb, var(--jade) 16%, transparent),
+    color-mix(in srgb, var(--harbor-blue) 8%, transparent) 45%,
+    transparent 72%
+  );
+}
+
+/* Keep marketing chrome above the atmosphere veil */
+.landing > .ln-nav,
+.landing > .scroll-progress,
+.landing > .ln-hero,
+.landing > .ln-section,
+.landing > .ln-demo-band,
+.landing > .ln-cta-band,
+.landing > footer,
+.landing > .ln-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Alternating section washes — option A ---------- */
+.ln-section--atmosphere {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+
+.ln-section-wash {
+  position: absolute;
+  inset: -18% -8%;
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.ln-section--atmosphere > :not(.ln-section-wash) {
+  position: relative;
+  z-index: 1;
+}
+
+.ln-section-wash--jade {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 12% 28%,
+      color-mix(in srgb, var(--jade) 16%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 55% 50% at 88% 72%,
+      color-mix(in srgb, var(--harbor-teal) 22%, transparent),
+      transparent 65%
+    );
+}
+
+.ln-section-wash--blue {
+  background:
+    radial-gradient(
+      ellipse 65% 60% at 82% 22%,
+      color-mix(in srgb, var(--harbor-blue) 28%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(
+      ellipse 50% 45% at 18% 78%,
+      color-mix(in srgb, var(--jade-deep) 14%, transparent),
+      transparent 60%
+    );
+}
+
+.ln-section-wash--cool {
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      color-mix(in srgb, var(--harbor-mid) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 55% at 70% 85%,
+      color-mix(in srgb, var(--jade) 10%, transparent),
+      transparent 62%
+    );
+}
+
+.ln-section-wash--deep {
+  background:
+    radial-gradient(
+      ellipse 75% 55% at 40% 40%,
+      color-mix(in srgb, var(--harbor-deep) 55%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 45% 40% at 90% 20%,
+      color-mix(in srgb, var(--jade-mid) 12%, transparent),
+      transparent 58%
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-atmosphere-sweep {
+    --ln-sweep-x: 22%;
+    --ln-sweep-y: 18%;
+  }
+
+  .ln-section-wash {
+    will-change: auto;
+    transform: none !important;
+  }
+}
+
 /* ---------- Scroll progress ---------- */
 .scroll-progress {
   position: fixed;
