@@ -14,6 +14,8 @@ import {
 } from './EmailShell.js'
 import { emailBrand, emailFonts, emailStyles } from './brand.js'
 
+export { issueTypeLabel, shortReportId } from './bugReportMeta.js'
+
 export type BugReportEmailProps = {
   reportId: string
   shortId: string
@@ -41,25 +43,6 @@ export type BugReportEmailProps = {
   logoSrc?: string
   /** When true, template references cid:bug-screenshot */
   hasScreenshot: boolean
-}
-
-const ISSUE_LABELS: Record<string, string> = {
-  translation: 'Translation wrong',
-  mic: 'Mic / live speech',
-  tts: 'Voice / TTS',
-  camera: 'Camera / OCR',
-  account: 'Login / billing',
-  ui: 'UI / layout',
-  crash: 'Crash / freeze',
-  other: 'Other',
-}
-
-export function issueTypeLabel(type: string): string {
-  return ISSUE_LABELS[type] || type
-}
-
-export function shortReportId(id: string): string {
-  return `rpt_${id.replace(/-/g, '').slice(0, 6)}`
 }
 
 function MetaCell({ label, value }: { label: string; value: string }) {
