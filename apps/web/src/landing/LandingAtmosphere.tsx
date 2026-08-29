@@ -21,8 +21,9 @@ export function LandingAtmosphere() {
     let start = performance.now()
     const tick = (now: number) => {
       const t = (now - start) / 1000
-      const x = (t * 2.1) % 100
-      const y = (t * 1.35) % 100
+      // ~32s cycle — readable drift without feeling busy
+      const x = (t * 3.2) % 100
+      const y = 12 + ((Math.sin(t * 0.22) + 1) / 2) * 58
       el.style.setProperty('--ln-sweep-x', `${x}%`)
       el.style.setProperty('--ln-sweep-y', `${y}%`)
       raf = requestAnimationFrame(tick)
@@ -45,10 +46,10 @@ export function LandingAtmosphere() {
     const apply = () => {
       ticking = false
       const y = latest
-      // Cap travel so oversized layers never flash empty edges mid-page.
-      const farY = Math.max(-180, Math.min(180, y * -0.1))
-      const midY = Math.max(-320, Math.min(320, y * -0.24))
-      const nearY = Math.max(-480, Math.min(480, y * -0.4))
+      // Slightly stronger parallax so depth reads while scrolling
+      const farY = Math.max(-220, Math.min(220, y * -0.14))
+      const midY = Math.max(-380, Math.min(380, y * -0.32))
+      const nearY = Math.max(-560, Math.min(560, y * -0.52))
       far.style.transform = `translate3d(0, ${farY}px, 0)`
       mid.style.transform = `translate3d(0, ${midY}px, 0)`
       near.style.transform = `translate3d(0, ${nearY}px, 0)`
@@ -89,6 +90,7 @@ export function LandingAtmosphere() {
         ref={sweepRef}
         className={`ln-atmosphere-sweep${reduced ? ' is-static' : ''}`}
       />
+      <div className={`ln-atmosphere-sheen${reduced ? ' is-static' : ''}`} />
     </div>
   )
 }

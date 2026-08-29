@@ -332,7 +332,9 @@ export async function sendCampaignToRecipients(input: {
 }> {
   const resend = getResend()
   if (!resend || !env.notifyFromEmail) {
-    throw new Error('Email sending is not configured (RESEND_API_KEY + YUE_NOTIFY_FROM).')
+    throw new Error(
+      'Email sending is not configured. Set RESEND_API_KEY and YUE_NOTIFY_FROM to an address like JyutTranslate <noreply@yourdomain.com> (must include @).',
+    )
   }
   const emails = [...new Set(input.emails.map((e) => e.trim().toLowerCase()).filter(Boolean))]
   if (!emails.length) throw new Error('Select at least one recipient.')
@@ -470,7 +472,9 @@ export async function sendCampaignToAudience(input: {
 }): Promise<{ broadcastId: string }> {
   const resend = getResend()
   if (!resend || !env.notifyFromEmail) {
-    throw new Error('Email sending is not configured (RESEND_API_KEY + YUE_NOTIFY_FROM).')
+    throw new Error(
+      'Email sending is not configured. Set RESEND_API_KEY and YUE_NOTIFY_FROM to an address like JyutTranslate <noreply@yourdomain.com> (must include @).',
+    )
   }
   if (!env.resendAudienceId) {
     throw new Error('Resend audience is not configured (RESEND_AUDIENCE_ID).')
