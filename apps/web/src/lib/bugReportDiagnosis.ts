@@ -28,6 +28,36 @@ export type ReportDiagnosis = {
   note: string | null
   screenshot: string | null
   lastError: string | null
+  /** Local heuristic — admin smoke tests with little product evidence. */
+  likelyTest: boolean
+}
+
+const TEST_NOTE_RE =
+  /^(test|testing|teste?r?|asdf+|xxx+|foo|bar|baz|hi+|hello|hey|123+|ok|okay|check|checking)(\s*[!.]*)?$/i
+
+function detectLikelyTestLocal(input: {
+  note: string | null
+  lastError: string | null
+  issueType: string
+  apiErrorCount: number
+  uncaughtCount: number
+}): { likelyTest: boolean; reasons: string[] } {
+  const reasons: string[] = []
+  const { note, lastError, issueType, apiErrorCount, uncaughtCount } = input
+  if (note && TEST_NOTE_RE.test(note)) {
+    reasons.push(`Note looks like a smoke test (“${note.slice(0, 40)}”).`)
+  }
+  if (note && /\b(test report|just testing|ignore this|admin test)\b/i.test(note)) {
+    reasons.push('Note explicitly says this is a test.')
+  }
+  if (!note && !lastError && !apiErrorCount && !uncaughtCount) {
+    reasons.push('No user note and no error trail — common for admin smoke tests.')
+  }
+  if (issueType === 'other' && !lastError && (!note || note.length < 12)) {
+    reasons.push('Type “other” with almost no description.')
+  }
+  const strong = reasons.some((r) => /smoke test|explicitly/i.test(r))
+  return { likelyTest: strong || reasons.length >= 2, reasons }
 }
 
 const TYPE_META: Record<
@@ -362,6 +392,30 @@ export function diagnoseBugReport(report: AdminBugReport): ReportDiagnosis {
     summary = `${meta.baseSummary} User note adds context — read it before changing code.`
   }
 
+  const testGuess = detectLikelyTestLocal({
+    note,
+    lastError,
+    issueType: report.issue_type,
+    apiErrorCount: apiErrors.length,
+    uncaughtCount: uncaught.length,
+  })
+  if (testGuess.likelyTest) {
+    findings.unshift({
+      id: 'likely-test',
+      label: 'Likely test report',
+      detail: testGuess.reasons.join(' '),
+      tone: 'ok',
+    })
+    actions.unshift({
+      id: 'close-test',
+      title: 'Mark closed',
+      detail: 'This looks like an admin/developer smoke test — safe to close unless you need it as a fixture.',
+    })
+    severity = 'info'
+    summary = 'Looks like a test / smoke report rather than a real user failure.'
+    confidence = Math.max(confidence, 0.7)
+  }
+
   if (!findings.length) {
     findings.push({
       id: 'sparse',
@@ -442,5 +496,6 @@ export function diagnoseBugReport(report: AdminBugReport): ReportDiagnosis {
     note,
     screenshot,
     lastError,
+    likelyTest: testGuess.likelyTest,
   }
 }

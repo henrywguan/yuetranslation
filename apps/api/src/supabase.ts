@@ -186,6 +186,7 @@ export type AuditAction =
   | 'email_send_recipients'
   | 'email_send_audience'
   | 'email_template_save'
+  | 'bug_report_ai_answer'
 
 export async function writeAuditLog(entry: {
   actorId: string
@@ -271,6 +272,18 @@ export async function listBugReports(limit = 100): Promise<BugReportRow[]> {
     .limit(Math.min(500, Math.max(1, limit)))
   if (error || !data) return []
   return data as BugReportRow[]
+}
+
+export async function getBugReportById(reportId: string): Promise<BugReportRow | null> {
+  const client = getAdmin()
+  if (!client) return null
+  const { data, error } = await client
+    .from('bug_reports')
+    .select('*')
+    .eq('id', reportId)
+    .maybeSingle()
+  if (error || !data) return null
+  return data as BugReportRow
 }
 
 export async function updateBugReportStatus(

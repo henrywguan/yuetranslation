@@ -536,6 +536,37 @@ export async function adminPatchBugReportStatus(req: AuthedRequest, res: Respons
   }
 }
 
+export async function adminBugReportAiAnswer(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const reportId = String(req.params.reportId || '').trim()
+  if (!reportId) {
+    res.status(400).json({ message: 'reportId required' })
+    return
+  }
+  try {
+    const { generateBugReportAiAnswer } = await import('./bugReportAi.js')
+    const answer = await generateBugReportAiAnswer(reportId)
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'bug_report_ai_answer',
+      targetUserId: undefined,
+      targetEmail: undefined,
+      detail: {
+        reportId,
+        verdict: answer.verdict,
+        suggestedStatus: answer.suggestedStatus,
+        model: answer.model,
+      },
+    })
+    res.json({ ok: true, answer })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'AI answer failed'
+    res.status(msg === 'Report not found' ? 404 : 500).json({ message: msg })
+  }
+}
+
 /** One-time / on-demand: sync every Supabase Auth email into the Resend Audience. */
 export async function adminSyncResendAudience(req: AuthedRequest, res: Response) {
   const auth = await requireAdmin(req, res)

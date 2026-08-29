@@ -1,8 +1,8 @@
 /**
  * Best-effort viewport capture for optional bug-report screenshots.
  *
- * Uses `modern-screenshot` (not html-to-image’s SVG foreignObject clone), which
- * produces a much closer pixel capture of the live UI on mobile Safari.
+ * Uses `modern-screenshot` (not html-to-image’s SVG foreignObject clone alone),
+ * with capture-safe styles so dock controls / glass layers don’t double-paint.
  */
 
 function isAppleWebKit(): boolean {
@@ -40,9 +40,60 @@ function waitFrames(n = 2): Promise<void> {
   })
 }
 
+/** Strip effects that SVG foreignObject clones paint incorrectly. */
+function sanitizeClone(cloned: Node) {
+  if (!(cloned instanceof HTMLElement) && !(cloned instanceof SVGElement)) return
+  const el = cloned as HTMLElement
+  el.style.setProperty('animation', 'none', 'important')
+  el.style.setProperty('transition', 'none', 'important')
+  el.style.setProperty('backdrop-filter', 'none', 'important')
+  el.style.setProperty('-webkit-backdrop-filter', 'none', 'important')
+  el.style.setProperty('filter', 'none', 'important')
+  el.style.setProperty('mix-blend-mode', 'normal', 'important')
+  el.style.setProperty('text-shadow', 'none', 'important')
+
+  // Hidden radios with position:absolute confuse clone layout (Direction row overlap).
+  if (el.matches?.('input[type="radio"], input[type="checkbox"]')) {
+    el.style.setProperty('position', 'static', 'important')
+    el.style.setProperty('opacity', '0', 'important')
+    el.style.setProperty('width', '0', 'important')
+    el.style.setProperty('height', '0', 'important')
+    el.style.setProperty('margin', '0', 'important')
+    el.style.setProperty('padding', '0', 'important')
+    el.style.setProperty('pointer-events', 'none', 'important')
+  }
+
+  if (el.classList?.contains('dir-switch')) {
+    el.style.setProperty('position', 'relative', 'important')
+    el.style.setProperty('transform', 'none', 'important')
+    el.style.setProperty('display', 'flex', 'important')
+  }
+
+  if (el.classList?.contains('opt-cell') || el.classList?.contains('opt-dir')) {
+    el.style.setProperty('display', 'flex', 'important')
+    el.style.setProperty('flex-direction', 'column', 'important')
+    el.style.setProperty('align-items', 'center', 'important')
+    el.style.setProperty('gap', '4px', 'important')
+    el.style.setProperty('transform', 'none', 'important')
+  }
+}
+
+function shouldIncludeNode(node: Node): boolean {
+  if (!(node instanceof HTMLElement)) return true
+  if (node.classList.contains('bug-report-overlay')) return false
+  if (node.classList.contains('bug-report-panel')) return false
+  if (node.classList.contains('bug-report-backdrop')) return false
+  if (node.classList.contains('jp-pop')) return false
+  if (node.classList.contains('jg-grain')) return false
+  if (node.classList.contains('jade-glass-field')) return false
+  if (node.classList.contains('app-cloth-bg')) return false
+  if (node.tagName === 'CANVAS') return false
+  if (node.tagName === 'VIDEO') return false
+  return true
+}
+
 async function compressJpegDataUrl(dataUrl: string, maxChars: number): Promise<string | null> {
   if (dataUrl.length <= maxChars) return dataUrl
-  // Re-encode at lower quality / scale until under budget.
   const img = new Image()
   img.decoding = 'async'
   const loaded = new Promise<void>((resolve, reject) => {
@@ -84,9 +135,9 @@ export async function captureAppScreenshot(): Promise<string | null> {
   const unmark = markCapturing()
 
   try {
-    await waitFrames(2)
-    // Let Safari paint after hiding the modal.
-    if (isAppleWebKit()) await new Promise((r) => setTimeout(r, 50))
+    await waitFrames(3)
+    // Let Safari paint after hiding the modal + applying capture CSS.
+    if (isAppleWebKit()) await new Promise((r) => setTimeout(r, 120))
 
     const { domToJpeg } = await import('modern-screenshot')
     const target =
@@ -102,18 +153,15 @@ export async function captureAppScreenshot(): Promise<string | null> {
       '#07131f'
 
     const opts = {
-      quality: 0.88,
-      scale: Math.min(2, window.devicePixelRatio || 1),
+      quality: 0.9,
+      // High DPR + foreignObject often double-paints text on mobile WebKit.
+      scale: Math.min(1.5, window.devicePixelRatio || 1),
       width,
       height,
       backgroundColor: bg,
-      filter: (node: Node) => {
-        if (!(node instanceof HTMLElement)) return true
-        if (node.classList.contains('bug-report-overlay')) return false
-        if (node.classList.contains('bug-report-panel')) return false
-        if (node.classList.contains('bug-report-backdrop')) return false
-        return true
-      },
+      drawImageInterval: isAppleWebKit() ? 250 : 100,
+      filter: shouldIncludeNode,
+      onCloneEachNode: sanitizeClone,
     }
 
     // Safari often returns an incomplete first paint — warm up, then capture.
@@ -123,7 +171,8 @@ export async function captureAppScreenshot(): Promise<string | null> {
       } catch {
         /* warm-up only */
       }
-      await waitFrames(1)
+      await waitFrames(2)
+      await new Promise((r) => setTimeout(r, 80))
     }
 
     const raw = await domToJpeg(target, opts)
@@ -144,15 +193,12 @@ export async function captureAppScreenshot(): Promise<string | null> {
         getComputedStyle(target).backgroundColor ||
         '#07131f'
       const raw = await toJpeg(target, {
-        quality: 0.8,
-        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+        quality: 0.82,
+        pixelRatio: Math.min(1.5, window.devicePixelRatio || 1),
         cacheBust: true,
         skipFonts: true,
         backgroundColor: bg,
-        filter: (node) => {
-          if (!(node instanceof HTMLElement)) return true
-          return !node.classList.contains('bug-report-overlay')
-        },
+        filter: shouldIncludeNode,
       })
       if (!raw || raw.length < 2_000) return null
       return compressJpegDataUrl(raw, 600_000)

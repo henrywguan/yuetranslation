@@ -302,10 +302,40 @@ export function AdminPage() {
       await adminPatchBugReportStatus(report.id, status)
       await reloadReports()
       if (selectedReport?.id === report.id) {
-        setSelectedReport({ ...report, status })
+        // Closing a report collapses the detail panel.
+        if (status === 'closed') setSelectedReport(null)
+        else setSelectedReport({ ...report, status })
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to update report')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onBulkSetReportStatus = async (
+    batch: AdminBugReport[],
+    status: AdminBugReport['status'],
+  ) => {
+    const targets = batch.filter((r) => r.status !== status)
+    if (!targets.length) return
+    setBusy(true)
+    setError('')
+    try {
+      const results = await Promise.allSettled(
+        targets.map((r) => adminPatchBugReportStatus(r.id, status)),
+      )
+      const failed = results.filter((r) => r.status === 'rejected').length
+      await reloadReports()
+      if (selectedReport && targets.some((r) => r.id === selectedReport.id)) {
+        if (status === 'closed') setSelectedReport(null)
+        else setSelectedReport({ ...selectedReport, status })
+      }
+      if (failed) {
+        setError(`Updated ${targets.length - failed} of ${targets.length}; ${failed} failed.`)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update reports')
     } finally {
       setBusy(false)
     }
@@ -693,6 +723,7 @@ export function AdminPage() {
           selectedId={selectedReport?.id ?? null}
           onSelect={setSelectedReport}
           onStatusChange={(report, status) => void onSetReportStatus(report, status)}
+          onBulkStatusChange={(batch, status) => void onBulkSetReportStatus(batch, status)}
         />
       ) : tab === 'email' ? (
         <AdminEmailHub />
