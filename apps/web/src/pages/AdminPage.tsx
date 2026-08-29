@@ -3,6 +3,7 @@ import { RoleBadge } from '../components/RoleBadge'
 import '../components/RoleBadge.css'
 import { AdminResetUsageModal } from '../components/AdminResetUsageModal'
 import { AdminBugReportsDashboard } from '../components/AdminBugReportsDashboard'
+import { AdminEmailHub } from '../components/AdminEmailHub'
 import {
   adminPatchBugReportStatus,
   adminResetUsage,
@@ -27,7 +28,7 @@ import { navigate } from '../lib/useHashRoute'
 import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
 
-type Tab = 'users' | 'audit' | 'reports'
+type Tab = 'users' | 'audit' | 'reports' | 'email'
 
 function currentMonthInput(): string {
   return new Date().toISOString().slice(0, 7)
@@ -156,7 +157,7 @@ export function AdminPage() {
     if (gate !== 'ok') return
     if (tab === 'users') void reloadUsers()
     else if (tab === 'audit') void reloadAudit()
-    else void reloadReports()
+    else if (tab === 'reports') void reloadReports()
   }, [gate, tab, reloadUsers, reloadAudit, reloadReports])
 
   const openUser = async (user: AdminUser) => {
@@ -380,6 +381,15 @@ export function AdminPage() {
             onClick={() => setTab('reports')}
           >
             Reports
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'email'}
+            className={`admin-tab${tab === 'email' ? ' is-active' : ''}`}
+            onClick={() => setTab('email')}
+          >
+            Email
           </button>
         </div>
       </header>
@@ -684,6 +694,8 @@ export function AdminPage() {
           onSelect={setSelectedReport}
           onStatusChange={(report, status) => void onSetReportStatus(report, status)}
         />
+      ) : tab === 'email' ? (
+        <AdminEmailHub />
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">

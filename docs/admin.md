@@ -99,8 +99,20 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 3. `supabase/migrations/004_camera_usage.sql` — `camera_seconds` + `camera_translate_count`, extends `increment_usage()` for cam metering
 4. `supabase/migrations/005_user_roles.sql` — optional `profiles.role` (`admin` | `family`)
 5. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
+6. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
 
 Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a session.
+
+## Admin Email hub
+
+`#/admin` → **Email** is the campaign center (React Email + Resend):
+
+- **Templates** — built-in layouts (announcement, product update, feature spotlight, newsletter, welcome, plain) with thumbnail + list views; save custom drafts to Supabase
+- **Compose** — subject, preview text, eyebrow, headline, body, CTA, sign-off; live HTML preview (desktop/mobile)
+- **Recipients** — pick contacts from the Resend audience, or broadcast to the **full audience** (`RESEND_AUDIENCE_ID`)
+- **APIs:** `GET/POST /api/admin/email/templates`, `DELETE /api/admin/email/templates/:id`, `GET /api/admin/email/contacts`, `POST /api/admin/email/preview`, `POST /api/admin/email/send`
+
+Apply migration `007_email_hub.sql` on Supabase before saving custom templates (built-ins work without it).
 
 ## Bug reports (signed-in users only)
 
@@ -124,6 +136,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Ban / unban | Profile flag + Auth ban; blocked entitlements (`account_disabled`) |
 | Audit log | Tab with recent admin actions |
 | Bug reports | Tab listing user reports with status triage |
+| Email | Campaign hub: templates, compose, preview, contacts / full audience send |
 | CSV export | Current filters + month (includes camera fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | `POST /api/usage/camera-heartbeat` → `camera_seconds`; `POST /api/camera/scan` → `camera_translate_count` |
@@ -142,3 +155,10 @@ All routes require Bearer JWT + allowlisted email:
 - `GET /api/admin/audit`
 - `GET /api/admin/bug-reports`
 - `PATCH /api/admin/bug-reports/:reportId/status`
+- `GET /api/admin/email/templates`
+- `POST /api/admin/email/templates`
+- `DELETE /api/admin/email/templates/:templateId`
+- `GET /api/admin/email/contacts`
+- `POST /api/admin/email/preview`
+- `POST /api/admin/email/send`
+- `POST /api/admin/resend-audience/sync`

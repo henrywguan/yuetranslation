@@ -253,6 +253,125 @@ export async function syncResendAudience(): Promise<ResendAudienceSyncResult> {
   return data as ResendAudienceSyncResult
 }
 
+export type CampaignFields = {
+  subject: string
+  preview: string
+  eyebrow: string
+  headline: string
+  body: string
+  ctaLabel: string
+  ctaUrl: string
+  secondary: string
+  signOff: string
+}
+
+export type CampaignVariant =
+  | 'announcement'
+  | 'product-update'
+  | 'feature-spotlight'
+  | 'newsletter'
+  | 'welcome'
+  | 'plain'
+
+export type EmailTemplateItem = {
+  id: string
+  source: 'builtin' | 'custom'
+  kind: string
+  variant: CampaignVariant
+  name: string
+  description: string
+  thumb: 'hero' | 'split' | 'digest' | 'minimal' | 'spotlight' | 'welcome'
+  defaults: CampaignFields
+  updatedAt?: string
+}
+
+export type EmailContact = {
+  id: string
+  email: string
+  name: string | null
+  source: 'resend' | 'app'
+  unsubscribed?: boolean
+}
+
+export async function fetchEmailTemplates(): Promise<{ templates: EmailTemplateItem[] }> {
+  const res = await adminFetch('/admin/email/templates')
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Failed to load templates')
+  return data as { templates: EmailTemplateItem[] }
+}
+
+export async function fetchEmailContacts(): Promise<{
+  contacts: EmailContact[]
+  audienceId: string | null
+  audienceConfigured: boolean
+}> {
+  const res = await adminFetch('/admin/email/contacts')
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Failed to load contacts')
+  return data as {
+    contacts: EmailContact[]
+    audienceId: string | null
+    audienceConfigured: boolean
+  }
+}
+
+export async function previewAdminEmail(input: {
+  variant: CampaignVariant
+  fields: CampaignFields
+  includeUnsubscribe?: boolean
+}): Promise<{ html: string }> {
+  const res = await adminFetch('/admin/email/preview', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Preview failed')
+  return data as { html: string }
+}
+
+export async function saveEmailTemplate(input: {
+  id?: string
+  name: string
+  description?: string
+  baseVariant: CampaignVariant
+  fields: CampaignFields
+}): Promise<{ ok: boolean; id: string }> {
+  const res = await adminFetch('/admin/email/templates', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Save failed')
+  return data as { ok: boolean; id: string }
+}
+
+export async function archiveEmailTemplate(templateId: string): Promise<void> {
+  const res = await adminFetch(`/admin/email/templates/${encodeURIComponent(templateId)}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error((data as { message?: string }).message || 'Archive failed')
+  }
+}
+
+export async function sendAdminEmail(input: {
+  mode: 'recipients' | 'audience'
+  templateKey: string
+  variant: CampaignVariant
+  fields: CampaignFields
+  emails?: string[]
+  confirm: true
+}): Promise<{ ok: boolean; mode: string; sent?: number; broadcastId?: string }> {
+  const res = await adminFetch('/admin/email/send', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Send failed')
+  return data as { ok: boolean; mode: string; sent?: number; broadcastId?: string }
+}
+
 /** Format integer seconds as `1h 02m 03s` (always shows seconds). */
 export function formatLiveSeconds(total: number): string {
   const s = Math.max(0, Math.floor(total))

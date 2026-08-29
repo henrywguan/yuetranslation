@@ -553,3 +553,193 @@ export async function adminSyncResendAudience(req: AuthedRequest, res: Response)
     res.status(500).json({ message: e instanceof Error ? e.message : 'Resend audience sync failed' })
   }
 }
+
+const CampaignFieldsSchema = z.object({
+  subject: z.string(),
+  preview: z.string(),
+  eyebrow: z.string(),
+  headline: z.string(),
+  body: z.string(),
+  ctaLabel: z.string(),
+  ctaUrl: z.string(),
+  secondary: z.string(),
+  signOff: z.string(),
+})
+
+const CampaignVariantSchema = z.enum([
+  'announcement',
+  'product-update',
+  'feature-spotlight',
+  'newsletter',
+  'welcome',
+  'plain',
+])
+
+export async function adminListEmailTemplates(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const { listEmailTemplates } = await import('./emailCampaign.js')
+    const templates = await listEmailTemplates(false)
+    res.json({ templates })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to list templates' })
+  }
+}
+
+export async function adminListEmailContacts(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const { listEmailContacts } = await import('./emailCampaign.js')
+    const result = await listEmailContacts()
+    res.json(result)
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to list contacts' })
+  }
+}
+
+export async function adminPreviewEmail(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const parsed = z
+    .object({
+      variant: CampaignVariantSchema,
+      fields: CampaignFieldsSchema,
+      includeUnsubscribe: z.boolean().optional(),
+    })
+    .safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid preview payload' })
+    return
+  }
+  try {
+    const { renderCampaignHtml } = await import('./emailCampaign.js')
+    const html = await renderCampaignHtml({
+      variant: parsed.data.variant,
+      fields: parsed.data.fields,
+      includeUnsubscribe: parsed.data.includeUnsubscribe,
+    })
+    res.json({ html })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Preview failed' })
+  }
+}
+
+export async function adminSaveEmailTemplate(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const parsed = z
+    .object({
+      id: z.string().uuid().optional(),
+      name: z.string().min(1).max(120),
+      description: z.string().max(500).optional(),
+      baseVariant: CampaignVariantSchema,
+      fields: CampaignFieldsSchema,
+    })
+    .safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid template payload' })
+    return
+  }
+  try {
+    const { saveCustomTemplate } = await import('./emailCampaign.js')
+    const saved = await saveCustomTemplate({
+      ...parsed.data,
+      actorId: auth.userId,
+    })
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'email_template_save',
+      detail: { id: saved.id, name: parsed.data.name },
+    })
+    res.json({ ok: true, id: saved.id })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save template' })
+  }
+}
+
+export async function adminArchiveEmailTemplate(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const id = String(req.params.templateId || '').trim()
+  if (!id) {
+    res.status(400).json({ message: 'templateId required' })
+    return
+  }
+  try {
+    const { archiveCustomTemplate } = await import('./emailCampaign.js')
+    await archiveCustomTemplate(id)
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to archive template' })
+  }
+}
+
+export async function adminSendEmail(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const parsed = z
+    .object({
+      mode: z.enum(['recipients', 'audience']),
+      templateKey: z.string().min(1),
+      variant: CampaignVariantSchema,
+      fields: CampaignFieldsSchema,
+      emails: z.array(z.string().email()).optional(),
+      confirm: z.literal(true),
+    })
+    .safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid send payload (confirm: true required)' })
+    return
+  }
+  if (!parsed.data.fields.subject.trim()) {
+    res.status(400).json({ message: 'Subject is required' })
+    return
+  }
+  try {
+    const {
+      sendCampaignToAudience,
+      sendCampaignToRecipients,
+    } = await import('./emailCampaign.js')
+
+    if (parsed.data.mode === 'audience') {
+      const result = await sendCampaignToAudience({
+        actorId: auth.userId,
+        actorEmail: auth.email,
+        templateKey: parsed.data.templateKey,
+        variant: parsed.data.variant,
+        fields: parsed.data.fields,
+      })
+      await writeAuditLog({
+        actorId: auth.userId,
+        actorEmail: auth.email,
+        action: 'email_send_audience',
+        detail: { ...result, subject: parsed.data.fields.subject, templateKey: parsed.data.templateKey },
+      })
+      res.json({ ok: true, mode: 'audience', ...result })
+      return
+    }
+
+    const emails = parsed.data.emails || []
+    const result = await sendCampaignToRecipients({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      templateKey: parsed.data.templateKey,
+      variant: parsed.data.variant,
+      fields: parsed.data.fields,
+      emails,
+    })
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'email_send_recipients',
+      detail: { sent: result.sent, subject: parsed.data.fields.subject, templateKey: parsed.data.templateKey },
+    })
+    res.json({ ok: true, mode: 'recipients', ...result })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Send failed' })
+  }
+}
+
