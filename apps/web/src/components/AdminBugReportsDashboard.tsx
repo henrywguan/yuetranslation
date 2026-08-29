@@ -242,10 +242,11 @@ function DiagnosisPanel({
             href={diagnosis.screenshot}
             target="_blank"
             rel="noreferrer"
-            title="Open screenshot"
+            title="Open full screenshot"
           >
             <img src={diagnosis.screenshot} alt="User-attached diagnostic screenshot" />
           </a>
+          <p className="brd-shot-hint">Tap image to open full size</p>
         </section>
       ) : null}
 
