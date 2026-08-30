@@ -1693,68 +1693,6 @@
   }
 }
 
-/* Text micro */
-.ln-micro--text {
-  justify-content: center;
-  gap: 18px;
-  padding-top: 56px;
-}
-
-.ln-micro-input {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-height: 1.6em;
-  padding: 12px 14px;
-  width: 100%;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--harbor) 45%, transparent);
-  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
-}
-
-.ln-micro-input-text {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink-bright, var(--ink));
-}
-
-.ln-micro-caret {
-  display: inline-block;
-  width: 1.5px;
-  height: 1.05em;
-  margin-left: 2px;
-  vertical-align: -0.12em;
-  background: var(--jade);
-  animation: ln-micro-caret 0.9s steps(1) infinite;
-}
-
-@keyframes ln-micro-caret {
-  50% {
-    opacity: 0;
-  }
-}
-
-.ln-micro-thinking {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  min-height: 4.5rem;
-}
-
-.ln-micro-tt.translate-thinking,
-.ln-micro-tt {
-  transform: scale(0.78);
-  transform-origin: center top;
-}
-
-.ln-micro--text .ln-micro-yue {
-  align-items: center;
-  width: 100%;
-  margin-top: 4px;
-}
-
 /* Camera micro */
 .ln-micro--camera {
   justify-content: center;
@@ -1818,7 +1756,6 @@
 @media (prefers-reduced-motion: reduce) {
   .ln-micro-mic.is-active .ln-micro-mic-ring,
   .ln-micro-speak.is-active,
-  .ln-micro-caret,
   .ln-micro-thumb {
     animation: none !important;
   }

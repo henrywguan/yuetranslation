@@ -9,7 +9,6 @@ export const ui = {
   modeFace: { en: 'Conversation', zh: '對話', jp: 'deoi3 waa6' },
   /** Short label for landing modes stage tabs. */
   modeFaceShort: { en: 'Conversation', zh: '對話', jp: 'deoi3 waa6' },
-  modeText: { en: 'Text', zh: '文字', jp: 'man4 zi6' },
   modeCamera: { en: 'Cam', zh: '相機', jp: 'soeng1 gei1' },
   modeTablist: { en: 'Mode', zh: '模式', jp: 'mou4 sik1' },
   modeSoloLine: {
@@ -21,11 +20,6 @@ export const ui = {
     en: 'One phone. Two languages, split screen — perfect for conversations!',
     zh: '一部手機，雙語分屏——最適合對話！',
     jp: 'jat1 bou6 sau2 gei1, soeng1 jyu5 fan1 ping4 — zeoi3 sik1 hap6 deoi3 waa6!',
-  },
-  modeTextLine: {
-    en: 'Type and wait for translation to appear',
-    zh: '輸入後稍等，譯文就會出現',
-    jp: 'jyu5 jap6 hau6 siu2 dang2, jik6 man4 zau6 wui5 ceot1 jin6',
   },
   modeCameraLine: {
     en: 'Point or upload -- translate signs and documents quickly!',
