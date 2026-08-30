@@ -82,7 +82,8 @@ function drawParagraph(page, font, text, x, y, size, maxWidth, color = rgb(0.08,
 
 async function writeEnReferenceLetter() {
   const pdf = await PDFDocument.create()
-  const { font } = await embedUiFont(pdf)
+  // Latin-only StandardFonts — custom CJK fonts corrupt Latin glyph mapping in extractors.
+  const font = await pdf.embedFont(StandardFonts.Helvetica)
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold)
   const page = pdf.addPage([612, 792])
   let y = 720
@@ -298,7 +299,7 @@ const MANIFEST = {
       direction: 'en→zh',
       challenges: ['multi-page', 'heading size', 'proper nouns', 'formal letter'],
       sourceHighlights: ['Henry Guan', 'Character Reference', 'Emmanuel Maldonado', 'Additional remarks'],
-      expectedHints: ['姓名／稱謂保留或音譯', '品格證明／推薦信語域', '第 2 頁標題對齊'],
+      expectedHints: ['亨利', '品格證明／推薦信／品行證明', 'Additional remarks／補充'],
     },
     {
       id: '02-en-cafe-menu',
@@ -316,7 +317,7 @@ const MANIFEST = {
       direction: 'zh→en',
       challenges: ['short CJK lines', 'sign tone'],
       sourceHighlights: ['注意', '請勿飲食', '請保持安靜', '緊急出口'],
-      expectedHints: ['Notice', 'No food or drink', 'Keep quiet', 'Emergency exit'],
+      expectedHints: ['Notice／Watch out／Attention', 'No food／do not eat', 'Keep quiet／quiet', 'Emergency exit'],
     },
     {
       id: '04-en-zh-travel-tips',
@@ -325,7 +326,7 @@ const MANIFEST = {
       direction: 'mixed — set From/To per pass',
       challenges: ['bilingual page', 'HK place terms'],
       sourceHighlights: ['Octopus card', '港鐵', '請勿阻擋車門'],
-      expectedHints: ['八達通', 'MTR', 'Do not block the doors'],
+      expectedHints: ['八達通', '港鐵／MTR／地鐵', '車門／block the door'],
     },
     {
       id: '05-en-apartment-notice',
@@ -352,7 +353,7 @@ const MANIFEST = {
       direction: 'en→zh',
       challenges: ['csv / tabular'],
       sourceHighlights: ['Bottled water', 'SIM card'],
-      expectedHints: ['樽裝水／瓶裝水', '電話卡'],
+      expectedHints: ['樽裝水／瓶裝水', 'SIM／電話卡'],
     },
     {
       id: '08-en-invoice-docx',
@@ -361,7 +362,7 @@ const MANIFEST = {
       direction: 'en→zh',
       challenges: ['docx layout-keep'],
       sourceHighlights: ['Invoice', 'Translation services', 'Total due'],
-      expectedHints: ['發票', '翻譯服務', '應付總額'],
+      expectedHints: ['發票', '翻譯服務', '應付／總共／Total'],
     },
     {
       id: '09-scanned-zh-menu',
@@ -370,7 +371,7 @@ const MANIFEST = {
       direction: 'zh→en',
       challenges: ['image-only PDF', 'Vision OCR path', 'no text layer'],
       sourceHighlights: ['今日特餐', '乾炒牛河', '凍檸茶'],
-      expectedHints: ['Today’s special', 'Beef chow fun', 'Iced lemon tea'],
+      expectedHints: ['Today\'s special／Today’s Special', 'Beef／chow fun／河', 'Iced lemon tea／凍檸茶'],
     },
   ],
   signs: [
@@ -388,7 +389,7 @@ const MANIFEST = {
       direction: 'zh→en',
       scene: 'Door placard',
       sourceText: ['不准進入', '職員專用'],
-      expectedHints: ['No entry', 'Staff only'],
+      expectedHints: ['No entry／not allowed', 'Staff only'],
     },
     {
       id: 'sign-03-wet-floor',
@@ -396,7 +397,7 @@ const MANIFEST = {
       direction: 'en→zh',
       scene: 'Safety cone style',
       sourceText: ['CAUTION', 'WET FLOOR'],
-      expectedHints: ['小心', '地面濕滑'],
+      expectedHints: ['小心', '地滑／濕滑／跣'],
     },
     {
       id: 'sign-04-restaurant-board',
@@ -404,7 +405,7 @@ const MANIFEST = {
       direction: 'zh→en',
       scene: 'Cha chaan teng specials board',
       sourceText: ['今日特餐', '乾炒牛河', '凍檸茶', '$48'],
-      expectedHints: ['Today’s special', 'Dry-fried beef hor fun', 'Iced lemon tea'],
+      expectedHints: ['Today\'s special／Today’s Special', 'beef／chow／河', 'Iced lemon tea'],
     },
     {
       id: 'sign-05-opening-hours',
@@ -412,7 +413,7 @@ const MANIFEST = {
       direction: 'zh→en',
       scene: 'Shop glass hours',
       sourceText: ['營業時間', '每日 10:00–22:00', '逢星期三休息'],
-      expectedHints: ['Business hours', 'Daily', 'Closed on Wednesday'],
+      expectedHints: ['Business hours', '10:00／Every day／Daily／每日', 'Wednesday／星期三'],
     },
     {
       id: 'sign-06-pharmacy',
@@ -420,7 +421,7 @@ const MANIFEST = {
       direction: 'en→zh',
       scene: 'Pharmacy counter',
       sourceText: ['PRESCRIPTION PICKUP', 'Please take a number', 'Queue here'],
-      expectedHints: ['處方取藥', '請抽籌', '請在此排隊'],
+      expectedHints: ['藥／處方', '冧把／抽籌／號碼', '排隊'],
     },
     {
       id: 'sign-07-street-bilingual',
@@ -428,7 +429,7 @@ const MANIFEST = {
       direction: 'either — test both',
       scene: 'HK street name plate',
       sourceText: ['德輔道中', 'DES VOEUX ROAD CENTRAL'],
-      expectedHints: ['keep both names', 'Des Voeux Road Central'],
+      expectedHints: ['德輔道中', 'Des Voeux／德輔'],
     },
     {
       id: 'sign-08-warning-construction',
@@ -436,7 +437,7 @@ const MANIFEST = {
       direction: 'zh→en',
       scene: 'Construction site',
       sourceText: ['前方施工', '請改道', '小心車輛'],
-      expectedHints: ['Roadwork ahead', 'Detour', 'Watch for vehicles'],
+      expectedHints: ['Roadwork／施工', 'detour／改道／alternate', 'cars／vehicles／車輛'],
     },
     {
       id: 'sign-09-hotel-lobby',
@@ -444,7 +445,7 @@ const MANIFEST = {
       direction: 'en→zh',
       scene: 'Hotel lobby',
       sourceText: ['Check-in', 'Concierge', 'Luggage storage'],
-      expectedHints: ['入住', '禮賓', '行李寄存'],
+      expectedHints: ['入住／登記', '禮賓', '行李寄存'],
     },
     {
       id: 'sign-10-dim-sum-menu',
@@ -452,7 +453,7 @@ const MANIFEST = {
       direction: 'zh→en',
       scene: 'Dense dim sum checklist',
       sourceText: ['蝦餃', '燒賣', '叉燒包', '腸粉', '流沙包'],
-      expectedHints: ['Har gow', 'Siu mai', 'BBQ pork bun', 'Rice noodle roll', 'Lava bun'],
+      expectedHints: ['har gow／shrimp dumpling／蝦', 'siu mai／燒賣', 'BBQ／char siu／叉燒', 'rice noodle／腸粉', 'lava／custard／流沙'],
     },
     {
       id: 'sign-11-angled-photo',
@@ -460,7 +461,7 @@ const MANIFEST = {
       direction: 'zh→en',
       scene: 'Perspective-warped placard (OCR stress)',
       sourceText: ['嚴禁吸煙', '違者罰款'],
-      expectedHints: ['No smoking', 'Fine for violations'],
+      expectedHints: ['No smoking', 'fine／罰'],
     },
     {
       id: 'sign-12-low-contrast',

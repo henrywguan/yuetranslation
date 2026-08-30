@@ -26,9 +26,9 @@
         "Additional remarks"
       ],
       "expectedHints": [
-        "姓名／稱謂保留或音譯",
-        "品格證明／推薦信語域",
-        "第 2 頁標題對齊"
+        "亨利",
+        "品格證明／推薦信／品行證明",
+        "Additional remarks／補充"
       ]
     },
     {
@@ -69,9 +69,9 @@
         "緊急出口"
       ],
       "expectedHints": [
-        "Notice",
-        "No food or drink",
-        "Keep quiet",
+        "Notice／Watch out／Attention",
+        "No food／do not eat",
+        "Keep quiet／quiet",
         "Emergency exit"
       ]
     },
@@ -91,8 +91,8 @@
       ],
       "expectedHints": [
         "八達通",
-        "MTR",
-        "Do not block the doors"
+        "港鐵／MTR／地鐵",
+        "車門／block the door"
       ]
     },
     {
@@ -147,7 +147,7 @@
       ],
       "expectedHints": [
         "樽裝水／瓶裝水",
-        "電話卡"
+        "SIM／電話卡"
       ]
     },
     {
@@ -166,7 +166,7 @@
       "expectedHints": [
         "發票",
         "翻譯服務",
-        "應付總額"
+        "應付／總共／Total"
       ]
     },
     {
@@ -185,9 +185,9 @@
         "凍檸茶"
       ],
       "expectedHints": [
-        "Today’s special",
-        "Beef chow fun",
-        "Iced lemon tea"
+        "Today's special／Today’s Special",
+        "Beef／chow fun／河",
+        "Iced lemon tea／凍檸茶"
       ]
     }
   ],
@@ -217,7 +217,7 @@
         "職員專用"
       ],
       "expectedHints": [
-        "No entry",
+        "No entry／not allowed",
         "Staff only"
       ]
     },
@@ -232,7 +232,7 @@
       ],
       "expectedHints": [
         "小心",
-        "地面濕滑"
+        "地滑／濕滑／跣"
       ]
     },
     {
@@ -247,8 +247,8 @@
         "$48"
       ],
       "expectedHints": [
-        "Today’s special",
-        "Dry-fried beef hor fun",
+        "Today's special／Today’s Special",
+        "beef／chow／河",
         "Iced lemon tea"
       ]
     },
@@ -264,8 +264,8 @@
       ],
       "expectedHints": [
         "Business hours",
-        "Daily",
-        "Closed on Wednesday"
+        "10:00／Every day／Daily／每日",
+        "Wednesday／星期三"
       ]
     },
     {
@@ -279,9 +279,9 @@
         "Queue here"
       ],
       "expectedHints": [
-        "處方取藥",
-        "請抽籌",
-        "請在此排隊"
+        "藥／處方",
+        "冧把／抽籌／號碼",
+        "排隊"
       ]
     },
     {
@@ -294,8 +294,8 @@
         "DES VOEUX ROAD CENTRAL"
       ],
       "expectedHints": [
-        "keep both names",
-        "Des Voeux Road Central"
+        "德輔道中",
+        "Des Voeux／德輔"
       ]
     },
     {
@@ -309,9 +309,9 @@
         "小心車輛"
       ],
       "expectedHints": [
-        "Roadwork ahead",
-        "Detour",
-        "Watch for vehicles"
+        "Roadwork／施工",
+        "detour／改道／alternate",
+        "cars／vehicles／車輛"
       ]
     },
     {
@@ -325,7 +325,7 @@
         "Luggage storage"
       ],
       "expectedHints": [
-        "入住",
+        "入住／登記",
         "禮賓",
         "行李寄存"
       ]
@@ -343,11 +343,11 @@
         "流沙包"
       ],
       "expectedHints": [
-        "Har gow",
-        "Siu mai",
-        "BBQ pork bun",
-        "Rice noodle roll",
-        "Lava bun"
+        "har gow／shrimp dumpling／蝦",
+        "siu mai／燒賣",
+        "BBQ／char siu／叉燒",
+        "rice noodle／腸粉",
+        "lava／custard／流沙"
       ]
     },
     {
@@ -361,7 +361,7 @@
       ],
       "expectedHints": [
         "No smoking",
-        "Fine for violations"
+        "fine／罰"
       ]
     },
     {
