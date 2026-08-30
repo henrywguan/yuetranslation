@@ -19,9 +19,11 @@
     "smoke:canto": "npm run smoke:canto --prefix apps/api",
     "test:translate": "node scripts/translation-quality-bot.mjs",
     "test:translate:live": "node scripts/live-pipeline-bot.mjs",
-    "docs:screenshots": "node scripts/capture-docs-screenshots.mjs"
+    "docs:screenshots": "node scripts/capture-docs-screenshots.mjs",
+    "fixtures:cam-accuracy": "node scripts/generate-cam-accuracy-fixtures.mjs"
   },
   "devDependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "puppeteer-core": "^24.0.0"
   }
 }
