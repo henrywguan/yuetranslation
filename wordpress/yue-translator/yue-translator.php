@@ -90,7 +90,7 @@ final class Yue_Translator_Plugin
 
     private static function missing_app_notice(): string
     {
-        return '<div class="yue-translator-missing"><p>Yue app build missing. Run <code>npm run build:web:wp</code> and keep files in <code>app/</code>.</p></div>';
+        return '<div class="yue-translator-missing"><p>JyutTranslate app build missing. Run <code>npm run build:web:wp</code> and keep files in <code>app/</code>.</p></div>';
     }
 
     public static function user_plan_field(WP_User $user): void

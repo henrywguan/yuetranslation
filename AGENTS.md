@@ -4,13 +4,11 @@
 
 ### Paid / external API usage (cloud testing only)
 
-This rule applies **only to Cursor Cloud agent testing** in this remote environment. It does **not** restrict Henry’s own local laptop/phone use of DeepSeek or Azure.
+This rule applies **only** to Cursor Cloud agent testing. It does **not** restrict Henry’s local use of DeepSeek or Azure.
 
-Henry’s DeepSeek (`OPENAI_*` / `OPENAI_BASE_URL`) and Azure Speech / Vision keys are metered. Cloud agents must **not** burn that quota on automated testing.
+Do **not** call DeepSeek, Azure Speech, Azure Vision, Cam Documents OCR/translate paths that hit paid APIs, or other metered providers unless Henry has **explicitly allowed that specific request** in the current turn.
 
-**Do not** call DeepSeek, Azure Speech, Azure Vision, or any other paid/external inference/STT/TTS/OCR provider from the cloud agent unless Henry has **explicitly allowed that specific request** in the current turn.
-
-Before each outbound cloud-agent call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon and hit the model, `/api/tts`, `/api/speech-token`, `/api/camera/scan`, live mic STT, quality-bot cases that require OpenAI, etc.):
+Before each outbound cloud-agent call that would use those keys (including `curl` to `/api/translate` when it would miss phrase/lexicon, `/api/tts`, `/api/speech-token`, `/api/camera/scan`, `/api/docs/*` when it bills Vision/model, live mic STT, quality-bot cases that require OpenAI, etc.):
 
 1. Ask Henry for confirmation
 2. Name the exact endpoint / action and why
@@ -44,7 +42,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
 npm run smoke:canto
 ```
 
-Do **not** run `npm run test:translate`, `npm run test:translate:live`, or any live translate/STT/TTS that can hit DeepSeek/Azure unless Henry approved that run.
+Do **not** run `npm run test:translate`, `npm run test:translate:live`, or any live translate/STT/TTS/Vision that can hit DeepSeek/Azure unless Henry approved that run.
 
 In DEV, `window.__yueStore` is exposed for seeding UI state from the console.
 
@@ -72,14 +70,15 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 
 ### Production auth & metering (Vercel)
 
-Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use **Solo text translate** and **tap-to-play voice** at `#/app` without signing in; Free TTS is metered with a hard char cap; Pro/Max TTS is unlimited (usage still counted). Live mic still requires login and is metered. Auto-speak remains Pro/Max.
+Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use **Solo text translate** and **tap-to-play voice** at `#/app` without signing in; Free TTS is metered with a hard char cap; Pro/Max TTS is unlimited (usage still counted). Live mic still requires login and is metered. Auto-speak remains Pro/Max. **Cam** (AR / Upload / Documents) requires login; camera minutes and document pages are **separate** meters — see [docs/entitlements.md](docs/entitlements.md) and [docs/camera.md](docs/camera.md). Production Pro live minutes may be **20** via `YUE_PRO_LIVE_MINUTES` in `vercel.json` (not the code default of 60).
 
 OAuth / confirm-email returns to the site origin (Supabase Site URL). The web app then routes to `#/app`. Login links must be `/?auth=1#/app` (query before hash). In Supabase → Authentication → URL configuration, Site URL should be the production origin; extra Redirect URLs can include `http://localhost:5173/**` and the production origin.
 
-Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (or `SUPABASE_ANON_KEY` — the web app also loads public keys from `GET /api/auth-config` at runtime, so Google/Apple still work if Vite keys were added after the last frontend build), and **`YUE_APP_URL=https://your-production-domain`**. Optional: **`YUE_ADMIN_EMAILS`** (comma-separated) for `#/admin` — see `docs/admin.md`. Sign-in in the web UI opens an in-app modal via `openAuthScreen()` — do not link to API `loginUrl` from the SPA. Enable the Google (and Apple) provider in Supabase → Authentication → Providers.
+Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (or `SUPABASE_ANON_KEY` — the web app also loads public keys from `GET /api/auth-config` at runtime), and **`YUE_APP_URL=https://your-production-domain`**. Optional: **`YUE_ADMIN_EMAILS`** for `#/admin` — see [docs/admin.md](docs/admin.md). Sign-in opens an in-app modal via `openAuthScreen()` — do not link to API `loginUrl` from the SPA. Enable Google (and Apple) in Supabase → Authentication → Providers.
+
+Stripe Checkout enables promotion codes — create a Stripe **Promotion code** (not only a coupon).
 
 ### Phone mic testing (Henry’s machine)
-
 
 For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.
 

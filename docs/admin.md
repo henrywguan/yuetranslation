@@ -101,6 +101,7 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 4. `supabase/migrations/005_user_roles.sql` — optional `profiles.role` (`admin` | `family`)
 5. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
 6. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
+7. `supabase/migrations/008_docs_pages.sql` — `docs_pages` on usage months + `increment_usage` support for Documents metering
 
 Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a session.
 
@@ -124,26 +125,27 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 - **User flow:** Account hub → **Report a bug**, error banner link (when signed in), or marketing footer link (when signed in). One-tap issue type + optional note; client attaches route, mode, entitlement snapshot, recent events, and env — **not** translation text, audio, or images.
 - **API:** `POST /api/bug-report` (Bearer JWT, rate limit 10/hour per user)
-- **Admin:** `#/admin` → **Reports** tab opens a self-diagnostic dashboard (interpreted findings, confidence, next steps, timeline). Heuristics flag likely **test / smoke** reports. On-demand **AI answer** (`POST /api/admin/bug-reports/:id/ai-answer`) recommends close vs triage and explains real issues from the note + diagnostics (translation text is never stored on reports). Raw JSON remains behind **Show technical payload**.
+- **Admin:** `#/admin` → **Reports** tab opens a self-diagnostic dashboard (interpreted findings, confidence, next steps, timeline). **Multi-select** (long-press / select mode) supports bulk status updates. Heuristics flag likely **test / smoke** reports. On-demand **AI answer** (`POST /api/admin/bug-reports/:id/ai-answer`) recommends close vs triage. Raw JSON remains behind **Show technical payload**.
 - **Email:** React Email + Resend — rich admin notify with issue summary, plan/route/mode, last error, note, recent trail, and **inline screenshot** (CID attachment) when the user opts in. Templates are authored as `.tsx` under `apps/api/src/emails/` and **compiled to plain JS** (`emails/compiled/`) before deploy — Vercel’s Node runtime has no JSX transform, and eagerly importing `.tsx` into the API boot path crashes `/api/health` (clients stuck on Connecting…). Logo uses the public `apple-touch-icon.png` URL; screenshots use Resend’s `inlineContentId` (not `contentId`) so Gmail renders them in the body instead of as downloads only.
 
 ## Features
 
 | Feature | Notes |
 | --- | --- |
-| User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count, cam time (+ scan count). Allowlisted emails show an animated **admin** badge (with current plan). Click the badge to open the plan dropdown. |
+| User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count, cam time (+ scan count), **docs pages**. Allowlisted emails show an animated **admin** badge (with current plan). Click the badge to open the plan dropdown. |
 | Search / filter | Email/name/id, plan, over-quota, banned |
-| Sort | Email, plan, live, TTS, translate, cam, joined |
+| Sort | Email, plan, live, TTS, translate, cam, docs, joined |
 | Change plan | `free` / `pro` / `max` |
-| Reset month usage | Zeros live / TTS / translate / cam for the selected month |
+| Reset month usage | Zeros live / TTS / translate / cam / docs for the selected month |
 | Stripe link | Opens Dashboard customer page when `stripe_customer_id` exists |
 | Ban / unban | Profile flag + Auth ban; blocked entitlements (`account_disabled`) |
 | Audit log | Tab with recent admin actions |
-| Bug reports | Tab listing user reports with status triage |
+| Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates, compose, preview, contacts / full audience send |
-| CSV export | Current filters + month (includes camera fields) |
+| CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | `POST /api/usage/camera-heartbeat` → `camera_seconds`; `POST /api/camera/scan` → `camera_translate_count` |
+| Docs metering | `POST /api/docs/translate` / `POST /api/docs/commit` → `docs_pages` (success only) |
 
 ## API
 

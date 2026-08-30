@@ -75,3 +75,7 @@ Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, and `stag
 npm run docs:screenshots   # writes docs/demos/*.png
                            # 写入 docs/demos/*.png
 ```
+
+Cam Documents and Vision OCR are **manual** checks (paid Azure / model). Cloud agents must get Henry’s OK first — see `AGENTS.md`.
+
+相机文件与 Vision OCR 属**手动**检查（付费 Azure／模型）。云端代理须先获 Henry 批准 — 见 `AGENTS.md`。

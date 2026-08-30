@@ -1,28 +1,25 @@
-# JyutTranslate UI demos / 粤译界面演示
+# UI snapshots / 界面截图
 
-Fresh snapshots from the local Vite app (`npm run docs:screenshots`). Modes: **Solo**, **Conversation**, **Text**, **Cam**.
+Static PNGs for the README and design docs. Regenerate after major UI changes:
 
-来自本地 Vite 应用的最新截图（`npm run docs:screenshots`）。模式：**独白**、**对话**、**文字**、**相机**。
-
-| # | Screen / 画面 | Preview / 预览 |
-| --- | --- | --- |
-| 1 | Landing — dark / 首页 — 深色 | ![Landing dark](./01-landing-dark.png) |
-| 2 | Landing — light / 首页 — 浅色 | ![Landing light](./02-landing-light.png) |
-| 3 | Pricing — dark / 定价 — 深色 | ![Pricing dark](./03-pricing-dark.png) |
-| 4 | Translator Solo — dark / 独白翻译 — 深色 | ![Solo dark](./04-app-solo-dark.png) |
-| 5 | Translator Solo — light / 独白翻译 — 浅色 | ![Solo light](./05-app-solo-light.png) |
-| 6 | Landing mobile — dark / 首页手机 — 深色 | ![Landing mobile](./06-landing-mobile-dark.png) |
-| 7 | Translator mobile — dark / 翻译器手机 — 深色 | ![App mobile](./07-app-mobile-dark.png) |
-| 8 | Conversation — dark / 对话 — 深色 | ![Conversation](./08-app-conversation-dark.png) |
-| 9 | Text mode — dark / 文字模式 — 深色 | ![Text mode](./09-app-text-dark.png) |
-
-Desktop viewport: 1440×900 · Mobile: 390×844 @2x.
-
-桌面视口：1440×900 · 手机：390×844 @2x。
-
-Refresh after UI changes / 界面改动后刷新：
+重大界面改动后请重新截图：
 
 ```bash
-npm run dev:web   # already running is fine / 已在运行亦可
 npm run docs:screenshots
 ```
+
+Requires local `dev:web` (and usually `dev:api`) on the default ports. Cloud agents should not burn paid APIs while capturing.
+
+需要本地默认端口上的 `dev:web`（通常还有 `dev:api`）。云端代理截图时勿消耗付费 API。
+
+| File | Subject |
+| --- | --- |
+| `01-landing-dark.png` | Landing (dark) — orbital marketing background |
+| `02-landing-light.png` | Landing (light) |
+| `03-pricing-*.png` | Pricing / plans |
+| `04-app-solo-*.png` | Solo translator |
+| `05–08` | Conversation / other app chrome (see script) |
+
+Cam choice (AR / Upload / Documents) and admin screens are not in the default set — add captures in `scripts/capture-docs-screenshots.mjs` if needed.
+
+相机选择与管理后台默认不截 — 需要时在截图脚本中追加。

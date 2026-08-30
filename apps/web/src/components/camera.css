@@ -554,34 +554,6 @@
   }
 }
 
-.cam-handle {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  background: var(--jade);
-  border: 1px solid #041018;
-  pointer-events: none;
-  z-index: 3;
-}
-
-.cam-handle--nw {
-  left: -6px;
-  top: -6px;
-}
-.cam-handle--ne {
-  right: -6px;
-  top: -6px;
-}
-.cam-handle--sw {
-  left: -6px;
-  bottom: -6px;
-}
-.cam-handle--se {
-  right: -6px;
-  bottom: -6px;
-}
-
 .cam-ar-frame {
   position: relative;
   border-radius: 16px;

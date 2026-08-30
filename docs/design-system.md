@@ -31,9 +31,13 @@ Toggle lives in the marketing nav and translator header. Preference is stored as
 
 切换开关在营销导航与翻译器页头。偏好保存在 `localStorage.yue-theme`，首次访问遵循 `prefers-color-scheme`。
 
-Background: iridescent glass bubbles (WebGL on marketing, CSS orbs in the translator) mixed from Harbor / Jade / Ink.
+**Marketing / pricing backgrounds:** fixed **orbital** sphere + soft wash (`MarketingPageShell` `background="orbital"`). Foreground content scrolls over a stationary atmosphere.
 
-背景为虹彩玻璃气泡（营销站用 WebGL，翻译器用 CSS 光球），由 Harbor / Jade / Ink 混合。
+**营销／定价背景：** 固定 **orbital** 球体与柔和洗色（`MarketingPageShell` `background="orbital"`）。前景滚动，氛围层静止。
+
+**Translator app:** cloth / glass field accents mixed from Harbor / Jade / Ink (not the marketing orbital).
+
+**翻译器：** Harbor / Jade / Ink 织物质感／玻璃场（与营销 orbital 不同）。
 
 ## Brand hierarchy / 品牌层级
 
