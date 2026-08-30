@@ -99,7 +99,7 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 
 Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Solo typing uses `POST /translate` (not gated by live minutes). Camera uses `POST /camera/scan` + `POST /usage/camera-heartbeat` (see [camera.md](./camera.md)).
 
-运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 点击朗读／自动朗读调用 `POST /tts`。文字模式走 `POST /translate`（不受实时分钟数限制）。相机走 `POST /camera/scan` 与 `POST /usage/camera-heartbeat`（见 [camera.md](./camera.md)）。
+运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 点击朗读／自动朗读调用 `POST /tts`。独白文字走 `POST /translate`（不受实时分钟数限制）。相机走 `POST /camera/scan` 与 `POST /usage/camera-heartbeat`（见 [camera.md](./camera.md)）。
 
 Plan resolution: capability `yue_pro` → user meta `yue_plan` → filter `yue_user_plan` → default `free` / `guest`.
 
