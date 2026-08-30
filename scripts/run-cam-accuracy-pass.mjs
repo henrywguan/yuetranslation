@@ -51,7 +51,7 @@ function fileToDataUrl(filePath, mime) {
 
 function scoreHints(translated, hints) {
   if (!hints?.length) return { hit: 0, total: 0, missing: [] }
-  const blob = String(translated || '')
+  const blob = String(translated || '').toLowerCase()
   const missing = []
   let hit = 0
   for (const h of hints) {
@@ -60,7 +60,7 @@ function scoreHints(translated, hints) {
       .split(/[／/]/)
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((s) => s.replace(/→.*/, '').trim())
+      .map((s) => s.replace(/→.*/, '').trim().toLowerCase())
     const ok = alts.some((a) => a && blob.includes(a))
     if (ok) hit += 1
     else missing.push(h)

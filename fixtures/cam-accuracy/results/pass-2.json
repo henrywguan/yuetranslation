@@ -1,0 +1,670 @@
+{
+  "pass": "2",
+  "startedAt": "2026-08-30T10:08:38.574Z",
+  "health": {
+    "openai": true,
+    "vision": false,
+    "demo": false,
+    "allowed": {
+      "live": true,
+      "autoSpeak": true,
+      "textTranslate": true,
+      "tts": true,
+      "camera": true,
+      "docs": true
+    }
+  },
+  "documents": [
+    {
+      "id": "01-en-reference-letter",
+      "file": "documents/01-en-reference-letter.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Henry Guan | Character Reference | Honorable Monica Ramirez Almadani | Director, U.S. Citizenship and Immigration Services | My name is Henry Guan. I have known Emmanuel Maldonado for about 9 years. | He is honest, hardworking, and a reliable friend to our community.",
+      "translationPreview": "關亨利 | 品格證明 | 莫妮卡·拉米雷斯·阿爾馬達尼 女士 | 美國公民及移民服務局局長 | 我叫Henry Guan。我識咗Emmanuel Maldonado大概9年喇。 | 佢好老實，又好勤力，係我哋社區一個好可靠嘅朋友。",
+      "hintScore": {
+        "hit": 2,
+        "total": 3,
+        "missing": [
+          "Additional remarks／補充"
+        ]
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 10,
+          "items": 10
+        },
+        {
+          "page": 2,
+          "lines": 9,
+          "items": 9
+        }
+      ]
+    },
+    {
+      "id": "02-en-cafe-menu",
+      "file": "documents/02-en-cafe-menu.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Harbor Tea House | Menu | Milk tea HK$ 28 | Lemon tea HK$ 26 | Pineapple bun HK$ 18 | Egg tart HK$ 16",
+      "translationPreview": "海港茶樓 | 菜單 | 奶茶 HK$28 | 凍檸茶 HK$26 | 菠蘿包 港幣18元 | 蛋撻 港幣16元",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 9,
+          "items": 15
+        }
+      ]
+    },
+    {
+      "id": "03-zh-library-notice",
+      "file": "documents/03-zh-library-notice.pdf",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "注意 | 請勿飲食 | 請保持安靜 | 如有查詢請聯絡職員 | 緊急出口 \u0000\u0000",
+      "translationPreview": "Attention | No food or drink | Please keep quiet | For inquiries, please contact staff. | Emergency exit",
+      "hintScore": {
+        "hit": 4,
+        "total": 4,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 5,
+          "items": 5
+        }
+      ]
+    },
+    {
+      "id": "04-en-zh-travel-tips",
+      "file": "documents/04-en-zh-travel-tips.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Hong Kong Travel Tips | Buy an Octopus card for MTR, buses, and convenience stores. Keep to the | right on escalators. | 港鐵 \u0000 巴士 \u0000 便利店 | 請勿阻擋車門 | Useful phrases: Where is the bathroom? · How much is this? · One ticket to",
+      "translationPreview": "香港旅遊貼士 | 買張八達通，搭地鐵、巴士同去便利店都用得㗎。記住要…… | 請緊握扶手，站穩於電梯上。 | 港鐵 巴士 便利店 | 請勿阻擋車門 | 實用短句：廁所喺邊度？· 呢個幾多錢？· 一張飛去",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 7,
+          "items": 7
+        }
+      ]
+    },
+    {
+      "id": "05-en-apartment-notice",
+      "file": "documents/05-en-apartment-notice.txt",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "大廈通告\n\n星期六朝早九點到兩點會暫停供水，因為要做維修。請大家預先儲定足夠嘅水。唔好意思，造成不便。\n\n管理處",
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "06-zh-shop-hours",
+      "file": "documents/06-zh-shop-hours.txt",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "Opening Hours\nMon–Fri 11:00–21:00\nSat–Sun 10:00–22:00\nOpen on public holidays\nWelcome",
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "Business hours",
+          "Monday to Friday"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "07-en-price-list",
+      "file": "documents/07-en-price-list.csv",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "項目，價錢（港幣）\n樽裝水，10\nSIM卡，88\n洗衣袋，35\n遮，45",
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "08-en-invoice-docx",
+      "file": "documents/08-en-invoice.docx",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "engine=docx pages=1 segments=1 | 發票 | 翻譯服務 | 應付總額",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "09-scanned-zh-menu",
+      "file": "documents/09-scanned-zh-menu.pdf",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "scanned-pdf",
+      "sourcePreview": "",
+      "translationPreview": "Today's special | Dry-fried beef chow fun | Iced lemon tea",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [
+        "SKIP Vision not configured — cannot OCR scanned PDF",
+        "MT-only fallback using sourceHighlights"
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "id": "sign-01-mtr-exit",
+      "file": "signs/01-mtr-exit-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "出口",
+          "translation": "Exit",
+          "status": 200
+        },
+        {
+          "source": "A2",
+          "translation": "A2",
+          "status": 200
+        },
+        {
+          "source": "中環",
+          "translation": "Central",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-02-no-entry",
+      "file": "signs/02-no-entry-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "不准進入",
+          "translation": "No entry",
+          "status": 200
+        },
+        {
+          "source": "職員專用",
+          "translation": "Staff only",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "file": "signs/03-wet-floor-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "CAUTION",
+          "translation": "小心",
+          "status": 200
+        },
+        {
+          "source": "WET FLOOR",
+          "translation": "小心地滑",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "file": "signs/04-restaurant-board-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "今日特餐",
+          "translation": "Today's special",
+          "status": 200
+        },
+        {
+          "source": "乾炒牛河",
+          "translation": "Dry-fried beef chow fun",
+          "status": 200
+        },
+        {
+          "source": "凍檸茶",
+          "translation": "Iced lemon tea",
+          "status": 200
+        },
+        {
+          "source": "$48",
+          "translation": "$48",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "file": "signs/05-opening-hours-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "營業時間",
+          "translation": "Business hours",
+          "status": 200
+        },
+        {
+          "source": "每日 10:00–22:00",
+          "translation": "Daily 10:00 AM – 10:00 PM",
+          "status": 200
+        },
+        {
+          "source": "逢星期三休息",
+          "translation": "Closed every Wednesday",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "file": "signs/06-pharmacy-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "PRESCRIPTION PICKUP",
+          "translation": "處方取藥",
+          "status": 200
+        },
+        {
+          "source": "Please take a number",
+          "translation": "請抽籌",
+          "status": 200
+        },
+        {
+          "source": "Queue here",
+          "translation": "請在此排隊",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "file": "signs/07-street-bilingual.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "德輔道中",
+          "translation": "德輔道中",
+          "status": 200
+        },
+        {
+          "source": "DES VOEUX ROAD CENTRAL",
+          "translation": "德輔道中",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "file": "signs/08-construction-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "前方施工",
+          "translation": "Construction ahead",
+          "status": 200
+        },
+        {
+          "source": "請改道",
+          "translation": "Please detour",
+          "status": 200
+        },
+        {
+          "source": "小心車輛",
+          "translation": "Mind the vehicle",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "Roadwork／施工",
+          "cars／vehicles／車輛"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "file": "signs/09-hotel-lobby-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "Check-in",
+          "translation": "入住登記",
+          "status": 200
+        },
+        {
+          "source": "Concierge",
+          "translation": "禮賓",
+          "status": 200
+        },
+        {
+          "source": "Luggage storage",
+          "translation": "行李寄存",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "file": "signs/10-dim-sum-menu-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "蝦餃",
+          "translation": "har gow / shrimp dumplings",
+          "status": 200
+        },
+        {
+          "source": "燒賣",
+          "translation": "siu mai",
+          "status": 200
+        },
+        {
+          "source": "叉燒包",
+          "translation": "BBQ pork bun",
+          "status": 200
+        },
+        {
+          "source": "腸粉",
+          "translation": "Rice noodle rolls",
+          "status": 200
+        },
+        {
+          "source": "流沙包",
+          "translation": "lava custard bun",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 4,
+        "total": 5,
+        "missing": [
+          "rice noodle／腸粉"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "file": "signs/11-angled-no-smoking-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "嚴禁吸煙",
+          "translation": "No smoking",
+          "status": 200
+        },
+        {
+          "source": "違者罰款",
+          "translation": "Violators will be fined",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "file": "signs/12-low-contrast-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "Push",
+          "translation": "推",
+          "status": 200
+        },
+        {
+          "source": "Pull",
+          "translation": "拉",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "01-en-reference-letter",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Additional remarks／補充"
+      ]
+    },
+    {
+      "id": "06-zh-shop-hours",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Business hours",
+        "Monday to Friday"
+      ]
+    },
+    {
+      "id": "09-scanned-zh-menu",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-01-mtr-exit",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-02-no-entry",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Roadwork／施工",
+        "cars／vehicles／車輛"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "rice noodle／腸粉"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "kind": "vision-missing"
+    }
+  ],
+  "finishedAt": "2026-08-30T10:09:48.019Z"
+}

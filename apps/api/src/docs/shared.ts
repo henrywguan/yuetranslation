@@ -1,7 +1,6 @@
 /**
  * Shared helpers for document translation jobs.
  */
-import { translate } from '../translate.js'
 import { translateCameraText } from '../translateCamera.js'
 import { hasHan } from '../canto/han.js'
 
@@ -9,15 +8,6 @@ export type DocLang = 'en' | 'yue'
 
 const SKIP_RE =
   /^(https?:\/\/\S+|[\w.+-]+@[\w.-]+\.\w+|[\d mon.,:%€$£¥+\-/=]+)$/i
-
-/** Short lines (menus, headings, signs) use the Cam written-Chinese path. */
-function preferCameraPath(text: string): boolean {
-  const t = text.replace(/\s+/g, ' ').trim()
-  if (t.length < 2 || t.length > 64) return false
-  // Multi-sentence body copy stays on the colloquial Solo pipeline.
-  if (/[.!?。！？]/.test(t) && t.length > 28) return false
-  return true
-}
 
 export function shouldTranslateSegment(text: string): boolean {
   const t = text.replace(/\s+/g, ' ').trim()
@@ -47,19 +37,15 @@ export async function translateSegments(
         continue
       }
       try {
-        if (preferCameraPath(src)) {
-          const camFrom = from === 'en' ? 'en' : 'zh'
-          const camTo = to === 'en' ? 'en' : 'zh'
-          const result = await translateCameraText(src, camFrom, camTo)
-          const text = (result.text || '').trim()
-          // Reject obvious language echoes.
-          if (camTo === 'en' && hasHan(text)) out[i] = src
-          else if (camTo === 'zh' && text && !hasHan(text) && /[A-Za-z]/.test(src)) out[i] = src
-          else out[i] = text || src
-        } else {
-          const result = await translate({ text: src, from, to, includeAlternatives: false })
-          out[i] = (result.text || src).trim() || src
-        }
+        // Documents always use Cam written-Chinese (書面語), not Solo colloquial 粵.
+        const camFrom = from === 'en' ? 'en' : 'zh'
+        const camTo = to === 'en' ? 'en' : 'zh'
+        const result = await translateCameraText(src, camFrom, camTo)
+        const text = (result.text || '').trim()
+        // Reject obvious language echoes.
+        if (camTo === 'en' && hasHan(text)) out[i] = src
+        else if (camTo === 'zh' && text && !hasHan(text) && /[A-Za-z]/.test(src)) out[i] = src
+        else out[i] = text || src
       } catch {
         out[i] = src
       }
