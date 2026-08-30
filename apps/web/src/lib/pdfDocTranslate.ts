@@ -21,6 +21,8 @@ type TextItem = {
 }
 
 const TEXT_CHAR_THRESHOLD = 24
+const MAX_SEGMENTS = 80
+const FONT_FAMILY = '"Noto Sans HK", "Noto Sans TC", "PingFang TC", "Segoe UI", sans-serif'
 
 async function loadPdfJs() {
   const pdfjs = await import('pdfjs-dist')
@@ -36,30 +38,178 @@ export async function getPdfPageCount(file: File): Promise<number> {
   return pdf.numPages
 }
 
-function paintTranslations(
+/** Group PDF.js glyph runs into reading lines (same baseline band). */
+export function groupTextItemsIntoLines(items: TextItem[]): TextItem[] {
+  if (!items.length) return []
+  const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x)
+  const lines: TextItem[][] = []
+  for (const it of sorted) {
+    const last = lines[lines.length - 1]
+    if (!last?.length) {
+      lines.push([it])
+      continue
+    }
+    const sample = last[0]!
+    const band = Math.max(sample.h, it.h) * 0.55
+    const midA = sample.y + sample.h / 2
+    const midB = it.y + it.h / 2
+    if (Math.abs(midA - midB) <= band) last.push(it)
+    else lines.push([it])
+  }
+
+  return lines.map((parts) => {
+    parts.sort((a, b) => a.x - b.x)
+    const text = parts
+      .map((p) => p.text)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const x0 = Math.min(...parts.map((p) => p.x))
+    const y0 = Math.min(...parts.map((p) => p.y))
+    const x1 = Math.max(...parts.map((p) => p.x + p.w))
+    const y1 = Math.max(...parts.map((p) => p.y + p.h))
+    return {
+      text,
+      x: x0,
+      y: y0,
+      w: Math.max(0.01, x1 - x0),
+      h: Math.max(0.01, y1 - y0),
+    }
+  }).filter((l) => l.text.length > 0)
+}
+
+function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean)
+  if (!words.length) return []
+  // CJK often has no spaces — break by measure.
+  if (words.length === 1 && words[0]!.length > 1 && ctx.measureText(words[0]!).width > maxW) {
+    const chars = [...words[0]!]
+    const lines: string[] = []
+    let cur = ''
+    for (const ch of chars) {
+      const next = cur + ch
+      if (cur && ctx.measureText(next).width > maxW) {
+        lines.push(cur)
+        cur = ch
+      } else cur = next
+    }
+    if (cur) lines.push(cur)
+    return lines
+  }
+  const lines: string[] = []
+  let cur = ''
+  for (const word of words) {
+    const next = cur ? `${cur} ${word}` : word
+    if (cur && ctx.measureText(next).width > maxW) {
+      lines.push(cur)
+      cur = word
+    } else cur = next
+  }
+  if (cur) lines.push(cur)
+  return lines
+}
+
+/**
+ * Cover source glyphs and paint translation sized to the source line height.
+ * Shrinks / wraps only when the translated string is wider than the box.
+ */
+export function paintTranslations(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   items: Array<{ x: number; y: number; w: number; h: number; translated: string }>,
 ) {
   for (const it of items) {
-    if (!it.translated.trim()) continue
+    const translated = it.translated.trim()
+    if (!translated) continue
     const x = it.x * canvas.width
     const y = it.y * canvas.height
-    const w = Math.max(8, it.w * canvas.width)
-    const h = Math.max(8, it.h * canvas.height)
-    ctx.fillStyle = 'rgba(7, 19, 31, 0.82)'
-    ctx.fillRect(x - 1, y - 1, w + 2, h + 2)
-    ctx.fillStyle = '#e8f4f1'
-    const fontSize = Math.max(10, Math.min(h * 0.78, 28))
-    ctx.font = `600 ${fontSize}px "Noto Sans HK", "Segoe UI", sans-serif`
+    const w = Math.max(10, it.w * canvas.width)
+    const h = Math.max(10, it.h * canvas.height)
+
+    // Match source line height — previous 28px cap made headings unreadable.
+    let fontSize = Math.max(9, h * 0.88)
+    const padX = Math.max(2, Math.min(6, h * 0.08))
+    const maxW = Math.max(8, w - padX * 2)
     ctx.textBaseline = 'top'
-    const maxW = w - 2
-    let line = it.translated
-    while (ctx.measureText(line).width > maxW && line.length > 1) {
-      line = line.slice(0, -1)
+    ctx.textAlign = 'left'
+
+    let lines: string[] = [translated]
+    for (; fontSize >= 9; fontSize -= 0.5) {
+      ctx.font = `600 ${fontSize}px ${FONT_FAMILY}`
+      lines = wrapLines(ctx, translated, maxW)
+      const lineH = fontSize * 1.15
+      const fitsHeight = lines.length * lineH <= h * 1.2
+      const fitsWidth =
+        lines.length === 1 ? ctx.measureText(lines[0]!).width <= maxW + 0.5 : true
+      if (fitsHeight && fitsWidth) break
     }
-    ctx.fillText(line, x + 1, y + Math.max(0, (h - fontSize) / 2), maxW)
+    ctx.font = `600 ${fontSize}px ${FONT_FAMILY}`
+    lines = wrapLines(ctx, translated, maxW)
+    const lineH = fontSize * 1.15
+    // Grow cover slightly when wrapping so glyphs stay readable.
+    const textBlockH = Math.max(h, lines.length * lineH + 2)
+    const coverH = Math.min(textBlockH, h * 2.2)
+    const coverY = y - Math.max(0, (coverH - h) * 0.15)
+
+    ctx.fillStyle = 'rgba(7, 19, 31, 0.88)'
+    ctx.fillRect(x - 1, coverY - 1, w + 2, coverH + 2)
+    ctx.fillStyle = '#e8f4f1'
+    const startY = coverY + Math.max(1, (coverH - lines.length * lineH) / 2)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!
+      let draw = line
+      while (ctx.measureText(draw).width > maxW && draw.length > 1) {
+        draw = draw.slice(0, -1)
+      }
+      ctx.fillText(draw, x + padX, startY + i * lineH, maxW)
+    }
   }
+}
+
+type PdfJsUtil = { transform: (m1: number[], m2: number[]) => number[] }
+
+/** Map PDF.js text content items into normalized page boxes (origin top-left). */
+export function textContentToItems(
+  pdfjs: { Util: PdfJsUtil },
+  viewport: { width: number; height: number; transform: number[] },
+  textContent: { items: unknown[] },
+): TextItem[] {
+  const items: TextItem[] = []
+  for (const raw of textContent.items) {
+    if (!raw || typeof raw !== 'object' || !('str' in raw)) continue
+    const it = raw as {
+      str: string
+      transform: number[]
+      width: number
+      height?: number
+    }
+    const text = (it.str || '').replace(/\s+/g, ' ').trim()
+    if (!text) continue
+    // Viewport transform already flips PDF → canvas (top-left origin, Y down).
+    const vx = pdfjs.Util.transform(viewport.transform, it.transform)
+    const tx = vx[4] ?? 0
+    const ty = vx[5] ?? 0
+    const scaleX = Math.hypot(vx[0] ?? 0, vx[1] ?? 0) || 1
+    const scaleY = Math.hypot(vx[2] ?? 0, vx[3] ?? 0) || scaleX
+    const fontH = Math.max(6, scaleY)
+    // item.width is in text space; scale into viewport pixels.
+    const wPx = Math.max(
+      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : fontH * text.length * 0.5,
+      fontH * 0.35,
+    )
+    // Baseline at ty; glyphs extend upward on the canvas.
+    const top = ty - fontH * 0.92
+    const x = tx / viewport.width
+    const y = top / viewport.height
+    items.push({
+      text,
+      x: Math.min(0.98, Math.max(0, x)),
+      y: Math.min(0.98, Math.max(0, y)),
+      w: Math.min(1 - Math.min(0.98, Math.max(0, x)), Math.max(0.01, wPx / viewport.width)),
+      h: Math.min(1, Math.max(0.012, fontH / viewport.height)),
+    })
+  }
+  return items
 }
 
 export async function translatePdfHybrid(
@@ -79,7 +229,8 @@ export async function translatePdfHybrid(
   for (let pageNum = 1; pageNum <= total; pageNum++) {
     onProgress?.(`Page ${pageNum} · reading`, pageNum, total)
     const page = await pdf.getPage(pageNum)
-    const viewport = page.getViewport({ scale: 1.45 })
+    // Higher scale → sharper paint + better OCR boxes on scanned pages.
+    const viewport = page.getViewport({ scale: 2 })
     const canvas = document.createElement('canvas')
     canvas.width = Math.max(1, Math.floor(viewport.width))
     canvas.height = Math.max(1, Math.floor(viewport.height))
@@ -89,38 +240,13 @@ export async function translatePdfHybrid(
     await page.render({ canvasContext: ctx, viewport }).promise
 
     const textContent = await page.getTextContent()
-    const items: TextItem[] = []
-    for (const raw of textContent.items) {
-      if (!raw || typeof raw !== 'object' || !('str' in raw)) continue
-      const it = raw as {
-        str: string
-        transform: number[]
-        width: number
-        height?: number
-      }
-      const text = (it.str || '').replace(/\s+/g, ' ').trim()
-      if (!text) continue
-      const vx = pdfjs.Util.transform(viewport.transform, it.transform) as number[]
-      const tx = vx[4] ?? 0
-      const ty = vx[5] ?? 0
-      const fontH = Math.max(6, Math.abs(vx[3] || vx[0] || 12))
-      const wPx = Math.max(it.width || fontH * text.length * 0.55, fontH)
-      const hPx = Math.max(it.height || fontH, 6)
-      const x = tx / viewport.width
-      const y = 1 - (ty + hPx * 0.15) / viewport.height
-      items.push({
-        text,
-        x: Math.min(0.98, Math.max(0, x)),
-        y: Math.min(0.98, Math.max(0, y - hPx / viewport.height)),
-        w: Math.min(1 - x, Math.max(0.01, wPx / viewport.width)),
-        h: Math.min(1, Math.max(0.01, hPx / viewport.height)),
-      })
-    }
+    const rawItems = textContentToItems(pdfjs, viewport, textContent)
+    const lineItems = groupTextItemsIntoLines(rawItems)
 
-    const charCount = items.reduce((n, i) => n + i.text.length, 0)
+    const charCount = lineItems.reduce((n, i) => n + i.text.length, 0)
     if (charCount >= TEXT_CHAR_THRESHOLD) {
       onProgress?.(`Page ${pageNum} · translating text layer`, pageNum, total)
-      const slice = items.slice(0, 120)
+      const slice = lineItems.slice(0, MAX_SEGMENTS)
       const { translations, entitlement } = await translateDocSegments({
         segments: slice.map((i) => i.text),
         from,
@@ -140,7 +266,7 @@ export async function translatePdfHybrid(
       )
     } else {
       onProgress?.(`Page ${pageNum} · vision OCR`, pageNum, total)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.84)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
       const scan = await cameraScan({ image: dataUrl, target, forDocs: true })
       if (scan.entitlement) onEntitlement?.(scan.entitlement as Entitlement)
       paintTranslations(
@@ -150,7 +276,7 @@ export async function translatePdfHybrid(
           x: r.box.x,
           y: r.box.y,
           w: r.box.w,
-          h: r.box.h,
+          h: Math.max(r.box.h, 0.014),
           translated: r.translated || '',
         })),
       )
@@ -163,7 +289,7 @@ export async function translatePdfHybrid(
           else void blob.arrayBuffer().then(resolve, reject)
         },
         'image/jpeg',
-        0.88,
+        0.9,
       )
     })
     const embedded = await outPdf.embedJpg(jpeg)
