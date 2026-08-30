@@ -75,9 +75,9 @@ export const ui = {
   },
   camChoiceClose: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
   camDocLead: {
-    en: 'Office files keep structure in place. PDFs use hybrid layout: text layer when present, vision OCR for scans — translations painted where they belong.',
-    zh: 'Office 文件會喺原位改字。PDF 用混合方式：有文字層就抽字，掃描頁用視覺辨識，譯文畫返原位。',
-    jp: 'Office man4 gin2 wui5 hai2 jyun4 wai6 goi2 zi6. PDF jung6 wan6 hap6 fong1 sik1.',
+    en: 'Word, Excel, and PowerPoint keep their formatting. PDFs place the translation back on the page — including scans.',
+    zh: 'Word、Excel、PowerPoint 會保留原本排版。PDF 譯文放返原來位置，掃描文件都得。',
+    jp: 'Word, Excel, PowerPoint wui5 bou2 lau4 jyun4 baan2. PDF jik6 man4 fong3 faan1 jyun4 wai6.',
   },
   camDocFrom: { en: 'From', zh: '原文', jp: 'jyun4 man4' },
   camDocTo: { en: 'To', zh: '譯文', jp: 'jik6 man4' },
@@ -112,9 +112,9 @@ export const ui = {
     jp: 'haa6 zoi3 jik6 man4',
   },
   camDocPrivacy: {
-    en: 'Files are processed to translate, then not kept in bug reports. Avoid medical PHI unless your org has a compliant plan.',
-    zh: '文件只用於翻譯，唔會寫入錯誤回報。醫療私隱資料請只喺合規方案下上載。',
-    jp: 'man4 gin2 zi2 jung6 jyu1 faan1 jik6.',
+    en: 'Your file is used only for translation. We don’t attach it to bug reports.',
+    zh: '文件只用於翻譯，唔會附喺錯誤回報入面。',
+    jp: 'man4 gin2 zi2 jung6 jyu1 faan1 jik6, m4 wui5 fu6 hai2 cho3 ng6 wui4 bou3.',
   },
   camDocRemaining: {
     en: 'Pages left this month',
