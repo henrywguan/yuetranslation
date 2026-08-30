@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { biPlain, ui } from '../lib/uiCopy'
 
@@ -9,11 +10,11 @@ type Props = {
   onDocs: () => void
 }
 
-/** Floating modal: AR / upload image / documents. */
+/** Floating modal: AR / upload image / documents. Portaled above the dock. */
 export function CameraChoiceModal({ open, onClose, onAr, onUpload, onDocs }: Props) {
-  if (!open) return null
+  if (!open || typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div className="cam-overlay" role="dialog" aria-modal="true" aria-labelledby="cam-choice-title">
       <button type="button" className="cam-backdrop" aria-label={biPlain(ui.camChoiceClose)} onClick={onClose} />
       <div className="cam-choice-card">
@@ -53,6 +54,7 @@ export function CameraChoiceModal({ open, onClose, onAr, onUpload, onDocs }: Pro
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
