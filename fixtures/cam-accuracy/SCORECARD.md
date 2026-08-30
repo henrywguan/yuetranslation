@@ -35,6 +35,8 @@ Harness: `node scripts/run-cam-accuracy-pass.mjs [1|2]` → `fixtures/cam-accura
 | 1 | 15 | 13 | Solo `/api/translate` for signs; EN PDF nulls; Vision off |
 | 2 | 4 | 13 | Cam segments + prompts; remaining scorecard/register issues |
 | 2b spot | 0 | — | Docs always 書面語; case-insensitive hints; 4/4 prior misses cleared |
+| 3 (Vision) | — | 10 OCR + rate-limits | Endpoint was regional; resource URL required |
+| 3b (Vision paced) | 0 | 0 | All 12 signs + scanned menu OCR+MT; 429 retries |
 
 ## Rubric
 

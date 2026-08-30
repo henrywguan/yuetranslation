@@ -1,0 +1,734 @@
+{
+  "pass": "3b",
+  "startedAt": "2026-08-30T18:22:38.445Z",
+  "health": {
+    "openai": true,
+    "vision": true,
+    "demo": false,
+    "allowed": {
+      "live": true,
+      "autoSpeak": true,
+      "textTranslate": true,
+      "tts": true,
+      "camera": true,
+      "docs": true
+    }
+  },
+  "documents": [
+    {
+      "id": "01-en-reference-letter",
+      "file": "documents/01-en-reference-letter.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Henry Guan | Character Reference | Honorable Monica Ramirez Almadani | Director, U.S. Citizenship and Immigration Services | My name is Henry Guan. I have known Emmanuel Maldonado for about 9 years. | He is honest, hardworking, and a reliable friend to our community.",
+      "translationPreview": "關亨利 | 品格證明 | 莫妮卡·拉米雷斯·阿爾馬達尼 女士 | 美國公民及移民服務局主任 | 我叫關亨利。我認識 Emmanuel Maldonado 大約 9 年了。 | 他為人誠實、勤奮，是我們社區中可靠的朋友。",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 10,
+          "items": 10
+        },
+        {
+          "page": 2,
+          "lines": 9,
+          "items": 9
+        }
+      ]
+    },
+    {
+      "id": "02-en-cafe-menu",
+      "file": "documents/02-en-cafe-menu.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Harbor Tea House | Menu | Milk tea HK$ 28 | Lemon tea HK$ 26 | Pineapple bun HK$ 18 | Egg tart HK$ 16",
+      "translationPreview": "海港茶居 | 菜單 | 奶茶 HK$28 | 檸檬茶 港幣$26 | 菠蘿包 港幣18元 | 蛋撻 HK$16",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 9,
+          "items": 15
+        }
+      ]
+    },
+    {
+      "id": "03-zh-library-notice",
+      "file": "documents/03-zh-library-notice.pdf",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "注意 | 請勿飲食 | 請保持安靜 | 如有查詢請聯絡職員 | 緊急出口 \u0000\u0000",
+      "translationPreview": "Attention | No food or drink | Please keep quiet | For inquiries, please contact staff. | Emergency exit",
+      "hintScore": {
+        "hit": 4,
+        "total": 4,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 5,
+          "items": 5
+        }
+      ]
+    },
+    {
+      "id": "04-en-zh-travel-tips",
+      "file": "documents/04-en-zh-travel-tips.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Hong Kong Travel Tips | Buy an Octopus card for MTR, buses, and convenience stores. Keep to the | right on escalators. | 港鐵 \u0000 巴士 \u0000 便利店 | 請勿阻擋車門 | Useful phrases: Where is the bathroom? · How much is this? · One ticket to",
+      "translationPreview": "香港旅遊貼士 | 購買八達通卡，適用於港鐵、巴士及便利店。請保留 | 請緊握扶手，站穩於電梯上。 | 港鐵 巴士 便利店 | 請勿阻擋車門 | 洗手間在哪裡？ · 這個多少錢？ · 一張去……的票",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 7,
+          "items": 7
+        }
+      ]
+    },
+    {
+      "id": "05-en-apartment-notice",
+      "file": "documents/05-en-apartment-notice.txt",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "大廈通告\n\n星期六上午9時至下午2時將暫停供水以進行維修。請提前儲備足夠的水。不便之處，敬請原諒。\n\n管理處",
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "06-zh-shop-hours",
+      "file": "documents/06-zh-shop-hours.txt",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "Opening Hours\nMon–Fri 11:00–21:00\nSat–Sun 10:00–22:00\nOpen on public holidays\nWelcome",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "07-en-price-list",
+      "file": "documents/07-en-price-list.csv",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "項目,價格（港幣）\n瓶裝水,10\nSIM卡,88\n洗衣袋,35\n雨傘,45",
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "08-en-invoice-docx",
+      "file": "documents/08-en-invoice.docx",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "engine=docx pages=1 segments=1 | 發票 | 翻譯服務 | 應付總額",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "09-scanned-zh-menu",
+      "file": "documents/09-scanned-zh-menu.pdf",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "scanned-pdf",
+      "sourcePreview": "",
+      "translationPreview": "Today's special\nDry-fried beef chow fun\n$48\nIced lemon tea\n$22\nPineapple bun with butter\n$18\nFrench toast\n$28\nCash discount · Welcome",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "ocr": {
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "特餐",
+            "translated": "Today's special"
+          },
+          {
+            "text": "乾炒牛河",
+            "translated": "Dry-fried beef chow fun"
+          },
+          {
+            "text": "$48",
+            "translated": "$48"
+          },
+          {
+            "text": "凍檸茶",
+            "translated": "Iced lemon tea"
+          },
+          {
+            "text": "$22",
+            "translated": "$22"
+          },
+          {
+            "text": "菠蘿油",
+            "translated": "Pineapple bun with butter"
+          },
+          {
+            "text": "$18",
+            "translated": "$18"
+          },
+          {
+            "text": "西多士",
+            "translated": "French toast"
+          },
+          {
+            "text": "$28",
+            "translated": "$28"
+          },
+          {
+            "text": "現金優惠 · 歡迎光臨",
+            "translated": "Cash discount · Welcome"
+          }
+        ]
+      },
+      "ocrScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      }
+    }
+  ],
+  "signs": [
+    {
+      "id": "sign-01-mtr-exit",
+      "file": "signs/01-mtr-exit-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "出口",
+            "translated": "Exit"
+          },
+          {
+            "text": "A2",
+            "translated": "A2"
+          },
+          {
+            "text": "EXIT",
+            "translated": "EXIT"
+          },
+          {
+            "text": "中環",
+            "translated": "Central"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-02-no-entry",
+      "file": "signs/02-no-entry-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "不准進入",
+            "translated": "No entry"
+          },
+          {
+            "text": "職員專用",
+            "translated": "Staff only"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "file": "signs/03-wet-floor-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "CAUTION",
+            "translated": "小心"
+          },
+          {
+            "text": "WET FLOOR",
+            "translated": "小心地滑"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "file": "signs/04-restaurant-board-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "特餐",
+            "translated": "Today's special"
+          },
+          {
+            "text": "乾炒牛河",
+            "translated": "Dry-fried beef chow fun"
+          },
+          {
+            "text": "$48",
+            "translated": "$48"
+          },
+          {
+            "text": "凍檸茶",
+            "translated": "Iced lemon tea"
+          },
+          {
+            "text": "$22",
+            "translated": "$22"
+          },
+          {
+            "text": "菠蘿油",
+            "translated": "Pineapple bun with butter"
+          },
+          {
+            "text": "$18",
+            "translated": "$18"
+          },
+          {
+            "text": "西多士",
+            "translated": "French toast"
+          },
+          {
+            "text": "$28",
+            "translated": "$28"
+          },
+          {
+            "text": "現金優惠 · 歡迎光臨",
+            "translated": "Cash discount · Welcome"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 4,
+        "total": 4,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "file": "signs/05-opening-hours-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "營業時間",
+            "translated": "Business hours"
+          },
+          {
+            "text": "每日 10:00-22:00",
+            "translated": "Daily 10:00 AM - 10:00 PM"
+          },
+          {
+            "text": "逢星期三休息",
+            "translated": "Closed every Wednesday"
+          },
+          {
+            "text": "OPEN DAILY . CLOSED WED",
+            "translated": "OPEN DAILY . CLOSED WED"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "file": "signs/06-pharmacy-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "PHARMACY",
+            "translated": "藥房"
+          },
+          {
+            "text": "PRESCRIPTION PICKUP",
+            "translated": "處方取藥"
+          },
+          {
+            "text": "Please take a number",
+            "translated": "請抽籌"
+          },
+          {
+            "text": "Queue here -",
+            "translated": "請在此排隊"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "file": "signs/07-street-bilingual.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "德輔道中",
+            "translated": "德輔道中"
+          },
+          {
+            "text": "DES VOEUX ROAD CENTRAL",
+            "translated": "德輔道中"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "file": "signs/08-construction-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "前方施工",
+            "translated": "Construction ahead"
+          },
+          {
+            "text": "請改道",
+            "translated": "Please detour"
+          },
+          {
+            "text": "小心車輛",
+            "translated": "Caution: vehicles"
+          },
+          {
+            "text": "ROADWORK AHEAD",
+            "translated": "ROADWORK AHEAD"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "file": "signs/09-hotel-lobby-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "LOBBY",
+            "translated": "大堂"
+          },
+          {
+            "text": "Check-in",
+            "translated": "入住登記"
+          },
+          {
+            "text": "Concierge",
+            "translated": "禮賓"
+          },
+          {
+            "text": "Luggage storage",
+            "translated": "行李寄存"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "file": "signs/10-dim-sum-menu-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "點心紙",
+            "translated": "Dim sum menu"
+          },
+          {
+            "text": "蝦餃",
+            "translated": "har gow / shrimp dumplings"
+          },
+          {
+            "text": "燒賣",
+            "translated": "siu mai"
+          },
+          {
+            "text": "叉燒包",
+            "translated": "BBQ pork bun"
+          },
+          {
+            "text": "腸粉",
+            "translated": "Rice noodle rolls"
+          },
+          {
+            "text": "流沙包",
+            "translated": "lava custard bun"
+          },
+          {
+            "text": "鳳爪",
+            "translated": "Chicken feet"
+          },
+          {
+            "text": "排骨",
+            "translated": "Pork ribs"
+          },
+          {
+            "text": "叉燒酥",
+            "translated": "BBQ pork puff pastry"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 5,
+        "total": 5,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 5,
+        "total": 5,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "file": "signs/11-angled-no-smoking-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "嚴禁吸煙",
+            "translated": "No smoking"
+          },
+          {
+            "text": "違者罰款",
+            "translated": "Violators will be fined"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      }
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "file": "signs/12-low-contrast-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": {
+        "status": 200,
+        "engine": "azure-vision",
+        "regions": [
+          {
+            "text": "Push",
+            "translated": "推"
+          },
+          {
+            "text": "Pull",
+            "translated": "拉"
+          }
+        ]
+      },
+      "translations": [],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [],
+      "ocrScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      }
+    }
+  ],
+  "issues": [],
+  "finishedAt": "2026-08-30T18:24:49.853Z"
+}

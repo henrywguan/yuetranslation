@@ -180,9 +180,9 @@
         "no text layer"
       ],
       "sourceHighlights": [
-        "今日特餐",
+        "今日特餐／特餐",
         "乾炒牛河",
-        "凍檸茶"
+        "菠蘿油／菠萝油"
       ],
       "expectedHints": [
         "Today's special／Today’s Special",
@@ -241,10 +241,10 @@
       "direction": "zh→en",
       "scene": "Cha chaan teng specials board",
       "sourceText": [
-        "今日特餐",
+        "今日特餐／特餐",
         "乾炒牛河",
         "凍檸茶",
-        "$48"
+        "菠蘿油"
       ],
       "expectedHints": [
         "Today's special／Today’s Special",
@@ -259,7 +259,7 @@
       "scene": "Shop glass hours",
       "sourceText": [
         "營業時間",
-        "每日 10:00–22:00",
+        "每日 10:00–22:00／每日 10:00-22:00",
         "逢星期三休息"
       ],
       "expectedHints": [

@@ -28,20 +28,34 @@ async function health() {
   return r.json()
 }
 
-async function postJson(path, body) {
-  const r = await fetch(`${API}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const text = await r.text()
-  let json
-  try {
-    json = JSON.parse(text)
-  } catch {
-    json = { raw: text }
+async function sleep(ms) {
+  await new Promise((r) => setTimeout(r, ms))
+}
+
+async function postJson(path, body, { retries = 5 } = {}) {
+  let last = { status: 0, json: {} }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const r = await fetch(`${API}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const text = await r.text()
+    let json
+    try {
+      json = JSON.parse(text)
+    } catch {
+      json = { raw: text }
+    }
+    last = { status: r.status, json }
+    const msg = String(json.message || json.raw || '')
+    const rateLimited = r.status === 429 || /rate limited|\b429\b/i.test(msg)
+    if (!rateLimited || attempt === retries) return last
+    const wait = Math.min(25000, 4000 * (attempt + 1))
+    console.log(`[retry] ${path} rate-limit — wait ${wait}ms (attempt ${attempt + 1}/${retries})`)
+    await sleep(wait)
   }
-  return { status: r.status, json }
+  return last
 }
 
 function fileToDataUrl(filePath, mime) {
@@ -51,7 +65,9 @@ function fileToDataUrl(filePath, mime) {
 
 function scoreHints(translated, hints) {
   if (!hints?.length) return { hit: 0, total: 0, missing: [] }
-  const blob = String(translated || '').toLowerCase()
+  const blob = String(translated || '')
+    .toLowerCase()
+    .replace(/[–—−]/g, '-') // OCR often returns ASCII hyphen
   const missing = []
   let hit = 0
   for (const h of hints) {
@@ -60,7 +76,7 @@ function scoreHints(translated, hints) {
       .split(/[／/]/)
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((s) => s.replace(/→.*/, '').trim().toLowerCase())
+      .map((s) => s.replace(/→.*/, '').trim().toLowerCase().replace(/[–—−]/g, '-'))
     const ok = alts.some((a) => a && blob.includes(a))
     if (ok) hit += 1
     else missing.push(h)
@@ -247,6 +263,36 @@ for (const doc of manifest.documents) {
           entry.hintScore = scoreHints((tr.translations || []).join('\n'), doc.expectedHints)
           entry.notes.push('MT-only fallback using sourceHighlights')
         }
+      } else {
+        // Fixture is a PNG wrapped in a PDF — OCR the source restaurant-board PNG
+        // (same pixels as documents/09). Prefer explicit sibling sign art.
+        const pngGuess = join(FIX, 'signs/04-restaurant-board-zh.png')
+        const pngPath = existsSync(pngGuess) ? pngGuess : abs
+        const dataUrl = fileToDataUrl(pngPath, 'image/png')
+        const { status, json } = await postJson('/api/camera/scan', {
+          image: dataUrl,
+          target: to === 'en' ? 'en' : 'zh',
+        })
+        entry.status = status
+        entry.ocr = {
+          engine: json.engine,
+          visionAuthFailed: json.visionAuthFailed,
+          regions: (json.regions || []).map((r) => ({ text: r.text, translated: r.translated })),
+        }
+        const ocrBlob = (json.regions || []).map((r) => r.text).join('\n')
+        const mtBlob = (json.regions || []).map((r) => r.translated || '').join('\n')
+        entry.translationPreview = mtBlob.slice(0, 400)
+        entry.ocrScore = scoreHints(ocrBlob, doc.sourceHighlights || [])
+        entry.hintScore = scoreHints(`${ocrBlob}\n${mtBlob}`, doc.expectedHints || [])
+        if (json.visionAuthFailed) {
+          report.issues.push({ id: doc.id, kind: 'vision-auth-failed' })
+        }
+        if (entry.ocrScore && entry.ocrScore.hit < entry.ocrScore.total) {
+          report.issues.push({ id: doc.id, kind: 'ocr-miss', missing: entry.ocrScore.missing })
+        }
+        if (entry.hintScore && entry.hintScore.hit < entry.hintScore.total) {
+          report.issues.push({ id: doc.id, kind: 'mt-hint-miss', missing: entry.hintScore.missing })
+        }
       }
     } else {
       entry.mode = 'docs-translate'
@@ -311,6 +357,8 @@ for (const sign of manifest.signs) {
   }
   try {
     if (h.engines?.azureVision && existsSync(abs)) {
+      // Free-tier Vision is ~10 TPM — pace OCR calls
+      await sleep(3500)
       const dataUrl = fileToDataUrl(abs, 'image/png')
       const { status, json } = await postJson('/api/camera/scan', {
         image: dataUrl,
