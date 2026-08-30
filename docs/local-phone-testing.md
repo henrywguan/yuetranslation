@@ -5,11 +5,15 @@ Browsers only allow the **microphone** in a [secure context](https://developer.m
 
 浏览器只在[安全上下文](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts)中允许使用**麦克风**：`https://…` 或 `http://localhost`。
 
-| URL | Page / 页面 | Mic / 麦克风 |
+| URL | Page / 页面 | Mic / Cam |
 | --- | --- | --- |
 | `http://localhost:5173` | Yes / 可以 | Yes (same computer) / 可以（同一台电脑） |
 | `http://192.168.x.x:5173` | Yes / 可以 | No (LAN HTTP is blocked) / 不可以（局域网 HTTP 会被拦截） |
 | Cloudflare quick tunnel / Cloudflare 快速隧道 | Yes / 可以 | Yes / 可以 |
+
+Cam AR and Document uploads that need the device camera/file picker also need this HTTPS tunnel on a phone (same secure-context rules as the mic).
+
+手机上的相机 AR／需系统文件选择器的文件翻译同样需要此 HTTPS 隧道（与麦克风相同的安全上下文规则）。
 
 ## Setup / 设置
 

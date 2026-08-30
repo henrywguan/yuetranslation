@@ -1,6 +1,10 @@
 # JyutTranslate — Bluehost launch guide
 # 粤译 — Bluehost 上线指南
 
+> **Note / 注意：** Production entitlements, Max plan, Cam Documents, Stripe, and Resend admin tools live on **Vercel**. This WordPress package is a **secondary** deploy path and may lag (no Max / Documents parity guaranteed). Canonical limits: [entitlements.md](./entitlements.md) · Cam: [camera.md](./camera.md).
+>
+> 生产环境的权益、旗舰版、相机文件、Stripe 与 Resend 管理工具以 **Vercel** 为准。本 WordPress 包为**次要**部署路径，可能落后。套餐以 entitlements 文档为准。
+
 Freemium launch: **WordPress plugin hosts the PWA**; **Azure Speech** (`zh-HK` STT/TTS) and **OpenAI** (colloquial 粤语) run through plugin REST.
 
 免费增值上线方式：**WordPress 插件托管 PWA**；**Azure Speech**（`zh-HK` 语音识别/合成）与 **OpenAI**（口语粤语）经由插件 REST 转发。
