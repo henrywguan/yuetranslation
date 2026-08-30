@@ -2961,7 +2961,13 @@
 }
 
 .solo-thinking,
-.pane-thinking,
+.pane-thinking {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  overflow: visible;
+  padding-block: 8px;
+}
 
 /* Monitors: floating History panel (drag / resize / minimize) */
 @media (min-width: 960px) {
