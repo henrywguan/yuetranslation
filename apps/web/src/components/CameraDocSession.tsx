@@ -89,7 +89,7 @@ export function CameraDocSession({ onBack, onEntitlement, entitlement }: Props) 
           filename: out.filename,
           mime: out.mime,
           dataBase64: out.dataBase64,
-          note: `PDF hybrid · ${out.pages} page(s) · text layer when present, vision when scanned`,
+          note: `PDF · ${out.pages} page${out.pages === 1 ? '' : 's'} · layout kept`,
         })
       } else {
         setStatus(biPlain(ui.camDocOffice))
@@ -105,7 +105,7 @@ export function CameraDocSession({ onBack, onEntitlement, entitlement }: Props) 
           filename: out.filename,
           mime: out.mime,
           dataBase64: out.dataBase64,
-          note: `Layout-keep · ${out.engine.toUpperCase()} · ${out.pages} page(s)`,
+          note: `Layout kept · ${out.pages} page${out.pages === 1 ? '' : 's'}`,
         })
       }
       setStatus(biPlain(ui.camDocDone))
