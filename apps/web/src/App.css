@@ -683,7 +683,8 @@
   }
 
   .account-hub-shell {
-    top: auto;
+    /* Match top/bottom insets so the sheet covers nearly the full viewport. */
+    top: max(12px, env(safe-area-inset-top));
     right: 12px;
     left: 12px;
     bottom: max(12px, env(safe-area-inset-bottom));
@@ -693,7 +694,8 @@
   }
 
   .account-hub {
-    max-height: min(78dvh, 640px);
+    height: 100%;
+    max-height: none;
     border-radius: 22px 22px 18px 18px;
   }
 }
