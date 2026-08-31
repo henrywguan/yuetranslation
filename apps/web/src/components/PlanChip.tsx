@@ -433,6 +433,21 @@ export function PlanChip() {
                 </span>
               </li>
             ) : null}
+            {entitlement.loggedIn ? (
+              <li>
+                <span className="account-hub-stat-label">
+                  <BiText copy={ui.accountAiVision} size="sm" />
+                </span>
+                <span className="account-hub-stat-value">
+                  <BiText
+                    copy={ui.accountAiVisionUsed(
+                      String(entitlement.usage.aiVisionCount ?? 0),
+                    )}
+                    size="sm"
+                  />
+                </span>
+              </li>
+            ) : null}
           </ul>
         </section>
 

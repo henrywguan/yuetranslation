@@ -29,6 +29,8 @@ export type Entitlement = {
     cameraSeconds?: number
     cameraTranslateCount?: number
     docsPages?: number
+    /** Multimodal LLM OCR fallback calls (view-only meter). */
+    aiVisionCount?: number
   }
   remaining: {
     liveSeconds: number

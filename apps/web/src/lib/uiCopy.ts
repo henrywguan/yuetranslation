@@ -324,6 +324,12 @@ export const ui = {
   accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },
   accountLive: { en: 'Live mic', zh: '即時咪', jp: 'zik1 si4 mai1' },
   accountVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },
+  accountAiVision: { en: 'AI vision', zh: 'AI 識字', jp: 'AI sik1 zi6' },
+  accountAiVisionUsed: (n: string): Bi => ({
+    en: `${n} AI reads`,
+    zh: `${n} 次 AI 識字`,
+    jp: `${n} ci3 AI sik1 zi6`,
+  }),
   accountBadgeDisplay: {
     en: 'Badge shows',
     zh: '角標顯示',
