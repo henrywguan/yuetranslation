@@ -539,6 +539,11 @@ export function AdminPage() {
                     </button>
                   </th>
                   <th>
+                    <button type="button" className="admin-sort" onClick={() => onSort('aiVisionCount')}>
+                      AI vision{sort === 'aiVisionCount' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                  <th>
                     <button type="button" className="admin-sort" onClick={() => onSort('docsPages')}>
                       Docs{sort === 'docsPages' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
                     </button>
@@ -637,9 +642,9 @@ export function AdminPage() {
                       {u.cameraTranslateCount > 0 ? (
                         <span className="admin-sub"> · {u.cameraTranslateCount} scan{u.cameraTranslateCount === 1 ? '' : 's'}</span>
                       ) : null}
-                      {(u.aiVisionCount ?? 0) > 0 ? (
-                        <span className="admin-sub"> · {u.aiVisionCount} AI</span>
-                      ) : null}
+                    </td>
+                    <td title="Multimodal LLM OCR fallbacks (view-only; no hard cap)">
+                      {(u.aiVisionCount ?? 0).toLocaleString()}
                     </td>
                     <td
                       title={
@@ -688,7 +693,7 @@ export function AdminPage() {
                 ))}
                 {!users.length && !busy ? (
                   <tr>
-                    <td colSpan={9} className="admin-muted">
+                    <td colSpan={10} className="admin-muted">
                       No users match these filters.
                     </td>
                   </tr>
