@@ -50,6 +50,9 @@ function getSupabase(): SupabaseClient | null {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        // PKCE puts ?code= in the query string so app hash routes (#/app) cannot
+        // wipe OAuth tokens the way implicit #access_token fragments can.
+        flowType: 'pkce',
       },
     })
   }
@@ -143,11 +146,12 @@ function oauthRedirectUrl(): string {
 }
 
 /** True when this page load is a Supabase auth callback (OAuth or magic link). */
-function isAuthCallback(): boolean {
+export function isAuthCallback(): boolean {
   if (typeof window === 'undefined') return false
   const q = new URLSearchParams(window.location.search)
   if (q.has('code') || (q.has('error') && q.has('error_description'))) return true
   const hash = window.location.hash.replace(/^#/, '')
+  // App routes are `#/app` etc. — never treat those as OAuth fragments.
   if (hash.startsWith('/')) return false
   const hp = new URLSearchParams(hash)
   return hp.has('access_token') || hp.has('refresh_token') || hp.has('error')

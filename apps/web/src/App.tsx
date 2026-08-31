@@ -1,7 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { BugReportModal } from './components/BugReportModal'
-import { bootstrapAuthSession, consumeAuthScreenDeepLink } from './lib/auth'
+import {
+  bootstrapAuthSession,
+  consumeAuthScreenDeepLink,
+  isAuthCallback,
+} from './lib/auth'
 import { isDisplayStandalone } from './lib/pwaInstall'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
@@ -23,14 +27,12 @@ export default function App() {
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
 
   useEffect(() => {
-    // Installed Home Screen / PWA icons should open the translator, not marketing home.
-    if (isDisplayStandalone() && !hashPath()) {
-      navigate('app')
-    }
-  }, [])
-
-  useEffect(() => {
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
+      // After OAuth is consumed — never rewrite `#access_token=...` to `#/app` first
+      // (that race signed users back into the app without a session).
+      if (isDisplayStandalone() && !hashPath() && !isAuthCallback()) {
+        navigate('app')
+      }
       consumeAuthScreenDeepLink()
       setReady(true)
     })
