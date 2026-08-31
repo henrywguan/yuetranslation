@@ -195,9 +195,11 @@ export function PlanChip() {
     layout()
     const raf = window.requestAnimationFrame(layout)
     const hub = hubRef.current
-    const ro =
-      hub && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => layout()) : null
-    ro?.observe(hub)
+    let ro: ResizeObserver | null = null
+    if (hub && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => layout())
+      ro.observe(hub)
+    }
     window.addEventListener('resize', layout)
     window.addEventListener('scroll', layout, true)
     return () => {
