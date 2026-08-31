@@ -101,6 +101,6 @@ Pro/Max: `ttsUnlimited: true` and `limits.tts_chars: 0`. Max: `cameraUnlimited` 
 | `POST /docs/segments` | `allowed.docs` — PDF text batch; no page bill |
 | `POST /docs/commit` | signed-in docs — bill PDF pages after success |
 
-Usage writes go through `increment_usage` (migrations `003` … `008`) so concurrent counters do not overwrite each other. The web client flushes live seconds when a mic session ends.
+Usage writes go through `increment_usage` (migrations `003` … `010`) so concurrent counters do not overwrite each other. The web client flushes live seconds when a mic session ends. `ai_vision_count` tracks multimodal LLM OCR fallbacks (view-only; no hard cap).
 
 Admin: [admin.md](./admin.md). Stripe Checkout enables **promotion codes** (`allow_promotion_codes` in `apps/api/src/billing.ts`).
