@@ -406,6 +406,62 @@
   border-color: color-mix(in srgb, var(--jade) 40%, transparent);
 }
 
+.account-hub-voice-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.account-hub-voice-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.account-hub-voice-lang {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.account-hub-select {
+  width: 100%;
+  min-height: 38px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-bright, var(--ink));
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.account-hub-select:disabled {
+  opacity: 0.65;
+}
+
+.account-hub-voice-preview {
+  min-height: 38px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--jade) 12%, transparent);
+  color: var(--ink-bright, var(--ink));
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.account-hub-voice-preview:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .account-hub-actions {
   display: flex;
   flex-direction: column;

@@ -2,6 +2,12 @@ import { env, isAdminEmail } from './env.js'
 import type { AuthContext } from './auth.js'
 import { getProfile, supabaseConfigured } from './supabase.js'
 import { emptyUsage, getUsage } from './usage.js'
+import {
+  DEFAULT_EN_VOICE,
+  DEFAULT_YUE_VOICE,
+  resolveEnVoice,
+  resolveYueVoice,
+} from './ttsVoices.js'
 
 export type Entitlement = {
   loggedIn: boolean
@@ -58,6 +64,11 @@ export type Entitlement = {
     docs: boolean
   }
   reason: string | null
+  /** Synced TTS voice preferences (Azure Neural ids). */
+  prefs: {
+    ttsVoiceYue: string
+    ttsVoiceEn: string
+  }
 }
 
 type PlanKey = 'guest' | 'free' | 'pro' | 'max'
@@ -177,12 +188,22 @@ function buildSnapshot(
   plan: PlanKey,
   loggedIn: boolean,
   usage: Entitlement['usage'],
-  opts: { isAdmin?: boolean; disabled?: boolean; role?: 'admin' | 'family' | null } = {},
+  opts: {
+    isAdmin?: boolean
+    disabled?: boolean
+    role?: 'admin' | 'family' | null
+    ttsVoiceYue?: string | null
+    ttsVoiceEn?: string | null
+  } = {},
 ): Entitlement {
   const isAdmin = Boolean(opts.isAdmin)
   const role = opts.role ?? null
   const disabled = Boolean(opts.disabled)
   const requireLogin = env.requireLogin
+  const prefs = {
+    ttsVoiceYue: resolveYueVoice(opts.ttsVoiceYue),
+    ttsVoiceEn: resolveEnVoice(opts.ttsVoiceEn),
+  }
 
   if (disabled && loggedIn) {
     const limits = limitsForPlan('free')
@@ -218,6 +239,7 @@ function buildSnapshot(
         docs: false,
       },
       reason: 'account_disabled',
+      prefs,
     }
   }
 
@@ -251,6 +273,7 @@ function buildSnapshot(
         docs: false,
       },
       reason: 'login_required',
+      prefs: { ttsVoiceYue: DEFAULT_YUE_VOICE, ttsVoiceEn: DEFAULT_EN_VOICE },
     }
   }
 
@@ -308,6 +331,7 @@ function buildSnapshot(
       docs: canDocs,
     },
     reason,
+    prefs,
   }
 }
 
@@ -359,6 +383,7 @@ function localEntitlement(): Entitlement {
         docs: true,
       },
       reason: null,
+      prefs: { ttsVoiceYue: DEFAULT_YUE_VOICE, ttsVoiceEn: DEFAULT_EN_VOICE },
     }
   }
 
@@ -384,5 +409,7 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
     isAdmin: isAdminEmail(auth.email) || role === 'admin',
     role,
     disabled: Boolean(profile?.disabled),
+    ttsVoiceYue: profile?.tts_voice_yue,
+    ttsVoiceEn: profile?.tts_voice_en,
   })
 }

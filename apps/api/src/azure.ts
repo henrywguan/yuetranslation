@@ -1,4 +1,5 @@
 import { env } from './env.js'
+import { resolveSpeakVoice } from './ttsVoices.js'
 
 export async function issueSpeechToken() {
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
@@ -18,13 +19,6 @@ export async function issueSpeechToken() {
   }
 }
 
-const VOICES: Record<string, { voice: string; xmlLang: string }> = {
-  'zh-HK': { voice: 'zh-HK-HiuMaanNeural', xmlLang: 'zh-HK' },
-  yue: { voice: 'zh-HK-HiuMaanNeural', xmlLang: 'zh-HK' },
-  en: { voice: 'en-US-JennyNeural', xmlLang: 'en-US' },
-  'en-US': { voice: 'en-US-JennyNeural', xmlLang: 'en-US' },
-}
-
 function escapeXml(s: string) {
   return s
     .replace(/&/g, '&amp;')
@@ -34,9 +28,16 @@ function escapeXml(s: string) {
     .replace(/'/g, '&apos;')
 }
 
-export async function synthesize(text: string, lang: string): Promise<Buffer> {
+export type SynthesizeOpts = {
+  /** Explicit allowlisted voice id (preview / override). */
+  voice?: string | null
+  preferredYue?: string | null
+  preferredEn?: string | null
+}
+
+export async function synthesize(text: string, lang: string, opts: SynthesizeOpts = {}): Promise<Buffer> {
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
-  const pick = VOICES[lang] || VOICES['zh-HK']
+  const pick = resolveSpeakVoice(lang, opts.preferredYue, opts.preferredEn, opts.voice)
   const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${escapeXml(text)}</voice></speak>`
   const url = `https://${env.azureSpeechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`
   const res = await fetch(url, {

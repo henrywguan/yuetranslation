@@ -1,5 +1,6 @@
 import { fetchTtsAudio } from './api'
 import type { Lang } from './types'
+import { readLocalEnVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
@@ -146,13 +147,18 @@ function browserSpeak(text: string, lang: Lang, g: number) {
   })
 }
 
-export async function speakText(text: string, lang: Lang) {
+function preferredVoiceFor(lang: Lang, override?: string | null): string | null {
+  if (override) return override
+  return lang === 'en' ? readLocalEnVoice() : readLocalYueVoice()
+}
+
+export async function speakText(text: string, lang: Lang, voice?: string | null) {
   const trimmed = text.trim()
   if (!trimmed) return
   stopSpeaking()
   const g = gen
   playing = true
-  const blob = await fetchTtsAudio(trimmed, lang)
+  const blob = await fetchTtsAudio(trimmed, lang, preferredVoiceFor(lang, voice))
   if (g !== gen) return
   if (blob && blob.size > 0) {
     const objectUrl = URL.createObjectURL(blob)
@@ -273,7 +279,9 @@ export async function speakTextSequence(
   const maxMs = options.maxMsPerItem ?? 950
   setTtsPlaybackRate(options.rate ?? 1.15)
 
-  const blobs = await Promise.all(items.map((text) => fetchTtsAudio(text, lang)))
+  const blobs = await Promise.all(
+    items.map((text) => fetchTtsAudio(text, lang, preferredVoiceFor(lang))),
+  )
   if (id !== sequenceId) return
 
   for (let i = 0; i < items.length; i++) {
