@@ -421,9 +421,9 @@ export const ui = {
     jp: 'gwaan1 bai3 zyu2 waa2 min6 tai4 si6',
   },
   iosHomescreenStep1: {
-    en: 'Tap Share in the Safari toolbar (box with an arrow up).',
-    zh: '喺 Safari 工具列撳「分享」（方框向上箭嘴）。',
-    jp: 'hai2 Safari gung1 geoi6 lit6 gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
+    en: 'Open the translator (not the homepage), then tap Share in Safari (box with an arrow up).',
+    zh: '先打開翻譯器（唔好喺主頁），再喺 Safari 撳「分享」（方框向上箭嘴）。',
+    jp: 'sin1 daa2 hoi1 faan1 jik6 hei3 (m4 hou2 hai2 zyu2 jip6), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
   },
   iosHomescreenStep2: {
     en: 'Select Add to Home Screen.',
