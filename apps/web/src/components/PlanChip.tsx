@@ -194,14 +194,21 @@ export function PlanChip() {
     }
     layout()
     const raf = window.requestAnimationFrame(layout)
+    const hub = hubRef.current
+    let ro: ResizeObserver | null = null
+    if (hub && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => layout())
+      ro.observe(hub)
+    }
     window.addEventListener('resize', layout)
     window.addEventListener('scroll', layout, true)
     return () => {
       window.cancelAnimationFrame(raf)
+      ro?.disconnect()
       window.removeEventListener('resize', layout)
       window.removeEventListener('scroll', layout, true)
     }
-  }, [open, badgeMetric])
+  }, [open, badgeMetric, entitlement?.usage?.aiVisionCount, enVoice, yueVoice])
 
   useEffect(() => {
     if (!open) return

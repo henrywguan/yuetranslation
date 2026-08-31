@@ -230,6 +230,7 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
       'translateCount',
       'cameraSeconds',
       'docsPages',
+      'aiVisionCount',
     ]
     const sortKey = allowedSort.includes(sort) ? sort : 'createdAt'
 
@@ -270,6 +271,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'translateCount',
       'cameraSeconds',
       'cameraTranslateCount',
+      'aiVisionCount',
       'docsPages',
       'liveLimitSeconds',
       'ttsLimitChars',
@@ -297,6 +299,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.translateCount,
           r.cameraSeconds,
           r.cameraTranslateCount,
+          r.aiVisionCount,
           r.docsPages,
           r.liveLimitSeconds,
           r.ttsLimitChars,

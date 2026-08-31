@@ -165,7 +165,8 @@
 .account-hub {
   display: flex;
   flex-direction: column;
-  max-height: none;
+  /* Tall hubs (usage + voice prefs + actions) must stay on-screen and scroll. */
+  max-height: min(calc(100dvh - 24px), 720px);
   border-radius: 18px;
   border: 1px solid var(--glass-border);
   background:
@@ -258,10 +259,13 @@
 .account-hub-body {
   display: flex;
   flex-direction: column;
-  flex: none;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 14px;
   padding: 12px 14px max(14px, env(safe-area-inset-bottom, 0px));
-  overflow: visible;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .account-hub-section {
@@ -689,16 +693,8 @@
   }
 
   .account-hub {
-    max-height: min(78vh, 640px);
+    max-height: min(78dvh, 640px);
     border-radius: 22px 22px 18px 18px;
-  }
-
-  .account-hub-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
   }
 }
 
