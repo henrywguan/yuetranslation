@@ -2,9 +2,10 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { BugReportModal } from './components/BugReportModal'
 import { bootstrapAuthSession, consumeAuthScreenDeepLink } from './lib/auth'
+import { isDisplayStandalone } from './lib/pwaInstall'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
-import { useRoute } from './lib/useHashRoute'
+import { hashPath, navigate, useRoute } from './lib/useHashRoute'
 
 const Landing = lazy(() => import('./landing/Landing').then((m) => ({ default: m.Landing })))
 const PricingPage = lazy(() =>
@@ -20,6 +21,13 @@ export default function App() {
   const route = useRoute()
   const [ready, setReady] = useState(false)
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
+
+  useEffect(() => {
+    // Installed Home Screen / PWA icons should open the translator, not marketing home.
+    if (isDisplayStandalone() && !hashPath()) {
+      navigate('app')
+    }
+  }, [])
 
   useEffect(() => {
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {

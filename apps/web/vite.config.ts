@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const base = process.env.VITE_BASE_PATH || '/'
-const appBuild = '2026-08-21-apple-touch-favicon'
+const appBuild = '2026-08-31-pwa-start-app'
 
 export default defineConfig({
   base,
@@ -22,7 +22,8 @@ export default defineConfig({
         theme_color: '#07131f',
         background_color: '#07131f',
         display: 'standalone',
-        start_url: base,
+        // Safari / installed PWA should open the translator, not the marketing homepage.
+        start_url: `${base.replace(/\/?$/, '/')}#/app`,
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
