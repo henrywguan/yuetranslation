@@ -93,6 +93,7 @@ npm run test:translate   # EN↔粵 bot — needs servers + may bill model (ask 
 | Doc | Topic |
 | --- | --- |
 | [docs/camera.md](docs/camera.md) | Cam AR · Upload · Documents |
+| [docs/cam-accuracy-fixtures.md](docs/cam-accuracy-fixtures.md) | Test documents & signs for Cam accuracy |
 | [docs/entitlements.md](docs/entitlements.md) | Plans, metering, gates (canonical) |
 | [docs/admin.md](docs/admin.md) | Admin panel, Resend, bug reports |
 | [docs/design-system.md](docs/design-system.md) | Brand tokens, themes, orbital marketing |

@@ -81,3 +81,7 @@ OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are 
 - `YUE_FREE_DOCS_PAGES` (default 40)
 - `YUE_PRO_DOCS_PAGES` (default 400)
 - `AZURE_VISION_KEY` / `AZURE_VISION_ENDPOINT`
+
+## Accuracy fixtures / 準確度測試素材
+
+Offline documents + sign images: [cam-accuracy-fixtures.md](./cam-accuracy-fixtures.md) · `fixtures/cam-accuracy/`.

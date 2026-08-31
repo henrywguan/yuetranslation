@@ -1,0 +1,798 @@
+{
+  "pass": "1",
+  "startedAt": "2026-08-30T10:02:37.135Z",
+  "health": {
+    "openai": true,
+    "vision": false,
+    "demo": false,
+    "allowed": {
+      "live": true,
+      "autoSpeak": true,
+      "textTranslate": true,
+      "tts": true,
+      "camera": true,
+      "docs": true
+    }
+  },
+  "documents": [
+    {
+      "id": "01-en-reference-letter",
+      "file": "documents/01-en-reference-letter.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Henry Guan | Character Reference | \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 | \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 | \u0000\u0000 \u0000\u0000\u0000\u0000 \u0000\u0000 \u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000 \u0000 \u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000 | \u0000\u0000 \u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000 \u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000",
+      "translationPreview": "亨利關 | 角色參考 | \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 | \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 | \u0000\u0000 \u0000\u0000\u0000\u0000 \u0000\u0000 \u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000 \u0000 \u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000 | \u0000\u0000 \u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000 \u0000 \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0000",
+      "hintScore": {
+        "hit": 0,
+        "total": 3,
+        "missing": [
+          "姓名／稱謂保留或音譯",
+          "品格證明／推薦信語域",
+          "第 2 頁標題對齊"
+        ]
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 10,
+          "items": 10
+        },
+        {
+          "page": 2,
+          "lines": 9,
+          "items": 9
+        }
+      ]
+    },
+    {
+      "id": "02-en-cafe-menu",
+      "file": "documents/02-en-cafe-menu.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Harbor Tea House | Menu | Milk tea HK$ 28 | Lemon tea HK$ 26 | Pineapple bun HK$ 18 | Egg tart HK$ 16",
+      "translationPreview": "海港茶樓 | 餐牌 | 奶茶廿八蚊 | 檸檬茶廿六蚊 | 菠蘿包十八蚊 | 蛋撻十六蚊",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 9,
+          "items": 15
+        }
+      ]
+    },
+    {
+      "id": "03-zh-library-notice",
+      "file": "documents/03-zh-library-notice.pdf",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "注意 | 請勿飲食 | 請保持安靜 | 如有查詢請聯絡職員 | 緊急出口 \u0000\u0000",
+      "translationPreview": "Watch out! | Please do not eat or drink here. | Please keep quiet. | If you have any inquiries, please contact the staff. | Emergency exit",
+      "hintScore": {
+        "hit": 1,
+        "total": 4,
+        "missing": [
+          "Notice",
+          "No food or drink",
+          "Keep quiet"
+        ]
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 5,
+          "items": 5
+        }
+      ]
+    },
+    {
+      "id": "04-en-zh-travel-tips",
+      "file": "documents/04-en-zh-travel-tips.pdf",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "pdf-text-layer+segments",
+      "sourcePreview": "Hong Kong Travel Tips | Buy an Octopus card for MTR, buses, and convenience stores. Keep to the | right on escalators. | 港鐵 \u0000 巴士 \u0000 便利店 | 請勿阻擋車門 | Useful phrases: Where is the bathroom? · How much is this? · One ticket to",
+      "translationPreview": "香港旅遊貼士 | 買張八達通，搭地鐵、巴士同去便利店都用得㗎。記住要…… | 喺電梯上面靠右企。 | 港鐵、巴士、便利店 | 唔好阻住車門呀 | 實用短句：廁所喺邊？· 呢個幾多錢？· 一張飛去",
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "MTR",
+          "Do not block the doors"
+        ]
+      },
+      "notes": [],
+      "extractPages": [
+        {
+          "page": 1,
+          "lines": 7,
+          "items": 7
+        }
+      ]
+    },
+    {
+      "id": "05-en-apartment-notice",
+      "file": "documents/05-en-apartment-notice.txt",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "大廈通告\n\n星期六朝早九點到晏晝兩點會暫停供水，因為要做維修。請大家預先儲定足夠嘅水。唔好意思，造成不便。\n\n管理處",
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "06-zh-shop-hours",
+      "file": "documents/06-zh-shop-hours.txt",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "Business hours: Monday to Friday 11:00–21:00, Saturday and Sunday 10:00–22:00. Open as usual on public holidays. Welcome!",
+      "hintScore": {
+        "hit": 3,
+        "total": 3,
+        "missing": []
+      },
+      "notes": []
+    },
+    {
+      "id": "07-en-price-list",
+      "file": "documents/07-en-price-list.csv",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "項目，價錢（港幣）\n樽裝水，10\nSIM卡，88\n洗衣袋，35\n遮，45",
+      "hintScore": {
+        "hit": 1,
+        "total": 2,
+        "missing": [
+          "電話卡"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "08-en-invoice-docx",
+      "file": "documents/08-en-invoice.docx",
+      "from": "en",
+      "to": "yue",
+      "status": 200,
+      "mode": "docs-translate",
+      "sourcePreview": "",
+      "translationPreview": "engine=docx pages=1 segments=1 | 發票 | 翻譯服務 | 總共要畀幾多錢",
+      "hintScore": {
+        "hit": 2,
+        "total": 3,
+        "missing": [
+          "應付總額"
+        ]
+      },
+      "notes": []
+    },
+    {
+      "id": "09-scanned-zh-menu",
+      "file": "documents/09-scanned-zh-menu.pdf",
+      "from": "yue",
+      "to": "en",
+      "status": 200,
+      "mode": "scanned-pdf",
+      "sourcePreview": "",
+      "translationPreview": "Today's special | 乾炒牛河 | Iced lemon tea",
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "Today’s special",
+          "Beef chow fun"
+        ]
+      },
+      "notes": [
+        "SKIP Vision not configured — cannot OCR scanned PDF",
+        "MT-only fallback using sourceHighlights"
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "id": "sign-01-mtr-exit",
+      "file": "signs/01-mtr-exit-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "出口",
+          "translation": "Exit",
+          "status": 200
+        },
+        {
+          "source": "A2",
+          "translation": "A2",
+          "status": 200
+        },
+        {
+          "source": "中環",
+          "translation": "Central",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-02-no-entry",
+      "file": "signs/02-no-entry-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "不准進入",
+          "translation": "You're not allowed to enter.",
+          "status": 200
+        },
+        {
+          "source": "職員專用",
+          "translation": "Staff only",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 2,
+        "missing": [
+          "No entry"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "file": "signs/03-wet-floor-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "CAUTION",
+          "translation": "小心",
+          "status": 200
+        },
+        {
+          "source": "WET FLOOR",
+          "translation": "地濕，小心跣親",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 2,
+        "missing": [
+          "地面濕滑"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "file": "signs/04-restaurant-board-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "今日特餐",
+          "translation": "Today's special",
+          "status": 200
+        },
+        {
+          "source": "乾炒牛河",
+          "translation": "",
+          "status": 200
+        },
+        {
+          "source": "凍檸茶",
+          "translation": "Iced lemon tea",
+          "status": 200
+        },
+        {
+          "source": "$48",
+          "translation": "$48",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "Today’s special",
+          "Dry-fried beef hor fun"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "file": "signs/05-opening-hours-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "營業時間",
+          "translation": "Business hours",
+          "status": 200
+        },
+        {
+          "source": "每日 10:00–22:00",
+          "translation": "Every day from 10:00 AM to 10:00 PM",
+          "status": 200
+        },
+        {
+          "source": "逢星期三休息",
+          "translation": "Closed every Wednesday.",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "Daily",
+          "Closed on Wednesday"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "file": "signs/06-pharmacy-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "PRESCRIPTION PICKUP",
+          "translation": "攞藥。",
+          "status": 200
+        },
+        {
+          "source": "Please take a number",
+          "translation": "攞個冧把啦",
+          "status": 200
+        },
+        {
+          "source": "Queue here",
+          "translation": "喺呢度排隊。",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 0,
+        "total": 3,
+        "missing": [
+          "處方取藥",
+          "請抽籌",
+          "請在此排隊"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "file": "signs/07-street-bilingual.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "德輔道中",
+          "translation": "德輔道中",
+          "status": 200
+        },
+        {
+          "source": "DES VOEUX ROAD CENTRAL",
+          "translation": "德輔道中",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 0,
+        "total": 2,
+        "missing": [
+          "keep both names",
+          "Des Voeux Road Central"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "file": "signs/08-construction-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "前方施工",
+          "translation": "Roadwork ahead",
+          "status": 200
+        },
+        {
+          "source": "請改道",
+          "translation": "Please take a detour.",
+          "status": 200
+        },
+        {
+          "source": "小心車輛",
+          "translation": "Watch out for the cars.",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 3,
+        "missing": [
+          "Detour",
+          "Watch for vehicles"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "file": "signs/09-hotel-lobby-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "Check-in",
+          "translation": "辦理登機手續",
+          "status": 200
+        },
+        {
+          "source": "Concierge",
+          "translation": "禮賓部",
+          "status": 200
+        },
+        {
+          "source": "Luggage storage",
+          "translation": "行李寄存",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 3,
+        "missing": [
+          "入住"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "file": "signs/10-dim-sum-menu-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "蝦餃",
+          "translation": "",
+          "status": 200
+        },
+        {
+          "source": "燒賣",
+          "translation": "",
+          "status": 200
+        },
+        {
+          "source": "叉燒包",
+          "translation": "",
+          "status": 200
+        },
+        {
+          "source": "腸粉",
+          "translation": "rice noodle rolls",
+          "status": 200
+        },
+        {
+          "source": "流沙包",
+          "translation": "molten custard bun",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 0,
+        "total": 5,
+        "missing": [
+          "Har gow",
+          "Siu mai",
+          "BBQ pork bun",
+          "Rice noodle roll",
+          "Lava bun"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "file": "signs/11-angled-no-smoking-zh.png",
+      "from": "yue",
+      "to": "en",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "嚴禁吸煙",
+          "translation": "No smoking strictly prohibited",
+          "status": 200
+        },
+        {
+          "source": "違者罰款",
+          "translation": "Offenders will be fined.",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 1,
+        "total": 2,
+        "missing": [
+          "Fine for violations"
+        ]
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "file": "signs/12-low-contrast-en.png",
+      "from": "en",
+      "to": "yue",
+      "ocr": null,
+      "translations": [
+        {
+          "source": "Push",
+          "translation": "推",
+          "status": 200
+        },
+        {
+          "source": "Pull",
+          "translation": "拉",
+          "status": 200
+        }
+      ],
+      "hintScore": {
+        "hit": 2,
+        "total": 2,
+        "missing": []
+      },
+      "notes": [
+        "OCR skipped (no Vision) — MT-only on sourceText"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "01-en-reference-letter",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "姓名／稱謂保留或音譯",
+        "品格證明／推薦信語域",
+        "第 2 頁標題對齊"
+      ]
+    },
+    {
+      "id": "03-zh-library-notice",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Notice",
+        "No food or drink",
+        "Keep quiet"
+      ]
+    },
+    {
+      "id": "04-en-zh-travel-tips",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "MTR",
+        "Do not block the doors"
+      ]
+    },
+    {
+      "id": "07-en-price-list",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "電話卡"
+      ]
+    },
+    {
+      "id": "08-en-invoice-docx",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "應付總額"
+      ]
+    },
+    {
+      "id": "09-scanned-zh-menu",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-01-mtr-exit",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-02-no-entry",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-02-no-entry",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "No entry"
+      ]
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "地面濕滑"
+      ]
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Today’s special",
+        "Dry-fried beef hor fun"
+      ]
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Daily",
+        "Closed on Wednesday"
+      ]
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "處方取藥",
+        "請抽籌",
+        "請在此排隊"
+      ]
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "keep both names",
+        "Des Voeux Road Central"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Detour",
+        "Watch for vehicles"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "入住"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Har gow",
+        "Siu mai",
+        "BBQ pork bun",
+        "Rice noodle roll",
+        "Lava bun"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "kind": "vision-missing"
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Fine for violations"
+      ]
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "kind": "vision-missing"
+    }
+  ],
+  "finishedAt": "2026-08-30T10:03:39.935Z"
+}

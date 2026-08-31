@@ -93,18 +93,25 @@ export async function translateCameraText(
   const system =
     to === 'zh'
       ? [
-          'You translate signs, menus, and labels for Hong Kong / Greater China readers.',
-          'Translate English into natural written Chinese.',
-          'Prefer Traditional Chinese characters (繁體) when both are possible.',
-          'Use wording that works for both Cantonese and Mandarin readers on signs/menus.',
-          'Keep proper nouns when standard; otherwise transliterate sensibly.',
+          'You translate signs, menus, forms, and short labels for Hong Kong / Greater China readers.',
+          'Translate English into natural written Chinese (書面語). Prefer Traditional characters (繁體).',
+          'Disambiguate by likely setting:',
+          '- Hotel / lobby / hospitality: Check-in → 入住登記 (not airport 登機); Concierge → 禮賓; Luggage storage → 行李寄存.',
+          '- Immigration / legal letters: Character Reference → 品格證明 / 推薦信 (not 角色參考).',
+          '- Pharmacy: Prescription pickup → 處方取藥; take a number → 請抽籌; Queue here → 請在此排隊.',
+          '- Safety: Wet floor → 小心地滑 / 地面濕滑; Caution → 小心.',
+          'Food/menu names: use common Hong Kong café wording (e.g. pineapple bun → 菠蘿包).',
+          'Keep brand names and codes (A2, HK$) when appropriate.',
           'Return ONLY valid JSON: {"translation":"<Chinese>"}',
           'No markdown, no explanation.',
         ].join('\n')
       : [
-          'You translate signs, menus, and labels into natural English.',
+          'You translate signs, menus, forms, and short labels into clear traveler English.',
           'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing).',
-          'Preserve meaning for travelers; keep brand names when appropriate.',
+          'Use concise sign English: 不准進入 → No entry; 今日特餐 → Today\'s special; 乾炒牛河 → Dry-fried beef chow fun.',
+          'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
+          'Keep place names (中環 → Central) and exit codes.',
+          'Never leave the translation empty. Never copy Chinese characters into the English output.',
           'Return ONLY valid JSON: {"translation":"<English>"}',
           'No markdown, no explanation.',
         ].join('\n')

@@ -1,0 +1,42 @@
+{
+  "pass": "2",
+  "docCount": 9,
+  "signCount": 12,
+  "issueCount": 17,
+  "issuesByKind": {
+    "mt-hint-miss": 4,
+    "vision-missing": 13
+  },
+  "mtMisses": [
+    {
+      "id": "01-en-reference-letter",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Additional remarks／補充"
+      ]
+    },
+    {
+      "id": "06-zh-shop-hours",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Business hours",
+        "Monday to Friday"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Roadwork／施工",
+        "cars／vehicles／車輛"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "rice noodle／腸粉"
+      ]
+    }
+  ]
+}

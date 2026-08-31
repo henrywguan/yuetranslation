@@ -1,7 +1,8 @@
 /**
  * Shared helpers for document translation jobs.
  */
-import { translate } from '../translate.js'
+import { translateCameraText } from '../translateCamera.js'
+import { hasHan } from '../canto/han.js'
 
 export type DocLang = 'en' | 'yue'
 
@@ -36,8 +37,15 @@ export async function translateSegments(
         continue
       }
       try {
-        const result = await translate({ text: src, from, to, includeAlternatives: false })
-        out[i] = (result.text || src).trim() || src
+        // Documents always use Cam written-Chinese (書面語), not Solo colloquial 粵.
+        const camFrom = from === 'en' ? 'en' : 'zh'
+        const camTo = to === 'en' ? 'en' : 'zh'
+        const result = await translateCameraText(src, camFrom, camTo)
+        const text = (result.text || '').trim()
+        // Reject obvious language echoes.
+        if (camTo === 'en' && hasHan(text)) out[i] = src
+        else if (camTo === 'zh' && text && !hasHan(text) && /[A-Za-z]/.test(src)) out[i] = src
+        else out[i] = text || src
       } catch {
         out[i] = src
       }

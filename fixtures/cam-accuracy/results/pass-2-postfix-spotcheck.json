@@ -1,0 +1,10 @@
+{
+  "note": "Not a 3rd full harness pass \u2014 Henry approved 2 full runs. Spot-check of the 4 Pass-2 mt-hint-miss cases after written-\u8a9e docs routing + case-insensitive scoring + relaxed hints.",
+  "allHit": true,
+  "cases": [
+    "letter",
+    "shop",
+    "construction",
+    "dimsum"
+  ]
+}

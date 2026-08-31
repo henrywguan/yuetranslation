@@ -355,6 +355,49 @@ export async function translate(input: unknown) {
 
   // 6) 粵→EN: never ship dictionary gloss dumps or source-language echo from the model path.
   if (looksLikeGlossDump(primary) || (from === 'yue' && hasHan(primary))) {
+    // One retry for short phrases (menus / labels) where the model often echoes Han.
+    if (client && text.trim().length <= 40) {
+      try {
+        const retry = await client.chat.completions.create({
+          model: env.openaiModel,
+          temperature: 0.1,
+          max_tokens: 200,
+          messages: [
+            {
+              role: 'system',
+              content: [
+                'Translate Cantonese / written Chinese into natural English.',
+                'Output English only — never repeat Chinese characters.',
+                'For food names use common English or Jyutping-aware menu terms (e.g. 蝦餃 → shrimp dumplings / har gow).',
+                'Return ONLY JSON: {"translation":"<English>","definition":""}',
+              ].join('\n'),
+            },
+            { role: 'user', content: text },
+          ],
+          response_format: { type: 'json_object' },
+          ...llmChatExtras(),
+        })
+        const rawRetry = retry.choices[0]?.message?.content?.trim() || ''
+        const parsedRetry = parsePayload(rawRetry, '', '', false)
+        if (parsedRetry.text && !hasHan(parsedRetry.text) && !looksLikeGlossDump(parsedRetry.text)) {
+          return withYueDefinitions(
+            {
+              text: parsedRetry.text,
+              definition: parsedRetry.definition || '',
+              alternatives: [],
+              engine,
+              from,
+              to,
+              stage,
+              meta: emptyMeta(['yue-echo-retried']),
+            },
+            text,
+          )
+        }
+      } catch {
+        // fall through to empty block
+      }
+    }
     return withYueDefinitions(
       {
         text: '',

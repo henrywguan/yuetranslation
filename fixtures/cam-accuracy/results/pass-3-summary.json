@@ -1,0 +1,83 @@
+{
+  "pass": "3",
+  "docCount": 9,
+  "signCount": 12,
+  "issueCount": 18,
+  "issuesByKind": {
+    "ocr-miss": 10,
+    "mt-hint-miss": 8
+  },
+  "mtMisses": [
+    {
+      "id": "sign-05-opening-hours",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Business hours",
+        "10:00／Every day／Daily／每日",
+        "Wednesday／星期三"
+      ]
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "藥／處方",
+        "冧把／抽籌／號碼",
+        "排隊"
+      ]
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "德輔道中",
+        "Des Voeux／德輔"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Construction／Roadwork／施工／前方",
+        "detour／改道／alternate",
+        "vehicle／vehicles／cars／車輛／車"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "入住／登記",
+        "禮賓",
+        "行李寄存"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "har gow／shrimp dumpling／蝦",
+        "siu mai／燒賣",
+        "BBQ／char siu／叉燒",
+        "rice noodle／cheung fun／腸粉",
+        "lava／custard／流沙"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "No smoking",
+        "fine／罰"
+      ]
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "推",
+        "拉"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "pass": "1",
+  "docCount": 9,
+  "signCount": 12,
+  "issueCount": 28,
+  "issuesByKind": {
+    "mt-hint-miss": 15,
+    "vision-missing": 13
+  },
+  "mtMisses": [
+    {
+      "id": "01-en-reference-letter",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "姓名／稱謂保留或音譯",
+        "品格證明／推薦信語域",
+        "第 2 頁標題對齊"
+      ]
+    },
+    {
+      "id": "03-zh-library-notice",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Notice",
+        "No food or drink",
+        "Keep quiet"
+      ]
+    },
+    {
+      "id": "04-en-zh-travel-tips",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "MTR",
+        "Do not block the doors"
+      ]
+    },
+    {
+      "id": "07-en-price-list",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "電話卡"
+      ]
+    },
+    {
+      "id": "08-en-invoice-docx",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "應付總額"
+      ]
+    },
+    {
+      "id": "sign-02-no-entry",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "No entry"
+      ]
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "地面濕滑"
+      ]
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Today’s special",
+        "Dry-fried beef hor fun"
+      ]
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Daily",
+        "Closed on Wednesday"
+      ]
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "處方取藥",
+        "請抽籌",
+        "請在此排隊"
+      ]
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "keep both names",
+        "Des Voeux Road Central"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Detour",
+        "Watch for vehicles"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "入住"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Har gow",
+        "Siu mai",
+        "BBQ pork bun",
+        "Rice noodle roll",
+        "Lava bun"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "kind": "mt-hint-miss",
+      "missing": [
+        "Fine for violations"
+      ]
+    }
+  ]
+}

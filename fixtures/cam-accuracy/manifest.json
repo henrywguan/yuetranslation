@@ -1,0 +1,382 @@
+{
+  "version": 1,
+  "purpose": "Offline fixtures for Cam AR / Upload / Documents accuracy. Do not commit live API outputs. Score OCR+MT separately.",
+  "howToTest": {
+    "documents": "Cam → Documents → upload each file under fixtures/cam-accuracy/documents/",
+    "signs": "Cam → Upload image → open each PNG under fixtures/cam-accuracy/signs/ → Auto-detect or draw boxes → Translate",
+    "ar": "Display a sign PNG fullscreen on a second device / print it, then Cam → AR → shutter",
+    "scoring": "Compare OCR text to sourceText (character/word error). Compare translation to expectedHints (meaning, not verbatim). Prefer Traditional Chinese for EN→zh output."
+  },
+  "documents": [
+    {
+      "id": "01-en-reference-letter",
+      "file": "documents/01-en-reference-letter.pdf",
+      "path": "documents",
+      "direction": "en→zh",
+      "challenges": [
+        "multi-page",
+        "heading size",
+        "proper nouns",
+        "formal letter"
+      ],
+      "sourceHighlights": [
+        "Henry Guan",
+        "Character Reference",
+        "Emmanuel Maldonado",
+        "Additional remarks"
+      ],
+      "expectedHints": [
+        "亨利",
+        "品格證明／推薦信／品行證明",
+        "Additional remarks／補充／備註"
+      ]
+    },
+    {
+      "id": "02-en-cafe-menu",
+      "file": "documents/02-en-cafe-menu.pdf",
+      "path": "documents",
+      "direction": "en→zh",
+      "challenges": [
+        "short menu lines",
+        "prices",
+        "food names"
+      ],
+      "sourceHighlights": [
+        "Harbor Tea House",
+        "Milk tea",
+        "Pineapple bun",
+        "Wonton noodles"
+      ],
+      "expectedHints": [
+        "奶茶",
+        "菠蘿包",
+        "雲吞麵／馄饨面→宜用繁體餐廳用詞"
+      ]
+    },
+    {
+      "id": "03-zh-library-notice",
+      "file": "documents/03-zh-library-notice.pdf",
+      "path": "documents",
+      "direction": "zh→en",
+      "challenges": [
+        "short CJK lines",
+        "sign tone"
+      ],
+      "sourceHighlights": [
+        "注意",
+        "請勿飲食",
+        "請保持安靜",
+        "緊急出口"
+      ],
+      "expectedHints": [
+        "Notice／Watch out／Attention",
+        "No food／do not eat",
+        "Keep quiet／quiet",
+        "Emergency exit"
+      ]
+    },
+    {
+      "id": "04-en-zh-travel-tips",
+      "file": "documents/04-en-zh-travel-tips.pdf",
+      "path": "documents",
+      "direction": "mixed — set From/To per pass",
+      "challenges": [
+        "bilingual page",
+        "HK place terms"
+      ],
+      "sourceHighlights": [
+        "Octopus card",
+        "港鐵",
+        "請勿阻擋車門"
+      ],
+      "expectedHints": [
+        "八達通",
+        "港鐵／MTR／地鐵",
+        "車門／block the door"
+      ]
+    },
+    {
+      "id": "05-en-apartment-notice",
+      "file": "documents/05-en-apartment-notice.txt",
+      "path": "documents",
+      "direction": "en→zh",
+      "challenges": [
+        "plain text",
+        "building notice"
+      ],
+      "sourceHighlights": [
+        "Water supply will be suspended",
+        "Management Office"
+      ],
+      "expectedHints": [
+        "暫停供水",
+        "管理處"
+      ]
+    },
+    {
+      "id": "06-zh-shop-hours",
+      "file": "documents/06-zh-shop-hours.txt",
+      "path": "documents",
+      "direction": "zh→en",
+      "challenges": [
+        "hours format",
+        "full-width spaces"
+      ],
+      "sourceHighlights": [
+        "營業時間",
+        "星期一至五",
+        "歡迎光臨"
+      ],
+      "expectedHints": [
+        "Business hours／Opening Hours／營業時間",
+        "Monday to Friday／Mon–Fri／Mon-Fri／星期一",
+        "Welcome"
+      ]
+    },
+    {
+      "id": "07-en-price-list",
+      "file": "documents/07-en-price-list.csv",
+      "path": "documents",
+      "direction": "en→zh",
+      "challenges": [
+        "csv / tabular"
+      ],
+      "sourceHighlights": [
+        "Bottled water",
+        "SIM card"
+      ],
+      "expectedHints": [
+        "樽裝水／瓶裝水",
+        "SIM／電話卡"
+      ]
+    },
+    {
+      "id": "08-en-invoice-docx",
+      "file": "documents/08-en-invoice.docx",
+      "path": "documents",
+      "direction": "en→zh",
+      "challenges": [
+        "docx layout-keep"
+      ],
+      "sourceHighlights": [
+        "Invoice",
+        "Translation services",
+        "Total due"
+      ],
+      "expectedHints": [
+        "發票",
+        "翻譯服務",
+        "應付／總共／Total"
+      ]
+    },
+    {
+      "id": "09-scanned-zh-menu",
+      "file": "documents/09-scanned-zh-menu.pdf",
+      "path": "documents",
+      "direction": "zh→en",
+      "challenges": [
+        "image-only PDF",
+        "Vision OCR path",
+        "no text layer"
+      ],
+      "sourceHighlights": [
+        "今日特餐／特餐",
+        "乾炒牛河",
+        "菠蘿油／菠萝油"
+      ],
+      "expectedHints": [
+        "Today's special／Today’s Special",
+        "Beef／chow fun／河",
+        "Iced lemon tea／凍檸茶"
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "id": "sign-01-mtr-exit",
+      "file": "signs/01-mtr-exit-zh.png",
+      "direction": "zh→en",
+      "scene": "MTR / mall exit",
+      "sourceText": [
+        "出口",
+        "A2",
+        "中環"
+      ],
+      "expectedHints": [
+        "Exit",
+        "Central"
+      ]
+    },
+    {
+      "id": "sign-02-no-entry",
+      "file": "signs/02-no-entry-zh.png",
+      "direction": "zh→en",
+      "scene": "Door placard",
+      "sourceText": [
+        "不准進入",
+        "職員專用"
+      ],
+      "expectedHints": [
+        "No entry／not allowed",
+        "Staff only"
+      ]
+    },
+    {
+      "id": "sign-03-wet-floor",
+      "file": "signs/03-wet-floor-en.png",
+      "direction": "en→zh",
+      "scene": "Safety cone style",
+      "sourceText": [
+        "CAUTION",
+        "WET FLOOR"
+      ],
+      "expectedHints": [
+        "小心",
+        "地滑／濕滑／跣"
+      ]
+    },
+    {
+      "id": "sign-04-restaurant-board",
+      "file": "signs/04-restaurant-board-zh.png",
+      "direction": "zh→en",
+      "scene": "Cha chaan teng specials board",
+      "sourceText": [
+        "今日特餐／特餐",
+        "乾炒牛河",
+        "凍檸茶",
+        "菠蘿油"
+      ],
+      "expectedHints": [
+        "Today's special／Today’s Special",
+        "beef／chow／河",
+        "Iced lemon tea"
+      ]
+    },
+    {
+      "id": "sign-05-opening-hours",
+      "file": "signs/05-opening-hours-zh.png",
+      "direction": "zh→en",
+      "scene": "Shop glass hours",
+      "sourceText": [
+        "營業時間",
+        "每日 10:00–22:00／每日 10:00-22:00",
+        "逢星期三休息"
+      ],
+      "expectedHints": [
+        "Business hours",
+        "10:00／Every day／Daily／每日",
+        "Wednesday／星期三"
+      ]
+    },
+    {
+      "id": "sign-06-pharmacy",
+      "file": "signs/06-pharmacy-en.png",
+      "direction": "en→zh",
+      "scene": "Pharmacy counter",
+      "sourceText": [
+        "PRESCRIPTION PICKUP",
+        "Please take a number",
+        "Queue here"
+      ],
+      "expectedHints": [
+        "藥／處方",
+        "冧把／抽籌／號碼",
+        "排隊"
+      ]
+    },
+    {
+      "id": "sign-07-street-bilingual",
+      "file": "signs/07-street-bilingual.png",
+      "direction": "either — test both",
+      "scene": "HK street name plate",
+      "sourceText": [
+        "德輔道中",
+        "DES VOEUX ROAD CENTRAL"
+      ],
+      "expectedHints": [
+        "德輔道中",
+        "Des Voeux／德輔"
+      ]
+    },
+    {
+      "id": "sign-08-warning-construction",
+      "file": "signs/08-construction-zh.png",
+      "direction": "zh→en",
+      "scene": "Construction site",
+      "sourceText": [
+        "前方施工",
+        "請改道",
+        "小心車輛"
+      ],
+      "expectedHints": [
+        "Construction／Roadwork／施工／前方",
+        "detour／改道／alternate",
+        "vehicle／vehicles／cars／車輛／車"
+      ]
+    },
+    {
+      "id": "sign-09-hotel-lobby",
+      "file": "signs/09-hotel-lobby-en.png",
+      "direction": "en→zh",
+      "scene": "Hotel lobby",
+      "sourceText": [
+        "Check-in",
+        "Concierge",
+        "Luggage storage"
+      ],
+      "expectedHints": [
+        "入住／登記",
+        "禮賓",
+        "行李寄存"
+      ]
+    },
+    {
+      "id": "sign-10-dim-sum-menu",
+      "file": "signs/10-dim-sum-menu-zh.png",
+      "direction": "zh→en",
+      "scene": "Dense dim sum checklist",
+      "sourceText": [
+        "蝦餃",
+        "燒賣",
+        "叉燒包",
+        "腸粉",
+        "流沙包"
+      ],
+      "expectedHints": [
+        "har gow／shrimp dumpling／蝦",
+        "siu mai／燒賣",
+        "BBQ／char siu／叉燒",
+        "rice noodle／cheung fun／腸粉",
+        "lava／custard／流沙"
+      ]
+    },
+    {
+      "id": "sign-11-angled-photo",
+      "file": "signs/11-angled-no-smoking-zh.png",
+      "direction": "zh→en",
+      "scene": "Perspective-warped placard (OCR stress)",
+      "sourceText": [
+        "嚴禁吸煙",
+        "違者罰款"
+      ],
+      "expectedHints": [
+        "No smoking",
+        "fine／罰"
+      ]
+    },
+    {
+      "id": "sign-12-low-contrast",
+      "file": "signs/12-low-contrast-en.png",
+      "direction": "en→zh",
+      "scene": "Faded sticker (OCR stress)",
+      "sourceText": [
+        "Push",
+        "Pull"
+      ],
+      "expectedHints": [
+        "推",
+        "拉"
+      ]
+    }
+  ]
+}
