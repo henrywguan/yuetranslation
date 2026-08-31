@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { visionConfigured } from './env.js'
 import { ocrImage, detectScript, type OcrBox, type OcrRegion } from './azureVision.js'
+import { ocrImageWithVisionLlm } from './visionLlmOcr.js'
 import { translateCameraText, type CameraLang } from './translateCamera.js'
 
 const BoxSchema = z.object({
@@ -101,9 +102,31 @@ export async function cameraScan(input: unknown): Promise<{
   visionConfigured: boolean
   visionAuthFailed?: boolean
   translateMisses: number
+  /** True when multimodal LLM OCR was invoked (Azure Read empty / weak). */
+  aiVisionUsed: boolean
+  /** Regions recovered by the LLM fallback (0 if unused or failed). */
+  aiVisionRegions: number
 }> {
   const parsed = Body.parse(input)
-  const { regions: ocrRegions, engine, authFailed: visionAuthFailed } = await ocrImage(parsed.image)
+  let { regions: ocrRegions, engine: ocrEngine, authFailed: visionAuthFailed } = await ocrImage(
+    parsed.image,
+  )
+  let engine: string = ocrEngine
+  let aiVisionUsed = false
+  let aiVisionRegions = 0
+
+  // Silent fallback: decorative / foil / calligraphy often returns 0 Azure lines.
+  if (ocrRegions.length === 0 && !visionAuthFailed) {
+    const llm = await ocrImageWithVisionLlm(parsed.image)
+    if (llm.invoked) {
+      aiVisionUsed = true
+      if (llm.regions.length > 0) {
+        ocrRegions = llm.regions
+        engine = llm.engine
+        aiVisionRegions = llm.regions.length
+      }
+    }
+  }
 
   const baseRegions: OcrRegion[] =
     parsed.boxes && parsed.boxes.length > 0
@@ -126,6 +149,8 @@ export async function cameraScan(input: unknown): Promise<{
       visionConfigured: visionConfigured(),
       visionAuthFailed,
       translateMisses: 0,
+      aiVisionUsed,
+      aiVisionRegions,
     }
   }
 
@@ -169,5 +194,7 @@ export async function cameraScan(input: unknown): Promise<{
     visionConfigured: visionConfigured(),
     visionAuthFailed,
     translateMisses,
+    aiVisionUsed,
+    aiVisionRegions,
   }
 }

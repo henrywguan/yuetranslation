@@ -9,6 +9,7 @@ export type UsageRow = {
   camera_seconds?: number
   camera_translate_count?: number
   docs_pages?: number
+  ai_vision_count?: number
 }
 
 export type UsageSnapshot = {
@@ -19,6 +20,8 @@ export type UsageSnapshot = {
   cameraSeconds: number
   cameraTranslateCount: number
   docsPages: number
+  /** Multimodal LLM OCR fallback invocations (view-only meter). */
+  aiVisionCount: number
 }
 
 function asInt(value: unknown): number {
@@ -39,6 +42,7 @@ export function emptyUsage(month = currentMonthKey()): UsageSnapshot {
     cameraSeconds: 0,
     cameraTranslateCount: 0,
     docsPages: 0,
+    aiVisionCount: 0,
   }
 }
 
@@ -51,6 +55,7 @@ function rowToSnapshot(row: UsageRow): UsageSnapshot {
     cameraSeconds: asInt(row.camera_seconds),
     cameraTranslateCount: asInt(row.camera_translate_count),
     docsPages: asInt(row.docs_pages),
+    aiVisionCount: asInt(row.ai_vision_count),
   }
 }
 
@@ -106,6 +111,7 @@ export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<s
       camera_seconds: asInt(row.camera_seconds),
       camera_translate_count: asInt(row.camera_translate_count),
       docs_pages: asInt(row.docs_pages),
+      ai_vision_count: asInt(row.ai_vision_count),
     })
   }
   return map
@@ -124,6 +130,7 @@ async function incrementUsage(
     cameraSeconds?: number
     cameraTranslateCount?: number
     docsPages?: number
+    aiVisionCount?: number
   },
 ) {
   const client = getAdmin()
@@ -134,8 +141,15 @@ async function incrementUsage(
   const cameraSeconds = asInt(delta.cameraSeconds)
   const cameraTranslateCount = asInt(delta.cameraTranslateCount)
   const docsPages = asInt(delta.docsPages)
+  const aiVisionCount = asInt(delta.aiVisionCount)
   if (
-    liveSeconds + ttsChars + translateCount + cameraSeconds + cameraTranslateCount + docsPages <=
+    liveSeconds +
+      ttsChars +
+      translateCount +
+      cameraSeconds +
+      cameraTranslateCount +
+      docsPages +
+      aiVisionCount <=
     0
   ) {
     return
@@ -151,6 +165,7 @@ async function incrementUsage(
     p_camera_seconds: cameraSeconds,
     p_camera_translate_count: cameraTranslateCount,
     p_docs_pages: docsPages,
+    p_ai_vision_count: aiVisionCount,
   })
   if (!rpcError) return
 
@@ -165,6 +180,7 @@ async function incrementUsage(
     patch.camera_translate_count = usage.cameraTranslateCount + cameraTranslateCount
   }
   if (docsPages) patch.docs_pages = usage.docsPages + docsPages
+  if (aiVisionCount) patch.ai_vision_count = usage.aiVisionCount + aiVisionCount
 
   const { error: profileError } = await client.from('profiles').upsert(
     { id: userId, plan: 'free' },
@@ -207,6 +223,11 @@ export async function addDocsPages(userId: string, pages = 1) {
   await incrementUsage(userId, { docsPages: pages })
 }
 
+/** Count multimodal LLM OCR fallback invocations (no hard cap). */
+export async function addAiVisionCount(userId: string, count = 1) {
+  await incrementUsage(userId, { aiVisionCount: count })
+}
+
 export type UsagePatch = {
   liveSeconds?: number
   ttsChars?: number
@@ -246,6 +267,7 @@ export async function setUsageMonth(
     camera_seconds: patch.cameraSeconds ?? current.cameraSeconds,
     camera_translate_count: current.cameraTranslateCount,
     docs_pages: patch.docsPages ?? current.docsPages,
+    ai_vision_count: current.aiVisionCount,
   }
 
   const { error } = await client.from('usage_months').upsert(row, { onConflict: 'user_id,month' })
@@ -267,6 +289,7 @@ export async function resetUsageMonth(userId: string, month = currentMonthKey())
       camera_seconds: 0,
       camera_translate_count: 0,
       docs_pages: 0,
+      ai_vision_count: 0,
     },
     { onConflict: 'user_id,month' },
   )

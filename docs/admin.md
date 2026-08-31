@@ -145,6 +145,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | `POST /api/usage/camera-heartbeat` → `camera_seconds`; `POST /api/camera/scan` → `camera_translate_count` |
+| AI vision metering | `POST /api/camera/scan` when LLM OCR fallback runs → `ai_vision_count` (view-only; Cam + Documents; no hard cap). Migration `010_ai_vision_usage.sql` |
 | Docs metering | `POST /api/docs/translate` / `POST /api/docs/commit` → `docs_pages` (success only) |
 
 ## API

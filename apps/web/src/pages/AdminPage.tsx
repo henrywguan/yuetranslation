@@ -71,6 +71,7 @@ export function AdminPage() {
       cameraSeconds: number
       cameraTranslateCount: number
       docsPages: number
+      aiVisionCount: number
     }[]
   >([])
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
@@ -636,6 +637,9 @@ export function AdminPage() {
                       {u.cameraTranslateCount > 0 ? (
                         <span className="admin-sub"> · {u.cameraTranslateCount} scan{u.cameraTranslateCount === 1 ? '' : 's'}</span>
                       ) : null}
+                      {(u.aiVisionCount ?? 0) > 0 ? (
+                        <span className="admin-sub"> · {u.aiVisionCount} AI</span>
+                      ) : null}
                     </td>
                     <td
                       title={
@@ -718,6 +722,7 @@ export function AdminPage() {
                           ? ` · ${m.cameraTranslateCount} scan${m.cameraTranslateCount === 1 ? '' : 's'}`
                           : ''}
                       </span>
+                      <span>AI vision {(m.aiVisionCount ?? 0).toLocaleString()}</span>
                       <span>Docs {(m.docsPages ?? 0).toLocaleString()} pages</span>
                     </li>
                   ))

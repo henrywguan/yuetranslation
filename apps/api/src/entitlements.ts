@@ -40,6 +40,8 @@ export type Entitlement = {
     cameraSeconds: number
     cameraTranslateCount: number
     docsPages: number
+    /** Multimodal LLM OCR fallback calls this month (view-only). */
+    aiVisionCount: number
   }
   remaining: {
     liveSeconds: number
@@ -367,6 +369,7 @@ function localEntitlement(): Entitlement {
         cameraSeconds: 0,
         cameraTranslateCount: 0,
         docsPages: 0,
+        aiVisionCount: 0,
       },
       remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1, docsPages: -1 },
       ttsUnlimited: true,

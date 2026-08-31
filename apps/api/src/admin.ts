@@ -45,6 +45,7 @@ export type AdminUserRow = {
   cameraSeconds: number
   cameraTranslateCount: number
   docsPages: number
+  aiVisionCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
   /** Hard cap seconds for Free; 0 means unlimited (Pro/Max) or disabled. */
@@ -102,6 +103,7 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
     const cameraSeconds = usage?.camera_seconds ?? 0
     const cameraTranslateCount = usage?.camera_translate_count ?? 0
     const docsPages = usage?.docs_pages ?? 0
+    const aiVisionCount = usage?.ai_vision_count ?? 0
     const liveLim = liveLimitSeconds(plan)
     const ttsLim = ttsLimitChars(plan)
     const camLim = cameraLimitSeconds(plan)
@@ -132,6 +134,7 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       cameraSeconds,
       cameraTranslateCount,
       docsPages,
+      aiVisionCount,
       liveLimitSeconds: liveLim,
       ttsLimitChars: ttsLim,
       cameraLimitSeconds: camLim,
@@ -151,6 +154,7 @@ type SortKey =
   | 'translateCount'
   | 'cameraSeconds'
   | 'docsPages'
+  | 'aiVisionCount'
 
 function sortUsers(rows: AdminUserRow[], sort: SortKey, dir: 'asc' | 'desc') {
   const mul = dir === 'asc' ? 1 : -1

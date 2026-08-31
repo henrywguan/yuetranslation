@@ -73,6 +73,8 @@ Docs translate body: `{ filename, data, from: 'en'|'yue', to: 'en'|'yue' }` (max
 
 OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are set (Vision or multi-service resource — Speech key alone is not enough). Without Vision, engine is `demo`. Invalid credentials return `visionAuthFailed: true`.
 
+**Silent AI vision fallback:** when Azure Read returns no text, Cam (AR / Upload / Documents) calls a multimodal LLM (`OPENAI_VISION_MODEL`, e.g. `deepseek-v4-flash-vision-exp` or `gpt-4o-mini`). Uses the same `OPENAI_API_KEY` / base URL unless `OPENAI_VISION_*` overrides are set. Each fallback invocation increments `ai_vision_count` (view-only; no hard cap). Migration: `010_ai_vision_usage.sql`.
+
 ## Env / 環境變數
 
 - `YUE_FREE_CAMERA_MINUTES` (default 60)
@@ -81,6 +83,7 @@ OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are 
 - `YUE_FREE_DOCS_PAGES` (default 40)
 - `YUE_PRO_DOCS_PAGES` (default 400)
 - `AZURE_VISION_KEY` / `AZURE_VISION_ENDPOINT`
+- `OPENAI_VISION_MODEL` (e.g. `deepseek-v4-flash-vision-exp`) — optional `OPENAI_VISION_API_KEY` / `OPENAI_VISION_BASE_URL` (default: same as translate)
 
 ## Accuracy fixtures / 準確度測試素材
 

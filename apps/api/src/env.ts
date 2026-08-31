@@ -49,6 +49,21 @@ export const env = {
   openaiBaseUrl: trimUrl(process.env.OPENAI_BASE_URL || ''),
   openaiModel: (process.env.OPENAI_MODEL || 'gpt-4o-mini').trim(),
   /**
+   * Vision LLM for Cam OCR fallback (calligraphy / foil).
+   * Same key/host as translate by default — set OPENAI_VISION_MODEL to a vision-capable
+   * model (e.g. deepseek-v4-flash-vision-exp or gpt-4o-mini). Empty MODEL = fallback off.
+   */
+  openaiVisionApiKey: (
+    process.env.OPENAI_VISION_API_KEY ||
+    process.env.OPENAI_API_KEY ||
+    ''
+  ).trim(),
+  openaiVisionBaseUrl: trimUrl(
+    process.env.OPENAI_VISION_BASE_URL || process.env.OPENAI_BASE_URL || '',
+  ),
+  /** Empty = vision LLM fallback disabled (Azure Read only). */
+  openaiVisionModel: (process.env.OPENAI_VISION_MODEL || '').trim(),
+  /**
    * Allow loading dictionaries under non-commercial licenses (words.hk).
    * Keep off for paid/ad-supported commercial deployments unless you have a separate license.
    */
@@ -205,12 +220,19 @@ export function visionConfigured() {
   return Boolean(env.azureVisionKey && env.azureVisionEndpoint)
 }
 
+/** Multimodal LLM OCR fallback (calligraphy / foil). Requires OPENAI_VISION_MODEL. */
+export function visionLlmConfigured() {
+  return Boolean(env.openaiVisionApiKey && env.openaiVisionModel)
+}
+
 export function openaiStatus() {
   return {
     configured: openaiConfigured(),
     hasApiKey: Boolean(env.openaiApiKey),
     hasBaseUrl: Boolean(env.openaiBaseUrl),
     model: env.openaiModel,
+    visionModel: env.openaiVisionModel || null,
+    visionLlm: visionLlmConfigured(),
     envFile: envPath,
   }
 }

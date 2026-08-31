@@ -37,6 +37,7 @@ export type AdminUser = {
   cameraSeconds: number
   cameraTranslateCount: number
   docsPages: number
+  aiVisionCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
   cameraLimitSeconds: number
@@ -123,6 +124,7 @@ export async function fetchAdminUserUsage(userId: string): Promise<{
     cameraSeconds: number
     cameraTranslateCount: number
     docsPages: number
+    aiVisionCount: number
   }[]
 }> {
   const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/usage`)

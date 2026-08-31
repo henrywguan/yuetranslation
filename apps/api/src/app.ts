@@ -1,7 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { ZodError } from 'zod'
-import { cloudReady, env, openaiStatus, visionConfigured } from './env.js'
+import { cloudReady, env, openaiStatus, visionConfigured, visionLlmConfigured } from './env.js'
 import { dictionaryStats, lexiconStats } from './canto/index.js'
 import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
@@ -21,6 +21,7 @@ import {
   addLiveSeconds,
   addTtsChars,
   addTranslateCount,
+  addAiVisionCount,
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
@@ -83,6 +84,7 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
     engines: {
       azureSpeech: Boolean(env.azureSpeechKey),
       azureVision: visionConfigured(),
+      visionLlm: visionLlmConfigured(),
       openai: openai.configured,
       demo: !openai.configured,
       dictionary: true,
@@ -342,6 +344,10 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
     // Docs hybrid vision: no camera translate metering (pages billed on /docs/commit).
     if (!forDocs && !env.openMode && req.auth?.userId && result.translateMisses > 0) {
       await addCameraTranslateCount(req.auth.userId, result.translateMisses)
+    }
+    // AI vision LLM fallback — view-only meter (Cam + Documents). No hard cap.
+    if (!env.openMode && req.auth?.userId && result.aiVisionUsed) {
+      await addAiVisionCount(req.auth.userId, 1)
     }
     res.json({ ...result, entitlement: await entitlementFor(req) })
   } catch (e) {
