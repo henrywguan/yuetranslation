@@ -198,11 +198,33 @@ export async function cameraScan(opts: {
   return res.json()
 }
 
-export async function fetchTtsAudio(text: string, lang: Lang): Promise<Blob | null> {
+export async function fetchTtsAudio(
+  text: string,
+  lang: Lang,
+  voice?: string | null,
+): Promise<Blob | null> {
   const res = await apiFetch('/tts', {
     method: 'POST',
-    body: JSON.stringify({ text, lang }),
+    body: JSON.stringify({ text, lang, ...(voice ? { voice } : {}) }),
   })
   if (!res.ok) return null
   return res.blob()
+}
+
+export async function saveTtsVoicePrefs(patch: {
+  ttsVoiceYue?: string
+  ttsVoiceEn?: string
+}): Promise<{ prefs: { ttsVoiceYue: string; ttsVoiceEn: string }; entitlement?: Entitlement }> {
+  const res = await apiFetch('/prefs/tts-voices', {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to save voice preferences'), {
+      code: res.status,
+      entitlement: data.entitlement,
+    })
+  }
+  return data
 }

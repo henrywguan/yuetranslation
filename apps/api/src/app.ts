@@ -24,6 +24,8 @@ import {
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
+import { upsertProfilePlan } from './supabase.js'
+import { isEnVoice, isYueVoice } from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -206,12 +208,17 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
   try {
     const text = String(req.body?.text || '').trim()
     const lang = String(req.body?.lang || 'yue')
+    const voiceOverride = typeof req.body?.voice === 'string' ? req.body.voice.trim() : null
     if (!text) {
       res.status(400).json({ message: 'text required' })
       return
     }
     const azureLang = lang === 'en' || lang === 'en-US' ? 'en' : 'zh-HK'
-    const audio = await synthesize(text, azureLang)
+    const audio = await synthesize(text, azureLang, {
+      voice: voiceOverride,
+      preferredYue: ent.prefs?.ttsVoiceYue,
+      preferredEn: ent.prefs?.ttsVoiceEn,
+    })
     // Meter signed-in usage for Free (hard cap) and Pro/Max (unlimited).
     if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
@@ -220,6 +227,63 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
     res.send(audio)
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'TTS error' })
+  }
+})
+
+/** Save cross-device TTS voice preferences (signed-in only). */
+app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  const body = req.body || {}
+  const patch: { tts_voice_yue?: string; tts_voice_en?: string } = {}
+  if (body.ttsVoiceYue != null) {
+    const v = String(body.ttsVoiceYue).trim()
+    if (!isYueVoice(v)) {
+      res.status(400).json({ message: 'Invalid Cantonese voice.' })
+      return
+    }
+    patch.tts_voice_yue = v
+  }
+  if (body.ttsVoiceEn != null) {
+    const v = String(body.ttsVoiceEn).trim()
+    if (!isEnVoice(v)) {
+      res.status(400).json({ message: 'Invalid English voice.' })
+      return
+    }
+    patch.tts_voice_en = v
+  }
+  if (!Object.keys(patch).length) {
+    res.status(400).json({ message: 'No voice preferences provided.' })
+    return
+  }
+
+  // Open / local-dev mode: validate + echo prefs (no Supabase user session).
+  if (env.openMode || !req.auth?.userId) {
+    if (!ent.loggedIn && !env.openMode) {
+      res.status(401).json({ message: 'Sign in to sync voice preferences.', entitlement: ent })
+      return
+    }
+    if (env.openMode) {
+      const prefs = {
+        ttsVoiceYue: patch.tts_voice_yue || ent.prefs.ttsVoiceYue,
+        ttsVoiceEn: patch.tts_voice_en || ent.prefs.ttsVoiceEn,
+      }
+      res.json({ ok: true, prefs, entitlement: { ...ent, prefs } })
+      return
+    }
+    res.status(401).json({ message: 'Sign in to sync voice preferences.', entitlement: ent })
+    return
+  }
+
+  try {
+    await upsertProfilePlan(req.auth.userId, patch)
+    const next = await entitlementFor(req)
+    res.json({
+      ok: true,
+      prefs: next.prefs,
+      entitlement: next,
+    })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save preferences' })
   }
 })
 

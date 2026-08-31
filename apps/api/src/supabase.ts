@@ -32,7 +32,25 @@ export type ProfileRow = {
   stripe_subscription_id: string | null
   disabled: boolean
   role: 'admin' | 'family' | null
+  tts_voice_yue: string | null
+  tts_voice_en: string | null
   updated_at: string
+}
+
+function normalizeProfile(data: unknown): ProfileRow {
+  const row = data as ProfileRow & {
+    disabled?: boolean
+    role?: ProfileRow['role']
+    tts_voice_yue?: string | null
+    tts_voice_en?: string | null
+  }
+  return {
+    ...row,
+    disabled: Boolean(row.disabled),
+    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
+    tts_voice_yue: typeof row.tts_voice_yue === 'string' ? row.tts_voice_yue : null,
+    tts_voice_en: typeof row.tts_voice_en === 'string' ? row.tts_voice_en : null,
+  }
 }
 
 export async function getProfile(userId: string): Promise<ProfileRow | null> {
@@ -40,18 +58,22 @@ export async function getProfile(userId: string): Promise<ProfileRow | null> {
   if (!client) return null
   const { data, error } = await client.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (error || !data) return null
-  const row = data as ProfileRow & { disabled?: boolean; role?: ProfileRow['role'] }
-  return {
-    ...row,
-    disabled: Boolean(row.disabled),
-    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
-  }
+  return normalizeProfile(data)
 }
 
 export async function upsertProfilePlan(
   userId: string,
   patch: Partial<
-    Pick<ProfileRow, 'plan' | 'stripe_customer_id' | 'stripe_subscription_id' | 'disabled' | 'role'>
+    Pick<
+      ProfileRow,
+      | 'plan'
+      | 'stripe_customer_id'
+      | 'stripe_subscription_id'
+      | 'disabled'
+      | 'role'
+      | 'tts_voice_yue'
+      | 'tts_voice_en'
+    >
   >,
 ): Promise<void> {
   const client = getAdmin()
@@ -70,12 +92,7 @@ export async function findProfileByStripeCustomer(customerId: string): Promise<P
     .eq('stripe_customer_id', customerId)
     .maybeSingle()
   if (!data) return null
-  const row = data as ProfileRow & { disabled?: boolean; role?: ProfileRow['role'] }
-  return {
-    ...row,
-    disabled: Boolean(row.disabled),
-    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
-  }
+  return normalizeProfile(data)
 }
 
 export async function findProfileByStripeSubscription(subscriptionId: string): Promise<ProfileRow | null> {
@@ -87,12 +104,7 @@ export async function findProfileByStripeSubscription(subscriptionId: string): P
     .eq('stripe_subscription_id', subscriptionId)
     .maybeSingle()
   if (!data) return null
-  const row = data as ProfileRow & { disabled?: boolean; role?: ProfileRow['role'] }
-  return {
-    ...row,
-    disabled: Boolean(row.disabled),
-    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
-  }
+  return normalizeProfile(data)
 }
 
 export type AuthUserSummary = {
@@ -140,11 +152,7 @@ export async function listProfiles(): Promise<ProfileRow[]> {
   if (!client) return []
   const { data, error } = await client.from('profiles').select('*')
   if (error || !data) return []
-  return (data as ProfileRow[]).map((row) => ({
-    ...row,
-    disabled: Boolean(row.disabled),
-    role: row.role === 'admin' || row.role === 'family' ? row.role : null,
-  }))
+  return (data as ProfileRow[]).map((row) => normalizeProfile(row))
 }
 
 export async function getAuthUserById(userId: string): Promise<AuthUserSummary | null> {

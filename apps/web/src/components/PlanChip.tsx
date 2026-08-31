@@ -15,6 +15,22 @@ import {
   writeBadgeUsageMetric,
   type BadgeUsageMetric,
 } from '../lib/badgeUsagePref'
+import { saveTtsVoicePrefs } from '../lib/api'
+import {
+  EN_VOICES,
+  PREVIEW_EN,
+  PREVIEW_YUE,
+  YUE_VOICES,
+  readLocalEnVoice,
+  readLocalYueVoice,
+  resolveEnVoice,
+  resolveYueVoice,
+  writeLocalEnVoice,
+  writeLocalYueVoice,
+  type EnVoiceId,
+  type YueVoiceId,
+} from '../lib/ttsVoices'
+import { speakText, unlockTtsPlayback } from '../lib/tts'
 import { openPricing } from '../lib/siteLinks'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
@@ -114,12 +130,31 @@ export function PlanChip() {
   const [busy, setBusy] = useState(false)
   const [hubPos, setHubPos] = useState<{ top: number; right: number } | null>(null)
   const [badgeMetric, setBadgeMetric] = useState<BadgeUsageMetric>(() => readBadgeUsageMetric())
+  const [yueVoice, setYueVoice] = useState<YueVoiceId>(() => readLocalYueVoice())
+  const [enVoice, setEnVoice] = useState<EnVoiceId>(() => readLocalEnVoice())
+  const [voiceBusy, setVoiceBusy] = useState(false)
+  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const hubRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
   const titleId = useId()
   const badgePrefId = useId()
+  const voicePrefId = useId()
+
+  useEffect(() => {
+    const prefs = entitlement?.prefs
+    if (prefs?.ttsVoiceYue) {
+      const v = resolveYueVoice(prefs.ttsVoiceYue)
+      setYueVoice(v)
+      writeLocalYueVoice(v)
+    }
+    if (prefs?.ttsVoiceEn) {
+      const v = resolveEnVoice(prefs.ttsVoiceEn)
+      setEnVoice(v)
+      writeLocalEnVoice(v)
+    }
+  }, [entitlement?.prefs?.ttsVoiceYue, entitlement?.prefs?.ttsVoiceEn, entitlement?.loggedIn])
 
   useEffect(() => {
     let cancelled = false
@@ -259,6 +294,46 @@ export function PlanChip() {
     writeBadgeUsageMetric(metric)
   }
 
+  const persistVoices = async (next: { yue?: YueVoiceId; en?: EnVoiceId }) => {
+    const yue = next.yue ?? yueVoice
+    const en = next.en ?? enVoice
+    writeLocalYueVoice(yue)
+    writeLocalEnVoice(en)
+    setYueVoice(yue)
+    setEnVoice(en)
+    if (!entitlement.loggedIn) return
+    setVoiceBusy(true)
+    try {
+      const data = await saveTtsVoicePrefs({ ttsVoiceYue: yue, ttsVoiceEn: en })
+      if (data.entitlement) {
+        useYueStore.setState({ entitlement: data.entitlement })
+      } else {
+        useYueStore.setState({
+          entitlement: {
+            ...entitlement,
+            prefs: data.prefs,
+          },
+        })
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not sync voice preferences'
+      useYueStore.setState({ error: message })
+    } finally {
+      setVoiceBusy(false)
+    }
+  }
+
+  const onPreview = async (kind: 'yue' | 'en') => {
+    unlockTtsPlayback()
+    setPreviewBusy(kind)
+    try {
+      if (kind === 'yue') await speakText(PREVIEW_YUE, 'yue', yueVoice)
+      else await speakText(PREVIEW_EN, 'en', enVoice)
+    } finally {
+      setPreviewBusy(null)
+    }
+  }
+
   const activeBadgeMetric = resolveBadgeMetric(badgeMetric, entitlement, showVoiceQuota)
   const badgeOptions: Array<{ id: BadgeUsageMetric; copy: Bi; available: boolean }> = [
     { id: 'live', copy: ui.accountBadgeLive, available: canShowMetric('live', entitlement, showVoiceQuota) },
@@ -389,6 +464,74 @@ export function PlanChip() {
             </div>
           </section>
         ) : null}
+
+        <section className="account-hub-section" aria-labelledby={voicePrefId}>
+          <p className="account-hub-label" id={voicePrefId}>
+            <BiText copy={ui.accountTtsVoices} size="sm" />
+          </p>
+          <p className="account-hub-hint">
+            <BiText
+              copy={entitlement.loggedIn ? ui.accountTtsVoicesHint : ui.accountTtsSignInToSync}
+              size="sm"
+            />
+          </p>
+          <div className="account-hub-voice-row">
+            <label className="account-hub-voice-field">
+              <span className="account-hub-voice-lang">
+                <BiText copy={ui.accountTtsYue} size="sm" hideJp />
+              </span>
+              <select
+                className="account-hub-select"
+                value={yueVoice}
+                disabled={voiceBusy}
+                onChange={(e) => void persistVoices({ yue: resolveYueVoice(e.target.value) })}
+                aria-label={biPlain(ui.accountTtsYue)}
+              >
+                {YUE_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.labelEn} · {v.labelZh}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="account-hub-voice-preview"
+              disabled={previewBusy !== null || !entitlement.allowed.tts}
+              onClick={() => void onPreview('yue')}
+            >
+              <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+            </button>
+          </div>
+          <div className="account-hub-voice-row">
+            <label className="account-hub-voice-field">
+              <span className="account-hub-voice-lang">
+                <BiText copy={ui.accountTtsEn} size="sm" hideJp />
+              </span>
+              <select
+                className="account-hub-select"
+                value={enVoice}
+                disabled={voiceBusy}
+                onChange={(e) => void persistVoices({ en: resolveEnVoice(e.target.value) })}
+                aria-label={biPlain(ui.accountTtsEn)}
+              >
+                {EN_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.labelEn} · {v.labelZh}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="account-hub-voice-preview"
+              disabled={previewBusy !== null || !entitlement.allowed.tts}
+              onClick={() => void onPreview('en')}
+            >
+              <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+            </button>
+          </div>
+        </section>
 
         <div className="account-hub-actions">
           {entitlement.isAdmin ? (

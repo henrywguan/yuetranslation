@@ -54,6 +54,11 @@ export type Entitlement = {
     docs?: boolean
   }
   reason: string | null
+  /** Synced TTS voice preferences (Azure Neural ids). Guests use client defaults. */
+  prefs?: {
+    ttsVoiceYue: string
+    ttsVoiceEn: string
+  }
 }
 
 export type ConversationTurn = {
