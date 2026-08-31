@@ -344,19 +344,9 @@ export const ui = {
     jp: 'syun2 zaak6 gai3 waak6 gok3 biu1 haa6 fong1 hin2 si6 dik1 jung6 loeng6',
   },
   accountTtsVoices: { en: 'Voice playback', zh: '語音朗讀', jp: 'jyu5 jam1 long5 duk6' },
-  accountTtsVoicesHint: {
-    en: 'Synced to your account across devices',
-    zh: '會同步到你嘅帳戶，跨裝置一樣',
-    jp: 'wui5 tung4 bou6 dou3 nei5 ge3 zoeng3 wu6',
-  },
   accountTtsYue: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   accountTtsEn: { en: 'English', zh: '英語', jp: 'jing1 jyu5' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
-  accountTtsSignInToSync: {
-    en: 'Sign in to sync voices across devices',
-    zh: '登入後可同步語音設定',
-    jp: 'dang1 jap6 hau6 ho2 tung4 bou6 jyu5 jam1 cit3 ding6',
-  },
   bugReportTitle: { en: 'Report a problem', zh: '回報問題', jp: 'wui4 bou3 man6 tai4' },
   bugReportHint: {
     en: 'What went wrong? We attach route and settings — not your translations.',

@@ -491,12 +491,6 @@ export function PlanChip() {
           <p className="account-hub-label" id={voicePrefId}>
             <BiText copy={ui.accountTtsVoices} size="sm" />
           </p>
-          <p className="account-hub-hint">
-            <BiText
-              copy={entitlement.loggedIn ? ui.accountTtsVoicesHint : ui.accountTtsSignInToSync}
-              size="sm"
-            />
-          </p>
           <div className="account-hub-voice-row">
             <label className="account-hub-voice-field">
               <span className="account-hub-voice-lang">
