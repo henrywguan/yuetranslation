@@ -4,7 +4,7 @@
  * (OPENAI_VISION_MODEL, e.g. gpt-4o-mini) — DeepSeek chat models do not accept images.
  */
 import OpenAI from 'openai'
-import { env, llmChatExtras, visionLlmConfigured } from './env.js'
+import { env, visionLlmConfigured } from './env.js'
 import type { OcrRegion } from './azureVision.js'
 import { detectScript } from './azureVision.js'
 
@@ -150,7 +150,7 @@ export async function ocrImageWithVisionLlm(imageBase64: string): Promise<{
           ],
         },
       ],
-      ...llmChatExtras(),
+      // Don't pass DeepSeek-chat thinking extras to vision models.
     })
 
     const raw = completion.choices[0]?.message?.content?.trim() || ''

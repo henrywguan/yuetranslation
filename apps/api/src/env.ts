@@ -49,8 +49,9 @@ export const env = {
   openaiBaseUrl: trimUrl(process.env.OPENAI_BASE_URL || ''),
   openaiModel: (process.env.OPENAI_MODEL || 'gpt-4o-mini').trim(),
   /**
-   * Vision LLM for Cam OCR fallback (calligraphy / foil). DeepSeek chat models reject images —
-   * set OPENAI_VISION_MODEL (+ optional key/base) to a vision-capable host (e.g. gpt-4o-mini).
+   * Vision LLM for Cam OCR fallback (calligraphy / foil).
+   * Same key/host as translate by default — set OPENAI_VISION_MODEL to a vision-capable
+   * model (e.g. deepseek-v4-flash-vision-exp or gpt-4o-mini). Empty MODEL = fallback off.
    */
   openaiVisionApiKey: (
     process.env.OPENAI_VISION_API_KEY ||
@@ -58,17 +59,7 @@ export const env = {
     ''
   ).trim(),
   openaiVisionBaseUrl: trimUrl(
-    (() => {
-      if (process.env.OPENAI_VISION_BASE_URL != null && process.env.OPENAI_VISION_BASE_URL !== '') {
-        return process.env.OPENAI_VISION_BASE_URL
-      }
-      // Explicit vision key → official OpenAI (empty baseURL).
-      if (process.env.OPENAI_VISION_API_KEY) return ''
-      const translateBase = process.env.OPENAI_BASE_URL || ''
-      // Don't send images to DeepSeek chat hosts.
-      if (/deepseek/i.test(translateBase)) return ''
-      return translateBase
-    })(),
+    process.env.OPENAI_VISION_BASE_URL || process.env.OPENAI_BASE_URL || '',
   ),
   /** Empty = vision LLM fallback disabled (Azure Read only). */
   openaiVisionModel: (process.env.OPENAI_VISION_MODEL || '').trim(),
