@@ -13,8 +13,12 @@ type MeterModel = {
   key: MeterKey
   label: Bi
   blurb: Bi
+  /** Default ring center (compact). */
   usedLabel: string
   limitLabel: string
+  /** Revealed on tap (mobile) / hover (desktop). */
+  revealUsed: string
+  revealLeft: string
   ratio: number | null
   unlimited: boolean
   detail: string
@@ -33,6 +37,15 @@ function formatChars(n: number): string {
   return String(Math.max(0, Math.round(n)))
 }
 
+function formatMinutesCompact(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds))
+  if (s > 0 && s < 60) return formatCompactDuration(s)
+  const mins = s / 60
+  if (mins >= 100) return `${Math.round(mins)}m`
+  if (mins >= 10) return `${mins.toFixed(0)}m`
+  return `${mins.toFixed(1).replace(/\.0$/, '')}m`
+}
+
 function timeDetail(usedSec: number, limitSec: number, unlimited: boolean): string {
   const used = formatExactDuration(usedSec)
   if (unlimited || limitSec <= 0) return `${used} used · unlimited`
@@ -45,6 +58,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const liveUsed = Math.max(0, Math.floor(e.usage.liveSeconds ?? 0))
   const liveUnlimited = liveLimitSec <= 0
   const liveRatio = liveUnlimited ? null : clampRatio(liveUsed / liveLimitSec)
+  const liveLeft = Math.max(0, liveLimitSec - liveUsed)
 
   const ttsUnlimited = Boolean(
     e.ttsUnlimited || e.plan === 'family' || e.plan === 'business',
@@ -63,6 +77,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
     : camLimitSec <= 0
       ? clampRatio(camUsed > 0 ? 1 : 0)
       : clampRatio(camUsed / camLimitSec)
+  const camLeft = Math.max(0, camLimitSec - camUsed)
 
   const docsLimit = Math.max(0, e.limits.docs_pages ?? 0)
   const docsUsed = Math.max(0, e.usage.docsPages ?? 0)
@@ -81,8 +96,10 @@ function buildMeters(e: Entitlement): MeterModel[] {
       key: 'live',
       label: ui.accountLive,
       blurb: ui.usageDetailLive,
-      usedLabel: formatCompactDuration(liveUsed),
-      limitLabel: liveUnlimited ? '∞' : formatCompactDuration(liveLimitSec),
+      usedLabel: formatMinutesCompact(liveUsed),
+      limitLabel: liveUnlimited ? '∞' : `${e.limits.live_minutes}m`,
+      revealUsed: formatExactDuration(liveUsed),
+      revealLeft: liveUnlimited ? 'unlimited' : `${formatExactDuration(liveLeft)} left`,
       ratio: liveRatio,
       unlimited: liveUnlimited,
       detail: timeDetail(liveUsed, liveLimitSec, liveUnlimited),
@@ -96,6 +113,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
       blurb: ui.usageDetailVoice,
       usedLabel: formatChars(ttsUsed),
       limitLabel: ttsUnlimited ? '∞' : formatChars(ttsLimit),
+      revealUsed: formatChars(ttsUsed),
+      revealLeft: ttsUnlimited ? 'unlimited' : `${formatChars(ttsLeft)} left`,
       ratio: ttsRatio,
       unlimited: ttsUnlimited,
       detail: ttsUnlimited
@@ -110,8 +129,10 @@ function buildMeters(e: Entitlement): MeterModel[] {
         key: 'camera',
         label: ui.modeCamera,
         blurb: ui.usageDetailCamera,
-        usedLabel: formatCompactDuration(camUsed),
-        limitLabel: camUnlimited ? '∞' : formatCompactDuration(camLimitSec),
+        usedLabel: formatMinutesCompact(camUsed),
+        limitLabel: camUnlimited ? '∞' : `${e.limits.camera_minutes ?? 0}m`,
+        revealUsed: formatExactDuration(camUsed),
+        revealLeft: camUnlimited ? 'unlimited' : `${formatExactDuration(camLeft)} left`,
         ratio: camRatio,
         unlimited: camUnlimited,
         detail: timeDetail(camUsed, camLimitSec, camUnlimited),
@@ -122,6 +143,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
         blurb: ui.usageDetailDocs,
         usedLabel: String(docsUsed),
         limitLabel: docsUnlimited ? '∞' : String(docsLimit),
+        revealUsed: String(docsUsed),
+        revealLeft: docsUnlimited ? 'unlimited' : `${docsLeft} left`,
         ratio: docsRatio,
         unlimited: docsUnlimited,
         detail: docsUnlimited
@@ -134,6 +157,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
         blurb: ui.usageDetailAiVision,
         usedLabel: String(aiUsed),
         limitLabel: '∞',
+        revealUsed: String(aiUsed),
+        revealLeft: 'tracked',
         ratio: null,
         unlimited: true,
         detail: `${aiUsed} AI reads · tracked only`,
@@ -149,11 +174,17 @@ function MeterRing({
   unlimited,
   usedLabel,
   limitLabel,
+  revealUsed,
+  revealLeft,
+  precise,
 }: {
   ratio: number | null
   unlimited: boolean
   usedLabel: string
   limitLabel: string
+  revealUsed: string
+  revealLeft: string
+  precise: boolean
 }) {
   const gradId = useId().replace(/:/g, '')
   const r = 34
@@ -164,7 +195,10 @@ function MeterRing({
     unlimited || fill < 0.55 ? 'ok' : fill < 0.85 ? 'warn' : 'hot'
 
   return (
-    <div className={`usage-meter-ring usage-meter-ring--${level}`} aria-hidden>
+    <div
+      className={`usage-meter-ring usage-meter-ring--${level}${precise ? ' is-precise' : ''}`}
+      aria-hidden
+    >
       <svg viewBox="0 0 80 80" className="usage-meter-ring-svg">
         <defs>
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -184,11 +218,23 @@ function MeterRing({
         />
       </svg>
       <div className="usage-meter-ring-center">
-        <span className="usage-meter-ring-used">{usedLabel}</span>
-        <span className="usage-meter-ring-of">/ {limitLabel}</span>
+        <span className="usage-meter-ring-default">
+          <span className="usage-meter-ring-used">{usedLabel}</span>
+          <span className="usage-meter-ring-of">/ {limitLabel}</span>
+        </span>
+        <span className="usage-meter-ring-reveal">
+          <span className="usage-meter-ring-used">{revealUsed}</span>
+          <span className="usage-meter-ring-of">{revealLeft}</span>
+        </span>
       </div>
     </div>
   )
+}
+
+function isCoarsePointer(event?: PointerEvent<HTMLElement>): boolean {
+  if (event?.pointerType === 'touch') return true
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(pointer: coarse)').matches
 }
 
 type Props = {
@@ -198,20 +244,27 @@ type Props = {
 export function UsageMeters({ entitlement }: Props) {
   const meters = buildMeters(entitlement)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [tapRevealed, setTapRevealed] = useState(false)
+  const [hoverPrecise, setHoverPrecise] = useState(false)
   const lastTapRef = useRef(0)
 
+  const precise = tapRevealed || hoverPrecise
+
   const onActivate = (event: PointerEvent<HTMLElement>) => {
+    if (isCoarsePointer(event)) {
+      const now = Date.now()
+      if (now - lastTapRef.current < 320) {
+        setDetailOpen(true)
+        lastTapRef.current = 0
+        return
+      }
+      lastTapRef.current = now
+      setTapRevealed((v) => !v)
+      return
+    }
     if (event.detail >= 2) {
       setDetailOpen(true)
-      return
     }
-    const now = Date.now()
-    if (now - lastTapRef.current < 320) {
-      setDetailOpen(true)
-      lastTapRef.current = 0
-      return
-    }
-    lastTapRef.current = now
   }
 
   useEffect(() => {
@@ -333,15 +386,25 @@ export function UsageMeters({ entitlement }: Props) {
   return (
     <>
       <section
-        className="usage-meters"
+        className={`usage-meters${precise ? ' is-precise' : ''}`}
         onPointerUp={onActivate}
+        onMouseEnter={() => {
+          if (!isCoarsePointer()) setHoverPrecise(true)
+        }}
+        onMouseLeave={() => setHoverPrecise(false)}
         role="button"
         tabIndex={0}
         aria-label={biPlain(ui.usageMetersA11y)}
+        aria-pressed={precise}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === 'Enter') {
             e.preventDefault()
             setDetailOpen(true)
+            return
+          }
+          if (e.key === ' ') {
+            e.preventDefault()
+            setTapRevealed((v) => !v)
           }
         }}
       >
@@ -359,12 +422,26 @@ export function UsageMeters({ entitlement }: Props) {
                 unlimited={m.unlimited}
                 usedLabel={m.usedLabel}
                 limitLabel={m.limitLabel}
+                revealUsed={m.revealUsed}
+                revealLeft={m.revealLeft}
+                precise={precise}
               />
               <BiText copy={m.label} size="sm" as="p" className="usage-meter-label" />
             </motion.div>
           ))}
         </div>
-        <BiText copy={ui.usageMetersHint} size="sm" as="p" className="usage-meters-hint" />
+        <BiText
+          copy={ui.usageMetersHintTouch}
+          size="sm"
+          as="p"
+          className="usage-meters-hint usage-meters-hint--touch"
+        />
+        <BiText
+          copy={ui.usageMetersHintMouse}
+          size="sm"
+          as="p"
+          className="usage-meters-hint usage-meters-hint--mouse"
+        />
       </section>
       {drawer}
     </>

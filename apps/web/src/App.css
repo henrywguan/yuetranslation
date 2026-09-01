@@ -489,6 +489,40 @@
   pointer-events: none;
 }
 
+.usage-meter-ring-default,
+.usage-meter-ring-reveal {
+  grid-area: 1 / 1;
+  display: grid;
+  place-content: center;
+  gap: 1px;
+  transition:
+    opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.usage-meter-ring-default {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.usage-meter-ring-reveal {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+}
+
+.usage-meters.is-precise .usage-meter-ring-default,
+.usage-meter-ring.is-precise .usage-meter-ring-default {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+.usage-meters.is-precise .usage-meter-ring-reveal,
+.usage-meter-ring.is-precise .usage-meter-ring-reveal {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .usage-meter-ring-used {
   font-size: 0.78rem;
   font-weight: 700;
@@ -502,6 +536,19 @@
   font-weight: 550;
   color: var(--muted);
   line-height: 1.1;
+  max-width: 4.6rem;
+  margin-inline: auto;
+}
+
+.usage-meter-ring.is-precise .usage-meter-ring-used,
+.usage-meters.is-precise .usage-meter-ring-used {
+  font-size: 0.68rem;
+}
+
+.usage-meter-ring.is-precise .usage-meter-ring-of,
+.usage-meters.is-precise .usage-meter-ring-of {
+  font-size: 0.56rem;
+  line-height: 1.15;
 }
 
 .usage-meter-label {
@@ -522,6 +569,55 @@
   font-size: 0.72rem;
   line-height: 1.35;
   opacity: 0.9;
+}
+
+.usage-meters-hint--mouse {
+  display: none;
+}
+
+.usage-meters-hint--touch {
+  display: block;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .usage-meters-hint--touch {
+    display: none;
+  }
+
+  .usage-meters-hint--mouse {
+    display: block;
+  }
+
+  /* Desktop: hover reveals exact used / remaining without a tap. */
+  .usage-meters:hover {
+    /* class is-precise also set via JS; CSS hover as a progressive enhance */
+  }
+
+  .usage-meters:hover .usage-meter-ring-default {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  .usage-meters:hover .usage-meter-ring-reveal {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .usage-meters:hover .usage-meter-ring-used {
+    font-size: 0.68rem;
+  }
+
+  .usage-meters:hover .usage-meter-ring-of {
+    font-size: 0.56rem;
+    line-height: 1.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usage-meter-ring-default,
+  .usage-meter-ring-reveal {
+    transition: none;
+  }
 }
 
 .usage-detail-layer {
