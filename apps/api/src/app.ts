@@ -32,7 +32,12 @@ import {
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
-import { upsertProfilePlan } from './supabase.js'
+import {
+  upsertProfilePlan,
+  normalizeUsernameInput,
+  isUsernameTaken,
+  getProfile,
+} from './supabase.js'
 import { isEnVoice, isYueVoice } from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
@@ -275,6 +280,8 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
       const prefs = {
         ttsVoiceYue: patch.tts_voice_yue || ent.prefs.ttsVoiceYue,
         ttsVoiceEn: patch.tts_voice_en || ent.prefs.ttsVoiceEn,
+        username: ent.prefs.username,
+        usernameChangedAt: ent.prefs.usernameChangedAt,
       }
       res.json({ ok: true, prefs, entitlement: { ...ent, prefs } })
       return
@@ -293,6 +300,74 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save preferences' })
+  }
+})
+
+const USERNAME_COOLDOWN_MS = 60 * 60 * 1000
+
+/** Set / change Account Hub username (once per hour). */
+app.patch('/api/prefs/username', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (!ent.loggedIn || !req.auth?.userId) {
+    res.status(401).json({ message: 'Sign in to set a username.', entitlement: ent })
+    return
+  }
+
+  const normalized = normalizeUsernameInput(String(req.body?.username || ''))
+  if (!normalized) {
+    res.status(400).json({
+      message: 'Username must be 3–24 characters: letters, numbers, . _ - (start with a letter or number).',
+    })
+    return
+  }
+
+  if (env.openMode) {
+    const prefs = {
+      ...ent.prefs,
+      username: normalized,
+      usernameChangedAt: new Date().toISOString(),
+    }
+    res.json({ ok: true, prefs, entitlement: { ...ent, prefs } })
+    return
+  }
+
+  try {
+    const profile = await getProfile(req.auth.userId)
+    const current = profile?.username || null
+    if (current && current.toLowerCase() === normalized.toLowerCase()) {
+      // Same name (any casing) — no-op, don't burn the cooldown.
+      const next = await entitlementFor(req)
+      res.json({ ok: true, prefs: next.prefs, entitlement: next })
+      return
+    }
+
+    const changedAt = profile?.username_changed_at ? Date.parse(profile.username_changed_at) : NaN
+    if (Number.isFinite(changedAt)) {
+      const waitMs = USERNAME_COOLDOWN_MS - (Date.now() - changedAt)
+      if (waitMs > 0) {
+        const waitMin = Math.max(1, Math.ceil(waitMs / 60000))
+        res.status(429).json({
+          message: `You can change your username again in about ${waitMin} minute${waitMin === 1 ? '' : 's'}.`,
+          retryAfterMinutes: waitMin,
+          entitlement: ent,
+        })
+        return
+      }
+    }
+
+    if (await isUsernameTaken(normalized, req.auth.userId)) {
+      res.status(409).json({ message: 'That username is already taken.' })
+      return
+    }
+
+    await upsertProfilePlan(req.auth.userId, {
+      username: normalized,
+      username_changed_at: new Date().toISOString(),
+    })
+    const next = await entitlementFor(req)
+    res.json({ ok: true, prefs: next.prefs, entitlement: next })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save username' })
   }
 })
 

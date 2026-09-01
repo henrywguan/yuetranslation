@@ -16,7 +16,13 @@ import {
   writeBadgeUsageMetric,
   type BadgeUsageMetric,
 } from '../lib/badgeUsagePref'
-import { saveTtsVoicePrefs, sendHouseholdInvite, revokeHouseholdInvite, removeHouseholdMember } from '../lib/api'
+import {
+  saveTtsVoicePrefs,
+  saveUsername,
+  sendHouseholdInvite,
+  revokeHouseholdInvite,
+  removeHouseholdMember,
+} from '../lib/api'
 import {
   EN_VOICES,
   PREVIEW_EN,
@@ -84,14 +90,18 @@ function cameraCopy(entitlement: Entitlement): Bi {
   return ui.camMinutesLeft(formatDuration(left))
 }
 
-function displayNameFromSession(email: string | undefined, meta: Record<string, unknown> | undefined) {
+function displayNameFromSession(meta: Record<string, unknown> | undefined) {
+  // OAuth names are only a soft fallback for signed-out/guest title; logged-in
+  // Account Hub title uses the custom username once set.
   const full =
     (typeof meta?.full_name === 'string' && meta.full_name.trim()) ||
     (typeof meta?.name === 'string' && meta.name.trim()) ||
     ''
-  if (full) return full
-  if (!email) return ''
-  return email.split('@')[0] || email
+  return full
+}
+
+function HubSep() {
+  return <div className="account-hub-sep" role="separator" aria-hidden="true" />
 }
 
 function canShowMetric(metric: BadgeUsageMetric, entitlement: Entitlement, showVoiceQuota: boolean): boolean {
@@ -127,7 +137,12 @@ export function PlanChip() {
   const [open, setOpen] = useState(false)
   const [homescreenOpen, setHomescreenOpen] = useState(false)
   const [email, setEmail] = useState('')
-  const [displayName, setDisplayName] = useState('')
+  const [oauthName, setOauthName] = useState('')
+  const [username, setUsername] = useState('')
+  const [usernameDraft, setUsernameDraft] = useState('')
+  const [usernameEditing, setUsernameEditing] = useState(false)
+  const [usernameBusy, setUsernameBusy] = useState(false)
+  const [usernameError, setUsernameError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [hubPos, setHubPos] = useState<{ top: number; right: number } | null>(null)
   const [badgeMetric, setBadgeMetric] = useState<BadgeUsageMetric>(() => readBadgeUsageMetric())
@@ -159,7 +174,18 @@ export function PlanChip() {
       setEnVoice(v)
       writeLocalEnVoice(v)
     }
-  }, [entitlement?.prefs?.ttsVoiceYue, entitlement?.prefs?.ttsVoiceEn, entitlement?.loggedIn])
+    if (prefs?.username) {
+      setUsername(prefs.username)
+      setUsernameDraft(prefs.username)
+    } else if (entitlement?.loggedIn) {
+      setUsername('')
+    }
+  }, [
+    entitlement?.prefs?.ttsVoiceYue,
+    entitlement?.prefs?.ttsVoiceEn,
+    entitlement?.prefs?.username,
+    entitlement?.loggedIn,
+  ])
 
   useEffect(() => {
     let cancelled = false
@@ -168,7 +194,7 @@ export function PlanChip() {
       const nextEmail = session?.user?.email?.trim() || ''
       const meta = session?.user?.user_metadata as Record<string, unknown> | undefined
       setEmail(nextEmail)
-      setDisplayName(displayNameFromSession(nextEmail, meta))
+      setOauthName(displayNameFromSession(meta))
     })
     return () => {
       cancelled = true
@@ -297,7 +323,11 @@ export function PlanChip() {
       await signOut()
       setOpen(false)
       setEmail('')
-      setDisplayName('')
+      setOauthName('')
+      setUsername('')
+      setUsernameDraft('')
+      setUsernameEditing(false)
+      setUsernameError(null)
       await loadBootstrap()
     } finally {
       setBusy(false)
@@ -349,6 +379,56 @@ export function PlanChip() {
     }
   }
 
+  const hubTitle = entitlement.loggedIn
+    ? username || biPlain(ui.accountUsernamePlaceholder)
+    : oauthName || email || biPlain(planLabel(plan))
+
+  const startUsernameEdit = () => {
+    if (!entitlement.loggedIn) return
+    setUsernameError(null)
+    setUsernameDraft(username)
+    setUsernameEditing(true)
+  }
+
+  const cancelUsernameEdit = () => {
+    setUsernameEditing(false)
+    setUsernameDraft(username)
+    setUsernameError(null)
+  }
+
+  const persistUsername = async () => {
+    if (!entitlement.loggedIn) return
+    const next = usernameDraft.trim()
+    setUsernameBusy(true)
+    setUsernameError(null)
+    try {
+      const data = await saveUsername(next)
+      const saved = data.prefs?.username || next
+      setUsername(saved)
+      setUsernameDraft(saved)
+      setUsernameEditing(false)
+      if (data.entitlement) {
+        useYueStore.setState({ entitlement: data.entitlement })
+      } else {
+        useYueStore.setState({
+          entitlement: {
+            ...entitlement,
+            prefs: {
+              ttsVoiceYue: entitlement.prefs?.ttsVoiceYue || yueVoice,
+              ttsVoiceEn: entitlement.prefs?.ttsVoiceEn || enVoice,
+              ...data.prefs,
+            },
+          },
+        })
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not save username'
+      setUsernameError(message)
+    } finally {
+      setUsernameBusy(false)
+    }
+  }
+
   const activeBadgeMetric = resolveBadgeMetric(badgeMetric, entitlement, showVoiceQuota)
   const badgeOptions: Array<{ id: BadgeUsageMetric; copy: Bi; available: boolean }> = [
     { id: 'live', copy: ui.accountBadgeLive, available: canShowMetric('live', entitlement, showVoiceQuota) },
@@ -367,19 +447,88 @@ export function PlanChip() {
           <p className="account-hub-kicker">
             <BiText copy={ui.accountHub} size="sm" />
           </p>
-          <div className="account-hub-title-row">
-            <h2 id={titleId} className="account-hub-title">
-              {displayName || email || biPlain(planLabel(plan))}
-            </h2>
-            {entitlement.role ? (
-              <div className="account-hub-header-role">
-                <RoleBadge role={entitlement.role} />
+          {entitlement.loggedIn && usernameEditing ? (
+            <div className="account-hub-username-edit">
+              <label className="account-hub-username-field" htmlFor={`${panelId}-username`}>
+                <span className="account-hub-label">
+                  <BiText copy={ui.accountUsername} size="sm" />
+                </span>
+                <input
+                  id={`${panelId}-username`}
+                  className="account-hub-username-input"
+                  value={usernameDraft}
+                  onChange={(e) => setUsernameDraft(e.target.value)}
+                  placeholder={biPlain(ui.accountUsernamePlaceholder)}
+                  maxLength={24}
+                  autoComplete="username"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  disabled={usernameBusy}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      void persistUsername()
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault()
+                      cancelUsernameEdit()
+                    }
+                  }}
+                />
+              </label>
+              <p className="account-hub-hint">
+                <BiText copy={ui.accountUsernameHint} size="sm" />
+              </p>
+              {usernameError ? (
+                <p className="account-hub-username-error" role="alert">
+                  {usernameError}
+                </p>
+              ) : null}
+              <div className="account-hub-username-actions">
+                <button
+                  type="button"
+                  className="account-hub-btn account-hub-btn--primary account-hub-btn--compact"
+                  disabled={usernameBusy || !usernameDraft.trim()}
+                  onClick={() => void persistUsername()}
+                >
+                  <BiText copy={ui.accountUsernameSave} size="sm" hideJp />
+                </button>
+                <button
+                  type="button"
+                  className="account-hub-btn account-hub-btn--compact"
+                  disabled={usernameBusy}
+                  onClick={cancelUsernameEdit}
+                >
+                  <BiText copy={ui.accountUsernameCancel} size="sm" hideJp />
+                </button>
               </div>
-            ) : null}
-          </div>
-          {email && displayName && displayName !== email ? (
-            <p className="account-hub-email">{email}</p>
-          ) : null}
+            </div>
+          ) : (
+            <>
+              <div className="account-hub-title-row">
+                {entitlement.loggedIn ? (
+                  <button
+                    type="button"
+                    id={titleId}
+                    className={`account-hub-title account-hub-title--btn${!username ? ' is-placeholder' : ''}`}
+                    onClick={startUsernameEdit}
+                    aria-label={biPlain(ui.accountUsernameEdit)}
+                  >
+                    {hubTitle}
+                  </button>
+                ) : (
+                  <h2 id={titleId} className="account-hub-title">
+                    {hubTitle}
+                  </h2>
+                )}
+                {entitlement.role ? (
+                  <div className="account-hub-header-role">
+                    <RoleBadge role={entitlement.role} />
+                  </div>
+                ) : null}
+              </div>
+              {email ? <p className="account-hub-email">{email}</p> : null}
+            </>
+          )}
         </div>
         <button
           type="button"
@@ -414,6 +563,8 @@ export function PlanChip() {
             )}
           </section>
         </div>
+
+        <HubSep />
 
         <section className="account-hub-section" aria-label={biPlain(ui.accountUsage)}>
           <p className="account-hub-label">
@@ -576,7 +727,9 @@ export function PlanChip() {
         ) : null}
 
         {badgeOptions.some((o) => o.available) ? (
-          <section className="account-hub-section" aria-labelledby={badgePrefId}>
+          <>
+            <HubSep />
+            <section className="account-hub-section" aria-labelledby={badgePrefId}>
             <p className="account-hub-label" id={badgePrefId}>
               <BiText copy={ui.accountBadgeDisplay} size="sm" />
             </p>
@@ -602,7 +755,10 @@ export function PlanChip() {
               )}
             </div>
           </section>
+          </>
         ) : null}
+
+        <HubSep />
 
         <section className="account-hub-section" aria-labelledby={voicePrefId}>
           <p className="account-hub-label" id={voicePrefId}>
@@ -665,6 +821,8 @@ export function PlanChip() {
             </button>
           </div>
         </section>
+
+        <HubSep />
 
         <div className="account-hub-actions">
           {entitlement.isAdmin ? (

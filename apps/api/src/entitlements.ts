@@ -73,10 +73,14 @@ export type Entitlement = {
     docs: boolean
   }
   reason: string | null
-  /** Synced TTS voice preferences (Azure Neural ids). */
+  /** Synced account preferences. */
   prefs: {
     ttsVoiceYue: string
     ttsVoiceEn: string
+    /** Custom display username; null until the user sets one. */
+    username: string | null
+    /** ISO timestamp of last username change; null if never set. */
+    usernameChangedAt: string | null
   }
   /** Present when the user owns or belongs to a Family/Max household with pooled usage. */
   household: HouseholdSummary | null
@@ -206,6 +210,8 @@ function buildSnapshot(
     ttsVoiceYue?: string | null
     ttsVoiceEn?: string | null
     household?: HouseholdSummary | null
+    username?: string | null
+    usernameChangedAt?: string | null
   } = {},
 ): Entitlement {
   const isAdmin = Boolean(opts.isAdmin)
@@ -216,6 +222,8 @@ function buildSnapshot(
   const prefs = {
     ttsVoiceYue: resolveYueVoice(opts.ttsVoiceYue),
     ttsVoiceEn: resolveEnVoice(opts.ttsVoiceEn),
+    username: opts.username?.trim() || null,
+    usernameChangedAt: opts.usernameChangedAt || null,
   }
 
   if (disabled && loggedIn) {
@@ -287,7 +295,12 @@ function buildSnapshot(
         docs: false,
       },
       reason: 'login_required',
-      prefs: { ttsVoiceYue: DEFAULT_YUE_VOICE, ttsVoiceEn: DEFAULT_EN_VOICE },
+      prefs: {
+        ttsVoiceYue: DEFAULT_YUE_VOICE,
+        ttsVoiceEn: DEFAULT_EN_VOICE,
+        username: null,
+        usernameChangedAt: null,
+      },
       household: null,
     }
   }
@@ -400,7 +413,12 @@ function localEntitlement(): Entitlement {
         docs: true,
       },
       reason: null,
-      prefs: { ttsVoiceYue: DEFAULT_YUE_VOICE, ttsVoiceEn: DEFAULT_EN_VOICE },
+      prefs: {
+        ttsVoiceYue: DEFAULT_YUE_VOICE,
+        ttsVoiceEn: DEFAULT_EN_VOICE,
+        username: null,
+        usernameChangedAt: null,
+      },
       household: null,
     }
   }
@@ -461,5 +479,7 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
     ttsVoiceYue: profile?.tts_voice_yue,
     ttsVoiceEn: profile?.tts_voice_en,
     household,
+    username: profile?.username,
+    usernameChangedAt: profile?.username_changed_at,
   })
 }
