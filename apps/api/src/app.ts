@@ -61,6 +61,7 @@ import {
   adminBackfillHouseholdUsage,
   adminUserUsage,
 } from './admin.js'
+import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 
 export const app = express()
 app.use(cors({ origin: true, credentials: true }))
@@ -602,5 +603,7 @@ app.delete('/api/admin/email/templates/:templateId', adminArchiveEmailTemplate)
 app.get('/api/admin/email/contacts', adminListEmailContacts)
 app.post('/api/admin/email/preview', adminPreviewEmail)
 app.post('/api/admin/email/send', adminSendEmail)
+
+scheduleHouseholdUsageBackfillOnStartup()
 
 export default app

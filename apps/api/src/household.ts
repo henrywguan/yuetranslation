@@ -386,6 +386,7 @@ export async function backfillHouseholdUsageFromLegacy(): Promise<HouseholdUsage
 
 /** All pooled usage months for a household (newest first). */
 export async function listHouseholdUsageMonths(householdId: string): Promise<UsageSnapshot[]> {
+  await resolveHouseholdUsageForAllMonths(householdId)
   const client = getAdmin()
   if (!client) return []
   const { data, error } = await client

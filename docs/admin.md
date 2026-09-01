@@ -58,6 +58,8 @@ Uses the same `RESEND_API_KEY`. Existing contacts are updated, not duplicated.
 
 **Backfill existing users:** In `#/admin`, click **Sync Resend audience** (or `POST /api/admin/resend-audience/sync` as an admin). This scans every Supabase Auth user and upserts their email into the audience. Users without an email are skipped.
 
+**Backfill household usage:** Before household pooling (migration `012`), meters lived in `usage_months` per user. After deploy, click **Backfill household usage** in `#/admin` (or `POST /api/admin/household-usage/backfill`) to fold that legacy data into `household_usage_months`. Safe to re-run. Production also runs this automatically on cold start when `YUE_RUN_HOUSEHOLD_USAGE_BACKFILL=1` is set in `vercel.json` — remove that flag once usage looks correct.
+
 ### 2. Upgrade alerts (automatic)
 
 Once `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set, **Stripe** `checkout.session.completed` sends an email when a user moves to `family` or `business`. Manual upgrades in `#/admin` also notify when the plan changes to a paid tier.

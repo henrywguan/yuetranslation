@@ -18,6 +18,7 @@ import {
   fetchAdminUsers,
   formatLiveSeconds,
   syncResendAudience,
+  backfillHouseholdUsage,
   type AdminAuditEntry,
   type AdminBugReport,
   type AdminListQuery,
@@ -95,6 +96,7 @@ export function AdminPage() {
   const [reports, setReports] = useState<AdminBugReport[]>([])
   const [selectedReport, setSelectedReport] = useState<AdminBugReport | null>(null)
   const [resendSyncMsg, setResendSyncMsg] = useState('')
+  const [usageBackfillMsg, setUsageBackfillMsg] = useState('')
   const [resetUser, setResetUser] = useState<AdminUser | null>(null)
 
   useEffect(() => {
@@ -315,6 +317,31 @@ export function AdminPage() {
     }
   }
 
+  const onBackfillHouseholdUsage = async () => {
+    if (
+      !window.confirm(
+        'Fold legacy per-user usage into household pools for all months? Safe to re-run. This may take a minute.',
+      )
+    ) {
+      return
+    }
+    setBusy(true)
+    setError('')
+    setUsageBackfillMsg('')
+    try {
+      const result = await backfillHouseholdUsage()
+      setUsageBackfillMsg(
+        `Usage backfill: ${result.householdsEnsured} households created, ${result.householdsMerged} merged, ${result.monthsMerged} month-rows processed.`,
+      )
+      await reloadUsers()
+      if (tab === 'audit') void reloadAudit()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Household usage backfill failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const onSetReportStatus = async (report: AdminBugReport, status: AdminBugReport['status']) => {
     if (status === report.status) return
     setBusy(true)
@@ -503,9 +530,18 @@ export function AdminPage() {
             >
               Sync Resend audience
             </button>
+            <button
+              type="button"
+              className="admin-btn admin-btn--secondary"
+              disabled={busy}
+              onClick={() => void onBackfillHouseholdUsage()}
+            >
+              Backfill household usage
+            </button>
           </section>
 
           {resendSyncMsg ? <p className="admin-muted">{resendSyncMsg}</p> : null}
+          {usageBackfillMsg ? <p className="admin-muted">{usageBackfillMsg}</p> : null}
 
           <p className="admin-muted">
             {busy ? 'Loading…' : `${count} user${count === 1 ? '' : 's'}`} · month{' '}
