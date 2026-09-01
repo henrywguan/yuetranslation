@@ -7,6 +7,7 @@ import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
 import { ui } from '../lib/uiCopy'
+import { normalizeEnglishApostrophes } from '../lib/typography'
 
 /**
  * Conversation: two language-pure cards on a shared phone.
@@ -139,7 +140,7 @@ export function ConversationView() {
                       onClick={openEnDetails}
                       aria-label={`${ui.enTranslation.en}. Open details.`}
                     >
-                      {enText}
+                      {normalizeEnglishApostrophes(enText)}
                     </button>
                   ) : (
                     <span className="spoken-line-text">{enText}</span>

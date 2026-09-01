@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { normalizeEnglishApostrophes } from './typography'
 
 /** Escape HTML, then restore a tiny safe markdown subset for legal pages. */
 function escapeHtml(s: string): string {
@@ -17,7 +18,7 @@ function rewriteLegalHref(href: string): string {
 }
 
 function inlineFormat(raw: string): string {
-  let s = escapeHtml(raw)
+  let s = escapeHtml(normalizeEnglishApostrophes(raw))
   // Links: [label](url)
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, label: string, href: string) => {
     const resolved = rewriteLegalHref(href)

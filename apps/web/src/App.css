@@ -2805,9 +2805,15 @@
   word-break: break-word;
 }
 
+.pane-en header p,
+.pane-en .spoken-line-text {
+  font-family: var(--font-english);
+  letter-spacing: normal;
+}
+
 .pane-hero--en {
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  font-family: var(--font-english);
+  letter-spacing: normal;
 }
 
 .pane-hero--yue {

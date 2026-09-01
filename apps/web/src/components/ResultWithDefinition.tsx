@@ -1,6 +1,7 @@
 import { CantoneseText } from './CantoneseText'
 import { ResultActions } from './ResultActions'
 import { SpeakButton } from './SpeakButton'
+import { normalizeEnglishApostrophes } from '../lib/typography'
 import type { Lang } from '../lib/types'
 
 /** Translation line only — gloss definitions stay out of the pane (details/drill-down only). */
@@ -46,7 +47,7 @@ export function ResultWithDefinition({
               onActivate={onActivate}
             />
           ) : (
-            <p className={textClassName || 'result-text'}>{trimmed}</p>
+            <p className={textClassName || 'result-text'}>{normalizeEnglishApostrophes(trimmed)}</p>
           )}
           {speakLang && trimmed ? (
             speakLang === 'yue' ? (

@@ -42,7 +42,7 @@ When you create or use an account, we may collect:
 
 ### 3.2 Billing information
 
-Paid plans are processed by **Stripe**. We receive and store Stripe customer and subscription identifiers linked to your account. Stripe collects and processes payment card details and related billing information under Stripe’s own terms and privacy policy. We do not store full payment card numbers on our servers.
+Paid plans are processed by **Stripe**. We receive and store Stripe customer and subscription identifiers linked to your account. Stripe collects and processes payment card details and related billing information under Stripe's own terms and privacy policy. We do not store full payment card numbers on our servers.
 
 ### 3.3 Usage and entitlement meters
 
@@ -97,7 +97,7 @@ We use **Vercel Analytics** for aggregated traffic and performance insights. Thi
 
 ### 3.8 Email communications
 
-If email tooling is configured, we may sync your account email to our email provider’s audience for product and operational messages, and we may send transactional or administrative notices (for example, related to account, billing, or support). You can contact us to request removal from marketing-style sends where applicable; transactional messages related to the Service may still be necessary.
+If email tooling is configured, we may sync your account email to our email provider's audience for product and operational messages, and we may send transactional or administrative notices (for example, related to account, billing, or support). You can contact us to request removal from marketing-style sends where applicable; transactional messages related to the Service may still be necessary.
 
 ### 3.9 Information we do not intentionally collect
 
@@ -119,7 +119,7 @@ We use information to:
 - Protect the rights, safety, and integrity of users and the Service
 
 **We do not sell your personal information.**  
-**We do not use your translation content, audio, images, or documents to train JyutTranslate’s own machine-learning models.**  
+**We do not use your translation content, audio, images, or documents to train JyutTranslate's own machine-learning models.**  
 **We do not sell your content or personal information to data brokers or advertisers.**
 
 ---
@@ -177,7 +177,7 @@ While your **account is active**, we retain:
 - Admin/security records associated with the account
 - Billing identifiers needed to operate subscriptions
 
-**Stripe** may retain payment and invoice records according to Stripe’s practices and legal/accounting requirements, including after a subscription ends.
+**Stripe** may retain payment and invoice records according to Stripe's practices and legal/accounting requirements, including after a subscription ends.
 
 ### After account closure
 
@@ -223,7 +223,7 @@ We do not operate a third-party advertising cookie stack on the Service today. B
 
 ---
 
-## 12. Children’s privacy
+## 12. Children's privacy
 
 The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. Contact us if you believe we have, and we will delete it as required.
 
