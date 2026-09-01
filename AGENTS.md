@@ -1,5 +1,17 @@
 # Agent notes
 
+## Product & design goals
+
+Henry’s bar for JyutTranslate UX: **fluid, dynamic, modern, interactive, responsive, luxury**.
+
+Before shipping a change that **reduces** live feedback, motion, immediacy, or polish (e.g. hiding interim STT, removing animations, deferring UI until a slow path completes, static placeholders where real-time state exists), **stop and flag the tradeoff** for Henry. Wait for his confirmation before implementing.
+
+**Do flag** when a proposal favors austerity, latency hacks, or “lean pipeline” over feel — especially voice, translation, and mic flows.
+
+**Do not flag** obvious engineering necessities (security, billing, crash fixes, env limits) unless they also materially hurt the goals above.
+
+**Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
+
 ## Cursor Cloud specific instructions
 
 ### Paid / external API usage (cloud testing only)
