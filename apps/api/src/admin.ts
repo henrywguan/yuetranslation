@@ -71,8 +71,7 @@ function liveLimitSeconds(plan: ProfileRow['plan']): number {
 }
 
 function ttsLimitChars(plan: ProfileRow['plan']): number {
-  if (plan === 'family') return env.familyTtsChars
-  if (plan === 'business') return env.businessTtsChars
+  if (plan === 'family' || plan === 'business') return 0
   return env.freeAllowTts ? env.freeTtsChars : 0
 }
 

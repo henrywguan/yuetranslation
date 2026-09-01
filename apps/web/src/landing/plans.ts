@@ -9,8 +9,6 @@ export type MarketingPlan = {
   tagline: Bi
   cta: Bi
   featured?: boolean
-  /** Shown greyed out with a tooltip; CTA disabled. */
-  unavailable?: boolean
   /** Where the plan CTA should go. */
   ctaOpens: 'app' | 'pricing'
   features: Bi[]
@@ -26,7 +24,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     tagline: ui.tagFree,
     cta: ui.getStarted,
     ctaOpens: 'app',
-    features: [ui.freeFeatLive20, ui.freeFeatText, ui.freeFeatCamera, ui.freeFeatTts, ui.freeFeatModes],
+    features: [ui.freeFeatLive5, ui.freeFeatText, ui.freeFeatCamera, ui.freeFeatTts, ui.freeFeatModes],
   },
   {
     id: 'family',
@@ -37,7 +35,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     cta: ui.goFamily,
     featured: true,
     ctaOpens: 'pricing',
-    features: [ui.familyFeatLive10, ui.familyFeatCamera, ui.familyFeatTts, ui.familyFeatQuality, ui.familyFeatEverything],
+    features: [ui.familyFeatLive1h, ui.familyFeatCamera, ui.familyFeatTts, ui.familyFeatQuality, ui.familyFeatEverything],
   },
   {
     id: 'business',

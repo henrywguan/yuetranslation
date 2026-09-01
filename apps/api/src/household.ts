@@ -402,15 +402,6 @@ export async function listHouseholdUsageMonths(householdId: string): Promise<Usa
   )
 }
 
-/** @deprecated Use resolveHouseholdUsage — kept for call-site compatibility. */
-export async function seedHouseholdUsageFromOwnerIfNeeded(
-  householdId: string,
-  _ownerUserId: string,
-  month = currentMonthKey(),
-): Promise<UsageSnapshot> {
-  return resolveHouseholdUsage(householdId, month)
-}
-
 export async function incrementHouseholdUsage(
   householdId: string,
   delta: {
