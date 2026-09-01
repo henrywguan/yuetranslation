@@ -5,7 +5,7 @@ export type SpeakDirection = 'en' | 'yue' | 'cmn'
 export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean
-  plan: 'guest' | 'free' | 'pro' | 'max'
+  plan: 'guest' | 'free' | 'family' | 'max'
   isAdmin?: boolean
   role?: 'admin' | 'family' | null
   disabled?: boolean
@@ -39,7 +39,7 @@ export type Entitlement = {
     /** -1 when unlimited (Max). */
     docsPages?: number
   }
-  /** Pro/Max: usage tracked, never gates the speaker. */
+  /** Family/Max: usage tracked, never gates the speaker. */
   ttsUnlimited?: boolean
   /** Max: usage tracked, never gates camera. */
   cameraUnlimited?: boolean
@@ -61,6 +61,29 @@ export type Entitlement = {
     ttsVoiceYue: string
     ttsVoiceEn: string
   }
+  /** Family/Max household seats with pooled monthly usage. */
+  household?: HouseholdSummary | null
+}
+
+export type HouseholdSummary = {
+  id: string
+  plan: 'family' | 'max'
+  seatLimit: number
+  seatUsed: number
+  role: 'owner' | 'member'
+  pooled: true
+  members: Array<{
+    userId: string
+    role: 'owner' | 'member'
+    email: string | null
+    joinedAt: string
+  }>
+  pendingInvites: Array<{
+    id: string
+    email: string
+    createdAt: string
+    expiresAt: string
+  }>
 }
 
 export type ConversationTurn = {

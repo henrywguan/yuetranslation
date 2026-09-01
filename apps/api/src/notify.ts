@@ -134,13 +134,13 @@ export function notifyNewSignup(input: {
 export function notifyUserUpgrade(input: {
   email: string | null
   userId: string
-  plan: 'pro' | 'max'
-  previousPlan: 'free' | 'pro' | 'max'
+  plan: 'family' | 'max'
+  previousPlan: 'free' | 'family' | 'max'
   source: 'stripe' | 'admin'
   stripeCustomerId?: string | null
 }): void {
   if (input.previousPlan === input.plan) return
-  if (input.plan !== 'pro' && input.plan !== 'max') return
+  if (input.plan !== 'family' && input.plan !== 'max') return
 
   const label = input.email || input.userId
   const via = input.source === 'stripe' ? 'Stripe checkout' : 'Admin panel'

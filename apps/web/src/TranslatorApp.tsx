@@ -17,7 +17,8 @@ import { SoloView } from './components/SoloView'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TranslationHistory } from './components/TranslationHistory'
 import { useYueStore } from './lib/store'
-import { openAuthScreen, onAuthChange } from './lib/auth'
+import { acceptHouseholdInvite } from './lib/api'
+import { openAuthScreen, onAuthChange, getSession } from './lib/auth'
 import { openBugReportOrAuth } from './lib/bugReport'
 import { openUpgrade } from './lib/billing'
 import { openHome } from './lib/siteLinks'
@@ -42,6 +43,36 @@ export function TranslatorApp() {
     return onAuthChange(() => {
       void loadBootstrap()
     })
+  }, [loadBootstrap])
+
+  // Deep link: /?invite=TOKEN#/app — accept after sign-in.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('invite')?.trim()
+    if (!token) return
+    let cancelled = false
+    void (async () => {
+      const session = await getSession()
+      if (cancelled) return
+      if (!session) {
+        openAuthScreen()
+        return
+      }
+      try {
+        await acceptHouseholdInvite(token)
+        await loadBootstrap()
+      } catch (err) {
+        console.warn('[household] accept invite failed', err)
+      } finally {
+        params.delete('invite')
+        const url = new URL(window.location.href)
+        url.search = params.toString()
+        window.history.replaceState({}, '', url.toString())
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [loadBootstrap])
 
   useEffect(() => {
@@ -119,7 +150,7 @@ export function TranslatorApp() {
               </GlowRotateButton>
             ) : null}
             {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
-              <button type="button" onClick={() => void openUpgrade('pro', 'month')}>
+              <button type="button" onClick={() => void openUpgrade('family', 'month')}>
                 <BiText copy={ui.upgrade} size="sm" />
               </button>
             ) : null}

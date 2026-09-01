@@ -25,7 +25,7 @@ const COMPARISON: Row[] = [
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   {
     label: ui.cmpCamera,
-    values: [ui.valCamFree, ui.valCamPro, ui.valCamMax],
+    values: [ui.valCamFree, ui.valCamFamily, ui.valCamMax],
   },
   {
     label: ui.cmpTts,
@@ -84,7 +84,7 @@ async function onPlanCta(plan: MarketingPlan, billing: Billing) {
     openAuthScreen()
     return
   }
-  if (plan.id === 'pro' || plan.id === 'max') {
+  if (plan.id === 'family' || plan.id === 'max') {
     await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
     return
   }
@@ -213,7 +213,7 @@ export function PricingPage() {
                   <BiText copy={ui.planFree} size="sm" />
                 </th>
                 <th className="pp-col-featured">
-                  <BiText copy={ui.planPro} size="sm" />
+                  <BiText copy={ui.planFamily} size="sm" />
                 </th>
                 <th className="pp-col-max">
                   <BiText copy={ui.planMax} size="sm" />

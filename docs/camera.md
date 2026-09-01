@@ -28,7 +28,7 @@ Speech Solo/Conversation remain EN↔粵 only.
 | --- | --- | --- | --- |
 | Guest | No | — | — |
 | Free | Yes | `YUE_FREE_CAMERA_MINUTES` (default 60) | `cameraSeconds` |
-| Pro | Yes | `YUE_PRO_CAMERA_MINUTES` (default 480 = 8 hr) | `cameraSeconds` |
+| Family | Yes | `YUE_FAMILY_CAMERA_MINUTES` (default 480 = 8 hr) | `cameraSeconds` |
 | Max | Yes | Unlimited | Yes (`cameraUnlimited`) |
 
 Heartbeat: `POST /api/usage/camera-heartbeat` while AR fullscreen or upload editor is open.
@@ -45,7 +45,7 @@ Same **access gate** as camera; **not** shared with camera minutes. Canonical nu
 | --- | --- | --- | --- |
 | Guest | No | — | — |
 | Free | Yes | `YUE_FREE_DOCS_PAGES` (default 40) | `docs_pages` |
-| Pro | Yes | `YUE_PRO_DOCS_PAGES` (default 400) | `docs_pages` |
+| Family | Yes | `YUE_FAMILY_DOCS_PAGES` (default 400) | `docs_pages` |
 | Max | Yes | Unlimited | Yes (`docsUnlimited`) |
 
 Billing:
@@ -78,10 +78,10 @@ OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are 
 ## Env / 環境變數
 
 - `YUE_FREE_CAMERA_MINUTES` (default 60)
-- `YUE_PRO_CAMERA_MINUTES` (default 480)
+- `YUE_FAMILY_CAMERA_MINUTES` (default 480)
 - `YUE_FREE_ALLOW_CAMERA` (default 1) — also gates documents
 - `YUE_FREE_DOCS_PAGES` (default 40)
-- `YUE_PRO_DOCS_PAGES` (default 400)
+- `YUE_FAMILY_DOCS_PAGES` (default 400)
 - `AZURE_VISION_KEY` / `AZURE_VISION_ENDPOINT`
 - `OPENAI_VISION_MODEL` (e.g. `deepseek-v4-flash-vision-exp`) — optional `OPENAI_VISION_API_KEY` / `OPENAI_VISION_BASE_URL` (default: same as translate)
 

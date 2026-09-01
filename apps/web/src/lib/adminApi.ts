@@ -22,7 +22,7 @@ export type AdminUser = {
   email: string | null
   displayName: string | null
   createdAt: string | null
-  plan: 'free' | 'pro' | 'max'
+  plan: 'free' | 'family' | 'max'
   role: 'admin' | 'family' | null
   isAdmin: boolean
   disabled: boolean
@@ -135,7 +135,7 @@ export async function fetchAdminUserUsage(userId: string): Promise<{
   return res.json()
 }
 
-export async function adminSetPlan(userId: string, plan: 'free' | 'pro' | 'max') {
+export async function adminSetPlan(userId: string, plan: 'free' | 'family' | 'max') {
   const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/plan`, {
     method: 'PATCH',
     body: JSON.stringify({ plan }),

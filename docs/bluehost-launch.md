@@ -95,20 +95,20 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 | --- | --- | --- | --- | --- | --- |
 | Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Blocked / 不可用 | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
 | Free / 免费 | ~5 min/mo (configurable) / 约每月 5 分钟（可配置） | ~1 hr/mo camera / 约每月 1 小时相机 | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
-| Pro / 专业版 | ~1 hr/mo / 约每月 1 小时 | 8 hr/mo camera / 每月 8 小时相机 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
+| Family / 家庭版 | ~1 hr/mo / 约每月 1 小时 | 8 hr/mo camera / 每月 8 小时相机 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
 
 Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Solo typing uses `POST /translate` (not gated by live minutes). Camera uses `POST /camera/scan` + `POST /usage/camera-heartbeat` (see [camera.md](./camera.md)).
 
 运行时：健康快照 → 实时会话调用 `GET /speech-token` → 每 15 秒心跳 → 点击朗读／自动朗读调用 `POST /tts`。独白文字走 `POST /translate`（不受实时分钟数限制）。相机走 `POST /camera/scan` 与 `POST /usage/camera-heartbeat`（见 [camera.md](./camera.md)）。
 
-Plan resolution: capability `yue_pro` → user meta `yue_plan` → filter `yue_user_plan` → default `free` / `guest`.
+Plan resolution: capability `yue_family` (legacy `yue_pro`) → user meta `yue_plan` → filter `yue_user_plan` → default `free` / `guest`.
 
-套餐判定顺序：能力 `yue_pro` → 用户元数据 `yue_plan` → 过滤器 `yue_user_plan` → 默认 `free` / `guest`。
+套餐判定顺序：能力 `yue_family`（旧名 `yue_pro`）→ 用户元数据 `yue_plan` → 过滤器 `yue_user_plan` → 默认 `free` / `guest`。
 
 ```php
 add_filter('yue_user_plan', function ($plan, $user_id) {
     if (function_exists('mepr_user_has_active_membership') && mepr_user_has_active_membership($user_id)) {
-        return 'pro';
+        return 'family';
     }
     return $plan;
 }, 10, 2);

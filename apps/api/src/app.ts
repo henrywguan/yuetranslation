@@ -9,6 +9,13 @@ import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
+import {
+  deleteHouseholdInvite,
+  deleteHouseholdMember,
+  getHousehold,
+  postHouseholdAccept,
+  postHouseholdInvite,
+} from './householdRoutes.js'
 import { handleSignupNotify } from './signupNotify.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
@@ -127,7 +134,7 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
           ? 'Please log in to use live translation.'
           : ent.reason === 'account_disabled'
             ? 'This account has been disabled.'
-            : 'Live listening requires a Pro plan or free minutes.',
+            : 'Live listening requires a Family plan or free minutes.',
       entitlement: ent,
     })
     return
@@ -221,7 +228,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
     })
-    // Meter signed-in usage for Free (hard cap) and Pro/Max (unlimited).
+    // Meter signed-in usage for Free (hard cap) and Family/Max (unlimited).
     if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
     }
@@ -490,6 +497,12 @@ app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
 
 app.post('/api/billing/checkout', startCheckout)
 app.post('/api/billing/portal', startPortal)
+
+app.get('/api/household', getHousehold)
+app.post('/api/household/invites', postHouseholdInvite)
+app.delete('/api/household/invites/:inviteId', deleteHouseholdInvite)
+app.delete('/api/household/members/:userId', deleteHouseholdMember)
+app.post('/api/household/accept', postHouseholdAccept)
 
 app.post('/api/bug-report', submitBugReport)
 

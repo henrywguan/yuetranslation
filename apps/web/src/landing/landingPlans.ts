@@ -9,7 +9,7 @@ export type LandingPlan = MarketingPlan & {
   teaserFeatures: Bi[]
 }
 
-/** Homepage Free / Pro duo — Max stays on the full pricing page. */
+/** Homepage Free / Family duo — Max stays on the full pricing page. */
 export const LANDING_PLANS: LandingPlan[] = [
   {
     ...MARKETING_PLANS.find((p) => p.id === 'free')!,
@@ -17,8 +17,8 @@ export const LANDING_PLANS: LandingPlan[] = [
     teaserFeatures: [ui.landFreeLive, ui.landFreeText, ui.landFreeCam],
   },
   {
-    ...MARKETING_PLANS.find((p) => p.id === 'pro')!,
+    ...MARKETING_PLANS.find((p) => p.id === 'family')!,
     demo: 'speak',
-    teaserFeatures: [ui.landProLive, ui.landProCam, ui.landProSpeak],
+    teaserFeatures: [ui.landFamilyLive, ui.landFamilyCam, ui.landFamilySpeak],
   },
 ]

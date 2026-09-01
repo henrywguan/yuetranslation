@@ -71,16 +71,20 @@ export const env = {
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
   freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 5),
-  /** Soft analytics default for Free; Pro/Max TTS is unlimited (see entitlements). */
+  /** Soft analytics default for Free; Family/Max TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   /** Free camera hard cap (minutes / month). */
   freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 60),
-  /** Pro camera hard cap (minutes / month). Max is unlimited but counted. */
-  proCameraMinutes: Number(process.env.YUE_PRO_CAMERA_MINUTES || 480),
+  /** Family camera hard cap (minutes / month). Max is unlimited but counted. */
+  familyCameraMinutes: Number(
+    process.env.YUE_FAMILY_CAMERA_MINUTES || process.env.YUE_PRO_CAMERA_MINUTES || 480,
+  ),
   /** Free document pages / month (Cam → Documents). */
   freeDocsPages: Number(process.env.YUE_FREE_DOCS_PAGES || 40),
-  /** Pro document pages / month. Max is unlimited but counted. */
-  proDocsPages: Number(process.env.YUE_PRO_DOCS_PAGES || 400),
+  /** Family document pages / month. Max is unlimited but counted. */
+  familyDocsPages: Number(
+    process.env.YUE_FAMILY_DOCS_PAGES || process.env.YUE_PRO_DOCS_PAGES || 400,
+  ),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
   /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',
@@ -88,8 +92,12 @@ export const env = {
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
-  proLiveMinutes: Number(process.env.YUE_PRO_LIVE_MINUTES || 60),
-  proTtsChars: Number(process.env.YUE_PRO_TTS_CHARS || 200000),
+  familyLiveMinutes: Number(
+    process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 60,
+  ),
+  familyTtsChars: Number(
+    process.env.YUE_FAMILY_TTS_CHARS || process.env.YUE_PRO_TTS_CHARS || 200000,
+  ),
   maxLiveMinutes: Number(process.env.YUE_MAX_LIVE_MINUTES || 2400),
   maxTtsChars: Number(process.env.YUE_MAX_TTS_CHARS || 500000),
   appUrl: trimUrl(
@@ -102,8 +110,16 @@ export const env = {
   supabaseAnonKey: (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim(),
   stripeSecretKey: (process.env.STRIPE_SECRET_KEY || '').trim(),
   stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || '').trim(),
-  stripePriceProMonth: (process.env.STRIPE_PRICE_PRO_MONTH || '').trim(),
-  stripePriceProYear: (process.env.STRIPE_PRICE_PRO_YEAR || '').trim(),
+  stripePriceFamilyMonth: (
+    process.env.STRIPE_PRICE_FAMILY_MONTH ||
+    process.env.STRIPE_PRICE_PRO_MONTH ||
+    ''
+  ).trim(),
+  stripePriceFamilyYear: (
+    process.env.STRIPE_PRICE_FAMILY_YEAR ||
+    process.env.STRIPE_PRICE_PRO_YEAR ||
+    ''
+  ).trim(),
   stripePriceMaxMonth: (process.env.STRIPE_PRICE_MAX_MONTH || '').trim(),
   stripePriceMaxYear: (process.env.STRIPE_PRICE_MAX_YEAR || '').trim(),
   /**

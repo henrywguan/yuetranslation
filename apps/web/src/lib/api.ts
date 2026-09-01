@@ -1,4 +1,4 @@
-import type { Entitlement, Lang } from './types'
+import type { Entitlement, HouseholdSummary, Lang } from './types'
 import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 
@@ -225,6 +225,77 @@ export async function saveTtsVoicePrefs(patch: {
       code: res.status,
       entitlement: data.entitlement,
     })
+  }
+  return data
+}
+
+export async function fetchHousehold(): Promise<{ household: HouseholdSummary | null }> {
+  const res = await apiFetch('/household')
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to load household')
+  }
+  return { household: data.household ?? null }
+}
+
+export async function sendHouseholdInvite(email: string): Promise<{
+  inviteSent: true
+  emailed: boolean
+  acceptUrl: string
+  invite: { id: string; email: string; createdAt: string; expiresAt: string }
+  household: HouseholdSummary
+  entitlement: Entitlement
+}> {
+  const res = await apiFetch('/household/invites', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Invite failed'), { code: data.code || res.status })
+  }
+  return data
+}
+
+export async function revokeHouseholdInvite(inviteId: string): Promise<{
+  household: HouseholdSummary
+  entitlement: Entitlement
+}> {
+  const res = await apiFetch(`/household/invites/${encodeURIComponent(inviteId)}`, {
+    method: 'DELETE',
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Could not revoke invite'), { code: data.code })
+  }
+  return data
+}
+
+export async function removeHouseholdMember(userId: string): Promise<{
+  household: HouseholdSummary
+  entitlement: Entitlement
+}> {
+  const res = await apiFetch(`/household/members/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Could not remove member'), { code: data.code })
+  }
+  return data
+}
+
+export async function acceptHouseholdInvite(token: string): Promise<{
+  household: HouseholdSummary
+  entitlement: Entitlement
+}> {
+  const res = await apiFetch('/household/accept', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Could not accept invite'), { code: data.code })
   }
   return data
 }

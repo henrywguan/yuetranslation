@@ -27,7 +27,7 @@ export async function getUserFromJwt(jwt: string): Promise<User | null> {
 
 export type ProfileRow = {
   id: string
-  plan: 'free' | 'pro' | 'max'
+  plan: 'free' | 'family' | 'max'
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   disabled: boolean
@@ -37,8 +37,16 @@ export type ProfileRow = {
   updated_at: string
 }
 
+function normalizePlan(plan: unknown): ProfileRow['plan'] {
+  // Legacy Stripe / DB value `pro` maps to Family.
+  if (plan === 'family' || plan === 'pro') return 'family'
+  if (plan === 'max') return 'max'
+  return 'free'
+}
+
 function normalizeProfile(data: unknown): ProfileRow {
   const row = data as ProfileRow & {
+    plan?: string
     disabled?: boolean
     role?: ProfileRow['role']
     tts_voice_yue?: string | null
@@ -46,6 +54,7 @@ function normalizeProfile(data: unknown): ProfileRow {
   }
   return {
     ...row,
+    plan: normalizePlan(row.plan),
     disabled: Boolean(row.disabled),
     role: row.role === 'admin' || row.role === 'family' ? row.role : null,
     tts_voice_yue: typeof row.tts_voice_yue === 'string' ? row.tts_voice_yue : null,
