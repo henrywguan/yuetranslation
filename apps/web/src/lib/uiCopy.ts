@@ -769,6 +769,21 @@ export const ui = {
     jp: '',
   },
   footerContact: { en: 'Contact', zh: '聯絡', jp: 'lyun4 lok3' },
+  footerPrivacy: { en: 'Privacy', zh: '私隱', jp: 'si1 jan2' },
+  footerTerms: { en: 'Terms', zh: '條款', jp: 'tiu4 fun2' },
+  legalPrivacyEyebrow: { en: 'Privacy', zh: '私隱政策', jp: 'si1 jan2 zing3 caak3' },
+  legalTermsEyebrow: { en: 'Terms', zh: '服務條款', jp: 'fuk6 mou6 tiu4 fun2' },
+  legalEffective: {
+    en: 'Effective September 1, 2026',
+    zh: '生效日期：2026年9月1日',
+    jp: 'sing1 haau6 jat6 kei4: 2026 nin4 9 jyut6 1 jat6',
+  },
+  authLegalLead: {
+    en: 'By continuing, you agree to our',
+    zh: '繼續即表示你同意我哋嘅',
+    jp: 'gai3 zuk6 zik1 biu2 si6 nei5 tung4 ji3 ngo5 dei6 ge3',
+  },
+  authLegalAnd: { en: 'and', zh: '同', jp: 'tung4' },
 
   ppEyebrow: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   ppTitle: {

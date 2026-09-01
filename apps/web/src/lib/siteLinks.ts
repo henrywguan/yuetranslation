@@ -111,3 +111,13 @@ export function openHome() {
 export function openTones() {
   navigate('tones')
 }
+
+/** Open Privacy Policy (`#/privacy`). */
+export function openPrivacy() {
+  navigate('privacy')
+}
+
+/** Open Terms of Service (`#/terms`). */
+export function openTerms() {
+  navigate('terms')
+}

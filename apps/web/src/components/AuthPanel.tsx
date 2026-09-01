@@ -17,6 +17,7 @@ import {
   subscribeAuthScreen,
   supabaseEnabled,
 } from '../lib/auth'
+import { openPrivacy, openTerms } from '../lib/siteLinks'
 import { biPlain, ui } from '../lib/uiCopy'
 
 type Props = {
@@ -176,6 +177,16 @@ export function AuthPanel({ onAuthChange }: Props) {
             <button type="submit" className="auth-submit" disabled={busy}>
               <BiText copy={ui.signIn} size="sm" />
             </button>
+            <p className="auth-legal">
+              <BiText copy={ui.authLegalLead} size="sm" hideJp only="en" />{' '}
+              <button type="button" className="auth-legal-link" onClick={() => openTerms()}>
+                <BiText copy={ui.footerTerms} size="sm" hideJp only="en" />
+              </button>{' '}
+              <BiText copy={ui.authLegalAnd} size="sm" hideJp only="en" />{' '}
+              <button type="button" className="auth-legal-link" onClick={() => openPrivacy()}>
+                <BiText copy={ui.footerPrivacy} size="sm" hideJp only="en" />
+              </button>
+            </p>
             <p className="auth-switch">
               <button type="button" onClick={() => setMode('register')}>
                 <BiText copy={ui.createAccount} size="sm" />
@@ -236,6 +247,16 @@ export function AuthPanel({ onAuthChange }: Props) {
             <button type="submit" className="auth-submit" disabled={busy}>
               <BiText copy={ui.register} size="sm" />
             </button>
+            <p className="auth-legal">
+              <BiText copy={ui.authLegalLead} size="sm" hideJp only="en" />{' '}
+              <button type="button" className="auth-legal-link" onClick={() => openTerms()}>
+                <BiText copy={ui.footerTerms} size="sm" hideJp only="en" />
+              </button>{' '}
+              <BiText copy={ui.authLegalAnd} size="sm" hideJp only="en" />{' '}
+              <button type="button" className="auth-legal-link" onClick={() => openPrivacy()}>
+                <BiText copy={ui.footerPrivacy} size="sm" hideJp only="en" />
+              </button>
+            </p>
             <p className="auth-switch">
               <button type="button" onClick={() => setMode('signin')}>
                 <BiText copy={ui.signIn} size="sm" />

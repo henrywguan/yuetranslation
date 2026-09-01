@@ -1,11 +1,13 @@
 # Legal drafts (JyutTranslate)
 
-Product-facing drafts for counsel review before publish:
+Product-facing drafts for counsel review:
 
-| Document | File |
-| --- | --- |
-| Privacy Policy | [privacy-policy.md](./privacy-policy.md) |
-| Terms of Service | [terms-of-service.md](./terms-of-service.md) |
+| Document | Source | In-app route |
+| --- | --- | --- |
+| Privacy Policy | [privacy-policy.md](./privacy-policy.md) | `#/privacy` |
+| Terms of Service | [terms-of-service.md](./terms-of-service.md) | `#/terms` |
+
+Web app copies (imported at build time): `apps/web/src/content/legal/`.
 
 **Operator:** Henry Guan, d/b/a JyutTranslate  
 **Privacy contact:** henrywguan@pvhmc.org  
@@ -14,4 +16,4 @@ Product-facing drafts for counsel review before publish:
 
 **Placeholder:** physical / PO Box notice address — add when available.
 
-These Markdown files are the source drafts. Wire `#/privacy` and `#/terms` (or static routes) in the web app when ready to publish.
+Footer links (Privacy · Terms · Contact) and auth-panel “agree to Terms and Privacy” are wired. Keep `docs/legal/*.md` and `apps/web/src/content/legal/*.md` in sync when editing.

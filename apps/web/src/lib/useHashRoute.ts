@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-export type Route = 'home' | 'app' | 'pricing' | 'tones' | 'admin'
+export type Route = 'home' | 'app' | 'pricing' | 'tones' | 'admin' | 'privacy' | 'terms'
 
 function subscribe(callback: () => void) {
   window.addEventListener('hashchange', callback)
@@ -36,6 +36,8 @@ export function useRoute(): Route {
   if (path === 'pricing') return 'pricing'
   if (path === 'tones') return 'tones'
   if (path === 'admin') return 'admin'
+  if (path === 'privacy') return 'privacy'
+  if (path === 'terms') return 'terms'
   if (isEmbeddedAppView()) return 'app'
   if (viewParam() === 'pricing') return 'pricing'
   return 'home'
@@ -50,6 +52,10 @@ export function navigate(route: Route) {
     window.location.hash = '/tones'
   } else if (route === 'admin') {
     window.location.hash = '/admin'
+  } else if (route === 'privacy') {
+    window.location.hash = '/privacy'
+  } else if (route === 'terms') {
+    window.location.hash = '/terms'
   } else {
     window.location.hash = '/'
   }
