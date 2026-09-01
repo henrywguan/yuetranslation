@@ -1,5 +1,17 @@
 /** Shared canvas helpers for Cam OCR overlays — glass panels + corner brackets. */
 
+/** Shrink a cover/panel to the measured glyph width (+ padding), capped by the OCR box. */
+export function tightCoverWidth(
+  measuredTextWidth: number,
+  padX: number,
+  maxWidth: number,
+  minWidth = 8,
+): number {
+  if (!Number.isFinite(measuredTextWidth) || measuredTextWidth <= 0) return maxWidth
+  const inner = measuredTextWidth + padX * 2 + 2
+  return Math.max(minWidth, Math.min(maxWidth, inner))
+}
+
 export function roundedRectPath(
   ctx: CanvasRenderingContext2D,
   x: number,
