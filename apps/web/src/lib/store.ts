@@ -582,67 +582,10 @@ function holdSourceText() {
   return parts.join(' ').replace(/\s+/g, ' ').trim()
 }
 
-function applyHoldSource(
-  get: () => State,
-  set: (p: Partial<State>) => void,
-  lang: Lang,
-  text: string,
-) {
-  // Only barge in on real TTS — do not mute the mic on every STT interim/final.
+function bargeInTtsIfNeeded(get: () => State) {
   if (isTtsPlaying() || get().status === 'speaking') {
     stopSpeaking()
     get().session?.setPlaybackActive(false)
-  }
-  const isFace = get().mode === 'conversation'
-  if (isFace) {
-    const face = get().face
-    if (lang === 'en') {
-      set({
-        face: {
-          ...face,
-          enInterim: text,
-          yueInterim: '',
-          enTranslation: '',
-          yueTranslation: '',
-          yueDefinition: '',
-        },
-        status: 'listening',
-      })
-    } else {
-      set({
-        face: {
-          ...face,
-          yueInterim: text,
-          enInterim: '',
-          enTranslation: '',
-          yueTranslation: '',
-          yueDefinition: '',
-        },
-        status: 'listening',
-      })
-    }
-  } else if (lang === 'en') {
-    set({
-      enInterim: text,
-      yueInterim: '',
-      enTranslation: '',
-      yueTranslation: '',
-      yueDefinition: '',
-      yueDefinitions: [],
-      yueAlternatives: [],
-      status: 'listening',
-    })
-  } else {
-    set({
-      yueInterim: text,
-      enInterim: '',
-      enTranslation: '',
-      yueTranslation: '',
-      yueDefinition: '',
-      yueDefinitions: [],
-      yueAlternatives: [],
-      status: 'listening',
-    })
   }
 }
 
@@ -854,13 +797,13 @@ export const useYueStore = create<State>((set, get) => ({
 
     const handlers = {
       onInterim: (detected: Lang, text: string) => {
-        // Live STT preview of the source only — never translate here.
+        // Track STT internally only — no live text in the UI; translate once in endHold.
         if (!holdActive(gen)) return
         clearNoSpeechTimer()
         const lang = resolveHoldLang(detected, get().speakDirection)
         holdLang = lang
         holdInterim = text
-        applyHoldSource(get, set, lang, holdSourceText())
+        bargeInTtsIfNeeded(get)
         // Still talking — restart sentence-end clock so auto-stop waits for real silence.
         if (tapSticky) scheduleTapSentenceEnd(get)
       },
@@ -874,7 +817,7 @@ export const useYueStore = create<State>((set, get) => ({
         holdLang = lang
         holdFinals.push(trimmed)
         holdInterim = ''
-        applyHoldSource(get, set, lang, holdSourceText())
+        bargeInTtsIfNeeded(get)
         // Sticky tap mode 1: utterance finalized → auto-stop after a short pause.
         if (tapSticky) scheduleTapSentenceEnd(get)
       },
