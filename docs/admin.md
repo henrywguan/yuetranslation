@@ -102,9 +102,13 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 5. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
 6. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
 7. `supabase/migrations/008_docs_pages.sql` — `docs_pages` on usage months + `increment_usage` support for Documents metering
-8. `supabase/migrations/012_household_seats_pooled_usage.sql` — household seats + pooled `household_usage_months`
-9. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
-10. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
+8. `supabase/migrations/009_tts_voices.sql` — profile TTS voice preferences
+9. `supabase/migrations/010_ai_vision_usage.sql` — `ai_vision_count` meter (view-only)
+10. `supabase/migrations/011_rename_pro_plan_to_family.sql` — `pro` → `family` plan id
+11. `supabase/migrations/012_household_seats_pooled_usage.sql` — household seats + pooled `household_usage_months`
+12. `supabase/migrations/013_profiles_username.sql` — custom Account Hub username
+13. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
+14. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
 
 **Legacy usage:** Before household pooling, meters lived in `usage_months` per user. After `012`, Family/Business usage should be in `household_usage_months`. Run migration `015` (or `POST /api/admin/household-usage/backfill`) once on production so historical usage carries over.
 

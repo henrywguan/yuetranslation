@@ -6,8 +6,6 @@
 
 These Terms of Service (“**Terms**”) are a contract between you and **Henry Guan, doing business as JyutTranslate** (“**JyutTranslate**,” “**we**,” “**us**,” or “**our**”) governing your use of **https://www.jyuttranslate.com** and related apps, pages, and services that link to these Terms (the “**Service**”).
 
-**Not legal advice.** This document is a product-facing Terms draft based on how the Service works today. Have qualified counsel review it before relying on it as your final published terms.
-
 By accessing or using the Service, you agree to these Terms and our [Privacy Policy](./privacy-policy.md). If you do not agree, do not use the Service.
 
 **Contact:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)
@@ -66,7 +64,7 @@ Limited features may be available without signing in (for example, certain text 
 
 ### 5.1 Plans
 
-We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, camera time, document pages, auto-speak, and similar), and feature comparisons are described on the Service’s pricing page and may change over time.
+We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, camera time, document pages, auto-speak, and similar), and feature comparisons are described on the Service's pricing page and may change over time.
 
 Paid subscriptions are billed through **Stripe** on a recurring monthly or annual basis, as selected at checkout.
 
@@ -105,7 +103,7 @@ You agree not to:
 - Use automated scraping/bots in a way that overloads or abuses the Service without our permission
 - Upload malware or infringing content
 - Misrepresent your identity or affiliation
-- Use microphone, camera, or document features to capture others’ private information without appropriate rights/permissions
+- Use microphone, camera, or document features to capture others' private information without appropriate rights/permissions
 - Use outputs as a substitute for professional advice where licensed expertise is required (medical, legal, immigration, emergency, etc.)
 
 We may throttle, suspend, or terminate access for abuse, including excessive use that harms service stability—even on high or “unlimited” tiers that remain metered for fairness and operations.
@@ -118,8 +116,8 @@ You retain ownership of content you submit (text, audio, images, documents).
 
 You grant JyutTranslate a worldwide, non-exclusive, royalty-free license to host, process, transmit, and display that content **solely as needed to provide the Service you request** (including via subprocessors such as speech, vision, and language-model providers).
 
-**We do not claim ownership of your translations’ source content.**  
-**We do not use your content to train JyutTranslate’s own AI models.**  
+**We do not claim ownership of your translations' source content.**  
+**We do not use your content to train JyutTranslate's own AI models.**  
 **We do not sell your content.**
 
 You represent that you have the rights needed to submit the content you provide and that your use will not violate law or third-party rights.
@@ -154,7 +152,7 @@ Our collection and use of personal information is described in the [Privacy Poli
 
 ## 11. Third-party services
 
-The Service depends on third parties (hosting, auth, payments, speech, vision, LLMs, email). Their outages, policy changes, or errors may affect the Service. Your use of third-party sign-in or payment flows may also be subject to those parties’ terms.
+The Service depends on third parties (hosting, auth, payments, speech, vision, LLMs, email). Their outages, policy changes, or errors may affect the Service. Your use of third-party sign-in or payment flows may also be subject to those parties' terms.
 
 ---
 
@@ -178,7 +176,7 @@ SOME JURISDICTIONS DO NOT ALLOW CERTAIN LIMITATIONS; IN THOSE CASES, OUR LIABILI
 
 ## 14. Indemnity
 
-To the maximum extent permitted by law, you will defend and indemnify Henry Guan d/b/a JyutTranslate against claims, damages, losses, and expenses (including reasonable attorneys’ fees) arising from your content, your misuse of the Service, or your violation of these Terms or applicable law.
+To the maximum extent permitted by law, you will defend and indemnify Henry Guan d/b/a JyutTranslate against claims, damages, losses, and expenses (including reasonable attorneys' fees) arising from your content, your misuse of the Service, or your violation of these Terms or applicable law.
 
 ---
 

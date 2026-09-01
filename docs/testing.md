@@ -41,13 +41,14 @@ Uses novel phrases so DeepSeek is actually hit (not phrase memory). Cloud agents
 
 使用未见过的句子，确保真正打到 DeepSeek（而不是短语记忆）。云端代理只有在 Henry 明确批准该次请求时才可运行。
 
-## Cantonese smoke / 粤语冒烟测试
+## Offline smoke tests / 离线冒烟测试
 
 ```bash
-npm run smoke:canto
+npm run smoke:all       # entitlements + usage + household + canto
+npm run smoke:canto     # dictionary / lexicon only
 ```
 
-Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, and `stage: interim` coerced to final.
+Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, entitlements helpers, usage increment shape, and household usage merge.
 
 覆盖短语记忆、书面语清洗、词条核验、词库仅整词粤→英，以及把 `stage: interim` 强制改为终稿。
 
