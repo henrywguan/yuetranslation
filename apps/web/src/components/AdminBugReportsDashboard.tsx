@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { AdminBugReport, BugReportAiAnswer } from '../lib/adminApi'
-import { fetchBugReportAiAnswer } from '../lib/adminApi'
+import { fetchBugReportAiAnswer, resendBugReportEmail } from '../lib/adminApi'
 import {
   diagnoseBugReport,
   formatReportAge,
@@ -104,6 +104,9 @@ function DiagnosisPanel({
   aiBusy,
   aiError,
   onGenerateAi,
+  emailBusy,
+  emailMsg,
+  onResendEmail,
 }: {
   report: AdminBugReport
   diagnosis: ReportDiagnosis
@@ -115,6 +118,9 @@ function DiagnosisPanel({
   aiBusy: boolean
   aiError: string
   onGenerateAi: () => void
+  emailBusy: boolean
+  emailMsg: string
+  onResendEmail: () => void
 }) {
   const [showRaw, setShowRaw] = useState(false)
   const confidencePct = Math.round(diagnosis.confidence * 100)
@@ -186,6 +192,25 @@ function DiagnosisPanel({
           <strong>{report.email || report.user_id.slice(0, 8)}</strong>
         </div>
       </div>
+
+      <section className="brd-section">
+        <div className="brd-ai-head">
+          <h3>Admin email</h3>
+          <button
+            type="button"
+            className="admin-btn admin-btn--secondary"
+            disabled={busy || emailBusy}
+            onClick={onResendEmail}
+          >
+            {emailBusy ? 'Sending…' : 'Resend notify email'}
+          </button>
+        </div>
+        <p className="brd-ai-intro">
+          Re-send the Resend admin alert for this report. If it fails, the error usually means
+          missing env vars or an unverified sending domain.
+        </p>
+        {emailMsg ? <p className={emailMsg.startsWith('Sent') ? 'brd-muted' : 'brd-ai-error'}>{emailMsg}</p> : null}
+      </section>
 
       <section className="brd-section brd-ai">
         <div className="brd-ai-head">
@@ -371,6 +396,8 @@ export function AdminBugReportsDashboard({
   const [aiCache, setAiCache] = useState<Record<string, BugReportAiAnswer>>({})
   const [aiBusyId, setAiBusyId] = useState<string | null>(null)
   const [aiError, setAiError] = useState('')
+  const [emailBusyId, setEmailBusyId] = useState<string | null>(null)
+  const [emailMsg, setEmailMsg] = useState('')
   const detailRef = useRef<HTMLElement | null>(null)
   const longPressRef = useRef<{
     id: string
@@ -529,6 +556,19 @@ export function AdminBugReportsDashboard({
       setAiError(e instanceof Error ? e.message : 'AI answer failed')
     } finally {
       setAiBusyId(null)
+    }
+  }
+
+  const resendEmail = async (reportId: string) => {
+    setEmailBusyId(reportId)
+    setEmailMsg('')
+    try {
+      await resendBugReportEmail(reportId)
+      setEmailMsg('Sent — check your admin inbox (and spam).')
+    } catch (e) {
+      setEmailMsg(e instanceof Error ? e.message : 'Resend email failed')
+    } finally {
+      setEmailBusyId(null)
     }
   }
 
@@ -713,6 +753,9 @@ export function AdminBugReportsDashboard({
               aiBusy={aiBusyId === selected.id}
               aiError={aiError}
               onGenerateAi={() => void generateAi(selected.id)}
+              emailBusy={emailBusyId === selected.id}
+              emailMsg={emailMsg}
+              onResendEmail={() => void resendEmail(selected.id)}
             />
           ) : null}
         </AnimatePresence>

@@ -9,6 +9,7 @@ import {
   listAuditLog,
   listAuthUsers,
   listBugReports,
+  getBugReportById,
   listProfiles,
   setAuthBanned,
   updateBugReportStatus,
@@ -16,7 +17,7 @@ import {
   writeAuditLog,
   type ProfileRow,
 } from './supabase.js'
-import { notifyUserUpgrade } from './notify.js'
+import { notifyUserUpgrade, sendBugReportNotify, notifyStatus } from './notify.js'
 import { backfillResendAudience } from './resendAudience.js'
 import { syncOwnerPlanForUser } from './household.js'
 import {
@@ -737,6 +738,57 @@ export async function adminBugReportAiAnswer(req: AuthedRequest, res: Response) 
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'AI answer failed'
     res.status(msg === 'Report not found' ? 404 : 500).json({ message: msg })
+  }
+}
+
+export async function adminNotifyStatus(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  res.json({ notify: notifyStatus() })
+}
+
+export async function adminBugReportResendEmail(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const reportId = String(req.params.reportId || '').trim()
+  if (!reportId) {
+    res.status(400).json({ message: 'reportId required' })
+    return
+  }
+  try {
+    const row = await getBugReportById(reportId)
+    if (!row) {
+      res.status(404).json({ message: 'Report not found' })
+      return
+    }
+    const result = await sendBugReportNotify({
+      reportId: row.id,
+      issueType: row.issue_type,
+      email: row.email,
+      userId: row.user_id,
+      route: row.route,
+      mode: row.mode,
+      client: row.client,
+      context: row.context,
+    })
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'bug_report_resend_email',
+      targetUserId: row.user_id,
+      targetEmail: row.email,
+      detail: { reportId: row.id, ok: result.ok, error: result.ok ? null : result.error },
+    })
+    if (!result.ok) {
+      res.status(502).json({
+        message: result.error,
+        notify: notifyStatus(),
+      })
+      return
+    }
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Resend failed' })
   }
 }
 
