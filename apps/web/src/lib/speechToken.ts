@@ -1,4 +1,5 @@
 import { fetchSpeechToken } from './api'
+import { isAppleTouchDevice } from './mediaAccess'
 
 type SpeechToken = { token: string; region: string; fetchedAt: number }
 
@@ -42,8 +43,11 @@ export async function getSpeechToken(opts?: { force?: boolean }): Promise<Speech
   return inflight
 }
 
-/** Warm the cache after bootstrap so the first mic press is fast. */
+/** Warm the cache after bootstrap so the first mic press is fast (desktop/Android). */
 export function prefetchSpeechToken() {
+  // On iPhone/iPad a warm token skips the gesture-safe Web Speech path and Azure
+  // often listens with no audio after awaits — keep the token cold on Apple.
+  if (isAppleTouchDevice()) return
   void getSpeechToken().catch(() => {
     /* Azure may be unconfigured — Web Speech fallback still works. */
   })

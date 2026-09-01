@@ -176,6 +176,17 @@ function releaseHeldMic() {
   heldMicStream = null
 }
 
+/** Reset UI when startHold aborts after arming the mic button. */
+function cancelHoldStart(set: (p: Partial<State>) => void) {
+  holding = false
+  tapSticky = false
+  startingHold = false
+  holdSideLock = null
+  releaseHeldMic()
+  clearTapTimers()
+  set({ liveInteraction: null, liveSide: null, status: 'idle' })
+}
+
 function holdActive(gen: number) {
   return gen === holdGen && (holding || flushingHold || tapSticky)
 }
@@ -824,6 +835,12 @@ export const useYueStore = create<State>((set, get) => ({
     // auto-speak (after STT + translate) can use the same HTMLAudioElement.
     unlockTtsPlayback()
 
+    const apple = isAppleTouchDevice()
+    // iPhone/iPad: Web Speech must start before any await (Safari silent mic otherwise).
+    const webSpeechFirst = apple && !peekSpeechToken()
+    // Desktop / warm-token paths: kick off getUserMedia now so it runs during sync setup.
+    const micPriming = webSpeechFirst ? null : unlockMicrophone()
+
     const gen = ++holdGen
     holding = true
     tapSticky = false
@@ -881,10 +898,8 @@ export const useYueStore = create<State>((set, get) => ({
       onError: (message: string) => {
         if (gen !== holdGen) return
         set({ error: message })
-        // Web Speech gave up after silent restarts — end the stuck “listening” turn.
-        if (/no speech detected/i.test(message)) {
-          void get().endHold()
-        }
+        // STT session died — tear down so live=false doesn’t block the next mic press.
+        void get().endHold()
       },
       onStatus: (status: 'listening' | 'idle' | 'speaking') => {
         if (gen !== holdGen) return
@@ -899,13 +914,12 @@ export const useYueStore = create<State>((set, get) => ({
       return lock || (d === 'en' || d === 'yue' ? d : undefined)
     }
 
-    const apple = isAppleTouchDevice()
     let next = null as LiveSession | null
     let alreadyStarted = false
 
     // iPhone/iPad without a warm Azure token: start Web Speech BEFORE any await so
     // recognition.start() stays in the user-gesture turn (otherwise Safari listens with no audio).
-    if (apple && !peekSpeechToken()) {
+    if (webSpeechFirst) {
       next = createWebSpeechSession(handlers, webSpeechLock())
       if (next) {
         try {
@@ -925,26 +939,18 @@ export const useYueStore = create<State>((set, get) => ({
 
     if (!alreadyStarted) {
       // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
-      const primed = await unlockMicrophone()
+      const primed = await micPriming!
       if (!primed) {
-        holding = false
-        tapSticky = false
-        startingHold = false
-        holdSideLock = null
-        clearTapTimers()
+        cancelHoldStart(set)
         set({
           error: 'Microphone permission denied. Allow mic access for this site and try again.',
-          liveInteraction: null,
-          liveSide: null,
         })
         return
       }
       heldMicStream = primed
-      connectMicAnalyser(primed)
 
       if (gen !== holdGen || (!holding && !tapSticky)) {
-        releaseHeldMic()
-        startingHold = false
+        cancelHoldStart(set)
         return
       }
 
@@ -957,7 +963,6 @@ export const useYueStore = create<State>((set, get) => ({
     }
 
     if (gen !== holdGen || (!holding && !tapSticky)) {
-      startingHold = false
       if (next) {
         try {
           await next.stop()
@@ -965,20 +970,13 @@ export const useYueStore = create<State>((set, get) => ({
           /* ignore */
         }
       }
-      releaseHeldMic()
+      cancelHoldStart(set)
       return
     }
     if (!next) {
-      holding = false
-      tapSticky = false
-      startingHold = false
-      holdSideLock = null
-      releaseHeldMic()
-      clearTapTimers()
+      cancelHoldStart(set)
       set({
         error: 'Speech unavailable. Set AZURE_SPEECH_KEY or use a browser with speech recognition.',
-        liveInteraction: null,
-        liveSide: null,
       })
       return
     }
@@ -1000,16 +998,16 @@ export const useYueStore = create<State>((set, get) => ({
         }
       }
       if (gen !== holdGen || (!holding && !tapSticky)) {
-        startingHold = false
         try {
           await next.stop()
         } catch {
           /* ignore */
         }
-        releaseHeldMic()
+        cancelHoldStart(set)
         return
       }
       startingHold = false
+      if (heldMicStream) connectMicAnalyser(heldMicStream)
       set({ live: true, session: next, status: 'listening', error: null })
       clearNoSpeechTimer()
       noSpeechTimer = setTimeout(() => {
