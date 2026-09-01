@@ -27,6 +27,8 @@ Apply migration `supabase/migrations/005_user_roles.sql` on your Supabase projec
 
 The API can email admins when someone **signs up** or **upgrades** (Stripe checkout or manual plan change in `#/admin`). Sign-up, upgrade, and bug-report notifies are **React Email** templates that share a branded shell (harbor + jade colors, Syne / Noto Sans HK fonts, and the JyutTranslate logo mark as a CID attachment).
 
+**User-facing auth emails** (confirm signup, magic link, password reset) also use React Email when the Supabase **Send Email** hook is configured — see [§4 User auth emails](#4-user-auth-emails-react-email--resend) below.
+
 ### 1. Vercel / API env
 
 ```bash
@@ -81,6 +83,26 @@ SUPABASE_AUTH_HOOK_SECRET=v1,whsec_...
 Redeploy the API. New sign-ups will email admins. The hook must return HTTP 200 (the API responds with `{}`).
 
 **Do not** add `X-Notify-Secret` for Auth Hooks — Supabase signs requests with Standard Webhooks headers instead.
+
+### 4. User auth emails (React Email + Resend)
+
+By default Supabase sends plain auth emails (confirm signup, password reset, etc.). To send **branded React Email** messages to users:
+
+1. Ensure `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set (verified domain — not `onboarding@resend.dev` for real users).
+2. **Supabase Dashboard → Authentication → Hooks → Send Email**
+3. Type: **HTTPS**
+4. URL: `https://<your-api-host>/api/internal/auth-send-email`
+5. Copy the hook secret into Vercel:
+
+```bash
+SUPABASE_SEND_EMAIL_HOOK_SECRET=v1,whsec_...
+```
+
+6. Redeploy the API. Supabase will call this hook **instead of** its built-in mailer for signup confirmation, magic links, recovery, invites, and email-change messages.
+
+Templates live at `apps/api/src/emails/AuthEmail.tsx` (compiled to `emails/compiled/` on deploy). `/api/health` reports `notify.userAuth` and `notify.sendEmailHook` when configured.
+
+**Note:** This is separate from the **Before user created** hook (`SUPABASE_AUTH_HOOK_SECRET`) which only emails **admins** about new sign-ups.
 
 #### Database Webhook fallback (optional)
 

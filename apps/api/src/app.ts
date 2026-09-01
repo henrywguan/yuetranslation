@@ -17,6 +17,7 @@ import {
   postHouseholdInvite,
 } from './householdRoutes.js'
 import { handleSignupNotify } from './signupNotify.js'
+import { handleAuthSendEmail } from './authSendEmail.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
 import { translate } from './translate.js'
@@ -30,8 +31,8 @@ import {
   addTranslateCount,
   addAiVisionCount,
 } from './usage.js'
+import { notifyStatus, userEmailConfigured } from './notify.js'
 import { submitBugReport } from './bugReport.js'
-import { notifyStatus } from './notify.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
 import {
   upsertProfilePlan,
@@ -75,6 +76,11 @@ app.post(
   express.raw({ type: 'application/json' }),
   handleSignupNotify,
 )
+app.post(
+  '/api/internal/auth-send-email',
+  express.raw({ type: 'application/json' }),
+  handleAuthSendEmail,
+)
 
 app.use(express.json({ limit: '12mb' }))
 app.use(attachAuth)
@@ -116,7 +122,11 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
       activeSources: activeGlossSources(),
     },
     openaiBaseUrl: openai.hasBaseUrl,
-    notify: notifyStatus(),
+    notify: {
+      admin: notifyStatus(),
+      userAuth: userEmailConfigured(),
+      sendEmailHook: Boolean(env.supabaseSendEmailHookSecret),
+    },
     entitlement: await entitlementFor(req),
   })
 })
