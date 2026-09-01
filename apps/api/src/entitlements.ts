@@ -19,7 +19,7 @@ import {
 export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean
-  plan: 'guest' | 'free' | 'family' | 'max'
+  plan: 'guest' | 'free' | 'family' | 'business'
   isAdmin: boolean
   /** Assignable profile role shown as a badge (admin or 家). */
   role: 'admin' | 'family' | null
@@ -27,11 +27,11 @@ export type Entitlement = {
   limits: {
     plan: string
     live_minutes: number
-    /** 0 when TTS is unlimited (Family/Max) or disabled. */
+    /** 0 when TTS is unlimited (Family/Business) or disabled. */
     tts_chars: number
-    /** 0 when camera is unlimited (Max) or disabled. */
+    /** 0 when camera is unlimited (Business) or disabled. */
     camera_minutes: number
-    /** 0 when docs are unlimited (Max) or disabled. */
+    /** 0 when docs are unlimited (Business) or disabled. */
     docs_pages: number
     auto_speak: boolean
     can_live: boolean
@@ -56,11 +56,11 @@ export type Entitlement = {
     cameraSeconds: number
     docsPages: number
   }
-  /** Family/Max: usage is tracked but never gates the speaker. */
+  /** Family/Business: usage is tracked but never gates the speaker. */
   ttsUnlimited: boolean
-  /** Max: usage is tracked but never gates camera. */
+  /** Business: usage is tracked but never gates camera. */
   cameraUnlimited: boolean
-  /** Max: usage is tracked but never gates documents. */
+  /** Business: usage is tracked but never gates documents. */
   docsUnlimited: boolean
   upgradeUrl: string
   loginUrl: string
@@ -82,11 +82,11 @@ export type Entitlement = {
     /** ISO timestamp of last username change; null if never set. */
     usernameChangedAt: string | null
   }
-  /** Present when the user owns or belongs to a Family/Max household with pooled usage. */
+  /** Present when the user owns or belongs to a Family/Business household with pooled usage. */
   household: HouseholdSummary | null
 }
 
-type PlanKey = 'guest' | 'free' | 'family' | 'max'
+type PlanKey = 'guest' | 'free' | 'family' | 'business'
 
 function appBaseUrl(): string {
   return env.appUrl.replace(/\/+$/, '')
@@ -117,10 +117,10 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       text_translate: true,
     }
   }
-  if (plan === 'max') {
+  if (plan === 'business') {
     return {
-      plan: 'max',
-      live_minutes: env.maxLiveMinutes,
+      plan: 'business',
+      live_minutes: env.businessLiveMinutes,
       tts_chars: 0,
       camera_minutes: 0,
       docs_pages: 0,
@@ -164,7 +164,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
 /**
  * Tap-to-play TTS access.
  * - Free: hard char quota.
- * - Family/Max (`unlimited`): always on; usage still counted separately.
+ * - Family/Business (`unlimited`): always on; usage still counted separately.
  * - Auto-speak follows the plan flag (and still requires TTS access).
  */
 export function voiceAccess(
@@ -309,9 +309,9 @@ function buildSnapshot(
   const liveLimit = Math.max(0, limits.live_minutes) * 60
   const cameraLimit = Math.max(0, limits.camera_minutes) * 60
   const docsLimit = Math.max(0, limits.docs_pages)
-  const ttsUnlimited = plan === 'family' || plan === 'max'
-  const cameraUnlimited = plan === 'max'
-  const docsUnlimited = plan === 'max'
+  const ttsUnlimited = plan === 'family' || plan === 'business'
+  const cameraUnlimited = plan === 'business'
+  const docsUnlimited = plan === 'business'
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
   const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
@@ -443,7 +443,7 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
 
   // Paid owners get a household; members inherit the owner's plan + pooled meters.
   let membership = await getMembershipForUser(auth.userId)
-  if (!membership && (personalPlan === 'family' || personalPlan === 'max')) {
+  if (!membership && (personalPlan === 'family' || personalPlan === 'business')) {
     await ensureOwnerHousehold(auth.userId, personalPlan)
     membership = await getMembershipForUser(auth.userId)
   }
@@ -459,7 +459,7 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
     // Keep owner household seat_limit / plan in sync with Stripe profile plan.
     if (
       membership.membership.member_role === 'owner' &&
-      (personalPlan === 'family' || personalPlan === 'max') &&
+      (personalPlan === 'family' || personalPlan === 'business') &&
       membership.household.plan !== personalPlan
     ) {
       await ensureOwnerHousehold(auth.userId, personalPlan)

@@ -20,17 +20,17 @@ function getStripe(): Stripe | null {
   return stripe
 }
 
-function priceIdFor(plan: 'family' | 'max', interval: 'month' | 'year'): string | null {
+function priceIdFor(plan: 'family' | 'business', interval: 'month' | 'year'): string | null {
   if (plan === 'family') return interval === 'year' ? env.stripePriceFamilyYear : env.stripePriceFamilyMonth
-  return interval === 'year' ? env.stripePriceMaxYear : env.stripePriceMaxMonth
+  return interval === 'year' ? env.stripePriceBusinessYear : env.stripePriceBusinessMonth
 }
 
-function planFromPriceId(priceId: string | null | undefined): 'family' | 'max' | null {
+function planFromPriceId(priceId: string | null | undefined): 'family' | 'business' | null {
   if (!priceId) return null
   const pro = [env.stripePriceFamilyMonth, env.stripePriceFamilyYear].filter(Boolean)
-  const max = [env.stripePriceMaxMonth, env.stripePriceMaxYear].filter(Boolean)
+  const max = [env.stripePriceBusinessMonth, env.stripePriceBusinessYear].filter(Boolean)
   if (pro.includes(priceId)) return 'family'
-  if (max.includes(priceId)) return 'max'
+  if (max.includes(priceId)) return 'business'
   return null
 }
 
@@ -51,8 +51,10 @@ export async function startCheckout(req: AuthedRequest, res: Response) {
     return
   }
 
-  // Accept legacy `pro` checkout requests as Family.
-  const plan = req.body?.plan === 'max' ? 'max' : 'family'
+  // Accept legacy `pro`→Family and `max`→Business checkout payloads.
+  const raw = req.body?.plan
+  const plan: 'family' | 'business' =
+    raw === 'business' || raw === 'max' ? 'business' : 'family'
   const interval = req.body?.interval === 'year' ? 'year' : 'month'
   const priceId = priceIdFor(plan, interval)
   if (!priceId) {
@@ -115,7 +117,7 @@ export async function startPortal(req: AuthedRequest, res: Response) {
   }
 }
 
-async function setPlanForUser(userId: string, plan: 'free' | 'family' | 'max', customerId?: string, subscriptionId?: string) {
+async function setPlanForUser(userId: string, plan: 'free' | 'family' | 'business', customerId?: string, subscriptionId?: string) {
   await upsertProfilePlan(userId, {
     plan,
     stripe_customer_id: customerId,
@@ -153,11 +155,11 @@ export async function handleBillingWebhook(req: AuthedRequest, res: Response) {
         const subscriptionId =
           typeof session.subscription === 'string' ? session.subscription : session.subscription?.id
         const rawPlan = session.metadata?.plan
-        const plan: 'family' | 'max' = rawPlan === 'max' ? 'max' : 'family'
+        const plan: 'family' | 'business' = rawPlan === 'max' || rawPlan === 'business' ? 'business' : 'family'
         if (userId) {
           const previous = (await getProfile(userId))?.plan ?? 'free'
           await setPlanForUser(userId, plan, customerId ?? undefined, subscriptionId ?? undefined)
-          if (previous !== plan && (plan === 'family' || plan === 'max')) {
+          if (previous !== plan && (plan === 'family' || plan === 'business')) {
             const user = await getAuthUserById(userId)
             notifyUserUpgrade({
               email: user?.email ?? session.customer_email ?? null,

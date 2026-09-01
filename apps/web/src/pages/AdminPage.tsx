@@ -174,7 +174,7 @@ export function AdminPage() {
     }
   }
 
-  const onSetPlan = async (user: AdminUser, next: 'free' | 'family' | 'max') => {
+  const onSetPlan = async (user: AdminUser, next: 'free' | 'family' | 'business') => {
     if (next === user.plan) return
     if (!window.confirm(`Set ${user.email || user.id} to ${next}?`)) return
     setBusy(true)
@@ -456,7 +456,7 @@ export function AdminPage() {
                 <option value="all">All</option>
                 <option value="free">Free</option>
                 <option value="family">Family</option>
-                <option value="max">Max</option>
+                <option value="business">Business</option>
               </select>
             </label>
             <label className="admin-check">
@@ -574,13 +574,13 @@ export function AdminPage() {
                         value={u.plan}
                         disabled={busy || u.disabled}
                         onChange={(e) =>
-                          void onSetPlan(u, e.target.value as 'free' | 'family' | 'max')
+                          void onSetPlan(u, e.target.value as 'free' | 'family' | 'business')
                         }
                         aria-label={`Plan for ${u.email || u.id}`}
                       >
                         <option value="free">free</option>
                         <option value="family">family</option>
-                        <option value="max">max</option>
+                        <option value="business">business</option>
                       </select>
                     </td>
                     <td className="admin-role-cell">

@@ -5,7 +5,7 @@ export type SpeakDirection = 'en' | 'yue' | 'cmn'
 export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean
-  plan: 'guest' | 'free' | 'family' | 'max'
+  plan: 'guest' | 'free' | 'family' | 'business'
   isAdmin?: boolean
   role?: 'admin' | 'family' | null
   disabled?: boolean
@@ -36,14 +36,14 @@ export type Entitlement = {
     liveSeconds: number
     ttsChars: number
     cameraSeconds?: number
-    /** -1 when unlimited (Max). */
+    /** -1 when unlimited (Business). */
     docsPages?: number
   }
-  /** Family/Max: usage tracked, never gates the speaker. */
+  /** Family/Business: usage tracked, never gates the speaker. */
   ttsUnlimited?: boolean
-  /** Max: usage tracked, never gates camera. */
+  /** Business: usage tracked, never gates camera. */
   cameraUnlimited?: boolean
-  /** Max: usage tracked, never gates documents. */
+  /** Business: usage tracked, never gates documents. */
   docsUnlimited?: boolean
   upgradeUrl: string
   loginUrl: string
@@ -63,13 +63,13 @@ export type Entitlement = {
     username?: string | null
     usernameChangedAt?: string | null
   }
-  /** Family/Max household seats with pooled monthly usage. */
+  /** Family/Business household seats with pooled monthly usage. */
   household?: HouseholdSummary | null
 }
 
 export type HouseholdSummary = {
   id: string
-  plan: 'family' | 'max'
+  plan: 'family' | 'business'
   seatLimit: number
   seatUsed: number
   role: 'owner' | 'member'

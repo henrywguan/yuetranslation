@@ -66,7 +66,7 @@ Limited features may be available without signing in (for example, certain text 
 
 ### 5.1 Plans
 
-We offer Free and paid plans (such as Pro and Max). Current pricing, included allowances (live minutes, TTS, camera time, document pages, auto-speak, and similar), and feature comparisons are described on the Service’s pricing page and may change over time.
+We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, camera time, document pages, auto-speak, and similar), and feature comparisons are described on the Service’s pricing page and may change over time.
 
 Paid subscriptions are billed through **Stripe** on a recurring monthly or annual basis, as selected at checkout.
 

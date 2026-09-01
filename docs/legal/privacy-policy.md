@@ -38,7 +38,7 @@ When you create or use an account, we may collect:
 
 - Email address
 - Authentication identifiers (including from email/password or Google / Apple sign-in)
-- Plan / subscription status (Free, Pro, Max)
+- Plan / subscription status (Free, Family, Business)
 - Voice preference settings you save to your account
 - Account status flags used for security and administration (for example, disabled/banned)
 

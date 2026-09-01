@@ -29,7 +29,7 @@ Speech Solo/Conversation remain EN↔粵 only.
 | Guest | No | — | — |
 | Free | Yes | `YUE_FREE_CAMERA_MINUTES` (default 60) | `cameraSeconds` |
 | Family | Yes | `YUE_FAMILY_CAMERA_MINUTES` (default 480 = 8 hr) | `cameraSeconds` |
-| Max | Yes | Unlimited | Yes (`cameraUnlimited`) |
+| Business | Yes | Unlimited | Yes (`cameraUnlimited`) |
 
 Heartbeat: `POST /api/usage/camera-heartbeat` while AR fullscreen or upload editor is open.
 
@@ -46,7 +46,7 @@ Same **access gate** as camera; **not** shared with camera minutes. Canonical nu
 | Guest | No | — | — |
 | Free | Yes | `YUE_FREE_DOCS_PAGES` (default 40) | `docs_pages` |
 | Family | Yes | `YUE_FAMILY_DOCS_PAGES` (default 400) | `docs_pages` |
-| Max | Yes | Unlimited | Yes (`docsUnlimited`) |
+| Business | Yes | Unlimited | Yes (`docsUnlimited`) |
 
 Billing:
 

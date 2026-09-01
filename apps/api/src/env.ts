@@ -71,17 +71,17 @@ export const env = {
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
   freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 5),
-  /** Soft analytics default for Free; Family/Max TTS is unlimited (see entitlements). */
+  /** Soft analytics default for Free; Family/Business TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   /** Free camera hard cap (minutes / month). */
   freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 60),
-  /** Family camera hard cap (minutes / month). Max is unlimited but counted. */
+  /** Family camera hard cap (minutes / month). Business is unlimited but counted. */
   familyCameraMinutes: Number(
     process.env.YUE_FAMILY_CAMERA_MINUTES || process.env.YUE_PRO_CAMERA_MINUTES || 480,
   ),
   /** Free document pages / month (Cam → Documents). */
   freeDocsPages: Number(process.env.YUE_FREE_DOCS_PAGES || 40),
-  /** Family document pages / month. Max is unlimited but counted. */
+  /** Family document pages / month. Business is unlimited but counted. */
   familyDocsPages: Number(
     process.env.YUE_FAMILY_DOCS_PAGES || process.env.YUE_PRO_DOCS_PAGES || 400,
   ),
@@ -98,8 +98,12 @@ export const env = {
   familyTtsChars: Number(
     process.env.YUE_FAMILY_TTS_CHARS || process.env.YUE_PRO_TTS_CHARS || 200000,
   ),
-  maxLiveMinutes: Number(process.env.YUE_MAX_LIVE_MINUTES || 2400),
-  maxTtsChars: Number(process.env.YUE_MAX_TTS_CHARS || 500000),
+  businessLiveMinutes: Number(
+    process.env.YUE_BUSINESS_LIVE_MINUTES || process.env.YUE_MAX_LIVE_MINUTES || 2400,
+  ),
+  businessTtsChars: Number(
+    process.env.YUE_BUSINESS_TTS_CHARS || process.env.YUE_MAX_TTS_CHARS || 500000,
+  ),
   appUrl: trimUrl(
     process.env.YUE_APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173'),
@@ -120,8 +124,16 @@ export const env = {
     process.env.STRIPE_PRICE_PRO_YEAR ||
     ''
   ).trim(),
-  stripePriceMaxMonth: (process.env.STRIPE_PRICE_MAX_MONTH || '').trim(),
-  stripePriceMaxYear: (process.env.STRIPE_PRICE_MAX_YEAR || '').trim(),
+  stripePriceBusinessMonth: (
+    process.env.STRIPE_PRICE_BUSINESS_MONTH ||
+    process.env.STRIPE_PRICE_MAX_MONTH ||
+    ''
+  ).trim(),
+  stripePriceBusinessYear: (
+    process.env.STRIPE_PRICE_BUSINESS_YEAR ||
+    process.env.STRIPE_PRICE_MAX_YEAR ||
+    ''
+  ).trim(),
   /**
    * Comma-separated admin emails (case-insensitive).
    * Only these accounts can call /api/admin/* and see #/admin.

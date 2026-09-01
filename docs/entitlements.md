@@ -10,7 +10,7 @@ Vercel 生产栈的套餐与计量以本文为准。WordPress 插件为次要表
 | --- | --- | --- |
 | Solo text translate + Jyutping | Yes | Yes |
 | Tap-to-play TTS | Yes (counts against Free cap once signed in) | Metered hard cap |
-| Live mic / auto-speak | Sign-in required | Live: metered; auto-speak: Family/Max |
+| Live mic / auto-speak | Sign-in required | Live: metered; auto-speak: Family/Business |
 | Cam AR / Upload / Documents | Sign-in required | Yes (camera + docs caps) |
 
 Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests use Solo text + tap TTS at `#/app`; live mic and Cam prompt sign-in.
@@ -19,9 +19,9 @@ Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests use
 
 Code defaults in `apps/api/src/env.ts`. **Production overrides** in `vercel.json` are noted.
 
-| Meter | Free | Family | Max |
+| Meter | Free | Family | Business |
 | --- | --- | --- | --- |
-| Live minutes | `YUE_FREE_LIVE_MINUTES` (default **5**; **prod `vercel.json` = 5**) | `YUE_FAMILY_LIVE_MINUTES` (code default 60; **prod `vercel.json` = 20**) | `YUE_MAX_LIVE_MINUTES` (default 2400) |
+| Live minutes | `YUE_FREE_LIVE_MINUTES` (default **5**; **prod `vercel.json` = 5**) | `YUE_FAMILY_LIVE_MINUTES` (code default 60; **prod `vercel.json` = 20**) | `YUE_BUSINESS_LIVE_MINUTES` or legacy `YUE_MAX_LIVE_MINUTES` (default 2400) |
 | TTS chars | `YUE_FREE_TTS_CHARS` (default **30000**) hard cap | Unlimited (`ttsUnlimited`) — still counted | Unlimited — still counted |
 | Camera minutes | `YUE_FREE_CAMERA_MINUTES` (default **60**) | `YUE_FAMILY_CAMERA_MINUTES` (default **480** = 8 hr) | Unlimited (`cameraUnlimited`) — still counted |
 | Document pages | `YUE_FREE_DOCS_PAGES` (default **40**) | `YUE_FAMILY_DOCS_PAGES` (default **400**) | Unlimited (`docsUnlimited`) — still counted |
@@ -33,7 +33,7 @@ Camera and Documents share the **same access gate** (signed-in + plan can use ca
 
 ## Household seats & pooled usage / 家庭座位与共用用量
 
-Family (**4 seats**) and Max (**10 seats**) can invite members by email from Account Hub.
+Family (**4 seats**) and Business (**10 seats**) can invite members by email from Account Hub.
 
 - One Stripe subscriber is the **owner**; invitees become **members**.
 - All members inherit the owner’s plan entitlements.
@@ -96,7 +96,7 @@ Returned by `/api/health` and `/api/entitlement`:
 }
 ```
 
-Family/Max: `ttsUnlimited: true` and `limits.tts_chars: 0`. Max: `cameraUnlimited` / `docsUnlimited` true with `limits.camera_minutes` / `docs_pages` = 0. Remaining uses `-1` for unlimited meters.
+Family/Business: `ttsUnlimited: true` and `limits.tts_chars: 0`. Max: `cameraUnlimited` / `docsUnlimited` true with `limits.camera_minutes` / `docs_pages` = 0. Remaining uses `-1` for unlimited meters.
 
 ## Gate points / 闸门
 
@@ -104,7 +104,7 @@ Family/Max: `ttsUnlimited: true` and `limits.tts_chars: 0`. Max: `cameraUnlimite
 | --- | --- |
 | `GET /speech-token` | live |
 | `POST /usage/heartbeat` | live, then add seconds |
-| `POST /tts` | Free: char quota; Family/Max: always (usage counted); guests: allowed |
+| `POST /tts` | Free: char quota; Family/Business: always (usage counted); guests: allowed |
 | `POST /translate` | `allowed.textTranslate` (guests OK); may increment `translate_count` |
 | `POST /breakdown` | same as translate |
 | `POST /camera/scan` | `allowed.camera` — or `allowed.docs` when `forDocs: true` (no camera translate meter) |

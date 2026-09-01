@@ -30,7 +30,7 @@ export type AdminUserRow = {
   email: string | null
   displayName: string | null
   createdAt: string | null
-  plan: 'free' | 'family' | 'max'
+  plan: 'free' | 'family' | 'business'
   role: 'admin' | 'family' | null
   isAdmin: boolean
   disabled: boolean
@@ -48,7 +48,7 @@ export type AdminUserRow = {
   aiVisionCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
-  /** Hard cap seconds for Free; 0 means unlimited (Family/Max) or disabled. */
+  /** Hard cap seconds for Free; 0 means unlimited (Family/Business) or disabled. */
   cameraLimitSeconds: number
   docsLimitPages: number
   overQuota: boolean
@@ -56,24 +56,24 @@ export type AdminUserRow = {
 
 function liveLimitSeconds(plan: ProfileRow['plan']): number {
   if (plan === 'family') return env.familyLiveMinutes * 60
-  if (plan === 'max') return env.maxLiveMinutes * 60
+  if (plan === 'business') return env.businessLiveMinutes * 60
   return env.freeLiveMinutes * 60
 }
 
 function ttsLimitChars(plan: ProfileRow['plan']): number {
   if (plan === 'family') return env.familyTtsChars
-  if (plan === 'max') return env.maxTtsChars
+  if (plan === 'business') return env.businessTtsChars
   return env.freeAllowTts ? env.freeTtsChars : 0
 }
 
 function cameraLimitSeconds(plan: ProfileRow['plan']): number {
-  if (plan === 'max') return 0
+  if (plan === 'business') return 0
   if (plan === 'family') return env.familyCameraMinutes * 60
   return env.freeAllowCamera ? env.freeCameraMinutes * 60 : 0
 }
 
 function docsLimitPages(plan: ProfileRow['plan']): number {
-  if (plan === 'max') return 0
+  if (plan === 'business') return 0
   if (plan === 'family') return env.familyDocsPages
   return env.freeAllowCamera ? env.freeDocsPages : 0
 }
@@ -338,7 +338,7 @@ export async function adminUserUsage(req: AuthedRequest, res: Response) {
 }
 
 const PlanBody = z.object({
-  plan: z.enum(['free', 'family', 'max']),
+  plan: z.enum(['free', 'family', 'business']),
 })
 
 export async function adminSetPlan(req: AuthedRequest, res: Response) {
@@ -364,7 +364,7 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
       detail: { plan: parsed.data.plan },
     })
     const plan = parsed.data.plan
-    if (plan !== previous && (plan === 'family' || plan === 'max')) {
+    if (plan !== previous && (plan === 'family' || plan === 'business')) {
       notifyUserUpgrade({
         email: target?.email ?? null,
         userId,

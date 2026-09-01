@@ -233,7 +233,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
     })
-    // Meter signed-in usage for Free (hard cap) and Family/Max (unlimited).
+    // Meter signed-in usage for Free (hard cap) and Family/Business (unlimited).
     if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
     }

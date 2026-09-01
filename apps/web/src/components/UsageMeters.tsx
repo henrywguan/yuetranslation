@@ -46,7 +46,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const liveRatio = liveUnlimited ? null : clampRatio(liveUsed / liveLimitSec)
 
   const ttsUnlimited = Boolean(
-    e.ttsUnlimited || e.plan === 'family' || e.plan === 'max',
+    e.ttsUnlimited || e.plan === 'family' || e.plan === 'business',
   )
   const ttsLimit = Math.max(0, e.limits.tts_chars ?? 0)
   const ttsUsed = Math.max(0, e.usage.ttsChars ?? 0)
