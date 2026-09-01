@@ -3,8 +3,8 @@ import type { AuthContext } from './auth.js'
 import {
   ensureOwnerHousehold,
   getHouseholdSummary,
-  getHouseholdUsage,
   getMembershipForUser,
+  seedHouseholdUsageFromOwnerIfNeeded,
   type HouseholdSummary,
 } from './household.js'
 import { getProfile, supabaseConfigured } from './supabase.js'
@@ -454,7 +454,10 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
 
   if (membership) {
     plan = membership.household.plan
-    usage = await getHouseholdUsage(membership.household.id)
+    usage = await seedHouseholdUsageFromOwnerIfNeeded(
+      membership.household.id,
+      membership.household.owner_user_id,
+    )
     household = await getHouseholdSummary(auth.userId)
     // Keep owner household seat_limit / plan in sync with Stripe profile plan.
     if (
@@ -466,7 +469,10 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
       membership = await getMembershipForUser(auth.userId)
       if (membership) {
         plan = membership.household.plan
-        usage = await getHouseholdUsage(membership.household.id)
+        usage = await seedHouseholdUsageFromOwnerIfNeeded(
+          membership.household.id,
+          membership.household.owner_user_id,
+        )
         household = await getHouseholdSummary(auth.userId)
       }
     }
