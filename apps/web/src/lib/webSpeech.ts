@@ -21,8 +21,8 @@ export function createWebSpeechSession(
   const echo = createEchoGuard()
   // iOS WebKit: continuous mode often yields zero results; use short sessions + restart.
   const apple = isAppleTouchDevice()
-  // zh-HK is primary; rotate fallbacks if iOS rejects / ignores Cantonese.
-  const yueLocales = apple ? ['zh-HK', 'yue-HK', 'yue-Hant-HK'] : ['zh-HK']
+  // zh-HK is primary; rotate fallbacks when the browser rejects Cantonese.
+  const yueLocales = ['zh-HK', 'yue-HK', 'yue-Hant-HK', 'zh-TW']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
 
@@ -67,6 +67,7 @@ export function createWebSpeechSession(
         yueLocaleIndex < yueLocales.length - 1
       ) {
         yueLocaleIndex += 1
+        queueMicrotask(() => startOne())
         return
       }
       if (e.error === 'not-allowed') {

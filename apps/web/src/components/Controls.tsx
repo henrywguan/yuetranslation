@@ -62,7 +62,7 @@ export function Controls() {
         </div>
         {showLiveDock ? (
           <div className="live-row">
-            <LiveHoldButton />
+            <LiveHoldButton side={dirValue} />
           </div>
         ) : null}
 
