@@ -21,6 +21,8 @@ type MeterModel = {
   revealUsed: string
   revealLeft: string
   ratio: number | null
+  /** Raw used amount for empty-ring checks. */
+  usedAmount: number
   /** Pooled plans: your share of the ring (0–1). */
   selfFill: number
   /** Pooled plans: other household members' share (0–1). */
@@ -44,7 +46,7 @@ function splitRingFills(
 
   if (unlimited) {
     const decorative = 0.12
-    if (total <= 0) return { selfFill: 0, familyFill: decorative }
+    if (total <= 0) return { selfFill: 0, familyFill: 0 }
     return {
       selfFill: (self / total) * decorative,
       familyFill: (family / total) * decorative,
@@ -138,6 +140,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       revealUsed: formatExactDuration(liveUsed),
       revealLeft: liveUnlimited ? 'unlimited' : `${formatExactDuration(liveLeft)} left`,
       ratio: liveRatio,
+      usedAmount: liveUsed,
       selfFill: liveSplit.selfFill,
       familyFill: liveSplit.familyFill,
       unlimited: liveUnlimited,
@@ -155,6 +158,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       revealUsed: formatChars(ttsUsed),
       revealLeft: ttsUnlimited ? 'unlimited' : `${formatChars(ttsLeft)} left`,
       ratio: ttsRatio,
+      usedAmount: ttsUsed,
       selfFill: ttsSplit.selfFill,
       familyFill: ttsSplit.familyFill,
       unlimited: ttsUnlimited,
@@ -175,6 +179,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: formatExactDuration(camUsed),
         revealLeft: camUnlimited ? 'unlimited' : `${formatExactDuration(camLeft)} left`,
         ratio: camRatio,
+        usedAmount: camUsed,
         selfFill: camSplit.selfFill,
         familyFill: camSplit.familyFill,
         unlimited: camUnlimited,
@@ -189,6 +194,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: String(docsUsed),
         revealLeft: docsUnlimited ? 'unlimited' : `${docsLeft} left`,
         ratio: docsRatio,
+        usedAmount: docsUsed,
         selfFill: docsSplit.selfFill,
         familyFill: docsSplit.familyFill,
         unlimited: docsUnlimited,
@@ -205,6 +211,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: String(aiUsed),
         revealLeft: 'tracked',
         ratio: null,
+        usedAmount: aiUsed,
         selfFill: 0,
         familyFill: 0,
         unlimited: true,
@@ -222,6 +229,7 @@ function MeterRing({
   familyFill,
   pooled,
   unlimited,
+  usedAmount,
   usedLabel,
   limitLabel,
   revealUsed,
@@ -233,6 +241,8 @@ function MeterRing({
   familyFill: number
   pooled: boolean
   unlimited: boolean
+  /** Raw used count/seconds/chars — rings stay empty when this is 0. */
+  usedAmount: number
   usedLabel: string
   limitLabel: string
   revealUsed: string
@@ -242,8 +252,13 @@ function MeterRing({
   const gradId = useId().replace(/:/g, '')
   const r = 34
   const c = 2 * Math.PI * r
-  const fill = unlimited ? 0.12 : clampRatio(ratio ?? 0)
-  const showSplit = pooled && (selfFill > 0 || familyFill > 0)
+  const hasUsage = usedAmount > 0
+  const showSplit = pooled && hasUsage && (selfFill > 0 || familyFill > 0)
+  const fill = unlimited
+    ? hasUsage && !showSplit
+      ? 0.12
+      : 0
+    : clampRatio(ratio ?? 0)
   const selfDash = c * (showSplit ? selfFill : fill)
   const familyDash = c * (showSplit ? familyFill : 0)
   const level =
@@ -440,7 +455,9 @@ export function UsageMeters({ entitlement }: Props) {
                             className="usage-detail-bar"
                             style={
                               {
-                                '--usage-pct': `${pct == null ? 12 : pct}%`,
+                                '--usage-pct': `${
+                                  pct == null ? (m.usedAmount > 0 ? 12 : 0) : pct
+                                }%`,
                               } as CSSProperties
                             }
                             data-unlimited={m.unlimited ? '1' : '0'}
@@ -505,6 +522,7 @@ export function UsageMeters({ entitlement }: Props) {
                 familyFill={m.familyFill}
                 pooled={pooled}
                 unlimited={m.unlimited}
+                usedAmount={m.usedAmount}
                 usedLabel={m.usedLabel}
                 limitLabel={m.limitLabel}
                 revealUsed={m.revealUsed}
