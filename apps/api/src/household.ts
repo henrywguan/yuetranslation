@@ -4,7 +4,7 @@ import { env } from './env.js'
 import { getAdmin } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
-export type HouseholdPlan = 'family' | 'max'
+export type HouseholdPlan = 'family' | 'business'
 export type MemberRole = 'owner' | 'member'
 
 export type HouseholdRow = {
@@ -57,7 +57,7 @@ export type HouseholdSummary = {
 }
 
 export function seatLimitForPlan(plan: HouseholdPlan): number {
-  return plan === 'max' ? 10 : 4
+  return plan === 'business' ? 10 : 4
 }
 
 function asInt(value: unknown): number {
@@ -378,7 +378,7 @@ async function sendInviteEmail(input: {
     return false
   }
   const resend = new Resend(env.resendApiKey)
-  const planLabel = input.plan === 'max' ? 'Max' : 'Family'
+  const planLabel = input.plan === 'business' ? 'Business' : 'Family'
   const who = input.inviterEmail || 'A JyutTranslate member'
   const { error } = await resend.emails.send({
     from: env.notifyFromEmail,
@@ -433,7 +433,7 @@ export async function createHouseholdInvite(input: {
     return {
       ok: false,
       code: 'no_household',
-      message: 'Upgrade to Family or Max before inviting people.',
+      message: 'Upgrade to Family or Business before inviting people.',
     }
   }
 

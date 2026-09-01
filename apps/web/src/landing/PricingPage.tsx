@@ -25,7 +25,7 @@ const COMPARISON: Row[] = [
   { label: ui.cmpModes, values: [{ en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }, { en: '✓', zh: '✓', jp: '' }] },
   {
     label: ui.cmpCamera,
-    values: [ui.valCamFree, ui.valCamFamily, ui.valCamMax],
+    values: [ui.valCamFree, ui.valCamFamily, ui.valCamBusiness],
   },
   {
     label: ui.cmpTts,
@@ -84,7 +84,7 @@ async function onPlanCta(plan: MarketingPlan, billing: Billing) {
     openAuthScreen()
     return
   }
-  if (plan.id === 'family' || plan.id === 'max') {
+  if (plan.id === 'family' || plan.id === 'business') {
     await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
     return
   }
@@ -146,11 +146,11 @@ export function PricingPage() {
                 .filter(Boolean)
                 .join(' ')}
               aria-disabled={plan.unavailable || undefined}
-              title={plan.unavailable ? ui.maxPlanUnavailable.en : undefined}
+              title={plan.unavailable ? ui.businessPlanUnavailable.en : undefined}
             >
               {plan.unavailable ? (
                 <span className="ln-price-card__tip" role="tooltip">
-                  {ui.maxPlanUnavailable.en}
+                  {ui.businessPlanUnavailable.en}
                 </span>
               ) : null}
               {plan.featured ? (
@@ -216,7 +216,7 @@ export function PricingPage() {
                   <BiText copy={ui.planFamily} size="sm" />
                 </th>
                 <th className="pp-col-max">
-                  <BiText copy={ui.planMax} size="sm" />
+                  <BiText copy={ui.planBusiness} size="sm" />
                 </th>
               </tr>
             </thead>

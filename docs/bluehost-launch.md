@@ -1,7 +1,7 @@
 # JyutTranslate — Bluehost launch guide
 # 粤译 — Bluehost 上线指南
 
-> **Note / 注意：** Production entitlements, Max plan, Cam Documents, Stripe, and Resend admin tools live on **Vercel**. This WordPress package is a **secondary** deploy path and may lag (no Max / Documents parity guaranteed). Canonical limits: [entitlements.md](./entitlements.md) · Cam: [camera.md](./camera.md).
+> **Note / 注意：** Production entitlements, Business plan, Cam Documents, Stripe, and Resend admin tools live on **Vercel**. This WordPress package is a **secondary** deploy path and may lag (no Business / Documents parity guaranteed). Canonical limits: [entitlements.md](./entitlements.md) · Cam: [camera.md](./camera.md).
 >
 > 生产环境的权益、旗舰版、相机文件、Stripe 与 Resend 管理工具以 **Vercel** 为准。本 WordPress 包为**次要**部署路径，可能落后。套餐以 entitlements 文档为准。
 

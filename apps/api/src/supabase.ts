@@ -27,7 +27,7 @@ export async function getUserFromJwt(jwt: string): Promise<User | null> {
 
 export type ProfileRow = {
   id: string
-  plan: 'free' | 'family' | 'max'
+  plan: 'free' | 'family' | 'business'
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   disabled: boolean
@@ -40,9 +40,9 @@ export type ProfileRow = {
 }
 
 function normalizePlan(plan: unknown): ProfileRow['plan'] {
-  // Legacy Stripe / DB value `pro` maps to Family.
+  // Legacy Stripe / DB values: `pro` → Family, `max` → Business.
   if (plan === 'family' || plan === 'pro') return 'family'
-  if (plan === 'max') return 'max'
+  if (plan === 'business' || plan === 'max') return 'business'
   return 'free'
 }
 

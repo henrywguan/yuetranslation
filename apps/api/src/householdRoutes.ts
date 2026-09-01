@@ -12,7 +12,7 @@ import {
 import { getProfile } from './supabase.js'
 
 function paidPlan(plan: string | null | undefined): HouseholdPlan | null {
-  if (plan === 'family' || plan === 'max') return plan
+  if (plan === 'family' || plan === 'business') return plan
   return null
 }
 
@@ -32,7 +32,7 @@ export async function postHouseholdInvite(req: AuthedRequest, res: Response) {
   if (!plan) {
     res.status(403).json({
       code: 'plan_required',
-      message: 'Upgrade to Family or Max to invite household members.',
+      message: 'Upgrade to Family or Business to invite household members.',
     })
     return
   }

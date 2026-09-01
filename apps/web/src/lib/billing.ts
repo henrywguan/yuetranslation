@@ -23,7 +23,7 @@ async function billingFetch(path: string, body: Record<string, string>) {
   return data as { url: string }
 }
 
-export async function startCheckout(plan: 'family' | 'max', interval: 'month' | 'year') {
+export async function startCheckout(plan: 'family' | 'business', interval: 'month' | 'year') {
   const { url } = await billingFetch('/billing/checkout', { plan, interval })
   if (!url) throw new Error('Checkout did not return a URL')
   window.location.assign(url)
@@ -36,7 +36,7 @@ export async function openBillingPortal() {
 }
 
 /** In-app upgrade: checkout when signed in, otherwise open auth then pricing. */
-export async function openUpgrade(plan: 'family' | 'max' = 'family', interval: 'month' | 'year' = 'month') {
+export async function openUpgrade(plan: 'family' | 'business' = 'family', interval: 'month' | 'year' = 'month') {
   const external = getUpgradeUrl()
   if (external) {
     window.location.assign(external)
