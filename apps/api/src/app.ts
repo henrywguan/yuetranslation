@@ -31,7 +31,7 @@ import {
   addTranslateCount,
   addAiVisionCount,
 } from './usage.js'
-import { notifyConfigured, notifyStatus, userEmailConfigured } from './notify.js'
+import { notifyStatus, userEmailConfigured } from './notify.js'
 import { submitBugReport } from './bugReport.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
 import {
