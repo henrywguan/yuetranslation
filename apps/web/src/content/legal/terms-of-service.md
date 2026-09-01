@@ -19,9 +19,12 @@ We do not currently list a physical mailing address. When we obtain a PO Box or 
 JyutTranslate provides English ↔ Hong Kong Cantonese (粵語) translation tools, which may include:
 
 - Solo / text translation and Jyutping romanization
+- Interactive character breakdown (tap-to-learn)
 - Conversation / live microphone translation
 - Text-to-speech (tap-to-play and, on eligible plans, auto-speak)
 - Camera features (AR, image upload) and document translation
+
+On some devices, live speech may use your browser’s built-in speech recognition when cloud speech services are unavailable.
 
 Features, limits, and availability may vary by plan, device, browser permissions (microphone/camera), geography, and configuration. We may modify, suspend, or discontinue features with or without notice, to the extent permitted by law.
 
