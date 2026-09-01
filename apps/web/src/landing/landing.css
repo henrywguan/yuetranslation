@@ -2334,7 +2334,7 @@
   align-items: stretch;
 }
 
-/* Desktop: lock demo + feature rows across Free / Pro via subgrid. */
+/* Desktop: lock demo + feature rows across Free / Family via subgrid. */
 @media (min-width: 761px) {
   .ln-price-grid--duo {
     grid-template-rows: auto minmax(56px, auto) repeat(3, minmax(2.35em, auto)) auto;

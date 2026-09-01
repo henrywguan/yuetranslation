@@ -119,7 +119,7 @@ export function TranslatorApp() {
               </GlowRotateButton>
             ) : null}
             {entitlement && !entitlement.allowed.live && entitlement.upgradeUrl ? (
-              <button type="button" onClick={() => void openUpgrade('pro', 'month')}>
+              <button type="button" onClick={() => void openUpgrade('family', 'month')}>
                 <BiText copy={ui.upgrade} size="sm" />
               </button>
             ) : null}

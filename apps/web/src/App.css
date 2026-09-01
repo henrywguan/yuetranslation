@@ -700,7 +700,7 @@
   }
 }
 
-.plan-chip.plan-pro {
+.plan-chip.plan-family {
   background: color-mix(in srgb, var(--jade) 22%, transparent);
   color: var(--mint);
   border-color: color-mix(in srgb, var(--jade) 35%, transparent);

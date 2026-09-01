@@ -1,7 +1,7 @@
 import { ui, type Bi } from '../lib/uiCopy'
 
 export type MarketingPlan = {
-  id: 'free' | 'pro' | 'max'
+  id: 'free' | 'family' | 'max'
   name: Bi
   monthly: number
   /** Effective $/mo when billed annually (shown on the pricing toggle). */
@@ -29,15 +29,15 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     features: [ui.freeFeatLive20, ui.freeFeatText, ui.freeFeatCamera, ui.freeFeatTts, ui.freeFeatModes],
   },
   {
-    id: 'pro',
-    name: ui.planPro,
+    id: 'family',
+    name: ui.planFamily,
     monthly: 10,
     annual: 8.99,
-    tagline: ui.tagPro,
-    cta: ui.goPro,
+    tagline: ui.tagFamily,
+    cta: ui.goFamily,
     featured: true,
     ctaOpens: 'pricing',
-    features: [ui.proFeatLive10, ui.proFeatCamera, ui.proFeatTts, ui.proFeatQuality, ui.proFeatEverything],
+    features: [ui.familyFeatLive10, ui.familyFeatCamera, ui.familyFeatTts, ui.familyFeatQuality, ui.familyFeatEverything],
   },
   {
     id: 'max',
@@ -51,4 +51,4 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   },
 ]
 
-/** Homepage Free/Pro teaser lives in `landingPlans.ts` (compact duo + demos). */
+/** Homepage Free/Family teaser lives in `landingPlans.ts` (compact duo + demos). */

@@ -16,7 +16,7 @@ export function PriceDemoText() {
   )
 }
 
-/** Pro card: waveform that livens on card hover. */
+/** Family card: waveform that livens on card hover. */
 export function PriceDemoSpeak() {
   const reduced = useReducedMotion()
   return (
@@ -95,7 +95,7 @@ function FeatIcon({ name }: { name: 'live' | 'text' | 'modes' | 'speak' | 'quali
 const FREE_ICONS = ['live', 'text', 'modes'] as const
 const PRO_ICONS = ['live', 'speak', 'quality'] as const
 
-export function PriceFeatIcon({ planId, index }: { planId: 'free' | 'pro'; index: number }) {
-  const name = planId === 'pro' ? PRO_ICONS[index] ?? 'live' : FREE_ICONS[index] ?? 'live'
+export function PriceFeatIcon({ planId, index }: { planId: 'free' | 'family'; index: number }) {
+  const name = planId === 'family' ? PRO_ICONS[index] ?? 'live' : FREE_ICONS[index] ?? 'live'
   return <FeatIcon name={name} />
 }

@@ -47,7 +47,7 @@ function formatDuration(seconds: number): string {
 }
 
 function planLabel(plan: string): Bi {
-  if (plan === 'pro') return ui.planPro
+  if (plan === 'family') return ui.planFamily
   if (plan === 'max') return ui.planMax
   if (plan === 'free') return ui.planFree
   return ui.planGuest
@@ -63,7 +63,7 @@ function formatChars(n: number): string {
 
 function voiceCopy(entitlement: Entitlement): Bi {
   const unlimited = Boolean(
-    entitlement.ttsUnlimited || entitlement.plan === 'pro' || entitlement.plan === 'max',
+    entitlement.ttsUnlimited || entitlement.plan === 'family' || entitlement.plan === 'max',
   )
   if (unlimited) return ui.charsUsedUnlimited(formatChars(entitlement.usage.ttsChars))
   return ui.charsLeft(formatChars(entitlement.remaining.ttsChars))
@@ -240,7 +240,7 @@ export function PlanChip() {
 
   const plan = entitlement.plan
   const showSignIn = !entitlement.loggedIn && entitlement.requireLogin
-  const paid = plan === 'pro' || plan === 'max'
+  const paid = plan === 'family' || plan === 'max'
   const ttsUnlimited = Boolean(entitlement.ttsUnlimited || paid)
   const showVoiceQuota = entitlement.loggedIn && (ttsUnlimited || entitlement.limits.tts_chars > 0)
 
@@ -254,7 +254,7 @@ export function PlanChip() {
 
   const onUpgrade = () => {
     setOpen(false)
-    void openUpgrade('pro', 'month').catch((err: unknown) => {
+    void openUpgrade('family', 'month').catch((err: unknown) => {
       const message = err instanceof Error ? err.message : 'Upgrade failed'
       useYueStore.setState({ error: message })
       void loadBootstrap()

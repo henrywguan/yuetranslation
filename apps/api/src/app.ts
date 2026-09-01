@@ -127,7 +127,7 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
           ? 'Please log in to use live translation.'
           : ent.reason === 'account_disabled'
             ? 'This account has been disabled.'
-            : 'Live listening requires a Pro plan or free minutes.',
+            : 'Live listening requires a Family plan or free minutes.',
       entitlement: ent,
     })
     return
@@ -221,7 +221,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
     })
-    // Meter signed-in usage for Free (hard cap) and Pro/Max (unlimited).
+    // Meter signed-in usage for Free (hard cap) and Family/Max (unlimited).
     if (!env.openMode && req.auth?.userId) {
       await addTtsChars(req.auth.userId, text.length)
     }

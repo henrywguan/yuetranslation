@@ -20,16 +20,16 @@ function getStripe(): Stripe | null {
   return stripe
 }
 
-function priceIdFor(plan: 'pro' | 'max', interval: 'month' | 'year'): string | null {
-  if (plan === 'pro') return interval === 'year' ? env.stripePriceProYear : env.stripePriceProMonth
+function priceIdFor(plan: 'family' | 'max', interval: 'month' | 'year'): string | null {
+  if (plan === 'family') return interval === 'year' ? env.stripePriceFamilyYear : env.stripePriceFamilyMonth
   return interval === 'year' ? env.stripePriceMaxYear : env.stripePriceMaxMonth
 }
 
-function planFromPriceId(priceId: string | null | undefined): 'pro' | 'max' | null {
+function planFromPriceId(priceId: string | null | undefined): 'family' | 'max' | null {
   if (!priceId) return null
-  const pro = [env.stripePriceProMonth, env.stripePriceProYear].filter(Boolean)
+  const pro = [env.stripePriceFamilyMonth, env.stripePriceFamilyYear].filter(Boolean)
   const max = [env.stripePriceMaxMonth, env.stripePriceMaxYear].filter(Boolean)
-  if (pro.includes(priceId)) return 'pro'
+  if (pro.includes(priceId)) return 'family'
   if (max.includes(priceId)) return 'max'
   return null
 }
@@ -51,7 +51,8 @@ export async function startCheckout(req: AuthedRequest, res: Response) {
     return
   }
 
-  const plan = req.body?.plan === 'max' ? 'max' : 'pro'
+  // Accept legacy `pro` checkout requests as Family.
+  const plan = req.body?.plan === 'max' ? 'max' : 'family'
   const interval = req.body?.interval === 'year' ? 'year' : 'month'
   const priceId = priceIdFor(plan, interval)
   if (!priceId) {
@@ -114,7 +115,7 @@ export async function startPortal(req: AuthedRequest, res: Response) {
   }
 }
 
-async function setPlanForUser(userId: string, plan: 'free' | 'pro' | 'max', customerId?: string, subscriptionId?: string) {
+async function setPlanForUser(userId: string, plan: 'free' | 'family' | 'max', customerId?: string, subscriptionId?: string) {
   await upsertProfilePlan(userId, {
     plan,
     stripe_customer_id: customerId,
@@ -151,11 +152,12 @@ export async function handleBillingWebhook(req: AuthedRequest, res: Response) {
         const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
         const subscriptionId =
           typeof session.subscription === 'string' ? session.subscription : session.subscription?.id
-        const plan = (session.metadata?.plan as 'pro' | 'max' | undefined) ?? 'pro'
+        const rawPlan = session.metadata?.plan
+        const plan: 'family' | 'max' = rawPlan === 'max' ? 'max' : 'family'
         if (userId) {
           const previous = (await getProfile(userId))?.plan ?? 'free'
           await setPlanForUser(userId, plan, customerId ?? undefined, subscriptionId ?? undefined)
-          if (previous !== plan && (plan === 'pro' || plan === 'max')) {
+          if (previous !== plan && (plan === 'family' || plan === 'max')) {
             const user = await getAuthUserById(userId)
             notifyUserUpgrade({
               email: user?.email ?? session.customer_email ?? null,
@@ -192,7 +194,7 @@ export async function handleBillingWebhook(req: AuthedRequest, res: Response) {
         }
 
         const priceId = sub.items.data[0]?.price?.id
-        const plan = planFromPriceId(priceId) ?? 'pro'
+        const plan = planFromPriceId(priceId) ?? 'family'
         await setPlanForUser(profile.id, plan, customerId, sub.id)
         break
       }

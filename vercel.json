@@ -9,7 +9,7 @@
     "YUE_FREE_ALLOW_TTS": "1",
     "YUE_FREE_TTS_CHARS": "30000",
     "YUE_FREE_LIVE_MINUTES": "5",
-    "YUE_PRO_LIVE_MINUTES": "20"
+    "YUE_FAMILY_LIVE_MINUTES": "20"
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },

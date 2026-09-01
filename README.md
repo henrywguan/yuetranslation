@@ -7,9 +7,9 @@ Live translator PWA with freemium entitlements (Supabase + Stripe on **Vercel**)
 
 **Stack / 技术栈：** Azure Speech (`zh-HK` STT/TTS) · Azure Vision (camera OCR) · OpenAI-compatible LLM (colloquial 粤语, e.g. DeepSeek).
 
-**Free for everyone / 人人可用：** Solo text translate, Jyutping, and guest tap-to-play voice. **Free** TTS is metered (hard char cap); **Pro/Max** TTS is unlimited (usage tracked). Live mic requires sign-in and is metered; auto-speak is Pro/Max. **Cam** (AR / Upload / Documents) requires sign-in — see [docs/camera.md](docs/camera.md) and [docs/entitlements.md](docs/entitlements.md).
+**Free for everyone / 人人可用：** Solo text translate, Jyutping, and guest tap-to-play voice. **Free** TTS is metered (hard char cap); **Family/Max** TTS is unlimited (usage tracked). Live mic requires sign-in and is metered; auto-speak is Family/Max. **Cam** (AR / Upload / Documents) requires sign-in — see [docs/camera.md](docs/camera.md) and [docs/entitlements.md](docs/entitlements.md).
 
-**人人可用：** 独白文字翻译、粤拼、访客点击朗读。**免费版** TTS 有字数硬上限；**专业版／旗舰版** TTS 无限（仍计数）。实时麦克风须登录并计量；自动朗读属专业版／旗舰版。**相机**（AR／上载／文件）须登录 — 见文档。
+**人人可用：** 独白文字翻译、粤拼、访客点击朗读。**免费版** TTS 有字数硬上限；**家庭版／旗舰版** TTS 无限（仍计数）。实时麦克风须登录并计量；自动朗读属家庭版／旗舰版。**相机**（AR／上载／文件）须登录 — 见文档。
 
 **Modes / 模式：** Solo · Conversation · Cam  
 独白 · 对话 · 相机  

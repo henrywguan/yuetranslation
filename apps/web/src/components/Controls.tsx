@@ -108,7 +108,7 @@ export function Controls() {
 
           <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
             <span className="opt-kicker">
-              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakPro} size="sm" />
+              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily} size="sm" />
             </span>
             <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
               <input

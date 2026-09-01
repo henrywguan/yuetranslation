@@ -230,7 +230,7 @@ export const ui = {
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
-  autoSpeakPro: { en: 'Auto-speak (Pro)', zh: '自動朗讀（專業版）', jp: 'zi6 dung6 long5 duk6 (zyun1 jip6 baan2)' },
+  autoSpeakFamily: { en: 'Auto-speak (Family)', zh: '自動朗讀（家庭版）', jp: 'zi6 dung6 long5 duk6 (gaa1 ting4 baan2)' },
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
   stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },
   speakPro: { en: 'Voice playback', zh: '語音播放', jp: 'jyu5 jam1 bo3 fong3' },
@@ -306,7 +306,7 @@ export const ui = {
 
   connecting: { en: 'Connecting…', zh: '連接中…', jp: 'lin4 zip3 zung1…' },
   planFree: { en: 'Free', zh: '免費', jp: 'min5 fai3' },
-  planPro: { en: 'Pro', zh: '專業版', jp: 'zyun1 jip6 baan2' },
+  planFamily: { en: 'Family', zh: '家庭版', jp: 'gaa1 ting4 baan2' },
   planGuest: { en: 'Guest', zh: '訪客', jp: 'fong2 haak3' },
   signIn: { en: 'Sign in', zh: '登入', jp: 'dang1 jap6' },
   signInGoogle: { en: 'Continue with Google', zh: '使用 Google 登入', jp: 'jau6 Google dang1 jap6' },
@@ -650,7 +650,7 @@ export const ui = {
   },
   mostPopular: { en: 'Most popular', zh: '最受歡迎', jp: 'zeoi3 sau6 fun1 jing4' },
   getStarted: { en: 'Get started', zh: '立即開始', jp: 'laap6 zik1 hoi1 ci2' },
-  goPro: { en: 'Go Pro', zh: '升級專業版', jp: 'sing1 kap1 zyun1 jip6 baan2' },
+  goFamily: { en: 'Go Family', zh: '升級家庭版', jp: 'sing1 kap1 gaa1 ting4 baan2' },
   comparePlans: { en: 'Compare all plans →', zh: '比較全部計劃 →', jp: 'bei2 gaau3 cyun4 bou6 gai3 waak6 →' },
 
   freeFeatLive20: {
@@ -678,27 +678,27 @@ export const ui = {
     zh: '撳喇叭播語音——免費但有限制',
     jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 — min5 fai3 daan6 jau5 haan6 zai3',
   },
-  proFeatLive10: {
+  familyFeatLive10: {
     en: '~1 hour of live translation / month',
     zh: '每月大約一小時即時翻譯',
     jp: 'mui5 jyut6 daai6 joek3 jat1 siu2 si4 zik1 si4 faan1 jik6',
   },
-  proFeatCamera: {
+  familyFeatCamera: {
     en: '8 hours camera translation / month',
     zh: '每月八小時相機翻譯',
     jp: 'mui5 jyut6 baat3 siu2 si4 soeng1 gei1 faan1 jik6',
   },
-  proFeatTts: {
+  familyFeatTts: {
     en: 'Unlimited tap-to-play + auto-speak',
     zh: '無限撳喇叭播語音＋自動朗讀',
     jp: 'mou4 haan6 gam2 laa3 baa1 bo3 jyu5 jam1 + zi6 dung6 long5 duk6',
   },
-  proFeatQuality: {
+  familyFeatQuality: {
     en: 'Priority, natural Cantonese quality',
     zh: '優先、自然嘅粵語質素',
     jp: 'jau4 sin1, zi6 jin4 ge3 jyut6 jyu5 zat1 sou3',
   },
-  proFeatEverything: {
+  familyFeatEverything: {
     en: 'Everything in Free',
     zh: '包含免費版全部功能',
     jp: 'bau1 ham4 min5 fai3 baan2 cyun4 bou6 gung1 nang4',
@@ -725,22 +725,22 @@ export const ui = {
     zh: '每月約一小時相機',
     jp: 'mui5 jyut6 joek3 jat1 siu2 si4 soeng1 gei1',
   },
-  landProLive: {
+  landFamilyLive: {
     en: '~1 hour live / month',
     zh: '每月約一小時即時',
     jp: 'mui5 jyut6 joek3 jat1 siu2 si4 zik1 si4',
   },
-  landProCam: {
+  landFamilyCam: {
     en: '8 hr cam / month',
     zh: '每月八小時相機',
     jp: 'mui5 jyut6 baat3 siu2 si4 soeng1 gei1',
   },
-  landProSpeak: {
+  landFamilySpeak: {
     en: 'Auto-speak + unlimited voice',
     zh: '自動朗讀＋無限語音',
     jp: 'zi6 dung6 long5 duk6 + mou4 haan6 jyu5 jam1',
   },
-  landProQuality: {
+  landFamilyQuality: {
     en: 'Priority Cantonese quality',
     zh: '優先粵語質素',
     jp: 'jau4 sin1 jyut6 jyu5 zat1 sou3',
@@ -792,7 +792,7 @@ export const ui = {
   }),
   planMax: { en: 'Max', zh: '旗艦版', jp: 'kei4 gaam3 baan2' },
   tagFree: { en: 'For trying it out', zh: '試用啱啱好', jp: 'si3 jung6 aam1 aam1 hou2' },
-  tagPro: { en: 'For regular conversations', zh: '日常傾計用', jp: 'jat6 soeng4 king1 gai2 jung6' },
+  tagFamily: { en: 'For regular conversations', zh: '日常傾計用', jp: 'jat6 soeng4 king1 gai2 jung6' },
   tagMax: {
     en: 'For long sessions & heavy live use',
     zh: '長時間、高用量即時翻譯',
@@ -820,9 +820,9 @@ export const ui = {
     jp: 'deoi3 waa6 mou4 sik1 tung4 coeng4 deoi3 waa6 jau5 kau3 gau3 hung1 gaan1',
   },
   maxFeatEverything: {
-    en: 'Everything in Pro',
-    zh: '包含專業版全部功能',
-    jp: 'bau1 ham4 zyun1 jip6 baan2 cyun4 bou6 gung1 nang4',
+    en: 'Everything in Family',
+    zh: '包含家庭版全部功能',
+    jp: 'bau1 ham4 gaa1 ting4 baan2 cyun4 bou6 gung1 nang4',
   },
   maxFeatSupport: {
     en: 'Priority support',
@@ -855,7 +855,7 @@ export const ui = {
   val1h: { en: '1 hour', zh: '一小時', jp: 'jat1 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valCamFree: { en: '1 hr / mo', zh: '每月一小時', jp: 'mui5 jyut6 jat1 siu2 si4' },
-  valCamPro: { en: '8 hr / mo', zh: '每月八小時', jp: 'mui5 jyut6 baat3 siu2 si4' },
+  valCamFamily: { en: '8 hr / mo', zh: '每月八小時', jp: 'mui5 jyut6 baat3 siu2 si4' },
   valCamMax: { en: 'Unlimited (metered)', zh: '無限（仍計量）', jp: 'mou4 haan6 (jing4 gai3 loeng4)' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
@@ -868,14 +868,14 @@ export const ui = {
     jp: 'me1 hai6 soeng1 gei1 fan1 zung1?',
   },
   camMinutesCardBody: {
-    en: 'Camera minutes count time spent in Cam — fullscreen AR preview or the upload editor — separate from live mic minutes. Free includes about 1 hour per month. Pro includes 8 hours per month. Max is unlimited but still tracked. Each shutter capture uses Azure Vision OCR once (not continuous polling).',
-    zh: '相機分鐘計算你喺「相機」模式嘅時間——全屏 AR 預覽或者上載編輯器——同即時咪高峰分鐘分開計。免費版大約每月一小時。專業版每月八小時。旗艦版無限但仍會計量。每次快門只用一次 Azure Vision OCR（唔會持續輪詢）。',
-    jp: 'soeng1 gei1 fan1 zung1 hai6 gai3 syun3 nei5 hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 bin1 cap1 hei3 — tung4 zik1 si4 mai1 gou1 fung1 fan1 zung1 fan1 hoi1 gai3. min5 fai3 baan2 daai6 joek3 mui5 jyut6 jat1 siu2 si4. zyun1 jip6 baan2 mui5 jyut6 baat3 siu2 si4. kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4. mui5 ci3 faai3 mun4 zi2 jung6 jat1 ci3 Azure Vision OCR (m4 wui5 ci4 zuk6 leon4 seon2).',
+    en: 'Camera minutes count time spent in Cam — fullscreen AR preview or the upload editor — separate from live mic minutes. Free includes about 1 hour per month. Family includes 8 hours per month. Max is unlimited but still tracked. Each shutter capture uses Azure Vision OCR once (not continuous polling).',
+    zh: '相機分鐘計算你喺「相機」模式嘅時間——全屏 AR 預覽或者上載編輯器——同即時咪高峰分鐘分開計。免費版大約每月一小時。家庭版每月八小時。旗艦版無限但仍會計量。每次快門只用一次 Azure Vision OCR（唔會持續輪詢）。',
+    jp: 'soeng1 gei1 fan1 zung1 hai6 gai3 syun3 nei5 hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 bin1 cap1 hei3 — tung4 zik1 si4 mai1 gou1 fung1 fan1 zung1 fan1 hoi1 gai3. min5 fai3 baan2 daai6 joek3 mui5 jyut6 jat1 siu2 si4. gaa1 ting4 baan2 mui5 jyut6 baat3 siu2 si4. kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4. mui5 ci3 faai3 mun4 zi2 jung6 jat1 ci3 Azure Vision OCR (m4 wui5 ci4 zuk6 leon4 seon2).',
   },
   fairUseNote: {
-    en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Pro camera is capped at 8 hr/mo; Max camera is unlimited but counted.',
-    zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。專業版相機每月八小時；旗艦版相機無限但仍會計量。',
-    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6. zyun1 jip6 baan2 soeng1 gei1 mui5 jyut6 baat3 siu2 si4; kei4 gaam3 baan2 soeng1 gei1 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
+    en: '* Max live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Family camera is capped at 8 hr/mo; Max camera is unlimited but counted.',
+    zh: '* 旗艦版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。家庭版相機每月八小時；旗艦版相機無限但仍會計量。',
+    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6. gaa1 ting4 baan2 soeng1 gei1 mui5 jyut6 baat3 siu2 si4; kei4 gaam3 baan2 soeng1 gei1 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
   },
 
   faqKicker: { en: 'FAQ', zh: '常見問題', jp: 'soeng4 gin3 man6 tai4' },
@@ -886,8 +886,8 @@ export const ui = {
     jp: 'ngo5 seoi1 m4 seoi1 jiu3 zi6 gei2 ge3 API mat6 joek6?',
   },
   faq1a: {
-    en: 'No. Guests can try tap-to-play voice; Free includes a monthly voice-char limit. Pro/Max add unlimited voice, auto-speak, and more live mic time. If you self-host, plug in your own Azure/OpenAI keys.',
-    zh: '唔使。訪客可以試撳喇叭播語音；免費版有每月語音字數上限。專業版／旗艦版有無限語音、自動朗讀同更多即時咪高峰時間。如果自己托管，可以改用你嘅 Azure／OpenAI 密鑰。',
+    en: 'No. Guests can try tap-to-play voice; Free includes a monthly voice-char limit. Family/Max add unlimited voice, auto-speak, and more live mic time. If you self-host, plug in your own Azure/OpenAI keys.',
+    zh: '唔使。訪客可以試撳喇叭播語音；免費版有每月語音字數上限。家庭版／旗艦版有無限語音、自動朗讀同更多即時咪高峰時間。如果自己托管，可以改用你嘅 Azure／OpenAI 密鑰。',
     jp: 'm4 sai2. fong2 haak3 ho2 ji5 si3 gam2 laa3 baa1 bo3 jyu5 jam1; min5 fai3 baan2 jau5 mui5 jyut6 jyu5 jam1 zi6 sou3 soeng6 haan6. zyun1 jip6 / kei4 gaam3 baan2 jau5 mou4 haan6 jyu5 jam1, zi6 dung6 long5 duk6 tung4 gang3 do1 zik1 si4 mai1 gou1 fung1 si4 gaan3. jyu4 gwo2 zi6 gei2 tok3 gun2, ho2 ji5 goi2 jung6 nei5 ge3 Azure / OpenAI mat6 joek6.',
   },
   faq2q: {

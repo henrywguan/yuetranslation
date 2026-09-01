@@ -6,7 +6,7 @@ import { MagneticButton } from './MagneticButton'
 import { PriceDemo, PriceFeatIcon } from './PriceDemos'
 import { Reveal } from './Reveal'
 
-/** Compact Free / Pro duo with micro-demos — studio teaser, not a full table. */
+/** Compact Free / Family duo with micro-demos — studio teaser, not a full table. */
 export function HomePricingDuo() {
   return (
     <section className="ln-section ln-pricing" id="pricing">
@@ -43,7 +43,7 @@ export function HomePricingDuo() {
                 <p className="ln-price-period">
                   /month<span className="ln-price-period-zh">(月)</span>
                 </p>
-                {plan.id === 'pro' ? (
+                {plan.id === 'family' ? (
                   <p className="ln-price-annual">
                     <BiText copy={ui.landAnnualHint} size="sm" hideJp />
                   </p>
@@ -61,7 +61,7 @@ export function HomePricingDuo() {
             <ul className="ln-price-feats">
               {plan.teaserFeatures.map((f, i) => (
                 <li key={f.en}>
-                  <PriceFeatIcon planId={plan.id === 'pro' ? 'pro' : 'free'} index={i} />
+                  <PriceFeatIcon planId={plan.id === 'family' ? 'family' : 'free'} index={i} />
                   <BiText copy={f} size="sm" />
                 </li>
               ))}

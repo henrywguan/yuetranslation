@@ -60,7 +60,7 @@ Uses the same `RESEND_API_KEY`. Existing contacts are updated, not duplicated.
 
 ### 2. Upgrade alerts (automatic)
 
-Once `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set, **Stripe** `checkout.session.completed` sends an email when a user moves to `pro` or `max`. Manual upgrades in `#/admin` also notify when the plan changes to a paid tier.
+Once `RESEND_API_KEY` and `YUE_NOTIFY_FROM` are set, **Stripe** `checkout.session.completed` sends an email when a user moves to `family` or `max`. Manual upgrades in `#/admin` also notify when the plan changes to a paid tier.
 
 ### 3. Sign-up alerts (Supabase Auth Hook — recommended)
 
@@ -135,7 +135,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count, cam time (+ scan count), **docs pages**. Allowlisted emails show an animated **admin** badge (with current plan). Click the badge to open the plan dropdown. |
 | Search / filter | Email/name/id, plan, over-quota, banned |
 | Sort | Email, plan, live, TTS, translate, cam, docs, joined |
-| Change plan | `free` / `pro` / `max` |
+| Change plan | `free` / `family` / `max` |
 | Reset month usage | Zeros live / TTS / translate / cam / docs for the selected month |
 | Stripe link | Opens Dashboard customer page when `stripe_customer_id` exists |
 | Ban / unban | Profile flag + Auth ban; blocked entitlements (`account_disabled`) |
