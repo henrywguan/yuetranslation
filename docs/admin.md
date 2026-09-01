@@ -102,6 +102,11 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 5. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
 6. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
 7. `supabase/migrations/008_docs_pages.sql` — `docs_pages` on usage months + `increment_usage` support for Documents metering
+8. `supabase/migrations/012_household_seats_pooled_usage.sql` — household seats + pooled `household_usage_months`
+9. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
+10. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
+
+**Legacy usage:** Before household pooling, meters lived in `usage_months` per user. After `012`, Family/Business usage should be in `household_usage_months`. Run migration `015` (or `POST /api/admin/household-usage/backfill`) once on production so historical usage carries over.
 
 Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a session.
 
@@ -170,3 +175,4 @@ All routes require Bearer JWT + allowlisted email:
 - `POST /api/admin/email/preview`
 - `POST /api/admin/email/send`
 - `POST /api/admin/resend-audience/sync`
+- `POST /api/admin/household-usage/backfill` — fold legacy `usage_months` into `household_usage_months` for all months (idempotent)
