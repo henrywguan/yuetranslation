@@ -166,9 +166,9 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 All routes require Bearer JWT + allowlisted email:
 
 - `GET /api/admin/me`
-- `GET /api/admin/users`
+- `GET /api/admin/users` — query `from` / `to` (`YYYY-MM-DD`, default start of current month → today UTC). Usage columns sum **whole calendar months** overlapping the range. Legacy `month=YYYY_MM` still works.
 - `GET /api/admin/users.csv`
-- `GET /api/admin/users/:userId/usage`
+- `GET /api/admin/users/:userId/usage` — same `from` / `to`; returns per-month rows plus a `total` for the range
 - `PATCH /api/admin/users/:userId/plan`
 - `POST /api/admin/users/:userId/reset-usage`
 - `PATCH /api/admin/users/:userId/disabled`

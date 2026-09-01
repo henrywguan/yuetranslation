@@ -60,6 +60,10 @@ function rowToSnapshot(row: UsageRow): UsageSnapshot {
   }
 }
 
+export function usageRowToSnapshot(row: UsageRow): UsageSnapshot {
+  return rowToSnapshot(row)
+}
+
 export async function getUsage(userId: string, month = currentMonthKey()): Promise<UsageSnapshot> {
   const client = getAdmin()
   if (!client) return emptyUsage(month)
@@ -95,16 +99,39 @@ export async function listUsageMonths(userId: string): Promise<UsageSnapshot[]> 
 
 /** Usage rows for many users in one month. */
 export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<string, UsageRow>> {
-  const client = getAdmin()
+  const maps = await getPersonalUsageByMonth([month])
   const map = new Map<string, UsageRow>()
-  if (!client) return map
-  const { data, error } = await client.from('usage_months').select('*').eq('month', month)
-  if (error) {
-    console.error('[usage] getUsageForMonth failed', error.message)
-    return map
+  const inner = maps.get(month)
+  if (inner) {
+    for (const [userId, row] of inner) map.set(userId, row)
   }
+  return map
+}
+
+/** Personal usage rows grouped by month then user id. */
+export async function getPersonalUsageByMonth(
+  months: string[],
+): Promise<Map<string, Map<string, UsageRow>>> {
+  const byMonth = new Map<string, Map<string, UsageRow>>()
+  if (!months.length) return byMonth
+
+  const client = getAdmin()
+  if (!client) return byMonth
+
+  const { data, error } = await client.from('usage_months').select('*').in('month', months)
+  if (error) {
+    console.error('[usage] getPersonalUsageByMonth failed', error.message)
+    return byMonth
+  }
+
   for (const row of (data as UsageRow[]) || []) {
-    map.set(row.user_id, {
+    const month = String(row.month)
+    let bucket = byMonth.get(month)
+    if (!bucket) {
+      bucket = new Map()
+      byMonth.set(month, bucket)
+    }
+    bucket.set(row.user_id, {
       ...row,
       live_seconds: asInt(row.live_seconds),
       tts_chars: asInt(row.tts_chars),
@@ -115,7 +142,7 @@ export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<s
       ai_vision_count: asInt(row.ai_vision_count),
     })
   }
-  return map
+  return byMonth
 }
 
 /**

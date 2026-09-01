@@ -32,7 +32,9 @@ export type AdminUser = {
   stripeCustomerId: string | null
   stripeSubscriptionId: string | null
   stripeDashboardUrl: string | null
-  month: string
+  rangeFrom: string
+  rangeTo: string
+  months: string[]
   liveSeconds: number
   ttsChars: number
   translateCount: number
@@ -72,6 +74,9 @@ export type AdminBugReport = {
 }
 
 export type AdminListQuery = {
+  from?: string
+  to?: string
+  /** @deprecated Prefer from/to — full calendar month */
   month?: string
   q?: string
   plan?: string
@@ -81,8 +86,26 @@ export type AdminListQuery = {
   dir?: 'asc' | 'desc'
 }
 
+export type AdminUsageMonth = {
+  month: string
+  liveSeconds: number
+  ttsChars: number
+  translateCount: number
+  cameraSeconds: number
+  cameraTranslateCount: number
+  docsPages: number
+  aiVisionCount: number
+}
+
+export type AdminUsageRangeQuery = {
+  from?: string
+  to?: string
+}
+
 function toQuery(params: AdminListQuery): string {
   const sp = new URLSearchParams()
+  if (params.from) sp.set('from', params.from)
+  if (params.to) sp.set('to', params.to)
   if (params.month) sp.set('month', params.month)
   if (params.q) sp.set('q', params.q)
   if (params.plan && params.plan !== 'all') sp.set('plan', params.plan)
@@ -104,7 +127,9 @@ export async function fetchAdminMe(): Promise<{ ok: boolean; email: string | nul
 }
 
 export async function fetchAdminUsers(params: AdminListQuery = {}): Promise<{
-  month: string
+  rangeFrom: string
+  rangeTo: string
+  months: string[]
   count: number
   users: AdminUser[]
 }> {
@@ -116,20 +141,23 @@ export async function fetchAdminUsers(params: AdminListQuery = {}): Promise<{
   return res.json()
 }
 
-export async function fetchAdminUserUsage(userId: string): Promise<{
+export async function fetchAdminUserUsage(
+  userId: string,
+  range: AdminUsageRangeQuery = {},
+): Promise<{
   user: { id: string; email: string | null } | null
-  months: {
-    month: string
-    liveSeconds: number
-    ttsChars: number
-    translateCount: number
-    cameraSeconds: number
-    cameraTranslateCount: number
-    docsPages: number
-    aiVisionCount: number
-  }[]
+  rangeFrom: string
+  rangeTo: string
+  months: AdminUsageMonth[]
+  total: AdminUsageMonth
 }> {
-  const res = await adminFetch(`/admin/users/${encodeURIComponent(userId)}/usage`)
+  const sp = new URLSearchParams()
+  if (range.from) sp.set('from', range.from)
+  if (range.to) sp.set('to', range.to)
+  const qs = sp.toString()
+  const res = await adminFetch(
+    `/admin/users/${encodeURIComponent(userId)}/usage${qs ? `?${qs}` : ''}`,
+  )
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
     throw new Error(data.message || 'Failed to load usage')
@@ -264,7 +292,7 @@ export async function downloadAdminUsersCsv(params: AdminListQuery = {}) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `jyut-users-${params.month || 'export'}.csv`
+  a.download = `jyut-users-${params.from || 'export'}_${params.to || ''}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }

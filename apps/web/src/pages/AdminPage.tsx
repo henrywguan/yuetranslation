@@ -23,6 +23,7 @@ import {
   type AdminBugReport,
   type AdminListQuery,
   type AdminUser,
+  type AdminUsageMonth,
 } from '../lib/adminApi'
 import { openAuthScreen } from '../lib/auth'
 import { navigate } from '../lib/useHashRoute'
@@ -31,12 +32,36 @@ import './AdminPage.css'
 
 type Tab = 'users' | 'audit' | 'reports' | 'email'
 
-function currentMonthInput(): string {
-  return new Date().toISOString().slice(0, 7)
+function todayYmdUtc(): string {
+  const d = new Date()
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
-function monthKeyFromInput(value: string): string {
-  return value.replace('-', '_')
+function startOfCurrentMonthYmdUtc(): string {
+  const d = new Date()
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`
+}
+
+function ymdFromIso(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
+function daysAgoYmdUtc(days: number): string {
+  const d = new Date()
+  d.setUTCDate(d.getUTCDate() - days)
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
+type RangePreset = 'this-month' | 'last-30' | 'all-time'
+
+function presetRange(preset: RangePreset): { from: string; to: string } {
+  const to = todayYmdUtc()
+  if (preset === 'this-month') return { from: startOfCurrentMonthYmdUtc(), to }
+  if (preset === 'last-30') return { from: daysAgoYmdUtc(29), to }
+  return { from: '2025-01-01', to }
 }
 
 /** Prefer custom Account Hub username, then OAuth name, then email. */
@@ -67,7 +92,9 @@ export function AdminPage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const [monthInput, setMonthInput] = useState(currentMonthInput)
+  const [rangeFrom, setRangeFrom] = useState(startOfCurrentMonthYmdUtc)
+  const [rangeTo, setRangeTo] = useState(todayYmdUtc)
+  const [rangePreset, setRangePreset] = useState<RangePreset>('this-month')
   const [q, setQ] = useState('')
   const [qDebounced, setQDebounced] = useState('')
   const [plan, setPlan] = useState('all')
@@ -80,18 +107,8 @@ export function AdminPage() {
   const [count, setCount] = useState(0)
   const [selected, setSelected] = useState<AdminUser | null>(null)
   const [editingRoleUserId, setEditingRoleUserId] = useState<string | null>(null)
-  const [usageMonths, setUsageMonths] = useState<
-    {
-      month: string
-      liveSeconds: number
-      ttsChars: number
-      translateCount: number
-      cameraSeconds: number
-      cameraTranslateCount: number
-      docsPages: number
-      aiVisionCount: number
-    }[]
-  >([])
+  const [usageMonths, setUsageMonths] = useState<AdminUsageMonth[]>([])
+  const [usageTotal, setUsageTotal] = useState<AdminUsageMonth | null>(null)
   const [audit, setAudit] = useState<AdminAuditEntry[]>([])
   const [reports, setReports] = useState<AdminBugReport[]>([])
   const [selectedReport, setSelectedReport] = useState<AdminBugReport | null>(null)
@@ -123,7 +140,8 @@ export function AdminPage() {
 
   const listParams = useMemo<AdminListQuery>(
     () => ({
-      month: monthKeyFromInput(monthInput),
+      from: rangeFrom,
+      to: rangeTo,
       q: qDebounced || undefined,
       plan,
       overQuota,
@@ -131,8 +149,10 @@ export function AdminPage() {
       sort,
       dir,
     }),
-    [monthInput, qDebounced, plan, overQuota, disabledOnly, sort, dir],
+    [rangeFrom, rangeTo, qDebounced, plan, overQuota, disabledOnly, sort, dir],
   )
+
+  const usageRange = useMemo(() => ({ from: rangeFrom, to: rangeTo }), [rangeFrom, rangeTo])
 
   const reloadUsers = useCallback(async () => {
     setBusy(true)
@@ -181,17 +201,31 @@ export function AdminPage() {
     else if (tab === 'reports') void reloadReports()
   }, [gate, tab, reloadUsers, reloadAudit, reloadReports])
 
+  const loadUserUsage = useCallback(
+    async (user: AdminUser) => {
+      setError('')
+      try {
+        const data = await fetchAdminUserUsage(user.id, usageRange)
+        setUsageMonths(data.months)
+        setUsageTotal(data.total)
+      } catch (e) {
+        setUsageMonths([])
+        setUsageTotal(null)
+        setError(e instanceof Error ? e.message : 'Failed to load usage history')
+      }
+    },
+    [usageRange],
+  )
+
   const openUser = async (user: AdminUser) => {
     setSelected(user)
-    setError('')
-    try {
-      const data = await fetchAdminUserUsage(user.id)
-      setUsageMonths(data.months)
-    } catch (e) {
-      setUsageMonths([])
-      setError(e instanceof Error ? e.message : 'Failed to load usage history')
-    }
+    await loadUserUsage(user)
   }
+
+  useEffect(() => {
+    if (!selected || tab !== 'users') return
+    void loadUserUsage(selected)
+  }, [selected, tab, loadUserUsage])
 
   const onSetPlan = async (user: AdminUser, next: 'free' | 'family' | 'business') => {
     if (next === user.plan) return
@@ -279,6 +313,22 @@ export function AdminPage() {
     } finally {
       setBusy(false)
     }
+  }
+
+  const onRangePreset = (preset: RangePreset) => {
+    setRangePreset(preset)
+    const { from, to } = presetRange(preset)
+    setRangeFrom(from)
+    setRangeTo(to)
+  }
+
+  const onSinceJoined = () => {
+    if (!selected?.createdAt) return
+    const joined = ymdFromIso(selected.createdAt)
+    if (!joined) return
+    setRangePreset('all-time')
+    setRangeFrom(joined)
+    setRangeTo(todayYmdUtc())
   }
 
   const onExport = async () => {
@@ -478,11 +528,36 @@ export function AdminPage() {
         <>
           <section className="admin-filters" aria-label="Filters">
             <label>
-              Month
+              Range
+              <select
+                value={rangePreset}
+                onChange={(e) => onRangePreset(e.target.value as RangePreset)}
+              >
+                <option value="this-month">This month</option>
+                <option value="last-30">Last 30 days</option>
+                <option value="all-time">All time</option>
+              </select>
+            </label>
+            <label>
+              From
               <input
-                type="month"
-                value={monthInput}
-                onChange={(e) => setMonthInput(e.target.value || currentMonthInput())}
+                type="date"
+                value={rangeFrom}
+                onChange={(e) => {
+                  setRangePreset('all-time')
+                  setRangeFrom(e.target.value || startOfCurrentMonthYmdUtc())
+                }}
+              />
+            </label>
+            <label>
+              To
+              <input
+                type="date"
+                value={rangeTo}
+                onChange={(e) => {
+                  setRangePreset('all-time')
+                  setRangeTo(e.target.value || todayYmdUtc())
+                }}
               />
             </label>
             <label className="admin-grow">
@@ -544,8 +619,9 @@ export function AdminPage() {
           {usageBackfillMsg ? <p className="admin-muted">{usageBackfillMsg}</p> : null}
 
           <p className="admin-muted">
-            {busy ? 'Loading…' : `${count} user${count === 1 ? '' : 's'}`} · month{' '}
-            {monthKeyFromInput(monthInput)}
+            {busy ? 'Loading…' : `${count} user${count === 1 ? '' : 's'}`} · {rangeFrom} →{' '}
+            {rangeTo}
+            <span className="admin-sub"> (usage summed by calendar month)</span>
           </p>
 
           <div className="admin-table-wrap">
@@ -765,11 +841,37 @@ export function AdminPage() {
                   {adminUserSubtitle(selected) ? (
                     <p className="admin-muted">{adminUserSubtitle(selected)}</p>
                   ) : null}
+                  <p className="admin-muted">
+                    {rangeFrom} → {rangeTo}
+                    {selected.createdAt ? (
+                      <>
+                        {' '}
+                        · joined {new Date(selected.createdAt).toLocaleDateString()}
+                      </>
+                    ) : null}
+                  </p>
                 </div>
-                <button type="button" className="admin-link-btn" onClick={() => setSelected(null)}>
-                  Close
-                </button>
+                <div className="admin-detail-actions">
+                  {selected.createdAt ? (
+                    <button type="button" className="admin-link-btn" onClick={onSinceJoined}>
+                      Since joined
+                    </button>
+                  ) : null}
+                  <button type="button" className="admin-link-btn" onClick={() => setSelected(null)}>
+                    Close
+                  </button>
+                </div>
               </header>
+              {usageTotal ? (
+                <p className="admin-usage-total">
+                  Total · Live {formatLiveSeconds(usageTotal.liveSeconds)} · TTS{' '}
+                  {usageTotal.ttsChars.toLocaleString()} · Translate{' '}
+                  {usageTotal.translateCount.toLocaleString()} · Cam{' '}
+                  {formatLiveSeconds(usageTotal.cameraSeconds)} · AI vision{' '}
+                  {(usageTotal.aiVisionCount ?? 0).toLocaleString()} · Docs{' '}
+                  {(usageTotal.docsPages ?? 0).toLocaleString()} pages
+                </p>
+              ) : null}
               <ul className="admin-usage-list">
                 {usageMonths.length ? (
                   usageMonths.map((m) => (
@@ -798,7 +900,7 @@ export function AdminPage() {
           <AdminResetUsageModal
             open={Boolean(resetUser)}
             user={resetUser}
-            monthLabel={monthKeyFromInput(monthInput)}
+            monthLabel={`${rangeFrom} → ${rangeTo}`}
             busy={busy}
             onClose={() => setResetUser(null)}
             onSubmit={(patch) => void onSubmitResetUsage(patch)}
