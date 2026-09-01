@@ -433,6 +433,26 @@ export async function ensureOwnerHousehold(
   return household
 }
 
+/** After profiles.plan is set to Family/Business, keep the owner household row in sync. */
+export async function syncOwnerPlanForUser(
+  userId: string,
+  plan: HouseholdPlan,
+): Promise<void> {
+  const membership = await getMembershipForUser(userId)
+  if (membership && membership.membership.member_role !== 'owner') {
+    // Members inherit plan from the household owner; only sync for owners (or new paid users).
+    return
+  }
+  const household = await ensureOwnerHousehold(userId, plan)
+  if (!household || household.plan !== plan) {
+    const actual = household?.plan ?? 'none'
+    throw new Error(
+      `Household plan sync failed (expected ${plan}, got ${actual}). ` +
+        'If Business is rejected, apply migration 014_rename_max_plan_to_business on Supabase.',
+    )
+  }
+}
+
 async function countOccupiedSeats(householdId: string): Promise<number> {
   const client = getAdmin()
   if (!client) return 0
