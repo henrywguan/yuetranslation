@@ -757,17 +757,66 @@
   line-height: 1.4;
 }
 
+.usage-detail-lead::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 16%,
+    color-mix(in srgb, var(--jade) 88%, #e8fff6) 50%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 84%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--jade) 32%, transparent),
+    0 0 1px color-mix(in srgb, var(--jade) 55%, transparent);
+  opacity: 0.9;
+}
+
 .usage-detail-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 14px;
+  gap: 0;
 }
 
 .usage-detail-row {
   display: grid;
   gap: 6px;
+  padding: 14px 0;
+}
+
+.usage-detail-row:first-child {
+  padding-top: 2px;
+}
+
+.usage-detail-row:last-child {
+  padding-bottom: 0;
+}
+
+.usage-detail-row + .usage-detail-row::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: 0 0 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 16%,
+    color-mix(in srgb, var(--jade) 88%, #e8fff6) 50%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 84%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--jade) 32%, transparent),
+    0 0 1px color-mix(in srgb, var(--jade) 55%, transparent);
+  opacity: 0.9;
 }
 
 .usage-detail-row-top {
