@@ -14,6 +14,7 @@ import {
   drawGlassPanel,
   drawOverlayLabel,
   measureOverlayLabel,
+  tightCoverWidth,
 } from '../lib/camera/overlayPaint'
 import {
   clampPan,
@@ -237,7 +238,10 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
         }
       }
 
-      const pref: PanelRect = { id: b.id, x: drawX, y: drawY, w: drawW, h: drawH }
+      const labelW = label ? measureOverlayLabel(ctx, label, fontSize) : 0
+      const tightW = label ? tightCoverWidth(labelW, padX, drawW) : drawW
+
+      const pref: PanelRect = { id: b.id, x: drawX, y: drawY, w: tightW, h: drawH }
       planned.push({ id: b.id, label, selected, fontSize, padX, pref })
     }
 

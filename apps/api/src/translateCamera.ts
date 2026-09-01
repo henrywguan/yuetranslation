@@ -56,6 +56,77 @@ function parseTranslation(raw: string, fallback: string): string {
   return trimmed.replace(/^["']|["']$/g, '').trim() || fallback
 }
 
+function parseBatchTranslations(raw: string, fallbacks: string[]): string[] {
+  let trimmed = raw.trim()
+  if (!trimmed) return fallbacks
+  trimmed = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+  try {
+    const json = JSON.parse(trimmed) as unknown
+    if (Array.isArray(json)) {
+      return json.map((v, i) =>
+        typeof v === 'string' && v.trim() ? v.trim() : fallbacks[i] || '',
+      )
+    }
+    if (json && typeof json === 'object') {
+      const arr = (json as { translations?: unknown }).translations
+      if (Array.isArray(arr)) {
+        return arr.map((v, i) =>
+          typeof v === 'string' && v.trim() ? v.trim() : fallbacks[i] || '',
+        )
+      }
+    }
+  } catch {
+    // fall through
+  }
+  return fallbacks
+}
+
+function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
+  const docHint = docBatch
+    ? 'These lines come from one document — keep terminology, names, and tone consistent across all lines.'
+    : ''
+  return to === 'zh'
+    ? [
+        'You translate signs, menus, forms, and short labels for Hong Kong / Greater China readers.',
+        'Translate English into natural written Chinese (書面語). Prefer Traditional characters (繁體).',
+        docHint,
+        'Disambiguate by likely setting:',
+        '- Hotel / lobby / hospitality: Check-in → 入住登記 (not airport 登機); Concierge → 禮賓; Luggage storage → 行李寄存.',
+        '- Immigration / legal letters: Character Reference → 品格證明 / 推薦信 (not 角色參考); Judge → 法官; Federal District Court → 聯邦地區法院.',
+        '- Pharmacy: Prescription pickup → 處方取藥; take a number → 請抽籌; Queue here → 請在此排隊.',
+        '- Safety: Wet floor → 小心地滑 / 地面濕滑; Caution → 小心.',
+        'Food/menu names: use common Hong Kong café wording (e.g. pineapple bun → 菠蘿包).',
+        'Keep personal names, place names, and legal terms accurate.',
+        'Keep brand names and codes (A2, HK$) when appropriate.',
+        docBatch
+          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input.'
+          : 'Return ONLY valid JSON: {"translation":"<Chinese>"}',
+        'No markdown, no explanation.',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : [
+        'You translate signs, menus, forms, and short labels into clear traveler English.',
+        'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing).',
+        docHint,
+        'Use concise sign English: 不准進入 → No entry; 今日特餐 → Today\'s special; 乾炒牛河 → Dry-fried beef chow fun.',
+        'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
+        'Keep place names (中環 → Central) and exit codes.',
+        'Never leave the translation empty. Never copy Chinese characters into the English output.',
+        docBatch
+          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input.'
+          : 'Return ONLY valid JSON: {"translation":"<English>"}',
+        'No markdown, no explanation.',
+      ]
+        .filter(Boolean)
+        .join('\n')
+}
+
+export type CameraTranslateOpts = {
+  /** Nearby OCR / document lines for disambiguation (not translated). */
+  context?: string
+}
+
 /**
  * Camera / written-Chinese translate (EN ↔ zh).
  * Separate from speech EN↔粵 so Solo/Conversation stay unchanged.
@@ -64,6 +135,7 @@ export async function translateCameraText(
   text: string,
   from: CameraLang,
   to: CameraLang,
+  opts?: CameraTranslateOpts,
 ): Promise<{ text: string; engine: string; cacheHit: boolean }> {
   const source = text.trim().slice(0, 2000)
   if (!source) return { text: '', engine: 'empty', cacheHit: true }
@@ -90,39 +162,18 @@ export async function translateCameraText(
     return { text: demo, engine: 'demo', cacheHit: false }
   }
 
-  const system =
-    to === 'zh'
-      ? [
-          'You translate signs, menus, forms, and short labels for Hong Kong / Greater China readers.',
-          'Translate English into natural written Chinese (書面語). Prefer Traditional characters (繁體).',
-          'Disambiguate by likely setting:',
-          '- Hotel / lobby / hospitality: Check-in → 入住登記 (not airport 登機); Concierge → 禮賓; Luggage storage → 行李寄存.',
-          '- Immigration / legal letters: Character Reference → 品格證明 / 推薦信 (not 角色參考).',
-          '- Pharmacy: Prescription pickup → 處方取藥; take a number → 請抽籌; Queue here → 請在此排隊.',
-          '- Safety: Wet floor → 小心地滑 / 地面濕滑; Caution → 小心.',
-          'Food/menu names: use common Hong Kong café wording (e.g. pineapple bun → 菠蘿包).',
-          'Keep brand names and codes (A2, HK$) when appropriate.',
-          'Return ONLY valid JSON: {"translation":"<Chinese>"}',
-          'No markdown, no explanation.',
-        ].join('\n')
-      : [
-          'You translate signs, menus, forms, and short labels into clear traveler English.',
-          'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing).',
-          'Use concise sign English: 不准進入 → No entry; 今日特餐 → Today\'s special; 乾炒牛河 → Dry-fried beef chow fun.',
-          'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
-          'Keep place names (中環 → Central) and exit codes.',
-          'Never leave the translation empty. Never copy Chinese characters into the English output.',
-          'Return ONLY valid JSON: {"translation":"<English>"}',
-          'No markdown, no explanation.',
-        ].join('\n')
+  const context = opts?.context?.trim().slice(0, 800)
+  const userContent = context
+    ? `Context (do not translate):\n${context}\n\nTranslate this line:\n${source}`
+    : source
 
   const completion = await client.chat.completions.create({
     model: env.openaiModel,
     temperature: 0.2,
     max_tokens: 500,
     messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: source },
+      { role: 'system', content: cameraSystemPrompt(to) },
+      { role: 'user', content: userContent },
     ],
     response_format: { type: 'json_object' },
     ...llmChatExtras(),
@@ -135,5 +186,69 @@ export async function translateCameraText(
     text: translated,
     engine: env.openaiBaseUrl ? 'openai-compatible' : 'openai',
     cacheHit: false,
+  }
+}
+
+const BATCH_SIZE = 16
+
+/** Context-aware batch translate for document page lines (keeps names/terms consistent). */
+export async function translateCameraBatch(
+  segments: string[],
+  from: CameraLang,
+  to: CameraLang,
+): Promise<{ translations: string[]; engine: string }> {
+  if (!segments.length) return { translations: [], engine: 'empty' }
+  if (from === to) return { translations: segments, engine: 'identity' }
+
+  const client = openaiClient()
+  if (!client) {
+    return {
+      translations: segments.map((s) =>
+        to === 'zh'
+          ? hasHan(s)
+            ? s
+            : `（示範）${s}`
+          : hasHan(s)
+            ? `(demo) ${s}`
+            : `(demo) ${s}`,
+      ),
+      engine: 'demo',
+    }
+  }
+
+  const out = [...segments]
+  for (let start = 0; start < segments.length; start += BATCH_SIZE) {
+    const chunk = segments.slice(start, start + BATCH_SIZE)
+    const numbered = chunk.map((line, i) => `${i + 1}. ${line}`).join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: Math.min(4000, 180 * chunk.length + 120),
+      messages: [
+        { role: 'system', content: cameraSystemPrompt(to, true) },
+        {
+          role: 'user',
+          content: `Translate each numbered line (${from === 'en' ? 'English' : 'Chinese'} → ${to === 'zh' ? 'written Chinese 繁體' : 'English'}):\n${numbered}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const fallbacks = chunk.map((s) => (to === 'zh' ? `（譯）${s}` : `(tr) ${s}`))
+    const translated = parseBatchTranslations(raw, fallbacks)
+    for (let i = 0; i < chunk.length; i++) {
+      const t = (translated[i] || '').trim()
+      const src = chunk[i] || ''
+      if (to === 'en' && hasHan(t)) out[start + i] = src
+      else if (to === 'zh' && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
+      else out[start + i] = t || src
+      remember(`${from}|${to}|${src}`, out[start + i]!)
+    }
+  }
+
+  return {
+    translations: out,
+    engine: env.openaiBaseUrl ? 'openai-compatible' : 'openai',
   }
 }

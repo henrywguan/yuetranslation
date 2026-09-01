@@ -1,7 +1,7 @@
 /**
  * Shared helpers for document translation jobs.
  */
-import { translateCameraText } from '../translateCamera.js'
+import { translateCameraText, translateCameraBatch, type CameraLang } from '../translateCamera.js'
 import { hasHan } from '../canto/han.js'
 
 export type DocLang = 'en' | 'yue'
@@ -18,31 +18,53 @@ export function shouldTranslateSegment(text: string): boolean {
   return true
 }
 
-/** Translate many short segments with limited concurrency. */
+/** Translate many short segments with document-level context when possible. */
 export async function translateSegments(
   segments: string[],
   from: DocLang,
   to: DocLang,
   concurrency = 3,
 ): Promise<string[]> {
-  const out = segments.map((s) => s)
-  let idx = 0
+  if (from === to) return segments.map((s) => s)
 
+  const camFrom: CameraLang = from === 'en' ? 'en' : 'zh'
+  const camTo: CameraLang = to === 'en' ? 'en' : 'zh'
+
+  const indices: number[] = []
+  const toTranslate: string[] = []
+  for (let i = 0; i < segments.length; i++) {
+    const src = segments[i] ?? ''
+    if (shouldTranslateSegment(src)) {
+      indices.push(i)
+      toTranslate.push(src)
+    }
+  }
+
+  if (!toTranslate.length) return segments
+
+  const out = segments.map((s) => s)
+  try {
+    const { translations } = await translateCameraBatch(toTranslate, camFrom, camTo)
+    for (let j = 0; j < indices.length; j++) {
+      out[indices[j]!] = translations[j] || segments[indices[j]!]!
+    }
+    return out
+  } catch {
+    // Fall back to per-line translate with limited concurrency.
+  }
+
+  let idx = 0
   async function worker() {
-    while (idx < segments.length) {
-      const i = idx++
-      const src = segments[i] ?? ''
-      if (!shouldTranslateSegment(src) || from === to) {
-        out[i] = src
-        continue
-      }
+    while (idx < toTranslate.length) {
+      const j = idx++
+      const i = indices[j]!
+      const src = toTranslate[j] ?? ''
+      const prev = j > 0 ? toTranslate[j - 1] : ''
+      const next = j + 1 < toTranslate.length ? toTranslate[j + 1] : ''
+      const context = [prev, next].filter(Boolean).join('\n')
       try {
-        // Documents always use Cam written-Chinese (書面語), not Solo colloquial 粵.
-        const camFrom = from === 'en' ? 'en' : 'zh'
-        const camTo = to === 'en' ? 'en' : 'zh'
-        const result = await translateCameraText(src, camFrom, camTo)
+        const result = await translateCameraText(src, camFrom, camTo, { context })
         const text = (result.text || '').trim()
-        // Reject obvious language echoes.
         if (camTo === 'en' && hasHan(text)) out[i] = src
         else if (camTo === 'zh' && text && !hasHan(text) && /[A-Za-z]/.test(src)) out[i] = src
         else out[i] = text || src
@@ -52,7 +74,7 @@ export async function translateSegments(
     }
   }
 
-  const n = Math.max(1, Math.min(concurrency, segments.length || 1))
+  const n = Math.max(1, Math.min(concurrency, toTranslate.length || 1))
   await Promise.all(Array.from({ length: n }, () => worker()))
   return out
 }

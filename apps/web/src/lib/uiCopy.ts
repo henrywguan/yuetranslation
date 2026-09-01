@@ -344,19 +344,9 @@ export const ui = {
     jp: 'syun2 zaak6 gai3 waak6 gok3 biu1 haa6 fong1 hin2 si6 dik1 jung6 loeng6',
   },
   accountTtsVoices: { en: 'Voice playback', zh: '語音朗讀', jp: 'jyu5 jam1 long5 duk6' },
-  accountTtsVoicesHint: {
-    en: 'Synced to your account across devices',
-    zh: '會同步到你嘅帳戶，跨裝置一樣',
-    jp: 'wui5 tung4 bou6 dou3 nei5 ge3 zoeng3 wu6',
-  },
   accountTtsYue: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   accountTtsEn: { en: 'English', zh: '英語', jp: 'jing1 jyu5' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
-  accountTtsSignInToSync: {
-    en: 'Sign in to sync voices across devices',
-    zh: '登入後可同步語音設定',
-    jp: 'dang1 jap6 hau6 ho2 tung4 bou6 jyu5 jam1 cit3 ding6',
-  },
   bugReportTitle: { en: 'Report a problem', zh: '回報問題', jp: 'wui4 bou3 man6 tai4' },
   bugReportHint: {
     en: 'What went wrong? We attach route and settings — not your translations.',
@@ -421,9 +411,9 @@ export const ui = {
     jp: 'gwaan1 bai3 zyu2 waa2 min6 tai4 si6',
   },
   iosHomescreenStep1: {
-    en: 'Tap Share in the Safari toolbar (box with an arrow up).',
-    zh: '喺 Safari 工具列撳「分享」（方框向上箭嘴）。',
-    jp: 'hai2 Safari gung1 geoi6 lit6 gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
+    en: 'Open the translator (not the homepage), then tap Share in Safari (box with an arrow up).',
+    zh: '先打開翻譯器（唔好喺主頁），再喺 Safari 撳「分享」（方框向上箭嘴）。',
+    jp: 'sin1 daa2 hoi1 faan1 jik6 hei3 (m4 hou2 hai2 zyu2 jip6), zoi3 hai2 Safari gam2 “fan1 hoeng2” (fong1 kwaang1 hoeng3 soeng6 zin3 zeoi2).',
   },
   iosHomescreenStep2: {
     en: 'Select Add to Home Screen.',

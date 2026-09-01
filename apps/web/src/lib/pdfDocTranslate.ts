@@ -10,6 +10,8 @@ import { cameraScan } from './api'
 import { commitDocPages, translateDocSegments, type DocLang } from './docsApi'
 import type { Entitlement } from './types'
 
+import { tightCoverWidth } from './camera/overlayPaint'
+
 export type PdfProgress = (msg: string, page: number, total: number) => void
 
 type TextItem = {
@@ -146,22 +148,26 @@ export function paintTranslations(
     ctx.font = `600 ${fontSize}px ${FONT_FAMILY}`
     lines = wrapLines(ctx, translated, maxW)
     const lineH = fontSize * 1.15
+    const lineWidths = lines.map((line) => ctx.measureText(line).width)
+    const textW = lineWidths.length ? Math.max(...lineWidths) : 0
+    const coverW = tightCoverWidth(textW, padX, w)
     // Grow cover slightly when wrapping so glyphs stay readable.
     const textBlockH = Math.max(h, lines.length * lineH + 2)
     const coverH = Math.min(textBlockH, h * 2.2)
     const coverY = y - Math.max(0, (coverH - h) * 0.15)
 
     ctx.fillStyle = 'rgba(7, 19, 31, 0.88)'
-    ctx.fillRect(x - 1, coverY - 1, w + 2, coverH + 2)
+    ctx.fillRect(x - 1, coverY - 1, coverW + 2, coverH + 2)
     ctx.fillStyle = '#e8f4f1'
     const startY = coverY + Math.max(1, (coverH - lines.length * lineH) / 2)
+    const textMaxW = Math.max(8, coverW - padX * 2)
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]!
       let draw = line
-      while (ctx.measureText(draw).width > maxW && draw.length > 1) {
+      while (ctx.measureText(draw).width > textMaxW && draw.length > 1) {
         draw = draw.slice(0, -1)
       }
-      ctx.fillText(draw, x + padX, startY + i * lineH, maxW)
+      ctx.fillText(draw, x + padX, startY + i * lineH, textMaxW)
     }
   }
 }
@@ -192,11 +198,10 @@ export function textContentToItems(
     const scaleX = Math.hypot(vx[0] ?? 0, vx[1] ?? 0) || 1
     const scaleY = Math.hypot(vx[2] ?? 0, vx[3] ?? 0) || scaleX
     const fontH = Math.max(6, scaleY)
-    // item.width is in text space; scale into viewport pixels.
-    const wPx = Math.max(
-      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : fontH * text.length * 0.5,
-      fontH * 0.35,
-    )
+    const charCap = fontH * Math.max(1, text.length) * 0.55
+    const rawW =
+      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : charCap
+    const wPx = Math.max(fontH * 0.35, Math.min(rawW, charCap * 1.1))
     // Baseline at ty; glyphs extend upward on the canvas.
     const top = ty - fontH * 0.92
     const x = tx / viewport.width

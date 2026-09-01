@@ -1,10 +1,15 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { BugReportModal } from './components/BugReportModal'
-import { bootstrapAuthSession, consumeAuthScreenDeepLink } from './lib/auth'
+import {
+  bootstrapAuthSession,
+  consumeAuthScreenDeepLink,
+  isAuthCallback,
+} from './lib/auth'
+import { isDisplayStandalone } from './lib/pwaInstall'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
-import { useRoute } from './lib/useHashRoute'
+import { hashPath, navigate, useRoute } from './lib/useHashRoute'
 
 const Landing = lazy(() => import('./landing/Landing').then((m) => ({ default: m.Landing })))
 const PricingPage = lazy(() =>
@@ -23,6 +28,11 @@ export default function App() {
 
   useEffect(() => {
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
+      // After OAuth is consumed — never rewrite `#access_token=...` to `#/app` first
+      // (that race signed users back into the app without a session).
+      if (isDisplayStandalone() && !hashPath() && !isAuthCallback()) {
+        navigate('app')
+      }
       consumeAuthScreenDeepLink()
       setReady(true)
     })
