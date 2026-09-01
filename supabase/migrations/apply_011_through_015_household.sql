@@ -2,17 +2,18 @@
 -- ONE-SHOT: apply household + plan renames + usage backfill (migrations 011–015)
 -- Paste into Supabase Dashboard → SQL Editor → Run
 -- Safe to re-run (IF NOT EXISTS / idempotent updates).
+-- IMPORTANT: plan check constraints are dropped BEFORE renaming pro→family / max→business.
 -- ============================================================================
 
 -- >>> 011_rename_pro_plan_to_family.sql
 -- Rename paid plan id `pro` → `family` (display name: Family / 家庭版).
--- Safe to re-run: updates existing rows, then replaces the check constraint.
+-- Drop the check constraint BEFORE updating rows (old check only allows free/pro/max).
+
+alter table public.profiles drop constraint if exists profiles_plan_check;
 
 update public.profiles
 set plan = 'family'
 where plan = 'pro';
-
-alter table public.profiles drop constraint if exists profiles_plan_check;
 
 alter table public.profiles
   add constraint profiles_plan_check check (plan in ('free', 'family', 'max'));
@@ -172,23 +173,23 @@ alter table public.profiles
 -- >>> 014_rename_max_plan_to_business.sql
 -- Rename Max plan → Business (keep existing paid users on the top tier).
 -- Legacy checkout / env aliases for `max` remain in application code.
+-- Drop check constraints BEFORE updating rows.
+
+alter table public.profiles drop constraint if exists profiles_plan_check;
 
 update public.profiles
 set plan = 'business'
 where plan = 'max';
 
-alter table public.profiles drop constraint if exists profiles_plan_check;
-
 alter table public.profiles
   add constraint profiles_plan_check check (plan in ('free', 'family', 'business'));
+
+alter table public.households drop constraint if exists households_plan_check;
 
 update public.households
 set plan = 'business'
 where plan = 'max';
 
-alter table public.households drop constraint if exists households_plan_check;
-
--- Recreate check from 012 with the new plan id.
 alter table public.households
   add constraint households_plan_check check (plan in ('family', 'business'));
 
@@ -197,6 +198,9 @@ alter table public.households
 -- Safe to re-run: merges pool + personal sums, then clears folded personal rows.
 
 -- Ensure plan ids are current (idempotent with 011 / 014).
+-- Drop checks first so renames cannot violate free/pro/max or free/family/max.
+alter table public.profiles drop constraint if exists profiles_plan_check;
+
 update public.profiles
 set plan = 'family'
 where plan = 'pro';
@@ -205,9 +209,17 @@ update public.profiles
 set plan = 'business'
 where plan = 'max';
 
+alter table public.profiles
+  add constraint profiles_plan_check check (plan in ('free', 'family', 'business'));
+
+alter table public.households drop constraint if exists households_plan_check;
+
 update public.households
 set plan = 'business'
 where plan = 'max';
+
+alter table public.households
+  add constraint households_plan_check check (plan in ('family', 'business'));
 
 -- Create households for paid owners who predate pooling.
 insert into public.households (owner_user_id, plan, seat_limit)

@@ -2,6 +2,9 @@
 -- Safe to re-run: merges pool + personal sums, then clears folded personal rows.
 
 -- Ensure plan ids are current (idempotent with 011 / 014).
+-- Drop checks first so renames cannot violate free/pro/max or free/family/max.
+alter table public.profiles drop constraint if exists profiles_plan_check;
+
 update public.profiles
 set plan = 'family'
 where plan = 'pro';
@@ -10,9 +13,17 @@ update public.profiles
 set plan = 'business'
 where plan = 'max';
 
+alter table public.profiles
+  add constraint profiles_plan_check check (plan in ('free', 'family', 'business'));
+
+alter table public.households drop constraint if exists households_plan_check;
+
 update public.households
 set plan = 'business'
 where plan = 'max';
+
+alter table public.households
+  add constraint households_plan_check check (plan in ('family', 'business'));
 
 -- Create households for paid owners who predate pooling.
 insert into public.households (owner_user_id, plan, seat_limit)
