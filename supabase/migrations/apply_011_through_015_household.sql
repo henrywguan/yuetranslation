@@ -327,6 +327,8 @@ on conflict (household_id, month) do update set
   ai_vision_count = excluded.ai_vision_count;
 
 -- Clear personal rows that were folded into the household pool.
+-- Note: Postgres forbids referencing the UPDATE target alias inside FROM/JOIN ON;
+-- match month in WHERE instead.
 update public.usage_months um
 set
   live_seconds = 0,
@@ -339,8 +341,8 @@ set
 from public.household_members hm
 inner join public.household_usage_months hu
   on hu.household_id = hm.household_id
- and hu.month = um.month
 where um.user_id = hm.user_id
+  and um.month = hu.month
   and (
     um.live_seconds > 0
     or um.tts_chars > 0
