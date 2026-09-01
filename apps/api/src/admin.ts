@@ -26,10 +26,18 @@ import {
   resolveHouseholdUsage,
 } from './household.js'
 import {
+  filterSnapshotsByMonths,
+  parseAdminUsageRange,
+  sumUsageSnapshots,
+  type AdminUsageRange,
+} from './adminUsageRange.js'
+import {
   currentMonthKey,
-  getUsageForMonth,
+  emptyUsage,
+  getPersonalUsageByMonth,
   listUsageMonths,
   setUsageMonth,
+  usageRowToSnapshot,
   type UsageRow,
 } from './usage.js'
 
@@ -48,7 +56,10 @@ export type AdminUserRow = {
   stripeCustomerId: string | null
   stripeSubscriptionId: string | null
   stripeDashboardUrl: string | null
-  month: string
+  rangeFrom: string
+  rangeTo: string
+  /** Calendar months summed in this row (`YYYY_MM`). */
+  months: string[]
   liveSeconds: number
   ttsChars: number
   translateCount: number
@@ -94,10 +105,33 @@ function stripeDashboardUrl(customerId: string | null): string | null {
   return `${base}/customers/${customerId}`
 }
 
-async function usageSnapshotForAdminUser(
+async function householdUsageForMonth(
+  householdId: string,
+  month: string,
+  cache: Map<string, Awaited<ReturnType<typeof resolveHouseholdUsage>>>,
+) {
+  const key = `${householdId}:${month}`
+  let usage = cache.get(key)
+  if (!usage) {
+    usage = await resolveHouseholdUsage(householdId, month)
+    cache.set(key, usage)
+  }
+  return usage
+}
+
+function personalUsageForMonth(
   userId: string,
   month: string,
-  personalByUser: Map<string, UsageRow>,
+  personalByMonth: Map<string, Map<string, UsageRow>>,
+) {
+  const row = personalByMonth.get(month)?.get(userId)
+  return row ? usageRowToSnapshot(row) : emptyUsage(month)
+}
+
+async function usageSnapshotForAdminUser(
+  userId: string,
+  months: string[],
+  personalByMonth: Map<string, Map<string, UsageRow>>,
   householdUsageCache: Map<string, Awaited<ReturnType<typeof resolveHouseholdUsage>>>,
 ): Promise<{
   liveSeconds: number
@@ -108,14 +142,15 @@ async function usageSnapshotForAdminUser(
   docsPages: number
   aiVisionCount: number
 }> {
+  const monthList = months.length ? months : [currentMonthKey()]
   const membership = await getMembershipForUser(userId)
   if (membership) {
-    const householdId = membership.household.id
-    let usage = householdUsageCache.get(householdId)
-    if (!usage) {
-      usage = await resolveHouseholdUsage(householdId, month)
-      householdUsageCache.set(householdId, usage)
-    }
+    const snaps = await Promise.all(
+      monthList.map((month) =>
+        householdUsageForMonth(membership.household.id, month, householdUsageCache),
+      ),
+    )
+    const usage = sumUsageSnapshots(snaps)
     return {
       liveSeconds: usage.liveSeconds,
       ttsChars: usage.ttsChars,
@@ -127,23 +162,28 @@ async function usageSnapshotForAdminUser(
     }
   }
 
-  const usage = personalByUser.get(userId)
+  const snaps = monthList.map((month) => personalUsageForMonth(userId, month, personalByMonth))
+  const usage = sumUsageSnapshots(snaps)
   return {
-    liveSeconds: usage?.live_seconds ?? 0,
-    ttsChars: usage?.tts_chars ?? 0,
-    translateCount: usage?.translate_count ?? 0,
-    cameraSeconds: usage?.camera_seconds ?? 0,
-    cameraTranslateCount: usage?.camera_translate_count ?? 0,
-    docsPages: usage?.docs_pages ?? 0,
-    aiVisionCount: usage?.ai_vision_count ?? 0,
+    liveSeconds: usage.liveSeconds,
+    ttsChars: usage.ttsChars,
+    translateCount: usage.translateCount,
+    cameraSeconds: usage.cameraSeconds,
+    cameraTranslateCount: usage.cameraTranslateCount,
+    docsPages: usage.docsPages,
+    aiVisionCount: usage.aiVisionCount,
   }
 }
 
-async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
-  const [authUsers, profiles, usageMap] = await Promise.all([
+async function buildAdminUsers(range: AdminUsageRange): Promise<AdminUserRow[]> {
+  const months = range.months.length ? range.months : [currentMonthKey()]
+  const quotaMonth = currentMonthKey()
+  const monthsToFetch = [...new Set([...months, quotaMonth])]
+
+  const [authUsers, profiles, personalByMonth] = await Promise.all([
     listAuthUsers(),
     listProfiles(),
-    getUsageForMonth(month),
+    getPersonalUsageByMonth(monthsToFetch),
   ])
   const profileById = new Map(profiles.map((p) => [p.id, p]))
   const householdUsageCache = new Map<string, Awaited<ReturnType<typeof resolveHouseholdUsage>>>()
@@ -152,7 +192,10 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
     authUsers.map(async (u) => {
     const profile = profileById.get(u.id)
     const plan = profile?.plan ?? 'free'
-    const usage = await usageSnapshotForAdminUser(u.id, month, usageMap, householdUsageCache)
+    const [usage, quotaUsage] = await Promise.all([
+      usageSnapshotForAdminUser(u.id, months, personalByMonth, householdUsageCache),
+      usageSnapshotForAdminUser(u.id, [quotaMonth], personalByMonth, householdUsageCache),
+    ])
     const liveSeconds = usage.liveSeconds
     const ttsChars = usage.ttsChars
     const translateCount = usage.translateCount
@@ -165,10 +208,10 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
     const camLim = cameraLimitSeconds(plan)
     const docsLim = docsLimitPages(plan)
     const overQuota =
-      (liveLim > 0 && liveSeconds >= liveLim) ||
-      (ttsLim > 0 && ttsChars >= ttsLim) ||
-      (camLim > 0 && cameraSeconds >= camLim) ||
-      (docsLim > 0 && docsPages >= docsLim)
+      (liveLim > 0 && quotaUsage.liveSeconds >= liveLim) ||
+      (ttsLim > 0 && quotaUsage.ttsChars >= ttsLim) ||
+      (camLim > 0 && quotaUsage.cameraSeconds >= camLim) ||
+      (docsLim > 0 && quotaUsage.docsPages >= docsLim)
 
     return {
       id: u.id,
@@ -184,7 +227,9 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       stripeCustomerId: profile?.stripe_customer_id ?? null,
       stripeSubscriptionId: profile?.stripe_subscription_id ?? null,
       stripeDashboardUrl: stripeDashboardUrl(profile?.stripe_customer_id ?? null),
-      month,
+      rangeFrom: range.from,
+      rangeTo: range.to,
+      months,
       liveSeconds,
       ttsChars,
       translateCount,
@@ -272,7 +317,7 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
   const auth = await requireAdmin(req, res)
   if (!auth) return
   try {
-    const month = String(req.query.month || currentMonthKey())
+    const range = parseAdminUsageRange(req.query)
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
     const plan = typeof req.query.plan === 'string' ? req.query.plan : undefined
     const overQuota = req.query.overQuota === '1' || req.query.overQuota === 'true'
@@ -294,11 +339,17 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
     const sortKey = allowedSort.includes(sort) ? sort : 'createdAt'
 
     const rows = sortUsers(
-      filterUsers(await buildAdminUsers(month), { q, plan, overQuota, disabled }),
+      filterUsers(await buildAdminUsers(range), { q, plan, overQuota, disabled }),
       sortKey,
       dir,
     )
-    res.json({ month, count: rows.length, users: rows })
+    res.json({
+      rangeFrom: range.from,
+      rangeTo: range.to,
+      months: range.months,
+      count: rows.length,
+      users: rows,
+    })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to list users' })
   }
@@ -308,12 +359,12 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
   const auth = await requireAdmin(req, res)
   if (!auth) return
   try {
-    const month = String(req.query.month || currentMonthKey())
+    const range = parseAdminUsageRange(req.query)
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
     const plan = typeof req.query.plan === 'string' ? req.query.plan : undefined
     const overQuota = req.query.overQuota === '1' || req.query.overQuota === 'true'
     const disabled = req.query.disabled === '1' || req.query.disabled === 'true'
-    const rows = filterUsers(await buildAdminUsers(month), { q, plan, overQuota, disabled })
+    const rows = filterUsers(await buildAdminUsers(range), { q, plan, overQuota, disabled })
 
     const header = [
       'id',
@@ -325,7 +376,9 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'isAdmin',
       'disabled',
       'createdAt',
-      'month',
+      'rangeFrom',
+      'rangeTo',
+      'months',
       'liveSeconds',
       'ttsChars',
       'translateCount',
@@ -354,7 +407,9 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.isAdmin,
           r.disabled,
           r.createdAt,
-          r.month,
+          r.rangeFrom,
+          r.rangeTo,
+          r.months.join('|'),
           r.liveSeconds,
           r.ttsChars,
           r.translateCount,
@@ -375,7 +430,10 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       ),
     ]
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-    res.setHeader('Content-Disposition', `attachment; filename="jyut-users-${month}.csv"`)
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="jyut-users-${range.from}_${range.to}.csv"`,
+    )
     res.send(lines.join('\n'))
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'CSV export failed' })
@@ -391,14 +449,23 @@ export async function adminUserUsage(req: AuthedRequest, res: Response) {
     return
   }
   try {
+    const range = parseAdminUsageRange(req.query)
     const membership = await getMembershipForUser(userId)
-    const [user, months] = await Promise.all([
+    const [user, allMonths] = await Promise.all([
       getAuthUserById(userId),
       membership
         ? listHouseholdUsageMonths(membership.household.id)
         : listUsageMonths(userId),
     ])
-    res.json({ user, months })
+    const months = filterSnapshotsByMonths(allMonths, range.months)
+    const total = sumUsageSnapshots(months)
+    res.json({
+      user,
+      rangeFrom: range.from,
+      rangeTo: range.to,
+      months,
+      total,
+    })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load usage' })
   }
