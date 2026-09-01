@@ -187,7 +187,10 @@ export function AdminResetUsageModal({ open, user, monthLabel, busy, onClose, on
           <div>
             <h2 id="admin-reset-title">Adjust usage</h2>
             <p className="admin-muted">
-              {user.email || user.displayName || user.id} · {monthLabel}
+              {user.username
+                ? `@${user.username}${user.email ? ` · ${user.email}` : ''}`
+                : user.email || user.displayName || user.id}{' '}
+              · {monthLabel}
             </p>
           </div>
           <button type="button" className="admin-link-btn" onClick={onClose} aria-label="Close">

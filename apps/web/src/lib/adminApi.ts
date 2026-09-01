@@ -21,6 +21,8 @@ export type AdminUser = {
   id: string
   email: string | null
   displayName: string | null
+  /** Custom Account Hub username; null if unset. */
+  username: string | null
   createdAt: string | null
   plan: 'free' | 'family' | 'business'
   role: 'admin' | 'family' | null
