@@ -1,7 +1,7 @@
 import type { Response } from 'express'
-import { Webhook } from 'standardwebhooks'
 import type { AuthedRequest } from './auth.js'
 import { env } from './env.js'
+import { verifySupabaseAuthHook } from './authWebhook.js'
 import { notifyNewSignup } from './notify.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 
@@ -25,11 +25,8 @@ type SupabaseAuthHookBody = {
   user?: SupabaseAuthUserRecord
 }
 
-function hookSecretBytes(raw: string): string | null {
-  const trimmed = raw.trim()
-  if (!trimmed) return null
-  const whsec = trimmed.match(/whsec_([A-Za-z0-9+/=]+)/)?.[1]
-  return whsec || trimmed
+function verifyAuthHook(rawBody: string, headers: AuthedRequest['headers']): boolean {
+  return verifySupabaseAuthHook(rawBody, headers, env.supabaseAuthHookSecret)
 }
 
 function providerFromUser(user: SupabaseAuthUserRecord): string {
@@ -62,21 +59,6 @@ function notifyFromUser(user: SupabaseAuthUserRecord): boolean {
     })
   }
   return true
-}
-
-function verifyAuthHook(rawBody: string, headers: AuthedRequest['headers']): boolean {
-  const secret = hookSecretBytes(env.supabaseAuthHookSecret)
-  if (!secret) return false
-  if (!headers['webhook-id'] || !headers['webhook-signature'] || !headers['webhook-timestamp']) {
-    return false
-  }
-  try {
-    const wh = new Webhook(secret)
-    wh.verify(rawBody, headers as Record<string, string>)
-    return true
-  } catch {
-    return false
-  }
 }
 
 /**

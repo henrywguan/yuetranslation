@@ -173,6 +173,15 @@ export const env = {
    */
   supabaseAuthHookSecret: (process.env.SUPABASE_AUTH_HOOK_SECRET || '').trim(),
   /**
+   * Supabase **Send Email** hook secret (Authentication → Hooks → Send Email).
+   * When the hook is configured, user auth emails use React Email via Resend.
+   */
+  supabaseSendEmailHookSecret: (
+    process.env.SUPABASE_SEND_EMAIL_HOOK_SECRET ||
+    process.env.SEND_EMAIL_HOOK_SECRET ||
+    ''
+  ).trim(),
+  /**
    * When 1, fold legacy per-user usage into household pools once per serverless instance
    * on cold start (idempotent). Set on deploy after migration 015, then remove when done.
    */

@@ -56,6 +56,11 @@ export function notifyStatus() {
   }
 }
 
+/** True when Resend + from address can send user-facing auth emails. */
+export function userEmailConfigured(): boolean {
+  return Boolean(getResend() && env.notifyFromEmail)
+}
+
 /** Resolve compiled React Email modules reliably on Vercel (includeFiles + bundled handler). */
 async function importCompiledEmail<T>(basename: string): Promise<T> {
   const rel = `./emails/compiled/${basename}.js`
@@ -103,6 +108,65 @@ function inlineImageAttachment(input: {
     content: input.bytes.toString('base64'),
     inlineContentId: input.inlineContentId,
   }
+}
+
+async function sendUserEmail(subject: string, html: string, to: string): Promise<void> {
+  const resend = getResend()
+  if (!resend || !env.notifyFromEmail) {
+    throw new Error('User email not configured — set RESEND_API_KEY and YUE_NOTIFY_FROM.')
+  }
+  const { error } = await resend.emails.send({
+    from: env.notifyFromEmail,
+    to: [to],
+    subject,
+    html,
+  })
+  if (error) {
+    throw new Error(error.message || 'Resend send failed')
+  }
+}
+
+async function renderEmailHtml(loadElement: () => Promise<ReactElement>): Promise<string> {
+  const [{ render }, element] = await Promise.all([
+    import('@react-email/render'),
+    loadElement(),
+  ])
+  return render(element)
+}
+
+export type SendAuthEmailInput = {
+  to: string
+  actionType: string
+  tokenHash: string
+  otpCode?: string | null
+  redirectTo: string
+  supabaseUrl: string
+}
+
+/** Branded Supabase auth email (signup confirm, magic link, recovery, …). */
+export async function sendAuthEmail(input: SendAuthEmailInput): Promise<void> {
+  const { authEmailCopy, buildSupabaseVerifyUrl } = await import('./emails/authEmailMeta.js')
+  const copy = authEmailCopy(input.actionType)
+  const verifyUrl = buildSupabaseVerifyUrl({
+    supabaseUrl: input.supabaseUrl,
+    tokenHash: input.tokenHash,
+    verifyType: copy.verifyType,
+    redirectTo: input.redirectTo || appPublicUrl(),
+  })
+  const html = await renderEmailHtml(async () => {
+    const [{ createElement }, { AuthEmail }] = await Promise.all([
+      import('react'),
+      importCompiledEmail<typeof import('./emails/compiled/AuthEmail.js')>('AuthEmail'),
+    ])
+    return createElement(AuthEmail, {
+      copy,
+      verifyUrl,
+      otpCode: input.otpCode,
+      appUrl: appPublicUrl(),
+      logoSrc: logoSrcForTemplate(),
+    })
+  })
+  await sendUserEmail(copy.subject, html, input.to)
 }
 
 async function sendAdminEmail(
