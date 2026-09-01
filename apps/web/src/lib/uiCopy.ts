@@ -768,7 +768,7 @@ export const ui = {
   goFamily: { en: 'Go Family', zh: '升級家庭版', jp: 'sing1 kap1 gaa1 ting4 baan2' },
   comparePlans: { en: 'Compare all plans →', zh: '比較全部計劃 →', jp: 'bei2 gaau3 cyun4 bou6 gai3 waak6 →' },
 
-  freeFeatLive20: {
+  freeFeatLive5: {
     en: '~5 minutes of live translation / month',
     zh: '每月大約五分鐘即時翻譯',
     jp: 'mui5 jyut6 daai6 joek3 ng5 fan1 zung1 zik1 si4 faan1 jik6',
@@ -793,7 +793,7 @@ export const ui = {
     zh: '撳喇叭播語音——免費但有限制',
     jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 — min5 fai3 daan6 jau5 haan6 zai3',
   },
-  familyFeatLive10: {
+  familyFeatLive1h: {
     en: '~1 hour of live translation / month',
     zh: '每月大約一小時即時翻譯',
     jp: 'mui5 jyut6 daai6 joek3 jat1 siu2 si4 zik1 si4 faan1 jik6',
@@ -829,11 +829,6 @@ export const ui = {
     en: 'Unlimited text',
     zh: '無限文字翻譯',
     jp: 'mou4 haan6 man4 zi6 faan1 jik6',
-  },
-  landFreeModes: {
-    en: 'Solo · Conversation · Cam',
-    zh: '獨白 · 對話 · 相機',
-    jp: 'duk6 baak6 · deoi3 waa6 · soeng1 gei1',
   },
   landFreeCam: {
     en: '~1 hr cam / month',
@@ -929,11 +924,6 @@ export const ui = {
     jp: 'tyun4 deoi6 tung4 gou1 jung6 loeng6 zik1 si4 faan1 jik6',
   },
   goBusiness: { en: 'Go Business', zh: '升級商務版', jp: 'sing1 kap1 soeng1 mou6 baan2' },
-  businessPlanUnavailable: {
-    en: "We're sorry, the Business plan is currently not available",
-    zh: '抱歉，商務版計劃暫時未能提供',
-    jp: 'm4 goi1, soeng1 mou6 baan2 gai3 waak6 zaam6 si6 mut6 nang4 tai4 gung1',
-  },
   businessFeatLive40: {
     en: '~40 hours of live translation / month (fair use)',
     zh: '每月大約四十小時即時翻譯（合理使用）',
@@ -984,6 +974,9 @@ export const ui = {
   val5m: { en: '5 minutes', zh: '五分鐘', jp: 'ng5 fan1 zung1' },
   val1h: { en: '1 hour', zh: '一小時', jp: 'jat1 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
+  valSeat1: { en: '1', zh: '1', jp: '' },
+  valSeat4: { en: '4 pooled', zh: '4 個共用', jp: '4 go3 gung6 jung6' },
+  valSeat10: { en: '10 pooled', zh: '10 個共用', jp: '10 go3 gung6 jung6' },
   valCamFree: { en: '1 hr / mo', zh: '每月一小時', jp: 'mui5 jyut6 jat1 siu2 si4' },
   valCamFamily: { en: '8 hr / mo', zh: '每月八小時', jp: 'mui5 jyut6 baat3 siu2 si4' },
   valCamBusiness: { en: 'Unlimited (metered)', zh: '無限（仍計量）', jp: 'mou4 haan6 (jing4 gai3 loeng4)' },

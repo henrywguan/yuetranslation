@@ -43,25 +43,14 @@ import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 import { formatExactDuration } from '../lib/formatDuration'
+import { formatChars } from '../lib/formatChars'
 import type { Entitlement } from '../lib/types'
-
-function formatDuration(seconds: number): string {
-  return formatExactDuration(seconds)
-}
 
 function planLabel(plan: string): Bi {
   if (plan === 'family') return ui.planFamily
   if (plan === 'business') return ui.planBusiness
   if (plan === 'free') return ui.planFree
   return ui.planGuest
-}
-
-function formatChars(n: number): string {
-  if (n >= 1000) {
-    const k = n / 1000
-    return `${k >= 10 ? Math.round(k) : Math.round(k * 10) / 10}k`
-  }
-  return String(Math.max(0, Math.round(n)))
 }
 
 function voiceCopy(entitlement: Entitlement): Bi {
@@ -75,15 +64,15 @@ function voiceCopy(entitlement: Entitlement): Bi {
 function liveCopy(entitlement: Entitlement): Bi {
   const used = entitlement.usage.liveSeconds ?? 0
   const left = Math.max(0, entitlement.remaining.liveSeconds ?? 0)
-  return ui.liveUsedRemaining(formatDuration(used), formatDuration(left))
+  return ui.liveUsedRemaining(formatExactDuration(used), formatExactDuration(left))
 }
 
 function cameraCopy(entitlement: Entitlement): Bi {
   const unlimited = Boolean(entitlement.cameraUnlimited)
   const used = entitlement.usage.cameraSeconds ?? 0
-  if (unlimited) return ui.camMinutesUsedUnlimited(formatDuration(used))
+  if (unlimited) return ui.camMinutesUsedUnlimited(formatExactDuration(used))
   const left = Math.max(0, entitlement.remaining.cameraSeconds ?? 0)
-  return ui.camMinutesLeft(formatDuration(left))
+  return ui.camMinutesLeft(formatExactDuration(left))
 }
 
 function displayNameFromSession(meta: Record<string, unknown> | undefined) {

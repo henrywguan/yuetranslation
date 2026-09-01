@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { inkEase } from '../lib/motion'
 import { formatCompactDuration, formatExactDuration } from '../lib/formatDuration'
+import { formatChars } from '../lib/formatChars'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
 
@@ -60,13 +61,6 @@ function clampRatio(n: number): number {
   if (!Number.isFinite(n) || n < 0) return 0
   if (n > 1) return 1
   return n
-}
-
-function formatChars(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
-  if (n >= 10_000) return `${Math.round(n / 1000)}k`
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`
-  return String(Math.max(0, Math.round(n)))
 }
 
 function formatMinutesCompact(seconds: number): string {

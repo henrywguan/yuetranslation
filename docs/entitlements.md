@@ -33,14 +33,10 @@ Camera and Documents share the **same access gate** (signed-in + plan can use ca
 
 ## Household seats & pooled usage / 家庭座位与共用用量
 
-Family (**4 seats**) and Business (**10 seats**) can invite members by email from Account Hub.
+Family (**4 seats**) and Business (**10 seats**) invite members from Account Hub. The owner’s Stripe plan applies to all members; monthly meters pool on `household_usage_months`. Per-member ring attribution dual-writes to `usage_months`.
 
-- One Stripe subscriber is the **owner**; invitees become **members**.
-- All members inherit the owner’s plan entitlements.
-- Monthly meters (live mic, TTS, camera, documents, AI vision) are **pooled** on `household_usage_months` — not multiplied per seat.
-- Pending invites count toward the seat cap until accepted, revoked, or expired.
-- Apply migration `012_household_seats_pooled_usage.sql`.
-- **Legacy usage:** meters recorded before pooling live in per-user `usage_months`. Run `015_backfill_household_usage_from_legacy.sql` (or `POST /api/admin/household-usage/backfill`) once so historical totals fold into `household_usage_months`.
+- Migrations: `011`–`015` (plan renames, pooling, legacy backfill).
+- **Legacy backfill:** `015_backfill_household_usage_from_legacy.sql` or `POST /api/admin/household-usage/backfill`.
 
 API: `GET /api/household`, `POST /api/household/invites`, `POST /api/household/accept`, revoke/remove under `/api/household/invites/:id` and `/api/household/members/:userId`.
 
@@ -97,7 +93,7 @@ Returned by `/api/health` and `/api/entitlement`:
 }
 ```
 
-Family/Business: `ttsUnlimited: true` and `limits.tts_chars: 0`. Max: `cameraUnlimited` / `docsUnlimited` true with `limits.camera_minutes` / `docs_pages` = 0. Remaining uses `-1` for unlimited meters.
+Family/Business: `ttsUnlimited: true` and `limits.tts_chars: 0`. Business: `cameraUnlimited` / `docsUnlimited` true with `limits.camera_minutes` / `docs_pages` = 0. Remaining uses `-1` for unlimited meters.
 
 ## Gate points / 闸门
 

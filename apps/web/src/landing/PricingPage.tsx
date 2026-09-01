@@ -42,11 +42,7 @@ const COMPARISON: Row[] = [
   { label: ui.cmpQuality, values: [ui.valStandard, ui.valPriority, ui.valPriority] },
   {
     label: ui.cmpSeats,
-    values: [
-      { en: '1', zh: '1', jp: '' },
-      { en: '1', zh: '1', jp: '' },
-      { en: '1', zh: '1', jp: '' },
-    ],
+    values: [ui.valSeat1, ui.valSeat4, ui.valSeat10],
   },
   { label: ui.cmpSupport, values: [ui.valCommunity, ui.valEmail, ui.valPriority] },
 ]
@@ -70,7 +66,6 @@ function annualTotalLabel(plan: MarketingPlan): string {
 }
 
 async function onPlanCta(plan: MarketingPlan, billing: Billing) {
-  if (plan.unavailable) return
   if (plan.ctaOpens === 'app') {
     openApp()
     return
@@ -138,21 +133,8 @@ export function PricingPage() {
           {MARKETING_PLANS.map((plan) => (
             <article
               key={plan.id}
-              className={[
-                'ln-price-card',
-                plan.featured ? 'featured' : '',
-                plan.unavailable ? 'is-unavailable' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              aria-disabled={plan.unavailable || undefined}
-              title={plan.unavailable ? ui.businessPlanUnavailable.en : undefined}
+              className={['ln-price-card', plan.featured ? 'featured' : ''].filter(Boolean).join(' ')}
             >
-              {plan.unavailable ? (
-                <span className="ln-price-card__tip" role="tooltip">
-                  {ui.businessPlanUnavailable.en}
-                </span>
-              ) : null}
               {plan.featured ? (
                 <span className="ln-price-badge">
                   <BiText copy={ui.mostPopular} size="sm" />
@@ -184,7 +166,6 @@ export function PricingPage() {
               </ul>
               <MagneticButton
                 className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                disabled={plan.unavailable}
                 onClick={() => void onPlanCta(plan, billing)}
               >
                 <BiText copy={plan.cta} size="sm" />

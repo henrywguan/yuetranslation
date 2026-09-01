@@ -14,14 +14,14 @@ const exhausted = voiceAccess(30000, 30000, false)
 assert(exhausted.tts === false, 'exhausted free quota should lock speaker')
 assert(exhausted.autoSpeak === false, 'exhausted free quota should lock auto-speak')
 
-const pro = voiceAccess(0, 10, true, true)
-assert(pro.tts === true, 'pro unlimited tap-to-play should be on')
-assert(pro.autoSpeak === true, 'pro auto-speak should be on')
-assert(pro.unlimited === true, 'pro is unlimited')
-assert(pro.ttsRemaining === -1, 'pro remaining sentinel is -1')
+const family = voiceAccess(0, 10, true, true)
+assert(family.tts === true, 'family unlimited tap-to-play should be on')
+assert(family.autoSpeak === true, 'family auto-speak should be on')
+assert(family.unlimited === true, 'family is unlimited')
+assert(family.ttsRemaining === -1, 'family remaining sentinel is -1')
 
-const heavyPro = voiceAccess(0, 9_999_999, true, true)
-assert(heavyPro.tts === true, 'pro stays on after heavy usage')
+const heavyFamily = voiceAccess(0, 9_999_999, true, true)
+assert(heavyFamily.tts === true, 'family stays on after heavy usage')
 
 const guest = voiceAccess(0, 0, false)
 assert(guest.tts === false, 'zero limit without unlimited locks speaker')
@@ -33,17 +33,29 @@ assert(camFree.cameraRemaining === 3600, 'free camera remaining 3600s')
 const camExhausted = cameraAccess(60 * 60, 60 * 60, false)
 assert(camExhausted.camera === false, 'exhausted camera should lock')
 
-const camPro = cameraAccess(8 * 60 * 60, 999, false)
-assert(camPro.camera === true, 'pro camera within 8hr cap')
-assert(camPro.cameraRemaining === 8 * 60 * 60 - 999, 'pro camera remaining')
+const camFamily = cameraAccess(8 * 60 * 60, 999, false)
+assert(camFamily.camera === true, 'family camera within 8hr cap')
+assert(camFamily.cameraRemaining === 8 * 60 * 60 - 999, 'family camera remaining')
 
-const camProExhausted = cameraAccess(8 * 60 * 60, 8 * 60 * 60, false)
-assert(camProExhausted.camera === false, 'pro camera exhausted at 8hr')
+const camFamilyExhausted = cameraAccess(8 * 60 * 60, 8 * 60 * 60, false)
+assert(camFamilyExhausted.camera === false, 'family camera exhausted at 8hr')
 
-const camMax = cameraAccess(0, 999, true)
-assert(camMax.camera === true, 'max camera unlimited')
-assert(camMax.cameraRemaining === -1, 'max camera remaining sentinel')
+const camBusiness = cameraAccess(0, 999, true)
+assert(camBusiness.camera === true, 'business camera unlimited')
+assert(camBusiness.cameraRemaining === -1, 'business camera remaining sentinel')
 
 console.log(
-  JSON.stringify({ ok: true, free, pro, exhausted, heavyPro, guest, camFree, camExhausted, camPro, camProExhausted, camMax }),
+  JSON.stringify({
+    ok: true,
+    free,
+    family,
+    exhausted,
+    heavyFamily,
+    guest,
+    camFree,
+    camExhausted,
+    camFamily,
+    camFamilyExhausted,
+    camBusiness,
+  }),
 )
