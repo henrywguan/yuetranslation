@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
-import { captureFrame, mediaFitLayout } from '../lib/camera/geometry'
+import { captureFrame, decodeDataUrlSize, mediaFitLayout } from '../lib/camera/geometry'
 import {
   clampPan,
   clampZoom,
@@ -12,11 +12,11 @@ import {
   type ZoomTransform,
 } from '../lib/camera/pinchZoom'
 import {
+  centeredLabelX,
   drawMatchedLabel,
   drawMatchedPanel,
   drawSourceOutline,
   measureOverlayLabel,
-  tightCoverWidth,
 } from '../lib/camera/overlayPaint'
 import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
 import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
@@ -154,6 +154,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       panelH: number
       fontSize: number
       padX: number
+      labelW: number
       ease: number
     }
 
@@ -193,8 +194,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       }
 
       const labelW = label ? measureOverlayLabel(ctx, label, fontSize) : 0
-      const tightPanelW = label ? tightCoverWidth(labelW, padX, panelW) : panelW
-
+      // Blanket the full OCR region — shrinking to glyph width left source ink visible (#250).
       planned.push({
         id: b.id,
         label,
@@ -204,10 +204,11 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         fg: b.fg,
         panelX,
         panelY,
-        panelW: tightPanelW,
+        panelW,
         panelH,
         fontSize,
         padX,
+        labelW,
         ease,
       })
     }
@@ -227,7 +228,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         drawMatchedLabel(
           ctx,
           p.label,
-          p.panelX + p.padX,
+          centeredLabelX(p.panelX, p.panelW, p.padX, p.labelW),
           p.panelY + p.panelH / 2,
           Math.max(8, p.panelW - p.padX * 2),
           p.fontSize,
@@ -334,9 +335,13 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       }
       const image = captureFrame(video, 1280, 0.72)
       if (!image) throw new Error('Could not capture frame')
-      mediaSizeRef.current = {
-        w: video.videoWidth || video.clientWidth,
-        h: video.videoHeight || video.clientHeight,
+      try {
+        mediaSizeRef.current = await decodeDataUrlSize(image)
+      } catch {
+        mediaSizeRef.current = {
+          w: video.videoWidth || video.clientWidth,
+          h: video.videoHeight || video.clientHeight,
+        }
       }
       setStillUrl(image)
       stillUrlRef.current = image
