@@ -14,8 +14,8 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
  * Cantonese sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
- * Pipeline: mic → STT source preview on the speaking side → after capture
- * ends, one final translation on the other side (no interim MT).
+ * Pipeline: mic → listen (no live STT text) → after capture ends, one final
+ * translation on the opposite pane (no interim MT or interim source preview).
  * Tap a finished translation to open details (definition + character breakdown).
  */
 export function ConversationView() {
@@ -31,13 +31,9 @@ export function ConversationView() {
   const enThinking = translating && translatingTo === 'en'
   const yueThinking = translating && translatingTo === 'yue'
 
-  const enText = face.enTranslation || face.enInterim
-  const yueText = face.yueTranslation || face.yueInterim
-  // Live = STT source preview only, before the post-capture translation lands.
-  const enLive =
-    Boolean(face.enInterim) && !face.enTranslation && !face.yueTranslation
-  const yueLive =
-    Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
+  // Source fields (enInterim/yueInterim) are set only after capture + translate — hide while live.
+  const enText = face.enTranslation || (!live ? face.enInterim : '')
+  const yueText = face.yueTranslation || (!live ? face.yueInterim : '')
   const enListening = live && liveSide === 'en'
   const yueListening = live && liveSide === 'yue'
 
@@ -77,9 +73,8 @@ export function ConversationView() {
               <TranslateThinking className="pane-thinking" />
             ) : (
               <InkSettle
-                id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}
+                id={yueText || 'face-yue-empty'}
                 className="pane-hero pane-hero--yue"
-                interim={yueLive}
               >
                 {yueText ? (
                   <span className="spoken-line">
@@ -127,13 +122,12 @@ export function ConversationView() {
             <TranslateThinking className="pane-thinking" />
           ) : (
             <InkSettle
-              id={enLive ? 'face-en-live' : enText || 'face-en-empty'}
+              id={enText || 'face-en-empty'}
               className="pane-hero pane-hero--en"
-              interim={enLive}
             >
               {enText ? (
                 <span className="spoken-line">
-                  {face.enTranslation && !enLive ? (
+                  {face.enTranslation ? (
                     <button
                       type="button"
                       className="spoken-line-text spoken-line-text--action"
