@@ -488,6 +488,11 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
     }
   }
 
+  // Solo household (1 seat): all pooled usage is yours — legacy backfill zeroed attribution rows.
+  if (household && household.seatUsed <= 1) {
+    usageSelf = { ...usage }
+  }
+
   return buildSnapshot(plan, true, usage, {
     isAdmin: isAdminEmail(auth.email) || role === 'admin',
     role,

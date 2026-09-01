@@ -83,6 +83,7 @@ function timeDetail(usedSec: number, limitSec: number, unlimited: boolean): stri
 
 function buildMeters(e: Entitlement): MeterModel[] {
   const pooled = Boolean(e.household?.pooled)
+  const pooledSplit = pooled && (e.household?.seatUsed ?? 0) > 1
   const selfUsage = e.usageSelf
 
   const liveLimitSec = Math.max(0, (e.limits.live_minutes ?? 0) * 60)
@@ -91,7 +92,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const liveRatio = liveUnlimited ? null : clampRatio(liveUsed / liveLimitSec)
   const liveLeft = Math.max(0, liveLimitSec - liveUsed)
   const liveSelfUsed = Math.max(0, Math.floor(selfUsage?.liveSeconds ?? 0))
-  const liveSplit = splitRingFills(liveUsed, liveSelfUsed, liveLimitSec, liveUnlimited, pooled)
+  const liveSplit = splitRingFills(liveUsed, liveSelfUsed, liveLimitSec, liveUnlimited, pooledSplit)
 
   const ttsUnlimited = Boolean(
     e.ttsUnlimited || e.plan === 'family' || e.plan === 'business',
@@ -102,7 +103,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const ttsRatio = ttsUnlimited || ttsLimit <= 0 ? null : clampRatio(ttsUsed / ttsLimit)
   const ttsLeft = Math.max(0, ttsLimit - ttsUsed)
   const ttsSelfUsed = Math.max(0, selfUsage?.ttsChars ?? 0)
-  const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooled)
+  const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooledSplit)
 
   const camLimitSec = Math.max(0, (e.limits.camera_minutes ?? 0) * 60)
   const camUsed = Math.max(0, Math.floor(e.usage.cameraSeconds ?? 0))
@@ -114,7 +115,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       : clampRatio(camUsed / camLimitSec)
   const camLeft = Math.max(0, camLimitSec - camUsed)
   const camSelfUsed = Math.max(0, Math.floor(selfUsage?.cameraSeconds ?? 0))
-  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooled)
+  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooledSplit)
 
   const docsLimit = Math.max(0, e.limits.docs_pages ?? 0)
   const docsUsed = Math.max(0, e.usage.docsPages ?? 0)
@@ -126,7 +127,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       : clampRatio(docsUsed / docsLimit)
   const docsLeft = Math.max(0, docsLimit - docsUsed)
   const docsSelfUsed = Math.max(0, selfUsage?.docsPages ?? 0)
-  const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooled)
+  const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooledSplit)
 
   const aiUsed = Math.max(0, e.usage.aiVisionCount ?? 0)
 
@@ -377,6 +378,7 @@ export function UsageMeters({ entitlement }: Props) {
   }, [detailOpen])
 
   const pooled = Boolean(entitlement.household?.pooled)
+  const pooledSplit = pooled && (entitlement.household?.seatUsed ?? 0) > 1
   const drawer =
     typeof document !== 'undefined'
       ? createPortal(
@@ -520,7 +522,7 @@ export function UsageMeters({ entitlement }: Props) {
                 ratio={m.ratio}
                 selfFill={m.selfFill}
                 familyFill={m.familyFill}
-                pooled={pooled}
+                pooled={pooledSplit}
                 unlimited={m.unlimited}
                 usedAmount={m.usedAmount}
                 usedLabel={m.usedLabel}
@@ -533,7 +535,7 @@ export function UsageMeters({ entitlement }: Props) {
             </motion.div>
           ))}
         </div>
-        {pooled ? (
+        {pooledSplit ? (
           <div className="usage-meters-legend" aria-hidden>
             <span className="usage-meters-legend-item">
               <span className="usage-meters-legend-swatch usage-meters-legend-swatch--self" />
