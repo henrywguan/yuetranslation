@@ -37,7 +37,6 @@ export function HomePricingDuo() {
                   <BiText copy={plan.name} size="md" />
                 </h3>
               </div>
-              <div className="ln-price-rule" aria-hidden="true" />
               <div className="ln-price-block">
                 <p className="ln-price">${plan.monthly}</p>
                 <p className="ln-price-period">
@@ -53,7 +52,6 @@ export function HomePricingDuo() {
                   </p>
                 )}
               </div>
-              <div className="ln-price-top-spacer" aria-hidden="true" />
             </div>
 
             <PriceDemo kind={plan.demo} />
