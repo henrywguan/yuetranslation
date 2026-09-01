@@ -400,6 +400,8 @@ export const ui = {
     zh: '用量圖表。輕觸或滑過睇精確時間。雙擊或按 Enter 睇詳情。空白鍵切換精確時間。',
     jp: 'jung6 loeng6 tou4 biu2. hing1 zuk1 waak6 waat6 gwo3 tai2 zing1 kok3 si4 gaan3. soeng1 gik6 waak6 on3 Enter tai2 coeng4 cing4. hung1 baak6 gan6 cit3 wun6 zing1 kok3 si4 gaan3.',
   },
+  usageMetersLegendYou: { en: 'You', zh: '你', jp: 'nei5' },
+  usageMetersLegendFamily: { en: 'Family', zh: '家人', jp: 'gaa1 jan4' },
   usageDetailTitle: {
     en: 'Usage details',
     zh: '用量詳情',

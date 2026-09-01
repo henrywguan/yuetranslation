@@ -471,6 +471,53 @@
   transition: stroke-dasharray 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.usage-meter-ring-fill--self {
+  stroke: var(--jade);
+}
+
+.usage-meter-ring-fill--family {
+  stroke: var(--usage-family, #7eb8e8);
+}
+
+.usage-meter-ring--warn .usage-meter-ring-fill--family {
+  stroke: color-mix(in srgb, var(--usage-family, #7eb8e8) 85%, var(--gold) 15%);
+}
+
+.usage-meter-ring--hot .usage-meter-ring-fill--family {
+  stroke: color-mix(in srgb, var(--usage-family, #7eb8e8) 70%, var(--gold) 30%);
+}
+
+.usage-meters-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem 1rem;
+  margin-top: 0.35rem;
+}
+
+.usage-meters-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.usage-meters-legend-swatch {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.usage-meters-legend-swatch--self {
+  background: var(--jade);
+}
+
+.usage-meters-legend-swatch--family {
+  background: var(--usage-family, #7eb8e8);
+}
+
 .usage-meter-ring--warn .usage-meter-ring-fill {
   filter: saturate(1.05);
 }

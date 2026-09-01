@@ -20,8 +20,40 @@ type MeterModel = {
   revealUsed: string
   revealLeft: string
   ratio: number | null
+  /** Pooled plans: your share of the ring (0–1). */
+  selfFill: number
+  /** Pooled plans: other household members' share (0–1). */
+  familyFill: number
   unlimited: boolean
   detail: string
+}
+
+function splitRingFills(
+  totalUsed: number,
+  selfUsed: number,
+  limit: number,
+  unlimited: boolean,
+  pooled: boolean,
+): { selfFill: number; familyFill: number } {
+  if (!pooled || limit <= 0) return { selfFill: 0, familyFill: 0 }
+
+  const total = Math.max(0, totalUsed)
+  const self = Math.max(0, Math.min(selfUsed, total))
+  const family = Math.max(0, total - self)
+
+  if (unlimited) {
+    const decorative = 0.12
+    if (total <= 0) return { selfFill: 0, familyFill: decorative }
+    return {
+      selfFill: (self / total) * decorative,
+      familyFill: (family / total) * decorative,
+    }
+  }
+
+  return {
+    selfFill: clampRatio(self / limit),
+    familyFill: clampRatio(family / limit),
+  }
 }
 
 function clampRatio(n: number): number {
@@ -54,11 +86,16 @@ function timeDetail(usedSec: number, limitSec: number, unlimited: boolean): stri
 }
 
 function buildMeters(e: Entitlement): MeterModel[] {
+  const pooled = Boolean(e.household?.pooled)
+  const selfUsage = e.usageSelf
+
   const liveLimitSec = Math.max(0, (e.limits.live_minutes ?? 0) * 60)
   const liveUsed = Math.max(0, Math.floor(e.usage.liveSeconds ?? 0))
   const liveUnlimited = liveLimitSec <= 0
   const liveRatio = liveUnlimited ? null : clampRatio(liveUsed / liveLimitSec)
   const liveLeft = Math.max(0, liveLimitSec - liveUsed)
+  const liveSelfUsed = Math.max(0, Math.floor(selfUsage?.liveSeconds ?? 0))
+  const liveSplit = splitRingFills(liveUsed, liveSelfUsed, liveLimitSec, liveUnlimited, pooled)
 
   const ttsUnlimited = Boolean(
     e.ttsUnlimited || e.plan === 'family' || e.plan === 'business',
@@ -68,6 +105,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const showVoice = ttsUnlimited || ttsLimit > 0
   const ttsRatio = ttsUnlimited || ttsLimit <= 0 ? null : clampRatio(ttsUsed / ttsLimit)
   const ttsLeft = Math.max(0, ttsLimit - ttsUsed)
+  const ttsSelfUsed = Math.max(0, selfUsage?.ttsChars ?? 0)
+  const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooled)
 
   const camLimitSec = Math.max(0, (e.limits.camera_minutes ?? 0) * 60)
   const camUsed = Math.max(0, Math.floor(e.usage.cameraSeconds ?? 0))
@@ -78,6 +117,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
       ? clampRatio(camUsed > 0 ? 1 : 0)
       : clampRatio(camUsed / camLimitSec)
   const camLeft = Math.max(0, camLimitSec - camUsed)
+  const camSelfUsed = Math.max(0, Math.floor(selfUsage?.cameraSeconds ?? 0))
+  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooled)
 
   const docsLimit = Math.max(0, e.limits.docs_pages ?? 0)
   const docsUsed = Math.max(0, e.usage.docsPages ?? 0)
@@ -88,6 +129,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
       ? clampRatio(docsUsed > 0 ? 1 : 0)
       : clampRatio(docsUsed / docsLimit)
   const docsLeft = Math.max(0, docsLimit - docsUsed)
+  const docsSelfUsed = Math.max(0, selfUsage?.docsPages ?? 0)
+  const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooled)
 
   const aiUsed = Math.max(0, e.usage.aiVisionCount ?? 0)
 
@@ -101,6 +144,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
       revealUsed: formatExactDuration(liveUsed),
       revealLeft: liveUnlimited ? 'unlimited' : `${formatExactDuration(liveLeft)} left`,
       ratio: liveRatio,
+      selfFill: liveSplit.selfFill,
+      familyFill: liveSplit.familyFill,
       unlimited: liveUnlimited,
       detail: timeDetail(liveUsed, liveLimitSec, liveUnlimited),
     },
@@ -116,6 +161,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
       revealUsed: formatChars(ttsUsed),
       revealLeft: ttsUnlimited ? 'unlimited' : `${formatChars(ttsLeft)} left`,
       ratio: ttsRatio,
+      selfFill: ttsSplit.selfFill,
+      familyFill: ttsSplit.familyFill,
       unlimited: ttsUnlimited,
       detail: ttsUnlimited
         ? `${formatChars(ttsUsed)} chars used · unlimited`
@@ -134,6 +181,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: formatExactDuration(camUsed),
         revealLeft: camUnlimited ? 'unlimited' : `${formatExactDuration(camLeft)} left`,
         ratio: camRatio,
+        selfFill: camSplit.selfFill,
+        familyFill: camSplit.familyFill,
         unlimited: camUnlimited,
         detail: timeDetail(camUsed, camLimitSec, camUnlimited),
       },
@@ -146,6 +195,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: String(docsUsed),
         revealLeft: docsUnlimited ? 'unlimited' : `${docsLeft} left`,
         ratio: docsRatio,
+        selfFill: docsSplit.selfFill,
+        familyFill: docsSplit.familyFill,
         unlimited: docsUnlimited,
         detail: docsUnlimited
           ? `${docsUsed} pages used · unlimited`
@@ -160,6 +211,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: String(aiUsed),
         revealLeft: 'tracked',
         ratio: null,
+        selfFill: 0,
+        familyFill: 0,
         unlimited: true,
         detail: `${aiUsed} AI reads · tracked only`,
       },
@@ -171,6 +224,9 @@ function buildMeters(e: Entitlement): MeterModel[] {
 
 function MeterRing({
   ratio,
+  selfFill,
+  familyFill,
+  pooled,
   unlimited,
   usedLabel,
   limitLabel,
@@ -179,6 +235,9 @@ function MeterRing({
   precise,
 }: {
   ratio: number | null
+  selfFill: number
+  familyFill: number
+  pooled: boolean
   unlimited: boolean
   usedLabel: string
   limitLabel: string
@@ -190,32 +249,61 @@ function MeterRing({
   const r = 34
   const c = 2 * Math.PI * r
   const fill = unlimited ? 0.12 : clampRatio(ratio ?? 0)
-  const dash = c * fill
+  const showSplit = pooled && (selfFill > 0 || familyFill > 0)
+  const selfDash = c * (showSplit ? selfFill : fill)
+  const familyDash = c * (showSplit ? familyFill : 0)
   const level =
     unlimited || fill < 0.55 ? 'ok' : fill < 0.85 ? 'warn' : 'hot'
 
   return (
     <div
-      className={`usage-meter-ring usage-meter-ring--${level}${precise ? ' is-precise' : ''}`}
+      className={`usage-meter-ring usage-meter-ring--${level}${precise ? ' is-precise' : ''}${showSplit ? ' is-split' : ''}`}
       aria-hidden
     >
       <svg viewBox="0 0 80 80" className="usage-meter-ring-svg">
-        <defs>
-          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--jade)" />
-            <stop offset="100%" stopColor="var(--gold)" />
-          </linearGradient>
-        </defs>
+        {!showSplit ? (
+          <defs>
+            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="var(--jade)" />
+              <stop offset="100%" stopColor="var(--gold)" />
+            </linearGradient>
+          </defs>
+        ) : null}
         <circle className="usage-meter-ring-track" cx="40" cy="40" r={r} />
-        <circle
-          className="usage-meter-ring-fill"
-          cx="40"
-          cy="40"
-          r={r}
-          stroke={`url(#${gradId})`}
-          strokeDasharray={`${dash} ${c - dash}`}
-          strokeDashoffset={c * 0.25}
-        />
+        {showSplit ? (
+          <>
+            {selfDash > 0 ? (
+              <circle
+                className="usage-meter-ring-fill usage-meter-ring-fill--self"
+                cx="40"
+                cy="40"
+                r={r}
+                strokeDasharray={`${selfDash} ${c - selfDash}`}
+                strokeDashoffset={c * 0.25}
+              />
+            ) : null}
+            {familyDash > 0 ? (
+              <circle
+                className="usage-meter-ring-fill usage-meter-ring-fill--family"
+                cx="40"
+                cy="40"
+                r={r}
+                strokeDasharray={`${familyDash} ${c - familyDash}`}
+                strokeDashoffset={c * 0.25 - selfDash}
+              />
+            ) : null}
+          </>
+        ) : (
+          <circle
+            className="usage-meter-ring-fill"
+            cx="40"
+            cy="40"
+            r={r}
+            stroke={`url(#${gradId})`}
+            strokeDasharray={`${selfDash} ${c - selfDash}`}
+            strokeDashoffset={c * 0.25}
+          />
+        )}
       </svg>
       <div className="usage-meter-ring-center">
         <span className="usage-meter-ring-default">
@@ -419,6 +507,9 @@ export function UsageMeters({ entitlement }: Props) {
             >
               <MeterRing
                 ratio={m.ratio}
+                selfFill={m.selfFill}
+                familyFill={m.familyFill}
+                pooled={pooled}
                 unlimited={m.unlimited}
                 usedLabel={m.usedLabel}
                 limitLabel={m.limitLabel}
@@ -430,6 +521,18 @@ export function UsageMeters({ entitlement }: Props) {
             </motion.div>
           ))}
         </div>
+        {pooled ? (
+          <div className="usage-meters-legend" aria-hidden>
+            <span className="usage-meters-legend-item">
+              <span className="usage-meters-legend-swatch usage-meters-legend-swatch--self" />
+              <BiText copy={ui.usageMetersLegendYou} size="sm" as="span" />
+            </span>
+            <span className="usage-meters-legend-item">
+              <span className="usage-meters-legend-swatch usage-meters-legend-swatch--family" />
+              <BiText copy={ui.usageMetersLegendFamily} size="sm" as="span" />
+            </span>
+          </div>
+        ) : null}
         <BiText
           copy={ui.usageMetersHintTouch}
           size="sm"

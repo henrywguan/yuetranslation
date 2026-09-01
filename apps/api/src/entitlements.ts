@@ -50,6 +50,17 @@ export type Entitlement = {
     /** Multimodal LLM OCR fallback calls this month (view-only). */
     aiVisionCount: number
   }
+  /** Your share of pooled household usage this month (Family/Business only). */
+  usageSelf?: {
+    month: string
+    liveSeconds: number
+    ttsChars: number
+    translateCount: number
+    cameraSeconds: number
+    cameraTranslateCount: number
+    docsPages: number
+    aiVisionCount: number
+  } | null
   remaining: {
     liveSeconds: number
     ttsChars: number
@@ -212,6 +223,7 @@ function buildSnapshot(
     household?: HouseholdSummary | null
     username?: string | null
     usernameChangedAt?: string | null
+    usageSelf?: Entitlement['usageSelf']
   } = {},
 ): Entitlement {
   const isAdmin = Boolean(opts.isAdmin)
@@ -361,6 +373,7 @@ function buildSnapshot(
     reason,
     prefs,
     household,
+    usageSelf: opts.usageSelf ?? null,
   }
 }
 
@@ -452,9 +465,12 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
   let usage = await getUsage(auth.userId)
   let household: HouseholdSummary | null = null
 
+  let usageSelf: Entitlement['usageSelf'] = null
+
   if (membership) {
     plan = membership.household.plan
     usage = await resolveHouseholdUsage(membership.household.id)
+    usageSelf = await getUsage(auth.userId)
     household = await getHouseholdSummary(auth.userId)
     // Keep owner household seat_limit / plan in sync with Stripe profile plan.
     if (
@@ -481,5 +497,6 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
     household,
     username: profile?.username,
     usernameChangedAt: profile?.username_changed_at,
+    usageSelf,
   })
 }
