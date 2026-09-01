@@ -16,6 +16,7 @@ import {
   drawMatchedPanel,
   drawSourceOutline,
   measureOverlayLabel,
+  tightCoverWidth,
 } from '../lib/camera/overlayPaint'
 import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
 import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
@@ -191,6 +192,9 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         }
       }
 
+      const labelW = label ? measureOverlayLabel(ctx, label, fontSize) : 0
+      const tightPanelW = label ? tightCoverWidth(labelW, padX, panelW) : panelW
+
       planned.push({
         id: b.id,
         label,
@@ -200,7 +204,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         fg: b.fg,
         panelX,
         panelY,
-        panelW,
+        panelW: tightPanelW,
         panelH,
         fontSize,
         padX,
