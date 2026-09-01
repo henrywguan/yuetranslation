@@ -12,6 +12,17 @@ YUE_ADMIN_EMAILS=you@example.com,other@example.com
 
 Matching is case-insensitive. Signed-in users on this list **or** with an assigned **admin** role (see below) can call `/api/admin/*`. The account hub shows an **Admin** link when `entitlement.isAdmin` is true.
 
+Apply migration `supabase/migrations/016_app_settings.sql` on your Supabase project.
+
+## Incident banner (site-wide)
+
+In `#/admin`, use **Site status → Show incident banner** to toggle a scrolling alert at the top of every page (landing, app, pricing, admin). The message is bilingual by default:
+
+- English: “The app is currently experiencing issues and is being worked on.”
+- 中文: “應用程式目前出現問題，我們正在處理中。”
+
+State is stored in `app_settings` (`incident_banner`) and exposed on `GET /api/health` as `incidentBanner`. Toggles are audit-logged (`incident_banner`).
+
 ## User roles (assignable badges)
 
 Optional roles are stored on `profiles.role` and can be assigned in `#/admin`:

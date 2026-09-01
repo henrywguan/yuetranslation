@@ -103,6 +103,33 @@
   color: var(--ink);
 }
 
+.admin-ops-card {
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #e74c3c 28%, var(--glass-border));
+  background: color-mix(in srgb, #e74c3c 8%, var(--surface));
+}
+
+.admin-ops-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.admin-ops-card-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.admin-ops-toggle {
+  padding-bottom: 0 !important;
+  font-weight: 600;
+}
+
 .admin-btn,
 .admin-link-btn,
 .admin-sort,

@@ -1,4 +1,4 @@
-import type { Entitlement, HouseholdSummary, Lang } from './types'
+import type { Entitlement, HouseholdSummary, IncidentBannerSettings, Lang } from './types'
 import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 
@@ -46,6 +46,7 @@ async function apiFetch(path: string, init: RequestInit = {}) {
 export async function fetchHealth(): Promise<{
   engines: Record<string, boolean>
   entitlement: Entitlement
+  incidentBanner?: IncidentBannerSettings | null
 }> {
   const res = await apiFetch('/health')
   if (!res.ok) throw new Error('health failed')
