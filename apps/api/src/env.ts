@@ -172,6 +172,11 @@ export const env = {
    * Preferred for sign-up alerts when Database Webhooks are unavailable.
    */
   supabaseAuthHookSecret: (process.env.SUPABASE_AUTH_HOOK_SECRET || '').trim(),
+  /**
+   * When 1, fold legacy per-user usage into household pools once per serverless instance
+   * on cold start (idempotent). Set on deploy after migration 015, then remove when done.
+   */
+  runHouseholdUsageBackfill: (process.env.YUE_RUN_HOUSEHOLD_USAGE_BACKFILL || '0') === '1',
 }
 
 /**
