@@ -214,7 +214,7 @@ export async function fetchTtsAudio(
 export async function saveTtsVoicePrefs(patch: {
   ttsVoiceYue?: string
   ttsVoiceEn?: string
-}): Promise<{ prefs: { ttsVoiceYue: string; ttsVoiceEn: string }; entitlement?: Entitlement }> {
+}): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
   const res = await apiFetch('/prefs/tts-voices', {
     method: 'PATCH',
     body: JSON.stringify(patch),
@@ -296,6 +296,24 @@ export async function acceptHouseholdInvite(token: string): Promise<{
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw Object.assign(new Error(data.message || 'Could not accept invite'), { code: data.code })
+  }
+  return data
+}
+
+export async function saveUsername(
+  username: string,
+): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
+  const res = await apiFetch('/prefs/username', {
+    method: 'PATCH',
+    body: JSON.stringify({ username }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to save username'), {
+      code: res.status,
+      retryAfterMinutes: data.retryAfterMinutes,
+      entitlement: data.entitlement,
+    })
   }
   return data
 }

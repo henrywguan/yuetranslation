@@ -261,11 +261,113 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  gap: 14px;
+  gap: 12px;
   padding: 12px 14px max(14px, env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+.account-hub-sep {
+  flex: none;
+  height: 1px;
+  margin: 2px 0;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--jade) 18%, transparent) 18%,
+    color-mix(in srgb, var(--jade) 55%, transparent) 50%,
+    color-mix(in srgb, var(--jade) 18%, transparent) 82%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--jade) 45%, transparent),
+    0 0 14px color-mix(in srgb, var(--jade-bright, var(--jade)) 22%, transparent);
+}
+
+.account-hub-title--btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.account-hub-title--btn:hover,
+.account-hub-title--btn:focus-visible {
+  color: var(--jade-bright, var(--jade));
+  outline: none;
+}
+
+.account-hub-title--btn.is-placeholder {
+  color: color-mix(in srgb, var(--jade) 72%, var(--muted));
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--jade) 35%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.account-hub-username-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.account-hub-username-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.account-hub-username-input {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--ink);
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.account-hub-username-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--jade) 55%, var(--glass-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--jade) 18%, transparent);
+}
+
+.account-hub-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.account-hub-username-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--danger, #e85d5d) 88%, var(--ink));
+}
+
+.account-hub-username-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-hub-btn--compact {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
 }
 
 .account-hub-section {

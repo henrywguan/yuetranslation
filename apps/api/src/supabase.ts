@@ -34,6 +34,8 @@ export type ProfileRow = {
   role: 'admin' | 'family' | null
   tts_voice_yue: string | null
   tts_voice_en: string | null
+  username: string | null
+  username_changed_at: string | null
   updated_at: string
 }
 
@@ -51,12 +53,17 @@ function normalizeProfile(data: unknown): ProfileRow {
     role?: ProfileRow['role']
     tts_voice_yue?: string | null
     tts_voice_en?: string | null
+    username?: string | null
+    username_changed_at?: string | null
   }
   return {
     ...row,
     plan: normalizePlan(row.plan),
     disabled: Boolean(row.disabled),
     role: row.role === 'admin' || row.role === 'family' ? row.role : null,
+    username: typeof row.username === 'string' && row.username.trim() ? row.username.trim() : null,
+    username_changed_at:
+      typeof row.username_changed_at === 'string' ? row.username_changed_at : null,
     tts_voice_yue: typeof row.tts_voice_yue === 'string' ? row.tts_voice_yue : null,
     tts_voice_en: typeof row.tts_voice_en === 'string' ? row.tts_voice_en : null,
   }
@@ -82,6 +89,8 @@ export async function upsertProfilePlan(
       | 'role'
       | 'tts_voice_yue'
       | 'tts_voice_en'
+      | 'username'
+      | 'username_changed_at'
     >
   >,
 ): Promise<void> {
@@ -90,6 +99,25 @@ export async function upsertProfilePlan(
   await client
     .from('profiles')
     .upsert({ id: userId, ...patch, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+}
+
+const USERNAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{2,23}$/
+
+export function normalizeUsernameInput(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!USERNAME_RE.test(trimmed)) return null
+  return trimmed
+}
+
+/** True when another profile already owns this username (case-insensitive). */
+export async function isUsernameTaken(username: string, exceptUserId?: string): Promise<boolean> {
+  const client = getAdmin()
+  if (!client) return false
+  let q = client.from('profiles').select('id').ilike('username', username).limit(2)
+  const { data, error } = await q
+  if (error || !data?.length) return false
+  if (!exceptUserId) return data.length > 0
+  return data.some((row) => row.id !== exceptUserId)
 }
 
 export async function findProfileByStripeCustomer(customerId: string): Promise<ProfileRow | null> {

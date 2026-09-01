@@ -56,10 +56,12 @@ export type Entitlement = {
     docs?: boolean
   }
   reason: string | null
-  /** Synced TTS voice preferences (Azure Neural ids). Guests use client defaults. */
+  /** Synced account preferences. */
   prefs?: {
     ttsVoiceYue: string
     ttsVoiceEn: string
+    username?: string | null
+    usernameChangedAt?: string | null
   }
   /** Family/Max household seats with pooled monthly usage. */
   household?: HouseholdSummary | null
