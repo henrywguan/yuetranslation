@@ -178,61 +178,127 @@ export async function getHouseholdUsage(
   return usageFromRow(data as Record<string, unknown> | null, month)
 }
 
-/**
- * Copy the owner's personal `usage_months` into the pooled household meter when
- * the household has no activity yet for this month. Prevents Account Hub from
- * showing 0 after seats/pooling lands on accounts that already had personal usage.
- *
- * Skips when the household meter already has any non-zero counters.
- */
-export async function seedHouseholdUsageFromOwnerIfNeeded(
-  householdId: string,
-  ownerUserId: string,
-  month = currentMonthKey(),
-): Promise<UsageSnapshot> {
+function sumUsageSnapshots(month: string, rows: UsageSnapshot[]): UsageSnapshot {
+  const total = emptyUsage(month)
+  for (const row of rows) {
+    total.liveSeconds += row.liveSeconds
+    total.ttsChars += row.ttsChars
+    total.translateCount += row.translateCount
+    total.cameraSeconds += row.cameraSeconds
+    total.cameraTranslateCount += row.cameraTranslateCount
+    total.docsPages += row.docsPages
+    total.aiVisionCount += row.aiVisionCount
+  }
+  return total
+}
+
+/** @deprecated Prefer sumUsageSnapshots in resolveHouseholdUsage. */
+export function mergePooledWithPersonal(
+  pool: UsageSnapshot,
+  personalSum: UsageSnapshot,
+): UsageSnapshot {
+  return sumUsageSnapshots(pool.month, [pool, personalSum])
+}
+
+
+async function listHouseholdMemberIds(householdId: string): Promise<string[]> {
   const client = getAdmin()
-  if (!client) return emptyUsage(month)
-
+  if (!client) return []
   const { data, error } = await client
-    .from('household_usage_months')
-    .select('*')
+    .from('household_members')
+    .select('user_id')
     .eq('household_id', householdId)
-    .eq('month', month)
-    .maybeSingle()
-  if (error) {
-    console.error('[household] seed lookup failed', error.message)
-    return emptyUsage(month)
+  if (error || !data) {
+    if (error) console.error('[household] list member ids failed', error.message)
+    return []
   }
-  if (data) {
-    const current = usageFromRow(data as Record<string, unknown>, month)
-    if (usageHasAny(current)) return current
-  }
+  return data.map((row) => row.user_id as string)
+}
 
-  const personal = await getPersonalUsage(ownerUserId, month)
-  if (!usageHasAny(personal)) {
-    return data ? usageFromRow(data as Record<string, unknown>, month) : emptyUsage(month)
-  }
+async function getMembersPersonalUsageSum(
+  householdId: string,
+  month: string,
+): Promise<UsageSnapshot> {
+  const memberIds = await listHouseholdMemberIds(householdId)
+  const snapshots = await Promise.all(memberIds.map((id) => getPersonalUsage(id, month)))
+  return sumUsageSnapshots(month, snapshots)
+}
 
-  const { error: upsertError } = await client.from('household_usage_months').upsert(
+async function persistHouseholdUsage(householdId: string, usage: UsageSnapshot): Promise<void> {
+  const client = getAdmin()
+  if (!client) return
+  const { error } = await client.from('household_usage_months').upsert(
     {
       household_id: householdId,
-      month,
-      live_seconds: personal.liveSeconds,
-      tts_chars: personal.ttsChars,
-      translate_count: personal.translateCount,
-      camera_seconds: personal.cameraSeconds,
-      camera_translate_count: personal.cameraTranslateCount,
-      docs_pages: personal.docsPages,
-      ai_vision_count: personal.aiVisionCount,
+      month: usage.month,
+      live_seconds: usage.liveSeconds,
+      tts_chars: usage.ttsChars,
+      translate_count: usage.translateCount,
+      camera_seconds: usage.cameraSeconds,
+      camera_translate_count: usage.cameraTranslateCount,
+      docs_pages: usage.docsPages,
+      ai_vision_count: usage.aiVisionCount,
     },
     { onConflict: 'household_id,month' },
   )
-  if (upsertError) {
-    console.error('[household] seed upsert failed', upsertError.message)
-    // Still surface personal totals so the hub is accurate this request.
-    return personal
+  if (error) console.error('[household] persist pooled usage failed', error.message)
+}
+
+async function zeroMembersPersonalUsage(householdId: string, month: string): Promise<void> {
+  const client = getAdmin()
+  if (!client) return
+  const memberIds = await listHouseholdMemberIds(householdId)
+  if (!memberIds.length) return
+  const zeroRow = {
+    month,
+    live_seconds: 0,
+    tts_chars: 0,
+    translate_count: 0,
+    camera_seconds: 0,
+    camera_translate_count: 0,
+    docs_pages: 0,
+    ai_vision_count: 0,
   }
-  return personal
+  const { error } = await client.from('usage_months').upsert(
+    memberIds.map((user_id) => ({ user_id, ...zeroRow })),
+    { onConflict: 'user_id,month' },
+  )
+  if (error) console.error('[household] zero personal usage failed', error.message)
+}
+
+/**
+ * Resolve pooled household meters by merging `household_usage_months` with any
+ * legacy per-member `usage_months` that predate pooling. Persists the merged
+ * totals back to the household row and clears folded personal rows so future
+ * reads only use the household pool.
+ */
+export async function resolveHouseholdUsage(
+  householdId: string,
+  month = currentMonthKey(),
+): Promise<UsageSnapshot> {
+  const pool = await getHouseholdUsage(householdId, month)
+  const personalSum = await getMembersPersonalUsageSum(householdId, month)
+
+  if (!usageHasAny(personalSum)) {
+    return pool
+  }
+
+  const merged = usageHasAny(pool)
+    ? sumUsageSnapshots(month, [pool, personalSum])
+    : personalSum
+
+  await persistHouseholdUsage(householdId, merged)
+  await zeroMembersPersonalUsage(householdId, month)
+  return merged
+}
+
+/** @deprecated Use resolveHouseholdUsage — kept for call-site compatibility. */
+export async function seedHouseholdUsageFromOwnerIfNeeded(
+  householdId: string,
+  _ownerUserId: string,
+  month = currentMonthKey(),
+): Promise<UsageSnapshot> {
+  return resolveHouseholdUsage(householdId, month)
 }
 
 export async function incrementHouseholdUsage(
@@ -361,8 +427,8 @@ export async function ensureOwnerHousehold(
   })
   if (memErr) console.error('[household] owner member insert failed', memErr.message)
 
-  // Carry over this month's personal meters into the new pooled household row.
-  await seedHouseholdUsageFromOwnerIfNeeded(household.id, ownerUserId)
+  // Carry over this month's meters into the new pooled household row.
+  await resolveHouseholdUsage(household.id, currentMonthKey())
 
   return household
 }
