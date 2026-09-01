@@ -61,6 +61,29 @@ export type Entitlement = {
     ttsVoiceYue: string
     ttsVoiceEn: string
   }
+  /** Family/Max household seats with pooled monthly usage. */
+  household?: HouseholdSummary | null
+}
+
+export type HouseholdSummary = {
+  id: string
+  plan: 'family' | 'max'
+  seatLimit: number
+  seatUsed: number
+  role: 'owner' | 'member'
+  pooled: true
+  members: Array<{
+    userId: string
+    role: 'owner' | 'member'
+    email: string | null
+    joinedAt: string
+  }>
+  pendingInvites: Array<{
+    id: string
+    email: string
+    createdAt: string
+    expiresAt: string
+  }>
 }
 
 export type ConversationTurn = {

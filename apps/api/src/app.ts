@@ -9,6 +9,13 @@ import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
+import {
+  deleteHouseholdInvite,
+  deleteHouseholdMember,
+  getHousehold,
+  postHouseholdAccept,
+  postHouseholdInvite,
+} from './householdRoutes.js'
 import { handleSignupNotify } from './signupNotify.js'
 import { issueSpeechToken, synthesize } from './azure.js'
 import { breakdown } from './breakdown.js'
@@ -490,6 +497,12 @@ app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
 
 app.post('/api/billing/checkout', startCheckout)
 app.post('/api/billing/portal', startPortal)
+
+app.get('/api/household', getHousehold)
+app.post('/api/household/invites', postHouseholdInvite)
+app.delete('/api/household/invites/:inviteId', deleteHouseholdInvite)
+app.delete('/api/household/members/:userId', deleteHouseholdMember)
+app.post('/api/household/accept', postHouseholdAccept)
 
 app.post('/api/bug-report', submitBugReport)
 

@@ -31,6 +31,18 @@ Marketing copy may round Family live as “~1 hr”; **shipped production** curr
 
 Camera and Documents share the **same access gate** (signed-in + plan can use cam/docs) but **separate meters**. Details: [camera.md](./camera.md).
 
+## Household seats & pooled usage / 家庭座位与共用用量
+
+Family (**4 seats**) and Max (**10 seats**) can invite members by email from Account Hub.
+
+- One Stripe subscriber is the **owner**; invitees become **members**.
+- All members inherit the owner’s plan entitlements.
+- Monthly meters (live mic, TTS, camera, documents, AI vision) are **pooled** on `household_usage_months` — not multiplied per seat.
+- Pending invites count toward the seat cap until accepted, revoked, or expired.
+- Apply migration `012_household_seats_pooled_usage.sql`.
+
+API: `GET /api/household`, `POST /api/household/invites`, `POST /api/household/accept`, revoke/remove under `/api/household/invites/:id` and `/api/household/members/:userId`.
+
 ## Snapshot shape / 快照结构
 
 Returned by `/api/health` and `/api/entitlement`:

@@ -1,5 +1,12 @@
 import { env, isAdminEmail } from './env.js'
 import type { AuthContext } from './auth.js'
+import {
+  ensureOwnerHousehold,
+  getHouseholdSummary,
+  getHouseholdUsage,
+  getMembershipForUser,
+  type HouseholdSummary,
+} from './household.js'
 import { getProfile, supabaseConfigured } from './supabase.js'
 import { emptyUsage, getUsage } from './usage.js'
 import {
@@ -71,6 +78,8 @@ export type Entitlement = {
     ttsVoiceYue: string
     ttsVoiceEn: string
   }
+  /** Present when the user owns or belongs to a Family/Max household with pooled usage. */
+  household: HouseholdSummary | null
 }
 
 type PlanKey = 'guest' | 'free' | 'family' | 'max'
@@ -196,12 +205,14 @@ function buildSnapshot(
     role?: 'admin' | 'family' | null
     ttsVoiceYue?: string | null
     ttsVoiceEn?: string | null
+    household?: HouseholdSummary | null
   } = {},
 ): Entitlement {
   const isAdmin = Boolean(opts.isAdmin)
   const role = opts.role ?? null
   const disabled = Boolean(opts.disabled)
   const requireLogin = env.requireLogin
+  const household = opts.household ?? null
   const prefs = {
     ttsVoiceYue: resolveYueVoice(opts.ttsVoiceYue),
     ttsVoiceEn: resolveEnVoice(opts.ttsVoiceEn),
@@ -242,6 +253,7 @@ function buildSnapshot(
       },
       reason: 'account_disabled',
       prefs,
+      household: null,
     }
   }
 
@@ -276,6 +288,7 @@ function buildSnapshot(
       },
       reason: 'login_required',
       prefs: { ttsVoiceYue: DEFAULT_YUE_VOICE, ttsVoiceEn: DEFAULT_EN_VOICE },
+      household: null,
     }
   }
 
@@ -334,6 +347,7 @@ function buildSnapshot(
     },
     reason,
     prefs,
+    household,
   }
 }
 
@@ -387,6 +401,7 @@ function localEntitlement(): Entitlement {
       },
       reason: null,
       prefs: { ttsVoiceYue: DEFAULT_YUE_VOICE, ttsVoiceEn: DEFAULT_EN_VOICE },
+      household: null,
     }
   }
 
@@ -405,14 +420,46 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
   }
 
   const profile = await getProfile(auth.userId)
-  const plan = (profile?.plan ?? 'free') as PlanKey
   const role = profile?.role ?? null
-  const usage = await getUsage(auth.userId)
+  const personalPlan = (profile?.plan ?? 'free') as PlanKey
+
+  // Paid owners get a household; members inherit the owner's plan + pooled meters.
+  let membership = await getMembershipForUser(auth.userId)
+  if (!membership && (personalPlan === 'family' || personalPlan === 'max')) {
+    await ensureOwnerHousehold(auth.userId, personalPlan)
+    membership = await getMembershipForUser(auth.userId)
+  }
+
+  let plan: PlanKey = personalPlan
+  let usage = await getUsage(auth.userId)
+  let household: HouseholdSummary | null = null
+
+  if (membership) {
+    plan = membership.household.plan
+    usage = await getHouseholdUsage(membership.household.id)
+    household = await getHouseholdSummary(auth.userId)
+    // Keep owner household seat_limit / plan in sync with Stripe profile plan.
+    if (
+      membership.membership.member_role === 'owner' &&
+      (personalPlan === 'family' || personalPlan === 'max') &&
+      membership.household.plan !== personalPlan
+    ) {
+      await ensureOwnerHousehold(auth.userId, personalPlan)
+      membership = await getMembershipForUser(auth.userId)
+      if (membership) {
+        plan = membership.household.plan
+        usage = await getHouseholdUsage(membership.household.id)
+        household = await getHouseholdSummary(auth.userId)
+      }
+    }
+  }
+
   return buildSnapshot(plan, true, usage, {
     isAdmin: isAdminEmail(auth.email) || role === 'admin',
     role,
     disabled: Boolean(profile?.disabled),
     ttsVoiceYue: profile?.tts_voice_yue,
     ttsVoiceEn: profile?.tts_voice_en,
+    household,
   })
 }

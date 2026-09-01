@@ -1,3 +1,4 @@
+import { getMembershipForUser, incrementHouseholdUsage } from './household.js'
 import { getAdmin } from './supabase.js'
 
 export type UsageRow = {
@@ -156,6 +157,22 @@ async function incrementUsage(
   }
 
   const month = currentMonthKey()
+
+  // Household seats share one pooled meter for the month.
+  const membership = await getMembershipForUser(userId)
+  if (membership) {
+    await incrementHouseholdUsage(membership.household.id, {
+      liveSeconds,
+      ttsChars,
+      translateCount,
+      cameraSeconds,
+      cameraTranslateCount,
+      docsPages,
+      aiVisionCount,
+    })
+    return
+  }
+
   const { error: rpcError } = await client.rpc('increment_usage', {
     p_user_id: userId,
     p_month: month,
