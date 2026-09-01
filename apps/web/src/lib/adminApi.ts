@@ -423,13 +423,9 @@ export async function sendAdminEmail(input: {
   }
 }
 
+import { formatExactDuration } from './formatDuration'
+
 /** Format integer seconds as `1h 02m 03s` (always shows seconds). */
 export function formatLiveSeconds(total: number): string {
-  const s = Math.max(0, Math.floor(total))
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  const sec = s % 60
-  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`
-  if (m > 0) return `${m}m ${String(sec).padStart(2, '0')}s`
-  return `${sec}s`
+  return formatExactDuration(total)
 }

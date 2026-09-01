@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { inkEase } from '../lib/motion'
+import { formatCompactDuration, formatExactDuration } from '../lib/formatDuration'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
 
@@ -25,13 +26,6 @@ function clampRatio(n: number): number {
   return n
 }
 
-function formatMinutes(seconds: number): string {
-  const mins = Math.max(0, seconds) / 60
-  if (mins >= 100) return `${Math.round(mins)}`
-  if (mins >= 10) return mins.toFixed(0)
-  return mins.toFixed(1).replace(/\.0$/, '')
-}
-
 function formatChars(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
   if (n >= 10_000) return `${Math.round(n / 1000)}k`
@@ -39,9 +33,16 @@ function formatChars(n: number): string {
   return String(Math.max(0, Math.round(n)))
 }
 
+function timeDetail(usedSec: number, limitSec: number, unlimited: boolean): string {
+  const used = formatExactDuration(usedSec)
+  if (unlimited || limitSec <= 0) return `${used} used · unlimited`
+  const left = formatExactDuration(Math.max(0, limitSec - usedSec))
+  return `${used} used · ${left} left`
+}
+
 function buildMeters(e: Entitlement): MeterModel[] {
   const liveLimitSec = Math.max(0, (e.limits.live_minutes ?? 0) * 60)
-  const liveUsed = Math.max(0, e.usage.liveSeconds ?? 0)
+  const liveUsed = Math.max(0, Math.floor(e.usage.liveSeconds ?? 0))
   const liveUnlimited = liveLimitSec <= 0
   const liveRatio = liveUnlimited ? null : clampRatio(liveUsed / liveLimitSec)
 
@@ -52,9 +53,10 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const ttsUsed = Math.max(0, e.usage.ttsChars ?? 0)
   const showVoice = ttsUnlimited || ttsLimit > 0
   const ttsRatio = ttsUnlimited || ttsLimit <= 0 ? null : clampRatio(ttsUsed / ttsLimit)
+  const ttsLeft = Math.max(0, ttsLimit - ttsUsed)
 
   const camLimitSec = Math.max(0, (e.limits.camera_minutes ?? 0) * 60)
-  const camUsed = Math.max(0, e.usage.cameraSeconds ?? 0)
+  const camUsed = Math.max(0, Math.floor(e.usage.cameraSeconds ?? 0))
   const camUnlimited = Boolean(e.cameraUnlimited)
   const camRatio = camUnlimited
     ? null
@@ -70,6 +72,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
     : docsLimit <= 0
       ? clampRatio(docsUsed > 0 ? 1 : 0)
       : clampRatio(docsUsed / docsLimit)
+  const docsLeft = Math.max(0, docsLimit - docsUsed)
 
   const aiUsed = Math.max(0, e.usage.aiVisionCount ?? 0)
 
@@ -78,13 +81,11 @@ function buildMeters(e: Entitlement): MeterModel[] {
       key: 'live',
       label: ui.accountLive,
       blurb: ui.usageDetailLive,
-      usedLabel: `${formatMinutes(liveUsed)}m`,
-      limitLabel: liveUnlimited ? '∞' : `${e.limits.live_minutes}m`,
+      usedLabel: formatCompactDuration(liveUsed),
+      limitLabel: liveUnlimited ? '∞' : formatCompactDuration(liveLimitSec),
       ratio: liveRatio,
       unlimited: liveUnlimited,
-      detail: liveUnlimited
-        ? `${formatMinutes(liveUsed)} min used · unlimited`
-        : `${formatMinutes(liveUsed)} / ${e.limits.live_minutes} min`,
+      detail: timeDetail(liveUsed, liveLimitSec, liveUnlimited),
     },
   ]
 
@@ -99,7 +100,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       unlimited: ttsUnlimited,
       detail: ttsUnlimited
         ? `${formatChars(ttsUsed)} chars used · unlimited`
-        : `${formatChars(ttsUsed)} / ${formatChars(ttsLimit)} chars`,
+        : `${formatChars(ttsUsed)} used · ${formatChars(ttsLeft)} left`,
     })
   }
 
@@ -109,13 +110,11 @@ function buildMeters(e: Entitlement): MeterModel[] {
         key: 'camera',
         label: ui.modeCamera,
         blurb: ui.usageDetailCamera,
-        usedLabel: `${formatMinutes(camUsed)}m`,
-        limitLabel: camUnlimited ? '∞' : `${e.limits.camera_minutes ?? 0}m`,
+        usedLabel: formatCompactDuration(camUsed),
+        limitLabel: camUnlimited ? '∞' : formatCompactDuration(camLimitSec),
         ratio: camRatio,
         unlimited: camUnlimited,
-        detail: camUnlimited
-          ? `${formatMinutes(camUsed)} min used · unlimited`
-          : `${formatMinutes(camUsed)} / ${e.limits.camera_minutes ?? 0} min`,
+        detail: timeDetail(camUsed, camLimitSec, camUnlimited),
       },
       {
         key: 'docs',
@@ -127,7 +126,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         unlimited: docsUnlimited,
         detail: docsUnlimited
           ? `${docsUsed} pages used · unlimited`
-          : `${docsUsed} / ${docsLimit} pages`,
+          : `${docsUsed} used · ${docsLeft} left`,
       },
       {
         key: 'aiVision',

@@ -42,15 +42,13 @@ import { openPricing } from '../lib/siteLinks'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
+import { formatExactDuration } from '../lib/formatDuration'
 import type { Entitlement } from '../lib/types'
 
 const HUB_SHEET_MQ = '(max-width: 959px)'
 
 function formatDuration(seconds: number): string {
-  const s = Math.max(0, Math.round(seconds))
-  if (s >= 3600) return `${Math.floor(s / 3600)}h`
-  if (s >= 60) return `${Math.ceil(s / 60)}m`
-  return `${s}s`
+  return formatExactDuration(seconds)
 }
 
 function planLabel(plan: string): Bi {
