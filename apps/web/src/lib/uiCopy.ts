@@ -385,10 +385,20 @@ export const ui = {
     zh: '雙擊圖表睇詳情',
     jp: 'soeng1 gik6 tou4 biu2 tai2 coeng4 cing4',
   },
+  usageMetersHintTouch: {
+    en: 'Tap for exact time · double-tap for details',
+    zh: '輕觸睇精確時間 · 雙擊睇詳情',
+    jp: 'hing1 zuk1 tai2 zing1 kok3 si4 gaan3 · soeng1 gik6 tai2 coeng4 cing4',
+  },
+  usageMetersHintMouse: {
+    en: 'Hover for exact time · double-click for details',
+    zh: '滑過睇精確時間 · 雙擊睇詳情',
+    jp: 'waat6 gwo3 tai2 zing1 kok3 si4 gaan3 · soeng1 gik6 tai2 coeng4 cing4',
+  },
   usageMetersA11y: {
-    en: 'Usage meters. Double-tap or press Enter for details.',
-    zh: '用量圖表。雙擊或按 Enter 睇詳情。',
-    jp: 'jung6 loeng6 tou4 biu2. soeng1 gik6 waak6 on3 Enter tai2 coeng4 cing4.',
+    en: 'Usage meters. Tap or hover for exact time. Double-tap or press Enter for details. Space toggles exact time.',
+    zh: '用量圖表。輕觸或滑過睇精確時間。雙擊或按 Enter 睇詳情。空白鍵切換精確時間。',
+    jp: 'jung6 loeng6 tou4 biu2. hing1 zuk1 waak6 waat6 gwo3 tai2 zing1 kok3 si4 gaan3. soeng1 gik6 waak6 on3 Enter tai2 coeng4 cing4. hung1 baak6 gan6 cit3 wun6 zing1 kok3 si4 gaan3.',
   },
   usageDetailTitle: {
     en: 'Usage details',
