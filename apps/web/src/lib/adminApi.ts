@@ -281,6 +281,23 @@ export async function fetchBugReportAiAnswer(
   return data as { ok: boolean; answer: BugReportAiAnswer }
 }
 
+export async function resendBugReportEmail(
+  reportId: string,
+): Promise<{ ok: boolean; message?: string }> {
+  const res = await adminFetch(
+    `/admin/bug-reports/${encodeURIComponent(reportId)}/resend-email`,
+    {
+      method: 'POST',
+      body: JSON.stringify({}),
+    },
+  )
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'Resend email failed')
+  }
+  return data as { ok: boolean }
+}
+
 /** Download CSV using the current admin session. */
 export async function downloadAdminUsersCsv(params: AdminListQuery = {}) {
   const res = await adminFetch(`/admin/users.csv${toQuery(params)}`)

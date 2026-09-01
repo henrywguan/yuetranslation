@@ -2,7 +2,7 @@ import type { Response } from 'express'
 import { z } from 'zod'
 import { requireAuth, type AuthedRequest } from './auth.js'
 import { cloudReady, openaiStatus, visionConfigured } from './env.js'
-import { notifyBugReport } from './notify.js'
+import { sendBugReportNotify } from './notify.js'
 import { getAuthUserById, insertBugReport, countRecentBugReports } from './supabase.js'
 import { getUsage } from './usage.js'
 
@@ -80,7 +80,9 @@ export async function submitBugReport(req: AuthedRequest, res: Response) {
       context,
     })
 
-    notifyBugReport({
+    // Await Resend before responding — Vercel freezes the function after res.json(),
+    // so fire-and-forget notify never reached Resend (no dashboard event).
+    const notify = await sendBugReportNotify({
       reportId: row.id,
       issueType: parsed.data.issueType,
       email: user?.email ?? auth.email,
@@ -90,8 +92,14 @@ export async function submitBugReport(req: AuthedRequest, res: Response) {
       client,
       context,
     })
+    if (!notify.ok) {
+      console.warn('[bug-report] admin notify failed', {
+        reportId: row.id,
+        error: notify.error,
+      })
+    }
 
-    res.json({ ok: true, reportId: row.id })
+    res.json({ ok: true, reportId: row.id, notifyOk: notify.ok })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save report' })
   }
