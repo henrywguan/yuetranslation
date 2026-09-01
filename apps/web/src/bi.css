@@ -390,6 +390,12 @@ button.jyutping {
   border-radius: 4px;
 }
 
+[lang='zh-HK'],
+.cantonese-jp-hint,
+.cantonese-multi-def {
+  font-family: var(--font-body);
+}
+
 .bi-zh {
   font-family: var(--font-body);
   font-weight: 500;
