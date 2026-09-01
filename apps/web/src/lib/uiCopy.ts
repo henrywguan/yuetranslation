@@ -365,6 +365,52 @@ export const ui = {
     zh: '未能傳送邀請',
     jp: 'mei6 nang4 cyun4 sung3 jiu1 cing2',
   },
+  usageDocs: { en: 'Documents', zh: '文件', jp: 'man4 gin2' },
+  usageMetersHint: {
+    en: 'Double-tap a chart for details',
+    zh: '雙擊圖表睇詳情',
+    jp: 'soeng1 gik6 tou4 biu2 tai2 coeng4 cing4',
+  },
+  usageMetersA11y: {
+    en: 'Usage meters. Double-tap or press Enter for details.',
+    zh: '用量圖表。雙擊或按 Enter 睇詳情。',
+    jp: 'jung6 loeng6 tou4 biu2. soeng1 gik6 waak6 on3 Enter tai2 coeng4 cing4.',
+  },
+  usageDetailTitle: {
+    en: 'Usage details',
+    zh: '用量詳情',
+    jp: 'jung6 loeng6 coeng4 cing4',
+  },
+  usageDetailLead: {
+    en: 'These meters reset each calendar month. Unlimited meters still track use so you can see activity.',
+    zh: '呢啲用量每個曆月重置。無限嘅項目仍會計數，方便你睇活躍度。',
+    jp: 'ne1 di1 jung6 loeng6 mui5 go3 lik6 jyut6 cung4 zi3. mou4 haan6 ge3 hong6 muk6 jing4 wui5 gai3 sou3, fong1 bin6 nei5 tai2 wut6 joek6 dou6.',
+  },
+  usageDetailLive: {
+    en: 'Time the live mic is actively listening in Solo or Conversation.',
+    zh: '獨白或對話模式入面，即時咪正在收聽嘅時間。',
+    jp: 'duk6 baak6 waak6 deoi3 waa6 mou4 sik1 jap6 min6, zik1 si4 mai1 zing3 zoi6 sau1 teng1 ge3 si4 gaan3.',
+  },
+  usageDetailVoice: {
+    en: 'Characters spoken with tap-to-play or auto-speak. Family/Max are unlimited but still counted.',
+    zh: '撳喇叭或自動朗讀嘅字數。家庭／旗艦版無限但仍會計量。',
+    jp: 'gam2 laa3 baa1 waak6 zi6 dung6 long5 duk6 ge3 zi6 sou3. gaa1 ting4 / kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
+  },
+  usageDetailCamera: {
+    en: 'Time spent in Cam — fullscreen AR preview or the upload editor.',
+    zh: '喺「相機」模式嘅時間——全屏 AR 預覽或上載編輯器。',
+    jp: 'hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 bin1 cap1 hei3.',
+  },
+  usageDetailDocs: {
+    en: 'Document pages translated in Cam → Documents this month.',
+    zh: '今個月喺相機 → 文件翻譯嘅頁數。',
+    jp: 'gam1 go3 jyut6 hai2 soeng1 gei1 → man4 gin2 faan1 jik6 ge3 jip6 sou3.',
+  },
+  usageDetailAiVision: {
+    en: 'AI vision OCR fallbacks (informational — no hard cap).',
+    zh: 'AI 視覺 OCR 後備次數（只供參考，無硬上限）。',
+    jp: 'AI si6 gok3 OCR hau6 bei6 ci3 sou3 (zi2 gung1 caam1 haau2, mou4 ngaang6 soeng6 haan6).',
+  },
   accountLive: { en: 'Live mic', zh: '即時咪', jp: 'zik1 si4 mai1' },
   accountVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },
   accountAiVision: { en: 'AI vision', zh: 'AI 識字', jp: 'AI sik1 zi6' },

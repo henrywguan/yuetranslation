@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
 import { RoleBadge } from './RoleBadge'
+import { UsageMeters } from './UsageMeters'
 import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { useYueStore } from '../lib/store'
@@ -217,13 +218,16 @@ export function PlanChip() {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key !== 'Escape') return
+      if (document.querySelector('.usage-detail-layer')) return
+      setOpen(false)
     }
     const onPointer = (e: PointerEvent) => {
       const target = e.target
       if (!(target instanceof Node)) return
       if (rootRef.current?.contains(target)) return
       if (hubRef.current?.contains(target)) return
+      if (target instanceof Element && target.closest('.usage-detail-layer')) return
       setOpen(false)
     }
     window.addEventListener('keydown', onKey)
@@ -423,51 +427,7 @@ export function PlanChip() {
               <BiText copy={ui.accountHouseholdPooledHint} size="sm" />
             </p>
           ) : null}
-          <ul className="account-hub-stats">
-            <li>
-              <span className="account-hub-stat-label">
-                <BiText copy={ui.accountLive} size="sm" />
-              </span>
-              <span className="account-hub-stat-value">
-                <BiText copy={liveCopy(entitlement)} size="sm" />
-              </span>
-            </li>
-            {showVoiceQuota ? (
-              <li>
-                <span className="account-hub-stat-label">
-                  <BiText copy={ui.accountVoice} size="sm" />
-                </span>
-                <span className="account-hub-stat-value">
-                  <BiText copy={voiceCopy(entitlement)} size="sm" />
-                </span>
-              </li>
-            ) : null}
-            {entitlement.loggedIn ? (
-              <li>
-                <span className="account-hub-stat-label">
-                  <BiText copy={ui.modeCamera} size="sm" />
-                </span>
-                <span className="account-hub-stat-value">
-                  <BiText copy={cameraCopy(entitlement)} size="sm" />
-                </span>
-              </li>
-            ) : null}
-            {entitlement.loggedIn ? (
-              <li>
-                <span className="account-hub-stat-label">
-                  <BiText copy={ui.accountAiVision} size="sm" />
-                </span>
-                <span className="account-hub-stat-value">
-                  <BiText
-                    copy={ui.accountAiVisionUsed(
-                      String(entitlement.usage.aiVisionCount ?? 0),
-                    )}
-                    size="sm"
-                  />
-                </span>
-              </li>
-            ) : null}
-          </ul>
+          <UsageMeters entitlement={entitlement} />
         </section>
 
         {entitlement.loggedIn &&
@@ -573,7 +533,7 @@ export function PlanChip() {
                         className="account-hub-member-action"
                         onClick={() => {
                           void removeHouseholdMember(m.userId)
-                            .then(async (res) => {
+                            .then(async () => {
                               await loadBootstrap()
                             })
                             .catch(() => undefined)
@@ -599,7 +559,7 @@ export function PlanChip() {
                         className="account-hub-member-action"
                         onClick={() => {
                           void revokeHouseholdInvite(inv.id)
-                            .then(async (res) => {
+                            .then(async () => {
                               await loadBootstrap()
                             })
                             .catch(() => undefined)

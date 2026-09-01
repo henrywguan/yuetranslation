@@ -313,51 +313,281 @@
   padding: 0.35rem 0;
 }
 
-.account-hub-stats {
+.usage-meters {
+  margin: 2px 0 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  width: 100%;
+  text-align: start;
+  cursor: pointer;
+}
+
+.usage-meters:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+
+.usage-meters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 10px 8px;
+}
+
+.usage-meter {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.usage-meter-ring {
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+
+.usage-meter-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.usage-meter-ring-track,
+.usage-meter-ring-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.usage-meter-ring-track {
+  stroke: color-mix(in srgb, var(--glass-border) 80%, transparent);
+}
+
+.usage-meter-ring-fill {
+  transition: stroke-dasharray 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.usage-meter-ring--warn .usage-meter-ring-fill {
+  filter: saturate(1.05);
+}
+
+.usage-meter-ring--hot .usage-meter-ring-fill {
+  filter: saturate(1.15);
+}
+
+.usage-meter-ring-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 1px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.usage-meter-ring-used {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-bright, var(--ink));
+  line-height: 1.05;
+}
+
+.usage-meter-ring-of {
+  font-size: 0.62rem;
+  font-weight: 550;
+  color: var(--muted);
+  line-height: 1.1;
+}
+
+.usage-meter-label {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.usage-meter-label .bi {
+  align-items: center;
+}
+
+.usage-meters-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.usage-detail-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  align-items: end;
+}
+
+.usage-detail-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: color-mix(in srgb, #061018 48%, transparent);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+}
+
+.usage-detail-drawer {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  max-height: min(78dvh, 640px);
+  margin: 0 auto;
+  padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-radius: 22px 22px 0 0;
+  border: 1px solid var(--glass-border);
+  border-bottom: 0;
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid) 96%, var(--jade) 4%),
+      color-mix(in srgb, var(--harbor-mid) 94%, transparent)
+    );
+  box-shadow: var(--shadow);
+  overflow: auto;
+  color: var(--ink);
+}
+
+.usage-detail-handle {
+  width: 42px;
+  height: 4px;
+  margin: 2px auto 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+.usage-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.usage-detail-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.usage-detail-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.usage-detail-close {
+  flex: none;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.usage-detail-close:hover,
+.usage-detail-close:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+}
+
+.usage-detail-lead {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.usage-detail-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  gap: 14px;
 }
 
-.account-hub-stats li {
+.usage-detail-row {
+  display: grid;
+  gap: 6px;
+}
+
+.usage-detail-row-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  gap: 10px;
 }
 
-.account-hub-stat-label {
-  flex: 0 1 auto;
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
+.usage-detail-label {
+  color: var(--ink);
+  font-weight: 600;
 }
 
-.account-hub-stat-value {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-weight: 650;
+.usage-detail-value {
   color: var(--ink-bright, var(--ink));
+  font-size: 0.82rem;
+  font-weight: 650;
   text-align: end;
 }
 
-.account-hub-stat-value .bi {
-  align-items: flex-end;
-  text-align: end;
-  margin-inline-start: auto;
+.usage-detail-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--glass-border) 70%, transparent);
+  overflow: hidden;
 }
 
-.account-hub-stat-value .bi-en,
-.account-hub-stat-value .bi-zh,
-.account-hub-stat-value .bi-zh-wrap {
-  text-align: end;
+.usage-detail-bar-fill {
+  display: block;
+  height: 100%;
+  width: var(--usage-pct, 0%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--jade), var(--gold));
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.usage-detail-bar[data-unlimited='1'] .usage-detail-bar-fill {
+  opacity: 0.45;
+  background: color-mix(in srgb, var(--jade) 55%, var(--muted));
+}
+
+.usage-detail-blurb {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+@media (min-width: 960px) {
+  .usage-detail-layer {
+    align-items: center;
+    justify-items: center;
+    padding: 24px;
+  }
+
+  .usage-detail-drawer {
+    border-radius: 18px;
+    border-bottom: 1px solid var(--glass-border);
+    max-height: min(72dvh, 620px);
+  }
+
+  .usage-detail-handle {
+    display: none;
+  }
 }
 
 .account-hub-hint {
