@@ -19,10 +19,17 @@ import {
 import { notifyUserUpgrade } from './notify.js'
 import { backfillResendAudience } from './resendAudience.js'
 import {
+  backfillHouseholdUsageFromLegacy,
+  getMembershipForUser,
+  listHouseholdUsageMonths,
+  resolveHouseholdUsage,
+} from './household.js'
+import {
   currentMonthKey,
   getUsageForMonth,
   listUsageMonths,
   setUsageMonth,
+  type UsageRow,
 } from './usage.js'
 
 export type AdminUserRow = {
@@ -87,6 +94,51 @@ function stripeDashboardUrl(customerId: string | null): string | null {
   return `${base}/customers/${customerId}`
 }
 
+async function usageSnapshotForAdminUser(
+  userId: string,
+  month: string,
+  personalByUser: Map<string, UsageRow>,
+  householdUsageCache: Map<string, Awaited<ReturnType<typeof resolveHouseholdUsage>>>,
+): Promise<{
+  liveSeconds: number
+  ttsChars: number
+  translateCount: number
+  cameraSeconds: number
+  cameraTranslateCount: number
+  docsPages: number
+  aiVisionCount: number
+}> {
+  const membership = await getMembershipForUser(userId)
+  if (membership) {
+    const householdId = membership.household.id
+    let usage = householdUsageCache.get(householdId)
+    if (!usage) {
+      usage = await resolveHouseholdUsage(householdId, month)
+      householdUsageCache.set(householdId, usage)
+    }
+    return {
+      liveSeconds: usage.liveSeconds,
+      ttsChars: usage.ttsChars,
+      translateCount: usage.translateCount,
+      cameraSeconds: usage.cameraSeconds,
+      cameraTranslateCount: usage.cameraTranslateCount,
+      docsPages: usage.docsPages,
+      aiVisionCount: usage.aiVisionCount,
+    }
+  }
+
+  const usage = personalByUser.get(userId)
+  return {
+    liveSeconds: usage?.live_seconds ?? 0,
+    ttsChars: usage?.tts_chars ?? 0,
+    translateCount: usage?.translate_count ?? 0,
+    cameraSeconds: usage?.camera_seconds ?? 0,
+    cameraTranslateCount: usage?.camera_translate_count ?? 0,
+    docsPages: usage?.docs_pages ?? 0,
+    aiVisionCount: usage?.ai_vision_count ?? 0,
+  }
+}
+
 async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
   const [authUsers, profiles, usageMap] = await Promise.all([
     listAuthUsers(),
@@ -94,18 +146,20 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
     getUsageForMonth(month),
   ])
   const profileById = new Map(profiles.map((p) => [p.id, p]))
+  const householdUsageCache = new Map<string, Awaited<ReturnType<typeof resolveHouseholdUsage>>>()
 
-  return authUsers.map((u) => {
+  return Promise.all(
+    authUsers.map(async (u) => {
     const profile = profileById.get(u.id)
     const plan = profile?.plan ?? 'free'
-    const usage = usageMap.get(u.id)
-    const liveSeconds = usage?.live_seconds ?? 0
-    const ttsChars = usage?.tts_chars ?? 0
-    const translateCount = usage?.translate_count ?? 0
-    const cameraSeconds = usage?.camera_seconds ?? 0
-    const cameraTranslateCount = usage?.camera_translate_count ?? 0
-    const docsPages = usage?.docs_pages ?? 0
-    const aiVisionCount = usage?.ai_vision_count ?? 0
+    const usage = await usageSnapshotForAdminUser(u.id, month, usageMap, householdUsageCache)
+    const liveSeconds = usage.liveSeconds
+    const ttsChars = usage.ttsChars
+    const translateCount = usage.translateCount
+    const cameraSeconds = usage.cameraSeconds
+    const cameraTranslateCount = usage.cameraTranslateCount
+    const docsPages = usage.docsPages
+    const aiVisionCount = usage.aiVisionCount
     const liveLim = liveLimitSeconds(plan)
     const ttsLim = ttsLimitChars(plan)
     const camLim = cameraLimitSeconds(plan)
@@ -144,7 +198,8 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       docsLimitPages: docsLim,
       overQuota,
     }
-  })
+    }),
+  )
 }
 
 type SortKey =
@@ -336,7 +391,13 @@ export async function adminUserUsage(req: AuthedRequest, res: Response) {
     return
   }
   try {
-    const [user, months] = await Promise.all([getAuthUserById(userId), listUsageMonths(userId)])
+    const membership = await getMembershipForUser(userId)
+    const [user, months] = await Promise.all([
+      getAuthUserById(userId),
+      membership
+        ? listHouseholdUsageMonths(membership.household.id)
+        : listUsageMonths(userId),
+    ])
     res.json({ user, months })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load usage' })
@@ -616,6 +677,24 @@ export async function adminSyncResendAudience(req: AuthedRequest, res: Response)
     res.json({ ok: true, ...result })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Resend audience sync failed' })
+  }
+}
+
+/** One-time / on-demand: fold legacy per-user usage into household pools for all months. */
+export async function adminBackfillHouseholdUsage(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const result = await backfillHouseholdUsageFromLegacy()
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'household_usage_backfill',
+      detail: result,
+    })
+    res.json({ ok: true, ...result })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Household usage backfill failed' })
   }
 }
 

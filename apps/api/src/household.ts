@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { Resend } from 'resend'
 import { env } from './env.js'
-import { getAdmin } from './supabase.js'
+import { getAdmin, listProfiles } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
 function usageHasAny(usage: UsageSnapshot): boolean {
@@ -290,6 +290,104 @@ export async function resolveHouseholdUsage(
   await persistHouseholdUsage(householdId, merged)
   await zeroMembersPersonalUsage(householdId, month)
   return merged
+}
+
+async function listDistinctUsageMonthsForHousehold(householdId: string): Promise<string[]> {
+  const client = getAdmin()
+  if (!client) return []
+  const months = new Set<string>()
+  const memberIds = await listHouseholdMemberIds(householdId)
+
+  if (memberIds.length) {
+    const { data, error } = await client.from('usage_months').select('month').in('user_id', memberIds)
+    if (error) console.error('[household] list personal usage months failed', error.message)
+    for (const row of data || []) {
+      if (row.month) months.add(String(row.month))
+    }
+  }
+
+  const { data: poolRows, error: poolError } = await client
+    .from('household_usage_months')
+    .select('month')
+    .eq('household_id', householdId)
+  if (poolError) console.error('[household] list pooled usage months failed', poolError.message)
+  for (const row of poolRows || []) {
+    if (row.month) months.add(String(row.month))
+  }
+
+  return Array.from(months).sort((a, b) => b.localeCompare(a))
+}
+
+/** Fold legacy per-member usage into the household pool for every month that has data. */
+export async function resolveHouseholdUsageForAllMonths(
+  householdId: string,
+): Promise<{ monthsProcessed: number }> {
+  const months = await listDistinctUsageMonthsForHousehold(householdId)
+  for (const month of months) {
+    await resolveHouseholdUsage(householdId, month)
+  }
+  return { monthsProcessed: months.length }
+}
+
+export type HouseholdUsageBackfillResult = {
+  householdsEnsured: number
+  householdsMerged: number
+  monthsMerged: number
+}
+
+/**
+ * One-time / on-demand migration: create missing owner households for paid users and
+ * fold pre-pooling `usage_months` rows into `household_usage_months` for all months.
+ */
+export async function backfillHouseholdUsageFromLegacy(): Promise<HouseholdUsageBackfillResult> {
+  const client = getAdmin()
+  if (!client) throw new Error('Database is not configured.')
+
+  const profiles = await listProfiles()
+  let householdsEnsured = 0
+
+  for (const profile of profiles) {
+    if (profile.plan !== 'family' && profile.plan !== 'business') continue
+    const membership = await getMembershipForUser(profile.id)
+    if (membership?.membership.member_role === 'member') continue
+    const hadHousehold = Boolean(membership?.household.id)
+    const household = await ensureOwnerHousehold(profile.id, profile.plan)
+    if (!household) continue
+    if (!hadHousehold) householdsEnsured++
+  }
+
+  const { data: households, error } = await client.from('households').select('id')
+  if (error) throw new Error(error.message)
+
+  let monthsMerged = 0
+  for (const row of households || []) {
+    const { monthsProcessed } = await resolveHouseholdUsageForAllMonths(String(row.id))
+    monthsMerged += monthsProcessed
+  }
+
+  return {
+    householdsEnsured,
+    householdsMerged: (households || []).length,
+    monthsMerged,
+  }
+}
+
+/** All pooled usage months for a household (newest first). */
+export async function listHouseholdUsageMonths(householdId: string): Promise<UsageSnapshot[]> {
+  const client = getAdmin()
+  if (!client) return []
+  const { data, error } = await client
+    .from('household_usage_months')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('month', { ascending: false })
+  if (error) {
+    console.error('[household] list pooled usage months failed', error.message)
+    return []
+  }
+  return ((data as Record<string, unknown>[]) || []).map((row) =>
+    usageFromRow(row, String(row.month || currentMonthKey())),
+  )
 }
 
 /** @deprecated Use resolveHouseholdUsage — kept for call-site compatibility. */

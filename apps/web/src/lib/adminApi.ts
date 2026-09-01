@@ -288,6 +288,23 @@ export async function syncResendAudience(): Promise<ResendAudienceSyncResult> {
   return data as ResendAudienceSyncResult
 }
 
+export type HouseholdUsageBackfillResult = {
+  ok: boolean
+  householdsEnsured: number
+  householdsMerged: number
+  monthsMerged: number
+}
+
+/** Fold legacy per-user usage into household pools for all months (idempotent). */
+export async function backfillHouseholdUsage(): Promise<HouseholdUsageBackfillResult> {
+  const res = await adminFetch('/admin/household-usage/backfill', { method: 'POST' })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'Household usage backfill failed')
+  }
+  return data as HouseholdUsageBackfillResult
+}
+
 export type CampaignFields = {
   subject: string
   preview: string

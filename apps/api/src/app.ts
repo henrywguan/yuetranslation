@@ -58,6 +58,7 @@ import {
   adminSetPlan,
   adminSetRole,
   adminSyncResendAudience,
+  adminBackfillHouseholdUsage,
   adminUserUsage,
 } from './admin.js'
 
@@ -594,6 +595,7 @@ app.get('/api/admin/bug-reports', adminListBugReports)
 app.patch('/api/admin/bug-reports/:reportId/status', adminPatchBugReportStatus)
 app.post('/api/admin/bug-reports/:reportId/ai-answer', adminBugReportAiAnswer)
 app.post('/api/admin/resend-audience/sync', adminSyncResendAudience)
+app.post('/api/admin/household-usage/backfill', adminBackfillHouseholdUsage)
 app.get('/api/admin/email/templates', adminListEmailTemplates)
 app.post('/api/admin/email/templates', adminSaveEmailTemplate)
 app.delete('/api/admin/email/templates/:templateId', adminArchiveEmailTemplate)
