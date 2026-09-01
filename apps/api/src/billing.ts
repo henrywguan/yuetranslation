@@ -9,6 +9,7 @@ import {
   getProfile,
   upsertProfilePlan,
 } from './supabase.js'
+import { syncOwnerPlanForUser } from './household.js'
 import { notifyUserUpgrade } from './notify.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 
@@ -123,6 +124,9 @@ async function setPlanForUser(userId: string, plan: 'free' | 'family' | 'busines
     stripe_customer_id: customerId,
     stripe_subscription_id: subscriptionId,
   })
+  if (plan === 'family' || plan === 'business') {
+    await syncOwnerPlanForUser(userId, plan)
+  }
 }
 
 export async function handleBillingWebhook(req: AuthedRequest, res: Response) {

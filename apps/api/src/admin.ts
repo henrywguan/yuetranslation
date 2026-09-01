@@ -18,6 +18,7 @@ import {
 } from './supabase.js'
 import { notifyUserUpgrade } from './notify.js'
 import { backfillResendAudience } from './resendAudience.js'
+import { syncOwnerPlanForUser } from './household.js'
 import {
   currentMonthKey,
   getUsageForMonth,
@@ -353,23 +354,34 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
   const userId = String(req.params.userId || '')
   const parsed = PlanBody.safeParse(req.body)
   if (!userId || !parsed.success) {
-    res.status(400).json({ message: 'plan must be free, pro, or max' })
+    res.status(400).json({ message: 'plan must be free, family, or business' })
     return
   }
   try {
     const target = await getAuthUserById(userId)
     const profile = await getProfile(userId)
     const previous = profile?.plan ?? 'free'
-    await upsertProfilePlan(userId, { plan: parsed.data.plan })
+    const plan = parsed.data.plan
+    await upsertProfilePlan(userId, { plan })
+    const saved = await getProfile(userId)
+    const savedPlan = saved?.plan ?? 'free'
+    if (savedPlan !== plan) {
+      res.status(500).json({
+        message: `Plan did not persist (expected ${plan}, got ${savedPlan}). Check database plan constraints.`,
+      })
+      return
+    }
+    if (plan === 'family' || plan === 'business') {
+      await syncOwnerPlanForUser(userId, plan)
+    }
     await writeAuditLog({
       actorId: auth.userId,
       actorEmail: auth.email,
       action: 'set_plan',
       targetUserId: userId,
       targetEmail: target?.email,
-      detail: { plan: parsed.data.plan },
+      detail: { plan },
     })
-    const plan = parsed.data.plan
     if (plan !== previous && (plan === 'family' || plan === 'business')) {
       notifyUserUpgrade({
         email: target?.email ?? null,
@@ -380,7 +392,7 @@ export async function adminSetPlan(req: AuthedRequest, res: Response) {
         stripeCustomerId: profile?.stripe_customer_id ?? null,
       })
     }
-    res.json({ ok: true, userId, plan: parsed.data.plan })
+    res.json({ ok: true, userId, plan })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to set plan' })
   }

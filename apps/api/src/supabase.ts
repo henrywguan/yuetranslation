@@ -95,10 +95,11 @@ export async function upsertProfilePlan(
   >,
 ): Promise<void> {
   const client = getAdmin()
-  if (!client) return
-  await client
+  if (!client) throw new Error('Database is not configured.')
+  const { error } = await client
     .from('profiles')
     .upsert({ id: userId, ...patch, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+  if (error) throw new Error(error.message)
 }
 
 const USERNAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{2,23}$/
