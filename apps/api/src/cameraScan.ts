@@ -174,7 +174,10 @@ export async function cameraScan(input: unknown): Promise<{
       continue
     }
     const { from, to } = pickTarget(r.script, parsed.target)
-    const result = await translateCameraText(text, from, to)
+    const prev = baseRegions[i - 1]?.text.trim()
+    const next = baseRegions[i + 1]?.text.trim()
+    const context = [prev, next].filter(Boolean).join('\n')
+    const result = await translateCameraText(text, from, to, { context })
     if (!result.cacheHit) translateMisses += 1
     out.push({
       id: `r${i}`,
