@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
@@ -43,8 +43,6 @@ import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
 import type { Entitlement } from '../lib/types'
-
-const HUB_SHEET_MQ = '(max-width: 959px)'
 
 function formatDuration(seconds: number): string {
   const s = Math.max(0, Math.round(seconds))
@@ -144,7 +142,6 @@ export function PlanChip() {
   const [usernameBusy, setUsernameBusy] = useState(false)
   const [usernameError, setUsernameError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [hubPos, setHubPos] = useState<{ top: number; right: number } | null>(null)
   const [badgeMetric, setBadgeMetric] = useState<BadgeUsageMetric>(() => readBadgeUsageMetric())
   const [yueVoice, setYueVoice] = useState<YueVoiceId>(() => readLocalYueVoice())
   const [enVoice, setEnVoice] = useState<EnVoiceId>(() => readLocalEnVoice())
@@ -200,46 +197,6 @@ export function PlanChip() {
       cancelled = true
     }
   }, [entitlement?.loggedIn, entitlement?.plan])
-
-  useLayoutEffect(() => {
-    if (!open) return
-    const layout = () => {
-      if (window.matchMedia(HUB_SHEET_MQ).matches) {
-        setHubPos(null)
-        return
-      }
-      const el = triggerRef.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const right = Math.max(12, window.innerWidth - r.right)
-      let top = r.bottom + 10
-      const hub = hubRef.current
-      if (hub) {
-        const hh = hub.getBoundingClientRect().height
-        const maxTop = window.innerHeight - hh - 12
-        if (Number.isFinite(hh) && hh > 0 && maxTop < top) {
-          top = Math.max(12, maxTop)
-        }
-      }
-      setHubPos({ top, right })
-    }
-    layout()
-    const raf = window.requestAnimationFrame(layout)
-    const hub = hubRef.current
-    let ro: ResizeObserver | null = null
-    if (hub && typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => layout())
-      ro.observe(hub)
-    }
-    window.addEventListener('resize', layout)
-    window.addEventListener('scroll', layout, true)
-    return () => {
-      window.cancelAnimationFrame(raf)
-      ro?.disconnect()
-      window.removeEventListener('resize', layout)
-      window.removeEventListener('scroll', layout, true)
-    }
-  }, [open, badgeMetric, entitlement?.usage?.aiVisionCount, enVoice, yueVoice])
 
   useEffect(() => {
     if (!open) return
@@ -541,7 +498,7 @@ export function PlanChip() {
       </header>
 
       <div className="account-hub-body">
-        <div className="account-hub-meta-grid">
+        <div className="account-hub-meta-grid account-hub-area-meta">
           <section className="account-hub-section account-hub-meta-col" aria-label={biPlain(ui.accountPlan)}>
             <p className="account-hub-label">
               <BiText copy={ui.accountPlan} size="sm" />
@@ -566,7 +523,10 @@ export function PlanChip() {
 
         <HubSep />
 
-        <section className="account-hub-section" aria-label={biPlain(ui.accountUsage)}>
+        <section
+          className="account-hub-section account-hub-area-usage"
+          aria-label={biPlain(ui.accountUsage)}
+        >
           <p className="account-hub-label">
             <BiText
               copy={entitlement.household?.pooled ? ui.accountUsagePooled : ui.accountUsage}
@@ -585,7 +545,10 @@ export function PlanChip() {
         (entitlement.plan === 'family' ||
           entitlement.plan === 'business' ||
           entitlement.household) ? (
-          <section className="account-hub-section" aria-label={biPlain(ui.accountHousehold)}>
+          <section
+            className="account-hub-section account-hub-area-household"
+            aria-label={biPlain(ui.accountHousehold)}
+          >
             <p className="account-hub-label">
               <BiText copy={ui.accountHousehold} size="sm" />
             </p>
@@ -729,7 +692,10 @@ export function PlanChip() {
         {badgeOptions.some((o) => o.available) ? (
           <>
             <HubSep />
-            <section className="account-hub-section" aria-labelledby={badgePrefId}>
+            <section
+              className="account-hub-section account-hub-area-badge"
+              aria-labelledby={badgePrefId}
+            >
             <p className="account-hub-label" id={badgePrefId}>
               <BiText copy={ui.accountBadgeDisplay} size="sm" />
             </p>
@@ -760,7 +726,10 @@ export function PlanChip() {
 
         <HubSep />
 
-        <section className="account-hub-section" aria-labelledby={voicePrefId}>
+        <section
+          className="account-hub-section account-hub-area-voice"
+          aria-labelledby={voicePrefId}
+        >
           <p className="account-hub-label" id={voicePrefId}>
             <BiText copy={ui.accountTtsVoices} size="sm" />
           </p>
@@ -824,7 +793,7 @@ export function PlanChip() {
 
         <HubSep />
 
-        <div className="account-hub-actions">
+        <div className="account-hub-actions account-hub-area-actions">
           {entitlement.isAdmin ? (
             <button
               type="button"
@@ -951,11 +920,10 @@ export function PlanChip() {
                 key="account-hub-panel"
                 ref={hubRef}
                 className="account-hub-shell"
-                style={hubPos ? { top: hubPos.top, right: hubPos.right } : undefined}
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                initial={{ opacity: 0, y: 14, scale: 0.985 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                transition={{ duration: 0.22, ease: inkEase }}
+                exit={{ opacity: 0, y: 10, scale: 0.985 }}
+                transition={{ duration: 0.24, ease: inkEase }}
               >
                 {panel}
               </motion.div>
