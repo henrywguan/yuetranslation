@@ -1,5 +1,6 @@
 import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
+import type { IncidentBannerSettings } from './types'
 
 async function adminFetch(path: string, init: RequestInit = {}) {
   const headers: Record<string, string> = {
@@ -296,6 +297,33 @@ export async function resendBugReportEmail(
     throw new Error((data as { message?: string }).message || 'Resend email failed')
   }
   return data as { ok: boolean }
+}
+
+export type { IncidentBannerSettings } from './types'
+
+export async function fetchAdminIncidentBanner(): Promise<{
+  incidentBanner: IncidentBannerSettings
+}> {
+  const res = await adminFetch('/admin/incident-banner')
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'Failed to load incident banner')
+  }
+  return data as { incidentBanner: IncidentBannerSettings }
+}
+
+export async function patchAdminIncidentBanner(
+  enabled: boolean,
+): Promise<{ ok: boolean; incidentBanner: IncidentBannerSettings }> {
+  const res = await adminFetch('/admin/incident-banner', {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'Failed to update incident banner')
+  }
+  return data as { ok: boolean; incidentBanner: IncidentBannerSettings }
 }
 
 /** Download CSV using the current admin session. */

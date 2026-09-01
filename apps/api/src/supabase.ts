@@ -234,6 +234,7 @@ export type AuditAction =
   | 'email_template_save'
   | 'bug_report_ai_answer'
   | 'bug_report_resend_email'
+  | 'incident_banner'
 
 export async function writeAuditLog(entry: {
   actorId: string

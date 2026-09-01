@@ -2,6 +2,12 @@ export type Lang = 'en' | 'yue'
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
 export type SpeakDirection = 'en' | 'yue' | 'cmn'
 
+export type IncidentBannerSettings = {
+  enabled: boolean
+  messageEn: string
+  messageZh: string
+}
+
 export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean

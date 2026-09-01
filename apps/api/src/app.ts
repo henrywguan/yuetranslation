@@ -45,6 +45,8 @@ import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
   adminBugReportResendEmail,
+  adminGetIncidentBanner,
+  adminPatchIncidentBanner,
   adminExportUsersCsv,
   adminListAudit,
   adminListBugReports,
@@ -65,6 +67,7 @@ import {
   adminUserUsage,
 } from './admin.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
+import { getIncidentBanner } from './appSettings.js'
 
 export const app = express()
 app.use(cors({ origin: true, credentials: true }))
@@ -97,6 +100,7 @@ async function entitlementFor(req: AuthedRequest) {
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
   const openai = openaiStatus()
+  const incidentBanner = await getIncidentBanner()
   res.json({
     ok: true,
     product: 'jyut',
@@ -127,6 +131,7 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
       userAuth: userEmailConfigured(),
       sendEmailHook: Boolean(env.supabaseSendEmailHookSecret),
     },
+    incidentBanner,
     entitlement: await entitlementFor(req),
   })
 })
@@ -609,6 +614,8 @@ app.get('/api/admin/bug-reports', adminListBugReports)
 app.patch('/api/admin/bug-reports/:reportId/status', adminPatchBugReportStatus)
 app.post('/api/admin/bug-reports/:reportId/ai-answer', adminBugReportAiAnswer)
 app.post('/api/admin/bug-reports/:reportId/resend-email', adminBugReportResendEmail)
+app.get('/api/admin/incident-banner', adminGetIncidentBanner)
+app.patch('/api/admin/incident-banner', adminPatchIncidentBanner)
 app.post('/api/admin/resend-audience/sync', adminSyncResendAudience)
 app.post('/api/admin/household-usage/backfill', adminBackfillHouseholdUsage)
 app.get('/api/admin/email/templates', adminListEmailTemplates)

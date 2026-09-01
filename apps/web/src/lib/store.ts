@@ -12,6 +12,7 @@ import type { DetailLayer } from './detailTypes'
 import type {
   ConversationTurn,
   Entitlement,
+  IncidentBannerSettings,
   Lang,
   LiveSession,
   Mode,
@@ -50,6 +51,8 @@ type State = {
   entitlement: Entitlement | null
   /** True when /api/health reports demo engine (no model key loaded). */
   demoMode: boolean
+  /** Ops-controlled site-wide incident banner (from /api/health). */
+  incidentBanner: IncidentBannerSettings | null
   error: string | null
   enInterim: string
   yueInterim: string
@@ -653,6 +656,7 @@ export const useYueStore = create<State>((set, get) => ({
   autoSpeak: false,
   entitlement: null,
   demoMode: false,
+  incidentBanner: null,
   error: null,
   enInterim: '',
   yueInterim: '',
@@ -727,6 +731,7 @@ export const useYueStore = create<State>((set, get) => ({
       set({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
+        incidentBanner: data.incidentBanner ?? null,
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {
@@ -742,6 +747,7 @@ export const useYueStore = create<State>((set, get) => ({
       set({
         entitlement: null,
         demoMode: false,
+        incidentBanner: null,
       })
     }
   },

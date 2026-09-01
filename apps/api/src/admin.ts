@@ -18,6 +18,7 @@ import {
   type ProfileRow,
 } from './supabase.js'
 import { notifyUserUpgrade, sendBugReportNotify, notifyStatus } from './notify.js'
+import { getIncidentBanner, setIncidentBanner } from './appSettings.js'
 import { backfillResendAudience } from './resendAudience.js'
 import { syncOwnerPlanForUser } from './household.js'
 import {
@@ -745,6 +746,43 @@ export async function adminNotifyStatus(req: AuthedRequest, res: Response) {
   const auth = await requireAdmin(req, res)
   if (!auth) return
   res.json({ notify: notifyStatus() })
+}
+
+const IncidentBannerBody = z.object({
+  enabled: z.boolean(),
+})
+
+export async function adminGetIncidentBanner(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const incidentBanner = await getIncidentBanner()
+    res.json({ incidentBanner })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load incident banner' })
+  }
+}
+
+export async function adminPatchIncidentBanner(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const parsed = IncidentBannerBody.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid incident banner payload' })
+    return
+  }
+  try {
+    const incidentBanner = await setIncidentBanner({ enabled: parsed.data.enabled }, auth.userId)
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'incident_banner',
+      detail: { enabled: incidentBanner.enabled },
+    })
+    res.json({ ok: true, incidentBanner })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save incident banner' })
+  }
 }
 
 export async function adminBugReportResendEmail(req: AuthedRequest, res: Response) {

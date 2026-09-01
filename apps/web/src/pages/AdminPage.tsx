@@ -19,6 +19,8 @@ import {
   formatLiveSeconds,
   syncResendAudience,
   backfillHouseholdUsage,
+  fetchAdminIncidentBanner,
+  patchAdminIncidentBanner,
   type AdminAuditEntry,
   type AdminBugReport,
   type AdminListQuery,
@@ -27,6 +29,7 @@ import {
 } from '../lib/adminApi'
 import { openAuthScreen } from '../lib/auth'
 import { navigate } from '../lib/useHashRoute'
+import { useYueStore } from '../lib/store'
 import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
 
@@ -119,6 +122,10 @@ export function AdminPage() {
   const [selectedReport, setSelectedReport] = useState<AdminBugReport | null>(null)
   const [resendSyncMsg, setResendSyncMsg] = useState('')
   const [usageBackfillMsg, setUsageBackfillMsg] = useState('')
+  const [incidentEnabled, setIncidentEnabled] = useState(false)
+  const [incidentBusy, setIncidentBusy] = useState(false)
+  const [incidentMsg, setIncidentMsg] = useState('')
+  const loadBootstrap = useYueStore((s) => s.loadBootstrap)
   const [resetUser, setResetUser] = useState<AdminUser | null>(null)
 
   useEffect(() => {
@@ -142,6 +149,21 @@ export function AdminPage() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (gate !== 'ok') return
+    let cancelled = false
+    void fetchAdminIncidentBanner()
+      .then(({ incidentBanner }) => {
+        if (!cancelled) setIncidentEnabled(incidentBanner.enabled)
+      })
+      .catch(() => {
+        if (!cancelled) setIncidentMsg('Could not load incident banner status.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [gate])
 
   const listParams = useMemo<AdminListQuery>(
     () => ({
@@ -397,6 +419,36 @@ export function AdminPage() {
     }
   }
 
+  const onToggleIncidentBanner = async () => {
+    const next = !incidentEnabled
+    if (
+      next &&
+      !window.confirm(
+        'Show the incident banner site-wide? Visitors will see a scrolling alert at the top.',
+      )
+    ) {
+      return
+    }
+    setIncidentBusy(true)
+    setIncidentMsg('')
+    setError('')
+    try {
+      const { incidentBanner } = await patchAdminIncidentBanner(next)
+      setIncidentEnabled(incidentBanner.enabled)
+      setIncidentMsg(
+        incidentBanner.enabled
+          ? 'Incident banner is live on the site.'
+          : 'Incident banner is hidden.',
+      )
+      await loadBootstrap()
+      if (tab === 'audit') void reloadAudit()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update incident banner')
+    } finally {
+      setIncidentBusy(false)
+    }
+  }
+
   const onSetReportStatus = async (report: AdminBugReport, status: AdminBugReport['status']) => {
     if (status === report.status) return
     setBusy(true)
@@ -526,6 +578,26 @@ export function AdminPage() {
           </button>
         </div>
       </header>
+
+      <section className="admin-ops-card" aria-label="Site status">
+        <div className="admin-ops-card-head">
+          <h2>Site status</h2>
+          <label className="admin-check admin-ops-toggle">
+            <input
+              type="checkbox"
+              checked={incidentEnabled}
+              disabled={incidentBusy || busy}
+              onChange={() => void onToggleIncidentBanner()}
+            />
+            Show incident banner
+          </label>
+        </div>
+        <p className="admin-muted">
+          When on, a scrolling banner appears at the top of the whole site: “The app is currently
+          experiencing issues and is being worked on.”
+        </p>
+        {incidentMsg ? <p className="admin-muted">{incidentMsg}</p> : null}
+      </section>
 
       {error ? <p className="admin-error">{error}</p> : null}
 

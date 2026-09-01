@@ -1,0 +1,67 @@
+.incident-banner {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #c0392b 88%, #1a1a1a) 0%,
+    color-mix(in srgb, #e74c3c 92%, #2a1515) 50%,
+    color-mix(in srgb, #c0392b 88%, #1a1a1a) 100%
+  );
+  color: #fff;
+  padding: 10px 0;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+}
+
+.incident-banner-track {
+  display: flex;
+  width: max-content;
+  animation: incident-marquee 36s linear infinite;
+}
+
+.incident-banner-chunk {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-right: 4rem;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.incident-banner .bi {
+  color: inherit;
+}
+
+.incident-banner .bi-en,
+.incident-banner .bi-zh {
+  color: inherit;
+}
+
+@keyframes incident-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .incident-banner {
+    overflow: auto;
+  }
+
+  .incident-banner-track {
+    animation: none;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .incident-banner-chunk:last-child {
+    display: none;
+  }
+}
