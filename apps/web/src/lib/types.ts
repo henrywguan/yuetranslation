@@ -32,6 +32,17 @@ export type Entitlement = {
     /** Multimodal LLM OCR fallback calls (view-only meter). */
     aiVisionCount?: number
   }
+  /** Your share of pooled household usage this month (Family/Business only). */
+  usageSelf?: {
+    month: string
+    liveSeconds: number
+    ttsChars: number
+    translateCount: number
+    cameraSeconds?: number
+    cameraTranslateCount?: number
+    docsPages?: number
+    aiVisionCount?: number
+  } | null
   remaining: {
     liveSeconds: number
     ttsChars: number

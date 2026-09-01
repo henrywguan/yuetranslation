@@ -170,6 +170,15 @@ async function incrementUsage(
       docsPages,
       aiVisionCount,
     })
+    await incrementPersonalAttribution(userId, month, {
+      liveSeconds,
+      ttsChars,
+      translateCount,
+      cameraSeconds,
+      cameraTranslateCount,
+      docsPages,
+      aiVisionCount,
+    })
     return
   }
 
@@ -212,6 +221,79 @@ async function incrementUsage(
     .upsert(patch, { onConflict: 'user_id,month' })
   if (upsertError) {
     console.error('[usage] upsert failed', upsertError.message, patch)
+  }
+}
+
+/**
+ * Per-member attribution for pooled households (display only; limits use the pool).
+ */
+async function incrementPersonalAttribution(
+  userId: string,
+  month: string,
+  delta: {
+    liveSeconds?: number
+    ttsChars?: number
+    translateCount?: number
+    cameraSeconds?: number
+    cameraTranslateCount?: number
+    docsPages?: number
+    aiVisionCount?: number
+  },
+) {
+  const client = getAdmin()
+  if (!client) return
+
+  const liveSeconds = asInt(delta.liveSeconds)
+  const ttsChars = asInt(delta.ttsChars)
+  const translateCount = asInt(delta.translateCount)
+  const cameraSeconds = asInt(delta.cameraSeconds)
+  const cameraTranslateCount = asInt(delta.cameraTranslateCount)
+  const docsPages = asInt(delta.docsPages)
+  const aiVisionCount = asInt(delta.aiVisionCount)
+  if (
+    liveSeconds +
+      ttsChars +
+      translateCount +
+      cameraSeconds +
+      cameraTranslateCount +
+      docsPages +
+      aiVisionCount <=
+    0
+  ) {
+    return
+  }
+
+  const { error: rpcError } = await client.rpc('increment_usage', {
+    p_user_id: userId,
+    p_month: month,
+    p_live_seconds: liveSeconds,
+    p_tts_chars: ttsChars,
+    p_translate_count: translateCount,
+    p_camera_seconds: cameraSeconds,
+    p_camera_translate_count: cameraTranslateCount,
+    p_docs_pages: docsPages,
+    p_ai_vision_count: aiVisionCount,
+  })
+  if (!rpcError) return
+
+  console.warn('[usage] increment_usage attribution fallback:', rpcError.message)
+  const usage = await getUsage(userId, month)
+  const patch: Record<string, string | number> = { user_id: userId, month }
+  if (liveSeconds) patch.live_seconds = usage.liveSeconds + liveSeconds
+  if (ttsChars) patch.tts_chars = usage.ttsChars + ttsChars
+  if (translateCount) patch.translate_count = usage.translateCount + translateCount
+  if (cameraSeconds) patch.camera_seconds = usage.cameraSeconds + cameraSeconds
+  if (cameraTranslateCount) {
+    patch.camera_translate_count = usage.cameraTranslateCount + cameraTranslateCount
+  }
+  if (docsPages) patch.docs_pages = usage.docsPages + docsPages
+  if (aiVisionCount) patch.ai_vision_count = usage.aiVisionCount + aiVisionCount
+
+  const { error: upsertError } = await client
+    .from('usage_months')
+    .upsert(patch, { onConflict: 'user_id,month' })
+  if (upsertError) {
+    console.error('[usage] attribution upsert failed', upsertError.message, patch)
   }
 }
 

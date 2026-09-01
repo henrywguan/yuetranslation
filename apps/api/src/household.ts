@@ -283,6 +283,18 @@ export async function resolveHouseholdUsage(
     return pool
   }
 
+  const legacyOrphanPersonal =
+    !usageHasAny(pool) ||
+    personalSum.liveSeconds > pool.liveSeconds ||
+    personalSum.ttsChars > pool.ttsChars ||
+    personalSum.cameraSeconds > pool.cameraSeconds ||
+    personalSum.docsPages > pool.docsPages
+
+  if (!legacyOrphanPersonal) {
+    // Dual-write attribution: personal rows track per-member share; pool is the total.
+    return pool
+  }
+
   const merged = usageHasAny(pool)
     ? sumUsageSnapshots(month, [pool, personalSum])
     : personalSum
