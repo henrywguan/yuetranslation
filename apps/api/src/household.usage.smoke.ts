@@ -9,8 +9,8 @@ assert.equal(
     { ...emptyUsage(month), liveSeconds: 120 },
     { ...emptyUsage(month), liveSeconds: 900 },
   ).liveSeconds,
-  1020,
-  'legacy personal folds into partial pool',
+  900,
+  'overlap adopts higher personal total without double-counting pool',
 )
 assert.equal(
   mergePooledWithPersonal(emptyUsage(month), { ...emptyUsage(month), liveSeconds: 900 })
