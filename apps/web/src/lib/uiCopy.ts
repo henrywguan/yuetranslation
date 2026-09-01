@@ -106,7 +106,7 @@ export const ui = {
     jp: 'haa6 zoi3 jik6 man4',
   },
   camDocPrivacy: {
-    en: 'Your file is used only for translation. We don’t attach it to bug reports.',
+    en: "Your file is used only for translation. We don't attach it to bug reports.",
     zh: '文件只用於翻譯，唔會附喺錯誤回報入面。',
     jp: 'man4 gin2 zi2 jung6 jyu1 faan1 jik6, m4 wui5 fu6 hai2 cho3 ng6 wui4 bou3.',
   },
@@ -163,7 +163,7 @@ export const ui = {
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
-    en: 'OCR not configured — draw boxes and we’ll still try translate when text is detected.',
+    en: "OCR not configured — draw boxes and we'll still try translate when text is detected.",
     zh: '未設定 OCR——可手動畫框；偵測到文字後仍會翻譯。',
     jp: 'mei6 cit3 ding6 OCR — ho2 sau2 dung6 waak6 kwaang1; zing1 caak1 dou2 man4 zi6 hau6 jing4 wui5 faan1 jik6.',
   },
@@ -481,7 +481,7 @@ export const ui = {
   bugReportSending: { en: 'Sending…', zh: '送出中…', jp: 'seon3 ceot1 zung1…' },
   bugReportThanks: { en: 'Thanks — we got it', zh: '多謝，已收到', jp: 'do1 ze6，ji5 sau1 dou3' },
   bugReportThanksHint: {
-    en: 'We’ll follow up if we need more detail.',
+    en: "We'll follow up if we need more detail.",
     zh: '如需更多資料會再聯絡你。',
     jp: 'jyu4 seoi1 geng3 do1 coi3 liu4 wui5 zoi3 lyun4 lok3 nei5。',
   },
@@ -627,7 +627,7 @@ export const ui = {
     jp: 'nei5 haang4 gan6 go3 dong2 hau2…',
   },
   tonesStorySellScene: {
-    en: 'Now you’re on the other side…',
+    en: "Now you're on the other side…",
     zh: '而家換你喺檔口嗰邊……',
     jp: 'ji4 gaa1 wun6 nei5 hai2 dong2 hau2 go2 bin1…',
   },

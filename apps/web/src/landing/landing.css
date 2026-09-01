@@ -6,7 +6,7 @@
      chops the pricing table / Jyutping popups at the bottom. */
   overflow-x: clip;
   overflow-y: visible;
-  font-family: var(--font-body);
+  font-family: var(--font-english);
   padding-bottom: 15px;
 }
 

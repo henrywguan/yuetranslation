@@ -47,17 +47,19 @@
 }
 
 .legal-body {
+  font-family: var(--font-english);
   color: color-mix(in srgb, var(--ink) 92%, transparent);
   font-size: 1.02rem;
   line-height: 1.65;
+  letter-spacing: normal;
 }
 
 .legal-body .legal-h2 {
   margin: 2.1rem 0 0.7rem;
-  font-family: var(--font-display, 'Syne', system-ui, sans-serif);
+  font-family: var(--font-english);
   font-size: 1.28rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: normal;
   line-height: 1.25;
   color: var(--ink);
 }

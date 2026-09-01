@@ -1,5 +1,6 @@
 import type { ElementType } from 'react'
 import type { Bi } from '../lib/uiCopy'
+import { normalizeEnglishApostrophes } from '../lib/typography'
 import { useJpPopup } from '../lib/useJpPopup'
 import { JpPop } from './JpPop'
 
@@ -49,7 +50,7 @@ export function BiText({
     <Tag
       className={`bi bi--${size}${only ? ` bi--${only}` : ''}${inline ? ' bi--inline' : ''} ${className}`.trim()}
     >
-      {only === 'zh' ? zh : <span className="bi-en">{copy.en}</span>}
+      {only === 'zh' ? zh : <span className="bi-en">{normalizeEnglishApostrophes(copy.en)}</span>}
       {only ? null : zh}
     </Tag>
   )

@@ -105,6 +105,7 @@ button.jyutping {
 }
 
 .jyut-ruby-han {
+  font-family: var(--font-body);
   line-height: 1.15;
   letter-spacing: 0.02em;
   color: inherit;
@@ -257,6 +258,7 @@ button.jyutping {
 }
 
 .jp-pop-han {
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 650;
   line-height: 1.05;
@@ -364,7 +366,9 @@ button.jyutping {
 }
 
 .bi-en {
+  font-family: var(--font-english);
   font-weight: 600;
+  letter-spacing: normal;
 }
 
 .bi-zh-wrap {
@@ -604,6 +608,12 @@ button.spoken-line-text--action:focus-visible {
   .speak-btn.is-speaking .speak-btn-wave {
     animation: none;
   }
+}
+
+.result-text,
+.spoken-line-text {
+  font-family: var(--font-english);
+  letter-spacing: normal;
 }
 
 .result-with-def .result-text,
