@@ -3062,6 +3062,14 @@
   cursor: pointer;
 }
 
+.ln-footer-legal {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 .ln-footer-langs {
   margin: 0;
   position: relative;

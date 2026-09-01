@@ -1369,6 +1369,37 @@
   font: inherit;
 }
 
+.auth-legal {
+  margin: 0.35rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--muted) 92%, transparent);
+}
+
+.auth-legal .bi-en {
+  font-size: inherit;
+  font-weight: 450;
+  color: inherit;
+}
+
+.auth-legal-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--jade) 45%, transparent);
+  text-underline-offset: 0.12em;
+}
+
+.auth-legal-link:hover {
+  color: var(--ink);
+  text-decoration-color: var(--jade);
+}
+
 .auth-signout {
   color: var(--muted);
   justify-self: start;
