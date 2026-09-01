@@ -4,6 +4,35 @@ import { env } from './env.js'
 import { getAdmin } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
+function usageHasAny(usage: UsageSnapshot): boolean {
+  return (
+    usage.liveSeconds +
+      usage.ttsChars +
+      usage.translateCount +
+      usage.cameraSeconds +
+      usage.cameraTranslateCount +
+      usage.docsPages +
+      usage.aiVisionCount >
+    0
+  )
+}
+
+async function getPersonalUsage(userId: string, month: string): Promise<UsageSnapshot> {
+  const client = getAdmin()
+  if (!client) return emptyUsage(month)
+  const { data, error } = await client
+    .from('usage_months')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('month', month)
+    .maybeSingle()
+  if (error) {
+    console.error('[household] personal usage lookup failed', error.message)
+    return emptyUsage(month)
+  }
+  return usageFromRow(data as Record<string, unknown> | null, month)
+}
+
 export type HouseholdPlan = 'family' | 'business'
 export type MemberRole = 'owner' | 'member'
 
@@ -149,6 +178,63 @@ export async function getHouseholdUsage(
   return usageFromRow(data as Record<string, unknown> | null, month)
 }
 
+/**
+ * Copy the owner's personal `usage_months` into the pooled household meter when
+ * the household has no activity yet for this month. Prevents Account Hub from
+ * showing 0 after seats/pooling lands on accounts that already had personal usage.
+ *
+ * Skips when the household meter already has any non-zero counters.
+ */
+export async function seedHouseholdUsageFromOwnerIfNeeded(
+  householdId: string,
+  ownerUserId: string,
+  month = currentMonthKey(),
+): Promise<UsageSnapshot> {
+  const client = getAdmin()
+  if (!client) return emptyUsage(month)
+
+  const { data, error } = await client
+    .from('household_usage_months')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('month', month)
+    .maybeSingle()
+  if (error) {
+    console.error('[household] seed lookup failed', error.message)
+    return emptyUsage(month)
+  }
+  if (data) {
+    const current = usageFromRow(data as Record<string, unknown>, month)
+    if (usageHasAny(current)) return current
+  }
+
+  const personal = await getPersonalUsage(ownerUserId, month)
+  if (!usageHasAny(personal)) {
+    return data ? usageFromRow(data as Record<string, unknown>, month) : emptyUsage(month)
+  }
+
+  const { error: upsertError } = await client.from('household_usage_months').upsert(
+    {
+      household_id: householdId,
+      month,
+      live_seconds: personal.liveSeconds,
+      tts_chars: personal.ttsChars,
+      translate_count: personal.translateCount,
+      camera_seconds: personal.cameraSeconds,
+      camera_translate_count: personal.cameraTranslateCount,
+      docs_pages: personal.docsPages,
+      ai_vision_count: personal.aiVisionCount,
+    },
+    { onConflict: 'household_id,month' },
+  )
+  if (upsertError) {
+    console.error('[household] seed upsert failed', upsertError.message)
+    // Still surface personal totals so the hub is accurate this request.
+    return personal
+  }
+  return personal
+}
+
 export async function incrementHouseholdUsage(
   householdId: string,
   delta: {
@@ -274,6 +360,10 @@ export async function ensureOwnerHousehold(
     member_role: 'owner',
   })
   if (memErr) console.error('[household] owner member insert failed', memErr.message)
+
+  // Carry over this month's personal meters into the new pooled household row.
+  await seedHouseholdUsageFromOwnerIfNeeded(household.id, ownerUserId)
+
   return household
 }
 
