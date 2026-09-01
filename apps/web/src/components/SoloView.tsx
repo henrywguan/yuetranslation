@@ -56,18 +56,17 @@ export function SoloView() {
 
   const latest = history[0]
   const turnActive = live || translating || Boolean(enInterim) || Boolean(yueInterim)
-  // Voice: no live STT in panes — source/translation appear only after mic turn ends.
   const storeEn =
+    enInterim ||
     enTranslation ||
-    (!live && enInterim) ||
     (!turnActive && latest
       ? latest.from === 'en'
         ? latest.source
         : latest.translation
       : '')
   const storeYue =
+    yueInterim ||
     yueTranslation ||
-    (!live && yueInterim) ||
     (!turnActive && latest
       ? latest.from === 'yue'
         ? latest.source
