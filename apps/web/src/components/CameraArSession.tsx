@@ -168,6 +168,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       const selected = b.id === selectedId
       const matched = Boolean(b.bg && b.fg)
 
+      // Lock panel to the OCR word region — same placement as upload overlays.
       const inflateX = obw * 0.05
       const inflateY = obh * 0.1
       const panelX = mapX(ox - inflateX)
@@ -211,6 +212,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       })
     }
 
+    // Selected on top for both paint and hit order.
     const paintOrder = [...planned].sort((a, b) => Number(a.selected) - Number(b.selected))
 
     for (const p of paintOrder) {

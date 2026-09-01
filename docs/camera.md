@@ -6,7 +6,7 @@ Sign-in-only mode for **AR**, **Upload**, and **Documents** (English ↔ written
 
 ## Paths / 路徑
 
-1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Each region gets a tight source cover plus a floating translation chip; unselected regions stay soft/outlined. Pinch-zoom or mouse-wheel the still. Tap a chip/cover for details. Clear resumes preview. X exits to the choice modal.
+1. **AR translation** — fullscreen camera; tap the shutter to freeze a still, then OCR + translate once (no continuous polling). Shows the shared translating animation while loading. Each region gets an inline translation panel locked to the detected text (same placement as upload). Pinch-zoom or mouse-wheel the still. Tap a region for details. Clear resumes preview. X exits to the choice modal.
 2. **Upload image** — still photo; draw boxes and/or auto-detect; **Translate** / **Translate all**. Overlays stay locked to each OCR/translated region. Drawn boxes can be moved until Translate; after translation they lock. Pinch-zoom / wheel / slider; selectable Results list.
 3. **Documents** — PDF / DOCX / PPTX / XLSX / TXT with layout kept. Office files rewrite OOXML in place. PDFs: extract text layer when present, always rasterize the page, paint translations at source positions (font size tracks the source line); scanned pages use Azure Vision via `/api/camera/scan`. Uses the Cantonese translate pipeline (not DeepL).
 
