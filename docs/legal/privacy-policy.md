@@ -14,7 +14,7 @@ We do not currently list a physical mailing address. When we obtain a PO Box or 
 
 ## 1. Who we are
 
-JyutTranslate is a web service that helps people translate between English and Hong Kong Cantonese (粵語), including text translation, Jyutping romanization, live speech translation, text-to-speech, and camera / document translation features.
+JyutTranslate is a web service that helps people translate between English and Hong Kong Cantonese (粵語), including text translation, Jyutping romanization, interactive character breakdown, live speech translation, text-to-speech, and camera / document translation features.
 
 The Service is operated by Henry Guan, doing business as JyutTranslate. This policy applies to consumer use of the Service worldwide, subject to applicable law.
 
@@ -65,6 +65,9 @@ Depending on the feature you use, the Service may process:
 - Audio from your microphone for speech recognition / live translation
 - Photos, camera frames, or uploaded images for OCR and translation
 - Documents (such as PDF or Office files) for translation
+- Chinese text you tap for character breakdown / learning overlays
+
+**Speech recognition paths:** Live microphone translation typically uses **Microsoft Azure Speech** via our API. On some devices or configurations (for example, when Azure is unavailable), the app may fall back to your browser’s **Web Speech API**, in which case speech recognition is handled by your browser and/or device platform (such as Apple or Google) under their policies, not stored by us as audio files.
 
 **How we treat this content:**
 
@@ -148,6 +151,7 @@ We share information with vendors who help us run the Service, under contractual
 | **Microsoft Azure** | Speech (STT/TTS) and vision/OCR |
 | **LLM provider** (OpenAI-compatible API such as DeepSeek / OpenAI, as configured) | Machine translation and related text/vision processing |
 | **Google / Apple** | Sign-in (if you choose those providers) |
+| **Google Fonts** | Typography delivery (fonts loaded from Google’s CDN when you visit the site) |
 
 We may also disclose information if required by law, legal process, or to protect rights, safety, and security; or in connection with a merger, acquisition, or asset transfer (in which case we will take reasonable steps so the recipient honors this policy or provide notice of changes).
 
