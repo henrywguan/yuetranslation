@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
 import { openAuthScreen } from '../lib/auth'
@@ -52,6 +52,16 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const keyDownAt = useRef(0)
   /** True after a sticky-tap “stop” press so pointerup doesn’t re-arm. */
   const stopTapRef = useRef(false)
+
+  // Release pointer capture if the turn ended without pointerup (common after translate).
+  useEffect(() => {
+    if (!live && !liveInteraction) {
+      activePointer.current = null
+      downAt.current = 0
+      keyDownAt.current = 0
+      stopTapRef.current = false
+    }
+  }, [live, liveInteraction])
 
   const canLive = !entitlement || entitlement.allowed.live
   const needsLogin = Boolean(
