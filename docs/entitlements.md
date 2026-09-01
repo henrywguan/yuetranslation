@@ -40,6 +40,7 @@ Family (**4 seats**) and Business (**10 seats**) can invite members by email fro
 - Monthly meters (live mic, TTS, camera, documents, AI vision) are **pooled** on `household_usage_months` — not multiplied per seat.
 - Pending invites count toward the seat cap until accepted, revoked, or expired.
 - Apply migration `012_household_seats_pooled_usage.sql`.
+- **Legacy usage:** meters recorded before pooling live in per-user `usage_months`. Run `015_backfill_household_usage_from_legacy.sql` (or `POST /api/admin/household-usage/backfill`) once so historical totals fold into `household_usage_months`.
 
 API: `GET /api/household`, `POST /api/household/invites`, `POST /api/household/accept`, revoke/remove under `/api/household/invites/:id` and `/api/household/members/:userId`.
 
