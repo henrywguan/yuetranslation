@@ -12,9 +12,18 @@ export function scheduleHouseholdUsageBackfillOnStartup(): void {
       console.log('[startup] household usage backfill complete', result)
     })
     .catch((err) => {
-      console.error(
-        '[startup] household usage backfill failed',
-        err instanceof Error ? err.message : err,
-      )
+      const message = err instanceof Error ? err.message : String(err)
+      if (
+        message.toLowerCase().includes('household') ||
+        message.toLowerCase().includes('schema cache')
+      ) {
+        console.error(
+          '[startup] household usage backfill skipped — apply ' +
+            'supabase/migrations/apply_011_through_015_household.sql in Supabase SQL Editor first. ' +
+            message,
+        )
+        return
+      }
+      console.error('[startup] household usage backfill failed', message)
     })
 }

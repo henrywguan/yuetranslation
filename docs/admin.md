@@ -112,6 +112,8 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 13. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
 14. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
 
+**If you see** `Could not find the table 'public.households' in the schema cache` — migrations `011`–`015` are not applied. Paste and run the one-shot file `supabase/migrations/apply_011_through_015_household.sql` in **Supabase → SQL Editor** (creates `households` / members / invites / pooled usage, renames plans, backfills legacy meters, then reloads the PostgREST schema cache).
+
 **Legacy usage:** Before household pooling, meters lived in `usage_months` per user. After `012`, Family/Business usage should be in `household_usage_months`. Run migration `015` (or `POST /api/admin/household-usage/backfill`) once on production so historical usage carries over.
 
 Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a session.

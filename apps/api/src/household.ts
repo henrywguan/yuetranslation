@@ -4,6 +4,33 @@ import { env } from './env.js'
 import { getAdmin, listProfiles } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
+let loggedMissingHouseholdSchema = false
+
+/** PostgREST returns this when migrations 011–015 have not been applied. */
+export function isMissingHouseholdSchemaError(message: string | undefined | null): boolean {
+  if (!message) return false
+  const m = message.toLowerCase()
+  return (
+    m.includes("could not find the table 'public.households'") ||
+    m.includes("could not find the table 'public.household_members'") ||
+    m.includes("could not find the table 'public.household_usage_months'") ||
+    m.includes('schema cache')
+  )
+}
+
+function warnMissingHouseholdSchema(context: string, message: string): void {
+  if (!loggedMissingHouseholdSchema) {
+    loggedMissingHouseholdSchema = true
+    console.error(
+      `[household] ${context}: household tables missing. ` +
+        'Run supabase/migrations/apply_011_through_015_household.sql in the Supabase SQL Editor. ' +
+        `(${message})`,
+    )
+    return
+  }
+  console.error(`[household] ${context}`, message)
+}
+
 function usageHasAny(usage: UsageSnapshot): boolean {
   return (
     usage.liveSeconds +
@@ -138,7 +165,11 @@ export async function getMembershipForUser(userId: string): Promise<{
     .eq('user_id', userId)
     .maybeSingle()
   if (error) {
-    console.error('[household] membership lookup failed', error.message)
+    if (isMissingHouseholdSchemaError(error.message)) {
+      warnMissingHouseholdSchema('membership lookup failed', error.message)
+    } else {
+      console.error('[household] membership lookup failed', error.message)
+    }
     return null
   }
   if (!membership) return null
@@ -149,7 +180,13 @@ export async function getMembershipForUser(userId: string): Promise<{
     .eq('id', (membership as MemberRow).household_id)
     .maybeSingle()
   if (hErr || !household) {
-    if (hErr) console.error('[household] household lookup failed', hErr.message)
+    if (hErr) {
+      if (isMissingHouseholdSchemaError(hErr.message)) {
+        warnMissingHouseholdSchema('household lookup failed', hErr.message)
+      } else {
+        console.error('[household] household lookup failed', hErr.message)
+      }
+    }
     return null
   }
 
@@ -517,7 +554,11 @@ export async function ensureOwnerHousehold(
   if (error || !created) {
     const raced = await getMembershipForUser(ownerUserId)
     if (raced?.membership.member_role === 'owner') return raced.household
-    console.error('[household] create failed', error?.message)
+    if (error && isMissingHouseholdSchemaError(error.message)) {
+      warnMissingHouseholdSchema('create failed', error.message)
+    } else {
+      console.error('[household] create failed', error?.message)
+    }
     return null
   }
 

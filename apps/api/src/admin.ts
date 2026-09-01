@@ -705,7 +705,15 @@ export async function adminBackfillHouseholdUsage(req: AuthedRequest, res: Respo
     })
     res.json({ ok: true, ...result })
   } catch (e) {
-    res.status(500).json({ message: e instanceof Error ? e.message : 'Household usage backfill failed' })
+    const message = e instanceof Error ? e.message : 'Household usage backfill failed'
+    const missing =
+      message.toLowerCase().includes('schema cache') ||
+      message.toLowerCase().includes("could not find the table 'public.household")
+    res.status(missing ? 503 : 500).json({
+      message: missing
+        ? 'Household tables are missing. Run supabase/migrations/apply_011_through_015_household.sql in the Supabase SQL Editor, then retry.'
+        : message,
+    })
   }
 }
 
