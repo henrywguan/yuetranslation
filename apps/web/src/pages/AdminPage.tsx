@@ -85,6 +85,11 @@ function monthInputFromKey(key: string): string {
   return key.replace('_', '-')
 }
 
+/** Current billing month key (`YYYY_MM`, UTC). */
+function currentMonthKey(): string {
+  return new Date().toISOString().slice(0, 7).replace('-', '_')
+}
+
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('users')
   const [gate, setGate] = useState<'loading' | 'ok' | 'denied'>('loading')
@@ -275,7 +280,7 @@ export function AdminPage() {
     docsPages?: number
   }) => {
     if (!resetUser) return
-    const month = monthKeyFromInput(monthInput)
+    const month = currentMonthKey()
     setBusy(true)
     setError('')
     try {
