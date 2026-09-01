@@ -29,6 +29,8 @@ export type AdminUserRow = {
   id: string
   email: string | null
   displayName: string | null
+  /** Custom Account Hub username from profiles; null if unset. */
+  username: string | null
   createdAt: string | null
   plan: 'free' | 'family' | 'business'
   role: 'admin' | 'family' | null
@@ -118,6 +120,7 @@ async function buildAdminUsers(month: string): Promise<AdminUserRow[]> {
       id: u.id,
       email: u.email,
       displayName: u.displayName,
+      username: profile?.username ?? null,
       createdAt: u.createdAt,
       plan,
       role: profile?.role ?? null,
@@ -177,6 +180,7 @@ function filterUsers(
       (r) =>
         (r.email || '').toLowerCase().includes(q) ||
         (r.displayName || '').toLowerCase().includes(q) ||
+        (r.username || '').toLowerCase().includes(q) ||
         r.id.toLowerCase().includes(q),
     )
   }
@@ -260,6 +264,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'id',
       'email',
       'displayName',
+      'username',
       'plan',
       'role',
       'isAdmin',
@@ -288,6 +293,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.id,
           r.email,
           r.displayName,
+          r.username,
           r.plan,
           r.role,
           r.isAdmin,

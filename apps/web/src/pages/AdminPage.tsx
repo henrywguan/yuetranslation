@@ -38,6 +38,23 @@ function monthKeyFromInput(value: string): string {
   return value.replace('-', '_')
 }
 
+/** Prefer custom Account Hub username, then OAuth name, then email. */
+function adminUserPrimary(u: Pick<AdminUser, 'username' | 'displayName' | 'email' | 'id'>): string {
+  if (u.username) return `@${u.username}`
+  return u.displayName || u.email || u.id.slice(0, 8)
+}
+
+function adminUserSubtitle(u: Pick<AdminUser, 'username' | 'displayName' | 'email'>): string | null {
+  const parts: string[] = []
+  if (u.username) {
+    if (u.displayName) parts.push(u.displayName)
+    if (u.email) parts.push(u.email)
+  } else if (u.displayName && u.email) {
+    parts.push(u.email)
+  }
+  return parts.length ? parts.join(' · ') : null
+}
+
 function monthInputFromKey(key: string): string {
   return key.replace('_', '-')
 }
@@ -445,7 +462,7 @@ export function AdminPage() {
               Search
               <input
                 type="search"
-                placeholder="Email, name, or id"
+                placeholder="Email, username, name, or id"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
@@ -561,8 +578,10 @@ export function AdminPage() {
                   <tr key={u.id} className={u.disabled ? 'is-disabled' : u.overQuota ? 'is-over' : ''}>
                     <td>
                       <button type="button" className="admin-user-btn" onClick={() => void openUser(u)}>
-                        <strong>{u.displayName || u.email || u.id.slice(0, 8)}</strong>
-                        {u.email && u.displayName ? <span className="admin-sub">{u.email}</span> : null}
+                        <strong className="admin-user-primary">{adminUserPrimary(u)}</strong>
+                        {adminUserSubtitle(u) ? (
+                          <span className="admin-sub">{adminUserSubtitle(u)}</span>
+                        ) : null}
                         {u.disabled ? <span className="admin-badge">Banned</span> : null}
                         {u.overQuota && !u.disabled ? (
                           <span className="admin-badge admin-badge--warn">Over quota</span>
@@ -706,8 +725,10 @@ export function AdminPage() {
             <aside className="admin-detail" aria-label="User usage detail">
               <header className="admin-detail-header">
                 <div>
-                  <h2>{selected.displayName || selected.email || selected.id}</h2>
-                  <p className="admin-muted">{selected.email}</p>
+                  <h2>{adminUserPrimary(selected)}</h2>
+                  {adminUserSubtitle(selected) ? (
+                    <p className="admin-muted">{adminUserSubtitle(selected)}</p>
+                  ) : null}
                 </div>
                 <button type="button" className="admin-link-btn" onClick={() => setSelected(null)}>
                   Close
