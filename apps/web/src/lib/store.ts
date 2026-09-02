@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
-import { speakText, stopSpeaking, isTtsPlaying, unlockTtsPlayback } from './tts'
+import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
@@ -417,8 +417,8 @@ async function runTranslation(
   set: (p: Partial<State>) => void,
   lang: Lang,
   text: string,
-  opts?: { lean?: boolean; minThinkingMs?: number; enrichAlts?: boolean },
-) {
+  opts?: { lean?: boolean; minThinkingMs?: number; enrichAlts?: boolean; skipSpeak?: boolean },
+): Promise<{ text: string; lang: Lang } | null> {
   const to: Lang = lang === 'en' ? 'yue' : 'en'
   const seq = ++translateSeq
   pending.set(lang, seq)
@@ -439,10 +439,10 @@ async function runTranslation(
       includeAlternatives: lang === 'en' && !lean,
       signal,
     })
-    if (pending.get(lang) !== seq || signal.aborted) return
+    if (pending.get(lang) !== seq || signal.aborted) return null
     const hold = minThinkingMs - (Date.now() - startedAt)
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
-    if (pending.get(lang) !== seq || signal.aborted) return
+    if (pending.get(lang) !== seq || signal.aborted) return null
     const clean =
       to === 'yue'
         ? sanitizeYueTranslation(result.text)
@@ -454,7 +454,7 @@ async function runTranslation(
             ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
             : 'Could not produce English for this phrase. Try again or rephrase.',
       })
-      return
+      return null
     }
     const altSanitize =
       to === 'yue'
@@ -538,13 +538,15 @@ async function runTranslation(
       void enrichTextAlternatives(get, set, text, clean, seq, signal)
     }
   } catch (e) {
-    if (e instanceof DOMException && e.name === 'AbortError') return
-    if (e instanceof Error && e.name === 'AbortError') return
+    if (e instanceof DOMException && e.name === 'AbortError') return null
+    if (e instanceof Error && e.name === 'AbortError') return null
     set({ error: String(e) })
+    return null
   } finally {
     endTranslate(set)
   }
-  if (speak) await speakFinal(get, set, speak.text, speak.lang)
+  if (speak && !opts?.skipSpeak) await speakFinal(get, set, speak.text, speak.lang)
+  return speak
 }
 
 function flushLiveMeter() {
@@ -613,7 +615,7 @@ function holdSourceText() {
 }
 
 function bargeInTtsIfNeeded(get: () => State) {
-  if (isTtsPlaying() || get().status === 'speaking') {
+  if (isMicEchoMuted() || get().status === 'speaking') {
     stopSpeaking()
     get().session?.setPlaybackActive(false)
   }
@@ -866,17 +868,17 @@ export const useYueStore = create<State>((set, get) => ({
     // Sync unlock before any await — iOS needs a gesture-time play() so later
     // auto-speak (after STT + translate) can use the same HTMLAudioElement.
     unlockTtsPlayback()
-    // Stop prior auto-speak so echo guard / isTtsPlaying() cannot mute the new session.
-    if (isTtsPlaying() || get().status === 'speaking') {
-      speakToken += 1
-      stopSpeaking()
-      set({ status: 'idle', speakingText: null })
-    }
+    // Always hard-stop any prior TTS/echo state — a stuck `playing` flag silences STT everywhere.
+    speakToken += 1
+    stopSpeaking()
+    set({ status: 'idle', speakingText: null })
 
     const apple = isAppleTouchDevice()
     // iPhone/iPad: always start Web Speech in the user-gesture turn. A warm Azure
     // token on the second press skips that path and Azure often listens with no audio.
     const webSpeechFirst = apple
+    // Re-open the iOS audio session before Web Speech after auto-speak from the prior turn.
+    const micWarm = apple ? unlockMicrophone() : null
     // Desktop / warm-token paths: kick off getUserMedia now so it runs during sync setup.
     const micPriming = webSpeechFirst ? null : unlockMicrophone()
 
@@ -961,6 +963,8 @@ export const useYueStore = create<State>((set, get) => ({
     // iPhone/iPad without a warm Azure token: start Web Speech BEFORE any await so
     // recognition.start() stays in the user-gesture turn (otherwise Safari listens with no audio).
     if (webSpeechFirst) {
+      const warmed = micWarm ? await micWarm : null
+      if (warmed) stopMediaStream(warmed)
       next = createWebSpeechSession(handlers, webSpeechLock())
       if (next) {
         try {
@@ -1106,6 +1110,7 @@ export const useYueStore = create<State>((set, get) => ({
     tapSticky = false
     clearTapTimers()
     flushingHold = true
+    let postSpeak: { text: string; lang: Lang } | null = null
     try {
       // Already have committed STT finals → shorter flush (latency). Else wait for late finals.
       const committedBeforeStop = holdFinals.length > 0 && !holdInterim.trim()
@@ -1127,7 +1132,7 @@ export const useYueStore = create<State>((set, get) => ({
 
       if (lang && text) {
         // Capture finished → single final translate (lean = no alt fan-out).
-        await runTranslation(get, set, lang, text, { lean: true })
+        postSpeak = await runTranslation(get, set, lang, text, { lean: true, skipSpeak: true })
       } else {
         set({
           status: 'idle',
@@ -1139,6 +1144,7 @@ export const useYueStore = create<State>((set, get) => ({
     } finally {
       flushingHold = false
     }
+    if (postSpeak) await speakFinal(get, set, postSpeak.text, postSpeak.lang)
   },
 
   translateTyped: async (text, from) => {
