@@ -16,7 +16,7 @@
   --font-english: 'Noto Sans', system-ui, sans-serif;
   --font-display: Syne, var(--font-english);
   --font-body: 'Noto Sans HK', var(--font-english);
-  --font-chao: 'Noto Sans', 'Noto Sans HK', sans-serif;
+  --font-chao: 'Noto Sans', sans-serif;
 }
 
 * {
@@ -33,48 +33,76 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.chao {
+/* Hidden preload so CJK + Chao subsets download before paint */
+.font-preload {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.font-preload-syne {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+.font-preload-hk {
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+.font-preload-noto {
   font-family: var(--font-chao);
-  font-feature-settings: 'kern' 1;
+  font-weight: 600;
 }
 
-.jyut-logo {
-  display: block;
-  overflow: visible;
-}
-
-.jyut-logo--mark {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+/* HTML logo mark — avoid SVG <text> (often drops CJK / shows tofu) */
+.logo-mark {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  flex-shrink: 0;
+  background: linear-gradient(145deg, var(--jade-bright), var(--jade) 45%, var(--jade-deep));
   box-shadow:
     0 8px 22px color-mix(in srgb, var(--jade) 28%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  overflow: hidden;
 }
 
-.jyut-logo-mark-j {
+.logo-mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.42), transparent 70%);
+  pointer-events: none;
+}
+
+.logo-mark-j {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-46%);
   font-family: var(--font-display);
   font-weight: 800;
+  font-size: 46px;
+  line-height: 1;
   letter-spacing: -0.055em;
-  fill: var(--on-jade);
+  color: var(--on-jade);
+  z-index: 1;
 }
 
-.jyut-logo-yue--on-jade {
+.logo-mark-yue {
+  position: absolute;
+  left: 36px;
+  top: 14px;
   font-family: var(--font-body);
   font-weight: 700;
-  fill: var(--on-jade);
-}
-
-.jyut-logo-latin {
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: -0.055em;
-  fill: var(--ink-bright);
-}
-
-.jyut-logo-yue {
-  font-family: var(--font-body);
-  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--on-jade);
+  z-index: 2;
 }
 
 .brand-row {
@@ -257,19 +285,45 @@ body {
   border-radius: 10px;
   background: linear-gradient(145deg, var(--jade), var(--jade-deep));
   color: var(--on-jade);
-  font-family: var(--font-display);
+  font-family: var(--font-english);
   font-weight: 800;
   font-size: 20px;
   display: grid;
   place-items: center;
 }
 
-.tone-chao {
-  font-family: var(--font-chao);
-  font-size: 22px;
-  font-weight: 600;
+/* Drawn Chao letters — no Unicode tofu risk */
+.chao-glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  vertical-align: middle;
+  color: var(--jade-bright);
+}
+
+.chao-glyph svg {
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
+.chao-glyph--inline {
+  height: 22px;
+  gap: 3px;
+  margin: 0 2px;
+}
+
+.chao-glyph--inline svg {
+  height: 20px;
+}
+
+.chao-inline-set {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--ink-bright);
-  letter-spacing: 0.02em;
+  vertical-align: middle;
 }
 
 .tone-han {
@@ -308,7 +362,6 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Portrait extras */
 .feat-list {
   display: flex;
   flex-direction: column;
@@ -365,19 +418,17 @@ body {
   text-align: center;
   background: color-mix(in srgb, var(--harbor-deep) 70%, #000);
   border: 1px solid color-mix(in srgb, var(--jade) 14%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 .tone-mini .tone-n {
-  margin: 0 auto 8px;
+  margin: 0;
   width: 32px;
   height: 32px;
   font-size: 17px;
-}
-
-.tone-mini .tone-chao {
-  font-size: 18px;
-  display: block;
-  margin-bottom: 4px;
 }
 
 .tone-mini .tone-han {

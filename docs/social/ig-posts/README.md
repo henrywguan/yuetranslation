@@ -10,10 +10,11 @@ Static brand posts rendered from HTML with **project fonts and logo**:
 
 ## Brand sources
 
-- Logo mark: same SVG as `JyutLogo` `variant="mark"` (`apps/web/src/components/JyutLogo.tsx`)
-- Fonts: Syne + Noto Sans + Noto Sans HK (same Google Fonts link as `apps/web/index.html`)
+- Logo mark: HTML lockup matching `JyutLogo` `variant="mark"` (Syne **J** + Noto **粵** on jade)
+- Fonts: self-hosted Syne / Noto Sans / Noto Sans HK subsets in `fonts/` + `fonts-local.css`
+- Chao letters: drawn SVG bars (not Unicode) so they never tofu
 - Colors: Harbor / Jade / Ink from `apps/web/src/index.css`
-- Tone set: `詩史試時市是` + Chao `˥ ˧˥ ˧ ˨˩ ˩˧ ˨` from `tonesData.ts`
+- Tone set: `詩史試時市是` from `tonesData.ts`
 - Dinner example: `你返唔返嚟食飯㗎？` · `nei5 faan2 m4 faan1 lai4 sik6 faan6 gaa3`
 
 ## Render
@@ -24,4 +25,4 @@ node docs/social/ig-posts/render.mjs
 node docs/social/ig-posts/render.mjs --out /opt/cursor/artifacts/social/v3
 ```
 
-Requires Chrome/Chromium (`google-chrome` or `CHROME_PATH`).
+Requires Chrome/Chromium. The script serves this folder over `localhost` (so `@font-face` loads) and aborts if `粵` still measures as missing.
