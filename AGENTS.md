@@ -12,6 +12,16 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 **Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
 
+### Instagram / static social posts (approved look)
+
+When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, start from the approved Jyutping + Chao tones posts — **not** a new AI poster style.
+
+- **Canon:** [`docs/social/ig-posts/DESIGN.md`](docs/social/ig-posts/DESIGN.md)
+- **References:** `docs/social/ig-posts/out/ig-post-jyutping-tones-{1080,portrait}.png` + matching HTML/`shared.css`
+- **Locked:** Harbor / Jade / Ink · Syne + Noto Sans HK · **`docs/brand/favicon.png` only** (never regenerate the chop)
+- **Pipeline:** HTML → `node docs/social/ig-posts/render.mjs` → commit `out/*.png`
+- Content/topic can change; **colors, type, logo, atmosphere, and composition language stay**
+
 ## Cursor Cloud specific instructions
 
 ### Paid / external API usage (cloud testing only)

@@ -1,5 +1,8 @@
 # Instagram posts — Jyutping + Chao tones
 
+> **Design canon:** Henry approved these two posts as the visual baseline for future static IG work.  
+> Full recipe → **[`DESIGN.md`](./DESIGN.md)** (colors, fonts, logo, composition, pipeline).
+
 Static brand posts rendered from HTML with **project fonts and logo**:
 
 | Asset | Size | File |
