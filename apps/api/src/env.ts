@@ -70,7 +70,7 @@ export const env = {
   allowNoncommercialDicts: (process.env.YUE_ALLOW_NONCOMMERCIAL_DICTS || '0') === '1',
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
-  freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 5),
+  freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 60),
   /** Soft analytics default for Free; Family/Business TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   /** Free camera hard cap (minutes / month). */
@@ -93,7 +93,7 @@ export const env = {
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
   familyLiveMinutes: Number(
-    process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 60,
+    process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 480,
   ),
   familyTtsChars: Number(
     process.env.YUE_FAMILY_TTS_CHARS || process.env.YUE_PRO_TTS_CHARS || 200000,

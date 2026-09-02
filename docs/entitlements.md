@@ -21,13 +21,13 @@ Code defaults in `apps/api/src/env.ts`. **Production overrides** in `vercel.json
 
 | Meter | Free | Family | Business |
 | --- | --- | --- | --- |
-| Live minutes | `YUE_FREE_LIVE_MINUTES` (default **5**; **prod `vercel.json` = 5**) | `YUE_FAMILY_LIVE_MINUTES` (default **60** = 1 hr; **prod `vercel.json` = 60**) | `YUE_BUSINESS_LIVE_MINUTES` or legacy `YUE_MAX_LIVE_MINUTES` (default 2400) |
+| Live minutes | `YUE_FREE_LIVE_MINUTES` (default **60** = 1 hr; **prod `vercel.json` = 60**) | `YUE_FAMILY_LIVE_MINUTES` (default **480** = 8 hr; **prod `vercel.json` = 480**) | `YUE_BUSINESS_LIVE_MINUTES` or legacy `YUE_MAX_LIVE_MINUTES` (default 2400) |
 | TTS chars | `YUE_FREE_TTS_CHARS` (default **30000**) hard cap | Unlimited (`ttsUnlimited`) — still counted | Unlimited — still counted |
 | Camera minutes | `YUE_FREE_CAMERA_MINUTES` (default **60**) | `YUE_FAMILY_CAMERA_MINUTES` (default **480** = 8 hr) | Unlimited (`cameraUnlimited`) — still counted |
 | Document pages | `YUE_FREE_DOCS_PAGES` (default **40**) | `YUE_FAMILY_DOCS_PAGES` (default **400**) | Unlimited (`docsUnlimited`) — still counted |
 | Auto-speak | No | Yes | Yes |
 
-Marketing copy rounds Family live as “~1 hr”; production sets Family live to **60 minutes** via `vercel.json` (`YUE_FAMILY_LIVE_MINUTES=60`). Prefer this table + env over stale marketing blurbs when debugging quotas.
+Marketing copy rounds Free live as “~1 hr” and Family live as “~8 hr”; production sets Free live to **60 minutes** and Family live to **480 minutes** via `vercel.json`. Prefer this table + env over stale marketing blurbs when debugging quotas.
 
 Camera and Documents share the **same access gate** (signed-in + plan can use cam/docs) but **separate meters**. Details: [camera.md](./camera.md).
 
@@ -51,7 +51,7 @@ Returned by `/api/health` and `/api/entitlement`:
   "plan": "free",
   "limits": {
     "plan": "free",
-    "live_minutes": 5,
+    "live_minutes": 60,
     "tts_chars": 30000,
     "camera_minutes": 60,
     "docs_pages": 40,
