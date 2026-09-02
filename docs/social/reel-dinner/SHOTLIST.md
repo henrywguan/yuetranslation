@@ -12,7 +12,7 @@
 ## Camera rules (reveal)
 
 - **No** left/right bobbing on a full-page screenshot
-- Vertical pan + scale only (phone-readable)
+- Vertical pan + scale only — punch ~3× into translation, pull, then ~3.3× into variation cards
 - Overlay callouts repeat the Cantonese + Jyutping so the beat lands even on small screens
 
 ## On-screen

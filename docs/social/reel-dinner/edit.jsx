@@ -311,29 +311,30 @@ function beatReveal(dur, uiStill) {
             [dur - 0.08, 1],
           ]),
           // Establish → punch translation → ease → dive variations
+          // Scales are aggressive so 口語 is phone-readable (not a tiny full-page still)
           chain("scale", dur, [
-            [0, 1.04],
-            [1.1, 1.12, "ease-out"],
-            [1.35, 1.12],
-            [2.55, 2.55, "house"], // INTO translation
-            [5.1, 2.62, "ease-in-out"],
-            [6.0, 1.85, "house"], // pull back
-            [6.55, 1.85],
-            [8.1, 2.45, "house"], // INTO variations
-            [dur - 0.08, 2.55, "ease-in-out"],
+            [0, 1.08],
+            [0.95, 1.18, "ease-out"],
+            [1.2, 1.18],
+            [2.4, 3.05, "house"], // hard punch INTO primary translation
+            [5.0, 3.15, "ease-in-out"],
+            [5.9, 1.55, "house"], // clear pull so the next dive reads
+            [6.4, 1.55],
+            [8.0, 3.2, "house"], // hard punch INTO variations cards
+            [dur - 0.08, 3.35, "ease-in-out"],
           ]),
           // Translation sits upper-mid on the still → pan down (positive Y)
           // Variations sit lower → pan up (negative Y)
           chain("offsetY", dur, [
-            [0, 40],
-            [1.1, 20, "ease-out"],
-            [1.35, 20],
-            [2.55, 210, "house"],
-            [5.1, 230, "ease-in-out"],
-            [6.0, 40, "house"],
-            [6.55, 40],
-            [8.1, -280, "house"],
-            [dur - 0.08, -300, "ease-in-out"],
+            [0, 30],
+            [0.95, 10, "ease-out"],
+            [1.2, 10],
+            [2.4, 290, "house"],
+            [5.0, 310, "ease-in-out"],
+            [5.9, 20, "house"],
+            [6.4, 20],
+            [8.0, -360, "house"],
+            [dur - 0.08, -390, "ease-in-out"],
           ]),
           // Keep X locked — no bob
           chain("offsetX", dur, [
@@ -377,8 +378,8 @@ function beatReveal(dur, uiStill) {
           chain("opacity", dur, [
             [0, 0],
             [0.25, 1, "house"],
-            [5.4, 1],
-            [5.85, 0],
+            [5.25, 1],
+            [5.7, 0],
             [dur - 0.08, 0],
           ]),
         ]}
@@ -398,13 +399,13 @@ function beatReveal(dur, uiStill) {
           chain("opacity", dur, [
             [0, 0],
             [0.35, 1, "house"],
-            [5.4, 1],
-            [5.85, 0],
+            [5.25, 1],
+            [5.7, 0],
             [dur - 0.08, 0],
           ]),
         ]}
       >
-        Zoom the translation
+        Read the real line
       </text>
 
       {/* Readable callout while parked on the translation */}
@@ -417,18 +418,18 @@ function beatReveal(dur, uiStill) {
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [2.4, 0],
-            [2.85, 1, "house"],
-            [5.35, 1],
-            [5.85, 0],
+            [2.25, 0],
+            [2.7, 1, "house"],
+            [5.2, 1],
+            [5.7, 0],
             [dur - 0.08, 0],
           ]),
           chain("offsetY", dur, [
             [0, 36],
-            [2.4, 36],
-            [2.9, 0, "house"],
-            [5.35, 0],
-            [5.85, 24],
+            [2.25, 36],
+            [2.75, 0, "house"],
+            [5.2, 0],
+            [5.7, 24],
             [dur - 0.08, 24],
           ]),
         ]}
@@ -500,8 +501,8 @@ function beatReveal(dur, uiStill) {
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [5.9, 0],
-            [6.35, 1, "house"],
+            [5.75, 0],
+            [6.2, 1, "house"],
             [dur - 0.08, 1],
           ]),
         ]}
@@ -520,8 +521,8 @@ function beatReveal(dur, uiStill) {
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [6.0, 0],
-            [6.45, 1, "house"],
+            [5.85, 0],
+            [6.3, 1, "house"],
             [dur - 0.08, 1],
           ]),
         ]}
@@ -539,15 +540,15 @@ function beatReveal(dur, uiStill) {
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [7.8, 0],
-            [8.35, 1, "house"],
+            [7.7, 0],
+            [8.25, 1, "house"],
             [dur - 0.35, 1],
             [dur - 0.08, 0],
           ]),
           chain("offsetY", dur, [
             [0, 40],
-            [7.8, 40],
-            [8.4, 0, "house"],
+            [7.7, 40],
+            [8.3, 0, "house"],
             [dur - 0.08, 0],
           ]),
         ]}
