@@ -5,7 +5,7 @@ import { speakText, stopSpeaking, isTtsPlaying, unlockTtsPlayback } from './tts'
 import { fetchHealth, getUpgradeUrl, postHeartbeat, translateText } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
-import { prefetchSpeechToken, peekSpeechToken } from './speechToken'
+import { prefetchSpeechToken } from './speechToken'
 import { newId } from './id'
 import { sanitizeYueTranslation, sanitizeEnTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
@@ -874,8 +874,9 @@ export const useYueStore = create<State>((set, get) => ({
     }
 
     const apple = isAppleTouchDevice()
-    // iPhone/iPad: Web Speech must start before any await (Safari silent mic otherwise).
-    const webSpeechFirst = apple && !peekSpeechToken()
+    // iPhone/iPad: always start Web Speech in the user-gesture turn. A warm Azure
+    // token on the second press skips that path and Azure often listens with no audio.
+    const webSpeechFirst = apple
     // Desktop / warm-token paths: kick off getUserMedia now so it runs during sync setup.
     const micPriming = webSpeechFirst ? null : unlockMicrophone()
 

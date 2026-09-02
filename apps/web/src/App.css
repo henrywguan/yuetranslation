@@ -453,7 +453,6 @@
 .usage-meter-ring-svg {
   width: 100%;
   height: 100%;
-  transform: rotate(-90deg);
 }
 
 .usage-meter-ring-track,
@@ -848,7 +847,6 @@
 .usage-detail-bar-fill {
   display: block;
   height: 100%;
-  width: var(--usage-pct, 0%);
   border-radius: inherit;
   background: linear-gradient(90deg, var(--jade), var(--gold));
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
