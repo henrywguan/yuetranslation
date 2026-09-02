@@ -301,6 +301,15 @@ body {
   color: var(--ink-bright);
 }
 
+.tone-jp {
+  font-family: var(--font-english);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--jade-bright);
+  line-height: 1.1;
+}
+
 .tone-shape {
   font-size: 15px;
   font-weight: 500;
@@ -401,6 +410,11 @@ body {
 
 .tone-mini .tone-han {
   font-size: 24px;
+}
+
+.tone-mini .tone-jp {
+  font-size: 14px;
+  margin-top: 1px;
 }
 
 .post--portrait .hero {
