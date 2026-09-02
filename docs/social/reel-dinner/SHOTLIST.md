@@ -23,11 +23,15 @@
 ## Render
 
 ```bash
-# In Higgsfield sandbox after media + fonts are placed:
-higgsedit fonts add fonts "Syne:700" "Noto Sans HK:700" "Noto Sans:600"
-higgsedit build edit.jsx
-higgsedit render jyut-dinner-reel-v2 --engine node --out renders/jyut-dinner-reel.mp4
+# In Higgsfield sandbox after media is in ./media/
+SKIP_RENDER=1 higgsedit build edit.jsx
+higgsedit fonts add jyut-dinner-reel-v2 "Syne:700" "Noto Sans:600" "Noto Sans HK:700"
+# Google css2 Latin-only for HK — replace with a text= CJK subset (粵口語…) before frames
+SKIP_RENDER=1 higgsedit build edit.jsx   # proof frames
+higgsedit render jyut-dinner-reel-v2 --out jyut-dinner-reel-v2/renders/jyut-dinner-reel.mp4
 ```
+
+**Delivered:** 1080×1920 · 30fps · 21.0s · H.264 · silent (~8.4 MB)
 
 ## Caption
 
