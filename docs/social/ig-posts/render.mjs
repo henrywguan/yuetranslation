@@ -120,27 +120,40 @@ async function shotExact(puppeteer, url, outPng, w, h) {
         document.fonts.load("700 28px Syne", 'JyutTranslate'),
       ])
       await document.fonts.ready
+      const logo = document.querySelector('img.logo-mark')
+      if (logo instanceof HTMLImageElement) {
+        if (!logo.complete) {
+          await new Promise((resolve, reject) => {
+            logo.addEventListener('load', resolve, { once: true })
+            logo.addEventListener('error', () => reject(new Error('logo load failed')), { once: true })
+          })
+        }
+        if (logo.decode) await logo.decode().catch(() => {})
+      }
     })
-    await new Promise((r) => setTimeout(r, 400))
-    const check = await page.evaluate(() => {
-      const yue = document.querySelector('.logo-mark-yue')
-      if (!yue) return { ok: false, reason: 'no yue' }
+    await new Promise((r) => setTimeout(r, 200))
+    const check = await page.evaluate(async () => {
+      const logo = document.querySelector('img.logo-mark')
+      if (!(logo instanceof HTMLImageElement) || !logo.complete || logo.naturalWidth < 64) {
+        return { ok: false, reason: 'logo-mark png missing or not loaded' }
+      }
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       ctx.font = "64px 'Noto Sans HK'"
       const wYue = ctx.measureText('粵').width
       const wTofu = ctx.measureText('\uFFFD').width
+      const bodyOk = wYue > 10 && Math.abs(wYue - wTofu) > 1
       return {
-        ok: wYue > 10 && Math.abs(wYue - wTofu) > 1,
+        ok: bodyOk,
         wYue,
         wTofu,
-        font: getComputedStyle(yue).fontFamily,
-        text: yue.textContent,
+        logoW: logo.naturalWidth,
+        logoH: logo.naturalHeight,
       }
     })
-    console.log('glyph-check', JSON.stringify(check))
+    console.log('asset-check', JSON.stringify(check))
     if (!check.ok) {
-      throw new Error('粵 glyph still missing — aborting screenshot')
+      throw new Error(`IG post assets failed: ${check.reason || '粵 glyph missing in body fonts'}`)
     }
     const el = await page.$('#post')
     if (!el) throw new Error('missing #post')

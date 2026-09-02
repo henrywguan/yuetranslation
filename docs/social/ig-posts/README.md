@@ -10,7 +10,8 @@ Static brand posts rendered from HTML with **project fonts and logo**:
 
 ## Brand sources
 
-- Logo mark: HTML lockup matching `JyutLogo` `variant="mark"` (Syne **J** + Noto **粵** on jade)
+- Logo mark: raster `assets/logo-mark.png` (product `JyutLogo` mark @ 512 — Syne **J** + Noto **粵** on jade)
+- Chao letters: jade SVG bars with Unicode orientation (staff on the **right**)
 - Fonts: self-hosted Syne / Noto Sans / Noto Sans HK subsets in `fonts/` + `fonts-local.css`
 - Chao letters: drawn SVG bars (not Unicode) so they never tofu
 - Colors: Harbor / Jade / Ink from `apps/web/src/index.css`
