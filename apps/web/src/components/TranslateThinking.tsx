@@ -41,10 +41,20 @@ function BounceLine({
 }
 
 /** Harbor/jade translate loader — bilingual bouncing text. */
-export function TranslateThinking({ className = '' }: { className?: string }) {
+export function TranslateThinking({
+  className = '',
+  en: enProp,
+  zh: zhProp,
+}: {
+  className?: string
+  /** Override default “Translating” stage copy (e.g. document page progress). */
+  en?: string
+  zh?: string
+}) {
   const reduce = useReducedMotion()
-  const en = ui.translating.en
-  const zh = ui.translating.zh
+  const en = enProp ?? ui.translating.en
+  const zh = zhProp ?? ui.translating.zh
+  const copyKey = `${en}\0${zh}`
 
   return (
     <motion.div
@@ -86,7 +96,7 @@ export function TranslateThinking({ className = '' }: { className?: string }) {
         <span className="tt-spark tt-spark--3" />
       </div>
 
-      <div className="tt-copy">
+      <div className="tt-copy" key={copyKey}>
         <BounceLine text={en} lang="en" reduce={reduce} />
         <BounceLine text={zh} lang="zh" reduce={reduce} delayOffset={0.12} />
       </div>

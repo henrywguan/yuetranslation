@@ -100,6 +100,17 @@ export const ui = {
     zh: '可以下載',
     jp: 'ho2 ji5 haa6 zoi3',
   },
+  /** Bounce-line stages for Cam → Documents (short so letter wave stays readable). */
+  camDocStageStarting: {
+    en: 'Starting…',
+    zh: '開始緊…',
+    jp: 'hoi1 ci2 gan2…',
+  },
+  camDocStageSaving: {
+    en: 'Saving pages…',
+    zh: '儲存頁面中…',
+    jp: 'cou5 cyun4 jip6 min6 zung1…',
+  },
   camDocDownload: {
     en: 'Download translation',
     zh: '下載譯文',
@@ -1054,4 +1065,52 @@ export const ui = {
 
 export function biPlain(b: Bi): string {
   return `${b.en} ${b.zh}`
+}
+
+/** Cam → Documents progress lines for TranslateThinking (page-aware stages). */
+export type DocThinkingPhase = 'starting' | 'reading' | 'translating' | 'ocr' | 'office' | 'saving'
+
+export function docThinkingCopy(
+  phase: DocThinkingPhase,
+  page = 0,
+  total = 0,
+): Bi {
+  switch (phase) {
+    case 'starting':
+      return ui.camDocStageStarting
+    case 'office':
+      return ui.camDocOffice
+    case 'saving':
+      return total > 1
+        ? {
+            en: `Saving ${total} pages…`,
+            zh: `儲存 ${total} 頁中…`,
+            jp: `cou5 cyun4 ${total} jip6 zung1…`,
+          }
+        : ui.camDocStageSaving
+    case 'reading':
+      return {
+        en: total > 1 ? `Reading page ${page} of ${total}` : `Reading page ${page}`,
+        zh: total > 1 ? `讀緊第 ${page}／${total} 頁` : `讀緊第 ${page} 頁`,
+        jp: total > 1
+          ? `duk6 gan2 dai6 ${page} / ${total} jip6`
+          : `duk6 gan2 dai6 ${page} jip6`,
+      }
+    case 'translating':
+      return {
+        en: total > 1 ? `Translating page ${page} of ${total}` : `Translating page ${page}`,
+        zh: total > 1 ? `翻譯緊第 ${page}／${total} 頁` : `翻譯緊第 ${page} 頁`,
+        jp: total > 1
+          ? `faan1 jik6 gan2 dai6 ${page} / ${total} jip6`
+          : `faan1 jik6 gan2 dai6 ${page} jip6`,
+      }
+    case 'ocr':
+      return {
+        en: total > 1 ? `Scanning page ${page} of ${total}` : `Scanning page ${page}`,
+        zh: total > 1 ? `掃描緊第 ${page}／${total} 頁` : `掃描緊第 ${page} 頁`,
+        jp: total > 1
+          ? `sou3 miu4 gan2 dai6 ${page} / ${total} jip6`
+          : `sou3 miu4 gan2 dai6 ${page} jip6`,
+      }
+  }
 }

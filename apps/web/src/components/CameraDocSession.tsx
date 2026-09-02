@@ -1,6 +1,8 @@
+import { AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
+import { TranslateThinking } from './TranslateThinking'
 import {
   downloadBase64File,
   fileToDataUrl,
@@ -9,7 +11,7 @@ import {
 } from '../lib/docsApi'
 import { translatePdfHybrid, getPdfPageCount } from '../lib/pdfDocTranslate'
 import type { Entitlement } from '../lib/types'
-import { biPlain, ui } from '../lib/uiCopy'
+import { biPlain, docThinkingCopy, ui, type Bi } from '../lib/uiCopy'
 import './camera.css'
 
 type Props = {
@@ -43,7 +45,8 @@ export function CameraDocSession({
   const [from, setFrom] = useState<DocLang>('en')
   const [to, setTo] = useState<DocLang>('yue')
   const [busy, setBusy] = useState(false)
-  const [status, setStatus] = useState('')
+  const [thinking, setThinking] = useState<Bi | null>(null)
+  const [doneStatus, setDoneStatus] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{
     filename: string
@@ -68,8 +71,9 @@ export function CameraDocSession({
     }
     setError('')
     setResult(null)
+    setDoneStatus(false)
     setBusy(true)
-    setStatus(biPlain(ui.camDocWorking))
+    setThinking(docThinkingCopy('starting'))
     try {
       const name = file.name || 'document'
       const isPdf = /\.pdf$/i.test(name) || file.type === 'application/pdf'
@@ -90,7 +94,7 @@ export function CameraDocSession({
           file,
           from,
           to,
-          (msg) => setStatus(msg),
+          (phase, page, total) => setThinking(docThinkingCopy(phase, page, total)),
           onEntitlement,
         )
         setResult({
@@ -100,7 +104,7 @@ export function CameraDocSession({
           note: `PDF · ${out.pages} page${out.pages === 1 ? '' : 's'} · layout kept`,
         })
       } else {
-        setStatus(biPlain(ui.camDocOffice))
+        setThinking(docThinkingCopy('office'))
         const data = await fileToDataUrl(file)
         const out = await translateDocumentFile({
           filename: name,
@@ -116,12 +120,14 @@ export function CameraDocSession({
           note: `Layout kept · ${out.pages} page${out.pages === 1 ? '' : 's'}`,
         })
       }
-      setStatus(biPlain(ui.camDocDone))
+      setThinking(null)
+      setDoneStatus(true)
     } catch (e) {
       const ent = (e as { entitlement?: Entitlement }).entitlement
       if (ent) onEntitlement(ent)
       setError(e instanceof Error ? e.message : 'Document translation failed')
-      setStatus('')
+      setThinking(null)
+      setDoneStatus(false)
     } finally {
       setBusy(false)
     }
@@ -211,7 +217,21 @@ export function CameraDocSession({
         </span>
       </label>
 
-      {status ? <p className="cam-docs-status">{status}</p> : null}
+      <AnimatePresence>
+        {thinking ? (
+          <TranslateThinking
+            key="docs-thinking"
+            className="cam-docs-thinking"
+            en={thinking.en}
+            zh={thinking.zh}
+          />
+        ) : null}
+      </AnimatePresence>
+      {doneStatus && !busy ? (
+        <p className="cam-docs-status">
+          <BiText copy={ui.camDocDone} size="sm" />
+        </p>
+      ) : null}
       {error ? <p className="cam-docs-error">{error}</p> : null}
 
       {result ? (
