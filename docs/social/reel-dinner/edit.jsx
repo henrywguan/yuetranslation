@@ -691,7 +691,7 @@ function beatCta(dur, logo) {
         color={JADE}
         animate={[fadeIn(0.45, dur)]}
       >
-        Real Hong Kong Cantonese
+        English ↔ Cantonese
       </text>
       <text
         x={MARGIN}
