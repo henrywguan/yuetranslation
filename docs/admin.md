@@ -45,13 +45,39 @@ The API can email admins when someone **signs up** or **upgrades** (Stripe check
 ```bash
 RESEND_API_KEY=re_...
 YUE_NOTIFY_FROM=JyutTranslate <notify@yourdomain.com>
+YUE_SUPPORT_FROM=JyutTranslate Help <help@mail.jyuttranslate.com>
 YUE_ADMIN_NOTIFY_EMAILS=you@example.com
 YUE_NOTIFY_WEBHOOK_SECRET=<long-random-secret>
 ```
 
 - `YUE_NOTIFY_FROM` must be a real email: `Name <local@domain.com>` or `local@domain.com`. A domain alone (`noreply.jyuttranslate.com` inside `<>`) fails Resend’s `from` validation — use `noreply@jyuttranslate.com`. If you verified the `noreply` subdomain in Resend, use e.g. `JyutTranslate <hello@noreply.jyuttranslate.com>`.
+- `YUE_SUPPORT_FROM` is the **Reply-To** on auth, household invites, campaigns, and admin notifies (default `JyutTranslate Help <help@mail.jyuttranslate.com>`). It does **not** need to match the Resend From domain — replies go to your Help inbox via Cloudflare Email Routing. See [§ Support inbox](#support-inbox-helpmailjyuttranslatecom) below.
 - `YUE_ADMIN_NOTIFY_EMAILS` is optional — defaults to `YUE_ADMIN_EMAILS`.
 - For Resend testing before domain verification, use `YUE_NOTIFY_FROM=JyutTranslate <onboarding@resend.dev>` (Resend’s sandbox sender). **Important:** `*.resend.dev` can only deliver to the Resend account owner email — other recipients fail at send time. To email contacts/audience, verify a domain at [resend.com/domains](https://resend.com/domains) and set `YUE_NOTIFY_FROM` to an address on that domain.
+
+### Support inbox (`help@mail.jyuttranslate.com`)
+
+Resend **sends** product mail; Cloudflare Email Routing **receives** Help replies and `mailto:` contact.
+
+**1. Cloudflare Email Routing (receive)**
+
+1. Cloudflare Dashboard → zone **`jyuttranslate.com`** → **Email** → **Email Routing** → enable routing.
+2. **Destination addresses** → add your personal Gmail (or Workspace) and confirm the verification email.
+3. For the **`mail`** subdomain address `help@mail.jyuttranslate.com`:
+   - Ensure DNS for `mail.jyuttranslate.com` has Cloudflare Email Routing **MX** records (Email Routing → enable for subdomain / add the MX pair Cloudflare shows for `mail`).
+   - **Routing rules** → custom address **`help@mail.jyuttranslate.com`** → forward to your verified destination.
+4. Send a test to `help@mail.jyuttranslate.com` from an outside account and confirm it lands in Gmail.
+
+**2. Resend (send + Reply-To)**
+
+- Keep `YUE_NOTIFY_FROM` on your verified sending domain (e.g. `noreply@…` or `notify@…`).
+- Set `YUE_SUPPORT_FROM=JyutTranslate Help <help@mail.jyuttranslate.com>` on Vercel (optional — this is already the code default).
+- Outbound auth / invites / campaigns / admin alerts use **From** = `YUE_NOTIFY_FROM` and **Reply-To** = `YUE_SUPPORT_FROM`, so “Reply” in Gmail goes to Help.
+- You do **not** need to verify `help@mail…` in Resend for Reply-To. Only verify `mail.jyuttranslate.com` in Resend if you later want to **send From** that address.
+
+**3. Site contact link**
+
+Marketing footer Contact uses `mailto:help@mail.jyuttranslate.com`.
 
 ### Resend Audience (automatic contact sync)
 

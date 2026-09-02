@@ -4,7 +4,7 @@
  */
 import type { ReactElement } from 'react'
 import { Resend } from 'resend'
-import { env } from './env.js'
+import { env, supportReplyTo } from './env.js'
 import {
   BUILTIN_TEMPLATES,
   getBuiltinTemplate,
@@ -348,6 +348,7 @@ export async function sendCampaignToRecipients(input: {
 
   const subject = input.fields.subject.trim() || 'JyutTranslate'
   const from = env.notifyFromEmail
+  const replyTo = supportReplyTo()
   const resendIds: string[] = []
   const errors: { email: string; message: string }[] = []
   let sent = 0
@@ -358,6 +359,7 @@ export async function sendCampaignToRecipients(input: {
     to: [to],
     subject,
     html,
+    ...(replyTo ? { replyTo } : {}),
   }))
 
   const batch = await resend.batch.send(batchPayload)
@@ -399,6 +401,7 @@ export async function sendCampaignToRecipients(input: {
           to: [to],
           subject,
           html,
+          ...(replyTo ? { replyTo } : {}),
         })
         if (!error && data?.id) {
           sent += 1
@@ -489,6 +492,7 @@ export async function sendCampaignToAudience(input: {
   const { data, error } = await resend.broadcasts.create({
     audienceId: env.resendAudienceId,
     from: env.notifyFromEmail,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
     subject: input.fields.subject.trim() || 'JyutTranslate',
     previewText: input.fields.preview.trim() || undefined,
     html,

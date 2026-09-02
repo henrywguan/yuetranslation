@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { ReactElement } from 'react'
 import { Resend, type Attachment } from 'resend'
-import { env } from './env.js'
+import { env, supportReplyTo } from './env.js'
 import { issueTypeLabel, shortReportId } from './emails/bugReportMeta.js'
 
 const notifyDir = dirname(fileURLToPath(import.meta.url))
@@ -41,6 +41,8 @@ export function notifyStatus() {
     configured: notifyConfigured(),
     hasResendKey: Boolean(env.resendApiKey),
     hasFrom: Boolean(from),
+    hasSupportReplyTo: Boolean(env.supportFromEmail),
+    supportReplyTo: env.supportFromEmail || null,
     recipientCount: env.adminNotifyEmails.length,
     fromDomain,
     testFromDomain: testFrom,
@@ -120,6 +122,7 @@ async function sendUserEmail(subject: string, html: string, to: string): Promise
     to: [to],
     subject,
     html,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
   })
   if (error) {
     throw new Error(error.message || 'Resend send failed')
@@ -190,6 +193,7 @@ async function sendAdminEmail(
     to: env.adminNotifyEmails,
     subject,
     html,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
     ...(attachments?.length ? { attachments } : {}),
   })
   if (error) {

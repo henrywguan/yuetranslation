@@ -156,6 +156,14 @@ export const env = {
    */
   notifyFromEmail: normalizeNotifyFrom(process.env.YUE_NOTIFY_FROM || ''),
   /**
+   * Support / Reply-To address (does not need to be the Resend From domain).
+   * Default: help@mail.jyuttranslate.com (Cloudflare Email Routing → your inbox).
+   * Override with YUE_SUPPORT_FROM. Used as Resend `replyTo` on user-facing and admin mail.
+   */
+  supportFromEmail: normalizeNotifyFrom(
+    process.env.YUE_SUPPORT_FROM || 'JyutTranslate Help <help@mail.jyuttranslate.com>',
+  ),
+  /**
    * Admin inboxes for sign-up / upgrade alerts. Falls back to YUE_ADMIN_EMAILS when unset.
    */
   adminNotifyEmails: (() => {
@@ -229,6 +237,23 @@ function coerceEmailAddress(value: string): string | null {
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email || !env.adminEmails.length) return false
   return env.adminEmails.includes(email.trim().toLowerCase())
+}
+
+/** Bare address from `Name <email>` or `email` — for mailto / diagnostics. */
+export function bareEmailAddress(from: string): string | null {
+  const s = from.trim()
+  if (!s) return null
+  const named = s.match(/<([^<>]+)>/)
+  const addr = (named?.[1] || s).trim()
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr) ? addr : null
+}
+
+/**
+ * Resend `replyTo` for outbound mail. Prefer YUE_SUPPORT_FROM so replies land in Help
+ * (Cloudflare Email Routing), not the noreply From address.
+ */
+export function supportReplyTo(): string | undefined {
+  return env.supportFromEmail || undefined
 }
 
 /** True when we can create a model client. */
