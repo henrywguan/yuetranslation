@@ -50,14 +50,14 @@ const MIME = {
   '.png': 'image/png',
 }
 
-function startStaticServer(root) {
+function startStaticServer(docsRoot) {
   return new Promise((resolvePromise) => {
     const server = createServer(async (req, res) => {
       try {
         const urlPath = decodeURIComponent((req.url || '/').split('?')[0])
         const rel = urlPath === '/' ? '/index.html' : urlPath
-        const file = join(root, rel)
-        if (!file.startsWith(root)) {
+        const file = resolve(docsRoot, '.' + rel)
+        if (!file.startsWith(docsRoot)) {
           res.writeHead(403)
           res.end()
           return
@@ -165,10 +165,11 @@ async function shotExact(puppeteer, url, outPng, w, h) {
 }
 
 const puppeteer = loadPuppeteer()
-const { server, port } = await startStaticServer(__dirname)
+const docsRoot = resolve(__dirname, '../..')
+const { server, port } = await startStaticServer(docsRoot)
 try {
   for (const job of jobs) {
-    const url = `http://127.0.0.1:${port}/${job.html}`
+    const url = `http://127.0.0.1:${port}/social/ig-posts/${job.html}`
     await shotExact(puppeteer, url, job.png, job.w, job.h)
   }
 } finally {

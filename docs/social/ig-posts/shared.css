@@ -56,7 +56,7 @@ body {
   font-weight: 600;
 }
 
-/* Product logo mark — hi-res raster (JyutLogo mark), not live text */
+/* Product chop from docs/brand/favicon.png — do not regenerate a J+粵 raster */
 .logo-mark {
   display: block;
   width: 72px;
