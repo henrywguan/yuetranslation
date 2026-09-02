@@ -432,3 +432,80 @@ body {
 .post--portrait .hero p {
   font-size: 22px;
 }
+
+/* Intro post — 2×2 mode tiles (square) */
+.hero--intro {
+  margin-top: 28px;
+}
+
+.hero--intro h1 {
+  font-size: 52px;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.mode-tile {
+  border-radius: 22px;
+  padding: 22px 22px 20px;
+  background: color-mix(in srgb, var(--harbor-mid) 72%, #000);
+  border: 1px solid color-mix(in srgb, var(--jade) 14%, transparent);
+  min-height: 168px;
+}
+
+.mode-kicker {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jade);
+}
+
+.mode-title {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  color: var(--ink-bright);
+  line-height: 1.1;
+}
+
+.mode-tile p {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--ink-mute);
+}
+
+.card--compact {
+  margin-top: 22px;
+  padding: 22px 26px 24px;
+}
+
+.card--compact .card-han {
+  font-size: 36px;
+}
+
+.post--portrait .feat-list {
+  margin-top: 24px;
+  gap: 12px;
+}
+
+.post--portrait .feat {
+  padding: 18px 20px;
+}
+
+.post--portrait .feat h3 {
+  font-size: 22px;
+}
+
+.post--portrait .feat p {
+  font-size: 17px;
+}
