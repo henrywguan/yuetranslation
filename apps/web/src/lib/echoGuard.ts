@@ -1,4 +1,4 @@
-import { isTtsPlaying } from './tts'
+import { armTtsEchoTail, isMicEchoMuted } from './tts'
 
 /** Ignore mic while TTS plays and briefly after — blocks speaker echo becoming a new turn. */
 const ECHO_TAIL_MS = 600
@@ -10,13 +10,16 @@ export function createEchoGuard() {
 
   return {
     shouldIgnoreMic() {
-      return playbackActive || isTtsPlaying() || Date.now() < ignoreUntil
+      return playbackActive || isMicEchoMuted() || Date.now() < ignoreUntil
     },
     setPlaybackActive(active: boolean) {
       // Only arm the post-TTS mute when playback actually ends (true → false).
       // Calling setPlaybackActive(false) on every STT update must NOT mute the mic.
       if (!active) {
-        if (playbackActive) ignoreUntil = Date.now() + ECHO_TAIL_MS
+        if (playbackActive) {
+          ignoreUntil = Date.now() + ECHO_TAIL_MS
+          armTtsEchoTail(ECHO_TAIL_MS)
+        }
         playbackActive = false
         return
       }
