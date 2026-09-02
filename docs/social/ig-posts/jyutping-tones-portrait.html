@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080" />
+    <title>JyutTranslate — Jyutping + Chao tones (portrait)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+HK:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shared.css" />
+  </head>
+  <body>
+    <article class="post post--portrait" id="post">
+      <header class="brand-row">
+        <svg class="jyut-logo jyut-logo--mark" viewBox="0 0 64 64" role="img" aria-label="JyutTranslate">
+          <defs>
+            <linearGradient id="jyut-jade" x1="12" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#7ef0dc" />
+              <stop offset="0.45" stop-color="#3dcfb6" />
+              <stop offset="1" stop-color="#1f8f7a" />
+            </linearGradient>
+            <radialGradient id="jyut-shine" cx="32%" cy="26%" r="70%">
+              <stop stop-color="rgba(255,255,255,0.42)" />
+              <stop offset="1" stop-color="rgba(255,255,255,0)" />
+            </radialGradient>
+          </defs>
+          <rect width="64" height="64" rx="18" fill="url(#jyut-jade)" />
+          <rect width="64" height="64" rx="18" fill="url(#jyut-shine)" />
+          <text class="jyut-logo-mark-j" x="10" y="50" font-size="46">J</text>
+          <text class="jyut-logo-yue jyut-logo-yue--on-jade" x="38" y="41" text-anchor="middle" font-size="18">粵</text>
+        </svg>
+        <div class="brand-text">
+          <div class="brand-name">JyutTranslate</div>
+          <div class="brand-sub">Built for Cantonese learners</div>
+        </div>
+      </header>
+
+      <div class="hero">
+        <h1>Why families switch</h1>
+        <div class="accent">Jyutping + Chao tones</div>
+        <p>on every translation.</p>
+      </div>
+
+      <div class="feat-list">
+        <div class="feat">
+          <div class="feat-dot" aria-hidden="true"></div>
+          <div>
+            <h3>Jyutping</h3>
+            <p>LSHK romanization with tone numbers 1–6 under every 粵 line — so ABCs can read aloud.</p>
+          </div>
+        </div>
+        <div class="feat">
+          <div class="feat-dot" aria-hidden="true"></div>
+          <div>
+            <h3>Chao tones</h3>
+            <p>
+              Expand any syllable to see
+              <span class="chao">˥ ˧˥ ˧ ˨˩ ˩˧ ˨</span>
+              — the contour, not just a digit.
+            </p>
+          </div>
+        </div>
+        <div class="feat">
+          <div class="feat-dot" aria-hidden="true"></div>
+          <div>
+            <h3>Real 口語</h3>
+            <p>Hong Kong Cantonese (係 唔 喺 咗) — not Mandarin, not textbook 書面語.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Tone map 聲調</div>
+      <div class="section-sub">Classic 詩史試時市是 · from the product tone lesson</div>
+
+      <div class="tones-row">
+        <div class="tone-mini">
+          <div class="tone-n">1</div>
+          <span class="tone-chao chao">˥</span>
+          <div class="tone-han">詩</div>
+        </div>
+        <div class="tone-mini">
+          <div class="tone-n">2</div>
+          <span class="tone-chao chao">˧˥</span>
+          <div class="tone-han">史</div>
+        </div>
+        <div class="tone-mini">
+          <div class="tone-n">3</div>
+          <span class="tone-chao chao">˧</span>
+          <div class="tone-han">試</div>
+        </div>
+        <div class="tone-mini">
+          <div class="tone-n">4</div>
+          <span class="tone-chao chao">˨˩</span>
+          <div class="tone-han">時</div>
+        </div>
+        <div class="tone-mini">
+          <div class="tone-n">5</div>
+          <span class="tone-chao chao">˩˧</span>
+          <div class="tone-han">市</div>
+        </div>
+        <div class="tone-mini">
+          <div class="tone-n">6</div>
+          <span class="tone-chao chao">˨</span>
+          <div class="tone-han">是</div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div class="footer-line">Free to try · jyuttranslate.com</div>
+      </footer>
+    </article>
+  </body>
+</html>
