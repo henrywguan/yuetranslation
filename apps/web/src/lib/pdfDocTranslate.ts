@@ -8,19 +8,12 @@ import { PDFDocument } from 'pdf-lib'
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { cameraScan } from './api'
 import { commitDocPages, translateDocSegments, type DocLang } from './docsApi'
+import { groupTextItemsIntoLines, type PdfTextItem } from './pdfTextLayout'
 import type { Entitlement } from './types'
-
-import { tightCoverWidth } from './camera/overlayPaint'
 
 export type PdfProgress = (msg: string, page: number, total: number) => void
 
-type TextItem = {
-  text: string
-  x: number
-  y: number
-  w: number
-  h: number
-}
+type TextItem = PdfTextItem
 
 const TEXT_CHAR_THRESHOLD = 24
 const MAX_SEGMENTS = 80
@@ -41,44 +34,7 @@ export async function getPdfPageCount(file: File): Promise<number> {
 }
 
 /** Group PDF.js glyph runs into reading lines (same baseline band). */
-export function groupTextItemsIntoLines(items: TextItem[]): TextItem[] {
-  if (!items.length) return []
-  const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x)
-  const lines: TextItem[][] = []
-  for (const it of sorted) {
-    const last = lines[lines.length - 1]
-    if (!last?.length) {
-      lines.push([it])
-      continue
-    }
-    const sample = last[0]!
-    const band = Math.max(sample.h, it.h) * 0.55
-    const midA = sample.y + sample.h / 2
-    const midB = it.y + it.h / 2
-    if (Math.abs(midA - midB) <= band) last.push(it)
-    else lines.push([it])
-  }
-
-  return lines.map((parts) => {
-    parts.sort((a, b) => a.x - b.x)
-    const text = parts
-      .map((p) => p.text)
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-    const x0 = Math.min(...parts.map((p) => p.x))
-    const y0 = Math.min(...parts.map((p) => p.y))
-    const x1 = Math.max(...parts.map((p) => p.x + p.w))
-    const y1 = Math.max(...parts.map((p) => p.y + p.h))
-    return {
-      text,
-      x: x0,
-      y: y0,
-      w: Math.max(0.01, x1 - x0),
-      h: Math.max(0.01, y1 - y0),
-    }
-  }).filter((l) => l.text.length > 0)
-}
+export { groupTextItemsIntoLines } from './pdfTextLayout'
 
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(/\s+/).filter(Boolean)
@@ -148,19 +104,20 @@ export function paintTranslations(
     ctx.font = `600 ${fontSize}px ${FONT_FAMILY}`
     lines = wrapLines(ctx, translated, maxW)
     const lineH = fontSize * 1.15
-    const lineWidths = lines.map((line) => ctx.measureText(line).width)
-    const textW = lineWidths.length ? Math.max(...lineWidths) : 0
-    const coverW = tightCoverWidth(textW, padX, w)
+    // Blanket the full source line — shrinking to glyph width left source ink visible (#250).
+    const inflateX = w * 0.05
+    const coverX = x - inflateX - 1
+    const coverW = w + inflateX * 2 + 2
     // Grow cover slightly when wrapping so glyphs stay readable.
     const textBlockH = Math.max(h, lines.length * lineH + 2)
     const coverH = Math.min(textBlockH, h * 2.2)
     const coverY = y - Math.max(0, (coverH - h) * 0.15)
 
     ctx.fillStyle = 'rgba(7, 19, 31, 0.88)'
-    ctx.fillRect(x - 1, coverY - 1, coverW + 2, coverH + 2)
+    ctx.fillRect(coverX, coverY - 1, coverW, coverH + 2)
     ctx.fillStyle = '#e8f4f1'
     const startY = coverY + Math.max(1, (coverH - lines.length * lineH) / 2)
-    const textMaxW = Math.max(8, coverW - padX * 2)
+    const textMaxW = Math.max(8, w - padX * 2)
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]!
       let draw = line
@@ -198,10 +155,11 @@ export function textContentToItems(
     const scaleX = Math.hypot(vx[0] ?? 0, vx[1] ?? 0) || 1
     const scaleY = Math.hypot(vx[2] ?? 0, vx[3] ?? 0) || scaleX
     const fontH = Math.max(6, scaleY)
-    const charCap = fontH * Math.max(1, text.length) * 0.55
-    const rawW =
-      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : charCap
-    const wPx = Math.max(fontH * 0.35, Math.min(rawW, charCap * 1.1))
+    // item.width is in text space; scale into viewport pixels.
+    const wPx = Math.max(
+      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : fontH * text.length * 0.5,
+      fontH * 0.35,
+    )
     // Baseline at ty; glyphs extend upward on the canvas.
     const top = ty - fontH * 0.92
     const x = tx / viewport.width
