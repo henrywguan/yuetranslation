@@ -1,6 +1,7 @@
-// JyutTranslate Reel v2 — dinner / 口語 vs 書面 (~21s, 9:16)
-// Brand: Harbor / Jade / Ink · Syne + Noto Sans HK
-// Motion: kinetic type → strike → 2.5D bullet-time orbit → punch zoom → CTA
+// JyutTranslate Reel v3 — dinner / 口語 vs 書面 (~23s, 9:16)
+// Brand: Harbor / Jade / Ink · Syne + Noto Sans HK · docs/brand/favicon.png
+// Motion: kinetic type → strike → Ken Burns INTO translation → pull → INTO variations → CTA
+// No left/right bobbing on a full-page screenshot.
 
 const HARBOR = "#07131f";
 const HARBOR_MID = "#0a1c2c";
@@ -12,27 +13,26 @@ const STRIKE = "#ff5a5a";
 
 const W = 1080;
 const H = 1920;
-const MARGIN = 72;
+const MARGIN = 64;
 const FPS = 30;
 const STEP = 1 / FPS;
 
 export default async ({ project }) => {
   const p = await project({
-    dir: "jyut-dinner-reel-v2",
+    dir: "jyut-dinner-reel-v3",
     size: `${W}x${H}`,
     fps: FPS,
     background: HARBOR,
   });
 
   const uiStill = await p.add("media/ui-reel-still.png");
-  const uiResult = await p.add("media/ui-result.png");
-  const logo = await p.add("media/logo-mark.png");
+  const logo = await p.add("media/logo-mark.png"); // docs/brand/favicon.png
 
   const BEATS = [
-    { id: "hook", dur: 3.2, build: beatHook },
-    { id: "strike", dur: 3.8, build: beatStrike },
-    { id: "orbit", dur: 9.4, build: (d) => beatOrbit(d, uiStill, uiResult) },
-    { id: "cta", dur: 4.6, build: (d) => beatCta(d, logo) },
+    { id: "hook", dur: 3.0, build: beatHook },
+    { id: "strike", dur: 3.6, build: beatStrike },
+    { id: "reveal", dur: 12.0, build: (d) => beatReveal(d, uiStill) },
+    { id: "cta", dur: 4.4, build: (d) => beatCta(d, logo) },
   ];
 
   let at = 0;
@@ -45,12 +45,13 @@ export default async ({ project }) => {
     at += beat.dur;
   }
 
-  await p.frame(0.9, "renders/proof-hook.png");
-  await p.frame(5.2, "renders/proof-strike.png");
-  await p.frame(8.4, "renders/proof-orbit-open.png");
-  await p.frame(11.8, "renders/proof-orbit-peak.png");
-  await p.frame(14.6, "renders/proof-zoom.png");
-  await p.frame(18.8, "renders/proof-cta.png");
+  await p.frame(0.8, "renders/proof-hook.png");
+  await p.frame(4.8, "renders/proof-strike.png");
+  await p.frame(7.4, "renders/proof-establish.png");
+  await p.frame(9.8, "renders/proof-zoom-translation.png");
+  await p.frame(13.6, "renders/proof-zoom-variations.png");
+  await p.frame(16.8, "renders/proof-variations-hold.png");
+  await p.frame(20.5, "renders/proof-cta.png");
 
   if (process.env.SKIP_RENDER !== "1") {
     await p.render("renders/jyut-dinner-reel.mp4");
@@ -75,7 +76,7 @@ function fadeIn(start, dur, holdEnd = 0.08) {
   return chain("opacity", dur, [
     [0, 0],
     [start, 0],
-    [start + 0.32, 1, "house"],
+    [start + 0.28, 1, "house"],
     [dur - holdEnd, 1],
   ]);
 }
@@ -84,7 +85,6 @@ function beatHook(dur) {
   return (
     <group name="hook">
       <rect x={0} y={0} width={W} height={H} fill={HARBOR} />
-      {/* Soft orbital glow */}
       <group
         name="glow"
         x={W / 2 - 420}
@@ -94,18 +94,14 @@ function beatHook(dur) {
         origin="center"
         animate={[
           chain("scale", dur, [
-            [0, 0.85],
-            [1.6, 1.08, "ease-in-out"],
-            [dur - 0.08, 0.95, "ease-in-out"],
+            [0, 0.88],
+            [1.4, 1.06, "ease-in-out"],
+            [dur - 0.08, 0.98, "ease-in-out"],
           ]),
           chain("opacity", dur, [
             [0, 0],
-            [0.35, 0.55, "house"],
-            [dur - 0.08, 0.35],
-          ]),
-          chain("rotation", dur, [
-            [0, -8],
-            [dur - 0.08, 12, "linear"],
+            [0.3, 0.5, "house"],
+            [dur - 0.08, 0.32],
           ]),
         ]}
       >
@@ -119,32 +115,15 @@ function beatHook(dur) {
             kind: "radial",
             angle: 0,
             stops: [
-              { offset: 0, color: "rgba(61,207,182,0.28)" },
-              { offset: 0.55, color: "rgba(18,50,74,0.18)" },
+              { offset: 0, color: "rgba(61,207,182,0.26)" },
+              { offset: 0.55, color: "rgba(18,50,74,0.16)" },
               { offset: 1, color: "rgba(7,19,31,0)" },
             ],
           }}
         />
       </group>
 
-      <group
-        name="jade-bar"
-        x={MARGIN}
-        y={260}
-        width={6}
-        height={440}
-        origin="center"
-        animate={[
-          chain("scaleY", dur, [
-            [0, 0],
-            [0.12, 0],
-            [0.65, 1, "house"],
-            [dur - 0.08, 1],
-          ]),
-        ]}
-      >
-        <rect x={0} y={0} width={6} height={440} fill={JADE} radius={3} />
-      </group>
+      <rect x={MARGIN} y={260} width={6} height={400} fill={JADE} radius={3} />
 
       <text
         x={MARGIN + 28}
@@ -160,7 +139,7 @@ function beatHook(dur) {
           by: "word",
           from: { y: 52, opacity: 0 },
           overlap: 0.55,
-          duration: 0.42,
+          duration: 0.4,
           easing: "house",
         }}
       >
@@ -178,24 +157,18 @@ function beatHook(dur) {
         color={JADE}
         motion={{
           by: "word",
-          from: { y: 60, opacity: 0, scale: 0.9 },
+          from: { y: 56, opacity: 0, scale: 0.92 },
           overlap: 0.4,
-          duration: 0.48,
+          duration: 0.46,
           easing: "house",
         }}
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [1.05, 0],
-            [1.4, 1],
-            [dur - 0.45, 1],
+            [0.95, 0],
+            [1.3, 1],
+            [dur - 0.4, 1],
             [dur - 0.08, 0],
-          ]),
-          chain("scale", dur, [
-            [0, 0.92],
-            [1.05, 0.92],
-            [1.55, 1.0, "house"],
-            [dur - 0.08, 1.04],
           ]),
         ]}
       >
@@ -234,7 +207,7 @@ function beatStrike(dur) {
         fontWeight={700}
         letterSpacing={-0.5}
         color={INK}
-        animate={[fadeIn(0.18, dur)]}
+        animate={[fadeIn(0.16, dur)]}
       >
         {"Are you coming home\nfor dinner?"}
       </text>
@@ -246,7 +219,7 @@ function beatStrike(dur) {
         fontSize={28}
         fontWeight={700}
         color={STRIKE}
-        animate={[fadeIn(0.65, dur)]}
+        animate={[fadeIn(0.55, dur)]}
       >
         書面 · WRITTEN MANDARIN
       </text>
@@ -258,7 +231,7 @@ function beatStrike(dur) {
         fontSize={70}
         fontWeight={700}
         color={INK}
-        animate={[fadeIn(0.95, dur)]}
+        animate={[fadeIn(0.85, dur)]}
       >
         你回家吃晚飯嗎？
       </text>
@@ -272,14 +245,14 @@ function beatStrike(dur) {
         animate={[
           chain("scaleX", dur, [
             [0, 0],
-            [1.35, 0],
-            [1.9, 1, "house"],
+            [1.2, 0],
+            [1.75, 1, "house"],
             [dur - 0.08, 1],
           ]),
           chain("opacity", dur, [
             [0, 0],
-            [1.3, 0],
-            [1.45, 1],
+            [1.15, 0],
+            [1.3, 1],
             [dur - 0.08, 1],
           ]),
         ]}
@@ -297,10 +270,10 @@ function beatStrike(dur) {
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [2.15, 0],
-            [2.55, 1, "house"],
-            [dur - 0.35, 1],
-            [dur - 0.08, 0.3],
+            [2.0, 0],
+            [2.4, 1, "house"],
+            [dur - 0.3, 1],
+            [dur - 0.08, 0.25],
           ]),
         ]}
       >
@@ -310,113 +283,83 @@ function beatStrike(dur) {
   );
 }
 
-function beatOrbit(dur, uiStill, uiResult) {
-  const cardW = W - MARGIN * 2;
-  const cardH = Math.round(cardW * (550 / 900));
-  const cardY = 520;
+/**
+ * Ken Burns on the real Solo UI still:
+ * 1) brief establish (readable context)
+ * 2) punch INTO the main translation + Jyutping
+ * 3) pull, then dive INTO OTHER VARIATIONS
+ * No lateral bobbing / orbit wobble.
+ */
+function beatReveal(dur, uiStill) {
+  const lineW = W - MARGIN * 2;
   return (
-    <group name="orbit">
+    <group name="reveal">
       <rect x={0} y={0} width={W} height={H} fill={HARBOR} />
 
+      {/* Camera on the full UI still — scale + vertical pan only */}
       <group
-        name="orbit-glow"
-        x={W / 2 - 500}
-        y={H / 2 - 600}
-        width={1000}
-        height={1000}
-        origin="center"
-        animate={[
-          chain("rotation", dur, [
-            [0, -22],
-            [dur - 0.08, 34, "linear"],
-          ]),
-          chain("opacity", dur, [
-            [0, 0],
-            [0.4, 0.72, "house"],
-            [dur - 0.08, 0.4],
-          ]),
-          chain("scale", dur, [
-            [0, 0.92],
-            [4.5, 1.08, "ease-in-out"],
-            [dur - 0.08, 1.15, "ease-in-out"],
-          ]),
-        ]}
-      >
-        <rect
-          x={0}
-          y={0}
-          width={1000}
-          height={1000}
-          radius={500}
-          fill={{
-            kind: "radial",
-            angle: 0,
-            stops: [
-              { offset: 0, color: "rgba(126,240,220,0.24)" },
-              { offset: 0.45, color: "rgba(61,207,182,0.12)" },
-              { offset: 1, color: "rgba(7,19,31,0)" },
-            ],
-          }}
-        />
-      </group>
-
-      <group
-        name="phone"
+        name="ui-camera"
         x={0}
         y={0}
         width={W}
         height={H}
         origin="center"
-        motionBlur={{ samples: 6, shutter: 0.45 }}
         animate={[
-          chain("offsetX", dur, [
-            [0, 0],
-            [1.2, -36, "ease-in-out"],
-            [3.4, 42, "ease-in-out"],
-            [5.6, -28, "ease-in-out"],
-            [7.2, 12, "ease-in-out"],
-            [dur - 0.08, 0, "house"],
-          ]),
-          chain("offsetY", dur, [
-            [0, 0],
-            [1.2, 18, "ease-in-out"],
-            [3.4, -24, "ease-in-out"],
-            [5.6, 14, "ease-in-out"],
-            [7.2, -8, "ease-in-out"],
-            [dur - 0.08, 0, "house"],
-          ]),
-          chain("scale", dur, [
-            [0, 1.02],
-            [0.55, 1.06, "house"],
-            [6.0, 1.14, "ease-in-out"],
-            [dur - 0.08, 1.32, "house"],
-          ]),
           chain("opacity", dur, [
             [0, 0],
-            [0.35, 1, "house"],
+            [0.28, 1, "house"],
             [dur - 0.08, 1],
           ]),
+          // Establish → punch translation → ease → dive variations
+          chain("scale", dur, [
+            [0, 1.04],
+            [1.1, 1.12, "ease-out"],
+            [1.35, 1.12],
+            [2.55, 2.55, "house"], // INTO translation
+            [5.1, 2.62, "ease-in-out"],
+            [6.0, 1.85, "house"], // pull back
+            [6.55, 1.85],
+            [8.1, 2.45, "house"], // INTO variations
+            [dur - 0.08, 2.55, "ease-in-out"],
+          ]),
+          // Translation sits upper-mid on the still → pan down (positive Y)
+          // Variations sit lower → pan up (negative Y)
+          chain("offsetY", dur, [
+            [0, 40],
+            [1.1, 20, "ease-out"],
+            [1.35, 20],
+            [2.55, 210, "house"],
+            [5.1, 230, "ease-in-out"],
+            [6.0, 40, "house"],
+            [6.55, 40],
+            [8.1, -280, "house"],
+            [dur - 0.08, -300, "ease-in-out"],
+          ]),
+          // Keep X locked — no bob
+          chain("offsetX", dur, [
+            [0, 0],
+            [dur - 0.08, 0],
+          ]),
           chain("rotation", dur, [
-            [0, -1.6],
-            [2.8, 1.8, "ease-in-out"],
-            [5.4, -1.0, "ease-in-out"],
-            [dur - 0.08, 0.3, "ease-in-out"],
+            [0, 0],
+            [dur - 0.08, 0],
           ]),
         ]}
       >
         <media file={uiStill} x={0} y={0} width={W} height={H} fit="cover" />
       </group>
 
+      {/* Top scrim + labels */}
       <rect
         x={0}
         y={0}
         width={W}
-        height={460}
+        height={320}
         fill={{
           kind: "linear",
           angle: 90,
           stops: [
-            { offset: 0, color: "rgba(7,19,31,0.94)" },
+            { offset: 0, color: "rgba(7,19,31,0.96)" },
             { offset: 1, color: "rgba(7,19,31,0)" },
           ],
         }}
@@ -424,133 +367,256 @@ function beatOrbit(dur, uiStill, uiResult) {
 
       <text
         x={MARGIN}
-        y={170}
-        width={cardW}
+        y={72}
+        width={lineW}
         fontFamily="Noto Sans HK"
-        fontSize={28}
+        fontSize={26}
         fontWeight={700}
         color={JADE}
-        animate={[fadeIn(0.05, dur)]}
+        animate={[
+          chain("opacity", dur, [
+            [0, 0],
+            [0.25, 1, "house"],
+            [5.4, 1],
+            [5.85, 0],
+            [dur - 0.08, 0],
+          ]),
+        ]}
       >
         REAL 口語粵語
       </text>
       <text
         x={MARGIN}
-        y={230}
-        width={cardW}
+        y={118}
+        width={lineW}
         fontFamily="Syne"
-        fontSize={60}
+        fontSize={44}
         fontWeight={700}
         letterSpacing={-1}
         color={INK}
-        motion={{
-          by: "word",
-          from: { y: 40, opacity: 0 },
-          overlap: 0.5,
-          duration: 0.38,
-          easing: "house",
-        }}
-      >
-        {"What they actually say"}
-      </text>
-
-      <group
-        name="result-card"
-        x={MARGIN}
-        y={cardY}
-        width={cardW}
-        height={cardH + 28}
-        origin="center"
-        motionBlur={{ samples: 8, shutter: 0.5 }}
         animate={[
-          chain("scale", dur, [
-            [0, 0.88],
-            [5.5, 0.88],
-            [6.05, 1.02, "house"],
-            [7.3, 1.1, "ease-in-out"],
-            [dur - 0.08, 1.22, "house"],
-          ]),
           chain("opacity", dur, [
             [0, 0],
-            [5.4, 0],
-            [5.85, 1, "house"],
-            [dur - 0.4, 1],
+            [0.35, 1, "house"],
+            [5.4, 1],
+            [5.85, 0],
             [dur - 0.08, 0],
           ]),
-          chain("rotation", dur, [
-            [0, 3.2],
-            [5.5, 3.2],
-            [6.2, 0, "house"],
-            [dur - 0.08, -0.8],
+        ]}
+      >
+        Zoom the translation
+      </text>
+
+      {/* Readable callout while parked on the translation */}
+      <group
+        name="translation-callout"
+        x={MARGIN}
+        y={H - 420}
+        width={lineW}
+        height={280}
+        animate={[
+          chain("opacity", dur, [
+            [0, 0],
+            [2.4, 0],
+            [2.85, 1, "house"],
+            [5.35, 1],
+            [5.85, 0],
+            [dur - 0.08, 0],
           ]),
           chain("offsetY", dur, [
-            [0, 40],
-            [5.5, 40],
-            [6.2, 0, "house"],
-            [dur - 0.08, -12],
+            [0, 36],
+            [2.4, 36],
+            [2.9, 0, "house"],
+            [5.35, 0],
+            [5.85, 24],
+            [dur - 0.08, 24],
           ]),
         ]}
       >
         <rect
           x={0}
           y={0}
-          width={cardW}
-          height={cardH + 28}
-          fill={HARBOR_MID}
+          width={lineW}
+          height={280}
           radius={28}
-          shadow={{ x: 0, y: 24, blur: 48, color: "rgba(0,0,0,0.45)" }}
+          fill="rgba(7,19,31,0.88)"
         />
-        <media
-          file={uiResult}
-          x={14}
-          y={14}
-          width={cardW - 28}
-          height={cardH}
-          fit="cover"
-          radius={20}
-        />
+        <text
+          x={28}
+          y={36}
+          width={lineW - 56}
+          fontFamily="Noto Sans"
+          fontSize={22}
+          fontWeight={600}
+          letterSpacing={2}
+          color={JADE}
+        >
+          PRIMARY · 口語
+        </text>
+        <text
+          x={28}
+          y={86}
+          width={lineW - 56}
+          fontFamily="Noto Sans HK"
+          fontSize={48}
+          fontWeight={700}
+          color={INK}
+        >
+          你返唔返嚟食飯㗎？
+        </text>
+        <text
+          x={28}
+          y={170}
+          width={lineW - 56}
+          fontFamily="Noto Sans"
+          fontSize={26}
+          fontWeight={600}
+          color={JADE_BRIGHT}
+        >
+          nei5 faan2 m4 faan1 lai4 sik6 faan6 gaa3
+        </text>
+        <text
+          x={28}
+          y={220}
+          width={lineW - 56}
+          fontFamily="Noto Sans"
+          fontSize={22}
+          fontWeight={500}
+          color={MUTED}
+        >
+          Are you coming back for dinner?
+        </text>
       </group>
 
+      {/* Variations chapter label */}
       <text
         x={MARGIN}
-        y={H - 240}
-        width={cardW}
+        y={72}
+        width={lineW}
         fontFamily="Noto Sans HK"
-        fontSize={36}
+        fontSize={26}
         fontWeight={700}
-        color={INK}
-        animate={[
-          chain("opacity", dur, [
-            [0, 0],
-            [0.7, 0],
-            [1.15, 1, "house"],
-            [dur - 0.55, 1],
-            [dur - 0.08, 0],
-          ]),
-        ]}
-      >
-        你返唔返嚟食飯㗎？
-      </text>
-      <text
-        x={MARGIN}
-        y={H - 175}
-        width={cardW}
-        fontFamily="Noto Sans"
-        fontSize={22}
-        fontWeight={600}
         color={JADE}
         animate={[
           chain("opacity", dur, [
             [0, 0],
-            [1.0, 0],
-            [1.4, 1, "house"],
-            [dur - 0.55, 1],
+            [5.9, 0],
+            [6.35, 1, "house"],
+            [dur - 0.08, 1],
+          ]),
+        ]}
+      >
+        OTHER VARIATIONS · 其他講法
+      </text>
+      <text
+        x={MARGIN}
+        y={118}
+        width={lineW}
+        fontFamily="Syne"
+        fontSize={44}
+        fontWeight={700}
+        letterSpacing={-1}
+        color={INK}
+        animate={[
+          chain("opacity", dur, [
+            [0, 0],
+            [6.0, 0],
+            [6.45, 1, "house"],
+            [dur - 0.08, 1],
+          ]),
+        ]}
+      >
+        Same meaning · different mouth
+      </text>
+
+      {/* Readable variation callouts while zoomed on the list */}
+      <group
+        name="variations-callout"
+        x={MARGIN}
+        y={H - 460}
+        width={lineW}
+        height={340}
+        animate={[
+          chain("opacity", dur, [
+            [0, 0],
+            [7.8, 0],
+            [8.35, 1, "house"],
+            [dur - 0.35, 1],
+            [dur - 0.08, 0],
+          ]),
+          chain("offsetY", dur, [
+            [0, 40],
+            [7.8, 40],
+            [8.4, 0, "house"],
             [dur - 0.08, 0],
           ]),
         ]}
       >
-        nei5 faan2 m4 faan1 lai4 sik6 faan6 gaa3
-      </text>
+        <rect
+          x={0}
+          y={0}
+          width={lineW}
+          height={340}
+          radius={28}
+          fill="rgba(7,19,31,0.9)"
+        />
+        <text
+          x={28}
+          y={32}
+          width={lineW - 56}
+          fontFamily="Noto Sans"
+          fontSize={20}
+          fontWeight={600}
+          letterSpacing={2}
+          color={JADE}
+        >
+          TAP ANY · ALTERNATE 口語
+        </text>
+        <text
+          x={28}
+          y={82}
+          width={lineW - 56}
+          fontFamily="Noto Sans HK"
+          fontSize={36}
+          fontWeight={700}
+          color={INK}
+        >
+          你返唔返嚟食飯呀？
+        </text>
+        <text
+          x={28}
+          y={140}
+          width={lineW - 56}
+          fontFamily="Noto Sans"
+          fontSize={22}
+          fontWeight={500}
+          color={MUTED}
+        >
+          Soft 呀 ending · everyday ask
+        </text>
+        <text
+          x={28}
+          y={200}
+          width={lineW - 56}
+          fontFamily="Noto Sans HK"
+          fontSize={36}
+          fontWeight={700}
+          color={INK}
+        >
+          你返唔返屋企食飯呀？
+        </text>
+        <text
+          x={28}
+          y={258}
+          width={lineW - 56}
+          fontFamily="Noto Sans"
+          fontSize={22}
+          fontWeight={500}
+          color={MUTED}
+        >
+          屋企 · home · family dinner
+        </text>
+      </group>
     </group>
   );
 }
@@ -573,60 +639,29 @@ function beatCta(dur, logo) {
           ],
         }}
       />
-      {/* Ambient orbit ring */}
-      <group
-        name="cta-ring"
-        x={W / 2 - 200}
-        y={520}
-        width={400}
-        height={400}
-        origin="center"
-        animate={[
-          chain("rotation", dur, [
-            [0, 0],
-            [dur - 0.08, 40, "linear"],
-          ]),
-          chain("opacity", dur, [
-            [0, 0],
-            [0.4, 0.35, "house"],
-            [dur - 0.08, 0.2],
-          ]),
-        ]}
-      >
-        <rect
-          x={0}
-          y={0}
-          width={400}
-          height={400}
-          radius={200}
-          fill="rgba(0,0,0,0)"
-          strokeWidth={2}
-          strokeColor="rgba(61,207,182,0.45)"
-        />
-      </group>
 
       <group
         name="logo-wrap"
-        x={W / 2 - 80}
-        y={560}
-        width={160}
-        height={160}
+        x={W / 2 - 88}
+        y={540}
+        width={176}
+        height={176}
         origin="center"
         animate={[
           chain("scale", dur, [
-            [0, 0.78],
-            [0.55, 1.06, "house"],
-            [0.9, 1.0, "ease-out"],
+            [0, 0.82],
+            [0.5, 1.05, "house"],
+            [0.85, 1.0, "ease-out"],
             [dur - 0.08, 1],
           ]),
           chain("opacity", dur, [
             [0, 0],
-            [0.2, 1, "house"],
+            [0.18, 1, "house"],
             [dur - 0.08, 1],
           ]),
         ]}
       >
-        <media file={logo} x={0} y={0} width={160} height={160} fit="contain" />
+        <media file={logo} x={0} y={0} width={176} height={176} fit="contain" />
       </group>
 
       <text
@@ -652,7 +687,7 @@ function beatCta(dur, logo) {
         fontWeight={600}
         align="center"
         color={JADE}
-        animate={[fadeIn(0.48, dur)]}
+        animate={[fadeIn(0.45, dur)]}
       >
         Real Hong Kong Cantonese
       </text>
@@ -665,7 +700,7 @@ function beatCta(dur, logo) {
         fontWeight={700}
         align="center"
         color={INK}
-        animate={[fadeIn(0.72, dur)]}
+        animate={[fadeIn(0.68, dur)]}
       >
         jyuttranslate.com
       </text>
@@ -678,7 +713,7 @@ function beatCta(dur, logo) {
         fontWeight={500}
         align="center"
         color={MUTED}
-        animate={[fadeIn(1.0, dur)]}
+        animate={[fadeIn(0.95, dur)]}
       >
         Try Conversation mode · Free to start
       </text>
@@ -692,8 +727,8 @@ function beatCta(dur, logo) {
         animate={[
           chain("scaleX", dur, [
             [0, 0],
-            [1.1, 0],
-            [1.55, 1, "house"],
+            [1.05, 0],
+            [1.5, 1, "house"],
             [dur - 0.08, 1],
           ]),
         ]}
