@@ -8,7 +8,7 @@ import { PDFDocument } from 'pdf-lib'
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { cameraScan } from './api'
 import { commitDocPages, translateDocSegments, type DocLang } from './docsApi'
-import { groupTextItemsIntoLines, type PdfTextItem } from './pdfTextLayout'
+import { groupTextItemsIntoLines, clampInkWidth, type PdfTextItem } from './pdfTextLayout'
 import type { Entitlement } from './types'
 
 export type PdfProgress = (msg: string, page: number, total: number) => void
@@ -81,7 +81,7 @@ export function paintTranslations(
     if (!translated) continue
     const x = it.x * canvas.width
     const y = it.y * canvas.height
-    const w = Math.max(10, it.w * canvas.width)
+    const w = Math.max(10, Math.min(it.w, 1 - it.x - 0.005) * canvas.width)
     const h = Math.max(10, it.h * canvas.height)
 
     // Match source line height — previous 28px cap made headings unreadable.
@@ -104,10 +104,14 @@ export function paintTranslations(
     ctx.font = `600 ${fontSize}px ${FONT_FAMILY}`
     lines = wrapLines(ctx, translated, maxW)
     const lineH = fontSize * 1.15
-    // Blanket the full source line — shrinking to glyph width left source ink visible (#250).
-    const inflateX = w * 0.05
+    const lineWidths = lines.map((line) => ctx.measureText(line).width)
+    const textW = lineWidths.length ? Math.max(...lineWidths) : 0
+    // Mask full source ink box; grow only when translation is wider than the source line.
+    const inflateX = w * 0.03
+    const sourceCoverW = w + inflateX * 2 + 2
+    const transCoverW = textW + padX * 2 + 4
+    const coverW = Math.max(sourceCoverW, transCoverW)
     const coverX = x - inflateX - 1
-    const coverW = w + inflateX * 2 + 2
     // Grow cover slightly when wrapping so glyphs stay readable.
     const textBlockH = Math.max(h, lines.length * lineH + 2)
     const coverH = Math.min(textBlockH, h * 2.2)
@@ -155,11 +159,10 @@ export function textContentToItems(
     const scaleX = Math.hypot(vx[0] ?? 0, vx[1] ?? 0) || 1
     const scaleY = Math.hypot(vx[2] ?? 0, vx[3] ?? 0) || scaleX
     const fontH = Math.max(6, scaleY)
-    // item.width is in text space; scale into viewport pixels.
-    const wPx = Math.max(
-      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : fontH * text.length * 0.5,
-      fontH * 0.35,
-    )
+    const rawW =
+      typeof it.width === 'number' && it.width > 0 ? it.width * scaleX : fontH * text.length * 0.5
+    const hNorm = fontH / viewport.height
+    const wNorm = clampInkWidth(text, hNorm, rawW / viewport.width)
     // Baseline at ty; glyphs extend upward on the canvas.
     const top = ty - fontH * 0.92
     const x = tx / viewport.width
@@ -168,8 +171,8 @@ export function textContentToItems(
       text,
       x: Math.min(0.98, Math.max(0, x)),
       y: Math.min(0.98, Math.max(0, y)),
-      w: Math.min(1 - Math.min(0.98, Math.max(0, x)), Math.max(0.01, wPx / viewport.width)),
-      h: Math.min(1, Math.max(0.012, fontH / viewport.height)),
+      w: Math.min(1 - Math.min(0.98, Math.max(0, x)), Math.max(0.01, wNorm)),
+      h: Math.min(1, Math.max(0.012, hNorm)),
     })
   }
   return items
