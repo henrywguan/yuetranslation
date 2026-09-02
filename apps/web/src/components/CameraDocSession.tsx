@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
 import {
@@ -16,6 +16,8 @@ type Props = {
   onBack: () => void
   onEntitlement: (ent: Entitlement) => void
   entitlement?: Entitlement | null
+  initialFile?: File | null
+  onInitialFileConsumed?: () => void
 }
 
 const ACCEPT =
@@ -31,7 +33,13 @@ function docsRemainingLabel(ent: Entitlement | null | undefined): string | null 
   return `${biPlain(ui.camDocRemaining)}: ${left}`
 }
 
-export function CameraDocSession({ onBack, onEntitlement, entitlement }: Props) {
+export function CameraDocSession({
+  onBack,
+  onEntitlement,
+  entitlement,
+  initialFile,
+  onInitialFileConsumed,
+}: Props) {
   const [from, setFrom] = useState<DocLang>('en')
   const [to, setTo] = useState<DocLang>('yue')
   const [busy, setBusy] = useState(false)
@@ -118,6 +126,18 @@ export function CameraDocSession({ onBack, onEntitlement, entitlement }: Props) 
       setBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (!initialFile) return
+    let cancelled = false
+    void (async () => {
+      await onPick(initialFile)
+      if (!cancelled) onInitialFileConsumed?.()
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [initialFile, onInitialFileConsumed])
 
   return (
     <div className="cam-session cam-session--docs">

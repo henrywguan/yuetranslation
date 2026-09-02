@@ -8,6 +8,7 @@ import { GlowRotateButton } from './GlowRotateButton'
 import { createCameraHeartbeat } from '../lib/camera/heartbeat'
 import type { CameraTarget, CamPath } from '../lib/camera/types'
 import { openAuthScreen } from '../lib/auth'
+import { consumePendingLaunchFile } from '../lib/pwaLaunch'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import './camera.css'
@@ -28,6 +29,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   const [path, setPath] = useState<CamPath>('choice')
   const [target, setTarget] = useState<CameraTarget>('auto')
   const [uploadUrl, setUploadUrl] = useState<string | null>(null)
+  const [docSeedFile, setDocSeedFile] = useState<File | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loggedIn = Boolean(entitlement?.loggedIn)
@@ -105,20 +107,36 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
     setPath('docs')
   }
 
-  const onFile = (file: File | undefined) => {
+  const onFile = useCallback(
+    (file: File | undefined) => {
+      if (!file) return
+      if (uploadUrl?.startsWith('blob:')) URL.revokeObjectURL(uploadUrl)
+      const url = URL.createObjectURL(file)
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = typeof reader.result === 'string' ? reader.result : url
+        setUploadUrl(dataUrl)
+        onChoiceOpenChange(false)
+        setPath('upload')
+      }
+      reader.readAsDataURL(file)
+    },
+    [onChoiceOpenChange, uploadUrl],
+  )
+
+  useEffect(() => {
+    if (!loggedIn) return
+    const file = consumePendingLaunchFile()
     if (!file) return
-    if (uploadUrl?.startsWith('blob:')) URL.revokeObjectURL(uploadUrl)
-    const url = URL.createObjectURL(file)
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : url
-      // Prefer data URL for scan payload; keep object URL for display if needed
-      setUploadUrl(dataUrl)
+    const pdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (pdf) {
       onChoiceOpenChange(false)
-      setPath('upload')
+      setDocSeedFile(file)
+      setPath('docs')
+      return
     }
-    reader.readAsDataURL(file)
-  }
+    onFile(file)
+  }, [loggedIn, onChoiceOpenChange, onFile])
 
   const backToChoice = () => {
     void meter.stop()
@@ -199,6 +217,8 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
           onBack={backToChoice}
           onEntitlement={setEntitlement}
           entitlement={entitlement}
+          initialFile={docSeedFile}
+          onInitialFileConsumed={() => setDocSeedFile(null)}
         />
       ) : null}
 

@@ -6,6 +6,7 @@ import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
 import { useYueStore } from '../lib/store'
+import { consumePendingShareText } from '../lib/pwaLaunch'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
@@ -137,6 +138,21 @@ export function SoloView() {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    const shared = consumePendingShareText()
+    if (!shared) return
+    const from: Lang = /[\u4e00-\u9fff]/.test(shared) ? 'yue' : 'en'
+    if (from === 'en') {
+      setEnDraft(shared)
+      editingRef.current = 'en'
+    } else {
+      setYueDraft(shared)
+      editingRef.current = 'yue'
+    }
+    setSoloShowAutoHint(false)
+    runTranslate(shared, from, 0, true)
+  }, [setSoloShowAutoHint])
 
   const onEnChange = (value: string) => {
     editingRef.current = 'en'
