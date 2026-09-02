@@ -2,6 +2,7 @@
 // Brand: Harbor / Jade / Ink · Syne + Noto Sans HK · docs/brand/favicon.png
 // Motion: kinetic type → strike → Ken Burns INTO translation → pull → INTO variations → CTA
 // No left/right bobbing on a full-page screenshot.
+// UI still: hi-DPI Solo capture (scripts/capture-ui-reel-still.mjs) so 3× punches stay sharp.
 
 const HARBOR = "#07131f";
 const HARBOR_MID = "#0a1c2c";
@@ -527,7 +528,7 @@ function beatReveal(dur, uiStill) {
           ]),
         ]}
       >
-        Same meaning · different mouth
+        Same meaning, different ways to say
       </text>
 
       {/* Readable variation callouts while zoomed on the list */}

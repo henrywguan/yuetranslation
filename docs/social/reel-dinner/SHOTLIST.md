@@ -14,10 +14,12 @@
 - **No** left/right bobbing on a full-page screenshot
 - Vertical pan + scale only — punch ~3× into translation, pull, then ~3.3× into variation cards
 - Overlay callouts repeat the Cantonese + Jyutping so the beat lands even on small screens
+- **UI still must be hi-DPI** (capture at deviceScaleFactor 2–3 via `scripts/capture-ui-reel-still.mjs`) so zooms stay sharp — never reuse a soft 1× phone grab
 
 ## On-screen
 
 - Primary: `你返唔返嚟食飯㗎？` · `nei5 faan2 m4 faan1 lai4 sik6 faan6 gaa3`
+- Variations chapter: **Same meaning, different ways to say**
 - Variations callouts: `你返唔返嚟食飯呀？` · `你返唔返屋企食飯呀？`
 
 ## Brand
@@ -29,7 +31,9 @@
 ## Render (Higgsfield sandbox)
 
 ```bash
-# media/: ui-reel-still.png + logo-mark.png (= favicon.png)
+# media/: ui-reel-still.png (hi-DPI Solo capture) + logo-mark.png (= favicon.png)
+# refresh still:
+#   node scripts/capture-ui-reel-still.mjs /path/to/ui-reel-still.png
 SKIP_RENDER=1 higgsedit build edit.jsx
 higgsedit fonts add jyut-dinner-reel-v3 "Syne:700" "Noto Sans:600" "Noto Sans HK:700"
 # CJK subset for 粵口語 + dinner phrases before frames
