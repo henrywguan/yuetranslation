@@ -469,23 +469,24 @@
 
 .usage-meter-ring-fill {
   transition: stroke-dasharray 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  filter: saturate(1.15) brightness(1.12);
 }
 
 .usage-meter-ring-fill--self {
-  stroke: var(--jade);
+  stroke: var(--jade-bright, var(--jade));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--jade-bright, var(--jade)) 45%, transparent));
 }
 
 .usage-meter-ring-fill--family {
-  stroke: var(--usage-family, #7eb8e8);
+  stroke: var(--usage-family, #8ec8f0);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--usage-family, #8ec8f0) 40%, transparent));
 }
 
 .usage-meter-ring--warn .usage-meter-ring-fill--family {
-  stroke: color-mix(in srgb, var(--usage-family, #7eb8e8) 85%, var(--gold) 15%);
+  stroke: color-mix(in srgb, var(--usage-family, #8ec8f0) 85%, var(--gold) 15%);
 }
 
 .usage-meter-ring--hot .usage-meter-ring-fill--family {
-  stroke: color-mix(in srgb, var(--usage-family, #7eb8e8) 70%, var(--gold) 30%);
+  stroke: color-mix(in srgb, var(--usage-family, #8ec8f0) 70%, var(--gold) 30%);
 }
 
 .usage-meters-legend {
@@ -512,19 +513,27 @@
 }
 
 .usage-meters-legend-swatch--self {
-  background: var(--jade);
+  background: var(--jade-bright, var(--jade));
 }
 
 .usage-meters-legend-swatch--family {
-  background: var(--usage-family, #7eb8e8);
+  background: var(--usage-family, #8ec8f0);
+}
+
+.usage-meter-ring--warn .usage-meter-ring-fill--self {
+  stroke: color-mix(in srgb, var(--jade-bright, var(--jade)) 80%, var(--gold) 20%);
+}
+
+.usage-meter-ring--hot .usage-meter-ring-fill--self {
+  stroke: color-mix(in srgb, var(--jade-bright, var(--jade)) 65%, var(--gold) 35%);
 }
 
 .usage-meter-ring--warn .usage-meter-ring-fill {
-  filter: saturate(1.05);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gold) 35%, transparent));
 }
 
 .usage-meter-ring--hot .usage-meter-ring-fill {
-  filter: saturate(1.15);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--gold) 45%, transparent));
 }
 
 .usage-meter-ring-center {

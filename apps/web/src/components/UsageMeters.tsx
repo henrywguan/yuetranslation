@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
@@ -82,7 +82,6 @@ function timeDetail(usedSec: number, limitSec: number, unlimited: boolean): stri
 
 function buildMeters(e: Entitlement): MeterModel[] {
   const pooled = Boolean(e.household?.pooled)
-  const pooledSplit = pooled && (e.household?.seatUsed ?? 0) > 1
   const selfUsage = e.usageSelf
 
   const liveLimitSec = Math.max(0, (e.limits.live_minutes ?? 0) * 60)
@@ -91,7 +90,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const liveRatio = liveUnlimited ? null : clampUsageRatio(liveUsed / liveLimitSec)
   const liveLeft = Math.max(0, liveLimitSec - liveUsed)
   const liveSelfUsed = Math.max(0, Math.floor(selfUsage?.liveSeconds ?? 0))
-  const liveSplit = splitRingFills(liveUsed, liveSelfUsed, liveLimitSec, liveUnlimited, pooledSplit)
+  const liveSplit = splitRingFills(liveUsed, liveSelfUsed, liveLimitSec, liveUnlimited, pooled)
 
   const ttsUnlimited = Boolean(
     e.ttsUnlimited || e.plan === 'family' || e.plan === 'business',
@@ -102,7 +101,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const ttsRatio = ttsUnlimited || ttsLimit <= 0 ? null : clampUsageRatio(ttsUsed / ttsLimit)
   const ttsLeft = Math.max(0, ttsLimit - ttsUsed)
   const ttsSelfUsed = Math.max(0, selfUsage?.ttsChars ?? 0)
-  const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooledSplit)
+  const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooled)
 
   const camLimitSec = Math.max(0, (e.limits.camera_minutes ?? 0) * 60)
   const camUsed = Math.max(0, Math.floor(e.usage.cameraSeconds ?? 0))
@@ -114,7 +113,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       : clampUsageRatio(camUsed / camLimitSec)
   const camLeft = Math.max(0, camLimitSec - camUsed)
   const camSelfUsed = Math.max(0, Math.floor(selfUsage?.cameraSeconds ?? 0))
-  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooledSplit)
+  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooled)
 
   const docsLimit = Math.max(0, e.limits.docs_pages ?? 0)
   const docsUsed = Math.max(0, e.usage.docsPages ?? 0)
@@ -126,7 +125,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       : clampUsageRatio(docsUsed / docsLimit)
   const docsLeft = Math.max(0, docsLimit - docsUsed)
   const docsSelfUsed = Math.max(0, selfUsage?.docsPages ?? 0)
-  const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooledSplit)
+  const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooled)
 
   const aiUsed = Math.max(0, e.usage.aiVisionCount ?? 0)
 
@@ -249,13 +248,13 @@ function MeterRing({
   revealLeft: string
   precise: boolean
 }) {
-  const gradId = useId().replace(/:/g, '')
   const r = 34
   const c = 2 * Math.PI * r
   const hasUsage = usedAmount > 0
-  const showSplit = pooled && hasUsage && (selfFill > 0 || familyFill > 0)
   const fill = usageRingFill(ratio, unlimited, usedAmount)
-  const selfDash = c * (showSplit ? selfFill : fill)
+  const showSplit = pooled && hasUsage && (selfFill > 0 || familyFill > 0)
+  const personalFill = showSplit ? selfFill : fill
+  const selfDash = c * personalFill
   const familyDash = c * (showSplit ? familyFill : 0)
   const level =
     unlimited || fill < 0.55 ? 'ok' : fill < 0.85 ? 'warn' : 'hot'
@@ -266,49 +265,27 @@ function MeterRing({
       aria-hidden
     >
       <svg viewBox="0 0 80 80" className="usage-meter-ring-svg">
-        {!showSplit ? (
-          <defs>
-            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--jade)" />
-              <stop offset="100%" stopColor="var(--gold)" />
-            </linearGradient>
-          </defs>
-        ) : null}
         <circle className="usage-meter-ring-track" cx="40" cy="40" r={r} />
-        {showSplit ? (
-          <>
-            {selfDash > 0 ? (
-              <circle
-                className="usage-meter-ring-fill usage-meter-ring-fill--self"
-                cx="40"
-                cy="40"
-                r={r}
-                strokeDasharray={`${selfDash} ${c - selfDash}`}
-                strokeDashoffset={0}
-              />
-            ) : null}
-            {familyDash > 0 ? (
-              <circle
-                className="usage-meter-ring-fill usage-meter-ring-fill--family"
-                cx="40"
-                cy="40"
-                r={r}
-                strokeDasharray={`${familyDash} ${c - familyDash}`}
-                strokeDashoffset={-selfDash}
-              />
-            ) : null}
-          </>
-        ) : (
+        {selfDash > 0 ? (
           <circle
-            className="usage-meter-ring-fill"
+            className="usage-meter-ring-fill usage-meter-ring-fill--self"
             cx="40"
             cy="40"
             r={r}
-            stroke={`url(#${gradId})`}
             strokeDasharray={`${selfDash} ${c - selfDash}`}
             strokeDashoffset={0}
           />
-        )}
+        ) : null}
+        {showSplit && familyDash > 0 ? (
+          <circle
+            className="usage-meter-ring-fill usage-meter-ring-fill--family"
+            cx="40"
+            cy="40"
+            r={r}
+            strokeDasharray={`${familyDash} ${c - familyDash}`}
+            strokeDashoffset={-selfDash}
+          />
+        ) : null}
       </svg>
       <div className="usage-meter-ring-center">
         <span className="usage-meter-ring-default">
@@ -510,7 +487,7 @@ export function UsageMeters({ entitlement }: Props) {
                 ratio={m.ratio}
                 selfFill={m.selfFill}
                 familyFill={m.familyFill}
-                pooled={pooledSplit}
+                pooled={pooled}
                 unlimited={m.unlimited}
                 usedAmount={m.usedAmount}
                 usedLabel={m.usedLabel}
