@@ -6,6 +6,16 @@ export type PdfTextItem = {
   h: number
 }
 
+/**
+ * Clamp a measured line/glyph width to plausible ink bounds.
+ * PDF.js item.width often spans to the margin; char cap keeps covers tight to text.
+ */
+export function clampInkWidth(text: string, h: number, measuredW: number): number {
+  if (!text.length || measuredW <= 0 || h <= 0) return measuredW
+  const charCap = h * text.length * 0.55 * 1.1
+  return Math.max(h * 0.35, Math.min(measuredW, charCap))
+}
+
 /** Group PDF.js glyph runs into reading lines (same baseline band). */
 export function groupTextItemsIntoLines(items: PdfTextItem[]): PdfTextItem[] {
   if (!items.length) return []
