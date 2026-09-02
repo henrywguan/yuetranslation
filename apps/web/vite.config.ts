@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import type { ManifestOptions } from 'vite-plugin-pwa'
+import { createPwaManifest } from './pwa-manifest.js'
 
 const base = process.env.VITE_BASE_PATH || '/'
-const appBuild = '2026-08-31-pwa-start-app'
+const appBuild = '2026-09-02-pwa-builder-prep'
 
 export default defineConfig({
   base,
@@ -11,25 +13,24 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'app-build.txt'],
+      injectRegister: 'script',
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'app-build.txt',
+        'pwa-screenshots/mobile-app-narrow.png',
+        'pwa-screenshots/desktop-app-wide.png',
+      ],
       workbox: {
         cleanupOutdatedCaches: true,
-        additionalManifestEntries: [{ url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild }],
-      },
-      manifest: {
-        name: 'JyutTranslate — English ↔ Cantonese',
-        short_name: 'JyutTranslate',
-        theme_color: '#07131f',
-        background_color: '#07131f',
-        display: 'standalone',
-        // Safari / installed PWA should open the translator, not the marketing homepage.
-        start_url: `${base.replace(/\/?$/, '/')}#/app`,
-        icons: [
-          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest,txt}'],
+        additionalManifestEntries: [
+          { url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild },
         ],
       },
+      manifest: createPwaManifest(base) as unknown as ManifestOptions,
     }),
   ],
   server: {

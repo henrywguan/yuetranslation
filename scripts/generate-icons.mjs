@@ -17,7 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const outDir = path.resolve(__dirname, '../apps/web/public')
 const pyPath = path.join(__dirname, 'generate-icons.py')
 
-const ICON_FILES = ['pwa-192.png', 'pwa-512.png', 'apple-touch-icon.png']
+const ICON_FILES = ['pwa-192.png', 'pwa-512.png', 'pwa-512-maskable.png', 'apple-touch-icon.png']
 
 fs.mkdirSync(outDir, { recursive: true })
 

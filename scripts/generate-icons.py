@@ -64,7 +64,7 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def render(size: int) -> Image.Image:
+def render(size: int, *, maskable: bool = False) -> Image.Image:
     cx = cy = (size - 1) / 2
     # Wider falloff so dark harbor fills more of the tile.
     radius = size * 0.48
@@ -75,7 +75,8 @@ def render(size: int) -> Image.Image:
             d = math.hypot(x - cx, y - cy) / radius
             data[x, y] = sample(d)
 
-    font = load_font(int(size * 0.54))
+    glyph_scale = 0.42 if maskable else 0.54
+    font = load_font(int(size * glyph_scale))
     anchor = (cx, cy + size * 0.015)
 
     glyph = Image.new("RGBA", (size, size), (0, 0, 0, 0))
@@ -109,6 +110,9 @@ def render(size: int) -> Image.Image:
     mask = rounded_mask(size, size * 0.22)
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     out.paste(base, (0, 0), mask=mask)
+    if maskable:
+        # Maskable icons should fill the full square; Android applies the mask.
+        return base
     return out
 
 
@@ -120,9 +124,15 @@ def main() -> None:
         (192, "pwa-192.png"),
         (512, "pwa-512.png"),
         (180, "apple-touch-icon.png"),
+        (512, "pwa-512-maskable.png", True),
     )
-    for size, name in targets:
-        img = render(size)
+    for entry in targets:
+        if len(entry) == 3:
+            size, name, maskable = entry
+        else:
+            size, name = entry
+            maskable = False
+        img = render(size, maskable=maskable)
         path = out_dir / name
         img.save(path, format="PNG", optimize=True)
         print(f"wrote {path}")

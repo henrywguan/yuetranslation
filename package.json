@@ -24,6 +24,7 @@
     "test:translate": "node scripts/translation-quality-bot.mjs",
     "test:translate:live": "node scripts/live-pipeline-bot.mjs",
     "docs:screenshots": "node scripts/capture-docs-screenshots.mjs",
+    "pwa:screenshots": "node scripts/generate-pwa-screenshots.mjs",
     "fixtures:cam-accuracy": "node scripts/generate-cam-accuracy-fixtures.mjs"
   },
   "devDependencies": {

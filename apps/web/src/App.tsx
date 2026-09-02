@@ -8,6 +8,7 @@ import {
   isAuthCallback,
 } from './lib/auth'
 import { isDisplayStandalone } from './lib/pwaInstall'
+import { bootstrapPwaLaunch } from './lib/pwaLaunch'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
 import { hashPath, navigate, useRoute } from './lib/useHashRoute'
@@ -29,6 +30,7 @@ export default function App() {
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
 
   useEffect(() => {
+    bootstrapPwaLaunch()
     void Promise.all([loadSiteConfig(), bootstrapAuthSession()]).finally(() => {
       // After OAuth is consumed — never rewrite `#access_token=...` to `#/app` first
       // (that race signed users back into the app without a session).
