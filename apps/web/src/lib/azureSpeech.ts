@@ -214,14 +214,9 @@ export async function createAzureLiveSession(
       if (!canUseMicrophone()) {
         throw new Error(micBlockedMessage() || 'Microphone unavailable.')
       }
-      // English: fixed en-US recognizer is reliable. Cantonese: fixed zh-HK is flaky on
-      // several Azure endpoints — use auto-detect (transcriber / multilingual recognizer)
-      // and pin attribution via lockLang so results stay on the 粵語 pane.
-      if (lockLang === 'en') {
-        await startWithRecognizer('en')
-        return
-      }
-      if (lockLang === 'yue') {
+      // Locked languages: prefer the multilingual transcriber for fast interim streaming.
+      // Fixed en-US recognizer feels sluggish; fixed zh-HK is flaky — transcriber + lockLang pins the pane.
+      if (lockLang === 'en' || lockLang === 'yue') {
         try {
           await startWithTranscriber()
         } catch (err) {
@@ -230,7 +225,7 @@ export async function createAzureLiveSession(
           if (!canUseMicrophone()) {
             throw err instanceof Error ? err : new Error(String(err))
           }
-          await startWithRecognizer(undefined)
+          await startWithRecognizer(lockLang)
         }
         return
       }

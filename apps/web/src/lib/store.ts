@@ -963,8 +963,13 @@ export const useYueStore = create<State>((set, get) => ({
     // iPhone/iPad without a warm Azure token: start Web Speech BEFORE any await so
     // recognition.start() stays in the user-gesture turn (otherwise Safari listens with no audio).
     if (webSpeechFirst) {
-      const warmed = micWarm ? await micWarm : null
-      if (warmed) stopMediaStream(warmed)
+      // Prime iOS audio session in parallel — never block STT on getUserMedia or early
+      // syllables are lost (English speakers especially tend to start talking immediately).
+      if (micWarm) {
+        void micWarm.then((warmed) => {
+          if (warmed) stopMediaStream(warmed)
+        })
+      }
       next = createWebSpeechSession(handlers, webSpeechLock())
       if (next) {
         try {

@@ -19,7 +19,7 @@ export function createWebSpeechSession(
   let heardSpeech = false
   let yueLocaleIndex = 0
   const echo = createEchoGuard()
-  // iOS WebKit: continuous mode often yields zero results; use short sessions + restart.
+  // iOS WebKit: Cantonese needs short sessions + restart; en-US handles continuous well.
   const apple = isAppleTouchDevice()
   // zh-HK is primary; rotate fallbacks when the browser rejects Cantonese.
   const yueLocales = ['zh-HK', 'yue-HK', 'yue-Hant-HK', 'zh-TW']
@@ -30,7 +30,7 @@ export function createWebSpeechSession(
     if (stopped) return
     const rec = new SR()
     recognition = rec
-    rec.continuous = !apple
+    rec.continuous = !apple || activeLang === 'en'
     rec.interimResults = true
     rec.maxAlternatives = 1
     rec.lang = activeLang === 'yue' ? yueLocale() : 'en-US'
