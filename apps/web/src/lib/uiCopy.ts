@@ -726,7 +726,7 @@ export const ui = {
   featFastTag: { en: 'Tap any word', zh: '撳字詳解', jp: 'gam2 zi6 coeng4 gaai2' },
   featHostTag: { en: 'Live AR overlay', zh: '即時 AR 覆蓋', jp: 'zik1 si4 AR fuk1 goi3' },
   featHostDesc: {
-    en: 'Point the camera and watch the translations update live!',
+    en: 'Hit capture and watch the translations update!',
     zh: '對準相機，睇住譯文即時更新！',
     jp: 'deoi3 zeon1 soeng1 gei1, tai2 zyu6 jik6 man4 zik1 si4 gang1 san1!',
   },
