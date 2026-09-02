@@ -1242,6 +1242,31 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
   margin: 0;
 }
 
+.cam-docs-thinking {
+  min-height: 0;
+  margin: 0.15rem 0 0.35rem;
+  padding: 10px 8px 6px;
+  gap: 14px;
+}
+
+.cam-docs-thinking .tt-stage {
+  width: 104px;
+  height: 104px;
+}
+
+.cam-docs-thinking .tt-copy {
+  gap: 4px;
+  min-height: 3.2em;
+}
+
+.cam-docs-thinking .tt-bounce--en {
+  font-size: clamp(1rem, 2.8vw, 1.28rem);
+}
+
+.cam-docs-thinking .tt-bounce--zh {
+  font-size: clamp(0.98rem, 2.6vw, 1.2rem);
+}
+
 .cam-docs-error {
   margin: 0;
   color: var(--danger-ink, #f0a0a8);

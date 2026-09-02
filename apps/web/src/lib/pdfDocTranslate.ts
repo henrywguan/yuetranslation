@@ -11,7 +11,8 @@ import { commitDocPages, translateDocSegments, type DocLang } from './docsApi'
 import { groupTextItemsIntoLines, clampInkWidth, type PdfTextItem } from './pdfTextLayout'
 import type { Entitlement } from './types'
 
-export type PdfProgress = (msg: string, page: number, total: number) => void
+export type PdfProgressPhase = 'reading' | 'translating' | 'ocr' | 'saving'
+export type PdfProgress = (phase: PdfProgressPhase, page: number, total: number) => void
 
 type TextItem = PdfTextItem
 
@@ -193,7 +194,7 @@ export async function translatePdfHybrid(
   const target = to === 'en' ? ('en' as const) : ('zh' as const)
 
   for (let pageNum = 1; pageNum <= total; pageNum++) {
-    onProgress?.(`Page ${pageNum} · reading`, pageNum, total)
+    onProgress?.('reading', pageNum, total)
     const page = await pdf.getPage(pageNum)
     // Higher scale → sharper paint + better OCR boxes on scanned pages.
     const viewport = page.getViewport({ scale: 2 })
@@ -211,7 +212,7 @@ export async function translatePdfHybrid(
 
     const charCount = lineItems.reduce((n, i) => n + i.text.length, 0)
     if (charCount >= TEXT_CHAR_THRESHOLD) {
-      onProgress?.(`Page ${pageNum} · translating text layer`, pageNum, total)
+      onProgress?.('translating', pageNum, total)
       const slice = lineItems.slice(0, MAX_SEGMENTS)
       const { translations, entitlement } = await translateDocSegments({
         segments: slice.map((i) => i.text),
@@ -231,7 +232,7 @@ export async function translatePdfHybrid(
         })),
       )
     } else {
-      onProgress?.(`Page ${pageNum} · vision OCR`, pageNum, total)
+      onProgress?.('ocr', pageNum, total)
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
       const scan = await cameraScan({ image: dataUrl, target, forDocs: true })
       if (scan.entitlement) onEntitlement?.(scan.entitlement as Entitlement)
@@ -276,7 +277,7 @@ export async function translatePdfHybrid(
   }
   const base = file.name.replace(/\.pdf$/i, '') || 'document'
   // Bill only after the full PDF hybrid job succeeds.
-  onProgress?.(`Saving · ${total} page(s)`, total, total)
+  onProgress?.('saving', total, total)
   const committed = await commitDocPages(total)
   if (committed.entitlement) onEntitlement?.(committed.entitlement)
   return {
