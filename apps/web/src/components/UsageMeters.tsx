@@ -257,7 +257,6 @@ function MeterRing({
   const fill = usageRingFill(ratio, unlimited, usedAmount)
   const selfDash = c * (showSplit ? selfFill : fill)
   const familyDash = c * (showSplit ? familyFill : 0)
-  const ringRotate = 'rotate(-90 40 40)'
   const level =
     unlimited || fill < 0.55 ? 'ok' : fill < 0.85 ? 'warn' : 'hot'
 
@@ -284,7 +283,6 @@ function MeterRing({
                 cx="40"
                 cy="40"
                 r={r}
-                transform={ringRotate}
                 strokeDasharray={`${selfDash} ${c - selfDash}`}
                 strokeDashoffset={0}
               />
@@ -295,7 +293,6 @@ function MeterRing({
                 cx="40"
                 cy="40"
                 r={r}
-                transform={ringRotate}
                 strokeDasharray={`${familyDash} ${c - familyDash}`}
                 strokeDashoffset={-selfDash}
               />
@@ -307,7 +304,6 @@ function MeterRing({
             cx="40"
             cy="40"
             r={r}
-            transform={ringRotate}
             stroke={`url(#${gradId})`}
             strokeDasharray={`${selfDash} ${c - selfDash}`}
             strokeDashoffset={0}
