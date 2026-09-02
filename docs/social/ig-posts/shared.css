@@ -56,12 +56,12 @@ body {
   font-weight: 600;
 }
 
-/* Product logo mark — raster from apps (JyutLogo mark @ 512), not live text */
+/* Product logo mark — hi-res raster (JyutLogo mark), not live text */
 .logo-mark {
   display: block;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   flex-shrink: 0;
   object-fit: cover;
   box-shadow: 0 8px 22px color-mix(in srgb, var(--jade) 28%, transparent);
@@ -260,7 +260,9 @@ body {
   align-items: center;
   gap: 3px;
   height: 28px;
-  padding-left: 2px;
+  /* Staff is on the right; leftward ticks need room on the left */
+  padding-left: 4px;
+  padding-right: 1px;
   vertical-align: middle;
   color: var(--jade-bright);
 }

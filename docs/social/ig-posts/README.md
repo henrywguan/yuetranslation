@@ -10,10 +10,9 @@ Static brand posts rendered from HTML with **project fonts and logo**:
 
 ## Brand sources
 
-- Logo mark: raster `assets/logo-mark.png` (product `JyutLogo` mark @ 512 — Syne **J** + Noto **粵** on jade)
-- Chao letters: jade SVG bars with Unicode orientation (staff on the **right**)
-- Fonts: self-hosted Syne / Noto Sans / Noto Sans HK subsets in `fonts/` + `fonts-local.css`
-- Chao letters: drawn SVG bars (not Unicode) so they never tofu
+- Logo mark: raster `assets/logo-mark.png` (1024 — Syne **J** + Noto **粵** on jade; regenerate via `node render-logo.mjs`)
+- Chao letters: jade SVG bars with Unicode orientation (staff on the **right**, ticks left — matches `˥` / cantonese.ca)
+- Fonts: self-hosted Syne / Noto Sans / Noto Sans HK subsets in `fonts/` + `fonts-local.css` (+ `noto-sans-hk-yue-700.woff2` for the mark)
 - Colors: Harbor / Jade / Ink from `apps/web/src/index.css`
 - Tone set: `詩史試時市是` from `tonesData.ts`
 - Dinner example: `你返唔返嚟食飯㗎？` · `nei5 faan2 m4 faan1 lai4 sik6 faan6 gaa3`
