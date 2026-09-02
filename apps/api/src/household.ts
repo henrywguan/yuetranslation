@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { Resend } from 'resend'
-import { env } from './env.js'
+import { env, supportReplyTo } from './env.js'
 import { getAdmin, listProfiles } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
@@ -692,6 +692,7 @@ async function sendInviteEmail(input: {
     from: env.notifyFromEmail,
     to: input.to,
     subject: `${who} invited you to JyutTranslate ${planLabel}`,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
     html: `
       <div style="font-family:system-ui,sans-serif;line-height:1.5;color:#102018">
         <p><strong>${who}</strong> invited you to share a <strong>${planLabel}</strong> plan on JyutTranslate.</p>
