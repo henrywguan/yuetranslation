@@ -779,10 +779,10 @@ export const ui = {
   goFamily: { en: 'Go Family', zh: '升級家庭版', jp: 'sing1 kap1 gaa1 ting4 baan2' },
   comparePlans: { en: 'Compare all plans →', zh: '比較全部計劃 →', jp: 'bei2 gaau3 cyun4 bou6 gai3 waak6 →' },
 
-  freeFeatLive5: {
-    en: '~5 minutes of live translation / month',
-    zh: '每月大約五分鐘即時翻譯',
-    jp: 'mui5 jyut6 daai6 joek3 ng5 fan1 zung1 zik1 si4 faan1 jik6',
+  freeFeatLive1h: {
+    en: '~1 hour of live translation / month',
+    zh: '每月大約一小時即時翻譯',
+    jp: 'mui5 jyut6 daai6 joek3 jat1 siu2 si4 zik1 si4 faan1 jik6',
   },
   freeFeatText: {
     en: 'Unlimited text translation',
@@ -804,10 +804,10 @@ export const ui = {
     zh: '撳喇叭播語音——免費但有限制',
     jp: 'gam2 laa3 baa1 bo3 jyu5 jam1 — min5 fai3 daan6 jau5 haan6 zai3',
   },
-  familyFeatLive1h: {
-    en: '~1 hour of live translation / month',
-    zh: '每月大約一小時即時翻譯',
-    jp: 'mui5 jyut6 daai6 joek3 jat1 siu2 si4 zik1 si4 faan1 jik6',
+  familyFeatLive8h: {
+    en: '~8 hours of live translation / month',
+    zh: '每月大約八小時即時翻譯',
+    jp: 'mui5 jyut6 daai6 joek3 baat3 siu2 si4 zik1 si4 faan1 jik6',
   },
   familyFeatCamera: {
     en: '8 hours camera translation / month',
@@ -832,9 +832,9 @@ export const ui = {
 
   /** Compact homepage pricing teaser (3 lines max). */
   landFreeLive: {
-    en: '~5 min live / month',
-    zh: '每月約五分鐘即時',
-    jp: 'mui5 jyut6 joek3 ng5 fan1 zung1 zik1 si4',
+    en: '~1 hr live / month',
+    zh: '每月約一小時即時',
+    jp: 'mui5 jyut6 joek3 jat1 siu2 si4 zik1 si4',
   },
   landFreeText: {
     en: 'Unlimited text',
@@ -847,9 +847,9 @@ export const ui = {
     jp: 'mui5 jyut6 joek3 jat1 siu2 si4 soeng1 gei1',
   },
   landFamilyLive: {
-    en: '~1 hour live / month',
-    zh: '每月約一小時即時',
-    jp: 'mui5 jyut6 joek3 jat1 siu2 si4 zik1 si4',
+    en: '~8 hours live / month',
+    zh: '每月約八小時即時',
+    jp: 'mui5 jyut6 joek3 baat3 siu2 si4 zik1 si4',
   },
   landFamilyCam: {
     en: '8 hr cam / month',
@@ -982,8 +982,8 @@ export const ui = {
   cmpSeats: { en: 'Seats', zh: '座位', jp: 'zo6 wai2' },
   cmpSupport: { en: 'Support', zh: '支援', jp: 'zi1 wun4' },
   valMetered: { en: 'Metered', zh: '有上限', jp: 'jau5 soeng6 haan6' },
-  val5m: { en: '5 minutes', zh: '五分鐘', jp: 'ng5 fan1 zung1' },
   val1h: { en: '1 hour', zh: '一小時', jp: 'jat1 siu2 si4' },
+  val8h: { en: '8 hours', zh: '八小時', jp: 'baat3 siu2 si4' },
   val40h: { en: '~40 hours*', zh: '大約四十小時*', jp: 'daai6 joek3 sei3 sap6 siu2 si4*' },
   valSeat1: { en: '1', zh: '1', jp: '' },
   valSeat4: { en: '4 pooled', zh: '4 個共用', jp: '4 go3 gung6 jung6' },
