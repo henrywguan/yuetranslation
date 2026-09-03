@@ -5,7 +5,7 @@ import type { ManifestOptions } from 'vite-plugin-pwa'
 import { createPwaManifest } from './pwa-manifest.js'
 
 const base = process.env.VITE_BASE_PATH || '/'
-const appBuild = '2026-09-02-pwa-builder-prep'
+const appBuild = '2026-09-03-pwa-builder-followup'
 
 export default defineConfig({
   base,
@@ -13,7 +13,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'script',
+      // Self-register in index.html (immediate) so PWA Builder HTML/Puppeteer
+      // scanners can find `/sw.js` without waiting for window.load.
+      injectRegister: false,
       includeAssets: [
         'favicon.svg',
         'apple-touch-icon.png',
