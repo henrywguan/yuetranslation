@@ -192,9 +192,9 @@ def pack_hook() -> None:
     layers.append(save_layer("hook", "title", title))
 
     # mode highlight rings — centers measured on 01-solo-ready (1080 space)
-    # Was (220,1175) — far left of dock. Solo/獨白 ≈ (425, 1185); Conversation ≈ (540, 1185).
+    # Was (220,1175) — far left of dock. Solo/獨白 ≈ (415, 1185); Conversation ≈ (540, 1185).
     ra = blank()
-    draw_ring(ra, 425, 1185, 56)
+    draw_ring(ra, 415, 1185, 56)
     layers.append(save_layer("hook", "ring-solo", ra))
 
     rb = blank()
