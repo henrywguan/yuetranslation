@@ -70,6 +70,26 @@ function renderSlide({ still, overlay, out, seconds = 8, zoomEnd = 1.14, focus =
   run('ffmpeg', args)
 }
 
+/** Live typing / STT demo clip (already 1080×1350) + Harbor overlay. */
+function renderLiveSlide({ video, overlay, out, seconds = 9, label }) {
+  const args = ['-y', '-i', video]
+  if (overlay && existsSync(overlay)) {
+    args.push('-loop', '1', '-i', overlay)
+    args.push(
+      '-filter_complex',
+      `[0:v]fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,tpad=stop_mode=clone:stop_duration=${seconds}[base];[1:v]format=rgba,scale=${W}:${H}[ov];[base][ov]overlay=0:0:format=auto,format=yuv420p`,
+    )
+  } else {
+    args.push(
+      '-vf',
+      `fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,tpad=stop_mode=clone:stop_duration=${seconds},format=yuv420p`,
+    )
+  }
+  args.push('-t', String(seconds), '-r', String(FPS), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', out)
+  console.log('render-live', label)
+  run('ffmpeg', args)
+}
+
 function validAudio(path) {
   if (!existsSync(path)) return false
   const r = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path], {
@@ -119,11 +139,23 @@ const silent = {
   6: join(OUT, '_silent-06.mp4'),
 }
 
+const liveSolo = join(SRC, 'live/solo-live-1080.mp4')
+const liveConvo = join(SRC, 'live/convo-live-1080.mp4')
+const hasLive = existsSync(liveSolo) && existsSync(liveConvo)
+
 renderSlide({ still: stills.soloReady, overlay: join(OVER, 'hook.png'), out: silent[1], seconds: 7, zoomEnd: 1.1, focus: 'tabs', label: '01 hook' })
 renderSlide({ still: stills.soloFilled, overlay: join(OVER, 'solo-anatomy.png'), out: silent[2], seconds: 8, zoomEnd: 1.14, focus: 'yue', label: '02 solo anatomy' })
-renderSlide({ still: stills.soloFilled, overlay: join(OVER, 'solo-howto.png'), out: silent[3], seconds: 9, zoomEnd: 1.2, focus: 'yue', label: '03 solo howto' })
+if (hasLive) {
+  renderLiveSlide({ video: liveSolo, overlay: join(OVER, 'solo-howto.png'), out: silent[3], seconds: 10, label: '03 solo howto LIVE' })
+} else {
+  renderSlide({ still: stills.soloFilled, overlay: join(OVER, 'solo-howto.png'), out: silent[3], seconds: 9, zoomEnd: 1.2, focus: 'yue', label: '03 solo howto (still fallback)' })
+}
 renderSlide({ still: stills.convoFilled, overlay: join(OVER, 'convo-anatomy.png'), out: silent[4], seconds: 8, zoomEnd: 1.12, focus: 'center', label: '04 convo anatomy' })
-renderSlide({ still: stills.convoFilled, overlay: join(OVER, 'convo-howto.png'), out: silent[5], seconds: 9, zoomEnd: 1.16, focus: 'center', label: '05 convo howto' })
+if (hasLive) {
+  renderLiveSlide({ video: liveConvo, overlay: join(OVER, 'convo-howto.png'), out: silent[5], seconds: 10, label: '05 convo howto LIVE' })
+} else {
+  renderSlide({ still: stills.convoFilled, overlay: join(OVER, 'convo-howto.png'), out: silent[5], seconds: 9, zoomEnd: 1.16, focus: 'center', label: '05 convo howto (still fallback)' })
+}
 renderSlide({ still: stills.soloFilled, overlay: join(OVER, 'cta.png'), out: silent[6], seconds: 7, zoomEnd: 1.08, focus: 'center', label: '06 cta' })
 
 const ttsSolo = join(AUDIO, 'tts-solo-yue.mp3')
@@ -132,9 +164,9 @@ const ttsConvo = join(AUDIO, 'tts-convo-yue.mp3')
 const finals = [
   { n: 1, file: 'slide-01-hook.mp4', sec: 7, tts: null, duck: false },
   { n: 2, file: 'slide-02-solo-anatomy.mp4', sec: 8, tts: null, duck: false },
-  { n: 3, file: 'slide-03-solo-howto.mp4', sec: 9, tts: ttsSolo, duck: true },
+  { n: 3, file: 'slide-03-solo-howto.mp4', sec: hasLive ? 10 : 9, tts: ttsSolo, duck: true },
   { n: 4, file: 'slide-04-convo-anatomy.mp4', sec: 8, tts: null, duck: false },
-  { n: 5, file: 'slide-05-convo-howto.mp4', sec: 9, tts: ttsConvo, duck: true },
+  { n: 5, file: 'slide-05-convo-howto.mp4', sec: hasLive ? 10 : 9, tts: ttsConvo, duck: true },
   { n: 6, file: 'slide-06-cta.mp4', sec: 7, tts: null, duck: false },
 ]
 
@@ -145,10 +177,12 @@ for (const s of finals) {
 const hasTts = validAudio(ttsSolo) && validAudio(ttsConvo)
 writeFileSync(
   join(OUT, 'BUILD_NOTES.txt'),
-  `Instructional night/dark Harbor carousel on real dark-mode UI (4K source).
-Azure TTS muxed on slides 3 & 5: ${hasTts ? 'YES' : 'NO — re-run after the Speech subscription key is a real portal key (not a placeholder)'}
+  `Instructional night/dark Harbor carousel.
+Slides 3 & 5 source: ${hasLive ? 'LIVE headed-Chrome capture (real Solo typing + Conversation STT sim → /api/translate)' : 'Ken Burns stills (run scripts/record-carousel-live-demo.mjs first)'}
+Azure TTS muxed on slides 3 & 5: ${hasTts ? 'YES' : 'NO — need real Azure Speech key'}
+Harbor panel overlays (not bare text). Soft bed under all slides.
 Template: docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md
 `,
 )
 
-console.log('done →', OUT, 'tts=', hasTts)
+console.log('done →', OUT, 'tts=', hasTts, 'live=', hasLive)
