@@ -1,0 +1,36 @@
+{
+  "theme": "dark",
+  "ttsPending": true,
+  "slides": [
+    {
+      "file": "slide-01-hook.mp4",
+      "hasTts": false,
+      "bytes": 1177860
+    },
+    {
+      "file": "slide-02-solo-anatomy.mp4",
+      "hasTts": false,
+      "bytes": 2890552
+    },
+    {
+      "file": "slide-03-solo-howto.mp4",
+      "hasTts": false,
+      "bytes": 2989180
+    },
+    {
+      "file": "slide-04-convo-anatomy.mp4",
+      "hasTts": false,
+      "bytes": 1624813
+    },
+    {
+      "file": "slide-05-convo-howto.mp4",
+      "hasTts": false,
+      "bytes": 1864829
+    },
+    {
+      "file": "slide-06-cta.mp4",
+      "hasTts": false,
+      "bytes": 1214668
+    }
+  ]
+}

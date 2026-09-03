@@ -1,0 +1,25 @@
+{
+  "theme": "dark",
+  "autoSpeak": true,
+  "dpr": 3,
+  "viewport": {
+    "w": 1080,
+    "h": 1350
+  },
+  "phrases": {
+    "solo": {
+      "en": "Are you coming home for dinner?",
+      "yue": "你返唔返嚟食飯㗎？"
+    },
+    "conversation": {
+      "en": "Don't worry",
+      "yue": "唔使擔心"
+    }
+  },
+  "files": [
+    "01-solo-ready.png",
+    "02-solo-filled.png",
+    "03-convo-ready.png",
+    "04-convo-filled.png"
+  ]
+}
