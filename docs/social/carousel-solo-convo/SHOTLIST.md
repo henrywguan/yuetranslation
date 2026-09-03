@@ -2,7 +2,7 @@
 
 **Format:** Instagram **video carousel** — 6 clips · **1080×1350 (4:5)** · AAC  
 **Theme:** **Dark / night mode** real UI + Harbor instructional overlays ([`INSTRUCTIONAL-NIGHT-MODE.md`](../ig-posts/INSTRUCTIONAL-NIGHT-MODE.md))  
-**Vibe:** modern, luxury, smart instructional · quiet Ken Burns · soft jade callouts  
+**Overlays:** layered Harbor panels — captions **pop in/out** (fade + slide); jade rings **pulse** and ride Ken Burns zoom so they keep circling UI targets. How-to captions clear mid-slide so live typing stays readable.  
 **Audio:** soft luxury bed on every slide · **auto-speak Azure TTS** on Solo + Conversation how-to slides  
 **Source:** live headed-Chrome capture for how-to slides (real typing / STT sim → `/api/translate`) · Ken Burns stills for anatomy/hook/CTA · never AI-fake UI  
 
