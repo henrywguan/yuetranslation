@@ -1,12 +1,18 @@
 # Instagram static posts — approved design canon
 
-**Status:** Henry signed off the Jyutping + Chao tones square + portrait posts as the visual baseline (“PERFECT”).  
+**Template name:** **Instructional night / dark mode post**  
+Say that phrase (or “night instructional”) to recall this look.
+
+**Status:** Henry signed off these Harbor instructional posts as the visual baseline (“PERFECT” / “really loved”).  
+**Named recall sheet + gallery:** [`INSTRUCTIONAL-NIGHT-MODE.md`](./INSTRUCTIONAL-NIGHT-MODE.md)  
 **Use this pack as the starting point for future static IG posts** — keep the look; swap content/topic.
 
 ## Canonical references (do not invent a new look)
 
 | Role | Path |
 | --- | --- |
+| Named template + layout variants | `INSTRUCTIONAL-NIGHT-MODE.md` |
+| Approved JPG gallery | `references/01-…jpg` … `references/05-…jpg` |
 | Square feed (1080×1080) | `jyutping-tones-square.html` → `out/ig-post-jyutping-tones-1080.png` |
 | Portrait / cover (1080×1350) | `jyutping-tones-portrait.html` → `out/ig-post-jyutping-tones-portrait.png` |
 | Shared tokens + layout | `shared.css` |

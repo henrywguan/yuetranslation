@@ -1,6 +1,8 @@
 # Instagram posts — JyutTranslate
 
-> **Design canon:** Henry approved these posts as the visual baseline for future static IG work.  
+> **Template name:** **Instructional night / dark mode post**  
+> Henry approved these Harbor instructional posts as the visual baseline.  
+> Named recall + gallery → **[`INSTRUCTIONAL-NIGHT-MODE.md`](./INSTRUCTIONAL-NIGHT-MODE.md)**  
 > Full recipe → **[`DESIGN.md`](./DESIGN.md)** (colors, fonts, logo, composition, pipeline).
 
 Static brand posts rendered from HTML with **project fonts and logo**:
