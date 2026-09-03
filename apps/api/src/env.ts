@@ -70,7 +70,7 @@ export const env = {
   allowNoncommercialDicts: (process.env.YUE_ALLOW_NONCOMMERCIAL_DICTS || '0') === '1',
   /** Load words.hk gloss pack when present AND non-commercial gate is open. */
   enableWordshk: (process.env.YUE_ENABLE_WORDSHK || '0') === '1',
-  freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 5),
+  freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 60),
   /** Soft analytics default for Free; Family/Business TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
   /** Free camera hard cap (minutes / month). */
@@ -93,7 +93,7 @@ export const env = {
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
   familyLiveMinutes: Number(
-    process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 60,
+    process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 480,
   ),
   familyTtsChars: Number(
     process.env.YUE_FAMILY_TTS_CHARS || process.env.YUE_PRO_TTS_CHARS || 200000,
@@ -156,6 +156,14 @@ export const env = {
    */
   notifyFromEmail: normalizeNotifyFrom(process.env.YUE_NOTIFY_FROM || ''),
   /**
+   * Support / Reply-To address (does not need to be the Resend From domain).
+   * Default: help@mail.jyuttranslate.com (Cloudflare Email Routing → your inbox).
+   * Override with YUE_SUPPORT_FROM. Used as Resend `replyTo` on user-facing and admin mail.
+   */
+  supportFromEmail: normalizeNotifyFrom(
+    process.env.YUE_SUPPORT_FROM || 'JyutTranslate Help <help@mail.jyuttranslate.com>',
+  ),
+  /**
    * Admin inboxes for sign-up / upgrade alerts. Falls back to YUE_ADMIN_EMAILS when unset.
    */
   adminNotifyEmails: (() => {
@@ -172,6 +180,15 @@ export const env = {
    * Preferred for sign-up alerts when Database Webhooks are unavailable.
    */
   supabaseAuthHookSecret: (process.env.SUPABASE_AUTH_HOOK_SECRET || '').trim(),
+  /**
+   * Supabase **Send Email** hook secret (Authentication → Hooks → Send Email).
+   * When the hook is configured, user auth emails use React Email via Resend.
+   */
+  supabaseSendEmailHookSecret: (
+    process.env.SUPABASE_SEND_EMAIL_HOOK_SECRET ||
+    process.env.SEND_EMAIL_HOOK_SECRET ||
+    ''
+  ).trim(),
   /**
    * When 1, fold legacy per-user usage into household pools once per serverless instance
    * on cold start (idempotent). Set on deploy after migration 015, then remove when done.
@@ -220,6 +237,23 @@ function coerceEmailAddress(value: string): string | null {
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email || !env.adminEmails.length) return false
   return env.adminEmails.includes(email.trim().toLowerCase())
+}
+
+/** Bare address from `Name <email>` or `email` — for mailto / diagnostics. */
+export function bareEmailAddress(from: string): string | null {
+  const s = from.trim()
+  if (!s) return null
+  const named = s.match(/<([^<>]+)>/)
+  const addr = (named?.[1] || s).trim()
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr) ? addr : null
+}
+
+/**
+ * Resend `replyTo` for outbound mail. Prefer YUE_SUPPORT_FROM so replies land in Help
+ * (Cloudflare Email Routing), not the noreply From address.
+ */
+export function supportReplyTo(): string | undefined {
+  return env.supportFromEmail || undefined
 }
 
 /** True when we can create a model client. */

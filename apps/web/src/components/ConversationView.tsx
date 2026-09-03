@@ -14,8 +14,8 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
  * Cantonese sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
- * Pipeline: mic → STT source preview on the speaking side → after capture
- * ends, one final translation on the other side (no interim MT).
+ * Pipeline: mic → live STT on the speaking side → after capture ends, one final
+ * translation on the opposite pane (no interim machine translation).
  * Tap a finished translation to open details (definition + character breakdown).
  */
 export function ConversationView() {
@@ -33,7 +33,7 @@ export function ConversationView() {
 
   const enText = face.enTranslation || face.enInterim
   const yueText = face.yueTranslation || face.yueInterim
-  // Live = STT source preview only, before the post-capture translation lands.
+  // Live = STT source preview on the speaking side, before post-capture translation.
   const enLive =
     Boolean(face.enInterim) && !face.enTranslation && !face.yueTranslation
   const yueLive =

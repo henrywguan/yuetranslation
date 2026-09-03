@@ -187,7 +187,9 @@ export function SoloView() {
   }, [showHint, setSoloShowAutoHint])
 
   const inputLocked = live
-  const showYueRuby = Boolean(yueDraft.trim()) && !yueEditing && !inputLocked
+  // Show ruby Jyutping + Chao tones during live Cantonese STT, not only after translate lands.
+  const showYueRuby =
+    Boolean(yueDraft.trim()) && !yueEditing && (!inputLocked || Boolean(yueInterim.trim()))
 
   const enterYueEdit = () => {
     editingRef.current = 'yue'

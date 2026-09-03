@@ -24,7 +24,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     tagline: ui.tagFree,
     cta: ui.getStarted,
     ctaOpens: 'app',
-    features: [ui.freeFeatLive5, ui.freeFeatText, ui.freeFeatCamera, ui.freeFeatTts, ui.freeFeatModes],
+    features: [ui.freeFeatLive1h, ui.freeFeatText, ui.freeFeatCamera, ui.freeFeatTts, ui.freeFeatModes],
   },
   {
     id: 'family',
@@ -35,7 +35,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     cta: ui.goFamily,
     featured: true,
     ctaOpens: 'pricing',
-    features: [ui.familyFeatLive1h, ui.familyFeatCamera, ui.familyFeatTts, ui.familyFeatQuality, ui.familyFeatEverything],
+    features: [ui.familyFeatLive8h, ui.familyFeatCamera, ui.familyFeatTts, ui.familyFeatQuality, ui.familyFeatEverything],
   },
   {
     id: 'business',

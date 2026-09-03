@@ -12,6 +12,17 @@ export function tightCoverWidth(
   return Math.max(minWidth, Math.min(maxWidth, inner))
 }
 
+/** Horizontally center a label inside a full-width OCR cover panel. */
+export function centeredLabelX(
+  panelX: number,
+  panelW: number,
+  padX: number,
+  labelW: number,
+): number {
+  if (!labelW || panelW <= 0) return panelX + padX
+  return panelX + Math.max(padX, (panelW - labelW) / 2)
+}
+
 export function roundedRectPath(
   ctx: CanvasRenderingContext2D,
   x: number,

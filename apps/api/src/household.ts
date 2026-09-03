@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { Resend } from 'resend'
-import { env } from './env.js'
+import { env, supportReplyTo } from './env.js'
 import { getAdmin, listProfiles } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
@@ -229,12 +229,26 @@ function sumUsageSnapshots(month: string, rows: UsageSnapshot[]): UsageSnapshot 
   return total
 }
 
-/** @deprecated Prefer sumUsageSnapshots in resolveHouseholdUsage. */
+/** Per-field max — avoids double-counting when personal rows overlap the household pool. */
+function maxUsageSnapshots(month: string, a: UsageSnapshot, b: UsageSnapshot): UsageSnapshot {
+  return {
+    month,
+    liveSeconds: Math.max(a.liveSeconds, b.liveSeconds),
+    ttsChars: Math.max(a.ttsChars, b.ttsChars),
+    translateCount: Math.max(a.translateCount, b.translateCount),
+    cameraSeconds: Math.max(a.cameraSeconds, b.cameraSeconds),
+    cameraTranslateCount: Math.max(a.cameraTranslateCount, b.cameraTranslateCount),
+    docsPages: Math.max(a.docsPages, b.docsPages),
+    aiVisionCount: Math.max(a.aiVisionCount, b.aiVisionCount),
+  }
+}
+
+/** @deprecated Prefer maxUsageSnapshots in resolveHouseholdUsage. */
 export function mergePooledWithPersonal(
   pool: UsageSnapshot,
   personalSum: UsageSnapshot,
 ): UsageSnapshot {
-  return sumUsageSnapshots(pool.month, [pool, personalSum])
+  return maxUsageSnapshots(pool.month, pool, personalSum)
 }
 
 
@@ -281,33 +295,11 @@ async function persistHouseholdUsage(householdId: string, usage: UsageSnapshot):
   if (error) console.error('[household] persist pooled usage failed', error.message)
 }
 
-async function zeroMembersPersonalUsage(householdId: string, month: string): Promise<void> {
-  const client = getAdmin()
-  if (!client) return
-  const memberIds = await listHouseholdMemberIds(householdId)
-  if (!memberIds.length) return
-  const zeroRow = {
-    month,
-    live_seconds: 0,
-    tts_chars: 0,
-    translate_count: 0,
-    camera_seconds: 0,
-    camera_translate_count: 0,
-    docs_pages: 0,
-    ai_vision_count: 0,
-  }
-  const { error } = await client.from('usage_months').upsert(
-    memberIds.map((user_id) => ({ user_id, ...zeroRow })),
-    { onConflict: 'user_id,month' },
-  )
-  if (error) console.error('[household] zero personal usage failed', error.message)
-}
-
 /**
  * Resolve pooled household meters by merging `household_usage_months` with any
  * legacy per-member `usage_months` that predate pooling. Persists the merged
- * totals back to the household row and clears folded personal rows so future
- * reads only use the household pool.
+ * totals back to the household row. Personal rows are kept for per-member
+ * attribution (do not zero — that made solo owners look like “family” usage).
  */
 export async function resolveHouseholdUsage(
   householdId: string,
@@ -332,12 +324,9 @@ export async function resolveHouseholdUsage(
     return pool
   }
 
-  const merged = usageHasAny(pool)
-    ? sumUsageSnapshots(month, [pool, personalSum])
-    : personalSum
+  const merged = maxUsageSnapshots(month, pool, personalSum)
 
   await persistHouseholdUsage(householdId, merged)
-  await zeroMembersPersonalUsage(householdId, month)
   return merged
 }
 
@@ -703,6 +692,7 @@ async function sendInviteEmail(input: {
     from: env.notifyFromEmail,
     to: input.to,
     subject: `${who} invited you to JyutTranslate ${planLabel}`,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
     html: `
       <div style="font-family:system-ui,sans-serif;line-height:1.5;color:#102018">
         <p><strong>${who}</strong> invited you to share a <strong>${planLabel}</strong> plan on JyutTranslate.</p>

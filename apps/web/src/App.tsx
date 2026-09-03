@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { BugReportModal } from './components/BugReportModal'
+import { IncidentBanner } from './components/IncidentBanner'
 import {
   bootstrapAuthSession,
   consumeAuthScreenDeepLink,
@@ -44,6 +45,16 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!ready) return
+    void loadBootstrap()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void loadBootstrap()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [ready, loadBootstrap])
+
   // Avoid flashing in-app hash routes before site-config.json resolves.
   if (!ready) return null
 
@@ -57,6 +68,7 @@ export default function App() {
 
   return (
     <>
+      <IncidentBanner />
       <Suspense fallback={null}>{page}</Suspense>
       <AuthPanel onAuthChange={() => void loadBootstrap()} />
       <BugReportModal />

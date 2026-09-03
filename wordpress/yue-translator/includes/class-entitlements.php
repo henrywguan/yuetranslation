@@ -47,7 +47,7 @@ final class Yue_Entitlements
         if ($plan === 'pro') {
             return [
                 'plan' => 'pro',
-                'live_minutes' => (int) get_option('yue_pro_live_minutes', 20),
+                'live_minutes' => (int) get_option('yue_pro_live_minutes', 480),
                 // Unlimited TTS / camera — usage still metered; 0 means no hard cap.
                 'tts_chars' => 0,
                 'camera_minutes' => 0,
@@ -72,7 +72,7 @@ final class Yue_Entitlements
         }
         return [
             'plan' => 'free',
-            'live_minutes' => (int) get_option('yue_free_live_minutes', 5),
+            'live_minutes' => (int) get_option('yue_free_live_minutes', 60),
             'tts_chars' => (int) get_option('yue_free_tts_chars', 30000),
             'camera_minutes' => (int) get_option('yue_free_camera_minutes', 5),
             'auto_speak' => (bool) get_option('yue_free_auto_speak', false),

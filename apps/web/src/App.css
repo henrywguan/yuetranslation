@@ -472,19 +472,21 @@
 }
 
 .usage-meter-ring-fill--self {
-  stroke: var(--jade);
+  stroke: var(--jade-bright, var(--jade));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--jade-bright, var(--jade)) 45%, transparent));
 }
 
 .usage-meter-ring-fill--family {
-  stroke: var(--usage-family, #7eb8e8);
+  stroke: var(--usage-family, #8ec8f0);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--usage-family, #8ec8f0) 40%, transparent));
 }
 
 .usage-meter-ring--warn .usage-meter-ring-fill--family {
-  stroke: color-mix(in srgb, var(--usage-family, #7eb8e8) 85%, var(--gold) 15%);
+  stroke: color-mix(in srgb, var(--usage-family, #8ec8f0) 85%, var(--gold) 15%);
 }
 
 .usage-meter-ring--hot .usage-meter-ring-fill--family {
-  stroke: color-mix(in srgb, var(--usage-family, #7eb8e8) 70%, var(--gold) 30%);
+  stroke: color-mix(in srgb, var(--usage-family, #8ec8f0) 70%, var(--gold) 30%);
 }
 
 .usage-meters-legend {
@@ -511,19 +513,27 @@
 }
 
 .usage-meters-legend-swatch--self {
-  background: var(--jade);
+  background: var(--jade-bright, var(--jade));
 }
 
 .usage-meters-legend-swatch--family {
-  background: var(--usage-family, #7eb8e8);
+  background: var(--usage-family, #8ec8f0);
+}
+
+.usage-meter-ring--warn .usage-meter-ring-fill--self {
+  stroke: color-mix(in srgb, var(--jade-bright, var(--jade)) 80%, var(--gold) 20%);
+}
+
+.usage-meter-ring--hot .usage-meter-ring-fill--self {
+  stroke: color-mix(in srgb, var(--jade-bright, var(--jade)) 65%, var(--gold) 35%);
 }
 
 .usage-meter-ring--warn .usage-meter-ring-fill {
-  filter: saturate(1.05);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gold) 35%, transparent));
 }
 
 .usage-meter-ring--hot .usage-meter-ring-fill {
-  filter: saturate(1.15);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--gold) 45%, transparent));
 }
 
 .usage-meter-ring-center {
@@ -757,17 +767,66 @@
   line-height: 1.4;
 }
 
+.usage-detail-lead::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 16%,
+    color-mix(in srgb, var(--jade) 88%, #e8fff6) 50%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 84%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--jade) 32%, transparent),
+    0 0 1px color-mix(in srgb, var(--jade) 55%, transparent);
+  opacity: 0.9;
+}
+
 .usage-detail-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 14px;
+  gap: 0;
 }
 
 .usage-detail-row {
   display: grid;
   gap: 6px;
+  padding: 14px 0;
+}
+
+.usage-detail-row:first-child {
+  padding-top: 2px;
+}
+
+.usage-detail-row:last-child {
+  padding-bottom: 0;
+}
+
+.usage-detail-row + .usage-detail-row::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: 0 0 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 16%,
+    color-mix(in srgb, var(--jade) 88%, #e8fff6) 50%,
+    color-mix(in srgb, var(--jade) 50%, transparent) 84%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--jade) 32%, transparent),
+    0 0 1px color-mix(in srgb, var(--jade) 55%, transparent);
+  opacity: 0.9;
 }
 
 .usage-detail-row-top {
@@ -799,7 +858,6 @@
 .usage-detail-bar-fill {
   display: block;
   height: 100%;
-  width: var(--usage-pct, 0%);
   border-radius: inherit;
   background: linear-gradient(90deg, var(--jade), var(--gold));
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);

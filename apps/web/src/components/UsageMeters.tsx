@@ -1,10 +1,15 @@
-import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { inkEase } from '../lib/motion'
 import { formatCompactDuration, formatExactDuration } from '../lib/formatDuration'
 import { formatChars } from '../lib/formatChars'
+import {
+  clampUsageRatio,
+  usageBarWidthPct,
+  usageRingFill,
+} from '../lib/usageMeterMath'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
 
@@ -21,6 +26,8 @@ type MeterModel = {
   revealUsed: string
   revealLeft: string
   ratio: number | null
+  /** Raw used amount for empty-ring checks. */
+  usedAmount: number
   /** Pooled plans: your share of the ring (0–1). */
   selfFill: number
   /** Pooled plans: other household members' share (0–1). */
@@ -44,7 +51,7 @@ function splitRingFills(
 
   if (unlimited) {
     const decorative = 0.12
-    if (total <= 0) return { selfFill: 0, familyFill: decorative }
+    if (total <= 0) return { selfFill: 0, familyFill: 0 }
     return {
       selfFill: (self / total) * decorative,
       familyFill: (family / total) * decorative,
@@ -52,15 +59,9 @@ function splitRingFills(
   }
 
   return {
-    selfFill: clampRatio(self / limit),
-    familyFill: clampRatio(family / limit),
+    selfFill: clampUsageRatio(self / limit),
+    familyFill: clampUsageRatio(family / limit),
   }
-}
-
-function clampRatio(n: number): number {
-  if (!Number.isFinite(n) || n < 0) return 0
-  if (n > 1) return 1
-  return n
 }
 
 function formatMinutesCompact(seconds: number): string {
@@ -86,7 +87,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const liveLimitSec = Math.max(0, (e.limits.live_minutes ?? 0) * 60)
   const liveUsed = Math.max(0, Math.floor(e.usage.liveSeconds ?? 0))
   const liveUnlimited = liveLimitSec <= 0
-  const liveRatio = liveUnlimited ? null : clampRatio(liveUsed / liveLimitSec)
+  const liveRatio = liveUnlimited ? null : clampUsageRatio(liveUsed / liveLimitSec)
   const liveLeft = Math.max(0, liveLimitSec - liveUsed)
   const liveSelfUsed = Math.max(0, Math.floor(selfUsage?.liveSeconds ?? 0))
   const liveSplit = splitRingFills(liveUsed, liveSelfUsed, liveLimitSec, liveUnlimited, pooled)
@@ -97,7 +98,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const ttsLimit = Math.max(0, e.limits.tts_chars ?? 0)
   const ttsUsed = Math.max(0, e.usage.ttsChars ?? 0)
   const showVoice = ttsUnlimited || ttsLimit > 0
-  const ttsRatio = ttsUnlimited || ttsLimit <= 0 ? null : clampRatio(ttsUsed / ttsLimit)
+  const ttsRatio = ttsUnlimited || ttsLimit <= 0 ? null : clampUsageRatio(ttsUsed / ttsLimit)
   const ttsLeft = Math.max(0, ttsLimit - ttsUsed)
   const ttsSelfUsed = Math.max(0, selfUsage?.ttsChars ?? 0)
   const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooled)
@@ -108,8 +109,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const camRatio = camUnlimited
     ? null
     : camLimitSec <= 0
-      ? clampRatio(camUsed > 0 ? 1 : 0)
-      : clampRatio(camUsed / camLimitSec)
+      ? clampUsageRatio(camUsed > 0 ? 1 : 0)
+      : clampUsageRatio(camUsed / camLimitSec)
   const camLeft = Math.max(0, camLimitSec - camUsed)
   const camSelfUsed = Math.max(0, Math.floor(selfUsage?.cameraSeconds ?? 0))
   const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooled)
@@ -120,8 +121,8 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const docsRatio = docsUnlimited
     ? null
     : docsLimit <= 0
-      ? clampRatio(docsUsed > 0 ? 1 : 0)
-      : clampRatio(docsUsed / docsLimit)
+      ? clampUsageRatio(docsUsed > 0 ? 1 : 0)
+      : clampUsageRatio(docsUsed / docsLimit)
   const docsLeft = Math.max(0, docsLimit - docsUsed)
   const docsSelfUsed = Math.max(0, selfUsage?.docsPages ?? 0)
   const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooled)
@@ -138,6 +139,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       revealUsed: formatExactDuration(liveUsed),
       revealLeft: liveUnlimited ? 'unlimited' : `${formatExactDuration(liveLeft)} left`,
       ratio: liveRatio,
+      usedAmount: liveUsed,
       selfFill: liveSplit.selfFill,
       familyFill: liveSplit.familyFill,
       unlimited: liveUnlimited,
@@ -155,6 +157,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
       revealUsed: formatChars(ttsUsed),
       revealLeft: ttsUnlimited ? 'unlimited' : `${formatChars(ttsLeft)} left`,
       ratio: ttsRatio,
+      usedAmount: ttsUsed,
       selfFill: ttsSplit.selfFill,
       familyFill: ttsSplit.familyFill,
       unlimited: ttsUnlimited,
@@ -175,6 +178,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: formatExactDuration(camUsed),
         revealLeft: camUnlimited ? 'unlimited' : `${formatExactDuration(camLeft)} left`,
         ratio: camRatio,
+        usedAmount: camUsed,
         selfFill: camSplit.selfFill,
         familyFill: camSplit.familyFill,
         unlimited: camUnlimited,
@@ -189,6 +193,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: String(docsUsed),
         revealLeft: docsUnlimited ? 'unlimited' : `${docsLeft} left`,
         ratio: docsRatio,
+        usedAmount: docsUsed,
         selfFill: docsSplit.selfFill,
         familyFill: docsSplit.familyFill,
         unlimited: docsUnlimited,
@@ -205,6 +210,7 @@ function buildMeters(e: Entitlement): MeterModel[] {
         revealUsed: String(aiUsed),
         revealLeft: 'tracked',
         ratio: null,
+        usedAmount: aiUsed,
         selfFill: 0,
         familyFill: 0,
         unlimited: true,
@@ -222,6 +228,7 @@ function MeterRing({
   familyFill,
   pooled,
   unlimited,
+  usedAmount,
   usedLabel,
   limitLabel,
   revealUsed,
@@ -233,18 +240,21 @@ function MeterRing({
   familyFill: number
   pooled: boolean
   unlimited: boolean
+  /** Raw used count/seconds/chars — rings stay empty when this is 0. */
+  usedAmount: number
   usedLabel: string
   limitLabel: string
   revealUsed: string
   revealLeft: string
   precise: boolean
 }) {
-  const gradId = useId().replace(/:/g, '')
   const r = 34
   const c = 2 * Math.PI * r
-  const fill = unlimited ? 0.12 : clampRatio(ratio ?? 0)
-  const showSplit = pooled && (selfFill > 0 || familyFill > 0)
-  const selfDash = c * (showSplit ? selfFill : fill)
+  const hasUsage = usedAmount > 0
+  const fill = usageRingFill(ratio, unlimited, usedAmount)
+  const showSplit = pooled && hasUsage && (selfFill > 0 || familyFill > 0)
+  const personalFill = showSplit ? selfFill : fill
+  const selfDash = c * personalFill
   const familyDash = c * (showSplit ? familyFill : 0)
   const level =
     unlimited || fill < 0.55 ? 'ok' : fill < 0.85 ? 'warn' : 'hot'
@@ -255,49 +265,27 @@ function MeterRing({
       aria-hidden
     >
       <svg viewBox="0 0 80 80" className="usage-meter-ring-svg">
-        {!showSplit ? (
-          <defs>
-            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--jade)" />
-              <stop offset="100%" stopColor="var(--gold)" />
-            </linearGradient>
-          </defs>
-        ) : null}
         <circle className="usage-meter-ring-track" cx="40" cy="40" r={r} />
-        {showSplit ? (
-          <>
-            {selfDash > 0 ? (
-              <circle
-                className="usage-meter-ring-fill usage-meter-ring-fill--self"
-                cx="40"
-                cy="40"
-                r={r}
-                strokeDasharray={`${selfDash} ${c - selfDash}`}
-                strokeDashoffset={c * 0.25}
-              />
-            ) : null}
-            {familyDash > 0 ? (
-              <circle
-                className="usage-meter-ring-fill usage-meter-ring-fill--family"
-                cx="40"
-                cy="40"
-                r={r}
-                strokeDasharray={`${familyDash} ${c - familyDash}`}
-                strokeDashoffset={c * 0.25 - selfDash}
-              />
-            ) : null}
-          </>
-        ) : (
+        {selfDash > 0 ? (
           <circle
-            className="usage-meter-ring-fill"
+            className="usage-meter-ring-fill usage-meter-ring-fill--self"
             cx="40"
             cy="40"
             r={r}
-            stroke={`url(#${gradId})`}
             strokeDasharray={`${selfDash} ${c - selfDash}`}
-            strokeDashoffset={c * 0.25}
+            strokeDashoffset={0}
           />
-        )}
+        ) : null}
+        {showSplit && familyDash > 0 ? (
+          <circle
+            className="usage-meter-ring-fill usage-meter-ring-fill--family"
+            cx="40"
+            cy="40"
+            r={r}
+            strokeDasharray={`${familyDash} ${c - familyDash}`}
+            strokeDashoffset={-selfDash}
+          />
+        ) : null}
       </svg>
       <div className="usage-meter-ring-center">
         <span className="usage-meter-ring-default">
@@ -362,6 +350,7 @@ export function UsageMeters({ entitlement }: Props) {
   }, [detailOpen])
 
   const pooled = Boolean(entitlement.household?.pooled)
+  const pooledSplit = pooled && (entitlement.household?.seatUsed ?? 0) > 1
   const drawer =
     typeof document !== 'undefined'
       ? createPortal(
@@ -421,10 +410,7 @@ export function UsageMeters({ entitlement }: Props) {
 
                   <ul className="usage-detail-list">
                     {meters.map((m) => {
-                      const pct =
-                        m.unlimited || m.ratio == null
-                          ? null
-                          : Math.round(clampRatio(m.ratio) * 100)
+                      const barWidth = usageBarWidthPct(m.ratio, m.unlimited, m.usedAmount)
                       return (
                         <li key={m.key} className="usage-detail-row">
                           <div className="usage-detail-row-top">
@@ -438,14 +424,12 @@ export function UsageMeters({ entitlement }: Props) {
                           </div>
                           <div
                             className="usage-detail-bar"
-                            style={
-                              {
-                                '--usage-pct': `${pct == null ? 12 : pct}%`,
-                              } as CSSProperties
-                            }
                             data-unlimited={m.unlimited ? '1' : '0'}
                           >
-                            <span className="usage-detail-bar-fill" />
+                            <span
+                              className="usage-detail-bar-fill"
+                              style={{ width: `${barWidth}%` }}
+                            />
                           </div>
                           <BiText
                             copy={m.blurb}
@@ -505,6 +489,7 @@ export function UsageMeters({ entitlement }: Props) {
                 familyFill={m.familyFill}
                 pooled={pooled}
                 unlimited={m.unlimited}
+                usedAmount={m.usedAmount}
                 usedLabel={m.usedLabel}
                 limitLabel={m.limitLabel}
                 revealUsed={m.revealUsed}
@@ -515,7 +500,7 @@ export function UsageMeters({ entitlement }: Props) {
             </motion.div>
           ))}
         </div>
-        {pooled ? (
+        {pooledSplit ? (
           <div className="usage-meters-legend" aria-hidden>
             <span className="usage-meters-legend-item">
               <span className="usage-meters-legend-swatch usage-meters-legend-swatch--self" />

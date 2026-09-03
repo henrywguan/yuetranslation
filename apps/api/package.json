@@ -14,7 +14,8 @@
     "smoke:entitlements": "tsx src/entitlements.smoke.ts",
     "smoke:usage": "tsx src/usage.smoke.ts",
     "smoke:household-usage": "tsx src/household.usage.smoke.ts",
-    "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:canto",
+    "smoke:admin-usage-range": "tsx src/adminUsageRange.smoke.ts",
+    "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:admin-usage-range && npm run smoke:canto",
     "import:cc-canto": "tsx scripts/import-cc-canto.ts",
     "import:wordshk": "tsx scripts/import-wordshk.ts"
   },

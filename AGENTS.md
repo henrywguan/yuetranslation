@@ -1,5 +1,27 @@
 # Agent notes
 
+## Product & design goals
+
+Henry’s bar for JyutTranslate UX: **fluid, dynamic, modern, interactive, responsive, luxury**.
+
+Before shipping a change that **reduces** live feedback, motion, immediacy, or polish (e.g. hiding interim STT, removing animations, deferring UI until a slow path completes, static placeholders where real-time state exists), **stop and flag the tradeoff** for Henry. Wait for his confirmation before implementing.
+
+**Do flag** when a proposal favors austerity, latency hacks, or “lean pipeline” over feel — especially voice, translation, and mic flows.
+
+**Do not flag** obvious engineering necessities (security, billing, crash fixes, env limits) unless they also materially hurt the goals above.
+
+**Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
+
+### Instagram / static social posts (approved look)
+
+When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, start from the approved Jyutping + Chao tones posts — **not** a new AI poster style.
+
+- **Canon:** [`docs/social/ig-posts/DESIGN.md`](docs/social/ig-posts/DESIGN.md)
+- **References:** `docs/social/ig-posts/out/ig-post-jyutping-tones-{1080,portrait}.png` + matching HTML/`shared.css`
+- **Locked:** Harbor / Jade / Ink · Syne + Noto Sans HK · **`docs/brand/favicon.png` only** (never regenerate the chop)
+- **Pipeline:** HTML → `node docs/social/ig-posts/render.mjs` → commit `out/*.png`
+- Content/topic can change; **colors, type, logo, atmosphere, and composition language stay**
+
 ## Cursor Cloud specific instructions
 
 ### Paid / external API usage (cloud testing only)
@@ -70,7 +92,7 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 
 ### Production auth & metering (Vercel)
 
-Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use **Solo text translate** and **tap-to-play voice** at `#/app` without signing in; Free TTS is metered with a hard char cap; Family/Business TTS is unlimited (usage still counted). Live mic still requires login and is metered. Auto-speak remains Family/Business. **Cam** (AR / Upload / Documents) requires login; camera minutes and document pages are **separate** meters — see [docs/entitlements.md](docs/entitlements.md) and [docs/camera.md](docs/camera.md). Production Family live minutes are **60** (`YUE_FAMILY_LIVE_MINUTES=60` in `vercel.json`), matching the pricing page.
+Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests can use **Solo text translate** and **tap-to-play voice** at `#/app` without signing in; Free TTS is metered with a hard char cap; Family/Business TTS is unlimited (usage still counted). Live mic still requires login and is metered. Auto-speak remains Family/Business. **Cam** (AR / Upload / Documents) requires login; camera minutes and document pages are **separate** meters — see [docs/entitlements.md](docs/entitlements.md) and [docs/camera.md](docs/camera.md). Production Free live minutes are **60** (`YUE_FREE_LIVE_MINUTES=60`) and Family live minutes are **480** (`YUE_FAMILY_LIVE_MINUTES=480` in `vercel.json`), matching the pricing page.
 
 OAuth / confirm-email returns to the site origin (Supabase Site URL). The web app then routes to `#/app`. Login links must be `/?auth=1#/app` (query before hash). In Supabase → Authentication → URL configuration, Site URL should be the production origin; extra Redirect URLs can include `http://localhost:5173/**` and the production origin.
 

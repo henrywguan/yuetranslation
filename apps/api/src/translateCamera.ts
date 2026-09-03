@@ -56,27 +56,44 @@ function parseTranslation(raw: string, fallback: string): string {
   return trimmed.replace(/^["']|["']$/g, '').trim() || fallback
 }
 
-function parseBatchTranslations(raw: string, fallbacks: string[]): string[] {
+/**
+ * Models often echo the prompt's "1. / 2." line markers into each translation.
+ * Strip a leading list index only when it looks like a batch marker (not e.g. "50g").
+ */
+export function stripLeadingListNumber(text: string): string {
+  const t = text.trim()
+  if (!t) return t
+  // "1. 翻譯" / "12) Foo" / "3、文言" — not "50g" or "2017年"
+  return t.replace(/^\d{1,3}(?:[\.\)：:]|\u3001)\s*/, '').trim() || t
+}
+
+function mapBatchItem(v: unknown, fallback: string): string {
+  if (typeof v !== 'string' || !v.trim()) return fallback
+  return stripLeadingListNumber(v)
+}
+
+export function parseBatchTranslations(raw: string, fallbacks: string[]): string[] {
   let trimmed = raw.trim()
   if (!trimmed) return fallbacks
   trimmed = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
   try {
     const json = JSON.parse(trimmed) as unknown
     if (Array.isArray(json)) {
-      return json.map((v, i) =>
-        typeof v === 'string' && v.trim() ? v.trim() : fallbacks[i] || '',
-      )
+      return json.map((v, i) => mapBatchItem(v, fallbacks[i] || ''))
     }
     if (json && typeof json === 'object') {
       const arr = (json as { translations?: unknown }).translations
       if (Array.isArray(arr)) {
-        return arr.map((v, i) =>
-          typeof v === 'string' && v.trim() ? v.trim() : fallbacks[i] || '',
-        )
+        return arr.map((v, i) => mapBatchItem(v, fallbacks[i] || ''))
       }
     }
   } catch {
-    // fall through
+    // fall through — plain numbered lines as a last resort
+    const lines = trimmed
+      .split(/\n+/)
+      .map((l) => stripLeadingListNumber(l))
+      .filter(Boolean)
+    if (lines.length === fallbacks.length) return lines
   }
   return fallbacks
 }
@@ -99,7 +116,7 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
         'Keep personal names, place names, and legal terms accurate.',
         'Keep brand names and codes (A2, HK$) when appropriate.',
         docBatch
-          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input.'
+          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
           : 'Return ONLY valid JSON: {"translation":"<Chinese>"}',
         'No markdown, no explanation.',
       ]
@@ -114,7 +131,7 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
         'Keep place names (中環 → Central) and exit codes.',
         'Never leave the translation empty. Never copy Chinese characters into the English output.',
         docBatch
-          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input.'
+          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
           : 'Return ONLY valid JSON: {"translation":"<English>"}',
         'No markdown, no explanation.',
       ]
@@ -238,7 +255,7 @@ export async function translateCameraBatch(
     const fallbacks = chunk.map((s) => (to === 'zh' ? `（譯）${s}` : `(tr) ${s}`))
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
-      const t = (translated[i] || '').trim()
+      const t = stripLeadingListNumber((translated[i] || '').trim())
       const src = chunk[i] || ''
       if (to === 'en' && hasHan(t)) out[start + i] = src
       else if (to === 'zh' && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src

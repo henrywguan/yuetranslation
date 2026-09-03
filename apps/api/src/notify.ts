@@ -8,10 +8,14 @@
  * “Connecting…”. Templates are compiled to plain JS under `emails/compiled/`
  * and loaded only when sending.
  */
+import { dirname, join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { ReactElement } from 'react'
 import { Resend, type Attachment } from 'resend'
-import { env } from './env.js'
+import { env, supportReplyTo } from './env.js'
 import { issueTypeLabel, shortReportId } from './emails/bugReportMeta.js'
+
+const notifyDir = dirname(fileURLToPath(import.meta.url))
 
 let client: Resend | null = null
 
@@ -23,6 +27,55 @@ function getResend(): Resend | null {
 
 export function notifyConfigured(): boolean {
   return Boolean(getResend() && env.adminNotifyEmails.length && env.notifyFromEmail)
+}
+
+/** Admin / health diagnostics — why notify may be skipped. */
+export function notifyStatus() {
+  const from = env.notifyFromEmail
+  const fromDomain =
+    from.match(/<([^<>@]+@[^<>]+)>/)?.[1]?.split('@')[1] ||
+    from.match(/@([^>\s]+)/)?.[1] ||
+    null
+  const testFrom = Boolean(fromDomain && /(^|\.)resend\.dev$/i.test(fromDomain))
+  return {
+    configured: notifyConfigured(),
+    hasResendKey: Boolean(env.resendApiKey),
+    hasFrom: Boolean(from),
+    hasSupportReplyTo: Boolean(env.supportFromEmail),
+    supportReplyTo: env.supportFromEmail || null,
+    recipientCount: env.adminNotifyEmails.length,
+    fromDomain,
+    testFromDomain: testFrom,
+    hint: testFrom
+      ? 'Resend test senders only deliver to the Resend account owner email — verify your domain and YUE_NOTIFY_FROM for other inboxes.'
+      : !env.resendApiKey
+        ? 'Set RESEND_API_KEY on Vercel.'
+        : !from
+          ? 'Set YUE_NOTIFY_FROM to a verified address (must include @).'
+          : !env.adminNotifyEmails.length
+            ? 'Set YUE_ADMIN_NOTIFY_EMAILS or YUE_ADMIN_EMAILS.'
+            : null,
+  }
+}
+
+/** True when Resend + from address can send user-facing auth emails. */
+export function userEmailConfigured(): boolean {
+  return Boolean(getResend() && env.notifyFromEmail)
+}
+
+/** Resolve compiled React Email modules reliably on Vercel (includeFiles + bundled handler). */
+async function importCompiledEmail<T>(basename: string): Promise<T> {
+  const rel = `./emails/compiled/${basename}.js`
+  try {
+    return (await import(rel)) as T
+  } catch (first) {
+    const abs = pathToFileURL(join(notifyDir, 'emails', 'compiled', `${basename}.js`)).href
+    try {
+      return (await import(abs)) as T
+    } catch {
+      throw first
+    }
+  }
 }
 
 function adminLink(path = '/#/admin'): string {
@@ -59,6 +112,66 @@ function inlineImageAttachment(input: {
   }
 }
 
+async function sendUserEmail(subject: string, html: string, to: string): Promise<void> {
+  const resend = getResend()
+  if (!resend || !env.notifyFromEmail) {
+    throw new Error('User email not configured — set RESEND_API_KEY and YUE_NOTIFY_FROM.')
+  }
+  const { error } = await resend.emails.send({
+    from: env.notifyFromEmail,
+    to: [to],
+    subject,
+    html,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
+  })
+  if (error) {
+    throw new Error(error.message || 'Resend send failed')
+  }
+}
+
+async function renderEmailHtml(loadElement: () => Promise<ReactElement>): Promise<string> {
+  const [{ render }, element] = await Promise.all([
+    import('@react-email/render'),
+    loadElement(),
+  ])
+  return render(element)
+}
+
+export type SendAuthEmailInput = {
+  to: string
+  actionType: string
+  tokenHash: string
+  otpCode?: string | null
+  redirectTo: string
+  supabaseUrl: string
+}
+
+/** Branded Supabase auth email (signup confirm, magic link, recovery, …). */
+export async function sendAuthEmail(input: SendAuthEmailInput): Promise<void> {
+  const { authEmailCopy, buildSupabaseVerifyUrl } = await import('./emails/authEmailMeta.js')
+  const copy = authEmailCopy(input.actionType)
+  const verifyUrl = buildSupabaseVerifyUrl({
+    supabaseUrl: input.supabaseUrl,
+    tokenHash: input.tokenHash,
+    verifyType: copy.verifyType,
+    redirectTo: input.redirectTo || appPublicUrl(),
+  })
+  const html = await renderEmailHtml(async () => {
+    const [{ createElement }, { AuthEmail }] = await Promise.all([
+      import('react'),
+      importCompiledEmail<typeof import('./emails/compiled/AuthEmail.js')>('AuthEmail'),
+    ])
+    return createElement(AuthEmail, {
+      copy,
+      verifyUrl,
+      otpCode: input.otpCode,
+      appUrl: appPublicUrl(),
+      logoSrc: logoSrcForTemplate(),
+    })
+  })
+  await sendUserEmail(copy.subject, html, input.to)
+}
+
 async function sendAdminEmail(
   subject: string,
   html: string,
@@ -66,7 +179,13 @@ async function sendAdminEmail(
 ): Promise<void> {
   const resend = getResend()
   if (!resend || !env.adminNotifyEmails.length || !env.notifyFromEmail) {
-    console.warn('[notify] Skipped — RESEND_API_KEY, YUE_NOTIFY_FROM, or admin notify emails missing')
+    const st = notifyStatus()
+    console.warn('[notify] Skipped admin email', {
+      hasResendKey: st.hasResendKey,
+      hasFrom: st.hasFrom,
+      recipientCount: st.recipientCount,
+      hint: st.hint,
+    })
     return
   }
   const { error } = await resend.emails.send({
@@ -74,6 +193,7 @@ async function sendAdminEmail(
     to: env.adminNotifyEmails,
     subject,
     html,
+    ...(supportReplyTo() ? { replyTo: supportReplyTo() } : {}),
     ...(attachments?.length ? { attachments } : {}),
   })
   if (error) {
@@ -101,7 +221,7 @@ function queueReactEmail(
   attachments?: Attachment[],
 ): void {
   void renderAndSend(subject, loadElement, attachments).catch((e) => {
-    console.error('[notify] send failed', e)
+    console.error('[notify] send failed', e instanceof Error ? e.message : e)
   })
 }
 
@@ -116,7 +236,7 @@ export function notifyNewSignup(input: {
   queueReactEmail(`JyutTranslate · New sign-up: ${label}`, async () => {
     const [{ createElement }, { SignupEmail }] = await Promise.all([
       import('react'),
-      import('./emails/compiled/SignupEmail.js'),
+      importCompiledEmail<typeof import('./emails/compiled/SignupEmail.js')>('SignupEmail'),
     ])
     return createElement(SignupEmail, {
       email: input.email || '—',
@@ -149,7 +269,7 @@ export function notifyUserUpgrade(input: {
   queueReactEmail(`JyutTranslate · Upgrade: ${label} → ${input.plan}`, async () => {
     const [{ createElement }, { UpgradeEmail }] = await Promise.all([
       import('react'),
-      import('./emails/compiled/UpgradeEmail.js'),
+      importCompiledEmail<typeof import('./emails/compiled/UpgradeEmail.js')>('UpgradeEmail'),
     ])
     return createElement(UpgradeEmail, {
       email: input.email || '—',
@@ -214,8 +334,7 @@ export type BugReportNotifyInput = {
   context?: Record<string, unknown>
 }
 
-/** Rich React Email + Resend notify for bug reports (screenshot via CID when present). */
-export function notifyBugReport(input: BugReportNotifyInput): void {
+function buildBugReportEmailProps(input: BugReportNotifyInput, hasScreenshot: boolean) {
   const clientPayload = asRecord(input.client)
   const context = asRecord(input.context)
   const entitlement = asRecord(clientPayload.entitlement)
@@ -224,11 +343,7 @@ export function notifyBugReport(input: BugReportNotifyInput): void {
   const server = asRecord(context.server)
   const openai = asRecord(server.openai)
 
-  const screenshotRaw =
-    typeof clientPayload.screenshot === 'string' ? clientPayload.screenshot : null
-  const parsedShot = screenshotRaw ? parseDataUrl(screenshotRaw) : null
-
-  const props = {
+  return {
     reportId: input.reportId,
     shortId: shortReportId(input.reportId),
     issueType: input.issueType,
@@ -256,28 +371,86 @@ export function notifyBugReport(input: BugReportNotifyInput): void {
     adminUrl: adminLink('/#/admin'),
     appUrl: appPublicUrl(),
     logoSrc: logoSrcForTemplate(),
-    hasScreenshot: Boolean(parsedShot),
+    hasScreenshot,
+  }
+}
+
+function bugReportAttachments(parsedShot: ReturnType<typeof parseDataUrl>): Attachment[] | undefined {
+  if (!parsedShot) return undefined
+  return [
+    inlineImageAttachment({
+      filename: `bug-screenshot.${parsedShot.ext}`,
+      contentType: parsedShot.contentType,
+      inlineContentId: 'bug-screenshot',
+      bytes: Buffer.from(parsedShot.base64, 'base64'),
+    }),
+  ]
+}
+
+/** Send bug-report admin email; retries without screenshot if the attachment fails. */
+export async function sendBugReportNotify(
+  input: BugReportNotifyInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!notifyConfigured()) {
+    const hint = notifyStatus().hint || 'Notify not configured'
+    console.warn('[notify] bug report skipped', { reportId: input.reportId, hint })
+    return { ok: false, error: hint }
   }
 
+  const clientPayload = asRecord(input.client)
+  const screenshotRaw =
+    typeof clientPayload.screenshot === 'string' ? clientPayload.screenshot : null
+  const parsedShot = screenshotRaw ? parseDataUrl(screenshotRaw) : null
+
   const label = input.email || input.userId
-  const subject = `JyutTranslate · ${props.issueLabel} (${props.shortId}) · ${label}`
+  const shortId = shortReportId(input.reportId)
+  const issueLabel = issueTypeLabel(input.issueType)
+  const subject = `JyutTranslate · ${issueLabel} (${shortId}) · ${label}`
 
-  const attachments: Attachment[] | undefined = parsedShot
-    ? [
-        inlineImageAttachment({
-          filename: `bug-screenshot.${parsedShot.ext}`,
-          contentType: parsedShot.contentType,
-          inlineContentId: 'bug-screenshot',
-          bytes: Buffer.from(parsedShot.base64, 'base64'),
-        }),
-      ]
-    : undefined
-
-  queueReactEmail(subject, async () => {
+  const loadElement = async (includeScreenshot: boolean) => {
     const [{ createElement }, { BugReportEmail }] = await Promise.all([
       import('react'),
-      import('./emails/compiled/BugReportEmail.js'),
+      importCompiledEmail<typeof import('./emails/compiled/BugReportEmail.js')>('BugReportEmail'),
     ])
-    return createElement(BugReportEmail, props)
-  }, attachments)
+    return createElement(
+      BugReportEmail,
+      buildBugReportEmailProps(input, includeScreenshot && Boolean(parsedShot)),
+    )
+  }
+
+  try {
+    await renderAndSend(
+      subject,
+      () => loadElement(true),
+      bugReportAttachments(parsedShot),
+    )
+    return { ok: true }
+  } catch (first) {
+    if (!parsedShot) {
+      const msg = first instanceof Error ? first.message : String(first)
+      console.error('[notify] bug report send failed', { reportId: input.reportId, error: msg })
+      return { ok: false, error: msg }
+    }
+    console.warn('[notify] bug report retry without screenshot', {
+      reportId: input.reportId,
+      error: first instanceof Error ? first.message : String(first),
+    })
+    try {
+      const retrySubject = `${subject} (screenshot omitted)`
+      await renderAndSend(retrySubject, () => loadElement(false))
+      return { ok: true }
+    } catch (retryErr) {
+      const msg = retryErr instanceof Error ? retryErr.message : String(retryErr)
+      console.error('[notify] bug report send failed after retry', {
+        reportId: input.reportId,
+        error: msg,
+      })
+      return { ok: false, error: msg }
+    }
+  }
+}
+
+/** Rich React Email + Resend notify for bug reports (screenshot via CID when present). */
+export function notifyBugReport(input: BugReportNotifyInput): void {
+  void sendBugReportNotify(input)
 }

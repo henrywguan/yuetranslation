@@ -10,6 +10,8 @@ let audio: HTMLAudioElement | null = null
 let url: string | null = null
 let gen = 0
 let playing = false
+/** Brief post-TTS mute so speaker echo cannot start a new STT turn. */
+let echoTailUntil = 0
 /** True after a successful gesture-time unlock play on the shared element. */
 let unlocked = false
 /** Prevent overlapping silent unlock plays from LiveHoldButton + startHold. */
@@ -28,6 +30,15 @@ function ensureSharedAudio(): HTMLAudioElement {
 
 export function isTtsPlaying() {
   return playing
+}
+
+/** True while TTS plays or during the short echo tail after playback. */
+export function isMicEchoMuted() {
+  return playing || Date.now() < echoTailUntil
+}
+
+export function armTtsEchoTail(ms = 600) {
+  echoTailUntil = Date.now() + ms
 }
 
 /** Whether gesture unlock succeeded (for probes / diagnostics). */
@@ -101,6 +112,7 @@ export function stopSpeaking() {
   sequenceId += 1
   gen += 1
   playing = false
+  echoTailUntil = 0
   if (audio) {
     audio.onended = null
     audio.onerror = null
@@ -158,37 +170,44 @@ export async function speakText(text: string, lang: Lang, voice?: string | null)
   stopSpeaking()
   const g = gen
   playing = true
-  const blob = await fetchTtsAudio(trimmed, lang, preferredVoiceFor(lang, voice))
-  if (g !== gen) return
-  if (blob && blob.size > 0) {
-    const objectUrl = URL.createObjectURL(blob)
-    url = objectUrl
-    // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
-    const el = ensureSharedAudio()
-    el.playbackRate = playbackRate
-    el.src = objectUrl
-    el.volume = 1
-    el.muted = false
-    await new Promise<void>((resolve) => {
-      el.onended = () => {
-        if (g === gen) playing = false
-        resolve()
-      }
-      el.onerror = () => {
-        if (g === gen) playing = false
-        resolve()
-      }
-      void el.play().then(
-        () => {},
-        () => {
+  try {
+    const blob = await fetchTtsAudio(trimmed, lang, preferredVoiceFor(lang, voice))
+    if (g !== gen) return
+    if (blob && blob.size > 0) {
+      const objectUrl = URL.createObjectURL(blob)
+      url = objectUrl
+      // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
+      const el = ensureSharedAudio()
+      el.playbackRate = playbackRate
+      el.src = objectUrl
+      el.volume = 1
+      el.muted = false
+      await new Promise<void>((resolve) => {
+        el.onended = () => {
           if (g === gen) playing = false
           resolve()
-        },
-      )
-    })
-    return
+        }
+        el.onerror = () => {
+          if (g === gen) playing = false
+          resolve()
+        }
+        void el.play().then(
+          () => {},
+          () => {
+            if (g === gen) playing = false
+            resolve()
+          },
+        )
+      })
+      return
+    }
+    await browserSpeak(trimmed, lang, g)
+  } finally {
+    if (g === gen) {
+      playing = false
+      armTtsEchoTail()
+    }
   }
-  await browserSpeak(trimmed, lang, g)
 }
 
 /** Play a pre-fetched blob without bumping the speak generation (for rapid sequences). */

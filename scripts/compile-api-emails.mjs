@@ -59,6 +59,7 @@ for (const name of readdirSync(outDir).filter((n) => n.endsWith('.js'))) {
   let next = readFileSync(file, 'utf8')
   next = next.replaceAll('from "./brand.js"', 'from "../brand.js"')
   next = next.replaceAll('from "./bugReportMeta.js"', 'from "../bugReportMeta.js"')
+  next = next.replaceAll('from "./authEmailMeta.js"', 'from "../authEmailMeta.js"')
   writeFileSync(file, next)
 }
 

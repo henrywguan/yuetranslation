@@ -153,10 +153,10 @@ export async function createAzureLiveSession(
     return true
   }
 
-  async function startWithRecognizer(): Promise<void> {
-    const speechConfig = buildSpeechConfig(lockLang)
+  async function startWithRecognizer(fixedLang: Lang | undefined = lockLang): Promise<void> {
+    const speechConfig = buildSpeechConfig(fixedLang)
     const audioConfig = buildAudioConfig(SpeechSDK, mediaStream)
-    const next = lockLang
+    const next = fixedLang
       ? new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig)
       : SpeechSDK.SpeechRecognizer.FromConfig(
           speechConfig,
@@ -171,8 +171,8 @@ export async function createAzureLiveSession(
       if (!text) return
       const speakerId = e.result.speakerId
       if (!gate.accept(speakerId)) return
-      const detected = lockLang
-        ? langToLocale(lockLang)
+      const detected = fixedLang
+        ? langToLocale(fixedLang)
         : SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result).language || 'en-US'
       handlers.onInterim(emitLang(detected), text, metaFromSpeaker(speakerId))
     }
@@ -183,8 +183,8 @@ export async function createAzureLiveSession(
       if (!text) return
       const speakerId = e.result.speakerId
       if (!gate.accept(speakerId)) return
-      const detected = lockLang
-        ? langToLocale(lockLang)
+      const detected = fixedLang
+        ? langToLocale(fixedLang)
         : SpeechSDK.AutoDetectSourceLanguageResult.fromResult(e.result).language || 'en-US'
       handlers.onFinal(emitLang(detected), text, metaFromSpeaker(speakerId))
     }
@@ -214,10 +214,19 @@ export async function createAzureLiveSession(
       if (!canUseMicrophone()) {
         throw new Error(micBlockedMessage() || 'Microphone unavailable.')
       }
-      // Fixed Solo/Conversation language: skip multilingual diarization — auto-detect
-      // often turns Cantonese into English gibberish and parks it in the 粵語 pane.
-      if (lockLang) {
-        await startWithRecognizer()
+      // Locked languages: prefer the multilingual transcriber for fast interim streaming.
+      // Fixed en-US recognizer feels sluggish; fixed zh-HK is flaky — transcriber + lockLang pins the pane.
+      if (lockLang === 'en' || lockLang === 'yue') {
+        try {
+          await startWithTranscriber()
+        } catch (err) {
+          transcriber = null
+          gate.reset()
+          if (!canUseMicrophone()) {
+            throw err instanceof Error ? err : new Error(String(err))
+          }
+          await startWithRecognizer(lockLang)
+        }
         return
       }
       try {
@@ -229,7 +238,7 @@ export async function createAzureLiveSession(
         if (!canUseMicrophone()) {
           throw err instanceof Error ? err : new Error(String(err))
         }
-        await startWithRecognizer()
+        await startWithRecognizer(undefined)
       }
     },
     async stop() {
