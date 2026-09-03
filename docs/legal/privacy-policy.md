@@ -2,11 +2,14 @@
 
 **JyutTranslate**  
 **Effective date:** September 1, 2026  
-**Last updated:** September 1, 2026
+**Last updated:** September 3, 2026
 
 This Privacy Policy explains how **Henry Guan, doing business as JyutTranslate** (“**JyutTranslate**,” “**we**,” “**us**,” or “**our**”) collects, uses, shares, and protects information when you use **https://www.jyuttranslate.com** and related apps, pages, and services that link to this policy (the “**Service**”).
 
-**Contact for privacy requests:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)
+**Not legal advice.** This document is a product-facing policy draft based on how the Service works today. Have qualified counsel review it before relying on it as your final published terms.
+
+**Privacy / data requests:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
+**General support:** [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com)
 
 We do not currently list a physical mailing address. When we obtain a PO Box or other notice address, we will update this policy.
 
@@ -36,17 +39,29 @@ When you create or use an account, we may collect:
 
 - Email address
 - Authentication identifiers (including from email/password or Google / Apple sign-in)
+- Display name from your sign-in provider, if provided
+- Optional username you choose for your account profile
 - Plan / subscription status (Free, Family, Business)
 - Voice preference settings you save to your account
 - Account status flags used for security and administration (for example, disabled/banned)
 
 ### 3.2 Billing information
 
-Paid plans are processed by **Stripe**. We receive and store Stripe customer and subscription identifiers linked to your account. Stripe collects and processes payment card details and related billing information under Stripe's own terms and privacy policy. We do not store full payment card numbers on our servers.
+Paid plans are processed by **Stripe**. We receive and store Stripe customer and subscription identifiers linked to your account. Stripe collects and processes payment card details and related billing information under Stripe’s own terms and privacy policy. We do not store full payment card numbers on our servers.
 
-### 3.3 Usage and entitlement meters
+### 3.3 Households (Family and Business)
 
-To enforce plan limits and operate the Service, we store **usage counters** for signed-in users, such as:
+Paid **Family** and **Business** plans may include a **household** (shared seats under one subscription). For households we may collect and store:
+
+- Household membership (who belongs to the household and their role, such as owner or member)
+- Invite emails and invite status (including emails of people who have not yet created an account)
+- Pooled usage meters for the household (shared monthly allowances)
+
+Household owners can invite others by email. Invitees may receive an invitation email even before they sign up. Within the Service, household members may see other members’ emails and pending invite emails so the household can be managed.
+
+### 3.4 Usage and entitlement meters
+
+To enforce plan limits and operate the Service, we store **usage counters** for signed-in users and, where applicable, for households, such as:
 
 - Live microphone minutes used
 - Text-to-speech character counts
@@ -55,13 +70,14 @@ To enforce plan limits and operate the Service, we store **usage counters** for 
 - Document page counts
 - Related operational counters (for example, AI vision fallback counts)
 
-These are **meters** (how much you used), not a stored archive of what you said, typed, photographed, or uploaded.
+These are **meters** (how much you used), not a stored archive of what you said, typed, photographed, or uploaded. On household plans, meters may be **pooled** across members under the owner’s subscription.
 
-### 3.4 Content you submit for translation (processed to provide the Service)
+### 3.5 Content you submit for translation (processed to provide the Service)
 
 Depending on the feature you use, the Service may process:
 
 - Text you type or paste for translation
+- Text or files you share into the app via the operating system (for example, PWA share target or “Open with” / file handlers)
 - Audio from your microphone for speech recognition / live translation
 - Photos, camera frames, or uploaded images for OCR and translation
 - Documents (such as PDF or Office files) for translation
@@ -78,7 +94,7 @@ Depending on the feature you use, the Service may process:
 
 **Important:** To deliver the feature, content may be transmitted to subprocessors listed in Section 6 (for example, speech, vision, and language-model providers) **solely to fulfill your request**. Those providers process data under their own terms.
 
-### 3.5 Bug reports and support
+### 3.6 Bug reports and support
 
 If you submit a bug report while signed in, we may store:
 
@@ -90,19 +106,21 @@ If you submit a bug report while signed in, we may store:
 
 Our in-product copy is designed so bug reports attach route and settings diagnostics and **not your translation text**. Document uploads are not attached to bug reports.
 
-### 3.6 Device / local storage
+Operators may use the configured **LLM provider** to help triage a bug report (for example, summarizing diagnostics you already submitted). That is support tooling, not a translation content archive.
 
-The Service may store preferences on your device (for example, theme, voice picks, UI layout, small offline gloss caches, PWA tip dismissals) using browser storage such as `localStorage`. This data stays on your device unless you clear site data.
+### 3.7 Device / local storage
 
-### 3.7 Approximate analytics
+The Service may store preferences on your device (for example, theme, voice picks, UI layout, small offline gloss caches, PWA tip dismissals) using browser storage such as `localStorage`. When you install the Service as a progressive web app (PWA), a service worker may cache static app assets on your device for offline/performance use. This data stays on your device unless you clear site data or uninstall the app.
+
+### 3.8 Approximate analytics
 
 We use **Vercel Analytics** for aggregated traffic and performance insights. This is not a store of your translation content.
 
-### 3.8 Email communications
+### 3.9 Email communications
 
-If email tooling is configured, we may sync your account email to our email provider's audience for product and operational messages, and we may send transactional or administrative notices (for example, related to account, billing, or support). You can contact us to request removal from marketing-style sends where applicable; transactional messages related to the Service may still be necessary.
+If email tooling is configured, we may sync your account email (and display name, if available) to our email provider’s audience for product and operational messages, and we may send transactional or administrative notices (for example, related to account confirmation, password reset, household invitations, billing, or support). You can contact us to request removal from marketing-style sends where applicable; transactional messages related to the Service may still be necessary.
 
-### 3.9 Information we do not intentionally collect
+### 3.10 Information we do not intentionally collect
 
 We do not ask for government ID, precise GPS tracking for ads, or payment card PANs in our own database. Please do not submit sensitive personal information (such as health, financial account secrets, or government ID images) into translation fields unless you accept the risk of processing by the Service and its processors.
 
@@ -114,6 +132,7 @@ We use information to:
 
 - Provide, operate, secure, and improve the Service
 - Authenticate users and maintain sessions
+- Operate households (invites, seats, pooled metering)
 - Meter entitlements and enforce plan limits
 - Process subscriptions and prevent fraud / abuse
 - Respond to bug reports and support requests
@@ -122,7 +141,7 @@ We use information to:
 - Protect the rights, safety, and integrity of users and the Service
 
 **We do not sell your personal information.**  
-**We do not use your translation content, audio, images, or documents to train JyutTranslate's own machine-learning models.**  
+**We do not use your translation content, audio, images, or documents to train JyutTranslate’s own machine-learning models.**  
 **We do not sell your content or personal information to data brokers or advertisers.**
 
 ---
@@ -131,7 +150,7 @@ We use information to:
 
 If European or UK data-protection law applies, we typically rely on:
 
-- **Contract** — to provide the Service you request (account, translation features, billing)
+- **Contract** — to provide the Service you request (account, translation features, billing, households)
 - **Legitimate interests** — security, abuse prevention, basic analytics, service improvement that does not override your rights
 - **Consent** — where required (for example, optional screenshot in a bug report, or certain cookies/marketing where consent is legally required)
 - **Legal obligation** — where we must retain or disclose information to comply with law
@@ -148,8 +167,9 @@ We share information with vendors who help us run the Service, under contractual
 | **Supabase** | Authentication and database |
 | **Stripe** | Payments and subscriptions |
 | **Resend** | Email delivery / audience tooling |
+| **Cloudflare** | Email routing for support inbox (for example, help@mail.jyuttranslate.com) |
 | **Microsoft Azure** | Speech (STT/TTS) and vision/OCR |
-| **LLM provider** (OpenAI-compatible API such as DeepSeek / OpenAI, as configured) | Machine translation and related text/vision processing |
+| **LLM provider** (OpenAI-compatible API such as DeepSeek / OpenAI, as configured) | Machine translation, related text/vision processing, and optional support triage |
 | **Google / Apple** | Sign-in (if you choose those providers) |
 | **Google Fonts** | Typography delivery (fonts loaded from Google’s CDN when you visit the site) |
 
@@ -176,12 +196,13 @@ Text, audio, images, and documents submitted for translation are processed to fu
 While your **account is active**, we retain:
 
 - Account / profile data
-- Usage meters
+- Usage meters (including household pooled meters where applicable)
+- Household membership and invite records associated with your account
 - Bug reports you submitted
 - Admin/security records associated with the account
 - Billing identifiers needed to operate subscriptions
 
-**Stripe** may retain payment and invoice records according to Stripe's practices and legal/accounting requirements, including after a subscription ends.
+**Stripe** may retain payment and invoice records according to Stripe’s practices and legal/accounting requirements, including after a subscription ends.
 
 ### After account closure
 
@@ -227,7 +248,7 @@ We do not operate a third-party advertising cookie stack on the Service today. B
 
 ---
 
-## 12. Children's privacy
+## 12. Children’s privacy
 
 The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. Contact us if you believe we have, and we will delete it as required.
 
@@ -248,6 +269,7 @@ We may update this Privacy Policy from time to time. We will post the updated ve
 ## 15. Contact
 
 **Privacy / data requests:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
+**General support:** [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com)  
 **Operator:** Henry Guan, doing business as JyutTranslate  
 **Service:** https://www.jyuttranslate.com
 
