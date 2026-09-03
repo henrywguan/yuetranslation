@@ -22,6 +22,15 @@ When Henry asks for **IG posts, static feed graphics, Reels covers, or similar b
 - **Pipeline:** HTML → `node docs/social/ig-posts/render.mjs` → commit `out/*.png`
 - Content/topic can change; **colors, type, logo, atmosphere, and composition language stay**
 
+### Social / Higgsfield / Recordly demos — auto-speak
+
+For **all** future social, Higgsfield, Recordly, or instructional demo work that shows a translation result:
+
+1. **Enable auto-speak** in the seeded / recorded UI (`autoSpeak: true` + Family/open entitlement).
+2. Ensure **TTS is audible** in the final audio (product Azure TTS when available; do not ship silent translation reveals when the beat is “hear it”).
+3. Soft background music may duck under TTS; do not replace TTS with music alone.
+4. Cloud agents still need Henry’s **explicit yes** before calling paid `/api/tts` (or other metered Azure/DeepSeek paths) for that shoot — see below.
+
 ## Cursor Cloud specific instructions
 
 ### Paid / external API usage (cloud testing only)
