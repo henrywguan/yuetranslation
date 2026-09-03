@@ -809,6 +809,11 @@ export const ui = {
     zh: '每月大約八小時即時翻譯',
     jp: 'mui5 jyut6 daai6 joek3 baat3 siu2 si4 zik1 si4 faan1 jik6',
   },
+  familyFeatSeats: {
+    en: 'Up to 4 shared users',
+    zh: '最多 4 位共用用戶',
+    jp: 'zeoi3 do1 4 wai2 gung6 jung6 jung6 wu6',
+  },
   familyFeatCamera: {
     en: '8 hours camera translation / month',
     zh: '每月八小時相機翻譯',
@@ -913,9 +918,9 @@ export const ui = {
     jp: 'gaa3 cin4 gan1 zyu6 nei5 ge3 deoi3 waa6 zang1 zoeng2',
   },
   ppSub: {
-    en: 'Start free. Upgrade for more live talk-time and unlimited tap-to-play voice. Guests can try voice without an account.',
-    zh: '免費開始。升級享更多即時通話時間同無限撳喇叭播語音。訪客唔使帳戶都可以試語音。',
-    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 zik1 si4 tung1 waa6 si4 gaan3 tung4 mou4 haan6 gam2 laa3 baa1 bo3 jyu5 jam1. fong2 haak3 m4 sai2 zoeng3 wu6 dou1 ho2 ji5 si3 jyu5 jam1.',
+    en: 'Start free. Upgrade for more live talk-time and cam translations!',
+    zh: '免費開始。升級享更多即時通話時間同相機翻譯！',
+    jp: 'min5 fai3 hoi1 ci2. sing1 kap1 hoeng2 gang3 do1 zik1 si4 tung1 waa6 si4 gaan3 tung4 soeng1 gei1 faan1 jik6!',
   },
   monthly: { en: 'Monthly', zh: '月費', jp: 'jyut6 fai3' },
   annual: { en: 'Annual', zh: '年費', jp: 'nin4 fai3' },
@@ -939,6 +944,11 @@ export const ui = {
     en: '~40 hours of live translation / month (fair use)',
     zh: '每月大約四十小時即時翻譯（合理使用）',
     jp: 'mui5 jyut6 daai6 joek3 sei3 sap6 siu2 si4 zik1 si4 faan1 jik6 (hap6 lei5 si2 jung6)',
+  },
+  businessFeatSeats: {
+    en: 'Up to 10 shared users',
+    zh: '最多 10 位共用用戶',
+    jp: 'zeoi3 do1 10 wai2 gung6 jung6 jung6 wu6',
   },
   businessFeatCamera: {
     en: 'Unlimited camera translation (metered)',
