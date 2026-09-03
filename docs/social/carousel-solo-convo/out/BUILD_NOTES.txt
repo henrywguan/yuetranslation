@@ -1,3 +1,3 @@
 Instructional night/dark Harbor carousel on real dark-mode UI (4K source).
-Azure TTS muxed on slides 3 & 5: NO — re-run after the Speech subscription key is a real portal key (not a placeholder).
+Azure TTS muxed on slides 3 & 5: YES
 Template: docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md
