@@ -3,6 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+npm ci --prefix packages/yue-shared
 npm ci --prefix apps/web
 npm ci --prefix apps/api
 

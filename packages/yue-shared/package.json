@@ -4,9 +4,35 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./glossDump": "./src/glossDump.ts",
-    "./ttsVoices": "./src/ttsVoices.ts",
-    "./charGloss": "./src/charGloss.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./glossDump": {
+      "types": "./dist/glossDump.d.ts",
+      "import": "./dist/glossDump.js",
+      "default": "./dist/glossDump.js"
+    },
+    "./ttsVoices": {
+      "types": "./dist/ttsVoices.d.ts",
+      "import": "./dist/ttsVoices.js",
+      "default": "./dist/ttsVoices.js"
+    },
+    "./charGloss": {
+      "types": "./dist/charGloss.d.ts",
+      "import": "./dist/charGloss.js",
+      "default": "./dist/charGloss.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
   }
 }
