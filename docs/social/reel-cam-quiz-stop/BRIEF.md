@@ -1,10 +1,18 @@
 # Reel pack — Drops-style Cam quiz (stop sign)
 
-**Status:** Script + still prompts ready · **waiting Henry OK before paid generation**  
+**Status:** **Assembled** · Flat 2.0 local stills + stagger motion + live Cam capture + Azure TTS  
+**Output:** [`out/reel-cam-quiz-stop.mp4`](out/reel-cam-quiz-stop.mp4) · **22s** · **9:16**  
 **Template:** [`../DROPS-STYLE-MOTION.md`](../DROPS-STYLE-MOTION.md)  
-**Format:** Instagram Reel · **9:16** · **~20s** (18–22)  
 **Palette:** Harbor `#07131f` · Jade `#3dcfb6` · Ink `#e8f4ff`  
 **Logo:** `docs/brand/favicon.png` only  
+
+**Rebuild:**
+
+```bash
+python3 scripts/make-reel-cam-quiz-stills.py   # if stills need regen
+NODE_PATH=/workspace/node_modules node scripts/record-reel-cam-quiz-stop.mjs
+node scripts/build-reel-cam-quiz-stop.mjs
+```
 
 ---
 
@@ -12,11 +20,11 @@
 
 | Time | Beat | Visual | On-screen text | Audio |
 | --- | --- | --- | --- | --- |
-| **0:00–0:03** | Hook | Harbor field + soft jade glow. Photoreal **stop-sign photo** locks in (slight spring settle). Flat 2.0 jade corner ticks / dashed ring optional. | **What’s the right 粵?** / **邊個啱？** (Syne + Noto Sans HK, kinetic pop) | Soft bed in |
-| **0:03–0:08** | Quiz | Three **Flat 2.0 option pills** stagger-pop (spring overshoot). Chinese bold + Jyutping under each. Optional dashed Jade path linking pills. | **A** 停車 · `ting4 ce1` · **B** 停止 · `ting2 zi2` · **C** 唔好行 · `m4 hou2 haang4` | Bed continues |
-| **0:08–0:16** | Demo | Wipe / scale into **real Cam UI** (screen capture — never AI-fake). Taps: Cam → Upload image → pick stop-sign → Translate → OCR/translation overlay lands on sign → **停車** in results. | Minimal chrome; burned-in tip optional: **Cam → Upload** | Bed ducks under UI; optional soft whoosh on Translate |
-| **0:16–0:20** | Reveal | Cut/composite back to quiz. **A 停車** fills Jade / check; B & C soft-fade. | **停車** · `ting4 ce1` ✓ | **粵 TTS:** 停車 (`ting4 ce1`) |
-| **0:20–0:22** | CTA | Quiet Harbor end card · favicon chop · URL | **Cam it in the app** · **jyuttranslate.com** · favicon | Bed resolve / TTS tail |
+| **0:00–0:03** | Hook | Harbor field + soft jade glow. Stop-sign locks in (spring settle). Flat 2.0 jade dashed ring. | **What’s the right 粵?** / **邊個啱？** (kinetic pop) | Soft bed in |
+| **0:03–0:08** | Quiz | Three Flat 2.0 option pills stagger-pop (spring overshoot). | **A** 停車 · `ting4 ce1` · **B** 停止 · `ting2 zi2` · **C** 唔好行 · `m4 hou2 haang4` | Bed continues |
+| **0:08–0:16** | Demo | **Real Cam UI** (screen capture — never AI-fake). Cam → Upload image → stop-sign → **Translate all** → OCR overlay. | Product chrome; tip implied by modal | Bed ducks |
+| **0:16–0:20** | Reveal | Quiz return. **A 停車** fills Jade / check; B & C soft. | **停車** · `ting4 ce1` ✓ | **粵 TTS:** 停車 |
+| **0:20–0:22** | CTA | Quiet Harbor end card · favicon · URL | **Cam it in the app** · **jyuttranslate.com** | Bed resolve / TTS tail |
 
 ### Quiz options (locked)
 
@@ -26,11 +34,25 @@
 | ❌ | 停止 | ting2 zi2 | Mandarin-leaning trap |
 | ❌ | 唔好行 | m4 hou2 haang4 | Vague / wrong register |
 
+### Cam Vision note (live capture)
+
+Real `/api/camera/scan` on the stop-sign asset currently returns **STOP → 停止** (literal / Mandarin-leaning). That is **kept on purpose** — never fake product UI. The reveal + caption teach **停車** as the HK street answer and call out **停止** as the trap. If a future model/lexicon lands 停車 on Cam, even better; either way the teaching beat holds.
+
 ---
 
-## 2. Flat 2.0 still prompts (Higgsfield / Soul / Flux)
+## 2. Flat 2.0 stills
 
-Generate **stills only** first. Animate bounce/stagger offline. Composite real Cam UI later.
+Generated **locally** (Harbor/Jade) via `scripts/make-reel-cam-quiz-stills.py` — no Higgsfield this pass (MCP session expired in cloud; reconnect in Cursor desktop if you want Soul/Flux still upgrades).
+
+| File | Role |
+| --- | --- |
+| `source/01-hook.jpg` + `01-hook-type.png` | Hook field + kinetic type layer |
+| `source/02-quiz.jpg` | Three option pills |
+| `source/03-reveal.jpg` | 停車 check reveal |
+| `source/04-end.jpg` | End card + favicon |
+| `source/stop-sign.png` | Cam upload input |
+
+Shared negative / Higgsfield prompts remain below for optional upgrades.
 
 ### Shared negative prompt
 
@@ -76,35 +98,21 @@ clean Flat 2.0, no text baked in, no purple, no gold, no lifestyle photo
 
 **Logo:** composite `docs/brand/favicon.png` in edit — never bake a regenerated chop into the still.
 
-### Photoreal stop-sign source (Cam input only)
-
-Prefer a **real photo** Henry already has, or a rights-safe still:
-
-```
-Photoreal Hong Kong street stop sign, red octagon white STOP lettering, slightly weathered, natural daylight, straight-on, no people faces, no logos other than the sign, documentary photo for OCR demo
-```
-
-Do **not** use this as lifestyle B-roll — only as Cam upload input.
-
 ---
 
-## 3. Shot list — real Cam upload capture (Recordly / screen)
+## 3. Shot list — real Cam upload capture
 
-Device: phone or desktop 9:16 Chrome · dark Harbor theme · Family entitlements · auto-speak ON if Cam TTS available.
+Device: 9:16 Chrome CDP screencast · dark Harbor · Family entitlements · open mode.
 
-| # | Action | Hold | Notes |
-| --- | --- | --- | --- |
-| 1 | Open app → dock **Cam** | 0.5s | Clean Harbor chrome |
-| 2 | Choice modal: tap **Upload image** / **上載相片** | 0.8s | Highlight tap |
-| 3 | System picker → select **stop-sign** image | 1.5s | Same asset as quiz |
-| 4 | Upload editor shows photo | 1.0s | |
-| 5 | Tap **Translate** / **翻譯** | 0.5s | |
-| 6 | Wait OCR + overlay on sign | 2–4s | Must show **停車** (or clear 粵 result) |
-| 7 | Results row / overlay readable | 1.5s | Hold for composite |
+| # | Action | Notes |
+| --- | --- | --- |
+| 1 | Open app → dock **Cam** | Choice modal |
+| 2 | Tap **Upload image** / **上載相片** | |
+| 3 | Pick `source/stop-sign.png` | |
+| 4 | Tap **Translate all** / **全部翻譯** | Auto OCR + translate (box Translate stays disabled until boxes exist) |
+| 5 | Hold OCR overlay + RESULTS | Real Vision — currently **停止** |
 
-**Exact taps:** `Cam` → `Upload image` → pick file → `Translate`.
-
-Export 1080×1920 (or crop 9:16). Never replace this beat with AI phone UI.
+Script: `scripts/record-reel-cam-quiz-stop.mjs` → `source/live/cam-upload-1080.mp4`
 
 ---
 
@@ -133,29 +141,20 @@ Sticker poll on a freeze of the three pills (before reveal).
 
 ---
 
-## 5. Credit estimate — **waiting for your OK**
+## 5. Credits used (this pass)
 
-| Step | Tool | Est. credits | Notes |
-| --- | --- | --- | --- |
-| Flat 2.0 stills A–D | Higgsfield Soul / Nano / Flux **image** | **~4–8** still gens | Preferred path |
-| Stop-sign photo | Own photo or 1 still | **0–1** | Prefer real photo |
-| Animate bounce/stagger | CapCut / AE / Remotion / Recordly | **$0** | |
-| Cam screen capture | Recordly / phone | **$0** | Required product proof |
-| Soft bed | Free bed / existing pack | **$0** | |
-| 粵 TTS 「停車」 | Azure `/api/tts` | Metered | Confirm in cloud before call |
-| Higgsfield **video** (Soul Cinema etc.) | — | **Ask first** | **Not needed** if still→animate path |
-
-**Recommended path (low credits):** stills A–D → local motion → composite Cam capture → TTS on reveal.  
-**Do not** run paid Higgsfield video until Henry says yes.
+| Step | Tool | Cost |
+| --- | --- | --- |
+| Flat 2.0 stills A–D | Local Pillow (`make-reel-cam-quiz-stills.py`) | **$0** |
+| Stagger / zoompan | ffmpeg (`build-reel-cam-quiz-stop.mjs`) | **$0** |
+| Cam screen capture | CDP Puppeteer + Vision scan | **Azure Vision** (Henry OK’d quiz pack) |
+| Soft bed | ffmpeg sine/noise lavfi | **$0** |
+| 粵 TTS 「停車」 | Azure `/api/tts` | **Azure Speech** (Henry OK’d) |
+| Higgsfield stills / video | — | **Skipped** (MCP expired — reconnect desktop to upgrade Flat chrome later) |
 
 ---
 
-## Approval gate
+## Approval log
 
-Reply with:
-
-1. **OK stills** — generate Flat 2.0 stills A–D (+ stop-sign if needed)  
-2. **OK TTS** — Azure 停車 line  
-3. **OK video credits** — only if you want Higgsfield video instead of still→animate  
-
-Default until then: **no paid generation**.
+- Henry: OK on quiz · Drops-style motion · Higgsfield OK if it helps the reel  
+- Cloud: Higgsfield MCP session expired → shipped local Flat 2.0 + live Cam + TTS
