@@ -127,7 +127,10 @@ function renderStillAnimated({ still, slideKey, out, label }) {
   const focus = spec.focus || 'center'
   let zx = 'iw/2-(iw/zoom/2)'
   let zy = 'ih/2-(ih/zoom/2)'
-  if (focus === 'tabs') zy = `(ih*0.78)-(ih/zoom/2)`
+  if (focus === 'tabs') {
+    zx = `(iw*0.45)-(iw/zoom/2)`
+    zy = `(ih*0.78)-(ih/zoom/2)`
+  }
   if (focus === 'yue') zy = `(ih*0.38)-(ih/zoom/2)`
   const zExpr = `1+${(zoomEnd - 1).toFixed(5)}*on/${frames}`
   const zp = `scale=3240:4050:force_original_aspect_ratio=increase,crop=3240:4050,zoompan=z='${zExpr}':x='${zx}':y='${zy}':d=${frames}:s=${W}x${H}:fps=${FPS}`

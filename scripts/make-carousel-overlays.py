@@ -191,13 +191,14 @@ def pack_hook() -> None:
     draw_title(title, 120, "Two ways to talk", "Solo  ·  Conversation")
     layers.append(save_layer("hook", "title", title))
 
-    # mode highlight rings near Solo / Conversation tabs
+    # mode highlight rings — centers measured on 01-solo-ready (1080 space)
+    # Was (220,1175) — far left of dock. Solo/獨白 ≈ (425, 1185); Conversation ≈ (540, 1185).
     ra = blank()
-    draw_ring(ra, 220, 1175, 72)
+    draw_ring(ra, 425, 1185, 56)
     layers.append(save_layer("hook", "ring-solo", ra))
 
     rb = blank()
-    draw_ring(rb, 540, 1175, 72)
+    draw_ring(rb, 540, 1185, 56)
     layers.append(save_layer("hook", "ring-convo", rb))
 
     foot = blank()
@@ -208,7 +209,7 @@ def pack_hook() -> None:
     manifest["slides"]["hook"] = {
         "seconds": 7,
         "focus": "tabs",
-        "zoomEnd": 1.1,
+        "zoomEnd": 1.06,
         "rings": [
             {"file": "ring-solo", "track": True, "pulse": True, "in": 0.6, "out": 6.4},
             {"file": "ring-convo", "track": True, "pulse": True, "in": 1.0, "out": 6.4},

@@ -5,7 +5,7 @@
     "hook": {
       "seconds": 7,
       "focus": "tabs",
-      "zoomEnd": 1.1,
+      "zoomEnd": 1.06,
       "rings": [
         {
           "file": "ring-solo",
