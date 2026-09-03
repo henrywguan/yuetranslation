@@ -14,13 +14,14 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 ### Instagram / static social posts (approved look)
 
-When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, start from the approved Jyutping + Chao tones posts — **not** a new AI poster style.
+When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, use the **instructional night/dark mode** Harbor look — **not** a new AI poster style.
 
-- **Canon:** [`docs/social/ig-posts/DESIGN.md`](docs/social/ig-posts/DESIGN.md)
-- **References:** `docs/social/ig-posts/out/ig-post-jyutping-tones-{1080,portrait}.png` + matching HTML/`shared.css`
+- **Named template:** [`docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`](docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md) (recall: *instructional night/dark mode post*)
+- **Canon:** [`docs/social/ig-posts/DESIGN.md`](docs/social/ig-posts/DESIGN.md) + `references/*.jpg`
 - **Locked:** Harbor / Jade / Ink · Syne + Noto Sans HK · **`docs/brand/favicon.png` only** (never regenerate the chop)
 - **Pipeline:** HTML → `node docs/social/ig-posts/render.mjs` → commit `out/*.png`
 - Content/topic can change; **colors, type, logo, atmosphere, and composition language stay**
+- Emotional story Reels: storybook + **real UI** overlay; cast/scene **variety by default** (see social-media-manager brief)
 
 ### Social / Higgsfield / Recordly demos — auto-speak
 
