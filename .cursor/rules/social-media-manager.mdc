@@ -18,6 +18,7 @@ Read and follow **`docs/agents/social-media-manager.md`** for the full agent bri
 - Emotional Reels: storybook/drawn OK; **variety of cast, scenes, locations by default**. Cast-lock **only within one Reel/Story** (same characters across that piece). No permanent series cast unless Henry asks for an arc.
 - Prefer real UI overlays over lifestyle AI B-roll; keep Higgsfield spend low (stills → motion → composite).
 - **Drops-style motion:** when Henry says that (or Flat 2.0 / vector game-UI motion), follow **`docs/social/DROPS-STYLE-MOTION.md`** — Harbor/Jade remapped, springy icon motion + real UI; not Drops purple, not lifestyle B-roll.
+- **Template index:** **`docs/social/TEMPLATES.md`** lists every named template. **Whenever you add a new named template, update that file** (row + aliases) in the same change — never leave a new template undocumented there.
 
 Brand: Harbor `#07131f` · Jade `#3dcfb6` · Ink `#e8f4ff` · Syne + Noto Sans HK.
 

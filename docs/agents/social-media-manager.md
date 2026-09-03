@@ -82,6 +82,16 @@ Inspired by Language Drops’ flat-vector / game-UI animation — remapped to Jy
 - Low-credit path: stills → higgsedit/Rive → Recordly UI  
 - Not for static Harbor instructional grids (use **instructional night/dark mode post**)
 
+## Template index (keep in sync)
+**Master list:** [`docs/social/TEMPLATES.md`](../social/TEMPLATES.md).
+
+When creating any **new named template** (new recall phrase + canon doc):
+1. Add the canon markdown under `docs/social/` (or `ig-posts/`)
+2. **Add a row + aliases to `TEMPLATES.md` in the same PR/commit**
+3. Link it from this brief and `.cursor/rules/social-media-manager.mdc`
+
+Do not invent a “secret” template that isn’t listed in `TEMPLATES.md`.
+
 ## Deliverable formats
 When Henry asks for ideas, respond with structured batches:
 

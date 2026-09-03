@@ -4,7 +4,8 @@
 > Henry approved these Harbor instructional posts as the visual baseline.  
 > Named recall + gallery → **[`INSTRUCTIONAL-NIGHT-MODE.md`](./INSTRUCTIONAL-NIGHT-MODE.md)**  
 > Full recipe → **[`DESIGN.md`](./DESIGN.md)** (colors, fonts, logo, composition, pipeline).  
-> Playful Reels (Flat 2.0 / game-UI bounce) → **[`../DROPS-STYLE-MOTION.md`](../DROPS-STYLE-MOTION.md)** — say **“Drops-style motion”**.
+> Playful Reels (Flat 2.0 / game-UI bounce) → **[`../DROPS-STYLE-MOTION.md`](../DROPS-STYLE-MOTION.md)** — say **“Drops-style motion”**.  
+> **All templates:** [`../TEMPLATES.md`](../TEMPLATES.md)
 
 Static brand posts rendered from HTML with **project fonts and logo**:
 

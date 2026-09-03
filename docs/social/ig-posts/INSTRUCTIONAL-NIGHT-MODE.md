@@ -5,6 +5,7 @@
 
 Henry loved these. This is the **approved static Instagram look** for product education: Meet JyutTranslate, Learn as you speak, Why switch, brand splash, feature grids, tone maps.
 
+> **Index:** listed in [`../TEMPLATES.md`](../TEMPLATES.md).  
 > For implementation: follow [`DESIGN.md`](./DESIGN.md) + HTML in this folder (`shared.css`, `render.mjs`).  
 > This file is the **named recall sheet** + layout variants + reference gallery.
 

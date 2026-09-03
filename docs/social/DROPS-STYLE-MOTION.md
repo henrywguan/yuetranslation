@@ -5,6 +5,7 @@
 
 Henry wants this for **playful Reels / motion posts** (e.g. this week). Inspired by [Language Drops](https://languagedrops.com) marketing + in-app motion — **not** a copy of their purple brand.
 
+> **Index:** listed in [`TEMPLATES.md`](./TEMPLATES.md).  
 > Pair with real JyutTranslate UI overlays. Prefer low credits: generate vector stills → animate (Rive / higgsedit / AE) → composite UI.  
 > For static Harbor education posts, use **`instructional night/dark mode post`** instead (`ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`).
 
