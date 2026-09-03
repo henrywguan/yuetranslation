@@ -5,8 +5,8 @@
   "type": "module",
   "_comment": "Keep dependencies in sync with /api/package.json (Vercel serverless bundle).",
   "scripts": {
-    "predev": "node ../../scripts/compile-api-emails.mjs",
-    "prestart": "node ../../scripts/compile-api-emails.mjs",
+    "predev": "npm run build --prefix ../../packages/yue-shared && node ../../scripts/compile-api-emails.mjs",
+    "prestart": "npm run build --prefix ../../packages/yue-shared && node ../../scripts/compile-api-emails.mjs",
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "compile:emails": "node ../../scripts/compile-api-emails.mjs",
