@@ -28,11 +28,22 @@ export function createPwaManifest(base: string) {
     orientation: 'any',
     categories: ['education', 'utilities', 'productivity'],
     prefer_related_applications: false,
+    // Empty until Play listing exists; field presence satisfies PWA Builder.
+    related_applications: [] as { platform: string; url: string; id?: string }[],
     start_url: startUrl,
     scope: root,
     launch_handler: {
       client_mode: 'navigate-existing',
     },
+    edge_side_panel: {
+      preferred_width: 480,
+    },
+    protocol_handlers: [
+      {
+        protocol: 'web+jyuttranslate',
+        url: `${root}?q=%s`,
+      },
+    ],
     icons: [
       { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

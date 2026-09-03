@@ -9,13 +9,15 @@ The web manifest in `apps/web/pwa-manifest.ts` includes:
 - `description`, stable `id`, `dir`, `orientation`, `categories`
 - Maskable + any-purpose icons (`pwa-512-maskable.png`)
 - Shortcuts (Translate, Camera, Pricing)
-- Manifest screenshots (narrow + wide)
+- Manifest screenshots (narrow + wide) — pixel sizes must match `sizes`
 - `share_target` (share text into Solo translate)
 - `file_handlers` (open images → Cam upload, PDF → Documents)
 - `launch_handler` (`navigate-existing`)
-- `prefer_related_applications: false`
+- `prefer_related_applications: false` + empty `related_applications` (fill after Play listing)
+- `protocol_handlers` (`web+jyuttranslate:`)
+- `edge_side_panel` (Edge sidebar preferred width)
 
-Service worker offline shell: `index.html` navigation fallback via Workbox.
+Service worker: Workbox offline shell + **inline** registration in `index.html` (so PWA Builder HTML/Puppeteer scanners can find `/sw.js`).
 
 Launch handling: `apps/web/src/lib/pwaLaunch.ts`.
 
@@ -92,7 +94,9 @@ Play requires **targetSdkVersion 36+** (2026). If PWA Builder’s AAB is rejecte
 | --- | --- |
 | Push notifications | Needs FCM + backend |
 | Background / periodic sync | Needs backend jobs |
-| Protocol handlers | No custom URL scheme yet |
-| Widgets / Edge side panel | Platform-specific, low ROI |
+| Widgets | Windows-only adaptive cards |
+| Window Controls Overlay / Tabbed display | Desktop chrome features not used by the translator UI |
+| Note taking | Not a notes app |
 | `iarc_rating_id` | Assigned after Play content rating |
-| `related_applications` | Add after Play listing exists |
+| `related_applications` Play Store URL/id | Fill after the listing exists |
+| `scope_extensions` | Only if TWA navigates to other domains |

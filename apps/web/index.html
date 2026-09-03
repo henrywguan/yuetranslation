@@ -15,6 +15,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+HK:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <title>JyutTranslate — English ↔ Cantonese</title>
     <script>
+      // Register ASAP (no window.load wait) so PWA scanners / Puppeteer can detect /sw.js.
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+      }
+    </script>
+    <script>
       (() => {
         try {
           const stored = localStorage.getItem('yue-theme')

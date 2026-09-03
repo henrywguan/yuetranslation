@@ -34,6 +34,19 @@ function stripShareParams(params: URLSearchParams): void {
   params.delete('url')
 }
 
+/** Decode `web+jyuttranslate:…` / `?q=` payloads from protocol_handlers. */
+function pickProtocolText(params: URLSearchParams): string | null {
+  const raw = params.get('q')?.trim()
+  if (!raw) return null
+  let decoded = raw
+  try {
+    decoded = decodeURIComponent(raw)
+  } catch {
+    /* keep raw */
+  }
+  return decoded.replace(/^web\+jyuttranslate:/i, '').trim() || null
+}
+
 function applySharedText(text: string): void {
   pendingShareText = text
   navigate('app')
@@ -51,11 +64,19 @@ export function bootstrapPwaLaunch(): void {
   if (typeof window === 'undefined') return
 
   const url = new URL(window.location.href)
-  const shared = pickSharedText(url.searchParams)
-  if (shared) {
-    stripShareParams(url.searchParams)
+
+  const protocolText = pickProtocolText(url.searchParams)
+  if (protocolText) {
+    url.searchParams.delete('q')
     window.history.replaceState({}, '', url.toString())
-    applySharedText(shared)
+    applySharedText(protocolText)
+  } else {
+    const shared = pickSharedText(url.searchParams)
+    if (shared) {
+      stripShareParams(url.searchParams)
+      window.history.replaceState({}, '', url.toString())
+      applySharedText(shared)
+    }
   }
 
   const camShortcut = url.searchParams.get('cam') === '1' || hashHasCamShortcut()
