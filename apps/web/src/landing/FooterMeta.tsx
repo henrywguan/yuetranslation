@@ -5,7 +5,7 @@ import { openBugReportOrAuth } from '../lib/bugReport'
 import { openPrivacy, openTerms } from '../lib/siteLinks'
 import { ui } from '../lib/uiCopy'
 
-const CONTACT_MAILTO = 'mailto:help@mail.jyuttranslate.com'
+const CONTACT_MAILTO = 'mailto:henrywguan@gmail.com'
 
 /** Quiet legal / contact line at the bottom of marketing footers. */
 export function FooterMeta() {

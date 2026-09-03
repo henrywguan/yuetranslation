@@ -10,8 +10,7 @@
 Do **not** keep a second copy under `apps/web` — `LegalPage` imports these files directly.
 
 **Operator:** Henry Guan, d/b/a JyutTranslate  
-**Privacy / data contact:** henrywguan@pvhmc.org  
-**General support:** help@mail.jyuttranslate.com (footer Contact; Resend reply-to)  
+**Privacy contact:** henrywguan@gmail.com  
 **Governing law (Terms):** California  
 **Age:** 13+
 

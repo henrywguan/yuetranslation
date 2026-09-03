@@ -8,8 +8,7 @@ This Privacy Policy explains how **Henry Guan, doing business as JyutTranslate**
 
 **Not legal advice.** This document is a product-facing policy draft based on how the Service works today. Have qualified counsel review it before relying on it as your final published terms.
 
-**Privacy / data requests:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
-**General support:** [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com)
+**Contact for privacy requests:** [henrywguan@gmail.com](mailto:henrywguan@gmail.com)
 
 We do not currently list a physical mailing address. When we obtain a PO Box or other notice address, we will update this policy.
 
@@ -27,7 +26,7 @@ The Service is operated by Henry Guan, doing business as JyutTranslate. This pol
 
 The Service is intended for users who are **at least 13 years old**.
 
-If you are under 13, do not create an account or use features that require sign-in. If you believe a child under 13 has provided us personal information, contact us at [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org) and we will take appropriate steps to delete it where required.
+If you are under 13, do not create an account or use features that require sign-in. If you believe a child under 13 has provided us personal information, contact us at [henrywguan@gmail.com](mailto:henrywguan@gmail.com) and we will take appropriate steps to delete it where required.
 
 ---
 
@@ -208,7 +207,7 @@ While your **account is active**, we retain:
 
 If you ask us to delete your account, we will delete or de-identify account-linked personal data we control within a reasonable period, except information we must keep for legal, security, fraud-prevention, tax, or accounting reasons, or that is stored only in residual backups for a limited time.
 
-Because we do not currently offer fully self-serve account deletion in the product UI, email [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org) to request deletion.
+Because we do not currently offer fully self-serve account deletion in the product UI, email [henrywguan@gmail.com](mailto:henrywguan@gmail.com) to request deletion.
 
 ---
 
@@ -232,7 +231,7 @@ Depending on where you live, you may have rights to:
 
 **California (CCPA/CPRA) notice (summary):** We do not sell personal information and do not share it for cross-context behavioral advertising. California residents may request know/access, delete, and correct rights, and may designate an authorized agent as permitted by law. We will not discriminate against you for exercising privacy rights.
 
-To exercise rights, email [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org). We may need to verify your identity (for example, via the email on your account).
+To exercise rights, email [henrywguan@gmail.com](mailto:henrywguan@gmail.com). We may need to verify your identity (for example, via the email on your account).
 
 ---
 
@@ -268,8 +267,7 @@ We may update this Privacy Policy from time to time. We will post the updated ve
 
 ## 15. Contact
 
-**Privacy / data requests:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
-**General support:** [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com)  
+**Privacy / data requests:** [henrywguan@gmail.com](mailto:henrywguan@gmail.com)  
 **Operator:** Henry Guan, doing business as JyutTranslate  
 **Service:** https://www.jyuttranslate.com
 
