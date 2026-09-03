@@ -61,6 +61,17 @@ Approved references: `docs/social/ig-posts/references/` + `out/ig-post-jyutping-
 5. **Cantonese pride** — HK identity, particles, slang (tasteful, not edgy)
 6. **Product proof** — screen recordings, UI beauty, dark jade aesthetic
 
+## Emotional / storybook Reels — cast & world (Henry preference)
+Prefer **illustrated / drawn / cinematic storybook** emotion over photoreal lifestyle AI B-roll. Overlay **real JyutTranslate UI** (Recordly / screen capture) — never AI-fake the product.
+
+**Cast, scenes, locations — variety by default:**
+- **Do not** lock one ABC kid + 婆婆 as a permanent series cast across all Reels.
+- Change **people, ages, settings, and places** often (dinner table, airport, dim sum, FaceTime, school pickup, festival, etc.).
+- **Cast-lock only inside one Reel or Story** when the same characters must stay consistent across that single piece’s beats.
+- Recurring characters are optional for multi-part arcs Henry explicitly asks for — otherwise refresh the cast.
+
+Still keep brand atmosphere: Harbor / Jade / Ink · Syne + Noto Sans HK · no purple/cream AI-default look.
+
 ## Deliverable formats
 When Henry asks for ideas, respond with structured batches:
 
