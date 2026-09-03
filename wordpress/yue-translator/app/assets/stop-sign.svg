@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="STOP">
+  <!-- Classic US-style octagonal stop sign -->
+  <polygon
+    points="36,8 84,8 112,36 112,84 84,112 36,112 8,84 8,36"
+    fill="#c8102e"
+    stroke="#f5f5f5"
+    stroke-width="7"
+    stroke-linejoin="round"
+  />
+  <text
+    x="60"
+    y="68"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, Helvetica, sans-serif"
+    font-size="28"
+    font-weight="800"
+    letter-spacing="1.5"
+    fill="#ffffff"
+  >STOP</text>
+</svg>
