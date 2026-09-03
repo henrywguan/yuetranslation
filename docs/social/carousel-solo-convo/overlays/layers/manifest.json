@@ -52,7 +52,7 @@
     "solo-anatomy": {
       "seconds": 8,
       "focus": "yue",
-      "zoomEnd": 1.12,
+      "zoomEnd": 1.1,
       "rings": [
         {
           "file": "ring-en",
@@ -62,7 +62,7 @@
           "out": 3.4
         },
         {
-          "file": "ring-yue",
+          "file": "bounds-yue",
           "track": true,
           "pulse": true,
           "in": 3.1,

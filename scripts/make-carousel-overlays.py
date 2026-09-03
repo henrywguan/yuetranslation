@@ -142,6 +142,21 @@ def draw_ring(im: Image.Image, cx: int, cy: int, r: int) -> None:
     d.ellipse([cx - r + 12, cy - r + 12, cx + r - 12, cy + r - 12], outline=(61, 207, 182, 100), width=3)
 
 
+def draw_bounds_rect(im: Image.Image, xy: tuple[int, int, int, int], radius: int = 28) -> None:
+    """Jade rectangular highlight around a UI block (replaces odd circular targets)."""
+    x0, y0, x1, y1 = xy
+    soft_glow(im, (x0 + x1) // 2, (y0 + y1) // 2, max(x1 - x0, y1 - y0) // 2 + 40, JADE_SOFT)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([x0, y0, x1, y1], radius=radius, outline=JADE, width=6)
+    # inner hairline
+    d.rounded_rectangle(
+        [x0 + 10, y0 + 10, x1 - 10, y1 - 10],
+        radius=max(8, radius - 8),
+        outline=(61, 207, 182, 110),
+        width=2,
+    )
+
+
 def save_layer(slide: str, name: str, im: Image.Image) -> str:
     folder = LAYERS / slide
     folder.mkdir(parents=True, exist_ok=True)
@@ -233,20 +248,22 @@ def pack_solo_anatomy() -> None:
     draw_title(title, 96, "Solo anatomy", "One-sided translate + Jyutping")
     layers.append(save_layer("solo-anatomy", "title", title))
 
+    # 1 · Type English — ring on the English line (higher than mid-gap)
     r1 = blank()
-    draw_ring(r1, 540, 360, 78)
+    draw_ring(r1, 540, 200, 82)
     layers.append(save_layer("solo-anatomy", "ring-en", r1))
 
+    # 2 · Read 粵 — rectangular bounds around Chinese + Jyutping result (incl. ？)
     r2 = blank()
-    draw_ring(r2, 540, 620, 96)
-    layers.append(save_layer("solo-anatomy", "ring-yue", r2))
+    draw_bounds_rect(r2, (240, 380, 880, 575), radius=28)
+    layers.append(save_layer("solo-anatomy", "bounds-yue", r2))
 
     c1 = blank()
-    draw_callout(c1, (90, 200, 520, 300), "1 · Type English", "Your side of the line")
+    draw_callout(c1, (90, 100, 520, 200), "1 · Type English", "Your side of the line")
     layers.append(save_layer("solo-anatomy", "callout-en", c1))
 
     c2 = blank()
-    draw_callout(c2, (520, 700, 990, 810), "2 · Read 粵 + tones", "Jyutping on every character")
+    draw_callout(c2, (540, 590, 1000, 700), "2 · Read 粵 + tones", "Jyutping on every character")
     layers.append(save_layer("solo-anatomy", "callout-yue", c2))
 
     c3 = blank()
@@ -256,11 +273,11 @@ def pack_solo_anatomy() -> None:
     compose_preview("solo-anatomy", layers)
     manifest["slides"]["solo-anatomy"] = {
         "seconds": 8,
-        "focus": "yue",
-        "zoomEnd": 1.12,
+        "focus": "center",
+        "zoomEnd": 1.06,
         "rings": [
             {"file": "ring-en", "track": True, "pulse": True, "in": 0.45, "out": 3.4},
-            {"file": "ring-yue", "track": True, "pulse": True, "in": 3.1, "out": 7.4},
+            {"file": "bounds-yue", "track": True, "pulse": True, "in": 3.1, "out": 7.4},
         ],
         "captions": [
             {"file": "chip", "in": 0.1, "out": 2.6, "style": "pop-down"},
