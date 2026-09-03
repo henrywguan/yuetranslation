@@ -1,3 +1,5 @@
-Instructional night/dark Harbor carousel on real dark-mode UI (4K source).
+Instructional night/dark Harbor carousel.
+Slides 3 & 5 source: LIVE headed-Chrome capture (real Solo typing + Conversation STT sim → /api/translate)
 Azure TTS muxed on slides 3 & 5: YES
+Harbor panel overlays (not bare text). Soft bed under all slides.
 Template: docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md

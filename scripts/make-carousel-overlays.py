@@ -36,6 +36,9 @@ def font(size: int, bold: bool = True) -> ImageFont.ImageFont:
             "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         ]
     cands += [
+        # CJK-capable first so 口語 / 粵語 / 獨白 render (DejaVu has no Han)
+        "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+        "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     ]
@@ -43,6 +46,19 @@ def font(size: int, bold: bool = True) -> ImageFont.ImageFont:
         if os.path.exists(p):
             return ImageFont.truetype(p, size)
     return ImageFont.load_default()
+
+
+def font_ui(size: int, bold: bool = True, text: str = "") -> ImageFont.ImageFont:
+    """Prefer CJK-capable face when the string contains Han characters."""
+    needs_cjk = any("\u4e00" <= ch <= "\u9fff" for ch in text)
+    if needs_cjk:
+        for p in (
+            "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+            "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
+        ):
+            if os.path.exists(p):
+                return ImageFont.truetype(p, size)
+    return font(size, bold)
 
 
 def text_size(d: ImageDraw.ImageDraw, text: str, f) -> tuple[int, int]:
@@ -73,7 +89,7 @@ def soft_glow(im: Image.Image, cx: int, cy: int, r: int, color=JADE_SOFT) -> Non
 def jade_chip(im: Image.Image, y: int, label: str) -> None:
     """Centered jade-caps chip like EXAMPLE 實例 / SOLO 獨白."""
     d = ImageDraw.Draw(im)
-    f = font(18, bold=True)
+    f = font_ui(18, bold=True, text=label)
     tw, th = text_size(d, label, f)
     pad_x, pad_y = 22, 10
     box_w = tw + pad_x * 2
@@ -89,8 +105,8 @@ def title_card(im: Image.Image, y: int, title: str, subtitle: str | None = None)
     """Harbor rounded title card; returns bottom y."""
     soft_glow(im, W // 2, y + 50, 220)
     d = ImageDraw.Draw(im)
-    ft = font(44, bold=True)
-    fs = font(22, bold=False)
+    ft = font_ui(44, bold=True, text=title)
+    fs = font_ui(22, bold=False, text=subtitle or "")
     tw, th = text_size(d, title, ft)
     sw, sh = text_size(d, subtitle or "", fs) if subtitle else (0, 0)
     inner_h = th + (18 + sh if subtitle else 0)
@@ -111,8 +127,8 @@ def callout_card(im: Image.Image, xy: tuple[int, int, int, int], title: str, bod
     soft_glow(im, (xy[0] + xy[2]) // 2, (xy[1] + xy[3]) // 2, 90)
     rounded_panel(im, xy, fill=HARBOR_PANEL, outline=BORDER, radius=24, width=2)
     d = ImageDraw.Draw(im)
-    ft = font(24, bold=True)
-    fb = font(18, bold=False)
+    ft = font_ui(24, bold=True, text=title)
+    fb = font_ui(18, bold=False, text=body or "")
     # left jade accent bar
     d.rounded_rectangle([xy[0] + 14, xy[1] + 18, xy[0] + 20, xy[3] - 18], radius=4, fill=JADE)
     d.text((xy[0] + 34, xy[1] + 22), title, font=ft, fill=INK)

@@ -1,0 +1,20 @@
+{
+  "theme": "dark",
+  "capture": "cdp-screencast",
+  "autoSpeak": true,
+  "solo": {
+    "en": "Are you coming home for dinner?",
+    "liveTyping": true,
+    "realTranslate": true
+  },
+  "conversation": {
+    "en": "Don't worry",
+    "yue": "唔使擔心",
+    "simulatedStt": true,
+    "realTranslate": true
+  },
+  "files": [
+    "solo-live-1080.mp4",
+    "convo-live-1080.mp4"
+  ]
+}

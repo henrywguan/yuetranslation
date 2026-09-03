@@ -70,23 +70,36 @@ function renderSlide({ still, overlay, out, seconds = 8, zoomEnd = 1.14, focus =
   run('ffmpeg', args)
 }
 
-/** Live typing / STT demo clip (already 1080×1350) + Harbor overlay. */
+/** Live typing / STT demo clip (already 1080×1350) + Harbor overlay.
+ *  Time-compresses the full arc to `seconds` so typing→translate always fits. */
+function probeDuration(path) {
+  const r = spawnSync(
+    'ffprobe',
+    ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path],
+    { encoding: 'utf8' },
+  )
+  const d = Number(String(r.stdout || '').trim())
+  return Number.isFinite(d) && d > 0.2 ? d : null
+}
+
 function renderLiveSlide({ video, overlay, out, seconds = 9, label }) {
+  const dur = probeDuration(video) || seconds
+  const pts = (seconds / dur).toFixed(6)
   const args = ['-y', '-i', video]
   if (overlay && existsSync(overlay)) {
     args.push('-loop', '1', '-i', overlay)
     args.push(
       '-filter_complex',
-      `[0:v]fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,tpad=stop_mode=clone:stop_duration=${seconds}[base];[1:v]format=rgba,scale=${W}:${H}[ov];[base][ov]overlay=0:0:format=auto,format=yuv420p`,
+      `[0:v]setpts=PTS*${pts},fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,tpad=stop_mode=clone:stop_duration=${seconds}[base];[1:v]format=rgba,scale=${W}:${H}[ov];[base][ov]overlay=0:0:format=auto,format=yuv420p`,
     )
   } else {
     args.push(
       '-vf',
-      `fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,tpad=stop_mode=clone:stop_duration=${seconds},format=yuv420p`,
+      `setpts=PTS*${pts},fps=${FPS},scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,tpad=stop_mode=clone:stop_duration=${seconds},format=yuv420p`,
     )
   }
   args.push('-t', String(seconds), '-r', String(FPS), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', out)
-  console.log('render-live', label)
+  console.log('render-live', label, `compress ${dur.toFixed(1)}s → ${seconds}s`)
   run('ffmpeg', args)
 }
 
@@ -146,13 +159,13 @@ const hasLive = existsSync(liveSolo) && existsSync(liveConvo)
 renderSlide({ still: stills.soloReady, overlay: join(OVER, 'hook.png'), out: silent[1], seconds: 7, zoomEnd: 1.1, focus: 'tabs', label: '01 hook' })
 renderSlide({ still: stills.soloFilled, overlay: join(OVER, 'solo-anatomy.png'), out: silent[2], seconds: 8, zoomEnd: 1.14, focus: 'yue', label: '02 solo anatomy' })
 if (hasLive) {
-  renderLiveSlide({ video: liveSolo, overlay: join(OVER, 'solo-howto.png'), out: silent[3], seconds: 10, label: '03 solo howto LIVE' })
+  renderLiveSlide({ video: liveSolo, overlay: join(OVER, 'solo-howto.png'), out: silent[3], seconds: 12, label: '03 solo howto LIVE' })
 } else {
   renderSlide({ still: stills.soloFilled, overlay: join(OVER, 'solo-howto.png'), out: silent[3], seconds: 9, zoomEnd: 1.2, focus: 'yue', label: '03 solo howto (still fallback)' })
 }
 renderSlide({ still: stills.convoFilled, overlay: join(OVER, 'convo-anatomy.png'), out: silent[4], seconds: 8, zoomEnd: 1.12, focus: 'center', label: '04 convo anatomy' })
 if (hasLive) {
-  renderLiveSlide({ video: liveConvo, overlay: join(OVER, 'convo-howto.png'), out: silent[5], seconds: 10, label: '05 convo howto LIVE' })
+  renderLiveSlide({ video: liveConvo, overlay: join(OVER, 'convo-howto.png'), out: silent[5], seconds: 11, label: '05 convo howto LIVE' })
 } else {
   renderSlide({ still: stills.convoFilled, overlay: join(OVER, 'convo-howto.png'), out: silent[5], seconds: 9, zoomEnd: 1.16, focus: 'center', label: '05 convo howto (still fallback)' })
 }
@@ -164,9 +177,9 @@ const ttsConvo = join(AUDIO, 'tts-convo-yue.mp3')
 const finals = [
   { n: 1, file: 'slide-01-hook.mp4', sec: 7, tts: null, duck: false },
   { n: 2, file: 'slide-02-solo-anatomy.mp4', sec: 8, tts: null, duck: false },
-  { n: 3, file: 'slide-03-solo-howto.mp4', sec: hasLive ? 10 : 9, tts: ttsSolo, duck: true },
+  { n: 3, file: 'slide-03-solo-howto.mp4', sec: hasLive ? 12 : 9, tts: ttsSolo, duck: true },
   { n: 4, file: 'slide-04-convo-anatomy.mp4', sec: 8, tts: null, duck: false },
-  { n: 5, file: 'slide-05-convo-howto.mp4', sec: hasLive ? 10 : 9, tts: ttsConvo, duck: true },
+  { n: 5, file: 'slide-05-convo-howto.mp4', sec: hasLive ? 11 : 9, tts: ttsConvo, duck: true },
   { n: 6, file: 'slide-06-cta.mp4', sec: 7, tts: null, duck: false },
 ]
 
