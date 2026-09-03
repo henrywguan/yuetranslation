@@ -2,6 +2,8 @@
 /**
  * Capture PWA manifest screenshots (narrow + wide) into apps/web/public/pwa-screenshots/.
  * Requires web on :5173. Usage: npm run pwa:screenshots
+ *
+ * Uses deviceScaleFactor 1 so PNG pixel dimensions match manifest `sizes`.
  */
 import puppeteer from 'puppeteer-core'
 import { mkdir } from 'node:fs/promises'
@@ -42,7 +44,7 @@ async function main() {
       await page.setViewport({
         width: shot.w,
         height: shot.h,
-        deviceScaleFactor: shot.w < 500 ? 2 : 1,
+        deviceScaleFactor: 1,
       })
       await page.evaluateOnNewDocument((theme) => {
         localStorage.setItem('yue-theme', theme)
@@ -57,7 +59,7 @@ async function main() {
       await new Promise((r) => setTimeout(r, 900))
       const dest = path.join(OUT, shot.file)
       await page.screenshot({ path: dest, type: 'png' })
-      console.log('wrote', dest)
+      console.log('wrote', dest, `(${shot.w}x${shot.h})`)
       await page.close()
     }
   } finally {
