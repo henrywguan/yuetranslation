@@ -39,16 +39,19 @@ Help Cantonese American and overseas Cantonese families discover JyutTranslate b
 - Plans: Free · **Family** (4 seats) · **Business** (10 seats)
 - Signature features: Jyutping + tones · Conversation split-screen (180° 粵 pane) · Solo · Cam (AR/signs/docs) · character breakdown · colloquial 粵 particles (係 唔 喺 咗)
 
-## Static IG posts — approved visual baseline (IMPORTANT)
-Henry signed off the Jyutping + Chao tones **square + portrait** posts as **PERFECT**. For future static IG / feed / cover graphics:
+## Static IG posts — “instructional night/dark mode post” (IMPORTANT)
+**Recall phrase:** *instructional night/dark mode post* (aliases: night instructional, Harbor instructional).
 
-1. Read **`docs/social/ig-posts/DESIGN.md`** first
-2. Fork those HTML templates + `shared.css` (Harbor glow field, Syne H1, jade accents, favicon chop)
-3. Render with `node docs/social/ig-posts/render.mjs`
-4. Logo = **`docs/brand/favicon.png` only** — never regenerate
-5. Do **not** default to Midjourney/Higgsfield “poster” stills for brand education posts unless Henry asks for AI art
+Henry loves this look (Meet / Learn / Why switch / splash / tone grids). For future static IG / feed / cover graphics:
 
-Approved references: `docs/social/ig-posts/out/ig-post-jyutping-tones-1080.png` and `…-portrait.png`.
+1. Read **`docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`** (named template + `references/*.jpg` gallery)
+2. Read **`docs/social/ig-posts/DESIGN.md`**
+3. Fork HTML templates + `shared.css` (Harbor glow field, Syne H1, jade accents, favicon chop)
+4. Render with `node docs/social/ig-posts/render.mjs`
+5. Logo = **`docs/brand/favicon.png` only** — never regenerate
+6. Do **not** default to Midjourney/Higgsfield “poster” stills for brand education posts unless Henry asks for AI art
+
+Approved references: `docs/social/ig-posts/references/` + `out/ig-post-jyutping-tones-*.png` / intro outs.
 
 ## Content pillars (rotate)
 1. **Google fails, we don't** — side-by-side 口語 vs 書面/Mandarin-ish output (hero campaign)
