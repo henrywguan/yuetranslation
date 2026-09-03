@@ -35,7 +35,14 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     cta: ui.goFamily,
     featured: true,
     ctaOpens: 'pricing',
-    features: [ui.familyFeatLive8h, ui.familyFeatCamera, ui.familyFeatTts, ui.familyFeatQuality, ui.familyFeatEverything],
+    features: [
+      ui.familyFeatLive8h,
+      ui.familyFeatSeats,
+      ui.familyFeatCamera,
+      ui.familyFeatTts,
+      ui.familyFeatQuality,
+      ui.familyFeatEverything,
+    ],
   },
   {
     id: 'business',
@@ -47,6 +54,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     ctaOpens: 'pricing',
     features: [
       ui.businessFeatLive40,
+      ui.businessFeatSeats,
       ui.businessFeatCamera,
       ui.businessFeatPower,
       ui.businessFeatEverything,
