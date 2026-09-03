@@ -7,6 +7,19 @@ import { RoleBadge } from './RoleBadge'
 import { UsageMeters } from './UsageMeters'
 import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
+import { AccountHubHousehold } from './AccountHubHousehold'
+import { AccountHubVoice } from './AccountHubVoice'
+import {
+  badgeCopyFor,
+  canShowMetric,
+  displayNameFromSession,
+  planLabel,
+  resolveBadgeMetric,
+} from './planChipHelpers'
+
+function HubSep() {
+  return <div className="account-hub-sep" role="separator" aria-hidden="true" />
+}
 import { useYueStore } from '../lib/store'
 import { getSession, openAuthScreen, signOut } from '../lib/auth'
 import { openBillingPortal, openUpgrade, type BillingError } from '../lib/billing'
@@ -16,18 +29,10 @@ import {
   writeBadgeUsageMetric,
   type BadgeUsageMetric,
 } from '../lib/badgeUsagePref'
+import { saveTtsVoicePrefs, saveUsername } from '../lib/api'
 import {
-  saveTtsVoicePrefs,
-  saveUsername,
-  sendHouseholdInvite,
-  revokeHouseholdInvite,
-  removeHouseholdMember,
-} from '../lib/api'
-import {
-  EN_VOICES,
   PREVIEW_EN,
   PREVIEW_YUE,
-  YUE_VOICES,
   readLocalEnVoice,
   readLocalYueVoice,
   resolveEnVoice,
@@ -42,78 +47,6 @@ import { openPricing } from '../lib/siteLinks'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
-import { formatExactDuration } from '../lib/formatDuration'
-import { formatChars } from '../lib/formatChars'
-import type { Entitlement } from '../lib/types'
-
-function planLabel(plan: string): Bi {
-  if (plan === 'family') return ui.planFamily
-  if (plan === 'business') return ui.planBusiness
-  if (plan === 'free') return ui.planFree
-  return ui.planGuest
-}
-
-function voiceCopy(entitlement: Entitlement): Bi {
-  const unlimited = Boolean(
-    entitlement.ttsUnlimited || entitlement.plan === 'family' || entitlement.plan === 'business',
-  )
-  if (unlimited) return ui.charsUsedUnlimited(formatChars(entitlement.usage.ttsChars))
-  return ui.charsLeft(formatChars(entitlement.remaining.ttsChars))
-}
-
-function liveCopy(entitlement: Entitlement): Bi {
-  const used = entitlement.usage.liveSeconds ?? 0
-  const left = Math.max(0, entitlement.remaining.liveSeconds ?? 0)
-  return ui.liveUsedRemaining(formatExactDuration(used), formatExactDuration(left))
-}
-
-function cameraCopy(entitlement: Entitlement): Bi {
-  const unlimited = Boolean(entitlement.cameraUnlimited)
-  const used = entitlement.usage.cameraSeconds ?? 0
-  if (unlimited) return ui.camMinutesUsedUnlimited(formatExactDuration(used))
-  const left = Math.max(0, entitlement.remaining.cameraSeconds ?? 0)
-  return ui.camMinutesLeft(formatExactDuration(left))
-}
-
-function displayNameFromSession(meta: Record<string, unknown> | undefined) {
-  // OAuth names are only a soft fallback for signed-out/guest title; logged-in
-  // Account Hub title uses the custom username once set.
-  const full =
-    (typeof meta?.full_name === 'string' && meta.full_name.trim()) ||
-    (typeof meta?.name === 'string' && meta.name.trim()) ||
-    ''
-  return full
-}
-
-function HubSep() {
-  return <div className="account-hub-sep" role="separator" aria-hidden="true" />
-}
-
-function canShowMetric(metric: BadgeUsageMetric, entitlement: Entitlement, showVoiceQuota: boolean): boolean {
-  if (metric === 'live') return Boolean(entitlement.allowed.live) || entitlement.loggedIn
-  if (metric === 'voice') return showVoiceQuota
-  if (metric === 'camera') return entitlement.loggedIn
-  return false
-}
-
-function resolveBadgeMetric(
-  preferred: BadgeUsageMetric,
-  entitlement: Entitlement,
-  showVoiceQuota: boolean,
-): BadgeUsageMetric | null {
-  if (canShowMetric(preferred, entitlement, showVoiceQuota)) return preferred
-  const order: BadgeUsageMetric[] = ['live', 'voice', 'camera']
-  return order.find((m) => canShowMetric(m, entitlement, showVoiceQuota)) ?? null
-}
-
-function badgeCopyFor(
-  metric: BadgeUsageMetric,
-  entitlement: Entitlement,
-): Bi {
-  if (metric === 'voice') return voiceCopy(entitlement)
-  if (metric === 'camera') return cameraCopy(entitlement)
-  return liveCopy(entitlement)
-}
 
 /** Plan indicator that expands into an account hub (plan, usage, upgrade, sign out). */
 export function PlanChip() {
@@ -528,153 +461,18 @@ export function PlanChip() {
           <UsageMeters entitlement={entitlement} />
         </section>
 
-        {entitlement.loggedIn &&
-        (entitlement.plan === 'family' ||
-          entitlement.plan === 'business' ||
-          entitlement.household) ? (
-          <section
-            className="account-hub-section account-hub-area-household"
-            aria-label={biPlain(ui.accountHousehold)}
-          >
-            <p className="account-hub-label">
-              <BiText copy={ui.accountHousehold} size="sm" />
-            </p>
-            <p className="account-hub-seats">
-              <BiText
-                copy={ui.accountSeatsUsed(
-                  String(entitlement.household?.seatUsed ?? 1),
-                  String(
-                    entitlement.household?.seatLimit ??
-                      (entitlement.plan === 'business' ? 10 : 4),
-                  ),
-                )}
-                size="sm"
-              />
-            </p>
-
-            {inviteSentTo ? (
-              <div className="account-hub-invite-sent" role="status">
-                <span className="account-hub-invite-sent-badge">
-                  <BiText copy={ui.accountInviteSent} size="sm" />
-                </span>
-                <p className="account-hub-invite-sent-msg">
-                  <BiText copy={ui.accountInviteSentTo(inviteSentTo)} size="sm" />
-                </p>
-              </div>
-            ) : null}
-
-            {(!entitlement.household || entitlement.household.role === 'owner') ? (
-              <form
-                className="account-hub-invite-form"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  const next = inviteEmail.trim()
-                  if (!next || inviteBusy) return
-                  setInviteBusy(true)
-                  setInviteError(null)
-                  void sendHouseholdInvite(next)
-                    .then(async (res) => {
-                      setInviteSentTo(res.invite?.email || next)
-                      setInviteEmail('')
-                      await loadBootstrap()
-                    })
-                    .catch((err: unknown) => {
-                      setInviteError(
-                        err instanceof Error ? err.message : biPlain(ui.accountInviteError),
-                      )
-                    })
-                    .finally(() => setInviteBusy(false))
-                }}
-              >
-                <label className="account-hub-invite-field">
-                  <span className="account-hub-voice-lang">
-                    <BiText copy={ui.accountInviteEmail} size="sm" />
-                  </span>
-                  <input
-                    type="email"
-                    className="account-hub-select account-hub-invite-input"
-                    value={inviteEmail}
-                    onChange={(e) => {
-                      setInviteEmail(e.target.value)
-                      setInviteSentTo(null)
-                    }}
-                    placeholder={biPlain(ui.accountInvitePlaceholder)}
-                    autoComplete="email"
-                    required
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="account-hub-btn account-hub-btn--primary account-hub-invite-btn"
-                  disabled={inviteBusy || !inviteEmail.trim()}
-                >
-                  <BiText copy={ui.accountInviteSend} size="sm" />
-                </button>
-              </form>
-            ) : null}
-
-            {inviteError ? <p className="account-hub-invite-error">{inviteError}</p> : null}
-
-            {entitlement.household ? (
-              <ul className="account-hub-member-list">
-                {entitlement.household.members.map((m) => (
-                  <li key={m.userId} className="account-hub-member-row">
-                    <span className="account-hub-member-email">
-                      {m.email || m.userId.slice(0, 8)}
-                      {m.role === 'owner' ? (
-                        <span className="account-hub-member-tag">
-                          {' '}
-                          · <BiText copy={ui.accountMemberOwner} size="sm" />
-                        </span>
-                      ) : null}
-                    </span>
-                    {entitlement.household?.role === 'owner' && m.role === 'member' ? (
-                      <button
-                        type="button"
-                        className="account-hub-member-action"
-                        onClick={() => {
-                          void removeHouseholdMember(m.userId)
-                            .then(async () => {
-                              await loadBootstrap()
-                            })
-                            .catch(() => undefined)
-                        }}
-                      >
-                        <BiText copy={ui.accountMemberRemove} size="sm" />
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-                {entitlement.household.pendingInvites.map((inv) => (
-                  <li key={inv.id} className="account-hub-member-row is-pending">
-                    <span className="account-hub-member-email">
-                      {inv.email}
-                      <span className="account-hub-member-tag">
-                        {' '}
-                        · <BiText copy={ui.accountInvitePending} size="sm" />
-                      </span>
-                    </span>
-                    {entitlement.household?.role === 'owner' ? (
-                      <button
-                        type="button"
-                        className="account-hub-member-action"
-                        onClick={() => {
-                          void revokeHouseholdInvite(inv.id)
-                            .then(async () => {
-                              await loadBootstrap()
-                            })
-                            .catch(() => undefined)
-                        }}
-                      >
-                        <BiText copy={ui.accountInviteRevoke} size="sm" />
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
-        ) : null}
+        <AccountHubHousehold
+          entitlement={entitlement}
+          inviteEmail={inviteEmail}
+          setInviteEmail={setInviteEmail}
+          inviteBusy={inviteBusy}
+          setInviteBusy={setInviteBusy}
+          inviteSentTo={inviteSentTo}
+          setInviteSentTo={setInviteSentTo}
+          inviteError={inviteError}
+          setInviteError={setInviteError}
+          loadBootstrap={loadBootstrap}
+        />
 
         {badgeOptions.some((o) => o.available) ? (
           <>
@@ -713,70 +511,16 @@ export function PlanChip() {
 
         <HubSep />
 
-        <section
-          className="account-hub-section account-hub-area-voice"
-          aria-labelledby={voicePrefId}
-        >
-          <p className="account-hub-label" id={voicePrefId}>
-            <BiText copy={ui.accountTtsVoices} size="sm" />
-          </p>
-          <div className="account-hub-voice-row">
-            <label className="account-hub-voice-field">
-              <span className="account-hub-voice-lang">
-                <BiText copy={ui.accountTtsYue} size="sm" hideJp />
-              </span>
-              <select
-                className="account-hub-select"
-                value={yueVoice}
-                disabled={voiceBusy}
-                onChange={(e) => void persistVoices({ yue: resolveYueVoice(e.target.value) })}
-                aria-label={biPlain(ui.accountTtsYue)}
-              >
-                {YUE_VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.labelEn} · {v.labelZh}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="account-hub-voice-preview"
-              disabled={previewBusy !== null || !entitlement.allowed.tts}
-              onClick={() => void onPreview('yue')}
-            >
-              <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
-            </button>
-          </div>
-          <div className="account-hub-voice-row">
-            <label className="account-hub-voice-field">
-              <span className="account-hub-voice-lang">
-                <BiText copy={ui.accountTtsEn} size="sm" hideJp />
-              </span>
-              <select
-                className="account-hub-select"
-                value={enVoice}
-                disabled={voiceBusy}
-                onChange={(e) => void persistVoices({ en: resolveEnVoice(e.target.value) })}
-                aria-label={biPlain(ui.accountTtsEn)}
-              >
-                {EN_VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.labelEn} · {v.labelZh}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="account-hub-voice-preview"
-              disabled={previewBusy !== null || !entitlement.allowed.tts}
-              onClick={() => void onPreview('en')}
-            >
-              <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
-            </button>
-          </div>
-        </section>
+        <AccountHubVoice
+          voicePrefId={voicePrefId}
+          entitlement={entitlement}
+          yueVoice={yueVoice}
+          enVoice={enVoice}
+          voiceBusy={voiceBusy}
+          previewBusy={previewBusy}
+          persistVoices={persistVoices}
+          onPreview={onPreview}
+        />
 
         <HubSep />
 

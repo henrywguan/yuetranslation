@@ -103,9 +103,6 @@ function BodyText({ children }) {
 function MutedText({ children }) {
   return /* @__PURE__ */ jsx(Text, { style: emailStyles.muted, children });
 }
-function JadeLink({ href, children }) {
-  return /* @__PURE__ */ jsx(Link, { href, style: emailStyles.link, children });
-}
 function CtaButton({ href, children }) {
   return /* @__PURE__ */ jsx(Section, { style: { textAlign: "center", margin: "20px 0 8px" }, children: /* @__PURE__ */ jsx(Link, { href, style: emailStyles.cta, children }) });
 }
@@ -113,7 +110,6 @@ export {
   BodyText,
   CtaButton,
   EmailShell,
-  JadeLink,
   MetaRow,
   MutedText,
   SoftBlock

@@ -742,12 +742,6 @@ export async function adminBugReportAiAnswer(req: AuthedRequest, res: Response) 
   }
 }
 
-export async function adminNotifyStatus(req: AuthedRequest, res: Response) {
-  const auth = await requireAdmin(req, res)
-  if (!auth) return
-  res.json({ notify: notifyStatus() })
-}
-
 const IncidentBannerBody = z.object({
   enabled: z.boolean(),
 })

@@ -23,23 +23,6 @@ export function captureFrame(
   return canvas.toDataURL('image/jpeg', quality)
 }
 
-/** Pixel size of a frame that `captureFrame` would produce (same rounding). */
-export function captureFrameSize(
-  source: HTMLVideoElement | HTMLImageElement,
-  maxEdge = 1280,
-): { w: number; h: number } {
-  const sw =
-    'videoWidth' in source ? source.videoWidth || source.clientWidth : source.naturalWidth
-  const sh =
-    'videoHeight' in source ? source.videoHeight || source.clientHeight : source.naturalHeight
-  if (!sw || !sh) return { w: 0, h: 0 }
-  const scale = Math.min(1, maxEdge / Math.max(sw, sh))
-  return {
-    w: Math.max(1, Math.round(sw * scale)),
-    h: Math.max(1, Math.round(sh * scale)),
-  }
-}
-
 /** Decode a data URL and return its intrinsic pixel size (what OCR boxes are normalized to). */
 export function decodeDataUrlSize(dataUrl: string): Promise<{ w: number; h: number }> {
   return new Promise((resolve, reject) => {

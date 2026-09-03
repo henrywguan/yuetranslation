@@ -30,9 +30,6 @@ export const emailFonts = {
   mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
 } as const;
 
-/** CID used when attaching the logo PNG to every branded email. */
-export const EMAIL_LOGO_CID = "jyut-logo";
-
 export const EMAIL_LOGO_SIZE = 56;
 
 export const emailStyles = {

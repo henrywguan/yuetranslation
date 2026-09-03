@@ -21,6 +21,8 @@ Hybrid static marketing + Bricks: see repo docs/bluehost-launch.md (`site-config
 Settings → JyutTranslate for Azure/OpenAI keys and plan limits.
 Build the app with `npm run build:web:wp` before uploading.
 
+**Do not hand-edit** files under `yue-translator/app/` — that tree is generated Vite/PWA output. Rebuild with `npm run build:web:wp` whenever the web app changes.
+
 == Installation ==
 
 1. Run `npm run build:web:wp` from the JyutTranslate monorepo.

@@ -28,7 +28,6 @@ const shots = [
     theme: 'dark',
     mode: 'conversation',
   },
-  { file: '09-app-text-dark.png', url: `${WEB}/?view=app`, w: 1440, h: 900, theme: 'dark', mode: 'text' },
 ]
 
 async function main() {

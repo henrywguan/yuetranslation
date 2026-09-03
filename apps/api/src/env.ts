@@ -239,15 +239,6 @@ export function isAdminEmail(email: string | null | undefined): boolean {
   return env.adminEmails.includes(email.trim().toLowerCase())
 }
 
-/** Bare address from `Name <email>` or `email` — for mailto / diagnostics. */
-export function bareEmailAddress(from: string): string | null {
-  const s = from.trim()
-  if (!s) return null
-  const named = s.match(/<([^<>]+)>/)
-  const addr = (named?.[1] || s).trim()
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr) ? addr : null
-}
-
 /**
  * Resend `replyTo` for outbound mail. Prefer YUE_SUPPORT_FROM so replies land in Help
  * (Cloudflare Email Routing), not the noreply From address.

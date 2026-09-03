@@ -230,15 +230,6 @@ export async function saveTtsVoicePrefs(patch: {
   return data
 }
 
-export async function fetchHousehold(): Promise<{ household: HouseholdSummary | null }> {
-  const res = await apiFetch('/household')
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(data.message || 'Failed to load household')
-  }
-  return { household: data.household ?? null }
-}
-
 export async function sendHouseholdInvite(email: string): Promise<{
   inviteSent: true
   emailed: boolean
