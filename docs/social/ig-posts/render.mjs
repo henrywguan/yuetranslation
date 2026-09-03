@@ -28,6 +28,8 @@ mkdirSync(outDir, { recursive: true })
 const jobs = [
   { html: 'jyutping-tones-square.html', png: 'ig-post-jyutping-tones-1080.png', w: 1080, h: 1080 },
   { html: 'jyutping-tones-portrait.html', png: 'ig-post-jyutping-tones-portrait.png', w: 1080, h: 1350 },
+  { html: 'intro-square.html', png: 'ig-post-intro-1080.png', w: 1080, h: 1080 },
+  { html: 'intro-portrait.html', png: 'ig-post-intro-portrait.png', w: 1080, h: 1350 },
 ]
 
 const chrome =
