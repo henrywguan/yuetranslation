@@ -28,10 +28,6 @@ function ensureSharedAudio(): HTMLAudioElement {
   return audio
 }
 
-export function isTtsPlaying() {
-  return playing
-}
-
 /** True while TTS plays or during the short echo tail after playback. */
 export function isMicEchoMuted() {
   return playing || Date.now() < echoTailUntil
@@ -208,11 +204,6 @@ export async function speakText(text: string, lang: Lang, voice?: string | null)
       armTtsEchoTail()
     }
   }
-}
-
-/** Play a pre-fetched blob without bumping the speak generation (for rapid sequences). */
-export function playTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang) {
-  void playTtsBlobAndWait(blob, fallbackText, lang, Number.POSITIVE_INFINITY)
 }
 
 function swapTtsBlob(blob: Blob | null, fallbackText: string, lang: Lang): HTMLAudioElement | null {
