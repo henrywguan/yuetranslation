@@ -61,6 +61,14 @@ Whenever a social / Higgsfield / Recordly piece **demonstrates a translation**:
 3. Soft luxury beds are fine; **duck under TTS**; never replace speak-through with music alone.
 4. Confirm paid Azure `/api/tts` with Henry before cloud generation (AGENTS.md).
 
+## Auto-speak + TTS (REQUIRED for translation demos)
+Whenever a social / Higgsfield / Recordly piece **demonstrates a translation**:
+
+1. Seed or toggle **auto-speak ON** (Family / open-mode entitlement).
+2. The final video must **hear TTS** of the Cantonese (or English) result — not silent UI only.
+3. Soft luxury beds are fine; **duck under TTS**; never replace speak-through with music alone.
+4. Confirm paid Azure `/api/tts` with Henry before cloud generation (AGENTS.md).
+
 ## Content pillars (rotate)
 1. **Google fails, we don't** — side-by-side 口語 vs 書面/Mandarin-ish output (hero campaign)
 2. **Family table** — one phone, two generations, Conversation mode

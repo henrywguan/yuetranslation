@@ -32,6 +32,15 @@ For **all** future social, Higgsfield, Recordly, or instructional demo work that
 3. Soft background music may duck under TTS; do not replace TTS with music alone.
 4. Cloud agents still need Henry’s **explicit yes** before calling paid `/api/tts` (or other metered Azure/DeepSeek paths) for that shoot — see below.
 
+### Social / Higgsfield / Recordly demos — auto-speak
+
+For **all** future social, Higgsfield, Recordly, or instructional demo work that shows a translation result:
+
+1. **Enable auto-speak** in the seeded / recorded UI (`autoSpeak: true` + Family/open entitlement).
+2. Ensure **TTS is audible** in the final audio (product Azure TTS when available; do not ship silent translation reveals when the beat is “hear it”).
+3. Soft background music may duck under TTS; do not replace TTS with music alone.
+4. Cloud agents still need Henry’s **explicit yes** before calling paid `/api/tts` (or other metered Azure/DeepSeek paths) for that shoot — see below.
+
 ## Cursor Cloud specific instructions
 
 ### Paid / external API usage (cloud testing only)
@@ -114,4 +123,4 @@ Stripe Checkout enables promotion codes — create a Stripe **Promotion code** (
 
 For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.
 
-Live STT on phone is most reliable with `AZURE_SPEECH_KEY` (+ region) in `apps/api/.env`. Without it, iOS falls back to Web Speech, which must start inside the tap gesture and is flaky. Restart `dev:api` after changing speech env vars; open the app over the HTTPS tunnel and allow mic when prompted. Cloud agents must still get Henry’s OK before triggering Azure STT/TTS **from this cloud testing environment** (local use is unrestricted).
+Live STT on phone is most reliable with the Azure Speech key (+ region) in `apps/api/.env` (see `apps/api/.env.example`). Without it, iOS falls back to Web Speech, which must start inside the tap gesture and is flaky. Restart `dev:api` after changing speech env vars; open the app over the HTTPS tunnel and allow mic when prompted. Cloud agents must still get Henry’s OK before triggering Azure STT/TTS **from this cloud testing environment** (local use is unrestricted).
