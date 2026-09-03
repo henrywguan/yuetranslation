@@ -160,20 +160,6 @@ export function getBuiltinTemplate(id: string): BuiltinTemplateMeta | undefined 
   return BUILTIN_TEMPLATES.find((t) => t.id === id)
 }
 
-export function emptyCampaignFields(): CampaignFields {
-  return {
-    subject: '',
-    preview: '',
-    eyebrow: '',
-    headline: '',
-    body: '',
-    ctaLabel: '',
-    ctaUrl: '',
-    secondary: '',
-    signOff: '',
-  }
-}
-
 export function mergeCampaignFields(
   base: CampaignFields,
   patch: Partial<CampaignFields> | null | undefined,

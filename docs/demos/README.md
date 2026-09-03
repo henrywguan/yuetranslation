@@ -16,9 +16,11 @@ Requires local `dev:web` (and usually `dev:api`) on the default ports. Cloud age
 | --- | --- |
 | `01-landing-dark.png` | Landing (dark) — orbital marketing background |
 | `02-landing-light.png` | Landing (light) |
-| `03-pricing-*.png` | Pricing / plans |
+| `03-pricing-dark.png` | Pricing / plans |
 | `04-app-solo-*.png` | Solo translator |
-| `05–08` | Conversation / other app chrome (see script) |
+| `05–08` | Conversation / other app chrome (see `scripts/capture-docs-screenshots.mjs`) |
+
+Text mode was folded into Solo — do not capture a separate `text` mode shot.
 
 Cam choice (AR / Upload / Documents) and admin screens are not in the default set — add captures in `scripts/capture-docs-screenshots.mjs` if needed.
 

@@ -258,35 +258,3 @@ export function drawSourceOutline(
   ctx.stroke()
   ctx.restore()
 }
-
-/** Floating translation chip (AR) — matched ink on a compact panel. */
-export function drawFloatChip(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  opts: { bg: string; fg: string; selected: boolean; label: string; fontSize: number },
-) {
-  const radius = Math.min(10, h * 0.35)
-  ctx.save()
-  ctx.shadowColor = opts.selected ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.28)'
-  ctx.shadowBlur = opts.selected ? 14 : 8
-  ctx.shadowOffsetY = 2
-  roundedRectPath(ctx, x, y, w, h, radius)
-  ctx.fillStyle = opts.bg
-  ctx.fill()
-  ctx.restore()
-
-  ctx.save()
-  roundedRectPath(ctx, x + 0.5, y + 0.5, w - 1, h - 1, Math.max(0, radius - 0.5))
-  ctx.strokeStyle = opts.selected ? 'rgba(255, 255, 255, 0.65)' : 'rgba(255, 255, 255, 0.22)'
-  ctx.lineWidth = opts.selected ? 1.6 : 1
-  ctx.stroke()
-  ctx.restore()
-
-  const padX = Math.max(6, h * 0.22)
-  drawMatchedLabel(ctx, opts.label, x + padX, y + h / 2, Math.max(8, w - padX * 2), opts.fontSize, {
-    fg: opts.fg,
-  })
-}

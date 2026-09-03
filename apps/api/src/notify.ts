@@ -450,7 +450,3 @@ export async function sendBugReportNotify(
   }
 }
 
-/** Rich React Email + Resend notify for bug reports (screenshot via CID when present). */
-export function notifyBugReport(input: BugReportNotifyInput): void {
-  void sendBugReportNotify(input)
-}

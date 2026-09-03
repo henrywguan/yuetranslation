@@ -143,14 +143,6 @@ export function MutedText({ children }: { children: ReactNode }) {
   return <Text style={emailStyles.muted}>{children}</Text>;
 }
 
-export function JadeLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <Link href={href} style={emailStyles.link}>
-      {children}
-    </Link>
-  );
-}
-
 export function CtaButton({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Section style={{ textAlign: "center", margin: "20px 0 8px" }}>

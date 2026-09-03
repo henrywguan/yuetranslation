@@ -77,7 +77,7 @@ Resend **sends** product mail; Cloudflare Email Routing **receives** Help replie
 
 **3. Site contact link**
 
-Marketing footer Contact uses `mailto:help@mail.jyuttranslate.com`.
+Marketing footer Contact uses `mailto:henrywguan@gmail.com`.
 
 ### Resend Audience (automatic contact sync)
 
@@ -97,7 +97,7 @@ Uses the same `RESEND_API_KEY`. Existing contacts are updated, not duplicated.
 
 **Backfill existing users:** In `#/admin`, click **Sync Resend audience** (or `POST /api/admin/resend-audience/sync` as an admin). This scans every Supabase Auth user and upserts their email into the audience. Users without an email are skipped.
 
-**Backfill household usage:** Before household pooling (migration `012`), meters lived in `usage_months` per user. After deploy, click **Backfill household usage** in `#/admin` (or `POST /api/admin/household-usage/backfill`) to fold that legacy data into `household_usage_months`. Safe to re-run. Production also runs this automatically on cold start when `YUE_RUN_HOUSEHOLD_USAGE_BACKFILL=1` is set in `vercel.json` — remove that flag once usage looks correct.
+**Backfill household usage:** Before household pooling (migration `012`), meters lived in `usage_months` per user. After deploy, click **Backfill household usage** in `#/admin` (or `POST /api/admin/household-usage/backfill`) to fold that legacy data into `household_usage_months`. Safe to re-run. Optional cold-start auto-backfill: set `YUE_RUN_HOUSEHOLD_USAGE_BACKFILL=1` temporarily on Vercel, then remove it when usage looks correct.
 
 ### 2. Upgrade alerts (automatic)
 
@@ -156,20 +156,22 @@ Only if your project supports Database Webhooks (no `supabase_functions` error):
 
 Run these in the Supabase SQL editor (or `supabase db push`), in order:
 
-1. `supabase/migrations/002_admin_disabled_audit.sql` — `profiles.disabled` + `admin_audit_log`
-2. `supabase/migrations/003_usage_increment.sql` — ensures `translate_count`, adds atomic `increment_usage()` so live / TTS / translate cannot wipe each other under concurrency
-3. `supabase/migrations/004_camera_usage.sql` — `camera_seconds` + `camera_translate_count`, extends `increment_usage()` for cam metering
-4. `supabase/migrations/005_user_roles.sql` — optional `profiles.role` (`admin` | `family`)
-5. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
-6. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
-7. `supabase/migrations/008_docs_pages.sql` — `docs_pages` on usage months + `increment_usage` support for Documents metering
-8. `supabase/migrations/009_tts_voices.sql` — profile TTS voice preferences
-9. `supabase/migrations/010_ai_vision_usage.sql` — `ai_vision_count` meter (view-only)
-10. `supabase/migrations/011_rename_pro_plan_to_family.sql` — `pro` → `family` plan id
-11. `supabase/migrations/012_household_seats_pooled_usage.sql` — household seats + pooled `household_usage_months`
-12. `supabase/migrations/013_profiles_username.sql` — custom Account Hub username
-13. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
-14. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
+1. `supabase/migrations/001_profiles_usage.sql` — profiles + monthly usage tables
+2. `supabase/migrations/002_admin_disabled_audit.sql` — `profiles.disabled` + `admin_audit_log`
+3. `supabase/migrations/003_usage_increment.sql` — ensures `translate_count`, adds atomic `increment_usage()` so live / TTS / translate cannot wipe each other under concurrency
+4. `supabase/migrations/004_camera_usage.sql` — `camera_seconds` + `camera_translate_count`, extends `increment_usage()` for cam metering
+5. `supabase/migrations/005_user_roles.sql` — optional `profiles.role` (`admin` | `family`)
+6. `supabase/migrations/006_bug_reports.sql` — `bug_reports` table for signed-in user bug reports
+7. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
+8. `supabase/migrations/008_docs_pages.sql` — `docs_pages` on usage months + `increment_usage` support for Documents metering
+9. `supabase/migrations/009_tts_voices.sql` — profile TTS voice preferences
+10. `supabase/migrations/010_ai_vision_usage.sql` — `ai_vision_count` meter (view-only)
+11. `supabase/migrations/011_rename_pro_plan_to_family.sql` — `pro` → `family` plan id
+12. `supabase/migrations/012_household_seats_pooled_usage.sql` — household seats + pooled `household_usage_months`
+13. `supabase/migrations/013_profiles_username.sql` — custom Account Hub username
+14. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
+15. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
+16. `supabase/migrations/016_app_settings.sql` — app settings (incident banner, etc.)
 
 **If you see** `Could not find the table 'public.households' in the schema cache` — migrations `011`–`015` are not applied. Paste and run the one-shot file `supabase/migrations/apply_011_through_015_household.sql` in **Supabase → SQL Editor** (creates `households` / members / invites / pooled usage, renames plans, backfills legacy meters, then reloads the PostgREST schema cache).
 

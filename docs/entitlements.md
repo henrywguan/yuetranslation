@@ -71,7 +71,7 @@ Returned by `/api/health` and `/api/entitlement`:
     "docsPages": 4
   },
   "remaining": {
-    "liveSeconds": 180,
+    "liveSeconds": 3480,
     "ttsChars": 29200,
     "cameraSeconds": 3560,
     "docsPages": 36

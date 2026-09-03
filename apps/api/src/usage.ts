@@ -399,25 +399,3 @@ export async function setUsageMonth(
   const { error } = await client.from('usage_months').upsert(row, { onConflict: 'user_id,month' })
   if (error) console.error('[usage] setUsageMonth failed', error.message)
 }
-
-/** Zero live / TTS / translate / camera / docs counters for a month (default: current). */
-export async function resetUsageMonth(userId: string, month = currentMonthKey()) {
-  const client = getAdmin()
-  if (!client) return
-  await ensureUsageProfile(userId)
-  const { error } = await client.from('usage_months').upsert(
-    {
-      user_id: userId,
-      month,
-      live_seconds: 0,
-      tts_chars: 0,
-      translate_count: 0,
-      camera_seconds: 0,
-      camera_translate_count: 0,
-      docs_pages: 0,
-      ai_vision_count: 0,
-    },
-    { onConflict: 'user_id,month' },
-  )
-  if (error) console.error('[usage] resetUsageMonth failed', error.message)
-}
