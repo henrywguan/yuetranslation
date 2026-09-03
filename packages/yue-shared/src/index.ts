@@ -1,9 +1,11 @@
-/** Curated Azure Neural TTS voices — re-export shared catalog. */
+export { looksLikeGlossDump } from "./glossDump.js";
 export {
   DEFAULT_YUE_VOICE,
   DEFAULT_EN_VOICE,
   YUE_VOICES,
   EN_VOICES,
+  PREVIEW_YUE,
+  PREVIEW_EN,
   isYueVoice,
   isEnVoice,
   resolveYueVoice,
@@ -14,4 +16,8 @@ export {
   type EnVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
-} from '@jyut/shared/ttsVoices'
+} from "./ttsVoices.js";
+export {
+  GENERIC_CHAR_GLOSS,
+  isGenericCharGloss,
+} from "./charGloss.js";

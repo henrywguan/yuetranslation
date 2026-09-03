@@ -4,6 +4,7 @@ import { openaiClientWithKey } from './openaiClient.js'
 import { lookupGloss } from './canto/gloss.js'
 import { isHanChar } from './canto/han.js'
 import { scrubMandarinToYue } from './canto/scrub.js'
+import { isGenericCharGloss } from '@jyut/shared/charGloss'
 
 const Body = z.object({
   text: z.string().min(1).max(500),
@@ -15,13 +16,6 @@ export type BreakdownChar = {
   jyutping: string | null
   meaning: string
   glossSource?: string
-}
-
-// Keep GENERIC_CHAR_GLOSS in sync with apps/web/src/lib/charGloss.ts.
-const GENERIC_CHAR_GLOSS = 'Cantonese character'
-
-function isGenericCharGloss(gloss: string | null | undefined): boolean {
-  return (gloss || '').trim() === GENERIC_CHAR_GLOSS
 }
 
 function pickMeaning(...candidates: (string | null | undefined)[]): string {
