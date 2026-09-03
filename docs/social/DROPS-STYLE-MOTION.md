@@ -1,108 +1,80 @@
-# Drops-style motion
+# Drops-style motion (JyutTranslate remap)
 
 **Template name (say this to recall):** `Drops-style motion`  
-**Aliases:** Drops motion · Flat 2.0 edutainment · vector game-UI motion · Kahoot-meets-icons  
+**Aliases:** Language Drops Flat 2.0 · game-UI Reel · quiz → Cam demo  
 
-Henry wants this for **playful Reels / motion posts** (e.g. this week). Inspired by [Language Drops](https://languagedrops.com) marketing + in-app motion — **not** a copy of their purple brand.
-
-> **Index:** listed in [`TEMPLATES.md`](./TEMPLATES.md).  
-> Pair with real JyutTranslate UI overlays. Prefer low credits: generate vector stills → animate (Rive / higgsedit / AE) → composite UI.  
-> For static Harbor education posts, use **`instructional night/dark mode post`** instead (`ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`).
+Remap **Language Drops–style Flat 2.0 game-UI motion** onto JyutTranslate brand.  
+Use this for **quiz / pick-the-right-粵 / kinetic type** Reels that end in a **real product proof** (Cam / Solo / Conversation screen capture).
 
 ---
 
-## When to use
+## Locked brand (never Drops purple/gold)
 
-| Use Drops-style motion | Don’t use |
+| Token | Value |
 | --- | --- |
-| Playful product Reels, streak/challenge energy, “fun” hooks | Photoreal lifestyle / Marketing Studio B-roll |
-| Icon-led explainers (particles, modes, progress) | Watercolor storybook emotion pieces (unless Henry asks) |
-| Game-UI bounce on Harbor/Jade | Copying Drops’ purple + gold palette |
+| Harbor field | `#07131f` |
+| Jade | `#3dcfb6` |
+| Ink | `#e8f4ff` |
+| Soft jade glow | radial, low opacity, no neon bloom |
+| Logo | **`docs/brand/favicon.png` only** — never regenerate |
+| Display / hooks | **Syne** 700–800 |
+| Body EN | **Noto Sans** |
+| Body 粵 / Jyutping | **Noto Sans HK** |
+
+**Anti-palette:** Drops purple, gold stars, cream Language-app pastels, purple SaaS glow, cyberpunk neon.
 
 ---
 
-## Style lock (JyutTranslate remapped)
+## Visual language
 
-Borrow Drops’ *method*, keep our colors:
-
-| Token | JyutTranslate value |
+| Do | Don’t |
 | --- | --- |
-| Field | Harbor `#07131f` (+ soft jade radial glow) |
-| Accent | Jade `#3dcfb6` (+ bright `#7ef0dc`) |
-| Text | Ink `#e8f4ff` · mute ~58% |
-| Logo | **`docs/brand/favicon.png` only** |
-| Type | **Syne** (big hooks) · **Noto Sans / Noto Sans HK** (body / 粵) |
-| Art | Flat / **Flat 2.0 vector** — solid fills, soft gradients only, no texture |
-| Characters | Simplified friendly humans (round features, soft fill, little outline) — **vary cast by Reel**; lock only inside one piece |
-| Objects | One-concept icons readable at thumbnail (dinner, plane, dim sum, phone) |
-| Motion | Spring bounce, stagger pops, dashed progress paths, kinetic type — **game UI**, not cinematic camera |
+| Flat / **Flat 2.0** vectors for icons, option pills, progress paths | Photoreal faces, stock lifestyle B-roll |
+| Solid fills + **soft gradients only** | Texture, watercolor, clay 3D, paper grain |
+| Spring bounce, stagger pops, kinetic type | Cinematic camera moves / film grain |
+| Photoreal **only** for Cam input photos (signs, menus, tickets) | AI-fake JyutTranslate UI |
+| Real UI via Recordly / screen capture | Midjourney “phone mock UI” |
 
-**Anti-patterns:** photoreal faces, stock B-roll, cyberpunk neon, watercolor, clay 3D, purple-on-white SaaS glow, Inter/system defaults, AI-fake product UI.
+**Cast:** default = object + UI (no people). Optional simplified Flat 2.0 “uploader” character — lock cast **inside that one Reel only**.
 
 ---
 
-## Motion recipe (15–25s Reel)
+## Motion grammar (game UI)
 
-1. Solid Harbor field (optional soft jade glow)  
-2. Hook type locks (one big word / short bilingual line)  
-3. Flat vector icons **pop with overshoot**  
-4. Optional dashed journey path / streak counter  
-5. **Real JyutTranslate UI** punches in (Solo / Conversation / Jyutping line)  
-6. End: quiet CTA → `jyuttranslate.com`
+1. **Stagger pop** — options / pills appear 80–120ms apart with spring overshoot (~1.08 → settle).
+2. **Kinetic type** — hook words scale/slide in; prefer Syne for EN hooks, Noto Sans HK for 粵.
+3. **Path draw** — optional dashed Jade progress path between beats (stroke, not 3D tube).
+4. **Correct reveal** — winner fills Jade; losers soft-fade / desaturate (no harsh X slam).
+5. **UI handoff** — Flat quiz → wipe/scale into **real** Cam upload capture (hard product proof).
 
-Audio: 粵 TTS when teaching a phrase; soft bed OK. Don’t rely on silent graphic-only if the beat is pronunciation.
-
----
-
-## AI prompt kit
-
-### Still / keyframe
-```
-Flat vector language-learning illustration, Flat 2.0 style,
-clean solid fills, soft subtle gradients only, no texture, no photoreal,
-simplified friendly characters with round features,
-bold simple object icons readable at small size,
-deep harbor navy background #07131f, jade #3dcfb6 and ink #e8f4ff accents,
-generous negative space, modern geometric sans display type,
-playful educational brand graphic, mobile app marketing still,
-no 3D render, no cinematic lighting, no stock photo look
-```
-
-### Motion / Reel
-```
-2D vector motion graphics, UI explainer animation,
-icons pop with spring bounce, dashed progress path draws on,
-kinetic bold type on deep navy harbor field with jade accents,
-phone UI mockup with flat vector overlays,
-game-like micro-interactions, 9:16 vertical, 15–22 seconds,
-no live-action, no photoreal people, no lifestyle B-roll
-```
-
-### Avoid / negative
-```
-photorealistic, cinematic bokeh, stock footage, uncanny AI faces,
-heavy texture, watercolor, oil paint, cyberpunk neon, purple haze fog,
-complex cluttered backgrounds, default Inter/Roboto SaaS look
-```
-
-### Low-credit pipeline (preferred)
-1. Generate **still** icons/characters (or draw in HTML/SVG on brand tokens)  
-2. Animate in **higgsedit / Rive / ffmpeg** (bounce, stagger, path)  
-3. Composite **Recordly / real app UI**  
-4. Ask Henry before spending Higgsfield video credits  
+Duration target: **~18–22s** · **9:16** Instagram Reel.
 
 ---
 
-## Cast & world (same as Studio preference)
+## Production preference (credits)
 
-- **Variety by default** across Reels (people, ages, places).  
-- **Cast-lock only inside one Reel/Story** when continuity is needed.  
-- No permanent ABC+婆婆 series cast unless Henry asks for an arc.
+1. Generate **Flat 2.0 stills** (Higgsfield Soul / Nano Banana / Flux — stills only).
+2. Animate stills in CapCut / After Effects / Remotion / Recordly ken-burns-lite (**$0–low**).
+3. Composite **real JyutTranslate Cam/Solo UI** screen capture.
+4. Soft bed + optional short **粵 TTS** on the correct answer (Azure — confirm with Henry in cloud).
+
+**Ask Henry before any paid Higgsfield *video* spend.** Never AI-fake the product UI.
 
 ---
 
-## Recall phrase for agents
+## Negative prompt block (reuse)
 
-> Make a **Drops-style motion** Reel for JyutTranslate (Flat 2.0 vector game-UI motion on Harbor/Jade + real product UI).
+```
+purple, violet, magenta, gold coins, Language Drops branding, watercolor, clay 3D,
+photoreal face, stock lifestyle b-roll, cyberpunk neon, lens flare spam,
+fake phone UI, fake JyutTranslate screens, Inter font, cream pastel language-app aesthetic,
+heavy texture, paper grain, cinematic shallow DOF on UI chrome
+```
 
-Read this file. Do **not** switch to instructional night static layout unless Henry asks for that template instead.
+---
+
+## Recall phrase
+
+> Make a **Drops-style motion** Reel (JyutTranslate Harbor/Jade Flat 2.0 quiz → real Cam UI).
+
+Index: [`TEMPLATES.md`](./TEMPLATES.md)
