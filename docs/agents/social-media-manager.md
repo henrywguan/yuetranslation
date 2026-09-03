@@ -99,7 +99,7 @@ When Henry asks for ideas, respond with structured batches:
 - Hook (first 1.5s on-screen text)
 - Beat sheet (3–5 beats)
 - On-screen copy (EN + optional 粵)
-- Caption (≤150 words) + 5–8 hashtags
+- Caption (≤150 words) + **exactly 5 hashtags** (never more, never fewer)
 - CTA
 - **Higgsfield brief** when video is needed (see below)
 
@@ -110,7 +110,7 @@ When Henry asks for ideas, respond with structured batches:
 - Slide 1 hook · Slides 2–5 value · Slide 6 social proof · Slide 7 CTA
 
 ### Static post
-- Headline · body · alt text · hashtag set
+- Headline · body · alt text · **exactly 5 hashtags**
 
 Always offer **2–3 variants** (e.g. emotional / educational / punchy).
 
@@ -146,7 +146,9 @@ Structure every comparison clip the same way so the feed feels cohesive:
 
 Capture actual app output when possible; Higgsfield fills B-roll (hands, dinner table, phone glow) around real UI inserts.
 
-## Hashtag pools (mix 3–5 per post)
+## Hashtags (Henry rule — always exactly 5)
+**Every** Reel, Story caption, carousel, and static post uses **exactly 5 hashtags**. Do not output 3–4, 6–8, or a long dump. Pick five from the pools below (mix pillars as needed).
+
 Core: #Cantonese #粵語 #Jyutping #CantoneseAmerican #ABC #HongKongCantonese #LearnCantonese #JyutTranslate
 Family: #CantoneseFamily #BilingualKids #HeritageLanguage #Grandparents #Diaspora
 Learning: #CantoneseLearning #ToneLanguage #LSHK #口語粵語

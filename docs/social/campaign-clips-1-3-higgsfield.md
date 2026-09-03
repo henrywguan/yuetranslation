@@ -37,7 +37,7 @@ Real Hong Kong Cantonese: **你返屋企食飯未呀？**
 Jyutping on every line. Try Conversation mode → link in bio.
 
 ### Hashtags
-`#Cantonese #粵語 #Jyutping #CantoneseAmerican #HongKongCantonese #CantoneseFamily #JyutTranslate`
+`#Cantonese #粵語 #Jyutping #CantoneseAmerican #JyutTranslate`
 
 ### Higgsfield Job A — B-roll
 
@@ -100,7 +100,7 @@ When you miss someone you love: **我掛住你** · ngo5 gwaa3 zyu6 nei5
 Jyutping + character breakdown on every line. Free to try → link in bio.
 
 ### Hashtags
-`#Cantonese #Jyutping #ABC #CantoneseAmerican #LearnCantonese #HeritageLanguage #JyutTranslate`
+`#Cantonese #Jyutping #ABC #CantoneseAmerican #JyutTranslate`
 
 ### Higgsfield Job A — B-roll
 
@@ -163,7 +163,7 @@ Conversation mode: one phone, English ↔ 粵, Jyutping on every line.
 Family plan — 4 seats for the people who actually need to talk.
 
 ### Hashtags
-`#Cantonese #粵語 #CantoneseFamily #BilingualKids #Jyutping #口語粵語 #JyutTranslate`
+`#Cantonese #粵語 #CantoneseFamily #Jyutping #JyutTranslate`
 
 ### Higgsfield Job A — B-roll
 
