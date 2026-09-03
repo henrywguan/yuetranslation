@@ -72,6 +72,16 @@ Prefer **illustrated / drawn / cinematic storybook** emotion over photoreal life
 
 Still keep brand atmosphere: Harbor / Jade / Ink · Syne + Noto Sans HK · no purple/cream AI-default look.
 
+## Drops-style motion (playful Reels)
+**Recall phrase:** *Drops-style motion* (aliases: Flat 2.0 edutainment · vector game-UI motion).
+
+Inspired by Language Drops’ flat-vector / game-UI animation — remapped to JyutTranslate Harbor/Jade. Full recipe + AI prompts: **`docs/social/DROPS-STYLE-MOTION.md`**.
+
+- Flat / Flat 2.0 icons + spring bounce / stagger / dashed paths / kinetic type  
+- Real product UI overlay (never AI-fake the app)  
+- Low-credit path: stills → higgsedit/Rive → Recordly UI  
+- Not for static Harbor instructional grids (use **instructional night/dark mode post**)
+
 ## Deliverable formats
 When Henry asks for ideas, respond with structured batches:
 
