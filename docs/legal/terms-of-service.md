@@ -2,13 +2,16 @@
 
 **JyutTranslate**  
 **Effective date:** September 1, 2026  
-**Last updated:** September 1, 2026
+**Last updated:** September 3, 2026
 
 These Terms of Service (“**Terms**”) are a contract between you and **Henry Guan, doing business as JyutTranslate** (“**JyutTranslate**,” “**we**,” “**us**,” or “**our**”) governing your use of **https://www.jyuttranslate.com** and related apps, pages, and services that link to these Terms (the “**Service**”).
 
+**Not legal advice.** This document is a product-facing Terms draft based on how the Service works today. Have qualified counsel review it before relying on it as your final published terms.
+
 By accessing or using the Service, you agree to these Terms and our [Privacy Policy](./privacy-policy.md). If you do not agree, do not use the Service.
 
-**Contact:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)
+**Privacy / data requests:** [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
+**General support:** [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com)
 
 We do not currently list a physical mailing address. When we obtain a PO Box or other notice address, we will update these Terms.
 
@@ -23,6 +26,7 @@ JyutTranslate provides English ↔ Hong Kong Cantonese (粵語) translation tool
 - Conversation / live microphone translation
 - Text-to-speech (tap-to-play and, on eligible plans, auto-speak)
 - Camera features (AR, image upload) and document translation
+- Installable progressive web app (PWA) use, including opening shared text or files into the Service where supported by your device
 
 On some devices, live speech may use your browser’s built-in speech recognition when cloud speech services are unavailable.
 
@@ -67,29 +71,40 @@ Limited features may be available without signing in (for example, certain text 
 
 ### 5.1 Plans
 
-We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, camera time, document pages, auto-speak, and similar), and feature comparisons are described on the Service's pricing page and may change over time.
+We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, camera time, document pages, auto-speak, household seats, and similar), and feature comparisons are described on the Service’s pricing page and may change over time.
 
 Paid subscriptions are billed through **Stripe** on a recurring monthly or annual basis, as selected at checkout.
 
-### 5.2 Renewal
+### 5.2 Households (seats and pooled usage)
+
+Family and Business plans may include a **household** with a limited number of seats (for example, Family up to **4** seats and Business up to **10** seats, as shown on the pricing page). Monthly allowances on those plans may be **pooled** across household members under the **owner’s** paid subscription.
+
+- The subscription owner may invite members by email, accept or revoke membership, and manage seats subject to plan limits.
+- Invited people may receive an invitation email at the address provided.
+- Household members must have (or create) their own accounts and are bound by these Terms and the Privacy Policy.
+- Members share the household’s pooled meters; misuse by any member may affect the household’s remaining allowance and may lead to suspension under these Terms.
+
+Seat counts and pooling rules may change; the pricing page and in-product Account Hub control the then-current limits.
+
+### 5.3 Renewal
 
 Unless you cancel, paid subscriptions **automatically renew** at the then-current rate for the selected interval until canceled.
 
-### 5.3 Cancellation
+### 5.4 Cancellation
 
 You may cancel a paid subscription at any time through the Stripe Customer Portal / billing management flow offered in the Service (or by contacting us if the portal is unavailable).
 
-**When you cancel, your paid plan remains active until the end of the then-current subscription period.** After that period ends, the account reverts to Free (or loses paid entitlements) unless you resubscribe.
+**When you cancel, your paid plan remains active until the end of the then-current subscription period.** After that period ends, the account reverts to Free (or loses paid entitlements) unless you resubscribe. Household seats and pooled paid allowances end when paid entitlements end.
 
-### 5.4 Refunds
+### 5.5 Refunds
 
 **Refunds are not guaranteed.** Charges are generally non-refundable except where required by law or where we expressly agree otherwise in writing (email sufficient). We may, at our sole discretion, issue a courtesy refund or credit in exceptional cases.
 
-### 5.5 Price changes; promotions
+### 5.6 Price changes; promotions
 
 We may change prices or plan limits prospectively. For material paid-plan price changes, we will provide reasonable notice where required by law or card-network rules. Promotional codes may be offered under additional conditions and may be modified or revoked.
 
-### 5.6 Taxes
+### 5.7 Taxes
 
 Fees may be exclusive of applicable taxes. You are responsible for taxes associated with your purchase, except taxes based on our net income. Tax handling depends on Stripe Checkout / Stripe configuration and your location.
 
@@ -100,13 +115,13 @@ Fees may be exclusive of applicable taxes. You are responsible for taxes associa
 You agree not to:
 
 - Use the Service unlawfully or to harm others
-- Attempt to bypass plan limits, metering, security, or access controls
+- Attempt to bypass plan limits, metering, security, or access controls (including household seat or pooling rules)
 - Probe, scan, or attack the Service, or disrupt other users
 - Reverse engineer the Service except to the limited extent allowed by law
 - Use automated scraping/bots in a way that overloads or abuses the Service without our permission
 - Upload malware or infringing content
 - Misrepresent your identity or affiliation
-- Use microphone, camera, or document features to capture others' private information without appropriate rights/permissions
+- Use microphone, camera, or document features to capture others’ private information without appropriate rights/permissions
 - Use outputs as a substitute for professional advice where licensed expertise is required (medical, legal, immigration, emergency, etc.)
 
 We may throttle, suspend, or terminate access for abuse, including excessive use that harms service stability—even on high or “unlimited” tiers that remain metered for fairness and operations.
@@ -119,8 +134,8 @@ You retain ownership of content you submit (text, audio, images, documents).
 
 You grant JyutTranslate a worldwide, non-exclusive, royalty-free license to host, process, transmit, and display that content **solely as needed to provide the Service you request** (including via subprocessors such as speech, vision, and language-model providers).
 
-**We do not claim ownership of your translations' source content.**  
-**We do not use your content to train JyutTranslate's own AI models.**  
+**We do not claim ownership of your translations’ source content.**  
+**We do not use your content to train JyutTranslate’s own AI models.**  
 **We do not sell your content.**
 
 You represent that you have the rights needed to submit the content you provide and that your use will not violate law or third-party rights.
@@ -155,7 +170,7 @@ Our collection and use of personal information is described in the [Privacy Poli
 
 ## 11. Third-party services
 
-The Service depends on third parties (hosting, auth, payments, speech, vision, LLMs, email). Their outages, policy changes, or errors may affect the Service. Your use of third-party sign-in or payment flows may also be subject to those parties' terms.
+The Service depends on third parties (hosting, auth, payments, speech, vision, LLMs, email). Their outages, policy changes, or errors may affect the Service. Your use of third-party sign-in or payment flows may also be subject to those parties’ terms.
 
 ---
 
@@ -179,7 +194,7 @@ SOME JURISDICTIONS DO NOT ALLOW CERTAIN LIMITATIONS; IN THOSE CASES, OUR LIABILI
 
 ## 14. Indemnity
 
-To the maximum extent permitted by law, you will defend and indemnify Henry Guan d/b/a JyutTranslate against claims, damages, losses, and expenses (including reasonable attorneys' fees) arising from your content, your misuse of the Service, or your violation of these Terms or applicable law.
+To the maximum extent permitted by law, you will defend and indemnify Henry Guan d/b/a JyutTranslate against claims, damages, losses, and expenses (including reasonable attorneys’ fees) arising from your content, your misuse of the Service, or your violation of these Terms or applicable law.
 
 ---
 
@@ -212,12 +227,13 @@ We may update these Terms from time to time. We will post the updated Terms with
 - **No waiver.** Failure to enforce a provision is not a waiver.
 - **Assignment.** You may not assign these Terms without our consent. We may assign them in connection with a reorganization, merger, or sale of assets.
 - **Language.** The English version controls if we provide translations.
-- **Notices.** We may notify you via the Service, email associated with your account, or by updating these pages. You may notify us at [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org). A physical notice address will be added when available.
+- **Notices.** We may notify you via the Service, email associated with your account, or by updating these pages. For privacy/data requests, email [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org); for general support, email [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com). A physical notice address will be added when available.
 
 ---
 
 ## 19. Contact
 
 **Henry Guan, doing business as JyutTranslate**  
-Email: [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
+Privacy / data: [henrywguan@pvhmc.org](mailto:henrywguan@pvhmc.org)  
+Support: [help@mail.jyuttranslate.com](mailto:help@mail.jyuttranslate.com)  
 Web: https://www.jyuttranslate.com
