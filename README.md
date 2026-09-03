@@ -97,6 +97,7 @@ npm run test:translate   # EN↔粵 bot — needs servers + may bill model (ask 
 | [docs/cam-accuracy-fixtures.md](docs/cam-accuracy-fixtures.md) | Test documents & signs for Cam accuracy |
 | [docs/entitlements.md](docs/entitlements.md) | Plans, metering, gates (canonical) |
 | [docs/admin.md](docs/admin.md) | Admin panel, Resend, bug reports |
+| [docs/legal/](docs/legal/) | Privacy / Terms (canonical; imported by the web app) |
 | [docs/design-system.md](docs/design-system.md) | Brand tokens, themes, orbital marketing |
 | [docs/testing.md](docs/testing.md) | Smoke / bots |
 | [docs/local-phone-testing.md](docs/local-phone-testing.md) | HTTPS tunnel for mic/camera |

@@ -1,4 +1,5 @@
 /** English glosses for common Hong Kong colloquial characters (offline / demo). */
+import { GENERIC_CHAR_GLOSS, isGenericCharGloss } from '@jyut/shared/charGloss'
 import { learnedGloss as lookupLearned } from './learnedGloss'
 
 const CHAR_GLOSS: Record<string, string> = {
@@ -98,13 +99,6 @@ const CHAR_GLOSS: Record<string, string> = {
   香: 'fragrant; in 香蕉 (banana)',
   牙: 'tooth; in 香牙蕉 (banana)',
   蕉: 'banana',
-}
-
-// Keep GENERIC_CHAR_GLOSS in sync with apps/api/src/breakdown.ts.
-const GENERIC_CHAR_GLOSS = 'Cantonese character'
-
-function isGenericCharGloss(gloss: string | null | undefined): boolean {
-  return (gloss || '').trim() === GENERIC_CHAR_GLOSS
 }
 
 /** Prefer a real gloss over the generic placeholder. */
