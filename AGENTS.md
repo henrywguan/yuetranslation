@@ -86,9 +86,10 @@ Computer-use / GUI screenshots are especially slow in this Cloud VM (software We
 
 ### Environment bootstrap
 
-- Install: `./scripts/cloud-agent-install.sh` (`npm ci` for web + api, icons)
+- Install: `./scripts/cloud-agent-install.sh` (`npm ci` for web + api, icons, Recordly)
 - Start: `./scripts/cloud-agent-start.sh` (frees stale 5173/8787 only)
 - Config: `.cursor/environment.json`
+- **Recordly** (screen recorder for demo source): `recordly` on `DISPLAY=:1` after install (`scripts/cloud-agent-install-recordly.sh`, AppImage v1.3.3 → `/opt/recordly`). Recordings land in `~/.config/Recordly/recordings`. Linux uses Electron capture (no cursor hide).
 
 ### Production auth & metering (Vercel)
 
