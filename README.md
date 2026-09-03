@@ -101,7 +101,9 @@ npm run test:translate   # EN↔粵 bot — needs servers + may bill model (ask 
 | [docs/design-system.md](docs/design-system.md) | Brand tokens, themes, orbital marketing |
 | [docs/testing.md](docs/testing.md) | Smoke / bots |
 | [docs/local-phone-testing.md](docs/local-phone-testing.md) | HTTPS tunnel for mic/camera |
+| [docs/android-twa.md](docs/android-twa.md) | Android TWA / Play packaging |
 | [docs/bluehost-launch.md](docs/bluehost-launch.md) | WordPress / Bluehost (secondary) |
+| [AGENTS.md](AGENTS.md) | Cursor Cloud agent rules |
 | [AGENTS.md](AGENTS.md) | Cursor Cloud agent notes |
 
 ## Checkout / 结账

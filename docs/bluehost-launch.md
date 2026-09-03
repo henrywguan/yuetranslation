@@ -96,6 +96,9 @@ Create a Bricks page (e.g. `/translate`) and place `[yue_translator]`. Match **U
 | Guest / 访客 | Blocked (sign-in) / 不可用（需登录） | Blocked / 不可用 | Allowed (unmetered try) / 可用（不计费试用） | Blocked / 不可用 | Allowed / 可用 |
 | Free / 免费 | ~1 hr/mo (configurable) / 约每月 1 小时（可配置） | ~1 hr/mo camera / 约每月 1 小时相机 | Metered hard cap / 字数硬上限 | Off / 关闭 | Allowed / 可用 |
 | Family / 家庭版 | ~8 hr/mo / 约每月 8 小时 | 8 hr/mo camera / 每月 8 小时相机 | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
+| Business / 商务版 | ~40 hr/mo fair use / 约每月 40 小时（合理使用） | Unlimited camera (metered) / 无限相机（仍计数） | Unlimited (usage tracked) / 无限（仍计数） | On / 开启 | Allowed / 可用 |
+
+> Canonical Vercel limits (docs pages, exact env defaults): [entitlements.md](./entitlements.md). WordPress may lag.
 
 Runtime: health snapshot → `GET /speech-token` for live → heartbeat every 15s → `POST /tts` for tap-to-play / auto-speak. Solo typing uses `POST /translate` (not gated by live minutes). Camera uses `POST /camera/scan` + `POST /usage/camera-heartbeat` (see [camera.md](./camera.md)).
 

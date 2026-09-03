@@ -166,7 +166,7 @@ We share information with vendors who help us run the Service, under contractual
 | **Supabase** | Authentication and database |
 | **Stripe** | Payments and subscriptions |
 | **Resend** | Email delivery / audience tooling |
-| **Cloudflare** | Email routing for support inbox (for example, help@mail.jyuttranslate.com) |
+| **Cloudflare** | CDN / edge network for the web app |
 | **Microsoft Azure** | Speech (STT/TTS) and vision/OCR |
 | **LLM provider** (OpenAI-compatible API such as DeepSeek / OpenAI, as configured) | Machine translation, related text/vision processing, and optional support triage |
 | **Google / Apple** | Sign-in (if you choose those providers) |

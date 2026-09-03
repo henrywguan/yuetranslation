@@ -14,6 +14,10 @@ Brand tokens for matching the marketing site and translator when building **Bric
 4. After deploy, open `https://<user>.github.io/<repo>/brand/`  
    部署后打开 `https://<user>.github.io/<repo>/brand/`
 
+> **Privacy:** Publishing `/docs` on Pages also exposes `docs/agents/**` and `docs/social/**` (campaign / social-ops briefs). Prefer opening `brand/index.html` locally, or use a Pages site that only serves `docs/brand/` if you keep the repo public.
+
+> **隐私：** 将整个 `/docs` 发布到 Pages 也会公开 `docs/agents/**` 与 `docs/social/**`（社媒运营文案）。仓库公开时建议本地打开 `brand/index.html`，或只托管 `docs/brand/`。
+
 **Product UI snapshots / 产品界面截图：** [demos/](./demos/)
 
 <p>
