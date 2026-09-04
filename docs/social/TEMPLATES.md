@@ -22,6 +22,7 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 - Logo: **`docs/brand/favicon.png` only** — never regenerate  
 - Emotional Reels: **variety of cast / scenes / locations by default**; cast-lock **only within one Reel or Story**  
 - Prefer real JyutTranslate UI overlays; ask Henry before Higgsfield video credit spend  
+- **Hashtags: always exactly 5** on every post (see Studio brief)  
 - Full Studio brief: [`docs/agents/social-media-manager.md`](../agents/social-media-manager.md)
 
 ## Related (not named templates)
