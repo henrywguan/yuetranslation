@@ -1,27 +1,25 @@
 #!/usr/bin/env node
 /**
- * Assemble Instagram Story — Studio feature tour (~11s, 9:16).
- * Brand: Harbor/Jade from apps/web tokens. Real UI clips + local atmosphere.
+ * Assemble Instagram Story — Studio feature tour (cinematic motion + loud SFX).
  *
+ *   python3 scripts/render-story-feature-tour-motion.py
  *   node scripts/build-story-feature-tour.mjs
  */
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const ROOT = process.cwd()
 const BASE = join(ROOT, 'docs/social/story-feature-tour')
-const SRC = join(BASE, 'source')
-const LIVE = join(SRC, 'live')
 const AUDIO = join(BASE, 'audio')
 const OUT = join(BASE, 'out')
+const STUDIO = join(OUT, '_studio')
 const TMP = join(OUT, '_tmp')
-const W = 1080
-const H = 1920
-const FPS = 30
+const SFX = join(AUDIO, 'sfx')
 
 mkdirSync(OUT, { recursive: true })
 mkdirSync(TMP, { recursive: true })
+mkdirSync(SFX, { recursive: true })
 
 function run(cmd, args) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
@@ -41,110 +39,130 @@ function durOf(path) {
   return Number(r.stdout.trim()) || 0
 }
 
-const openCard = join(SRC, 'open-card.png')
-const endCard = join(SRC, 'end-card.png')
-const atmos = existsSync(join(SRC, 'atmosphere/harbor-jade-local.png'))
-  ? join(SRC, 'atmosphere/harbor-jade-local.png')
-  : join(SRC, 'atmosphere/harbor-jade.png')
-const solo = join(LIVE, 'solo-1080.mp4')
-const convo = join(LIVE, 'conversation-1080.mp4')
-const cam = join(LIVE, 'cam-1080.mp4')
-const bed = join(AUDIO, 'bed-soft.wav')
-const whoosh = join(AUDIO, 'whoosh.wav')
-const pop = join(AUDIO, 'pop.wav')
-const voMeet = join(AUDIO, 'higgsfield/vo-meet.mp3')
-const voCantonese = join(AUDIO, 'higgsfield/vo-cantonese.mp3')
-const voFeatures = join(AUDIO, 'higgsfield/vo-features.mp3')
+function ensureSfx() {
+  // Cinematic stereo-ish mono beds — loud enough for phone speakers / IG Stories.
+  const whoosh = join(SFX, 'whoosh-cine.wav')
+  if (!existsSync(whoosh)) {
+    run('ffmpeg', [
+      '-y',
+      '-f', 'lavfi', '-i', 'anoisesrc=color=white:sample_rate=48000:amplitude=0.55:duration=1.15',
+      '-f', 'lavfi', '-i', 'sine=frequency=180:sample_rate=48000:duration=1.15',
+      '-filter_complex',
+      [
+        '[0]highpass=f=280,lowpass=f=3200,afade=t=in:st=0:d=0.08,afade=t=out:st=0.45:d=0.65,volume=1.4[n]',
+        '[1]lowpass=f=400,afade=t=in:st=0:d=0.05,afade=t=out:st=0.25:d=0.5,volume=0.35[b]',
+        '[n][b]amix=inputs=2:normalize=0,alimiter=limit=0.95',
+      ].join(';'),
+      whoosh,
+    ])
+  }
 
-for (const p of [openCard, endCard, atmos, solo, convo, cam, bed, whoosh, pop, voMeet, voCantonese, voFeatures]) {
+  const whooshDeep = join(SFX, 'whoosh-deep.wav')
+  if (!existsSync(whooshDeep)) {
+    run('ffmpeg', [
+      '-y',
+      '-f', 'lavfi', '-i', 'anoisesrc=color=pink:sample_rate=48000:amplitude=0.5:duration=1.35',
+      '-af',
+      'highpass=f=120,lowpass=f=1800,afade=t=in:st=0:d=0.12,afade=t=out:st=0.55:d=0.75,volume=1.55,alimiter=limit=0.95',
+      whooshDeep,
+    ])
+  }
+
+  const hit = join(SFX, 'hit-soft.wav')
+  if (!existsSync(hit)) {
+    run('ffmpeg', [
+      '-y',
+      '-f', 'lavfi', '-i', 'sine=frequency=92:sample_rate=48000:duration=0.55',
+      '-f', 'lavfi', '-i', 'anoisesrc=color=brown:sample_rate=48000:amplitude=0.45:duration=0.55',
+      '-filter_complex',
+      [
+        '[0]afade=t=in:st=0:d=0.005,afade=t=out:st=0.08:d=0.4,volume=1.1[s]',
+        '[1]lowpass=f=600,afade=t=in:st=0:d=0.002,afade=t=out:st=0.05:d=0.35,volume=0.9[n]',
+        '[s][n]amix=inputs=2:normalize=0,alimiter=limit=0.95',
+      ].join(';'),
+      hit,
+    ])
+  }
+
+  const click = join(SFX, 'click-ui.wav')
+  if (!existsSync(click)) {
+    run('ffmpeg', [
+      '-y',
+      '-f', 'lavfi', '-i', 'sine=frequency=1480:sample_rate=48000:duration=0.09',
+      '-f', 'lavfi', '-i', 'sine=frequency=2200:sample_rate=48000:duration=0.06',
+      '-filter_complex',
+      [
+        '[0]afade=t=out:st=0.02:d=0.07,volume=0.55[a]',
+        '[1]afade=t=out:st=0.01:d=0.05,volume=0.35[b]',
+        '[a][b]amix=inputs=2:normalize=0,alimiter=limit=0.9',
+      ].join(';'),
+      click,
+    ])
+  }
+
+  const riser = join(SFX, 'riser-short.wav')
+  if (!existsSync(riser)) {
+    run('ffmpeg', [
+      '-y',
+      '-f', 'lavfi', '-i', 'anoisesrc=color=white:sample_rate=48000:amplitude=0.4:duration=1.2',
+      '-af',
+      'highpass=f=400,lowpass=f=5000,afade=t=in:st=0:d=0.9,afade=t=out:st=1.0:d=0.2,volume=1.2,alimiter=limit=0.9',
+      riser,
+    ])
+  }
+
+  const bed = join(AUDIO, 'bed-cinematic.wav')
+  if (!existsSync(bed)) {
+    // Richer Harbor bed — low drones + soft air (still under VO)
+    run('ffmpeg', [
+      '-y',
+      '-f', 'lavfi', '-i', 'sine=frequency=65:sample_rate=48000:duration=40',
+      '-f', 'lavfi', '-i', 'sine=frequency=98:sample_rate=48000:duration=40',
+      '-f', 'lavfi', '-i', 'sine=frequency=146.83:sample_rate=48000:duration=40',
+      '-f', 'lavfi', '-i', 'sine=frequency=196:sample_rate=48000:duration=40',
+      '-f', 'lavfi', '-i', 'anoisesrc=color=pink:sample_rate=48000:amplitude=0.02:duration=40',
+      '-filter_complex',
+      [
+        '[0]volume=0.22[a]',
+        '[1]volume=0.16[b]',
+        '[2]volume=0.11[c]',
+        '[3]volume=0.07[d]',
+        '[4]lowpass=f=500,volume=0.55[e]',
+        '[a][b][c][d][e]amix=inputs=5:normalize=0,alimiter=limit=0.35',
+      ].join(';'),
+      bed,
+    ])
+  }
+
+  return { whoosh, whooshDeep, hit, click, riser, bed }
+}
+
+// 1) Motion frames
+console.log('render cinematic motion…')
+run('python3', [join(ROOT, 'scripts/render-story-feature-tour-motion.py')])
+
+const meta = Object.fromEntries(
+  readFileSync(join(STUDIO, 'meta.txt'), 'utf8')
+    .trim()
+    .split('\n')
+    .map((l) => {
+      const [k, v] = l.split('=')
+      return [k, Number(v)]
+    }),
+)
+
+const xf = meta.xf || 0.32
+const order = ['open', 'solo', 'convo', 'cam', 'end']
+const segs = order.map((k) => join(STUDIO, `${k}.mp4`))
+for (const p of segs) {
   if (!existsSync(p)) throw new Error(`missing ${p}`)
 }
+const durs = order.map((k) => meta[k])
 
-// Timing (Apple-demo pacing)
-const T = {
-  open: 1.5,
-  solo: 2.5,
-  convo: 2.5,
-  cam: 2.8,
-  end: 2.2,
-}
-const total = T.open + T.solo + T.convo + T.cam + T.end
-
-function stillToClip(still, out, dur, zoom = 1.06) {
-  // Slow Ken Burns punch-in on still
-  const frames = Math.round(dur * FPS)
-  run('ffmpeg', [
-    '-y',
-    '-loop',
-    '1',
-    '-i',
-    still,
-    '-vf',
-    `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(1+${(zoom - 1).toFixed(4)}*on/${frames}, ${zoom})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS},setsar=1`,
-    '-t',
-    String(dur),
-    '-c:v',
-    'libx264',
-    '-pix_fmt',
-    'yuv420p',
-    '-crf',
-    '17',
-    '-an',
-    out,
-  ])
-}
-
-function trimClip(src, out, dur, zoomIn = false) {
-  const z = zoomIn
-    ? `,zoompan=z='min(1+0.04*on/${Math.round(dur * FPS)},1.04)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${W}x${H}:fps=${FPS}`
-    : ''
-  // For live clips prefer scale+crop; skip zoompan on video (jumpy). Use simple scale.
-  run('ffmpeg', [
-    '-y',
-    '-i',
-    src,
-    '-t',
-    String(dur),
-    '-vf',
-    `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},setsar=1,fps=${FPS}`,
-    '-c:v',
-    'libx264',
-    '-pix_fmt',
-    'yuv420p',
-    '-crf',
-    '17',
-    '-an',
-    out,
-  ])
-}
-
-console.log('segments…')
-const seg = {
-  open: join(TMP, 'open.mp4'),
-  solo: join(TMP, 'solo.mp4'),
-  convo: join(TMP, 'convo.mp4'),
-  cam: join(TMP, 'cam.mp4'),
-  end: join(TMP, 'end.mp4'),
-}
-
-stillToClip(openCard, seg.open, T.open, 1.05)
-trimClip(solo, seg.solo, T.solo)
-trimClip(convo, seg.convo, T.convo)
-trimClip(cam, seg.cam, T.cam)
-stillToClip(endCard, seg.end, T.end, 1.04)
-
-// Soft xfade chain
-const xf = 0.28
-const order = [seg.open, seg.solo, seg.convo, seg.cam, seg.end]
-const durs = [T.open, T.solo, T.convo, T.cam, T.end]
-
-// Build filter for xfade
+// 2) Video xfade (keep soft fades Henry liked)
 let filter = ''
 const inputs = []
-order.forEach((p, i) => {
-  inputs.push('-i', p)
-})
-// offset cumulative
+segs.forEach((p) => inputs.push('-i', p))
 let off = durs[0] - xf
 filter += `[0][1]xfade=transition=fade:duration=${xf}:offset=${off.toFixed(3)}[v1];`
 off += durs[1] - xf
@@ -152,7 +170,7 @@ filter += `[v1][2]xfade=transition=fade:duration=${xf}:offset=${off.toFixed(3)}[
 off += durs[2] - xf
 filter += `[v2][3]xfade=transition=fade:duration=${xf}:offset=${off.toFixed(3)}[v3];`
 off += durs[3] - xf
-filter += `[v3][4]xfade=transition=fadeblack:duration=${xf}:offset=${off.toFixed(3)}[vout]`
+filter += `[v3][4]xfade=transition=fadeblack:duration=${xf}:offset=${off.toFixed(3)},format=yuv420p[vout]`
 
 const silent = join(TMP, 'silent.mp4')
 run('ffmpeg', [
@@ -167,119 +185,139 @@ run('ffmpeg', [
   '-pix_fmt',
   'yuv420p',
   '-crf',
-  '17',
+  '16',
   '-an',
   silent,
 ])
-
 const videoDur = durOf(silent)
-console.log('video', videoDur.toFixed(2), 's (target ~', total.toFixed(2), ')')
+console.log('video', videoDur.toFixed(2), 's')
 
-// VO lengths — duck if overlong
+const sfx = ensureSfx()
+const voMeet = join(AUDIO, 'higgsfield/vo-meet.mp3')
+const voCantonese = join(AUDIO, 'higgsfield/vo-cantonese.mp3')
+const voFeatures = join(AUDIO, 'higgsfield/vo-features.mp3')
+
 function capVo(src, dest, maxSec) {
   const d = durOf(src)
-  if (d <= maxSec + 0.05) {
-    run('ffmpeg', ['-y', '-i', src, '-c:a', 'aac', '-b:a', '192k', dest])
-    return Math.min(d, maxSec)
-  }
+  const t = Math.min(d, maxSec)
   run('ffmpeg', [
     '-y',
     '-i',
     src,
     '-t',
-    String(maxSec),
+    String(t),
     '-af',
-    `afade=t=out:st=${(maxSec - 0.15).toFixed(2)}:d=0.15`,
+    `loudnorm=I=-14:TP=-1.5:LRA=11,afade=t=out:st=${Math.max(0, t - 0.12).toFixed(2)}:d=0.12`,
+    '-ar',
+    '48000',
+    '-ac',
+    '2',
     '-c:a',
-    'aac',
-    '-b:a',
-    '192k',
+    'pcm_s16le',
     dest,
   ])
-  return maxSec
+  return t
 }
 
-const vo1 = join(TMP, 'vo1.aac')
-const vo2 = join(TMP, 'vo2.aac')
-const vo3 = join(TMP, 'vo3.aac')
-capVo(voMeet, vo1, 1.6)
-capVo(voCantonese, vo2, 2.2)
-capVo(voFeatures, vo3, 2.4)
+const vo1 = join(TMP, 'vo1.wav')
+const vo2 = join(TMP, 'vo2.wav')
+const vo3 = join(TMP, 'vo3.wav')
+capVo(voMeet, vo1, 1.7)
+capVo(voCantonese, vo2, 2.0)
+capVo(voFeatures, vo3, 2.5)
 
-// Cue times after fades
-const tMeet = 0.15
-const tSolo = T.open - xf * 0.5
-const tConvo = tSolo + T.solo - xf
-const tCam = tConvo + T.convo - xf
-const tFeatures = tCam + 0.15
-const tEnd = tCam + T.cam - xf
+// Cue map aligned to xfade offsets
+const tOpen = 0
+const tSolo = durs[0] - xf
+const tConvo = tSolo + durs[1] - xf
+const tCam = tConvo + durs[2] - xf
+const tEnd = tCam + durs[3] - xf
 
-const mixed = join(TMP, 'mixed.m4a')
+const tMeet = 0.25
+const tVoSolo = tSolo + 0.12
+const tVoCam = tCam + 0.18
+const tHitOpen = 0.55
+const tWhoosh1 = tSolo - 0.05
+const tWhoosh2 = tConvo - 0.05
+const tWhoosh3 = tCam - 0.05
+const tWhoosh4 = tEnd - 0.08
+const tClick1 = tSolo + 0.35
+const tClick2 = tConvo + 0.4
+const tClick3 = tCam + 0.45
+const tRiser = Math.max(0, tEnd - 0.85)
+
+const ms = (t) => Math.max(0, Math.round(t * 1000))
+
+const mixed = join(TMP, 'mixed.wav')
+// CRITICAL: amix normalize=0 — default normalize made the prior cut nearly inaudible on phones.
 run('ffmpeg', [
   '-y',
-  '-i',
-  bed,
-  '-i',
-  vo1,
-  '-i',
-  vo2,
-  '-i',
-  vo3,
-  '-i',
-  whoosh,
-  '-i',
-  pop,
+  '-i', sfx.bed,
+  '-i', vo1,
+  '-i', vo2,
+  '-i', vo3,
+  '-i', sfx.whoosh,
+  '-i', sfx.whooshDeep,
+  '-i', sfx.hit,
+  '-i', sfx.click,
+  '-i', sfx.riser,
   '-filter_complex',
   [
-    `[0]atrim=0:${videoDur.toFixed(3)},afade=t=in:st=0:d=0.8,afade=t=out:st=${(videoDur - 1.2).toFixed(2)}:d=1.2,volume=0.22[bed]`,
-    `[1]adelay=${Math.round(tMeet * 1000)}|${Math.round(tMeet * 1000)},volume=1.05[v1]`,
-    `[2]adelay=${Math.round(tSolo * 1000)}|${Math.round(tSolo * 1000)},volume=1.05[v2]`,
-    `[3]adelay=${Math.round(tFeatures * 1000)}|${Math.round(tFeatures * 1000)},volume=1.05[v3]`,
-    `[4]adelay=${Math.round(tConvo * 1000)}|${Math.round(tConvo * 1000)},volume=0.35[w1]`,
-    `[4]adelay=${Math.round(tCam * 1000)}|${Math.round(tCam * 1000)},volume=0.3[w2]`,
-    `[5]adelay=${Math.round(tCam * 1000)}|${Math.round(tCam * 1000)},volume=0.28[p1]`,
-    `[bed][v1][v2][v3][w1][w2][p1]amix=inputs=7:duration=longest:dropout_transition=0,alimiter=limit=0.92[aout]`,
+    `[0]atrim=0:${videoDur.toFixed(3)},afade=t=in:st=0:d=0.6,afade=t=out:st=${(videoDur - 1.4).toFixed(2)}:d=1.4,volume=0.55[bed]`,
+    `[1]adelay=${ms(tMeet)}|${ms(tMeet)},volume=1.35[v1]`,
+    `[2]adelay=${ms(tVoSolo)}|${ms(tVoSolo)},volume=1.35[v2]`,
+    `[3]adelay=${ms(tVoCam)}|${ms(tVoCam)},volume=1.35[v3]`,
+    `[4]adelay=${ms(tWhoosh1)}|${ms(tWhoosh1)},volume=1.15[w1]`,
+    `[4]adelay=${ms(tWhoosh2)}|${ms(tWhoosh2)},volume=1.1[w2]`,
+    `[5]adelay=${ms(tWhoosh3)}|${ms(tWhoosh3)},volume=1.2[w3]`,
+    `[5]adelay=${ms(tWhoosh4)}|${ms(tWhoosh4)},volume=1.15[w4]`,
+    `[6]adelay=${ms(tHitOpen)}|${ms(tHitOpen)},volume=1.25[h1]`,
+    `[6]adelay=${ms(tEnd + 0.15)}|${ms(tEnd + 0.15)},volume=0.95[h2]`,
+    `[7]adelay=${ms(tClick1)}|${ms(tClick1)},volume=0.85[c1]`,
+    `[7]adelay=${ms(tClick2)}|${ms(tClick2)},volume=0.85[c2]`,
+    `[7]adelay=${ms(tClick3)}|${ms(tClick3)},volume=0.9[c3]`,
+    `[8]adelay=${ms(tRiser)}|${ms(tRiser)},volume=0.7[r1]`,
+    `[bed][v1][v2][v3][w1][w2][w3][w4][h1][h2][c1][c2][c3][r1]amix=inputs=14:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95,loudnorm=I=-12:TP=-1.0:LRA=9[aout]`,
   ].join(';'),
-  '-map',
-  '[aout]',
-  '-c:a',
-  'aac',
-  '-b:a',
-  '192k',
+  '-map', '[aout]',
+  '-ar', '48000',
+  '-ac', '2',
   mixed,
 ])
 
 const final = join(OUT, 'story-feature-tour.mp4')
 run('ffmpeg', [
   '-y',
-  '-i',
-  silent,
-  '-i',
-  mixed,
-  '-c:v',
-  'copy',
-  '-c:a',
-  'aac',
-  '-b:a',
-  '192k',
+  '-i', silent,
+  '-i', mixed,
+  '-c:v', 'copy',
+  '-c:a', 'aac',
+  '-b:a', '256k',
+  '-ar', '48000',
+  '-ac', '2',
   '-shortest',
-  '-movflags',
-  '+faststart',
+  '-movflags', '+faststart',
   final,
 ])
+
+// Loudness report
+const vol = run('ffmpeg', ['-i', final, '-af', 'volumedetect', '-f', 'null', '-'])
+const mean = (vol.stderr.match(/mean_volume:\s*([-\d.]+)/) || [])[1]
+const maxv = (vol.stderr.match(/max_volume:\s*([-\d.]+)/) || [])[1]
 
 writeFileSync(
   join(OUT, 'BUILD_NOTES.txt'),
   [
     `story-feature-tour.mp4`,
     `duration≈${durOf(final).toFixed(2)}s`,
+    `mean_volume=${mean}dB max_volume=${maxv}dB`,
     `palette: Harbor #07131f · Jade #3dcfb6 · Ink #e8f4ff`,
-    `atmosphere: ${atmos}`,
-    `VO: Seed Audio Juno (meet / cantonese / features)`,
-    `UI: real Solo + Conversation captures; Cam trim from prior live Recordly`,
-    `cues: meet@${tMeet} soloVO@${tSolo} whooshConvo@${tConvo} cam@${tCam} features@${tFeatures}`,
+    `motion: LANCZOS eased zoom/punch (no zoompan); transition pulses`,
+    `audio: cinematic whoosh/hit/click/riser + loudnorm; amix normalize=0`,
+    `cues: meet@${tMeet} hit@${tHitOpen} solo@${tSolo} convo@${tConvo} cam@${tCam} end@${tEnd}`,
   ].join('\n') + '\n',
 )
 
-console.log('wrote', final, durOf(final).toFixed(2), 's')
+console.log('wrote', final, durOf(final).toFixed(2), 's', `mean=${mean} max=${maxv}`)
+// Keep _studio for rebuild speed; wipe tmp
 rmSync(TMP, { recursive: true, force: true })

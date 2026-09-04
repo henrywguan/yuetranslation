@@ -5,10 +5,13 @@
 **Rebuild:**
 
 ```bash
-NODE_PATH=/workspace/node_modules node scripts/capture-story-feature-tour.mjs
+python3 scripts/render-story-feature-tour-motion.py
+node scripts/build-story-feature-tour.mjs
+# (build also invokes the motion renderer)
 node scripts/build-story-feature-tour.mjs
 ```
 
+**Motion / audio (v2):** LANCZOS eased open zoom + punch-ins on Solo/Conversation/Cam; transition whoosh/hit/click/riser; `amix normalize=0` + loudnorm so Stories audio is audible on phone.
 **Output:** `out/story-feature-tour.mp4` · **~11s** · **9:16** (1080×1920)  
 **Template feel:** Apple / Google studio product demo (not Drops quiz)  
 **Logo:** `docs/brand/favicon.png` only  
