@@ -29,6 +29,7 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 
 | Asset | Notes |
 | --- | --- |
+| [`COMPETITOR-AD-CLONE-PROMPTS.md`](./COMPETITOR-AD-CLONE-PROMPTS.md) | High-end peer ad grammars + paste-ready Higgsfield/Studio clone prompts (Drops / Jumpspeak / Speak / Pingo / Google-utility / Timekettle / SaaS UGC) |
 | [`campaign-clips-1-3-higgsfield.md`](./campaign-clips-1-3-higgsfield.md) | Early campaign / Higgsfield clip briefs |
 | [`reel-dinner/`](./reel-dinner/) | Dinner Reel shotlist + higgsedit project |
 | [`ig-posts/out/`](./ig-posts/out/) | Rendered PNG outs + captions |
