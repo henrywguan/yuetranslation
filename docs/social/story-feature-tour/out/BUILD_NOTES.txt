@@ -1,0 +1,7 @@
+story-feature-tour.mp4
+duration≈10.40s
+palette: Harbor #07131f · Jade #3dcfb6 · Ink #e8f4ff
+atmosphere: /workspace/docs/social/story-feature-tour/source/atmosphere/harbor-jade-local.png
+VO: Seed Audio Juno (meet / cantonese / features)
+UI: real Solo + Conversation captures; Cam trim from prior live Recordly
+cues: meet@0.15 soloVO@1.3599999999999999 whooshConvo@3.58 cam@5.8 features@5.95

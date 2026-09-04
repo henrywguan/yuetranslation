@@ -1,0 +1,16 @@
+{
+  "w": 1080,
+  "h": 1920,
+  "fps": 30,
+  "theme": "dark",
+  "palette": {
+    "harbor": "#07131f",
+    "jade": "#3dcfb6",
+    "ink": "#e8f4ff"
+  },
+  "clips": [
+    "solo-1080.mp4",
+    "conversation-1080.mp4",
+    "cam-1080.mp4"
+  ]
+}

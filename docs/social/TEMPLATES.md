@@ -8,6 +8,7 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | --- | --- | --- | --- |
 | **instructional night/dark mode post** | Static IG (feed / portrait) | Product education: Meet app, Jyutping + Chao tones, Why switch, brand splash, feature grids. Harbor night field, jade accents, rounded instructional cards, HTML→`render.mjs`. | [`ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`](./ig-posts/INSTRUCTIONAL-NIGHT-MODE.md) · design [`ig-posts/DESIGN.md`](./ig-posts/DESIGN.md) · refs [`ig-posts/references/`](./ig-posts/references/) |
 | **Drops-style motion** | Motion / Reels | Playful Flat 2.0 vector game-UI bounce (spring icons, kinetic type, dashed paths) on Harbor/Jade + **real** product UI overlay. Not lifestyle B-roll; not Drops purple. | [`DROPS-STYLE-MOTION.md`](./DROPS-STYLE-MOTION.md) |
+| **Studio feature tour** | Motion / Stories | Apple/Google-style product demo (~10–12s): Harbor/Jade lock + real Solo → Conversation → Cam UI + Seed Audio VO. No fake app UI. | [`story-feature-tour/BRIEF.md`](./story-feature-tour/BRIEF.md) |
 
 ## Aliases (quick lookup)
 
@@ -15,6 +16,7 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | --- | --- |
 | night instructional · dark mode IG post · Harbor instructional | **instructional night/dark mode post** |
 | Flat 2.0 edutainment · vector game-UI motion · Drops motion | **Drops-style motion** |
+| studio hybrid · feature tour Story · Apple demo tour | **Studio feature tour** |
 
 ## Shared rules (all templates)
 
