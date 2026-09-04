@@ -1,0 +1,5 @@
+Instructional night/dark Harbor carousel — animated overlays.
+Captions pop in/out (fade + slide) so UI isn't covered the whole beat.
+Rings pulse; on Ken Burns slides they ride the zoom (pre-zoom composite) to keep circling targets.
+Slides 3 & 5 source: LIVE typing/STT capture
+Azure TTS on 3 & 5: YES

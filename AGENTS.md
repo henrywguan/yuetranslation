@@ -14,13 +14,32 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 ### Instagram / static social posts (approved look)
 
-When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, start from the approved Jyutping + Chao tones posts — **not** a new AI poster style.
+When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, use the **instructional night/dark mode** Harbor look — **not** a new AI poster style.
 
-- **Canon:** [`docs/social/ig-posts/DESIGN.md`](docs/social/ig-posts/DESIGN.md)
-- **References:** `docs/social/ig-posts/out/ig-post-jyutping-tones-{1080,portrait}.png` + matching HTML/`shared.css`
+- **Named template:** [`docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`](docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md) (recall: *instructional night/dark mode post*)
+- **Canon:** [`docs/social/ig-posts/DESIGN.md`](docs/social/ig-posts/DESIGN.md) + `references/*.jpg`
 - **Locked:** Harbor / Jade / Ink · Syne + Noto Sans HK · **`docs/brand/favicon.png` only** (never regenerate the chop)
 - **Pipeline:** HTML → `node docs/social/ig-posts/render.mjs` → commit `out/*.png`
 - Content/topic can change; **colors, type, logo, atmosphere, and composition language stay**
+- Emotional story Reels: storybook + **real UI** overlay; cast/scene **variety by default** (see social-media-manager brief)
+
+### Social / Higgsfield / Recordly demos — auto-speak
+
+For **all** future social, Higgsfield, Recordly, or instructional demo work that shows a translation result:
+
+1. **Enable auto-speak** in the seeded / recorded UI (`autoSpeak: true` + Family/open entitlement).
+2. Ensure **TTS is audible** in the final audio (product Azure TTS when available; do not ship silent translation reveals when the beat is “hear it”).
+3. Soft background music may duck under TTS; do not replace TTS with music alone.
+4. Cloud agents still need Henry’s **explicit yes** before calling paid `/api/tts` (or other metered Azure/DeepSeek paths) for that shoot — see below.
+
+### Social / Higgsfield / Recordly demos — auto-speak
+
+For **all** future social, Higgsfield, Recordly, or instructional demo work that shows a translation result:
+
+1. **Enable auto-speak** in the seeded / recorded UI (`autoSpeak: true` + Family/open entitlement).
+2. Ensure **TTS is audible** in the final audio (product Azure TTS when available; do not ship silent translation reveals when the beat is “hear it”).
+3. Soft background music may duck under TTS; do not replace TTS with music alone.
+4. Cloud agents still need Henry’s **explicit yes** before calling paid `/api/tts` (or other metered Azure/DeepSeek paths) for that shoot — see below.
 
 ## Cursor Cloud specific instructions
 
@@ -104,4 +123,4 @@ Stripe Checkout enables promotion codes — create a Stripe **Promotion code** (
 
 For microphone on a real phone, use the free Cloudflare quick tunnel — see [docs/local-phone-testing.md](docs/local-phone-testing.md) and `npm run dev:tunnel`. Do not expect mic to work on `http://192.168.x.x`.
 
-Live STT on phone is most reliable with `AZURE_SPEECH_KEY` (+ region) in `apps/api/.env`. Without it, iOS falls back to Web Speech, which must start inside the tap gesture and is flaky. Restart `dev:api` after changing speech env vars; open the app over the HTTPS tunnel and allow mic when prompted. Cloud agents must still get Henry’s OK before triggering Azure STT/TTS **from this cloud testing environment** (local use is unrestricted).
+Live STT on phone is most reliable with the Azure Speech key (+ region) in `apps/api/.env` (see `apps/api/.env.example`). Without it, iOS falls back to Web Speech, which must start inside the tap gesture and is flaky. Restart `dev:api` after changing speech env vars; open the app over the HTTPS tunnel and allow mic when prompted. Cloud agents must still get Henry’s OK before triggering Azure STT/TTS **from this cloud testing environment** (local use is unrestricted).

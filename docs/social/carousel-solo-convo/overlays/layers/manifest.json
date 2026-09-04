@@ -1,0 +1,277 @@
+{
+  "w": 1080,
+  "h": 1350,
+  "slides": {
+    "hook": {
+      "seconds": 7,
+      "focus": "tabs",
+      "zoomEnd": 1.06,
+      "rings": [
+        {
+          "file": "ring-solo",
+          "track": true,
+          "pulse": true,
+          "in": 0.6,
+          "out": 6.4
+        },
+        {
+          "file": "ring-convo",
+          "track": true,
+          "pulse": true,
+          "in": 1.0,
+          "out": 6.4
+        }
+      ],
+      "captions": [
+        {
+          "file": "scrim",
+          "in": 0.0,
+          "out": 6.6,
+          "style": "fade"
+        },
+        {
+          "file": "chip",
+          "in": 0.15,
+          "out": 6.3,
+          "style": "pop-down"
+        },
+        {
+          "file": "title",
+          "in": 0.35,
+          "out": 6.2,
+          "style": "pop-down"
+        },
+        {
+          "file": "footer",
+          "in": 1.2,
+          "out": 6.5,
+          "style": "pop-up"
+        }
+      ]
+    },
+    "solo-anatomy": {
+      "seconds": 8,
+      "focus": "center",
+      "zoomEnd": 1.06,
+      "rings": [
+        {
+          "file": "ring-en",
+          "track": true,
+          "pulse": true,
+          "in": 0.45,
+          "out": 3.4
+        },
+        {
+          "file": "bounds-yue",
+          "track": true,
+          "pulse": true,
+          "in": 3.1,
+          "out": 7.4
+        }
+      ],
+      "captions": [
+        {
+          "file": "chip",
+          "in": 0.1,
+          "out": 1.85,
+          "style": "pop-down"
+        },
+        {
+          "file": "title",
+          "in": 0.2,
+          "out": 1.9,
+          "style": "pop-down"
+        },
+        {
+          "file": "callout-en",
+          "in": 1.75,
+          "out": 3.5,
+          "style": "pop-down"
+        },
+        {
+          "file": "callout-yue",
+          "in": 3.2,
+          "out": 6.2,
+          "style": "pop-up"
+        },
+        {
+          "file": "callout-speak",
+          "in": 5.5,
+          "out": 7.6,
+          "style": "pop-up"
+        }
+      ]
+    },
+    "solo-howto": {
+      "seconds": 12,
+      "live": true,
+      "rings": [
+        {
+          "file": "ring-en",
+          "track": false,
+          "pulse": true,
+          "in": 0.8,
+          "out": 5.5
+        },
+        {
+          "file": "ring-yue",
+          "track": false,
+          "pulse": true,
+          "in": 5.2,
+          "out": 11.2
+        }
+      ],
+      "captions": [
+        {
+          "file": "chip",
+          "in": 0.1,
+          "out": 4.2,
+          "style": "pop-down"
+        },
+        {
+          "file": "title",
+          "in": 0.25,
+          "out": 4.0,
+          "style": "pop-down"
+        },
+        {
+          "file": "step1",
+          "in": 0.6,
+          "out": 4.5,
+          "style": "pop-left"
+        },
+        {
+          "file": "step2",
+          "in": 5.0,
+          "out": 8.5,
+          "style": "pop-left"
+        },
+        {
+          "file": "step3",
+          "in": 8.2,
+          "out": 11.5,
+          "style": "pop-left"
+        }
+      ]
+    },
+    "convo-anatomy": {
+      "seconds": 8,
+      "focus": "center",
+      "zoomEnd": 1.1,
+      "rings": [
+        {
+          "file": "ring-yue",
+          "track": true,
+          "pulse": true,
+          "in": 0.5,
+          "out": 3.8
+        },
+        {
+          "file": "ring-en",
+          "track": true,
+          "pulse": true,
+          "in": 3.5,
+          "out": 7.2
+        }
+      ],
+      "captions": [
+        {
+          "file": "chip",
+          "in": 0.1,
+          "out": 2.4,
+          "style": "pop-down"
+        },
+        {
+          "file": "title",
+          "in": 0.2,
+          "out": 2.3,
+          "style": "pop-down"
+        },
+        {
+          "file": "callout-yue",
+          "in": 0.5,
+          "out": 3.5,
+          "style": "pop-down"
+        },
+        {
+          "file": "mid-bar",
+          "in": 1.0,
+          "out": 7.0,
+          "style": "fade"
+        },
+        {
+          "file": "callout-en",
+          "in": 3.5,
+          "out": 6.5,
+          "style": "pop-up"
+        }
+      ]
+    },
+    "convo-howto": {
+      "seconds": 11,
+      "live": true,
+      "rings": [
+        {
+          "file": "ring-en",
+          "track": false,
+          "pulse": true,
+          "in": 0.8,
+          "out": 5.0
+        },
+        {
+          "file": "ring-yue",
+          "track": false,
+          "pulse": true,
+          "in": 4.8,
+          "out": 10.2
+        }
+      ],
+      "captions": [
+        {
+          "file": "chip",
+          "in": 0.1,
+          "out": 3.8,
+          "style": "pop-down"
+        },
+        {
+          "file": "title",
+          "in": 0.25,
+          "out": 3.6,
+          "style": "pop-down"
+        },
+        {
+          "file": "footer",
+          "in": 7.5,
+          "out": 10.6,
+          "style": "pop-up"
+        }
+      ]
+    },
+    "cta": {
+      "seconds": 7,
+      "focus": "center",
+      "zoomEnd": 1.08,
+      "rings": [],
+      "captions": [
+        {
+          "file": "field",
+          "in": 0.0,
+          "out": 6.8,
+          "style": "fade"
+        },
+        {
+          "file": "logo",
+          "in": 0.2,
+          "out": 6.6,
+          "style": "pop-down"
+        },
+        {
+          "file": "copy",
+          "in": 0.45,
+          "out": 6.7,
+          "style": "pop-up"
+        }
+      ]
+    }
+  }
+}
