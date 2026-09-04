@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Record real Cam upload flow for stop-sign quiz Reel (9:16 CDP screencast).
- * Uploads docs/social/reel-cam-quiz-stop/source/stop-sign.png into Cam → Upload image.
- * Then runs Translate (Azure Vision) so OCR/overlay is real product UI.
+ * Record Cam upload for stop-sign quiz Reel with Recordly-style zoom cues.
+ *
+ * Flow: Cam → Upload (tight STOP crop) → Translate all (OCR boxes cover full STOP)
+ * → hold overlay. Emits cam-upload-1080.mp4 + zoom-cues.json.
+ *
+ * Uses Translate all (not manual draw) so Vision places a box over the whole word.
  *
  *   NODE_PATH=/workspace/node_modules node scripts/record-reel-cam-quiz-stop.mjs
  */
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync, readFileSync, rmSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import puppeteer from 'puppeteer-core'
 
@@ -26,6 +29,11 @@ mkdirSync(OUT_DIR, { recursive: true })
 if (!existsSync(SIGN)) throw new Error(`missing ${SIGN}`)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const cues = []
+const mark = (label, extra = {}) => {
+  cues.push({ t: Date.now(), label, ...extra })
+  console.log('cue', label, extra)
+}
 
 function createScreencast(page, framesDir) {
   mkdirSync(framesDir, { recursive: true })
@@ -49,7 +57,7 @@ function createScreencast(page, framesDir) {
       session.on('Page.screencastFrame', onFrame)
       await session.send('Page.startScreencast', {
         format: 'jpeg',
-        quality: 86,
+        quality: 88,
         maxWidth: W,
         maxHeight: H,
         everyNthFrame: 1,
@@ -92,9 +100,41 @@ function createScreencast(page, framesDir) {
         throw new Error('encode failed')
       }
       rmSync(framesDir, { recursive: true, force: true })
-      return { count, wallSec }
+      return { count, wallSec, t0 }
     },
   }
+}
+
+async function findToolBtn(page, patterns) {
+  return page.evaluate((pats) => {
+    const btns = [...document.querySelectorAll('button')]
+    for (const pat of pats) {
+      const re = new RegExp(pat)
+      const el = btns.find((b) => re.test((b.textContent || '').replace(/\s+/g, ' ').trim()) && !b.disabled)
+      if (el) {
+        const r = el.getBoundingClientRect()
+        return {
+          x: r.x + r.width / 2,
+          y: r.y + r.height / 2,
+          w: r.width,
+          h: r.height,
+          label: (el.textContent || '').trim().slice(0, 48),
+        }
+      }
+    }
+    return null
+  }, patterns)
+}
+
+async function pressBtn(page, btn, label) {
+  if (!btn) throw new Error(`missing button for ${label}`)
+  await page.mouse.move(btn.x, btn.y, { steps: 10 })
+  await sleep(160)
+  await page.mouse.down()
+  mark(`${label}_press`, { btn })
+  await sleep(240) // hold so Recordly zoom catches the depressed state
+  await page.mouse.up()
+  mark(`${label}_release`)
 }
 
 const browser = await puppeteer.launch({
@@ -133,12 +173,12 @@ await page.evaluate(() => {
       },
       limits: { ...(ent.limits || {}), plan: 'family', auto_speak: true, can_camera: true, can_docs: true },
     },
+    autoSpeak: false, // avoid TTS during Cam capture (metered); reveal uses offline TTS
   })
   s.getState().setMode('camera')
 })
-await sleep(1200)
+await sleep(1000)
 
-// Ensure choice modal / Cam view is ready
 const modalReady = await page.evaluate(() => {
   const t = document.body?.innerText || ''
   if (/Upload image|上載相片/.test(t)) return true
@@ -147,14 +187,14 @@ const modalReady = await page.evaluate(() => {
   cam?.click()
   return false
 })
-if (!modalReady) await sleep(900)
+if (!modalReady) await sleep(800)
 
 const outMp4 = join(OUT_DIR, 'cam-upload-1080.mp4')
 const cast = createScreencast(page, join(OUT_DIR, '_frames'))
 await cast.start()
-await sleep(700)
+mark('cast_start')
+await sleep(500)
 
-// Tap Upload image — file chooser opens from that click
 const signAbs = join(process.cwd(), SIGN)
 const [chooser] = await Promise.all([
   page.waitForFileChooser({ timeout: 15000 }).catch(() => null),
@@ -165,56 +205,70 @@ const [chooser] = await Promise.all([
     up.click()
   }),
 ])
-if (chooser) {
-  await chooser.accept([signAbs])
-} else {
+mark('upload_click')
+if (chooser) await chooser.accept([signAbs])
+else {
   const input = await page.$('input[type=file]')
   if (!input) throw new Error('no file input')
   await input.uploadFile(signAbs)
 }
-await sleep(1800)
 
-// Wait for upload editor + image
 await page
+  .waitForFunction(() => /Translate all|全部翻譯|Draw box|畫框/.test(document.body?.innerText || ''), {
+    timeout: 20000,
+  })
+  .catch(() => {})
+await sleep(900)
+mark('image_loaded')
+
+const translateAll = await findToolBtn(page, ['Translate all|全部翻譯'])
+mark('pre_translate', { btn: translateAll })
+await sleep(450)
+mark('zoom_in_target')
+await sleep(350)
+
+await pressBtn(page, translateAll, 'translate')
+
+const ok = await page
   .waitForFunction(
     () => {
       const t = document.body?.innerText || ''
-      return /Translate all|全部翻譯|Translate|翻譯/.test(t)
+      if (/Scanning|掃描中/.test(t)) return false
+      // Real Vision often returns 停止; quiz reveal teaches 停車 — either means overlay landed
+      return /停車|停止|ting4|ting2|Details|詳情|RESULTS|結果/.test(t)
     },
-    { timeout: 15000 },
+    { timeout: 45000 },
   )
-  .catch(() => console.warn('upload editor wait timed out'))
+  .then(() => true)
+  .catch(() => false)
 
-await sleep(600)
+if (!ok) {
+  console.warn('translate wait timed out — checking overlay canvas / boxes')
+  const debug = await page.evaluate(() => ({
+    text: (document.body?.innerText || '').slice(0, 800),
+    busy: /Scanning|掃描中/.test(document.body?.innerText || ''),
+  }))
+  console.warn('debug', JSON.stringify(debug).slice(0, 500))
+}
 
-// Primary Cam demo path: Translate all (auto OCR + translate) — not box Translate
-await page.evaluate(() => {
-  const btns = [...document.querySelectorAll('button')]
-  const all = btns.find((b) => /Translate all|全部翻譯/.test(b.textContent || ''))
-  if (all) {
-    all.click()
-    return
-  }
-  const tr = btns.find((b) => /^Translate$|^翻譯$|Translate|翻譯/.test(b.textContent || '') && !/AR|all|全部/.test(b.textContent || ''))
-  tr?.click()
-})
+mark('result_visible', { ok })
+await sleep(900)
+mark('zoom_out')
+await sleep(3200)
+mark('hold_end')
 
-// Wait for OCR/translation result — real Vision overlay
-await page
-  .waitForFunction(
-    () => {
-      const t = document.body?.innerText || ''
-      const scanning = /Scanning|掃描中/.test(t)
-      if (scanning) return false
-      return /停車|ting4|STOP|Details|詳情|粵/.test(t)
-    },
-    { timeout: 60000 },
-  )
-  .catch(() => console.warn('translate wait timed out — keeping capture anyway'))
-
-// Hold on OCR overlay + results so the packed 8s Cam beat keeps 停車/停止 readable
-await sleep(6500)
 const info = await cast.stop(outMp4)
 await browser.close()
-writeFileSync(join(OUT_DIR, 'manifest.json'), JSON.stringify({ ...info, sign: SIGN, file: 'cam-upload-1080.mp4' }, null, 2))
+
+const cueRel = cues.map((c) => ({
+  ...c,
+  sec: Number(((c.t - info.t0) / 1000).toFixed(3)),
+}))
+writeFileSync(
+  join(OUT_DIR, 'manifest.json'),
+  JSON.stringify({ ...info, sign: SIGN, file: 'cam-upload-1080.mp4', cues: cueRel }, null, 2),
+)
+writeFileSync(join(OUT_DIR, 'zoom-cues.json'), JSON.stringify(cueRel, null, 2))
 console.log('cam live →', outMp4, info)
+console.log('cues', cueRel.map((c) => `${c.sec}s ${c.label}`).join(' | '))
+if (!ok) process.exitCode = 2

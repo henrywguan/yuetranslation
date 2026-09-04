@@ -12,6 +12,14 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 **Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
 
+### Social / rendered text — tofu (□) glyph check
+
+**Always** inspect rendered Chinese / Jyutping / mixed EN+粵 overlays for **tofu blocks** (empty boxes / `.notdef` glyphs) before shipping stills, Reels, carousels, or overlays.
+
+1. Prefer a CJK-capable face for any string that includes Han characters (e.g. WenQuanYi Micro Hei, Droid Sans Fallback, Noto Sans HK / CJK). **Never** draw 粵/中文 with DejaVu / Liberation / Latin-only fonts.
+2. Mixed lines (“What’s the right 粵?”): either use a CJK font for the whole line, or composite Latin + CJK runs separately — do not assume Latin bold will fall back correctly in Pillow.
+3. After generating stills/overlays, open the PNG/frame and **visually confirm** no □ / empty squares appear. If tofu is present, fix fonts and regenerate **without waiting for Henry to report it**.
+
 ### Instagram / static social posts (approved look)
 
 When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, start from the approved Jyutping + Chao tones posts — **not** a new AI poster style.
