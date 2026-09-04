@@ -1,6 +1,8 @@
-Cam quiz stop-sign Reel (v4 — luxurious)
-Duration: 24.00s · 9:16 · xfade 0.85s between scenes
-Cam: Translate all only (no draw box) + Recordly zoom in/out
-Reveal: breathing correct pill + ambient jade motes (not plain Ken Burns)
-Overlay: DEV expand to full STOP after OCR
-Higgsfield VO: YES · Azure 停車 TTS: YES
+Cam quiz stop-sign Reel — STUDIO / Apple-demo motion
+Duration: 32.83s · 9:16
+Motion: parallax hook, spring pills, light sweeps, mote fields
+Transitions: blur-dissolve + luminous iris (not Ken Burns / hard cuts)
+Cam: Translate all + cubic-ease Recordly zoom
+Reveal: focus-rack wrong pills + breathing correct + specular edge
+CTA: soft logo settle
+Audio: bed + whoosh + Azure 停車 + Higgsfield VO (yes)
