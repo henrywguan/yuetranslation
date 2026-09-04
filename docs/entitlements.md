@@ -6,14 +6,18 @@ Vercel 生产栈的套餐与计量以本文为准。WordPress 插件为次要表
 
 ## Guest & Free / 访客与免费版
 
-| Capability | Guest | Free (signed in) |
+| Capability | Guest (cookie trial) | Free (signed in) |
 | --- | --- | --- |
-| Solo text translate + Jyutping | Yes | Yes |
-| Tap-to-play TTS | Yes (counts against Free cap once signed in) | Metered hard cap |
-| Live mic / auto-speak | Sign-in required | Live: metered; auto-speak: Family/Business |
-| Cam AR / Upload / Documents | Sign-in required | Yes (camera + docs caps) |
+| Solo text translate + Jyutping | Yes (unlimited, metered) | Yes (unlimited, metered) |
+| Tap-to-play TTS | Yes (unlimited, metered) | Metered hard cap |
+| Live mic | **30 min / month** (`YUE_GUEST_LIVE_MINUTES`) | Live: metered; auto-speak: Family/Business |
+| Cam AR / Upload | **30 min / month** (`YUE_GUEST_CAMERA_MINUTES`) | Yes (camera meter) |
+| Documents | Sign-in required (button greyed) | Yes (docs page meter) |
+| Auto-speak | No | Family/Business |
 
-Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`. Guests use Solo text + tap TTS at `#/app`; live mic and Cam prompt sign-in.
+Guests get an HttpOnly `yue_guest_id` cookie. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free.
+
+Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, `YUE_GUEST_LIVE_MINUTES=30`, `YUE_GUEST_CAMERA_MINUTES=30`.
 
 ## Default limits / 默认上限
 

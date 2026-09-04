@@ -399,3 +399,181 @@ export async function setUsageMonth(
   const { error } = await client.from('usage_months').upsert(row, { onConflict: 'user_id,month' })
   if (error) console.error('[usage] setUsageMonth failed', error.message)
 }
+
+type GuestUsageRow = {
+  guest_id: string
+  month: string
+  live_seconds: number
+  tts_chars: number
+  translate_count: number
+  camera_seconds?: number
+  camera_translate_count?: number
+  docs_pages?: number
+  ai_vision_count?: number
+}
+
+function guestRowToSnapshot(row: GuestUsageRow): UsageSnapshot {
+  return {
+    month: row.month,
+    liveSeconds: asInt(row.live_seconds),
+    ttsChars: asInt(row.tts_chars),
+    translateCount: asInt(row.translate_count),
+    cameraSeconds: asInt(row.camera_seconds),
+    cameraTranslateCount: asInt(row.camera_translate_count),
+    docsPages: asInt(row.docs_pages),
+    aiVisionCount: asInt(row.ai_vision_count),
+  }
+}
+
+export async function getGuestUsage(
+  guestId: string,
+  month = currentMonthKey(),
+): Promise<UsageSnapshot> {
+  const client = getAdmin()
+  if (!client) return emptyUsage(month)
+  const { data, error } = await client
+    .from('guest_usage_months')
+    .select('*')
+    .eq('guest_id', guestId)
+    .eq('month', month)
+    .maybeSingle()
+  if (error) {
+    console.error('[usage] getGuestUsage failed', error.message)
+    return emptyUsage(month)
+  }
+  if (!data) return emptyUsage(month)
+  return guestRowToSnapshot(data as GuestUsageRow)
+}
+
+async function incrementGuestUsage(
+  guestId: string,
+  delta: {
+    liveSeconds?: number
+    ttsChars?: number
+    translateCount?: number
+    cameraSeconds?: number
+    cameraTranslateCount?: number
+    docsPages?: number
+    aiVisionCount?: number
+  },
+) {
+  const client = getAdmin()
+  if (!client) return
+  const liveSeconds = asInt(delta.liveSeconds)
+  const ttsChars = asInt(delta.ttsChars)
+  const translateCount = asInt(delta.translateCount)
+  const cameraSeconds = asInt(delta.cameraSeconds)
+  const cameraTranslateCount = asInt(delta.cameraTranslateCount)
+  const docsPages = asInt(delta.docsPages)
+  const aiVisionCount = asInt(delta.aiVisionCount)
+  if (
+    liveSeconds +
+      ttsChars +
+      translateCount +
+      cameraSeconds +
+      cameraTranslateCount +
+      docsPages +
+      aiVisionCount <=
+    0
+  ) {
+    return
+  }
+
+  const month = currentMonthKey()
+  const { error: rpcError } = await client.rpc('increment_guest_usage', {
+    p_guest_id: guestId,
+    p_month: month,
+    p_live_seconds: liveSeconds,
+    p_tts_chars: ttsChars,
+    p_translate_count: translateCount,
+    p_camera_seconds: cameraSeconds,
+    p_camera_translate_count: cameraTranslateCount,
+    p_docs_pages: docsPages,
+    p_ai_vision_count: aiVisionCount,
+  })
+  if (!rpcError) return
+
+  console.warn('[usage] increment_guest_usage RPC unavailable, upserting:', rpcError.message)
+  const usage = await getGuestUsage(guestId, month)
+  const patch: Record<string, string | number> = {
+    guest_id: guestId,
+    month,
+    updated_at: new Date().toISOString(),
+  }
+  if (liveSeconds) patch.live_seconds = usage.liveSeconds + liveSeconds
+  if (ttsChars) patch.tts_chars = usage.ttsChars + ttsChars
+  if (translateCount) patch.translate_count = usage.translateCount + translateCount
+  if (cameraSeconds) patch.camera_seconds = usage.cameraSeconds + cameraSeconds
+  if (cameraTranslateCount) {
+    patch.camera_translate_count = usage.cameraTranslateCount + cameraTranslateCount
+  }
+  if (docsPages) patch.docs_pages = usage.docsPages + docsPages
+  if (aiVisionCount) patch.ai_vision_count = usage.aiVisionCount + aiVisionCount
+
+  const { data: existing } = await client
+    .from('guest_usage_months')
+    .select('guest_id')
+    .eq('guest_id', guestId)
+    .eq('month', month)
+    .maybeSingle()
+
+  if (!existing) {
+    const { error } = await client.from('guest_usage_months').insert({
+      guest_id: guestId,
+      month,
+      live_seconds: liveSeconds,
+      tts_chars: ttsChars,
+      translate_count: translateCount,
+      camera_seconds: cameraSeconds,
+      camera_translate_count: cameraTranslateCount,
+      docs_pages: docsPages,
+      ai_vision_count: aiVisionCount,
+    })
+    if (error) console.error('[usage] guest insert failed', error.message)
+    return
+  }
+
+  const { error } = await client
+    .from('guest_usage_months')
+    .update(patch)
+    .eq('guest_id', guestId)
+    .eq('month', month)
+  if (error) console.error('[usage] guest upsert failed', error.message)
+}
+
+export async function addGuestLiveSeconds(guestId: string, seconds: number) {
+  await incrementGuestUsage(guestId, { liveSeconds: seconds })
+}
+
+export async function addGuestTtsChars(guestId: string, chars: number) {
+  await incrementGuestUsage(guestId, { ttsChars: chars })
+}
+
+export async function addGuestTranslateCount(guestId: string, count = 1) {
+  await incrementGuestUsage(guestId, { translateCount: count })
+}
+
+export async function addGuestCameraSeconds(guestId: string, seconds: number) {
+  await incrementGuestUsage(guestId, { cameraSeconds: seconds })
+}
+
+export async function addGuestCameraTranslateCount(guestId: string, count = 1) {
+  await incrementGuestUsage(guestId, { cameraTranslateCount: count })
+}
+
+export async function addGuestAiVisionCount(guestId: string, count = 1) {
+  await incrementGuestUsage(guestId, { aiVisionCount: count })
+}
+
+/** Fold guest trial meters into the signed-in user, then delete guest rows. */
+export async function mergeGuestUsageIntoUser(guestId: string, userId: string) {
+  const client = getAdmin()
+  if (!client || !guestId || !userId) return
+  const { error } = await client.rpc('merge_guest_usage_into_user', {
+    p_guest_id: guestId,
+    p_user_id: userId,
+  })
+  if (error) {
+    console.warn('[usage] merge_guest_usage_into_user failed:', error.message)
+  }
+}

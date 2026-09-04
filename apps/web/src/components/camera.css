@@ -1414,3 +1414,10 @@ body.cam-ar-open.yue-details-open .cam-overlay-canvas {
     animation: none;
   }
 }
+
+.cam-choice-btn.is-disabled,
+.cam-choice-btn--docs.is-disabled {
+  opacity: 0.45;
+  filter: grayscale(0.35);
+  cursor: pointer;
+}

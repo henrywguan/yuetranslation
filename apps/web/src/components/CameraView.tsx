@@ -49,13 +49,14 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   )
 
   useEffect(() => {
-    if (!loggedIn) {
+    // Guests with remaining camera trial can use AR/Upload; docs still need sign-in.
+    if (!loggedIn && !canCamera) {
       onChoiceOpenChange(false)
       openAuthScreen()
     } else if (path === 'choice') {
       onChoiceOpenChange(true)
     }
-  }, [loggedIn, path, onChoiceOpenChange])
+  }, [loggedIn, canCamera, path, onChoiceOpenChange])
 
   useEffect(() => {
     return () => {
@@ -72,7 +73,9 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   const startAr = () => {
     if (!canCamera) {
       useYueStore.setState({
-        error: entitlement?.reason === 'login_required' ? biPlain(ui.camSignIn) : biPlain(ui.camQuota),
+        error: !loggedIn
+          ? biPlain(ui.guestTrialExhaustedCam)
+          : biPlain(ui.camQuota),
       })
       if (!loggedIn) openAuthScreen()
       return
@@ -84,7 +87,9 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   const startUploadPick = () => {
     if (!canCamera) {
       useYueStore.setState({
-        error: entitlement?.reason === 'login_required' ? biPlain(ui.camSignIn) : biPlain(ui.camQuota),
+        error: !loggedIn
+          ? biPlain(ui.guestTrialExhaustedCam)
+          : biPlain(ui.camQuota),
       })
       if (!loggedIn) openAuthScreen()
       return
@@ -95,10 +100,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   const startDocs = () => {
     if (!canDocs) {
       useYueStore.setState({
-        error:
-          entitlement?.reason === 'login_required'
-            ? biPlain(ui.camSignIn)
-            : biPlain(ui.camDocQuota),
+        error: !loggedIn ? biPlain(ui.guestDocsSignIn) : biPlain(ui.camDocQuota),
       })
       if (!loggedIn) openAuthScreen()
       return
@@ -125,18 +127,28 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
   )
 
   useEffect(() => {
-    if (!loggedIn) return
+    if (!loggedIn && !canCamera) return
     const file = consumePendingLaunchFile()
     if (!file) return
     const pdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
     if (pdf) {
+      if (!canDocs) {
+        useYueStore.setState({ error: biPlain(ui.guestDocsSignIn) })
+        openAuthScreen()
+        return
+      }
       onChoiceOpenChange(false)
       setDocSeedFile(file)
       setPath('docs')
       return
     }
+    if (!canCamera) {
+      useYueStore.setState({ error: biPlain(ui.guestTrialExhaustedCam) })
+      if (!loggedIn) openAuthScreen()
+      return
+    }
     onFile(file)
-  }, [loggedIn, onChoiceOpenChange, onFile])
+  }, [loggedIn, canCamera, canDocs, onChoiceOpenChange, onFile])
 
   const backToChoice = () => {
     void meter.stop()
@@ -144,11 +156,14 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
     onChoiceOpenChange(true)
   }
 
-  if (!loggedIn) {
+  if (!loggedIn && !canCamera) {
     return (
       <div className="cam-gate">
         <p>
-          <BiText copy={ui.camSignIn} size="md" />
+          <BiText
+            copy={entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedCam : ui.camSignIn}
+            size="md"
+          />
         </p>
         <GlowRotateButton onClick={() => openAuthScreen()}>
           <BiText copy={ui.signIn} size="sm" layout="inline" />
@@ -228,6 +243,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
         onAr={startAr}
         onUpload={startUploadPick}
         onDocs={startDocs}
+        docsDisabled={!canDocs}
       />
     </div>
   )

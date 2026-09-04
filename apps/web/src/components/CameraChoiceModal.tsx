@@ -8,10 +8,12 @@ type Props = {
   onAr: () => void
   onUpload: () => void
   onDocs: () => void
+  /** Guests cannot use Documents — grey the button and open sign-in on tap. */
+  docsDisabled?: boolean
 }
 
 /** Floating modal: AR / upload image / documents. Portaled above the dock. */
-export function CameraChoiceModal({ open, onClose, onAr, onUpload, onDocs }: Props) {
+export function CameraChoiceModal({ open, onClose, onAr, onUpload, onDocs, docsDisabled = false }: Props) {
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
@@ -44,12 +46,17 @@ export function CameraChoiceModal({ open, onClose, onAr, onUpload, onDocs }: Pro
               <BiText copy={ui.camChoiceUploadHint} size="sm" />
             </span>
           </button>
-          <button type="button" className="cam-choice-btn cam-choice-btn--docs" onClick={onDocs}>
+          <button
+            type="button"
+            className={`cam-choice-btn cam-choice-btn--docs${docsDisabled ? ' is-disabled' : ''}`}
+            onClick={onDocs}
+            aria-disabled={docsDisabled}
+          >
             <span className="cam-choice-btn-label">
               <BiText copy={ui.camChoiceDocs} size="md" />
             </span>
             <span className="cam-choice-btn-hint">
-              <BiText copy={ui.camChoiceDocsHint} size="sm" />
+              <BiText copy={docsDisabled ? ui.guestDocsSignIn : ui.camChoiceDocsHint} size="sm" />
             </span>
           </button>
         </div>

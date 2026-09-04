@@ -33,7 +33,7 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   if (token) headers.Authorization = `Bearer ${token}`
 
   const res = await fetch(`${API_BASE}${path}`, {
-    credentials: WP_NONCE ? 'include' : 'same-origin',
+    credentials: 'include',
     ...init,
     headers,
   })

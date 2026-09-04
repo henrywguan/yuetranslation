@@ -64,9 +64,8 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   }, [live, liveInteraction])
 
   const canLive = !entitlement || entitlement.allowed.live
-  const needsLogin = Boolean(
-    entitlement && !entitlement.loggedIn && (entitlement.requireLogin || entitlement.reason === 'login_required'),
-  )
+  // Guests may use metered live trial; lock only when live is not allowed (exhausted / disabled).
+  const needsLogin = Boolean(entitlement && !entitlement.loggedIn && !entitlement.allowed.live)
   const isThisSide = !side || !liveSide || liveSide === side
   const otherSideBusy = Boolean(side && live && liveSide && liveSide !== side)
   // Keep the button “on” while sticky tap is armed even before `live` flips true.
@@ -185,7 +184,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
         onContextMenu={(e) => e.preventDefault()}
         whileTap={{ scale: otherSideBusy || needsLogin ? 1 : 0.97 }}
         disabled={needsLogin || (!live && !canLive && !stickyHere) || otherSideBusy}
-        aria-label={needsLogin ? biPlain(ui.liveMicSignIn) : aria}
+        aria-label={needsLogin ? biPlain(entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive : ui.liveMicSignIn) : aria}
         aria-pressed={armedHere}
       >
         <span className="live-dot" />
@@ -202,14 +201,16 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
           type="button"
           className="live-btn-lock"
           onClick={() => openAuthScreen()}
-          aria-label={biPlain(ui.liveMicSignIn)}
+          aria-label={biPlain(entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive : ui.liveMicSignIn)}
         >
           <span className="live-btn-lock-tip" role="tooltip">
             {labelLang === 'bi' ? (
-              <BiText copy={ui.liveMicSignIn} size="sm" />
+              <BiText copy={entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive : ui.liveMicSignIn} size="sm" />
             ) : (
               <span lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
-                {labelLang === 'zh' ? ui.liveMicSignIn.zh : ui.liveMicSignIn.en}
+                {labelLang === 'zh'
+                ? (entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive.zh : ui.liveMicSignIn.zh)
+                : (entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive.en : ui.liveMicSignIn.en)}
               </span>
             )}
           </span>
