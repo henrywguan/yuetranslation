@@ -5,9 +5,6 @@
 **Rebuild:**
 
 ```bash
-python3 scripts/render-story-feature-tour-motion.py
-node scripts/build-story-feature-tour.mjs
-# (build also invokes the motion renderer)
 node scripts/build-story-feature-tour.mjs
 ```
 
