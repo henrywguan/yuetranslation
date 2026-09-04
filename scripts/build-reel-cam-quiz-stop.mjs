@@ -118,51 +118,14 @@ encodeSeq(join(STUDIO, 'quiz'), seg.quiz, meta.quiz)
 encodeSeq(join(STUDIO, 'tx_qc'), seg.txQc, meta.tx_qc)
 console.log('seg stills + transitions')
 
-// Cam — cubic ease Recordly zoom (Translate all)
+// Cam — true Recordly lock onto Translate all (Python crop zoom)
 {
+  console.log('render Cam button-lock zoom…')
+  run('python3', [join(ROOT, 'scripts/render-reel-cam-zoom.py')])
+  const camDir = join(STUDIO, 'cam')
   const CAM_DUR = 11.5
-  let zoomInAt = 2.8
-  let zoomPeakAt = 3.6
-  let zoomOutAt = 4.5
-  let btnYNorm = 0.12
-  if (existsSync(zoomCuesPath)) {
-    try {
-      const cues = JSON.parse(readFileSync(zoomCuesPath, 'utf8'))
-      const zin = cues.find((c) => c.label === 'zoom_in_target' || c.label === 'pre_translate')
-      const press = cues.find((c) => c.label === 'translate_press' || c.label === 'translate_release')
-      const pre = cues.find((c) => c.label === 'pre_translate')
-      if (zin) zoomInAt = Math.max(0.4, zin.sec - 0.2)
-      if (press) {
-        zoomPeakAt = Math.max(zoomInAt + 0.35, press.sec)
-        zoomInAt = Math.min(zoomInAt, Math.max(0.4, press.sec - 0.7))
-        zoomOutAt = zoomPeakAt + 0.7
-      }
-      if (pre?.btn?.y != null) btnYNorm = Math.min(0.32, Math.max(0.06, pre.btn.y / H))
-    } catch {}
-  }
-  const zinF = Math.round(zoomInAt * FPS)
-  const peakF = Math.round(zoomPeakAt * FPS)
-  const zoutF = Math.round(zoomOutAt * FPS)
-  const easeIn = Math.max(1, peakF - zinF)
-  const easeOut = Math.round(1.35 * FPS)
-  // smootherstep-ish via nested mins for organic ease (not linear KB)
-  const zExpr =
-    `if(lt(on\\,${zinF})\\,1+0.04*on/${Math.max(1, zinF)}\\,` +
-    `if(lt(on\\,${peakF})\\,1.04+(1.92-1.04)*pow((on-${zinF})/${easeIn}\\,2)*(3-2*(on-${zinF})/${easeIn})\\,` +
-    `if(lt(on\\,${zoutF})\\,1.92\\,` +
-    `1.92-(1.92-1.0)*min(1\\,pow((on-${zoutF})/${easeOut}\\,2)*(3-2*min(1\\,(on-${zoutF})/${easeOut}))))))`
-  const zy =
-    `if(lt(on\\,${zoutF})\\,(ih*${btnYNorm.toFixed(3)})-(ih/zoom/2)\\,` +
-    `(ih*0.40)-(ih/zoom/2))`
-  run('ffmpeg', [
-    '-y', '-i', camLive,
-    '-vf',
-    `fps=${FPS},scale=1680:2987:force_original_aspect_ratio=increase,crop=1680:2987,` +
-      `zoompan=z='${zExpr}':x='iw/2-(iw/zoom/2)':y='${zy}':d=1:s=${W}x${H}:fps=${FPS},` +
-      `tpad=stop_mode=clone:stop_duration=${CAM_DUR},format=yuv420p`,
-    '-t', String(CAM_DUR), '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-an', seg.cam,
-  ])
-  console.log(`seg cam (ease zoom in@${zoomInAt.toFixed(1)}s peak@${zoomPeakAt.toFixed(1)}s out@${zoomOutAt.toFixed(1)}s)`)
+  encodeSeq(camDir, seg.cam, CAM_DUR)
+  console.log('seg cam (lock onto Translate all → ease out to overlay)')
   meta.cam = CAM_DUR
 }
 
@@ -226,8 +189,8 @@ writeFileSync(
 Duration: ${total.toFixed(2)}s · 9:16
 Motion: parallax hook, spring pills, light sweeps, mote fields
 Transitions: blur-dissolve + luminous iris (not Ken Burns / hard cuts)
-Cam: Translate all + cubic-ease Recordly zoom
-Reveal: focus-rack wrong pills + breathing correct + specular edge
+Cam: Translate all + button-lock zoom (2.65×) + jade reticle + press flash
+Reveal: focus-rack + spring pop + particle burst + breathing glow
 CTA: soft logo settle
 Audio: bed + whoosh + Azure 停車 + Higgsfield VO (${hasHfVo ? 'yes' : 'no'})
 `,

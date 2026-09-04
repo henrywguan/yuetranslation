@@ -153,7 +153,7 @@ def blur_mix(a: Image.Image, b: Image.Image, t: float, blur_max=18) -> Image.Ima
 
 
 def luminous_iris(a: Image.Image, b: Image.Image, t: float) -> Image.Image:
-    """Expanding soft iris with jade rim light."""
+    """Expanding soft iris with jade rim light + mid-burst flash."""
     t = smootherstep(t)
     r = int(40 + t * 1600)
     mask = Image.new("L", (W, H), 0)
@@ -165,14 +165,19 @@ def luminous_iris(a: Image.Image, b: Image.Image, t: float) -> Image.Image:
     rd = ImageDraw.Draw(rim)
     thick = max(2, int(22 * (1 - t * 0.7)))
     rd.ellipse([540 - r - 8, 960 - r - 8, 540 + r + 8, 960 + r + 8], outline=(*JADE_BRIGHT, int(200 * (1 - t * 0.5))), width=thick)
-    # spark ticks on rim
-    for k in range(20):
-        ang = k * (2 * math.pi / 20) + t * 2.5
+    for k in range(24):
+        ang = k * (2 * math.pi / 24) + t * 3.0
         x = 540 + r * math.cos(ang)
         y = 960 + r * math.sin(ang)
-        rd.ellipse([x - 5, y - 5, x + 5, y + 5], fill=(*JADE_BRIGHT, int(180 * (1 - t * 0.4))))
+        rd.ellipse([x - 6, y - 6, x + 6, y + 6], fill=(*JADE_BRIGHT, int(200 * (1 - t * 0.35))))
+    # radial light burst near midpoint
+    burst = 1.0 - abs(t - 0.45) * 2.2
+    if burst > 0:
+        rd.ellipse([540 - 80, 960 - 80, 540 + 80, 960 + 80], fill=(*JADE_BRIGHT, int(90 * burst)))
     rim = rim.filter(ImageFilter.GaussianBlur(3))
     base.alpha_composite(rim)
+    if burst > 0.2:
+        base = ImageEnhance.Brightness(base).enhance(1.0 + 0.18 * burst)
     return base.convert("RGB")
 
 
@@ -309,22 +314,23 @@ def render_reveal(n: int) -> list[Image.Image]:
             region = ImageEnhance.Color(region).enhance(1 - 0.5 * rack)
             base.paste(region, (x0, y0))
 
-        # correct pill breathe
+        # correct pill breathe + entrance pop
         x0, y0, x1, y1 = correct
         pill = rev.crop((x0, y0, x1, y1))
-        sc = 1.0 + 0.055 * breath
+        pop = spring(clamp(t / 0.7), damp=0.5)  # overshoot entrance
+        sc = (0.88 + 0.12 * pop) * (1.0 + 0.06 * breath)
         nw, nh = int(pill.width * sc), int(pill.height * sc)
         pill_s = pill.resize((nw, nh), Image.Resampling.LANCZOS)
-        # luminous aura
+        # luminous aura — stronger
         aura = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         ad = ImageDraw.Draw(aura)
-        pad = int(22 + 20 * breath)
+        pad = int(28 + 28 * breath)
         ad.rounded_rectangle(
             [x0 - pad, y0 - pad, x1 + pad, y1 + pad],
-            radius=44,
-            fill=(*JADE, int(40 + 55 * breath)),
+            radius=48,
+            fill=(*JADE, int(55 + 70 * breath)),
         )
-        aura = aura.filter(ImageFilter.GaussianBlur(22))
+        aura = aura.filter(ImageFilter.GaussianBlur(26))
         base.alpha_composite(aura)
         # dim original correct slot
         dim = Image.new("RGBA", (x1 - x0, y1 - y0), (7, 19, 31, 160))
@@ -332,6 +338,21 @@ def render_reveal(n: int) -> list[Image.Image]:
         base.paste(slot, (x0, y0))
         cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
         base.alpha_composite(pill_s, (cx - nw // 2, cy - nh // 2))
+
+        # particle burst on entrance
+        if t < 1.4:
+            burst_u = clamp(t / 1.2)
+            burst = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            bd = ImageDraw.Draw(burst)
+            for k in range(28):
+                ang = k * (2 * math.pi / 28) + t
+                dist = 40 + 220 * ease_out_cubic(burst_u)
+                px = cx + dist * math.cos(ang)
+                py = cy + dist * math.sin(ang) * 0.85
+                s = 3 + (k % 4)
+                bd.ellipse([px - s, py - s, px + s, py + s], fill=(*JADE_BRIGHT, int(160 * (1 - burst_u))))
+            burst = burst.filter(ImageFilter.GaussianBlur(1))
+            base.alpha_composite(burst)
 
         # specular edge tick on breath peak
         if breath > 0.85:
