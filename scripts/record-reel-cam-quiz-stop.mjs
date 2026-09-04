@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Record Cam upload for stop-sign quiz Reel with Recordly-style zoom cues.
+ * Record Cam upload for stop-sign quiz Reel — Translate all only (no draw box).
  *
- * Flow: Upload tight STOP crop → Draw box over FULL "STOP" via PointerEvents on
- * the overlay canvas → Translate (zoom in on press) → hold overlay → zoom out.
+ * Flow: Upload tight STOP crop → Recordly zoom toward Translate all → press →
+ * hold full OCR overlay → zoom out. Emits cam-upload-1080.mp4 + zoom-cues.json.
  *
  *   NODE_PATH=/workspace/node_modules node scripts/record-reel-cam-quiz-stop.mjs
  */
@@ -124,68 +124,27 @@ async function findToolBtn(page, patterns) {
   }, patterns)
 }
 
-/** Draw a normalized (image-space) box via PointerEvents — mirrors Cam toNorm/contain layout. */
-async function drawNormBox(page, box) {
-  return page.evaluate(async (b) => {
-    const canvas = document.querySelector('canvas.cam-overlay-canvas')
-    const frame = document.querySelector('.cam-upload-frame')
-    const img = document.querySelector('.cam-upload-frame img')
-    if (!canvas || !frame || !img) throw new Error('canvas/frame/img missing')
-    const fr = frame.getBoundingClientRect()
-    const mw = img.naturalWidth || 1
-    const mh = img.naturalHeight || 1
-    const scale = Math.min(fr.width / mw, fr.height / mh)
-    const dispW = mw * scale
-    const dispH = mh * scale
-    const offsetX = (fr.width - dispW) / 2
-    const offsetY = (fr.height - dispH) / 2
-    const toClient = (nx, ny) => ({
-      x: fr.left + offsetX + nx * dispW,
-      y: fr.top + offsetY + ny * dispH,
-    })
-    const p0 = toClient(b.x, b.y)
-    const p1 = toClient(b.x + b.w, b.y + b.h)
-    const fire = (type, x, y, buttons = 1) => {
-      canvas.dispatchEvent(
-        new PointerEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          pointerId: 1,
-          pointerType: 'mouse',
-          isPrimary: true,
-          clientX: x,
-          clientY: y,
-          buttons,
-          button: 0,
-        }),
-      )
-    }
-    fire('pointerdown', p0.x, p0.y, 1)
-    const steps = 10
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps
-      fire('pointermove', p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t, 1)
-    }
-    fire('pointerup', p1.x, p1.y, 0)
-    return {
-      fr: { x: fr.x, y: fr.y, w: fr.width, h: fr.height },
-      layout: { offsetX, offsetY, dispW, dispH, mw, mh },
-      p0,
-      p1,
-    }
-  }, box)
-}
-
 async function pressBtn(page, btn, label) {
   if (!btn) throw new Error(`missing button for ${label}`)
-  // Instant jump (avoid 8s mouse.move lag under screencast), then visible hold
   await page.mouse.move(btn.x, btn.y, { steps: 1 })
-  await sleep(120)
+  await sleep(140)
   await page.mouse.down()
   mark(`${label}_press`, { btn })
-  await sleep(280)
+  await sleep(300) // hold so Recordly zoom catches the press
   await page.mouse.up()
   mark(`${label}_release`)
+}
+
+/**
+ * After OCR, expand glass to blanket STOP letters (Vision often returns a skinny box).
+ * Uses DEV-only window event wired in CameraUploadEditor.
+ */
+async function expandOverlayToStop(page) {
+  return page.evaluate(() => {
+    const box = { x: 0.14, y: 0.34, w: 0.72, h: 0.28 }
+    window.dispatchEvent(new CustomEvent('yue:cam-set-overlay-box', { detail: { box } }))
+    return { ok: true, box }
+  })
 }
 
 const browser = await puppeteer.launch({
@@ -244,7 +203,7 @@ const outMp4 = join(OUT_DIR, 'cam-upload-1080.mp4')
 const cast = createScreencast(page, join(OUT_DIR, '_frames'))
 await cast.start()
 mark('cast_start')
-await sleep(400)
+await sleep(450)
 
 const signAbs = join(process.cwd(), SIGN)
 const [chooser] = await Promise.all([
@@ -269,38 +228,16 @@ await page
     timeout: 20000,
   })
   .catch(() => {})
-await sleep(800)
+await sleep(900)
 mark('image_loaded')
 
-// Draw mode → box covering full STOP on the tight crop
-await page.evaluate(() => {
-  const btns = [...document.querySelectorAll('button')]
-  const draw = btns.find((b) => /Draw box|畫框/.test(b.textContent || ''))
-  draw?.click()
-})
-await sleep(350)
-mark('draw_mode')
-
-// Tight crop: STOP letters span ~center of the octagon
-const STOP_BOX = { x: 0.18, y: 0.36, w: 0.64, h: 0.26 }
-const drawn = await drawNormBox(page, STOP_BOX)
-mark('box_drawn', { ...STOP_BOX, ...drawn })
-await sleep(450)
-
-// Prefer primary Translate (needs a box); fall back to Translate all
-let translateBtn = await findToolBtn(page, ['^Translate翻譯$|^Translate$|^翻譯$'])
-if (!translateBtn) {
-  translateBtn = await findToolBtn(page, ['Translate(?! all)|翻譯(?!全部)'])
-}
-if (!translateBtn) {
-  translateBtn = await findToolBtn(page, ['Translate all|全部翻譯'])
-}
-mark('pre_translate', { btn: translateBtn })
-await sleep(300)
+const translateAll = await findToolBtn(page, ['Translate all|全部翻譯'])
+mark('pre_translate', { btn: translateAll })
+await sleep(400)
 mark('zoom_in_target')
-await sleep(250)
+await sleep(350)
 
-await pressBtn(page, translateBtn, 'translate')
+await pressBtn(page, translateAll, 'translate')
 
 const ok = await page
   .waitForFunction(
@@ -315,9 +252,13 @@ const ok = await page
   .catch(() => false)
 
 mark('result_visible', { ok })
-await sleep(800)
+
+// Expand glass to blanket full STOP (DEV event) so overlay covers S–P
+const expanded = await expandOverlayToStop(page)
+mark('overlay_expand', expanded)
+await sleep(1200)
 mark('zoom_out')
-await sleep(3000)
+await sleep(3400)
 mark('hold_end')
 
 const info = await cast.stop(outMp4)
@@ -329,7 +270,7 @@ const cueRel = cues.map((c) => ({
 }))
 writeFileSync(
   join(OUT_DIR, 'manifest.json'),
-  JSON.stringify({ ...info, sign: SIGN, file: 'cam-upload-1080.mp4', cues: cueRel }, null, 2),
+  JSON.stringify({ ...info, sign: SIGN, file: 'cam-upload-1080.mp4', mode: 'translate_all', cues: cueRel }, null, 2),
 )
 writeFileSync(join(OUT_DIR, 'zoom-cues.json'), JSON.stringify(cueRel, null, 2))
 console.log('cam live →', outMp4, info)

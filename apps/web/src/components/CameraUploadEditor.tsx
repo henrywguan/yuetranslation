@@ -115,6 +115,29 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
     boxesRef.current = boxes
   }, [boxes])
 
+  // DEV / reel capture: let Puppeteer expand OCR glass to cover full STOP (Vision often
+  // returns a skinny glyph box). Production builds strip this via import.meta.env.DEV.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const onSet = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ box?: { x: number; y: number; w: number; h: number } }>).detail
+      const nextBox = detail?.box
+      if (!nextBox) return
+      setBoxes((prev) => {
+        if (!prev.length) return prev
+        const next = prev.map((b) => ({
+          ...b,
+          box: clampBox(nextBox),
+          dirty: false,
+        }))
+        boxesRef.current = next
+        return next
+      })
+    }
+    window.addEventListener('yue:cam-set-overlay-box', onSet as EventListener)
+    return () => window.removeEventListener('yue:cam-set-overlay-box', onSet as EventListener)
+  }, [])
+
   useEffect(() => {
     zoomRef.current = zoom
   }, [zoom])

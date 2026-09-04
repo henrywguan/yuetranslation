@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * Assemble Drops-style Cam quiz stop-sign Reel (9:16 · ~24s).
+ * Assemble Cam quiz stop-sign Reel (9:16) with luxurious soft transitions.
  *
- * Beats: hook → stagger quiz + lively BG → jade wipe transition →
- * Cam demo with Recordly-style zoom-in on Translate → zoom-out on result →
- * reveal + TTS → end.
+ * Beats: hook → quiz (lively) → soft dissolve → Cam (zoom → Translate all →
+ * overlay) → soft dissolve → reveal (breathing correct pill) → soft dissolve → CTA.
  *
  *   node scripts/build-reel-cam-quiz-stop.mjs
  */
@@ -19,6 +18,7 @@ const AUDIO = join(ROOT, 'docs/social/reel-cam-quiz-stop/audio')
 const W = 1080
 const H = 1920
 const FPS = 30
+const XFADE = 0.85 // soft luxurious dissolve between scenes
 
 mkdirSync(OUT, { recursive: true })
 mkdirSync(AUDIO, { recursive: true })
@@ -46,7 +46,6 @@ if (!existsSync(bed)) {
   ])
 }
 
-// Soft whoosh for quiz→cam transition
 const whoosh = join(AUDIO, 'whoosh.wav')
 if (!existsSync(whoosh)) {
   run('ffmpeg', [
@@ -75,6 +74,9 @@ const endCard = join(SRC, '04-end.jpg')
 const camLive = join(SRC, 'live/cam-upload-1080.mp4')
 const zoomCuesPath = join(SRC, 'live/zoom-cues.json')
 const tts = join(AUDIO, 'tts-ting4ce1.mp3')
+const voHook = join(AUDIO, 'higgsfield/vo-hook.mp3')
+const voQuiz = join(AUDIO, 'higgsfield/vo-quiz.mp3')
+const voReveal = join(AUDIO, 'higgsfield/vo-reveal.mp3')
 
 for (const p of [hook, hookType, quiz, reveal, endCard]) {
   if (!existsSync(p)) throw new Error(`missing ${p} — run scripts/make-reel-cam-quiz-stills.py`)
@@ -83,31 +85,33 @@ for (const p of [hook, hookType, quiz, reveal, endCard]) {
 const seg = {
   hook: join(OUT, '_seg-hook.mp4'),
   quiz: join(OUT, '_seg-quiz.mp4'),
-  wipe: join(OUT, '_seg-wipe.mp4'),
   cam: join(OUT, '_seg-cam.mp4'),
   reveal: join(OUT, '_seg-reveal.mp4'),
   end: join(OUT, '_seg-end.mp4'),
 }
 
-// 0–3s Hook
+const DUR = { hook: 3.0, quiz: 5.5, cam: 9.0, reveal: 5.0, end: 2.4 }
+
+// ── Hook ────────────────────────────────────────────────────────────
 {
-  const frames = 3 * FPS
+  const frames = Math.round(DUR.hook * FPS)
   run('ffmpeg', [
     '-y',
     '-loop', '1', '-i', hook,
     '-loop', '1', '-i', hookType,
     '-filter_complex',
-    `[0:v]scale=1620:2880,zoompan=z='min(1.08\\,1+0.08*on/${frames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS}[base];` +
-      `[1:v]format=rgba,scale=${W}:${H},fade=t=in:st=0.35:d=0.35:alpha=1[ty];` +
+    `[0:v]scale=1620:2880,zoompan=z='min(1.06\\,1+0.06*on/${frames})':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS}[base];` +
+      `[1:v]format=rgba,scale=${W}:${H},fade=t=in:st=0.4:d=0.45:alpha=1[ty];` +
       `[base][ty]overlay=0:0:format=auto,format=yuv420p[v]`,
-    '-map', '[v]', '-t', '3', '-r', String(FPS), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.hook,
+    '-map', '[v]', '-t', String(DUR.hook), '-r', String(FPS), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.hook,
   ])
   console.log('seg hook')
 }
 
-// 3–9s Quiz: stagger pills + lively floating orbs / dashed path sparkle
+// ── Quiz (stagger + liveliness) ─────────────────────────────────────
 {
   const tmpDir = join(OUT, '_quiz_frames')
+  const nFrames = Math.round(DUR.quiz * FPS)
   mkdirSync(tmpDir, { recursive: true })
   run('python3', [
     '-c',
@@ -124,39 +128,32 @@ blank = base.copy()
 d = ImageDraw.Draw(blank)
 for y in (510, 790, 1070):
     d.rounded_rectangle([110,y,970,y+230], radius=32, fill=(7,19,31,255))
+n = ${nFrames}
 
-def lively(frame, i, total=180):
-    """Floating jade orbs, petal drifts, dashed path — keeps motion after pills land."""
+def lively(frame, i):
     overlay = Image.new('RGBA', frame.size, (0,0,0,0))
     od = ImageDraw.Draw(overlay)
     t = i / 30.0
-    # soft ambient orbs
     for k, (cx0, cy0, amp, speed, r) in enumerate([
-        (180, 420, 28, 1.1, 36),
-        (900, 560, 34, 0.85, 48),
-        (160, 1500, 22, 1.3, 28),
-        (940, 1380, 30, 0.95, 40),
-        (540, 1700, 18, 1.5, 22),
-        (520, 380, 40, 0.7, 20),
+        (180, 420, 28, 1.1, 36), (900, 560, 34, 0.85, 48),
+        (160, 1500, 22, 1.3, 28), (940, 1380, 30, 0.95, 40),
+        (540, 1700, 18, 1.5, 22), (520, 380, 40, 0.7, 20),
     ]):
         cx = cx0 + amp * math.sin(t * speed + k)
         cy = cy0 + amp * 0.6 * math.cos(t * speed * 0.8 + k * 0.7)
         a = int(45 + 45 * (0.5 + 0.5 * math.sin(t * 2 + k)))
         od.ellipse([cx-r, cy-r, cx+r, cy+r], fill=(61, 207, 182, a))
-    # petal-like diamonds drifting across (lighthearted, not clutter)
     for k in range(7):
         px = (120 + k * 140 + t * (18 + k * 3)) % 1200 - 60
         py = 200 + (k * 97 + 40 * math.sin(t * 1.2 + k)) % 1500
         s = 7 + (k % 3) * 3
         a = int(90 + 50 * math.sin(t * 2.5 + k))
         od.polygon([(px, py-s), (px+s, py), (px, py+s), (px-s, py)], fill=(126, 240, 220, max(0, a)))
-    # dashed path sparkle (left rail)
     for yy in range(480, 1400, 28):
         phase = (yy / 28 + i * 0.35) % 6
         if phase < 3:
             od.line([(70, yy), (70, yy + 14)], fill=(126, 240, 220, 220), width=4)
-    # gentle pulse ring near option stack once pills are in
-    if i >= 57:
+    if i >= 50:
         pulse = 0.5 + 0.5 * math.sin(t * 3.2)
         rr = int(210 + 18 * pulse)
         od.ellipse([540-rr, 900-rr, 540+rr, 900+rr], outline=(61, 207, 182, int(40 + 50 * pulse)), width=3)
@@ -165,108 +162,50 @@ def lively(frame, i, total=180):
     out_im.alpha_composite(overlay)
     return out_im
 
-for i in range(12):
+for i in range(min(10, n)):
     lively(blank, i).convert('RGB').save(out/f'f{i:04d}.jpg', quality=92)
-for i in range(12, 27):
-    t=(i-12)/15
+for i in range(10, min(24, n)):
+    t=(i-10)/14
     frame = blank.copy()
     pill = base.crop((0,500,1080,760))
-    oy = int(36*(1-t)**2) if t<1 else 0
+    oy = int(40*(1-t)**2) if t<1 else 0
     frame.paste(pill, (0,500-oy))
     lively(frame, i).convert('RGB').save(out/f'f{i:04d}.jpg', quality=92)
-for i in range(27, 42):
+for i in range(24, min(38, n)):
     frame = blank.copy()
     frame.paste(base.crop((0,500,1080,760)), (0,500))
-    t=(i-27)/15
+    t=(i-24)/14
     pill = base.crop((0,780,1080,1040))
-    oy = int(36*(1-t)**2) if t<1 else 0
+    oy = int(40*(1-t)**2) if t<1 else 0
     frame.paste(pill, (0,780-oy))
     lively(frame, i).convert('RGB').save(out/f'f{i:04d}.jpg', quality=92)
-for i in range(42, 57):
+for i in range(38, min(52, n)):
     frame = blank.copy()
     frame.paste(base.crop((0,500,1080,760)), (0,500))
     frame.paste(base.crop((0,780,1080,1040)), (0,780))
-    t=(i-42)/15
+    t=(i-38)/14
     pill = base.crop((0,1060,1080,1320))
-    oy = int(36*(1-t)**2) if t<1 else 0
+    oy = int(40*(1-t)**2) if t<1 else 0
     frame.paste(pill, (0,1060-oy))
     lively(frame, i).convert('RGB').save(out/f'f{i:04d}.jpg', quality=92)
-for i in range(57, 180):
+for i in range(52, n):
     lively(base, i).convert('RGB').save(out/f'f{i:04d}.jpg', quality=92)
-print('quiz frames', len(list(out.glob('f*.jpg'))))
+print('quiz frames', n)
 `,
   ])
   run('ffmpeg', [
-    '-y', '-framerate', '30', '-i', join(tmpDir, 'f%04d.jpg'),
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-t', '6', seg.quiz,
+    '-y', '-framerate', String(FPS), '-i', join(tmpDir, 'f%04d.jpg'),
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-t', String(DUR.quiz), seg.quiz,
   ])
-  console.log('seg quiz (stagger + lively BG)')
+  console.log('seg quiz')
 }
 
-// 9–10.2s Jade iris wipe transition (quiz → cam peek)
-{
-  const wipeDir = join(OUT, '_wipe_frames')
-  mkdirSync(wipeDir, { recursive: true })
-  const camStill = join(OUT, '_cam-still.jpg')
-  if (existsSync(camLive)) {
-    run('ffmpeg', ['-y', '-ss', '1.5', '-i', camLive, '-frames:v', '1', '-q:v', '2', camStill])
-  }
-  run('python3', [
-    '-c',
-    `
-from PIL import Image, ImageDraw, ImageFilter
-from pathlib import Path
-import math
-quiz = Image.open(${JSON.stringify(quiz)}).convert('RGB').resize((1080,1920))
-cam_still = Path(${JSON.stringify(camStill)})
-if cam_still.exists():
-    nxt = Image.open(cam_still).convert('RGB').resize((1080,1920))
-else:
-    nxt = Image.new('RGB', (1080,1920), (7,19,31))
-out = Path(${JSON.stringify(wipeDir)})
-out.mkdir(parents=True, exist_ok=True)
-n = 36  # 1.2s @ 30fps
-for i in range(n):
-    t = i / (n - 1)
-    # expanding jade ring iris revealing Cam
-    r = int(60 + t * 1500)
-    mask = Image.new('L', (1080,1920), 0)
-    md = ImageDraw.Draw(mask)
-    md.ellipse([540-r, 960-r, 540+r, 960+r], fill=255)
-    mask = mask.filter(ImageFilter.GaussianBlur(14))
-    # jade glow rim
-    glow = Image.new('RGBA', (1080,1920), (0,0,0,0))
-    gd = ImageDraw.Draw(glow)
-    gd.ellipse([540-r-30, 960-r-30, 540+r+30, 960+r+30], outline=(61,207,182, int(180*(1-t*0.5))), width=18)
-    glow = glow.filter(ImageFilter.GaussianBlur(8))
-    frame = Image.composite(nxt, quiz, mask).convert('RGBA')
-    frame.alpha_composite(glow)
-    d = ImageDraw.Draw(frame)
-    for k in range(18):
-        a = k * (2*math.pi/18) + t * 3
-        x = 540 + r * math.cos(a)
-        y = 960 + r * math.sin(a)
-        d.ellipse([x-7,y-7,x+7,y+7], fill=(126,240,220, int(220*(1-t*0.3))))
-    frame.convert('RGB').save(out/f'f{i:04d}.jpg', quality=92)
-print('wipe frames', n)
-`,
-  ])
-  run('ffmpeg', [
-    '-y', '-framerate', '30', '-i', join(wipeDir, 'f%04d.jpg'),
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-t', '1.2', seg.wipe,
-  ])
-  console.log('seg wipe transition (iris → Cam)')
-  try {
-    if (existsSync(camStill)) rmSync(camStill)
-  } catch {}
-}
-
-// Cam demo with Recordly-style zoom-in on Translate press, zoom-out on result
+// ── Cam: zoom in → Translate all press → zoom out to overlay ────────
 if (existsSync(camLive)) {
-  let zoomInAt = 3.2
-  let zoomPeakAt = 4.0
-  let zoomOutAt = 5.2 // start easing out soon after press so overlay is visible
-  let btnYNorm = 0.12 // toolbar row (Translate)
+  let zoomInAt = 2.8
+  let zoomPeakAt = 3.6
+  let zoomOutAt = 4.4
+  let btnYNorm = 0.12
   if (existsSync(zoomCuesPath)) {
     try {
       const cues = JSON.parse(readFileSync(zoomCuesPath, 'utf8'))
@@ -275,86 +214,182 @@ if (existsSync(camLive)) {
       const pre = cues.find((c) => c.label === 'pre_translate')
       if (zin) zoomInAt = Math.max(0.4, zin.sec - 0.25)
       if (press) {
-        zoomPeakAt = Math.max(zoomInAt + 0.35, press.sec)
-        zoomInAt = Math.min(zoomInAt, Math.max(0.4, press.sec - 0.7))
-        // Punch in on the press, hold ~0.7s, then zoom out so the STOP overlay reads
-        zoomOutAt = zoomPeakAt + 0.7
+        zoomPeakAt = Math.max(zoomInAt + 0.3, press.sec)
+        zoomInAt = Math.min(zoomInAt, Math.max(0.4, press.sec - 0.65))
+        zoomOutAt = zoomPeakAt + 0.65
       }
       if (pre?.btn?.y != null) btnYNorm = Math.min(0.35, Math.max(0.06, pre.btn.y / H))
     } catch {}
   }
-  const dur = 10
   const zinF = Math.round(zoomInAt * FPS)
   const peakF = Math.round(zoomPeakAt * FPS)
   const zoutF = Math.round(zoomOutAt * FPS)
   const easeIn = Math.max(1, peakF - zinF)
-  const easeOut = Math.round(1.2 * FPS)
-  // Punch in hard to ~1.9× on Translate press, brief hold, ease out to show full STOP overlay
+  const easeOut = Math.round(1.15 * FPS)
   const zExpr =
-    `if(lt(on\\,${zinF})\\,1+0.06*on/${Math.max(1, zinF)}\\,` +
-    `if(lt(on\\,${peakF})\\,1.06+(1.9-1.06)*(on-${zinF})/${easeIn}\\,` +
-    `if(lt(on\\,${zoutF})\\,1.9\\,` +
-    `1.9-(1.9-1.0)*min(1\\,(on-${zoutF})/${easeOut}))))`
-  // Bias toward toolbar during punch-in; return toward sign center on the way out
+    `if(lt(on\\,${zinF})\\,1+0.05*on/${Math.max(1, zinF)}\\,` +
+    `if(lt(on\\,${peakF})\\,1.05+(1.85-1.05)*(on-${zinF})/${easeIn}\\,` +
+    `if(lt(on\\,${zoutF})\\,1.85\\,` +
+    `1.85-(1.85-1.0)*min(1\\,(on-${zoutF})/${easeOut}))))`
   const zy =
     `if(lt(on\\,${zoutF})\\,(ih*${btnYNorm.toFixed(3)})-(ih/zoom/2)\\,` +
-    `(ih*0.42)-(ih/zoom/2))`
+    `(ih*0.40)-(ih/zoom/2))`
   run('ffmpeg', [
     '-y', '-i', camLive,
     '-vf',
     `fps=${FPS},scale=1620:2880:force_original_aspect_ratio=increase,crop=1620:2880,` +
       `zoompan=z='${zExpr}':x='iw/2-(iw/zoom/2)':y='${zy}':d=1:s=${W}x${H}:fps=${FPS},` +
-      `tpad=stop_mode=clone:stop_duration=${dur},format=yuv420p`,
-    '-t', String(dur), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.cam,
+      `tpad=stop_mode=clone:stop_duration=${DUR.cam},format=yuv420p`,
+    '-t', String(DUR.cam), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.cam,
   ])
-  console.log(
-    `seg cam LIVE (Recordly zoom in@${zoomInAt.toFixed(1)}s peak@${zoomPeakAt.toFixed(1)}s out@${zoomOutAt.toFixed(1)}s)`,
-  )
+  console.log(`seg cam (Translate all · zoom in@${zoomInAt.toFixed(1)}s peak@${zoomPeakAt.toFixed(1)}s out@${zoomOutAt.toFixed(1)}s)`)
 } else {
-  run('ffmpeg', [
-    '-y', '-loop', '1', '-i', hook,
-    '-vf', `scale=${W}:${H},zoompan=z='min(1.2\\,1+0.15*on/300)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=300:s=${W}x${H}:fps=${FPS},format=yuv420p`,
-    '-t', '10', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.cam,
-  ])
-  console.log('seg cam FALLBACK')
+  throw new Error('missing cam live — run scripts/record-reel-cam-quiz-stop.mjs')
 }
 
-// Reveal 4s
+// ── Reveal: breathing correct pill + ambient BG (no plain Ken Burns) ─
 {
-  const frames = 4 * FPS
-  run('ffmpeg', [
-    '-y', '-loop', '1', '-i', reveal,
-    '-vf', `scale=1200:2133,zoompan=z='1+0.03*on/${frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS},fade=t=in:st=0:d=0.25,format=yuv420p`,
-    '-t', '4', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.reveal,
+  const tmpDir = join(OUT, '_reveal_frames')
+  const nFrames = Math.round(DUR.reveal * FPS)
+  mkdirSync(tmpDir, { recursive: true })
+  run('python3', [
+    '-c',
+    `
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
+from pathlib import Path
+import math, shutil
+src = Path(${JSON.stringify(reveal)})
+out = Path(${JSON.stringify(tmpDir)})
+shutil.rmtree(out, ignore_errors=True)
+out.mkdir()
+base = Image.open(src).convert('RGBA').resize((1080,1920))
+n = ${nFrames}
+# Correct pill is the top option band ~ y 500–760 on still
+PILL = (90, 480, 990, 780)
+
+def frame_at(i):
+    t = i / 30.0
+    breath = 0.5 + 0.5 * math.sin(t * 2.4)  # ~0.4 Hz gentle breathe
+    # subtle ambient BG wash
+    bg = base.copy()
+    glow = Image.new('RGBA', bg.size, (0,0,0,0))
+    gd = ImageDraw.Draw(glow)
+    for k, (cx, cy, r0) in enumerate([(200, 360, 120), (880, 500, 160), (540, 1600, 200), (140, 1400, 90)]):
+        rr = int(r0 + 18 * math.sin(t * 1.3 + k))
+        a = int(28 + 22 * (0.5 + 0.5 * math.sin(t * 1.8 + k)))
+        gd.ellipse([cx-rr, cy-rr, cx+rr, cy+rr], fill=(61, 207, 182, a))
+    # drifting motes
+    for k in range(10):
+        px = (80 + k * 110 + t * (12 + k * 2)) % 1180 - 50
+        py = 160 + (k * 160 + 30 * math.sin(t * 1.1 + k)) % 1700
+        s = 5 + k % 4
+        gd.ellipse([px-s, py-s, px+s, py+s], fill=(126, 240, 220, int(70 + 40 * math.sin(t * 2 + k))))
+    glow = glow.filter(ImageFilter.GaussianBlur(2))
+    bg.alpha_composite(glow)
+
+    # Extract correct pill, scale with breath, composite back
+    x0,y0,x1,y1 = PILL
+    pill = base.crop((x0,y0,x1,y1))
+    # scale 1.0 → 1.045 with soft ease
+    sc = 1.0 + 0.045 * breath
+    nw, nh = int(pill.width * sc), int(pill.height * sc)
+    pill_s = pill.resize((nw, nh), Image.Resampling.LANCZOS)
+    # jade aura behind pill
+    aura = Image.new('RGBA', bg.size, (0,0,0,0))
+    ad = ImageDraw.Draw(aura)
+    pad = int(18 + 14 * breath)
+    ad.rounded_rectangle(
+        [x0 - pad, y0 - pad, x1 + pad, y1 + pad],
+        radius=40,
+        fill=(61, 207, 182, int(35 + 45 * breath)),
+    )
+    aura = aura.filter(ImageFilter.GaussianBlur(18))
+    bg.alpha_composite(aura)
+    # center scaled pill on original pill center
+    cx = (x0 + x1) // 2
+    cy = (y0 + y1) // 2
+    px = cx - nw // 2
+    py = cy - nh // 2
+    # dim the still's original pill area slightly so scaled version reads clean
+    dim = Image.new('RGBA', (x1-x0, y1-y0), (7, 19, 31, 180))
+    bg.paste(Image.alpha_composite(base.crop((x0,y0,x1,y1)), dim), (x0, y0))
+    bg.alpha_composite(pill_s, (px, py))
+    # soft outer ring pulse
+    ring = Image.new('RGBA', bg.size, (0,0,0,0))
+    rd = ImageDraw.Draw(ring)
+    rr = int(200 + 22 * breath)
+    rd.ellipse([cx-rr, cy-rr, cx+rr, cy+rr], outline=(126, 240, 220, int(50 + 70 * breath)), width=3)
+    ring = ring.filter(ImageFilter.GaussianBlur(1))
+    bg.alpha_composite(ring)
+    return bg.convert('RGB')
+
+for i in range(n):
+    frame_at(i).save(out/f'f{i:04d}.jpg', quality=92)
+print('reveal frames', n)
+`,
   ])
-  console.log('seg reveal')
+  run('ffmpeg', [
+    '-y', '-framerate', String(FPS), '-i', join(tmpDir, 'f%04d.jpg'),
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-t', String(DUR.reveal), seg.reveal,
+  ])
+  console.log('seg reveal (breathing correct pill)')
 }
 
-// End 2s
+// ── End CTA ─────────────────────────────────────────────────────────
 {
+  const frames = Math.round(DUR.end * FPS)
   run('ffmpeg', [
     '-y', '-loop', '1', '-i', endCard,
-    '-vf', `scale=${W}:${H},fade=t=in:st=0:d=0.3,format=yuv420p`,
-    '-t', '2', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.end,
+    '-vf', `scale=1180:2098,zoompan=z='1+0.02*on/${frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=${W}x${H}:fps=${FPS},fade=t=in:st=0:d=0.5,format=yuv420p`,
+    '-t', String(DUR.end), '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-an', seg.end,
   ])
   console.log('seg end')
 }
 
-const list = join(OUT, '_concat.txt')
-writeFileSync(
-  list,
-  [seg.hook, seg.quiz, seg.wipe, seg.cam, seg.reveal, seg.end].map((p) => `file '${p}'`).join('\n'),
-)
+// ── Soft xfade chain (no hard cuts) ─────────────────────────────────
+const parts = [seg.hook, seg.quiz, seg.cam, seg.reveal, seg.end]
+const durs = [DUR.hook, DUR.quiz, DUR.cam, DUR.reveal, DUR.end]
 const silent = join(OUT, '_silent.mp4')
-run('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', silent])
+{
+  const inputs = []
+  parts.forEach((p) => inputs.push('-i', p))
+  // offset[i] = start time of clip i in the output timeline (accounting for overlaps)
+  let offset = durs[0]
+  const filters = []
+  let prev = '[0:v]'
+  for (let i = 1; i < parts.length; i++) {
+    const outLabel = i === parts.length - 1 ? '[vout]' : `[v${i}]`
+    const off = offset - XFADE
+    filters.push(
+      `${prev}[${i}:v]xfade=transition=fade:duration=${XFADE}:offset=${off.toFixed(3)}${outLabel}`,
+    )
+    prev = outLabel
+    offset = offset + durs[i] - XFADE
+  }
+  const totalSilent = offset
+  run('ffmpeg', [
+    '-y',
+    ...inputs,
+    '-filter_complex',
+    filters.join(';'),
+    '-map', '[vout]',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p',
+    '-t', String(totalSilent),
+    '-an',
+    silent,
+  ])
+  console.log(`xfade chain → ${totalSilent.toFixed(2)}s (fade ${XFADE}s)`)
+  writeFileSync(join(OUT, '_total.txt'), String(totalSilent))
+}
 
-const total = 3 + 6 + 1.2 + 10 + 4 + 2 // 26.2
+const total = Number(readFileSync(join(OUT, '_total.txt'), 'utf8'))
 const final = join(OUT, 'reel-cam-quiz-stop.mp4')
-const wipeAt = 3 + 6 // whoosh at transition
-const revealAt = 3 + 6 + 1.2 + 10 // Azure 停車 TTS
-const voHook = join(AUDIO, 'higgsfield/vo-hook.mp3')
-const voQuiz = join(AUDIO, 'higgsfield/vo-quiz.mp3')
-const voReveal = join(AUDIO, 'higgsfield/vo-reveal.mp3')
+
+// Audio timeline mirrors visual offsets
+const quizAt = DUR.hook - XFADE
+const camAt = quizAt + DUR.quiz - XFADE
+const revealAt = camAt + DUR.cam - XFADE
+const wipeAt = camAt // soft whoosh as Cam arrives
 const hasHfVo = existsSync(voHook) && existsSync(voQuiz) && existsSync(voReveal)
 
 const args = ['-y', '-i', silent, '-stream_loop', '-1', '-i', bed, '-i', whoosh]
@@ -364,33 +399,25 @@ if (hasHfVo) args.push('-i', voHook, '-i', voQuiz, '-i', voReveal)
 
 let filter
 if (hasHfVo && existsSync(tts) && existsSync(pop)) {
-  // 0 silent 1 bed 2 whoosh 3 tts 4 pop 5 voHook 6 voQuiz 7 voReveal
   filter =
-    `[1:a]volume=0.16,atrim=0:${total},asetpts=PTS-STARTPTS[bed];` +
-    `[2:a]volume=0.65,adelay=${Math.round(wipeAt * 1000)}|${Math.round(wipeAt * 1000)},apad=whole_dur=${total}[wh];` +
+    `[1:a]volume=0.15,atrim=0:${total},asetpts=PTS-STARTPTS[bed];` +
+    `[2:a]volume=0.55,adelay=${Math.round(wipeAt * 1000)}|${Math.round(wipeAt * 1000)},apad=whole_dur=${total}[wh];` +
     `[3:a]volume=1.3,adelay=${Math.round(revealAt * 1000)}|${Math.round(revealAt * 1000)},apad=whole_dur=${total}[canto];` +
-    `[4:a]volume=0.5,adelay=3400|3400,apad=whole_dur=${total}[p1];` +
-    `[5:a]atempo=1.18,volume=1.15,adelay=200|200,apad=whole_dur=${total}[vh];` +
-    `[6:a]atempo=1.18,volume=1.1,adelay=3600|3600,apad=whole_dur=${total}[vq];` +
-    `[7:a]atempo=1.15,volume=1.05,adelay=${Math.round((revealAt + 1.6) * 1000)}|${Math.round((revealAt + 1.6) * 1000)},apad=whole_dur=${total}[vr];` +
-    `[bed][wh][canto][p1][vh][vq][vr]amix=inputs=7:duration=first:dropout_transition=0.15,alimiter=limit=0.92,afade=t=in:st=0:d=0.35,afade=t=out:st=${total - 0.9}:d=0.8[a]`
+    `[4:a]volume=0.45,adelay=${Math.round((quizAt + 0.4) * 1000)}|${Math.round((quizAt + 0.4) * 1000)},apad=whole_dur=${total}[p1];` +
+    `[5:a]atempo=1.18,volume=1.1,adelay=250|250,apad=whole_dur=${total}[vh];` +
+    `[6:a]atempo=1.18,volume=1.05,adelay=${Math.round((quizAt + 0.35) * 1000)}|${Math.round((quizAt + 0.35) * 1000)},apad=whole_dur=${total}[vq];` +
+    `[7:a]atempo=1.15,volume=1.0,adelay=${Math.round((revealAt + 1.5) * 1000)}|${Math.round((revealAt + 1.5) * 1000)},apad=whole_dur=${total}[vr];` +
+    `[bed][wh][canto][p1][vh][vq][vr]amix=inputs=7:duration=first:dropout_transition=0.2,alimiter=limit=0.92,afade=t=in:st=0:d=0.4,afade=t=out:st=${total - 0.9}:d=0.8[a]`
 } else if (existsSync(tts) && existsSync(pop)) {
-  // 0 silent 1 bed 2 whoosh 3 tts 4 pop
   filter =
     `[1:a]volume=0.2,atrim=0:${total},asetpts=PTS-STARTPTS[bed];` +
-    `[2:a]volume=0.7,adelay=${Math.round(wipeAt * 1000)}|${Math.round(wipeAt * 1000)},apad=whole_dur=${total}[wh];` +
+    `[2:a]volume=0.65,adelay=${Math.round(wipeAt * 1000)}|${Math.round(wipeAt * 1000)},apad=whole_dur=${total}[wh];` +
     `[3:a]volume=1.25,adelay=${Math.round(revealAt * 1000)}|${Math.round(revealAt * 1000)},apad=whole_dur=${total}[voice];` +
-    `[4:a]volume=0.55,adelay=3400|3400,apad=whole_dur=${total}[p1];` +
+    `[4:a]volume=0.5,adelay=${Math.round((quizAt + 0.4) * 1000)}|${Math.round((quizAt + 0.4) * 1000)},apad=whole_dur=${total}[p1];` +
     `[bed][wh][voice][p1]amix=inputs=4:duration=first:dropout_transition=0.2,alimiter=limit=0.9,afade=t=in:st=0:d=0.4,afade=t=out:st=${total - 0.9}:d=0.8[a]`
-} else if (existsSync(tts)) {
-  filter =
-    `[1:a]volume=0.22,atrim=0:${total},asetpts=PTS-STARTPTS[bed];` +
-    `[2:a]volume=0.7,adelay=${Math.round(wipeAt * 1000)}|${Math.round(wipeAt * 1000)},apad=whole_dur=${total}[wh];` +
-    `[3:a]volume=1.25,adelay=${Math.round(revealAt * 1000)}|${Math.round(revealAt * 1000)},apad=whole_dur=${total}[voice];` +
-    `[bed][wh][voice]amix=inputs=3:duration=first:dropout_transition=0.2,alimiter=limit=0.9,afade=t=in:st=0:d=0.4,afade=t=out:st=${total - 0.9}:d=0.8[a]`
 } else {
   filter =
-    `[1:a]volume=0.28,atrim=0:${total},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.5,afade=t=out:st=${total - 0.8}:d=0.7[a]`
+    `[1:a]volume=0.25,atrim=0:${total},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.5,afade=t=out:st=${total - 0.8}:d=0.7[a]`
 }
 args.push('-filter_complex', filter, '-map', '0:v', '-map', '[a]')
 args.push('-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-t', String(total), '-movflags', '+faststart', final)
@@ -398,22 +425,28 @@ run('ffmpeg', args)
 
 writeFileSync(
   join(OUT, 'BUILD_NOTES.txt'),
-  `Drops-style Cam quiz stop-sign Reel (v3)
-Duration: ${total}s · 9:16
-Photo: Henry stop-sign (stop-sign-photo.png)
-Cam insert: ${existsSync(camLive) ? 'LIVE + Recordly-style zoom' : 'FALLBACK'}
-TTS 停車: ${existsSync(tts) ? 'YES' : 'NO'}
-Higgsfield VO (Juno / seed_audio): ${hasHfVo ? 'hook + quiz + reveal EN' : 'NO'}
-Transition: jade iris wipe + whoosh
-Liveliness: floating orbs + petals + pulse after pill stagger
-Tofu: mixed Latin+CJK fonts for 粵
-Note: Higgsfield standalone generate_audio is speech-only — bed/SFX stay local lavfi
+  `Cam quiz stop-sign Reel (v4 — luxurious)
+Duration: ${total.toFixed(2)}s · 9:16 · xfade ${XFADE}s between scenes
+Cam: Translate all only (no draw box) + Recordly zoom in/out
+Reveal: breathing correct pill + ambient jade motes (not plain Ken Burns)
+Overlay: DEV expand to full STOP after OCR
+Higgsfield VO: ${hasHfVo ? 'YES' : 'NO'} · Azure 停車 TTS: ${existsSync(tts) ? 'YES' : 'NO'}
 `,
 )
 
-for (const p of [list, silent, seg.hook, seg.quiz, seg.wipe, seg.cam, seg.reveal, seg.end, join(OUT, '_quiz_frames'), join(OUT, '_wipe_frames')]) {
+for (const p of [
+  silent,
+  seg.hook,
+  seg.quiz,
+  seg.cam,
+  seg.reveal,
+  seg.end,
+  join(OUT, '_quiz_frames'),
+  join(OUT, '_reveal_frames'),
+  join(OUT, '_total.txt'),
+]) {
   try {
     if (existsSync(p)) rmSync(p, { recursive: true, force: true })
   } catch {}
 }
-console.log('done →', final)
+console.log('done →', final, `(${total.toFixed(2)}s)`)
