@@ -40,25 +40,33 @@ function durOf(path) {
 }
 
 function ensureSfx() {
-  // Simple sine sweeps (not noise whooshes) — clean Apple-style transition accents.
-  const sweep = join(SFX, 'sweep-soft.wav')
+  // Soft page-flip transitions (paper rustle) — not sine sweeps / whooshes.
+  const flip = join(SFX, 'page-flip.wav')
   run('ffmpeg', [
     '-y',
-    '-f', 'lavfi',
-    '-i', "aevalsrc=exprs='0.38*sin(2*PI*(1100*exp(-2.8*t))*t)':s=48000:d=0.55",
-    '-af',
-    'afade=t=in:st=0:d=0.02,afade=t=out:st=0.38:d=0.17,highpass=f=180,lowpass=f=6000,volume=1.0,alimiter=limit=0.88',
-    sweep,
+    '-f', 'lavfi', '-i', 'anoisesrc=color=pink:sample_rate=48000:amplitude=0.55:duration=0.42',
+    '-f', 'lavfi', '-i', 'anoisesrc=color=brown:sample_rate=48000:amplitude=0.35:duration=0.42',
+    '-f', 'lavfi', '-i', 'sine=frequency=240:sample_rate=48000:duration=0.08',
+    '-filter_complex',
+    [
+      // Fluttering mid-band rustle
+      '[0]highpass=f=500,lowpass=f=4200,vibrato=f=14:d=0.35,afade=t=in:st=0:d=0.012,afade=t=out:st=0.14:d=0.26,volume=0.95[rustle]',
+      // Soft body / page weight
+      '[1]highpass=f=120,lowpass=f=900,afade=t=in:st=0:d=0.008,afade=t=out:st=0.08:d=0.28,volume=0.55[body]',
+      // Tiny tip attack
+      '[2]afade=t=in:st=0:d=0.002,afade=t=out:st=0.02:d=0.055,volume=0.22[tip]',
+      '[rustle][body][tip]amix=inputs=3:normalize=0,alimiter=limit=0.88',
+    ].join(';'),
+    flip,
   ])
 
-  const sweepDeep = join(SFX, 'sweep-deep.wav')
+  const flipSoft = join(SFX, 'page-flip-soft.wav')
   run('ffmpeg', [
     '-y',
-    '-f', 'lavfi',
-    '-i', "aevalsrc=exprs='0.42*sin(2*PI*(720*exp(-2.2*t))*t)':s=48000:d=0.65",
+    '-f', 'lavfi', '-i', 'anoisesrc=color=pink:sample_rate=48000:amplitude=0.42:duration=0.36',
     '-af',
-    'afade=t=in:st=0:d=0.03,afade=t=out:st=0.42:d=0.22,highpass=f=80,lowpass=f=3500,volume=1.05,alimiter=limit=0.88',
-    sweepDeep,
+    'highpass=f=600,lowpass=f=3800,vibrato=f=11:d=0.28,afade=t=in:st=0:d=0.015,afade=t=out:st=0.12:d=0.22,volume=0.85,alimiter=limit=0.85',
+    flipSoft,
   ])
 
   const hit = join(SFX, 'hit-soft.wav')
@@ -115,7 +123,7 @@ function ensureSfx() {
     ])
   }
 
-  return { sweep, sweepDeep, hit, click, bed }
+  return { flip, flipSoft, hit, click, bed }
 }
 
 // 1) Motion frames
@@ -151,7 +159,7 @@ filter += `[v1][2]xfade=transition=fade:duration=${xf}:offset=${off.toFixed(3)}[
 off += durs[2] - xf
 filter += `[v2][3]xfade=transition=fade:duration=${xf}:offset=${off.toFixed(3)}[v3];`
 off += durs[3] - xf
-filter += `[v3][4]xfade=transition=fadeblack:duration=${xf}:offset=${off.toFixed(3)},format=yuv420p[vout]`
+filter += `[v3][4]xfade=transition=fade:duration=${xf}:offset=${off.toFixed(3)},format=yuv420p[vout]`
 
 const silent = join(TMP, 'silent.mp4')
 run('ffmpeg', [
@@ -216,10 +224,10 @@ const tEnd = tCam + durs[3] - xf
 const tHook = 0.2
 const tVoCam = tCam + 0.2
 const tHitOpen = 0.7
-const tSweep1 = tSolo - 0.04
-const tSweep2 = tConvo - 0.04
-const tSweep3 = tCam - 0.04
-const tSweep4 = tEnd - 0.06
+const tFlip1 = tSolo - 0.04
+const tFlip2 = tConvo - 0.04
+const tFlip3 = tCam - 0.04
+const tFlip4 = tEnd - 0.04
 const tClick1 = tSolo + 0.4
 const tClick2 = tConvo + 0.4
 const tClick3 = tCam + 0.45
@@ -233,8 +241,8 @@ run('ffmpeg', [
   '-i', sfx.bed,
   '-i', vo1,
   '-i', vo3,
-  '-i', sfx.sweep,
-  '-i', sfx.sweepDeep,
+  '-i', sfx.flip,
+  '-i', sfx.flipSoft,
   '-i', sfx.hit,
   '-i', sfx.click,
   '-filter_complex',
@@ -242,16 +250,16 @@ run('ffmpeg', [
     `[0]atrim=0:${videoDur.toFixed(3)},afade=t=in:st=0:d=0.6,afade=t=out:st=${(videoDur - 1.4).toFixed(2)}:d=1.4,volume=0.42[bed]`,
     `[1]adelay=${ms(tHook)}|${ms(tHook)},volume=1.45[v1]`,
     `[2]adelay=${ms(tVoCam)}|${ms(tVoCam)},volume=1.4[v3]`,
-    `[3]adelay=${ms(tSweep1)}|${ms(tSweep1)},volume=0.85[s1]`,
-    `[3]adelay=${ms(tSweep2)}|${ms(tSweep2)},volume=0.8[s2]`,
-    `[4]adelay=${ms(tSweep3)}|${ms(tSweep3)},volume=0.9[s3]`,
-    `[4]adelay=${ms(tSweep4)}|${ms(tSweep4)},volume=0.85[s4]`,
-    `[5]adelay=${ms(tHitOpen)}|${ms(tHitOpen)},volume=0.95[h1]`,
-    `[5]adelay=${ms(tEnd + 0.12)}|${ms(tEnd + 0.12)},volume=0.8[h2]`,
-    `[6]adelay=${ms(tClick1)}|${ms(tClick1)},volume=0.7[c1]`,
-    `[6]adelay=${ms(tClick2)}|${ms(tClick2)},volume=0.7[c2]`,
-    `[6]adelay=${ms(tClick3)}|${ms(tClick3)},volume=0.75[c3]`,
-    `[bed][v1][v3][s1][s2][s3][s4][h1][h2][c1][c2][c3]amix=inputs=12:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95,loudnorm=I=-12:TP=-1.0:LRA=9[aout]`,
+    `[3]adelay=${ms(tFlip1)}|${ms(tFlip1)},volume=0.95[f1]`,
+    `[4]adelay=${ms(tFlip2)}|${ms(tFlip2)},volume=0.9[f2]`,
+    `[3]adelay=${ms(tFlip3)}|${ms(tFlip3)},volume=0.95[f3]`,
+    `[4]adelay=${ms(tFlip4)}|${ms(tFlip4)},volume=0.85[f4]`,
+    `[5]adelay=${ms(tHitOpen)}|${ms(tHitOpen)},volume=0.85[h1]`,
+    `[5]adelay=${ms(tEnd + 0.35)}|${ms(tEnd + 0.35)},volume=0.7[h2]`,
+    `[6]adelay=${ms(tClick1)}|${ms(tClick1)},volume=0.55[c1]`,
+    `[6]adelay=${ms(tClick2)}|${ms(tClick2)},volume=0.55[c2]`,
+    `[6]adelay=${ms(tClick3)}|${ms(tClick3)},volume=0.6[c3]`,
+    `[bed][v1][v3][f1][f2][f3][f4][h1][h2][c1][c2][c3]amix=inputs=12:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95,loudnorm=I=-12:TP=-1.0:LRA=9[aout]`,
   ].join(';'),
   '-map', '[aout]',
   '-ar', '48000',
@@ -289,8 +297,9 @@ writeFileSync(
     `motion: LANCZOS eased zoom/punch; transition pulses`,
     `VO: ElevenLabs Maeve — "Other apps translate written Chinese. We give you Cantonese." (${hookDur.toFixed(2)}s @${tHook}s)`,
     `VO: ElevenLabs Maeve — "Speak it. Read it. Cam it." @${tVoCam}s`,
-    `SFX: simple sine sweeps (not whooshes) + soft hit/click`,
-    `cues: hook@${tHook} sweeps@${tSweep1}/${tSweep2}/${tSweep3}/${tSweep4} camVO@${tVoCam} end@${tEnd}`,
+    `SFX: soft page-flip rustle on transitions (no sine sweeps)`,
+    `end: cinematic iris reveal (no zoom)`,
+    `cues: hook@${tHook} flips@${tFlip1}/${tFlip2}/${tFlip3}/${tFlip4} camVO@${tVoCam} end@${tEnd}`,
   ].join('\n') + '\n',
 )
 

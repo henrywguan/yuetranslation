@@ -105,14 +105,31 @@ def render_open(open_card: Path, atmos: Path, n: int) -> list[Image.Image]:
 
 
 def render_end(end_card: Path, n: int) -> list[Image.Image]:
+    """Cinematic CTA reveal — no zoom. Fade up from Harbor + soft iris light."""
     card = Image.open(end_card).convert("RGB").resize((W, H), Image.Resampling.LANCZOS)
+    harbor = Image.new("RGB", (W, H), (7, 19, 31))
+    # Soft radial matte for iris (white = reveal)
+    yy, xx = np.mgrid[0:H, 0:W]
+    cx, cy = W * 0.5, H * 0.42
+    dist = np.sqrt(((xx - cx) / (W * 0.72)) ** 2 + ((yy - cy) / (H * 0.55)) ** 2)
     frames = []
     for i in range(n):
         t = i / max(1, n - 1)
-        e = ease_in_out_quint(t)
-        # gentle breathe out then settle
-        z = 1.0 + 0.06 * math.sin(e * math.pi) * (1 - 0.3 * e)
-        fr = zoom_crop(card, z, 0.5, 0.45)
+        # Hold dark briefly, then ease reveal
+        reveal = ease_out_quart(max(0.0, (t - 0.08) / 0.72))
+        # Expanding iris: start tight, open to full
+        radius = 0.12 + 1.15 * ease_in_out_cubic(reveal)
+        mask_f = np.clip((radius - dist) / 0.18, 0.0, 1.0)
+        # Extra global fade so edges don't clip harshly
+        mask_f = np.clip(mask_f * (0.35 + 0.65 * reveal), 0.0, 1.0)
+        mask = Image.fromarray((mask_f * 255).astype(np.uint8), mode="L")
+        fr = Image.composite(card, harbor, mask)
+        # Soft brightness lift as it settles (no scale/zoom)
+        if reveal > 0.55:
+            lift = ease_in_out_cubic((reveal - 0.55) / 0.45) * 0.04
+            arr = np.array(fr, dtype=np.float32)
+            arr = np.clip(arr * (1.0 + lift), 0, 255).astype(np.uint8)
+            fr = Image.fromarray(arr)
         frames.append(fr)
     return frames
 
@@ -123,24 +140,6 @@ def extract_video_frames(src: Path, n: int) -> list[Image.Image]:
         for p in tmp.glob("*"):
             p.unlink()
     tmp.mkdir(parents=True, exist_ok=True)
-    # Sample n frames evenly across source
-    dur = float(
-        subprocess.check_output(
-            [
-                "ffprobe",
-                "-v",
-                "error",
-                "-show_entries",
-                "format=duration",
-                "-of",
-                "csv=p=0",
-                str(src),
-            ],
-            text=True,
-        ).strip()
-        or "1"
-    )
-    # decode at FPS into temp then take first n after fps filter matching duration
     subprocess.run(
         [
             "ffmpeg",
@@ -176,7 +175,6 @@ def punch_frames(
         t = i / max(1, n - 1)
         e = ease(t)
         z = z0 + (z1 - z0) * e
-        # micro-drift toward focal point
         cxi = 0.5 + (cx - 0.5) * e
         cyi = 0.5 + (cy - 0.5) * e
         out.append(zoom_crop(fr, z, cxi, cyi))
@@ -184,23 +182,23 @@ def punch_frames(
 
 
 def transition_pulse(
-    a: list[Image.Image], b: list[Image.Image], xf_frames: int
+    a: list[Image.Image], b: list[Image.Image], xf_frames: int, pulse_b: bool = True
 ) -> tuple[list[Image.Image], list[Image.Image]]:
-    """Slight overshoot zoom into the last frames of A / first of B for energy."""
+    """Slight overshoot zoom into the last frames of A / first of B for energy.
+    Set pulse_b=False to keep B static (e.g. end-card cinematic reveal)."""
     a2 = list(a)
     b2 = list(b)
     for i in range(min(xf_frames, len(a2))):
         t = (i + 1) / xf_frames
-        # last frames of A: push in
         idx = len(a2) - xf_frames + i
         if 0 <= idx < len(a2):
             z = 1.0 + 0.05 * ease_in_out_cubic(t)
             a2[idx] = zoom_crop(a2[idx], z, 0.5, 0.45)
-    for i in range(min(xf_frames, len(b2))):
-        t = 1 - (i / max(1, xf_frames - 1))
-        # open B slightly zoomed then ease out
-        z = 1.0 + 0.07 * ease_out_quart(t)
-        b2[i] = zoom_crop(b2[i], z, 0.5, 0.45)
+    if pulse_b:
+        for i in range(min(xf_frames, len(b2))):
+            t = 1 - (i / max(1, xf_frames - 1))
+            z = 1.0 + 0.07 * ease_out_quart(t)
+            b2[i] = zoom_crop(b2[i], z, 0.5, 0.45)
     return a2, b2
 
 
@@ -222,7 +220,7 @@ def main() -> None:
         "solo": 3.0,
         "convo": 2.2,
         "cam": 2.5,
-        "end": 2.0,
+        "end": 2.4,
         "xf": 0.32,
     }
     n = {k: max(8, int(round(v * FPS))) for k, v in T.items() if k != "xf"}
@@ -252,7 +250,7 @@ def main() -> None:
     open_f, solo_f = transition_pulse(open_f, solo_f, xf_n)
     solo_f, convo_f = transition_pulse(solo_f, convo_f, xf_n)
     convo_f, cam_f = transition_pulse(convo_f, cam_f, xf_n)
-    cam_f, end_f = transition_pulse(cam_f, end_f, xf_n)
+    cam_f, end_f = transition_pulse(cam_f, end_f, xf_n, pulse_b=False)
 
     segs = {
         "open": open_f,
