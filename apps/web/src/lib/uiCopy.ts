@@ -194,6 +194,21 @@ export const ui = {
     zh: '本月相機分鐘已用完。',
     jp: 'bun2 jyut6 soeng1 gei1 fan1 zung1 ji5 jung6 jyun4.',
   },
+  guestTrialExhaustedLive: {
+    en: 'Guest live time used up. Sign in to continue on Free.',
+    zh: '訪客即時分鐘已用完。登入後可用免費版繼續。',
+    jp: 'haak3 haak3 zik1 si4 fan1 zung1 ji5 jung6 jyun4. dang1 jap6 hau6 ho2 jung6 min5 fai3 baan2.',
+  },
+  guestTrialExhaustedCam: {
+    en: 'Guest camera time used up. Sign in to continue on Free.',
+    zh: '訪客相機分鐘已用完。登入後可用免費版繼續。',
+    jp: 'haak3 haak3 soeng1 gei1 fan1 zung1 ji5 jung6 jyun4. dang1 jap6 hau6 ho2 jung6 min5 fai3 baan2.',
+  },
+  guestDocsSignIn: {
+    en: 'Sign in to translate documents.',
+    zh: '登入後先可以翻譯文件。',
+    jp: 'dang1 jap6 hau6 sin1 ho2 ji5 faan1 jik6 man4 gin2.',
+  },
   camSignIn: {
     en: 'Sign in to use camera translation',
     zh: '登入後使用相機翻譯',

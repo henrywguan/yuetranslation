@@ -20,7 +20,7 @@ async function docsFetch(path: string, body: unknown) {
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(`${resolveApiBase()}${path}`, {
     method: 'POST',
-    credentials: 'same-origin',
+    credentials: 'include',
     headers,
     body: JSON.stringify(body),
   })

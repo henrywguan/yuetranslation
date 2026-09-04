@@ -7,6 +7,7 @@ import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
+import { attachGuest, type GuestRequest } from './guest.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
 import {
@@ -30,6 +31,12 @@ import {
   addTtsChars,
   addTranslateCount,
   addAiVisionCount,
+  addGuestCameraSeconds,
+  addGuestCameraTranslateCount,
+  addGuestLiveSeconds,
+  addGuestTtsChars,
+  addGuestTranslateCount,
+  addGuestAiVisionCount,
 } from './usage.js'
 import { notifyStatus, userEmailConfigured } from './notify.js'
 import { submitBugReport } from './bugReport.js'
@@ -87,6 +94,7 @@ app.post(
 
 app.use(express.json({ limit: '12mb' }))
 app.use(attachAuth)
+app.use(attachGuest)
 
 async function entitlementFor(req: AuthedRequest) {
   if (req.auth?.email) {
@@ -95,7 +103,14 @@ async function entitlementFor(req: AuthedRequest) {
       userId: req.auth.userId,
     })
   }
-  return resolveEntitlement(req.auth)
+  const guestId = (req as GuestRequest).guestId
+  return resolveEntitlement(req.auth, guestId)
+}
+
+function guestTrialMessage(kind: 'live' | 'camera') {
+  return kind === 'live'
+    ? 'Guest live minutes used up. Sign in to continue on the Free plan.'
+    : 'Guest camera minutes used up. Sign in to continue on the Free plan.'
 }
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
@@ -153,13 +168,17 @@ app.get('/api/auth-config', (_req, res) => {
 app.get('/api/speech-token', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.live) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+    const login = ent.reason === 'login_required'
+    const guestDone = ent.reason === 'guest_trial_exhausted'
+    res.status(login || guestDone ? 401 : 402).json({
       message:
-        ent.reason === 'login_required'
+        login
           ? 'Please log in to use live translation.'
-          : ent.reason === 'account_disabled'
-            ? 'This account has been disabled.'
-            : 'Live listening requires a Family plan or free minutes.',
+          : guestDone
+            ? guestTrialMessage('live')
+            : ent.reason === 'account_disabled'
+              ? 'This account has been disabled.'
+              : 'Live listening requires a Family plan or free minutes.',
       entitlement: ent,
     })
     return
@@ -193,8 +212,11 @@ app.post('/api/translate', async (req: AuthedRequest, res) => {
   }
   try {
     const result = await translate(req.body)
-    if (!env.openMode && req.auth?.userId) {
-      await addTranslateCount(req.auth.userId, 1)
+    if (!env.openMode) {
+      if (req.auth?.userId) await addTranslateCount(req.auth.userId, 1)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestTranslateCount((req as GuestRequest).guestId!, 1)
+      }
     }
     res.json(result)
   } catch (e) {
@@ -253,9 +275,12 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
     })
-    // Meter signed-in usage for Free (hard cap) and Family/Business (unlimited).
-    if (!env.openMode && req.auth?.userId) {
-      await addTtsChars(req.auth.userId, text.length)
+    // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
+    if (!env.openMode) {
+      if (req.auth?.userId) await addTtsChars(req.auth.userId, text.length)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestTtsChars((req as GuestRequest).guestId!, text.length)
+      }
     }
     res.setHeader('Content-Type', 'audio/mpeg')
     res.send(audio)
@@ -394,20 +419,27 @@ app.patch('/api/prefs/username', async (req: AuthedRequest, res) => {
 app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.live) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+    const login = ent.reason === 'login_required'
+    const guestDone = ent.reason === 'guest_trial_exhausted'
+    res.status(login || guestDone ? 401 : 402).json({
       message:
-        ent.reason === 'login_required'
+        login
           ? 'Please log in to use live translation.'
-          : ent.reason === 'account_disabled'
-            ? 'This account has been disabled.'
-            : 'Live minutes exhausted for this month.',
+          : guestDone
+            ? guestTrialMessage('live')
+            : ent.reason === 'account_disabled'
+              ? 'This account has been disabled.'
+              : 'Live minutes exhausted for this month.',
       entitlement: ent,
     })
     return
   }
   const seconds = Math.max(0, Math.min(120, Number(req.body?.seconds || 0)))
-  if (!env.openMode && req.auth?.userId && seconds > 0) {
-    await addLiveSeconds(req.auth.userId, seconds)
+  if (!env.openMode && seconds > 0) {
+    if (req.auth?.userId) await addLiveSeconds(req.auth.userId, seconds)
+    else if ((req as GuestRequest).guestId) {
+      await addGuestLiveSeconds((req as GuestRequest).guestId!, seconds)
+    }
   }
   res.json(await entitlementFor(req))
 })
@@ -417,26 +449,29 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   const allowed = forDocs ? ent.allowed.docs : ent.allowed.camera
   if (!allowed) {
-    const login = ent.reason === 'login_required'
+    const login = ent.reason === 'login_required' || (forDocs && !ent.loggedIn)
+    const guestDone = !forDocs && ent.reason === 'guest_trial_exhausted'
     const disabled = ent.reason === 'account_disabled'
     const docsQuota =
       ent.reason === 'docs_quota_exhausted' || ent.reason === 'no_docs_quota'
     const camQuota =
       ent.reason === 'camera_quota_exhausted' || ent.reason === 'no_camera_quota'
-    res.status(login ? 401 : 402).json({
+    res.status(login || guestDone ? 401 : 402).json({
       message: login
         ? forDocs
           ? 'Please sign in to translate documents.'
           : 'Please sign in to use camera translation.'
-        : disabled
-          ? 'This account has been disabled.'
-          : forDocs
-            ? docsQuota
-              ? 'Document page quota exhausted for this month.'
-              : 'Document translation is not available.'
-            : camQuota
-              ? 'Camera minutes exhausted for this month.'
-              : 'Camera translation is not available.',
+        : guestDone
+          ? guestTrialMessage('camera')
+          : disabled
+            ? 'This account has been disabled.'
+            : forDocs
+              ? docsQuota
+                ? 'Document page quota exhausted for this month.'
+                : 'Document translation is not available.'
+              : camQuota
+                ? 'Camera minutes exhausted for this month.'
+                : 'Camera translation is not available.',
       entitlement: ent,
     })
     return
@@ -444,12 +479,18 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
   try {
     const result = await cameraScan(req.body)
     // Docs hybrid vision: no camera translate metering (pages billed on /docs/commit).
-    if (!forDocs && !env.openMode && req.auth?.userId && result.translateMisses > 0) {
-      await addCameraTranslateCount(req.auth.userId, result.translateMisses)
+    if (!forDocs && !env.openMode && result.translateMisses > 0) {
+      if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, result.translateMisses)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestCameraTranslateCount((req as GuestRequest).guestId!, result.translateMisses)
+      }
     }
     // AI vision LLM fallback — view-only meter (Cam + Documents). No hard cap.
-    if (!env.openMode && req.auth?.userId && result.aiVisionUsed) {
-      await addAiVisionCount(req.auth.userId, 1)
+    if (!env.openMode && result.aiVisionUsed) {
+      if (req.auth?.userId) await addAiVisionCount(req.auth.userId, 1)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestAiVisionCount((req as GuestRequest).guestId!, 1)
+      }
     }
     res.json({ ...result, entitlement: await entitlementFor(req) })
   } catch (e) {
@@ -465,7 +506,9 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
 })
 
 function docsDeniedMessage(ent: Awaited<ReturnType<typeof entitlementFor>>) {
-  if (ent.reason === 'login_required') return 'Please sign in to translate documents.'
+  if (!ent.loggedIn || ent.reason === 'login_required') {
+    return 'Please sign in to translate documents.'
+  }
   if (ent.reason === 'account_disabled') return 'This account has been disabled.'
   if (ent.reason === 'docs_quota_exhausted' || ent.reason === 'no_docs_quota') {
     return 'Document page quota exhausted for this month.'
@@ -488,7 +531,7 @@ function docsPagesRemainingOk(
 app.post('/api/docs/translate', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.docs) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+    res.status(!ent.loggedIn || ent.reason === 'login_required' ? 401 : 402).json({
       message: docsDeniedMessage(ent),
       entitlement: ent,
     })
@@ -521,7 +564,7 @@ app.post('/api/docs/translate', async (req: AuthedRequest, res) => {
 app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.docs) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+    res.status(!ent.loggedIn || ent.reason === 'login_required' ? 401 : 402).json({
       message: docsDeniedMessage(ent),
       entitlement: ent,
     })
@@ -572,20 +615,27 @@ app.post('/api/docs/commit', async (req: AuthedRequest, res) => {
 app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.camera) {
-    res.status(ent.reason === 'login_required' ? 401 : 402).json({
+    const login = ent.reason === 'login_required'
+    const guestDone = ent.reason === 'guest_trial_exhausted'
+    res.status(login || guestDone ? 401 : 402).json({
       message:
-        ent.reason === 'login_required'
+        login
           ? 'Please sign in to use camera translation.'
-          : ent.reason === 'account_disabled'
-            ? 'This account has been disabled.'
-            : 'Camera minutes exhausted for this month.',
+          : guestDone
+            ? guestTrialMessage('camera')
+            : ent.reason === 'account_disabled'
+              ? 'This account has been disabled.'
+              : 'Camera minutes exhausted for this month.',
       entitlement: ent,
     })
     return
   }
   const seconds = Math.max(0, Math.min(120, Number(req.body?.seconds || 0)))
-  if (!env.openMode && req.auth?.userId && seconds > 0) {
-    await addCameraSeconds(req.auth.userId, seconds)
+  if (!env.openMode && seconds > 0) {
+    if (req.auth?.userId) await addCameraSeconds(req.auth.userId, seconds)
+    else if ((req as GuestRequest).guestId) {
+      await addGuestCameraSeconds((req as GuestRequest).guestId!, seconds)
+    }
   }
   res.json(await entitlementFor(req))
 })

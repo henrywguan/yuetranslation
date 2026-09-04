@@ -91,7 +91,10 @@ export const env = {
   freeAllowCamera: (process.env.YUE_FREE_ALLOW_CAMERA || '1') === '1',
   openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
-  guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 0),
+  /** Guest trial live minutes / month (0 = guests cannot use live). */
+  guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 30),
+  /** Guest trial camera minutes / month (0 = guests cannot use Cam AR/Upload). */
+  guestCameraMinutes: Number(process.env.YUE_GUEST_CAMERA_MINUTES || 30),
   familyLiveMinutes: Number(
     process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 480,
   ),

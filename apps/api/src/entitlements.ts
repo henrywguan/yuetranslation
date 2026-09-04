@@ -8,7 +8,7 @@ import {
   type HouseholdSummary,
 } from './household.js'
 import { getProfile, supabaseConfigured } from './supabase.js'
-import { emptyUsage, getUsage } from './usage.js'
+import { emptyUsage, getGuestUsage, getUsage, type UsageSnapshot } from './usage.js'
 import {
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
@@ -143,17 +143,18 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     }
   }
   if (plan === 'guest') {
-    const mins = env.guestLiveMinutes
+    const liveMins = Math.max(0, env.guestLiveMinutes)
+    const cameraMins = Math.max(0, env.guestCameraMinutes)
     return {
       plan: 'guest',
-      live_minutes: mins,
-      // Guests can tap-to-play without an account (no persistent meter).
+      live_minutes: liveMins,
+      // Unlimited TTS for guests — still counted via guest_usage_months.
       tts_chars: 0,
-      camera_minutes: 0,
+      camera_minutes: cameraMins,
       docs_pages: 0,
       auto_speak: false,
-      can_live: mins > 0 && !env.requireLogin,
-      can_camera: false,
+      can_live: liveMins > 0,
+      can_camera: cameraMins > 0,
       can_docs: false,
       text_translate: true,
     }
@@ -277,36 +278,60 @@ function buildSnapshot(
     }
   }
 
-  if (requireLogin && !loggedIn) {
+  // Guests get a metered trial (live + cam). Docs stay sign-in only.
+  // Text + TTS stay unlimited but counted when a guest id is present.
+  if (!loggedIn) {
     const limits = limitsForPlan('guest')
-    limits.can_live = false
-    limits.can_camera = false
     limits.can_docs = false
+    limits.docs_pages = 0
+    const liveLimit = Math.max(0, limits.live_minutes) * 60
+    const cameraLimit = Math.max(0, limits.camera_minutes) * 60
+    const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
+    const cameraRemaining = Math.max(0, cameraLimit - usage.cameraSeconds)
+    const canLive = limits.can_live && liveRemaining > 0
+    const canCamera = limits.can_camera && cameraRemaining > 0
+    // TTS unlimited for guests (same pattern as Family) — still metered in usage.
+    const voice = voiceAccess(0, usage.ttsChars, false, true)
+
+    let reason: string | null = null
+    if (!canLive && limits.can_live) reason = 'guest_trial_exhausted'
+    else if (!canCamera && limits.can_camera) reason = 'guest_trial_exhausted'
+    else if (!canLive && !canCamera) reason = requireLogin ? 'guest_trial_exhausted' : 'no_live_quota'
+    // Docs always need an account when requireLogin is on (or always for guests).
+    if (!reason && requireLogin) {
+      // Soft signal for docs/UI: sign-in available, trial still active for live/cam.
+      reason = null
+    }
+
     return {
       loggedIn: false,
-      requireLogin: true,
+      requireLogin,
       plan: 'guest',
       isAdmin: false,
       role: null,
       disabled: false,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0, docsPages: 0 },
-      ttsUnlimited: false,
+      remaining: {
+        liveSeconds: liveRemaining,
+        ttsChars: -1,
+        cameraSeconds: cameraRemaining,
+        docsPages: 0,
+      },
+      ttsUnlimited: true,
       cameraUnlimited: false,
       docsUnlimited: false,
       upgradeUrl: upgradeUrl(),
       loginUrl: loginUrl(),
       allowed: {
-        live: false,
+        live: canLive,
         autoSpeak: false,
         textTranslate: true,
-        // Guests may tap-to-play without signing in (no persistent meter).
-        tts: true,
-        camera: false,
+        tts: voice.tts,
+        camera: canCamera,
         docs: false,
       },
-      reason: 'login_required',
+      reason,
       prefs: {
         ttsVoiceYue: DEFAULT_YUE_VOICE,
         ttsVoiceEn: DEFAULT_EN_VOICE,
@@ -439,7 +464,10 @@ function localEntitlement(): Entitlement {
   return buildSnapshot('free', false, emptyUsage(month))
 }
 
-export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlement> {
+export async function resolveEntitlement(
+  auth?: AuthContext,
+  guestId?: string | null,
+): Promise<Entitlement> {
   if (env.openMode) return localEntitlement()
 
   if (!supabaseConfigured()) {
@@ -447,7 +475,8 @@ export async function resolveEntitlement(auth?: AuthContext): Promise<Entitlemen
   }
 
   if (!auth?.userId) {
-    return buildSnapshot('guest', false, emptyUsage())
+    const usage = guestId ? await getGuestUsage(guestId) : emptyUsage()
+    return buildSnapshot('guest', false, usage)
   }
 
   const profile = await getProfile(auth.userId)
