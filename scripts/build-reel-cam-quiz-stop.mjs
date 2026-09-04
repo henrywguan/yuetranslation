@@ -90,7 +90,7 @@ const seg = {
   end: join(OUT, '_seg-end.mp4'),
 }
 
-const DUR = { hook: 3.0, quiz: 5.5, cam: 9.0, reveal: 5.0, end: 2.4 }
+const DUR = { hook: 3.0, quiz: 5.5, cam: 11.5, reveal: 5.0, end: 2.4 }
 
 // ── Hook ────────────────────────────────────────────────────────────
 {
