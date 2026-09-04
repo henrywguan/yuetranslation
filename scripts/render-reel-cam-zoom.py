@@ -13,18 +13,29 @@ import subprocess
 from functools import lru_cache
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "docs/social/reel-cam-quiz-stop/source/live"
 OUT = ROOT / "docs/social/reel-cam-quiz-stop/out/_studio/cam"
 HAND_PATH = ROOT / "docs/social/reel-cam-quiz-stop/source/hand-tap.png"
+TIP_JSON = ROOT / "docs/social/reel-cam-quiz-stop/source/hand-tap-tip.json"
 W, H, FPS = 1080, 1920, 30
 CAM_DUR = 11.5
 JADE = (61, 207, 182)
 HARBOR = (7, 19, 31)
-# Fingertip in source/hand-tap.png (see hand-tap-tip.json)
-TIP0 = (210.0, 95.0)
+EMOJI_FONT = Path("/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf")
+
+
+def _load_tip0() -> tuple[float, float]:
+    if TIP_JSON.exists():
+        data = json.loads(TIP_JSON.read_text())
+        return float(data["x"]), float(data["y"])
+    return 135.4, 34.0
+
+
+TIP0 = _load_tip0()
 
 
 def clamp(v, a=0.0, b=1.0):
@@ -55,67 +66,55 @@ def extract_frames(mp4: Path, dir: Path):
 
 
 def make_hand_asset(path: Path) -> Image.Image:
-    """Soft illustrated index finger + palm for product-demo taps (generated once)."""
+    """Render the 👆 emoji (Noto Color Emoji) — never draw a custom hand silhouette."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    cw, ch = 520, 680
-    im = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-    tip = (int(TIP0[0]), int(TIP0[1]))
+    if not EMOJI_FONT.exists():
+        raise SystemExit(f"missing emoji font: {EMOJI_FONT}")
+    font = None
+    for size in (109, 96, 72, 128):
+        try:
+            font = ImageFont.truetype(str(EMOJI_FONT), size=size)
+            break
+        except OSError:
+            continue
+    if font is None:
+        raise SystemExit("could not load Noto Color Emoji")
 
+    cw, ch = 400, 480
+    canvas = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    glyph = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+    ImageDraw.Draw(glyph).text((80, 20), "👆", font=font, embedded_color=True)
+    if glyph.getbbox() is None:
+        raise SystemExit("emoji render produced empty image")
+
+    # Soft drop shadow from glyph alpha
+    alpha = glyph.split()[3]
     shadow = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.ellipse([tip[0] - 50, tip[1] - 40, tip[0] + 70, tip[1] + 70], fill=(0, 0, 0, 70))
-    sd.polygon(
-        [
-            (tip[0] - 20, tip[1] + 40),
-            (tip[0] + 55, tip[1] + 50),
-            (tip[0] + 160, tip[1] + 560),
-            (tip[0] + 40, tip[1] + 580),
-        ],
-        fill=(0, 0, 0, 55),
-    )
-    im.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(22)))
+    shadow.paste((0, 0, 0, 110), (0, 0), alpha)
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(10)), (6, 12))
+    canvas.alpha_composite(glyph)
 
-    d = ImageDraw.Draw(im)
-    skin = (240, 208, 186, 255)
-    skin2 = (224, 180, 155, 255)
-    skin3 = (250, 225, 208, 255)
-    nail = (255, 242, 235, 245)
-    d.ellipse([tip[0] - 10, tip[1] + 280, tip[0] + 220, tip[1] + 520], fill=skin)
-    for i, (cy, rx, ry) in enumerate(
-        [
-            (tip[1] + 30, 38, 42),
-            (tip[1] + 80, 40, 48),
-            (tip[1] + 140, 44, 52),
-            (tip[1] + 210, 50, 58),
-            (tip[1] + 270, 58, 64),
-        ]
-    ):
-        d.ellipse([tip[0] - rx, cy - ry, tip[0] + rx, cy + ry], fill=skin if i % 2 == 0 else skin2)
-    d.polygon(
-        [
-            (tip[0] - 36, tip[1] + 20),
-            (tip[0] + 36, tip[1] + 20),
-            (tip[0] + 70, tip[1] + 300),
-            (tip[0] - 20, tip[1] + 310),
-        ],
-        fill=skin,
-    )
-    d.ellipse([tip[0] - 48, tip[1] - 48, tip[0] + 48, tip[1] + 48], fill=skin3)
-    d.ellipse([tip[0] - 26, tip[1] - 40, tip[0] + 26, tip[1] + 6], fill=nail)
-    d.arc([tip[0] - 34, tip[1] + 8, tip[0] + 34, tip[1] + 50], 200, 340, fill=(200, 150, 130, 180), width=3)
-    d.ellipse([tip[0] + 55, tip[1] + 200, tip[0] + 150, tip[1] + 320], fill=skin2)
-    hi = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-    ImageDraw.Draw(hi).ellipse([tip[0] - 28, tip[1] - 36, tip[0] + 10, tip[1] - 2], fill=(255, 255, 255, 70))
-    im.alpha_composite(hi.filter(ImageFilter.GaussianBlur(3)))
-    im.save(path)
-    tip_json = path.with_name("hand-tap-tip.json")
-    tip_json.write_text('{"x": %d, "y": %d}\n' % (tip[0], tip[1]))
-    return im
+    arr = np.array(canvas)
+    ys, xs = np.where(arr[:, :, 3] > 40)
+    y_cut = int(ys.min() + max(4, (ys.max() - ys.min()) * 0.08))
+    top = ys <= y_cut
+    tip_x = float(xs[top].mean())
+    tip_y = float(ys[top].min() + 8)
+
+    canvas.save(path)
+    TIP_JSON.write_text('{"x": %.1f, "y": %.1f}\n' % (tip_x, tip_y))
+    global TIP0
+    TIP0 = (tip_x, tip_y)
+    return canvas
 
 
 def load_hand() -> Image.Image:
+    # Always prefer regenerating from 👆 if the on-disk asset is missing or stale custom art
     if HAND_PATH.exists():
-        return Image.open(HAND_PATH).convert("RGBA")
+        im = Image.open(HAND_PATH).convert("RGBA")
+        # Old procedural blobs were ~520×680 skin-tone; emoji asset is 400×480
+        if im.size == (400, 480) or im.size[0] <= 420:
+            return im
     return make_hand_asset(HAND_PATH)
 
 
@@ -245,7 +244,7 @@ def main():
 
     # Warm cache
     load_hand()
-    prepared_hand(58, -28)
+    prepared_hand(145, 8)
 
     raw_dir = SRC / "_cam_raw"
     if raw_dir.exists():
@@ -318,7 +317,7 @@ def main():
         if press_amt > 0.02:
             frame = button_press_feedback(frame, btn_cx, btn_cy, btn_w, btn_h, press_amt)
         if hand_alpha > 0.02:
-            frame = paste_hand(frame, hand_pos, scale=0.58, angle=-28, alpha=hand_alpha, press=press_amt)
+            frame = paste_hand(frame, hand_pos, scale=1.45, angle=8, alpha=hand_alpha, press=press_amt)
 
         frame = crop_toward(frame, fx, fy, zoom)
         frame.save(OUT / f"f{i:04d}.jpg", quality=93)
