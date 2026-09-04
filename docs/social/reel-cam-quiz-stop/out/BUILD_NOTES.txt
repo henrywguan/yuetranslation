@@ -2,7 +2,7 @@ Cam quiz stop-sign Reel — STUDIO / Apple-demo motion
 Duration: 32.83s · 9:16
 Motion: parallax hook, spring pills, light sweeps, mote fields
 Transitions: blur-dissolve + luminous iris (not Ken Burns / hard cuts)
-Cam: Translate all + cubic-ease Recordly zoom
-Reveal: focus-rack wrong pills + breathing correct + specular edge
+Cam: Translate all + button-lock zoom (4.4× padded) + jade reticle + press flash
+Reveal: focus-rack + spring pop + particle burst + breathing glow
 CTA: soft logo settle
 Audio: bed + whoosh + Azure 停車 + Higgsfield VO (yes)

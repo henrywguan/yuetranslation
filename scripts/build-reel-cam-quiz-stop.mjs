@@ -189,7 +189,7 @@ writeFileSync(
 Duration: ${total.toFixed(2)}s · 9:16
 Motion: parallax hook, spring pills, light sweeps, mote fields
 Transitions: blur-dissolve + luminous iris (not Ken Burns / hard cuts)
-Cam: Translate all + button-lock zoom (2.65×) + jade reticle + press flash
+Cam: Translate all + button-lock zoom (4.4× padded) + jade reticle + press flash
 Reveal: focus-rack + spring pop + particle burst + breathing glow
 CTA: soft logo settle
 Audio: bed + whoosh + Azure 停車 + Higgsfield VO (${hasHfVo ? 'yes' : 'no'})
