@@ -216,13 +216,13 @@ def main() -> None:
         if not p.exists():
             raise SystemExit(f"missing {p}")
 
-    # Timing — slightly longer open for cinematic settle
+    # Timing — open+solo cover ElevenLabs hook VO (~4.4s)
     T = {
-        "open": 1.7,
-        "solo": 2.4,
-        "convo": 2.4,
-        "cam": 2.7,
-        "end": 2.2,
+        "open": 2.0,
+        "solo": 3.0,
+        "convo": 2.2,
+        "cam": 2.5,
+        "end": 2.0,
         "xf": 0.32,
     }
     n = {k: max(8, int(round(v * FPS))) for k, v in T.items() if k != "xf"}

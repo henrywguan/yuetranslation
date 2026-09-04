@@ -1,7 +1,9 @@
 story-feature-tour.mp4
-duration≈10.13s
-mean_volume=-17.8dB max_volume=-4.0dB
+duration≈10.43s
+mean_volume=-16.9dB max_volume=-3.9dB
 palette: Harbor #07131f · Jade #3dcfb6 · Ink #e8f4ff
-motion: LANCZOS eased zoom/punch (no zoompan); transition pulses
-audio: cinematic whoosh/hit/click/riser + loudnorm; amix normalize=0
-cues: meet@0.25 hit@0.55 solo@1.38 convo@3.46 cam@5.539999999999999 end@7.919999999999998
+motion: LANCZOS eased zoom/punch; transition pulses
+VO: ElevenLabs Maeve — "Other apps translate written Chinese. We give you Cantonese." (4.36s @0.2s)
+VO: ElevenLabs Maeve — "Speak it. Read it. Cam it." @6.4399999999999995s
+SFX: simple sine sweeps (not whooshes) + soft hit/click
+cues: hook@0.2 sweeps@1.64/4.319999999999999/6.199999999999999/8.359999999999998 camVO@6.4399999999999995 end@8.419999999999998

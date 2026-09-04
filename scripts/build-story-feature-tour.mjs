@@ -40,33 +40,26 @@ function durOf(path) {
 }
 
 function ensureSfx() {
-  // Cinematic stereo-ish mono beds — loud enough for phone speakers / IG Stories.
-  const whoosh = join(SFX, 'whoosh-cine.wav')
-  if (!existsSync(whoosh)) {
-    run('ffmpeg', [
-      '-y',
-      '-f', 'lavfi', '-i', 'anoisesrc=color=white:sample_rate=48000:amplitude=0.55:duration=1.15',
-      '-f', 'lavfi', '-i', 'sine=frequency=180:sample_rate=48000:duration=1.15',
-      '-filter_complex',
-      [
-        '[0]highpass=f=280,lowpass=f=3200,afade=t=in:st=0:d=0.08,afade=t=out:st=0.45:d=0.65,volume=1.4[n]',
-        '[1]lowpass=f=400,afade=t=in:st=0:d=0.05,afade=t=out:st=0.25:d=0.5,volume=0.35[b]',
-        '[n][b]amix=inputs=2:normalize=0,alimiter=limit=0.95',
-      ].join(';'),
-      whoosh,
-    ])
-  }
+  // Simple sine sweeps (not noise whooshes) — clean Apple-style transition accents.
+  const sweep = join(SFX, 'sweep-soft.wav')
+  run('ffmpeg', [
+    '-y',
+    '-f', 'lavfi',
+    '-i', "aevalsrc=exprs='0.38*sin(2*PI*(1100*exp(-2.8*t))*t)':s=48000:d=0.55",
+    '-af',
+    'afade=t=in:st=0:d=0.02,afade=t=out:st=0.38:d=0.17,highpass=f=180,lowpass=f=6000,volume=1.0,alimiter=limit=0.88',
+    sweep,
+  ])
 
-  const whooshDeep = join(SFX, 'whoosh-deep.wav')
-  if (!existsSync(whooshDeep)) {
-    run('ffmpeg', [
-      '-y',
-      '-f', 'lavfi', '-i', 'anoisesrc=color=pink:sample_rate=48000:amplitude=0.5:duration=1.35',
-      '-af',
-      'highpass=f=120,lowpass=f=1800,afade=t=in:st=0:d=0.12,afade=t=out:st=0.55:d=0.75,volume=1.55,alimiter=limit=0.95',
-      whooshDeep,
-    ])
-  }
+  const sweepDeep = join(SFX, 'sweep-deep.wav')
+  run('ffmpeg', [
+    '-y',
+    '-f', 'lavfi',
+    '-i', "aevalsrc=exprs='0.42*sin(2*PI*(720*exp(-2.2*t))*t)':s=48000:d=0.65",
+    '-af',
+    'afade=t=in:st=0:d=0.03,afade=t=out:st=0.42:d=0.22,highpass=f=80,lowpass=f=3500,volume=1.05,alimiter=limit=0.88',
+    sweepDeep,
+  ])
 
   const hit = join(SFX, 'hit-soft.wav')
   if (!existsSync(hit)) {
@@ -100,20 +93,8 @@ function ensureSfx() {
     ])
   }
 
-  const riser = join(SFX, 'riser-short.wav')
-  if (!existsSync(riser)) {
-    run('ffmpeg', [
-      '-y',
-      '-f', 'lavfi', '-i', 'anoisesrc=color=white:sample_rate=48000:amplitude=0.4:duration=1.2',
-      '-af',
-      'highpass=f=400,lowpass=f=5000,afade=t=in:st=0:d=0.9,afade=t=out:st=1.0:d=0.2,volume=1.2,alimiter=limit=0.9',
-      riser,
-    ])
-  }
-
   const bed = join(AUDIO, 'bed-cinematic.wav')
   if (!existsSync(bed)) {
-    // Richer Harbor bed — low drones + soft air (still under VO)
     run('ffmpeg', [
       '-y',
       '-f', 'lavfi', '-i', 'sine=frequency=65:sample_rate=48000:duration=40',
@@ -134,7 +115,7 @@ function ensureSfx() {
     ])
   }
 
-  return { whoosh, whooshDeep, hit, click, riser, bed }
+  return { sweep, sweepDeep, hit, click, bed }
 }
 
 // 1) Motion frames
@@ -193,8 +174,10 @@ const videoDur = durOf(silent)
 console.log('video', videoDur.toFixed(2), 's')
 
 const sfx = ensureSfx()
-const voMeet = join(AUDIO, 'higgsfield/vo-meet.mp3')
-const voCantonese = join(AUDIO, 'higgsfield/vo-cantonese.mp3')
+// Prefer ElevenLabs Maeve hook; fall back to vo-meet.mp3
+const voHook = existsSync(join(AUDIO, 'higgsfield/vo-hook-maeve.mp3'))
+  ? join(AUDIO, 'higgsfield/vo-hook-maeve.mp3')
+  : join(AUDIO, 'higgsfield/vo-meet.mp3')
 const voFeatures = join(AUDIO, 'higgsfield/vo-features.mp3')
 
 function capVo(src, dest, maxSec) {
@@ -220,31 +203,26 @@ function capVo(src, dest, maxSec) {
 }
 
 const vo1 = join(TMP, 'vo1.wav')
-const vo2 = join(TMP, 'vo2.wav')
 const vo3 = join(TMP, 'vo3.wav')
-capVo(voMeet, vo1, 1.7)
-capVo(voCantonese, vo2, 2.0)
-capVo(voFeatures, vo3, 2.5)
+const hookDur = capVo(voHook, vo1, 5.0)
+capVo(voFeatures, vo3, 2.6)
 
 // Cue map aligned to xfade offsets
-const tOpen = 0
 const tSolo = durs[0] - xf
 const tConvo = tSolo + durs[1] - xf
 const tCam = tConvo + durs[2] - xf
 const tEnd = tCam + durs[3] - xf
 
-const tMeet = 0.25
-const tVoSolo = tSolo + 0.12
-const tVoCam = tCam + 0.18
-const tHitOpen = 0.55
-const tWhoosh1 = tSolo - 0.05
-const tWhoosh2 = tConvo - 0.05
-const tWhoosh3 = tCam - 0.05
-const tWhoosh4 = tEnd - 0.08
-const tClick1 = tSolo + 0.35
+const tHook = 0.2
+const tVoCam = tCam + 0.2
+const tHitOpen = 0.7
+const tSweep1 = tSolo - 0.04
+const tSweep2 = tConvo - 0.04
+const tSweep3 = tCam - 0.04
+const tSweep4 = tEnd - 0.06
+const tClick1 = tSolo + 0.4
 const tClick2 = tConvo + 0.4
 const tClick3 = tCam + 0.45
-const tRiser = Math.max(0, tEnd - 0.85)
 
 const ms = (t) => Math.max(0, Math.round(t * 1000))
 
@@ -254,30 +232,26 @@ run('ffmpeg', [
   '-y',
   '-i', sfx.bed,
   '-i', vo1,
-  '-i', vo2,
   '-i', vo3,
-  '-i', sfx.whoosh,
-  '-i', sfx.whooshDeep,
+  '-i', sfx.sweep,
+  '-i', sfx.sweepDeep,
   '-i', sfx.hit,
   '-i', sfx.click,
-  '-i', sfx.riser,
   '-filter_complex',
   [
-    `[0]atrim=0:${videoDur.toFixed(3)},afade=t=in:st=0:d=0.6,afade=t=out:st=${(videoDur - 1.4).toFixed(2)}:d=1.4,volume=0.55[bed]`,
-    `[1]adelay=${ms(tMeet)}|${ms(tMeet)},volume=1.35[v1]`,
-    `[2]adelay=${ms(tVoSolo)}|${ms(tVoSolo)},volume=1.35[v2]`,
-    `[3]adelay=${ms(tVoCam)}|${ms(tVoCam)},volume=1.35[v3]`,
-    `[4]adelay=${ms(tWhoosh1)}|${ms(tWhoosh1)},volume=1.15[w1]`,
-    `[4]adelay=${ms(tWhoosh2)}|${ms(tWhoosh2)},volume=1.1[w2]`,
-    `[5]adelay=${ms(tWhoosh3)}|${ms(tWhoosh3)},volume=1.2[w3]`,
-    `[5]adelay=${ms(tWhoosh4)}|${ms(tWhoosh4)},volume=1.15[w4]`,
-    `[6]adelay=${ms(tHitOpen)}|${ms(tHitOpen)},volume=1.25[h1]`,
-    `[6]adelay=${ms(tEnd + 0.15)}|${ms(tEnd + 0.15)},volume=0.95[h2]`,
-    `[7]adelay=${ms(tClick1)}|${ms(tClick1)},volume=0.85[c1]`,
-    `[7]adelay=${ms(tClick2)}|${ms(tClick2)},volume=0.85[c2]`,
-    `[7]adelay=${ms(tClick3)}|${ms(tClick3)},volume=0.9[c3]`,
-    `[8]adelay=${ms(tRiser)}|${ms(tRiser)},volume=0.7[r1]`,
-    `[bed][v1][v2][v3][w1][w2][w3][w4][h1][h2][c1][c2][c3][r1]amix=inputs=14:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95,loudnorm=I=-12:TP=-1.0:LRA=9[aout]`,
+    `[0]atrim=0:${videoDur.toFixed(3)},afade=t=in:st=0:d=0.6,afade=t=out:st=${(videoDur - 1.4).toFixed(2)}:d=1.4,volume=0.42[bed]`,
+    `[1]adelay=${ms(tHook)}|${ms(tHook)},volume=1.45[v1]`,
+    `[2]adelay=${ms(tVoCam)}|${ms(tVoCam)},volume=1.4[v3]`,
+    `[3]adelay=${ms(tSweep1)}|${ms(tSweep1)},volume=0.85[s1]`,
+    `[3]adelay=${ms(tSweep2)}|${ms(tSweep2)},volume=0.8[s2]`,
+    `[4]adelay=${ms(tSweep3)}|${ms(tSweep3)},volume=0.9[s3]`,
+    `[4]adelay=${ms(tSweep4)}|${ms(tSweep4)},volume=0.85[s4]`,
+    `[5]adelay=${ms(tHitOpen)}|${ms(tHitOpen)},volume=0.95[h1]`,
+    `[5]adelay=${ms(tEnd + 0.12)}|${ms(tEnd + 0.12)},volume=0.8[h2]`,
+    `[6]adelay=${ms(tClick1)}|${ms(tClick1)},volume=0.7[c1]`,
+    `[6]adelay=${ms(tClick2)}|${ms(tClick2)},volume=0.7[c2]`,
+    `[6]adelay=${ms(tClick3)}|${ms(tClick3)},volume=0.75[c3]`,
+    `[bed][v1][v3][s1][s2][s3][s4][h1][h2][c1][c2][c3]amix=inputs=12:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95,loudnorm=I=-12:TP=-1.0:LRA=9[aout]`,
   ].join(';'),
   '-map', '[aout]',
   '-ar', '48000',
@@ -312,12 +286,13 @@ writeFileSync(
     `duration≈${durOf(final).toFixed(2)}s`,
     `mean_volume=${mean}dB max_volume=${maxv}dB`,
     `palette: Harbor #07131f · Jade #3dcfb6 · Ink #e8f4ff`,
-    `motion: LANCZOS eased zoom/punch (no zoompan); transition pulses`,
-    `audio: cinematic whoosh/hit/click/riser + loudnorm; amix normalize=0`,
-    `cues: meet@${tMeet} hit@${tHitOpen} solo@${tSolo} convo@${tConvo} cam@${tCam} end@${tEnd}`,
+    `motion: LANCZOS eased zoom/punch; transition pulses`,
+    `VO: ElevenLabs Maeve — "Other apps translate written Chinese. We give you Cantonese." (${hookDur.toFixed(2)}s @${tHook}s)`,
+    `VO: ElevenLabs Maeve — "Speak it. Read it. Cam it." @${tVoCam}s`,
+    `SFX: simple sine sweeps (not whooshes) + soft hit/click`,
+    `cues: hook@${tHook} sweeps@${tSweep1}/${tSweep2}/${tSweep3}/${tSweep4} camVO@${tVoCam} end@${tEnd}`,
   ].join('\n') + '\n',
 )
 
 console.log('wrote', final, durOf(final).toFixed(2), 's', `mean=${mean} max=${maxv}`)
-// Keep _studio for rebuild speed; wipe tmp
 rmSync(TMP, { recursive: true, force: true })

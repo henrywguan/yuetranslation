@@ -43,11 +43,11 @@ Source of truth: `apps/web/src/index.css` `[data-theme='dark']` + approved IG ca
 
 | Time | Beat | Visual | VO / audio |
 | --- | --- | --- | --- |
-| 0.0–1.5s | Open | Harbor field + soft jade glow → favicon settle | Soft bed in · “Meet JyutTranslate.” |
-| 1.5–4.0s | Solo | **Real** Solo UI — EN → 粵 + Jyutping (seeded) | Punch-in · “English to real Cantonese.” |
-| 4.0–6.5s | Conversation | **Real** Conversation split / panes (seeded) | Whoosh · bed continues |
-| 6.5–9.0s | Cam | **Real** Cam upload glass on a sign (prior live capture) | Soft click · “Speak it. Read it. Cam it.” |
-| 9.0–11.5s | End | Iris → Harbor end card · favicon · jyuttranslate.com | Bed resolve |
+| 0.0–2.0s | Open | Harbor field + favicon settle | Soft sweep · ElevenLabs: “Other apps translate written Chinese. We give you Cantonese.” |
+| 2.0–4.8s | Solo | **Real** Solo UI — EN → 粵 + Jyutping (seeded) | Hook VO continues · punch-in |
+| 4.8–7.1s | Conversation | **Real** Conversation split / panes (seeded) | Soft sweep |
+| 7.1–9.5s | Cam | **Real** Cam upload glass on a sign | Soft sweep · “Speak it. Read it. Cam it.” |
+| 9.5–11.5s | End | Iris → Harbor end card · favicon · jyuttranslate.com | Soft sweep · bed resolve |
 
 ---
 
