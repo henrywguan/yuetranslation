@@ -61,12 +61,12 @@ def focus_reticle(im: Image.Image, cx: float, cy: float, t_peak: float) -> Image
     a = int(220 * t_peak)
     if a < 8:
         return im
-    # button-sized brackets (~110x52 from cues, scaled up as we zoom — draw in screen space)
-    bw, bh = 280, 120
+    # At ~4× zoom the button dominates — brackets match that scale
+    bw, bh = 520, 240
     x0, y0 = cx - bw / 2, cy - bh / 2
     x1, y1 = cx + bw / 2, cy + bh / 2
-    L = 36
-    w = 4
+    L = 56
+    w = 5
     col = (*JADE_B, a)
     # corners
     for (ax, ay, dx, dy) in [
@@ -95,16 +95,18 @@ def press_flash(im: Image.Image, amount: float) -> Image.Image:
     return out.convert("RGB")
 
 
-def crop_toward(im: Image.Image, cx: float, cy: float, zoom: float) -> Image.Image:
-    """Zoom into (cx,cy) in source pixel space; zoom>=1."""
+def crop_toward(im: Image.Image, cx: float, cy: float, zoom: float, pad_rgb=(7, 19, 31)) -> Image.Image:
+    """Zoom into (cx,cy). Pads with harbor so the focus can sit above the UI top edge."""
     zoom = max(1.0, zoom)
     vw, vh = W / zoom, H / zoom
-    x0 = cx - vw / 2
-    y0 = cy - vh / 2
-    # clamp crop inside image
-    x0 = clamp(x0, 0, W - vw)
-    y0 = clamp(y0, 0, H - vh)
-    crop = im.crop((int(x0), int(y0), int(x0 + vw), int(y0 + vh)))
+    # Pad source so crops can center near the top toolbar
+    pad = int(max(W, H) * 0.55)
+    canvas = Image.new("RGB", (W + 2 * pad, H + 2 * pad), pad_rgb)
+    canvas.paste(im, (pad, pad))
+    cx_p, cy_p = cx + pad, cy + pad
+    x0 = cx_p - vw / 2
+    y0 = cy_p - vh / 2
+    crop = canvas.crop((int(x0), int(y0), int(x0 + vw), int(y0 + vh)))
     return crop.resize((W, H), Image.Resampling.LANCZOS)
 
 
@@ -168,38 +170,35 @@ def main():
         # Zoom + focus timeline
         if t < zoom_in_at:
             u = t / max(0.01, zoom_in_at)
-            zoom = 1.0 + 0.08 * smootherstep(u)
-            fx, fy = lerp(f_start[0], f_btn[0], smootherstep(u * 0.5))
-            fy = lerp(f_start[1], f_btn[1], smootherstep(u * 0.5))
+            zoom = 1.0 + 0.12 * smootherstep(u)
+            fx = lerp(f_start[0], f_btn[0], smootherstep(u * 0.65))
+            fy = lerp(f_start[1], f_btn[1], smootherstep(u * 0.65))
             reticle = 0.0
             flash = 0.0
         elif t < peak_at:
             u = smootherstep((t - zoom_in_at) / max(0.01, peak_at - zoom_in_at))
-            zoom = 1.08 + (2.65 - 1.08) * u  # punch hard into the button
-            fx = lerp(f_start[0], f_btn[0], u)
-            fy = lerp(f_start[1], f_btn[1], u)
+            zoom = 1.12 + (4.4 - 1.12) * u  # hard punch — button dominates
+            fx = lerp(lerp(f_start[0], f_btn[0], 0.65), f_btn[0], u)
+            fy = lerp(lerp(f_start[1], f_btn[1], 0.65), f_btn[1], u)
             reticle = u
             flash = 0.0
         elif t < hold_end:
-            zoom = 2.65
+            zoom = 4.4
             fx, fy = f_btn
             reticle = 1.0
-            # flash right at press
-            flash = 1.0 - clamp((t - peak_at) / 0.25)
+            flash = 1.0 - clamp((t - peak_at) / 0.28)
         elif t < zoom_out_at:
-            # hold then micro-drift toward sign while still tight
-            u = smootherstep((t - hold_end) / max(0.01, zoom_out_at - hold_end))
-            zoom = lerp(2.65, 2.15, u)
-            fx = lerp(f_btn[0], f_sign[0], u * 0.35)
-            fy = lerp(f_btn[1], f_sign[1], u * 0.45)
-            reticle = 1.0 - u
+            # stay locked on button a beat longer (no early drift)
+            zoom = 4.4
+            fx, fy = f_btn
+            reticle = 0.85
             flash = 0.0
         elif t < out_done:
             u = smootherstep((t - zoom_out_at) / max(0.01, out_done - zoom_out_at))
-            zoom = lerp(2.15, 1.0, u)
-            fx = lerp(f_btn[0], f_sign[0], 0.35 + 0.65 * u)
-            fy = lerp(f_btn[1], f_sign[1], 0.45 + 0.55 * u)
-            reticle = 0.0
+            zoom = lerp(4.4, 1.0, u)
+            fx = lerp(f_btn[0], f_sign[0], u)
+            fy = lerp(f_btn[1], f_sign[1], u)
+            reticle = max(0.0, 1.0 - u * 1.4)
             flash = 0.0
         else:
             zoom = 1.0
@@ -209,11 +208,11 @@ def main():
 
         frame = crop_toward(im, fx, fy, zoom)
         if reticle > 0.05:
-            # reticle at screen center (we've cropped so button is centered)
-            frame = focus_reticle(frame, W / 2, H * 0.42, reticle)
+            # button is centered in the crop
+            frame = focus_reticle(frame, W / 2, H / 2, reticle)
         if flash > 0.05:
             frame = press_flash(frame, flash)
-            frame = ImageEnhance.Contrast(frame).enhance(1.0 + 0.15 * flash)
+            frame = ImageEnhance.Contrast(frame).enhance(1.0 + 0.18 * flash)
 
         frame.save(OUT / f"f{i:04d}.jpg", quality=93)
 
