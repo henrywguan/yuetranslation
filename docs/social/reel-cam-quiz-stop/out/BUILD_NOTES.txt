@@ -1,5 +1,9 @@
-Drops-style Cam quiz stop-sign Reel
-Duration: 22s · 9:16
-Cam insert: LIVE screen capture
+Drops-style Cam quiz stop-sign Reel (v2)
+Duration: 26.2s · 9:16
+Photo: Henry stop-sign (stop-sign-photo.png)
+Cam insert: LIVE + Recordly-style zoom
 TTS 停車: YES
-Higgsfield: skipped in cloud (MCP session expired — reconnect in Cursor desktop)
+Transition: jade iris wipe + whoosh
+Liveliness: floating orbs + dashed path after pill stagger
+Higgsfield audio/avatar: skipped (MCP session expired — reconnect desktop)
+Tofu: mixed Latin+CJK fonts for 粵

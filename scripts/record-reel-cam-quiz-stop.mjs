@@ -2,10 +2,8 @@
 /**
  * Record Cam upload for stop-sign quiz Reel with Recordly-style zoom cues.
  *
- * Flow: Cam → Upload (tight STOP crop) → Translate all (OCR boxes cover full STOP)
- * → hold overlay. Emits cam-upload-1080.mp4 + zoom-cues.json.
- *
- * Uses Translate all (not manual draw) so Vision places a box over the whole word.
+ * Flow: Upload tight STOP crop → Draw box over FULL "STOP" via PointerEvents on
+ * the overlay canvas → Translate (zoom in on press) → hold overlay → zoom out.
  *
  *   NODE_PATH=/workspace/node_modules node scripts/record-reel-cam-quiz-stop.mjs
  */
@@ -126,13 +124,66 @@ async function findToolBtn(page, patterns) {
   }, patterns)
 }
 
+/** Draw a normalized (image-space) box via PointerEvents — mirrors Cam toNorm/contain layout. */
+async function drawNormBox(page, box) {
+  return page.evaluate(async (b) => {
+    const canvas = document.querySelector('canvas.cam-overlay-canvas')
+    const frame = document.querySelector('.cam-upload-frame')
+    const img = document.querySelector('.cam-upload-frame img')
+    if (!canvas || !frame || !img) throw new Error('canvas/frame/img missing')
+    const fr = frame.getBoundingClientRect()
+    const mw = img.naturalWidth || 1
+    const mh = img.naturalHeight || 1
+    const scale = Math.min(fr.width / mw, fr.height / mh)
+    const dispW = mw * scale
+    const dispH = mh * scale
+    const offsetX = (fr.width - dispW) / 2
+    const offsetY = (fr.height - dispH) / 2
+    const toClient = (nx, ny) => ({
+      x: fr.left + offsetX + nx * dispW,
+      y: fr.top + offsetY + ny * dispH,
+    })
+    const p0 = toClient(b.x, b.y)
+    const p1 = toClient(b.x + b.w, b.y + b.h)
+    const fire = (type, x, y, buttons = 1) => {
+      canvas.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 1,
+          pointerType: 'mouse',
+          isPrimary: true,
+          clientX: x,
+          clientY: y,
+          buttons,
+          button: 0,
+        }),
+      )
+    }
+    fire('pointerdown', p0.x, p0.y, 1)
+    const steps = 10
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps
+      fire('pointermove', p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t, 1)
+    }
+    fire('pointerup', p1.x, p1.y, 0)
+    return {
+      fr: { x: fr.x, y: fr.y, w: fr.width, h: fr.height },
+      layout: { offsetX, offsetY, dispW, dispH, mw, mh },
+      p0,
+      p1,
+    }
+  }, box)
+}
+
 async function pressBtn(page, btn, label) {
   if (!btn) throw new Error(`missing button for ${label}`)
-  await page.mouse.move(btn.x, btn.y, { steps: 10 })
-  await sleep(160)
+  // Instant jump (avoid 8s mouse.move lag under screencast), then visible hold
+  await page.mouse.move(btn.x, btn.y, { steps: 1 })
+  await sleep(120)
   await page.mouse.down()
   mark(`${label}_press`, { btn })
-  await sleep(240) // hold so Recordly zoom catches the depressed state
+  await sleep(280)
   await page.mouse.up()
   mark(`${label}_release`)
 }
@@ -173,11 +224,11 @@ await page.evaluate(() => {
       },
       limits: { ...(ent.limits || {}), plan: 'family', auto_speak: true, can_camera: true, can_docs: true },
     },
-    autoSpeak: false, // avoid TTS during Cam capture (metered); reveal uses offline TTS
+    autoSpeak: false,
   })
   s.getState().setMode('camera')
 })
-await sleep(1000)
+await sleep(900)
 
 const modalReady = await page.evaluate(() => {
   const t = document.body?.innerText || ''
@@ -187,13 +238,13 @@ const modalReady = await page.evaluate(() => {
   cam?.click()
   return false
 })
-if (!modalReady) await sleep(800)
+if (!modalReady) await sleep(700)
 
 const outMp4 = join(OUT_DIR, 'cam-upload-1080.mp4')
 const cast = createScreencast(page, join(OUT_DIR, '_frames'))
 await cast.start()
 mark('cast_start')
-await sleep(500)
+await sleep(400)
 
 const signAbs = join(process.cwd(), SIGN)
 const [chooser] = await Promise.all([
@@ -218,23 +269,44 @@ await page
     timeout: 20000,
   })
   .catch(() => {})
-await sleep(900)
+await sleep(800)
 mark('image_loaded')
 
-const translateAll = await findToolBtn(page, ['Translate all|全部翻譯'])
-mark('pre_translate', { btn: translateAll })
-await sleep(450)
-mark('zoom_in_target')
+// Draw mode → box covering full STOP on the tight crop
+await page.evaluate(() => {
+  const btns = [...document.querySelectorAll('button')]
+  const draw = btns.find((b) => /Draw box|畫框/.test(b.textContent || ''))
+  draw?.click()
+})
 await sleep(350)
+mark('draw_mode')
 
-await pressBtn(page, translateAll, 'translate')
+// Tight crop: STOP letters span ~center of the octagon
+const STOP_BOX = { x: 0.18, y: 0.36, w: 0.64, h: 0.26 }
+const drawn = await drawNormBox(page, STOP_BOX)
+mark('box_drawn', { ...STOP_BOX, ...drawn })
+await sleep(450)
+
+// Prefer primary Translate (needs a box); fall back to Translate all
+let translateBtn = await findToolBtn(page, ['^Translate翻譯$|^Translate$|^翻譯$'])
+if (!translateBtn) {
+  translateBtn = await findToolBtn(page, ['Translate(?! all)|翻譯(?!全部)'])
+}
+if (!translateBtn) {
+  translateBtn = await findToolBtn(page, ['Translate all|全部翻譯'])
+}
+mark('pre_translate', { btn: translateBtn })
+await sleep(300)
+mark('zoom_in_target')
+await sleep(250)
+
+await pressBtn(page, translateBtn, 'translate')
 
 const ok = await page
   .waitForFunction(
     () => {
       const t = document.body?.innerText || ''
       if (/Scanning|掃描中/.test(t)) return false
-      // Real Vision often returns 停止; quiz reveal teaches 停車 — either means overlay landed
       return /停車|停止|ting4|ting2|Details|詳情|RESULTS|結果/.test(t)
     },
     { timeout: 45000 },
@@ -242,19 +314,10 @@ const ok = await page
   .then(() => true)
   .catch(() => false)
 
-if (!ok) {
-  console.warn('translate wait timed out — checking overlay canvas / boxes')
-  const debug = await page.evaluate(() => ({
-    text: (document.body?.innerText || '').slice(0, 800),
-    busy: /Scanning|掃描中/.test(document.body?.innerText || ''),
-  }))
-  console.warn('debug', JSON.stringify(debug).slice(0, 500))
-}
-
 mark('result_visible', { ok })
-await sleep(900)
+await sleep(800)
 mark('zoom_out')
-await sleep(3200)
+await sleep(3000)
 mark('hold_end')
 
 const info = await cast.stop(outMp4)

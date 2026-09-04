@@ -265,21 +265,21 @@ print('wipe frames', n)
 if (existsSync(camLive)) {
   let zoomInAt = 3.2
   let zoomPeakAt = 4.0
-  let zoomOutAt = 7.0
-  let btnYNorm = 0.12 // toolbar row (Translate all)
+  let zoomOutAt = 5.2 // start easing out soon after press so overlay is visible
+  let btnYNorm = 0.12 // toolbar row (Translate)
   if (existsSync(zoomCuesPath)) {
     try {
       const cues = JSON.parse(readFileSync(zoomCuesPath, 'utf8'))
       const zin = cues.find((c) => c.label === 'zoom_in_target' || c.label === 'pre_translate')
       const press = cues.find((c) => c.label === 'translate_press' || c.label === 'translate_release')
-      const zout = cues.find((c) => c.label === 'result_visible' || c.label === 'zoom_out')
       const pre = cues.find((c) => c.label === 'pre_translate')
       if (zin) zoomInAt = Math.max(0.4, zin.sec - 0.25)
       if (press) {
         zoomPeakAt = Math.max(zoomInAt + 0.35, press.sec)
         zoomInAt = Math.min(zoomInAt, Math.max(0.4, press.sec - 0.7))
+        // Punch in on the press, hold ~0.7s, then zoom out so the STOP overlay reads
+        zoomOutAt = zoomPeakAt + 0.7
       }
-      if (zout) zoomOutAt = Math.max(zoomPeakAt + 0.9, zout.sec)
       if (pre?.btn?.y != null) btnYNorm = Math.min(0.35, Math.max(0.06, pre.btn.y / H))
     } catch {}
   }
@@ -288,14 +288,14 @@ if (existsSync(camLive)) {
   const peakF = Math.round(zoomPeakAt * FPS)
   const zoutF = Math.round(zoomOutAt * FPS)
   const easeIn = Math.max(1, peakF - zinF)
-  const easeOut = Math.round(1.5 * FPS)
-  // Punch in hard to ~1.85× on the Translate press, hold, ease out to show full STOP overlay
+  const easeOut = Math.round(1.2 * FPS)
+  // Punch in hard to ~1.9× on Translate press, brief hold, ease out to show full STOP overlay
   const zExpr =
     `if(lt(on\\,${zinF})\\,1+0.06*on/${Math.max(1, zinF)}\\,` +
-    `if(lt(on\\,${peakF})\\,1.06+(1.85-1.06)*(on-${zinF})/${easeIn}\\,` +
-    `if(lt(on\\,${zoutF})\\,1.85\\,` +
-    `1.85-(1.85-1.0)*min(1\\,(on-${zoutF})/${easeOut}))))`
-  // Bias toward toolbar button, then drift toward sign center on zoom-out
+    `if(lt(on\\,${peakF})\\,1.06+(1.9-1.06)*(on-${zinF})/${easeIn}\\,` +
+    `if(lt(on\\,${zoutF})\\,1.9\\,` +
+    `1.9-(1.9-1.0)*min(1\\,(on-${zoutF})/${easeOut}))))`
+  // Bias toward toolbar during punch-in; return toward sign center on the way out
   const zy =
     `if(lt(on\\,${zoutF})\\,(ih*${btnYNorm.toFixed(3)})-(ih/zoom/2)\\,` +
     `(ih*0.42)-(ih/zoom/2))`
