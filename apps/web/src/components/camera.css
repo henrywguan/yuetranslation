@@ -593,6 +593,114 @@
   overflow: hidden;
 }
 
+.cam-ar-frame--fs.is-live {
+  touch-action: none;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.cam-ar-focus-ring {
+  position: absolute;
+  z-index: 4;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  border: 1.5px solid color-mix(in srgb, #e8fff6 88%, var(--jade));
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(3, 10, 16, 0.35),
+    0 0 18px color-mix(in srgb, var(--jade) 45%, transparent);
+  pointer-events: none;
+  animation: cam-ar-focus-pulse 0.85s ease-out forwards;
+}
+
+@keyframes cam-ar-focus-pulse {
+  0% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  35% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+}
+
+.cam-ar-live-zoom {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  top: 50%;
+  z-index: 5;
+  transform: translateY(-58%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 10px;
+  border-radius: 18px;
+  background: color-mix(in srgb, #061018 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.cam-ar-live-zoom-label {
+  writing-mode: horizontal-tb;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #e8fff6 75%, transparent);
+}
+
+.cam-ar-live-zoom input[type='range'] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: none;
+  width: 18px;
+  height: min(28vh, 180px);
+  background: transparent;
+  cursor: pointer;
+}
+
+.cam-ar-live-zoom input[type='range']::-webkit-slider-runnable-track {
+  width: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #e8fff6 28%, transparent);
+}
+
+.cam-ar-live-zoom input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-left: -6.5px;
+  border-radius: 50%;
+  background: #e8fff6;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--jade) 55%, transparent);
+  border: 0;
+}
+
+.cam-ar-live-zoom input[type='range']::-moz-range-track {
+  width: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #e8fff6 28%, transparent);
+}
+
+.cam-ar-live-zoom input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e8fff6;
+  border: 0;
+}
+
+body.cam-ar-open.yue-details-open .cam-ar-live-zoom {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .cam-ar-zoom {
   position: absolute;
   inset: 0;

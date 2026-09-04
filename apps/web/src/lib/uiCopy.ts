@@ -148,6 +148,12 @@ export const ui = {
     zh: '對準文字，再輕按相機翻譯',
     jp: 'deoi3 zeon1 man4 zi6, zoi3 hing1 on3 soeng1 gei1 faan1 jik6',
   },
+  camCaptureHintZoomFocus: {
+    en: 'Pinch or dial to zoom, tap to focus, then capture',
+    zh: '雙指或滑桿放大，輕按對焦，再拍攝',
+    jp: 'soeng1 zi2 waak6 waat6 gon1 fong3 daai6, hing1 on3 deoi3 ziu1, zoi3 paak3 sip3',
+  },
+  camLiveZoom: { en: 'Zoom', zh: '放大', jp: 'fong3 daai6' },
   camClearOverlays: { en: 'Clear translations', zh: '清除翻譯', jp: 'cing1 ceoi4 faan1 jik6' },
   camDetailTitle: { en: 'Translation detail', zh: '翻譯詳情', jp: 'faan1 jik6 coeng4 cing4' },
   camOpenDetails: { en: 'Details', zh: '詳情', jp: 'coeng4 cing4' },

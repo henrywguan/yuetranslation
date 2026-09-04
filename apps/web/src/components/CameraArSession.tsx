@@ -3,14 +3,25 @@ import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
-import { captureFrame, decodeDataUrlSize, mediaFitLayout } from '../lib/camera/geometry'
+import { captureFrame, captureZoomedVideoFrame, decodeDataUrlSize, mediaFitLayout } from '../lib/camera/geometry'
 import {
   clampPan,
   clampZoom,
   touchDistance,
   touchMidpoint,
+  ZOOM_MAX,
+  ZOOM_MIN,
   type ZoomTransform,
 } from '../lib/camera/pinchZoom'
+import {
+  focusTrackAt,
+  framePointToMediaNorm,
+  preferContinuousFocus,
+  probeCameraTrack,
+  setTrackZoom,
+  type CameraTrackFeatures,
+  type ZoomRange,
+} from '../lib/camera/trackControls'
 import {
   centeredLabelX,
   drawMatchedLabel,
@@ -77,6 +88,13 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   /** Frozen capture — live preview is hidden while this is set. */
   const [stillUrl, setStillUrl] = useState<string | null>(null)
   const [zoom, setZoom] = useState<ZoomTransform>(IDENTITY_ZOOM)
+  /** Hardware zoom range when the track exposes it; otherwise digital CSS zoom. */
+  const [hwZoomRange, setHwZoomRange] = useState<ZoomRange | null>(null)
+  const [hwZoom, setHwZoom] = useState(1)
+  const [canTapFocus, setCanTapFocus] = useState(false)
+  const [focusRing, setFocusRing] = useState<{ x: number; y: number; key: number } | null>(null)
+  const focusRingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const livePinchRef = useRef<{ startDist: number; startZoom: number } | null>(null)
 
   useEffect(() => {
     boxesRef.current = boxes
@@ -277,6 +295,11 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         return
       }
       streamRef.current = stream
+      const features: CameraTrackFeatures = probeCameraTrack(stream)
+      setHwZoomRange(features.zoom)
+      setHwZoom(features.zoomValue)
+      setCanTapFocus(features.canTapFocus || features.canContinuousFocus)
+      await preferContinuousFocus(stream)
       const video = videoRef.current
       if (video) {
         video.srcObject = stream
@@ -287,6 +310,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
     return () => {
       cancelled = true
+      if (focusRingTimer.current) clearTimeout(focusRingTimer.current)
       void meter.stop()
       stopMediaStream(streamRef.current)
       streamRef.current = null
@@ -308,11 +332,57 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setStillUrl(null)
     setZoom(IDENTITY_ZOOM)
     zoomRef.current = IDENTITY_ZOOM
+    setFocusRing(null)
     const video = videoRef.current
     if (video && video.paused) {
       void video.play().catch(() => undefined)
     }
   }, [])
+
+  const applyLiveZoom = useCallback(async (next: number) => {
+    if (hwZoomRange) {
+      const applied = await setTrackZoom(streamRef.current, next)
+      if (applied != null) setHwZoom(applied)
+      return
+    }
+    const scale = clampZoom(next)
+    const frame = frameRef.current
+    const clamped = clampPan(
+      { scale, x: zoomRef.current.x, y: zoomRef.current.y },
+      frame?.clientWidth || 1,
+      frame?.clientHeight || 1,
+    )
+    zoomRef.current = clamped
+    setZoom(clamped)
+  }, [hwZoomRange])
+
+  const onLiveFocusTap = useCallback(
+    async (e: ReactMouseEvent<HTMLDivElement>) => {
+      if (stillUrlRef.current || busy || scanning.current) return
+      // Ignore taps on dock / chrome — only the frame receives this.
+      const frame = frameRef.current
+      const video = videoRef.current
+      if (!frame || !video) return
+      const rect = frame.getBoundingClientRect()
+      const localX = e.clientX - rect.left
+      const localY = e.clientY - rect.top
+      setFocusRing({ x: localX, y: localY, key: Date.now() })
+      if (focusRingTimer.current) clearTimeout(focusRingTimer.current)
+      focusRingTimer.current = setTimeout(() => setFocusRing(null), 900)
+
+      if (!canTapFocus) return
+      const mw = video.videoWidth || mediaSizeRef.current.w
+      const mh = video.videoHeight || mediaSizeRef.current.h
+      // Undo digital CSS zoom so focus maps into the true video frame.
+      const z = zoomRef.current
+      const zx = (localX - z.x) / Math.max(1, z.scale)
+      const zy = (localY - z.y) / Math.max(1, z.scale)
+      const norm = framePointToMediaNorm(rect.width, rect.height, mw, mh, zx, zy)
+      if (!norm) return
+      await focusTrackAt(streamRef.current, norm.x, norm.y)
+    },
+    [busy, canTapFocus],
+  )
 
   const runCapture = async () => {
     const video = videoRef.current
@@ -333,7 +403,18 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       if (video.paused) {
         await video.play().catch(() => undefined)
       }
-      const image = captureFrame(video, 1280, 0.72)
+      const frame = frameRef.current
+      const image =
+        !hwZoomRange && frame && zoomRef.current.scale > 1.01
+          ? captureZoomedVideoFrame(
+              video,
+              frame.clientWidth,
+              frame.clientHeight,
+              zoomRef.current,
+              1280,
+              0.72,
+            )
+          : captureFrame(video, 1280, 0.72)
       if (!image) throw new Error('Could not capture frame')
       try {
         mediaSizeRef.current = await decodeDataUrlSize(image)
@@ -407,8 +488,24 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   }
 
   const onZoomTouchStart = useCallback((e: TouchEvent) => {
-    if (!stillUrlRef.current) return
     const touches = e.touches
+    const live = !stillUrlRef.current
+    if (live && hwZoomRange && touches.length === 2) {
+      e.preventDefault()
+      const a = touches[0]!
+      const b = touches[1]!
+      livePinchRef.current = {
+        startDist: Math.max(1, touchDistance(a, b)),
+        startZoom: hwZoom,
+      }
+      pinchRef.current = null
+      return
+    }
+    if (live && hwZoomRange) {
+      livePinchRef.current = null
+      return
+    }
+    // Still mode, or live digital zoom (no hardware zoom).
     if (touches.length === 2) {
       e.preventDefault()
       const a = touches[0]!
@@ -442,10 +539,21 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     } else {
       pinchRef.current = null
     }
-  }, [])
+  }, [hwZoom, hwZoomRange])
 
   const onZoomTouchMove = useCallback((e: TouchEvent) => {
-    if (!stillUrlRef.current || !pinchRef.current) return
+    if (!stillUrlRef.current && hwZoomRange && livePinchRef.current && e.touches.length === 2) {
+      e.preventDefault()
+      const a = e.touches[0]!
+      const b = e.touches[1]!
+      const dist = Math.max(1, touchDistance(a, b))
+      const ratio = dist / livePinchRef.current.startDist
+      const next = livePinchRef.current.startZoom * ratio
+      void applyLiveZoom(next)
+      return
+    }
+    if (!pinchRef.current) return
+    if (!stillUrlRef.current && hwZoomRange) return
     const state = pinchRef.current
     const frame = frameRef.current
     const apply = (next: ZoomTransform) => {
@@ -476,14 +584,15 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         y: state.startY + (t.clientY - state.lastY),
       })
     }
-  }, [])
+  }, [applyLiveZoom, hwZoomRange])
 
   const onZoomTouchEnd = useCallback((e: TouchEvent) => {
     if (e.touches.length === 0) {
       pinchRef.current = null
+      livePinchRef.current = null
       return
     }
-    if (e.touches.length === 1 && stillUrlRef.current && zoomRef.current.scale > 1.01) {
+    if (e.touches.length === 1 && zoomRef.current.scale > 1.01 && (!stillUrlRef.current ? !hwZoomRange : true)) {
       const t = e.touches[0]!
       const z = zoomRef.current
       pinchRef.current = {
@@ -497,7 +606,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         lastX: t.clientX,
         lastY: t.clientY,
       }
-    } else if (e.touches.length >= 2 && stillUrlRef.current) {
+    } else if (e.touches.length >= 2 && (stillUrlRef.current || !hwZoomRange)) {
       const a = e.touches[0]!
       const b = e.touches[1]!
       const mid = touchMidpoint(a, b)
@@ -514,42 +623,51 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         lastY: mid.y,
       }
     }
-  }, [])
+  }, [hwZoomRange])
 
   useEffect(() => {
     const el = frameRef.current
-    if (!el || !stillUrl) return
+    if (!el) return
     el.addEventListener('touchstart', onZoomTouchStart, { passive: false, capture: true })
     el.addEventListener('touchmove', onZoomTouchMove, { passive: false, capture: true })
     el.addEventListener('touchend', onZoomTouchEnd, { capture: true })
     el.addEventListener('touchcancel', onZoomTouchEnd, { capture: true })
-
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
-      const z = zoomRef.current
-      const nextScale = clampZoom(z.scale * (e.deltaY > 0 ? 0.92 : 1.08))
-      if (Math.abs(nextScale - z.scale) < 0.001) return
-      const r = el.getBoundingClientRect()
-      const px = e.clientX - r.left
-      const py = e.clientY - r.top
-      const cx = r.width / 2
-      const cy = r.height / 2
-      const worldX = (px - cx - z.x) / z.scale
-      const worldY = (py - cy - z.y) / z.scale
-      const next = clampPan(
-        {
-          scale: nextScale,
-          x: px - cx - worldX * nextScale,
-          y: py - cy - worldY * nextScale,
-        },
-        r.width,
-        r.height,
-      )
-      zoomRef.current = next
-      setZoom(next)
+      if (stillUrlRef.current) {
+        const z = zoomRef.current
+        const nextScale = clampZoom(z.scale * (e.deltaY > 0 ? 0.92 : 1.08))
+        if (Math.abs(nextScale - z.scale) < 0.001) return
+        const r = el.getBoundingClientRect()
+        const px = e.clientX - r.left
+        const py = e.clientY - r.top
+        const cx = r.width / 2
+        const cy = r.height / 2
+        const worldX = (px - cx - z.x) / z.scale
+        const worldY = (py - cy - z.y) / z.scale
+        const next = clampPan(
+          {
+            scale: nextScale,
+            x: px - cx - worldX * nextScale,
+            y: py - cy - worldY * nextScale,
+          },
+          r.width,
+          r.height,
+        )
+        zoomRef.current = next
+        setZoom(next)
+        return
+      }
+      if (hwZoomRange) {
+        const span = hwZoomRange.max - hwZoomRange.min
+        const step = Math.max(hwZoomRange.step, span * 0.04)
+        void applyLiveZoom(hwZoom + (e.deltaY < 0 ? step : -step))
+      } else {
+        const nextScale = clampZoom(zoomRef.current.scale * (e.deltaY < 0 ? 1.08 : 0.92))
+        void applyLiveZoom(nextScale)
+      }
     }
     el.addEventListener('wheel', onWheel, { passive: false })
-
     return () => {
       el.removeEventListener('touchstart', onZoomTouchStart, true)
       el.removeEventListener('touchmove', onZoomTouchMove, true)
@@ -557,10 +675,15 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       el.removeEventListener('touchcancel', onZoomTouchEnd, true)
       el.removeEventListener('wheel', onWheel)
     }
-  }, [stillUrl, onZoomTouchStart, onZoomTouchMove, onZoomTouchEnd])
+  }, [stillUrl, hwZoom, hwZoomRange, applyLiveZoom, onZoomTouchStart, onZoomTouchMove, onZoomTouchEnd])
 
   const onOverlayClick = (e: ReactMouseEvent<HTMLCanvasElement>) => {
     if (busy) return
+    // Live preview: tap-to-focus (canvas sits above the video).
+    if (!stillUrl && !boxes.length) {
+      void onLiveFocusTap(e as unknown as ReactMouseEvent<HTMLDivElement>)
+      return
+    }
     const canvas = overlayRef.current
     if (!canvas) return
     const r = canvas.getBoundingClientRect()
@@ -580,6 +703,12 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     if (!phrase) return
     openBreakdown(phrase, { translation })
   }
+
+  const liveZoomValue = hwZoomRange ? hwZoom : zoom.scale
+  const liveZoomMin = hwZoomRange?.min ?? ZOOM_MIN
+  const liveZoomMax = hwZoomRange?.max ?? ZOOM_MAX
+  const liveZoomStep = hwZoomRange?.step ?? 0.05
+  const showLiveZoom = !stillUrl && !busy
 
   const zoomStyle = {
     transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`,
@@ -625,7 +754,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
       </div>
 
       <div
-        className={`cam-ar-frame cam-ar-frame--fs${stillUrl ? ' is-still' : ''}`}
+        className={`cam-ar-frame cam-ar-frame--fs${stillUrl ? ' is-still' : ' is-live'}`}
         ref={frameRef}
       >
         <div
@@ -649,6 +778,14 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           className="cam-overlay-canvas"
           onClick={onOverlayClick}
         />
+        {focusRing ? (
+          <span
+            key={focusRing.key}
+            className="cam-ar-focus-ring"
+            style={{ left: focusRing.x, top: focusRing.y }}
+            aria-hidden="true"
+          />
+        ) : null}
       </div>
 
       {busy ? (
@@ -665,8 +802,28 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
       {!busy && !boxes.length && !error && !stillUrl ? (
         <p className="cam-ar-toast">
-          <BiText copy={ui.camCaptureHint} size="sm" />
+          <BiText
+            copy={canTapFocus || showLiveZoom ? ui.camCaptureHintZoomFocus : ui.camCaptureHint}
+            size="sm"
+          />
         </p>
+      ) : null}
+
+      {showLiveZoom ? (
+        <label className="cam-ar-live-zoom">
+          <span className="cam-ar-live-zoom-label">
+            <BiText copy={ui.camLiveZoom} size="sm" />
+          </span>
+          <input
+            type="range"
+            min={liveZoomMin}
+            max={liveZoomMax}
+            step={liveZoomStep}
+            value={liveZoomValue}
+            onChange={(e) => void applyLiveZoom(Number(e.target.value))}
+            aria-label={biPlain(ui.camLiveZoom)}
+          />
+        </label>
       ) : null}
 
       <div className="cam-ar-dock">
