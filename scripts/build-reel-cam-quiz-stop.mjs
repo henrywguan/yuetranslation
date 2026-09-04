@@ -351,13 +351,30 @@ run('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', sil
 const total = 3 + 6 + 1.2 + 10 + 4 + 2 // 26.2
 const final = join(OUT, 'reel-cam-quiz-stop.mp4')
 const wipeAt = 3 + 6 // whoosh at transition
-const revealAt = 3 + 6 + 1.2 + 10 // TTS
+const revealAt = 3 + 6 + 1.2 + 10 // Azure 停車 TTS
+const voHook = join(AUDIO, 'higgsfield/vo-hook.mp3')
+const voQuiz = join(AUDIO, 'higgsfield/vo-quiz.mp3')
+const voReveal = join(AUDIO, 'higgsfield/vo-reveal.mp3')
+const hasHfVo = existsSync(voHook) && existsSync(voQuiz) && existsSync(voReveal)
+
 const args = ['-y', '-i', silent, '-stream_loop', '-1', '-i', bed, '-i', whoosh]
 if (existsSync(tts)) args.push('-i', tts)
 if (existsSync(pop)) args.push('-i', pop)
+if (hasHfVo) args.push('-i', voHook, '-i', voQuiz, '-i', voReveal)
 
 let filter
-if (existsSync(tts) && existsSync(pop)) {
+if (hasHfVo && existsSync(tts) && existsSync(pop)) {
+  // 0 silent 1 bed 2 whoosh 3 tts 4 pop 5 voHook 6 voQuiz 7 voReveal
+  filter =
+    `[1:a]volume=0.16,atrim=0:${total},asetpts=PTS-STARTPTS[bed];` +
+    `[2:a]volume=0.65,adelay=${Math.round(wipeAt * 1000)}|${Math.round(wipeAt * 1000)},apad=whole_dur=${total}[wh];` +
+    `[3:a]volume=1.3,adelay=${Math.round(revealAt * 1000)}|${Math.round(revealAt * 1000)},apad=whole_dur=${total}[canto];` +
+    `[4:a]volume=0.5,adelay=3400|3400,apad=whole_dur=${total}[p1];` +
+    `[5:a]atempo=1.18,volume=1.15,adelay=200|200,apad=whole_dur=${total}[vh];` +
+    `[6:a]atempo=1.18,volume=1.1,adelay=3600|3600,apad=whole_dur=${total}[vq];` +
+    `[7:a]atempo=1.15,volume=1.05,adelay=${Math.round((revealAt + 1.6) * 1000)}|${Math.round((revealAt + 1.6) * 1000)},apad=whole_dur=${total}[vr];` +
+    `[bed][wh][canto][p1][vh][vq][vr]amix=inputs=7:duration=first:dropout_transition=0.15,alimiter=limit=0.92,afade=t=in:st=0:d=0.35,afade=t=out:st=${total - 0.9}:d=0.8[a]`
+} else if (existsSync(tts) && existsSync(pop)) {
   // 0 silent 1 bed 2 whoosh 3 tts 4 pop
   filter =
     `[1:a]volume=0.2,atrim=0:${total},asetpts=PTS-STARTPTS[bed];` +
@@ -381,15 +398,16 @@ run('ffmpeg', args)
 
 writeFileSync(
   join(OUT, 'BUILD_NOTES.txt'),
-  `Drops-style Cam quiz stop-sign Reel (v2)
+  `Drops-style Cam quiz stop-sign Reel (v3)
 Duration: ${total}s · 9:16
 Photo: Henry stop-sign (stop-sign-photo.png)
 Cam insert: ${existsSync(camLive) ? 'LIVE + Recordly-style zoom' : 'FALLBACK'}
 TTS 停車: ${existsSync(tts) ? 'YES' : 'NO'}
+Higgsfield VO (Juno / seed_audio): ${hasHfVo ? 'hook + quiz + reveal EN' : 'NO'}
 Transition: jade iris wipe + whoosh
-Liveliness: floating orbs + dashed path after pill stagger
-Higgsfield audio/avatar: skipped (MCP session expired — reconnect desktop)
+Liveliness: floating orbs + petals + pulse after pill stagger
 Tofu: mixed Latin+CJK fonts for 粵
+Note: Higgsfield standalone generate_audio is speech-only — bed/SFX stay local lavfi
 `,
 )
 

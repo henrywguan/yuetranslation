@@ -1,9 +1,10 @@
-Drops-style Cam quiz stop-sign Reel (v2)
+Drops-style Cam quiz stop-sign Reel (v3)
 Duration: 26.2s · 9:16
 Photo: Henry stop-sign (stop-sign-photo.png)
 Cam insert: LIVE + Recordly-style zoom
 TTS 停車: YES
+Higgsfield VO (Juno / seed_audio): hook + quiz + reveal EN
 Transition: jade iris wipe + whoosh
-Liveliness: floating orbs + dashed path after pill stagger
-Higgsfield audio/avatar: skipped (MCP session expired — reconnect desktop)
+Liveliness: floating orbs + petals + pulse after pill stagger
 Tofu: mixed Latin+CJK fonts for 粵
+Note: Higgsfield standalone generate_audio is speech-only — bed/SFX stay local lavfi
