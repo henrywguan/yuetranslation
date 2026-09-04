@@ -51,8 +51,8 @@
     },
     "solo-anatomy": {
       "seconds": 8,
-      "focus": "yue",
-      "zoomEnd": 1.1,
+      "focus": "center",
+      "zoomEnd": 1.06,
       "rings": [
         {
           "file": "ring-en",
