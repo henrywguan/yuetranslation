@@ -22,6 +22,7 @@
     "smoke:usage": "npm run smoke:usage --prefix apps/api",
     "smoke:household-usage": "npm run smoke:household-usage --prefix apps/api",
     "smoke:all": "npm run smoke:all --prefix apps/api",
+    "security:api-health": "./scripts/security-api-health.sh",
     "test:translate": "node scripts/translation-quality-bot.mjs",
     "test:translate:live": "node scripts/live-pipeline-bot.mjs",
     "docs:screenshots": "node scripts/capture-docs-screenshots.mjs",

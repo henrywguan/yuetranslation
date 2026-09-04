@@ -12,6 +12,17 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 **Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
 
+### Security Guardian (PR + abuse + API health)
+
+Standing security / leak / token-abuse review for every PR and scheduled full-repo scans:
+
+- Brief + Automations paste prompts: [`docs/agents/security-guardian.md`](docs/agents/security-guardian.md)
+- Baseline findings: [`docs/agents/security-baseline.md`](docs/agents/security-baseline.md)
+- Bugbot rules: [`.cursor/BUGBOT.md`](.cursor/BUGBOT.md)
+- Safe health probe (no paid APIs): `npm run security:api-health` → `./scripts/security-api-health.sh`
+
+Henry activates **Security Reviewer**, **Vulnerability Scanner**, and the API-health custom automation in [cursor.com/automations](https://cursor.com/automations) (cloud agents cannot create standing Automations via API).
+
 ### Instagram / static social posts (approved look)
 
 When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, use the **instructional night/dark mode** Harbor look — **not** a new AI poster style.
@@ -59,6 +70,7 @@ Before each outbound cloud-agent call that would use those keys (including `curl
 Allowed without asking (cloud):
 
 - `/api/health` (readiness only)
+- `npm run security:api-health` (health + auth-config shape only)
 - Offline `npm run smoke:canto`
 - Dictionary/lexicon-only checks that cannot reach the model
 - Local Vite / Express process management
@@ -80,6 +92,7 @@ Smoke without a browser (offline / no paid APIs):
 ```bash
 curl -s http://localhost:8787/api/health
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
+npm run security:api-health
 npm run smoke:canto
 ```
 
