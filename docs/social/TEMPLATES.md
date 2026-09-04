@@ -22,6 +22,7 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 
 - Brand: Harbor `#07131f` · Jade `#3dcfb6` · Ink `#e8f4ff` · Syne + Noto Sans HK  
 - Logo: **`docs/brand/favicon.png` only** — never regenerate  
+- **End CTA / brand lockup (REQUIRED):** use the **real** favicon chop + **JyutTranslate** set in **Syne** (self-hosted / composited HTML or FFmpeg overlay). Never AI-invented wordmarks, metallic 3D type, wrong casing (`Jyuttranslate`), or regenerated logos. In Higgsfield/Seedance prompts: leave the end card as a clean Harbor field (or soft hold) and say explicitly **“no logo, no brand wordmark, no CTA type — composited in post.”** Then composite `docs/brand/favicon.png` + Syne wordmark + URL/`Launch translator` in edit.  
 - Emotional Reels: **variety of cast / scenes / locations by default**; cast-lock **only within one Reel or Story**  
 - Prefer real JyutTranslate UI overlays; ask Henry before Higgsfield video credit spend  
 - **Hashtags: always exactly 5** on every post (see Studio brief)  

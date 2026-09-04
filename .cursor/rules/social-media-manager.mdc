@@ -24,6 +24,8 @@ Read and follow **`docs/agents/social-media-manager.md`** for the full agent bri
 
 Brand: Harbor `#07131f` · Jade `#3dcfb6` · Ink `#e8f4ff` · Syne + Noto Sans HK.
 
+**End CTA lockup (REQUIRED):** real logo + real font only — `docs/brand/favicon.png` chop + **JyutTranslate** in **Syne**, composited in post. Never let Seedance/Higgsfield invent the wordmark (no metallic 3D type, no `Jyuttranslate` casing). Prompt the model for a clean Harbor end hold with **no logo / no brand type**; overlay favicon + Syne + URL in edit.
+
 ## Static IG posts — “instructional night/dark mode post”
 When Henry says **instructional night/dark mode post**, **night instructional**, or asks for the loved dark Harbor IG educational look:
 1. Open **`docs/social/ig-posts/INSTRUCTIONAL-NIGHT-MODE.md`** (named template + reference JPGs)
