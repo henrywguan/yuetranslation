@@ -55,10 +55,10 @@ for p in patterns:
     if re.search(p, blob):
         print(f"Suspicious secret-like pattern in health: {p}")
         sys.exit(3)
-env_file = (data.get("openai") or {}).get("envFile")
-if isinstance(env_file, str) and env_file.strip():
-    print(f"WARN: health discloses envFile={env_file}")
-    # Warning only — still exit 0 for health-up; Security Guardian treats as finding.
+openai = data.get("openai") or {}
+if "envFile" in openai or "envPath" in openai:
+    print("FAIL: health must not disclose openai.envFile / envPath")
+    sys.exit(4)
 mode = data.get("mode")
 print(f"ok=true mode={mode} engines={json.dumps(data.get('engines'))}")
 sys.exit(0)
@@ -66,12 +66,7 @@ PY
 then
   fail "/api/health JSON validation failed (see above)"
 else
-  pass "/api/health ok:true"
-fi
-
-# Soft warning already printed by Python for envFile
-if grep -q '"envFile"' "$HEALTH_FILE" 2>/dev/null; then
-  note "FINDING: /api/health includes openai.envFile — strip from public payload (AUTOMATED)"
+  pass "/api/health ok:true (no envFile leak)"
 fi
 
 # --- Auth config shape (no service role) ---

@@ -89,7 +89,8 @@ export const env = {
   /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',
   freeAllowCamera: (process.env.YUE_FREE_ALLOW_CAMERA || '1') === '1',
-  openMode: (process.env.YUE_OPEN_MODE || '1') === '1',
+  /** Fail-closed: metering + login gates on unless local `.env` sets YUE_OPEN_MODE=1. */
+  openMode: (process.env.YUE_OPEN_MODE || '0') === '1',
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   /** Guest trial live minutes / month (0 = guests cannot use live). */
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 30),
@@ -286,6 +287,12 @@ export function visionLlmConfigured() {
   return Boolean(env.openaiVisionApiKey && env.openaiVisionModel)
 }
 
+/** Absolute path to `apps/api/.env` — for server logs only; never put in public JSON. */
+export function loadedEnvFilePath() {
+  return envPath
+}
+
+/** Public / admin-safe model status — no filesystem paths or secret material. */
 export function openaiStatus() {
   return {
     configured: openaiConfigured(),
@@ -294,6 +301,5 @@ export function openaiStatus() {
     model: env.openaiModel,
     visionModel: env.openaiVisionModel || null,
     visionLlm: visionLlmConfigured(),
-    envFile: envPath,
   }
 }

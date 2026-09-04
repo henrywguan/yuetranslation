@@ -3,7 +3,8 @@
 Initial full-project pass by Security Guardian (code review + safe `/api/health` probe).  
 Re-run via **Vulnerability Scanner** automation or chat: follow `docs/agents/security-guardian.md`.
 
-Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production HTTP)
+Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production HTTP)  
+Updated: 2026-09-04 — shipped fail-closed `YUE_OPEN_MODE` default + stripped health `envFile`
 
 ---
 
@@ -17,21 +18,17 @@ Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production 
 - **Fixability:** NEEDS_HUMAN
 - **Why:** Cap numbers and whether guests stay free are product/billing decisions Henry must set.
 
-### [High] `/api/health` discloses internal env file path + model identity
+### [High] `/api/health` discloses internal env file path + model identity — FIXED
+- **Status:** Fixed on this branch — `openaiStatus()` no longer returns `envFile`; server boot still logs `loadedEnvFilePath()` to stdout only.
 - **Category:** leak
-- **Evidence:** `openaiStatus()` in `apps/api/src/env.ts` returns `envFile`; `/api/health` embeds full `openai` object (`apps/api/src/app.ts`). Local probe returned `envFile: "/workspace/apps/api/.env"` plus model names.
-- **Impact:** Helps attackers map filesystem layout and stack; increases value of other vulns; noisy reconnaissance.
-- **Fix:** Strip `envFile` (and any absolute paths) from public health JSON; keep booleans only (`configured`, `hasApiKey`, engine flags). Log paths server-side only (`apps/api/src/index.ts` already logs).
-- **Fixability:** AUTOMATED
-- **Why:** Safe response-shape cleanup with no product-policy change.
+- **Evidence (was):** `openaiStatus()` returned `envFile`; `/api/health` embedded it.
+- **Fix applied:** Public status is booleans + model names only; `scripts/security-api-health.sh` now fails if `envFile` reappears.
 
-### [Medium→High in misconfig] `YUE_OPEN_MODE` defaults to open in code
+### [Medium→High in misconfig] `YUE_OPEN_MODE` defaults to open in code — FIXED
+- **Status:** Fixed on this branch — code default is now `'0'` (fail-closed). Local lux still sets `YUE_OPEN_MODE=1` in `apps/api/.env.example`.
 - **Category:** config / metering
-- **Evidence:** `apps/api/src/env.ts` defaults `YUE_OPEN_MODE` to `'1'`. Production overrides to `0` in `vercel.json`. Local/cloud health currently reports `mode: "open"`.
-- **Impact:** Any deploy missing the Vercel env override skips metering and soft-opens entitlements → token burn + free live-like behavior.
-- **Fix:** Prefer fail-closed default (`'0'`) in code; keep explicit `1` only in local `.env.example`. Add a deploy checklist / health assert that production must be `mode: "cloud"`.
-- **Fixability:** NEEDS_HUMAN (default flip) / AUTOMATED (docs + health assert once Henry confirms fail-closed)
-- **Why:** Changing the code default affects every local/dev workflow; Henry should confirm.
+- **Evidence (was):** Default `'1'` meant any deploy missing Vercel override skipped metering.
+- **Why this was safe to flip:** Production already pins `0` in `vercel.json`. Dev convenience belongs in `.env`, not in the fail-open code default.
 
 ---
 
@@ -40,25 +37,24 @@ Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production 
 ### [Medium] CORS `origin: true` reflects any Origin
 - **Category:** config
 - **Evidence:** `app.use(cors({ origin: true, credentials: true }))` in `apps/api/src/app.ts`.
-- **Impact:** Browser sessions with cookies/credentials could be invoked from arbitrary origins if cookie auth is used; with Bearer tokens the risk is lower but still widens CSRF-style browser abuse of logged-in clients that attach tokens cross-origin.
+- **Impact:** See PR / chat explanation — browser cross-origin calls with credentials. With Bearer JWT in `Authorization` (JyutTranslate’s pattern) risk is lower than cookie sessions, but any browser page can still trigger credentialed CORS preflight+request if a logged-in SPA attaches the token to cross-origin fetches.
 - **Fix:** Restrict to `YUE_APP_URL` + known marketing/localhost origins in production.
 - **Fixability:** NEEDS_HUMAN
 - **Why:** Must confirm all legitimate web origins (TWA, WordPress, tunnels) before tightening.
 
-### [Medium] `ai_vision_count` is view-only (no hard cap)
+### [Medium] `ai_vision_count` is view-only (no hard cap) — accepted by product
 - **Category:** metering / abuse
-- **Evidence:** `docs/entitlements.md` + camera scan path notes uncapped AI vision fallback.
-- **Impact:** Signed-in Free/Family users who trigger vision LLM fallback repeatedly can burn vision-model spend beyond soft expectations.
-- **Fix:** Add a hard or soft monthly cap, or degrade to Azure-only OCR when over budget.
-- **Fixability:** NEEDS_HUMAN
-- **Why:** Quota numbers are a plan decision.
+- **Evidence:** Camera/docs AI vision LLM fallback increments `ai_vision_count` but does not block when high.
+- **Product decision (Henry):** Keep uncapped; meter for visibility because the path is rare.
+- **Residual risk:** A signed-in attacker who can force the vision-LLM fallback (hard/calligraphy images, or crafted payloads that fail Azure OCR) can still spend vision-model $ without a plan ceiling — camera minutes / docs pages may still constrain *how often* they call the endpoint, but each call can be expensive if AI vision fires. Metering lets you spot the burn in admin; it does not stop it mid-month.
+- **Fixability:** NEEDS_HUMAN only if Henry later wants a kill-switch / soft alert threshold — not shipping a hard cap now.
 
 ### [Medium] Large JSON body limit (`12mb`) on shared parser
 - **Category:** abuse
 - **Evidence:** `express.json({ limit: '12mb' })` before route handlers.
 - **Impact:** Easy bandwidth/CPU DoS on any JSON endpoint; camera/docs may need large payloads but translate/tts do not.
 - **Fix:** Keep a high limit only on camera/docs routes; use a smaller default (e.g. 256kb–1mb) globally.
-- **Fixability:** AUTOMATED (with care for docs/camera tests)
+- **Fixability:** AUTOMATED (deferred — Cam/Docs still need large base64 bodies; do as a follow-up with route-specific parsers)
 - **Why:** Localized Express wiring; verify Cam/Docs still work.
 
 ---
@@ -84,19 +80,12 @@ Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production 
 ## Healthy controls already in place
 
 - Production `vercel.json` sets `YUE_OPEN_MODE=0` and `YUE_REQUIRE_LOGIN=1`
+- Code default is now also `YUE_OPEN_MODE=0` (fail-closed)
 - Live speech token gated on `ent.allowed.live`; Cam/docs on `allowed.camera` / `allowed.docs`
 - Admin routes use `requireAdmin` (email allowlist + role)
 - Stripe webhook uses raw body + signature path; auth send-email hook verifies Standard Webhooks secret
 - Bug reports rate-limited (10/hour) and strip oversized screenshots
 - `.gitignore` excludes `.env` / `apps/api/.env`
+- Public `/api/health` no longer exposes `openai.envFile`
 - Offline smoke scripts exist (`smoke:canto`, `smoke:entitlements`, `smoke:usage`, `smoke:all`) without needing live paid calls for core lexicon paths
 - Cloud `AGENTS.md` forbids unapproved metered API calls from agents
-
----
-
-## Suggested first automated fix PR (if Henry says go)
-
-1. Remove `envFile` from public `openaiStatus()` / health JSON  
-2. Optionally shrink default JSON body limit with per-route overrides for Cam/Docs  
-
-Leave rate limits, CORS allowlist, open-mode default, and vision caps for Henry’s input.
