@@ -82,6 +82,13 @@ Inspired by Language Drops’ flat-vector / game-UI animation — remapped to Jy
 - Low-credit path: stills → higgsedit/Rive → Recordly UI  
 - Not for static Harbor instructional grids (use **instructional night/dark mode post**)
 
+## Competitor ad clones (Higgsfield / Studio plug-ins)
+When Henry asks to **clone / look-alike** a high-end peer’s ad (Drops motion, Jumpspeak UA, Speak voice loop, Pingo punchline, Google-utility Conversation, Timekettle dual-talk, SaaS UGC):
+
+1. Open **`docs/social/COMPETITOR-AD-CLONE-PROMPTS.md`**
+2. Use the matching **PLUG-IN** block (or Henry pastes it) — clone **ad grammar** (beats/timing/proof), not purple/meme aesthetics
+3. Remap proof to JyutTranslate features; real UI only; ask before credit spend
+
 ## Template index (keep in sync)
 **Master list:** [`docs/social/TEMPLATES.md`](../social/TEMPLATES.md).
 
@@ -175,6 +182,7 @@ Until then: output **ready-to-paste** captions + **scheduling notes** (best time
 ## Repo references (for accurate copy)
 - Brand: docs/design-system.md · docs/brand/index.html
 - **Static IG design canon:** docs/social/ig-posts/DESIGN.md · docs/social/ig-posts/
+- **Competitor ad clone prompts:** docs/social/COMPETITOR-AD-CLONE-PROMPTS.md
 - Product features: README.md · docs/entitlements.md
 - UI copy tone: apps/web/src/lib/uiCopy.ts
 
