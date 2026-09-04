@@ -88,9 +88,18 @@ def rounded_panel(
 
 
 def soft_glow(im: Image.Image, cx: int, cy: int, r: int, color=JADE_SOFT) -> None:
+    # Keep ellipse + blur kernel inside the canvas — hard edge clip reads as a broken overlay.
+    margin = min(cx, cy, W - cx, H - cy)
+    # Blur spreads ~radius px past the ellipse; reserve that inset.
+    for _ in range(3):
+        blur = max(12, r // 4)
+        r = int(min(r, max(16, margin - blur - 10)))
+    if r < 14:
+        return
+    blur = max(12, r // 4)
     layer = blank()
     ImageDraw.Draw(layer).ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
-    layer = layer.filter(ImageFilter.GaussianBlur(radius=max(18, r // 4)))
+    layer = layer.filter(ImageFilter.GaussianBlur(radius=blur))
     im.alpha_composite(layer)
 
 
@@ -258,12 +267,13 @@ def pack_solo_anatomy() -> None:
     draw_bounds_rect(r2, (240, 380, 880, 575), radius=28)
     layers.append(save_layer("solo-anatomy", "bounds-yue", r2))
 
+    # Keep clear of title and inset from edges (safe for glow + pop motion)
     c1 = blank()
-    draw_callout(c1, (90, 100, 520, 200), "1 · Type English", "Your side of the line")
+    draw_callout(c1, (80, 275, 520, 380), "1 · Type English", "Your side of the line")
     layers.append(save_layer("solo-anatomy", "callout-en", c1))
 
     c2 = blank()
-    draw_callout(c2, (540, 590, 1000, 700), "2 · Read 粵 + tones", "Jyutping on every character")
+    draw_callout(c2, (500, 600, 1000, 710), "2 · Read 粵 + tones", "Jyutping on every character")
     layers.append(save_layer("solo-anatomy", "callout-yue", c2))
 
     c3 = blank()
@@ -280,10 +290,11 @@ def pack_solo_anatomy() -> None:
             {"file": "bounds-yue", "track": True, "pulse": True, "in": 3.1, "out": 7.4},
         ],
         "captions": [
-            {"file": "chip", "in": 0.1, "out": 2.6, "style": "pop-down"},
-            {"file": "title", "in": 0.2, "out": 2.5, "style": "pop-down"},
-            {"file": "callout-en", "in": 0.5, "out": 3.3, "style": "pop-left"},
-            {"file": "callout-yue", "in": 3.2, "out": 6.2, "style": "pop-right"},
+            {"file": "chip", "in": 0.1, "out": 1.85, "style": "pop-down"},
+            {"file": "title", "in": 0.2, "out": 1.9, "style": "pop-down"},
+            # After title clears — pop-down (not pop-left) so left glow never clips
+            {"file": "callout-en", "in": 1.75, "out": 3.5, "style": "pop-down"},
+            {"file": "callout-yue", "in": 3.2, "out": 6.2, "style": "pop-up"},
             {"file": "callout-speak", "in": 5.5, "out": 7.6, "style": "pop-up"},
         ],
     }

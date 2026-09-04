@@ -73,26 +73,26 @@
         {
           "file": "chip",
           "in": 0.1,
-          "out": 2.6,
+          "out": 1.85,
           "style": "pop-down"
         },
         {
           "file": "title",
           "in": 0.2,
-          "out": 2.5,
+          "out": 1.9,
           "style": "pop-down"
         },
         {
           "file": "callout-en",
-          "in": 0.5,
-          "out": 3.3,
-          "style": "pop-left"
+          "in": 1.75,
+          "out": 3.5,
+          "style": "pop-down"
         },
         {
           "file": "callout-yue",
           "in": 3.2,
           "out": 6.2,
-          "style": "pop-right"
+          "style": "pop-up"
         },
         {
           "file": "callout-speak",
