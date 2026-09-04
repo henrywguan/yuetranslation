@@ -13,8 +13,8 @@ import {
   drawCornerBrackets,
   drawGlassPanel,
   drawOverlayLabel,
+  centeredLabelX,
   measureOverlayLabel,
-  tightCoverWidth,
 } from '../lib/camera/overlayPaint'
 import {
   clampPan,
@@ -205,6 +205,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       selected: boolean
       fontSize: number
       padX: number
+      labelW: number
       pref: PanelRect
     }
 
@@ -239,10 +240,10 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       }
 
       const labelW = label ? measureOverlayLabel(ctx, label, fontSize) : 0
-      const tightW = label ? tightCoverWidth(labelW, padX, drawW) : drawW
-
-      const pref: PanelRect = { id: b.id, x: drawX, y: drawY, w: tightW, h: drawH }
-      planned.push({ id: b.id, label, selected, fontSize, padX, pref })
+      // Blanket the full OCR / drawn region — shrinking to glyph width left source
+      // ink visible (same fix as AR Cam, #250). STOP→停止 must cover all of STOP.
+      const pref: PanelRect = { id: b.id, x: drawX, y: drawY, w: drawW, h: drawH }
+      planned.push({ id: b.id, label, selected, fontSize, padX, labelW, pref })
     }
 
     const paintOrder = [...planned].sort((a, b) => Number(a.selected) - Number(b.selected))
@@ -254,7 +255,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
         drawOverlayLabel(
           ctx,
           p.label,
-          rect.x + p.padX,
+          centeredLabelX(rect.x, rect.w, p.padX, p.labelW),
           rect.y + rect.h / 2,
           Math.max(8, rect.w - p.padX * 2),
           p.fontSize,
