@@ -108,6 +108,8 @@ type State = {
   setSpeakDirection: (d: SpeakDirection) => void
   /** Solo: set a pane language; if same as the other pane, swap. */
   setSoloPaneLang: (pane: 'upper' | 'lower', lang: Lang) => void
+  /** Conversation: clear partner-pane output after Chinese variety change. */
+  clearConversationChinesePane: () => void
   setAutoSpeak: (v: boolean) => void
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
@@ -490,10 +492,12 @@ export const useYueStore = create<State>((set, get) => ({
     const lower = get().soloLowerLang
     const other = pane === 'upper' ? lower : upper
     const current = pane === 'upper' ? upper : lower
+    if (lang === current) return
     let nextUpper = upper
     let nextLower = lower
-    if (lang === other) {
-      // Same as the other pane → swap.
+    const swapping = lang === other
+    if (swapping) {
+      // Same as the other pane → swap languages + pane contents.
       if (pane === 'upper') {
         nextUpper = lang
         nextLower = current
@@ -512,11 +516,78 @@ export const useYueStore = create<State>((set, get) => ({
         : current === 'yue' || current === 'cmn' || current === 'wuu' || current === 'tl'
           ? {}
           : {}
+    invalidatePendingTranslations()
+    const s = get()
+    if (swapping) {
+      set({
+        soloUpperLang: nextUpper,
+        soloLowerLang: nextLower,
+        speakDirection: lang,
+        ...chinesePatch,
+        enInterim: s.yueInterim,
+        yueInterim: s.enInterim,
+        enTranslation: s.yueTranslation,
+        yueTranslation: s.enTranslation,
+        enDefinition: s.yueDefinition,
+        yueDefinition: s.enDefinition,
+        enDefinitions: s.yueDefinitions,
+        yueDefinitions: s.enDefinitions,
+        enAlternatives: s.yueAlternatives,
+        yueAlternatives: s.enAlternatives,
+        translating: false,
+        translatingTo: null,
+        altsLoading: false,
+      })
+      return
+    }
+    // Language changed on one pane — clear that pane's text so stale output
+    // cannot linger under the new label (SoloView re-translates from the other side).
+    const cleared =
+      pane === 'upper'
+        ? {
+            enInterim: '',
+            enTranslation: '',
+            enDefinition: '',
+            enDefinitions: [] as string[],
+            enAlternatives: [] as string[],
+          }
+        : {
+            yueInterim: '',
+            yueTranslation: '',
+            yueDefinition: '',
+            yueDefinitions: [] as string[],
+            yueAlternatives: [] as string[],
+          }
     set({
       soloUpperLang: nextUpper,
       soloLowerLang: nextLower,
       speakDirection: lang,
       ...chinesePatch,
+      ...cleared,
+      translating: false,
+      translatingTo: null,
+      altsLoading: false,
+    })
+  },
+  clearConversationChinesePane: () => {
+    invalidatePendingTranslations()
+    const face = get().face
+    const zhWasSource = Boolean(face.yueInterim.trim()) && !face.enInterim.trim()
+    set({
+      face: {
+        ...face,
+        yueInterim: '',
+        yueTranslation: '',
+        yueDefinition: '',
+        yueDefinitions: [],
+        romanization: undefined,
+        sandhiHint: undefined,
+        ipa: undefined,
+        ...(zhWasSource ? { enTranslation: '' } : {}),
+      },
+      translating: false,
+      translatingTo: null,
+      altsLoading: false,
     })
   },
   setAutoSpeak: (autoSpeak) => {
