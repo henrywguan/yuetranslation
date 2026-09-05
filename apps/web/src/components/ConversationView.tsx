@@ -1,3 +1,4 @@
+import type { Lang } from '../lib/types'
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
@@ -70,8 +71,8 @@ export function ConversationView() {
     })
   }
 
-  const onChineseLang = (lang: 'yue' | 'cmn' | 'en') => {
-    if (lang === 'en') return
+  const onChineseLang = (lang: Lang) => {
+    if (lang !== 'yue' && lang !== 'cmn') return
     setSpeakDirection(lang)
   }
 

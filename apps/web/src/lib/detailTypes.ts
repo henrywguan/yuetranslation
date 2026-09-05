@@ -4,7 +4,7 @@ export type DetailLayer =
       /** Phrase under study (Cantonese, Mandarin, or English). */
       phrase: string
       /** Which learner panel to show. Auto-detected from script when omitted. */
-      lang?: 'en' | 'yue' | 'cmn'
+      lang?: 'en' | 'yue' | 'cmn' | 'tl'
       translation?: string
       definition?: string
       /** Multiple learner senses listed in the details pane / drawer. */
@@ -18,7 +18,7 @@ export type DetailLayer =
       /** Yue: Jyutping. Cmn: pinyin (tone marks). En: IPA. */
       jp: string | null
       phrase: string
-      lang?: 'en' | 'yue' | 'cmn'
+      lang?: 'en' | 'yue' | 'cmn' | 'tl'
       definition?: string
       /** Sense for this character/word when known. */
       sense?: string

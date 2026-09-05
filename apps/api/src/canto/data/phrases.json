@@ -3965,6 +3965,295 @@
         "noun",
         "meta"
       ]
+    },
+    {
+      "id": "en-hello-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "hello",
+      "text": "Kumusta",
+      "alternatives": [
+        "Kamusta",
+        "Hi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-thanks-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "thank you",
+      "text": "Salamat",
+      "alternatives": [
+        "Salamat ha",
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-thanks-alot-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "thank you so much",
+      "text": "Maraming salamat",
+      "alternatives": [
+        "Salamat ng marami"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-sorry-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i'm sorry",
+      "text": "Pasensya na",
+      "alternatives": [
+        "Sorry",
+        "Patawad"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-yes-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "yes",
+      "text": "Oo",
+      "alternatives": [
+        "Opo"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-no-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "no",
+      "text": "Hindi",
+      "alternatives": [
+        "Hindi po"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-ok-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "okay",
+      "text": "Sige",
+      "alternatives": [
+        "Okay",
+        "Ok"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-lets-go-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "let's go",
+      "text": "Tara",
+      "alternatives": [
+        "Tara na",
+        "Go"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-how-much-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "how much",
+      "text": "Magkano",
+      "alternatives": [
+        "Magkano po"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-where-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "where is it",
+      "text": "Nasaan",
+      "alternatives": [
+        "Saan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-help-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "help",
+      "text": "Tulong",
+      "alternatives": [
+        "Help"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "en-delicious-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "this is delicious",
+      "text": "Ang sarap",
+      "alternatives": [
+        "Masarap"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-wait-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "wait a minute",
+      "text": "Sandali lang",
+      "alternatives": [
+        "Teka",
+        "Wait"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-dont-understand-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i don't understand",
+      "text": "Hindi ko gets",
+      "alternatives": [
+        "Di ko gets",
+        "Hindi ko maintindihan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-kumusta-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "kumusta",
+      "text": "Hello",
+      "alternatives": [
+        "Hi",
+        "How are you"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "tl-salamat-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "salamat",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-sige-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "sige",
+      "text": "Okay",
+      "alternatives": [
+        "Sure",
+        "Alright"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-tara-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tara",
+      "text": "Let's go",
+      "alternatives": [
+        "Come on"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-hindi-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "hindi",
+      "text": "No",
+      "alternatives": [
+        "No, I don't"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-oo-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "oo",
+      "text": "Yes",
+      "alternatives": [
+        "Yeah"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
     }
   ]
 }

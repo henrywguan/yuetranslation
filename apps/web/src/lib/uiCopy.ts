@@ -263,6 +263,7 @@ export const ui = {
   dirEnglish: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
+  dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakHint: {
     en: 'Play translations aloud automatically after each turn.',

@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'tl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -199,8 +199,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn',
-): 'en' | 'yue' | 'cmn' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'tl',
+): 'en' | 'yue' | 'cmn' | 'tl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -417,6 +417,17 @@ async function yueBreakdown(text: string) {
   }
 }
 
+
+async function tlBreakdown(text: string) {
+  const tokens = text.match(/[A-Za-zÀ-ÿÑñ]+(?:'[A-Za-zÀ-ÿÑñ]+)?|[^\sA-Za-zÀ-ÿÑñ]+/g) || []
+  const characters = tokens.map((tok) => ({
+    char: tok,
+    jyutping: null as string | null,
+    meaning: '',
+  }))
+  return { characters, engine: 'dictionary' as const, lang: 'tl' as const }
+}
+
 async function cmnBreakdown(text: string) {
   // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
   // API returns gloss rows with jyutping left null for client merge.
@@ -433,6 +444,7 @@ export async function breakdown(input: unknown) {
   const text = parsed.text.trim()
   const lang = detectBreakdownLang(text, parsed.lang)
   if (lang === 'en') return englishBreakdown(text)
+  if (lang === 'tl') return tlBreakdown(text)
   if (lang === 'cmn') return cmnBreakdown(text)
   return yueBreakdown(text)
 }

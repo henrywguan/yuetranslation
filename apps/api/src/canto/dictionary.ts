@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'tl'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -45,7 +45,7 @@ function yueSttVariants(source: string): string[] {
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'tl'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean

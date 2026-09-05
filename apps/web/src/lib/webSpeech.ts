@@ -19,15 +19,18 @@ export function createWebSpeechSession(
   let heardSpeech = false
   let yueLocaleIndex = 0
   let cmnLocaleIndex = 0
+  let tlLocaleIndex = 0
   const echo = createEchoGuard()
   // iOS WebKit: Cantonese needs short sessions + restart; en-US handles continuous well.
   const apple = isAppleTouchDevice()
   // zh-HK is primary; rotate fallbacks when the browser rejects Cantonese.
   const yueLocales = ['zh-HK', 'yue-HK', 'yue-Hant-HK', 'zh-TW']
   const cmnLocales = ['zh-CN', 'zh-Hans-CN', 'cmn-Hans-CN', 'zh']
+  const tlLocales = ['fil-PH', 'tl-PH', 'fil']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
+  const tlLocale = () => tlLocales[tlLocaleIndex % tlLocales.length]
 
   const startOne = () => {
     if (stopped) return
@@ -37,7 +40,13 @@ export function createWebSpeechSession(
     rec.interimResults = true
     rec.maxAlternatives = 1
     rec.lang =
-      activeLang === 'yue' ? yueLocale() : activeLang === 'cmn' ? cmnLocale() : 'en-US'
+      activeLang === 'yue'
+        ? yueLocale()
+        : activeLang === 'cmn'
+          ? cmnLocale()
+          : activeLang === 'tl'
+            ? tlLocale()
+            : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -80,6 +89,15 @@ export function createWebSpeechSession(
         cmnLocaleIndex < cmnLocales.length - 1
       ) {
         cmnLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (
+        e.error === 'language-not-supported' &&
+        activeLang === 'tl' &&
+        tlLocaleIndex < tlLocales.length - 1
+      ) {
+        tlLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
@@ -143,6 +161,7 @@ export function createWebSpeechSession(
       heardSpeech = false
       yueLocaleIndex = 0
       cmnLocaleIndex = 0
+      tlLocaleIndex = 0
       startOne()
     },
     async stop() {

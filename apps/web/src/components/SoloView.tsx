@@ -26,12 +26,14 @@ function isWorthAutoTranslate(value: string, from: Lang): boolean {
 
 function placeholderFor(lang: Lang): string {
   if (lang === 'en') return ui.soloTapTypeEnglish.en
+  if (lang === 'tl') return 'Mag-type ng Tagalog…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
 }
 
 function ariaForPane(lang: Lang): string {
   if (lang === 'en') return 'Speak English with the mic'
+  if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   return 'Speak Cantonese with the mic'
 }

@@ -78,7 +78,7 @@ function isChineseCam(lang: CameraLang): boolean {
 export function boxDetailArgs(box: EditableBox): {
   phrase: string
   translation?: string
-  lang?: Lang
+  lang?: CameraLang
 } {
   const zhByDir = isChineseCam(box.to)
     ? box.translated
@@ -96,7 +96,7 @@ export function boxDetailArgs(box: EditableBox): {
     (!HAN_RE.test(box.translated) ? box.translated : '')
   const phrase = (zh || box.text || box.translated).trim()
   const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
-  const lang: Lang | undefined = isChineseCam(box.to)
+  const lang: CameraLang | undefined = isChineseCam(box.to)
     ? box.to
     : isChineseCam(box.from)
       ? box.from

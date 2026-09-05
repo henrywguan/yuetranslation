@@ -140,7 +140,7 @@ function browserSpeak(text: string, lang: Lang, g: number) {
       return
     }
     const u = new SpeechSynthesisUtterance(text)
-    u.lang = lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : 'en-US'
+    u.lang = lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : lang === 'tl' ? 'fil-PH' : 'en-US'
     u.onend = () => {
       if (g === gen) playing = false
       resolve()
@@ -159,6 +159,7 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (override) return override
   if (lang === 'en') return readLocalEnVoice()
   if (lang === 'cmn') return readLocalCmnVoice()
+  if (lang === 'tl') return null
   return readLocalYueVoice()
 }
 

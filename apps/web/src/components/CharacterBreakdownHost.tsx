@@ -31,9 +31,11 @@ import './DetailPanel.css'
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
 
-function speakLangFor(text: string, detailLang?: 'en' | 'yue' | 'cmn'): Lang {
+function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'cmn') return 'cmn'
+  if (detailLang === 'tl') return 'tl'
   if (detailLang === 'en') return 'en'
+  if (detailLang === 'yue') return 'yue'
   return hasHan(text) ? 'yue' : 'en'
 }
 
