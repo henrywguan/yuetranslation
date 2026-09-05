@@ -1,5 +1,7 @@
 export { dictionaryStats, dictionaryTranslate } from './dictionary.js'
 export { lexiconTranslate, lexiconStats, looksLikeGlossDump, englishDefinitionsForYue, cantoneseGlossForEnglish, cantoneseSensesForEnglish } from './lexiconTranslate.js'
 export { hardenYueOutput } from './postProcess.js'
+export { scrubMandarinToYue } from './scrub.js'
+export { scrubYueToCmn } from './scrubCmn.js'
 export { uniqStrings } from './normalize.js'
 export type { TranslateStage } from './types.js'

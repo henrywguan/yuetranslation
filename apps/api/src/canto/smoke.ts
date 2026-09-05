@@ -4,6 +4,7 @@ import { dictionaryTranslate } from './dictionary.js'
 import { glossStats, lookupGloss } from './gloss.js'
 import { lexiconTranslate, lexiconStats, looksLikeGlossDump } from './lexiconTranslate.js'
 import { scrubMandarinToYue } from './scrub.js'
+import { scrubYueToCmn } from './scrubCmn.js'
 import { hardenYueOutput } from './postProcess.js'
 import { wordshkEnabled } from './licenseGate.js'
 import { openaiConfigured } from '../env.js'
@@ -58,6 +59,18 @@ assert(offlineHappyBday.text === '生日快樂', `offline happy birthday: ${offl
 const scrubbed = scrubMandarinToYue('你们在做什么？')
 assert(scrubbed.changed, 'scrub should change Mandarin')
 assert(!/们|什么/.test(scrubbed.text), `scrub left Mandarin: ${scrubbed.text}`)
+
+const scrubbedCmn = scrubYueToCmn('你哋做緊咩？係唔係喺呢度？')
+assert(scrubbedCmn.changed, 'reverse scrub should change Yue')
+assert(!/哋|緊|咩|係|唔|喺|呢度/.test(scrubbedCmn.text), `reverse scrub left Yue: ${scrubbedCmn.text}`)
+assert(/你们|在做|什么|是不是|在|这里/.test(scrubbedCmn.text), `reverse scrub missing Mandarin: ${scrubbedCmn.text}`)
+
+const scrubPhrase = scrubYueToCmn('點解你哋冇鍾意一齊食？')
+assert(scrubPhrase.changed, 'phrase reverse scrub should change')
+assert(scrubPhrase.text.includes('为什么'), `expected 为什么: ${scrubPhrase.text}`)
+assert(scrubPhrase.text.includes('没有') || scrubPhrase.text.includes('没'), `expected 没有: ${scrubPhrase.text}`)
+assert(scrubPhrase.text.includes('喜欢'), `expected 喜欢: ${scrubPhrase.text}`)
+assert(!/點解|哋|冇|鍾意/.test(scrubPhrase.text), `phrase reverse left Yue: ${scrubPhrase.text}`)
 
 const good = colloquialScore('你做緊咩呀？')
 const bad = colloquialScore('你们在做什么？')

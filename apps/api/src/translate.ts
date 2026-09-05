@@ -8,10 +8,31 @@ import {
   looksLikeGlossDump,
   englishDefinitionsForYue,
   cantoneseSensesForEnglish,
+  scrubYueToCmn,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
 import { hasHan } from './canto/han.js'
+
+/** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
+function applyCmnScrub(
+  primary: string,
+  alternatives: string[],
+): { text: string; alternatives: string[]; scrubbed: boolean; notes: string[] } {
+  const scrubbedPrimary = scrubYueToCmn(primary)
+  let scrubbed = scrubbedPrimary.changed
+  const nextAlts = alternatives.map((a) => {
+    const s = scrubYueToCmn(a)
+    if (s.changed) scrubbed = true
+    return s.text
+  })
+  return {
+    text: scrubbedPrimary.text,
+    alternatives: nextAlts,
+    scrubbed,
+    notes: scrubbed ? ['cmn-scrub', 'cmn-no-yue-scrub'] : ['cmn-no-yue-scrub'],
+  }
+}
 
 const LangZ = z.enum(['en', 'yue', 'cmn'])
 
@@ -108,11 +129,34 @@ async function translateMandarin(opts: {
     wantAlternatives: wantAlts,
   })
   if (dictHit) {
+    const alts = wantAlts ? dictHit.alternatives : []
+    if (to === 'cmn') {
+      const scrubbed = applyCmnScrub(dictHit.text, alts)
+      return withLearnerDefinitions(
+        {
+          text: scrubbed.text,
+          definition: fallbackDefinition,
+          alternatives: scrubbed.alternatives,
+          engine: 'dictionary',
+          from,
+          to,
+          stage,
+          meta: {
+            dictionaryHit: true,
+            scrubbed: scrubbed.scrubbed,
+            colloquialScore: 0,
+            rewritten: false,
+            notes: [`dict:${dictHit.entry.id}`, ...scrubbed.notes],
+          },
+        },
+        text,
+      )
+    }
     return withLearnerDefinitions(
       {
         text: dictHit.text,
-        definition: to === 'cmn' ? fallbackDefinition : '',
-        alternatives: wantAlts ? dictHit.alternatives : [],
+        definition: '',
+        alternatives: alts,
         engine: 'dictionary',
         from,
         to,
@@ -131,12 +175,31 @@ async function translateMandarin(opts: {
 
   const client = openaiClient()
   if (!client) {
-    // Offline demo — do not scrub Mandarin into Cantonese.
+    // Offline demo — do not scrub Mandarin into Cantonese; reverse-scrub cmn if needed.
     const demoPrimary = to === 'cmn' ? `（示范）${text}` : `(demo) ${text}`
+    if (to === 'cmn') {
+      const scrubbed = applyCmnScrub(demoPrimary, [])
+      return withLearnerDefinitions(
+        {
+          text: scrubbed.text,
+          definition: fallbackDefinition,
+          alternatives: [],
+          engine: 'demo',
+          from,
+          to,
+          stage,
+          meta: {
+            ...emptyMeta(['demo', ...scrubbed.notes]),
+            scrubbed: scrubbed.scrubbed,
+          },
+        },
+        text,
+      )
+    }
     return withLearnerDefinitions(
       {
         text: demoPrimary,
-        definition: to === 'cmn' ? fallbackDefinition : '',
+        definition: '',
         alternatives: [],
         engine: 'demo',
         from,
@@ -259,20 +322,39 @@ async function translateMandarin(opts: {
   }
 
   // Never call hardenYueOutput / scrubMandarinToYue for Mandarin.
+  // When targeting cmn, reverse-scrub residual Yue colloquialisms.
   if (toCmn) {
-    const outText = hasHan(primary) ? primary : ''
+    const hanAlts = wantAlts ? alternatives.filter((a) => hasHan(a)) : []
+    const outRaw = hasHan(primary) ? primary : ''
+    if (!outRaw) {
+      return withLearnerDefinitions(
+        {
+          text: '',
+          definition,
+          alternatives: [],
+          engine,
+          from,
+          to,
+          stage,
+          meta: emptyMeta(['cmn-no-yue-scrub', 'no-cmn-output']),
+        },
+        text,
+      )
+    }
+    const scrubbed = applyCmnScrub(outRaw, hanAlts)
     return withLearnerDefinitions(
       {
-        text: outText,
+        text: scrubbed.text,
         definition,
-        alternatives: wantAlts ? alternatives.filter((a) => hasHan(a)) : [],
+        alternatives: scrubbed.alternatives,
         engine,
         from,
         to,
         stage,
-        meta: emptyMeta(
-          outText ? ['cmn-no-yue-scrub'] : ['cmn-no-yue-scrub', 'no-cmn-output'],
-        ),
+        meta: {
+          ...emptyMeta(scrubbed.notes),
+          scrubbed: scrubbed.scrubbed,
+        },
       },
       text,
     )

@@ -1,6 +1,7 @@
 import { env, llmChatExtras } from './env.js'
 import { openaiClient } from './openaiClient.js'
 import { hasHan } from './canto/han.js'
+import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn; legacy `zh` maps to yue. */
 export type CameraLang = 'en' | 'yue' | 'cmn'
@@ -173,7 +174,7 @@ export type CameraTranslateOpts = {
 
 /**
  * Camera / written-Chinese translate (EN ↔ yue|cmn).
- * Never apply Yue scrub to Mandarin (cmn) outputs.
+ * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
  */
 export async function translateCameraText(
   text: string,
@@ -194,7 +195,7 @@ export async function translateCameraText(
 
   const client = openaiClient()
   if (!client) {
-    const demo = isChineseTarget(to)
+    let demo = isChineseTarget(to)
       ? hasHan(source)
         ? source
         : to === 'cmn'
@@ -203,6 +204,7 @@ export async function translateCameraText(
       : hasHan(source)
         ? `(demo) ${source}`
         : `(demo) ${source}`
+    if (to === 'cmn') demo = scrubYueToCmn(demo).text
     remember(key, demo)
     return { text: demo, engine: 'demo', cacheHit: false }
   }
@@ -230,7 +232,8 @@ export async function translateCameraText(
       ? `（译）${source}`
       : `（譯）${source}`
     : `(tr) ${source}`
-  const translated = parseTranslation(raw, fallback)
+  let translated = parseTranslation(raw, fallback)
+  if (to === 'cmn') translated = scrubYueToCmn(translated).text
   remember(key, translated)
   return {
     text: translated,
@@ -259,8 +262,8 @@ export async function translateCameraBatch(
   const client = openaiClient()
   if (!client) {
     return {
-      translations: segments.map((s) =>
-        isChineseTarget(to)
+      translations: segments.map((s) => {
+        let demo = isChineseTarget(to)
           ? hasHan(s)
             ? s
             : to === 'cmn'
@@ -268,8 +271,10 @@ export async function translateCameraBatch(
               : `（示範）${s}`
           : hasHan(s)
             ? `(demo) ${s}`
-            : `(demo) ${s}`,
-      ),
+            : `(demo) ${s}`
+        if (to === 'cmn') demo = scrubYueToCmn(demo).text
+        return demo
+      }),
       engine: 'demo',
     }
   }
@@ -298,11 +303,14 @@ export async function translateCameraBatch(
     )
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
-      const t = stripLeadingListNumber((translated[i] || '').trim())
+      let t = stripLeadingListNumber((translated[i] || '').trim())
       const src = chunk[i] || ''
       if (to === 'en' && hasHan(t)) out[start + i] = src
       else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
-      else out[start + i] = t || src
+      else {
+        if (to === 'cmn' && t) t = scrubYueToCmn(t).text
+        out[start + i] = t || src
+      }
       remember(`${from}|${to}|${src}`, out[start + i]!)
     }
   }
