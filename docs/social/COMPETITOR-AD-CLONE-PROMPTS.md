@@ -7,6 +7,7 @@
 **Hard rules (every clone):**
 - Brand: Harbor `#07131f` · Jade `#3dcfb6` · Ink `#e8f4ff` · Syne + Noto Sans HK  
 - Logo: `docs/brand/favicon.png` only — never regenerate  
+- **End CTA:** composite real favicon + **JyutTranslate** in **Syne** (+ URL). Prompt AI for a clean Harbor hold with **no invented logo/wordmark**; never ship metallic/3D AI brand type  
 - Product UI = **real screen record / Recordly** — never AI-fake JyutTranslate  
 - Ask Henry before Higgsfield credit spend  
 - Hashtags: exactly **5** on published captions  
@@ -204,7 +205,7 @@ Ask me before any generate_* credit spend.
 
 ```
 Do NOT paraphrase into generic cinematic AI ads.
-Lock: beat timings, who is on camera, real-UI-only proof, Harbor/Jade remap, negative list (purple SaaS glow, cream serif, photoreal fake app, competitor logos, Duolingo meme owl).
+Lock: beat timings, who is on camera, real-UI-only proof, Harbor/Jade remap, end CTA = real favicon + Syne wordmark composited (no AI logo/wordmark), negative list (purple SaaS glow, cream serif, photoreal fake app, competitor logos, Duolingo meme owl, metallic 3D invented brand type).
 Output: (1) 1-line thesis (2) timed beat sheet (3) on-screen text (4) caption+5 hashtags (5) exact Higgsfield prompts/JSON (6) composite plan. STOP for credit approval.
 ```
 

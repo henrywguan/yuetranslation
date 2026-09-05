@@ -213,7 +213,7 @@ BEATS:
 
 ### Safe zones
 - Top 14% / bottom 20% clear for IG UI  
-- End card logo + URL in bottom third above safe zone  
+- End card: composite **real** `docs/brand/favicon.png` + **JyutTranslate** in **Syne** + URL in bottom third above safe zone — never AI-drawn logo/wordmark  
 
 ### Music (optional, royalty-free)
 - Clip #1: soft guzheng + room tone, 72 BPM  

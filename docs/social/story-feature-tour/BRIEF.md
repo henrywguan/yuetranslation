@@ -35,7 +35,7 @@ Source of truth: `apps/web/src/index.css` `[data-theme='dark']` + approved IG ca
 
 **Theme for all UI captures:** dark (`yue-theme=dark`) so chrome matches Harbor/Jade.
 
-**Anti-patterns:** purple gradients, cream/serif AI defaults, fake app UI, regenerated logo, Inter/system display fonts on overlays.
+**Anti-patterns:** purple gradients, cream/serif AI defaults, fake app UI, regenerated logo, Inter/system display fonts on overlays, AI-invented end-card wordmarks (end CTA = real favicon + Syne only).
 
 ---
 

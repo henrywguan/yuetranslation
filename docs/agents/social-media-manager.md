@@ -36,6 +36,8 @@ Help Cantonese American and overseas Cantonese families discover JyutTranslate b
 - URL: jyuttranslate.com · CTA: Launch translator / Try Conversation mode
 - Colors: Harbor #07131f · Jade #3dcfb6 · Ink #e8f4ff · Mist #eef5f8
 - Fonts: Syne (display), Noto Sans HK (Cantonese)
+- Logo: **`docs/brand/favicon.png` only** (chop 粵) — never regenerate
+- **End CTA lockup (REQUIRED):** real favicon + **JyutTranslate** in **Syne** (+ URL / Launch translator), composited in post. Never AI-invented wordmarks, metallic 3D brand type, or wrong casing (`Jyuttranslate`). In Seedance/Higgsfield prompts: clean Harbor end hold — **no logo, no brand wordmark, no CTA type** — then overlay real assets in edit.
 - Plans: Free · **Family** (4 seats) · **Business** (10 seats)
 - Signature features: Jyutping + tones · Conversation split-screen (180° 粵 pane) · Solo · Cam (AR/signs/docs) · character breakdown · colloquial 粵 particles (係 唔 喺 咗)
 
@@ -53,13 +55,14 @@ Henry loves this look (Meet / Learn / Why switch / splash / tone grids). For fut
 
 Approved references: `docs/social/ig-posts/references/` + `out/ig-post-jyutping-tones-*.png` / intro outs.
 
-## Auto-speak + TTS (REQUIRED for translation demos)
-Whenever a social / Higgsfield / Recordly piece **demonstrates a translation**:
+## End CTA — real logo + Syne (REQUIRED for all motion / Reels / Stories)
+Henry: end cards must feel **genuine** — our real mark and display font, not model-hallucinated brand chrome.
 
-1. Seed or toggle **auto-speak ON** (Family / open-mode entitlement).
-2. The final video must **hear TTS** of the Cantonese (or English) result — not silent UI only.
-3. Soft luxury beds are fine; **duck under TTS**; never replace speak-through with music alone.
-4. Confirm paid Azure `/api/tts` with Henry before cloud generation (AGENTS.md).
+1. **Mark:** `docs/brand/favicon.png` only (chop 粵). Never regenerate or redraw.
+2. **Wordmark:** **JyutTranslate** set in **Syne** (700–800) — same as static IG / site. Not Inter, not metallic 3D AI type, not `Jyuttranslate`.
+3. **CTA line / URL:** Syne or Noto Sans · Ink / Jade as in design canon · e.g. “Ready to be understood?” · `jyuttranslate.com` · optional “Launch translator”.
+4. **AI video prompts (Seedance / Marketing Studio / Kling / etc.):** do **not** ask the model to draw the logo or wordmark. Prompt a clean Harbor end hold (soft glow OK) with explicit negatives: **no logo, no brand wordmark, no CTA button type, no URL type**. Composite favicon + Syne lockup in FFmpeg / HTML / Recordly edit (see Studio feature-tour iris end card).
+5. **Reference pattern:** `docs/social/story-feature-tour/` end card · `docs/social/ig-posts/DESIGN.md` brand-first lockup.
 
 ## Auto-speak + TTS (REQUIRED for translation demos)
 Whenever a social / Higgsfield / Recordly piece **demonstrates a translation**:

@@ -56,6 +56,7 @@ Say that phrase (or “night instructional”) to recall this look.
 ## Anti-patterns
 
 - Regenerating or redrawing the logo
+- AI-invented end-card wordmarks (metallic 3D type, wrong casing) — motion CTAs must composite real favicon + Syne (see Studio brief **End CTA**)
 - Purple / cream-serif / glassmorphism / emoji spam
 - Tiny unreadable 粵 on phone
 - Chao staff on the wrong side

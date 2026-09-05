@@ -37,7 +37,7 @@ Borrow Drops’ *method*, keep our colors:
 | Objects | One-concept icons readable at thumbnail (dinner, plane, dim sum, phone) |
 | Motion | Spring bounce, stagger pops, dashed progress paths, kinetic type — **game UI**, not cinematic camera |
 
-**Anti-patterns:** photoreal faces, stock B-roll, cyberpunk neon, watercolor, clay 3D, purple-on-white SaaS glow, Inter/system defaults, AI-fake product UI.
+**Anti-patterns:** photoreal faces, stock B-roll, cyberpunk neon, watercolor, clay 3D, purple-on-white SaaS glow, Inter/system defaults, AI-fake product UI, AI-invented logo / metallic wordmark on the end card.
 
 ---
 
@@ -48,7 +48,7 @@ Borrow Drops’ *method*, keep our colors:
 3. Flat vector icons **pop with overshoot**  
 4. Optional dashed journey path / streak counter  
 5. **Real JyutTranslate UI** punches in (Solo / Conversation / Jyutping line)  
-6. End: quiet CTA → `jyuttranslate.com`
+6. End: quiet CTA → composite **real** `docs/brand/favicon.png` + **JyutTranslate** in **Syne** + `jyuttranslate.com` (never AI wordmark)
 
 Audio: 粵 TTS when teaching a phrase; soft bed OK. Don’t rely on silent graphic-only if the beat is pronunciation.
 
