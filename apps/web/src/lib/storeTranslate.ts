@@ -7,9 +7,8 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: 'yue' | 'cmn' | 'tl'
-  /** Solo upper/lower pane languages (any en|yue|cmn|tl pair; must differ). */
-  soloUpperLang: Lang
+  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl'
+  /** Solo upper/lower pane languages (any en|yue|cmn|wuu|tl pair; must differ). */  soloUpperLang: Lang
   soloLowerLang: Lang
   face: {
     enInterim: string
@@ -18,6 +17,9 @@ export type TranslateState = {
     yueTranslation: string
     yueDefinition: string
     yueDefinitions: string[]
+    romanization?: string
+    sandhiHint?: string
+    ipa?: string
   }
   history: ConversationTurn[]
   detailStack: DetailLayer[]
@@ -89,8 +91,8 @@ function nextHistory(
   return [{ id: newId(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
 }
 
-function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' {
-  return lang === 'yue' || lang === 'cmn'
+function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' | 'wuu' {
+  return lang === 'yue' || lang === 'cmn' || lang === 'wuu'
 }
 
 /** Solo stores upper pane in en* fields and lower pane in yue* fields. */
@@ -105,7 +107,7 @@ function resolveSoloTarget(get: Get, from: Lang): Lang {
 
 function sanitizeTranslation(to: Lang, text: string, source?: string): string | null {
   if (to === 'tl') return sanitizeTlTranslation(text)
-  if (to === 'yue' || to === 'cmn') return sanitizeYueTranslation(text)
+  if (to === 'yue' || to === 'cmn' || to === 'wuu') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
 
@@ -118,7 +120,7 @@ async function enrichTextAlternatives(
   set: Set,
   sourceEn: string,
   primaryZh: string,
-  toZh: 'yue' | 'cmn',
+  toZh: 'yue' | 'cmn' | 'wuu',
   seq: number,
   signal: AbortSignal,
 ) {
@@ -170,6 +172,11 @@ async function enrichTextAlternatives(
       alternatives: alternatives.length ? alternatives : latest.alternatives,
       definitions: mergedDefs.length ? mergedDefs : latest.definitions,
       definition: latest.definition || result.definition || sourceEn,
+      romanization:
+        (result as { romanization?: string }).romanization || latest.romanization || undefined,
+      sandhiHint:
+        (result as { sandhiHint?: string }).sandhiHint || latest.sandhiHint || undefined,
+      ipa: (result as { ipa?: string }).ipa || latest.ipa || undefined,
     }
 
     const stack = get().detailStack
@@ -186,6 +193,9 @@ async function enrichTextAlternatives(
               definition: nextLatest.definition,
               definitions: nextLatest.definitions,
               alternatives: nextLatest.alternatives,
+              romanization: nextLatest.romanization,
+              sandhiHint: nextLatest.sandhiHint,
+              ipa: nextLatest.ipa,
             },
             ...stack.slice(1),
           ]
@@ -256,9 +266,11 @@ export async function runTranslation(
             ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
             : to === 'cmn'
             ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
-            : to === 'yue'
-              ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-              : 'Could not produce English for this phrase. Try again or rephrase.',
+            : to === 'wuu'
+              ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'
+              : to === 'yue'
+                ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+                : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return null
     }
@@ -280,6 +292,9 @@ export async function runTranslation(
             yueTranslation: clean,
             yueDefinition: result.definition || text,
             yueDefinitions: definitions,
+            romanization: (result as { romanization?: string }).romanization || undefined,
+            sandhiHint: (result as { sandhiHint?: string }).sandhiHint || undefined,
+            ipa: (result as { ipa?: string }).ipa || undefined,
           },
         })
       } else {
@@ -307,6 +322,9 @@ export async function runTranslation(
         definition,
         definitions: definitions.length ? definitions : undefined,
         alternatives: alternatives.length ? alternatives : undefined,
+        romanization: (result as { romanization?: string }).romanization || undefined,
+        sandhiHint: (result as { sandhiHint?: string }).sandhiHint || undefined,
+        ipa: (result as { ipa?: string }).ipa || undefined,
       })
       // Solo: en* = upper pane, yue* = lower pane (regardless of language).
       const fromUpper = lang === get().soloUpperLang

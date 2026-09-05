@@ -34,6 +34,7 @@ export type SynthesizeOpts = {
   preferredYue?: string | null
   preferredEn?: string | null
   preferredCmn?: string | null
+  preferredWuu?: string | null
   preferredTl?: string | null
 }
 
@@ -44,6 +45,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredYue,
     opts.preferredEn,
     opts.preferredCmn,
+    opts.preferredWuu,
     opts.preferredTl,
     opts.voice,
   )

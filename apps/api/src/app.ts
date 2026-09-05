@@ -275,14 +275,16 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
         ? 'en'
         : lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
           ? 'zh-CN'
-          : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
-            ? 'fil-PH'
-            : 'zh-HK'
+          : lang === 'wuu' || lang === 'wuu-CN'
+            ? 'wuu-CN'
+            : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
+              ? 'fil-PH'            : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
       preferredCmn: ent.prefs?.ttsVoiceCmn,
+      preferredWuu: null,
       preferredTl: ent.prefs?.ttsVoiceTl,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).

@@ -264,8 +264,8 @@ export const ui = {
   dirEnglish: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
-  dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
-  autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
+  dirShanghainese: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
+  dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },  autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakHint: {
     en: 'Play translations aloud automatically after each turn.',
     zh: '每次翻譯後自動朗讀。',
@@ -1021,6 +1021,10 @@ export const ui = {
   cmpLive: { en: 'Live translation / month', zh: '每月即時翻譯', jp: 'mui5 jyut6 zik1 si4 faan1 jik6' },
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
+  cmpWugniu: { en: 'Wugniu romanization', zh: '吳拼（吳語學堂）', jp: 'ng4 ping3 (ng4 jyu5 hok6 tong4)' },
+  cmpSandhi: { en: 'Sandhi domain', zh: '連讀變調域', jp: 'lin4 duk6 bin3 diu6 wik6' },
+  cmpIpa: { en: 'IPA pronunciation', zh: '國際音標', jp: 'gwok3 zai3 jam1 biu1' },
+  camTargetWuu: { en: 'To Shanghainese', zh: '譯成上海話', jp: 'jik6 sing4 soeng6 hoi2 waa2' },
   cmpModes: {
     en: 'Solo · Conversation · Cam',
     zh: '獨白 · 對話 · 相機',

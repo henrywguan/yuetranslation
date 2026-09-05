@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'tl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -45,18 +45,32 @@ function yueSttVariants(source: string): string[] {
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'tl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
-}): { text: string; alternatives: string[]; entry: PhraseEntry } | null {
+}): {
+  text: string
+  alternatives: string[]
+  entry: PhraseEntry
+  romanization?: string
+  sandhiHint?: string
+  ipa?: string
+} | null {
   const entry = lookupPhrase(opts)
   if (!entry) return null
   const alternatives =
-    opts.wantAlternatives && (entry.targetLang === 'yue' || entry.targetLang === 'en')
+    opts.wantAlternatives && (entry.targetLang === 'yue' || entry.targetLang === 'en' || entry.targetLang === 'wuu')
       ? uniqStrings(entry.text, entry.alternatives || [])
       : []
-  return { text: entry.text, alternatives, entry }
+  return {
+    text: entry.text,
+    alternatives,
+    entry,
+    romanization: entry.romanization,
+    sandhiHint: entry.sandhiHint,
+    ipa: entry.ipa,
+  }
 }
 
 export function dictionaryStats() {

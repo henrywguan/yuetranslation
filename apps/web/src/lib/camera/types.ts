@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'tl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
 
 export type EditableBox = {
   id: string
@@ -21,11 +21,12 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'tl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
 
-/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn` | `tl`). */
+/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn` | `wuu` | `tl`). */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'cmn') return 'cmn'
+  if (lang === 'wuu') return 'wuu'
   if (lang === 'en') return 'en'
   if (lang === 'tl' || lang === 'fil') return 'tl'
   // Legacy `zh` and explicit yue → Cantonese
@@ -72,7 +73,7 @@ export function clampBox(box: CameraBox): CameraBox {
 const HAN_RE = /[\u3400-\u9fff]/
 
 function isChineseCam(lang: CameraLang): boolean {
-  return lang === 'yue' || lang === 'cmn'
+  return lang === 'yue' || lang === 'cmn' || lang === 'wuu'
 }
 
 function isTagalogCam(lang: CameraLang): boolean {
@@ -129,6 +130,7 @@ export function boxDetailArgs(box: EditableBox): {
 
 export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'cmn') return 'cmn'
+  if (box.to === 'wuu') return 'wuu'
   if (box.to === 'yue') return 'yue'
   if (box.to === 'tl') return 'tl'
   if (box.to === 'en') return 'en'

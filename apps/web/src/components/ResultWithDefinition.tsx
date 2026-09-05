@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
@@ -14,6 +15,8 @@ export function ResultWithDefinition({
   definitions,
   cantonese = true,
   chineseLang = 'yue',
+  romanization,
+  sandhiHint,
   className = '',
   textClassName = '',
   onActivate,
@@ -27,7 +30,11 @@ export function ResultWithDefinition({
   definitions?: string[]
   cantonese?: boolean
   /** When cantonese/display, which variety for ruby / Tagalog stress + copy. */
-  chineseLang?: 'yue' | 'cmn' | 'tl'
+  chineseLang?: 'yue' | 'cmn' | 'wuu' | 'tl'
+  /** Wugniu when chineseLang is wuu. */
+  romanization?: string
+  /** Sandhi-domain hint when chineseLang is wuu. */
+  sandhiHint?: string
   className?: string
   textClassName?: string
   onActivate?: (text: string) => void
@@ -40,7 +47,13 @@ export function ResultWithDefinition({
   const def = definition?.trim() || ''
   if (!trimmed) return null
   const displayLang: Lang =
-    chineseLang === 'cmn' ? 'cmn' : chineseLang === 'tl' ? 'tl' : 'yue'
+    chineseLang === 'cmn'
+      ? 'cmn'
+      : chineseLang === 'wuu'
+        ? 'wuu'
+        : chineseLang === 'tl'
+          ? 'tl'
+          : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -63,6 +76,14 @@ export function ResultWithDefinition({
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />
+            ) : chineseLang === 'wuu' ? (
+              <ShanghaineseText
+                text={trimmed}
+                romanization={romanization}
+                sandhiHint={sandhiHint}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
             ) : (
               <CantoneseText
                 text={trimmed}
@@ -76,7 +97,7 @@ export function ResultWithDefinition({
             <p className={textClassName || 'result-text'}>{normalizeEnglishApostrophes(trimmed)}</p>
           )}
           {speakLang && trimmed ? (
-            speakLang === 'yue' || speakLang === 'cmn' ? (
+            speakLang === 'yue' || speakLang === 'cmn' || speakLang === 'wuu' ? (
               <ResultActions text={trimmed} lang={speakLang} showCopy={showCopy} />
             ) : (
               <SpeakButton text={trimmed} lang={speakLang} />

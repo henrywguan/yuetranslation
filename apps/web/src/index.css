@@ -409,3 +409,63 @@ html.is-bug-capturing .dir-switch-opt input {
   margin: 0 !important;
   inset: 0 auto auto 0 !important;
 }
+
+
+/* Shanghainese — plain Han + Wugniu (no fake per-syllable tones) */
+.shanghainese-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.shanghainese-wugniu-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  flex-wrap: wrap;
+}
+.shanghainese-wugniu-label {
+  font-size: 0.62em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  font-weight: 600;
+}
+.shanghainese-wugniu {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.72;
+  font-weight: 500;
+}
+.shanghainese-sandhi-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  flex-wrap: wrap;
+}
+.shanghainese-sandhi-label {
+  font-size: 0.58em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  font-weight: 600;
+}
+.shanghainese-sandhi {
+  font-size: 0.68em;
+  line-height: 1.2;
+  opacity: 0.62;
+  font-style: italic;
+  font-weight: 500;
+}
+button.shanghainese-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}

@@ -10,14 +10,13 @@ const OPTIONS: { id: Lang; copy: Bi }[] = [
   { id: 'en', copy: ui.english },
   { id: 'yue', copy: ui.cantonese },
   { id: 'cmn', copy: ui.dirMandarin },
-  { id: 'tl', copy: ui.dirTagalog },
-]
+  { id: 'wuu', copy: ui.dirShanghainese },
+  { id: 'tl', copy: ui.dirTagalog },]
 
 /**
  * Pane language label — tap opens a top or bottom drawer (not an inline popover),
  * so mobile taps cannot miss the menu and hit the Solo mic-direction pane behind it.
- * Solo: full en|yue|cmn|tl. Conversation partner face: only="zh" (yue|cmn|tl).
- */
+ * Solo: full en|yue|cmn|wuu|tl. Conversation partner face: only="zh" (yue|cmn|wuu|tl). */
 export function LangLabelButton({
   lang,
   active,
@@ -39,8 +38,7 @@ export function LangLabelButton({
     only === 'en'
       ? OPTIONS.filter((o) => o.id === 'en')
       : only === 'zh'
-        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn' || o.id === 'tl')
-        : OPTIONS
+        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn' || o.id === 'wuu' || o.id === 'tl')        : OPTIONS
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1
 
@@ -150,10 +148,9 @@ export function LangLabelButton({
               ? 'en'
               : current.id === 'tl'
                 ? undefined
-                : only === 'zh' || current.id === 'yue' || current.id === 'cmn'
+                : only === 'zh' || current.id === 'yue' || current.id === 'cmn' || current.id === 'wuu'
                   ? 'zh'
-                  : undefined
-          }
+                  : undefined          }
           hideJp
         />
         {canPick ? (

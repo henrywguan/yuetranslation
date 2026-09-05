@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { ShanghaineseText } from './ShanghaineseText'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -7,6 +8,7 @@ import { biPlain, ui } from '../lib/uiCopy'
 function langShort(lang: Lang): string {
   if (lang === 'en') return 'EN'
   if (lang === 'cmn') return '普'
+  if (lang === 'wuu') return '沪'
   if (lang === 'tl') return 'TL'
   return '粵'
 }
@@ -16,12 +18,16 @@ function LangLine({
   text,
   definition,
   definitions,
+  romanization,
+  sandhiHint,
   onBreakdown,
 }: {
   lang: ConversationTurn['from']
   text: string
   definition?: string
   definitions?: string[]
+  romanization?: string
+  sandhiHint?: string
   onBreakdown?: (phrase: string) => void
 }) {
   if (lang === 'yue') {
@@ -46,6 +52,17 @@ function LangLine({
       />
     )
   }
+  if (lang === 'wuu') {
+    return (
+      <ShanghaineseText
+        text={text}
+        romanization={romanization}
+        sandhiHint={sandhiHint}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
   if (onBreakdown) {
     return (
       <button
@@ -64,6 +81,7 @@ function LangLine({
 function langLabel(lang: Lang) {
   if (lang === 'en') return <BiText copy={ui.english} size="sm" only="en" />
   if (lang === 'cmn') return <BiText copy={ui.dirMandarin} size="sm" only="zh" />
+  if (lang === 'wuu') return <BiText copy={ui.dirShanghainese} size="sm" only="zh" />
   if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
@@ -82,9 +100,9 @@ export function HistoryCard({
   isLatest?: boolean
 }) {
   const zhPhrase =
-    turn.to === 'yue' || turn.to === 'cmn'
+    turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu'
       ? turn.translation
-      : turn.from === 'yue' || turn.from === 'cmn'
+      : turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu'
         ? turn.source
         : ''
   const yueDefs = (turn.definitions || []).map((d) => d.trim()).filter(Boolean)
@@ -149,7 +167,9 @@ export function HistoryCard({
                 lang={turn.from}
                 text={turn.source}
                 definition={turn.definition}
-                definitions={turn.from === 'yue' || turn.from === 'cmn' ? yueDefs : undefined}
+                definitions={turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' ? yueDefs : undefined}
+                romanization={turn.from === 'wuu' ? turn.romanization : undefined}
+                sandhiHint={turn.from === 'wuu' ? turn.sandhiHint : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -165,7 +185,9 @@ export function HistoryCard({
                 lang={turn.to}
                 text={turn.translation}
                 definition={turn.definition}
-                definitions={turn.to === 'yue' || turn.to === 'cmn' ? yueDefs : undefined}
+                definitions={turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' ? yueDefs : undefined}
+                romanization={turn.to === 'wuu' ? turn.romanization : undefined}
+                sandhiHint={turn.to === 'wuu' ? turn.sandhiHint : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -205,6 +227,12 @@ export function HistoryCard({
                   <li key={alt}>
                     {turn.to === 'cmn' ? (
                       <MandarinText
+                        text={alt}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
+                      />
+                    ) : turn.to === 'wuu' ? (
+                      <ShanghaineseText
                         text={alt}
                         className="history-card-line"
                         onActivate={onBreakdown}

@@ -71,6 +71,9 @@ type TranslateResponse = {
   definition?: string
   definitions?: string[]
   alternatives?: string[]
+  romanization?: string
+  sandhiHint?: string
+  ipa?: string
 }
 
 const TRANSLATE_CACHE_MAX = 64
@@ -116,12 +119,11 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'tl' },
+  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' },
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue' | 'cmn' | 'tl'
-}> {
+  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'}> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
     body: JSON.stringify({ text, ...(opts?.lang ? { lang: opts.lang } : {}) }),
@@ -151,8 +153,8 @@ export type CameraScanRegion = {
   id: string
   text: string
   translated: string
-  from: 'en' | 'zh' | 'yue' | 'cmn' | 'tl'
-  to: 'en' | 'zh' | 'yue' | 'cmn' | 'tl'
+  from: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl'
+  to: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl'
   box: CameraBox
   script: 'latin' | 'cjk' | 'mixed' | 'other'
   cacheHit: boolean
@@ -185,7 +187,7 @@ export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
 export async function cameraScan(opts: {
   image: string
   boxes?: CameraBox[]
-  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'tl'
+  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl'
   ocrOnly?: boolean
   /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
   forDocs?: boolean

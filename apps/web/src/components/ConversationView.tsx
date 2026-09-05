@@ -2,6 +2,7 @@ import type { Lang } from '../lib/types'
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
@@ -16,7 +17,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 
 /**
  * Conversation: two language-pure cards on a shared phone.
- * Partner pane (粵 / 普 / Tagalog) sits on top, rotated 180° for the person across the table.
+ * Partner pane (粵 / 普 / 沪 / Tagalog) sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
  * Pipeline: mic → live STT on the speaking side → after capture ends, one final
@@ -48,7 +49,7 @@ export function ConversationView() {
     Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
   const enListening = live && liveSide === 'en'
   const zhListening =
-    live && (liveSide === 'yue' || liveSide === 'cmn' || liveSide === 'tl')
+    live && (liveSide === 'yue' || liveSide === 'cmn' || liveSide === 'wuu' || liveSide === 'tl')
 
   const openEnDetails = () => {
     const zh = (face.yueInterim || face.yueTranslation).trim()
@@ -70,23 +71,34 @@ export function ConversationView() {
       translation: face.enTranslation.trim() || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,
+      romanization: chineseLang === 'wuu' ? face.romanization : undefined,
+      sandhiHint: chineseLang === 'wuu' ? face.sandhiHint : undefined,
+      ipa: chineseLang === 'wuu' ? face.ipa : undefined,
     })
   }
 
   const onChineseLang = (lang: Lang) => {
-    if (lang !== 'yue' && lang !== 'cmn' && lang !== 'tl') return
+    if (lang !== 'yue' && lang !== 'cmn' && lang !== 'wuu' && lang !== 'tl') return
     setSpeakDirection(lang)
   }
 
   const partnerHintLang =
-    chineseLang === 'cmn' ? 'zh-CN' : chineseLang === 'tl' ? 'tl' : 'zh-HK'
+    chineseLang === 'cmn'
+      ? 'zh-CN'
+      : chineseLang === 'wuu'
+        ? 'wuu-CN'
+        : chineseLang === 'tl'
+          ? 'tl'
+          : 'zh-HK'
 
   const partnerPlaceholder =
     chineseLang === 'tl'
       ? ui.dirTagalog.en
       : chineseLang === 'cmn'
         ? ui.dirMandarin.zh
-        : ui.yueTranslation.zh
+        : chineseLang === 'wuu'
+          ? ui.dirShanghainese.zh
+          : ui.yueTranslation.zh
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
@@ -135,6 +147,14 @@ export function ConversationView() {
                         text={zhText}
                         definition={face.yueDefinition}
                         definitions={face.yueDefinitions}
+                        className="pane-hero--yue"
+                        onActivate={openZhDetails}
+                      />
+                    ) : chineseLang === 'wuu' ? (
+                      <ShanghaineseText
+                        text={zhText}
+                        romanization={face.romanization}
+                        sandhiHint={face.sandhiHint}
                         className="pane-hero--yue"
                         onActivate={openZhDetails}
                       />

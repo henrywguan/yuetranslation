@@ -25,8 +25,7 @@ const Body = z.object({
    */
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
-  target: z.enum(['en', 'zh', 'yue', 'cmn', 'tl']).optional(),
-  /** When true, skip translation and only return OCR regions. */
+  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'tl']).optional(),  /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
   /**
    * When true, this scan is part of Cam → Documents (PDF hybrid).

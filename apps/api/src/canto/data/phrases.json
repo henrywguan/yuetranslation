@@ -3967,6 +3967,208 @@
       ]
     },
     {
+      "id": "en-hello-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "hello",
+      "text": "侬好",
+      "romanization": "non ho",
+      "alternatives": [
+        "你好"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · word",
+      "ipa": "noŋ.hɔ"
+    },
+    {
+      "id": "en-hi-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "hi",
+      "text": "诶",
+      "romanization": "e",
+      "alternatives": [
+        "侬好"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · word",
+      "ipa": "ɛ"
+    },
+    {
+      "id": "en-thank-you-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "thank you",
+      "text": "谢谢侬",
+      "romanization": "xia xia non",
+      "alternatives": [
+        "谢谢"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · phrase"
+    },
+    {
+      "id": "en-thanks-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "thanks",
+      "text": "谢谢",
+      "romanization": "xia xia",
+      "alternatives": [
+        "谢谢侬"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · word"
+    },
+    {
+      "id": "en-how-are-you-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "how are you",
+      "text": "侬好伐",
+      "romanization": "non ho va",
+      "alternatives": [
+        "侬哪能"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · phrase"
+    },
+    {
+      "id": "en-good-morning-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "good morning",
+      "text": "早啊",
+      "romanization": "tsau a",
+      "alternatives": [
+        "早上好"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · word"
+    },
+    {
+      "id": "en-excuse-me-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "excuse me",
+      "text": "对勿起",
+      "romanization": "te ve qi",
+      "alternatives": [
+        "借问一声"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · phrase"
+    },
+    {
+      "id": "en-where-is-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "where is it",
+      "text": "勒哪搭",
+      "romanization": "leq na taq",
+      "alternatives": [
+        "啥地方"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · phrase"
+    },
+    {
+      "id": "en-i-dont-understand-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "i don't understand",
+      "text": "我听勿懂",
+      "romanization": "ngu thin ve tong",
+      "alternatives": [
+        "勿懂"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "clarify",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · phrase"
+    },
+    {
+      "id": "en-how-much-wuu",
+      "sourceLang": "en",
+      "targetLang": "wuu",
+      "source": "how much",
+      "text": "几钿",
+      "romanization": "ji di",
+      "alternatives": [
+        "啥价钱"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "shanghainese"
+      ],
+      "sandhiHint": "left-dominant · word"
+    },
+    {
+      "id": "wuu-non-ho-en",
+      "sourceLang": "wuu",
+      "targetLang": "en",
+      "source": "侬好",
+      "text": "Hello",
+      "alternatives": [
+        "Hi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "shanghainese"
+      ]
+    },
+    {
+      "id": "wuu-xia-xia-non-en",
+      "sourceLang": "wuu",
+      "targetLang": "en",
+      "source": "谢谢侬",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "shanghainese"
+      ]
+    },
+    {
       "id": "en-hello-tl",
       "sourceLang": "en",
       "targetLang": "tl",

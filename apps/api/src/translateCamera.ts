@@ -3,9 +3,8 @@ import { openaiClient } from './openaiClient.js'
 import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
-/** Camera / docs target languages. Prefer yue|cmn|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'tl'
-
+/** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -101,7 +100,7 @@ export function parseBatchTranslations(raw: string, fallbacks: string[]): string
 }
 
 function isChineseTarget(to: CameraLang): boolean {
-  return to === 'yue' || to === 'cmn'
+  return to === 'yue' || to === 'cmn' || to === 'wuu'
 }
 
 function isTagalogTarget(to: CameraLang): boolean {
@@ -129,6 +128,25 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       docBatch
         ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
         : 'Return ONLY valid JSON: {"translation":"<Chinese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (to === 'wuu') {
+    return [
+      'You translate signs, menus, forms, and short labels into colloquial Shanghainese (上海话 / 沪语).',
+      'Use dialectal Chinese characters natural for spoken Shanghainese — NOT Mandarin-with-accent, NOT Cantonese.',
+      'Prefer everyday Shanghai wording (e.g. 侬/阿拉/勿要) over textbook Mandarin.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → 登记入住; Concierge → 礼宾.',
+      '- Safety: Wet floor → 地上潮湿 / 当心滑跌; Caution → 当心.',
+      '- Pharmacy: Prescription pickup → 配药; Queue here → 请排队.',
+      'Keep brand names and codes when appropriate.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Shanghainese Han>"}',
       'No markdown, no explanation.',
     ]
       .filter(Boolean)
@@ -215,8 +233,7 @@ function demoTranslation(source: string, to: CameraLang): string {
 }
 
 /**
- * Camera / written-Chinese translate (EN ↔ yue|cmn|tl).
- * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
+ * Camera / written-Chinese translate (EN ↔ yue|cmn|wuu|tl). * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
  */
 export async function translateCameraText(
   text: string,
@@ -282,6 +299,7 @@ const BATCH_SIZE = 16
 function langLabel(lang: CameraLang): string {
   if (lang === 'en') return 'English'
   if (lang === 'cmn') return 'Mandarin Chinese 普通话 (简体 OK)'
+  if (lang === 'wuu') return 'Shanghainese 上海话 / 沪语'
   if (lang === 'tl') return 'Tagalog / Filipino (Latin script)'
   return 'Hong Kong Chinese 繁體'
 }
@@ -357,6 +375,6 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (!lang) return undefined
   if (lang === 'zh' || lang === 'yue') return 'yue'
   if (lang === 'fil' || lang === 'tl') return 'tl'
-  if (lang === 'cmn' || lang === 'en') return lang
+  if (lang === 'cmn' || lang === 'en' || lang === 'wuu') return lang
   return undefined
 }

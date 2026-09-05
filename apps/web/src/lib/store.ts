@@ -32,6 +32,9 @@ type FaceLive = {
   yueTranslation: string
   yueDefinition: string
   yueDefinitions: string[]
+  romanization?: string
+  sandhiHint?: string
+  ipa?: string
 }
 
 function emptyFaceLive(): FaceLive {
@@ -48,11 +51,11 @@ function emptyFaceLive(): FaceLive {
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
-  /** Remembered partner variety for Conversation (粵 / 普 / Tagalog). */
-  chineseLang: 'yue' | 'cmn' | 'tl'
-  /** Solo upper pane language (any en|yue|cmn; must differ from lower). */
+  /** Remembered partner variety for Conversation (粵 / 普 / 沪 / Tagalog). */
+  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl'
+  /** Solo upper pane language (any en|yue|cmn|wuu|tl; must differ from lower). */
   soloUpperLang: Lang
-  /** Solo lower pane language (any en|yue|cmn; must differ from upper). */
+  /** Solo lower pane language (any en|yue|cmn|wuu|tl; must differ from upper). */
   soloLowerLang: Lang
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
@@ -121,11 +124,14 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: Lang
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
       translation?: string
       definition?: string
       definitions?: string[]
       alternatives?: string[]
+      romanization?: string
+      sandhiHint?: string
+      ipa?: string
     },
   ) => void
   pushDetail: (layer: DetailLayer) => void
@@ -250,6 +256,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
   if (direction === 'yue') return 'yue'
   if (direction === 'cmn') return 'cmn'
+  if (direction === 'wuu') return 'wuu'
   if (direction === 'tl') return 'tl'
   return detected
 }
@@ -473,7 +480,7 @@ export const useYueStore = create<State>((set, get) => ({
   },
   setSpeakDirection: (speakDirection) =>
     set(
-      speakDirection === 'yue' || speakDirection === 'cmn' || speakDirection === 'tl'
+      speakDirection === 'yue' || speakDirection === 'cmn' || speakDirection === 'wuu' || speakDirection === 'tl'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -499,9 +506,9 @@ export const useYueStore = create<State>((set, get) => ({
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'tl'
-        ? { chineseLang: lang as 'yue' | 'cmn' | 'tl' }
-        : current === 'yue' || current === 'cmn' || current === 'tl'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl'
+        ? { chineseLang: lang as 'yue' | 'cmn' | 'wuu' | 'tl' }
+        : current === 'yue' || current === 'cmn' || current === 'wuu' || current === 'tl'
           ? {}
           : {}
     set({
@@ -727,7 +734,7 @@ export const useYueStore = create<State>((set, get) => ({
     const webSpeechLock = () => {
       const lock = holdSideLock
       const d = get().speakDirection
-      return lock || (d === 'en' || d === 'yue' || d === 'cmn' ? d : undefined)
+      return lock || (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' ? d : undefined)
     }
 
     let next = null as LiveSession | null
@@ -952,6 +959,9 @@ export const useYueStore = create<State>((set, get) => ({
       definition: opts?.definition?.trim() || undefined,
       definitions: defs.length ? defs : undefined,
       alternatives: alts.length ? alts : undefined,
+      romanization: opts?.romanization?.trim() || undefined,
+      sandhiHint: opts?.sandhiHint?.trim() || undefined,
+      ipa: opts?.ipa?.trim() || undefined,
     }
     set({
       detailStack: [layer],

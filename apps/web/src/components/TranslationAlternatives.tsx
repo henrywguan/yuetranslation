@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { ShanghaineseText } from './ShanghaineseText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -45,6 +46,12 @@ export function TranslationAlternatives({
                   text={alt}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open breakdown`}
+                />
+              ) : lang === 'wuu' ? (
+                <ShanghaineseText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
                 />
               ) : (
                 <button

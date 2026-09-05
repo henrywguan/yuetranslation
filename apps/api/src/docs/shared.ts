@@ -4,7 +4,7 @@
 import { translateCameraText, translateCameraBatch, type CameraLang } from '../translateCamera.js'
 import { hasHan } from '../canto/han.js'
 
-export type DocLang = 'en' | 'yue' | 'cmn'
+export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu'
 
 const SKIP_RE =
   /^(https?:\/\/\S+|[\w.+-]+@[\w.-]+\.\w+|[\d mon.,:%€$£¥+\-/=]+)$/i
