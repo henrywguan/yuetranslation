@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { ResultActions } from './ResultActions'
+import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { normalizeEnglishApostrophes } from '../lib/typography'
 import type { Lang } from '../lib/types'
@@ -55,6 +56,8 @@ export function ResultWithDefinition({
             ) : (
               <SpeakButton text={trimmed} lang={speakLang} />
             )
+          ) : showCopy && cantonese && trimmed ? (
+            <CopyButton text={trimmed} lang="yue" />
           ) : null}
         </div>
       </div>
