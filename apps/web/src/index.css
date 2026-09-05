@@ -421,16 +421,10 @@ html.is-bug-capturing .dir-switch-opt input {
 .shanghainese-wugniu-row {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.45em;
+  gap: 0.4em;
   flex-wrap: wrap;
-}
-.shanghainese-wugniu-label {
-  font-size: 0.62em;
-  line-height: 1.2;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  opacity: 0.55;
-  font-weight: 600;
+  /* Romanization leads so it sits under the Han; scheme label trails. */
+  justify-content: flex-start;
 }
 .shanghainese-wugniu {
   font-size: 0.72em;
@@ -438,19 +432,20 @@ html.is-bug-capturing .dir-switch-opt input {
   opacity: 0.72;
   font-weight: 500;
 }
-.shanghainese-sandhi-row {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.45em;
-  flex-wrap: wrap;
-}
-.shanghainese-sandhi-label {
-  font-size: 0.58em;
+.shanghainese-wugniu-label {
+  font-size: 0.48em;
   line-height: 1.2;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  opacity: 0.45;
+  opacity: 0.42;
   font-weight: 600;
+}
+.shanghainese-sandhi-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 .shanghainese-sandhi {
   font-size: 0.68em;
@@ -458,6 +453,14 @@ html.is-bug-capturing .dir-switch-opt input {
   opacity: 0.62;
   font-style: italic;
   font-weight: 500;
+}
+.shanghainese-sandhi-label {
+  font-size: 0.55em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.4;
+  font-weight: 600;
 }
 button.shanghainese-activate {
   background: none;

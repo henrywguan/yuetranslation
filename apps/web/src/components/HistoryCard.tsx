@@ -19,7 +19,6 @@ function LangLine({
   definition,
   definitions,
   romanization,
-  sandhiHint,
   onBreakdown,
 }: {
   lang: ConversationTurn['from']
@@ -27,7 +26,6 @@ function LangLine({
   definition?: string
   definitions?: string[]
   romanization?: string
-  sandhiHint?: string
   onBreakdown?: (phrase: string) => void
 }) {
   if (lang === 'yue') {
@@ -57,7 +55,6 @@ function LangLine({
       <ShanghaineseText
         text={text}
         romanization={romanization}
-        sandhiHint={sandhiHint}
         className="history-card-line"
         onActivate={onBreakdown}
       />
@@ -169,7 +166,6 @@ export function HistoryCard({
                 definition={turn.definition}
                 definitions={turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' ? yueDefs : undefined}
                 romanization={turn.from === 'wuu' ? turn.romanization : undefined}
-                sandhiHint={turn.from === 'wuu' ? turn.sandhiHint : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -187,7 +183,6 @@ export function HistoryCard({
                 definition={turn.definition}
                 definitions={turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' ? yueDefs : undefined}
                 romanization={turn.to === 'wuu' ? turn.romanization : undefined}
-                sandhiHint={turn.to === 'wuu' ? turn.sandhiHint : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>

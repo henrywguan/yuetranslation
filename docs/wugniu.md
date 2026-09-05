@@ -14,21 +14,22 @@ Canonical scheme for Shanghainese romanization in JyutTranslate: **Wugniu** (吴
 
 ## Compact vs detailed / 紧凑与详细
 
-- **Compact** (translation line): Shanghainese Han + Wugniu underneath, e.g. `侬好` / `non ho`
-- **Not used:** Mandarin pinyin ruby, Jyutping tone numbers (`zou2 san4`)
+- **Compact** (translation line): Shanghainese Han + Wugniu underneath (romanization left-aligned under the characters; scheme label trails), e.g. `侬好` / `non ho` Wugniu
+- **Details:** optional Sandhi domain hint + optional IPA
+- **Not used on compact:** Mandarin pinyin ruby, Jyutping tone numbers (`zou2 san4`), Sandhi row
 
 Implemented in `apps/web/src/components/ShanghaineseText.tsx`. API path: `translateShanghainese` in `apps/api/src/translate.ts` (`Lang` code `wuu`).
 
 
 ## API field
 
-Translate responses targeting `wuu` include optional `romanization` (Wugniu). Solo, History, and the details panel render it under the Han line with a **Wugniu** caption via `ShanghaineseText`. Phrase seeds store Wugniu on `romanization`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).
+Translate responses targeting `wuu` include optional `romanization` (Wugniu). Solo, History, and Conversation render Han + Wugniu on the compact line. The details panel may also show **Sandhi** and optional **IPA** via `ShanghaineseText` (`showSandhiHint`). Phrase seeds store Wugniu on `romanization`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).
 
 
 ## Sandhi domain hints
 
-Compact UI may show a short **Sandhi** line under Wugniu (e.g. `left-dominant · word`) describing the phonological domain — never Cantonese-style tone digits after sandhi.
+**Details only.** Short Sandhi line (e.g. `left-dominant · word`) describing the phonological domain — never Cantonese-style tone digits after sandhi. Compact Solo / Conversation / History results do **not** show Sandhi.
 
 ## Optional IPA
 
-**IPA** (International Phonetic Alphabet) is a phonetic transcription like `/noŋ.hɔ/`. It is more precise than Wugniu but denser for everyday use. JyutTranslate keeps IPA **optional and details-only**; the compact Solo/Conversation line stays Han + Wugniu (+ sandhi hint).
+**IPA** (International Phonetic Alphabet) is a phonetic transcription like `/noŋ.hɔ/`. It is more precise than Wugniu but denser for everyday use. JyutTranslate keeps IPA **optional and details-only**; the compact Solo/Conversation line stays Han + Wugniu.

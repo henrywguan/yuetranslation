@@ -328,6 +328,7 @@ export function CharacterBreakdownHost() {
                   text={topLabel}
                   romanization={phraseWugniu || undefined}
                   sandhiHint={phraseSandhi || undefined}
+                  showSandhiHint
                   className="detail-panel-title-han"
                 />
               ) : showRubyTitle ? (

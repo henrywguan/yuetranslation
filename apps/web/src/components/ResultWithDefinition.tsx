@@ -16,7 +16,6 @@ export function ResultWithDefinition({
   cantonese = true,
   chineseLang = 'yue',
   romanization,
-  sandhiHint,
   className = '',
   textClassName = '',
   onActivate,
@@ -33,8 +32,6 @@ export function ResultWithDefinition({
   chineseLang?: 'yue' | 'cmn' | 'wuu' | 'tl'
   /** Wugniu when chineseLang is wuu. */
   romanization?: string
-  /** Sandhi-domain hint when chineseLang is wuu. */
-  sandhiHint?: string
   className?: string
   textClassName?: string
   onActivate?: (text: string) => void
@@ -80,7 +77,6 @@ export function ResultWithDefinition({
               <ShanghaineseText
                 text={trimmed}
                 romanization={romanization}
-                sandhiHint={sandhiHint}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />
