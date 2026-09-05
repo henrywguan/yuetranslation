@@ -8,6 +8,9 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 export type TranslateState = {
   mode: Mode
   chineseLang: 'yue' | 'cmn'
+  /** Solo upper/lower pane languages (any en|yue|cmn pair; must differ). */
+  soloUpperLang: Lang
+  soloLowerLang: Lang
   face: {
     enInterim: string
     yueInterim: string
@@ -88,6 +91,21 @@ function nextHistory(
 
 function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' {
   return lang === 'yue' || lang === 'cmn'
+}
+
+/** Solo stores upper pane in en* fields and lower pane in yue* fields. */
+function resolveSoloTarget(get: Get, from: Lang): Lang {
+  const upper = get().soloUpperLang
+  const lower = get().soloLowerLang
+  if (from === upper) return lower
+  if (from === lower) return upper
+  // Fallback if STT detected a lang that isn't on either pane.
+  return from === 'en' ? (upper === 'en' ? lower : upper) : 'en'
+}
+
+function sanitizeTranslation(to: Lang, text: string, source?: string): string | null {
+  if (to === 'yue' || to === 'cmn') return sanitizeYueTranslation(text)
+  return sanitizeEnTranslation(text, source)
 }
 
 /**
@@ -200,15 +218,19 @@ export async function runTranslation(
   opts?: { lean?: boolean; minThinkingMs?: number; enrichAlts?: boolean; skipSpeak?: boolean },
 ): Promise<{ text: string; lang: Lang } | null> {
   const chineseLang = get().chineseLang
-  // Conversation / live still pass yue explicitly; Solo pairs EN with chineseLang.
-  const to: Lang = lang === 'en' ? (get().mode === 'conversation' ? 'yue' : chineseLang) : 'en'
+  const isFace = get().mode === 'conversation'
+  // Conversation: EN ↔ chineseLang. Solo: translate to the other pane's language.
+  const to: Lang = isFace
+    ? lang === 'en'
+      ? chineseLang
+      : 'en'
+    : resolveSoloTarget(get, lang)
   const seq = ++translateSeq
   pending.set(lang, seq)
   beginTranslate(set, to)
   const startedAt = Date.now()
   let speak: { text: string; lang: Lang } | null = null
-  const isFace = get().mode === 'conversation'
-  // Live mic + Conversation: skip EN→粵 variation fan-out for lower latency.
+  // Live mic + Conversation: skip EN→ZH variation fan-out for lower latency.
   // Typed Solo paints a primary first; alternatives enrich in the background when asked.
   const lean = Boolean(opts?.lean) || isFace
   const minThinkingMs = opts?.minThinkingMs ?? 900
@@ -225,24 +247,20 @@ export async function runTranslation(
     const hold = minThinkingMs - (Date.now() - startedAt)
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
     if (pending.get(lang) !== seq || signal.aborted) return null
-    const clean =
-      isChineseLang(to)
-        ? sanitizeYueTranslation(result.text)
-        : sanitizeEnTranslation(result.text, isChineseLang(lang) ? text : undefined)
+    const clean = sanitizeTranslation(to, result.text, isChineseLang(lang) ? text : undefined)
     if (!clean) {
       set({
-        error: isChineseLang(to)
-          ? to === 'cmn'
+        error:
+          to === 'cmn'
             ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
-            : 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-          : 'Could not produce English for this phrase. Try again or rephrase.',
+            : to === 'yue'
+              ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+              : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return null
     }
-    const altSanitize = isChineseLang(to)
-      ? sanitizeYueTranslation
-      : (value: string | null | undefined) =>
-          sanitizeEnTranslation(value, isChineseLang(lang) ? text : undefined)
+    const altSanitize = (value: string | null | undefined) =>
+      sanitizeTranslation(to, value || '', isChineseLang(lang) ? text : undefined)
     const alternatives = (result.alternatives || []).filter((a) => Boolean(altSanitize(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
     const definitions = (result.definitions || []).filter((d) => Boolean(d?.trim()))
@@ -287,15 +305,20 @@ export async function runTranslation(
         definitions: definitions.length ? definitions : undefined,
         alternatives: alternatives.length ? alternatives : undefined,
       })
-      if (lang === 'en') {
+      // Solo: en* = upper pane, yue* = lower pane (regardless of language).
+      const fromUpper = lang === get().soloUpperLang
+      if (fromUpper) {
         set({
           enInterim: text,
           yueInterim: '',
           enTranslation: '',
           yueTranslation: clean,
-          yueDefinition: result.definition || text,
+          yueDefinition: result.definition || (lang === 'en' ? text : ''),
           yueDefinitions: definitions,
           yueAlternatives: alternatives,
+          enDefinition: to === 'en' ? result.definition || '' : get().enDefinition,
+          enDefinitions: to === 'en' ? definitions : get().enDefinitions,
+          enAlternatives: to === 'en' ? alternatives : [],
           history,
         })
       } else {
@@ -306,17 +329,17 @@ export async function runTranslation(
           enTranslation: clean,
           yueDefinition: result.definition || '',
           yueDefinitions: definitions,
-          yueAlternatives: [],
+          yueAlternatives: isChineseLang(to) ? alternatives : [],
           enDefinition: result.definition || '',
           enDefinitions: definitions,
-          enAlternatives: alternatives,
+          enAlternatives: to === 'en' ? alternatives : [],
           history,
         })
       }
     }
     speak = { text: clean, lang: to }
 
-    // Typed Solo EN→ZH: paint primary first, then enrich alternatives without blocking TTS/UI.
+    // Typed Solo EN→Chinese: paint primary first, then enrich alternatives without blocking TTS/UI.
     if (
       opts?.enrichAlts &&
       lang === 'en' &&

@@ -150,23 +150,32 @@ async function translateMandarin(opts: {
 
   const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
   const toCmn = to === 'cmn'
+  const fromYue = from === 'yue'
   let primary = text
   let alternatives: string[] = []
   let definition = fallbackDefinition
 
   if (wantAlts && toCmn) {
-    const system = [
-      'You are a Mandarin Chinese interpreter (普通话).',
-      'Translate English into natural spoken Mandarin. Simplified characters are OK (Mainland style).',
-      'Do NOT use Cantonese-only particles or spellings (no 係/唔/喺/咗/㗎 unless shared).',
-      'Return ONLY valid JSON:',
-      '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
-      'Rules for alternatives:',
-      '- Prefer 2–3 natural spoken variants that differ in tone or wording.',
-      '- Do not repeat the primary or near-duplicates.',
-      '- If there is truly no useful variation, return "alternatives": [].',
-      '- No markdown, no explanation.',
-    ].join('\n')
+    const system = fromYue
+      ? [
+          'You convert Cantonese (粵語) into natural Mandarin (普通话).',
+          'Simplified characters are OK. Do NOT keep Cantonese-only particles (係/唔/喺/咗/㗎) unless shared.',
+          'Return ONLY valid JSON:',
+          '{"primary":"<best Mandarin>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+          'Prefer 2–3 natural spoken variants. No markdown.',
+        ].join('\n')
+      : [
+          'You are a Mandarin Chinese interpreter (普通话).',
+          'Translate English into natural spoken Mandarin. Simplified characters are OK (Mainland style).',
+          'Do NOT use Cantonese-only particles or spellings (no 係/唔/喺/咗/㗎 unless shared).',
+          'Return ONLY valid JSON:',
+          '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+          'Rules for alternatives:',
+          '- Prefer 2–3 natural spoken variants that differ in tone or wording.',
+          '- Do not repeat the primary or near-duplicates.',
+          '- If there is truly no useful variation, return "alternatives": [].',
+          '- No markdown, no explanation.',
+        ].join('\n')
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.35,
@@ -213,13 +222,20 @@ async function translateMandarin(opts: {
     if (parsedEn.definition) definition = parsedEn.definition
   } else {
     const system = toCmn
-      ? [
-          'You are a Mandarin Chinese interpreter (普通话).',
-          'Translate into natural spoken Mandarin. Simplified characters are OK.',
-          'Do NOT convert into Cantonese.',
-          'Return ONLY valid JSON:',
-          '{"translation":"<Mandarin>","definition":"<short English gloss of what the Mandarin means>"}',
-        ].join('\n')
+      ? fromYue
+        ? [
+            'Convert Cantonese (粵語) into natural Mandarin (普通话).',
+            'Simplified characters are OK. Do NOT keep Cantonese-only particles.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<Mandarin>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Mandarin Chinese interpreter (普通话).',
+            'Translate into natural spoken Mandarin. Simplified characters are OK.',
+            'Do NOT convert into Cantonese.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<Mandarin>","definition":"<short English gloss of what the Mandarin means>"}',
+          ].join('\n')
       : [
           'You are a Mandarin Chinese interpreter.',
           'Translate Mandarin (普通话) into natural English for face-to-face conversation.',
@@ -319,8 +335,9 @@ export async function translate(input: unknown) {
     )
   }
 
-  // Mandarin path — skip Yue scrub/harden entirely.
-  if (from === 'cmn' || to === 'cmn') {
+  // Mandarin path — skip Yue scrub/harden entirely when target is Mandarin
+  // or when translating Mandarin → English. cmn→yue still uses Yue harden below.
+  if (to === 'cmn' || (from === 'cmn' && to === 'en')) {
     return translateMandarin({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
