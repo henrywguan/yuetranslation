@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { attestAgainstLexicon, ATTESTATION_REWRITE_THRESHOLD } from './attest.js'
 import { colloquialScore, COLLOQUIAL_REWRITE_THRESHOLD } from './colloquialScore.js'
+import { isHanChar } from './han.js'
 import { scrubMandarinToYue } from './scrub.js'
 import { uniqStrings } from './normalize.js'
 import type { PostProcessMeta, TranslateStage } from './types.js'
@@ -45,9 +46,16 @@ export async function hardenYueOutput(opts: {
   const looksMandarinish =
     score < COLLOQUIAL_REWRITE_THRESHOLD || /[们們什么什麼怎么怎麼吗嗎正在]/.test(text)
   const weaklyAttested = attestation.coverage < ATTESTATION_REWRITE_THRESHOLD
+  // Short lexical headwords (e.g. 翻譯) must not be "clarified" away by attestation rewrite
+  // just because CC-Canto lacks the headword — keep the draft unless it looks Mandarin.
+  const hanCount = Array.from(text).filter((ch) => isHanChar(ch)).length
+  const shortLexicalHeadword = hanCount > 0 && hanCount <= 3 && !looksMandarinish
 
   const shouldRewrite =
-    opts.stage === 'final' && Boolean(opts.client) && (looksMandarinish || weaklyAttested)
+    opts.stage === 'final' &&
+    Boolean(opts.client) &&
+    !shortLexicalHeadword &&
+    (looksMandarinish || weaklyAttested)
 
   if (shouldRewrite && opts.client) {
     try {

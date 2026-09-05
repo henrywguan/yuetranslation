@@ -23,6 +23,19 @@ const dict = dictionaryTranslate({
 assert(dict?.text.includes('做緊'), `dict hit failed: ${dict?.text}`)
 assert((dict?.alternatives.length || 0) >= 2, 'dict alts missing')
 
+const translateWord = dictionaryTranslate({
+  sourceLang: 'en',
+  targetLang: 'yue',
+  source: 'Translate',
+  wantAlternatives: true,
+})
+assert(translateWord?.text === '翻譯', `translate phrase memory failed: ${translateWord?.text}`)
+assert(
+  (translateWord?.alternatives || []).some((a) => a.includes('譯')),
+  'translate alts should include 譯 variants',
+)
+assert(lookupGloss('翻譯')?.gloss, '翻譯 should be in gloss seed for attestation')
+
 const apple = dictionaryTranslate({
   sourceLang: 'en',
   targetLang: 'yue',

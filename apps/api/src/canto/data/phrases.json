@@ -3900,6 +3900,71 @@
       "tags": [
         "travel"
       ]
+    },
+    {
+      "id": "en-translate",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "translate",
+      "text": "翻譯",
+      "alternatives": [
+        "譯",
+        "翻譯吓"
+      ],
+      "register": "neutral",
+      "tags": [
+        "verb",
+        "meta"
+      ]
+    },
+    {
+      "id": "en-translation",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "translation",
+      "text": "翻譯",
+      "alternatives": [
+        "譯文",
+        "譯本"
+      ],
+      "register": "neutral",
+      "tags": [
+        "noun",
+        "meta"
+      ]
+    },
+    {
+      "id": "en-to-translate",
+      "sourceLang": "en",
+      "targetLang": "yue",
+      "source": "to translate",
+      "text": "翻譯",
+      "alternatives": [
+        "譯",
+        "翻譯吓"
+      ],
+      "register": "neutral",
+      "tags": [
+        "verb",
+        "meta"
+      ]
+    },
+    {
+      "id": "yue-faan-jik",
+      "sourceLang": "yue",
+      "targetLang": "en",
+      "source": "翻譯",
+      "text": "translate",
+      "alternatives": [
+        "translation",
+        "to translate"
+      ],
+      "register": "neutral",
+      "tags": [
+        "verb",
+        "noun",
+        "meta"
+      ]
     }
   ]
 }
