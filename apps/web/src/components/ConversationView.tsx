@@ -124,6 +124,8 @@ export function ConversationView() {
               lang={chineseLang}
               active={zhListening}
               only="zh"
+              drawer="bottom"
+              variant="dropdown"
               onSelect={onChineseLang}
             />
             <p lang={partnerHintLang}>
