@@ -150,7 +150,20 @@ export function SoloView() {
       return
     }
     const top = historyRef.current[0]
-    if (top && top.from === from && top.source === next) {
+    const target =
+      from === upperLangRef.current
+        ? lowerLangRef.current
+        : from === lowerLangRef.current
+          ? upperLangRef.current
+          : null
+    // Skip only when the same pair already landed — force (lang switch) always re-runs.
+    if (
+      !force &&
+      top &&
+      top.from === from &&
+      top.source === next &&
+      (target == null || top.to === target)
+    ) {
       setTypedBusy(false)
       return
     }
@@ -201,6 +214,52 @@ export function SoloView() {
     setSoloShowAutoHint(false)
     runTranslate(shared, from, 0, true)
   }, [setSoloShowAutoHint, soloUpperLang, soloLowerLang])
+
+
+  const onPaneLangSelect = (pane: 'upper' | 'lower', lang: Lang) => {
+    const thisLang = pane === 'upper' ? soloUpperLang : soloLowerLang
+    const otherLang = pane === 'upper' ? soloLowerLang : soloUpperLang
+    if (lang === thisLang) return
+
+    const upperText = upperDraft
+    const lowerText = lowerDraft
+    const otherText = (pane === 'upper' ? lowerText : upperText).trim()
+    const swapping = lang === otherLang
+
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+
+    if (swapping) {
+      // Keep text with its language when panes swap labels.
+      setUpperDraft(lowerText)
+      setLowerDraft(upperText)
+      editingRef.current = null
+      setUpperEditing(false)
+      setLowerEditing(false)
+      setSoloPaneLang(pane, lang)
+      return
+    }
+
+    setSoloPaneLang(pane, lang)
+
+    // Clear the switched pane; keep the other side as the source.
+    if (pane === 'upper') {
+      setUpperDraft('')
+      setUpperEditing(false)
+    } else {
+      setLowerDraft('')
+      setLowerEditing(false)
+    }
+    editingRef.current = pane === 'upper' ? 'lower' : 'upper'
+
+    if (otherText) {
+      runTranslate(otherText, otherLang, 0, true)
+    } else {
+      setTypedBusy(false)
+    }
+  }
 
   const onUpperChange = (value: string) => {
     editingRef.current = 'upper'
@@ -402,7 +461,7 @@ export function SoloView() {
               lang={soloUpperLang}
               active={speakDirection === soloUpperLang}
               drawer="top"
-              onSelect={(lang) => setSoloPaneLang('upper', lang)}
+              onSelect={(lang) => onPaneLangSelect('upper', lang)}
             />
             {upperDraft.trim() ? (
               <div className="solo-pane-actions">
@@ -461,7 +520,7 @@ export function SoloView() {
               lang={soloLowerLang}
               active={speakDirection === soloLowerLang}
               drawer="bottom"
-              onSelect={(lang) => setSoloPaneLang('lower', lang)}
+              onSelect={(lang) => onPaneLangSelect('lower', lang)}
             />
             {lowerDraft.trim() || canClear ? (
               <div className="solo-pane-actions">

@@ -30,6 +30,8 @@ export function ConversationView() {
   const clearHistory = useYueStore((s) => s.clearHistory)
   const chineseLang = useYueStore((s) => s.chineseLang)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
+  const clearConversationChinesePane = useYueStore((s) => s.clearConversationChinesePane)
+  const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
   const liveSide = useYueStore((s) => s.liveSide)
   const status = useYueStore((s) => s.status)
@@ -79,7 +81,12 @@ export function ConversationView() {
 
   const onChineseLang = (lang: Lang) => {
     if (lang !== 'yue' && lang !== 'cmn' && lang !== 'wuu' && lang !== 'tl') return
+    if (lang === chineseLang) return
+    const enSource = face.enInterim.trim()
     setSpeakDirection(lang)
+    clearConversationChinesePane()
+    // Partner variety changed — re-translate from English if that side has input.
+    if (enSource) void translateTyped(enSource, 'en')
   }
 
   const partnerHintLang =
