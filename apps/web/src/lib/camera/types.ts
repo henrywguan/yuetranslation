@@ -23,7 +23,8 @@ export type EditableBox = {
 
 export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn'
 
-function normalizeRegionLang(lang: string | undefined): CameraLang {
+/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn`). */
+export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'cmn') return 'cmn'
   if (lang === 'en') return 'en'
   // Legacy `zh` and explicit yue → Cantonese

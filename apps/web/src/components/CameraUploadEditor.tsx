@@ -29,6 +29,7 @@ import {
   clampBox,
   isOverlayLocked,
   newBox,
+  normalizeRegionLang,
   regionToEditable,
   boxDetailArgs,
   type CameraTarget,
