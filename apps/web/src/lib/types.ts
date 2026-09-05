@@ -1,6 +1,6 @@
-export type Lang = 'en' | 'yue' | 'cmn'
+export type Lang = 'en' | 'yue' | 'cmn' | 'wuu'
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
-export type SpeakDirection = 'en' | 'yue' | 'cmn'
+export type SpeakDirection = 'en' | 'yue' | 'cmn' | 'wuu'
 
 export type IncidentBannerSettings = {
   enabled: boolean
@@ -126,6 +126,8 @@ export type ConversationTurn = {
   definitions?: string[]
   /** Other colloquial EN→粵 renderings when the API found meaningful variants. */
   alternatives?: string[]
+  /** Wugniu romanization when translation is Shanghainese. */
+  romanization?: string
   at: number
 }
 

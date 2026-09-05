@@ -34,7 +34,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -69,7 +69,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu'
 
 type TranslateResult = {
   text: string
@@ -81,6 +81,8 @@ type TranslateResult = {
   stage: TranslateStage
   meta: ReturnType<typeof emptyMeta> & Record<string, unknown>
   definitions?: string[]
+  /** Wugniu romanization when targeting Shanghainese. */
+  romanization?: string
 }
 
 /** Attach lexicon English senses for the Cantonese phrase in this turn. */
@@ -391,6 +393,254 @@ async function translateMandarin(opts: {
   )
 }
 
+
+/**
+ * EN↔Shanghainese (沪语) — colloquial spoken Wu Han, not Mandarin-with-accent.
+ * Never run Yue scrub/harden. Prefer Wugniu romanization when available.
+ * Sandhi-aware: do not invent per-syllable tone digits like Jyutping.
+ */
+async function translateShanghainese(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+  const toWuu = to === 'wuu'
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    const alts = wantAlts ? dictHit.alternatives : []
+    const romanization =
+      toWuu && typeof (dictHit as { romanization?: string }).romanization === 'string'
+        ? (dictHit as { romanization?: string }).romanization
+        : toWuu && typeof dictHit.entry?.romanization === 'string'
+          ? dictHit.entry.romanization
+          : undefined
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: toWuu ? fallbackDefinition : '',
+        alternatives: alts,
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: toWuu ? 8 : 0,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'wuu-no-yue-scrub', 'wuu-colloquial'],
+        },
+        ...(romanization ? { romanization } : {}),
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = toWuu ? `（示范·沪语）${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: toWuu ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'wuu-no-yue-scrub', 'wuu-colloquial']),
+        ...(toWuu ? { romanization: '（demo）' } : {}),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+  let romanization = ''
+
+  if (wantAlts && toWuu) {
+    const system = [
+      'You are a Shanghainese (上海话 / 沪语) interpreter for everyday spoken Wu Chinese.',
+      'Translate into COLLOQUIAL spoken Shanghainese using Chinese characters (dialectal spellings OK).',
+      'Do NOT output Mandarin 普通话. Do NOT use Cantonese particles (係/唔/喺/咗/㗎).',
+      'Prefer natural Shanghai street speech over textbook Wu.',
+      'Also provide Wugniu romanization (吴语学堂) for the primary line — sandhi-aware word-level spelling, NOT Cantonese-style per-syllable tone digits.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best Shanghainese Han>","alternatives":["<other natural Shanghainese>", "..."],"definition":"<short English gloss>","romanization":"<Wugniu for primary>"}',
+      'Rules:',
+      '- Prefer 2–3 spoken variants that differ in wording or politeness.',
+      '- Do not repeat the primary or near-duplicates.',
+      '- romanization must match the primary phrase; leave empty string if unsure.',
+      '- No markdown, no explanation.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 450,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsed = parseYuePayload(raw, text, true)
+    primary = parsed.text
+    alternatives = parsed.alternatives
+    if (parsed.definition) definition = parsed.definition
+    try {
+      const j = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) as {
+        romanization?: unknown
+      }
+      if (typeof j.romanization === 'string') romanization = j.romanization.trim()
+    } catch {
+      /* ignore */
+    }
+  } else if (wantAlts && !toWuu) {
+    const system = [
+      'You are a Shanghainese interpreter helping Shanghainese speakers learn English.',
+      'Translate colloquial Shanghainese (上海话) into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English>", "..."],"definition":"<short Chinese gloss of the English>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a: string) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toWuu
+      ? [
+          'You are a Shanghainese (上海话 / 沪语) interpreter.',
+          'Translate into colloquial spoken Shanghainese Chinese characters (not Mandarin, not Cantonese).',
+          'Provide Wugniu romanization for the translation (sandhi-aware; no fake per-syllable tone digits).',
+          'Return ONLY valid JSON:',
+          '{"translation":"<Shanghainese Han>","definition":"<short English gloss>","romanization":"<Wugniu>"}',
+        ].join('\n')
+      : [
+          'You are a Shanghainese interpreter.',
+          'Translate Shanghainese (上海话) into natural English for face-to-face conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toWuu ? text : '', fallbackDefinition, toWuu)
+    primary = payload.text
+    definition = toWuu ? payload.definition || fallbackDefinition : payload.definition
+    if (toWuu) {
+      try {
+        const j = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) as {
+          romanization?: unknown
+        }
+        if (typeof j.romanization === 'string') romanization = j.romanization.trim()
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  if (toWuu) {
+    const hanAlts = wantAlts ? alternatives.filter((a: string) => hasHan(a)) : []
+    const outRaw = hasHan(primary) ? primary : ''
+    if (!outRaw) {
+      return withLearnerDefinitions(
+        {
+          text: '',
+          definition,
+          alternatives: [],
+          engine,
+          from,
+          to,
+          stage,
+          meta: emptyMeta(['wuu-no-yue-scrub', 'no-wuu-output']),
+        },
+        text,
+      )
+    }
+    return withLearnerDefinitions(
+      {
+        text: outRaw,
+        definition,
+        alternatives: hanAlts.filter((a: string) => a !== outRaw),
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['wuu-no-yue-scrub', 'wuu-colloquial']),
+        ...(romanization ? { romanization } : {}),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || (from === 'wuu' && hasHan(primary))) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['wuu-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a: string) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta(['wuu-no-yue-scrub']),
+    },
+    text,
+  )
+}
+
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -421,6 +671,11 @@ export async function translate(input: unknown) {
   // or when translating Mandarin → English. cmn→yue still uses Yue harden below.
   if (to === 'cmn' || (from === 'cmn' && to === 'en')) {
     return translateMandarin({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  // Shanghainese path — skip Yue scrub/harden; colloquial 沪语 + optional Wugniu.
+  if (to === 'wuu' || (from === 'wuu' && to === 'en')) {
+    return translateShanghainese({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   // 1) Phrase memory — O(1) curated EN↔粵 (always on: accurate + lowest latency).

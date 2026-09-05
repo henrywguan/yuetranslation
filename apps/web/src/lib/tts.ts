@@ -1,6 +1,6 @@
 import { fetchTtsAudio } from './api'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalEnVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalEnVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
@@ -140,7 +140,8 @@ function browserSpeak(text: string, lang: Lang, g: number) {
       return
     }
     const u = new SpeechSynthesisUtterance(text)
-    u.lang = lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : 'en-US'
+    u.lang =
+      lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : lang === 'wuu' ? 'wuu-CN' : 'en-US'
     u.onend = () => {
       if (g === gen) playing = false
       resolve()
@@ -159,6 +160,7 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (override) return override
   if (lang === 'en') return readLocalEnVoice()
   if (lang === 'cmn') return readLocalCmnVoice()
+  if (lang === 'wuu') return readLocalWuuVoice()
   return readLocalYueVoice()
 }
 

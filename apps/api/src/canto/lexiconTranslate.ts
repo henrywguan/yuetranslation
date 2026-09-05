@@ -369,11 +369,14 @@ export function cantoneseSensesForEnglish(en: string): string[] {
 }
 
 export function lexiconTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'wuu'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
 }): LexiconTranslateHit | null {
+  // Shanghainese is handled by translateShanghainese — no Yue lexicon MT.
+  if (opts.sourceLang === 'wuu' || opts.targetLang === 'wuu') return null
+
   const source = opts.source.trim()
   if (!source) return null
 

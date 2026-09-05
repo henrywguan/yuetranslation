@@ -8,7 +8,7 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 export type TranslateState = {
   mode: Mode
   chineseLang: 'yue' | 'cmn'
-  /** Solo upper/lower pane languages (any en|yue|cmn pair; must differ). */
+  /** Solo upper/lower pane languages (any en|yue|cmn|wuu pair; must differ). */
   soloUpperLang: Lang
   soloLowerLang: Lang
   face: {
@@ -89,8 +89,8 @@ function nextHistory(
   return [{ id: newId(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
 }
 
-function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' {
-  return lang === 'yue' || lang === 'cmn'
+function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' | 'wuu' {
+  return lang === 'yue' || lang === 'cmn' || lang === 'wuu'
 }
 
 /** Solo stores upper pane in en* fields and lower pane in yue* fields. */
@@ -104,7 +104,7 @@ function resolveSoloTarget(get: Get, from: Lang): Lang {
 }
 
 function sanitizeTranslation(to: Lang, text: string, source?: string): string | null {
-  if (to === 'yue' || to === 'cmn') return sanitizeYueTranslation(text)
+  if (to === 'yue' || to === 'cmn' || to === 'wuu') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
 
@@ -117,7 +117,7 @@ async function enrichTextAlternatives(
   set: Set,
   sourceEn: string,
   primaryZh: string,
-  toZh: 'yue' | 'cmn',
+  toZh: 'yue' | 'cmn' | 'wuu',
   seq: number,
   signal: AbortSignal,
 ) {
@@ -253,9 +253,11 @@ export async function runTranslation(
         error:
           to === 'cmn'
             ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
-            : to === 'yue'
-              ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-              : 'Could not produce English for this phrase. Try again or rephrase.',
+            : to === 'wuu'
+              ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'
+              : to === 'yue'
+                ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+                : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return null
     }
@@ -304,6 +306,7 @@ export async function runTranslation(
         definition,
         definitions: definitions.length ? definitions : undefined,
         alternatives: alternatives.length ? alternatives : undefined,
+        romanization: (result as { romanization?: string }).romanization || undefined,
       })
       // Solo: en* = upper pane, yue* = lower pane (regardless of language).
       const fromUpper = lang === get().soloUpperLang

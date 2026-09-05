@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { ShanghaineseText } from './ShanghaineseText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -13,6 +14,7 @@ export function ResultWithDefinition({
   definitions,
   cantonese = true,
   chineseLang = 'yue',
+  romanization,
   className = '',
   textClassName = '',
   onActivate,
@@ -26,7 +28,9 @@ export function ResultWithDefinition({
   definitions?: string[]
   cantonese?: boolean
   /** When cantonese, which Chinese variety for ruby + copy. */
-  chineseLang?: 'yue' | 'cmn'
+  chineseLang?: 'yue' | 'cmn' | 'wuu'
+  /** Wugniu when chineseLang is wuu. */
+  romanization?: string
   className?: string
   textClassName?: string
   onActivate?: (text: string) => void
@@ -38,7 +42,8 @@ export function ResultWithDefinition({
   const trimmed = text.trim()
   const def = definition?.trim() || ''
   if (!trimmed) return null
-  const hanLang: Lang = chineseLang === 'cmn' ? 'cmn' : 'yue'
+  const hanLang: Lang =
+    chineseLang === 'cmn' ? 'cmn' : chineseLang === 'wuu' ? 'wuu' : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -50,6 +55,13 @@ export function ResultWithDefinition({
                 text={trimmed}
                 definition={def}
                 definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'wuu' ? (
+              <ShanghaineseText
+                text={trimmed}
+                romanization={romanization}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />
@@ -66,7 +78,7 @@ export function ResultWithDefinition({
             <p className={textClassName || 'result-text'}>{normalizeEnglishApostrophes(trimmed)}</p>
           )}
           {speakLang && trimmed ? (
-            speakLang === 'yue' || speakLang === 'cmn' ? (
+            speakLang === 'yue' || speakLang === 'cmn' || speakLang === 'wuu' ? (
               <ResultActions text={trimmed} lang={speakLang} showCopy={showCopy} />
             ) : (
               <SpeakButton text={trimmed} lang={speakLang} />

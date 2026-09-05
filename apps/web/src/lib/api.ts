@@ -71,6 +71,7 @@ type TranslateResponse = {
   definition?: string
   definitions?: string[]
   alternatives?: string[]
+  romanization?: string
 }
 
 const TRANSLATE_CACHE_MAX = 64

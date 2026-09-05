@@ -10,12 +10,13 @@ const OPTIONS: { id: Lang; copy: Bi }[] = [
   { id: 'en', copy: ui.english },
   { id: 'yue', copy: ui.cantonese },
   { id: 'cmn', copy: ui.dirMandarin },
+  { id: 'wuu', copy: ui.dirShanghainese },
 ]
 
 /**
  * Pane language label — tap opens a top or bottom drawer (not an inline popover),
  * so mobile taps cannot miss the menu and hit the Solo mic-direction pane behind it.
- * Solo: full en|yue|cmn. Conversation Chinese face: only="zh".
+ * Solo: full en|yue|cmn|wuu. Conversation Chinese face: only="zh".
  */
 export function LangLabelButton({
   lang,
@@ -147,7 +148,7 @@ export function LangLabelButton({
           only={
             only === 'en'
               ? 'en'
-              : only === 'zh' || current.id === 'yue' || current.id === 'cmn'
+              : only === 'zh' || current.id === 'yue' || current.id === 'cmn' || current.id === 'wuu'
                 ? 'zh'
                 : undefined
           }

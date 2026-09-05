@@ -50,9 +50,9 @@ type State = {
   speakDirection: SpeakDirection
   /** Remembered Chinese variety for defaults when picking 粵/普 (Solo + Conversation). */
   chineseLang: 'yue' | 'cmn'
-  /** Solo upper pane language (any en|yue|cmn; must differ from lower). */
+  /** Solo upper pane language (any en|yue|cmn|wuu; must differ from lower). */
   soloUpperLang: Lang
-  /** Solo lower pane language (any en|yue|cmn; must differ from upper). */
+  /** Solo lower pane language (any en|yue|cmn|wuu; must differ from upper). */
   soloLowerLang: Lang
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
@@ -250,6 +250,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
   if (direction === 'yue') return 'yue'
   if (direction === 'cmn') return 'cmn'
+  if (direction === 'wuu') return 'wuu'
   return detected
 }
 
@@ -723,7 +724,7 @@ export const useYueStore = create<State>((set, get) => ({
     const webSpeechLock = () => {
       const lock = holdSideLock
       const d = get().speakDirection
-      return lock || (d === 'en' || d === 'yue' || d === 'cmn' ? d : undefined)
+      return lock || (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' ? d : undefined)
     }
 
     let next = null as LiveSession | null

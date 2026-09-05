@@ -17,7 +17,7 @@ const AUTO_TRANSLATE_MS = 2000
 function isWorthAutoTranslate(value: string, from: Lang): boolean {
   const t = value.trim()
   if (!t) return false
-  if (from === 'yue' || from === 'cmn') {
+  if (from === 'yue' || from === 'cmn' || from === 'wuu') {
     return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
   }
   const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
@@ -33,6 +33,7 @@ function placeholderFor(lang: Lang): string {
 function ariaForPane(lang: Lang): string {
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
+  if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   return 'Speak Cantonese with the mic'
 }
 
@@ -120,7 +121,7 @@ export function SoloView() {
     ? yueAlternatives
     : yueAlternatives.length
       ? yueAlternatives
-      : latest && (latest.to === soloLowerLang || latest.to === 'yue' || latest.to === 'cmn')
+      : latest && (latest.to === soloLowerLang || latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu')
         ? latest.alternatives || []
         : []
 
@@ -218,7 +219,7 @@ export function SoloView() {
     if (!phrase) return
     const isZhTarget =
       latest?.to === paneLang ||
-      (pane === 'lower' && (soloLowerLang === 'yue' || soloLowerLang === 'cmn'))
+      (pane === 'lower' && (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu'))
     openBreakdown(phrase, {
       lang: paneLang,
       translation: other || undefined,
@@ -257,12 +258,12 @@ export function SoloView() {
 
   const inputLocked = live
   const showLowerRuby =
-    (soloLowerLang === 'yue' || soloLowerLang === 'cmn') &&
+    (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu') &&
     Boolean(lowerDraft.trim()) &&
     !lowerEditing &&
     (!inputLocked || Boolean(yueInterim.trim()))
   const showUpperRuby =
-    (soloUpperLang === 'yue' || soloUpperLang === 'cmn') &&
+    (soloUpperLang === 'yue' || soloUpperLang === 'cmn' || soloUpperLang === 'wuu') &&
     Boolean(upperDraft.trim()) &&
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
@@ -290,7 +291,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
@@ -301,6 +302,7 @@ export function SoloView() {
             definition={def}
             definitions={defs}
             chineseLang={lang}
+            romanization={lang === 'wuu' ? latest?.romanization : undefined}
             textClassName="solo-tr-text"
             onActivate={() => openPaneDetails(pane)}
             showCopy
@@ -500,7 +502,7 @@ export function SoloView() {
               <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
             </p>
           ) : null}
-          {!showLowerRuby && alts.length > 0 && (soloLowerLang === 'yue' || soloLowerLang === 'cmn') ? (
+          {!showLowerRuby && alts.length > 0 && (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu') ? (
             <TranslationAlternatives
               alternatives={alts}
               lang={soloLowerLang}

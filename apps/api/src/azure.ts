@@ -34,6 +34,7 @@ export type SynthesizeOpts = {
   preferredYue?: string | null
   preferredEn?: string | null
   preferredCmn?: string | null
+  preferredWuu?: string | null
 }
 
 export async function synthesize(text: string, lang: string, opts: SynthesizeOpts = {}): Promise<Buffer> {
@@ -43,6 +44,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredYue,
     opts.preferredEn,
     opts.preferredCmn,
+    opts.preferredWuu,
     opts.voice,
   )
   const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${escapeXml(text)}</voice></speak>`
