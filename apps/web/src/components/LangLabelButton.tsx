@@ -11,7 +11,7 @@ const OPTIONS: { id: Lang; copy: Bi }[] = [
 
 /**
  * Pane language label — tap to pick mic language (Apple Translate–style).
- * Cut B: English + Cantonese + Mandarin.
+ * Solo: full en|yue|cmn. Conversation Chinese face: only="zh".
  */
 export function LangLabelButton({
   lang,
@@ -63,7 +63,7 @@ export function LangLabelButton({
         onClick={() => setOpen((v) => !v)}
       >
         {/* hideJp: Jyutping tip steals clicks from the language menu on Solo. */}
-        <BiText copy={current.copy} size="sm" only={only} hideJp />
+        <BiText copy={current.copy} size="sm" only={only === 'en' ? 'en' : only === 'zh' ? 'zh' : undefined} hideJp />
         <span className="lang-label-chevron" aria-hidden="true">
           ▾
         </span>

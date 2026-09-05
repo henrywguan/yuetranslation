@@ -24,8 +24,13 @@ export function HistoryPane({
   }, [latestId])
 
   const handleBreakdown = (phrase: string, turn: ConversationTurn) => {
+    const zhLang = turn.to === 'cmn' || turn.from === 'cmn' ? 'cmn' : 'yue'
     const canto =
-      turn.to === 'yue' ? turn.translation : turn.from === 'yue' ? turn.source : phrase
+      turn.to === 'yue' || turn.to === 'cmn'
+        ? turn.translation
+        : turn.from === 'yue' || turn.from === 'cmn'
+          ? turn.source
+          : phrase
     const english =
       turn.from === 'en' ? turn.source : turn.to === 'en' ? turn.translation : ''
     const tappedEn = Boolean(english && phrase.trim() === english.trim())
@@ -39,7 +44,7 @@ export function HistoryPane({
       })
     } else {
       openBreakdown(canto.trim() || phrase, {
-        lang: 'yue',
+        lang: zhLang,
         translation: english.trim() || undefined,
         definition: turn.definition || undefined,
         definitions: turn.definitions,

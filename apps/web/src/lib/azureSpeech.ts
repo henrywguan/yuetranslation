@@ -5,12 +5,17 @@ import type { Lang, LiveSession, SpeechEventHandlers, SpeechMeta } from './types
 
 function localeToLang(locale: string): Lang {
   const l = locale.toLowerCase()
-  if (l.startsWith('zh') || l.includes('yue') || l.includes('hk')) return 'yue'
+  if (l.includes('yue') || l.includes('hk') || l === 'zh-hk' || l.startsWith('zh-hk')) return 'yue'
+  if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans') || l === 'zh-cn') return 'cmn'
+  // Generic zh without region — prefer Cantonese for HK product default.
+  if (l.startsWith('zh')) return 'yue'
   return 'en'
 }
 
 function langToLocale(lang: Lang): string {
-  return lang === 'yue' ? 'zh-HK' : 'en-US'
+  if (lang === 'yue') return 'zh-HK'
+  if (lang === 'cmn') return 'zh-CN'
+  return 'en-US'
 }
 
 function normalizeSpeakerId(speakerId?: string | null): string {
@@ -216,6 +221,11 @@ export async function createAzureLiveSession(
       }
       // Locked languages: prefer the multilingual transcriber for fast interim streaming.
       // Fixed en-US recognizer feels sluggish; fixed zh-HK is flaky — transcriber + lockLang pins the pane.
+      // Mandarin (zh-CN): use fixed recognizer — auto-detect set is en-US + zh-HK only.
+      if (lockLang === 'cmn') {
+        await startWithRecognizer('cmn')
+        return
+      }
       if (lockLang === 'en' || lockLang === 'yue') {
         try {
           await startWithTranscriber()

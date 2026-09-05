@@ -47,6 +47,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const armTapMode = useYueStore((s) => s.armTapMode)
   const endHold = useYueStore((s) => s.endHold)
   const entitlement = useYueStore((s) => s.entitlement)
+  const chineseLang = useYueStore((s) => s.chineseLang)
   const activePointer = useRef<number | null>(null)
   const downAt = useRef(0)
   const keyDownAt = useRef(0)
@@ -76,7 +77,8 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
 
   // Face: initiating pane’s button shows translating while the other pane gets the loader.
   const thinkingHere = side
-    ? translating && translatingTo === (side === 'en' ? 'yue' : 'en')
+    ? translating &&
+      translatingTo === (side === 'en' ? chineseLang : 'en')
     : translating
 
   const liveCopy: Bi = thinkingHere

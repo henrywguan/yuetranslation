@@ -1,7 +1,14 @@
 import { CantoneseText } from './CantoneseText'
+import { MandarinText } from './MandarinText'
 import { BiText } from './BiText'
-import type { ConversationTurn } from '../lib/types'
+import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
+
+function langShort(lang: Lang): string {
+  if (lang === 'en') return 'EN'
+  if (lang === 'cmn') return '普'
+  return '粵'
+}
 
 function LangLine({
   lang,
@@ -27,6 +34,17 @@ function LangLine({
       />
     )
   }
+  if (lang === 'cmn') {
+    return (
+      <MandarinText
+        text={text}
+        definition={definition}
+        definitions={definitions}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
   if (onBreakdown) {
     return (
       <button
@@ -42,6 +60,12 @@ function LangLine({
   return <p className="history-card-line history-card-en">{text}</p>
 }
 
+function langLabel(lang: Lang) {
+  if (lang === 'en') return <BiText copy={ui.english} size="sm" only="en" />
+  if (lang === 'cmn') return <BiText copy={ui.dirMandarin} size="sm" only="zh" />
+  return <BiText copy={ui.cantonese} size="sm" only="zh" />
+}
+
 export function HistoryCard({
   turn,
   expanded,
@@ -55,9 +79,14 @@ export function HistoryCard({
   onBreakdown: (phrase: string) => void
   isLatest?: boolean
 }) {
-  const yuePhrase = turn.to === 'yue' ? turn.translation : turn.from === 'yue' ? turn.source : ''
+  const zhPhrase =
+    turn.to === 'yue' || turn.to === 'cmn'
+      ? turn.translation
+      : turn.from === 'yue' || turn.from === 'cmn'
+        ? turn.source
+        : ''
   const yueDefs = (turn.definitions || []).map((d) => d.trim()).filter(Boolean)
-  const hasDrill = Boolean(yuePhrase.trim())
+  const hasDrill = Boolean(zhPhrase.trim())
   const hasDetails =
     Boolean(turn.definition?.trim()) ||
     Boolean(turn.alternatives?.length) ||
@@ -71,7 +100,7 @@ export function HistoryCard({
       <div className="history-card-top">
         <div className="history-card-meta">
           <span className="history-card-dir">
-            {turn.from === 'en' ? 'EN' : '粵'} → {turn.to === 'en' ? 'EN' : '粵'}
+            {langShort(turn.from)} → {langShort(turn.to)}
           </span>
           {isLatest ? (
             <span className="history-card-badge">
@@ -108,13 +137,7 @@ export function HistoryCard({
       >
         <div className="history-card-pair">
           <div className="history-card-block">
-            <p className="history-card-label">
-              {turn.from === 'en' ? (
-                <BiText copy={ui.english} size="sm" only="en" />
-              ) : (
-                <BiText copy={ui.cantonese} size="sm" only="zh" />
-              )}
-            </p>
+            <p className="history-card-label">{langLabel(turn.from)}</p>
             <div
               className="history-card-line-wrap"
               onClick={(e) => e.stopPropagation()}
@@ -124,19 +147,13 @@ export function HistoryCard({
                 lang={turn.from}
                 text={turn.source}
                 definition={turn.definition}
-                definitions={turn.from === 'yue' ? yueDefs : undefined}
+                definitions={turn.from === 'yue' || turn.from === 'cmn' ? yueDefs : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
           </div>
           <div className="history-card-block">
-            <p className="history-card-label">
-              {turn.to === 'en' ? (
-                <BiText copy={ui.english} size="sm" only="en" />
-              ) : (
-                <BiText copy={ui.cantonese} size="sm" only="zh" />
-              )}
-            </p>
+            <p className="history-card-label">{langLabel(turn.to)}</p>
             <div
               className="history-card-line-wrap"
               onClick={(e) => e.stopPropagation()}
@@ -146,7 +163,7 @@ export function HistoryCard({
                 lang={turn.to}
                 text={turn.translation}
                 definition={turn.definition}
-                definitions={turn.to === 'yue' ? yueDefs : undefined}
+                definitions={turn.to === 'yue' || turn.to === 'cmn' ? yueDefs : undefined}
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -184,12 +201,22 @@ export function HistoryCard({
               <ul>
                 {turn.alternatives.map((alt) => (
                   <li key={alt}>
-                    <CantoneseText
-                      text={alt}
-                      jpMode="popup"
-                      onActivate={onBreakdown}
-                      activateLabel={biPlain(ui.charDetail)}
-                    />
+                    {turn.to === 'cmn' ? (
+                      <MandarinText
+                        text={alt}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
+                      />
+                    ) : turn.to === 'yue' ? (
+                      <CantoneseText
+                        text={alt}
+                        jpMode="popup"
+                        onActivate={onBreakdown}
+                        activateLabel={biPlain(ui.charDetail)}
+                      />
+                    ) : (
+                      alt
+                    )}
                   </li>
                 ))}
               </ul>
@@ -200,7 +227,7 @@ export function HistoryCard({
             <button
               type="button"
               className="history-card-drill"
-              onClick={() => onBreakdown(yuePhrase)}
+              onClick={() => onBreakdown(zhPhrase)}
             >
               <BiText copy={ui.historyBreakdown} size="sm" layout="inline" />
             </button>
