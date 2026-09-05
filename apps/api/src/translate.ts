@@ -7,6 +7,7 @@ import {
   lexiconTranslate,
   looksLikeGlossDump,
   englishDefinitionsForYue,
+  cantoneseSensesForEnglish,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
@@ -16,7 +17,7 @@ const Body = z.object({
   text: z.string().min(1).max(2000),
   from: z.enum(['en', 'yue']).default('en'),
   to: z.enum(['en', 'yue']),
-  /** When true and EN→粵, also return colloquial alternatives if they exist. */
+  /** When true, also return colloquial alternatives for EN↔粵 when they exist. */
   includeAlternatives: z.boolean().optional().default(false),
 })
 
@@ -68,6 +69,20 @@ function withYueDefinitions(result: TranslateResult, sourceText: string): Transl
   }
 }
 
+/** Attach Cantonese learner senses for an English phrase (粵 speakers learning EN). */
+function withEnDefinitions(result: TranslateResult): TranslateResult {
+  if (result.to !== 'en') return result
+  const senses = result.text ? cantoneseSensesForEnglish(result.text) : []
+  return {
+    ...result,
+    definitions: mergeDefinitions(result.definition, senses),
+  }
+}
+
+function withLearnerDefinitions(result: TranslateResult, sourceText: string): TranslateResult {
+  return result.to === 'en' ? withEnDefinitions(result) : withYueDefinitions(result, sourceText)
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -75,11 +90,11 @@ export async function translate(input: unknown) {
   const text = parsed.text.trim()
   // No interim translations anywhere — always run the full final pipeline.
   const stage: TranslateStage = 'final'
-  const wantAlts = Boolean(parsed.includeAlternatives && from === 'en' && to === 'yue')
+  const wantAlts = Boolean(parsed.includeAlternatives && from !== to)
   const fallbackDefinition = from === 'en' ? text : ''
 
   if (from === to) {
-    return withYueDefinitions(
+    return withLearnerDefinitions(
       {
         text,
         definition: '',
@@ -102,7 +117,7 @@ export async function translate(input: unknown) {
     wantAlternatives: wantAlts,
   })
   if (dictHit) {
-    return withYueDefinitions(
+    return withLearnerDefinitions(
       {
         text: dictHit.text,
         definition: to === 'yue' ? fallbackDefinition : '',
@@ -145,7 +160,7 @@ export async function translate(input: unknown) {
           sourceEn: from === 'en' ? text : undefined,
           client: null,
         })
-        return withYueDefinitions(
+        return withLearnerDefinitions(
           {
             text: hardened.text,
             definition: lexHit.definition || fallbackDefinition,
@@ -163,7 +178,7 @@ export async function translate(input: unknown) {
           text,
         )
       }
-      return withYueDefinitions(
+      return withLearnerDefinitions(
         {
           text: lexHit.text,
           definition: lexHit.definition,
@@ -194,7 +209,7 @@ export async function translate(input: unknown) {
         sourceEn: from === 'en' ? text : undefined,
         client: null,
       })
-      return withYueDefinitions(
+      return withLearnerDefinitions(
         {
           text: hardened.text,
           definition: fallbackDefinition,
@@ -208,7 +223,7 @@ export async function translate(input: unknown) {
         text,
       )
     }
-    return withYueDefinitions(
+    return withLearnerDefinitions(
       {
         text: demoPrimary,
         definition: '',
@@ -230,7 +245,7 @@ export async function translate(input: unknown) {
   let definition = fallbackDefinition
   const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
 
-  if (wantAlts) {
+  if (wantAlts && toYue) {
     const system = [
       'You are a Hong Kong Cantonese interpreter.',
       'Translate English into colloquial spoken Cantonese (口語粵語), not Mandarin and not formal written Chinese.',
@@ -264,6 +279,37 @@ export async function translate(input: unknown) {
     primary = parsedYue.text
     alternatives = parsedYue.alternatives
     if (parsedYue.definition) definition = parsedYue.definition
+  } else if (wantAlts && !toYue) {
+    const system = [
+      'You are a Hong Kong Cantonese interpreter helping Cantonese speakers learn English.',
+      'Translate Cantonese into natural conversational English.',
+      'Return ONLY valid JSON with this shape:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Cantonese (粵語) gloss of what the English means>"}',
+      'Rules for alternatives:',
+      '- Prefer 2–3 natural English variants that differ in tone, formality, or wording.',
+      '- Do not repeat the primary or near-duplicates.',
+      '- If there is truly no useful variation, return "alternatives": [].',
+      '- definition should help a Cantonese learner: brief 粵語, not a dictionary dump.',
+      '- No markdown, no explanation.',
+    ].join('\n')
+
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
   } else {
     const system = toYue
       ? [
@@ -335,7 +381,7 @@ export async function translate(input: unknown) {
       client,
     })
     const outText = hasHan(hardened.text) ? hardened.text : ''
-    return withYueDefinitions(
+    return withLearnerDefinitions(
       {
         text: outText,
         definition,
@@ -380,7 +426,7 @@ export async function translate(input: unknown) {
         const rawRetry = retry.choices[0]?.message?.content?.trim() || ''
         const parsedRetry = parsePayload(rawRetry, '', '', false)
         if (parsedRetry.text && !hasHan(parsedRetry.text) && !looksLikeGlossDump(parsedRetry.text)) {
-          return withYueDefinitions(
+          return withLearnerDefinitions(
             {
               text: parsedRetry.text,
               definition: parsedRetry.definition || '',
@@ -398,7 +444,7 @@ export async function translate(input: unknown) {
         // fall through to empty block
       }
     }
-    return withYueDefinitions(
+    return withLearnerDefinitions(
       {
         text: '',
         definition: '',
@@ -413,11 +459,11 @@ export async function translate(input: unknown) {
     )
   }
 
-  return withYueDefinitions(
+  return withLearnerDefinitions(
     {
       text: primary,
       definition,
-      alternatives: [],
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
       engine,
       from,
       to,

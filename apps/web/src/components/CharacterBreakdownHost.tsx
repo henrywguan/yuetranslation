@@ -72,6 +72,7 @@ export function CharacterBreakdownHost() {
   const minimizeDetail = useYueStore((s) => s.minimizeDetail)
   const restoreDetail = useYueStore((s) => s.restoreDetail)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
+  const selectEnVariation = useYueStore((s) => s.selectEnVariation)
   const altsLoading = useYueStore((s) => s.altsLoading)
   const dockUpsert = usePanelDock((s) => s.upsert)
   const dockRemove = usePanelDock((s) => s.remove)
@@ -134,18 +135,21 @@ export function CharacterBreakdownHost() {
       return
     }
     const phrase = top.phrase
+    const detailLang = top.lang || (hasHan(phrase) ? 'yue' : 'en')
     let cancelled = false
     setLoading(true)
     setRows([])
     void (async () => {
-      const local = await buildLocalBreakdown(phrase)
+      const local = detailLang === 'yue' ? await buildLocalBreakdown(phrase) : []
       if (cancelled) return
       setRows(local)
       try {
-        const remote = await fetchBreakdown(phrase)
+        const remote = await fetchBreakdown(phrase, { lang: detailLang })
         if (cancelled) return
-        const merged = mergeMeanings(local, remote.characters || [])
-        rememberBreakdownRows(merged, phrase)
+        const remoteRows = remote.characters || []
+        const merged =
+          detailLang === 'yue' ? mergeMeanings(local, remoteRows) : remoteRows.length ? remoteRows : local
+        if (detailLang === 'yue') rememberBreakdownRows(merged, phrase)
         setRows(merged)
       } catch {
         /* local enough */
@@ -161,6 +165,11 @@ export function CharacterBreakdownHost() {
   useEffect(() => {
     if (!top || top.kind !== 'char' || !top.jp) {
       setIpa('')
+      return
+    }
+    const detailLang = top.lang || (hasHan(top.char) ? 'yue' : 'en')
+    if (detailLang === 'en') {
+      setIpa(top.jp)
       return
     }
     let cancelled = false
@@ -186,13 +195,20 @@ export function CharacterBreakdownHost() {
   }, [top, minimized, stack.length, popDetail, closeBreakdown])
 
   const openChar = (row: CharBreakdown) => {
-    const sense = pickCharGloss(row.meaning, glossForChar(row.char))
+    const detailLang =
+      (top?.kind === 'phrase' || top?.kind === 'char' ? top.lang : undefined) ||
+      (hasHan(row.char) ? 'yue' : 'en')
+    const sense =
+      detailLang === 'yue'
+        ? pickCharGloss(row.meaning, glossForChar(row.char))
+        : row.meaning.trim()
     if (!sense && !row.jyutping) return
     pushDetail({
       kind: 'char',
       char: row.char,
       jp: row.jyutping,
       phrase: top?.kind === 'phrase' ? top.phrase : row.char,
+      lang: detailLang,
       definition: top?.kind === 'phrase' ? top.definition || top.translation : undefined,
       sense: sense || undefined,
     })
@@ -215,7 +231,16 @@ export function CharacterBreakdownHost() {
       ? (top.alternatives || []).map((a) => a.trim()).filter(Boolean)
       : []
   const topLabel = top.kind === 'phrase' ? top.phrase : top.char
-  const showRubyTitle = hasHan(topLabel)
+  const detailLang = top.lang || (hasHan(topLabel) ? 'yue' : 'en')
+  const isEnglishDetail = detailLang === 'en'
+  const showRubyTitle = !isEnglishDetail && hasHan(topLabel)
+  const phraseIpa =
+    isEnglishDetail && top.kind === 'phrase'
+      ? rows
+          .map((r) => r.jyutping)
+          .filter(Boolean)
+          .join(' ')
+      : ''
   const titleSegs: JyutSeg[] | undefined =
     top.kind === 'char' && top.jp
       ? [{ char: top.char, jp: top.jp }]
@@ -278,7 +303,11 @@ export function CharacterBreakdownHost() {
           </div>
           {ipa ? (
             <p className="detail-panel-ipa-line" lang="en">
-              [{ipa}]
+              /{ipa}/
+            </p>
+          ) : phraseIpa ? (
+            <p className="detail-panel-ipa-line" lang="en">
+              /{phraseIpa}/
             </p>
           ) : null}
           {translationText ? (
@@ -333,8 +362,11 @@ export function CharacterBreakdownHost() {
             {definitions.length > 1 || alternatives.length > 0 || altsLoading ? (
               <div className="detail-panel-extra">
                 {definitions.length > 1 ? (
-                  <section className="detail-panel-defs" aria-label="English meanings">
-                    <h3>English meanings</h3>
+                  <section
+                    className="detail-panel-defs"
+                    aria-label={isEnglishDetail ? 'Meanings' : 'English meanings'}
+                  >
+                    <h3>{isEnglishDetail ? 'Meanings' : 'English meanings'}</h3>
                     <ul>
                       {definitions.map((def, i) => (
                         <li key={`def-${i}`}>{def}</li>
@@ -355,7 +387,8 @@ export function CharacterBreakdownHost() {
                   <section className="detail-panel-alts" aria-label="Other variations">
                     <TranslationAlternatives
                       alternatives={alternatives}
-                      onSelect={selectYueVariation}
+                      lang={isEnglishDetail ? 'en' : 'yue'}
+                      onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     />
                   </section>
                 ) : null}
@@ -368,7 +401,7 @@ export function CharacterBreakdownHost() {
                 {rows.map((row, i) => {
                   const meaning = pickCharGloss(row.meaning)
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
-                  const canSpeak = isHanChar(row.char)
+                  const canSpeak = isEnglishDetail || isHanChar(row.char)
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
@@ -384,7 +417,17 @@ export function CharacterBreakdownHost() {
                       >
                         <span className="detail-panel-char-stack" lang="zh-HK">
                           <span className="detail-panel-row-jp">
-                            {row.jyutping ? <JyutSyllable jp={row.jyutping} /> : '—'}
+                            {row.jyutping ? (
+                              isEnglishDetail ? (
+                                <span className="detail-panel-ipa" lang="en">
+                                  /{row.jyutping}/
+                                </span>
+                              ) : (
+                                <JyutSyllable jp={row.jyutping} />
+                              )
+                            ) : (
+                              '—'
+                            )}
                           </span>
                           <span className="detail-panel-char">{row.char}</span>
                         </span>
@@ -398,7 +441,7 @@ export function CharacterBreakdownHost() {
                       {canSpeak ? (
                         <SpeakButton
                           text={row.char}
-                          lang="yue"
+                          lang={isEnglishDetail ? 'en' : 'yue'}
                           className="detail-panel-row-speak"
                         />
                       ) : null}
@@ -407,14 +450,16 @@ export function CharacterBreakdownHost() {
                 })}
               </ul>
             ) : (
-              <p className="detail-panel-loading muted">No character details available.</p>
+              <p className="detail-panel-loading muted">
+                {isEnglishDetail ? 'No word details available.' : 'No character details available.'}
+              </p>
             )}
           </>
         ) : (
           <div className="detail-panel-char-view">
             {top.sense ? (
               <section>
-                <h3>This character</h3>
+                <h3>{isEnglishDetail ? 'This word' : 'This character'}</h3>
                 <p>{top.sense}</p>
               </section>
             ) : (

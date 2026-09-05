@@ -524,3 +524,29 @@
 [data-theme='light'] .panel-taskbar-tab-sub {
   color: var(--jade-deep);
 }
+
+.detail-panel-ipa {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78em;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--muted) 85%, var(--ink));
+}
+
+.translation-alt-en {
+  border: 0;
+  background: transparent;
+  padding: 0.15rem 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--jade) 40%, transparent);
+  text-underline-offset: 0.14em;
+}
+
+.translation-alt-en:hover,
+.translation-alt-en:focus-visible {
+  color: var(--ink);
+  text-decoration-color: var(--jade);
+}

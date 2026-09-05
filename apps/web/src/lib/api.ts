@@ -116,10 +116,15 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-): Promise<{ characters: { char: string; jyutping: string | null; meaning: string }[]; engine: string }> {
+  opts?: { lang?: 'en' | 'yue' },
+): Promise<{
+  characters: { char: string; jyutping: string | null; meaning: string }[]
+  engine: string
+  lang?: 'en' | 'yue'
+}> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, ...(opts?.lang ? { lang: opts.lang } : {}) }),
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
