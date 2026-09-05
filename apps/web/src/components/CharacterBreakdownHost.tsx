@@ -10,6 +10,7 @@ import { fetchBreakdown } from '../lib/api'
 import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
+import { tagalogStressClass, tagalogStressLabel } from '../lib/tagalogPronunciation'
 import { buildLocalPinyinBreakdown, type PinyinSeg } from '../lib/pinyin'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
@@ -381,16 +382,38 @@ export function CharacterBreakdownHost() {
               /{phraseWuuIpa}/
             </p>
           ) : ipa && isTlDetail ? (
-            <p className="detail-panel-ipa-line" lang="tl" title="Accented / stress form">
-              {ipa}
+            <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="tl">
+              <span title="Accented / stress form">{ipa}</span>
+              {(() => {
+                const kind = tagalogStressClass(ipa || topLabel)
+                return kind ? (
+                  <span
+                    className={`tagalog-stress-chip tagalog-stress-chip--${kind}`}
+                    title={tagalogStressLabel(kind)}
+                  >
+                    {tagalogStressLabel(kind)}
+                  </span>
+                ) : null
+              })()}
             </p>
           ) : ipa ? (
             <p className="detail-panel-ipa-line" lang="en">
               /{ipa}/
             </p>
           ) : phraseAccented ? (
-            <p className="detail-panel-ipa-line" lang="tl" title="Accented / stress forms">
-              {phraseAccented}
+            <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="tl" title="Accented / stress forms">
+              <span>{phraseAccented}</span>
+              {(() => {
+                const kind = tagalogStressClass(phraseAccented.split(/\s+/)[0] || topLabel)
+                return kind ? (
+                  <span
+                    className={`tagalog-stress-chip tagalog-stress-chip--${kind}`}
+                    title={tagalogStressLabel(kind)}
+                  >
+                    {tagalogStressLabel(kind)}
+                  </span>
+                ) : null
+              })()}
             </p>
           ) : phraseIpa ? (
             <p className="detail-panel-ipa-line" lang="en">
@@ -529,18 +552,38 @@ export function CharacterBreakdownHost() {
                           }
                         >
                           <span className="detail-panel-row-jp">
-                            {row.jyutping && !isWuuDetail ? (
+                            {isTlDetail ? (
+                              <span className="detail-panel-tl-pron" lang="tl">
+                                {row.jyutping ? (
+                                  <span
+                                    className="detail-panel-ipa"
+                                    title="Accented / stress form"
+                                  >
+                                    {row.jyutping}
+                                  </span>
+                                ) : (
+                                  <span className="detail-panel-ipa muted" title="Unmarked form">
+                                    {row.char}
+                                  </span>
+                                )}
+                                {(() => {
+                                  const kind = tagalogStressClass(row.jyutping || row.char)
+                                  return kind ? (
+                                    <span
+                                      className={`tagalog-stress-chip tagalog-stress-chip--${kind}`}
+                                      title={tagalogStressLabel(kind)}
+                                    >
+                                      {tagalogStressLabel(kind)}
+                                    </span>
+                                  ) : (
+                                    <span className="detail-panel-ipa muted">—</span>
+                                  )
+                                })()}
+                              </span>
+                            ) : row.jyutping && !isWuuDetail ? (
                               isEnglishDetail ? (
                                 <span className="detail-panel-ipa" lang="en">
                                   /{row.jyutping}/
-                                </span>
-                              ) : isTlDetail ? (
-                                <span
-                                  className="detail-panel-ipa"
-                                  lang="tl"
-                                  title="Accented / stress form"
-                                >
-                                  {row.jyutping}
                                 </span>
                               ) : isCmnDetail ? (
                                 <PinyinSyllable py={row.jyutping} />

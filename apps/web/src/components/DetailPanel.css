@@ -107,6 +107,17 @@
   color: var(--muted);
 }
 
+.detail-panel-tl-pron {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.detail-panel-tl-pron .tagalog-stress-chip {
+  font-size: 0.72rem;
+}
+
 
 
 .detail-panel-translation {
