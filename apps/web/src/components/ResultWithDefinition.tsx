@@ -1,5 +1,6 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { TagalogText } from './TagalogText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -25,27 +26,36 @@ export function ResultWithDefinition({
   /** Multiple English senses — triggers dotted underline + details open. */
   definitions?: string[]
   cantonese?: boolean
-  /** When cantonese, which Chinese variety for ruby + copy. */
-  chineseLang?: 'yue' | 'cmn'
+  /** When cantonese/display, which variety for ruby / Tagalog stress + copy. */
+  chineseLang?: 'yue' | 'cmn' | 'tl'
   className?: string
   textClassName?: string
   onActivate?: (text: string) => void
   /** When set, show a tap-to-speak control for this line. */
   speakLang?: Lang
-  /** Show copy beside speak (Chinese only). */
+  /** Show copy beside speak (Chinese / Tagalog). */
   showCopy?: boolean
 }) {
   const trimmed = text.trim()
   const def = definition?.trim() || ''
   if (!trimmed) return null
-  const hanLang: Lang = chineseLang === 'cmn' ? 'cmn' : 'yue'
+  const displayLang: Lang =
+    chineseLang === 'cmn' ? 'cmn' : chineseLang === 'tl' ? 'tl' : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
       <div className="result-with-def-main">
         <div className="result-with-def-line">
           {cantonese ? (
-            chineseLang === 'cmn' ? (
+            chineseLang === 'tl' ? (
+              <TagalogText
+                text={trimmed}
+                definition={def}
+                definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'cmn' ? (
               <MandarinText
                 text={trimmed}
                 definition={def}
@@ -72,7 +82,7 @@ export function ResultWithDefinition({
               <SpeakButton text={trimmed} lang={speakLang} />
             )
           ) : showCopy && cantonese && trimmed ? (
-            <CopyButton text={trimmed} lang={hanLang} />
+            <CopyButton text={trimmed} lang={displayLang} />
           ) : null}
         </div>
       </div>

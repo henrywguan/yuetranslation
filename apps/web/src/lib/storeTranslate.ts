@@ -1,14 +1,14 @@
 import { translateText } from './api'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: 'yue' | 'cmn'
-  /** Solo upper/lower pane languages (any en|yue|cmn pair; must differ). */
+  chineseLang: 'yue' | 'cmn' | 'tl'
+  /** Solo upper/lower pane languages (any en|yue|cmn|tl pair; must differ). */
   soloUpperLang: Lang
   soloLowerLang: Lang
   face: {
@@ -104,6 +104,7 @@ function resolveSoloTarget(get: Get, from: Lang): Lang {
 }
 
 function sanitizeTranslation(to: Lang, text: string, source?: string): string | null {
+  if (to === 'tl') return sanitizeTlTranslation(text)
   if (to === 'yue' || to === 'cmn') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
@@ -251,7 +252,9 @@ export async function runTranslation(
     if (!clean) {
       set({
         error:
-          to === 'cmn'
+          to === 'tl'
+            ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
+            : to === 'cmn'
             ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
             : to === 'yue'
               ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'

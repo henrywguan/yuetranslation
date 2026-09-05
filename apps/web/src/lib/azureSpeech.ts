@@ -7,6 +7,7 @@ function localeToLang(locale: string): Lang {
   const l = locale.toLowerCase()
   if (l.includes('yue') || l.includes('hk') || l === 'zh-hk' || l.startsWith('zh-hk')) return 'yue'
   if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans') || l === 'zh-cn') return 'cmn'
+  if (l.startsWith('fil') || l.startsWith('tl')) return 'tl'
   // Generic zh without region — prefer Cantonese for HK product default.
   if (l.startsWith('zh')) return 'yue'
   return 'en'
@@ -15,6 +16,7 @@ function localeToLang(locale: string): Lang {
 function langToLocale(lang: Lang): string {
   if (lang === 'yue') return 'zh-HK'
   if (lang === 'cmn') return 'zh-CN'
+  if (lang === 'tl') return 'fil-PH'
   return 'en-US'
 }
 
@@ -222,6 +224,10 @@ export async function createAzureLiveSession(
       // Locked languages: prefer the multilingual transcriber for fast interim streaming.
       // Fixed en-US recognizer feels sluggish; fixed zh-HK is flaky — transcriber + lockLang pins the pane.
       // Mandarin (zh-CN): use fixed recognizer — auto-detect set is en-US + zh-HK only.
+      if (lockLang === 'tl') {
+        await startWithRecognizer('tl')
+        return
+      }
       if (lockLang === 'cmn') {
         await startWithRecognizer('cmn')
         return

@@ -13,6 +13,7 @@ import {
   type TranslateStage,
 } from './canto/index.js'
 import { hasHan } from './canto/han.js'
+import { inferTagalogRegister } from './tagalogRegister.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
 function applyCmnScrub(
@@ -34,7 +35,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'tl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -69,7 +70,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'tl'
 
 type TranslateResult = {
   text: string
@@ -391,6 +392,234 @@ async function translateMandarin(opts: {
   )
 }
 
+
+/**
+ * EN↔Tagalog — colloquial spoken Filipino/Tagalog (not textbook).
+ * Never run Yue scrub/harden. Latin script only.
+ */
+async function translateTagalog(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'tl' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'tl-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'tl' ? `(demo TL) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'tl' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'tl-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toTl = to === 'tl'
+  const register = toTl ? inferTagalogRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'tl-formal' : 'tl-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toTl) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Filipino/Tagalog interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Filipino/Tagalog (complete sentences, po/opo when natural).',
+            'Avoid slang and heavy Taglish; keep wording clear and respectful.',
+            'On the PRIMARY line, mark stress/glottal with dictionary diacritics when helpful (acute/grave/circumflex on the final vowel). Alternatives may be unmarked.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Tagalog>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Filipino/Tagalog interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Tagalog/Filipino (not textbook).',
+            'Use Metro Manila everyday conversation; light Taglish is OK when natural.',
+            'Do NOT use stiff textbook / formal school Filipino.',
+            'Prefer everyday wording: kumusta, wala na, sige, tara, ano ba, grabe.',
+            'On the PRIMARY line, mark stress/glottal with dictionary diacritics when helpful (acute/grave/circumflex on the final vowel). Alternatives may be unmarked.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Tagalog>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants (including a more Taglish option when natural). No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedTl = parseYuePayload(raw, text, true)
+    primary = parsedTl.text
+    alternatives = parsedTl.alternatives
+    if (parsedTl.definition) definition = parsedTl.definition
+  } else if (wantAlts && !toTl) {
+    const system = [
+      'You are a Filipino/Tagalog interpreter helping Tagalog speakers learn English.',
+      'Translate colloquial Tagalog/Filipino (including Taglish) into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Tagalog gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. definition: brief colloquial Tagalog for a learner. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toTl
+      ? register === 'formal'
+        ? [
+            'You are a Filipino/Tagalog interpreter for formal situations.',
+            'Translate into POLITE formal Filipino/Tagalog (complete sentences; po/opo when natural).',
+            'Avoid slang and heavy Taglish.',
+            'Mark stress/glottal with dictionary diacritics when helpful for pronunciation.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Tagalog>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Filipino/Tagalog interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Tagalog/Filipino (not textbook).',
+            'Metro Manila everyday style; light Taglish OK when natural.',
+            'Mark stress/glottal with dictionary diacritics when helpful for pronunciation.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Tagalog>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Filipino/Tagalog interpreter.',
+          'Translate colloquial Tagalog/Filipino (including Taglish) into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toTl && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toTl ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toTl ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toTl) {
+    const outText = primary && !hasHan(primary) ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-tl-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['tl-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -419,6 +648,10 @@ export async function translate(input: unknown) {
 
   // Mandarin path — skip Yue scrub/harden entirely when target is Mandarin
   // or when translating Mandarin → English. cmn→yue still uses Yue harden below.
+  if (to === 'tl' || (from === 'tl' && to === 'en')) {
+    return translateTagalog({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
   if (to === 'cmn' || (from === 'cmn' && to === 'en')) {
     return translateMandarin({ from, to, text, stage, wantAlts, fallbackDefinition })
   }

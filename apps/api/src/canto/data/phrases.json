@@ -3965,6 +3965,1741 @@
         "noun",
         "meta"
       ]
+    },
+    {
+      "id": "en-hello-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "hello",
+      "text": "Kumusta",
+      "alternatives": [
+        "Kamusta",
+        "Hi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-thanks-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "thank you",
+      "text": "Salamat",
+      "alternatives": [
+        "Salamat ha",
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-thanks-alot-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "thank you so much",
+      "text": "Maraming salamat",
+      "alternatives": [
+        "Salamat ng marami"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-sorry-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i'm sorry",
+      "text": "Pasensya na",
+      "alternatives": [
+        "Sorry",
+        "Patawad"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-yes-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "yes",
+      "text": "Oo",
+      "alternatives": [
+        "Opo"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-no-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "no",
+      "text": "Hindi",
+      "alternatives": [
+        "Hindi po"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-ok-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "okay",
+      "text": "Sige",
+      "alternatives": [
+        "Okay",
+        "Ok"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-lets-go-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "let's go",
+      "text": "Tara",
+      "alternatives": [
+        "Tara na",
+        "Go"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-how-much-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "how much",
+      "text": "Magkano",
+      "alternatives": [
+        "Magkano po"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-where-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "where is it",
+      "text": "Nasaan",
+      "alternatives": [
+        "Saan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel"
+      ]
+    },
+    {
+      "id": "en-help-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "help",
+      "text": "Tulong",
+      "alternatives": [
+        "Help"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "en-delicious-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "this is delicious",
+      "text": "Ang sarap",
+      "alternatives": [
+        "Masarap"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-wait-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "wait a minute",
+      "text": "Sandali lang",
+      "alternatives": [
+        "Teka",
+        "Wait"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-dont-understand-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i don't understand",
+      "text": "Hindi ko gets",
+      "alternatives": [
+        "Di ko gets",
+        "Hindi ko maintindihan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-kumusta-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "kumusta",
+      "text": "Hello",
+      "alternatives": [
+        "Hi",
+        "How are you"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting"
+      ]
+    },
+    {
+      "id": "tl-salamat-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "salamat",
+      "text": "Thank you",
+      "alternatives": [
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-sige-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "sige",
+      "text": "Okay",
+      "alternatives": [
+        "Sure",
+        "Alright"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-tara-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tara",
+      "text": "Let's go",
+      "alternatives": [
+        "Come on"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-hindi-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "hindi",
+      "text": "No",
+      "alternatives": [
+        "No, I don't"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "tl-oo-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "oo",
+      "text": "Yes",
+      "alternatives": [
+        "Yeah"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic"
+      ]
+    },
+    {
+      "id": "en-bathroom-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "where is the bathroom",
+      "text": "Nasaan ang CR",
+      "alternatives": [
+        "Nasaan ang banyo",
+        "Saan ang CR"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-nasaan-ang-cr-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "nasaan ang cr",
+      "text": "Where is the bathroom",
+      "alternatives": [
+        "Where's the restroom"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "en-left-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "left",
+      "text": "Kaliwa",
+      "register": "colloquial",
+      "tags": [
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-kaliwa-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "kaliwa",
+      "text": "Left",
+      "register": "colloquial",
+      "tags": [
+        "directions"
+      ]
+    },
+    {
+      "id": "en-right-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "right",
+      "text": "Kanan",
+      "register": "colloquial",
+      "tags": [
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-kanan-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "kanan",
+      "text": "Right",
+      "register": "colloquial",
+      "tags": [
+        "directions"
+      ]
+    },
+    {
+      "id": "en-straight-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "straight ahead",
+      "text": "Diretso",
+      "alternatives": [
+        "Tuwid lang"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-diretso-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "diretso",
+      "text": "Straight ahead",
+      "alternatives": [
+        "Go straight"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "directions"
+      ]
+    },
+    {
+      "id": "en-i-am-lost-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i'm lost",
+      "text": "Naliligaw ako",
+      "alternatives": [
+        "Lost ako"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-naliligaw-ako-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "naliligaw ako",
+      "text": "I'm lost",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "en-how-do-i-get-to-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "how do i get to",
+      "text": "Paano pumunta sa",
+      "alternatives": [
+        "Paano ba pumunta sa"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-paano-pumunta-sa-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "paano pumunta sa",
+      "text": "How do I get to",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "en-near-here-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "is it near here",
+      "text": "Malapit ba dito",
+      "alternatives": [
+        "Malapit lang ba"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-malapit-ba-dito-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "malapit ba dito",
+      "text": "Is it near here",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "en-far-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "is it far",
+      "text": "Malayo ba",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "tl-malayo-ba-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "malayo ba",
+      "text": "Is it far",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "directions"
+      ]
+    },
+    {
+      "id": "en-call-taxi-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "call a taxi",
+      "text": "Tumawag ng taxi",
+      "alternatives": [
+        "Taxi nga",
+        "Grab nga"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "taxi",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-tumawag-ng-taxi-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tumawag ng taxi",
+      "text": "Call a taxi",
+      "alternatives": [
+        "Get me a taxi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "taxi",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-to-airport-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "to the airport",
+      "text": "Papuntang airport",
+      "alternatives": [
+        "Sa airport"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "taxi",
+        "airport",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-papuntang-airport-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "papuntang airport",
+      "text": "To the airport",
+      "register": "colloquial",
+      "tags": [
+        "taxi",
+        "airport",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-stop-here-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "stop here",
+      "text": "Dito na lang",
+      "alternatives": [
+        "Para dito"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "taxi"
+      ]
+    },
+    {
+      "id": "tl-dito-na-lang-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "dito na lang",
+      "text": "Stop here",
+      "alternatives": [
+        "Drop me here"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "taxi"
+      ]
+    },
+    {
+      "id": "en-how-long-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "how long will it take",
+      "text": "Gaano katagal",
+      "alternatives": [
+        "Ilang oras"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "taxi",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-gaano-katagal-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "gaano katagal",
+      "text": "How long will it take",
+      "register": "colloquial",
+      "tags": [
+        "taxi",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-airport-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "airport",
+      "text": "Airport",
+      "alternatives": [
+        "Paliparan"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "airport",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-airport-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "airport",
+      "text": "Airport",
+      "register": "colloquial",
+      "tags": [
+        "airport",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-terminal-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "which terminal",
+      "text": "Anong terminal",
+      "alternatives": [
+        "Aling terminal"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "airport"
+      ]
+    },
+    {
+      "id": "tl-anong-terminal-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "anong terminal",
+      "text": "Which terminal",
+      "register": "colloquial",
+      "tags": [
+        "airport"
+      ]
+    },
+    {
+      "id": "en-boarding-pass-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "boarding pass",
+      "text": "Boarding pass",
+      "alternatives": [
+        "Ticket"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "airport"
+      ]
+    },
+    {
+      "id": "tl-boarding-pass-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "boarding pass",
+      "text": "Boarding pass",
+      "register": "colloquial",
+      "tags": [
+        "airport"
+      ]
+    },
+    {
+      "id": "en-baggage-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "baggage claim",
+      "text": "Baggage claim",
+      "alternatives": [
+        "Kuhanan ng bagahe"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "airport"
+      ]
+    },
+    {
+      "id": "tl-baggage-claim-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "baggage claim",
+      "text": "Baggage claim",
+      "register": "colloquial",
+      "tags": [
+        "airport"
+      ]
+    },
+    {
+      "id": "en-check-in-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "check-in please",
+      "text": "Check-in po",
+      "alternatives": [
+        "Magche-check-in"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "tl-check-in-po-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "check-in po",
+      "text": "Check-in please",
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "en-check-out-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "check-out",
+      "text": "Check-out",
+      "alternatives": [
+        "Magche-check-out"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "tl-check-out-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "check-out",
+      "text": "Check-out",
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "en-reservation-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i have a reservation",
+      "text": "May reservation ako",
+      "alternatives": [
+        "May booking ako"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "tl-may-reservation-ako-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "may reservation ako",
+      "text": "I have a reservation",
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "en-wifi-password-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "wifi password",
+      "text": "Password ng wifi",
+      "alternatives": [
+        "Ano'ng wifi password"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "hotel",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-password-ng-wifi-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "password ng wifi",
+      "text": "Wi‑Fi password",
+      "alternatives": [
+        "What's the Wi‑Fi password"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "hotel",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-room-key-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "room key",
+      "text": "Key ng room",
+      "alternatives": [
+        "Susí ng kwarto"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "tl-key-ng-room-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "key ng room",
+      "text": "Room key",
+      "register": "colloquial",
+      "tags": [
+        "hotel"
+      ]
+    },
+    {
+      "id": "en-bill-please-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "bill please",
+      "text": "Bill po",
+      "alternatives": [
+        "Yung bill",
+        "Check please"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-bill-po-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "bill po",
+      "text": "Bill please",
+      "alternatives": [
+        "The check please"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-spicy-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "spicy",
+      "text": "Maanghang",
+      "alternatives": [
+        "Spicy"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-maanghang-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "maanghang",
+      "text": "Spicy",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-not-spicy-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "not spicy",
+      "text": "Hindi maanghang",
+      "alternatives": [
+        "Walang anghang",
+        "Not spicy"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-hindi-maanghang-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "hindi maanghang",
+      "text": "Not spicy",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-allergic-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i'm allergic",
+      "text": "Allergic ako",
+      "alternatives": [
+        "May allergy ako"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "emergency"
+      ]
+    },
+    {
+      "id": "tl-allergic-ako-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "allergic ako",
+      "text": "I'm allergic",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "emergency"
+      ]
+    },
+    {
+      "id": "en-water-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "water",
+      "text": "Tubig",
+      "alternatives": [
+        "Water"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-tubig-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tubig",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-beer-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "beer",
+      "text": "Beer",
+      "alternatives": [
+        "Serbesa"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-beer-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "beer",
+      "text": "Beer",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-rice-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "rice",
+      "text": "Kanin",
+      "alternatives": [
+        "Rice"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-kanin-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "kanin",
+      "text": "Rice",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-menu-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "menu",
+      "text": "Menu",
+      "alternatives": [
+        "Ménu"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-menu-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "menu",
+      "text": "Menu",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-i-want-this-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i want this",
+      "text": "Ito yung gusto ko",
+      "alternatives": [
+        "Ito nga",
+        "Gusto ko nito"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-ito-yung-gusto-ko-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "ito yung gusto ko",
+      "text": "I want this",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-no-ice-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "no ice",
+      "text": "Walang ice",
+      "alternatives": [
+        "No ice"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-walang-ice-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "walang ice",
+      "text": "No ice",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-vegetarian-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "vegetarian",
+      "text": "Vegetarian",
+      "alternatives": [
+        "Walang karne"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "tl-vegetarian-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "vegetarian",
+      "text": "Vegetarian",
+      "register": "colloquial",
+      "tags": [
+        "food"
+      ]
+    },
+    {
+      "id": "en-too-expensive-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "too expensive",
+      "text": "Masyadong mahal",
+      "alternatives": [
+        "Ang mahal",
+        "Sobrang mahal"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-masyadong-mahal-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "masyadong mahal",
+      "text": "Too expensive",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-cheap-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "cheap",
+      "text": "Mura",
+      "alternatives": [
+        "Murang-mura"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-mura-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "mura",
+      "text": "Cheap",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-receipt-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "receipt",
+      "text": "Resibo",
+      "alternatives": [
+        "Receipt"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "food"
+      ]
+    },
+    {
+      "id": "tl-resibo-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "resibo",
+      "text": "Receipt",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "food"
+      ]
+    },
+    {
+      "id": "en-cash-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "do you accept cash",
+      "text": "Tanggap ba ang cash",
+      "alternatives": [
+        "Pwede ba cash"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-tanggap-ba-ang-cash-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tanggap ba ang cash",
+      "text": "Do you accept cash",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-card-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "do you accept cards",
+      "text": "Tanggap ba ang card",
+      "alternatives": [
+        "Pwede ba card"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-tanggap-ba-ang-card-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tanggap ba ang card",
+      "text": "Do you accept cards",
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-discount-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "any discount",
+      "text": "May discount ba",
+      "alternatives": [
+        "Pwede bang tawaran"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "tl-may-discount-ba-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "may discount ba",
+      "text": "Any discount",
+      "alternatives": [
+        "Can you lower the price"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping"
+      ]
+    },
+    {
+      "id": "en-police-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "call the police",
+      "text": "Tumawag ng pulis",
+      "alternatives": [
+        "Pulis!",
+        "Call the police"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "tl-tumawag-ng-pulis-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tumawag ng pulis",
+      "text": "Call the police",
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "en-hospital-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "hospital",
+      "text": "Ospital",
+      "alternatives": [
+        "Hospital"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "tl-ospital-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "ospital",
+      "text": "Hospital",
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "en-doctor-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i need a doctor",
+      "text": "Kailangan ko ng doktor",
+      "alternatives": [
+        "Doctor please"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "tl-kailangan-ko-ng-doktor-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "kailangan ko ng doktor",
+      "text": "I need a doctor",
+      "register": "colloquial",
+      "tags": [
+        "emergency"
+      ]
+    },
+    {
+      "id": "en-pharmacy-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "pharmacy",
+      "text": "Botika",
+      "alternatives": [
+        "Pharmacy",
+        "Drugstore"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "emergency",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-botika-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "botika",
+      "text": "Pharmacy",
+      "register": "colloquial",
+      "tags": [
+        "emergency",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-english-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "do you speak english",
+      "text": "Marunong ka bang mag-English",
+      "alternatives": [
+        "English?",
+        "Pwede ba English"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-marunong-ka-bang-mag-english-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "marunong ka bang mag-english",
+      "text": "Do you speak English",
+      "alternatives": [
+        "English?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-dont-speak-tagalog-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "i don't speak tagalog",
+      "text": "Hindi ako marunong mag-Tagalog",
+      "alternatives": [
+        "Di ako mag-Tagalog"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "travel"
+      ]
+    },
+    {
+      "id": "tl-hindi-ako-marunong-mag-tagalog-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "hindi ako marunong mag-tagalog",
+      "text": "I don't speak Tagalog",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "travel"
+      ]
+    },
+    {
+      "id": "en-repeat-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "can you repeat",
+      "text": "Pakiulit",
+      "alternatives": [
+        "Ulitin mo nga",
+        "Can you repeat"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-pakiulit-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "pakiulit",
+      "text": "Can you repeat",
+      "alternatives": [
+        "Please say that again"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-speak-slowly-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "speak slowly",
+      "text": "Bagalan lang",
+      "alternatives": [
+        "Dahan-dahan lang"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-bagalan-lang-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "bagalan lang",
+      "text": "Speak slowly",
+      "alternatives": [
+        "Please speak slowly"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-excuse-me-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "excuse me",
+      "text": "Excuse me",
+      "alternatives": [
+        "Pasensya na po",
+        "Tabi po"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-excuse-me-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "excuse me",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-please-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "please",
+      "text": "Please",
+      "alternatives": [
+        "Paki",
+        "Pakiusap"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-please-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "please",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-youre-welcome-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "you're welcome",
+      "text": "Walang anuman",
+      "alternatives": [
+        "Welcome"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "tl-walang-anuman-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "walang anuman",
+      "text": "You're welcome",
+      "register": "colloquial",
+      "tags": [
+        "courtesy"
+      ]
+    },
+    {
+      "id": "en-good-morning-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "good morning",
+      "text": "Magandang umaga",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "greeting"
+      ]
+    },
+    {
+      "id": "tl-magandang-umaga-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "magandang umaga",
+      "text": "Good morning",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-good-evening-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "good evening",
+      "text": "Magandang gabi",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "greeting"
+      ]
+    },
+    {
+      "id": "tl-magandang-gabi-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "magandang gabi",
+      "text": "Good evening",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "greeting"
+      ]
+    },
+    {
+      "id": "en-one-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "one",
+      "text": "Isa",
+      "alternatives": [
+        "One"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "tl-isa-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "isa",
+      "text": "One",
+      "register": "colloquial",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "en-two-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "two",
+      "text": "Dalawa",
+      "alternatives": [
+        "Two"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "tl-dalawa-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "dalawa",
+      "text": "Two",
+      "register": "colloquial",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "en-three-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "three",
+      "text": "Tatlo",
+      "alternatives": [
+        "Three"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "tl-tatlo-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "tatlo",
+      "text": "Three",
+      "register": "colloquial",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "en-how-much-is-this-tl",
+      "sourceLang": "en",
+      "targetLang": "tl",
+      "source": "how much is this",
+      "text": "Magkano ito",
+      "alternatives": [
+        "Magkano 'to"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "numbers"
+      ]
+    },
+    {
+      "id": "tl-magkano-ito-en",
+      "sourceLang": "tl",
+      "targetLang": "en",
+      "source": "magkano ito",
+      "text": "How much is this",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "numbers"
+      ]
     }
   ]
 }

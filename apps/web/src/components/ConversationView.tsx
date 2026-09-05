@@ -1,6 +1,8 @@
+import type { Lang } from '../lib/types'
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { TagalogText } from './TagalogText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { LangLabelButton } from './LangLabelButton'
@@ -14,7 +16,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 
 /**
  * Conversation: two language-pure cards on a shared phone.
- * Chinese (粵 or 普) sits on top, rotated 180° for the person across the table.
+ * Partner pane (粵 / 普 / Tagalog) sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
  * Pipeline: mic → live STT on the speaking side → after capture ends, one final
@@ -45,7 +47,8 @@ export function ConversationView() {
   const zhLive =
     Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
   const enListening = live && liveSide === 'en'
-  const zhListening = live && (liveSide === 'yue' || liveSide === 'cmn')
+  const zhListening =
+    live && (liveSide === 'yue' || liveSide === 'cmn' || liveSide === 'tl')
 
   const openEnDetails = () => {
     const zh = (face.yueInterim || face.yueTranslation).trim()
@@ -70,10 +73,20 @@ export function ConversationView() {
     })
   }
 
-  const onChineseLang = (lang: 'yue' | 'cmn' | 'en') => {
-    if (lang === 'en') return
+  const onChineseLang = (lang: Lang) => {
+    if (lang !== 'yue' && lang !== 'cmn' && lang !== 'tl') return
     setSpeakDirection(lang)
   }
+
+  const partnerHintLang =
+    chineseLang === 'cmn' ? 'zh-CN' : chineseLang === 'tl' ? 'tl' : 'zh-HK'
+
+  const partnerPlaceholder =
+    chineseLang === 'tl'
+      ? ui.dirTagalog.en
+      : chineseLang === 'cmn'
+        ? ui.dirMandarin.zh
+        : ui.yueTranslation.zh
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
@@ -94,7 +107,9 @@ export function ConversationView() {
               only="zh"
               onSelect={onChineseLang}
             />
-            <p lang={chineseLang === 'cmn' ? 'zh-CN' : 'zh-HK'}>{ui.friendLooksHere.zh}</p>
+            <p lang={partnerHintLang}>
+              {chineseLang === 'tl' ? ui.friendLooksHere.en : ui.friendLooksHere.zh}
+            </p>
           </header>
           <div className="pane-body pane-body--hero">
             {zhThinking ? (
@@ -107,7 +122,15 @@ export function ConversationView() {
               >
                 {zhText ? (
                   <span className="spoken-line">
-                    {chineseLang === 'cmn' ? (
+                    {chineseLang === 'tl' ? (
+                      <TagalogText
+                        text={zhText}
+                        definition={face.yueDefinition}
+                        definitions={face.yueDefinitions}
+                        className="pane-hero--yue"
+                        onActivate={openZhDetails}
+                      />
+                    ) : chineseLang === 'cmn' ? (
                       <MandarinText
                         text={zhText}
                         definition={face.yueDefinition}
@@ -129,9 +152,7 @@ export function ConversationView() {
                     ) : null}
                   </span>
                 ) : (
-                  <span className="placeholder">
-                    {chineseLang === 'cmn' ? ui.dirMandarin.zh : ui.yueTranslation.zh}
-                  </span>
+                  <span className="placeholder">{partnerPlaceholder}</span>
                 )}
               </InkSettle>
             )}
@@ -139,7 +160,7 @@ export function ConversationView() {
           <div className="pane-live">
             <LiveHoldButton
               side={chineseLang}
-              labelLang="zh"
+              labelLang={chineseLang === 'tl' ? 'en' : 'zh'}
               className="live-btn--pane live-btn--yue"
             />
           </div>

@@ -12,9 +12,11 @@ import { emptyUsage, getGuestUsage, getUsage, type UsageSnapshot } from './usage
 import {
   DEFAULT_CMN_VOICE,
   DEFAULT_EN_VOICE,
+  DEFAULT_TL_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
+  resolveTlVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
@@ -97,6 +99,7 @@ export type Entitlement = {
     ttsVoiceYue: string
     ttsVoiceEn: string
     ttsVoiceCmn: string
+    ttsVoiceTl: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Custom display username; null until the user sets one. */
@@ -243,6 +246,7 @@ function buildSnapshot(
     ttsVoiceYue?: string | null
     ttsVoiceEn?: string | null
     ttsVoiceCmn?: string | null
+    ttsVoiceTl?: string | null
     autoSpeak?: boolean | null
     household?: HouseholdSummary | null
     username?: string | null
@@ -259,6 +263,7 @@ function buildSnapshot(
     ttsVoiceYue: resolveYueVoice(opts.ttsVoiceYue),
     ttsVoiceEn: resolveEnVoice(opts.ttsVoiceEn),
     ttsVoiceCmn: resolveCmnVoice(opts.ttsVoiceCmn),
+    ttsVoiceTl: resolveTlVoice(opts.ttsVoiceTl),
     autoSpeak: Boolean(opts.autoSpeak),
     username: opts.username?.trim() || null,
     usernameChangedAt: opts.usernameChangedAt || null,
@@ -365,6 +370,7 @@ function buildSnapshot(
         ttsVoiceYue: DEFAULT_YUE_VOICE,
         ttsVoiceEn: DEFAULT_EN_VOICE,
         ttsVoiceCmn: DEFAULT_CMN_VOICE,
+        ttsVoiceTl: DEFAULT_TL_VOICE,
         autoSpeak: false,
         username: null,
         usernameChangedAt: null,
@@ -495,6 +501,7 @@ function localEntitlement(): Entitlement {
         ttsVoiceYue: DEFAULT_YUE_VOICE,
         ttsVoiceEn: DEFAULT_EN_VOICE,
         ttsVoiceCmn: DEFAULT_CMN_VOICE,
+        ttsVoiceTl: DEFAULT_TL_VOICE,
         autoSpeak: false,
         username: null,
         usernameChangedAt: null,
@@ -571,6 +578,7 @@ export async function resolveEntitlement(
     ttsVoiceYue: profile?.tts_voice_yue,
     ttsVoiceEn: profile?.tts_voice_en,
     ttsVoiceCmn: profile?.tts_voice_cmn,
+    ttsVoiceTl: profile?.tts_voice_tl,
     autoSpeak: profile?.auto_speak,
     household,
     username: profile?.username,

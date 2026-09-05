@@ -116,11 +116,11 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-  opts?: { lang?: 'en' | 'yue' | 'cmn' },
+  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'tl' },
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue' | 'cmn'
+  lang?: 'en' | 'yue' | 'cmn' | 'tl'
 }> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
@@ -151,8 +151,8 @@ export type CameraScanRegion = {
   id: string
   text: string
   translated: string
-  from: 'en' | 'zh' | 'yue' | 'cmn'
-  to: 'en' | 'zh' | 'yue' | 'cmn'
+  from: 'en' | 'zh' | 'yue' | 'cmn' | 'tl'
+  to: 'en' | 'zh' | 'yue' | 'cmn' | 'tl'
   box: CameraBox
   script: 'latin' | 'cjk' | 'mixed' | 'other'
   cacheHit: boolean
@@ -185,7 +185,7 @@ export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
 export async function cameraScan(opts: {
   image: string
   boxes?: CameraBox[]
-  target?: 'en' | 'zh' | 'yue' | 'cmn'
+  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'tl'
   ocrOnly?: boolean
   /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
   forDocs?: boolean
@@ -221,6 +221,7 @@ export async function saveTtsVoicePrefs(patch: {
   ttsVoiceYue?: string
   ttsVoiceEn?: string
   ttsVoiceCmn?: string
+  ttsVoiceTl?: string
 }): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
   const res = await apiFetch('/prefs/tts-voices', {
     method: 'PATCH',

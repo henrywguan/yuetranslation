@@ -3,6 +3,7 @@
 export const DEFAULT_YUE_VOICE = 'zh-HK-HiuMaanNeural'
 export const DEFAULT_EN_VOICE = 'en-US-JennyNeural'
 export const DEFAULT_CMN_VOICE = 'zh-CN-XiaoxiaoNeural'
+export const DEFAULT_TL_VOICE = 'fil-PH-BlessicaNeural'
 
 export type YueVoiceId =
   | 'zh-HK-HiuMaanNeural'
@@ -19,11 +20,13 @@ export type EnVoiceId =
 
 export type CmnVoiceId = 'zh-CN-XiaoxiaoNeural' | 'zh-CN-YunxiNeural'
 
-export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId
+export type TlVoiceId = 'fil-PH-BlessicaNeural' | 'fil-PH-AngeloNeural'
+
+export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId | TlVoiceId
 
 export type TtsVoiceOption = {
   id: TtsVoiceId
-  lang: 'yue' | 'en' | 'cmn'
+  lang: 'yue' | 'en' | 'cmn' | 'tl'
   /** Azure SSML xml:lang */
   xmlLang: string
   labelEn: string
@@ -109,6 +112,26 @@ export const EN_VOICES: TtsVoiceOption[] = [
   },
 ]
 
+
+export const TL_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'fil-PH-BlessicaNeural',
+    lang: 'tl',
+    xmlLang: 'fil-PH',
+    labelEn: 'Blessica · Female',
+    labelZh: 'Blessica · 女聲',
+    gender: 'female',
+  },
+  {
+    id: 'fil-PH-AngeloNeural',
+    lang: 'tl',
+    xmlLang: 'fil-PH',
+    labelEn: 'Angelo · Male',
+    labelZh: 'Angelo · 男聲',
+    gender: 'male',
+  },
+]
+
 export const CMN_VOICES: TtsVoiceOption[] = [
   {
     id: 'zh-CN-XiaoxiaoNeural',
@@ -131,8 +154,9 @@ export const CMN_VOICES: TtsVoiceOption[] = [
 const YUE_SET = new Set(YUE_VOICES.map((v) => v.id))
 const EN_SET = new Set(EN_VOICES.map((v) => v.id))
 const CMN_SET = new Set(CMN_VOICES.map((v) => v.id))
+const TL_SET = new Set(TL_VOICES.map((v) => v.id))
 const ALL = new Map<string, TtsVoiceOption>(
-  [...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES].map((v) => [v.id, v]),
+  [...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES, ...TL_VOICES].map((v) => [v.id, v]),
 )
 
 export function isYueVoice(id: string): id is YueVoiceId {
@@ -147,6 +171,10 @@ export function isCmnVoice(id: string): id is CmnVoiceId {
   return CMN_SET.has(id as CmnVoiceId)
 }
 
+export function isTlVoice(id: string): id is TlVoiceId {
+  return TL_SET.has(id as TlVoiceId)
+}
+
 export function resolveYueVoice(id: string | null | undefined): YueVoiceId {
   return id && isYueVoice(id) ? id : DEFAULT_YUE_VOICE
 }
@@ -159,6 +187,10 @@ export function resolveCmnVoice(id: string | null | undefined): CmnVoiceId {
   return id && isCmnVoice(id) ? id : DEFAULT_CMN_VOICE
 }
 
+export function resolveTlVoice(id: string | null | undefined): TlVoiceId {
+  return id && isTlVoice(id) ? id : DEFAULT_TL_VOICE
+}
+
 export function voiceMeta(id: string): TtsVoiceOption | undefined {
   return ALL.get(id)
 }
@@ -169,16 +201,19 @@ export function resolveSpeakVoice(
   preferredYue?: string | null,
   preferredEn?: string | null,
   preferredCmn?: string | null,
+  preferredTl?: string | null,
   override?: string | null,
 ): { voice: string; xmlLang: string } {
   const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU'
   const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
+  const isTl = lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
   if (override) {
     const meta = voiceMeta(override)
     if (meta) {
       if (isEn && meta.lang === 'en') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isCmn && meta.lang === 'cmn') return { voice: meta.id, xmlLang: meta.xmlLang }
-      if (!isEn && !isCmn && meta.lang === 'yue') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isTl && meta.lang === 'tl') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (!isEn && !isCmn && !isTl && meta.lang === 'yue') return { voice: meta.id, xmlLang: meta.xmlLang }
     }
   }
   if (isEn) {
@@ -189,6 +224,10 @@ export function resolveSpeakVoice(
     const id = resolveCmnVoice(preferredCmn)
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
+  if (isTl) {
+    const id = resolveTlVoice(preferredTl)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
   const id = resolveYueVoice(preferredYue)
   return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
 }
@@ -196,3 +235,4 @@ export function resolveSpeakVoice(
 export const PREVIEW_YUE = '你好，歡迎使用粵譯。'
 export const PREVIEW_EN = 'Hello — this is your English voice.'
 export const PREVIEW_CMN = '你好，欢迎使用粤译。'
+export const PREVIEW_TL = 'Kumusta — ito ang Tagalog voice mo.'

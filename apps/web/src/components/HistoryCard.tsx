@@ -7,6 +7,7 @@ import { biPlain, ui } from '../lib/uiCopy'
 function langShort(lang: Lang): string {
   if (lang === 'en') return 'EN'
   if (lang === 'cmn') return '普'
+  if (lang === 'tl') return 'TL'
   return '粵'
 }
 
@@ -63,6 +64,7 @@ function LangLine({
 function langLabel(lang: Lang) {
   if (lang === 'en') return <BiText copy={ui.english} size="sm" only="en" />
   if (lang === 'cmn') return <BiText copy={ui.dirMandarin} size="sm" only="zh" />
+  if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
 

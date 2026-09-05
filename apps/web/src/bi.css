@@ -10,6 +10,45 @@
   overflow: visible;
 }
 
+.tagalog-block {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.tagalog-activate {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.tagalog-stress-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.12em 0.55em;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mint) 28%, transparent);
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  color: color-mix(in srgb, var(--mint) 78%, white);
+  font-family: var(--font-body);
+  font-size: clamp(0.62rem, 2.1vw, 0.74rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+}
+
 .jyutping {
   position: relative;
   display: inline-block;
