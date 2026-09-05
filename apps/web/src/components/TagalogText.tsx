@@ -21,9 +21,8 @@ function chipShort(kind: TagalogStressClass): string {
 }
 
 /**
- * Tagalog line with always-visible stress / glottal chips (not tones).
- * Unmarked Latin words default to penult (malumay); dictionary diacritics
- * upgrade the chip to final / glottal classes.
+ * Tagalog line for Solo / Conversation panes.
+ * Stress / glottal chips stay in the details pane by default (`showStress`).
  */
 export function TagalogText({
   text,
@@ -31,6 +30,7 @@ export function TagalogText({
   placeholder,
   onActivate,
   activateLabel,
+  showStress = false,
 }: {
   text: string
   definition?: string
@@ -39,19 +39,23 @@ export function TagalogText({
   placeholder?: ReactNode
   onActivate?: (text: string) => void
   activateLabel?: string
+  /** Compact panes: false. Details can opt in. */
+  showStress?: boolean
 }) {
   const trimmed = text.trim()
   if (!trimmed) return placeholder ? <>{placeholder}</> : null
 
-  const tokens = trimmed.split(/(\s+)/)
-  const chips = tokens
-    .filter((t) => t.trim() && !/^\s+$/.test(t))
-    .map((raw) => {
-      const bare = tagalogBareWord(raw)
-      const kind = tagalogStressClass(bare)
-      return bare && kind ? { w: bare, kind } : null
-    })
-    .filter((x): x is { w: string; kind: TagalogStressClass } => Boolean(x))
+  const chips = showStress
+    ? trimmed
+        .split(/(\s+)/)
+        .filter((t) => t.trim() && !/^\s+$/.test(t))
+        .map((raw) => {
+          const bare = tagalogBareWord(raw)
+          const kind = tagalogStressClass(bare)
+          return bare && kind ? { w: bare, kind } : null
+        })
+        .filter((x): x is { w: string; kind: TagalogStressClass } => Boolean(x))
+    : []
 
   const body = (
     <span className={`tagalog-block${chips.length ? ' tagalog-block--hint' : ''}`}>
