@@ -95,6 +95,13 @@ Returned by `/api/health` and `/api/entitlement`:
     "docs": true,
     "aiVision": true
   },
+  "prefs": {
+    "ttsVoiceYue": "zh-HK-HiuMaanNeural",
+    "ttsVoiceEn": "en-US-JennyNeural",
+    "autoSpeak": false,
+    "username": null,
+    "usernameChangedAt": null
+  },
   "upgradeUrl": "https://www.example.com/#/pricing",
   "loginUrl": null,
   "reason": null
@@ -102,6 +109,8 @@ Returned by `/api/health` and `/api/entitlement`:
 ```
 
 Family/Business: `ttsUnlimited: true` and `limits.tts_chars: 0`. Business: `cameraUnlimited` / `docsUnlimited` true with `limits.camera_minutes` / `docs_pages` = 0. Remaining uses `-1` for unlimited meters.
+
+Signed-in `prefs.autoSpeak` syncs across devices via `PATCH /api/prefs/auto-speak` (column `profiles.auto_speak`). Playback is still gated by `allowed.autoSpeak` (Family/Business). Guests keep a device-local cache only.
 
 ## Gate points / 闸门
 
