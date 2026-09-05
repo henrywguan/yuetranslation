@@ -277,7 +277,25 @@ export function SoloView() {
         }
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
-        <div className="solo-upper">
+        <div
+          className={`solo-upper${dirValue === 'en' ? ' is-mic-active' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={dirValue === 'en'}
+          aria-label="Speak English with the mic"
+          onClick={(e) => {
+            // Pane chrome selects mic language; ignore clicks on controls/inputs.
+            const t = e.target as HTMLElement
+            if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
+            setSpeakDirection('en')
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return
+            if (e.target !== e.currentTarget) return
+            e.preventDefault()
+            setSpeakDirection('en')
+          }}
+        >
           <div className="solo-pane-head">
             <LangLabelButton
               lang="en"
@@ -328,7 +346,24 @@ export function SoloView() {
 
         <div className="solo-divider" />
 
-        <div className="solo-lower">
+        <div
+          className={`solo-lower${dirValue !== 'en' ? ' is-mic-active' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={dirValue !== 'en'}
+          aria-label="Speak Chinese with the mic"
+          onClick={(e) => {
+            const t = e.target as HTMLElement
+            if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
+            setSpeakDirection(chineseLang)
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return
+            if (e.target !== e.currentTarget) return
+            e.preventDefault()
+            setSpeakDirection(chineseLang)
+          }}
+        >
           <div className="solo-pane-head">
             <LangLabelButton
               lang={chineseLang}

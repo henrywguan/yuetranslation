@@ -2044,6 +2044,84 @@
 .solo-upper,
 .solo-lower {
   position: relative;
+  border-radius: 18px;
+  padding: 10px 10px 12px;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.solo-upper:hover,
+.solo-lower:hover {
+  background: color-mix(in srgb, var(--jade, #2a9d8f) 4%, transparent);
+}
+
+.solo-upper.is-mic-active,
+.solo-lower.is-mic-active {
+  cursor: default;
+  background: color-mix(in srgb, var(--jade, #2a9d8f) 6%, transparent);
+}
+
+/* Glowing jade rotating border — marks the mic language pane. */
+.solo-upper.is-mic-active::before,
+.solo-lower.is-mic-active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--solo-mic-angle, 0deg),
+    color-mix(in srgb, var(--jade, #2a9d8f) 5%, transparent),
+    var(--jade-bright, #3dcfb6),
+    color-mix(in srgb, var(--jade, #2a9d8f) 15%, transparent),
+    var(--jade, #2a9d8f),
+    color-mix(in srgb, var(--jade, #2a9d8f) 5%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  animation: solo-mic-glow-spin 2.8s linear infinite;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--jade, #2a9d8f) 28%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--jade, #2a9d8f) 12%, transparent);
+}
+
+.solo-upper.is-mic-active > *,
+.solo-lower.is-mic-active > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes solo-mic-glow-spin {
+  to {
+    --solo-mic-angle: 360deg;
+  }
+}
+
+@property --solo-mic-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solo-upper.is-mic-active::before,
+  .solo-lower.is-mic-active::before {
+    animation: none;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--jade, #2a9d8f) 55%, transparent),
+      var(--jade-bright, #3dcfb6),
+      color-mix(in srgb, var(--jade, #2a9d8f) 55%, transparent)
+    );
+  }
 }
 
 .solo-lower {
