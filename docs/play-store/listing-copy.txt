@@ -1,0 +1,28 @@
+APP NAME (30)
+JyutTranslate
+
+SHORT DESCRIPTION (80 max)
+Live English ↔ Cantonese: voice, camera OCR, and documents with Jyutping.
+
+FULL DESCRIPTION
+JyutTranslate helps you move between English and Hong Kong Cantonese (粵語) in real life — not textbook Mandarin.
+
+Speak, type, or point your camera. Get clear Cantonese with Jyutping so you can pronounce what you see and hear.
+
+WHAT YOU CAN DO
+• Live voice translate — English ↔ Cantonese, hands-free conversation mode
+• Camera translate — snap menus, signs, and labels; read them in your language
+• Documents — translate PDFs and office files while keeping layout where possible
+• Jyutping — romanization to learn tones and pronunciation
+• Character breakdown — tap Chinese to explore meanings and readings
+• Text-to-speech — hear natural Cantonese playback
+
+WHO IT’S FOR
+Travelers, families, learners, and anyone who needs practical Hong Kong Cantonese — at the table, on the street, or on a call.
+
+PLANS
+Free to try. Family and Business plans unlock more live minutes, camera time, and document pages.
+
+Privacy-minded: we process speech, photos, and text to deliver your translation. We don’t sell your personal information. Details: https://www.jyuttranslate.com (Privacy Policy).
+
+Website: https://www.jyuttranslate.com
