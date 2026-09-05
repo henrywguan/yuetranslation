@@ -35,7 +35,7 @@ Updated: 2026-09-04 — shipped fail-closed `YUE_OPEN_MODE` default + stripped h
 ## Medium
 
 ### [Medium] CORS `origin: true` reflects any Origin — FIXED
-- **Status:** Fixed — allowlist = `YUE_APP_URL` ± www, localhost/127.0.0.1 (:5173/:4173/:8787), optional `YUE_CORS_ORIGINS`. No `*.vercel.app` previews. Apex `jyuttranslate.com` 301 → `www.jyuttranslate.com` in `vercel.json`.
+- **Status:** Fixed — allowlist = `YUE_APP_URL` ± www, `https://jyuttranslate.vercel.app`, localhost/127.0.0.1 (:5173/:4173/:8787), optional `YUE_CORS_ORIGINS`. No ephemeral `*-git-*.vercel.app` previews. Apex `jyuttranslate.com` 301 → `www.jyuttranslate.com` in `vercel.json`.
 - **Category:** config
 - **Evidence:** `app.use(cors({ origin: true, credentials: true }))` in `apps/api/src/app.ts`.
 - **Impact:** See PR / chat explanation — browser cross-origin calls with credentials. With Bearer JWT in `Authorization` (JyutTranslate’s pattern) risk is lower than cookie sessions, but any browser page can still trigger credentialed CORS preflight+request if a logged-in SPA attaches the token to cross-origin fetches.

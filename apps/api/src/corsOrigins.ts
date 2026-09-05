@@ -40,6 +40,9 @@ export function allowedCorsOrigins(): Set<string> {
 
   if (env.appUrl) add(env.appUrl)
 
+  // Production Vercel alias (stable project URL — not ephemeral preview deploys).
+  add('https://jyuttranslate.vercel.app')
+
   // Local Vite / preview / direct API
   for (const host of ['localhost', '127.0.0.1']) {
     for (const port of [5173, 4173, 8787]) {
@@ -49,8 +52,8 @@ export function allowedCorsOrigins(): Set<string> {
 
   for (const extra of env.corsExtraOrigins) add(extra)
 
-  // Intentionally omit VERCEL_URL / *.vercel.app preview hosts — production
-  // traffic is www + apex only (apex redirects to www in vercel.json).
+  // Omit ephemeral *.vercel.app preview hosts (e.g. branch-git-…vercel.app).
+  // Only the stable project alias above is allowlisted.
 
   return set
 }
