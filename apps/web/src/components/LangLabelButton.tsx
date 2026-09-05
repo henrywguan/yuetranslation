@@ -18,8 +18,8 @@ type MenuPlacement = 'top' | 'bottom'
 
 /**
  * Pane language control.
- * - `dropdown` (Solo): pill trigger + anchored glass menu in harbor/jade.
- * - `drawer` (Conversation): full-sheet picker so taps cannot miss into the mic pane.
+ * - `dropdown` (Solo + Conversation): pill trigger + anchored glass menu in harbor/jade.
+ * - `drawer`: full-sheet picker (fallback when a sheet is preferred).
  */
 export function LangLabelButton({
   lang,
@@ -33,9 +33,9 @@ export function LangLabelButton({
   active: boolean
   onSelect: (lang: Lang) => void
   only?: 'en' | 'zh'
-  /** Upper Solo pane → menu opens downward; lower → upward. Also used for drawer edge. */
+  /** Upper Solo / open-down → `top`; lower Solo / Conversation partner → `bottom` (opens up). */
   drawer?: MenuPlacement
-  /** Solo uses dropdown; Conversation keeps the full drawer. */
+  /** Solo + Conversation use `dropdown`; `drawer` remains available for sheet pickers. */
   variant?: 'drawer' | 'dropdown'
 }) {
   const [open, setOpen] = useState(false)
