@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BiText } from '../components/BiText'
 import { getSession } from '../lib/auth'
 import { openBugReportOrAuth } from '../lib/bugReport'
-import { openPrivacy, openTerms } from '../lib/siteLinks'
+import { openDeleteAccount, openPrivacy, openTerms } from '../lib/siteLinks'
 import { ui } from '../lib/uiCopy'
 
 const CONTACT_MAILTO = 'mailto:henrywguan@gmail.com'
@@ -35,6 +35,16 @@ export function FooterMeta() {
       </span>
       <button type="button" className="ln-footer-contact ln-footer-legal" onClick={() => openTerms()}>
         <BiText copy={ui.footerTerms} size="sm" hideJp />
+      </button>
+      <span className="ln-footer-meta-sep" aria-hidden="true">
+        ·
+      </span>
+      <button
+        type="button"
+        className="ln-footer-contact ln-footer-legal"
+        onClick={() => openDeleteAccount()}
+      >
+        <BiText copy={ui.footerDeleteAccount} size="sm" hideJp />
       </button>
       <span className="ln-footer-meta-sep" aria-hidden="true">
         ·

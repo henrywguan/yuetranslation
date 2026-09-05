@@ -2,7 +2,7 @@
 
 **JyutTranslate**  
 **Effective date:** September 1, 2026  
-**Last updated:** September 3, 2026
+**Last updated:** September 5, 2026
 
 This Privacy Policy explains how **Henry Guan, doing business as JyutTranslate** (“**JyutTranslate**,” “**we**,” “**us**,” or “**our**”) collects, uses, shares, and protects information when you use **https://www.jyuttranslate.com** and related apps, pages, and services that link to this policy (the “**Service**”).
 
@@ -207,7 +207,7 @@ While your **account is active**, we retain:
 
 If you ask us to delete your account, we will delete or de-identify account-linked personal data we control within a reasonable period, except information we must keep for legal, security, fraud-prevention, tax, or accounting reasons, or that is stored only in residual backups for a limited time.
 
-Because we do not currently offer fully self-serve account deletion in the product UI, email [henrywguan@gmail.com](mailto:henrywguan@gmail.com) to request deletion.
+Because we do not currently offer fully self-serve account deletion in the product UI, follow the steps on our [Account & data deletion](./account-deletion.md) page, or email [henrywguan@gmail.com](mailto:henrywguan@gmail.com) with the subject line `JyutTranslate account deletion request`.
 
 ---
 

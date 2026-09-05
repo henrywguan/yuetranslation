@@ -65,6 +65,7 @@ export default function App() {
   else if (route === 'admin') page = <AdminPage />
   else if (route === 'privacy') page = <LegalPage doc="privacy" />
   else if (route === 'terms') page = <LegalPage doc="terms" />
+  else if (route === 'delete-account') page = <LegalPage doc="delete-account" />
 
   return (
     <>

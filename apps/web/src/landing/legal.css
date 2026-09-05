@@ -30,6 +30,9 @@
 
 .legal-switch {
   margin: 0.85rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
 }
 
 .legal-switch-link {

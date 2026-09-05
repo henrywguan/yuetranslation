@@ -14,6 +14,7 @@ function rewriteLegalHref(href: string): string {
   const t = href.trim()
   if (/privacy-policy\.md$/i.test(t) || t === './privacy-policy.md') return '#/privacy'
   if (/terms-of-service\.md$/i.test(t) || t === './terms-of-service.md') return '#/terms'
+  if (/account-deletion\.md$/i.test(t) || t === './account-deletion.md') return '#/delete-account'
   return t
 }
 
