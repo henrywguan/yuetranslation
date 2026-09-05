@@ -396,6 +396,7 @@ export function SoloView() {
             <LangLabelButton
               lang={soloUpperLang}
               active={speakDirection === soloUpperLang}
+              drawer="top"
               onSelect={(lang) => setSoloPaneLang('upper', lang)}
             />
             {upperDraft.trim() ? (
@@ -454,6 +455,7 @@ export function SoloView() {
             <LangLabelButton
               lang={soloLowerLang}
               active={speakDirection === soloLowerLang}
+              drawer="bottom"
               onSelect={(lang) => setSoloPaneLang('lower', lang)}
             />
             {lowerDraft.trim() || canClear ? (
