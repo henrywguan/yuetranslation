@@ -362,6 +362,9 @@
   z-index: 1;
   width: 100%;
   max-width: 820px;
+  /* Size the scramble wordmark from this box so mobile never clips it. */
+  container-type: inline-size;
+  container-name: hero;
 }
 
 /* three.js harbor cloth sits behind the hero text */
@@ -3519,7 +3522,8 @@
   }
 
   .ln-hero {
-    padding: 28px 16px 72px;
+    /* 20px side pad — 16px left the wordmark ink too close to overflow-x: clip. */
+    padding: 28px 20px 72px;
     min-height: calc(100dvh - 64px);
   }
 
@@ -3538,7 +3542,8 @@
   }
 
   .ln-title {
-    font-size: clamp(2.05rem, 9.5vw, 2.65rem);
+    /* Keep below the brand lockup width on ~320–390px (Syne 800 + tracking). */
+    font-size: clamp(1.55rem, 8.2vw, 2.35rem);
     margin-bottom: 16px;
   }
 
@@ -3704,16 +3709,27 @@
 
 /* Homepage brand scramble wordmark (粵翻譯 ↔ JyutTranslate).
    Grid-stack (not absolute inset): background-clip:text + absolute/overflow
-   was clipping the final glyph on wide monitors (broken trailing “e”). */
+   was clipping the final glyph on wide monitors (broken trailing “e”).
+   Font size is tied to hero-inner width so “JyutTranslate” fits on phones
+   (inheriting .ln-title’s mobile clamp made it overflow under overflow-x: clip).
+   Extra inline pad + softer tracking: WebKit background-clip chews the last
+   glyph when letter-spacing is tight inside overflow-x: clip ancestors. */
 .ln-title .brand-scramble {
   display: inline-grid;
   justify-items: center;
   align-items: center;
+  box-sizing: border-box;
+  width: max-content;
   max-width: 100%;
-  /* Negative letter-spacing on .ln-title lets glyphs overhang the box;
-     a touch of inline pad keeps overflow-x: clip from chewing the edges. */
-  padding-inline: 0.06em;
+  /* Leave headroom inside the hero so glyph ink never meets overflow-x: clip. */
+  font-size: clamp(1.35rem, calc((100vw - 3rem) / 10.5), 5.4rem);
+  font-size: clamp(1.35rem, 9.2cqi, 5.4rem);
+  /* Softer than .ln-title (-0.04em) — overhang was getting clipped on iOS. */
+  letter-spacing: -0.02em;
+  padding-inline: 0.14em;
+  overflow: visible;
   box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   cursor: default;
   outline: none;
   user-select: none;
@@ -3732,6 +3748,7 @@
   font-weight: inherit;
   letter-spacing: inherit;
   line-height: inherit;
+  overflow: visible;
 }
 
 .ln-title .brand-scramble-spacer {
@@ -3743,15 +3760,26 @@
   background: linear-gradient(120deg, var(--jade), var(--jade-bright) 55%, #b8ead0);
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
-  /* Paint full glyph ink even when tracking is tight. */
-  padding-inline: 0.02em;
+  /* Widen the paint box so background-clip covers full glyph ink. */
+  padding-inline: 0.1em;
+  margin-inline: -0.04em;
+  overflow: visible;
+}
+
+/* Only while scrambling: CJK noise can briefly exceed the English spacer. */
+.ln-title .brand-scramble.is-scrambling .brand-scramble-live {
+  max-width: 100%;
+  overflow: hidden;
+  margin-inline: 0;
 }
 
 [data-theme='light'] .ln-hero .ln-title .brand-scramble-live {
   background: none;
   -webkit-background-clip: unset;
   background-clip: unset;
+  -webkit-text-fill-color: var(--ink);
   color: var(--ink);
 }
 
