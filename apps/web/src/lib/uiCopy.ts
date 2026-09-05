@@ -705,11 +705,11 @@ export const ui = {
   },
   heroTitle: {
     en: 'JyutTranslate',
-    zh: '口語粵語／英文翻譯器',
-    jp: 'hau2 jyu5 jyut6 jyu5 / jing1 man2 faan1 jik6 hei3',
+    zh: '粵語翻譯器',
+    jp: 'jyut6 jyu5 faan1 jik6 hei3',
   },
   heroSub: {
-    en: 'Live English/Cantonese translation with Jyutping — Use Conversation mode to help you bridge the communication!',
+    en: 'Live Cantonese translation with Jyutping — Use Conversation mode to help you bridge the communication!',
     zh: '即時英粵翻譯連粵拼——用對話模式幫你打通溝通橋梁！',
     jp: 'zik1 si4 jing1 jyut6 faan1 jik6 lin4 jyut6 ping3 — jung6 deoi3 waa6 mou4 sik1 bong1 nei5 daa2 tung1 kau3 tung1 kiu4 loeng4!',
   },
