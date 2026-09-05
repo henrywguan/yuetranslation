@@ -169,6 +169,8 @@ async function enrichTextAlternatives(
       alternatives: alternatives.length ? alternatives : latest.alternatives,
       definitions: mergedDefs.length ? mergedDefs : latest.definitions,
       definition: latest.definition || result.definition || sourceEn,
+      romanization:
+        (result as { romanization?: string }).romanization || latest.romanization || undefined,
     }
 
     const stack = get().detailStack
@@ -185,6 +187,7 @@ async function enrichTextAlternatives(
               definition: nextLatest.definition,
               definitions: nextLatest.definitions,
               alternatives: nextLatest.alternatives,
+              romanization: nextLatest.romanization,
             },
             ...stack.slice(1),
           ]

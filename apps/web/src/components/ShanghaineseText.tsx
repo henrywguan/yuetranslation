@@ -12,13 +12,17 @@ export function ShanghaineseText({
   onActivate,
   activateLabel,
   placeholder,
+  showSchemeLabel = true,
 }: {
   text: string
+  /** Wugniu (吴语学堂) romanization for the phrase. */
   romanization?: string
   className?: string
   onActivate?: (text: string) => void
   activateLabel?: string
   placeholder?: ReactNode
+  /** Show a small “Wugniu” caption beside the romanization line. */
+  showSchemeLabel?: boolean
 }) {
   const trimmed = text.trim()
   const rom = romanization?.trim() || ''
@@ -34,8 +38,15 @@ export function ShanghaineseText({
     <span className="shanghainese-block">
       {han}
       {rom ? (
-        <span className="shanghainese-wugniu" lang="en">
-          {rom}
+        <span className="shanghainese-wugniu-row">
+          {showSchemeLabel ? (
+            <span className="shanghainese-wugniu-label" aria-hidden="true">
+              Wugniu
+            </span>
+          ) : null}
+          <span className="shanghainese-wugniu" lang="en">
+            {rom}
+          </span>
         </span>
       ) : null}
     </span>
@@ -47,7 +58,10 @@ export function ShanghaineseText({
         type="button"
         className="shanghainese-activate spoken-line-text--action"
         onClick={() => onActivate(trimmed)}
-        aria-label={activateLabel || `Open details for ${trimmed}`}
+        aria-label={
+          activateLabel ||
+          (rom ? `Open details for ${trimmed} (${rom})` : `Open details for ${trimmed}`)
+        }
       >
         {body}
       </button>

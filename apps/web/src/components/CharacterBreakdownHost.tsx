@@ -24,6 +24,7 @@ import { TranslationAlternatives } from './TranslationAlternatives'
 import { BiText } from './BiText'
 import { SpeakButton } from './SpeakButton'
 import { ResultActions } from './ResultActions'
+import { ShanghaineseText } from './ShanghaineseText'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 import './DetailPanel.css'
@@ -31,8 +32,9 @@ import './DetailPanel.css'
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
 
-function speakLangFor(text: string, detailLang?: 'en' | 'yue' | 'cmn'): Lang {
+function speakLangFor(text: string, detailLang?: 'en' | 'yue' | 'cmn' | 'wuu'): Lang {
   if (detailLang === 'cmn') return 'cmn'
+  if (detailLang === 'wuu') return 'wuu'
   if (detailLang === 'en') return 'en'
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -153,6 +155,7 @@ export function CharacterBreakdownHost() {
       if (cancelled) return
       setRows(local)
       try {
+        // wuu: gloss-only from API; Wugniu stays phrase-level (no per-char ruby).
         const remote = await fetchBreakdown(phrase, { lang: detailLang })
         if (cancelled) return
         const remoteRows = remote.characters || []
@@ -185,8 +188,8 @@ export function CharacterBreakdownHost() {
       setIpa(top.jp)
       return
     }
-    if (detailLang === 'cmn') {
-      // Pinyin is already tone-marked in jp — no Jyutping→IPA conversion.
+    if (detailLang === 'cmn' || detailLang === 'wuu') {
+      // Cmn: pinyin is tone-marked in jp. Wuu: no per-char romanization in jp.
       setIpa('')
       return
     }
@@ -217,14 +220,14 @@ export function CharacterBreakdownHost() {
       (top?.kind === 'phrase' || top?.kind === 'char' ? top.lang : undefined) ||
       (hasHan(row.char) ? 'yue' : 'en')
     const sense =
-      detailLang === 'yue' || detailLang === 'cmn'
+      detailLang === 'yue' || detailLang === 'cmn' || detailLang === 'wuu'
         ? pickCharGloss(row.meaning, glossForChar(row.char))
         : row.meaning.trim()
     if (!sense && !row.jyutping) return
     pushDetail({
       kind: 'char',
       char: row.char,
-      jp: row.jyutping,
+      jp: detailLang === 'wuu' ? null : row.jyutping,
       phrase: top?.kind === 'phrase' ? top.phrase : row.char,
       lang: detailLang,
       definition: top?.kind === 'phrase' ? top.definition || top.translation : undefined,
@@ -252,7 +255,10 @@ export function CharacterBreakdownHost() {
   const detailLang = top.lang || (hasHan(topLabel) ? 'yue' : 'en')
   const isEnglishDetail = detailLang === 'en'
   const isCmnDetail = detailLang === 'cmn'
-  const showRubyTitle = !isEnglishDetail && hasHan(topLabel)
+  const isWuuDetail = detailLang === 'wuu'
+  const phraseWugniu = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
+  const showRubyTitle = !isEnglishDetail && !isWuuDetail && hasHan(topLabel)
+  const showWuuTitle = isWuuDetail && hasHan(topLabel)
   const phraseIpa =
     isEnglishDetail && top.kind === 'phrase'
       ? rows
@@ -261,15 +267,17 @@ export function CharacterBreakdownHost() {
           .join(' ')
       : ''
   const titleSegs: JyutSeg[] | PinyinSeg[] | undefined =
-    top.kind === 'char' && top.jp
-      ? isCmnDetail
-        ? [{ char: top.char, py: top.jp }]
-        : [{ char: top.char, jp: top.jp }]
-      : top.kind === 'phrase' && rows.some((r) => r.jyutping)
+    isWuuDetail
+      ? undefined
+      : top.kind === 'char' && top.jp
         ? isCmnDetail
-          ? rows.map((r) => ({ char: r.char, py: r.jyutping || '' }))
-          : rows.map((r) => ({ char: r.char, jp: r.jyutping || '' }))
-        : undefined
+          ? [{ char: top.char, py: top.jp }]
+          : [{ char: top.char, jp: top.jp }]
+        : top.kind === 'phrase' && rows.some((r) => r.jyutping)
+          ? isCmnDetail
+            ? rows.map((r) => ({ char: r.char, py: r.jyutping || '' }))
+            : rows.map((r) => ({ char: r.char, jp: r.jyutping || '' }))
+          : undefined
   const showDefinition =
     Boolean(definitionText) &&
     definitions.length <= 1 &&
@@ -290,9 +298,23 @@ export function CharacterBreakdownHost() {
             <h2
               id={titleId}
               className="detail-panel-title"
-              lang={top.kind === 'char' || showRubyTitle ? (isCmnDetail ? 'zh-CN' : 'zh-HK') : 'en'}
+              lang={
+                top.kind === 'char' || showRubyTitle || showWuuTitle
+                  ? isWuuDetail
+                    ? 'wuu-CN'
+                    : isCmnDetail
+                      ? 'zh-CN'
+                      : 'zh-HK'
+                  : 'en'
+              }
             >
-              {showRubyTitle ? (
+              {showWuuTitle ? (
+                <ShanghaineseText
+                  text={topLabel}
+                  romanization={phraseWugniu || undefined}
+                  className="detail-panel-title-han"
+                />
+              ) : showRubyTitle ? (
                 <span
                   {...titleJpBind}
                   className="detail-panel-title-jp"
@@ -425,7 +447,9 @@ export function CharacterBreakdownHost() {
                   <section className="detail-panel-alts" aria-label="Other variations">
                     <TranslationAlternatives
                       alternatives={alternatives}
-                      lang={isEnglishDetail ? 'en' : isCmnDetail ? 'cmn' : 'yue'}
+                      lang={
+                        isEnglishDetail ? 'en' : isCmnDetail ? 'cmn' : isWuuDetail ? 'wuu' : 'yue'
+                      }
                       onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     />
                   </section>
@@ -453,9 +477,12 @@ export function CharacterBreakdownHost() {
                             : `${row.char}: no further details`
                         }
                       >
-                        <span className="detail-panel-char-stack" lang={isCmnDetail ? 'zh-CN' : 'zh-HK'}>
+                        <span
+                          className="detail-panel-char-stack"
+                          lang={isWuuDetail ? 'wuu-CN' : isCmnDetail ? 'zh-CN' : 'zh-HK'}
+                        >
                           <span className="detail-panel-row-jp">
-                            {row.jyutping ? (
+                            {row.jyutping && !isWuuDetail ? (
                               isEnglishDetail ? (
                                 <span className="detail-panel-ipa" lang="en">
                                   /{row.jyutping}/
@@ -481,7 +508,15 @@ export function CharacterBreakdownHost() {
                       {canSpeak ? (
                         <SpeakButton
                           text={row.char}
-                          lang={isEnglishDetail ? 'en' : isCmnDetail ? 'cmn' : 'yue'}
+                          lang={
+                            isEnglishDetail
+                              ? 'en'
+                              : isCmnDetail
+                                ? 'cmn'
+                                : isWuuDetail
+                                  ? 'wuu'
+                                  : 'yue'
+                          }
                           className="detail-panel-row-speak"
                         />
                       ) : null}

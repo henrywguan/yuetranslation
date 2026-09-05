@@ -233,6 +233,7 @@ export function SoloView() {
             ? enDefinitions
             : undefined
           : lowerDefs,
+      romanization: paneLang === 'wuu' ? latest?.romanization : undefined,
       alternatives:
         paneLang === 'en'
           ? enAlternatives.length

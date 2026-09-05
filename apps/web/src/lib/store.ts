@@ -121,11 +121,12 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu'
       translation?: string
       definition?: string
       definitions?: string[]
       alternatives?: string[]
+      romanization?: string
     },
   ) => void
   pushDetail: (layer: DetailLayer) => void
@@ -949,6 +950,7 @@ export const useYueStore = create<State>((set, get) => ({
       definition: opts?.definition?.trim() || undefined,
       definitions: defs.length ? defs : undefined,
       alternatives: alts.length ? alts : undefined,
+      romanization: opts?.romanization?.trim() || undefined,
     }
     set({
       detailStack: [layer],

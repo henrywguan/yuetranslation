@@ -18,3 +18,8 @@ Canonical scheme for Shanghainese romanization in JyutTranslate: **Wugniu** (吴
 - **Not used:** Mandarin pinyin ruby, Jyutping tone numbers (`zou2 san4`)
 
 Implemented in `apps/web/src/components/ShanghaineseText.tsx`. API path: `translateShanghainese` in `apps/api/src/translate.ts` (`Lang` code `wuu`).
+
+
+## API field
+
+Translate responses targeting `wuu` include optional `romanization` (Wugniu). Solo, History, and the details panel render it under the Han line with a **Wugniu** caption via `ShanghaineseText`. Phrase seeds store Wugniu on `romanization`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).

@@ -418,6 +418,20 @@ html.is-bug-capturing .dir-switch-opt input {
   align-items: flex-start;
   gap: 0.15em;
 }
+.shanghainese-wugniu-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  flex-wrap: wrap;
+}
+.shanghainese-wugniu-label {
+  font-size: 0.62em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  font-weight: 600;
+}
 .shanghainese-wugniu {
   font-size: 0.72em;
   line-height: 1.2;

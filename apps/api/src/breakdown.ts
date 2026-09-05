@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu']).optional(),
 })
 
 export type BreakdownChar = {
@@ -199,8 +199,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn',
-): 'en' | 'yue' | 'cmn' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu',
+): 'en' | 'yue' | 'cmn' | 'wuu' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -428,11 +428,23 @@ async function cmnBreakdown(text: string) {
   return { characters: fallback, engine: 'dictionary' as const, lang: 'cmn' as const }
 }
 
+async function wuuBreakdown(text: string) {
+  // Colloquial Shanghainese — glosses only. Do not invent Jyutping or Mandarin pinyin;
+  // Wugniu lives on the phrase-level `romanization` field from translate, not per-char ruby.
+  const trimmed = text.trim()
+  const fallback = localYueBreakdown(trimmed).map((row) => ({
+    ...row,
+    jyutping: null as string | null,
+  }))
+  return { characters: fallback, engine: 'dictionary' as const, lang: 'wuu' as const }
+}
+
 export async function breakdown(input: unknown) {
   const parsed = Body.parse(input)
   const text = parsed.text.trim()
   const lang = detectBreakdownLang(text, parsed.lang)
   if (lang === 'en') return englishBreakdown(text)
   if (lang === 'cmn') return cmnBreakdown(text)
+  if (lang === 'wuu') return wuuBreakdown(text)
   return yueBreakdown(text)
 }

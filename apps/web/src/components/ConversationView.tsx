@@ -92,7 +92,9 @@ export function ConversationView() {
               lang={chineseLang}
               active={zhListening}
               only="zh"
-              onSelect={onChineseLang}
+              onSelect={(lang) => {
+                if (lang === 'yue' || lang === 'cmn') onChineseLang(lang)
+              }}
             />
             <p lang={chineseLang === 'cmn' ? 'zh-CN' : 'zh-HK'}>{ui.friendLooksHere.zh}</p>
           </header>
