@@ -62,7 +62,8 @@ export function LangLabelButton({
         aria-label={biPlain(current.copy)}
         onClick={() => setOpen((v) => !v)}
       >
-        <BiText copy={current.copy} size="sm" only={only} />
+        {/* hideJp: Jyutping tip steals clicks from the language menu on Solo. */}
+        <BiText copy={current.copy} size="sm" only={only} hideJp />
         <span className="lang-label-chevron" aria-hidden="true">
           ▾
         </span>
@@ -79,7 +80,7 @@ export function LangLabelButton({
                   setOpen(false)
                 }}
               >
-                <BiText copy={opt.copy} size="sm" />
+                <BiText copy={opt.copy} size="sm" hideJp />
               </button>
             </li>
           ))}
