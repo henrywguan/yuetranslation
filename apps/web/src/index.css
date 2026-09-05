@@ -436,8 +436,28 @@ html.is-bug-capturing .dir-switch-opt input {
   font-size: 0.72em;
   line-height: 1.2;
   opacity: 0.72;
-  letter-spacing: 0.02em;
-  font-weight: 450;
+  font-weight: 500;
+}
+.shanghainese-sandhi-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  flex-wrap: wrap;
+}
+.shanghainese-sandhi-label {
+  font-size: 0.58em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  font-weight: 600;
+}
+.shanghainese-sandhi {
+  font-size: 0.68em;
+  line-height: 1.2;
+  opacity: 0.62;
+  font-style: italic;
+  font-weight: 500;
 }
 button.shanghainese-activate {
   background: none;

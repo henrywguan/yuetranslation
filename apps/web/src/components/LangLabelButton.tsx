@@ -39,7 +39,7 @@ export function LangLabelButton({
     only === 'en'
       ? OPTIONS.filter((o) => o.id === 'en')
       : only === 'zh'
-        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn')
+        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn' || o.id === 'wuu')
         : OPTIONS
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1

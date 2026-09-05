@@ -3980,7 +3980,9 @@
       "tags": [
         "greeting",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · word",
+      "ipa": "noŋ.hɔ"
     },
     {
       "id": "en-hi-wuu",
@@ -3996,7 +3998,9 @@
       "tags": [
         "greeting",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · word",
+      "ipa": "ɛ"
     },
     {
       "id": "en-thank-you-wuu",
@@ -4012,7 +4016,8 @@
       "tags": [
         "courtesy",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · phrase"
     },
     {
       "id": "en-thanks-wuu",
@@ -4028,7 +4033,8 @@
       "tags": [
         "courtesy",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · word"
     },
     {
       "id": "en-how-are-you-wuu",
@@ -4044,7 +4050,8 @@
       "tags": [
         "greeting",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · phrase"
     },
     {
       "id": "en-good-morning-wuu",
@@ -4060,7 +4067,8 @@
       "tags": [
         "greeting",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · word"
     },
     {
       "id": "en-excuse-me-wuu",
@@ -4076,7 +4084,8 @@
       "tags": [
         "courtesy",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · phrase"
     },
     {
       "id": "en-where-is-wuu",
@@ -4092,7 +4101,8 @@
       "tags": [
         "travel",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · phrase"
     },
     {
       "id": "en-i-dont-understand-wuu",
@@ -4108,7 +4118,8 @@
       "tags": [
         "clarify",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · phrase"
     },
     {
       "id": "en-how-much-wuu",
@@ -4124,7 +4135,8 @@
       "tags": [
         "shopping",
         "shanghainese"
-      ]
+      ],
+      "sandhiHint": "left-dominant · word"
     },
     {
       "id": "wuu-non-ho-en",

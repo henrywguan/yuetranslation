@@ -23,3 +23,12 @@ Implemented in `apps/web/src/components/ShanghaineseText.tsx`. API path: `transl
 ## API field
 
 Translate responses targeting `wuu` include optional `romanization` (Wugniu). Solo, History, and the details panel render it under the Han line with a **Wugniu** caption via `ShanghaineseText`. Phrase seeds store Wugniu on `romanization`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).
+
+
+## Sandhi domain hints
+
+Compact UI may show a short **Sandhi** line under Wugniu (e.g. `left-dominant · word`) describing the phonological domain — never Cantonese-style tone digits after sandhi.
+
+## Optional IPA
+
+**IPA** (International Phonetic Alphabet) is a phonetic transcription like `/noŋ.hɔ/`. It is more precise than Wugniu but denser for everyday use. JyutTranslate keeps IPA **optional and details-only**; the compact Solo/Conversation line stays Han + Wugniu (+ sandhi hint).

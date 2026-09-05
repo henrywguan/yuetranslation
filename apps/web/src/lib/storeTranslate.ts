@@ -7,7 +7,7 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: 'yue' | 'cmn'
+  chineseLang: 'yue' | 'cmn' | 'wuu'
   /** Solo upper/lower pane languages (any en|yue|cmn|wuu pair; must differ). */
   soloUpperLang: Lang
   soloLowerLang: Lang
@@ -18,6 +18,9 @@ export type TranslateState = {
     yueTranslation: string
     yueDefinition: string
     yueDefinitions: string[]
+    romanization?: string
+    sandhiHint?: string
+    ipa?: string
   }
   history: ConversationTurn[]
   detailStack: DetailLayer[]
@@ -171,6 +174,9 @@ async function enrichTextAlternatives(
       definition: latest.definition || result.definition || sourceEn,
       romanization:
         (result as { romanization?: string }).romanization || latest.romanization || undefined,
+      sandhiHint:
+        (result as { sandhiHint?: string }).sandhiHint || latest.sandhiHint || undefined,
+      ipa: (result as { ipa?: string }).ipa || latest.ipa || undefined,
     }
 
     const stack = get().detailStack
@@ -188,6 +194,8 @@ async function enrichTextAlternatives(
               definitions: nextLatest.definitions,
               alternatives: nextLatest.alternatives,
               romanization: nextLatest.romanization,
+              sandhiHint: nextLatest.sandhiHint,
+              ipa: nextLatest.ipa,
             },
             ...stack.slice(1),
           ]
@@ -282,6 +290,9 @@ export async function runTranslation(
             yueTranslation: clean,
             yueDefinition: result.definition || text,
             yueDefinitions: definitions,
+            romanization: (result as { romanization?: string }).romanization || undefined,
+            sandhiHint: (result as { sandhiHint?: string }).sandhiHint || undefined,
+            ipa: (result as { ipa?: string }).ipa || undefined,
           },
         })
       } else {
@@ -310,6 +321,8 @@ export async function runTranslation(
         definitions: definitions.length ? definitions : undefined,
         alternatives: alternatives.length ? alternatives : undefined,
         romanization: (result as { romanization?: string }).romanization || undefined,
+        sandhiHint: (result as { sandhiHint?: string }).sandhiHint || undefined,
+        ipa: (result as { ipa?: string }).ipa || undefined,
       })
       // Solo: en* = upper pane, yue* = lower pane (regardless of language).
       const fromUpper = lang === get().soloUpperLang

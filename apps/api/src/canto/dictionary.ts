@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'wuu'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -45,11 +45,18 @@ function yueSttVariants(source: string): string[] {
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'wuu'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
-}): { text: string; alternatives: string[]; entry: PhraseEntry; romanization?: string } | null {
+}): {
+  text: string
+  alternatives: string[]
+  entry: PhraseEntry
+  romanization?: string
+  sandhiHint?: string
+  ipa?: string
+} | null {
   const entry = lookupPhrase(opts)
   if (!entry) return null
   const alternatives =
@@ -61,6 +68,8 @@ export function dictionaryTranslate(opts: {
     alternatives,
     entry,
     romanization: entry.romanization,
+    sandhiHint: entry.sandhiHint,
+    ipa: entry.ipa,
   }
 }
 

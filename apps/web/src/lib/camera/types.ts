@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu'
 
 export type EditableBox = {
   id: string
@@ -21,11 +21,12 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn`). */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'cmn') return 'cmn'
+  if (lang === 'wuu') return 'wuu'
   if (lang === 'en') return 'en'
   // Legacy `zh` and explicit yue → Cantonese
   return 'yue'
@@ -71,14 +72,14 @@ export function clampBox(box: CameraBox): CameraBox {
 const HAN_RE = /[\u3400-\u9fff]/
 
 function isChineseCam(lang: CameraLang): boolean {
-  return lang === 'yue' || lang === 'cmn'
+  return lang === 'yue' || lang === 'cmn' || lang === 'wuu'
 }
 
 /** Pick Chinese + English sides for the shared character breakdown panel. */
 export function boxDetailArgs(box: EditableBox): {
   phrase: string
   translation?: string
-  lang?: 'en' | 'yue' | 'cmn'
+  lang?: 'en' | 'yue' | 'cmn' | 'wuu'
 } {
   const zhByDir = isChineseCam(box.to)
     ? box.translated
@@ -96,7 +97,7 @@ export function boxDetailArgs(box: EditableBox): {
     (!HAN_RE.test(box.translated) ? box.translated : '')
   const phrase = (zh || box.text || box.translated).trim()
   const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
-  const lang: 'en' | 'yue' | 'cmn' | undefined = isChineseCam(box.to)
+  const lang: 'en' | 'yue' | 'cmn' | 'wuu' | undefined = isChineseCam(box.to)
     ? box.to
     : isChineseCam(box.from)
       ? box.from
@@ -108,6 +109,7 @@ export function boxDetailArgs(box: EditableBox): {
 
 export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'cmn') return 'cmn'
+  if (box.to === 'wuu') return 'wuu'
   if (box.to === 'yue') return 'yue'
   if (box.to === 'en') return 'en'
   return HAN_RE.test(box.translated || box.text) ? 'yue' : 'en'

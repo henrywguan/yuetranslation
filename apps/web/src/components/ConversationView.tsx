@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
+import { ShanghaineseText } from './ShanghaineseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { LangLabelButton } from './LangLabelButton'
@@ -14,7 +15,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 
 /**
  * Conversation: two language-pure cards on a shared phone.
- * Chinese (粵 or 普) sits on top, rotated 180° for the person across the table.
+ * Chinese (粵 / 普 / 沪) sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
  * Pipeline: mic → live STT on the speaking side → after capture ends, one final
@@ -45,7 +46,7 @@ export function ConversationView() {
   const zhLive =
     Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
   const enListening = live && liveSide === 'en'
-  const zhListening = live && (liveSide === 'yue' || liveSide === 'cmn')
+  const zhListening = live && (liveSide === 'yue' || liveSide === 'cmn' || liveSide === 'wuu')
 
   const openEnDetails = () => {
     const zh = (face.yueInterim || face.yueTranslation).trim()
@@ -67,10 +68,13 @@ export function ConversationView() {
       translation: face.enTranslation.trim() || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,
+      romanization: chineseLang === 'wuu' ? face.romanization : undefined,
+      sandhiHint: chineseLang === 'wuu' ? face.sandhiHint : undefined,
+      ipa: chineseLang === 'wuu' ? face.ipa : undefined,
     })
   }
 
-  const onChineseLang = (lang: 'yue' | 'cmn' | 'en') => {
+  const onChineseLang = (lang: 'yue' | 'cmn' | 'wuu' | 'en') => {
     if (lang === 'en') return
     setSpeakDirection(lang)
   }
@@ -93,10 +97,12 @@ export function ConversationView() {
               active={zhListening}
               only="zh"
               onSelect={(lang) => {
-                if (lang === 'yue' || lang === 'cmn') onChineseLang(lang)
+                if (lang === 'yue' || lang === 'cmn' || lang === 'wuu') onChineseLang(lang)
               }}
             />
-            <p lang={chineseLang === 'cmn' ? 'zh-CN' : 'zh-HK'}>{ui.friendLooksHere.zh}</p>
+            <p lang={chineseLang === 'cmn' ? 'zh-CN' : chineseLang === 'wuu' ? 'wuu-CN' : 'zh-HK'}>
+              {ui.friendLooksHere.zh}
+            </p>
           </header>
           <div className="pane-body pane-body--hero">
             {zhThinking ? (
@@ -117,6 +123,14 @@ export function ConversationView() {
                         className="pane-hero--yue"
                         onActivate={openZhDetails}
                       />
+                    ) : chineseLang === 'wuu' ? (
+                      <ShanghaineseText
+                        text={zhText}
+                        romanization={face.romanization}
+                        sandhiHint={face.sandhiHint}
+                        className="pane-hero--yue"
+                        onActivate={openZhDetails}
+                      />
                     ) : (
                       <CantoneseText
                         text={zhText}
@@ -132,7 +146,7 @@ export function ConversationView() {
                   </span>
                 ) : (
                   <span className="placeholder">
-                    {chineseLang === 'cmn' ? ui.dirMandarin.zh : ui.yueTranslation.zh}
+                    {chineseLang === 'cmn' ? ui.dirMandarin.zh : chineseLang === 'wuu' ? ui.dirShanghainese.zh : ui.yueTranslation.zh}
                   </span>
                 )}
               </InkSettle>

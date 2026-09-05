@@ -1020,6 +1020,9 @@ export const ui = {
   cmpText: { en: 'Text translation', zh: '文字翻譯', jp: 'man4 zi6 faan1 jik6' },
   cmpJp: { en: 'Jyutping romanization', zh: '粵拼羅馬拼音', jp: 'jyut6 ping3 lo4 maa5 ping3 jam1' },
   cmpWugniu: { en: 'Wugniu romanization', zh: '吳拼（吳語學堂）', jp: 'ng4 ping3 (ng4 jyu5 hok6 tong4)' },
+  cmpSandhi: { en: 'Sandhi domain', zh: '連讀變調域', jp: 'lin4 duk6 bin3 diu6 wik6' },
+  cmpIpa: { en: 'IPA pronunciation', zh: '國際音標', jp: 'gwok3 zai3 jam1 biu1' },
+  camTargetWuu: { en: 'To Shanghainese', zh: '譯成上海話', jp: 'jik6 sing4 soeng6 hoi2 waa2' },
   cmpModes: {
     en: 'Solo · Conversation · Cam',
     zh: '獨白 · 對話 · 相機',

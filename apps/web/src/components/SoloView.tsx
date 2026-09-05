@@ -234,6 +234,8 @@ export function SoloView() {
             : undefined
           : lowerDefs,
       romanization: paneLang === 'wuu' ? latest?.romanization : undefined,
+      sandhiHint: paneLang === 'wuu' ? latest?.sandhiHint : undefined,
+      ipa: paneLang === 'wuu' ? latest?.ipa : undefined,
       alternatives:
         paneLang === 'en'
           ? enAlternatives.length
@@ -304,6 +306,7 @@ export function SoloView() {
             definitions={defs}
             chineseLang={lang}
             romanization={lang === 'wuu' ? latest?.romanization : undefined}
+            sandhiHint={lang === 'wuu' ? latest?.sandhiHint : undefined}
             textClassName="solo-tr-text"
             onActivate={() => openPaneDetails(pane)}
             showCopy

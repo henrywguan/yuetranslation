@@ -32,6 +32,9 @@ type FaceLive = {
   yueTranslation: string
   yueDefinition: string
   yueDefinitions: string[]
+  romanization?: string
+  sandhiHint?: string
+  ipa?: string
 }
 
 function emptyFaceLive(): FaceLive {
@@ -49,7 +52,7 @@ type State = {
   mode: Mode
   speakDirection: SpeakDirection
   /** Remembered Chinese variety for defaults when picking 粵/普 (Solo + Conversation). */
-  chineseLang: 'yue' | 'cmn'
+  chineseLang: 'yue' | 'cmn' | 'wuu'
   /** Solo upper pane language (any en|yue|cmn|wuu; must differ from lower). */
   soloUpperLang: Lang
   /** Solo lower pane language (any en|yue|cmn|wuu; must differ from upper). */
@@ -127,6 +130,8 @@ type State = {
       definitions?: string[]
       alternatives?: string[]
       romanization?: string
+      sandhiHint?: string
+      ipa?: string
     },
   ) => void
   pushDetail: (layer: DetailLayer) => void
@@ -474,7 +479,7 @@ export const useYueStore = create<State>((set, get) => ({
   },
   setSpeakDirection: (speakDirection) =>
     set(
-      speakDirection === 'yue' || speakDirection === 'cmn'
+      speakDirection === 'yue' || speakDirection === 'cmn' || speakDirection === 'wuu'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -500,8 +505,8 @@ export const useYueStore = create<State>((set, get) => ({
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn'
-        ? { chineseLang: lang as 'yue' | 'cmn' }
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu'
+        ? { chineseLang: lang as 'yue' | 'cmn' | 'wuu' }
         : current === 'yue' || current === 'cmn'
           ? {}
           : {}
@@ -951,6 +956,8 @@ export const useYueStore = create<State>((set, get) => ({
       definitions: defs.length ? defs : undefined,
       alternatives: alts.length ? alts : undefined,
       romanization: opts?.romanization?.trim() || undefined,
+      sandhiHint: opts?.sandhiHint?.trim() || undefined,
+      ipa: opts?.ipa?.trim() || undefined,
     }
     set({
       detailStack: [layer],

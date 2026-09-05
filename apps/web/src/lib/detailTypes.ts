@@ -13,6 +13,10 @@ export type DetailLayer =
       alternatives?: string[]
       /** Wugniu when lang is wuu. */
       romanization?: string
+      /** Sandhi-domain hint when lang is wuu. */
+      sandhiHint?: string
+      /** Optional IPA (details) when lang is wuu. */
+      ipa?: string
     }
   | {
       kind: 'char'

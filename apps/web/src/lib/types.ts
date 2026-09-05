@@ -128,6 +128,10 @@ export type ConversationTurn = {
   alternatives?: string[]
   /** Wugniu romanization when translation is Shanghainese. */
   romanization?: string
+  /** Sandhi-domain hint when translation is Shanghainese. */
+  sandhiHint?: string
+  /** Optional IPA for Shanghainese (details). */
+  ipa?: string
   at: number
 }
 

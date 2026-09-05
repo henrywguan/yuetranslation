@@ -72,6 +72,8 @@ type TranslateResponse = {
   definitions?: string[]
   alternatives?: string[]
   romanization?: string
+  sandhiHint?: string
+  ipa?: string
 }
 
 const TRANSLATE_CACHE_MAX = 64
@@ -152,8 +154,8 @@ export type CameraScanRegion = {
   id: string
   text: string
   translated: string
-  from: 'en' | 'zh' | 'yue' | 'cmn'
-  to: 'en' | 'zh' | 'yue' | 'cmn'
+  from: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu'
+  to: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu'
   box: CameraBox
   script: 'latin' | 'cjk' | 'mixed' | 'other'
   cacheHit: boolean
@@ -186,7 +188,7 @@ export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
 export async function cameraScan(opts: {
   image: string
   boxes?: CameraBox[]
-  target?: 'en' | 'zh' | 'yue' | 'cmn'
+  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu'
   ocrOnly?: boolean
   /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
   forDocs?: boolean

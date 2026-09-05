@@ -257,9 +257,11 @@ export function CharacterBreakdownHost() {
   const isCmnDetail = detailLang === 'cmn'
   const isWuuDetail = detailLang === 'wuu'
   const phraseWugniu = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
+  const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
+  const phraseIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
   const showRubyTitle = !isEnglishDetail && !isWuuDetail && hasHan(topLabel)
   const showWuuTitle = isWuuDetail && hasHan(topLabel)
-  const phraseIpa =
+  const englishPhraseIpa =
     isEnglishDetail && top.kind === 'phrase'
       ? rows
           .map((r) => r.jyutping)
@@ -312,6 +314,7 @@ export function CharacterBreakdownHost() {
                 <ShanghaineseText
                   text={topLabel}
                   romanization={phraseWugniu || undefined}
+                  sandhiHint={phraseSandhi || undefined}
                   className="detail-panel-title-han"
                 />
               ) : showRubyTitle ? (
@@ -361,13 +364,17 @@ export function CharacterBreakdownHost() {
               className="detail-panel-speak"
             />
           </div>
-          {ipa ? (
+          {isWuuDetail && phraseIpa ? (
+            <p className="detail-panel-ipa-line" lang="en" title="IPA">
+              /{phraseIpa}/
+            </p>
+          ) : ipa ? (
             <p className="detail-panel-ipa-line" lang="en">
               /{ipa}/
             </p>
-          ) : phraseIpa ? (
+          ) : englishPhraseIpa ? (
             <p className="detail-panel-ipa-line" lang="en">
-              /{phraseIpa}/
+              /{englishPhraseIpa}/
             </p>
           ) : null}
           {translationText ? (

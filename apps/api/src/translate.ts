@@ -83,6 +83,10 @@ type TranslateResult = {
   definitions?: string[]
   /** Wugniu romanization when targeting Shanghainese. */
   romanization?: string
+  /** Compact sandhi-domain hint (e.g. "left-dominant · word"). */
+  sandhiHint?: string
+  /** Optional IPA for details (not the compact line). */
+  ipa?: string
 }
 
 /** Attach lexicon English senses for the Cantonese phrase in this turn. */
@@ -419,10 +423,22 @@ async function translateShanghainese(opts: {
   if (dictHit) {
     const alts = wantAlts ? dictHit.alternatives : []
     const romanization =
-      toWuu && typeof (dictHit as { romanization?: string }).romanization === 'string'
-        ? (dictHit as { romanization?: string }).romanization
+      toWuu && typeof dictHit.romanization === 'string'
+        ? dictHit.romanization
         : toWuu && typeof dictHit.entry?.romanization === 'string'
           ? dictHit.entry.romanization
+          : undefined
+    const sandhiHint =
+      toWuu && typeof dictHit.sandhiHint === 'string'
+        ? dictHit.sandhiHint
+        : toWuu && typeof dictHit.entry?.sandhiHint === 'string'
+          ? dictHit.entry.sandhiHint
+          : undefined
+    const ipa =
+      toWuu && typeof dictHit.ipa === 'string'
+        ? dictHit.ipa
+        : toWuu && typeof dictHit.entry?.ipa === 'string'
+          ? dictHit.entry.ipa
           : undefined
     return withLearnerDefinitions(
       {
@@ -443,9 +459,12 @@ async function translateShanghainese(opts: {
             'wuu-no-yue-scrub',
             'wuu-colloquial',
             ...(romanization ? ['wuu-wugniu'] : []),
+            ...(sandhiHint ? ['wuu-sandhi'] : []),
           ],
         },
         ...(romanization ? { romanization } : {}),
+        ...(sandhiHint ? { sandhiHint } : {}),
+        ...(ipa ? { ipa } : {}),
       },
       text,
     )
@@ -475,6 +494,8 @@ async function translateShanghainese(opts: {
   let alternatives: string[] = []
   let definition = fallbackDefinition
   let romanization = ''
+  let sandhiHint = ''
+  let ipa = ''
 
   if (wantAlts && toWuu) {
     const system = [
@@ -483,12 +504,15 @@ async function translateShanghainese(opts: {
       'Do NOT output Mandarin 普通话. Do NOT use Cantonese particles (係/唔/喺/咗/㗎).',
       'Prefer natural Shanghai street speech over textbook Wu.',
       'Also provide Wugniu romanization (吴语学堂) for the primary line — sandhi-aware word-level spelling, NOT Cantonese-style per-syllable tone digits.',
+      'Include a short sandhi domain hint (e.g. "left-dominant · word" or "left-dominant · phrase") — never invent tone digits.',
+      'Optionally include IPA for the primary phrase without slashes; leave empty if unsure.',
       'Return ONLY valid JSON:',
-      '{"primary":"<best Shanghainese Han>","alternatives":["<other natural Shanghainese>", "..."],"definition":"<short English gloss>","romanization":"<Wugniu for primary>"}',
+      '{"primary":"<best Shanghainese Han>","alternatives":["<other natural Shanghainese>", "..."],"definition":"<short English gloss>","romanization":"<Wugniu for primary>","sandhiHint":"<compact sandhi domain hint>","ipa":"<optional IPA or empty>"}',
       'Rules:',
       '- Prefer 2–3 spoken variants that differ in wording or politeness.',
       '- Do not repeat the primary or near-duplicates.',
       '- romanization must match the primary phrase; leave empty string if unsure.',
+      '- sandhiHint should stay short (under ~40 chars); empty if unsure.',
       '- No markdown, no explanation.',
     ].join('\n')
     const completion = await client.chat.completions.create({
@@ -510,8 +534,12 @@ async function translateShanghainese(opts: {
     try {
       const j = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) as {
         romanization?: unknown
+        sandhiHint?: unknown
+        ipa?: unknown
       }
       if (typeof j.romanization === 'string') romanization = j.romanization.trim()
+      if (typeof j.sandhiHint === 'string') sandhiHint = j.sandhiHint.trim()
+      if (typeof j.ipa === 'string') ipa = j.ipa.trim()
     } catch {
       /* ignore */
     }
@@ -545,8 +573,9 @@ async function translateShanghainese(opts: {
           'You are a Shanghainese (上海话 / 沪语) interpreter.',
           'Translate into colloquial spoken Shanghainese Chinese characters (not Mandarin, not Cantonese).',
           'Provide Wugniu romanization for the translation (sandhi-aware; no fake per-syllable tone digits).',
+          'Include a short sandhi domain hint (e.g. "left-dominant · word"); optional IPA without slashes.',
           'Return ONLY valid JSON:',
-          '{"translation":"<Shanghainese Han>","definition":"<short English gloss>","romanization":"<Wugniu>"}',
+          '{"translation":"<Shanghainese Han>","definition":"<short English gloss>","romanization":"<Wugniu>","sandhiHint":"<compact hint>","ipa":"<optional IPA or empty>"}',
         ].join('\n')
       : [
           'You are a Shanghainese interpreter.',
@@ -572,8 +601,12 @@ async function translateShanghainese(opts: {
       try {
         const j = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) as {
           romanization?: unknown
+          sandhiHint?: unknown
+          ipa?: unknown
         }
         if (typeof j.romanization === 'string') romanization = j.romanization.trim()
+        if (typeof j.sandhiHint === 'string') sandhiHint = j.sandhiHint.trim()
+        if (typeof j.ipa === 'string') ipa = j.ipa.trim()
       } catch {
         /* ignore */
       }
@@ -607,8 +640,15 @@ async function translateShanghainese(opts: {
         from,
         to,
         stage,
-        meta: emptyMeta(['wuu-no-yue-scrub', 'wuu-colloquial', ...(romanization ? ['wuu-wugniu'] as const : [])]),
+        meta: emptyMeta([
+          'wuu-no-yue-scrub',
+          'wuu-colloquial',
+          ...(romanization ? (['wuu-wugniu'] as const) : []),
+          ...(sandhiHint ? (['wuu-sandhi'] as const) : []),
+        ]),
         ...(romanization ? { romanization } : {}),
+        ...(sandhiHint ? { sandhiHint } : {}),
+        ...(ipa ? { ipa } : {}),
       },
       text,
     )
