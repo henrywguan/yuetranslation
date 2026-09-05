@@ -31,14 +31,19 @@ import {
 } from '../lib/badgeUsagePref'
 import { saveTtsVoicePrefs, saveUsername } from '../lib/api'
 import {
+  PREVIEW_CMN,
   PREVIEW_EN,
   PREVIEW_YUE,
+  readLocalCmnVoice,
   readLocalEnVoice,
   readLocalYueVoice,
+  resolveCmnVoice,
   resolveEnVoice,
   resolveYueVoice,
+  writeLocalCmnVoice,
   writeLocalEnVoice,
   writeLocalYueVoice,
+  type CmnVoiceId,
   type EnVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
@@ -67,8 +72,9 @@ export function PlanChip() {
   const [badgeMetric, setBadgeMetric] = useState<BadgeUsageMetric>(() => readBadgeUsageMetric())
   const [yueVoice, setYueVoice] = useState<YueVoiceId>(() => readLocalYueVoice())
   const [enVoice, setEnVoice] = useState<EnVoiceId>(() => readLocalEnVoice())
+  const [cmnVoice, setCmnVoice] = useState<CmnVoiceId>(() => readLocalCmnVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
-  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | null>(null)
+  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | 'cmn' | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteSentTo, setInviteSentTo] = useState<string | null>(null)
@@ -93,6 +99,11 @@ export function PlanChip() {
       setEnVoice(v)
       writeLocalEnVoice(v)
     }
+    if (prefs?.ttsVoiceCmn) {
+      const v = resolveCmnVoice(prefs.ttsVoiceCmn)
+      setCmnVoice(v)
+      writeLocalCmnVoice(v)
+    }
     if (prefs?.username) {
       setUsername(prefs.username)
       setUsernameDraft(prefs.username)
@@ -102,6 +113,7 @@ export function PlanChip() {
   }, [
     entitlement?.prefs?.ttsVoiceYue,
     entitlement?.prefs?.ttsVoiceEn,
+    entitlement?.prefs?.ttsVoiceCmn,
     entitlement?.prefs?.username,
     entitlement?.loggedIn,
   ])
@@ -218,17 +230,24 @@ export function PlanChip() {
     writeBadgeUsageMetric(metric)
   }
 
-  const persistVoices = async (next: { yue?: YueVoiceId; en?: EnVoiceId }) => {
+  const persistVoices = async (next: { yue?: YueVoiceId; en?: EnVoiceId; cmn?: CmnVoiceId }) => {
     const yue = next.yue ?? yueVoice
     const en = next.en ?? enVoice
+    const cmn = next.cmn ?? cmnVoice
     writeLocalYueVoice(yue)
     writeLocalEnVoice(en)
+    writeLocalCmnVoice(cmn)
     setYueVoice(yue)
     setEnVoice(en)
+    setCmnVoice(cmn)
     if (!entitlement.loggedIn) return
     setVoiceBusy(true)
     try {
-      const data = await saveTtsVoicePrefs({ ttsVoiceYue: yue, ttsVoiceEn: en })
+      const data = await saveTtsVoicePrefs({
+        ttsVoiceYue: yue,
+        ttsVoiceEn: en,
+        ttsVoiceCmn: cmn,
+      })
       if (data.entitlement) {
         useYueStore.setState({ entitlement: data.entitlement })
       } else {
@@ -247,12 +266,13 @@ export function PlanChip() {
     }
   }
 
-  const onPreview = async (kind: 'yue' | 'en') => {
+  const onPreview = async (kind: 'yue' | 'en' | 'cmn') => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
     try {
       if (kind === 'yue') await speakText(PREVIEW_YUE, 'yue', yueVoice)
-      else await speakText(PREVIEW_EN, 'en', enVoice)
+      else if (kind === 'en') await speakText(PREVIEW_EN, 'en', enVoice)
+      else await speakText(PREVIEW_CMN, 'cmn', cmnVoice)
     } finally {
       setPreviewBusy(null)
     }
@@ -295,6 +315,7 @@ export function PlanChip() {
             prefs: {
               ttsVoiceYue: entitlement.prefs?.ttsVoiceYue || yueVoice,
               ttsVoiceEn: entitlement.prefs?.ttsVoiceEn || enVoice,
+              ttsVoiceCmn: entitlement.prefs?.ttsVoiceCmn || cmnVoice,
               ...data.prefs,
             },
           },
@@ -553,6 +574,7 @@ export function PlanChip() {
           entitlement={entitlement}
           yueVoice={yueVoice}
           enVoice={enVoice}
+          cmnVoice={cmnVoice}
           voiceBusy={voiceBusy}
           previewBusy={previewBusy}
           persistVoices={persistVoices}

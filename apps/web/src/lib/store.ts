@@ -576,10 +576,17 @@ export const useYueStore = create<State>((set, get) => ({
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {
-        const { writeLocalEnVoice, writeLocalYueVoice, resolveEnVoice, resolveYueVoice } =
-          await import('./ttsVoices')
+        const {
+          writeLocalCmnVoice,
+          writeLocalEnVoice,
+          writeLocalYueVoice,
+          resolveCmnVoice,
+          resolveEnVoice,
+          resolveYueVoice,
+        } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
         if (ent.prefs?.ttsVoiceEn) writeLocalEnVoice(resolveEnVoice(ent.prefs.ttsVoiceEn))
+        if (ent.prefs?.ttsVoiceCmn) writeLocalCmnVoice(resolveCmnVoice(ent.prefs.ttsVoiceCmn))
       } catch {
         /* ignore */
       }

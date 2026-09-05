@@ -220,6 +220,7 @@ export async function fetchTtsAudio(
 export async function saveTtsVoicePrefs(patch: {
   ttsVoiceYue?: string
   ttsVoiceEn?: string
+  ttsVoiceCmn?: string
 }): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
   const res = await apiFetch('/prefs/tts-voices', {
     method: 'PATCH',

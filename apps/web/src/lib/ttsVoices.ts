@@ -15,6 +15,7 @@ export {
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
+  voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
   type CmnVoiceId,
@@ -23,16 +24,21 @@ export {
 } from '@jyut/shared/ttsVoices'
 
 import {
+  DEFAULT_CMN_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
+  resolveCmnVoice,
   resolveEnVoice,
   resolveYueVoice,
+  voiceMeta,
+  type CmnVoiceId,
   type EnVoiceId,
   type YueVoiceId,
 } from '@jyut/shared/ttsVoices'
 
 const STORAGE_YUE = 'yue-tts-voice-yue'
 const STORAGE_EN = 'yue-tts-voice-en'
+const STORAGE_CMN = 'yue-tts-voice-cmn'
 
 export function readLocalYueVoice(): YueVoiceId {
   if (typeof window === 'undefined') return DEFAULT_YUE_VOICE
@@ -52,6 +58,15 @@ export function readLocalEnVoice(): EnVoiceId {
   }
 }
 
+export function readLocalCmnVoice(): CmnVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_CMN_VOICE
+  try {
+    return resolveCmnVoice(localStorage.getItem(STORAGE_CMN))
+  } catch {
+    return DEFAULT_CMN_VOICE
+  }
+}
+
 export function writeLocalYueVoice(id: YueVoiceId) {
   try {
     localStorage.setItem(STORAGE_YUE, resolveYueVoice(id))
@@ -66,4 +81,19 @@ export function writeLocalEnVoice(id: EnVoiceId) {
   } catch {
     /* ignore */
   }
+}
+
+export function writeLocalCmnVoice(id: CmnVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_CMN, resolveCmnVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Short label for hub summary (first segment before ·). */
+export function voiceShortLabel(id: string): string {
+  const meta = voiceMeta(id)
+  if (!meta) return id
+  return meta.labelEn.split('·')[0]?.trim() || meta.labelEn
 }

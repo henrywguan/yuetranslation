@@ -48,7 +48,7 @@ import {
   isUsernameTaken,
   getProfile,
 } from './supabase.js'
-import { isEnVoice, isYueVoice } from './ttsVoices.js'
+import { isCmnVoice, isEnVoice, isYueVoice } from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -280,6 +280,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
+      preferredCmn: ent.prefs?.ttsVoiceCmn,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
     if (!env.openMode) {
@@ -299,7 +300,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
 app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   const body = req.body || {}
-  const patch: { tts_voice_yue?: string; tts_voice_en?: string } = {}
+  const patch: { tts_voice_yue?: string; tts_voice_en?: string; tts_voice_cmn?: string } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
     if (!isYueVoice(v)) {
@@ -316,6 +317,14 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_en = v
   }
+  if (body.ttsVoiceCmn != null) {
+    const v = String(body.ttsVoiceCmn).trim()
+    if (!isCmnVoice(v)) {
+      res.status(400).json({ message: 'Invalid Mandarin voice.' })
+      return
+    }
+    patch.tts_voice_cmn = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -331,6 +340,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
       const prefs = {
         ttsVoiceYue: patch.tts_voice_yue || ent.prefs.ttsVoiceYue,
         ttsVoiceEn: patch.tts_voice_en || ent.prefs.ttsVoiceEn,
+        ttsVoiceCmn: patch.tts_voice_cmn || ent.prefs.ttsVoiceCmn,
         autoSpeak: ent.prefs.autoSpeak,
         username: ent.prefs.username,
         usernameChangedAt: ent.prefs.usernameChangedAt,

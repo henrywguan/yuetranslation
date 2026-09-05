@@ -122,7 +122,7 @@ export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, override) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, override) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     if (override) {
@@ -141,7 +141,7 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, override) {
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
     if (isCmn) {
-        const id = resolveCmnVoice(null);
+        const id = resolveCmnVoice(preferredCmn);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
     const id = resolveYueVoice(preferredYue);

@@ -33,11 +33,18 @@ export type SynthesizeOpts = {
   voice?: string | null
   preferredYue?: string | null
   preferredEn?: string | null
+  preferredCmn?: string | null
 }
 
 export async function synthesize(text: string, lang: string, opts: SynthesizeOpts = {}): Promise<Buffer> {
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
-  const pick = resolveSpeakVoice(lang, opts.preferredYue, opts.preferredEn, opts.voice)
+  const pick = resolveSpeakVoice(
+    lang,
+    opts.preferredYue,
+    opts.preferredEn,
+    opts.preferredCmn,
+    opts.voice,
+  )
   const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${escapeXml(text)}</voice></speak>`
   const url = `https://${env.azureSpeechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`
   const res = await fetch(url, {
