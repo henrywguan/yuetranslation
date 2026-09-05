@@ -49,9 +49,8 @@ export function allowedCorsOrigins(): Set<string> {
 
   for (const extra of env.corsExtraOrigins) add(extra)
 
-  // This Vercel deployment’s own URL (preview + production aliases)
-  const vercel = (process.env.VERCEL_URL || '').trim()
-  if (vercel) add(vercel.startsWith('http') ? vercel : `https://${vercel}`)
+  // Intentionally omit VERCEL_URL / *.vercel.app preview hosts — production
+  // traffic is www + apex only (apex redirects to www in vercel.json).
 
   return set
 }

@@ -94,8 +94,8 @@ export const env = {
   familyAiVisionCount: Number(process.env.YUE_FAMILY_AI_VISION_COUNT || 2000),
   businessAiVisionCount: Number(process.env.YUE_BUSINESS_AI_VISION_COUNT || 10000),
   /**
-   * Extra browser Origins allowed for CORS (comma-separated), e.g. WordPress
-   * host or a preview URL. Production always includes YUE_APP_URL ± www and localhost.
+   * Extra browser Origins for CORS (comma-separated). Rarely needed — production
+   * already allows YUE_APP_URL ± www, plus localhost. WordPress/Bluehost shelved.
    */
   corsExtraOrigins: (process.env.YUE_CORS_ORIGINS || '')
     .split(',')
