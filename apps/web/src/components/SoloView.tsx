@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
+import { ClearIconButton } from './ClearIconButton'
+import { LangLabelButton } from './LangLabelButton'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
@@ -33,7 +35,9 @@ export function SoloView() {
   const altsLoading = useYueStore((s) => s.altsLoading)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
+  const speakDirection = useYueStore((s) => s.speakDirection)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
+  const clearHistory = useYueStore((s) => s.clearHistory)
   const setSoloShowAutoHint = useYueStore((s) => s.setSoloShowAutoHint)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
@@ -208,7 +212,18 @@ export function SoloView() {
     })
   }
 
+  const dirValue: Lang = speakDirection === 'yue' ? 'yue' : 'en'
+  const canClear =
+    Boolean(enDraft.trim()) ||
+    Boolean(yueDraft.trim()) ||
+    history.length > 0 ||
+    Boolean(enInterim) ||
+    Boolean(yueInterim) ||
+    Boolean(enTranslation) ||
+    Boolean(yueTranslation)
+
   return (
+
     <div className="solo">
       <motion.div
         className={`solo-stage ${live ? 'live' : ''} status-${status}`}
@@ -227,9 +242,12 @@ export function SoloView() {
       >
         <div className="solo-upper">
           <div className="solo-pane-head">
-            <p className="solo-label">
-              <BiText copy={ui.english} size="sm" only="en" />
-            </p>
+            <LangLabelButton
+              lang="en"
+              active={dirValue === 'en'}
+              only="en"
+              onSelect={setSpeakDirection}
+            />
             {enDraft.trim() ? <SpeakButton text={enDraft} lang="en" /> : null}
           </div>
           {enThinking ? (
@@ -263,20 +281,28 @@ export function SoloView() {
 
         <div className="solo-lower">
           <div className="solo-pane-head">
-            <p className="solo-label">
-              <BiText copy={ui.cantonese} size="sm" only="zh" />
-            </p>
-            {yueDraft.trim() ? (
+            <LangLabelButton
+              lang="yue"
+              active={dirValue === 'yue'}
+              only="zh"
+              onSelect={setSpeakDirection}
+            />
+            {yueDraft.trim() || canClear ? (
               <div className="solo-pane-actions">
-                <button
-                  type="button"
-                  className="solo-details-btn"
-                  onClick={openDetails}
-                  aria-label={biPlain(ui.charDetail)}
-                >
-                  <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
-                </button>
-                <SpeakButton text={yueDraft} lang="yue" />
+                {yueDraft.trim() ? (
+                  <button
+                    type="button"
+                    className="solo-details-btn"
+                    onClick={openDetails}
+                    aria-label={biPlain(ui.charDetail)}
+                  >
+                    <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
+                  </button>
+                ) : null}
+                <div className="solo-pane-actions-stack">
+                  {canClear ? <ClearIconButton onClick={clearHistory} /> : null}
+                  {yueDraft.trim() ? <SpeakButton text={yueDraft} lang="yue" /> : null}
+                </div>
               </div>
             ) : null}
           </div>
@@ -290,7 +316,7 @@ export function SoloView() {
                 definitions={yueDefs}
                 textClassName="solo-tr-text"
                 onActivate={openYueDetails}
-                speakLang="yue"
+                showCopy
               />
               {altsLoading && alts.length === 0 ? (
                 <p className="solo-alts-loading muted" aria-live="polite">

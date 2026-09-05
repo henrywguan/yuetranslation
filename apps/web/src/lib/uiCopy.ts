@@ -262,6 +262,11 @@ export const ui = {
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
+  autoSpeakHint: {
+    en: 'Play translations aloud automatically after each turn.',
+    zh: '每次翻譯後自動朗讀。',
+    jp: 'mui5 ci3 faan1 jik6 hau6 zi6 dung6 long5 duk6.',
+  },
   autoSpeakFamily: { en: 'Auto-speak (Family)', zh: '自動朗讀（家庭版）', jp: 'zi6 dung6 long5 duk6 (gaa1 ting4 baan2)' },
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
   stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },

@@ -52,6 +52,8 @@ import { inkEase } from '../lib/motion'
 export function PlanChip() {
   const entitlement = useYueStore((s) => s.entitlement)
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
+  const autoSpeak = useYueStore((s) => s.autoSpeak)
+  const setAutoSpeak = useYueStore((s) => s.setAutoSpeak)
   const [open, setOpen] = useState(false)
   const [homescreenOpen, setHomescreenOpen] = useState(false)
   const [email, setEmail] = useState('')
@@ -317,6 +319,9 @@ export function PlanChip() {
     },
   ]
 
+  const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
+  const speakOn = Boolean(autoSpeak && canAutoSpeak)
+
   const panel = (
     <div className="account-hub" id={panelId} role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <header className="account-hub-header">
@@ -418,6 +423,38 @@ export function PlanChip() {
       </header>
 
       <div className="account-hub-body">
+        <section
+          className="account-hub-section account-hub-area-autospeak"
+          aria-label={biPlain(canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily)}
+        >
+          <div className="account-hub-autospeak-row">
+            <div className="account-hub-autospeak-copy">
+              <p className="account-hub-label">
+                <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily} size="sm" />
+              </p>
+              <p className="account-hub-hint">
+                <BiText copy={ui.autoSpeakHint} size="sm" />
+              </p>
+            </div>
+            <label
+              className={`account-hub-autospeak-switch${speakOn ? ' is-on' : ''}${!canAutoSpeak ? ' is-disabled' : ''}`}
+            >
+              <input
+                type="checkbox"
+                checked={speakOn}
+                disabled={!canAutoSpeak}
+                onChange={(e) => setAutoSpeak(e.target.checked)}
+                aria-label={biPlain(canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily)}
+              />
+              <span className="account-hub-autospeak-ui" aria-hidden="true">
+                <span className="account-hub-autospeak-thumb" />
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <HubSep />
+
         <div className="account-hub-meta-grid account-hub-area-meta">
           <section className="account-hub-section account-hub-meta-col" aria-label={biPlain(ui.accountPlan)}>
             <p className="account-hub-label">

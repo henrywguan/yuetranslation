@@ -3,6 +3,7 @@ import { CantoneseText } from './CantoneseText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { LiveHoldButton } from './LiveHoldButton'
+import { ClearIconButton } from './ClearIconButton'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
@@ -21,6 +22,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 export function ConversationView() {
   const face = useYueStore((s) => s.face)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const clearHistory = useYueStore((s) => s.clearHistory)
   const live = useYueStore((s) => s.live)
   const liveSide = useYueStore((s) => s.liveSide)
   const status = useYueStore((s) => s.status)
@@ -64,6 +66,12 @@ export function ConversationView() {
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
+      {(face.enTranslation || face.yueTranslation || face.enInterim || face.yueInterim) ? (
+        <div className="conversation-clear">
+          <ClearIconButton onClick={clearHistory} />
+        </div>
+      ) : null}
+
       <section
         className={`pane pane-yue${yueListening ? ' is-listening' : ''}${yueThinking ? ' is-thinking' : ''}`}
       >

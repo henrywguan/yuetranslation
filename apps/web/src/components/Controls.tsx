@@ -10,37 +10,19 @@ const MODES: { id: Mode; copy: typeof ui.modeSolo }[] = [
   { id: 'camera', copy: ui.modeCamera },
 ]
 
-const DIR_SWITCH: {
-  id: SpeakDirection
-  copy: typeof ui.dirEnglish
-  /** Hidden until Mandarin STT is wired. */
-  hidden?: boolean
-}[] = [
-  { id: 'en', copy: ui.dirEnglish },
-  { id: 'yue', copy: ui.dirJyutjyu },
-  { id: 'cmn', copy: ui.dirMandarin, hidden: true },
-]
-
 function visibleDirection(d: SpeakDirection): 'en' | 'yue' {
   return d === 'yue' ? 'yue' : 'en'
 }
 
+/** Mode tabs + Solo live dock. Direction / auto-speak / clear live on the panes + account hub. */
 export function Controls() {
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
   const speakDirection = useYueStore((s) => s.speakDirection)
-  const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
-  const autoSpeak = useYueStore((s) => s.autoSpeak)
-  const setAutoSpeak = useYueStore((s) => s.setAutoSpeak)
-  const entitlement = useYueStore((s) => s.entitlement)
-  const clearHistory = useYueStore((s) => s.clearHistory)
 
-  const canAutoSpeak = Boolean(entitlement?.allowed.autoSpeak)
-  const speakOn = autoSpeak && canAutoSpeak
   const faceMode = mode === 'conversation'
   const cameraMode = mode === 'camera'
   const showLiveDock = !faceMode && !cameraMode
-  const showDirection = !faceMode && !cameraMode
   const dirValue = visibleDirection(speakDirection)
 
   return (
@@ -65,70 +47,6 @@ export function Controls() {
             <LiveHoldButton side={dirValue} />
           </div>
         ) : null}
-
-        <div
-          className={`opt-row${faceMode || cameraMode ? ' opt-row--compact' : ''}${faceMode ? ' opt-row--face' : ''}`}
-        >
-          {showDirection ? (
-            <div className="opt-cell opt-dir">
-              <span className="opt-kicker">
-                <BiText copy={ui.direction} size="sm" />
-              </span>
-              {/* Radio switch adapted from Uiverse.io by Yaya12085 (MIT). */}
-              <div
-                className="dir-switch"
-                role="radiogroup"
-                aria-label={biPlain(ui.direction)}
-              >
-                {DIR_SWITCH.map((d) => (
-                  <label
-                    key={d.id}
-                    className={`dir-switch-opt${d.hidden ? ' is-pending' : ''}`}
-                    hidden={d.hidden}
-                  >
-                    <input
-                      type="radio"
-                      name="yue-speak-direction"
-                      value={d.id}
-                      checked={!d.hidden && dirValue === d.id}
-                      disabled={d.hidden}
-                      onChange={() => {
-                        if (d.hidden) return
-                        setSpeakDirection(d.id)
-                      }}
-                    />
-                    <span className="dir-switch-name">
-                      <BiText copy={d.copy} size="sm" />
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <label className={`opt-cell opt-speak ${!canAutoSpeak ? 'disabled' : ''}`}>
-            <span className="opt-kicker">
-              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily} size="sm" />
-            </span>
-            <span className={`speak-switch${speakOn ? ' is-on' : ''}`}>
-              <input
-                type="checkbox"
-                checked={speakOn}
-                disabled={!canAutoSpeak}
-                onChange={(e) => setAutoSpeak(e.target.checked)}
-              />
-              <span className="speak-switch-ui" aria-hidden="true">
-                <span className="speak-switch-thumb" />
-              </span>
-            </span>
-          </label>
-
-          <button type="button" className="opt-cell opt-clear" onClick={clearHistory}>
-            <span className="opt-kicker">
-              <BiText copy={ui.clear} size="sm" />
-            </span>
-          </button>
-        </div>
       </div>
     </div>
   )
