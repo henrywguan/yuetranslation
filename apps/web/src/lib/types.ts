@@ -1,6 +1,6 @@
-export type Lang = 'en' | 'yue' | 'cmn' | 'wuu'
+export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
-export type SpeakDirection = 'en' | 'yue' | 'cmn' | 'wuu'
+export type SpeakDirection = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
 
 export type IncidentBannerSettings = {
   enabled: boolean
@@ -84,6 +84,7 @@ export type Entitlement = {
     ttsVoiceYue: string
     ttsVoiceEn: string
     ttsVoiceCmn?: string
+    ttsVoiceTl?: string
     /** Cross-device Auto-speak preference. */
     autoSpeak?: boolean
     username?: string | null

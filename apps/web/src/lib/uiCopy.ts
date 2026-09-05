@@ -179,6 +179,7 @@ export const ui = {
   camTargetZh: { en: 'To 中文', zh: '譯成中文', jp: 'jik6 sing4 zung1 man2' },
   camTargetYue: { en: 'To Cantonese', zh: '譯成粵語', jp: 'jik6 sing4 jyut6 jyu5' },
   camTargetCmn: { en: 'To Mandarin', zh: '譯成普通話', jp: 'jik6 sing4 pou2 tung1 waa2' },
+  camTargetTl: { en: 'To Tagalog', zh: '譯成他加祿語', jp: 'jik6 sing4 taa1 gaa1 luk6 jyu5' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
@@ -264,7 +265,7 @@ export const ui = {
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   dirShanghainese: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
-  autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
+  dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },  autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakHint: {
     en: 'Play translations aloud automatically after each turn.',
     zh: '每次翻譯後自動朗讀。',
@@ -502,6 +503,7 @@ export const ui = {
   accountTtsYue: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   accountTtsEn: { en: 'English', zh: '英語', jp: 'jing1 jyu5' },
   accountTtsCmn: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
+  accountTtsTl: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
   accountTtsVoiceSettings: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
   accountTtsVoiceModalTitle: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },

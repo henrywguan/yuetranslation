@@ -741,7 +741,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
             ['yue', ui.camTargetYue],
             ['cmn', ui.camTargetCmn],
             ['wuu', ui.camTargetWuu],
-          ] as const
+            ['tl', ui.camTargetTl],          ] as const
         ).map(([id, copy]) => (
           <label key={id} className={`cam-target-opt${target === id ? ' is-on' : ''}`}>
             <input

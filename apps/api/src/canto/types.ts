@@ -1,11 +1,11 @@
 /** Target language for translation memory / future Mandarin support. */
-export type TargetLang = 'yue' | 'cmn' | 'wuu' | 'en'
+export type TargetLang = 'yue' | 'cmn' | 'wuu' | 'en' | 'tl'
 
 export type PhraseRegister = 'colloquial' | 'formal' | 'neutral'
 
 export type PhraseEntry = {
   id: string
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
   targetLang: TargetLang
   /** Normalized lookup key is derived from `source` at load time. */
   source: string
@@ -35,4 +35,3 @@ export type PostProcessMeta = {
   rewritten: boolean
   notes: string[]
 }
-

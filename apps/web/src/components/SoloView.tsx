@@ -26,12 +26,14 @@ function isWorthAutoTranslate(value: string, from: Lang): boolean {
 
 function placeholderFor(lang: Lang): string {
   if (lang === 'en') return ui.soloTapTypeEnglish.en
+  if (lang === 'tl') return 'Mag-type ng Tagalog…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
 }
 
 function ariaForPane(lang: Lang): string {
   if (lang === 'en') return 'Speak English with the mic'
+  if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   return 'Speak Cantonese with the mic'
@@ -261,13 +263,11 @@ export function SoloView() {
 
   const inputLocked = live
   const showLowerRuby =
-    (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu') &&
-    Boolean(lowerDraft.trim()) &&
+    (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu' || soloLowerLang === 'tl') &&    Boolean(lowerDraft.trim()) &&
     !lowerEditing &&
     (!inputLocked || Boolean(yueInterim.trim()))
   const showUpperRuby =
-    (soloUpperLang === 'yue' || soloUpperLang === 'cmn' || soloUpperLang === 'wuu') &&
-    Boolean(upperDraft.trim()) &&
+    (soloUpperLang === 'yue' || soloUpperLang === 'cmn' || soloUpperLang === 'wuu' || soloUpperLang === 'tl') &&    Boolean(upperDraft.trim()) &&
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
 
@@ -294,7 +294,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
@@ -506,8 +506,7 @@ export function SoloView() {
               <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
             </p>
           ) : null}
-          {!showLowerRuby && alts.length > 0 && (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu') ? (
-            <TranslationAlternatives
+          {!showLowerRuby && alts.length > 0 && (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu' || soloLowerLang === 'tl') ? (            <TranslationAlternatives
               alternatives={alts}
               lang={soloLowerLang}
               onSelect={selectYueVariation}

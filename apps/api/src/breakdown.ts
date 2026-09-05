@@ -10,8 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu']).optional(),
-})
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'tl']).optional(),})
 
 export type BreakdownChar = {
   char: string
@@ -19,6 +18,7 @@ export type BreakdownChar = {
    * Yue: Jyutping if known.
    * Cmn: pinyin when provided by client merge (API may leave null).
    * En: IPA if known (same field so the client can reuse the row shape).
+   * Tl: accented dictionary form / stress spelling (same field).
    * Null for punctuation / unknown.
    */
   jyutping: string | null
@@ -199,8 +199,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu',
-): 'en' | 'yue' | 'cmn' | 'wuu' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -417,6 +417,154 @@ async function yueBreakdown(text: string) {
   }
 }
 
+
+async function tlBreakdown(text: string) {
+  const fallback = localTlBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'tl' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Tagalog / Filipino word-by-word for English-speaking learners.',
+    'Given a Tagalog phrase, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":"<dictionary form with stress/glottal diacritics, or null>","meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented: use standard Filipino dictionary diacritics (á é í ó ú ñ) when stress/glottal differs from the unmarked form; null when unmarked or for punctuation.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words (ng/sa/ang), still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char.toLowerCase() !== row.char.toLowerCase()) {
+        const byText = fallback.find((f) => f.char.toLowerCase() === row.char.toLowerCase())
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: row.jyutping || fb.jyutping,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'tl' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'tl' as const }
+  }
+}
+
+function tokenizeTagalog(text: string): string[] {
+  const matches = text.match(/[A-Za-zÀ-ÿÑñ]+(?:'[A-Za-zÀ-ÿÑñ]+)?|[0-9]+|[^\sA-Za-zÀ-ÿÑñ0-9]+/g)
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localTlBreakdown(text: string): BreakdownChar[] {
+  return tokenizeTagalog(text).map((tok) => {
+    if (/^[^A-Za-zÀ-ÿÑñ0-9]+$/.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return {
+      char: tok,
+      jyutping: null,
+      meaning: '',
+    }
+  })
+}
+
+function parseTlBreakdownPayload(raw: string, fallback: BreakdownChar[]): BreakdownChar[] {
+  const cleaned = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
+  try {
+    const parsed = JSON.parse(cleaned) as { words?: unknown; characters?: unknown }
+    const list = Array.isArray(parsed.words)
+      ? parsed.words
+      : Array.isArray(parsed.characters)
+        ? parsed.characters
+        : null
+    if (!list) return fallback
+    const out: BreakdownChar[] = []
+    for (const item of list) {
+      if (!item || typeof item !== 'object') continue
+      const row = item as Record<string, unknown>
+      const char =
+        typeof row.word === 'string'
+          ? row.word
+          : typeof row.char === 'string'
+            ? row.char
+            : typeof row.text === 'string'
+              ? row.text
+              : ''
+      if (!char) continue
+      const accented =
+        typeof row.accented === 'string' && row.accented.trim()
+          ? row.accented.trim()
+          : typeof row.jyutping === 'string' && row.jyutping.trim()
+            ? row.jyutping.trim()
+            : typeof row.pronunciation === 'string' && row.pronunciation.trim()
+              ? row.pronunciation.trim()
+              : null
+      const meaning =
+        typeof row.meaning === 'string' && row.meaning.trim()
+          ? row.meaning.trim()
+          : typeof row.gloss === 'string' && row.gloss.trim()
+            ? row.gloss.trim()
+            : ''
+      out.push({
+        char,
+        jyutping: accented,
+        meaning,
+        glossSource: 'model',
+      })
+    }
+    return out.length ? out : fallback
+  } catch {
+    return fallback
+  }
+}
+
 async function cmnBreakdown(text: string) {
   // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
   // API returns gloss rows with jyutping left null for client merge.
@@ -444,6 +592,7 @@ export async function breakdown(input: unknown) {
   const text = parsed.text.trim()
   const lang = detectBreakdownLang(text, parsed.lang)
   if (lang === 'en') return englishBreakdown(text)
+  if (lang === 'tl') return tlBreakdown(text)
   if (lang === 'cmn') return cmnBreakdown(text)
   if (lang === 'wuu') return wuuBreakdown(text)
   return yueBreakdown(text)

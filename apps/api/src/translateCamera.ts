@@ -3,9 +3,8 @@ import { openaiClient } from './openaiClient.js'
 import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
-/** Camera / docs target languages. Prefer yue|cmn; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu'
-
+/** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -104,6 +103,10 @@ function isChineseTarget(to: CameraLang): boolean {
   return to === 'yue' || to === 'cmn' || to === 'wuu'
 }
 
+function isTagalogTarget(to: CameraLang): boolean {
+  return to === 'tl'
+}
+
 function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
   const docHint = docBatch
     ? 'These lines come from one document — keep terminology, names, and tone consistent across all lines.'
@@ -169,9 +172,31 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'tl') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Filipino (Tagalog).',
+      'Write for Filipino travelers/readers: everyday spoken Filipino, not stiff textbook Tagalog.',
+      'Light Taglish is OK when it is how Filipinos would actually say it on a sign (e.g. Check-in, Exit, Wi‑Fi).',
+      'Use Latin script only. Diacritics (á, é, í, ó, ú, ñ) are optional — prefer plain ASCII when unsure.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Mag-check-in / Resepsyon; Luggage → Bagaha / Luggage.',
+      '- Safety: Wet floor → Madulas ang sahig / Mag-ingat; Caution → Mag-ingat.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Tagalog output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Tagalog>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   return [
     'You translate signs, menus, forms, and short labels into clear traveler English.',
-    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing).',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), or Tagalog / Filipino (Latin script).',
+    'When the source is Tagalog/Filipino Latin text, translate it into concise English (Latin → English).',
     docHint,
     "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
     'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
@@ -191,9 +216,24 @@ export type CameraTranslateOpts = {
   context?: string
 }
 
+function demoTranslation(source: string, to: CameraLang): string {
+  if (isChineseTarget(to)) {
+    let demo = hasHan(source)
+      ? source
+      : to === 'cmn'
+        ? `（示范）${source}`
+        : `（示範）${source}`
+    if (to === 'cmn') demo = scrubYueToCmn(demo).text
+    return demo
+  }
+  if (isTagalogTarget(to)) {
+    return hasHan(source) ? `(demo TL) ${source}` : `(demo) ${source}`
+  }
+  return `(demo) ${source}`
+}
+
 /**
- * Camera / written-Chinese translate (EN ↔ yue|cmn|wuu).
- * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
+ * Camera / written-Chinese translate (EN ↔ yue|cmn|wuu|tl). * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
  */
 export async function translateCameraText(
   text: string,
@@ -214,16 +254,7 @@ export async function translateCameraText(
 
   const client = openaiClient()
   if (!client) {
-    let demo = isChineseTarget(to)
-      ? hasHan(source)
-        ? source
-        : to === 'cmn'
-          ? `（示范）${source}`
-          : `（示範）${source}`
-      : hasHan(source)
-        ? `(demo) ${source}`
-        : `(demo) ${source}`
-    if (to === 'cmn') demo = scrubYueToCmn(demo).text
+    const demo = demoTranslation(source, to)
     remember(key, demo)
     return { text: demo, engine: 'demo', cacheHit: false }
   }
@@ -250,7 +281,9 @@ export async function translateCameraText(
     ? to === 'cmn'
       ? `（译）${source}`
       : `（譯）${source}`
-    : `(tr) ${source}`
+    : isTagalogTarget(to)
+      ? `(tr TL) ${source}`
+      : `(tr) ${source}`
   let translated = parseTranslation(raw, fallback)
   if (to === 'cmn') translated = scrubYueToCmn(translated).text
   remember(key, translated)
@@ -267,6 +300,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'en') return 'English'
   if (lang === 'cmn') return 'Mandarin Chinese 普通话 (简体 OK)'
   if (lang === 'wuu') return 'Shanghainese 上海话 / 沪语'
+  if (lang === 'tl') return 'Tagalog / Filipino (Latin script)'
   return 'Hong Kong Chinese 繁體'
 }
 
@@ -282,19 +316,7 @@ export async function translateCameraBatch(
   const client = openaiClient()
   if (!client) {
     return {
-      translations: segments.map((s) => {
-        let demo = isChineseTarget(to)
-          ? hasHan(s)
-            ? s
-            : to === 'cmn'
-              ? `（示范）${s}`
-              : `（示範）${s}`
-          : hasHan(s)
-            ? `(demo) ${s}`
-            : `(demo) ${s}`
-        if (to === 'cmn') demo = scrubYueToCmn(demo).text
-        return demo
-      }),
+      translations: segments.map((s) => demoTranslation(s, to)),
       engine: 'demo',
     }
   }
@@ -319,7 +341,13 @@ export async function translateCameraBatch(
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
     const fallbacks = chunk.map((s) =>
-      isChineseTarget(to) ? (to === 'cmn' ? `（译）${s}` : `（譯）${s}`) : `(tr) ${s}`,
+      isChineseTarget(to)
+        ? to === 'cmn'
+          ? `（译）${s}`
+          : `（譯）${s}`
+        : isTagalogTarget(to)
+          ? `(tr TL) ${s}`
+          : `(tr) ${s}`,
     )
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
@@ -327,6 +355,7 @@ export async function translateCameraBatch(
       const src = chunk[i] || ''
       if (to === 'en' && hasHan(t)) out[start + i] = src
       else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
+      else if (isTagalogTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text
         out[start + i] = t || src
@@ -341,10 +370,11 @@ export async function translateCameraBatch(
   }
 }
 
-/** Normalize legacy `zh` → `yue` for API callers. */
+/** Normalize legacy `zh` → `yue`; `fil` → `tl` for API callers. */
 export function normalizeCameraLang(lang: string | undefined): CameraLang | undefined {
   if (!lang) return undefined
   if (lang === 'zh' || lang === 'yue') return 'yue'
+  if (lang === 'fil' || lang === 'tl') return 'tl'
   if (lang === 'cmn' || lang === 'en' || lang === 'wuu') return lang
   return undefined
 }

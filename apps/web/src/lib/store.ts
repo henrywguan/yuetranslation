@@ -51,11 +51,11 @@ function emptyFaceLive(): FaceLive {
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
-  /** Remembered Chinese variety for defaults when picking 粵/普 (Solo + Conversation). */
-  chineseLang: 'yue' | 'cmn' | 'wuu'
-  /** Solo upper pane language (any en|yue|cmn|wuu; must differ from lower). */
+  /** Remembered partner variety for Conversation (粵 / 普 / 沪 / Tagalog). */
+  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl'
+  /** Solo upper pane language (any en|yue|cmn|wuu|tl; must differ from lower). */
   soloUpperLang: Lang
-  /** Solo lower pane language (any en|yue|cmn|wuu; must differ from upper). */
+  /** Solo lower pane language (any en|yue|cmn|wuu|tl; must differ from upper). */
   soloLowerLang: Lang
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
@@ -124,7 +124,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -257,6 +257,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'yue') return 'yue'
   if (direction === 'cmn') return 'cmn'
   if (direction === 'wuu') return 'wuu'
+  if (direction === 'tl') return 'tl'
   return detected
 }
 
@@ -479,7 +480,7 @@ export const useYueStore = create<State>((set, get) => ({
   },
   setSpeakDirection: (speakDirection) =>
     set(
-      speakDirection === 'yue' || speakDirection === 'cmn' || speakDirection === 'wuu'
+      speakDirection === 'yue' || speakDirection === 'cmn' || speakDirection === 'wuu' || speakDirection === 'tl'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -505,9 +506,9 @@ export const useYueStore = create<State>((set, get) => ({
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'wuu'
-        ? { chineseLang: lang as 'yue' | 'cmn' | 'wuu' }
-        : current === 'yue' || current === 'cmn'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl'
+        ? { chineseLang: lang as 'yue' | 'cmn' | 'wuu' | 'tl' }
+        : current === 'yue' || current === 'cmn' || current === 'wuu' || current === 'tl'
           ? {}
           : {}
     set({
@@ -586,14 +587,17 @@ export const useYueStore = create<State>((set, get) => ({
         const {
           writeLocalCmnVoice,
           writeLocalEnVoice,
+          writeLocalTlVoice,
           writeLocalYueVoice,
           resolveCmnVoice,
           resolveEnVoice,
+          resolveTlVoice,
           resolveYueVoice,
         } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
         if (ent.prefs?.ttsVoiceEn) writeLocalEnVoice(resolveEnVoice(ent.prefs.ttsVoiceEn))
         if (ent.prefs?.ttsVoiceCmn) writeLocalCmnVoice(resolveCmnVoice(ent.prefs.ttsVoiceCmn))
+        if (ent.prefs?.ttsVoiceTl) writeLocalTlVoice(resolveTlVoice(ent.prefs.ttsVoiceTl))
       } catch {
         /* ignore */
       }

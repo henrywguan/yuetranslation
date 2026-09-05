@@ -7,38 +7,46 @@ export {
   DEFAULT_EN_VOICE,
   DEFAULT_CMN_VOICE,
   DEFAULT_WUU_VOICE,
+  DEFAULT_TL_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
   WUU_VOICES,
+  TL_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
   PREVIEW_WUU,
+  PREVIEW_TL,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
   resolveWuuVoice,
+  resolveTlVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
   type CmnVoiceId,
   type WuuVoiceId,
+  type TlVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
 
 import {
   DEFAULT_CMN_VOICE,
+  DEFAULT_TL_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
   resolveCmnVoice,
+  resolveTlVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
   voiceMeta,
   type CmnVoiceId,
+  type TlVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -48,6 +56,7 @@ const STORAGE_YUE = 'yue-tts-voice-yue'
 const STORAGE_EN = 'yue-tts-voice-en'
 const STORAGE_CMN = 'yue-tts-voice-cmn'
 const STORAGE_WUU = 'yue-tts-voice-wuu'
+const STORAGE_TL = 'yue-tts-voice-tl'
 
 export function readLocalYueVoice(): YueVoiceId {
   if (typeof window === 'undefined') return DEFAULT_YUE_VOICE
@@ -99,6 +108,24 @@ export function writeLocalCmnVoice(id: CmnVoiceId) {
     /* ignore */
   }
 }
+
+export function readLocalTlVoice(): TlVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_TL_VOICE
+  try {
+    return resolveTlVoice(localStorage.getItem(STORAGE_TL))
+  } catch {
+    return DEFAULT_TL_VOICE
+  }
+}
+
+export function writeLocalTlVoice(id: TlVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_TL, resolveTlVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
 
 /** Short label for hub summary (first segment before ·). */
 export function voiceShortLabel(id: string): string {

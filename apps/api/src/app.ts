@@ -48,7 +48,7 @@ import {
   isUsernameTaken,
   getProfile,
 } from './supabase.js'
-import { isCmnVoice, isEnVoice, isYueVoice } from './ttsVoices.js'
+import { isCmnVoice, isEnVoice, isTlVoice, isYueVoice } from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -270,20 +270,22 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       res.status(400).json({ message: 'text required' })
       return
     }
-    const azureLang =
+        const azureLang =
       lang === 'en' || lang === 'en-US'
         ? 'en'
         : lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
           ? 'zh-CN'
           : lang === 'wuu' || lang === 'wuu-CN'
             ? 'wuu-CN'
-            : 'zh-HK'
+            : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
+              ? 'fil-PH'            : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
       preferredCmn: ent.prefs?.ttsVoiceCmn,
       preferredWuu: null,
+      preferredTl: ent.prefs?.ttsVoiceTl,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
     if (!env.openMode) {
@@ -303,7 +305,12 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
 app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   const body = req.body || {}
-  const patch: { tts_voice_yue?: string; tts_voice_en?: string; tts_voice_cmn?: string } = {}
+  const patch: {
+    tts_voice_yue?: string
+    tts_voice_en?: string
+    tts_voice_cmn?: string
+    tts_voice_tl?: string
+  } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
     if (!isYueVoice(v)) {
@@ -328,6 +335,14 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_cmn = v
   }
+  if (body.ttsVoiceTl != null) {
+    const v = String(body.ttsVoiceTl).trim()
+    if (!isTlVoice(v)) {
+      res.status(400).json({ message: 'Invalid Tagalog voice.' })
+      return
+    }
+    patch.tts_voice_tl = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -344,6 +359,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceYue: patch.tts_voice_yue || ent.prefs.ttsVoiceYue,
         ttsVoiceEn: patch.tts_voice_en || ent.prefs.ttsVoiceEn,
         ttsVoiceCmn: patch.tts_voice_cmn || ent.prefs.ttsVoiceCmn,
+        ttsVoiceTl: patch.tts_voice_tl || ent.prefs.ttsVoiceTl,
         autoSpeak: ent.prefs.autoSpeak,
         username: ent.prefs.username,
         usernameChangedAt: ent.prefs.usernameChangedAt,

@@ -32,10 +32,12 @@ import './DetailPanel.css'
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
 
-function speakLangFor(text: string, detailLang?: 'en' | 'yue' | 'cmn' | 'wuu'): Lang {
+function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'cmn') return 'cmn'
   if (detailLang === 'wuu') return 'wuu'
+  if (detailLang === 'tl') return 'tl'
   if (detailLang === 'en') return 'en'
+  if (detailLang === 'yue') return 'yue'
   return hasHan(text) ? 'yue' : 'en'
 }
 
@@ -184,7 +186,7 @@ export function CharacterBreakdownHost() {
       return
     }
     const detailLang = top.lang || (hasHan(top.char) ? 'yue' : 'en')
-    if (detailLang === 'en') {
+    if (detailLang === 'en' || detailLang === 'tl') {
       setIpa(top.jp)
       return
     }
@@ -256,13 +258,21 @@ export function CharacterBreakdownHost() {
   const isEnglishDetail = detailLang === 'en'
   const isCmnDetail = detailLang === 'cmn'
   const isWuuDetail = detailLang === 'wuu'
+  const isTlDetail = detailLang === 'tl'
   const phraseWugniu = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
   const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
-  const phraseIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
-  const showRubyTitle = !isEnglishDetail && !isWuuDetail && hasHan(topLabel)
+  const phraseWuuIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
+  const showRubyTitle = !isEnglishDetail && !isWuuDetail && !isTlDetail && hasHan(topLabel)
   const showWuuTitle = isWuuDetail && hasHan(topLabel)
-  const englishPhraseIpa =
+  const phraseIpa =
     isEnglishDetail && top.kind === 'phrase'
+      ? rows
+          .map((r) => r.jyutping)
+          .filter(Boolean)
+          .join(' ')
+      : ''
+  const phraseAccented =
+    isTlDetail && top.kind === 'phrase'
       ? rows
           .map((r) => r.jyutping)
           .filter(Boolean)
@@ -275,7 +285,7 @@ export function CharacterBreakdownHost() {
         ? isCmnDetail
           ? [{ char: top.char, py: top.jp }]
           : [{ char: top.char, jp: top.jp }]
-        : top.kind === 'phrase' && rows.some((r) => r.jyutping)
+        : top.kind === 'phrase' && rows.some((r) => r.jyutping) && !isTlDetail && !isEnglishDetail
           ? isCmnDetail
             ? rows.map((r) => ({ char: r.char, py: r.jyutping || '' }))
             : rows.map((r) => ({ char: r.char, jp: r.jyutping || '' }))
@@ -301,13 +311,15 @@ export function CharacterBreakdownHost() {
               id={titleId}
               className="detail-panel-title"
               lang={
-                top.kind === 'char' || showRubyTitle || showWuuTitle
-                  ? isWuuDetail
-                    ? 'wuu-CN'
-                    : isCmnDetail
-                      ? 'zh-CN'
-                      : 'zh-HK'
-                  : 'en'
+                isTlDetail
+                  ? 'tl'
+                  : top.kind === 'char' || showRubyTitle || showWuuTitle
+                    ? isWuuDetail
+                      ? 'wuu-CN'
+                      : isCmnDetail
+                        ? 'zh-CN'
+                        : 'zh-HK'
+                    : 'en'
               }
             >
               {showWuuTitle ? (
@@ -364,17 +376,25 @@ export function CharacterBreakdownHost() {
               className="detail-panel-speak"
             />
           </div>
-          {isWuuDetail && phraseIpa ? (
+          {isWuuDetail && phraseWuuIpa ? (
             <p className="detail-panel-ipa-line" lang="en" title="IPA">
-              /{phraseIpa}/
+              /{phraseWuuIpa}/
+            </p>
+          ) : ipa && isTlDetail ? (
+            <p className="detail-panel-ipa-line" lang="tl" title="Accented / stress form">
+              {ipa}
             </p>
           ) : ipa ? (
             <p className="detail-panel-ipa-line" lang="en">
               /{ipa}/
             </p>
-          ) : englishPhraseIpa ? (
+          ) : phraseAccented ? (
+            <p className="detail-panel-ipa-line" lang="tl" title="Accented / stress forms">
+              {phraseAccented}
+            </p>
+          ) : phraseIpa ? (
             <p className="detail-panel-ipa-line" lang="en">
-              /{englishPhraseIpa}/
+              /{phraseIpa}/
             </p>
           ) : null}
           {translationText ? (
@@ -455,7 +475,15 @@ export function CharacterBreakdownHost() {
                     <TranslationAlternatives
                       alternatives={alternatives}
                       lang={
-                        isEnglishDetail ? 'en' : isCmnDetail ? 'cmn' : isWuuDetail ? 'wuu' : 'yue'
+                        isEnglishDetail
+                          ? 'en'
+                          : isTlDetail
+                            ? 'tl'
+                            : isCmnDetail
+                              ? 'cmn'
+                              : isWuuDetail
+                                ? 'wuu'
+                                : 'yue'
                       }
                       onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     />
@@ -470,7 +498,17 @@ export function CharacterBreakdownHost() {
                 {rows.map((row, i) => {
                   const meaning = pickCharGloss(row.meaning)
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
-                  const canSpeak = isEnglishDetail || isHanChar(row.char)
+                  const canSpeak =
+                    isEnglishDetail || isTlDetail || isHanChar(row.char)
+                  const rowSpeakLang: Lang = isEnglishDetail
+                    ? 'en'
+                    : isTlDetail
+                      ? 'tl'
+                      : isCmnDetail
+                        ? 'cmn'
+                        : isWuuDetail
+                          ? 'wuu'
+                          : 'yue'
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
@@ -486,13 +524,23 @@ export function CharacterBreakdownHost() {
                       >
                         <span
                           className="detail-panel-char-stack"
-                          lang={isWuuDetail ? 'wuu-CN' : isCmnDetail ? 'zh-CN' : 'zh-HK'}
+                          lang={
+                            isTlDetail ? 'tl' : isWuuDetail ? 'wuu-CN' : isCmnDetail ? 'zh-CN' : 'zh-HK'
+                          }
                         >
                           <span className="detail-panel-row-jp">
                             {row.jyutping && !isWuuDetail ? (
                               isEnglishDetail ? (
                                 <span className="detail-panel-ipa" lang="en">
                                   /{row.jyutping}/
+                                </span>
+                              ) : isTlDetail ? (
+                                <span
+                                  className="detail-panel-ipa"
+                                  lang="tl"
+                                  title="Accented / stress form"
+                                >
+                                  {row.jyutping}
                                 </span>
                               ) : isCmnDetail ? (
                                 <PinyinSyllable py={row.jyutping} />
@@ -515,15 +563,7 @@ export function CharacterBreakdownHost() {
                       {canSpeak ? (
                         <SpeakButton
                           text={row.char}
-                          lang={
-                            isEnglishDetail
-                              ? 'en'
-                              : isCmnDetail
-                                ? 'cmn'
-                                : isWuuDetail
-                                  ? 'wuu'
-                                  : 'yue'
-                          }
+                          lang={rowSpeakLang}
                           className="detail-panel-row-speak"
                         />
                       ) : null}
@@ -533,7 +573,9 @@ export function CharacterBreakdownHost() {
               </ul>
             ) : (
               <p className="detail-panel-loading muted">
-                {isEnglishDetail ? 'No word details available.' : 'No character details available.'}
+                {isEnglishDetail || isTlDetail
+                  ? 'No word details available.'
+                  : 'No character details available.'}
               </p>
             )}
           </>
@@ -541,7 +583,7 @@ export function CharacterBreakdownHost() {
           <div className="detail-panel-char-view">
             {top.sense ? (
               <section>
-                <h3>{isEnglishDetail ? 'This word' : 'This character'}</h3>
+                <h3>{isEnglishDetail || isTlDetail ? 'This word' : 'This character'}</h3>
                 <p>{top.sense}</p>
               </section>
             ) : (

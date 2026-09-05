@@ -3,13 +3,16 @@ import { BiText } from './BiText'
 import {
   CMN_VOICES,
   EN_VOICES,
+  TL_VOICES,
   YUE_VOICES,
   resolveCmnVoice,
   resolveEnVoice,
+  resolveTlVoice,
   resolveYueVoice,
   voiceShortLabel,
   type CmnVoiceId,
   type EnVoiceId,
+  type TlVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -22,19 +25,26 @@ type Props = {
   yueVoice: YueVoiceId
   enVoice: EnVoiceId
   cmnVoice: CmnVoiceId
+  tlVoice: TlVoiceId
   voiceBusy: boolean
-  previewBusy: 'yue' | 'en' | 'cmn' | null
-  persistVoices: (next: { yue?: YueVoiceId; en?: EnVoiceId; cmn?: CmnVoiceId }) => Promise<void>
-  onPreview: (kind: 'yue' | 'en' | 'cmn') => Promise<void>
+  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | null
+  persistVoices: (next: {
+    yue?: YueVoiceId
+    en?: EnVoiceId
+    cmn?: CmnVoiceId
+    tl?: TlVoiceId
+  }) => Promise<void>
+  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl') => Promise<void>
 }
 
-/** Compact TTS summary + modal for Yue / En / Cmn voice prefs. */
+/** Compact TTS summary + modal for Yue / En / Cmn / Tl voice prefs. */
 export function AccountHubVoice({
   voicePrefId,
   entitlement,
   yueVoice,
   enVoice,
   cmnVoice,
+  tlVoice,
   voiceBusy,
   previewBusy,
   persistVoices,
@@ -77,6 +87,10 @@ export function AccountHubVoice({
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">普</span>
             <span className="account-hub-voice-chip-name">{voiceShortLabel(cmnVoice)}</span>
+          </span>
+          <span className="account-hub-voice-chip">
+            <span className="account-hub-voice-chip-lang">Tl</span>
+            <span className="account-hub-voice-chip-name">{voiceShortLabel(tlVoice)}</span>
           </span>
         </p>
         <button
@@ -197,6 +211,35 @@ export function AccountHubVoice({
                 className="account-hub-voice-preview"
                 disabled={previewBusy !== null || !ttsOk}
                 onClick={() => void onPreview('cmn')}
+              >
+                <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+              </button>
+            </div>
+
+            <div className="voice-settings-row">
+              <label className="voice-settings-field">
+                <span className="voice-settings-lang">
+                  <BiText copy={ui.accountTtsTl} size="sm" hideJp />
+                </span>
+                <select
+                  className="account-hub-select"
+                  value={tlVoice}
+                  disabled={voiceBusy}
+                  onChange={(e) => void persistVoices({ tl: resolveTlVoice(e.target.value) })}
+                  aria-label={biPlain(ui.accountTtsTl)}
+                >
+                  {TL_VOICES.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.labelEn} · {v.labelZh}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="account-hub-voice-preview"
+                disabled={previewBusy !== null || !ttsOk}
+                onClick={() => void onPreview('tl')}
               >
                 <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
               </button>

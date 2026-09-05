@@ -1,4 +1,4 @@
 export { looksLikeGlossDump } from "./glossDump.js";
-export { DEFAULT_YUE_VOICE, DEFAULT_EN_VOICE, DEFAULT_CMN_VOICE, DEFAULT_WUU_VOICE, YUE_VOICES, EN_VOICES, CMN_VOICES, WUU_VOICES, PREVIEW_YUE, PREVIEW_EN, PREVIEW_CMN, PREVIEW_WUU, isYueVoice, isEnVoice, isCmnVoice, isWuuVoice, resolveYueVoice, resolveEnVoice, resolveCmnVoice, resolveWuuVoice, voiceMeta, resolveSpeakVoice, type YueVoiceId, type EnVoiceId, type CmnVoiceId, type WuuVoiceId, type TtsVoiceId, type TtsVoiceOption, } from "./ttsVoices.js";
+export { DEFAULT_YUE_VOICE, DEFAULT_EN_VOICE, DEFAULT_CMN_VOICE, DEFAULT_WUU_VOICE, DEFAULT_TL_VOICE, YUE_VOICES, EN_VOICES, CMN_VOICES, WUU_VOICES, TL_VOICES, PREVIEW_YUE, PREVIEW_EN, PREVIEW_CMN, PREVIEW_WUU, PREVIEW_TL, isYueVoice, isEnVoice, isCmnVoice, isWuuVoice, isTlVoice, resolveYueVoice, resolveEnVoice, resolveCmnVoice, resolveWuuVoice, resolveTlVoice, voiceMeta, resolveSpeakVoice, type YueVoiceId, type EnVoiceId, type CmnVoiceId, type WuuVoiceId, type TlVoiceId, type TtsVoiceId, type TtsVoiceOption, } from "./ttsVoices.js";
 export { GENERIC_CHAR_GLOSS, isGenericCharGloss, } from "./charGloss.js";
 //# sourceMappingURL=index.d.ts.map
