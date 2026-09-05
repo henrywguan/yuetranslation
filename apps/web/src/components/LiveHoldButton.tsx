@@ -96,6 +96,9 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
 
   const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return
+    // Ignore presses that start in the OS home-gesture strip (PWA dismiss swipe).
+    // Dock CSS already lifts the control; this catches edge cases when safe-area is 0.
+    if (typeof window !== 'undefined' && window.innerHeight - e.clientY <= 16) return
     if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) return
     if (activePointer.current != null) return
 

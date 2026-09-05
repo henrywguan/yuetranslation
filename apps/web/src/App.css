@@ -3078,6 +3078,19 @@
   box-shadow:
     0 -12px 32px color-mix(in srgb, var(--harbor) 22%, transparent),
     inset 0 1px 0 var(--glass-shine);
+  /*
+   * Keep the mic / mode tabs above the system home-gesture strip.
+   * safe-area alone still leaves the hold button easy to graze when swiping
+   * the installed PWA away — add a dead zone under the controls.
+   */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--app-bottom-gesture-guard, 12px));
+}
+
+/* Installed / fullscreen PWA: larger dead zone (home indicator + dismiss swipe). */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  .dock {
+    --app-bottom-gesture-guard: 24px;
+  }
 }
 
 [data-theme='light'] .dock {
