@@ -13,6 +13,14 @@
     "YUE_GUEST_LIVE_MINUTES": "30",
     "YUE_GUEST_CAMERA_MINUTES": "30"
   },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "jyuttranslate.com" }],
+      "destination": "https://www.jyuttranslate.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }

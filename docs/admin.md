@@ -165,7 +165,7 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 7. `supabase/migrations/007_email_hub.sql` — saved campaign templates + email send log for Admin → Email
 8. `supabase/migrations/008_docs_pages.sql` — `docs_pages` on usage months + `increment_usage` support for Documents metering
 9. `supabase/migrations/009_tts_voices.sql` — profile TTS voice preferences
-10. `supabase/migrations/010_ai_vision_usage.sql` — `ai_vision_count` meter (view-only)
+10. `supabase/migrations/010_ai_vision_usage.sql` — `ai_vision_count` meter (hard monthly cap)
 11. `supabase/migrations/011_rename_pro_plan_to_family.sql` — `pro` → `family` plan id
 12. `supabase/migrations/012_household_seats_pooled_usage.sql` — household seats + pooled `household_usage_months`
 13. `supabase/migrations/013_profiles_username.sql` — custom Account Hub username
@@ -219,7 +219,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | `POST /api/usage/camera-heartbeat` → `camera_seconds`; `POST /api/camera/scan` → `camera_translate_count` |
-| AI vision metering | `POST /api/camera/scan` when LLM OCR fallback runs → `ai_vision_count` (view-only; Cam + Documents; no hard cap). Migration `010_ai_vision_usage.sql` |
+| AI vision metering | `POST /api/camera/scan` when LLM OCR fallback runs → `ai_vision_count` (hard monthly cap; Cam + Documents). Migration `010_ai_vision_usage.sql` |
 | Docs metering | `POST /api/docs/translate` / `POST /api/docs/commit` → `docs_pages` (success only) |
 
 ## API

@@ -349,7 +349,7 @@ export async function addDocsPages(userId: string, pages = 1) {
   await incrementUsage(userId, { docsPages: pages })
 }
 
-/** Count multimodal LLM OCR fallback invocations (no hard cap). */
+/** Count multimodal LLM OCR fallback invocations (hard monthly cap in entitlements). */
 export async function addAiVisionCount(userId: string, count = 1) {
   await incrementUsage(userId, { aiVisionCount: count })
 }

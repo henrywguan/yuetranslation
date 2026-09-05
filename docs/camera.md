@@ -73,7 +73,7 @@ Docs translate body: `{ filename, data, from: 'en'|'yue', to: 'en'|'yue' }` (max
 
 OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are set (Vision or multi-service resource — Speech key alone is not enough). Without Vision, engine is `demo`. Invalid credentials return `visionAuthFailed: true`.
 
-**Silent AI vision fallback:** when Azure Read returns no text, Cam (AR / Upload / Documents) calls a multimodal LLM (`OPENAI_VISION_MODEL`, e.g. `deepseek-v4-flash-vision-exp` or `gpt-4o-mini`). Uses the same `OPENAI_API_KEY` / base URL unless `OPENAI_VISION_*` overrides are set. Each fallback invocation increments `ai_vision_count` (view-only; no hard cap). Migration: `010_ai_vision_usage.sql`.
+**Silent AI vision fallback:** when Azure Read returns no text, Cam (AR / Upload / Documents) calls a multimodal LLM (`OPENAI_VISION_MODEL`, e.g. `deepseek-v4-flash-vision-exp` or `gpt-4o-mini`). Uses the same `OPENAI_API_KEY` / base URL unless `OPENAI_VISION_*` overrides are set. Each fallback invocation increments `ai_vision_count` against a **hard monthly cap** (Free 200 / Family 2000 / Business 10000 by default). When the cap is hit, Azure Read still runs; the LLM fallback is skipped. Migration: `010_ai_vision_usage.sql`.
 
 ## Env / 環境變數
 

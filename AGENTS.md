@@ -12,6 +12,17 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 **Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
 
+### Security Guardian (PR + abuse + API health)
+
+Standing security / leak / token-abuse review for every PR and scheduled full-repo scans:
+
+- Brief + Automations paste prompts: [`docs/agents/security-guardian.md`](docs/agents/security-guardian.md)
+- Baseline findings: [`docs/agents/security-baseline.md`](docs/agents/security-baseline.md)
+- Bugbot rules: [`.cursor/BUGBOT.md`](.cursor/BUGBOT.md)
+- Safe health probe (no paid APIs): `npm run security:api-health` → `./scripts/security-api-health.sh`
+
+Henry activates **Security Reviewer**, **Vulnerability Scanner**, and the API-health custom automation in [cursor.com/automations](https://cursor.com/automations) (cloud agents cannot create standing Automations via API).
+
 ### Instagram / static social posts (approved look)
 
 When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, use the **instructional night/dark mode** Harbor look — **not** a new AI poster style.
@@ -59,6 +70,7 @@ Before each outbound cloud-agent call that would use those keys (including `curl
 Allowed without asking (cloud):
 
 - `/api/health` (readiness only)
+- `npm run security:api-health` (health + auth-config shape only)
 - Offline `npm run smoke:canto`
 - Dictionary/lexicon-only checks that cannot reach the model
 - Local Vite / Express process management
@@ -80,6 +92,7 @@ Smoke without a browser (offline / no paid APIs):
 ```bash
 curl -s http://localhost:8787/api/health
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
+npm run security:api-health
 npm run smoke:canto
 ```
 
@@ -116,7 +129,7 @@ Default deploy flags in `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`.
 
 OAuth / confirm-email returns to the site origin (Supabase Site URL). The web app then routes to `#/app`. Login links must be `/?auth=1#/app` (query before hash). In Supabase → Authentication → URL configuration, Site URL should be the production origin; extra Redirect URLs can include `http://localhost:5173/**` and the production origin.
 
-Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (or `SUPABASE_ANON_KEY` — the web app also loads public keys from `GET /api/auth-config` at runtime), and **`YUE_APP_URL=https://your-production-domain`**. Optional: **`YUE_ADMIN_EMAILS`** for `#/admin` — see [docs/admin.md](docs/admin.md). Sign-in opens an in-app modal via `openAuthScreen()` — do not link to API `loginUrl` from the SPA. Enable Google (and Apple) in Supabase → Authentication → Providers.
+Required Vercel env (in addition to Azure/OpenAI): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (or `SUPABASE_ANON_KEY` — the web app also loads public keys from `GET /api/auth-config` at runtime), and **`YUE_APP_URL=https://www.jyuttranslate.com`** (canonical **www**; `vercel.json` 301s apex `jyuttranslate.com` → www). Point both apex + www DNS at Vercel. Optional: **`YUE_ADMIN_EMAILS`** for `#/admin` — see [docs/admin.md](docs/admin.md). Sign-in opens an in-app modal via `openAuthScreen()` — do not link to API `loginUrl` from the SPA. Enable Google (and Apple) in Supabase → Authentication → Providers. Supabase Site URL should be the www origin; Redirect URLs can include both www and apex.
 
 Stripe Checkout enables promotion codes — create a Stripe **Promotion code** (not only a coupon).
 

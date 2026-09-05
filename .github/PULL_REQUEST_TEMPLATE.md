@@ -9,3 +9,4 @@
 ## Notes
 - Do not burn DeepSeek / Azure from Cloud agents without explicit OK — see `AGENTS.md`.
 - Prefer not enabling GitHub Pages on all of `/docs` while `docs/agents` / `docs/social` stay public.
+- Security / leak / token-abuse: Security Guardian + Bugbot — see `docs/agents/security-guardian.md`.

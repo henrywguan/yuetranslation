@@ -33,6 +33,8 @@ export type Entitlement = {
     camera_minutes: number
     /** 0 when docs are unlimited (Business) or disabled. */
     docs_pages: number
+    /** Monthly hard cap for multimodal LLM OCR fallback (Cam + Documents). */
+    ai_vision_count: number
     auto_speak: boolean
     can_live: boolean
     can_camera: boolean
@@ -47,7 +49,7 @@ export type Entitlement = {
     cameraSeconds: number
     cameraTranslateCount: number
     docsPages: number
-    /** Multimodal LLM OCR fallback calls this month (view-only). */
+    /** Multimodal LLM OCR fallback calls this month. */
     aiVisionCount: number
   }
   /** Your share of pooled household usage this month (Family/Business only). */
@@ -66,6 +68,8 @@ export type Entitlement = {
     ttsChars: number
     cameraSeconds: number
     docsPages: number
+    /** Remaining AI vision LLM fallbacks this month. */
+    aiVisionCount: number
   }
   /** Family/Business: usage is tracked but never gates the speaker. */
   ttsUnlimited: boolean
@@ -82,6 +86,8 @@ export type Entitlement = {
     tts: boolean
     camera: boolean
     docs: boolean
+    /** Multimodal LLM OCR fallback within monthly hard cap. */
+    aiVision: boolean
   }
   reason: string | null
   /** Synced account preferences. */
@@ -121,6 +127,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       tts_chars: 0,
       camera_minutes: env.familyCameraMinutes,
       docs_pages: env.familyDocsPages,
+      ai_vision_count: env.familyAiVisionCount,
       auto_speak: true,
       can_live: true,
       can_camera: true,
@@ -135,6 +142,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       tts_chars: 0,
       camera_minutes: 0,
       docs_pages: 0,
+      ai_vision_count: env.businessAiVisionCount,
       auto_speak: true,
       can_live: true,
       can_camera: true,
@@ -152,6 +160,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       tts_chars: 0,
       camera_minutes: cameraMins,
       docs_pages: 0,
+      ai_vision_count: 0,
       auto_speak: false,
       can_live: liveMins > 0,
       can_camera: cameraMins > 0,
@@ -165,6 +174,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     tts_chars: env.freeAllowTts ? env.freeTtsChars : 0,
     camera_minutes: env.freeAllowCamera ? env.freeCameraMinutes : 0,
     docs_pages: env.freeAllowCamera ? env.freeDocsPages : 0,
+    ai_vision_count: env.freeAllowCamera ? env.freeAiVisionCount : 0,
     auto_speak: false,
     can_live: env.freeAllowLive,
     can_camera: env.freeAllowCamera,
@@ -211,6 +221,12 @@ export function docsAccess(docsLimit: number, docsUsed: number, unlimited = fals
   return { docs, docsRemaining, unlimited: false }
 }
 
+/** Hard monthly cap for multimodal LLM OCR fallback (never unlimited — abuse brake). */
+export function aiVisionAccess(limit: number, used: number) {
+  const remaining = Math.max(0, limit - used)
+  return { aiVision: limit > 0 && remaining > 0, aiVisionRemaining: remaining }
+}
+
 function buildSnapshot(
   plan: PlanKey,
   loggedIn: boolean,
@@ -247,6 +263,7 @@ function buildSnapshot(
     limits.tts_chars = 0
     limits.camera_minutes = 0
     limits.docs_pages = 0
+    limits.ai_vision_count = 0
     limits.auto_speak = false
     limits.text_translate = false
     return {
@@ -258,7 +275,7 @@ function buildSnapshot(
       disabled: true,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0, docsPages: 0 },
+      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0, docsPages: 0, aiVisionCount: 0 },
       ttsUnlimited: false,
       cameraUnlimited: false,
       docsUnlimited: false,
@@ -271,6 +288,7 @@ function buildSnapshot(
         tts: false,
         camera: false,
         docs: false,
+        aiVision: false,
       },
       reason: 'account_disabled',
       prefs,
@@ -317,6 +335,7 @@ function buildSnapshot(
         ttsChars: -1,
         cameraSeconds: cameraRemaining,
         docsPages: 0,
+        aiVisionCount: 0,
       },
       ttsUnlimited: true,
       cameraUnlimited: false,
@@ -330,6 +349,7 @@ function buildSnapshot(
         tts: voice.tts,
         camera: canCamera,
         docs: false,
+        aiVision: false,
       },
       reason,
       prefs: {
@@ -354,9 +374,12 @@ function buildSnapshot(
   const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
   const cam = cameraAccess(cameraLimit, usage.cameraSeconds, cameraUnlimited)
   const docs = docsAccess(docsLimit, usage.docsPages, docsUnlimited)
+  const aiVisionLimit = Math.max(0, limits.ai_vision_count)
+  const vision = aiVisionAccess(aiVisionLimit, usage.aiVisionCount)
   const canLive = limits.can_live && liveRemaining > 0
   const canCamera = limits.can_camera && (cameraUnlimited || cam.camera)
   const canDocs = limits.can_docs && (docsUnlimited || docs.docs)
+  const canAiVision = vision.aiVision
 
   let reason: string | null = null
   if (!canLive) reason = liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted'
@@ -365,6 +388,8 @@ function buildSnapshot(
     reason = cameraLimit <= 0 ? 'no_camera_quota' : 'camera_quota_exhausted'
   } else if (!canDocs && loggedIn) {
     reason = docsLimit <= 0 ? 'no_docs_quota' : 'docs_quota_exhausted'
+  } else if (!canAiVision && loggedIn && aiVisionLimit > 0 && usage.aiVisionCount >= aiVisionLimit) {
+    reason = 'ai_vision_quota_exhausted'
   }
 
   return {
@@ -381,6 +406,7 @@ function buildSnapshot(
       ttsChars: Math.max(0, voice.ttsRemaining),
       cameraSeconds: cameraUnlimited ? -1 : Math.max(0, cam.cameraRemaining),
       docsPages: docsUnlimited ? -1 : Math.max(0, docs.docsRemaining),
+      aiVisionCount: vision.aiVisionRemaining,
     },
     ttsUnlimited,
     cameraUnlimited,
@@ -394,6 +420,7 @@ function buildSnapshot(
       tts: voice.tts,
       camera: canCamera,
       docs: canDocs,
+      aiVision: canAiVision,
     },
     reason,
     prefs,
@@ -420,6 +447,7 @@ function localEntitlement(): Entitlement {
         tts_chars: 999999,
         camera_minutes: 0,
         docs_pages: 0,
+        ai_vision_count: 999999,
         auto_speak: true,
         can_live: true,
         can_camera: true,
@@ -436,7 +464,7 @@ function localEntitlement(): Entitlement {
         docsPages: 0,
         aiVisionCount: 0,
       },
-      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1, docsPages: -1 },
+      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1, docsPages: -1, aiVisionCount: 999999 },
       ttsUnlimited: true,
       cameraUnlimited: true,
       docsUnlimited: true,
@@ -449,6 +477,7 @@ function localEntitlement(): Entitlement {
         tts: true,
         camera: true,
         docs: true,
+        aiVision: true,
       },
       reason: null,
       prefs: {

@@ -2,6 +2,7 @@ import cors from 'cors'
 import express from 'express'
 import { ZodError } from 'zod'
 import { cloudReady, env, openaiStatus, visionConfigured, visionLlmConfigured } from './env.js'
+import { corsOriginDelegate } from './corsOrigins.js'
 import { dictionaryStats, lexiconStats } from './canto/index.js'
 import { glossStats } from './canto/gloss.js'
 import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
@@ -77,7 +78,7 @@ import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 import { getIncidentBanner } from './appSettings.js'
 
 export const app = express()
-app.use(cors({ origin: true, credentials: true }))
+app.use(cors({ origin: corsOriginDelegate, credentials: true }))
 
 // Stripe webhook must read the raw body before JSON parsing.
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleBillingWebhook)
@@ -477,7 +478,8 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
     return
   }
   try {
-    const result = await cameraScan(req.body)
+    const allowAiVision = env.openMode || Boolean(ent.allowed.aiVision)
+    const result = await cameraScan(req.body, { allowAiVision })
     // Docs hybrid vision: no camera translate metering (pages billed on /docs/commit).
     if (!forDocs && !env.openMode && result.translateMisses > 0) {
       if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, result.translateMisses)
@@ -485,7 +487,7 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
         await addGuestCameraTranslateCount((req as GuestRequest).guestId!, result.translateMisses)
       }
     }
-    // AI vision LLM fallback — view-only meter (Cam + Documents). No hard cap.
+    // AI vision LLM fallback — metered; hard monthly caps enforced via entitlements.
     if (!env.openMode && result.aiVisionUsed) {
       if (req.auth?.userId) await addAiVisionCount(req.auth.userId, 1)
       else if ((req as GuestRequest).guestId) {
