@@ -306,7 +306,6 @@ export function SoloView() {
             definitions={defs}
             chineseLang={lang}
             romanization={lang === 'wuu' ? latest?.romanization : undefined}
-            sandhiHint={lang === 'wuu' ? latest?.sandhiHint : undefined}
             textClassName="solo-tr-text"
             onActivate={() => openPaneDetails(pane)}
             showCopy

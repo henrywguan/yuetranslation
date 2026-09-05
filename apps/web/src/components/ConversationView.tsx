@@ -154,7 +154,6 @@ export function ConversationView() {
                       <ShanghaineseText
                         text={zhText}
                         romanization={face.romanization}
-                        sandhiHint={face.sandhiHint}
                         className="pane-hero--yue"
                         onActivate={openZhDetails}
                       />
