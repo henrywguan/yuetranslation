@@ -94,6 +94,8 @@ export type Entitlement = {
   prefs: {
     ttsVoiceYue: string
     ttsVoiceEn: string
+    /** Cross-device Auto-speak preference (playback still gated by plan). */
+    autoSpeak: boolean
     /** Custom display username; null until the user sets one. */
     username: string | null
     /** ISO timestamp of last username change; null if never set. */
@@ -237,6 +239,7 @@ function buildSnapshot(
     role?: 'admin' | 'family' | null
     ttsVoiceYue?: string | null
     ttsVoiceEn?: string | null
+    autoSpeak?: boolean | null
     household?: HouseholdSummary | null
     username?: string | null
     usernameChangedAt?: string | null
@@ -251,6 +254,7 @@ function buildSnapshot(
   const prefs = {
     ttsVoiceYue: resolveYueVoice(opts.ttsVoiceYue),
     ttsVoiceEn: resolveEnVoice(opts.ttsVoiceEn),
+    autoSpeak: Boolean(opts.autoSpeak),
     username: opts.username?.trim() || null,
     usernameChangedAt: opts.usernameChangedAt || null,
   }
@@ -355,6 +359,7 @@ function buildSnapshot(
       prefs: {
         ttsVoiceYue: DEFAULT_YUE_VOICE,
         ttsVoiceEn: DEFAULT_EN_VOICE,
+        autoSpeak: false,
         username: null,
         usernameChangedAt: null,
       },
@@ -483,6 +488,7 @@ function localEntitlement(): Entitlement {
       prefs: {
         ttsVoiceYue: DEFAULT_YUE_VOICE,
         ttsVoiceEn: DEFAULT_EN_VOICE,
+        autoSpeak: false,
         username: null,
         usernameChangedAt: null,
       },
@@ -557,6 +563,7 @@ export async function resolveEntitlement(
     disabled: Boolean(profile?.disabled),
     ttsVoiceYue: profile?.tts_voice_yue,
     ttsVoiceEn: profile?.tts_voice_en,
+    autoSpeak: profile?.auto_speak,
     household,
     username: profile?.username,
     usernameChangedAt: profile?.username_changed_at,

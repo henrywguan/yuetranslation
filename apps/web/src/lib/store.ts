@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tts'
-import { fetchHealth, getUpgradeUrl } from './api'
+import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
 import { prefetchSpeechToken } from './speechToken'
@@ -22,6 +22,7 @@ import {
   setTranslateSpeakFinal,
 } from './storeTranslate'
 import { startHeartbeat, stopHeartbeat } from './storeLiveMeter'
+import { readLocalAutoSpeak, writeLocalAutoSpeak } from './autoSpeakPref'
 
 /** Isolated live lines for Conversation mode — never shared with Solo/Text. */
 type FaceLive = {
@@ -415,7 +416,7 @@ export const useYueStore = create<State>((set, get) => ({
   live: false,
   status: 'idle',
   speakingText: null,
-  autoSpeak: false,
+  autoSpeak: readLocalAutoSpeak(),
   entitlement: null,
   demoMode: false,
   incidentBanner: null,
@@ -454,7 +455,19 @@ export const useYueStore = create<State>((set, get) => ({
     set({ mode: next })
   },
   setSpeakDirection: (speakDirection) => set({ speakDirection }),
-  setAutoSpeak: (autoSpeak) => set({ autoSpeak }),
+  setAutoSpeak: (autoSpeak) => {
+    writeLocalAutoSpeak(autoSpeak)
+    set({ autoSpeak })
+    const loggedIn = Boolean(get().entitlement?.loggedIn)
+    if (!loggedIn) return
+    void saveAutoSpeakPref(autoSpeak)
+      .then((data) => {
+        if (data.entitlement) set({ entitlement: data.entitlement })
+      })
+      .catch(() => {
+        /* Keep local preference; next bootstrap will reconcile if save failed. */
+      })
+  },
   setSoloShowAutoHint: (soloShowAutoHint) => set({ soloShowAutoHint }),
 
   speakManual: async (text, lang) => {
@@ -492,11 +505,19 @@ export const useYueStore = create<State>((set, get) => ({
       if (!ent.upgradeUrl && getUpgradeUrl()) {
         ent.upgradeUrl = getUpgradeUrl()
       }
-      // Do not force autoSpeak on — keep the user's preference (default off).
+      // Prefer server Auto-speak when signed in (cross-device); else keep local cache.
+      const nextAutoSpeak =
+        ent.loggedIn && typeof ent.prefs?.autoSpeak === 'boolean'
+          ? ent.prefs.autoSpeak
+          : get().autoSpeak
+      if (ent.loggedIn && typeof ent.prefs?.autoSpeak === 'boolean') {
+        writeLocalAutoSpeak(ent.prefs.autoSpeak)
+      }
       set({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
         incidentBanner: data.incidentBanner ?? null,
+        autoSpeak: nextAutoSpeak,
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {

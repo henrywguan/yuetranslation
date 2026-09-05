@@ -326,6 +326,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
       const prefs = {
         ttsVoiceYue: patch.tts_voice_yue || ent.prefs.ttsVoiceYue,
         ttsVoiceEn: patch.tts_voice_en || ent.prefs.ttsVoiceEn,
+        autoSpeak: ent.prefs.autoSpeak,
         username: ent.prefs.username,
         usernameChangedAt: ent.prefs.usernameChangedAt,
       }
@@ -346,6 +347,42 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save preferences' })
+  }
+})
+
+/** Save cross-device Auto-speak preference (signed-in only). */
+app.patch('/api/prefs/auto-speak', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  if (typeof req.body?.autoSpeak !== 'boolean') {
+    res.status(400).json({ message: 'autoSpeak boolean is required.' })
+    return
+  }
+  const autoSpeak = Boolean(req.body.autoSpeak)
+
+  if (env.openMode || !req.auth?.userId) {
+    if (!ent.loggedIn && !env.openMode) {
+      res.status(401).json({ message: 'Sign in to sync Auto-speak.', entitlement: ent })
+      return
+    }
+    if (env.openMode) {
+      const prefs = { ...ent.prefs, autoSpeak }
+      res.json({ ok: true, prefs, entitlement: { ...ent, prefs } })
+      return
+    }
+    res.status(401).json({ message: 'Sign in to sync Auto-speak.', entitlement: ent })
+    return
+  }
+
+  try {
+    await upsertProfilePlan(req.auth.userId, { auto_speak: autoSpeak })
+    const next = await entitlementFor(req)
+    res.json({
+      ok: true,
+      prefs: next.prefs,
+      entitlement: next,
+    })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save Auto-speak' })
   }
 })
 

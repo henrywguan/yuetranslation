@@ -83,6 +83,8 @@ export type Entitlement = {
   prefs?: {
     ttsVoiceYue: string
     ttsVoiceEn: string
+    /** Cross-device Auto-speak preference. */
+    autoSpeak?: boolean
     username?: string | null
     usernameChangedAt?: string | null
   }

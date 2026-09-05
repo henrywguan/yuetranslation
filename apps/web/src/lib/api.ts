@@ -235,6 +235,23 @@ export async function saveTtsVoicePrefs(patch: {
   return data
 }
 
+export async function saveAutoSpeakPref(
+  autoSpeak: boolean,
+): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
+  const res = await apiFetch('/prefs/auto-speak', {
+    method: 'PATCH',
+    body: JSON.stringify({ autoSpeak }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to save Auto-speak'), {
+      code: res.status,
+      entitlement: data.entitlement,
+    })
+  }
+  return data
+}
+
 export async function sendHouseholdInvite(email: string): Promise<{
   inviteSent: true
   emailed: boolean
