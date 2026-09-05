@@ -3701,6 +3701,61 @@
   color: transparent;
 }
 
+/* Homepage brand scramble wordmark (粵翻譯 ↔ JyutTranslate). */
+.ln-title .brand-scramble {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  cursor: default;
+  outline: none;
+  user-select: none;
+}
+
+.ln-title .brand-scramble:focus-visible {
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--jade) 55%, transparent);
+}
+
+.ln-title .brand-scramble-spacer {
+  visibility: hidden;
+  white-space: nowrap;
+  font-size: clamp(1.72rem, 7.6vw, 5.4rem);
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+
+.ln-title .brand-scramble-live {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: clamp(1.72rem, 7.6vw, 5.4rem);
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  background: linear-gradient(120deg, var(--jade), var(--jade-bright) 55%, #b8ead0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ln-title .brand-scramble.is-scrambling .brand-scramble-live {
+  letter-spacing: 0.01em;
+}
+
+[data-theme='light'] .ln-hero .ln-title .brand-scramble-live {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: var(--ink);
+}
+
 /* Light mode: match the header lockup — dark harbor ink, not pale mint gradient. */
 [data-theme='light'] .ln-hero .ln-title .bi-en {
   background: none;

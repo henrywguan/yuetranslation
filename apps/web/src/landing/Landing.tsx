@@ -12,6 +12,7 @@ import { openApp, openTones } from '../lib/siteLinks'
 import { BiText } from '../components/BiText'
 import { DeepSeekMark } from '../components/DeepSeekMark'
 import { ui, type Bi } from '../lib/uiCopy'
+import { BrandScramble } from './BrandScramble'
 import { HeroEyebrow } from './HeroEyebrow'
 import { inkEase } from '../lib/motion'
 import './landing.css'
@@ -74,7 +75,7 @@ export function Landing() {
         >
           <HeroEyebrow />
           <h1 className="ln-title">
-            <BiText copy={ui.heroTitle} size="lg" />
+            <BrandScramble />
           </h1>
           <BiText className="ln-sub" copy={ui.heroSub} size="md" as="p" />
           <div className="ln-hero-cta">
