@@ -24,11 +24,18 @@ export function HistoryPane({
   }, [latestId])
 
   const handleBreakdown = (phrase: string, turn: ConversationTurn) => {
-    const zhLang = turn.to === 'cmn' || turn.from === 'cmn' ? 'cmn' : 'yue'
+    const zhLang =
+      turn.to === 'cmn' || turn.from === 'cmn'
+        ? 'cmn'
+        : turn.to === 'wuu' || turn.from === 'wuu'
+          ? 'wuu'
+          : turn.to === 'tl' || turn.from === 'tl'
+            ? 'tl'
+            : 'yue'
     const canto =
-      turn.to === 'yue' || turn.to === 'cmn'
+      turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' || turn.to === 'tl'
         ? turn.translation
-        : turn.from === 'yue' || turn.from === 'cmn'
+        : turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' || turn.from === 'tl'
           ? turn.source
           : phrase
     const english =
@@ -49,6 +56,11 @@ export function HistoryPane({
         definition: turn.definition || undefined,
         definitions: turn.definitions,
         alternatives: turn.alternatives,
+        romanization: zhLang === 'wuu' ? turn.romanization : undefined,
+        sandhiHint: zhLang === 'wuu' ? turn.sandhiHint : undefined,
+        ipa: zhLang === 'wuu' ? turn.ipa : undefined,
+        alternativeRomanizations:
+          zhLang === 'wuu' ? turn.alternativeRomanizations : undefined,
       })
     }
     onOpenBreakdown?.()

@@ -20,6 +20,7 @@ export type TranslateState = {
     romanization?: string
     sandhiHint?: string
     ipa?: string
+    alternativeRomanizations?: string[]
   }
   history: ConversationTurn[]
   detailStack: DetailLayer[]
@@ -177,6 +178,10 @@ async function enrichTextAlternatives(
       sandhiHint:
         (result as { sandhiHint?: string }).sandhiHint || latest.sandhiHint || undefined,
       ipa: (result as { ipa?: string }).ipa || latest.ipa || undefined,
+      alternativeRomanizations:
+        (result as { alternativeRomanizations?: string[] }).alternativeRomanizations ||
+        latest.alternativeRomanizations ||
+        undefined,
     }
 
     const stack = get().detailStack
@@ -196,6 +201,7 @@ async function enrichTextAlternatives(
               romanization: nextLatest.romanization,
               sandhiHint: nextLatest.sandhiHint,
               ipa: nextLatest.ipa,
+              alternativeRomanizations: nextLatest.alternativeRomanizations,
             },
             ...stack.slice(1),
           ]
@@ -325,6 +331,8 @@ export async function runTranslation(
         romanization: (result as { romanization?: string }).romanization || undefined,
         sandhiHint: (result as { sandhiHint?: string }).sandhiHint || undefined,
         ipa: (result as { ipa?: string }).ipa || undefined,
+        alternativeRomanizations:
+          (result as { alternativeRomanizations?: string[] }).alternativeRomanizations || undefined,
       })
       // Solo: en* = upper pane, yue* = lower pane (regardless of language).
       const fromUpper = lang === get().soloUpperLang

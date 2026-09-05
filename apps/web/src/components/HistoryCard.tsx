@@ -218,7 +218,7 @@ export function HistoryCard({
                 <BiText copy={ui.historyVariations} size="sm" layout="inline" />
               </p>
               <ul>
-                {turn.alternatives.map((alt) => (
+                {turn.alternatives.map((alt, i) => (
                   <li key={alt}>
                     {turn.to === 'cmn' ? (
                       <MandarinText
@@ -229,6 +229,8 @@ export function HistoryCard({
                     ) : turn.to === 'wuu' ? (
                       <ShanghaineseText
                         text={alt}
+                        romanization={turn.alternativeRomanizations?.[i]}
+                        showSchemeLabel={false}
                         className="history-card-line"
                         onActivate={onBreakdown}
                       />

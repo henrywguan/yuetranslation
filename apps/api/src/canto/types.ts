@@ -14,6 +14,11 @@ export type PhraseEntry = {
   /** Wugniu (or other) romanization for the target phrase when curated. */
   romanization?: string
   /**
+   * Wugniu for each `alternatives` entry (same order). Prefer looking up another
+   * seeded phrase’s romanization when the alt Han matches; this field fills gaps.
+   */
+  alternativeRomanizations?: string[]
+  /**
    * Compact sandhi-domain hint for Shanghainese (e.g. "left-dominant · word").
    * Pedagogy only — never invent per-syllable tone digits.
    */

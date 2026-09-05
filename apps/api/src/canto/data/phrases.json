@@ -3982,7 +3982,10 @@
         "shanghainese"
       ],
       "sandhiHint": "left-dominant · word",
-      "ipa": "noŋ.hɔ"
+      "ipa": "noŋ.hɔ",
+      "alternativeRomanizations": [
+        "ni ho"
+      ]
     },
     {
       "id": "en-hi-wuu",
@@ -4000,7 +4003,10 @@
         "shanghainese"
       ],
       "sandhiHint": "left-dominant · word",
-      "ipa": "ɛ"
+      "ipa": "ɛ",
+      "alternativeRomanizations": [
+        "non ho"
+      ]
     },
     {
       "id": "en-thank-you-wuu",
@@ -4017,7 +4023,10 @@
         "courtesy",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · phrase"
+      "sandhiHint": "left-dominant · phrase",
+      "alternativeRomanizations": [
+        "xia xia"
+      ]
     },
     {
       "id": "en-thanks-wuu",
@@ -4034,7 +4043,10 @@
         "courtesy",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · word"
+      "sandhiHint": "left-dominant · word",
+      "alternativeRomanizations": [
+        "xia xia non"
+      ]
     },
     {
       "id": "en-how-are-you-wuu",
@@ -4051,7 +4063,10 @@
         "greeting",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · phrase"
+      "sandhiHint": "left-dominant · phrase",
+      "alternativeRomanizations": [
+        "non na nen"
+      ]
     },
     {
       "id": "en-good-morning-wuu",
@@ -4068,7 +4083,10 @@
         "greeting",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · word"
+      "sandhiHint": "left-dominant · word",
+      "alternativeRomanizations": [
+        "tsau zo ho"
+      ]
     },
     {
       "id": "en-excuse-me-wuu",
@@ -4085,7 +4103,10 @@
         "courtesy",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · phrase"
+      "sandhiHint": "left-dominant · phrase",
+      "alternativeRomanizations": [
+        "cia men iq sang"
+      ]
     },
     {
       "id": "en-where-is-wuu",
@@ -4102,7 +4123,10 @@
         "travel",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · phrase"
+      "sandhiHint": "left-dominant · phrase",
+      "alternativeRomanizations": [
+        "sa di fan"
+      ]
     },
     {
       "id": "en-i-dont-understand-wuu",
@@ -4119,7 +4143,10 @@
         "clarify",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · phrase"
+      "sandhiHint": "left-dominant · phrase",
+      "alternativeRomanizations": [
+        "ve tong"
+      ]
     },
     {
       "id": "en-how-much-wuu",
@@ -4136,7 +4163,10 @@
         "shopping",
         "shanghainese"
       ],
-      "sandhiHint": "left-dominant · word"
+      "sandhiHint": "left-dominant · word",
+      "alternativeRomanizations": [
+        "sa ka dien"
+      ]
     },
     {
       "id": "wuu-non-ho-en",

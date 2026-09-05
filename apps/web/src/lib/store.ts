@@ -132,6 +132,7 @@ type State = {
       romanization?: string
       sandhiHint?: string
       ipa?: string
+      alternativeRomanizations?: string[]
     },
   ) => void
   pushDetail: (layer: DetailLayer) => void
@@ -962,6 +963,9 @@ export const useYueStore = create<State>((set, get) => ({
       romanization: opts?.romanization?.trim() || undefined,
       sandhiHint: opts?.sandhiHint?.trim() || undefined,
       ipa: opts?.ipa?.trim() || undefined,
+      alternativeRomanizations: opts?.alternativeRomanizations?.length
+        ? opts.alternativeRomanizations.map((r) => r.trim())
+        : undefined,
     }
     set({
       detailStack: [layer],
@@ -1010,28 +1014,41 @@ export const useYueStore = create<State>((set, get) => ({
     if (!chosen) return
     const current = get().yueTranslation.trim()
     const prevAlts = get().yueAlternatives
+    const latest = get().history[0]
+    const prevAltRoms = latest?.alternativeRomanizations || []
+    const primaryRom = latest?.romanization || ''
+    const chosenIdx = prevAlts.indexOf(chosen)
+    const chosenRom = chosenIdx >= 0 ? prevAltRoms[chosenIdx] || '' : ''
+    const romByPhrase = new Map<string, string>()
+    if (current && primaryRom) romByPhrase.set(current, primaryRom)
+    prevAlts.forEach((a, i) => {
+      if (prevAltRoms[i]) romByPhrase.set(a, prevAltRoms[i])
+    })
     const nextAlts = [current, ...prevAlts]
       .map((s) => s.trim())
       .filter((s) => s && s !== chosen)
       .filter((s, i, arr) => arr.indexOf(s) === i)
       .slice(0, 3)
+    const nextAltRoms = nextAlts.map((a) => romByPhrase.get(a) || '')
 
     const history = get().history
-    const latest = history[0]
+    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'tl')
     const nextHistory =
-      latest && (latest.to === 'yue' || latest.to === 'cmn')
+      zhTargets
         ? [
             {
               ...latest,
               translation: chosen,
               alternatives: nextAlts,
+              romanization: chosenRom || latest.romanization,
+              alternativeRomanizations: nextAltRoms.some(Boolean) ? nextAltRoms : undefined,
             },
             ...history.slice(1),
           ]
         : history
 
     const sourceEn =
-      (latest && (latest.to === 'yue' || latest.to === 'cmn') ? latest.source : '') ||
+      (zhTargets ? latest.source : '') ||
       get().enInterim ||
       ''
     const definition = get().yueDefinition || undefined
@@ -1050,6 +1067,10 @@ export const useYueStore = create<State>((set, get) => ({
           definition,
           definitions: definitions.length ? definitions : undefined,
           alternatives: nextAlts.length ? nextAlts : undefined,
+          romanization: chosenRom || undefined,
+          sandhiHint: latest?.sandhiHint,
+          ipa: latest?.ipa,
+          alternativeRomanizations: nextAltRoms.some(Boolean) ? nextAltRoms : undefined,
         },
       ],
       detailMinimized: false,
