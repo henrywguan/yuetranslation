@@ -3701,13 +3701,18 @@
   color: transparent;
 }
 
-/* Homepage brand scramble wordmark (粵翻譯 ↔ JyutTranslate). */
+/* Homepage brand scramble wordmark (粵翻譯 ↔ JyutTranslate).
+   Grid-stack (not absolute inset): background-clip:text + absolute/overflow
+   was clipping the final glyph on wide monitors (broken trailing “e”). */
 .ln-title .brand-scramble {
-  position: relative;
-  display: inline-flex;
+  display: inline-grid;
+  justify-items: center;
   align-items: center;
-  justify-content: center;
   max-width: 100%;
+  /* Negative letter-spacing on .ln-title lets glyphs overhang the box;
+     a touch of inline pad keeps overflow-x: clip from chewing the edges. */
+  padding-inline: 0.06em;
+  box-decoration-break: clone;
   cursor: default;
   outline: none;
   user-select: none;
@@ -3718,35 +3723,28 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--jade) 55%, transparent);
 }
 
-.ln-title .brand-scramble-spacer {
-  visibility: hidden;
+.ln-title .brand-scramble-spacer,
+.ln-title .brand-scramble-live {
+  grid-area: 1 / 1;
   white-space: nowrap;
-  font-size: clamp(1.72rem, 7.6vw, 5.4rem);
+  font-size: inherit;
   font-weight: inherit;
   letter-spacing: inherit;
   line-height: inherit;
+}
+
+.ln-title .brand-scramble-spacer {
+  visibility: hidden;
   pointer-events: none;
 }
 
 .ln-title .brand-scramble-live {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  font-size: clamp(1.72rem, 7.6vw, 5.4rem);
-  font-weight: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
   background: linear-gradient(120deg, var(--jade), var(--jade-bright) 55%, #b8ead0);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-
-.ln-title .brand-scramble.is-scrambling .brand-scramble-live {
-  letter-spacing: 0.01em;
+  /* Paint full glyph ink even when tracking is tight. */
+  padding-inline: 0.02em;
 }
 
 [data-theme='light'] .ln-hero .ln-title .brand-scramble-live {
