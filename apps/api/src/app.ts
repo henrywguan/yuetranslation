@@ -270,7 +270,12 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       res.status(400).json({ message: 'text required' })
       return
     }
-    const azureLang = lang === 'en' || lang === 'en-US' ? 'en' : 'zh-HK'
+    const azureLang =
+      lang === 'en' || lang === 'en-US'
+        ? 'en'
+        : lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
+          ? 'zh-CN'
+          : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,

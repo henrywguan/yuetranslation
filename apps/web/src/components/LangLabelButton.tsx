@@ -6,11 +6,12 @@ import type { Lang } from '../lib/types'
 const OPTIONS: { id: Lang; copy: Bi }[] = [
   { id: 'en', copy: ui.english },
   { id: 'yue', copy: ui.cantonese },
+  { id: 'cmn', copy: ui.dirMandarin },
 ]
 
 /**
  * Pane language label — tap to pick mic language (Apple Translate–style).
- * Cut A: English + Cantonese only.
+ * Cut B: English + Cantonese + Mandarin.
  */
 export function LangLabelButton({
   lang,
@@ -26,7 +27,13 @@ export function LangLabelButton({
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
-  const current = OPTIONS.find((o) => o.id === lang) ?? OPTIONS[0]!
+  const visible =
+    only === 'en'
+      ? OPTIONS.filter((o) => o.id === 'en')
+      : only === 'zh'
+        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn')
+        : OPTIONS
+  const current = visible.find((o) => o.id === lang) ?? visible[0]!
 
   useEffect(() => {
     if (!open) return
@@ -55,14 +62,15 @@ export function LangLabelButton({
         aria-label={biPlain(current.copy)}
         onClick={() => setOpen((v) => !v)}
       >
-        <BiText copy={current.copy} size="sm" only={only} />
+        {/* hideJp: Jyutping tip steals clicks from the language menu on Solo. */}
+        <BiText copy={current.copy} size="sm" only={only} hideJp />
         <span className="lang-label-chevron" aria-hidden="true">
           ▾
         </span>
       </button>
       {open ? (
         <ul className="lang-label-menu" id={menuId} role="listbox" aria-label={biPlain(ui.direction)}>
-          {OPTIONS.map((opt) => (
+          {visible.map((opt) => (
             <li key={opt.id} role="option" aria-selected={opt.id === lang}>
               <button
                 type="button"
@@ -72,7 +80,7 @@ export function LangLabelButton({
                   setOpen(false)
                 }}
               >
-                <BiText copy={opt.copy} size="sm" />
+                <BiText copy={opt.copy} size="sm" hideJp />
               </button>
             </li>
           ))}

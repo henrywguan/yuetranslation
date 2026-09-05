@@ -11,7 +11,8 @@ const MODES: { id: Mode; copy: typeof ui.modeSolo }[] = [
 ]
 
 function visibleDirection(d: SpeakDirection): 'en' | 'yue' {
-  return d === 'yue' ? 'yue' : 'en'
+  // Mandarin live STT deferred — Chinese pane live still uses Yue recognizer.
+  return d === 'en' ? 'en' : 'yue'
 }
 
 /** Mode tabs + Solo live dock. Direction / auto-speak / clear live on the panes + account hub. */

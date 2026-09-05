@@ -1,4 +1,4 @@
-export type Lang = 'en' | 'yue'
+export type Lang = 'en' | 'yue' | 'cmn'
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
 export type SpeakDirection = 'en' | 'yue' | 'cmn'
 

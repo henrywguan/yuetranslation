@@ -7,6 +7,7 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
+  chineseLang: 'yue' | 'cmn'
   face: {
     enInterim: string
     yueInterim: string
@@ -85,28 +86,33 @@ function nextHistory(
   return [{ id: newId(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
 }
 
+function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' {
+  return lang === 'yue' || lang === 'cmn'
+}
+
 /**
- * After a lean Text EN→粵 primary lands, fetch alternatives/definitions in the
+ * After a lean typed EN→ZH primary lands, fetch alternatives/definitions in the
  * background so the first paint stays fast.
  */
 async function enrichTextAlternatives(
   get: Get,
   set: Set,
   sourceEn: string,
-  primaryYue: string,
+  primaryZh: string,
+  toZh: 'yue' | 'cmn',
   seq: number,
   signal: AbortSignal,
 ) {
   set({ altsLoading: true })
   try {
-    const result = await translateText(sourceEn, 'en', 'yue', {
+    const result = await translateText(sourceEn, 'en', toZh, {
       includeAlternatives: true,
       signal,
     })
     if (pending.get('en') !== seq || signal.aborted) return
 
     const latest = get().history[0]
-    if (!latest || latest.from !== 'en' || latest.to !== 'yue' || latest.source !== sourceEn) {
+    if (!latest || latest.from !== 'en' || latest.to !== toZh || latest.source !== sourceEn) {
       return
     }
 
@@ -118,8 +124,8 @@ async function enrichTextAlternatives(
     const extras: string[] = []
     if (enrichPrimary && enrichPrimary !== currentPrimary) extras.push(enrichPrimary)
     // Keep the lean primary as an alt if enrich returned a different preferred line.
-    if (primaryYue && primaryYue !== currentPrimary && primaryYue !== enrichPrimary) {
-      extras.push(primaryYue)
+    if (primaryZh && primaryZh !== currentPrimary && primaryZh !== enrichPrimary) {
+      extras.push(primaryZh)
     }
     const alternatives = [...extras, ...fromResult]
       .map((s) => s.trim())
@@ -151,11 +157,12 @@ async function enrichTextAlternatives(
     const top = stack[0]
     const nextStack =
       top?.kind === 'phrase' &&
-      (top.phrase === currentPrimary || top.phrase === primaryYue || top.phrase === enrichPrimary)
+      (top.phrase === currentPrimary || top.phrase === primaryZh || top.phrase === enrichPrimary)
         ? [
             {
               ...top,
               phrase: currentPrimary,
+              lang: toZh,
               translation: sourceEn,
               definition: nextLatest.definition,
               definitions: nextLatest.definitions,
@@ -192,7 +199,9 @@ export async function runTranslation(
   text: string,
   opts?: { lean?: boolean; minThinkingMs?: number; enrichAlts?: boolean; skipSpeak?: boolean },
 ): Promise<{ text: string; lang: Lang } | null> {
-  const to: Lang = lang === 'en' ? 'yue' : 'en'
+  const chineseLang = get().chineseLang
+  // Conversation / live still pass yue explicitly; Solo pairs EN with chineseLang.
+  const to: Lang = lang === 'en' ? (get().mode === 'conversation' ? 'yue' : chineseLang) : 'en'
   const seq = ++translateSeq
   pending.set(lang, seq)
   beginTranslate(set, to)
@@ -217,22 +226,23 @@ export async function runTranslation(
     if (hold > 0) await new Promise((r) => setTimeout(r, hold))
     if (pending.get(lang) !== seq || signal.aborted) return null
     const clean =
-      to === 'yue'
+      isChineseLang(to)
         ? sanitizeYueTranslation(result.text)
-        : sanitizeEnTranslation(result.text, lang === 'yue' ? text : undefined)
+        : sanitizeEnTranslation(result.text, isChineseLang(lang) ? text : undefined)
     if (!clean) {
       set({
-        error:
-          to === 'yue'
-            ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-            : 'Could not produce English for this phrase. Try again or rephrase.',
+        error: isChineseLang(to)
+          ? to === 'cmn'
+            ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
+            : 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+          : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return null
     }
-    const altSanitize =
-      to === 'yue'
-        ? sanitizeYueTranslation
-        : (value: string | null | undefined) => sanitizeEnTranslation(value, lang === 'yue' ? text : undefined)
+    const altSanitize = isChineseLang(to)
+      ? sanitizeYueTranslation
+      : (value: string | null | undefined) =>
+          sanitizeEnTranslation(value, isChineseLang(lang) ? text : undefined)
     const alternatives = (result.alternatives || []).filter((a) => Boolean(altSanitize(a)))
     const definition = result.definition || (lang === 'en' ? text : '')
     const definitions = (result.definitions || []).filter((d) => Boolean(d?.trim()))
@@ -306,15 +316,16 @@ export async function runTranslation(
     }
     speak = { text: clean, lang: to }
 
-    // Typed Solo EN→粵: paint primary first, then enrich alternatives without blocking TTS/UI.
+    // Typed Solo EN→ZH: paint primary first, then enrich alternatives without blocking TTS/UI.
     if (
       opts?.enrichAlts &&
       lang === 'en' &&
+      isChineseLang(to) &&
       lean &&
       !signal.aborted &&
       pending.get(lang) === seq
     ) {
-      void enrichTextAlternatives(get, set, text, clean, seq, signal)
+      void enrichTextAlternatives(get, set, text, clean, to, seq, signal)
     }
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') return null

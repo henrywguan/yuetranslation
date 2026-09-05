@@ -1,8 +1,10 @@
 import { CantoneseText } from './CantoneseText'
+import { MandarinText } from './MandarinText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
 import { ui } from '../lib/uiCopy'
+import type { Lang } from '../lib/types'
 
 /** Secondary colloquial variants when the API found meaningful alternatives. */
 export function TranslationAlternatives({
@@ -19,8 +21,8 @@ export function TranslationAlternatives({
   onSelect: (phrase: string) => void
   showCopy?: boolean
   showSpeak?: boolean
-  /** Yue variants use Cantonese ruby; English variants stay plain. */
-  lang?: 'en' | 'yue'
+  /** Yue/cmn variants use ruby; English variants stay plain. */
+  lang?: Lang
 }) {
   if (!alternatives.length) return null
   return (
@@ -34,6 +36,12 @@ export function TranslationAlternatives({
             <div className="translation-alt-row">
               {lang === 'yue' ? (
                 <CantoneseText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open breakdown`}
+                />
+              ) : lang === 'cmn' ? (
+                <MandarinText
                   text={alt}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open breakdown`}

@@ -1,6 +1,7 @@
 /** Curated Azure Neural TTS voices (API + web). */
 export const DEFAULT_YUE_VOICE = 'zh-HK-HiuMaanNeural';
 export const DEFAULT_EN_VOICE = 'en-US-JennyNeural';
+export const DEFAULT_CMN_VOICE = 'zh-CN-XiaoxiaoNeural';
 export const YUE_VOICES = [
     {
         id: 'zh-HK-HiuMaanNeural',
@@ -77,14 +78,36 @@ export const EN_VOICES = [
         gender: 'female',
     },
 ];
+export const CMN_VOICES = [
+    {
+        id: 'zh-CN-XiaoxiaoNeural',
+        lang: 'cmn',
+        xmlLang: 'zh-CN',
+        labelEn: 'Xiaoxiao · Female',
+        labelZh: '晓晓 · 女声',
+        gender: 'female',
+    },
+    {
+        id: 'zh-CN-YunxiNeural',
+        lang: 'cmn',
+        xmlLang: 'zh-CN',
+        labelEn: 'Yunxi · Male',
+        labelZh: '云希 · 男声',
+        gender: 'male',
+    },
+];
 const YUE_SET = new Set(YUE_VOICES.map((v) => v.id));
 const EN_SET = new Set(EN_VOICES.map((v) => v.id));
-const ALL = new Map([...YUE_VOICES, ...EN_VOICES].map((v) => [v.id, v]));
+const CMN_SET = new Set(CMN_VOICES.map((v) => v.id));
+const ALL = new Map([...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES].map((v) => [v.id, v]));
 export function isYueVoice(id) {
     return YUE_SET.has(id);
 }
 export function isEnVoice(id) {
     return EN_SET.has(id);
+}
+export function isCmnVoice(id) {
+    return CMN_SET.has(id);
 }
 export function resolveYueVoice(id) {
     return id && isYueVoice(id) ? id : DEFAULT_YUE_VOICE;
@@ -92,22 +115,33 @@ export function resolveYueVoice(id) {
 export function resolveEnVoice(id) {
     return id && isEnVoice(id) ? id : DEFAULT_EN_VOICE;
 }
+export function resolveCmnVoice(id) {
+    return id && isCmnVoice(id) ? id : DEFAULT_CMN_VOICE;
+}
 export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
 export function resolveSpeakVoice(lang, preferredYue, preferredEn, override) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
+    const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     if (override) {
         const meta = voiceMeta(override);
         if (meta) {
-            if (isEn ? meta.lang === 'en' : meta.lang === 'yue') {
+            if (isEn && meta.lang === 'en')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
-            }
+            if (isCmn && meta.lang === 'cmn')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (!isEn && !isCmn && meta.lang === 'yue')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
         }
     }
     if (isEn) {
         const id = resolveEnVoice(preferredEn);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
+    if (isCmn) {
+        const id = resolveCmnVoice(null);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
     const id = resolveYueVoice(preferredYue);
@@ -115,3 +149,4 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, override) {
 }
 export const PREVIEW_YUE = '你好，歡迎使用粵譯。';
 export const PREVIEW_EN = 'Hello — this is your English voice.';
+export const PREVIEW_CMN = '你好，欢迎使用粤译。';

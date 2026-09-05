@@ -17,11 +17,15 @@ const AUTO_TRANSLATE_MS = 2000
 function isWorthAutoTranslate(value: string, from: Lang): boolean {
   const t = value.trim()
   if (!t) return false
-  if (from === 'yue') {
+  if (from === 'yue' || from === 'cmn') {
     return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
   }
   const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
   return letters.length >= 3 || t.split(/\s+/).filter(Boolean).length >= 2
+}
+
+function isChineseHistory(from: Lang | undefined, chineseLang: 'yue' | 'cmn') {
+  return from === chineseLang || from === 'yue' || from === 'cmn'
 }
 
 export function SoloView() {
@@ -39,6 +43,7 @@ export function SoloView() {
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const speakDirection = useYueStore((s) => s.speakDirection)
+  const chineseLang = useYueStore((s) => s.chineseLang)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const clearHistory = useYueStore((s) => s.clearHistory)
   const setSoloShowAutoHint = useYueStore((s) => s.setSoloShowAutoHint)
@@ -53,14 +58,16 @@ export function SoloView() {
   const [yueDraft, setYueDraft] = useState('')
   const [yueEditing, setYueEditing] = useState(false)
   const [typedBusy, setTypedBusy] = useState(false)
-  const editingRef = useRef<'en' | 'yue' | null>(null)
+  const editingRef = useRef<'en' | 'zh' | null>(null)
   const yueInputRef = useRef<HTMLTextAreaElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqId = useRef(0)
   const translateRef = useRef(translateTyped)
   const historyRef = useRef(history)
+  const chineseLangRef = useRef(chineseLang)
   translateRef.current = translateTyped
   historyRef.current = history
+  chineseLangRef.current = chineseLang
 
   const latest = history[0]
   const turnActive = live || translating || Boolean(enInterim) || Boolean(yueInterim)
@@ -76,7 +83,7 @@ export function SoloView() {
     yueInterim ||
     yueTranslation ||
     (!turnActive && latest
-      ? latest.from === 'yue'
+      ? isChineseHistory(latest.from, chineseLang)
         ? latest.source
         : latest.translation
       : '')
@@ -92,7 +99,7 @@ export function SoloView() {
     ? yueAlternatives
     : yueAlternatives.length
       ? yueAlternatives
-      : latest?.to === 'yue'
+      : latest?.to === chineseLang || latest?.to === 'yue' || latest?.to === 'cmn'
         ? latest.alternatives || []
         : []
 
@@ -102,7 +109,7 @@ export function SoloView() {
   }, [storeEn])
 
   useEffect(() => {
-    if (editingRef.current !== 'yue') setYueDraft(storeYue)
+    if (editingRef.current !== 'zh') setYueDraft(storeYue)
   }, [storeYue])
 
   const runTranslate = (value: string, from: Lang, delay: number, force = false) => {
@@ -149,13 +156,13 @@ export function SoloView() {
   useEffect(() => {
     const shared = consumePendingShareText()
     if (!shared) return
-    const from: Lang = /[\u4e00-\u9fff]/.test(shared) ? 'yue' : 'en'
+    const from: Lang = /[\u4e00-\u9fff]/.test(shared) ? chineseLangRef.current : 'en'
     if (from === 'en') {
       setEnDraft(shared)
       editingRef.current = 'en'
     } else {
       setYueDraft(shared)
-      editingRef.current = 'yue'
+      editingRef.current = 'zh'
     }
     setSoloShowAutoHint(false)
     runTranslate(shared, from, 0, true)
@@ -167,20 +174,19 @@ export function SoloView() {
     runTranslate(value, 'en', AUTO_TRANSLATE_MS)
   }
 
-  const onYueChange = (value: string) => {
-    editingRef.current = 'yue'
+  const onZhChange = (value: string) => {
+    editingRef.current = 'zh'
     setYueDraft(value)
-    runTranslate(value, 'yue', AUTO_TRANSLATE_MS)
+    runTranslate(value, chineseLangRef.current, AUTO_TRANSLATE_MS)
   }
 
   const openDetails = () => {
-    const yue = (yueDraft || storeYue).trim()
+    const zh = (yueDraft || storeYue).trim()
     const en = (enDraft || storeEn).trim()
-    if (!yue && !en) return
-    // Default Details stays Cantonese-first when 粵 text exists (EN→粵 learning).
-    if (yue) {
-      openBreakdown(yue, {
-        lang: 'yue',
+    if (!zh && !en) return
+    if (zh) {
+      openBreakdown(zh, {
+        lang: chineseLang,
         translation: en || undefined,
         definition: yueDef || undefined,
         definitions: yueDefs,
@@ -198,20 +204,23 @@ export function SoloView() {
   }
 
   const openEnDetails = () => {
-    const yue = (yueDraft || storeYue).trim()
+    const zh = (yueDraft || storeYue).trim()
     const en = (enDraft || storeEn).trim()
     if (!en) return
     openBreakdown(en, {
       lang: 'en',
-      translation: yue || undefined,
+      translation: zh || undefined,
       definition: enDefinition || undefined,
       definitions: enDefinitions.length ? enDefinitions : undefined,
       alternatives: enAlternatives.length ? enAlternatives : undefined,
     })
   }
 
-  const enThinking = (translating && translatingTo === 'en') || (typedBusy && editingRef.current === 'yue')
-  const yueThinking = (translating && translatingTo === 'yue') || (typedBusy && editingRef.current === 'en')
+  const enThinking =
+    (translating && translatingTo === 'en') || (typedBusy && editingRef.current === 'zh')
+  const yueThinking =
+    (translating && (translatingTo === 'yue' || translatingTo === 'cmn')) ||
+    (typedBusy && editingRef.current === 'en')
   const showHint = !live && !translating && !typedBusy && !enDraft.trim() && !yueDraft.trim()
   useEffect(() => {
     setSoloShowAutoHint(showHint)
@@ -219,21 +228,21 @@ export function SoloView() {
   }, [showHint, setSoloShowAutoHint])
 
   const inputLocked = live
-  // Show ruby Jyutping + Chao tones during live Cantonese STT, not only after translate lands.
+  // Show ruby during live Chinese STT, not only after translate lands.
   const showYueRuby =
     Boolean(yueDraft.trim()) && !yueEditing && (!inputLocked || Boolean(yueInterim.trim()))
 
-  const enterYueEdit = () => {
-    editingRef.current = 'yue'
+  const enterZhEdit = () => {
+    editingRef.current = 'zh'
     setYueEditing(true)
-    setSpeakDirection('yue')
+    setSpeakDirection(chineseLang)
     queueMicrotask(() => yueInputRef.current?.focus())
   }
 
-  const openYueDetails = (phrase: string) => {
+  const openZhDetails = (phrase: string) => {
     const en = (enDraft || storeEn).trim()
     openBreakdown(phrase, {
-      lang: 'yue',
+      lang: chineseLang,
       translation: en || undefined,
       definition: yueDef || undefined,
       definitions: yueDefs,
@@ -241,7 +250,7 @@ export function SoloView() {
     })
   }
 
-  const dirValue: Lang = speakDirection === 'yue' ? 'yue' : 'en'
+  const dirValue: Lang = speakDirection === 'en' ? 'en' : chineseLang
   const canClear =
     Boolean(enDraft.trim()) ||
     Boolean(yueDraft.trim()) ||
@@ -252,7 +261,6 @@ export function SoloView() {
     Boolean(yueTranslation)
 
   return (
-
     <div className="solo">
       <motion.div
         className={`solo-stage ${live ? 'live' : ''} status-${status}`}
@@ -269,7 +277,25 @@ export function SoloView() {
         }
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
-        <div className="solo-upper">
+        <div
+          className={`solo-upper${dirValue === 'en' ? ' is-mic-active' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={dirValue === 'en'}
+          aria-label="Speak English with the mic"
+          onClick={(e) => {
+            // Pane chrome selects mic language; ignore clicks on controls/inputs.
+            const t = e.target as HTMLElement
+            if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
+            setSpeakDirection('en')
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return
+            if (e.target !== e.currentTarget) return
+            e.preventDefault()
+            setSpeakDirection('en')
+          }}
+        >
           <div className="solo-pane-head">
             <LangLabelButton
               lang="en"
@@ -320,11 +346,28 @@ export function SoloView() {
 
         <div className="solo-divider" />
 
-        <div className="solo-lower">
+        <div
+          className={`solo-lower${dirValue !== 'en' ? ' is-mic-active' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={dirValue !== 'en'}
+          aria-label="Speak Chinese with the mic"
+          onClick={(e) => {
+            const t = e.target as HTMLElement
+            if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
+            setSpeakDirection(chineseLang)
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return
+            if (e.target !== e.currentTarget) return
+            e.preventDefault()
+            setSpeakDirection(chineseLang)
+          }}
+        >
           <div className="solo-pane-head">
             <LangLabelButton
-              lang="yue"
-              active={dirValue === 'yue'}
+              lang={chineseLang}
+              active={dirValue !== 'en'}
               only="zh"
               onSelect={setSpeakDirection}
             />
@@ -342,7 +385,9 @@ export function SoloView() {
                 ) : null}
                 <div className="solo-pane-actions-stack">
                   {canClear ? <ClearIconButton onClick={clearHistory} /> : null}
-                  {yueDraft.trim() ? <SpeakButton text={yueDraft} lang="yue" /> : null}
+                  {yueDraft.trim() ? (
+                    <SpeakButton text={yueDraft} lang={chineseLang} />
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -355,8 +400,9 @@ export function SoloView() {
                 text={yueDraft}
                 definition={yueDef}
                 definitions={yueDefs}
+                chineseLang={chineseLang}
                 textClassName="solo-tr-text"
-                onActivate={openYueDetails}
+                onActivate={openZhDetails}
                 showCopy
               />
               {altsLoading && alts.length === 0 ? (
@@ -365,9 +411,13 @@ export function SoloView() {
                 </p>
               ) : null}
               {alts.length > 0 ? (
-                <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
+                <TranslationAlternatives
+                  alternatives={alts}
+                  lang={chineseLang}
+                  onSelect={selectYueVariation}
+                />
               ) : null}
-              <button type="button" className="solo-edit-link" onClick={enterYueEdit}>
+              <button type="button" className="solo-edit-link" onClick={enterZhEdit}>
                 {ui.soloTapTypeChinese.zh}
               </button>
             </div>
@@ -381,19 +431,19 @@ export function SoloView() {
               placeholder={ui.soloTapTypeChinese.zh}
               aria-label={ui.soloTapTypeChinese.zh}
               onFocus={() => {
-                editingRef.current = 'yue'
+                editingRef.current = 'zh'
                 setYueEditing(true)
-                setSpeakDirection('yue')
+                setSpeakDirection(chineseLang)
               }}
               onBlur={() => {
-                if (editingRef.current === 'yue') editingRef.current = null
+                if (editingRef.current === 'zh') editingRef.current = null
                 setYueEditing(false)
               }}
-              onChange={(e) => onYueChange(e.target.value)}
+              onChange={(e) => onZhChange(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key !== 'Enter' || e.shiftKey) return
                 e.preventDefault()
-                runTranslate(yueDraft, 'yue', 0, true)
+                runTranslate(yueDraft, chineseLang, 0, true)
               }}
             />
           )}
@@ -403,7 +453,11 @@ export function SoloView() {
             </p>
           ) : null}
           {!showYueRuby && alts.length > 0 ? (
-            <TranslationAlternatives alternatives={alts} onSelect={selectYueVariation} />
+            <TranslationAlternatives
+              alternatives={alts}
+              lang={chineseLang}
+              onSelect={selectYueVariation}
+            />
           ) : null}
         </div>
       </motion.div>
