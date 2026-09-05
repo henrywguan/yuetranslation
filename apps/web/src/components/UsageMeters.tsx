@@ -128,6 +128,11 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const docsSplit = splitRingFills(docsUsed, docsSelfUsed, docsLimit, docsUnlimited, pooled)
 
   const aiUsed = Math.max(0, e.usage.aiVisionCount ?? 0)
+  const aiLimit = Math.max(0, e.limits.ai_vision_count ?? 0)
+  const aiRatio = aiLimit <= 0 ? null : clampUsageRatio(aiUsed / aiLimit)
+  const aiLeft = Math.max(0, aiLimit - aiUsed)
+  const aiSelfUsed = Math.max(0, selfUsage?.aiVisionCount ?? 0)
+  const aiSplit = splitRingFills(aiUsed, aiSelfUsed, aiLimit, false, pooled)
 
   const meters: MeterModel[] = [
     {
@@ -206,15 +211,18 @@ function buildMeters(e: Entitlement): MeterModel[] {
         label: ui.accountAiVision,
         blurb: ui.usageDetailAiVision,
         usedLabel: String(aiUsed),
-        limitLabel: '∞',
+        limitLabel: aiLimit > 0 ? String(aiLimit) : '—',
         revealUsed: String(aiUsed),
-        revealLeft: 'tracked',
-        ratio: null,
+        revealLeft: aiLimit > 0 ? `${aiLeft} left` : 'n/a',
+        ratio: aiRatio,
         usedAmount: aiUsed,
-        selfFill: 0,
-        familyFill: 0,
-        unlimited: true,
-        detail: `${aiUsed} AI reads · tracked only`,
+        selfFill: aiSplit.selfFill,
+        familyFill: aiSplit.familyFill,
+        unlimited: false,
+        detail:
+          aiLimit > 0
+            ? `${aiUsed} used · ${aiLeft} left`
+            : `${aiUsed} AI reads`,
       },
     )
   }

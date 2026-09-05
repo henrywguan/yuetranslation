@@ -85,6 +85,22 @@ export const env = {
   familyDocsPages: Number(
     process.env.YUE_FAMILY_DOCS_PAGES || process.env.YUE_PRO_DOCS_PAGES || 400,
   ),
+  /**
+   * Hard monthly caps for multimodal LLM OCR fallback (Cam + Documents).
+   * Generous for real calligraphy/foil use; stops signed-in burn attacks.
+   * Business camera/docs minutes may be unlimited — AI vision is still capped.
+   */
+  freeAiVisionCount: Number(process.env.YUE_FREE_AI_VISION_COUNT || 200),
+  familyAiVisionCount: Number(process.env.YUE_FAMILY_AI_VISION_COUNT || 2000),
+  businessAiVisionCount: Number(process.env.YUE_BUSINESS_AI_VISION_COUNT || 10000),
+  /**
+   * Extra browser Origins allowed for CORS (comma-separated), e.g. WordPress
+   * host or a preview URL. Production always includes YUE_APP_URL ± www and localhost.
+   */
+  corsExtraOrigins: (process.env.YUE_CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim().replace(/\/+$/, ''))
+    .filter(Boolean),
   freeAllowLive: (process.env.YUE_FREE_ALLOW_LIVE || '1') === '1',
   /** When 0, Free plan has no tap-to-play quota. Auto-speak stays a paid-plan flag. */
   freeAllowTts: (process.env.YUE_FREE_ALLOW_TTS || '1') === '1',

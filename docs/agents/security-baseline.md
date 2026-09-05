@@ -34,7 +34,8 @@ Updated: 2026-09-04 — shipped fail-closed `YUE_OPEN_MODE` default + stripped h
 
 ## Medium
 
-### [Medium] CORS `origin: true` reflects any Origin
+### [Medium] CORS `origin: true` reflects any Origin — FIXED
+- **Status:** Fixed — allowlist = `YUE_APP_URL` ± www, localhost/127.0.0.1 (:5173/:4173/:8787), `VERCEL_URL`, optional `YUE_CORS_ORIGINS`.
 - **Category:** config
 - **Evidence:** `app.use(cors({ origin: true, credentials: true }))` in `apps/api/src/app.ts`.
 - **Impact:** See PR / chat explanation — browser cross-origin calls with credentials. With Bearer JWT in `Authorization` (JyutTranslate’s pattern) risk is lower than cookie sessions, but any browser page can still trigger credentialed CORS preflight+request if a logged-in SPA attaches the token to cross-origin fetches.
@@ -42,12 +43,13 @@ Updated: 2026-09-04 — shipped fail-closed `YUE_OPEN_MODE` default + stripped h
 - **Fixability:** NEEDS_HUMAN
 - **Why:** Must confirm all legitimate web origins (TWA, WordPress, tunnels) before tightening.
 
-### [Medium] `ai_vision_count` is view-only (no hard cap) — accepted by product
+### [Medium] `ai_vision_count` was view-only — FIXED (hard monthly caps)
+- **Status:** Fixed — Free **200** / Family **2000** / Business **10000** per month (`YUE_*_AI_VISION_COUNT`). Exhausted → skip LLM fallback; Azure OCR still runs. Cam/docs stay available.
 - **Category:** metering / abuse
-- **Evidence:** Camera/docs AI vision LLM fallback increments `ai_vision_count` but does not block when high.
-- **Product decision (Henry):** Keep uncapped; meter for visibility because the path is rare.
-- **Residual risk:** A signed-in attacker who can force the vision-LLM fallback (hard/calligraphy images, or crafted payloads that fail Azure OCR) can still spend vision-model $ without a plan ceiling — camera minutes / docs pages may still constrain *how often* they call the endpoint, but each call can be expensive if AI vision fires. Metering lets you spot the burn in admin; it does not stop it mid-month.
-- **Fixability:** NEEDS_HUMAN only if Henry later wants a kill-switch / soft alert threshold — not shipping a hard cap now.
+- **Evidence:** Camera/docs AI vision LLM fallback increments `ai_vision_count` and now gates via `allowed.aiVision` before the paid LLM call.
+- **Impact (before):** Signed-in users who forced vision LLM fallback repeatedly could burn vision-model spend without a ceiling.
+- **Residual risk:** Caps are generous; a determined signed-in attacker can still spend up to the monthly ceiling. Camera minutes / docs pages remain additional brakes. Lower the env caps if you want a tighter budget.
+
 
 ### [Medium] Large JSON body limit (`12mb`) on shared parser
 - **Category:** abuse

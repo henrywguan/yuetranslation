@@ -21,6 +21,8 @@ export type Entitlement = {
     tts_chars: number
     camera_minutes?: number
     docs_pages?: number
+    /** Monthly hard cap for multimodal LLM OCR fallback (Cam + Documents). */
+    ai_vision_count?: number
     auto_speak: boolean
     can_live: boolean
     can_camera?: boolean
@@ -35,7 +37,7 @@ export type Entitlement = {
     cameraSeconds?: number
     cameraTranslateCount?: number
     docsPages?: number
-    /** Multimodal LLM OCR fallback calls (view-only meter). */
+    /** Multimodal LLM OCR fallback calls this month. */
     aiVisionCount?: number
   }
   /** Your share of pooled household usage this month (Family/Business only). */
@@ -55,6 +57,8 @@ export type Entitlement = {
     cameraSeconds?: number
     /** -1 when unlimited (Business). */
     docsPages?: number
+    /** Remaining AI vision LLM fallbacks this month. */
+    aiVisionCount?: number
   }
   /** Family/Business: usage tracked, never gates the speaker. */
   ttsUnlimited?: boolean
@@ -71,6 +75,8 @@ export type Entitlement = {
     tts: boolean
     camera?: boolean
     docs?: boolean
+    /** Multimodal LLM OCR fallback within monthly hard cap. */
+    aiVision?: boolean
   }
   reason: string | null
   /** Synced account preferences. */

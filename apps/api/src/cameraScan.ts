@@ -96,7 +96,18 @@ function assignTextToBoxes(ocr: OcrRegion[], boxes: OcrBox[]): Array<OcrRegion &
   })
 }
 
-export async function cameraScan(input: unknown): Promise<{
+export type CameraScanOptions = {
+  /**
+   * When false, skip multimodal LLM OCR fallback (quota exhausted).
+   * Azure Read still runs. Default true.
+   */
+  allowAiVision?: boolean
+}
+
+export async function cameraScan(
+  input: unknown,
+  opts: CameraScanOptions = {},
+): Promise<{
   regions: CameraScanRegion[]
   engine: string
   visionConfigured: boolean
@@ -106,24 +117,32 @@ export async function cameraScan(input: unknown): Promise<{
   aiVisionUsed: boolean
   /** Regions recovered by the LLM fallback (0 if unused or failed). */
   aiVisionRegions: number
+  /** True when LLM fallback was skipped because the monthly hard cap was hit. */
+  aiVisionQuotaExhausted?: boolean
 }> {
   const parsed = Body.parse(input)
+  const allowAiVision = opts.allowAiVision !== false
   let { regions: ocrRegions, engine: ocrEngine, authFailed: visionAuthFailed } = await ocrImage(
     parsed.image,
   )
   let engine: string = ocrEngine
   let aiVisionUsed = false
   let aiVisionRegions = 0
+  let aiVisionQuotaExhausted = false
 
   // Silent fallback: decorative / foil / calligraphy often returns 0 Azure lines.
   if (ocrRegions.length === 0 && !visionAuthFailed) {
-    const llm = await ocrImageWithVisionLlm(parsed.image)
-    if (llm.invoked) {
-      aiVisionUsed = true
-      if (llm.regions.length > 0) {
-        ocrRegions = llm.regions
-        engine = llm.engine
-        aiVisionRegions = llm.regions.length
+    if (!allowAiVision) {
+      aiVisionQuotaExhausted = true
+    } else {
+      const llm = await ocrImageWithVisionLlm(parsed.image)
+      if (llm.invoked) {
+        aiVisionUsed = true
+        if (llm.regions.length > 0) {
+          ocrRegions = llm.regions
+          engine = llm.engine
+          aiVisionRegions = llm.regions.length
+        }
       }
     }
   }
@@ -151,6 +170,7 @@ export async function cameraScan(input: unknown): Promise<{
       translateMisses: 0,
       aiVisionUsed,
       aiVisionRegions,
+      aiVisionQuotaExhausted,
     }
   }
 
@@ -199,5 +219,6 @@ export async function cameraScan(input: unknown): Promise<{
     translateMisses,
     aiVisionUsed,
     aiVisionRegions,
+    aiVisionQuotaExhausted,
   }
 }

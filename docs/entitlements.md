@@ -30,6 +30,7 @@ Code defaults in `apps/api/src/env.ts`. **Production overrides** in `vercel.json
 | Camera minutes | `YUE_FREE_CAMERA_MINUTES` (default **60**) | `YUE_FAMILY_CAMERA_MINUTES` (default **480** = 8 hr) | Unlimited (`cameraUnlimited`) — still counted |
 | Document pages | `YUE_FREE_DOCS_PAGES` (default **40**) | `YUE_FAMILY_DOCS_PAGES` (default **400**) | Unlimited (`docsUnlimited`) — still counted |
 | Auto-speak | No | Yes | Yes |
+| AI vision OCR fallbacks | `YUE_FREE_AI_VISION_COUNT` (default **200**) hard cap | `YUE_FAMILY_AI_VISION_COUNT` (default **2000**) hard cap | `YUE_BUSINESS_AI_VISION_COUNT` (default **10000**) hard cap |
 
 Marketing copy rounds Free live as “~1 hr” and Family live as “~8 hr”; production sets Free live to **60 minutes** and Family live to **480 minutes** via `vercel.json`. Prefer this table + env over stale marketing blurbs when debugging quotas.
 
@@ -72,13 +73,15 @@ Returned by `/api/health` and `/api/entitlement`:
     "translateCount": 3,
     "cameraSeconds": 40,
     "cameraTranslateCount": 2,
-    "docsPages": 4
+    "docsPages": 4,
+    "aiVisionCount": 2
   },
   "remaining": {
     "liveSeconds": 3480,
     "ttsChars": 29200,
     "cameraSeconds": 3560,
-    "docsPages": 36
+    "docsPages": 36,
+    "aiVisionCount": 198
   },
   "ttsUnlimited": false,
   "cameraUnlimited": false,
@@ -89,7 +92,8 @@ Returned by `/api/health` and `/api/entitlement`:
     "textTranslate": true,
     "tts": true,
     "camera": true,
-    "docs": true
+    "docs": true,
+    "aiVision": true
   },
   "upgradeUrl": "https://www.example.com/#/pricing",
   "loginUrl": null,
@@ -114,6 +118,6 @@ Family/Business: `ttsUnlimited: true` and `limits.tts_chars: 0`. Business: `came
 | `POST /docs/segments` | `allowed.docs` — PDF text batch; no page bill |
 | `POST /docs/commit` | signed-in docs — bill PDF pages after success |
 
-Usage writes go through `increment_usage` (migrations `003` … `010`) so concurrent counters do not overwrite each other. The web client flushes live seconds when a mic session ends. `ai_vision_count` tracks multimodal LLM OCR fallbacks (view-only; no hard cap).
+Usage writes go through `increment_usage` (migrations `003` … `010`) so concurrent counters do not overwrite each other. The web client flushes live seconds when a mic session ends. `ai_vision_count` tracks multimodal LLM OCR fallbacks with a **hard monthly cap** (Azure Read still runs when exhausted). Defaults: Free **200** · Family **2000** · Business **10000**.
 
 Admin: [admin.md](./admin.md). Stripe Checkout enables **promotion codes** (`allow_promotion_codes` in `apps/api/src/billing.ts`).

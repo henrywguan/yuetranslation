@@ -470,9 +470,9 @@ export const ui = {
     jp: 'gam1 go3 jyut6 hai2 soeng1 gei1 → man4 gin2 faan1 jik6 ge3 jip6 sou3.',
   },
   usageDetailAiVision: {
-    en: 'AI vision OCR fallbacks (informational — no hard cap).',
-    zh: 'AI 視覺 OCR 後備次數（只供參考，無硬上限）。',
-    jp: 'AI si6 gok3 OCR hau6 bei6 ci3 sou3 (zi2 gung1 caam1 haau2, mou4 ngaang6 soeng6 haan6).',
+    en: 'AI vision OCR fallbacks this month (hard cap — Azure OCR still works when exhausted).',
+    zh: '今個月 AI 視覺 OCR 後備次數（有硬上限；用盡後仍可用 Azure OCR）。',
+    jp: 'gam1 go3 jyut6 AI si6 gok3 OCR hau6 bei6 ci3 sou3 (jau5 ngaang6 soeng6 haan6; jung6 zeon6 hau6 jing4 ho2 jung6 Azure OCR).',
   },
   accountLive: { en: 'Live mic', zh: '即時咪', jp: 'zik1 si4 mai1' },
   accountVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },

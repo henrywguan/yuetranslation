@@ -1,4 +1,4 @@
-import { cameraAccess, voiceAccess } from './entitlements.js'
+import { aiVisionAccess, cameraAccess, voiceAccess } from './entitlements.js'
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg)
@@ -44,7 +44,17 @@ const camBusiness = cameraAccess(0, 999, true)
 assert(camBusiness.camera === true, 'business camera unlimited')
 assert(camBusiness.cameraRemaining === -1, 'business camera remaining sentinel')
 
+const aiOk = aiVisionAccess(200, 0)
+assert(aiOk.aiVision === true, 'ai vision within cap')
+assert(aiOk.aiVisionRemaining === 200, 'ai vision remaining')
+const aiDone = aiVisionAccess(200, 200)
+assert(aiDone.aiVision === false, 'ai vision exhausted')
+assert(aiDone.aiVisionRemaining === 0, 'ai vision remaining 0')
+const aiBiz = aiVisionAccess(10000, 9999)
+assert(aiBiz.aiVision === true, 'business ai vision near cap still on')
+
 console.log(
+
   JSON.stringify({
     ok: true,
     free,
@@ -57,5 +67,8 @@ console.log(
     camFamily,
     camFamilyExhausted,
     camBusiness,
+    aiOk,
+    aiDone,
+    aiBiz,
   }),
 )
