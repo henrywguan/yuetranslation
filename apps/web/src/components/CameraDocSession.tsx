@@ -174,6 +174,7 @@ export function CameraDocSession({
           >
             <option value="en">English</option>
             <option value="yue">粵語</option>
+            <option value="cmn">普通話</option>
           </select>
         </label>
         <button
@@ -194,6 +195,7 @@ export function CameraDocSession({
             onChange={(e) => setTo(e.target.value as DocLang)}
           >
             <option value="yue">粵語</option>
+            <option value="cmn">普通話</option>
             <option value="en">English</option>
           </select>
         </label>

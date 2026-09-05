@@ -2,7 +2,7 @@ import type { Entitlement } from './types'
 import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
 
-export type DocLang = 'en' | 'yue'
+export type DocLang = 'en' | 'yue' | 'cmn'
 
 export type DocFileResult = {
   filename: string

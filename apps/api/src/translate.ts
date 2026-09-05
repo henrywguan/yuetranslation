@@ -8,10 +8,31 @@ import {
   looksLikeGlossDump,
   englishDefinitionsForYue,
   cantoneseSensesForEnglish,
+  scrubYueToCmn,
   uniqStrings,
   type TranslateStage,
 } from './canto/index.js'
 import { hasHan } from './canto/han.js'
+
+/** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
+function applyCmnScrub(
+  primary: string,
+  alternatives: string[],
+): { text: string; alternatives: string[]; scrubbed: boolean; notes: string[] } {
+  const scrubbedPrimary = scrubYueToCmn(primary)
+  let scrubbed = scrubbedPrimary.changed
+  const nextAlts = alternatives.map((a) => {
+    const s = scrubYueToCmn(a)
+    if (s.changed) scrubbed = true
+    return s.text
+  })
+  return {
+    text: scrubbedPrimary.text,
+    alternatives: nextAlts,
+    scrubbed,
+    notes: scrubbed ? ['cmn-scrub', 'cmn-no-yue-scrub'] : ['cmn-no-yue-scrub'],
+  }
+}
 
 const LangZ = z.enum(['en', 'yue', 'cmn'])
 
@@ -108,11 +129,34 @@ async function translateMandarin(opts: {
     wantAlternatives: wantAlts,
   })
   if (dictHit) {
+    const alts = wantAlts ? dictHit.alternatives : []
+    if (to === 'cmn') {
+      const scrubbed = applyCmnScrub(dictHit.text, alts)
+      return withLearnerDefinitions(
+        {
+          text: scrubbed.text,
+          definition: fallbackDefinition,
+          alternatives: scrubbed.alternatives,
+          engine: 'dictionary',
+          from,
+          to,
+          stage,
+          meta: {
+            dictionaryHit: true,
+            scrubbed: scrubbed.scrubbed,
+            colloquialScore: 0,
+            rewritten: false,
+            notes: [`dict:${dictHit.entry.id}`, ...scrubbed.notes],
+          },
+        },
+        text,
+      )
+    }
     return withLearnerDefinitions(
       {
         text: dictHit.text,
-        definition: to === 'cmn' ? fallbackDefinition : '',
-        alternatives: wantAlts ? dictHit.alternatives : [],
+        definition: '',
+        alternatives: alts,
         engine: 'dictionary',
         from,
         to,
@@ -131,12 +175,31 @@ async function translateMandarin(opts: {
 
   const client = openaiClient()
   if (!client) {
-    // Offline demo — do not scrub Mandarin into Cantonese.
+    // Offline demo — do not scrub Mandarin into Cantonese; reverse-scrub cmn if needed.
     const demoPrimary = to === 'cmn' ? `（示范）${text}` : `(demo) ${text}`
+    if (to === 'cmn') {
+      const scrubbed = applyCmnScrub(demoPrimary, [])
+      return withLearnerDefinitions(
+        {
+          text: scrubbed.text,
+          definition: fallbackDefinition,
+          alternatives: [],
+          engine: 'demo',
+          from,
+          to,
+          stage,
+          meta: {
+            ...emptyMeta(['demo', ...scrubbed.notes]),
+            scrubbed: scrubbed.scrubbed,
+          },
+        },
+        text,
+      )
+    }
     return withLearnerDefinitions(
       {
         text: demoPrimary,
-        definition: to === 'cmn' ? fallbackDefinition : '',
+        definition: '',
         alternatives: [],
         engine: 'demo',
         from,
@@ -150,23 +213,32 @@ async function translateMandarin(opts: {
 
   const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
   const toCmn = to === 'cmn'
+  const fromYue = from === 'yue'
   let primary = text
   let alternatives: string[] = []
   let definition = fallbackDefinition
 
   if (wantAlts && toCmn) {
-    const system = [
-      'You are a Mandarin Chinese interpreter (普通话).',
-      'Translate English into natural spoken Mandarin. Simplified characters are OK (Mainland style).',
-      'Do NOT use Cantonese-only particles or spellings (no 係/唔/喺/咗/㗎 unless shared).',
-      'Return ONLY valid JSON:',
-      '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
-      'Rules for alternatives:',
-      '- Prefer 2–3 natural spoken variants that differ in tone or wording.',
-      '- Do not repeat the primary or near-duplicates.',
-      '- If there is truly no useful variation, return "alternatives": [].',
-      '- No markdown, no explanation.',
-    ].join('\n')
+    const system = fromYue
+      ? [
+          'You convert Cantonese (粵語) into natural Mandarin (普通话).',
+          'Simplified characters are OK. Do NOT keep Cantonese-only particles (係/唔/喺/咗/㗎) unless shared.',
+          'Return ONLY valid JSON:',
+          '{"primary":"<best Mandarin>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+          'Prefer 2–3 natural spoken variants. No markdown.',
+        ].join('\n')
+      : [
+          'You are a Mandarin Chinese interpreter (普通话).',
+          'Translate English into natural spoken Mandarin. Simplified characters are OK (Mainland style).',
+          'Do NOT use Cantonese-only particles or spellings (no 係/唔/喺/咗/㗎 unless shared).',
+          'Return ONLY valid JSON:',
+          '{"primary":"<best translation>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+          'Rules for alternatives:',
+          '- Prefer 2–3 natural spoken variants that differ in tone or wording.',
+          '- Do not repeat the primary or near-duplicates.',
+          '- If there is truly no useful variation, return "alternatives": [].',
+          '- No markdown, no explanation.',
+        ].join('\n')
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
       temperature: 0.35,
@@ -213,13 +285,20 @@ async function translateMandarin(opts: {
     if (parsedEn.definition) definition = parsedEn.definition
   } else {
     const system = toCmn
-      ? [
-          'You are a Mandarin Chinese interpreter (普通话).',
-          'Translate into natural spoken Mandarin. Simplified characters are OK.',
-          'Do NOT convert into Cantonese.',
-          'Return ONLY valid JSON:',
-          '{"translation":"<Mandarin>","definition":"<short English gloss of what the Mandarin means>"}',
-        ].join('\n')
+      ? fromYue
+        ? [
+            'Convert Cantonese (粵語) into natural Mandarin (普通话).',
+            'Simplified characters are OK. Do NOT keep Cantonese-only particles.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<Mandarin>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Mandarin Chinese interpreter (普通话).',
+            'Translate into natural spoken Mandarin. Simplified characters are OK.',
+            'Do NOT convert into Cantonese.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<Mandarin>","definition":"<short English gloss of what the Mandarin means>"}',
+          ].join('\n')
       : [
           'You are a Mandarin Chinese interpreter.',
           'Translate Mandarin (普通话) into natural English for face-to-face conversation.',
@@ -243,20 +322,39 @@ async function translateMandarin(opts: {
   }
 
   // Never call hardenYueOutput / scrubMandarinToYue for Mandarin.
+  // When targeting cmn, reverse-scrub residual Yue colloquialisms.
   if (toCmn) {
-    const outText = hasHan(primary) ? primary : ''
+    const hanAlts = wantAlts ? alternatives.filter((a) => hasHan(a)) : []
+    const outRaw = hasHan(primary) ? primary : ''
+    if (!outRaw) {
+      return withLearnerDefinitions(
+        {
+          text: '',
+          definition,
+          alternatives: [],
+          engine,
+          from,
+          to,
+          stage,
+          meta: emptyMeta(['cmn-no-yue-scrub', 'no-cmn-output']),
+        },
+        text,
+      )
+    }
+    const scrubbed = applyCmnScrub(outRaw, hanAlts)
     return withLearnerDefinitions(
       {
-        text: outText,
+        text: scrubbed.text,
         definition,
-        alternatives: wantAlts ? alternatives.filter((a) => hasHan(a)) : [],
+        alternatives: scrubbed.alternatives,
         engine,
         from,
         to,
         stage,
-        meta: emptyMeta(
-          outText ? ['cmn-no-yue-scrub'] : ['cmn-no-yue-scrub', 'no-cmn-output'],
-        ),
+        meta: {
+          ...emptyMeta(scrubbed.notes),
+          scrubbed: scrubbed.scrubbed,
+        },
       },
       text,
     )
@@ -319,8 +417,9 @@ export async function translate(input: unknown) {
     )
   }
 
-  // Mandarin path — skip Yue scrub/harden entirely.
-  if (from === 'cmn' || to === 'cmn') {
+  // Mandarin path — skip Yue scrub/harden entirely when target is Mandarin
+  // or when translating Mandarin → English. cmn→yue still uses Yue harden below.
+  if (to === 'cmn' || (from === 'cmn' && to === 'en')) {
     return translateMandarin({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 

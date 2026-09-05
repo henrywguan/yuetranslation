@@ -191,7 +191,7 @@ export async function translatePdfHybrid(
   const pdf = await pdfjs.getDocument({ data }).promise
   const outPdf = await PDFDocument.create()
   const total = pdf.numPages
-  const target = to === 'en' ? ('en' as const) : ('zh' as const)
+  const target = to === 'en' ? ('en' as const) : to === 'cmn' ? ('cmn' as const) : ('yue' as const)
 
   for (let pageNum = 1; pageNum <= total; pageNum++) {
     onProgress?.('reading', pageNum, total)

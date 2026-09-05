@@ -177,6 +177,8 @@ export const ui = {
   camDeleteBox: { en: 'Delete box', zh: '刪除選框', jp: 'saan1 ceoi4 syun2 kwaang1' },
   camTargetEn: { en: 'To English', zh: '譯成英文', jp: 'jik6 sing4 jing1 man2' },
   camTargetZh: { en: 'To 中文', zh: '譯成中文', jp: 'jik6 sing4 zung1 man2' },
+  camTargetYue: { en: 'To Cantonese', zh: '譯成粵語', jp: 'jik6 sing4 jyut6 jyu5' },
+  camTargetCmn: { en: 'To Mandarin', zh: '譯成普通話', jp: 'jik6 sing4 pou2 tung1 waa2' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
@@ -498,7 +500,11 @@ export const ui = {
   accountTtsVoices: { en: 'Voice playback', zh: '語音朗讀', jp: 'jyu5 jam1 long5 duk6' },
   accountTtsYue: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   accountTtsEn: { en: 'English', zh: '英語', jp: 'jing1 jyu5' },
+  accountTtsCmn: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
+  accountTtsVoiceSettings: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
+  accountTtsVoiceModalTitle: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
+  accountTtsVoiceModalClose: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
   bugReportTitle: { en: 'Report a problem', zh: '回報問題', jp: 'wui4 bou3 man6 tai4' },
   bugReportHint: {
     en: 'What went wrong? We attach route and settings — not your translations.',

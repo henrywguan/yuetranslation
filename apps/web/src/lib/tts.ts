@@ -1,6 +1,6 @@
 import { fetchTtsAudio } from './api'
 import type { Lang } from './types'
-import { readLocalEnVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalEnVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
@@ -158,7 +158,7 @@ function browserSpeak(text: string, lang: Lang, g: number) {
 function preferredVoiceFor(lang: Lang, override?: string | null): string | null {
   if (override) return override
   if (lang === 'en') return readLocalEnVoice()
-  if (lang === 'cmn') return null // resolveSpeakVoice defaults to Xiaoxiao
+  if (lang === 'cmn') return readLocalCmnVoice()
   return readLocalYueVoice()
 }
 

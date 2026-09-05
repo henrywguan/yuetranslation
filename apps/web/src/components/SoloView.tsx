@@ -24,8 +24,16 @@ function isWorthAutoTranslate(value: string, from: Lang): boolean {
   return letters.length >= 3 || t.split(/\s+/).filter(Boolean).length >= 2
 }
 
-function isChineseHistory(from: Lang | undefined, chineseLang: 'yue' | 'cmn') {
-  return from === chineseLang || from === 'yue' || from === 'cmn'
+function placeholderFor(lang: Lang): string {
+  if (lang === 'en') return ui.soloTapTypeEnglish.en
+  if (lang === 'cmn') return ui.soloTapTypeChinese.zh
+  return ui.soloTapTypeChinese.zh
+}
+
+function ariaForPane(lang: Lang): string {
+  if (lang === 'en') return 'Speak English with the mic'
+  if (lang === 'cmn') return 'Speak Mandarin with the mic'
+  return 'Speak Cantonese with the mic'
 }
 
 export function SoloView() {
@@ -43,8 +51,10 @@ export function SoloView() {
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const speakDirection = useYueStore((s) => s.speakDirection)
-  const chineseLang = useYueStore((s) => s.chineseLang)
+  const soloUpperLang = useYueStore((s) => s.soloUpperLang)
+  const soloLowerLang = useYueStore((s) => s.soloLowerLang)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
+  const setSoloPaneLang = useYueStore((s) => s.setSoloPaneLang)
   const clearHistory = useYueStore((s) => s.clearHistory)
   const setSoloShowAutoHint = useYueStore((s) => s.setSoloShowAutoHint)
   const translateTyped = useYueStore((s) => s.translateTyped)
@@ -54,43 +64,54 @@ export function SoloView() {
   const translating = useYueStore((s) => s.translating)
   const translatingTo = useYueStore((s) => s.translatingTo)
 
-  const [enDraft, setEnDraft] = useState('')
-  const [yueDraft, setYueDraft] = useState('')
-  const [yueEditing, setYueEditing] = useState(false)
+  const [upperDraft, setUpperDraft] = useState('')
+  const [lowerDraft, setLowerDraft] = useState('')
+  const [lowerEditing, setLowerEditing] = useState(false)
+  const [upperEditing, setUpperEditing] = useState(false)
   const [typedBusy, setTypedBusy] = useState(false)
-  const editingRef = useRef<'en' | 'zh' | null>(null)
-  const yueInputRef = useRef<HTMLTextAreaElement>(null)
+  const editingRef = useRef<'upper' | 'lower' | null>(null)
+  const upperInputRef = useRef<HTMLTextAreaElement>(null)
+  const lowerInputRef = useRef<HTMLTextAreaElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqId = useRef(0)
   const translateRef = useRef(translateTyped)
   const historyRef = useRef(history)
-  const chineseLangRef = useRef(chineseLang)
+  const upperLangRef = useRef(soloUpperLang)
+  const lowerLangRef = useRef(soloLowerLang)
   translateRef.current = translateTyped
   historyRef.current = history
-  chineseLangRef.current = chineseLang
+  upperLangRef.current = soloUpperLang
+  lowerLangRef.current = soloLowerLang
 
   const latest = history[0]
   const turnActive = live || translating || Boolean(enInterim) || Boolean(yueInterim)
-  const storeEn =
+
+  // Solo store: en* = upper pane, yue* = lower pane.
+  const storeUpper =
     enInterim ||
     enTranslation ||
     (!turnActive && latest
-      ? latest.from === 'en'
+      ? latest.from === soloUpperLang
         ? latest.source
-        : latest.translation
+        : latest.to === soloUpperLang
+          ? latest.translation
+          : ''
       : '')
-  const storeYue =
+  const storeLower =
     yueInterim ||
     yueTranslation ||
     (!turnActive && latest
-      ? isChineseHistory(latest.from, chineseLang)
+      ? latest.from === soloLowerLang
         ? latest.source
-        : latest.translation
+        : latest.to === soloLowerLang
+          ? latest.translation
+          : ''
       : '')
-  const yueDef = turnActive
+
+  const lowerDef = turnActive
     ? yueDefinition
     : yueDefinition || latest?.definition || ''
-  const yueDefs = turnActive
+  const lowerDefs = turnActive
     ? yueDefinitions
     : yueDefinitions.length
       ? yueDefinitions
@@ -99,18 +120,17 @@ export function SoloView() {
     ? yueAlternatives
     : yueAlternatives.length
       ? yueAlternatives
-      : latest?.to === chineseLang || latest?.to === 'yue' || latest?.to === 'cmn'
+      : latest && (latest.to === soloLowerLang || latest.to === 'yue' || latest.to === 'cmn')
         ? latest.alternatives || []
         : []
 
-  // Mirror speech / translate results into the panes the user is not editing.
   useEffect(() => {
-    if (editingRef.current !== 'en') setEnDraft(storeEn)
-  }, [storeEn])
+    if (editingRef.current !== 'upper') setUpperDraft(storeUpper)
+  }, [storeUpper])
 
   useEffect(() => {
-    if (editingRef.current !== 'zh') setYueDraft(storeYue)
-  }, [storeYue])
+    if (editingRef.current !== 'lower') setLowerDraft(storeLower)
+  }, [storeLower])
 
   const runTranslate = (value: string, from: Lang, delay: number, force = false) => {
     if (timerRef.current) {
@@ -156,109 +176,186 @@ export function SoloView() {
   useEffect(() => {
     const shared = consumePendingShareText()
     if (!shared) return
-    const from: Lang = /[\u4e00-\u9fff]/.test(shared) ? chineseLangRef.current : 'en'
-    if (from === 'en') {
-      setEnDraft(shared)
-      editingRef.current = 'en'
+    const hasHan = /[\u4e00-\u9fff]/.test(shared)
+    const from: Lang = hasHan
+      ? soloUpperLang !== 'en'
+        ? soloUpperLang
+        : soloLowerLang !== 'en'
+          ? soloLowerLang
+          : 'yue'
+      : soloUpperLang === 'en'
+        ? 'en'
+        : soloLowerLang === 'en'
+          ? 'en'
+          : 'en'
+    if (from === soloUpperLang) {
+      setUpperDraft(shared)
+      editingRef.current = 'upper'
     } else {
-      setYueDraft(shared)
-      editingRef.current = 'zh'
+      setLowerDraft(shared)
+      editingRef.current = 'lower'
     }
     setSoloShowAutoHint(false)
     runTranslate(shared, from, 0, true)
-  }, [setSoloShowAutoHint])
+  }, [setSoloShowAutoHint, soloUpperLang, soloLowerLang])
 
-  const onEnChange = (value: string) => {
-    editingRef.current = 'en'
-    setEnDraft(value)
-    runTranslate(value, 'en', AUTO_TRANSLATE_MS)
+  const onUpperChange = (value: string) => {
+    editingRef.current = 'upper'
+    setUpperDraft(value)
+    runTranslate(value, upperLangRef.current, AUTO_TRANSLATE_MS)
   }
 
-  const onZhChange = (value: string) => {
-    editingRef.current = 'zh'
-    setYueDraft(value)
-    runTranslate(value, chineseLangRef.current, AUTO_TRANSLATE_MS)
+  const onLowerChange = (value: string) => {
+    editingRef.current = 'lower'
+    setLowerDraft(value)
+    runTranslate(value, lowerLangRef.current, AUTO_TRANSLATE_MS)
   }
 
-  const openDetails = () => {
-    const zh = (yueDraft || storeYue).trim()
-    const en = (enDraft || storeEn).trim()
-    if (!zh && !en) return
-    if (zh) {
-      openBreakdown(zh, {
-        lang: chineseLang,
-        translation: en || undefined,
-        definition: yueDef || undefined,
-        definitions: yueDefs,
-        alternatives: alts,
-      })
-      return
-    }
-    openBreakdown(en, {
-      lang: 'en',
-      translation: undefined,
-      definition: enDefinition || undefined,
-      definitions: enDefinitions.length ? enDefinitions : undefined,
-      alternatives: enAlternatives.length ? enAlternatives : undefined,
+  const openPaneDetails = (pane: 'upper' | 'lower') => {
+    const paneLang = pane === 'upper' ? soloUpperLang : soloLowerLang
+    const phrase = (pane === 'upper' ? upperDraft || storeUpper : lowerDraft || storeLower).trim()
+    const other = (pane === 'upper' ? lowerDraft || storeLower : upperDraft || storeUpper).trim()
+    if (!phrase) return
+    const isZhTarget =
+      latest?.to === paneLang ||
+      (pane === 'lower' && (soloLowerLang === 'yue' || soloLowerLang === 'cmn'))
+    openBreakdown(phrase, {
+      lang: paneLang,
+      translation: other || undefined,
+      definition:
+        paneLang === 'en'
+          ? enDefinition || undefined
+          : lowerDef || undefined,
+      definitions:
+        paneLang === 'en'
+          ? enDefinitions.length
+            ? enDefinitions
+            : undefined
+          : lowerDefs,
+      alternatives:
+        paneLang === 'en'
+          ? enAlternatives.length
+            ? enAlternatives
+            : undefined
+          : isZhTarget
+            ? alts
+            : undefined,
     })
   }
 
-  const openEnDetails = () => {
-    const zh = (yueDraft || storeYue).trim()
-    const en = (enDraft || storeEn).trim()
-    if (!en) return
-    openBreakdown(en, {
-      lang: 'en',
-      translation: zh || undefined,
-      definition: enDefinition || undefined,
-      definitions: enDefinitions.length ? enDefinitions : undefined,
-      alternatives: enAlternatives.length ? enAlternatives : undefined,
-    })
-  }
-
-  const enThinking =
-    (translating && translatingTo === 'en') || (typedBusy && editingRef.current === 'zh')
-  const yueThinking =
-    (translating && (translatingTo === 'yue' || translatingTo === 'cmn')) ||
-    (typedBusy && editingRef.current === 'en')
-  const showHint = !live && !translating && !typedBusy && !enDraft.trim() && !yueDraft.trim()
+  const upperThinking =
+    (translating && translatingTo === soloUpperLang) ||
+    (typedBusy && editingRef.current === 'lower')
+  const lowerThinking =
+    (translating && translatingTo === soloLowerLang) ||
+    (typedBusy && editingRef.current === 'upper')
+  const showHint = !live && !translating && !typedBusy && !upperDraft.trim() && !lowerDraft.trim()
   useEffect(() => {
     setSoloShowAutoHint(showHint)
     return () => setSoloShowAutoHint(false)
   }, [showHint, setSoloShowAutoHint])
 
   const inputLocked = live
-  // Show ruby during live Chinese STT, not only after translate lands.
-  const showYueRuby =
-    Boolean(yueDraft.trim()) && !yueEditing && (!inputLocked || Boolean(yueInterim.trim()))
+  const showLowerRuby =
+    (soloLowerLang === 'yue' || soloLowerLang === 'cmn') &&
+    Boolean(lowerDraft.trim()) &&
+    !lowerEditing &&
+    (!inputLocked || Boolean(yueInterim.trim()))
+  const showUpperRuby =
+    (soloUpperLang === 'yue' || soloUpperLang === 'cmn') &&
+    Boolean(upperDraft.trim()) &&
+    !upperEditing &&
+    (!inputLocked || Boolean(enInterim.trim()))
 
-  const enterZhEdit = () => {
-    editingRef.current = 'zh'
-    setYueEditing(true)
-    setSpeakDirection(chineseLang)
-    queueMicrotask(() => yueInputRef.current?.focus())
-  }
-
-  const openZhDetails = (phrase: string) => {
-    const en = (enDraft || storeEn).trim()
-    openBreakdown(phrase, {
-      lang: chineseLang,
-      translation: en || undefined,
-      definition: yueDef || undefined,
-      definitions: yueDefs,
-      alternatives: alts,
-    })
-  }
-
-  const dirValue: Lang = speakDirection === 'en' ? 'en' : chineseLang
   const canClear =
-    Boolean(enDraft.trim()) ||
-    Boolean(yueDraft.trim()) ||
+    Boolean(upperDraft.trim()) ||
+    Boolean(lowerDraft.trim()) ||
     history.length > 0 ||
     Boolean(enInterim) ||
     Boolean(yueInterim) ||
     Boolean(enTranslation) ||
     Boolean(yueTranslation)
+
+  const renderPaneBody = (opts: {
+    pane: 'upper' | 'lower'
+    lang: Lang
+    draft: string
+    thinking: boolean
+    showRuby: boolean
+    inputRef: React.RefObject<HTMLTextAreaElement | null>
+    onChange: (v: string) => void
+    onEdit: () => void
+    onBlurEdit: () => void
+  }) => {
+    const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
+    if (thinking) return <TranslateThinking className="solo-thinking" />
+
+    if (showRuby && (lang === 'yue' || lang === 'cmn')) {
+      const def = pane === 'lower' ? lowerDef : ''
+      const defs = pane === 'lower' ? lowerDefs : undefined
+      const paneAlts = pane === 'lower' ? alts : []
+      return (
+        <div className="solo-translation">
+          <ResultWithDefinition
+            text={draft}
+            definition={def}
+            definitions={defs}
+            chineseLang={lang}
+            textClassName="solo-tr-text"
+            onActivate={() => openPaneDetails(pane)}
+            showCopy
+          />
+          {pane === 'lower' && altsLoading && paneAlts.length === 0 ? (
+            <p className="solo-alts-loading muted" aria-live="polite">
+              <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
+            </p>
+          ) : null}
+          {paneAlts.length > 0 ? (
+            <TranslationAlternatives
+              alternatives={paneAlts}
+              lang={lang}
+              onSelect={selectYueVariation}
+            />
+          ) : null}
+          <button type="button" className="solo-edit-link" onClick={onEdit}>
+            {placeholderFor(lang)}
+          </button>
+        </div>
+      )
+    }
+
+    if (lang === 'en' && draft.trim() && !thinking) {
+      // Plain English stays in the textarea for type-to-edit.
+    }
+
+    return (
+      <textarea
+        ref={inputRef}
+        className={`solo-input ${lang === 'en' ? 'solo-input--en' : 'solo-input--yue'}`}
+        value={draft}
+        rows={3}
+        disabled={inputLocked}
+        placeholder={placeholderFor(lang)}
+        aria-label={placeholderFor(lang)}
+        onFocus={() => {
+          editingRef.current = pane
+          if (pane === 'upper') setUpperEditing(true)
+          else setLowerEditing(true)
+          setSpeakDirection(lang)
+        }}
+        onBlur={() => {
+          if (editingRef.current === pane) editingRef.current = null
+          onBlurEdit()
+        }}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || e.shiftKey) return
+          e.preventDefault()
+          runTranslate(draft, lang, 0, true)
+        }}
+      />
+    )
+  }
 
   return (
     <div className="solo">
@@ -278,106 +375,94 @@ export function SoloView() {
         transition={{ duration: 2.4, repeat: live ? Infinity : 0 }}
       >
         <div
-          className={`solo-upper${dirValue === 'en' ? ' is-mic-active' : ''}`}
+          className={`solo-upper${speakDirection === soloUpperLang ? ' is-mic-active' : ''}`}
           role="button"
           tabIndex={0}
-          aria-pressed={dirValue === 'en'}
-          aria-label="Speak English with the mic"
+          aria-pressed={speakDirection === soloUpperLang}
+          aria-label={ariaForPane(soloUpperLang)}
           onClick={(e) => {
-            // Pane chrome selects mic language; ignore clicks on controls/inputs.
             const t = e.target as HTMLElement
             if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
-            setSpeakDirection('en')
+            setSpeakDirection(soloUpperLang)
           }}
           onKeyDown={(e) => {
             if (e.key !== 'Enter' && e.key !== ' ') return
             if (e.target !== e.currentTarget) return
             e.preventDefault()
-            setSpeakDirection('en')
+            setSpeakDirection(soloUpperLang)
           }}
         >
           <div className="solo-pane-head">
             <LangLabelButton
-              lang="en"
-              active={dirValue === 'en'}
-              only="en"
-              onSelect={setSpeakDirection}
+              lang={soloUpperLang}
+              active={speakDirection === soloUpperLang}
+              onSelect={(lang) => setSoloPaneLang('upper', lang)}
             />
-            {enDraft.trim() ? (
+            {upperDraft.trim() ? (
               <div className="solo-pane-actions">
                 <button
                   type="button"
                   className="solo-details-btn"
-                  onClick={openEnDetails}
-                  aria-label="Open English details"
+                  onClick={() => openPaneDetails('upper')}
+                  aria-label="Open details"
                 >
                   <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
                 </button>
-                <SpeakButton text={enDraft} lang="en" />
+                <SpeakButton text={upperDraft} lang={soloUpperLang} />
               </div>
             ) : null}
           </div>
-          {enThinking ? (
-            <TranslateThinking className="solo-thinking" />
-          ) : (
-            <textarea
-              className="solo-input solo-input--en"
-              value={enDraft}
-              rows={3}
-              disabled={inputLocked}
-              placeholder={ui.soloTapTypeEnglish.en}
-              aria-label={ui.soloTapTypeEnglish.en}
-              onFocus={() => {
-                editingRef.current = 'en'
-                setSpeakDirection('en')
-              }}
-              onBlur={() => {
-                if (editingRef.current === 'en') editingRef.current = null
-              }}
-              onChange={(e) => onEnChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter' || e.shiftKey) return
-                e.preventDefault()
-                runTranslate(enDraft, 'en', 0, true)
-              }}
-            />
-          )}
+          {renderPaneBody({
+            pane: 'upper',
+            lang: soloUpperLang,
+            draft: upperDraft,
+            thinking: upperThinking,
+            showRuby: showUpperRuby,
+            inputRef: upperInputRef,
+            onChange: onUpperChange,
+            onEdit: () => {
+              editingRef.current = 'upper'
+              setUpperEditing(true)
+              setSpeakDirection(soloUpperLang)
+              queueMicrotask(() => upperInputRef.current?.focus())
+            },
+            onBlurEdit: () => setUpperEditing(false),
+          })}
         </div>
 
         <div className="solo-divider" />
 
         <div
-          className={`solo-lower${dirValue !== 'en' ? ' is-mic-active' : ''}`}
+          className={`solo-lower${speakDirection === soloLowerLang ? ' is-mic-active' : ''}`}
           role="button"
           tabIndex={0}
-          aria-pressed={dirValue !== 'en'}
-          aria-label="Speak Chinese with the mic"
+          aria-pressed={speakDirection === soloLowerLang}
+          aria-label={ariaForPane(soloLowerLang)}
           onClick={(e) => {
             const t = e.target as HTMLElement
             if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
-            setSpeakDirection(chineseLang)
+            setSpeakDirection(soloLowerLang)
           }}
           onKeyDown={(e) => {
             if (e.key !== 'Enter' && e.key !== ' ') return
             if (e.target !== e.currentTarget) return
             e.preventDefault()
-            setSpeakDirection(chineseLang)
+            setSpeakDirection(soloLowerLang)
           }}
         >
           <div className="solo-pane-head">
             <LangLabelButton
-              lang={chineseLang}
-              active={dirValue !== 'en'}
-              only="zh"
-              onSelect={setSpeakDirection}
+              lang={soloLowerLang}
+              active={speakDirection === soloLowerLang}
+              onSelect={(lang) => setSoloPaneLang('lower', lang)}
             />
-            {yueDraft.trim() || canClear ? (
+            {lowerDraft.trim() || canClear ? (
               <div className="solo-pane-actions">
-                {yueDraft.trim() ? (
+                {lowerDraft.trim() ? (
                   <button
                     type="button"
                     className="solo-details-btn"
-                    onClick={openDetails}
+                    onClick={() => openPaneDetails('lower')}
                     aria-label={biPlain(ui.charDetail)}
                   >
                     <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
@@ -385,77 +470,38 @@ export function SoloView() {
                 ) : null}
                 <div className="solo-pane-actions-stack">
                   {canClear ? <ClearIconButton onClick={clearHistory} /> : null}
-                  {yueDraft.trim() ? (
-                    <SpeakButton text={yueDraft} lang={chineseLang} />
+                  {lowerDraft.trim() ? (
+                    <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
                 </div>
               </div>
             ) : null}
           </div>
-          {yueThinking ? (
-            <TranslateThinking className="solo-thinking" />
-          ) : showYueRuby ? (
-            <div className="solo-translation">
-              <ResultWithDefinition
-                text={yueDraft}
-                definition={yueDef}
-                definitions={yueDefs}
-                chineseLang={chineseLang}
-                textClassName="solo-tr-text"
-                onActivate={openZhDetails}
-                showCopy
-              />
-              {altsLoading && alts.length === 0 ? (
-                <p className="solo-alts-loading muted" aria-live="polite">
-                  <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
-                </p>
-              ) : null}
-              {alts.length > 0 ? (
-                <TranslationAlternatives
-                  alternatives={alts}
-                  lang={chineseLang}
-                  onSelect={selectYueVariation}
-                />
-              ) : null}
-              <button type="button" className="solo-edit-link" onClick={enterZhEdit}>
-                {ui.soloTapTypeChinese.zh}
-              </button>
-            </div>
-          ) : (
-            <textarea
-              ref={yueInputRef}
-              className="solo-input solo-input--yue"
-              value={yueDraft}
-              rows={3}
-              disabled={inputLocked}
-              placeholder={ui.soloTapTypeChinese.zh}
-              aria-label={ui.soloTapTypeChinese.zh}
-              onFocus={() => {
-                editingRef.current = 'zh'
-                setYueEditing(true)
-                setSpeakDirection(chineseLang)
-              }}
-              onBlur={() => {
-                if (editingRef.current === 'zh') editingRef.current = null
-                setYueEditing(false)
-              }}
-              onChange={(e) => onZhChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key !== 'Enter' || e.shiftKey) return
-                e.preventDefault()
-                runTranslate(yueDraft, chineseLang, 0, true)
-              }}
-            />
-          )}
-          {!showYueRuby && altsLoading && alts.length === 0 && yueDraft.trim() ? (
+          {renderPaneBody({
+            pane: 'lower',
+            lang: soloLowerLang,
+            draft: lowerDraft,
+            thinking: lowerThinking,
+            showRuby: showLowerRuby,
+            inputRef: lowerInputRef,
+            onChange: onLowerChange,
+            onEdit: () => {
+              editingRef.current = 'lower'
+              setLowerEditing(true)
+              setSpeakDirection(soloLowerLang)
+              queueMicrotask(() => lowerInputRef.current?.focus())
+            },
+            onBlurEdit: () => setLowerEditing(false),
+          })}
+          {!showLowerRuby && altsLoading && alts.length === 0 && lowerDraft.trim() ? (
             <p className="solo-alts-loading muted" aria-live="polite">
               <BiText copy={ui.loadingVariations} size="sm" layout="inline" />
             </p>
           ) : null}
-          {!showYueRuby && alts.length > 0 ? (
+          {!showLowerRuby && alts.length > 0 && (soloLowerLang === 'yue' || soloLowerLang === 'cmn') ? (
             <TranslationAlternatives
               alternatives={alts}
-              lang={chineseLang}
+              lang={soloLowerLang}
               onSelect={selectYueVariation}
             />
           ) : null}

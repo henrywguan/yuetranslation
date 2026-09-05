@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
+import { MandarinText } from './MandarinText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
+import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
 import { ClearIconButton } from './ClearIconButton'
 import { SpeakButton } from './SpeakButton'
@@ -12,7 +14,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 
 /**
  * Conversation: two language-pure cards on a shared phone.
- * Cantonese sits on top, rotated 180° for the person across the table.
+ * Chinese (粵 or 普) sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
  * Pipeline: mic → live STT on the speaking side → after capture ends, one final
@@ -23,6 +25,8 @@ export function ConversationView() {
   const face = useYueStore((s) => s.face)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const clearHistory = useYueStore((s) => s.clearHistory)
+  const chineseLang = useYueStore((s) => s.chineseLang)
+  const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const live = useYueStore((s) => s.live)
   const liveSide = useYueStore((s) => s.liveSide)
   const status = useYueStore((s) => s.status)
@@ -31,39 +35,44 @@ export function ConversationView() {
 
   // Independent loaders: each pane shows thinking when it is receiving a translation.
   const enThinking = translating && translatingTo === 'en'
-  const yueThinking = translating && translatingTo === 'yue'
+  const zhThinking = translating && translatingTo === chineseLang
 
   const enText = face.enTranslation || face.enInterim
-  const yueText = face.yueTranslation || face.yueInterim
+  const zhText = face.yueTranslation || face.yueInterim
   // Live = STT source preview on the speaking side, before post-capture translation.
   const enLive =
     Boolean(face.enInterim) && !face.enTranslation && !face.yueTranslation
-  const yueLive =
+  const zhLive =
     Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
   const enListening = live && liveSide === 'en'
-  const yueListening = live && liveSide === 'yue'
+  const zhListening = live && (liveSide === 'yue' || liveSide === 'cmn')
 
   const openEnDetails = () => {
-    const yue = (face.yueInterim || face.yueTranslation).trim()
+    const zh = (face.yueInterim || face.yueTranslation).trim()
     const en = face.enTranslation.trim()
     if (!en) return
     openBreakdown(en, {
       lang: 'en',
-      translation: yue || undefined,
+      translation: zh || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,
     })
   }
 
-  const openYueDetails = (phrase: string) => {
+  const openZhDetails = (phrase: string) => {
     const source = phrase.trim()
     if (!source) return
     openBreakdown(source, {
-      lang: 'yue',
+      lang: chineseLang,
       translation: face.enTranslation.trim() || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,
     })
+  }
+
+  const onChineseLang = (lang: 'yue' | 'cmn' | 'en') => {
+    if (lang === 'en') return
+    setSpeakDirection(lang)
   }
 
   return (
@@ -75,43 +84,64 @@ export function ConversationView() {
       ) : null}
 
       <section
-        className={`pane pane-yue${yueListening ? ' is-listening' : ''}${yueThinking ? ' is-thinking' : ''}`}
+        className={`pane pane-yue${zhListening ? ' is-listening' : ''}${zhThinking ? ' is-thinking' : ''}`}
       >
         <div className="pane-face">
           <header>
-            <h2 lang="zh-HK">{ui.cantonese.zh}</h2>
-            <p lang="zh-HK">{ui.friendLooksHere.zh}</p>
+            <LangLabelButton
+              lang={chineseLang}
+              active={zhListening}
+              only="zh"
+              onSelect={onChineseLang}
+            />
+            <p lang={chineseLang === 'cmn' ? 'zh-CN' : 'zh-HK'}>{ui.friendLooksHere.zh}</p>
           </header>
           <div className="pane-body pane-body--hero">
-            {yueThinking ? (
+            {zhThinking ? (
               <TranslateThinking className="pane-thinking" />
             ) : (
               <InkSettle
-                id={yueLive ? 'face-yue-live' : yueText || 'face-yue-empty'}
+                id={zhLive ? 'face-zh-live' : zhText || 'face-zh-empty'}
                 className="pane-hero pane-hero--yue"
-                interim={yueLive}
+                interim={zhLive}
               >
-                {yueText ? (
+                {zhText ? (
                   <span className="spoken-line">
-                    <CantoneseText
-                      text={yueText}
-                      definition={face.yueDefinition}
-                      definitions={face.yueDefinitions}
-                      className="pane-hero--yue"
-                      onActivate={openYueDetails}
-                    />
+                    {chineseLang === 'cmn' ? (
+                      <MandarinText
+                        text={zhText}
+                        definition={face.yueDefinition}
+                        definitions={face.yueDefinitions}
+                        className="pane-hero--yue"
+                        onActivate={openZhDetails}
+                      />
+                    ) : (
+                      <CantoneseText
+                        text={zhText}
+                        definition={face.yueDefinition}
+                        definitions={face.yueDefinitions}
+                        className="pane-hero--yue"
+                        onActivate={openZhDetails}
+                      />
+                    )}
                     {face.yueTranslation ? (
-                      <SpeakButton text={face.yueTranslation} lang="yue" />
+                      <SpeakButton text={face.yueTranslation} lang={chineseLang} />
                     ) : null}
                   </span>
                 ) : (
-                  <span className="placeholder">{ui.yueTranslation.zh}</span>
+                  <span className="placeholder">
+                    {chineseLang === 'cmn' ? ui.dirMandarin.zh : ui.yueTranslation.zh}
+                  </span>
                 )}
               </InkSettle>
             )}
           </div>
           <div className="pane-live">
-            <LiveHoldButton side="yue" labelLang="zh" className="live-btn--pane live-btn--yue" />
+            <LiveHoldButton
+              side={chineseLang}
+              labelLang="zh"
+              className="live-btn--pane live-btn--yue"
+            />
           </div>
         </div>
       </section>

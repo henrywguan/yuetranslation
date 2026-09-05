@@ -4,7 +4,7 @@
 import { translateCameraText, translateCameraBatch, type CameraLang } from '../translateCamera.js'
 import { hasHan } from '../canto/han.js'
 
-export type DocLang = 'en' | 'yue'
+export type DocLang = 'en' | 'yue' | 'cmn'
 
 const SKIP_RE =
   /^(https?:\/\/\S+|[\w.+-]+@[\w.-]+\.\w+|[\d mon.,:%€$£¥+\-/=]+)$/i
@@ -18,6 +18,10 @@ export function shouldTranslateSegment(text: string): boolean {
   return true
 }
 
+function toCameraLang(lang: DocLang): CameraLang {
+  return lang
+}
+
 /** Translate many short segments with document-level context when possible. */
 export async function translateSegments(
   segments: string[],
@@ -27,8 +31,8 @@ export async function translateSegments(
 ): Promise<string[]> {
   if (from === to) return segments.map((s) => s)
 
-  const camFrom: CameraLang = from === 'en' ? 'en' : 'zh'
-  const camTo: CameraLang = to === 'en' ? 'en' : 'zh'
+  const camFrom = toCameraLang(from)
+  const camTo = toCameraLang(to)
 
   const indices: number[] = []
   const toTranslate: string[] = []
@@ -66,7 +70,13 @@ export async function translateSegments(
         const result = await translateCameraText(src, camFrom, camTo, { context })
         const text = (result.text || '').trim()
         if (camTo === 'en' && hasHan(text)) out[i] = src
-        else if (camTo === 'zh' && text && !hasHan(text) && /[A-Za-z]/.test(src)) out[i] = src
+        else if (
+          (camTo === 'yue' || camTo === 'cmn') &&
+          text &&
+          !hasHan(text) &&
+          /[A-Za-z]/.test(src)
+        )
+          out[i] = src
         else out[i] = text || src
       } catch {
         out[i] = src

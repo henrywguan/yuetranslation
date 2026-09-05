@@ -48,8 +48,12 @@ function emptyFaceLive(): FaceLive {
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
-  /** Remembered Chinese variety for Solo EN↔ZH pairing (default Cantonese). */
+  /** Remembered Chinese variety for defaults when picking 粵/普 (Solo + Conversation). */
   chineseLang: 'yue' | 'cmn'
+  /** Solo upper pane language (any en|yue|cmn; must differ from lower). */
+  soloUpperLang: Lang
+  /** Solo lower pane language (any en|yue|cmn; must differ from upper). */
+  soloLowerLang: Lang
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
   /** Text currently playing via manual/auto TTS (for per-button speaking state). */
@@ -99,6 +103,8 @@ type State = {
   liveSide: Lang | null
   setMode: (mode: Mode) => void
   setSpeakDirection: (d: SpeakDirection) => void
+  /** Solo: set a pane language; if same as the other pane, swap. */
+  setSoloPaneLang: (pane: 'upper' | 'lower', lang: Lang) => void
   setAutoSpeak: (v: boolean) => void
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
@@ -243,8 +249,7 @@ function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
 function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
   if (direction === 'yue') return 'yue'
-  // Mandarin STT not wired yet — treat `cmn` as auto-detect for live mic.
-  if (direction === 'cmn') return detected
+  if (direction === 'cmn') return 'cmn'
   return detected
 }
 
@@ -344,28 +349,33 @@ function applyHoldSource(
         status: 'listening',
       })
     }
-  } else if (lang === 'en') {
-    set({
-      enInterim: text,
-      yueInterim: '',
-      enTranslation: '',
-      yueTranslation: '',
-      yueDefinition: '',
-      yueDefinitions: [],
-      yueAlternatives: [],
-      status: 'listening',
-    })
   } else {
-    set({
-      yueInterim: text,
-      enInterim: '',
-      enTranslation: '',
-      yueTranslation: '',
-      yueDefinition: '',
-      yueDefinitions: [],
-      yueAlternatives: [],
-      status: 'listening',
-    })
+    // Solo: en* = upper pane, yue* = lower pane.
+    const upper = get().soloUpperLang
+    const fromUpper = lang === upper
+    if (fromUpper) {
+      set({
+        enInterim: text,
+        yueInterim: '',
+        enTranslation: '',
+        yueTranslation: '',
+        yueDefinition: '',
+        yueDefinitions: [],
+        yueAlternatives: [],
+        status: 'listening',
+      })
+    } else {
+      set({
+        yueInterim: text,
+        enInterim: '',
+        enTranslation: '',
+        yueTranslation: '',
+        yueDefinition: '',
+        yueDefinitions: [],
+        yueAlternatives: [],
+        status: 'listening',
+      })
+    }
   }
 }
 
@@ -417,6 +427,8 @@ export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
   speakDirection: 'en',
   chineseLang: 'yue',
+  soloUpperLang: 'en',
+  soloLowerLang: 'yue',
   live: false,
   status: 'idle',
   speakingText: null,
@@ -464,6 +476,40 @@ export const useYueStore = create<State>((set, get) => ({
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
+  setSoloPaneLang: (pane, lang) => {
+    const upper = get().soloUpperLang
+    const lower = get().soloLowerLang
+    const other = pane === 'upper' ? lower : upper
+    const current = pane === 'upper' ? upper : lower
+    let nextUpper = upper
+    let nextLower = lower
+    if (lang === other) {
+      // Same as the other pane → swap.
+      if (pane === 'upper') {
+        nextUpper = lang
+        nextLower = current
+      } else {
+        nextLower = lang
+        nextUpper = current
+      }
+    } else if (pane === 'upper') {
+      nextUpper = lang
+    } else {
+      nextLower = lang
+    }
+    const chinesePatch =
+      lang === 'yue' || lang === 'cmn'
+        ? { chineseLang: lang as 'yue' | 'cmn' }
+        : current === 'yue' || current === 'cmn'
+          ? {}
+          : {}
+    set({
+      soloUpperLang: nextUpper,
+      soloLowerLang: nextLower,
+      speakDirection: lang,
+      ...chinesePatch,
+    })
+  },
   setAutoSpeak: (autoSpeak) => {
     writeLocalAutoSpeak(autoSpeak)
     set({ autoSpeak })
@@ -530,10 +576,17 @@ export const useYueStore = create<State>((set, get) => ({
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {
-        const { writeLocalEnVoice, writeLocalYueVoice, resolveEnVoice, resolveYueVoice } =
-          await import('./ttsVoices')
+        const {
+          writeLocalCmnVoice,
+          writeLocalEnVoice,
+          writeLocalYueVoice,
+          resolveCmnVoice,
+          resolveEnVoice,
+          resolveYueVoice,
+        } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
         if (ent.prefs?.ttsVoiceEn) writeLocalEnVoice(resolveEnVoice(ent.prefs.ttsVoiceEn))
+        if (ent.prefs?.ttsVoiceCmn) writeLocalCmnVoice(resolveCmnVoice(ent.prefs.ttsVoiceCmn))
       } catch {
         /* ignore */
       }
@@ -670,7 +723,7 @@ export const useYueStore = create<State>((set, get) => ({
     const webSpeechLock = () => {
       const lock = holdSideLock
       const d = get().speakDirection
-      return lock || (d === 'en' || d === 'yue' ? d : undefined)
+      return lock || (d === 'en' || d === 'yue' || d === 'cmn' ? d : undefined)
     }
 
     let next = null as LiveSession | null
