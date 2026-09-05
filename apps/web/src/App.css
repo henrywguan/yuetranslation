@@ -4115,11 +4115,14 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.lang-label-btn:disabled {
+  cursor: default;
+}
 .lang-label.is-active .lang-label-btn {
   color: var(--ink-bright, var(--ink));
 }
-.lang-label-btn:hover,
-.lang-label-btn:focus-visible {
+.lang-label-btn:hover:not(:disabled),
+.lang-label-btn:focus-visible:not(:disabled) {
   color: var(--ink-bright, var(--ink));
   outline: none;
 }
@@ -4128,40 +4131,151 @@
   opacity: 0.75;
   transform: translateY(-0.05em);
 }
-.lang-label-menu {
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 0;
-  z-index: 30;
-  margin: 0;
-  padding: 0.3rem;
-  list-style: none;
-  min-width: 9.5rem;
-  border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--harbor-mid, #163039) 92%, black);
-  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border, #2c4a52));
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+
+/* Full-screen language pickers — avoid Solo pane hit-target collisions on mobile. */
+.lang-drawer-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  pointer-events: auto;
 }
-.lang-label-option {
+.lang-drawer-layer--bottom {
+  align-items: end;
+  justify-items: center;
+}
+.lang-drawer-layer--top {
+  align-items: start;
+  justify-items: center;
+}
+.lang-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: color-mix(in srgb, #061018 52%, transparent);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+.lang-drawer {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  margin: 0 auto;
+  padding: 10px 14px 14px;
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--harbor-mid, #163039) 96%, var(--jade) 4%),
+      color-mix(in srgb, var(--harbor-mid, #163039) 94%, transparent)
+    );
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+.lang-drawer--bottom {
+  border-radius: 22px 22px 0 0;
+  border-bottom: 0;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
+.lang-drawer--top {
+  border-radius: 0 0 22px 22px;
+  border-top: 0;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+}
+.lang-drawer-handle {
+  width: 42px;
+  height: 4px;
+  margin: 2px auto 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+.lang-drawer-handle--top {
+  order: 3;
+  margin: 12px auto 2px;
+}
+.lang-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.lang-drawer--top .lang-drawer-head {
+  order: 1;
+}
+.lang-drawer-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.lang-drawer-close {
+  flex: none;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.lang-drawer-close:hover,
+.lang-drawer-close:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+}
+.lang-drawer-menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.lang-drawer--top .lang-drawer-menu {
+  order: 2;
+}
+.lang-drawer-option {
   appearance: none;
   width: 100%;
-  border: 0;
-  background: transparent;
+  min-height: 3rem;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--surface) 35%, transparent);
   color: var(--ink-bright, var(--ink));
   text-align: left;
-  padding: 0.45rem 0.6rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
   cursor: pointer;
   font: inherit;
 }
-.lang-label-option:hover,
-.lang-label-option:focus-visible {
+.lang-drawer-option:hover,
+.lang-drawer-option:focus-visible {
   background: color-mix(in srgb, var(--jade) 18%, transparent);
   outline: none;
 }
-.lang-label-option.is-selected {
+.lang-drawer-option.is-selected {
   background: color-mix(in srgb, var(--jade) 24%, transparent);
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
   font-weight: 600;
+}
+
+@media (min-width: 720px) {
+  .lang-drawer-layer--bottom,
+  .lang-drawer-layer--top {
+    align-items: center;
+    justify-items: center;
+    padding: 24px;
+  }
+  .lang-drawer--bottom,
+  .lang-drawer--top {
+    border-radius: 18px;
+    border: 1px solid var(--glass-border);
+    padding: 14px 16px;
+  }
+  .lang-drawer-handle {
+    display: none;
+  }
 }
 
 .conversation-clear {
