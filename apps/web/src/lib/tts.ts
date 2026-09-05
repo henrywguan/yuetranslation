@@ -1,6 +1,6 @@
 import { fetchTtsAudio } from './api'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalEnVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalEnVoice, readLocalTlVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
@@ -159,7 +159,7 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (override) return override
   if (lang === 'en') return readLocalEnVoice()
   if (lang === 'cmn') return readLocalCmnVoice()
-  if (lang === 'tl') return null
+  if (lang === 'tl') return readLocalTlVoice()
   return readLocalYueVoice()
 }
 

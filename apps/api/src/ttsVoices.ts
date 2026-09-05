@@ -11,6 +11,7 @@ export {
   isYueVoice,
   isEnVoice,
   isCmnVoice,
+  isTlVoice,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -20,6 +21,7 @@ export {
   type YueVoiceId,
   type EnVoiceId,
   type CmnVoiceId,
+  type TlVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'

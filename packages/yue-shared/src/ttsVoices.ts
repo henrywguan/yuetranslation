@@ -201,6 +201,7 @@ export function resolveSpeakVoice(
   preferredYue?: string | null,
   preferredEn?: string | null,
   preferredCmn?: string | null,
+  preferredTl?: string | null,
   override?: string | null,
 ): { voice: string; xmlLang: string } {
   const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU'
@@ -224,7 +225,7 @@ export function resolveSpeakVoice(
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
   if (isTl) {
-    const id = resolveTlVoice(null)
+    const id = resolveTlVoice(preferredTl)
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
   const id = resolveYueVoice(preferredYue)

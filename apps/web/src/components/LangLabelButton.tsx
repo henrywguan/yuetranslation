@@ -16,7 +16,7 @@ const OPTIONS: { id: Lang; copy: Bi }[] = [
 /**
  * Pane language label — tap opens a top or bottom drawer (not an inline popover),
  * so mobile taps cannot miss the menu and hit the Solo mic-direction pane behind it.
- * Solo: full en|yue|cmn|tl. Conversation Chinese face: only="zh".
+ * Solo: full en|yue|cmn|tl. Conversation partner face: only="zh" (yue|cmn|tl).
  */
 export function LangLabelButton({
   lang,
@@ -39,7 +39,7 @@ export function LangLabelButton({
     only === 'en'
       ? OPTIONS.filter((o) => o.id === 'en')
       : only === 'zh'
-        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn')
+        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn' || o.id === 'tl')
         : OPTIONS
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1
@@ -148,9 +148,11 @@ export function LangLabelButton({
           only={
             only === 'en'
               ? 'en'
-              : only === 'zh' || current.id === 'yue' || current.id === 'cmn'
-                ? 'zh'
-                : undefined
+              : current.id === 'tl'
+                ? undefined
+                : only === 'zh' || current.id === 'yue' || current.id === 'cmn'
+                  ? 'zh'
+                  : undefined
           }
           hideJp
         />

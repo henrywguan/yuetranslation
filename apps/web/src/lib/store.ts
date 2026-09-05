@@ -48,8 +48,8 @@ function emptyFaceLive(): FaceLive {
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
-  /** Remembered Chinese variety for defaults when picking 粵/普 (Solo + Conversation). */
-  chineseLang: 'yue' | 'cmn'
+  /** Remembered partner variety for Conversation (粵 / 普 / Tagalog). */
+  chineseLang: 'yue' | 'cmn' | 'tl'
   /** Solo upper pane language (any en|yue|cmn; must differ from lower). */
   soloUpperLang: Lang
   /** Solo lower pane language (any en|yue|cmn; must differ from upper). */
@@ -250,6 +250,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
   if (direction === 'yue') return 'yue'
   if (direction === 'cmn') return 'cmn'
+  if (direction === 'tl') return 'tl'
   return detected
 }
 
@@ -472,7 +473,7 @@ export const useYueStore = create<State>((set, get) => ({
   },
   setSpeakDirection: (speakDirection) =>
     set(
-      speakDirection === 'yue' || speakDirection === 'cmn'
+      speakDirection === 'yue' || speakDirection === 'cmn' || speakDirection === 'tl'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -498,9 +499,9 @@ export const useYueStore = create<State>((set, get) => ({
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn'
-        ? { chineseLang: lang as 'yue' | 'cmn' }
-        : current === 'yue' || current === 'cmn'
+      lang === 'yue' || lang === 'cmn' || lang === 'tl'
+        ? { chineseLang: lang as 'yue' | 'cmn' | 'tl' }
+        : current === 'yue' || current === 'cmn' || current === 'tl'
           ? {}
           : {}
     set({
@@ -579,14 +580,17 @@ export const useYueStore = create<State>((set, get) => ({
         const {
           writeLocalCmnVoice,
           writeLocalEnVoice,
+          writeLocalTlVoice,
           writeLocalYueVoice,
           resolveCmnVoice,
           resolveEnVoice,
+          resolveTlVoice,
           resolveYueVoice,
         } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
         if (ent.prefs?.ttsVoiceEn) writeLocalEnVoice(resolveEnVoice(ent.prefs.ttsVoiceEn))
         if (ent.prefs?.ttsVoiceCmn) writeLocalCmnVoice(resolveCmnVoice(ent.prefs.ttsVoiceCmn))
+        if (ent.prefs?.ttsVoiceTl) writeLocalTlVoice(resolveTlVoice(ent.prefs.ttsVoiceTl))
       } catch {
         /* ignore */
       }

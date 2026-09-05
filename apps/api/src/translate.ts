@@ -13,6 +13,7 @@ import {
   type TranslateStage,
 } from './canto/index.js'
 import { hasHan } from './canto/han.js'
+import { inferTagalogRegister } from './tagalogRegister.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
 function applyCmnScrub(
@@ -454,26 +455,40 @@ async function translateTagalog(opts: {
 
   const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
   const toTl = to === 'tl'
+  const register = toTl ? inferTagalogRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'tl-formal' : 'tl-colloquial'
   let primary = text
   let alternatives: string[] = []
   let definition = fallbackDefinition
 
   if (wantAlts && toTl) {
-    const system = [
-      'You are a Filipino/Tagalog interpreter for face-to-face conversation.',
-      'Translate English into COLLOQUIAL spoken Tagalog/Filipino (not textbook).',
-      'Use Metro Manila everyday conversation; light Taglish is OK when natural.',
-      'Do NOT use stiff textbook / formal school Filipino.',
-      'Prefer everyday wording: kumusta, wala na, sige, tara, ano ba, grabe.',
-      'On the PRIMARY line, mark stress/glottal with dictionary diacritics when helpful (acute/grave/circumflex on the final vowel). Alternatives may be unmarked.',
-      'Do NOT use Chinese characters.',
-      'Return ONLY valid JSON:',
-      '{"primary":"<best colloquial Tagalog>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
-      'Prefer 2–3 natural spoken variants (including a more Taglish option when natural). No markdown.',
-    ].join('\n')
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Filipino/Tagalog interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Filipino/Tagalog (complete sentences, po/opo when natural).',
+            'Avoid slang and heavy Taglish; keep wording clear and respectful.',
+            'On the PRIMARY line, mark stress/glottal with dictionary diacritics when helpful (acute/grave/circumflex on the final vowel). Alternatives may be unmarked.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Tagalog>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Filipino/Tagalog interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Tagalog/Filipino (not textbook).',
+            'Use Metro Manila everyday conversation; light Taglish is OK when natural.',
+            'Do NOT use stiff textbook / formal school Filipino.',
+            'Prefer everyday wording: kumusta, wala na, sige, tara, ano ba, grabe.',
+            'On the PRIMARY line, mark stress/glottal with dictionary diacritics when helpful (acute/grave/circumflex on the final vowel). Alternatives may be unmarked.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Tagalog>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants (including a more Taglish option when natural). No markdown.',
+          ].join('\n')
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
-      temperature: 0.4,
+      temperature: register === 'formal' ? 0.3 : 0.4,
       max_tokens: 400,
       messages: [
         { role: 'system', content: system },
@@ -513,15 +528,25 @@ async function translateTagalog(opts: {
     if (parsedEn.definition) definition = parsedEn.definition
   } else {
     const system = toTl
-      ? [
-          'You are a Filipino/Tagalog interpreter for face-to-face conversation.',
-          'Translate into COLLOQUIAL spoken Tagalog/Filipino (not textbook).',
-          'Metro Manila everyday style; light Taglish OK when natural.',
-          'Mark stress/glottal with dictionary diacritics when helpful for pronunciation.',
-          'Do NOT use Chinese characters.',
-          'Return ONLY valid JSON:',
-          '{"translation":"<colloquial Tagalog>","definition":"<short English gloss>"}',
-        ].join('\n')
+      ? register === 'formal'
+        ? [
+            'You are a Filipino/Tagalog interpreter for formal situations.',
+            'Translate into POLITE formal Filipino/Tagalog (complete sentences; po/opo when natural).',
+            'Avoid slang and heavy Taglish.',
+            'Mark stress/glottal with dictionary diacritics when helpful for pronunciation.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Tagalog>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Filipino/Tagalog interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Tagalog/Filipino (not textbook).',
+            'Metro Manila everyday style; light Taglish OK when natural.',
+            'Mark stress/glottal with dictionary diacritics when helpful for pronunciation.',
+            'Do NOT use Chinese characters.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Tagalog>","definition":"<short English gloss>"}',
+          ].join('\n')
       : [
           'You are a Filipino/Tagalog interpreter.',
           'Translate colloquial Tagalog/Filipino (including Taglish) into natural English for conversation.',
@@ -530,7 +555,7 @@ async function translateTagalog(opts: {
         ].join('\n')
     const completion = await client.chat.completions.create({
       model: env.openaiModel,
-      temperature: 0.25,
+      temperature: toTl && register === 'formal' ? 0.2 : 0.25,
       max_tokens: 400,
       messages: [
         { role: 'system', content: system },
@@ -557,7 +582,7 @@ async function translateTagalog(opts: {
         from,
         to,
         stage,
-        meta: emptyMeta(outText ? ['tl-colloquial'] : ['tl-colloquial', 'no-tl-output']),
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-tl-output']),
       },
       text,
     )
@@ -588,7 +613,7 @@ async function translateTagalog(opts: {
       from,
       to,
       stage,
-      meta: emptyMeta(['tl-colloquial']),
+      meta: emptyMeta([registerNote]),
     },
     text,
   )

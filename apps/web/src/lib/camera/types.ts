@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'tl'
 
 export type EditableBox = {
   id: string
@@ -21,12 +21,13 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'tl'
 
-/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn`). */
+/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn` | `tl`). */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'cmn') return 'cmn'
   if (lang === 'en') return 'en'
+  if (lang === 'tl' || lang === 'fil') return 'tl'
   // Legacy `zh` and explicit yue → Cantonese
   return 'yue'
 }
@@ -74,12 +75,32 @@ function isChineseCam(lang: CameraLang): boolean {
   return lang === 'yue' || lang === 'cmn'
 }
 
-/** Pick Chinese + English sides for the shared character breakdown panel. */
+function isTagalogCam(lang: CameraLang): boolean {
+  return lang === 'tl'
+}
+
+/** Pick Chinese/Tagalog + English sides for the shared character breakdown panel. */
 export function boxDetailArgs(box: EditableBox): {
   phrase: string
   translation?: string
   lang?: CameraLang
 } {
+  if (isTagalogCam(box.to) || isTagalogCam(box.from)) {
+    const tlByDir = box.to === 'tl' ? box.translated : box.from === 'tl' ? box.text : ''
+    const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
+    const tl =
+      tlByDir.trim() ||
+      (!HAN_RE.test(box.translated) ? box.translated : '') ||
+      (!HAN_RE.test(box.text) ? box.text : '')
+    const en =
+      enByDir.trim() ||
+      (box.to !== 'tl' && !HAN_RE.test(box.translated) ? box.translated : '') ||
+      (box.from !== 'tl' && !HAN_RE.test(box.text) ? box.text : '')
+    const phrase = (tl || box.text || box.translated).trim()
+    const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
+    return { phrase, translation, lang: 'tl' }
+  }
+
   const zhByDir = isChineseCam(box.to)
     ? box.translated
     : isChineseCam(box.from)
@@ -109,6 +130,7 @@ export function boxDetailArgs(box: EditableBox): {
 export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'cmn') return 'cmn'
   if (box.to === 'yue') return 'yue'
+  if (box.to === 'tl') return 'tl'
   if (box.to === 'en') return 'en'
   return HAN_RE.test(box.translated || box.text) ? 'yue' : 'en'
 }

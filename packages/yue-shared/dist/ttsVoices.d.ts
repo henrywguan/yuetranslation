@@ -31,7 +31,7 @@ export declare function resolveCmnVoice(id: string | null | undefined): CmnVoice
 export declare function resolveTlVoice(id: string | null | undefined): TlVoiceId;
 export declare function voiceMeta(id: string): TtsVoiceOption | undefined;
 /** Pick Azure voice + xml:lang for a speak request. */
-export declare function resolveSpeakVoice(lang: string, preferredYue?: string | null, preferredEn?: string | null, preferredCmn?: string | null, override?: string | null): {
+export declare function resolveSpeakVoice(lang: string, preferredYue?: string | null, preferredEn?: string | null, preferredCmn?: string | null, preferredTl?: string | null, override?: string | null): {
     voice: string;
     xmlLang: string;
 };

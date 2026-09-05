@@ -148,7 +148,7 @@ export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, override) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredTl, override) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     const isTl = lang === 'tl' || lang === 'fil' || lang === 'fil-PH';
@@ -174,7 +174,7 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
     if (isTl) {
-        const id = resolveTlVoice(null);
+        const id = resolveTlVoice(preferredTl);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
     const id = resolveYueVoice(preferredYue);

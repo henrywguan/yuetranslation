@@ -7,7 +7,7 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: 'yue' | 'cmn'
+  chineseLang: 'yue' | 'cmn' | 'tl'
   /** Solo upper/lower pane languages (any en|yue|cmn|tl pair; must differ). */
   soloUpperLang: Lang
   soloLowerLang: Lang

@@ -35,6 +35,7 @@ export type ProfileRow = {
   tts_voice_yue: string | null
   tts_voice_en: string | null
   tts_voice_cmn: string | null
+  tts_voice_tl: string | null
   /** Cross-device Auto-speak preference. */
   auto_speak: boolean
   username: string | null
@@ -57,6 +58,7 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_yue?: string | null
     tts_voice_en?: string | null
     tts_voice_cmn?: string | null
+    tts_voice_tl?: string | null
     auto_speak?: boolean | null
     username?: string | null
     username_changed_at?: string | null
@@ -72,6 +74,7 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_yue: typeof row.tts_voice_yue === 'string' ? row.tts_voice_yue : null,
     tts_voice_en: typeof row.tts_voice_en === 'string' ? row.tts_voice_en : null,
     tts_voice_cmn: typeof row.tts_voice_cmn === 'string' ? row.tts_voice_cmn : null,
+    tts_voice_tl: typeof row.tts_voice_tl === 'string' ? row.tts_voice_tl : null,
     auto_speak: Boolean(row.auto_speak),
   }
 }
@@ -97,6 +100,7 @@ export async function upsertProfilePlan(
       | 'tts_voice_yue'
       | 'tts_voice_en'
       | 'tts_voice_cmn'
+      | 'tts_voice_tl'
       | 'auto_speak'
       | 'username'
       | 'username_changed_at'
