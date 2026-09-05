@@ -326,6 +326,16 @@ assert(
   `expected contextual gloss for 牙, got ${JSON.stringify(ngaaRow!.meaning)}`,
 )
 
+
+// English learner breakdown (offline dictionary path — no model required).
+const enBreakdown = await breakdown({ text: 'Happy birthday', lang: 'en' })
+assert(enBreakdown.lang === 'en', `expected en breakdown lang, got ${enBreakdown.lang}`)
+assert(enBreakdown.characters.some((c) => /birthday/i.test(c.char)), 'en breakdown missing birthday token')
+assert(
+  enBreakdown.characters.some((c) => c.meaning),
+  'en breakdown should include at least one Cantonese gloss offline',
+)
+
 console.log(
   JSON.stringify(
     {

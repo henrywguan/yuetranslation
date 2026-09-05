@@ -1,21 +1,25 @@
 export type DetailLayer =
   | {
       kind: 'phrase'
-      /** Cantonese (or source) phrase under study. */
+      /** Phrase under study (Cantonese or English). */
       phrase: string
+      /** Which learner panel to show. Auto-detected from script when omitted. */
+      lang?: 'en' | 'yue'
       translation?: string
       definition?: string
-      /** Multiple English senses listed in the details pane / drawer. */
+      /** Multiple learner senses listed in the details pane / drawer. */
       definitions?: string[]
-      /** Other Cantonese renderings when known. */
+      /** Other renderings when known (粵 variants or English paraphrases). */
       alternatives?: string[]
     }
   | {
       kind: 'char'
       char: string
+      /** Yue: Jyutping. En: IPA. */
       jp: string | null
       phrase: string
+      lang?: 'en' | 'yue'
       definition?: string
-      /** Sense for this character when known. */
+      /** Sense for this character/word when known. */
       sense?: string
     }

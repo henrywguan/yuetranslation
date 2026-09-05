@@ -28,12 +28,24 @@ export function HistoryPane({
       turn.to === 'yue' ? turn.translation : turn.from === 'yue' ? turn.source : phrase
     const english =
       turn.from === 'en' ? turn.source : turn.to === 'en' ? turn.translation : ''
-    openBreakdown(canto.trim() || phrase, {
-      translation: english.trim() || undefined,
-      definition: turn.definition || undefined,
-      definitions: turn.definitions,
-      alternatives: turn.alternatives,
-    })
+    const tappedEn = Boolean(english && phrase.trim() === english.trim())
+    if (tappedEn || (turn.to === 'en' && !canto.trim())) {
+      openBreakdown((english || phrase).trim(), {
+        lang: 'en',
+        translation: canto.trim() || undefined,
+        definition: turn.definition || undefined,
+        definitions: turn.definitions,
+        alternatives: turn.alternatives,
+      })
+    } else {
+      openBreakdown(canto.trim() || phrase, {
+        lang: 'yue',
+        translation: english.trim() || undefined,
+        definition: turn.definition || undefined,
+        definitions: turn.definitions,
+        alternatives: turn.alternatives,
+      })
+    }
     onOpenBreakdown?.()
   }
 

@@ -68,6 +68,12 @@ type State = {
   yueDefinitions: string[]
   /** Colloquial EN→粵 variants for the current Cantonese result (empty if none). */
   yueAlternatives: string[]
+  /** Learner note for the current English translation (粵 speakers). */
+  enDefinition: string
+  /** Multiple senses / 粵 glosses for the current English phrase. */
+  enDefinitions: string[]
+  /** Other natural English renderings for the current English result. */
+  enAlternatives: string[]
   /** True while a background request is loading text-mode EN→粵 alternatives. */
   altsLoading: boolean
   /** Solo empty-state: show type-to-translate hint beside History. */
@@ -106,6 +112,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
+      lang?: 'en' | 'yue'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -119,6 +126,7 @@ type State = {
   restoreDetail: () => void
   /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
   selectYueVariation: (phrase: string) => void
+  selectEnVariation: (phrase: string) => void
   clearHistory: () => void
   setSoloShowAutoHint: (v: boolean) => void
 }
@@ -419,6 +427,9 @@ export const useYueStore = create<State>((set, get) => ({
   yueDefinition: '',
   yueDefinitions: [],
   yueAlternatives: [],
+  enDefinition: '',
+  enDefinitions: [],
+  enAlternatives: [],
   altsLoading: false,
   soloShowAutoHint: false,
   face: emptyFaceLive(),
@@ -844,9 +855,12 @@ export const useYueStore = create<State>((set, get) => ({
     if (!trimmed) return
     const defs = (opts?.definitions || []).map((d) => d.trim()).filter(Boolean)
     const alts = (opts?.alternatives || []).map((a) => a.trim()).filter(Boolean)
+    const hasHan = /[\u3400-\u9fff]/.test(trimmed)
+    const lang = opts?.lang || (hasHan ? 'yue' : 'en')
     const layer: DetailLayer = {
       kind: 'phrase',
       phrase: trimmed,
+      lang,
       translation: opts?.translation?.trim() || undefined,
       definition: opts?.definition?.trim() || undefined,
       definitions: defs.length ? defs : undefined,
@@ -941,6 +955,54 @@ export const useYueStore = create<State>((set, get) => ({
     })
   },
 
+  selectEnVariation: (phrase) => {
+    const chosen = phrase.trim()
+    if (!chosen) return
+    const current = get().enTranslation.trim()
+    const prevAlts = get().enAlternatives || get().yueAlternatives
+    const nextAlts = [current, ...prevAlts]
+      .map((s) => s.trim())
+      .filter((s) => s && s !== chosen)
+      .filter((s, i, arr) => arr.indexOf(s) === i)
+      .slice(0, 3)
+
+    const history = get().history
+    const latest = history[0]
+    const nextHistory =
+      latest && latest.to === 'en'
+        ? [
+            {
+              ...latest,
+              translation: chosen,
+              alternatives: nextAlts,
+            },
+            ...history.slice(1),
+          ]
+        : history
+
+    const sourceYue =
+      (latest && latest.to === 'en' ? latest.source : '') || get().yueInterim || ''
+    const definition = get().enDefinition || get().yueDefinition || undefined
+    const definitions = get().enDefinitions?.length ? get().enDefinitions : get().yueDefinitions
+    set({
+      enTranslation: chosen,
+      enAlternatives: nextAlts,
+      history: nextHistory,
+      detailStack: [
+        {
+          kind: 'phrase',
+          phrase: chosen,
+          lang: 'en',
+          translation: sourceYue || undefined,
+          definition,
+          definitions: definitions?.length ? definitions : undefined,
+          alternatives: nextAlts.length ? nextAlts : undefined,
+        },
+      ],
+      detailMinimized: false,
+    })
+  },
+
   clearHistory: () => {
     speakToken += 1
     stopSpeaking()
@@ -964,6 +1026,9 @@ export const useYueStore = create<State>((set, get) => ({
       yueDefinition: '',
       yueDefinitions: [],
       yueAlternatives: [],
+      enDefinition: '',
+      enDefinitions: [],
+      enAlternatives: [],
       altsLoading: false,
       detailStack: [],
       detailMinimized: false,

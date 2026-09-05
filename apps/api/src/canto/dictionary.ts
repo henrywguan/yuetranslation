@@ -53,7 +53,7 @@ export function dictionaryTranslate(opts: {
   const entry = lookupPhrase(opts)
   if (!entry) return null
   const alternatives =
-    opts.wantAlternatives && entry.targetLang === 'yue'
+    opts.wantAlternatives && (entry.targetLang === 'yue' || entry.targetLang === 'en')
       ? uniqStrings(entry.text, entry.alternatives || [])
       : []
   return { text: entry.text, alternatives, entry }

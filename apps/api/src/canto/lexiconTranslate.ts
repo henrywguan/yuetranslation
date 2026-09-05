@@ -341,6 +341,33 @@ function yueToEn(source: string): LexiconTranslateHit | null {
  * Offline dictionary MT using seed + CC-Canto (+ gated words.hk).
  * Prefer phrase memory first; call this before the demo echo fallback.
  */
+
+/** Cantonese gloss for an English lemma/phrase (lexicon or phrase memory). */
+export function cantoneseGlossForEnglish(en: string): string | null {
+  const trimmed = en.trim()
+  if (!trimmed) return null
+  const hit = resolveEnToken(trimmed) || pickEnHits(trimmed, false)
+  return hit?.text?.trim() || null
+}
+
+/** Learner-facing Cantonese senses for an English phrase (primary + close variants). */
+export function cantoneseSensesForEnglish(en: string): string[] {
+  const trimmed = en.trim()
+  if (!trimmed) return []
+  const hit = pickEnHits(trimmed, true) || resolveEnToken(trimmed)
+  if (!hit) return []
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const s of [hit.text, ...(hit.alternatives || [])]) {
+    const t = (s || '').trim()
+    if (!t || seen.has(t)) continue
+    seen.add(t)
+    out.push(t)
+    if (out.length >= 6) break
+  }
+  return out
+}
+
 export function lexiconTranslate(opts: {
   sourceLang: 'en' | 'yue' | 'cmn'
   targetLang: TargetLang

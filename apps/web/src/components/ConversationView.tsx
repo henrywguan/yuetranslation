@@ -44,11 +44,12 @@ export function ConversationView() {
   const yueListening = live && liveSide === 'yue'
 
   const openEnDetails = () => {
-    const source = (face.yueInterim || face.yueTranslation).trim()
-    const translation = face.enTranslation.trim()
-    if (!source || !translation) return
-    openBreakdown(source, {
-      translation,
+    const yue = (face.yueInterim || face.yueTranslation).trim()
+    const en = face.enTranslation.trim()
+    if (!en) return
+    openBreakdown(en, {
+      lang: 'en',
+      translation: yue || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,
     })
@@ -58,6 +59,7 @@ export function ConversationView() {
     const source = phrase.trim()
     if (!source) return
     openBreakdown(source, {
+      lang: 'yue',
       translation: face.enTranslation.trim() || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,

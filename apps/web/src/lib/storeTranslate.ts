@@ -34,6 +34,9 @@ export type TranslateState = {
   yueTranslation: string
   yueDefinitions: string[]
   yueAlternatives: string[]
+  enDefinition: string
+  enDefinitions: string[]
+  enAlternatives: string[]
 }
 
 type Get = () => TranslateState
@@ -206,7 +209,7 @@ export async function runTranslation(
   if (opts?.enrichAlts) set({ altsLoading: false })
   try {
     const result = await translateText(text, lang, to, {
-      includeAlternatives: lang === 'en' && !lean,
+      includeAlternatives: !lean,
       signal,
     })
     if (pending.get(lang) !== seq || signal.aborted) return null
@@ -259,6 +262,9 @@ export async function runTranslation(
             yueDefinition: result.definition || '',
             yueDefinitions: definitions,
           },
+          enDefinition: result.definition || '',
+          enDefinitions: definitions,
+          enAlternatives: alternatives,
         })
       }
     } else {
@@ -269,7 +275,7 @@ export async function runTranslation(
         translation: clean,
         definition,
         definitions: definitions.length ? definitions : undefined,
-        alternatives: lang === 'en' ? alternatives : undefined,
+        alternatives: alternatives.length ? alternatives : undefined,
       })
       if (lang === 'en') {
         set({
@@ -291,6 +297,9 @@ export async function runTranslation(
           yueDefinition: result.definition || '',
           yueDefinitions: definitions,
           yueAlternatives: [],
+          enDefinition: result.definition || '',
+          enDefinitions: definitions,
+          enAlternatives: alternatives,
           history,
         })
       }

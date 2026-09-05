@@ -32,6 +32,9 @@ export function SoloView() {
   const yueDefinition = useYueStore((s) => s.yueDefinition)
   const yueDefinitions = useYueStore((s) => s.yueDefinitions)
   const yueAlternatives = useYueStore((s) => s.yueAlternatives)
+  const enAlternatives = useYueStore((s) => s.enAlternatives)
+  const enDefinitions = useYueStore((s) => s.enDefinitions)
+  const enDefinition = useYueStore((s) => s.enDefinition)
   const altsLoading = useYueStore((s) => s.altsLoading)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
@@ -174,11 +177,36 @@ export function SoloView() {
     const yue = (yueDraft || storeYue).trim()
     const en = (enDraft || storeEn).trim()
     if (!yue && !en) return
-    openBreakdown(yue || en, {
-      translation: en || undefined,
-      definition: yueDef || undefined,
-      definitions: yueDefs,
-      alternatives: alts,
+    // Default Details stays Cantonese-first when 粵 text exists (EN→粵 learning).
+    if (yue) {
+      openBreakdown(yue, {
+        lang: 'yue',
+        translation: en || undefined,
+        definition: yueDef || undefined,
+        definitions: yueDefs,
+        alternatives: alts,
+      })
+      return
+    }
+    openBreakdown(en, {
+      lang: 'en',
+      translation: undefined,
+      definition: enDefinition || undefined,
+      definitions: enDefinitions.length ? enDefinitions : undefined,
+      alternatives: enAlternatives.length ? enAlternatives : undefined,
+    })
+  }
+
+  const openEnDetails = () => {
+    const yue = (yueDraft || storeYue).trim()
+    const en = (enDraft || storeEn).trim()
+    if (!en) return
+    openBreakdown(en, {
+      lang: 'en',
+      translation: yue || undefined,
+      definition: enDefinition || undefined,
+      definitions: enDefinitions.length ? enDefinitions : undefined,
+      alternatives: enAlternatives.length ? enAlternatives : undefined,
     })
   }
 
@@ -205,6 +233,7 @@ export function SoloView() {
   const openYueDetails = (phrase: string) => {
     const en = (enDraft || storeEn).trim()
     openBreakdown(phrase, {
+      lang: 'yue',
       translation: en || undefined,
       definition: yueDef || undefined,
       definitions: yueDefs,
@@ -248,7 +277,19 @@ export function SoloView() {
               only="en"
               onSelect={setSpeakDirection}
             />
-            {enDraft.trim() ? <SpeakButton text={enDraft} lang="en" /> : null}
+            {enDraft.trim() ? (
+              <div className="solo-pane-actions">
+                <button
+                  type="button"
+                  className="solo-details-btn"
+                  onClick={openEnDetails}
+                  aria-label="Open English details"
+                >
+                  <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
+                </button>
+                <SpeakButton text={enDraft} lang="en" />
+              </div>
+            ) : null}
           </div>
           {enThinking ? (
             <TranslateThinking className="solo-thinking" />
