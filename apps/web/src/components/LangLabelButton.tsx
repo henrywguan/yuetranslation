@@ -138,11 +138,19 @@ export function LangLabelButton({
           setOpen((v) => !v)
         }}
       >
-        {/* hideJp: Jyutping tip steals clicks from the language menu on Solo. */}
+        {/* hideJp: Jyutping tip steals clicks from the language menu on Solo.
+            Yue/cmn: Chinese-only on the pane chrome — stacked English (CANTONESE/MANDARIN)
+            reads loud and redundant next to 粵語/普通話. Drawer options stay bilingual. */}
         <BiText
           copy={current.copy}
           size="sm"
-          only={only === 'en' ? 'en' : only === 'zh' ? 'zh' : undefined}
+          only={
+            only === 'en'
+              ? 'en'
+              : only === 'zh' || current.id === 'yue' || current.id === 'cmn'
+                ? 'zh'
+                : undefined
+          }
           hideJp
         />
         {canPick ? (
