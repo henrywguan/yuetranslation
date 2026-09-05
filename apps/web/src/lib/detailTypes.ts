@@ -17,6 +17,8 @@ export type DetailLayer =
       sandhiHint?: string
       /** Optional IPA (details) when lang is wuu. */
       ipa?: string
+      /** Wugniu for each alternatives entry (same order). */
+      alternativeRomanizations?: string[]
     }
   | {
       kind: 'char'

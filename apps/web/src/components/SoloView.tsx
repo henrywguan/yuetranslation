@@ -238,6 +238,7 @@ export function SoloView() {
       romanization: paneLang === 'wuu' ? latest?.romanization : undefined,
       sandhiHint: paneLang === 'wuu' ? latest?.sandhiHint : undefined,
       ipa: paneLang === 'wuu' ? latest?.ipa : undefined,
+      alternativeRomanizations: paneLang === 'wuu' ? latest?.alternativeRomanizations : undefined,
       alternatives:
         paneLang === 'en'
           ? enAlternatives.length
@@ -318,6 +319,7 @@ export function SoloView() {
           {paneAlts.length > 0 ? (
             <TranslationAlternatives
               alternatives={paneAlts}
+              alternativeRomanizations={lang === 'wuu' ? latest?.alternativeRomanizations : undefined}
               lang={lang}
               onSelect={selectYueVariation}
             />
@@ -507,6 +509,7 @@ export function SoloView() {
           ) : null}
           {!showLowerRuby && alts.length > 0 && (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu' || soloLowerLang === 'tl') ? (            <TranslationAlternatives
               alternatives={alts}
+              alternativeRomanizations={soloLowerLang === 'wuu' ? latest?.alternativeRomanizations : undefined}
               lang={soloLowerLang}
               onSelect={selectYueVariation}
             />

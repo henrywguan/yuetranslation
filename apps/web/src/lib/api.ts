@@ -74,6 +74,8 @@ type TranslateResponse = {
   romanization?: string
   sandhiHint?: string
   ipa?: string
+  /** Wugniu for each alternatives entry (same order), Shanghainese only. */
+  alternativeRomanizations?: string[]
 }
 
 const TRANSLATE_CACHE_MAX = 64

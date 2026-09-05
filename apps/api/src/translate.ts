@@ -88,6 +88,8 @@ type TranslateResult = {
   sandhiHint?: string
   /** Optional IPA for details (not the compact line). */
   ipa?: string
+  /** Wugniu for each `alternatives` entry (same order), when targeting Shanghainese. */
+  alternativeRomanizations?: string[]
 }
 
 /** Attach lexicon English senses for the Cantonese phrase in this turn. */
@@ -441,6 +443,10 @@ async function translateShanghainese(opts: {
         : toWuu && typeof dictHit.entry?.ipa === 'string'
           ? dictHit.entry.ipa
           : undefined
+    const alternativeRomanizations =
+      toWuu && Array.isArray(dictHit.alternativeRomanizations)
+        ? dictHit.alternativeRomanizations
+        : undefined
     return withLearnerDefinitions(
       {
         text: dictHit.text,
@@ -461,11 +467,15 @@ async function translateShanghainese(opts: {
             'wuu-colloquial',
             ...(romanization ? ['wuu-wugniu'] : []),
             ...(sandhiHint ? ['wuu-sandhi'] : []),
+            ...(alternativeRomanizations?.some(Boolean) ? ['wuu-wugniu-alts'] : []),
           ],
         },
         ...(romanization ? { romanization } : {}),
         ...(sandhiHint ? { sandhiHint } : {}),
         ...(ipa ? { ipa } : {}),
+        ...(alternativeRomanizations?.some(Boolean)
+          ? { alternativeRomanizations }
+          : {}),
       },
       text,
     )
@@ -497,6 +507,7 @@ async function translateShanghainese(opts: {
   let romanization = ''
   let sandhiHint = ''
   let ipa = ''
+  let alternativeRomanizations: string[] = []
 
   if (wantAlts && toWuu) {
     const system = [
@@ -507,12 +518,14 @@ async function translateShanghainese(opts: {
       'Also provide Wugniu romanization (吴语学堂) for the primary line — sandhi-aware word-level spelling, NOT Cantonese-style per-syllable tone digits.',
       'Include a short sandhi domain hint (e.g. "left-dominant · word" or "left-dominant · phrase") — never invent tone digits.',
       'Optionally include IPA for the primary phrase without slashes; leave empty if unsure.',
+      'For each alternative, also provide matching Wugniu in alternativeRomanizations (same order as alternatives).',
       'Return ONLY valid JSON:',
-      '{"primary":"<best Shanghainese Han>","alternatives":["<other natural Shanghainese>", "..."],"definition":"<short English gloss>","romanization":"<Wugniu for primary>","sandhiHint":"<compact sandhi domain hint>","ipa":"<optional IPA or empty>"}',
+      '{"primary":"<best Shanghainese Han>","alternatives":["<other natural Shanghainese>", "..."],"alternativeRomanizations":["<Wugniu for alt0>", "..."],"definition":"<short English gloss>","romanization":"<Wugniu for primary>","sandhiHint":"<compact sandhi domain hint>","ipa":"<optional IPA or empty>"}',
       'Rules:',
       '- Prefer 2–3 spoken variants that differ in wording or politeness.',
       '- Do not repeat the primary or near-duplicates.',
       '- romanization must match the primary phrase; leave empty string if unsure.',
+      '- alternativeRomanizations[i] must match alternatives[i]; use empty string if unsure for that alt.',
       '- sandhiHint should stay short (under ~40 chars); empty if unsure.',
       '- No markdown, no explanation.',
     ].join('\n')
@@ -537,10 +550,16 @@ async function translateShanghainese(opts: {
         romanization?: unknown
         sandhiHint?: unknown
         ipa?: unknown
+        alternativeRomanizations?: unknown
       }
       if (typeof j.romanization === 'string') romanization = j.romanization.trim()
       if (typeof j.sandhiHint === 'string') sandhiHint = j.sandhiHint.trim()
       if (typeof j.ipa === 'string') ipa = j.ipa.trim()
+      if (Array.isArray(j.alternativeRomanizations)) {
+        alternativeRomanizations = j.alternativeRomanizations.map((x) =>
+          typeof x === 'string' ? x.trim() : '',
+        )
+      }
     } catch {
       /* ignore */
     }
@@ -615,8 +634,17 @@ async function translateShanghainese(opts: {
   }
 
   if (toWuu) {
-    const hanAlts = wantAlts ? alternatives.filter((a: string) => hasHan(a)) : []
+    const hanPairs = wantAlts
+      ? alternatives
+          .map((a: string, i: number) => ({
+            text: a,
+            rom: alternativeRomanizations[i] || '',
+          }))
+          .filter((p) => hasHan(p.text) && p.text !== (hasHan(primary) ? primary : ''))
+      : []
     const outRaw = hasHan(primary) ? primary : ''
+    const outAlts = hanPairs.map((p) => p.text)
+    const outAltRoms = hanPairs.map((p) => p.rom)
     if (!outRaw) {
       return withLearnerDefinitions(
         {
@@ -636,7 +664,7 @@ async function translateShanghainese(opts: {
       {
         text: outRaw,
         definition,
-        alternatives: hanAlts.filter((a: string) => a !== outRaw),
+        alternatives: outAlts,
         engine,
         from,
         to,
@@ -646,10 +674,12 @@ async function translateShanghainese(opts: {
           'wuu-colloquial',
           ...(romanization ? (['wuu-wugniu'] as const) : []),
           ...(sandhiHint ? (['wuu-sandhi'] as const) : []),
+          ...(outAltRoms.some(Boolean) ? (['wuu-wugniu-alts'] as const) : []),
         ]),
         ...(romanization ? { romanization } : {}),
         ...(sandhiHint ? { sandhiHint } : {}),
         ...(ipa ? { ipa } : {}),
+        ...(outAltRoms.some(Boolean) ? { alternativeRomanizations: outAltRoms } : {}),
       },
       text,
     )

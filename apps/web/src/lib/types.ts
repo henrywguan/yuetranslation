@@ -133,6 +133,8 @@ export type ConversationTurn = {
   sandhiHint?: string
   /** Optional IPA for Shanghainese (details). */
   ipa?: string
+  /** Wugniu for each alternatives entry (same order), Shanghainese only. */
+  alternativeRomanizations?: string[]
   at: number
 }
 
