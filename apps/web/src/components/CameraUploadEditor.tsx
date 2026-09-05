@@ -367,8 +367,8 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
               ...b,
               text: r.text || b.text,
               translated: unwrapTranslationText(r.translated),
-              from: r.from,
-              to: r.to,
+              from: normalizeRegionLang(r.from),
+              to: normalizeRegionLang(r.to),
               dirty: false,
             }
           })
