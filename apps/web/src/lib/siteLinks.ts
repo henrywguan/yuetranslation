@@ -121,3 +121,8 @@ export function openPrivacy() {
 export function openTerms() {
   navigate('terms')
 }
+
+/** Open account & data deletion request page (`#/delete-account`). */
+export function openDeleteAccount() {
+  navigate('delete-account')
+}

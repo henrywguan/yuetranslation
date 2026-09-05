@@ -67,8 +67,8 @@ In Supabase → Authentication → URL configuration, ensure:
 
 1. Developer account ($25)
 2. Upload `.aab` → Internal testing
-3. Store listing: screenshots, feature graphic, privacy policy URL
-4. Data safety: declare microphone + camera
+3. Store listing: screenshots, feature graphic, privacy policy URL (`https://www.jyuttranslate.com/privacy`)
+4. Data safety: declare microphone + camera; **Delete account URL** = `https://www.jyuttranslate.com/delete-account`
 5. Content rating questionnaire
 6. After publish: add `related_applications` to manifest (optional) with Play Store ID
 

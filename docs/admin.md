@@ -77,7 +77,7 @@ Resend **sends** product mail; Cloudflare Email Routing **receives** Help replie
 
 **3. Site contact link**
 
-Marketing footer Contact uses `mailto:henrywguan@gmail.com`.
+Marketing footer Contact uses `mailto:Help@JyutTranslate.com`.
 
 ### Resend Audience (automatic contact sync)
 

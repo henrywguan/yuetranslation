@@ -923,8 +923,14 @@ export const ui = {
   footerContact: { en: 'Contact', zh: '聯絡', jp: 'lyun4 lok3' },
   footerPrivacy: { en: 'Privacy', zh: '私隱', jp: 'si1 jan2' },
   footerTerms: { en: 'Terms', zh: '條款', jp: 'tiu4 fun2' },
+  footerDeleteAccount: { en: 'Delete account', zh: '刪除帳戶', jp: 'saan1 ceoi4 wu6 hau2' },
   legalPrivacyEyebrow: { en: 'Privacy', zh: '私隱政策', jp: 'si1 jan2 zing3 caak3' },
   legalTermsEyebrow: { en: 'Terms', zh: '服務條款', jp: 'fuk6 mou6 tiu4 fun2' },
+  legalDeleteEyebrow: {
+    en: 'Account deletion',
+    zh: '刪除帳戶',
+    jp: 'saan1 ceoi4 wu6 hau2',
+  },
   legalEffective: {
     en: 'Effective September 1, 2026',
     zh: '生效日期：2026年9月1日',

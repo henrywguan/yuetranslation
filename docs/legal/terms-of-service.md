@@ -10,7 +10,7 @@ These Terms of Service (“**Terms**”) are a contract between you and **Henry 
 
 By accessing or using the Service, you agree to these Terms and our [Privacy Policy](./privacy-policy.md). If you do not agree, do not use the Service.
 
-**Contact:** [henrywguan@gmail.com](mailto:henrywguan@gmail.com)
+**Contact:** [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com)
 
 We do not currently list a physical mailing address. When we obtain a PO Box or other notice address, we will update these Terms.
 
@@ -56,7 +56,7 @@ You agree to:
 
 We may refuse registration, restrict features, or suspend/terminate accounts for suspected fraud, abuse, non-payment, legal risk, or Terms violations.
 
-To request account deletion, email [henrywguan@gmail.com](mailto:henrywguan@gmail.com) (self-serve deletion may not yet be available in the product UI).
+To request account deletion, email [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com) (self-serve deletion may not yet be available in the product UI).
 
 ---
 
@@ -226,12 +226,12 @@ We may update these Terms from time to time. We will post the updated Terms with
 - **No waiver.** Failure to enforce a provision is not a waiver.
 - **Assignment.** You may not assign these Terms without our consent. We may assign them in connection with a reorganization, merger, or sale of assets.
 - **Language.** The English version controls if we provide translations.
-- **Notices.** We may notify you via the Service, email associated with your account, or by updating these pages. You may notify us at [henrywguan@gmail.com](mailto:henrywguan@gmail.com). A physical notice address will be added when available.
+- **Notices.** We may notify you via the Service, email associated with your account, or by updating these pages. You may notify us at [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com). A physical notice address will be added when available.
 
 ---
 
 ## 19. Contact
 
 **Henry Guan, doing business as JyutTranslate**  
-Email: [henrywguan@gmail.com](mailto:henrywguan@gmail.com)  
+Email: [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com)  
 Web: https://www.jyuttranslate.com
