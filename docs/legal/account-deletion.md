@@ -12,7 +12,7 @@ This page explains how to request deletion of your **JyutTranslate** account and
 
 Account deletion is handled by email (self-serve deletion is not yet available in the app).
 
-1. Send an email to **[henrywguan@gmail.com](mailto:henrywguan@gmail.com?subject=JyutTranslate%20account%20deletion%20request)**.
+1. Send an email to **[Help@JyutTranslate.com](mailto:Help@JyutTranslate.com?subject=JyutTranslate%20account%20deletion%20request)**.
 2. Use the **subject line:** `JyutTranslate account deletion request`.
 3. Include:
    - The **email address** on your JyutTranslate account
@@ -20,9 +20,9 @@ Account deletion is handled by email (self-serve deletion is not yet available i
 4. We may reply to verify that you control the account (for example, by confirming from the same email address).
 5. After verification, we process the request within a **reasonable period** (typically within **30 days**).
 
-**Quick link:** [Email a deletion request](mailto:henrywguan@gmail.com?subject=JyutTranslate%20account%20deletion%20request)
+**Quick link:** [Email a deletion request](mailto:Help@JyutTranslate.com?subject=JyutTranslate%20account%20deletion%20request)
 
-You can also start from Contact in the site footer (`mailto:henrywguan@gmail.com`) and use the same subject line.
+You can also start from Contact in the site footer (`mailto:Help@JyutTranslate.com`) and use the same subject line.
 
 ---
 
@@ -51,7 +51,7 @@ We may retain certain information after account deletion when required or permit
 | **Residual backups** | Limited time until rotated out of backup systems |
 | **Anonymized / aggregated** analytics or operational metrics that no longer identify you | May be retained |
 
-If you only want specific personal data deleted **without** closing the account, email [henrywguan@gmail.com](mailto:henrywguan@gmail.com) with that request. We will evaluate it under applicable law and our [Privacy Policy](./privacy-policy.md).
+If you only want specific personal data deleted **without** closing the account, email [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com) with that request. We will evaluate it under applicable law and our [Privacy Policy](./privacy-policy.md).
 
 ---
 
@@ -66,5 +66,5 @@ Deleting your account does **not** automatically cancel a Stripe subscription. T
 - [Privacy Policy](./privacy-policy.md)
 - [Terms of Service](./terms-of-service.md)
 
-**Privacy / data contact:** [henrywguan@gmail.com](mailto:henrywguan@gmail.com)  
+**Privacy / data contact:** [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com)  
 **Service:** https://www.jyuttranslate.com

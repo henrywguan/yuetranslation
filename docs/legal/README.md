@@ -15,7 +15,7 @@ Do **not** keep a second copy under `apps/web` — `LegalPage` imports these fil
 (rewrites to `#/delete-account` in `apps/web/index.html`)
 
 **Operator:** Henry Guan, d/b/a JyutTranslate  
-**Privacy contact:** henrywguan@gmail.com  
+**Privacy contact:** Help@JyutTranslate.com  
 **Governing law (Terms):** California  
 **Age:** 13+
 
