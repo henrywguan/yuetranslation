@@ -2,7 +2,11 @@ import { z } from 'zod'
 import { visionConfigured } from './env.js'
 import { ocrImage, detectScript, type OcrBox, type OcrRegion } from './azureVision.js'
 import { ocrImageWithVisionLlm } from './visionLlmOcr.js'
-import { translateCameraText, type CameraLang } from './translateCamera.js'
+import {
+  translateCameraText,
+  normalizeCameraLang,
+  type CameraLang,
+} from './translateCamera.js'
 
 const BoxSchema = z.object({
   x: z.number().min(0).max(1),
@@ -21,7 +25,7 @@ const Body = z.object({
    */
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
-  target: z.enum(['en', 'zh']).optional(),
+  target: z.enum(['en', 'zh', 'yue', 'cmn']).optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
   /**
@@ -59,19 +63,21 @@ function iou(a: OcrBox, b: OcrBox): number {
   return union > 0 ? inter / union : 0
 }
 
-function pickTarget(script: OcrRegion['script'], preferred?: CameraLang): {
-  from: CameraLang
-  to: CameraLang
-} {
+function pickTarget(
+  script: OcrRegion['script'],
+  preferred?: CameraLang,
+): { from: CameraLang; to: CameraLang } {
   const looksChinese = script === 'cjk' || script === 'mixed'
   if (preferred === 'en') {
-    return looksChinese ? { from: 'zh', to: 'en' } : { from: 'en', to: 'en' }
+    return looksChinese ? { from: 'yue', to: 'en' } : { from: 'en', to: 'en' }
   }
-  if (preferred === 'zh') {
-    return looksChinese ? { from: 'zh', to: 'zh' } : { from: 'en', to: 'zh' }
+  if (preferred === 'yue' || preferred === 'cmn') {
+    return looksChinese
+      ? { from: preferred, to: preferred }
+      : { from: 'en', to: preferred }
   }
-  // Auto: Latin → Chinese, CJK → English
-  return looksChinese ? { from: 'zh', to: 'en' } : { from: 'en', to: 'zh' }
+  // Auto: Latin → Cantonese (HK default), CJK → English
+  return looksChinese ? { from: 'yue', to: 'en' } : { from: 'en', to: 'yue' }
 }
 
 function assignTextToBoxes(ocr: OcrRegion[], boxes: OcrBox[]): Array<OcrRegion & { box: OcrBox }> {
@@ -159,7 +165,7 @@ export async function cameraScan(
         text: r.text,
         translated: '',
         from: 'en',
-        to: 'zh',
+        to: 'yue',
         box: r.box,
         script: r.script,
         cacheHit: false,
@@ -176,6 +182,7 @@ export async function cameraScan(
 
   const out: CameraScanRegion[] = []
   let translateMisses = 0
+  const preferred = normalizeCameraLang(parsed.target)
 
   for (let i = 0; i < baseRegions.length; i++) {
     const r = baseRegions[i]!
@@ -186,14 +193,14 @@ export async function cameraScan(
         text: '',
         translated: '',
         from: 'en',
-        to: 'zh',
+        to: preferred && preferred !== 'en' ? preferred : 'yue',
         box: r.box,
         script: r.script,
         cacheHit: false,
       })
       continue
     }
-    const { from, to } = pickTarget(r.script, parsed.target)
+    const { from, to } = pickTarget(r.script, preferred)
     const prev = baseRegions[i - 1]?.text.trim()
     const next = baseRegions[i + 1]?.text.trim()
     const context = [prev, next].filter(Boolean).join('\n')

@@ -16,7 +16,8 @@ type Props = {
 }
 
 function resultLang(box: EditableBox): Lang {
-  if (box.to === 'zh') return 'yue'
+  if (box.to === 'cmn') return 'cmn'
+  if (box.to === 'yue') return 'yue'
   if (box.to === 'en') return 'en'
   return /[\u3400-\u9fff]/.test(box.translated || box.text) ? 'yue' : 'en'
 }

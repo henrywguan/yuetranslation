@@ -191,7 +191,8 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
             [
               ['auto', ui.camTargetAuto],
               ['en', ui.camTargetEn],
-              ['zh', ui.camTargetZh],
+              ['yue', ui.camTargetYue],
+              ['cmn', ui.camTargetCmn],
             ] as const
           ).map(([id, copy]) => (
             <label key={id} className={`cam-target-opt${target === id ? ' is-on' : ''}`}>

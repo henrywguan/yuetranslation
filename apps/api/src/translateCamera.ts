@@ -2,7 +2,8 @@ import { env, llmChatExtras } from './env.js'
 import { openaiClient } from './openaiClient.js'
 import { hasHan } from './canto/han.js'
 
-export type CameraLang = 'en' | 'zh'
+/** Camera / docs target languages. Prefer yue|cmn; legacy `zh` maps to yue. */
+export type CameraLang = 'en' | 'yue' | 'cmn'
 
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
@@ -98,45 +99,71 @@ export function parseBatchTranslations(raw: string, fallbacks: string[]): string
   return fallbacks
 }
 
+function isChineseTarget(to: CameraLang): boolean {
+  return to === 'yue' || to === 'cmn'
+}
+
 function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
   const docHint = docBatch
     ? 'These lines come from one document — keep terminology, names, and tone consistent across all lines.'
     : ''
-  return to === 'zh'
-    ? [
-        'You translate signs, menus, forms, and short labels for Hong Kong / Greater China readers.',
-        'Translate English into natural written Chinese (書面語). Prefer Traditional characters (繁體).',
-        docHint,
-        'Disambiguate by likely setting:',
-        '- Hotel / lobby / hospitality: Check-in → 入住登記 (not airport 登機); Concierge → 禮賓; Luggage storage → 行李寄存.',
-        '- Immigration / legal letters: Character Reference → 品格證明 / 推薦信 (not 角色參考); Judge → 法官; Federal District Court → 聯邦地區法院.',
-        '- Pharmacy: Prescription pickup → 處方取藥; take a number → 請抽籌; Queue here → 請在此排隊.',
-        '- Safety: Wet floor → 小心地滑 / 地面濕滑; Caution → 小心.',
-        'Food/menu names: use common Hong Kong café wording (e.g. pineapple bun → 菠蘿包).',
-        'Keep personal names, place names, and legal terms accurate.',
-        'Keep brand names and codes (A2, HK$) when appropriate.',
-        docBatch
-          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
-          : 'Return ONLY valid JSON: {"translation":"<Chinese>"}',
-        'No markdown, no explanation.',
-      ]
-        .filter(Boolean)
-        .join('\n')
-    : [
-        'You translate signs, menus, forms, and short labels into clear traveler English.',
-        'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing).',
-        docHint,
-        'Use concise sign English: 不准進入 → No entry; 今日特餐 → Today\'s special; 乾炒牛河 → Dry-fried beef chow fun.',
-        'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
-        'Keep place names (中環 → Central) and exit codes.',
-        'Never leave the translation empty. Never copy Chinese characters into the English output.',
-        docBatch
-          ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
-          : 'Return ONLY valid JSON: {"translation":"<English>"}',
-        'No markdown, no explanation.',
-      ]
-        .filter(Boolean)
-        .join('\n')
+  if (to === 'yue') {
+    return [
+      'You translate signs, menus, forms, and short labels for Hong Kong / Cantonese readers.',
+      'Translate English into natural written Chinese for Hong Kong (書面語 / 繁體). Prefer Traditional characters.',
+      'Use Hong Kong wording where it differs from Mainland Mandarin (e.g. 的士 not 出租车; 巴士 not 公交车).',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel / lobby / hospitality: Check-in → 入住登記 (not airport 登機); Concierge → 禮賓; Luggage storage → 行李寄存.',
+      '- Immigration / legal letters: Character Reference → 品格證明 / 推薦信 (not 角色參考); Judge → 法官; Federal District Court → 聯邦地區法院.',
+      '- Pharmacy: Prescription pickup → 處方取藥; take a number → 請抽籌; Queue here → 請在此排隊.',
+      '- Safety: Wet floor → 小心地滑 / 地面濕滑; Caution → 小心.',
+      'Food/menu names: use common Hong Kong café wording (e.g. pineapple bun → 菠蘿包).',
+      'Keep personal names, place names, and legal terms accurate.',
+      'Keep brand names and codes (A2, HK$) when appropriate.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Chinese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (to === 'cmn') {
+    return [
+      'You translate signs, menus, forms, and short labels into Mandarin Chinese (普通话).',
+      'Prefer Simplified characters (简体) for Mainland / Mandarin readers.',
+      'Do NOT use Cantonese-only particles or Hong Kong-only spellings (no 係/唔/喺/咗/㗎 unless shared).',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → 入住登记; Concierge → 礼宾; Luggage storage → 行李寄存.',
+      '- Legal: Character Reference → 品格证明 / 推荐信; Judge → 法官.',
+      '- Pharmacy: Prescription pickup → 处方取药; Queue here → 请在此排队.',
+      '- Safety: Wet floor → 小心地滑; Caution → 小心.',
+      'Keep brand names and codes when appropriate.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Mandarin Chinese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  return [
+    'You translate signs, menus, forms, and short labels into clear traveler English.',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing).',
+    docHint,
+    "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
+    'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
+    'Keep place names (中環 → Central) and exit codes.',
+    'Never leave the translation empty. Never copy Chinese characters into the English output.',
+    docBatch
+      ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+      : 'Return ONLY valid JSON: {"translation":"<English>"}',
+    'No markdown, no explanation.',
+  ]
+    .filter(Boolean)
+    .join('\n')
 }
 
 export type CameraTranslateOpts = {
@@ -145,8 +172,8 @@ export type CameraTranslateOpts = {
 }
 
 /**
- * Camera / written-Chinese translate (EN ↔ zh).
- * Separate from speech EN↔粵 so Solo/Conversation stay unchanged.
+ * Camera / written-Chinese translate (EN ↔ yue|cmn).
+ * Never apply Yue scrub to Mandarin (cmn) outputs.
  */
 export async function translateCameraText(
   text: string,
@@ -167,14 +194,15 @@ export async function translateCameraText(
 
   const client = openaiClient()
   if (!client) {
-    const demo =
-      to === 'zh'
-        ? hasHan(source)
-          ? source
+    const demo = isChineseTarget(to)
+      ? hasHan(source)
+        ? source
+        : to === 'cmn'
+          ? `（示范）${source}`
           : `（示範）${source}`
-        : hasHan(source)
-          ? `(demo) ${source}`
-          : `(demo) ${source}`
+      : hasHan(source)
+        ? `(demo) ${source}`
+        : `(demo) ${source}`
     remember(key, demo)
     return { text: demo, engine: 'demo', cacheHit: false }
   }
@@ -197,7 +225,12 @@ export async function translateCameraText(
   })
 
   const raw = completion.choices[0]?.message?.content?.trim() || ''
-  const translated = parseTranslation(raw, to === 'zh' ? `（譯）${source}` : `(tr) ${source}`)
+  const fallback = isChineseTarget(to)
+    ? to === 'cmn'
+      ? `（译）${source}`
+      : `（譯）${source}`
+    : `(tr) ${source}`
+  const translated = parseTranslation(raw, fallback)
   remember(key, translated)
   return {
     text: translated,
@@ -207,6 +240,12 @@ export async function translateCameraText(
 }
 
 const BATCH_SIZE = 16
+
+function langLabel(lang: CameraLang): string {
+  if (lang === 'en') return 'English'
+  if (lang === 'cmn') return 'Mandarin Chinese 普通话 (简体 OK)'
+  return 'Hong Kong Chinese 繁體'
+}
 
 /** Context-aware batch translate for document page lines (keeps names/terms consistent). */
 export async function translateCameraBatch(
@@ -221,10 +260,12 @@ export async function translateCameraBatch(
   if (!client) {
     return {
       translations: segments.map((s) =>
-        to === 'zh'
+        isChineseTarget(to)
           ? hasHan(s)
             ? s
-            : `（示範）${s}`
+            : to === 'cmn'
+              ? `（示范）${s}`
+              : `（示範）${s}`
           : hasHan(s)
             ? `(demo) ${s}`
             : `(demo) ${s}`,
@@ -245,20 +286,22 @@ export async function translateCameraBatch(
         { role: 'system', content: cameraSystemPrompt(to, true) },
         {
           role: 'user',
-          content: `Translate each numbered line (${from === 'en' ? 'English' : 'Chinese'} → ${to === 'zh' ? 'written Chinese 繁體' : 'English'}):\n${numbered}`,
+          content: `Translate each numbered line (${langLabel(from)} → ${langLabel(to)}):\n${numbered}`,
         },
       ],
       response_format: { type: 'json_object' },
       ...llmChatExtras(),
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
-    const fallbacks = chunk.map((s) => (to === 'zh' ? `（譯）${s}` : `(tr) ${s}`))
+    const fallbacks = chunk.map((s) =>
+      isChineseTarget(to) ? (to === 'cmn' ? `（译）${s}` : `（譯）${s}`) : `(tr) ${s}`,
+    )
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
       const t = stripLeadingListNumber((translated[i] || '').trim())
       const src = chunk[i] || ''
       if (to === 'en' && hasHan(t)) out[start + i] = src
-      else if (to === 'zh' && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
+      else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
       else out[start + i] = t || src
       remember(`${from}|${to}|${src}`, out[start + i]!)
     }
@@ -268,4 +311,12 @@ export async function translateCameraBatch(
     translations: out,
     engine: env.openaiBaseUrl ? 'openai-compatible' : 'openai',
   }
+}
+
+/** Normalize legacy `zh` → `yue` for API callers. */
+export function normalizeCameraLang(lang: string | undefined): CameraLang | undefined {
+  if (!lang) return undefined
+  if (lang === 'zh' || lang === 'yue') return 'yue'
+  if (lang === 'cmn' || lang === 'en') return lang
+  return undefined
 }

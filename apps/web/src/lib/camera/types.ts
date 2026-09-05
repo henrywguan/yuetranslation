@@ -1,16 +1,19 @@
 import type { CameraBox, CameraScanRegion } from '../api'
 import type { Rgb } from './sampleRegionColors'
 import { unwrapTranslationText } from './unwrapTranslation'
+import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
+
+export type CameraLang = 'en' | 'yue' | 'cmn'
 
 export type EditableBox = {
   id: string
   box: CameraBox
   text: string
   translated: string
-  from: 'en' | 'zh'
-  to: 'en' | 'zh'
+  from: CameraLang
+  to: CameraLang
   dirty: boolean
   /** Sampled source background (AR matched overlays). */
   bg?: Rgb
@@ -18,7 +21,14 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'zh'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn'
+
+function normalizeRegionLang(lang: string | undefined): CameraLang {
+  if (lang === 'cmn') return 'cmn'
+  if (lang === 'en') return 'en'
+  // Legacy `zh` and explicit yue → Cantonese
+  return 'yue'
+}
 
 export function regionToEditable(r: CameraScanRegion): EditableBox {
   return {
@@ -26,8 +36,8 @@ export function regionToEditable(r: CameraScanRegion): EditableBox {
     box: { ...r.box },
     text: r.text,
     translated: unwrapTranslationText(r.translated),
-    from: r.from,
-    to: r.to,
+    from: normalizeRegionLang(r.from),
+    to: normalizeRegionLang(r.to),
     dirty: false,
   }
 }
@@ -39,7 +49,7 @@ export function newBox(box: CameraBox): EditableBox {
     text: '',
     translated: '',
     from: 'en',
-    to: 'zh',
+    to: 'yue',
     dirty: true,
   }
 }
@@ -59,9 +69,21 @@ export function clampBox(box: CameraBox): CameraBox {
 
 const HAN_RE = /[\u3400-\u9fff]/
 
-/** Pick Cantonese/Chinese + English sides for the shared character breakdown panel. */
-export function boxDetailArgs(box: EditableBox): { phrase: string; translation?: string } {
-  const zhByDir = box.to === 'zh' ? box.translated : box.from === 'zh' ? box.text : ''
+function isChineseCam(lang: CameraLang): boolean {
+  return lang === 'yue' || lang === 'cmn'
+}
+
+/** Pick Chinese + English sides for the shared character breakdown panel. */
+export function boxDetailArgs(box: EditableBox): {
+  phrase: string
+  translation?: string
+  lang?: Lang
+} {
+  const zhByDir = isChineseCam(box.to)
+    ? box.translated
+    : isChineseCam(box.from)
+      ? box.text
+      : ''
   const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
   const zh =
     zhByDir.trim() ||
@@ -73,5 +95,19 @@ export function boxDetailArgs(box: EditableBox): { phrase: string; translation?:
     (!HAN_RE.test(box.translated) ? box.translated : '')
   const phrase = (zh || box.text || box.translated).trim()
   const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
-  return { phrase, translation }
+  const lang: Lang | undefined = isChineseCam(box.to)
+    ? box.to
+    : isChineseCam(box.from)
+      ? box.from
+      : HAN_RE.test(phrase)
+        ? 'yue'
+        : undefined
+  return { phrase, translation, lang }
+}
+
+export function speakLangForBox(box: EditableBox): Lang {
+  if (box.to === 'cmn') return 'cmn'
+  if (box.to === 'yue') return 'yue'
+  if (box.to === 'en') return 'en'
+  return HAN_RE.test(box.translated || box.text) ? 'yue' : 'en'
 }

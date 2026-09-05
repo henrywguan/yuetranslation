@@ -30,7 +30,7 @@ import {
   measureOverlayLabel,
 } from '../lib/camera/overlayPaint'
 import { rgbCss, sampleColorsFromImageUrl } from '../lib/camera/sampleRegionColors'
-import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs } from '../lib/camera/types'
+import { regionToEditable, type CameraTarget, type EditableBox, boxDetailArgs, speakLangForBox } from '../lib/camera/types'
 import { unwrapTranslationText } from '../lib/camera/unwrapTranslation'
 import { cameraBlockedMessage, stopMediaStream, unlockCamera } from '../lib/mediaAccess'
 import { useYueStore } from '../lib/store'
@@ -699,9 +699,9 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
   const openSelectedDetails = () => {
     if (!selected) return
-    const { phrase, translation } = boxDetailArgs(selected)
+    const { phrase, translation, lang } = boxDetailArgs(selected)
     if (!phrase) return
-    openBreakdown(phrase, { translation })
+    openBreakdown(phrase, { translation, lang })
   }
 
   const liveZoomValue = hwZoomRange ? hwZoom : zoom.scale
@@ -738,7 +738,8 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           [
             ['auto', ui.camTargetAuto],
             ['en', ui.camTargetEn],
-            ['zh', ui.camTargetZh],
+            ['yue', ui.camTargetYue],
+            ['cmn', ui.camTargetCmn],
           ] as const
         ).map(([id, copy]) => (
           <label key={id} className={`cam-target-opt${target === id ? ' is-on' : ''}`}>
@@ -913,7 +914,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
                 type="button"
                 className="cam-tool-btn"
                 onClick={() =>
-                  void speakManual(selected.translated, selected.to === 'zh' ? 'yue' : 'en')
+                  void speakManual(selected.translated, speakLangForBox(selected))
                 }
               >
                 <BiText copy={ui.speak} size="sm" />

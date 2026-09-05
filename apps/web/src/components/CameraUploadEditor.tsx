@@ -641,9 +641,9 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
   }
 
   const openBoxDetails = (box: EditableBox) => {
-    const { phrase, translation } = boxDetailArgs(box)
+    const { phrase, translation, lang } = boxDetailArgs(box)
     if (!phrase) return
-    openBreakdown(phrase, { translation })
+    openBreakdown(phrase, { translation, lang })
   }
 
   const zoomStyle = {

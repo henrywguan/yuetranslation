@@ -151,8 +151,8 @@ export type CameraScanRegion = {
   id: string
   text: string
   translated: string
-  from: 'en' | 'zh'
-  to: 'en' | 'zh'
+  from: 'en' | 'zh' | 'yue' | 'cmn'
+  to: 'en' | 'zh' | 'yue' | 'cmn'
   box: CameraBox
   script: 'latin' | 'cjk' | 'mixed' | 'other'
   cacheHit: boolean
@@ -185,7 +185,7 @@ export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
 export async function cameraScan(opts: {
   image: string
   boxes?: CameraBox[]
-  target?: 'en' | 'zh'
+  target?: 'en' | 'zh' | 'yue' | 'cmn'
   ocrOnly?: boolean
   /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
   forDocs?: boolean

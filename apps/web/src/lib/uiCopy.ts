@@ -177,6 +177,8 @@ export const ui = {
   camDeleteBox: { en: 'Delete box', zh: '刪除選框', jp: 'saan1 ceoi4 syun2 kwaang1' },
   camTargetEn: { en: 'To English', zh: '譯成英文', jp: 'jik6 sing4 jing1 man2' },
   camTargetZh: { en: 'To 中文', zh: '譯成中文', jp: 'jik6 sing4 zung1 man2' },
+  camTargetYue: { en: 'To Cantonese', zh: '譯成粵語', jp: 'jik6 sing4 jyut6 jyu5' },
+  camTargetCmn: { en: 'To Mandarin', zh: '譯成普通話', jp: 'jik6 sing4 pou2 tung1 waa2' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
