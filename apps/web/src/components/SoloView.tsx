@@ -463,6 +463,7 @@ export function SoloView() {
               lang={soloUpperLang}
               active={speakDirection === soloUpperLang}
               drawer="top"
+              variant="dropdown"
               onSelect={(lang) => onPaneLangSelect('upper', lang)}
             />
             {upperDraft.trim() ? (
@@ -522,6 +523,7 @@ export function SoloView() {
               lang={soloLowerLang}
               active={speakDirection === soloLowerLang}
               drawer="bottom"
+              variant="dropdown"
               onSelect={(lang) => onPaneLangSelect('lower', lang)}
             />
             {lowerDraft.trim() || canClear ? (
