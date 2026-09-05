@@ -10,7 +10,9 @@ import { fetchBreakdown } from '../lib/api'
 import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
+import { buildLocalPinyinBreakdown, type PinyinSeg } from '../lib/pinyin'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
+import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
 import { useJpPopup } from '../lib/useJpPopup'
 import { usePanelDock, PANEL_TASKBAR_W } from '../lib/panelDock'
@@ -29,7 +31,9 @@ import './DetailPanel.css'
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
 
-function speakLangFor(text: string): Lang {
+function speakLangFor(text: string, detailLang?: 'en' | 'yue' | 'cmn'): Lang {
+  if (detailLang === 'cmn') return 'cmn'
+  if (detailLang === 'en') return 'en'
   return hasHan(text) ? 'yue' : 'en'
 }
 
@@ -140,7 +144,12 @@ export function CharacterBreakdownHost() {
     setLoading(true)
     setRows([])
     void (async () => {
-      const local = detailLang === 'yue' ? await buildLocalBreakdown(phrase) : []
+      const local =
+        detailLang === 'yue'
+          ? await buildLocalBreakdown(phrase)
+          : detailLang === 'cmn'
+            ? await buildLocalPinyinBreakdown(phrase)
+            : []
       if (cancelled) return
       setRows(local)
       try {
@@ -148,7 +157,11 @@ export function CharacterBreakdownHost() {
         if (cancelled) return
         const remoteRows = remote.characters || []
         const merged =
-          detailLang === 'yue' ? mergeMeanings(local, remoteRows) : remoteRows.length ? remoteRows : local
+          detailLang === 'yue' || detailLang === 'cmn'
+            ? mergeMeanings(local, remoteRows)
+            : remoteRows.length
+              ? remoteRows
+              : local
         if (detailLang === 'yue') rememberBreakdownRows(merged, phrase)
         setRows(merged)
       } catch {
@@ -170,6 +183,11 @@ export function CharacterBreakdownHost() {
     const detailLang = top.lang || (hasHan(top.char) ? 'yue' : 'en')
     if (detailLang === 'en') {
       setIpa(top.jp)
+      return
+    }
+    if (detailLang === 'cmn') {
+      // Pinyin is already tone-marked in jp — no Jyutping→IPA conversion.
+      setIpa('')
       return
     }
     let cancelled = false
@@ -199,7 +217,7 @@ export function CharacterBreakdownHost() {
       (top?.kind === 'phrase' || top?.kind === 'char' ? top.lang : undefined) ||
       (hasHan(row.char) ? 'yue' : 'en')
     const sense =
-      detailLang === 'yue'
+      detailLang === 'yue' || detailLang === 'cmn'
         ? pickCharGloss(row.meaning, glossForChar(row.char))
         : row.meaning.trim()
     if (!sense && !row.jyutping) return
@@ -233,6 +251,7 @@ export function CharacterBreakdownHost() {
   const topLabel = top.kind === 'phrase' ? top.phrase : top.char
   const detailLang = top.lang || (hasHan(topLabel) ? 'yue' : 'en')
   const isEnglishDetail = detailLang === 'en'
+  const isCmnDetail = detailLang === 'cmn'
   const showRubyTitle = !isEnglishDetail && hasHan(topLabel)
   const phraseIpa =
     isEnglishDetail && top.kind === 'phrase'
@@ -241,11 +260,15 @@ export function CharacterBreakdownHost() {
           .filter(Boolean)
           .join(' ')
       : ''
-  const titleSegs: JyutSeg[] | undefined =
+  const titleSegs: JyutSeg[] | PinyinSeg[] | undefined =
     top.kind === 'char' && top.jp
-      ? [{ char: top.char, jp: top.jp }]
+      ? isCmnDetail
+        ? [{ char: top.char, py: top.jp }]
+        : [{ char: top.char, jp: top.jp }]
       : top.kind === 'phrase' && rows.some((r) => r.jyutping)
-        ? rows.map((r) => ({ char: r.char, jp: r.jyutping || '' }))
+        ? isCmnDetail
+          ? rows.map((r) => ({ char: r.char, py: r.jyutping || '' }))
+          : rows.map((r) => ({ char: r.char, jp: r.jyutping || '' }))
         : undefined
   const showDefinition =
     Boolean(definitionText) &&
@@ -267,29 +290,44 @@ export function CharacterBreakdownHost() {
             <h2
               id={titleId}
               className="detail-panel-title"
-              lang={top.kind === 'char' || showRubyTitle ? 'zh-HK' : 'en'}
+              lang={top.kind === 'char' || showRubyTitle ? (isCmnDetail ? 'zh-CN' : 'zh-HK') : 'en'}
             >
               {showRubyTitle ? (
                 <span
                   {...titleJpBind}
                   className="detail-panel-title-jp"
                   onPointerDown={(e) => e.stopPropagation()}
-                  aria-label={`Show Jyutping for ${topLabel}`}
+                  aria-label={
+                    isCmnDetail
+                      ? `Show pinyin for ${topLabel}`
+                      : `Show Jyutping for ${topLabel}`
+                  }
                 >
-                  <JyutRuby
-                    han={topLabel}
-                    segs={titleSegs}
-                    size="lg"
-                    className="detail-panel-title-ruby jyut-ruby--hint"
-                  />
-                  <JpPop
-                    show={titleJpShow}
-                    id={titleJpTipId}
-                    han={topLabel}
-                    segs={titleSegs}
-                    size="lg"
-                    anchorRef={titleJpRef}
-                  />
+                  {isCmnDetail ? (
+                    <PinyinRuby
+                      han={topLabel}
+                      segs={titleSegs as PinyinSeg[] | undefined}
+                      size="lg"
+                      className="detail-panel-title-ruby jyut-ruby--hint"
+                    />
+                  ) : (
+                    <JyutRuby
+                      han={topLabel}
+                      segs={titleSegs as JyutSeg[] | undefined}
+                      size="lg"
+                      className="detail-panel-title-ruby jyut-ruby--hint"
+                    />
+                  )}
+                  {!isCmnDetail ? (
+                    <JpPop
+                      show={titleJpShow}
+                      id={titleJpTipId}
+                      han={topLabel}
+                      segs={titleSegs as JyutSeg[] | undefined}
+                      size="lg"
+                      anchorRef={titleJpRef}
+                    />
+                  ) : null}
                 </span>
               ) : (
                 topLabel
@@ -297,7 +335,7 @@ export function CharacterBreakdownHost() {
             </h2>
             <ResultActions
               text={topLabel}
-              lang={speakLangFor(topLabel)}
+              lang={speakLangFor(topLabel, detailLang)}
               className="detail-panel-speak"
             />
           </div>
@@ -387,7 +425,7 @@ export function CharacterBreakdownHost() {
                   <section className="detail-panel-alts" aria-label="Other variations">
                     <TranslationAlternatives
                       alternatives={alternatives}
-                      lang={isEnglishDetail ? 'en' : 'yue'}
+                      lang={isEnglishDetail ? 'en' : isCmnDetail ? 'cmn' : 'yue'}
                       onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     />
                   </section>
@@ -415,13 +453,15 @@ export function CharacterBreakdownHost() {
                             : `${row.char}: no further details`
                         }
                       >
-                        <span className="detail-panel-char-stack" lang="zh-HK">
+                        <span className="detail-panel-char-stack" lang={isCmnDetail ? 'zh-CN' : 'zh-HK'}>
                           <span className="detail-panel-row-jp">
                             {row.jyutping ? (
                               isEnglishDetail ? (
                                 <span className="detail-panel-ipa" lang="en">
                                   /{row.jyutping}/
                                 </span>
+                              ) : isCmnDetail ? (
+                                <PinyinSyllable py={row.jyutping} />
                               ) : (
                                 <JyutSyllable jp={row.jyutping} />
                               )
@@ -441,7 +481,7 @@ export function CharacterBreakdownHost() {
                       {canSpeak ? (
                         <SpeakButton
                           text={row.char}
-                          lang={isEnglishDetail ? 'en' : 'yue'}
+                          lang={isEnglishDetail ? 'en' : isCmnDetail ? 'cmn' : 'yue'}
                           className="detail-panel-row-speak"
                         />
                       ) : null}

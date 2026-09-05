@@ -48,6 +48,8 @@ function emptyFaceLive(): FaceLive {
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
+  /** Remembered Chinese variety for Solo EN↔ZH pairing (default Cantonese). */
+  chineseLang: 'yue' | 'cmn'
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
   /** Text currently playing via manual/auto TTS (for per-button speaking state). */
@@ -113,7 +115,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue'
+      lang?: 'en' | 'yue' | 'cmn'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -241,7 +243,8 @@ function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
 function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'en') return 'en'
   if (direction === 'yue') return 'yue'
-  // `cmn` is reserved for later Mandarin STT — treat as auto-detect until then.
+  // Mandarin STT not wired yet — treat `cmn` as auto-detect for live mic.
+  if (direction === 'cmn') return detected
   return detected
 }
 
@@ -413,6 +416,7 @@ async function tearDownLive(
 export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
   speakDirection: 'en',
+  chineseLang: 'yue',
   live: false,
   status: 'idle',
   speakingText: null,
@@ -454,7 +458,12 @@ export const useYueStore = create<State>((set, get) => ({
     }
     set({ mode: next })
   },
-  setSpeakDirection: (speakDirection) => set({ speakDirection }),
+  setSpeakDirection: (speakDirection) =>
+    set(
+      speakDirection === 'yue' || speakDirection === 'cmn'
+        ? { speakDirection, chineseLang: speakDirection }
+        : { speakDirection },
+    ),
   setAutoSpeak: (autoSpeak) => {
     writeLocalAutoSpeak(autoSpeak)
     set({ autoSpeak })
@@ -877,7 +886,7 @@ export const useYueStore = create<State>((set, get) => ({
     const defs = (opts?.definitions || []).map((d) => d.trim()).filter(Boolean)
     const alts = (opts?.alternatives || []).map((a) => a.trim()).filter(Boolean)
     const hasHan = /[\u3400-\u9fff]/.test(trimmed)
-    const lang = opts?.lang || (hasHan ? 'yue' : 'en')
+    const lang = opts?.lang || (hasHan ? get().chineseLang : 'en')
     const layer: DetailLayer = {
       kind: 'phrase',
       phrase: trimmed,
@@ -943,7 +952,7 @@ export const useYueStore = create<State>((set, get) => ({
     const history = get().history
     const latest = history[0]
     const nextHistory =
-      latest && latest.to === 'yue'
+      latest && (latest.to === 'yue' || latest.to === 'cmn')
         ? [
             {
               ...latest,
@@ -955,9 +964,12 @@ export const useYueStore = create<State>((set, get) => ({
         : history
 
     const sourceEn =
-      (latest && latest.to === 'yue' ? latest.source : '') || get().enInterim || ''
+      (latest && (latest.to === 'yue' || latest.to === 'cmn') ? latest.source : '') ||
+      get().enInterim ||
+      ''
     const definition = get().yueDefinition || undefined
     const definitions = get().yueDefinitions
+    const zhLang = get().chineseLang
     set({
       yueTranslation: chosen,
       yueAlternatives: nextAlts,
@@ -966,6 +978,7 @@ export const useYueStore = create<State>((set, get) => ({
         {
           kind: 'phrase',
           phrase: chosen,
+          lang: zhLang,
           translation: sourceEn || undefined,
           definition,
           definitions: definitions.length ? definitions : undefined,

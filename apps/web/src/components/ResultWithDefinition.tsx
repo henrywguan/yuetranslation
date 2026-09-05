@@ -1,4 +1,5 @@
 import { CantoneseText } from './CantoneseText'
+import { MandarinText } from './MandarinText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -11,6 +12,7 @@ export function ResultWithDefinition({
   definition,
   definitions,
   cantonese = true,
+  chineseLang = 'yue',
   className = '',
   textClassName = '',
   onActivate,
@@ -23,41 +25,54 @@ export function ResultWithDefinition({
   /** Multiple English senses — triggers dotted underline + details open. */
   definitions?: string[]
   cantonese?: boolean
+  /** When cantonese, which Chinese variety for ruby + copy. */
+  chineseLang?: 'yue' | 'cmn'
   className?: string
   textClassName?: string
   onActivate?: (text: string) => void
   /** When set, show a tap-to-speak control for this line. */
   speakLang?: Lang
-  /** Show copy beside speak (Cantonese only). */
+  /** Show copy beside speak (Chinese only). */
   showCopy?: boolean
 }) {
   const trimmed = text.trim()
   const def = definition?.trim() || ''
   if (!trimmed) return null
+  const hanLang: Lang = chineseLang === 'cmn' ? 'cmn' : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
       <div className="result-with-def-main">
         <div className="result-with-def-line">
           {cantonese ? (
-            <CantoneseText
-              text={trimmed}
-              definition={def}
-              definitions={definitions}
-              className={textClassName || 'result-text'}
-              onActivate={onActivate}
-            />
+            chineseLang === 'cmn' ? (
+              <MandarinText
+                text={trimmed}
+                definition={def}
+                definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : (
+              <CantoneseText
+                text={trimmed}
+                definition={def}
+                definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            )
           ) : (
             <p className={textClassName || 'result-text'}>{normalizeEnglishApostrophes(trimmed)}</p>
           )}
           {speakLang && trimmed ? (
-            speakLang === 'yue' ? (
+            speakLang === 'yue' || speakLang === 'cmn' ? (
               <ResultActions text={trimmed} lang={speakLang} showCopy={showCopy} />
             ) : (
               <SpeakButton text={trimmed} lang={speakLang} />
             )
           ) : showCopy && cantonese && trimmed ? (
-            <CopyButton text={trimmed} lang="yue" />
+            <CopyButton text={trimmed} lang={hanLang} />
           ) : null}
         </div>
       </div>

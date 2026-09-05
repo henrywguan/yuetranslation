@@ -2,6 +2,7 @@
 
 export const DEFAULT_YUE_VOICE = 'zh-HK-HiuMaanNeural'
 export const DEFAULT_EN_VOICE = 'en-US-JennyNeural'
+export const DEFAULT_CMN_VOICE = 'zh-CN-XiaoxiaoNeural'
 
 export type YueVoiceId =
   | 'zh-HK-HiuMaanNeural'
@@ -16,11 +17,13 @@ export type EnVoiceId =
   | 'en-GB-RyanNeural'
   | 'en-AU-NatashaNeural'
 
-export type TtsVoiceId = YueVoiceId | EnVoiceId
+export type CmnVoiceId = 'zh-CN-XiaoxiaoNeural' | 'zh-CN-YunxiNeural'
+
+export type TtsVoiceId = YueVoiceId | EnVoiceId | CmnVoiceId
 
 export type TtsVoiceOption = {
   id: TtsVoiceId
-  lang: 'yue' | 'en'
+  lang: 'yue' | 'en' | 'cmn'
   /** Azure SSML xml:lang */
   xmlLang: string
   labelEn: string
@@ -106,10 +109,30 @@ export const EN_VOICES: TtsVoiceOption[] = [
   },
 ]
 
+export const CMN_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'zh-CN-XiaoxiaoNeural',
+    lang: 'cmn',
+    xmlLang: 'zh-CN',
+    labelEn: 'Xiaoxiao · Female',
+    labelZh: '晓晓 · 女声',
+    gender: 'female',
+  },
+  {
+    id: 'zh-CN-YunxiNeural',
+    lang: 'cmn',
+    xmlLang: 'zh-CN',
+    labelEn: 'Yunxi · Male',
+    labelZh: '云希 · 男声',
+    gender: 'male',
+  },
+]
+
 const YUE_SET = new Set(YUE_VOICES.map((v) => v.id))
 const EN_SET = new Set(EN_VOICES.map((v) => v.id))
+const CMN_SET = new Set(CMN_VOICES.map((v) => v.id))
 const ALL = new Map<string, TtsVoiceOption>(
-  [...YUE_VOICES, ...EN_VOICES].map((v) => [v.id, v]),
+  [...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES].map((v) => [v.id, v]),
 )
 
 export function isYueVoice(id: string): id is YueVoiceId {
@@ -120,12 +143,20 @@ export function isEnVoice(id: string): id is EnVoiceId {
   return EN_SET.has(id as EnVoiceId)
 }
 
+export function isCmnVoice(id: string): id is CmnVoiceId {
+  return CMN_SET.has(id as CmnVoiceId)
+}
+
 export function resolveYueVoice(id: string | null | undefined): YueVoiceId {
   return id && isYueVoice(id) ? id : DEFAULT_YUE_VOICE
 }
 
 export function resolveEnVoice(id: string | null | undefined): EnVoiceId {
   return id && isEnVoice(id) ? id : DEFAULT_EN_VOICE
+}
+
+export function resolveCmnVoice(id: string | null | undefined): CmnVoiceId {
+  return id && isCmnVoice(id) ? id : DEFAULT_CMN_VOICE
 }
 
 export function voiceMeta(id: string): TtsVoiceOption | undefined {
@@ -140,16 +171,21 @@ export function resolveSpeakVoice(
   override?: string | null,
 ): { voice: string; xmlLang: string } {
   const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU'
+  const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
   if (override) {
     const meta = voiceMeta(override)
     if (meta) {
-      if (isEn ? meta.lang === 'en' : meta.lang === 'yue') {
-        return { voice: meta.id, xmlLang: meta.xmlLang }
-      }
+      if (isEn && meta.lang === 'en') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isCmn && meta.lang === 'cmn') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (!isEn && !isCmn && meta.lang === 'yue') return { voice: meta.id, xmlLang: meta.xmlLang }
     }
   }
   if (isEn) {
     const id = resolveEnVoice(preferredEn)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isCmn) {
+    const id = resolveCmnVoice(null)
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
   const id = resolveYueVoice(preferredYue)
@@ -158,3 +194,4 @@ export function resolveSpeakVoice(
 
 export const PREVIEW_YUE = '你好，歡迎使用粵譯。'
 export const PREVIEW_EN = 'Hello — this is your English voice.'
+export const PREVIEW_CMN = '你好，欢迎使用粤译。'

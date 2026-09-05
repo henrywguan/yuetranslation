@@ -10,13 +10,14 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn']).optional(),
 })
 
 export type BreakdownChar = {
   char: string
   /**
    * Yue: Jyutping if known.
+   * Cmn: pinyin when provided by client merge (API may leave null).
    * En: IPA if known (same field so the client can reuse the row shape).
    * Null for punctuation / unknown.
    */
@@ -196,7 +197,10 @@ const SKIP_EN_BREAKDOWN = new Set([
   'your',
 ])
 
-function detectBreakdownLang(text: string, explicit?: 'en' | 'yue'): 'en' | 'yue' {
+function detectBreakdownLang(
+  text: string,
+  explicit?: 'en' | 'yue' | 'cmn',
+): 'en' | 'yue' | 'cmn' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -413,10 +417,22 @@ async function yueBreakdown(text: string) {
   }
 }
 
+async function cmnBreakdown(text: string) {
+  // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
+  // API returns gloss rows with jyutping left null for client merge.
+  const trimmed = text.trim()
+  const fallback = localYueBreakdown(trimmed).map((row) => ({
+    ...row,
+    jyutping: null as string | null,
+  }))
+  return { characters: fallback, engine: 'dictionary' as const, lang: 'cmn' as const }
+}
+
 export async function breakdown(input: unknown) {
   const parsed = Body.parse(input)
   const text = parsed.text.trim()
   const lang = detectBreakdownLang(text, parsed.lang)
   if (lang === 'en') return englishBreakdown(text)
+  if (lang === 'cmn') return cmnBreakdown(text)
   return yueBreakdown(text)
 }

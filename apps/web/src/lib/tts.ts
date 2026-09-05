@@ -140,7 +140,7 @@ function browserSpeak(text: string, lang: Lang, g: number) {
       return
     }
     const u = new SpeechSynthesisUtterance(text)
-    u.lang = lang === 'yue' ? 'zh-HK' : 'en-US'
+    u.lang = lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : 'en-US'
     u.onend = () => {
       if (g === gen) playing = false
       resolve()
@@ -157,7 +157,9 @@ function browserSpeak(text: string, lang: Lang, g: number) {
 
 function preferredVoiceFor(lang: Lang, override?: string | null): string | null {
   if (override) return override
-  return lang === 'en' ? readLocalEnVoice() : readLocalYueVoice()
+  if (lang === 'en') return readLocalEnVoice()
+  if (lang === 'cmn') return null // resolveSpeakVoice defaults to Xiaoxiao
+  return readLocalYueVoice()
 }
 
 export async function speakText(text: string, lang: Lang, voice?: string | null) {

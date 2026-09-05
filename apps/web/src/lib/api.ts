@@ -116,11 +116,11 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-  opts?: { lang?: 'en' | 'yue' },
+  opts?: { lang?: 'en' | 'yue' | 'cmn' },
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue'
+  lang?: 'en' | 'yue' | 'cmn'
 }> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
