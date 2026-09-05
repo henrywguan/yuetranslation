@@ -44,6 +44,32 @@ function yueSttVariants(source: string): string[] {
   return out
 }
 
+/** Wugniu for a Shanghainese Han string when another seeded phrase uses that text. */
+export function wugniuForWuuText(han: string): string | undefined {
+  const needle = normalizeLookupKey(han)
+  if (!needle) return undefined
+  for (const entry of raw.entries) {
+    if (entry.targetLang !== 'wuu') continue
+    if (normalizeLookupKey(entry.text) === needle && entry.romanization?.trim()) {
+      return entry.romanization.trim()
+    }
+  }
+  return undefined
+}
+
+function alternativeRomanizationsFor(entry: PhraseEntry, alternatives: string[]): string[] | undefined {
+  if (!alternatives.length) return undefined
+  const curated = entry.alternativeRomanizations || []
+  const entryAlts = entry.alternatives || []
+  const out = alternatives.map((alt) => {
+    const idx = entryAlts.indexOf(alt)
+    const fromCurated = idx >= 0 ? curated[idx]?.trim() : ''
+    if (fromCurated) return fromCurated
+    return wugniuForWuuText(alt) || ''
+  })
+  return out.some(Boolean) ? out : undefined
+}
+
 export function dictionaryTranslate(opts: {
   sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
   targetLang: TargetLang
@@ -56,6 +82,7 @@ export function dictionaryTranslate(opts: {
   romanization?: string
   sandhiHint?: string
   ipa?: string
+  alternativeRomanizations?: string[]
 } | null {
   const entry = lookupPhrase(opts)
   if (!entry) return null
@@ -63,6 +90,8 @@ export function dictionaryTranslate(opts: {
     opts.wantAlternatives && (entry.targetLang === 'yue' || entry.targetLang === 'en' || entry.targetLang === 'wuu')
       ? uniqStrings(entry.text, entry.alternatives || [])
       : []
+  const alternativeRomanizations =
+    opts.targetLang === 'wuu' ? alternativeRomanizationsFor(entry, alternatives) : undefined
   return {
     text: entry.text,
     alternatives,
@@ -70,6 +99,7 @@ export function dictionaryTranslate(opts: {
     romanization: entry.romanization,
     sandhiHint: entry.sandhiHint,
     ipa: entry.ipa,
+    ...(alternativeRomanizations ? { alternativeRomanizations } : {}),
   }
 }
 

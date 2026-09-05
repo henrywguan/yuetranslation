@@ -254,6 +254,8 @@ export function CharacterBreakdownHost() {
     top.kind === 'phrase'
       ? (top.alternatives || []).map((a) => a.trim()).filter(Boolean)
       : []
+  const alternativeRomanizations =
+    top.kind === 'phrase' ? top.alternativeRomanizations || [] : []
   const topLabel = top.kind === 'phrase' ? top.phrase : top.char
   const detailLang = top.lang || (hasHan(topLabel) ? 'yue' : 'en')
   const isEnglishDetail = detailLang === 'en'
@@ -498,6 +500,9 @@ export function CharacterBreakdownHost() {
                   <section className="detail-panel-alts" aria-label="Other variations">
                     <TranslationAlternatives
                       alternatives={alternatives}
+                      alternativeRomanizations={
+                        isWuuDetail ? alternativeRomanizations : undefined
+                      }
                       lang={
                         isEnglishDetail
                           ? 'en'

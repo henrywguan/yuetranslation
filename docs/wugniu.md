@@ -23,7 +23,7 @@ Implemented in `apps/web/src/components/ShanghaineseText.tsx`. API path: `transl
 
 ## API field
 
-Translate responses targeting `wuu` include optional `romanization` (Wugniu). Solo, History, and Conversation render Han + Wugniu on the compact line. The details panel may also show **Sandhi** and optional **IPA** via `ShanghaineseText` (`showSandhiHint`). Phrase seeds store Wugniu on `romanization`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).
+Translate responses targeting `wuu` include optional `romanization` (Wugniu) and, when alternatives are present, `alternativeRomanizations` (same order as `alternatives`). Solo, History, Conversation, and Other variations render Han + Wugniu on compact lines. The details panel may also show **Sandhi** and optional **IPA** via `ShanghaineseText` (`showSandhiHint`). Phrase seeds store Wugniu on `romanization` / `alternativeRomanizations`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).
 
 
 ## Sandhi domain hints

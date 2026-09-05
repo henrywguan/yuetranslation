@@ -10,6 +10,7 @@ import type { Lang } from '../lib/types'
 /** Secondary colloquial variants when the API found meaningful alternatives. */
 export function TranslationAlternatives({
   alternatives,
+  alternativeRomanizations,
   className = '',
   onSelect,
   showCopy = true,
@@ -17,6 +18,8 @@ export function TranslationAlternatives({
   lang = 'yue',
 }: {
   alternatives: string[]
+  /** Wugniu for each Shanghainese alternative (same order). */
+  alternativeRomanizations?: string[]
   className?: string
   /** Selecting a variation promotes it and opens its breakdown. */
   onSelect: (phrase: string) => void
@@ -32,7 +35,7 @@ export function TranslationAlternatives({
         <BiText copy={ui.historyVariations} size="sm" />
       </p>
       <ul className="translation-alts-list">
-        {alternatives.map((alt) => (
+        {alternatives.map((alt, i) => (
           <li key={alt}>
             <div className="translation-alt-row">
               {lang === 'yue' ? (
@@ -50,6 +53,8 @@ export function TranslationAlternatives({
               ) : lang === 'wuu' ? (
                 <ShanghaineseText
                   text={alt}
+                  romanization={alternativeRomanizations?.[i]}
+                  showSchemeLabel={false}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}
                 />
