@@ -433,11 +433,11 @@ html.is-bug-capturing .dir-switch-opt input {
   font-weight: 500;
 }
 .shanghainese-wugniu-label {
-  font-size: 0.58em;
+  font-size: 0.48em;
   line-height: 1.2;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  opacity: 0.45;
+  opacity: 0.42;
   font-weight: 600;
 }
 .shanghainese-sandhi-row {
