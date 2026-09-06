@@ -751,21 +751,195 @@ body.cam-ar-open.yue-details-open .cam-ar-live-zoom {
   transform: translateX(-50%);
   z-index: 4;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
   justify-content: center;
   max-width: calc(100% - 110px);
   padding: 4px;
+  pointer-events: none;
 }
 
-.cam-ar-target-row .cam-target-opt {
-  background: color-mix(in srgb, #041018 55%, transparent);
-  backdrop-filter: blur(8px);
-  color: #d7efe6;
+.cam-ar-target-row .cam-target-dd {
+  pointer-events: auto;
 }
 
-.cam-ar-target-row .cam-target-opt.is-on {
+/* —— Cam translate-target dropdown (single pill + menu) —— */
+.cam-target-dd {
+  position: relative;
+  z-index: 2;
+}
+
+.cam-target-dd-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: min(78vw, 280px);
+  padding: 0.42rem 0.72rem 0.42rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 32%, var(--glass-border, rgba(232, 244, 255, 0.16)));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, #041018 62%, transparent),
+      color-mix(in srgb, #0a1c2c 48%, transparent)
+    );
   color: #e8fff6;
+  font: inherit;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 14%, transparent),
+    0 8px 22px color-mix(in srgb, #000 28%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.cam-target-dd--panel .cam-target-dd-trigger {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-strong, rgba(232, 244, 255, 0.09)) 72%, transparent),
+      color-mix(in srgb, var(--harbor-mid, #0a1c2c) 55%, transparent)
+    );
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine, rgba(232, 244, 255, 0.18)),
+    0 8px 22px color-mix(in srgb, var(--harbor, #07131f) 18%, transparent);
+}
+
+.cam-target-dd.is-open .cam-target-dd-trigger,
+.cam-target-dd-trigger:hover,
+.cam-target-dd-trigger:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 58%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--jade) 22%, transparent),
+    0 10px 28px color-mix(in srgb, var(--jade) 16%, transparent);
+  outline: none;
+}
+
+.cam-target-dd-mark {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.55rem;
+  height: 1.55rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--on-jade, #041018);
+  background: linear-gradient(145deg, var(--jade-bright, #7ef0dc), var(--jade-mid, #2aa88f));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--jade) 28%, transparent);
+}
+
+.cam-target-dd-chevron {
+  display: inline-flex;
+  color: color-mix(in srgb, var(--jade) 72%, #d7efe6);
+  transition: transform 0.18s ease;
+}
+
+.cam-target-dd-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.cam-target-dd-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  pointer-events: auto;
+}
+
+.cam-target-dd-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: color-mix(in srgb, #041018 32%, transparent);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.cam-target-dd-menu {
+  position: absolute;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, rgba(232, 244, 255, 0.14));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, #07131f 88%, transparent),
+      color-mix(in srgb, #0a1c2c 82%, transparent)
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent),
+    0 18px 40px color-mix(in srgb, #000 42%, transparent);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  color: #e8fff6;
+}
+
+.cam-target-dd-layer--panel .cam-target-dd-menu {
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-strong, rgba(232, 244, 255, 0.09)) 86%, transparent),
+      color-mix(in srgb, var(--harbor-mid, #0a1c2c) 78%, transparent)
+    );
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine, rgba(232, 244, 255, 0.18)),
+    0 18px 40px color-mix(in srgb, var(--harbor, #07131f) 28%, transparent);
+}
+
+.cam-target-dd-option {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.55rem 0.6rem;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cam-target-dd-option:hover,
+.cam-target-dd-option:focus-visible {
+  background: color-mix(in srgb, var(--jade) 16%, transparent);
+  outline: none;
+}
+
+.cam-target-dd-option.is-selected {
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+}
+
+.cam-target-dd-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.cam-target-dd-check {
+  flex: none;
+  display: inline-flex;
+  color: var(--jade-bright, #7ef0dc);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cam-target-dd-chevron {
+    transition: none;
+  }
 }
 
 .cam-ar-busy,
