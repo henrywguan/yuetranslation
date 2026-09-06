@@ -1,93 +1,163 @@
 # Security baseline — JyutTranslate
 
-Initial full-project pass by Security Guardian (code review + safe `/api/health` probe).  
+Full-project Security Guardian pass (code review + safe `/api/health` + `npm audit`).  
 Re-run via **Vulnerability Scanner** automation or chat: follow `docs/agents/security-guardian.md`.
 
 Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production HTTP)  
-Updated: 2026-09-04 — shipped fail-closed `YUE_OPEN_MODE` default + stripped health `envFile`
+Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AUTOMATED hardenings (see below)
+
+---
+
+## Executive summary (2026-09-06)
+
+| Area | Status |
+| --- | --- |
+| Secrets in repo / client bundles | **Healthy** — no service-role / Stripe / Azure keys committed; `npm audit` → 0 vulns |
+| Open mode / login defaults | **Healthy** — `YUE_OPEN_MODE` fail-closed `'0'`; `vercel.json` pins `0` + `YUE_REQUIRE_LOGIN=1` |
+| CORS | **Healthy** — allowlist (not `origin: true`) |
+| Admin / Stripe / auth webhooks | **Healthy** — `requireAdmin`; Stripe `constructEvent`; Standard Webhooks on auth hooks |
+| Guest / paid-API abuse | **Open risk** — no IP rate limits; guest cookie rotation; TTS unlimited for guests; speech-token & camera scan not tightly tied to minute burn |
+| Health info disclosure | **Residual** — no `envFile`, but engines/models/full entitlement still public |
+
+**Safe health probe:** `npm run security:api-health` → fail=0 (2026-09-06).
 
 ---
 
 ## Critical / High
 
-### [High] Guest `#/app` translate can burn DeepSeek with no per-IP rate limit
+### [High] Guest `#/app` translate can burn DeepSeek with no per-IP rate limit — STILL OPEN
 - **Category:** abuse
-- **Evidence:** `POST /api/translate` allows guests when `allowed.textTranslate` is true (`apps/api/src/app.ts`). Metering via `addTranslateCount` only runs for signed-in users when `!env.openMode`. Bug-report path has a rate limit; translate does not.
-- **Impact:** Scrapers / AI bots can spam translate against production without an account and burn model tokens until infra or provider limits kick in.
-- **Fix:** Add per-IP (and optionally per-user) rate limits on `/api/translate`, `/api/breakdown`, and other guest-reachable paid paths; consider a soft anonymous daily cap or edge WAF rules on Vercel.
+- **Evidence:** `POST /api/translate` allows guests when `allowed.textTranslate` is true (`apps/api/src/app.ts`). Counts are recorded (`addTranslateCount` / `addGuestTranslateCount`) but **do not gate** guests. No IP/user rate limiter on translate (bug-report path is rate-limited).
+- **Impact:** Scrapers / AI bots can spam translate without an account and burn model tokens until infra or provider limits kick in.
+- **Fix:** Add per-IP (and optionally per-user) rate limits on `/api/translate`, `/api/breakdown`, `/api/tts`, `/api/speech-token`, `/api/camera/scan`; consider anonymous daily caps or Vercel Firewall / WAF rules.
 - **Fixability:** NEEDS_HUMAN
-- **Why:** Cap numbers and whether guests stay free are product/billing decisions Henry must set.
+- **Why:** Cap numbers and whether guests stay free are product/billing decisions.
 
-### [High] `/api/health` discloses internal env file path + model identity — FIXED
-- **Status:** Fixed on this branch — `openaiStatus()` no longer returns `envFile`; server boot still logs `loadedEnvFilePath()` to stdout only.
-- **Category:** leak
-- **Evidence (was):** `openaiStatus()` returned `envFile`; `/api/health` embedded it.
-- **Fix applied:** Public status is booleans + model names only; `scripts/security-api-health.sh` now fails if `envFile` reappears.
+### [High] Guest TTS is unlimited + was uncapped per request — PARTIALLY HARDENED
+- **Category:** abuse / metering
+- **Evidence:** Guests get `ttsUnlimited: true` (`entitlements.ts`). Usage is counted but does not block. **2026-09-06 AUTOMATED:** `/api/tts` now rejects text longer than **2000** chars (same as translate).
+- **Impact (residual):** Anonymous callers can still burn Azure TTS continuously within 2000 chars/request and by rotating guest cookies.
+- **Fix (remaining):** Per-IP rate limits; optional guest monthly TTS hard cap; require login for TTS if product allows.
+- **Fixability:** NEEDS_HUMAN (policy / caps) — max-length **AUTOMATED** (shipped)
 
-### [Medium→High in misconfig] `YUE_OPEN_MODE` defaults to open in code — FIXED
-- **Status:** Fixed on this branch — code default is now `'0'` (fail-closed). Local lux still sets `YUE_OPEN_MODE=1` in `apps/api/.env.example`.
-- **Category:** config / metering
-- **Evidence (was):** Default `'1'` meant any deploy missing Vercel override skipped metering.
-- **Why this was safe to flip:** Production already pins `0` in `vercel.json`. Dev convenience belongs in `.env`, not in the fail-open code default.
+### [High] `/api/breakdown` hit the model with no metering — FIXED (metering)
+- **Status:** Fixed 2026-09-06 — breakdown now increments the same translate counters as `/api/translate`.
+- **Category:** abuse / metering
+- **Evidence (was):** Guest-reachable LLM path with no `addTranslateCount`.
+- **Residual:** Still no IP rate limit (same as translate).
+
+### [High] Speech token issued without consuming live minutes — STILL OPEN
+- **Category:** metering
+- **Evidence:** `GET /api/speech-token` checks `allowed.live` then issues an Azure STS token (~540s). Live seconds only decrement via client `POST /api/usage/heartbeat`.
+- **Impact:** While minutes “remain”, a client can mint tokens and run STT without heartbeats → Azure STT spend largely unmetered.
+- **Fix:** Tie token issuance to remaining seconds / rate-limit issuance / shorter TTL + server-side debit.
+- **Fixability:** NEEDS_HUMAN
+
+### [High] Camera OCR/scan without camera-minute burn — STILL OPEN
+- **Category:** metering
+- **Evidence:** `POST /api/camera/scan` requires `allowed.camera` (from minute balance) but each scan runs Azure Read OCR; minutes only move via `camera-heartbeat`. Guests have AI vision off (good); OCR still runs.
+- **Impact:** Spam scans (or skip heartbeats) while minutes appear remaining → Vision cost with little/no minute burn.
+- **Fix:** Charge seconds or scan units per scan; require a recent heartbeat window.
+- **Fixability:** NEEDS_HUMAN
+
+### [High] Guest cookie rotation resets trial meters — STILL OPEN
+- **Category:** abuse / metering
+- **Evidence:** Guest id is HttpOnly cookie UUID (`guest.ts`). Dropping the cookie → new UUID → fresh guest live/camera minutes (`YUE_GUEST_*_MINUTES=30`) and fresh translate/TTS counts.
+- **Impact:** Unlimited guest trials for live tokens, cam OCR, and soft-counted translate/TTS.
+- **Fix:** Bind trial to IP/fingerprint hash, reject cookieless live/cam, and/or edge rate limits.
+- **Fixability:** NEEDS_HUMAN
+
+### [High] `/api/docs/segments` model spend without page metering — STILL OPEN
+- **Category:** metering
+- **Evidence:** Requires `allowed.docs` but does not call `addDocsPages`; pages billed later via client `/api/docs/commit`. Batch can be large (hundreds of segments).
+- **Impact:** Signed-in users can burn DeepSeek on PDF hybrid path without consuming docs pages until commit.
+- **Fix:** Meter segment chars/calls against docs or translate budget; estimate pages server-side where possible.
+- **Fixability:** NEEDS_HUMAN
+
+### [High] `/api/health` disclosed `envFile` — FIXED (earlier)
+- **Status:** Fixed — public health has no `envFile`. Probe script fails if it reappears.
+
+### [Medium→High in misconfig] `YUE_OPEN_MODE` fail-open default — FIXED (earlier)
+- **Status:** Fixed — code default `'0'`; `vercel.json` pins `0`.
 
 ---
 
 ## Medium
 
-### [Medium] CORS `origin: true` reflects any Origin — FIXED
-- **Status:** Fixed — allowlist = `YUE_APP_URL` ± www, `https://jyuttranslate.vercel.app`, localhost/127.0.0.1 (:5173/:4173/:8787), optional `YUE_CORS_ORIGINS`. No ephemeral `*-git-*.vercel.app` previews. Apex `jyuttranslate.com` 301 → `www.jyuttranslate.com` in `vercel.json`.
-- **Category:** config
-- **Evidence:** `app.use(cors({ origin: true, credentials: true }))` in `apps/api/src/app.ts`.
-- **Impact:** See PR / chat explanation — browser cross-origin calls with credentials. With Bearer JWT in `Authorization` (JyutTranslate’s pattern) risk is lower than cookie sessions, but any browser page can still trigger credentialed CORS preflight+request if a logged-in SPA attaches the token to cross-origin fetches.
-- **Fix:** Restrict to `YUE_APP_URL` + known marketing/localhost origins in production.
-- **Fixability:** NEEDS_HUMAN
-- **Why:** Must confirm all legitimate web origins (TWA, WordPress, tunnels) before tightening.
+### [Medium] CORS `origin: true` — FIXED (earlier)
+- **Status:** Fixed — allowlist via `corsOrigins.ts`.
 
-### [Medium] `ai_vision_count` was view-only — FIXED (hard monthly caps)
-- **Status:** Fixed — Free **200** / Family **2000** / Business **10000** per month (`YUE_*_AI_VISION_COUNT`). Exhausted → skip LLM fallback; Azure OCR still runs. Cam/docs stay available.
-- **Category:** metering / abuse
-- **Evidence:** Camera/docs AI vision LLM fallback increments `ai_vision_count` and now gates via `allowed.aiVision` before the paid LLM call.
-- **Impact (before):** Signed-in users who forced vision LLM fallback repeatedly could burn vision-model spend without a ceiling.
-- **Residual risk:** Caps are generous; a determined signed-in attacker can still spend up to the monthly ceiling. Camera minutes / docs pages remain additional brakes. Lower the env caps if you want a tighter budget.
+### [Medium] `ai_vision_count` uncapped — FIXED (earlier)
+- **Status:** Fixed — Free / Family / Business monthly hard caps; guests `aiVision: false`.
 
-
-### [Medium] Large JSON body limit (`12mb`) on shared parser
+### [Medium] Global JSON body limit (`12mb`) — STILL OPEN
 - **Category:** abuse
-- **Evidence:** `express.json({ limit: '12mb' })` before route handlers.
-- **Impact:** Easy bandwidth/CPU DoS on any JSON endpoint; camera/docs may need large payloads but translate/tts do not.
-- **Fix:** Keep a high limit only on camera/docs routes; use a smaller default (e.g. 256kb–1mb) globally.
-- **Fixability:** AUTOMATED (deferred — Cam/Docs still need large base64 bodies; do as a follow-up with route-specific parsers)
-- **Why:** Localized Express wiring; verify Cam/Docs still work.
+- **Evidence:** `express.json({ limit: '12mb' })` before all JSON routes.
+- **Impact:** Bandwidth/CPU DoS on translate/tts/etc.; Cam/Docs may need large payloads.
+- **Fix:** Smaller default (256kb–1mb); route-specific large parsers for camera/docs.
+- **Fixability:** AUTOMATED (deferred — needs Cam/Docs verification)
+
+### [Medium] `/api/health` still returns engines, models, full entitlement
+- **Category:** leak / health
+- **Evidence:** Public payload includes engine booleans, model names, license gate, notify shape, full `entitlement`.
+- **Impact:** Aids targeting of paid backends; reveals guest quotas. No secrets observed.
+- **Fix:** Slim public health to `ok` + minimal readiness; move diagnostics behind admin.
+- **Fixability:** AUTOMATED (confirm SPA still works) / NEEDS_HUMAN if ops dashboards depend on fields
 
 ---
 
 ## Low
 
-### [Low] Public `GET /api/auth-config` returns anon key
-- **Category:** config
-- **Evidence:** By design for SPA runtime config (`apps/api/src/app.ts`).
-- **Impact:** Anon key is meant to be public with RLS; risk only if Supabase RLS/policies are wrong.
-- **Fix:** Audit Supabase RLS; never put service role in this endpoint (already correct).
-- **Fixability:** NEEDS_HUMAN (RLS audit in Supabase dashboard)
+### [Low] Public `GET /api/auth-config` returns anon key — by design
+- **Fixability:** NEEDS_HUMAN (Supabase RLS audit)
 
-### [Low] Docs / social agent markdown is public if GitHub Pages covers `/docs`
-- **Category:** leak
-- **Evidence:** `.github/PULL_REQUEST_TEMPLATE.md` already warns about Pages exposing `docs/agents`.
-- **Impact:** Internal agent prompts and ops notes become public intel (not keys).
-- **Fix:** Keep Pages scoped away from `docs/agents` / `docs/social`, or move sensitive runbooks private.
+### [Low] Docs / social agent markdown if GitHub Pages covers `/docs`
 - **Fixability:** NEEDS_HUMAN
+
+### [Low] Legal markdown `javascript:` hrefs — HARDENED 2026-09-06
+- **Status:** `rewriteLegalHref` now allowlists `http(s):`, `mailto:`, and `#/` only.
+
+### [Low] Azure Vision `Operation-Location` host not pinned — HARDENED 2026-09-06
+- **Status:** Poll URL host must match configured Vision endpoint (https only).
+
+### [Low] Internal DB webhook secret compared with `!==` — HARDENED 2026-09-06
+- **Status:** `timingSafeEqual` on `x-notify-secret` in `signupNotify.ts`.
+
+---
+
+## AUTOMATED hardenings shipped in this re-scan
+
+1. Meter `/api/breakdown` like translate  
+2. Cap `/api/tts` text at 2000 characters  
+3. Constant-time compare for signup DB webhook secret  
+4. Pin Azure Vision operation-location host  
+5. Block non-http(s)/mailto/hash hrefs in legal markdown  
 
 ---
 
 ## Healthy controls already in place
 
-- Production `vercel.json` sets `YUE_OPEN_MODE=0` and `YUE_REQUIRE_LOGIN=1`
-- Code default is now also `YUE_OPEN_MODE=0` (fail-closed)
+- Production `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, guest live/cam 30 minutes
+- Code default `YUE_OPEN_MODE=0` (fail-closed)
 - Live speech token gated on `ent.allowed.live`; Cam/docs on `allowed.camera` / `allowed.docs`
 - Admin routes use `requireAdmin` (email allowlist + role)
-- Stripe webhook uses raw body + signature path; auth send-email hook verifies Standard Webhooks secret
-- Bug reports rate-limited (10/hour) and strip oversized screenshots
+- Stripe webhook: raw body + signature verification
+- Auth send-email + signup auth hook: Standard Webhooks
+- Bug reports: auth + 10/hour + screenshot size strip
 - `.gitignore` excludes `.env` / `apps/api/.env`
-- Public `/api/health` no longer exposes `openai.envFile`
-- Offline smoke scripts exist (`smoke:canto`, `smoke:entitlements`, `smoke:usage`, `smoke:all`) without needing live paid calls for core lexicon paths
+- Public `/api/health` no longer exposes `envFile`
+- CORS allowlist (no ephemeral `*-git-*.vercel.app`)
+- Guest AI vision hard-off
+- Offline smokes + `npm run security:api-health` (no paid APIs)
 - Cloud `AGENTS.md` forbids unapproved metered API calls from agents
+- `npm audit --omit=dev` → **0 vulnerabilities** (2026-09-06)
+
+---
+
+## Recommended next actions for Henry (NEEDS_HUMAN)
+
+1. **Decide guest policy:** keep anonymous live/cam/TTS, or require login after a tighter trial.  
+2. **Pick rate-limit numbers** (e.g. translate 30/min/IP, TTS 20/min/IP, speech-token 10/min/IP) — then AUTOMATED implement.  
+3. **Bind guest trials to IP** (or drop cookieless live/cam).  
+4. **Align live/cam meters** with actual Azure spend (token debit / per-scan charge).  
+5. Optional: slim `/api/health`; route-specific JSON body limits; Supabase RLS audit.

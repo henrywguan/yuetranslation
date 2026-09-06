@@ -243,7 +243,15 @@ app.post('/api/breakdown', async (req: AuthedRequest, res) => {
     return
   }
   try {
-    res.json(await breakdown(req.body))
+    const result = await breakdown(req.body)
+    // Same guest/signed-in metering as translate — breakdown also hits the model.
+    if (!env.openMode) {
+      if (req.auth?.userId) await addTranslateCount(req.auth.userId, 1)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestTranslateCount((req as GuestRequest).guestId!, 1)
+      }
+    }
+    res.json(result)
   } catch (e) {
     res.status(400).json({ message: e instanceof Error ? e.message : 'Breakdown error' })
   }
@@ -271,7 +279,12 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       res.status(400).json({ message: 'text required' })
       return
     }
-        const azureLang =
+    // Bound Azure TTS spend per request (matches translate max length).
+    if (text.length > 2000) {
+      res.status(400).json({ message: 'text too long (max 2000 characters)' })
+      return
+    }
+    const azureLang =
       lang === 'en' || lang === 'en-US'
         ? 'en'
         : lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'

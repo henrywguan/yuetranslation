@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto'
 import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { env } from './env.js'
@@ -108,7 +109,12 @@ export function handleSignupNotify(req: AuthedRequest, res: Response) {
   }
 
   const secret = req.headers['x-notify-secret']
-  if (secret !== env.notifyWebhookSecret) {
+  const provided = typeof secret === 'string' ? secret : Array.isArray(secret) ? secret[0] : ''
+  const expected = env.notifyWebhookSecret
+  const a = Buffer.from(provided || '', 'utf8')
+  const b = Buffer.from(expected, 'utf8')
+  // Constant-time compare when lengths match; mismatched lengths are always unauthorized.
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
     res.status(401).json({ message: 'Unauthorized' })
     return
   }
