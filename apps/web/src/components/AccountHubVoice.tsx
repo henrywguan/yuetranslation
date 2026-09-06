@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import {
@@ -65,6 +65,8 @@ export function AccountHubVoice({
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
   const titleId = useId()
+  /** Native <select> dismiss can synthesize a click on the backdrop (esp. iOS). */
+  const ignoreBackdropUntil = useRef(0)
 
   useEffect(() => {
     if (!modalOpen) return
@@ -82,6 +84,19 @@ export function AccountHubVoice({
 
   const close = () => setModalOpen(false)
   const ttsOk = entitlement.allowed.tts
+
+  const markSelectInteraction = () => {
+    // Cover picker dismiss + delayed ghost click after choosing an option.
+    ignoreBackdropUntil.current = Date.now() + 500
+  }
+
+  const onBackdropPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.target !== e.currentTarget) return
+    if (Date.now() < ignoreBackdropUntil.current) return
+    // Use pointerdown — post-select ghost events are usually clicks, not pointerdowns.
+    close()
+  }
+
 
   return (
     <section
@@ -142,9 +157,12 @@ export function AccountHubVoice({
                 type="button"
                 className="voice-settings-backdrop"
                 aria-label={biPlain(ui.accountTtsVoiceModalClose)}
-                onClick={close}
+                onPointerDown={onBackdropPointerDown}
               />
-              <div className="voice-settings-panel">
+              <div
+                className="voice-settings-panel"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 <button
                   type="button"
                   className="voice-settings-close"
@@ -164,9 +182,14 @@ export function AccountHubVoice({
                     </span>
                     <select
                       className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
                       value={yueVoice}
                       disabled={voiceBusy}
-                      onChange={(e) => void persistVoices({ yue: resolveYueVoice(e.target.value) })}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ yue: resolveYueVoice(e.target.value) })
+                      }}
                       aria-label={biPlain(ui.accountTtsYue)}
                     >
                       {YUE_VOICES.map((v) => (
@@ -193,9 +216,14 @@ export function AccountHubVoice({
                     </span>
                     <select
                       className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
                       value={enVoice}
                       disabled={voiceBusy}
-                      onChange={(e) => void persistVoices({ en: resolveEnVoice(e.target.value) })}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ en: resolveEnVoice(e.target.value) })
+                      }}
                       aria-label={biPlain(ui.accountTtsEn)}
                     >
                       {EN_VOICES.map((v) => (
@@ -222,9 +250,14 @@ export function AccountHubVoice({
                     </span>
                     <select
                       className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
                       value={cmnVoice}
                       disabled={voiceBusy}
-                      onChange={(e) => void persistVoices({ cmn: resolveCmnVoice(e.target.value) })}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ cmn: resolveCmnVoice(e.target.value) })
+                      }}
                       aria-label={biPlain(ui.accountTtsCmn)}
                     >
                       {CMN_VOICES.map((v) => (
@@ -251,9 +284,14 @@ export function AccountHubVoice({
                     </span>
                     <select
                       className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
                       value={tlVoice}
                       disabled={voiceBusy}
-                      onChange={(e) => void persistVoices({ tl: resolveTlVoice(e.target.value) })}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ tl: resolveTlVoice(e.target.value) })
+                      }}
                       aria-label={biPlain(ui.accountTtsTl)}
                     >
                       {TL_VOICES.map((v) => (
@@ -280,9 +318,14 @@ export function AccountHubVoice({
                     </span>
                     <select
                       className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
                       value={esVoice}
                       disabled={voiceBusy}
-                      onChange={(e) => void persistVoices({ es: resolveEsVoice(e.target.value) })}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ es: resolveEsVoice(e.target.value) })
+                      }}
                       aria-label={biPlain(ui.accountTtsEs)}
                     >
                       {ES_VOICES.map((v) => (
@@ -309,9 +352,14 @@ export function AccountHubVoice({
                     </span>
                     <select
                       className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
                       value={wuuVoice}
                       disabled={voiceBusy}
-                      onChange={(e) => void persistVoices({ wuu: resolveWuuVoice(e.target.value) })}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ wuu: resolveWuuVoice(e.target.value) })
+                      }}
                       aria-label={biPlain(ui.accountTtsWuu)}
                     >
                       {WUU_VOICES.map((v) => (
