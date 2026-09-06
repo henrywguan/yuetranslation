@@ -2233,36 +2233,6 @@
   outline: none;
 }
 
-.solo-auto-hint {
-  margin: 0;
-  padding: 0 8px 10px 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  text-align: left;
-  max-width: min(100%, 16rem);
-  line-height: 1.35;
-}
-
-.solo-auto-hint .bi {
-  align-items: flex-start;
-}
-
-/* Hint overlays Solo chrome instead of consuming a History row. */
-.solo-auto-hint--float {
-  position: fixed;
-  z-index: 44;
-  left: max(12px, env(safe-area-inset-left));
-  bottom: calc(118px + env(safe-area-inset-bottom, 0px));
-  margin: 0;
-  padding: 8px 12px;
-  max-width: min(58vw, 15rem);
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  box-shadow: 0 8px 22px color-mix(in srgb, #000 16%, transparent);
-  backdrop-filter: blur(12px);
-  pointer-events: none;
-}
 
 .solo-alts-loading {
   margin: 8px 0 0;

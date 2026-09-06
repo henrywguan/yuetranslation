@@ -87,7 +87,6 @@ type State = {
   /** True while a background request is loading text-mode EN→粵 alternatives. */
   altsLoading: boolean
   /** Solo empty-state: show type-to-translate hint beside History. */
-  soloShowAutoHint: boolean
   /** Conversation panes only — separate from Solo/Text results. */
   face: FaceLive
   /** Drill-down details stack (phrase → character → …). Empty = closed. */
@@ -149,7 +148,6 @@ type State = {
   clearCurrent: () => void
   /** Wipe History list (and persist empty to the account when signed in). */
   clearHistory: () => void
-  setSoloShowAutoHint: (v: boolean) => void
 }
 
 let speakToken = 0
@@ -463,7 +461,6 @@ export const useYueStore = create<State>((set, get) => ({
   enDefinitions: [],
   enAlternatives: [],
   altsLoading: false,
-  soloShowAutoHint: false,
   face: emptyFaceLive(),
   detailStack: [],
   detailMinimized: false,
@@ -611,7 +608,6 @@ export const useYueStore = create<State>((set, get) => ({
         /* Keep local preference; next bootstrap will reconcile if save failed. */
       })
   },
-  setSoloShowAutoHint: (soloShowAutoHint) => set({ soloShowAutoHint }),
 
   speakManual: async (text, lang) => {
     const trimmed = text.trim()
