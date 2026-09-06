@@ -1,0 +1,326 @@
+/* Language-launch promo ads — match Tagalog “Uy, Pare!” layout (light field + phone). */
+
+.lang-launch {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 18% 22%, #e8fff6 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 88% 78%, #d9f5ee 0%, transparent 50%),
+    linear-gradient(165deg, #f4fbf8 0%, #e8f3ef 48%, #dfeceb 100%);
+  color: var(--harbor);
+  font-family: var(--font-english);
+}
+
+.lang-launch__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  height: 100%;
+  padding: 72px 36px 56px 64px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.lang-launch__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 24px;
+  max-width: 520px;
+}
+
+.lang-launch__hook {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 92px;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: var(--harbor);
+  margin-bottom: 28px;
+}
+
+.lang-launch__hook--zh {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 96px;
+  letter-spacing: 0.02em;
+}
+
+.lang-launch__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.lang-launch__line {
+  font-family: var(--font-english);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.35;
+  color: #1a2a36;
+}
+
+.lang-launch__line--zh {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.4;
+}
+
+.lang-launch__line strong {
+  font-weight: 800;
+  color: var(--harbor);
+}
+
+.lang-launch__arrow {
+  font-size: 36px;
+  line-height: 1;
+  color: var(--harbor);
+  margin: 4px 0 36px;
+  font-weight: 400;
+}
+
+.lang-launch__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.lang-launch__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--jade) 35%, transparent);
+  flex-shrink: 0;
+}
+
+.lang-launch__brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  color: var(--harbor);
+}
+
+.lang-launch__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  min-height: 64px;
+  padding: 16px 36px;
+  border-radius: 999px;
+  background: var(--jade);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--jade) 40%, transparent);
+  margin-bottom: 16px;
+}
+
+.lang-launch__fine {
+  font-family: var(--font-english);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #4a5a66;
+  max-width: 420px;
+}
+
+.lang-launch__phone-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.phone {
+  width: 420px;
+  height: 860px;
+  border-radius: 48px;
+  background: #0a1218;
+  border: 3px solid #1c2a36;
+  box-shadow:
+    0 40px 80px rgba(7, 19, 31, 0.35),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  position: relative;
+}
+
+.phone__notch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  border-radius: 20px;
+  background: #050a10;
+  z-index: 3;
+}
+
+.phone__screen {
+  position: absolute;
+  inset: 0;
+  padding: 52px 18px 28px;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(61, 207, 182, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 90% 80%, rgba(18, 50, 74, 0.55), transparent 50%),
+    linear-gradient(180deg, #0a1a24 0%, #07131f 55%, #061018 100%);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.phone__status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.85;
+  padding: 0 8px 4px;
+}
+
+.details-card {
+  flex: 1;
+  min-height: 0;
+  border-radius: 28px;
+  background: color-mix(in srgb, #0e2430 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, transparent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  padding: 22px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.details-card__kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.ruby-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  align-items: flex-end;
+}
+
+.ruby {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ruby__py {
+  font-family: var(--font-english);
+  font-size: 13px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  line-height: 1;
+}
+
+.ruby__han {
+  font-family: var(--font-body);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.05;
+}
+
+.details-card__en {
+  font-family: var(--font-english);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.details-card__en-sub {
+  font-size: 14px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.details-card__divider {
+  height: 0;
+  border: none;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent);
+  margin: 2px 0;
+}
+
+.char-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.char-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, #061018 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.char-card__han {
+  font-family: var(--font-body);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.char-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.char-card__py {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.char-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+  color: var(--jade-bright);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.char-card__gloss {
+  font-size: 14px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  line-height: 1.3;
+}

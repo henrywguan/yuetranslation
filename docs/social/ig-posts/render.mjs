@@ -30,6 +30,8 @@ const jobs = [
   { html: 'jyutping-tones-portrait.html', png: 'ig-post-jyutping-tones-portrait.png', w: 1080, h: 1350 },
   { html: 'intro-square.html', png: 'ig-post-intro-1080.png', w: 1080, h: 1080 },
   { html: 'intro-portrait.html', png: 'ig-post-intro-portrait.png', w: 1080, h: 1350 },
+  { html: 'mandarin-support-en.html', png: 'ig-ad-mandarin-support-en.png', w: 1080, h: 1350 },
+  { html: 'mandarin-support-zh.html', png: 'ig-ad-mandarin-support-zh.png', w: 1080, h: 1350 },
 ]
 
 const chrome =
