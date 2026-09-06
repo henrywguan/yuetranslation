@@ -30,6 +30,7 @@ import { BiText } from './BiText'
 import { SpeakButton } from './SpeakButton'
 import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
+import { MexicanSpanishLearnPanel } from './MexicanSpanishLearnPanel'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 import './DetailPanel.css'
@@ -565,6 +566,7 @@ export function CharacterBreakdownHost() {
                 ) : null}
               </div>
             ) : null}
+            {isEsDetail ? <MexicanSpanishLearnPanel text={topLabel} /> : null}
             {loading && !rows.length ? (
               <p className="detail-panel-loading muted">Loading…</p>
             ) : rows.length ? (

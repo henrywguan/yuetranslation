@@ -3,6 +3,7 @@ import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { MexicanSpanishLearnPanel } from './MexicanSpanishLearnPanel'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -290,6 +291,10 @@ export function HistoryCard({
                 ))}
               </ul>
             </div>
+          ) : null}
+
+          {turn.to === 'es' && zhPhrase ? (
+            <MexicanSpanishLearnPanel text={zhPhrase} />
           ) : null}
 
           {hasDrill ? (
