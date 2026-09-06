@@ -31,11 +31,21 @@ export function HistoryPane({
           ? 'wuu'
           : turn.to === 'tl' || turn.from === 'tl'
             ? 'tl'
-            : 'yue'
+            : turn.to === 'es' || turn.from === 'es'
+              ? 'es'
+              : 'yue'
     const canto =
-      turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' || turn.to === 'tl'
+      turn.to === 'yue' ||
+      turn.to === 'cmn' ||
+      turn.to === 'wuu' ||
+      turn.to === 'tl' ||
+      turn.to === 'es'
         ? turn.translation
-        : turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' || turn.from === 'tl'
+        : turn.from === 'yue' ||
+            turn.from === 'cmn' ||
+            turn.from === 'wuu' ||
+            turn.from === 'tl' ||
+            turn.from === 'es'
           ? turn.source
           : phrase
     const english =

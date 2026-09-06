@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -107,6 +107,10 @@ function isTagalogTarget(to: CameraLang): boolean {
   return to === 'tl'
 }
 
+function isMexicanTarget(to: CameraLang): boolean {
+  return to === 'es'
+}
+
 function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
   const docHint = docBatch
     ? 'These lines come from one document — keep terminology, names, and tone consistent across all lines.'
@@ -193,10 +197,31 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'es') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Mexican Spanish (español mexicano).',
+      'Write for Mexican travelers/readers: everyday spoken Mexican Spanish, not stiff textbook Castilian.',
+      'Prefer Mexico vocabulary (e.g. computadora, celular, plática, ¿mande?) over Spain-only wording when they differ.',
+      'Use Latin script only. Include written accents (á, é, í, ó, ú, ñ, ü) when standard orthography requires them.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Registro / Check-in; Luggage → Equipaje.',
+      '- Safety: Wet floor → Piso mojado / Piso resbaloso; Caution → Precaución.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Spanish output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Mexican Spanish>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   return [
     'You translate signs, menus, forms, and short labels into clear traveler English.',
-    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), or Tagalog / Filipino (Latin script).',
-    'When the source is Tagalog/Filipino Latin text, translate it into concise English (Latin → English).',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, or Mexican Spanish (Latin script).',
+    'When the source is Tagalog/Filipino or Mexican Spanish Latin text, translate it into concise English (Latin → English).',
     docHint,
     "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
     'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
@@ -229,11 +254,14 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isTagalogTarget(to)) {
     return hasHan(source) ? `(demo TL) ${source}` : `(demo) ${source}`
   }
+  if (isMexicanTarget(to)) {
+    return hasHan(source) ? `(demo Mx) ${source}` : `(demo) ${source}`
+  }
   return `(demo) ${source}`
 }
 
 /**
- * Camera / written-Chinese translate (EN ↔ yue|cmn|wuu|tl). * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
+ * Camera / written-Chinese translate (EN ↔ yue|cmn|wuu|tl|es). * Never apply Yue scrub to Mandarin (cmn) outputs — reverse-scrub Yue→cmn instead.
  */
 export async function translateCameraText(
   text: string,
@@ -283,7 +311,9 @@ export async function translateCameraText(
       : `（譯）${source}`
     : isTagalogTarget(to)
       ? `(tr TL) ${source}`
-      : `(tr) ${source}`
+      : isMexicanTarget(to)
+        ? `(tr Mx) ${source}`
+        : `(tr) ${source}`
   let translated = parseTranslation(raw, fallback)
   if (to === 'cmn') translated = scrubYueToCmn(translated).text
   remember(key, translated)
@@ -301,6 +331,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'cmn') return 'Mandarin Chinese 普通话 (简体 OK)'
   if (lang === 'wuu') return 'Shanghainese 上海话 / 沪语'
   if (lang === 'tl') return 'Tagalog / Filipino (Latin script)'
+  if (lang === 'es') return 'Mexican Spanish (Latin script, es-MX)'
   return 'Hong Kong Chinese 繁體'
 }
 
@@ -347,7 +378,9 @@ export async function translateCameraBatch(
           : `（譯）${s}`
         : isTagalogTarget(to)
           ? `(tr TL) ${s}`
-          : `(tr) ${s}`,
+          : isMexicanTarget(to)
+            ? `(tr Mx) ${s}`
+            : `(tr) ${s}`,
     )
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
@@ -356,6 +389,7 @@ export async function translateCameraBatch(
       if (to === 'en' && hasHan(t)) out[start + i] = src
       else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
       else if (isTagalogTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text
         out[start + i] = t || src
@@ -375,6 +409,7 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (!lang) return undefined
   if (lang === 'zh' || lang === 'yue') return 'yue'
   if (lang === 'fil' || lang === 'tl') return 'tl'
+  if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
   if (lang === 'cmn' || lang === 'en' || lang === 'wuu') return lang
   return undefined
 }

@@ -12,6 +12,7 @@ const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
   { id: 'cmn', copy: ui.dirMandarin, mark: '普' },
   { id: 'wuu', copy: ui.dirShanghainese, mark: '沪' },
   { id: 'tl', copy: ui.dirTagalog, mark: 'Tl' },
+  { id: 'es', copy: ui.dirMexicanSpanish, mark: 'Mx' },
 ]
 
 type MenuPlacement = 'top' | 'bottom'
@@ -48,7 +49,7 @@ export function LangLabelButton({
     only === 'en'
       ? OPTIONS.filter((o) => o.id === 'en')
       : only === 'zh'
-        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn' || o.id === 'wuu' || o.id === 'tl')
+        ? OPTIONS.filter((o) => o.id === 'yue' || o.id === 'cmn' || o.id === 'wuu' || o.id === 'tl' || o.id === 'es')
         : OPTIONS
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1
@@ -101,7 +102,7 @@ export function LangLabelButton({
   const labelOnly =
     only === 'en'
       ? 'en'
-      : current.id === 'tl'
+      : current.id === 'tl' || current.id === 'es'
         ? undefined
         : only === 'zh' || current.id === 'yue' || current.id === 'cmn' || current.id === 'wuu'
           ? 'zh'

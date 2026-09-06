@@ -25,7 +25,8 @@ const Body = z.object({
    */
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
-  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'tl']).optional(),  /** When true, skip translation and only return OCR regions. */
+  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'tl', 'es']).optional(),
+  /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
   /**
    * When true, this scan is part of Cam → Documents (PDF hybrid).
@@ -77,6 +78,12 @@ function pickTarget(
   }
   if (preferred === 'tl') {
     return looksChinese ? { from: 'yue', to: 'tl' } : { from: 'en', to: 'tl' }
+  }
+  if (preferred === 'es') {
+    return looksChinese ? { from: 'yue', to: 'es' } : { from: 'en', to: 'es' }
+  }
+  if (preferred === 'wuu') {
+    return looksChinese ? { from: 'wuu', to: 'wuu' } : { from: 'en', to: 'wuu' }
   }
   // Auto: Latin → Cantonese (HK default), CJK → English
   return looksChinese ? { from: 'yue', to: 'en' } : { from: 'en', to: 'yue' }

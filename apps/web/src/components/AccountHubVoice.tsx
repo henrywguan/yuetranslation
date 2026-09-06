@@ -3,16 +3,22 @@ import { BiText } from './BiText'
 import {
   CMN_VOICES,
   EN_VOICES,
+  ES_VOICES,
   TL_VOICES,
+  WUU_VOICES,
   YUE_VOICES,
   resolveCmnVoice,
   resolveEnVoice,
+  resolveEsVoice,
   resolveTlVoice,
+  resolveWuuVoice,
   resolveYueVoice,
   voiceShortLabel,
   type CmnVoiceId,
   type EnVoiceId,
+  type EsVoiceId,
   type TlVoiceId,
+  type WuuVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -26,18 +32,22 @@ type Props = {
   enVoice: EnVoiceId
   cmnVoice: CmnVoiceId
   tlVoice: TlVoiceId
+  esVoice: EsVoiceId
+  wuuVoice: WuuVoiceId
   voiceBusy: boolean
-  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | null
+  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'wuu' | null
   persistVoices: (next: {
     yue?: YueVoiceId
     en?: EnVoiceId
     cmn?: CmnVoiceId
     tl?: TlVoiceId
+    es?: EsVoiceId
+    wuu?: WuuVoiceId
   }) => Promise<void>
-  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl') => Promise<void>
+  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'wuu') => Promise<void>
 }
 
-/** Compact TTS summary + modal for Yue / En / Cmn / Tl voice prefs. */
+/** Compact TTS summary + modal for Yue / En / Cmn / Tl / Es / Wuu voice prefs. */
 export function AccountHubVoice({
   voicePrefId,
   entitlement,
@@ -45,6 +55,8 @@ export function AccountHubVoice({
   enVoice,
   cmnVoice,
   tlVoice,
+  esVoice,
+  wuuVoice,
   voiceBusy,
   previewBusy,
   persistVoices,
@@ -91,6 +103,14 @@ export function AccountHubVoice({
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">Tl</span>
             <span className="account-hub-voice-chip-name">{voiceShortLabel(tlVoice)}</span>
+          </span>
+          <span className="account-hub-voice-chip">
+            <span className="account-hub-voice-chip-lang">Mx</span>
+            <span className="account-hub-voice-chip-name">{voiceShortLabel(esVoice)}</span>
+          </span>
+          <span className="account-hub-voice-chip">
+            <span className="account-hub-voice-chip-lang">沪</span>
+            <span className="account-hub-voice-chip-name">{voiceShortLabel(wuuVoice)}</span>
           </span>
         </p>
         <button
@@ -240,6 +260,64 @@ export function AccountHubVoice({
                 className="account-hub-voice-preview"
                 disabled={previewBusy !== null || !ttsOk}
                 onClick={() => void onPreview('tl')}
+              >
+                <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+              </button>
+            </div>
+
+            <div className="voice-settings-row">
+              <label className="voice-settings-field">
+                <span className="voice-settings-lang">
+                  <BiText copy={ui.accountTtsEs} size="sm" hideJp />
+                </span>
+                <select
+                  className="account-hub-select"
+                  value={esVoice}
+                  disabled={voiceBusy}
+                  onChange={(e) => void persistVoices({ es: resolveEsVoice(e.target.value) })}
+                  aria-label={biPlain(ui.accountTtsEs)}
+                >
+                  {ES_VOICES.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.labelEn} · {v.labelZh}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="account-hub-voice-preview"
+                disabled={previewBusy !== null || !ttsOk}
+                onClick={() => void onPreview('es')}
+              >
+                <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+              </button>
+            </div>
+
+            <div className="voice-settings-row">
+              <label className="voice-settings-field">
+                <span className="voice-settings-lang">
+                  <BiText copy={ui.accountTtsWuu} size="sm" hideJp />
+                </span>
+                <select
+                  className="account-hub-select"
+                  value={wuuVoice}
+                  disabled={voiceBusy}
+                  onChange={(e) => void persistVoices({ wuu: resolveWuuVoice(e.target.value) })}
+                  aria-label={biPlain(ui.accountTtsWuu)}
+                >
+                  {WUU_VOICES.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.labelEn} · {v.labelZh}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="account-hub-voice-preview"
+                disabled={previewBusy !== null || !ttsOk}
+                onClick={() => void onPreview('wuu')}
               >
                 <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
               </button>

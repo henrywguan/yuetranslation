@@ -45,3 +45,13 @@ export function sanitizeTlTranslation(text: string | null | undefined): string |
   if (!/[\p{L}]/u.test(t)) return null
   return t
 }
+
+
+/** Reject EN→Mexican Spanish payloads that are empty, glossy, or still Chinese. */
+export function sanitizeEsTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\p{L}]/u.test(t)) return null
+  return t
+}

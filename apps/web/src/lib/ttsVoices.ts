@@ -8,27 +8,38 @@ export {
   DEFAULT_CMN_VOICE,
   DEFAULT_WUU_VOICE,
   DEFAULT_TL_VOICE,
+  DEFAULT_ES_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
   WUU_VOICES,
   TL_VOICES,
+  ES_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
   PREVIEW_WUU,
   PREVIEW_TL,
+  PREVIEW_ES,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
   resolveWuuVoice,
   resolveTlVoice,
+  resolveEsVoice,
+  isYueVoice,
+  isEnVoice,
+  isCmnVoice,
+  isWuuVoice,
+  isTlVoice,
+  isEsVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
   type CmnVoiceId,
   type WuuVoiceId,
   type TlVoiceId,
+  type EsVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -36,17 +47,20 @@ export {
 import {
   DEFAULT_CMN_VOICE,
   DEFAULT_TL_VOICE,
+  DEFAULT_ES_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
   resolveCmnVoice,
   resolveTlVoice,
+  resolveEsVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
   voiceMeta,
   type CmnVoiceId,
   type TlVoiceId,
+  type EsVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -57,6 +71,7 @@ const STORAGE_EN = 'yue-tts-voice-en'
 const STORAGE_CMN = 'yue-tts-voice-cmn'
 const STORAGE_WUU = 'yue-tts-voice-wuu'
 const STORAGE_TL = 'yue-tts-voice-tl'
+const STORAGE_ES = 'yue-tts-voice-es'
 
 export function readLocalYueVoice(): YueVoiceId {
   if (typeof window === 'undefined') return DEFAULT_YUE_VOICE
@@ -128,6 +143,23 @@ export function writeLocalTlVoice(id: TlVoiceId) {
 
 
 /** Short label for hub summary (first segment before ·). */
+export function readLocalEsVoice(): EsVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_ES_VOICE
+  try {
+    return resolveEsVoice(localStorage.getItem(STORAGE_ES))
+  } catch {
+    return DEFAULT_ES_VOICE
+  }
+}
+
+export function writeLocalEsVoice(id: EsVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_ES, resolveEsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
 export function voiceShortLabel(id: string): string {
   const meta = voiceMeta(id)
   if (!meta) return id

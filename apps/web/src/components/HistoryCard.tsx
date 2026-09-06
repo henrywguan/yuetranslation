@@ -1,6 +1,8 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
+import { TagalogText } from './TagalogText'
+import { MexicanSpanishText } from './MexicanSpanishText'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -10,6 +12,7 @@ function langShort(lang: Lang): string {
   if (lang === 'cmn') return '普'
   if (lang === 'wuu') return '沪'
   if (lang === 'tl') return 'TL'
+  if (lang === 'es') return 'Mx'
   return '粵'
 }
 
@@ -60,6 +63,28 @@ function LangLine({
       />
     )
   }
+  if (lang === 'tl') {
+    return (
+      <TagalogText
+        text={text}
+        definition={definition}
+        definitions={definitions}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
+  if (lang === 'es') {
+    return (
+      <MexicanSpanishText
+        text={text}
+        definition={definition}
+        definitions={definitions}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
   if (onBreakdown) {
     return (
       <button
@@ -80,6 +105,7 @@ function langLabel(lang: Lang) {
   if (lang === 'cmn') return <BiText copy={ui.dirMandarin} size="sm" only="zh" />
   if (lang === 'wuu') return <BiText copy={ui.dirShanghainese} size="sm" only="zh" />
   if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
+  if (lang === 'es') return <BiText copy={ui.dirMexicanSpanish} size="sm" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
 
@@ -97,9 +123,13 @@ export function HistoryCard({
   isLatest?: boolean
 }) {
   const zhPhrase =
-    turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu'
+    turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' || turn.to === 'tl' || turn.to === 'es'
       ? turn.translation
-      : turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu'
+      : turn.from === 'yue' ||
+          turn.from === 'cmn' ||
+          turn.from === 'wuu' ||
+          turn.from === 'tl' ||
+          turn.from === 'es'
         ? turn.source
         : ''
   const yueDefs = (turn.definitions || []).map((d) => d.trim()).filter(Boolean)
@@ -164,7 +194,9 @@ export function HistoryCard({
                 lang={turn.from}
                 text={turn.source}
                 definition={turn.definition}
-                definitions={turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' ? yueDefs : undefined}
+                definitions={
+                  turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' ? yueDefs : undefined
+                }
                 romanization={turn.from === 'wuu' ? turn.romanization : undefined}
                 onBreakdown={onBreakdown}
               />
@@ -181,7 +213,9 @@ export function HistoryCard({
                 lang={turn.to}
                 text={turn.translation}
                 definition={turn.definition}
-                definitions={turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' ? yueDefs : undefined}
+                definitions={
+                  turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' ? yueDefs : undefined
+                }
                 romanization={turn.to === 'wuu' ? turn.romanization : undefined}
                 onBreakdown={onBreakdown}
               />
@@ -240,6 +274,14 @@ export function HistoryCard({
                         jpMode="popup"
                         onActivate={onBreakdown}
                         activateLabel={biPlain(ui.charDetail)}
+                      />
+                    ) : turn.to === 'tl' ? (
+                      <TagalogText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'es' ? (
+                      <MexicanSpanishText
+                        text={alt}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
                       />
                     ) : (
                       alt
