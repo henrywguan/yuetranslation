@@ -15,7 +15,20 @@ Vercel 生产栈的套餐与计量以本文为准。WordPress 插件为次要表
 | Documents | Sign-in required (button greyed) | Yes (docs page meter) |
 | Auto-speak | No | Family/Business |
 
-Guests get an HttpOnly `yue_guest_id` cookie. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free.
+Guests get an HttpOnly `yue_guest_id` cookie (1 year, `SameSite=Lax`, `Secure` on HTTPS). The API sets it on first anonymous request via `attachGuest`; the browser keeps it and sends it back on later calls. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free. Clearing site cookies (or private browsing) creates a **new** guest id and resets trial meters — that is why IP rate limits matter.
+
+### Guest per-IP rate limits (app)
+
+Signed-in users are not limited by these. TTS is intentionally uncapped by IP (product choice; still counted in usage). Defaults (override with env):
+
+| Bucket | Endpoint | Default |
+| --- | --- | --- |
+| translate | `POST /api/translate` | `YUE_GUEST_RL_TRANSLATE_PER_MIN=30` |
+| breakdown | `POST /api/breakdown` | `YUE_GUEST_RL_BREAKDOWN_PER_MIN=20` |
+| speechToken | `GET /api/speech-token` | `YUE_GUEST_RL_SPEECH_TOKEN_PER_MIN=12` |
+| cameraScan | `POST /api/camera/scan` | `YUE_GUEST_RL_CAMERA_SCAN_PER_MIN=20` |
+
+These are in-memory fixed 1-minute windows (best-effort on multi-instance Vercel). Pair with Vercel Firewall / WAF if you want a hard edge cap on all `/api*`.
 
 Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, `YUE_GUEST_LIVE_MINUTES=30`, `YUE_GUEST_CAMERA_MINUTES=30`.
 

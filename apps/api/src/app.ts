@@ -9,6 +9,7 @@ import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
 import { attachGuest, type GuestRequest } from './guest.js'
+import { allowGuestIpOrReject } from './guestRateLimit.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
 import {
@@ -168,6 +169,7 @@ app.get('/api/auth-config', (_req, res) => {
 })
 
 app.get('/api/speech-token', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'speechToken')) return
   const ent = await entitlementFor(req)
   if (!ent.allowed.live) {
     const login = ent.reason === 'login_required'
@@ -197,6 +199,7 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/translate', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'translate')) return
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
     res
@@ -227,6 +230,7 @@ app.post('/api/translate', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/breakdown', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'breakdown')) return
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
     res
@@ -545,6 +549,7 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'cameraScan')) return
   const forDocs = Boolean(req.body?.forDocs)
   const ent = await entitlementFor(req)
   const allowed = forDocs ? ent.allowed.docs : ent.allowed.camera

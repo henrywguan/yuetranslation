@@ -16,7 +16,7 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 | Open mode / login defaults | **Healthy** — `YUE_OPEN_MODE` fail-closed `'0'`; `vercel.json` pins `0` + `YUE_REQUIRE_LOGIN=1` |
 | CORS | **Healthy** — allowlist (not `origin: true`) |
 | Admin / Stripe / auth webhooks | **Healthy** — `requireAdmin`; Stripe `constructEvent`; Standard Webhooks on auth hooks |
-| Guest / paid-API abuse | **Open risk** — no IP rate limits; guest cookie rotation; TTS unlimited for guests; speech-token & camera scan not tightly tied to minute burn |
+| Guest / paid-API abuse | **Partially hardened** — guest IP RL on translate/breakdown/speech-token/camera; TTS uncapped by choice; cookie rotation + minute/token decoupling still open |
 | Health info disclosure | **Residual** — no `envFile`, but engines/models/full entitlement still public |
 
 **Safe health probe:** `npm run security:api-health` → fail=0 (2026-09-06).
@@ -25,20 +25,19 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 
 ## Critical / High
 
-### [High] Guest `#/app` translate can burn DeepSeek with no per-IP rate limit — STILL OPEN
+### [High] Guest `#/app` translate can burn DeepSeek with no per-IP rate limit — HARDENED (app RL)
+- **Status:** Guest-only per-IP limits shipped 2026-09-06 — translate **30**/min, breakdown **20**/min, speech-token **12**/min, camera scan **20**/min (`YUE_GUEST_RL_*`). TTS intentionally uncapped by IP (product). In-memory windows are best-effort on multi-instance Vercel; keep edge Firewall if configured.
 - **Category:** abuse
-- **Evidence:** `POST /api/translate` allows guests when `allowed.textTranslate` is true (`apps/api/src/app.ts`). Counts are recorded (`addTranslateCount` / `addGuestTranslateCount`) but **do not gate** guests. No IP/user rate limiter on translate (bug-report path is rate-limited).
-- **Impact:** Scrapers / AI bots can spam translate without an account and burn model tokens until infra or provider limits kick in.
-- **Fix:** Add per-IP (and optionally per-user) rate limits on `/api/translate`, `/api/breakdown`, `/api/tts`, `/api/speech-token`, `/api/camera/scan`; consider anonymous daily caps or Vercel Firewall / WAF rules.
-- **Fixability:** NEEDS_HUMAN
-- **Why:** Cap numbers and whether guests stay free are product/billing decisions.
+- **Evidence:** `allowGuestIpOrReject` in `apps/api/src/guestRateLimit.ts` on guest translate/breakdown/speech-token/camera.
+- **Residual:** Cookie rotation still refreshes trial meters; signed-in users not limited by these buckets; serverless cold starts reset memory.
+- **Fixability:** NEEDS_HUMAN for Redis/Upstash shared limiter or cookie↔IP binding if abuse continues.
 
-### [High] Guest TTS is unlimited + was uncapped per request — PARTIALLY HARDENED
+### [High] Guest TTS is unlimited + was uncapped per request — ACCEPTED (product) + length cap
+- **Status:** Henry accepted unlimited guest TTS (2026-09-06). Per-request max **2000** chars remains. No guest IP RL on TTS by design.
 - **Category:** abuse / metering
-- **Evidence:** Guests get `ttsUnlimited: true` (`entitlements.ts`). Usage is counted but does not block. **2026-09-06 AUTOMATED:** `/api/tts` now rejects text longer than **2000** chars (same as translate).
-- **Impact (residual):** Anonymous callers can still burn Azure TTS continuously within 2000 chars/request and by rotating guest cookies.
-- **Fix (remaining):** Per-IP rate limits; optional guest monthly TTS hard cap; require login for TTS if product allows.
-- **Fixability:** NEEDS_HUMAN (policy / caps) — max-length **AUTOMATED** (shipped)
+- **Evidence:** Guests get `ttsUnlimited: true`; usage counted; `/api/tts` rejects text > 2000 chars.
+- **Residual:** High-volume short TTS still possible; rely on edge Firewall / provider limits if needed.
+- **Fixability:** NEEDS_HUMAN only if costs appear — otherwise leave as-is.
 
 ### [High] `/api/breakdown` hit the model with no metering — FIXED (metering)
 - **Status:** Fixed 2026-09-06 — breakdown now increments the same translate counters as `/api/translate`.
@@ -131,7 +130,8 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 2. Cap `/api/tts` text at 2000 characters  
 3. Constant-time compare for signup DB webhook secret  
 4. Pin Azure Vision operation-location host  
-5. Block non-http(s)/mailto/hash hrefs in legal markdown  
+5. Block non-http(s)/mailto/hash hrefs in legal markdown
+6. Guest per-IP rate limits on translate / breakdown / speech-token / camera scan (TTS excluded by product choice)  
 
 ---
 
@@ -156,8 +156,8 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 
 ## Recommended next actions for Henry (NEEDS_HUMAN)
 
-1. **Decide guest policy:** keep anonymous live/cam/TTS, or require login after a tighter trial.  
-2. **Pick rate-limit numbers** (e.g. translate 30/min/IP, TTS 20/min/IP, speech-token 10/min/IP) — then AUTOMATED implement.  
-3. **Bind guest trials to IP** (or drop cookieless live/cam).  
-4. **Align live/cam meters** with actual Azure spend (token debit / per-scan charge).  
-5. Optional: slim `/api/health`; route-specific JSON body limits; Supabase RLS audit.
+1. Confirm guest IP RL defaults feel right in real Solo use (or tweak `YUE_GUEST_RL_*`).  
+2. **Bind guest trials to IP** (or drop cookieless live/cam) if cookie wipe abuse shows up.  
+3. **Align live/cam meters** with actual Azure spend (token debit / per-scan charge) — see #4.  
+4. Meter or soft-cap `/api/docs/segments` — see #5.  
+5. Optional: slim `/api/health`; route-specific JSON body limits; Supabase RLS audit; Upstash shared RL.
