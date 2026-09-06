@@ -509,6 +509,7 @@ export const ui = {
   accountTtsCmn: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   accountTtsTl: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   accountTtsEs: { en: 'Mexican Spanish', zh: '墨西哥西班牙語', jp: 'mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
+  accountTtsWuu: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
   accountTtsVoiceSettings: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
   accountTtsVoiceModalTitle: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
