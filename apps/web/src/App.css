@@ -3163,13 +3163,13 @@
    * safe-area alone still leaves the hold button easy to graze when swiping
    * the installed PWA away — add a dead zone under the controls.
    */
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--app-bottom-gesture-guard, 12px));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--app-bottom-gesture-guard, 16px));
 }
 
 /* Installed / fullscreen PWA: larger dead zone (home indicator + dismiss swipe). */
 @media (display-mode: standalone), (display-mode: fullscreen) {
   .dock {
-    --app-bottom-gesture-guard: 24px;
+    --app-bottom-gesture-guard: 28px;
   }
 }
 
@@ -3303,6 +3303,7 @@
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .live-btn.on {
