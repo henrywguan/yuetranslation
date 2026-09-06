@@ -41,8 +41,6 @@ function defaultGeom(): PanelGeom {
  */
 export function TranslationHistory() {
   const history = useYueStore((s) => s.history)
-  const mode = useYueStore((s) => s.mode)
-  const soloShowAutoHint = useYueStore((s) => s.soloShowAutoHint)
   const clearHistory = useYueStore((s) => s.clearHistory)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { geom, persist, update, onDragPointerDown } = useFloatingPanel<PanelGeom>({
@@ -56,7 +54,6 @@ export function TranslationHistory() {
   const dockUpsert = usePanelDock((s) => s.upsert)
   const dockRemove = usePanelDock((s) => s.remove)
   const count = history.length
-  const showSoloHint = (mode === 'solo' || mode === 'text') && soloShowAutoHint
 
   useEffect(() => {
     if (!geom.minimized) {
@@ -154,13 +151,6 @@ export function TranslationHistory() {
             onPointerDown={(e) => onDragPointerDown(e, 'resize')}
           />
         </aside>
-      ) : null}
-
-      {/* Floats over chrome — does not take Solo flex height. */}
-      {showSoloHint ? (
-        <p className="solo-auto-hint solo-auto-hint--float" aria-live="polite">
-          <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
-        </p>
       ) : null}
 
       <button

@@ -61,7 +61,6 @@ export function SoloView() {
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const setSoloPaneLang = useYueStore((s) => s.setSoloPaneLang)
   const clearCurrent = useYueStore((s) => s.clearCurrent)
-  const setSoloShowAutoHint = useYueStore((s) => s.setSoloShowAutoHint)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
   const status = useYueStore((s) => s.status)
@@ -213,9 +212,8 @@ export function SoloView() {
       setLowerDraft(shared)
       editingRef.current = 'lower'
     }
-    setSoloShowAutoHint(false)
     runTranslate(shared, from, 0, true)
-  }, [setSoloShowAutoHint, soloUpperLang, soloLowerLang])
+  }, [soloUpperLang, soloLowerLang])
 
 
   const onPaneLangSelect = (pane: 'upper' | 'lower', lang: Lang) => {
@@ -317,12 +315,6 @@ export function SoloView() {
   const lowerThinking =
     (translating && translatingTo === soloLowerLang) ||
     (typedBusy && editingRef.current === 'upper')
-  const showHint = !live && !translating && !typedBusy && !upperDraft.trim() && !lowerDraft.trim()
-  useEffect(() => {
-    setSoloShowAutoHint(showHint)
-    return () => setSoloShowAutoHint(false)
-  }, [showHint, setSoloShowAutoHint])
-
   const inputLocked = live
   const showLowerRuby =
     (soloLowerLang === 'yue' ||
