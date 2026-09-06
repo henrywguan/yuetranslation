@@ -26,16 +26,16 @@ Speech Solo/Conversation remain EN↔粵 only.
 
 | Plan | Camera | Cap | Counted |
 | --- | --- | --- | --- |
-| Guest | No | — | — |
-| Free | Yes | `YUE_FREE_CAMERA_MINUTES` (default 60) | `cameraSeconds` |
-| Family | Yes | `YUE_FAMILY_CAMERA_MINUTES` (default 480 = 8 hr) | `cameraSeconds` |
-| Business | Yes | Unlimited | Yes (`cameraUnlimited`) |
+| Guest | Yes | `YUE_GUEST_CAMERA_SCANS` (default **30**; legacy `YUE_GUEST_CAMERA_MINUTES` fallback) | `camera_translate_count` |
+| Free | Yes | `YUE_FREE_CAMERA_SCANS` (default **120**) | `camera_translate_count` |
+| Family | Yes | `YUE_FAMILY_CAMERA_SCANS` (default **800**) | `camera_translate_count` |
+| Business | Yes | Unlimited | Yes (`cameraUnlimited`) — still counted |
 
-Heartbeat: `POST /api/usage/camera-heartbeat` while AR fullscreen or upload editor is open.
+**Hard gate:** each successful `POST /api/camera/scan` with `forDocs: false` costs **1 scan credit** (pre-check remaining, charge on success). Documents hybrid (`forDocs: true`) does **not** burn Cam credits.
 
-Analytics: `camera_translate_count` on OCR→translate cache misses — **not** when `forDocs: true`.
+**Heartbeat (logging only):** `POST /api/usage/camera-heartbeat` while AR fullscreen or upload editor is open writes `cameraSeconds` for admin session duration — it does **not** gate Cam.
 
-Migration: `004_camera_usage.sql`.
+Migration: `004_camera_usage.sql` (reuses `camera_translate_count`; no new column).
 
 ### Documents (separate meter)
 
@@ -77,8 +77,9 @@ OCR: Azure AI Vision Read when `AZURE_VISION_KEY` + `AZURE_VISION_ENDPOINT` are 
 
 ## Env / 環境變數
 
-- `YUE_FREE_CAMERA_MINUTES` (default 60)
-- `YUE_FAMILY_CAMERA_MINUTES` (default 480)
+- `YUE_FREE_CAMERA_SCANS` (default 120)
+- `YUE_FAMILY_CAMERA_SCANS` (default 800)
+- `YUE_GUEST_CAMERA_SCANS` (default 30; falls back to `YUE_GUEST_CAMERA_MINUTES`)
 - `YUE_FREE_ALLOW_CAMERA` (default 1) — also gates documents
 - `YUE_FREE_DOCS_PAGES` (default 40)
 - `YUE_FAMILY_DOCS_PAGES` (default 400)

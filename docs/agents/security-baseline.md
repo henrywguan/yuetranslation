@@ -52,12 +52,10 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 - **Fix:** Tie token issuance to remaining seconds / rate-limit issuance / shorter TTL + server-side debit.
 - **Fixability:** NEEDS_HUMAN
 
-### [High] Camera OCR/scan without camera-minute burn — STILL OPEN
+### [High] Camera OCR/scan without camera-minute burn — FIXED (scan credits)
+- **Status:** Fixed 2026-09-06 — Cam hard gate is monthly **scan credits** (`camera_translate_count`): Guest 30 / Free 120 / Family 800 / Business unlimited. Each successful non-docs `/api/camera/scan` costs 1 credit (pre-check + charge on success). Heartbeats still write `cameraSeconds` for admin logging only and no longer gate Cam.
 - **Category:** metering
-- **Evidence:** `POST /api/camera/scan` requires `allowed.camera` (from minute balance) but each scan runs Azure Read OCR; minutes only move via `camera-heartbeat`. Guests have AI vision off (good); OCR still runs.
-- **Impact:** Spam scans (or skip heartbeats) while minutes appear remaining → Vision cost with little/no minute burn.
-- **Fix:** Charge seconds or scan units per scan; require a recent heartbeat window.
-- **Fixability:** NEEDS_HUMAN
+- **Residual:** Guest cookie rotation still refreshes scan trial; guest IP RL applies.
 
 ### [High] Guest cookie rotation resets trial meters — STILL OPEN
 - **Category:** abuse / metering

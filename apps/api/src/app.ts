@@ -113,7 +113,7 @@ async function entitlementFor(req: AuthedRequest) {
 function guestTrialMessage(kind: 'live' | 'camera') {
   return kind === 'live'
     ? 'Guest live minutes used up. Sign in to continue on the Free plan.'
-    : 'Guest camera minutes used up. Sign in to continue on the Free plan.'
+    : 'Guest camera scans used up. Sign in to continue on the Free plan.'
 }
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
@@ -575,7 +575,7 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
                 ? 'Document page quota exhausted for this month.'
                 : 'Document translation is not available.'
               : camQuota
-                ? 'Camera minutes exhausted for this month.'
+                ? 'Camera scan credits exhausted for this month.'
                 : 'Camera translation is not available.',
       entitlement: ent,
     })
@@ -584,11 +584,11 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
   try {
     const allowAiVision = env.openMode || Boolean(ent.allowed.aiVision)
     const result = await cameraScan(req.body, { allowAiVision })
-    // Docs hybrid vision: no camera translate metering (pages billed on /docs/commit).
-    if (!forDocs && !env.openMode && result.translateMisses > 0) {
-      if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, result.translateMisses)
+    // Cam AR/Upload: 1 scan credit per successful call. Docs hybrid uses docs pages.
+    if (!forDocs && !env.openMode) {
+      if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, 1)
       else if ((req as GuestRequest).guestId) {
-        await addGuestCameraTranslateCount((req as GuestRequest).guestId!, result.translateMisses)
+        await addGuestCameraTranslateCount((req as GuestRequest).guestId!, 1)
       }
     }
     // AI vision LLM fallback — metered; hard monthly caps enforced via entitlements.
@@ -720,18 +720,17 @@ app.post('/api/docs/commit', async (req: AuthedRequest, res) => {
 
 app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
-  if (!ent.allowed.camera) {
-    const login = ent.reason === 'login_required'
-    const guestDone = ent.reason === 'guest_trial_exhausted'
-    res.status(login || guestDone ? 401 : 402).json({
-      message:
-        login
+  // Heartbeat is admin session logging only — do not gate on scan credits.
+  const camFeature =
+    Boolean(ent.limits.can_camera) && !ent.disabled && (ent.loggedIn || ent.plan === 'guest')
+  if (!camFeature) {
+    const login = !ent.loggedIn && ent.requireLogin
+    res.status(login || ent.disabled ? 401 : 402).json({
+      message: ent.disabled
+        ? 'This account has been disabled.'
+        : login
           ? 'Please sign in to use camera translation.'
-          : guestDone
-            ? guestTrialMessage('camera')
-            : ent.reason === 'account_disabled'
-              ? 'This account has been disabled.'
-              : 'Camera minutes exhausted for this month.',
+          : 'Camera translation is not available.',
       entitlement: ent,
     })
     return

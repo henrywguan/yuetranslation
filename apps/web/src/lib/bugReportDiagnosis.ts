@@ -327,7 +327,7 @@ export function diagnoseBugReport(report: AdminBugReport): ReportDiagnosis {
     actions.push({
       id: 'cam-check',
       title: 'Reproduce camera path',
-      detail: 'Try AR capture and upload scan; verify Vision auth and camera minute remaining.',
+      detail: 'Try AR capture and upload scan; verify Vision auth and camera scan credits remaining.',
     })
     if (server.azureVision === false) {
       findings.push({

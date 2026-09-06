@@ -26,19 +26,23 @@ assert(heavyFamily.tts === true, 'family stays on after heavy usage')
 const guest = voiceAccess(0, 0, false)
 assert(guest.tts === false, 'zero limit without unlimited locks speaker')
 
-const camFree = cameraAccess(60 * 60, 0, false)
+const camGuest = cameraAccess(30, 0, false)
+assert(camGuest.camera === true, 'guest camera scans should be on')
+assert(camGuest.cameraRemaining === 30, 'guest camera remaining 30 scans')
+
+const camFree = cameraAccess(120, 0, false)
 assert(camFree.camera === true, 'free camera should be on')
-assert(camFree.cameraRemaining === 3600, 'free camera remaining 3600s')
+assert(camFree.cameraRemaining === 120, 'free camera remaining 120 scans')
 
-const camExhausted = cameraAccess(60 * 60, 60 * 60, false)
-assert(camExhausted.camera === false, 'exhausted camera should lock')
+const camExhausted = cameraAccess(120, 120, false)
+assert(camExhausted.camera === false, 'exhausted camera scans should lock')
 
-const camFamily = cameraAccess(8 * 60 * 60, 999, false)
-assert(camFamily.camera === true, 'family camera within 8hr cap')
-assert(camFamily.cameraRemaining === 8 * 60 * 60 - 999, 'family camera remaining')
+const camFamily = cameraAccess(800, 100, false)
+assert(camFamily.camera === true, 'family camera within 800 scan cap')
+assert(camFamily.cameraRemaining === 700, 'family camera remaining')
 
-const camFamilyExhausted = cameraAccess(8 * 60 * 60, 8 * 60 * 60, false)
-assert(camFamilyExhausted.camera === false, 'family camera exhausted at 8hr')
+const camFamilyExhausted = cameraAccess(800, 800, false)
+assert(camFamilyExhausted.camera === false, 'family camera exhausted at 800 scans')
 
 const camBusiness = cameraAccess(0, 999, true)
 assert(camBusiness.camera === true, 'business camera unlimited')
@@ -54,7 +58,6 @@ const aiBiz = aiVisionAccess(10000, 9999)
 assert(aiBiz.aiVision === true, 'business ai vision near cap still on')
 
 console.log(
-
   JSON.stringify({
     ok: true,
     free,
@@ -62,6 +65,7 @@ console.log(
     exhausted,
     heavyFamily,
     guest,
+    camGuest,
     camFree,
     camExhausted,
     camFamily,

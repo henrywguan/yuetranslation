@@ -45,7 +45,7 @@ export type AdminUser = {
   aiVisionCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
-  cameraLimitSeconds: number
+  cameraLimitScans: number
   docsLimitPages: number
   overQuota: boolean
 }

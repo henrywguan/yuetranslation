@@ -72,7 +72,7 @@ export type AdminUserRow = {
   liveLimitSeconds: number
   ttsLimitChars: number
   /** Hard cap seconds for Free; 0 means unlimited (Family/Business) or disabled. */
-  cameraLimitSeconds: number
+  cameraLimitScans: number
   docsLimitPages: number
   overQuota: boolean
 }
@@ -88,10 +88,10 @@ function ttsLimitChars(plan: ProfileRow['plan']): number {
   return env.freeAllowTts ? env.freeTtsChars : 0
 }
 
-function cameraLimitSeconds(plan: ProfileRow['plan']): number {
+function cameraLimitScans(plan: ProfileRow['plan']): number {
   if (plan === 'business') return 0
-  if (plan === 'family') return env.familyCameraMinutes * 60
-  return env.freeAllowCamera ? env.freeCameraMinutes * 60 : 0
+  if (plan === 'family') return env.familyCameraScans
+  return env.freeAllowCamera ? env.freeCameraScans : 0
 }
 
 function docsLimitPages(plan: ProfileRow['plan']): number {
@@ -207,12 +207,12 @@ async function buildAdminUsers(range: AdminUsageRange): Promise<AdminUserRow[]> 
     const aiVisionCount = usage.aiVisionCount
     const liveLim = liveLimitSeconds(plan)
     const ttsLim = ttsLimitChars(plan)
-    const camLim = cameraLimitSeconds(plan)
+    const camLim = cameraLimitScans(plan)
     const docsLim = docsLimitPages(plan)
     const overQuota =
       (liveLim > 0 && quotaUsage.liveSeconds >= liveLim) ||
       (ttsLim > 0 && quotaUsage.ttsChars >= ttsLim) ||
-      (camLim > 0 && quotaUsage.cameraSeconds >= camLim) ||
+      (camLim > 0 && quotaUsage.cameraTranslateCount >= camLim) ||
       (docsLim > 0 && quotaUsage.docsPages >= docsLim)
 
     return {
@@ -241,7 +241,7 @@ async function buildAdminUsers(range: AdminUsageRange): Promise<AdminUserRow[]> 
       aiVisionCount,
       liveLimitSeconds: liveLim,
       ttsLimitChars: ttsLim,
-      cameraLimitSeconds: camLim,
+      cameraLimitScans: camLim,
       docsLimitPages: docsLim,
       overQuota,
     }
@@ -390,7 +390,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'docsPages',
       'liveLimitSeconds',
       'ttsLimitChars',
-      'cameraLimitSeconds',
+      'cameraLimitScans',
       'docsLimitPages',
       'overQuota',
       'stripeCustomerId',
@@ -421,7 +421,7 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.docsPages,
           r.liveLimitSeconds,
           r.ttsLimitChars,
-          r.cameraLimitSeconds,
+          r.cameraLimitScans,
           r.docsLimitPages,
           r.overQuota,
           r.stripeCustomerId,

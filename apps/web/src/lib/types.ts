@@ -19,6 +19,9 @@ export type Entitlement = {
     plan: string
     live_minutes: number
     tts_chars: number
+    /** Monthly Cam scan credits (hard gate). */
+    camera_scans?: number
+    /** @deprecated Prefer camera_scans (same value). */
     camera_minutes?: number
     docs_pages?: number
     /** Monthly hard cap for multimodal LLM OCR fallback (Cam + Documents). */
@@ -54,6 +57,9 @@ export type Entitlement = {
   remaining: {
     liveSeconds: number
     ttsChars: number
+    /** Remaining Cam scan credits (-1 unlimited). */
+    cameraScans?: number
+    /** Session time is logging-only; -1 = not a hard quota. */
     cameraSeconds?: number
     /** -1 when unlimited (Business). */
     docsPages?: number

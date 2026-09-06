@@ -73,11 +73,17 @@ export const env = {
   freeLiveMinutes: Number(process.env.YUE_FREE_LIVE_MINUTES || 60),
   /** Soft analytics default for Free; Family/Business TTS is unlimited (see entitlements). */
   freeTtsChars: Number(process.env.YUE_FREE_TTS_CHARS || 30000),
-  /** Free camera hard cap (minutes / month). */
-  freeCameraMinutes: Number(process.env.YUE_FREE_CAMERA_MINUTES || 60),
-  /** Family camera hard cap (minutes / month). Business is unlimited but counted. */
-  familyCameraMinutes: Number(
-    process.env.YUE_FAMILY_CAMERA_MINUTES || process.env.YUE_PRO_CAMERA_MINUTES || 480,
+  /**
+   * Monthly Cam scan credits (hard gate on `/api/camera/scan`).
+   * `cameraSeconds` from heartbeats are admin session logging only.
+   * Legacy `YUE_*_CAMERA_MINUTES` accepted as fallback for guest (prod still sets it).
+   */
+  freeCameraScans: Number(process.env.YUE_FREE_CAMERA_SCANS || 120),
+  familyCameraScans: Number(
+    process.env.YUE_FAMILY_CAMERA_SCANS ||
+      process.env.YUE_FAMILY_CAMERA_MINUTES ||
+      process.env.YUE_PRO_CAMERA_MINUTES ||
+      800,
   ),
   /** Free document pages / month (Cam → Documents). */
   freeDocsPages: Number(process.env.YUE_FREE_DOCS_PAGES || 40),
@@ -110,8 +116,10 @@ export const env = {
   requireLogin: (process.env.YUE_REQUIRE_LOGIN || '1') === '1',
   /** Guest trial live minutes / month (0 = guests cannot use live). */
   guestLiveMinutes: Number(process.env.YUE_GUEST_LIVE_MINUTES || 30),
-  /** Guest trial camera minutes / month (0 = guests cannot use Cam AR/Upload). */
-  guestCameraMinutes: Number(process.env.YUE_GUEST_CAMERA_MINUTES || 30),
+  /** Guest trial Cam scan credits / month (0 = guests cannot use Cam AR/Upload). */
+  guestCameraScans: Number(
+    process.env.YUE_GUEST_CAMERA_SCANS || process.env.YUE_GUEST_CAMERA_MINUTES || 30,
+  ),
   /**
    * Guest-only per-IP rate limits (requests / rolling minute).
    * Signed-in users are not limited by these. Set 0 to disable a bucket.

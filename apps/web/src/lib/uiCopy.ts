@@ -194,9 +194,9 @@ export const ui = {
     jp: 'OCR pang4 zing3 mou4 siu6 — cing2 bei6 fu6 kei4 cit3 ding6 AZURE_VISION_KEY tung4 AZURE_VISION_ENDPOINT. ho2 sin1 sau2 dung6 waak6 kwaang1.',
   },
   camQuota: {
-    en: 'Camera minutes used up this month.',
-    zh: '本月相機分鐘已用完。',
-    jp: 'bun2 jyut6 soeng1 gei1 fan1 zung1 ji5 jung6 jyun4.',
+    en: 'Camera scan credits used up this month.',
+    zh: '本月相機掃描額度已用完。',
+    jp: 'bun2 jyut6 soeng1 gei1 sou3 miu4 ngaak6 dou6 ji5 jung6 jyun4.',
   },
   guestTrialExhaustedLive: {
     en: 'Guest live time used up. Sign in to continue on Free.',
@@ -204,9 +204,9 @@ export const ui = {
     jp: 'haak3 haak3 zik1 si4 fan1 zung1 ji5 jung6 jyun4. dang1 jap6 hau6 ho2 jung6 min5 fai3 baan2.',
   },
   guestTrialExhaustedCam: {
-    en: 'Guest camera time used up. Sign in to continue on Free.',
-    zh: '訪客相機分鐘已用完。登入後可用免費版繼續。',
-    jp: 'haak3 haak3 soeng1 gei1 fan1 zung1 ji5 jung6 jyun4. dang1 jap6 hau6 ho2 jung6 min5 fai3 baan2.',
+    en: 'Guest camera scans used up. Sign in to continue on Free.',
+    zh: '訪客相機掃描已用完。登入後可用免費版繼續。',
+    jp: 'haak3 haak3 soeng1 gei1 sou3 miu4 ji5 jung6 jyun4. dang1 jap6 hau6 ho2 jung6 min5 fai3 baan2.',
   },
   guestDocsSignIn: {
     en: 'Sign in to translate documents.',
@@ -236,6 +236,16 @@ export const ui = {
     en: `${formatted} used / unlimited`,
     zh: `已用 ${formatted}／無限`,
     jp: `ji5 jung6 ${formatted} / mou4 haan6`,
+  }),
+  camScansLeft: (n: string): Bi => ({
+    en: `${n} camera scans left`,
+    zh: `剩餘 ${n} 次相機掃描`,
+    jp: `zi6 jyu4 ${n} ci3 soeng1 gei1 sou3 miu4`,
+  }),
+  camScansUsedUnlimited: (n: string): Bi => ({
+    en: `${n} camera scans used · unlimited`,
+    zh: `已用 ${n} 次相機掃描 · 無限`,
+    jp: `ji5 jung6 ${n} ci3 soeng1 gei1 sou3 miu4 · mou4 haan6`,
   }),
   holdOrTapToSpeak: {
     en: 'Hold or tap to speak',
@@ -468,9 +478,9 @@ export const ui = {
     jp: 'gam2 laa3 baa1 waak6 zi6 dung6 long5 duk6 ge3 zi6 sou3. gaa1 ting4 / kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
   },
   usageDetailCamera: {
-    en: 'Time spent in Cam — fullscreen AR preview or the upload editor.',
-    zh: '喺「相機」模式嘅時間——全屏 AR 預覽或上載編輯器。',
-    jp: 'hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 bin1 cap1 hei3.',
+    en: 'Camera scan credits this month (each AR shutter or upload translate). Session time is logged separately for admin.',
+    zh: '今個月相機掃描額度（每次 AR 快門或上載翻譯）。使用時長另作管理紀錄。',
+    jp: 'gam1 go3 jyut6 soeng1 gei1 sou3 miu4 ngaak6 dou6 (mui5 ci3 AR faai3 mun4 waak6 soeng5 zoi3 faan1 jik6). si2 jung6 si4 coeng4 ling6 zou6 gun2 lei5 gei3 luk6.',
   },
   usageDetailDocs: {
     en: 'Document pages translated in Cam → Documents this month.',
@@ -836,9 +846,9 @@ export const ui = {
     jp: 'duk6 baak6, deoi3 waa6 tung4 soeng1 gei1',
   },
   freeFeatCamera: {
-    en: '~1 hour camera translation / month',
-    zh: '每月大約一小時相機翻譯',
-    jp: 'mui5 jyut6 daai6 joek3 jat1 siu2 si4 soeng1 gei1 faan1 jik6',
+    en: '120 camera scans / month',
+    zh: '每月 120 次相機掃描',
+    jp: 'mui5 jyut6 120 ci3 soeng1 gei1 sou3 miu4',
   },
   freeFeatTts: {
     en: 'Tap-to-play voice — free with limitations',
@@ -856,9 +866,9 @@ export const ui = {
     jp: 'zeoi3 do1 4 wai2 gung6 jung6 jung6 wu6',
   },
   familyFeatCamera: {
-    en: '8 hours camera translation / month',
-    zh: '每月八小時相機翻譯',
-    jp: 'mui5 jyut6 baat3 siu2 si4 soeng1 gei1 faan1 jik6',
+    en: '800 camera scans / month',
+    zh: '每月 800 次相機掃描',
+    jp: 'mui5 jyut6 800 ci3 soeng1 gei1 sou3 miu4',
   },
   familyFeatTts: {
     en: 'Unlimited tap-to-play + auto-speak',
@@ -888,9 +898,9 @@ export const ui = {
     jp: 'mou4 haan6 man4 zi6 faan1 jik6',
   },
   landFreeCam: {
-    en: '~1 hr cam / month',
-    zh: '每月約一小時相機',
-    jp: 'mui5 jyut6 joek3 jat1 siu2 si4 soeng1 gei1',
+    en: '120 cam scans / month',
+    zh: '每月 120 次相機掃描',
+    jp: 'mui5 jyut6 120 ci3 soeng1 gei1 sou3 miu4',
   },
   landFamilyLive: {
     en: '~8 hours live / month',
@@ -898,9 +908,9 @@ export const ui = {
     jp: 'mui5 jyut6 joek3 baat3 siu2 si4 zik1 si4',
   },
   landFamilyCam: {
-    en: '8 hr cam / month',
-    zh: '每月八小時相機',
-    jp: 'mui5 jyut6 baat3 siu2 si4 soeng1 gei1',
+    en: '800 cam scans / month',
+    zh: '每月 800 次相機掃描',
+    jp: 'mui5 jyut6 800 ci3 soeng1 gei1 sou3 miu4',
   },
   landFamilySpeak: {
     en: 'Auto-speak + unlimited voice',
@@ -1049,8 +1059,8 @@ export const ui = {
   valSeat1: { en: '1', zh: '1', jp: '' },
   valSeat4: { en: '4 pooled', zh: '4 個共用', jp: '4 go3 gung6 jung6' },
   valSeat10: { en: '10 pooled', zh: '10 個共用', jp: '10 go3 gung6 jung6' },
-  valCamFree: { en: '1 hr / mo', zh: '每月一小時', jp: 'mui5 jyut6 jat1 siu2 si4' },
-  valCamFamily: { en: '8 hr / mo', zh: '每月八小時', jp: 'mui5 jyut6 baat3 siu2 si4' },
+  valCamFree: { en: '120 scans / mo', zh: '每月 120 次', jp: 'mui5 jyut6 120 ci3' },
+  valCamFamily: { en: '800 scans / mo', zh: '每月 800 次', jp: 'mui5 jyut6 800 ci3' },
   valCamBusiness: { en: 'Unlimited (metered)', zh: '無限（仍計量）', jp: 'mou4 haan6 (jing4 gai3 loeng4)' },
   valUnlimitedPlain: { en: 'Unlimited', zh: '無限', jp: 'mou4 haan6' },
   valStandard: { en: 'Standard', zh: '標準', jp: 'biu1 zeon2' },
@@ -1058,19 +1068,19 @@ export const ui = {
   valCommunity: { en: 'Community', zh: '社區', jp: 'se5 keoi1' },
   valEmail: { en: 'Email', zh: '電郵', jp: 'din6 jau4' },
   camMinutesCardTitle: {
-    en: 'What are camera minutes?',
-    zh: '咩係相機分鐘？',
-    jp: 'me1 hai6 soeng1 gei1 fan1 zung1?',
+    en: 'What are camera scans?',
+    zh: '咩係相機掃描？',
+    jp: 'me1 hai6 soeng1 gei1 sou3 miu4?',
   },
   camMinutesCardBody: {
-    en: 'Camera minutes count time spent in Cam — fullscreen AR preview or the upload editor — separate from live mic minutes. Free includes about 1 hour per month. Family includes 8 hours per month. Business is unlimited but still tracked. Each shutter capture uses Azure Vision OCR once (not continuous polling).',
-    zh: '相機分鐘計算你喺「相機」模式嘅時間——全屏 AR 預覽或者上載編輯器——同即時咪高峰分鐘分開計。免費版大約每月一小時。家庭版每月八小時。商務版無限但仍會計量。每次快門只用一次 Azure Vision OCR（唔會持續輪詢）。',
-    jp: 'soeng1 gei1 fan1 zung1 hai6 gai3 syun3 nei5 hai2 “soeng1 gei1” mou4 sik1 ge3 si4 gaan3 — cyun4 ping4 AR jyu6 laam5 waak6 soeng5 zoi3 bin1 cap1 hei3 — tung4 zik1 si4 mai1 gou1 fung1 fan1 zung1 fan1 hoi1 gai3. min5 fai3 baan2 daai6 joek3 mui5 jyut6 jat1 siu2 si4. gaa1 ting4 baan2 mui5 jyut6 baat3 siu2 si4. kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4. mui5 ci3 faai3 mun4 zi2 jung6 jat1 ci3 Azure Vision OCR (m4 wui5 ci4 zuk6 leon4 seon2).',
+    en: 'Each Cam shutter or upload translate uses one scan credit (Azure Vision OCR once — not continuous polling). Free includes 120 scans per month. Family includes 800. Business is unlimited but still tracked. Time spent in the Cam UI is logged for admin only and does not spend scan credits.',
+    zh: '每次相機快門或上載翻譯用一格掃描額度（一次 Azure Vision OCR——唔會持續輪詢）。免費版每月 120 次。家庭版 800 次。商務版無限但仍會計量。喺相機介面嘅時間只作管理紀錄，唔扣掃描額度。',
+    jp: 'mui5 ci3 soeng1 gei1 faai3 mun4 waak6 soeng5 zoi3 faan1 jik6 jung6 jat1 gaak3 sou3 miu4 ngaak6 dou6 (jat1 ci3 Azure Vision OCR — m4 wui5 ci4 zuk6 leon4 seon2). min5 fai3 baan2 mui5 jyut6 120 ci3. gaa1 ting4 baan2 800 ci3. kei4 gaam3 baan2 mou4 haan6 daan6 jing4 wui5 gai3 loeng4. hai2 soeng1 gei1 gaai3 min6 ge3 si4 gaan3 zi2 zou6 gun2 lei5 gei3 luk6, m4 kau3 sou3 miu4 ngaak6 dou6.',
   },
   fairUseNote: {
-    en: '* Business live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Family camera is capped at 8 hr/mo; Business camera is unlimited but counted.',
-    zh: '* 商務版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。家庭版相機每月八小時；商務版相機無限但仍會計量。',
-    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6. gaa1 ting4 baan2 soeng1 gei1 mui5 jyut6 baat3 siu2 si4; kei4 gaam3 baan2 soeng1 gei1 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
+    en: '* Business live hours are a soft fair-use cap (~40 hrs/mo) so speech costs stay sustainable. Family camera is capped at 800 scans/mo; Business camera is unlimited but counted.',
+    zh: '* 商務版即時時數係合理使用上限（大約每月四十小時），等語音成本可以持續。家庭版相機每月 800 次掃描；商務版相機無限但仍會計量。',
+    jp: '* kei4 gaam3 baan2 zik1 si4 si4 sou3 hai6 hap6 lei5 si2 jung6 soeng6 haan6 (daai6 joek3 mui5 jyut6 sei3 sap6 siu2 si4), dang2 jyu5 jam1 sing4 bun2 ho2 ji5 ci4 zuk6. gaa1 ting4 baan2 soeng1 gei1 mui5 jyut6 800 ci3 sou3 miu4; kei4 gaam3 baan2 soeng1 gei1 mou4 haan6 daan6 jing4 wui5 gai3 loeng4.',
   },
 
   faqKicker: { en: 'FAQ', zh: '常見問題', jp: 'soeng4 gin3 man6 tai4' },
@@ -1091,9 +1101,9 @@ export const ui = {
     jp: 'me1 giu3 zou6 “zik1 si4 fan1 zung1”?',
   },
   faq2a: {
-    en: 'Time the microphone is actively listening in Solo or Conversation Mode. Text and Camera never use live minutes (Camera has its own monthly minutes).',
-    zh: '喺獨白或者對話模式，咪高峰開啟聽緊嘅時間。文字同相機唔計即時分鐘（相機有自己嘅每月分鐘）。',
-    jp: 'hai2 duk6 baak6 waak6 ze2 deoi3 waa6 mou4 sik1, mai1 gou1 fung1 hoi1 kai2 teng1 gan2 ge3 si4 gaan3. man4 zi6 tung4 soeng1 gei1 m4 gai3 zik1 si4 fan1 zung1 (soeng1 gei1 jau5 zi6 gei2 ge3 mui5 jyut6 fan1 zung1).',
+    en: 'Time the microphone is actively listening in Solo or Conversation Mode. Text never uses live minutes. Camera uses its own monthly scan credits (session time is logged separately).',
+    zh: '獨白或對話模式入面，咪高峰正在收聽嘅時間。文字翻譯唔用即時分鐘。相機用自己嘅每月掃描額度（使用時長另作紀錄）。',
+    jp: 'duk6 baak6 waak6 deoi3 waa6 mou4 sik1 jap6 min6, mai1 gou1 fung1 zing3 zoi6 sau1 teng1 ge3 si4 gaan3. man4 zi6 faan1 jik6 m4 jung6 zik1 si4 fan1 zung1. soeng1 gei1 jung6 zi6 gei2 ge3 mui5 jyut6 sou3 miu4 ngaak6 dou6 (si2 jung6 si4 coeng4 ling6 zou6 gei3 luk6).',
   },
   faq3q: {
     en: 'Can I run it on my own server?',

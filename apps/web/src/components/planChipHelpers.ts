@@ -29,10 +29,14 @@ export function liveCopy(entitlement: Entitlement): Bi {
 
 export function cameraCopy(entitlement: Entitlement): Bi {
   const unlimited = Boolean(entitlement.cameraUnlimited)
-  const used = entitlement.usage.cameraSeconds ?? 0
-  if (unlimited) return ui.camMinutesUsedUnlimited(formatExactDuration(used))
-  const left = Math.max(0, entitlement.remaining.cameraSeconds ?? 0)
-  return ui.camMinutesLeft(formatExactDuration(left))
+  const used = entitlement.usage.cameraTranslateCount ?? 0
+  if (unlimited) return ui.camScansUsedUnlimited(String(used))
+  const left = Math.max(
+    0,
+    entitlement.remaining.cameraScans ??
+      Math.max(0, (entitlement.limits.camera_scans ?? entitlement.limits.camera_minutes ?? 0) - used),
+  )
+  return ui.camScansLeft(String(left))
 }
 
 export function displayNameFromSession(meta: Record<string, unknown> | undefined) {
@@ -48,7 +52,7 @@ export function displayNameFromSession(meta: Record<string, unknown> | undefined
 export function canShowMetric(metric: BadgeUsageMetric, entitlement: Entitlement, showVoiceQuota: boolean): boolean {
   if (metric === 'live') return Boolean(entitlement.allowed.live) || entitlement.loggedIn
   if (metric === 'voice') return showVoiceQuota
-  if (metric === 'camera') return entitlement.loggedIn
+  if (metric === 'camera') return Boolean(entitlement.limits.can_camera) || entitlement.loggedIn
   return false
 }
 

@@ -838,17 +838,19 @@ export function AdminPage() {
                     <td>{u.translateCount.toLocaleString()}</td>
                     <td
                       title={
-                        u.cameraLimitSeconds > 0
-                          ? `${u.cameraSeconds} / ${u.cameraLimitSeconds} s · ${u.cameraTranslateCount} scans`
-                          : `${u.cameraSeconds} s · ${u.cameraTranslateCount} scans`
+                        u.cameraLimitScans > 0
+                          ? `${u.cameraTranslateCount} / ${u.cameraLimitScans} scans · ${u.cameraSeconds}s session`
+                          : `${u.cameraTranslateCount} scans · ${u.cameraSeconds}s session`
                       }
                     >
-                      {formatLiveSeconds(u.cameraSeconds)}
-                      {u.cameraLimitSeconds > 0 ? (
-                        <span className="admin-sub"> / {formatLiveSeconds(u.cameraLimitSeconds)}</span>
-                      ) : null}
-                      {u.cameraTranslateCount > 0 ? (
-                        <span className="admin-sub"> · {u.cameraTranslateCount} scan{u.cameraTranslateCount === 1 ? '' : 's'}</span>
+                      {u.cameraTranslateCount.toLocaleString()}
+                      {u.cameraLimitScans > 0 ? (
+                        <span className="admin-sub"> / {u.cameraLimitScans.toLocaleString()}</span>
+                      ) : (
+                        <span className="admin-sub"> / ∞</span>
+                      )}
+                      {u.cameraSeconds > 0 ? (
+                        <span className="admin-sub"> · {formatLiveSeconds(u.cameraSeconds)} sess</span>
                       ) : null}
                     </td>
                     <td title="Multimodal LLM OCR fallbacks (view-only; no hard cap)">

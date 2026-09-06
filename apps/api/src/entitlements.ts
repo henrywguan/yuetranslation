@@ -35,7 +35,12 @@ export type Entitlement = {
     live_minutes: number
     /** 0 when TTS is unlimited (Family/Business) or disabled. */
     tts_chars: number
-    /** 0 when camera is unlimited (Business) or disabled. */
+    /**
+     * Monthly Cam scan credits (hard gate). 0 when unlimited (Business) or disabled.
+     * Prefer this over legacy `camera_minutes`.
+     */
+    camera_scans: number
+    /** @deprecated Prefer `camera_scans` — kept for older clients (same value). */
     camera_minutes: number
     /** 0 when docs are unlimited (Business) or disabled. */
     docs_pages: number
@@ -72,6 +77,12 @@ export type Entitlement = {
   remaining: {
     liveSeconds: number
     ttsChars: number
+    /** Remaining Cam scan credits (-1 unlimited). */
+    cameraScans: number
+    /**
+     * Session time is logging-only (heartbeats). Sentinel -1 = not a hard quota.
+     * Kept for older clients.
+     */
     cameraSeconds: number
     docsPages: number
     /** Remaining AI vision LLM fallbacks this month. */
@@ -136,7 +147,8 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       live_minutes: env.familyLiveMinutes,
       // Unlimited TTS — usage is still metered; 0 means no hard cap.
       tts_chars: 0,
-      camera_minutes: env.familyCameraMinutes,
+      camera_scans: env.familyCameraScans,
+      camera_minutes: env.familyCameraScans,
       docs_pages: env.familyDocsPages,
       ai_vision_count: env.familyAiVisionCount,
       auto_speak: true,
@@ -151,6 +163,7 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
       plan: 'business',
       live_minutes: env.businessLiveMinutes,
       tts_chars: 0,
+      camera_scans: 0,
       camera_minutes: 0,
       docs_pages: 0,
       ai_vision_count: env.businessAiVisionCount,
@@ -163,18 +176,19 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
   }
   if (plan === 'guest') {
     const liveMins = Math.max(0, env.guestLiveMinutes)
-    const cameraMins = Math.max(0, env.guestCameraMinutes)
+    const cameraScans = Math.max(0, env.guestCameraScans)
     return {
       plan: 'guest',
       live_minutes: liveMins,
       // Unlimited TTS for guests — still counted via guest_usage_months.
       tts_chars: 0,
-      camera_minutes: cameraMins,
+      camera_scans: cameraScans,
+      camera_minutes: cameraScans,
       docs_pages: 0,
       ai_vision_count: 0,
       auto_speak: false,
       can_live: liveMins > 0,
-      can_camera: cameraMins > 0,
+      can_camera: cameraScans > 0,
       can_docs: false,
       text_translate: true,
     }
@@ -183,7 +197,8 @@ function limitsForPlan(plan: PlanKey): Entitlement['limits'] {
     plan: 'free',
     live_minutes: env.freeLiveMinutes,
     tts_chars: env.freeAllowTts ? env.freeTtsChars : 0,
-    camera_minutes: env.freeAllowCamera ? env.freeCameraMinutes : 0,
+    camera_scans: env.freeAllowCamera ? env.freeCameraScans : 0,
+    camera_minutes: env.freeAllowCamera ? env.freeCameraScans : 0,
     docs_pages: env.freeAllowCamera ? env.freeDocsPages : 0,
     ai_vision_count: env.freeAllowCamera ? env.freeAiVisionCount : 0,
     auto_speak: false,
@@ -214,12 +229,13 @@ export function voiceAccess(
   return { tts, autoSpeak: autoSpeakPlan && tts, ttsRemaining, unlimited: false }
 }
 
-export function cameraAccess(cameraLimitSeconds: number, cameraUsed: number, unlimited = false) {
+/** Hard Cam gate from monthly scan credits (`camera_translate_count` usage). */
+export function cameraAccess(scanLimit: number, scansUsed: number, unlimited = false) {
   if (unlimited) {
     return { camera: true, cameraRemaining: -1, unlimited: true }
   }
-  const cameraRemaining = Math.max(0, cameraLimitSeconds - cameraUsed)
-  const camera = cameraLimitSeconds > 0 && cameraRemaining > 0
+  const cameraRemaining = Math.max(0, scanLimit - scansUsed)
+  const camera = scanLimit > 0 && cameraRemaining > 0
   return { camera, cameraRemaining, unlimited: false }
 }
 
@@ -280,6 +296,7 @@ function buildSnapshot(
     limits.can_camera = false
     limits.can_docs = false
     limits.tts_chars = 0
+    limits.camera_scans = 0
     limits.camera_minutes = 0
     limits.docs_pages = 0
     limits.ai_vision_count = 0
@@ -294,7 +311,7 @@ function buildSnapshot(
       disabled: true,
       limits,
       usage,
-      remaining: { liveSeconds: 0, ttsChars: 0, cameraSeconds: 0, docsPages: 0, aiVisionCount: 0 },
+      remaining: { liveSeconds: 0, ttsChars: 0, cameraScans: 0, cameraSeconds: -1, docsPages: 0, aiVisionCount: 0 },
       ttsUnlimited: false,
       cameraUnlimited: false,
       docsUnlimited: false,
@@ -322,11 +339,11 @@ function buildSnapshot(
     limits.can_docs = false
     limits.docs_pages = 0
     const liveLimit = Math.max(0, limits.live_minutes) * 60
-    const cameraLimit = Math.max(0, limits.camera_minutes) * 60
+    const scanLimit = Math.max(0, limits.camera_scans)
     const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
-    const cameraRemaining = Math.max(0, cameraLimit - usage.cameraSeconds)
+    const cam = cameraAccess(scanLimit, usage.cameraTranslateCount, false)
     const canLive = limits.can_live && liveRemaining > 0
-    const canCamera = limits.can_camera && cameraRemaining > 0
+    const canCamera = limits.can_camera && cam.camera
     // TTS unlimited for guests (same pattern as Family) — still metered in usage.
     const voice = voiceAccess(0, usage.ttsChars, false, true)
 
@@ -352,7 +369,8 @@ function buildSnapshot(
       remaining: {
         liveSeconds: liveRemaining,
         ttsChars: -1,
-        cameraSeconds: cameraRemaining,
+        cameraScans: cam.cameraRemaining,
+        cameraSeconds: -1,
         docsPages: 0,
         aiVisionCount: 0,
       },
@@ -387,7 +405,7 @@ function buildSnapshot(
 
   const limits = limitsForPlan(plan)
   const liveLimit = Math.max(0, limits.live_minutes) * 60
-  const cameraLimit = Math.max(0, limits.camera_minutes) * 60
+  const scanLimit = Math.max(0, limits.camera_scans)
   const docsLimit = Math.max(0, limits.docs_pages)
   const ttsUnlimited = plan === 'family' || plan === 'business'
   const cameraUnlimited = plan === 'business'
@@ -395,7 +413,7 @@ function buildSnapshot(
   const ttsLimit = Math.max(0, limits.tts_chars)
   const liveRemaining = Math.max(0, liveLimit - usage.liveSeconds)
   const voice = voiceAccess(ttsLimit, usage.ttsChars, limits.auto_speak, ttsUnlimited)
-  const cam = cameraAccess(cameraLimit, usage.cameraSeconds, cameraUnlimited)
+  const cam = cameraAccess(scanLimit, usage.cameraTranslateCount, cameraUnlimited)
   const docs = docsAccess(docsLimit, usage.docsPages, docsUnlimited)
   const aiVisionLimit = Math.max(0, limits.ai_vision_count)
   const vision = aiVisionAccess(aiVisionLimit, usage.aiVisionCount)
@@ -408,7 +426,7 @@ function buildSnapshot(
   if (!canLive) reason = liveLimit <= 0 ? 'no_live_quota' : 'live_quota_exhausted'
   else if (!voice.tts) reason = ttsLimit <= 0 ? 'no_tts_quota' : 'tts_quota_exhausted'
   else if (!canCamera && loggedIn) {
-    reason = cameraLimit <= 0 ? 'no_camera_quota' : 'camera_quota_exhausted'
+    reason = scanLimit <= 0 && !cameraUnlimited ? 'no_camera_quota' : 'camera_quota_exhausted'
   } else if (!canDocs && loggedIn) {
     reason = docsLimit <= 0 ? 'no_docs_quota' : 'docs_quota_exhausted'
   } else if (!canAiVision && loggedIn && aiVisionLimit > 0 && usage.aiVisionCount >= aiVisionLimit) {
@@ -427,7 +445,8 @@ function buildSnapshot(
     remaining: {
       liveSeconds: liveRemaining,
       ttsChars: Math.max(0, voice.ttsRemaining),
-      cameraSeconds: cameraUnlimited ? -1 : Math.max(0, cam.cameraRemaining),
+      cameraScans: cameraUnlimited ? -1 : Math.max(0, cam.cameraRemaining),
+      cameraSeconds: -1,
       docsPages: docsUnlimited ? -1 : Math.max(0, docs.docsRemaining),
       aiVisionCount: vision.aiVisionRemaining,
     },
@@ -468,6 +487,7 @@ function localEntitlement(): Entitlement {
         plan: 'family',
         live_minutes: 9999,
         tts_chars: 999999,
+        camera_scans: 0,
         camera_minutes: 0,
         docs_pages: 0,
         ai_vision_count: 999999,
@@ -487,7 +507,7 @@ function localEntitlement(): Entitlement {
         docsPages: 0,
         aiVisionCount: 0,
       },
-      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraSeconds: -1, docsPages: -1, aiVisionCount: 999999 },
+      remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraScans: -1, cameraSeconds: -1, docsPages: -1, aiVisionCount: 999999 },
       ttsUnlimited: true,
       cameraUnlimited: true,
       docsUnlimited: true,
