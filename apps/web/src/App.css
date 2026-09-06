@@ -2983,6 +2983,7 @@
 
 .pane-body--hero {
   align-items: center;
+  justify-content: center;
   justify-content: safe center;
   text-align: center;
   gap: 0;
