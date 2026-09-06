@@ -57,26 +57,26 @@
 .voice-settings-overlay {
   position: fixed;
   inset: 0;
-  z-index: 130;
+  z-index: 140;
   display: grid;
   place-items: center;
-}
-
-.voice-settings-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: color-mix(in srgb, var(--harbor) 58%, transparent);
-  backdrop-filter: blur(10px);
-  cursor: pointer;
+  padding:
+    max(12px, env(safe-area-inset-top, 0px))
+    max(12px, env(safe-area-inset-right, 0px))
+    max(12px, env(safe-area-inset-bottom, 0px))
+    max(12px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
 }
 
 .voice-settings-panel {
   position: relative;
   z-index: 1;
-  width: min(400px, calc(100vw - 32px));
-  max-height: min(90vh, 560px);
-  overflow: auto;
+  width: min(400px, 100%);
+  max-height: min(560px, 100%);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: grid;
   gap: 12px;
   padding: 28px 22px 20px;
@@ -91,6 +91,29 @@
   box-shadow: var(--shadow), inset 0 1px 0 var(--glass-shine);
   backdrop-filter: blur(22px);
 }
+
+@media (max-width: 959px) {
+  .voice-settings-overlay {
+    place-items: end center;
+    align-content: end;
+  }
+
+  .voice-settings-panel {
+    width: min(420px, 100%);
+    max-height: calc(100dvh - max(12px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)) - 24px);
+    border-radius: 18px 18px 14px 14px;
+  }
+}
+
+.voice-settings-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--harbor) 58%, transparent);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
 
 .voice-settings-close {
   position: absolute;
