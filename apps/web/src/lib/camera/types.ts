@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
 
 export type EditableBox = {
   id: string
@@ -21,14 +21,15 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
 
-/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn` | `wuu` | `tl`). */
+/** Map API/legacy region langs (`zh`) onto CameraLang (`en` | `yue` | `cmn` | `wuu` | `tl` | `es`). */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'cmn') return 'cmn'
   if (lang === 'wuu') return 'wuu'
   if (lang === 'en') return 'en'
   if (lang === 'tl' || lang === 'fil') return 'tl'
+  if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
   // Legacy `zh` and explicit yue → Cantonese
   return 'yue'
 }
@@ -80,6 +81,10 @@ function isTagalogCam(lang: CameraLang): boolean {
   return lang === 'tl'
 }
 
+function isMexicanCam(lang: CameraLang): boolean {
+  return lang === 'es'
+}
+
 /** Pick Chinese/Tagalog + English sides for the shared character breakdown panel. */
 export function boxDetailArgs(box: EditableBox): {
   phrase: string
@@ -100,6 +105,22 @@ export function boxDetailArgs(box: EditableBox): {
     const phrase = (tl || box.text || box.translated).trim()
     const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
     return { phrase, translation, lang: 'tl' }
+  }
+
+  if (isMexicanCam(box.to) || isMexicanCam(box.from)) {
+    const esByDir = box.to === 'es' ? box.translated : box.from === 'es' ? box.text : ''
+    const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
+    const es =
+      esByDir.trim() ||
+      (!HAN_RE.test(box.translated) ? box.translated : '') ||
+      (!HAN_RE.test(box.text) ? box.text : '')
+    const en =
+      enByDir.trim() ||
+      (box.to !== 'es' && !HAN_RE.test(box.translated) ? box.translated : '') ||
+      (box.from !== 'es' && !HAN_RE.test(box.text) ? box.text : '')
+    const phrase = (es || box.text || box.translated).trim()
+    const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
+    return { phrase, translation, lang: 'es' }
   }
 
   const zhByDir = isChineseCam(box.to)
@@ -133,6 +154,7 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'wuu') return 'wuu'
   if (box.to === 'yue') return 'yue'
   if (box.to === 'tl') return 'tl'
+  if (box.to === 'es') return 'es'
   if (box.to === 'en') return 'en'
   return HAN_RE.test(box.translated || box.text) ? 'yue' : 'en'
 }

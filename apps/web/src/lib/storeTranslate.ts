@@ -1,14 +1,14 @@
 import { translateText } from './api'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl'
-  /** Solo upper/lower pane languages (any en|yue|cmn|wuu|tl pair; must differ). */  soloUpperLang: Lang
+  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+  /** Solo upper/lower pane languages (any en|yue|cmn|wuu|tl|es pair; must differ). */  soloUpperLang: Lang
   soloLowerLang: Lang
   face: {
     enInterim: string
@@ -108,6 +108,7 @@ function resolveSoloTarget(get: Get, from: Lang): Lang {
 
 function sanitizeTranslation(to: Lang, text: string, source?: string): string | null {
   if (to === 'tl') return sanitizeTlTranslation(text)
+  if (to === 'es') return sanitizeEsTranslation(text)
   if (to === 'yue' || to === 'cmn' || to === 'wuu') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
@@ -268,15 +269,17 @@ export async function runTranslation(
     if (!clean) {
       set({
         error:
-          to === 'tl'
-            ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
-            : to === 'cmn'
-            ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
-            : to === 'wuu'
-              ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'
-              : to === 'yue'
-                ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-                : 'Could not produce English for this phrase. Try again or rephrase.',
+          to === 'es'
+            ? 'Could not produce Mexican Spanish for this phrase. Try again or rephrase.'
+            : to === 'tl'
+              ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
+              : to === 'cmn'
+                ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
+                : to === 'wuu'
+                  ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'
+                  : to === 'yue'
+                    ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+                    : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return null
     }

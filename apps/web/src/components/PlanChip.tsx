@@ -34,22 +34,27 @@ import {
   PREVIEW_CMN,
   PREVIEW_EN,
   PREVIEW_TL,
+  PREVIEW_ES,
   PREVIEW_YUE,
   readLocalCmnVoice,
   readLocalEnVoice,
   readLocalTlVoice,
+  readLocalEsVoice,
   readLocalYueVoice,
   resolveCmnVoice,
   resolveEnVoice,
   resolveTlVoice,
+  resolveEsVoice,
   resolveYueVoice,
   writeLocalCmnVoice,
   writeLocalEnVoice,
   writeLocalTlVoice,
+  writeLocalEsVoice,
   writeLocalYueVoice,
   type CmnVoiceId,
   type EnVoiceId,
   type TlVoiceId,
+  type EsVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
 import { speakText, unlockTtsPlayback } from '../lib/tts'
@@ -79,8 +84,9 @@ export function PlanChip() {
   const [enVoice, setEnVoice] = useState<EnVoiceId>(() => readLocalEnVoice())
   const [cmnVoice, setCmnVoice] = useState<CmnVoiceId>(() => readLocalCmnVoice())
   const [tlVoice, setTlVoice] = useState<TlVoiceId>(() => readLocalTlVoice())
+  const [esVoice, setEsVoice] = useState<EsVoiceId>(() => readLocalEsVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
-  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | 'cmn' | 'tl' | null>(null)
+  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | 'cmn' | 'tl' | 'es' | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteSentTo, setInviteSentTo] = useState<string | null>(null)
@@ -115,6 +121,11 @@ export function PlanChip() {
       setTlVoice(v)
       writeLocalTlVoice(v)
     }
+    if (prefs?.ttsVoiceEs) {
+      const v = resolveEsVoice(prefs.ttsVoiceEs)
+      setEsVoice(v)
+      writeLocalEsVoice(v)
+    }
     if (prefs?.username) {
       setUsername(prefs.username)
       setUsernameDraft(prefs.username)
@@ -126,6 +137,7 @@ export function PlanChip() {
     entitlement?.prefs?.ttsVoiceEn,
     entitlement?.prefs?.ttsVoiceCmn,
     entitlement?.prefs?.ttsVoiceTl,
+    entitlement?.prefs?.ttsVoiceEs,
     entitlement?.prefs?.username,
     entitlement?.loggedIn,
   ])
@@ -247,19 +259,23 @@ export function PlanChip() {
     en?: EnVoiceId
     cmn?: CmnVoiceId
     tl?: TlVoiceId
+    es?: EsVoiceId
   }) => {
     const yue = next.yue ?? yueVoice
     const en = next.en ?? enVoice
     const cmn = next.cmn ?? cmnVoice
     const tl = next.tl ?? tlVoice
+    const es = next.es ?? esVoice
     writeLocalYueVoice(yue)
     writeLocalEnVoice(en)
     writeLocalCmnVoice(cmn)
     writeLocalTlVoice(tl)
+    writeLocalEsVoice(es)
     setYueVoice(yue)
     setEnVoice(en)
     setCmnVoice(cmn)
     setTlVoice(tl)
+    setEsVoice(es)
     if (!entitlement.loggedIn) return
     setVoiceBusy(true)
     try {
@@ -268,6 +284,7 @@ export function PlanChip() {
         ttsVoiceEn: en,
         ttsVoiceCmn: cmn,
         ttsVoiceTl: tl,
+        ttsVoiceEs: es,
       })
       if (data.entitlement) {
         useYueStore.setState({ entitlement: data.entitlement })
@@ -287,14 +304,15 @@ export function PlanChip() {
     }
   }
 
-  const onPreview = async (kind: 'yue' | 'en' | 'cmn' | 'tl') => {
+  const onPreview = async (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es') => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
     try {
       if (kind === 'yue') await speakText(PREVIEW_YUE, 'yue', yueVoice)
       else if (kind === 'en') await speakText(PREVIEW_EN, 'en', enVoice)
       else if (kind === 'cmn') await speakText(PREVIEW_CMN, 'cmn', cmnVoice)
-      else await speakText(PREVIEW_TL, 'tl', tlVoice)
+      else if (kind === 'tl') await speakText(PREVIEW_TL, 'tl', tlVoice)
+      else await speakText(PREVIEW_ES, 'es', esVoice)
     } finally {
       setPreviewBusy(null)
     }
@@ -339,6 +357,7 @@ export function PlanChip() {
               ttsVoiceEn: entitlement.prefs?.ttsVoiceEn || enVoice,
               ttsVoiceCmn: entitlement.prefs?.ttsVoiceCmn || cmnVoice,
               ttsVoiceTl: entitlement.prefs?.ttsVoiceTl || tlVoice,
+              ttsVoiceEs: entitlement.prefs?.ttsVoiceEs || esVoice,
               ...data.prefs,
             },
           },
@@ -599,6 +618,7 @@ export function PlanChip() {
           enVoice={enVoice}
           cmnVoice={cmnVoice}
           tlVoice={tlVoice}
+          esVoice={esVoice}
           voiceBusy={voiceBusy}
           previewBusy={previewBusy}
           persistVoices={persistVoices}

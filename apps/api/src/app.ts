@@ -49,7 +49,7 @@ import {
   isUsernameTaken,
   getProfile,
 } from './supabase.js'
-import { isCmnVoice, isEnVoice, isTlVoice, isYueVoice } from './ttsVoices.js'
+import { isCmnVoice, isEnVoice, isEsVoice, isTlVoice, isYueVoice } from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -279,7 +279,10 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
           : lang === 'wuu' || lang === 'wuu-CN'
             ? 'wuu-CN'
             : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
-              ? 'fil-PH'            : 'zh-HK'
+              ? 'fil-PH'
+              : lang === 'es' || lang === 'es-MX' || lang === 'es-mx'
+                ? 'es-MX'
+                : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
@@ -287,6 +290,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredCmn: ent.prefs?.ttsVoiceCmn,
       preferredWuu: null,
       preferredTl: ent.prefs?.ttsVoiceTl,
+      preferredEs: ent.prefs?.ttsVoiceEs,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
     if (!env.openMode) {
@@ -311,6 +315,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_en?: string
     tts_voice_cmn?: string
     tts_voice_tl?: string
+    tts_voice_es?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -344,6 +349,14 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_tl = v
   }
+  if (body.ttsVoiceEs != null) {
+    const v = String(body.ttsVoiceEs).trim()
+    if (!isEsVoice(v)) {
+      res.status(400).json({ message: 'Invalid Mexican Spanish voice.' })
+      return
+    }
+    patch.tts_voice_es = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -361,6 +374,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceEn: patch.tts_voice_en || ent.prefs.ttsVoiceEn,
         ttsVoiceCmn: patch.tts_voice_cmn || ent.prefs.ttsVoiceCmn,
         ttsVoiceTl: patch.tts_voice_tl || ent.prefs.ttsVoiceTl,
+        ttsVoiceEs: patch.tts_voice_es || ent.prefs.ttsVoiceEs,
         autoSpeak: ent.prefs.autoSpeak,
         username: ent.prefs.username,
         usernameChangedAt: ent.prefs.usernameChangedAt,

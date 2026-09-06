@@ -8,7 +8,9 @@ function localeToLang(locale: string): Lang {
   if (l.includes('yue') || l.includes('hk') || l === 'zh-hk' || l.startsWith('zh-hk')) return 'yue'
   if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans') || l === 'zh-cn') return 'cmn'
   if (l.startsWith('wuu') || l.includes('wuu')) return 'wuu'
-  if (l.startsWith('fil') || l.startsWith('tl')) return 'tl'  // Generic zh without region — prefer Cantonese for HK product default.
+  if (l.startsWith('fil') || l.startsWith('tl')) return 'tl'
+  if (l.startsWith('es')) return 'es'
+  // Generic zh without region — prefer Cantonese for HK product default.
   if (l.startsWith('zh')) return 'yue'
   return 'en'
 }
@@ -18,6 +20,7 @@ function langToLocale(lang: Lang): string {
   if (lang === 'cmn') return 'zh-CN'
   if (lang === 'wuu') return 'wuu-CN'
   if (lang === 'tl') return 'fil-PH'
+  if (lang === 'es') return 'es-MX'
   return 'en-US'
 }
 
@@ -227,6 +230,10 @@ export async function createAzureLiveSession(
       // Mandarin (zh-CN): use fixed recognizer — auto-detect set is en-US + zh-HK only.
       if (lockLang === 'tl') {
         await startWithRecognizer('tl')
+        return
+      }
+      if (lockLang === 'es') {
+        await startWithRecognizer('es')
         return
       }
       if (lockLang === 'cmn') {

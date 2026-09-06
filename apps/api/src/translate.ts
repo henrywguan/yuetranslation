@@ -14,6 +14,7 @@ import {
 } from './canto/index.js'
 import { hasHan } from './canto/han.js'
 import { inferTagalogRegister } from './tagalogRegister.js'
+import { inferMexicanSpanishRegister } from './mexicanSpanishRegister.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
 function applyCmnScrub(
@@ -35,7 +36,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -70,7 +71,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
 
 type TranslateResult = {
   text: string
@@ -943,6 +944,231 @@ async function translateTagalog(opts: {
 }
 
 
+
+/**
+ * EN↔Mexican Spanish — colloquial central Mexican (CDMX / altiplano).
+ * Not Peninsular default. Latin script only; orthographic stress (tilde), not tones.
+ */
+async function translateMexicanSpanish(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'es' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'es-mx-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'es' ? `(demo MX) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'es' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'es-mx-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toEs = to === 'es'
+  const register = toEs ? inferMexicanSpanishRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'es-mx-formal' : 'es-mx-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toEs) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Mexican Spanish interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Mexican Spanish (clear, respectful; ustedes not vosotros).',
+            'Avoid slang; keep Mexican (not Peninsular) vocabulary and spelling.',
+            'On the PRIMARY line, ALWAYS use correct orthographic accent marks (tildes) per RAE rules. Alternatives may omit optional styling but must keep required accents.',
+            'Do NOT use Chinese characters. Do NOT invent tone numbers.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Mexican Spanish>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Mexican Spanish interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Mexican Spanish (central Mexico / CDMX style — not Peninsular, not Rioplatense).',
+            'Use everyday Mexican wording when natural (órale, pues, qué onda, ahorita, camión, platicar). Prefer ustedes over vosotros.',
+            'Do NOT use Castilian vosotros/peninsularisms or Argentine vos.',
+            'On the PRIMARY line, ALWAYS use correct orthographic accent marks (tildes) per RAE rules on every word that needs them. Alternatives may be lighter but must keep required accents.',
+            'Do NOT use Chinese characters. Do NOT invent tone digits or IPA on the primary line.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Mexican Spanish>","alternatives":["<other natural Mexican variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEs = parseYuePayload(raw, text, true)
+    primary = parsedEs.text
+    alternatives = parsedEs.alternatives
+    if (parsedEs.definition) definition = parsedEs.definition
+  } else if (wantAlts && !toEs) {
+    const system = [
+      'You are a Mexican Spanish interpreter helping Spanish speakers learn English.',
+      'Translate colloquial Mexican Spanish into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Mexican Spanish gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toEs
+      ? register === 'formal'
+        ? [
+            'You are a Mexican Spanish interpreter for formal situations.',
+            'Translate into POLITE formal Mexican Spanish (ustedes; Mexican vocabulary; not Peninsular).',
+            'ALWAYS use correct orthographic accent marks (tildes) per RAE rules.',
+            'Do NOT use Chinese characters or tone numbers.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Mexican Spanish>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Mexican Spanish interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Mexican Spanish (CDMX / central Mexico — not Peninsular).',
+            'ALWAYS use correct orthographic accent marks (tildes) per RAE rules.',
+            'Do NOT use Chinese characters or tone numbers.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Mexican Spanish>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Mexican Spanish interpreter.',
+          'Translate colloquial Mexican Spanish into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toEs && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toEs ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toEs ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toEs) {
+    const outText = primary && !hasHan(primary) ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-es-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['es-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -977,6 +1203,10 @@ export async function translate(input: unknown) {
 
   if (to === 'tl' || (from === 'tl' && to === 'en')) {
     return translateTagalog({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'es' || (from === 'es' && to === 'en')) {
+    return translateMexicanSpanish({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'cmn' || (from === 'cmn' && to === 'en')) {

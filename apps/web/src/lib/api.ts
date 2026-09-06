@@ -127,11 +127,11 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' },
+  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' },
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl'}> {
+  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'}> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
     body: JSON.stringify({ text, ...(opts?.lang ? { lang: opts.lang } : {}) }),
@@ -232,6 +232,7 @@ export async function saveTtsVoicePrefs(patch: {
   ttsVoiceEn?: string
   ttsVoiceCmn?: string
   ttsVoiceTl?: string
+  ttsVoiceEs?: string
 }): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
   const res = await apiFetch('/prefs/tts-voices', {
     method: 'PATCH',

@@ -5,7 +5,7 @@ const LOCAL_KEY = 'yue-translation-history-v1'
 const MAX_TURNS = 80
 
 function isLang(v: unknown): v is Lang {
-  return v === 'en' || v === 'yue' || v === 'cmn' || v === 'wuu' || v === 'tl'
+  return v === 'en' || v === 'yue' || v === 'cmn' || v === 'wuu' || v === 'tl' || v === 'es'
 }
 
 /** Best-effort sanitize of turns from localStorage / API. */

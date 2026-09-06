@@ -5932,6 +5932,507 @@
         "travel",
         "numbers"
       ]
+    },
+    {
+      "id": "en-hello-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "hello",
+      "text": "Hola",
+      "alternatives": [
+        "Qué onda",
+        "Hey"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-hola-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "hola",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-thank-you-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "thank you",
+      "text": "Gracias",
+      "alternatives": [
+        "Mil gracias",
+        "Thanks"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-gracias-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "gracias",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-thank-you-so-much-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "thank you so much",
+      "text": "Muchas gracias",
+      "alternatives": [
+        "Mil gracias"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-muchas-gracias-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "muchas gracias",
+      "text": "Thank you so much",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-im-sorry-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "i'm sorry",
+      "text": "Perdón",
+      "alternatives": [
+        "Disculpa",
+        "Lo siento"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-perdon-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "perdón",
+      "text": "I'm sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-yes-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "yes",
+      "text": "Sí",
+      "alternatives": [
+        "Claro",
+        "Órale"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-si-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "sí",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-no-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "no",
+      "text": "No",
+      "alternatives": [
+        "Nel"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-no-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "no",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-please-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "please",
+      "text": "Por favor",
+      "alternatives": [
+        "Porfa"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-por-favor-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "por favor",
+      "text": "Please",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-excuse-me-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "excuse me",
+      "text": "Disculpa",
+      "alternatives": [
+        "Con permiso",
+        "Perdón"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-disculpa-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "disculpa",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-how-much-is-this-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "how much is this",
+      "text": "¿Cuánto cuesta esto?",
+      "alternatives": [
+        "¿Cuánto es?",
+        "¿A cómo?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-cuanto-cuesta-esto-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "cuánto cuesta esto",
+      "text": "How much is this",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "where is the bathroom",
+      "text": "¿Dónde está el baño?",
+      "alternatives": [
+        "¿Dónde está el sanitario?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-donde-esta-el-bano-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "dónde está el baño",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-i-dont-speak-spanish-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "i don't speak spanish",
+      "text": "No hablo español",
+      "alternatives": [
+        "No hablo español mexicano"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-no-hablo-espanol-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "no hablo español",
+      "text": "I don't speak spanish",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-do-you-speak-english-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "do you speak english",
+      "text": "¿Hablas inglés?",
+      "alternatives": [
+        "¿Habla inglés?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-hablas-ingles-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "hablas inglés",
+      "text": "Do you speak english",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-whats-up-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "what's up",
+      "text": "¿Qué onda?",
+      "alternatives": [
+        "¿Qué tal?",
+        "¿Cómo estás?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-que-onda-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "qué onda",
+      "text": "What's up",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-lets-go-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "let's go",
+      "text": "Vámonos",
+      "alternatives": [
+        "Ándale",
+        "Nos vamos"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-vamonos-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "vámonos",
+      "text": "Let's go",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-cool-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "cool",
+      "text": "Chido",
+      "alternatives": [
+        "Padre",
+        "Qué padre"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "slang",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-chido-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "chido",
+      "text": "Cool",
+      "register": "colloquial",
+      "tags": [
+        "slang",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-delicious-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "delicious",
+      "text": "Está rico",
+      "alternatives": [
+        "Está bien rico",
+        "Delicioso"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-esta-rico-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "está rico",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-the-check-please-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "the check please",
+      "text": "La cuenta, por favor",
+      "alternatives": [
+        "La cuenta, porfa"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-la-cuenta-por-favor-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "la cuenta, por favor",
+      "text": "The check please",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "travel",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "en-see-you-later-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "see you later",
+      "text": "Nos vemos",
+      "alternatives": [
+        "Ahí nos vemos",
+        "Hasta luego"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-nos-vemos-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "nos vemos",
+      "text": "See you later",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "mexican-spanish"
+      ]
     }
   ]
 }

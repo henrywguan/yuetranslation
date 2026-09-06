@@ -2,6 +2,7 @@ import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
+import { MexicanSpanishText } from './MexicanSpanishText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -28,8 +29,8 @@ export function ResultWithDefinition({
   /** Multiple English senses — triggers dotted underline + details open. */
   definitions?: string[]
   cantonese?: boolean
-  /** When cantonese/display, which variety for ruby / Tagalog stress + copy. */
-  chineseLang?: 'yue' | 'cmn' | 'wuu' | 'tl'
+  /** When cantonese/display, which variety for ruby / Tagalog / Mexican Spanish + copy. */
+  chineseLang?: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
   /** Wugniu when chineseLang is wuu. */
   romanization?: string
   className?: string
@@ -37,7 +38,7 @@ export function ResultWithDefinition({
   onActivate?: (text: string) => void
   /** When set, show a tap-to-speak control for this line. */
   speakLang?: Lang
-  /** Show copy beside speak (Chinese / Tagalog). */
+  /** Show copy beside speak (Chinese / Tagalog / Mexican Spanish). */
   showCopy?: boolean
 }) {
   const trimmed = text.trim()
@@ -50,7 +51,9 @@ export function ResultWithDefinition({
         ? 'wuu'
         : chineseLang === 'tl'
           ? 'tl'
-          : 'yue'
+          : chineseLang === 'es'
+            ? 'es'
+            : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -59,6 +62,14 @@ export function ResultWithDefinition({
           {cantonese ? (
             chineseLang === 'tl' ? (
               <TagalogText
+                text={trimmed}
+                definition={def}
+                definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'es' ? (
+              <MexicanSpanishText
                 text={trimmed}
                 definition={def}
                 definitions={definitions}

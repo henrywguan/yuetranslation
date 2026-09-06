@@ -4,6 +4,7 @@ import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
+import { MexicanSpanishText } from './MexicanSpanishText'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { LangLabelButton } from './LangLabelButton'
@@ -17,7 +18,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 
 /**
  * Conversation: two language-pure cards on a shared phone.
- * Partner pane (粵 / 普 / 沪 / Tagalog) sits on top, rotated 180° for the person across the table.
+ * Partner pane (粵 / 普 / 沪 / Tagalog / Mexican Spanish) sits on top, rotated 180° for the person across the table.
  * English sits on the bottom, upright for you.
  *
  * Pipeline: mic → live STT on the speaking side → after capture ends, one final
@@ -51,7 +52,12 @@ export function ConversationView() {
     Boolean(face.yueInterim) && !face.enTranslation && !face.yueTranslation
   const enListening = live && liveSide === 'en'
   const zhListening =
-    live && (liveSide === 'yue' || liveSide === 'cmn' || liveSide === 'wuu' || liveSide === 'tl')
+    live &&
+    (liveSide === 'yue' ||
+      liveSide === 'cmn' ||
+      liveSide === 'wuu' ||
+      liveSide === 'tl' ||
+      liveSide === 'es')
 
   const openEnDetails = () => {
     const zh = (face.yueInterim || face.yueTranslation).trim()
@@ -80,7 +86,7 @@ export function ConversationView() {
   }
 
   const onChineseLang = (lang: Lang) => {
-    if (lang !== 'yue' && lang !== 'cmn' && lang !== 'wuu' && lang !== 'tl') return
+    if (lang !== 'yue' && lang !== 'cmn' && lang !== 'wuu' && lang !== 'tl' && lang !== 'es') return
     if (lang === chineseLang) return
     const enSource = face.enInterim.trim()
     setSpeakDirection(lang)
@@ -96,16 +102,22 @@ export function ConversationView() {
         ? 'wuu-CN'
         : chineseLang === 'tl'
           ? 'tl'
-          : 'zh-HK'
+          : chineseLang === 'es'
+            ? 'es-MX'
+            : 'zh-HK'
 
   const partnerPlaceholder =
     chineseLang === 'tl'
       ? ui.dirTagalog.en
-      : chineseLang === 'cmn'
-        ? ui.dirMandarin.zh
-        : chineseLang === 'wuu'
-          ? ui.dirShanghainese.zh
-          : ui.yueTranslation.zh
+      : chineseLang === 'es'
+        ? ui.dirMexicanSpanish.en
+        : chineseLang === 'cmn'
+          ? ui.dirMandarin.zh
+          : chineseLang === 'wuu'
+            ? ui.dirShanghainese.zh
+            : ui.yueTranslation.zh
+
+  const partnerLatin = chineseLang === 'tl' || chineseLang === 'es'
 
   return (
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
@@ -129,7 +141,7 @@ export function ConversationView() {
               onSelect={onChineseLang}
             />
             <p lang={partnerHintLang}>
-              {chineseLang === 'tl' ? ui.friendLooksHere.en : ui.friendLooksHere.zh}
+              {partnerLatin ? ui.friendLooksHere.en : ui.friendLooksHere.zh}
             </p>
           </header>
           <div className="pane-body pane-body--hero">
@@ -145,6 +157,14 @@ export function ConversationView() {
                   <span className="spoken-line">
                     {chineseLang === 'tl' ? (
                       <TagalogText
+                        text={zhText}
+                        definition={face.yueDefinition}
+                        definitions={face.yueDefinitions}
+                        className="pane-hero--yue"
+                        onActivate={openZhDetails}
+                      />
+                    ) : chineseLang === 'es' ? (
+                      <MexicanSpanishText
                         text={zhText}
                         definition={face.yueDefinition}
                         definitions={face.yueDefinitions}
@@ -188,7 +208,7 @@ export function ConversationView() {
           <div className="pane-live">
             <LiveHoldButton
               side={chineseLang}
-              labelLang={chineseLang === 'tl' ? 'en' : 'zh'}
+              labelLang={partnerLatin ? 'en' : 'zh'}
               className="live-btn--pane live-btn--yue"
             />
           </div>

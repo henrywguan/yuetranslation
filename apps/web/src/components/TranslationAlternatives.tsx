@@ -1,6 +1,8 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
+import { TagalogText } from './TagalogText'
+import { MexicanSpanishText } from './MexicanSpanishText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -55,6 +57,18 @@ export function TranslationAlternatives({
                   text={alt}
                   romanization={alternativeRomanizations?.[i]}
                   showSchemeLabel={false}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'tl' ? (
+                <TagalogText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'es' ? (
+                <MexicanSpanishText
+                  text={alt}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}
                 />
