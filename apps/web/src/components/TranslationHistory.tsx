@@ -35,12 +35,16 @@ function defaultGeom(): PanelGeom {
   }
 }
 
-/** Desktop floating panel + mobile history button / closable sheet. */
+/**
+ * History: desktop floating rail + mobile slim edge sidebar.
+ * Collapsed tab expands into a right drawer — no circular FAB stealing Solo space.
+ */
 export function TranslationHistory() {
   const history = useYueStore((s) => s.history)
   const mode = useYueStore((s) => s.mode)
   const soloShowAutoHint = useYueStore((s) => s.soloShowAutoHint)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const clearHistory = useYueStore((s) => s.clearHistory)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const { geom, persist, update, onDragPointerDown } = useFloatingPanel<PanelGeom>({
     storageKey: PANEL_KEY,
     minW: 260,
@@ -79,19 +83,19 @@ export function TranslationHistory() {
   }, [update])
 
   useEffect(() => {
-    if (!sheetOpen) return
+    if (!drawerOpen) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     closeRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSheetOpen(false)
+      if (e.key === 'Escape') setDrawerOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
     }
-  }, [sheetOpen])
+  }, [drawerOpen])
 
   return (
     <>
@@ -121,6 +125,17 @@ export function TranslationHistory() {
               ) : null}
             </div>
             <div className="history-rail-actions">
+              {count ? (
+                <button
+                  type="button"
+                  className="history-clear-btn"
+                  onClick={() => clearHistory()}
+                  aria-label={biPlain(ui.historyClear)}
+                  title={biPlain(ui.historyClear)}
+                >
+                  <BiText copy={ui.historyClear} size="sm" hideJp />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="history-rail-btn"
@@ -141,69 +156,93 @@ export function TranslationHistory() {
         </aside>
       ) : null}
 
-      <div className="history-mobile-row">
-        <div className="history-mobile-leading">
-          {showSoloHint ? (
-            <p className="solo-auto-hint" aria-live="polite">
-              <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
-            </p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          className="history-open-btn"
-          onClick={() => setSheetOpen(true)}
-          aria-haspopup="dialog"
-          aria-expanded={sheetOpen}
-          aria-label={biPlain(ui.historyTitle)}
-        >
-          <BiText copy={ui.historyTitle} size="sm" />
-          {count ? <span className="history-open-count">{count}</span> : null}
-        </button>
-      </div>
+      {/* Floats over chrome — does not take Solo flex height. */}
+      {showSoloHint ? (
+        <p className="solo-auto-hint solo-auto-hint--float" aria-live="polite">
+          <BiText copy={ui.autoTranslateHint} size="sm" layout="inline" />
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        className="history-edge-tab"
+        onClick={() => setDrawerOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={drawerOpen}
+        aria-controls={titleId}
+        aria-label={biPlain(ui.historyTitle)}
+        hidden={drawerOpen}
+      >
+        <span className="history-edge-tab-label">
+          <BiText copy={ui.historyTitle} size="sm" only="zh" hideJp />
+        </span>
+        {count ? <span className="history-edge-tab-count">{count}</span> : null}
+        <span className="history-edge-tab-chevron" aria-hidden="true">
+          ‹
+        </span>
+      </button>
 
       <AnimatePresence>
-        {sheetOpen ? (
+        {drawerOpen ? (
           <>
             <motion.div
-              key="history-backdrop"
-              className="history-sheet-backdrop"
+              key="history-drawer-backdrop"
+              className="history-drawer-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              onClick={() => setSheetOpen(false)}
+              onClick={() => setDrawerOpen(false)}
               aria-hidden="true"
             />
-            <motion.div
-              key="history-sheet"
-              className="history-sheet"
+            <motion.aside
+              key="history-drawer"
+              className="history-drawer"
               role="dialog"
               aria-modal="true"
               aria-labelledby={titleId}
-              initial={{ opacity: 0, y: 36 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
               transition={{ duration: 0.28, ease: inkEase }}
             >
-              <header className="history-panel-header history-sheet-header">
-                <div>
+              <header className="history-panel-header history-drawer-header">
+                <div className="history-drawer-title-wrap">
                   <h2 id={titleId} className="history-panel-title">
                     <BiText copy={ui.historyTitle} size="md" />
                   </h2>
+                  {count ? (
+                    <span className="history-count" aria-label={`${count}`}>
+                      {count}
+                    </span>
+                  ) : null}
                 </div>
-                <button
-                  ref={closeRef}
-                  type="button"
-                  className="history-sheet-close"
-                  onClick={() => setSheetOpen(false)}
-                  aria-label={biPlain(ui.close)}
-                >
-                  ×
-                </button>
+                <div className="history-drawer-actions">
+                  {count ? (
+                    <button
+                      type="button"
+                      className="history-clear-btn"
+                      onClick={() => clearHistory()}
+                      aria-label={biPlain(ui.historyClear)}
+                      title={biPlain(ui.historyClear)}
+                    >
+                      <BiText copy={ui.historyClear} size="sm" hideJp />
+                    </button>
+                  ) : null}
+                  <button
+                    ref={closeRef}
+                    type="button"
+                    className="history-drawer-close"
+                    onClick={() => setDrawerOpen(false)}
+                    aria-label={biPlain(ui.historyCollapse)}
+                    title={biPlain(ui.historyCollapse)}
+                  >
+                    ›
+                  </button>
+                </div>
               </header>
-              <HistoryPane turns={history} onOpenBreakdown={() => setSheetOpen(false)} />
-            </motion.div>
+              <HistoryPane turns={history} onOpenBreakdown={() => setDrawerOpen(false)} />
+            </motion.aside>
           </>
         ) : null}
       </AnimatePresence>
