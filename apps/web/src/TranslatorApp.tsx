@@ -39,7 +39,7 @@ export function TranslatorApp() {
   const embedded = isEmbeddedAppView()
   const [camChoiceOpen, setCamChoiceOpen] = useState(true)
 
-  // App-like chrome: no document scroll; keyboard resizes the shell via visualViewport.
+  // App-like chrome: no document scroll. Soft keyboard does not resize the shell.
   useAppViewportLock(true)
 
   useEffect(() => {
