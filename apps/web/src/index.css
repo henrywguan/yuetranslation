@@ -108,6 +108,33 @@ body {
   transition: background-color 0.35s ease, color 0.35s ease;
 }
 
+/*
+ * Translator `#/app` only (class set by useAppViewportLock).
+ * Locks the document so the SPA feels like a native shell; marketing pages stay scrollable.
+ */
+html.yue-app-lock,
+html.yue-app-lock body {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  /* iOS: block document rubber-band without killing nested scrollports */
+  touch-action: manipulation;
+}
+
+html.yue-app-lock #root {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html.yue-app-lock body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+}
+
 button,
 input,
 select,
