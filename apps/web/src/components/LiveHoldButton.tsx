@@ -14,6 +14,23 @@ import type { Lang } from '../lib/types'
  */
 const HOLD_THRESHOLD_MS = 520
 
+function capturePointer(el: HTMLElement, pointerId: number) {
+  try {
+    el.setPointerCapture(pointerId)
+  } catch {
+    /* Some WebViews throw; window-level listeners still finish the press. */
+  }
+}
+
+function releasePointer(el: HTMLElement | null, pointerId: number) {
+  if (!el) return
+  try {
+    if (el.hasPointerCapture(pointerId)) el.releasePointerCapture(pointerId)
+  } catch {
+    /* ignore */
+  }
+}
+
 type Props = {
   /** Conversation panes pass en|yue to lock that speaker’s language for the turn. */
   side?: Lang
@@ -53,6 +70,12 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const keyDownAt = useRef(0)
   /** True after a sticky-tap “stop” press so pointerup doesn’t re-arm. */
   const stopTapRef = useRef(false)
+  const winCleanupRef = useRef<(() => void) | null>(null)
+
+  const clearWinListeners = () => {
+    winCleanupRef.current?.()
+    winCleanupRef.current = null
+  }
 
   // Release pointer capture if the turn ended without pointerup (common after translate).
   useEffect(() => {
@@ -61,8 +84,11 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
       downAt.current = 0
       keyDownAt.current = 0
       stopTapRef.current = false
+      clearWinListeners()
     }
   }, [live, liveInteraction])
+
+  useEffect(() => () => clearWinListeners(), [])
 
   const canLive = !entitlement || entitlement.allowed.live
   // Guests may use metered live trial; lock only when live is not allowed (exhausted / disabled).
@@ -94,41 +120,11 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const label = pickLabel(liveCopy, labelLang)
   const aria = labelLang === 'bi' ? biPlain(liveCopy) : label
 
-  const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return
-    // Ignore presses that start in the OS home-gesture strip (PWA dismiss swipe).
-    // Dock CSS already lifts the control; this catches edge cases when safe-area is 0.
-    if (typeof window !== 'undefined' && window.innerHeight - e.clientY <= 16) return
-    if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) return
-    if (activePointer.current != null) return
-
-    // Mode 2: second tap while sticky-listening → stop + translate.
-    if (stickyHere) {
-      stopTapRef.current = true
-      activePointer.current = e.pointerId
-      e.currentTarget.setPointerCapture(e.pointerId)
-      downAt.current = 0
-      void endHold()
-      return
-    }
-
-    stopTapRef.current = false
-    activePointer.current = e.pointerId
-    downAt.current = performance.now()
-    e.currentTarget.setPointerCapture(e.pointerId)
-    // Unlock TTS in this gesture turn so Solo auto-speak can play after async translate (iOS).
-    unlockTtsPlayback()
-    // startHold must own getUserMedia + recognition.start() in this gesture turn.
-    // Do not unlock+stop a competing stream here — that races and leaves STT silent.
-    void startHold(side)
-  }
-
-  const onPointerUp = (e: PointerEvent<HTMLButtonElement>) => {
-    if (activePointer.current !== e.pointerId) return
+  const finishPress = (pointerId: number, target: HTMLElement | null) => {
+    if (activePointer.current !== pointerId) return
     activePointer.current = null
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId)
-    }
+    clearWinListeners()
+    releasePointer(target, pointerId)
     if (stopTapRef.current) {
       stopTapRef.current = false
       return
@@ -143,6 +139,61 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
       // Mode 3: hold-to-speak — release ends the turn.
       void endHold()
     }
+  }
+
+  const armWinListeners = (pointerId: number, target: HTMLElement) => {
+    clearWinListeners()
+    const onWinUp = (ev: globalThis.PointerEvent) => {
+      if (ev.pointerId !== pointerId) return
+      finishPress(pointerId, target)
+    }
+    window.addEventListener('pointerup', onWinUp)
+    window.addEventListener('pointercancel', onWinUp)
+    winCleanupRef.current = () => {
+      window.removeEventListener('pointerup', onWinUp)
+      window.removeEventListener('pointercancel', onWinUp)
+    }
+  }
+
+  const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    // Touch/pen: accept primary contact (some WebViews report button as -1).
+    // Mouse: only the primary (left) button.
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) return
+    if (activePointer.current != null) return
+
+    // Avoid iOS callout / synthetic mouse after touch stealing the gesture.
+    e.preventDefault()
+
+    const target = e.currentTarget
+
+    // Mode 2: second tap while sticky-listening → stop + translate.
+    if (stickyHere) {
+      stopTapRef.current = true
+      activePointer.current = e.pointerId
+      capturePointer(target, e.pointerId)
+      armWinListeners(e.pointerId, target)
+      downAt.current = 0
+      void endHold()
+      return
+    }
+
+    stopTapRef.current = false
+    activePointer.current = e.pointerId
+    downAt.current = performance.now()
+    capturePointer(target, e.pointerId)
+    armWinListeners(e.pointerId, target)
+    // Unlock TTS in this gesture turn so Solo auto-speak can play after async translate (iOS).
+    unlockTtsPlayback()
+    // startHold must own getUserMedia + recognition.start() in this gesture turn.
+    // Do not unlock+stop a competing stream here — that races and leaves STT silent.
+    void startHold(side)
+  }
+
+  const onPointerUp = (e: PointerEvent<HTMLButtonElement>) => {
+    // Window listeners are the primary release path when capture fails; button
+    // handlers remain for browsers that deliver pointerup to the target.
+    finishPress(e.pointerId, e.currentTarget)
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
