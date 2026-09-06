@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
+import { CamTargetPicker } from './CamTargetPicker'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
 import { captureFrame, captureZoomedVideoFrame, decodeDataUrlSize, mediaFitLayout } from '../lib/camera/geometry'
@@ -733,26 +734,8 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         </svg>
       </button>
 
-      <div className="cam-ar-target-row" role="radiogroup" aria-label="Translate target">
-        {(
-          [
-            ['auto', ui.camTargetAuto],
-            ['en', ui.camTargetEn],
-            ['yue', ui.camTargetYue],
-            ['cmn', ui.camTargetCmn],
-            ['wuu', ui.camTargetWuu],
-            ['tl', ui.camTargetTl],          ] as const
-        ).map(([id, copy]) => (
-          <label key={id} className={`cam-target-opt${target === id ? ' is-on' : ''}`}>
-            <input
-              type="radio"
-              name="cam-ar-target"
-              checked={target === id}
-              onChange={() => onTargetChange(id)}
-            />
-            <BiText copy={copy} size="sm" />
-          </label>
-        ))}
+      <div className="cam-ar-target-row">
+        <CamTargetPicker value={target} onChange={onTargetChange} tone="ar" />
       </div>
 
       <div

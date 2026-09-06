@@ -4,6 +4,7 @@ import { CameraChoiceModal } from './CameraChoiceModal'
 import { CameraDocSession } from './CameraDocSession'
 import { CameraUploadEditor } from './CameraUploadEditor'
 import { BiText } from './BiText'
+import { CamTargetPicker } from './CamTargetPicker'
 import { GlowRotateButton } from './GlowRotateButton'
 import { createCameraHeartbeat } from '../lib/camera/heartbeat'
 import type { CameraTarget, CamPath } from '../lib/camera/types'
@@ -186,26 +187,8 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
       />
 
       {path !== 'choice' && path !== 'ar' && path !== 'docs' ? (
-        <div className="cam-target-row" role="radiogroup" aria-label="Translate target">
-          {(
-            [
-              ['auto', ui.camTargetAuto],
-              ['en', ui.camTargetEn],
-              ['yue', ui.camTargetYue],
-              ['cmn', ui.camTargetCmn],
-              ['wuu', ui.camTargetWuu],
-              ['tl', ui.camTargetTl],            ] as const
-          ).map(([id, copy]) => (
-            <label key={id} className={`cam-target-opt${target === id ? ' is-on' : ''}`}>
-              <input
-                type="radio"
-                name="cam-target"
-                checked={target === id}
-                onChange={() => setTarget(id)}
-              />
-              <BiText copy={copy} size="sm" />
-            </label>
-          ))}
+        <div className="cam-target-row">
+          <CamTargetPicker value={target} onChange={setTarget} tone="panel" />
         </div>
       ) : null}
 
