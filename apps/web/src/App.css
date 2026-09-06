@@ -1,11 +1,9 @@
 .app-shell {
-  /* Fixed frame = native-app chrome; --app-vv* tracks soft keyboard via visualViewport. */
+  /* Fixed frame = native-app chrome; height stays 100dvh (no soft-keyboard shrink). */
   position: fixed;
-  top: var(--app-vv-top, 0px);
-  left: 0;
-  right: 0;
-  height: var(--app-vvh, 100dvh);
-  max-height: var(--app-vvh, 100dvh);
+  inset: 0;
+  height: 100dvh;
+  max-height: 100dvh;
   min-height: 0;
   display: flex;
   flex-direction: column;
