@@ -24,6 +24,7 @@ import { openUpgrade } from './lib/billing'
 import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
 import { isEmbeddedAppView } from './lib/useHashRoute'
+import { useAppViewportLock } from './lib/useAppViewportLock'
 import './App.css'
 import { inkEase } from './lib/motion'
 
@@ -37,6 +38,9 @@ export function TranslatorApp() {
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
   const embedded = isEmbeddedAppView()
   const [camChoiceOpen, setCamChoiceOpen] = useState(true)
+
+  // App-like chrome: no document scroll; keyboard resizes the shell via visualViewport.
+  useAppViewportLock(true)
 
   useEffect(() => {
     void loadBootstrap()
