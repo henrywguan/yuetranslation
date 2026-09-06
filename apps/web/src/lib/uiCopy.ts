@@ -288,6 +288,7 @@ export const ui = {
   historyLatest: { en: 'Latest', zh: '最新', jp: 'zeoi3 san1' },
   historyExpand: { en: 'Expand', zh: '展開', jp: 'zin2 hoi1' },
   historyCollapse: { en: 'Collapse', zh: '收起', jp: 'sau1 hei2' },
+  historyClear: { en: 'Clear history', zh: '清除紀錄', jp: 'cing1 ceoi4 gei3 luk6' },
   historyVariations: { en: 'Other variations', zh: '其他講法', jp: 'kei4 taa1 gong2 faat3' },
   historyBreakdown: {
     en: 'Character breakdown',

@@ -1,4 +1,10 @@
-import type { Entitlement, HouseholdSummary, IncidentBannerSettings, Lang } from './types'
+import type {
+  ConversationTurn,
+  Entitlement,
+  HouseholdSummary,
+  IncidentBannerSettings,
+  Lang,
+} from './types'
 import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 
@@ -336,4 +342,26 @@ export async function saveUsername(
     })
   }
   return data
+}
+
+export async function fetchAccountHistory(): Promise<ConversationTurn[] | null> {
+  const res = await apiFetch('/history')
+  if (res.status === 401) return null
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to load history')
+  }
+  return Array.isArray(data.turns) ? (data.turns as ConversationTurn[]) : []
+}
+
+export async function putAccountHistory(turns: ConversationTurn[]): Promise<void> {
+  const res = await apiFetch('/history', {
+    method: 'PUT',
+    body: JSON.stringify({ turns }),
+  })
+  if (res.status === 401) return
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to save history')
+  }
 }

@@ -43,6 +43,7 @@ export function TranslationHistory() {
   const history = useYueStore((s) => s.history)
   const mode = useYueStore((s) => s.mode)
   const soloShowAutoHint = useYueStore((s) => s.soloShowAutoHint)
+  const clearHistory = useYueStore((s) => s.clearHistory)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { geom, persist, update, onDragPointerDown } = useFloatingPanel<PanelGeom>({
     storageKey: PANEL_KEY,
@@ -124,6 +125,17 @@ export function TranslationHistory() {
               ) : null}
             </div>
             <div className="history-rail-actions">
+              {count ? (
+                <button
+                  type="button"
+                  className="history-clear-btn"
+                  onClick={() => clearHistory()}
+                  aria-label={biPlain(ui.historyClear)}
+                  title={biPlain(ui.historyClear)}
+                >
+                  <BiText copy={ui.historyClear} size="sm" hideJp />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="history-rail-btn"
@@ -205,16 +217,29 @@ export function TranslationHistory() {
                     </span>
                   ) : null}
                 </div>
-                <button
-                  ref={closeRef}
-                  type="button"
-                  className="history-drawer-close"
-                  onClick={() => setDrawerOpen(false)}
-                  aria-label={biPlain(ui.historyCollapse)}
-                  title={biPlain(ui.historyCollapse)}
-                >
-                  ›
-                </button>
+                <div className="history-drawer-actions">
+                  {count ? (
+                    <button
+                      type="button"
+                      className="history-clear-btn"
+                      onClick={() => clearHistory()}
+                      aria-label={biPlain(ui.historyClear)}
+                      title={biPlain(ui.historyClear)}
+                    >
+                      <BiText copy={ui.historyClear} size="sm" hideJp />
+                    </button>
+                  ) : null}
+                  <button
+                    ref={closeRef}
+                    type="button"
+                    className="history-drawer-close"
+                    onClick={() => setDrawerOpen(false)}
+                    aria-label={biPlain(ui.historyCollapse)}
+                    title={biPlain(ui.historyCollapse)}
+                  >
+                    ›
+                  </button>
+                </div>
               </header>
               <HistoryPane turns={history} onOpenBreakdown={() => setDrawerOpen(false)} />
             </motion.aside>

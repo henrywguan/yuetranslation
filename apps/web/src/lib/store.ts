@@ -145,6 +145,9 @@ type State = {
   /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
   selectYueVariation: (phrase: string) => void
   selectEnVariation: (phrase: string) => void
+  /** Clear Solo / Conversation active text only — keeps History. */
+  clearCurrent: () => void
+  /** Wipe History list (and persist empty to the account when signed in). */
   clearHistory: () => void
   setSoloShowAutoHint: (v: boolean) => void
 }
@@ -648,11 +651,14 @@ export const useYueStore = create<State>((set, get) => ({
       if (ent.loggedIn && typeof ent.prefs?.autoSpeak === 'boolean') {
         writeLocalAutoSpeak(ent.prefs.autoSpeak)
       }
+      const { hydrateHistory } = await import('./historySync')
+      const history = await hydrateHistory(Boolean(ent.loggedIn))
       set({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
         incidentBanner: data.incidentBanner ?? null,
         autoSpeak: nextAutoSpeak,
+        history,
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {
@@ -1196,7 +1202,7 @@ export const useYueStore = create<State>((set, get) => ({
     })
   },
 
-  clearHistory: () => {
+  clearCurrent: () => {
     speakToken += 1
     stopSpeaking()
     if (get().mode === 'conversation') {
@@ -1211,7 +1217,6 @@ export const useYueStore = create<State>((set, get) => ({
       return
     }
     set({
-      history: [],
       enInterim: '',
       yueInterim: '',
       enTranslation: '',
@@ -1229,6 +1234,11 @@ export const useYueStore = create<State>((set, get) => ({
       translatingTo: null,
     })
   },
+
+  clearHistory: () => {
+    set({ history: [] })
+    void import('./historySync').then((m) => m.persistHistory([]))
+  },
 }))
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
@@ -1239,5 +1249,16 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
   w.__yueStore = useYueStore
   import('./learnedGloss').then((m) => {
     w.__yueLearnedGloss = m.learnedGlossStats
+  })
+}
+
+
+/** Keep History on device (and sync to the account when signed in). */
+if (typeof window !== 'undefined') {
+  let prevHistory = useYueStore.getState().history
+  useYueStore.subscribe((state) => {
+    if (state.history === prevHistory) return
+    prevHistory = state.history
+    void import('./historySync').then((m) => m.persistHistory(state.history))
   })
 }

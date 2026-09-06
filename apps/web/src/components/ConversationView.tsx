@@ -27,7 +27,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 export function ConversationView() {
   const face = useYueStore((s) => s.face)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
-  const clearHistory = useYueStore((s) => s.clearHistory)
+  const clearCurrent = useYueStore((s) => s.clearCurrent)
   const chineseLang = useYueStore((s) => s.chineseLang)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const clearConversationChinesePane = useYueStore((s) => s.clearConversationChinesePane)
@@ -111,7 +111,7 @@ export function ConversationView() {
     <div className={`conversation ${live ? 'live' : ''} status-${status}`}>
       {(face.enTranslation || face.yueTranslation || face.enInterim || face.yueInterim) ? (
         <div className="conversation-clear">
-          <ClearIconButton onClick={clearHistory} />
+          <ClearIconButton onClick={clearCurrent} />
         </div>
       ) : null}
 

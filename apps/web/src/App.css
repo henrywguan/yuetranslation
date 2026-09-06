@@ -2597,6 +2597,35 @@
   justify-content: flex-start;
 }
 
+
+.history-clear-btn {
+  appearance: none;
+  flex: none;
+  max-width: 9rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--danger, #e36b6b) 35%, var(--glass-border));
+  background: color-mix(in srgb, var(--danger, #e36b6b) 12%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  line-height: 1.15;
+}
+
+.history-clear-btn:hover,
+.history-clear-btn:focus-visible {
+  background: color-mix(in srgb, var(--danger, #e36b6b) 22%, transparent);
+  outline: none;
+}
+
+.history-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
 .history-pane {
   flex: 1;
   min-height: 0;

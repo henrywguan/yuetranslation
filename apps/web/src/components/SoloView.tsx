@@ -58,7 +58,7 @@ export function SoloView() {
   const soloLowerLang = useYueStore((s) => s.soloLowerLang)
   const setSpeakDirection = useYueStore((s) => s.setSpeakDirection)
   const setSoloPaneLang = useYueStore((s) => s.setSoloPaneLang)
-  const clearHistory = useYueStore((s) => s.clearHistory)
+  const clearCurrent = useYueStore((s) => s.clearCurrent)
   const setSoloShowAutoHint = useYueStore((s) => s.setSoloShowAutoHint)
   const translateTyped = useYueStore((s) => s.translateTyped)
   const live = useYueStore((s) => s.live)
@@ -334,7 +334,6 @@ export function SoloView() {
   const canClear =
     Boolean(upperDraft.trim()) ||
     Boolean(lowerDraft.trim()) ||
-    history.length > 0 ||
     Boolean(enInterim) ||
     Boolean(yueInterim) ||
     Boolean(enTranslation) ||
@@ -539,7 +538,7 @@ export function SoloView() {
                   </button>
                 ) : null}
                 <div className="solo-pane-actions-stack">
-                  {canClear ? <ClearIconButton onClick={clearHistory} /> : null}
+                  {canClear ? <ClearIconButton onClick={clearCurrent} /> : null}
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}
