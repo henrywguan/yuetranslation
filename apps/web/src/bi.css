@@ -801,3 +801,249 @@ button.spoken-line-text--action:focus-visible {
   margin-top: 0;
 }
 
+
+/* Mexican Spanish learn tools — practice + situations + culture (details / expandable) */
+.mx-practice {
+  flex: 1 1 100%;
+  margin-top: 0.45rem;
+}
+
+.mx-practice-toggle {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--mint) 35%, transparent);
+  background: color-mix(in srgb, var(--mint) 12%, transparent);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font: inherit;
+  font-size: clamp(0.68rem, 2vw, 0.78rem);
+  cursor: pointer;
+}
+
+.mx-practice-toggle.is-open {
+  border-color: color-mix(in srgb, var(--mint) 55%, transparent);
+  background: color-mix(in srgb, var(--mint) 22%, transparent);
+}
+
+.mx-practice-panel {
+  margin-top: 0.55rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--paper) 88%, var(--mint));
+}
+
+.mx-practice-target {
+  margin: 0 0 0.55rem;
+  font-size: clamp(1rem, 3.2vw, 1.2rem);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.mx-practice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.mx-practice-hear,
+.mx-practice-mic {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.mx-practice-mic.is-listening {
+  border-color: color-mix(in srgb, var(--mint) 60%, transparent);
+  background: color-mix(in srgb, var(--mint) 28%, transparent);
+  animation: mx-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mx-pulse {
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+.mx-practice-heard {
+  margin: 0.55rem 0 0;
+  font-size: 0.85rem;
+}
+
+.mx-practice-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.7rem;
+  margin-top: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.mx-practice-score--good {
+  border-color: color-mix(in srgb, var(--mint) 45%, transparent);
+  background: color-mix(in srgb, var(--mint) 16%, transparent);
+}
+
+.mx-practice-score--mid {
+  border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.mx-practice-score--low {
+  border-color: color-mix(in srgb, #c45c26 40%, transparent);
+  background: color-mix(in srgb, #c45c26 10%, transparent);
+}
+
+.mx-practice-score-num {
+  font-family: var(--font-display, var(--font-body));
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.mx-practice-score-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.mx-practice-score-zh {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.mx-practice-tips {
+  flex: 1 1 100%;
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.mx-practice-error {
+  margin: 0.45rem 0 0;
+  color: #b42318;
+  font-size: 0.78rem;
+}
+
+.mx-learn {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.mx-learn-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.mx-culture {
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mint) 28%, transparent);
+}
+
+.mx-culture-term {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.mx-culture-note {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.mx-culture-note--zh {
+  margin-top: 0.2rem;
+  opacity: 0.88;
+}
+
+.mx-culture-empty {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+}
+
+.mx-situations-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.mx-situation-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.55rem;
+}
+
+.mx-situation-chip {
+  appearance: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  border-radius: 12px;
+  padding: 0.35rem 0.55rem;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mx-situation-chip.is-active {
+  border-color: color-mix(in srgb, var(--mint) 50%, transparent);
+  background: color-mix(in srgb, var(--mint) 18%, transparent);
+}
+
+.mx-situation-chip-en {
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+.mx-situation-chip-zh {
+  font-size: 0.64rem;
+  opacity: 0.8;
+}
+
+.mx-chunks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mx-chunk {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: transparent;
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.mx-chunk:hover {
+  border-color: color-mix(in srgb, var(--mint) 40%, transparent);
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+}

@@ -5,6 +5,7 @@ import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { MexicanSpanishPractice } from './MexicanSpanishPractice'
 import { InkSettle } from './InkSettle'
 import { JyutLogo } from './JyutLogo'
 import { LangLabelButton } from './LangLabelButton'
@@ -202,6 +203,9 @@ export function ConversationView() {
                 ) : (
                   <span className="placeholder">{partnerPlaceholder}</span>
                 )}
+                {chineseLang === 'es' && zhText ? (
+                  <MexicanSpanishPractice target={zhText} className="mx-practice--inline" />
+                ) : null}
               </InkSettle>
             )}
           </div>
