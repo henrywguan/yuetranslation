@@ -87,7 +87,12 @@ export function dictionaryTranslate(opts: {
   const entry = lookupPhrase(opts)
   if (!entry) return null
   const alternatives =
-    opts.wantAlternatives && (entry.targetLang === 'yue' || entry.targetLang === 'en' || entry.targetLang === 'wuu')
+    opts.wantAlternatives &&
+    (entry.targetLang === 'yue' ||
+      entry.targetLang === 'en' ||
+      entry.targetLang === 'wuu' ||
+      entry.targetLang === 'tl' ||
+      entry.targetLang === 'es')
       ? uniqStrings(entry.text, entry.alternatives || [])
       : []
   const alternativeRomanizations =
