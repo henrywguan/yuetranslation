@@ -1,6 +1,6 @@
 import { fetchTtsAudio } from './api'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalViVoice, readLocalYueVoice } from './ttsVoices'
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
   'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA=='
@@ -140,7 +140,19 @@ function browserSpeak(text: string, lang: Lang, g: number) {
     }
     const u = new SpeechSynthesisUtterance(text)
     u.lang =
-      lang === 'yue' ? 'zh-HK' : lang === 'cmn' ? 'zh-CN' : lang === 'wuu' ? 'wuu-CN' : lang === 'tl' ? 'fil-PH' : lang === 'es' ? 'es-MX' : 'en-US'
+      lang === 'yue'
+        ? 'zh-HK'
+        : lang === 'cmn'
+          ? 'zh-CN'
+          : lang === 'wuu'
+            ? 'wuu-CN'
+            : lang === 'tl'
+              ? 'fil-PH'
+              : lang === 'es'
+                ? 'es-MX'
+                : lang === 'vi'
+                  ? 'vi-VN'
+                  : 'en-US'
     u.onend = () => {
       if (g === gen) playing = false
       resolve()
@@ -162,6 +174,7 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'wuu') return readLocalWuuVoice()
   if (lang === 'tl') return readLocalTlVoice()
   if (lang === 'es') return readLocalEsVoice()
+  if (lang === 'vi') return readLocalViVoice()
   return readLocalYueVoice()
 }
 

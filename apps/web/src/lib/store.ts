@@ -129,7 +129,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -267,6 +267,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'wuu') return 'wuu'
   if (direction === 'tl') return 'tl'
   if (direction === 'es') return 'es'
+  if (direction === 'vi') return 'vi'
   return detected
 }
 
@@ -494,7 +495,8 @@ export const useYueStore = create<State>((set, get) => ({
       speakDirection === 'cmn' ||
       speakDirection === 'wuu' ||
       speakDirection === 'tl' ||
-      speakDirection === 'es'
+      speakDirection === 'es' ||
+      speakDirection === 'vi'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -594,7 +596,7 @@ export const useYueStore = create<State>((set, get) => ({
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi'
         ? { chineseLang: lang }
         : {}
     invalidatePendingTranslations()
@@ -894,7 +896,7 @@ export const useYueStore = create<State>((set, get) => ({
       const d = get().speakDirection
       return (
         lock ||
-        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'tl' || d === 'es'
+        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'tl' || d === 'es' || d === 'vi'
           ? d
           : undefined)
       )
@@ -1194,7 +1196,7 @@ export const useYueStore = create<State>((set, get) => ({
     const nextAltRoms = nextAlts.map((a) => romByPhrase.get(a) || '')
 
     const history = get().history
-    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'tl' || latest.to === 'es')
+    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'vi')
     const nextHistory =
       zhTargets
         ? [
