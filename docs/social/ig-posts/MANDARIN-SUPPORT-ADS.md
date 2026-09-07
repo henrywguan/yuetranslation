@@ -1,17 +1,18 @@
-# Mandarin support launch ads
+# Mandarin support launch ads (carousel)
 
-Portrait **1080×1350** promos matching the Tagalog “Uy, Pare!” layout.
+Portrait **1080×1350** · Tagalog-style promo layout · **real UI only**
 
-| File | Variant |
-| --- | --- |
-| `mandarin-support-en.html` → `out/ig-ad-mandarin-support-en.png` | Hook **大家好！** · English body |
-| `mandarin-support-zh.html` → `out/ig-ad-mandarin-support-zh.png` | Hook **大家好！** · Traditional Chinese body |
+| Slide | HTML | PNG | Phone UI |
+| --- | --- | --- | --- |
+| 1 EN | `mandarin-support-en.html` | `out/ig-ad-mandarin-support-en.png` | `source/mandarin-ads/ui-en-cmn.jpg` |
+| 2 ZH | `mandarin-support-zh.html` | `out/ig-ad-mandarin-support-zh.png` | `source/mandarin-ads/ui-zh-yue-cmn.jpg` |
+| 3 Details | `mandarin-support-details.html` | `out/ig-ad-mandarin-support-details.png` | `source/mandarin-ads/ui-details.jpg` |
 
-**Locked (unchanged from Tagalog promo):** CTA `2 Months Free Family Plan` · fine print `Code: JYUTTESTER1023 • Ends 10/23 • Cancel before renewal to avoid automatic charge!`
+**Logo:** `apps/web/public/pwa-512.png` (copied to `source/mandarin-ads/pwa-512.png` for render) — not favicon.
 
-**Logo:** `docs/brand/favicon.png` (PWA / product mark) + Syne **JyutTranslate** — never invent a 文+A mark.
+**Locked CTA / fine print:** `2 Months Free Family Plan` · `Code: JYUTTESTER1023 • Ends 10/23 • Cancel before renewal to avoid automatic charge!`
 
-**Phone:** Details sheet with pinyin ruby + character breakdown for 大家好.
+**Caption:** `out/ig-ad-mandarin-support-caption.txt`
 
 ```bash
 node docs/social/ig-posts/render.mjs

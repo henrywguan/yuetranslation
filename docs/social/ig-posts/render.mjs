@@ -32,6 +32,7 @@ const jobs = [
   { html: 'intro-portrait.html', png: 'ig-post-intro-portrait.png', w: 1080, h: 1350 },
   { html: 'mandarin-support-en.html', png: 'ig-ad-mandarin-support-en.png', w: 1080, h: 1350 },
   { html: 'mandarin-support-zh.html', png: 'ig-ad-mandarin-support-zh.png', w: 1080, h: 1350 },
+  { html: 'mandarin-support-details.html', png: 'ig-ad-mandarin-support-details.png', w: 1080, h: 1350 },
 ]
 
 const chrome =
@@ -52,6 +53,8 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
 }
 
 function startStaticServer(docsRoot) {
@@ -124,22 +127,33 @@ async function shotExact(puppeteer, url, outPng, w, h) {
         document.fonts.load("700 28px Syne", 'JyutTranslate'),
       ])
       await document.fonts.ready
-      const logo = document.querySelector('img.logo-mark')
-      if (logo instanceof HTMLImageElement) {
-        if (!logo.complete) {
-          await new Promise((resolve, reject) => {
-            logo.addEventListener('load', resolve, { once: true })
-            logo.addEventListener('error', () => reject(new Error('logo load failed')), { once: true })
-          })
-        }
-        if (logo.decode) await logo.decode().catch(() => {})
-      }
+      const imgs = [...document.querySelectorAll('#post img')]
+      await Promise.all(
+        imgs.map(async (img) => {
+          if (!(img instanceof HTMLImageElement)) return
+          if (!img.complete) {
+            await new Promise((resolve, reject) => {
+              img.addEventListener('load', resolve, { once: true })
+              img.addEventListener('error', () => reject(new Error(`img load failed: ${img.src}`)), {
+                once: true,
+              })
+            })
+          }
+          if (img.decode) await img.decode().catch(() => {})
+        }),
+      )
     })
     await new Promise((r) => setTimeout(r, 200))
     const check = await page.evaluate(async () => {
       const logo = document.querySelector('img.logo-mark')
       if (!(logo instanceof HTMLImageElement) || !logo.complete || logo.naturalWidth < 64) {
         return { ok: false, reason: 'logo-mark png missing or not loaded' }
+      }
+      const shots = [...document.querySelectorAll('img.phone__shot')]
+      for (const shot of shots) {
+        if (!(shot instanceof HTMLImageElement) || !shot.complete || shot.naturalWidth < 100) {
+          return { ok: false, reason: 'phone__shot missing or not loaded' }
+        }
       }
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
