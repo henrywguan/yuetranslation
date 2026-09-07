@@ -164,7 +164,9 @@ a {
 }
 
 .jyut-logo--lockup {
-  width: clamp(11.5rem, 52vw, 15.5rem);
+  /* Cap vs viewport so the wordmark never crowds ThemeToggle / PlanChip. */
+  width: clamp(10.75rem, 42vw, 15.5rem);
+  max-width: 100%;
   height: auto;
 }
 
@@ -205,12 +207,15 @@ a {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .brand-lockup,
 .ln-brand-btn.brand-lockup {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
