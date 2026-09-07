@@ -33,19 +33,23 @@ export function HistoryPane({
             ? 'tl'
             : turn.to === 'es' || turn.from === 'es'
               ? 'es'
-              : 'yue'
+              : turn.to === 'vi' || turn.from === 'vi'
+                ? 'vi'
+                : 'yue'
     const canto =
       turn.to === 'yue' ||
       turn.to === 'cmn' ||
       turn.to === 'wuu' ||
       turn.to === 'tl' ||
-      turn.to === 'es'
+      turn.to === 'es' ||
+      turn.to === 'vi'
         ? turn.translation
         : turn.from === 'yue' ||
             turn.from === 'cmn' ||
             turn.from === 'wuu' ||
             turn.from === 'tl' ||
-            turn.from === 'es'
+            turn.from === 'es' ||
+            turn.from === 'vi'
           ? turn.source
           : phrase
     const english =

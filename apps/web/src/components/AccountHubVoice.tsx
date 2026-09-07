@@ -6,12 +6,14 @@ import {
   EN_VOICES,
   ES_VOICES,
   TL_VOICES,
+  VI_VOICES,
   WUU_VOICES,
   YUE_VOICES,
   resolveCmnVoice,
   resolveEnVoice,
   resolveEsVoice,
   resolveTlVoice,
+  resolveViVoice,
   resolveWuuVoice,
   resolveYueVoice,
   voiceShortLabel,
@@ -19,6 +21,7 @@ import {
   type EnVoiceId,
   type EsVoiceId,
   type TlVoiceId,
+  type ViVoiceId,
   type WuuVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
@@ -34,18 +37,20 @@ type Props = {
   cmnVoice: CmnVoiceId
   tlVoice: TlVoiceId
   esVoice: EsVoiceId
+  viVoice: ViVoiceId
   wuuVoice: WuuVoiceId
   voiceBusy: boolean
-  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'wuu' | null
+  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | null
   persistVoices: (next: {
     yue?: YueVoiceId
     en?: EnVoiceId
     cmn?: CmnVoiceId
     tl?: TlVoiceId
     es?: EsVoiceId
+    vi?: ViVoiceId
     wuu?: WuuVoiceId
   }) => Promise<void>
-  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'wuu') => Promise<void>
+  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu') => Promise<void>
 }
 
 /** Compact TTS summary + modal for Yue / En / Cmn / Tl / Es / Wuu voice prefs. */
@@ -57,6 +62,7 @@ export function AccountHubVoice({
   cmnVoice,
   tlVoice,
   esVoice,
+  viVoice,
   wuuVoice,
   voiceBusy,
   previewBusy,
@@ -128,6 +134,10 @@ export function AccountHubVoice({
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">Mx</span>
             <span className="account-hub-voice-chip-name">{voiceShortLabel(esVoice)}</span>
+          </span>
+          <span className="account-hub-voice-chip">
+            <span className="account-hub-voice-chip-lang">Vi</span>
+            <span className="account-hub-voice-chip-name">{voiceShortLabel(viVoice)}</span>
           </span>
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">沪</span>
@@ -340,6 +350,40 @@ export function AccountHubVoice({
                     className="account-hub-voice-preview"
                     disabled={previewBusy !== null || !ttsOk}
                     onClick={() => void onPreview('es')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsVi} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={viVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ vi: resolveViVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsVi)}
+                    >
+                      {VI_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('vi')}
                   >
                     <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
                   </button>

@@ -3,6 +3,7 @@ import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { VietnameseText } from './VietnameseText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -53,9 +54,11 @@ export function ResultWithDefinition({
           ? 'tl'
           : chineseLang === 'es'
             ? 'es'
-            : chineseLang === 'en'
-              ? 'en'
-              : 'yue'
+            : chineseLang === 'vi'
+              ? 'vi'
+              : chineseLang === 'en'
+                ? 'en'
+                : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -72,6 +75,14 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'es' ? (
               <MexicanSpanishText
+                text={trimmed}
+                definition={def}
+                definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'vi' ? (
+              <VietnameseText
                 text={trimmed}
                 definition={def}
                 definitions={definitions}

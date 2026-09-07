@@ -16,6 +16,8 @@ import {
   mexicanStressLabel,
 } from '../lib/mexicanSpanishStress'
 import { buildLocalPinyinBreakdown, type PinyinSeg } from '../lib/pinyin'
+import { vietnameseToneClass, vietnameseToneChipShort, vietnameseToneLabel } from '../lib/vietnameseTones'
+import { VietnameseText } from './VietnameseText'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
@@ -43,6 +45,7 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'wuu') return 'wuu'
   if (detailLang === 'tl') return 'tl'
   if (detailLang === 'es') return 'es'
+  if (detailLang === 'vi') return 'vi'
   if (detailLang === 'en') return 'en'
   if (detailLang === 'yue') return 'yue'
   return hasHan(text) ? 'yue' : 'en'
@@ -193,7 +196,7 @@ export function CharacterBreakdownHost() {
       return
     }
     const detailLang = top.lang || (hasHan(top.char) ? 'yue' : 'en')
-    if (detailLang === 'en' || detailLang === 'tl' || detailLang === 'es') {
+    if (detailLang === 'en' || detailLang === 'tl' || detailLang === 'es' || detailLang === 'vi') {
       setIpa(top.jp)
       return
     }
@@ -269,7 +272,8 @@ export function CharacterBreakdownHost() {
   const isWuuDetail = detailLang === 'wuu'
   const isTlDetail = detailLang === 'tl'
   const isEsDetail = detailLang === 'es'
-  const isLatinDetail = isTlDetail || isEsDetail
+  const isViDetail = detailLang === 'vi'
+  const isLatinDetail = isTlDetail || isEsDetail || isViDetail
   const phraseWugniu = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
   const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
   const phraseWuuIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
@@ -326,7 +330,9 @@ export function CharacterBreakdownHost() {
                   ? 'tl'
                   : isEsDetail
                     ? 'es-MX'
-                    : top.kind === 'char' || showRubyTitle || showWuuTitle
+                    : isViDetail
+                      ? 'vi'
+                      : top.kind === 'char' || showRubyTitle || showWuuTitle
                       ? isWuuDetail
                         ? 'wuu-CN'
                         : isCmnDetail
@@ -394,6 +400,8 @@ export function CharacterBreakdownHost() {
             <p className="detail-panel-ipa-line" lang="en" title="IPA">
               /{phraseWuuIpa}/
             </p>
+          ) : isViDetail ? (
+            <VietnameseText text={topLabel} showTones />
           ) : ipa && isTlDetail ? (
             <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="tl">
               <span title="Accented / stress form">{ipa}</span>
@@ -554,11 +562,13 @@ export function CharacterBreakdownHost() {
                             ? 'tl'
                             : isEsDetail
                               ? 'es'
-                              : isCmnDetail
-                                ? 'cmn'
-                                : isWuuDetail
-                                  ? 'wuu'
-                                  : 'yue'
+                              : isViDetail
+                                ? 'vi'
+                                : isCmnDetail
+                                  ? 'cmn'
+                                  : isWuuDetail
+                                    ? 'wuu'
+                                    : 'yue'
                       }
                       onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     />
@@ -582,11 +592,13 @@ export function CharacterBreakdownHost() {
                       ? 'tl'
                       : isEsDetail
                         ? 'es'
-                        : isCmnDetail
-                          ? 'cmn'
-                          : isWuuDetail
-                            ? 'wuu'
-                            : 'yue'
+                        : isViDetail
+                          ? 'vi'
+                          : isCmnDetail
+                            ? 'cmn'
+                            : isWuuDetail
+                              ? 'wuu'
+                              : 'yue'
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
@@ -607,11 +619,13 @@ export function CharacterBreakdownHost() {
                               ? 'tl'
                               : isEsDetail
                                 ? 'es-MX'
-                                : isWuuDetail
-                                  ? 'wuu-CN'
-                                  : isCmnDetail
-                                    ? 'zh-CN'
-                                    : 'zh-HK'
+                                : isViDetail
+                                  ? 'vi'
+                                  : isWuuDetail
+                                    ? 'wuu-CN'
+                                    : isCmnDetail
+                                      ? 'zh-CN'
+                                      : 'zh-HK'
                           }
                         >
                           <span className="detail-panel-row-jp">
@@ -665,6 +679,28 @@ export function CharacterBreakdownHost() {
                                       title={mexicanStressLabel(kind)}
                                     >
                                       {mexicanStressLabel(kind)}
+                                    </span>
+                                  ) : (
+                                    <span className="detail-panel-ipa muted">—</span>
+                                  )
+                                })()}
+                              </span>
+                            ) : isViDetail ? (
+                              <span className="detail-panel-tl-pron" lang="vi">
+                                <span
+                                  className="detail-panel-ipa"
+                                  title="Full Quốc ngữ form"
+                                >
+                                  {row.jyutping || row.char}
+                                </span>
+                                {(() => {
+                                  const kind = vietnameseToneClass(row.jyutping || row.char)
+                                  return kind ? (
+                                    <span
+                                      className={`vietnamese-tone-chip vietnamese-tone-chip--${kind}`}
+                                      title={vietnameseToneLabel(kind)}
+                                    >
+                                      {vietnameseToneChipShort(kind)}
                                     </span>
                                   ) : (
                                     <span className="detail-panel-ipa muted">—</span>

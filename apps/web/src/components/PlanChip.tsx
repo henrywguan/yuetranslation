@@ -35,29 +35,34 @@ import {
   PREVIEW_EN,
   PREVIEW_TL,
   PREVIEW_ES,
+  PREVIEW_VI,
   PREVIEW_WUU,
   PREVIEW_YUE,
   readLocalCmnVoice,
   readLocalEnVoice,
   readLocalTlVoice,
   readLocalEsVoice,
+  readLocalViVoice,
   readLocalWuuVoice,
   readLocalYueVoice,
   resolveCmnVoice,
   resolveEnVoice,
   resolveTlVoice,
   resolveEsVoice,
+  resolveViVoice,
   resolveYueVoice,
   writeLocalCmnVoice,
   writeLocalEnVoice,
   writeLocalTlVoice,
   writeLocalEsVoice,
+  writeLocalViVoice,
   writeLocalWuuVoice,
   writeLocalYueVoice,
   type CmnVoiceId,
   type EnVoiceId,
   type TlVoiceId,
   type EsVoiceId,
+  type ViVoiceId,
   type WuuVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
@@ -89,9 +94,10 @@ export function PlanChip() {
   const [cmnVoice, setCmnVoice] = useState<CmnVoiceId>(() => readLocalCmnVoice())
   const [tlVoice, setTlVoice] = useState<TlVoiceId>(() => readLocalTlVoice())
   const [esVoice, setEsVoice] = useState<EsVoiceId>(() => readLocalEsVoice())
+  const [viVoice, setViVoice] = useState<ViVoiceId>(() => readLocalViVoice())
   const [wuuVoice, setWuuVoice] = useState<WuuVoiceId>(() => readLocalWuuVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
-  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'wuu' | null>(null)
+  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteSentTo, setInviteSentTo] = useState<string | null>(null)
@@ -131,6 +137,11 @@ export function PlanChip() {
       setEsVoice(v)
       writeLocalEsVoice(v)
     }
+    if (prefs?.ttsVoiceVi) {
+      const v = resolveViVoice(prefs.ttsVoiceVi)
+      setViVoice(v)
+      writeLocalViVoice(v)
+    }
     if (prefs?.username) {
       setUsername(prefs.username)
       setUsernameDraft(prefs.username)
@@ -143,6 +154,7 @@ export function PlanChip() {
     entitlement?.prefs?.ttsVoiceCmn,
     entitlement?.prefs?.ttsVoiceTl,
     entitlement?.prefs?.ttsVoiceEs,
+    entitlement?.prefs?.ttsVoiceVi,
     entitlement?.prefs?.username,
     entitlement?.loggedIn,
   ])
@@ -265,6 +277,7 @@ export function PlanChip() {
     cmn?: CmnVoiceId
     tl?: TlVoiceId
     es?: EsVoiceId
+    vi?: ViVoiceId
     wuu?: WuuVoiceId
   }) => {
     const yue = next.yue ?? yueVoice
@@ -272,18 +285,21 @@ export function PlanChip() {
     const cmn = next.cmn ?? cmnVoice
     const tl = next.tl ?? tlVoice
     const es = next.es ?? esVoice
+    const vi = next.vi ?? viVoice
     const wuu = next.wuu ?? wuuVoice
     writeLocalYueVoice(yue)
     writeLocalEnVoice(en)
     writeLocalCmnVoice(cmn)
     writeLocalTlVoice(tl)
     writeLocalEsVoice(es)
+    writeLocalViVoice(vi)
     writeLocalWuuVoice(wuu)
     setYueVoice(yue)
     setEnVoice(en)
     setCmnVoice(cmn)
     setTlVoice(tl)
     setEsVoice(es)
+    setViVoice(vi)
     setWuuVoice(wuu)
     if (!entitlement.loggedIn) return
     setVoiceBusy(true)
@@ -294,6 +310,7 @@ export function PlanChip() {
         ttsVoiceCmn: cmn,
         ttsVoiceTl: tl,
         ttsVoiceEs: es,
+        ttsVoiceVi: vi,
       })
       if (data.entitlement) {
         useYueStore.setState({ entitlement: data.entitlement })
@@ -313,7 +330,7 @@ export function PlanChip() {
     }
   }
 
-  const onPreview = async (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'wuu') => {
+  const onPreview = async (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu') => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
     try {
@@ -322,6 +339,7 @@ export function PlanChip() {
       else if (kind === 'cmn') await speakText(PREVIEW_CMN, 'cmn', cmnVoice)
       else if (kind === 'tl') await speakText(PREVIEW_TL, 'tl', tlVoice)
       else if (kind === 'es') await speakText(PREVIEW_ES, 'es', esVoice)
+      else if (kind === 'vi') await speakText(PREVIEW_VI, 'vi', viVoice)
       else await speakText(PREVIEW_WUU, 'wuu', wuuVoice)
     } finally {
       setPreviewBusy(null)
@@ -368,6 +386,7 @@ export function PlanChip() {
               ttsVoiceCmn: entitlement.prefs?.ttsVoiceCmn || cmnVoice,
               ttsVoiceTl: entitlement.prefs?.ttsVoiceTl || tlVoice,
               ttsVoiceEs: entitlement.prefs?.ttsVoiceEs || esVoice,
+              ttsVoiceVi: entitlement.prefs?.ttsVoiceVi || viVoice,
               ...data.prefs,
             },
           },
@@ -629,6 +648,7 @@ export function PlanChip() {
           cmnVoice={cmnVoice}
           tlVoice={tlVoice}
           esVoice={esVoice}
+          viVoice={viVoice}
           wuuVoice={wuuVoice}
           voiceBusy={voiceBusy}
           previewBusy={previewBusy}

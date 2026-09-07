@@ -14,6 +14,7 @@ const OPTIONS: { id: CameraTarget; copy: Bi; mark: string }[] = [
   { id: 'wuu', copy: ui.camTargetWuu, mark: '沪' },
   { id: 'tl', copy: ui.camTargetTl, mark: 'Tl' },
   { id: 'es', copy: ui.camTargetEs, mark: 'Mx' },
+  { id: 'vi', copy: ui.camTargetVi, mark: 'Vi' },
 ]
 
 type Props = {

@@ -5,6 +5,7 @@ import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { VietnameseText } from './VietnameseText'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
@@ -20,6 +21,7 @@ function langHintAttr(lang: Lang): string {
   if (lang === 'wuu') return 'wuu-CN'
   if (lang === 'tl') return 'tl'
   if (lang === 'es') return 'es-MX'
+  if (lang === 'vi') return 'vi-VN'
   if (lang === 'en') return 'en'
   return 'zh-HK'
 }
@@ -27,6 +29,7 @@ function langHintAttr(lang: Lang): string {
 function langPlaceholder(lang: Lang): string {
   if (lang === 'tl') return ui.dirTagalog.en
   if (lang === 'es') return ui.dirMexicanSpanish.en
+  if (lang === 'vi') return ui.dirVietnamese.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'en') return ui.enTranslation.en
@@ -34,7 +37,7 @@ function langPlaceholder(lang: Lang): string {
 }
 
 function isLatinLang(lang: Lang): boolean {
-  return lang === 'en' || lang === 'tl' || lang === 'es'
+  return lang === 'en' || lang === 'tl' || lang === 'es' || lang === 'vi'
 }
 
 /**
@@ -137,6 +140,17 @@ export function ConversationView() {
     if (lang === 'es') {
       return (
         <MexicanSpanishText
+          text={text}
+          definition={face.yueDefinition}
+          definitions={face.yueDefinitions}
+          className={className}
+          onActivate={onActivate}
+        />
+      )
+    }
+    if (lang === 'vi') {
+      return (
+        <VietnameseText
           text={text}
           definition={face.yueDefinition}
           definitions={face.yueDefinitions}
