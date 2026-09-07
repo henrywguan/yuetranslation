@@ -2482,7 +2482,10 @@
 }
 
 .history-rail-chrome {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 0;
   padding-bottom: 10px;
   cursor: grab;
@@ -2498,21 +2501,24 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 .history-rail-title-wrap .history-panel-title {
   margin: 0;
 }
 .history-rail-title-wrap .bi {
   align-items: center;
-  text-align: center;
+  text-align: start;
   gap: 0.1rem;
 }
 
 .history-rail-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
-  flex: none;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .history-rail-btn {
@@ -4160,6 +4166,26 @@
     box-shadow: 0 16px 40px color-mix(in srgb, #000 18%, transparent);
     overflow: hidden;
     min-height: 0;
+  }
+
+  /* Keep the collapse control pinned to the floating panel’s top-right. */
+  .history-rail .history-rail-chrome {
+    position: relative;
+    padding-right: 2.5rem;
+  }
+
+  .history-rail .history-rail-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .history-rail .history-rail-actions {
+    position: static;
+  }
+
+  .history-rail .history-clear-btn {
+    margin-right: 0.15rem;
   }
 
   .history-rail .history-pane {
