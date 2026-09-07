@@ -940,6 +940,56 @@ export async function adminPreviewEmail(req: AuthedRequest, res: Response) {
   }
 }
 
+export async function adminListEmailSends(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const limitRaw = Number(req.query.limit)
+  const limit = Number.isFinite(limitRaw) ? limitRaw : 40
+  try {
+    const { listEmailSends } = await import('./emailCampaign.js')
+    const sends = await listEmailSends(limit)
+    res.json({ sends })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to list sends' })
+  }
+}
+
+export async function adminDraftEmail(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const parsed = z
+    .object({
+      variant: CampaignVariantSchema,
+      fields: CampaignFieldsSchema,
+      templateKey: z.string().min(1).optional(),
+      notes: z.string().max(2000).optional(),
+    })
+    .safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid draft payload' })
+    return
+  }
+  try {
+    const { generateEmailDraft } = await import('./emailDraftAi.js')
+    const draft = await generateEmailDraft(parsed.data)
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'email_ai_draft',
+      detail: {
+        variant: parsed.data.variant,
+        templateKey: parsed.data.templateKey || null,
+        model: draft.model,
+        usedLastSend: draft.usedLastSend,
+        lastSendAt: draft.lastSendAt,
+      },
+    })
+    res.json(draft)
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Draft failed' })
+  }
+}
+
 export async function adminSaveEmailTemplate(req: AuthedRequest, res: Response) {
   const auth = await requireAdmin(req, res)
   if (!auth) return

@@ -253,6 +253,7 @@ export type AuditAction =
   | 'email_send_recipients'
   | 'email_send_audience'
   | 'email_template_save'
+  | 'email_ai_draft'
   | 'bug_report_ai_answer'
   | 'bug_report_resend_email'
   | 'incident_banner'

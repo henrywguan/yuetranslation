@@ -454,6 +454,50 @@ export async function previewAdminEmail(input: {
   return data as { html: string }
 }
 
+export type EmailSendItem = {
+  id: string
+  created_at: string
+  template_key: string
+  subject: string
+  audience: string
+  recipient_count: number
+  status: string
+  provider_id: string | null
+  detail: Record<string, unknown> | null
+  created_by: string | null
+}
+
+export async function fetchEmailSends(limit = 40): Promise<{ sends: EmailSendItem[] }> {
+  const res = await adminFetch(`/admin/email/sends?limit=${encodeURIComponent(String(limit))}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Failed to load sends')
+  return data as { sends: EmailSendItem[] }
+}
+
+export type EmailDraftResult = {
+  fields: CampaignFields
+  reasoning: string
+  model: string
+  usedLastSend: boolean
+  lastSendAt: string | null
+  lastSendSubject: string | null
+}
+
+export async function draftAdminEmail(input: {
+  variant: CampaignVariant
+  fields: CampaignFields
+  templateKey?: string
+  notes?: string
+}): Promise<EmailDraftResult> {
+  const res = await adminFetch('/admin/email/draft', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'AI draft failed')
+  return data as EmailDraftResult
+}
+
 export async function saveEmailTemplate(input: {
   id?: string
   name: string

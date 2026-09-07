@@ -60,7 +60,9 @@ import {
   adminExportUsersCsv,
   adminListAudit,
   adminListBugReports,
+  adminDraftEmail,
   adminListEmailContacts,
+  adminListEmailSends,
   adminListEmailTemplates,
   adminListUsers,
   adminMe,
@@ -793,7 +795,9 @@ app.get('/api/admin/email/templates', adminListEmailTemplates)
 app.post('/api/admin/email/templates', adminSaveEmailTemplate)
 app.delete('/api/admin/email/templates/:templateId', adminArchiveEmailTemplate)
 app.get('/api/admin/email/contacts', adminListEmailContacts)
+app.get('/api/admin/email/sends', adminListEmailSends)
 app.post('/api/admin/email/preview', adminPreviewEmail)
+app.post('/api/admin/email/draft', adminDraftEmail)
 app.post('/api/admin/email/send', adminSendEmail)
 
 scheduleHouseholdUsageBackfillOnStartup()
