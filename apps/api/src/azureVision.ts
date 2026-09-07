@@ -125,10 +125,22 @@ export async function ocrImage(imageBase64: string): Promise<{
     throw new Error('Azure Vision OCR missing operation-location')
   }
 
+  // Defense-in-depth: only poll Azure hosts matching our configured Vision endpoint.
+  let operationUrl: URL
+  try {
+    operationUrl = new URL(operationLocation)
+  } catch {
+    throw new Error('Azure Vision OCR returned an invalid operation-location')
+  }
+  const expectedHost = new URL(endpoint).host.toLowerCase()
+  if (operationUrl.protocol !== 'https:' || operationUrl.host.toLowerCase() !== expectedHost) {
+    throw new Error('Azure Vision OCR operation-location host mismatch')
+  }
+
   let result: unknown = null
   for (let attempt = 0; attempt < 40; attempt++) {
     await new Promise((r) => setTimeout(r, attempt < 3 ? 200 : 350))
-    const poll = await fetch(operationLocation, {
+    const poll = await fetch(operationUrl.toString(), {
       headers: { 'Ocp-Apim-Subscription-Key': env.azureVisionKey },
     })
     if (!poll.ok) {

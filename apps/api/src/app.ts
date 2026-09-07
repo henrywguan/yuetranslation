@@ -9,6 +9,7 @@ import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
 import { attachGuest, type GuestRequest } from './guest.js'
+import { allowGuestIpOrReject } from './guestRateLimit.js'
 import { queueResendAudienceContact } from './resendAudience.js'
 import { handleBillingWebhook, startCheckout, startPortal } from './billing.js'
 import {
@@ -112,7 +113,7 @@ async function entitlementFor(req: AuthedRequest) {
 function guestTrialMessage(kind: 'live' | 'camera') {
   return kind === 'live'
     ? 'Guest live minutes used up. Sign in to continue on the Free plan.'
-    : 'Guest camera minutes used up. Sign in to continue on the Free plan.'
+    : 'Guest camera scans used up. Sign in to continue on the Free plan.'
 }
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
@@ -168,6 +169,7 @@ app.get('/api/auth-config', (_req, res) => {
 })
 
 app.get('/api/speech-token', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'speechToken')) return
   const ent = await entitlementFor(req)
   if (!ent.allowed.live) {
     const login = ent.reason === 'login_required'
@@ -197,6 +199,7 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/translate', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'translate')) return
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
     res
@@ -227,6 +230,7 @@ app.post('/api/translate', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/breakdown', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'breakdown')) return
   const ent = await entitlementFor(req)
   if (!ent.allowed.textTranslate) {
     res
@@ -243,7 +247,15 @@ app.post('/api/breakdown', async (req: AuthedRequest, res) => {
     return
   }
   try {
-    res.json(await breakdown(req.body))
+    const result = await breakdown(req.body)
+    // Same guest/signed-in metering as translate — breakdown also hits the model.
+    if (!env.openMode) {
+      if (req.auth?.userId) await addTranslateCount(req.auth.userId, 1)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestTranslateCount((req as GuestRequest).guestId!, 1)
+      }
+    }
+    res.json(result)
   } catch (e) {
     res.status(400).json({ message: e instanceof Error ? e.message : 'Breakdown error' })
   }
@@ -271,7 +283,12 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       res.status(400).json({ message: 'text required' })
       return
     }
-        const azureLang =
+    // Bound Azure TTS spend per request (matches translate max length).
+    if (text.length > 2000) {
+      res.status(400).json({ message: 'text too long (max 2000 characters)' })
+      return
+    }
+    const azureLang =
       lang === 'en' || lang === 'en-US'
         ? 'en'
         : lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
@@ -532,6 +549,7 @@ app.post('/api/usage/heartbeat', async (req: AuthedRequest, res) => {
 })
 
 app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'cameraScan')) return
   const forDocs = Boolean(req.body?.forDocs)
   const ent = await entitlementFor(req)
   const allowed = forDocs ? ent.allowed.docs : ent.allowed.camera
@@ -557,7 +575,7 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
                 ? 'Document page quota exhausted for this month.'
                 : 'Document translation is not available.'
               : camQuota
-                ? 'Camera minutes exhausted for this month.'
+                ? 'Camera scan credits exhausted for this month.'
                 : 'Camera translation is not available.',
       entitlement: ent,
     })
@@ -566,11 +584,11 @@ app.post('/api/camera/scan', async (req: AuthedRequest, res) => {
   try {
     const allowAiVision = env.openMode || Boolean(ent.allowed.aiVision)
     const result = await cameraScan(req.body, { allowAiVision })
-    // Docs hybrid vision: no camera translate metering (pages billed on /docs/commit).
-    if (!forDocs && !env.openMode && result.translateMisses > 0) {
-      if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, result.translateMisses)
+    // Cam AR/Upload: 1 scan credit per successful call. Docs hybrid uses docs pages.
+    if (!forDocs && !env.openMode) {
+      if (req.auth?.userId) await addCameraTranslateCount(req.auth.userId, 1)
       else if ((req as GuestRequest).guestId) {
-        await addGuestCameraTranslateCount((req as GuestRequest).guestId!, result.translateMisses)
+        await addGuestCameraTranslateCount((req as GuestRequest).guestId!, 1)
       }
     }
     // AI vision LLM fallback — metered; hard monthly caps enforced via entitlements.
@@ -702,18 +720,17 @@ app.post('/api/docs/commit', async (req: AuthedRequest, res) => {
 
 app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
-  if (!ent.allowed.camera) {
-    const login = ent.reason === 'login_required'
-    const guestDone = ent.reason === 'guest_trial_exhausted'
-    res.status(login || guestDone ? 401 : 402).json({
-      message:
-        login
+  // Heartbeat is admin session logging only — do not gate on scan credits.
+  const camFeature =
+    Boolean(ent.limits.can_camera) && !ent.disabled && (ent.loggedIn || ent.plan === 'guest')
+  if (!camFeature) {
+    const login = !ent.loggedIn && ent.requireLogin
+    res.status(login || ent.disabled ? 401 : 402).json({
+      message: ent.disabled
+        ? 'This account has been disabled.'
+        : login
           ? 'Please sign in to use camera translation.'
-          : guestDone
-            ? guestTrialMessage('camera')
-            : ent.reason === 'account_disabled'
-              ? 'This account has been disabled.'
-              : 'Camera minutes exhausted for this month.',
+          : 'Camera translation is not available.',
       entitlement: ent,
     })
     return

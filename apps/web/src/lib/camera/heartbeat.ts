@@ -7,12 +7,13 @@ type HeartbeatCtl = {
 }
 
 /**
- * Meters cameraSeconds while an AR or upload session is active.
+ * Logs cameraSeconds while an AR or upload session is active (admin usage).
+ * Does not gate Cam — scan credits gate `/api/camera/scan` separately.
  * Flushes on stop so short sessions still count.
  */
 export function createCameraHeartbeat(
   onEntitlement: (ent: Entitlement) => void,
-  onBlocked?: (message: string, ent?: Entitlement) => void,
+  _onBlocked?: (message: string, ent?: Entitlement) => void,
 ): HeartbeatCtl {
   let timer: ReturnType<typeof setInterval> | null = null
   let startedAt = 0
@@ -28,13 +29,10 @@ export function createCameraHeartbeat(
     try {
       const ent = await postCameraHeartbeat(Math.min(120, delta))
       onEntitlement(ent)
-      if (!ent.allowed.camera) {
-        onBlocked?.('Camera minutes exhausted for this month.', ent)
-      }
     } catch (e) {
       const err = e as { message?: string; entitlement?: Entitlement }
       if (err.entitlement) onEntitlement(err.entitlement)
-      onBlocked?.(err.message || 'Camera metering failed', err.entitlement)
+      // Logging-only — do not tear down Cam on scan-credit exhaustion.
     }
   }
 
@@ -46,10 +44,9 @@ export function createCameraHeartbeat(
       reported = 0
       timer = setInterval(() => {
         void flush()
-      }, 15000)
+      }, 15_000)
     },
     async stop() {
-      if (!active) return
       if (timer) {
         clearInterval(timer)
         timer = null

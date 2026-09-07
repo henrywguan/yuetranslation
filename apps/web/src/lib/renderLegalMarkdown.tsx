@@ -15,7 +15,9 @@ function rewriteLegalHref(href: string): string {
   if (/privacy-policy\.md$/i.test(t) || t === './privacy-policy.md') return '#/privacy'
   if (/terms-of-service\.md$/i.test(t) || t === './terms-of-service.md') return '#/terms'
   if (/account-deletion\.md$/i.test(t) || t === './account-deletion.md') return '#/delete-account'
-  return t
+  // Only allow http(s), hash routes, and mailto — block javascript: and data: URLs.
+  if (/^(https?:|mailto:|#\/)/i.test(t)) return t
+  return '#'
 }
 
 function inlineFormat(raw: string): string {

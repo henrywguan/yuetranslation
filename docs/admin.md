@@ -216,7 +216,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Email | Campaign hub: templates, compose, preview, contacts / full audience send |
 | CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
-| Cam metering | `POST /api/usage/camera-heartbeat` → `camera_seconds`; `POST /api/camera/scan` → `camera_translate_count` |
+| Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |
 | AI vision metering | `POST /api/camera/scan` when LLM OCR fallback runs → `ai_vision_count` (hard monthly cap; Cam + Documents). Migration `010_ai_vision_usage.sql` |
 | Docs metering | `POST /api/docs/translate` / `POST /api/docs/commit` → `docs_pages` (success only) |
 

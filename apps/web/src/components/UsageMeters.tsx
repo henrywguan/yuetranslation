@@ -103,17 +103,20 @@ function buildMeters(e: Entitlement): MeterModel[] {
   const ttsSelfUsed = Math.max(0, selfUsage?.ttsChars ?? 0)
   const ttsSplit = splitRingFills(ttsUsed, ttsSelfUsed, ttsLimit, ttsUnlimited, pooled)
 
-  const camLimitSec = Math.max(0, (e.limits.camera_minutes ?? 0) * 60)
-  const camUsed = Math.max(0, Math.floor(e.usage.cameraSeconds ?? 0))
+  const camLimit = Math.max(0, e.limits.camera_scans ?? e.limits.camera_minutes ?? 0)
+  const camUsed = Math.max(0, Math.floor(e.usage.cameraTranslateCount ?? 0))
   const camUnlimited = Boolean(e.cameraUnlimited)
   const camRatio = camUnlimited
     ? null
-    : camLimitSec <= 0
+    : camLimit <= 0
       ? clampUsageRatio(camUsed > 0 ? 1 : 0)
-      : clampUsageRatio(camUsed / camLimitSec)
-  const camLeft = Math.max(0, camLimitSec - camUsed)
-  const camSelfUsed = Math.max(0, Math.floor(selfUsage?.cameraSeconds ?? 0))
-  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimitSec, camUnlimited, pooled)
+      : clampUsageRatio(camUsed / camLimit)
+  const camLeft = Math.max(
+    0,
+    e.remaining.cameraScans ?? Math.max(0, camLimit - camUsed),
+  )
+  const camSelfUsed = Math.max(0, Math.floor(selfUsage?.cameraTranslateCount ?? 0))
+  const camSplit = splitRingFills(camUsed, camSelfUsed, camLimit, camUnlimited, pooled)
 
   const docsLimit = Math.max(0, e.limits.docs_pages ?? 0)
   const docsUsed = Math.max(0, e.usage.docsPages ?? 0)
@@ -172,23 +175,30 @@ function buildMeters(e: Entitlement): MeterModel[] {
     })
   }
 
-  if (e.loggedIn) {
+  if (e.loggedIn || e.limits.can_camera) {
     meters.push(
       {
         key: 'camera',
         label: ui.modeCamera,
         blurb: ui.usageDetailCamera,
-        usedLabel: formatMinutesCompact(camUsed),
-        limitLabel: camUnlimited ? '∞' : `${e.limits.camera_minutes ?? 0}m`,
-        revealUsed: formatExactDuration(camUsed),
-        revealLeft: camUnlimited ? 'unlimited' : `${formatExactDuration(camLeft)} left`,
+        usedLabel: String(camUsed),
+        limitLabel: camUnlimited ? '∞' : String(camLimit),
+        revealUsed: `${camUsed} scans`,
+        revealLeft: camUnlimited ? 'unlimited' : `${camLeft} left`,
         ratio: camRatio,
         usedAmount: camUsed,
         selfFill: camSplit.selfFill,
         familyFill: camSplit.familyFill,
         unlimited: camUnlimited,
-        detail: timeDetail(camUsed, camLimitSec, camUnlimited),
+        detail: camUnlimited
+          ? `${camUsed} scans used · unlimited`
+          : `${camUsed} used · ${camLeft} left`,
       },
+    )
+  }
+
+  if (e.loggedIn) {
+    meters.push(
       {
         key: 'docs',
         label: ui.usageDocs,

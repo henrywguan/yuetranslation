@@ -11,11 +11,24 @@ Vercel 生产栈的套餐与计量以本文为准。WordPress 插件为次要表
 | Solo text translate + Jyutping | Yes (unlimited, metered) | Yes (unlimited, metered) |
 | Tap-to-play TTS | Yes (unlimited, metered) | Metered hard cap |
 | Live mic | **30 min / month** (`YUE_GUEST_LIVE_MINUTES`) | Live: metered; auto-speak: Family/Business |
-| Cam AR / Upload | **30 min / month** (`YUE_GUEST_CAMERA_MINUTES`) | Yes (camera meter) |
+| Cam AR / Upload | **30 scans / month** (`YUE_GUEST_CAMERA_SCANS`) | Yes (scan credits) |
 | Documents | Sign-in required (button greyed) | Yes (docs page meter) |
 | Auto-speak | No | Family/Business |
 
-Guests get an HttpOnly `yue_guest_id` cookie. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free.
+Guests get an HttpOnly `yue_guest_id` cookie (1 year, `SameSite=Lax`, `Secure` on HTTPS). The API sets it on first anonymous request via `attachGuest`; the browser keeps it and sends it back on later calls. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free. Clearing site cookies (or private browsing) creates a **new** guest id and resets trial meters — that is why IP rate limits matter.
+
+### Guest per-IP rate limits (app)
+
+Signed-in users are not limited by these. TTS is intentionally uncapped by IP (product choice; still counted in usage). Defaults (override with env):
+
+| Bucket | Endpoint | Default |
+| --- | --- | --- |
+| translate | `POST /api/translate` | `YUE_GUEST_RL_TRANSLATE_PER_MIN=30` |
+| breakdown | `POST /api/breakdown` | `YUE_GUEST_RL_BREAKDOWN_PER_MIN=20` |
+| speechToken | `GET /api/speech-token` | `YUE_GUEST_RL_SPEECH_TOKEN_PER_MIN=12` |
+| cameraScan | `POST /api/camera/scan` | `YUE_GUEST_RL_CAMERA_SCAN_PER_MIN=20` |
+
+These are in-memory fixed 1-minute windows (best-effort on multi-instance Vercel). Pair with Vercel Firewall / WAF if you want a hard edge cap on all `/api*`.
 
 Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, `YUE_GUEST_LIVE_MINUTES=30`, `YUE_GUEST_CAMERA_MINUTES=30`.
 
@@ -27,14 +40,14 @@ Code defaults in `apps/api/src/env.ts`. **Production overrides** in `vercel.json
 | --- | --- | --- | --- |
 | Live minutes | `YUE_FREE_LIVE_MINUTES` (default **60** = 1 hr; **prod `vercel.json` = 60**) | `YUE_FAMILY_LIVE_MINUTES` (default **480** = 8 hr; **prod `vercel.json` = 480**) | `YUE_BUSINESS_LIVE_MINUTES` or legacy `YUE_MAX_LIVE_MINUTES` (default 2400) |
 | TTS chars | `YUE_FREE_TTS_CHARS` (default **30000**) hard cap | Unlimited (`ttsUnlimited`) — still counted | Unlimited — still counted |
-| Camera minutes | `YUE_FREE_CAMERA_MINUTES` (default **60**) | `YUE_FAMILY_CAMERA_MINUTES` (default **480** = 8 hr) | Unlimited (`cameraUnlimited`) — still counted |
+| Camera scans | `YUE_FREE_CAMERA_SCANS` (default **120**) | `YUE_FAMILY_CAMERA_SCANS` (default **800**) | Unlimited (`cameraUnlimited`) — still counted |
 | Document pages | `YUE_FREE_DOCS_PAGES` (default **40**) | `YUE_FAMILY_DOCS_PAGES` (default **400**) | Unlimited (`docsUnlimited`) — still counted |
 | Auto-speak | No | Yes | Yes |
 | AI vision OCR fallbacks | `YUE_FREE_AI_VISION_COUNT` (default **200**) hard cap | `YUE_FAMILY_AI_VISION_COUNT` (default **2000**) hard cap | `YUE_BUSINESS_AI_VISION_COUNT` (default **10000**) hard cap |
 
 Marketing copy rounds Free live as “~1 hr” and Family live as “~8 hr”; production sets Free live to **60 minutes** and Family live to **480 minutes** via `vercel.json`. Prefer this table + env over stale marketing blurbs when debugging quotas.
 
-Camera and Documents share the **same access gate** (signed-in + plan can use cam/docs) but **separate meters**. Details: [camera.md](./camera.md).
+Camera and Documents share the **same access gate** (plan can use cam/docs) but **separate meters**. Cam hard meter is **scan credits** (`camera_translate_count`); `cameraSeconds` is admin session logging only. Details: [camera.md](./camera.md).
 
 ## Household seats & pooled usage / 家庭座位与共用用量
 
@@ -58,7 +71,7 @@ Returned by `/api/health` and `/api/entitlement`:
     "plan": "free",
     "live_minutes": 60,
     "tts_chars": 30000,
-    "camera_minutes": 60,
+    "camera_scans": 120,
     "docs_pages": 40,
     "auto_speak": false,
     "can_live": true,
@@ -79,7 +92,8 @@ Returned by `/api/health` and `/api/entitlement`:
   "remaining": {
     "liveSeconds": 3480,
     "ttsChars": 29200,
-    "cameraSeconds": 3560,
+    "cameraScans": 118,
+    "cameraSeconds": -1,
     "docsPages": 36,
     "aiVisionCount": 198
   },
@@ -121,8 +135,8 @@ Signed-in `prefs.autoSpeak` syncs across devices via `PATCH /api/prefs/auto-spea
 | `POST /tts` | Free: char quota; Family/Business: always (usage counted); guests: allowed |
 | `POST /translate` | `allowed.textTranslate` (guests OK); may increment `translate_count` |
 | `POST /breakdown` | same as translate |
-| `POST /camera/scan` | `allowed.camera` — or `allowed.docs` when `forDocs: true` (no camera translate meter) |
-| `POST /usage/camera-heartbeat` | camera, then add `cameraSeconds` |
+| `POST /camera/scan` | `allowed.camera` (scan credits) — or `allowed.docs` when `forDocs: true` (no Cam scan charge) |
+| `POST /usage/camera-heartbeat` | plan can_camera (logging only) — adds `cameraSeconds`; does **not** gate on scan credits |
 | `POST /docs/translate` | `allowed.docs` — Office/TXT; bills pages on success |
 | `POST /docs/segments` | `allowed.docs` — PDF text batch; no page bill |
 | `POST /docs/commit` | signed-in docs — bill PDF pages after success |
