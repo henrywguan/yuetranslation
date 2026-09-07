@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { BiText } from '../components/BiText'
 import { openDeleteAccount, openHome, openPrivacy, openTerms } from '../lib/siteLinks'
 import { renderLegalMarkdown } from '../lib/renderLegalMarkdown'
@@ -8,6 +7,7 @@ import termsMd from '../../../../docs/legal/terms-of-service.md?raw'
 import deleteAccountMd from '../../../../docs/legal/account-deletion.md?raw'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
 import './landing.css'
 import './legal.css'
 
@@ -42,13 +42,11 @@ const DOCS: Record<
 export function LegalPage({ doc }: { doc: LegalDoc }) {
   const meta = DOCS[doc]
 
-  useEffect(() => {
-    const prev = document.title
-    document.title = `${meta.title} — JyutTranslate`
-    return () => {
-      document.title = prev
-    }
-  }, [meta.title])
+  useDocumentMeta({
+    title: `${meta.title} — JyutTranslate`,
+    description: `${meta.title} for JyutTranslate.`,
+    path: `/${doc}`,
+  })
 
   return (
     <MarketingPageShell className="legal-page" onFeatures={() => openHome()}>

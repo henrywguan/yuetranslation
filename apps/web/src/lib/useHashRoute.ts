@@ -9,6 +9,7 @@ export type Route =
   | 'privacy'
   | 'terms'
   | 'delete-account'
+  | 'not-found'
 
 function subscribe(callback: () => void) {
   window.addEventListener('hashchange', callback)
@@ -47,6 +48,7 @@ export function useRoute(): Route {
   if (path === 'privacy') return 'privacy'
   if (path === 'terms') return 'terms'
   if (path === 'delete-account') return 'delete-account'
+  if (path) return 'not-found'
   if (isEmbeddedAppView()) return 'app'
   if (viewParam() === 'pricing') return 'pricing'
   return 'home'

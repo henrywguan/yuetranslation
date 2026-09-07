@@ -755,7 +755,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
             autoPlay
           />
           {stillUrl ? (
-            <img src={stillUrl} alt="" className="cam-still" draggable={false} />
+            <img src={stillUrl} alt="Camera capture for translation" className="cam-still" draggable={false} />
           ) : null}
         </div>
         <canvas

@@ -16,6 +16,7 @@ import { BrandScramble } from './BrandScramble'
 import { HeroEyebrow } from './HeroEyebrow'
 import { HeroMultilangTip } from './HeroMultilangTip'
 import { inkEase } from '../lib/motion'
+import { useDocumentMeta, documentMetaDefaults } from '../lib/useDocumentMeta'
 import './landing.css'
 
 const FEATURES_LEFT: { title: Bi; desc: Bi; aside?: Bi; href?: 'tones' }[] = [
@@ -65,6 +66,11 @@ function scrollToId(id: string) {
 }
 
 export function Landing() {
+  useDocumentMeta({
+    title: documentMetaDefaults.title,
+    description: documentMetaDefaults.description,
+    path: '/',
+  })
   return (
     <MarketingPageShell background="orbital" onFeatures={() => scrollToId('features')}>
       <header className="ln-hero">

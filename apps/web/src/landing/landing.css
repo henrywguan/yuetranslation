@@ -936,6 +936,19 @@
   margin-bottom: 54px;
 }
 
+.ln-not-found {
+  min-height: min(70dvh, 640px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.ln-not-found .ln-h2 {
+  margin-top: 12px;
+}
+
 .ln-kicker {
   display: block;
   font-size: 0.72rem;

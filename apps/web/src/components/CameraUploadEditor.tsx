@@ -734,7 +734,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
             <img
               ref={imgRef}
               src={imageUrl}
-              alt=""
+              alt="Uploaded photo for translation"
               className="cam-image cam-image--fit"
               draggable={false}
               onLoad={onImgLoad}

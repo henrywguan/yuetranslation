@@ -23,6 +23,9 @@ const TranslatorApp = lazy(() =>
 )
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 const LegalPage = lazy(() => import('./landing/LegalPage').then((m) => ({ default: m.LegalPage })))
+const NotFoundPage = lazy(() =>
+  import('./landing/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+)
 
 export default function App() {
   const route = useRoute()
@@ -66,6 +69,7 @@ export default function App() {
   else if (route === 'privacy') page = <LegalPage doc="privacy" />
   else if (route === 'terms') page = <LegalPage doc="terms" />
   else if (route === 'delete-account') page = <LegalPage doc="delete-account" />
+  else if (route === 'not-found') page = <NotFoundPage />
 
   return (
     <>
