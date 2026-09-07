@@ -41,7 +41,16 @@ export function LangLabelButton({
   variant?: 'drawer' | 'dropdown'
 }) {
   const [open, setOpen] = useState(false)
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [menuPos, setMenuPos] = useState<{
+    left: number
+    width: number
+    opensDown: boolean
+    /** Distance from viewport top (down menus) or unused when opening up. */
+    top?: number
+    /** Distance from viewport bottom (up menus). */
+    bottom?: number
+    maxHeight: number
+  } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuId = useId()
@@ -62,7 +71,7 @@ export function LangLabelButton({
         : OPTIONS
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1
-  const menuOpensDown = drawer === 'top'
+  const preferDown = drawer === 'top'
 
   useLayoutEffect(() => {
     if (!open || variant !== 'dropdown') return
@@ -72,8 +81,24 @@ export function LangLabelButton({
       const r = el.getBoundingClientRect()
       const width = Math.max(r.width, 196)
       const left = Math.min(Math.max(10, r.left), window.innerWidth - width - 10)
-      const top = menuOpensDown ? r.bottom + 8 : r.top - 8
-      setMenuPos({ top, left, width })
+      const gap = 8
+      const edge = 12
+      const spaceBelow = Math.max(0, window.innerHeight - r.bottom - gap - edge)
+      const spaceAbove = Math.max(0, r.top - gap - edge)
+      // Prefer the drawer hint, but flip when that side is too short for the list.
+      const minComfort = 200
+      let opensDown = preferDown
+      if (preferDown && spaceBelow < minComfort && spaceAbove > spaceBelow) opensDown = false
+      if (!preferDown && spaceAbove < minComfort && spaceBelow > spaceAbove) opensDown = true
+      const maxHeight = Math.max(140, opensDown ? spaceBelow : spaceAbove)
+      setMenuPos({
+        left,
+        width,
+        opensDown,
+        top: opensDown ? r.bottom + gap : undefined,
+        bottom: opensDown ? undefined : window.innerHeight - r.top + gap,
+        maxHeight,
+      })
     }
     placeMenu()
     window.addEventListener('resize', placeMenu)
@@ -82,7 +107,7 @@ export function LangLabelButton({
       window.removeEventListener('resize', placeMenu)
       window.removeEventListener('scroll', placeMenu, true)
     }
-  }, [open, variant, menuOpensDown, lang])
+  }, [open, variant, preferDown, lang, visible.length])
 
   useEffect(() => {
     if (!open) return
@@ -250,18 +275,19 @@ export function LangLabelButton({
                 />
                 <motion.ul
                   id={menuId}
-                  className={`lang-dd-menu lang-dd-menu--${menuOpensDown ? 'down' : 'up'}`}
+                  className={`lang-dd-menu lang-dd-menu--${menuPos.opensDown ? 'down' : 'up'}`}
                   role="listbox"
                   aria-label={biPlain(ui.direction)}
                   style={{
-                    top: menuOpensDown ? menuPos.top : undefined,
-                    bottom: menuOpensDown ? undefined : window.innerHeight - menuPos.top,
+                    top: menuPos.opensDown ? menuPos.top : undefined,
+                    bottom: menuPos.opensDown ? undefined : menuPos.bottom,
                     left: menuPos.left,
                     minWidth: menuPos.width,
+                    maxHeight: menuPos.maxHeight,
                   }}
-                  initial={{ opacity: 0, y: menuOpensDown ? -6 : 6, scale: 0.98 }}
+                  initial={{ opacity: 0, y: menuPos.opensDown ? -6 : 6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: menuOpensDown ? -4 : 4, scale: 0.98 }}
+                  exit={{ opacity: 0, y: menuPos.opensDown ? -4 : 4, scale: 0.98 }}
                   transition={{ duration: 0.18, ease: [...inkEase] }}
                 >
                   {visible.map((opt) => {
