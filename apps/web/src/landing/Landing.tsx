@@ -14,6 +14,7 @@ import { DeepSeekMark } from '../components/DeepSeekMark'
 import { ui, type Bi } from '../lib/uiCopy'
 import { BrandScramble } from './BrandScramble'
 import { HeroEyebrow } from './HeroEyebrow'
+import { HeroMultilangTip } from './HeroMultilangTip'
 import { inkEase } from '../lib/motion'
 import './landing.css'
 
@@ -86,6 +87,7 @@ export function Landing() {
               <BiText copy={ui.tryDemo} size="sm" />
             </MagneticButton>
           </div>
+          <HeroMultilangTip />
           <div className="ln-hero-stats">
             <div className="ln-hero-stat ln-hero-stat--deepseek">
               <span className="ln-hero-stat-icon" aria-hidden="true">
