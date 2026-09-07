@@ -7,8 +7,10 @@ import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './t
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
-  /** Solo upper/lower pane languages (any en|yue|cmn|wuu|tl|es pair; must differ). */  soloUpperLang: Lang
+  chineseLang: Lang
+  conversationYouLang: Lang
+  /** Solo upper/lower pane languages (any en|yue|cmn|wuu|tl|es pair; must differ). */
+  soloUpperLang: Lang
   soloLowerLang: Lang
   face: {
     enInterim: string
@@ -236,12 +238,15 @@ export async function runTranslation(
   opts?: { lean?: boolean; minThinkingMs?: number; enrichAlts?: boolean; skipSpeak?: boolean },
 ): Promise<{ text: string; lang: Lang } | null> {
   const chineseLang = get().chineseLang
+  const youLang = get().conversationYouLang
   const isFace = get().mode === 'conversation'
-  // Conversation: EN ↔ chineseLang. Solo: translate to the other pane's language.
+  // Conversation: you ↔ partner. Solo: translate to the other pane's language.
   const to: Lang = isFace
-    ? lang === 'en'
+    ? lang === youLang
       ? chineseLang
-      : 'en'
+      : lang === chineseLang
+        ? youLang
+        : chineseLang
     : resolveSoloTarget(get, lang)
   const seq = ++translateSeq
   pending.set(lang, seq)
@@ -291,7 +296,8 @@ export async function runTranslation(
 
     if (isFace) {
       const face = get().face
-      if (lang === 'en') {
+      const fromYou = lang === youLang
+      if (fromYou) {
         set({
           face: {
             ...face,
