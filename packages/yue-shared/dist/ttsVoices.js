@@ -6,6 +6,7 @@ export const DEFAULT_CMN_VOICE = 'zh-CN-XiaoxiaoNeural';
 export const DEFAULT_WUU_VOICE = 'wuu-CN-XiaotongNeural';
 export const DEFAULT_TL_VOICE = 'fil-PH-BlessicaNeural';
 export const DEFAULT_ES_VOICE = 'es-MX-DaliaNeural';
+export const DEFAULT_VI_VOICE = 'vi-VN-HoaiMyNeural';
 export const YUE_VOICES = [
     {
         id: 'zh-HK-HiuMaanNeural',
@@ -118,6 +119,24 @@ export const ES_VOICES = [
         gender: 'male',
     },
 ];
+export const VI_VOICES = [
+    {
+        id: 'vi-VN-HoaiMyNeural',
+        lang: 'vi',
+        xmlLang: 'vi-VN',
+        labelEn: 'Hoài My · Female',
+        labelZh: 'Hoài My · 女聲',
+        gender: 'female',
+    },
+    {
+        id: 'vi-VN-NamMinhNeural',
+        lang: 'vi',
+        xmlLang: 'vi-VN',
+        labelEn: 'Nam Minh · Male',
+        labelZh: 'Nam Minh · 男聲',
+        gender: 'male',
+    },
+];
 export const CMN_VOICES = [
     {
         id: 'zh-CN-XiaoxiaoNeural',
@@ -160,7 +179,8 @@ const CMN_SET = new Set(CMN_VOICES.map((v) => v.id));
 const WUU_SET = new Set(WUU_VOICES.map((v) => v.id));
 const TL_SET = new Set(TL_VOICES.map((v) => v.id));
 const ES_SET = new Set(ES_VOICES.map((v) => v.id));
-const ALL = new Map([...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES, ...WUU_VOICES, ...TL_VOICES, ...ES_VOICES].map((v) => [v.id, v]));
+const VI_SET = new Set(VI_VOICES.map((v) => v.id));
+const ALL = new Map([...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES, ...WUU_VOICES, ...TL_VOICES, ...ES_VOICES, ...VI_VOICES].map((v) => [v.id, v]));
 export function isYueVoice(id) {
     return YUE_SET.has(id);
 }
@@ -178,6 +198,9 @@ export function isTlVoice(id) {
 }
 export function isEsVoice(id) {
     return ES_SET.has(id);
+}
+export function isViVoice(id) {
+    return VI_SET.has(id);
 }
 export function resolveYueVoice(id) {
     return id && isYueVoice(id) ? id : DEFAULT_YUE_VOICE;
@@ -197,16 +220,20 @@ export function resolveTlVoice(id) {
 export function resolveEsVoice(id) {
     return id && isEsVoice(id) ? id : DEFAULT_ES_VOICE;
 }
+export function resolveViVoice(id) {
+    return id && isViVoice(id) ? id : DEFAULT_VI_VOICE;
+}
 export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredTl, preferredEs, override) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredTl, preferredEs, override, preferredVi) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     const isWuu = lang === 'wuu' || lang === 'wuu-CN';
     const isTl = lang === 'tl' || lang === 'fil' || lang === 'fil-PH';
     const isEs = lang === 'es' || lang === 'es-MX' || lang === 'es-mx' || lang === 'es-ES';
+    const isVi = lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn';
     if (override) {
         const meta = voiceMeta(override);
         if (meta) {
@@ -220,7 +247,9 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             if (isEs && meta.lang === 'es')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
-            if (!isEn && !isCmn && !isWuu && !isTl && !isEs && meta.lang === 'yue') {
+            if (isVi && meta.lang === 'vi')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (!isEn && !isCmn && !isWuu && !isTl && !isEs && !isVi && meta.lang === 'yue') {
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             }
         }
@@ -245,6 +274,10 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
         const id = resolveEsVoice(preferredEs);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
+    if (isVi) {
+        const id = resolveViVoice(preferredVi);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
     const id = resolveYueVoice(preferredYue);
     return { voice: id, xmlLang: voiceMeta(id).xmlLang };
 }
@@ -254,3 +287,4 @@ export const PREVIEW_CMN = '你好，欢迎使用粤译。';
 export const PREVIEW_WUU = '侬好，欢迎用沪语翻译。';
 export const PREVIEW_TL = 'Kumusta — ito ang Tagalog voice mo.';
 export const PREVIEW_ES = 'Hola — esta es tu voz en español mexicano.';
+export const PREVIEW_VI = 'Xin chào — đây là giọng tiếng Việt của bạn.';

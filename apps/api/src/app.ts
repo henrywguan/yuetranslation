@@ -50,7 +50,7 @@ import {
   isUsernameTaken,
   getProfile,
 } from './supabase.js'
-import { isCmnVoice, isEnVoice, isEsVoice, isTlVoice, isYueVoice } from './ttsVoices.js'
+import { isCmnVoice, isEnVoice, isEsVoice, isTlVoice, isViVoice, isYueVoice } from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -299,7 +299,9 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
               ? 'fil-PH'
               : lang === 'es' || lang === 'es-MX' || lang === 'es-mx'
                 ? 'es-MX'
-                : 'zh-HK'
+                : lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
+                  ? 'vi-VN'
+                  : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
@@ -308,6 +310,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredWuu: null,
       preferredTl: ent.prefs?.ttsVoiceTl,
       preferredEs: ent.prefs?.ttsVoiceEs,
+      preferredVi: ent.prefs?.ttsVoiceVi,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
     if (!env.openMode) {
@@ -333,6 +336,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_cmn?: string
     tts_voice_tl?: string
     tts_voice_es?: string
+    tts_voice_vi?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -374,6 +378,14 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_es = v
   }
+  if (body.ttsVoiceVi != null) {
+    const v = String(body.ttsVoiceVi).trim()
+    if (!isViVoice(v)) {
+      res.status(400).json({ message: 'Invalid Vietnamese voice.' })
+      return
+    }
+    patch.tts_voice_vi = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -392,6 +404,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceCmn: patch.tts_voice_cmn || ent.prefs.ttsVoiceCmn,
         ttsVoiceTl: patch.tts_voice_tl || ent.prefs.ttsVoiceTl,
         ttsVoiceEs: patch.tts_voice_es || ent.prefs.ttsVoiceEs,
+        ttsVoiceVi: patch.tts_voice_vi || ent.prefs.ttsVoiceVi,
         autoSpeak: ent.prefs.autoSpeak,
         username: ent.prefs.username,
         usernameChangedAt: ent.prefs.usernameChangedAt,

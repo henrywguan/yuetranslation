@@ -9,30 +9,35 @@ export {
   DEFAULT_WUU_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_ES_VOICE,
+  DEFAULT_VI_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
   WUU_VOICES,
   TL_VOICES,
   ES_VOICES,
+  VI_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
   PREVIEW_WUU,
   PREVIEW_TL,
   PREVIEW_ES,
+  PREVIEW_VI,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
   resolveWuuVoice,
   resolveTlVoice,
   resolveEsVoice,
+  resolveViVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
   isWuuVoice,
   isTlVoice,
   isEsVoice,
+  isViVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -40,6 +45,7 @@ export {
   type WuuVoiceId,
   type TlVoiceId,
   type EsVoiceId,
+  type ViVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -48,12 +54,14 @@ import {
   DEFAULT_CMN_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_ES_VOICE,
+  DEFAULT_VI_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
   resolveCmnVoice,
   resolveTlVoice,
   resolveEsVoice,
+  resolveViVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -61,6 +69,7 @@ import {
   type CmnVoiceId,
   type TlVoiceId,
   type EsVoiceId,
+  type ViVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -72,6 +81,7 @@ const STORAGE_CMN = 'yue-tts-voice-cmn'
 const STORAGE_WUU = 'yue-tts-voice-wuu'
 const STORAGE_TL = 'yue-tts-voice-tl'
 const STORAGE_ES = 'yue-tts-voice-es'
+const STORAGE_VI = 'yue-tts-voice-vi'
 
 export function readLocalYueVoice(): YueVoiceId {
   if (typeof window === 'undefined') return DEFAULT_YUE_VOICE
@@ -155,6 +165,23 @@ export function readLocalEsVoice(): EsVoiceId {
 export function writeLocalEsVoice(id: EsVoiceId) {
   try {
     localStorage.setItem(STORAGE_ES, resolveEsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalViVoice(): ViVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_VI_VOICE
+  try {
+    return resolveViVoice(localStorage.getItem(STORAGE_VI))
+  } catch {
+    return DEFAULT_VI_VOICE
+  }
+}
+
+export function writeLocalViVoice(id: ViVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_VI, resolveViVoice(id))
   } catch {
     /* ignore */
   }
