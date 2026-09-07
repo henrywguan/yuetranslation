@@ -3733,12 +3733,19 @@
 
   .ln-eyebrow {
     font-size: 0.68rem;
-    padding: 6px 10px;
+    padding: 8px 12px;
     margin-bottom: 18px;
+    border-radius: 18px;
   }
 
   .ln-eyebrow-en {
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
+    gap: 0.28rem;
+  }
+
+  .ln-multilang-tip-trigger {
+    font-size: 0.64rem;
+    max-width: 14rem;
   }
 
   .ln-eyebrow-row {
