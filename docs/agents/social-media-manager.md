@@ -64,6 +64,14 @@ Henry: end cards must feel **genuine** — our real mark and display font, not m
 4. **AI video prompts (Seedance / Marketing Studio / Kling / etc.):** do **not** ask the model to draw the logo or wordmark. Prompt a clean Harbor end hold (soft glow OK) with explicit negatives: **no logo, no brand wordmark, no CTA button type, no URL type**. Composite favicon + Syne lockup in FFmpeg / HTML / Recordly edit (see Studio feature-tour iris end card).
 5. **Reference pattern:** `docs/social/story-feature-tour/` end card · `docs/social/ig-posts/DESIGN.md` brand-first lockup.
 
+## Phone mockups — realistic insets (REQUIRED)
+Whenever Henry asks for a **mobile / phone mockup** (ads, carousels, Stories, statics, composites):
+
+1. **Never** paste a screenshot edge-to-edge into a rounded rect — that looks cheap.
+2. **Always** include device chrome: **bezel inset**, **notch or Dynamic Island** (match the capture device — Henry’s iPhone 13 Pro uses a **notch**), **home indicator** (side buttons optional).
+3. Use **real UI** captures only; show the **full** screenshot with **no clipping** (screen aspect = capture aspect, e.g. iPhone 13 Pro **1170×2532**). Overlay hardware on top — do not crop status bar / bottom CTA away.
+4. Canon + CSS/HTML to fork: **`docs/social/ig-posts/PHONE-MOCKUP.md`** · `lang-launch.css` `.phone*` · `mandarin-support-*.html`.
+
 ## Auto-speak + TTS (REQUIRED for translation demos)
 Whenever a social / Higgsfield / Recordly piece **demonstrates a translation**:
 

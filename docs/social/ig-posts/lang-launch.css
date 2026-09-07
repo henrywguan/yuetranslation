@@ -1,0 +1,331 @@
+/* Language-launch promo ads — Tagalog “Uy, Pare!” layout + real UI screenshots.
+ * Phone chrome: see PHONE-MOCKUP.md — bezel insets + device notch/island + home bar.
+ * Full iPhone 13 Pro captures (1170×2532) shown without clipping.
+ */
+
+.lang-launch {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 18% 22%, #e8fff6 0%, transparent 55%),
+    radial-gradient(ellipse 80% 60% at 88% 78%, #d9f5ee 0%, transparent 50%),
+    linear-gradient(165deg, #f4fbf8 0%, #e8f3ef 48%, #dfeceb 100%);
+  color: var(--harbor);
+  font-family: var(--font-english);
+}
+
+.lang-launch__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  height: 100%;
+  padding: 56px 28px 48px 56px;
+  gap: 8px;
+  align-items: center;
+}
+
+.lang-launch__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 12px;
+  max-width: 500px;
+}
+
+.lang-launch__hook {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 88px;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: var(--harbor);
+  margin-bottom: 24px;
+}
+
+.lang-launch__hook--zh {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 92px;
+  letter-spacing: 0.02em;
+}
+
+.lang-launch__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.lang-launch__line {
+  font-family: var(--font-english);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.35;
+  color: #1a2a36;
+}
+
+.lang-launch__line--zh {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.4;
+}
+
+.lang-launch__line strong {
+  font-weight: 800;
+  color: var(--harbor);
+}
+
+.lang-launch__arrow {
+  font-size: 34px;
+  line-height: 1;
+  color: var(--harbor);
+  margin: 4px 0 28px;
+  font-weight: 400;
+}
+
+.lang-launch__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.lang-launch__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--jade) 35%, transparent);
+  flex-shrink: 0;
+}
+
+.lang-launch__brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  color: var(--harbor);
+}
+
+.lang-launch__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  min-height: 60px;
+  padding: 14px 32px;
+  border-radius: 999px;
+  background: var(--jade);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--jade) 40%, transparent);
+  margin-bottom: 14px;
+}
+
+.lang-launch__fine {
+  font-family: var(--font-english);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #4a5a66;
+  max-width: 420px;
+}
+
+.lang-launch__phone-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+}
+
+/* iPhone 13 Pro chrome — full 1170×2532 capture, no clipping */
+.phone {
+  --phone-bezel: 13px;
+  --phone-radius: 48px;
+  --phone-screen-radius: 35px;
+  --phone-shot-w: 1170;
+  --phone-shot-h: 2532;
+  width: 384px;
+  height: auto;
+  border-radius: var(--phone-radius);
+  background: linear-gradient(145deg, #3a424a 0%, #1a2028 38%, #0b0f14 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 42px 90px rgba(7, 19, 31, 0.4),
+    0 8px 24px rgba(7, 19, 31, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
+  overflow: visible;
+  position: relative;
+  flex-shrink: 0;
+  padding: var(--phone-bezel);
+  box-sizing: border-box;
+}
+
+.phone--lg {
+  --phone-bezel: 15px;
+  --phone-radius: 54px;
+  --phone-screen-radius: 39px;
+  width: 420px;
+}
+
+.phone__side {
+  position: absolute;
+  background: linear-gradient(180deg, #2a323a, #151b22);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 2;
+}
+
+.phone__side--vol-up {
+  left: -3px;
+  top: 18%;
+  width: 4px;
+  height: 5%;
+}
+
+.phone__side--vol-down {
+  left: -3px;
+  top: 25%;
+  width: 4px;
+  height: 7.5%;
+}
+
+.phone__side--power {
+  right: -3px;
+  top: 24%;
+  width: 4px;
+  height: 9%;
+}
+
+.phone__bezel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--phone-shot-w) / var(--phone-shot-h);
+  border-radius: var(--phone-screen-radius);
+  background: #000;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.08),
+    inset 0 0 28px rgba(0, 0, 0, 0.55);
+}
+
+.phone__screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  z-index: 1;
+}
+
+.phone__shot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  object-position: center center;
+}
+
+/* iPhone 13 Pro notch — sits over the capture’s notch, does not crop UI */
+.phone__notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34%;
+  max-width: 140px;
+  height: 3.2%;
+  min-height: 24px;
+  background: #000;
+  border-radius: 0 0 17px 17px;
+  z-index: 5;
+  pointer-events: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.phone__notch::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-58%, -50%);
+  width: 42%;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #1c1c20, #050506);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.phone__notch::after {
+  content: '';
+  position: absolute;
+  right: 14%;
+  top: 42%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 32%, #3d5a74 0%, #0a1520 55%, #020508 100%);
+  box-shadow: 0 0 0 1.5px #050508;
+}
+
+.phone--lg .phone__notch {
+  max-width: 156px;
+  border-radius: 0 0 19px 19px;
+}
+
+.phone__home {
+  position: absolute;
+  left: 50%;
+  bottom: 1.05%;
+  transform: translateX(-50%);
+  width: 34%;
+  max-width: 132px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.48);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.phone--lg .phone__home {
+  max-width: 148px;
+  height: 5px;
+}
+
+/* Slide 3 — single phone focus */
+.lang-launch--solo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 48px 48px 44px;
+}
+
+.lang-launch--solo .lang-launch__brand {
+  margin-bottom: 0;
+}
+
+.lang-launch--solo .lang-launch__cta {
+  align-self: center;
+}
+
+.lang-launch--solo .lang-launch__fine {
+  text-align: center;
+  max-width: 520px;
+}
+
+.lang-launch__solo-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
