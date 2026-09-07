@@ -45,6 +45,66 @@ export type CustomTemplateRow = {
   archived: boolean
 }
 
+/** Row from `email_sends` — used for history + AI “since last send” context. */
+export type EmailSendRow = {
+  id: string
+  created_at: string
+  template_key: string
+  subject: string
+  audience: string
+  recipient_count: number
+  status: string
+  provider_id: string | null
+  detail: Record<string, unknown> | null
+  created_by: string | null
+}
+
+function parseSendFields(detail: Record<string, unknown> | null | undefined): CampaignFields | null {
+  if (!detail || typeof detail !== 'object') return null
+  const raw = detail.fields
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  return raw as CampaignFields
+}
+
+export function fieldsFromSendRow(row: EmailSendRow): CampaignFields | null {
+  return parseSendFields(row.detail)
+}
+
+export async function getLastEmailSend(opts?: {
+  variant?: CampaignVariant
+  templateKey?: string
+  status?: string
+}): Promise<EmailSendRow | null> {
+  const db = getAdmin()
+  if (!db) return null
+  let q = db.from('email_sends').select('*').order('created_at', { ascending: false }).limit(40)
+  if (opts?.templateKey) q = q.eq('template_key', opts.templateKey)
+  if (opts?.status) q = q.eq('status', opts.status)
+  const { data, error } = await q
+  if (error || !data?.length) return null
+  const rows = data as EmailSendRow[]
+  if (!opts?.variant) return rows[0] ?? null
+  for (const row of rows) {
+    const v = row.detail && typeof row.detail === 'object' ? row.detail.variant : null
+    if (v === opts.variant) return row
+    // Legacy rows: template_key often matched variant for built-ins
+    if (!v && row.template_key === opts.variant) return row
+  }
+  return null
+}
+
+export async function listEmailSends(limit = 40): Promise<EmailSendRow[]> {
+  const db = getAdmin()
+  if (!db) return []
+  const { data, error } = await db
+    .from('email_sends')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(Math.min(100, Math.max(1, limit)))
+  if (error || !data) return []
+  return data as EmailSendRow[]
+}
+
 export type EmailTemplateListItem =
   | (BuiltinTemplateMeta & { source: 'builtin' })
   | {
@@ -439,6 +499,8 @@ export async function sendCampaignToRecipients(input: {
     resendId: resendIds[0] || null,
     status: sent > 0 ? 'sent' : 'failed',
     detail: {
+      variant: input.variant,
+      fields: input.fields,
       resendIds,
       errors: errors.slice(0, 40),
       attempted: emails.length,
@@ -509,7 +571,7 @@ export async function sendCampaignToAudience(input: {
       recipientCount: 0,
       resendId: null,
       status: 'failed',
-      detail: { error: error.message },
+      detail: { variant: input.variant, fields: input.fields, error: error.message },
     })
     throw new Error(error.message || 'Broadcast create failed')
   }
@@ -528,7 +590,7 @@ export async function sendCampaignToAudience(input: {
       recipientCount: 0,
       resendId: broadcastId,
       status: 'failed',
-      detail: { error: sent.error.message, phase: 'send' },
+      detail: { variant: input.variant, fields: input.fields, error: sent.error.message, phase: 'send' },
     })
     throw new Error(sent.error.message || 'Broadcast send failed')
   }
@@ -542,7 +604,7 @@ export async function sendCampaignToAudience(input: {
     recipientCount: 0,
     resendId: broadcastId,
     status: 'sent',
-    detail: { broadcastId },
+    detail: { variant: input.variant, fields: input.fields, broadcastId },
   })
 
   return { broadcastId }

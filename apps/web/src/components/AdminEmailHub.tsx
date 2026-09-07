@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   archiveEmailTemplate,
+  draftAdminEmail,
   fetchEmailContacts,
   fetchEmailTemplates,
   previewAdminEmail,
@@ -54,16 +55,89 @@ function emptyFields(): CampaignFields {
   }
 }
 
-function TemplateThumb({ thumb, name }: { thumb: EmailTemplateItem['thumb']; name: string }) {
+function aiHintForVariant(variant: CampaignVariant): string {
+  switch (variant) {
+    case 'product-update':
+      return 'Summarize changes since the last product-update email sent from this page'
+    case 'feature-spotlight':
+      return 'Draft a feature spotlight from the subject'
+    case 'newsletter':
+      return 'Draft a newsletter digest from the subject'
+    case 'welcome':
+      return 'Draft a welcome email from the subject'
+    case 'plain':
+      return 'Draft a plain corporate note from the subject'
+    case 'announcement':
+    default:
+      return 'Draft an announcement from the subject'
+  }
+}
+
+function SkeletonThumb({ name }: { name: string }) {
   return (
-    <div className={`email-hub-thumb email-hub-thumb--${thumb}`} aria-hidden>
+    <div className="email-hub-thumb email-hub-thumb--skeleton" aria-hidden>
       <div className="email-hub-thumb-bar" />
       <div className="email-hub-thumb-title" />
       <div className="email-hub-thumb-line" />
       <div className="email-hub-thumb-line email-hub-thumb-line--short" />
-      {thumb === 'spotlight' || thumb === 'hero' || thumb === 'welcome' ? (
-        <div className="email-hub-thumb-cta" />
-      ) : null}
+      <span className="email-hub-thumb-label">{name}</span>
+    </div>
+  )
+}
+
+function LiveTemplateThumb({
+  variant,
+  fields,
+  name,
+}: {
+  variant: CampaignVariant
+  fields: CampaignFields
+  name: string
+}) {
+  const [html, setHtml] = useState('')
+  const [failed, setFailed] = useState(false)
+  const cacheKey = useMemo(
+    () => `${variant}::${fields.subject}::${fields.headline}::${fields.body.slice(0, 120)}`,
+    [variant, fields.subject, fields.headline, fields.body],
+  )
+  const cacheKeyRef = useRef(cacheKey)
+  cacheKeyRef.current = cacheKey
+
+  useEffect(() => {
+    let cancelled = false
+    setFailed(false)
+    const t = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const { html: next } = await previewAdminEmail({
+            variant,
+            fields,
+            includeUnsubscribe: false,
+          })
+          if (!cancelled && cacheKeyRef.current === cacheKey) setHtml(next)
+        } catch {
+          if (!cancelled) {
+            setFailed(true)
+            setHtml('')
+          }
+        }
+      })()
+    }, 180)
+    return () => {
+      cancelled = true
+      window.clearTimeout(t)
+    }
+  }, [cacheKey, variant, fields])
+
+  if (!html || failed) {
+    return <SkeletonThumb name={name} />
+  }
+
+  return (
+    <div className="email-hub-thumb email-hub-thumb--live" aria-hidden>
+      <div className="email-hub-thumb-scale">
+        <iframe title={`${name} preview`} className="email-hub-thumb-iframe" srcDoc={html} tabIndex={-1} />
+      </div>
       <span className="email-hub-thumb-label">{name}</span>
     </div>
   )
@@ -84,6 +158,8 @@ export function AdminEmailHub() {
   const [contactQuery, setContactQuery] = useState('')
   const [busy, setBusy] = useState(false)
   const [previewBusy, setPreviewBusy] = useState(false)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiReasoning, setAiReasoning] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [sendNotice, setSendNotice] = useState<SendNotice | null>(null)
@@ -160,12 +236,43 @@ export function AdminEmailHub() {
     setVariant(tpl.variant)
     setFields({ ...tpl.defaults })
     setSaveName(tpl.source === 'custom' ? tpl.name : '')
+    setAiReasoning('')
     setMessage('')
     setError('')
   }
 
   const patchField = (key: keyof CampaignFields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const runAiDraft = async () => {
+    setAiBusy(true)
+    setError('')
+    setMessage('')
+    try {
+      const draft = await draftAdminEmail({
+        variant,
+        fields,
+        templateKey: selectedKey || undefined,
+      })
+      setFields({ ...draft.fields })
+      setAiReasoning(draft.reasoning)
+      const meta = [
+        draft.model === 'fallback' ? 'Local draft' : `AI · ${draft.model}`,
+        draft.usedLastSend && draft.lastSendSubject
+          ? `since “${draft.lastSendSubject}”`
+          : draft.usedLastSend
+            ? 'used last send'
+            : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+      setMessage(meta)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'AI draft failed')
+    } finally {
+      setAiBusy(false)
+    }
   }
 
   const toggleEmail = (email: string) => {
@@ -377,7 +484,7 @@ export function AdminEmailHub() {
                 className={`email-hub-card${selectedKey === tpl.id ? ' is-selected' : ''}`}
                 onClick={() => applyTemplate(tpl)}
               >
-                <TemplateThumb thumb={tpl.thumb} name={tpl.name} />
+                <LiveTemplateThumb variant={tpl.variant} fields={tpl.defaults} name={tpl.name} />
                 <div className="email-hub-card-meta">
                   <strong>{tpl.name}</strong>
                   <span>{tpl.source === 'builtin' ? 'Built-in' : 'Custom'}</span>
@@ -393,6 +500,7 @@ export function AdminEmailHub() {
                 setVariant('announcement')
                 setFields(emptyFields())
                 setSaveName('')
+                setAiReasoning('')
                 setMessage('Blank draft — edit fields, then Save as template.')
               }}
             >
@@ -446,10 +554,28 @@ export function AdminEmailHub() {
           </div>
 
           {FIELD_LABELS.map((f) => (
-            <label key={f.key} className="email-hub-field">
-              <span>
-                {f.label}
-                {f.hint ? <em>{f.hint}</em> : null}
+            <label key={f.key} className={`email-hub-field${f.key === 'body' ? ' email-hub-field--body' : ''}`}>
+              <span className="email-hub-field-label-row">
+                <span>
+                  {f.label}
+                  {f.hint ? <em>{f.hint}</em> : null}
+                </span>
+                {f.key === 'body' ? (
+                  <button
+                    type="button"
+                    className={`email-hub-ai-btn${aiBusy ? ' is-busy' : ''}`}
+                    disabled={aiBusy || busy}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      void runAiDraft()
+                    }}
+                    title={aiHintForVariant(variant)}
+                    aria-label={aiHintForVariant(variant)}
+                  >
+                    <span className="email-hub-ai-orb" aria-hidden />
+                    <span className="email-hub-ai-label">{aiBusy ? 'Thinking…' : 'AI draft'}</span>
+                  </button>
+                ) : null}
               </span>
               {f.multiline ? (
                 <textarea
@@ -466,6 +592,13 @@ export function AdminEmailHub() {
               )}
             </label>
           ))}
+
+          {aiReasoning ? (
+            <div className="email-hub-ai-reason" role="status">
+              <strong>AI notes</strong>
+              <p>{aiReasoning}</p>
+            </div>
+          ) : null}
 
           <div className="email-hub-save-row">
             <input
