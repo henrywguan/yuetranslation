@@ -6,7 +6,6 @@ import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { InkSettle } from './InkSettle'
-import { JyutLogo } from './JyutLogo'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
 import { ClearIconButton } from './ClearIconButton'
@@ -254,9 +253,7 @@ export function ConversationView() {
       </section>
 
       <div className="conversation-gutter" aria-hidden="true">
-        <span className="conversation-gutter-line" />
-        <JyutLogo variant="mark" className="conversation-gutter-logo" />
-        <span className="conversation-gutter-line" />
+        <span className="conversation-gutter-glow" />
       </div>
 
       <motion.section
