@@ -2,7 +2,7 @@
 export type Bi = { en: string; zh: string; jp: string }
 
 export const ui = {
-  brandTag: { en: 'English ↔ Cantonese', zh: '英文 ↔ 粵語', jp: 'jing1 man2 ↔ jyut6 jyu5' },
+  brandTag: { en: 'Cantonese Language Tool', zh: '粵語語言工具', jp: 'jyut6 jyu5 jyu5 jin4 gung1 geoi6' },
   backHome: { en: 'Back to JyutTranslate home', zh: '返 JyutTranslate 首頁', jp: 'faan1 JyutTranslate sau2 jap6' },
 
   modeSolo: { en: 'Solo', zh: '獨白', jp: 'duk6 baak6' },
@@ -734,15 +734,35 @@ export const ui = {
   tonesOpenApp: { en: 'Open translator', zh: '開啟翻譯器', jp: 'hoi1 kai2 faan1 jik6 hei3' },
 
   heroEyebrow: {
-    enLang: 'English',
-    zhLang: '英文',
-    jpLang: 'jing1 man4',
-    enYue: 'Cantonese',
-    zhYue: '廣東話',
-    jpYue: 'gwong2 dung1 waa2',
-    enLive: 'Live translator',
-    zhLive: '實時翻譯器',
-    jpLive: 'sat6 si4 faan1 jik6 hei3',
+    en: 'Cantonese Language Tool',
+    zh: 'JyutJyu Translator',
+    jp: '',
+  },
+  /** English-line teaser tip on the hero eyebrow. */
+  heroMultilangTipTrigger: {
+    en: 'Multi-Language support coming soon',
+    zh: '多語言支援即將推出',
+    jp: 'do1 jyu5 jin4 zi1 wun6 zak1 zoeng1 teoi1 ceot1',
+  },
+  heroMultilangTipTitle: {
+    en: 'Multi-Language Support',
+    zh: '多語言支援',
+    jp: 'do1 jyu5 jin4 zi1 wun6',
+  },
+  heroMultilangTipLead: {
+    en: 'Here are our currently supported languages.',
+    zh: '以下係我哋而家支援嘅語言。',
+    jp: 'ji5 haa6 hai6 ngo5 dei6 ji4 gaa1 zi1 wun6 ge3 jyu5 jin4.',
+  },
+  heroMultilangTipAsk: {
+    en: 'Do you have any suggestions?',
+    zh: '有冇想建議嘅語言？',
+    jp: 'jau5 mou5 soeng2 gin3 ji5 ge3 jyu5 jin4?',
+  },
+  heroMultilangTipMail: {
+    en: 'help@jyuttranslate.com',
+    zh: 'help@jyuttranslate.com',
+    jp: 'help@jyuttranslate.com',
   },
   heroTitle: {
     en: 'JyutTranslate',
