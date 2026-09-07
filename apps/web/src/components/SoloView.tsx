@@ -73,6 +73,8 @@ export function SoloView() {
   const [lowerEditing, setLowerEditing] = useState(false)
   const [upperEditing, setUpperEditing] = useState(false)
   const [typedBusy, setTypedBusy] = useState(false)
+  /** After Clear, do not rehydrate panes from History until the next live/typed turn. */
+  const [soloCleared, setSoloCleared] = useState(false)
   const editingRef = useRef<'upper' | 'lower' | null>(null)
   const upperInputRef = useRef<HTMLTextAreaElement>(null)
   const lowerInputRef = useRef<HTMLTextAreaElement>(null)
@@ -91,10 +93,11 @@ export function SoloView() {
   const turnActive = live || translating || Boolean(enInterim) || Boolean(yueInterim)
 
   // Solo store: en* = upper pane, yue* = lower pane.
+  // After an explicit Clear, skip History fallback so both panes stay empty.
   const storeUpper =
     enInterim ||
     enTranslation ||
-    (!turnActive && latest
+    (!turnActive && !soloCleared && latest
       ? latest.from === soloUpperLang
         ? latest.source
         : latest.to === soloUpperLang
@@ -104,7 +107,7 @@ export function SoloView() {
   const storeLower =
     yueInterim ||
     yueTranslation ||
-    (!turnActive && latest
+    (!turnActive && !soloCleared && latest
       ? latest.from === soloLowerLang
         ? latest.source
         : latest.to === soloLowerLang
@@ -135,6 +138,28 @@ export function SoloView() {
   useEffect(() => {
     if (editingRef.current !== 'lower') setLowerDraft(storeLower)
   }, [storeLower])
+
+  useEffect(() => {
+    if (live || translating || enInterim || yueInterim || enTranslation || yueTranslation) {
+      setSoloCleared(false)
+    }
+  }, [live, translating, enInterim, yueInterim, enTranslation, yueTranslation])
+
+  const clearSolo = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    reqId.current += 1
+    editingRef.current = null
+    setUpperDraft('')
+    setLowerDraft('')
+    setUpperEditing(false)
+    setLowerEditing(false)
+    setTypedBusy(false)
+    setSoloCleared(true)
+    clearCurrent()
+  }
 
   const runTranslate = (value: string, from: Lang, delay: number, force = false) => {
     if (timerRef.current) {
@@ -469,17 +494,24 @@ export function SoloView() {
               variant="dropdown"
               onSelect={(lang) => onPaneLangSelect('upper', lang)}
             />
-            {upperDraft.trim() ? (
+            {upperDraft.trim() || canClear ? (
               <div className="solo-pane-actions">
-                <button
-                  type="button"
-                  className="solo-details-btn"
-                  onClick={() => openPaneDetails('upper')}
-                  aria-label="Open details"
-                >
-                  <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
-                </button>
-                <SpeakButton text={upperDraft} lang={soloUpperLang} />
+                {upperDraft.trim() ? (
+                  <button
+                    type="button"
+                    className="solo-details-btn"
+                    onClick={() => openPaneDetails('upper')}
+                    aria-label="Open details"
+                  >
+                    <BiText copy={ui.camOpenDetails} size="sm" layout="inline" />
+                  </button>
+                ) : null}
+                <div className="solo-pane-actions-stack">
+                  {canClear ? <ClearIconButton onClick={clearSolo} /> : null}
+                  {upperDraft.trim() ? (
+                    <SpeakButton text={upperDraft} lang={soloUpperLang} />
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>
@@ -542,7 +574,7 @@ export function SoloView() {
                   </button>
                 ) : null}
                 <div className="solo-pane-actions-stack">
-                  {canClear ? <ClearIconButton onClick={clearCurrent} /> : null}
+                  {canClear ? <ClearIconButton onClick={clearSolo} /> : null}
                   {lowerDraft.trim() ? (
                     <SpeakButton text={lowerDraft} lang={soloLowerLang} />
                   ) : null}

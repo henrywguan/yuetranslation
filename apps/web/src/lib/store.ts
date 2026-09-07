@@ -1290,6 +1290,7 @@ export const useYueStore = create<State>((set, get) => ({
   clearCurrent: () => {
     speakToken += 1
     stopSpeaking()
+    invalidatePendingTranslations()
     if (get().mode === 'conversation') {
       set({
         face: emptyFaceLive(),
