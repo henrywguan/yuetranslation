@@ -51,8 +51,10 @@ function emptyFaceLive(): FaceLive {
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
-  /** Remembered partner variety for Conversation (粵 / 普 / 沪 / Tagalog). */
-  chineseLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+  /** Partner (top / rotated) pane language in Conversation. */
+  chineseLang: Lang
+  /** You (bottom / upright) pane language in Conversation. */
+  conversationYouLang: Lang
   /** Solo upper pane language (any en|yue|cmn|wuu|tl|es; must differ from lower). */
   soloUpperLang: Lang
   /** Solo lower pane language (any en|yue|cmn|wuu|tl|es; must differ from upper). */
@@ -107,6 +109,8 @@ type State = {
   setSpeakDirection: (d: SpeakDirection) => void
   /** Solo: set a pane language; if same as the other pane, swap. */
   setSoloPaneLang: (pane: 'upper' | 'lower', lang: Lang) => void
+  /** Conversation: set you/partner pane language; if same as the other pane, swap. */
+  setConversationPaneLang: (pane: 'you' | 'partner', lang: Lang) => void
   /** Conversation: clear partner-pane output after Chinese variety change. */
   clearConversationChinesePane: () => void
   setAutoSpeak: (v: boolean) => void
@@ -337,7 +341,8 @@ function applyHoldSource(
   const isFace = get().mode === 'conversation'
   if (isFace) {
     const face = get().face
-    if (lang === 'en') {
+    const youLang = get().conversationYouLang
+    if (lang === youLang) {
       set({
         face: {
           ...face,
@@ -440,6 +445,7 @@ export const useYueStore = create<State>((set, get) => ({
   mode: 'solo',
   speakDirection: 'en',
   chineseLang: 'yue',
+  conversationYouLang: 'en',
   soloUpperLang: 'en',
   soloLowerLang: 'yue',
   live: false,
@@ -492,6 +498,78 @@ export const useYueStore = create<State>((set, get) => ({
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
+  setConversationPaneLang: (pane, lang) => {
+    const you = get().conversationYouLang
+    const partner = get().chineseLang
+    const other = pane === 'you' ? partner : you
+    const current = pane === 'you' ? you : partner
+    if (lang === current) return
+    let nextYou = you
+    let nextPartner = partner
+    const swapping = lang === other
+    if (swapping) {
+      if (pane === 'you') {
+        nextYou = lang
+        nextPartner = current
+      } else {
+        nextPartner = lang
+        nextYou = current
+      }
+    } else if (pane === 'you') {
+      nextYou = lang
+    } else {
+      nextPartner = lang
+    }
+    invalidatePendingTranslations()
+    const face = get().face
+    if (swapping) {
+      set({
+        conversationYouLang: nextYou,
+        chineseLang: nextPartner,
+        speakDirection: lang,
+        face: {
+          ...face,
+          enInterim: face.yueInterim,
+          yueInterim: face.enInterim,
+          enTranslation: face.yueTranslation,
+          yueTranslation: face.enTranslation,
+          yueDefinition: face.yueDefinition,
+          yueDefinitions: face.yueDefinitions,
+          romanization: undefined,
+          sandhiHint: undefined,
+          ipa: undefined,
+        },
+        translating: false,
+        translatingTo: null,
+        altsLoading: false,
+      })
+      return
+    }
+    const cleared =
+      pane === 'you'
+        ? {
+            enInterim: '',
+            enTranslation: '',
+          }
+        : {
+            yueInterim: '',
+            yueTranslation: '',
+            yueDefinition: '',
+            yueDefinitions: [] as string[],
+            romanization: undefined,
+            sandhiHint: undefined,
+            ipa: undefined,
+          }
+    set({
+      conversationYouLang: nextYou,
+      chineseLang: nextPartner,
+      speakDirection: lang,
+      face: { ...face, ...cleared },
+      translating: false,
+      translatingTo: null,
+      altsLoading: false,
+    })
+  },
   setSoloPaneLang: (pane, lang) => {
     const upper = get().soloUpperLang
     const lower = get().soloLowerLang
@@ -517,10 +595,8 @@ export const useYueStore = create<State>((set, get) => ({
     }
     const chinesePatch =
       lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es'
-        ? { chineseLang: lang as 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' }
-        : current === 'yue' || current === 'cmn' || current === 'wuu' || current === 'tl' || current === 'es'
-          ? {}
-          : {}
+        ? { chineseLang: lang }
+        : {}
     invalidatePendingTranslations()
     const s = get()
     if (swapping) {

@@ -30,7 +30,7 @@ export function ResultWithDefinition({
   definitions?: string[]
   cantonese?: boolean
   /** When cantonese/display, which variety for ruby / Tagalog / Mexican Spanish + copy. */
-  chineseLang?: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+  chineseLang?: Lang
   /** Wugniu when chineseLang is wuu. */
   romanization?: string
   className?: string
@@ -53,7 +53,9 @@ export function ResultWithDefinition({
           ? 'tl'
           : chineseLang === 'es'
             ? 'es'
-            : 'yue'
+            : chineseLang === 'en'
+              ? 'en'
+              : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
