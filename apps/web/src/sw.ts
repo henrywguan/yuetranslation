@@ -49,11 +49,19 @@ function parsePushPayload(event: PushEvent): PushPayload {
   }
 }
 
+type ShowNotificationOptions = NotificationOptions & {
+  image?: string
+  renotify?: boolean
+  vibrate?: number[]
+  actions?: PushAction[]
+  timestamp?: number
+}
+
 self.addEventListener('push', (event) => {
   const payload = parsePushPayload(event)
   const title = (payload.title || 'JyutTranslate').trim() || 'JyutTranslate'
   const url = String(payload.url || payload.data?.url || '#/app')
-  const options: NotificationOptions = {
+  const options: ShowNotificationOptions = {
     body: payload.body || '',
     icon: payload.icon || '/pwa-192.png',
     badge: payload.badge || '/pwa-192.png',
