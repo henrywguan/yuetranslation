@@ -4,7 +4,7 @@ import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
 import { openAuthScreen } from '../lib/auth'
 import { unlockTtsPlayback } from '../lib/tts'
-import { biPlain, ui, type Bi } from '../lib/uiCopy'
+import { biPlain, ui, liveMicLabel, conversationLabelHtmlLang, type Bi, type ConversationLabelLang } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
 /**
@@ -32,17 +32,19 @@ function releasePointer(el: HTMLElement | null, pointerId: number) {
 }
 
 type Props = {
-  /** Conversation panes pass en|yue to lock that speaker’s language for the turn. */
+  /** Conversation panes pass the pane language to lock STT for the turn. */
   side?: Lang
   /** Conversation panes are language-pure; Solo dock stays bilingual. */
-  labelLang?: 'bi' | 'en' | 'zh'
+  labelLang?: 'bi' | ConversationLabelLang
   className?: string
 }
 
-function pickLabel(copy: Bi, labelLang: Props['labelLang']): string {
-  if (labelLang === 'en') return copy.en
-  if (labelLang === 'zh') return copy.zh
-  return biPlain(copy)
+function pickLabel(
+  key: 'holdOrTapToSpeak' | 'releaseWhenDone' | 'tapListening' | 'speaking' | 'translating',
+  labelLang: Props['labelLang'],
+): string {
+  if (!labelLang || labelLang === 'bi') return biPlain(ui[key])
+  return liveMicLabel(key, labelLang)
 }
 
 /**
@@ -114,18 +116,21 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
         : 'en'
   const thinkingHere = side ? translating && translatingTo === otherPaneLang : translating
 
-  const liveCopy: Bi = thinkingHere
-    ? ui.translating
+  const liveKey = thinkingHere
+    ? ('translating' as const)
     : stickyHere
-      ? ui.tapListening
+      ? ('tapListening' as const)
       : holdHere || (armedHere && status === 'listening')
         ? status === 'speaking'
-          ? ui.speaking
-          : ui.releaseWhenDone
-        : ui.holdOrTapToSpeak
+          ? ('speaking' as const)
+          : ('releaseWhenDone' as const)
+        : ('holdOrTapToSpeak' as const)
 
-  const label = pickLabel(liveCopy, labelLang)
+  const liveCopy: Bi = ui[liveKey]
+  const label = pickLabel(liveKey, labelLang)
   const aria = labelLang === 'bi' ? biPlain(liveCopy) : label
+  const labelHtmlLang =
+    labelLang && labelLang !== 'bi' ? conversationLabelHtmlLang(labelLang) : 'en'
 
   const finishPress = (pointerId: number, target: HTMLElement | null) => {
     if (activePointer.current !== pointerId) return
@@ -254,7 +259,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
         {labelLang === 'bi' ? (
           <BiText copy={liveCopy} size="sm" />
         ) : (
-          <span className="live-btn-label" lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
+          <span className="live-btn-label" lang={labelHtmlLang}>
             {label}
           </span>
         )}
@@ -270,10 +275,14 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
             {labelLang === 'bi' ? (
               <BiText copy={entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive : ui.liveMicSignIn} size="sm" />
             ) : (
-              <span lang={labelLang === 'zh' ? 'zh-HK' : 'en'}>
+              <span lang={labelHtmlLang}>
                 {labelLang === 'zh'
-                ? (entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive.zh : ui.liveMicSignIn.zh)
-                : (entitlement?.reason === 'guest_trial_exhausted' ? ui.guestTrialExhaustedLive.en : ui.liveMicSignIn.en)}
+                  ? entitlement?.reason === 'guest_trial_exhausted'
+                    ? ui.guestTrialExhaustedLive.zh
+                    : ui.liveMicSignIn.zh
+                  : entitlement?.reason === 'guest_trial_exhausted'
+                    ? ui.guestTrialExhaustedLive.en
+                    : ui.liveMicSignIn.en}
               </span>
             )}
           </span>

@@ -272,6 +272,29 @@ export const ui = {
   speaking: { en: 'Speaking…', zh: '講緊…', jp: 'gong2 gan2…' },
   translating: { en: 'Translating', zh: '翻譯緊', jp: 'faan1 jik6 gan2' },
 
+  /** Conversation language-pure mic / hint strings (Tagalog, Mexican Spanish, Vietnamese). */
+  holdOrTapToSpeakTl: 'Pindutin o hawakan para magsalita',
+  holdOrTapToSpeakEs: 'Mantén o toca para hablar',
+  holdOrTapToSpeakVi: 'Giữ hoặc chạm để nói',
+  releaseWhenDoneTl: 'Nakikinig — bitawan kapag tapos na',
+  releaseWhenDoneEs: 'Escuchando — suelta al terminar',
+  releaseWhenDoneVi: 'Đang nghe — thả ra khi xong',
+  tapListeningTl: 'Nakikinig — tumigil o pindutin ulit',
+  tapListeningEs: 'Escuchando — pausa o toca para parar',
+  tapListeningVi: 'Đang nghe — tạm dừng hoặc chạm để dừng',
+  speakingTl: 'Nagsasalita…',
+  speakingEs: 'Hablando…',
+  speakingVi: 'Đang nói…',
+  translatingTl: 'Isinasalin',
+  translatingEs: 'Traduciendo',
+  translatingVi: 'Đang dịch',
+  friendLooksHereTl: 'Tumingin dito ang kaibigan',
+  friendLooksHereEs: 'Tu amigo mira hacia este lado',
+  friendLooksHereVi: 'Bạn nhìn về phía này',
+  holdFacingYouTl: 'Hawakan ang telepono patungo sa iyo',
+  holdFacingYouEs: 'Sostén el teléfono mirándote',
+  holdFacingYouVi: 'Hướng điện thoại về phía bạn',
+
   direction: { en: 'Direction', zh: '方向', jp: 'fong1 hoeng3' },
   dirEnglish: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
@@ -1175,6 +1198,65 @@ export const ui = {
 
 export function biPlain(b: Bi): string {
   return `${b.en} ${b.zh}`
+}
+
+/** Conversation pane mic / hint label language (language-pure panes). */
+export type ConversationLabelLang = 'en' | 'zh' | 'tl' | 'es' | 'vi'
+
+/** Map a Conversation pane language onto the mic button / hint locale. */
+export function conversationLabelLang(lang: import('./types').Lang): ConversationLabelLang {
+  if (lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'en') return lang
+  return 'zh'
+}
+
+export function conversationLabelHtmlLang(lang: ConversationLabelLang): string {
+  if (lang === 'zh') return 'zh-HK'
+  if (lang === 'tl') return 'tl'
+  if (lang === 'es') return 'es-MX'
+  if (lang === 'vi') return 'vi-VN'
+  return 'en'
+}
+
+type LiveMicKey = 'holdOrTapToSpeak' | 'releaseWhenDone' | 'tapListening' | 'speaking' | 'translating'
+
+/** Native live-mic label for Conversation panes (Tagalog / Spanish / Vietnamese / EN / ZH). */
+export function liveMicLabel(key: LiveMicKey, lang: ConversationLabelLang): string {
+  if (lang === 'tl') {
+    if (key === 'holdOrTapToSpeak') return ui.holdOrTapToSpeakTl
+    if (key === 'releaseWhenDone') return ui.releaseWhenDoneTl
+    if (key === 'tapListening') return ui.tapListeningTl
+    if (key === 'speaking') return ui.speakingTl
+    return ui.translatingTl
+  }
+  if (lang === 'es') {
+    if (key === 'holdOrTapToSpeak') return ui.holdOrTapToSpeakEs
+    if (key === 'releaseWhenDone') return ui.releaseWhenDoneEs
+    if (key === 'tapListening') return ui.tapListeningEs
+    if (key === 'speaking') return ui.speakingEs
+    return ui.translatingEs
+  }
+  if (lang === 'vi') {
+    if (key === 'holdOrTapToSpeak') return ui.holdOrTapToSpeakVi
+    if (key === 'releaseWhenDone') return ui.releaseWhenDoneVi
+    if (key === 'tapListening') return ui.tapListeningVi
+    if (key === 'speaking') return ui.speakingVi
+    return ui.translatingVi
+  }
+  const copy = ui[key]
+  return lang === 'zh' ? copy.zh : copy.en
+}
+
+export function conversationPaneHint(lang: ConversationLabelLang, kind: 'friend' | 'you'): string {
+  if (kind === 'friend') {
+    if (lang === 'tl') return ui.friendLooksHereTl
+    if (lang === 'es') return ui.friendLooksHereEs
+    if (lang === 'vi') return ui.friendLooksHereVi
+    return lang === 'zh' ? ui.friendLooksHere.zh : ui.friendLooksHere.en
+  }
+  if (lang === 'tl') return ui.holdFacingYouTl
+  if (lang === 'es') return ui.holdFacingYouEs
+  if (lang === 'vi') return ui.holdFacingYouVi
+  return lang === 'zh' ? ui.holdFacingYou.zh : ui.holdFacingYou.en
 }
 
 /** Cam → Documents progress lines for TranslateThinking (page-aware stages). */
