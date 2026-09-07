@@ -33,6 +33,15 @@ Azure Speech locale: **`vi-VN`** (TTS e.g. `vi-VN-HoaiMyNeural`, `vi-VN-NamMinhN
 
 ## Implementation status
 
-**Canon only** — product wiring (`VietnameseText`, `translateVietnamese`, `Lang` code `vi`, Solo / Conversation / Cam) is **not** shipped yet. Closest existing patterns: [`docs/jyutping.md`](./jyutping.md) (tone names + Chao), [`docs/mexican-spanish.md`](./mexican-spanish.md) (compact orthography + details chips), Mandarin tone marks in orthography.
+**Shipped** — `Lang` code `vi` is wired end-to-end: Solo, Conversation, Cam, breakdown, TTS prefs, and Account Hub voice settings, mirroring the `tl` / `es` Latin-orthography paths.
 
-When greenlit later: helpers `vietnameseTones.ts`, UI `VietnameseText.tsx`, API `translateVietnamese` in `apps/api/src/translate.ts`, Azure `vi-VN` STT/TTS, phrase seeds — wire like `tl` / `es`.
+- Register inference: `apps/api/src/vietnameseRegister.ts` (`inferVietnameseRegister`) — colloquial by default, formal when the English source looks legal/medical/official. No user-facing toggle.
+- Translation: `translateVietnamese` in `apps/api/src/translate.ts` — full Quốc ngữ diacritics, no Chinese characters, no Chao letters, no IPA, no ASCII tone digits.
+- Cam: `apps/api/src/translateCamera.ts` (`isVietnameseTarget`) rejects Han characters in Vietnamese output the same way `es`/`tl` do.
+- Tone classification (Details only): `apps/web/src/lib/vietnameseTones.ts` classifies the tone mark already present in a word via NFD decomposition — `ngang` (unmarked), `sắc` (acute), `huyền` (grave), `hỏi` (hook above), `ngã` (tilde), `nặng` (dot below). Vowel-quality marks (`ă â ê ô ơ ư`) decompose to separate combining characters and are never confused with tone marks.
+- Compact rendering: `apps/web/src/components/VietnameseText.tsx` renders fully accented Quốc ngữ only (`lang="vi"`) with `showTones={false}` (the default) in Solo / Conversation / Cam — no tone chips, no IPA, no Chao letters.
+- Details rendering: `VietnameseText` with `showTones={true}` (used in `CharacterBreakdownHost`) always renders tone-class chips **and** the Southern merge note (`VIETNAMESE_SOUTHERN_MERGE_NOTE`, "Southern speech often merges hỏi ≈ ngã; writing keeps all six marks.") beneath the chips — the note is never optional once tones are shown.
+- Azure: `vi-VN` locale for STT (`azureSpeech.ts`, `webSpeech.ts` fallback) and TTS (`vi-VN-HoaiMyNeural`, `vi-VN-NamMinhNeural`), selectable per-user in Account Hub → Voice settings and persisted via `tts_voice_vi` (`supabase/migrations/023_tts_voice_vi.sql`).
+- Phrase seeds: `apps/api/src/canto/data/phrases.json` has EN↔vi pairs tagged `vietnamese`, register `colloquial`.
+
+No IPA and no Chao tone letters appear anywhere in the Vietnamese UI, compact or detailed — only the tone-class chip labels above.
