@@ -8,24 +8,16 @@ import {
 import { speakText } from '../lib/tts'
 import { biPlain, ui } from '../lib/uiCopy'
 import { BiText } from './BiText'
-import { MexicanSpanishPractice } from './MexicanSpanishPractice'
 
 /**
- * Details-only Mexican Spanish pedagogy: culture note + situation chips + practice.
+ * Details-only Mexican Spanish pedagogy: culture note + situation chips.
  * Never renders on the compact translation line.
  */
-export function MexicanSpanishLearnPanel({
-  text,
-  showPractice = true,
-}: {
-  text: string
-  showPractice?: boolean
-}) {
+export function MexicanSpanishLearnPanel({ text }: { text: string }) {
   const trimmed = text.trim()
   const note = cultureNoteFor(trimmed)
   const situations = situationsFor(trimmed)
   const [active, setActive] = useState<MxSituationId | null>(situations[0]?.id ?? null)
-  const [practiceTarget, setPracticeTarget] = useState(trimmed)
 
   if (!trimmed) return null
 
@@ -82,10 +74,7 @@ export function MexicanSpanishLearnPanel({
                   type="button"
                   className="mx-chunk"
                   lang="es-MX"
-                  onClick={() => {
-                    setPracticeTarget(chunk)
-                    void speakText(chunk, 'es')
-                  }}
+                  onClick={() => void speakText(chunk, 'es')}
                 >
                   {chunk}
                 </button>
@@ -94,8 +83,6 @@ export function MexicanSpanishLearnPanel({
           </ul>
         ) : null}
       </div>
-
-      {showPractice ? <MexicanSpanishPractice target={practiceTarget} /> : null}
     </section>
   )
 }

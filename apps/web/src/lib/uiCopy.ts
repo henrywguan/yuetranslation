@@ -278,15 +278,6 @@ export const ui = {
   dirShanghainese: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
   dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   dirMexicanSpanish: { en: 'Mexican Spanish', zh: '墨西哥西班牙語', jp: 'mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
-  mxPractice: { en: 'Practice', zh: '練習', jp: 'lin6 zaap6' },
-  mxPracticeHear: { en: 'Hear model', zh: '聽示範', jp: 'teng1 si6 faan6' },
-  mxPracticeSpeak: { en: 'Tap to speak', zh: '輕按講', jp: 'hing1 on3 gong2' },
-  mxPracticeListening: { en: 'Listening…', zh: '聽緊…', jp: 'teng1 gan2…' },
-  mxPracticeNoMic: {
-    en: 'Speech recognition unavailable in this browser.',
-    zh: '呢個瀏覽器唔支援語音辨識。',
-    jp: 'ni1 go3 lau4 laam5 hei3 m4 zi1 jyun4 jyu5 jam1 bin6 sik1.',
-  },
   mxLearnTitle: { en: 'Learn Mexican Spanish', zh: '學墨西哥西班牙語', jp: 'hok6 mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
   mxSituations: { en: 'Situations', zh: '情境', jp: 'cing4 ging2' },
   mxCultureEmpty: {
