@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Hash-admin is SPA-only; keep crawlers off clean /admin paths if added later.
+Disallow: /admin
+
+Sitemap: https://www.jyuttranslate.com/sitemap.xml

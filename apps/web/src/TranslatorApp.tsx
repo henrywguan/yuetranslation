@@ -25,10 +25,16 @@ import { openHome } from './lib/siteLinks'
 import { ui, biPlain } from './lib/uiCopy'
 import { isEmbeddedAppView } from './lib/useHashRoute'
 import { useAppViewportLock } from './lib/useAppViewportLock'
+import { useDocumentMeta } from './lib/useDocumentMeta'
 import './App.css'
 import { inkEase } from './lib/motion'
 
 export function TranslatorApp() {
+  useDocumentMeta({
+    title: 'Translator — JyutTranslate',
+    description: 'Solo, Conversation, and Cam modes for live English ↔ Cantonese translation.',
+    path: '/#/app',
+  })
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
   const live = useYueStore((s) => s.live)

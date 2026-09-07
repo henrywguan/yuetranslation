@@ -9,11 +9,18 @@ import { MarketingPageShell } from './MarketingPageShell'
 import { Reveal } from './Reveal'
 import { ToneTheater } from './tones/ToneTheater'
 import { ToneTwinsStory } from './tones/ToneTwinsStory'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
 import './landing.css'
 import './tones.css'
 
 /** Cinematic ELI5 explainer for the six Cantonese tones. */
 export function TonesPage() {
+  useDocumentMeta({
+    title: 'Cantonese tones — JyutTranslate',
+    description: 'Hear and see the six Cantonese tones with Jyutping — an ELI5 guide inside JyutTranslate.',
+    path: '/#/tones',
+  })
+
   return (
     <MarketingPageShell className="tones-page" onFeatures={() => openHome()}>
       <header className="tones-hero tones-hero--compact">

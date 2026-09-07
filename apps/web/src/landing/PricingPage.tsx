@@ -12,6 +12,7 @@ import { BiText } from '../components/BiText'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import { inkEase } from '../lib/motion'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
@@ -88,6 +89,12 @@ async function onPlanCta(plan: MarketingPlan, billing: Billing) {
 
 export function PricingPage() {
   const [billing, setBilling] = useState<Billing>('monthly')
+  useDocumentMeta({
+    title: 'Pricing — JyutTranslate',
+    description:
+      'Free, Family, and Business plans for live Cantonese translation — voice, camera, and documents.',
+    path: '/#/pricing',
+  })
 
   return (
     <MarketingPageShell className="pricing-page" background="orbital" onFeatures={() => openHome()}>

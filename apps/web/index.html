@@ -9,19 +9,35 @@
     <meta name="theme-color" content="#07131f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="JyutTranslate" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="JyutTranslate" />
+    <meta property="og:title" content="JyutTranslate — English ↔ Cantonese" />
+    <meta property="og:description" content="Live English ↔ Cantonese translator with jyutping, voice, camera OCR, and document translation." />
+    <meta property="og:url" content="https://www.jyuttranslate.com/" />
+    <meta property="og:image" content="https://www.jyuttranslate.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="JyutTranslate — English ↔ Cantonese" />
+    <meta name="twitter:description" content="Live English ↔ Cantonese translator with jyutping, voice, camera OCR, and document translation." />
+    <meta name="twitter:image" content="https://www.jyuttranslate.com/og.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+HK:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <title>JyutTranslate — English ↔ Cantonese</title>
     <script>
-      // Clean paths for store listings → hash routes (SPA).
+      // Clean paths for store listings / share links → hash routes (SPA).
       (() => {
         const path = (location.pathname || '/').replace(/\/+$/, '') || '/'
         const map = {
           '/delete-account': '#/delete-account',
           '/privacy': '#/privacy',
           '/terms': '#/terms',
+          '/app': '#/app',
+          '/pricing': '#/pricing',
+          '/tones': '#/tones',
+          '/admin': '#/admin',
         }
         const target = map[path]
         if (target && !location.hash) {
