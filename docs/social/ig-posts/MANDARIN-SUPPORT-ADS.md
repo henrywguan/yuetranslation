@@ -10,6 +10,8 @@ Portrait **1080×1350** · Tagalog-style promo layout · **real UI only**
 
 **Logo:** `apps/web/public/pwa-512.png` (copied to `source/mandarin-ads/pwa-512.png` for render) — not favicon.
 
+**Phone chrome:** follows [`PHONE-MOCKUP.md`](./PHONE-MOCKUP.md) — bezel insets, Dynamic Island, home indicator (not edge-to-edge overlays).
+
 **Locked CTA / fine print:** `2 Months Free Family Plan` · `Code: JYUTTESTER1023 • Ends 10/23 • Cancel before renewal to avoid automatic charge!`
 
 **Caption:** `out/ig-ad-mandarin-support-caption.txt`
