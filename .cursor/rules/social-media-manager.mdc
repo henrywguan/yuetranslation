@@ -26,7 +26,7 @@ Brand: Harbor `#07131f` · Jade `#3dcfb6` · Ink `#e8f4ff` · Syne + Noto Sans H
 
 **End CTA lockup (REQUIRED):** real logo + real font only — `docs/brand/favicon.png` chop + **JyutTranslate** in **Syne**, composited in post. Never let Seedance/Higgsfield invent the wordmark (no metallic 3D type, no `Jyuttranslate` casing). Prompt the model for a clean Harbor end hold with **no logo / no brand type**; overlay favicon + Syne + URL in edit.
 
-**Phone mockups (REQUIRED):** always include realistic **bezel insets + Dynamic Island (speaker/camera) + home indicator** — never edge-to-edge screenshot overlays. Follow **`docs/social/ig-posts/PHONE-MOCKUP.md`**.
+**Phone mockups (REQUIRED):** always include realistic **bezel insets + device notch/island + home indicator**, and show the **full** real screenshot with **no clipping** (match capture aspect — iPhone 13 Pro is 1170×2532). Follow **`docs/social/ig-posts/PHONE-MOCKUP.md`**.
 
 ## Static IG posts — “instructional night/dark mode post”
 When Henry says **instructional night/dark mode post**, **night instructional**, or asks for the loved dark Harbor IG educational look:

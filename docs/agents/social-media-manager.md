@@ -68,8 +68,8 @@ Henry: end cards must feel **genuine** — our real mark and display font, not m
 Whenever Henry asks for a **mobile / phone mockup** (ads, carousels, Stories, statics, composites):
 
 1. **Never** paste a screenshot edge-to-edge into a rounded rect — that looks cheap.
-2. **Always** include device chrome: **bezel inset**, **Dynamic Island** (speaker + camera), **home indicator** (side buttons optional).
-3. Use **real UI** captures only; crop the capture’s native status bar under our island band.
+2. **Always** include device chrome: **bezel inset**, **notch or Dynamic Island** (match the capture device — Henry’s iPhone 13 Pro uses a **notch**), **home indicator** (side buttons optional).
+3. Use **real UI** captures only; show the **full** screenshot with **no clipping** (screen aspect = capture aspect, e.g. iPhone 13 Pro **1170×2532**). Overlay hardware on top — do not crop status bar / bottom CTA away.
 4. Canon + CSS/HTML to fork: **`docs/social/ig-posts/PHONE-MOCKUP.md`** · `lang-launch.css` `.phone*` · `mandarin-support-*.html`.
 
 ## Auto-speak + TTS (REQUIRED for translation demos)
