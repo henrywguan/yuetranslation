@@ -4168,24 +4168,20 @@
     min-height: 0;
   }
 
-  /* Keep the collapse control pinned to the floating panel’s top-right. */
+  /* Pin collapse (–) to the floating panel’s top-right corner. */
   .history-rail .history-rail-chrome {
-    position: relative;
-    padding-right: 2.5rem;
+    padding-right: 2.75rem;
   }
 
-  .history-rail .history-rail-btn {
+  .history-rail .history-rail-btn--collapse {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
   }
 
   .history-rail .history-rail-actions {
     position: static;
-  }
-
-  .history-rail .history-clear-btn {
-    margin-right: 0.15rem;
   }
 
   .history-rail .history-pane {

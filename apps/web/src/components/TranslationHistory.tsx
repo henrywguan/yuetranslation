@@ -121,7 +121,10 @@ export function TranslationHistory() {
                 </span>
               ) : null}
             </div>
-            <div className="history-rail-actions">
+            <div
+              className="history-rail-actions"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               {count ? (
                 <button
                   type="button"
@@ -135,7 +138,7 @@ export function TranslationHistory() {
               ) : null}
               <button
                 type="button"
-                className="history-rail-btn"
+                className="history-rail-btn history-rail-btn--collapse"
                 onClick={() => persist({ ...geom, minimized: true })}
                 aria-label={biPlain(ui.historyCollapse)}
                 title={biPlain(ui.historyCollapse)}
