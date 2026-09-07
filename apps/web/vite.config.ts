@@ -20,6 +20,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       // Self-register in index.html (immediate) so PWA Builder HTML/Puppeteer
       // scanners can find `/sw.js` without waiting for window.load.
@@ -31,10 +34,7 @@ export default defineConfig({
         'pwa-screenshots/mobile-app-narrow.png',
         'pwa-screenshots/desktop-app-wide.png',
       ],
-      workbox: {
-        cleanupOutdatedCaches: true,
-        navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest,txt}'],
         additionalManifestEntries: [
           { url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild },

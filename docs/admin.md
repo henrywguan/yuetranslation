@@ -214,6 +214,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Audit log | Tab with recent admin actions |
 | Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates, compose, preview, contacts / full audience send |
+| Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
 | CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |
@@ -240,6 +241,33 @@ All routes require Bearer JWT + allowlisted email:
 - `DELETE /api/admin/email/templates/:templateId`
 - `GET /api/admin/email/contacts`
 - `POST /api/admin/email/preview`
+- `POST /api/admin/email/draft`
 - `POST /api/admin/email/send`
+- `GET /api/admin/email/sends`
+- `GET /api/admin/push/stats`
+- `GET /api/admin/push/sends`
+- `POST /api/admin/push/send` — `{ confirm: true, payload, targetMode, dryRun?, ttl?, urgency?, topic?, plans?, userIds?, emails? }`
 - `POST /api/admin/resend-audience/sync`
 - `POST /api/admin/household-usage/backfill` — fold legacy `usage_months` into `household_usage_months` for all months (idempotent)
+
+Public (optional Bearer JWT):
+
+- `GET /api/push/config` — `{ configured, publicKey, subject }`
+- `POST /api/push/subscribe` — browser `PushSubscription` JSON
+- `POST /api/push/unsubscribe` — `{ endpoint, deleteRow? }`
+
+## PWA push notifications
+
+Admin tab **Push** sends Web Push to devices that opted in (Account hub → Notifications).
+
+1. Apply migration `supabase/migrations/024_push_notifications.sql`.
+2. Generate keys: `npx web-push generate-vapid-keys`
+3. Set on the API / Vercel:
+
+```bash
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:help@jyuttranslate.com
+```
+
+Composer supports title/body, icon/badge/image, deep link, tag/renotify, require-interaction, silent, lang/dir, vibrate, up to 2 actions, TTL/urgency/topic, targeting (self / admins / signed-in / guests / plans / user IDs / emails / all), dry-run, local preview, and send history.

@@ -68,6 +68,9 @@ import {
   adminMe,
   adminPatchBugReportStatus,
   adminPreviewEmail,
+  adminPushStats,
+  adminListPushSends,
+  adminSendPush,
   adminResetUsage,
   adminSaveEmailTemplate,
   adminSendEmail,
@@ -78,8 +81,10 @@ import {
   adminBackfillHouseholdUsage,
   adminUserUsage,
 } from './admin.js'
+import { getPushConfig, subscribePush, unsubscribePush } from './pushRoutes.js'
 import { scheduleHouseholdUsageBackfillOnStartup } from './startupBackfill.js'
 import { getIncidentBanner } from './appSettings.js'
+import { pushConfigured } from './pushNotifications.js'
 
 export const app = express()
 app.use(cors({ origin: corsOriginDelegate, credentials: true }))
@@ -150,6 +155,9 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
       admin: notifyStatus(),
       userAuth: userEmailConfigured(),
       sendEmailHook: Boolean(env.supabaseSendEmailHookSecret),
+    },
+    push: {
+      configured: pushConfigured(),
     },
     incidentBanner,
     entitlement: await entitlementFor(req),
@@ -774,6 +782,10 @@ app.post('/api/household/accept', postHouseholdAccept)
 
 app.post('/api/bug-report', submitBugReport)
 
+app.get('/api/push/config', getPushConfig)
+app.post('/api/push/subscribe', subscribePush)
+app.post('/api/push/unsubscribe', unsubscribePush)
+
 app.get('/api/admin/me', adminMe)
 app.get('/api/admin/users', adminListUsers)
 app.get('/api/admin/users.csv', adminExportUsersCsv)
@@ -799,6 +811,9 @@ app.get('/api/admin/email/sends', adminListEmailSends)
 app.post('/api/admin/email/preview', adminPreviewEmail)
 app.post('/api/admin/email/draft', adminDraftEmail)
 app.post('/api/admin/email/send', adminSendEmail)
+app.get('/api/admin/push/stats', adminPushStats)
+app.get('/api/admin/push/sends', adminListPushSends)
+app.post('/api/admin/push/send', adminSendPush)
 
 scheduleHouseholdUsageBackfillOnStartup()
 

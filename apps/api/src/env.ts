@@ -231,6 +231,14 @@ export const env = {
    * on cold start (idempotent). Set on deploy after migration 015, then remove when done.
    */
   runHouseholdUsageBackfill: (process.env.YUE_RUN_HOUSEHOLD_USAGE_BACKFILL || '0') === '1',
+  /**
+   * Web Push (PWA) VAPID keys — generate with `npx web-push generate-vapid-keys`.
+   * Public key is safe to expose to the browser; private key stays on the API.
+   */
+  vapidPublicKey: (process.env.VAPID_PUBLIC_KEY || '').trim(),
+  vapidPrivateKey: (process.env.VAPID_PRIVATE_KEY || '').trim(),
+  /** Contact URI for VAPID (`mailto:` or `https:`). */
+  vapidSubject: (process.env.VAPID_SUBJECT || 'mailto:help@jyuttranslate.com').trim(),
 }
 
 /**

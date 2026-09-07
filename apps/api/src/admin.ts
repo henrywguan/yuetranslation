@@ -1115,3 +1115,91 @@ export async function adminSendEmail(req: AuthedRequest, res: Response) {
   }
 }
 
+export async function adminPushStats(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  try {
+    const { pushSubscriptionStats, publicPushConfig } = await import('./pushNotifications.js')
+    const stats = await pushSubscriptionStats()
+    res.json({ ...publicPushConfig(), stats })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to load push stats' })
+  }
+}
+
+export async function adminListPushSends(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const limitRaw = Number(req.query.limit)
+  const limit = Number.isFinite(limitRaw) ? limitRaw : 40
+  try {
+    const { listPushSends } = await import('./pushNotifications.js')
+    const sends = await listPushSends(limit)
+    res.json({ sends })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to list push sends' })
+  }
+}
+
+export async function adminSendPush(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const {
+    PushPayloadSchema,
+    PushTargetModeSchema,
+    PushUrgencySchema,
+    sendPushCampaign,
+  } = await import('./pushNotifications.js')
+  const parsed = z
+    .object({
+      payload: PushPayloadSchema,
+      targetMode: PushTargetModeSchema,
+      plans: z.array(z.enum(['free', 'family', 'business'])).optional(),
+      userIds: z.array(z.string().uuid()).optional(),
+      emails: z.array(z.string().email()).optional(),
+      dryRun: z.boolean().optional(),
+      ttl: z.number().int().min(0).max(60 * 60 * 24 * 28).optional(),
+      urgency: PushUrgencySchema.optional(),
+      topic: z.string().max(32).optional(),
+      confirm: z.literal(true),
+    })
+    .safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid push payload (confirm: true required)' })
+    return
+  }
+  try {
+    const result = await sendPushCampaign({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      payload: parsed.data.payload,
+      targetMode: parsed.data.targetMode,
+      plans: parsed.data.plans,
+      userIds: parsed.data.userIds,
+      emails: parsed.data.emails,
+      dryRun: parsed.data.dryRun,
+      ttl: parsed.data.ttl,
+      urgency: parsed.data.urgency,
+      topic: parsed.data.topic,
+    })
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'push_send',
+      detail: {
+        dryRun: result.dryRun,
+        targetMode: parsed.data.targetMode,
+        title: parsed.data.payload.title,
+        recipientCount: result.recipientCount,
+        sent: result.sent,
+        failed: result.failed,
+        pruned: result.pruned,
+        status: result.status,
+      },
+    })
+    res.json({ ok: true, ...result })
+  } catch (e) {
+    res.status(500).json({ message: e instanceof Error ? e.message : 'Push send failed' })
+  }
+}
+

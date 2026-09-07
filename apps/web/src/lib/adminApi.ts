@@ -559,6 +559,128 @@ export async function sendAdminEmail(input: {
   }
 }
 
+export type PushPayloadInput = {
+  title: string
+  body?: string
+  icon?: string
+  badge?: string
+  image?: string
+  url?: string
+  tag?: string
+  renotify?: boolean
+  requireInteraction?: boolean
+  silent?: boolean
+  timestamp?: number
+  lang?: string
+  dir?: 'auto' | 'ltr' | 'rtl'
+  vibrate?: number[]
+  actions?: { action: string; title: string; icon?: string }[]
+  data?: Record<string, unknown>
+}
+
+export type PushTargetMode =
+  | 'all'
+  | 'signed_in'
+  | 'guests'
+  | 'plans'
+  | 'user_ids'
+  | 'emails'
+  | 'admins'
+  | 'self'
+
+export type PushSendItem = {
+  id: string
+  created_at: string
+  actor_id: string | null
+  actor_email: string | null
+  title: string
+  body: string
+  target_mode: string
+  dry_run: boolean
+  recipient_count: number
+  sent_count: number
+  failed_count: number
+  pruned_count: number
+  status: string
+  payload: Record<string, unknown>
+  detail: Record<string, unknown>
+}
+
+export async function fetchAdminPushStats(): Promise<{
+  configured: boolean
+  publicKey: string | null
+  subject: string | null
+  stats: {
+    total: number
+    enabled: number
+    signedIn: number
+    guests: number
+    byPlan: Record<string, number>
+  }
+}> {
+  const res = await adminFetch('/admin/push/stats')
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Failed to load push stats')
+  return data as {
+    configured: boolean
+    publicKey: string | null
+    subject: string | null
+    stats: {
+      total: number
+      enabled: number
+      signedIn: number
+      guests: number
+      byPlan: Record<string, number>
+    }
+  }
+}
+
+export async function fetchAdminPushSends(limit = 40): Promise<{ sends: PushSendItem[] }> {
+  const res = await adminFetch(`/admin/push/sends?limit=${encodeURIComponent(String(limit))}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Failed to load push sends')
+  return data as { sends: PushSendItem[] }
+}
+
+export async function sendAdminPush(input: {
+  payload: PushPayloadInput
+  targetMode: PushTargetMode
+  plans?: Array<'free' | 'family' | 'business'>
+  userIds?: string[]
+  emails?: string[]
+  dryRun?: boolean
+  ttl?: number
+  urgency?: 'very-low' | 'low' | 'normal' | 'high'
+  topic?: string
+  confirm: true
+}): Promise<{
+  ok: boolean
+  dryRun: boolean
+  recipientCount: number
+  sent: number
+  failed: number
+  pruned: number
+  status: string
+  errors: { endpoint: string; statusCode?: number; message: string }[]
+}> {
+  const res = await adminFetch('/admin/push/send', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as { message?: string }).message || 'Push send failed')
+  return data as {
+    ok: boolean
+    dryRun: boolean
+    recipientCount: number
+    sent: number
+    failed: number
+    pruned: number
+    status: string
+    errors: { endpoint: string; statusCode?: number; message: string }[]
+  }
+}
+
 import { formatExactDuration } from './formatDuration'
 
 /** Format integer seconds as `1h 02m 03s` (always shows seconds). */
