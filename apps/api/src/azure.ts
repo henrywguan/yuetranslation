@@ -37,6 +37,7 @@ export type SynthesizeOpts = {
   preferredWuu?: string | null
   preferredTl?: string | null
   preferredEs?: string | null
+  preferredVi?: string | null
 }
 
 export async function synthesize(text: string, lang: string, opts: SynthesizeOpts = {}): Promise<Buffer> {
@@ -50,6 +51,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredTl,
     opts.preferredEs,
     opts.voice,
+    opts.preferredVi,
   )
   const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${escapeXml(text)}</voice></speak>`
   const url = `https://${env.azureSpeechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`

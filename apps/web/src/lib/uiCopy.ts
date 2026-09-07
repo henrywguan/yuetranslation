@@ -181,6 +181,7 @@ export const ui = {
   camTargetCmn: { en: 'To Mandarin', zh: '譯成普通話', jp: 'jik6 sing4 pou2 tung1 waa2' },
   camTargetTl: { en: 'To Tagalog', zh: '譯成他加祿語', jp: 'jik6 sing4 taa1 gaa1 luk6 jyu5' },
   camTargetEs: { en: 'To Mexican Spanish', zh: '譯成墨西哥西班牙語', jp: 'jik6 sing4 mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
+  camTargetVi: { en: 'To Vietnamese', zh: '譯成越南話', jp: 'jik6 sing4 jyut6 naam4 waa2' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
@@ -278,6 +279,7 @@ export const ui = {
   dirShanghainese: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
   dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   dirMexicanSpanish: { en: 'Mexican Spanish', zh: '墨西哥西班牙語', jp: 'mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
+  dirVietnamese: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
   mxLearnTitle: { en: 'Learn Mexican Spanish', zh: '學墨西哥西班牙語', jp: 'hok6 mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
   mxSituations: { en: 'Situations', zh: '情境', jp: 'cing4 ging2' },
   mxCultureEmpty: {
@@ -526,6 +528,7 @@ export const ui = {
   accountTtsCmn: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   accountTtsTl: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   accountTtsEs: { en: 'Mexican Spanish', zh: '墨西哥西班牙語', jp: 'mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
+  accountTtsVi: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
   accountTtsWuu: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
   accountTtsVoiceSettings: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },

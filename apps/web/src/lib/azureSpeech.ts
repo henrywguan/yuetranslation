@@ -10,6 +10,7 @@ function localeToLang(locale: string): Lang {
   if (l.startsWith('wuu') || l.includes('wuu')) return 'wuu'
   if (l.startsWith('fil') || l.startsWith('tl')) return 'tl'
   if (l.startsWith('es')) return 'es'
+  if (l.startsWith('vi')) return 'vi'
   // Generic zh without region — prefer Cantonese for HK product default.
   if (l.startsWith('zh')) return 'yue'
   return 'en'
@@ -21,6 +22,7 @@ function langToLocale(lang: Lang): string {
   if (lang === 'wuu') return 'wuu-CN'
   if (lang === 'tl') return 'fil-PH'
   if (lang === 'es') return 'es-MX'
+  if (lang === 'vi') return 'vi-VN'
   return 'en-US'
 }
 
@@ -234,6 +236,10 @@ export async function createAzureLiveSession(
       }
       if (lockLang === 'es') {
         await startWithRecognizer('es')
+        return
+      }
+      if (lockLang === 'vi') {
+        await startWithRecognizer('vi')
         return
       }
       if (lockLang === 'cmn') {

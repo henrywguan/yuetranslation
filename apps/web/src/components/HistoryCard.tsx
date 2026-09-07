@@ -4,6 +4,7 @@ import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { MexicanSpanishLearnPanel } from './MexicanSpanishLearnPanel'
+import { VietnameseText } from './VietnameseText'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -14,6 +15,7 @@ function langShort(lang: Lang): string {
   if (lang === 'wuu') return '沪'
   if (lang === 'tl') return 'TL'
   if (lang === 'es') return 'Mx'
+  if (lang === 'vi') return 'Vi'
   return '粵'
 }
 
@@ -86,6 +88,17 @@ function LangLine({
       />
     )
   }
+  if (lang === 'vi') {
+    return (
+      <VietnameseText
+        text={text}
+        definition={definition}
+        definitions={definitions}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
   if (onBreakdown) {
     return (
       <button
@@ -107,6 +120,7 @@ function langLabel(lang: Lang) {
   if (lang === 'wuu') return <BiText copy={ui.dirShanghainese} size="sm" only="zh" />
   if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
   if (lang === 'es') return <BiText copy={ui.dirMexicanSpanish} size="sm" />
+  if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
 
@@ -124,13 +138,19 @@ export function HistoryCard({
   isLatest?: boolean
 }) {
   const zhPhrase =
-    turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' || turn.to === 'tl' || turn.to === 'es'
+    turn.to === 'yue' ||
+    turn.to === 'cmn' ||
+    turn.to === 'wuu' ||
+    turn.to === 'tl' ||
+    turn.to === 'es' ||
+    turn.to === 'vi'
       ? turn.translation
       : turn.from === 'yue' ||
           turn.from === 'cmn' ||
           turn.from === 'wuu' ||
           turn.from === 'tl' ||
-          turn.from === 'es'
+          turn.from === 'es' ||
+          turn.from === 'vi'
         ? turn.source
         : ''
   const yueDefs = (turn.definitions || []).map((d) => d.trim()).filter(Boolean)
@@ -280,6 +300,12 @@ export function HistoryCard({
                       <TagalogText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : turn.to === 'es' ? (
                       <MexicanSpanishText
+                        text={alt}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
+                      />
+                    ) : turn.to === 'vi' ? (
+                      <VietnameseText
                         text={alt}
                         className="history-card-line"
                         onActivate={onBreakdown}

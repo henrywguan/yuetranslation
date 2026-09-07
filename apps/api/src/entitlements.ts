@@ -14,11 +14,13 @@ import {
   DEFAULT_EN_VOICE,
   DEFAULT_ES_VOICE,
   DEFAULT_TL_VOICE,
+  DEFAULT_VI_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
   resolveEsVoice,
   resolveTlVoice,
+  resolveViVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
@@ -114,6 +116,7 @@ export type Entitlement = {
     ttsVoiceCmn: string
     ttsVoiceTl: string
     ttsVoiceEs: string
+    ttsVoiceVi: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Custom display username; null until the user sets one. */
@@ -267,6 +270,7 @@ function buildSnapshot(
     ttsVoiceCmn?: string | null
     ttsVoiceTl?: string | null
     ttsVoiceEs?: string | null
+    ttsVoiceVi?: string | null
     autoSpeak?: boolean | null
     household?: HouseholdSummary | null
     username?: string | null
@@ -285,6 +289,7 @@ function buildSnapshot(
     ttsVoiceCmn: resolveCmnVoice(opts.ttsVoiceCmn),
     ttsVoiceTl: resolveTlVoice(opts.ttsVoiceTl),
     ttsVoiceEs: resolveEsVoice(opts.ttsVoiceEs),
+    ttsVoiceVi: resolveViVoice(opts.ttsVoiceVi),
     autoSpeak: Boolean(opts.autoSpeak),
     username: opts.username?.trim() || null,
     usernameChangedAt: opts.usernameChangedAt || null,
@@ -395,6 +400,7 @@ function buildSnapshot(
         ttsVoiceCmn: DEFAULT_CMN_VOICE,
         ttsVoiceTl: DEFAULT_TL_VOICE,
         ttsVoiceEs: DEFAULT_ES_VOICE,
+        ttsVoiceVi: DEFAULT_VI_VOICE,
         autoSpeak: false,
         username: null,
         usernameChangedAt: null,
@@ -529,6 +535,7 @@ function localEntitlement(): Entitlement {
         ttsVoiceCmn: DEFAULT_CMN_VOICE,
         ttsVoiceTl: DEFAULT_TL_VOICE,
         ttsVoiceEs: DEFAULT_ES_VOICE,
+        ttsVoiceVi: DEFAULT_VI_VOICE,
         autoSpeak: false,
         username: null,
         usernameChangedAt: null,
@@ -607,6 +614,7 @@ export async function resolveEntitlement(
     ttsVoiceCmn: profile?.tts_voice_cmn,
     ttsVoiceTl: profile?.tts_voice_tl,
     ttsVoiceEs: profile?.tts_voice_es,
+    ttsVoiceVi: profile?.tts_voice_vi,
     autoSpeak: profile?.auto_speak,
     household,
     username: profile?.username,

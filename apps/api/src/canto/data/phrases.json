@@ -6433,6 +6433,474 @@
         "greeting",
         "mexican-spanish"
       ]
+    },
+    {
+      "id": "en-hello-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "hello",
+      "text": "Xin chào",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Chào",
+        "Chào bạn"
+      ]
+    },
+    {
+      "id": "vi-xin-chào-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "xin chào",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-thank-you-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "thank you",
+      "text": "Cảm ơn",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Cảm ơn nhiều",
+        "Thanks"
+      ]
+    },
+    {
+      "id": "vi-cảm-ơn-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "cảm ơn",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-yes-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "yes",
+      "text": "Dạ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Vâng",
+        "Ừ"
+      ]
+    },
+    {
+      "id": "vi-dạ-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "dạ",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-no-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "no",
+      "text": "Không",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Dạ không",
+        "Không có"
+      ]
+    },
+    {
+      "id": "vi-không-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "không",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "where is the bathroom",
+      "text": "Nhà vệ sinh ở đâu",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Toilet ở đâu"
+      ]
+    },
+    {
+      "id": "vi-nhà-vệ-sinh-ở-đâu-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "nhà vệ sinh ở đâu",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-how-much-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "how much",
+      "text": "Bao nhiêu tiền",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Giá bao nhiêu"
+      ]
+    },
+    {
+      "id": "vi-bao-nhiêu-tiền-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "bao nhiêu tiền",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-delicious-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "delicious",
+      "text": "Ngon",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Ngon quá",
+        "Ngon lắm"
+      ]
+    },
+    {
+      "id": "vi-ngon-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "ngon",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-excuse-me-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "excuse me",
+      "text": "Xin lỗi",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Cho tôi hỏi"
+      ]
+    },
+    {
+      "id": "vi-xin-lỗi-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "xin lỗi",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-good-morning-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "good morning",
+      "text": "Chào buổi sáng",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Buổi sáng tốt lành"
+      ]
+    },
+    {
+      "id": "vi-chào-buổi-sáng-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "chào buổi sáng",
+      "text": "Good morning",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-good-night-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "good night",
+      "text": "Chúc ngủ ngon",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Ngủ ngon nha"
+      ]
+    },
+    {
+      "id": "vi-chúc-ngủ-ngon-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "chúc ngủ ngon",
+      "text": "Good night",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-i-dont-understand-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "i don't understand",
+      "text": "Tôi không hiểu",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Tôi không hiểu ạ"
+      ]
+    },
+    {
+      "id": "vi-tôi-không-hiểu-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "tôi không hiểu",
+      "text": "I don't understand",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-help-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "help",
+      "text": "Giúp tôi",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Cứu tôi",
+        "Làm ơn giúp tôi"
+      ]
+    },
+    {
+      "id": "vi-giúp-tôi-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "giúp tôi",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-water-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "water",
+      "text": "Nước",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Nước lọc",
+        "Xin nước"
+      ]
+    },
+    {
+      "id": "vi-nước-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "nước",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-check-please-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "check please",
+      "text": "Tính tiền giúp",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Cho xin hóa đơn",
+        "Tính tiền"
+      ]
+    },
+    {
+      "id": "vi-tính-tiền-giúp-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "tính tiền giúp",
+      "text": "Check please",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "nice to meet you",
+      "text": "Rất vui được gặp bạn",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Hân hạnh gặp bạn"
+      ]
+    },
+    {
+      "id": "vi-rất-vui-được-gặp-bạn-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "rất vui được gặp bạn",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-goodbye-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "goodbye",
+      "text": "Tạm biệt",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Chào nhé",
+        "Hẹn gặp lại"
+      ]
+    },
+    {
+      "id": "vi-tạm-biệt-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "tạm biệt",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "vietnamese"
+      ]
+    },
+    {
+      "id": "en-sorry-vi",
+      "sourceLang": "en",
+      "targetLang": "vi",
+      "source": "sorry",
+      "text": "Xin lỗi",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "vietnamese"
+      ],
+      "alternatives": [
+        "Tôi xin lỗi"
+      ]
+    },
+    {
+      "id": "vi-xin-lỗi-en",
+      "sourceLang": "vi",
+      "targetLang": "en",
+      "source": "xin lỗi",
+      "text": "Sorry",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "vietnamese"
+      ]
     }
   ]
 }

@@ -15,6 +15,7 @@ import {
 import { hasHan } from './canto/han.js'
 import { inferTagalogRegister } from './tagalogRegister.js'
 import { inferMexicanSpanishRegister } from './mexicanSpanishRegister.js'
+import { inferVietnameseRegister } from './vietnameseRegister.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
 function applyCmnScrub(
@@ -36,7 +37,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -71,7 +72,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
 
 type TranslateResult = {
   text: string
@@ -1169,6 +1170,228 @@ async function translateMexicanSpanish(opts: {
 }
 
 
+/**
+ * EN↔Vietnamese — colloquial everyday Vietnamese (Southern-friendly), full Quốc ngữ diacritics.
+ * Latin script only; tone marks are orthographic (never invent ASCII tone digits).
+ */
+async function translateVietnamese(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'vi' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'vi-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'vi' ? `(demo VI) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'vi' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'vi-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toVi = to === 'vi'
+  const register = toVi ? inferVietnameseRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'vi-formal' : 'vi-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toVi) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Vietnamese interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Vietnamese (complete sentences, respectful pronouns).',
+            'Avoid slang; keep wording clear and respectful.',
+            'On the PRIMARY line, ALWAYS write full Quốc ngữ with complete diacritics (tone marks + vowel-quality marks) on every word that needs them. Alternatives must also keep required diacritics.',
+            'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits (no "ma2"-style spellings).',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Vietnamese>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Vietnamese interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Vietnamese (everyday conversational — Southern-friendly wording is fine, e.g. dạ, ha, nè, hén — but keep it broadly natural for any Vietnamese speaker).',
+            'Do NOT use stiff textbook / formal written Vietnamese.',
+            'On the PRIMARY line, ALWAYS write full Quốc ngữ with complete diacritics (tone marks + vowel-quality marks) on every word that needs them. Alternatives must also keep required diacritics.',
+            'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits (no "ma2"-style spellings).',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Vietnamese>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedVi = parseYuePayload(raw, text, true)
+    primary = parsedVi.text
+    alternatives = parsedVi.alternatives
+    if (parsedVi.definition) definition = parsedVi.definition
+  } else if (wantAlts && !toVi) {
+    const system = [
+      'You are a Vietnamese interpreter helping Vietnamese speakers learn English.',
+      'Translate colloquial Vietnamese into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Vietnamese gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toVi
+      ? register === 'formal'
+        ? [
+            'You are a Vietnamese interpreter for formal situations.',
+            'Translate into POLITE formal Vietnamese (complete sentences, respectful pronouns).',
+            'ALWAYS write full Quốc ngữ with complete diacritics (tone + vowel-quality marks).',
+            'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Vietnamese>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Vietnamese interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Vietnamese (everyday conversational, Southern-friendly wording OK).',
+            'ALWAYS write full Quốc ngữ with complete diacritics (tone + vowel-quality marks).',
+            'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Vietnamese>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Vietnamese interpreter.',
+          'Translate colloquial Vietnamese into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toVi && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toVi ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toVi ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toVi) {
+    const outText = primary && !hasHan(primary) ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-vi-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['vi-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -1207,6 +1430,10 @@ export async function translate(input: unknown) {
 
   if (to === 'es' || (from === 'es' && to === 'en')) {
     return translateMexicanSpanish({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'vi' || (from === 'vi' && to === 'en')) {
+    return translateVietnamese({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'cmn' || (from === 'cmn' && to === 'en')) {

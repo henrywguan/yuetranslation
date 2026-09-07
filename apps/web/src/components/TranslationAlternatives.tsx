@@ -3,6 +3,7 @@ import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { VietnameseText } from './VietnameseText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -68,6 +69,12 @@ export function TranslationAlternatives({
                 />
               ) : lang === 'es' ? (
                 <MexicanSpanishText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'vi' ? (
+                <VietnameseText
                   text={alt}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}

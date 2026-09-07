@@ -28,6 +28,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'en') return ui.soloTapTypeEnglish.en
   if (lang === 'tl') return 'Mag-type ng Tagalog…'
   if (lang === 'es') return 'Escribe en español mexicano…'
+  if (lang === 'vi') return 'Nhập tiếng Việt…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
 }
@@ -36,6 +37,7 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'es') return 'Speak Mexican Spanish with the mic'
+  if (lang === 'vi') return 'Speak Vietnamese with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   return 'Speak Cantonese with the mic'
@@ -346,7 +348,8 @@ export function SoloView() {
       soloLowerLang === 'cmn' ||
       soloLowerLang === 'wuu' ||
       soloLowerLang === 'tl' ||
-      soloLowerLang === 'es') &&
+      soloLowerLang === 'es' ||
+      soloLowerLang === 'vi') &&
     Boolean(lowerDraft.trim()) &&
     !lowerEditing &&
     (!inputLocked || Boolean(yueInterim.trim()))
@@ -355,7 +358,8 @@ export function SoloView() {
       soloUpperLang === 'cmn' ||
       soloUpperLang === 'wuu' ||
       soloUpperLang === 'tl' ||
-      soloUpperLang === 'es') &&
+      soloUpperLang === 'es' ||
+      soloUpperLang === 'vi') &&
     Boolean(upperDraft.trim()) &&
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
@@ -382,7 +386,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
@@ -609,7 +613,8 @@ export function SoloView() {
             soloLowerLang === 'cmn' ||
             soloLowerLang === 'wuu' ||
             soloLowerLang === 'tl' ||
-            soloLowerLang === 'es') ? (
+            soloLowerLang === 'es' ||
+            soloLowerLang === 'vi') ? (
             <TranslationAlternatives
               alternatives={alts}
               alternativeRomanizations={soloLowerLang === 'wuu' ? latest?.alternativeRomanizations : undefined}

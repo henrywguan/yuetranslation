@@ -22,6 +22,7 @@ export function createWebSpeechSession(
   let wuuLocaleIndex = 0
   let tlLocaleIndex = 0
   let esLocaleIndex = 0
+  let viLocaleIndex = 0
   const echo = createEchoGuard()
   // iOS WebKit: Cantonese needs short sessions + restart; en-US handles continuous well.
   const apple = isAppleTouchDevice()
@@ -31,12 +32,14 @@ export function createWebSpeechSession(
   const wuuLocales = ['wuu-CN', 'zh-CN']
   const tlLocales = ['fil-PH', 'tl-PH', 'fil']
   const esLocales = ['es-MX', 'es-US', 'es']
+  const viLocales = ['vi-VN', 'vi']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
   const wuuLocale = () => wuuLocales[wuuLocaleIndex % wuuLocales.length]
   const tlLocale = () => tlLocales[tlLocaleIndex % tlLocales.length]
   const esLocale = () => esLocales[esLocaleIndex % esLocales.length]
+  const viLocale = () => viLocales[viLocaleIndex % viLocales.length]
   const startOne = () => {
     if (stopped) return
     const rec = new SR()
@@ -55,7 +58,9 @@ export function createWebSpeechSession(
               ? tlLocale()
               : activeLang === 'es'
                 ? esLocale()
-                : 'en-US'
+                : activeLang === 'vi'
+                  ? viLocale()
+                  : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -116,6 +121,15 @@ export function createWebSpeechSession(
         esLocaleIndex < esLocales.length - 1
       ) {
         esLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (
+        e.error === 'language-not-supported' &&
+        activeLang === 'vi' &&
+        viLocaleIndex < viLocales.length - 1
+      ) {
+        viLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }

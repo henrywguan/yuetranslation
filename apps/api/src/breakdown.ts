@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es']).optional(),})
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi']).optional(),})
 
 export type BreakdownChar = {
   char: string
@@ -199,8 +199,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -660,6 +660,103 @@ function localEsBreakdown(text: string): BreakdownChar[] {
   })
 }
 
+async function viBreakdown(text: string) {
+  const fallback = localViBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'vi' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Vietnamese word-by-word for English-speaking learners.',
+    'Given a Vietnamese phrase, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":"<full Quốc ngữ form with tone + vowel-quality diacritics, or null>","meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented: use standard Vietnamese Quốc ngữ diacritics (tone marks + vowel-quality marks); null when already correct or for punctuation.',
+    '- Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words (là/của/và), still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char.toLowerCase() !== row.char.toLowerCase()) {
+        const byText = fallback.find((f) => f.char.toLowerCase() === row.char.toLowerCase())
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: row.jyutping || fb.jyutping,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'vi' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'vi' as const }
+  }
+}
+
+/** Vietnamese words use Latin letters plus Quốc ngữ diacritics (Đ/đ + combining/precomposed marks). */
+function tokenizeVietnamese(text: string): string[] {
+  const matches = text.match(
+    /[A-Za-zÀ-ỹĐđ\u0300-\u036f]+(?:'[A-Za-zÀ-ỹĐđ]+)?|[0-9]+|[^\sA-Za-zÀ-ỹĐđ0-9]+/g,
+  )
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localViBreakdown(text: string): BreakdownChar[] {
+  return tokenizeVietnamese(text).map((tok) => {
+    if (/^[^A-Za-zÀ-ỹĐđ0-9]+$/.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return {
+      char: tok,
+      jyutping: null,
+      meaning: '',
+    }
+  })
+}
+
 async function cmnBreakdown(text: string) {
   // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
   // API returns gloss rows with jyutping left null for client merge.
@@ -689,6 +786,7 @@ export async function breakdown(input: unknown) {
   if (lang === 'en') return englishBreakdown(text)
   if (lang === 'tl') return tlBreakdown(text)
   if (lang === 'es') return esBreakdown(text)
+  if (lang === 'vi') return viBreakdown(text)
   if (lang === 'cmn') return cmnBreakdown(text)
   if (lang === 'wuu') return wuuBreakdown(text)
   return yueBreakdown(text)

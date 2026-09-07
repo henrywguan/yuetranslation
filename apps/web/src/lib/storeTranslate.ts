@@ -1,6 +1,6 @@
 import { translateText } from './api'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
@@ -111,6 +111,7 @@ function resolveSoloTarget(get: Get, from: Lang): Lang {
 function sanitizeTranslation(to: Lang, text: string, source?: string): string | null {
   if (to === 'tl') return sanitizeTlTranslation(text)
   if (to === 'es') return sanitizeEsTranslation(text)
+  if (to === 'vi') return sanitizeViTranslation(text)
   if (to === 'yue' || to === 'cmn' || to === 'wuu') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
@@ -276,9 +277,11 @@ export async function runTranslation(
         error:
           to === 'es'
             ? 'Could not produce Mexican Spanish for this phrase. Try again or rephrase.'
-            : to === 'tl'
-              ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
-              : to === 'cmn'
+            : to === 'vi'
+              ? 'Could not produce Vietnamese for this phrase. Try again or rephrase.'
+              : to === 'tl'
+                ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
+                : to === 'cmn'
                 ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
                 : to === 'wuu'
                   ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'

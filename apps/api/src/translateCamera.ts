@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -109,6 +109,10 @@ function isTagalogTarget(to: CameraLang): boolean {
 
 function isMexicanTarget(to: CameraLang): boolean {
   return to === 'es'
+}
+
+function isVietnameseTarget(to: CameraLang): boolean {
+  return to === 'vi'
 }
 
 function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
@@ -218,10 +222,31 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'vi') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Vietnamese (tiếng Việt).',
+      'Write for Vietnamese travelers/readers: everyday spoken Vietnamese, not stiff formal writing.',
+      'Use Latin script only (Quốc ngữ). ALWAYS include full tone and vowel-quality diacritics — never strip accents.',
+      'Do NOT use Chinese characters, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Nhận phòng; Luggage → Hành lý.',
+      '- Safety: Wet floor → Sàn ướt, cẩn thận; Caution → Cẩn thận.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Vietnamese output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Vietnamese>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   return [
     'You translate signs, menus, forms, and short labels into clear traveler English.',
-    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, or Mexican Spanish (Latin script).',
-    'When the source is Tagalog/Filipino or Mexican Spanish Latin text, translate it into concise English (Latin → English).',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, or Vietnamese (Latin script).',
+    'When the source is Tagalog/Filipino, Mexican Spanish, or Vietnamese Latin text, translate it into concise English (Latin → English).',
     docHint,
     "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
     'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
@@ -256,6 +281,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   }
   if (isMexicanTarget(to)) {
     return hasHan(source) ? `(demo Mx) ${source}` : `(demo) ${source}`
+  }
+  if (isVietnameseTarget(to)) {
+    return hasHan(source) ? `(demo VI) ${source}` : `(demo) ${source}`
   }
   return `(demo) ${source}`
 }
@@ -313,7 +341,9 @@ export async function translateCameraText(
       ? `(tr TL) ${source}`
       : isMexicanTarget(to)
         ? `(tr Mx) ${source}`
-        : `(tr) ${source}`
+        : isVietnameseTarget(to)
+          ? `(tr VI) ${source}`
+          : `(tr) ${source}`
   let translated = parseTranslation(raw, fallback)
   if (to === 'cmn') translated = scrubYueToCmn(translated).text
   remember(key, translated)
@@ -332,6 +362,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'wuu') return 'Shanghainese 上海话 / 沪语'
   if (lang === 'tl') return 'Tagalog / Filipino (Latin script)'
   if (lang === 'es') return 'Mexican Spanish (Latin script, es-MX)'
+  if (lang === 'vi') return 'Vietnamese (Latin script / Quốc ngữ, vi-VN)'
   return 'Hong Kong Chinese 繁體'
 }
 
@@ -380,7 +411,9 @@ export async function translateCameraBatch(
           ? `(tr TL) ${s}`
           : isMexicanTarget(to)
             ? `(tr Mx) ${s}`
-            : `(tr) ${s}`,
+            : isVietnameseTarget(to)
+              ? `(tr VI) ${s}`
+              : `(tr) ${s}`,
     )
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
@@ -390,6 +423,7 @@ export async function translateCameraBatch(
       else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
       else if (isTagalogTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text
         out[start + i] = t || src
@@ -410,6 +444,7 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'zh' || lang === 'yue') return 'yue'
   if (lang === 'fil' || lang === 'tl') return 'tl'
   if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
+  if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
   if (lang === 'cmn' || lang === 'en' || lang === 'wuu') return lang
   return undefined
 }
