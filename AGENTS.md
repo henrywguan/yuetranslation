@@ -12,6 +12,13 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 **Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
 
+### Adding a language
+
+When extending `Lang` (Solo / Conversation / Cam):
+
+1. Fill **`CONVERSATION_PANE_UI`** in [`apps/web/src/lib/conversationUi.ts`](apps/web/src/lib/conversationUi.ts) — native mic labels + pane hints. `Record<Lang, …>` makes `tsc` fail until this exists; do not hard-code new langs in `ConversationView` / `LiveHoldButton`.
+2. Wire the rest of the pipeline (translate, STT/TTS, pickers, pedagogy) as for `tl` / `es` / `vi`.
+
 ### Security Guardian (PR + abuse + API health)
 
 Standing security / leak / token-abuse review for every PR and scheduled full-repo scans:
