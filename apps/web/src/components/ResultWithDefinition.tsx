@@ -3,7 +3,6 @@ import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
-import { MexicanSpanishPractice } from './MexicanSpanishPractice'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -114,9 +113,6 @@ export function ResultWithDefinition({
             <CopyButton text={trimmed} lang={displayLang} />
           ) : null}
         </div>
-        {chineseLang === 'es' && trimmed ? (
-          <MexicanSpanishPractice target={trimmed} className="mx-practice--inline" />
-        ) : null}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 /**
- * Mexican Spanish educational helpers — situations, slang/culture notes, speak-score.
- * Compact panes stay accented Spanish only; these feed details / practice UI.
+ * Mexican Spanish educational helpers — situations and slang/culture notes.
+ * Compact panes stay accented Spanish only; these feed details UI.
  */
 
 import { spanishBareWord } from './mexicanSpanishStress'
@@ -199,67 +199,4 @@ export function situationsFor(text: string): MxSituation[] {
     }),
   )
   return hits.length ? hits : MX_SITUATIONS
-}
-
-export type MxSpeakScore = {
-  /** 0–100 */
-  score: number
-  labelEn: string
-  labelZh: string
-  tipsEn: string[]
-}
-
-/**
- * Local speak-score: compare STT transcript to target Mexican Spanish.
- * Rewards word overlap; lightly rewards matching written accents on stressed words.
- * No Azure Pronunciation Assessment (keeps compact pedagogy free of a new paid path).
- */
-export function scoreMexicanSpanishSpeech(heard: string, target: string): MxSpeakScore {
-  const ref = target.trim()
-  const hyp = heard.trim()
-  if (!ref) {
-    return { score: 0, labelEn: 'No target', labelZh: '冇目標', tipsEn: [] }
-  }
-  if (!hyp) {
-    return {
-      score: 0,
-      labelEn: 'No speech heard',
-      labelZh: '聽唔到',
-      tipsEn: ['Hold the mic and say the line in Mexican Spanish.'],
-    }
-  }
-
-  const refToks = tokens(ref)
-  const hypToks = tokens(hyp)
-  const refSet = new Set(refToks)
-  const hypSet = new Set(hypToks)
-  let overlap = 0
-  for (const t of hypSet) if (refSet.has(t)) overlap += 1
-  const precision = hypSet.size ? overlap / hypSet.size : 0
-  const recall = refSet.size ? overlap / refSet.size : 0
-  const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
-
-  // Accent bonus: written acute vowels in target that also appear in heard.
-  const acuteRef = (ref.match(/[áéíóúÁÉÍÓÚ]/g) || []).length
-  const acuteHyp = (hyp.match(/[áéíóúÁÉÍÓÚ]/g) || []).length
-  const accentBonus = acuteRef ? Math.min(0.08, (Math.min(acuteHyp, acuteRef) / acuteRef) * 0.08) : 0
-
-  const score = Math.round(Math.min(100, (f1 + accentBonus) * 100))
-
-  const missing = refToks.filter((t) => !hypSet.has(t)).slice(0, 4)
-  const tipsEn: string[] = []
-  if (missing.length) tipsEn.push(`Try including: ${missing.join(', ')}`)
-  if (acuteRef && acuteHyp < acuteRef) {
-    tipsEn.push('Watch stressed vowels with a tilde (á é í ó ú) — they change meaning.')
-  }
-  if (score >= 90) tipsEn.push('Sounds solid — try it a little faster, like street CDMX.')
-  else if (score >= 70) tipsEn.push('Close — one more pass for the missing bits.')
-  else if (score > 0) tipsEn.push('Listen once, then shadow the whole chunk.')
-
-  const labelEn =
-    score >= 90 ? 'Excellent' : score >= 75 ? 'Strong' : score >= 55 ? 'Getting there' : score >= 30 ? 'Keep going' : 'Try again'
-  const labelZh =
-    score >= 90 ? '好正' : score >= 75 ? '唔錯' : score >= 55 ? '有進步' : score >= 30 ? '繼續' : '再試'
-
-  return { score, labelEn, labelZh, tipsEn }
 }
