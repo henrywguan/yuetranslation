@@ -82,7 +82,7 @@ export function VietnameseText({
           </span>
         </span>
       ) : null}
-      {chips.length ? (
+      {showTones ? (
         <span className="vietnamese-southern-note">{VIETNAMESE_SOUTHERN_MERGE_NOTE}</span>
       ) : null}
     </span>

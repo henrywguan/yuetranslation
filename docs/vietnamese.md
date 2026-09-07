@@ -26,8 +26,8 @@ Azure Speech locale: **`vi-VN`** (TTS e.g. `vi-VN-HoaiMyNeural`, `vi-VN-NamMinhN
 
 ## Compact vs detailed
 
-- **Compact** (Solo / Conversation / Cam text): fully accented Vietnamese only. No tone chips, no Chao row, no ASCII tone digits, no Telex/VNI on the line.
-- **Details:** tone-class chips — *ngang / sắc / huyền / hỏi / ngã / nặng* — inferred from diacritics (`vietnameseTones.ts` when implemented). Optional Chao letters / contour labels; optional IPA; optional short North vs South note when hỏi/ngã matters.
+- **Compact** (Solo / Conversation / Cam text): fully accented Vietnamese only. No tone chips, no Chao, no IPA, no ASCII tone digits, no Telex/VNI on the line.
+- **Details:** tone-class chips — *ngang / sắc / huyền / hỏi / ngã / nặng* — inferred from diacritics (`vietnameseTones.ts`). Always show the Southern merge note (*hỏi ≈ ngã* in Southern speech; writing keeps all six marks). No Chao letters. No IPA.
 - **Learn / marketing (not every Solo line):** classic minimal pair `ma má mà mả mã mạ`; tone-mark placement tips (rhyme vowel; quality-diacritic vowels take the tone mark first).
 - **Not on compact:** inventing `ma2`-style digits, stripping diacritics, ruby-above-Latin, treating vowel hats as tones.
 
