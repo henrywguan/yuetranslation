@@ -974,8 +974,11 @@ export const ui = {
     zh: '開啟 JyutTranslate，幾秒之內就可以開始雙語對話。',
     jp: 'hoi1 kai2 JyutTranslate, gei2 miu5 zi1 noi6 zau6 ho2 ji5 hoi1 ci2 soeng1 jyu5 deoi3 waa6.',
   },
-  footerEnLang: { en: 'English', zh: '英文', jp: 'jing1 man2' },
-  footerYueLang: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
+  footerTagline: {
+    en: 'Cantonese Language Tool',
+    zh: '粵語語言工具',
+    jp: 'jyut6 jyu5 jyu5 jin4 gung1 geoi6',
+  },
   footerCopyright: {
     en: 'JyutTranslate © 2026',
     zh: 'JyutTranslate © 2026',
