@@ -142,34 +142,184 @@
   padding-right: 8px;
 }
 
-/* Real device chrome + screenshot (no fake UI) */
+/* Real device chrome — thick bezel, top island band, home bar */
 .phone {
+  --phone-bezel: 16px;
+  --phone-radius: 54px;
+  --phone-screen-radius: 40px;
+  --phone-top-chrome: 54px;
+  --phone-bottom-chrome: 22px;
   width: 420px;
   height: 860px;
-  border-radius: 48px;
-  background: #0a1218;
-  border: 3px solid #1c2a36;
+  border-radius: var(--phone-radius);
+  background: linear-gradient(145deg, #3a424a 0%, #1a2028 38%, #0b0f14 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 40px 80px rgba(7, 19, 31, 0.35),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.06);
-  overflow: hidden;
+    0 42px 90px rgba(7, 19, 31, 0.4),
+    0 8px 24px rgba(7, 19, 31, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
+  overflow: visible;
   position: relative;
   flex-shrink: 0;
+  padding: var(--phone-bezel);
+  box-sizing: border-box;
 }
 
 .phone--lg {
+  --phone-bezel: 18px;
+  --phone-radius: 60px;
+  --phone-screen-radius: 44px;
+  --phone-top-chrome: 58px;
+  --phone-bottom-chrome: 24px;
   width: 480px;
   height: 980px;
-  border-radius: 54px;
+}
+
+.phone__side {
+  position: absolute;
+  background: linear-gradient(180deg, #2a323a, #151b22);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 2;
+}
+
+.phone__side--vol-up {
+  left: -3px;
+  top: 152px;
+  width: 4px;
+  height: 42px;
+}
+
+.phone__side--vol-down {
+  left: -3px;
+  top: 206px;
+  width: 4px;
+  height: 64px;
+}
+
+.phone__side--power {
+  right: -3px;
+  top: 192px;
+  width: 4px;
+  height: 78px;
+}
+
+.phone__bezel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--phone-screen-radius);
+  background: #000;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.08),
+    inset 0 0 32px rgba(0, 0, 0, 0.65);
+}
+
+/* Black speaker / camera band — screenshot starts below this */
+.phone__top-chrome {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--phone-top-chrome);
+  background: #000;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.phone__island {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 36px;
+  border-radius: 22px;
+  background: #0a0a0c;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 2px rgba(255, 255, 255, 0.12);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.phone__island::before {
+  /* speaker mesh */
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #1a1a1e, #050506);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.phone__island::after {
+  /* camera lens */
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 32%, #4a6a88 0%, #0c1824 52%, #020508 100%);
+  box-shadow:
+    0 0 0 2px #050508,
+    0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.phone--lg .phone__island {
+  width: 140px;
+  height: 38px;
+  top: 14px;
+}
+
+.phone__screen {
+  position: absolute;
+  top: var(--phone-top-chrome);
+  left: 0;
+  right: 0;
+  bottom: var(--phone-bottom-chrome);
+  overflow: hidden;
+  background: #07131f;
+  z-index: 1;
 }
 
 .phone__shot {
   display: block;
   width: 100%;
-  height: 100%;
+  /* Crop screenshot native status bar / island under our hardware chrome */
+  height: 118%;
+  margin-top: -9%;
   object-fit: cover;
-  object-position: top center;
+  object-position: center top;
 }
+
+.phone__home {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.phone--lg .phone__home {
+  width: 142px;
+  bottom: 9px;
+}
+
 
 /* Slide 3 — single phone focus */
 .lang-launch--solo {
