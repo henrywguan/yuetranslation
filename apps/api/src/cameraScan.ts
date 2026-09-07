@@ -25,7 +25,7 @@ const Body = z.object({
    */
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
-  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'tl', 'es']).optional(),
+  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi']).optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
   /**
@@ -81,6 +81,9 @@ function pickTarget(
   }
   if (preferred === 'es') {
     return looksChinese ? { from: 'yue', to: 'es' } : { from: 'en', to: 'es' }
+  }
+  if (preferred === 'vi') {
+    return looksChinese ? { from: 'yue', to: 'vi' } : { from: 'en', to: 'vi' }
   }
   if (preferred === 'wuu') {
     return looksChinese ? { from: 'wuu', to: 'wuu' } : { from: 'en', to: 'wuu' }

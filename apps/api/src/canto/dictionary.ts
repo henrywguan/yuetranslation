@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -71,7 +71,7 @@ function alternativeRomanizationsFor(entry: PhraseEntry, alternatives: string[])
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
@@ -92,7 +92,8 @@ export function dictionaryTranslate(opts: {
       entry.targetLang === 'en' ||
       entry.targetLang === 'wuu' ||
       entry.targetLang === 'tl' ||
-      entry.targetLang === 'es')
+      entry.targetLang === 'es' ||
+      entry.targetLang === 'vi')
       ? uniqStrings(entry.text, entry.alternatives || [])
       : []
   const alternativeRomanizations =
