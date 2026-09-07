@@ -735,8 +735,8 @@ export const ui = {
 
   heroEyebrow: {
     en: 'Cantonese Language Tool',
-    zh: 'JyutJyu Translator',
-    jp: '',
+    zh: '粵語翻譯器',
+    jp: 'jyut6 jyu5 faan1 jik6 hei3',
   },
   /** English-line teaser tip on the hero eyebrow. */
   heroMultilangTipTrigger: {
