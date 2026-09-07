@@ -3395,8 +3395,7 @@
   gap: 0.55em;
 }
 
-.ln-footer-lang-stack,
-.ln-footer-lang-arrow-stack {
+.ln-footer-lang-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3404,12 +3403,6 @@
   text-align: center;
   gap: 0.22rem;
   min-width: 0;
-}
-
-.ln-footer-lang-arrow-stack {
-  flex: none;
-  color: color-mix(in srgb, var(--jade) 78%, var(--muted));
-  font-weight: 650;
 }
 
 .ln-footer-lang-en {
@@ -3432,12 +3425,6 @@
   color: color-mix(in srgb, var(--ink) 72%, var(--muted));
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--muted) 55%, transparent);
-}
-
-.ln-footer-lang-zh--arrow {
-  cursor: default;
-  border-bottom: 0;
-  color: color-mix(in srgb, var(--jade) 78%, var(--muted));
 }
 
 /* ---------- Landing pricing teaser link ---------- */
