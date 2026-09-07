@@ -754,6 +754,12 @@ export const ui = {
     zh: '以下係我哋而家支援嘅語言。',
     jp: 'ji5 haa6 hai6 ngo5 dei6 ji4 gaa1 zi1 wun6 ge3 jyu5 jin4.',
   },
+  /** Static label beside the lizard word-spin (uiverse kennyotsu/fresh-lizard-20). */
+  heroMultilangTipLoading: {
+    en: 'Supported',
+    zh: '支援',
+    jp: 'zi1 wun6',
+  },
   heroMultilangTipAsk: {
     en: 'Do you have any suggestions?',
     zh: '有冇想建議嘅語言？',
