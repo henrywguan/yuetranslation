@@ -103,7 +103,7 @@ export function setTtsPlaybackRate(rate: number) {
   if (audio) audio.playbackRate = playbackRate
 }
 
-export function stopSpeaking() {
+export function stopSpeaking(opts?: { preserveSession?: boolean }) {
   sequenceId += 1
   gen += 1
   playing = false
@@ -116,12 +116,15 @@ export function stopSpeaking() {
     } catch {
       /* ignore */
     }
-    // Keep the shared element (iOS unlock) — clear src only.
-    try {
-      audio.removeAttribute('src')
-      audio.load()
-    } catch {
-      audio.src = ''
+    // iOS: audio.load() resets the shared audio session and the next Web Speech
+    // start looks live but captures nothing. Mic barge-in only pauses.
+    if (!opts?.preserveSession) {
+      try {
+        audio.removeAttribute('src')
+        audio.load()
+      } catch {
+        audio.src = ''
+      }
     }
   }
   if (url) {
