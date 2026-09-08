@@ -45,6 +45,11 @@ const Body = z.object({
   to: LangZ,
   /** When true, also return colloquial alternatives for EN↔粵/Mandarin when they exist. */
   includeAlternatives: z.boolean().optional().default(false),
+  /**
+   * Force Mexican Spanish (and future) register. When omitted, inferred from source
+   * (`mexicanSpanishRegister.ts`). Details “Make formal” sends `formal`.
+   */
+  register: z.enum(['colloquial', 'formal']).optional(),
 })
 
 function emptyMeta(notes: string[] = []) {
@@ -957,15 +962,20 @@ async function translateMexicanSpanish(opts: {
   stage: TranslateStage
   wantAlts: boolean
   fallbackDefinition: string
+  /** When set, skips source inference (details formalize control). */
+  registerOverride?: 'colloquial' | 'formal'
 }): Promise<TranslateResult> {
-  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+  const { from, to, text, stage, wantAlts, fallbackDefinition, registerOverride } = opts
 
-  const dictHit = dictionaryTranslate({
-    sourceLang: from,
-    targetLang: to,
-    source: text,
-    wantAlternatives: wantAlts,
-  })
+  const dictHit =
+    registerOverride === 'formal'
+      ? null
+      : dictionaryTranslate({
+          sourceLang: from,
+          targetLang: to,
+          source: text,
+          wantAlternatives: wantAlts,
+        })
   if (dictHit) {
     return withLearnerDefinitions(
       {
@@ -1008,7 +1018,9 @@ async function translateMexicanSpanish(opts: {
 
   const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
   const toEs = to === 'es'
-  const register = toEs ? inferMexicanSpanishRegister(text) : 'colloquial'
+  const register = toEs
+    ? registerOverride || inferMexicanSpanishRegister(text)
+    : 'colloquial'
   const registerNote = register === 'formal' ? 'es-mx-formal' : 'es-mx-colloquial'
   let primary = text
   let alternatives: string[] = []
@@ -1471,7 +1483,15 @@ export async function translate(input: unknown) {
   }
 
   if (to === 'es' || (from === 'es' && to === 'en')) {
-    return translateMexicanSpanish({ from, to, text, stage, wantAlts, fallbackDefinition })
+    return translateMexicanSpanish({
+      from,
+      to,
+      text,
+      stage,
+      wantAlts,
+      fallbackDefinition,
+      registerOverride: parsed.register,
+    })
   }
 
   if (to === 'vi' || (from === 'vi' && to === 'en')) {

@@ -32,7 +32,7 @@ import { BiText } from './BiText'
 import { SpeakButton } from './SpeakButton'
 import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
-import { MexicanSpanishLearnPanel } from './MexicanSpanishLearnPanel'
+import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 import './DetailPanel.css'
@@ -92,6 +92,7 @@ export function CharacterBreakdownHost() {
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
   const selectEnVariation = useYueStore((s) => s.selectEnVariation)
   const altsLoading = useYueStore((s) => s.altsLoading)
+  const latestTurn = useYueStore((s) => s.history[0])
   const dockUpsert = usePanelDock((s) => s.upsert)
   const dockRemove = usePanelDock((s) => s.remove)
 
@@ -576,7 +577,22 @@ export function CharacterBreakdownHost() {
                 ) : null}
               </div>
             ) : null}
-            {isEsDetail ? <MexicanSpanishLearnPanel text={topLabel} /> : null}
+            {isEsDetail ? (
+              <MexicanSpanishRegisterPanel
+                text={topLabel}
+                sourceText={
+                  top.kind === 'phrase'
+                    ? top.translation ||
+                      (latestTurn?.to === 'es' ? latestTurn.source : undefined)
+                    : undefined
+                }
+                sourceLang={
+                  latestTurn?.to === 'es' && latestTurn.from !== 'es'
+                    ? latestTurn.from
+                    : 'en'
+                }
+              />
+            ) : null}
             {loading && !rows.length ? (
               <p className="detail-panel-loading muted">Loading…</p>
             ) : rows.length ? (

@@ -9,7 +9,8 @@ import {
   unlockTtsPlayback,
   duckTtsForMicBargeIn,
 } from './tts'
-import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
+import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref, translateText } from './api'
+import { sanitizeEsTranslation } from './translationGuard'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
 import {
@@ -175,6 +176,15 @@ type State = {
   /** Promote a variation to primary, reshuffle alts, and open its character breakdown. */
   selectYueVariation: (phrase: string) => void
   selectEnVariation: (phrase: string) => void
+  /**
+   * Re-translate the current Mexican Spanish turn as formal register and swap it in.
+   * Uses paid `/api/translate` — callers should only fire from explicit user taps.
+   */
+  formalizeMexicanSpanish: (opts: {
+    spanish: string
+    sourceText: string
+    sourceLang?: Lang
+  }) => Promise<void>
   /** Clear Solo / Conversation active text only — keeps History. */
   clearCurrent: () => void
   /** Wipe History list (and persist empty to the account when signed in). */
@@ -1596,6 +1606,94 @@ export const useYueStore = create<State>((set, get) => {
       ],
       detailMinimized: false,
     })
+  },
+
+  formalizeMexicanSpanish: async ({ spanish, sourceText, sourceLang = 'en' }) => {
+    const source = sourceText.trim()
+    const prev = spanish.trim()
+    if (!source || !prev) return
+    const from: Lang = sourceLang === 'es' ? 'en' : sourceLang
+    set({ translating: true, translatingTo: 'es', error: null })
+    try {
+      const result = await translateText(source, from, 'es', {
+        includeAlternatives: true,
+        register: 'formal',
+      })
+      const formal = sanitizeEsTranslation(result.text)
+      if (!formal) throw new Error('Formal translation returned empty')
+      const alts = (result.alternatives || [])
+        .map((a) => sanitizeEsTranslation(a))
+        .filter((a): a is string => Boolean(a && a !== formal))
+        .slice(0, 3)
+      const history = get().history
+      const latest = history[0]
+      const nextHistory =
+        latest && latest.to === 'es'
+          ? [
+              {
+                ...latest,
+                translation: formal,
+                definition: result.definition || latest.definition,
+                definitions: result.definitions?.length
+                  ? result.definitions
+                  : latest.definitions,
+                alternatives: alts.length ? alts : undefined,
+              },
+              ...history.slice(1),
+            ]
+          : history
+
+      const face = get().face
+      const nextFace =
+        get().mode === 'conversation'
+          ? {
+              ...face,
+              yueTranslation:
+                face.yueTranslation.trim() === prev ? formal : face.yueTranslation,
+              enTranslation:
+                face.enTranslation.trim() === prev ? formal : face.enTranslation,
+            }
+          : face
+
+      set({
+        enTranslation: get().enTranslation.trim() === prev ? formal : get().enTranslation,
+        enAlternatives:
+          get().soloUpperLang === 'es' || get().enTranslation.trim() === formal
+            ? alts
+            : get().enAlternatives,
+        yueTranslation: get().yueTranslation.trim() === prev ? formal : get().yueTranslation,
+        yueAlternatives:
+          get().soloLowerLang === 'es' || get().yueTranslation.trim() === formal
+            ? alts
+            : get().yueAlternatives,
+        yueDefinition: result.definition || get().yueDefinition,
+        yueDefinitions: result.definitions?.length
+          ? result.definitions
+          : get().yueDefinitions,
+        history: nextHistory,
+        face: nextFace,
+        detailStack: [
+          {
+            kind: 'phrase',
+            phrase: formal,
+            lang: 'es',
+            translation: source,
+            definition: result.definition || undefined,
+            definitions: result.definitions?.length ? result.definitions : undefined,
+            alternatives: alts.length ? alts : undefined,
+          },
+        ],
+        detailMinimized: false,
+        error: null,
+      })
+    } catch (e) {
+      set({
+        error: humanizeThrownError(e) || 'Could not formalize translation',
+      })
+      throw e
+    } finally {
+      set({ translating: false, translatingTo: null })
+    }
   },
 
   clearCurrent: () => {

@@ -108,10 +108,16 @@ export async function translateText(
   text: string,
   from: Lang,
   to: Lang,
-  opts?: { includeAlternatives?: boolean; signal?: AbortSignal },
+  opts?: {
+    includeAlternatives?: boolean
+    signal?: AbortSignal
+    /** Force Mexican Spanish register (details formalize). */
+    register?: 'colloquial' | 'formal'
+  },
 ): Promise<TranslateResponse> {
   const alts = Boolean(opts?.includeAlternatives)
-  const cacheKey = `${from}|${to}|${alts ? 1 : 0}|${text.trim()}`
+  const register = opts?.register || ''
+  const cacheKey = `${from}|${to}|${alts ? 1 : 0}|${register}|${text.trim()}`
   const cached = translateCache.get(cacheKey)
   if (cached) return cached
 
@@ -124,6 +130,7 @@ export async function translateText(
       from,
       to,
       includeAlternatives: alts,
+      ...(opts?.register ? { register: opts.register } : {}),
     }),
   })
   if (!res.ok) await throwApiError(res, 'Translation failed')
