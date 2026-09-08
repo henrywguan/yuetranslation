@@ -965,6 +965,10 @@ body.cam-ar-open.yue-details-open .cam-ar-live-zoom {
   color: #ffc9c9;
 }
 
+.cam-ar-toast--ok {
+  color: #b8f5e4;
+}
+
 .cam-ar-busy {
   color: var(--jade);
 }
@@ -1070,6 +1074,31 @@ body.cam-ar-open.yue-details-open .cam-ar-live-zoom {
 .cam-ar-clear:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.cam-ar-save {
+  appearance: none;
+  position: absolute;
+  right: calc(100% + 18px);
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 18%, transparent);
+  background: color-mix(in srgb, #041018 60%, transparent);
+  color: #e8fff6;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.cam-ar-save:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cam-ar-save-card {
+  max-width: min(420px, calc(100vw - 32px));
 }
 
 .cam-ar-sheet {
