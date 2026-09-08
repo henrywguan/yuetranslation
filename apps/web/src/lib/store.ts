@@ -1,11 +1,18 @@
 import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
-import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tts'
+import {
+  speakText,
+  stopSpeaking,
+  isMicEchoMuted,
+  isTtsPlaying,
+  unlockTtsPlayback,
+  duckTtsForMicBargeIn,
+} from './tts'
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
-import { appleFallsBackToAzure, appleLiveUsesWebSpeech } from './liveStt'
+import { appleFallsBackToAzure, appleLiveUsesWebSpeech, shouldDeferTtsStopUntilSttStarts } from './liveStt'
 import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
@@ -337,20 +344,29 @@ function formatMinutes(seconds: number) {
   return Math.max(0, Math.ceil(seconds / 60))
 }
 
+function micTurnIsLive(get: () => State) {
+  return Boolean(get().live || holding || startingHold || tapSticky || pendingStickyTap)
+}
+
 async function runSpeak(
   get: () => State,
   set: (p: Partial<State>) => void,
   text: string,
   lang: Lang,
 ) {
+  // Don't layer auto-speak onto a tap the user already started (e.g. during translate).
+  if (micTurnIsLive(get)) return
   const token = ++speakToken
   get().session?.setPlaybackActive(true)
   set({ status: 'speaking', speakingText: text })
   try {
     await speakText(text, lang)
   } finally {
-    get().session?.setPlaybackActive(false)
+    // Only the still-current speak owns echo-tail / status. A barge-in tap
+    // increments speakToken; applying setPlaybackActive(false) on the *new*
+    // live session would swallow the first ~600ms of speech.
     if (token === speakToken) {
+      get().session?.setPlaybackActive(false)
       set({ status: get().live ? 'listening' : 'idle', speakingText: null })
     }
   }
@@ -368,6 +384,7 @@ async function speakFinal(
   const entAuto = Boolean(ent?.allowed.autoSpeak)
   const allowed = Boolean(entAuto && autoSpeakFlag)
   if (!allowed) return
+  if (micTurnIsLive(get)) return
   await runSpeak(get, set, text, lang)
 }
 
@@ -387,9 +404,10 @@ function holdSourceText() {
 }
 
 function bargeInTtsIfNeeded(get: () => State) {
-  if (isMicEchoMuted() || get().status === 'speaking') {
-    stopSpeaking()
-    get().session?.setPlaybackActive(false)
+  if (isMicEchoMuted() || isTtsPlaying() || get().status === 'speaking') {
+    // preserveSession: audio.load() / speechSynthesis.cancel() while Web Speech
+    // is live makes the next capture silent on iPhone.
+    stopSpeaking({ preserveSession: isAppleTouchDevice() })
   }
 }
 
@@ -938,22 +956,39 @@ export const useYueStore = create<State>((set, get) => {
   },
 
   startHold: async (side) => {
-    // Gesture-time unlocks first — must run before any await on this turn (iOS).
-    unlockTtsPlayback()
-    ensureSharedAudioContext()
-    speakToken += 1
     const apple = isAppleTouchDevice()
-    // iOS: do not audio.load() here — that resets the session and the next
-    // Web Speech / Azure tap shows the icon with no audio.
-    stopSpeaking({ preserveSession: apple })
-    set({ status: 'idle', speakingText: null })
-
+    const bargingIn = isTtsPlaying() || get().status === 'speaking'
     const appleFollowUp = apple && appleMicTurns > 0
     // Every iOS tap uses Web Speech (zh-HK when locked to Yue). Azure LID on
     // later taps was emitting English onto the Cantonese pane.
     const webSpeechFirst = apple && appleLiveUsesWebSpeech() && !liveSessionFactory
-    const micPriming =
-      liveSessionFactory || (webSpeechFirst && !appleFollowUp) ? null : unlockMicrophone()
+    const deferTtsStop = shouldDeferTtsStopUntilSttStarts({
+      apple,
+      webSpeechFirst,
+      ttsPlaying: bargingIn,
+    })
+
+    // Gesture-time unlocks first — must run before any await on this turn (iOS).
+    // Do not steal the shared audio element while auto-speak is playing.
+    if (!bargingIn) unlockTtsPlayback()
+    ensureSharedAudioContext()
+
+    if (!deferTtsStop) {
+      speakToken += 1
+      // iOS: do not audio.load() here — that resets the session and the next
+      // Web Speech / Azure tap shows the icon with no audio.
+      stopSpeaking({ preserveSession: apple })
+      set({ status: 'idle', speakingText: null })
+    }
+
+    // Follow-up taps keep a getUserMedia hold so Safari stays in record mode.
+    // Do not open gUM *while* TTS is playing — that fight cancels Web Speech.
+    let micPriming: Promise<MediaStream | null> | null = null
+    const skipMicPrimeNow =
+      Boolean(liveSessionFactory) || (webSpeechFirst && !appleFollowUp) || deferTtsStop
+    if (!skipMicPrimeNow) {
+      micPriming = unlockMicrophone()
+    }
 
     // Wait out an in-flight endHold flush on Azure. On Apple first tap,
     // recognition.start() must stay in this gesture turn.
@@ -1073,7 +1108,9 @@ export const useYueStore = create<State>((set, get) => {
       },
       onStatus: (status: 'listening' | 'idle' | 'speaking') => {
         if (gen !== holdGen) return
-        if (get().status === 'speaking' && status === 'listening') return
+        // Ignore leftover "listening" while auto-speak is playing — but not
+        // during an in-progress mic start (barge-in must be allowed to listen).
+        if (get().status === 'speaking' && status === 'listening' && !startingHold) return
         if (status !== 'speaking') set({ status })
       },
     }
@@ -1099,6 +1136,13 @@ export const useYueStore = create<State>((set, get) => {
       // Follow-up taps also keep a getUserMedia hold so Safari’s audio session
       // stays in record mode — otherwise the 2nd start is silent.
       next = createWebSpeechSession(handlers, webSpeechLock())
+      if (next && deferTtsStop) {
+        // Duck then start then pause — pausing HTMLAudio *before* rec.start()
+        // (and speechSynthesis.cancel) makes Safari show the mic with no capture.
+        speakToken += 1
+        duckTtsForMicBargeIn()
+        set({ status: 'listening', speakingText: null })
+      }
       if (next) {
         try {
           await next.start()
@@ -1112,6 +1156,12 @@ export const useYueStore = create<State>((set, get) => {
           next = null
           alreadyStarted = false
         }
+      }
+      if (deferTtsStop) {
+        stopSpeaking({ preserveSession: true })
+      }
+      if (alreadyStarted && appleFollowUp && !micPriming) {
+        micPriming = unlockMicrophone()
       }
       if (alreadyStarted && micPriming) {
         const warmed = await micPriming

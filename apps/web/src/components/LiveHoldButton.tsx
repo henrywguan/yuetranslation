@@ -201,6 +201,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     capturePointer(target, e.pointerId)
     armWinListeners(e.pointerId, target)
     // Unlock TTS in this gesture turn so Solo auto-speak can play after async translate (iOS).
+    // No-op while auto-speak is already playing — stealing the shared element cancels mic capture.
     unlockTtsPlayback()
     // startHold must own getUserMedia + recognition.start() in this gesture turn.
     // Do not unlock+stop a competing stream here — that races and leaves STT silent.

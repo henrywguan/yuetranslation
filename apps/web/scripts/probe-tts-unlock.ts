@@ -81,11 +81,25 @@ async function main() {
 `
   writeFileSync(join(dir, 'api.ts'), apiStub)
   writeFileSync(join(dir, 'types.ts'), `export type Lang = 'en' | 'yue'\n`)
+  writeFileSync(
+    join(dir, 'ttsVoices.ts'),
+    `export function readLocalCmnVoice() { return null }
+export function readLocalWuuVoice() { return null }
+export function readLocalEnVoice() { return null }
+export function readLocalTlVoice() { return null }
+export function readLocalEsVoice() { return null }
+export function readLocalViVoice() { return null }
+export function readLocalYueVoice() { return null }
+`,
+  )
 
   // Read real tts.ts and rewrite imports to local stubs.
   const { readFileSync } = await import('node:fs')
   let src = readFileSync(new URL('../src/lib/tts.ts', import.meta.url), 'utf8')
-  src = src.replace("from './api'", "from './api.ts'").replace("from './types'", "from './types.ts'")
+  src = src
+    .replace("from './api'", "from './api.ts'")
+    .replace("from './types'", "from './types.ts'")
+    .replace("from './ttsVoices'", "from './ttsVoices.ts'")
   writeFileSync(join(dir, 'tts.ts'), src)
 
   const tts = await import(pathToFileURL(join(dir, 'tts.ts')).href)
