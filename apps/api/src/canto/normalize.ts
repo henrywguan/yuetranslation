@@ -4,7 +4,9 @@ export function normalizeLookupKey(text: string) {
     .toLowerCase()
     .normalize('NFKC')
     .replace(/[’']/g, "'")
-    .replace(/[?!.,;:。？！，、…]+$/g, '')
+    // Strip Spanish/Latin inverted marks and trailing sentence punctuation.
+    .replace(/[¡¿]+/g, '')
+    .replace(/[?!.,;:。？！，、…¡¿]+$/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }

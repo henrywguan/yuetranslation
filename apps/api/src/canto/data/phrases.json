@@ -6435,6 +6435,38 @@
       ]
     },
     {
+      "id": "en-no-way-es",
+      "sourceLang": "en",
+      "targetLang": "es",
+      "source": "no way",
+      "text": "¡No manches!",
+      "alternatives": [
+        "¡No mames!",
+        "¿A poco?"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "exclamation",
+        "mexican-spanish"
+      ]
+    },
+    {
+      "id": "es-no-manches-en",
+      "sourceLang": "es",
+      "targetLang": "en",
+      "source": "no manches",
+      "text": "No way!",
+      "alternatives": [
+        "You're kidding!",
+        "No way"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "exclamation",
+        "mexican-spanish"
+      ]
+    },
+    {
       "id": "en-hello-vi",
       "sourceLang": "en",
       "targetLang": "vi",

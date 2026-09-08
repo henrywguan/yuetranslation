@@ -15,7 +15,13 @@ Vercel 生产栈的套餐与计量以本文为准。
 | Documents | Sign-in required (button greyed) | Yes (docs page meter) |
 | Auto-speak | No | Family/Business |
 
-Guests get an HttpOnly `yue_guest_id` cookie (1 year, `SameSite=Lax`, `Secure` on HTTPS). The API sets it on first anonymous request via `attachGuest`; the browser keeps it and sends it back on later calls. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free. Clearing site cookies (or private browsing) creates a **new** guest id and resets trial meters — that is why IP rate limits matter.
+Guests get an HttpOnly `yue_guest_id` cookie (1 year, `SameSite=Lax`, `Secure` on HTTPS). Guest **identity** is resolved in this order:
+
+1. **Device id** — SPA stores a UUID in `localStorage` and sends `X-Yue-Guest-Device` on API calls. Survives cookie wipe and most IP/VPN changes on the same browser profile.
+2. **Network registry** — server maps `sha256(ip|month)` → guest id (`guest_network_trials`). Survives cookie wipe on the same network.
+3. **Fallback** — deterministic id from IP + month when neither mapping exists yet.
+
+Usage lands in `guest_usage_months` and merges into the user on sign-in (cookie + device + network candidates). When live/cam trial is exhausted, the UI asks them to sign in and continue on Free. Residual: full site-data clear **and** a new IP still yields a new trial; shared café NAT shares one network trial (intentional).
 
 ### Guest per-IP rate limits (app)
 
@@ -130,7 +136,7 @@ Signed-in `prefs.autoSpeak` syncs across devices via `PATCH /api/prefs/auto-spea
 
 | Endpoint | Gate |
 | --- | --- |
-| `GET /speech-token` | live |
+| `GET /speech-token` | live — prepaid ≤60s live debit + TTL ≤180s |
 | `POST /usage/heartbeat` | live, then add seconds |
 | `POST /tts` | Free: char quota; Family/Business: always (usage counted); guests: allowed |
 | `POST /translate` | `allowed.textTranslate` (guests OK); may increment `translate_count` |
@@ -138,8 +144,8 @@ Signed-in `prefs.autoSpeak` syncs across devices via `PATCH /api/prefs/auto-spea
 | `POST /camera/scan` | `allowed.camera` (scan credits) — or `allowed.docs` when `forDocs: true` (no Cam scan charge) |
 | `POST /usage/camera-heartbeat` | plan can_camera (logging only) — adds `cameraSeconds`; does **not** gate on scan credits |
 | `POST /docs/translate` | `allowed.docs` — Office/TXT; bills pages on success |
-| `POST /docs/segments` | `allowed.docs` — PDF text batch; no page bill |
-| `POST /docs/commit` | signed-in docs — bill PDF pages after success |
+| `POST /docs/segments` | `allowed.docs` — PDF text batch; bills estimated docs pages (prepaid); commit deducts prepaid |
+| `POST /docs/commit` | signed-in docs — bill remaining PDF pages after success (`pages - prepaidPages`) |
 
 Usage writes go through `increment_usage` (migrations `003` … `010`) so concurrent counters do not overwrite each other. The web client flushes live seconds when a mic session ends. `ai_vision_count` tracks multimodal LLM OCR fallbacks with a **hard monthly cap** (Azure Read still runs when exhausted). Defaults: Free **200** · Family **2000** · Business **10000**.
 

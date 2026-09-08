@@ -1,6 +1,7 @@
 import type { Entitlement } from './types'
 import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
+import { guestDeviceHeaders } from './guestDevice'
 
 export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu'
 
@@ -15,7 +16,10 @@ export type DocFileResult = {
 }
 
 async function docsFetch(path: string, body: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...guestDeviceHeaders(),
+  }
   const token = await getAccessToken()
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(`${resolveApiBase()}${path}`, {
@@ -47,22 +51,33 @@ export async function translateDocSegments(input: {
   segments: string[]
   from: DocLang
   to: DocLang
-}): Promise<{ translations: string[]; entitlement?: Entitlement }> {
+}): Promise<{ translations: string[]; entitlement?: Entitlement; pagesBilled?: number }> {
   return (await docsFetch('/docs/segments', input)) as {
     translations: string[]
     entitlement?: Entitlement
+    pagesBilled?: number
   }
 }
 
-/** Bill PDF pages only after a successful hybrid job. */
-export async function commitDocPages(pages: number): Promise<{
+/** Bill PDF pages after a successful hybrid job (minus pages already billed via segments). */
+export async function commitDocPages(
+  pages: number,
+  opts?: { prepaidPages?: number },
+): Promise<{
   ok: boolean
   pages: number
+  prepaidPages?: number
+  pagesBilled?: number
   entitlement?: Entitlement
 }> {
-  return (await docsFetch('/docs/commit', { pages })) as {
+  return (await docsFetch('/docs/commit', {
+    pages,
+    prepaidPages: opts?.prepaidPages ?? 0,
+  })) as {
     ok: boolean
     pages: number
+    prepaidPages?: number
+    pagesBilled?: number
     entitlement?: Entitlement
   }
 }

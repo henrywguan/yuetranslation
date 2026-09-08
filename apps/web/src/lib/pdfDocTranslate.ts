@@ -192,6 +192,7 @@ export async function translatePdfHybrid(
   const outPdf = await PDFDocument.create()
   const total = pdf.numPages
   const target = to === 'en' ? ('en' as const) : to === 'cmn' ? ('cmn' as const) : ('yue' as const)
+  let prepaidPages = 0
 
   for (let pageNum = 1; pageNum <= total; pageNum++) {
     onProgress?.('reading', pageNum, total)
@@ -214,12 +215,13 @@ export async function translatePdfHybrid(
     if (charCount >= TEXT_CHAR_THRESHOLD) {
       onProgress?.('translating', pageNum, total)
       const slice = lineItems.slice(0, MAX_SEGMENTS)
-      const { translations, entitlement } = await translateDocSegments({
+      const { translations, entitlement, pagesBilled } = await translateDocSegments({
         segments: slice.map((i) => i.text),
         from,
         to,
       })
       if (entitlement) onEntitlement?.(entitlement)
+      prepaidPages += Math.max(0, Number(pagesBilled) || 0)
       paintTranslations(
         ctx,
         canvas,
@@ -276,9 +278,9 @@ export async function translatePdfHybrid(
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
   }
   const base = file.name.replace(/\.pdf$/i, '') || 'document'
-  // Bill only after the full PDF hybrid job succeeds.
+  // Bill remaining pages (OCR path) after success; segment pages already prepaid.
   onProgress?.('saving', total, total)
-  const committed = await commitDocPages(total)
+  const committed = await commitDocPages(total, { prepaidPages })
   if (committed.entitlement) onEntitlement?.(committed.entitlement)
   return {
     filename: `${base}.${to}.pdf`,

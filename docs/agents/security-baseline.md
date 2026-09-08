@@ -4,22 +4,22 @@ Full-project Security Guardian pass (code review + safe `/api/health` + `npm aud
 Re-run via **Vulnerability Scanner** automation or chat: follow `docs/agents/security-guardian.md`.
 
 Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production HTTP)  
-Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AUTOMATED hardenings (see below)
+Updated: **2026-09-08** — speech-token prepaid debit, IP-bound guest ids, docs/segments page metering, slim health, JSON body split; `¡No manches!` phrase rescue
 
 ---
 
-## Executive summary (2026-09-06)
+## Executive summary (2026-09-08)
 
 | Area | Status |
 | --- | --- |
-| Secrets in repo / client bundles | **Healthy** — no service-role / Stripe / Azure keys committed; `npm audit` → 0 vulns |
+| Secrets in repo / client bundles | **Healthy** — no service-role / Stripe / Azure keys committed |
 | Open mode / login defaults | **Healthy** — `YUE_OPEN_MODE` fail-closed `'0'`; `vercel.json` pins `0` + `YUE_REQUIRE_LOGIN=1` |
 | CORS | **Healthy** — allowlist (not `origin: true`) |
 | Admin / Stripe / auth webhooks | **Healthy** — `requireAdmin`; Stripe `constructEvent`; Standard Webhooks on auth hooks |
-| Guest / paid-API abuse | **Partially hardened** — guest IP RL on translate/breakdown/speech-token/camera; TTS uncapped by choice; cookie rotation + minute/token decoupling still open |
-| Health info disclosure | **Residual** — no `envFile`, but engines/models/full entitlement still public |
+| Guest / paid-API abuse | **Hardened** — guest IP RL + **IP-bound guest ids** (cookie wipe no longer refreshes trial); speech-token **prepay** live seconds; docs/segments bills pages |
+| Health info disclosure | **Hardened** — public health is readiness + entitlement + incident banner (no model/lexicon/notify dump) |
 
-**Safe health probe:** `npm run security:api-health` → fail=0 (2026-09-06).
+**Safe health probe:** `npm run security:api-health` → fail=0.
 
 ---
 
@@ -45,31 +45,28 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 - **Evidence (was):** Guest-reachable LLM path with no `addTranslateCount`.
 - **Residual:** Still no IP rate limit (same as translate).
 
-### [High] Speech token issued without consuming live minutes — STILL OPEN
+### [High] Speech token issued without consuming live minutes — FIXED (prepaid debit)
+- **Status:** Fixed 2026-09-08 — `GET /api/speech-token` requires ≥15s remaining, advertises TTL ≤180s, and **debits up to 60 live seconds** on mint (user + guest). Heartbeats still record session time.
 - **Category:** metering
-- **Evidence:** `GET /api/speech-token` checks `allowed.live` then issues an Azure STS token (~540s). Live seconds only decrement via client `POST /api/usage/heartbeat`.
-- **Impact:** While minutes “remain”, a client can mint tokens and run STT without heartbeats → Azure STT spend largely unmetered.
-- **Fix:** Tie token issuance to remaining seconds / rate-limit issuance / shorter TTL + server-side debit.
-- **Fixability:** NEEDS_HUMAN
+- **Residual:** Heartbeats can slightly over-count after prepaid debit; Family still has a finite live minutes cap.
+- **Fixability:** Done
 
 ### [High] Camera OCR/scan without camera-minute burn — FIXED (scan credits)
 - **Status:** Fixed 2026-09-06 — Cam hard gate is monthly **scan credits** (`camera_translate_count`): Guest 30 / Free 120 / Family 800 / Business unlimited. Each successful non-docs `/api/camera/scan` costs 1 credit (pre-check + charge on success). Heartbeats still write `cameraSeconds` for admin logging only and no longer gate Cam.
 - **Category:** metering
-- **Residual:** Guest cookie rotation still refreshes scan trial; guest IP RL applies.
+- **Residual:** Guest IP change still starts a new trial identity (see guest binding).
 
-### [High] Guest cookie rotation resets trial meters — STILL OPEN
+### [High] Guest cookie rotation resets trial meters — FIXED (device + network anchors)
+- **Status:** Fixed 2026-09-08 — guest id resolved via (1) durable `X-Yue-Guest-Device` / `localStorage`, (2) `guest_network_trials` IP hash registry, (3) IP-derived fallback. Migration `025_guest_identity_anchors.sql`.
 - **Category:** abuse / metering
-- **Evidence:** Guest id is HttpOnly cookie UUID (`guest.ts`). Dropping the cookie → new UUID → fresh guest live/camera minutes (`YUE_GUEST_*_MINUTES=30`) and fresh translate/TTS counts.
-- **Impact:** Unlimited guest trials for live tokens, cam OCR, and soft-counted translate/TTS.
-- **Fix:** Bind trial to IP/fingerprint hash, reject cookieless live/cam, and/or edge rate limits.
-- **Fixability:** NEEDS_HUMAN
+- **Residual:** Full site-data clear **and** new IP still yields a new trial; café NAT shares one network trial.
+- **Fixability:** Done (further: Firewall / captcha — NEEDS_HUMAN if abuse continues)
 
-### [High] `/api/docs/segments` model spend without page metering — STILL OPEN
+### [High] `/api/docs/segments` model spend without page metering — FIXED
+- **Status:** Fixed 2026-09-08 — segments pre-checks remaining docs pages, bills `ceil(chars/1800)` (min 1) on success; PDF hybrid passes `prepaidPages` into `/api/docs/commit` so pages are not double-billed.
 - **Category:** metering
-- **Evidence:** Requires `allowed.docs` but does not call `addDocsPages`; pages billed later via client `/api/docs/commit`. Batch can be large (hundreds of segments).
-- **Impact:** Signed-in users can burn DeepSeek on PDF hybrid path without consuming docs pages until commit.
-- **Fix:** Meter segment chars/calls against docs or translate budget; estimate pages server-side where possible.
-- **Fixability:** NEEDS_HUMAN
+- **Residual:** Abandoned segment calls still consume pages (fair — model already ran).
+- **Fixability:** Done
 
 ### [High] `/api/health` disclosed `envFile` — FIXED (earlier)
 - **Status:** Fixed — public health has no `envFile`. Probe script fails if it reappears.
@@ -87,19 +84,16 @@ Updated: **2026-09-06** — full re-scan on `main` (`d889387`); shipped small AU
 ### [Medium] `ai_vision_count` uncapped — FIXED (earlier)
 - **Status:** Fixed — Free / Family / Business monthly hard caps; guests `aiVision: false`.
 
-### [Medium] Global JSON body limit (`12mb`) — STILL OPEN
+### [Medium] Global JSON body limit (`12mb`) — FIXED (split parser)
+- **Status:** Fixed 2026-09-08 — default JSON limit **256kb**; Cam scan + docs routes keep **12mb**.
 - **Category:** abuse
-- **Evidence:** `express.json({ limit: '12mb' })` before all JSON routes.
-- **Impact:** Bandwidth/CPU DoS on translate/tts/etc.; Cam/Docs may need large payloads.
-- **Fix:** Smaller default (256kb–1mb); route-specific large parsers for camera/docs.
-- **Fixability:** AUTOMATED (deferred — needs Cam/Docs verification)
+- **Fixability:** Done
 
-### [Medium] `/api/health` still returns engines, models, full entitlement
+### [Medium] `/api/health` still returns engines, models, full entitlement — HARDENED
+- **Status:** 2026-09-08 — public health keeps `ok` / `cloudReady` / engine booleans / `entitlement` / `incidentBanner` / push configured for SPA bootstrap; removed model names, lexicon/gloss dumps, notify config shape.
 - **Category:** leak / health
-- **Evidence:** Public payload includes engine booleans, model names, license gate, notify shape, full `entitlement`.
-- **Impact:** Aids targeting of paid backends; reveals guest quotas. No secrets observed.
-- **Fix:** Slim public health to `ok` + minimal readiness; move diagnostics behind admin.
-- **Fixability:** AUTOMATED (confirm SPA still works) / NEEDS_HUMAN if ops dashboards depend on fields
+- **Residual:** Entitlement snapshot still public (needed for `#/app` bootstrap).
+- **Fixability:** Done / residual accepted
 
 ---
 

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
-import { randomUUID } from 'node:crypto'
 import { mergeGuestUsageIntoUser } from './usage.js'
 import type { AuthedRequest } from './auth.js'
+import { resolveGuestIdentity } from './guestId.js'
 
 export const GUEST_COOKIE = 'yue_guest_id'
 const ONE_YEAR_S = 60 * 60 * 24 * 365
@@ -71,25 +71,31 @@ export type GuestRequest = AuthedRequest & {
 }
 
 /**
- * Issue / restore a durable guest id cookie for anonymous metering.
- * When the user signs in, fold guest meters into their account once.
+ * Attach guest metering identity:
+ * - durable device id (X-Yue-Guest-Device) survives IP/VPN changes
+ * - IP/network registry survives HttpOnly cookie wipe on the same network
+ * - cookie mirrors the resolved guest id
+ * On sign-in, fold all related guest meter rows into the user.
  */
 export async function attachGuest(req: GuestRequest, res: Response, next: NextFunction) {
   try {
-    const existing = readGuestId(req)
+    const existingCookie = readGuestId(req)
+    const identity = await resolveGuestIdentity(req)
+
     if (req.auth?.userId) {
-      if (existing) {
-        await mergeGuestUsageIntoUser(existing, req.auth.userId)
-        clearGuestCookie(req, res)
+      const toMerge = new Set<string>(identity.mergeCandidates)
+      if (existingCookie) toMerge.add(existingCookie)
+      for (const gid of toMerge) {
+        await mergeGuestUsageIntoUser(gid, req.auth.userId)
       }
+      if (existingCookie) clearGuestCookie(req, res)
       req.guestId = undefined
       next()
       return
     }
 
-    const guestId = existing || randomUUID()
-    req.guestId = guestId
-    if (!existing) setGuestCookie(req, res, guestId)
+    req.guestId = identity.guestId
+    if (existingCookie !== identity.guestId) setGuestCookie(req, res, identity.guestId)
     next()
   } catch (err) {
     console.warn('[guest] attachGuest failed', err instanceof Error ? err.message : err)
