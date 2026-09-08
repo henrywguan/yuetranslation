@@ -74,6 +74,11 @@ import {
   isPushOptIn,
   pushSupported,
 } from '../lib/pushNotifications'
+import {
+  PRIMARY_LANGS,
+  primaryLangShortCopy,
+  type PrimaryLang,
+} from '../lib/primaryLanguagePref'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
@@ -84,6 +89,8 @@ export function PlanChip() {
   const loadBootstrap = useYueStore((s) => s.loadBootstrap)
   const autoSpeak = useYueStore((s) => s.autoSpeak)
   const setAutoSpeak = useYueStore((s) => s.setAutoSpeak)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  const setPrimaryLanguage = useYueStore((s) => s.setPrimaryLanguage)
   const [open, setOpen] = useState(false)
   const [homescreenOpen, setHomescreenOpen] = useState(false)
   const [email, setEmail] = useState('')
@@ -551,6 +558,37 @@ export function PlanChip() {
                 <span className="account-hub-autospeak-thumb" />
               </span>
             </label>
+          </div>
+        </section>
+
+        <HubSep />
+
+        <section className="account-hub-section" aria-label={biPlain(ui.primaryLanguage)}>
+          <p className="account-hub-label">
+            <BiText copy={ui.primaryLanguage} size="sm" />
+          </p>
+          <p className="account-hub-hint">
+            <BiText copy={ui.primaryLanguageHint} size="sm" />
+          </p>
+          <div className="account-hub-seg account-hub-seg--wrap" role="radiogroup" aria-label={biPlain(ui.primaryLanguage)}>
+            {PRIMARY_LANGS.map((id) => {
+              const copy = primaryLangShortCopy(id)
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={primaryLanguage === id}
+                  className={`account-hub-seg-opt${primaryLanguage === id ? ' is-on' : ''}`}
+                  onClick={() => setPrimaryLanguage(id as PrimaryLang)}
+                >
+                  <span className="bi bi-sm">
+                    <span className="bi-en">{copy.en}</span>
+                    <span className="bi-zh">{copy.zh}</span>
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </section>
 

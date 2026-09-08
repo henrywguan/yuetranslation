@@ -1050,6 +1050,10 @@
   gap: 6px;
 }
 
+.account-hub-seg--wrap {
+  margin-top: 0.45rem;
+}
+
 .account-hub-seg-opt {
   position: relative;
   display: inline-flex;

@@ -40,6 +40,8 @@ export type ProfileRow = {
   tts_voice_vi: string | null
   /** Cross-device Auto-speak preference. */
   auto_speak: boolean
+  /** Primary non-English language (Solo lower / Conversation partner / Cam / brand). */
+  primary_lang: string
   username: string | null
   username_changed_at: string | null
   updated_at: string
@@ -64,9 +66,19 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_es?: string | null
     tts_voice_vi?: string | null
     auto_speak?: boolean | null
+    primary_lang?: string | null
     username?: string | null
     username_changed_at?: string | null
   }
+  const primary =
+    row.primary_lang === 'cmn' ||
+    row.primary_lang === 'wuu' ||
+    row.primary_lang === 'tl' ||
+    row.primary_lang === 'es' ||
+    row.primary_lang === 'vi' ||
+    row.primary_lang === 'yue'
+      ? row.primary_lang
+      : 'yue'
   return {
     ...row,
     plan: normalizePlan(row.plan),
@@ -82,6 +94,7 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_es: typeof row.tts_voice_es === 'string' ? row.tts_voice_es : null,
     tts_voice_vi: typeof row.tts_voice_vi === 'string' ? row.tts_voice_vi : null,
     auto_speak: Boolean(row.auto_speak),
+    primary_lang: primary,
   }
 }
 
@@ -110,6 +123,7 @@ export async function upsertProfilePlan(
       | 'tts_voice_es'
       | 'tts_voice_vi'
       | 'auto_speak'
+      | 'primary_lang'
       | 'username'
       | 'username_changed_at'
     >

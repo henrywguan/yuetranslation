@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createAzureLiveSession } from './azureSpeech'
 import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tts'
-import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref } from './api'
+import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
 import { prefetchSpeechToken } from './speechToken'
@@ -23,6 +23,12 @@ import {
 } from './storeTranslate'
 import { startHeartbeat, stopHeartbeat } from './storeLiveMeter'
 import { readLocalAutoSpeak, writeLocalAutoSpeak } from './autoSpeakPref'
+import {
+  normalizePrimaryLang,
+  readLocalPrimaryLang,
+  writeLocalPrimaryLang,
+  type PrimaryLang,
+} from './primaryLanguagePref'
 
 /** Isolated live lines for Conversation mode — never shared with Solo/Text. */
 type FaceLive = {
@@ -59,6 +65,8 @@ type State = {
   soloUpperLang: Lang
   /** Solo lower pane language (any en|yue|cmn|wuu|tl|es; must differ from upper). */
   soloLowerLang: Lang
+  /** Non-English language paired with English across Solo / Conversation / Cam / brand. */
+  primaryLanguage: PrimaryLang
   live: boolean
   status: 'idle' | 'listening' | 'speaking'
   /** Text currently playing via manual/auto TTS (for per-button speaking state). */
@@ -114,6 +122,8 @@ type State = {
   /** Conversation: clear partner-pane output after Chinese variety change. */
   clearConversationChinesePane: () => void
   setAutoSpeak: (v: boolean) => void
+  /** Set primary language and apply it to Solo / Conversation defaults. */
+  setPrimaryLanguage: (lang: PrimaryLang) => void
   /** Play (or stop) TTS for a line — does not require auto-speak. */
   speakManual: (text: string, lang: Lang) => Promise<void>
   loadBootstrap: () => Promise<void>
@@ -442,13 +452,17 @@ async function tearDownLive(
   void get().loadBootstrap()
 }
 
-export const useYueStore = create<State>((set, get) => ({
+export const useYueStore = create<State>((set, get) => {
+  const initialPrimary = readLocalPrimaryLang()
+  const classic = initialPrimary === 'yue'
+  return {
   mode: 'solo',
-  speakDirection: 'en',
-  chineseLang: 'yue',
-  conversationYouLang: 'en',
-  soloUpperLang: 'en',
-  soloLowerLang: 'yue',
+  speakDirection: classic ? 'en' : initialPrimary,
+  chineseLang: classic ? 'yue' : 'en',
+  conversationYouLang: classic ? 'en' : initialPrimary,
+  soloUpperLang: classic ? 'en' : initialPrimary,
+  soloLowerLang: classic ? 'yue' : 'en',
+  primaryLanguage: initialPrimary,
   live: false,
   status: 'idle',
   speakingText: null,
@@ -687,6 +701,44 @@ export const useYueStore = create<State>((set, get) => ({
       })
   },
 
+  setPrimaryLanguage: (lang) => {
+    const primary = normalizePrimaryLang(lang)
+    writeLocalPrimaryLang(primary)
+
+    // Default Cantonese keeps the classic English-you layout.
+    // Any other primary fills Solo upper + Conversation you (facing the phone user);
+    // English moves to Solo lower + Conversation partner. Cam targets primary either way.
+    if (primary === 'yue') {
+      set({
+        primaryLanguage: primary,
+        soloUpperLang: 'en',
+        soloLowerLang: 'yue',
+        conversationYouLang: 'en',
+        chineseLang: 'yue',
+        speakDirection: get().speakDirection === 'yue' ? 'yue' : 'en',
+      })
+    } else {
+      set({
+        primaryLanguage: primary,
+        soloUpperLang: primary,
+        soloLowerLang: 'en',
+        conversationYouLang: primary,
+        chineseLang: 'en',
+        speakDirection: primary,
+      })
+    }
+
+    const loggedIn = Boolean(get().entitlement?.loggedIn)
+    if (!loggedIn) return
+    void savePrimaryLangPref(primary)
+      .then((data) => {
+        if (data.entitlement) set({ entitlement: data.entitlement })
+      })
+      .catch(() => {
+        /* Keep local preference; next bootstrap will reconcile if save failed. */
+      })
+  },
+
   speakManual: async (text, lang) => {
     const trimmed = text.trim()
     if (!trimmed) return
@@ -730,6 +782,29 @@ export const useYueStore = create<State>((set, get) => ({
       if (ent.loggedIn && typeof ent.prefs?.autoSpeak === 'boolean') {
         writeLocalAutoSpeak(ent.prefs.autoSpeak)
       }
+      const nextPrimary =
+        ent.loggedIn && ent.prefs?.primaryLang
+          ? normalizePrimaryLang(ent.prefs.primaryLang)
+          : get().primaryLanguage
+      if (ent.loggedIn && ent.prefs?.primaryLang) {
+        writeLocalPrimaryLang(nextPrimary)
+      }
+      const layout =
+        nextPrimary === 'yue'
+          ? {
+              soloUpperLang: 'en' as const,
+              soloLowerLang: 'yue' as const,
+              conversationYouLang: 'en' as const,
+              chineseLang: 'yue' as const,
+              speakDirection: (get().speakDirection === 'yue' ? 'yue' : 'en') as Lang,
+            }
+          : {
+              soloUpperLang: nextPrimary,
+              soloLowerLang: 'en' as const,
+              conversationYouLang: nextPrimary,
+              chineseLang: 'en' as const,
+              speakDirection: nextPrimary,
+            }
       const { hydrateHistory } = await import('./historySync')
       const history = await hydrateHistory(Boolean(ent.loggedIn))
       set({
@@ -737,6 +812,8 @@ export const useYueStore = create<State>((set, get) => ({
         demoMode: Boolean(data.engines?.demo),
         incidentBanner: data.incidentBanner ?? null,
         autoSpeak: nextAutoSpeak,
+        primaryLanguage: nextPrimary,
+        ...layout,
         history,
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
@@ -1327,7 +1404,8 @@ export const useYueStore = create<State>((set, get) => ({
     set({ history: [] })
     void import('./historySync').then((m) => m.persistHistory([]))
   },
-}))
+  }
+})
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   const w = window as unknown as {

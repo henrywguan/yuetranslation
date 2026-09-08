@@ -55,6 +55,8 @@ const DRAW_SLOP_PX = 12
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, meter }: Props) {
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  const scanTarget = target === 'auto' ? primaryLanguage : target
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const imgRef = useRef<HTMLImageElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -345,7 +347,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       const result = await cameraScan({
         image,
         boxes: opts.boxes,
-        target: target === 'auto' ? undefined : target,
+        target: scanTarget,
         ocrOnly: opts.ocrOnly,
       })
       if (result.visionAuthFailed) {

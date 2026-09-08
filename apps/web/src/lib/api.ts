@@ -266,6 +266,23 @@ export async function saveAutoSpeakPref(
   return data
 }
 
+export async function savePrimaryLangPref(
+  primaryLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi',
+): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
+  const res = await apiFetch('/prefs/primary-lang', {
+    method: 'PATCH',
+    body: JSON.stringify({ primaryLang }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Failed to save primary language'), {
+      code: res.status,
+      entitlement: data.entitlement,
+    })
+  }
+  return data
+}
+
 export async function sendHouseholdInvite(email: string): Promise<{
   inviteSent: true
   emailed: boolean

@@ -416,6 +416,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceEs: patch.tts_voice_es || ent.prefs.ttsVoiceEs,
         ttsVoiceVi: patch.tts_voice_vi || ent.prefs.ttsVoiceVi,
         autoSpeak: ent.prefs.autoSpeak,
+        primaryLang: ent.prefs.primaryLang,
         username: ent.prefs.username,
         usernameChangedAt: ent.prefs.usernameChangedAt,
       }
@@ -472,6 +473,47 @@ app.patch('/api/prefs/auto-speak', async (req: AuthedRequest, res) => {
     })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Failed to save Auto-speak' })
+  }
+})
+
+/** Save cross-device primary language preference (signed-in only). */
+app.patch('/api/prefs/primary-lang', async (req: AuthedRequest, res) => {
+  const ent = await entitlementFor(req)
+  const { normalizePrimaryLang } = await import('./entitlements.js')
+  const raw = req.body?.primaryLang
+  const allowed = ['yue', 'cmn', 'wuu', 'tl', 'es', 'vi']
+  if (typeof raw !== 'string' || !allowed.includes(raw)) {
+    res.status(400).json({ message: 'primaryLang must be yue, cmn, wuu, tl, es, or vi.' })
+    return
+  }
+  const primaryLang = normalizePrimaryLang(raw)
+
+  if (env.openMode || !req.auth?.userId) {
+    if (!ent.loggedIn && !env.openMode) {
+      res.status(401).json({ message: 'Sign in to sync primary language.', entitlement: ent })
+      return
+    }
+    if (env.openMode) {
+      const prefs = { ...ent.prefs, primaryLang }
+      res.json({ ok: true, prefs, entitlement: { ...ent, prefs } })
+      return
+    }
+    res.status(401).json({ message: 'Sign in to sync primary language.', entitlement: ent })
+    return
+  }
+
+  try {
+    await upsertProfilePlan(req.auth.userId, { primary_lang: primaryLang })
+    const next = await entitlementFor(req)
+    res.json({
+      ok: true,
+      prefs: next.prefs,
+      entitlement: next,
+    })
+  } catch (e) {
+    res.status(500).json({
+      message: e instanceof Error ? e.message : 'Failed to save primary language',
+    })
   }
 })
 

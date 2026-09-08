@@ -55,6 +55,8 @@ type HitRect = { id: string; x: number; y: number; w: number; h: number }
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  const scanTarget = target === 'auto' ? primaryLanguage : target
   const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const reduce = useReducedMotion()
@@ -431,7 +433,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
       const result = await cameraScan({
         image,
-        target: target === 'auto' ? undefined : target,
+        target: scanTarget,
       })
       if (result.entitlement) onEntitlement(result.entitlement)
       let next = result.regions.map(regionToEditable)
