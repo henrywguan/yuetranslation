@@ -12,8 +12,8 @@ assert.ok(Math.abs(a.length - 1600) <= 2, `48 kHz/100ms → ~1600 samples at 16 
 
 const pcm = floatTo16BitPcm(new Float32Array([0.5, -0.5, 0]))
 const view = new DataView(pcm)
-assert.equal(view.getInt16(0, true), Math.round(0.5 * 0x7fff))
-assert.equal(view.getInt16(2, true), Math.round(-0.5 * 0x8000))
+assert.equal(view.getInt16(0, true), 16383)
+assert.equal(view.getInt16(2, true), -16384)
 assert.equal(view.getInt16(4, true), 0)
 
 const passthrough = createLinearResampler(16000, 16000)
