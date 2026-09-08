@@ -2,6 +2,7 @@ import { useEffect, useState, type ElementType } from 'react'
 import {
   isPrimaryGlossLang,
   primaryGlossHtmlLang,
+  primaryReplacesChinese,
   resolvePrimaryUiGloss,
 } from '../lib/primaryUiGloss'
 import { ensurePinyinSegs, toPinyinCached } from '../lib/pinyin'
@@ -18,16 +19,16 @@ type BiTextProps = {
   as?: ElementType
   /** Skip Jyutping popup entirely */
   hideJp?: boolean
-  /** Language-pure: English only, or Chinese (+ Jyutping / primary gloss) only. */
+  /** Language-pure: English only, or secondary line (Chinese / primary) only. */
   only?: 'en' | 'zh'
   /**
-   * `stack` (default): English above Chinese.
-   * `inline`: English and Chinese on one line (panel chrome / compact labels).
+   * `stack` (default): English above secondary.
+   * `inline`: English and secondary on one line (panel chrome / compact labels).
    */
   layout?: 'stack' | 'inline'
 }
 
-/** Bilingual UI copy; Jyutping (or primary-language gloss) under Chinese. */
+/** Bilingual UI copy; secondary line follows Account Hub primary language. */
 export function BiText({
   copy,
   size = 'md',
@@ -71,14 +72,19 @@ export function BiText({
     catalogGloss ||
     (primaryLanguage === 'cmn' && wantPrimaryGloss ? cmnPinyin.trim() || undefined : undefined)
 
+  const replaceZh =
+    wantPrimaryGloss && Boolean(gloss) && primaryReplacesChinese(primaryLanguage)
+
   const canJp =
+    !replaceZh &&
     (primaryLanguage === 'yue' || primaryLanguage === 'en') &&
     !hideJp &&
     only !== 'en' &&
     Boolean(copy.jp)
   const { tipId, show, bind, wrapRef } = useJpPopup(canJp)
   const inline = layout === 'inline' && !only
-  const zh = (
+
+  const zhLine = (
     <span
       {...bind}
       className={`bi-zh-wrap${canJp ? ' bi-zh-wrap--hint' : ''}`}
@@ -91,8 +97,18 @@ export function BiText({
     </span>
   )
 
-  const primaryLine =
-    gloss && wantPrimaryGloss ? (
+  const primaryAsSecondary =
+    replaceZh && gloss ? (
+      <span className="bi-zh-wrap" lang={primaryGlossHtmlLang(primaryLanguage)}>
+        <span className="bi-zh bi-zh--primary-lang">{gloss}</span>
+      </span>
+    ) : null
+
+  const secondary = primaryAsSecondary || zhLine
+
+  // Mandarin: keep Chinese characters; pinyin stays a quieter tertiary line.
+  const tertiary =
+    !replaceZh && gloss && wantPrimaryGloss ? (
       <span className="bi-primary" lang={primaryGlossHtmlLang(primaryLanguage)}>
         {gloss}
       </span>
@@ -102,9 +118,9 @@ export function BiText({
     <Tag
       className={`bi bi--${size}${only ? ` bi--${only}` : ''}${inline ? ' bi--inline' : ''} ${className}`.trim()}
     >
-      {only === 'zh' ? zh : <span className="bi-en">{normalizeEnglishApostrophes(copy.en)}</span>}
-      {only ? null : zh}
-      {only === 'en' ? null : primaryLine}
+      {only === 'zh' ? secondary : <span className="bi-en">{normalizeEnglishApostrophes(copy.en)}</span>}
+      {only ? null : secondary}
+      {only === 'en' ? null : tertiary}
     </Tag>
   )
 }

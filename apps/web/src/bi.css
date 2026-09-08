@@ -675,7 +675,13 @@ button.jyutping {
   color: color-mix(in srgb, var(--ink) 78%, transparent);
 }
 
-/* Primary-language gloss replaces Jyutping when Account Hub primary ≠ Yue */
+/* Primary-language secondary line (Tagalog / Spanish / …) uses English font. */
+.bi-zh--primary-lang {
+  font-family: var(--font-english);
+  letter-spacing: normal;
+}
+
+/* Mandarin pinyin (and similar) tertiary under Chinese when primary = cmn */
 .bi-primary {
   display: block;
   width: 100%;

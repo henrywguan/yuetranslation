@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ensurePinyinSegs, toPinyinCached } from '../lib/pinyin'
-import { isPrimaryGlossLang, primaryGlossHtmlLang } from '../lib/primaryUiGloss'
+import {
+  isPrimaryGlossLang,
+  primaryGlossHtmlLang,
+  primaryReplacesChinese,
+} from '../lib/primaryUiGloss'
 import { primaryLangLabel } from '../lib/primaryLanguagePref'
 import { useYueStore } from '../lib/store'
 import { useJpPopup } from '../lib/useJpPopup'
@@ -44,19 +48,32 @@ export function BrandTag() {
       ? cmnPinyin.trim() || undefined
       : tag.gloss
 
+  const replaceZh = Boolean(gloss) && primaryReplacesChinese(primaryLanguage)
+
   return (
     <p className="brand-tag">
-      <span className="brand-tag-inner" {...bind}>
+      <span className="brand-tag-inner" {...(replaceZh ? {} : bind)}>
         <span className="brand-tag-stack">
           <span className="brand-tag-en">{tag.en}</span>
-          <span className="brand-tag-zh">{tag.zh}</span>
-          {gloss ? (
+          {replaceZh && gloss ? (
+            <span
+              className="brand-tag-zh brand-tag-zh--primary-lang"
+              lang={primaryGlossHtmlLang(primaryLanguage)}
+            >
+              {gloss}
+            </span>
+          ) : (
+            <span className="brand-tag-zh">{tag.zh}</span>
+          )}
+          {!replaceZh && gloss ? (
             <span className="brand-tag-primary" lang={primaryGlossHtmlLang(primaryLanguage)}>
               {gloss}
             </span>
           ) : null}
         </span>
-        {canJp ? <JpPop show={show} id={tipId} han={tag.zh} anchorRef={wrapRef} /> : null}
+        {!replaceZh && canJp ? (
+          <JpPop show={show} id={tipId} han={tag.zh} anchorRef={wrapRef} />
+        ) : null}
       </span>
     </p>
   )

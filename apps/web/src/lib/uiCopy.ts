@@ -1,3 +1,6 @@
+import { readLocalPrimaryLang, type PrimaryLang } from './primaryLanguagePref'
+import { PRIMARY_UI_GLOSS } from './primaryUiGloss.data'
+
 /** Bilingual UI copy: English + 粵語 + Jyutping under the Chinese. */
 export type Bi = { en: string; zh: string; jp: string }
 
@@ -1206,7 +1209,13 @@ export const ui = {
   backToApp: { en: 'Back to the app', zh: '返去應用', jp: 'faan1 heoi3 jing3 jung6' },
 }
 
-export function biPlain(b: Bi): string {
+export function biPlain(b: Bi, primary?: PrimaryLang): string {
+  const lang = primary ?? (typeof localStorage !== 'undefined' ? readLocalPrimaryLang() : 'yue')
+  if (lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'wuu') {
+    const row = PRIMARY_UI_GLOSS[b.en]
+    const gloss = row?.[lang]
+    if (typeof gloss === 'string' && gloss.trim()) return `${b.en} ${gloss.trim()}`
+  }
   return `${b.en} ${b.zh}`
 }
 

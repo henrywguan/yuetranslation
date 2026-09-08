@@ -3,14 +3,23 @@ import type { PrimaryLang } from './primaryLanguagePref'
 import { PRIMARY_UI_GLOSS } from './primaryUiGloss.data'
 import type { Bi } from './uiCopy'
 
-/** Primary languages that replace Jyutping in BiText chrome. */
+/** Primary languages that replace Jyutping / Chinese chrome with a native gloss. */
 export type PrimaryGlossLang = Exclude<PrimaryLang, 'yue' | 'en'>
 
 export function isPrimaryGlossLang(lang: PrimaryLang): lang is PrimaryGlossLang {
   return lang !== 'yue' && lang !== 'en'
 }
 
-/** BCP 47 / HTML lang for the tertiary primary gloss line. */
+/**
+ * Latin-script (and Shanghainese) primaries: the gloss becomes the secondary UI
+ * line and Chinese is hidden. Mandarin keeps Chinese characters as secondary
+ * (pinyin stays tertiary).
+ */
+export function primaryReplacesChinese(lang: PrimaryLang): boolean {
+  return lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'wuu'
+}
+
+/** BCP 47 / HTML lang for the primary gloss line. */
 export function primaryGlossHtmlLang(lang: PrimaryLang): string {
   switch (lang) {
     case 'tl':
@@ -24,6 +33,7 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
     case 'wuu':
       return 'wuu-Latn'
     case 'yue':
+    case 'en':
     default:
       return 'en'
   }
@@ -32,7 +42,7 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
 type BiWithGloss = Bi & Partial<Record<PrimaryGlossLang, string>>
 
 /**
- * Tertiary UI gloss that replaces Jyutping when Account Hub primary ≠ Cantonese/English.
+ * Native UI gloss for Account Hub primary ≠ Cantonese/English.
  * Mandarin falls back to tone-mark pinyin of the Chinese line when no explicit gloss.
  */
 export function resolvePrimaryUiGloss(
@@ -45,7 +55,7 @@ export function resolvePrimaryUiGloss(
   if (typeof fromBi === 'string' && fromBi.trim()) return fromBi.trim()
 
   const row = PRIMARY_UI_GLOSS[copy.en]
-  const fromMap = row?.[primary]
+  const fromMap = row?.[primary as PrimaryGlossLang]
   if (typeof fromMap === 'string' && fromMap.trim()) return fromMap.trim()
 
   if (primary === 'cmn' && copy.zh.trim()) {
