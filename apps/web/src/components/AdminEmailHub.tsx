@@ -18,6 +18,14 @@ import './AdminEmailHub.css'
 type GalleryView = 'thumbnails' | 'list'
 type RecipientMode = 'recipients' | 'audience'
 type PreviewWidth = 'desktop' | 'mobile'
+type MobilePane = 'templates' | 'compose' | 'preview' | 'send'
+
+const MOBILE_PANES: { id: MobilePane; label: string }[] = [
+  { id: 'templates', label: 'Templates' },
+  { id: 'compose', label: 'Compose' },
+  { id: 'preview', label: 'Preview' },
+  { id: 'send', label: 'Send' },
+]
 
 type SendNotice = {
   tone: 'ok' | 'warn' | 'error'
@@ -35,7 +43,7 @@ const FIELD_LABELS: { key: keyof CampaignFields; label: string; multiline?: bool
   { key: 'preview', label: 'Preview text', hint: 'Inbox snippet under the subject' },
   { key: 'eyebrow', label: 'Eyebrow' },
   { key: 'headline', label: 'Headline' },
-  { key: 'body', label: 'Body', multiline: true, hint: 'Blank line = new paragraph. Product update uses one line per bullet.' },
+  { key: 'body', label: 'Body', multiline: true, hint: 'Blank line = paragraph. **bold**, *italic*, [label](https://…). Product update: one line per bullet.' },
   { key: 'ctaLabel', label: 'CTA label' },
   { key: 'ctaUrl', label: 'CTA URL' },
   { key: 'secondary', label: 'Secondary note', multiline: true },
@@ -166,11 +174,23 @@ export function AdminEmailHub() {
   const [sendNotice, setSendNotice] = useState<SendNotice | null>(null)
   const [saveName, setSaveName] = useState('')
   const [confirmAudience, setConfirmAudience] = useState(false)
+  const [mobilePane, setMobilePane] = useState<MobilePane>('compose')
+  const [bodyHistory, setBodyHistory] = useState<string[]>([])
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null)
+  const bodyDirtyRef = useRef(false)
 
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === selectedKey) || null,
     [templates, selectedKey],
   )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.matchMedia('(max-width: 860px)').matches) {
+      setPreviewWidth('mobile')
+      setGalleryView('list')
+    }
+  }, [])
 
   const reload = useCallback(async () => {
     setBusy(true)
@@ -240,16 +260,130 @@ export function AdminEmailHub() {
     setAiReasoning('')
     setMessage('')
     setError('')
+    setBodyHistory([])
+    bodyDirtyRef.current = false
+    setMobilePane('compose')
   }
 
   const patchField = (key: keyof CampaignFields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }))
   }
 
+  const pushBodyHistory = () => {
+    setBodyHistory((prev) => [...prev.slice(-19), fields.body])
+  }
+
+  const undoBody = () => {
+    setBodyHistory((prev) => {
+      if (!prev.length) return prev
+      const next = [...prev]
+      const last = next.pop()
+      if (last != null) {
+        setFields((f) => ({ ...f, body: last }))
+        bodyDirtyRef.current = false
+      }
+      return next
+    })
+  }
+
+  const insertBodySnippet = (mode: 'paragraph' | 'bullet') => {
+    pushBodyHistory()
+    bodyDirtyRef.current = false
+    const el = bodyRef.current
+    setFields((prev) => {
+      const cur = prev.body
+      const start = el?.selectionStart ?? cur.length
+      const end = el?.selectionEnd ?? cur.length
+      const before = cur.slice(0, start)
+      const after = cur.slice(end)
+      let insert = ''
+      if (mode === 'paragraph') {
+        if (!before) insert = ''
+        else if (before.endsWith('\n\n')) insert = ''
+        else if (before.endsWith('\n')) insert = '\n'
+        else insert = '\n\n'
+      } else {
+        const atLineStart = !before || before.endsWith('\n')
+        insert = atLineStart ? '• ' : '\n• '
+      }
+      const next = `${before}${insert}${after}`
+      window.requestAnimationFrame(() => {
+        const node = bodyRef.current
+        if (!node) return
+        node.focus()
+        const caret = before.length + insert.length
+        node.setSelectionRange(caret, caret)
+      })
+      return { ...prev, body: next }
+    })
+  }
+
+  const wrapBodySelection = (prefix: string, suffix: string, placeholder = 'text') => {
+    pushBodyHistory()
+    bodyDirtyRef.current = false
+    const el = bodyRef.current
+    const cur = fields.body
+    const start = el?.selectionStart ?? cur.length
+    const end = el?.selectionEnd ?? cur.length
+    const selected = cur.slice(start, end) || placeholder
+    const next = `${cur.slice(0, start)}${prefix}${selected}${suffix}${cur.slice(end)}`
+    setFields((prev) => ({ ...prev, body: next }))
+    window.requestAnimationFrame(() => {
+      const node = bodyRef.current
+      if (!node) return
+      node.focus()
+      const innerStart = start + prefix.length
+      const innerEnd = innerStart + selected.length
+      node.setSelectionRange(innerStart, innerEnd)
+    })
+  }
+
+  const insertBodyLink = () => {
+    const el = bodyRef.current
+    const cur = fields.body
+    const start = el?.selectionStart ?? cur.length
+    const end = el?.selectionEnd ?? cur.length
+    const selected = cur.slice(start, end).trim() || 'Learn more'
+    const url = window.prompt('Link URL (https://…)', 'https://')
+    if (!url?.trim()) return
+    const href = url.trim()
+    if (!/^https?:\/\//i.test(href)) {
+      setError('Links must start with http:// or https://')
+      return
+    }
+    pushBodyHistory()
+    bodyDirtyRef.current = false
+    const markdown = `[${selected}](${href})`
+    const next = `${cur.slice(0, start)}${markdown}${cur.slice(end)}`
+    setFields((prev) => ({ ...prev, body: next }))
+    window.requestAnimationFrame(() => {
+      const node = bodyRef.current
+      if (!node) return
+      node.focus()
+      const caret = start + markdown.length
+      node.setSelectionRange(caret, caret)
+    })
+  }
+
+  const goPreview = () => {
+    setMobilePane('preview')
+    void runPreview()
+  }
+
+  const onBodyChange = (value: string) => {
+    if (!bodyDirtyRef.current) {
+      pushBodyHistory()
+      bodyDirtyRef.current = true
+    }
+    patchField('body', value)
+  }
+
   const runAiDraft = async () => {
     setAiBusy(true)
     setError('')
     setMessage('')
+    pushBodyHistory()
+    bodyDirtyRef.current = false
     try {
       const draft = await draftAdminEmail({
         variant,
@@ -452,10 +586,27 @@ export function AdminEmailHub() {
         </div>
       </div>
 
+      <nav className="email-hub-mobile-nav" aria-label="Email editor steps">
+        {MOBILE_PANES.map((pane) => (
+          <button
+            key={pane.id}
+            type="button"
+            className={mobilePane === pane.id ? 'is-active' : undefined}
+            onClick={() => setMobilePane(pane.id)}
+            aria-current={mobilePane === pane.id ? 'page' : undefined}
+          >
+            {pane.label}
+          </button>
+        ))}
+      </nav>
+
       {error ? <p className="admin-error">{error}</p> : null}
       {message ? <p className="email-hub-ok">{message}</p> : null}
 
-      <section className="email-hub-gallery" aria-label="Templates">
+      <section
+        className={`email-hub-gallery${mobilePane === 'templates' ? ' is-mobile-active' : ''}`}
+        aria-label="Templates"
+      >
         <div className="email-hub-gallery-head">
           <h3>Templates</h3>
           <div className="email-hub-view-toggle" role="group" aria-label="Template view">
@@ -502,6 +653,9 @@ export function AdminEmailHub() {
                 setFields(emptyFields())
                 setSaveName('')
                 setAiReasoning('')
+                setBodyHistory([])
+                bodyDirtyRef.current = false
+                setMobilePane('compose')
                 setMessage('Blank draft — edit fields, then Save as template.')
               }}
             >
@@ -535,7 +689,10 @@ export function AdminEmailHub() {
       </section>
 
       <div className="email-hub-workspace">
-        <section className="email-hub-editor" aria-label="Compose">
+        <section
+          className={`email-hub-editor${mobilePane === 'compose' ? ' is-mobile-active' : ''}`}
+          aria-label="Compose"
+        >
           <div className="email-hub-editor-head">
             <h3>Compose</h3>
             <label className="email-hub-inline-label">
@@ -569,33 +726,130 @@ export function AdminEmailHub() {
                   {f.hint ? <em>{f.hint}</em> : null}
                 </span>
                 {f.key === 'body' ? (
-                  <button
-                    type="button"
-                    className={`email-hub-ai-btn${aiBusy ? ' is-busy' : ''}`}
-                    disabled={aiBusy || busy}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      void runAiDraft()
-                    }}
-                    title={aiHintForVariant(variant)}
-                    aria-label={aiHintForVariant(variant)}
-                  >
-                    <span className="email-hub-ai-orb" aria-hidden />
-                    <span className="email-hub-ai-label">{aiBusy ? 'Thinking…' : 'AI draft'}</span>
-                  </button>
+                  <div className="email-hub-body-tools" role="toolbar" aria-label="Body editor">
+                    <button
+                      type="button"
+                      className={`email-hub-ai-btn${aiBusy ? ' is-busy' : ''}`}
+                      disabled={aiBusy || busy}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        void runAiDraft()
+                      }}
+                      title={aiHintForVariant(variant)}
+                      aria-label={aiHintForVariant(variant)}
+                    >
+                      <span className="email-hub-ai-orb" aria-hidden />
+                      <span className="email-hub-ai-label">{aiBusy ? 'Thinking…' : 'AI draft'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="email-hub-tool email-hub-tool--bold"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        wrapBodySelection('**', '**', 'bold')
+                      }}
+                      title="Bold"
+                      aria-label="Bold"
+                    >
+                      B
+                    </button>
+                    <button
+                      type="button"
+                      className="email-hub-tool email-hub-tool--italic"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        wrapBodySelection('*', '*', 'italic')
+                      }}
+                      title="Italic"
+                      aria-label="Italic"
+                    >
+                      I
+                    </button>
+                    <button
+                      type="button"
+                      className="email-hub-tool"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        insertBodyLink()
+                      }}
+                      title="Insert link"
+                      aria-label="Insert link"
+                    >
+                      Link
+                    </button>
+                    <button
+                      type="button"
+                      className="email-hub-tool"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        insertBodySnippet('paragraph')
+                      }}
+                      title="New paragraph"
+                      aria-label="New paragraph"
+                    >
+                      ¶
+                    </button>
+                    {variant === 'product-update' ? (
+                      <button
+                        type="button"
+                        className="email-hub-tool"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          insertBodySnippet('bullet')
+                        }}
+                        title="Insert bullet"
+                        aria-label="Insert bullet"
+                      >
+                        •
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="email-hub-tool"
+                      disabled={bodyHistory.length === 0}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        undoBody()
+                      }}
+                      title="Undo body"
+                      aria-label="Undo body"
+                    >
+                      ↶
+                    </button>
+                    <button
+                      type="button"
+                      className="email-hub-tool email-hub-tool--preview"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        goPreview()
+                      }}
+                      title="Jump to preview"
+                      aria-label="Jump to preview"
+                    >
+                      Preview
+                    </button>
+                  </div>
                 ) : null}
               </span>
               {f.multiline ? (
                 <textarea
+                  ref={f.key === 'body' ? bodyRef : undefined}
                   rows={f.key === 'body' ? 8 : 3}
                   value={fields[f.key]}
-                  onChange={(e) => patchField(f.key, e.target.value)}
+                  onChange={(e) =>
+                    f.key === 'body' ? onBodyChange(e.target.value) : patchField(f.key, e.target.value)
+                  }
+                  onBlur={f.key === 'body' ? () => { bodyDirtyRef.current = false } : undefined}
+                  enterKeyHint={f.key === 'body' ? 'enter' : undefined}
+                  autoCapitalize={f.key === 'body' ? 'sentences' : undefined}
                 />
               ) : (
                 <input
                   type="text"
                   value={fields[f.key]}
                   onChange={(e) => patchField(f.key, e.target.value)}
+                  inputMode={f.key === 'ctaUrl' ? 'url' : undefined}
+                  autoComplete="off"
                 />
               )}
             </label>
@@ -627,7 +881,10 @@ export function AdminEmailHub() {
           </div>
         </section>
 
-        <section className="email-hub-preview" aria-label="Preview">
+        <section
+          className={`email-hub-preview${mobilePane === 'preview' ? ' is-mobile-active' : ''}`}
+          aria-label="Preview"
+        >
           <div className="email-hub-preview-head">
             <h3>Preview</h3>
             <div className="email-hub-view-toggle" role="group" aria-label="Preview width">
@@ -656,7 +913,10 @@ export function AdminEmailHub() {
           </div>
         </section>
 
-        <section className="email-hub-recipients" aria-label="Recipients">
+        <section
+          className={`email-hub-recipients${mobilePane === 'send' ? ' is-mobile-active' : ''}`}
+          aria-label="Recipients"
+        >
           <h3>Recipients</h3>
           <div className="email-hub-mode" role="group" aria-label="Send mode">
             <button
@@ -700,6 +960,7 @@ export function AdminEmailHub() {
                   placeholder="Search contacts"
                   value={contactQuery}
                   onChange={(e) => setContactQuery(e.target.value)}
+                  enterKeyHint="search"
                 />
                 <button type="button" className="admin-btn admin-btn--secondary" onClick={selectAllFiltered}>
                   Select filtered
@@ -746,6 +1007,19 @@ export function AdminEmailHub() {
             {recipientMode === 'audience' ? 'Send to audience' : 'Send to selected'}
           </button>
         </section>
+      </div>
+
+      <div className="email-hub-mobile-dock" role="toolbar" aria-label="Quick actions">
+        <button type="button" className="admin-btn admin-btn--secondary" onClick={goPreview}>
+          Preview
+        </button>
+        <button
+          type="button"
+          className="admin-btn"
+          onClick={() => setMobilePane('send')}
+        >
+          Send…
+        </button>
       </div>
 
       {sendNotice ? (

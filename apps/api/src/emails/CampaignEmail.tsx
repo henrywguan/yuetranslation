@@ -8,6 +8,7 @@ import {
 } from './EmailShell.js'
 import type { CampaignFields, CampaignVariant } from './emailCatalog.js'
 import { emailBrand, emailFonts, emailStyles } from './brand.js'
+import { renderInlineFormat, stripLeadingBullet } from './inlineFormat.js'
 
 export type CampaignEmailProps = CampaignFields & {
   variant: CampaignVariant
@@ -62,36 +63,41 @@ export function CampaignEmail(props: CampaignEmailProps) {
     >
       {variant === 'product-update' ? (
         <SoftBlock accent label="What’s included">
-          {lines(body).map((line) => (
-            <Text key={line} style={bullet}>
-              <span style={bulletDot}>●</span> {line}
-            </Text>
-          ))}
+          {lines(body).map((line, i) => {
+            const cleaned = stripLeadingBullet(line)
+            return (
+              <Text key={`${i}-${cleaned.slice(0, 24)}`} style={bullet}>
+                <span style={bulletDot}>●</span> {renderInlineFormat(cleaned)}
+              </Text>
+            )
+          })}
         </SoftBlock>
       ) : variant === 'newsletter' ? (
         paragraphs(body).map((block, i) => (
           <SoftBlock key={`${i}-${block.slice(0, 24)}`}>
-            <Text style={emailStyles.pre}>{block}</Text>
+            <Text style={emailStyles.pre}>{renderInlineFormat(block)}</Text>
           </SoftBlock>
         ))
       ) : variant === 'feature-spotlight' ? (
         <SoftBlock accent>
-          {paragraphs(body).map((p) => (
-            <BodyText key={p.slice(0, 32)}>{p}</BodyText>
+          {paragraphs(body).map((p, i) => (
+            <BodyText key={`${i}-${p.slice(0, 32)}`}>{renderInlineFormat(p)}</BodyText>
           ))}
         </SoftBlock>
       ) : (
-        paragraphs(body).map((p) => <BodyText key={p.slice(0, 32)}>{p}</BodyText>)
+        paragraphs(body).map((p, i) => (
+          <BodyText key={`${i}-${p.slice(0, 32)}`}>{renderInlineFormat(p)}</BodyText>
+        ))
       )}
 
       {showCta ? <CtaButton href={ctaUrl.trim()}>{ctaLabel.trim()}</CtaButton> : null}
 
-      {secondary?.trim() ? <MutedText>{secondary.trim()}</MutedText> : null}
+      {secondary?.trim() ? <MutedText>{renderInlineFormat(secondary.trim())}</MutedText> : null}
 
       {signOff?.trim() ? (
         <>
           <Hr style={emailStyles.hr} />
-          <Text style={signOffStyle}>{signOff.trim()}</Text>
+          <Text style={signOffStyle}>{renderInlineFormat(signOff.trim())}</Text>
         </>
       ) : null}
 
