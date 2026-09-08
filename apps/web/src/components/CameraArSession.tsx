@@ -23,6 +23,7 @@ import {
   type CameraTrackFeatures,
   type ZoomRange,
 } from '../lib/camera/trackControls'
+import { saveArSnapshot, translationsTopToBottom } from '../lib/camera/arExport'
 import {
   centeredLabelX,
   drawMatchedLabel,
@@ -38,6 +39,7 @@ import { useYueStore } from '../lib/store'
 import { useReducedMotion } from '../lib/useReducedMotion'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Entitlement } from '../lib/types'
+import { CameraArSaveModal } from './CameraArSaveModal'
 
 type Props = {
   target: CameraTarget
@@ -98,6 +100,10 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
   const [focusRing, setFocusRing] = useState<{ x: number; y: number; key: number } | null>(null)
   const focusRingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const livePinchRef = useRef<{ startDist: number; startZoom: number } | null>(null)
+  const [saveOpen, setSaveOpen] = useState(false)
+  const [saveBusy, setSaveBusy] = useState(false)
+  const [saveToast, setSaveToast] = useState<string | null>(null)
+  const saveToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     boxesRef.current = boxes
@@ -314,6 +320,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     return () => {
       cancelled = true
       if (focusRingTimer.current) clearTimeout(focusRingTimer.current)
+      if (saveToastTimer.current) clearTimeout(saveToastTimer.current)
       void meter.stop()
       stopMediaStream(streamRef.current)
       streamRef.current = null
@@ -486,9 +493,59 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
     setBoxes([])
     setSelectedId(null)
     setError(null)
+    setSaveOpen(false)
     resumeLive()
     paintOverlay()
   }
+
+  const flashSaveToast = (msg: string) => {
+    if (saveToastTimer.current) clearTimeout(saveToastTimer.current)
+    setSaveToast(msg)
+    saveToastTimer.current = setTimeout(() => setSaveToast(null), 1800)
+  }
+
+  const handleSavePhoto = () => {
+    const url = stillUrlRef.current
+    if (!url || saveBusy) return
+    setSaveBusy(true)
+    void (async () => {
+      try {
+        await saveArSnapshot(url, boxesRef.current)
+        setSaveOpen(false)
+      } catch {
+        setError(biPlain(ui.camArSaveFailed))
+      } finally {
+        setSaveBusy(false)
+      }
+    })()
+  }
+
+  const handleCopyTranslations = () => {
+    const text = translationsTopToBottom(boxesRef.current)
+    if (!text) {
+      setSaveOpen(false)
+      return
+    }
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(text)
+      } catch {
+        const area = document.createElement('textarea')
+        area.value = text
+        area.setAttribute('readonly', '')
+        area.style.position = 'fixed'
+        area.style.left = '-9999px'
+        document.body.appendChild(area)
+        area.select()
+        document.execCommand('copy')
+        document.body.removeChild(area)
+      }
+      setSaveOpen(false)
+      flashSaveToast(biPlain(ui.camArCopiedToast))
+    })()
+  }
+
+  const canSave = Boolean(stillUrl && boxes.length && !busy)
 
   const onZoomTouchStart = useCallback((e: TouchEvent) => {
     const touches = e.touches
@@ -817,6 +874,24 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
         <div className="cam-ar-dock-cluster">
           <button
             type="button"
+            className="cam-ar-save"
+            disabled={!canSave}
+            onClick={() => setSaveOpen(true)}
+            aria-label={biPlain(ui.camSaveSnapshot)}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M12 3v10m0 0l3.5-3.5M12 13l-3.5-3.5M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
             className="cam-ar-shutter"
             disabled={busy}
             onClick={() => void runCapture()}
@@ -854,6 +929,20 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
           </button>
         </div>
       </div>
+
+      <CameraArSaveModal
+        open={saveOpen}
+        onClose={() => setSaveOpen(false)}
+        onSavePhoto={handleSavePhoto}
+        onCopyTranslations={handleCopyTranslations}
+        busy={saveBusy}
+      />
+
+      {saveToast ? (
+        <p className="cam-ar-toast cam-ar-toast--ok" role="status">
+          {saveToast}
+        </p>
+      ) : null}
 
       {selected && !busy ? (
         <div className="cam-ar-sheet" role="region" aria-label={biPlain(ui.camDetailTitle)}>
