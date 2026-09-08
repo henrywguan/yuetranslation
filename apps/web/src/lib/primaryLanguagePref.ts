@@ -92,9 +92,9 @@ export function primaryLangLabel(lang: PrimaryLang): {
       }
     case 'es':
       return {
-        en: 'Spanish Language Tool',
-        zh: '西班牙語語言工具',
-        gloss: 'Herramienta de español',
+        en: 'Spanish(MX) Language Tool',
+        zh: '西班牙語（MX）語言工具',
+        gloss: 'Herramienta de español (MX)',
       }
     case 'vi':
       return {
@@ -123,7 +123,7 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
     case 'tl':
       return { en: 'Tagalog', zh: '他加祿語' }
     case 'es':
-      return { en: 'Spanish', zh: '西班牙語' }
+      return { en: 'Spanish(MX)', zh: '西班牙語（MX）' }
     case 'vi':
       return { en: 'Vietnamese', zh: '越南語' }
     case 'yue':

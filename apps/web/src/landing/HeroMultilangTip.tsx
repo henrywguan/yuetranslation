@@ -17,7 +17,7 @@ const SUPPORTED_LANGS: SupportedLang[] = [
   { flag: '🇭🇰', name: 'Cantonese', native: '粵語 / 廣東話' },
   { flag: '🇨🇳', name: 'Mandarin', native: '普通話 / 国语' },
   { flag: '🇵🇭', name: 'Tagalog', native: 'Tagalog / Filipino' },
-  { flag: '🇲🇽', name: 'Mexican Spanish', native: 'Español mexicano' },
+  { flag: '🇲🇽', name: 'Spanish(MX)', native: 'Español (MX)' },
   { flag: '🇻🇳', name: 'Vietnamese', native: 'Tiếng Việt' },
   { flag: '🇨🇳', name: 'Shanghainese', native: '上海話 / 沪语' },
 ]

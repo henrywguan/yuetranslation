@@ -277,7 +277,7 @@ export async function runTranslation(
       set({
         error:
           to === 'es'
-            ? 'Could not produce Mexican Spanish for this phrase. Try again or rephrase.'
+            ? 'Could not produce Spanish(MX) for this phrase. Try again or rephrase.'
             : to === 'vi'
               ? 'Could not produce Vietnamese for this phrase. Try again or rephrase.'
               : to === 'tl'
