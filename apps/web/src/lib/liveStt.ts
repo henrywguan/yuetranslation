@@ -28,6 +28,19 @@ export function azureUsesFixedLocale(lockLang?: Lang): boolean {
 }
 
 /**
+ * iPhone Web Speech + HTMLAudio auto-speak: pausing TTS *before*
+ * `recognition.start()` cancels capture (orange pill on, no audio).
+ * Start STT first, then pause with `preserveSession`.
+ */
+export function shouldDeferTtsStopUntilSttStarts(opts: {
+  apple: boolean
+  webSpeechFirst: boolean
+  ttsPlaying: boolean
+}): boolean {
+  return opts.apple && opts.webSpeechFirst && opts.ttsPlaying
+}
+
+/**
  * Edge-visible APIs one iPhone live turn is allowed to hit after STT.
  * Health + history hydrate on teardown used to fire every tap and trip
  * Vercel’s security checkpoint after 2–3 translations.

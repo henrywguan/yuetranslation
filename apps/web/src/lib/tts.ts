@@ -17,6 +17,8 @@ let unlocked = false
 let unlockInFlight = false
 let playbackRate = 1
 let sequenceId = 0
+/** Resolves an in-flight `speakText` waiter when barge-in pauses TTS. */
+let playbackWaiter: (() => void) | null = null
 
 function ensureSharedAudio(): HTMLAudioElement {
   if (!audio) {
@@ -30,6 +32,34 @@ function ensureSharedAudio(): HTMLAudioElement {
 /** True while TTS plays or during the short echo tail after playback. */
 export function isMicEchoMuted() {
   return playing || Date.now() < echoTailUntil
+}
+
+/** True while Azure / browser TTS audio is actually playing (not the echo tail). */
+export function isTtsPlaying() {
+  return playing
+}
+
+function resolvePlaybackWaiter() {
+  const done = playbackWaiter
+  playbackWaiter = null
+  done?.()
+}
+
+/**
+ * Mute in-flight TTS without pausing or cancelling speechSynthesis.
+ * Call immediately before `recognition.start()` on iPhone barge-in so the
+ * audio session stays up and Web Speech can attach, then `stopSpeaking({ preserveSession: true })`.
+ */
+export function duckTtsForMicBargeIn() {
+  playing = false
+  echoTailUntil = 0
+  if (audio) {
+    try {
+      audio.volume = 0
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 export function armTtsEchoTail(ms = 600) {
@@ -48,6 +78,9 @@ export function isTtsPlaybackUnlocked() {
  */
 export function unlockTtsPlayback(): void {
   if (typeof window === 'undefined') return
+  // Auto-speak barge-in: do not steal the shared element or resume/cancel
+  // speechSynthesis — that aborts the Web Speech capture we are about to start.
+  if (playing) return
   const el = ensureSharedAudio()
   // Warm speechSynthesis resume in the same gesture (browserSpeak fallback).
   try {
@@ -127,11 +160,24 @@ export function stopSpeaking(opts?: { preserveSession?: boolean }) {
       }
     }
   }
+  resolvePlaybackWaiter()
   if (url) {
     URL.revokeObjectURL(url)
     url = null
   }
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+  // speechSynthesis.cancel() aborts an in-flight SpeechRecognition on iOS.
+  // Barge-in only pauses; a full stop may cancel.
+  if ('speechSynthesis' in window) {
+    if (opts?.preserveSession) {
+      try {
+        window.speechSynthesis.pause()
+      } catch {
+        /* ignore */
+      }
+    } else {
+      window.speechSynthesis.cancel()
+    }
+  }
 }
 
 function browserSpeak(text: string, lang: Lang, g: number) {
@@ -200,20 +246,17 @@ export async function speakText(text: string, lang: Lang, voice?: string | null)
       el.volume = 1
       el.muted = false
       await new Promise<void>((resolve) => {
-        el.onended = () => {
+        const finish = () => {
+          if (playbackWaiter === finish) playbackWaiter = null
           if (g === gen) playing = false
           resolve()
         }
-        el.onerror = () => {
-          if (g === gen) playing = false
-          resolve()
-        }
+        playbackWaiter = finish
+        el.onended = finish
+        el.onerror = finish
         void el.play().then(
           () => {},
-          () => {
-            if (g === gen) playing = false
-            resolve()
-          },
+          finish,
         )
       })
       return

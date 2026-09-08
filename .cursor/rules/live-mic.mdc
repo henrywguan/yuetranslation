@@ -1,9 +1,9 @@
 ---
 description: Critical live mic / tap-to-talk invariants — never ship idle button with OS mic on
-globs: apps/web/src/lib/webSpeech.ts,apps/web/src/lib/store.ts,apps/web/src/lib/liveStt.ts,apps/web/src/lib/azureSpeech.ts,apps/web/src/components/LiveHoldButton.tsx,apps/web/src/lib/apiError.ts,apps/web/src/lib/speechToken.ts
+globs: apps/web/src/lib/webSpeech.ts,apps/web/src/lib/store.ts,apps/web/src/lib/liveStt.ts,apps/web/src/lib/azureSpeech.ts,apps/web/src/lib/tts.ts,apps/web/src/components/LiveHoldButton.tsx,apps/web/src/lib/apiError.ts,apps/web/src/lib/speechToken.ts
 alwaysApply: false
 ---
 
 Read **`.cursor/skills/live-mic-invariants/SKILL.md`** and the **Live mic** section in `AGENTS.md`.
 
-Release-blocking: tap must stay listening (every language) until second tap or ~2s silence after speech. Do not set iOS `rec.continuous` false, do not kill Apple Web Speech after two empty `onend`s, do not bootstrap `/health` on mic teardown, do not dump Vercel checkpoint HTML into the error banner.
+Release-blocking: tap must stay listening (every language) until second tap or ~2s silence after speech. Do not set iOS `rec.continuous` false, do not kill Apple Web Speech after two empty `onend`s, do not bootstrap `/health` on mic teardown, do not dump Vercel checkpoint HTML into the error banner. Auto-speak barge-in: start Web Speech before pausing TTS; never `speechSynthesis.cancel()` / `audio.load()` on the preserve-session path.
