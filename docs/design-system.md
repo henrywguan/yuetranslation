@@ -4,19 +4,13 @@ Brand tokens for matching the marketing site and translator when building **Bric
 
 品牌变量，用于在 **Bricks**（或任意 WordPress）页面中对齐营销站与翻译器。
 
-**Visual swatches / 色板：** open [`brand/index.html`](./brand/index.html) locally, or enable GitHub Pages:
+**Visual swatches / 色板：** open [`brand/index.html`](./brand/index.html) locally (preferred).
 
-本地打开 [`brand/index.html`](./brand/index.html)，或启用 GitHub Pages：
+本地打开 [`brand/index.html`](./brand/index.html)（推荐）。
 
-1. Repo **Settings → Pages** / 仓库 **Settings → Pages**
-2. Source: **Deploy from a branch** / 来源：**从分支部署**
-3. Branch: `main`, folder: **`/docs`** / 分支：`main`，文件夹： **`/docs`**
-4. After deploy, open `https://<user>.github.io/<repo>/brand/`  
-   部署后打开 `https://<user>.github.io/<repo>/brand/`
-
-> **Privacy:** Publishing `/docs` on Pages also exposes `docs/agents/**` and `docs/social/**` (campaign / social-ops briefs). Prefer opening `brand/index.html` locally, or use a Pages site that only serves `docs/brand/` if you keep the repo public.
-
-> **隐私：** 将整个 `/docs` 发布到 Pages 也会公开 `docs/agents/**` 与 `docs/social/**`（社媒运营文案）。仓库公开时建议本地打开 `brand/index.html`，或只托管 `docs/brand/`。
+> **Privacy:** Do **not** enable GitHub Pages on the whole `/docs` folder — that would also publish `docs/agents/**` and `docs/social/**`. See [`.github/README.md`](../.github/README.md). If you need a public brand page, host **only** `docs/brand/`.
+>
+> **隐私：** **不要**把整个 `/docs` 挂到 GitHub Pages（会公开 `docs/agents/**` 与 `docs/social/**`）。见 [`.github/README.md`](../.github/README.md)。若要公开品牌页，只托管 `docs/brand/`。
 
 **Product UI snapshots / 产品界面截图：** [demos/](./demos/)
 

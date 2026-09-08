@@ -15,5 +15,5 @@ Read and follow **`docs/agents/security-guardian.md`**. For baseline known issue
 - NEEDS_HUMAN = product decision, dashboard/secrets, rate-limit numbers, CORS allowlist.
 - Cloud probes: only `/api/health`, web 200, offline smokes, lint/tsc — **no** unapproved `/api/tts`, speech-token, Vision, or model translate.
 - Production must stay `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1` (`vercel.json`).
-- Guests: Solo text + tap TTS OK; live mic + Cam need login + meters (`docs/entitlements.md`).
+- Guests: Solo text + tap TTS OK; live mic + Cam AR/Upload are metered guest trials; Documents need login (`docs/entitlements.md`).
 - Prefer fail-closed defaults; do not weaken live feedback/UX polish unless Henry confirms (see `AGENTS.md` product goals — security fixes are OK).

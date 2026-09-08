@@ -7,9 +7,9 @@ Live translator PWA with freemium entitlements (Supabase + Stripe on **Vercel**)
 
 **Stack / 技术栈：** Azure Speech (`zh-HK` STT/TTS) · Azure Vision (camera OCR) · OpenAI-compatible LLM (colloquial 粤语, e.g. DeepSeek).
 
-**Free for everyone / 人人可用：** Solo text translate, Jyutping, and guest tap-to-play voice. **Free** TTS is metered (hard char cap); **Family/Business** TTS is unlimited (usage tracked). Live mic requires sign-in and is metered; auto-speak is Family/Business. **Cam** (AR / Upload / Documents) requires sign-in — see [docs/camera.md](docs/camera.md) and [docs/entitlements.md](docs/entitlements.md).
+**Free for everyone / 人人可用：** Solo text translate, Jyutping, and guest tap-to-play voice. Guests also get a metered trial (**30 min live**, **30 Cam AR/Upload scans**); **Documents** still require sign-in. **Free** TTS is metered (hard char cap); **Family/Business** TTS is unlimited (usage tracked). Auto-speak is Family/Business. Signed-in **Cam** uses scan credits — see [docs/camera.md](docs/camera.md) and [docs/entitlements.md](docs/entitlements.md).
 
-**人人可用：** 独白文字翻译、粤拼、访客点击朗读。**免费版** TTS 有字数硬上限；**家庭版／商務版** TTS 无限（仍计数）。实时麦克风须登录并计量；自动朗读属家庭版／商務版。**相机**（AR／上载／文件）须登录 — 见文档。
+**人人可用：** 独白文字翻译、粤拼、访客点击朗读。访客另有计量试用（**30 分钟实时**、**30 次相机 AR／上载扫描**）；**文件**仍须登录。**免费版** TTS 有字数硬上限；**家庭版／商務版** TTS 无限（仍计数）。自动朗读属家庭版／商務版。登录后**相机**按扫描次数计量 — 见文档。
 
 **Modes / 模式：** Solo · Conversation · Cam  
 独白 · 对话 · 相机  
@@ -104,7 +104,6 @@ npm run test:translate   # EN↔粵 bot — needs servers + may bill model (ask 
 | [docs/android-twa.md](docs/android-twa.md) | Android TWA / Play packaging |
 | [docs/bluehost-launch.md](docs/bluehost-launch.md) | WordPress / Bluehost (secondary) |
 | [AGENTS.md](AGENTS.md) | Cursor Cloud agent rules |
-| [AGENTS.md](AGENTS.md) | Cursor Cloud agent notes |
 
 ## Checkout / 结账
 

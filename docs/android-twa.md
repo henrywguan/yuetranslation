@@ -92,7 +92,7 @@ Play requires **targetSdkVersion 36+** (2026). If PWA Builder’s AAB is rejecte
 
 | Item | Why skipped |
 | --- | --- |
-| Push notifications | Needs FCM + backend |
+| Push notifications | Web Push + VAPID already on Vercel PWA (`docs/admin.md`); native FCM for TWA still optional |
 | Background / periodic sync | Needs backend jobs |
 | Widgets | Windows-only adaptive cards |
 | Window Controls Overlay / Tabbed display | Desktop chrome features not used by the translator UI |
