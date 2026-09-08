@@ -3,28 +3,21 @@
  *
  * Azure’s own MediaStream AudioContext is closed on every session.stop(),
  * which leaves the next recognizer “listening” with no audio. We keep one
- * AudioContext for the page and push 16-bit PCM ourselves.
+ * AudioContext for the page and push float samples ourselves.
+ *
+ * Do not connect the processor to ctx.destination — that plays (silent)
+ * audio through the speakers and wrecks echo cancellation / STT accuracy.
  */
 
 let ctx: AudioContext | null = null
 let analyser: AnalyserNode | null = null
 let source: MediaStreamAudioSourceNode | null = null
 let processor: ScriptProcessorNode | null = null
-let silentGain: GainNode | null = null
+let sink: MediaStreamAudioDestinationNode | null = null
 let data: Uint8Array<ArrayBuffer> | null = null
 let sourceStream: MediaStream | null = null
 
-const pcmListeners = new Set<(buf: ArrayBuffer) => void>()
-
-function floatTo16BitPcm(input: Float32Array): ArrayBuffer {
-  const out = new ArrayBuffer(input.length * 2)
-  const view = new DataView(out)
-  for (let i = 0; i < input.length; i++) {
-    const s = Math.max(-1, Math.min(1, input[i] ?? 0))
-    view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true)
-  }
-  return out
-}
+const pcmListeners = new Set<(samples: Float32Array) => void>()
 
 function isUsableContext(c: AudioContext | null): c is AudioContext {
   return Boolean(c && c.state !== 'closed')
@@ -58,7 +51,7 @@ function teardownGraphNodes() {
     /* ignore */
   }
   try {
-    silentGain?.disconnect()
+    sink?.disconnect()
   } catch {
     /* ignore */
   }
@@ -68,7 +61,7 @@ function teardownGraphNodes() {
     /* ignore */
   }
   processor = null
-  silentGain = null
+  sink = null
   source = null
   analyser = null
   data = null
@@ -81,15 +74,13 @@ function ensureProcessor() {
     processor = ctx.createScriptProcessor(4096, 1, 1)
     processor.onaudioprocess = (event) => {
       if (!pcmListeners.size) return
-      const input = event.inputBuffer.getChannelData(0)
-      const pcm = floatTo16BitPcm(input)
-      for (const fn of pcmListeners) fn(pcm)
+      // inputBuffer is reused — copy before the next process tick.
+      const input = Float32Array.from(event.inputBuffer.getChannelData(0))
+      for (const fn of pcmListeners) fn(input)
     }
-    silentGain = ctx.createGain()
-    silentGain.gain.value = 0
+    sink = ctx.createMediaStreamDestination()
     source.connect(processor)
-    processor.connect(silentGain)
-    silentGain.connect(ctx.destination)
+    processor.connect(sink)
   } catch {
     try {
       processor?.disconnect()
@@ -97,7 +88,7 @@ function ensureProcessor() {
       /* ignore */
     }
     processor = null
-    silentGain = null
+    sink = null
   }
 }
 
@@ -136,7 +127,7 @@ export function disconnectMicAnalyser() {
   teardownGraphNodes()
 }
 
-export function addMicPcmListener(fn: (buf: ArrayBuffer) => void): () => void {
+export function addMicPcmListener(fn: (samples: Float32Array) => void): () => void {
   pcmListeners.add(fn)
   ensureProcessor()
   return () => {

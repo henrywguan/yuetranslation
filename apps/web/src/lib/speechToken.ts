@@ -45,8 +45,8 @@ export async function getSpeechToken(opts?: { force?: boolean }): Promise<Speech
 
 /** Warm the cache after bootstrap so the first mic press is fast (desktop/Android). */
 export function prefetchSpeechToken(opts?: { allowApple?: boolean }) {
-  // Keep the token cold on Apple until after the first Web Speech turn — a warm
-  // token used to skip that path. Later iOS taps use Azure with a held stream.
+  // Keep the token cold on Apple — iOS live STT uses Web Speech (zh-HK when
+  // locked to Cantonese). A warm token used to divert follow-up taps to Azure LID.
   if (isAppleTouchDevice() && !opts?.allowApple) return
   void getSpeechToken().catch(() => {
     /* Azure may be unconfigured — Web Speech fallback still works. */

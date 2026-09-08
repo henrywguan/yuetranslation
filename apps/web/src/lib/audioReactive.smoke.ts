@@ -6,10 +6,13 @@ const hooked = {
   onaudioprocess: null as ((ev: { inputBuffer: { getChannelData: () => Float32Array } }) => void) | null,
 }
 
+const speakers = { id: 'speakers' }
+let connectedToSpeakers = false
+
 class FakeAudioContext {
   state = 'running' as AudioContext['state']
   sampleRate = 48000
-  destination = {}
+  destination = speakers
   createAnalyser() {
     return {
       fftSize: 0,
@@ -33,12 +36,23 @@ class FakeAudioContext {
       get onaudioprocess() {
         return hooked.onaudioprocess
       },
-      connect() {},
+      connect(node: { id?: string }) {
+        if (node === speakers || node?.id === 'speakers') connectedToSpeakers = true
+      },
       disconnect() {},
     }
   }
+  createMediaStreamDestination() {
+    return { id: 'msdest', stream: { getAudioTracks: () => [] }, connect() {}, disconnect() {} }
+  }
   createGain() {
-    return { gain: { value: 1 }, connect() {}, disconnect() {} }
+    return {
+      gain: { value: 1 },
+      connect(node: { id?: string }) {
+        if (node === speakers || node?.id === 'speakers') connectedToSpeakers = true
+      },
+      disconnect() {},
+    }
   }
   resume() {
     resumeCount += 1
@@ -68,7 +82,9 @@ const ctx1 = audio.ensureSharedAudioContext()
 assert.equal(ctx1.sampleRate, 48000)
 assert.equal(audio.getSharedAudioSampleRate(), 48000)
 
-const chunks: ArrayBuffer[] = []
+assert.equal(connectedToSpeakers, false, 'PCM graph must not connect to ctx.destination')
+
+const chunks: Float32Array[] = []
 const unsub = audio.addMicPcmListener((buf) => chunks.push(buf))
 if (!hooked.onaudioprocess) throw new Error('PCM processor should be attached')
 
@@ -79,7 +95,9 @@ hooked.onaudioprocess({
   inputBuffer: { getChannelData: () => samples },
 })
 assert.equal(chunks.length, 1, 'listener receives PCM')
-assert.equal(chunks[0]!.byteLength, 16)
+assert.equal(chunks[0]![0], 0.5)
+assert.equal(chunks[0]![1], -0.5)
+assert.notEqual(chunks[0], samples, 'listener must receive a copy of the input buffer')
 
 audio.disconnectMicAnalyser()
 assert.equal(closeCount, 0, 'disconnect must not close the shared AudioContext')

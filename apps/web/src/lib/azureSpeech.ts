@@ -6,6 +6,8 @@ import {
   getSharedAudioSampleRate,
 } from './audioReactive'
 import { createEchoGuard } from './echoGuard'
+import { azureUsesFixedLocale } from './liveStt'
+import { AZURE_PCM_RATE, createLinearResampler, floatTo16BitPcm } from './pcmResample'
 import { getSpeechToken } from './speechToken'
 import type { Lang, LiveSession, SpeechEventHandlers, SpeechMeta } from './types'
 
@@ -35,13 +37,16 @@ function createAudioPump(SpeechSDK: SpeechSdk, mediaStream?: MediaStream | null)
 
   ensureSharedAudioContext()
   connectMicAnalyser(live)
-  const format = SpeechSDK.AudioStreamFormat.getWaveFormatPCM(getSharedAudioSampleRate(), 16, 1)
+  const resample = createLinearResampler(getSharedAudioSampleRate(), AZURE_PCM_RATE)
+  const format = SpeechSDK.AudioStreamFormat.getWaveFormatPCM(AZURE_PCM_RATE, 16, 1)
   const push = SpeechSDK.AudioInputStream.createPushStream(format)
   let open = true
-  const unsub = addMicPcmListener((buf) => {
+  const unsub = addMicPcmListener((samples) => {
     if (!open) return
     try {
-      push.write(buf)
+      const at16k = resample(samples)
+      if (!at16k.length) return
+      push.write(floatTo16BitPcm(at16k))
     } catch {
       open = false
     }
@@ -316,42 +321,11 @@ export async function createAzureLiveSession(
       if (!canUseMicrophone()) {
         throw new Error(micBlockedMessage() || 'Microphone unavailable.')
       }
-      // Locked languages: prefer the multilingual transcriber for fast interim streaming.
-      // Fixed en-US recognizer feels sluggish; fixed zh-HK is flaky — transcriber + lockLang pins the pane.
-      // Mandarin (zh-CN): use fixed recognizer — auto-detect set is en-US + zh-HK only.
-      if (lockLang === 'tl') {
-        await startWithRecognizer('tl')
-        return
-      }
-      if (lockLang === 'es') {
-        await startWithRecognizer('es')
-        return
-      }
-      if (lockLang === 'vi') {
-        await startWithRecognizer('vi')
-        return
-      }
-      if (lockLang === 'cmn') {
-        await startWithRecognizer('cmn')
-        return
-      }
-      if (lockLang === 'wuu') {
-        await startWithRecognizer('wuu')
-        return
-      }
-      if (lockLang === 'en' || lockLang === 'yue') {
-        try {
-          await startWithTranscriber()
-        } catch (err) {
-          transcriber = null
-          audioPump?.close()
-          audioPump = null
-          gate.reset()
-          if (!canUseMicrophone()) {
-            throw err instanceof Error ? err : new Error(String(err))
-          }
-          await startWithRecognizer(lockLang)
-        }
+      // Solo direction / Conversation pane lock → fixed locale (zh-HK for Yue).
+      // LID transcriber (en-US + zh-HK) often picks English for Cantonese;
+      // emitLang then pinned that English text onto the Yue pane.
+      if (azureUsesFixedLocale(lockLang) && lockLang) {
+        await startWithRecognizer(lockLang)
         return
       }
       try {

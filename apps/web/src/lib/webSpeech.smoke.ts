@@ -111,6 +111,7 @@ export type SpeechEventHandlers = {
   await session!.stop()
 
   assert.equal(instances.length, 2, `${apple ? 'ios' : 'desk'}: two recognizers`)
+  assert.equal(instances[0]?.lang, 'en-US')
   if (apple) {
     assert.equal(instances[0]?.stopCount, 1, 'iOS must stop() not abort() — abort poisons the next tap')
     assert.equal(instances[0]?.abortCount, 0, 'iOS must not abort()')
@@ -120,6 +121,19 @@ export type SpeechEventHandlers = {
     assert.equal(instances[0]?.abortCount, 1, 'desktop stop() aborts to release the mic lock')
     assert.equal(instances[1]?.abortCount, 1)
   }
+
+  const yueSession = createWebSpeechSession(
+    {
+      onInterim: () => {},
+      onFinal: () => {},
+      onError: () => {},
+      onStatus: () => {},
+    },
+    'yue',
+  )
+  await yueSession!.start()
+  assert.equal(instances[2]?.lang, 'zh-HK', 'Cantonese lock must use zh-HK, not English')
+  await yueSession!.stop()
   rmSync(dir, { recursive: true, force: true })
 }
 
