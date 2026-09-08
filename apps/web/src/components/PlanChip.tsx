@@ -564,32 +564,27 @@ export function PlanChip() {
         <HubSep />
 
         <section className="account-hub-section" aria-label={biPlain(ui.primaryLanguage)}>
-          <p className="account-hub-label">
+          <p className="account-hub-label" id="account-hub-primary-lang-label">
             <BiText copy={ui.primaryLanguage} size="sm" />
           </p>
           <p className="account-hub-hint">
             <BiText copy={ui.primaryLanguageHint} size="sm" />
           </p>
-          <div className="account-hub-seg account-hub-seg--wrap" role="radiogroup" aria-label={biPlain(ui.primaryLanguage)}>
+          <select
+            className="account-hub-select"
+            value={primaryLanguage}
+            onChange={(e) => setPrimaryLanguage(e.target.value as PrimaryLang)}
+            aria-labelledby="account-hub-primary-lang-label"
+          >
             {PRIMARY_LANGS.map((id) => {
               const copy = primaryLangShortCopy(id)
               return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={primaryLanguage === id}
-                  className={`account-hub-seg-opt${primaryLanguage === id ? ' is-on' : ''}`}
-                  onClick={() => setPrimaryLanguage(id as PrimaryLang)}
-                >
-                  <span className="bi bi-sm">
-                    <span className="bi-en">{copy.en}</span>
-                    <span className="bi-zh">{copy.zh}</span>
-                  </span>
-                </button>
+                <option key={id} value={id}>
+                  {copy.en} · {copy.zh}
+                </option>
               )
             })}
-          </div>
+          </select>
         </section>
 
         <HubSep />
