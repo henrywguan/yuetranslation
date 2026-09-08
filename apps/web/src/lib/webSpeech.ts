@@ -87,47 +87,36 @@ export function createWebSpeechSession(
         // iOS often fires no-speech then onend; restart is handled in onend.
         return
       }
-      if (
-        e.error === 'language-not-supported' &&
-        activeLang === 'yue' &&
-        yueLocaleIndex < yueLocales.length - 1
-      ) {
+      // Safari often returns service-not-allowed (not language-not-supported)
+      // for locales it cannot recognize (e.g. fil-PH Tagalog).
+      const localeRejected =
+        e.error === 'language-not-supported' || e.error === 'service-not-allowed'
+      if (localeRejected && activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {
         yueLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
-      if (
-        e.error === 'language-not-supported' &&
-        activeLang === 'cmn' &&
-        cmnLocaleIndex < cmnLocales.length - 1
-      ) {
+      if (localeRejected && activeLang === 'cmn' && cmnLocaleIndex < cmnLocales.length - 1) {
         cmnLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
-      if (
-        e.error === 'language-not-supported' &&
-        activeLang === 'tl' &&
-        tlLocaleIndex < tlLocales.length - 1
-      ) {
+      if (localeRejected && activeLang === 'wuu' && wuuLocaleIndex < wuuLocales.length - 1) {
+        wuuLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'tl' && tlLocaleIndex < tlLocales.length - 1) {
         tlLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
-      if (
-        e.error === 'language-not-supported' &&
-        activeLang === 'es' &&
-        esLocaleIndex < esLocales.length - 1
-      ) {
+      if (localeRejected && activeLang === 'es' && esLocaleIndex < esLocales.length - 1) {
         esLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
-      if (
-        e.error === 'language-not-supported' &&
-        activeLang === 'vi' &&
-        viLocaleIndex < viLocales.length - 1
-      ) {
+      if (localeRejected && activeLang === 'vi' && viLocaleIndex < viLocales.length - 1) {
         viLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
@@ -135,6 +124,15 @@ export function createWebSpeechSession(
       if (e.error === 'not-allowed') {
         stopped = true
         handlers.onError('Microphone permission denied. Allow mic access and try again.')
+        return
+      }
+      if (e.error === 'service-not-allowed' || e.error === 'language-not-supported') {
+        stopped = true
+        handlers.onError(
+          activeLang === 'tl'
+            ? 'Tagalog speech recognition is not available in this browser. Try again on a network that can reach live speech, or use another device.'
+            : 'Speech recognition is not available for this language here. Try again or switch language.',
+        )
         return
       }
       handlers.onError(e.error)

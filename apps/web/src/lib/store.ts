@@ -12,7 +12,12 @@ import {
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
-import { appleFallsBackToAzure, appleLiveUsesWebSpeech, shouldDeferTtsStopUntilSttStarts } from './liveStt'
+import {
+  appleFallsBackToAzure,
+  appleLiveUsesWebSpeech,
+  appleNeedsAzureStt,
+  shouldDeferTtsStopUntilSttStarts,
+} from './liveStt'
 import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
@@ -940,9 +945,26 @@ export const useYueStore = create<State>((set, get) => {
     const apple = isAppleTouchDevice()
     const bargingIn = isTtsPlaying() || get().status === 'speaking'
     const appleFollowUp = apple && appleMicTurns > 0
-    // Every iOS tap uses Web Speech (zh-HK when locked to Yue). Azure LID on
-    // later taps was emitting English onto the Cantonese pane.
-    const webSpeechFirst = apple && appleLiveUsesWebSpeech() && !liveSessionFactory
+    // Resolve pane lock before choosing STT engine — Tagalog / Wu need Azure
+    // fixed-locale on iPhone (Safari Web Speech returns service-not-allowed).
+    const direction = get().speakDirection
+    const intendedLock: Lang | undefined =
+      side ||
+      (direction === 'en' ||
+      direction === 'yue' ||
+      direction === 'cmn' ||
+      direction === 'wuu' ||
+      direction === 'tl' ||
+      direction === 'es' ||
+      direction === 'vi'
+        ? direction
+        : undefined)
+    // Yue/En/… stay on Web Speech. tl/wuu use Azure fixed locale (never LID).
+    const webSpeechFirst =
+      apple && appleLiveUsesWebSpeech(intendedLock) && !liveSessionFactory
+    if (apple && appleNeedsAzureStt(intendedLock)) {
+      prefetchSpeechToken({ allowApple: true })
+    }
     const deferTtsStop = shouldDeferTtsStopUntilSttStarts({
       apple,
       webSpeechFirst,
@@ -1155,8 +1177,12 @@ export const useYueStore = create<State>((set, get) => {
     }
 
     if (!liveSessionFactory && !alreadyStarted) {
-      if (apple && appleLiveUsesWebSpeech() && !appleFallsBackToAzure()) {
-        // Stay on Web Speech — do not mint /api/speech-token on iPhone.
+      if (
+        apple &&
+        appleLiveUsesWebSpeech(intendedLock) &&
+        !appleFallsBackToAzure(intendedLock)
+      ) {
+        // Stay on Web Speech for Yue/En — do not mint /api/speech-token (LID leak).
         if (micPriming) {
           const leftover = await micPriming.catch(() => null)
           if (leftover) stopMediaStream(leftover)

@@ -1,22 +1,34 @@
 import type { Lang } from './types'
 
 /**
- * iPhone live STT stays on Web Speech for every tap.
- * Routing follow-up taps to Azure ConversationTranscriber (en-US + zh-HK LID)
- * transcribed English onto a Cantonese-locked pane.
+ * Safari Web Speech has no reliable STT for these locales (Tagalog →
+ * `service-not-allowed`; Shanghainese unsupported). Use Azure with a
+ * **fixed** locale on iPhone — never LID — so English cannot leak onto
+ * a Cantonese-locked pane.
  */
-export function appleLiveUsesWebSpeech(): boolean {
-  return true
+export function appleNeedsAzureStt(lockLang?: Lang | null): boolean {
+  return lockLang === 'tl' || lockLang === 'wuu'
 }
 
-/** iOS must not mint Azure speech tokens for live STT (WAF + paid Azure). */
-export function applePrefetchesSpeechToken(): boolean {
-  return false
+/**
+ * iPhone live STT stays on Web Speech for Yue / En / Cmn / Es / Vi.
+ * Tagalog + Shanghainese use Azure fixed-locale instead (see above).
+ */
+export function appleLiveUsesWebSpeech(lockLang?: Lang | null): boolean {
+  return !appleNeedsAzureStt(lockLang)
 }
 
-/** iOS must not fall through to Azure if Web Speech fails to start. */
-export function appleFallsBackToAzure(): boolean {
-  return false
+/** Warm `/api/speech-token` on Apple only when Azure STT is required. */
+export function applePrefetchesSpeechToken(lockLang?: Lang | null): boolean {
+  return appleNeedsAzureStt(lockLang)
+}
+
+/**
+ * iOS must not fall through to Azure LID when Web Speech fails for Yue/En.
+ * Tagalog / Wu may use Azure fixed-locale when Web Speech cannot start.
+ */
+export function appleFallsBackToAzure(lockLang?: Lang | null): boolean {
+  return appleNeedsAzureStt(lockLang)
 }
 
 /**
@@ -44,6 +56,9 @@ export function shouldDeferTtsStopUntilSttStarts(opts: {
  * Edge-visible APIs one iPhone live turn is allowed to hit after STT.
  * Health + history hydrate on teardown used to fire every tap and trip
  * Vercel’s security checkpoint after 2–3 translations.
+ *
+ * `speechToken` stays false for the default Yue/En Web Speech path.
+ * Tagalog / Wu mint a token only when `appleNeedsAzureStt` applies.
  */
 export const APPLE_LIVE_TURN_API = {
   translate: true,

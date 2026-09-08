@@ -66,7 +66,13 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.voice,
     opts.preferredVi,
   )
-  const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${escapeXml(text)}</voice></speak>`
+  // fil-PH neural voices read quieter than zh-HK / en-US on iPhone speakers —
+  // boost so Tagalog TTS matches other languages at the same device volume.
+  const spoken =
+    pick.xmlLang === 'fil-PH'
+      ? `<prosody volume="+45%">${escapeXml(text)}</prosody>`
+      : escapeXml(text)
+  const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${spoken}</voice></speak>`
   const url = `https://${env.azureSpeechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`
   const res = await fetch(url, {
     method: 'POST',

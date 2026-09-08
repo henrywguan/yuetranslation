@@ -28,8 +28,16 @@ In `apps/web/src/lib/store.ts`:
 
 - Sticky tap must arm even if `pointerup` lands while `startHold` is awaiting `recognition.start()` (`pendingStickyTap` / `keepHoldOrSticky`).
 - Do not `loadBootstrap()` (GET `/health` + history) on every mic teardown — that burst tripped Vercel’s security checkpoint after 2–3 turns.
-- iPhone live STT stays on Web Speech. Do not mint `/api/speech-token` or fall back to Azure LID on later taps (English leaked onto a Yue lock).
-- **Auto-speak barge-in:** tapping the mic while TTS plays must start Web Speech *then* pause TTS (`shouldDeferTtsStopUntilSttStarts`). Do not `speechSynthesis.cancel()`, `audio.load()`, silent-WAV unlock, or `getUserMedia` until STT has started — those abort Safari capture (pill on, no audio). Do not arm the 600ms echo tail on user barge-in. Skip auto-speak if a new mic turn is already live.
+- iPhone live STT stays on Web Speech for Yue/En/Cmn/Es/Vi. Do not mint
+  `/api/speech-token` or fall back to Azure LID on later taps (English leaked
+  onto a Yue lock). **Exception:** Tagalog (`tl`) and Shanghainese (`wuu`) use
+  Azure **fixed-locale** on iPhone — Safari Web Speech returns
+  `service-not-allowed` for `fil-PH` / lacks Wu. Never use LID for those panes.
+- **Auto-speak barge-in:** tapping the mic while TTS plays must start Web Speech *then*
+  pause TTS (`shouldDeferTtsStopUntilSttStarts`). Do not `speechSynthesis.cancel()`,
+  `audio.load()`, silent-WAV unlock, or `getUserMedia` until STT has started — those
+  abort Safari capture (pill on, no audio). Do not arm the 600ms echo tail on user
+  barge-in. Skip auto-speak if a new mic turn is already live.
 
 In `apps/web/src/lib/tts.ts`:
 
