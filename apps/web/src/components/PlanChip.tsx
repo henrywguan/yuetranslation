@@ -357,6 +357,9 @@ export function PlanChip() {
       else if (kind === 'es') await speakText(PREVIEW_ES, 'es', esVoice)
       else if (kind === 'vi') await speakText(PREVIEW_VI, 'vi', viVoice)
       else await speakText(PREVIEW_WUU, 'wuu', wuuVoice)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Voice playback failed.'
+      useYueStore.setState({ error: message })
     } finally {
       setPreviewBusy(null)
     }

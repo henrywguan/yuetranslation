@@ -354,6 +354,7 @@ async function runSpeak(
   set: (p: Partial<State>) => void,
   text: string,
   lang: Lang,
+  rethrow = false,
 ) {
   // Don't layer auto-speak onto a tap the user already started (e.g. during translate).
   if (micTurnIsLive(get)) return
@@ -362,6 +363,9 @@ async function runSpeak(
   set({ status: 'speaking', speakingText: text })
   try {
     await speakText(text, lang)
+  } catch (err) {
+    // Auto-speak stays quiet; manual speak surfaces the error to the banner.
+    if (rethrow) throw err
   } finally {
     // Only the still-current speak owns echo-tail / status. A barge-in tap
     // increments speakToken; applying setPlaybackActive(false) on the *new*
@@ -834,8 +838,14 @@ export const useYueStore = create<State>((set, get) => {
       // Same utterance → stop; different text → fall through and play the new one.
       if (same) return
     }
+    // Sync unlock while still in the click/tap gesture (Cam / Account call sites).
+    unlockTtsPlayback()
     set({ error: null })
-    await runSpeak(get, set, trimmed, lang)
+    try {
+      await runSpeak(get, set, trimmed, lang, true)
+    } catch (err) {
+      set({ error: humanizeThrownError(err) })
+    }
   },
 
   loadBootstrap: async () => {
