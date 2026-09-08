@@ -1,4 +1,5 @@
 import { useYueStore } from '../lib/store'
+import { unlockTtsPlayback } from '../lib/tts'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
@@ -33,6 +34,9 @@ export function SpeakButton({
       title={biPlain(label)}
       onClick={(e) => {
         e.stopPropagation()
+        // Unlock during the tap gesture so async Azure MP3 play works on iOS
+        // (and so Tagalog does not silently die when browserSpeak has no fil-PH voice).
+        unlockTtsPlayback()
         void speakManual(trimmed, lang)
       }}
     >

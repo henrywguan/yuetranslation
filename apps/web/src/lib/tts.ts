@@ -180,35 +180,68 @@ export function stopSpeaking(opts?: { preserveSession?: boolean }) {
   }
 }
 
-function browserSpeak(text: string, lang: Lang, g: number) {
-  return new Promise<void>((resolve) => {
+function browserLangTag(lang: Lang): string {
+  if (lang === 'yue') return 'zh-HK'
+  if (lang === 'cmn') return 'zh-CN'
+  if (lang === 'wuu') return 'wuu-CN'
+  if (lang === 'tl') return 'fil-PH'
+  if (lang === 'es') return 'es-MX'
+  if (lang === 'vi') return 'vi-VN'
+  return 'en-US'
+}
+
+/** Prefer an installed system voice so Tagalog/fil-PH does not speak as English. */
+function pickBrowserVoice(langTag: string): SpeechSynthesisVoice | undefined {
+  if (!('speechSynthesis' in window)) return undefined
+  let voices: SpeechSynthesisVoice[] = []
+  try {
+    voices = window.speechSynthesis.getVoices()
+  } catch {
+    return undefined
+  }
+  if (!voices.length) return undefined
+  const want = langTag.toLowerCase()
+  const prefix = want.split('-')[0] || want
+  // Tagalog: browsers may label voices fil-PH, fil, tl-PH, or tl.
+  const aliases =
+    prefix === 'fil' || prefix === 'tl'
+      ? ['fil-ph', 'fil', 'tl-ph', 'tl']
+      : [want, prefix]
+  return (
+    voices.find((v) => aliases.includes(v.lang.toLowerCase())) ||
+    voices.find((v) => {
+      const vl = v.lang.toLowerCase()
+      return aliases.some((a) => vl === a || vl.startsWith(`${a}-`) || vl.startsWith(`${a}_`))
+    })
+  )
+}
+
+function browserSpeak(text: string, lang: Lang, g: number): Promise<boolean> {
+  return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {
-      playing = false
-      resolve()
+      if (g === gen) playing = false
+      resolve(false)
       return
     }
+    const langTag = browserLangTag(lang)
     const u = new SpeechSynthesisUtterance(text)
-    u.lang =
-      lang === 'yue'
-        ? 'zh-HK'
-        : lang === 'cmn'
-          ? 'zh-CN'
-          : lang === 'wuu'
-            ? 'wuu-CN'
-            : lang === 'tl'
-              ? 'fil-PH'
-              : lang === 'es'
-                ? 'es-MX'
-                : lang === 'vi'
-                  ? 'vi-VN'
-                  : 'en-US'
+    u.lang = langTag
+    const match = pickBrowserVoice(langTag)
+    if (match) u.voice = match
+    // Languages without a system voice (common for fil-PH) would otherwise
+    // silently speak as the default English voice or fail — treat as no-op.
+    if (!match && (lang === 'tl' || lang === 'wuu')) {
+      if (g === gen) playing = false
+      resolve(false)
+      return
+    }
     u.onend = () => {
       if (g === gen) playing = false
-      resolve()
+      resolve(true)
     }
     u.onerror = () => {
       if (g === gen) playing = false
-      resolve()
+      resolve(false)
     }
     playing = true
     window.speechSynthesis.cancel()
@@ -227,41 +260,61 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   return readLocalYueVoice()
 }
 
+async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed' | 'aborted'> {
+  const objectUrl = URL.createObjectURL(blob)
+  url = objectUrl
+  // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
+  const el = ensureSharedAudio()
+  el.playbackRate = playbackRate
+  el.src = objectUrl
+  el.volume = 1
+  el.muted = false
+  return await new Promise<'played' | 'failed' | 'aborted'>((resolve) => {
+    let settled = false
+    const finish = (result: 'played' | 'failed' | 'aborted') => {
+      if (settled) return
+      settled = true
+      if (playbackWaiter === onEnded) playbackWaiter = null
+      if (g === gen) playing = false
+      resolve(result)
+    }
+    const onEnded = () => finish(g === gen ? 'played' : 'aborted')
+    playbackWaiter = onEnded
+    el.onended = onEnded
+    el.onerror = () => finish('failed')
+    void el.play().then(
+      () => {
+        // play() resolved — wait for onended; if gen changes, abort.
+      },
+      () => finish('failed'),
+    )
+  })
+}
+
 export async function speakText(text: string, lang: Lang, voice?: string | null) {
   const trimmed = text.trim()
   if (!trimmed) return
   stopSpeaking()
   const g = gen
   playing = true
+  let fetchError: Error | null = null
   try {
-    const blob = await fetchTtsAudio(trimmed, lang, preferredVoiceFor(lang, voice))
+    let blob: Blob | null = null
+    try {
+      blob = await fetchTtsAudio(trimmed, lang, preferredVoiceFor(lang, voice))
+    } catch (err) {
+      fetchError = err instanceof Error ? err : new Error('Voice playback failed.')
+    }
     if (g !== gen) return
     if (blob && blob.size > 0) {
-      const objectUrl = URL.createObjectURL(blob)
-      url = objectUrl
-      // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
-      const el = ensureSharedAudio()
-      el.playbackRate = playbackRate
-      el.src = objectUrl
-      el.volume = 1
-      el.muted = false
-      await new Promise<void>((resolve) => {
-        const finish = () => {
-          if (playbackWaiter === finish) playbackWaiter = null
-          if (g === gen) playing = false
-          resolve()
-        }
-        playbackWaiter = finish
-        el.onended = finish
-        el.onerror = finish
-        void el.play().then(
-          () => {},
-          finish,
-        )
-      })
-      return
+      const result = await playAzureBlob(blob, g)
+      if (result === 'played' || result === 'aborted' || g !== gen) return
+      // play() blocked (often missing gesture unlock) — try browser fallback.
     }
-    await browserSpeak(trimmed, lang, g)
+    const spoke = await browserSpeak(trimmed, lang, g)
+    if (spoke || g !== gen) return
+    if (fetchError) throw fetchError
+    throw new Error('Voice playback failed.')
   } finally {
     if (g === gen) {
       playing = false
@@ -354,7 +407,9 @@ export async function speakTextSequence(
   setTtsPlaybackRate(options.rate ?? 1.15)
 
   const blobs = await Promise.all(
-    items.map((text) => fetchTtsAudio(text, lang, preferredVoiceFor(lang))),
+    items.map((text) =>
+      fetchTtsAudio(text, lang, preferredVoiceFor(lang)).catch(() => null),
+    ),
   )
   if (id !== sequenceId) return
 

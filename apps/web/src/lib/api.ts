@@ -230,7 +230,13 @@ export async function fetchTtsAudio(
     method: 'POST',
     body: JSON.stringify({ text, lang, ...(voice ? { voice } : {}) }),
   })
-  if (!res.ok) return null
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { message?: string }
+    throw Object.assign(new Error(data.message || 'Voice playback failed.'), {
+      code: res.status,
+      entitlement: (data as { entitlement?: unknown }).entitlement,
+    })
+  }
   return res.blob()
 }
 
