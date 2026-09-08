@@ -24,7 +24,6 @@ export function createWebSpeechSession(
   let esLocaleIndex = 0
   let viLocaleIndex = 0
   const echo = createEchoGuard()
-  // iOS WebKit: Cantonese needs short sessions + restart; en-US handles continuous well.
   const apple = isAppleTouchDevice()
   // zh-HK is primary; rotate fallbacks when the browser rejects Cantonese.
   const yueLocales = ['zh-HK', 'yue-HK', 'yue-Hant-HK', 'zh-TW']
@@ -44,7 +43,7 @@ export function createWebSpeechSession(
     if (stopped) return
     const rec = new SR()
     recognition = rec
-    rec.continuous = !apple || activeLang === 'en'
+    rec.continuous = true
     rec.interimResults = true
     rec.maxAlternatives = 1
     rec.lang =
@@ -145,11 +144,10 @@ export function createWebSpeechSession(
         handlers.onStatus('idle')
         return
       }
-      // Without an initial user-gesture, iOS restarts produce zero audio.
-      // Tap-to-talk still uses short (non-continuous) Yue sessions — Safari often
-      // fires onend before the user speaks. The store’s 7s silence timer ends the
-      // turn; do not kill listening after two empty restarts (button flipped back
-      // to “hold or tap” while the orange Safari mic stayed on).
+      // iOS tap-to-talk (every language): Safari often fires onend before the
+      // user speaks. The store’s 7s silence timer / second tap ends the turn —
+      // do not kill listening after two empty restarts (button flipped back to
+      // “hold or tap” while the orange Safari mic stayed on).
       if (!heardSpeech) {
         emptyRestarts += 1
         if (activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {

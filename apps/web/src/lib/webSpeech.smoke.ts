@@ -111,6 +111,7 @@ export type SpeechEventHandlers = {
   assert.ok(session)
 
   await session!.start()
+  assert.equal(instances[0]?.continuous, true, 'tap-to-talk uses continuous recognition for every language')
   await session!.stop()
   await session!.start()
   await session!.stop()
@@ -138,27 +139,31 @@ export type SpeechEventHandlers = {
   )
   await yueSession!.start()
   assert.equal(instances[2]?.lang, 'zh-HK', 'Cantonese lock must use zh-HK, not English')
+  assert.equal(instances[2]?.continuous, true, 'Yue tap-to-talk must stay continuous like English')
   await yueSession!.stop()
 
   if (apple) {
-    const errors: string[] = []
-    const sticky = createWebSpeechSession(
-      {
-        onInterim: () => {},
-        onFinal: () => {},
-        onError: (m: string) => errors.push(m),
-        onStatus: () => {},
-      },
-      'yue',
-    )
-    await sticky!.start()
-    for (let i = 0; i < 6; i++) {
-      const rec = instances[instances.length - 1]
-      rec!.ended = true
-      rec!.onend?.()
+    for (const lang of ['yue', 'en', 'es'] as const) {
+      const errors: string[] = []
+      const sticky = createWebSpeechSession(
+        {
+          onInterim: () => {},
+          onFinal: () => {},
+          onError: (m: string) => errors.push(m),
+          onStatus: () => {},
+        },
+        lang,
+      )
+      await sticky!.start()
+      assert.equal(instances[instances.length - 1]?.continuous, true, `${lang} must be continuous on iOS`)
+      for (let i = 0; i < 6; i++) {
+        const rec = instances[instances.length - 1]
+        rec!.ended = true
+        rec!.onend?.()
+      }
+      assert.equal(errors.length, 0, `iOS empty onend must not kill ${lang} tap-to-talk`)
+      await sticky!.stop()
     }
-    assert.equal(errors.length, 0, 'iOS empty onend must not kill tap-to-talk')
-    await sticky!.stop()
   }
   rmSync(dir, { recursive: true, force: true })
 }
