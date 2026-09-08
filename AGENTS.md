@@ -30,6 +30,7 @@ When extending `Lang` (Solo / Conversation / Cam):
 
 1. Fill **`CONVERSATION_PANE_UI`** in [`apps/web/src/lib/conversationUi.ts`](apps/web/src/lib/conversationUi.ts) — native mic labels + pane hints. `Record<Lang, …>` makes `tsc` fail until this exists; do not hard-code new langs in `ConversationView` / `LiveHoldButton`.
 2. Wire the rest of the pipeline (translate, STT/TTS, pickers, pedagogy) as for `tl` / `es` / `vi`.
+3. If the language can be an Account Hub **primary** (`PRIMARY_LANGS`), add UI glosses in [`apps/web/src/lib/primaryUiGloss.data.ts`](apps/web/src/lib/primaryUiGloss.data.ts) for every `Bi` string that has Jyutping — `BiText` shows that gloss instead of Jyutping when primary ≠ `yue`. Mandarin (`cmn`) can rely on auto-pinyin of the Chinese line.
 
 ### Security Guardian (PR + abuse + API health)
 

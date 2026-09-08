@@ -33,18 +33,40 @@ export function writeLocalPrimaryLang(lang: PrimaryLang) {
   }
 }
 
-export function primaryLangLabel(lang: PrimaryLang): { en: string; zh: string; jp?: string } {
+export function primaryLangLabel(lang: PrimaryLang): {
+  en: string
+  zh: string
+  jp?: string
+  /** Native tertiary when primary ≠ Yue (replaces Jyutping under the logo). */
+  gloss?: string
+} {
   switch (lang) {
     case 'cmn':
       return { en: 'Mandarin Language Tool', zh: '普通話語言工具' }
     case 'wuu':
-      return { en: 'Shanghainese Language Tool', zh: '上海話語言工具' }
+      return {
+        en: 'Shanghainese Language Tool',
+        zh: '上海話語言工具',
+        gloss: '上海话语言工具',
+      }
     case 'tl':
-      return { en: 'Tagalog Language Tool', zh: '他加祿語語言工具' }
+      return {
+        en: 'Tagalog Language Tool',
+        zh: '他加祿語語言工具',
+        gloss: 'Kagamitan sa Wikang Tagalog',
+      }
     case 'es':
-      return { en: 'Spanish Language Tool', zh: '西班牙語語言工具' }
+      return {
+        en: 'Spanish Language Tool',
+        zh: '西班牙語語言工具',
+        gloss: 'Herramienta de español',
+      }
     case 'vi':
-      return { en: 'Vietnamese Language Tool', zh: '越南語語言工具' }
+      return {
+        en: 'Vietnamese Language Tool',
+        zh: '越南語語言工具',
+        gloss: 'Công cụ tiếng Việt',
+      }
     case 'yue':
     default:
       return {

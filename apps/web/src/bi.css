@@ -675,6 +675,36 @@ button.jyutping {
   color: color-mix(in srgb, var(--ink) 78%, transparent);
 }
 
+/* Primary-language gloss replaces Jyutping when Account Hub primary ≠ Yue */
+.bi-primary {
+  display: block;
+  width: 100%;
+  font-family: var(--font-english);
+  font-weight: 550;
+  font-size: 0.78em;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--muted) 92%, var(--ink));
+  text-wrap: balance;
+}
+
+.bi--inline .bi-primary {
+  display: inline;
+  width: auto;
+  font-size: 0.85em;
+  margin-inline-start: 0.15em;
+}
+
+.bi--sm .bi-primary {
+  font-size: 0.72em;
+}
+
+.bi--lg .bi-primary {
+  font-size: 0.48em;
+  font-weight: 520;
+  opacity: 0.9;
+}
+
 .bi--sm {
   font-size: inherit;
   gap: 0.08rem;
