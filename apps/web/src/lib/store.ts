@@ -789,6 +789,12 @@ export const useYueStore = create<State>((set, get) => {
       if (ent.loggedIn && ent.prefs?.primaryLang) {
         writeLocalPrimaryLang(nextPrimary)
       }
+      // Only reset Solo/Conversation pane layout when primary actually changes.
+      // Re-applying on every health refresh (visibility, mic overlays, concurrent
+      // boots) wiped manual Solo pane picks — e.g. 粵 upper + Mexican Spanish lower
+      // snapped back to classic English-you after record/stop.
+      const prevPrimary = get().primaryLanguage
+      const primaryChanged = nextPrimary !== prevPrimary
       const layout =
         nextPrimary === 'yue'
           ? {
@@ -813,7 +819,7 @@ export const useYueStore = create<State>((set, get) => {
         incidentBanner: data.incidentBanner ?? null,
         autoSpeak: nextAutoSpeak,
         primaryLanguage: nextPrimary,
-        ...layout,
+        ...(primaryChanged ? layout : {}),
         history,
       })
       // Sync TTS voices from server prefs (cross-device) into local cache.
