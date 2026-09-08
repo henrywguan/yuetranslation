@@ -195,6 +195,35 @@ const NO_SPEECH_HINT_MS = 7000
 let noSpeechTimer: ReturnType<typeof setTimeout> | null = null
 /** Mic stream opened in the gesture turn — fed to Azure so iOS doesn’t need a second open. */
 let heldMicStream: MediaStream | null = null
+/** Bumps on every tearDown so a slower teardown cannot wipe a newer live session/mic. */
+let tearEpoch = 0
+
+/** DEV/test: inject a live session (skip Azure / Web Speech). */
+let liveSessionFactory:
+  | ((
+      handlers: import('./types').SpeechEventHandlers,
+      mediaStream: MediaStream | null,
+      lockLang?: Lang,
+    ) => Promise<LiveSession | null>)
+  | null = null
+
+export function __setLiveSessionFactoryForTests(
+  factory: typeof liveSessionFactory,
+) {
+  liveSessionFactory = factory
+}
+
+export function __getHoldDebugFlagsForTests() {
+  return {
+    holding,
+    tapSticky,
+    flushingHold,
+    startingHold,
+    holdGen,
+    tearEpoch,
+    hasMic: Boolean(heldMicStream),
+  }
+}
 
 function clearNoSpeechTimer() {
   if (noSpeechTimer) {
@@ -413,6 +442,9 @@ async function tearDownLive(
   set: (p: Partial<State>) => void,
   opts?: { clearInterim?: boolean; clearSideLock?: boolean },
 ) {
+  const myEpoch = ++tearEpoch
+  const session = get().session
+  const mic = heldMicStream
   speakToken += 1
   stopSpeaking()
   stopHeartbeat()
@@ -424,7 +456,6 @@ async function tearDownLive(
   if (opts?.clearSideLock !== false) {
     holdSideLock = null
   }
-  const session = get().session
   if (session) {
     try {
       // Hung Azure/Web Speech stop() used to leave flushingHold true forever.
@@ -436,8 +467,14 @@ async function tearDownLive(
       /* ignore */
     }
   }
-  // Stop after the recognizer so Azure can finish reading the stream.
-  releaseHeldMic()
+  // A newer startHold/tearDown owns the mic — do not stop their tracks.
+  if (myEpoch === tearEpoch && heldMicStream === mic) {
+    releaseHeldMic()
+  }
+  // A newer live session was installed while we were stopping — leave it alone.
+  if (myEpoch !== tearEpoch) return
+  if (session && get().session && get().session !== session) return
+
   const clearInterim = opts?.clearInterim !== false
   set({
     live: false,
@@ -868,16 +905,33 @@ export const useYueStore = create<State>((set, get) => {
   },
 
   startHold: async (side) => {
+    // Gesture-time unlocks first — must run before any await on this turn (iOS).
+    unlockTtsPlayback()
+    speakToken += 1
+    stopSpeaking()
+    set({ status: 'idle', speakingText: null })
+
+    const apple = isAppleTouchDevice()
+    const webSpeechFirst = apple && !liveSessionFactory
+    const micWarm = apple && !liveSessionFactory ? unlockMicrophone() : null
+    const micPriming = webSpeechFirst || liveSessionFactory ? null : unlockMicrophone()
+
+    // Wait out an in-flight endHold flush instead of tearing down concurrently
+    // (overlapping tearDown was able to null a freshly started session).
+    if (flushingHold) {
+      const deadline = Date.now() + 4000
+      while (flushingHold && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 40))
+      }
+    }
+
     repairStaleHoldCapture(get)
-    // Barge-in / zombie clear: a prior turn can leave live=true with a dead session
-    // (Azure cancel without details never called onError). Silent-return blocked the mic
-    // until refresh — tear down and start a fresh turn instead.
+    // Barge-in / zombie clear: a prior turn can leave live=true with a dead session.
     if (get().live) {
       holdGen += 1
       await tearDownLive(get, set, { clearInterim: false })
       repairStaleHoldCapture(get)
     }
-    // Hung flush (stop/translate never resolved) used to block every later press.
     if (flushingHold && !holding && !startingHold && !tapSticky && !get().live) {
       flushingHold = false
     }
@@ -893,28 +947,13 @@ export const useYueStore = create<State>((set, get) => {
     }
 
     // iOS Safari over http://192.168.x.x has no mediaDevices — fail before Azure crashes.
-    const micBlock = micBlockedMessage()
-    if (micBlock) {
-      set({ error: micBlock })
-      return
+    if (!liveSessionFactory) {
+      const micBlock = micBlockedMessage()
+      if (micBlock) {
+        set({ error: micBlock })
+        return
+      }
     }
-
-    // Sync unlock before any await — iOS needs a gesture-time play() so later
-    // auto-speak (after STT + translate) can use the same HTMLAudioElement.
-    unlockTtsPlayback()
-    // Always hard-stop any prior TTS/echo state — a stuck `playing` flag silences STT everywhere.
-    speakToken += 1
-    stopSpeaking()
-    set({ status: 'idle', speakingText: null })
-
-    const apple = isAppleTouchDevice()
-    // iPhone/iPad: always start Web Speech in the user-gesture turn. A warm Azure
-    // token on the second press skips that path and Azure often listens with no audio.
-    const webSpeechFirst = apple
-    // Re-open the iOS audio session before Web Speech after auto-speak from the prior turn.
-    const micWarm = apple ? unlockMicrophone() : null
-    // Desktop / warm-token paths: kick off getUserMedia now so it runs during sync setup.
-    const micPriming = webSpeechFirst ? null : unlockMicrophone()
 
     const gen = ++holdGen
     holding = true
@@ -1000,9 +1039,9 @@ export const useYueStore = create<State>((set, get) => {
     let next = null as LiveSession | null
     let alreadyStarted = false
 
-    // iPhone/iPad without a warm Azure token: start Web Speech BEFORE any await so
-    // recognition.start() stays in the user-gesture turn (otherwise Safari listens with no audio).
-    if (webSpeechFirst) {
+    if (liveSessionFactory) {
+      next = await liveSessionFactory(handlers, heldMicStream, webSpeechLock())
+    } else if (webSpeechFirst) {
       // Prime iOS audio session in parallel — never block STT on getUserMedia or early
       // syllables are lost (English speakers especially tend to start talking immediately).
       if (micWarm) {
@@ -1027,7 +1066,7 @@ export const useYueStore = create<State>((set, get) => {
       }
     }
 
-    if (!alreadyStarted) {
+    if (!liveSessionFactory && !alreadyStarted) {
       // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
       const primed = await micPriming!
       if (!primed) {
@@ -1147,7 +1186,7 @@ export const useYueStore = create<State>((set, get) => {
   },
 
   endHold: async () => {
-    // Prevent concurrent teardown/translate (double release / double tap).
+    // Prevent concurrent teardown (double release / double tap).
     if (flushingHold) return
     if (!holding && !startingHold && !get().live && !tapSticky) return
     const gen = holdGen
@@ -1155,7 +1194,7 @@ export const useYueStore = create<State>((set, get) => {
     tapSticky = false
     clearTapTimers()
     flushingHold = true
-    let postSpeak: { text: string; lang: Lang } | null = null
+    let translateJob: { lang: Lang; text: string } | null = null
     try {
       // Already have committed STT finals → shorter flush (latency). Else wait for late finals.
       const committedBeforeStop = holdFinals.length > 0 && !holdInterim.trim()
@@ -1175,13 +1214,8 @@ export const useYueStore = create<State>((set, get) => {
       holdSideLock = null
       set({ liveSide: null })
 
-      // Release the mic gate before translate so the next press can barge in.
-      // (Auto-speak already runs after finally — same idea for STT.)
-      flushingHold = false
-
       if (lang && text) {
-        // Capture finished → single final translate (lean = no alt fan-out).
-        postSpeak = await runTranslation(get, set, lang, text, { lean: true, skipSpeak: true })
+        translateJob = { lang, text }
       } else {
         set({
           status: 'idle',
@@ -1191,7 +1225,16 @@ export const useYueStore = create<State>((set, get) => {
         })
       }
     } finally {
+      // Always clear before translate so the next mic press is never gated on network MT.
       flushingHold = false
+    }
+
+    let postSpeak: { text: string; lang: Lang } | null = null
+    if (translateJob) {
+      postSpeak = await runTranslation(get, set, translateJob.lang, translateJob.text, {
+        lean: true,
+        skipSpeak: true,
+      })
     }
     if (postSpeak) await speakFinal(get, set, postSpeak.text, postSpeak.lang)
   },
@@ -1433,8 +1476,12 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
   const w = window as unknown as {
     __yueStore?: typeof useYueStore
     __yueLearnedGloss?: unknown
+    __setLiveSessionFactoryForTests?: typeof __setLiveSessionFactoryForTests
+    __getHoldDebugFlagsForTests?: typeof __getHoldDebugFlagsForTests
   }
   w.__yueStore = useYueStore
+  w.__setLiveSessionFactoryForTests = __setLiveSessionFactoryForTests
+  w.__getHoldDebugFlagsForTests = __getHoldDebugFlagsForTests
   import('./learnedGloss').then((m) => {
     w.__yueLearnedGloss = m.learnedGlossStats
   })
