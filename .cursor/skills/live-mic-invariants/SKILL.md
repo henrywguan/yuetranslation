@@ -38,6 +38,7 @@ In `apps/web/src/lib/store.ts`:
   `audio.load()`, silent-WAV unlock, or `getUserMedia` until STT has started — those
   abort Safari capture (pill on, no audio). Do not arm the 600ms echo tail on user
   barge-in. Skip auto-speak if a new mic turn is already live.
+- **Background privacy:** Home / app switcher / Control Center must **stop tracks immediately** (`releaseCaptureOnBackground`). Do not wait for `session.stop()` — iOS can freeze JS and leave the orange “Safari Websites” pill on. Do not `loadBootstrap` on hide.
 
 In `apps/web/src/lib/tts.ts`:
 
@@ -54,5 +55,6 @@ In `apps/web/src/lib/api.ts` / `apiError.ts`:
 npx tsx apps/web/src/lib/webSpeech.smoke.ts
 npx tsx apps/web/src/lib/liveStt.smoke.ts
 npx tsx apps/web/src/lib/tts.smoke.ts
+npx tsx apps/web/src/lib/micPrivacy.smoke.ts
 npx tsx apps/web/src/lib/apiError.smoke.ts
 ```

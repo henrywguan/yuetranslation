@@ -22,6 +22,7 @@ If the PR touches STT / mic (`webSpeech.ts`, `store.ts` `startHold`, `LiveHoldBu
 - `rec.continuous` false on Apple, or English-only continuous (`!apple || activeLang === 'en'`)
 - Apple Web Speech killed after two empty `onend`s
 - Mic tap during auto-speak pauses TTS in a way that cancels capture (`speechSynthesis.cancel()`, `audio.load()`, silent-WAV unlock, or `getUserMedia` before `recognition.start()`)
+- Orange Safari mic pill stays on after Home / app switcher (mic tracks not stopped on `pagehide` / `hidden`)
 - `loadBootstrap()` / `/api/health` on every mic teardown
 - Vercel checkpoint HTML dumped into the error banner
 

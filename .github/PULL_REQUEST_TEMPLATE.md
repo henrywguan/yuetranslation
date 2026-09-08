@@ -5,7 +5,7 @@
 - [ ] `npx tsc --noEmit -p apps/web/tsconfig.json` (and/or API) when TS changed
 - [ ] Offline `npm run smoke:all` (or at least `smoke:canto`) when API / entitlements touched
 - [ ] Manual check of the affected UI / API path
-- [ ] If STT / mic / TTS changed: tap stays listening (every language) until second tap or ~2s silence after speech; mic tap during auto-speak barges in without killing capture — see `AGENTS.md` Live mic
+- [ ] If STT / mic / TTS changed: tap stays listening (every language) until second tap or ~2s silence after speech; mic tap during auto-speak barges in without killing capture; Home / switcher must drop the orange Safari mic pill — see `AGENTS.md` Live mic
 
 ## Notes
 - Do not burn DeepSeek / Azure from Cloud agents without explicit OK — see `AGENTS.md`.
