@@ -427,7 +427,11 @@ async function tearDownLive(
   const session = get().session
   if (session) {
     try {
-      await session.stop()
+      // Hung Azure/Web Speech stop() used to leave flushingHold true forever.
+      await Promise.race([
+        session.stop(),
+        new Promise<void>((resolve) => setTimeout(resolve, 2500)),
+      ])
     } catch {
       /* ignore */
     }
@@ -865,10 +869,17 @@ export const useYueStore = create<State>((set, get) => {
 
   startHold: async (side) => {
     repairStaleHoldCapture(get)
-    // Ghost `live` without a session blocks every subsequent press until refresh.
-    if (get().live && !get().session) {
+    // Barge-in / zombie clear: a prior turn can leave live=true with a dead session
+    // (Azure cancel without details never called onError). Silent-return blocked the mic
+    // until refresh — tear down and start a fresh turn instead.
+    if (get().live) {
+      holdGen += 1
       await tearDownLive(get, set, { clearInterim: false })
       repairStaleHoldCapture(get)
+    }
+    // Hung flush (stop/translate never resolved) used to block every later press.
+    if (flushingHold && !holding && !startingHold && !tapSticky && !get().live) {
+      flushingHold = false
     }
     if (holding || startingHold || flushingHold || tapSticky || get().live) return
     const { entitlement } = get()
@@ -963,7 +974,8 @@ export const useYueStore = create<State>((set, get) => {
         if (gen !== holdGen) return
         // Azure/Web Speech often emit canceled during intentional session.stop().
         if (flushingHold) return
-        set({ error: message })
+        const trimmed = message.trim()
+        if (trimmed) set({ error: trimmed })
         // STT session died — tear down so live=false doesn’t block the next mic press.
         void get().endHold()
       },
@@ -1162,6 +1174,10 @@ export const useYueStore = create<State>((set, get) => {
       resetHoldCapture()
       holdSideLock = null
       set({ liveSide: null })
+
+      // Release the mic gate before translate so the next press can barge in.
+      // (Auto-speak already runs after finally — same idea for STT.)
+      flushingHold = false
 
       if (lang && text) {
         // Capture finished → single final translate (lean = no alt fan-out).

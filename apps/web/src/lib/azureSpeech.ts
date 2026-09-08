@@ -149,7 +149,14 @@ export async function createAzureLiveSession(
       handlers.onFinal(emitLang(e.result.language || 'en-US'), text, metaFromSpeaker(speakerId))
     }
     next.canceled = (_s, e) => {
-      if (e.errorDetails) handlers.onError(e.errorDetails)
+      // Quiet EndOfStream cancels often omit errorDetails — still tear down via onError
+      // when the store is not already flushing, so live=true zombies cannot block the next mic.
+      const detail = e.errorDetails?.trim()
+      if (detail || e.reason === SpeechSDK.CancellationReason.Error) {
+        handlers.onError(detail || 'Speech recognition error')
+      } else {
+        handlers.onError('')
+      }
       handlers.onStatus('idle')
     }
 
@@ -202,7 +209,12 @@ export async function createAzureLiveSession(
       handlers.onFinal(emitLang(detected), text, metaFromSpeaker(speakerId))
     }
     next.canceled = (_s, e) => {
-      if (e.errorDetails) handlers.onError(e.errorDetails)
+      const detail = e.errorDetails?.trim()
+      if (detail || e.reason === SpeechSDK.CancellationReason.Error) {
+        handlers.onError(detail || 'Speech recognition error')
+      } else {
+        handlers.onError('')
+      }
       handlers.onStatus('idle')
     }
 
@@ -244,7 +256,9 @@ export async function createAzureLiveSession(
       }
       if (lockLang === 'cmn') {
         await startWithRecognizer('cmn')
-      } else if (lockLang === 'wuu') {
+        return
+      }
+      if (lockLang === 'wuu') {
         await startWithRecognizer('wuu')
         return
       }
@@ -279,14 +293,12 @@ export async function createAzureLiveSession(
       transcriber = null
       recognizer = null
       gate.reset()
+      // Stop both if a fallthrough ever started recognizer + transcriber on one stream.
       if (currentTranscriber) {
         await new Promise<void>((resolve) => {
           currentTranscriber.stopTranscribingAsync(
             () => {
-              currentTranscriber.close(() => {
-                handlers.onStatus('idle')
-                resolve()
-              })
+              currentTranscriber.close(() => resolve())
             },
             () => {
               try {
@@ -294,28 +306,30 @@ export async function createAzureLiveSession(
               } catch {
                 /* ignore */
               }
-              handlers.onStatus('idle')
               resolve()
             },
           )
         })
-        return
       }
-      if (!currentRecognizer) return
-      await new Promise<void>((resolve) => {
-        currentRecognizer.stopContinuousRecognitionAsync(
-          () => {
-            currentRecognizer.close()
-            handlers.onStatus('idle')
-            resolve()
-          },
-          () => {
-            currentRecognizer.close()
-            handlers.onStatus('idle')
-            resolve()
-          },
-        )
-      })
+      if (currentRecognizer) {
+        await new Promise<void>((resolve) => {
+          currentRecognizer.stopContinuousRecognitionAsync(
+            () => {
+              currentRecognizer.close()
+              resolve()
+            },
+            () => {
+              try {
+                currentRecognizer.close()
+              } catch {
+                /* ignore */
+              }
+              resolve()
+            },
+          )
+        })
+      }
+      if (currentTranscriber || currentRecognizer) handlers.onStatus('idle')
     },
   }
 }
