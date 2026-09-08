@@ -705,3 +705,151 @@
     display: none;
   }
 }
+
+/* —— Text highlight illustration (native Aceternity-style) —— */
+.email-highlight-illu {
+  margin: 0 0 1rem;
+}
+
+.email-highlight-illu-card {
+  position: relative;
+  padding: 1rem 1.05rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--jade, #3dcfb6) 22%, transparent);
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--jade, #3dcfb6) 10%, transparent),
+      color-mix(in srgb, #07131f 88%, transparent)
+    );
+  overflow: visible;
+}
+
+.email-highlight-illu-copy {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, #e8f4f1 92%, transparent);
+}
+
+.email-highlight-illu-mark-wrap {
+  position: relative;
+  display: inline;
+  white-space: nowrap;
+}
+
+.email-highlight-illu-mark {
+  position: absolute;
+  left: -0.12em;
+  right: -0.12em;
+  top: 0.05em;
+  bottom: 0.05em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--jade, #3dcfb6) 38%, #9af0de);
+  transform-origin: left center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.email-highlight-illu-mark-text {
+  position: relative;
+  z-index: 1;
+  color: #041018;
+  font-weight: 650;
+}
+
+.email-highlight-illu-toolbar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.28rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #fff 16%, transparent);
+  background: color-mix(in srgb, #0a1c24 92%, transparent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.email-highlight-illu-tool {
+  display: grid;
+  place-items: center;
+  min-width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 7px;
+  color: #d7efe6;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.email-highlight-illu-tool--italic {
+  font-style: italic;
+}
+
+.email-highlight-illu-tool--underline {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.email-highlight-illu-tool--strike {
+  text-decoration: line-through;
+}
+
+.email-highlight-illu-tool-sep {
+  width: 1px;
+  height: 1rem;
+  margin: 0 0.2rem;
+  background: color-mix(in srgb, #fff 18%, transparent);
+}
+
+.email-highlight-illu-ask {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem 0.2rem 0.35rem;
+  background: color-mix(in srgb, var(--jade, #3dcfb6) 22%, transparent);
+  color: #9af0de;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.email-highlight-illu-ask:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.email-highlight-illu-ask.is-busy {
+  opacity: 0.8;
+}
+
+.email-highlight-illu-ask-orb {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #e8fff6, var(--jade, #3dcfb6));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--jade, #3dcfb6) 55%, transparent);
+}
+
+.email-highlight-illu-sub {
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--muted, rgba(232, 244, 241, 0.65));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .email-highlight-illu-mark,
+  .email-highlight-illu-toolbar {
+    transition: none !important;
+  }
+}

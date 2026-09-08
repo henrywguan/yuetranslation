@@ -12,6 +12,7 @@ import {
   type EmailContact,
   type EmailTemplateItem,
 } from '../lib/adminApi'
+import { EmailTextHighlightIllustration } from './EmailTextHighlightIllustration'
 import './AdminEmailHub.css'
 
 type GalleryView = 'thumbnails' | 'list'
@@ -552,6 +553,13 @@ export function AdminEmailHub() {
               </select>
             </label>
           </div>
+
+          <EmailTextHighlightIllustration
+            aiBusy={aiBusy}
+            onAskAi={() => {
+              void runAiDraft()
+            }}
+          />
 
           {FIELD_LABELS.map((f) => (
             <label key={f.key} className={`email-hub-field${f.key === 'body' ? ' email-hub-field--body' : ''}`}>
