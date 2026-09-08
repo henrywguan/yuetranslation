@@ -56,11 +56,11 @@ Updated: **2026-09-08** — speech-token prepaid debit, IP-bound guest ids, docs
 - **Category:** metering
 - **Residual:** Guest IP change still starts a new trial identity (see guest binding).
 
-### [High] Guest cookie rotation resets trial meters — FIXED (IP-bound guest id)
-- **Status:** Fixed 2026-09-08 — guest id is a deterministic UUID from `sha256(month|ip)` (`guestId.ts`). Clearing `yue_guest_id` reissues the same id for that network/month.
+### [High] Guest cookie rotation resets trial meters — FIXED (device + network anchors)
+- **Status:** Fixed 2026-09-08 — guest id resolved via (1) durable `X-Yue-Guest-Device` / `localStorage`, (2) `guest_network_trials` IP hash registry, (3) IP-derived fallback. Migration `025_guest_identity_anchors.sql`.
 - **Category:** abuse / metering
-- **Residual:** Changing IP/VPN still yields a new trial; shared NAT shares one trial (intentional abuse tradeoff).
-- **Fixability:** Done (further: edge Firewall / fingerprint — NEEDS_HUMAN if abuse continues)
+- **Residual:** Full site-data clear **and** new IP still yields a new trial; café NAT shares one network trial.
+- **Fixability:** Done (further: Firewall / captcha — NEEDS_HUMAN if abuse continues)
 
 ### [High] `/api/docs/segments` model spend without page metering — FIXED
 - **Status:** Fixed 2026-09-08 — segments pre-checks remaining docs pages, bills `ceil(chars/1800)` (min 1) on success; PDF hybrid passes `prepaidPages` into `/api/docs/commit` so pages are not double-billed.

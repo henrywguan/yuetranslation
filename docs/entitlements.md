@@ -15,7 +15,13 @@ Vercel 生产栈的套餐与计量以本文为准。
 | Documents | Sign-in required (button greyed) | Yes (docs page meter) |
 | Auto-speak | No | Family/Business |
 
-Guests get an HttpOnly `yue_guest_id` cookie (1 year, `SameSite=Lax`, `Secure` on HTTPS). The guest **identity** is a deterministic UUID from client IP + billing month (`guestId.ts`), so clearing cookies no longer refreshes the trial on the same network. The cookie mirrors that id. Usage lands in `guest_usage_months` and merges into the user on sign-in. When live/cam trial is exhausted, the UI asks them to sign in and continue on Free. Changing IP/VPN still yields a new trial identity — pair with Vercel Firewall if needed.
+Guests get an HttpOnly `yue_guest_id` cookie (1 year, `SameSite=Lax`, `Secure` on HTTPS). Guest **identity** is resolved in this order:
+
+1. **Device id** — SPA stores a UUID in `localStorage` and sends `X-Yue-Guest-Device` on API calls. Survives cookie wipe and most IP/VPN changes on the same browser profile.
+2. **Network registry** — server maps `sha256(ip|month)` → guest id (`guest_network_trials`). Survives cookie wipe on the same network.
+3. **Fallback** — deterministic id from IP + month when neither mapping exists yet.
+
+Usage lands in `guest_usage_months` and merges into the user on sign-in (cookie + device + network candidates). When live/cam trial is exhausted, the UI asks them to sign in and continue on Free. Residual: full site-data clear **and** a new IP still yields a new trial; shared café NAT shares one network trial (intentional).
 
 ### Guest per-IP rate limits (app)
 

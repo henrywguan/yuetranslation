@@ -1,6 +1,7 @@
 import type { Entitlement } from './types'
 import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
+import { guestDeviceHeaders } from './guestDevice'
 
 export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu'
 
@@ -15,7 +16,10 @@ export type DocFileResult = {
 }
 
 async function docsFetch(path: string, body: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...guestDeviceHeaders(),
+  }
   const token = await getAccessToken()
   if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(`${resolveApiBase()}${path}`, {

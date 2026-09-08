@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { mergeGuestUsageIntoUser } from './usage.js'
 import type { AuthedRequest } from './auth.js'
-import { guestIdForRequest } from './guestId.js'
+import { resolveGuestIdentity } from './guestId.js'
 
 export const GUEST_COOKIE = 'yue_guest_id'
 const ONE_YEAR_S = 60 * 60 * 24 * 365
@@ -71,20 +71,20 @@ export type GuestRequest = AuthedRequest & {
 }
 
 /**
- * Issue / restore a durable guest id for anonymous metering.
- * Identity is bound to client IP + month (deterministic UUID) so dropping the
- * cookie cannot refresh guest live/cam trials. Cookie still mirrors the id.
- * When the user signs in, fold guest meters into their account once.
+ * Attach guest metering identity:
+ * - durable device id (X-Yue-Guest-Device) survives IP/VPN changes
+ * - IP/network registry survives HttpOnly cookie wipe on the same network
+ * - cookie mirrors the resolved guest id
+ * On sign-in, fold all related guest meter rows into the user.
  */
 export async function attachGuest(req: GuestRequest, res: Response, next: NextFunction) {
   try {
     const existingCookie = readGuestId(req)
+    const identity = await resolveGuestIdentity(req)
+
     if (req.auth?.userId) {
-      // Prefer cookie (legacy random UUID) then IP-bound id so both get merged.
-      const ipBound = guestIdForRequest(req)
-      const toMerge = new Set<string>()
+      const toMerge = new Set<string>(identity.mergeCandidates)
       if (existingCookie) toMerge.add(existingCookie)
-      toMerge.add(ipBound)
       for (const gid of toMerge) {
         await mergeGuestUsageIntoUser(gid, req.auth.userId)
       }
@@ -94,9 +94,8 @@ export async function attachGuest(req: GuestRequest, res: Response, next: NextFu
       return
     }
 
-    const guestId = guestIdForRequest(req)
-    req.guestId = guestId
-    if (existingCookie !== guestId) setGuestCookie(req, res, guestId)
+    req.guestId = identity.guestId
+    if (existingCookie !== identity.guestId) setGuestCookie(req, res, identity.guestId)
     next()
   } catch (err) {
     console.warn('[guest] attachGuest failed', err instanceof Error ? err.message : err)

@@ -7,6 +7,7 @@ import type {
 } from './types'
 import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
+import { guestDeviceHeaders } from './guestDevice'
 
 export function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -32,6 +33,7 @@ const WP_NONCE = resolveWpNonce()
 async function apiFetch(path: string, init: RequestInit = {}) {
   const headers: Record<string, string> = {
     ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+    ...guestDeviceHeaders(),
     ...((init.headers as Record<string, string>) || {}),
   }
   if (WP_NONCE) headers['X-WP-Nonce'] = WP_NONCE
