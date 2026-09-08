@@ -274,7 +274,7 @@ export async function saveAutoSpeakPref(
 }
 
 export async function savePrimaryLangPref(
-  primaryLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi',
+  primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi',
 ): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
   const res = await apiFetch('/prefs/primary-lang', {
     method: 'PATCH',

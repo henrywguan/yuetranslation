@@ -24,10 +24,11 @@ import {
   resolveYueVoice,
 } from './ttsVoices.js'
 
-export type PrimaryLang = 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+export type PrimaryLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
 
 export function normalizePrimaryLang(value: unknown): PrimaryLang {
   if (
+    value === 'en' ||
     value === 'yue' ||
     value === 'cmn' ||
     value === 'wuu' ||
@@ -136,7 +137,7 @@ export type Entitlement = {
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Primary non-English language for Solo / Conversation / Cam / brand. */
-    primaryLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+    primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
     /** Custom display username; null until the user sets one. */
     username: string | null
     /** ISO timestamp of last username change; null if never set. */

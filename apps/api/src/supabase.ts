@@ -71,6 +71,7 @@ function normalizeProfile(data: unknown): ProfileRow {
     username_changed_at?: string | null
   }
   const primary =
+    row.primary_lang === 'en' ||
     row.primary_lang === 'cmn' ||
     row.primary_lang === 'wuu' ||
     row.primary_lang === 'tl' ||

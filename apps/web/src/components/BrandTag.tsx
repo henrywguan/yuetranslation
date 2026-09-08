@@ -10,7 +10,8 @@ import { JpPop } from './JpPop'
 export function BrandTag() {
   const primaryLanguage = useYueStore((s) => s.primaryLanguage)
   const tag = primaryLangLabel(primaryLanguage)
-  const canJp = primaryLanguage === 'yue' && Boolean(tag.jp)
+  const canJp =
+    (primaryLanguage === 'yue' || primaryLanguage === 'en') && Boolean(tag.jp)
   const { tipId, show, bind, wrapRef } = useJpPopup(canJp)
 
   const [cmnPinyin, setCmnPinyin] = useState(() =>

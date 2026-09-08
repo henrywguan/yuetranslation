@@ -2,10 +2,11 @@ import assert from 'node:assert/strict'
 import { resolvePrimaryUiGloss } from './primaryUiGloss'
 import { ui } from './uiCopy'
 
-/** Offline: primary ≠ Yue replaces Jyutping with a primary-language gloss. */
+/** Offline: primary ≠ Yue/English replaces Jyutping with a primary-language gloss. */
 function main() {
   const solo = ui.modeSolo
   assert.equal(resolvePrimaryUiGloss(solo, 'yue'), undefined)
+  assert.equal(resolvePrimaryUiGloss(solo, 'en'), undefined)
   assert.equal(resolvePrimaryUiGloss(solo, 'tl'), 'Solo')
   assert.equal(resolvePrimaryUiGloss(solo, 'es'), 'Solo')
   assert.equal(resolvePrimaryUiGloss(solo, 'vi'), 'Solo')

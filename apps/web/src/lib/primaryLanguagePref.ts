@@ -2,8 +2,8 @@ import type { Lang } from './types'
 
 const STORAGE_KEY = 'yue-primary-lang'
 
-/** Non-English languages that can be the app “primary” (paired with English). */
-export const PRIMARY_LANGS = ['yue', 'cmn', 'wuu', 'tl', 'es', 'vi'] as const
+/** Languages that can be the app “primary” (your side of Solo / Conversation). */
+export const PRIMARY_LANGS = ['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi'] as const
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
 export function isPrimaryLang(value: unknown): value is PrimaryLang {
@@ -33,14 +33,49 @@ export function writeLocalPrimaryLang(lang: PrimaryLang) {
   }
 }
 
+/** Solo / Conversation / mic defaults for an Account Hub primary. */
+export function layoutForPrimary(primary: PrimaryLang): {
+  soloUpperLang: Lang
+  soloLowerLang: Lang
+  conversationYouLang: Lang
+  chineseLang: Lang
+  speakDirection: Lang
+} {
+  // English primary → classic English-you, Cantonese partner.
+  if (primary === 'en') {
+    return {
+      soloUpperLang: 'en',
+      soloLowerLang: 'yue',
+      conversationYouLang: 'en',
+      chineseLang: 'yue',
+      speakDirection: 'en',
+    }
+  }
+  // Every other primary (including Cantonese) fills Solo upper + Conversation you;
+  // English moves to Solo lower + Conversation partner.
+  return {
+    soloUpperLang: primary,
+    soloLowerLang: 'en',
+    conversationYouLang: primary,
+    chineseLang: 'en',
+    speakDirection: primary,
+  }
+}
+
 export function primaryLangLabel(lang: PrimaryLang): {
   en: string
   zh: string
   jp?: string
-  /** Native tertiary when primary ≠ Yue (replaces Jyutping under the logo). */
+  /** Native tertiary when primary ≠ Yue/English (replaces Jyutping under the logo). */
   gloss?: string
 } {
   switch (lang) {
+    case 'en':
+      return {
+        en: 'English Language Tool',
+        zh: '英語語言工具',
+        jp: 'jing1 jyu5 jyu5 jin4 gung1 geoi6',
+      }
     case 'cmn':
       return { en: 'Mandarin Language Tool', zh: '普通話語言工具' }
     case 'wuu':
@@ -79,6 +114,8 @@ export function primaryLangLabel(lang: PrimaryLang): {
 
 export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: string } {
   switch (lang) {
+    case 'en':
+      return { en: 'English', zh: '英語' }
     case 'cmn':
       return { en: 'Mandarin', zh: '普通話' }
     case 'wuu':
@@ -95,7 +132,7 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
   }
 }
 
-/** Cast helper when a Lang must be treated as primary (never `en`). */
+/** Cast helper when a Lang must be treated as primary (never an unsupported id). */
 export function asPrimaryOrYue(lang: Lang): PrimaryLang {
   return isPrimaryLang(lang) ? lang : 'yue'
 }

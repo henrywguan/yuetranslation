@@ -96,7 +96,7 @@ export type Entitlement = {
     /** Cross-device Auto-speak preference. */
     autoSpeak?: boolean
     /** Primary non-English language (Solo / Conversation / Cam / brand). */
-    primaryLang?: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+    primaryLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
     username?: string | null
     usernameChangedAt?: string | null
   }
