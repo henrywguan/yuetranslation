@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict'
+import { mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { pathToFileURL } from 'node:url'
 
 type Rec = {
   continuous: boolean
@@ -55,37 +59,47 @@ g.SpeechRecognition = function SpeechRecognition() {
   return makeRec()
 }
 g.webkitSpeechRecognition = g.SpeechRecognition
-g.speechSynthesis = { resume() {}, cancel() {}, speak() {} }
-g.Audio = function Audio() {
-  return {
-    src: '',
-    volume: 1,
-    muted: false,
-    currentTime: 0,
-    onended: null,
-    onerror: null,
-    play: () => Promise.resolve(),
-    pause() {},
-    load() {},
-    setAttribute() {},
-    removeAttribute() {},
-  }
-}
-g.navigator = { userAgent: 'Mozilla/5.0', platform: 'Linux', maxTouchPoints: 0, mediaDevices: {} }
-g.localStorage = {
-  getItem: () => null,
-  setItem() {},
-  removeItem() {},
-}
 
-const { createWebSpeechSession } = await import('./webSpeech.ts')
+const dir = join(tmpdir(), `web-speech-smoke-${Date.now()}`)
+mkdirSync(dir, { recursive: true })
+writeFileSync(join(dir, 'tts.ts'), 'export function stopSpeaking() {}\n')
+writeFileSync(join(dir, 'mediaAccess.ts'), 'export function isAppleTouchDevice() { return false }\n')
+writeFileSync(
+  join(dir, 'echoGuard.ts'),
+  `export function createEchoGuard() {
+  return { shouldIgnoreMic() { return false }, setPlaybackActive() {} }
+}
+`,
+)
+writeFileSync(
+  join(dir, 'types.ts'),
+  `export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+export type LiveSession = { start(): Promise<void>; stop(): Promise<void>; setPlaybackActive(a: boolean): void }
+export type SpeechEventHandlers = {
+  onInterim: (lang: Lang, text: string) => void
+  onFinal: (lang: Lang, text: string) => void
+  onError: (message: string) => void
+  onStatus: (status: 'listening' | 'idle' | 'speaking') => void
+}
+`,
+)
+
+let src = readFileSync(new URL('./webSpeech.ts', import.meta.url), 'utf8')
+src = src
+  .replace("from './tts'", "from './tts.ts'")
+  .replace("from './echoGuard'", "from './echoGuard.ts'")
+  .replace("from './mediaAccess'", "from './mediaAccess.ts'")
+  .replace("from './types'", "from './types.ts'")
+writeFileSync(join(dir, 'webSpeech.ts'), src)
+
+const { createWebSpeechSession } = await import(pathToFileURL(join(dir, 'webSpeech.ts')).href)
 
 const events: string[] = []
 const session = createWebSpeechSession({
   onInterim: () => events.push('interim'),
   onFinal: () => events.push('final'),
-  onError: (m) => events.push(`error:${m}`),
-  onStatus: (s) => events.push(`status:${s}`),
+  onError: (m: string) => events.push(`error:${m}`),
+  onStatus: (s: string) => events.push(`status:${s}`),
 }, 'en')
 
 assert.ok(session, 'expected a Web Speech session')
@@ -99,7 +113,6 @@ await session!.stop()
 assert.equal(instances[0]?.abortCount, 1, 'stop() must abort so the browser releases the mic lock')
 assert.ok(events.includes('status:idle'))
 
-// Second start must not throw “already started” — the first recognizer has ended.
 await session!.start()
 assert.equal(instances.length, 2, 'second start uses a fresh recognizer')
 assert.equal(instances[1]?.startCount, 1)
@@ -108,6 +121,7 @@ assert.equal(instances[0]?.startCount, 1, 'old recognizer must not be started ag
 await session!.stop()
 assert.equal(instances[1]?.abortCount, 1)
 
+rmSync(dir, { recursive: true, force: true })
 console.log('webSpeech.smoke: ok', {
   recognizers: instances.length,
   firstAbort: instances[0]?.abortCount,
