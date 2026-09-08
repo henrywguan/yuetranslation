@@ -5,7 +5,7 @@ import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tt
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
-import { appleLiveUsesWebSpeech } from './liveStt'
+import { appleFallsBackToAzure, appleLiveUsesWebSpeech } from './liveStt'
 import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
@@ -201,6 +201,8 @@ let heldMicStream: MediaStream | null = null
 let tearEpoch = 0
 /** iOS: follow-up taps keep a getUserMedia hold so Safari stays in record mode. */
 let appleMicTurns = 0
+/** Coalesce overlapping App + TranslatorApp boots (and visibility blips). */
+let bootstrapInflight: Promise<void> | null = null
 
 /** DEV/test: inject a live session (skip Azure / Web Speech). */
 let liveSessionFactory:
@@ -495,7 +497,9 @@ async function tearDownLive(
         }
       : {}),
   })
-  void get().loadBootstrap()
+  // Do not loadBootstrap here. Each mic stop used to GET /health + GET/PUT
+  // /history on top of translate + TTS + heartbeat — enough POSTs for Vercel’s
+  // checkpoint after 2–3 iPhone turns. Heartbeat already returns entitlement.
 }
 
 export const useYueStore = create<State>((set, get) => {
@@ -814,6 +818,8 @@ export const useYueStore = create<State>((set, get) => {
   },
 
   loadBootstrap: async () => {
+    if (bootstrapInflight) return bootstrapInflight
+    bootstrapInflight = (async () => {
     try {
       const data = await fetchHealth()
       const ent = data.entitlement
@@ -898,6 +904,10 @@ export const useYueStore = create<State>((set, get) => {
         incidentBanner: null,
       })
     }
+    })().finally(() => {
+      bootstrapInflight = null
+    })
+    return bootstrapInflight
   },
 
   stopLive: async () => {
@@ -1088,27 +1098,35 @@ export const useYueStore = create<State>((set, get) => {
     }
 
     if (!liveSessionFactory && !alreadyStarted) {
-      // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
-      const primed = await micPriming!
-      if (!primed) {
-        cancelHoldStart(set)
-        set({
-          error: 'Microphone permission denied. Allow mic access for this site and try again.',
-        })
-        return
-      }
-      heldMicStream = primed
+      if (apple && appleLiveUsesWebSpeech() && !appleFallsBackToAzure()) {
+        // Stay on Web Speech — do not mint /api/speech-token on iPhone.
+        if (micPriming) {
+          const leftover = await micPriming.catch(() => null)
+          if (leftover) stopMediaStream(leftover)
+        }
+      } else {
+        // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
+        const primed = await micPriming!
+        if (!primed) {
+          cancelHoldStart(set)
+          set({
+            error: 'Microphone permission denied. Allow mic access for this site and try again.',
+          })
+          return
+        }
+        heldMicStream = primed
 
-      if (gen !== holdGen || (!holding && !tapSticky)) {
-        cancelHoldStart(set)
-        return
-      }
+        if (gen !== holdGen || (!holding && !tapSticky)) {
+          cancelHoldStart(set)
+          return
+        }
 
-      next = await createAzureLiveSession(handlers, primed, webSpeechLock())
-      if (!next) {
-        // Free the exclusive mic lock so Web Speech can open its own input.
-        releaseHeldMic()
-        next = createWebSpeechSession(handlers, webSpeechLock())
+        next = await createAzureLiveSession(handlers, primed, webSpeechLock())
+        if (!next) {
+          // Free the exclusive mic lock so Web Speech can open its own input.
+          releaseHeldMic()
+          next = createWebSpeechSession(handlers, webSpeechLock())
+        }
       }
     }
 

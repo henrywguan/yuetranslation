@@ -1,8 +1,10 @@
 import type { ConversationTurn, Lang } from './types'
 import { fetchAccountHistory, putAccountHistory } from './api'
+import { MAX_TURNS, mergeHistory, shouldPushHydratedHistory } from './historyMerge'
+
+export { mergeHistory, shouldPushHydratedHistory }
 
 const LOCAL_KEY = 'yue-translation-history-v1'
-const MAX_TURNS = 80
 
 function isLang(v: unknown): v is Lang {
   return (
@@ -75,19 +77,6 @@ export function writeLocalHistory(turns: ConversationTurn[]) {
   }
 }
 
-/** Merge by id; newest `at` wins; keep MAX_TURNS. */
-export function mergeHistory(
-  a: ConversationTurn[],
-  b: ConversationTurn[],
-): ConversationTurn[] {
-  const map = new Map<string, ConversationTurn>()
-  for (const t of [...a, ...b]) {
-    const prev = map.get(t.id)
-    if (!prev || t.at >= prev.at) map.set(t.id, t)
-  }
-  return [...map.values()].sort((x, y) => y.at - x.at).slice(0, MAX_TURNS)
-}
-
 let persistTimer: ReturnType<typeof setTimeout> | null = null
 let persistLoggedIn = false
 
@@ -119,8 +108,9 @@ export async function hydrateHistory(loggedIn: boolean): Promise<ConversationTur
     if (!remote) return local
     const merged = mergeHistory(local, remote)
     writeLocalHistory(merged)
-    // Push merge up so older devices pick up local-only turns.
-    void putAccountHistory(merged).catch(() => {})
+    if (shouldPushHydratedHistory(merged, remote)) {
+      void putAccountHistory(merged).catch(() => {})
+    }
     return merged
   } catch {
     return local

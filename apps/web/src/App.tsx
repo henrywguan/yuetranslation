@@ -67,8 +67,14 @@ export default function App() {
   useEffect(() => {
     if (!ready) return
     void loadBootstrap()
+    let lastVisibleAt = 0
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void loadBootstrap()
+      if (document.visibilityState !== 'visible') return
+      // iPhone control-center / app-switcher used to re-GET /health + /history
+      // on every blip, stacking with live translate/TTS until Vercel challenged.
+      if (Date.now() - lastVisibleAt < 20_000) return
+      lastVisibleAt = Date.now()
+      void loadBootstrap()
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
