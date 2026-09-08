@@ -4,6 +4,7 @@ import '../components/RoleBadge.css'
 import { AdminResetUsageModal } from '../components/AdminResetUsageModal'
 import { AdminBugReportsDashboard } from '../components/AdminBugReportsDashboard'
 import { AdminEmailHub } from '../components/AdminEmailHub'
+import { AdminPushHub } from '../components/AdminPushHub'
 import {
   adminPatchBugReportStatus,
   adminResetUsage,
@@ -33,7 +34,7 @@ import { useYueStore } from '../lib/store'
 import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
 
-type Tab = 'users' | 'audit' | 'reports' | 'email'
+type Tab = 'users' | 'audit' | 'reports' | 'email' | 'push'
 
 function todayYmdUtc(): string {
   const d = new Date()
@@ -576,6 +577,15 @@ export function AdminPage() {
           >
             Email
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'push'}
+            className={`admin-tab${tab === 'push' ? ' is-active' : ''}`}
+            onClick={() => setTab('push')}
+          >
+            Push
+          </button>
         </div>
       </header>
 
@@ -996,6 +1006,8 @@ export function AdminPage() {
         />
       ) : tab === 'email' ? (
         <AdminEmailHub />
+      ) : tab === 'push' ? (
+        <AdminPushHub />
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">

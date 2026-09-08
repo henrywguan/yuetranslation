@@ -9,6 +9,7 @@ import {
 } from './lib/auth'
 import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
+import { listenPushNavigate, syncPushSubscriptionIfEnabled } from './lib/pushNotifications'
 import { loadSiteConfig } from './lib/siteLinks'
 import { useYueStore } from './lib/store'
 import { hashPath, navigate, useRoute } from './lib/useHashRoute'
@@ -47,6 +48,21 @@ export default function App() {
       void navigator.serviceWorker.getRegistration().then((reg) => reg?.update())
     }
   }, [])
+
+  useEffect(() => {
+    if (!ready) return
+    void syncPushSubscriptionIfEnabled()
+    return listenPushNavigate((url) => {
+      if (url.startsWith('#')) {
+        window.location.hash = url.replace(/^#/, '')
+      } else if (url.startsWith('/#') || url.includes('#')) {
+        const hash = url.includes('#') ? url.slice(url.indexOf('#') + 1) : url
+        window.location.hash = hash
+      } else {
+        window.location.assign(url)
+      }
+    })
+  }, [ready])
 
   useEffect(() => {
     if (!ready) return

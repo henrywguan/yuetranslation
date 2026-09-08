@@ -68,6 +68,12 @@ import {
 } from '../lib/ttsVoices'
 import { speakText, unlockTtsPlayback } from '../lib/tts'
 import { openPricing } from '../lib/siteLinks'
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  isPushOptIn,
+  pushSupported,
+} from '../lib/pushNotifications'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
@@ -102,6 +108,9 @@ export function PlanChip() {
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteSentTo, setInviteSentTo] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [pushOn, setPushOn] = useState(() => isPushOptIn())
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushError, setPushError] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const hubRef = useRef<HTMLDivElement>(null)
@@ -537,6 +546,65 @@ export function PlanChip() {
                 disabled={!canAutoSpeak}
                 onChange={(e) => setAutoSpeak(e.target.checked)}
                 aria-label={biPlain(canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily)}
+              />
+              <span className="account-hub-autospeak-ui" aria-hidden="true">
+                <span className="account-hub-autospeak-thumb" />
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <HubSep />
+
+        <section className="account-hub-section" aria-label="Notifications">
+          <div className="account-hub-autospeak-row">
+            <div className="account-hub-autospeak-copy">
+              <p className="account-hub-label">Notifications · 通知</p>
+              <p className="account-hub-hint">
+                {pushSupported()
+                  ? 'Product updates on this device when JyutTranslate is closed.'
+                  : 'Push is not supported in this browser.'}
+              </p>
+              {pushError ? (
+                <p className="account-hub-username-error" role="alert">
+                  {pushError}
+                </p>
+              ) : null}
+            </div>
+            <label
+              className={`account-hub-autospeak-switch${pushOn ? ' is-on' : ''}${!pushSupported() || pushBusy ? ' is-disabled' : ''}`}
+            >
+              <input
+                type="checkbox"
+                checked={pushOn}
+                disabled={!pushSupported() || pushBusy}
+                onChange={(e) => {
+                  const on = e.target.checked
+                  setPushBusy(true)
+                  setPushError(null)
+                  void (async () => {
+                    try {
+                      if (on) {
+                        const result = await enablePushNotifications()
+                        if (!result.ok) {
+                          setPushError(result.message)
+                          setPushOn(false)
+                          return
+                        }
+                        setPushOn(true)
+                      } else {
+                        await disablePushNotifications()
+                        setPushOn(false)
+                      }
+                    } catch (err) {
+                      setPushError(err instanceof Error ? err.message : 'Push update failed')
+                      setPushOn(isPushOptIn())
+                    } finally {
+                      setPushBusy(false)
+                    }
+                  })()
+                }}
+                aria-label="Enable push notifications"
               />
               <span className="account-hub-autospeak-ui" aria-hidden="true">
                 <span className="account-hub-autospeak-thumb" />
