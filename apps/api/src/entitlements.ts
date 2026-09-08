@@ -24,6 +24,22 @@ import {
   resolveYueVoice,
 } from './ttsVoices.js'
 
+export type PrimaryLang = 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+
+export function normalizePrimaryLang(value: unknown): PrimaryLang {
+  if (
+    value === 'yue' ||
+    value === 'cmn' ||
+    value === 'wuu' ||
+    value === 'tl' ||
+    value === 'es' ||
+    value === 'vi'
+  ) {
+    return value
+  }
+  return 'yue'
+}
+
 export type Entitlement = {
   loggedIn: boolean
   requireLogin: boolean
@@ -119,6 +135,8 @@ export type Entitlement = {
     ttsVoiceVi: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
+    /** Primary non-English language for Solo / Conversation / Cam / brand. */
+    primaryLang: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
     /** Custom display username; null until the user sets one. */
     username: string | null
     /** ISO timestamp of last username change; null if never set. */
@@ -272,6 +290,7 @@ function buildSnapshot(
     ttsVoiceEs?: string | null
     ttsVoiceVi?: string | null
     autoSpeak?: boolean | null
+    primaryLang?: string | null
     household?: HouseholdSummary | null
     username?: string | null
     usernameChangedAt?: string | null
@@ -291,6 +310,7 @@ function buildSnapshot(
     ttsVoiceEs: resolveEsVoice(opts.ttsVoiceEs),
     ttsVoiceVi: resolveViVoice(opts.ttsVoiceVi),
     autoSpeak: Boolean(opts.autoSpeak),
+    primaryLang: normalizePrimaryLang(opts.primaryLang),
     username: opts.username?.trim() || null,
     usernameChangedAt: opts.usernameChangedAt || null,
   }
@@ -402,6 +422,7 @@ function buildSnapshot(
         ttsVoiceEs: DEFAULT_ES_VOICE,
         ttsVoiceVi: DEFAULT_VI_VOICE,
         autoSpeak: false,
+        primaryLang: 'yue',
         username: null,
         usernameChangedAt: null,
       },
@@ -537,6 +558,7 @@ function localEntitlement(): Entitlement {
         ttsVoiceEs: DEFAULT_ES_VOICE,
         ttsVoiceVi: DEFAULT_VI_VOICE,
         autoSpeak: false,
+        primaryLang: 'yue',
         username: null,
         usernameChangedAt: null,
       },
@@ -616,6 +638,7 @@ export async function resolveEntitlement(
     ttsVoiceEs: profile?.tts_voice_es,
     ttsVoiceVi: profile?.tts_voice_vi,
     autoSpeak: profile?.auto_speak,
+    primaryLang: profile?.primary_lang,
     household,
     username: profile?.username,
     usernameChangedAt: profile?.username_changed_at,

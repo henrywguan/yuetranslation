@@ -294,6 +294,11 @@ export const ui = {
     jp: 'mui5 ci3 faan1 jik6 hau6 zi6 dung6 long5 duk6.',
   },
   autoSpeakFamily: { en: 'Auto-speak (Family)', zh: '自動朗讀（家庭版）', jp: 'zi6 dung6 long5 duk6 (gaa1 ting4 baan2)' },
+  primaryLanguage: { en: 'Primary language', zh: '主要語言' },
+  primaryLanguageHint: {
+    en: 'Sets Solo, Conversation (your side), Cam translations, and the label under the logo.',
+    zh: '設定 Solo、對話（你的一側）、Cam 譯文，以及標誌下方名稱。',
+  },
   speak: { en: 'Play voice', zh: '播放語音', jp: 'bo3 fong3 jyu5 jam1' },
   stopSpeak: { en: 'Stop voice', zh: '停止語音', jp: 'ting4 zi2 jyu5 jam1' },
   speakPro: { en: 'Voice playback', zh: '語音播放', jp: 'jyu5 jam1 bo3 fong3' },

@@ -8,6 +8,7 @@ import {
 import { BiText } from './BiText'
 import { CamResultsList } from './CamResultsList'
 import { cameraScan, type CameraBox } from '../lib/api'
+import { useYueStore } from '../lib/store'
 import { mediaFitLayout } from '../lib/camera/geometry'
 import {
   drawCornerBrackets,
@@ -55,7 +56,8 @@ const DRAW_SLOP_PX = 12
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, meter }: Props) {
-  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  const scanTarget = target === 'auto' ? primaryLanguage : target  const openBreakdown = useYueStore((s) => s.openBreakdown)
   const imgRef = useRef<HTMLImageElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
@@ -345,7 +347,7 @@ export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, me
       const result = await cameraScan({
         image,
         boxes: opts.boxes,
-        target: target === 'auto' ? undefined : target,
+        target: scanTarget,
         ocrOnly: opts.ocrOnly,
       })
       if (result.visionAuthFailed) {

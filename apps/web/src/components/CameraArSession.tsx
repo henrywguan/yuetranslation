@@ -4,6 +4,7 @@ import { BiText } from './BiText'
 import { CamTargetPicker } from './CamTargetPicker'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
+import { useYueStore } from '../lib/store'
 import { captureFrame, captureZoomedVideoFrame, decodeDataUrlSize, mediaFitLayout } from '../lib/camera/geometry'
 import {
   clampPan,
@@ -55,7 +56,8 @@ type HitRect = { id: string; x: number; y: number; w: number; h: number }
 const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
-  const speakManual = useYueStore((s) => s.speakManual)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  const scanTarget = target === 'auto' ? primaryLanguage : target  const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const reduce = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -431,7 +433,7 @@ export function CameraArSession({ target, onTargetChange, onBack, onEntitlement,
 
       const result = await cameraScan({
         image,
-        target: target === 'auto' ? undefined : target,
+        target: scanTarget,
       })
       if (result.entitlement) onEntitlement(result.entitlement)
       let next = result.regions.map(regionToEditable)

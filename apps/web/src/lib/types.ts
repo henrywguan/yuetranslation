@@ -95,6 +95,8 @@ export type Entitlement = {
     ttsVoiceVi?: string
     /** Cross-device Auto-speak preference. */
     autoSpeak?: boolean
+    /** Primary non-English language (Solo / Conversation / Cam / brand). */
+    primaryLang?: 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
     username?: string | null
     usernameChangedAt?: string | null
   }
