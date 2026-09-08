@@ -36,7 +36,7 @@ function placeholderFor(lang: Lang): string {
 function ariaForPane(lang: Lang): string {
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'tl') return 'Speak Tagalog with the mic'
-  if (lang === 'es') return 'Speak Mexican Spanish with the mic'
+  if (lang === 'es') return 'Speak Spanish(MX) with the mic'
   if (lang === 'vi') return 'Speak Vietnamese with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
