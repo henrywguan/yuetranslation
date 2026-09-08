@@ -196,17 +196,43 @@ export function createWebSpeechSession(
       wuuLocaleIndex = 0
       tlLocaleIndex = 0
       esLocaleIndex = 0
+      viLocaleIndex = 0
       startOne()
     },
     async stop() {
       stopped = true
       stopSpeaking()
-      try {
-        recognition?.stop()
-      } catch {
-        /* ignore */
-      }
+      const rec = recognition
       recognition = null
+      if (!rec) {
+        handlers.onStatus('idle')
+        return
+      }
+      // Chrome/Safari keep a global recognition lock until onend. Starting the
+      // next turn before that fires shows the mic icon with no audio.
+      await new Promise<void>((resolve) => {
+        let settled = false
+        const finish = () => {
+          if (settled) return
+          settled = true
+          window.clearTimeout(timer)
+          rec.onend = null
+          rec.onerror = null
+          rec.onresult = null
+          resolve()
+        }
+        const timer = window.setTimeout(finish, 400)
+        rec.onend = () => finish()
+        try {
+          rec.abort()
+        } catch {
+          try {
+            rec.stop()
+          } catch {
+            finish()
+          }
+        }
+      })
       handlers.onStatus('idle')
     },
   }

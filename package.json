@@ -24,6 +24,7 @@
     "security:api-health": "./scripts/security-api-health.sh",
     "test:translate": "node scripts/translation-quality-bot.mjs",
     "test:translate:live": "node scripts/live-pipeline-bot.mjs",
+    "test:mic:live": "node scripts/mic-second-turn-live.mjs",
     "docs:screenshots": "node scripts/capture-docs-screenshots.mjs",
     "pwa:screenshots": "node scripts/generate-pwa-screenshots.mjs",
     "fixtures:cam-accuracy": "node scripts/generate-cam-accuracy-fixtures.mjs",
