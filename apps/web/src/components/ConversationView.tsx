@@ -13,7 +13,8 @@ import { ClearIconButton } from './ClearIconButton'
 import { SpeakButton } from './SpeakButton'
 import { TranslateThinking } from './TranslateThinking'
 import { useYueStore } from '../lib/store'
-import { ui, conversationLabelLang, conversationPaneHint, conversationLabelHtmlLang } from '../lib/uiCopy'
+import { ui } from '../lib/uiCopy'
+import { conversationLabelHtmlLang, conversationPaneHint } from '../lib/conversationUi'
 import { normalizeEnglishApostrophes } from '../lib/typography'
 
 function langPlaceholder(lang: Lang): string {
@@ -102,9 +103,6 @@ export function ConversationView() {
     if (swapping) return
     if (otherSource) void translateTyped(otherSource, otherLang)
   }
-
-  const partnerLabelLang = conversationLabelLang(partnerLang)
-  const youLabelLang = conversationLabelLang(youLang)
 
   const renderPhrase = (
     lang: Lang,
@@ -201,8 +199,8 @@ export function ConversationView() {
               variant="dropdown"
               onSelect={(lang) => onPaneLang('partner', lang)}
             />
-            <p lang={conversationLabelHtmlLang(partnerLabelLang)}>
-              {conversationPaneHint(partnerLabelLang, 'friend')}
+            <p lang={conversationLabelHtmlLang(partnerLang)}>
+              {conversationPaneHint(partnerLang, 'friend')}
             </p>
           </header>
           <div className="pane-body pane-body--hero">
@@ -245,7 +243,7 @@ export function ConversationView() {
           <div className="pane-live">
             <LiveHoldButton
               side={partnerLang}
-              labelLang={partnerLabelLang}
+              labelLang={partnerLang}
               className="live-btn--pane live-btn--yue"
             />
           </div>
@@ -270,8 +268,8 @@ export function ConversationView() {
             variant="dropdown"
             onSelect={(lang) => onPaneLang('you', lang)}
           />
-          <p lang={conversationLabelHtmlLang(youLabelLang)}>
-            {conversationPaneHint(youLabelLang, 'you')}
+          <p lang={conversationLabelHtmlLang(youLang)}>
+            {conversationPaneHint(youLang, 'you')}
           </p>
         </header>
         <div className="pane-body pane-body--hero">
@@ -312,7 +310,7 @@ export function ConversationView() {
         <div className="pane-live">
           <LiveHoldButton
             side={youLang}
-            labelLang={youLabelLang}
+            labelLang={youLang}
             className="live-btn--pane live-btn--en"
           />
         </div>
