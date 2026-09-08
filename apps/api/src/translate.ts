@@ -1138,7 +1138,49 @@ async function translateMexicanSpanish(opts: {
     )
   }
 
-  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+  // es→en: reject Han / glossary dumps / Spanish echo; fall back to phrase memory when empty.
+  const cleanedEn = (primary || '').trim()
+  const sourceNorm = cleanedEn
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[¡¿?!.,;:'"“”‘’]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const inputNorm = text
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[¡¿?!.,;:'"“”‘’]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const echoedSource = Boolean(sourceNorm) && sourceNorm === inputNorm
+  if (!cleanedEn || looksLikeGlossDump(cleanedEn) || hasHan(cleanedEn) || echoedSource) {
+    const rescue = dictionaryTranslate({
+      sourceLang: 'es',
+      targetLang: 'en',
+      source: text,
+      wantAlternatives: wantAlts,
+    })
+    if (rescue?.text) {
+      return withLearnerDefinitions(
+        {
+          text: rescue.text,
+          definition: '',
+          alternatives: wantAlts ? rescue.alternatives : [],
+          engine: 'dictionary',
+          from,
+          to,
+          stage,
+          meta: {
+            dictionaryHit: true,
+            scrubbed: false,
+            colloquialScore: 8,
+            rewritten: false,
+            notes: [`dict:${rescue.entry.id}`, registerNote, 'es-en-rescue'],
+          },
+        },
+        text,
+      )
+    }
     return withLearnerDefinitions(
       {
         text: '',
@@ -1156,9 +1198,9 @@ async function translateMexicanSpanish(opts: {
 
   return withLearnerDefinitions(
     {
-      text: primary,
+      text: cleanedEn,
       definition,
-      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== cleanedEn) : [],
       engine,
       from,
       to,
