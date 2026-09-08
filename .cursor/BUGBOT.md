@@ -14,6 +14,18 @@ Bugbot reviews every PR. Prefer **security, entitlement, and token-abuse** findi
 - `/api/health` or logs exposing absolute `.env` paths, raw keys, or internal hosts
 - CORS / auth changes that widen cross-origin credentialed access
 
+## Critical live mic (also flag)
+
+If the PR touches STT / mic (`webSpeech.ts`, `store.ts` `startHold`, `LiveHoldButton`, `azureSpeech.ts`, `liveStt.ts`):
+
+- iOS tap ends immediately / button returns to **Hold or tap** while Safari’s orange mic is on
+- `rec.continuous` false on Apple, or English-only continuous (`!apple || activeLang === 'en'`)
+- Apple Web Speech killed after two empty `onend`s
+- `loadBootstrap()` / `/api/health` on every mic teardown
+- Vercel checkpoint HTML dumped into the error banner
+
+See `AGENTS.md` (Live mic) and `.cursor/skills/live-mic-invariants/SKILL.md`.
+
 ## Finding comments
 
 For each security finding, include:
