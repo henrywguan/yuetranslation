@@ -105,6 +105,12 @@
   color: color-mix(in srgb, var(--muted) 88%, transparent);
 }
 
+.brand-tag-zh--primary-lang {
+  font-family: var(--font-english);
+  letter-spacing: normal;
+  font-weight: 500;
+}
+
 .brand-tag-primary {
   font-size: 0.82em;
   font-weight: 500;

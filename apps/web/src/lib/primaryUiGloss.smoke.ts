@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict'
-import { resolvePrimaryUiGloss } from './primaryUiGloss'
+import { primaryReplacesChinese, resolvePrimaryUiGloss } from './primaryUiGloss'
 import { ui } from './uiCopy'
 
-/** Offline: primary ≠ Yue/English replaces Jyutping with a primary-language gloss. */
+/** Offline: Tagalog/Spanish/… replace Chinese; Mandarin keeps 漢字 + pinyin gloss. */
 function main() {
+  assert.equal(primaryReplacesChinese('tl'), true)
+  assert.equal(primaryReplacesChinese('cmn'), false)
+  assert.equal(primaryReplacesChinese('yue'), false)
+
   const solo = ui.modeSolo
   assert.equal(resolvePrimaryUiGloss(solo, 'yue'), undefined)
   assert.equal(resolvePrimaryUiGloss(solo, 'en'), undefined)
