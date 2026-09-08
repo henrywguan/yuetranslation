@@ -8,6 +8,7 @@ import type {
 import { getAccessToken } from './auth'
 import { captureDiagnostic } from './diagnostics'
 import { guestDeviceHeaders } from './guestDevice'
+import { messageFromApiBody } from './apiError'
 
 export function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -49,6 +50,10 @@ async function apiFetch(path: string, init: RequestInit = {}) {
     captureDiagnostic('api_error', `${path} ${res.status}`, res.status)
   }
   return res
+}
+
+async function throwApiError(res: Response, fallback: string): Promise<never> {
+  throw new Error(messageFromApiBody(res.status, await res.text(), fallback))
 }
 
 export async function fetchHealth(): Promise<{
@@ -121,7 +126,7 @@ export async function translateText(
       includeAlternatives: alts,
     }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) await throwApiError(res, 'Translation failed')
   const data = (await res.json()) as TranslateResponse
   rememberTranslate(cacheKey, data)
   return data
@@ -138,7 +143,7 @@ export async function fetchBreakdown(
     method: 'POST',
     body: JSON.stringify({ text, ...(opts?.lang ? { lang: opts.lang } : {}) }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) await throwApiError(res, 'Breakdown failed')
   return res.json()
 }
 

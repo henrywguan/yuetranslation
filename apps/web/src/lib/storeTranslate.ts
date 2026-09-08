@@ -1,4 +1,5 @@
 import { translateText } from './api'
+import { humanizeThrownError } from './apiError'
 import { newId } from './id'
 import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
@@ -394,7 +395,7 @@ export async function runTranslation(
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') return null
     if (e instanceof Error && e.name === 'AbortError') return null
-    set({ error: String(e) })
+    set({ error: humanizeThrownError(e) })
     return null
   } finally {
     endTranslate(set)

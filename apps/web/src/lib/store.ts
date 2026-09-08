@@ -5,7 +5,8 @@ import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tt
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
-import { appleLiveUsesWebSpeech } from './liveStt'
+import { appleFallsBackToAzure, appleLiveUsesWebSpeech } from './liveStt'
+import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
@@ -200,6 +201,10 @@ let heldMicStream: MediaStream | null = null
 let tearEpoch = 0
 /** iOS: follow-up taps keep a getUserMedia hold so Safari stays in record mode. */
 let appleMicTurns = 0
+/** Pointerup won the race before startHold finished — keep sticky tap. */
+let pendingStickyTap = false
+/** Coalesce overlapping App + TranslatorApp boots (and visibility blips). */
+let bootstrapInflight: Promise<void> | null = null
 
 /** DEV/test: inject a live session (skip Azure / Web Speech). */
 let liveSessionFactory:
@@ -226,6 +231,7 @@ export function __getHoldDebugFlagsForTests() {
     tearEpoch,
     appleMicTurns,
     hasMic: Boolean(heldMicStream),
+    pendingStickyTap,
   }
 }
 
@@ -246,6 +252,7 @@ function releaseHeldMic() {
 function cancelHoldStart(set: (p: Partial<State>) => void) {
   holding = false
   tapSticky = false
+  pendingStickyTap = false
   startingHold = false
   flushingHold = false
   holdSideLock = null
@@ -263,6 +270,7 @@ function repairStaleHoldCapture(get: () => State) {
     startingHold = false
     flushingHold = false
     tapSticky = false
+    pendingStickyTap = false
     holdSideLock = null
     releaseHeldMic()
     clearTapTimers()
@@ -270,7 +278,7 @@ function repairStaleHoldCapture(get: () => State) {
 }
 
 function holdActive(gen: number) {
-  return gen === holdGen && (holding || flushingHold || tapSticky)
+  return gen === holdGen && (holding || flushingHold || tapSticky || pendingStickyTap)
 }
 
 function clearTapTimers() {
@@ -296,6 +304,17 @@ function scheduleTapSentenceEnd(get: () => State) {
     if (!holdFinals.length && !holdInterim.trim()) return
     void get().endHold()
   }, TAP_SENTENCE_END_MS)
+}
+
+/** Pointerup often lands while startHold is awaiting STT start — keep sticky tap. */
+function keepHoldOrSticky(gen: number, set: (p: Partial<State>) => void): boolean {
+  if (pendingStickyTap) {
+    pendingStickyTap = false
+    tapSticky = true
+    holding = false
+    set({ liveInteraction: 'tap' })
+  }
+  return gen === holdGen && (holding || tapSticky)
 }
 
 function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
@@ -455,6 +474,7 @@ async function tearDownLive(
   clearTapTimers()
   holding = false
   tapSticky = false
+  pendingStickyTap = false
   startingHold = false
   // Keep face pane language lock through STT flush unless explicitly cleared.
   if (opts?.clearSideLock !== false) {
@@ -494,7 +514,9 @@ async function tearDownLive(
         }
       : {}),
   })
-  void get().loadBootstrap()
+  // Do not loadBootstrap here. Each mic stop used to GET /health + GET/PUT
+  // /history on top of translate + TTS + heartbeat — enough POSTs for Vercel’s
+  // checkpoint after 2–3 iPhone turns. Heartbeat already returns entitlement.
 }
 
 export const useYueStore = create<State>((set, get) => {
@@ -813,6 +835,8 @@ export const useYueStore = create<State>((set, get) => {
   },
 
   loadBootstrap: async () => {
+    if (bootstrapInflight) return bootstrapInflight
+    bootstrapInflight = (async () => {
     try {
       const data = await fetchHealth()
       const ent = data.entitlement
@@ -897,12 +921,17 @@ export const useYueStore = create<State>((set, get) => {
         incidentBanner: null,
       })
     }
+    })().finally(() => {
+      bootstrapInflight = null
+    })
+    return bootstrapInflight
   },
 
   stopLive: async () => {
     resetHoldCapture()
     flushingHold = false
     tapSticky = false
+    pendingStickyTap = false
     clearTapTimers()
     holdGen += 1
     await tearDownLive(get, set, { clearInterim: true })
@@ -951,7 +980,15 @@ export const useYueStore = create<State>((set, get) => {
     if (flushingHold && !holding && !startingHold && !tapSticky && !get().live) {
       flushingHold = false
     }
-    if (holding || startingHold || flushingHold || tapSticky || (get().live && !bargedLive)) return
+    if (
+      holding ||
+      startingHold ||
+      flushingHold ||
+      (tapSticky && !pendingStickyTap) ||
+      (get().live && !bargedLive)
+    ) {
+      return
+    }
     const { entitlement } = get()
     if (entitlement && !entitlement.allowed.live) {
       const msg =
@@ -973,7 +1010,7 @@ export const useYueStore = create<State>((set, get) => {
 
     const gen = ++holdGen
     holding = true
-    tapSticky = false
+    tapSticky = pendingStickyTap
     flushingHold = false
     startingHold = true
     holdSideLock = side ?? null
@@ -985,7 +1022,7 @@ export const useYueStore = create<State>((set, get) => {
     // Clear prior translations so nothing looks like an interim MT result.
     set({
       error: null,
-      liveInteraction: 'hold',
+      liveInteraction: pendingStickyTap ? 'tap' : 'hold',
       liveSide: side ?? null,
       translating: false,
       translatingTo: null,
@@ -1078,7 +1115,7 @@ export const useYueStore = create<State>((set, get) => {
       }
       if (alreadyStarted && micPriming) {
         const warmed = await micPriming
-        if (warmed && gen === holdGen && (holding || tapSticky)) {
+        if (warmed && keepHoldOrSticky(gen, set)) {
           heldMicStream = warmed
         } else if (warmed) {
           stopMediaStream(warmed)
@@ -1087,31 +1124,39 @@ export const useYueStore = create<State>((set, get) => {
     }
 
     if (!liveSessionFactory && !alreadyStarted) {
-      // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
-      const primed = await micPriming!
-      if (!primed) {
-        cancelHoldStart(set)
-        set({
-          error: 'Microphone permission denied. Allow mic access for this site and try again.',
-        })
-        return
-      }
-      heldMicStream = primed
+      if (apple && appleLiveUsesWebSpeech() && !appleFallsBackToAzure()) {
+        // Stay on Web Speech — do not mint /api/speech-token on iPhone.
+        if (micPriming) {
+          const leftover = await micPriming.catch(() => null)
+          if (leftover) stopMediaStream(leftover)
+        }
+      } else {
+        // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
+        const primed = await micPriming!
+        if (!primed) {
+          cancelHoldStart(set)
+          set({
+            error: 'Microphone permission denied. Allow mic access for this site and try again.',
+          })
+          return
+        }
+        heldMicStream = primed
 
-      if (gen !== holdGen || (!holding && !tapSticky)) {
-        cancelHoldStart(set)
-        return
-      }
+        if (!keepHoldOrSticky(gen, set)) {
+          cancelHoldStart(set)
+          return
+        }
 
-      next = await createAzureLiveSession(handlers, primed, webSpeechLock())
-      if (!next) {
-        // Free the exclusive mic lock so Web Speech can open its own input.
-        releaseHeldMic()
-        next = createWebSpeechSession(handlers, webSpeechLock())
+        next = await createAzureLiveSession(handlers, primed, webSpeechLock())
+        if (!next) {
+          // Free the exclusive mic lock so Web Speech can open its own input.
+          releaseHeldMic()
+          next = createWebSpeechSession(handlers, webSpeechLock())
+        }
       }
     }
 
-    if (gen !== holdGen || (!holding && !tapSticky)) {
+    if (!keepHoldOrSticky(gen, set)) {
       if (next) {
         try {
           await next.stop()
@@ -1146,7 +1191,7 @@ export const useYueStore = create<State>((set, get) => {
           await next.start()
         }
       }
-      if (gen !== holdGen || (!holding && !tapSticky)) {
+      if (!keepHoldOrSticky(gen, set)) {
         try {
           await next.stop()
         } catch {
@@ -1157,7 +1202,13 @@ export const useYueStore = create<State>((set, get) => {
       }
       startingHold = false
       if (heldMicStream) connectMicAnalyser(heldMicStream)
-      set({ live: true, session: next, status: 'listening', error: null })
+      set({
+        live: true,
+        session: next,
+        status: 'listening',
+        error: null,
+        liveInteraction: tapSticky ? 'tap' : 'hold',
+      })
       if (apple) {
         appleMicTurns += 1
       }
@@ -1179,15 +1230,16 @@ export const useYueStore = create<State>((set, get) => {
       tapSticky = false
       startingHold = false
       holdSideLock = null
+      pendingStickyTap = false
       releaseHeldMic()
       clearTapTimers()
-      set({ error: String(e), live: false, session: null, liveInteraction: null, liveSide: null })
+      set({ error: humanizeThrownError(e), live: false, session: null, liveInteraction: null, liveSide: null })
     }
   },
 
   armTapMode: () => {
     // Modes 1–2: short press released — keep mic on until sentence end or second tap.
-    if (!holding && !startingHold && !get().live) return
+    pendingStickyTap = true
     if (flushingHold) return
     holding = false
     tapSticky = true
@@ -1211,10 +1263,11 @@ export const useYueStore = create<State>((set, get) => {
   endHold: async () => {
     // Prevent concurrent teardown (double release / double tap).
     if (flushingHold) return
-    if (!holding && !startingHold && !get().live && !tapSticky) return
+    if (!holding && !startingHold && !get().live && !tapSticky && !pendingStickyTap) return
     const gen = holdGen
     holding = false
     tapSticky = false
+    pendingStickyTap = false
     clearTapTimers()
     flushingHold = true
     let translateJob: { lang: Lang; text: string } | null = null

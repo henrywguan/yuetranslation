@@ -12,6 +12,17 @@ Before shipping a change that **reduces** live feedback, motion, immediacy, or p
 
 **Example:** Interim **machine translation** during speech wastes tokens — fine to avoid. Interim **transcription** preview is local STT feedback and supports the goals — removing it needs explicit approval.
 
+### Live mic (critical — do not regress)
+
+Whenever hunting bugs, reviewing a PR, or touching STT / `LiveHoldButton` / `startHold`, treat this as **release-blocking**:
+
+- **Tap** keeps listening until a **second tap** or **~2s silence after speech**. **Hold** listens until release. **Every language** (not only Yue).
+- If Safari’s orange mic pill is on, the in-app button must stay in a listening state — never **Hold or tap** while the OS mic is on.
+- iOS Web Speech stays `continuous = true` for all langs. Do not restore one-shot sessions (`continuous = !apple`) or an Apple empty-`onend` kill after two restarts (`MAX_EMPTY_RESTARTS` on iOS).
+- Do not `GET /health` + history-hydrate on every mic stop (Vercel checkpoint after 2–3 turns). Do not dump checkpoint HTML into the error banner. iPhone live STT stays on Web Speech (no Azure LID / `/api/speech-token` on later taps).
+
+Skill + file rule: [`.cursor/skills/live-mic-invariants/SKILL.md`](.cursor/skills/live-mic-invariants/SKILL.md) · [`.cursor/rules/live-mic.mdc`](.cursor/rules/live-mic.mdc). Smoke: `npx tsx apps/web/src/lib/webSpeech.smoke.ts`.
+
 ### Adding a language
 
 When extending `Lang` (Solo / Conversation / Cam):

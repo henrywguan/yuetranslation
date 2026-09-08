@@ -15,6 +15,7 @@ type Rec = {
   startCount: number
   abortCount: number
   stopCount: number
+  ended: boolean
   start: () => void
   stop: () => void
   abort: () => void
@@ -34,18 +35,22 @@ async function runCase(apple: boolean) {
       startCount: 0,
       abortCount: 0,
       stopCount: 0,
+      ended: false,
       start() {
         rec.startCount += 1
-        if (instances.some((other) => other !== rec && other.startCount > other.abortCount + other.stopCount)) {
+        rec.ended = false
+        if (instances.some((other) => other !== rec && !other.ended && other.startCount > 0)) {
           throw new Error('InvalidStateError: recognition already started')
         }
       },
       stop() {
         rec.stopCount += 1
+        rec.ended = true
         queueMicrotask(() => rec.onend?.())
       },
       abort() {
         rec.abortCount += 1
+        rec.ended = true
         queueMicrotask(() => rec.onend?.())
       },
     }
@@ -106,6 +111,7 @@ export type SpeechEventHandlers = {
   assert.ok(session)
 
   await session!.start()
+  assert.equal(instances[0]?.continuous, true, 'tap-to-talk uses continuous recognition for every language')
   await session!.stop()
   await session!.start()
   await session!.stop()
@@ -133,7 +139,32 @@ export type SpeechEventHandlers = {
   )
   await yueSession!.start()
   assert.equal(instances[2]?.lang, 'zh-HK', 'Cantonese lock must use zh-HK, not English')
+  assert.equal(instances[2]?.continuous, true, 'Yue tap-to-talk must stay continuous like English')
   await yueSession!.stop()
+
+  if (apple) {
+    for (const lang of ['yue', 'en', 'es'] as const) {
+      const errors: string[] = []
+      const sticky = createWebSpeechSession(
+        {
+          onInterim: () => {},
+          onFinal: () => {},
+          onError: (m: string) => errors.push(m),
+          onStatus: () => {},
+        },
+        lang,
+      )
+      await sticky!.start()
+      assert.equal(instances[instances.length - 1]?.continuous, true, `${lang} must be continuous on iOS`)
+      for (let i = 0; i < 6; i++) {
+        const rec = instances[instances.length - 1]
+        rec!.ended = true
+        rec!.onend?.()
+      }
+      assert.equal(errors.length, 0, `iOS empty onend must not kill ${lang} tap-to-talk`)
+      await sticky!.stop()
+    }
+  }
   rmSync(dir, { recursive: true, force: true })
 }
 
