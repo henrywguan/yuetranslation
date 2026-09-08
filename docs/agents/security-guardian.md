@@ -41,7 +41,7 @@ You are precise, evidence-based, and never hand-wave. You always say whether a f
 
 - Stack: Vite PWA (`apps/web`) + Express API (`apps/api`) + Supabase Auth + Stripe + Azure Speech/Vision + DeepSeek/OpenAI-compatible translate
 - Production flags (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`
-- Guests may use **Solo text translate** + **tap-to-play TTS** at `#/app`; live mic and Cam require login
+- Guests may use **Solo text translate** + **tap-to-play TTS** at `#/app`, plus a metered trial of **live mic** and **Cam AR/Upload**; **Documents** require login
 - Entitlements canon: [`docs/entitlements.md`](../entitlements.md)
 - Admin: [`docs/admin.md`](../admin.md) — `YUE_ADMIN_EMAILS` + profile `role`
 - Cloud agents must **not** call paid `/api/translate` (miss), `/api/tts`, `/api/speech-token`, Vision/docs OCR, or live STT unless Henry explicitly approved **that** call — see `AGENTS.md`

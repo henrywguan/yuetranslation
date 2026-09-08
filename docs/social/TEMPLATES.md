@@ -36,7 +36,15 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | Asset | Notes |
 | --- | --- |
 | [`ig-posts/PHONE-MOCKUP.md`](./ig-posts/PHONE-MOCKUP.md) | **Default phone chrome** — insets / island / home bar for all mobile mockups |
-| [`COMPETITOR-AD-CLONE-PROMPTS.md`](./COMPETITOR-AD-CLONE-PROMPTS.md) | High-end peer ad grammars + paste-ready Higgsfield/Studio clone prompts (Drops / Jumpspeak / Speak / Pingo / Google-utility / Timekettle / SaaS UGC) |
+| [`COMPETITOR-AD-CLONE-PROMPTS.md`](./COMPETITOR-AD-CLONE-PROMPTS.md) | High-end peer ad grammars + paste-ready Higgsfield/Studio clone prompts |
+| [`ig-posts/out/`](./ig-posts/out/) | Rendered PNG outs + captions |
+
+### Archive / one-shot briefs (completed shoots — not living SOPs)
+
+| Asset | Notes |
+| --- | --- |
 | [`campaign-clips-1-3-higgsfield.md`](./campaign-clips-1-3-higgsfield.md) | Early campaign / Higgsfield clip briefs |
 | [`reel-dinner/`](./reel-dinner/) | Dinner Reel shotlist + higgsedit project |
-| [`ig-posts/out/`](./ig-posts/out/) | Rendered PNG outs + captions |
+| [`carousel-solo-convo/`](./carousel-solo-convo/) | Solo/Convo instructional carousel |
+| [`launch-unrestricted/`](./launch-unrestricted/) | Unrestricted launch commercial brief |
+| [`story-feature-tour/BRIEF.md`](./story-feature-tour/BRIEF.md) | Also listed above as a living template when rebuilding |

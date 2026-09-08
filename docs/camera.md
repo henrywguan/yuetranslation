@@ -1,8 +1,8 @@
 # Camera translation
 
-Sign-in-only mode for **AR**, **Upload**, and **Documents** (English ↔ written Chinese).
+**AR**, **Upload**, and **Documents** (English ↔ written Chinese). Guests get a metered **AR / Upload** trial; **Documents** require sign-in.
 
-相機翻譯：須登入。支援 **AR**、**上載**、**文件**（英文 ↔ 書面中文）。
+相機翻譯：支援 **AR**、**上載**、**文件**（英文 ↔ 書面中文）。訪客有計量 **AR／上載** 試用；**文件**須登入。
 
 ## Paths / 路徑
 
@@ -10,7 +10,7 @@ Sign-in-only mode for **AR**, **Upload**, and **Documents** (English ↔ written
 2. **Upload image** — still photo; draw boxes and/or auto-detect; **Translate** / **Translate all**. Overlays stay locked to each OCR/translated region. Drawn boxes can be moved until Translate; after translation they lock. Pinch-zoom / wheel / slider; selectable Results list.
 3. **Documents** — PDF / DOCX / PPTX / XLSX / TXT with layout kept. Office files rewrite OOXML in place. PDFs: extract text layer when present, always rasterize the page, paint translations at source positions (font size tracks the source line); scanned pages use Azure Vision via `/api/camera/scan`. Uses the Cantonese translate pipeline (not DeepL).
 
-Entry: **Cam** tab → choice modal. Guests see sign-in first.
+Entry: **Cam** tab → choice modal. Guests can use AR / Upload until scan credits run out (then sign-in). Documents stays greyed for guests.
 
 ## Languages / 語言
 

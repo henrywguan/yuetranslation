@@ -30,7 +30,7 @@ Signed-in users are not limited by these. TTS is intentionally uncapped by IP (p
 
 These are in-memory fixed 1-minute windows (best-effort on multi-instance Vercel). Pair with Vercel Firewall / WAF if you want a hard edge cap on all `/api*`.
 
-Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, `YUE_GUEST_LIVE_MINUTES=30`, `YUE_GUEST_CAMERA_MINUTES=30`.
+Production (`vercel.json`): `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, `YUE_GUEST_LIVE_MINUTES=30`, and guest Cam trial via `YUE_GUEST_CAMERA_SCANS` (or legacy `YUE_GUEST_CAMERA_MINUTES=30` in prod today — both mean **30 scan credits**).
 
 ## Default limits / 默认上限
 
