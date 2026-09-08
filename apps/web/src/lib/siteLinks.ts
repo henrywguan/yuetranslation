@@ -1,11 +1,11 @@
 import { navigate } from './useHashRoute'
 
 export type SiteConfig = {
-  /** Absolute URL of the Bricks (or WP) page that embeds `[yue_translator]`. */
+  /** Absolute URL of an external translator entry (optional; normally in-app `#/app`). */
   translatorUrl?: string
-  /** Absolute URL of pricing / checkout (MemberPress, etc.). */
+  /** Absolute URL of pricing / checkout. */
   pricingUrl?: string
-  /** Absolute URL of the static marketing site (optional back-link). */
+  /** Absolute URL of the marketing site (optional back-link). */
   marketingUrl?: string
 }
 
@@ -46,7 +46,7 @@ function configUrl(): string {
   return `${base.replace(/\/?$/, '/')}site-config.json`
 }
 
-/** Load editable `site-config.json` (sits next to index.html on Bluehost). */
+/** Load editable `site-config.json` (sits next to index.html in the web build). */
 export function loadSiteConfig(): Promise<SiteConfig> {
   if (cached) return Promise.resolve(cached)
   if (loadPromise) return loadPromise
@@ -59,7 +59,7 @@ export function loadSiteConfig(): Promise<SiteConfig> {
     } catch {
       file = {}
     }
-    // Query overrides file; file overrides env — so Bluehost edits and shareable overrides win.
+    // Query overrides file; file overrides env — so shareable overrides win.
     cached = merge(fromEnv(), file, fromQuery())
     return cached
   })()
@@ -72,12 +72,12 @@ function getSiteConfig(): SiteConfig {
 }
 
 function leaveTo(url: string) {
-  // Break out of WP splash iframes so Bricks pages load top-level.
+  // Break out of iframes so external pages load top-level.
   const target = window.top ?? window
   target.location.assign(url)
 }
 
-/** Open the translator: external Bricks URL when configured, else in-app `#/app`. */
+/** Open the translator: external URL when configured, else in-app `#/app`. */
 export function openApp() {
   const url = getSiteConfig().translatorUrl?.trim()
   if (url) {

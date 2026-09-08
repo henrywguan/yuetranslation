@@ -1,9 +1,9 @@
 # JyutTranslate — English ↔ Cantonese
 # 粤译 — 英语 ↔ 粤语
 
-Live translator PWA with freemium entitlements (Supabase + Stripe on **Vercel**). Optional WordPress package for Bluehost is a secondary deploy path and may lag Vercel features.
+Live translator PWA with freemium entitlements (Supabase + Stripe on **Vercel**).
 
-即时翻译 PWA，免费增值权益（**Vercel** 上的 Supabase + Stripe）。可选 WordPress／Bluehost 安装包为次要部署路径，功能可能落后于 Vercel。
+即时翻译 PWA，免费增值权益（**Vercel** 上的 Supabase + Stripe）。
 
 **Stack / 技术栈：** Azure Speech (`zh-HK` STT/TTS) · Azure Vision (camera OCR) · OpenAI-compatible LLM (colloquial 粤语, e.g. DeepSeek).
 
@@ -31,7 +31,6 @@ Live translator PWA with freemium entitlements (Supabase + Stripe on **Vercel**)
 
 - `apps/web` — React/Vite PWA (marketing + translator)
 - `apps/api` — Express proxy for local / Vercel serverless
-- `wordpress/yue-translator` — optional Bluehost plugin (may lag Vercel entitlements)
 
 ## Quick start (local) / 本地快速开始
 
@@ -102,17 +101,8 @@ npm run test:translate   # EN↔粵 bot — needs servers + may bill model (ask 
 | [docs/testing.md](docs/testing.md) | Smoke / bots |
 | [docs/local-phone-testing.md](docs/local-phone-testing.md) | HTTPS tunnel for mic/camera |
 | [docs/android-twa.md](docs/android-twa.md) | Android TWA / Play packaging |
-| [docs/bluehost-launch.md](docs/bluehost-launch.md) | WordPress / Bluehost (secondary) |
 | [AGENTS.md](AGENTS.md) | Cursor Cloud agent rules |
 
 ## Checkout / 结账
 
 Stripe Checkout sessions enable **promotion codes** (`allow_promotion_codes`). Create a **Promotion code** (not only a coupon) in the Stripe Dashboard.
-
-## WordPress package / WordPress 安装包
-
-```bash
-npm run build:web:wp
-```
-
-Upload `wordpress/yue-translator` and follow [docs/bluehost-launch.md](docs/bluehost-launch.md). Prefer Vercel for production when possible — WP entitlements may not include Business / Documents parity.

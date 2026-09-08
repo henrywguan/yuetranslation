@@ -1150,9 +1150,9 @@ export const ui = {
     jp: 'ho2 m4 ho2 ji5 hai2 zi6 gei2 si1 fuk6 hei3 paau2?',
   },
   faq3a: {
-    en: 'Yes — you can self-host the Vite app + Express API (or the WordPress plugin) with your own Azure Speech, Azure Vision, and OpenAI/DeepSeek keys.',
-    zh: '可以——你可以自己托管 Vite 應用＋Express 接口（或者 WordPress 插件），並使用你自己嘅 Azure Speech、Azure Vision 同 OpenAI／DeepSeek 密鑰。',
-    jp: 'ho2 ji5 — nei5 ho2 ji5 zi6 gei2 tok3 gun2 Vite jing3 jung6 + Express zip3 hau2 (waak6 ze2 WordPress caa1 gin6), bing6 si2 jung6 nei5 zi6 gei2 ge3 Azure Speech, Azure Vision tung4 OpenAI / DeepSeek mat6 joek6.',
+    en: 'Yes — you can self-host the Vite app + Express API with your own Azure Speech, Azure Vision, and OpenAI/DeepSeek keys.',
+    zh: '可以——你可以自己托管 Vite 應用＋Express 接口，並使用你自己嘅 Azure Speech、Azure Vision 同 OpenAI／DeepSeek 密鑰。',
+    jp: 'ho2 ji5 — nei5 ho2 ji5 zi6 gei2 tok3 gun2 Vite jing3 jung6 + Express zip3 hau2, bing6 si2 jung6 nei5 zi6 gei2 ge3 Azure Speech, Azure Vision tung4 OpenAI / DeepSeek mat6 joek6.',
   },
   faq4q: {
     en: 'Can I cancel anytime?',

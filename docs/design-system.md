@@ -1,8 +1,8 @@
 # JyutTranslate design system / 粤译设计系统
 
-Brand tokens for matching the marketing site and translator when building **Bricks** (or any WordPress) pages.
+Brand tokens for the marketing site and translator UI.
 
-品牌变量，用于在 **Bricks**（或任意 WordPress）页面中对齐营销站与翻译器。
+品牌变量，用于对齐营销站与翻译器界面。
 
 **Visual swatches / 色板：** open [`brand/index.html`](./brand/index.html) locally (preferred).
 
