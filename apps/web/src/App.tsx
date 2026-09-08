@@ -11,6 +11,7 @@ import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
 import { listenPushNavigate, syncPushSubscriptionIfEnabled } from './lib/pushNotifications'
 import { loadSiteConfig } from './lib/siteLinks'
+import { bindMicBackgroundRelease } from './lib/micPrivacy'
 import { useYueStore } from './lib/store'
 import { hashPath, navigate, useRoute } from './lib/useHashRoute'
 
@@ -63,6 +64,12 @@ export default function App() {
       }
     })
   }, [ready])
+
+  useEffect(() => {
+    return bindMicBackgroundRelease(() => {
+      useYueStore.getState().releaseCaptureOnBackground()
+    })
+  }, [])
 
   useEffect(() => {
     if (!ready) return

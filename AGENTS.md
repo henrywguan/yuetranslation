@@ -20,6 +20,7 @@ Whenever hunting bugs, reviewing a PR, or touching STT / `LiveHoldButton` / `sta
 - If Safari’s orange mic pill is on, the in-app button must stay in a listening state — never **Hold or tap** while the OS mic is on.
 - iOS Web Speech stays `continuous = true` for all langs. Do not restore one-shot sessions (`continuous = !apple`) or an Apple empty-`onend` kill after two restarts (`MAX_EMPTY_RESTARTS` on iOS).
 - **Auto-speak barge-in:** a mic tap during TTS must start listening, then pause playback. Pausing HTMLAudio / `speechSynthesis.cancel()` / silent-WAV unlock / `getUserMedia` *before* `recognition.start()` cancels iPhone capture. Skip auto-speak if the next tap is already live.
+- **Background privacy:** leaving the app (Home / switcher / Control Center) must drop mic tracks immediately. An orange “Safari Websites” pill while backgrounded is a leak.
 - Do not `GET /health` + history-hydrate on every mic stop (Vercel checkpoint after 2–3 turns). Do not dump checkpoint HTML into the error banner. iPhone live STT stays on Web Speech for Yue/En/Cmn/Es/Vi (no Azure LID / `/api/speech-token` on later taps). **Exception:** Tagalog (`tl`) and Shanghainese (`wuu`) use Azure **fixed-locale** on iPhone — Safari returns `service-not-allowed` for `fil-PH` / lacks Wu; never use LID for those panes.
 
 Skill + file rule: [`.cursor/skills/live-mic-invariants/SKILL.md`](.cursor/skills/live-mic-invariants/SKILL.md) · [`.cursor/rules/live-mic.mdc`](.cursor/rules/live-mic.mdc). Smoke: `npx tsx apps/web/src/lib/webSpeech.smoke.ts`.

@@ -150,6 +150,8 @@ type State = {
   endHold: () => Promise<void>
   /** Cancel live without translating (mode switch / quota). */
   stopLive: () => Promise<void>
+  /** Home / app switcher / Control Center: drop mic tracks now (orange pill). */
+  releaseCaptureOnBackground: () => void
   translateTyped: (text: string, from: Lang) => Promise<void>
   openBreakdown: (
     phrase: string,
@@ -939,6 +941,38 @@ export const useYueStore = create<State>((set, get) => {
     clearTapTimers()
     holdGen += 1
     await tearDownLive(get, set, { clearInterim: true })
+  },
+
+  releaseCaptureOnBackground: () => {
+    // Sync first — iOS may freeze the page before session.stop() resolves,
+    // which left getUserMedia / Web Speech live (Control Center orange pill).
+    ++tearEpoch
+    appleMicTurns = 0
+    holdGen += 1
+    resetHoldCapture()
+    flushingHold = false
+    tapSticky = false
+    pendingStickyTap = false
+    holding = false
+    startingHold = false
+    clearTapTimers()
+    stopHeartbeat()
+    speakToken += 1
+    releaseHeldMic()
+    const session = get().session
+    if (session) {
+      void session.stop().catch(() => undefined)
+    }
+    set({
+      live: false,
+      session: null,
+      liveInteraction: null,
+      liveSide: null,
+      status: get().translating ? get().status : 'idle',
+      enInterim: '',
+      yueInterim: '',
+      face: { ...get().face, enInterim: '', yueInterim: '' },
+    })
   },
 
   startHold: async (side) => {
