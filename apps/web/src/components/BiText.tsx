@@ -72,7 +72,10 @@ export function BiText({
     (primaryLanguage === 'cmn' && wantPrimaryGloss ? cmnPinyin.trim() || undefined : undefined)
 
   const canJp =
-    primaryLanguage === 'yue' && !hideJp && only !== 'en' && Boolean(copy.jp)
+    (primaryLanguage === 'yue' || primaryLanguage === 'en') &&
+    !hideJp &&
+    only !== 'en' &&
+    Boolean(copy.jp)
   const { tipId, show, bind, wrapRef } = useJpPopup(canJp)
   const inline = layout === 'inline' && !only
   const zh = (

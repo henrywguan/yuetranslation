@@ -36,6 +36,7 @@ import {
   normalizePrimaryLang,
   readLocalPrimaryLang,
   writeLocalPrimaryLang,
+  layoutForPrimary,
   type PrimaryLang,
 } from './primaryLanguagePref'
 
@@ -539,14 +540,14 @@ async function tearDownLive(
 
 export const useYueStore = create<State>((set, get) => {
   const initialPrimary = readLocalPrimaryLang()
-  const classic = initialPrimary === 'yue'
+  const initialLayout = layoutForPrimary(initialPrimary)
   return {
   mode: 'solo',
-  speakDirection: classic ? 'en' : initialPrimary,
-  chineseLang: classic ? 'yue' : 'en',
-  conversationYouLang: classic ? 'en' : initialPrimary,
-  soloUpperLang: classic ? 'en' : initialPrimary,
-  soloLowerLang: classic ? 'yue' : 'en',
+  speakDirection: initialLayout.speakDirection,
+  chineseLang: initialLayout.chineseLang,
+  conversationYouLang: initialLayout.conversationYouLang,
+  soloUpperLang: initialLayout.soloUpperLang,
+  soloLowerLang: initialLayout.soloLowerLang,
   primaryLanguage: initialPrimary,
   live: false,
   status: 'idle',
@@ -790,28 +791,13 @@ export const useYueStore = create<State>((set, get) => {
     const primary = normalizePrimaryLang(lang)
     writeLocalPrimaryLang(primary)
 
-    // Default Cantonese keeps the classic English-you layout.
-    // Any other primary fills Solo upper + Conversation you (facing the phone user);
-    // English moves to Solo lower + Conversation partner. Cam targets primary either way.
-    if (primary === 'yue') {
-      set({
-        primaryLanguage: primary,
-        soloUpperLang: 'en',
-        soloLowerLang: 'yue',
-        conversationYouLang: 'en',
-        chineseLang: 'yue',
-        speakDirection: get().speakDirection === 'yue' ? 'yue' : 'en',
-      })
-    } else {
-      set({
-        primaryLanguage: primary,
-        soloUpperLang: primary,
-        soloLowerLang: 'en',
-        conversationYouLang: primary,
-        chineseLang: 'en',
-        speakDirection: primary,
-      })
-    }
+    // Primary fills Solo upper + Conversation you (facing the phone user).
+    // English primary pairs with Cantonese on the partner / lower side;
+    // every other primary (including Cantonese) pairs with English.
+    set({
+      primaryLanguage: primary,
+      ...layoutForPrimary(primary),
+    })
 
     const loggedIn = Boolean(get().entitlement?.loggedIn)
     if (!loggedIn) return
@@ -879,25 +865,10 @@ export const useYueStore = create<State>((set, get) => {
       // Only reset Solo/Conversation pane layout when primary actually changes.
       // Re-applying on every health refresh (visibility, mic overlays, concurrent
       // boots) wiped manual Solo pane picks — e.g. 粵 upper + Mexican Spanish lower
-      // snapped back to classic English-you after record/stop.
+      // snapped back after record/stop.
       const prevPrimary = get().primaryLanguage
       const primaryChanged = nextPrimary !== prevPrimary
-      const layout =
-        nextPrimary === 'yue'
-          ? {
-              soloUpperLang: 'en' as const,
-              soloLowerLang: 'yue' as const,
-              conversationYouLang: 'en' as const,
-              chineseLang: 'yue' as const,
-              speakDirection: (get().speakDirection === 'yue' ? 'yue' : 'en') as Lang,
-            }
-          : {
-              soloUpperLang: nextPrimary,
-              soloLowerLang: 'en' as const,
-              conversationYouLang: nextPrimary,
-              chineseLang: 'en' as const,
-              speakDirection: nextPrimary,
-            }
+      const layout = layoutForPrimary(nextPrimary)
       const { hydrateHistory } = await import('./historySync')
       const history = await hydrateHistory(Boolean(ent.loggedIn))
       set({

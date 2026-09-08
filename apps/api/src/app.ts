@@ -498,9 +498,9 @@ app.patch('/api/prefs/primary-lang', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   const { normalizePrimaryLang } = await import('./entitlements.js')
   const raw = req.body?.primaryLang
-  const allowed = ['yue', 'cmn', 'wuu', 'tl', 'es', 'vi']
+  const allowed = ['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi']
   if (typeof raw !== 'string' || !allowed.includes(raw)) {
-    res.status(400).json({ message: 'primaryLang must be yue, cmn, wuu, tl, es, or vi.' })
+    res.status(400).json({ message: 'primaryLang must be en, yue, cmn, wuu, tl, es, or vi.' })
     return
   }
   const primaryLang = normalizePrimaryLang(raw)
