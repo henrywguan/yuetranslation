@@ -691,6 +691,54 @@
   justify-content: flex-end;
 }
 
+.email-hub-mobile-nav,
+.email-hub-mobile-dock {
+  display: none;
+}
+
+.email-hub-body-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.email-hub-tool {
+  appearance: none;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(154, 240, 222, 0.22);
+  background: rgba(15, 33, 51, 0.9);
+  color: #9af0de;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.email-hub-tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.email-hub-tool--preview {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: auto;
+}
+
+.email-hub-tool--bold {
+  font-weight: 700;
+}
+
+.email-hub-tool--italic {
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
 @media (max-width: 1100px) {
   .email-hub-workspace {
     grid-template-columns: 1fr;
@@ -703,6 +751,161 @@
   .email-hub-list-desc,
   .email-hub-list-variant {
     display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .email-hub {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .email-hub-sub {
+    font-size: 0.86rem;
+  }
+
+  .email-hub-top-actions {
+    width: 100%;
+  }
+
+  .email-hub-top-actions .admin-btn {
+    flex: 1 1 auto;
+    min-height: 2.6rem;
+  }
+
+  .email-hub-mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 0.35rem;
+    margin: 0 -0.1rem;
+    border: 1px solid rgba(154, 240, 222, 0.16);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--harbor-mid, #0c1f2e) 92%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .email-hub-mobile-nav button {
+    appearance: none;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(232, 244, 241, 0.65);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.65rem 0.25rem;
+    min-height: 2.75rem;
+    cursor: pointer;
+  }
+
+  .email-hub-mobile-nav button.is-active {
+    background: rgba(61, 207, 182, 0.22);
+    color: #9af0de;
+  }
+
+  .email-hub-gallery,
+  .email-hub-workspace > .email-hub-editor,
+  .email-hub-workspace > .email-hub-preview,
+  .email-hub-workspace > .email-hub-recipients {
+    display: none;
+  }
+
+  .email-hub-gallery.is-mobile-active,
+  .email-hub-workspace > .email-hub-editor.is-mobile-active,
+  .email-hub-workspace > .email-hub-preview.is-mobile-active,
+  .email-hub-workspace > .email-hub-recipients.is-mobile-active {
+    display: block;
+  }
+
+  .email-hub-workspace {
+    display: block;
+  }
+
+  .email-hub-workspace > .email-hub-editor.is-mobile-active,
+  .email-hub-workspace > .email-hub-preview.is-mobile-active,
+  .email-hub-workspace > .email-hub-recipients.is-mobile-active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .email-hub-field input,
+  .email-hub-field textarea,
+  .email-hub-save-row input,
+  .email-hub-contact-tools input,
+  .email-hub-inline-label select {
+    font-size: 16px;
+    min-height: 2.75rem;
+  }
+
+  .email-hub-field--body textarea {
+    min-height: 12rem;
+  }
+
+  .email-hub-field-label-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .email-hub-body-tools {
+    width: 100%;
+  }
+
+  .email-hub-ai-btn {
+    min-height: 2.4rem;
+    padding: 0.4rem 0.75rem 0.4rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .email-hub-tool {
+    min-width: 2.6rem;
+    min-height: 2.6rem;
+  }
+
+  .email-hub-iframe-wrap {
+    min-height: 55dvh;
+  }
+
+  .email-hub-iframe {
+    height: min(65dvh, 560px);
+  }
+
+  .email-hub-contact-list {
+    max-height: min(50dvh, 320px);
+  }
+
+  .email-hub-contact-list label {
+    min-height: 2.75rem;
+    padding: 0.65rem 0.7rem;
+    align-items: center;
+  }
+
+  .email-hub-send {
+    min-height: 3rem;
+    font-size: 1rem;
+  }
+
+  .email-hub-mobile-dock {
+    display: flex;
+    gap: 0.5rem;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    padding: 0.65rem 0.85rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(154, 240, 222, 0.18);
+    background: color-mix(in srgb, var(--harbor-deep, #07131f) 94%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .email-hub-mobile-dock .admin-btn {
+    flex: 1 1 0;
+    min-height: 2.85rem;
+    justify-content: center;
   }
 }
 
