@@ -307,12 +307,20 @@ export const ui = {
   dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   dirMexicanSpanish: { en: 'Mexican Spanish', zh: '墨西哥西班牙語', jp: 'mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
   dirVietnamese: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
-  mxLearnTitle: { en: 'Learn Mexican Spanish', zh: '學墨西哥西班牙語', jp: 'hok6 mak6 sai1 go1 sai1 baan1 ngaa4 jyu5' },
-  mxSituations: { en: 'Situations', zh: '情境', jp: 'cing4 ging2' },
-  mxCultureEmpty: {
-    en: 'Open a slangy line (órale, ahorita, ¿mande?) for a culture note.',
-    zh: '譯到口語（órale、ahorita、¿mande?）會顯示文化提示。',
-    jp: 'jik6 dou3 hau2 jyu5 wui5 hin2 si6 man4 faa3 tai4 si6.',
+  mxInformalNote: {
+    en: 'This line is informal Mexican Spanish.',
+    zh: '呢句係非正式墨西哥西班牙語。',
+    jp: 'ni1 geoi3 hai6 fei1 zing3 sik1 mak6 sai1 go1 sai1 baan1 ngaa4 jyu5.',
+  },
+  mxFormalize: {
+    en: 'Make formal',
+    zh: '改成正式',
+    jp: 'goi2 sing4 zing3 sik1',
+  },
+  mxFormalizeNeedSource: {
+    en: 'Open details from a full turn to formalize from the source.',
+    zh: '由完整對話打開詳情，先可以用原文改正式。',
+    jp: 'jau4 jyun4 man4 hoi1 hoi1 soeng4 cing4.',
   },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakHint: {
