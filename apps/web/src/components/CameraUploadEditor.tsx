@@ -57,7 +57,8 @@ const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraUploadEditor({ imageUrl, target, onBack, onEntitlement, meter }: Props) {
   const primaryLanguage = useYueStore((s) => s.primaryLanguage)
-  const scanTarget = target === 'auto' ? primaryLanguage : target  const openBreakdown = useYueStore((s) => s.openBreakdown)
+  const scanTarget = target === 'auto' ? primaryLanguage : target
+  const openBreakdown = useYueStore((s) => s.openBreakdown)
   const imgRef = useRef<HTMLImageElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)

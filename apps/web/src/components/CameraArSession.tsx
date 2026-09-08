@@ -57,7 +57,8 @@ const IDENTITY_ZOOM: ZoomTransform = { scale: 1, x: 0, y: 0 }
 
 export function CameraArSession({ target, onTargetChange, onBack, onEntitlement, meter }: Props) {
   const primaryLanguage = useYueStore((s) => s.primaryLanguage)
-  const scanTarget = target === 'auto' ? primaryLanguage : target  const speakManual = useYueStore((s) => s.speakManual)
+  const scanTarget = target === 'auto' ? primaryLanguage : target
+  const speakManual = useYueStore((s) => s.speakManual)
   const openBreakdown = useYueStore((s) => s.openBreakdown)
   const reduce = useReducedMotion()
   const videoRef = useRef<HTMLVideoElement>(null)
