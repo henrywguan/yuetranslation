@@ -66,11 +66,12 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.voice,
     opts.preferredVi,
   )
-  // fil-PH neural voices read quieter than zh-HK / en-US on iPhone speakers —
-  // boost so Tagalog TTS matches other languages at the same device volume.
+  // fil-PH neural voices are much quieter than zh-HK / en-US on iPhone speakers
+  // (even at device max). Use Azure's loudest relative prosody so Tagalog speak
+  // is in the same ballpark as Cantonese/English without client-side gain nodes.
   const spoken =
     pick.xmlLang === 'fil-PH'
-      ? `<prosody volume="+45%">${escapeXml(text)}</prosody>`
+      ? `<prosody volume="x-loud">${escapeXml(text)}</prosody>`
       : escapeXml(text)
   const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${spoken}</voice></speak>`
   const url = `https://${env.azureSpeechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`
