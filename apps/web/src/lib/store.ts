@@ -4,7 +4,7 @@ import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tts'
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
-import { connectMicAnalyser, disconnectMicAnalyser } from './audioReactive'
+import { connectMicAnalyser, disconnectMicAnalyser, resumeSharedAudioContext } from './audioReactive'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
@@ -907,18 +907,19 @@ export const useYueStore = create<State>((set, get) => {
   startHold: async (side) => {
     // Gesture-time unlocks first — must run before any await on this turn (iOS).
     unlockTtsPlayback()
+    resumeSharedAudioContext()
     speakToken += 1
     stopSpeaking()
     set({ status: 'idle', speakingText: null })
 
     const apple = isAppleTouchDevice()
     const webSpeechFirst = apple && !liveSessionFactory
-    const micWarm = apple && !liveSessionFactory ? unlockMicrophone() : null
+    // Do not getUserMedia+stop alongside Web Speech — that race mutes the second tap.
     const micPriming = webSpeechFirst || liveSessionFactory ? null : unlockMicrophone()
 
-    // Wait out an in-flight endHold flush instead of tearing down concurrently
-    // (overlapping tearDown was able to null a freshly started session).
-    if (flushingHold) {
+    // Wait out an in-flight endHold flush on Azure. On Apple, recognition.start()
+    // must stay in this gesture turn or Safari listens with no audio.
+    if (flushingHold && !webSpeechFirst) {
       const deadline = Date.now() + 4000
       while (flushingHold && Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 40))
@@ -927,15 +928,21 @@ export const useYueStore = create<State>((set, get) => {
 
     repairStaleHoldCapture(get)
     // Barge-in / zombie clear: a prior turn can leave live=true with a dead session.
+    let bargedLive = false
     if (get().live) {
       holdGen += 1
-      await tearDownLive(get, set, { clearInterim: false })
+      bargedLive = true
+      if (webSpeechFirst) {
+        void tearDownLive(get, set, { clearInterim: false })
+      } else {
+        await tearDownLive(get, set, { clearInterim: false })
+      }
       repairStaleHoldCapture(get)
     }
     if (flushingHold && !holding && !startingHold && !tapSticky && !get().live) {
       flushingHold = false
     }
-    if (holding || startingHold || flushingHold || tapSticky || get().live) return
+    if (holding || startingHold || flushingHold || tapSticky || (get().live && !bargedLive)) return
     const { entitlement } = get()
     if (entitlement && !entitlement.allowed.live) {
       const msg =
@@ -1042,13 +1049,8 @@ export const useYueStore = create<State>((set, get) => {
     if (liveSessionFactory) {
       next = await liveSessionFactory(handlers, heldMicStream, webSpeechLock())
     } else if (webSpeechFirst) {
-      // Prime iOS audio session in parallel — never block STT on getUserMedia or early
-      // syllables are lost (English speakers especially tend to start talking immediately).
-      if (micWarm) {
-        void micWarm.then((warmed) => {
-          if (warmed) stopMediaStream(warmed)
-        })
-      }
+      // Start in this gesture turn — do not await getUserMedia first (lost syllables)
+      // and do not open a competing stream that we then stop (second tap goes silent).
       next = createWebSpeechSession(handlers, webSpeechLock())
       if (next) {
         try {

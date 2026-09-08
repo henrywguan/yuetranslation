@@ -1,7 +1,89 @@
 import { canUseMicrophone, micBlockedMessage } from './mediaAccess'
+import {
+  addMicPcmListener,
+  connectMicAnalyser,
+  ensureSharedAudioContext,
+  getSharedAudioSampleRate,
+} from './audioReactive'
 import { createEchoGuard } from './echoGuard'
 import { getSpeechToken } from './speechToken'
 import type { Lang, LiveSession, SpeechEventHandlers, SpeechMeta } from './types'
+
+type SpeechSdk = typeof import('microsoft-cognitiveservices-speech-sdk')
+
+type AudioPump = {
+  audioConfig: import('microsoft-cognitiveservices-speech-sdk').AudioConfig
+  close: () => void
+}
+
+/**
+ * Feed Azure from our persistent AudioContext instead of fromStreamInput(MediaStream).
+ * The SDK closes its own AudioContext on stop(), and the next session then
+ * starts “listening” with a dead graph (icon on, no speech).
+ */
+function createAudioPump(SpeechSDK: SpeechSdk, mediaStream?: MediaStream | null): AudioPump {
+  const live =
+    mediaStream && mediaStream.getAudioTracks().some((t) => t.readyState === 'live')
+      ? mediaStream
+      : null
+  if (!live) {
+    return {
+      audioConfig: SpeechSDK.AudioConfig.fromDefaultMicrophoneInput(),
+      close() {},
+    }
+  }
+
+  ensureSharedAudioContext()
+  connectMicAnalyser(live)
+  const format = SpeechSDK.AudioStreamFormat.getWaveFormatPCM(getSharedAudioSampleRate(), 16, 1)
+  const push = SpeechSDK.AudioInputStream.createPushStream(format)
+  let open = true
+  const unsub = addMicPcmListener((buf) => {
+    if (!open) return
+    try {
+      push.write(buf)
+    } catch {
+      open = false
+    }
+  })
+  return {
+    audioConfig: SpeechSDK.AudioConfig.fromStreamInput(push),
+    close() {
+      if (!open) return
+      open = false
+      unsub()
+      try {
+        push.close()
+      } catch {
+        /* ignore */
+      }
+    },
+  }
+}
+
+function waitEngineStop(
+  engine: { sessionStopped: unknown },
+  startStop: (ok: () => void, err: () => void) => void,
+  close: () => void,
+): Promise<void> {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timer)
+      try {
+        close()
+      } catch {
+        /* ignore */
+      }
+      resolve()
+    }
+    const timer = window.setTimeout(finish, 2000)
+    engine.sessionStopped = () => finish()
+    startStop(finish, finish)
+  })
+}
 
 function localeToLang(locale: string): Lang {
   const l = locale.toLowerCase()
@@ -65,18 +147,6 @@ function metaFromSpeaker(speakerId?: string | null): SpeechMeta | undefined {
   return id ? { speakerId: id } : undefined
 }
 
-function buildAudioConfig(
-  SpeechSDK: typeof import('microsoft-cognitiveservices-speech-sdk'),
-  mediaStream?: MediaStream | null,
-) {
-  // Prefer a stream opened in the user-gesture turn — iOS often blocks a second
-  // fromDefaultMicrophoneInput() after awaits (token fetch / dynamic import).
-  if (mediaStream && mediaStream.getAudioTracks().some((t) => t.readyState === 'live')) {
-    return SpeechSDK.AudioConfig.fromStreamInput(mediaStream)
-  }
-  return SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
-}
-
 export async function createAzureLiveSession(
   handlers: SpeechEventHandlers,
   mediaStream?: MediaStream | null,
@@ -97,8 +167,15 @@ export async function createAzureLiveSession(
   let transcriber: import('microsoft-cognitiveservices-speech-sdk').ConversationTranscriber | null =
     null
   let recognizer: import('microsoft-cognitiveservices-speech-sdk').SpeechRecognizer | null = null
+  let audioPump: AudioPump | null = null
   const echo = createEchoGuard()
   const gate = createSpeakerGate()
+
+  function replaceAudioPump(): AudioPump {
+    audioPump?.close()
+    audioPump = createAudioPump(SpeechSDK, mediaStream)
+    return audioPump
+  }
 
   function buildSpeechConfig(fixedLang?: Lang) {
     const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
@@ -127,7 +204,7 @@ export async function createAzureLiveSession(
   async function startWithTranscriber(): Promise<boolean> {
     const speechConfig = buildSpeechConfig()
     const autoDetect = SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(['en-US', 'zh-HK'])
-    const audioConfig = buildAudioConfig(SpeechSDK, mediaStream)
+    const audioConfig = replaceAudioPump().audioConfig
     const next = SpeechSDK.ConversationTranscriber.FromConfig(speechConfig, autoDetect, audioConfig)
 
     next.transcribing = (_s, e) => {
@@ -175,7 +252,7 @@ export async function createAzureLiveSession(
 
   async function startWithRecognizer(fixedLang: Lang | undefined = lockLang): Promise<void> {
     const speechConfig = buildSpeechConfig(fixedLang)
-    const audioConfig = buildAudioConfig(SpeechSDK, mediaStream)
+    const audioConfig = replaceAudioPump().audioConfig
     const next = fixedLang
       ? new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig)
       : SpeechSDK.SpeechRecognizer.FromConfig(
@@ -267,6 +344,8 @@ export async function createAzureLiveSession(
           await startWithTranscriber()
         } catch (err) {
           transcriber = null
+          audioPump?.close()
+          audioPump = null
           gate.reset()
           if (!canUseMicrophone()) {
             throw err instanceof Error ? err : new Error(String(err))
@@ -280,6 +359,8 @@ export async function createAzureLiveSession(
       } catch (err) {
         // Diarization endpoint unavailable — fall back to plain recognition (no speaker lock).
         transcriber = null
+        audioPump?.close()
+        audioPump = null
         gate.reset()
         if (!canUseMicrophone()) {
           throw err instanceof Error ? err : new Error(String(err))
@@ -290,44 +371,26 @@ export async function createAzureLiveSession(
     async stop() {
       const currentTranscriber = transcriber
       const currentRecognizer = recognizer
+      const currentPump = audioPump
       transcriber = null
       recognizer = null
+      audioPump = null
       gate.reset()
+      currentPump?.close()
       // Stop both if a fallthrough ever started recognizer + transcriber on one stream.
       if (currentTranscriber) {
-        await new Promise<void>((resolve) => {
-          currentTranscriber.stopTranscribingAsync(
-            () => {
-              currentTranscriber.close(() => resolve())
-            },
-            () => {
-              try {
-                currentTranscriber.close()
-              } catch {
-                /* ignore */
-              }
-              resolve()
-            },
-          )
-        })
+        await waitEngineStop(
+          currentTranscriber,
+          (ok, err) => currentTranscriber.stopTranscribingAsync(ok, err),
+          () => currentTranscriber.close(),
+        )
       }
       if (currentRecognizer) {
-        await new Promise<void>((resolve) => {
-          currentRecognizer.stopContinuousRecognitionAsync(
-            () => {
-              currentRecognizer.close()
-              resolve()
-            },
-            () => {
-              try {
-                currentRecognizer.close()
-              } catch {
-                /* ignore */
-              }
-              resolve()
-            },
-          )
-        })
+        await waitEngineStop(
+          currentRecognizer,
+          (ok, err) => currentRecognizer.stopContinuousRecognitionAsync(ok, err),
+          () => currentRecognizer.close(),
+        )
       }
       if (currentTranscriber || currentRecognizer) handlers.onStatus('idle')
     },
