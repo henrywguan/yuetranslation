@@ -66,7 +66,7 @@ export function primaryLangLabel(lang: PrimaryLang): {
   en: string
   zh: string
   jp?: string
-  /** Native tertiary when primary ≠ Yue/English (replaces Jyutping under the logo). */
+  /** Native secondary line when primary ≠ Yue/English (replaces Chinese under the logo). */
   gloss?: string
 } {
   switch (lang) {
