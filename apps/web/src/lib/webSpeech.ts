@@ -201,7 +201,7 @@ export function createWebSpeechSession(
     },
     async stop() {
       stopped = true
-      stopSpeaking()
+      stopSpeaking({ preserveSession: apple })
       const rec = recognition
       recognition = null
       if (!rec) {
@@ -221,10 +221,11 @@ export function createWebSpeechSession(
           rec.onresult = null
           resolve()
         }
-        const timer = window.setTimeout(finish, 400)
+        const timer = window.setTimeout(finish, apple ? 800 : 400)
         rec.onend = () => finish()
         try {
-          rec.abort()
+          if (apple) rec.stop()
+          else rec.abort()
         } catch {
           try {
             rec.stop()

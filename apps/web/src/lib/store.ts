@@ -4,8 +4,8 @@ import { createWebSpeechSession } from './webSpeech'
 import { speakText, stopSpeaking, isMicEchoMuted, unlockTtsPlayback } from './tts'
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } from './api'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
-import { connectMicAnalyser, disconnectMicAnalyser, resumeSharedAudioContext } from './audioReactive'
-import { prefetchSpeechToken } from './speechToken'
+import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
+import { peekSpeechToken, prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
   ConversationTurn,
@@ -197,6 +197,8 @@ let noSpeechTimer: ReturnType<typeof setTimeout> | null = null
 let heldMicStream: MediaStream | null = null
 /** Bumps on every tearDown so a slower teardown cannot wipe a newer live session/mic. */
 let tearEpoch = 0
+/** iOS: first tap uses Web Speech in the gesture; later taps use Azure + held mic. */
+let appleMicTurns = 0
 
 /** DEV/test: inject a live session (skip Azure / Web Speech). */
 let liveSessionFactory:
@@ -221,6 +223,7 @@ export function __getHoldDebugFlagsForTests() {
     startingHold,
     holdGen,
     tearEpoch,
+    appleMicTurns,
     hasMic: Boolean(heldMicStream),
   }
 }
@@ -446,7 +449,7 @@ async function tearDownLive(
   const session = get().session
   const mic = heldMicStream
   speakToken += 1
-  stopSpeaking()
+  stopSpeaking({ preserveSession: isAppleTouchDevice() })
   stopHeartbeat()
   clearTapTimers()
   holding = false
@@ -907,18 +910,22 @@ export const useYueStore = create<State>((set, get) => {
   startHold: async (side) => {
     // Gesture-time unlocks first — must run before any await on this turn (iOS).
     unlockTtsPlayback()
-    resumeSharedAudioContext()
+    ensureSharedAudioContext()
     speakToken += 1
-    stopSpeaking()
+    const apple = isAppleTouchDevice()
+    // iOS: do not audio.load() here — that resets the session and the next
+    // Web Speech / Azure tap shows the icon with no audio.
+    stopSpeaking({ preserveSession: apple })
     set({ status: 'idle', speakingText: null })
 
-    const apple = isAppleTouchDevice()
-    const webSpeechFirst = apple && !liveSessionFactory
-    // Do not getUserMedia+stop alongside Web Speech — that race mutes the second tap.
-    const micPriming = webSpeechFirst || liveSessionFactory ? null : unlockMicrophone()
+    const appleFollowUp = apple && appleMicTurns > 0
+    const appleUseAzure = appleFollowUp && Boolean(peekSpeechToken()) && !liveSessionFactory
+    const webSpeechFirst = apple && !appleUseAzure && !liveSessionFactory
+    const micPriming =
+      liveSessionFactory || (webSpeechFirst && !appleFollowUp) ? null : unlockMicrophone()
 
-    // Wait out an in-flight endHold flush on Azure. On Apple, recognition.start()
-    // must stay in this gesture turn or Safari listens with no audio.
+    // Wait out an in-flight endHold flush on Azure. On Apple first tap,
+    // recognition.start() must stay in this gesture turn.
     if (flushingHold && !webSpeechFirst) {
       const deadline = Date.now() + 4000
       while (flushingHold && Date.now() < deadline) {
@@ -1049,8 +1056,9 @@ export const useYueStore = create<State>((set, get) => {
     if (liveSessionFactory) {
       next = await liveSessionFactory(handlers, heldMicStream, webSpeechLock())
     } else if (webSpeechFirst) {
-      // Start in this gesture turn — do not await getUserMedia first (lost syllables)
-      // and do not open a competing stream that we then stop (second tap goes silent).
+      // First iOS tap: start Web Speech in this gesture (no competing getUserMedia).
+      // Later iOS taps without a speech token: keep a getUserMedia hold so Safari’s
+      // audio session stays in record mode — otherwise the 2nd start is silent.
       next = createWebSpeechSession(handlers, webSpeechLock())
       if (next) {
         try {
@@ -1064,6 +1072,14 @@ export const useYueStore = create<State>((set, get) => {
           }
           next = null
           alreadyStarted = false
+        }
+      }
+      if (alreadyStarted && micPriming) {
+        const warmed = await micPriming
+        if (warmed && gen === holdGen && (holding || tapSticky)) {
+          heldMicStream = warmed
+        } else if (warmed) {
+          stopMediaStream(warmed)
         }
       }
     }
@@ -1140,6 +1156,10 @@ export const useYueStore = create<State>((set, get) => {
       startingHold = false
       if (heldMicStream) connectMicAnalyser(heldMicStream)
       set({ live: true, session: next, status: 'listening', error: null })
+      if (apple) {
+        appleMicTurns += 1
+        prefetchSpeechToken({ allowApple: true })
+      }
       clearNoSpeechTimer()
       noSpeechTimer = setTimeout(() => {
         noSpeechTimer = null
