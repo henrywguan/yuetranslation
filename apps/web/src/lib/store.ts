@@ -201,6 +201,8 @@ let heldMicStream: MediaStream | null = null
 let tearEpoch = 0
 /** iOS: follow-up taps keep a getUserMedia hold so Safari stays in record mode. */
 let appleMicTurns = 0
+/** Pointerup won the race before startHold finished — keep sticky tap. */
+let pendingStickyTap = false
 /** Coalesce overlapping App + TranslatorApp boots (and visibility blips). */
 let bootstrapInflight: Promise<void> | null = null
 
@@ -229,6 +231,7 @@ export function __getHoldDebugFlagsForTests() {
     tearEpoch,
     appleMicTurns,
     hasMic: Boolean(heldMicStream),
+    pendingStickyTap,
   }
 }
 
@@ -249,6 +252,7 @@ function releaseHeldMic() {
 function cancelHoldStart(set: (p: Partial<State>) => void) {
   holding = false
   tapSticky = false
+  pendingStickyTap = false
   startingHold = false
   flushingHold = false
   holdSideLock = null
@@ -266,6 +270,7 @@ function repairStaleHoldCapture(get: () => State) {
     startingHold = false
     flushingHold = false
     tapSticky = false
+    pendingStickyTap = false
     holdSideLock = null
     releaseHeldMic()
     clearTapTimers()
@@ -273,7 +278,7 @@ function repairStaleHoldCapture(get: () => State) {
 }
 
 function holdActive(gen: number) {
-  return gen === holdGen && (holding || flushingHold || tapSticky)
+  return gen === holdGen && (holding || flushingHold || tapSticky || pendingStickyTap)
 }
 
 function clearTapTimers() {
@@ -299,6 +304,17 @@ function scheduleTapSentenceEnd(get: () => State) {
     if (!holdFinals.length && !holdInterim.trim()) return
     void get().endHold()
   }, TAP_SENTENCE_END_MS)
+}
+
+/** Pointerup often lands while startHold is awaiting STT start — keep sticky tap. */
+function keepHoldOrSticky(gen: number, set: (p: Partial<State>) => void): boolean {
+  if (pendingStickyTap) {
+    pendingStickyTap = false
+    tapSticky = true
+    holding = false
+    set({ liveInteraction: 'tap' })
+  }
+  return gen === holdGen && (holding || tapSticky)
 }
 
 function resolveHoldLang(detected: Lang, direction: SpeakDirection): Lang {
@@ -458,6 +474,7 @@ async function tearDownLive(
   clearTapTimers()
   holding = false
   tapSticky = false
+  pendingStickyTap = false
   startingHold = false
   // Keep face pane language lock through STT flush unless explicitly cleared.
   if (opts?.clearSideLock !== false) {
@@ -914,6 +931,7 @@ export const useYueStore = create<State>((set, get) => {
     resetHoldCapture()
     flushingHold = false
     tapSticky = false
+    pendingStickyTap = false
     clearTapTimers()
     holdGen += 1
     await tearDownLive(get, set, { clearInterim: true })
@@ -962,7 +980,15 @@ export const useYueStore = create<State>((set, get) => {
     if (flushingHold && !holding && !startingHold && !tapSticky && !get().live) {
       flushingHold = false
     }
-    if (holding || startingHold || flushingHold || tapSticky || (get().live && !bargedLive)) return
+    if (
+      holding ||
+      startingHold ||
+      flushingHold ||
+      (tapSticky && !pendingStickyTap) ||
+      (get().live && !bargedLive)
+    ) {
+      return
+    }
     const { entitlement } = get()
     if (entitlement && !entitlement.allowed.live) {
       const msg =
@@ -984,7 +1010,7 @@ export const useYueStore = create<State>((set, get) => {
 
     const gen = ++holdGen
     holding = true
-    tapSticky = false
+    tapSticky = pendingStickyTap
     flushingHold = false
     startingHold = true
     holdSideLock = side ?? null
@@ -996,7 +1022,7 @@ export const useYueStore = create<State>((set, get) => {
     // Clear prior translations so nothing looks like an interim MT result.
     set({
       error: null,
-      liveInteraction: 'hold',
+      liveInteraction: pendingStickyTap ? 'tap' : 'hold',
       liveSide: side ?? null,
       translating: false,
       translatingTo: null,
@@ -1089,7 +1115,7 @@ export const useYueStore = create<State>((set, get) => {
       }
       if (alreadyStarted && micPriming) {
         const warmed = await micPriming
-        if (warmed && gen === holdGen && (holding || tapSticky)) {
+        if (warmed && keepHoldOrSticky(gen, set)) {
           heldMicStream = warmed
         } else if (warmed) {
           stopMediaStream(warmed)
@@ -1116,7 +1142,7 @@ export const useYueStore = create<State>((set, get) => {
         }
         heldMicStream = primed
 
-        if (gen !== holdGen || (!holding && !tapSticky)) {
+        if (!keepHoldOrSticky(gen, set)) {
           cancelHoldStart(set)
           return
         }
@@ -1130,7 +1156,7 @@ export const useYueStore = create<State>((set, get) => {
       }
     }
 
-    if (gen !== holdGen || (!holding && !tapSticky)) {
+    if (!keepHoldOrSticky(gen, set)) {
       if (next) {
         try {
           await next.stop()
@@ -1165,7 +1191,7 @@ export const useYueStore = create<State>((set, get) => {
           await next.start()
         }
       }
-      if (gen !== holdGen || (!holding && !tapSticky)) {
+      if (!keepHoldOrSticky(gen, set)) {
         try {
           await next.stop()
         } catch {
@@ -1176,7 +1202,13 @@ export const useYueStore = create<State>((set, get) => {
       }
       startingHold = false
       if (heldMicStream) connectMicAnalyser(heldMicStream)
-      set({ live: true, session: next, status: 'listening', error: null })
+      set({
+        live: true,
+        session: next,
+        status: 'listening',
+        error: null,
+        liveInteraction: tapSticky ? 'tap' : 'hold',
+      })
       if (apple) {
         appleMicTurns += 1
       }
@@ -1198,6 +1230,7 @@ export const useYueStore = create<State>((set, get) => {
       tapSticky = false
       startingHold = false
       holdSideLock = null
+      pendingStickyTap = false
       releaseHeldMic()
       clearTapTimers()
       set({ error: humanizeThrownError(e), live: false, session: null, liveInteraction: null, liveSide: null })
@@ -1206,7 +1239,7 @@ export const useYueStore = create<State>((set, get) => {
 
   armTapMode: () => {
     // Modes 1–2: short press released — keep mic on until sentence end or second tap.
-    if (!holding && !startingHold && !get().live) return
+    pendingStickyTap = true
     if (flushingHold) return
     holding = false
     tapSticky = true
@@ -1230,10 +1263,11 @@ export const useYueStore = create<State>((set, get) => {
   endHold: async () => {
     // Prevent concurrent teardown (double release / double tap).
     if (flushingHold) return
-    if (!holding && !startingHold && !get().live && !tapSticky) return
+    if (!holding && !startingHold && !get().live && !tapSticky && !pendingStickyTap) return
     const gen = holdGen
     holding = false
     tapSticky = false
+    pendingStickyTap = false
     clearTapTimers()
     flushingHold = true
     let translateJob: { lang: Lang; text: string } | null = null

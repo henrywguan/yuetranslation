@@ -3,7 +3,7 @@ import { createEchoGuard } from './echoGuard'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang, LiveSession, SpeechEventHandlers } from './types'
 
-/** After this many silent no-speech ends, stop instead of restarting forever. */
+/** After this many silent no-speech ends on desktop, stop instead of restarting forever. */
 const MAX_EMPTY_RESTARTS = 2
 
 export function createWebSpeechSession(
@@ -145,7 +145,11 @@ export function createWebSpeechSession(
         handlers.onStatus('idle')
         return
       }
-      // Without an initial user-gesture, iOS restarts produce zero audio — cap them.
+      // Without an initial user-gesture, iOS restarts produce zero audio.
+      // Tap-to-talk still uses short (non-continuous) Yue sessions — Safari often
+      // fires onend before the user speaks. The store’s 7s silence timer ends the
+      // turn; do not kill listening after two empty restarts (button flipped back
+      // to “hold or tap” while the orange Safari mic stayed on).
       if (!heardSpeech) {
         emptyRestarts += 1
         if (activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {
@@ -154,7 +158,7 @@ export function createWebSpeechSession(
         if (activeLang === 'cmn' && cmnLocaleIndex < cmnLocales.length - 1) {
           cmnLocaleIndex += 1
         }
-        if (emptyRestarts > MAX_EMPTY_RESTARTS) {
+        if (!apple && emptyRestarts > MAX_EMPTY_RESTARTS) {
           stopped = true
           recognition = null
           handlers.onError(
