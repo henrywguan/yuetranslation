@@ -3704,6 +3704,15 @@
   color: var(--danger-ink);
 }
 
+.banner.error > span {
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+
 .banner.warn {
   background: color-mix(in srgb, #e0a106 16%, var(--surface));
   color: var(--ink);

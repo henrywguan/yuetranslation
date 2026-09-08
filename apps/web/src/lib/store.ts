@@ -6,6 +6,7 @@ import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref } fr
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
 import { appleLiveUsesWebSpeech } from './liveStt'
+import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
@@ -1181,7 +1182,7 @@ export const useYueStore = create<State>((set, get) => {
       holdSideLock = null
       releaseHeldMic()
       clearTapTimers()
-      set({ error: String(e), live: false, session: null, liveInteraction: null, liveSide: null })
+      set({ error: humanizeThrownError(e), live: false, session: null, liveInteraction: null, liveSide: null })
     }
   },
 
