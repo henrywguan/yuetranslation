@@ -32,7 +32,7 @@ export function hashPath(hash = typeof window === 'undefined' ? '' : window.loca
   return raw.replace(/^\//, '').split('?')[0] || ''
 }
 
-/** True when the app is embedded via `[yue_translator]` (`?view=app`). */
+/** True when the app is embedded via `?view=app` (iframe / deep link). */
 export function isEmbeddedAppView(): boolean {
   return viewParam() === 'app'
 }

@@ -2,7 +2,7 @@
   "name": "yue",
   "private": true,
   "version": "0.2.0",
-  "description": "JyutTranslate — English ↔ Cantonese live translator (PWA + WordPress)",
+  "description": "JyutTranslate — English ↔ Cantonese live translator (PWA)",
   "scripts": {
     "dev:web": "npm run dev --prefix apps/web -- --host 0.0.0.0 --port 5173",
     "dev:api": "npm run dev --prefix apps/api",
@@ -15,7 +15,6 @@
     "build:shared": "npm run build --prefix packages/yue-shared",
     "build:vercel": "npm run build:shared && node scripts/compile-api-emails.mjs && node scripts/generate-icons.mjs && npm run build --prefix apps/web",
     "build:web:marketing": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf dist-marketing && mkdir -p dist-marketing && cp -R apps/web/dist/. dist-marketing/",
-    "build:web:wp": "node scripts/generate-icons.mjs && VITE_BASE_PATH=./ npm run build --prefix apps/web && rm -rf wordpress/yue-translator/app && mkdir -p wordpress/yue-translator/app && cp -R apps/web/dist/. wordpress/yue-translator/app/",
     "icons": "node scripts/generate-icons.mjs",
     "smoke:canto": "npm run smoke:canto --prefix apps/api",
     "smoke:entitlements": "npm run smoke:entitlements --prefix apps/api",

@@ -1,8 +1,8 @@
 # Entitlements & usage metering
 
-Canonical plan limits for the **Vercel** stack (`apps/api` + Supabase + Stripe). The WordPress plugin is a secondary surface and may not match these defaults — see [bluehost-launch.md](./bluehost-launch.md).
+Canonical plan limits for the **Vercel** stack (`apps/api` + Supabase + Stripe).
 
-Vercel 生产栈的套餐与计量以本文为准。WordPress 插件为次要表面，默认值可能不一致。
+Vercel 生产栈的套餐与计量以本文为准。
 
 ## Guest & Free / 访客与免费版
 
