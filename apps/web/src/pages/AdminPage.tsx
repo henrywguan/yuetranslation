@@ -36,6 +36,66 @@ import './AdminPage.css'
 
 type Tab = 'users' | 'audit' | 'reports' | 'email' | 'push'
 
+const ADMIN_NAV: { id: Tab; label: string }[] = [
+  { id: 'users', label: 'Users' },
+  { id: 'audit', label: 'Audit log' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'email', label: 'Email' },
+  { id: 'push', label: 'Push' },
+]
+
+function AdminNavIcon({ tab }: { tab: Tab }) {
+  const common = {
+    viewBox: '0 0 24 24',
+    width: 18,
+    height: 18,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.7,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true as const,
+  }
+  if (tab === 'users') {
+    return (
+      <svg {...common}>
+        <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="3.2" />
+        <path d="M22 21v-2a3.5 3.5 0 00-2.5-3.3M16.5 3.7a3.2 3.2 0 010 6.2" />
+      </svg>
+    )
+  }
+  if (tab === 'audit') {
+    return (
+      <svg {...common}>
+        <path d="M8 6h11M8 12h11M8 18h11M4 6h.01M4 12h.01M4 18h.01" />
+      </svg>
+    )
+  }
+  if (tab === 'reports') {
+    return (
+      <svg {...common}>
+        <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" />
+        <path d="M14 3v5h5M9 13h6M9 17h4" />
+      </svg>
+    )
+  }
+  if (tab === 'email') {
+    return (
+      <svg {...common}>
+        <path d="M4 6h16v12H4z" />
+        <path d="M4 7l8 6 8-6" />
+      </svg>
+    )
+  }
+  return (
+    <svg {...common}>
+      <path d="M12 3v4M12 17v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M3 12h4M17 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" />
+      <circle cx="12" cy="12" r="3.2" />
+    </svg>
+  )
+}
+
 function todayYmdUtc(): string {
   const d = new Date()
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
@@ -96,6 +156,7 @@ function currentMonthKey(): string {
 
 export function AdminPage() {
   const [tab, setTab] = useState<Tab>('users')
+  const [navOpen, setNavOpen] = useState(false)
   const [gate, setGate] = useState<'loading' | 'ok' | 'denied'>('loading')
   const [adminEmail, setAdminEmail] = useState('')
   const [error, setError] = useState('')
@@ -165,6 +226,20 @@ export function AdminPage() {
       cancelled = true
     }
   }, [gate])
+
+  useEffect(() => {
+    if (!navOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [navOpen])
+
+  const selectTab = (next: Tab) => {
+    setTab(next)
+    setNavOpen(false)
+  }
 
   const listParams = useMemo<AdminListQuery>(
     () => ({
@@ -531,63 +606,106 @@ export function AdminPage() {
   }
 
   return (
-    <div className="admin-page">
-      <header className="admin-header">
-        <div className="admin-header-row">
-          <button type="button" className="admin-link-btn" onClick={() => navigate('app')}>
-            ← App
-          </button>
-          <p className="admin-muted">Signed in as {adminEmail || 'admin'}</p>
+    <div className="admin-shell">
+      <aside className="admin-sidebar" aria-label="Admin navigation">
+        <div className="admin-sidebar-brand">
+          <p className="admin-sidebar-kicker">JyutTranslate</p>
+          <h1 className="admin-sidebar-title">Admin</h1>
         </div>
-        <h1>Admin</h1>
-        <div className="admin-tabs" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'users'}
-            className={`admin-tab${tab === 'users' ? ' is-active' : ''}`}
-            onClick={() => setTab('users')}
-          >
-            Users
+        <nav className="admin-sidebar-nav" aria-label="Sections">
+          {ADMIN_NAV.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`admin-sidebar-link${tab === item.id ? ' is-active' : ''}`}
+              aria-current={tab === item.id ? 'page' : undefined}
+              onClick={() => selectTab(item.id)}
+            >
+              <AdminNavIcon tab={item.id} />
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="admin-sidebar-footer">
+          <button type="button" className="admin-sidebar-back" onClick={() => navigate('app')}>
+            ← Back to app
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'audit'}
-            className={`admin-tab${tab === 'audit' ? ' is-active' : ''}`}
-            onClick={() => setTab('audit')}
-          >
-            Audit log
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'reports'}
-            className={`admin-tab${tab === 'reports' ? ' is-active' : ''}`}
-            onClick={() => setTab('reports')}
-          >
-            Reports
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'email'}
-            className={`admin-tab${tab === 'email' ? ' is-active' : ''}`}
-            onClick={() => setTab('email')}
-          >
-            Email
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'push'}
-            className={`admin-tab${tab === 'push' ? ' is-active' : ''}`}
-            onClick={() => setTab('push')}
-          >
-            Push
-          </button>
+          <p className="admin-sidebar-email" title={adminEmail || 'admin'}>
+            {adminEmail || 'admin'}
+          </p>
         </div>
-      </header>
+      </aside>
+
+      {navOpen ? (
+        <div className="admin-nav-drawer" role="dialog" aria-modal="true" aria-label="Admin menu">
+          <button
+            type="button"
+            className="admin-nav-backdrop"
+            aria-label="Close menu"
+            onClick={() => setNavOpen(false)}
+          />
+          <aside className="admin-sidebar admin-sidebar--drawer">
+            <div className="admin-sidebar-brand">
+              <div className="admin-sidebar-brand-row">
+                <div>
+                  <p className="admin-sidebar-kicker">JyutTranslate</p>
+                  <h1 className="admin-sidebar-title">Admin</h1>
+                </div>
+                <button
+                  type="button"
+                  className="admin-nav-close"
+                  aria-label="Close menu"
+                  onClick={() => setNavOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <nav className="admin-sidebar-nav" aria-label="Sections">
+              {ADMIN_NAV.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`admin-sidebar-link${tab === item.id ? ' is-active' : ''}`}
+                  aria-current={tab === item.id ? 'page' : undefined}
+                  onClick={() => selectTab(item.id)}
+                >
+                  <AdminNavIcon tab={item.id} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="admin-sidebar-footer">
+              <button type="button" className="admin-sidebar-back" onClick={() => navigate('app')}>
+                ← Back to app
+              </button>
+              <p className="admin-sidebar-email" title={adminEmail || 'admin'}>
+                {adminEmail || 'admin'}
+              </p>
+            </div>
+          </aside>
+        </div>
+      ) : null}
+
+      <div className="admin-main">
+        <header className="admin-header">
+          <div className="admin-header-row">
+            <button
+              type="button"
+              className="admin-nav-toggle"
+              aria-label="Open admin menu"
+              aria-expanded={navOpen}
+              onClick={() => setNavOpen(true)}
+            >
+              <span className="admin-nav-toggle-bars" aria-hidden="true" />
+              Menu
+            </button>
+            <p className="admin-muted admin-header-email">Signed in as {adminEmail || 'admin'}</p>
+          </div>
+          <h1 className="admin-main-title">
+            {ADMIN_NAV.find((item) => item.id === tab)?.label || 'Admin'}
+          </h1>
+        </header>
 
       <section className="admin-ops-card" aria-label="Site status">
         <div className="admin-ops-card-head">
@@ -1043,6 +1161,7 @@ export function AdminPage() {
           </table>
         </div>
       )}
+      </div>
     </div>
   )
 }
