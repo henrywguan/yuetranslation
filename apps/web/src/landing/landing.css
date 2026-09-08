@@ -435,11 +435,19 @@
   margin-left: 0.2em;
 }
 
-.ln-eyebrow-en {
+.ln-eyebrow-en,
+.ln-eyebrow-stack .bi-en {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 650;
   line-height: 1.2;
+}
+
+.ln-eyebrow-stack .bi-primary {
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-weight: 550;
 }
 
 /* —— Multilang tip below hero CTAs (uiverse card + lizard word spin) —— */
@@ -751,7 +759,8 @@
 }
 
 
-.ln-eyebrow-zh {
+.ln-eyebrow-zh,
+.ln-eyebrow-stack .bi-zh {
   position: relative;
   display: inline-flex;
   flex-wrap: wrap;
@@ -3418,7 +3427,8 @@
   min-width: 0;
 }
 
-.ln-footer-lang-en {
+.ln-footer-lang-en,
+.ln-footer-lang-stack .bi-en {
   font-size: 0.92rem;
   font-weight: 650;
   letter-spacing: 0.02em;
@@ -3426,7 +3436,8 @@
   color: var(--muted);
 }
 
-.ln-footer-lang-zh {
+.ln-footer-lang-zh,
+.ln-footer-lang-stack .bi-zh {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -3436,8 +3447,17 @@
   line-height: 1.25;
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--ink) 72%, var(--muted));
+}
+
+.ln-footer-lang-stack .bi-zh-wrap--hint {
   cursor: help;
   border-bottom: 1px dotted color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.ln-footer-lang-stack .bi-primary {
+  font-size: 0.78rem;
+  font-weight: 520;
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
 }
 
 /* ---------- Landing pricing teaser link ---------- */

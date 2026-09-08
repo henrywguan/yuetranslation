@@ -105,6 +105,13 @@
   color: color-mix(in srgb, var(--muted) 88%, transparent);
 }
 
+.brand-tag-primary {
+  font-size: 0.82em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--muted) 92%, var(--ink));
+}
+
 /* Legacy pair layout kept for any residual markup. */
 .brand-pair {
   display: grid;
@@ -4056,6 +4063,13 @@
   text-align: center;
 }
 
+.mode-tabs .bi-primary {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 0.68em;
+}
+
 /* Keep Jyutping chips visible above bottom chrome */
 .controls .jp-pop {
   top: auto;
@@ -4084,6 +4098,13 @@
 
 .live-btn .bi-zh {
   text-align: center;
+}
+
+.live-btn .bi-primary {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 0.7em;
 }
 
 .plan-chip .bi {
