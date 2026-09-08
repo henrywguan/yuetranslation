@@ -135,7 +135,7 @@ SUPABASE_SEND_EMAIL_HOOK_SECRET=v1,whsec_...
 
 6. Redeploy the API. Supabase will call this hook **instead of** its built-in mailer for signup confirmation, magic links, recovery, invites, and email-change messages.
 
-Templates live at `apps/api/src/emails/AuthEmail.tsx` (compiled to `emails/compiled/` on deploy). `/api/health` reports `notify.userAuth` and `notify.sendEmailHook` when configured.
+Templates live at `apps/api/src/emails/AuthEmail.tsx` (compiled to `emails/compiled/` on deploy). Auth email readiness is configured via env (`RESEND_*` / hook secrets); public `/api/health` stays slim (no notify dump).
 
 **Note:** This is separate from the **Before user created** hook (`SUPABASE_AUTH_HOOK_SECRET`) which only emails **admins** about new sign-ups.
 

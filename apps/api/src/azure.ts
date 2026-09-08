@@ -1,7 +1,16 @@
 import { env } from './env.js'
 import { resolveSpeakVoice } from './ttsVoices.js'
 
-export async function issueSpeechToken() {
+/** Azure STS max; we advertise a shorter TTL and prepay live seconds on mint. */
+export const SPEECH_TOKEN_AZURE_TTL_S = 540
+/** Client-facing max TTL — refresh more often; pairs with prepaid debit. */
+export const SPEECH_TOKEN_MAX_TTL_S = 180
+/** Minimum remaining live seconds required to mint a token. */
+export const SPEECH_TOKEN_MIN_REMAINING_S = 15
+/** Live seconds debited on each successful mint (closes no-heartbeat abuse). */
+export const SPEECH_TOKEN_PREPAY_S = 60
+
+export async function issueSpeechToken(opts?: { expiresIn?: number }) {
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
   const url = `https://${env.azureSpeechRegion}.api.cognitive.microsoft.com/sts/v1.0/issueToken`
   const res = await fetch(url, {
@@ -12,10 +21,14 @@ export async function issueSpeechToken() {
     },
   })
   if (!res.ok) throw new Error(`Azure token failed: ${res.status}`)
+  const expiresIn = Math.max(
+    SPEECH_TOKEN_MIN_REMAINING_S,
+    Math.min(SPEECH_TOKEN_MAX_TTL_S, Math.floor(opts?.expiresIn ?? SPEECH_TOKEN_MAX_TTL_S)),
+  )
   return {
     token: await res.text(),
     region: env.azureSpeechRegion,
-    expiresIn: 540,
+    expiresIn,
   }
 }
 

@@ -3,9 +3,6 @@ import express from 'express'
 import { ZodError } from 'zod'
 import { cloudReady, env, openaiStatus, visionConfigured, visionLlmConfigured } from './env.js'
 import { corsOriginDelegate } from './corsOrigins.js'
-import { dictionaryStats, lexiconStats } from './canto/index.js'
-import { glossStats } from './canto/gloss.js'
-import { activeGlossSources, wordshkEnabled } from './canto/licenseGate.js'
 import { resolveEntitlement } from './entitlements.js'
 import { attachAuth, type AuthedRequest } from './auth.js'
 import { attachGuest, type GuestRequest } from './guest.js'
@@ -21,7 +18,7 @@ import {
 } from './householdRoutes.js'
 import { handleSignupNotify } from './signupNotify.js'
 import { handleAuthSendEmail } from './authSendEmail.js'
-import { issueSpeechToken, synthesize } from './azure.js'
+import { issueSpeechToken, synthesize, SPEECH_TOKEN_MAX_TTL_S, SPEECH_TOKEN_MIN_REMAINING_S, SPEECH_TOKEN_PREPAY_S } from './azure.js'
 import { breakdown } from './breakdown.js'
 import { translate } from './translate.js'
 import { cameraScan } from './cameraScan.js'
@@ -40,7 +37,6 @@ import {
   addGuestTranslateCount,
   addGuestAiVisionCount,
 } from './usage.js'
-import { notifyStatus, userEmailConfigured } from './notify.js'
 import { submitBugReport } from './bugReport.js'
 import { getHistory, putHistory } from './history.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
@@ -102,7 +98,21 @@ app.post(
   handleAuthSendEmail,
 )
 
-app.use(express.json({ limit: '12mb' }))
+// Default JSON body limit is small; Cam/Docs keep a larger parser (images / files).
+const jsonSmall = express.json({ limit: '256kb' })
+const jsonLarge = express.json({ limit: '12mb' })
+app.use((req, res, next) => {
+  if (
+    req.method === 'POST' &&
+    (req.path === '/api/camera/scan' ||
+      req.path === '/api/docs/translate' ||
+      req.path === '/api/docs/segments' ||
+      req.path === '/api/docs/commit')
+  ) {
+    return jsonLarge(req, res, next)
+  }
+  return jsonSmall(req, res, next)
+})
 app.use(attachAuth)
 app.use(attachGuest)
 
@@ -126,6 +136,8 @@ function guestTrialMessage(kind: 'live' | 'camera') {
 app.get('/api/health', async (req: AuthedRequest, res) => {
   const openai = openaiStatus()
   const incidentBanner = await getIncidentBanner()
+  // Public readiness only — keep entitlement + demo flag for SPA bootstrap.
+  // Omit model names, lexicon dumps, notify config, and other targeting aids.
   res.json({
     ok: true,
     product: 'jyut',
@@ -140,21 +152,6 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
       demo: !openai.configured,
       dictionary: true,
       lexicon: true,
-    },
-    openai,
-    dictionary: dictionaryStats(),
-    lexicon: lexiconStats(),
-    gloss: glossStats(),
-    licenseGate: {
-      allowNoncommercialDicts: env.allowNoncommercialDicts,
-      wordshkEnabled: wordshkEnabled(),
-      activeSources: activeGlossSources(),
-    },
-    openaiBaseUrl: openai.hasBaseUrl,
-    notify: {
-      admin: notifyStatus(),
-      userAuth: userEmailConfigured(),
-      sendEmailHook: Boolean(env.supabaseSendEmailHookSecret),
     },
     push: {
       configured: pushConfigured(),
@@ -201,8 +198,28 @@ app.get('/api/speech-token', async (req: AuthedRequest, res) => {
     res.status(503).json({ message: 'Azure Speech is not configured' })
     return
   }
+  // Prepaid debit closes the "mint tokens without heartbeats" hole.
+  const remaining = ent.remaining.liveSeconds
+  if (!env.openMode && remaining < SPEECH_TOKEN_MIN_REMAINING_S) {
+    res.status(402).json({
+      message: 'Live minutes exhausted for this month.',
+      entitlement: ent,
+    })
+    return
+  }
+  const ttl = env.openMode
+    ? SPEECH_TOKEN_MAX_TTL_S
+    : Math.min(SPEECH_TOKEN_MAX_TTL_S, Math.max(SPEECH_TOKEN_MIN_REMAINING_S, remaining))
+  const debit = env.openMode ? 0 : Math.min(SPEECH_TOKEN_PREPAY_S, remaining)
   try {
-    res.json(await issueSpeechToken())
+    const token = await issueSpeechToken({ expiresIn: ttl })
+    if (debit > 0) {
+      if (req.auth?.userId) await addLiveSeconds(req.auth.userId, debit)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestLiveSeconds((req as GuestRequest).guestId!, debit)
+      }
+    }
+    res.json({ ...token, prepaidSeconds: debit, entitlement: await entitlementFor(req) })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Token error' })
   }
@@ -689,7 +706,7 @@ app.post('/api/docs/translate', async (req: AuthedRequest, res) => {
   }
 })
 
-/** Batch text segments for PDF hybrid (extract → translate → paint). No page billing. */
+/** Batch text segments for PDF hybrid (extract → translate → paint). Bills ~1 docs page per call. */
 app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   if (!ent.allowed.docs) {
@@ -700,8 +717,30 @@ app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
     return
   }
   try {
+    const segments = Array.isArray(req.body?.segments) ? (req.body.segments as unknown[]) : []
+    const totalChars = segments.reduce(
+      (n, s) => n + (typeof s === 'string' ? s.length : 0),
+      0,
+    )
+    // Same density as Office/TXT page estimate — at least 1 page per paid model call.
+    const estimatePages = Math.max(1, Math.min(50, Math.ceil(totalChars / 1800)))
+    if (!docsPagesRemainingOk(ent, estimatePages)) {
+      res.status(402).json({
+        message: `Not enough document pages remaining (need ~${estimatePages}).`,
+        entitlement: ent,
+        pagesNeeded: estimatePages,
+      })
+      return
+    }
     const result = await translateDocSegments(req.body)
-    res.json({ ...result, entitlement: await entitlementFor(req) })
+    if (!env.openMode && req.auth?.userId) {
+      await addDocsPages(req.auth.userId, estimatePages)
+    }
+    res.json({
+      ...result,
+      pagesBilled: env.openMode ? 0 : estimatePages,
+      entitlement: await entitlementFor(req),
+    })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Segment translation failed'
     res.status(e instanceof ZodError ? 400 : 500).json({ message })
@@ -710,7 +749,8 @@ app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
 
 /**
  * Commit PDF hybrid page usage after a successful client job.
- * Failed / abandoned jobs never call this — so they are not billed.
+ * `prepaidPages` = pages already billed via `/api/docs/segments` during the job.
+ * Failed / abandoned OCR-only pages still bill here; segment pages are not double-billed.
  */
 app.post('/api/docs/commit', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
@@ -723,22 +763,30 @@ app.post('/api/docs/commit', async (req: AuthedRequest, res) => {
     return
   }
   const pages = Math.max(0, Math.min(500, Math.floor(Number(req.body?.pages) || 0)))
+  const prepaid = Math.max(0, Math.min(pages, Math.floor(Number(req.body?.prepaidPages) || 0)))
   if (pages <= 0) {
     res.status(400).json({ message: 'pages must be a positive integer' })
     return
   }
-  if (!docsPagesRemainingOk(ent, pages)) {
+  const toBill = Math.max(0, pages - prepaid)
+  if (toBill > 0 && !docsPagesRemainingOk(ent, toBill)) {
     res.status(402).json({
-      message: `Not enough document pages remaining (need ${pages}).`,
+      message: `Not enough document pages remaining (need ${toBill}).`,
       entitlement: ent,
-      pagesNeeded: pages,
+      pagesNeeded: toBill,
     })
     return
   }
-  if (!env.openMode && req.auth?.userId) {
-    await addDocsPages(req.auth.userId, pages)
+  if (!env.openMode && req.auth?.userId && toBill > 0) {
+    await addDocsPages(req.auth.userId, toBill)
   }
-  res.json({ ok: true, pages, entitlement: await entitlementFor(req) })
+  res.json({
+    ok: true,
+    pages,
+    prepaidPages: prepaid,
+    pagesBilled: env.openMode ? 0 : toBill,
+    entitlement: await entitlementFor(req),
+  })
 })
 
 app.post('/api/usage/camera-heartbeat', async (req: AuthedRequest, res) => {

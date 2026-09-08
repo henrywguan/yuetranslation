@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
-import { randomUUID } from 'node:crypto'
 import { mergeGuestUsageIntoUser } from './usage.js'
 import type { AuthedRequest } from './auth.js'
+import { guestIdForRequest } from './guestId.js'
 
 export const GUEST_COOKIE = 'yue_guest_id'
 const ONE_YEAR_S = 60 * 60 * 24 * 365
@@ -71,25 +71,32 @@ export type GuestRequest = AuthedRequest & {
 }
 
 /**
- * Issue / restore a durable guest id cookie for anonymous metering.
+ * Issue / restore a durable guest id for anonymous metering.
+ * Identity is bound to client IP + month (deterministic UUID) so dropping the
+ * cookie cannot refresh guest live/cam trials. Cookie still mirrors the id.
  * When the user signs in, fold guest meters into their account once.
  */
 export async function attachGuest(req: GuestRequest, res: Response, next: NextFunction) {
   try {
-    const existing = readGuestId(req)
+    const existingCookie = readGuestId(req)
     if (req.auth?.userId) {
-      if (existing) {
-        await mergeGuestUsageIntoUser(existing, req.auth.userId)
-        clearGuestCookie(req, res)
+      // Prefer cookie (legacy random UUID) then IP-bound id so both get merged.
+      const ipBound = guestIdForRequest(req)
+      const toMerge = new Set<string>()
+      if (existingCookie) toMerge.add(existingCookie)
+      toMerge.add(ipBound)
+      for (const gid of toMerge) {
+        await mergeGuestUsageIntoUser(gid, req.auth.userId)
       }
+      if (existingCookie) clearGuestCookie(req, res)
       req.guestId = undefined
       next()
       return
     }
 
-    const guestId = existing || randomUUID()
+    const guestId = guestIdForRequest(req)
     req.guestId = guestId
-    if (!existing) setGuestCookie(req, res, guestId)
+    if (existingCookie !== guestId) setGuestCookie(req, res, guestId)
     next()
   } catch (err) {
     console.warn('[guest] attachGuest failed', err instanceof Error ? err.message : err)
