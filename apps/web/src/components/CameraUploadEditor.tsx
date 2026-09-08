@@ -8,7 +8,6 @@ import {
 import { BiText } from './BiText'
 import { CamResultsList } from './CamResultsList'
 import { cameraScan, type CameraBox } from '../lib/api'
-import { useYueStore } from '../lib/store'
 import { mediaFitLayout } from '../lib/camera/geometry'
 import {
   drawCornerBrackets,

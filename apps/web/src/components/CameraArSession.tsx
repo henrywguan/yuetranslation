@@ -4,7 +4,6 @@ import { BiText } from './BiText'
 import { CamTargetPicker } from './CamTargetPicker'
 import { TranslateThinking } from './TranslateThinking'
 import { cameraScan } from '../lib/api'
-import { useYueStore } from '../lib/store'
 import { captureFrame, captureZoomedVideoFrame, decodeDataUrlSize, mediaFitLayout } from '../lib/camera/geometry'
 import {
   clampPan,
