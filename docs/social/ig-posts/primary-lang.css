@@ -1,0 +1,318 @@
+/* Primary Language promo — Harbor night field + iPhone 13 Pro chrome (full UI, no clip). */
+
+@import url('./lang-launch.css');
+
+.primary-lang {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 85% 55% at 18% 12%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 58%),
+    radial-gradient(ellipse 70% 50% at 92% 88%, color-mix(in srgb, var(--harbor-blue) 55%, transparent), transparent 55%),
+    linear-gradient(165deg, var(--harbor-deep) 0%, var(--harbor) 48%, #041018 100%);
+  color: var(--ink);
+  font-family: var(--font-english);
+}
+
+.primary-lang--story {
+  width: 1080px;
+  height: 1920px;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 8%, color-mix(in srgb, var(--jade) 20%, transparent), transparent 60%),
+    radial-gradient(ellipse 80% 40% at 80% 92%, color-mix(in srgb, var(--harbor-blue) 45%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--harbor-deep) 0%, var(--harbor) 42%, #030c14 100%);
+}
+
+.primary-lang__frame {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 48px 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-sizing: border-box;
+}
+
+.primary-lang--story .primary-lang__frame {
+  padding: 64px 48px 56px;
+  gap: 22px;
+}
+
+/* Copy always reserved above the phone — never covered */
+.primary-lang__copy {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.primary-lang__kicker {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--jade);
+}
+
+.primary-lang__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 52px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  max-width: 960px;
+}
+
+.primary-lang--story .primary-lang__title {
+  font-size: 50px;
+}
+
+.primary-lang__sub {
+  font-size: 23px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--ink-mute);
+  max-width: 920px;
+}
+
+.primary-lang__sub strong {
+  color: var(--jade-bright);
+  font-weight: 700;
+}
+
+.primary-lang__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.primary-lang__stage--single {
+  align-items: center;
+}
+
+.primary-lang__stage--hub {
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 0 8px;
+}
+
+.primary-lang__hub-copy {
+  flex: 1;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+}
+
+.primary-lang__hub-copy .primary-lang__title {
+  font-size: 48px;
+}
+
+.primary-lang__hub-copy .primary-lang__sub {
+  font-size: 21px;
+}
+
+.primary-lang__detail {
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--jade) 35%, transparent);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  background: #0a1520;
+}
+
+.primary-lang__detail img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.primary-lang__chip {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jade) 18%, transparent);
+  color: var(--jade-bright);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.primary-lang__foot {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.primary-lang__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.primary-lang__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--jade) 30%, transparent);
+}
+
+.primary-lang__brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--ink);
+}
+
+.primary-lang__cta {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--on-jade);
+  background: var(--jade);
+  padding: 14px 22px;
+  border-radius: 999px;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--jade) 35%, transparent);
+}
+
+.primary-lang--story .primary-lang__cta {
+  font-size: 20px;
+  padding: 16px 26px;
+}
+
+/*
+ * Fixed phone widths sized so height always fits under copy on 1080×1350 / 1920.
+ * (Do not rely on cqh — invalid calc falls back to lang-launch 420px and covers text.)
+ * 300px wide ≈ 672px tall with bezel; stage has ~750–900px free on post slides.
+ */
+.primary-lang .phone {
+  --phone-bezel: 11px;
+  --phone-radius: 42px;
+  --phone-screen-radius: 30px;
+  flex-shrink: 0;
+  width: 280px !important;
+  height: auto;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.primary-lang .phone--lg {
+  --phone-bezel: 12px;
+  --phone-radius: 46px;
+  --phone-screen-radius: 33px;
+  width: 300px !important;
+}
+
+.primary-lang--story .phone--story {
+  --phone-bezel: 14px;
+  --phone-radius: 52px;
+  --phone-screen-radius: 37px;
+  width: 420px !important;
+}
+
+.primary-lang__langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.primary-lang__lang {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
+  background: color-mix(in srgb, var(--harbor-deep) 40%, transparent);
+}
+
+.primary-lang__url {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  letter-spacing: 0.02em;
+}
+
+/* Story hub: copy on top, crop + phone row */
+.primary-lang--story .primary-lang__stage--hub {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 20px;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.primary-lang--story .primary-lang__hub-copy {
+  max-width: none;
+  width: 100%;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.primary-lang--story .primary-lang__hub-copy .primary-lang__title {
+  font-size: 48px;
+}
+
+.primary-lang--story .primary-lang__hub-copy .primary-lang__sub {
+  font-size: 23px;
+  max-width: 980px;
+}
+
+.primary-lang--story .primary-lang__hub-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.primary-lang--story .primary-lang__detail {
+  width: 380px;
+  flex-shrink: 0;
+  border-radius: 24px;
+}
+
+.primary-lang--story .phone--story-hub {
+  --phone-bezel: 13px;
+  --phone-radius: 48px;
+  --phone-screen-radius: 34px;
+  width: 360px !important;
+  height: auto;
+  max-height: 100%;
+}
+
+/* Hub post: keep left copy clear of the phone */
+.primary-lang__stage--hub .phone {
+  width: 320px !important;
+  flex-shrink: 0;
+  align-self: center;
+  max-height: 100%;
+}

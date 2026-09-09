@@ -25,7 +25,11 @@ const outDir =
 
 mkdirSync(outDir, { recursive: true })
 
-const jobs = [
+const onlyArg = process.argv.indexOf('--only')
+const onlyFilter =
+  onlyArg >= 0 && process.argv[onlyArg + 1] ? process.argv[onlyArg + 1] : null
+
+const allJobs = [
   { html: 'jyutping-tones-square.html', png: 'ig-post-jyutping-tones-1080.png', w: 1080, h: 1080 },
   { html: 'jyutping-tones-portrait.html', png: 'ig-post-jyutping-tones-portrait.png', w: 1080, h: 1350 },
   { html: 'intro-square.html', png: 'ig-post-intro-1080.png', w: 1080, h: 1080 },
@@ -33,7 +37,24 @@ const jobs = [
   { html: 'mandarin-support-en.html', png: 'ig-ad-mandarin-support-en.png', w: 1080, h: 1350 },
   { html: 'mandarin-support-zh.html', png: 'ig-ad-mandarin-support-zh.png', w: 1080, h: 1350 },
   { html: 'mandarin-support-details.html', png: 'ig-ad-mandarin-support-details.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-01-hub.html', png: 'ig-post-primary-lang-01-hub.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-02-solo.html', png: 'ig-post-primary-lang-02-solo.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-03-convo.html', png: 'ig-post-primary-lang-03-convo.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-04-cam.html', png: 'ig-post-primary-lang-04-cam.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-01-hub-story.html', png: 'ig-story-primary-lang-01-hub.png', w: 1080, h: 1920 },
+  { html: 'primary-lang-02-solo-story.html', png: 'ig-story-primary-lang-02-solo.png', w: 1080, h: 1920 },
+  { html: 'primary-lang-03-convo-story.html', png: 'ig-story-primary-lang-03-convo.png', w: 1080, h: 1920 },
+  { html: 'primary-lang-04-cam-story.html', png: 'ig-story-primary-lang-04-cam.png', w: 1080, h: 1920 },
 ]
+
+const jobs = onlyFilter
+  ? allJobs.filter((j) => j.html.includes(onlyFilter) || j.png.includes(onlyFilter))
+  : allJobs
+
+if (!jobs.length) {
+  console.error(`No jobs matched --only ${onlyFilter}`)
+  process.exit(1)
+}
 
 const chrome =
   process.env.CHROME_PATH ||
@@ -209,4 +230,24 @@ jyuttranslate.com
 #Cantonese #粵語 #Jyutping #LearnCantonese #CantoneseAmerican #ABC #HongKongCantonese #ChaoTones #口語粵語 #JyutTranslate
 `
 writeFileSync(join(outDir, 'ig-post-jyutping-tones-caption.txt'), caption, 'utf8')
+
+const primaryLangCaption = `One setting. Your whole app speaks your language.
+
+Primary Language (Account → Primary Language) sets Solo, Conversation (your side), Cam translations, and the label under the logo — so JyutTranslate feels built for you, not borrowed from English.
+
+Pick once — watch the UI flip:
+• Cantonese · 粵語 → Solo opens as a 粵語語言工具 (tabs, placeholders, speak CTA)
+• Spanish(MX) · Español (MX) → Conversation becomes Herramienta de español (MX)
+• Vietnamese · Tiếng Việt → Cam sheet becomes Dịch bằng camera (AR · upload · docs)
+
+Also: English, Mandarin · 普通話, Shanghainese · 上海話, Tagalog.
+
+Same live mic. Same face-to-face Conversation. Same Cam AR / upload / documents — now labeled in your locale.
+
+Free to try → link in bio
+jyuttranslate.com
+
+#PrimaryLanguage #JyutTranslate #Cantonese #LanguageLearning #Multilingual
+`
+writeFileSync(join(outDir, 'ig-post-primary-lang-caption.txt'), primaryLangCaption, 'utf8')
 console.log('done →', outDir)
