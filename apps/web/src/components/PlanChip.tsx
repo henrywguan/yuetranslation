@@ -8,6 +8,7 @@ import { UsageMeters } from './UsageMeters'
 import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { AccountHubHousehold } from './AccountHubHousehold'
+import { AccountHubPrimarySelect } from './AccountHubPrimarySelect'
 import { AccountHubVoice } from './AccountHubVoice'
 import {
   badgeCopyFor,
@@ -76,11 +77,7 @@ import {
   pushCapability,
   pushSupported,
 } from '../lib/pushNotifications'
-import {
-  PRIMARY_LANGS,
-  primaryLangShortCopy,
-  type PrimaryLang,
-} from '../lib/primaryLanguagePref'
+import type { PrimaryLang } from '../lib/primaryLanguagePref'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'
@@ -580,21 +577,11 @@ export function PlanChip() {
           <p className="account-hub-hint">
             <BiText copy={ui.primaryLanguageHint} size="sm" />
           </p>
-          <select
-            className="account-hub-select"
+          <AccountHubPrimarySelect
             value={primaryLanguage}
-            onChange={(e) => setPrimaryLanguage(e.target.value as PrimaryLang)}
-            aria-labelledby="account-hub-primary-lang-label"
-          >
-            {PRIMARY_LANGS.map((id) => {
-              const copy = primaryLangShortCopy(id)
-              return (
-                <option key={id} value={id}>
-                  {copy.en} · {copy.zh}
-                </option>
-              )
-            })}
-          </select>
+            onChange={setPrimaryLanguage}
+            labelledBy="account-hub-primary-lang-label"
+          />
         </section>
 
         <HubSep />
