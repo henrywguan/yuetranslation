@@ -7,7 +7,7 @@ import { BiText } from './BiText'
 
 /**
  * Details-only: note when the Mexican Spanish line is informal + icon to formalize.
- * Never renders Learn / Situations chrome.
+ * Rewrites the Spanish line in place (es→es formal); optional source is a fallback.
  */
 export function MexicanSpanishRegisterPanel({
   text,
@@ -15,7 +15,7 @@ export function MexicanSpanishRegisterPanel({
   sourceLang = 'en',
 }: {
   text: string
-  /** Original utterance to re-translate as formal (usually English). */
+  /** Paired utterance (usually English) — fallback if rewrite fails. */
   sourceText?: string
   sourceLang?: Lang
 }) {
@@ -27,8 +27,6 @@ export function MexicanSpanishRegisterPanel({
 
   if (!trimmed || !informal) return null
 
-  const canFormalize = Boolean(sourceText?.trim())
-
   return (
     <section className="mx-register" aria-label={biPlain(ui.mxInformalNote)}>
       <div className="mx-register-row">
@@ -38,16 +36,16 @@ export function MexicanSpanishRegisterPanel({
         <button
           type="button"
           className="mx-formalize-btn"
-          disabled={!canFormalize || busy}
+          disabled={busy}
           aria-label={biPlain(ui.mxFormalize)}
           title={biPlain(ui.mxFormalize)}
           onClick={() => {
-            if (!canFormalize || busy) return
+            if (busy) return
             setErr(null)
             setBusy(true)
             void formalize({
               spanish: trimmed,
-              sourceText: sourceText!.trim(),
+              sourceText: sourceText?.trim() || '',
               sourceLang,
             })
               .catch((e: unknown) => {
@@ -60,7 +58,6 @@ export function MexicanSpanishRegisterPanel({
             <span className="mx-formalize-busy" aria-hidden="true" />
           ) : (
             <svg className="mx-formalize-icon" viewBox="0 0 24 24" aria-hidden="true">
-              {/* Formalize: rising arrow into a tidy check — colloquial → polite */}
               <path
                 d="M7 17V9.5M7 9.5 4.5 12M7 9.5 9.5 12"
                 fill="none"
@@ -90,11 +87,6 @@ export function MexicanSpanishRegisterPanel({
         </button>
       </div>
       {err ? <p className="mx-register-error muted">{err}</p> : null}
-      {!canFormalize ? (
-        <p className="mx-register-hint muted">
-          <BiText copy={ui.mxFormalizeNeedSource} size="sm" hideJp />
-        </p>
-      ) : null}
     </section>
   )
 }

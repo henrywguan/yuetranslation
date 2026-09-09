@@ -955,6 +955,94 @@ async function translateTagalog(opts: {
  * EN↔Mexican Spanish — colloquial central Mexican (CDMX / altiplano).
  * Not Peninsular default. Latin script only; orthographic stress (tilde), not tones.
  */
+async function rewriteMexicanSpanishFormal(opts: {
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+}): Promise<TranslateResult> {
+  const { text, stage, wantAlts } = opts
+  const client = openaiClient()
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+
+  if (!client) {
+    // Offline / no key: light local polish so Details formalize still shows something.
+    const polished = text
+      .replace(/\bqué onda\b/gi, 'cómo está')
+      .replace(/\bque onda\b/gi, 'cómo está')
+      .replace(/\bgüey\b/gi, '')
+      .replace(/\bwey\b/gi, '')
+      .replace(/\bórale\b/gi, 'de acuerdo')
+      .replace(/\borale\b/gi, 'de acuerdo')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+([?!¡¿.,;])/g, '$1')
+      .trim()
+    return {
+      text: polished || text,
+      definition: '',
+      alternatives: [],
+      engine: 'demo',
+      from: 'es',
+      to: 'es',
+      stage,
+      meta: emptyMeta(['demo', 'es-mx-formal-rewrite']),
+    }
+  }
+
+  const system = [
+    'You rewrite colloquial Mexican Spanish into POLITE formal Mexican Spanish.',
+    'Keep the same meaning. Prefer usted / ustedes. Avoid slang (órale, güey, qué onda, no manches, ahorita as “maybe never”).',
+    'Mexican vocabulary (not Peninsular vosotros). Keep required orthographic accents (tildes).',
+    'Do NOT use Chinese characters. Do NOT invent tone numbers.',
+    'Return ONLY valid JSON:',
+    wantAlts
+      ? '{"primary":"<best formal Mexican Spanish>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}'
+      : '{"translation":"<formal Mexican Spanish>","definition":"<short English gloss>"}',
+  ].join('\n')
+
+  const completion = await client.chat.completions.create({
+    model: env.openaiModel,
+    temperature: 0.25,
+    max_tokens: 400,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: text },
+    ],
+    ...(wantAlts ? { response_format: { type: 'json_object' as const } } : {}),
+    ...llmChatExtras(),
+  })
+  const raw = completion.choices[0]?.message?.content?.trim() || ''
+  let primary = ''
+  let alternatives: string[] = []
+  let definition = ''
+  if (wantAlts) {
+    const parsed = parseYuePayload(raw, text, true)
+    primary = parsed.text
+    alternatives = parsed.alternatives
+    definition = parsed.definition || ''
+  } else {
+    const payload = parsePayload(raw, text, '', false)
+    primary = payload.text
+    definition = payload.definition || ''
+  }
+  const outText = primary && !hasHan(primary) ? primary.trim() : ''
+  return {
+    text: outText || text,
+    definition,
+    alternatives: wantAlts
+      ? alternatives.filter((a) => a && !hasHan(a) && a !== outText).slice(0, 3)
+      : [],
+    engine,
+    from: 'es',
+    to: 'es',
+    stage,
+    meta: emptyMeta(outText ? ['es-mx-formal-rewrite'] : ['es-mx-formal-rewrite', 'no-es-output']),
+  }
+}
+
+/**
+ * EN↔Mexican Spanish — colloquial central Mexican (CDMX / altiplano).
+ * Not Peninsular default. Latin script only; orthographic stress (tilde), not tones.
+ */
 async function translateMexicanSpanish(opts: {
   from: TranslateLang
   to: TranslateLang
@@ -1455,6 +1543,15 @@ export async function translate(input: unknown) {
   const stage: TranslateStage = 'final'
   const wantAlts = Boolean(parsed.includeAlternatives && from !== to)
   const fallbackDefinition = from === 'en' ? text : ''
+
+  // Details “Make formal”: rewrite colloquial MX Spanish → polite MX Spanish in place.
+  if (from === 'es' && to === 'es' && parsed.register === 'formal') {
+    return rewriteMexicanSpanishFormal({
+      text,
+      stage,
+      wantAlts: Boolean(parsed.includeAlternatives),
+    })
+  }
 
   if (from === to) {
     return withLearnerDefinitions(

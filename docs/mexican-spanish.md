@@ -16,8 +16,8 @@ Azure Speech locale: **`es-MX`** (TTS e.g. `es-MX-DaliaNeural`, `es-MX-JorgeNeur
 
 - **Compact** (Solo / Conversation / Cam text): accented Mexican Spanish only (`lang="es-MX"`). No stress chips, no IPA, no Sp_ToBI.
 - **Details:** optional stress-class chips — *aguda / llana / esdrújula / sobreesdrújula* — from orthography (`mexicanSpanishStress.ts`). Optional IPA later.
-- **Register (details):** when the line looks informal/slangy (`isInformalMexicanSpanish`), show a short note plus a **Make formal** icon. Tap re-translates the source with `register: "formal"` on `/api/translate` (`MexicanSpanishRegisterPanel`). No Learn / Situations chips.
+- **Register (details):** when the line looks informal/slangy (`isInformalMexicanSpanish`), show a short note plus a **Make formal** icon. Tap rewrites the Spanish in place (`es→es` + `register: "formal"`) and replaces the Details title with the formal line (informal kept under Other variations). Fallback: re-translate from the paired English source.
 - **Not yet:** speak-score practice; interactive tilde-placement drills (optional later — teach writing accents via the same stress classes).
 - **Register (pipeline):** colloquial by default; formal when source looks legal/medical/official (`mexicanSpanishRegister.ts`), or when the client sends `register: "formal"`.
 
-Implemented in `apps/web/src/components/MexicanSpanishText.tsx` + `MexicanSpanishRegisterPanel.tsx`. API path: `translateMexicanSpanish` in `apps/api/src/translate.ts` (`Lang` code `es`).
+Implemented in `apps/web/src/components/MexicanSpanishText.tsx` + `MexicanSpanishRegisterPanel.tsx`. API path: `translateMexicanSpanish` / `rewriteMexicanSpanishFormal` in `apps/api/src/translate.ts` (`Lang` code `es`).

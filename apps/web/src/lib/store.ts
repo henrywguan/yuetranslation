@@ -10,7 +10,7 @@ import {
   duckTtsForMicBargeIn,
 } from './tts'
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref, translateText } from './api'
-import { sanitizeEsTranslation } from './translationGuard'
+import { hasHan } from './charGloss'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
 import {
@@ -68,6 +68,17 @@ function emptyFaceLive(): FaceLive {
     yueDefinition: '',
     yueDefinitions: [],
   }
+}
+
+/** Lenient ES cleaner for formalize — strips demo prefixes; keeps natural Spanish. */
+function cleanFormalEs(text: string | null | undefined, prev: string): string | null {
+  let t = (text || '').trim()
+  if (!t) return null
+  t = t.replace(/^(（示範）|\(demo(?:\s*MX)?\))\s*/i, '').trim()
+  if (!t || hasHan(t)) return null
+  if (!/[\p{L}]/u.test(t)) return null
+  if (t === prev.trim()) return null
+  return t
 }
 
 type State = {
@@ -1611,37 +1622,65 @@ export const useYueStore = create<State>((set, get) => {
   formalizeMexicanSpanish: async ({ spanish, sourceText, sourceLang = 'en' }) => {
     const source = sourceText.trim()
     const prev = spanish.trim()
-    if (!source || !prev) return
-    const from: Lang = sourceLang === 'es' ? 'en' : sourceLang
+    if (!prev) return
     set({ translating: true, translatingTo: 'es', error: null })
     try {
-      const result = await translateText(source, from, 'es', {
+      // Prefer rewriting the Spanish line in place (works for es→en and en→es turns).
+      let result = await translateText(prev, 'es', 'es', {
         includeAlternatives: true,
         register: 'formal',
       })
-      const formal = sanitizeEsTranslation(result.text)
-      if (!formal) throw new Error('Formal translation returned empty')
-      const alts = (result.alternatives || [])
-        .map((a) => sanitizeEsTranslation(a))
+      let formal = cleanFormalEs(result.text, prev)
+
+      // Fallback: re-translate from the paired source (usually English).
+      if (!formal && source) {
+        const from: Lang = sourceLang === 'es' ? 'en' : sourceLang
+        result = await translateText(source, from, 'es', {
+          includeAlternatives: true,
+          register: 'formal',
+        })
+        formal = cleanFormalEs(result.text, prev)
+      }
+
+      if (!formal) {
+        throw new Error(
+          result.text?.trim()
+            ? 'Formal translation looked invalid — try again'
+            : 'Formal translation returned empty',
+        )
+      }
+
+      const alts = [prev, ...(result.alternatives || [])]
+        .map((a) => (a === prev ? prev : cleanFormalEs(a, prev)))
         .filter((a): a is string => Boolean(a && a !== formal))
+        .filter((a, i, arr) => arr.indexOf(a) === i)
         .slice(0, 3)
       const history = get().history
       const latest = history[0]
-      const nextHistory =
-        latest && latest.to === 'es'
-          ? [
-              {
-                ...latest,
-                translation: formal,
-                definition: result.definition || latest.definition,
-                definitions: result.definitions?.length
-                  ? result.definitions
-                  : latest.definitions,
-                alternatives: alts.length ? alts : undefined,
-              },
-              ...history.slice(1),
-            ]
-          : history
+      let nextHistory = history
+      if (latest?.to === 'es') {
+        nextHistory = [
+          {
+            ...latest,
+            translation: formal,
+            definition: result.definition || latest.definition,
+            definitions: result.definitions?.length
+              ? result.definitions
+              : latest.definitions,
+            alternatives: alts.length ? alts : undefined,
+          },
+          ...history.slice(1),
+        ]
+      } else if (latest?.from === 'es' && latest.source.trim() === prev) {
+        // Spanish was the source (e.g. es→en): formalize the source line.
+        nextHistory = [
+          {
+            ...latest,
+            source: formal,
+          },
+          ...history.slice(1),
+        ]
+      }
 
       const face = get().face
       const nextFace =
@@ -1655,17 +1694,21 @@ export const useYueStore = create<State>((set, get) => {
             }
           : face
 
+      const detailTop = get().detailStack[0]
+      const pairedTranslation =
+        latest?.from === 'es' && latest.to === 'en'
+          ? latest.translation
+          : source ||
+            (latest?.to === 'es' ? latest.source : undefined) ||
+            (detailTop?.kind === 'phrase' ? detailTop.translation : undefined)
+
       set({
         enTranslation: get().enTranslation.trim() === prev ? formal : get().enTranslation,
         enAlternatives:
-          get().soloUpperLang === 'es' || get().enTranslation.trim() === formal
-            ? alts
-            : get().enAlternatives,
+          get().soloUpperLang === 'es' ? alts : get().enAlternatives,
         yueTranslation: get().yueTranslation.trim() === prev ? formal : get().yueTranslation,
         yueAlternatives:
-          get().soloLowerLang === 'es' || get().yueTranslation.trim() === formal
-            ? alts
-            : get().yueAlternatives,
+          get().soloLowerLang === 'es' ? alts : get().yueAlternatives,
         yueDefinition: result.definition || get().yueDefinition,
         yueDefinitions: result.definitions?.length
           ? result.definitions
@@ -1677,7 +1720,7 @@ export const useYueStore = create<State>((set, get) => {
             kind: 'phrase',
             phrase: formal,
             lang: 'es',
-            translation: source,
+            translation: pairedTranslation || undefined,
             definition: result.definition || undefined,
             definitions: result.definitions?.length ? result.definitions : undefined,
             alternatives: alts.length ? alts : undefined,
