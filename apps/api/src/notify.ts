@@ -87,15 +87,11 @@ function appPublicUrl(): string {
   return env.appUrl.replace(/\/+$/, '') || 'https://www.jyuttranslate.com'
 }
 
-/** Absolute logo URL — prefer the canonical production mark when the app host is local/preview. */
+/** Absolute logo URL — always production; preview/local hosts 404 or SSO-gate the icon. */
 const CANONICAL_EMAIL_LOGO = 'https://www.jyuttranslate.com/apple-touch-icon.png'
 
 function logoSrcForTemplate(): string {
-  const base = appPublicUrl()
-  if (!base || /localhost|127\.0\.0\.1|\.vercel\.app/i.test(base)) {
-    return CANONICAL_EMAIL_LOGO
-  }
-  return `${base}/apple-touch-icon.png`
+  return CANONICAL_EMAIL_LOGO
 }
 
 /**

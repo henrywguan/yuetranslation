@@ -35,17 +35,16 @@ function parseCustomEmails(raw: string): string[] {
   return [...new Set(parts.filter((p) => emailRe.test(p)))]
 }
 
-/** Prefer a resolvable logo in the admin preview iframe (local / preview hosts). */
+/**
+ * Force the production PWA mark in admin preview HTML.
+ * Localhost API and Vercel preview hosts 404 / SSO-gate `/apple-touch-icon.png`,
+ * so never rewrite to `window.location.origin` (that broke preview on *.vercel.app).
+ */
 function fixPreviewLogoHtml(html: string): string {
-  if (typeof window === 'undefined') return html
-  const local = `${window.location.origin}/apple-touch-icon.png`
   const canonical = 'https://www.jyuttranslate.com/apple-touch-icon.png'
-  return html.replace(/(src=")([^"]*apple-touch-icon\.png)(")/gi, (_m, a, src, c) => {
-    const use =
-      /localhost|127\.0\.0\.1|\.vercel\.app/i.test(window.location.hostname) ? local : canonical
-    if (src === use) return `${a}${src}${c}`
-    return `${a}${use}${c}`
-  })
+  return html
+    .replace(/(src=")([^"]*apple-touch-icon\.png)(")/gi, `$1${canonical}$3`)
+    .replace(/(href=")([^"]*apple-touch-icon\.png)(")/gi, `$1${canonical}$3`)
 }
 
 type SendNotice = {
