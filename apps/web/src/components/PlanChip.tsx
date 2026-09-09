@@ -72,6 +72,8 @@ import {
   disablePushNotifications,
   enablePushNotifications,
   isPushOptIn,
+  prefetchPushConfig,
+  pushCapability,
   pushSupported,
 } from '../lib/pushNotifications'
 import {
@@ -118,6 +120,7 @@ export function PlanChip() {
   const [pushOn, setPushOn] = useState(() => isPushOptIn())
   const [pushBusy, setPushBusy] = useState(false)
   const [pushError, setPushError] = useState<string | null>(null)
+  const pushCap = pushCapability()
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const hubRef = useRef<HTMLDivElement>(null)
@@ -125,6 +128,10 @@ export function PlanChip() {
   const titleId = useId()
   const badgePrefId = useId()
   const voicePrefId = useId()
+
+  useEffect(() => {
+    prefetchPushConfig()
+  }, [])
 
   useEffect(() => {
     const prefs = entitlement?.prefs
@@ -597,9 +604,11 @@ export function PlanChip() {
             <div className="account-hub-autospeak-copy">
               <p className="account-hub-label">Notifications · 通知</p>
               <p className="account-hub-hint">
-                {pushSupported()
-                  ? 'Product updates on this device when JyutTranslate is closed.'
-                  : 'Push is not supported in this browser.'}
+                {pushCap.needsIosInstall
+                  ? 'On iPhone: Share → Add to Home Screen, open JyutTranslate from that icon, then enable notifications here.'
+                  : pushSupported()
+                    ? 'Product updates on this device when JyutTranslate is closed. Each device must opt in separately.'
+                    : 'Push is not supported in this browser.'}
               </p>
               {pushError ? (
                 <p className="account-hub-username-error" role="alert">

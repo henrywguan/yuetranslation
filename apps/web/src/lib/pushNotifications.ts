@@ -1,8 +1,11 @@
 /**
  * Browser Web Push subscribe helpers for the installed / HTTPS PWA.
+ * iOS: only works from a Home Screen web app (16.4+); request permission
+ * before any await so WebKit keeps the user gesture.
  */
 import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
+import { isDisplayStandalone } from './pwaInstall'
 
 const LS_ENABLED = 'yue.push.enabled'
 const LS_ENDPOINT = 'yue.push.endpoint'
@@ -13,12 +16,31 @@ export type PushPublicConfig = {
   subject: string | null
 }
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+export type PushCapability = {
+  supported: boolean
+  standalone: boolean
+  /** iPhone/iPad Safari tab — PushManager missing until Add to Home Screen. */
+  needsIosInstall: boolean
+}
+
+let cachedPushConfig: PushPublicConfig | null = null
+let cachedPushConfigAt = 0
+
+function isIosDevice(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  if (/iPad|iPhone|iPod/i.test(ua)) return true
+  return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+}
+
+/** Safari wants a plain ArrayBuffer for applicationServerKey (not a Uint8Array view). */
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
   const raw = atob(base64)
-  const out = new Uint8Array(raw.length)
-  for (let i = 0; i < raw.length; i += 1) out[i] = raw.charCodeAt(i)
+  const out = new ArrayBuffer(raw.length)
+  const view = new Uint8Array(out)
+  for (let i = 0; i < raw.length; i += 1) view[i] = raw.charCodeAt(i)
   return out
 }
 
@@ -29,6 +51,19 @@ export function pushSupported(): boolean {
     'PushManager' in window &&
     'Notification' in window
   )
+}
+
+export function pushCapability(): PushCapability {
+  const hasSw = typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+  const hasPush = typeof window !== 'undefined' && 'PushManager' in window
+  const hasNotification = typeof window !== 'undefined' && 'Notification' in window
+  const standalone = isDisplayStandalone()
+  const ios = isIosDevice()
+  return {
+    supported: hasSw && hasPush && hasNotification,
+    standalone,
+    needsIosInstall: ios && !standalone && hasSw && !hasPush,
+  }
 }
 
 export function pushPermission(): NotificationPermission | 'unsupported' {
@@ -52,11 +87,25 @@ export function setPushOptIn(on: boolean) {
   }
 }
 
-export async function fetchPushConfig(): Promise<PushPublicConfig> {
+export async function fetchPushConfig(force = false): Promise<PushPublicConfig> {
+  const now = Date.now()
+  if (!force && cachedPushConfig && now - cachedPushConfigAt < 5 * 60 * 1000) {
+    return cachedPushConfig
+  }
   const res = await fetch(`${resolveApiBase()}/push/config`)
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error((data as { message?: string }).message || 'Push config failed')
-  return data as PushPublicConfig
+  cachedPushConfig = data as PushPublicConfig
+  cachedPushConfigAt = now
+  return cachedPushConfig
+}
+
+/** Warm the VAPID public key so opt-in can request permission before any await. */
+export function prefetchPushConfig(): void {
+  if (!pushSupported() && !pushCapability().needsIosInstall) return
+  void fetchPushConfig().catch(() => {
+    // ignore warm failures
+  })
 }
 
 async function postSubscribe(sub: PushSubscription): Promise<void> {
@@ -98,22 +147,40 @@ async function postUnsubscribe(endpoint: string, deleteRow = false): Promise<voi
 }
 
 export async function enablePushNotifications(): Promise<{ ok: true } | { ok: false; message: string }> {
-  if (!pushSupported()) return { ok: false, message: 'Push is not supported in this browser.' }
-  const cfg = await fetchPushConfig()
-  if (!cfg.configured || !cfg.publicKey) {
-    return { ok: false, message: 'Push is not configured on the server yet.' }
+  const cap = pushCapability()
+  if (cap.needsIosInstall) {
+    return {
+      ok: false,
+      message:
+        'On iPhone, add JyutTranslate to your Home Screen first, open it from that icon, then enable notifications.',
+    }
   }
-  const permission = await Notification.requestPermission()
+  if (!pushSupported()) {
+    return { ok: false, message: 'Push is not supported in this browser.' }
+  }
+
+  // iOS WebKit: request permission while the tap gesture is still alive.
+  // Do not await network before this when permission is still "default".
+  let permission = Notification.permission
+  if (permission === 'default') {
+    permission = await Notification.requestPermission()
+  }
   if (permission !== 'granted') {
     setPushOptIn(false)
     return { ok: false, message: 'Notification permission was not granted.' }
   }
+
+  const cfg = await fetchPushConfig()
+  if (!cfg.configured || !cfg.publicKey) {
+    return { ok: false, message: 'Push is not configured on the server yet.' }
+  }
+
   const reg = await navigator.serviceWorker.ready
   let sub = await reg.pushManager.getSubscription()
   if (!sub) {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(cfg.publicKey) as BufferSource,
+      applicationServerKey: urlBase64ToArrayBuffer(cfg.publicKey),
     })
   }
   await postSubscribe(sub)
@@ -142,6 +209,7 @@ export async function disablePushNotifications(): Promise<void> {
 
 /** Re-sync subscription when the user already opted in (e.g. after login). */
 export async function syncPushSubscriptionIfEnabled(): Promise<void> {
+  prefetchPushConfig()
   if (!isPushOptIn() || !pushSupported()) return
   if (Notification.permission !== 'granted') return
   try {
@@ -152,7 +220,7 @@ export async function syncPushSubscriptionIfEnabled(): Promise<void> {
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(cfg.publicKey) as BufferSource,
+        applicationServerKey: urlBase64ToArrayBuffer(cfg.publicKey),
       })
     }
     await postSubscribe(sub)

@@ -92,8 +92,14 @@ function ensureVapid(): void {
       'Web Push is not configured. Set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT on the API.',
     )
   }
+  const subject = env.vapidSubject
+  if (!/^(mailto:|https:)/i.test(subject)) {
+    throw new Error(
+      'VAPID_SUBJECT must be a mailto: or https: URI (Apple rejects bare email addresses).',
+    )
+  }
   if (!vapidReady) {
-    webpush.setVapidDetails(env.vapidSubject, env.vapidPublicKey, env.vapidPrivateKey)
+    webpush.setVapidDetails(subject, env.vapidPublicKey, env.vapidPrivateKey)
     vapidReady = true
   }
 }
@@ -115,6 +121,78 @@ function absoluteAsset(pathOrUrl: string): string {
   return `${base}/${raw}`
 }
 
+export type PushProvider = 'apple' | 'fcm' | 'mozilla' | 'other'
+
+export function pushProviderForEndpoint(endpoint: string): PushProvider {
+  const e = endpoint.toLowerCase()
+  if (e.includes('web.push.apple.com')) return 'apple'
+  if (e.includes('fcm.googleapis.com') || e.includes('android.googleapis.com/gcm')) return 'fcm'
+  if (e.includes('updates.push.services.mozilla.com') || e.includes('push.services.mozilla.com')) {
+    return 'mozilla'
+  }
+  return 'other'
+}
+
+function inferPlatform(userAgent: string, platformHint?: string): string {
+  const ua = userAgent || ''
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios'
+  if (/Android/i.test(ua)) return 'android'
+  if (/Mac OS X/i.test(ua) && /Mobile/i.test(ua)) return 'ios'
+  if (/Mac OS X/i.test(ua)) return 'macos'
+  if (/Windows/i.test(ua)) return 'windows'
+  if (/Linux/i.test(ua)) return 'linux'
+  const hint = (platformHint || '').trim()
+  return hint ? hint.slice(0, 64) : 'unknown'
+}
+
+/** Keep the encrypted record under Apple's ~4KB ceiling. */
+function wirePushBody(payload: PushPayload): string {
+  const full = {
+    title: payload.title,
+    body: payload.body || '',
+    icon: payload.icon || '',
+    badge: payload.badge || '',
+    image: payload.image || '',
+    url: payload.url || '#/app',
+    tag: payload.tag || '',
+    renotify: Boolean(payload.renotify) && Boolean((payload.tag || '').trim()),
+    requireInteraction: Boolean(payload.requireInteraction),
+    silent: Boolean(payload.silent),
+    lang: payload.lang || '',
+    dir: payload.dir || 'auto',
+    vibrate: payload.silent ? undefined : payload.vibrate,
+    actions: (payload.actions || []).slice(0, 2),
+    data: {
+      ...(payload.data || {}),
+      url: payload.url || '#/app',
+    },
+  }
+  let body = JSON.stringify(full)
+  if (Buffer.byteLength(body) <= 3500) return body
+  const slim = {
+    title: payload.title.slice(0, 120),
+    body: (payload.body || '').slice(0, 500),
+    url: payload.url || '#/app',
+    tag: payload.tag || '',
+    data: { url: payload.url || '#/app' },
+  }
+  body = JSON.stringify(slim)
+  if (Buffer.byteLength(body) > 3500) {
+    slim.body = slim.body.slice(0, 200)
+    body = JSON.stringify(slim)
+  }
+  return body
+}
+
+function urgencyForEndpoint(endpoint: string, requested?: PushUrgency): PushUrgency {
+  // Apple often defers or drops low-urgency web pushes while the device is idle.
+  if (pushProviderForEndpoint(endpoint) === 'apple') {
+    if (!requested || requested === 'very-low' || requested === 'low') return 'high'
+    return requested
+  }
+  return requested || 'normal'
+}
+
 export function normalizePushPayload(input: PushPayload): PushPayload {
   const app = env.appUrl.replace(/\/+$/, '')
   const icon = absoluteAsset(input.icon || '/pwa-192.png') || `${app}/pwa-192.png`
@@ -134,6 +212,7 @@ export function normalizePushPayload(input: PushPayload): PushPayload {
     badge,
     image,
     url,
+    renotify: Boolean(input.renotify) && Boolean((input.tag || '').trim()),
     actions: (input.actions || [])
       .filter((a) => a.action && a.title)
       .slice(0, 2)
@@ -169,7 +248,7 @@ export async function upsertPushSubscription(input: {
     expiration_time: expiration,
     user_agent: (input.userAgent || '').slice(0, 400),
     locale: (input.locale || '').slice(0, 32),
-    platform: (input.platform || '').slice(0, 64),
+    platform: inferPlatform(input.userAgent || '', input.platform).slice(0, 64),
     enabled: true,
     updated_at: new Date().toISOString(),
   }
@@ -202,22 +281,49 @@ export async function pushSubscriptionStats(): Promise<{
   signedIn: number
   guests: number
   byPlan: Record<string, number>
+  byProvider: Record<PushProvider, number>
+  byPlatform: Record<string, number>
 }> {
+  const emptyProvider: Record<PushProvider, number> = { apple: 0, fcm: 0, mozilla: 0, other: 0 }
   const db = getAdmin()
   if (!db) {
-    return { total: 0, enabled: 0, signedIn: 0, guests: 0, byPlan: {} }
+    return {
+      total: 0,
+      enabled: 0,
+      signedIn: 0,
+      guests: 0,
+      byPlan: {},
+      byProvider: emptyProvider,
+      byPlatform: {},
+    }
   }
   const { data, error } = await db
     .from('push_subscriptions')
-    .select('id, user_id, enabled')
+    .select('id, user_id, enabled, endpoint, platform')
     .limit(5000)
   if (error || !data) {
-    return { total: 0, enabled: 0, signedIn: 0, guests: 0, byPlan: {} }
+    return {
+      total: 0,
+      enabled: 0,
+      signedIn: 0,
+      guests: 0,
+      byPlan: {},
+      byProvider: emptyProvider,
+      byPlatform: {},
+    }
   }
-  const rows = data as Pick<PushSubscriptionRow, 'id' | 'user_id' | 'enabled'>[]
+  const rows = data as Pick<PushSubscriptionRow, 'id' | 'user_id' | 'enabled' | 'endpoint' | 'platform'>[]
   const enabledRows = rows.filter((r) => r.enabled)
   const userIds = [...new Set(enabledRows.map((r) => r.user_id).filter(Boolean))] as string[]
   const byPlan: Record<string, number> = { free: 0, family: 0, business: 0, unknown: 0 }
+  const byProvider: Record<PushProvider, number> = { apple: 0, fcm: 0, mozilla: 0, other: 0 }
+  const byPlatform: Record<string, number> = {}
+  for (const r of enabledRows) {
+    const provider = pushProviderForEndpoint(r.endpoint)
+    byProvider[provider] = (byProvider[provider] || 0) + 1
+    const plat = (r.platform || 'unknown').slice(0, 32) || 'unknown'
+    byPlatform[plat] = (byPlatform[plat] || 0) + 1
+  }
   if (userIds.length) {
     const { data: profiles } = await db.from('profiles').select('id, plan').in('id', userIds)
     const planByUser = new Map<string, string>()
@@ -236,6 +342,8 @@ export async function pushSubscriptionStats(): Promise<{
     signedIn: enabledRows.filter((r) => r.user_id).length,
     guests: enabledRows.filter((r) => !r.user_id).length,
     byPlan,
+    byProvider,
+    byPlatform,
   }
 }
 
@@ -403,9 +511,20 @@ export async function sendPushCampaign(input: {
   failed: number
   pruned: number
   status: string
-  errors: { endpoint: string; statusCode?: number; message: string }[]
+  errors: { endpoint: string; statusCode?: number; message: string; provider?: PushProvider }[]
+  byProvider: Record<PushProvider, { targeted: number; sent: number; failed: number; pruned: number }>
 }> {
   const payload = normalizePushPayload(input.payload)
+  const emptyByProvider = (): Record<
+    PushProvider,
+    { targeted: number; sent: number; failed: number; pruned: number }
+  > => ({
+    apple: { targeted: 0, sent: 0, failed: 0, pruned: 0 },
+    fcm: { targeted: 0, sent: 0, failed: 0, pruned: 0 },
+    mozilla: { targeted: 0, sent: 0, failed: 0, pruned: 0 },
+    other: { targeted: 0, sent: 0, failed: 0, pruned: 0 },
+  })
+  const byProvider = emptyByProvider()
   const subs = await listTargetSubscriptions({
     mode: input.targetMode,
     plans: input.plans,
@@ -413,6 +532,9 @@ export async function sendPushCampaign(input: {
     emails: input.emails,
     actorUserId: input.actorId,
   })
+  for (const sub of subs) {
+    byProvider[pushProviderForEndpoint(sub.endpoint)].targeted += 1
+  }
 
   if (input.dryRun) {
     await logPushSend({
@@ -435,6 +557,7 @@ export async function sendPushCampaign(input: {
         ttl: input.ttl ?? null,
         urgency: input.urgency || 'normal',
         topic: input.topic || null,
+        byProvider,
       },
     })
     return {
@@ -445,24 +568,25 @@ export async function sendPushCampaign(input: {
       pruned: 0,
       status: 'dry_run',
       errors: [],
+      byProvider,
     }
   }
 
   ensureVapid()
-  const body = JSON.stringify({
-    ...payload,
-    data: {
-      ...(payload.data || {}),
-      url: payload.url,
-    },
-  })
+  const body = wirePushBody(payload)
 
   let sent = 0
   let failed = 0
   let pruned = 0
-  const errors: { endpoint: string; statusCode?: number; message: string }[] = []
+  const errors: {
+    endpoint: string
+    statusCode?: number
+    message: string
+    provider?: PushProvider
+  }[] = []
 
   for (const sub of subs) {
+    const provider = pushProviderForEndpoint(sub.endpoint)
     try {
       await webpush.sendNotification(
         {
@@ -472,25 +596,29 @@ export async function sendPushCampaign(input: {
         body,
         {
           TTL: typeof input.ttl === 'number' ? input.ttl : 60 * 60 * 24,
-          urgency: input.urgency || 'normal',
+          urgency: urgencyForEndpoint(sub.endpoint, input.urgency),
           topic: input.topic?.trim() || undefined,
         },
       )
       sent += 1
+      byProvider[provider].sent += 1
     } catch (e) {
       const err = e as { statusCode?: number; message?: string; body?: string }
       const statusCode = err.statusCode
       const message = err.message || String(e)
       if (statusCode === 404 || statusCode === 410) {
         pruned += 1
+        byProvider[provider].pruned += 1
         await deletePushSubscription(sub.endpoint)
       } else {
         failed += 1
+        byProvider[provider].failed += 1
         if (errors.length < 40) {
           errors.push({
             endpoint: sub.endpoint.slice(0, 80),
             statusCode,
             message: message.slice(0, 200),
+            provider,
           })
         }
       }
@@ -521,6 +649,7 @@ export async function sendPushCampaign(input: {
       urgency: input.urgency || 'normal',
       topic: input.topic || null,
       errors,
+      byProvider,
     },
   })
 
@@ -532,5 +661,6 @@ export async function sendPushCampaign(input: {
     pruned,
     status,
     errors,
+    byProvider,
   }
 }

@@ -271,4 +271,18 @@ VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:help@jyuttranslate.com
 ```
 
+`VAPID_SUBJECT` must be a `mailto:` or `https:` URI — Apple rejects bare email addresses.
+
 Composer supports title/body, icon/badge/image, deep link, tag/renotify, require-interaction, silent, lang/dir, vibrate, up to 2 actions, TTL/urgency/topic, targeting (self / admins / signed-in / guests / plans / user IDs / emails / all), dry-run, local preview, and send history.
+
+### iPhone / iPad
+
+Web Push on iOS only works from an **Add to Home Screen** web app (iOS 16.4+), not from a Safari tab. Each device must opt in separately — a desktop subscription does not cover the phone.
+
+Checklist when “send successful” but no iPhone banner:
+
+1. Open JyutTranslate from the Home Screen icon (not Safari).
+2. Account → enable Notifications (allow the system prompt).
+3. Admin → Push stats: **Apple** count ≥ 1 for that account.
+4. Send to **Self** with the phone locked / app backgrounded; check Focus / Notification settings for JyutTranslate.
+5. Re-open the Home Screen app once after a deploy so the service worker updates.

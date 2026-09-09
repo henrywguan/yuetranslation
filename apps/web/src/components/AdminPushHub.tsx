@@ -85,6 +85,8 @@ export function AdminPushHub() {
     signedIn: 0,
     guests: 0,
     byPlan: {} as Record<string, number>,
+    byProvider: { apple: 0, fcm: 0, mozilla: 0, other: 0 } as Record<string, number>,
+    byPlatform: {} as Record<string, number>,
   })
   const [sends, setSends] = useState<PushSendItem[]>([])
   const [payload, setPayload] = useState<PushPayloadInput>(emptyPayload)
@@ -93,7 +95,7 @@ export function AdminPushHub() {
   const [userIdsText, setUserIdsText] = useState('')
   const [emailsText, setEmailsText] = useState('')
   const [ttl, setTtl] = useState(60 * 60 * 24)
-  const [urgency, setUrgency] = useState<Urgency>('normal')
+  const [urgency, setUrgency] = useState<Urgency>('high')
   const [topic, setTopic] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -118,7 +120,15 @@ export function AdminPushHub() {
     try {
       const [st, hist] = await Promise.all([fetchAdminPushStats(), fetchAdminPushSends(30)])
       setConfigured(st.configured)
-      setStats(st.stats)
+      setStats({
+        total: st.stats.total,
+        enabled: st.stats.enabled,
+        signedIn: st.stats.signedIn,
+        guests: st.stats.guests,
+        byPlan: st.stats.byPlan || {},
+        byProvider: st.stats.byProvider || { apple: 0, fcm: 0, mozilla: 0, other: 0 },
+        byPlatform: st.stats.byPlatform || {},
+      })
       setSends(hist.sends)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load push hub')
@@ -200,9 +210,14 @@ export function AdminPushHub() {
         confirm: true,
       })
 
+      const apple = result.byProvider?.apple
+      const appleBit =
+        apple && (apple.targeted || apple.sent || apple.failed)
+          ? ` · Apple ${apple.sent}/${apple.targeted}${apple.failed ? ` (${apple.failed} failed)` : ''}`
+          : ''
       const summary = dryRun
-        ? `Dry run · ${result.recipientCount} device${result.recipientCount === 1 ? '' : 's'} would be targeted`
-        : `Sent ${result.sent} · failed ${result.failed} · pruned ${result.pruned} · of ${result.recipientCount}`
+        ? `Dry run · ${result.recipientCount} device${result.recipientCount === 1 ? '' : 's'} would be targeted${appleBit}`
+        : `Sent ${result.sent} · failed ${result.failed} · pruned ${result.pruned} · of ${result.recipientCount}${appleBit}`
 
       setMessage(summary)
       setNotice({
@@ -243,7 +258,7 @@ export function AdminPushHub() {
         // image is supported in Chromium
         image: payload.image || undefined,
         tag: payload.tag || 'admin-preview',
-        renotify: payload.renotify,
+        renotify: Boolean(payload.renotify) && Boolean((payload.tag || '').trim() || 'admin-preview'),
         requireInteraction: payload.requireInteraction,
         silent: payload.silent,
         lang: payload.lang || undefined,
@@ -287,7 +302,9 @@ export function AdminPushHub() {
           <h2 className="push-hub-title">PWA notifications</h2>
           <p className="push-hub-sub">
             Compose Web Push alerts for installed PWAs — full payload controls, targeting, dry-run,
-            and send history. Users opt in from Account hub.
+            and send history. Users opt in from Account hub. iPhone only receives push from the Home
+            Screen app (iOS 16.4+), not from a Safari tab — each device must enable Notifications
+            separately.
           </p>
         </div>
         <div className="push-hub-top-actions">
@@ -324,6 +341,14 @@ export function AdminPushHub() {
           <span>Guests</span>
         </div>
         <div className="push-hub-stat">
+          <strong>{stats.byProvider?.apple || 0}</strong>
+          <span>Apple</span>
+        </div>
+        <div className="push-hub-stat">
+          <strong>{stats.byPlatform?.ios || 0}</strong>
+          <span>iOS</span>
+        </div>
+        <div className="push-hub-stat">
           <strong>{stats.byPlan.family || 0}</strong>
           <span>Family</span>
         </div>
@@ -336,6 +361,14 @@ export function AdminPushHub() {
           <span>Free</span>
         </div>
       </section>
+
+      {(stats.byProvider?.apple || 0) === 0 ? (
+        <p className="admin-muted">
+          No Apple (web.push.apple.com) subscriptions yet. If your iPhone never shows a banner after a
+          successful send, open the Home Screen app → Account → enable Notifications, then send to
+          Self and confirm the Apple count above is at least 1.
+        </p>
+      ) : null}
 
       <div className="push-hub-workspace">
         <section className="push-hub-editor" aria-label="Compose notification">

@@ -58,32 +58,57 @@ type ShowNotificationOptions = NotificationOptions & {
 }
 
 self.addEventListener('push', (event) => {
-  const payload = parsePushPayload(event)
-  const title = (payload.title || 'JyutTranslate').trim() || 'JyutTranslate'
-  const url = String(payload.url || payload.data?.url || '#/app')
-  const options: ShowNotificationOptions = {
-    body: payload.body || '',
-    icon: payload.icon || '/pwa-192.png',
-    badge: payload.badge || '/pwa-192.png',
-    image: payload.image || undefined,
-    tag: payload.tag || undefined,
-    renotify: Boolean(payload.renotify),
-    requireInteraction: Boolean(payload.requireInteraction),
-    silent: Boolean(payload.silent),
-    timestamp: payload.timestamp || Date.now(),
-    lang: payload.lang || undefined,
-    dir: payload.dir || 'auto',
-    vibrate: payload.vibrate,
-    actions: (payload.actions || [])
-      .filter((a) => a?.action && a?.title)
-      .slice(0, 2)
-      .map((a) => ({ action: a.action, title: a.title, icon: a.icon || undefined })),
-    data: {
-      ...(payload.data || {}),
-      url,
-    },
-  }
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(
+    (async () => {
+      const payload = parsePushPayload(event)
+      const title = (payload.title || 'JyutTranslate').trim() || 'JyutTranslate'
+      const url = String(payload.url || payload.data?.url || '#/app')
+      const tag = (payload.tag || '').trim() || undefined
+      // renotify without tag throws TypeError — kills the push on WebKit/Chromium.
+      const renotify = Boolean(payload.renotify) && Boolean(tag)
+      const data = {
+        ...(payload.data || {}),
+        url,
+      }
+      const rich: ShowNotificationOptions = {
+        body: payload.body || '',
+        icon: payload.icon || '/pwa-192.png',
+        badge: payload.badge || '/pwa-192.png',
+        image: payload.image || undefined,
+        tag,
+        renotify,
+        requireInteraction: Boolean(payload.requireInteraction),
+        silent: Boolean(payload.silent),
+        timestamp: payload.timestamp || Date.now(),
+        lang: payload.lang || undefined,
+        dir: payload.dir || 'auto',
+        vibrate: payload.silent ? undefined : payload.vibrate,
+        actions: (payload.actions || [])
+          .filter((a) => a?.action && a?.title)
+          .slice(0, 2)
+          .map((a) => ({ action: a.action, title: a.title, icon: a.icon || undefined })),
+        data,
+      }
+      try {
+        await self.registration.showNotification(title, rich)
+      } catch {
+        // Apple/WebKit: always show something or the origin can lose push permission.
+        await self.registration.showNotification(title, {
+          body: payload.body || 'Open JyutTranslate for details.',
+          tag: tag || 'jyut-push',
+          data,
+        })
+      }
+      try {
+        const nav = self.navigator as Navigator & {
+          setAppBadge?: (count?: number) => Promise<void>
+        }
+        if (typeof nav.setAppBadge === 'function') await nav.setAppBadge(1)
+      } catch {
+        // badge is best-effort on iOS Home Screen PWAs
+      }
+    })(),
+  )
 })
 
 self.addEventListener('notificationclick', (event) => {
@@ -98,6 +123,14 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     (async () => {
+      try {
+        const nav = self.navigator as Navigator & {
+          clearAppBadge?: () => Promise<void>
+        }
+        if (typeof nav.clearAppBadge === 'function') await nav.clearAppBadge()
+      } catch {
+        // ignore
+      }
       const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       for (const client of all) {
         if ('focus' in client) {
