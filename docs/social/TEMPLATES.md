@@ -47,4 +47,5 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | [`reel-dinner/`](./reel-dinner/) | Dinner Reel shotlist + higgsedit project |
 | [`carousel-solo-convo/`](./carousel-solo-convo/) | Solo/Convo instructional carousel |
 | [`launch-unrestricted/`](./launch-unrestricted/) | Unrestricted launch commercial brief |
+| [`ig-posts/PRIMARY-LANG.md`](./ig-posts/PRIMARY-LANG.md) | Primary Language locale carousel + Stories (night instructional + real UI) |
 | [`story-feature-tour/BRIEF.md`](./story-feature-tour/BRIEF.md) | Also listed above as a living template when rebuilding |
