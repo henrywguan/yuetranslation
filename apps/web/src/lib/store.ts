@@ -11,6 +11,7 @@ import {
 } from './tts'
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref, translateText } from './api'
 import { hasHan } from './charGloss'
+import { localFormalizeMexicanSpanish } from './mexicanSpanishPedagogy'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
 import {
@@ -1640,6 +1641,20 @@ export const useYueStore = create<State>((set, get) => {
           register: 'formal',
         })
         formal = cleanFormalEs(result.text, prev)
+      }
+
+      // Last resort: deterministic local polish (never leave the user with an empty error).
+      if (!formal) {
+        const local = localFormalizeMexicanSpanish(prev)
+        formal = cleanFormalEs(local, prev) || (local !== prev ? local : null)
+        if (formal) {
+          result = {
+            text: formal,
+            alternatives: [prev],
+            definition: result.definition,
+            definitions: result.definitions,
+          }
+        }
       }
 
       if (!formal) {

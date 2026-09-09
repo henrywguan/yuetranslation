@@ -76,6 +76,40 @@ function hasMarker(folded: string, marker: string): boolean {
   return folded.includes(m)
 }
 
+/**
+ * Deterministic colloquial→formal polish for Mexican Spanish.
+ * Used offline and as a client fallback when the model returns empty.
+ */
+export function localFormalizeMexicanSpanish(text: string): string {
+  const src = text.trim()
+  if (!src) return src
+  let t = src
+    .replace(/qué\s+onda/gi, 'cómo está')
+    .replace(/que\s+onda/gi, 'cómo está')
+    .replace(/cómo\s+andas/gi, 'cómo está')
+    .replace(/como\s+andas/gi, 'cómo está')
+    .replace(/no manches/gi, 'no puede ser')
+    .replace(/órale/gi, 'de acuerdo')
+    .replace(/orale/gi, 'de acuerdo')
+    .replace(/güey/gi, '')
+    .replace(/(^|[^\p{L}])wey(?=[^\p{L}]|$)/giu, '$1')
+    .replace(/,?\s*hermano(?=[^\p{L}]|$)/giu, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([?!¡¿.,;])/g, '$1')
+    .trim()
+  if (!/usted/i.test(t) && /cómo está/i.test(t)) {
+    t = t.replace(/cómo está(?!\s+usted)/gi, 'cómo está usted')
+  }
+  if (!t || t.toLowerCase() === src.toLowerCase()) {
+    if (/onda|hermano|güey|wey/i.test(src)) return '¿Cómo está usted?'
+    return src
+  }
+  if (/^¿/.test(src) && !/^¿/.test(t)) t = `¿${t.replace(/^¿\s*/, '')}`
+  if (/\?\s*$/.test(src) && !/\?\s*$/.test(t)) t = `${t.replace(/\?\s*$/, '')}?`
+  t = t.replace(/^¿([a-záéíóúüñ])/u, (_, c: string) => `¿${c.toUpperCase()}`)
+  return t.trim()
+}
+
 /** True when the Mexican Spanish line reads colloquial / slangy. */
 export function isInformalMexicanSpanish(text: string): boolean {
   const folded = foldEs(text)

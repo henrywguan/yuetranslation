@@ -828,7 +828,7 @@ async function translateTagalog(opts: {
       ...llmChatExtras(),
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
-    const parsedTl = parseYuePayload(raw, text, true)
+    const parsedTl = parseYuePayload(raw, text, false)
     primary = parsedTl.text
     alternatives = parsedTl.alternatives
     if (parsedTl.definition) definition = parsedTl.definition
@@ -955,6 +955,40 @@ async function translateTagalog(opts: {
  * EN↔Mexican Spanish — colloquial central Mexican (CDMX / altiplano).
  * Not Peninsular default. Latin script only; orthographic stress (tilde), not tones.
  */
+/** Deterministic colloquial→formal polish when the model is unavailable. */
+export function localFormalizeMexicanSpanish(text: string): string {
+  const src = text.trim()
+  if (!src) return src
+  let t = src
+    .replace(/qué\s+onda/gi, 'cómo está')
+    .replace(/que\s+onda/gi, 'cómo está')
+    .replace(/cómo\s+andas/gi, 'cómo está')
+    .replace(/como\s+andas/gi, 'cómo está')
+    .replace(/no manches/gi, 'no puede ser')
+    .replace(/órale/gi, 'de acuerdo')
+    .replace(/orale/gi, 'de acuerdo')
+    .replace(/güey/gi, '')
+    .replace(/(^|[^\p{L}])wey(?=[^\p{L}]|$)/giu, '$1')
+    .replace(/,?\s*hermano(?=[^\p{L}]|$)/giu, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([?!¡¿.,;])/g, '$1')
+    .trim()
+  if (!/usted/i.test(t) && /cómo está/i.test(t)) {
+    t = t.replace(/cómo está(?!\s+usted)/gi, 'cómo está usted')
+  }
+  if (!t || t.toLowerCase() === src.toLowerCase()) {
+    // Last resort: a polite greeting that preserves intent of casual “qué onda”.
+    if (/onda|hermano|güey|wey/i.test(src)) return '¿Cómo está usted?'
+    return src
+  }
+  // Preserve leading ¿ / trailing ? when the source had them.
+  if (/^¿/.test(src) && !/^¿/.test(t)) t = `¿${t.replace(/^¿\s*/, '')}`
+  if (/\?\s*$/.test(src) && !/\?\s*$/.test(t)) t = `${t.replace(/\?\s*$/, '')}?`
+  // Capitalize first letter after ¿
+  t = t.replace(/^¿([a-záéíóúüñ])/u, (_, c: string) => `¿${c.toUpperCase()}`)
+  return t.trim()
+}
+
 async function rewriteMexicanSpanishFormal(opts: {
   text: string
   stage: TranslateStage
@@ -965,21 +999,12 @@ async function rewriteMexicanSpanishFormal(opts: {
   const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
 
   if (!client) {
-    // Offline / no key: light local polish so Details formalize still shows something.
-    const polished = text
-      .replace(/\bqué onda\b/gi, 'cómo está')
-      .replace(/\bque onda\b/gi, 'cómo está')
-      .replace(/\bgüey\b/gi, '')
-      .replace(/\bwey\b/gi, '')
-      .replace(/\bórale\b/gi, 'de acuerdo')
-      .replace(/\borale\b/gi, 'de acuerdo')
-      .replace(/\s{2,}/g, ' ')
-      .replace(/\s+([?!¡¿.,;])/g, '$1')
-      .trim()
+    // Offline / no key: deterministic polish so Details formalize still works.
+    const formal = localFormalizeMexicanSpanish(text)
     return {
-      text: polished || text,
+      text: formal,
       definition: '',
-      alternatives: [],
+      alternatives: formal !== text ? [text] : [],
       engine: 'demo',
       from: 'es',
       to: 'es',
@@ -1015,7 +1040,7 @@ async function rewriteMexicanSpanishFormal(opts: {
   let alternatives: string[] = []
   let definition = ''
   if (wantAlts) {
-    const parsed = parseYuePayload(raw, text, true)
+    const parsed = parseYuePayload(raw, text, false)
     primary = parsed.text
     alternatives = parsed.alternatives
     definition = parsed.definition || ''
@@ -1150,7 +1175,7 @@ async function translateMexicanSpanish(opts: {
       ...llmChatExtras(),
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
-    const parsedEs = parseYuePayload(raw, text, true)
+    const parsedEs = parseYuePayload(raw, text, false)
     primary = parsedEs.text
     alternatives = parsedEs.alternatives
     if (parsedEs.definition) definition = parsedEs.definition
@@ -1415,7 +1440,7 @@ async function translateVietnamese(opts: {
       ...llmChatExtras(),
     })
     const raw = completion.choices[0]?.message?.content?.trim() || ''
-    const parsedVi = parseYuePayload(raw, text, true)
+    const parsedVi = parseYuePayload(raw, text, false)
     primary = parsedVi.text
     alternatives = parsedVi.alternatives
     if (parsedVi.definition) definition = parsedVi.definition
@@ -2016,18 +2041,22 @@ function parseYuePayload(
   try {
     const parsed = JSON.parse(cleaned) as {
       primary?: unknown
+      translation?: unknown
       alternatives?: unknown
       definition?: unknown
     }
-    const primary = asTrimmedString(parsed.primary)
-    const text =
-      primary && (!requireHan || hasHan(primary))
-        ? primary
-        : requireHan
-          ? ''
-          : hasHan(fallback)
-            ? fallback
-            : ''
+    // Accept either `primary` (alts JSON) or `translation` (single JSON).
+    const primary =
+      asTrimmedString(parsed.primary) || asTrimmedString(parsed.translation)
+    let text = ''
+    if (primary) {
+      text = !requireHan || hasHan(primary) ? primary : ''
+    } else if (!requireHan) {
+      // Latin-script targets (es/tl/vi): keep the fallback phrase when JSON is incomplete.
+      text = fallback
+    } else if (hasHan(fallback)) {
+      text = fallback
+    }
     const alts = Array.isArray(parsed.alternatives)
       ? parsed.alternatives.filter((x): x is string => typeof x === 'string')
       : []
@@ -2038,7 +2067,13 @@ function parseYuePayload(
     }
   } catch {
     const text =
-      cleaned && (!requireHan || hasHan(cleaned)) ? cleaned : requireHan ? '' : fallback
+      cleaned && (!requireHan || hasHan(cleaned))
+        ? cleaned
+        : requireHan
+          ? hasHan(fallback)
+            ? fallback
+            : ''
+          : fallback || cleaned
     return { text, alternatives: [], definition: '' }
   }
 }
