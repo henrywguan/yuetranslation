@@ -331,6 +331,128 @@
   font-size: 1.2rem;
 }
 
+.detail-panel-breakdown-title {
+  margin: 12px 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-dict {
+  margin: 0 0 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+}
+
+.detail-dict-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.detail-dict h3,
+.detail-dict h4 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-dict-block {
+  margin-top: 10px;
+}
+
+.detail-dict-block h4 {
+  margin-bottom: 6px;
+}
+
+.detail-dict-provenance {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.detail-dict-pron {
+  margin: 0 0 8px;
+  font-family: var(--font-english);
+  color: var(--jade-bright);
+  font-weight: 600;
+}
+
+.detail-dict-senses,
+.detail-dict-examples,
+.detail-dict-usage {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.detail-dict-senses li,
+.detail-dict-examples li,
+.detail-dict-usage li {
+  margin: 0 0 6px;
+}
+
+.detail-dict-pos {
+  display: inline-block;
+  margin-right: 0.4em;
+  padding: 0.05em 0.4em;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--on-jade, #041018);
+  background: color-mix(in srgb, var(--jade) 55%, transparent);
+}
+
+.detail-dict-gloss {
+  font-weight: 600;
+}
+
+.detail-dict-note {
+  display: inline-block;
+  margin-left: 0.35em;
+  font-size: 0.82em;
+}
+
+.detail-dict-ex-text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.detail-dict-ex-tr {
+  margin: 2px 0 0;
+  font-size: 0.9em;
+}
+
+.detail-dict-media {
+  margin: 12px 0 0;
+}
+
+.detail-dict-media img {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--harbor-mid) 80%, transparent);
+}
+
+.detail-dict-media figcaption {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .detail-panel-char-view section {
   margin: 0 0 14px;
   padding: 12px;

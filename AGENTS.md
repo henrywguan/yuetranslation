@@ -30,8 +30,9 @@ Skill + file rule: [`.cursor/skills/live-mic-invariants/SKILL.md`](.cursor/skill
 When extending `Lang` (Solo / Conversation / Cam):
 
 1. Fill **`CONVERSATION_PANE_UI`** in [`apps/web/src/lib/conversationUi.ts`](apps/web/src/lib/conversationUi.ts) — native mic labels + pane hints. `Record<Lang, …>` makes `tsc` fail until this exists; do not hard-code new langs in `ConversationView` / `LiveHoldButton`.
-2. Wire the rest of the pipeline (translate, STT/TTS, pickers, pedagogy) as for `tl` / `es` / `vi`.
-3. If the language can be an Account Hub **primary** (`PRIMARY_LANGS`), add UI glosses in [`apps/web/src/lib/primaryUiGloss.data.ts`](apps/web/src/lib/primaryUiGloss.data.ts) for every `Bi` string that has Jyutping — for `tl` / `es` / `vi` / `wuu`, `BiText` **replaces the Chinese line** with that gloss; Mandarin (`cmn`) keeps Chinese and can show auto-pinyin under it.
+2. Fill **`DETAIL_PEDAGOGY`** in [`apps/web/src/lib/detailPedagogy.ts`](apps/web/src/lib/detailPedagogy.ts) and the matching `ENRICH_META` row in [`apps/api/src/detailsEnrich.ts`](apps/api/src/detailsEnrich.ts) so Details dictionary enrich stays lang-complete.
+3. Wire the rest of the pipeline (translate, STT/TTS, pickers, pedagogy, `/api/breakdown`) as for `tl` / `es` / `vi`.
+4. If the language can be an Account Hub **primary** (`PRIMARY_LANGS`), add UI glosses in [`apps/web/src/lib/primaryUiGloss.data.ts`](apps/web/src/lib/primaryUiGloss.data.ts) for every `Bi` string that has Jyutping — for `tl` / `es` / `vi` / `wuu`, `BiText` **replaces the Chinese line** with that gloss; Mandarin (`cmn`) keeps Chinese and can show auto-pinyin under it.
 
 ### Security Guardian (PR + abuse + API health)
 

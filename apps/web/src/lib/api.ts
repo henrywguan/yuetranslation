@@ -145,13 +145,42 @@ export async function fetchBreakdown(
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'}> {
+  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+}> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
     body: JSON.stringify({ text, ...(opts?.lang ? { lang: opts.lang } : {}) }),
   })
   if (!res.ok) await throwApiError(res, 'Breakdown failed')
   return res.json()
+}
+
+export type DictionaryEntry = {
+  lemma: string
+  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  pronunciation?: string
+  senses: { gloss: string; pos?: string; note?: string }[]
+  examples: { text: string; translation?: string; note?: string }[]
+  usageNotes: string[]
+  media: { type: 'gif'; url: string; previewUrl?: string; alt?: string; source: string }[]
+  provenance: string[]
+  engine: 'offline' | 'openai' | 'mixed'
+}
+
+export async function fetchDetailsEnrich(input: {
+  text: string
+  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  contextText?: string
+  contextLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  wantMedia?: boolean
+}): Promise<DictionaryEntry> {
+  const res = await apiFetch('/details/enrich', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) await throwApiError(res, 'Dictionary details failed')
+  const data = (await res.json()) as { entry: DictionaryEntry }
+  return data.entry
 }
 
 export async function postHeartbeat(seconds = 15): Promise<Entitlement> {
