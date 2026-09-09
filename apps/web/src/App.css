@@ -4230,6 +4230,10 @@
     font-size: 0.72em;
   }
 
+  .mode-tabs .bi--zh .bi-zh {
+    font-size: 0.9rem;
+  }
+
   .live-btn {
     padding: 14px 16px;
     font-size: 1rem;
