@@ -20,6 +20,7 @@ import { handleSignupNotify } from './signupNotify.js'
 import { handleAuthSendEmail } from './authSendEmail.js'
 import { issueSpeechToken, synthesize, SPEECH_TOKEN_MAX_TTL_S, SPEECH_TOKEN_MIN_REMAINING_S, SPEECH_TOKEN_PREPAY_S } from './azure.js'
 import { breakdown } from './breakdown.js'
+import { enrichDictionaryEntry } from './detailsEnrich.js'
 import { translate } from './translate.js'
 import { cameraScan } from './cameraScan.js'
 import {
@@ -285,6 +286,42 @@ app.post('/api/breakdown', async (req: AuthedRequest, res) => {
     res.json(result)
   } catch (e) {
     res.status(400).json({ message: e instanceof Error ? e.message : 'Breakdown error' })
+  }
+})
+
+/** Unified dictionary entry for Details (senses / examples / usage / keyless visuals). */
+app.post('/api/details/enrich', async (req: AuthedRequest, res) => {
+  if (!allowGuestIpOrReject(req, res, 'breakdown')) return
+  const ent = await entitlementFor(req)
+  if (!ent.allowed.textTranslate) {
+    res
+      .status(ent.reason === 'login_required' ? 401 : ent.reason === 'account_disabled' ? 403 : 402)
+      .json({
+        message:
+          ent.reason === 'login_required'
+            ? 'Please log in to use dictionary details.'
+            : ent.reason === 'account_disabled'
+              ? 'This account has been disabled.'
+              : 'Dictionary details are not available on your plan.',
+        entitlement: ent,
+      })
+    return
+  }
+  try {
+    const entry = await enrichDictionaryEntry(req.body)
+    if (!env.openMode && entry.engine !== 'offline') {
+      if (req.auth?.userId) await addTranslateCount(req.auth.userId, 1)
+      else if ((req as GuestRequest).guestId) {
+        await addGuestTranslateCount((req as GuestRequest).guestId!, 1)
+      }
+    }
+    res.json({ entry })
+  } catch (e) {
+    if (e instanceof ZodError) {
+      res.status(400).json({ message: 'Invalid details enrich payload' })
+      return
+    }
+    res.status(400).json({ message: e instanceof Error ? e.message : 'Details enrich error' })
   }
 })
 

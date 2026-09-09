@@ -448,6 +448,21 @@ export const ui = {
   definition: { en: 'Definition', zh: '釋義', jp: 'sik1 ji6' },
   close: { en: 'Close', zh: '關閉', jp: 'gwaan1 bai3' },
   charDetail: { en: 'Character detail', zh: '單字詳情', jp: 'daan1 zi6 coeng4 cing4' },
+  detailDictionary: { en: 'Dictionary', zh: '詞典', jp: 'ci4 din2' },
+  detailDictionaryLoading: {
+    en: 'Building a unified entry…',
+    zh: '正在整理統一詞條…',
+    jp: 'zing3 zoi6 zing2 lei5 tung2 jat1 ci4 tiu4',
+  },
+  detailSenses: { en: 'Senses', zh: '義項', jp: 'ji6 hong6' },
+  detailExamples: { en: 'Examples', zh: '例句', jp: 'lai6 geoi3' },
+  detailUsage: { en: 'Usage', zh: '用法', jp: 'jung6 faat3' },
+  detailWordBreakdown: { en: 'Word breakdown', zh: '逐詞拆解', jp: 'zuk6 ci4 caak3 gaai2' },
+  detailNoWordDetails: {
+    en: 'No word details available.',
+    zh: '暫無逐詞資料。',
+    jp: 'zaam6 mou4 zuk6 ci4 zi1 liu2',
+  },
 
   connecting: { en: 'Connecting…', zh: '連接中…', jp: 'lin4 zip3 zung1…' },
   planFree: { en: 'Free', zh: '免費', jp: 'min5 fai3' },

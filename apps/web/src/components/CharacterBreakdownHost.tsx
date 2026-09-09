@@ -6,10 +6,12 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { fetchBreakdown } from '../lib/api'
+import { fetchBreakdown, fetchDetailsEnrich, type DictionaryEntry } from '../lib/api'
 import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
 import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
+import { buildLocalLatinBreakdown, isLatinDetailLang } from '../lib/localLatinBreakdown'
+import { detailPedagogy } from '../lib/detailPedagogy'
 import { tagalogStressClass, tagalogStressLabel } from '../lib/tagalogPronunciation'
 import {
   mexicanStressClass,
@@ -33,6 +35,7 @@ import { SpeakButton } from './SpeakButton'
 import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
+import { DetailDictionaryPanel } from './DetailDictionaryPanel'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 import './DetailPanel.css'
@@ -100,6 +103,8 @@ export function CharacterBreakdownHost() {
   const [rows, setRows] = useState<CharBreakdown[]>([])
   const [loading, setLoading] = useState(false)
   const [ipa, setIpa] = useState('')
+  const [dictEntry, setDictEntry] = useState<DictionaryEntry | null>(null)
+  const [dictLoading, setDictLoading] = useState(false)
   const { geom, desktop, onDragPointerDown } = useFloatingPanel({
     storageKey: PANEL_KEY,
     minW: 280,
@@ -148,42 +153,109 @@ export function CharacterBreakdownHost() {
   }, [restoreDetail])
 
   useEffect(() => {
-    if (!top || top.kind !== 'phrase') {
+    if (!top || (top.kind !== 'phrase' && top.kind !== 'char')) {
       setRows([])
       setLoading(false)
+      setDictEntry(null)
+      setDictLoading(false)
       return
     }
-    const phrase = top.phrase
+    const phrase = top.kind === 'phrase' ? top.phrase : top.char
     const detailLang = top.lang || (hasHan(phrase) ? 'yue' : 'en')
+    const phraseGloss =
+      top.kind === 'phrase'
+        ? top.definition?.trim() || top.translation?.trim() || ''
+        : top.sense?.trim() || top.definition?.trim() || ''
+    const contextText =
+      top.kind === 'phrase' ? top.translation || top.definition : top.phrase || top.definition
+    const turn = useYueStore.getState().history[0]
     let cancelled = false
-    setLoading(true)
-    setRows([])
-    void (async () => {
-      const local =
-        detailLang === 'yue'
-          ? await buildLocalBreakdown(phrase)
-          : detailLang === 'cmn'
-            ? await buildLocalPinyinBreakdown(phrase)
-            : []
-      if (cancelled) return
-      setRows(local)
-      try {
-        // wuu: gloss-only from API; Wugniu stays phrase-level (no per-char ruby).
-        const remote = await fetchBreakdown(phrase, { lang: detailLang })
+    setDictEntry(null)
+    setDictLoading(true)
+
+    if (top.kind === 'phrase') {
+      setLoading(true)
+      setRows([])
+      void (async () => {
+        const local =
+          detailLang === 'yue'
+            ? await buildLocalBreakdown(phrase)
+            : detailLang === 'cmn'
+              ? await buildLocalPinyinBreakdown(phrase)
+              : isLatinDetailLang(detailLang)
+                ? buildLocalLatinBreakdown(phrase, { phraseGloss, lang: detailLang })
+                : []
         if (cancelled) return
-        const remoteRows = remote.characters || []
-        const merged =
-          detailLang === 'yue' || detailLang === 'cmn'
-            ? mergeMeanings(local, remoteRows)
-            : remoteRows.length
-              ? remoteRows
-              : local
-        if (detailLang === 'yue') rememberBreakdownRows(merged, phrase)
-        setRows(merged)
+        setRows(local)
+        try {
+          const remote = await fetchBreakdown(phrase, { lang: detailLang })
+          if (cancelled) return
+          const remoteRows = remote.characters || []
+          const merged =
+            detailLang === 'yue' || detailLang === 'cmn'
+              ? mergeMeanings(local, remoteRows)
+              : remoteRows.length
+                ? remoteRows.map((r, i) => ({
+                    char: r.char,
+                    jyutping: r.jyutping,
+                    meaning: pickCharGloss(r.meaning, local[i]?.meaning, phraseGloss),
+                  }))
+                : local
+          if (detailLang === 'yue') rememberBreakdownRows(merged, phrase)
+          setRows(merged)
+        } catch {
+          /* local enough */
+        } finally {
+          if (!cancelled) setLoading(false)
+        }
+      })()
+    } else {
+      setRows([])
+      setLoading(false)
+    }
+
+    void (async () => {
+      try {
+        const pairedFromTurn =
+          turn && top.kind === 'phrase'
+            ? turn.to === detailLang
+              ? turn.from
+              : turn.from === detailLang
+                ? turn.to
+                : undefined
+            : undefined
+        const contextLang =
+          pairedFromTurn ||
+          (contextText
+            ? hasHan(contextText)
+              ? detailLang === 'cmn'
+                ? 'cmn'
+                : 'yue'
+              : 'en'
+            : undefined)
+        const entry = await fetchDetailsEnrich({
+          text: phrase,
+          lang: detailLang,
+          contextText: contextText || undefined,
+          contextLang,
+          wantMedia: true,
+        })
+        if (!cancelled) setDictEntry(entry)
       } catch {
-        /* local enough */
+        if (!cancelled && phraseGloss) {
+          setDictEntry({
+            lemma: phrase,
+            lang: detailLang,
+            senses: [{ gloss: phraseGloss, note: 'Paired translation' }],
+            examples: [],
+            usageNotes: [],
+            media: [],
+            provenance: ['paired-context'],
+            engine: 'offline',
+          })
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setDictLoading(false)
       }
     })()
     return () => {
@@ -308,10 +380,28 @@ export function CharacterBreakdownHost() {
           : undefined
   const showDefinition =
     Boolean(definitionText) &&
-    definitions.length <= 1 &&
-    definitionText.toLowerCase() !== translationText.toLowerCase() &&
+    definitions.length === 0 &&
     definitionText.toLowerCase() !== topLabel.toLowerCase()
 
+  /** Unified sense list — include single definitions even when they match the paired translation. */
+  const senseList = (() => {
+    const out: string[] = []
+    const seen = new Set<string>()
+    const push = (raw?: string) => {
+      const t = (raw || '').trim()
+      if (!t) return
+      const key = t.toLowerCase()
+      if (seen.has(key)) return
+      seen.add(key)
+      out.push(t)
+    }
+    for (const d of definitions) push(d)
+    if (definitions.length === 0) push(definitionText)
+    // English (and other learner panes): paired translation is often the useful gloss.
+    if (isEnglishDetail || isLatinDetail) push(translationText)
+    return out
+  })()
+  const pedagogy = detailPedagogy(detailLang)
   const body = (
     <>
       <header
@@ -482,7 +572,7 @@ export function CharacterBreakdownHost() {
             </p>
           ) : null}
           {showDefinition ? (
-            <p className="detail-panel-definition" lang="en">
+            <p className="detail-panel-definition" lang={pedagogy.htmlLang}>
               {definitionText}
             </p>
           ) : null}
@@ -525,16 +615,15 @@ export function CharacterBreakdownHost() {
       <div className="detail-panel-body">
         {top.kind === 'phrase' ? (
           <>
-            {definitions.length > 1 || alternatives.length > 0 || altsLoading ? (
+            {senseList.length > 0 || alternatives.length > 0 || altsLoading ? (
               <div className="detail-panel-extra">
-                {definitions.length > 1 ? (
-                  <section
-                    className="detail-panel-defs"
-                    aria-label={isEnglishDetail ? 'Meanings' : 'English meanings'}
-                  >
-                    <h3>{isEnglishDetail ? 'Meanings' : 'English meanings'}</h3>
+                {senseList.length > 0 ? (
+                  <section className="detail-panel-defs" aria-label="Meanings">
+                    <h3>
+                      <BiText copy={ui.detailSenses} size="sm" />
+                    </h3>
                     <ul>
-                      {definitions.map((def, i) => (
+                      {senseList.map((def, i) => (
                         <li key={`def-${i}`}>{def}</li>
                       ))}
                     </ul>
@@ -577,7 +666,8 @@ export function CharacterBreakdownHost() {
                 ) : null}
               </div>
             ) : null}
-            {isEsDetail ? (
+            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
+            {isEsDetail && pedagogy.extraPanels.includes('mx-register') ? (
               <MexicanSpanishRegisterPanel
                 text={topLabel}
                 sourceText={
@@ -596,6 +686,10 @@ export function CharacterBreakdownHost() {
             {loading && !rows.length ? (
               <p className="detail-panel-loading muted">Loading…</p>
             ) : rows.length ? (
+              <>
+                <h3 className="detail-panel-breakdown-title">
+                  <BiText copy={ui.detailWordBreakdown} size="sm" />
+                </h3>
               <ul className="detail-panel-list">
                 {rows.map((row, i) => {
                   const meaning = pickCharGloss(row.meaning)
@@ -757,16 +851,16 @@ export function CharacterBreakdownHost() {
                   )
                 })}
               </ul>
+              </>
             ) : (
               <p className="detail-panel-loading muted">
-                {isEnglishDetail || isLatinDetail
-                  ? 'No word details available.'
-                  : 'No character details available.'}
+                <BiText copy={ui.detailNoWordDetails} size="sm" />
               </p>
             )}
           </>
         ) : (
           <div className="detail-panel-char-view">
+            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
             {top.sense ? (
               <section>
                 <h3>{isEnglishDetail || isLatinDetail ? 'This word' : 'This character'}</h3>
