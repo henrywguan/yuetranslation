@@ -384,9 +384,9 @@ export const ui = {
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
   historyEmpty: {
-    en: 'Past translations will show up here as cards.',
-    zh: '以前嘅翻譯會喺呢度以卡片顯示。',
-    jp: 'ji5 cin4 ge3 faan1 jik6 wui5 hai2 ni1 dou6 ji5 kaa1 pin3 hin2 si6.',
+    en: 'Past translations show up here for two weeks, then clear on their own.',
+    zh: '以前嘅翻譯會喺呢度顯示兩星期，之後會自動清除。',
+    jp: 'ji5 cin4 ge3 faan1 jik6 wui5 hai2 ni1 dou6 hin2 si6 loeng5 sing1 kei4, zi1 hau6 wui5 zi6 dung6 cing1 ceoi4.',
   },
   historyLatest: { en: 'Latest', zh: '最新', jp: 'zeoi3 san1' },
   historyExpand: { en: 'Expand', zh: '展開', jp: 'zin2 hoi1' },

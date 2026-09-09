@@ -1,8 +1,13 @@
 import type { ConversationTurn, Lang } from './types'
 import { fetchAccountHistory, putAccountHistory } from './api'
-import { MAX_TURNS, mergeHistory, shouldPushHydratedHistory } from './historyMerge'
+import {
+  MAX_TURNS,
+  expireHistoryTurns,
+  mergeHistory,
+  shouldPushHydratedHistory,
+} from './historyMerge'
 
-export { mergeHistory, shouldPushHydratedHistory }
+export { expireHistoryTurns, mergeHistory, shouldPushHydratedHistory }
 
 const LOCAL_KEY = 'yue-translation-history-v1'
 
@@ -28,14 +33,15 @@ export function sanitizeTurns(raw: unknown): ConversationTurn[] {
     if (typeof t.id !== 'string' || !t.id) continue
     if (!isLang(t.from) || !isLang(t.to)) continue
     if (typeof t.source !== 'string' || typeof t.translation !== 'string') continue
-    const at = typeof t.at === 'number' && Number.isFinite(t.at) ? t.at : Date.now()
+    // Require a real timestamp so we never "refresh" stale turns to now.
+    if (typeof t.at !== 'number' || !Number.isFinite(t.at)) continue
     const turn: ConversationTurn = {
       id: t.id,
       from: t.from,
       to: t.to,
       source: t.source,
       translation: t.translation,
-      at,
+      at: t.at,
     }
     if (typeof t.definition === 'string') turn.definition = t.definition
     if (Array.isArray(t.definitions)) {
@@ -54,7 +60,7 @@ export function sanitizeTurns(raw: unknown): ConversationTurn[] {
     }
     out.push(turn)
   }
-  return out.slice(0, MAX_TURNS)
+  return expireHistoryTurns(out).slice(0, MAX_TURNS)
 }
 
 export function readLocalHistory(): ConversationTurn[] {
@@ -86,7 +92,7 @@ export function setHistoryPersistLoggedIn(loggedIn: boolean) {
 
 /** Write local always; debounce account sync when signed in. */
 export function persistHistory(turns: ConversationTurn[]) {
-  const next = turns.slice(0, MAX_TURNS)
+  const next = expireHistoryTurns(turns).slice(0, MAX_TURNS)
   writeLocalHistory(next)
   if (!persistLoggedIn) return
   if (persistTimer) clearTimeout(persistTimer)

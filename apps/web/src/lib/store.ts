@@ -1801,7 +1801,16 @@ if (typeof window !== 'undefined') {
   let prevHistory = useYueStore.getState().history
   useYueStore.subscribe((state) => {
     if (state.history === prevHistory) return
-    prevHistory = state.history
-    void import('./historySync').then((m) => m.persistHistory(state.history))
+    void import('./historySync').then((m) => {
+      const next = m.expireHistoryTurns(state.history)
+      if (next.length !== state.history.length) {
+        prevHistory = next
+        useYueStore.setState({ history: next })
+        m.persistHistory(next)
+        return
+      }
+      prevHistory = state.history
+      m.persistHistory(state.history)
+    })
   })
 }

@@ -170,6 +170,7 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 14. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
 15. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
 16. `supabase/migrations/016_app_settings.sql` — app settings (incident banner, etc.)
+17. `supabase/migrations/026_translation_history_ttl.sql` — prune Solo/Conversation history turns older than **14 days** (`prune_stale_translation_history()`); app GET/PUT also prune per user. Optional: enable the commented `pg_cron` daily job on Pro.
 
 **If you see** `Could not find the table 'public.households' in the schema cache` — migrations `011`–`015` are not applied. Paste and run the one-shot file `supabase/migrations/apply_011_through_015_household.sql` in **Supabase → SQL Editor** (creates `households` / members / invites / pooled usage, renames plans, backfills legacy meters, then reloads the PostgREST schema cache).
 
