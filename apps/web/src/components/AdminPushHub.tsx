@@ -120,7 +120,15 @@ export function AdminPushHub() {
     try {
       const [st, hist] = await Promise.all([fetchAdminPushStats(), fetchAdminPushSends(30)])
       setConfigured(st.configured)
-      setStats(st.stats)
+      setStats({
+        total: st.stats.total,
+        enabled: st.stats.enabled,
+        signedIn: st.stats.signedIn,
+        guests: st.stats.guests,
+        byPlan: st.stats.byPlan || {},
+        byProvider: st.stats.byProvider || { apple: 0, fcm: 0, mozilla: 0, other: 0 },
+        byPlatform: st.stats.byPlatform || {},
+      })
       setSends(hist.sends)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load push hub')
