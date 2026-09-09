@@ -446,6 +446,24 @@
   background: color-mix(in srgb, var(--harbor-mid) 80%, transparent);
 }
 
+.detail-dict-media--emoji {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.detail-dict-emoji {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 2.75rem;
+  line-height: 1;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--harbor-mid) 72%, transparent);
+}
+
 .detail-dict-media figcaption {
   margin-top: 4px;
   font-size: 0.7rem;

@@ -289,7 +289,7 @@ app.post('/api/breakdown', async (req: AuthedRequest, res) => {
   }
 })
 
-/** Unified dictionary entry for Details (senses / examples / usage / optional GIF). */
+/** Unified dictionary entry for Details (senses / examples / usage / keyless visuals). */
 app.post('/api/details/enrich', async (req: AuthedRequest, res) => {
   if (!allowGuestIpOrReject(req, res, 'breakdown')) return
   const ent = await entitlementFor(req)

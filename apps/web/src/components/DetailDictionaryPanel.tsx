@@ -94,9 +94,21 @@ export function DetailDictionaryPanel({ entry, loading }: Props) {
         </div>
       ) : null}
       {entry.media.map((m, i) =>
-        m.type === 'gif' ? (
+        m.type === 'emoji' && m.emoji ? (
+          <figure key={`media-${i}`} className="detail-dict-media detail-dict-media--emoji">
+            <span className="detail-dict-emoji" role="img" aria-label={m.alt || entry.lemma}>
+              {m.emoji}
+            </span>
+            <figcaption className="muted">{m.source}</figcaption>
+          </figure>
+        ) : m.type === 'image' || m.type === 'gif' ? (
           <figure key={`media-${i}`} className="detail-dict-media">
-            <img src={m.previewUrl || m.url} alt={m.alt || entry.lemma} loading="lazy" />
+            <img
+              src={m.previewUrl || m.url}
+              alt={m.alt || entry.lemma}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
             <figcaption className="muted">{m.source}</figcaption>
           </figure>
         ) : null,

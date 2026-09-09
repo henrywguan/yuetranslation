@@ -162,7 +162,14 @@ export type DictionaryEntry = {
   senses: { gloss: string; pos?: string; note?: string }[]
   examples: { text: string; translation?: string; note?: string }[]
   usageNotes: string[]
-  media: { type: 'gif'; url: string; previewUrl?: string; alt?: string; source: string }[]
+  media: {
+    type: 'emoji' | 'image' | 'gif'
+    url?: string
+    previewUrl?: string
+    emoji?: string
+    alt?: string
+    source: string
+  }[]
   provenance: string[]
   engine: 'offline' | 'openai' | 'mixed'
 }

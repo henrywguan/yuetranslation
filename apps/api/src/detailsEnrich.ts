@@ -1,5 +1,5 @@
 /**
- * Unified dictionary entry for Details — lexicon + phrase memory + optional LLM + optional GIF.
+ * Unified dictionary entry for Details — lexicon + phrase memory + optional LLM + keyless visuals (emoji / Wikipedia).
  * Lang-agnostic contract; prompts parameterized by DETAIL_ENRICH_META (server mirror of pedagogy).
  */
 import { z } from 'zod'
@@ -11,6 +11,7 @@ import {
 } from './canto/lexiconTranslate.js'
 import { lookupGloss } from './canto/gloss.js'
 import { hasHan } from './canto/han.js'
+import { resolveDictionaryMedia } from './detailsMedia.js'
 
 export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi'])
 export type DetailLang = z.infer<typeof DetailLangSchema>
@@ -21,7 +22,7 @@ const EnrichBody = z.object({
   /** Paired pane text (source or translation) for context-aware senses. */
   contextText: z.string().max(500).optional(),
   contextLang: DetailLangSchema.optional(),
-  /** Prefer GIFs when Tenor is configured. */
+  /** Prefer illustrative media (emoji offline + keyless Wikipedia thumb). */
   wantMedia: z.boolean().optional(),
 })
 
@@ -37,13 +38,7 @@ export type DictionaryExample = {
   note?: string
 }
 
-export type DictionaryMedia = {
-  type: 'gif'
-  url: string
-  previewUrl?: string
-  alt?: string
-  source: string
-}
+export type { DictionaryMedia } from './detailsMedia.js'
 
 export type DictionaryEntry = {
   lemma: string
@@ -143,35 +138,6 @@ function offlineSenses(text: string, lang: DetailLang, contextText?: string): Di
   return senses
 }
 
-async function fetchTenorGif(query: string): Promise<DictionaryMedia | null> {
-  const key = (process.env.TENOR_API_KEY || '').trim()
-  if (!key) return null
-  try {
-    const url = new URL('https://tenor.googleapis.com/v2/search')
-    url.searchParams.set('q', query.slice(0, 80))
-    url.searchParams.set('key', key)
-    url.searchParams.set('limit', '1')
-    url.searchParams.set('media_filter', 'gif,tinygif')
-    url.searchParams.set('contentfilter', 'medium')
-    const res = await fetch(url.toString())
-    if (!res.ok) return null
-    const data = (await res.json()) as {
-      results?: { media_formats?: { gif?: { url?: string }; tinygif?: { url?: string } }; content_description?: string }[]
-    }
-    const hit = data.results?.[0]
-    const gif = hit?.media_formats?.gif?.url || hit?.media_formats?.tinygif?.url
-    if (!gif) return null
-    return {
-      type: 'gif',
-      url: gif,
-      previewUrl: hit?.media_formats?.tinygif?.url || gif,
-      alt: hit?.content_description || query,
-      source: 'tenor',
-    }
-  } catch {
-    return null
-  }
-}
 
 function parseModelEntry(raw: string): {
   pronunciation?: string
@@ -317,17 +283,17 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
     usageNotes = model.usageNotes.slice(0, 4)
   }
 
-  const media: DictionaryMedia[] = []
-  if (parsed.wantMedia !== false) {
-    const gif = await fetchTenorGif(
-      [lemma, parsed.contextText].filter(Boolean).join(' ').slice(0, 60) || lemma,
-    )
-    if (gif) {
-      media.push(gif)
-      provenance.push('tenor')
-      if (engine === 'offline') engine = 'mixed'
-    }
+  const mediaPack = await resolveDictionaryMedia({
+    lemma,
+    contextText: parsed.contextText,
+    // Remote Wikipedia thumb is keyless; still skip when caller opts out.
+    wantRemote: parsed.wantMedia !== false,
+  })
+  const media = mediaPack.media
+  if (mediaPack.provenance.length) {
+    provenance.push(...mediaPack.provenance)
   }
+  // Do not flip engine for Wikipedia/emoji — only LLM synthesis is metered.
 
   return {
     lemma,
