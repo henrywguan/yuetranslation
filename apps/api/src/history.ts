@@ -2,23 +2,23 @@ import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
 import { env } from './env.js'
+import { sanitizeTurns, turnsChanged, type HistoryTurn } from './historyExpiry.js'
 import { getAdmin } from './supabase.js'
 
-const MAX_TURNS = 80
+export { HISTORY_TTL_MS } from './historyExpiry.js'
 
-function sanitizeTurns(raw: unknown): unknown[] {
-  if (!Array.isArray(raw)) return []
-  const out: unknown[] = []
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') continue
-    const t = item as Record<string, unknown>
-    if (typeof t.id !== 'string' || !t.id) continue
-    if (typeof t.from !== 'string' || typeof t.to !== 'string') continue
-    if (typeof t.source !== 'string' || typeof t.translation !== 'string') continue
-    out.push(item)
-    if (out.length >= MAX_TURNS) break
-  }
-  return out
+async function persistTurns(userId: string, turns: HistoryTurn[]) {
+  const admin = getAdmin()
+  if (!admin) return { error: new Error('History sync unavailable.') }
+  const { error } = await admin.from('translation_history').upsert(
+    {
+      user_id: userId,
+      turns,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  )
+  return { error }
 }
 
 /** GET /api/history — signed-in account translation history. */
@@ -48,7 +48,17 @@ export async function getHistory(req: AuthedRequest, res: Response) {
     return
   }
 
-  res.json({ turns: sanitizeTurns(data?.turns) })
+  const turns = sanitizeTurns(data?.turns)
+  // Rewrite pruned payload so expired turns leave the cloud copy immediately.
+  if (data && turnsChanged(data.turns, turns)) {
+    const { error: writeErr } = await persistTurns(auth.userId, turns)
+    if (writeErr) {
+      res.status(500).json({ message: writeErr.message })
+      return
+    }
+  }
+
+  res.json({ turns })
 }
 
 /** PUT /api/history — replace account translation history. */
@@ -56,8 +66,10 @@ export async function putHistory(req: AuthedRequest, res: Response) {
   const auth = requireAuth(req, res)
   if (!auth) return
 
+  const turns = sanitizeTurns(req.body?.turns)
+
   if (env.openMode) {
-    res.json({ ok: true, turns: sanitizeTurns(req.body?.turns) })
+    res.json({ ok: true, turns })
     return
   }
 
@@ -67,16 +79,7 @@ export async function putHistory(req: AuthedRequest, res: Response) {
     return
   }
 
-  const turns = sanitizeTurns(req.body?.turns)
-  const { error } = await admin.from('translation_history').upsert(
-    {
-      user_id: auth.userId,
-      turns,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' },
-  )
-
+  const { error } = await persistTurns(auth.userId, turns)
   if (error) {
     res.status(500).json({ message: error.message })
     return

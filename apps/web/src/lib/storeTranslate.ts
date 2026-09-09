@@ -1,5 +1,6 @@
 import { translateText } from './api'
 import { humanizeThrownError } from './apiError'
+import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
 import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
@@ -92,7 +93,11 @@ function nextHistory(
   get: Get,
   turn: Omit<ConversationTurn, 'id' | 'at'>,
 ): ConversationTurn[] {
-  return [{ id: newId(), at: Date.now(), ...turn }, ...get().history].slice(0, 80)
+  // New turns stamp `at` now; older than 14 days drop on every write.
+  return expireHistoryTurns([{ id: newId(), at: Date.now(), ...turn }, ...get().history]).slice(
+    0,
+    MAX_TURNS,
+  )
 }
 
 function isChineseLang(lang: Lang): lang is 'yue' | 'cmn' | 'wuu' {
