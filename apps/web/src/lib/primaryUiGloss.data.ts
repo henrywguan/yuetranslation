@@ -366,7 +366,7 @@ export const PRIMARY_UI_GLOSS: Record<string, PrimaryUiGlossRow> = {
   '~8 hours live / month': { tl: '~8 oras live / buwan', es: '~8 horas en vivo / mes', vi: '~8 giờ live / tháng', wuu: '每月约 8 小时即时' },
   '~8 hours of live translation / month': { tl: '~8 oras ng live translation / buwan', es: '~8 horas de traducción en vivo / mes', vi: '~8 giờ dịch trực tiếp / tháng', wuu: '每月约 8 小时即时翻译' },
   '輕按輸入中文': { tl: 'I-tap para mag-type sa Chinese', es: 'Toca para escribir en chino', vi: 'Chạm để gõ tiếng Trung', wuu: '点一下输入中文' },
-  'This line is informal Mexican Spanish.': { tl: 'Ang linya na ito ay informal na Mexican Spanish.', es: 'Esta línea es español mexicano informal.', vi: 'Câu này là tiếng Tây Ban Nha Mexico thân mật.', wuu: '搿句是非正式墨西哥西班牙语。' },
+  'This line is informal Spanish(MX).': { tl: 'Ang linya na ito ay informal na Spanish(MX).', es: 'Esta línea es español (MX) informal.', vi: 'Câu này là Spanish(MX) thân mật.', wuu: '搿句是非正式西班牙语（MX）。' },
   'Make formal': { tl: 'Gawing pormal', es: 'Hacer formal', vi: 'Chuyển sang trang trọng', wuu: '改成正式' },
   'Open details from a full turn to formalize from the source.': { tl: 'Buksan ang details mula sa full turn para ma-formalize mula sa source.', es: 'Abre los detalles de un turno completo para formalizar desde el original.', vi: 'Mở chi tiết từ một lượt đầy đủ để chuyển sang trang trọng từ bản gốc.', wuu: '由完整对话打开详情，先可以用原文改正式。' },
 }

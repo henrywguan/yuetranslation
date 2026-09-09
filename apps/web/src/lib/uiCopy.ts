@@ -1,8 +1,17 @@
 import { readLocalPrimaryLang, type PrimaryLang } from './primaryLanguagePref'
 import { PRIMARY_UI_GLOSS } from './primaryUiGloss.data'
 
-/** Bilingual UI copy: English + 粵語 + Jyutping under the Chinese. */
-export type Bi = { en: string; zh: string; jp: string }
+/** Bilingual UI copy: English + 粵語 (+ optional primary-language gloss fields). */
+export type Bi = {
+  en: string
+  zh: string
+  jp: string
+  tl?: string
+  es?: string
+  vi?: string
+  wuu?: string
+  cmn?: string
+}
 
 export const ui = {
   brandTag: { en: 'Cantonese Language Tool', zh: '粵語語言工具', jp: 'jyut6 jyu5 jyu5 jin4 gung1 geoi6' },
@@ -262,21 +271,37 @@ export const ui = {
     en: `${formatted} left`,
     zh: `剩餘 ${formatted}`,
     jp: `sang1 jyu4 ${formatted}`,
+    es: `${formatted} restantes`,
+    tl: `${formatted} natitira`,
+    vi: `còn ${formatted}`,
+    wuu: `剩余 ${formatted}`,
   }),
   camMinutesUsedUnlimited: (formatted: string): Bi => ({
     en: `${formatted} used / unlimited`,
     zh: `已用 ${formatted}／無限`,
     jp: `ji5 jung6 ${formatted} / mou4 haan6`,
+    es: `${formatted} usados / ilimitado`,
+    tl: `${formatted} nagamit / walang limit`,
+    vi: `đã dùng ${formatted} / không giới hạn`,
+    wuu: `已用 ${formatted}／无限`,
   }),
   camScansLeft: (n: string): Bi => ({
     en: `${n} camera scans left`,
     zh: `剩餘 ${n} 次相機掃描`,
     jp: `zi6 jyu4 ${n} ci3 soeng1 gei1 sou3 miu4`,
+    es: `${n} escaneos de cámara restantes`,
+    tl: `${n} camera scans ang natitira`,
+    vi: `còn ${n} lần quét camera`,
+    wuu: `剩余 ${n} 次相机扫描`,
   }),
   camScansUsedUnlimited: (n: string): Bi => ({
     en: `${n} camera scans used · unlimited`,
     zh: `已用 ${n} 次相機掃描 · 無限`,
     jp: `ji5 jung6 ${n} ci3 soeng1 gei1 sou3 miu4 · mou4 haan6`,
+    es: `${n} escaneos de cámara usados · ilimitado`,
+    tl: `${n} camera scans nagamit · walang limit`,
+    vi: `đã dùng ${n} lần quét camera · không giới hạn`,
+    wuu: `已用 ${n} 次相机扫描 · 无限`,
   }),
   holdOrTapToSpeak: {
     en: 'Hold or tap to speak',
@@ -314,16 +339,28 @@ export const ui = {
     en: 'This line is informal Spanish(MX).',
     zh: '呢句係非正式西班牙語（MX）。',
     jp: 'ni1 geoi3 hai6 fei1 zing3 sik1 sai1 baan1 ngaa4 jyu5 (MX).',
+    es: 'Esta línea es español (MX) informal.',
+    tl: 'Ang linya na ito ay informal na Spanish(MX).',
+    vi: 'Câu này là Spanish(MX) thân mật.',
+    wuu: '搿句是非正式西班牙语（MX）。',
   },
   mxFormalize: {
     en: 'Make formal',
     zh: '改成正式',
     jp: 'goi2 sing4 zing3 sik1',
+    es: 'Hacer formal',
+    tl: 'Gawing pormal',
+    vi: 'Chuyển sang trang trọng',
+    wuu: '改成正式',
   },
   mxFormalizeNeedSource: {
     en: 'Open details from a full turn to formalize from the source.',
     zh: '由完整對話打開詳情，先可以用原文改正式。',
     jp: 'jau4 jyun4 man4 hoi1 hoi1 soeng4 cing4.',
+    es: 'Abre los detalles de un turno completo para formalizar.',
+    tl: 'Buksan ang details mula sa full turn para ma-formalize.',
+    vi: 'Mở chi tiết từ một lượt đầy đủ để chuyển sang trang trọng.',
+    wuu: '由完整对话打开详情，先可以用原文改正式。',
   },
   autoSpeak: { en: 'Auto-speak', zh: '自動朗讀', jp: 'zi6 dung6 long5 duk6' },
   autoSpeakHint: {
@@ -670,32 +707,56 @@ export const ui = {
     en: `${formatted} chars left`,
     zh: `剩 ${formatted} 字`,
     jp: `sing6 ${formatted} zi6`,
+    es: `${formatted} caracteres restantes`,
+    tl: `${formatted} chars ang natitira`,
+    vi: `còn ${formatted} ký tự`,
+    wuu: `剩 ${formatted} 字`,
   }),
   charsUsedUnlimited: (formatted: string): Bi => ({
     en: `${formatted} used / unlimited`,
     zh: `已用 ${formatted}／無限`,
     jp: `ji5 jung6 ${formatted} / mou4 haan6`,
+    es: `${formatted} usados / ilimitado`,
+    tl: `${formatted} nagamit / walang limit`,
+    vi: `đã dùng ${formatted} / không giới hạn`,
+    wuu: `已用 ${formatted}／无限`,
   }),
   hoursLeft: (n: number): Bi => ({
     en: `${n}h left`,
     zh: `剩 ${n} 小時`,
     jp: `sing6 ${n} siu2 si4`,
+    es: `${n}h restantes`,
+    tl: `${n}h natitira`,
+    vi: `còn ${n} giờ`,
+    wuu: `剩 ${n} 小时`,
   }),
   minsLeft: (n: number): Bi => ({
     en: `${n}m left`,
     zh: `剩 ${n} 分鐘`,
     jp: `sing6 ${n} fan1 zung1`,
+    es: `${n}m restantes`,
+    tl: `${n}m natitira`,
+    vi: `còn ${n} phút`,
+    wuu: `剩 ${n} 分钟`,
   }),
   secsLeft: (n: number): Bi => ({
     en: `${n}s left`,
     zh: `剩 ${n} 秒`,
     jp: `sing6 ${n} miu5`,
+    es: `${n}s restantes`,
+    tl: `${n}s natitira`,
+    vi: `còn ${n} giây`,
+    wuu: `剩 ${n} 秒`,
   }),
   /** Compact live mic: used + remaining, e.g. "3m used · 17m left". */
   liveUsedRemaining: (used: string, left: string): Bi => ({
     en: `${used} used · ${left} left`,
     zh: `已用 ${used} · 剩 ${left}`,
     jp: `ji5 jung6 ${used} · sing6 ${left}`,
+    es: `${used} usados · ${left} restantes`,
+    tl: `${used} nagamit · ${left} natitira`,
+    vi: `đã dùng ${used} · còn ${left}`,
+    wuu: `已用 ${used} · 剩 ${left}`,
   }),
 
   lightTheme: { en: 'Light', zh: '淺色', jp: 'cin2 sik1' },
@@ -1220,6 +1281,8 @@ export const ui = {
 export function biPlain(b: Bi, primary?: PrimaryLang): string {
   const lang = primary ?? (typeof localStorage !== 'undefined' ? readLocalPrimaryLang() : 'yue')
   if (lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'wuu') {
+    const fromBi = b[lang]
+    if (typeof fromBi === 'string' && fromBi.trim()) return `${b.en} ${fromBi.trim()}`
     const row = PRIMARY_UI_GLOSS[b.en]
     const gloss = row?.[lang]
     if (typeof gloss === 'string' && gloss.trim()) return `${b.en} ${gloss.trim()}`
