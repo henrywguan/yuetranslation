@@ -74,6 +74,8 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const chineseLang = useYueStore((s) => s.chineseLang)
   const conversationYouLang = useYueStore((s) => s.conversationYouLang)
   const mode = useYueStore((s) => s.mode)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  const cantoPrimaryBi = labelLang === 'bi' && primaryLanguage === 'yue'
   const activePointer = useRef<number | null>(null)
   const downAt = useRef(0)
   const keyDownAt = useRef(0)
@@ -263,7 +265,7 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
       >
         <span className="live-dot" />
         {labelLang === 'bi' ? (
-          <BiText copy={liveCopy} size="sm" />
+          <BiText copy={liveCopy} size="sm" order={cantoPrimaryBi ? 'zh-first' : 'en-first'} />
         ) : (
           <span className="live-btn-label" lang={labelHtmlLang}>
             {label}

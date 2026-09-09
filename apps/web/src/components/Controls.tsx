@@ -15,6 +15,9 @@ export function Controls() {
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
   const speakDirection = useYueStore((s) => s.speakDirection)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
+  /** Cantonese primary: mode chrome is Chinese-only (English stays as mic hint). */
+  const cantoPrimary = primaryLanguage === 'yue'
 
   const faceMode = mode === 'conversation'
   const cameraMode = mode === 'camera'
@@ -33,7 +36,7 @@ export function Controls() {
               className={mode === m.id ? 'active' : ''}
               onClick={() => setMode(m.id)}
             >
-              <BiText copy={m.copy} size="sm" />
+              <BiText copy={m.copy} size="sm" only={cantoPrimary ? 'zh' : undefined} hideJp />
             </button>
           ))}
         </div>
