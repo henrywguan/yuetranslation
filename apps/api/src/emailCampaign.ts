@@ -24,11 +24,17 @@ function getResend(): Resend | null {
 }
 
 function appPublicUrl(): string {
-  return env.appUrl.replace(/\/+$/, '') || 'https://jyuttranslate.com'
+  return env.appUrl.replace(/\/+$/, '') || 'https://www.jyuttranslate.com'
 }
 
+/**
+ * Always use the production PWA mark. Localhost / Vercel preview hosts either
+ * 404 the icon (API) or SSO-gate it (*.vercel.app) — both break email preview.
+ */
+const CANONICAL_EMAIL_LOGO = 'https://www.jyuttranslate.com/apple-touch-icon.png'
+
 function logoSrc(): string {
-  return `${appPublicUrl()}/apple-touch-icon.png`
+  return CANONICAL_EMAIL_LOGO
 }
 
 export type CustomTemplateRow = {

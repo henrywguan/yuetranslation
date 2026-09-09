@@ -24,9 +24,9 @@ function EmailShell({
   eyebrow,
   children,
   logoSrc,
-  appUrl = "https://jyuttranslate.com"
+  appUrl = "https://www.jyuttranslate.com"
 }) {
-  const base = appUrl.replace(/\/+$/, "") || "https://jyuttranslate.com";
+  const base = appUrl.replace(/\/+$/, "") || "https://www.jyuttranslate.com";
   const imgSrc = logoSrc?.trim() || `${base}/apple-touch-icon.png`;
   return /* @__PURE__ */ jsxs(Html, { lang: "en", children: [
     /* @__PURE__ */ jsxs(Head, { children: [

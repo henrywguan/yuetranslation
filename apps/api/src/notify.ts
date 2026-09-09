@@ -84,12 +84,14 @@ function adminLink(path = '/#/admin'): string {
 }
 
 function appPublicUrl(): string {
-  return env.appUrl.replace(/\/+$/, '') || 'https://jyuttranslate.com'
+  return env.appUrl.replace(/\/+$/, '') || 'https://www.jyuttranslate.com'
 }
 
-/** Absolute logo URL — more reliable in Gmail than CID for a stable brand mark. */
+/** Absolute logo URL — always production; preview/local hosts 404 or SSO-gate the icon. */
+const CANONICAL_EMAIL_LOGO = 'https://www.jyuttranslate.com/apple-touch-icon.png'
+
 function logoSrcForTemplate(): string {
-  return `${appPublicUrl()}/apple-touch-icon.png`
+  return CANONICAL_EMAIL_LOGO
 }
 
 /**

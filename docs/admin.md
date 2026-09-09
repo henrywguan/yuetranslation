@@ -184,7 +184,7 @@ Auth ban uses Supabase Auth Admin `ban_duration` so banned users cannot keep a s
 
 - **Templates** — built-in layouts (announcement, product update, feature spotlight, newsletter, welcome, plain) with thumbnail + list views; save custom drafts to Supabase
 - **Compose** — subject, preview text, eyebrow, headline, body, CTA, sign-off; live HTML preview (desktop/mobile)
-- **Recipients** — pick contacts from the Resend audience, or broadcast to the **full audience** (`RESEND_AUDIENCE_ID`)
+- **Recipients** — pick contacts from the Resend audience, enter **custom** addresses, or broadcast to the **full audience** (`RESEND_AUDIENCE_ID`)
 - **Send results** — after Send, a closable popup shows sent/failed counts, per-recipient errors, and a domain hint when Resend rejects non-owner addresses on a test sender
 - **APIs:** `GET/POST /api/admin/email/templates`, `DELETE /api/admin/email/templates/:id`, `GET /api/admin/email/contacts`, `POST /api/admin/email/preview`, `POST /api/admin/email/send`
 
@@ -214,7 +214,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Ban / unban | Profile flag + Auth ban; blocked entitlements (`account_disabled`) |
 | Audit log | Tab with recent admin actions |
 | Bug reports | Tab with triage + multi-select bulk status |
-| Email | Campaign hub: templates, compose, preview, contacts / full audience send |
+| Email | Campaign hub: templates (minimizable), compose, preview, contacts / custom / full audience send |
 | Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
 | CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
