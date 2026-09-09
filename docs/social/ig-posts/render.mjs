@@ -33,6 +33,14 @@ const jobs = [
   { html: 'mandarin-support-en.html', png: 'ig-ad-mandarin-support-en.png', w: 1080, h: 1350 },
   { html: 'mandarin-support-zh.html', png: 'ig-ad-mandarin-support-zh.png', w: 1080, h: 1350 },
   { html: 'mandarin-support-details.html', png: 'ig-ad-mandarin-support-details.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-01-hub.html', png: 'ig-post-primary-lang-01-hub.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-02-solo.html', png: 'ig-post-primary-lang-02-solo.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-03-convo.html', png: 'ig-post-primary-lang-03-convo.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-04-cam.html', png: 'ig-post-primary-lang-04-cam.png', w: 1080, h: 1350 },
+  { html: 'primary-lang-01-hub-story.html', png: 'ig-story-primary-lang-01-hub.png', w: 1080, h: 1920 },
+  { html: 'primary-lang-02-solo-story.html', png: 'ig-story-primary-lang-02-solo.png', w: 1080, h: 1920 },
+  { html: 'primary-lang-03-convo-story.html', png: 'ig-story-primary-lang-03-convo.png', w: 1080, h: 1920 },
+  { html: 'primary-lang-04-cam-story.html', png: 'ig-story-primary-lang-04-cam.png', w: 1080, h: 1920 },
 ]
 
 const chrome =
@@ -209,4 +217,24 @@ jyuttranslate.com
 #Cantonese #粵語 #Jyutping #LearnCantonese #CantoneseAmerican #ABC #HongKongCantonese #ChaoTones #口語粵語 #JyutTranslate
 `
 writeFileSync(join(outDir, 'ig-post-jyutping-tones-caption.txt'), caption, 'utf8')
+
+const primaryLangCaption = `One setting. Your whole app speaks your language.
+
+Primary Language (Account Hub) sets Solo, Conversation (your side), Cam translations, and the label under the logo — so JyutTranslate feels like it was built for you.
+
+Pick once:
+• Cantonese · 粵語 → Solo as a 粵語語言工具
+• Spanish (MX) · Español (MX) → Conversation as Herramienta de español (MX)
+• Vietnamese · Tiếng Việt → Cam as Dịch bằng camera
+
+Also: English, Mandarin · 普通話, Shanghainese · 上海話, Tagalog.
+
+Same live mic. Same face-to-face Conversation. Same Cam AR / upload / docs — now in your locale.
+
+Free to try → link in bio
+jyuttranslate.com
+
+#PrimaryLanguage #JyutTranslate #Cantonese #LanguageLearning #Multilingual
+`
+writeFileSync(join(outDir, 'ig-post-primary-lang-caption.txt'), primaryLangCaption, 'utf8')
 console.log('done →', outDir)
