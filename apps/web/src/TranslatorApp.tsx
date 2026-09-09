@@ -164,6 +164,14 @@ export function TranslatorApp() {
                 <BiText copy={ui.upgrade} size="sm" />
               </button>
             ) : null}
+            <button
+              type="button"
+              className="banner-dismiss"
+              aria-label={biPlain(ui.close)}
+              onClick={() => useYueStore.setState({ error: null })}
+            >
+              ×
+            </button>
           </div>
         ) : null}
 

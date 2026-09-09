@@ -3724,6 +3724,34 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   max-width: 100%;
+  flex: 1 1 12rem;
+}
+
+.banner-dismiss {
+  flex: none;
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.banner-dismiss:hover,
+.banner-dismiss:focus-visible {
+  color: color-mix(in srgb, var(--muted) 70%, var(--ink));
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+}
+
+.banner-dismiss:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--muted) 45%, transparent);
+  outline-offset: 2px;
 }
 
 .banner.warn {
