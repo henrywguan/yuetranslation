@@ -1287,6 +1287,8 @@ export function biPlain(b: Bi, primary?: PrimaryLang): string {
     const gloss = row?.[lang]
     if (typeof gloss === 'string' && gloss.trim()) return `${b.en} ${gloss.trim()}`
   }
+  // Cantonese primary: Chinese leads (matches zh-first chrome).
+  if (lang === 'yue') return `${b.zh} ${b.en}`
   return `${b.en} ${b.zh}`
 }
 

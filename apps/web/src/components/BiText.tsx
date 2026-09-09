@@ -26,6 +26,11 @@ type BiTextProps = {
    * `inline`: English and secondary on one line (panel chrome / compact labels).
    */
   layout?: 'stack' | 'inline'
+  /**
+   * Visual order when both lines show. Default English first.
+   * `zh-first`: Chinese (or primary-replaced secondary) leads; English is the quieter hint.
+   */
+  order?: 'en-first' | 'zh-first'
 }
 
 /** Bilingual UI copy; secondary line follows Account Hub primary language. */
@@ -37,6 +42,7 @@ export function BiText({
   hideJp = false,
   only,
   layout = 'stack',
+  order = 'en-first',
 }: BiTextProps) {
   const primaryLanguage = useYueStore((s) => s.primaryLanguage)
   const wantPrimaryGloss = isPrimaryGlossLang(primaryLanguage) && only !== 'en'
@@ -83,6 +89,7 @@ export function BiText({
     Boolean(copy.jp)
   const { tipId, show, bind, wrapRef } = useJpPopup(canJp)
   const inline = layout === 'inline' && !only
+  const zhFirst = order === 'zh-first' && !only
 
   const zhLine = (
     <span
@@ -114,13 +121,29 @@ export function BiText({
       </span>
     ) : null
 
+  const enLine = <span className="bi-en">{normalizeEnglishApostrophes(copy.en)}</span>
+
   return (
     <Tag
-      className={`bi bi--${size}${only ? ` bi--${only}` : ''}${inline ? ' bi--inline' : ''} ${className}`.trim()}
+      className={`bi bi--${size}${only ? ` bi--${only}` : ''}${inline ? ' bi--inline' : ''}${zhFirst ? ' bi--zh-first' : ''} ${className}`.trim()}
     >
-      {only === 'zh' ? secondary : <span className="bi-en">{normalizeEnglishApostrophes(copy.en)}</span>}
-      {only ? null : secondary}
-      {only === 'en' ? null : tertiary}
+      {only === 'zh' ? (
+        secondary
+      ) : only === 'en' ? (
+        enLine
+      ) : zhFirst ? (
+        <>
+          {secondary}
+          {enLine}
+          {tertiary}
+        </>
+      ) : (
+        <>
+          {enLine}
+          {secondary}
+          {tertiary}
+        </>
+      )}
     </Tag>
   )
 }
