@@ -24,11 +24,18 @@ function getResend(): Resend | null {
 }
 
 function appPublicUrl(): string {
-  return env.appUrl.replace(/\/+$/, '') || 'https://jyuttranslate.com'
+  return env.appUrl.replace(/\/+$/, '') || 'https://www.jyuttranslate.com'
 }
 
+/** Stable hosted PWA mark — avoid localhost / preview hosts that 404 the icon. */
+const CANONICAL_EMAIL_LOGO = 'https://www.jyuttranslate.com/apple-touch-icon.png'
+
 function logoSrc(): string {
-  return `${appPublicUrl()}/apple-touch-icon.png`
+  const base = appPublicUrl()
+  if (!base || /localhost|127\.0\.0\.1|\.vercel\.app/i.test(base)) {
+    return CANONICAL_EMAIL_LOGO
+  }
+  return `${base}/apple-touch-icon.png`
 }
 
 export type CustomTemplateRow = {

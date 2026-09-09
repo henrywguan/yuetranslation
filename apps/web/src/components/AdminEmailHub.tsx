@@ -12,11 +12,10 @@ import {
   type EmailContact,
   type EmailTemplateItem,
 } from '../lib/adminApi'
-import { EmailTextHighlightIllustration } from './EmailTextHighlightIllustration'
 import './AdminEmailHub.css'
 
 type GalleryView = 'thumbnails' | 'list'
-type RecipientMode = 'recipients' | 'audience'
+type RecipientMode = 'recipients' | 'audience' | 'custom'
 type PreviewWidth = 'desktop' | 'mobile'
 type MobilePane = 'templates' | 'compose' | 'preview' | 'send'
 
@@ -26,6 +25,28 @@ const MOBILE_PANES: { id: MobilePane; label: string }[] = [
   { id: 'preview', label: 'Preview' },
   { id: 'send', label: 'Send' },
 ]
+
+function parseCustomEmails(raw: string): string[] {
+  const parts = raw
+    .split(/[\s,;]+/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return [...new Set(parts.filter((p) => emailRe.test(p)))]
+}
+
+/** Prefer a resolvable logo in the admin preview iframe (local / preview hosts). */
+function fixPreviewLogoHtml(html: string): string {
+  if (typeof window === 'undefined') return html
+  const local = `${window.location.origin}/apple-touch-icon.png`
+  const canonical = 'https://www.jyuttranslate.com/apple-touch-icon.png'
+  return html.replace(/(src=")([^"]*apple-touch-icon\.png)(")/gi, (_m, a, src, c) => {
+    const use =
+      /localhost|127\.0\.0\.1|\.vercel\.app/i.test(window.location.hostname) ? local : canonical
+    if (src === use) return `${a}${src}${c}`
+    return `${a}${use}${c}`
+  })
+}
 
 type SendNotice = {
   tone: 'ok' | 'warn' | 'error'
@@ -123,7 +144,7 @@ function LiveTemplateThumb({
             fields,
             includeUnsubscribe: false,
           })
-          if (!cancelled && cacheKeyRef.current === cacheKey) setHtml(next)
+          if (!cancelled && cacheKeyRef.current === cacheKey) setHtml(fixPreviewLogoHtml(next))
         } catch {
           if (!cancelled) {
             setFailed(true)
@@ -157,6 +178,7 @@ export function AdminEmailHub() {
   const [contacts, setContacts] = useState<EmailContact[]>([])
   const [audienceConfigured, setAudienceConfigured] = useState(false)
   const [galleryView, setGalleryView] = useState<GalleryView>('thumbnails')
+  const [galleryCollapsed, setGalleryCollapsed] = useState(false)
   const [selectedKey, setSelectedKey] = useState<string>('')
   const [variant, setVariant] = useState<CampaignVariant>('announcement')
   const [fields, setFields] = useState<CampaignFields>(emptyFields)
@@ -164,6 +186,7 @@ export function AdminEmailHub() {
   const [previewWidth, setPreviewWidth] = useState<PreviewWidth>('desktop')
   const [recipientMode, setRecipientMode] = useState<RecipientMode>('recipients')
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set())
+  const [customEmailsRaw, setCustomEmailsRaw] = useState('')
   const [contactQuery, setContactQuery] = useState('')
   const [busy, setBusy] = useState(false)
   const [previewBusy, setPreviewBusy] = useState(false)
@@ -228,7 +251,7 @@ export function AdminEmailHub() {
         fields,
         includeUnsubscribe: recipientMode === 'audience',
       })
-      setPreviewHtml(html)
+      setPreviewHtml(fixPreviewLogoHtml(html))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Preview failed')
     } finally {
@@ -251,6 +274,8 @@ export function AdminEmailHub() {
       return c.email.includes(q) || (c.name || '').toLowerCase().includes(q)
     })
   }, [contacts, contactQuery])
+
+  const customEmailList = useMemo(() => parseCustomEmails(customEmailsRaw), [customEmailsRaw])
 
   const applyTemplate = (tpl: EmailTemplateItem) => {
     setSelectedKey(tpl.id)
@@ -497,6 +522,11 @@ export function AdminEmailHub() {
       ) {
         return
       }
+    } else if (recipientMode === 'custom') {
+      if (!customEmailList.length) {
+        setError('Enter at least one valid email address.')
+        return
+      }
     } else if (!selectedEmails.size) {
       setError('Select at least one contact.')
       return
@@ -509,7 +539,12 @@ export function AdminEmailHub() {
         templateKey: selectedKey || `builtin:${variant}`,
         variant,
         fields,
-        emails: recipientMode === 'recipients' ? [...selectedEmails] : undefined,
+        emails:
+          recipientMode === 'recipients'
+            ? [...selectedEmails]
+            : recipientMode === 'custom'
+              ? customEmailList
+              : undefined,
         confirm: true,
       })
       if (result.mode === 'audience') {
@@ -604,30 +639,47 @@ export function AdminEmailHub() {
       {message ? <p className="email-hub-ok">{message}</p> : null}
 
       <section
-        className={`email-hub-gallery${mobilePane === 'templates' ? ' is-mobile-active' : ''}`}
+        className={`email-hub-gallery${mobilePane === 'templates' ? ' is-mobile-active' : ''}${galleryCollapsed ? ' is-collapsed' : ''}`}
         aria-label="Templates"
       >
         <div className="email-hub-gallery-head">
           <h3>Templates</h3>
-          <div className="email-hub-view-toggle" role="group" aria-label="Template view">
+          <div className="email-hub-gallery-head-actions">
+            {!galleryCollapsed ? (
+              <div className="email-hub-view-toggle" role="group" aria-label="Template view">
+                <button
+                  type="button"
+                  className={galleryView === 'thumbnails' ? 'is-active' : ''}
+                  onClick={() => setGalleryView('thumbnails')}
+                >
+                  Thumbnails
+                </button>
+                <button
+                  type="button"
+                  className={galleryView === 'list' ? 'is-active' : ''}
+                  onClick={() => setGalleryView('list')}
+                >
+                  List
+                </button>
+              </div>
+            ) : (
+              <p className="email-hub-gallery-collapsed-label">
+                {selectedTemplate?.name || 'Blank draft'}
+              </p>
+            )}
             <button
               type="button"
-              className={galleryView === 'thumbnails' ? 'is-active' : ''}
-              onClick={() => setGalleryView('thumbnails')}
+              className="email-hub-gallery-toggle"
+              aria-expanded={!galleryCollapsed}
+              onClick={() => setGalleryCollapsed((v) => !v)}
             >
-              Thumbnails
-            </button>
-            <button
-              type="button"
-              className={galleryView === 'list' ? 'is-active' : ''}
-              onClick={() => setGalleryView('list')}
-            >
-              List
+              {galleryCollapsed ? 'Expand' : 'Minimize'}
             </button>
           </div>
         </div>
 
-        {galleryView === 'thumbnails' ? (
+        {!galleryCollapsed ? (
+          galleryView === 'thumbnails' ? (
           <div className="email-hub-thumbs">
             {templates.map((tpl) => (
               <button
@@ -685,7 +737,8 @@ export function AdminEmailHub() {
               </button>
             ))}
           </div>
-        )}
+        )
+        ) : null}
       </section>
 
       <div className="email-hub-workspace">
@@ -710,13 +763,6 @@ export function AdminEmailHub() {
               </select>
             </label>
           </div>
-
-          <EmailTextHighlightIllustration
-            aiBusy={aiBusy}
-            onAskAi={() => {
-              void runAiDraft()
-            }}
-          />
 
           {FIELD_LABELS.map((f) => (
             <label key={f.key} className={`email-hub-field${f.key === 'body' ? ' email-hub-field--body' : ''}`}>
@@ -928,6 +974,13 @@ export function AdminEmailHub() {
             </button>
             <button
               type="button"
+              className={recipientMode === 'custom' ? 'is-active' : ''}
+              onClick={() => setRecipientMode('custom')}
+            >
+              Custom
+            </button>
+            <button
+              type="button"
               className={recipientMode === 'audience' ? 'is-active' : ''}
               onClick={() => setRecipientMode('audience')}
               disabled={!audienceConfigured}
@@ -951,6 +1004,27 @@ export function AdminEmailHub() {
                 />
                 I understand this emails the entire audience
               </label>
+            </div>
+          ) : recipientMode === 'custom' ? (
+            <div className="email-hub-custom-box">
+              <label className="email-hub-field">
+                <span>
+                  Addresses
+                  <em>Comma, space, or newline separated</em>
+                </span>
+                <textarea
+                  rows={5}
+                  value={customEmailsRaw}
+                  onChange={(e) => setCustomEmailsRaw(e.target.value)}
+                  placeholder="you@example.com&#10;friend@example.com"
+                  inputMode="email"
+                  autoComplete="off"
+                />
+              </label>
+              <p className="email-hub-selected-count">
+                {customEmailList.length} valid address
+                {customEmailList.length === 1 ? '' : 'es'}
+              </p>
             </div>
           ) : (
             <>
@@ -1004,7 +1078,11 @@ export function AdminEmailHub() {
             disabled={busy}
             onClick={() => void onSend()}
           >
-            {recipientMode === 'audience' ? 'Send to audience' : 'Send to selected'}
+            {recipientMode === 'audience'
+              ? 'Send to audience'
+              : recipientMode === 'custom'
+                ? `Send to custom (${customEmailList.length})`
+                : 'Send to selected'}
           </button>
         </section>
       </div>

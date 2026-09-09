@@ -525,7 +525,7 @@ export async function archiveEmailTemplate(templateId: string): Promise<void> {
 }
 
 export async function sendAdminEmail(input: {
-  mode: 'recipients' | 'audience'
+  mode: 'recipients' | 'audience' | 'custom'
   templateKey: string
   variant: CampaignVariant
   fields: CampaignFields

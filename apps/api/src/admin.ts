@@ -1046,7 +1046,7 @@ export async function adminSendEmail(req: AuthedRequest, res: Response) {
   if (!auth) return
   const parsed = z
     .object({
-      mode: z.enum(['recipients', 'audience']),
+      mode: z.enum(['recipients', 'audience', 'custom']),
       templateKey: z.string().min(1),
       variant: CampaignVariantSchema,
       fields: CampaignFieldsSchema,
@@ -1087,6 +1087,15 @@ export async function adminSendEmail(req: AuthedRequest, res: Response) {
     }
 
     const emails = parsed.data.emails || []
+    if (!emails.length) {
+      res.status(400).json({
+        message:
+          parsed.data.mode === 'custom'
+            ? 'Enter at least one valid email address.'
+            : 'Select at least one contact.',
+      })
+      return
+    }
     const result = await sendCampaignToRecipients({
       actorId: auth.userId,
       actorEmail: auth.email,
@@ -1098,7 +1107,7 @@ export async function adminSendEmail(req: AuthedRequest, res: Response) {
     await writeAuditLog({
       actorId: auth.userId,
       actorEmail: auth.email,
-      action: 'email_send_recipients',
+      action: parsed.data.mode === 'custom' ? 'email_send_custom' : 'email_send_recipients',
       detail: {
         sent: result.sent,
         failed: result.failed,
@@ -1107,9 +1116,10 @@ export async function adminSendEmail(req: AuthedRequest, res: Response) {
         templateKey: parsed.data.templateKey,
         errors: result.errors.slice(0, 20),
         hint: result.hint,
+        mode: parsed.data.mode,
       },
     })
-    res.json({ ok: true, mode: 'recipients', ...result })
+    res.json({ ok: true, mode: parsed.data.mode, ...result })
   } catch (e) {
     res.status(500).json({ message: e instanceof Error ? e.message : 'Send failed' })
   }
