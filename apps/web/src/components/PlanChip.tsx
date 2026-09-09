@@ -77,7 +77,6 @@ import {
   pushCapability,
   pushSupported,
 } from '../lib/pushNotifications'
-import type { PrimaryLang } from '../lib/primaryLanguagePref'
 import { navigate } from '../lib/useHashRoute'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { inkEase } from '../lib/motion'

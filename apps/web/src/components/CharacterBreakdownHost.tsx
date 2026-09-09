@@ -36,9 +36,35 @@ import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { DetailDictionaryPanel } from './DetailDictionaryPanel'
+import { detailEmojiFor } from '../lib/detailEmoji'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 import './DetailPanel.css'
+
+function offlineDictSeed(opts: {
+  lemma: string
+  lang: Lang
+  gloss?: string
+  contextText?: string
+}): DictionaryEntry {
+  const gloss = (opts.gloss || '').trim()
+  const emoji = detailEmojiFor(opts.lemma, opts.contextText || gloss)
+  return {
+    lemma: opts.lemma,
+    lang: opts.lang,
+    senses: gloss ? [{ gloss, note: 'Paired translation' }] : [],
+    examples: [],
+    usageNotes: [],
+    media: emoji
+      ? [{ type: 'emoji', emoji, alt: opts.lemma, source: 'emoji' }]
+      : [],
+    provenance: [
+      ...(gloss ? ['paired-context'] : []),
+      ...(emoji ? ['emoji'] : []),
+    ],
+    engine: 'offline',
+  }
+}
 
 const PANEL_KEY = 'yue-details-panel-v2'
 const DOCK_ID = 'details'
@@ -170,7 +196,14 @@ export function CharacterBreakdownHost() {
       top.kind === 'phrase' ? top.translation || top.definition : top.phrase || top.definition
     const turn = useYueStore.getState().history[0]
     let cancelled = false
-    setDictEntry(null)
+    // Immediate offline seed so Details never looks empty while enrich loads.
+    const seed = offlineDictSeed({
+      lemma: phrase,
+      lang: detailLang,
+      gloss: phraseGloss,
+      contextText: contextText || undefined,
+    })
+    setDictEntry(seed.senses.length || seed.media.length ? seed : null)
     setDictLoading(true)
 
     if (top.kind === 'phrase') {
@@ -242,17 +275,14 @@ export function CharacterBreakdownHost() {
         })
         if (!cancelled) setDictEntry(entry)
       } catch {
-        if (!cancelled && phraseGloss) {
-          setDictEntry({
+        if (!cancelled) {
+          const fallback = offlineDictSeed({
             lemma: phrase,
             lang: detailLang,
-            senses: [{ gloss: phraseGloss, note: 'Paired translation' }],
-            examples: [],
-            usageNotes: [],
-            media: [],
-            provenance: ['paired-context'],
-            engine: 'offline',
+            gloss: phraseGloss,
+            contextText: contextText || undefined,
           })
+          setDictEntry(fallback.senses.length || fallback.media.length ? fallback : null)
         }
       } finally {
         if (!cancelled) setDictLoading(false)
@@ -401,6 +431,27 @@ export function CharacterBreakdownHost() {
     if (isEnglishDetail || isLatinDetail) push(translationText)
     return out
   })()
+  // Dictionary panel already surfaces paired gloss + emoji — avoid duplicating the same line.
+  const showSenseList =
+    senseList.length > 0 &&
+    !(
+      dictEntry &&
+      senseList.every((s) =>
+        dictEntry.senses.some((d) => d.gloss.trim().toLowerCase() === s.toLowerCase()),
+      )
+    )
+  const contentRows = rows.filter((r) => /[\p{L}\p{N}]/u.test(r.char))
+  const redundantSingleLatin =
+    (isEnglishDetail || isLatinDetail) &&
+    contentRows.length === 1 &&
+    contentRows[0]!.char.toLowerCase() === topLabel.toLowerCase() &&
+    Boolean(
+      pickCharGloss(contentRows[0]!.meaning) &&
+        (pickCharGloss(contentRows[0]!.meaning) === translationText ||
+          pickCharGloss(contentRows[0]!.meaning) === definitionText ||
+          senseList.includes(pickCharGloss(contentRows[0]!.meaning))),
+    )
+  const showWordBreakdown = rows.length > 0 && !redundantSingleLatin
   const pedagogy = detailPedagogy(detailLang)
   const body = (
     <>
@@ -615,9 +666,9 @@ export function CharacterBreakdownHost() {
       <div className="detail-panel-body">
         {top.kind === 'phrase' ? (
           <>
-            {senseList.length > 0 || alternatives.length > 0 || altsLoading ? (
+            {showSenseList || alternatives.length > 0 || altsLoading ? (
               <div className="detail-panel-extra">
-                {senseList.length > 0 ? (
+                {showSenseList ? (
                   <section className="detail-panel-defs" aria-label="Meanings">
                     <h3>
                       <BiText copy={ui.detailSenses} size="sm" />
@@ -685,7 +736,7 @@ export function CharacterBreakdownHost() {
             ) : null}
             {loading && !rows.length ? (
               <p className="detail-panel-loading muted">Loading…</p>
-            ) : rows.length ? (
+            ) : showWordBreakdown ? (
               <>
                 <h3 className="detail-panel-breakdown-title">
                   <BiText copy={ui.detailWordBreakdown} size="sm" />
