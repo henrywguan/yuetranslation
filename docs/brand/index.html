@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+HK:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -23,6 +23,7 @@
         --jade-deep: #1f8f7a;
         --jade-bright: #7ef0dc;
         --on-jade: #041018;
+        --usage-family: #8ec8f0;
         --ink: #e8f4ff;
         --ink-bright: #e8fff8;
         --muted: rgba(232, 244, 255, 0.58);
@@ -30,8 +31,9 @@
         --danger: #e36b6b;
         --danger-deep: #c44d4d;
         --danger-ink: #ffd0d0;
-        --font-display: Syne, 'Noto Sans HK', sans-serif;
-        --font-body: 'Noto Sans HK', Syne, sans-serif;
+        --font-english: 'Noto Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        --font-display: Syne, var(--font-english);
+        --font-body: 'Noto Sans HK', var(--font-english);
       }
 
       * {
@@ -218,8 +220,8 @@
         <div>
           <h1>JyutTranslate design tokens / 粤译设计变量</h1>
           <p class="sub">
-            Primary Harbor, secondary Jade, tertiary Ink — for matching Bricks pages to the product.
-            主色 Harbor、辅色 Jade、第三色 Ink — 用于把 Bricks 页面与产品对齐。
+            Primary Harbor, secondary Jade, tertiary Ink — match marketing and the translator app.
+            主色 Harbor、辅色 Jade、第三色 Ink — 对齐营销站与翻译器。
           </p>
         </div>
       </header>
@@ -244,10 +246,39 @@
           <p class="muted">Weights 500–800 · headlines, buttons, brand / 字重 500–800 · 标题、按钮、品牌</p>
         </div>
         <div class="card">
-          <h3>Noto Sans HK — body / 正文</h3>
-          <p class="type-sample body">你好嗎 · English ↔ 廣東話</p>
-          <p class="type-sample mint">nei5 hou2 maa3 · Jyutping</p>
-          <p class="muted">Weights 400–700 · body &amp; Cantonese / 字重 400–700 · 正文与粤语</p>
+          <h3>Noto Sans — Latin / 拉丁</h3>
+          <p class="type-sample body" style="font-family: var(--font-english)">
+            Hello · Kumusta · ¿Cómo estás? · Xin chào
+          </p>
+          <p class="muted">
+            Weights 400–700 · EN · Tagalog · Spanish(MX) · Vietnamese / 字重 400–700 · 英、他加禄、西语(MX)、越南语
+          </p>
+        </div>
+        <div class="card">
+          <h3>Noto Sans HK — Han / 汉字</h3>
+          <p class="type-sample body">你好嗎 · 普通话 · 上海话</p>
+          <p class="type-sample mint">nei5 hou2 maa3 · Jyutping · Wugniu</p>
+          <p class="muted">
+            Weights 400–700 · Yue · Mandarin · Shanghainese / 字重 400–700 · 粤、普、沪
+          </p>
+        </div>
+      </div>
+
+      <h2>Language samples / 语种字样</h2>
+      <div class="row">
+        <div class="card">
+          <h3>Latin stack / 拉丁栈</h3>
+          <p class="type-sample body" style="font-family: var(--font-english)" lang="en">English — Hold to speak</p>
+          <p class="type-sample body" style="font-family: var(--font-english)" lang="tl">Tagalog — Pindutin para magsalita</p>
+          <p class="type-sample body" style="font-family: var(--font-english)" lang="es">Spanish(MX) — Mantén para hablar</p>
+          <p class="type-sample body" style="font-family: var(--font-english)" lang="vi">Tiếng Việt — Giữ để nói · hỏi</p>
+        </div>
+        <div class="card">
+          <h3>Han stack / 汉字栈</h3>
+          <p class="type-sample body" lang="zh-HK">粵語 — 按住講</p>
+          <p class="type-sample body" lang="zh-CN">普通话 — 按住说话</p>
+          <p class="type-sample body" lang="wuu">上海话 — 按牢脱讲</p>
+          <p class="type-sample mint">Cam/PDF fallbacks: Noto Sans TC · PingFang TC</p>
         </div>
       </div>
 
@@ -300,6 +331,7 @@
           ['Ink bright', '#e8fff8', 'Tertiary'],
           ['Mint', '#9af0de', 'Tertiary'],
           ['Muted', 'rgba(232,244,255,0.58)', 'Tertiary'],
+          ['Usage family', '#8ec8f0', 'System'],
         ],
         danger: [
           ['Danger', '#e36b6b', 'System'],
