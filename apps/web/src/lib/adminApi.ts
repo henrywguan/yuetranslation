@@ -616,6 +616,8 @@ export async function fetchAdminPushStats(): Promise<{
     signedIn: number
     guests: number
     byPlan: Record<string, number>
+    byProvider?: Record<string, number>
+    byPlatform?: Record<string, number>
   }
 }> {
   const res = await adminFetch('/admin/push/stats')
@@ -631,6 +633,8 @@ export async function fetchAdminPushStats(): Promise<{
       signedIn: number
       guests: number
       byPlan: Record<string, number>
+      byProvider?: Record<string, number>
+      byPlatform?: Record<string, number>
     }
   }
 }
@@ -661,7 +665,11 @@ export async function sendAdminPush(input: {
   failed: number
   pruned: number
   status: string
-  errors: { endpoint: string; statusCode?: number; message: string }[]
+  errors: { endpoint: string; statusCode?: number; message: string; provider?: string }[]
+  byProvider?: Record<
+    string,
+    { targeted: number; sent: number; failed: number; pruned: number }
+  >
 }> {
   const res = await adminFetch('/admin/push/send', {
     method: 'POST',
@@ -677,7 +685,11 @@ export async function sendAdminPush(input: {
     failed: number
     pruned: number
     status: string
-    errors: { endpoint: string; statusCode?: number; message: string }[]
+    errors: { endpoint: string; statusCode?: number; message: string; provider?: string }[]
+    byProvider?: Record<
+      string,
+      { targeted: number; sent: number; failed: number; pruned: number }
+    >
   }
 }
 
