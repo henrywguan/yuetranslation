@@ -1,0 +1,17 @@
+One setting. Your whole app speaks your language.
+
+Primary Language (Account → Primary Language) sets Solo, Conversation (your side), Cam translations, and the label under the logo — so JyutTranslate feels built for you, not borrowed from English.
+
+Pick once — watch the UI flip:
+• Cantonese · 粵語 → Solo opens as a 粵語語言工具 (tabs, placeholders, speak CTA)
+• Spanish(MX) · Español (MX) → Conversation becomes Herramienta de español (MX)
+• Vietnamese · Tiếng Việt → Cam sheet becomes Dịch bằng camera (AR · upload · docs)
+
+Also: English, Mandarin · 普通話, Shanghainese · 上海話, Tagalog.
+
+Same live mic. Same face-to-face Conversation. Same Cam AR / upload / documents — now labeled in your locale.
+
+Free to try → link in bio
+jyuttranslate.com
+
+#PrimaryLanguage #JyutTranslate #Cantonese #LanguageLearning #Multilingual
