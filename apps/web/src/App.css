@@ -1135,10 +1135,28 @@
   color: var(--ink-bright, var(--ink));
   font: inherit;
   font-size: 0.86rem;
+  accent-color: var(--jade);
 }
 
 .account-hub-select:disabled {
   opacity: 0.65;
+}
+
+/*
+ * Native <option> menus (esp. Windows Chromium) often keep the select’s light ink
+ * while painting a light / jade-tinted panel — white-on-jade / white-on-white.
+ * Force solid dark ink on a solid light panel for the open list only.
+ */
+.account-hub-select option,
+.account-hub-select optgroup {
+  color: #07131f;
+  background-color: #ffffff;
+}
+
+.account-hub-select option:checked,
+.account-hub-select option:hover {
+  color: #07131f;
+  background-color: color-mix(in srgb, #3dcfb6 32%, #ffffff);
 }
 
 .account-hub-voice-preview {
