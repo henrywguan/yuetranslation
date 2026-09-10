@@ -112,6 +112,14 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  bcl: {
+    htmlLang: 'bcl',
+    pronField: 'accented',
+    defaultGlossLang: 'bcl',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
 }
 
 export function detailPedagogy(lang: Lang): DetailPedagogy {

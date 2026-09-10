@@ -1,6 +1,6 @@
 export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi'
 /** Solo + Cam text translate only — no STT/TTS (Azure has no locales). */
-export type TextOnlyLang = 'ceb' | 'ilo'
+export type TextOnlyLang = 'ceb' | 'ilo' | 'bcl'
 export type Lang = VoiceLang | TextOnlyLang
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
 /** Mic / speak side — never a text-only language. */

@@ -65,11 +65,15 @@ export function sanitizeViTranslation(text: string | null | undefined): string |
   return t
 }
 
-/** Reject EN→Cebuano / Ilocano Latin payloads that are empty, glossy, or still Chinese. */
+/** Reject EN→Cebuano / Ilocano / Central Bikol Latin payloads that are empty, glossy, or still Chinese. */
 export function sanitizeCebTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }
 
 export function sanitizeIloTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeBclTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)
 }

@@ -4,7 +4,7 @@ import { translateText } from './api'
 import { humanizeThrownError } from './apiError'
 import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeCebTranslation, sanitizeIloTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationLang, ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
@@ -122,6 +122,7 @@ function sanitizeTranslation(to: Lang, text: string, source?: string): string | 
   if (to === 'vi') return sanitizeViTranslation(text)
   if (to === 'ceb') return sanitizeCebTranslation(text)
   if (to === 'ilo') return sanitizeIloTranslation(text)
+  if (to === 'bcl') return sanitizeBclTranslation(text)
   if (to === 'yue' || to === 'cmn' || to === 'wuu' || to === 'sichuan') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
@@ -293,7 +294,9 @@ export async function runTranslation(
                 ? 'Could not produce Cebuano for this phrase. Try again or rephrase.'
                 : to === 'ilo'
                   ? 'Could not produce Ilocano for this phrase. Try again or rephrase.'
-                  : to === 'sichuan'
+                  : to === 'bcl'
+                    ? 'Could not produce Bikol (Central) for this phrase. Try again or rephrase.'
+                    : to === 'sichuan'
                     ? 'Could not produce Sichuanese for this phrase. Try again or rephrase.'
                     : to === 'tl'
                       ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'

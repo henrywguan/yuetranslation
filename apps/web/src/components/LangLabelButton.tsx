@@ -18,6 +18,7 @@ const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
   { id: 'vi', copy: ui.dirVietnamese, mark: 'Vi' },
   { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
   { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
+  { id: 'bcl', copy: ui.dirBikol, mark: 'Bc' },
 ]
 
 type MenuPlacement = 'top' | 'bottom'
@@ -26,7 +27,7 @@ type MenuPlacement = 'top' | 'bottom'
  * Pane language control.
  * - `dropdown` (Solo + Conversation): pill trigger + anchored glass menu in harbor/jade.
  * - `drawer`: full-sheet picker (fallback when a sheet is preferred).
- * - `scope: 'conversation'` hides text-only langs (Cebuano / Ilocano).
+ * - `scope: 'conversation'` hides text-only langs (Cebuano / Ilocano / Bikol).
  */
 export function LangLabelButton({
   lang,

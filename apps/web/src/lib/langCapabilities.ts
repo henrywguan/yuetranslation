@@ -1,7 +1,7 @@
 import type { Lang, SpeakDirection, TextOnlyLang, VoiceLang } from './types'
 
 export function isTextOnlyLang(lang: string | null | undefined): lang is TextOnlyLang {
-  return lang === 'ceb' || lang === 'ilo'
+  return lang === 'ceb' || lang === 'ilo' || lang === 'bcl'
 }
 
 export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang {
@@ -46,5 +46,7 @@ export function resolveSpeakDirectionForSolo(opts: {
 }
 
 export function textOnlyLangLabel(lang: TextOnlyLang): string {
-  return lang === 'ceb' ? 'Cebuano' : 'Ilocano'
+  if (lang === 'ceb') return 'Cebuano'
+  if (lang === 'ilo') return 'Ilocano'
+  return 'Bikol (Central)'
 }

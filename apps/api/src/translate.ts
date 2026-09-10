@@ -16,7 +16,7 @@ import { hasHan } from './canto/han.js'
 import { inferTagalogRegister } from './tagalogRegister.js'
 import { inferMexicanSpanishRegister } from './mexicanSpanishRegister.js'
 import { inferVietnameseRegister } from './vietnameseRegister.js'
-import { translateCebuano, translateIlocano } from './translatePhilippineRegional.js'
+import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
 function applyCmnScrub(
@@ -38,7 +38,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -78,7 +78,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -1918,6 +1918,13 @@ export async function translate(input: unknown) {
   if (to === 'ilo' || (from === 'ilo' && to === 'en')) {
     return withLearnerDefinitions(
       await translateIlocano({ from, to, text, stage, wantAlts, fallbackDefinition }),
+      text,
+    )
+  }
+
+  if (to === 'bcl' || (from === 'bcl' && to === 'en')) {
+    return withLearnerDefinitions(
+      await translateBikol({ from, to, text, stage, wantAlts, fallbackDefinition }),
       text,
     )
   }

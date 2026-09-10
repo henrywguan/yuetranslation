@@ -196,6 +196,7 @@ export const ui = {
   camTargetVi: { en: 'To Vietnamese', zh: '譯成越南話', jp: 'jik6 sing4 jyut6 naam4 waa2' },
   camTargetCeb: { en: 'To Cebuano', zh: '譯成宿霧話', jp: 'jik6 sing4 suk1 mou6 waa2' },
   camTargetIlo: { en: 'To Ilocano', zh: '譯成伊洛卡诺話', jp: 'jik6 sing4 ji1 lok6 kaa1 nok3 waa2' },
+  camTargetBcl: { en: 'To Bikol (Central)', zh: '譯成中比科爾話', jp: 'jik6 sing4 zung1 bei2 ho1 ji5 waa2' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
@@ -340,6 +341,7 @@ export const ui = {
   dirVietnamese: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
   dirCebuano: { en: 'Cebuano', zh: '宿霧話', jp: 'suk1 mou6 waa2' },
   dirIlocano: { en: 'Ilocano', zh: '伊洛卡诺話', jp: 'ji1 lok6 kaa1 nok3 waa2' },
+  dirBikol: { en: 'Bikol (Central)', zh: '中比科爾話', jp: 'zung1 bei2 ho1 ji5 waa2' },
   textOnlyLangTip: {
     en: 'Text only — type to translate. Speech isn’t available for this language yet.',
     zh: '純文字——請打字翻譯。此語言暫未支援語音。',

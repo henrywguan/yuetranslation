@@ -8,7 +8,7 @@ import { openaiClientWithKey } from './openaiClient.js'
 import { hasHan } from './canto/han.js'
 import { resolveDictionaryMedia, type DictionaryMedia } from './detailsMedia.js'
 
-export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo'])
+export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo', 'bcl'])
 export type DetailLang = z.infer<typeof DetailLangSchema>
 
 const EnrichBody = z.object({
@@ -112,6 +112,11 @@ const ENRICH_META: Record<
     label: 'Ilocano / Ilokano',
     glossLangHint: 'Ilocano',
     exampleIn: 'natural Ilocano',
+  },
+  bcl: {
+    label: 'Central Bikol / Bikol Naga',
+    glossLangHint: 'Central Bikol',
+    exampleIn: 'natural Central Bikol',
   },
 }
 

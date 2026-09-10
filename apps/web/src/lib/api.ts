@@ -141,11 +141,11 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' },
+  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl' },
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 }> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
@@ -157,9 +157,9 @@ export async function fetchBreakdown(
 
 export type DictionaryEntry = {
   lemma: string
-  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   /** Language senses/examples/usage were written in (Account Hub primary). */
-  glossLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  glossLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   pronunciation?: string
   senses: { gloss: string; pos?: string; note?: string }[]
   examples: { text: string; translation?: string; note?: string }[]
@@ -178,11 +178,11 @@ export type DictionaryEntry = {
 
 export async function fetchDetailsEnrich(input: {
   text: string
-  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   contextText?: string
-  contextLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  contextLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   /** Account Hub primary — senses/examples/usage language. */
-  glossLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  glossLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   wantMedia?: boolean
 }): Promise<DictionaryEntry> {
   const res = await apiFetch('/details/enrich', {
@@ -215,8 +215,8 @@ export type CameraScanRegion = {
   id: string
   text: string
   translated: string
-  from: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
-  to: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  from: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+  to: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   box: CameraBox
   script: 'latin' | 'cjk' | 'mixed' | 'other'
   cacheHit: boolean
@@ -249,7 +249,7 @@ export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
 export async function cameraScan(opts: {
   image: string
   boxes?: CameraBox[]
-  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   ocrOnly?: boolean
   /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
   forDocs?: boolean

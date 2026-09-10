@@ -176,7 +176,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
       translation?: string
       definition?: string
       definitions?: string[]
