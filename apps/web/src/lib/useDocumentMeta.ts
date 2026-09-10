@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 
 const SITE = 'https://www.jyuttranslate.com'
-const DEFAULT_TITLE = 'JyutTranslate — English ↔ Cantonese'
+const DEFAULT_TITLE = 'JyutTranslate — AI Language Tool'
 const DEFAULT_DESC =
-  'Live English ↔ Cantonese translator with jyutping, voice, camera OCR, and document translation.'
+  'AI language tool with live translation, voice, camera OCR, and document translation.'
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null

@@ -2,7 +2,7 @@
   "name": "yue",
   "private": true,
   "version": "0.2.0",
-  "description": "JyutTranslate — English ↔ Cantonese live translator (PWA)",
+  "description": "JyutTranslate — AI Language Tool (PWA)",
   "scripts": {
     "dev:web": "npm run dev --prefix apps/web -- --host 0.0.0.0 --port 5173",
     "dev:api": "npm run dev --prefix apps/api",

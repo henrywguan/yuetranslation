@@ -32,7 +32,7 @@ import { inkEase } from './lib/motion'
 export function TranslatorApp() {
   useDocumentMeta({
     title: 'Translator — JyutTranslate',
-    description: 'Solo, Conversation, and Cam modes for live English ↔ Cantonese translation.',
+    description: 'Solo, Conversation, and Cam modes for live AI translation.',
     path: '/#/app',
   })
   const mode = useYueStore((s) => s.mode)
