@@ -5,11 +5,6 @@
 import { z } from 'zod'
 import { env, llmChatExtras } from './env.js'
 import { openaiClientWithKey } from './openaiClient.js'
-import {
-  cantoneseGlossForEnglish,
-  cantoneseSensesForEnglish,
-} from './canto/lexiconTranslate.js'
-import { lookupGloss } from './canto/gloss.js'
 import { hasHan } from './canto/han.js'
 import { resolveDictionaryMedia, type DictionaryMedia } from './detailsMedia.js'
 
@@ -59,52 +54,52 @@ const ENRICH_META: Record<
 > = {
   en: {
     label: 'English',
-    glossLangHint: 'Hong Kong Cantonese (粵語) and/or brief English when useful',
+    glossLangHint: 'clear English (monolingual English dictionary definitions)',
     exampleIn: 'natural English',
   },
   yue: {
     label: 'Hong Kong Cantonese (粵語)',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Hong Kong Cantonese (粵語) — monolingual 粵語 explanations',
     exampleIn: 'natural 粵語',
   },
   cmn: {
     label: 'Mandarin Chinese',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Mandarin Chinese — monolingual 普通话 explanations',
     exampleIn: 'natural Mandarin',
   },
   wuu: {
     label: 'Shanghainese (吳語)',
-    glossLangHint: 'clear English',
-    exampleIn: 'natural Shanghainese or Mandarin with a note',
+    glossLangHint: 'Shanghainese (吳語) — monolingual 上海話 / 吳語 explanations',
+    exampleIn: 'natural Shanghainese',
   },
   sichuan: {
     label: 'Sichuanese / Chengdu dialect (四川話)',
-    glossLangHint: 'clear English',
-    exampleIn: 'natural Chengdu Sichuanese or Mandarin with a note',
+    glossLangHint: 'Chengdu Sichuanese (四川話) — monolingual dialect explanations',
+    exampleIn: 'natural Chengdu Sichuanese',
   },
   tl: {
     label: 'Tagalog / Filipino',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Tagalog / Filipino — monolingual Tagalog explanations',
     exampleIn: 'natural Tagalog',
   },
   es: {
     label: 'Mexican Spanish',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Mexican Spanish — monolingual Spanish explanations',
     exampleIn: 'natural Mexican Spanish',
   },
   vi: {
     label: 'Vietnamese',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Vietnamese — monolingual Vietnamese explanations',
     exampleIn: 'natural Vietnamese',
   },
   ceb: {
     label: 'Cebuano / Bisaya',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Cebuano — monolingual Cebuano explanations',
     exampleIn: 'natural Cebuano',
   },
   ilo: {
     label: 'Ilocano / Ilokano',
-    glossLangHint: 'clear English',
+    glossLangHint: 'Ilocano — monolingual Ilocano explanations',
     exampleIn: 'natural Ilocano',
   },
 }
@@ -123,34 +118,21 @@ function uniqueStrings(items: string[]): string[] {
   return out
 }
 
-function offlineSenses(text: string, lang: DetailLang, contextText?: string): DictionarySense[] {
-  const lemma = text.trim()
-  const senses: DictionarySense[] = []
-  const push = (gloss: string, note: string) => {
-    const t = gloss.trim()
-    if (!t) return
-    if (senses.some((s) => s.gloss.toLowerCase() === t.toLowerCase())) return
-    senses.push({ gloss: t, note })
-  }
-  if (lang === 'en') {
-    const fromSenses = cantoneseSensesForEnglish(lemma)
-    if (fromSenses.length) {
-      for (const g of fromSenses) push(g, 'Lexicon')
-    } else {
-      const gloss =
-        cantoneseGlossForEnglish(lemma.toLowerCase()) || cantoneseGlossForEnglish(lemma)
-      if (gloss) push(gloss, 'Lexicon')
-    }
-  } else if (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan') {
-    const hit = lookupGloss(lemma)
-    if (hit?.gloss) {
-      const first = hit.gloss.replace(/^\([^)]+\)\s*/, '').split(/;\s*/)[0]?.trim() || hit.gloss
-      if (first) push(first, hit.source || 'Dictionary')
-    }
-  }
-  const ctx = (contextText || '').trim()
-  if (ctx) push(ctx, 'Paired translation')
-  return senses
+/**
+ * Offline senses stay in the Details panel language only.
+ * Never promote CONTEXT / paired-pane text into senses (header translation covers that).
+ * Cross-language lexicon glosses (e.g. EN→粵) are omitted so Solo EN↔Sichuanese cannot share a dict.
+ * Monolingual senses come from the AI enrich path when available.
+ */
+function offlineSenses(_text: string, _lang: DetailLang): DictionarySense[] {
+  return []
+}
+
+/** Drop senses that merely echo the paired CONTEXT string. */
+function withoutPairedLeak(senses: DictionarySense[], contextText?: string): DictionarySense[] {
+  const ctx = (contextText || '').trim().toLowerCase()
+  if (!ctx) return senses
+  return senses.filter((s) => s.gloss.trim().toLowerCase() !== ctx)
 }
 
 
@@ -224,20 +206,21 @@ async function modelEnrich(input: {
   const client = openaiClientWithKey()
   const system = [
     `You are a learner dictionary for JyutTranslate (${meta.label}).`,
-    'Synthesize ONE unified dictionary entry from typical learner sources (monolingual dict, bilingual gloss, usage guides).',
+    'Synthesize ONE unified monolingual dictionary entry for the Details panel language only.',
     'Return ONLY valid JSON:',
     '{"pronunciation":"<ipa or romanization or empty>","senses":[{"gloss":"...","pos":"noun|verb|…","note":"optional"}],"examples":[{"text":"...","translation":"...","note":"optional"}],"usageNotes":["..."]}',
     'Rules:',
     `- Gloss language: ${meta.glossLangHint}.`,
-    `- Example sentences in ${meta.exampleIn}; add a short translation when helpful.`,
-    '- Prefer senses that fit the CONTEXT phrase when provided (disambiguate Apple fruit vs company, etc.).',
+    `- Example sentence text in ${meta.exampleIn}. Optional "translation" may be a brief English gloss only when the panel language is not English; never put CONTEXT / paired-pane text there.`,
+    '- CONTEXT (when provided) is ONLY for sense disambiguation (e.g. Apple fruit vs company). NEVER copy CONTEXT into gloss, examples, or usageNotes.',
+    '- Do not mix in another language’s dictionary, dialect explanations, or the paired translation as a sense.',
     '- 1–4 senses, 1–3 examples, 0–3 usage notes. Be concise. No markdown.',
   ].join('\n')
   const user = [
     `Lemma (${input.lang}): ${input.text}`,
     input.contextText
-      ? `Context (${input.contextLang || 'paired'}): ${input.contextText}`
-      : 'Context: (none)',
+      ? `CONTEXT for disambiguation only (${input.contextLang || 'paired'}): ${input.contextText}`
+      : 'CONTEXT: (none)',
   ].join('\n')
 
   try {
@@ -264,8 +247,8 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
   const lemma = parsed.text.trim()
   const lang = parsed.lang || (hasHan(lemma) ? 'yue' : 'en')
   const provenance: string[] = []
-  const offline = offlineSenses(lemma, lang, parsed.contextText)
-  if (offline.length) provenance.push('lexicon', 'paired-context')
+  const offline = withoutPairedLeak(offlineSenses(lemma, lang), parsed.contextText)
+  if (offline.length) provenance.push('lexicon')
 
   const model = await modelEnrich({
     text: lemma,
@@ -285,7 +268,7 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
     engine = offline.length ? 'mixed' : 'openai'
     pronunciation = model.pronunciation
     // Prefer model senses when present; keep offline glosses that add something new.
-    const modelGlosses = model.senses
+    const modelGlosses = withoutPairedLeak(model.senses, parsed.contextText)
     if (modelGlosses.length) {
       senses = [
         ...modelGlosses,
@@ -297,6 +280,7 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
     examples = model.examples.slice(0, 4)
     usageNotes = model.usageNotes.slice(0, 4)
   }
+  senses = withoutPairedLeak(senses, parsed.contextText)
 
   const mediaPack = await resolveDictionaryMedia({
     lemma,

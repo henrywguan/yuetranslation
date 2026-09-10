@@ -46,26 +46,38 @@ import './DetailPanel.css'
 function offlineDictSeed(opts: {
   lemma: string
   lang: Lang
-  gloss?: string
+  /** Paired pane text — emoji disambiguation only; never a dictionary sense. */
   contextText?: string
 }): DictionaryEntry {
-  const gloss = (opts.gloss || '').trim()
-  const emoji = detailEmojiFor(opts.lemma, opts.contextText || gloss)
+  const emoji = detailEmojiFor(opts.lemma, opts.contextText || '')
   return {
     lemma: opts.lemma,
     lang: opts.lang,
-    senses: gloss ? [{ gloss, note: 'Paired translation' }] : [],
+    // Senses stay monolingual in the panel language (filled by /api/details/enrich).
+    senses: [],
     examples: [],
     usageNotes: [],
     media: emoji
       ? [{ type: 'emoji', emoji, alt: opts.lemma, source: 'emoji' }]
       : [],
-    provenance: [
-      ...(gloss ? ['paired-context'] : []),
-      ...(emoji ? ['emoji'] : []),
-    ],
+    provenance: [...(emoji ? ['emoji'] : [])],
     engine: 'offline',
   }
+}
+
+/** Infer paired-pane lang for CONTEXT disambiguation (not for sense gloss language). */
+function inferContextLang(opts: {
+  detailLang: Lang
+  contextText?: string
+  pairedFromTurn?: Lang
+}): Lang | undefined {
+  if (opts.pairedFromTurn) return opts.pairedFromTurn
+  const ctx = (opts.contextText || '').trim()
+  if (!ctx) return undefined
+  if (!hasHan(ctx)) return 'en'
+  if (opts.detailLang === 'cmn') return 'cmn'
+  // Prefer Solo/history pair over defaulting every Han string to 粵.
+  return undefined
 }
 
 const PANEL_KEY = 'yue-details-panel-v2'
@@ -191,22 +203,22 @@ export function CharacterBreakdownHost() {
     }
     const phrase = top.kind === 'phrase' ? top.phrase : top.char
     const detailLang = top.lang || (hasHan(phrase) ? 'yue' : 'en')
+    // Same-language learner gloss only — never the paired pane’s translation.
     const phraseGloss =
       top.kind === 'phrase'
-        ? top.definition?.trim() || top.translation?.trim() || ''
+        ? top.definition?.trim() || ''
         : top.sense?.trim() || top.definition?.trim() || ''
     const contextText =
-      top.kind === 'phrase' ? top.translation || top.definition : top.phrase || top.definition
+      top.kind === 'phrase' ? top.translation || undefined : top.phrase || undefined
     const turn = useYueStore.getState().history[0]
     let cancelled = false
-    // Immediate offline seed so Details never looks empty while enrich loads.
+    // Immediate offline seed (emoji) so Details isn’t blank while enrich loads.
     const seed = offlineDictSeed({
       lemma: phrase,
       lang: detailLang,
-      gloss: phraseGloss,
       contextText: contextText || undefined,
     })
-    setDictEntry(seed.senses.length || seed.media.length ? seed : null)
+    setDictEntry(seed.media.length ? seed : null)
     setDictLoading(true)
 
     if (top.kind === 'phrase') {
@@ -260,15 +272,11 @@ export function CharacterBreakdownHost() {
                 ? turn.to
                 : undefined
             : undefined
-        const contextLang =
-          pairedFromTurn ||
-          (contextText
-            ? hasHan(contextText)
-              ? detailLang === 'cmn'
-                ? 'cmn'
-                : 'yue'
-              : 'en'
-            : undefined)
+        const contextLang = inferContextLang({
+          detailLang,
+          contextText: contextText || undefined,
+          pairedFromTurn,
+        })
         const entry = await fetchDetailsEnrich({
           text: phrase,
           lang: detailLang,
@@ -282,10 +290,9 @@ export function CharacterBreakdownHost() {
           const fallback = offlineDictSeed({
             lemma: phrase,
             lang: detailLang,
-            gloss: phraseGloss,
             contextText: contextText || undefined,
           })
-          setDictEntry(fallback.senses.length || fallback.media.length ? fallback : null)
+          setDictEntry(fallback.media.length ? fallback : null)
         }
       } finally {
         if (!cancelled) setDictLoading(false)
@@ -433,13 +440,23 @@ export function CharacterBreakdownHost() {
     definitions.length === 0 &&
     definitionText.toLowerCase() !== topLabel.toLowerCase()
 
-  /** Unified sense list — include single definitions even when they match the paired translation. */
+  /**
+   * Learner sense list — same-language definitions only.
+   * Paired translation stays in the header; never inject it into SENSES.
+   */
   const senseList = (() => {
     const out: string[] = []
     const seen = new Set<string>()
+    const paired = translationText.toLowerCase()
     const push = (raw?: string) => {
       const t = (raw || '').trim()
       if (!t) return
+      if (paired && t.toLowerCase() === paired) return
+      if (t.toLowerCase() === topLabel.toLowerCase()) return
+      const han = hasHan(t)
+      // Drop cross-script learner defs (e.g. English source on a Sichuanese pane).
+      if ((isEnglishDetail || isLatinDetail) && han && !/[A-Za-z]/.test(t)) return
+      if (!(isEnglishDetail || isLatinDetail) && !han) return
       const key = t.toLowerCase()
       if (seen.has(key)) return
       seen.add(key)
@@ -447,8 +464,6 @@ export function CharacterBreakdownHost() {
     }
     for (const d of definitions) push(d)
     if (definitions.length === 0) push(definitionText)
-    // English (and other learner panes): paired translation is often the useful gloss.
-    if (isEnglishDetail || isLatinDetail) push(translationText)
     return out
   })()
   // Dictionary panel already surfaces paired gloss + emoji — avoid duplicating the same line.

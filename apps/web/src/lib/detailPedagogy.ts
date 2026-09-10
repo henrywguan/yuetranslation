@@ -32,7 +32,8 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   en: {
     htmlLang: 'en',
     pronField: 'ipa',
-    defaultGlossLang: 'yue',
+    // Monolingual English Details (paired pane is header translation only).
+    defaultGlossLang: 'en',
     rubyTitle: false,
     localOffline: true,
     extraPanels: [],
@@ -40,7 +41,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   yue: {
     htmlLang: 'zh-HK',
     pronField: 'jyutping',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'yue',
     rubyTitle: true,
     localOffline: true,
     extraPanels: [],
@@ -48,7 +49,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   cmn: {
     htmlLang: 'zh-CN',
     pronField: 'pinyin',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'cmn',
     rubyTitle: true,
     localOffline: true,
     extraPanels: [],
@@ -56,7 +57,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   wuu: {
     htmlLang: 'wuu-CN',
     pronField: 'wugniu',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'wuu',
     // Title uses ShanghaineseText (phrase Wugniu + sandhi), not JyutRuby.
     // Per-char citation Wugniu is returned in CharBreakdown.jyutping.
     rubyTitle: false,
@@ -66,7 +67,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   sichuan: {
     htmlLang: 'zh-CN-sichuan',
     pronField: 'sichuanese',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'sichuan',
     rubyTitle: true,
     localOffline: false,
     extraPanels: [],
@@ -74,7 +75,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   tl: {
     htmlLang: 'tl',
     pronField: 'accented',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'tl',
     rubyTitle: false,
     localOffline: true,
     extraPanels: [],
@@ -82,7 +83,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   es: {
     htmlLang: 'es-MX',
     pronField: 'accented',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'es',
     rubyTitle: false,
     localOffline: true,
     extraPanels: ['mx-register'],
@@ -90,7 +91,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   vi: {
     htmlLang: 'vi',
     pronField: 'accented',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'vi',
     rubyTitle: false,
     localOffline: true,
     extraPanels: [],
@@ -98,7 +99,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'ceb',
     rubyTitle: false,
     localOffline: true,
     extraPanels: [],
@@ -106,7 +107,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   ilo: {
     htmlLang: 'ilo',
     pronField: 'accented',
-    defaultGlossLang: 'en',
+    defaultGlossLang: 'ilo',
     rubyTitle: false,
     localOffline: true,
     extraPanels: [],
