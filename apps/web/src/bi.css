@@ -803,6 +803,24 @@ button.jyutping {
   border-color: color-mix(in srgb, var(--jade-bright) 40%, transparent);
 }
 
+.copy-btn.is-busy {
+  opacity: 0.55;
+  cursor: wait;
+  transform: none;
+}
+
+/* Jyutping + Chao: document-style icon — slightly softer rim vs Han dual-page copy */
+.copy-btn--jyutping {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  color: color-mix(in srgb, var(--muted) 70%, var(--jade));
+}
+
+.copy-btn--jyutping:hover {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--jade) 48%, var(--glass-border));
+}
+
 .copy-btn-icon {
   width: 0.95rem;
   height: 0.95rem;

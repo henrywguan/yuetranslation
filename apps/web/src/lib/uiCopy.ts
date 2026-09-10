@@ -391,6 +391,16 @@ export const ui = {
   speakPro: { en: 'Voice playback', zh: '語音播放', jp: 'jyu5 jam1 bo3 fong3' },
   copyText: { en: 'Copy text', zh: '複製文字', jp: 'fuk6 zai3 man4 zi6' },
   copied: { en: 'Copied', zh: '已複製', jp: 'ji5 fuk6 zai3' },
+  copyJyutping: {
+    en: 'Copy Jyutping + Chao tones',
+    zh: '複製粵拼＋調號',
+    jp: 'fuk6 zai3 jyut6 ping3 + diu6 hou6',
+  },
+  copiedJyutping: {
+    en: 'Jyutping copied',
+    zh: '已複製粵拼',
+    jp: 'ji5 fuk6 zai3 jyut6 ping3',
+  },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },

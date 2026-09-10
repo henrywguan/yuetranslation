@@ -1,4 +1,5 @@
 import type { Lang } from './types'
+import { ensureJyutpingSegs, rubyJpSyllable } from './jyutping'
 
 const HAN_RE = /[\u3400-\u9fff\uf900-\ufaff]/
 const CANTO_PUNCT = /[？！。，、…]/
@@ -19,4 +20,22 @@ export function copyableText(text: string, lang: Lang): string {
     .replace(/[\u3400-\u9fff\uf900-\ufaff]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/**
+ * Clipboard Jyutping with LSHK Chao tone letters (e.g. `teng1˥ m4˨˩`).
+ * Skips chars without a syllable (punctuation / unknown).
+ */
+export async function copyableJyutpingChao(text: string): Promise<string> {
+  const trimmed = text.trim()
+  if (!trimmed) return ''
+  const segs = await ensureJyutpingSegs(trimmed)
+  if (!segs.length) return ''
+  const out: string[] = []
+  for (const seg of segs) {
+    const jp = (seg.jp || '').trim()
+    if (!jp) continue
+    out.push(rubyJpSyllable(jp))
+  }
+  return out.join(' ')
 }

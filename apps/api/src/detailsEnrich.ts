@@ -17,6 +17,11 @@ const EnrichBody = z.object({
   /** Paired pane text (source or translation) for context-aware senses. */
   contextText: z.string().max(500).optional(),
   contextLang: DetailLangSchema.optional(),
+  /**
+   * Learner gloss language — Account Hub primary language.
+   * Senses / examples / usage are written in this language (not the lemma language).
+   */
+  glossLang: DetailLangSchema.optional(),
   /** Prefer illustrative media (emoji offline + keyless Wikipedia thumb). */
   wantMedia: z.boolean().optional(),
 })
@@ -38,6 +43,8 @@ export type { DictionaryMedia }
 export type DictionaryEntry = {
   lemma: string
   lang: DetailLang
+  /** Language senses/examples/usage were written in (Account Hub primary). */
+  glossLang?: DetailLang
   pronunciation?: string
   senses: DictionarySense[]
   examples: DictionaryExample[]
@@ -47,59 +54,63 @@ export type DictionaryEntry = {
   engine: 'offline' | 'openai' | 'mixed'
 }
 
-/** Server-side meta so new langs only need a row here (keep in sync with web detailPedagogy). */
+/**
+ * Writing-language meta for senses/examples/usage.
+ * `lang` = lemma language; `glossLang` (Account Hub primary) selects this row for output.
+ * Keep in sync with web `DETAIL_PEDAGOGY` / primary langs.
+ */
 const ENRICH_META: Record<
   DetailLang,
   { label: string; glossLangHint: string; exampleIn: string }
 > = {
   en: {
     label: 'English',
-    glossLangHint: 'clear English (monolingual English dictionary definitions)',
+    glossLangHint: 'clear English',
     exampleIn: 'natural English',
   },
   yue: {
     label: 'Hong Kong Cantonese (粵語)',
-    glossLangHint: 'Hong Kong Cantonese (粵語) — monolingual 粵語 explanations',
-    exampleIn: 'natural 粵語',
+    glossLangHint: 'Hong Kong Cantonese (粵語) — write glosses and notes in 粵語 Chinese characters (Jyutping is added by the client)',
+    exampleIn: 'natural 粵語 (Chinese characters)',
   },
   cmn: {
     label: 'Mandarin Chinese',
-    glossLangHint: 'Mandarin Chinese — monolingual 普通话 explanations',
-    exampleIn: 'natural Mandarin',
+    glossLangHint: 'Mandarin Chinese (普通话) — Chinese characters (pinyin is added by the client)',
+    exampleIn: 'natural Mandarin (Chinese characters)',
   },
   wuu: {
     label: 'Shanghainese (吳語)',
-    glossLangHint: 'Shanghainese (吳語) — monolingual 上海話 / 吳語 explanations',
-    exampleIn: 'natural Shanghainese',
+    glossLangHint: 'Shanghainese (吳語) — Chinese characters',
+    exampleIn: 'natural Shanghainese (Chinese characters)',
   },
   sichuan: {
     label: 'Sichuanese / Chengdu dialect (四川話)',
-    glossLangHint: 'Chengdu Sichuanese (四川話) — monolingual dialect explanations',
-    exampleIn: 'natural Chengdu Sichuanese',
+    glossLangHint: 'Chengdu Sichuanese (四川話) — Chinese characters',
+    exampleIn: 'natural Chengdu Sichuanese (Chinese characters)',
   },
   tl: {
     label: 'Tagalog / Filipino',
-    glossLangHint: 'Tagalog / Filipino — monolingual Tagalog explanations',
+    glossLangHint: 'Tagalog / Filipino',
     exampleIn: 'natural Tagalog',
   },
   es: {
     label: 'Mexican Spanish',
-    glossLangHint: 'Mexican Spanish — monolingual Spanish explanations',
+    glossLangHint: 'Mexican Spanish',
     exampleIn: 'natural Mexican Spanish',
   },
   vi: {
     label: 'Vietnamese',
-    glossLangHint: 'Vietnamese — monolingual Vietnamese explanations',
+    glossLangHint: 'Vietnamese',
     exampleIn: 'natural Vietnamese',
   },
   ceb: {
     label: 'Cebuano / Bisaya',
-    glossLangHint: 'Cebuano — monolingual Cebuano explanations',
+    glossLangHint: 'Cebuano',
     exampleIn: 'natural Cebuano',
   },
   ilo: {
     label: 'Ilocano / Ilokano',
-    glossLangHint: 'Ilocano — monolingual Ilocano explanations',
+    glossLangHint: 'Ilocano',
     exampleIn: 'natural Ilocano',
   },
 }
@@ -193,6 +204,7 @@ function parseModelEntry(raw: string): {
 async function modelEnrich(input: {
   text: string
   lang: DetailLang
+  glossLang: DetailLang
   contextText?: string
   contextLang?: DetailLang
 }): Promise<{
@@ -202,22 +214,28 @@ async function modelEnrich(input: {
   usageNotes: string[]
 } | null> {
   if (!env.openaiApiKey) return null
-  const meta = ENRICH_META[input.lang]
+  const lemmaMeta = ENRICH_META[input.lang]
+  const glossMeta = ENRICH_META[input.glossLang]
   const client = openaiClientWithKey()
   const system = [
-    `You are a learner dictionary for JyutTranslate (${meta.label}).`,
-    'Synthesize ONE unified monolingual dictionary entry for the Details panel language only.',
+    `You are a learner dictionary for JyutTranslate.`,
+    `Lemma language: ${lemmaMeta.label}. Learner primary (gloss) language: ${glossMeta.label}.`,
+    'Synthesize ONE unified dictionary entry: explain the LEMMA for a learner whose primary language is the gloss language.',
     'Return ONLY valid JSON:',
-    '{"pronunciation":"<ipa or romanization or empty>","senses":[{"gloss":"...","pos":"noun|verb|…","note":"optional"}],"examples":[{"text":"...","translation":"...","note":"optional"}],"usageNotes":["..."]}',
+    '{"pronunciation":"<lemma pronunciation: ipa or romanization or empty>","senses":[{"gloss":"...","pos":"noun|verb|…","note":"optional"}],"examples":[{"text":"...","translation":"...","note":"optional"}],"usageNotes":["..."]}',
     'Rules:',
-    `- Gloss language: ${meta.glossLangHint}.`,
-    `- Example sentence text in ${meta.exampleIn}. Optional "translation" may be a brief English gloss only when the panel language is not English; never put CONTEXT / paired-pane text there.`,
+    `- Every sense gloss, usage note, and example "text" MUST be written in: ${glossMeta.glossLangHint}.`,
+    `- Example "text" in ${glossMeta.exampleIn} — illustrate the lemma’s meaning for that learner.`,
+    `- When gloss language ≠ lemma language, optional example "translation" may briefly show a lemma-language surface form; never put CONTEXT / paired-pane text into glosses.`,
     '- CONTEXT (when provided) is ONLY for sense disambiguation (e.g. Apple fruit vs company). NEVER copy CONTEXT into gloss, examples, or usageNotes.',
-    '- Do not mix in another language’s dictionary, dialect explanations, or the paired translation as a sense.',
+    '- Do not write senses in the lemma language when a different gloss language was requested.',
+    '- For Cantonese (yue) lemmas: pronunciation MUST be "" — the client shows LSHK Jyutping + Chao; never invent IPA or Mandarin pinyin.',
+    '- Never use Mandarin pinyin for a Cantonese lemma.',
     '- 1–4 senses, 1–3 examples, 0–3 usage notes. Be concise. No markdown.',
   ].join('\n')
   const user = [
     `Lemma (${input.lang}): ${input.text}`,
+    `Gloss language (${input.glossLang}): write senses/examples/usage in this language only.`,
     input.contextText
       ? `CONTEXT for disambiguation only (${input.contextLang || 'paired'}): ${input.contextText}`
       : 'CONTEXT: (none)',
@@ -250,9 +268,11 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
   const offline = withoutPairedLeak(offlineSenses(lemma, lang), parsed.contextText)
   if (offline.length) provenance.push('lexicon')
 
+  const glossLang = parsed.glossLang || lang
   const model = await modelEnrich({
     text: lemma,
     lang,
+    glossLang,
     contextText: parsed.contextText,
     contextLang: parsed.contextLang,
   })
@@ -266,7 +286,8 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
   if (model) {
     provenance.push('ai-synthesis')
     engine = offline.length ? 'mixed' : 'openai'
-    pronunciation = model.pronunciation
+    // Cantonese: strip AI pronunciation — client Jyutping + Chao is authoritative.
+    pronunciation = lang === 'yue' ? undefined : model.pronunciation
     // Prefer model senses when present; keep offline glosses that add something new.
     const modelGlosses = withoutPairedLeak(model.senses, parsed.contextText)
     if (modelGlosses.length) {
@@ -297,6 +318,7 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
   return {
     lemma,
     lang,
+    glossLang,
     pronunciation,
     senses,
     examples,

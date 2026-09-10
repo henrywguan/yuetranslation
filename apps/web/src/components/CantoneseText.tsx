@@ -94,13 +94,13 @@ export function CantoneseText({
     </span>
   ) : null
 
-  const inlineHan =
-    jp && !popupJp ? (
+  const showRuby = Boolean((jp || segs.length) && !popupJp)
+  const inlineHan = showRuby ? (
       <span {...(phraseActivate ? {} : bind)} className={hanClass || undefined}>
         <JyutRuby
           han={trimmed}
           segs={segs}
-          size="lg"
+          size="md"
           className="jyut-ruby--hint"
         />
         {!phraseActivate ? (
@@ -113,7 +113,7 @@ export function CantoneseText({
 
   const body = (
     <span
-      className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}${jp && !popupJp ? ' cantonese-block--ruby' : ''}`}
+      className={`cantonese-block${hasMultiDef ? ' cantonese-block--multi-def' : ''}${popupJp ? ' cantonese-block--jp-popup' : ''}${showRuby ? ' cantonese-block--ruby' : ''}`}
     >
       {popupJp ? popupHan : inlineHan}
     </span>

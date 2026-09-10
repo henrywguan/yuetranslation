@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown, fetchDetailsEnrich, type DictionaryEntry } from '../lib/api'
 import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
-import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
+import { buildLocalBreakdown, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
 import { buildLocalLatinBreakdown, isLatinDetailLang } from '../lib/localLatinBreakdown'
 import { detailPedagogy } from '../lib/detailPedagogy'
 import { tagalogStressClass, tagalogStressLabel } from '../lib/tagalogPronunciation'
@@ -131,6 +131,7 @@ export function CharacterBreakdownHost() {
   const popDetail = useYueStore((s) => s.popDetail)
   const pushDetail = useYueStore((s) => s.pushDetail)
   const closeBreakdown = useYueStore((s) => s.closeBreakdown)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
   const minimizeDetail = useYueStore((s) => s.minimizeDetail)
   const restoreDetail = useYueStore((s) => s.restoreDetail)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
@@ -282,6 +283,7 @@ export function CharacterBreakdownHost() {
           lang: detailLang,
           contextText: contextText || undefined,
           contextLang,
+          glossLang: primaryLanguage,
           wantMedia: true,
         })
         if (!cancelled) setDictEntry(entry)
@@ -301,7 +303,7 @@ export function CharacterBreakdownHost() {
     return () => {
       cancelled = true
     }
-  }, [top])
+  }, [top, primaryLanguage])
 
   useEffect(() => {
     if (!top || top.kind !== 'char' || !top.jp) {
@@ -313,19 +315,19 @@ export function CharacterBreakdownHost() {
       setIpa(top.jp)
       return
     }
-    if (detailLang === 'cmn' || detailLang === 'wuu' || detailLang === 'sichuan') {
+    if (
+      detailLang === 'yue' ||
+      detailLang === 'cmn' ||
+      detailLang === 'wuu' ||
+      detailLang === 'sichuan'
+    ) {
+      // Yue: Jyutping + Chao on the title (not IPA / AI pinyin).
       // Cmn: pinyin is tone-marked in jp. Wuu: citation Wugniu lives in jp but is not IPA.
       // Sichuan: 四川话拼音 lives in jp; not Yue Jyutping for IPA lookup.
       setIpa('')
       return
     }
-    let cancelled = false
-    void ensureIpa(top.jp).then((v) => {
-      if (!cancelled) setIpa(v)
-    })
-    return () => {
-      cancelled = true
-    }
+    setIpa('')
   }, [top])
 
   useEffect(() => {
@@ -579,6 +581,7 @@ export function CharacterBreakdownHost() {
               text={topLabel}
               lang={speakLangFor(topLabel, detailLang)}
               className="detail-panel-speak"
+              showJyutpingCopy={detailLang === 'yue'}
             />
           </div>
           {isWuuDetail && phraseWuuIpa ? (
@@ -765,7 +768,7 @@ export function CharacterBreakdownHost() {
                 )}
               </DetailCollapsible>
             </div>
-            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
+            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} glossLang={primaryLanguage} />
             {isEsDetail && pedagogy.extraPanels.includes('mx-register') ? (
               <MexicanSpanishRegisterPanel
                 text={topLabel}
@@ -985,7 +988,7 @@ export function CharacterBreakdownHost() {
           </>
         ) : (
           <div className="detail-panel-char-view">
-            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
+            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} glossLang={primaryLanguage} />
             {top.sense ? (
               <section>
                 <h3>{isEnglishDetail || isLatinDetail ? 'This word' : 'This character'}</h3>

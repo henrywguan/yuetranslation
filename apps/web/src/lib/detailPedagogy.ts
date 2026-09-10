@@ -18,7 +18,7 @@ export type DetailPedagogy = {
   htmlLang: string
   /** Which pronunciation field lives in CharBreakdown.jyutping */
   pronField: DetailPronField
-  /** Learner-facing gloss language for dictionary senses (usually paired L1). */
+  /** Fallback gloss language when primary is unset; runtime prefers Account Hub primary. */
   defaultGlossLang: Lang
   /** Show Han ruby title when phrase has Han */
   rubyTitle: boolean
@@ -32,7 +32,7 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
   en: {
     htmlLang: 'en',
     pronField: 'ipa',
-    // Monolingual English Details (paired pane is header translation only).
+    // Fallback only — Details enrich uses Account Hub primary as glossLang.
     defaultGlossLang: 'en',
     rubyTitle: false,
     localOffline: true,

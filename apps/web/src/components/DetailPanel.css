@@ -397,7 +397,24 @@
 .detail-dict-senses li,
 .detail-dict-examples li,
 .detail-dict-usage li {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
+  overflow: visible;
+}
+
+.detail-dict-ex-text,
+.detail-dict-usage li,
+.detail-dict-senses li {
+  overflow: visible;
+}
+
+.detail-dict-ex-text .cantonese-block--ruby,
+.detail-dict-usage .cantonese-block--ruby,
+.detail-dict-senses .cantonese-block--ruby,
+.detail-dict-note .cantonese-block--ruby {
+  display: inline-block;
+  max-width: 100%;
+  padding-top: 0.85em;
+  line-height: 1.55;
 }
 
 .detail-dict-pos {
@@ -415,6 +432,15 @@
 
 .detail-dict-gloss {
   font-weight: 600;
+}
+
+.detail-dict-gloss .jyut-ruby,
+.detail-dict-gloss .pinyin-ruby,
+.detail-dict-ex-text .jyut-ruby,
+.detail-dict-ex-text .pinyin-ruby,
+.detail-dict-usage .jyut-ruby,
+.detail-dict-usage .pinyin-ruby {
+  font-weight: inherit;
 }
 
 .detail-dict-note {
