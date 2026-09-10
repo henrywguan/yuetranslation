@@ -809,6 +809,12 @@ button.jyutping {
   transform: none;
 }
 
+.copy-btn.is-locked {
+  opacity: 0.45;
+  /* Still clickable — opens Family upgrade */
+  cursor: pointer;
+}
+
 /* Jyutping + Chao: document-style icon — slightly softer rim vs Han dual-page copy */
 .copy-btn--jyutping {
   border-style: dashed;

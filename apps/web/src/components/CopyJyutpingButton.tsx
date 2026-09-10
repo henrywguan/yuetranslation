@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { openUpgrade } from '../lib/billing'
 import { hasHan } from '../lib/jyutping'
 import { copyableJyutpingChao } from '../lib/copyText'
+import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 
 async function writeClipboard(payload: string) {
@@ -19,9 +21,15 @@ async function writeClipboard(payload: string) {
   }
 }
 
+function canCopyJyutping(plan: string | undefined): boolean {
+  // Family+ — Business includes everything in Family (same as auto-speak).
+  return plan === 'family' || plan === 'business'
+}
+
 /**
  * Copies Jyutping + LSHK Chao tone letters for Cantonese creators
  * (e.g. `teng1˥ m4˨˩ teng1˥ dou3˧`). Distinct icon from Han CopyButton.
+ * Locked to Family/Business — tap opens upgrade when on Free/guest.
  */
 export function CopyJyutpingButton({
   text,
@@ -31,22 +39,32 @@ export function CopyJyutpingButton({
   className?: string
 }) {
   const trimmed = text.trim()
+  const entitlement = useYueStore((s) => s.entitlement)
+  const unlocked = !entitlement || canCopyJyutping(entitlement.plan)
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
 
   if (!trimmed || !hasHan(trimmed)) return null
 
-  const label = copied ? ui.copiedJyutping : ui.copyJyutping
+  const label = !unlocked
+    ? ui.copyJyutpingFamily
+    : copied
+      ? ui.copiedJyutping
+      : ui.copyJyutping
 
   return (
     <button
       type="button"
-      className={`copy-btn copy-btn--jyutping${copied ? ' is-copied' : ''}${busy ? ' is-busy' : ''} ${className}`.trim()}
+      className={`copy-btn copy-btn--jyutping${copied ? ' is-copied' : ''}${busy ? ' is-busy' : ''}${!unlocked ? ' is-locked' : ''} ${className}`.trim()}
       aria-label={biPlain(label)}
       title={biPlain(label)}
       disabled={busy}
       onClick={(e) => {
         e.stopPropagation()
+        if (!unlocked) {
+          void openUpgrade('family')
+          return
+        }
         if (busy) return
         void (async () => {
           setBusy(true)
