@@ -81,7 +81,7 @@ async function runCase(apple: boolean) {
   )
   writeFileSync(
     join(dir, 'types.ts'),
-    `export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+    `export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi'
 export type LiveSession = { start(): Promise<void>; stop(): Promise<void>; setPlaybackActive(a: boolean): void }
 export type SpeechEventHandlers = {
   onInterim: (lang: Lang, text: string) => void
@@ -141,6 +141,23 @@ export type SpeechEventHandlers = {
   assert.equal(instances[2]?.lang, 'zh-HK', 'Cantonese lock must use zh-HK, not English')
   assert.equal(instances[2]?.continuous, true, 'Yue tap-to-talk must stay continuous like English')
   await yueSession!.stop()
+
+  const sichuanSession = createWebSpeechSession(
+    {
+      onInterim: () => {},
+      onFinal: () => {},
+      onError: () => {},
+      onStatus: () => {},
+    },
+    'sichuan',
+  )
+  await sichuanSession!.start()
+  assert.equal(
+    instances[3]?.lang,
+    'zh-CN-sichuan',
+    'Sichuanese lock must use zh-CN-sichuan',
+  )
+  await sichuanSession!.stop()
 
   if (apple) {
     for (const lang of ['yue', 'en', 'es'] as const) {

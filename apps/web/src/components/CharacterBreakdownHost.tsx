@@ -34,6 +34,7 @@ import { BiText } from './BiText'
 import { SpeakButton } from './SpeakButton'
 import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
+import { SichuaneseText } from './SichuaneseText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { DetailDictionaryPanel } from './DetailDictionaryPanel'
 import { detailEmojiFor } from '../lib/detailEmoji'
@@ -390,10 +391,16 @@ export function CharacterBreakdownHost() {
       : top.jp?.trim() || ''
   const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
   const phraseWuuIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
-  // Sichuanese uses per-char 四川话拼音 ruby (not gloss-only like wuu).
+  const phraseSichuanRom = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
+  // Sichuanese title uses SichuaneseText (Han + 四川话拼音), not Yue JyutRuby.
   const showRubyTitle =
-    !isEnglishDetail && !isWuuDetail && !isLatinDetail && hasHan(topLabel)
+    !isEnglishDetail &&
+    !isWuuDetail &&
+    !isSichuanDetail &&
+    !isLatinDetail &&
+    hasHan(topLabel)
   const showWuuTitle = isWuuDetail && hasHan(topLabel)
+  const showSichuanTitle = isSichuanDetail && hasHan(topLabel)
   const phraseIpa =
     isEnglishDetail && top.kind === 'phrase'
       ? rows
@@ -409,7 +416,7 @@ export function CharacterBreakdownHost() {
           .join(' ')
       : ''
   const titleSegs: JyutSeg[] | PinyinSeg[] | undefined =
-    isWuuDetail
+    isWuuDetail || isSichuanDetail
       ? undefined
       : top.kind === 'char' && top.jp
         ? isCmnDetail
@@ -486,7 +493,7 @@ export function CharacterBreakdownHost() {
                     ? 'es-MX'
                     : isViDetail
                       ? 'vi'
-                      : top.kind === 'char' || showRubyTitle || showWuuTitle
+                      : top.kind === 'char' || showRubyTitle || showWuuTitle || showSichuanTitle
                       ? isWuuDetail
                         ? 'wuu-CN'
                         : isSichuanDetail
@@ -505,6 +512,12 @@ export function CharacterBreakdownHost() {
                   showSandhiHint
                   className="detail-panel-title-han"
                 />
+              ) : showSichuanTitle ? (
+                <SichuaneseText
+                  text={topLabel}
+                  romanization={phraseSichuanRom || undefined}
+                  className="detail-panel-title-han"
+                />
               ) : showRubyTitle ? (
                 <span
                   {...titleJpBind}
@@ -513,9 +526,7 @@ export function CharacterBreakdownHost() {
                   aria-label={
                     isCmnDetail
                       ? `Show pinyin for ${topLabel}`
-                      : isSichuanDetail
-                        ? `Show Sichuanese Pinyin for ${topLabel}`
-                        : `Show Jyutping for ${topLabel}`
+                      : `Show Jyutping for ${topLabel}`
                   }
                 >
                   {isCmnDetail ? (
@@ -710,7 +721,7 @@ export function CharacterBreakdownHost() {
                     <TranslationAlternatives
                       alternatives={alternatives}
                       alternativeRomanizations={
-                        isWuuDetail ? alternativeRomanizations : undefined
+                        isWuuDetail || isSichuanDetail ? alternativeRomanizations : undefined
                       }
                       lang={
                         isEnglishDetail
@@ -912,7 +923,7 @@ export function CharacterBreakdownHost() {
                               ) : isSichuanDetail ? (
                                 <span
                                   className="detail-panel-ipa"
-                                  lang="en"
+                                  lang="zh-Latn-CN-sichuan"
                                   title="四川话拼音"
                                 >
                                   {row.jyutping}

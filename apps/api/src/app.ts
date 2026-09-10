@@ -359,19 +359,22 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
           ? 'zh-CN'
           : lang === 'wuu' || lang === 'wuu-CN'
             ? 'wuu-CN'
-            : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
-              ? 'fil-PH'
-              : lang === 'es' || lang === 'es-MX' || lang === 'es-mx'
-                ? 'es-MX'
-                : lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
-                  ? 'vi-VN'
-                  : 'zh-HK'
+            : lang === 'sichuan' || lang === 'zh-CN-sichuan'
+              ? 'zh-CN-sichuan'
+              : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
+                ? 'fil-PH'
+                : lang === 'es' || lang === 'es-MX' || lang === 'es-mx'
+                  ? 'es-MX'
+                  : lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
+                    ? 'vi-VN'
+                    : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
       preferredEn: ent.prefs?.ttsVoiceEn,
       preferredCmn: ent.prefs?.ttsVoiceCmn,
       preferredWuu: null,
+      preferredSichuan: null,
       preferredTl: ent.prefs?.ttsVoiceTl,
       preferredEs: ent.prefs?.ttsVoiceEs,
       preferredVi: ent.prefs?.ttsVoiceVi,
@@ -535,9 +538,9 @@ app.patch('/api/prefs/primary-lang', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   const { normalizePrimaryLang } = await import('./entitlements.js')
   const raw = req.body?.primaryLang
-  const allowed = ['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi']
+  const allowed = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi']
   if (typeof raw !== 'string' || !allowed.includes(raw)) {
-    res.status(400).json({ message: 'primaryLang must be en, yue, cmn, wuu, tl, es, or vi.' })
+    res.status(400).json({ message: 'primaryLang must be en, yue, cmn, wuu, sichuan, tl, es, or vi.' })
     return
   }
   const primaryLang = normalizePrimaryLang(raw)

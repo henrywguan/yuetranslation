@@ -1,6 +1,7 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
+import { SichuaneseText } from './SichuaneseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
@@ -13,6 +14,7 @@ function langShort(lang: Lang): string {
   if (lang === 'en') return 'EN'
   if (lang === 'cmn') return '普'
   if (lang === 'wuu') return '沪'
+  if (lang === 'sichuan') return '川'
   if (lang === 'tl') return 'TL'
   if (lang === 'es') return 'Mx'
   if (lang === 'vi') return 'Vi'
@@ -61,6 +63,16 @@ function LangLine({
   if (lang === 'wuu') {
     return (
       <ShanghaineseText
+        text={text}
+        romanization={romanization}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
+  if (lang === 'sichuan') {
+    return (
+      <SichuaneseText
         text={text}
         romanization={romanization}
         className="history-card-line"
@@ -140,6 +152,7 @@ function langLabel(lang: Lang) {
   if (lang === 'en') return <BiText copy={ui.english} size="sm" only="en" />
   if (lang === 'cmn') return <BiText copy={ui.dirMandarin} size="sm" only="zh" />
   if (lang === 'wuu') return <BiText copy={ui.dirShanghainese} size="sm" only="zh" />
+  if (lang === 'sichuan') return <BiText copy={ui.dirSichuanese} size="sm" only="zh" />
   if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
   if (lang === 'es') return <BiText copy={ui.dirMexicanSpanish} size="sm" />
   if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
@@ -165,6 +178,7 @@ export function HistoryCard({
     turn.to === 'yue' ||
     turn.to === 'cmn' ||
     turn.to === 'wuu' ||
+    turn.to === 'sichuan' ||
     turn.to === 'tl' ||
     turn.to === 'es' ||
     turn.to === 'vi'
@@ -172,6 +186,7 @@ export function HistoryCard({
       : turn.from === 'yue' ||
           turn.from === 'cmn' ||
           turn.from === 'wuu' ||
+          turn.from === 'sichuan' ||
           turn.from === 'tl' ||
           turn.from === 'es' ||
           turn.from === 'vi'
@@ -240,9 +255,16 @@ export function HistoryCard({
                 text={turn.source}
                 definition={turn.definition}
                 definitions={
-                  turn.from === 'yue' || turn.from === 'cmn' || turn.from === 'wuu' ? yueDefs : undefined
+                  turn.from === 'yue' ||
+                  turn.from === 'cmn' ||
+                  turn.from === 'wuu' ||
+                  turn.from === 'sichuan'
+                    ? yueDefs
+                    : undefined
                 }
-                romanization={turn.from === 'wuu' ? turn.romanization : undefined}
+                romanization={
+                  turn.from === 'wuu' || turn.from === 'sichuan' ? turn.romanization : undefined
+                }
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -259,9 +281,16 @@ export function HistoryCard({
                 text={turn.translation}
                 definition={turn.definition}
                 definitions={
-                  turn.to === 'yue' || turn.to === 'cmn' || turn.to === 'wuu' ? yueDefs : undefined
+                  turn.to === 'yue' ||
+                  turn.to === 'cmn' ||
+                  turn.to === 'wuu' ||
+                  turn.to === 'sichuan'
+                    ? yueDefs
+                    : undefined
                 }
-                romanization={turn.to === 'wuu' ? turn.romanization : undefined}
+                romanization={
+                  turn.to === 'wuu' || turn.to === 'sichuan' ? turn.romanization : undefined
+                }
                 onBreakdown={onBreakdown}
               />
             </div>
@@ -307,6 +336,14 @@ export function HistoryCard({
                       />
                     ) : turn.to === 'wuu' ? (
                       <ShanghaineseText
+                        text={alt}
+                        romanization={turn.alternativeRomanizations?.[i]}
+                        showSchemeLabel={false}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
+                      />
+                    ) : turn.to === 'sichuan' ? (
+                      <SichuaneseText
                         text={alt}
                         romanization={turn.alternativeRomanizations?.[i]}
                         showSchemeLabel={false}

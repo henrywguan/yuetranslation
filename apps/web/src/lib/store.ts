@@ -176,7 +176,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -371,6 +371,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'yue') return 'yue'
   if (direction === 'cmn') return 'cmn'
   if (direction === 'wuu') return 'wuu'
+  if (direction === 'sichuan') return 'sichuan'
   if (direction === 'tl') return 'tl'
   if (direction === 'es') return 'es'
   if (direction === 'vi') return 'vi'
@@ -632,7 +633,13 @@ export const useYueStore = create<State>((set, get) => {
   },
   setSpeakDirection: (speakDirection) =>
     set(
-      speakDirection !== 'en'
+      speakDirection === 'yue' ||
+      speakDirection === 'cmn' ||
+      speakDirection === 'wuu' ||
+      speakDirection === 'sichuan' ||
+      speakDirection === 'tl' ||
+      speakDirection === 'es' ||
+      speakDirection === 'vi'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -733,7 +740,7 @@ export const useYueStore = create<State>((set, get) => {
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'vi'
         ? { chineseLang: lang }
         : {}
     const nextSpeak = resolveSpeakDirectionForSolo({
@@ -1014,7 +1021,7 @@ export const useYueStore = create<State>((set, get) => {
     const apple = isAppleTouchDevice()
     const bargingIn = isTtsPlaying() || get().status === 'speaking'
     const appleFollowUp = apple && appleMicTurns > 0
-    // Resolve pane lock before choosing STT engine — Tagalog / Wu need Azure
+    // Resolve pane lock before choosing STT engine — Tagalog / Wu / Sichuan need Azure
     // fixed-locale on iPhone (Safari Web Speech returns service-not-allowed).
     const direction = get().speakDirection
     const intendedLock: Lang | undefined =
@@ -1023,12 +1030,13 @@ export const useYueStore = create<State>((set, get) => {
       direction === 'yue' ||
       direction === 'cmn' ||
       direction === 'wuu' ||
+      direction === 'sichuan' ||
       direction === 'tl' ||
       direction === 'es' ||
       direction === 'vi'
         ? direction
         : undefined)
-    // Yue/En/… stay on Web Speech. tl/wuu use Azure fixed locale (never LID).
+    // Yue/En/… stay on Web Speech. tl/wuu/sichuan use Azure fixed locale (never LID).
     const webSpeechFirst =
       apple && appleLiveUsesWebSpeech(intendedLock) && !liveSessionFactory
     if (apple && appleNeedsAzureStt(intendedLock)) {
@@ -1202,7 +1210,7 @@ export const useYueStore = create<State>((set, get) => {
       const d = get().speakDirection
       return (
         lock ||
-        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'tl' || d === 'es' || d === 'vi'
+        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'sichuan' || d === 'tl' || d === 'es' || d === 'vi'
           ? d
           : undefined)
       )
@@ -1550,7 +1558,7 @@ export const useYueStore = create<State>((set, get) => {
     const nextAltRoms = nextAlts.map((a) => romByPhrase.get(a) || '')
 
     const history = get().history
-    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'vi')
+    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'vi')
     const nextHistory =
       zhTargets
         ? [

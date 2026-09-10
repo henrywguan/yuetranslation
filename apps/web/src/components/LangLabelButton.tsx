@@ -12,6 +12,7 @@ const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
   { id: 'yue', copy: ui.cantonese, mark: '粵' },
   { id: 'cmn', copy: ui.dirMandarin, mark: '普' },
   { id: 'wuu', copy: ui.dirShanghainese, mark: '沪' },
+  { id: 'sichuan', copy: ui.dirSichuanese, mark: '川' },
   { id: 'tl', copy: ui.dirTagalog, mark: 'Tl' },
   { id: 'es', copy: ui.dirMexicanSpanish, mark: 'Mx' },
   { id: 'vi', copy: ui.dirVietnamese, mark: 'Vi' },
@@ -73,6 +74,7 @@ export function LangLabelButton({
               o.id === 'yue' ||
               o.id === 'cmn' ||
               o.id === 'wuu' ||
+              o.id === 'sichuan' ||
               o.id === 'tl' ||
               o.id === 'es' ||
               o.id === 'vi' ||
@@ -148,7 +150,11 @@ export function LangLabelButton({
       ? 'en'
       : current.id === 'tl' || current.id === 'es' || current.id === 'vi'
         ? undefined
-        : only === 'zh' || current.id === 'yue' || current.id === 'cmn' || current.id === 'wuu'
+        : only === 'zh' ||
+            current.id === 'yue' ||
+            current.id === 'cmn' ||
+            current.id === 'wuu' ||
+            current.id === 'sichuan'
           ? 'zh'
           : undefined
 

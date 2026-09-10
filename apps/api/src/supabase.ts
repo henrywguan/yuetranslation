@@ -74,6 +74,7 @@ function normalizeProfile(data: unknown): ProfileRow {
     row.primary_lang === 'en' ||
     row.primary_lang === 'cmn' ||
     row.primary_lang === 'wuu' ||
+    row.primary_lang === 'sichuan' ||
     row.primary_lang === 'tl' ||
     row.primary_lang === 'es' ||
     row.primary_lang === 'vi' ||

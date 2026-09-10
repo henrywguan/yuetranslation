@@ -2,17 +2,17 @@ import type { Lang } from './types'
 
 /**
  * Safari Web Speech has no reliable STT for these locales (Tagalog →
- * `service-not-allowed`; Shanghainese unsupported). Use Azure with a
- * **fixed** locale on iPhone — never LID — so English cannot leak onto
+ * `service-not-allowed`; Shanghainese / Sichuanese unsupported). Use Azure
+ * with a **fixed** locale on iPhone — never LID — so English cannot leak onto
  * a Cantonese-locked pane.
  */
 export function appleNeedsAzureStt(lockLang?: Lang | null): boolean {
-  return lockLang === 'tl' || lockLang === 'wuu'
+  return lockLang === 'tl' || lockLang === 'wuu' || lockLang === 'sichuan'
 }
 
 /**
  * iPhone live STT stays on Web Speech for Yue / En / Cmn / Es / Vi.
- * Tagalog + Shanghainese use Azure fixed-locale instead (see above).
+ * Tagalog + Shanghainese + Sichuanese use Azure fixed-locale instead (see above).
  */
 export function appleLiveUsesWebSpeech(lockLang?: Lang | null): boolean {
   return !appleNeedsAzureStt(lockLang)
@@ -25,7 +25,7 @@ export function applePrefetchesSpeechToken(lockLang?: Lang | null): boolean {
 
 /**
  * iOS must not fall through to Azure LID when Web Speech fails for Yue/En.
- * Tagalog / Wu may use Azure fixed-locale when Web Speech cannot start.
+ * Tagalog / Wu / Sichuan may use Azure fixed-locale when Web Speech cannot start.
  */
 export function appleFallsBackToAzure(lockLang?: Lang | null): boolean {
   return appleNeedsAzureStt(lockLang)
@@ -58,7 +58,7 @@ export function shouldDeferTtsStopUntilSttStarts(opts: {
  * Vercel’s security checkpoint after 2–3 translations.
  *
  * `speechToken` stays false for the default Yue/En Web Speech path.
- * Tagalog / Wu mint a token only when `appleNeedsAzureStt` applies.
+ * Tagalog / Wu / Sichuan mint a token only when `appleNeedsAzureStt` applies.
  */
 export const APPLE_LIVE_TURN_API = {
   translate: true,

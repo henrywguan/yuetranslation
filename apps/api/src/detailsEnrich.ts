@@ -13,7 +13,7 @@ import { lookupGloss } from './canto/gloss.js'
 import { hasHan } from './canto/han.js'
 import { resolveDictionaryMedia, type DictionaryMedia } from './detailsMedia.js'
 
-export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi', 'ceb', 'ilo'])
+export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo'])
 export type DetailLang = z.infer<typeof DetailLangSchema>
 
 const EnrichBody = z.object({
@@ -77,6 +77,11 @@ const ENRICH_META: Record<
     glossLangHint: 'clear English',
     exampleIn: 'natural Shanghainese or Mandarin with a note',
   },
+  sichuan: {
+    label: 'Sichuanese / Chengdu dialect (四川話)',
+    glossLangHint: 'clear English',
+    exampleIn: 'natural Chengdu Sichuanese or Mandarin with a note',
+  },
   tl: {
     label: 'Tagalog / Filipino',
     glossLangHint: 'clear English',
@@ -136,7 +141,7 @@ function offlineSenses(text: string, lang: DetailLang, contextText?: string): Di
         cantoneseGlossForEnglish(lemma.toLowerCase()) || cantoneseGlossForEnglish(lemma)
       if (gloss) push(gloss, 'Lexicon')
     }
-  } else if (lang === 'yue' || lang === 'cmn' || lang === 'wuu') {
+  } else if (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan') {
     const hit = lookupGloss(lemma)
     if (hit?.gloss) {
       const first = hit.gloss.replace(/^\([^)]+\)\s*/, '').split(/;\s*/)[0]?.trim() || hit.gloss

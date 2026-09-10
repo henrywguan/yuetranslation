@@ -20,6 +20,7 @@ export function createWebSpeechSession(
   let yueLocaleIndex = 0
   let cmnLocaleIndex = 0
   let wuuLocaleIndex = 0
+  let sichuanLocaleIndex = 0
   let tlLocaleIndex = 0
   let esLocaleIndex = 0
   let viLocaleIndex = 0
@@ -29,6 +30,7 @@ export function createWebSpeechSession(
   const yueLocales = ['zh-HK', 'yue-HK', 'yue-Hant-HK', 'zh-TW']
   const cmnLocales = ['zh-CN', 'zh-Hans-CN', 'cmn-Hans-CN', 'zh']
   const wuuLocales = ['wuu-CN', 'zh-CN']
+  const sichuanLocales = ['zh-CN-sichuan', 'zh-CN']
   const tlLocales = ['fil-PH', 'tl-PH', 'fil']
   const esLocales = ['es-MX', 'es-US', 'es']
   const viLocales = ['vi-VN', 'vi']
@@ -36,6 +38,7 @@ export function createWebSpeechSession(
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
   const wuuLocale = () => wuuLocales[wuuLocaleIndex % wuuLocales.length]
+  const sichuanLocale = () => sichuanLocales[sichuanLocaleIndex % sichuanLocales.length]
   const tlLocale = () => tlLocales[tlLocaleIndex % tlLocales.length]
   const esLocale = () => esLocales[esLocaleIndex % esLocales.length]
   const viLocale = () => viLocales[viLocaleIndex % viLocales.length]
@@ -53,13 +56,15 @@ export function createWebSpeechSession(
           ? cmnLocale()
           : activeLang === 'wuu'
             ? wuuLocale()
-            : activeLang === 'tl'
-              ? tlLocale()
-              : activeLang === 'es'
-                ? esLocale()
-                : activeLang === 'vi'
-                  ? viLocale()
-                  : 'en-US'
+            : activeLang === 'sichuan'
+              ? sichuanLocale()
+              : activeLang === 'tl'
+                ? tlLocale()
+                : activeLang === 'es'
+                  ? esLocale()
+                  : activeLang === 'vi'
+                    ? viLocale()
+                    : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -103,6 +108,15 @@ export function createWebSpeechSession(
       }
       if (localeRejected && activeLang === 'wuu' && wuuLocaleIndex < wuuLocales.length - 1) {
         wuuLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (
+        localeRejected &&
+        activeLang === 'sichuan' &&
+        sichuanLocaleIndex < sichuanLocales.length - 1
+      ) {
+        sichuanLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
@@ -194,6 +208,7 @@ export function createWebSpeechSession(
       yueLocaleIndex = 0
       cmnLocaleIndex = 0
       wuuLocaleIndex = 0
+      sichuanLocaleIndex = 0
       tlLocaleIndex = 0
       esLocaleIndex = 0
       viLocaleIndex = 0

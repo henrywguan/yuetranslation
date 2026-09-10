@@ -19,7 +19,7 @@ const AUTO_TRANSLATE_MS = 2000
 function isWorthAutoTranslate(value: string, from: Lang): boolean {
   const t = value.trim()
   if (!t) return false
-  if (from === 'yue' || from === 'cmn' || from === 'wuu') {
+  if (from === 'yue' || from === 'cmn' || from === 'wuu' || from === 'sichuan') {
     return /[\u4e00-\u9fff]/.test(t) || t.length >= 2
   }
   const letters = t.replace(/[^\p{L}\p{N}]+/gu, '')
@@ -46,6 +46,7 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'vi') return 'Speak Vietnamese with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
+  if (lang === 'sichuan') return 'Speak Sichuanese with the mic'
   return 'Speak Cantonese with the mic'
 }
 
@@ -135,7 +136,7 @@ export function SoloView() {
     ? yueAlternatives
     : yueAlternatives.length
       ? yueAlternatives
-      : latest && (latest.to === soloLowerLang || latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu')
+      : latest && (latest.to === soloLowerLang || latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan')
         ? latest.alternatives || []
         : []
 
@@ -338,7 +339,11 @@ export function SoloView() {
     if (!phrase) return
     const isZhTarget =
       latest?.to === paneLang ||
-      (pane === 'lower' && (soloLowerLang === 'yue' || soloLowerLang === 'cmn' || soloLowerLang === 'wuu'))
+      (pane === 'lower' &&
+        (soloLowerLang === 'yue' ||
+          soloLowerLang === 'cmn' ||
+          soloLowerLang === 'wuu' ||
+          soloLowerLang === 'sichuan'))
     openBreakdown(phrase, {
       lang: paneLang,
       translation: other || undefined,
@@ -352,10 +357,14 @@ export function SoloView() {
             ? enDefinitions
             : undefined
           : lowerDefs,
-      romanization: paneLang === 'wuu' ? latest?.romanization : undefined,
+      romanization:
+        paneLang === 'wuu' || paneLang === 'sichuan' ? latest?.romanization : undefined,
       sandhiHint: paneLang === 'wuu' ? latest?.sandhiHint : undefined,
       ipa: paneLang === 'wuu' ? latest?.ipa : undefined,
-      alternativeRomanizations: paneLang === 'wuu' ? latest?.alternativeRomanizations : undefined,
+      alternativeRomanizations:
+        paneLang === 'wuu' || paneLang === 'sichuan'
+          ? latest?.alternativeRomanizations
+          : undefined,
       alternatives:
         paneLang === 'en'
           ? enAlternatives.length
@@ -378,6 +387,7 @@ export function SoloView() {
     (soloLowerLang === 'yue' ||
       soloLowerLang === 'cmn' ||
       soloLowerLang === 'wuu' ||
+      soloLowerLang === 'sichuan' ||
       soloLowerLang === 'tl' ||
       soloLowerLang === 'es' ||
       soloLowerLang === 'vi' ||
@@ -390,6 +400,7 @@ export function SoloView() {
     (soloUpperLang === 'yue' ||
       soloUpperLang === 'cmn' ||
       soloUpperLang === 'wuu' ||
+      soloUpperLang === 'sichuan' ||
       soloUpperLang === 'tl' ||
       soloUpperLang === 'es' ||
       soloUpperLang === 'vi' ||
@@ -421,7 +432,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'ceb' || lang === 'ilo')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'ceb' || lang === 'ilo')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
@@ -432,7 +443,9 @@ export function SoloView() {
             definition={def}
             definitions={defs}
             chineseLang={lang}
-            romanization={lang === 'wuu' ? latest?.romanization : undefined}
+            romanization={
+              lang === 'wuu' || lang === 'sichuan' ? latest?.romanization : undefined
+            }
             textClassName="solo-tr-text"
             onActivate={() => openPaneDetails(pane)}
             showCopy
@@ -445,7 +458,11 @@ export function SoloView() {
           {paneAlts.length > 0 ? (
             <TranslationAlternatives
               alternatives={paneAlts}
-              alternativeRomanizations={lang === 'wuu' ? latest?.alternativeRomanizations : undefined}
+              alternativeRomanizations={
+                lang === 'wuu' || lang === 'sichuan'
+                  ? latest?.alternativeRomanizations
+                  : undefined
+              }
               lang={lang}
               onSelect={selectYueVariation}
             />
@@ -649,12 +666,17 @@ export function SoloView() {
           (soloLowerLang === 'yue' ||
             soloLowerLang === 'cmn' ||
             soloLowerLang === 'wuu' ||
+            soloLowerLang === 'sichuan' ||
             soloLowerLang === 'tl' ||
             soloLowerLang === 'es' ||
             soloLowerLang === 'vi') ? (
             <TranslationAlternatives
               alternatives={alts}
-              alternativeRomanizations={soloLowerLang === 'wuu' ? latest?.alternativeRomanizations : undefined}
+              alternativeRomanizations={
+                soloLowerLang === 'wuu' || soloLowerLang === 'sichuan'
+                  ? latest?.alternativeRomanizations
+                  : undefined
+              }
               lang={soloLowerLang}
               onSelect={selectYueVariation}
             />

@@ -334,6 +334,7 @@ export const ui = {
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   dirShanghainese: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
+  dirSichuanese: { en: 'Sichuanese', zh: '四川話', jp: 'sei3 cyun1 waa2' },
   dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   dirMexicanSpanish: { en: 'Spanish(MX)', zh: '西班牙語（MX）', jp: 'sai1 baan1 ngaa4 jyu5 (MX)' },
   dirVietnamese: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
@@ -636,6 +637,7 @@ export const ui = {
   accountTtsEs: { en: 'Spanish(MX)', zh: '西班牙語（MX）', jp: 'sai1 baan1 ngaa4 jyu5 (MX)' },
   accountTtsVi: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
   accountTtsWuu: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
+  accountTtsSichuan: { en: 'Sichuanese', zh: '四川話', jp: 'sei3 cyun1 waa2' },
   accountTtsPreview: { en: 'Preview', zh: '試聽', jp: 'si3 teng1' },
   accountTtsVoiceSettings: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
   accountTtsVoiceModalTitle: { en: 'Voice settings', zh: '語音設定', jp: 'jyu5 jam1 cit3 ding6' },
@@ -1210,6 +1212,7 @@ export const ui = {
   cmpSandhi: { en: 'Sandhi domain', zh: '連讀變調域', jp: 'lin4 duk6 bin3 diu6 wik6' },
   cmpIpa: { en: 'IPA pronunciation', zh: '國際音標', jp: 'gwok3 zai3 jam1 biu1' },
   camTargetWuu: { en: 'To Shanghainese', zh: '譯成上海話', jp: 'jik6 sing4 soeng6 hoi2 waa2' },
+  camTargetSichuan: { en: 'To Sichuanese', zh: '譯成四川話', jp: 'jik6 sing4 sei3 cyun1 waa2' },
   cmpModes: {
     en: 'Solo · Conversation · Cam',
     zh: '獨白 · 對話 · 相機',
