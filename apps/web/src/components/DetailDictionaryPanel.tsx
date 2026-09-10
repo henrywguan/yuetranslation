@@ -55,7 +55,7 @@ function GlossLine({
 export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
   if (loading && !entry) {
     return (
-      <DetailCollapsible title={ui.detailDictionary} className="detail-dict" defaultOpen>
+      <DetailCollapsible title={ui.detailDictionary} className="detail-dict" defaultOpen={false}>
         <p className="muted" aria-busy="true">
           <BiText copy={ui.detailDictionaryLoading} size="sm" />
         </p>
@@ -79,7 +79,7 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
     <DetailCollapsible
       title={ui.detailDictionary}
       className="detail-dict"
-      defaultOpen
+      defaultOpen={false}
       meta={
         entry.provenance.length ? entry.provenance.join(' · ') : undefined
       }
