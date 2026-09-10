@@ -10,6 +10,7 @@ import {
   liveMicLabel,
   type LiveMicKey,
 } from '../lib/conversationUi'
+import { isConversationLang } from '../lib/langCapabilities'
 import type { Lang } from '../lib/types'
 
 /**
@@ -49,6 +50,7 @@ type Props = {
 
 function pickLabel(key: LiveMicKey, labelLang: Props['labelLang']): string {
   if (!labelLang || labelLang === 'bi') return biPlain(ui[key])
+  if (!isConversationLang(labelLang)) return biPlain(ui[key])
   return liveMicLabel(key, labelLang)
 }
 

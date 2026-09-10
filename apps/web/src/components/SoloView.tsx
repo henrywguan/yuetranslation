@@ -5,8 +5,10 @@ import { ClearIconButton } from './ClearIconButton'
 import { LangLabelButton } from './LangLabelButton'
 import { ResultWithDefinition } from './ResultWithDefinition'
 import { SpeakButton } from './SpeakButton'
+import { SoloTextOnlyLangTip } from './TextOnlyLangTip'
 import { TranslateThinking } from './TranslateThinking'
 import { TranslationAlternatives } from './TranslationAlternatives'
+import { isTextOnlyLang, isVoiceLang } from '../lib/langCapabilities'
 import { useYueStore } from '../lib/store'
 import { consumePendingShareText } from '../lib/pwaLaunch'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -29,11 +31,15 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'tl') return 'Mag-type ng Tagalog…'
   if (lang === 'es') return 'Escribe en español mexicano…'
   if (lang === 'vi') return 'Nhập tiếng Việt…'
+  if (lang === 'ceb') return 'I-type ang Cebuano…'
+  if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
 }
 
 function ariaForPane(lang: Lang): string {
+  if (lang === 'ceb') return 'Type Cebuano'
+  if (lang === 'ilo') return 'Type Ilocano'
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'es') return 'Speak Spanish(MX) with the mic'
@@ -243,6 +249,25 @@ export function SoloView() {
   }, [soloUpperLang, soloLowerLang])
 
 
+  const activatePane = (pane: 'upper' | 'lower') => {
+    const lang = pane === 'upper' ? soloUpperLang : soloLowerLang
+    const other = pane === 'upper' ? soloLowerLang : soloUpperLang
+    if (isTextOnlyLang(lang)) {
+      if (isVoiceLang(other)) setSpeakDirection(other)
+      if (pane === 'upper') {
+        editingRef.current = 'upper'
+        setUpperEditing(true)
+        queueMicrotask(() => upperInputRef.current?.focus())
+      } else {
+        editingRef.current = 'lower'
+        setLowerEditing(true)
+        queueMicrotask(() => lowerInputRef.current?.focus())
+      }
+      return
+    }
+    setSpeakDirection(lang)
+  }
+
   const onPaneLangSelect = (pane: 'upper' | 'lower', lang: Lang) => {
     const thisLang = pane === 'upper' ? soloUpperLang : soloLowerLang
     const otherLang = pane === 'upper' ? soloLowerLang : soloUpperLang
@@ -266,6 +291,9 @@ export function SoloView() {
       setUpperEditing(false)
       setLowerEditing(false)
       setSoloPaneLang(pane, lang)
+      if (isTextOnlyLang(lang)) {
+        queueMicrotask(() => activatePane(pane))
+      }
       return
     }
 
@@ -285,6 +313,9 @@ export function SoloView() {
       runTranslate(otherText, otherLang, 0, true)
     } else {
       setTypedBusy(false)
+    }
+    if (isTextOnlyLang(lang)) {
+      queueMicrotask(() => activatePane(pane))
     }
   }
 
@@ -349,7 +380,9 @@ export function SoloView() {
       soloLowerLang === 'wuu' ||
       soloLowerLang === 'tl' ||
       soloLowerLang === 'es' ||
-      soloLowerLang === 'vi') &&
+      soloLowerLang === 'vi' ||
+      soloLowerLang === 'ceb' ||
+      soloLowerLang === 'ilo') &&
     Boolean(lowerDraft.trim()) &&
     !lowerEditing &&
     (!inputLocked || Boolean(yueInterim.trim()))
@@ -359,7 +392,9 @@ export function SoloView() {
       soloUpperLang === 'wuu' ||
       soloUpperLang === 'tl' ||
       soloUpperLang === 'es' ||
-      soloUpperLang === 'vi') &&
+      soloUpperLang === 'vi' ||
+      soloUpperLang === 'ceb' ||
+      soloUpperLang === 'ilo') &&
     Boolean(upperDraft.trim()) &&
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
@@ -386,7 +421,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'ceb' || lang === 'ilo')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
@@ -457,6 +492,7 @@ export function SoloView() {
 
   return (
     <div className="solo">
+      <SoloTextOnlyLangTip />
       <motion.div
         className={`solo-stage ${live ? 'live' : ''} status-${status}`}
         animate={
@@ -481,13 +517,13 @@ export function SoloView() {
           onClick={(e) => {
             const t = e.target as HTMLElement
             if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
-            setSpeakDirection(soloUpperLang)
+            activatePane('upper')
           }}
           onKeyDown={(e) => {
             if (e.key !== 'Enter' && e.key !== ' ') return
             if (e.target !== e.currentTarget) return
             e.preventDefault()
-            setSpeakDirection(soloUpperLang)
+            activatePane('upper')
           }}
         >
           <div className="solo-pane-head">
@@ -530,7 +566,7 @@ export function SoloView() {
             onEdit: () => {
               editingRef.current = 'upper'
               setUpperEditing(true)
-              setSpeakDirection(soloUpperLang)
+              activatePane('upper')
               queueMicrotask(() => upperInputRef.current?.focus())
             },
             onBlurEdit: () => setUpperEditing(false),
@@ -548,13 +584,13 @@ export function SoloView() {
           onClick={(e) => {
             const t = e.target as HTMLElement
             if (t.closest('button, a, textarea, input, [role="listbox"], [role="option"]')) return
-            setSpeakDirection(soloLowerLang)
+            activatePane('lower')
           }}
           onKeyDown={(e) => {
             if (e.key !== 'Enter' && e.key !== ' ') return
             if (e.target !== e.currentTarget) return
             e.preventDefault()
-            setSpeakDirection(soloLowerLang)
+            activatePane('lower')
           }}
         >
           <div className="solo-pane-head">
@@ -597,7 +633,7 @@ export function SoloView() {
             onEdit: () => {
               editingRef.current = 'lower'
               setLowerEditing(true)
-              setSpeakDirection(soloLowerLang)
+              activatePane('lower')
               queueMicrotask(() => lowerInputRef.current?.focus())
             },
             onBlurEdit: () => setLowerEditing(false),

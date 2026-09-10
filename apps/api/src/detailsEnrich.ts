@@ -11,9 +11,9 @@ import {
 } from './canto/lexiconTranslate.js'
 import { lookupGloss } from './canto/gloss.js'
 import { hasHan } from './canto/han.js'
-import { resolveDictionaryMedia } from './detailsMedia.js'
+import { resolveDictionaryMedia, type DictionaryMedia } from './detailsMedia.js'
 
-export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi'])
+export const DetailLangSchema = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi', 'ceb', 'ilo'])
 export type DetailLang = z.infer<typeof DetailLangSchema>
 
 const EnrichBody = z.object({
@@ -38,7 +38,7 @@ export type DictionaryExample = {
   note?: string
 }
 
-export type { DictionaryMedia } from './detailsMedia.js'
+export type { DictionaryMedia }
 
 export type DictionaryEntry = {
   lemma: string
@@ -91,6 +91,16 @@ const ENRICH_META: Record<
     label: 'Vietnamese',
     glossLangHint: 'clear English',
     exampleIn: 'natural Vietnamese',
+  },
+  ceb: {
+    label: 'Cebuano / Bisaya',
+    glossLangHint: 'clear English',
+    exampleIn: 'natural Cebuano',
+  },
+  ilo: {
+    label: 'Ilocano / Ilokano',
+    glossLangHint: 'clear English',
+    exampleIn: 'natural Ilocano',
   },
 }
 

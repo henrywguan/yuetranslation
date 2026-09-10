@@ -1,5 +1,6 @@
 import { BiText } from './BiText'
 import { LiveHoldButton } from './LiveHoldButton'
+import { supportsLiveMic } from '../lib/langCapabilities'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Mode } from '../lib/types'
@@ -15,13 +16,21 @@ export function Controls() {
   const mode = useYueStore((s) => s.mode)
   const setMode = useYueStore((s) => s.setMode)
   const speakDirection = useYueStore((s) => s.speakDirection)
+  const soloUpperLang = useYueStore((s) => s.soloUpperLang)
+  const soloLowerLang = useYueStore((s) => s.soloLowerLang)
   const primaryLanguage = useYueStore((s) => s.primaryLanguage)
   /** Cantonese primary: mode chrome is Chinese-only (English stays as mic hint). */
   const cantoPrimary = primaryLanguage === 'yue'
 
   const faceMode = mode === 'conversation'
   const cameraMode = mode === 'camera'
-  const showLiveDock = !faceMode && !cameraMode
+  // Mic only when the active Solo speak side is a voice language on a pane.
+  // Text-only panes (Cebuano / Ilocano) are keyboard-led — no STT for that side.
+  const micOnSoloPane =
+    mode === 'solo' &&
+    supportsLiveMic(speakDirection) &&
+    (soloUpperLang === speakDirection || soloLowerLang === speakDirection)
+  const showLiveDock = !faceMode && !cameraMode && micOnSoloPane
 
   return (
     <div className="controls">

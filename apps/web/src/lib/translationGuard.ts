@@ -64,3 +64,12 @@ export function sanitizeViTranslation(text: string | null | undefined): string |
   if (!/[\p{L}]/u.test(t)) return null
   return t
 }
+
+/** Reject EN→Cebuano / Ilocano Latin payloads that are empty, glossy, or still Chinese. */
+export function sanitizeCebTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}
+
+export function sanitizeIloTranslation(text: string | null | undefined): string | null {
+  return sanitizeViTranslation(text)
+}

@@ -29,10 +29,11 @@ Skill + file rule: [`.cursor/skills/live-mic-invariants/SKILL.md`](.cursor/skill
 
 When extending `Lang` (Solo / Conversation / Cam):
 
-1. Fill **`CONVERSATION_PANE_UI`** in [`apps/web/src/lib/conversationUi.ts`](apps/web/src/lib/conversationUi.ts) — native mic labels + pane hints. `Record<Lang, …>` makes `tsc` fail until this exists; do not hard-code new langs in `ConversationView` / `LiveHoldButton`.
+1. Fill **`CONVERSATION_PANE_UI`** in [`apps/web/src/lib/conversationUi.ts`](apps/web/src/lib/conversationUi.ts) — native mic labels + pane hints — **only for voice languages** (`ConversationLang`). Text-only langs (`ceb` / `ilo`) stay off this map. `Record<ConversationLang, …>` makes `tsc` fail until Conversation copy exists; do not hard-code new langs in `ConversationView` / `LiveHoldButton`.
 2. Fill **`DETAIL_PEDAGOGY`** in [`apps/web/src/lib/detailPedagogy.ts`](apps/web/src/lib/detailPedagogy.ts) and the matching `ENRICH_META` row in [`apps/api/src/detailsEnrich.ts`](apps/api/src/detailsEnrich.ts) so Details dictionary enrich stays lang-complete.
-3. Wire the rest of the pipeline (translate, STT/TTS, pickers, pedagogy, `/api/breakdown`) as for `tl` / `es` / `vi`.
-4. If the language can be an Account Hub **primary** (`PRIMARY_LANGS`), add UI glosses in [`apps/web/src/lib/primaryUiGloss.data.ts`](apps/web/src/lib/primaryUiGloss.data.ts) for every `Bi` string that has Jyutping — for `tl` / `es` / `vi` / `wuu`, `BiText` **replaces the Chinese line** with that gloss; Mandarin (`cmn`) keeps Chinese and can show auto-pinyin under it.
+3. **Text-only langs** (`ceb` Cebuano, `ilo` Ilocano): Solo + Cam type-to-translate only — no Azure STT/TTS. Use `isTextOnlyLang` in [`apps/web/src/lib/langCapabilities.ts`](apps/web/src/lib/langCapabilities.ts); keyboard-led Solo (hide mic when that side is active); dismissible text-only tip; exclude from Conversation pickers. Do not add Account Hub TTS prefs or `PRIMARY_LANGS`.
+4. Wire the rest of the pipeline (translate, STT/TTS when voice-capable, pickers, pedagogy, `/api/breakdown`) as for `tl` / `es` / `vi`.
+5. If the language can be an Account Hub **primary** (`PRIMARY_LANGS`), add UI glosses in [`apps/web/src/lib/primaryUiGloss.data.ts`](apps/web/src/lib/primaryUiGloss.data.ts) for every `Bi` string that has Jyutping — for `tl` / `es` / `vi` / `wuu`, `BiText` **replaces the Chinese line** with that gloss; Mandarin (`cmn`) keeps Chinese and can show auto-pinyin under it.
 
 ### Security Guardian (PR + abuse + API health)
 

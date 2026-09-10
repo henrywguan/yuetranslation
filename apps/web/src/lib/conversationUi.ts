@@ -1,10 +1,13 @@
-import type { Lang } from './types'
+import type { ConversationLang } from './types'
 
 /**
  * Conversation language-pure UI (mic button + pane hints).
  *
- * **When adding a language:** extend `Lang` in `types.ts`, then add a full
- * entry here. `Record<Lang, …>` makes `tsc` fail until Conversation copy exists —
+ * **When adding a Conversation language:** extend `VoiceLang` / `ConversationLang`
+ * in `types.ts`, then add a full entry here. Text-only langs (`ceb` / `ilo`) stay
+ * off this map — they are Solo + Cam only.
+ *
+ * `Record<ConversationLang, …>` makes `tsc` fail until Conversation copy exists —
  * do not special-case individual langs in ConversationView / LiveHoldButton.
  */
 
@@ -38,7 +41,7 @@ const ZH_YOU = '手機對住自己'
  * Exhaustive map: every `Lang` must have native Conversation chrome.
  * Chinese varieties share Traditional Chinese mic/hint copy; htmlLang differs.
  */
-export const CONVERSATION_PANE_UI: Record<Lang, ConversationPaneUi> = {
+export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> = {
   en: {
     htmlLang: 'en',
     mic: {
@@ -107,19 +110,19 @@ export const CONVERSATION_PANE_UI: Record<Lang, ConversationPaneUi> = {
   },
 }
 
-export function conversationPaneUi(lang: Lang): ConversationPaneUi {
+export function conversationPaneUi(lang: ConversationLang): ConversationPaneUi {
   return CONVERSATION_PANE_UI[lang]
 }
 
-export function conversationLabelHtmlLang(lang: Lang): string {
+export function conversationLabelHtmlLang(lang: ConversationLang): string {
   return CONVERSATION_PANE_UI[lang].htmlLang
 }
 
-export function liveMicLabel(key: LiveMicKey, lang: Lang): string {
+export function liveMicLabel(key: LiveMicKey, lang: ConversationLang): string {
   return CONVERSATION_PANE_UI[lang].mic[key]
 }
 
-export function conversationPaneHint(lang: Lang, kind: 'friend' | 'you'): string {
+export function conversationPaneHint(lang: ConversationLang, kind: 'friend' | 'you'): string {
   const pane = CONVERSATION_PANE_UI[lang]
   return kind === 'friend' ? pane.friendLooksHere : pane.holdFacingYou
 }

@@ -197,6 +197,7 @@ export function ConversationView() {
               active={partnerListening}
               drawer="bottom"
               variant="dropdown"
+              scope="conversation"
               onSelect={(lang) => onPaneLang('partner', lang)}
             />
             <p lang={conversationLabelHtmlLang(partnerLang)}>
@@ -266,6 +267,7 @@ export function ConversationView() {
             active={youListening}
             drawer="bottom"
             variant="dropdown"
+            scope="conversation"
             onSelect={(lang) => onPaneLang('you', lang)}
           />
           <p lang={conversationLabelHtmlLang(youLang)}>

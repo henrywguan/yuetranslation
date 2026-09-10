@@ -16,6 +16,8 @@ function langShort(lang: Lang): string {
   if (lang === 'tl') return 'TL'
   if (lang === 'es') return 'Mx'
   if (lang === 'vi') return 'Vi'
+  if (lang === 'ceb') return 'Cb'
+  if (lang === 'ilo') return 'Il'
   return '粵'
 }
 
@@ -99,6 +101,26 @@ function LangLine({
       />
     )
   }
+  if (lang === 'ceb' || lang === 'ilo') {
+    if (onBreakdown) {
+      return (
+        <button
+          type="button"
+          className="history-card-line history-card-en spoken-line-text--action"
+          lang={lang}
+          onClick={() => onBreakdown(text)}
+          aria-label="Open translation details"
+        >
+          {text}
+        </button>
+      )
+    }
+    return (
+      <p className="history-card-line history-card-en" lang={lang}>
+        {text}
+      </p>
+    )
+  }
   if (onBreakdown) {
     return (
       <button
@@ -121,6 +143,8 @@ function langLabel(lang: Lang) {
   if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
   if (lang === 'es') return <BiText copy={ui.dirMexicanSpanish} size="sm" />
   if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
+  if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
+  if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
 

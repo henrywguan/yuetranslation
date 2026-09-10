@@ -3,6 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { inkEase } from '../lib/motion'
+import { isConversationLang, isTextOnlyLang } from '../lib/langCapabilities'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
@@ -14,6 +15,8 @@ const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
   { id: 'tl', copy: ui.dirTagalog, mark: 'Tl' },
   { id: 'es', copy: ui.dirMexicanSpanish, mark: 'Mx' },
   { id: 'vi', copy: ui.dirVietnamese, mark: 'Vi' },
+  { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
+  { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
 ]
 
 type MenuPlacement = 'top' | 'bottom'
@@ -22,6 +25,7 @@ type MenuPlacement = 'top' | 'bottom'
  * Pane language control.
  * - `dropdown` (Solo + Conversation): pill trigger + anchored glass menu in harbor/jade.
  * - `drawer`: full-sheet picker (fallback when a sheet is preferred).
+ * - `scope: 'conversation'` hides text-only langs (Cebuano / Ilocano).
  */
 export function LangLabelButton({
   lang,
@@ -30,6 +34,7 @@ export function LangLabelButton({
   only,
   drawer = 'bottom',
   variant = 'drawer',
+  scope = 'solo',
 }: {
   lang: Lang
   active: boolean
@@ -39,6 +44,8 @@ export function LangLabelButton({
   drawer?: MenuPlacement
   /** Solo + Conversation use `dropdown`; `drawer` remains available for sheet pickers. */
   variant?: 'drawer' | 'dropdown'
+  /** Conversation panes exclude text-only languages. */
+  scope?: 'solo' | 'conversation'
 }) {
   const [open, setOpen] = useState(false)
   const [menuPos, setMenuPos] = useState<{
@@ -55,20 +62,23 @@ export function LangLabelButton({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuId = useId()
   const titleId = useId()
+  const scoped =
+    scope === 'conversation' ? OPTIONS.filter((o) => isConversationLang(o.id)) : OPTIONS
   const visible =
     only === 'en'
-      ? OPTIONS.filter((o) => o.id === 'en')
+      ? scoped.filter((o) => o.id === 'en')
       : only === 'zh'
-        ? OPTIONS.filter(
+        ? scoped.filter(
             (o) =>
               o.id === 'yue' ||
               o.id === 'cmn' ||
               o.id === 'wuu' ||
               o.id === 'tl' ||
               o.id === 'es' ||
-              o.id === 'vi',
+              o.id === 'vi' ||
+              isTextOnlyLang(o.id),
           )
-        : OPTIONS
+        : scoped
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1
   const preferDown = drawer === 'top'

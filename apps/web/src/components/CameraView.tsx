@@ -5,6 +5,7 @@ import { CameraDocSession } from './CameraDocSession'
 import { CameraUploadEditor } from './CameraUploadEditor'
 import { BiText } from './BiText'
 import { CamTargetPicker } from './CamTargetPicker'
+import { CamTextOnlyLangTip } from './TextOnlyLangTip'
 import { GlowRotateButton } from './GlowRotateButton'
 import { createCameraHeartbeat } from '../lib/camera/heartbeat'
 import type { CameraTarget, CamPath } from '../lib/camera/types'
@@ -191,6 +192,7 @@ export function CameraView({ choiceOpen, onChoiceOpenChange, onLeaveCamera }: Pr
           <CamTargetPicker value={target} onChange={setTarget} tone="panel" />
         </div>
       ) : null}
+      {path !== 'choice' ? <CamTextOnlyLangTip target={target} /> : null}
 
       {path === 'ar' ? (
         <CameraArSession
