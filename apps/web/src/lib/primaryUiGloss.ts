@@ -11,9 +11,9 @@ export function isPrimaryGlossLang(lang: PrimaryLang): lang is PrimaryGlossLang 
 }
 
 /**
- * Latin-script (and Shanghainese) primaries: the gloss becomes the secondary UI
- * line and Chinese is hidden. Mandarin keeps Chinese characters as secondary
- * (pinyin stays tertiary).
+ * Latin-script + Shanghainese / Sichuanese primaries: the gloss becomes the
+ * secondary UI line and Chinese is hidden. Mandarin keeps Chinese characters as
+ * secondary (pinyin stays tertiary).
  */
 export function primaryReplacesChinese(lang: PrimaryLang): boolean {
   return lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'wuu' || lang === 'sichuan'

@@ -87,8 +87,8 @@ export function primaryLangLabel(lang: PrimaryLang): {
     case 'sichuan':
       return {
         en: 'Sichuanese Language Tool',
-        zh: '四川話',
-        gloss: '四川话',
+        zh: '四川話語言工具',
+        gloss: '四川话语言工具',
       }
     case 'tl':
       return {
