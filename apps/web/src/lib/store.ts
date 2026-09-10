@@ -20,6 +20,13 @@ import {
   appleNeedsAzureStt,
   shouldDeferTtsStopUntilSttStarts,
 } from './liveStt'
+import {
+  isConversationLang,
+  isTextOnlyLang,
+  isVoiceLang,
+  resolveSpeakDirectionForSolo,
+  supportsTts,
+} from './langCapabilities'
 import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
@@ -169,7 +176,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -412,6 +419,7 @@ async function speakFinal(
   text: string,
   lang: Lang,
 ) {
+  if (!supportsTts(lang)) return
   const ent = get().entitlement
   // Auto-speak only when the user opted in (default is off).
   const autoSpeakFlag = get().autoSpeak
@@ -634,6 +642,7 @@ export const useYueStore = create<State>((set, get) => {
         : { speakDirection },
     ),
   setConversationPaneLang: (pane, lang) => {
+    if (!isConversationLang(lang)) return
     const you = get().conversationYouLang
     const partner = get().chineseLang
     const other = pane === 'you' ? partner : you
@@ -732,13 +741,18 @@ export const useYueStore = create<State>((set, get) => {
       lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'tl' || lang === 'es' || lang === 'vi'
         ? { chineseLang: lang }
         : {}
+    const nextSpeak = resolveSpeakDirectionForSolo({
+      selected: lang,
+      other: pane === 'upper' ? nextLower : nextUpper,
+      current: get().speakDirection,
+    })
     invalidatePendingTranslations()
     const s = get()
     if (swapping) {
       set({
         soloUpperLang: nextUpper,
         soloLowerLang: nextLower,
-        speakDirection: lang,
+        speakDirection: nextSpeak,
         ...chinesePatch,
         enInterim: s.yueInterim,
         yueInterim: s.enInterim,
@@ -777,7 +791,7 @@ export const useYueStore = create<State>((set, get) => {
     set({
       soloUpperLang: nextUpper,
       soloLowerLang: nextLower,
-      speakDirection: lang,
+      speakDirection: nextSpeak,
       ...chinesePatch,
       ...cleared,
       translating: false,
@@ -846,6 +860,10 @@ export const useYueStore = create<State>((set, get) => {
   speakManual: async (text, lang) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    if (!supportsTts(lang)) {
+      set({ error: 'Speech isn’t available for this language — type to translate instead.' })
+      return
+    }
     const ent = get().entitlement
     if (ent && !ent.allowed.tts) {
       set({
@@ -1090,6 +1108,16 @@ export const useYueStore = create<State>((set, get) => {
           ? 'Log in to use live translation.'
           : `Free live minutes used (${formatMinutes(entitlement.usage.liveSeconds)} minutes this month). Upgrade for more.`
       set({ error: msg })
+      return
+    }
+
+    if (side && isTextOnlyLang(side)) {
+      set({ error: 'Speech isn’t available for this language — type to translate instead.' })
+      return
+    }
+    if (intendedLock && isTextOnlyLang(intendedLock) && !side) {
+      // Solo mic dock should already be hidden; belt-and-suspenders.
+      set({ error: 'Speech isn’t available for this language — type to translate instead.' })
       return
     }
 

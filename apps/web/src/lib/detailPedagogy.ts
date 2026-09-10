@@ -78,6 +78,22 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  ceb: {
+    htmlLang: 'ceb',
+    pronField: 'accented',
+    defaultGlossLang: 'en',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  ilo: {
+    htmlLang: 'ilo',
+    pronField: 'accented',
+    defaultGlossLang: 'en',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
 }
 
 export function detailPedagogy(lang: Lang): DetailPedagogy {

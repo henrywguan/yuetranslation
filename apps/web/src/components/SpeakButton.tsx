@@ -1,4 +1,5 @@
 import { useYueStore } from '../lib/store'
+import { supportsTts } from '../lib/langCapabilities'
 import { unlockTtsPlayback } from '../lib/tts'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
@@ -18,10 +19,10 @@ export function SpeakButton({
   const status = useYueStore((s) => s.status)
   const speakingText = useYueStore((s) => s.speakingText)
   const entitlement = useYueStore((s) => s.entitlement)
-  const canTts = !entitlement || entitlement.allowed.tts
+  const canTts = (!entitlement || entitlement.allowed.tts) && supportsTts(lang)
   const speaking = status === 'speaking' && speakingText === trimmed
 
-  if (!trimmed) return null
+  if (!trimmed || !supportsTts(lang)) return null
 
   const label = !canTts ? ui.speakPro : speaking ? ui.stopSpeak : ui.speak
 

@@ -194,6 +194,8 @@ export const ui = {
   camTargetTl: { en: 'To Tagalog', zh: '譯成他加祿語', jp: 'jik6 sing4 taa1 gaa1 luk6 jyu5' },
   camTargetEs: { en: 'To Spanish(MX)', zh: '譯成西班牙語（MX）', jp: 'jik6 sing4 sai1 baan1 ngaa4 jyu5 (MX)' },
   camTargetVi: { en: 'To Vietnamese', zh: '譯成越南話', jp: 'jik6 sing4 jyut6 naam4 waa2' },
+  camTargetCeb: { en: 'To Cebuano', zh: '譯成宿霧話', jp: 'jik6 sing4 suk1 mou6 waa2' },
+  camTargetIlo: { en: 'To Ilocano', zh: '譯成伊洛卡诺話', jp: 'jik6 sing4 ji1 lok6 kaa1 nok3 waa2' },
   camTargetAuto: { en: 'Auto', zh: '自動', jp: 'zi6 dung6' },
   camScanning: { en: 'Scanning…', zh: '掃描中…', jp: 'siu2 miu4 zung1…' },
   camNoVision: {
@@ -335,6 +337,14 @@ export const ui = {
   dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   dirMexicanSpanish: { en: 'Spanish(MX)', zh: '西班牙語（MX）', jp: 'sai1 baan1 ngaa4 jyu5 (MX)' },
   dirVietnamese: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
+  dirCebuano: { en: 'Cebuano', zh: '宿霧話', jp: 'suk1 mou6 waa2' },
+  dirIlocano: { en: 'Ilocano', zh: '伊洛卡诺話', jp: 'ji1 lok6 kaa1 nok3 waa2' },
+  textOnlyLangTip: {
+    en: 'Text only — type to translate. Speech isn’t available for this language yet.',
+    zh: '純文字——請打字翻譯。此語言暫未支援語音。',
+    jp: 'ceon4 man4 zi6 — cing2 daa2 zi6 faan1 jik6. ci2 jyu5 jin4 zaam6 mei6 zi1 jyun4 jyu5 jam1.',
+  },
+  textOnlyLangTipClose: { en: 'Dismiss', zh: '關閉', jp: 'gwaan1 bai3' },
   mxInformalNote: {
     en: 'This line is informal Spanish(MX).',
     zh: '呢句係非正式西班牙語（MX）。',

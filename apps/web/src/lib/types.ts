@@ -1,6 +1,12 @@
-export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+/** Solo + Cam text translate only — no STT/TTS (Azure has no locales). */
+export type TextOnlyLang = 'ceb' | 'ilo'
+export type Lang = VoiceLang | TextOnlyLang
 export type Mode = 'solo' | 'conversation' | 'text' | 'camera'
-export type SpeakDirection = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+/** Mic / speak side — never a text-only language. */
+export type SpeakDirection = VoiceLang
+/** Conversation pane languages — same as voice-capable langs. */
+export type ConversationLang = VoiceLang
 
 export type IncidentBannerSettings = {
   enabled: boolean

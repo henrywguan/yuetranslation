@@ -141,11 +141,11 @@ export async function translateText(
 
 export async function fetchBreakdown(
   text: string,
-  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' },
+  opts?: { lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' },
 ): Promise<{
   characters: { char: string; jyutping: string | null; meaning: string }[]
   engine: string
-  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
 }> {
   const res = await apiFetch('/breakdown', {
     method: 'POST',
@@ -157,7 +157,7 @@ export async function fetchBreakdown(
 
 export type DictionaryEntry = {
   lemma: string
-  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   pronunciation?: string
   senses: { gloss: string; pos?: string; note?: string }[]
   examples: { text: string; translation?: string; note?: string }[]
@@ -176,9 +176,9 @@ export type DictionaryEntry = {
 
 export async function fetchDetailsEnrich(input: {
   text: string
-  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   contextText?: string
-  contextLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  contextLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   wantMedia?: boolean
 }): Promise<DictionaryEntry> {
   const res = await apiFetch('/details/enrich', {
@@ -211,8 +211,8 @@ export type CameraScanRegion = {
   id: string
   text: string
   translated: string
-  from: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
-  to: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  from: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  to: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   box: CameraBox
   script: 'latin' | 'cjk' | 'mixed' | 'other'
   cacheHit: boolean
@@ -245,7 +245,7 @@ export async function postCameraHeartbeat(seconds = 15): Promise<Entitlement> {
 export async function cameraScan(opts: {
   image: string
   boxes?: CameraBox[]
-  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  target?: 'en' | 'zh' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   ocrOnly?: boolean
   /** PDF hybrid / Documents path — gated as docs, not camera translate metering. */
   forDocs?: boolean

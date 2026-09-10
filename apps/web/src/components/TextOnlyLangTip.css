@@ -1,0 +1,53 @@
+.text-only-lang-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0.35rem 0 0.55rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--jade, #2f6f5e) 28%, transparent);
+  background: color-mix(in srgb, var(--jade, #2f6f5e) 10%, var(--panel, #0f1a17));
+  color: var(--ink, #e8f2ee);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 6%, transparent) inset;
+}
+
+.text-only-lang-tip-copy {
+  margin: 0;
+  flex: 1;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  opacity: 0.92;
+}
+
+.text-only-lang-tip-name {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.text-only-lang-tip-close {
+  flex: none;
+  width: 1.55rem;
+  height: 1.55rem;
+  margin: -0.1rem -0.15rem 0 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.text-only-lang-tip-close:hover,
+.text-only-lang-tip-close:focus-visible {
+  opacity: 1;
+  background: color-mix(in srgb, #fff 8%, transparent);
+  outline: none;
+}
+
+[data-theme='light'] .text-only-lang-tip {
+  background: color-mix(in srgb, var(--jade, #2f6f5e) 8%, #fff);
+  border-color: color-mix(in srgb, var(--jade, #2f6f5e) 22%, transparent);
+  color: var(--ink, #14241e);
+}

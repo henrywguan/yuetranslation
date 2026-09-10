@@ -56,9 +56,13 @@ export function ResultWithDefinition({
             ? 'es'
             : chineseLang === 'vi'
               ? 'vi'
-              : chineseLang === 'en'
-                ? 'en'
-                : 'yue'
+              : chineseLang === 'ceb'
+                ? 'ceb'
+                : chineseLang === 'ilo'
+                  ? 'ilo'
+                  : chineseLang === 'en'
+                    ? 'en'
+                    : 'yue'
 
   return (
     <div className={`result-with-def ${className}`.trim()}>
@@ -89,6 +93,21 @@ export function ResultWithDefinition({
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />
+            ) : chineseLang === 'ceb' || chineseLang === 'ilo' ? (
+              onActivate ? (
+                <button
+                  type="button"
+                  className={`${textClassName || 'result-text'} spoken-line-text--action`}
+                  lang={chineseLang === 'ceb' ? 'ceb' : 'ilo'}
+                  onClick={() => onActivate(trimmed)}
+                >
+                  {trimmed}
+                </button>
+              ) : (
+                <p className={textClassName || 'result-text'} lang={chineseLang === 'ceb' ? 'ceb' : 'ilo'}>
+                  {trimmed}
+                </p>
+              )
             ) : chineseLang === 'cmn' ? (
               <MandarinText
                 text={trimmed}

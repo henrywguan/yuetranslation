@@ -2,7 +2,7 @@ import { translateText } from './api'
 import { humanizeThrownError } from './apiError'
 import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeCebTranslation, sanitizeIloTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
@@ -118,6 +118,8 @@ function sanitizeTranslation(to: Lang, text: string, source?: string): string | 
   if (to === 'tl') return sanitizeTlTranslation(text)
   if (to === 'es') return sanitizeEsTranslation(text)
   if (to === 'vi') return sanitizeViTranslation(text)
+  if (to === 'ceb') return sanitizeCebTranslation(text)
+  if (to === 'ilo') return sanitizeIloTranslation(text)
   if (to === 'yue' || to === 'cmn' || to === 'wuu') return sanitizeYueTranslation(text)
   return sanitizeEnTranslation(text, source)
 }
@@ -285,15 +287,19 @@ export async function runTranslation(
             ? 'Could not produce Spanish(MX) for this phrase. Try again or rephrase.'
             : to === 'vi'
               ? 'Could not produce Vietnamese for this phrase. Try again or rephrase.'
-              : to === 'tl'
-                ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
-                : to === 'cmn'
-                ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
-                : to === 'wuu'
-                  ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'
-                  : to === 'yue'
-                    ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
-                    : 'Could not produce English for this phrase. Try again or rephrase.',
+              : to === 'ceb'
+                ? 'Could not produce Cebuano for this phrase. Try again or rephrase.'
+                : to === 'ilo'
+                  ? 'Could not produce Ilocano for this phrase. Try again or rephrase.'
+                  : to === 'tl'
+                    ? 'Could not produce Tagalog for this phrase. Try again or rephrase.'
+                    : to === 'cmn'
+                      ? 'Could not produce Mandarin for this phrase. Try again or rephrase.'
+                      : to === 'wuu'
+                        ? 'Could not produce Shanghainese for this phrase. Try again or rephrase.'
+                        : to === 'yue'
+                          ? 'Could not produce Cantonese for this phrase. Try again or rephrase.'
+                          : 'Could not produce English for this phrase. Try again or rephrase.',
       })
       return null
     }
