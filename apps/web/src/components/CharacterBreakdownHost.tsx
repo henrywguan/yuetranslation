@@ -581,6 +581,7 @@ export function CharacterBreakdownHost() {
               text={topLabel}
               lang={speakLangFor(topLabel, detailLang)}
               className="detail-panel-speak"
+              showJyutpingCopy={detailLang === 'yue'}
             />
           </div>
           {isWuuDetail && phraseWuuIpa ? (
