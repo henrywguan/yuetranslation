@@ -14,29 +14,38 @@ type Props = {
   glossLang?: Lang
 }
 
-/** Render gloss / example lines in the learner’s primary language. */
+/**
+ * Render gloss / example / usage lines.
+ * Han + Yue (primary or lemma) → Jyutping + Chao ruby; Han + Cmn → pinyin ruby.
+ */
 function GlossLine({
   text,
   glossLang,
+  lemmaLang,
   className,
   muted,
 }: {
   text: string
   glossLang?: Lang
+  lemmaLang?: Lang
   className?: string
   muted?: boolean
 }) {
   const trimmed = text.trim()
   if (!trimmed) return null
   const cls = [className, muted ? 'muted' : ''].filter(Boolean).join(' ')
-  if (glossLang === 'yue' && hasHan(trimmed)) {
+  const wantYueRuby =
+    hasHan(trimmed) && (glossLang === 'yue' || lemmaLang === 'yue')
+  const wantCmnRuby =
+    hasHan(trimmed) && !wantYueRuby && (glossLang === 'cmn' || lemmaLang === 'cmn')
+  if (wantYueRuby) {
     return <CantoneseText text={trimmed} className={cls || undefined} jpMode="inline" />
   }
-  if (glossLang === 'cmn' && hasHan(trimmed)) {
+  if (wantCmnRuby) {
     return <MandarinText text={trimmed} className={cls || undefined} />
   }
   return (
-    <span className={cls || undefined} lang={glossLang || undefined}>
+    <span className={cls || undefined} lang={glossLang || lemmaLang || undefined}>
       {trimmed}
     </span>
   )
@@ -55,6 +64,7 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
   }
   if (!entry) return null
   const renderLang = glossLang || entry.glossLang || entry.lang
+  const lemmaLang = entry.lang
   const hasBody =
     entry.senses.length > 0 ||
     entry.examples.length > 0 ||
@@ -88,9 +98,20 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
             {entry.senses.map((s, i) => (
               <li key={`sense-${i}`}>
                 {s.pos ? <span className="detail-dict-pos">{s.pos}</span> : null}
-                <GlossLine text={s.gloss} glossLang={renderLang} className="detail-dict-gloss" />
+                <GlossLine
+                  text={s.gloss}
+                  glossLang={renderLang}
+                  lemmaLang={lemmaLang}
+                  className="detail-dict-gloss"
+                />
                 {s.note ? (
-                  <GlossLine text={s.note} glossLang={renderLang} className="detail-dict-note" muted />
+                  <GlossLine
+                    text={s.note}
+                    glossLang={renderLang}
+                    lemmaLang={lemmaLang}
+                    className="detail-dict-note"
+                    muted
+                  />
                 ) : null}
               </li>
             ))}
@@ -108,14 +129,19 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
             {entry.examples.map((ex, i) => (
               <li key={`ex-${i}`}>
                 <p className="detail-dict-ex-text">
-                  <GlossLine text={ex.text} glossLang={renderLang} />
+                  <GlossLine text={ex.text} glossLang={renderLang} lemmaLang={lemmaLang} />
                 </p>
                 {ex.translation ? (
                   <p className="detail-dict-ex-tr muted">{ex.translation}</p>
                 ) : null}
                 {ex.note ? (
                   <p className="detail-dict-note muted">
-                    <GlossLine text={ex.note} glossLang={renderLang} muted />
+                    <GlossLine
+                      text={ex.note}
+                      glossLang={renderLang}
+                      lemmaLang={lemmaLang}
+                      muted
+                    />
                   </p>
                 ) : null}
               </li>
@@ -133,7 +159,7 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
           <ul className="detail-dict-usage">
             {entry.usageNotes.map((n, i) => (
               <li key={`note-${i}`}>
-                <GlossLine text={n} glossLang={renderLang} />
+                <GlossLine text={n} glossLang={renderLang} lemmaLang={lemmaLang} />
               </li>
             ))}
           </ul>
