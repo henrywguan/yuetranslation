@@ -474,6 +474,11 @@ export const ui = {
     zh: '暫無逐詞資料。',
     jp: 'zaam6 mou4 zuk6 ci4 zi1 liu2',
   },
+  detailNoAlternatives: {
+    en: 'No alternative translations for this phrase.',
+    zh: '呢句暫時冇其他譯法。',
+    jp: 'ni1 geoi3 zaam6 si4 mou5 kei4 taa1 jik6 faat3.',
+  },
 
   connecting: { en: 'Connecting…', zh: '連接中…', jp: 'lin4 zip3 zung1…' },
   planFree: { en: 'Free', zh: '免費', jp: 'min5 fai3' },

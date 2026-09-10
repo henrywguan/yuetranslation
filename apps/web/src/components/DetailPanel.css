@@ -471,6 +471,94 @@
   letter-spacing: 0.04em;
 }
 
+/* Collapsible Details sections */
+.detail-collapse {
+  margin: 0 0 12px;
+}
+
+.detail-collapse.detail-dict {
+  margin: 0 0 14px;
+  padding: 10px 12px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+}
+
+.detail-collapse.detail-dict-block {
+  margin-top: 10px;
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.detail-collapse-toggle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.detail-collapse-toggle:hover {
+  color: var(--foam);
+}
+
+.detail-collapse-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.detail-collapse-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  min-width: 0;
+}
+
+.detail-collapse-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.detail-collapse-meta {
+  font-size: 0.72rem;
+}
+
+.detail-collapse-chevron {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.detail-collapse-body {
+  margin-top: 6px;
+}
+
+.detail-panel-breakdown.detail-collapse {
+  margin-top: 4px;
+}
+
+.detail-panel-defs.detail-collapse,
+.detail-panel-alts.detail-collapse {
+  margin-bottom: 10px;
+}
+
 .detail-panel-char-view section {
   margin: 0 0 14px;
   padding: 12px;

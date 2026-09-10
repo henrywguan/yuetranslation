@@ -1,5 +1,6 @@
 import type { DictionaryEntry } from '../lib/api'
 import { BiText } from './BiText'
+import { DetailCollapsible } from './DetailCollapsible'
 import { ui } from '../lib/uiCopy'
 
 type Props = {
@@ -7,18 +8,15 @@ type Props = {
   loading: boolean
 }
 
-/** AI / multi-source dictionary block inside Details. */
+/** AI / multi-source dictionary block inside Details — nested sections collapse. */
 export function DetailDictionaryPanel({ entry, loading }: Props) {
   if (loading && !entry) {
     return (
-      <section className="detail-dict" aria-busy="true">
-        <h3>
-          <BiText copy={ui.detailDictionary} size="sm" />
-        </h3>
-        <p className="muted">
+      <DetailCollapsible title={ui.detailDictionary} className="detail-dict" defaultOpen>
+        <p className="muted" aria-busy="true">
           <BiText copy={ui.detailDictionaryLoading} size="sm" />
         </p>
-      </section>
+      </DetailCollapsible>
     )
   }
   if (!entry) return null
@@ -31,27 +29,26 @@ export function DetailDictionaryPanel({ entry, loading }: Props) {
   if (!hasBody) return null
 
   return (
-    <section className="detail-dict" aria-label="Dictionary">
-      <div className="detail-dict-head">
-        <h3>
-          <BiText copy={ui.detailDictionary} size="sm" />
-        </h3>
-        {entry.provenance.length ? (
-          <p className="detail-dict-provenance muted">
-            {entry.provenance.join(' · ')}
-          </p>
-        ) : null}
-      </div>
+    <DetailCollapsible
+      title={ui.detailDictionary}
+      className="detail-dict"
+      defaultOpen
+      meta={
+        entry.provenance.length ? entry.provenance.join(' · ') : undefined
+      }
+    >
       {entry.pronunciation ? (
         <p className="detail-dict-pron" lang="en">
           /{entry.pronunciation.replace(/^\/|\/$/g, '')}/
         </p>
       ) : null}
       {entry.senses.length ? (
-        <div className="detail-dict-block">
-          <h4>
-            <BiText copy={ui.detailSenses} size="sm" />
-          </h4>
+        <DetailCollapsible
+          title={ui.detailSenses}
+          className="detail-dict-block"
+          headingLevel="h4"
+          defaultOpen
+        >
           <ul className="detail-dict-senses">
             {entry.senses.map((s, i) => (
               <li key={`sense-${i}`}>
@@ -61,13 +58,15 @@ export function DetailDictionaryPanel({ entry, loading }: Props) {
               </li>
             ))}
           </ul>
-        </div>
+        </DetailCollapsible>
       ) : null}
       {entry.examples.length ? (
-        <div className="detail-dict-block">
-          <h4>
-            <BiText copy={ui.detailExamples} size="sm" />
-          </h4>
+        <DetailCollapsible
+          title={ui.detailExamples}
+          className="detail-dict-block"
+          headingLevel="h4"
+          defaultOpen
+        >
           <ul className="detail-dict-examples">
             {entry.examples.map((ex, i) => (
               <li key={`ex-${i}`}>
@@ -79,19 +78,21 @@ export function DetailDictionaryPanel({ entry, loading }: Props) {
               </li>
             ))}
           </ul>
-        </div>
+        </DetailCollapsible>
       ) : null}
       {entry.usageNotes.length ? (
-        <div className="detail-dict-block">
-          <h4>
-            <BiText copy={ui.detailUsage} size="sm" />
-          </h4>
+        <DetailCollapsible
+          title={ui.detailUsage}
+          className="detail-dict-block"
+          headingLevel="h4"
+          defaultOpen
+        >
           <ul className="detail-dict-usage">
             {entry.usageNotes.map((n, i) => (
               <li key={`note-${i}`}>{n}</li>
             ))}
           </ul>
-        </div>
+        </DetailCollapsible>
       ) : null}
       {entry.media.map((m, i) =>
         m.type === 'emoji' && m.emoji ? (
@@ -113,6 +114,6 @@ export function DetailDictionaryPanel({ entry, loading }: Props) {
           </figure>
         ) : null,
       )}
-    </section>
+    </DetailCollapsible>
   )
 }

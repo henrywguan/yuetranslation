@@ -37,6 +37,7 @@ import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { DetailDictionaryPanel } from './DetailDictionaryPanel'
+import { DetailCollapsible } from './DetailCollapsible'
 import { detailEmojiFor } from '../lib/detailEmoji'
 import { ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
@@ -693,59 +694,62 @@ export function CharacterBreakdownHost() {
       <div className="detail-panel-body">
         {top.kind === 'phrase' ? (
           <>
-            {showSenseList || alternatives.length > 0 || altsLoading ? (
-              <div className="detail-panel-extra">
-                {showSenseList ? (
-                  <section className="detail-panel-defs" aria-label="Meanings">
-                    <h3>
-                      <BiText copy={ui.detailSenses} size="sm" />
-                    </h3>
-                    <ul>
-                      {senseList.map((def, i) => (
-                        <li key={`def-${i}`}>{def}</li>
-                      ))}
-                    </ul>
-                  </section>
-                ) : null}
+            <div className="detail-panel-extra">
+              {showSenseList ? (
+                <DetailCollapsible
+                  title={ui.detailSenses}
+                  className="detail-panel-defs"
+                  defaultOpen
+                >
+                  <ul>
+                    {senseList.map((def, i) => (
+                      <li key={`def-${i}`}>{def}</li>
+                    ))}
+                  </ul>
+                </DetailCollapsible>
+              ) : null}
+              <DetailCollapsible
+                title={ui.historyVariations}
+                className="detail-panel-alts"
+                defaultOpen
+              >
                 {altsLoading && alternatives.length === 0 ? (
-                  <section className="detail-panel-alts" aria-live="polite">
-                    <h3>
-                      <BiText copy={ui.historyVariations} size="sm" />
-                    </h3>
-                    <p className="muted">
-                      <BiText copy={ui.loadingVariations} size="sm" />
-                    </p>
-                  </section>
+                  <p className="muted" aria-live="polite">
+                    <BiText copy={ui.loadingVariations} size="sm" />
+                  </p>
                 ) : alternatives.length > 0 ? (
-                  <section className="detail-panel-alts" aria-label="Other variations">
-                    <TranslationAlternatives
-                      alternatives={alternatives}
-                      alternativeRomanizations={
-                        isWuuDetail || isSichuanDetail ? alternativeRomanizations : undefined
-                      }
-                      lang={
-                        isEnglishDetail
-                          ? 'en'
-                          : isTlDetail
-                            ? 'tl'
-                            : isEsDetail
-                              ? 'es'
-                              : isViDetail
-                                ? 'vi'
-                                : isCmnDetail
-                                  ? 'cmn'
-                                  : isWuuDetail
-                                    ? 'wuu'
-                                    : isSichuanDetail
-                                      ? 'sichuan'
-                                      : 'yue'
-                      }
-                      onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
-                    />
-                  </section>
-                ) : null}
-              </div>
-            ) : null}
+                  <TranslationAlternatives
+                    alternatives={alternatives}
+                    alternativeRomanizations={
+                      isWuuDetail || isSichuanDetail ? alternativeRomanizations : undefined
+                    }
+                    lang={
+                      isEnglishDetail
+                        ? 'en'
+                        : isTlDetail
+                          ? 'tl'
+                          : isEsDetail
+                            ? 'es'
+                            : isViDetail
+                              ? 'vi'
+                              : isCmnDetail
+                                ? 'cmn'
+                                : isWuuDetail
+                                  ? 'wuu'
+                                  : isSichuanDetail
+                                    ? 'sichuan'
+                                    : 'yue'
+                    }
+                    onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
+                    hideLabel
+                  />
+                ) : (
+                  <p className="muted">
+                    <BiText copy={ui.detailNoAlternatives} size="sm" />
+                  </p>
+                )}
+              </DetailCollapsible>
+            </div>
             <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
             {isEsDetail && pedagogy.extraPanels.includes('mx-register') ? (
               <MexicanSpanishRegisterPanel
@@ -766,10 +770,11 @@ export function CharacterBreakdownHost() {
             {loading && !rows.length ? (
               <p className="detail-panel-loading muted">Loading…</p>
             ) : showWordBreakdown ? (
-              <>
-                <h3 className="detail-panel-breakdown-title">
-                  <BiText copy={ui.detailWordBreakdown} size="sm" />
-                </h3>
+              <DetailCollapsible
+                title={ui.detailWordBreakdown}
+                className="detail-panel-breakdown"
+                defaultOpen={rows.length <= 8}
+              >
               <ul className="detail-panel-list">
                 {rows.map((row, i) => {
                   const meaning = pickCharGloss(row.meaning)
@@ -955,7 +960,7 @@ export function CharacterBreakdownHost() {
                   )
                 })}
               </ul>
-              </>
+              </DetailCollapsible>
             ) : (
               <p className="detail-panel-loading muted">
                 <BiText copy={ui.detailNoWordDetails} size="sm" />
