@@ -141,11 +141,31 @@ export function SoloView() {
         : []
 
   useEffect(() => {
-    if (editingRef.current !== 'upper') setUpperDraft(storeUpper)
+    if (editingRef.current !== 'upper') {
+      setUpperDraft(storeUpper)
+      return
+    }
+    // Text-only panes auto-focus empty — don't let that edit lock hide a
+    // translation that landed while the textarea was still blank.
+    setUpperDraft((prev) => {
+      if (prev.trim() || !storeUpper.trim()) return prev
+      editingRef.current = null
+      queueMicrotask(() => setUpperEditing(false))
+      return storeUpper
+    })
   }, [storeUpper])
 
   useEffect(() => {
-    if (editingRef.current !== 'lower') setLowerDraft(storeLower)
+    if (editingRef.current !== 'lower') {
+      setLowerDraft(storeLower)
+      return
+    }
+    setLowerDraft((prev) => {
+      if (prev.trim() || !storeLower.trim()) return prev
+      editingRef.current = null
+      queueMicrotask(() => setLowerEditing(false))
+      return storeLower
+    })
   }, [storeLower])
 
   useEffect(() => {
@@ -292,7 +312,10 @@ export function SoloView() {
       setUpperEditing(false)
       setLowerEditing(false)
       setSoloPaneLang(pane, lang)
-      if (isTextOnlyLang(lang)) {
+      // After a swap the text-only pane already has its copy (if any). Only
+      // keyboard-focus when that pane is empty so the user can type source.
+      const textOnlyDraft = (pane === 'upper' ? lowerText : upperText).trim()
+      if (isTextOnlyLang(lang) && !textOnlyDraft) {
         queueMicrotask(() => activatePane(pane))
       }
       return
@@ -315,7 +338,10 @@ export function SoloView() {
     } else {
       setTypedBusy(false)
     }
-    if (isTextOnlyLang(lang)) {
+    // Keyboard-lead text-only only when there is nothing to translate into it.
+    // Auto-focusing the empty target while a translation is in flight locks
+    // editing and blocks store→draft sync (Ilocano/Cebuano looked blank).
+    if (isTextOnlyLang(lang) && !otherText) {
       queueMicrotask(() => activatePane(pane))
     }
   }
