@@ -50,6 +50,8 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     htmlLang: 'wuu-CN',
     pronField: 'wugniu',
     defaultGlossLang: 'en',
+    // Title uses ShanghaineseText (phrase Wugniu + sandhi), not JyutRuby.
+    // Per-char citation Wugniu is returned in CharBreakdown.jyutping.
     rubyTitle: false,
     localOffline: false,
     extraPanels: [],

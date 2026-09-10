@@ -15,16 +15,16 @@ Canonical scheme for Shanghainese romanization in JyutTranslate: **Wugniu** (吴
 ## Compact vs detailed / 紧凑与详细
 
 - **Compact** (translation line): Shanghainese Han + Wugniu underneath (romanization left-aligned under the characters; scheme label trails), e.g. `侬好` / `non ho` Wugniu
-- **Details:** optional Sandhi domain hint + optional IPA
+- **Details:** per-char pedagogy (citation-form Wugniu + English gloss for each character), plus optional Sandhi domain hint + optional IPA on the phrase title
 - **Not used on compact:** Mandarin pinyin ruby, Jyutping tone numbers (`zou2 san4`), Sandhi row
+- **Sandhi honesty in Details:** phrase-level Wugniu may reflect sandhi; per-char readings are **citation / isolation** Wugniu — never invent Cantonese-style tone digits for sandhi-surface forms
 
 Implemented in `apps/web/src/components/ShanghaineseText.tsx`. API path: `translateShanghainese` in `apps/api/src/translate.ts` (`Lang` code `wuu`).
 
 
 ## API field
 
-Translate responses targeting `wuu` include optional `romanization` (Wugniu) and, when alternatives are present, `alternativeRomanizations` (same order as `alternatives`). Solo, History, Conversation, and Other variations render Han + Wugniu on compact lines. The details panel may also show **Sandhi** and optional **IPA** via `ShanghaineseText` (`showSandhiHint`). Phrase seeds store Wugniu on `romanization` / `alternativeRomanizations`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is gloss-only (no Jyutping/pinyin ruby).
-
+Translate responses targeting `wuu` include optional `romanization` (Wugniu) and, when alternatives are present, `alternativeRomanizations` (same order as `alternatives`). Solo, History, Conversation, and Other variations render Han + Wugniu on compact lines. The details panel may also show **Sandhi** and optional **IPA** via `ShanghaineseText` (`showSandhiHint`). Phrase seeds store Wugniu on `romanization` / `alternativeRomanizations`; successful dict/model hits add meta note `wuu-wugniu`. Character breakdown for `wuu` is **per-char pedagogy**: the reused `jyutping` field holds citation-form Wugniu (not gloss-only).
 
 ## Sandhi domain hints
 

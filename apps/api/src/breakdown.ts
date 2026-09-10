@@ -18,6 +18,7 @@ export type BreakdownChar = {
   /**
    * Yue: Jyutping if known.
    * Cmn: pinyin when provided by client merge (API may leave null).
+   * Wuu: citation-form Wugniu (吴语学堂) from the model (never Yue Jyutping).
    * En: IPA if known (same field so the client can reuse the row shape).
    * Tl / Es: accented dictionary form / stress spelling (same field).
    * Null for punctuation / unknown.
@@ -770,14 +771,104 @@ async function cmnBreakdown(text: string) {
 }
 
 async function wuuBreakdown(text: string) {
-  // Colloquial Shanghainese — glosses only. Do not invent Jyutping or Mandarin pinyin;
-  // Wugniu lives on the phrase-level `romanization` field from translate, not per-char ruby.
+  /**
+   * Colloquial Shanghainese — DETAILED per-char pedagogy.
+   * `jyutping` holds citation-form Wugniu (吴语学堂) for that character — not Yue Jyutping,
+   * not Mandarin pinyin, and not sandhi-surface spellings (phrase-level Wugniu stays on translate).
+   */
   const trimmed = text.trim()
   const fallback = localYueBreakdown(trimmed).map((row) => ({
     ...row,
     jyutping: null as string | null,
   }))
-  return { characters: fallback, engine: 'dictionary' as const, lang: 'wuu' as const }
+
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'wuu' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain colloquial Shanghainese (上海话 / 沪语) character-by-character for language learners.',
+    'Given a Shanghainese phrase, return ONLY valid JSON:',
+    '{"characters":[{"char":"<one character>","jyutping":"<Wugniu citation reading or null>","meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every character in order (skip spaces).',
+    '- For punctuation, jyutping null and a brief meaning like “question mark”.',
+    '- Meanings must fit THIS phrase (particles, aspect markers, dialectal uses).',
+    '- The jyutping field holds Wugniu (吴语学堂拼音) citation / isolation readings for each character (e.g. non, ho) — NOT Mandarin pinyin and NOT Cantonese Jyutping.',
+    '- Do NOT invent Cantonese-style per-syllable tone digits for sandhi-surface forms. Phrase-level sandhi belongs elsewhere; here give citation Wugniu per character.',
+    '- Prefer Shanghainese colloquial readings when they differ from Mandarin.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: trimmed },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim()
+    let modelRows = fallback
+    try {
+      const parsed = JSON.parse(cleaned) as { characters?: unknown }
+      if (Array.isArray(parsed.characters)) {
+        const out: BreakdownChar[] = []
+        for (const item of parsed.characters) {
+          if (!item || typeof item !== 'object') continue
+          const row = item as Record<string, unknown>
+          const char = typeof row.char === 'string' ? row.char : ''
+          if (!char) continue
+          // Never fill from Yue lexicon — jyutping must be Wugniu from the model.
+          const jyutping =
+            typeof row.jyutping === 'string' && row.jyutping.trim()
+              ? row.jyutping.trim()
+              : null
+          const meaning =
+            typeof row.meaning === 'string' && row.meaning.trim() ? row.meaning.trim() : ''
+          out.push({
+            char,
+            jyutping,
+            meaning,
+            glossSource: meaning ? 'model' : undefined,
+          })
+        }
+        if (out.length) modelRows = out
+      }
+    } catch {
+      /* keep fallback */
+    }
+
+    const merged = modelRows.map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) return row
+      return {
+        ...row,
+        jyutping: row.jyutping || null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return {
+      characters: merged,
+      engine: 'openai' as const,
+      lang: 'wuu' as const,
+    }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'wuu' as const }
+  }
 }
 
 export async function breakdown(input: unknown) {
