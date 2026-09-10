@@ -52,8 +52,44 @@ export type SynthesizeOpts = {
   preferredVi?: string | null
 }
 
+const TTS_CLIP_CACHE_MAX = 48
+const ttsClipCache = new Map<string, Buffer>()
+
+export function ttsClipCacheKey(voice: string, text: string) {
+  return `${voice}\n${text}`
+}
+
+export function resetTtsClipCacheForTests() {
+  ttsClipCache.clear()
+}
+
+export function ttsClipCacheSizeForTests() {
+  return ttsClipCache.size
+}
+
+export function rememberTtsClipForTests(voice: string, text: string, buf: Buffer) {
+  rememberTtsClip(ttsClipCacheKey(voice, text), buf)
+}
+
+function rememberTtsClip(key: string, buf: Buffer) {
+  if (ttsClipCache.has(key)) ttsClipCache.delete(key)
+  ttsClipCache.set(key, buf)
+  while (ttsClipCache.size > TTS_CLIP_CACHE_MAX) {
+    const oldest = ttsClipCache.keys().next().value
+    if (oldest === undefined) break
+    ttsClipCache.delete(oldest)
+  }
+}
+
+function cachedTtsClip(key: string): Buffer | undefined {
+  const hit = ttsClipCache.get(key)
+  if (!hit) return undefined
+  ttsClipCache.delete(key)
+  ttsClipCache.set(key, hit)
+  return hit
+}
+
 export async function synthesize(text: string, lang: string, opts: SynthesizeOpts = {}): Promise<Buffer> {
-  if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
   const pick = resolveSpeakVoice(
     lang,
     opts.preferredYue,
@@ -66,6 +102,11 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.voice,
     opts.preferredVi,
   )
+  const cacheKey = ttsClipCacheKey(pick.voice, text)
+  const cached = cachedTtsClip(cacheKey)
+  if (cached) return Buffer.from(cached)
+
+  if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
   // fil-PH neural voices are much quieter than zh-HK / en-US on iPhone speakers
   // (even at device max). Use Azure's loudest relative prosody so Tagalog speak
   // is in the same ballpark as Cantonese/English without client-side gain nodes.
@@ -85,5 +126,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     body: ssml,
   })
   if (!res.ok) throw new Error(`TTS failed: ${res.status}`)
-  return Buffer.from(await res.arrayBuffer())
+  const audio = Buffer.from(await res.arrayBuffer())
+  rememberTtsClip(cacheKey, audio)
+  return audio
 }

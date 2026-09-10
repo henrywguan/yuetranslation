@@ -262,6 +262,74 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   return readLocalYueVoice()
 }
 
+const TTS_CACHE_MAX = 24
+const ttsBlobs = new Map<string, Blob>()
+const ttsInflight = new Map<string, Promise<Blob | null>>()
+
+function ttsCacheKey(text: string, lang: Lang, voice: string | null) {
+  return `${lang}|${voice || ''}|${text}`
+}
+
+function rememberTtsBlob(key: string, blob: Blob) {
+  if (ttsBlobs.has(key)) ttsBlobs.delete(key)
+  ttsBlobs.set(key, blob)
+  while (ttsBlobs.size > TTS_CACHE_MAX) {
+    const oldest = ttsBlobs.keys().next().value
+    if (oldest === undefined) break
+    ttsBlobs.delete(oldest)
+  }
+}
+
+/** Test/dev: drop in-memory clips so smokes start clean. */
+export function resetTtsAudioCacheForTests() {
+  ttsBlobs.clear()
+  ttsInflight.clear()
+}
+
+export function ttsAudioCacheSizeForTests() {
+  return ttsBlobs.size
+}
+
+/**
+ * Load Azure TTS audio, coalescing in-flight requests and reusing recent clips.
+ * Auto-speak and the speaker button share this so a tap after playback is instant.
+ */
+export async function loadTtsAudio(
+  text: string,
+  lang: Lang,
+  voice?: string | null,
+): Promise<Blob | null> {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  const resolved = preferredVoiceFor(lang, voice)
+  const key = ttsCacheKey(trimmed, lang, resolved)
+  const cached = ttsBlobs.get(key)
+  if (cached) {
+    ttsBlobs.delete(key)
+    ttsBlobs.set(key, cached)
+    return cached
+  }
+  const pending = ttsInflight.get(key)
+  if (pending) return pending
+  const next = fetchTtsAudio(trimmed, lang, resolved)
+    .then((blob) => {
+      if (blob && blob.size > 0) rememberTtsBlob(key, blob)
+      return blob
+    })
+    .finally(() => {
+      ttsInflight.delete(key)
+    })
+  ttsInflight.set(key, next)
+  return next
+}
+
+/** Warm the clip while the user reads the translation — no playback. */
+export function prefetchTts(text: string, lang: Lang, voice?: string | null) {
+  const trimmed = text.trim()
+  if (!trimmed) return
+  void loadTtsAudio(trimmed, lang, voice).catch(() => undefined)
+}
+
 async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed' | 'aborted'> {
   const objectUrl = URL.createObjectURL(blob)
   url = objectUrl
@@ -296,14 +364,15 @@ async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed'
 export async function speakText(text: string, lang: Lang, voice?: string | null) {
   const trimmed = text.trim()
   if (!trimmed) return
-  stopSpeaking()
+  // Keep the shared element — audio.load() here added a visible gap before play.
+  stopSpeaking({ preserveSession: true })
   const g = gen
   playing = true
   let fetchError: Error | null = null
   try {
     let blob: Blob | null = null
     try {
-      blob = await fetchTtsAudio(trimmed, lang, preferredVoiceFor(lang, voice))
+      blob = await loadTtsAudio(trimmed, lang, voice)
     } catch (err) {
       fetchError = err instanceof Error ? err : new Error('Voice playback failed.')
     }
@@ -409,9 +478,7 @@ export async function speakTextSequence(
   setTtsPlaybackRate(options.rate ?? 1.15)
 
   const blobs = await Promise.all(
-    items.map((text) =>
-      fetchTtsAudio(text, lang, preferredVoiceFor(lang)).catch(() => null),
-    ),
+    items.map((text) => loadTtsAudio(text, lang, preferredVoiceFor(lang)).catch(() => null)),
   )
   if (id !== sequenceId) return
 

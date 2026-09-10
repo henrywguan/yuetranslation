@@ -104,7 +104,7 @@ export function TranslationAlternatives({
                 </button>
               )}
               {showSpeak ? (
-                <SpeakButton text={alt} lang={lang} className="translation-alt-speak" />
+                <SpeakButton text={alt} lang={lang} className="translation-alt-speak" warm={false} />
               ) : null}
               {showCopy ? (
                 <CopyButton text={alt} lang={lang} className="translation-alt-copy" />
