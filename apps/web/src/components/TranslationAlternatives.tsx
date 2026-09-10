@@ -20,6 +20,7 @@ export function TranslationAlternatives({
   showCopy = true,
   showSpeak = false,
   lang = 'yue',
+  hideLabel = false,
 }: {
   alternatives: string[]
   /** Wugniu / Sichuanese Pinyin for each alternative (same order). */
@@ -31,13 +32,17 @@ export function TranslationAlternatives({
   showSpeak?: boolean
   /** Yue/cmn variants use ruby; English variants stay plain. */
   lang?: Lang
+  /** When Details wraps this in DetailCollapsible, skip the duplicate label. */
+  hideLabel?: boolean
 }) {
   if (!alternatives.length) return null
   return (
     <div className={['translation-alts', className].filter(Boolean).join(' ')}>
-      <p className="translation-alts-label">
-        <BiText copy={ui.historyVariations} size="sm" />
-      </p>
+      {hideLabel ? null : (
+        <p className="translation-alts-label">
+          <BiText copy={ui.historyVariations} size="sm" />
+        </p>
+      )}
       <ul className="translation-alts-list">
         {alternatives.map((alt, i) => (
           <li key={alt}>

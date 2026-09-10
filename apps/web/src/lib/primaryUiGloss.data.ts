@@ -189,6 +189,13 @@ export const PRIMARY_UI_GLOSS: Record<string, PrimaryUiGlossRow> = {
   'Next tone story': { tl: 'Next tone story', es: 'Siguiente historia de tono', vi: 'Câu chuyện thanh sau', wuu: '下一个声调故事', sichuan: '下一个声调故事' },
   'No extra details for this turn.': { tl: 'Walang karagdagang detalye para sa turn na ito.', es: 'No hay más detalles para este turno.', vi: 'Không có chi tiết thêm cho lượt này.', wuu: '这趟无额外详情。', sichuan: '这趟无额外详情。' },
   'No text found — try again closer or with better light': { tl: 'Walang nakitang text — subukang mas malapit o mas magandang ilaw', es: 'No se encontró texto — acércate o mejora la luz', vi: 'Không thấy chữ — thử gần hơn hoặc sáng hơn', wuu: '没侦测到文字——靠近点或改善光线再试', sichuan: '没侦测到文字——靠近点或改善光线再试' },
+  'No alternative translations for this phrase.': {
+    tl: 'Walang alternative translations para sa phrase na ito.',
+    es: 'No hay traducciones alternativas para esta frase.',
+    vi: 'Không có bản dịch thay thế cho cụm này.',
+    wuu: '搿句暂时无其他译法。',
+    sichuan: '这句暂时没得别的译法。',
+  },
   'No word details available.': { tl: 'Walang available na word details.', es: 'No hay detalles de palabras.', vi: 'Không có chi tiết từng từ.', wuu: '暂无逐词资料。', sichuan: '暂无逐词资料。' },
   'No. Guests can try tap-to-play voice; Free includes a monthly voice-char limit. Family/Business add unlimited voice, auto-speak, and more live mic time. If you self-host, plug in your own Azure/OpenAI keys.': { tl: 'Hindi. Puwedeng subukan ng guests ang tap-to-play voice; may monthly voice-char limit ang Free. May unlimited voice, auto-speak, at mas maraming live mic time ang Family/Business. Kung self-host, gamitin ang sarili mong Azure/OpenAI keys.', es: 'No. Los invitados pueden probar voz al tocar; Free tiene límite mensual de caracteres de voz. Family/Business añaden voz ilimitada, auto-voz y más mic en vivo. Si autoalojas, usa tus claves Azure/OpenAI.', vi: 'Không. Khách có thể thử chạm phát; Free có hạn ký tự giọng/tháng. Family/Business thêm giọng không giới hạn, tự đọc và thêm thời gian mic. Nếu tự host, dùng khoá Azure/OpenAI của bạn.', wuu: '勿使。访客可以试点喇叭播语音；免费版有每月语音字数上限。家庭／商务版有无限语音、自动朗读搭更多即时麦克风时间。如果自家托管，可以改用侬个 Azure／OpenAI 密钥。', sichuan: '不用。访客可以试点喇叭播语音；免费版有每月语音字数上限。家庭／商务版有无限语音、自动朗读和更多即时麦克风时间。如果自己托管，可以用你的 Azure／OpenAI 密钥。' },
   'Not enough pages left for this PDF.': { tl: 'Hindi sapat ang natitirang pages para sa PDF na ito.', es: 'No quedan páginas suficientes para este PDF.', vi: 'Không đủ trang còn lại cho PDF này.', wuu: '剩余页数不够这份 PDF。', sichuan: '剩余页数不够这份 PDF。' },
