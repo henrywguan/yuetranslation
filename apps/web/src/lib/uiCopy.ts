@@ -396,6 +396,11 @@ export const ui = {
     zh: '複製粵拼＋調號',
     jp: 'fuk6 zai3 jyut6 ping3 + diu6 hou6',
   },
+  copyJyutpingFamily: {
+    en: 'Copy Jyutping + Chao (Family)',
+    zh: '複製粵拼＋調號（家庭版）',
+    jp: 'fuk6 zai3 jyut6 ping3 + diu6 hou6 (gaa1 ting4 baan2)',
+  },
   copiedJyutping: {
     en: 'Jyutping copied',
     zh: '已複製粵拼',

@@ -85,6 +85,7 @@ export const PRIMARY_UI_GLOSS: Record<string, PrimaryUiGlossRow> = {
   'Copy': { tl: 'Kopyahin', es: 'Copiar', vi: 'Sao chép', wuu: '复制', sichuan: '复制' },
   'Copy text': { tl: 'Kopyahin ang text', es: 'Copiar texto', vi: 'Sao chép chữ', wuu: '复制文字', sichuan: '复制文字' },
   'Copy Jyutping + Chao tones': { tl: 'Kopyahin ang Jyutping + Chao tones', es: 'Copiar Jyutping + tonos Chao', vi: 'Sao chép Jyutping + thanh Chao', wuu: '复制粤拼＋调号', sichuan: '复制粤拼＋调号' },
+  'Copy Jyutping + Chao (Family)': { tl: 'Kopyahin ang Jyutping + Chao (Family)', es: 'Copiar Jyutping + Chao (Family)', vi: 'Sao chép Jyutping + Chao (Family)', wuu: '复制粤拼＋调号（家庭版）', sichuan: '复制粤拼＋调号（家庭版）' },
   'Copy translations to clipboard': { tl: 'Kopyahin ang mga salin sa clipboard', es: 'Copiar traducciones al portapapeles', vi: 'Sao chép bản dịch vào clipboard', wuu: '复制翻译到剪贴板', sichuan: '复制翻译到剪贴板' },
   'Could not save photo — try again': { tl: 'Hindi ma-save ang larawan — subukan ulit', es: 'No se pudo guardar la foto — inténtalo de nuevo', vi: 'Không lưu được ảnh — thử lại', wuu: '无法保存相片——请再试', sichuan: '无法保存相片——请再试' },
   'Could not send invite': { tl: 'Hindi maipadala ang invite', es: 'No se pudo enviar la invitación', vi: 'Không gửi được lời mời', wuu: '发不出邀请', sichuan: '发不出邀请' },
