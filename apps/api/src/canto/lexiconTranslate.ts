@@ -369,13 +369,14 @@ export function cantoneseSensesForEnglish(en: string): string[] {
 }
 
 export function lexiconTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
 }): LexiconTranslateHit | null {
-  // Shanghainese is handled by translateShanghainese — no Yue lexicon MT.
+  // Shanghainese / Sichuanese are dedicated paths — no Yue lexicon MT.
   if (opts.sourceLang === 'wuu' || opts.targetLang === 'wuu') return null
+  if (opts.sourceLang === 'sichuan' || opts.targetLang === 'sichuan') return null
 
   const source = opts.source.trim()
   if (!source) return null

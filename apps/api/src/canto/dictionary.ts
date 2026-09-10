@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -46,10 +46,19 @@ function yueSttVariants(source: string): string[] {
 
 /** Wugniu for a Shanghainese Han string when another seeded phrase uses that text. */
 export function wugniuForWuuText(han: string): string | undefined {
+  return romanizationForTargetText(han, 'wuu')
+}
+
+/** Sichuanese Pinyin for a Sichuanese Han string when another seeded phrase uses that text. */
+export function sichuanPinyinForText(han: string): string | undefined {
+  return romanizationForTargetText(han, 'sichuan')
+}
+
+function romanizationForTargetText(han: string, targetLang: TargetLang): string | undefined {
   const needle = normalizeLookupKey(han)
   if (!needle) return undefined
   for (const entry of raw.entries) {
-    if (entry.targetLang !== 'wuu') continue
+    if (entry.targetLang !== targetLang) continue
     if (normalizeLookupKey(entry.text) === needle && entry.romanization?.trim()) {
       return entry.romanization.trim()
     }
@@ -57,7 +66,11 @@ export function wugniuForWuuText(han: string): string | undefined {
   return undefined
 }
 
-function alternativeRomanizationsFor(entry: PhraseEntry, alternatives: string[]): string[] | undefined {
+function alternativeRomanizationsFor(
+  entry: PhraseEntry,
+  alternatives: string[],
+  targetLang: 'wuu' | 'sichuan',
+): string[] | undefined {
   if (!alternatives.length) return undefined
   const curated = entry.alternativeRomanizations || []
   const entryAlts = entry.alternatives || []
@@ -65,13 +78,13 @@ function alternativeRomanizationsFor(entry: PhraseEntry, alternatives: string[])
     const idx = entryAlts.indexOf(alt)
     const fromCurated = idx >= 0 ? curated[idx]?.trim() : ''
     if (fromCurated) return fromCurated
-    return wugniuForWuuText(alt) || ''
+    return romanizationForTargetText(alt, targetLang) || ''
   })
   return out.some(Boolean) ? out : undefined
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
@@ -91,6 +104,7 @@ export function dictionaryTranslate(opts: {
     (entry.targetLang === 'yue' ||
       entry.targetLang === 'en' ||
       entry.targetLang === 'wuu' ||
+      entry.targetLang === 'sichuan' ||
       entry.targetLang === 'tl' ||
       entry.targetLang === 'es' ||
       entry.targetLang === 'vi' ||
@@ -99,7 +113,9 @@ export function dictionaryTranslate(opts: {
       ? uniqStrings(entry.text, entry.alternatives || [])
       : []
   const alternativeRomanizations =
-    opts.targetLang === 'wuu' ? alternativeRomanizationsFor(entry, alternatives) : undefined
+    opts.targetLang === 'wuu' || opts.targetLang === 'sichuan'
+      ? alternativeRomanizationsFor(entry, alternatives, opts.targetLang)
+      : undefined
   return {
     text: entry.text,
     alternatives,

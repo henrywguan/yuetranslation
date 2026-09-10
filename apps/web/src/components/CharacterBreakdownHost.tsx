@@ -72,6 +72,7 @@ const DOCK_ID = 'details'
 function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'cmn') return 'cmn'
   if (detailLang === 'wuu') return 'wuu'
+  if (detailLang === 'sichuan') return 'sichuan'
   if (detailLang === 'tl') return 'tl'
   if (detailLang === 'es') return 'es'
   if (detailLang === 'vi') return 'vi'
@@ -303,8 +304,9 @@ export function CharacterBreakdownHost() {
       setIpa(top.jp)
       return
     }
-    if (detailLang === 'cmn' || detailLang === 'wuu') {
+    if (detailLang === 'cmn' || detailLang === 'wuu' || detailLang === 'sichuan') {
       // Cmn: pinyin is tone-marked in jp. Wuu: citation Wugniu lives in jp but is not IPA.
+      // Sichuan: 四川话拼音 lives in jp; not Yue Jyutping for IPA lookup.
       setIpa('')
       return
     }
@@ -335,14 +337,17 @@ export function CharacterBreakdownHost() {
       (top?.kind === 'phrase' || top?.kind === 'char' ? top.lang : undefined) ||
       (hasHan(row.char) ? 'yue' : 'en')
     const sense =
-      detailLang === 'yue' || detailLang === 'cmn' || detailLang === 'wuu'
+      detailLang === 'yue' ||
+      detailLang === 'cmn' ||
+      detailLang === 'wuu' ||
+      detailLang === 'sichuan'
         ? pickCharGloss(row.meaning, glossForChar(row.char))
         : row.meaning.trim()
     if (!sense && !row.jyutping) return
     pushDetail({
       kind: 'char',
       char: row.char,
-      // Wuu: jyutping field carries citation-form Wugniu (same reuse as cmn pinyin).
+      // Wuu / Sichuan: jyutping field carries romanization (Wugniu / 四川话拼音).
       jp: row.jyutping,
       phrase: top?.kind === 'phrase' ? top.phrase : row.char,
       lang: detailLang,
@@ -374,6 +379,7 @@ export function CharacterBreakdownHost() {
   const isEnglishDetail = detailLang === 'en'
   const isCmnDetail = detailLang === 'cmn'
   const isWuuDetail = detailLang === 'wuu'
+  const isSichuanDetail = detailLang === 'sichuan'
   const isTlDetail = detailLang === 'tl'
   const isEsDetail = detailLang === 'es'
   const isViDetail = detailLang === 'vi'
@@ -384,7 +390,9 @@ export function CharacterBreakdownHost() {
       : top.jp?.trim() || ''
   const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
   const phraseWuuIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
-  const showRubyTitle = !isEnglishDetail && !isWuuDetail && !isLatinDetail && hasHan(topLabel)
+  // Sichuanese uses per-char 四川话拼音 ruby (not gloss-only like wuu).
+  const showRubyTitle =
+    !isEnglishDetail && !isWuuDetail && !isLatinDetail && hasHan(topLabel)
   const showWuuTitle = isWuuDetail && hasHan(topLabel)
   const phraseIpa =
     isEnglishDetail && top.kind === 'phrase'
@@ -481,9 +489,11 @@ export function CharacterBreakdownHost() {
                       : top.kind === 'char' || showRubyTitle || showWuuTitle
                       ? isWuuDetail
                         ? 'wuu-CN'
-                        : isCmnDetail
-                          ? 'zh-CN'
-                          : 'zh-HK'
+                        : isSichuanDetail
+                          ? 'zh-CN-sichuan'
+                          : isCmnDetail
+                            ? 'zh-CN'
+                            : 'zh-HK'
                       : 'en'
               }
             >
@@ -503,7 +513,9 @@ export function CharacterBreakdownHost() {
                   aria-label={
                     isCmnDetail
                       ? `Show pinyin for ${topLabel}`
-                      : `Show Jyutping for ${topLabel}`
+                      : isSichuanDetail
+                        ? `Show Sichuanese Pinyin for ${topLabel}`
+                        : `Show Jyutping for ${topLabel}`
                   }
                 >
                   {isCmnDetail ? (
@@ -713,7 +725,9 @@ export function CharacterBreakdownHost() {
                                   ? 'cmn'
                                   : isWuuDetail
                                     ? 'wuu'
-                                    : 'yue'
+                                    : isSichuanDetail
+                                      ? 'sichuan'
+                                      : 'yue'
                       }
                       onSelect={isEnglishDetail ? selectEnVariation : selectYueVariation}
                     />
@@ -763,7 +777,9 @@ export function CharacterBreakdownHost() {
                             ? 'cmn'
                             : isWuuDetail
                               ? 'wuu'
-                              : 'yue'
+                              : isSichuanDetail
+                                ? 'sichuan'
+                                : 'yue'
                   return (
                     <li key={`${row.char}-${i}`} className="detail-panel-row-wrap">
                       <button
@@ -788,9 +804,11 @@ export function CharacterBreakdownHost() {
                                   ? 'vi'
                                   : isWuuDetail
                                     ? 'wuu-CN'
-                                    : isCmnDetail
-                                      ? 'zh-CN'
-                                      : 'zh-HK'
+                                    : isSichuanDetail
+                                      ? 'zh-CN-sichuan'
+                                      : isCmnDetail
+                                        ? 'zh-CN'
+                                        : 'zh-HK'
                           }
                         >
                           <span className="detail-panel-row-jp">
@@ -891,6 +909,14 @@ export function CharacterBreakdownHost() {
                                 </span>
                               ) : isCmnDetail ? (
                                 <PinyinSyllable py={row.jyutping} />
+                              ) : isSichuanDetail ? (
+                                <span
+                                  className="detail-panel-ipa"
+                                  lang="en"
+                                  title="四川话拼音"
+                                >
+                                  {row.jyutping}
+                                </span>
                               ) : (
                                 <JyutSyllable jp={row.jyutping} />
                               )
