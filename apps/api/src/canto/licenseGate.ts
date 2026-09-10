@@ -7,14 +7,7 @@
  */
 import { env } from '../env.js'
 
-export type DictSourceId = 'seed' | 'cc-canto' | 'wordshk'
-
 export function wordshkEnabled() {
   return env.enableWordshk && env.allowNoncommercialDicts
 }
 
-export function activeGlossSources(): DictSourceId[] {
-  const out: DictSourceId[] = ['seed', 'cc-canto']
-  if (wordshkEnabled()) out.push('wordshk')
-  return out
-}

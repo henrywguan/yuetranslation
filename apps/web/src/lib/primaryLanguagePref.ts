@@ -140,7 +140,3 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
   }
 }
 
-/** Cast helper when a Lang must be treated as primary (never an unsupported id). */
-export function asPrimaryOrYue(lang: Lang): PrimaryLang {
-  return isPrimaryLang(lang) ? lang : 'yue'
-}

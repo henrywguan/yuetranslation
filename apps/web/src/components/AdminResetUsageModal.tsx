@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { formatLiveSeconds, type AdminUser } from '../lib/adminApi'
+import { type AdminUser } from '../lib/adminApi'
+import { formatExactDuration } from '../lib/formatDuration'
 
 type MetricKey = 'live' | 'tts' | 'cam'
 
@@ -132,7 +133,7 @@ export function AdminResetUsageModal({ open, user, monthLabel, busy, onClose, on
         />
         <span>
           <strong>{label}</strong>
-          <span className="admin-sub">Current: {formatLiveSeconds(currentSeconds)}</span>
+          <span className="admin-sub">Current: {formatExactDuration(currentSeconds)}</span>
         </span>
       </label>
       {state.enabled ? (

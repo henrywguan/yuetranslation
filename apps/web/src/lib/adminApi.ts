@@ -454,26 +454,6 @@ export async function previewAdminEmail(input: {
   return data as { html: string }
 }
 
-export type EmailSendItem = {
-  id: string
-  created_at: string
-  template_key: string
-  subject: string
-  audience: string
-  recipient_count: number
-  status: string
-  provider_id: string | null
-  detail: Record<string, unknown> | null
-  created_by: string | null
-}
-
-export async function fetchEmailSends(limit = 40): Promise<{ sends: EmailSendItem[] }> {
-  const res = await adminFetch(`/admin/email/sends?limit=${encodeURIComponent(String(limit))}`)
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((data as { message?: string }).message || 'Failed to load sends')
-  return data as { sends: EmailSendItem[] }
-}
-
 export type EmailDraftResult = {
   fields: CampaignFields
   reasoning: string
@@ -693,9 +673,3 @@ export async function sendAdminPush(input: {
   }
 }
 
-import { formatExactDuration } from './formatDuration'
-
-/** Format integer seconds as `1h 02m 03s` (always shows seconds). */
-export function formatLiveSeconds(total: number): string {
-  return formatExactDuration(total)
-}

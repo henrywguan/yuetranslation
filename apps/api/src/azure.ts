@@ -1,8 +1,6 @@
 import { env } from './env.js'
 import { resolveSpeakVoice } from './ttsVoices.js'
 
-/** Azure STS max; we advertise a shorter TTL and prepay live seconds on mint. */
-export const SPEECH_TOKEN_AZURE_TTL_S = 540
 /** Client-facing max TTL — refresh more often; pairs with prepaid debit. */
 export const SPEECH_TOKEN_MAX_TTL_S = 180
 /** Minimum remaining live seconds required to mint a token. */
