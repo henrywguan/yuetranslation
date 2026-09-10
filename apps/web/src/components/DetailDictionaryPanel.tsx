@@ -65,12 +65,14 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
   if (!entry) return null
   const renderLang = glossLang || entry.glossLang || entry.lang
   const lemmaLang = entry.lang
+  // Cantonese: never surface AI IPA/pinyin — title + ruby already show LSHK Jyutping + Chao.
+  const showAiPron = Boolean(entry.pronunciation) && lemmaLang !== 'yue'
   const hasBody =
     entry.senses.length > 0 ||
     entry.examples.length > 0 ||
     entry.usageNotes.length > 0 ||
     entry.media.length > 0 ||
-    Boolean(entry.pronunciation)
+    showAiPron
   if (!hasBody) return null
 
   return (
@@ -82,9 +84,9 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
         entry.provenance.length ? entry.provenance.join(' · ') : undefined
       }
     >
-      {entry.pronunciation ? (
+      {showAiPron ? (
         <p className="detail-dict-pron" lang="en">
-          /{entry.pronunciation.replace(/^\/|\/$/g, '')}/
+          /{entry.pronunciation!.replace(/^\/|\/$/g, '')}/
         </p>
       ) : null}
       {entry.senses.length ? (

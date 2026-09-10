@@ -62,6 +62,7 @@ assert.ok(
   `粵 panel must not seed paired English as a sense, got ${JSON.stringify(yue.senses)}`,
 )
 assert.ok(yue.media.some((m) => m.type === 'emoji' && m.emoji === '🍎'))
+assert.equal(yue.pronunciation, undefined, '粵 Details must not ship AI IPA/pinyin pronunciation')
 
 const emptyish = await enrichDictionaryEntry({
   text: 'xyzzy-not-a-word',

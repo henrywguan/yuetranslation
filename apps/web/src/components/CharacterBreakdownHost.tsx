@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { fetchBreakdown, fetchDetailsEnrich, type DictionaryEntry } from '../lib/api'
 import { glossForChar, hasHan, isHanChar, pickCharGloss } from '../lib/charGloss'
 import { rememberBreakdownRows } from '../lib/learnedGloss'
-import { buildLocalBreakdown, ensureIpa, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
+import { buildLocalBreakdown, type CharBreakdown, type JyutSeg } from '../lib/jyutping'
 import { buildLocalLatinBreakdown, isLatinDetailLang } from '../lib/localLatinBreakdown'
 import { detailPedagogy } from '../lib/detailPedagogy'
 import { tagalogStressClass, tagalogStressLabel } from '../lib/tagalogPronunciation'
@@ -315,19 +315,19 @@ export function CharacterBreakdownHost() {
       setIpa(top.jp)
       return
     }
-    if (detailLang === 'cmn' || detailLang === 'wuu' || detailLang === 'sichuan') {
+    if (
+      detailLang === 'yue' ||
+      detailLang === 'cmn' ||
+      detailLang === 'wuu' ||
+      detailLang === 'sichuan'
+    ) {
+      // Yue: Jyutping + Chao on the title (not IPA / AI pinyin).
       // Cmn: pinyin is tone-marked in jp. Wuu: citation Wugniu lives in jp but is not IPA.
       // Sichuan: 四川话拼音 lives in jp; not Yue Jyutping for IPA lookup.
       setIpa('')
       return
     }
-    let cancelled = false
-    void ensureIpa(top.jp).then((v) => {
-      if (!cancelled) setIpa(v)
-    })
-    return () => {
-      cancelled = true
-    }
+    setIpa('')
   }, [top])
 
   useEffect(() => {

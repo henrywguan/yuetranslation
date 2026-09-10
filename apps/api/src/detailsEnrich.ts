@@ -229,6 +229,8 @@ async function modelEnrich(input: {
     `- When gloss language ≠ lemma language, optional example "translation" may briefly show a lemma-language surface form; never put CONTEXT / paired-pane text into glosses.`,
     '- CONTEXT (when provided) is ONLY for sense disambiguation (e.g. Apple fruit vs company). NEVER copy CONTEXT into gloss, examples, or usageNotes.',
     '- Do not write senses in the lemma language when a different gloss language was requested.',
+    '- For Cantonese (yue) lemmas: pronunciation MUST be "" — the client shows LSHK Jyutping + Chao; never invent IPA or Mandarin pinyin.',
+    '- Never use Mandarin pinyin for a Cantonese lemma.',
     '- 1–4 senses, 1–3 examples, 0–3 usage notes. Be concise. No markdown.',
   ].join('\n')
   const user = [
@@ -284,7 +286,8 @@ export async function enrichDictionaryEntry(input: unknown): Promise<DictionaryE
   if (model) {
     provenance.push('ai-synthesis')
     engine = offline.length ? 'mixed' : 'openai'
-    pronunciation = model.pronunciation
+    // Cantonese: strip AI pronunciation — client Jyutping + Chao is authoritative.
+    pronunciation = lang === 'yue' ? undefined : model.pronunciation
     // Prefer model senses when present; keep offline glosses that add something new.
     const modelGlosses = withoutPairedLeak(model.senses, parsed.contextText)
     if (modelGlosses.length) {
