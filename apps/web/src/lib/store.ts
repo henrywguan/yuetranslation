@@ -23,7 +23,6 @@ import {
 import {
   isConversationLang,
   isTextOnlyLang,
-  isVoiceLang,
   resolveSpeakDirectionForSolo,
   supportsTts,
 } from './langCapabilities'
@@ -31,6 +30,7 @@ import { humanizeThrownError } from './apiError'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
+  ConversationLang,
   ConversationTurn,
   Entitlement,
   IncidentBannerSettings,
@@ -92,13 +92,13 @@ function cleanFormalEs(text: string | null | undefined, prev: string): string | 
 type State = {
   mode: Mode
   speakDirection: SpeakDirection
-  /** Partner (top / rotated) pane language in Conversation. */
-  chineseLang: Lang
-  /** You (bottom / upright) pane language in Conversation. */
-  conversationYouLang: Lang
-  /** Solo upper pane language (any en|yue|cmn|wuu|tl|es; must differ from lower). */
+  /** Partner (top / rotated) pane language in Conversation (voice langs only). */
+  chineseLang: ConversationLang
+  /** You (bottom / upright) pane language in Conversation (voice langs only). */
+  conversationYouLang: ConversationLang
+  /** Solo upper pane language (voice + text-only; must differ from lower). */
   soloUpperLang: Lang
-  /** Solo lower pane language (any en|yue|cmn|wuu|tl|es; must differ from upper). */
+  /** Solo lower pane language (voice + text-only; must differ from upper). */
   soloLowerLang: Lang
   /** Non-English language paired with English across Solo / Conversation / Cam / brand. */
   primaryLanguage: PrimaryLang
@@ -632,12 +632,7 @@ export const useYueStore = create<State>((set, get) => {
   },
   setSpeakDirection: (speakDirection) =>
     set(
-      speakDirection === 'yue' ||
-      speakDirection === 'cmn' ||
-      speakDirection === 'wuu' ||
-      speakDirection === 'tl' ||
-      speakDirection === 'es' ||
-      speakDirection === 'vi'
+      speakDirection !== 'en'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
     ),
@@ -648,8 +643,8 @@ export const useYueStore = create<State>((set, get) => {
     const other = pane === 'you' ? partner : you
     const current = pane === 'you' ? you : partner
     if (lang === current) return
-    let nextYou = you
-    let nextPartner = partner
+    let nextYou: ConversationLang = you
+    let nextPartner: ConversationLang = partner
     const swapping = lang === other
     if (swapping) {
       if (pane === 'you') {

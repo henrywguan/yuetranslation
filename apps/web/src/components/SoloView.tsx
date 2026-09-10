@@ -474,7 +474,8 @@ export function SoloView() {
           editingRef.current = pane
           if (pane === 'upper') setUpperEditing(true)
           else setLowerEditing(true)
-          setSpeakDirection(lang)
+          // Text-only panes keep the keyboard; mic side stays on a voice lang.
+          if (isVoiceLang(lang)) setSpeakDirection(lang)
         }}
         onBlur={() => {
           if (editingRef.current === pane) editingRef.current = null
