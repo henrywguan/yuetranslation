@@ -11,7 +11,7 @@ import {
   type LiveMicKey,
 } from '../lib/conversationUi'
 import { isConversationLang } from '../lib/langCapabilities'
-import type { Lang } from '../lib/types'
+import type { VoiceLang } from '../lib/types'
 
 /**
  * Press shorter than this → sticky tap (keep listening after release).
@@ -39,12 +39,12 @@ function releasePointer(el: HTMLElement | null, pointerId: number) {
 
 type Props = {
   /** Conversation panes pass the pane language to lock STT for the turn. */
-  side?: Lang
+  side?: VoiceLang
   /**
-   * Conversation panes are language-pure — pass the pane `Lang` so mic copy
+   * Conversation panes are language-pure — pass the pane voice lang so mic copy
    * comes from `CONVERSATION_PANE_UI`. Solo dock stays bilingual (`bi`).
    */
-  labelLang?: 'bi' | Lang
+  labelLang?: 'bi' | VoiceLang
   className?: string
 }
 
@@ -139,7 +139,9 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
   const label = pickLabel(liveKey, labelLang)
   const aria = labelLang === 'bi' ? biPlain(liveCopy) : label
   const labelHtmlLang =
-    labelLang && labelLang !== 'bi' ? conversationLabelHtmlLang(labelLang) : 'en'
+    labelLang && labelLang !== 'bi' && isConversationLang(labelLang)
+      ? conversationLabelHtmlLang(labelLang)
+      : 'en'
 
   const finishPress = (pointerId: number, target: HTMLElement | null) => {
     if (activePointer.current !== pointerId) return

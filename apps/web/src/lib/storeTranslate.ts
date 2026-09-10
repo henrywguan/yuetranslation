@@ -4,14 +4,14 @@ import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
 import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeCebTranslation, sanitizeIloTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
-import type { ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
+import type { ConversationLang, ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
 /** Minimal store surface used by the translate pipeline. */
 export type TranslateState = {
   mode: Mode
-  chineseLang: Lang
-  conversationYouLang: Lang
-  /** Solo upper/lower pane languages (any en|yue|cmn|wuu|tl|es pair; must differ). */
+  chineseLang: ConversationLang
+  conversationYouLang: ConversationLang
+  /** Solo upper/lower pane languages (voice + text-only; must differ). */
   soloUpperLang: Lang
   soloLowerLang: Lang
   face: {

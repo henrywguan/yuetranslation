@@ -1,4 +1,4 @@
-import type { Lang } from './types'
+import type { ConversationLang, Lang, SpeakDirection } from './types'
 
 const STORAGE_KEY = 'yue-primary-lang'
 
@@ -37,9 +37,9 @@ export function writeLocalPrimaryLang(lang: PrimaryLang) {
 export function layoutForPrimary(primary: PrimaryLang): {
   soloUpperLang: Lang
   soloLowerLang: Lang
-  conversationYouLang: Lang
-  chineseLang: Lang
-  speakDirection: Lang
+  conversationYouLang: ConversationLang
+  chineseLang: ConversationLang
+  speakDirection: SpeakDirection
 } {
   // English primary → classic English-you, Cantonese partner.
   if (primary === 'en') {
