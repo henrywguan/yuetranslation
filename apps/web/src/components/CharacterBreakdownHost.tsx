@@ -304,7 +304,7 @@ export function CharacterBreakdownHost() {
       return
     }
     if (detailLang === 'cmn' || detailLang === 'wuu') {
-      // Cmn: pinyin is tone-marked in jp. Wuu: no per-char romanization in jp.
+      // Cmn: pinyin is tone-marked in jp. Wuu: citation Wugniu lives in jp but is not IPA.
       setIpa('')
       return
     }
@@ -342,7 +342,8 @@ export function CharacterBreakdownHost() {
     pushDetail({
       kind: 'char',
       char: row.char,
-      jp: detailLang === 'wuu' ? null : row.jyutping,
+      // Wuu: jyutping field carries citation-form Wugniu (same reuse as cmn pinyin).
+      jp: row.jyutping,
       phrase: top?.kind === 'phrase' ? top.phrase : row.char,
       lang: detailLang,
       definition: top?.kind === 'phrase' ? top.definition || top.translation : undefined,
@@ -377,7 +378,10 @@ export function CharacterBreakdownHost() {
   const isEsDetail = detailLang === 'es'
   const isViDetail = detailLang === 'vi'
   const isLatinDetail = isTlDetail || isEsDetail || isViDetail
-  const phraseWugniu = top.kind === 'phrase' ? top.romanization?.trim() || '' : ''
+  const phraseWugniu =
+    top.kind === 'phrase'
+      ? top.romanization?.trim() || ''
+      : top.jp?.trim() || ''
   const phraseSandhi = top.kind === 'phrase' ? top.sandhiHint?.trim() || '' : ''
   const phraseWuuIpa = top.kind === 'phrase' ? top.ipa?.trim() || '' : ''
   const showRubyTitle = !isEnglishDetail && !isWuuDetail && !isLatinDetail && hasHan(topLabel)
@@ -868,7 +872,19 @@ export function CharacterBreakdownHost() {
                                   )
                                 })()}
                               </span>
-                            ) : row.jyutping && !isWuuDetail ? (
+                            ) : isWuuDetail ? (
+                              row.jyutping ? (
+                                <span
+                                  className="detail-panel-ipa"
+                                  lang="en"
+                                  title="Wugniu (citation form)"
+                                >
+                                  {row.jyutping}
+                                </span>
+                              ) : (
+                                '—'
+                              )
+                            ) : row.jyutping ? (
                               isEnglishDetail ? (
                                 <span className="detail-panel-ipa" lang="en">
                                   /{row.jyutping}/
