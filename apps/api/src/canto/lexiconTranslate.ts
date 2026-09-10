@@ -369,7 +369,7 @@ export function cantoneseSensesForEnglish(en: string): string[] {
 }
 
 export function lexiconTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean

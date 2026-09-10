@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -202,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -984,7 +984,7 @@ export async function breakdown(input: unknown) {
   if (lang === 'es') return esBreakdown(text)
   if (lang === 'vi') return viBreakdown(text)
   // Soft: Cebuano / Ilocano text-only — reuse English token breakdown until dedicated packs exist.
-  if (lang === 'ceb' || lang === 'ilo') return englishBreakdown(text)
+  if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') return englishBreakdown(text)
   if (lang === 'cmn') return cmnBreakdown(text)
   if (lang === 'wuu') return wuuBreakdown(text)
   if (lang === 'sichuan') return sichuanBreakdown(text)

@@ -20,6 +20,7 @@ function langShort(lang: Lang): string {
   if (lang === 'vi') return 'Vi'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
+  if (lang === 'bcl') return 'Bc'
   return '粵'
 }
 
@@ -113,7 +114,7 @@ function LangLine({
       />
     )
   }
-  if (lang === 'ceb' || lang === 'ilo') {
+  if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
         <button
@@ -158,6 +159,7 @@ function langLabel(lang: Lang) {
   if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
+  if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
   return <BiText copy={ui.cantonese} size="sm" only="zh" />
 }
 

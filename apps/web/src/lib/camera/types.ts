@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang. */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
@@ -31,6 +31,7 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'en') return 'en'
   if (lang === 'ceb') return 'ceb'
   if (lang === 'ilo') return 'ilo'
+  if (lang === 'bcl') return 'bcl'
   if (lang === 'tl' || lang === 'fil') return 'tl'
   if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'

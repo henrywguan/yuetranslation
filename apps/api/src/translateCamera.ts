@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -123,8 +123,12 @@ function isIlocanoTarget(to: CameraLang): boolean {
   return to === 'ilo'
 }
 
+function isBikolTarget(to: CameraLang): boolean {
+  return to === 'bcl'
+}
+
 function isLatinPhilippineRegionalTarget(to: CameraLang): boolean {
-  return isCebuanoTarget(to) || isIlocanoTarget(to)
+  return isCebuanoTarget(to) || isIlocanoTarget(to) || isBikolTarget(to)
 }
 
 function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
@@ -297,10 +301,31 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'bcl') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Central Bikol (Bikol Naga).',
+      'Write for Bikol travelers/readers: everyday spoken Central Bikol, not stiff textbook Bikol.',
+      'Use Latin script only. Diacritics are optional — prefer clear Latin orthography.',
+      'Do NOT use Chinese characters, Baybayin, IPA, or invented tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Check-in / Rehistro; Luggage → Maleta / Luggage.',
+      '- Safety: Wet floor → Basâ an salog / Mag-ingat; Caution → Mag-ingat.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Bikol output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Central Bikol>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   return [
     'You translate signs, menus, forms, and short labels into clear traveler English.',
-    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, Vietnamese, Cebuano, or Ilocano (Latin script).',
-    'When the source is Tagalog/Filipino, Mexican Spanish, Vietnamese, Cebuano, or Ilocano Latin text, translate it into concise English (Latin → English).',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, Vietnamese, Cebuano, Ilocano, or Central Bikol (Latin script).',
+    'When the source is Tagalog/Filipino, Mexican Spanish, Vietnamese, Cebuano, Ilocano, or Central Bikol Latin text, translate it into concise English (Latin → English).',
     docHint,
     "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
     'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
@@ -344,6 +369,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   }
   if (isIlocanoTarget(to)) {
     return hasHan(source) ? `(demo ILO) ${source}` : `(demo) ${source}`
+  }
+  if (isBikolTarget(to)) {
+    return hasHan(source) ? `(demo BCL) ${source}` : `(demo) ${source}`
   }
   return `(demo) ${source}`
 }
@@ -407,7 +435,9 @@ export async function translateCameraText(
             ? `(tr CEB) ${source}`
             : isIlocanoTarget(to)
               ? `(tr ILO) ${source}`
-              : `(tr) ${source}`
+              : isBikolTarget(to)
+                ? `(tr BCL) ${source}`
+                : `(tr) ${source}`
   let translated = parseTranslation(raw, fallback)
   if (to === 'cmn') translated = scrubYueToCmn(translated).text
   remember(key, translated)
@@ -429,6 +459,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'vi') return 'Vietnamese (Latin script / Quốc ngữ, vi-VN)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
+  if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
   return 'Hong Kong Chinese 繁體'
 }
 
@@ -483,7 +514,9 @@ export async function translateCameraBatch(
                 ? `(tr CEB) ${s}`
                 : isIlocanoTarget(to)
                   ? `(tr ILO) ${s}`
-                  : `(tr) ${s}`,
+                  : isBikolTarget(to)
+                    ? `(tr BCL) ${s}`
+                    : `(tr) ${s}`,
     )
     const translated = parseBatchTranslations(raw, fallbacks)
     for (let i = 0; i < chunk.length; i++) {
@@ -518,6 +551,7 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
+  if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'
   if (lang === 'cmn' || lang === 'en' || lang === 'wuu') return lang
   return undefined
 }

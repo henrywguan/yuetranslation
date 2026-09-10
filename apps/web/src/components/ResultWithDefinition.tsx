@@ -63,6 +63,8 @@ export function ResultWithDefinition({
                   ? 'ceb'
                   : chineseLang === 'ilo'
                     ? 'ilo'
+                    : chineseLang === 'bcl'
+                      ? 'bcl'
                     : chineseLang === 'en'
                       ? 'en'
                       : 'yue'
@@ -96,18 +98,18 @@ export function ResultWithDefinition({
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />
-            ) : chineseLang === 'ceb' || chineseLang === 'ilo' ? (
+            ) : chineseLang === 'ceb' || chineseLang === 'ilo' || chineseLang === 'bcl' ? (
               onActivate ? (
                 <button
                   type="button"
                   className={`${textClassName || 'result-text'} spoken-line-text--action`}
-                  lang={chineseLang === 'ceb' ? 'ceb' : 'ilo'}
+                  lang={chineseLang === 'ceb' ? 'ceb' : chineseLang === 'ilo' ? 'ilo' : 'bcl'}
                   onClick={() => onActivate(trimmed)}
                 >
                   {trimmed}
                 </button>
               ) : (
-                <p className={textClassName || 'result-text'} lang={chineseLang === 'ceb' ? 'ceb' : 'ilo'}>
+                <p className={textClassName || 'result-text'} lang={chineseLang === 'ceb' ? 'ceb' : chineseLang === 'ilo' ? 'ilo' : 'bcl'}>
                   {trimmed}
                 </p>
               )

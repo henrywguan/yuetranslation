@@ -1,5 +1,5 @@
 /**
- * EN ↔ Cebuano (`ceb`) / Ilocano (`ilo`) — colloquial everyday Latin-script paths.
+ * EN ↔ Cebuano (`ceb`) / Ilocano (`ilo`) / Central Bikol (`bcl`) — colloquial everyday Latin-script paths.
  * Shared helper (dict → demo → LLM JSON). No STT/TTS; no Han in target output.
  */
 import { env, llmChatExtras } from './env.js'
@@ -12,13 +12,14 @@ import {
 } from './canto/index.js'
 import { hasHan } from './canto/han.js'
 
-export type PhilippineRegionalLang = 'ceb' | 'ilo'
+export type PhilippineRegionalLang = 'ceb' | 'ilo' | 'bcl'
 
 export type PhilippineTranslateLang =
   | 'en'
   | 'yue'
   | 'cmn'
   | 'wuu'
+  | 'sichuan'
   | 'tl'
   | 'es'
   | 'vi'
@@ -69,6 +70,15 @@ const PROFILES: Record<PhilippineRegionalLang, RegionalProfile> = {
     colloquialNote: 'ilo-colloquial',
     styleHints:
       'Everyday Ilocano conversation (Ilocos / Northern Luzon). Prefer natural spoken Ilokano over stiff textbook forms. Light English loanwords OK when natural.',
+  },
+  bcl: {
+    code: 'bcl',
+    englishName: 'Central Bikol',
+    nativeName: 'Bikol Naga / Bikol Central',
+    demoTag: 'BCL',
+    colloquialNote: 'bcl-colloquial',
+    styleHints:
+      'Everyday Central Bikol (Naga / Bicol Region) conversation. Prefer natural spoken Bikol over stiff textbook forms. Light English and Spanish loanwords OK when natural.',
   },
 }
 
@@ -366,4 +376,15 @@ export function translateIlocano(opts: {
   fallbackDefinition: string
 }): Promise<PhilippineTranslateResult> {
   return translatePhilippineRegional({ ...opts, lang: 'ilo' })
+}
+
+export function translateBikol(opts: {
+  from: PhilippineTranslateLang
+  to: PhilippineTranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<PhilippineTranslateResult> {
+  return translatePhilippineRegional({ ...opts, lang: 'bcl' })
 }

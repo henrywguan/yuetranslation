@@ -33,6 +33,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'vi') return 'Nhập tiếng Việt…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
+  if (lang === 'bcl') return 'I-type nin Bikol…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
 }
@@ -40,6 +41,7 @@ function placeholderFor(lang: Lang): string {
 function ariaForPane(lang: Lang): string {
   if (lang === 'ceb') return 'Type Cebuano'
   if (lang === 'ilo') return 'Type Ilocano'
+  if (lang === 'bcl') return 'Type Bikol'
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'es') return 'Speak Spanish(MX) with the mic'
@@ -363,7 +365,7 @@ export function SoloView() {
     const t = (raw || '').trim()
     if (!t) return undefined
     const han = /[\u3400-\u9fff]/u.test(t)
-    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'vi' || paneLang === 'ceb' || paneLang === 'ilo') {
+    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'vi' || paneLang === 'ceb' || paneLang === 'ilo' || paneLang === 'bcl') {
       // Latin panels: drop pure-Han paired glosses.
       if (han && !/[A-Za-z]/.test(t)) return undefined
       return t
@@ -434,7 +436,8 @@ export function SoloView() {
       soloLowerLang === 'es' ||
       soloLowerLang === 'vi' ||
       soloLowerLang === 'ceb' ||
-      soloLowerLang === 'ilo') &&
+      soloLowerLang === 'ilo' ||
+      soloLowerLang === 'bcl') &&
     Boolean(lowerDraft.trim()) &&
     !lowerEditing &&
     (!inputLocked || Boolean(yueInterim.trim()))
@@ -447,7 +450,8 @@ export function SoloView() {
       soloUpperLang === 'es' ||
       soloUpperLang === 'vi' ||
       soloUpperLang === 'ceb' ||
-      soloUpperLang === 'ilo') &&
+      soloUpperLang === 'ilo' ||
+      soloUpperLang === 'bcl') &&
     Boolean(upperDraft.trim()) &&
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
@@ -474,7 +478,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'ceb' || lang === 'ilo')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'ceb' || lang === 'ilo' || lang === 'bcl')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []

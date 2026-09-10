@@ -4,7 +4,7 @@ import type { ConversationLang } from './types'
  * Conversation language-pure UI (mic button + pane hints).
  *
  * **When adding a Conversation language:** extend `VoiceLang` / `ConversationLang`
- * in `types.ts`, then add a full entry here. Text-only langs (`ceb` / `ilo`) stay
+ * in `types.ts`, then add a full entry here. Text-only langs (`ceb` / `ilo` / `bcl`) stay
  * off this map — they are Solo + Cam only.
  *
  * `Record<ConversationLang, …>` makes `tsc` fail until Conversation copy exists —
