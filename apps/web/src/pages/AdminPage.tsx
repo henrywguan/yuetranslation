@@ -17,8 +17,7 @@ import {
   fetchAdminMe,
   fetchAdminUserUsage,
   fetchAdminUsers,
-  formatLiveSeconds,
-  syncResendAudience,
+    syncResendAudience,
   backfillHouseholdUsage,
   fetchAdminIncidentBanner,
   patchAdminIncidentBanner,
@@ -28,6 +27,7 @@ import {
   type AdminUser,
   type AdminUsageMonth,
 } from '../lib/adminApi'
+import { formatExactDuration } from '../lib/formatDuration'
 import { openAuthScreen } from '../lib/auth'
 import { navigate } from '../lib/useHashRoute'
 import { useYueStore } from '../lib/store'
@@ -957,7 +957,7 @@ export function AdminPage() {
                       )}
                     </td>
                     <td title={`${u.liveSeconds} / ${u.liveLimitSeconds} s`}>
-                      {formatLiveSeconds(u.liveSeconds)}
+                      {formatExactDuration(u.liveSeconds)}
                     </td>
                     <td>
                       {u.ttsChars.toLocaleString()}
@@ -978,7 +978,7 @@ export function AdminPage() {
                         <span className="admin-sub"> / ∞</span>
                       )}
                       {u.cameraSeconds > 0 ? (
-                        <span className="admin-sub"> · {formatLiveSeconds(u.cameraSeconds)} sess</span>
+                        <span className="admin-sub"> · {formatExactDuration(u.cameraSeconds)} sess</span>
                       ) : null}
                     </td>
                     <td title="Multimodal LLM OCR fallbacks (view-only; no hard cap)">
@@ -1071,10 +1071,10 @@ export function AdminPage() {
               </header>
               {usageTotal ? (
                 <p className="admin-usage-total">
-                  Total · Live {formatLiveSeconds(usageTotal.liveSeconds)} · TTS{' '}
+                  Total · Live {formatExactDuration(usageTotal.liveSeconds)} · TTS{' '}
                   {usageTotal.ttsChars.toLocaleString()} · Translate{' '}
                   {usageTotal.translateCount.toLocaleString()} · Cam{' '}
-                  {formatLiveSeconds(usageTotal.cameraSeconds)} · AI vision{' '}
+                  {formatExactDuration(usageTotal.cameraSeconds)} · AI vision{' '}
                   {(usageTotal.aiVisionCount ?? 0).toLocaleString()} · Docs{' '}
                   {(usageTotal.docsPages ?? 0).toLocaleString()} pages
                 </p>
@@ -1084,11 +1084,11 @@ export function AdminPage() {
                   usageMonths.map((m) => (
                     <li key={m.month}>
                       <strong>{monthInputFromKey(m.month)}</strong>
-                      <span>Live {formatLiveSeconds(m.liveSeconds)}</span>
+                      <span>Live {formatExactDuration(m.liveSeconds)}</span>
                       <span>TTS {m.ttsChars.toLocaleString()}</span>
                       <span>Translate {m.translateCount.toLocaleString()}</span>
                       <span>
-                        Cam {formatLiveSeconds(m.cameraSeconds)}
+                        Cam {formatExactDuration(m.cameraSeconds)}
                         {m.cameraTranslateCount
                           ? ` · ${m.cameraTranslateCount} scan${m.cameraTranslateCount === 1 ? '' : 's'}`
                           : ''}

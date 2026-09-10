@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const LATIN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 const CJK = '粵語翻譯器廣東話漢字拼音聲調'
-const POOL = LATIN + CJK
 
 function prefersReducedMotion() {
   if (typeof window === 'undefined' || !window.matchMedia) return false
@@ -119,5 +118,3 @@ export function useTextScramble(initial: string): TextScrambleControls {
   return { text, scrambleTo, busy }
 }
 
-/** Glyph pool exported for tests / demos. */
-export const TEXT_SCRAMBLE_POOL = POOL

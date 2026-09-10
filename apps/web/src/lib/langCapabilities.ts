@@ -1,9 +1,5 @@
 import type { Lang, SpeakDirection, TextOnlyLang, VoiceLang } from './types'
 
-export const VOICE_LANGS = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi'] as const satisfies readonly VoiceLang[]
-export const TEXT_ONLY_LANGS = ['ceb', 'ilo'] as const satisfies readonly TextOnlyLang[]
-export const SOLO_LANGS = [...VOICE_LANGS, ...TEXT_ONLY_LANGS] as const satisfies readonly Lang[]
-
 export function isTextOnlyLang(lang: string | null | undefined): lang is TextOnlyLang {
   return lang === 'ceb' || lang === 'ilo'
 }
@@ -34,10 +30,6 @@ export function supportsTts(lang: string | null | undefined): boolean {
 /** Conversation panes — voice languages only. */
 export function isConversationLang(lang: string | null | undefined): lang is VoiceLang {
   return isVoiceLang(lang)
-}
-
-export function asSpeakDirection(lang: Lang | SpeakDirection | null | undefined): SpeakDirection | null {
-  return isVoiceLang(lang) ? lang : null
 }
 
 /** When selecting a Solo pane language, pick a mic side that still supports speech. */

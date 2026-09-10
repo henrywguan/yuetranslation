@@ -97,16 +97,6 @@ export async function listUsageMonths(userId: string): Promise<UsageSnapshot[]> 
   return ((data as UsageRow[]) || []).map(rowToSnapshot)
 }
 
-/** Usage rows for many users in one month. */
-export async function getUsageForMonth(month = currentMonthKey()): Promise<Map<string, UsageRow>> {
-  const maps = await getPersonalUsageByMonth([month])
-  const map = new Map<string, UsageRow>()
-  const inner = maps.get(month)
-  if (inner) {
-    for (const [userId, row] of inner) map.set(userId, row)
-  }
-  return map
-}
 
 /** Personal usage rows grouped by month then user id. */
 export async function getPersonalUsageByMonth(

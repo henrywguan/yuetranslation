@@ -72,10 +72,6 @@ function parseSendFields(detail: Record<string, unknown> | null | undefined): Ca
   return raw as CampaignFields
 }
 
-export function fieldsFromSendRow(row: EmailSendRow): CampaignFields | null {
-  return parseSendFields(row.detail)
-}
-
 export async function getLastEmailSend(opts?: {
   variant?: CampaignVariant
   templateKey?: string
@@ -268,41 +264,6 @@ export async function renderCampaignHtml(input: {
     loadCampaignElement(input.variant, input.fields, Boolean(input.includeUnsubscribe)),
   ])
   return render(element)
-}
-
-export function resolveTemplateSelection(templateKey: string): {
-  variant: CampaignVariant
-  customId: string | null
-} {
-  if (templateKey.startsWith('custom:')) {
-    return {
-      variant: 'announcement',
-      customId: templateKey.slice('custom:'.length),
-    }
-  }
-  const builtin = getBuiltinTemplate(templateKey)
-  if (!builtin) throw new Error('Unknown template')
-  return { variant: builtin.variant, customId: null }
-}
-
-export async function resolveVariantForTemplateKey(
-  templateKey: string,
-): Promise<CampaignVariant> {
-  if (templateKey.startsWith('custom:')) {
-    const id = templateKey.slice('custom:'.length)
-    const clientSb = getAdmin()
-    if (!clientSb) return 'announcement'
-    const { data, error } = await clientSb
-      .from('email_templates')
-      .select('base_variant')
-      .eq('id', id)
-      .maybeSingle()
-    if (error) throw new Error(error.message)
-    return ((data?.base_variant as CampaignVariant) || 'announcement')
-  }
-  const builtin = getBuiltinTemplate(templateKey)
-  if (!builtin) throw new Error('Unknown template')
-  return builtin.variant
 }
 
 export type EmailContact = {
@@ -532,7 +493,6 @@ export async function sendCampaignToRecipients(input: {
     hint: testingDomainHint,
   }
 }
-
 
 export async function sendCampaignToAudience(input: {
   actorId: string

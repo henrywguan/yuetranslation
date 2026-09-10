@@ -44,16 +44,6 @@ function yueSttVariants(source: string): string[] {
   return out
 }
 
-/** Wugniu for a Shanghainese Han string when another seeded phrase uses that text. */
-export function wugniuForWuuText(han: string): string | undefined {
-  return romanizationForTargetText(han, 'wuu')
-}
-
-/** Sichuanese Pinyin for a Sichuanese Han string when another seeded phrase uses that text. */
-export function sichuanPinyinForText(han: string): string | undefined {
-  return romanizationForTargetText(han, 'sichuan')
-}
-
 function romanizationForTargetText(han: string, targetLang: TargetLang): string | undefined {
   const needle = normalizeLookupKey(han)
   if (!needle) return undefined

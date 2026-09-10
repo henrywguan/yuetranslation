@@ -12,6 +12,7 @@
     "compile:emails": "node ../../scripts/compile-api-emails.mjs",
     "smoke:canto": "tsx src/canto/smoke.ts",
     "smoke:details-enrich": "tsx src/detailsEnrich.smoke.ts",
+    "smoke:translate-camera": "tsx src/translateCamera.smoke.ts",
     "smoke:guest-rl": "tsx src/guestRateLimit.smoke.ts",
     "smoke:guest-identity": "tsx src/guestIdentity.smoke.ts",
     "smoke:entitlements": "tsx src/entitlements.smoke.ts",
@@ -19,7 +20,7 @@
     "smoke:household-usage": "tsx src/household.usage.smoke.ts",
     "smoke:history": "tsx src/history.smoke.ts",
     "smoke:admin-usage-range": "tsx src/adminUsageRange.smoke.ts",
-    "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:admin-usage-range && npm run smoke:guest-rl && npm run smoke:guest-identity && npm run smoke:history && npm run smoke:canto",
+    "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:admin-usage-range && npm run smoke:guest-rl && npm run smoke:guest-identity && npm run smoke:history && npm run smoke:canto && npm run smoke:details-enrich && npm run smoke:translate-camera",
     "import:cc-canto": "tsx scripts/import-cc-canto.ts",
     "import:wordshk": "tsx scripts/import-wordshk.ts"
   },

@@ -115,7 +115,9 @@ export async function hydrateHistory(loggedIn: boolean): Promise<ConversationTur
     const merged = mergeHistory(local, remote)
     writeLocalHistory(merged)
     if (shouldPushHydratedHistory(merged, remote)) {
-      void putAccountHistory(merged).catch(() => {})
+      void putAccountHistory(merged).catch(() => {
+        /* offline / unsigned — local still kept */
+      })
     }
     return merged
   } catch {

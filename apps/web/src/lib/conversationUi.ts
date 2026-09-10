@@ -116,9 +116,6 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
   },
 }
 
-export function conversationPaneUi(lang: ConversationLang): ConversationPaneUi {
-  return CONVERSATION_PANE_UI[lang]
-}
 
 export function conversationLabelHtmlLang(lang: ConversationLang): string {
   return CONVERSATION_PANE_UI[lang].htmlLang
