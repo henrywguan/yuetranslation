@@ -1,7 +1,7 @@
 /** Web app manifest fields for PWA Builder / Play Store TWA packaging. */
 
 const PWA_DESCRIPTION =
-  'Live English ↔ Cantonese translator with jyutping, voice, camera OCR, and document translation.'
+  'AI language tool with live translation, voice, camera OCR, and document translation.'
 
 /** Shared icon entries for shortcuts (relative to public/). */
 const shortcutIcon = { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' as const }
@@ -15,7 +15,7 @@ export function createPwaManifest(base: string) {
   const startUrl = `${root}#/app`
 
   return {
-    name: 'JyutTranslate — English ↔ Cantonese',
+    name: 'JyutTranslate — AI Language Tool',
     short_name: 'JyutTranslate',
     description: PWA_DESCRIPTION,
     id: root,
