@@ -874,7 +874,7 @@ async function wuuBreakdown(text: string) {
 
 /**
  * Chengdu Sichuanese — DETAILED per-char pedagogy.
- * `jyutping` field holds 四川话拼音 (tone numbers), not gloss-only like wuu.
+ * `jyutping` field holds 四川话拼音 (tone numbers) — same per-char pedagogy shape as Yue/Wuu.
  * Never scrub into Yue; never prefer CC-Canto Jyutping over model Sichuanese Pinyin.
  */
 async function sichuanBreakdown(text: string) {
