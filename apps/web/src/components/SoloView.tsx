@@ -332,6 +332,21 @@ export function SoloView() {
     runTranslate(value, lowerLangRef.current, AUTO_TRANSLATE_MS)
   }
 
+  /** Keep learner defs in the Details panel language (paired pane stays header-only). */
+  const defFitsPaneLang = (raw: string | undefined, paneLang: Lang): string | undefined => {
+    const t = (raw || '').trim()
+    if (!t) return undefined
+    const han = /[\u3400-\u9fff]/u.test(t)
+    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'vi' || paneLang === 'ceb' || paneLang === 'ilo') {
+      // Latin panels: drop pure-Han paired glosses.
+      if (han && !/[A-Za-z]/.test(t)) return undefined
+      return t
+    }
+    // Han / dialect panels: require some Han; drop English source fallbacks.
+    if (!han) return undefined
+    return t
+  }
+
   const openPaneDetails = (pane: 'upper' | 'lower') => {
     const paneLang = pane === 'upper' ? soloUpperLang : soloLowerLang
     const phrase = (pane === 'upper' ? upperDraft || storeUpper : lowerDraft || storeLower).trim()
@@ -349,14 +364,15 @@ export function SoloView() {
       translation: other || undefined,
       definition:
         paneLang === 'en'
-          ? enDefinition || undefined
-          : lowerDef || undefined,
-      definitions:
+          ? defFitsPaneLang(enDefinition, paneLang)
+          : defFitsPaneLang(lowerDef, paneLang),
+      definitions: (
         paneLang === 'en'
-          ? enDefinitions.length
-            ? enDefinitions
-            : undefined
-          : lowerDefs,
+          ? enDefinitions
+          : lowerDefs
+      )
+        .map((d) => defFitsPaneLang(d, paneLang))
+        .filter((d): d is string => Boolean(d)),
       romanization:
         paneLang === 'wuu' || paneLang === 'sichuan' ? latest?.romanization : undefined,
       sandhiHint: paneLang === 'wuu' ? latest?.sandhiHint : undefined,

@@ -368,11 +368,13 @@ export async function runTranslation(
           yueInterim: '',
           enTranslation: '',
           yueTranslation: clean,
-          yueDefinition: result.definition || (lang === 'en' ? text : ''),
+          yueDefinition: result.definition || '',
           yueDefinitions: definitions,
           yueAlternatives: alternatives,
-          enDefinition: to === 'en' ? result.definition || '' : get().enDefinition,
-          enDefinitions: to === 'en' ? definitions : get().enDefinitions,
+          // When upper is English translating into another lang, clear stale EN learner defs
+          // so English Details does not reuse prior 粵/paired senses.
+          enDefinition: to === 'en' ? result.definition || '' : lang === 'en' ? '' : get().enDefinition,
+          enDefinitions: to === 'en' ? definitions : lang === 'en' ? [] : get().enDefinitions,
           enAlternatives: to === 'en' ? alternatives : [],
           history,
         })

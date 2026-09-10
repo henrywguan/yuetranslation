@@ -2,6 +2,8 @@
  * Offline smoke for Details dictionary enrich (no OpenAI / no paid media APIs).
  * Forces empty keys so the model path stays cold.
  * Tenor’s public API shut down 2026-06-30 — we use offline emoji instead.
+ *
+ * Paired CONTEXT must never become a dictionary sense — each Details panel is monolingual.
  */
 import assert from 'node:assert/strict'
 
@@ -24,17 +26,28 @@ const apple = await enrichDictionaryEntry({
 
 assert.equal(apple.lemma, 'Apple')
 assert.equal(apple.engine, 'offline')
-assert.ok(apple.senses.length >= 1, 'Apple should have offline senses')
 assert.ok(
-  apple.senses.some((s) => s.gloss.includes('蘋果') || s.gloss.includes('苹')),
-  `expected 蘋果 gloss, got ${JSON.stringify(apple.senses)}`,
+  !apple.senses.some((s) => s.gloss.includes('蘋果') || s.gloss.includes('苹')),
+  `paired CONTEXT must not become an English sense, got ${JSON.stringify(apple.senses)}`,
 )
 assert.ok(
   apple.media.some((m) => m.type === 'emoji' && m.emoji === '🍎'),
   `expected offline apple emoji media, got ${JSON.stringify(apple.media)}`,
 )
 assert.ok(apple.provenance.includes('emoji'))
-assert.ok(apple.provenance.includes('lexicon') || apple.provenance.includes('paired-context'))
+assert.ok(!apple.provenance.includes('paired-context'))
+
+const sichuanCtx = await enrichDictionaryEntry({
+  text: 'Hello',
+  lang: 'en',
+  contextText: '你好',
+  contextLang: 'sichuan',
+  wantMedia: false,
+})
+assert.ok(
+  !sichuanCtx.senses.some((s) => /你好|哦豁|你来/.test(s.gloss)),
+  `English Details must not absorb Sichuanese CONTEXT, got ${JSON.stringify(sichuanCtx.senses)}`,
+)
 
 const yue = await enrichDictionaryEntry({
   text: '蘋果',
@@ -43,11 +56,9 @@ const yue = await enrichDictionaryEntry({
   contextLang: 'en',
   wantMedia: false,
 })
-assert.ok(yue.senses.length >= 1, '粵 gloss or paired English')
 assert.ok(
-  yue.senses.some(
-    (s) => /apple/i.test(s.gloss) || s.note === 'Paired translation',
-  ),
+  !yue.senses.some((s) => /^apple$/i.test(s.gloss.trim()) || s.note === 'Paired translation'),
+  `粵 panel must not seed paired English as a sense, got ${JSON.stringify(yue.senses)}`,
 )
 assert.ok(yue.media.some((m) => m.type === 'emoji' && m.emoji === '🍎'))
 
@@ -58,7 +69,10 @@ const emptyish = await enrichDictionaryEntry({
   wantMedia: false,
 })
 assert.equal(emptyish.engine, 'offline')
-assert.ok(emptyish.senses.some((s) => s.gloss === 'walang kahulugan'))
+assert.ok(
+  !emptyish.senses.some((s) => s.gloss === 'walang kahulugan'),
+  'Tagalog CONTEXT must not become a sense',
+)
 assert.equal(emptyish.media.length, 0, 'no emoji for unknown lemma')
 
 console.log('detailsEnrich.smoke: ok', {
