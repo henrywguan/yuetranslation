@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 

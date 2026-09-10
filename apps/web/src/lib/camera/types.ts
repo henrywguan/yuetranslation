@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
 
 export type EditableBox = {
   id: string
@@ -21,12 +21,13 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang. */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'cmn') return 'cmn'
   if (lang === 'wuu') return 'wuu'
+  if (lang === 'sichuan') return 'sichuan'
   if (lang === 'en') return 'en'
   if (lang === 'ceb') return 'ceb'
   if (lang === 'ilo') return 'ilo'

@@ -5,6 +5,8 @@ export const DEFAULT_EN_VOICE = 'en-US-JennyNeural'
 export const DEFAULT_CMN_VOICE = 'zh-CN-XiaoxiaoNeural'
 /** Shanghainese (Wu) — Azure locale wuu-CN. */
 export const DEFAULT_WUU_VOICE = 'wuu-CN-XiaotongNeural'
+/** Sichuanese (Chengdu) — Azure locale zh-CN-sichuan. */
+export const DEFAULT_SICHUAN_VOICE = 'zh-CN-sichuan-YunxiNeural'
 export const DEFAULT_TL_VOICE = 'fil-PH-BlessicaNeural'
 export const DEFAULT_ES_VOICE = 'es-MX-DaliaNeural'
 export const DEFAULT_VI_VOICE = 'vi-VN-HoaiMyNeural'
@@ -26,6 +28,9 @@ export type CmnVoiceId = 'zh-CN-XiaoxiaoNeural' | 'zh-CN-YunxiNeural'
 
 export type WuuVoiceId = 'wuu-CN-XiaotongNeural' | 'wuu-CN-YunzheNeural'
 
+/** Male Chengdu — only curated Sichuanese neural for now. */
+export type SichuanVoiceId = 'zh-CN-sichuan-YunxiNeural'
+
 export type TlVoiceId = 'fil-PH-BlessicaNeural' | 'fil-PH-AngeloNeural'
 
 export type EsVoiceId = 'es-MX-DaliaNeural' | 'es-MX-JorgeNeural'
@@ -37,13 +42,14 @@ export type TtsVoiceId =
   | EnVoiceId
   | CmnVoiceId
   | WuuVoiceId
+  | SichuanVoiceId
   | TlVoiceId
   | EsVoiceId
   | ViVoiceId
 
 export type TtsVoiceOption = {
   id: TtsVoiceId
-  lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi'
+  lang: 'yue' | 'en' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi'
   /** Azure SSML xml:lang */
   xmlLang: string
   labelEn: string
@@ -226,17 +232,36 @@ export const WUU_VOICES: TtsVoiceOption[] = [
   },
 ]
 
+export const SICHUAN_VOICES: TtsVoiceOption[] = [
+  {
+    id: 'zh-CN-sichuan-YunxiNeural',
+    lang: 'sichuan',
+    xmlLang: 'zh-CN-sichuan',
+    labelEn: 'Yunxi · Chengdu Male',
+    labelZh: '云希 · 成都男声',
+    gender: 'male',
+  },
+]
+
 const YUE_SET = new Set(YUE_VOICES.map((v) => v.id))
 const EN_SET = new Set(EN_VOICES.map((v) => v.id))
 const CMN_SET = new Set(CMN_VOICES.map((v) => v.id))
 const WUU_SET = new Set(WUU_VOICES.map((v) => v.id))
+const SICHUAN_SET = new Set(SICHUAN_VOICES.map((v) => v.id))
 const TL_SET = new Set(TL_VOICES.map((v) => v.id))
 const ES_SET = new Set(ES_VOICES.map((v) => v.id))
 const VI_SET = new Set(VI_VOICES.map((v) => v.id))
 const ALL = new Map<string, TtsVoiceOption>(
-  [...YUE_VOICES, ...EN_VOICES, ...CMN_VOICES, ...WUU_VOICES, ...TL_VOICES, ...ES_VOICES, ...VI_VOICES].map(
-    (v) => [v.id, v],
-  ),
+  [
+    ...YUE_VOICES,
+    ...EN_VOICES,
+    ...CMN_VOICES,
+    ...WUU_VOICES,
+    ...SICHUAN_VOICES,
+    ...TL_VOICES,
+    ...ES_VOICES,
+    ...VI_VOICES,
+  ].map((v) => [v.id, v]),
 )
 
 export function isYueVoice(id: string): id is YueVoiceId {
@@ -253,6 +278,10 @@ export function isCmnVoice(id: string): id is CmnVoiceId {
 
 export function isWuuVoice(id: string): id is WuuVoiceId {
   return WUU_SET.has(id as WuuVoiceId)
+}
+
+export function isSichuanVoice(id: string): id is SichuanVoiceId {
+  return SICHUAN_SET.has(id as SichuanVoiceId)
 }
 
 export function isTlVoice(id: string): id is TlVoiceId {
@@ -283,6 +312,10 @@ export function resolveWuuVoice(id: string | null | undefined): WuuVoiceId {
   return id && isWuuVoice(id) ? id : DEFAULT_WUU_VOICE
 }
 
+export function resolveSichuanVoice(id: string | null | undefined): SichuanVoiceId {
+  return id && isSichuanVoice(id) ? id : DEFAULT_SICHUAN_VOICE
+}
+
 export function resolveTlVoice(id: string | null | undefined): TlVoiceId {
   return id && isTlVoice(id) ? id : DEFAULT_TL_VOICE
 }
@@ -306,6 +339,7 @@ export function resolveSpeakVoice(
   preferredEn?: string | null,
   preferredCmn?: string | null,
   preferredWuu?: string | null,
+  preferredSichuan?: string | null,
   preferredTl?: string | null,
   preferredEs?: string | null,
   override?: string | null,
@@ -314,6 +348,7 @@ export function resolveSpeakVoice(
   const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU'
   const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans'
   const isWuu = lang === 'wuu' || lang === 'wuu-CN'
+  const isSichuan = lang === 'sichuan' || lang === 'zh-CN-sichuan'
   const isTl = lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
   const isEs = lang === 'es' || lang === 'es-MX' || lang === 'es-mx' || lang === 'es-ES'
   const isVi = lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
@@ -323,10 +358,20 @@ export function resolveSpeakVoice(
       if (isEn && meta.lang === 'en') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isCmn && meta.lang === 'cmn') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isWuu && meta.lang === 'wuu') return { voice: meta.id, xmlLang: meta.xmlLang }
+      if (isSichuan && meta.lang === 'sichuan') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isTl && meta.lang === 'tl') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isEs && meta.lang === 'es') return { voice: meta.id, xmlLang: meta.xmlLang }
       if (isVi && meta.lang === 'vi') return { voice: meta.id, xmlLang: meta.xmlLang }
-      if (!isEn && !isCmn && !isWuu && !isTl && !isEs && !isVi && meta.lang === 'yue') {
+      if (
+        !isEn &&
+        !isCmn &&
+        !isWuu &&
+        !isSichuan &&
+        !isTl &&
+        !isEs &&
+        !isVi &&
+        meta.lang === 'yue'
+      ) {
         return { voice: meta.id, xmlLang: meta.xmlLang }
       }
     }
@@ -341,6 +386,10 @@ export function resolveSpeakVoice(
   }
   if (isWuu) {
     const id = resolveWuuVoice(preferredWuu)
+    return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
+  }
+  if (isSichuan) {
+    const id = resolveSichuanVoice(preferredSichuan)
     return { voice: id, xmlLang: voiceMeta(id)!.xmlLang }
   }
   if (isTl) {
@@ -363,6 +412,7 @@ export const PREVIEW_YUE = '你好，歡迎使用粵譯。'
 export const PREVIEW_EN = 'Hello — this is your English voice.'
 export const PREVIEW_CMN = '你好，欢迎使用粤译。'
 export const PREVIEW_WUU = '侬好，欢迎用沪语翻译。'
+export const PREVIEW_SICHUAN = '你好，欢迎用四川话。'
 export const PREVIEW_TL = 'Kumusta — ito ang Tagalog voice mo.'
 export const PREVIEW_ES = 'Hola — esta es tu voz en español mexicano.'
 export const PREVIEW_VI = 'Xin chào — đây là giọng tiếng Việt của bạn.'

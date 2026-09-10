@@ -7,6 +7,7 @@ export {
   DEFAULT_EN_VOICE,
   DEFAULT_CMN_VOICE,
   DEFAULT_WUU_VOICE,
+  DEFAULT_SICHUAN_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_ES_VOICE,
   DEFAULT_VI_VOICE,
@@ -14,6 +15,7 @@ export {
   EN_VOICES,
   CMN_VOICES,
   WUU_VOICES,
+  SICHUAN_VOICES,
   TL_VOICES,
   ES_VOICES,
   VI_VOICES,
@@ -21,6 +23,7 @@ export {
   PREVIEW_EN,
   PREVIEW_CMN,
   PREVIEW_WUU,
+  PREVIEW_SICHUAN,
   PREVIEW_TL,
   PREVIEW_ES,
   PREVIEW_VI,
@@ -28,6 +31,7 @@ export {
   resolveEnVoice,
   resolveCmnVoice,
   resolveWuuVoice,
+  resolveSichuanVoice,
   resolveTlVoice,
   resolveEsVoice,
   resolveViVoice,
@@ -35,6 +39,7 @@ export {
   isEnVoice,
   isCmnVoice,
   isWuuVoice,
+  isSichuanVoice,
   isTlVoice,
   isEsVoice,
   isViVoice,
@@ -43,6 +48,7 @@ export {
   type EnVoiceId,
   type CmnVoiceId,
   type WuuVoiceId,
+  type SichuanVoiceId,
   type TlVoiceId,
   type EsVoiceId,
   type ViVoiceId,
@@ -58,6 +64,7 @@ import {
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
+  DEFAULT_SICHUAN_VOICE,
   resolveCmnVoice,
   resolveTlVoice,
   resolveEsVoice,
@@ -65,6 +72,7 @@ import {
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
+  resolveSichuanVoice,
   voiceMeta,
   type CmnVoiceId,
   type TlVoiceId,
@@ -73,12 +81,14 @@ import {
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
+  type SichuanVoiceId,
 } from '@jyut/shared/ttsVoices'
 
 const STORAGE_YUE = 'yue-tts-voice-yue'
 const STORAGE_EN = 'yue-tts-voice-en'
 const STORAGE_CMN = 'yue-tts-voice-cmn'
 const STORAGE_WUU = 'yue-tts-voice-wuu'
+const STORAGE_SICHUAN = 'yue-tts-voice-sichuan'
 const STORAGE_TL = 'yue-tts-voice-tl'
 const STORAGE_ES = 'yue-tts-voice-es'
 const STORAGE_VI = 'yue-tts-voice-vi'
@@ -205,6 +215,23 @@ export function readLocalWuuVoice(): WuuVoiceId {
 export function writeLocalWuuVoice(id: WuuVoiceId) {
   try {
     localStorage.setItem(STORAGE_WUU, resolveWuuVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalSichuanVoice(): SichuanVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_SICHUAN_VOICE
+  try {
+    return resolveSichuanVoice(localStorage.getItem(STORAGE_SICHUAN))
+  } catch {
+    return DEFAULT_SICHUAN_VOICE
+  }
+}
+
+export function writeLocalSichuanVoice(id: SichuanVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_SICHUAN, resolveSichuanVoice(id))
   } catch {
     /* ignore */
   }

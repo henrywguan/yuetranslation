@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi', 'ceb', 'ilo']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo']).optional(),
 })
 
 export type BreakdownChar = {
@@ -19,9 +19,10 @@ export type BreakdownChar = {
    * Yue: Jyutping if known.
    * Cmn: pinyin when provided by client merge (API may leave null).
    * Wuu: citation-form Wugniu (吴语学堂) from the model (never Yue Jyutping).
+   * Sichuan: 四川话拼音 with tone numbers (e.g. ni3) from the model.
    * En: IPA if known (same field so the client can reuse the row shape).
    * Tl / Es: accented dictionary form / stress spelling (same field).
-   * Null for punctuation / unknown.
+   * Null for punctuation / unknown / wuu gloss-only.
    */
   jyutping: string | null
   meaning: string
@@ -201,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -871,6 +872,109 @@ async function wuuBreakdown(text: string) {
   }
 }
 
+/**
+ * Chengdu Sichuanese — DETAILED per-char pedagogy.
+ * `jyutping` field holds 四川话拼音 (tone numbers) — same per-char pedagogy shape as Yue/Wuu.
+ * Never scrub into Yue; never prefer CC-Canto Jyutping over model Sichuanese Pinyin.
+ */
+async function sichuanBreakdown(text: string) {
+  const trimmed = text.trim()
+  const fallback = localYueBreakdown(trimmed).map((row) => ({
+    ...row,
+    jyutping: null as string | null,
+  }))
+
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'sichuan' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Chengdu Sichuanese (四川话) character-by-character for language learners.',
+    'Given a Sichuanese phrase, return ONLY valid JSON:',
+    '{"characters":[{"char":"<one character>","jyutping":"<四川话拼音 syllable+tone or null>","meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every character in order (skip spaces).',
+    '- For punctuation, jyutping null and a brief meaning like “question mark”.',
+    '- Meanings must fit THIS phrase (particles, aspect markers, dialectal uses).',
+    '- The jyutping field holds 四川话拼音 with tone numbers (e.g. ni3, yao4) — NOT Mandarin pinyin and NOT Cantonese Jyutping.',
+    '- Prefer Chengdu colloquial readings when they differ from Mandarin.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: trimmed },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const cleaned = raw
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim()
+    let modelRows: BreakdownChar[] = fallback
+    try {
+      const parsed = JSON.parse(cleaned) as { characters?: unknown }
+      if (Array.isArray(parsed.characters)) {
+        const out: BreakdownChar[] = []
+        for (const item of parsed.characters) {
+          if (!item || typeof item !== 'object') continue
+          const row = item as Record<string, unknown>
+          const char = typeof row.char === 'string' ? row.char : ''
+          if (!char) continue
+          // Never fill from Yue lexicon — jyutping must be 四川话拼音 from the model.
+          const jyutping =
+            typeof row.jyutping === 'string' && row.jyutping.trim()
+              ? row.jyutping.trim()
+              : null
+          const meaning =
+            typeof row.meaning === 'string' && row.meaning.trim()
+              ? row.meaning.trim()
+              : ''
+          out.push({
+            char,
+            jyutping,
+            meaning,
+            glossSource: meaning ? 'model' : undefined,
+          })
+        }
+        if (out.length) modelRows = out
+      }
+    } catch {
+      /* keep fallback */
+    }
+
+    const merged = modelRows.map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) return row
+      return {
+        ...row,
+        // Prefer model 四川话拼音; do not fall back to Yue Jyutping from local gloss.
+        jyutping: row.jyutping || null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return {
+      characters: merged,
+      engine: 'openai' as const,
+      lang: 'sichuan' as const,
+    }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'sichuan' as const }
+  }
+}
+
 export async function breakdown(input: unknown) {
   const parsed = Body.parse(input)
   const text = parsed.text.trim()
@@ -883,5 +987,6 @@ export async function breakdown(input: unknown) {
   if (lang === 'ceb' || lang === 'ilo') return englishBreakdown(text)
   if (lang === 'cmn') return cmnBreakdown(text)
   if (lang === 'wuu') return wuuBreakdown(text)
+  if (lang === 'sichuan') return sichuanBreakdown(text)
   return yueBreakdown(text)
 }

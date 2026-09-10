@@ -1,6 +1,6 @@
 import { fetchTtsAudio } from './api'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalViVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalViVoice, readLocalYueVoice } from './ttsVoices'
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
   'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA=='
@@ -184,6 +184,7 @@ function browserLangTag(lang: Lang): string {
   if (lang === 'yue') return 'zh-HK'
   if (lang === 'cmn') return 'zh-CN'
   if (lang === 'wuu') return 'wuu-CN'
+  if (lang === 'sichuan') return 'zh-CN-sichuan'
   if (lang === 'tl') return 'fil-PH'
   if (lang === 'es') return 'es-MX'
   if (lang === 'vi') return 'vi-VN'
@@ -230,7 +231,7 @@ function browserSpeak(text: string, lang: Lang, g: number): Promise<boolean> {
     if (match) u.voice = match
     // Languages without a system voice (common for fil-PH) would otherwise
     // silently speak as the default English voice or fail — treat as no-op.
-    if (!match && (lang === 'tl' || lang === 'wuu')) {
+    if (!match && (lang === 'tl' || lang === 'wuu' || lang === 'sichuan')) {
       if (g === gen) playing = false
       resolve(false)
       return
@@ -254,6 +255,7 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'en') return readLocalEnVoice()
   if (lang === 'cmn') return readLocalCmnVoice()
   if (lang === 'wuu') return readLocalWuuVoice()
+  if (lang === 'sichuan') return readLocalSichuanVoice()
   if (lang === 'tl') return readLocalTlVoice()
   if (lang === 'es') return readLocalEsVoice()
   if (lang === 'vi') return readLocalViVoice()

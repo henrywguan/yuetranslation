@@ -38,7 +38,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi', 'ceb', 'ilo'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -78,7 +78,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
 
 type TranslateResult = {
   text: string
@@ -719,6 +719,289 @@ async function translateShanghainese(opts: {
       to,
       stage,
       meta: emptyMeta(['wuu-no-yue-scrub']),
+    },
+    text,
+  )
+}
+
+/**
+ * EN↔Sichuanese (四川话) — colloquial Chengdu Sichuanese Han, not Mandarin-with-accent.
+ * Never run Yue scrub/harden. Phrase-level 四川话拼音 romanization when available.
+ */
+async function translateSichuanese(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+  const toSichuan = to === 'sichuan'
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    const alts = wantAlts ? dictHit.alternatives : []
+    const romanization =
+      toSichuan && typeof dictHit.romanization === 'string'
+        ? dictHit.romanization
+        : toSichuan && typeof dictHit.entry?.romanization === 'string'
+          ? dictHit.entry.romanization
+          : undefined
+    const alternativeRomanizations =
+      toSichuan && Array.isArray(dictHit.alternativeRomanizations)
+        ? dictHit.alternativeRomanizations
+        : undefined
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: toSichuan ? fallbackDefinition : '',
+        alternatives: alts,
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: toSichuan ? 8 : 0,
+          rewritten: false,
+          notes: [
+            `dict:${dictHit.entry.id}`,
+            'sichuan-no-yue-scrub',
+            'sichuan-colloquial',
+            ...(romanization ? ['sichuan-pinyin'] : []),
+            ...(alternativeRomanizations?.some(Boolean) ? ['sichuan-pinyin-alts'] : []),
+          ],
+        },
+        ...(romanization ? { romanization } : {}),
+        ...(alternativeRomanizations?.some(Boolean)
+          ? { alternativeRomanizations }
+          : {}),
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = toSichuan ? `（示范·四川话）${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: toSichuan ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'sichuan-no-yue-scrub', 'sichuan-colloquial']),
+        ...(toSichuan ? { romanization: '（demo）' } : {}),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+  let romanization = ''
+  let alternativeRomanizations: string[] = []
+
+  if (wantAlts && toSichuan) {
+    const system = [
+      'You are a Sichuanese (四川话 / Chengdu) interpreter for everyday spoken Southwestern Mandarin.',
+      'Translate into COLLOQUIAL Chengdu Sichuanese using Chinese characters (dialectal spellings OK: 要得、巴适、啥子、莫得…).',
+      'Do NOT output Mandarin 普通话 textbook style. Do NOT use Cantonese particles (係/唔/喺/咗/㗎).',
+      'Prefer natural Chengdu street speech over formal Mandarin.',
+      'Also provide 四川话拼音 (Sichuanese Pinyin) for the primary line — phrase-level romanization with tone numbers (e.g. ni3 hao3).',
+      'For each alternative, also provide matching 四川话拼音 in alternativeRomanizations (same order as alternatives).',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best Sichuanese Han>","alternatives":["<other natural Sichuanese>", "..."],"alternativeRomanizations":["<Sichuanese Pinyin for alt0>", "..."],"definition":"<short English gloss>","romanization":"<Sichuanese Pinyin for primary>"}',
+      'Rules:',
+      '- Prefer 2–3 spoken variants that differ in wording or politeness.',
+      '- Do not repeat the primary or near-duplicates.',
+      '- romanization must match the primary phrase; leave empty string if unsure.',
+      '- alternativeRomanizations[i] must match alternatives[i]; use empty string if unsure for that alt.',
+      '- No markdown, no explanation.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 450,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsed = parseYuePayload(raw, text, true)
+    primary = parsed.text
+    alternatives = parsed.alternatives
+    if (parsed.definition) definition = parsed.definition
+    try {
+      const j = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) as {
+        romanization?: unknown
+        alternativeRomanizations?: unknown
+      }
+      if (typeof j.romanization === 'string') romanization = j.romanization.trim()
+      if (Array.isArray(j.alternativeRomanizations)) {
+        alternativeRomanizations = j.alternativeRomanizations.map((x) =>
+          typeof x === 'string' ? x.trim() : '',
+        )
+      }
+    } catch {
+      /* ignore */
+    }
+  } else if (wantAlts && !toSichuan) {
+    const system = [
+      'You are a Sichuanese interpreter helping Sichuanese speakers learn English.',
+      'Translate colloquial Chengdu Sichuanese (四川话) into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English>", "..."],"definition":"<short Chinese gloss of the English>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a: string) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toSichuan
+      ? [
+          'You are a Sichuanese (四川话 / Chengdu) interpreter.',
+          'Translate into colloquial Chengdu Sichuanese Chinese characters (not Mandarin textbook, not Cantonese).',
+          'Dialectal Han OK (要得、巴适、啥子、莫得…).',
+          'Provide 四川话拼音 (Sichuanese Pinyin) for the translation with tone numbers (e.g. yao4 de2).',
+          'Return ONLY valid JSON:',
+          '{"translation":"<Sichuanese Han>","definition":"<short English gloss>","romanization":"<Sichuanese Pinyin>"}',
+        ].join('\n')
+      : [
+          'You are a Sichuanese interpreter.',
+          'Translate Chengdu Sichuanese (四川话) into natural English for face-to-face conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toSichuan ? text : '', fallbackDefinition, toSichuan)
+    primary = payload.text
+    definition = toSichuan ? payload.definition || fallbackDefinition : payload.definition
+    if (toSichuan) {
+      try {
+        const j = JSON.parse(raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')) as {
+          romanization?: unknown
+        }
+        if (typeof j.romanization === 'string') romanization = j.romanization.trim()
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  if (toSichuan) {
+    const hanPairs = wantAlts
+      ? alternatives
+          .map((a: string, i: number) => ({
+            text: a,
+            rom: alternativeRomanizations[i] || '',
+          }))
+          .filter((p) => hasHan(p.text) && p.text !== (hasHan(primary) ? primary : ''))
+      : []
+    const outRaw = hasHan(primary) ? primary : ''
+    const outAlts = hanPairs.map((p) => p.text)
+    const outAltRoms = hanPairs.map((p) => p.rom)
+    if (!outRaw) {
+      return withLearnerDefinitions(
+        {
+          text: '',
+          definition,
+          alternatives: [],
+          engine,
+          from,
+          to,
+          stage,
+          meta: emptyMeta(['sichuan-no-yue-scrub', 'no-sichuan-output']),
+        },
+        text,
+      )
+    }
+    return withLearnerDefinitions(
+      {
+        text: outRaw,
+        definition,
+        alternatives: outAlts,
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta([
+          'sichuan-no-yue-scrub',
+          'sichuan-colloquial',
+          ...(romanization ? (['sichuan-pinyin'] as const) : []),
+          ...(outAltRoms.some(Boolean) ? (['sichuan-pinyin-alts'] as const) : []),
+        ]),
+        ...(romanization ? { romanization } : {}),
+        ...(outAltRoms.some(Boolean) ? { alternativeRomanizations: outAltRoms } : {}),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || (from === 'sichuan' && hasHan(primary))) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['sichuan-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a: string) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta(['sichuan-no-yue-scrub']),
     },
     text,
   )
@@ -1599,6 +1882,10 @@ export async function translate(input: unknown) {
   // or when translating Mandarin → English. cmn→yue still uses Yue harden below.
   if (to === 'wuu' || (from === 'wuu' && to === 'en')) {
     return translateShanghainese({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'sichuan' || (from === 'sichuan' && to === 'en')) {
+    return translateSichuanese({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'tl' || (from === 'tl' && to === 'en')) {

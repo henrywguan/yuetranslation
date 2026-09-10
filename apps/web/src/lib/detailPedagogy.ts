@@ -4,7 +4,14 @@
  */
 import type { Lang } from './types'
 
-export type DetailPronField = 'ipa' | 'jyutping' | 'pinyin' | 'accented' | 'wugniu' | 'none'
+export type DetailPronField =
+  | 'ipa'
+  | 'jyutping'
+  | 'pinyin'
+  | 'accented'
+  | 'wugniu'
+  | 'sichuanese'
+  | 'none'
 
 export type DetailPedagogy = {
   /** BCP-47 for title / rows */
@@ -53,6 +60,14 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     // Title uses ShanghaineseText (phrase Wugniu + sandhi), not JyutRuby.
     // Per-char citation Wugniu is returned in CharBreakdown.jyutping.
     rubyTitle: false,
+    localOffline: false,
+    extraPanels: [],
+  },
+  sichuan: {
+    htmlLang: 'zh-CN-sichuan',
+    pronField: 'sichuanese',
+    defaultGlossLang: 'en',
+    rubyTitle: true,
     localOffline: false,
     extraPanels: [],
   },

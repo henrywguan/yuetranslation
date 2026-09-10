@@ -4199,6 +4199,243 @@
       ]
     },
     {
+      "id": "en-hello-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "hello",
+      "text": "你好",
+      "romanization": "ni3 hao3",
+      "alternatives": [
+        "嗨"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "hai1"
+      ]
+    },
+    {
+      "id": "en-hi-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "hi",
+      "text": "嗨",
+      "romanization": "hai1",
+      "alternatives": [
+        "你好"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "ni3 hao3"
+      ]
+    },
+    {
+      "id": "en-thank-you-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "thank you",
+      "text": "谢谢",
+      "romanization": "xie4 xie4",
+      "alternatives": [
+        "谢谢喽"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "xie4 xie4 lou"
+      ]
+    },
+    {
+      "id": "en-thanks-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "thanks",
+      "text": "谢谢",
+      "romanization": "xie4 xie4",
+      "alternatives": [
+        "谢谢喽"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "xie4 xie4 lou"
+      ]
+    },
+    {
+      "id": "en-how-are-you-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "how are you",
+      "text": "你好哇",
+      "romanization": "ni3 hao3 wa",
+      "alternatives": [
+        "咋个样"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "za3 ge4 yang4"
+      ]
+    },
+    {
+      "id": "en-goodbye-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "goodbye",
+      "text": "拜拜",
+      "romanization": "bai4 bai4",
+      "alternatives": [
+        "慢走"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "man4 zou3"
+      ]
+    },
+    {
+      "id": "en-yes-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "yes",
+      "text": "要得",
+      "romanization": "yao4 de2",
+      "alternatives": [
+        "对"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "affirmation",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "dui4"
+      ]
+    },
+    {
+      "id": "en-ok-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "ok",
+      "text": "要得",
+      "romanization": "yao4 de2",
+      "alternatives": [
+        "巴适"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "affirmation",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "ba1 si4"
+      ]
+    },
+    {
+      "id": "en-no-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "no",
+      "text": "不",
+      "romanization": "bu4",
+      "alternatives": [
+        "莫得"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "negation",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "mo2 de2"
+      ]
+    },
+    {
+      "id": "en-what-sichuan",
+      "sourceLang": "en",
+      "targetLang": "sichuan",
+      "source": "what",
+      "text": "啥子",
+      "romanization": "sa4 zi",
+      "alternatives": [
+        "啥"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "question",
+        "sichuanese"
+      ],
+      "alternativeRomanizations": [
+        "sa4"
+      ]
+    },
+    {
+      "id": "sichuan-ni-hao-en",
+      "sourceLang": "sichuan",
+      "targetLang": "en",
+      "source": "你好",
+      "text": "Hello",
+      "alternatives": [
+        "Hi"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "sichuanese"
+      ]
+    },
+    {
+      "id": "sichuan-yao-de-en",
+      "sourceLang": "sichuan",
+      "targetLang": "en",
+      "source": "要得",
+      "text": "OK",
+      "alternatives": [
+        "Yes",
+        "Got it"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "affirmation",
+        "sichuanese"
+      ]
+    },
+    {
+      "id": "sichuan-mo-de-en",
+      "sourceLang": "sichuan",
+      "targetLang": "en",
+      "source": "莫得",
+      "text": "No",
+      "alternatives": [
+        "Don't have any",
+        "Nothing"
+      ],
+      "register": "colloquial",
+      "tags": [
+        "negation",
+        "sichuanese"
+      ]
+    },
+    {
       "id": "en-hello-tl",
       "sourceLang": "en",
       "targetLang": "tl",

@@ -1,6 +1,7 @@
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
+import { SichuaneseText } from './SichuaneseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { VietnameseText } from './VietnameseText'
@@ -21,7 +22,7 @@ export function TranslationAlternatives({
   lang = 'yue',
 }: {
   alternatives: string[]
-  /** Wugniu for each Shanghainese alternative (same order). */
+  /** Wugniu / Sichuanese Pinyin for each alternative (same order). */
   alternativeRomanizations?: string[]
   className?: string
   /** Selecting a variation promotes it and opens its breakdown. */
@@ -55,6 +56,14 @@ export function TranslationAlternatives({
                 />
               ) : lang === 'wuu' ? (
                 <ShanghaineseText
+                  text={alt}
+                  romanization={alternativeRomanizations?.[i]}
+                  showSchemeLabel={false}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'sichuan' ? (
+                <SichuaneseText
                   text={alt}
                   romanization={alternativeRomanizations?.[i]}
                   showSchemeLabel={false}

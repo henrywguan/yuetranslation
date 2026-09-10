@@ -72,6 +72,12 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: ZH_FRIEND,
     holdFacingYou: ZH_YOU,
   },
+  sichuan: {
+    htmlLang: 'zh-CN-sichuan',
+    mic: ZH_MIC,
+    friendLooksHere: ZH_FRIEND,
+    holdFacingYou: ZH_YOU,
+  },
   tl: {
     htmlLang: 'tl',
     mic: {

@@ -5,6 +5,7 @@ import {
   CMN_VOICES,
   EN_VOICES,
   ES_VOICES,
+  SICHUAN_VOICES,
   TL_VOICES,
   VI_VOICES,
   WUU_VOICES,
@@ -12,6 +13,7 @@ import {
   resolveCmnVoice,
   resolveEnVoice,
   resolveEsVoice,
+  resolveSichuanVoice,
   resolveTlVoice,
   resolveViVoice,
   resolveWuuVoice,
@@ -20,6 +22,7 @@ import {
   type CmnVoiceId,
   type EnVoiceId,
   type EsVoiceId,
+  type SichuanVoiceId,
   type TlVoiceId,
   type ViVoiceId,
   type WuuVoiceId,
@@ -39,8 +42,9 @@ type Props = {
   esVoice: EsVoiceId
   viVoice: ViVoiceId
   wuuVoice: WuuVoiceId
+  sichuanVoice: SichuanVoiceId
   voiceBusy: boolean
-  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | null
+  previewBusy: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | 'sichuan' | null
   persistVoices: (next: {
     yue?: YueVoiceId
     en?: EnVoiceId
@@ -49,11 +53,12 @@ type Props = {
     es?: EsVoiceId
     vi?: ViVoiceId
     wuu?: WuuVoiceId
+    sichuan?: SichuanVoiceId
   }) => Promise<void>
-  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu') => Promise<void>
+  onPreview: (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | 'sichuan') => Promise<void>
 }
 
-/** Compact TTS summary + modal for Yue / En / Cmn / Tl / Es / Wuu voice prefs. */
+/** Compact TTS summary + modal for Yue / En / Cmn / Tl / Es / Wuu / Sichuan voice prefs. */
 export function AccountHubVoice({
   voicePrefId,
   entitlement,
@@ -64,6 +69,7 @@ export function AccountHubVoice({
   esVoice,
   viVoice,
   wuuVoice,
+  sichuanVoice,
   voiceBusy,
   previewBusy,
   persistVoices,
@@ -142,6 +148,10 @@ export function AccountHubVoice({
           <span className="account-hub-voice-chip">
             <span className="account-hub-voice-chip-lang">沪</span>
             <span className="account-hub-voice-chip-name">{voiceShortLabel(wuuVoice)}</span>
+          </span>
+          <span className="account-hub-voice-chip">
+            <span className="account-hub-voice-chip-lang">川</span>
+            <span className="account-hub-voice-chip-name">{voiceShortLabel(sichuanVoice)}</span>
           </span>
         </p>
         <button
@@ -418,6 +428,40 @@ export function AccountHubVoice({
                     className="account-hub-voice-preview"
                     disabled={previewBusy !== null || !ttsOk}
                     onClick={() => void onPreview('wuu')}
+                  >
+                    <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
+                  </button>
+                </div>
+
+                <div className="voice-settings-row">
+                  <label className="voice-settings-field">
+                    <span className="voice-settings-lang">
+                      <BiText copy={ui.accountTtsSichuan} size="sm" hideJp />
+                    </span>
+                    <select
+                      className="account-hub-select"
+                      onPointerDown={markSelectInteraction}
+                      onFocus={markSelectInteraction}
+                      value={sichuanVoice}
+                      disabled={voiceBusy}
+                      onChange={(e) => {
+                        markSelectInteraction()
+                        void persistVoices({ sichuan: resolveSichuanVoice(e.target.value) })
+                      }}
+                      aria-label={biPlain(ui.accountTtsSichuan)}
+                    >
+                      {SICHUAN_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.labelEn} · {v.labelZh}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="account-hub-voice-preview"
+                    disabled={previewBusy !== null || !ttsOk}
+                    onClick={() => void onPreview('sichuan')}
                   >
                     <BiText copy={ui.accountTtsPreview} size="sm" hideJp />
                   </button>

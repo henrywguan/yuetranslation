@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { CantoneseText } from './CantoneseText'
 import { MandarinText } from './MandarinText'
 import { ShanghaineseText } from './ShanghaineseText'
+import { SichuaneseText } from './SichuaneseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { VietnameseText } from './VietnameseText'
@@ -23,6 +24,7 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'vi') return ui.dirVietnamese.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
+  if (lang === 'sichuan') return ui.dirSichuanese.zh
   if (lang === 'en') return ui.enTranslation.en
   return ui.yueTranslation.zh
 }
@@ -83,7 +85,8 @@ export function ConversationView() {
       translation: face.enTranslation.trim() || undefined,
       definition: face.yueDefinition || undefined,
       definitions: face.yueDefinitions,
-      romanization: partnerLang === 'wuu' ? face.romanization : undefined,
+      romanization:
+        partnerLang === 'wuu' || partnerLang === 'sichuan' ? face.romanization : undefined,
       sandhiHint: partnerLang === 'wuu' ? face.sandhiHint : undefined,
       ipa: partnerLang === 'wuu' ? face.ipa : undefined,
     })
@@ -157,6 +160,16 @@ export function ConversationView() {
     if (lang === 'wuu') {
       return (
         <ShanghaineseText
+          text={text}
+          romanization={face.romanization}
+          className={className}
+          onActivate={onActivate}
+        />
+      )
+    }
+    if (lang === 'sichuan') {
+      return (
+        <SichuaneseText
           text={text}
           romanization={face.romanization}
           className={className}

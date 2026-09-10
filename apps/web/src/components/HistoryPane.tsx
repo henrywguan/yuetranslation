@@ -29,17 +29,20 @@ export function HistoryPane({
         ? 'cmn'
         : turn.to === 'wuu' || turn.from === 'wuu'
           ? 'wuu'
-          : turn.to === 'tl' || turn.from === 'tl'
-            ? 'tl'
-            : turn.to === 'es' || turn.from === 'es'
-              ? 'es'
-              : turn.to === 'vi' || turn.from === 'vi'
-                ? 'vi'
-                : 'yue'
+          : turn.to === 'sichuan' || turn.from === 'sichuan'
+            ? 'sichuan'
+            : turn.to === 'tl' || turn.from === 'tl'
+              ? 'tl'
+              : turn.to === 'es' || turn.from === 'es'
+                ? 'es'
+                : turn.to === 'vi' || turn.from === 'vi'
+                  ? 'vi'
+                  : 'yue'
     const canto =
       turn.to === 'yue' ||
       turn.to === 'cmn' ||
       turn.to === 'wuu' ||
+      turn.to === 'sichuan' ||
       turn.to === 'tl' ||
       turn.to === 'es' ||
       turn.to === 'vi'
@@ -47,6 +50,7 @@ export function HistoryPane({
         : turn.from === 'yue' ||
             turn.from === 'cmn' ||
             turn.from === 'wuu' ||
+            turn.from === 'sichuan' ||
             turn.from === 'tl' ||
             turn.from === 'es' ||
             turn.from === 'vi'
@@ -70,11 +74,14 @@ export function HistoryPane({
         definition: turn.definition || undefined,
         definitions: turn.definitions,
         alternatives: turn.alternatives,
-        romanization: zhLang === 'wuu' ? turn.romanization : undefined,
+        romanization:
+          zhLang === 'wuu' || zhLang === 'sichuan' ? turn.romanization : undefined,
         sandhiHint: zhLang === 'wuu' ? turn.sandhiHint : undefined,
         ipa: zhLang === 'wuu' ? turn.ipa : undefined,
         alternativeRomanizations:
-          zhLang === 'wuu' ? turn.alternativeRomanizations : undefined,
+          zhLang === 'wuu' || zhLang === 'sichuan'
+            ? turn.alternativeRomanizations
+            : undefined,
       })
     }
     onOpenBreakdown?.()

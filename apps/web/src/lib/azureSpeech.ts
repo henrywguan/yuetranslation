@@ -93,6 +93,8 @@ function waitEngineStop(
 function localeToLang(locale: string): Lang {
   const l = locale.toLowerCase()
   if (l.includes('yue') || l.includes('hk') || l === 'zh-hk' || l.startsWith('zh-hk')) return 'yue'
+  // Sichuan before generic zh-CN / cmn — locale is zh-CN-sichuan.
+  if (l.includes('sichuan')) return 'sichuan'
   if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans') || l === 'zh-cn') return 'cmn'
   if (l.startsWith('wuu') || l.includes('wuu')) return 'wuu'
   if (l.startsWith('fil') || l.startsWith('tl')) return 'tl'
@@ -107,6 +109,7 @@ function langToLocale(lang: Lang): string {
   if (lang === 'yue') return 'zh-HK'
   if (lang === 'cmn') return 'zh-CN'
   if (lang === 'wuu') return 'wuu-CN'
+  if (lang === 'sichuan') return 'zh-CN-sichuan'
   if (lang === 'tl') return 'fil-PH'
   if (lang === 'es') return 'es-MX'
   if (lang === 'vi') return 'vi-VN'

@@ -25,7 +25,7 @@ const Body = z.object({
    */
   boxes: z.array(BoxSchema).max(64).optional(),
   /** Preferred output language. Auto flips per-region from script when omitted. */
-  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi', 'ceb', 'ilo']).optional(),
+  target: z.enum(['en', 'zh', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo']).optional(),
   /** When true, skip translation and only return OCR regions. */
   ocrOnly: z.boolean().optional().default(false),
   /**

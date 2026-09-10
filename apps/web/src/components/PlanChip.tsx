@@ -38,6 +38,7 @@ import {
   PREVIEW_ES,
   PREVIEW_VI,
   PREVIEW_WUU,
+  PREVIEW_SICHUAN,
   PREVIEW_YUE,
   readLocalCmnVoice,
   readLocalEnVoice,
@@ -45,6 +46,7 @@ import {
   readLocalEsVoice,
   readLocalViVoice,
   readLocalWuuVoice,
+  readLocalSichuanVoice,
   readLocalYueVoice,
   resolveCmnVoice,
   resolveEnVoice,
@@ -58,6 +60,7 @@ import {
   writeLocalEsVoice,
   writeLocalViVoice,
   writeLocalWuuVoice,
+  writeLocalSichuanVoice,
   writeLocalYueVoice,
   type CmnVoiceId,
   type EnVoiceId,
@@ -65,6 +68,7 @@ import {
   type EsVoiceId,
   type ViVoiceId,
   type WuuVoiceId,
+  type SichuanVoiceId,
   type YueVoiceId,
 } from '../lib/ttsVoices'
 import { speakText, unlockTtsPlayback } from '../lib/tts'
@@ -107,8 +111,11 @@ export function PlanChip() {
   const [esVoice, setEsVoice] = useState<EsVoiceId>(() => readLocalEsVoice())
   const [viVoice, setViVoice] = useState<ViVoiceId>(() => readLocalViVoice())
   const [wuuVoice, setWuuVoice] = useState<WuuVoiceId>(() => readLocalWuuVoice())
+  const [sichuanVoice, setSichuanVoice] = useState<SichuanVoiceId>(() => readLocalSichuanVoice())
   const [voiceBusy, setVoiceBusy] = useState(false)
-  const [previewBusy, setPreviewBusy] = useState<'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | null>(null)
+  const [previewBusy, setPreviewBusy] = useState<
+    'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | 'sichuan' | null
+  >(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteSentTo, setInviteSentTo] = useState<string | null>(null)
@@ -298,6 +305,7 @@ export function PlanChip() {
     es?: EsVoiceId
     vi?: ViVoiceId
     wuu?: WuuVoiceId
+    sichuan?: SichuanVoiceId
   }) => {
     const yue = next.yue ?? yueVoice
     const en = next.en ?? enVoice
@@ -306,6 +314,7 @@ export function PlanChip() {
     const es = next.es ?? esVoice
     const vi = next.vi ?? viVoice
     const wuu = next.wuu ?? wuuVoice
+    const sichuan = next.sichuan ?? sichuanVoice
     writeLocalYueVoice(yue)
     writeLocalEnVoice(en)
     writeLocalCmnVoice(cmn)
@@ -313,6 +322,7 @@ export function PlanChip() {
     writeLocalEsVoice(es)
     writeLocalViVoice(vi)
     writeLocalWuuVoice(wuu)
+    writeLocalSichuanVoice(sichuan)
     setYueVoice(yue)
     setEnVoice(en)
     setCmnVoice(cmn)
@@ -320,6 +330,7 @@ export function PlanChip() {
     setEsVoice(es)
     setViVoice(vi)
     setWuuVoice(wuu)
+    setSichuanVoice(sichuan)
     if (!entitlement.loggedIn) return
     setVoiceBusy(true)
     try {
@@ -349,7 +360,7 @@ export function PlanChip() {
     }
   }
 
-  const onPreview = async (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu') => {
+  const onPreview = async (kind: 'yue' | 'en' | 'cmn' | 'tl' | 'es' | 'vi' | 'wuu' | 'sichuan') => {
     unlockTtsPlayback()
     setPreviewBusy(kind)
     try {
@@ -359,6 +370,7 @@ export function PlanChip() {
       else if (kind === 'tl') await speakText(PREVIEW_TL, 'tl', tlVoice)
       else if (kind === 'es') await speakText(PREVIEW_ES, 'es', esVoice)
       else if (kind === 'vi') await speakText(PREVIEW_VI, 'vi', viVoice)
+      else if (kind === 'sichuan') await speakText(PREVIEW_SICHUAN, 'sichuan', sichuanVoice)
       else await speakText(PREVIEW_WUU, 'wuu', wuuVoice)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Voice playback failed.'
@@ -749,6 +761,7 @@ export function PlanChip() {
           esVoice={esVoice}
           viVoice={viVoice}
           wuuVoice={wuuVoice}
+          sichuanVoice={sichuanVoice}
           voiceBusy={voiceBusy}
           previewBusy={previewBusy}
           persistVoices={persistVoices}

@@ -3,7 +3,7 @@ import { getAccessToken } from './auth'
 import { resolveApiBase } from './api'
 import { guestDeviceHeaders } from './guestDevice'
 
-export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu'
+export type DocLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan'
 
 export type DocFileResult = {
   filename: string

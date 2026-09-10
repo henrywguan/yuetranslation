@@ -1,6 +1,6 @@
 import type { Lang, SpeakDirection, TextOnlyLang, VoiceLang } from './types'
 
-export const VOICE_LANGS = ['en', 'yue', 'cmn', 'wuu', 'tl', 'es', 'vi'] as const satisfies readonly VoiceLang[]
+export const VOICE_LANGS = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi'] as const satisfies readonly VoiceLang[]
 export const TEXT_ONLY_LANGS = ['ceb', 'ilo'] as const satisfies readonly TextOnlyLang[]
 export const SOLO_LANGS = [...VOICE_LANGS, ...TEXT_ONLY_LANGS] as const satisfies readonly Lang[]
 
@@ -14,6 +14,7 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'yue' ||
     lang === 'cmn' ||
     lang === 'wuu' ||
+    lang === 'sichuan' ||
     lang === 'tl' ||
     lang === 'es' ||
     lang === 'vi'
