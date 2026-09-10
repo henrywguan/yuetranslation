@@ -204,33 +204,32 @@
 }
 
 /*
- * Fixed phone widths sized so height always fits under copy on 1080×1350 / 1920.
- * (Do not rely on cqh — invalid calc falls back to lang-launch 420px and covers text.)
- * 300px wide ≈ 672px tall with bezel; stage has ~750–900px free on post slides.
+ * Max phone widths that still clear copy (binary-searched, ≥20px gap).
+ * Post stage ≈959px → ~450px wide. Story stage ≈1486px → ~680px wide.
  */
 .primary-lang .phone {
-  --phone-bezel: 11px;
-  --phone-radius: 42px;
-  --phone-screen-radius: 30px;
+  --phone-bezel: 13px;
+  --phone-radius: 50px;
+  --phone-screen-radius: 36px;
   flex-shrink: 0;
-  width: 280px !important;
+  width: 420px !important;
   height: auto;
   max-height: 100%;
   box-sizing: border-box;
 }
 
 .primary-lang .phone--lg {
-  --phone-bezel: 12px;
-  --phone-radius: 46px;
-  --phone-screen-radius: 33px;
-  width: 300px !important;
+  --phone-bezel: 14px;
+  --phone-radius: 54px;
+  --phone-screen-radius: 39px;
+  width: 450px !important;
 }
 
 .primary-lang--story .phone--story {
-  --phone-bezel: 14px;
-  --phone-radius: 52px;
-  --phone-screen-radius: 37px;
-  width: 420px !important;
+  --phone-bezel: 16px;
+  --phone-radius: 60px;
+  --phone-screen-radius: 44px;
+  width: 680px !important;
 }
 
 .primary-lang__langs {
@@ -301,18 +300,28 @@
 }
 
 .primary-lang--story .phone--story-hub {
-  --phone-bezel: 13px;
-  --phone-radius: 48px;
-  --phone-screen-radius: 34px;
-  width: 360px !important;
+  /* Hub-row height caps phone; keep native aspect (~400px @ ~850px tall). */
+  --phone-bezel: 14px;
+  --phone-radius: 52px;
+  --phone-screen-radius: 38px;
+  width: 400px !important;
   height: auto;
   max-height: 100%;
 }
 
-/* Hub post: keep left copy clear of the phone */
+/* Hub post: max width with ≥20px gap beside left copy */
 .primary-lang__stage--hub .phone {
-  width: 320px !important;
+  width: 500px !important;
   flex-shrink: 0;
   align-self: center;
   max-height: 100%;
+}
+
+/* Story hub must not inherit the post hub 500px (would squash aspect). */
+.primary-lang--story .primary-lang__stage--hub .phone {
+  width: 400px !important;
+}
+
+.primary-lang__stage--hub .primary-lang__hub-copy {
+  max-width: 360px;
 }
