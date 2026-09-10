@@ -131,6 +131,7 @@ export function CharacterBreakdownHost() {
   const popDetail = useYueStore((s) => s.popDetail)
   const pushDetail = useYueStore((s) => s.pushDetail)
   const closeBreakdown = useYueStore((s) => s.closeBreakdown)
+  const primaryLanguage = useYueStore((s) => s.primaryLanguage)
   const minimizeDetail = useYueStore((s) => s.minimizeDetail)
   const restoreDetail = useYueStore((s) => s.restoreDetail)
   const selectYueVariation = useYueStore((s) => s.selectYueVariation)
@@ -282,6 +283,7 @@ export function CharacterBreakdownHost() {
           lang: detailLang,
           contextText: contextText || undefined,
           contextLang,
+          glossLang: primaryLanguage,
           wantMedia: true,
         })
         if (!cancelled) setDictEntry(entry)
@@ -301,7 +303,7 @@ export function CharacterBreakdownHost() {
     return () => {
       cancelled = true
     }
-  }, [top])
+  }, [top, primaryLanguage])
 
   useEffect(() => {
     if (!top || top.kind !== 'char' || !top.jp) {
@@ -765,7 +767,7 @@ export function CharacterBreakdownHost() {
                 )}
               </DetailCollapsible>
             </div>
-            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
+            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} glossLang={primaryLanguage} />
             {isEsDetail && pedagogy.extraPanels.includes('mx-register') ? (
               <MexicanSpanishRegisterPanel
                 text={topLabel}
@@ -984,7 +986,7 @@ export function CharacterBreakdownHost() {
           </>
         ) : (
           <div className="detail-panel-char-view">
-            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} />
+            <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} glossLang={primaryLanguage} />
             {top.sense ? (
               <section>
                 <h3>{isEnglishDetail || isLatinDetail ? 'This word' : 'This character'}</h3>

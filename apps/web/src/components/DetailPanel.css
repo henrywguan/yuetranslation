@@ -417,6 +417,15 @@
   font-weight: 600;
 }
 
+.detail-dict-gloss .jyut-ruby,
+.detail-dict-gloss .pinyin-ruby,
+.detail-dict-ex-text .jyut-ruby,
+.detail-dict-ex-text .pinyin-ruby,
+.detail-dict-usage .jyut-ruby,
+.detail-dict-usage .pinyin-ruby {
+  font-weight: inherit;
+}
+
 .detail-dict-note {
   display: inline-block;
   margin-left: 0.35em;

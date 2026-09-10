@@ -158,6 +158,8 @@ export async function fetchBreakdown(
 export type DictionaryEntry = {
   lemma: string
   lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  /** Language senses/examples/usage were written in (Account Hub primary). */
+  glossLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   pronunciation?: string
   senses: { gloss: string; pos?: string; note?: string }[]
   examples: { text: string; translation?: string; note?: string }[]
@@ -179,6 +181,8 @@ export async function fetchDetailsEnrich(input: {
   lang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   contextText?: string
   contextLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
+  /** Account Hub primary — senses/examples/usage language. */
+  glossLang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo'
   wantMedia?: boolean
 }): Promise<DictionaryEntry> {
   const res = await apiFetch('/details/enrich', {

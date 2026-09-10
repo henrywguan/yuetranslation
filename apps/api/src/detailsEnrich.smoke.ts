@@ -3,7 +3,8 @@
  * Forces empty keys so the model path stays cold.
  * Tenor’s public API shut down 2026-06-30 — we use offline emoji instead.
  *
- * Paired CONTEXT must never become a dictionary sense — each Details panel is monolingual.
+ * Paired CONTEXT must never become a dictionary sense.
+ * Senses/examples are written in glossLang (Account Hub primary), not the lemma language.
  */
 import assert from 'node:assert/strict'
 
@@ -74,6 +75,21 @@ assert.ok(
   'Tagalog CONTEXT must not become a sense',
 )
 assert.equal(emptyish.media.length, 0, 'no emoji for unknown lemma')
+
+
+const esForYue = await enrichDictionaryEntry({
+  text: 'Hola',
+  lang: 'es',
+  contextText: '你好',
+  contextLang: 'yue',
+  glossLang: 'yue',
+  wantMedia: false,
+})
+assert.equal(esForYue.glossLang, 'yue')
+assert.ok(
+  !esForYue.senses.some((s) => s.gloss === '你好'),
+  `CONTEXT must not become a Yue sense, got ${JSON.stringify(esForYue.senses)}`,
+)
 
 console.log('detailsEnrich.smoke: ok', {
   appleSenses: apple.senses.map((s) => s.gloss),
