@@ -83,7 +83,10 @@ const dir = join(tmpdir(), `tts-smoke-${Date.now()}`)
 mkdirSync(dir, { recursive: true })
 writeFileSync(
   join(dir, 'api.ts'),
-  `export async function fetchTtsAudio() {
+  `let fetches = 0
+export function fetchCount() { return fetches }
+export async function fetchTtsAudio() {
+  fetches += 1
   return new Blob([new Uint8Array([1, 2, 3, 4])], { type: 'audio/mpeg' })
 }
 `,
@@ -91,7 +94,8 @@ writeFileSync(
 writeFileSync(join(dir, 'types.ts'), `export type Lang = 'en' | 'yue'\n`)
 writeFileSync(
   join(dir, 'ttsVoices.ts'),
-  `export function readLocalCmnVoice() { return null }
+  `export function readLocalSichuanVoice() { return null }
+export function readLocalCmnVoice() { return null }
 export function readLocalWuuVoice() { return null }
 export function readLocalEnVoice() { return null }
 export function readLocalTlVoice() { return null }
@@ -145,5 +149,18 @@ tts.stopSpeaking()
 assert.ok(synthCancel > cancelBefore, 'full stop may cancel speechSynthesis')
 assert.ok((instances[0]?.loadCount ?? 0) > loadBefore, 'full stop loads to reset src')
 
+const apiMod = (await import(pathToFileURL(join(dir, 'api.ts')).href)) as {
+  fetchCount: () => number
+}
+tts.resetTtsAudioCacheForTests()
+const before = apiMod.fetchCount() as number
+const p1 = tts.loadTtsAudio('cache-me', 'en') as Promise<Blob | null>
+const p2 = tts.loadTtsAudio('cache-me', 'en') as Promise<Blob | null>
+await Promise.all([p1, p2])
+assert.equal(apiMod.fetchCount(), before + 1, 'parallel loads must share one Azure fetch')
+await tts.loadTtsAudio('cache-me', 'en')
+assert.equal(apiMod.fetchCount(), before + 1, 'replay must not refetch TTS')
+assert.equal(tts.ttsAudioCacheSizeForTests(), 1)
+
 rmSync(dir, { recursive: true, force: true })
-console.log('tts.smoke: ok (barge-in preserveSession)')
+console.log('tts.smoke: ok (barge-in preserveSession + clip cache)')

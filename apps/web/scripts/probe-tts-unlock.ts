@@ -65,10 +65,18 @@ g.URL = class extends RealURL {
   static revokeObjectURL = () => {}
 }
 g.fetch = async () => ({ ok: true })
+g.SpeechSynthesisUtterance = function SpeechSynthesisUtterance(this: { text: string; lang: string }, text: string) {
+  this.text = text
+  this.lang = ''
+}
 g.speechSynthesis = {
   resume() {},
+  pause() {},
   cancel() {},
   speak() {},
+  getVoices() {
+    return []
+  },
 }
 
 async function main() {
@@ -83,7 +91,8 @@ async function main() {
   writeFileSync(join(dir, 'types.ts'), `export type Lang = 'en' | 'yue'\n`)
   writeFileSync(
     join(dir, 'ttsVoices.ts'),
-    `export function readLocalCmnVoice() { return null }
+    `export function readLocalSichuanVoice() { return null }
+export function readLocalCmnVoice() { return null }
 export function readLocalWuuVoice() { return null }
 export function readLocalEnVoice() { return null }
 export function readLocalTlVoice() { return null }

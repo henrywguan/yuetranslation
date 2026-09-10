@@ -969,6 +969,7 @@ export function CharacterBreakdownHost() {
                           text={row.char}
                           lang={rowSpeakLang}
                           className="detail-panel-row-speak"
+                          warm={false}
                         />
                       ) : null}
                     </li>

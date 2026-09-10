@@ -71,7 +71,7 @@ export function ToneTheater() {
               <span className="tone-theater-meta">
                 <span className="tone-theater-chao">{active.chao}</span>
                 <span className="tone-theater-gloss">{active.meaningEn}</span>
-                <SpeakButton text={active.han} lang="yue" className="tone-speak" />
+                <SpeakButton text={active.han} lang="yue" className="tone-speak" warm={false} />
               </span>
             </div>
             <div className="tone-theater-shape">

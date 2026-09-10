@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { useYueStore } from '../lib/store'
 import { supportsTts } from '../lib/langCapabilities'
-import { unlockTtsPlayback } from '../lib/tts'
+import { prefetchTts, unlockTtsPlayback } from '../lib/tts'
 import { biPlain, ui } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
@@ -9,10 +10,13 @@ export function SpeakButton({
   text,
   lang,
   className = '',
+  warm = true,
 }: {
   text: string
   lang: Lang
   className?: string
+  /** Prefetch Azure audio while the line is on screen. Off for alts / breakdown lists. */
+  warm?: boolean
 }) {
   const trimmed = text.trim()
   const speakManual = useYueStore((s) => s.speakManual)
@@ -21,6 +25,11 @@ export function SpeakButton({
   const entitlement = useYueStore((s) => s.entitlement)
   const canTts = (!entitlement || entitlement.allowed.tts) && supportsTts(lang)
   const speaking = status === 'speaking' && speakingText === trimmed
+
+  useEffect(() => {
+    if (!warm || !canTts || !trimmed || !supportsTts(lang)) return
+    prefetchTts(trimmed, lang)
+  }, [warm, canTts, trimmed, lang])
 
   if (!trimmed || !supportsTts(lang)) return null
 
