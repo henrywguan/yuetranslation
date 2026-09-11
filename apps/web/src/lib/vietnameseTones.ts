@@ -1,6 +1,6 @@
 /**
  * Vietnamese tone-class helpers — Quốc ngữ already encodes tone via diacritics.
- * We never invent ASCII tone digits or Chao letters; this only classifies the
+ * We never invent ASCII tone digits or Chao tone letters; this only classifies the
  * mark that is already written so Details can show a short tone-class chip.
  *
  * Six tones (thanh điệu): ngang (unmarked), sắc (acute), huyền (grave),

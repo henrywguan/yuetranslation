@@ -8,12 +8,14 @@ Use this page as the source of truth for romanization in JyutTranslate. Compact 
 
 ### Product naming / 产品用语
 
-In the JyutTranslate UI and creator kit, the clipboard feature that copies `syllable + tone number + contour mark` (e.g. `teng1˥`) is labeled **Jyutping + chao numbers + tone** (粵：**粵拼＋調號數字＋聲調**). The contour glyphs themselves (˥ ˧˥ ˧ ˨˩ ˩˧ ˨) are still the academic **Chao tone letters** (赵元任调值字母) from LSHK §4 — that is the notation system, not a separate set of “Chao tones.”
+In the JyutTranslate UI and creator kit, the clipboard feature that copies
+`syllable + tone number + contour mark` (e.g. `teng1˥`) is labeled
+**Jyutping + Chao tone letters** (粵：**粵拼＋趙元任調號**). The contour glyphs (˥ ˧˥ ˧ ˨˩ ˩˧ ˨) are the academic
+**Chao tone letters** (赵元任调值字母) from LSHK §4.
 
-界面与创作者页将「音节 + 调号数字 + 调型符号」（如 `teng1˥`）称为 **Jyutping + chao numbers + tone**（**粵拼＋調號數字＋聲調**）。符号 ˥ ˧˥ … 本身仍是学会方案 §4 的**赵元任调值字母**——是记调法，不是另一套声调名称。
+界面与创作者页将「音节 + 调号数字 + 调型符号」（如 `teng1˥`）称为
+**Jyutping + Chao tone letters**（**粵拼＋趙元任調號**）。符号本身即学会方案 §4 的**赵元任调值字母**。
 
-
-粤译以本页为罗马化依据。紧凑界面按学会规定，在每个音节后使用 ASCII 声调**数字**（1–6）。展开详情时可加上 **§4 声调**中的赵元任调值字母。
 
 ## 4. Tone / 4. 声调
 
@@ -26,7 +28,7 @@ Tone marks appear at the end of the syllable. Examples: `fu1` 夫, `fu2` 虎, `f
 | 陰 | 1 [˥] 詩 | 2 [˧˥] 史 | 3 [˧] 試 | 1 [˥] 識 · 3 [˧] 洩 |
 | 陽 | 4 [˨˩] 時 | 5 [˩˧] 市 | 6 [˨] 事 | 6 [˨] 蝕 |
 
-| Number / 数字 | Contour / 调型 | Chao letters / 调值字母 | Cue / 提示 |
+| Number / 数字 | Contour / 调型 | Chao tone letters / 调值字母 | Cue / 提示 |
 | --- | --- | --- | --- |
 | 1 | high level / 高平 | ˥ | high and steady / 高而平稳 |
 | 2 | high rising / 高升 | ˧˥ | rises toward the top / 升向高处 |
@@ -49,7 +51,7 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
   **紧凑**（翻译行始终可见）：`zou2 san4`
 - **Detailed expansion** (hover / tap Jyutping): Chinese character above each syllable, e.g. `早` / `zou2 ˧˥` · `晨` / `san4 ˨˩`  
   **详细展开**（悬停或点按粤拼）：每个音节上方显示汉字，例如 `早` / `zou2 ˧˥` · `晨` / `san4 ˨˩`
-- **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao letters, character sense, and the phrase gloss  
+- **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao tone letters, character sense, and the phrase gloss  
   **单字下钻**：有释义时可点按汉字 → 弹出可关闭面板，含调型、调值字母、字义与短语释义
 
 Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.

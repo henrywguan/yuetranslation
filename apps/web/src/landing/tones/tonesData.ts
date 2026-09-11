@@ -9,7 +9,7 @@ export type ToneDef = {
   shapeZh: string
   han: string
   jp: string
-  /** Tone contour marks (Chao letters) for display. */
+  /** Tone contour marks (Chao tone letters) for display. */
   chao: string
   meaningEn: string
   contour: TonePoint[]

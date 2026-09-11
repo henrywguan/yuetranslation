@@ -20,20 +20,20 @@ const NOTO_SANS_HK_SPECIMEN = 'https://fonts.google.com/noto/specimen/Noto+Sans+
 
 /** Demo phrase for the live copy button (Family+). */
 const DEMO_HAN = '聽唔聽得'
-/** Expected clipboard shape (Jyutping numbers + Chao letters). */
+/** Expected clipboard shape (Jyutping numbers + Chao tone letters). */
 const DEMO_CHAOS = 'teng1˥ m4˨˩ teng1˥ dak1˥'
 
 type Step = { title: Bi; body: Bi }
 
 /**
- * Creator kit: Jyutping + chao numbers + tone copy walkthrough, Noto font downloads,
+ * Creator kit: Jyutping + Chao tone letters copy walkthrough, Noto font downloads,
  * and how to load custom fonts in CapCut / Instagram / other editors.
  */
 export function CreatorsPage() {
   useDocumentMeta({
-    title: 'Creator kit — Jyutping + chao numbers + tone · JyutTranslate',
+    title: 'Creator kit — Jyutping + Chao tone letters · JyutTranslate',
     description:
-      'How to copy Jyutping + chao numbers + tone, download Noto Sans / Noto Sans HK, and use them in CapCut, Instagram, and other editors.',
+      'How to copy Jyutping + Chao tone letters, download Noto Sans / Noto Sans HK, and use them in CapCut, Instagram, and other editors.',
     path: '/#/creators',
   })
 

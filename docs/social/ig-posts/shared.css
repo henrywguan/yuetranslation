@@ -254,7 +254,7 @@ body {
   place-items: center;
 }
 
-/* Drawn Chao letters — Unicode orientation: staff RIGHT, ticks LEFT */
+/* Drawn Chao tone letters — Unicode orientation: staff RIGHT, ticks LEFT */
 .chao-glyph {
   display: inline-flex;
   align-items: center;

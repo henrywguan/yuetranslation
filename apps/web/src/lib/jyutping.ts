@@ -9,7 +9,7 @@ export type CharBreakdown = {
 export { hasHan }
 
 /**
- * LSHK Jyutping §4 tone contour marks (Chao letters) — product label: Jyutping + chao numbers + tone.
+ * LSHK Jyutping §4 tone contour marks (Chao tone letters) — product label: Jyutping + Chao tone letters.
  * @see https://jyutping.org/en/jyutping/
  */
 const TONE_LETTERS: Record<string, string> = {

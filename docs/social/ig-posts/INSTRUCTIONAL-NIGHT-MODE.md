@@ -55,7 +55,7 @@ Centered glass 粵 chop → **JyutTranslate** → jade `English ↔ Cantonese` �
 Reference: [`references/03-brand-splash.jpg`](./references/03-brand-splash.jpg)
 
 ### D — Learn + six tones (portrait)
-Brand row → “Learn as you speak” / jade “Jyutping + chao numbers + tone” → example phrase → 3×2 tone tiles → footer.  
+Brand row → “Learn as you speak” / jade “Jyutping + Chao tone letters” → example phrase → 3×2 tone tiles → footer.  
 Reference: [`references/04-learn-six-tones.jpg`](./references/04-learn-six-tones.jpg)  
 HTML baselines: `jyutping-tones-square.html` · `jyutping-tones-portrait.html`
 

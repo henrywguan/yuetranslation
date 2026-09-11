@@ -10,7 +10,7 @@ import {
 
 /**
  * Vietnamese line for Solo / Conversation panes.
- * Compact: fully accented Quốc ngữ only — no tone chips, no IPA, no Chao letters.
+ * Compact: fully accented Quốc ngữ only — no tone chips, no IPA, no Chao tone letters.
  * Details can opt in via `showTones`, which always renders the Southern hỏi≈ngã
  * merge note alongside the chips (never optional once tones are shown).
  */

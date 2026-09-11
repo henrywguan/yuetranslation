@@ -332,7 +332,7 @@ export function CharacterBreakdownHost() {
       detailLang === 'wuu' ||
       detailLang === 'sichuan'
     ) {
-      // Yue: Jyutping + chao numbers + tone on the title (not IPA / AI pinyin).
+      // Yue: Jyutping + Chao tone letters on the title (not IPA / AI pinyin).
       // Cmn: pinyin is tone-marked in jp. Wuu: citation Wugniu lives in jp but is not IPA.
       // Sichuan: 四川话拼音 lives in jp; not Yue Jyutping for IPA lookup.
       setIpa('')
