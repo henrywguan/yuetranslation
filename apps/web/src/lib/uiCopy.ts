@@ -1096,7 +1096,7 @@ export const ui = {
   },
   creatorsOtherTitle: { en: 'VN, InShot, and others', zh: 'VN、InShot 及其他', jp: 'VN, InShot tung4 kei4 taa1' },
   creatorsOtherBody: {
-    en: 'Look for Import font / Add font in the text panel. Prefer editors that accept .ttf/.otf from Files. If tone contour marks still box, the active face is not Noto Sans — switch fonts and re-paste.',
+    en: 'Look for Import font / Add font in the text panel. Prefer editors that accept .ttf/.otf from Files. If Chao tone letters still box, the active face is not Noto Sans — switch fonts and re-paste.',
     zh: '喺文字面板搵「匯入字體／新增字體」。優先用可從檔案讀 .ttf／.otf 嘅軟件。若調號仲係方格，代表而家唔係 Noto Sans——換字體再貼一次。',
     jp: 'hai2 man4 zi6 min6 baan2 wan2 “wui6 jap6 zi6 tai2 / san1 zang1 zi6 tai2”. jau4 sin1 jung6 ho2 cung4 dong2 on3 duk6 .ttf / .otf ge3 jyun4 gin6.',
   },
