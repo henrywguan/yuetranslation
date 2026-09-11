@@ -2,6 +2,8 @@
 
 Use this document when **forking a Cursor chat** into your Social Media Manager agent. Paste the **System prompt (fork block)** below into the first message, or attach `.cursor/rules/social-media-manager.mdc` in this repo.
 
+Sister agent for **finding creators to reach** (not posts to publish): [`docs/agents/cantonese-creator-scout.md`](cantonese-creator-scout.md) · tracker [`docs/social/creator-scout/TRACKER.md`](../social/creator-scout/TRACKER.md).
+
 ---
 
 ## Role
