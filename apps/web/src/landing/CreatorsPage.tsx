@@ -51,9 +51,12 @@ export function CreatorsPage() {
   ]
 
   return (
-    <MarketingPageShell className="creators-page" onFeatures={() => openHome()}>
+    <MarketingPageShell
+      className="creators-page"
+      background="orbital"
+      onFeatures={() => openHome()}
+    >
       <header className="creators-hero">
-        <div className="creators-hero-wash" aria-hidden="true" />
         <motion.div
           className="creators-hero-inner"
           initial={{ opacity: 0, y: 22 }}

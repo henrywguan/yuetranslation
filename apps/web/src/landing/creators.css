@@ -10,18 +10,6 @@
   flex-direction: column;
   align-items: center;
   padding: 40px clamp(20px, 5vw, 40px) 12px;
-  overflow: clip;
-}
-
-.creators-hero-wash {
-  position: absolute;
-  inset: -10% -20% auto;
-  height: 78%;
-  pointer-events: none;
-  background:
-    radial-gradient(50% 60% at 50% 40%, color-mix(in srgb, var(--jade) 16%, transparent), transparent 70%),
-    radial-gradient(40% 50% at 82% 75%, color-mix(in srgb, var(--harbor-blue) 22%, transparent), transparent 65%);
-  filter: blur(8px);
 }
 
 .creators-hero-inner {
