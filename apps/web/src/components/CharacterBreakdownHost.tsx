@@ -742,7 +742,7 @@ export function CharacterBreakdownHost() {
               <DetailCollapsible
                 title={ui.historyVariations}
                 className="detail-panel-alts"
-                defaultOpen
+                defaultOpen={false}
               >
                 {altsLoading && alternatives.length === 0 ? (
                   <p className="muted" aria-live="polite">
