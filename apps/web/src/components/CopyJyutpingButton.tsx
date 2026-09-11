@@ -27,7 +27,7 @@ function canCopyJyutping(plan: string | undefined): boolean {
 }
 
 /**
- * Copies Jyutping + LSHK Chao tone letters for Cantonese creators
+ * Copies Jyutping + chao numbers + tone for Cantonese creators
  * (e.g. `teng1˥ m4˨˩ teng1˥ dou3˧`). Distinct icon from Han CopyButton.
  * Locked to Family/Business — tap opens upgrade when on Free/guest.
  */

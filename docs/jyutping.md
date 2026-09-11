@@ -6,6 +6,13 @@ Canonical scheme: [Jyutping: The Linguistic Society of Hong Kong Cantonese Roman
 
 Use this page as the source of truth for romanization in JyutTranslate. Compact UI keeps ASCII tone **numbers** (1–6) after each syllable, as LSHK specifies. Detailed expansions may add the Chao tone letters from **§4 Tone**.
 
+### Product naming / 产品用语
+
+In the JyutTranslate UI and creator kit, the clipboard feature that copies `syllable + tone number + contour mark` (e.g. `teng1˥`) is labeled **Jyutping + chao numbers + tone** (粵：**粵拼＋調號數字＋聲調**). The contour glyphs themselves (˥ ˧˥ ˧ ˨˩ ˩˧ ˨) are still the academic **Chao tone letters** (赵元任调值字母) from LSHK §4 — that is the notation system, not a separate set of “Chao tones.”
+
+界面与创作者页将「音节 + 调号数字 + 调型符号」（如 `teng1˥`）称为 **Jyutping + chao numbers + tone**（**粵拼＋調號數字＋聲調**）。符号 ˥ ˧˥ … 本身仍是学会方案 §4 的**赵元任调值字母**——是记调法，不是另一套声调名称。
+
+
 粤译以本页为罗马化依据。紧凑界面按学会规定，在每个音节后使用 ASCII 声调**数字**（1–6）。展开详情时可加上 **§4 声调**中的赵元任调值字母。
 
 ## 4. Tone / 4. 声调

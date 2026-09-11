@@ -16,7 +16,7 @@ type Props = {
 
 /**
  * Render gloss / example / usage lines.
- * Han + Yue (primary or lemma) → Jyutping + Chao ruby; Han + Cmn → pinyin ruby.
+ * Han + Yue (primary or lemma) → Jyutping + chao numbers + tone ruby; Han + Cmn → pinyin ruby.
  */
 function GlossLine({
   text,
@@ -65,7 +65,7 @@ export function DetailDictionaryPanel({ entry, loading, glossLang }: Props) {
   if (!entry) return null
   const renderLang = glossLang || entry.glossLang || entry.lang
   const lemmaLang = entry.lang
-  // Cantonese: never surface AI IPA/pinyin — title + ruby already show LSHK Jyutping + Chao.
+  // Cantonese: never surface AI IPA/pinyin — title + ruby already show LSHK Jyutping + chao numbers + tone.
   const showAiPron = Boolean(entry.pronunciation) && lemmaLang !== 'yue'
   const hasBody =
     entry.senses.length > 0 ||

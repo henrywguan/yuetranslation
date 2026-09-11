@@ -19,7 +19,7 @@ Built from **`docs/brand/favicon.png`** (product chop 粵) on Harbor with a soft
 **A — Recommended**
 ```
 Real Hong Kong Cantonese — not textbook Chinese.
-Jyutping + Chao tones on every line.
+Jyutping + chao numbers + tone on every line.
 → jyuttranslate.com
 ```
 

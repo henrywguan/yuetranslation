@@ -23,7 +23,7 @@ export function copyableText(text: string, lang: Lang): string {
 }
 
 /**
- * Clipboard Jyutping with LSHK Chao tone letters (e.g. `teng1˥ m4˨˩`).
+ * Clipboard Jyutping + chao numbers + tone (LSHK numbers + contour marks) (e.g. `teng1˥ m4˨˩`).
  * Skips chars without a syllable (punctuation / unknown).
  */
 export async function copyableJyutpingChao(text: string): Promise<string> {

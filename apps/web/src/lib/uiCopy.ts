@@ -891,7 +891,7 @@ export const ui = {
   },
   creatorsHeroSub: {
     en: 'Download the fonts that show Cantonese and Jyutping + chao numbers + tone correctly — then copy pronunciation from JyutTranslate into CapCut, Instagram, and your editor.',
-    zh: '下載正確顯示粵語同趙元任調號嘅字體——再喺 JyutTranslate 複製讀音，貼去 CapCut、Instagram 同你嘅剪輯軟件。',
+    zh: '下載正確顯示粵語同粵拼＋調號數字＋聲調嘅字體——再喺 JyutTranslate 複製讀音，貼去 CapCut、Instagram 同你嘅剪輯軟件。',
     jp: 'haa6 zoi3 zing3 kok3 hin2 si6 jyut6 jyu5 tung4 ziu6 jyun4 jam4 diu6 hou6 ge3 zi6 tai2 — zoi3 hai2 JyutTranslate fuk6 zai3 duk6 jam1, tip3 heoi3 CapCut, Instagram tung4 nei5 ge3 zin2 cap6 jyun4 gin6.',
   },
   creatorsTocLabel: { en: 'On this page', zh: '本頁內容', jp: 'bun2 jip6 noi6 jung4' },
@@ -905,8 +905,8 @@ export const ui = {
     jp: 'haa6 zoi3 Noto Sans HK tung4 Noto Sans',
   },
   creatorsFontsLead: {
-    en: 'Use both. HK covers Hong Kong Chinese characters; Noto Sans carries Latin letters and Chao tone marks (˥ ˧˥ ˧ ˨˩ ˩˧ ˨).',
-    zh: '兩款都要用。HK 負責香港漢字；Noto Sans 負責拉丁字母同趙元任調號（˥ ˧˥ ˧ ˨˩ ˩˧ ˨）。',
+    en: 'Use both. HK covers Hong Kong Chinese characters; Noto Sans carries Latin letters and Jyutping + chao numbers + tone (˥ ˧˥ ˧ ˨˩ ˩˧ ˨).',
+    zh: '兩款都要用。HK 負責香港漢字；Noto Sans 負責拉丁字母同粵拼＋調號數字＋聲調（˥ ˧˥ ˧ ˨˩ ˩˧ ˨）。',
     jp: 'loeng5 fun2 dou1 jiu3 jung6. HK fu6 zaak3 hoeng1 gong2 hon3 zi6; Noto Sans fu6 zaak3 laai1 ding1 zi6 mou5 tung4 ziu6 jyun4 jam4 diu6 hou6.',
   },
   creatorsFontHkTitle: { en: 'Noto Sans HK', zh: 'Noto Sans HK', jp: 'Noto Sans HK' },
@@ -917,8 +917,8 @@ export const ui = {
   },
   creatorsFontSansTitle: { en: 'Noto Sans', zh: 'Noto Sans', jp: 'Noto Sans' },
   creatorsFontSansHint: {
-    en: 'Required for Chao tone letters to display correctly (˥ ˧˥ ˧ ˨˩ ˩˧ ˨). Also covers English / Jyutping Latin.',
-    zh: '要正確顯示趙元任調號（˥ ˧˥ ˧ ˨˩ ˩˧ ˨）必須用呢款。亦覆蓋英文／粵拼拉丁字母。',
+    en: 'Required for Jyutping + chao numbers + tone to display correctly (˥ ˧˥ ˧ ˨˩ ˩˧ ˨). Also covers English / Jyutping Latin.',
+    zh: '要正確顯示粵拼＋調號數字＋聲調（˥ ˧˥ ˧ ˨˩ ˩˧ ˨）必須用呢款。亦覆蓋英文／粵拼拉丁字母。',
     jp: 'jiu3 zing3 kok3 hin2 si6 ziu6 jyun4 jam4 diu6 hou6 bit1 seoi1 jung6 ni1 fun2. jik6 fu6 goi3 jing1 man4 / jyut6 ping3 laai1 ding1 zi6 mou5.',
   },
   creatorsDownloadHk: { en: 'Download Noto Sans HK', zh: '下載 Noto Sans HK', jp: 'haa6 zoi3 Noto Sans HK' },
@@ -930,8 +930,8 @@ export const ui = {
     jp: 'dim2 gaai2 jiu3 loeng5 fun2 zi6 tai2',
   },
   creatorsPairBody: {
-    en: 'Noto Sans HK does not include Chao tone letters. If captions only use HK, ˥ ˨˩ often fall back to tofu boxes or the wrong face. Install Noto Sans for romanization + tones, and Noto Sans HK for 漢字.',
-    zh: 'Noto Sans HK 唔包趙元任調號。字幕淨用 HK 時，˥ ˨˩ 好多時會變方格或者跳錯字體。粵拼＋調號用 Noto Sans，漢字用 Noto Sans HK。',
+    en: 'Noto Sans HK does not include Jyutping + chao numbers + tone contour marks (˥ ˨˩). If captions only use HK, ˥ ˨˩ often fall back to tofu boxes or the wrong face. Install Noto Sans for romanization + tones, and Noto Sans HK for 漢字.',
+    zh: 'Noto Sans HK 唔包粵拼＋調號數字＋聲調。字幕淨用 HK 時，˥ ˨˩ 好多時會變方格或者跳錯字體。粵拼＋調號數字＋聲調用 Noto Sans，漢字用 Noto Sans HK。',
     jp: 'Noto Sans HK m4 baau1 ziu6 jyun4 jam4 diu6 hou6. zi6 mok6 zing6 jung6 HK si4, ˥ ˨˩ hou2 do1 si4 wui5 bin3 fong1 gaak3 waak6 ze2 tiu3 co3 zi6 tai2.',
   },
   creatorsPreviewLabel: { en: 'Preview (paste target)', zh: '預覽（貼上目標）', jp: 'jyu6 laam5 (tip3 soeng5 muk6 biu1)' },
@@ -947,8 +947,8 @@ export const ui = {
     jp: 'dim2 joeng2 jung6 “fuk6 zai3 jyut6 ping3 + diu6 hou6” zai3',
   },
   creatorsCopyLead: {
-    en: 'Family and Business unlock one-tap copy of Jyutping with LSHK Chao tone letters — perfect for Reels captions and lesson overlays.',
-    zh: '家庭版同商業版開通一鍵複製粵拼＋趙元任調號——好啱 Reels 字幕同課堂疊字。',
+    en: 'Family and Business unlock one-tap copy of Jyutping + chao numbers + tone — perfect for Reels captions and lesson overlays.',
+    zh: '家庭版同商業版開通一鍵複製粵拼＋調號數字＋聲調——好啱 Reels 字幕同課堂疊字。',
     jp: 'gaa1 ting4 baan2 tung4 soeng1 jip6 baan2 hoi1 tung1 jat1 gin6 fuk6 zai3 jyut6 ping3 + ziu6 jyun4 jam4 diu6 hou6 — hou2 ngaam1 Reels zi6 mok6 tung4 fo3 tong4 dip6 zi6.',
   },
   creatorsCopyStep1Title: { en: 'Open the translator', zh: '開啟翻譯器', jp: 'hoi1 kai2 faan1 jik6 hei3' },
@@ -959,8 +959,8 @@ export const ui = {
   },
   creatorsCopyStep2Title: { en: 'Open Details', zh: '打開詳情', jp: 'daa2 hoi1 coeng4 cing4' },
   creatorsCopyStep2Body: {
-    en: 'Tap the Cantonese result to open Details — Jyutping sits under each line, with Chao letters in the breakdown.',
-    zh: '撳粵語結果打開詳情——每句下面有粵拼，拆解入面有趙元任調號。',
+    en: 'Tap the Cantonese result to open Details — Jyutping sits under each line, with Jyutping + chao numbers + tone in the breakdown.',
+    zh: '撳粵語結果打開詳情——每句下面有粵拼，拆解入面有粵拼＋調號數字＋聲調。',
     jp: 'gam2 jyut6 jyu5 git3 gwo2 daa2 hoi1 coeng4 cing4 — mui5 geoi3 haa6 min6 jau5 jyut6 ping3, caak3 gaai2 jap6 min6 jau5 ziu6 jyun4 jam4 diu6 hou6.',
   },
   creatorsCopyStep3Title: {
@@ -975,7 +975,7 @@ export const ui = {
   },
   creatorsCopyStep4Title: { en: 'Paste into your editor', zh: '貼去剪輯軟件', jp: 'tip3 heoi3 zin2 cap6 jyun4 gin6' },
   creatorsCopyStep4Body: {
-    en: 'Paste into CapCut / Canva text, or a Notes doc first. You should see syllables like teng1˥ with Chao letters — not missing boxes.',
+    en: 'Paste into CapCut / Canva text, or a Notes doc first. You should see syllables like teng1˥ with Jyutping + chao numbers + tone — not missing boxes.',
     zh: '貼去 CapCut／Canva 文字，或者先貼去備忘錄。應該見到 teng1˥ 呢類音節同調號——唔好係方格。',
     jp: 'tip3 heoi3 CapCut / Canva man4 zi6, waak6 ze2 sin1 tip3 heoi3 bei6 mong4 luk6. jing1 goi1 gin3 dou2 teng1˥ ni1 leoi6 jam1 zit3 tung4 diu6 hou6 — m4 hou2 hai6 fong1 gaak3.',
   },
@@ -1007,8 +1007,8 @@ export const ui = {
     jp: 'hai2 zin2 cap6 jyun4 gin6 gaa1 jap6 zi6 ding6 zi6 tai2',
   },
   creatorsEditorsLead: {
-    en: 'Import Noto Sans (and Noto Sans HK for 漢字) in Instagram Reels, CapCut, Canva, or your NLE — Chao tone letters need Noto Sans.',
-    zh: '喺 Instagram Reels、CapCut、Canva 或你嘅剪輯軟件匯入 Noto Sans（漢字另加 Noto Sans HK）——趙元任調號需要 Noto Sans。',
+    en: 'Import Noto Sans (and Noto Sans HK for 漢字) in Instagram Reels, CapCut, Canva, or your NLE — Jyutping + chao numbers + tone needs Noto Sans.',
+    zh: '喺 Instagram Reels、CapCut、Canva 或你嘅剪輯軟件匯入 Noto Sans（漢字另加 Noto Sans HK）——粵拼＋調號數字＋聲調需要 Noto Sans。',
     jp: 'hai2 Instagram Reels, CapCut, Canva waak6 nei5 ge3 zin2 cap6 jyun4 gin6 wui6 jap6 Noto Sans (hon3 zi6 ling6 gaa1 Noto Sans HK) — ziu6 jyun4 jam1 diu6 hou6 jiu3 Noto Sans.',
   },
   creatorsCapcutTitle: { en: 'CapCut', zh: 'CapCut', jp: 'CapCut' },
@@ -1039,8 +1039,8 @@ export const ui = {
   },
   creatorsIgTitle: { en: 'Instagram (Reels / Stories)', zh: 'Instagram（Reels／限時動態）', jp: 'Instagram (Reels / haan6 si4 dung6 taai3)' },
   creatorsIgNote: {
-    en: 'Reels can import custom fonts — use Noto Sans so Chao tone letters (˥ ˨˩ …) render correctly.',
-    zh: 'Reels 可以匯入自訂字體——用 Noto Sans 先正確顯示趙元任調號（˥ ˨˩ …）。',
+    en: 'Reels can import custom fonts — use Noto Sans so Jyutping + chao numbers + tone (˥ ˨˩ …) renders correctly.',
+    zh: 'Reels 可以匯入自訂字體——用 Noto Sans 先正確顯示粵拼＋調號數字＋聲調（˥ ˨˩ …）。',
     jp: 'Reels ho2 ji5 wui6 jap6 zi6 ding6 zi6 tai2 — jung6 Noto Sans sin1 zing3 kok3 hin2 si6 ziu6 jyun4 jam1 diu6 hou6.',
   },
   creatorsIg1: {
@@ -1096,7 +1096,7 @@ export const ui = {
   },
   creatorsOtherTitle: { en: 'VN, InShot, and others', zh: 'VN、InShot 及其他', jp: 'VN, InShot tung4 kei4 taa1' },
   creatorsOtherBody: {
-    en: 'Look for Import font / Add font in the text panel. Prefer editors that accept .ttf/.otf from Files. If Chao letters still box, the active face is not Noto Sans — switch fonts and re-paste.',
+    en: 'Look for Import font / Add font in the text panel. Prefer editors that accept .ttf/.otf from Files. If tone contour marks still box, the active face is not Noto Sans — switch fonts and re-paste.',
     zh: '喺文字面板搵「匯入字體／新增字體」。優先用可從檔案讀 .ttf／.otf 嘅軟件。若調號仲係方格，代表而家唔係 Noto Sans——換字體再貼一次。',
     jp: 'hai2 man4 zi6 min6 baan2 wan2 “wui6 jap6 zi6 tai2 / san1 zang1 zi6 tai2”. jau4 sin1 jung6 ho2 cung4 dong2 on3 duk6 .ttf / .otf ge3 jyun4 gin6.',
   },
@@ -1181,7 +1181,7 @@ export const ui = {
 
   featJpTitle: { en: 'Jyutping built in', zh: '內建粵拼', jp: 'noi6 gin3 jyut6 ping3' },
   featJpDesc: {
-    en: 'Romanization and chao tones under every Cantonese line, so you can learn as you speak.',
+    en: 'Romanization and Jyutping + chao numbers + tone under every Cantonese line, so you can learn as you speak.',
     zh: '每句粵語下面都有粵拼同聲調，一邊講一邊學。',
     jp: 'mui5 geoi3 jyut6 jyu5 haa6 min6 dou1 jau5 jyut6 ping3 tung4 sing1 diu6, jat1 bin1 gong2 jat1 bin1 hok6.',
   },

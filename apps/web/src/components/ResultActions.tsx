@@ -9,7 +9,7 @@ export function ResultActions({
   lang,
   className = '',
   showCopy = true,
-  /** Second copy control: Jyutping + Chao (Details / Cantonese creators). */
+  /** Second copy control: Jyutping + chao numbers + tone (Details / Cantonese creators). */
   showJyutpingCopy = false,
 }: {
   text: string
