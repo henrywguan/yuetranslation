@@ -25,6 +25,11 @@ const DEMO_CHAOS = 'teng1˥ m4˨˩ teng1˥ dak1˥'
 
 type Step = { title: Bi; body: Bi }
 
+/** In-page jump without clobbering hash route `#/creators` → home. */
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 /**
  * Creator kit: Jyutping + Chao tone letters copy walkthrough, Noto font downloads,
  * and how to load custom fonts in CapCut / Instagram / other editors.
@@ -65,13 +70,31 @@ export function CreatorsPage() {
             <BiText copy={ui.creatorsHeroSub} size="md" hideJp />
           </p>
           <nav className="creators-toc" aria-label={ui.creatorsTocLabel.en}>
-            <a href="#creators-fonts">
+            <a
+              href="#/creators"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToSection('creators-fonts')
+              }}
+            >
               <BiText copy={ui.creatorsTocFonts} size="sm" hideJp only="en" />
             </a>
-            <a href="#creators-copy">
+            <a
+              href="#/creators"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToSection('creators-copy')
+              }}
+            >
               <BiText copy={ui.creatorsTocCopy} size="sm" hideJp only="en" />
             </a>
-            <a href="#creators-editors">
+            <a
+              href="#/creators"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToSection('creators-editors')
+              }}
+            >
               <BiText copy={ui.creatorsTocEditors} size="sm" hideJp only="en" />
             </a>
           </nav>
