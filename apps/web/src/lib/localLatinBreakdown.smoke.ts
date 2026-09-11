@@ -2,6 +2,9 @@ import assert from 'node:assert/strict'
 import { buildLocalLatinBreakdown, isLatinDetailLang } from './localLatinBreakdown'
 
 assert.equal(isLatinDetailLang('en'), true)
+assert.equal(isLatinDetailLang('bcl'), true)
+assert.equal(isLatinDetailLang('ceb'), true)
+assert.equal(isLatinDetailLang('ilo'), true)
 assert.equal(isLatinDetailLang('yue'), false)
 
 const apple = buildLocalLatinBreakdown('Apple', { phraseGloss: '蘋果', lang: 'en' })

@@ -90,6 +90,9 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'tl') return 'tl'
   if (detailLang === 'es') return 'es'
   if (detailLang === 'vi') return 'vi'
+  if (detailLang === 'ceb') return 'ceb'
+  if (detailLang === 'ilo') return 'ilo'
+  if (detailLang === 'bcl') return 'bcl'
   if (detailLang === 'en') return 'en'
   if (detailLang === 'yue') return 'yue'
   return hasHan(text) ? 'yue' : 'en'
@@ -311,7 +314,15 @@ export function CharacterBreakdownHost() {
       return
     }
     const detailLang = top.lang || (hasHan(top.char) ? 'yue' : 'en')
-    if (detailLang === 'en' || detailLang === 'tl' || detailLang === 'es' || detailLang === 'vi') {
+    if (
+      detailLang === 'en' ||
+      detailLang === 'tl' ||
+      detailLang === 'es' ||
+      detailLang === 'vi' ||
+      detailLang === 'ceb' ||
+      detailLang === 'ilo' ||
+      detailLang === 'bcl'
+    ) {
       setIpa(top.jp)
       return
     }
@@ -394,7 +405,9 @@ export function CharacterBreakdownHost() {
   const isTlDetail = detailLang === 'tl'
   const isEsDetail = detailLang === 'es'
   const isViDetail = detailLang === 'vi'
-  const isLatinDetail = isTlDetail || isEsDetail || isViDetail
+  const isPhilippineRegionalDetail =
+    detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
+  const isLatinDetail = isTlDetail || isEsDetail || isViDetail || isPhilippineRegionalDetail
   const phraseWugniu =
     top.kind === 'phrase'
       ? top.romanization?.trim() || ''
