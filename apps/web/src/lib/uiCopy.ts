@@ -890,8 +890,8 @@ export const ui = {
     jp: 'jyut6 ping3 + ziu6 jyun4 jam4 diu6 hou6, jat1 gin6 fuk6 zai3',
   },
   creatorsHeroSub: {
-    en: 'Download the fonts that show Cantonese and Jyutping + Chao tone letters correctly — then copy pronunciation from JyutTranslate into CapCut, Instagram, and your editor.',
-    zh: '下載正確顯示粵語同粵拼＋趙元任調號嘅字體——再喺 JyutTranslate 複製讀音，貼去 CapCut、Instagram 同你嘅剪輯軟件。',
+    en: 'Download the fonts that show Cantonese and Jyutping + Chao tone letters correctly — then copy pronunciation from JyutTranslate into CapCut, Instagram, or your editor.',
+    zh: '下載正確顯示粵語同粵拼＋趙元任調號嘅字體——再喺 JyutTranslate 複製讀音，貼去 CapCut、Instagram 或你嘅剪輯軟件。',
     jp: 'haa6 zoi3 zing3 kok3 hin2 si6 jyut6 jyu5 tung4 ziu6 jyun4 jam4 diu6 hou6 ge3 zi6 tai2 — zoi3 hai2 JyutTranslate fuk6 zai3 duk6 jam1, tip3 heoi3 CapCut, Instagram tung4 nei5 ge3 zin2 cap6 jyun4 gin6.',
   },
   creatorsTocLabel: { en: 'On this page', zh: '本頁內容', jp: 'bun2 jip6 noi6 jung4' },
