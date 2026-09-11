@@ -51,7 +51,7 @@ Henry activates **Security Reviewer**, **Vulnerability Scanner**, and the API-he
 Public guide for Cantonese educators / creators:
 
 - Route: `#/creators` · page: [`apps/web/src/landing/CreatorsPage.tsx`](apps/web/src/landing/CreatorsPage.tsx)
-- Covers: **Noto Sans HK** (漢字) + **Noto Sans** (Jyutping / Chao tone letters) downloads, Copy Jyutping + Chao steps (Family+), CapCut / Instagram / Canva / NLE font import
+- Covers: **Noto Sans HK** (漢字) + **Noto Sans** (Jyutping + chao numbers + tone) downloads, Copy Jyutping + chao numbers + tone steps (Family+), CapCut / Instagram / Canva / NLE font import
 - Nav + footer link: **Creators** — share this URL in creator outreach
 
 ### Instagram / static social posts (approved look)

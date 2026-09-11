@@ -26,14 +26,14 @@ const DEMO_CHAOS = 'teng1˥ m4˨˩ teng1˥ dak1˥'
 type Step = { title: Bi; body: Bi }
 
 /**
- * Creator kit: Jyutping + Chao copy walkthrough, Noto font downloads,
+ * Creator kit: Jyutping + chao numbers + tone copy walkthrough, Noto font downloads,
  * and how to load custom fonts in CapCut / Instagram / other editors.
  */
 export function CreatorsPage() {
   useDocumentMeta({
-    title: 'Creator kit — Jyutping + Chao · JyutTranslate',
+    title: 'Creator kit — Jyutping + chao numbers + tone · JyutTranslate',
     description:
-      'How to copy Jyutping with Chao tone letters, download Noto Sans / Noto Sans HK, and use them in CapCut, Instagram, and other editors.',
+      'How to copy Jyutping + chao numbers + tone, download Noto Sans / Noto Sans HK, and use them in CapCut, Instagram, and other editors.',
     path: '/#/creators',
   })
 

@@ -394,13 +394,13 @@ export const ui = {
   copyText: { en: 'Copy text', zh: '複製文字', jp: 'fuk6 zai3 man4 zi6' },
   copied: { en: 'Copied', zh: '已複製', jp: 'ji5 fuk6 zai3' },
   copyJyutping: {
-    en: 'Copy Jyutping + Chao tones',
-    zh: '複製粵拼＋調號',
+    en: 'Copy Jyutping + chao numbers + tone',
+    zh: '複製粵拼＋調號數字＋聲調',
     jp: 'fuk6 zai3 jyut6 ping3 + diu6 hou6',
   },
   copyJyutpingFamily: {
-    en: 'Copy Jyutping + Chao (Family)',
-    zh: '複製粵拼＋調號（家庭版）',
+    en: 'Copy Jyutping + chao numbers + tone (Family)',
+    zh: '複製粵拼＋調號數字＋聲調（家庭版）',
     jp: 'fuk6 zai3 jyut6 ping3 + diu6 hou6 (gaa1 ting4 baan2)',
   },
   copiedJyutping: {
@@ -885,8 +885,8 @@ export const ui = {
   // —— Creator kit (#/creators) ——
   creatorsKicker: { en: 'For creators', zh: '專為創作者', jp: 'zyun1 wai6 cong3 zok3 ze2' },
   creatorsHeroTitle: {
-    en: 'Jyutping + Chao, ready to paste',
-    zh: '粵拼＋趙元任調號，一鍵複製',
+    en: 'Jyutping + chao numbers + tone, ready to paste',
+    zh: '粵拼＋調號數字＋聲調，一鍵複製',
     jp: 'jyut6 ping3 + ziu6 jyun4 jam4 diu6 hou6, jat1 gin6 fuk6 zai3',
   },
   creatorsHeroSub: {
@@ -911,7 +911,7 @@ export const ui = {
   },
   creatorsFontHkTitle: { en: 'Noto Sans HK', zh: 'Noto Sans HK', jp: 'Noto Sans HK' },
   creatorsFontHkHint: {
-    en: 'For Chinese characters only (HK glyph set). Pair with Noto Sans for Jyutping + Chao.',
+    en: 'For Chinese characters only (HK glyph set). Pair with Noto Sans for Jyutping + chao numbers + tone.',
     zh: '只用於漢字（香港字形）。粵拼＋調號請配 Noto Sans。',
     jp: 'zi2 jung6 jyu1 hon3 zi6 (hoeng1 gong2 zi6 jing4). jyut6 ping3 + diu6 hou6 cing2 pui3 Noto Sans.',
   },
@@ -942,8 +942,8 @@ export const ui = {
   },
 
   creatorsCopyTitle: {
-    en: 'How to use the Copy Jyutping + Chao button',
-    zh: '點樣用「複製粵拼＋調號」掣',
+    en: 'How to use the Copy Jyutping + chao numbers + tone button',
+    zh: '點樣用「複製粵拼＋調號數字＋聲調」掣',
     jp: 'dim2 joeng2 jung6 “fuk6 zai3 jyut6 ping3 + diu6 hou6” zai3',
   },
   creatorsCopyLead: {
@@ -964,8 +964,8 @@ export const ui = {
     jp: 'gam2 jyut6 jyu5 git3 gwo2 daa2 hoi1 coeng4 cing4 — mui5 geoi3 haa6 min6 jau5 jyut6 ping3, caak3 gaai2 jap6 min6 jau5 ziu6 jyun4 jam4 diu6 hou6.',
   },
   creatorsCopyStep3Title: {
-    en: 'Tap Copy Jyutping + Chao tones',
-    zh: '撳「複製粵拼＋調號」',
+    en: 'Tap Copy Jyutping + chao numbers + tone',
+    zh: '撳「複製粵拼＋調號數字＋聲調」',
     jp: 'gam2 “fuk6 zai3 jyut6 ping3 + diu6 hou6”',
   },
   creatorsCopyStep3Body: {
@@ -1028,7 +1028,7 @@ export const ui = {
     jp: 'wui6 jap6 Noto Sans ge3 .ttf / .otf (hon3 zi6 ling6 gaa1 Noto Sans HK).',
   },
   creatorsCapcut4: {
-    en: 'Paste your Jyutping + Chao string; set that text layer to Noto Sans.',
+    en: 'Paste your Jyutping + chao numbers + tone string; set that text layer to Noto Sans.',
     zh: '貼上粵拼＋調號；將呢層文字設為 Noto Sans。',
     jp: 'tip3 soeng5 jyut6 ping3 + diu6 hou6; zoeng1 ni1 cang4 man4 zi6 cit3 wai4 Noto Sans.',
   },
@@ -1054,7 +1054,7 @@ export const ui = {
     jp: 'hai2 zi6 tai2 syun2 zaak6 hei3 gaan2 “san1 zang1 / zi6 ding6 / wui6 jap6”, zoi3 gaan2 Noto Sans ge3 .ttf / .otf.',
   },
   creatorsIg3: {
-    en: 'Paste your Jyutping + Chao string onto the text layer set to Noto Sans. For 漢字, add a second layer with Noto Sans HK if needed.',
+    en: 'Paste your Jyutping + chao numbers + tone string onto the text layer set to Noto Sans. For 漢字, add a second layer with Noto Sans HK if needed.',
     zh: '將粵拼＋調號貼上已設 Noto Sans 嘅文字層。漢字如需，另加一層用 Noto Sans HK。',
     jp: 'zoeng1 jyut6 ping3 + diu6 hou6 tip3 soeng5 ji5 cit3 Noto Sans ge3 man4 zi6 cang4. hon3 zi6 jyu4 seoi1, ling6 gaa1 jat1 cang4 jung6 Noto Sans HK.',
   },
@@ -1070,7 +1070,7 @@ export const ui = {
     jp: 'min5 fai3 Canva: hai2 ji5 on1 cong3 Noto ge3 din6 nou5 cit3 gai3, waak6 jung6 kei4 taa1 gung1 geoi6 zoeng1 man4 zi6 wui6 ceot1 sing4 SVG / PNG.',
   },
   creatorsCanva3: {
-    en: 'Paste Jyutping + Chao, set font to Noto Sans, download MP4 / PNG for Instagram.',
+    en: 'Paste Jyutping + chao numbers + tone, set font to Noto Sans, download MP4 / PNG for Instagram.',
     zh: '貼上粵拼＋調號，字體選 Noto Sans，下載 MP4／PNG 再發 Instagram。',
     jp: 'tip3 soeng5 jyut6 ping3 + diu6 hou6, zi6 tai2 syun2 Noto Sans, haa6 zoi3 MP4 / PNG zoi3 faat3 Instagram.',
   },
@@ -1107,7 +1107,7 @@ export const ui = {
     jp: 'fuk6 zai3 diu6 hou6, zou6 ceot1 gang3 cing1 co2 ge3 jyut6 jyu5 noi6 jung4.',
   },
   creatorsCtaBody: {
-    en: 'Open JyutTranslate, translate a line, and try Copy Jyutping + Chao on Family.',
+    en: 'Open JyutTranslate, translate a line, and try Copy Jyutping + chao numbers + tone on Family.',
     zh: '打開 JyutTranslate，翻譯一句，用家庭版試「複製粵拼＋調號」。',
     jp: 'daa2 hoi1 JyutTranslate, faan1 jik6 jat1 geoi3, jung6 gaa1 ting4 baan2 si3 “fuk6 zai3 jyut6 ping3 + diu6 hou6”.',
   },
