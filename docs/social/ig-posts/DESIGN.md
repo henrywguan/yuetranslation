@@ -40,7 +40,7 @@ Say that phrase (or “night instructional”) to recall this look.
 3. **Hero** — one Syne H1 + jade accent line + one short support sentence. No card clutter in the hero.
 4. **Content blocks** — rounded Harbor panels (`feat` / `card` / tone tiles) with jade section labels (`EXAMPLE 實例`, `SIX TONES 六聲`, etc.).
 5. **Typography hierarchy** — big readable Syne; jade for product terms (Jyutping, Chao, URL); Ink for Han; mute for meta.
-6. **Chao tones** — jade SVG bars, Unicode orientation (**staff right, ticks left**). Prefer drawn glyphs over Unicode-only Chao in finals.
+6. **Jyutping + Chao tone letters** — jade SVG bars, Unicode orientation (**staff right, ticks left**). Prefer drawn glyphs over Unicode-only Chao in finals.
 7. **Footer** — quiet rule + **JyutTranslate.com** (or short product line + URL). Avoid busy CTAs unless Henry asks.
 8. **Sizes** — ship **both** 1080×1080 and 1080×1350 when making a static post set, unless Henry asks for one format.
 

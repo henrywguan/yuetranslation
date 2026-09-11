@@ -575,7 +575,7 @@ button.jyutping {
   color: color-mix(in srgb, var(--jade-deep) 82%, var(--ink));
 }
 
-/* Large Details title reveal — roomy Jyutping + Chao, Chinese still anchors */
+/* Large Details title reveal — roomy Jyutping + Chao tone letters, Chinese still anchors */
 .jp-pop--lg {
   padding: 12px 14px 14px;
   max-width: min(94vw, 28rem);
@@ -815,7 +815,7 @@ button.jyutping {
   cursor: pointer;
 }
 
-/* Jyutping + Chao: document-style icon — slightly softer rim vs Han dual-page copy */
+/* Jyutping + Chao tone letters: document-style icon — slightly softer rim vs Han dual-page copy */
 .copy-btn--jyutping {
   border-style: dashed;
   border-color: color-mix(in srgb, var(--jade) 28%, var(--glass-border));

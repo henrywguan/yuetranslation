@@ -1,0 +1,326 @@
+/* Creator kit — fonts + Jyutping/Chao copy + editor guides */
+
+.creators-page {
+  --creators-max: 820px;
+}
+
+.creators-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px clamp(20px, 5vw, 40px) 12px;
+  overflow: clip;
+}
+
+.creators-hero-wash {
+  position: absolute;
+  inset: -10% -20% auto;
+  height: 78%;
+  pointer-events: none;
+  background:
+    radial-gradient(50% 60% at 50% 40%, color-mix(in srgb, var(--jade) 16%, transparent), transparent 70%),
+    radial-gradient(40% 50% at 82% 75%, color-mix(in srgb, var(--harbor-blue) 22%, transparent), transparent 65%);
+  filter: blur(8px);
+}
+
+.creators-hero-inner {
+  position: relative;
+  z-index: 1;
+  width: min(var(--creators-max), 100%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.creators-hero-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 750;
+  font-size: clamp(2rem, 5.5vw, 3.2rem);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  max-width: 16ch;
+}
+
+.creators-hero-title .bi {
+  align-items: center;
+  text-align: center;
+}
+
+.creators-hero-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  max-width: 42rem;
+}
+
+.creators-hero-sub .bi {
+  align-items: center;
+  text-align: center;
+}
+
+.creators-toc {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 16px;
+  margin-top: 8px;
+}
+
+.creators-toc a {
+  color: var(--jade);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--jade) 35%, transparent);
+  padding-bottom: 2px;
+}
+
+.creators-toc a:hover {
+  border-bottom-color: var(--jade);
+}
+
+.creators-section {
+  position: relative;
+  width: min(var(--creators-max), calc(100% - 2.5rem));
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 48px) 0 clamp(12px, 2vw, 20px);
+}
+
+.creators-h2 {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 3.2vw, 1.9rem);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.creators-h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.creators-lead {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.creators-font-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 720px) {
+  .creators-font-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.creators-font-card,
+.creators-callout,
+.creators-demo,
+.creators-editor-card {
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--panel, var(--surface)) 88%, transparent);
+  backdrop-filter: blur(10px);
+  padding: 18px 18px 16px;
+}
+
+.creators-font-hint,
+.creators-callout p,
+.creators-license,
+.creators-demo-hint,
+.creators-editor-note,
+.creators-step-body p,
+.creators-editor-card > p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.creators-font-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.creators-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-weight: 650;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink);
+}
+
+.creators-btn--primary {
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+  border-color: color-mix(in srgb, var(--jade) 45%, transparent);
+  color: var(--ink);
+}
+
+.creators-btn--primary:hover {
+  background: color-mix(in srgb, var(--jade) 34%, transparent);
+}
+
+.creators-btn--ghost {
+  border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.creators-btn--ghost:hover {
+  border-color: color-mix(in srgb, var(--jade) 50%, transparent);
+}
+
+.creators-callout {
+  margin-top: 4px;
+}
+
+.creators-preview-label {
+  margin: 16px 0 8px !important;
+  font-weight: 650;
+  color: var(--ink) !important;
+}
+
+.creators-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--harbor, #07131f) 92%, transparent);
+  color: var(--ink-on-dark, #e8f4ff);
+}
+
+.creators-preview-han {
+  font-family: 'Noto Sans HK', 'Noto Sans', system-ui, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.creators-preview-chao {
+  font-family: 'Noto Sans', system-ui, sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--jade) 85%, white);
+}
+
+.creators-license {
+  margin-top: 12px !important;
+  font-size: 0.85rem !important;
+}
+
+.creators-steps {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.creators-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--panel, var(--surface)) 80%, transparent);
+}
+
+.creators-step-num {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 750;
+  font-family: var(--font-display);
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+  color: var(--ink);
+}
+
+.creators-demo-label {
+  margin: 0 0 10px;
+  font-weight: 650;
+}
+
+.creators-demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.creators-demo-han {
+  font-family: 'Noto Sans HK', 'Noto Sans', system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.creators-demo .creators-btn {
+  margin-top: 12px;
+}
+
+.creators-editor-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.creators-mini-steps {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.creators-mini-steps li {
+  margin: 0.35rem 0;
+}
+
+.creators-editor-note {
+  margin-bottom: 8px !important;
+  color: color-mix(in srgb, var(--jade) 70%, var(--ink)) !important;
+  font-weight: 550;
+}
+
+.creators-cta {
+  margin-top: clamp(24px, 4vw, 40px);
+}
+
+@media (max-width: 560px) {
+  .creators-section {
+    width: min(100%, calc(100% - 2rem));
+  }
+
+  .creators-step {
+    gap: 10px;
+    padding: 12px;
+  }
+}

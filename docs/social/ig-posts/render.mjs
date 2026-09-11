@@ -219,7 +219,7 @@ const caption = `Most apps give you Chinese.
 JyutTranslate teaches you how to say Cantonese.
 
 ✅ Jyutping (LSHK) on every line — tone numbers 1–6
-✅ Chao tone letters when you dig in — ˥ ˧˥ ˧ ˨˩ ˩˧ ˨
+✅ Jyutping + Chao tone letters when you dig in — ˥ ˧˥ ˧ ˨˩ ˩˧ ˨
 ✅ Real Hong Kong 口語, not textbook 書面語
 
 Built for ABCs, families, and anyone who wants to hear — and speak — Cantonese correctly.

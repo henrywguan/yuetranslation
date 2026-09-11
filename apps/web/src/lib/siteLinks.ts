@@ -112,6 +112,11 @@ export function openTones() {
   navigate('tones')
 }
 
+/** Open the creator kit (`#/creators`) — Jyutping+Chao copy + Noto fonts. */
+export function openCreators() {
+  navigate('creators')
+}
+
 /** Open Privacy Policy (`#/privacy`). */
 export function openPrivacy() {
   navigate('privacy')
