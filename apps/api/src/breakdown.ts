@@ -568,6 +568,75 @@ function parseTlBreakdownPayload(raw: string, fallback: BreakdownChar[]): Breakd
   }
 }
 
+const PHILIPPINE_REGIONAL_LABEL: Record<'ceb' | 'ilo' | 'bcl', string> = {
+  ceb: 'Cebuano / Bisaya',
+  ilo: 'Ilocano / Ilokano',
+  bcl: 'Central Bikol / Bikol Naga',
+}
+
+/** Soft path for text-only Philippine regional langs — English glosses, Latin tokens. */
+async function philippineRegionalBreakdown(text: string, lang: 'ceb' | 'ilo' | 'bcl') {
+  const fallback = localTlBreakdown(text)
+  const label = PHILIPPINE_REGIONAL_LABEL[lang]
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    `You explain ${label} word-by-word for English-speaking learners.`,
+    'Given a phrase in that language, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented may be null (no stress diacritics required).',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words, still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char.toLowerCase() !== row.char.toLowerCase()) {
+        const byText = fallback.find((f) => f.char.toLowerCase() === row.char.toLowerCase())
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: row.jyutping || fb.jyutping,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang }
+  }
+}
+
 
 async function esBreakdown(text: string) {
   const fallback = localEsBreakdown(text)
@@ -983,8 +1052,10 @@ export async function breakdown(input: unknown) {
   if (lang === 'tl') return tlBreakdown(text)
   if (lang === 'es') return esBreakdown(text)
   if (lang === 'vi') return viBreakdown(text)
-  // Soft: Cebuano / Ilocano text-only — reuse English token breakdown until dedicated packs exist.
-  if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') return englishBreakdown(text)
+  // Soft: Cebuano / Ilocano / Central Bikol — English glosses (not Cantonese englishBreakdown).
+  if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
+    return philippineRegionalBreakdown(text, lang)
+  }
   if (lang === 'cmn') return cmnBreakdown(text)
   if (lang === 'wuu') return wuuBreakdown(text)
   if (lang === 'sichuan') return sichuanBreakdown(text)

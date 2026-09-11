@@ -79,74 +79,47 @@ export function clampBox(box: CameraBox): CameraBox {
 const HAN_RE = /[\u3400-\u9fff]/
 
 function isChineseCam(lang: CameraLang): boolean {
-  return lang === 'yue' || lang === 'cmn' || lang === 'wuu'
+  return lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan'
 }
 
-function isTagalogCam(lang: CameraLang): boolean {
-  return lang === 'tl'
+/** Latin non-Chinese Cam targets: translation is the Details subject; English is the hint. */
+const LATIN_DETAIL_CAM_LANGS = ['tl', 'es', 'vi', 'ceb', 'ilo', 'bcl'] as const
+type LatinDetailCamLang = (typeof LATIN_DETAIL_CAM_LANGS)[number]
+
+function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
+  return (LATIN_DETAIL_CAM_LANGS as readonly string[]).includes(lang)
 }
 
-function isMexicanCam(lang: CameraLang): boolean {
-  return lang === 'es'
+function latinDetailArgs(
+  box: EditableBox,
+  target: LatinDetailCamLang,
+): { phrase: string; translation?: string; lang: LatinDetailCamLang } {
+  const targetByDir = box.to === target ? box.translated : box.from === target ? box.text : ''
+  const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
+  const targetText =
+    targetByDir.trim() ||
+    (!HAN_RE.test(box.translated) ? box.translated : '') ||
+    (!HAN_RE.test(box.text) ? box.text : '')
+  const en =
+    enByDir.trim() ||
+    (box.to !== target && !HAN_RE.test(box.translated) ? box.translated : '') ||
+    (box.from !== target && !HAN_RE.test(box.text) ? box.text : '')
+  const phrase = (targetText || box.text || box.translated).trim()
+  const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
+  return { phrase, translation, lang: target }
 }
 
-function isVietnameseCam(lang: CameraLang): boolean {
-  return lang === 'vi'
-}
-
-/** Pick Chinese/Tagalog + English sides for the shared character breakdown panel. */
+/** Pick target-language phrase + English hint for the shared character breakdown panel. */
 export function boxDetailArgs(box: EditableBox): {
   phrase: string
   translation?: string
   lang?: CameraLang
 } {
-  if (isTagalogCam(box.to) || isTagalogCam(box.from)) {
-    const tlByDir = box.to === 'tl' ? box.translated : box.from === 'tl' ? box.text : ''
-    const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
-    const tl =
-      tlByDir.trim() ||
-      (!HAN_RE.test(box.translated) ? box.translated : '') ||
-      (!HAN_RE.test(box.text) ? box.text : '')
-    const en =
-      enByDir.trim() ||
-      (box.to !== 'tl' && !HAN_RE.test(box.translated) ? box.translated : '') ||
-      (box.from !== 'tl' && !HAN_RE.test(box.text) ? box.text : '')
-    const phrase = (tl || box.text || box.translated).trim()
-    const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
-    return { phrase, translation, lang: 'tl' }
-  }
-
-  if (isMexicanCam(box.to) || isMexicanCam(box.from)) {
-    const esByDir = box.to === 'es' ? box.translated : box.from === 'es' ? box.text : ''
-    const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
-    const es =
-      esByDir.trim() ||
-      (!HAN_RE.test(box.translated) ? box.translated : '') ||
-      (!HAN_RE.test(box.text) ? box.text : '')
-    const en =
-      enByDir.trim() ||
-      (box.to !== 'es' && !HAN_RE.test(box.translated) ? box.translated : '') ||
-      (box.from !== 'es' && !HAN_RE.test(box.text) ? box.text : '')
-    const phrase = (es || box.text || box.translated).trim()
-    const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
-    return { phrase, translation, lang: 'es' }
-  }
-
-  if (isVietnameseCam(box.to) || isVietnameseCam(box.from)) {
-    const viByDir = box.to === 'vi' ? box.translated : box.from === 'vi' ? box.text : ''
-    const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
-    const vi =
-      viByDir.trim() ||
-      (!HAN_RE.test(box.translated) ? box.translated : '') ||
-      (!HAN_RE.test(box.text) ? box.text : '')
-    const en =
-      enByDir.trim() ||
-      (box.to !== 'vi' && !HAN_RE.test(box.translated) ? box.translated : '') ||
-      (box.from !== 'vi' && !HAN_RE.test(box.text) ? box.text : '')
-    const phrase = (vi || box.text || box.translated).trim()
-    const translation = en.trim() && en.trim() !== phrase ? en.trim() : undefined
-    return { phrase, translation, lang: 'vi' }
-  }
+  const latinTarget =
+    (isLatinDetailCam(box.to) && box.to) ||
+    (isLatinDetailCam(box.from) && box.from) ||
+    null
+  if (latinTarget) return latinDetailArgs(box, latinTarget)
 
   const zhByDir = isChineseCam(box.to)
     ? box.translated
@@ -177,10 +150,14 @@ export function boxDetailArgs(box: EditableBox): {
 export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'cmn') return 'cmn'
   if (box.to === 'wuu') return 'wuu'
+  if (box.to === 'sichuan') return 'sichuan'
   if (box.to === 'yue') return 'yue'
   if (box.to === 'tl') return 'tl'
   if (box.to === 'es') return 'es'
   if (box.to === 'vi') return 'vi'
+  if (box.to === 'ceb') return 'ceb'
+  if (box.to === 'ilo') return 'ilo'
+  if (box.to === 'bcl') return 'bcl'
   if (box.to === 'en') return 'en'
   return HAN_RE.test(box.translated || box.text) ? 'yue' : 'en'
 }
