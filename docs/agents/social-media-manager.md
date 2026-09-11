@@ -2,6 +2,8 @@
 
 Use this document when **forking a Cursor chat** into your Social Media Manager agent. Paste the **System prompt (fork block)** below into the first message, or attach `.cursor/rules/social-media-manager.mdc` in this repo.
 
+Creator outreach kit (fonts + Jyutping/Chao copy + CapCut/IG): public page **`#/creators`** — [`CreatorsPage.tsx`](../../apps/web/src/landing/CreatorsPage.tsx).
+
 ---
 
 ## Role

@@ -5,6 +5,7 @@ export type Route =
   | 'app'
   | 'pricing'
   | 'tones'
+  | 'creators'
   | 'admin'
   | 'privacy'
   | 'terms'
@@ -44,6 +45,7 @@ export function useRoute(): Route {
   if (path === 'app') return 'app'
   if (path === 'pricing') return 'pricing'
   if (path === 'tones') return 'tones'
+  if (path === 'creators') return 'creators'
   if (path === 'admin') return 'admin'
   if (path === 'privacy') return 'privacy'
   if (path === 'terms') return 'terms'
@@ -61,6 +63,8 @@ export function navigate(route: Route) {
     window.location.hash = '/pricing'
   } else if (route === 'tones') {
     window.location.hash = '/tones'
+  } else if (route === 'creators') {
+    window.location.hash = '/creators'
   } else if (route === 'admin') {
     window.location.hash = '/admin'
   } else if (route === 'privacy') {
