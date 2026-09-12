@@ -885,12 +885,12 @@ export const ui = {
   // —— Creator kit (#/creators) ——
   creatorsKicker: { en: 'For creators', zh: '專為創作者', jp: 'zyun1 wai6 cong3 zok3 ze2' },
   creatorsHeroTitle: {
-    en: 'Jyutping + Chao tone letters, ready to paste',
+    en: 'Jyutping + Chao tone letters, paste into subtitles',
     zh: '粵拼＋趙元任調號，一鍵複製',
     jp: 'jyut6 ping3 + ziu6 jyun4 jam4 diu6 hou6, jat1 gin6 fuk6 zai3',
   },
   creatorsHeroSub: {
-    en: 'Download the fonts that show Cantonese and Jyutping + Chao tone letters correctly — then copy pronunciation from JyutTranslate into CapCut, Instagram, or your editor.',
+    en: 'Download both custom fonts that display Cantonese and Jyutping + Chao tone letters correctly — then copy from JyutTranslate into CapCut, Instagram, or your favorite video editor.',
     zh: '下載正確顯示粵語同粵拼＋趙元任調號嘅字體——再喺 JyutTranslate 複製讀音，貼去 CapCut、Instagram 或你嘅剪輯軟件。',
     jp: 'haa6 zoi3 zing3 kok3 hin2 si6 jyut6 jyu5 tung4 ziu6 jyun4 jam4 diu6 hou6 ge3 zi6 tai2 — zoi3 hai2 JyutTranslate fuk6 zai3 duk6 jam1, tip3 heoi3 CapCut, Instagram tung4 nei5 ge3 zin2 cap6 jyun4 gin6.',
   },
