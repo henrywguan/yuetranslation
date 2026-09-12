@@ -5,6 +5,7 @@ import { AdminResetUsageModal } from '../components/AdminResetUsageModal'
 import { AdminBugReportsDashboard } from '../components/AdminBugReportsDashboard'
 import { AdminEmailHub } from '../components/AdminEmailHub'
 import { AdminPushHub } from '../components/AdminPushHub'
+import { AdminPracticePartnerLab } from '../components/AdminPracticePartnerLab'
 import {
   adminPatchBugReportStatus,
   adminResetUsage,
@@ -34,7 +35,7 @@ import { useYueStore } from '../lib/store'
 import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
 
-type Tab = 'users' | 'audit' | 'reports' | 'email' | 'push'
+type Tab = 'users' | 'audit' | 'reports' | 'email' | 'push' | 'partner'
 
 const ADMIN_NAV: { id: Tab; label: string }[] = [
   { id: 'users', label: 'Users' },
@@ -42,6 +43,7 @@ const ADMIN_NAV: { id: Tab; label: string }[] = [
   { id: 'reports', label: 'Reports' },
   { id: 'email', label: 'Email' },
   { id: 'push', label: 'Push' },
+  { id: 'partner', label: 'Practice Partner' },
 ]
 
 function AdminNavIcon({ tab }: { tab: Tab }) {
@@ -88,10 +90,19 @@ function AdminNavIcon({ tab }: { tab: Tab }) {
       </svg>
     )
   }
+  if (tab === 'push') {
+    return (
+      <svg {...common}>
+        <path d="M12 3v4M12 17v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M3 12h4M17 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" />
+        <circle cx="12" cy="12" r="3.2" />
+      </svg>
+    )
+  }
   return (
     <svg {...common}>
-      <path d="M12 3v4M12 17v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M3 12h4M17 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" />
-      <circle cx="12" cy="12" r="3.2" />
+      <circle cx="12" cy="12" r="7.2" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2" />
     </svg>
   )
 }
@@ -707,25 +718,27 @@ export function AdminPage() {
           </h1>
         </header>
 
-      <section className="admin-ops-card" aria-label="Site status">
-        <div className="admin-ops-card-head">
-          <h2>Site status</h2>
-          <label className="admin-check admin-ops-toggle">
-            <input
-              type="checkbox"
-              checked={incidentEnabled}
-              disabled={incidentBusy || busy}
-              onChange={() => void onToggleIncidentBanner()}
-            />
-            Show incident banner
-          </label>
-        </div>
-        <p className="admin-muted">
-          When on, a scrolling banner appears at the top of the whole site: “The app is currently
-          experiencing issues and is being worked on.”
-        </p>
-        {incidentMsg ? <p className="admin-muted">{incidentMsg}</p> : null}
-      </section>
+      {tab !== 'partner' ? (
+        <section className="admin-ops-card" aria-label="Site status">
+          <div className="admin-ops-card-head">
+            <h2>Site status</h2>
+            <label className="admin-check admin-ops-toggle">
+              <input
+                type="checkbox"
+                checked={incidentEnabled}
+                disabled={incidentBusy || busy}
+                onChange={() => void onToggleIncidentBanner()}
+              />
+              Show incident banner
+            </label>
+          </div>
+          <p className="admin-muted">
+            When on, a scrolling banner appears at the top of the whole site: “The app is currently
+            experiencing issues and is being worked on.”
+          </p>
+          {incidentMsg ? <p className="admin-muted">{incidentMsg}</p> : null}
+        </section>
+      ) : null}
 
       {error ? <p className="admin-error">{error}</p> : null}
 
@@ -1126,6 +1139,8 @@ export function AdminPage() {
         <AdminEmailHub />
       ) : tab === 'push' ? (
         <AdminPushHub />
+      ) : tab === 'partner' ? (
+        <AdminPracticePartnerLab />
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">

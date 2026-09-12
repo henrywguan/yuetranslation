@@ -6,6 +6,9 @@ import {
 } from './orbital-sphere-utils/orbitalSphereRenderer'
 import './orbital-sphere.css'
 
+export { ORBITAL_SPHERE_DEFAULTS }
+export type { OrbitalSphereOptions }
+
 export type OrbitalSphereBackgroundProps = Partial<OrbitalSphereOptions> & {
   className?: string
 }
@@ -76,7 +79,7 @@ export function OrbitalSphereBackground({
     >
       <canvas
         ref={canvasRef}
-        style={{ filter: `hue-rotate(${optionsRef.current.hue}deg)` }}
+        style={{ filter: `hue-rotate(${props.hue ?? ORBITAL_SPHERE_DEFAULTS.hue}deg)` }}
       />
     </div>
   )
