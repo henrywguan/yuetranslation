@@ -886,13 +886,31 @@ button.jyutping {
   width: min(16.5rem, calc(100vw - 1.5rem));
   padding: 0.7rem 0.75rem 0.65rem;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
-  background: color-mix(in srgb, var(--surface) 92%, var(--harbor));
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  /* Solid harbor fill — --surface is translucent glass and bleeds Details through. */
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--harbor-mid) 92%, var(--jade) 8%),
+    var(--harbor-deep)
+  );
   box-shadow:
-    0 14px 36px color-mix(in srgb, #000 28%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--glass-shine) 50%, transparent);
+    0 16px 40px color-mix(in srgb, #000 48%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--harbor) 70%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--glass-shine) 40%, transparent);
   color: var(--ink);
   text-align: left;
+}
+
+[data-theme='light'] .jyutping-font-tip-pop {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--harbor-mid) 94%, #fff 6%),
+    var(--harbor-deep)
+  );
+  box-shadow:
+    0 16px 40px color-mix(in srgb, #000 18%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--harbor) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .jyutping-font-tip-pop--left {
