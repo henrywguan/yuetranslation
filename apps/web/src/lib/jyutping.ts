@@ -9,6 +9,28 @@ export type CharBreakdown = {
 export { hasHan }
 
 /**
+ * UI tone rendering — flip to reverse in one place:
+ * - `true`  → ruby DOM is `teng1` + SVG contour (no Chao Unicode in HTML)
+ * - `false` → classic `teng1˥` Unicode Chao in the DOM (previous look)
+ *
+ * Family “Copy Jyutping + Chao” always uses Unicode Chao via `rubyJpSyllable()`.
+ */
+export const JYUTPING_UI_SVG_TONES = true
+
+/**
+ * Select/copy gate for Free/guest — flip to `false` to disable.
+ * Selecting Jyutping ruby and copying replaces the clipboard with a Family+ upgrade line
+ * (Family/Business are exempt; use the Copy Jyutping button instead).
+ */
+export const JYUTPING_SELECT_COPY_TRAP = true
+
+/** Family / Business (and open-mode with no entitlement snapshot). */
+export function planAllowsJyutpingCopy(plan: string | undefined, hasEntitlement: boolean): boolean {
+  if (!hasEntitlement) return true
+  return plan === 'family' || plan === 'business'
+}
+
+/**
  * LSHK Jyutping §4 tone contour marks (Chao tone letters) — product label: Jyutping + Chao tone letters.
  * @see https://jyutping.org/en/jyutping/
  */
@@ -21,14 +43,24 @@ const TONE_LETTERS: Record<string, string> = {
   '6': '˨',
 }
 
-/** One syllable for ruby cells: `zou2` → `zou2˧˥` (tone digit + Chao letter). */
+export type JyutTone = '1' | '2' | '3' | '4' | '5' | '6'
+
+/** Split `teng1` → roman+digit for UI; null if not a plain Jyutping syllable. */
+export function parseJyutpingTone(jp: string): { roman: string; tone: JyutTone } | null {
+  const t = jp.trim()
+  if (!t) return null
+  const m = t.match(/^([A-Za-z]+)([1-6])$/)
+  if (!m) return null
+  return { roman: `${m[1]}${m[2]}`, tone: m[2] as JyutTone }
+}
+
+/** Clipboard / Unicode form: `zou2` → `zou2˧˥` (tone digit + Chao letter). */
 export function rubyJpSyllable(jp: string) {
   const t = jp.trim()
   if (!t) return '\u00a0'
-  const m = t.match(/^([A-Za-z]+)([1-6])$/)
-  if (!m) return t
-  const [, syl, n] = m
-  return `${syl}${n}${TONE_LETTERS[n]}`
+  const parsed = parseJyutpingTone(t)
+  if (!parsed) return t
+  return `${parsed.roman}${TONE_LETTERS[parsed.tone]}`
 }
 
 type Api = {

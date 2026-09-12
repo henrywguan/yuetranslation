@@ -376,6 +376,40 @@ button.jyutping {
   white-space: nowrap;
 }
 
+/* Digits + SVG contour (JYUTPING_UI_SVG_TONES) — Chao Unicode stays on clipboard only */
+.jyut-syl-ui {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06em;
+  white-space: nowrap;
+}
+
+.jyut-syl-roman {
+  flex: none;
+  /* Soft gate — Free users who force-select still hit the copy upgrade message */
+  user-select: none;
+}
+
+.jyut-tone-mark {
+  flex: none;
+  width: 0.55em;
+  height: 0.85em;
+  display: block;
+  overflow: visible;
+  user-select: none;
+  pointer-events: none;
+}
+
+.jyut-ruby--lg .jyut-tone-mark {
+  width: 0.58em;
+  height: 0.9em;
+}
+
+.jp-pop-syl .jyut-tone-mark {
+  width: 0.52em;
+  height: 0.8em;
+}
+
 .jyut-ruby-han {
   font-family: var(--font-body);
   line-height: 1.15;

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthPanel } from './components/AuthPanel'
 import { BugReportModal } from './components/BugReportModal'
 import { IncidentBanner } from './components/IncidentBanner'
+import { JyutpingSelectCopyTrap } from './components/JyutpingSelectCopyTrap'
 import {
   bootstrapAuthSession,
   consumeAuthScreenDeepLink,
@@ -107,6 +108,7 @@ export default function App() {
   return (
     <>
       <IncidentBanner />
+      <JyutpingSelectCopyTrap />
       <Suspense fallback={null}>{page}</Suspense>
       <AuthPanel onAuthChange={() => void loadBootstrap()} />
       <BugReportModal />

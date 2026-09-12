@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { openUpgrade } from '../lib/billing'
-import { hasHan } from '../lib/jyutping'
+import { hasHan, planAllowsJyutpingCopy } from '../lib/jyutping'
 import { copyableJyutpingChao } from '../lib/copyText'
 import { useYueStore } from '../lib/store'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -21,9 +21,8 @@ async function writeClipboard(payload: string) {
   }
 }
 
-function canCopyJyutping(plan: string | undefined): boolean {
-  // Family+ — Business includes everything in Family (same as auto-speak).
-  return plan === 'family' || plan === 'business'
+function canCopyJyutping(plan: string | undefined, hasEntitlement: boolean): boolean {
+  return planAllowsJyutpingCopy(plan, hasEntitlement)
 }
 
 /**
@@ -40,7 +39,7 @@ export function CopyJyutpingButton({
 }) {
   const trimmed = text.trim()
   const entitlement = useYueStore((s) => s.entitlement)
-  const unlocked = !entitlement || canCopyJyutping(entitlement.plan)
+  const unlocked = canCopyJyutping(entitlement?.plan, Boolean(entitlement))
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
 

@@ -423,6 +423,11 @@ export const ui = {
     zh: '打開創作者頁',
     jp: 'daa2 hoi1 cong3 zok3 ze2 jip6',
   },
+  jyutpingSelectCopyTrap: {
+    en: 'Jyutping + Chao tone letters is a Family+ plan feature. Please upgrade to copy.',
+    zh: '粵拼＋趙元任調號係家庭版＋功能。請升級後再複製。',
+    jp: 'jyut6 ping3 + diu6 hou6 hai6 gaa1 ting4 baan2 + gung1 nang4. cing2 sing1 kap1 hau6 zoi3 fuk6 zai3.',
+  },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
