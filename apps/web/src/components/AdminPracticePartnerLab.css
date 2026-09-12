@@ -147,11 +147,84 @@
   height: 100% !important;
 }
 
+.partner-lab-subtitles {
+  position: absolute;
+  left: 50%;
+  bottom: 3.6rem;
+  z-index: 3;
+  width: min(92%, 34rem);
+  transform: translateX(-50%);
+  padding: 0.7rem 1rem 0.85rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #041018 72%, transparent),
+      color-mix(in srgb, #02080c 88%, transparent)
+    );
+  backdrop-filter: blur(10px);
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 12px 36px color-mix(in srgb, #000 35%, transparent);
+}
+
+.partner-lab-subtitles--you {
+  border-color: color-mix(in srgb, var(--jade) 35%, var(--glass-border));
+}
+
+.partner-lab-subtitles--partner {
+  border-color: color-mix(in srgb, var(--jade) 55%, var(--glass-border));
+  box-shadow:
+    0 12px 36px color-mix(in srgb, #000 35%, transparent),
+    0 0 28px color-mix(in srgb, var(--jade) 18%, transparent);
+}
+
+.partner-lab-subtitles--system {
+  opacity: 0.92;
+}
+
+.partner-lab-subtitles.is-interim .partner-lab-subtitles-text {
+  opacity: 0.82;
+}
+
+.partner-lab-subtitles-role {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--jade) 75%, var(--muted));
+}
+
+.partner-lab-subtitles--partner .partner-lab-subtitles-role {
+  color: var(--jade);
+}
+
+.partner-lab-subtitles-text {
+  margin: 0;
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  font-weight: 550;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: var(--ink-bright);
+}
+
+.partner-lab-subtitles-secondary {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--jade) 55%, var(--muted));
+}
+
 .partner-lab-status {
   position: absolute;
   left: 1rem;
   right: 1rem;
-  bottom: 1rem;
+  bottom: 0.85rem;
   z-index: 2;
   display: flex;
   flex-wrap: wrap;
@@ -163,14 +236,79 @@
 
 .partner-lab-status-mood {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink-bright);
 }
 
 .partner-lab-status-hint {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.partner-lab-transcript {
+  padding: 0.95rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-strong) 55%, transparent);
+}
+
+.partner-lab-transcript h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.partner-lab-transcript ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.partner-lab-transcript li {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.partner-lab-transcript-role {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.partner-lab-transcript-role.is-you {
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+}
+
+.partner-lab-transcript-role.is-partner {
+  color: var(--jade);
+}
+
+.partner-lab-transcript-text {
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--ink-bright);
+}
+
+.partner-lab-transcript-secondary {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.partner-lab-transcript-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
   color: var(--muted);
 }
 
