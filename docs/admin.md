@@ -216,7 +216,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates (minimizable), compose, preview, contacts / custom / full audience send |
 | Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
-| Practice Partner | Internal lab only: reactive Harbor orb + simulated moods for a future voice partner. Not shown in the consumer app until publish-ready. |
+| Practice Partner | Internal lab only: reactive Harbor orb + live subtitles (simulated moods/captions). Not shown in the consumer app until publish-ready. |
 | CSV export | Current filters + month (includes camera + docs fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |

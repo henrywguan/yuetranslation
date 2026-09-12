@@ -8,11 +8,21 @@ import './AdminPracticePartnerLab.css'
 
 export type PartnerMood = 'idle' | 'listening' | 'thinking' | 'speaking'
 
+type SubtitleRole = 'you' | 'partner' | 'system'
+
+type SubtitleLine = {
+  role: SubtitleRole
+  text: string
+  /** Optional Jyutping / secondary line under the main caption. */
+  secondary?: string
+  interim?: boolean
+}
+
 const MOODS: { id: PartnerMood; label: string; hint: string }[] = [
   { id: 'idle', label: 'Idle', hint: 'Waiting — soft drift' },
   { id: 'listening', label: 'Listening', hint: 'User is speaking' },
   { id: 'thinking', label: 'Thinking', hint: 'Agent turn / tools' },
-  { id: 'speaking', label: 'Speaking', hint: 'TTS audio out' },
+  { id: 'speaking', label: 'Speaking', hint: 'TTS + captions' },
 ]
 
 const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
@@ -50,15 +60,46 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
   },
 }
 
+/** Simulated bilingual turn for the lab — replaced by live STT / agent text later. */
+const DEMO_SCRIPT: Record<PartnerMood, SubtitleLine> = {
+  idle: {
+    role: 'system',
+    text: 'Tap a mood, or auto-cycle to preview orb + captions.',
+  },
+  listening: {
+    role: 'you',
+    text: '早晨，今日天氣點呀？',
+    secondary: 'zou2 san4, gam1 jat6 tin1 hei3 dim2 aa3?',
+    interim: true,
+  },
+  thinking: {
+    role: 'system',
+    text: 'Partner is thinking…',
+  },
+  speaking: {
+    role: 'partner',
+    text: '早晨！今日幾好天，適合出街呀。',
+    secondary: 'zou2 san4! gam1 jat6 gei2 hou2 tin1, sik1 hap6 ceot1 gaai1 aa3.',
+  },
+}
+
+const ROLE_LABEL: Record<SubtitleRole, string> = {
+  you: 'You',
+  partner: 'Partner',
+  system: 'Lab',
+}
+
 /**
  * Admin-only Practice Partner visual lab.
- * Reactive Harbor orb + mood simulation — not wired to Voice Live yet,
- * and not exposed in the consumer app until publish-ready.
+ * Chosen direction: reactive Harbor orb + live subtitles.
+ * Not wired to Voice Live yet, and not exposed in the consumer app.
  */
 export function AdminPracticePartnerLab() {
   const [mood, setMood] = useState<PartnerMood>('idle')
   const [demo, setDemo] = useState(false)
   const [amp, setAmp] = useState(0)
+  const [caption, setCaption] = useState<SubtitleLine>(DEMO_SCRIPT.idle)
+  const [history, setHistory] = useState<SubtitleLine[]>([])
 
   useEffect(() => {
     if (!demo) return undefined
@@ -68,7 +109,7 @@ export function AdminPracticePartnerLab() {
     const id = window.setInterval(() => {
       i = (i + 1) % order.length
       setMood(order[i]!)
-    }, 2600)
+    }, 2800)
     return () => window.clearInterval(id)
   }, [demo])
 
@@ -81,7 +122,6 @@ export function AdminPracticePartnerLab() {
     const start = performance.now()
     const tick = (now: number) => {
       const t = (now - start) / 1000
-      // Fake mic / TTS envelope until real audio analysers are wired.
       const wave =
         mood === 'speaking'
           ? 0.35 + 0.55 * Math.abs(Math.sin(t * 6.2)) * (0.6 + 0.4 * Math.sin(t * 2.1))
@@ -91,6 +131,18 @@ export function AdminPracticePartnerLab() {
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
+  }, [mood])
+
+  useEffect(() => {
+    const next = DEMO_SCRIPT[mood]
+    setCaption(next)
+    if (mood === 'listening' || mood === 'speaking') {
+      setHistory((prev) => {
+        const last = prev[prev.length - 1]
+        if (last && last.role === next.role && last.text === next.text) return prev
+        return [...prev.slice(-5), { ...next, interim: false }]
+      })
+    }
   }, [mood])
 
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
@@ -114,8 +166,9 @@ export function AdminPracticePartnerLab() {
           <p className="partner-lab-kicker">Internal · not in app</p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Reactive Harbor orb for a future voice conversation agent. Moods are simulated here —
-            Voice Live / Foundry are not connected. Nothing in this lab shows in the consumer app.
+            Direction locked: reactive Harbor orb + live subtitles. Moods and captions are simulated
+            here — Voice Live / Foundry are not connected. Nothing in this lab shows in the consumer
+            app.
           </p>
         </div>
         <label className="partner-lab-demo">
@@ -131,6 +184,20 @@ export function AdminPracticePartnerLab() {
       <div className={`partner-lab-stage partner-lab-stage--${mood}`} data-mood={mood}>
         <div className="partner-lab-glow" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+
+        <div
+          className={`partner-lab-subtitles partner-lab-subtitles--${caption.role}${
+            caption.interim ? ' is-interim' : ''
+          }`}
+          aria-live="polite"
+        >
+          <span className="partner-lab-subtitles-role">{ROLE_LABEL[caption.role]}</span>
+          <p className="partner-lab-subtitles-text">{caption.text}</p>
+          {caption.secondary ? (
+            <p className="partner-lab-subtitles-secondary">{caption.secondary}</p>
+          ) : null}
+        </div>
+
         <p className="partner-lab-status" aria-live="polite">
           <span className="partner-lab-status-mood">{moodMeta.label}</span>
           <span className="partner-lab-status-hint">{moodMeta.hint}</span>
@@ -153,19 +220,42 @@ export function AdminPracticePartnerLab() {
         ))}
       </div>
 
+      <aside className="partner-lab-transcript" aria-label="Caption history">
+        <h3>Caption reel</h3>
+        {history.length ? (
+          <ul>
+            {history.map((line, i) => (
+              <li key={`${line.role}-${i}-${line.text.slice(0, 12)}`}>
+                <span className={`partner-lab-transcript-role is-${line.role}`}>
+                  {ROLE_LABEL[line.role]}
+                </span>
+                <span className="partner-lab-transcript-text">{line.text}</span>
+                {line.secondary ? (
+                  <span className="partner-lab-transcript-secondary">{line.secondary}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="partner-lab-transcript-empty">
+            Listening and speaking turns will stack here — like live captions under the orb.
+          </p>
+        )}
+      </aside>
+
       <aside className="partner-lab-notes">
         <h3>Next when we wire speech</h3>
         <ul>
           <li>
-            <code>speech_started</code> → Listening
+            Partial STT → Listening + interim You captions
           </li>
           <li>
-            <code>response</code> / tool wait → Thinking
+            Agent / tool wait → Thinking (system line)
           </li>
           <li>
-            TTS / analyser level → Speaking + real amplitude
+            TTS stream → Speaking + Partner captions (Jyutping secondary optional)
           </li>
-          <li>Session end / silence → Idle</li>
+          <li>Silence / end → Idle</li>
         </ul>
         <p>
           Keep this tab admin-only until the partner flow is entitlement-metered, mic-safe, and
