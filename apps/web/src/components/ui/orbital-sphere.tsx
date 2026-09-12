@@ -82,7 +82,7 @@ export function OrbitalSphereBackground({
     >
       <canvas
         ref={canvasRef}
-        style={{ filter: `hue-rotate(${optionsRef.current.hue}deg)` }}
+        style={{ filter: `hue-rotate(${props.hue ?? ORBITAL_SPHERE_DEFAULTS.hue}deg)` }}
       />
     </div>
   )
