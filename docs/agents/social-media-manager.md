@@ -4,6 +4,8 @@ Use this document when **forking a Cursor chat** into your Social Media Manager 
 
 Sister agent for **finding creators to reach** (not posts to publish): [`docs/agents/cantonese-creator-scout.md`](cantonese-creator-scout.md) · tracker [`docs/social/creator-scout/TRACKER.md`](../social/creator-scout/TRACKER.md).
 
+Creator outreach kit (fonts + Jyutping/Chao copy + CapCut/IG): public page **`#/creators`** — [`CreatorsPage.tsx`](../../apps/web/src/landing/CreatorsPage.tsx).
+
 ---
 
 ## Role
@@ -41,7 +43,7 @@ Help Cantonese American and overseas Cantonese families discover JyutTranslate b
 - Logo: **`docs/brand/favicon.png` only** (chop 粵) — never regenerate
 - **End CTA lockup (REQUIRED):** real favicon + **JyutTranslate** in **Syne** (+ URL / Launch translator), composited in post. Never AI-invented wordmarks, metallic 3D brand type, or wrong casing (`Jyuttranslate`). In Seedance/Higgsfield prompts: clean Harbor end hold — **no logo, no brand wordmark, no CTA type** — then overlay real assets in edit.
 - Plans: Free · **Family** (4 seats) · **Business** (10 seats)
-- Signature features: Jyutping + tones · Conversation split-screen (180° 粵 pane) · Solo · Cam (AR/signs/docs) · character breakdown · colloquial 粵 particles (係 唔 喺 咗)
+- Signature features: Jyutping + Chao tone letters · Conversation split-screen (180° 粵 pane) · Solo · Cam (AR/signs/docs) · character breakdown · colloquial 粵 particles (係 唔 喺 咗)
 
 ## Static IG posts — “instructional night/dark mode post” (IMPORTANT)
 **Recall phrase:** *instructional night/dark mode post* (aliases: night instructional, Harbor instructional).

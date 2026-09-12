@@ -21,7 +21,7 @@ Static brand posts rendered from HTML with **project fonts and logo**:
 ## Brand sources
 
 - Logo mark: **`docs/brand/favicon.png`** (chop 粵 — do not regenerate; do not invent a J+粵 raster)
-- Chao letters: jade SVG bars with Unicode orientation (staff on the **right**, ticks left — matches `˥` / cantonese.ca)
+- Chao tone letters: jade SVG bars with Unicode orientation (staff on the **right**, ticks left — matches `˥` / cantonese.ca)
 - Fonts: self-hosted Syne / Noto Sans / Noto Sans HK subsets in `fonts/` + `fonts-local.css`
 - Colors: Harbor / Jade / Ink from `apps/web/src/index.css`
 

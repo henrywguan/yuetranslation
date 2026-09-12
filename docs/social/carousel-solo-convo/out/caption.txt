@@ -1,6 +1,6 @@
 Solo + Conversation — how JyutTranslate works.
 
-Slide through: Solo for one-sided translate (Jyutping + Chao tones). Conversation for face-to-face — one phone, two people.
+Slide through: Solo for one-sided translate (Jyutping + Chao tone letters). Conversation for face-to-face — one phone, two people.
 
 Auto-speak so you hear it as you learn.
 

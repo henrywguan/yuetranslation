@@ -48,13 +48,21 @@ Henry activates **Security Reviewer**, **Vulnerability Scanner**, and the API-he
 
 ### Cantonese Creator Scout (audience / partner research)
 
-Find and rank Cantonese educators & creators for soft outreach around **Noto Sans HK** + **Jyutping + Chao tones copy**:
+Find and rank Cantonese educators & creators for soft outreach around **Noto Sans HK** + **Jyutping + Chao tone letters** copy:
 
 - Brief + fork prompt: [`docs/agents/cantonese-creator-scout.md`](docs/agents/cantonese-creator-scout.md)
 - Tracker: [`docs/social/creator-scout/TRACKER.md`](docs/social/creator-scout/TRACKER.md)
 - Cursor rule: [`.cursor/rules/cantonese-creator-scout.mdc`](.cursor/rules/cantonese-creator-scout.mdc)
 
 Researches and prepares outreach packs — does not auto-DM. Optional weekly Automation is documented in the brief (Henry activates in Automations UI).
+
+### Creator kit page (`#/creators`)
+
+Public guide for Cantonese educators / creators:
+
+- Route: `#/creators` · page: [`apps/web/src/landing/CreatorsPage.tsx`](apps/web/src/landing/CreatorsPage.tsx)
+- Covers: **Noto Sans HK** (漢字) + **Noto Sans** (Jyutping + Chao tone letters) downloads, Copy Jyutping + Chao tone letters steps (Family+), CapCut / Instagram / Canva / NLE font import
+- Nav + footer link: **Creators** — share this URL in creator outreach
 
 ### Instagram / static social posts (approved look)
 
