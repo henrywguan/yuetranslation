@@ -54,8 +54,10 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 - **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao tone letters, character sense, and the phrase gloss  
   **单字下钻**：有释义时可点按汉字 → 弹出可关闭面板，含调型、调值字母、字义与短语释义
 
-Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`, `JYUTPING_UI_SVG_TONES`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
+Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`, `JYUTPING_UI_SVG_TONES`, `JYUTPING_SELECT_COPY_TRAP`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
 
 **On-screen vs clipboard:** with `JYUTPING_UI_SVG_TONES = true` (default), ruby UI draws contours as SVG so inspect/select does not yield Chao Unicode; Family **Copy Jyutping + Chao** still copies `teng1˥ …`. Set the flag to `false` to restore Unicode Chao in the DOM.
 
-实现于 `apps/web/src/lib/jyutping.ts`（`rubyJpSyllable`、`ensureJyutpingSegs`、`JYUTPING_UI_SVG_TONES`）与 `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`。
+**Select/copy trap:** with `JYUTPING_SELECT_COPY_TRAP = true` (default), Free/guest users who select ruby and copy get a playful Family nudge on the clipboard instead of syllables (`data-jyutping-notice` also shows in inspect). Family/Business exempt. Set to `false` to disable.
+
+实现于 `apps/web/src/lib/jyutping.ts`（`rubyJpSyllable`、`ensureJyutpingSegs`、`JYUTPING_UI_SVG_TONES`、`JYUTPING_SELECT_COPY_TRAP`）与 `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`。

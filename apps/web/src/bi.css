@@ -386,6 +386,8 @@ button.jyutping {
 
 .jyut-syl-roman {
   flex: none;
+  /* Soft nudge — Free users who force-select still hit the copy trap */
+  user-select: none;
 }
 
 .jyut-tone-mark {

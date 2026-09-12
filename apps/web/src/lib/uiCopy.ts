@@ -423,6 +423,11 @@ export const ui = {
     zh: '打開創作者頁',
     jp: 'daa2 hoi1 cong3 zok3 ze2 jip6',
   },
+  jyutpingSelectCopyTrap: {
+    en: 'Ha, got you. Please pay $10 for the Family plan!',
+    zh: '哈哈中計喇。請畀 $10 買家庭版！',
+    jp: 'haa1 haa1 zung1 gai3 laa3. cing2 bei2 $10 maai5 gaa1 ting4 baan2!',
+  },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },

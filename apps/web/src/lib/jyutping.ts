@@ -18,6 +18,19 @@ export { hasHan }
 export const JYUTPING_UI_SVG_TONES = true
 
 /**
+ * Select/copy prank for Free/guest — flip to `false` to disable.
+ * Selecting Jyutping ruby and copying replaces the clipboard with a Family nudge
+ * (Family/Business are exempt; use the Copy Jyutping button instead).
+ */
+export const JYUTPING_SELECT_COPY_TRAP = true
+
+/** Family / Business (and open-mode with no entitlement snapshot). */
+export function planAllowsJyutpingCopy(plan: string | undefined, hasEntitlement: boolean): boolean {
+  if (!hasEntitlement) return true
+  return plan === 'family' || plan === 'business'
+}
+
+/**
  * LSHK Jyutping §4 tone contour marks (Chao tone letters) — product label: Jyutping + Chao tone letters.
  * @see https://jyutping.org/en/jyutping/
  */
