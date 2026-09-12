@@ -386,7 +386,7 @@ button.jyutping {
 
 .jyut-syl-roman {
   flex: none;
-  /* Soft nudge — Free users who force-select still hit the copy trap */
+  /* Soft gate — Free users who force-select still hit the copy upgrade message */
   user-select: none;
 }
 

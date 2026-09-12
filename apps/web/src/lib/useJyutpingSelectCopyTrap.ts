@@ -30,7 +30,7 @@ function selectionTouchesJyutpingUi(): boolean {
 }
 
 /**
- * Freeloader easter egg: Ctrl/Cmd+C on Jyutping ruby pastes the gotcha line
+ * Free/guest select→copy on Jyutping ruby pastes the Family+ upgrade line
  * instead of syllables. Disable with `JYUTPING_SELECT_COPY_TRAP = false`.
  */
 export function useJyutpingSelectCopyTrap() {

@@ -58,6 +58,6 @@ Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutping
 
 **On-screen vs clipboard:** with `JYUTPING_UI_SVG_TONES = true` (default), ruby UI draws contours as SVG so inspect/select does not yield Chao Unicode; Family **Copy Jyutping + Chao** still copies `teng1˥ …`. Set the flag to `false` to restore Unicode Chao in the DOM.
 
-**Select/copy trap:** with `JYUTPING_SELECT_COPY_TRAP = true` (default), Free/guest users who select ruby and copy get a playful Family nudge on the clipboard instead of syllables (`data-jyutping-notice` also shows in inspect). Family/Business exempt. Set to `false` to disable.
+**Select/copy gate:** with `JYUTPING_SELECT_COPY_TRAP = true` (default), Free/guest users who select ruby and copy get: *Jyutping + Chao tone letters is a Family+ plan feature. Please upgrade to copy.* Family/Business exempt. Set to `false` to disable.
 
 实现于 `apps/web/src/lib/jyutping.ts`（`rubyJpSyllable`、`ensureJyutpingSegs`、`JYUTPING_UI_SVG_TONES`、`JYUTPING_SELECT_COPY_TRAP`）与 `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`。

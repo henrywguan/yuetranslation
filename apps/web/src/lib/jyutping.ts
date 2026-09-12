@@ -18,8 +18,8 @@ export { hasHan }
 export const JYUTPING_UI_SVG_TONES = true
 
 /**
- * Select/copy prank for Free/guest — flip to `false` to disable.
- * Selecting Jyutping ruby and copying replaces the clipboard with a Family nudge
+ * Select/copy gate for Free/guest — flip to `false` to disable.
+ * Selecting Jyutping ruby and copying replaces the clipboard with a Family+ upgrade line
  * (Family/Business are exempt; use the Copy Jyutping button instead).
  */
 export const JYUTPING_SELECT_COPY_TRAP = true
