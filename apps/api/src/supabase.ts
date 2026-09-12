@@ -275,6 +275,7 @@ export type AuditAction =
   | 'bug_report_resend_email'
   | 'incident_banner'
   | 'household_usage_backfill'
+  | 'practice_partner_chat'
 
 export async function writeAuditLog(entry: {
   actorId: string

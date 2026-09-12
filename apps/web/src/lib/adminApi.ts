@@ -673,3 +673,22 @@ export async function sendAdminPush(input: {
   }
 }
 
+export type PracticePartnerChatMessage = {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+/** Admin Practice Partner turn — DeepSeek/OpenAI reply for Azure TTS + captions. */
+export async function postPracticePartnerChat(
+  messages: PracticePartnerChatMessage[],
+): Promise<{ ok: boolean; reply: string; model: string }> {
+  const res = await adminFetch('/admin/practice-partner/chat', {
+    method: 'POST',
+    body: JSON.stringify({ messages }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error((data as { message?: string }).message || 'Practice partner chat failed')
+  }
+  return data as { ok: boolean; reply: string; model: string }
+}
