@@ -203,7 +203,9 @@ export function PlanChip() {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      // Nested portals own the first Escape (usage detail, primary-lang menu).
       if (document.querySelector('.usage-detail-layer')) return
+      if (document.querySelector('.account-hub-dd-layer')) return
       setOpen(false)
     }
     const onPointer = (e: PointerEvent) => {
@@ -211,7 +213,13 @@ export function PlanChip() {
       if (!(target instanceof Node)) return
       if (rootRef.current?.contains(target)) return
       if (hubRef.current?.contains(target)) return
-      if (target instanceof Element && target.closest('.usage-detail-layer')) return
+      // Portaled overlays — not under hubRef; scrolling/tapping them must keep the hub open.
+      if (
+        target instanceof Element &&
+        (target.closest('.usage-detail-layer') || target.closest('.account-hub-dd-layer'))
+      ) {
+        return
+      }
       setOpen(false)
     }
     window.addEventListener('keydown', onKey)

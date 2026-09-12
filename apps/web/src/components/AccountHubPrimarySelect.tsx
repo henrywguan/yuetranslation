@@ -52,7 +52,13 @@ export function AccountHubPrimarySelect({ value, onChange, labelledBy }: Props) 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    const onReposition = () => placeMenu()
+    const onReposition = (e?: Event) => {
+      // Don't re-anchor while the list itself is scrolling — that fights the gesture
+      // and (with hub outside-dismiss) feels like the menu "breaks" mid-scroll.
+      const t = e?.target
+      if (t instanceof Node && menuRef.current?.contains(t)) return
+      placeMenu()
+    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('resize', onReposition)
     window.addEventListener('scroll', onReposition, true)
