@@ -827,6 +827,98 @@ button.jyutping {
   border-color: color-mix(in srgb, var(--jade) 48%, var(--glass-border));
 }
 
+.result-actions-jyutping-row {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.jyutping-font-tip {
+  position: relative;
+  flex: none;
+}
+
+.jyutping-font-tip-btn {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 18%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  color: color-mix(in srgb, var(--muted) 82%, var(--jade));
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+.jyutping-font-tip-btn:hover,
+.jyutping-font-tip.is-open .jyutping-font-tip-btn {
+  border-color: color-mix(in srgb, var(--jade) 42%, var(--glass-border));
+  color: var(--ink-bright);
+  transform: translateY(-1px);
+}
+
+.jyutping-font-tip-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.jyutping-font-tip-icon {
+  width: 0.78rem;
+  height: 0.78rem;
+}
+
+.jyutping-font-tip-pop {
+  position: fixed;
+  z-index: 80;
+  width: min(16.5rem, calc(100vw - 1.5rem));
+  padding: 0.7rem 0.75rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface) 92%, var(--harbor));
+  box-shadow:
+    0 14px 36px color-mix(in srgb, #000 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--glass-shine) 50%, transparent);
+  color: var(--ink);
+  transform: translate(-100%, -50%);
+  text-align: left;
+}
+
+.jyutping-font-tip-body {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--ink) 88%, var(--muted));
+}
+
+.jyutping-font-tip-link {
+  appearance: none;
+  display: inline-flex;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--jade-bright, var(--jade));
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.jyutping-font-tip-link:hover {
+  color: var(--ink-bright);
+}
+
 .copy-btn-icon {
   width: 0.95rem;
   height: 0.95rem;
