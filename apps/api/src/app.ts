@@ -68,6 +68,7 @@ import {
   adminPushStats,
   adminListPushSends,
   adminSendPush,
+  adminPracticePartnerChat,
   adminResetUsage,
   adminSaveEmailTemplate,
   adminSendEmail,
@@ -944,6 +945,7 @@ app.post('/api/admin/email/send', adminSendEmail)
 app.get('/api/admin/push/stats', adminPushStats)
 app.get('/api/admin/push/sends', adminListPushSends)
 app.post('/api/admin/push/send', adminSendPush)
+app.post('/api/admin/practice-partner/chat', adminPracticePartnerChat)
 
 scheduleHouseholdUsageBackfillOnStartup()
 

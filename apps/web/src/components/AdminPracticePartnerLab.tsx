@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   OrbitalSphereBackground,
   ORBITAL_SPHERE_DEFAULTS,
   type OrbitalSphereOptions,
 } from './ui/orbital-sphere'
+import { postPracticePartnerChat, type PracticePartnerChatMessage } from '../lib/adminApi'
+import { createWebSpeechSession } from '../lib/webSpeech'
+import { isAppleTouchDevice } from '../lib/mediaAccess'
+import { isTtsPlaying, speakText, stopSpeaking } from '../lib/tts'
+import type { LiveSession, SpeechEventHandlers } from '../lib/types'
 import './AdminPracticePartnerLab.css'
 
 export type PartnerMood = 'idle' | 'listening' | 'thinking' | 'speaking'
@@ -13,16 +18,14 @@ type SubtitleRole = 'you' | 'partner' | 'system'
 type SubtitleLine = {
   role: SubtitleRole
   text: string
-  /** Optional Jyutping / secondary line under the main caption. */
-  secondary?: string
   interim?: boolean
 }
 
 const MOODS: { id: PartnerMood; label: string; hint: string }[] = [
   { id: 'idle', label: 'Idle', hint: 'Waiting — soft drift' },
-  { id: 'listening', label: 'Listening', hint: 'User is speaking' },
-  { id: 'thinking', label: 'Thinking', hint: 'Agent turn / tools' },
-  { id: 'speaking', label: 'Speaking', hint: 'TTS + captions' },
+  { id: 'listening', label: 'Listening', hint: 'Mic / your words' },
+  { id: 'thinking', label: 'Thinking', hint: 'LLM reply' },
+  { id: 'speaking', label: 'Speaking', hint: 'Azure TTS' },
 ]
 
 const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
@@ -60,60 +63,44 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
   },
 }
 
-/** Simulated bilingual turn for the lab — replaced by live STT / agent text later. */
-const DEMO_SCRIPT: Record<PartnerMood, SubtitleLine> = {
-  idle: {
-    role: 'system',
-    text: 'Tap a mood, or auto-cycle to preview orb + captions.',
-  },
-  listening: {
-    role: 'you',
-    text: '早晨，今日天氣點呀？',
-    secondary: 'zou2 san4, gam1 jat6 tin1 hei3 dim2 aa3?',
-    interim: true,
-  },
-  thinking: {
-    role: 'system',
-    text: 'Partner is thinking…',
-  },
-  speaking: {
-    role: 'partner',
-    text: '早晨！今日幾好天，適合出街呀。',
-    secondary: 'zou2 san4! gam1 jat6 gei2 hou2 tin1, sik1 hap6 ceot1 gaai1 aa3.',
-  },
-}
-
 const ROLE_LABEL: Record<SubtitleRole, string> = {
   you: 'You',
   partner: 'Partner',
   system: 'Lab',
 }
 
+const SILENCE_MS = 1600
+
 /**
- * Admin-only Practice Partner visual lab.
- * Chosen direction: reactive Harbor orb + live subtitles.
- * Explicitly not Voice Live / Foundry Agent (avoid new Azure spend).
- * Speech, if ever wired, should reuse existing stack only — this lab stays simulated for now.
- * Not exposed in the consumer app until publish-ready.
+ * Admin-only Practice Partner.
+ * Mic → Web Speech STT → DeepSeek (persona + history) → Azure TTS,
+ * with Harbor orb + captions. No Voice Live / Foundry.
  */
 export function AdminPracticePartnerLab() {
   const [mood, setMood] = useState<PartnerMood>('idle')
-  const [demo, setDemo] = useState(false)
   const [amp, setAmp] = useState(0)
-  const [caption, setCaption] = useState<SubtitleLine>(DEMO_SCRIPT.idle)
-  const [history, setHistory] = useState<SubtitleLine[]>([])
+  const [caption, setCaption] = useState<SubtitleLine>({
+    role: 'system',
+    text: 'Tap Talk to speak, or type a line. 港灣 replies from a fixed persona + chat history, then Azure TTS speaks.',
+  })
+  const [reel, setReel] = useState<SubtitleLine[]>([])
+  const [messages, setMessages] = useState<PracticePartnerChatMessage[]>([])
+  const [listening, setListening] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [draft, setDraft] = useState('')
+  const [lastModel, setLastModel] = useState('')
+
+  const sessionRef = useRef<LiveSession | null>(null)
+  const finalsRef = useRef('')
+  const silenceTimerRef = useRef(0)
+  const messagesRef = useRef<PracticePartnerChatMessage[]>([])
+  const turnLockRef = useRef(false)
+  const finishRef = useRef<() => void>(() => {})
 
   useEffect(() => {
-    if (!demo) return undefined
-    const order: PartnerMood[] = ['idle', 'listening', 'thinking', 'speaking']
-    let i = 0
-    setMood(order[0]!)
-    const id = window.setInterval(() => {
-      i = (i + 1) % order.length
-      setMood(order[i]!)
-    }, 2800)
-    return () => window.clearInterval(id)
-  }, [demo])
+    messagesRef.current = messages
+  }, [messages])
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -135,17 +122,202 @@ export function AdminPracticePartnerLab() {
     return () => cancelAnimationFrame(frame)
   }, [mood])
 
-  useEffect(() => {
-    const next = DEMO_SCRIPT[mood]
-    setCaption(next)
-    if (mood === 'listening' || mood === 'speaking') {
-      setHistory((prev) => {
-        const last = prev[prev.length - 1]
-        if (last && last.role === next.role && last.text === next.text) return prev
-        return [...prev.slice(-5), { ...next, interim: false }]
-      })
+  const pushReel = useCallback((line: SubtitleLine) => {
+    if (line.role === 'system') return
+    setReel((prev) => {
+      const last = prev[prev.length - 1]
+      if (last && last.role === line.role && last.text === line.text) return prev
+      return [...prev.slice(-8), { ...line, interim: false }]
+    })
+  }, [])
+
+  const stopMic = useCallback(async () => {
+    window.clearTimeout(silenceTimerRef.current)
+    const session = sessionRef.current
+    sessionRef.current = null
+    setListening(false)
+    if (session) {
+      try {
+        await session.stop()
+      } catch {
+        /* ignore */
+      }
     }
-  }, [mood])
+  }, [])
+
+  const runPartnerTurn = useCallback(
+    async (userText: string) => {
+      const text = userText.trim()
+      if (!text || turnLockRef.current) return
+      turnLockRef.current = true
+      setBusy(true)
+      setError('')
+      setMood('thinking')
+      setCaption({ role: 'system', text: '港灣 is thinking…' })
+
+      const nextMessages: PracticePartnerChatMessage[] = [
+        ...messagesRef.current,
+        { role: 'user', content: text },
+      ]
+      setMessages(nextMessages)
+      pushReel({ role: 'you', text })
+
+      try {
+        const { reply, model } = await postPracticePartnerChat(nextMessages)
+        const withReply: PracticePartnerChatMessage[] = [
+          ...nextMessages,
+          { role: 'assistant', content: reply },
+        ]
+        setMessages(withReply)
+        setLastModel(model)
+        setMood('speaking')
+        setCaption({ role: 'partner', text: reply })
+        pushReel({ role: 'partner', text: reply })
+        await speakText(reply, 'yue')
+        setMood('idle')
+        setCaption({
+          role: 'system',
+          text: 'Ready — tap Talk or type another line.',
+        })
+      } catch (e) {
+        setMood('idle')
+        const msg = e instanceof Error ? e.message : 'Partner turn failed'
+        setError(msg)
+        setCaption({ role: 'system', text: msg })
+      } finally {
+        setBusy(false)
+        turnLockRef.current = false
+      }
+    },
+    [pushReel],
+  )
+
+  const finishUtterance = useCallback(async () => {
+    window.clearTimeout(silenceTimerRef.current)
+    const spoken = finalsRef.current.trim()
+    finalsRef.current = ''
+    await stopMic()
+    if (!spoken) {
+      setMood('idle')
+      setCaption({
+        role: 'system',
+        text: 'No speech captured — try again, or type a line below.',
+      })
+      return
+    }
+    await runPartnerTurn(spoken)
+  }, [runPartnerTurn, stopMic])
+
+  useEffect(() => {
+    finishRef.current = () => {
+      void finishUtterance()
+    }
+  }, [finishUtterance])
+
+  const startListening = useCallback(async () => {
+    if (busy || listening || turnLockRef.current) return
+    setError('')
+    finalsRef.current = ''
+
+    const handlers: SpeechEventHandlers = {
+      onInterim: (_lang, text) => {
+        const t = text.trim()
+        if (!t) return
+        setMood('listening')
+        setCaption({ role: 'you', text: t, interim: true })
+      },
+      onFinal: (_lang, text) => {
+        const t = text.trim()
+        if (!t) return
+        finalsRef.current = `${finalsRef.current} ${t}`.trim()
+        setMood('listening')
+        setCaption({ role: 'you', text: finalsRef.current })
+        window.clearTimeout(silenceTimerRef.current)
+        silenceTimerRef.current = window.setTimeout(() => {
+          finishRef.current()
+        }, SILENCE_MS)
+      },
+      onError: (message) => {
+        setError(message)
+        setCaption({ role: 'system', text: message })
+        void stopMic()
+        setMood('idle')
+      },
+      onStatus: (status) => {
+        if (status === 'listening') setListening(true)
+        if (status === 'idle') setListening(false)
+      },
+    }
+
+    const session = createWebSpeechSession(handlers, 'yue')
+    if (!session) {
+      setError('Web Speech is not available in this browser. Type a line instead.')
+      return
+    }
+
+    sessionRef.current = session
+    setMood('listening')
+    setCaption({ role: 'system', text: 'Listening… speak in Cantonese or English.' })
+    setListening(true)
+    try {
+      // Live-mic invariant: start STT before pausing TTS on Apple barge-in.
+      await session.start()
+      if (isTtsPlaying()) {
+        stopSpeaking({ preserveSession: isAppleTouchDevice() })
+      }
+    } catch (e) {
+      sessionRef.current = null
+      setListening(false)
+      setMood('idle')
+      setError(e instanceof Error ? e.message : 'Could not start mic')
+    }
+  }, [busy, listening, stopMic])
+
+  const toggleTalk = useCallback(() => {
+    if (listening) {
+      void finishUtterance()
+      return
+    }
+    void startListening()
+  }, [listening, finishUtterance, startListening])
+
+  const sendDraft = useCallback(() => {
+    const text = draft.trim()
+    if (!text || busy) return
+    setDraft('')
+    void runPartnerTurn(text)
+  }, [draft, busy, runPartnerTurn])
+
+  const resetChat = useCallback(() => {
+    void stopMic()
+    stopSpeaking()
+    turnLockRef.current = false
+    setBusy(false)
+    setMessages([])
+    setReel([])
+    setLastModel('')
+    setError('')
+    setMood('idle')
+    setCaption({
+      role: 'system',
+      text: 'Chat cleared. Tap Talk or type to start again.',
+    })
+  }, [stopMic])
+
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') {
+        void stopMic()
+      }
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.clearTimeout(silenceTimerRef.current)
+      void stopMic()
+      stopSpeaking()
+    }
+  }, [stopMic])
 
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
     const base = { ...ORBITAL_SPHERE_DEFAULTS, ...MOOD_ORBIT[mood] }
@@ -168,19 +340,10 @@ export function AdminPracticePartnerLab() {
           <p className="partner-lab-kicker">Internal · not in app</p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Direction locked: reactive Harbor orb + live subtitles — keep it simple. Moods and
-            captions are simulated here. We are not using Azure Voice Live or Foundry Agent (no
-            extra spend). Nothing in this lab shows in the consumer app.
+            Live loop (admin only): mic → Web Speech STT → DeepSeek (persona + history) → your
+            existing Azure TTS. Harbor orb + captions on top. No Voice Live / Foundry.
           </p>
         </div>
-        <label className="partner-lab-demo">
-          <input
-            type="checkbox"
-            checked={demo}
-            onChange={(e) => setDemo(e.target.checked)}
-          />
-          Auto-cycle moods
-        </label>
       </header>
 
       <div className={`partner-lab-stage partner-lab-stage--${mood}`} data-mood={mood}>
@@ -195,75 +358,96 @@ export function AdminPracticePartnerLab() {
         >
           <span className="partner-lab-subtitles-role">{ROLE_LABEL[caption.role]}</span>
           <p className="partner-lab-subtitles-text">{caption.text}</p>
-          {caption.secondary ? (
-            <p className="partner-lab-subtitles-secondary">{caption.secondary}</p>
-          ) : null}
         </div>
 
         <p className="partner-lab-status" aria-live="polite">
           <span className="partner-lab-status-mood">{moodMeta.label}</span>
           <span className="partner-lab-status-hint">{moodMeta.hint}</span>
+          {lastModel ? <span className="partner-lab-status-hint"> · {lastModel}</span> : null}
         </p>
       </div>
 
-      <div className="partner-lab-controls" role="group" aria-label="Partner mood">
-        {MOODS.map((m) => (
+      <div className="partner-lab-live" role="group" aria-label="Practice Partner live controls">
+        <button
+          type="button"
+          className={`partner-lab-talk${listening ? ' is-live' : ''}`}
+          disabled={busy && !listening}
+          onClick={toggleTalk}
+        >
+          {listening ? 'Stop & reply' : busy ? 'Working…' : 'Talk'}
+        </button>
+        <div className="partner-lab-compose">
+          <input
+            type="text"
+            value={draft}
+            disabled={busy || listening}
+            placeholder="Or type Cantonese / English…"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                sendDraft()
+              }
+            }}
+          />
           <button
-            key={m.id}
             type="button"
-            className={`partner-lab-mood${mood === m.id ? ' is-active' : ''}`}
-            aria-pressed={mood === m.id}
-            disabled={demo}
-            onClick={() => setMood(m.id)}
+            className="partner-lab-send"
+            disabled={busy || listening || !draft.trim()}
+            onClick={sendDraft}
           >
-            <span className="partner-lab-mood-label">{m.label}</span>
-            <span className="partner-lab-mood-hint">{m.hint}</span>
+            Send
           </button>
-        ))}
+        </div>
+        <button
+          type="button"
+          className="partner-lab-reset"
+          disabled={busy || listening}
+          onClick={resetChat}
+        >
+          Clear chat
+        </button>
       </div>
+
+      {error ? <p className="partner-lab-error">{error}</p> : null}
 
       <aside className="partner-lab-transcript" aria-label="Caption history">
         <h3>Caption reel</h3>
-        {history.length ? (
+        {reel.length ? (
           <ul>
-            {history.map((line, i) => (
+            {reel.map((line, i) => (
               <li key={`${line.role}-${i}-${line.text.slice(0, 12)}`}>
                 <span className={`partner-lab-transcript-role is-${line.role}`}>
                   {ROLE_LABEL[line.role]}
                 </span>
                 <span className="partner-lab-transcript-text">{line.text}</span>
-                {line.secondary ? (
-                  <span className="partner-lab-transcript-secondary">{line.secondary}</span>
-                ) : null}
               </li>
             ))}
           </ul>
         ) : (
           <p className="partner-lab-transcript-empty">
-            Listening and speaking turns will stack here — like live captions under the orb.
+            Turns appear here as you talk — You from STT, Partner from the LLM.
           </p>
         )}
       </aside>
 
       <aside className="partner-lab-notes">
-        <h3>Scope (cost-safe)</h3>
+        <h3>How it knows what to reply</h3>
         <ul>
           <li>
-            <strong>Now:</strong> orb + caption UX only (this lab) — free to iterate
+            <strong>Persona:</strong> fixed system prompt — “港灣”, a Cantonese practice partner
           </li>
           <li>
-            <strong>Not in plan:</strong> Azure Voice Live, Foundry Agent, custom avatar video
+            <strong>Memory:</strong> this session’s chat history (your lines + its replies)
           </li>
           <li>
-            <strong>If speech later:</strong> reuse what we already have (browser STT / existing
-            DeepSeek + TTS) — no new Azure voice products
+            <strong>Voice:</strong> same Azure TTS path as the translator (`yue` / zh-HK)
           </li>
-          <li>Partial captions → Listening · reply text → Speaking · silence → Idle</li>
+          <li>
+            <strong>Not used:</strong> Azure Voice Live or Foundry Agent
+          </li>
         </ul>
-        <p>
-          Keep this tab admin-only until the partner flow is entitlement-metered, mic-safe, and
-          publishable.
-        </p>
+        <p>Admin-only until entitlement + mic polish are ready for the consumer app.</p>
       </aside>
     </section>
   )

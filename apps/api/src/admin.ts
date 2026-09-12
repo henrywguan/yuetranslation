@@ -1151,6 +1151,37 @@ export async function adminListPushSends(req: AuthedRequest, res: Response) {
   }
 }
 
+export async function adminPracticePartnerChat(req: AuthedRequest, res: Response) {
+  const auth = await requireAdmin(req, res)
+  if (!auth) return
+  const { PracticePartnerChatBodySchema, generatePracticePartnerReply} = await import(
+    './practicePartnerAi.js'
+  )
+  const parsed = PracticePartnerChatBodySchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ message: 'Invalid practice partner chat payload' })
+    return
+  }
+  try {
+    const result = await generatePracticePartnerReply(parsed.data.messages)
+    await writeAuditLog({
+      actorId: auth.userId,
+      actorEmail: auth.email,
+      action: 'practice_partner_chat',
+      detail: {
+        messageCount: parsed.data.messages.length,
+        model: result.model,
+        replyChars: result.reply.length,
+      },
+    })
+    res.json({ ok: true, reply: result.reply, model: result.model })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Practice partner chat failed'
+    const status = /not configured|unavailable/i.test(msg) ? 503 : 500
+    res.status(status).json({ message: msg })
+  }
+}
+
 export async function adminSendPush(req: AuthedRequest, res: Response) {
   const auth = await requireAdmin(req, res)
   if (!auth) return
