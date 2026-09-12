@@ -13,7 +13,7 @@ export type OrbitalSphereOptions = {
   hue: number
   /**
    * `harbor` — homepage / pricing neon-jade orbital.
-   * `creators` — ink/celadon, slower, sparse 漢字 + Chao glyphs + seal nodes.
+   * `creators` — ink/celadon, slower, Chao tone-letter glyphs + seal nodes.
    */
   variant: OrbitalSphereVariant
 }
@@ -64,6 +64,31 @@ const CREATORS_GLYPHS = ['˥', '˧˥', '˧', '˨˩', '˩˧', '˨'] as const
 /** Seal accents also stay in Chao — no Chinese characters on this stage. */
 const CREATORS_SEAL_CHARS = ['˥', '˨˩'] as const
 
+/**
+ * Chao tone sample used to force-load Noto Sans glyph coverage.
+ * Canvas sprites never appear in the DOM, so Google Fonts would otherwise
+ * skip the Spacing Modifier Letters subset and paint tofu boxes.
+ */
+export const ORBITAL_CREATORS_FONT_SAMPLE = CREATORS_GLYPHS.join('')
+
+/** Canvas stack: Noto Sans first (Chao tones), HK only as Latin/CJK fallback. */
+const ORBITAL_GLYPH_FONT = '"Noto Sans", "Noto Sans HK", system-ui, sans-serif'
+
+/** Wait until Noto Sans can paint Chao tone letters before building textures. */
+export async function ensureOrbitalCreatorsFonts(): Promise<void> {
+  if (typeof document === 'undefined' || !document.fonts?.load) return
+  const sample = ORBITAL_CREATORS_FONT_SAMPLE
+  try {
+    await Promise.all([
+      document.fonts.load(`500 60px ${ORBITAL_GLYPH_FONT}`, sample),
+      document.fonts.load(`600 58px ${ORBITAL_GLYPH_FONT}`, sample),
+      document.fonts.ready,
+    ])
+  } catch {
+    // Still build sprites — system fallback beats a hung mount.
+  }
+}
+
 function makeGlyphTexture(text: string, fill: string): THREE.CanvasTexture {
   const size = 128
   const canvas = document.createElement('canvas')
@@ -77,7 +102,7 @@ function makeGlyphTexture(text: string, fill: string): THREE.CanvasTexture {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const fontSize = text.length > 1 ? 48 : 60
-  ctx.font = `500 ${fontSize}px "Noto Sans", "Noto Sans HK", system-ui, sans-serif`
+  ctx.font = `500 ${fontSize}px ${ORBITAL_GLYPH_FONT}`
   ctx.globalAlpha = 0.94
   ctx.fillText(text, size / 2, size / 2 + 2)
 
@@ -117,7 +142,7 @@ function makeSealTexture(char: string): THREE.CanvasTexture {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   const fontSize = char.length > 1 ? 46 : 58
-  ctx.font = `600 ${fontSize}px "Noto Sans", "Noto Sans HK", system-ui, sans-serif`
+  ctx.font = `600 ${fontSize}px ${ORBITAL_GLYPH_FONT}`
   ctx.fillText(char, cx, cy + 2)
 
   const tex = new THREE.CanvasTexture(canvas)
