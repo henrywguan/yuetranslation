@@ -46,6 +46,16 @@ Standing security / leak / token-abuse review for every PR and scheduled full-re
 
 Henry activates **Security Reviewer**, **Vulnerability Scanner**, and the API-health custom automation in [cursor.com/automations](https://cursor.com/automations) (cloud agents cannot create standing Automations via API).
 
+### Cantonese Creator Scout (audience / partner research)
+
+Find and rank Cantonese educators & creators for soft outreach around **Noto Sans HK** + **Jyutping + Chao tone letters** copy:
+
+- Brief + fork prompt: [`docs/agents/cantonese-creator-scout.md`](docs/agents/cantonese-creator-scout.md)
+- Tracker: [`docs/social/creator-scout/TRACKER.md`](docs/social/creator-scout/TRACKER.md)
+- Cursor rule: [`.cursor/rules/cantonese-creator-scout.mdc`](.cursor/rules/cantonese-creator-scout.mdc)
+
+Researches and prepares outreach packs — does not auto-DM. Optional weekly Automation is documented in the brief (Henry activates in Automations UI).
+
 ### Creator kit page (`#/creators`)
 
 Public guide for Cantonese educators / creators:
