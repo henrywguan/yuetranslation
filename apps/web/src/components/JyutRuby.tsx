@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { ensureJyutpingSegs, hasHan, rubyJpSyllable, type JyutSeg } from '../lib/jyutping'
+import { ensureJyutpingSegs, hasHan, type JyutSeg } from '../lib/jyutping'
+import { JyutpingSylText } from './JyutpingSylText'
 
 type JyutRubyProps = {
   han: string
@@ -66,7 +67,7 @@ export function JyutRuby({
       {segs.map((seg, i) => (
         <span key={`${seg.char}-${i}`} className={cellClass}>
           <span className={sylClass} lang="en">
-            {seg.jp ? rubyJpSyllable(seg.jp) : '\u00a0'}
+            {seg.jp ? <JyutpingSylText jp={seg.jp} /> : '\u00a0'}
           </span>
           <span className={hanClass} lang="zh-HK">
             {renderChar ? renderChar(seg, i) : seg.char}
@@ -77,11 +78,11 @@ export function JyutRuby({
   )
 }
 
-/** Single syllable with tone digit + Chao letter (compact metadata rows). */
+/** Single syllable with tone digit + tone mark (compact metadata rows). */
 export function JyutSyllable({ jp, className = '' }: { jp: string; className?: string }) {
   return (
     <span className={`jyut-syllable ${className}`.trim()} lang="en">
-      {rubyJpSyllable(jp)}
+      <JyutpingSylText jp={jp} />
     </span>
   )
 }
