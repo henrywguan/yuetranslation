@@ -4,6 +4,36 @@
   --creators-max: 820px;
 }
 
+/* Quieter ink / celadon wash — less neon harbor, more paper-room. */
+.creators-page .orbital-sphere-wash {
+  background:
+    radial-gradient(ellipse 85% 65% at 78% 18%, color-mix(in srgb, #7a9e8c 14%, transparent), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 12% 82%, color-mix(in srgb, #1a2a28 62%, transparent), transparent 52%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, #061018 94%, #3d5c52 6%) 0%,
+      color-mix(in srgb, #0a1614 90%, #1e3a34 10%) 45%,
+      color-mix(in srgb, #071210 96%, #2a4a42 4%) 100%
+    );
+  animation: none;
+}
+
+.creators-page .orbital-sphere-bg--page {
+  opacity: 0.82;
+}
+
+[data-theme='light'] .creators-page .orbital-sphere-wash {
+  background:
+    radial-gradient(ellipse 85% 65% at 78% 16%, color-mix(in srgb, #8fb5a4 16%, transparent), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 14% 84%, color-mix(in srgb, #c5ddd2 40%, transparent), transparent 52%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, #eef4f1 90%, #8fb5a4 10%) 0%,
+      color-mix(in srgb, #f5faf7 92%, #d5e8df 8%) 45%,
+      color-mix(in srgb, #eef6f3 94%, #9fc4b4 6%) 100%
+    );
+}
+
 .creators-hero {
   position: relative;
   display: flex;

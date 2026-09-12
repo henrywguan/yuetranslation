@@ -4,6 +4,7 @@ import { CopyJyutpingButton } from '../components/CopyJyutpingButton'
 import { openApp, openHome, openPricing } from '../lib/siteLinks'
 import { inkEase } from '../lib/motion'
 import { ui, type Bi } from '../lib/uiCopy'
+import { ORBITAL_SPHERE_CREATORS } from '../components/ui/orbital-sphere'
 import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
@@ -54,6 +55,7 @@ export function CreatorsPage() {
     <MarketingPageShell
       className="creators-page"
       background="orbital"
+      orbital={ORBITAL_SPHERE_CREATORS}
       onFeatures={() => openHome()}
     >
       <header className="creators-hero">
