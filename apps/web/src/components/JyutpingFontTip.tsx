@@ -4,6 +4,8 @@ import { openCreators } from '../lib/siteLinks'
 import { biPlain, ui } from '../lib/uiCopy'
 import { BiText } from './BiText'
 
+type TipCoords = { top: number; left: number; placement: 'left' | 'below' }
+
 /**
  * Info “i” beside Details Jyutping+Chao copy — explains custom fonts
  * and links to the Creators page.
@@ -13,16 +15,28 @@ export function JyutpingFontTip({ className = '' }: { className?: string }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+  const [coords, setCoords] = useState<TipCoords | null>(null)
 
   const place = () => {
     const btn = btnRef.current
     if (!btn) return
     const r = btn.getBoundingClientRect()
-    // Prefer left of the i (actions sit on the right edge of Details).
+    const tipW = Math.min(16.5 * 16, window.innerWidth - 24)
+    const gap = 10
+    const spaceLeft = r.left - 12
+    // On narrow / right-edge layouts (mobile Details), drop below so the tip stays on-screen.
+    if (spaceLeft < tipW + 8 || window.innerWidth < 640) {
+      setCoords({
+        top: r.bottom + gap,
+        left: Math.min(Math.max(12, r.right - tipW), window.innerWidth - tipW - 12),
+        placement: 'below',
+      })
+      return
+    }
     setCoords({
       top: r.top + r.height / 2,
-      left: Math.max(12, r.left - 8),
+      left: Math.max(12, r.left - gap),
+      placement: 'left',
     })
   }
 
@@ -40,10 +54,14 @@ export function JyutpingFontTip({ className = '' }: { className?: string }) {
     }
     const onReposition = () => place()
     window.addEventListener('keydown', onKey)
-    window.addEventListener('pointerdown', onDoc)
     window.addEventListener('resize', onReposition)
     window.addEventListener('scroll', onReposition, true)
+    // Delay outside-close so the opening tap cannot immediately dismiss on mobile.
+    const arm = window.setTimeout(() => {
+      window.addEventListener('pointerdown', onDoc)
+    }, 280)
     return () => {
+      window.clearTimeout(arm)
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('pointerdown', onDoc)
       window.removeEventListener('resize', onReposition)
@@ -56,8 +74,8 @@ export function JyutpingFontTip({ className = '' }: { className?: string }) {
       ? createPortal(
           <div
             id={tipId}
-            role="tooltip"
-            className="jyutping-font-tip-pop"
+            role="dialog"
+            className={`jyutping-font-tip-pop jyutping-font-tip-pop--${coords.placement}`}
             style={{ top: coords.top, left: coords.left }}
           >
             <p className="jyutping-font-tip-body">
@@ -92,8 +110,10 @@ export function JyutpingFontTip({ className = '' }: { className?: string }) {
         aria-expanded={open}
         aria-controls={tipId}
         title={biPlain(ui.copyJyutpingFontTipInfo)}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation()
+          e.preventDefault()
           setOpen((v) => !v)
         }}
       >
