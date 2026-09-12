@@ -81,7 +81,7 @@ export function AdminPracticePartnerLab() {
   const [amp, setAmp] = useState(0)
   const [caption, setCaption] = useState<SubtitleLine>({
     role: 'system',
-    text: 'Tap Talk to speak, or type a line. 港灣 replies like a Hong Kong uncle to his nephew, then Azure TTS speaks.',
+    text: 'Tap Talk to speak, or type a line. 港灣 replies from a fixed persona + chat history, then Azure TTS speaks.',
   })
   const [reel, setReel] = useState<SubtitleLine[]>([])
   const [messages, setMessages] = useState<PracticePartnerChatMessage[]>([])
@@ -435,8 +435,7 @@ export function AdminPracticePartnerLab() {
         <h3>How it knows what to reply</h3>
         <ul>
           <li>
-            <strong>Persona:</strong> fixed system prompt — “港灣”, a Hong Kong uncle talking to
-            his nephew (阿叔 → 阿侄)
+            <strong>Persona:</strong> fixed system prompt — “港灣”, a Cantonese practice partner
           </li>
           <li>
             <strong>Memory:</strong> this session’s chat history (your lines + its replies)
