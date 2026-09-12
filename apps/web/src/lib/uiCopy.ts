@@ -408,6 +408,21 @@ export const ui = {
     zh: '已複製粵拼',
     jp: 'ji5 fuk6 zai3 jyut6 ping3',
   },
+  copyJyutpingFontTipInfo: {
+    en: 'About Jyutping fonts',
+    zh: '粵拼字體說明',
+    jp: 'jyut6 ping3 zi6 tai2 syut3 ming4',
+  },
+  copyJyutpingFontTip: {
+    en: 'Jyutping + Chao tone letters only display correctly with custom fonts available from the Creators page.',
+    zh: '粵拼＋趙元任調號要喺創作者頁提供嘅自訂字體先會正確顯示。',
+    jp: 'jyut6 ping3 + diu6 hou6 jiu3 hai2 cong3 zok3 ze2 jip6 tai4 gung1 ge3 zi6 tai2 sin1 wui5 zing3 kok3 hin2 si6.',
+  },
+  copyJyutpingFontTipCta: {
+    en: 'Open Creators page',
+    zh: '打開創作者頁',
+    jp: 'daa2 hoi1 cong3 zok3 ze2 jip6',
+  },
   clear: { en: 'Clear', zh: '清除', jp: 'cing1 ceoi4' },
 
   historyTitle: { en: 'History', zh: '紀錄', jp: 'gei3 luk6' },
