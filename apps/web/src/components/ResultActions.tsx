@@ -23,20 +23,18 @@ export function ResultActions({
   const trimmed = text.trim()
   if (!trimmed) return null
 
-  const showJyutpingRow = lang === 'yue' && showJyutpingCopy && hasHan(trimmed)
+  const showJyutping = lang === 'yue' && showJyutpingCopy && hasHan(trimmed)
 
   return (
     <div className={`result-actions ${className}`.trim()}>
-      <SpeakButton text={trimmed} lang={lang} />
-      {(lang === 'yue' || lang === 'cmn') && showCopy ? (
-        <CopyButton text={trimmed} lang={lang} />
-      ) : null}
-      {showJyutpingRow ? (
-        <div className="result-actions-jyutping-row">
-          <CopyJyutpingButton text={trimmed} />
-          <JyutpingFontTip />
-        </div>
-      ) : null}
+      <div className="result-actions-stack">
+        <SpeakButton text={trimmed} lang={lang} />
+        {(lang === 'yue' || lang === 'cmn') && showCopy ? (
+          <CopyButton text={trimmed} lang={lang} />
+        ) : null}
+        {showJyutping ? <CopyJyutpingButton text={trimmed} /> : null}
+      </div>
+      {showJyutping ? <JyutpingFontTip /> : null}
     </div>
   )
 }

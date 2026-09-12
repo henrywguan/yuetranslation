@@ -756,10 +756,18 @@ button.jyutping {
 .result-actions {
   flex: none;
   display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.28rem;
+  margin-top: 0.05rem;
+}
+
+/* Speak / Han copy / Jyutping copy stay on one vertical axis. */
+.result-actions-stack {
+  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  margin-top: 0.05rem;
 }
 
 .copy-btn {
@@ -827,16 +835,11 @@ button.jyutping {
   border-color: color-mix(in srgb, var(--jade) 48%, var(--glass-border));
 }
 
-.result-actions-jyutping-row {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.28rem;
-}
-
 .jyutping-font-tip {
   position: relative;
   flex: none;
+  /* Sit beside the Jyutping copy control without shifting that column. */
+  margin-bottom: 0.32rem;
 }
 
 .jyutping-font-tip-btn {
@@ -878,7 +881,8 @@ button.jyutping {
 
 .jyutping-font-tip-pop {
   position: fixed;
-  z-index: 80;
+  /* Above Details sheet (mobile 102 / desktop 200) so the tip is visible. */
+  z-index: 260;
   width: min(16.5rem, calc(100vw - 1.5rem));
   padding: 0.7rem 0.75rem 0.65rem;
   border-radius: 12px;
@@ -888,8 +892,15 @@ button.jyutping {
     0 14px 36px color-mix(in srgb, #000 28%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--glass-shine) 50%, transparent);
   color: var(--ink);
-  transform: translate(-100%, -50%);
   text-align: left;
+}
+
+.jyutping-font-tip-pop--left {
+  transform: translate(-100%, -50%);
+}
+
+.jyutping-font-tip-pop--below {
+  transform: translate(0, 0);
 }
 
 .jyutping-font-tip-body {
