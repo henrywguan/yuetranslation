@@ -92,7 +92,9 @@ const ROLE_LABEL: Record<SubtitleRole, string> = {
 /**
  * Admin-only Practice Partner visual lab.
  * Chosen direction: reactive Harbor orb + live subtitles.
- * Not wired to Voice Live yet, and not exposed in the consumer app.
+ * Explicitly not Voice Live / Foundry Agent (avoid new Azure spend).
+ * Speech, if ever wired, should reuse existing stack only — this lab stays simulated for now.
+ * Not exposed in the consumer app until publish-ready.
  */
 export function AdminPracticePartnerLab() {
   const [mood, setMood] = useState<PartnerMood>('idle')
@@ -166,9 +168,9 @@ export function AdminPracticePartnerLab() {
           <p className="partner-lab-kicker">Internal · not in app</p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Direction locked: reactive Harbor orb + live subtitles. Moods and captions are simulated
-            here — Voice Live / Foundry are not connected. Nothing in this lab shows in the consumer
-            app.
+            Direction locked: reactive Harbor orb + live subtitles — keep it simple. Moods and
+            captions are simulated here. We are not using Azure Voice Live or Foundry Agent (no
+            extra spend). Nothing in this lab shows in the consumer app.
           </p>
         </div>
         <label className="partner-lab-demo">
@@ -244,18 +246,19 @@ export function AdminPracticePartnerLab() {
       </aside>
 
       <aside className="partner-lab-notes">
-        <h3>Next when we wire speech</h3>
+        <h3>Scope (cost-safe)</h3>
         <ul>
           <li>
-            Partial STT → Listening + interim You captions
+            <strong>Now:</strong> orb + caption UX only (this lab) — free to iterate
           </li>
           <li>
-            Agent / tool wait → Thinking (system line)
+            <strong>Not in plan:</strong> Azure Voice Live, Foundry Agent, custom avatar video
           </li>
           <li>
-            TTS stream → Speaking + Partner captions (Jyutping secondary optional)
+            <strong>If speech later:</strong> reuse what we already have (browser STT / existing
+            DeepSeek + TTS) — no new Azure voice products
           </li>
-          <li>Silence / end → Idle</li>
+          <li>Partial captions → Listening · reply text → Speaking · silence → Idle</li>
         </ul>
         <p>
           Keep this tab admin-only until the partner flow is entitlement-metered, mic-safe, and
