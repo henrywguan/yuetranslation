@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react'
 import {
   createOrbitalSphereRenderer,
+  ORBITAL_SPHERE_CREATORS,
   ORBITAL_SPHERE_DEFAULTS,
   type OrbitalSphereOptions,
 } from './orbital-sphere-utils/orbitalSphereRenderer'
 import './orbital-sphere.css'
+
+export { ORBITAL_SPHERE_CREATORS, ORBITAL_SPHERE_DEFAULTS }
+export type { OrbitalSphereOptions }
 
 export type OrbitalSphereBackgroundProps = Partial<OrbitalSphereOptions> & {
   className?: string
@@ -22,6 +26,7 @@ export function OrbitalSphereBackground({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const optionsRef = useRef({ ...ORBITAL_SPHERE_DEFAULTS, ...props })
   optionsRef.current = { ...ORBITAL_SPHERE_DEFAULTS, ...props }
+  const variant = optionsRef.current.variant
 
   useEffect(() => {
     const host = hostRef.current
@@ -29,6 +34,7 @@ export function OrbitalSphereBackground({
     if (!host || !canvas) return undefined
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // Geometry (glyphs / seals / palette) is built once per variant.
     const renderer = createOrbitalSphereRenderer(canvas, () => optionsRef.current)
     let frame = 0
     let visible = true
@@ -66,7 +72,7 @@ export function OrbitalSphereBackground({
       intersection.disconnect()
       renderer.dispose()
     }
-  }, [])
+  }, [variant])
 
   return (
     <div

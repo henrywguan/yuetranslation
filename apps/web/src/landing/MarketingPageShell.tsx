@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { JadeGlassField } from '../components/JadeGlassField'
-import { OrbitalSphereBackground } from '../components/ui/orbital-sphere'
+import {
+  OrbitalSphereBackground,
+  type OrbitalSphereBackgroundProps,
+} from '../components/ui/orbital-sphere'
 import { LandingAtmosphere } from './LandingAtmosphere'
 import { Nav } from './Nav'
 import { ScrollProgress } from './ScrollProgress'
@@ -13,6 +16,7 @@ export function MarketingPageShell({
   className,
   reducedMotion = true,
   background = 'glass',
+  orbital,
 }: {
   children: ReactNode
   onFeatures: () => void
@@ -20,6 +24,8 @@ export function MarketingPageShell({
   reducedMotion?: boolean
   /** `orbital` = pricing-style gradient wash + particle sphere. */
   background?: 'glass' | 'orbital'
+  /** Optional overrides / variant for the orbital sphere (creators page). */
+  orbital?: Omit<OrbitalSphereBackgroundProps, 'className'>
 }) {
   useSmoothScroll(true)
 
@@ -29,7 +35,7 @@ export function MarketingPageShell({
       {background === 'orbital' ? (
         <>
           <div className="orbital-sphere-wash" aria-hidden="true" />
-          <OrbitalSphereBackground className="orbital-sphere-bg--page" />
+          <OrbitalSphereBackground className="orbital-sphere-bg--page" {...orbital} />
         </>
       ) : (
         <>
