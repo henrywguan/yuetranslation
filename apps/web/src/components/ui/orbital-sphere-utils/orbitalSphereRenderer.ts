@@ -58,33 +58,11 @@ const CREATORS = {
   halo: 0x6a9e88,
 } as const
 
-/** Sparse teaching glyphs — Cantonese + Chao tone letters. */
-const CREATORS_GLYPHS = [
-  '粵',
-  '拼',
-  '聲',
-  '調',
-  '聽',
-  '講',
-  '字',
-  '音',
-  '語',
-  '讀',
-  '寫',
-  '學',
-  '˥',
-  '˧˥',
-  '˧',
-  '˨˩',
-  '˩˧',
-  '˨',
-] as const
+/** Chao tone letters only — the six Cantonese contours (no 漢字). */
+const CREATORS_GLYPHS = ['˥', '˧˥', '˧', '˨˩', '˩˧', '˨'] as const
 
-const CREATORS_SEAL_CHARS = ['粵', '音'] as const
-
-function isChaoGlyph(text: string) {
-  return text.startsWith('˥') || text.startsWith('˧') || text.startsWith('˨') || text.startsWith('˩')
-}
+/** Seal accents also stay in Chao — no Chinese characters on this stage. */
+const CREATORS_SEAL_CHARS = ['˥', '˨˩'] as const
 
 function makeGlyphTexture(text: string, fill: string): THREE.CanvasTexture {
   const size = 128
@@ -98,11 +76,10 @@ function makeGlyphTexture(text: string, fill: string): THREE.CanvasTexture {
   ctx.fillStyle = fill
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  const chao = isChaoGlyph(text)
-  const fontSize = chao ? (text.length > 1 ? 44 : 56) : 62
-  ctx.font = `${chao ? 500 : 450} ${fontSize}px "Noto Sans HK", "Noto Sans", system-ui, sans-serif`
-  ctx.globalAlpha = 0.92
-  ctx.fillText(text, size / 2, size / 2 + (chao ? 2 : 1))
+  const fontSize = text.length > 1 ? 48 : 60
+  ctx.font = `500 ${fontSize}px "Noto Sans", "Noto Sans HK", system-ui, sans-serif`
+  ctx.globalAlpha = 0.94
+  ctx.fillText(text, size / 2, size / 2 + 2)
 
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
@@ -110,7 +87,7 @@ function makeGlyphTexture(text: string, fill: string): THREE.CanvasTexture {
   return tex
 }
 
-/** Circular seal / chop — soft vermillion, low drama. */
+/** Circular seal / chop — soft vermillion frame around a Chao tone letter. */
 function makeSealTexture(char: string): THREE.CanvasTexture {
   const size = 160
   const canvas = document.createElement('canvas')
@@ -139,7 +116,8 @@ function makeSealTexture(char: string): THREE.CanvasTexture {
   ctx.fillStyle = 'rgba(176, 52, 48, 0.9)'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = '600 58px "Noto Sans HK", "Noto Sans", system-ui, sans-serif'
+  const fontSize = char.length > 1 ? 46 : 58
+  ctx.font = `600 ${fontSize}px "Noto Sans", "Noto Sans HK", system-ui, sans-serif`
   ctx.fillText(char, cx, cy + 2)
 
   const tex = new THREE.CanvasTexture(canvas)
@@ -175,12 +153,12 @@ export function createOrbitalSphereRenderer(
   scene.add(root)
 
   const radius = 2.2
-  const maxParticles = isCreators ? 5_500 : 12_000
+  const maxParticles = isCreators ? 8_500 : 12_000
   const positions = new Float32Array(maxParticles * 3)
   const colors = new Float32Array(maxParticles * 3)
   const hi = new THREE.Color(palette.particleHi)
   const lo = new THREE.Color(palette.particleLo)
-  const fieldCutoff = isCreators ? 0.05 : -0.1
+  const fieldCutoff = isCreators ? -0.02 : -0.1
 
   let count = 0
   for (let i = 0; i < maxParticles; i += 1) {
@@ -192,11 +170,11 @@ export function createOrbitalSphereRenderer(
     const field =
       Math.sin(x * 3.5) * Math.cos(y * 3.5) * Math.sin(z * 3.5) + Math.cos(x * 6) * 0.4
     if (field <= fieldCutoff) continue
-    const puff = 1 + field * (isCreators ? 0.07 : 0.1)
+    const puff = 1 + field * (isCreators ? 0.08 : 0.1)
     positions[count * 3] = x * puff
     positions[count * 3 + 1] = y * puff
     positions[count * 3 + 2] = z * puff
-    const tint = lo.clone().lerp(hi, field > 0.5 ? 1 : isCreators ? 0.45 : 0.35)
+    const tint = lo.clone().lerp(hi, field > 0.5 ? 1 : isCreators ? 0.5 : 0.35)
     colors[count * 3] = tint.r
     colors[count * 3 + 1] = tint.g
     colors[count * 3 + 2] = tint.b
@@ -291,18 +269,18 @@ export function createOrbitalSphereRenderer(
   }
 
   if (isCreators) {
-    const glyphCount = 42
+    // Dense Chao constellation — six tone contours only, no 漢字.
+    const glyphCount = 120
     const glyphRadius = radius * 1.14
     for (let i = 0; i < glyphCount; i += 1) {
       const glyph = CREATORS_GLYPHS[i % CREATORS_GLYPHS.length]!
-      const chao = isChaoGlyph(glyph)
-      const fill = chao ? 'rgba(180, 214, 198, 0.95)' : 'rgba(214, 228, 220, 0.92)'
+      const fill = 'rgba(180, 214, 198, 0.95)'
       const tex = makeGlyphTexture(glyph, fill)
       glyphTextures.push(tex)
       const mat = new THREE.SpriteMaterial({
         map: tex,
         transparent: true,
-        opacity: chao ? 0.55 : 0.48,
+        opacity: 0.58,
         depthWrite: false,
         blending: THREE.NormalBlending,
       })
@@ -310,7 +288,7 @@ export function createOrbitalSphereRenderer(
       const sprite = new THREE.Sprite(mat)
       const { x, y, z } = fibonacciPoint(i, glyphCount, glyphRadius)
       sprite.position.set(x, y, z)
-      const s = chao ? 0.28 : 0.34
+      const s = glyph.length > 1 ? 0.24 : 0.27
       sprite.scale.set(s, s, 1)
       root.add(sprite)
     }
