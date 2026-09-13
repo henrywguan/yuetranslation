@@ -979,7 +979,7 @@ export function createHarborWorld(
   let raf = 0
   let last = performance.now()
 
-  // Finger / mouse orbit (inverted: drag right → cam left, drag down → cam up)
+  // Finger / mouse orbit — grab-the-world: drag right → camera left, drag down → camera up
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
@@ -1005,8 +1005,8 @@ export function createHarborWorld(
     const dy = e.clientY - lastPtrY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
-    // Inverted axes: opposite of drag direction
-    yawTarget += dx * ORBIT_SENS
+    // Drag right → negative yaw → camera swings left (OSRS grab feel)
+    yawTarget -= dx * ORBIT_SENS
     pitchTarget = clampOrbitPitch(pitchTarget - dy * ORBIT_SENS)
   }
   const endDrag = (e: PointerEvent) => {

@@ -138,6 +138,9 @@ function main() {
   assert.ok(Math.abs(side.x) > Math.abs(side.z), 'yaw π/2 swings to the side')
   const around = orbitCameraOffset(Math.PI * 2, Math.PI / 6)
   assert.ok(Math.abs(around.x - behind.x) < 1e-9 && Math.abs(around.z - behind.z) < 1e-9, 'yaw wraps 360°')
+  const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
+  assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
 
   assert.ok(HARBOR_NPC_ROLES.includes('villager'), 'villager NPCs')
   assert.ok(HARBOR_NPC_ROLES.includes('scholar'), 'scholar NPCs')
