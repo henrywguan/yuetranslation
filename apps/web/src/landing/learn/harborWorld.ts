@@ -29,6 +29,38 @@ const CHUNK = 28
 const BANK = 7.2
 const RIVER = 3.4
 
+/** Spacing between quiz pier stops along +Z (smoke-tested). */
+export const HARBOR_DOCK_SPACING = 22
+/** Sideways offset from river center when the canoe is docked. */
+export const HARBOR_DOCK_X = RIVER + 0.55
+
+/** Chinese clothing roles for bank / pier NPCs (smoke-tested). */
+export const HARBOR_NPC_ROLES = [
+  'villager',
+  'scholar',
+  'fisherman',
+  'merchant',
+  'child',
+  'ferryman',
+] as const
+export type HarborNpcRole = (typeof HARBOR_NPC_ROLES)[number]
+
+/**
+ * Discrete pier stop for a quest progress value (0…1).
+ * Alternates bank so each answer docks at a fresh landing.
+ */
+export function dockPoseForProgress(progress: number): { z: number; side: 1 | -1; slot: number } {
+  const t = Math.min(1, Math.max(0, progress))
+  const maxZ = 240
+  const rawZ = t * maxZ
+  const slot = Math.max(0, Math.round(rawZ / HARBOR_DOCK_SPACING))
+  return {
+    slot,
+    z: slot * HARBOR_DOCK_SPACING + 6,
+    side: slot % 2 === 0 ? 1 : -1,
+  }
+}
+
 const FOG: Record<HarborHue, number> = {
   jade: 0x0a2a28,
   harbor: 0x0a1c28,
@@ -307,16 +339,169 @@ function lantern() {
 
 function pierSegment() {
   const g = new THREE.Group()
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.14, 3.2), mat(0x8a6a48))
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 3.6), mat(0x8a6a48))
   deck.position.y = 0.55
   g.add(deck)
-  for (const x of [-0.85, 0.85]) {
-    for (const z of [-1.1, 1.1]) {
+  // Short gangplank toward the river
+  const plank = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 1.1), mat(0x7a5a38))
+  plank.position.set(-0.9, 0.5, 0)
+  plank.rotation.z = 0.12
+  g.add(plank)
+  for (const x of [-0.95, 0.95]) {
+    for (const z of [-1.3, 1.3]) {
       const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 1.1, 5), mat(0x5a4030))
       pile.position.set(x, 0.15, z)
       g.add(pile)
     }
   }
+  // Bollard
+  const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.35, 6), mat(0x4a3828))
+  bollard.position.set(0.7, 0.72, 1.2)
+  g.add(bollard)
+  g.userData.pier = true
+  return g
+}
+
+/**
+ * Low-poly Chinese-styled figure — clothing varies by role
+ * (villager jacket, scholar robe + hat, fisherman conical hat, etc.).
+ */
+function chineseNpc(role: HarborNpcRole, rng: () => number) {
+  const g = new THREE.Group()
+  const child = role === 'child'
+  const scale = child ? 0.72 : 1
+  const skin = mat(0xe8c4a8)
+  const hair = mat(0x1a1410)
+
+  const palette: Record<HarborNpcRole, { robe: number; trim: number; pants: number }> = {
+    villager: { robe: 0x2a3a6a, trim: 0xc4a060, pants: 0x3a3028 },
+    scholar: { robe: 0x6a7a8a, trim: 0xe8e0d0, pants: 0x4a4850 },
+    fisherman: { robe: 0x5a6a48, trim: 0xc8b070, pants: 0x4a3a28 },
+    merchant: { robe: 0x8a3048, trim: 0xd4a848, pants: 0x3a2820 },
+    child: { robe: 0xc45a48, trim: 0xf0d060, pants: 0x3a4a68 },
+    ferryman: { robe: 0x4a5a58, trim: 0x8a6a40, pants: 0x3a3028 },
+  }
+  const colors = palette[role]
+
+  // Legs
+  for (const sx of [-0.08, 0.08] as const) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.42, 5), mat(colors.pants))
+    leg.position.set(sx, 0.21, 0)
+    g.add(leg)
+  }
+  // Torso / robe
+  const torsoH = role === 'scholar' || role === 'merchant' ? 0.55 : 0.42
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.32, torsoH, 0.2), mat(colors.robe))
+  torso.position.y = 0.42 + torsoH / 2 - 0.05
+  g.add(torso)
+  // Sash / trim
+  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.22), mat(colors.trim))
+  sash.position.y = 0.55
+  g.add(sash)
+  // Scholar / merchant long hem
+  if (role === 'scholar' || role === 'merchant') {
+    const hem = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.28, 0.18), mat(colors.robe))
+    hem.position.y = 0.38
+    g.add(hem)
+  }
+  // Arms
+  for (const sx of [-0.2, 0.2] as const) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), mat(colors.robe))
+    arm.position.set(sx, 0.72, 0)
+    g.add(arm)
+  }
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), skin)
+  head.position.y = 1.05
+  g.add(head)
+  // Hair bun
+  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
+  bun.position.set(0, 1.16, -0.02)
+  g.add(bun)
+
+  if (role === 'scholar') {
+    // Square scholar hat
+    const hat = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.24), mat(0x1a1814))
+    hat.position.y = 1.2
+    g.add(hat)
+    const crown = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.14), mat(0x1a1814))
+    crown.position.y = 1.3
+    g.add(crown)
+  } else if (role === 'fisherman' || role === 'ferryman') {
+    // Conical bamboo / straw hat
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.14, 7), mat(0xc4a860))
+    hat.position.y = 1.2
+    g.add(hat)
+  } else if (role === 'merchant') {
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.08, 6), mat(0x2a1810))
+    cap.position.y = 1.18
+    g.add(cap)
+  } else if (role === 'villager') {
+    // Soft cloth wrap
+    const wrap = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.22), mat(0x2a2820))
+    wrap.position.y = 1.16
+    g.add(wrap)
+  }
+
+  // Fisherman pole accent
+  if (role === 'fisherman' && rng() > 0.35) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 1.4, 4), mat(0x6a4a28))
+    pole.position.set(0.28, 0.85, 0)
+    pole.rotation.z = -0.55
+    g.add(pole)
+  }
+  // Scholar scroll
+  if (role === 'scholar' && rng() > 0.4) {
+    const scroll = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.28, 5), mat(0xe8e0d0))
+    scroll.rotation.z = Math.PI / 2
+    scroll.position.set(0.22, 0.62, 0.12)
+    g.add(scroll)
+  }
+
+  g.scale.setScalar(scale * (0.92 + rng() * 0.12))
+  g.userData.npc = role
+  return g
+}
+
+function randomNpcRole(rng: () => number): HarborNpcRole {
+  return HARBOR_NPC_ROLES[Math.floor(rng() * HARBOR_NPC_ROLES.length)]!
+}
+
+/** Traveler / player avatar seated in the canoe — jade sash marks “you”. */
+function playerTraveler() {
+  const g = new THREE.Group()
+  const skin = mat(0xe8c4a8)
+  const robe = mat(0x2a4858)
+  const jade = mat(0x3dcfb6)
+  const hair = mat(0x1a1410)
+  // Seated legs (forward)
+  for (const sx of [-0.09, 0.09] as const) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.32), mat(0x3a3028))
+    leg.position.set(sx, 0.12, 0.12)
+    g.add(leg)
+  }
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.38, 0.2), robe)
+  torso.position.y = 0.38
+  g.add(torso)
+  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.07, 0.22), jade)
+  sash.position.y = 0.32
+  g.add(sash)
+  for (const sx of [-0.18, 0.18] as const) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.28, 0.09), robe)
+    arm.position.set(sx, 0.4, 0)
+    g.add(arm)
+  }
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 5), skin)
+  head.position.y = 0.68
+  g.add(head)
+  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), hair)
+  bun.position.set(0, 0.78, -0.02)
+  g.add(bun)
+  // Small conical traveler hat
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.1, 6), mat(0xc4a860))
+  hat.position.y = 0.82
+  g.add(hat)
+  g.userData.player = true
   return g
 }
 
@@ -483,6 +668,12 @@ function poplar(rng: () => number) {
 export const HARBOR_SCENIC_TREES = ['cherry', 'ginkgo', 'poplar', 'pine', 'oak'] as const
 export type HarborScenicTree = (typeof HARBOR_SCENIC_TREES)[number]
 
+/** Distant Wulingyuan-style karst backdrop is present in the voyage. */
+export const HARBOR_WULINGYUAN = true as const
+
+/** 祥云 auspicious clouds fill the Harbor Quest sky. */
+export const HARBOR_XIANGYUN = true as const
+
 function bridge() {
   const g = new THREE.Group()
   const deck = new THREE.Mesh(new THREE.BoxGeometry(RIVER * 2.2, 0.12, 1.4), mat(0x7a5a3a))
@@ -511,7 +702,158 @@ function canoe() {
   const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85), mat(0x3dcfb6))
   sail.position.set(0.15, 0.95, 0.02)
   g.add(sail)
+  // You — seated traveler with jade sash
+  const you = playerTraveler()
+  you.position.set(0, 0.38, -0.05)
+  you.rotation.y = Math.PI
+  g.add(you)
   return g
+}
+
+/**
+ * Distant Wulingyuan-inspired sandstone pillars — tall thin karst stacks
+ * with green caps (original low-poly homage, not a real-world scan).
+ */
+function wulingPillar(rng: () => number) {
+  const g = new THREE.Group()
+  const h = 4.5 + rng() * 9
+  const r = 0.35 + rng() * 0.55
+  const rockTones = [0x8a8578, 0x7a7668, 0x9a9588, 0x6a6860]
+  const tone = rockTones[Math.floor(rng() * rockTones.length)]!
+  // Stacked tapered boxes for the classic pillar silhouette
+  const layers = 3 + Math.floor(rng() * 3)
+  for (let i = 0; i < layers; i++) {
+    const t = i / Math.max(1, layers - 1)
+    const w = r * (1.15 - t * 0.45)
+    const layerH = h / layers
+    const stone = new THREE.Mesh(
+      new THREE.CylinderGeometry(w * 0.85, w, layerH, 5),
+      mat(tone),
+    )
+    stone.position.y = layerH * i + layerH / 2
+    stone.rotation.y = rng() * Math.PI
+    g.add(stone)
+  }
+  // Green vegetation crown
+  const crown = new THREE.Mesh(
+    new THREE.SphereGeometry(r * 0.9, 5, 4),
+    mat(rng() > 0.5 ? 0x2f6a40 : 0x3a7a48),
+  )
+  crown.position.y = h + 0.15
+  crown.scale.set(1, 0.55, 1)
+  g.add(crown)
+  // Occasional mid-ledge shrub
+  if (rng() > 0.55) {
+    const ledge = new THREE.Mesh(new THREE.SphereGeometry(r * 0.35, 4, 3), mat(0x3a6a40))
+    ledge.position.set(r * 0.5, h * (0.4 + rng() * 0.3), 0)
+    ledge.scale.y = 0.5
+    g.add(ledge)
+  }
+  return g
+}
+
+/** Parallax mountain range group — follows the voyage at a slower Z. */
+function wulingyuanRange(seed: number) {
+  const root = new THREE.Group()
+  const rng = mulberry32(seed)
+  const count = 28
+  for (let i = 0; i < count; i++) {
+    const pillar = wulingPillar(rng)
+    const side = i % 2 === 0 ? 1 : -1
+    const x = side * (22 + rng() * 16 + (i % 5) * 1.2)
+    const z = (rng() - 0.5) * 90
+    pillar.position.set(x, -0.2, z)
+    pillar.scale.setScalar(0.85 + rng() * 0.55)
+    root.add(pillar)
+  }
+  // A few closer “gateway” pillars for depth
+  for (let i = 0; i < 6; i++) {
+    const pillar = wulingPillar(rng)
+    const side = i % 2 === 0 ? 1 : -1
+    pillar.position.set(side * (16 + rng() * 5), -0.1, -20 + i * 12)
+    pillar.scale.setScalar(0.7 + rng() * 0.35)
+    root.add(pillar)
+  }
+  root.userData.wulingyuan = true
+  return root
+}
+
+/**
+ * Single 祥云 (xiangyun) auspicious cloud — ruyi-head lobes + trailing swirls
+ * in the classic Chinese decorative silhouette (not fluffy Western cumulus).
+ */
+function xiangyunCloud(rng: () => number) {
+  const g = new THREE.Group()
+  const tones = [0xf7f2e8, 0xfff8f0, 0xf0e6d8, 0xffecd8, 0xf8f0ff, 0xffe8c8]
+  const tone = tones[Math.floor(rng() * tones.length)]!
+  const cloudMat = mat(tone, { transparent: true, opacity: 0.82 + rng() * 0.12 })
+  // Soft gold accent for the auspicious rim
+  const rimMat = mat(0xe8c878, { transparent: true, opacity: 0.55 })
+
+  const lobe = (sx: number, sy: number, sz: number, x: number, y: number, z: number, rim = false) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.55, 6, 5), rim ? rimMat : cloudMat)
+    mesh.scale.set(sx, sy, sz)
+    mesh.position.set(x, y, z)
+    g.add(mesh)
+  }
+
+  // Ruyi head — three stacked curls (classic 如意云头)
+  lobe(1.35, 0.55, 0.95, 0, 0.15, 0)
+  lobe(0.95, 0.48, 0.75, -0.85, 0.35, 0.1)
+  lobe(0.95, 0.48, 0.75, 0.85, 0.35, -0.05)
+  // Upper crown curl
+  lobe(0.7, 0.4, 0.55, 0, 0.7, 0.05, true)
+  // Trailing body lobes (scrolling 流云)
+  const trail = 2 + Math.floor(rng() * 3)
+  for (let i = 0; i < trail; i++) {
+    const t = (i + 1) / (trail + 1)
+    lobe(
+      0.85 - t * 0.35,
+      0.38 - t * 0.08,
+      0.65 - t * 0.2,
+      -1.2 - i * 0.85,
+      0.1 + Math.sin(t * Math.PI) * 0.25,
+      (rng() - 0.5) * 0.3,
+      i === trail - 1,
+    )
+  }
+  // Small spiral accent under the head
+  lobe(0.45, 0.28, 0.4, 0.35, -0.15, 0.2)
+
+  g.userData.xiangyun = true
+  g.userData.phase = rng() * Math.PI * 2
+  g.userData.drift = 0.15 + rng() * 0.35
+  return g
+}
+
+/** Sky field of 祥云 — parallax layer above the river voyage. */
+function xiangyunSky(seed: number) {
+  const root = new THREE.Group()
+  const rng = mulberry32(seed)
+  const count = 14
+  for (let i = 0; i < count; i++) {
+    const cloud = xiangyunCloud(rng)
+    const side = i % 2 === 0 ? 1 : -1
+    const x = side * (6 + rng() * 22 + (i % 4) * 1.5)
+    const y = 9 + rng() * 7
+    const z = (rng() - 0.5) * 100
+    cloud.position.set(x, y, z)
+    cloud.rotation.y = (rng() - 0.5) * 0.8
+    cloud.scale.setScalar(1.4 + rng() * 2.2)
+    // Flatten slightly so they read as painted sky scrolls
+    cloud.scale.y *= 0.75 + rng() * 0.2
+    root.add(cloud)
+  }
+  // A few closer ceremonial banners of cloud
+  for (let i = 0; i < 5; i++) {
+    const cloud = xiangyunCloud(rng)
+    cloud.position.set((rng() - 0.5) * 18, 7.5 + rng() * 3, -8 + i * 16)
+    cloud.scale.setScalar(1.1 + rng() * 1.2)
+    cloud.scale.y *= 0.7
+    root.add(cloud)
+  }
+  root.userData.xiangyunSky = true
+  return root
 }
 
 function place(
@@ -530,6 +872,37 @@ function place(
     obj.rotation.y = rng() * Math.PI * 2
     obj.scale.setScalar(0.85 + rng() * 0.4)
     group.add(obj)
+  }
+}
+
+/** Place a pier + Chinese NPC at each quiz dock slot that falls in this chunk. */
+function placeDockStops(group: THREE.Group, chunkIndex: number, rng: () => number) {
+  const z0 = chunkIndex * CHUNK
+  const z1 = z0 + CHUNK
+  for (let slot = 0; slot < 40; slot++) {
+    const z = slot * HARBOR_DOCK_SPACING + 6
+    if (z < z0 || z >= z1) continue
+    const side: 1 | -1 = slot % 2 === 0 ? 1 : -1
+    const pier = pierSegment()
+    pier.position.set(side * (RIVER + 1.35), 0, z)
+    pier.rotation.y = side > 0 ? -0.2 : Math.PI + 0.2
+    pier.userData.dockSlot = slot
+    group.add(pier)
+
+    const role = HARBOR_NPC_ROLES[slot % HARBOR_NPC_ROLES.length]!
+    const npc = chineseNpc(role, rng)
+    // Stand on the pier deck, facing the river
+    npc.position.set(side * (RIVER + 1.55), 0.55, z + (rng() - 0.5) * 0.6)
+    npc.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2
+    group.add(npc)
+
+    // Extra villager variety near the landing
+    if (rng() > 0.45) {
+      const extra = chineseNpc(randomNpcRole(rng), rng)
+      extra.position.set(side * (RIVER + 2.4 + rng() * 0.8), 0, z + (rng() - 0.5) * 1.4)
+      extra.rotation.y = side > 0 ? -Math.PI / 2 + (rng() - 0.5) * 0.6 : Math.PI / 2 + (rng() - 0.5) * 0.6
+      group.add(extra)
+    }
   }
 }
 
@@ -552,6 +925,9 @@ function populateChunk(
     group.add(shore)
   }
 
+  // Quiz pier landings (every chunk may host one or more dock slots)
+  placeDockStops(group, chunkIndex, rng)
+
   if (biome === 'forest' || biome === 'hills') {
     place(group, rng, 4, () => tree(rng, leaf), BANK - 0.2, BANK + 4.5, z0)
     place(group, rng, 3, () => pine(rng), BANK, BANK + 5, z0)
@@ -570,6 +946,8 @@ function populateChunk(
     place(group, rng, 1, () => ginkgo(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => lantern(), BANK - 0.2, BANK + 1.2, z0)
     place(group, rng, 4, () => flower(rng), BANK - 0.4, BANK + 2, z0)
+    // Villagers & merchants strolling the lane
+    place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK + 0.3, BANK + 2.5, z0)
     if (rng() > 0.55) {
       const br = bridge()
       br.position.set(0, 0, z0 + CHUNK * (0.35 + rng() * 0.3))
@@ -582,6 +960,7 @@ function populateChunk(
     place(group, rng, 3, () => poplar(rng), BANK + 0.5, BANK + 3.5, z0)
     place(group, rng, 1, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
+    if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('fisherman', rng), RIVER + 0.8, BANK + 1.2, z0)
   }
   if (biome === 'pier') {
     for (const side of [-1, 1] as const) {
@@ -598,10 +977,13 @@ function populateChunk(
     place(group, rng, 2, () => stiltShop(rng), BANK - 0.1, BANK + 2.2, z0)
     place(group, rng, 1, () => hut(rng), BANK + 2, BANK + 4, z0)
     place(group, rng, 2, () => cherryBlossom(rng), BANK + 0.5, BANK + 3, z0)
+    place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK - 0.2, BANK + 1.5, z0)
+    place(group, rng, 1, () => chineseNpc('ferryman', rng), RIVER + 1.2, RIVER + 2.2, z0)
   }
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
+    if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('scholar', rng), BANK + 1, BANK + 3, z0)
   }
 
   // Fauna: birds overhead + occasional fish leap near the canoe lane
@@ -651,10 +1033,11 @@ export function createHarborWorld(
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(FOG[hue], 0.028)
+  // Slightly softer fog so distant Wulingyuan pillars stay readable
+  scene.fog = new THREE.FogExp2(FOG[hue], 0.022)
   scene.background = new THREE.Color(SKY[hue])
 
-  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 120)
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 220)
   camera.position.set(0, 4.2, -6.5)
 
   const amb = new THREE.AmbientLight(0xb8d4e0, 0.62)
@@ -703,6 +1086,14 @@ export function createHarborWorld(
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
+  // Distant Wulingyuan-style karst pillars (parallax backdrop)
+  const mountains = wulingyuanRange(42)
+  scene.add(mountains)
+
+  // 祥云 — auspicious Chinese sky scrolls
+  const clouds = xiangyunSky(77)
+  scene.add(clouds)
+
   const wakeMat = mat(0xa8d8e8, { transparent: true, opacity: 0.35 })
   const wakes: THREE.Mesh[] = []
   for (let i = 0; i < 5; i++) {
@@ -712,7 +1103,9 @@ export function createHarborWorld(
     wakes.push(w)
   }
 
-  let voyageZ = progress * 180
+  const startDock = dockPoseForProgress(progress)
+  let voyageZ = startDock.z
+  let boatX = startDock.side * HARBOR_DOCK_X * 0.35
   let waterPhase = 0
   let raf = 0
   let last = performance.now()
@@ -774,7 +1167,7 @@ export function createHarborWorld(
 
   const applyHue = () => {
     scene.background = new THREE.Color(SKY[hue])
-    scene.fog = new THREE.FogExp2(FOG[hue], 0.028)
+    scene.fog = new THREE.FogExp2(FOG[hue], 0.022)
     renderer.setClearColor(SKY[hue], 1)
     waterMat.color.setHex(WATER[hue])
   }
@@ -784,30 +1177,54 @@ export function createHarborWorld(
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
 
-    const targetZ = progress * 220
-    const drift = reduced ? 0.35 : 1.6
-    voyageZ += (targetZ - voyageZ) * Math.min(1, dt * 1.6)
-    voyageZ += dt * drift
+    // Sail toward the pier stop for this quest step, then ease sideways to dock
+    const dock = dockPoseForProgress(progress)
+    const distZ = dock.z - voyageZ
+    const approaching = Math.abs(distZ) < 10
+    const docked = Math.abs(distZ) < 1.25
+    voyageZ += distZ * Math.min(1, dt * 2.1)
+    // Light forward drift only while sailing between piers
+    if (!docked) {
+      const cruise = reduced ? 0.15 : 0.55
+      voyageZ += dt * cruise * Math.sign(distZ || 1)
+    }
+    const sway = reduced || approaching ? 0 : Math.sin(waterPhase * 0.7) * 0.18
+    const targetX = dock.side * HARBOR_DOCK_X * (approaching || docked ? 1 : 0.2) + sway
+    boatX += (targetX - boatX) * Math.min(1, dt * 3.2)
 
     waterPhase += dt * (reduced ? 0.4 : 1.2)
     const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
-    boat.position.set(
-      Math.sin(waterPhase * 0.7) * 0.25,
-      0.08 + bob,
-      voyageZ,
-    )
-    boat.rotation.y = reduced ? 0 : Math.sin(waterPhase * 1.1) * 0.04
+    boat.position.set(boatX, 0.08 + bob, voyageZ)
+    // Nose toward the pier when docking
+    const yawBoat = docked || approaching ? dock.side * 0.35 : reduced ? 0 : Math.sin(waterPhase * 1.1) * 0.04
+    boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
     boat.rotation.z = reduced ? 0 : Math.sin(waterPhase * 1.7) * 0.03
 
     for (let i = 0; i < wakes.length; i++) {
       const w = wakes[i]!
       w.position.set(boat.position.x * (1 - i * 0.12), 0.04, boat.position.z - 0.7 - i * 0.55)
       w.scale.setScalar(1 + Math.sin(waterPhase * 3 + i) * 0.15)
-      ;(w.material as THREE.MeshLambertMaterial).opacity = 0.28 - i * 0.04
+      ;(w.material as THREE.MeshLambertMaterial).opacity = docked ? 0.12 - i * 0.02 : 0.28 - i * 0.04
     }
 
     water.position.z = voyageZ + 60
     water.position.y = 0.02 + Math.sin(waterPhase) * 0.015
+
+    // Parallax: mountains drift slower than the canoe
+    mountains.position.z = voyageZ * 0.35
+    mountains.position.x = boatX * 0.15
+
+    // 祥云 drift even slower — painted sky scrolls sliding with the voyage
+    clouds.position.z = voyageZ * 0.22
+    clouds.position.x = boatX * 0.08
+    if (!reduced) {
+      clouds.children.forEach((child, i) => {
+        if (child.userData.baseY == null) child.userData.baseY = child.position.y
+        const phase = ((child.userData.phase as number) || 0) + waterPhase * ((child.userData.drift as number) || 0.25)
+        child.position.y = (child.userData.baseY as number) + Math.sin(phase + i) * 0.35
+        child.rotation.z = Math.sin(phase * 0.5) * 0.04
+      })
+    }
 
     // Ease orbit toward finger drag (snappy, still smooth)
     const orbitLerp = Math.min(1, dt * 14)
