@@ -516,6 +516,50 @@
   opacity: 0.75;
 }
 
+.hq-hear {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.hq-hear-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
+  background: color-mix(in srgb, var(--jade) 10%, transparent);
+}
+
+.hq-hear-han {
+  font-family: 'Noto Sans HK', 'Noto Sans', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.hq-hear-jp {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+
+.hq-hear-speak {
+  flex-shrink: 0;
+}
+
+.hq-quest-spotlight .hq-hear {
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.hq-build-preview .hq-hear {
+  justify-content: center;
+  margin-top: 0.55rem;
+}
+
 .hq-choices {
   display: grid;
   gap: 0.55rem;

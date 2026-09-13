@@ -9,6 +9,9 @@
 
 export type LearnLine = { en: string; zh: string }
 
+/** Han clip for Azure Cantonese TTS (characters beat bare Jyutping). */
+export type HearClip = { han: string; label?: string }
+
 export type TeachStep = {
   kind: 'teach'
   id: string
@@ -17,6 +20,8 @@ export type TeachStep = {
   /** Big stage glyph (Jyutping, Han, or label). */
   spotlight?: string
   spotlightHint?: LearnLine
+  /** Optional speaker examples for this beat. */
+  hear?: HearClip[]
 }
 
 export type PickStep = {
@@ -27,6 +32,7 @@ export type PickStep = {
   choices: { id: string; label: string; sub?: string }[]
   correctId: string
   explain: LearnLine
+  hear?: HearClip[]
 }
 
 export type BuildStep = {
@@ -39,6 +45,7 @@ export type BuildStep = {
   resultJp: string
   resultGloss?: LearnLine
   explain: LearnLine
+  hear?: HearClip[]
 }
 
 export type QuestStep = TeachStep | PickStep | BuildStep
@@ -90,6 +97,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'pick',
         id: 'intro-spaces',
+        hear: [{ han: '你好', label: 'nei5 hou2' }],
         tip: {
           en: 'Romanized Cantonese is written syllable by syllable.',
           zh: '羅馬拼音粵語係一個音節一個音節咁寫。',
@@ -123,6 +131,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'pick',
         id: 'intro-tone-number',
+        hear: [{ han: '詩', label: 'si1' }],
         prompt: {
           en: 'In Jyutping si1, what does the 1 mark?',
           zh: '粵拼 si1 入面嘅 1 代表咩？',
@@ -270,6 +279,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l1-baa1',
+        hear: [{ han: '爸', label: 'baa1' }],
         tip: {
           en: 'Build a syllable: initial + final + tone.',
           zh: '砌一個音節：聲母＋韻母＋聲調。',
@@ -312,6 +322,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'teach',
         id: 'l1-t1',
+        hear: [{ han: '詩', label: 'si1' }],
         title: { en: 'Tone 1 · high level', zh: '第一聲 · 高平' },
         body: {
           en: 'Tone 1 stays high and flat for the whole syllable — like a calm high pier rail. Chao letter: ˥.',
@@ -323,6 +334,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'teach',
         id: 'l1-t2',
+        hear: [{ han: '史', label: 'si2' }],
         title: { en: 'Tone 2 · mid rising', zh: '第二聲 · 中升' },
         body: {
           en: 'Tone 2 climbs from mid toward high — a wave lifting the ferry. Chao letters: ˧˥.',
@@ -352,6 +364,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l1-si2',
+        hear: [{ han: '史', label: 'si2' }],
         prompt: {
           en: 'Build the rising syllable si2.',
           zh: '砌出上升音節 si2。',
@@ -386,6 +399,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'teach',
         id: 'l2-t3',
+        hear: [{ han: '試', label: 'si3' }],
         title: { en: 'Tone 3 · mid level', zh: '第三聲 · 中平' },
         body: {
           en: 'Tone 3 sits mid and flat — neither the high rail of tone 1 nor a climb. Chao: ˧.',
@@ -435,6 +449,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l2-sai3',
+        hear: [{ han: '細', label: 'sai3' }],
         prompt: { en: 'Build sai3.', zh: '砌出 sai3。' },
         slots: [
           { key: 'initial', label: 'Initial', options: ['s', 'z', 'c'] },
@@ -465,6 +480,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'teach',
         id: 'l3-t4',
+        hear: [{ han: '時', label: 'si4' }],
         title: { en: 'Tone 4 · low falling', zh: '第四聲 · 低降' },
         body: {
           en: 'Tone 4 starts low and drifts lower — fog rolling off the water. Chao: ˨˩.',
@@ -493,6 +509,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l3-mou4',
+        hear: [{ han: '冇', label: 'mou4' }],
         prompt: { en: 'Build mou4.', zh: '砌出 mou4。' },
         slots: [
           { key: 'initial', label: 'Initial', options: ['m', 'n', 'ng'] },
@@ -524,6 +541,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'teach',
         id: 'l4-t5',
+        hear: [{ han: '買', label: 'maai5' }],
         title: { en: 'Tone 5 · low rising', zh: '第五聲 · 低升' },
         body: {
           en: 'Tone 5 rises from low — softer climb than tone 2. Chao: ˩˧. Famous twin: 買 maai5.',
@@ -552,6 +570,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l4-maai5',
+        hear: [{ han: '買', label: 'maai5' }],
         prompt: { en: 'Build maai5 (buy).', zh: '砌出 maai5（買）。' },
         slots: [
           { key: 'initial', label: 'Initial', options: ['m', 'n', 'l'] },
@@ -583,6 +602,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'teach',
         id: 'l5-t6',
+        hear: [{ han: '賣', label: 'maai6' }],
         title: { en: 'Tone 6 · low level', zh: '第六聲 · 低平' },
         body: {
           en: 'Tone 6 stays low and level — the deep water line. Chao: ˨. Twin of buy: 賣 maai6.',
@@ -615,6 +635,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l5-jat1',
+        hear: [{ han: '一', label: 'jat1' }],
         prompt: { en: 'Build jat1 (one).', zh: '砌出 jat1（一）。' },
         slots: [
           { key: 'initial', label: 'Initial', options: ['j', 'w', 'z'] },
@@ -684,6 +705,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'l6-gwaa1',
+        hear: [{ han: '瓜', label: 'gwaa1' }],
         prompt: { en: 'Build gwaa1.', zh: '砌出 gwaa1。' },
         slots: [
           { key: 'initial', label: 'Initial', options: ['gw', 'kw', 'g'] },
@@ -714,6 +736,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'pick',
         id: 'l7-rising',
+        hear: [{ han: '史', label: 'si2' }, { han: '市', label: 'si5' }],
         prompt: {
           en: 'Which two tones both rise?',
           zh: '邊兩個聲調都會上升？',
@@ -732,6 +755,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'pick',
         id: 'l7-buy-sell',
+        hear: [{ han: '買', label: 'maai5' }, { han: '賣', label: 'maai6' }],
         prompt: {
           en: '賣 “sell” is which tone?',
           zh: '「賣」係第幾聲？',
@@ -810,6 +834,7 @@ export const HARBOR_LEVELS: HarborLevel[] = [
       {
         kind: 'build',
         id: 'chart-nei5hou2',
+        hear: [{ han: '你好', label: 'nei5 hou2' }],
         prompt: {
           en: 'Build the second syllable of nei5 hou2.',
           zh: '砌出 nei5 hou2 嘅第二個音節。',

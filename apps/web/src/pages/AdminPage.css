@@ -114,6 +114,12 @@
   font-weight: 600;
 }
 
+.admin-sidebar-link--tool {
+  margin-top: 0.55rem;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--jade) 34%, transparent);
+}
+
 .admin-sidebar-link svg {
   flex: 0 0 auto;
   opacity: 0.9;

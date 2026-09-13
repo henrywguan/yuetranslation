@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
+import { SpeakButton } from '../../components/SpeakButton'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
-import type { BuildStep, PickStep, QuestStep, TeachStep } from './curriculum'
+import type { BuildStep, HearClip, PickStep, QuestStep, TeachStep } from './curriculum'
 
 type QuestPanelProps = {
   step: QuestStep
@@ -66,6 +67,23 @@ function Line({ line, className }: { line: { en: string; zh: string }; className
   )
 }
 
+function HearRow({ clips }: { clips?: HearClip[] }) {
+  if (!clips?.length) return null
+  return (
+    <div className="hq-hear" role="group" aria-label="Listen">
+      {clips.map((clip) => (
+        <div key={`${clip.han}-${clip.label ?? ''}`} className="hq-hear-chip">
+          <span className="hq-hear-han" lang="zh-HK">
+            {clip.han}
+          </span>
+          {clip.label ? <span className="hq-hear-jp">{clip.label}</span> : null}
+          <SpeakButton text={clip.han} lang="yue" className="hq-hear-speak" warm={false} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function TeachBody({ step, onAdvance }: { step: TeachStep; onAdvance: () => void }) {
   return (
     <>
@@ -76,13 +94,18 @@ function TeachBody({ step, onAdvance }: { step: TeachStep; onAdvance: () => void
         <Line line={step.body} />
       </p>
       {step.spotlight ? (
-        <div className="hq-quest-spotlight" aria-hidden="true">
-          <span className="hq-quest-spotlight-glyph">{step.spotlight}</span>
+        <div className="hq-quest-spotlight">
+          <span className="hq-quest-spotlight-glyph" aria-hidden="true">
+            {step.spotlight}
+          </span>
           {step.spotlightHint ? (
             <Line line={step.spotlightHint} className="hq-quest-spotlight-hint" />
           ) : null}
+          <HearRow clips={step.hear} />
         </div>
-      ) : null}
+      ) : (
+        <HearRow clips={step.hear} />
+      )}
       <button type="button" className="hq-btn hq-btn--primary" onClick={onAdvance}>
         Cast off →
       </button>
@@ -121,6 +144,7 @@ function PickBody({
       <h2 className="hq-quest-title">
         <Line line={step.prompt} />
       </h2>
+      <HearRow clips={step.hear} />
       <div className="hq-choices" role="group" aria-label="Answers">
         {step.choices.map((c) => {
           let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
@@ -206,11 +230,13 @@ function BuildBody({
       <h2 className="hq-quest-title">
         <Line line={step.prompt} />
       </h2>
+      {!resolved ? <HearRow clips={step.hear} /> : null}
       <div className="hq-build-preview" aria-live="polite">
         <span className="hq-build-jp">{resolved && ok ? step.resultJp : assembled}</span>
         {resolved && ok && step.resultGloss ? (
           <Line line={step.resultGloss} className="hq-build-gloss" />
         ) : null}
+        {resolved && ok ? <HearRow clips={step.hear} /> : null}
       </div>
       <div className="hq-build-slots">
         {step.slots.map((slot) => (
