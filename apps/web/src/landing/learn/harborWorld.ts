@@ -17,14 +17,20 @@ import { buildHarborProtagonist } from './harborProtagonist'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
+export type HarborWeather = 'sunny' | 'cloudy' | 'rainy' | 'night'
+
 export type HarborWorldOptions = {
   hue?: HarborHue
   reducedMotion?: boolean
   /** Quest progress 0…1 — canoe eases down the stream. */
   progress?: number
+  /** Force a weather scene (otherwise random per session). */
+  weather?: HarborWeather
 }
 
 export type HarborWorldHandle = {
+  /** Active weather / time-of-day for this session. */
+  weather: HarborWeather
   setProgress: (t: number) => void
   setFlash: (flash: 'ok' | 'no' | null) => void
   setHue: (hue: HarborHue) => void
@@ -71,28 +77,120 @@ export function dockPoseForProgress(progress: number): { z: number; side: 1 | -1
   }
 }
 
-const FOG: Record<HarborHue, number> = {
-  jade: 0x6a9a90,
-  harbor: 0x6a8aa0,
-  ink: 0x5a6878,
-  gold: 0x8a8068,
-}
+/** Water tint per brand hue — weather may override for rain/night. */
 const WATER: Record<HarborHue, number> = {
-  jade: 0x2a8b7c,
-  harbor: 0x2a7a98,
-  ink: 0x3a5870,
-  gold: 0x4a7a78,
-}
-const SKY: Record<HarborHue, number> = {
-  jade: 0x6ab0a0,
-  harbor: 0x6aa0b8,
-  ink: 0x5a7088,
-  gold: 0x9a9068,
+  jade: 0x3ab89a,
+  harbor: 0x3aa8c8,
+  ink: 0x4a7898,
+  gold: 0x5a9890,
 }
 
-/** Exp2 density — keep light so the pier stays readable (not a dark veil). */
-export const HARBOR_FOG_DENSITY = 0.011
+/** Scene weather / time-of-day — picked at random each session. */
+export const HARBOR_WEATHERS: readonly HarborWeather[] = [
+  'sunny',
+  'cloudy',
+  'rainy',
+  'night',
+] as const
 
+type WeatherLook = {
+  sky: number
+  fog: number
+  fogDensity: number
+  amb: number
+  ambI: number
+  sun: number
+  sunI: number
+  hemiSky: number
+  hemiGround: number
+  hemiI: number
+  cloudTones: number[]
+  cloudCount: number
+  cloudOpacity: number
+  rain: boolean
+  stars: boolean
+}
+
+/** Max-bright sunny + distinct cloudy / rainy / night looks. */
+export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
+  sunny: {
+    sky: 0xc8f0ff,
+    fog: 0xe8f8ff,
+    fogDensity: 0.0028,
+    amb: 0xffffff,
+    ambI: 1.65,
+    sun: 0xfffaf0,
+    sunI: 2.55,
+    hemiSky: 0xf0fbff,
+    hemiGround: 0x98b878,
+    hemiI: 1.05,
+    cloudTones: [0xffffff, 0xfffaf5, 0xfff5e8],
+    cloudCount: 9,
+    cloudOpacity: 0.92,
+    rain: false,
+    stars: false,
+  },
+  cloudy: {
+    sky: 0x9ab0c0,
+    fog: 0xb0c0cc,
+    fogDensity: 0.008,
+    amb: 0xd8e0e8,
+    ambI: 1.15,
+    sun: 0xe8eef4,
+    sunI: 0.75,
+    hemiSky: 0xc8d4e0,
+    hemiGround: 0x6a7a68,
+    hemiI: 0.7,
+    cloudTones: [0xd0d4d8, 0xc0c8d0, 0xb8c0c8, 0xe0e4e8],
+    cloudCount: 18,
+    cloudOpacity: 0.88,
+    rain: false,
+    stars: false,
+  },
+  rainy: {
+    sky: 0x6a7888,
+    fog: 0x788898,
+    fogDensity: 0.014,
+    amb: 0xb0bcc8,
+    ambI: 0.95,
+    sun: 0xc8d0d8,
+    sunI: 0.45,
+    hemiSky: 0x98a8b8,
+    hemiGround: 0x4a5a50,
+    hemiI: 0.55,
+    cloudTones: [0x687888, 0x788898, 0x586878, 0x8898a8],
+    cloudCount: 20,
+    cloudOpacity: 0.9,
+    rain: true,
+    stars: false,
+  },
+  night: {
+    sky: 0x0a1830,
+    fog: 0x102038,
+    fogDensity: 0.006,
+    amb: 0x607898,
+    ambI: 0.55,
+    sun: 0xc8d8ff,
+    sunI: 0.35,
+    hemiSky: 0x183058,
+    hemiGround: 0x1a2830,
+    hemiI: 0.4,
+    cloudTones: [0x304868, 0x283858, 0x406080],
+    cloudCount: 7,
+    cloudOpacity: 0.55,
+    rain: false,
+    stars: true,
+  },
+}
+
+/** Default fog density for sunny daylight (smoke-tested). */
+export const HARBOR_FOG_DENSITY = HARBOR_WEATHER_LOOK.sunny.fogDensity
+
+/** Pick a random weather scene (deterministic when `seed` is set). */
+export function pickHarborWeather(seed?: number): HarborWeather {
+  const rng = mulberry32((seed ?? (Date.now() ^ (Math.random() * 0x7fffffff))) >>> 0)
+  return HARBOR_WEATHERS[Math.floor(rng() * HARBOR_WEATHERS.length)]!
+}
 /** Deterministic biome for a chunk index (smoke-tested). */
 export function biomeForChunk(i: number): BiomeId {
   const cycle: BiomeId[] = ['pier', 'village', 'forest', 'reeds', 'hills', 'forest', 'village']
@@ -649,13 +747,11 @@ function wulingyuanRange(seed: number) {
  * Single 祥云 (xiangyun) auspicious cloud — ruyi-head lobes + trailing swirls
  * in the classic Chinese decorative silhouette (not fluffy Western cumulus).
  */
-function xiangyunCloud(rng: () => number) {
+function xiangyunCloud(rng: () => number, tones: number[], opacity: number) {
   const g = new THREE.Group()
-  const tones = [0xf7f2e8, 0xfff8f0, 0xf0e6d8, 0xffecd8, 0xf8f0ff, 0xffe8c8]
   const tone = tones[Math.floor(rng() * tones.length)]!
-  const cloudMat = mat(tone, { transparent: true, opacity: 0.82 + rng() * 0.12 })
-  // Soft gold accent for the auspicious rim
-  const rimMat = mat(0xe8c878, { transparent: true, opacity: 0.55 })
+  const cloudMat = mat(tone, { transparent: true, opacity })
+  const rimMat = mat(0xe8c878, { transparent: true, opacity: Math.min(0.7, opacity * 0.7) })
 
   const lobe = (sx: number, sy: number, sz: number, x: number, y: number, z: number, rim = false) => {
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.55, 6, 5), rim ? rimMat : cloudMat)
@@ -664,13 +760,10 @@ function xiangyunCloud(rng: () => number) {
     g.add(mesh)
   }
 
-  // Ruyi head — three stacked curls (classic 如意云头)
   lobe(1.35, 0.55, 0.95, 0, 0.15, 0)
   lobe(0.95, 0.48, 0.75, -0.85, 0.35, 0.1)
   lobe(0.95, 0.48, 0.75, 0.85, 0.35, -0.05)
-  // Upper crown curl
   lobe(0.7, 0.4, 0.55, 0, 0.7, 0.05, true)
-  // Trailing body lobes (scrolling 流云)
   const trail = 2 + Math.floor(rng() * 3)
   for (let i = 0; i < trail; i++) {
     const t = (i + 1) / (trail + 1)
@@ -684,7 +777,6 @@ function xiangyunCloud(rng: () => number) {
       i === trail - 1,
     )
   }
-  // Small spiral accent under the head
   lobe(0.45, 0.28, 0.4, 0.35, -0.15, 0.2)
 
   g.userData.xiangyun = true
@@ -693,27 +785,23 @@ function xiangyunCloud(rng: () => number) {
   return g
 }
 
-/** Sky field of 祥云 — parallax layer above the river voyage. */
-function xiangyunSky(seed: number) {
+/** Sky field of 祥云 — density/tone follow the weather look. */
+function xiangyunSky(seed: number, look: WeatherLook) {
   const root = new THREE.Group()
   const rng = mulberry32(seed)
-  const count = 14
+  const count = look.cloudCount
   for (let i = 0; i < count; i++) {
-    const cloud = xiangyunCloud(rng)
+    const cloud = xiangyunCloud(rng, look.cloudTones, look.cloudOpacity)
     const side = i % 2 === 0 ? 1 : -1
-    const x = side * (6 + rng() * 22 + (i % 4) * 1.5)
-    const y = 9 + rng() * 7
-    const z = (rng() - 0.5) * 100
-    cloud.position.set(x, y, z)
+    cloud.position.set(side * (6 + rng() * 22 + (i % 4) * 1.5), 9 + rng() * 7, (rng() - 0.5) * 100)
     cloud.rotation.y = (rng() - 0.5) * 0.8
     cloud.scale.setScalar(1.4 + rng() * 2.2)
-    // Flatten slightly so they read as painted sky scrolls
     cloud.scale.y *= 0.75 + rng() * 0.2
     root.add(cloud)
   }
-  // A few closer ceremonial banners of cloud
-  for (let i = 0; i < 5; i++) {
-    const cloud = xiangyunCloud(rng)
+  const near = Math.max(2, Math.floor(count / 3))
+  for (let i = 0; i < near; i++) {
+    const cloud = xiangyunCloud(rng, look.cloudTones, look.cloudOpacity)
     cloud.position.set((rng() - 0.5) * 18, 7.5 + rng() * 3, -8 + i * 16)
     cloud.scale.setScalar(1.1 + rng() * 1.2)
     cloud.scale.y *= 0.7
@@ -723,6 +811,79 @@ function xiangyunSky(seed: number) {
   return root
 }
 
+/** Falling rain streaks parented near the canoe. */
+function rainField(seed: number) {
+  const rng = mulberry32(seed)
+  const count = 700
+  const positions = new Float32Array(count * 3)
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (rng() - 0.5) * 36
+    positions[i * 3 + 1] = rng() * 22
+    positions[i * 3 + 2] = (rng() - 0.5) * 50
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  const pts = new THREE.Points(
+    geo,
+    new THREE.PointsMaterial({
+      color: 0xb8d0e8,
+      size: 0.09,
+      transparent: true,
+      opacity: 0.7,
+      depthWrite: false,
+    }),
+  )
+  pts.userData.rain = true
+  pts.frustumCulled = false
+  return pts
+}
+
+/** Night sky field + a few streaking shooting stars. */
+function nightSkyField(seed: number) {
+  const root = new THREE.Group()
+  const rng = mulberry32(seed)
+  const count = 220
+  const positions = new Float32Array(count * 3)
+  for (let i = 0; i < count; i++) {
+    const theta = rng() * Math.PI * 2
+    const phi = rng() * 0.55
+    const r = 40 + rng() * 30
+    positions[i * 3] = Math.sin(theta) * Math.cos(phi) * r
+    positions[i * 3 + 1] = 8 + Math.sin(phi) * r * 0.85
+    positions[i * 3 + 2] = Math.cos(theta) * Math.cos(phi) * r
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  const stars = new THREE.Points(
+    geo,
+    new THREE.PointsMaterial({
+      color: 0xfff8e0,
+      size: 0.18,
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+    }),
+  )
+  stars.userData.stars = true
+  root.add(stars)
+
+  const streaks: THREE.Mesh[] = []
+  for (let i = 0; i < 4; i++) {
+    const streak = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.08, 2.8),
+      mat(0xfff5d0, { transparent: true, opacity: 0 }),
+    )
+    streak.userData.shooting = true
+    streak.userData.delay = rng() * 8
+    streak.userData.life = 0
+    streak.visible = false
+    root.add(streak)
+    streaks.push(streak)
+  }
+  root.userData.streaks = streaks
+  root.userData.nightSky = true
+  return root
+}
 function place(
   group: THREE.Group,
   rng: () => number,
@@ -888,6 +1049,8 @@ export function createHarborWorld(
   let flash: 'ok' | 'no' | null = null
   let flashUntil = 0
   let disposed = false
+  const weather: HarborWeather = options.weather ?? pickHarborWeather()
+  const look = HARBOR_WEATHER_LOOK[weather]
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -896,29 +1059,37 @@ export function createHarborWorld(
     powerPreference: 'high-performance',
   })
   renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.5))
-  renderer.setClearColor(SKY[hue], 1)
+  renderer.setClearColor(look.sky, 1)
   renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.toneMapping = THREE.ACESFilmicToneMapping
+  // Sunny pushes exposure high so the voyage reads full daylight
+  renderer.toneMappingExposure =
+    weather === 'sunny' ? 1.42 : weather === 'cloudy' ? 1.12 : weather === 'rainy' ? 1.0 : 0.92
 
   const scene = new THREE.Scene()
-  // Soft daylight haze — dark Exp2 fog read as a UI overlay on the pier
-  scene.fog = new THREE.FogExp2(FOG[hue], HARBOR_FOG_DENSITY)
-  scene.background = new THREE.Color(SKY[hue])
+  scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
+  scene.background = new THREE.Color(look.sky)
 
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 220)
   camera.position.set(0, 4.2, -6.5)
 
-  const amb = new THREE.AmbientLight(0xd0e8f0, 0.92)
+  const amb = new THREE.AmbientLight(look.amb, look.ambI)
   scene.add(amb)
-  const sun = new THREE.DirectionalLight(0xfff6e0, 1.15)
-  sun.position.set(-4, 10, 2)
+  const sun = new THREE.DirectionalLight(look.sun, look.sunI)
+  sun.position.set(weather === 'night' ? 2 : -4, weather === 'night' ? 6 : 14, 2)
   scene.add(sun)
-  const fill = new THREE.HemisphereLight(0xc8e8f8, 0x4a6a58, 0.45)
+  const fill = new THREE.HemisphereLight(look.hemiSky, look.hemiGround, look.hemiI)
   scene.add(fill)
 
   const world = new THREE.Group()
   scene.add(world)
 
-  const waterMat = mat(WATER[hue], { transparent: true, opacity: 0.88 })
+  const waterTint =
+    weather === 'night' ? 0x1a3048 : weather === 'rainy' ? 0x3a6078 : weather === 'cloudy' ? 0x4a8898 : WATER[hue]
+  const waterMat = mat(waterTint, {
+    transparent: true,
+    opacity: weather === 'rainy' ? 0.92 : weather === 'night' ? 0.9 : 0.88,
+  })
   const water = new THREE.Mesh(new THREE.PlaneGeometry(RIVER * 2.4, 400, 1, 40), waterMat)
   water.rotation.x = -Math.PI / 2
   water.position.set(0, 0.02, 80)
@@ -959,9 +1130,15 @@ export function createHarborWorld(
   const mountains = wulingyuanRange(42)
   scene.add(mountains)
 
-  // 祥云 — auspicious Chinese sky scrolls
-  const clouds = xiangyunSky(77)
+  // 祥云 — density/tone follow the weather look
+  const clouds = xiangyunSky(77, look)
   scene.add(clouds)
+
+  const rain = look.rain ? rainField(0x51f1e ^ (hue.charCodeAt(0) << 8)) : null
+  if (rain) scene.add(rain)
+
+  const nightSky = look.stars ? nightSkyField(0x33a11 ^ (hue.charCodeAt(0) << 4)) : null
+  if (nightSky) scene.add(nightSky)
 
   const wakeMat = mat(0xa8d8e8, { transparent: true, opacity: 0.35 })
   const wakes: THREE.Mesh[] = []
@@ -1036,10 +1213,13 @@ export function createHarborWorld(
   resize()
 
   const applyHue = () => {
-    scene.background = new THREE.Color(SKY[hue])
-    scene.fog = new THREE.FogExp2(FOG[hue], HARBOR_FOG_DENSITY)
-    renderer.setClearColor(SKY[hue], 1)
-    waterMat.color.setHex(WATER[hue])
+    // Weather owns sky/fog; hue only retints the river when daylight allows it
+    scene.background = new THREE.Color(look.sky)
+    scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
+    renderer.setClearColor(look.sky, 1)
+    if (weather === 'sunny') {
+      waterMat.color.setHex(WATER[hue])
+    }
   }
 
   const tick = (now: number) => {
@@ -1096,6 +1276,55 @@ export function createHarborWorld(
       })
     }
 
+    // Rain sheet follows the canoe and falls
+    if (rain) {
+      rain.position.set(boat.position.x, 0, boat.position.z)
+      if (!reduced) {
+        const pos = rain.geometry.getAttribute('position') as THREE.BufferAttribute
+        const arr = pos.array as Float32Array
+        const fall = dt * 18
+        for (let i = 1; i < arr.length; i += 3) {
+          arr[i]! -= fall
+          if (arr[i]! < 0) arr[i]! += 22
+        }
+        pos.needsUpdate = true
+      }
+    }
+
+    // Night stars follow canoe; shooting stars streak across the sky
+    if (nightSky) {
+      nightSky.position.set(boat.position.x, 0, boat.position.z)
+      if (!reduced) {
+        const streaks = (nightSky.userData.streaks as THREE.Mesh[]) || []
+        for (const streak of streaks) {
+          let life = (streak.userData.life as number) || 0
+          let delay = (streak.userData.delay as number) || 0
+          if (life <= 0) {
+            delay -= dt
+            streak.userData.delay = delay
+            if (delay <= 0) {
+              streak.userData.life = 0.9 + Math.random() * 0.5
+              streak.userData.delay = 4 + Math.random() * 10
+              streak.visible = true
+              streak.position.set((Math.random() - 0.5) * 28, 12 + Math.random() * 8, (Math.random() - 0.5) * 20)
+              streak.rotation.set(0, Math.random() * Math.PI * 2, -0.55 - Math.random() * 0.35)
+              ;(streak.material as THREE.MeshLambertMaterial).opacity = 0.95
+            } else {
+              streak.visible = false
+            }
+          } else {
+            life -= dt
+            streak.userData.life = life
+            streak.position.x += Math.sin(streak.rotation.y) * dt * 22
+            streak.position.y -= dt * 10
+            streak.position.z += Math.cos(streak.rotation.y) * dt * 22
+            ;(streak.material as THREE.MeshLambertMaterial).opacity = Math.max(0, life * 1.1)
+            if (life <= 0) streak.visible = false
+          }
+        }
+      }
+    }
+
     // Ease orbit toward finger drag (snappy, still smooth)
     const orbitLerp = Math.min(1, dt * 14)
     yaw += (yawTarget - yaw) * orbitLerp
@@ -1137,7 +1366,7 @@ export function createHarborWorld(
     if (flash && now < flashUntil) {
       amb.color.lerp(new THREE.Color(flash === 'ok' ? 0x3dcfb6 : 0xe07070), 0.15)
     } else {
-      amb.color.lerp(new THREE.Color(0xb8d4e0), 0.08)
+      amb.color.lerp(new THREE.Color(look.amb), 0.08)
       if (now >= flashUntil) flash = null
     }
 
@@ -1149,6 +1378,7 @@ export function createHarborWorld(
   raf = requestAnimationFrame(tick)
 
   return {
+    weather,
     setProgress(t) {
       progress = Math.min(1, Math.max(0, t))
     },
@@ -1183,6 +1413,22 @@ export function createHarborWorld(
       grassMat.dispose()
       sandMat.dispose()
       wakeMat.dispose()
+      if (rain) {
+        rain.geometry.dispose()
+        ;(rain.material as THREE.PointsMaterial).dispose()
+      }
+      if (nightSky) {
+        nightSky.traverse((o) => {
+          if (o instanceof THREE.Points) {
+            o.geometry.dispose()
+            ;(o.material as THREE.PointsMaterial).dispose()
+          }
+          if (o instanceof THREE.Mesh) {
+            o.geometry.dispose()
+            ;(o.material as THREE.Material).dispose()
+          }
+        })
+      }
       renderer.dispose()
     },
   }
