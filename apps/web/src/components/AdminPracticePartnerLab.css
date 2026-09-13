@@ -154,70 +154,92 @@
   z-index: 3;
   width: min(92%, 34rem);
   transform: translateX(-50%);
-  padding: 0.7rem 1rem 0.85rem;
-  border-radius: 0.95rem;
-  border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, #041018 72%, transparent),
-      color-mix(in srgb, #02080c 88%, transparent)
-    );
-  backdrop-filter: blur(10px);
+  padding: 0.35rem 0.75rem 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
   text-align: center;
   pointer-events: none;
-  box-shadow: 0 12px 36px color-mix(in srgb, #000 35%, transparent);
+  box-shadow: none;
 }
 
-.partner-lab-subtitles--you {
-  border-color: color-mix(in srgb, var(--jade) 35%, var(--glass-border));
-}
-
-.partner-lab-subtitles--partner {
-  border-color: color-mix(in srgb, var(--jade) 55%, var(--glass-border));
-  box-shadow:
-    0 12px 36px color-mix(in srgb, #000 35%, transparent),
-    0 0 28px color-mix(in srgb, var(--jade) 18%, transparent);
-}
-
+.partner-lab-subtitles--you,
+.partner-lab-subtitles--partner,
 .partner-lab-subtitles--system {
-  opacity: 0.92;
+  border: none;
+  box-shadow: none;
 }
 
 .partner-lab-subtitles.is-interim .partner-lab-subtitles-text {
-  opacity: 0.82;
+  opacity: 0.88;
+}
+
+/* Fallout 4 plate: speaker name on its own line, dialogue beneath */
+.partner-lab-subtitles-speaker {
+  display: block;
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display), 'Noto Sans', system-ui, sans-serif;
+  font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: #4dfc4d;
+  text-shadow:
+    0 0 2px #000,
+    1px 1px 0 #000,
+    -1px 1px 0 #000,
+    1px -1px 0 #000,
+    -1px -1px 0 #000;
+}
+
+.partner-lab-subtitles--you .partner-lab-subtitles-speaker {
+  color: #7ef0ff;
+}
+
+.partner-lab-subtitles--system .partner-lab-subtitles-speaker {
+  color: #b8c4b0;
 }
 
 .partner-lab-subtitles-role {
-  display: inline-block;
-  margin-bottom: 0.25rem;
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--jade) 75%, var(--muted));
-}
-
-.partner-lab-subtitles--partner .partner-lab-subtitles-role {
-  color: var(--jade);
+  display: none;
 }
 
 .partner-lab-subtitles-text {
   margin: 0;
   font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
   font-size: clamp(1.05rem, 2.4vw, 1.35rem);
-  font-weight: 550;
+  font-weight: 600;
   line-height: 1.35;
   letter-spacing: 0.01em;
-  color: var(--ink-bright);
+  color: #fff;
+  text-shadow:
+    0 0 2px #000,
+    1px 1px 0 #000,
+    -1px 1px 0 #000,
+    1px -1px 0 #000,
+    -1px -1px 0 #000;
 }
 
 .partner-lab-subtitles-secondary {
-  margin: 0.35rem 0 0;
-  font-family: var(--font-display);
+  margin: 0 0 0.55rem;
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
   font-size: 0.82rem;
   line-height: 1.35;
-  color: color-mix(in srgb, var(--jade) 55%, var(--muted));
+  opacity: 0.72;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+.partner-lab-subtitles-secondary .partner-lab-subtitles-speaker {
+  display: inline;
+  margin: 0 0.4rem 0 0;
+  font-size: 0.72rem;
+  vertical-align: 0.05em;
+}
+
+.partner-lab-subtitles-secondary-text {
+  color: color-mix(in srgb, #fff 82%, transparent);
 }
 
 .partner-lab-status {
@@ -428,6 +450,38 @@
   gap: 0.65rem;
 }
 
+.partner-lab-voice {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 11rem;
+}
+
+.partner-lab-voice-label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+}
+
+.partner-lab-voice select {
+  appearance: none;
+  min-width: 12rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.partner-lab-voice select:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .partner-lab-talk {
   appearance: none;
   min-width: 7.5rem;
@@ -575,36 +629,39 @@
   );
 }
 
-/* TV / game subtitles — lower half, centered, high-contrast */
+/* Fallout / game subtitles — lower half, no plate, Pip-Boy green name */
 .partner-lab.is-fullscreen .partner-lab-subtitles {
   top: auto;
   bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 4.75rem));
   left: 50%;
   right: auto;
-  width: min(92vw, 42rem);
+  width: min(94vw, 44rem);
   max-width: none;
   transform: translateX(-50%);
-  padding: 0.85rem 1.15rem 1rem;
-  border-radius: 0.35rem;
+  padding: 0.35rem 1rem 0.55rem;
+  border-radius: 0;
   border: none;
-  background: color-mix(in srgb, #000 58%, transparent);
+  background: transparent;
   box-shadow: none;
-  backdrop-filter: blur(6px);
+  backdrop-filter: none;
   text-align: center;
   z-index: 4;
 }
 
-.partner-lab.is-fullscreen .partner-lab-subtitles-role {
-  margin-bottom: 0.35rem;
-  font-size: 0.7rem;
-  opacity: 0.9;
+.partner-lab.is-fullscreen .partner-lab-subtitles-speaker {
+  margin-bottom: 0.28rem;
+  font-size: clamp(1.05rem, 3.2vw, 1.35rem);
 }
 
 .partner-lab.is-fullscreen .partner-lab-subtitles-text {
-  font-size: clamp(1.25rem, 4.2vw, 1.85rem);
-  font-weight: 600;
+  font-size: clamp(1.25rem, 4.2vw, 1.9rem);
+  font-weight: 650;
   line-height: 1.35;
-  text-shadow: 0 1px 2px color-mix(in srgb, #000 55%, transparent);
+}
+
+.partner-lab.is-fullscreen .partner-lab-subtitles-secondary {
+  margin-bottom: 0.65rem;
+  font-size: clamp(0.85rem, 2.6vw, 1.05rem);
 }
 
 .partner-lab.is-fullscreen .partner-lab-status {

@@ -9,7 +9,38 @@ import { createWebSpeechSession } from '../lib/webSpeech'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
 import { isTtsPlaying, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
 import type { LiveSession, SpeechEventHandlers } from '../lib/types'
+import {
+  YUE_VOICES,
+  resolveYueVoice,
+  type YueVoiceId,
+} from '../lib/ttsVoices'
 import './AdminPracticePartnerLab.css'
+
+const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
+
+function readPartnerVoice(): YueVoiceId {
+  if (typeof window === 'undefined') return resolveYueVoice(null)
+  try {
+    return resolveYueVoice(localStorage.getItem(PARTNER_VOICE_KEY))
+  } catch {
+    return resolveYueVoice(null)
+  }
+}
+
+function writePartnerVoice(id: YueVoiceId) {
+  try {
+    localStorage.setItem(PARTNER_VOICE_KEY, resolveYueVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Fallout-style speaker plate: Azure profile name before the · gender tag. */
+function voiceSpeakerName(id: YueVoiceId): string {
+  const meta = YUE_VOICES.find((v) => v.id === id)
+  if (!meta) return 'Partner'
+  return meta.labelEn.split('·')[0]?.trim() || meta.labelEn
+}
 
 export type PartnerMood = 'idle' | 'listening' | 'thinking' | 'speaking'
 
@@ -92,6 +123,7 @@ export function AdminPracticePartnerLab() {
   const [lastModel, setLastModel] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
+  const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
@@ -189,7 +221,7 @@ export function AdminPracticePartnerLab() {
         // cannot leave the lab stuck on Speaking forever.
         try {
           await Promise.race([
-            speakText(reply, 'yue', null, { loud: true }),
+            speakText(reply, 'yue', partnerVoice, { loud: true }),
             new Promise<never>((_, reject) => {
               window.setTimeout(
                 () => reject(new Error('Voice playback timed out — tap Talk again.')),
@@ -217,7 +249,7 @@ export function AdminPracticePartnerLab() {
         turnLockRef.current = false
       }
     },
-    [pushReel],
+    [partnerVoice, pushReel],
   )
 
   const finishUtterance = useCallback(async () => {
@@ -427,6 +459,20 @@ export function AdminPracticePartnerLab() {
     setFsTypeOpen(true)
   }
 
+  const partnerSpeaker = voiceSpeakerName(partnerVoice)
+  const speakerName =
+    displayPrimary.role === 'partner'
+      ? partnerSpeaker
+      : displayPrimary.role === 'you'
+        ? 'You'
+        : 'Lab'
+
+  const onPartnerVoiceChange = (next: string) => {
+    const id = resolveYueVoice(next)
+    setPartnerVoice(id)
+    writePartnerVoice(id)
+  }
+
   return (
     <section className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Practice Partner lab">
       <header className="partner-lab-head">
@@ -482,7 +528,7 @@ export function AdminPracticePartnerLab() {
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
         <div
-          className={`partner-lab-subtitles partner-lab-subtitles--${displayPrimary.role}${
+          className={`partner-lab-subtitles partner-lab-subtitles--fallout partner-lab-subtitles--${displayPrimary.role}${
             displayPrimary.interim ? ' is-interim' : ''
           }${displaySecondary ? ' has-secondary' : ''}`}
           aria-live="polite"
@@ -490,11 +536,11 @@ export function AdminPracticePartnerLab() {
         >
           {displaySecondary ? (
             <p className="partner-lab-subtitles-secondary">
-              <span className="partner-lab-subtitles-role">{ROLE_LABEL.partner}</span>
-              {displaySecondary.text}
+              <span className="partner-lab-subtitles-speaker">{partnerSpeaker}</span>
+              <span className="partner-lab-subtitles-secondary-text">{displaySecondary.text}</span>
             </p>
           ) : null}
-          <span className="partner-lab-subtitles-role">{ROLE_LABEL[displayPrimary.role]}</span>
+          <p className="partner-lab-subtitles-speaker">{speakerName}</p>
           <p className="partner-lab-subtitles-text">{displayPrimary.text}</p>
           {listening && !youLive ? (
             <p className="partner-lab-subtitles-listening">Listening… your words appear here</p>
@@ -588,6 +634,21 @@ export function AdminPracticePartnerLab() {
           </>
         ) : (
           <>
+            <label className="partner-lab-voice">
+              <span className="partner-lab-voice-label">Partner voice</span>
+              <select
+                value={partnerVoice}
+                disabled={busy || listening}
+                aria-label="Practice Partner Azure voice"
+                onChange={(e) => onPartnerVoiceChange(e.target.value)}
+              >
+                {YUE_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.labelEn}
+                  </option>
+                ))}
+              </select>
+            </label>
             <button
               type="button"
               className={`partner-lab-talk${listening ? ' is-live' : ''}`}
