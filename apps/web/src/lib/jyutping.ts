@@ -10,15 +10,15 @@ export { hasHan }
 
 /**
  * On-screen tone rendering — pick one:
- * - `obfuscated` (default) — roman+digit text + canvas Chao (Noto look, no Chao text nodes)
- * - `unicode` — classic `teng1˥` in the DOM
+ * - `unicode` (default) — `teng1` + Chao letters in the DOM (`.chao-face` → Noto Sans)
+ * - `obfuscated` — roman+digit text + canvas Chao (optional scrape friction)
  * - `svg` — stroke contours (no Chao; does not match Noto letterforms)
  *
  * Family “Copy Jyutping + Chao” always uses Unicode Chao via `rubyJpSyllable()`.
  */
 export type JyutpingUiToneMode = 'obfuscated' | 'unicode' | 'svg'
 
-export const JYUTPING_UI_TONE_MODE: JyutpingUiToneMode = 'obfuscated'
+export const JYUTPING_UI_TONE_MODE: JyutpingUiToneMode = 'unicode'
 
 /** @deprecated Prefer `JYUTPING_UI_TONE_MODE === 'svg'`. Kept as a one-line reverse switch. */
 export const JYUTPING_UI_SVG_TONES: boolean = modeIsSvg(JYUTPING_UI_TONE_MODE)
@@ -54,6 +54,11 @@ const TONE_LETTERS: Record<string, string> = {
 }
 
 export type JyutTone = '1' | '2' | '3' | '4' | '5' | '6'
+
+/** Chao contour glyph for one tone digit (LSHK §4). */
+export function chaoContourForTone(tone: JyutTone): string {
+  return TONE_LETTERS[tone]
+}
 
 /** Split `teng1` → roman+digit for UI; null if not a plain Jyutping syllable. */
 export function parseJyutpingTone(jp: string): { roman: string; tone: JyutTone } | null {
