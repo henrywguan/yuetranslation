@@ -43,10 +43,13 @@
   color-scheme: dark;
 }
 
-/* Chao tone letters (˥ ˧˥ …) — HK font lacks these; always paint with Noto Sans. */
+/* Chao tone letters (˥ ˧˥ ˧ ˨˩ ˩˧ ˨) — Noto Sans HK lacks these; force Noto Sans. */
 .chao-face {
-  font-family: var(--font-english);
+  font-family: 'Noto Sans', var(--font-english), system-ui, sans-serif;
   font-weight: inherit;
+  font-style: normal;
+  /* Keep contour letters on the Latin face even inside zh / HK runs */
+  font-synthesis: none;
 }
 
 [data-theme='light'] {

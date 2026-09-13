@@ -59,7 +59,12 @@ export function QuestPanel({
     >
       {!talking ? (
         <div className="hq-explore-bar">
-          <p className="hq-explore-hint">Drag to look around the harbor</p>
+          <p className="hq-explore-hint">
+            <span className="hq-explore-step">
+              {stepIndex + 1}/{stepCount}
+            </span>
+            <span className="hq-explore-hint-text">Drag to look around the harbor</span>
+          </p>
           <div className="hq-explore-actions">
             <button type="button" className="hq-btn hq-btn--primary hq-btn--talk" onClick={onTalk}>
               Talk to {speaker.en}
@@ -226,14 +231,14 @@ function TeachBody({
         <p>
           <Line line={step.body} />
         </p>
-        {step.spotlight ? (
-          <p className="hq-dialog-spotlight" aria-hidden="true">
-            <JyutpingChaoText text={step.spotlight} />
-          </p>
-        ) : null}
         {step.spotlightHint ? (
           <p className="hq-dialog-hint">
             <Line line={step.spotlightHint} />
+          </p>
+        ) : null}
+        {step.spotlight ? (
+          <p className="hq-dialog-spotlight" aria-hidden="true">
+            <JyutpingChaoText text={step.spotlight} />
           </p>
         ) : null}
         <HearRow clips={step.hear} />
