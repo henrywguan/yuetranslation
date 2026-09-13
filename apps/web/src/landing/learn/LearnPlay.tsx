@@ -45,6 +45,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prev
+      stopHarborCorrectFanfare()
     }
   }, [])
 
