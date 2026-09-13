@@ -91,7 +91,13 @@ export function AdminPracticePartnerLab() {
   const [draft, setDraft] = useState('')
   const [lastModel, setLastModel] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
+  const [fsTypeOpen, setFsTypeOpen] = useState(false)
+  /** Last partner line — stays on screen until the user starts speaking. */
+  const [partnerHold, setPartnerHold] = useState<string | null>(null)
+  /** Live STT (interim + accumulating finals) while the mic is open. */
+  const [youLive, setYouLive] = useState<{ text: string; interim: boolean } | null>(null)
 
+  const draftInputRef = useRef<HTMLInputElement | null>(null)
   const sessionRef = useRef<LiveSession | null>(null)
   const finalsRef = useRef('')
   const silenceTimerRef = useRef(0)
@@ -153,6 +159,8 @@ export function AdminPracticePartnerLab() {
       turnLockRef.current = true
       setBusy(true)
       setError('')
+      setYouLive(null)
+      setFsTypeOpen(false)
       setMood('thinking')
       setCaption({ role: 'system', text: '港灣 is thinking…' })
 
@@ -172,6 +180,8 @@ export function AdminPracticePartnerLab() {
         setMessages(withReply)
         setLastModel(model)
         setMood('speaking')
+        setPartnerHold(reply)
+        setYouLive(null)
         setCaption({ role: 'partner', text: reply })
         pushReel({ role: 'partner', text: reply })
         // After the LLM round-trip we are outside the user gesture. Unlock must
@@ -195,10 +205,8 @@ export function AdminPracticePartnerLab() {
           // Caption already shows the partner line; keep chatting even if TTS failed.
         }
         setMood('idle')
-        setCaption({
-          role: 'system',
-          text: 'Ready — tap Talk or type another line.',
-        })
+        // Keep the partner line on screen until the user starts speaking again.
+        setCaption({ role: 'partner', text: reply })
       } catch (e) {
         setMood('idle')
         const msg = e instanceof Error ? e.message : 'Partner turn failed'
@@ -219,14 +227,19 @@ export function AdminPracticePartnerLab() {
     await stopMic()
     if (!spoken) {
       setMood('idle')
-      setCaption({
-        role: 'system',
-        text: 'No speech captured — try again, or type a line below.',
-      })
+      setYouLive(null)
+      setCaption(
+        partnerHold
+          ? { role: 'partner', text: partnerHold }
+          : {
+              role: 'system',
+              text: 'No speech captured — try again, or type a line below.',
+            },
+      )
       return
     }
     await runPartnerTurn(spoken)
-  }, [runPartnerTurn, stopMic])
+  }, [partnerHold, runPartnerTurn, stopMic])
 
   useEffect(() => {
     finishRef.current = () => {
@@ -246,6 +259,7 @@ export function AdminPracticePartnerLab() {
         const t = text.trim()
         if (!t) return
         setMood('listening')
+        setYouLive({ text: t, interim: true })
         setCaption({ role: 'you', text: t, interim: true })
       },
       onFinal: (_lang, text) => {
@@ -253,6 +267,7 @@ export function AdminPracticePartnerLab() {
         if (!t) return
         finalsRef.current = `${finalsRef.current} ${t}`.trim()
         setMood('listening')
+        setYouLive({ text: finalsRef.current, interim: false })
         setCaption({ role: 'you', text: finalsRef.current })
         window.clearTimeout(silenceTimerRef.current)
         silenceTimerRef.current = window.setTimeout(() => {
@@ -278,8 +293,14 @@ export function AdminPracticePartnerLab() {
     }
 
     sessionRef.current = session
+    setYouLive(null)
     setMood('listening')
-    setCaption({ role: 'system', text: 'Listening… speak in Cantonese or English.' })
+    // Keep partner subtitles visible until STT produces text.
+    if (partnerHold) {
+      setCaption({ role: 'partner', text: partnerHold })
+    } else {
+      setCaption({ role: 'system', text: 'Listening… speak in Cantonese or English.' })
+    }
     setListening(true)
     try {
       // Live-mic invariant: start STT before pausing TTS on Apple barge-in.
@@ -293,7 +314,7 @@ export function AdminPracticePartnerLab() {
       setMood('idle')
       setError(e instanceof Error ? e.message : 'Could not start mic')
     }
-  }, [busy, listening, stopMic])
+  }, [busy, listening, partnerHold, stopMic])
 
   const toggleTalk = useCallback(() => {
     if (listening) {
@@ -311,6 +332,7 @@ export function AdminPracticePartnerLab() {
     // Same gesture unlock as Talk — typed turns also auto-speak after the LLM.
     unlockTtsPlayback()
     setDraft('')
+    setFsTypeOpen(false)
     void runPartnerTurn(text)
   }, [draft, busy, runPartnerTurn])
 
@@ -323,6 +345,9 @@ export function AdminPracticePartnerLab() {
     setReel([])
     setLastModel('')
     setError('')
+    setPartnerHold(null)
+    setYouLive(null)
+    setFsTypeOpen(false)
     setMood('idle')
     setCaption({
       role: 'system',
@@ -346,18 +371,35 @@ export function AdminPracticePartnerLab() {
   }, [stopMic])
 
   useEffect(() => {
-    if (!fullscreen) return undefined
+    if (!fullscreen) {
+      setFsTypeOpen(false)
+      return undefined
+    }
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setFullscreen(false)
+      if (event.key === 'Escape') {
+        if (fsTypeOpen) {
+          setFsTypeOpen(false)
+          return
+        }
+        setFullscreen(false)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKey)
     }
-  }, [fullscreen])
+  }, [fullscreen, fsTypeOpen])
+
+  useEffect(() => {
+    if (!fullscreen || !fsTypeOpen) return
+    const id = window.requestAnimationFrame(() => {
+      draftInputRef.current?.focus()
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [fullscreen, fsTypeOpen])
 
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
     const base = { ...ORBITAL_SPHERE_DEFAULTS, ...MOOD_ORBIT[mood] }
@@ -372,6 +414,18 @@ export function AdminPracticePartnerLab() {
   }, [mood, amp])
 
   const moodMeta = MOODS.find((m) => m.id === mood)!
+
+  const displayPrimary: SubtitleLine = youLive
+    ? { role: 'you', text: youLive.text, interim: youLive.interim }
+    : caption
+  // When you are speaking, keep the last partner line visible above your STT.
+  const displaySecondary =
+    youLive && partnerHold ? { role: 'partner' as const, text: partnerHold } : null
+
+  const openFsKeyboard = () => {
+    if (busy || listening) return
+    setFsTypeOpen(true)
+  }
 
   return (
     <section className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Practice Partner lab">
@@ -428,14 +482,23 @@ export function AdminPracticePartnerLab() {
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
         <div
-          className={`partner-lab-subtitles partner-lab-subtitles--${caption.role}${
-            caption.interim ? ' is-interim' : ''
-          }`}
+          className={`partner-lab-subtitles partner-lab-subtitles--${displayPrimary.role}${
+            displayPrimary.interim ? ' is-interim' : ''
+          }${displaySecondary ? ' has-secondary' : ''}`}
           aria-live="polite"
           onClick={(event) => event.stopPropagation()}
         >
-          <span className="partner-lab-subtitles-role">{ROLE_LABEL[caption.role]}</span>
-          <p className="partner-lab-subtitles-text">{caption.text}</p>
+          {displaySecondary ? (
+            <p className="partner-lab-subtitles-secondary">
+              <span className="partner-lab-subtitles-role">{ROLE_LABEL.partner}</span>
+              {displaySecondary.text}
+            </p>
+          ) : null}
+          <span className="partner-lab-subtitles-role">{ROLE_LABEL[displayPrimary.role]}</span>
+          <p className="partner-lab-subtitles-text">{displayPrimary.text}</p>
+          {listening && !youLive ? (
+            <p className="partner-lab-subtitles-listening">Listening… your words appear here</p>
+          ) : null}
         </div>
 
         <p className="partner-lab-status" aria-live="polite">
@@ -445,46 +508,127 @@ export function AdminPracticePartnerLab() {
         </p>
       </div>
 
-      <div className="partner-lab-live" role="group" aria-label="Practice Partner live controls">
-        <button
-          type="button"
-          className={`partner-lab-talk${listening ? ' is-live' : ''}`}
-          disabled={busy && !listening}
-          onClick={toggleTalk}
-        >
-          {listening ? 'Stop & reply' : busy ? 'Working…' : 'Talk'}
-        </button>
-        <div className="partner-lab-compose">
-          <input
-            type="text"
-            value={draft}
-            disabled={busy || listening}
-            placeholder="Or type Cantonese / English…"
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                sendDraft()
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="partner-lab-send"
-            disabled={busy || listening || !draft.trim()}
-            onClick={sendDraft}
-          >
-            Send
-          </button>
-        </div>
-        <button
-          type="button"
-          className="partner-lab-reset"
-          disabled={busy || listening}
-          onClick={resetChat}
-        >
-          Clear chat
-        </button>
+      <div
+        className={`partner-lab-live${fullscreen ? ' is-fs-dock' : ''}`}
+        role="group"
+        aria-label="Practice Partner live controls"
+      >
+        {fullscreen ? (
+          <>
+            <div className="partner-lab-fs-dock">
+              <button
+                type="button"
+                className={`partner-lab-fs-mic${listening ? ' is-live' : ''}`}
+                disabled={busy && !listening}
+                aria-label={listening ? 'Stop listening and reply' : 'Talk'}
+                onClick={toggleTalk}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-fs-mic-icon">
+                  <path
+                    fill="currentColor"
+                    d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`partner-lab-fs-keyboard${fsTypeOpen ? ' is-open' : ''}`}
+                disabled={busy || listening}
+                aria-label="Type instead"
+                aria-expanded={fsTypeOpen}
+                onClick={openFsKeyboard}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-fs-keyboard-icon">
+                  <path
+                    fill="currentColor"
+                    d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm1 3v2h2V8H5zm3 0v2h2V8H8zm3 0v2h2V8h-2zm3 0v2h2V8h-2zm3 0v2h2V8h-2zM5 11v2h2v-2H5zm3 0v2h2v-2H8zm3 0v2h5v-2h-5zm6 0v2h2v-2h-2zM5 14v2h11v-2H5zm12 0v2h2v-2h-2z"
+                  />
+                </svg>
+              </button>
+            </div>
+            {fsTypeOpen ? (
+              <div className="partner-lab-fs-type" onClick={(e) => e.stopPropagation()}>
+                <input
+                  ref={draftInputRef}
+                  type="text"
+                  inputMode="text"
+                  enterKeyHint="send"
+                  value={draft}
+                  disabled={busy || listening}
+                  placeholder="Type Cantonese / English…"
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      sendDraft()
+                      setFsTypeOpen(false)
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="partner-lab-send"
+                  disabled={busy || listening || !draft.trim()}
+                  onClick={() => {
+                    sendDraft()
+                    setFsTypeOpen(false)
+                  }}
+                >
+                  Send
+                </button>
+                <button
+                  type="button"
+                  className="partner-lab-fs-type-close"
+                  onClick={() => setFsTypeOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`partner-lab-talk${listening ? ' is-live' : ''}`}
+              disabled={busy && !listening}
+              onClick={toggleTalk}
+            >
+              {listening ? 'Stop & reply' : busy ? 'Working…' : 'Talk'}
+            </button>
+            <div className="partner-lab-compose">
+              <input
+                type="text"
+                value={draft}
+                disabled={busy || listening}
+                placeholder="Or type Cantonese / English…"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    sendDraft()
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="partner-lab-send"
+                disabled={busy || listening || !draft.trim()}
+                onClick={sendDraft}
+              >
+                Send
+              </button>
+            </div>
+            <button
+              type="button"
+              className="partner-lab-reset"
+              disabled={busy || listening}
+              onClick={resetChat}
+            >
+              Clear chat
+            </button>
+          </>
+        )}
       </div>
 
       {error ? <p className="partner-lab-error">{error}</p> : null}
