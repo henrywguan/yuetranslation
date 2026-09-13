@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { MotionConfig, motion } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
 import { BiText } from '../../components/BiText'
 import { openApp, openHome, openLearn, openTones } from '../../lib/siteLinks'
@@ -61,16 +61,18 @@ export function LearnPage() {
   }, [])
 
   if (levelId) {
+    // Fullscreen game shell — no marketing nav/footer so the harbor fills the viewport.
     return (
-      <MarketingPageShell className="learn-page learn-page--play" onFeatures={() => openHome()}>
-        <LearnSession
-          levelId={levelId}
-          onExit={exitLevel}
-          onOpenLevel={openLevel}
-          onProgress={setProgress}
-        />
-        <MarketingFooter />
-      </MarketingPageShell>
+      <MotionConfig reducedMotion="user">
+        <div className="learn-page learn-page--play learn-page--immersive">
+          <LearnSession
+            levelId={levelId}
+            onExit={exitLevel}
+            onOpenLevel={openLevel}
+            onProgress={setProgress}
+          />
+        </div>
+      </MotionConfig>
     )
   }
 
