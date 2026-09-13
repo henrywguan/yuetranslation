@@ -602,6 +602,12 @@ async function countOccupiedSeats(householdId: string): Promise<number> {
   return (members ?? 0) + (invites ?? 0)
 }
 
+/**
+ * Member rows for entitlement / Account Hub. Emails are intentionally omitted
+ * here — `auth.admin.listUsers` is too expensive for health/bootstrap. Account
+ * Hub falls back to a short userId; Admin Users tab loads emails via
+ * `listAuthUsers` when that page opens.
+ */
 async function listMembers(householdId: string): Promise<HouseholdSummary['members']> {
   const client = getAdmin()
   if (!client) return []
@@ -615,20 +621,10 @@ async function listMembers(householdId: string): Promise<HouseholdSummary['membe
     return []
   }
 
-  const emailById = new Map<string, string | null>()
-  try {
-    const { data: users } = await client.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    for (const user of users?.users ?? []) {
-      emailById.set(user.id, user.email ?? null)
-    }
-  } catch (e) {
-    console.warn('[household] auth listUsers failed', e)
-  }
-
   return data.map((row) => ({
     userId: row.user_id as string,
     role: row.member_role as MemberRole,
-    email: emailById.get(row.user_id as string) ?? null,
+    email: null,
     joinedAt: row.joined_at as string,
   }))
 }

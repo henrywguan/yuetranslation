@@ -16,6 +16,11 @@ export function supabaseEnabled(): boolean {
 /**
  * Vite only bakes VITE_* at build time. On Vercel the keys are often added
  * after the last frontend build — load them from the API at runtime.
+ *
+ * When `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are present (local/dev
+ * and production builds with those envs), this returns immediately and skips
+ * `GET /api/auth-config` — faster sign-in bootstrap. Keep those VITE_ vars
+ * set on Vercel so login does not wait on an extra round-trip.
  */
 export async function loadAuthConfig(): Promise<void> {
   if (supabaseEnabled()) return
