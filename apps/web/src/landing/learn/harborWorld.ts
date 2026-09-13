@@ -453,13 +453,99 @@ function flower(rng: () => number) {
 }
 
 
-function lantern() {
+/** Warm point-light strength — brighter at night / dark weather. */
+export function harborLanternIntensity(weather: HarborWeather): number {
+  if (weather === 'night') return 1.65
+  if (weather === 'rainy') return 1.1
+  if (weather === 'cloudy') return 0.55
+  return 0.14
+}
+
+function glowMat(color: number, emissive: number, intensity = 0.9) {
+  return new THREE.MeshLambertMaterial({
+    color,
+    emissive,
+    emissiveIntensity: intensity,
+    flatShading: true,
+  })
+}
+
+function attachLanternLight(
+  parent: THREE.Object3D,
+  weather: HarborWeather,
+  y = 1.55,
+  color = 0xffb060,
+  scale = 1,
+) {
+  const base = harborLanternIntensity(weather) * scale
+  const light = new THREE.PointLight(color, base, 7.5, 2)
+  light.position.set(0, y, 0)
+  light.userData.harborLanternLight = true
+  light.userData.baseIntensity = base
+  parent.add(light)
+  return light
+}
+
+/** Paper lantern on a post — emits ambiance light (stronger at night / rain). */
+function lantern(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
+  g.userData.harborLantern = true
   g.add(hqPost(0.05, 0.07, 1.5, P.woodDark, 0, 0.75, 0, 5))
-  g.add(hqBox(0.3, 0.34, 0.3, P.lantern, 0, 1.55, 0))
+  const lamp = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.34, 0.3),
+    glowMat(P.lantern, 0xffa040, weather === 'sunny' ? 0.28 : 0.95),
+  )
+  lamp.position.set(0, 1.55, 0)
+  g.add(lamp)
   g.add(hqBox(0.34, 0.04, 0.34, P.woodDeep, 0, 1.74, 0))
+  attachLanternLight(g, weather, 1.55)
   return g
 }
+
+/** Packed-earth lane with wheel ruts — runs along the bank. */
+function dirtRoadStrip(length: number, width = 1.1) {
+  const g = new THREE.Group()
+  g.userData.dirtRoad = true
+  g.add(hqBox(width, 0.05, length, 0x6a4828, 0, 0.06, 0))
+  g.add(hqBox(0.12, 0.02, length * 0.96, 0x4a3018, -width * 0.22, 0.09, 0))
+  g.add(hqBox(0.12, 0.02, length * 0.96, 0x4a3018, width * 0.22, 0.09, 0))
+  return g
+}
+
+function placeDirtRoads(
+  group: THREE.Group,
+  chunkIndex: number,
+  rng: () => number,
+  weather: HarborWeather = 'sunny',
+) {
+  const z0 = chunkIndex * CHUNK
+  const mid = z0 + CHUNK / 2
+  for (const side of [-1, 1] as const) {
+    const road = dirtRoadStrip(CHUNK - 0.35, 1.0 + rng() * 0.25)
+    road.position.set(side * (BANK + 0.2), 0, mid)
+    group.add(road)
+    // Roadside lanterns — warm pools along the lane (brightest at night / rain)
+    for (const t of [0.22, 0.55, 0.82] as const) {
+      if (rng() > 0.35) continue
+      const lamp = lantern(weather)
+      lamp.position.set(
+        side * (BANK + 0.2 + (rng() > 0.5 ? 0.55 : -0.55)),
+        0,
+        z0 + CHUNK * t + (rng() - 0.5) * 1.2,
+      )
+      lamp.rotation.y = rng() * Math.PI * 2
+      group.add(lamp)
+    }
+    // Spur toward shore / pier landings
+    if (rng() > 0.3) {
+      const spur = dirtRoadStrip(2.6, 0.8)
+      spur.rotation.y = Math.PI / 2
+      spur.position.set(side * (RIVER + 2.35), 0, z0 + 3.5 + rng() * (CHUNK - 7))
+      group.add(spur)
+    }
+  }
+}
+
 
 
 function pierSegment() {
@@ -993,6 +1079,7 @@ function populateChunk(
   chunkIndex: number,
   group: THREE.Group,
   mats: { grass: THREE.Material; sand: THREE.Material },
+  weather: HarborWeather = 'sunny',
 ) {
   const biome = biomeForChunk(chunkIndex)
   const rng = mulberry32((chunkIndex + 17) * 9973)
@@ -1008,6 +1095,9 @@ function populateChunk(
     group.add(shore)
   }
 
+  // Dirt roads along both banks (and occasional shore spurs)
+  placeDirtRoads(group, chunkIndex, rng, weather)
+
   // Quiz pier landings (every chunk may host one or more dock slots)
   placeDockStops(group, chunkIndex, rng)
 
@@ -1019,6 +1109,7 @@ function populateChunk(
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
     place(group, rng, 5, () => flower(rng), BANK - 0.3, BANK + 2.5, z0)
     if (rng() > 0.4) place(group, rng, 1, () => deer(rng), BANK + 0.5, BANK + 3.5, z0)
+    place(group, rng, 1, () => lantern(weather), BANK + 0.2, BANK + 1.8, z0)
   }
   if (biome === 'village') {
     place(group, rng, 3, () => house(rng), BANK + 0.5, BANK + 4, z0)
@@ -1027,7 +1118,7 @@ function populateChunk(
     place(group, rng, 2, () => tree(rng, leaf), BANK + 2, BANK + 5, z0)
     place(group, rng, 3, () => cherryBlossom(rng), BANK - 0.2, BANK + 3.5, z0)
     place(group, rng, 1, () => ginkgo(rng), BANK + 1.5, BANK + 4, z0)
-    place(group, rng, 2, () => lantern(), BANK - 0.2, BANK + 1.2, z0)
+    place(group, rng, 3, () => lantern(weather), BANK - 0.2, BANK + 1.4, z0)
     place(group, rng, 4, () => flower(rng), BANK - 0.4, BANK + 2, z0)
     // Villagers & merchants strolling the lane
     place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK + 0.3, BANK + 2.5, z0)
@@ -1044,6 +1135,7 @@ function populateChunk(
     place(group, rng, 1, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('fisherman', rng), RIVER + 0.8, BANK + 1.2, z0)
+    place(group, rng, 1, () => lantern(weather), BANK - 0.3, BANK + 1.0, z0)
   }
   if (biome === 'pier') {
     for (const side of [-1, 1] as const) {
@@ -1055,7 +1147,7 @@ function populateChunk(
       p2.position.set(side * (RIVER + 1.4), 0, z0 + CHUNK * 0.7)
       group.add(p2)
     }
-    place(group, rng, 2, () => lantern(), BANK - 0.5, BANK + 0.8, z0)
+    place(group, rng, 3, () => lantern(weather), BANK - 0.5, BANK + 1.0, z0)
     place(group, rng, 2, () => house(rng), BANK + 1, BANK + 3.5, z0)
     place(group, rng, 2, () => stiltShop(rng), BANK - 0.1, BANK + 2.2, z0)
     place(group, rng, 1, () => hut(rng), BANK + 2, BANK + 4, z0)
@@ -1066,6 +1158,7 @@ function populateChunk(
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
+    place(group, rng, 1, () => lantern(weather), BANK + 0.5, BANK + 2.2, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('scholar', rng), BANK + 1, BANK + 3, z0)
   }
 
@@ -1114,48 +1207,167 @@ function clickMarker() {
  * a gentle drift keeps scenery moving between answers.
  */
 
-/** Compact riverside Save Shack — visit to stamp progress + look. */
-function saveShackBuilding() {
+/** Save Shack on a pier dock — gold portal + hanging sign (unique landmark). */
+function saveShackBuilding(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
   g.name = 'save-shack'
   g.userData.visitable = 'save-shack'
-  g.add(hqBox(1.4, 0.9, 1.2, P.plaster, 0, 0.55, 0))
-  const roof = hqBox(1.7, 0.12, 1.45, P.roofTile, 0, 1.15, 0)
-  roof.rotation.x = -0.18
+  g.userData.uniqueLandmark = 'save-shack'
+
+  // Long pier dock toward the river (+Z)
+  g.add(hqBox(2.2, 0.14, 4.2, P.woodLight, 0, 0.42, 1.6))
+  for (const z of [0.2, 1.4, 2.6, 3.6] as const) {
+    g.add(hqBox(2.1, 0.03, 0.06, P.woodDark, 0, 0.5, z))
+  }
+  for (const x of [-0.85, 0.85] as const) {
+    for (const z of [0.4, 1.8, 3.2] as const) {
+      g.add(hqPost(0.09, 0.11, 0.95, P.woodDark, x, 0.1, z))
+    }
+  }
+  // Railings
+  for (const x of [-1.0, 1.0] as const) {
+    for (const z of [0.6, 2.0, 3.4] as const) {
+      g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, x, 0.75, z, 5))
+    }
+    g.add(hqBox(0.05, 0.06, 3.0, P.woodMid, x, 1.0, 2.0))
+  }
+
+  // Teal vault drum (distinct from plaster village homes)
+  g.add(hqPost(0.85, 0.95, 1.15, 0x1e4a48, 0, 0.95, 0.2, 8))
+  g.add(hqBox(1.5, 0.12, 1.5, P.stone, 0, 0.38, 0.2))
+  // Gold pagoda roof
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(1.15, 0.55, 8),
+    glowMat(0xd4a040, 0xffc050, 0.4),
+  )
+  roof.position.set(0, 1.75, 0.2)
   g.add(roof)
-  g.add(hqBox(0.28, 0.5, 0.06, P.woodDark, 0, 0.35, 0.62))
-  g.add(hqWindow(0.28, 0.24, P.trimGold, 0x1a3040, 0.35, 0.7, 0.62))
-  // Jade lantern = “save” beacon
-  g.add(hqPost(0.03, 0.04, 0.7, P.woodDark, -0.55, 0.9, 0.55, 5))
-  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.16), hqMat(P.jade))
-  lamp.position.set(-0.55, 1.15, 0.55)
-  g.add(lamp)
-  // Pier plank leading to the door
-  g.add(hqBox(0.9, 0.08, 1.6, P.woodMid, 0, 0.08, 1.2))
+  g.add(hqPost(0.06, 0.08, 0.35, P.trimGold, 0, 2.15, 0.2, 5))
+  g.add(hqBox(0.32, 0.55, 0.08, P.woodDeep, 0, 0.72, 0.95))
+  g.add(hqWindow(0.22, 0.22, P.trimGold, 0x102828, 0.45, 1.05, 0.75))
+
+  // Visible hanging SAVE sign
+  g.add(hqPost(0.05, 0.06, 2.1, P.woodDark, -1.15, 1.1, 1.1, 5))
+  g.add(hqBox(0.08, 0.08, 0.7, P.woodMid, -0.75, 2.0, 1.1))
+  g.add(hqBox(0.72, 0.5, 0.08, 0x1a3030, -0.35, 1.85, 1.1))
+  g.add(hqBox(0.78, 0.08, 0.1, P.trimGold, -0.35, 2.12, 1.1))
+  g.add(hqBox(0.78, 0.08, 0.1, P.trimGold, -0.35, 1.58, 1.1))
+  // Glyph blocks ≈ 存
+  g.add(hqBox(0.35, 0.08, 0.04, P.jade, -0.35, 1.95, 1.15))
+  g.add(hqBox(0.08, 0.28, 0.04, P.jade, -0.35, 1.82, 1.15))
+  g.add(hqBox(0.28, 0.08, 0.04, 0xffe080, -0.35, 1.72, 1.15))
+
+  // Golden glowing portal at the pier tip
+  const portal = new THREE.Group()
+  portal.name = 'save-portal'
+  portal.userData.goldenPortal = true
+  portal.position.set(0, 0.55, 3.55)
+  for (const x of [-0.55, 0.55] as const) {
+    portal.add(hqPost(0.07, 0.09, 1.5, P.trimGold, x, 0.75, 0, 6))
+  }
+  portal.add(hqBox(1.3, 0.12, 0.12, P.trimGold, 0, 1.55, 0))
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.42, 0.07, 6, 12),
+    glowMat(0xffe080, 0xffc020, weather === 'night' ? 1.4 : 1.0),
+  )
+  ring.position.set(0, 0.85, 0.05)
+  portal.add(ring)
+  const veil = new THREE.Mesh(
+    new THREE.CircleGeometry(0.38, 12),
+    new THREE.MeshLambertMaterial({
+      color: 0xffe8a0,
+      emissive: 0xffb020,
+      emissiveIntensity: weather === 'night' ? 1.2 : 0.7,
+      transparent: true,
+      opacity: 0.55,
+      flatShading: true,
+      side: THREE.DoubleSide,
+    }),
+  )
+  veil.position.set(0, 0.85, 0)
+  portal.add(veil)
+  const portalLight = new THREE.PointLight(
+    0xffc040,
+    weather === 'night' ? 2.2 : weather === 'sunny' ? 0.85 : 1.4,
+    9,
+    2,
+  )
+  portalLight.position.set(0, 0.9, 0.2)
+  portalLight.userData.harborLanternLight = true
+  portalLight.userData.baseIntensity = portalLight.intensity
+  portalLight.userData.portalGlow = true
+  portal.add(portalLight)
+  g.add(portal)
+
   return g
 }
 
-/** Riverside Outfitter shop — buy / equip hats, tops, bottoms, shoes, handhelds. */
-function outfitterBuilding() {
+/** River Outfitter — crimson pavilion clothier (distinct from stilt shops). */
+function outfitterBuilding(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
   g.name = 'outfitter'
   g.userData.visitable = 'outfitter'
-  for (const x of [-0.45, 0.45] as const) {
-    for (const z of [-0.35, 0.35] as const) {
-      g.add(hqPost(0.06, 0.08, 0.55, P.woodDark, x, 0.28, z, 5))
+  g.userData.uniqueLandmark = 'outfitter'
+
+  // Wide raised deck
+  for (const x of [-0.9, 0, 0.9] as const) {
+    for (const z of [-0.55, 0.55] as const) {
+      g.add(hqPost(0.07, 0.09, 0.7, P.woodDark, x, 0.35, z, 5))
     }
   }
-  g.add(hqBox(1.5, 0.1, 1.3, P.woodLight, 0, 0.55, 0))
-  g.add(hqBox(1.35, 0.75, 1.15, 0xd8c8a8, 0, 0.98, 0))
-  const roof = hqBox(1.7, 0.1, 1.4, P.roofClay, 0, 1.5, 0)
-  roof.rotation.x = -0.2
+  g.add(hqBox(2.4, 0.12, 1.8, P.woodLight, 0, 0.7, 0))
+  // Cream shop body
+  g.add(hqBox(2.1, 1.05, 1.45, 0xf2e6d0, 0, 1.28, -0.05))
+  // Deep crimson roof + gold ridge
+  const roof = hqBox(2.55, 0.12, 1.85, 0x9a2038, 0, 1.95, -0.05)
+  roof.rotation.x = -0.12
   g.add(roof)
-  g.add(hqBox(0.12, 0.55, 0.04, P.banner, 0.55, 1.15, 0.6))
-  g.add(hqWindow(0.32, 0.28, P.trimGold, 0x1a3040, -0.25, 1.05, 0.6))
-  g.add(hqBox(0.7, 0.04, 0.04, P.woodDark, 0, 1.2, -0.2))
-  g.add(hqBox(0.18, 0.35, 0.08, 0x2a6a58, -0.2, 1.0, -0.2))
-  g.add(hqBox(0.18, 0.35, 0.08, 0x5a2a48, 0.15, 1.0, -0.2))
-  g.add(hqBox(0.9, 0.08, 1.5, P.woodMid, 0, 0.08, 1.15))
+  g.add(hqBox(2.6, 0.1, 0.16, P.trimGold, 0, 2.12, -0.05))
+  // Striped awning
+  for (let i = 0; i < 6; i++) {
+    const stripe = hqBox(
+      0.32,
+      0.06,
+      0.85,
+      i % 2 === 0 ? 0xc04040 : 0xf0e8d8,
+      -0.9 + i * 0.36,
+      1.72,
+      0.85,
+    )
+    stripe.rotation.x = 0.35
+    g.add(stripe)
+  }
+  // Hanging garments rack
+  g.add(hqBox(1.4, 0.04, 0.04, P.woodDark, 0, 1.55, 0.55))
+  const garmentColors = [0x2a3a6a, 0x8a3048, 0x3dcfb6, 0xc4a060, 0x5a6a48]
+  garmentColors.forEach((c, i) => {
+    g.add(hqBox(0.18, 0.45, 0.06, c, -0.55 + i * 0.28, 1.28, 0.55))
+  })
+  // Tall shop sign pole with 衣 banner
+  g.add(hqPost(0.06, 0.08, 2.8, P.woodDeep, 1.35, 1.4, 0.7, 5))
+  g.add(hqBox(0.45, 1.1, 0.06, 0x1e3a48, 1.35, 2.2, 0.7))
+  g.add(hqBox(0.5, 0.08, 0.08, P.trimGold, 1.35, 2.78, 0.7))
+  g.add(hqBox(0.5, 0.08, 0.08, P.trimGold, 1.35, 1.62, 0.7))
+  g.add(hqBox(0.28, 0.08, 0.04, 0xf0d060, 1.35, 2.45, 0.74))
+  g.add(hqBox(0.08, 0.4, 0.04, 0xf0d060, 1.35, 2.15, 0.74))
+  g.add(hqBox(0.32, 0.08, 0.04, P.jade, 1.35, 1.9, 0.74))
+  g.add(hqWindow(0.5, 0.4, P.trimGold, 0x1a2840, -0.55, 1.25, 0.72))
+  // Warm shop lanterns under the awning
+  for (const x of [-0.7, 0.7] as const) {
+    const lamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 0.24, 0.2),
+      glowMat(P.lantern, 0xff9040, weather === 'sunny' ? 0.3 : 1.0),
+    )
+    lamp.position.set(x, 1.58, 0.95)
+    g.add(lamp)
+    const light = new THREE.PointLight(0xffa050, harborLanternIntensity(weather) * 0.85, 6.5, 2)
+    light.position.copy(lamp.position)
+    light.userData.harborLanternLight = true
+    light.userData.baseIntensity = light.intensity
+    g.add(light)
+  }
+  // Approach plank
+  g.add(hqBox(1.2, 0.1, 1.8, P.woodMid, 0, 0.12, 1.4))
   return g
 }
 
@@ -1249,7 +1461,7 @@ export function createHarborWorld(
     for (const idx of need) {
       if (chunkGroups.has(idx)) continue
       const g = new THREE.Group()
-      populateChunk(idx, g, { grass: grassMat, sand: sandMat })
+      populateChunk(idx, g, { grass: grassMat, sand: sandMat }, weather)
       world.add(g)
       chunkGroups.set(idx, g)
     }
@@ -1263,7 +1475,7 @@ export function createHarborWorld(
   const visitablesRoot = new THREE.Group()
   visitablesRoot.name = 'harbor-visitables'
   for (const v of HARBOR_VISITABLES) {
-    const building = v.id === 'save-shack' ? saveShackBuilding() : outfitterBuilding()
+    const building = v.id === 'save-shack' ? saveShackBuilding(weather) : outfitterBuilding(weather)
     building.position.set(v.x, 0, v.z)
     // Face the river
     building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
@@ -1583,11 +1795,20 @@ export function createHarborWorld(
       })
     }
 
-    if (flash && now < flashUntil) {
+        if (flash && now < flashUntil) {
       amb.color.lerp(new THREE.Color(flash === 'ok' ? 0x3dcfb6 : 0xe07070), 0.15)
     } else {
       amb.color.lerp(new THREE.Color(look.amb), 0.08)
       if (now >= flashUntil) flash = null
+    }
+
+    // Lantern / portal flicker — reads strongest at night & dark weather
+    if (!reduced) {
+      scene.traverse((o) => {
+        if (!(o instanceof THREE.PointLight) || !o.userData.harborLanternLight) return
+        const base = (o.userData.baseIntensity as number) ?? o.intensity
+        o.intensity = base * (0.88 + Math.sin(waterPhase * 3.2 + o.id) * 0.12)
+      })
     }
 
     renderer.render(scene, camera)
