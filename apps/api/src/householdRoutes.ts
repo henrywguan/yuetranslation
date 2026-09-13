@@ -19,7 +19,7 @@ function paidPlan(plan: string | null | undefined): HouseholdPlan | null {
 export async function getHousehold(req: AuthedRequest, res: Response) {
   const auth = requireAuth(req, res)
   if (!auth) return
-  const summary = await getHouseholdSummary(auth.userId)
+  const summary = await getHouseholdSummary(auth.userId, { includeMemberEmails: true })
   res.json({ household: summary })
 }
 

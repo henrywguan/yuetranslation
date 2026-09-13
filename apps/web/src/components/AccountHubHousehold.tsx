@@ -1,11 +1,14 @@
+import { useEffect } from 'react'
 import { BiText } from './BiText'
 import {
+  fetchHousehold,
   sendHouseholdInvite,
   revokeHouseholdInvite,
   removeHouseholdMember,
 } from '../lib/api'
 import { biPlain, ui } from '../lib/uiCopy'
-import type { Entitlement } from '../lib/types'
+import { useYueStore } from '../lib/store'
+import type { Entitlement, HouseholdSummary } from '../lib/types'
 
 type Props = {
   entitlement: Entitlement
@@ -18,6 +21,14 @@ type Props = {
   inviteError: string | null
   setInviteError: (v: string | null) => void
   loadBootstrap: () => Promise<void>
+}
+
+function applyHousehold(household: HouseholdSummary | null | undefined) {
+  if (!household) return
+  useYueStore.setState((s) => {
+    if (!s.entitlement) return {}
+    return { entitlement: { ...s.entitlement, household } }
+  })
 }
 
 /** Household seats, invite form, and member list for the account hub. */
@@ -33,6 +44,31 @@ export function AccountHubHousehold({
   setInviteError,
   loadBootstrap,
 }: Props) {
+  // Health bootstrap omits member emails for speed — enrich when hub opens.
+  useEffect(() => {
+    if (
+      !(
+        entitlement.loggedIn &&
+        (entitlement.plan === 'family' ||
+          entitlement.plan === 'business' ||
+          entitlement.household)
+      )
+    ) {
+      return
+    }
+    let cancelled = false
+    void fetchHousehold()
+      .then((res) => {
+        if (!cancelled) applyHousehold(res.household)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+    // Only on open — avoid re-fetch loops when we patch entitlement.household.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional once-per-mount
+  }, [])
+
   if (
     !(
       entitlement.loggedIn &&
@@ -90,6 +126,7 @@ export function AccountHubHousehold({
                 setInviteSentTo(res.invite?.email || next)
                 setInviteEmail('')
                 await loadBootstrap()
+                applyHousehold(res.household)
               })
               .catch((err: unknown) => {
                 setInviteError(
@@ -147,8 +184,9 @@ export function AccountHubHousehold({
                   className="account-hub-member-action"
                   onClick={() => {
                     void removeHouseholdMember(m.userId)
-                      .then(async () => {
+                      .then(async (res) => {
                         await loadBootstrap()
+                        applyHousehold(res.household)
                       })
                       .catch(() => undefined)
                   }}
@@ -173,8 +211,9 @@ export function AccountHubHousehold({
                   className="account-hub-member-action"
                   onClick={() => {
                     void revokeHouseholdInvite(inv.id)
-                      .then(async () => {
+                      .then(async (res) => {
                         await loadBootstrap()
+                        applyHousehold(res.household)
                       })
                       .catch(() => undefined)
                   }}

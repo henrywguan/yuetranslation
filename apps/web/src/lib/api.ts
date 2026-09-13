@@ -343,6 +343,17 @@ export async function savePrimaryLangPref(
   return data
 }
 
+export async function fetchHousehold(): Promise<{ household: HouseholdSummary | null }> {
+  const res = await apiFetch('/household')
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw Object.assign(new Error(data.message || 'Could not load household'), {
+      code: data.code || res.status,
+    })
+  }
+  return data
+}
+
 export async function sendHouseholdInvite(email: string): Promise<{
   inviteSent: true
   emailed: boolean
