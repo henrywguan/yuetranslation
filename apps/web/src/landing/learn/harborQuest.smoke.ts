@@ -20,14 +20,18 @@ import {
   clampOrbitPitch,
   dockPoseForProgress,
   HARBOR_DOCK_SPACING,
+  HARBOR_FOG_DENSITY,
   HARBOR_NPC_ROLES,
   HARBOR_SCENIC_TREES,
   HARBOR_VILLAGE_HOMES,
+  HARBOR_WEATHER_LOOK,
+  HARBOR_WEATHERS,
   HARBOR_WULINGYUAN,
   HARBOR_XIANGYUN,
   orbitCameraOffset,
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
+  pickHarborWeather,
 } from '../../landing/learn/harborWorld'
 import {
   HARBOR_CRAFT_PALETTE,
@@ -143,7 +147,16 @@ function main() {
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
   assert.match(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*\+\s*dy/, 'pitch drag is natural (drag down → look down)')
   assert.doesNotMatch(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*-\s*dy/, 'inverted pitch drag removed')
-  assert.match(worldSrc, /HARBOR_FOG_DENSITY\s*=\s*0\.011/, 'daylight fog density (not a dark veil)')
+  assert.equal(HARBOR_FOG_DENSITY, 0.0028, 'max-bright sunny fog (not a dark veil)')
+  assert.equal(HARBOR_WEATHER_LOOK.sunny.ambI, 1.65, 'sunny ambient max-bright')
+  assert.equal(HARBOR_WEATHER_LOOK.sunny.sunI, 2.55, 'sunny sun max-bright')
+  assert.deepEqual([...HARBOR_WEATHERS], ['sunny', 'cloudy', 'rainy', 'night'], 'four weather scenes')
+  assert.equal(pickHarborWeather(42), pickHarborWeather(42), 'weather pick is deterministic with seed')
+  assert.ok(HARBOR_WEATHER_LOOK.rainy.rain, 'rainy look enables rain')
+  assert.ok(HARBOR_WEATHER_LOOK.night.stars, 'night look enables shooting stars')
+  assert.match(worldSrc, /pickHarborWeather/, 'session weather is randomized')
+  assert.match(worldSrc, /function rainField/, 'rain particle field')
+  assert.match(worldSrc, /userData\.shooting/, 'shooting-star streaks')
   assert.doesNotMatch(worldSrc, /FogExp2\([^)]*0\.022/, 'old dense dark fog removed')
 
   assert.ok(HARBOR_NPC_ROLES.includes('villager'), 'villager NPCs')
@@ -218,7 +231,7 @@ function main() {
   assert.match(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*height:\s*var\(--hq-osrs-strip\)/, 'talking HUD docks as fixed strip')
   assert.doesNotMatch(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(62dvh/, 'old tall talking HUD removed')
   assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
-  assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#6aa0b8/, 'immersive shell uses daylight clear color')
+  assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }

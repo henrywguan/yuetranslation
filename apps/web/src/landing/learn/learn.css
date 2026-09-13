@@ -17,8 +17,8 @@
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
-  /* Daylight clear color — was near-black and showed through as a veil */
-  background: #6aa0b8;
+  /* Max-bright sunny clear — matches HARBOR_WEATHER_LOOK.sunny.sky */
+  background: #c8f0ff;
 }
 
 /* —— Hero —— */
@@ -1259,7 +1259,7 @@
   height: 100%;
   width: 100%;
   /* Match daylight sky — avoid a dark frame behind the WebGL canvas */
-  background: #6aa0b8;
+  background: #c8f0ff;
 }
 
 .hq-world-canvas {
