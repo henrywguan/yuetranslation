@@ -15,24 +15,32 @@ export function HarborWorldCanvas({ progress, flash, hue, reducedMotion, classNa
   const worldRef = useRef<HarborWorldHandle | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const world = createHarborWorld(canvas, { hue, reducedMotion });
-    worldRef.current = world;
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const world = createHarborWorld(canvas, { hue, reducedMotion })
+    worldRef.current = world
 
-    const onResize = () => world.resize();
-    window.addEventListener("resize", onResize);
-    // Layout may settle after mount (fullscreen HUD).
-    requestAnimationFrame(() => world.resize());
+    const onResize = () => world.resize()
+    window.addEventListener('resize', onResize)
+    // Stage height changes when the OSRS chat strip docks — observe the parent box.
+    const box = canvas.parentElement
+    const ro =
+      typeof ResizeObserver !== 'undefined' && box
+        ? new ResizeObserver(() => world.resize())
+        : null
+    ro?.observe(box ?? canvas)
+    // Layout may settle after mount (fullscreen HUD / strip toggle).
+    requestAnimationFrame(() => world.resize())
 
     return () => {
-      window.removeEventListener("resize", onResize);
-      world.dispose();
-      worldRef.current = null;
-    };
+      window.removeEventListener('resize', onResize)
+      ro?.disconnect()
+      world.dispose()
+      worldRef.current = null
+    }
     // Recreate only when canvas mounts; hue / motion / flash sync via setters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   useEffect(() => {
     worldRef.current?.setProgress(progress);
