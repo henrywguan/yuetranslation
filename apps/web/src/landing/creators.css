@@ -233,13 +233,13 @@
 }
 
 .creators-preview-han {
-  font-family: 'Noto Sans HK', 'Noto Sans', system-ui, sans-serif;
+  font-family: 'Noto Sans HK', var(--font-english);
   font-size: 1.45rem;
   font-weight: 700;
 }
 
 .creators-preview-chao {
-  font-family: 'Noto Sans', system-ui, sans-serif;
+  font-family: var(--font-english);
   font-size: 1.05rem;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--jade) 85%, white);
@@ -296,7 +296,7 @@
 }
 
 .creators-demo-han {
-  font-family: 'Noto Sans HK', 'Noto Sans', system-ui, sans-serif;
+  font-family: 'Noto Sans HK', var(--font-english);
   font-size: 1.5rem;
   font-weight: 700;
 }

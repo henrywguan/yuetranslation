@@ -38,9 +38,19 @@
   /* Typography */
   --font-english: 'Noto Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-display: Syne, var(--font-english);
+  /* HK for 漢字; English/Noto Sans is the fallback (needed for Chao tone letters). */
   --font-body: 'Noto Sans HK', var(--font-english);
 
   color-scheme: dark;
+}
+
+/*
+ * Chao tone letters (˥˧˨˩…) live in Noto Sans, not Noto Sans HK.
+ * BiText wraps Chao runs in this class so HK-first body text does not tofu.
+ */
+.chao-face {
+  font-family: var(--font-english);
+  font-synthesis: none;
 }
 
 [data-theme='light'] {
