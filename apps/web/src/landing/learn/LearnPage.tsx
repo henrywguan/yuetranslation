@@ -12,7 +12,7 @@ import { MarketingPageShell } from '../MarketingPageShell'
 import { Reveal } from '../Reveal'
 import { HARBOR_LEVELS } from './curriculum'
 import { HarborMap, LearnSession } from './LearnPlay'
-import { loadHarborProgress, type HarborProgress } from './progress'
+import { hydrateHarborProgress, loadHarborProgress, type HarborProgress } from './progress'
 import '../landing.css'
 import './learn.css'
 
@@ -37,6 +37,16 @@ export function LearnPage() {
     const sync = () => setLevelId(learnLevelFromHash())
     window.addEventListener('hashchange', sync)
     return () => window.removeEventListener('hashchange', sync)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    void hydrateHarborProgress().then((p) => {
+      if (!cancelled) setProgress(p)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const openLevel = useCallback((id: string) => {

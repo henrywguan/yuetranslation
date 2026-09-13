@@ -1,35 +1,37 @@
-/** Local progress for Harbor Quest (`#/learn`). */
+/**
+ * Harbor Quest progress — localStorage + optional cloud sync when signed in.
+ * Merge is monotonic (union cleared, max step/correct) so devices never lose progress.
+ */
+
+import { fetchHarborQuestProgress, putHarborQuestProgress } from '../../lib/api'
+import { getSession } from '../../lib/auth'
+import {
+  emptyHarborProgress,
+  harborProgressEqual,
+  isLevelCleared as isLevelClearedPure,
+  isLevelUnlocked as isLevelUnlockedPure,
+  mergeHarborProgress,
+  sanitizeHarborProgress,
+  type HarborProgress,
+} from './progressMerge'
+
+export type { HarborProgress }
+export {
+  emptyHarborProgress,
+  harborProgressEqual,
+  mergeHarborProgress,
+  sanitizeHarborProgress,
+}
 
 const STORAGE_KEY = 'yue-harbor-quest-v1'
-
-export type HarborProgress = {
-  /** Level ids cleared (last step completed). */
-  cleared: string[]
-  /** Highest step index reached per level (inclusive, 0-based). */
-  stepCursor: Record<string, number>
-  /** Total correct answers (lifetime). */
-  correctCount: number
-}
-
-const EMPTY: HarborProgress = {
-  cleared: [],
-  stepCursor: {},
-  correctCount: 0,
-}
 
 function read(): HarborProgress {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { ...EMPTY, cleared: [], stepCursor: {} }
-    const parsed = JSON.parse(raw) as Partial<HarborProgress>
-    return {
-      cleared: Array.isArray(parsed.cleared) ? parsed.cleared.filter((x) => typeof x === 'string') : [],
-      stepCursor:
-        parsed.stepCursor && typeof parsed.stepCursor === 'object' ? { ...parsed.stepCursor } : {},
-      correctCount: typeof parsed.correctCount === 'number' ? parsed.correctCount : 0,
-    }
+    if (!raw) return emptyHarborProgress()
+    return sanitizeHarborProgress(JSON.parse(raw))
   } catch {
-    return { ...EMPTY, cleared: [], stepCursor: {} }
+    return emptyHarborProgress()
   }
 }
 
@@ -41,43 +43,90 @@ function write(p: HarborProgress) {
   }
 }
 
+let persistLoggedIn = false
+let persistTimer: ReturnType<typeof setTimeout> | null = null
+
+export function setHarborPersistLoggedIn(loggedIn: boolean) {
+  persistLoggedIn = loggedIn
+}
+
+function scheduleCloudPush(p: HarborProgress) {
+  if (!persistLoggedIn) return
+  if (persistTimer) clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => {
+    persistTimer = null
+    void putHarborQuestProgress(p).catch(() => {
+      /* offline — local still kept */
+    })
+  }, 700)
+}
+
+function commit(p: HarborProgress): HarborProgress {
+  write(p)
+  scheduleCloudPush(p)
+  return p
+}
+
 export function loadHarborProgress(): HarborProgress {
   return read()
 }
 
 export function isLevelCleared(levelId: string, progress = read()): boolean {
-  return progress.cleared.includes(levelId)
+  return isLevelClearedPure(levelId, progress)
 }
 
 export function isLevelUnlocked(levelId: string, orderedIds: string[], progress = read()): boolean {
-  const i = orderedIds.indexOf(levelId)
-  if (i <= 0) return true
-  const prev = orderedIds[i - 1]!
-  return progress.cleared.includes(prev)
+  return isLevelUnlockedPure(levelId, orderedIds, progress)
 }
 
 export function markStepReached(levelId: string, stepIndex: number) {
   const p = read()
   const prev = p.stepCursor[levelId] ?? 0
   if (stepIndex > prev) p.stepCursor[levelId] = stepIndex
-  write(p)
-  return p
+  return commit(p)
 }
 
 export function markCorrect() {
   const p = read()
   p.correctCount += 1
-  write(p)
-  return p
+  return commit(p)
 }
 
 export function markLevelCleared(levelId: string) {
   const p = read()
   if (!p.cleared.includes(levelId)) p.cleared = [...p.cleared, levelId]
-  write(p)
-  return p
+  return commit(p)
 }
 
 export function resetHarborProgress() {
-  write({ cleared: [], stepCursor: {}, correctCount: 0 })
+  return commit(emptyHarborProgress())
+}
+
+/**
+ * Load local + account progress after Learn open / sign-in.
+ * Always writes the merged result locally; pushes cloud when local was ahead.
+ */
+export async function hydrateHarborProgress(loggedIn?: boolean): Promise<HarborProgress> {
+  const session = loggedIn === undefined ? await getSession() : null
+  const isLoggedIn = loggedIn ?? Boolean(session)
+  setHarborPersistLoggedIn(isLoggedIn)
+
+  const local = read()
+  if (!isLoggedIn) return local
+
+  try {
+    const remoteRaw = await fetchHarborQuestProgress()
+    if (!remoteRaw) return local
+    const remote = sanitizeHarborProgress(remoteRaw)
+    const merged = mergeHarborProgress(local, remote)
+    write(merged)
+    if (!harborProgressEqual(merged, remote)) {
+      void putHarborQuestProgress(merged).catch(() => {
+        /* offline */
+      })
+    }
+    return merged
+  } catch {
+    return local
+  }
 }

@@ -70,10 +70,12 @@ CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide
 
 - Route: `#/learn` (hub) · `#/learn/<levelId>` (play) · page: [`apps/web/src/landing/learn/LearnPage.tsx`](apps/web/src/landing/learn/LearnPage.tsx)
 - Curriculum: [`apps/web/src/landing/learn/curriculum.ts`](apps/web/src/landing/learn/curriculum.ts) — Intro + Lessons 1–7 + Jyutping chart
-- Dual pane: quest brief (left) + harbor ferry stage (right); progress in `localStorage` (same origin, persists across PWA close/reopen on that device)
+- Dual pane: quest brief (left) + harbor ferry stage (right)
+- Progress: `localStorage` (`yue-harbor-quest-v1`) + cloud sync for signed-in users (`harbor_quest_progress` / `GET|PUT /api/harbor-quest`); merge is monotonic (union clears, max step/correct)
+- Migration: [`supabase/migrations/028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) — apply in Supabase SQL editor if not yet pushed
 - Speaker buttons use existing Azure TTS (`SpeakButton` / `yue`) on hearable Han examples
 - Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
-- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts`
+- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`
 - Related: cinematic tones refresher remains `#/tones`
 
 ### Instagram / static social posts (approved look)

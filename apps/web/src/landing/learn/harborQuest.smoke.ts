@@ -5,7 +5,7 @@ import {
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
-import { isLevelUnlocked } from '../../landing/learn/progress'
+import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 
 /** Offline: Harbor Quest curriculum integrity (no paid APIs). */
 function main() {
