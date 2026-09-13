@@ -18,8 +18,12 @@ import { HARBOR_MISS_SRC } from '../../landing/learn/harborSfx'
 import {
   biomeForChunk,
   clampOrbitPitch,
+  dockPoseForProgress,
+  HARBOR_DOCK_SPACING,
+  HARBOR_NPC_ROLES,
   HARBOR_SCENIC_TREES,
   HARBOR_VILLAGE_HOMES,
+  HARBOR_WULINGYUAN,
   orbitCameraOffset,
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
@@ -117,6 +121,17 @@ function main() {
   assert.ok(Math.abs(side.x) > Math.abs(side.z), 'yaw π/2 swings to the side')
   const around = orbitCameraOffset(Math.PI * 2, Math.PI / 6)
   assert.ok(Math.abs(around.x - behind.x) < 1e-9 && Math.abs(around.z - behind.z) < 1e-9, 'yaw wraps 360°')
+
+  assert.ok(HARBOR_NPC_ROLES.includes('villager'), 'villager NPCs')
+  assert.ok(HARBOR_NPC_ROLES.includes('scholar'), 'scholar NPCs')
+  assert.ok(HARBOR_NPC_ROLES.includes('fisherman'), 'fisherman NPCs')
+  assert.ok(HARBOR_NPC_ROLES.includes('merchant'), 'merchant NPCs')
+  assert.equal(HARBOR_NPC_ROLES.length, 6, 'Chinese clothing role kit')
+  const dock0 = dockPoseForProgress(0)
+  const dockMid = dockPoseForProgress(0.5)
+  assert.ok(dockMid.z > dock0.z, 'later progress docks further downriver')
+  assert.notEqual(dock0.side, dockPoseForProgress(HARBOR_DOCK_SPACING / 240).side, 'adjacent slots alternate banks')
+  assert.equal(HARBOR_WULINGYUAN, true, 'Wulingyuan mountain backdrop')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
