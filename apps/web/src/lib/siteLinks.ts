@@ -112,6 +112,16 @@ export function openTones() {
   navigate('tones')
 }
 
+/** Open Learn · Harbor Quest (`#/learn` or `#/learn/<levelId>`). */
+export function openLearn(levelId?: string) {
+  if (levelId) {
+    window.location.hash = `/learn/${levelId}`
+    window.scrollTo({ top: 0 })
+    return
+  }
+  navigate('learn')
+}
+
 /** Open the creator kit (`#/creators`) — Jyutping+Chao copy + Noto fonts. */
 export function openCreators() {
   navigate('creators')

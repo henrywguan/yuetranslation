@@ -31,6 +31,7 @@ import {
 import { formatExactDuration } from '../lib/formatDuration'
 import { openAuthScreen } from '../lib/auth'
 import { navigate } from '../lib/useHashRoute'
+import { openLearn } from '../lib/siteLinks'
 import { useYueStore } from '../lib/store'
 import { USER_ROLE_OPTIONS, type UserRole } from '../lib/userRoles'
 import './AdminPage.css'
@@ -104,6 +105,44 @@ function AdminNavIcon({ tab }: { tab: Tab }) {
       <circle cx="12" cy="12" r="3" />
       <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2" />
     </svg>
+  )
+}
+
+function HarborQuestNavIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={18}
+      height={18}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 17h18" />
+      <path d="M5 17V11l7-5 7 5v6" />
+      <path d="M9 17v-3h6v3" />
+      <path d="M12 6V3" />
+      <path d="M12 3l3 1.2" />
+    </svg>
+  )
+}
+
+function AdminHarborQuestLink({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <button
+      type="button"
+      className="admin-sidebar-link admin-sidebar-link--tool"
+      onClick={() => {
+        onNavigate?.()
+        openLearn()
+      }}
+    >
+      <HarborQuestNavIcon />
+      <span>Harbor Quest</span>
+    </button>
   )
 }
 
@@ -636,6 +675,7 @@ export function AdminPage() {
               <span>{item.label}</span>
             </button>
           ))}
+          <AdminHarborQuestLink />
         </nav>
         <div className="admin-sidebar-footer">
           <button type="button" className="admin-sidebar-back" onClick={() => navigate('app')}>
@@ -685,6 +725,7 @@ export function AdminPage() {
                   <span>{item.label}</span>
                 </button>
               ))}
+              <AdminHarborQuestLink onNavigate={() => setNavOpen(false)} />
             </nav>
             <div className="admin-sidebar-footer">
               <button type="button" className="admin-sidebar-back" onClick={() => navigate('app')}>

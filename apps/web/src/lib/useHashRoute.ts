@@ -5,6 +5,7 @@ export type Route =
   | 'app'
   | 'pricing'
   | 'tones'
+  | 'learn'
   | 'creators'
   | 'admin'
   | 'privacy'
@@ -45,6 +46,7 @@ export function useRoute(): Route {
   if (path === 'app') return 'app'
   if (path === 'pricing') return 'pricing'
   if (path === 'tones') return 'tones'
+  if (path === 'learn' || path.startsWith('learn/')) return 'learn'
   if (path === 'creators') return 'creators'
   if (path === 'admin') return 'admin'
   if (path === 'privacy') return 'privacy'
@@ -63,6 +65,8 @@ export function navigate(route: Route) {
     window.location.hash = '/pricing'
   } else if (route === 'tones') {
     window.location.hash = '/tones'
+  } else if (route === 'learn') {
+    window.location.hash = '/learn'
   } else if (route === 'creators') {
     window.location.hash = '/creators'
   } else if (route === 'admin') {
@@ -77,4 +81,12 @@ export function navigate(route: Route) {
     window.location.hash = '/'
   }
   window.scrollTo({ top: 0 })
+}
+
+/** Level id from `#/learn/<id>` (hub when absent). */
+export function learnLevelFromHash(hash = typeof window === 'undefined' ? '' : window.location.hash): string | null {
+  const path = hashPath(hash)
+  if (!path.startsWith('learn')) return null
+  const rest = path.slice('learn'.length).replace(/^\//, '')
+  return rest || null
 }

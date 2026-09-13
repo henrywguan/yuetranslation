@@ -461,3 +461,35 @@ export async function putAccountHistory(turns: ConversationTurn[]): Promise<void
     throw new Error(data.message || 'Failed to save history')
   }
 }
+
+export type HarborQuestProgressPayload = {
+  cleared: string[]
+  stepCursor: Record<string, number>
+  correctCount: number
+}
+
+export async function fetchHarborQuestProgress(): Promise<HarborQuestProgressPayload | null> {
+  const res = await apiFetch('/harbor-quest')
+  if (res.status === 401) return null
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to load Harbor Quest progress')
+  }
+  const progress = data.progress
+  if (!progress || typeof progress !== 'object') {
+    return { cleared: [], stepCursor: {}, correctCount: 0 }
+  }
+  return progress as HarborQuestProgressPayload
+}
+
+export async function putHarborQuestProgress(progress: HarborQuestProgressPayload): Promise<void> {
+  const res = await apiFetch('/harbor-quest', {
+    method: 'PUT',
+    body: JSON.stringify({ progress }),
+  })
+  if (res.status === 401) return
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to save Harbor Quest progress')
+  }
+}

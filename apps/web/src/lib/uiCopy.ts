@@ -833,9 +833,69 @@ export const ui = {
 
   navFeatures: { en: 'Features', zh: '功能', jp: 'gung1 nang4' },
   navTones: { en: 'Tones', zh: '聲調', jp: 'sing1 diu6' },
+  navLearn: { en: 'Learn', zh: '學習', jp: 'hok6 zaap6' },
   navCreators: { en: 'Creators', zh: '創作者', jp: 'cong3 zok3 ze2' },
   navPricing: { en: 'Pricing', zh: '價錢', jp: 'gaa3 cin4' },
   navLaunch: { en: 'Launch app', zh: '開啟應用', jp: 'hoi1 kai2 jing3 jung6' },
+
+  // —— Learn · Harbor Quest (#/learn) ——
+  learnHeroTitle: {
+    en: 'Steer the ferry with Jyutping',
+    zh: '用粵拼駕船過碼頭',
+    jp: 'jung6 jyut6 ping3 gaa3 syun4 gwo3 maa5 tau4',
+  },
+  learnHeroSub: {
+    en: 'A CodeCombat-style voyage through the Open Cantonese Pronunciation Guide — initials, finals, and six tones.',
+    zh: '似 CodeCombat 嘅航行，跟 Open Cantonese 發音導讀——聲母、韻母、六個聲調。',
+    jp: 'ci5 CodeCombat ge3 hong4 hang4, gan1 Open Cantonese faat3 jam1 dou6 duk6 — sing1 mou5, wan5 mou5, luk6 go3 sing1 diu6.',
+  },
+  learnBegin: { en: 'Begin voyage', zh: '開始航行', jp: 'hoi1 ci2 hang4 hong4' },
+  learnOcLink: {
+    en: 'Open Cantonese textbook ↗',
+    zh: 'Open Cantonese 課本 ↗',
+    jp: 'Open Cantonese fo3 bun2 ↗',
+  },
+  learnHowTitle: {
+    en: 'How Harbor Quest plays',
+    zh: 'Harbor Quest 點玩',
+    jp: 'Harbor Quest dim2 waan2',
+  },
+  learnHowBody: {
+    en: 'Left pane is your quest brief. Right pane is the harbor — clear gates and the ferry advances.',
+    zh: '左邊係任務說明，右邊係碼頭——答對過閘，船就向前。',
+    jp: 'zo2 bin1 hai6 jam6 mou6 syut3 ming4, jau6 bin1 hai6 maa5 tau4 — daap3 deoi3 gwo3 zaap6, syun4 zau6 hoeng3 cin4.',
+  },
+  learnHow1: {
+    en: 'Read the tip, then pick or build the Jyutping syllable.',
+    zh: '先睇提示，再揀或砌出粵拼音節。',
+    jp: 'sin1 tai2 tai4 si6, zoi3 gaan2 waak6 cai3 ceot1 jyut6 ping3 jam1 zit3.',
+  },
+  learnHow2: {
+    en: 'Wrong cast? Try again — the pier stays until you clear it.',
+    zh: '答錯？再試——碼頭會等到你過關。',
+    jp: 'daap3 co3? zoi3 si3 — maa5 tau4 wui5 dang2 dou3 nei5 gwo3 gwaan1.',
+  },
+  learnHow3: {
+    en: 'Levels follow Open Cantonese Lesson 0–7 plus the Jyutping chart.',
+    zh: '關卡跟 Open Cantonese 導讀第 0–7 課同粵拼總表。',
+    jp: 'gwaan1 kaa1 gan1 Open Cantonese dou6 duk6 dai6 0–7 fo3 tung4 jyut6 ping3 zung2 biu2.',
+  },
+  learnTonesLink: {
+    en: 'Prefer a cinematic tone refresher? Open Tones →',
+    zh: '想睇電影感聲調溫習？去聲調頁 →',
+    jp: 'soeng2 tai2 din6 jing2 gam2 sing1 diu6 wan1 zaap6? heoi3 sing1 diu6 jip6 →',
+  },
+  learnCtaTitle: {
+    en: 'Use Jyutping in real conversations',
+    zh: '將粵拼用喺真對話',
+    jp: 'zoeng1 jyut6 ping3 jung6 hai2 zan1 deoi3 waa6',
+  },
+  learnCtaBody: {
+    en: 'Harbor Quest teaches the legend. The translator draws it under every Cantonese line.',
+    zh: 'Harbor Quest 教你圖例；翻譯器會喺每句粵語下面畫出嚟。',
+    jp: 'Harbor Quest gaau3 nei5 tou4 lai6; faan1 jik6 hei3 wui5 hai2 mui5 geoi3 jyut6 jyu5 haa6 min6 waak6 ceot1 lai4.',
+  },
+  learnOpenApp: { en: 'Open translator', zh: '開啟翻譯器', jp: 'hoi1 kai2 faan1 jik6 hei3' },
 
   tonesKicker: { en: 'Cantonese tones', zh: '粵語聲調', jp: 'jyut6 jyu5 sing1 diu6' },
   tonesHeroTitle: {

@@ -64,6 +64,20 @@ Public guide for Cantonese educators / creators:
 - Covers: **Noto Sans HK** (漢字) + **Noto Sans** (Jyutping + Chao tone letters) downloads, Copy Jyutping + Chao tone letters steps (Family+), CapCut / Instagram / Canva / NLE font import
 - Nav + footer link: **Creators** — share this URL in creator outreach
 
+### Learn · Harbor Quest (`#/learn`) — admin preview
+
+CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide. **Not in public nav** yet — open from **Admin → Harbor Quest** (or `#/learn` directly).
+
+- Route: `#/learn` (hub) · `#/learn/<levelId>` (play) · page: [`apps/web/src/landing/learn/LearnPage.tsx`](apps/web/src/landing/learn/LearnPage.tsx)
+- Curriculum: [`apps/web/src/landing/learn/curriculum.ts`](apps/web/src/landing/learn/curriculum.ts) — Intro + Lessons 1–7 + Jyutping chart
+- Dual pane: quest brief (left) + harbor ferry stage (right)
+- Progress: `localStorage` (`yue-harbor-quest-v1`) + cloud sync for signed-in users (`harbor_quest_progress` / `GET|PUT /api/harbor-quest`); merge is monotonic (union clears, max step/correct)
+- Migration: [`supabase/migrations/028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) — apply in Supabase SQL editor if not yet pushed
+- Speaker buttons use existing Azure TTS (`SpeakButton` / `yue`) on hearable Han examples
+- Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
+- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`
+- Related: cinematic tones refresher remains `#/tones`
+
 ### Instagram / static social posts (approved look)
 
 When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, use the **instructional night/dark mode** Harbor look — **not** a new AI poster style.

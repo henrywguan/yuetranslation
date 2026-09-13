@@ -941,6 +941,9 @@ export const useYueStore = create<State>((set, get) => {
       const { hydrateHistory } = await import('./historySync')
       const history = await hydrateHistory(Boolean(ent.loggedIn))
       set({ history })
+      void import('../landing/learn/progress').then((m) => {
+        void m.hydrateHarborProgress(Boolean(ent.loggedIn))
+      })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {
         const {
