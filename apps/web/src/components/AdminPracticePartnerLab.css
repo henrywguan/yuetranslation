@@ -493,3 +493,152 @@
   color: #ff8f8f;
   font-size: 0.88rem;
 }
+
+
+/* —— Fullscreen practice view —— */
+.partner-lab-fs-hint {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.9rem;
+  z-index: 4;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+  background: color-mix(in srgb, #041018 55%, transparent);
+  backdrop-filter: blur(8px);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+  pointer-events: none;
+}
+
+.partner-lab-fs-exit {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.9rem, env(safe-area-inset-right));
+  z-index: 5;
+  appearance: none;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 75%, transparent);
+  background: color-mix(in srgb, #041018 72%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--ink-bright);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.partner-lab-subtitle-band {
+  display: none;
+}
+
+.partner-lab-stage {
+  cursor: pointer;
+}
+
+.partner-lab-stage:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.partner-lab.is-fullscreen .partner-lab-stage,
+.partner-lab-stage.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  border-radius: 0;
+  border: none;
+  cursor: default;
+  box-shadow: none;
+}
+
+.partner-lab.is-fullscreen .partner-lab-subtitle-band {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  bottom: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, #02080c 35%, transparent) 28%,
+    color-mix(in srgb, #02080c 72%, transparent) 100%
+  );
+}
+
+/* TV / game subtitles — lower half, centered, high-contrast */
+.partner-lab.is-fullscreen .partner-lab-subtitles {
+  top: auto;
+  bottom: max(6.75rem, calc(env(safe-area-inset-bottom) + 5.75rem));
+  left: 50%;
+  right: auto;
+  width: min(92vw, 42rem);
+  max-width: none;
+  transform: translateX(-50%);
+  padding: 0.85rem 1.15rem 1rem;
+  border-radius: 0.35rem;
+  border: none;
+  background: color-mix(in srgb, #000 58%, transparent);
+  box-shadow: none;
+  backdrop-filter: blur(6px);
+  text-align: center;
+  z-index: 4;
+}
+
+.partner-lab.is-fullscreen .partner-lab-subtitles-role {
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.partner-lab.is-fullscreen .partner-lab-subtitles-text {
+  font-size: clamp(1.25rem, 4.2vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.35;
+  text-shadow: 0 1px 2px color-mix(in srgb, #000 55%, transparent);
+}
+
+.partner-lab.is-fullscreen .partner-lab-status {
+  top: max(0.85rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  right: auto;
+  bottom: auto;
+  max-width: min(70vw, 22rem);
+  z-index: 4;
+}
+
+.partner-lab.is-fullscreen .partner-lab-live {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 81;
+  margin: 0;
+  padding: 0.75rem 0.9rem calc(0.85rem + env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--glass-border) 55%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #041018 55%, transparent),
+      color-mix(in srgb, #02080c 92%, transparent)
+    );
+  backdrop-filter: blur(14px);
+  box-sizing: border-box;
+}
+
+.partner-lab.is-fullscreen .partner-lab-head,
+.partner-lab.is-fullscreen .partner-lab-transcript,
+.partner-lab.is-fullscreen .partner-lab-notes,
+.partner-lab.is-fullscreen .partner-lab-error {
+  /* Keep in document flow under the overlay; hide so focus stays on stage */
+  visibility: hidden;
+}

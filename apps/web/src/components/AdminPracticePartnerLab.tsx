@@ -90,6 +90,7 @@ export function AdminPracticePartnerLab() {
   const [error, setError] = useState('')
   const [draft, setDraft] = useState('')
   const [lastModel, setLastModel] = useState('')
+  const [fullscreen, setFullscreen] = useState(false)
 
   const sessionRef = useRef<LiveSession | null>(null)
   const finalsRef = useRef('')
@@ -344,6 +345,20 @@ export function AdminPracticePartnerLab() {
     }
   }, [stopMic])
 
+  useEffect(() => {
+    if (!fullscreen) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setFullscreen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [fullscreen])
+
   const orbitProps = useMemo((): Partial<OrbitalSphereOptions> => {
     const base = { ...ORBITAL_SPHERE_DEFAULTS, ...MOOD_ORBIT[mood] }
     const breathe = mood === 'speaking' || mood === 'listening' ? amp * 0.12 : 0
@@ -359,27 +374,65 @@ export function AdminPracticePartnerLab() {
   const moodMeta = MOODS.find((m) => m.id === mood)!
 
   return (
-    <section className="partner-lab" aria-label="Practice Partner lab">
+    <section className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Practice Partner lab">
       <header className="partner-lab-head">
         <div>
           <p className="partner-lab-kicker">Internal · not in app</p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
             Live loop (admin only): mic → Web Speech STT → DeepSeek (persona + history) → your
-            existing Azure TTS. Harbor orb + captions on top. No Voice Live / Foundry.
+            existing Azure TTS. Tap the orb for fullscreen — captions sit in the lower half like TV
+            subtitles. No Voice Live / Foundry.
           </p>
         </div>
       </header>
 
-      <div className={`partner-lab-stage partner-lab-stage--${mood}`} data-mood={mood}>
+      <div
+        className={`partner-lab-stage partner-lab-stage--${mood}${fullscreen ? ' is-fullscreen' : ''}`}
+        data-mood={mood}
+        data-fullscreen={fullscreen ? 'true' : 'false'}
+        role={fullscreen ? undefined : 'button'}
+        tabIndex={fullscreen ? undefined : 0}
+        aria-label={fullscreen ? undefined : 'Enter fullscreen practice view'}
+        onClick={() => {
+          if (!fullscreen) setFullscreen(true)
+        }}
+        onKeyDown={(event) => {
+          if (fullscreen) return
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            setFullscreen(true)
+          }
+        }}
+      >
         <div className="partner-lab-glow" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+
+        {!fullscreen ? (
+          <p className="partner-lab-fs-hint" aria-hidden="true">
+            Tap for fullscreen
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="partner-lab-fs-exit"
+            onClick={(event) => {
+              event.stopPropagation()
+              setFullscreen(false)
+            }}
+          >
+            Exit fullscreen
+          </button>
+        )}
+
+        <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
         <div
           className={`partner-lab-subtitles partner-lab-subtitles--${caption.role}${
             caption.interim ? ' is-interim' : ''
           }`}
           aria-live="polite"
+          onClick={(event) => event.stopPropagation()}
         >
           <span className="partner-lab-subtitles-role">{ROLE_LABEL[caption.role]}</span>
           <p className="partner-lab-subtitles-text">{caption.text}</p>
