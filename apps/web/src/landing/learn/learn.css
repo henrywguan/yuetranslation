@@ -934,6 +934,8 @@
 }
 
 .hq-stage-meter {
+  position: relative;
+  z-index: 2;
   height: 3px;
   margin: 0 1rem;
   border-radius: 999px;
@@ -948,6 +950,8 @@
 }
 
 .hq-stage-caption {
+  position: relative;
+  z-index: 2;
   margin: 0.55rem 1rem 0.85rem;
   font-size: 0.8rem;
   letter-spacing: 0.03em;
@@ -973,6 +977,20 @@
   min-height: 100%;
   height: 100%;
   width: 100%;
+}
+
+.hq-world-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hq-stage--immersive .hq-world-canvas {
+  min-height: 100%;
 }
 
 .hq-stage--immersive .hq-stage-svg {
