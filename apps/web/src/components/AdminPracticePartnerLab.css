@@ -1,7 +1,37 @@
 .partner-lab {
   display: grid;
-  gap: 1.25rem;
+  gap: 0.75rem;
   max-width: 52rem;
+  align-content: start;
+}
+
+/* Fit inside Admin shell without forcing page zoom */
+.partner-lab:not(.is-fullscreen) {
+  max-height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0.15rem;
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-head {
+  gap: 0.35rem;
+}
+
+/* Admin page already shows “Practice Partner” — skip duplicate chrome */
+.partner-lab:not(.is-fullscreen) .partner-lab-kicker,
+.partner-lab:not(.is-fullscreen) .partner-lab-title {
+  display: none;
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-lede {
+  margin: 0;
+  max-width: 44rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
 }
 
 .partner-lab-head {
@@ -55,7 +85,9 @@
 .partner-lab-stage {
   position: relative;
   isolation: isolate;
-  min-height: min(52vh, 420px);
+  min-height: min(28vh, 220px);
+  height: min(32vh, 260px);
+  max-height: min(42vh, 280px);
   border-radius: 1.25rem;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--glass-border) 75%, transparent);
@@ -270,10 +302,42 @@
 }
 
 .partner-lab-transcript {
-  padding: 0.95rem 1rem;
+  padding: 0.75rem 0.9rem;
   border-radius: 0.9rem;
   border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
   background: color-mix(in srgb, var(--surface-strong) 55%, transparent);
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-transcript,
+.partner-lab:not(.is-fullscreen) .partner-lab-notes {
+  max-height: min(18vh, 140px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-live {
+  gap: 0.5rem;
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-voice select,
+.partner-lab:not(.is-fullscreen) .partner-lab-talk,
+.partner-lab:not(.is-fullscreen) .partner-lab-compose input,
+.partner-lab:not(.is-fullscreen) .partner-lab-send,
+.partner-lab:not(.is-fullscreen) .partner-lab-reset {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-bottom {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .partner-lab:not(.is-fullscreen) .partner-lab-bottom {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: start;
+  }
 }
 
 .partner-lab-transcript h3 {
@@ -386,7 +450,7 @@
 }
 
 .partner-lab-notes {
-  padding: 0.95rem 1rem;
+  padding: 0.75rem 0.9rem;
   border-radius: 0.9rem;
   border: 1px dashed color-mix(in srgb, var(--glass-border) 90%, transparent);
   background: color-mix(in srgb, var(--surface-strong) 45%, transparent);
@@ -429,7 +493,9 @@
   }
 
   .partner-lab-stage {
-    min-height: min(48vh, 340px);
+    min-height: min(24vh, 180px);
+    height: min(28vh, 210px);
+    max-height: 220px;
   }
 }
 
@@ -606,6 +672,7 @@
   width: 100vw;
   height: 100dvh;
   min-height: 100dvh;
+  max-height: none;
   border-radius: 0;
   border: none;
   cursor: default;
@@ -838,6 +905,7 @@
 }
 
 .partner-lab.is-fullscreen .partner-lab-head,
+.partner-lab.is-fullscreen .partner-lab-bottom,
 .partner-lab.is-fullscreen .partner-lab-transcript,
 .partner-lab.is-fullscreen .partner-lab-notes,
 .partner-lab.is-fullscreen .partner-lab-error {
