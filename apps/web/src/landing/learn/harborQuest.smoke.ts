@@ -30,6 +30,14 @@ import {
   ORBIT_PITCH_MIN,
 } from '../../landing/learn/harborWorld'
 import {
+  HARBOR_CRAFT_PALETTE,
+  HARBOR_FACETS,
+  hqBox,
+  hqCanopy,
+  hqRock,
+  hqWindow,
+} from '../../landing/learn/harborCraft'
+import {
   buildHarborProtagonist,
   countProtagonistMeshes,
   HARBOR_PROTAGONIST_ID,
@@ -136,6 +144,15 @@ function main() {
   assert.ok(HARBOR_NPC_ROLES.includes('fisherman'), 'fisherman NPCs')
   assert.ok(HARBOR_NPC_ROLES.includes('merchant'), 'merchant NPCs')
   assert.equal(HARBOR_NPC_ROLES.length, 6, 'Chinese clothing role kit')
+
+  // Craft bible kit — locked palette + faceted helpers
+  assert.equal(HARBOR_FACETS, 6, 'era cylinders stay 6-gon')
+  assert.ok(HARBOR_CRAFT_PALETTE.jade === 0x3dcfb6, 'brand jade in craft palette')
+  assert.ok(HARBOR_CRAFT_PALETTE.woodMid && HARBOR_CRAFT_PALETTE.roofTile, 'wood/roof swatches')
+  assert.ok(hqBox(1, 1, 1, HARBOR_CRAFT_PALETTE.stone).isMesh, 'hqBox builds meshes')
+  assert.ok(hqCanopy(0.5, HARBOR_CRAFT_PALETTE.leafMid).isMesh, 'hqCanopy faceted')
+  assert.ok(hqRock(() => 0.5).isMesh, 'hqRock boxy')
+  assert.ok(hqWindow(0.3, 0.3, HARBOR_CRAFT_PALETTE.trimGold, 0x102030, 0, 0, 0).isGroup, 'extruded window')
 
   // Original River Scout protagonist (not Jagex Bob / cache mesh)
   assert.equal(HARBOR_PROTAGONIST_ID, 'river-scout')

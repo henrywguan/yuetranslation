@@ -9,8 +9,15 @@ Procedurally synthesized for JyutTranslate Harbor Quest.
 
 Regenerate: `python3 scripts/gen-harbor-miss-sfx.py`
 
-## Player mannequin
+## 3D craft
 
-The canoe traveler is **River Scout** (`apps/web/src/landing/learn/harborProtagonist.ts`) — an original low-poly kitbash using RS-*era* proportion grammar (chunky head/hands, faceted limbs, jade sash). It is **not** extracted from a RuneScape cache and is **not** a recolor of Jagex’s default player (“Bob”).
+World meshes are authored in code (`harborCraft.ts`, `harborWorld.ts`, `harborProtagonist.ts`) against **`docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md`**:
+
+- Locked posterized palette
+- Flat Lambert / faceted cylinders (6-gon)
+- Extruded windows & chunky architecture
+- Oversized-head NPC / River Scout mannequin grammar
+
+Original Harbor / Jiangnan kit — **not** extracted from a RuneScape cache and **not** a recolor of Jagex models.
 
 Do not replace these with ripped game files.
