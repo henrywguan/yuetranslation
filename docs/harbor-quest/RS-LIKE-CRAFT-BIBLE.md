@@ -363,6 +363,7 @@ CLI `extract` modes exist (`items`, `bin`, live/`openrs2` loaders). Treat them a
 - Faceted trees/rocks; modular docks/boats
 - Readable combat poses; simple attachment sockets
 - “Graphical integrity” philosophy: *new content that looks authentically of-era*
+- Using open-source viewers like **rsmv** for proportion / budget *study notes* only (§6.1b)
 
 ### 7.2 NOT SAFE (Jagex IP / policy)
 
