@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict'
+import { readFileSync, statSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   HARBOR_LEVELS,
   levelById,
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
+<<<<<<< HEAD
 import {
   HARBOR_FANFARE_DURATION_BOUNDS_MS,
   HARBOR_FANFARE_DURATION_MS,
@@ -12,10 +16,10 @@ import {
   harborFanfareDurationMs,
 } from '../../landing/learn/harborFanfare'
 import { HARBOR_MISS_SRC } from '../../landing/learn/harborSfx'
-import { biomeForChunk } from '../../landing/learn/harborWorld'
-import { readFileSync, statSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { biomeForChunk, HARBOR_SCENIC_TREES } from '../../landing/learn/harborWorld'
+=======
+import { biomeForChunk, HARBOR_SCENIC_TREES, HARBOR_VILLAGE_HOMES } from '../../landing/learn/harborWorld'
+>>>>>>> 7841d90 (Harbor Quest: Chinese village homes along the river)
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -59,7 +63,6 @@ function main() {
     true,
   )
 
-
   assert.equal(rubyJpSyllable('si1'), 'si1˥')
   assert.equal(enrichJyutpingWithChao('In Jyutping si1, what does the 1 mark?'), 'In Jyutping si1˥, what does the 1 mark?')
   assert.equal(enrichJyutpingWithChao('nei5 hou2'), 'nei5˩˧ hou2˧˥')
@@ -96,6 +99,14 @@ function main() {
     const hdr = readFileSync(abs).subarray(0, 4).toString('ascii')
     assert.equal(hdr, 'RIFF', `${style} must be a WAV`)
   }
+
+  assert.ok(HARBOR_SCENIC_TREES.includes('cherry'), 'cherry blossom trees')
+  assert.ok(HARBOR_SCENIC_TREES.includes('ginkgo'), 'ginkgo trees')
+  assert.ok(HARBOR_SCENIC_TREES.includes('poplar'), 'poplar trees')
+  assert.equal(HARBOR_SCENIC_TREES.length, 5, 'scenic tree kit')
+  assert.ok(HARBOR_VILLAGE_HOMES.includes('jiangnan'), 'jiangnan homes')
+  assert.ok(HARBOR_VILLAGE_HOMES.includes('stilt'), 'riverside stilt shops')
+  assert.equal(HARBOR_VILLAGE_HOMES.length, 4, 'village home kit')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
