@@ -671,6 +671,9 @@ export type HarborScenicTree = (typeof HARBOR_SCENIC_TREES)[number]
 /** Distant Wulingyuan-style karst backdrop is present in the voyage. */
 export const HARBOR_WULINGYUAN = true as const
 
+/** 祥云 auspicious clouds fill the Harbor Quest sky. */
+export const HARBOR_XIANGYUN = true as const
+
 function bridge() {
   const g = new THREE.Group()
   const deck = new THREE.Mesh(new THREE.BoxGeometry(RIVER * 2.2, 0.12, 1.4), mat(0x7a5a3a))
@@ -772,6 +775,84 @@ function wulingyuanRange(seed: number) {
     root.add(pillar)
   }
   root.userData.wulingyuan = true
+  return root
+}
+
+/**
+ * Single 祥云 (xiangyun) auspicious cloud — ruyi-head lobes + trailing swirls
+ * in the classic Chinese decorative silhouette (not fluffy Western cumulus).
+ */
+function xiangyunCloud(rng: () => number) {
+  const g = new THREE.Group()
+  const tones = [0xf7f2e8, 0xfff8f0, 0xf0e6d8, 0xffecd8, 0xf8f0ff, 0xffe8c8]
+  const tone = tones[Math.floor(rng() * tones.length)]!
+  const cloudMat = mat(tone, { transparent: true, opacity: 0.82 + rng() * 0.12 })
+  // Soft gold accent for the auspicious rim
+  const rimMat = mat(0xe8c878, { transparent: true, opacity: 0.55 })
+
+  const lobe = (sx: number, sy: number, sz: number, x: number, y: number, z: number, rim = false) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.55, 6, 5), rim ? rimMat : cloudMat)
+    mesh.scale.set(sx, sy, sz)
+    mesh.position.set(x, y, z)
+    g.add(mesh)
+  }
+
+  // Ruyi head — three stacked curls (classic 如意云头)
+  lobe(1.35, 0.55, 0.95, 0, 0.15, 0)
+  lobe(0.95, 0.48, 0.75, -0.85, 0.35, 0.1)
+  lobe(0.95, 0.48, 0.75, 0.85, 0.35, -0.05)
+  // Upper crown curl
+  lobe(0.7, 0.4, 0.55, 0, 0.7, 0.05, true)
+  // Trailing body lobes (scrolling 流云)
+  const trail = 2 + Math.floor(rng() * 3)
+  for (let i = 0; i < trail; i++) {
+    const t = (i + 1) / (trail + 1)
+    lobe(
+      0.85 - t * 0.35,
+      0.38 - t * 0.08,
+      0.65 - t * 0.2,
+      -1.2 - i * 0.85,
+      0.1 + Math.sin(t * Math.PI) * 0.25,
+      (rng() - 0.5) * 0.3,
+      i === trail - 1,
+    )
+  }
+  // Small spiral accent under the head
+  lobe(0.45, 0.28, 0.4, 0.35, -0.15, 0.2)
+
+  g.userData.xiangyun = true
+  g.userData.phase = rng() * Math.PI * 2
+  g.userData.drift = 0.15 + rng() * 0.35
+  return g
+}
+
+/** Sky field of 祥云 — parallax layer above the river voyage. */
+function xiangyunSky(seed: number) {
+  const root = new THREE.Group()
+  const rng = mulberry32(seed)
+  const count = 14
+  for (let i = 0; i < count; i++) {
+    const cloud = xiangyunCloud(rng)
+    const side = i % 2 === 0 ? 1 : -1
+    const x = side * (6 + rng() * 22 + (i % 4) * 1.5)
+    const y = 9 + rng() * 7
+    const z = (rng() - 0.5) * 100
+    cloud.position.set(x, y, z)
+    cloud.rotation.y = (rng() - 0.5) * 0.8
+    cloud.scale.setScalar(1.4 + rng() * 2.2)
+    // Flatten slightly so they read as painted sky scrolls
+    cloud.scale.y *= 0.75 + rng() * 0.2
+    root.add(cloud)
+  }
+  // A few closer ceremonial banners of cloud
+  for (let i = 0; i < 5; i++) {
+    const cloud = xiangyunCloud(rng)
+    cloud.position.set((rng() - 0.5) * 18, 7.5 + rng() * 3, -8 + i * 16)
+    cloud.scale.setScalar(1.1 + rng() * 1.2)
+    cloud.scale.y *= 0.7
+    root.add(cloud)
+  }
+  root.userData.xiangyunSky = true
   return root
 }
 
@@ -1009,6 +1090,10 @@ export function createHarborWorld(
   const mountains = wulingyuanRange(42)
   scene.add(mountains)
 
+  // 祥云 — auspicious Chinese sky scrolls
+  const clouds = xiangyunSky(77)
+  scene.add(clouds)
+
   const wakeMat = mat(0xa8d8e8, { transparent: true, opacity: 0.35 })
   const wakes: THREE.Mesh[] = []
   for (let i = 0; i < 5; i++) {
@@ -1127,6 +1212,18 @@ export function createHarborWorld(
     // Parallax: mountains drift slower than the canoe
     mountains.position.z = voyageZ * 0.35
     mountains.position.x = boatX * 0.15
+
+    // 祥云 drift even slower — painted sky scrolls sliding with the voyage
+    clouds.position.z = voyageZ * 0.22
+    clouds.position.x = boatX * 0.08
+    if (!reduced) {
+      clouds.children.forEach((child, i) => {
+        if (child.userData.baseY == null) child.userData.baseY = child.position.y
+        const phase = ((child.userData.phase as number) || 0) + waterPhase * ((child.userData.drift as number) || 0.25)
+        child.position.y = (child.userData.baseY as number) + Math.sin(phase + i) * 0.35
+        child.rotation.z = Math.sin(phase * 0.5) * 0.04
+      })
+    }
 
     // Ease orbit toward finger drag (snappy, still smooth)
     const orbitLerp = Math.min(1, dt * 14)

@@ -24,6 +24,7 @@ import {
   HARBOR_SCENIC_TREES,
   HARBOR_VILLAGE_HOMES,
   HARBOR_WULINGYUAN,
+  HARBOR_XIANGYUN,
   orbitCameraOffset,
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
@@ -132,6 +133,7 @@ function main() {
   assert.ok(dockMid.z > dock0.z, 'later progress docks further downriver')
   assert.notEqual(dock0.side, dockPoseForProgress(HARBOR_DOCK_SPACING / 240).side, 'adjacent slots alternate banks')
   assert.equal(HARBOR_WULINGYUAN, true, 'Wulingyuan mountain backdrop')
+  assert.equal(HARBOR_XIANGYUN, true, 'xiangyun auspicious sky clouds')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
