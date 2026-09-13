@@ -156,6 +156,19 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         </a>
       </header>
 
+      {/* Persistent open-world control — always on stage, exits dialogue when talking */}
+      <button
+        type="button"
+        className={`hq-explore-fab${!talking ? ' is-on' : ''}`}
+        aria-label="Open world exploration"
+        aria-pressed={!talking}
+        title="Open world exploration"
+        onClick={() => setTalking(false)}
+      >
+        <ExploreWorldIcon />
+        <span className="hq-explore-fab-label">Explore</span>
+      </button>
+
       <div className={`hq-play-hud${talking ? ' is-talking' : ' is-exploring'}`}>
         <QuestPanel
           step={step}
@@ -172,6 +185,27 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         />
       </div>
     </div>
+  )
+}
+
+/** Compass rose for the open-world explore FAB. */
+function ExploreWorldIcon() {
+  return (
+    <svg className="hq-explore-fab-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+      <path
+        d="M12 3.2 13.6 10.4 12 9.2 10.4 10.4Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 20.8 10.4 13.6 12 14.8 13.6 13.6Z"
+        fill="currentColor"
+        opacity="0.55"
+      />
+      <path d="M3.2 12 10.4 10.4 9.2 12 10.4 13.6Z" fill="currentColor" opacity="0.7" />
+      <path d="M20.8 12 13.6 13.6 14.8 12 13.6 10.4Z" fill="currentColor" opacity="0.7" />
+    </svg>
   )
 }
 
