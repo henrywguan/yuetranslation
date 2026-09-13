@@ -14,6 +14,15 @@ import {
   sanitizeHarborProgress,
   type HarborProgress,
 } from './progressMerge'
+import {
+  HARBOR_STARTER_OWNED,
+  harborGearById,
+  sanitizeHarborLook,
+  sanitizeOwnedGear,
+  type HarborGearId,
+  type HarborGearSlot,
+  type HarborLook,
+} from './harborGear'
 
 export type { HarborProgress }
 export {
@@ -22,6 +31,9 @@ export {
   mergeHarborProgress,
   sanitizeHarborProgress,
 }
+
+/** Coins awarded per correct answer (quest + practice). */
+export const HARBOR_COINS_PER_CORRECT = 8
 
 const STORAGE_KEY = 'yue-harbor-quest-v1'
 
@@ -89,7 +101,64 @@ export function markStepReached(levelId: string, stepIndex: number) {
 export function markCorrect() {
   const p = read()
   p.correctCount += 1
+  p.coins = Math.max(0, Math.floor(p.coins)) + HARBOR_COINS_PER_CORRECT
   return commit(p)
+}
+
+/** Stamp a visit to the Save Shack (persists look + progress timestamp). */
+export function visitSaveShack(): HarborProgress {
+  const p = read()
+  return commit({
+    ...p,
+    look: sanitizeHarborLook(p.look),
+    owned: sanitizeOwnedGear(p.owned),
+    lastSavedAt: Date.now(),
+  })
+}
+
+export function buyHarborGear(
+  id: HarborGearId,
+): { ok: true; progress: HarborProgress } | { ok: false; reason: string } {
+  const item = harborGearById(id)
+  if (!item) return { ok: false, reason: 'Unknown item.' }
+  const p = read()
+  const owned = new Set(sanitizeOwnedGear(p.owned))
+  if (owned.has(id)) return { ok: false, reason: 'Already owned.' }
+  const price = Math.max(0, Math.floor(item.price))
+  const coins = Math.max(0, Math.floor(p.coins))
+  if (coins < price) return { ok: false, reason: 'Not enough coins.' }
+  owned.add(id)
+  const look: HarborLook = { ...sanitizeHarborLook(p.look), [item.slot]: id }
+  return {
+    ok: true,
+    progress: commit({
+      ...p,
+      coins: coins - price,
+      owned: sanitizeOwnedGear([...owned]),
+      look: sanitizeHarborLook(look),
+    }),
+  }
+}
+
+export function equipHarborGear(
+  slot: HarborGearSlot,
+  id: HarborGearId,
+): { ok: true; progress: HarborProgress } | { ok: false; reason: string } {
+  const item = harborGearById(id)
+  if (!item) return { ok: false, reason: 'Unknown item.' }
+  if (item.slot !== slot) return { ok: false, reason: 'Wrong slot.' }
+  const p = read()
+  const owned = new Set(sanitizeOwnedGear(p.owned.length ? p.owned : [...HARBOR_STARTER_OWNED]))
+  if (!owned.has(id)) return { ok: false, reason: 'Not owned — buy it first.' }
+  const look: HarborLook = { ...sanitizeHarborLook(p.look), [slot]: id }
+  return {
+    ok: true,
+    progress: commit({
+      ...p,
+      owned: [...owned],
+      look: sanitizeHarborLook(look),
+    }),
+  }
 }
 
 export function markLevelCleared(levelId: string) {

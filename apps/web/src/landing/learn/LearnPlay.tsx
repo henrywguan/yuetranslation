@@ -8,14 +8,29 @@ import {
 } from './curriculum'
 import { playHarborCorrectFanfare, stopHarborCorrectFanfare } from './harborFanfare'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
+import {
+  HARBOR_GEAR_SLOTS,
+  harborGearById,
+  harborGearForSlot,
+  type HarborGearId,
+  type HarborGearSlot,
+} from './harborGear'
 import { HarborStage } from './HarborStage'
-import { HARBOR_NPC_ROLES, type HarborNpcRole } from './harborWorld'
+import {
+  HARBOR_NPC_ROLES,
+  type HarborNpcRole,
+  type HarborVisitableId,
+} from './harborWorld'
 import {
   isLevelCleared,
   isLevelUnlocked,
+  buyHarborGear,
+  equipHarborGear,
+  loadHarborProgress,
   markCorrect,
   markLevelCleared,
   markStepReached,
+  visitSaveShack,
   type HarborProgress,
 } from './progress'
 import { QuestPanel } from './QuestPanel'
@@ -41,6 +56,11 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [lastOk, setLastOk] = useState(false)
   /** World-first: dialogue closed until the sailor chooses Talk. */
   const [talking, setTalking] = useState(false)
+  const [progressSnap, setProgressSnap] = useState<HarborProgress>(() => loadHarborProgress())
+  const [visitable, setVisitable] = useState<HarborVisitableId | null>(null)
+  const [shopSlot, setShopSlot] = useState<HarborGearSlot>('hat')
+  const [saveFlash, setSaveFlash] = useState<string | null>(null)
+  const [shopMsg, setShopMsg] = useState<string | null>(null)
 
   useEffect(() => {
     setStepIndex(0)
@@ -48,6 +68,9 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setCleared(false)
     setLastOk(false)
     setTalking(false)
+    setVisitable(null)
+    setSaveFlash(null)
+    setShopMsg(null)
   }, [levelId])
 
   useEffect(() => {
@@ -61,22 +84,30 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     }
   }, [])
 
+  const pushProgress = useCallback(
+    (p: HarborProgress) => {
+      setProgressSnap(p)
+      onProgress(p)
+    },
+    [onProgress],
+  )
+
   useEffect(() => {
     if (!level) return
-    onProgress(markStepReached(level.id, stepIndex))
-  }, [level, stepIndex, onProgress])
+    pushProgress(markStepReached(level.id, stepIndex))
+  }, [level, stepIndex, pushProgress])
 
   const advance = useCallback(() => {
     if (!level) return
     if (stepIndex >= level.steps.length - 1) {
-      onProgress(markLevelCleared(level.id))
+      pushProgress(markLevelCleared(level.id))
       setCleared(true)
       return
     }
     setStepIndex((i) => i + 1)
     setFlash(null)
     setLastOk(false)
-  }, [level, stepIndex, onProgress])
+  }, [level, stepIndex, pushProgress])
 
   const onResult = useCallback(
     (ok: boolean) => {
@@ -84,7 +115,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       setLastOk(ok)
       if (ok) {
         stopHarborMiss()
-        onProgress(markCorrect())
+        pushProgress(markCorrect())
         playHarborCorrectFanfare()
       } else {
         stopHarborCorrectFanfare()
@@ -93,7 +124,47 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       }
       window.setTimeout(() => setFlash(null), 420)
     },
-    [onProgress],
+    [pushProgress],
+  )
+
+  const onVisitable = useCallback((id: HarborVisitableId | null) => {
+    setVisitable(id)
+    if (!id) {
+      setSaveFlash(null)
+      setShopMsg(null)
+    }
+  }, [])
+
+  const onSave = useCallback(() => {
+    const p = visitSaveShack()
+    pushProgress(p)
+    setSaveFlash('Progress & look saved.')
+  }, [pushProgress])
+
+  const onBuy = useCallback(
+    (id: HarborGearId) => {
+      const res = buyHarborGear(id)
+      if (!res.ok) {
+        setShopMsg(res.reason)
+        return
+      }
+      pushProgress(res.progress)
+      setShopMsg(`Bought ${harborGearById(id)?.name.en ?? id}.`)
+    },
+    [pushProgress],
+  )
+
+  const onEquip = useCallback(
+    (slot: HarborGearSlot, id: HarborGearId) => {
+      const res = equipHarborGear(slot, id)
+      if (!res.ok) {
+        setShopMsg(res.reason)
+        return
+      }
+      pushProgress(res.progress)
+      setShopMsg(`Equipped ${harborGearById(id)?.name.en ?? id}.`)
+    },
+    [pushProgress],
   )
 
   if (!level) {
@@ -132,6 +203,8 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           flash={flash}
           spotlight={talking ? spotlight : undefined}
           immersive
+          look={progressSnap.look}
+          onVisitable={onVisitable}
         />
       </div>
 
@@ -154,7 +227,107 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         >
           Textbook
         </a>
+        <div className="hq-coin-chip" title="Ferry coins">
+          <span className="hq-coin-chip-icon" aria-hidden="true">◌</span>
+          <span className="hq-coin-chip-val">{progressSnap.coins}</span>
+        </div>
       </header>
+
+      {visitable === 'save-shack' ? (
+        <aside className="hq-visit-panel hq-visit-panel--save" role="dialog" aria-label="Save Shack">
+          <p className="hq-visit-kicker">Save Shack · 存檔小屋</p>
+          <h2 className="hq-visit-title">Stamp your voyage</h2>
+          <p className="hq-visit-body">
+            Store pier progress, ferry coins, and your River Scout look on this device
+            {progressSnap.lastSavedAt
+              ? ` · last saved ${new Date(progressSnap.lastSavedAt).toLocaleString()}`
+              : ' · not saved yet'}
+            .
+          </p>
+          <button type="button" className="hq-btn hq-btn--primary" onClick={onSave}>
+            Save progress & look
+          </button>
+          {saveFlash ? <p className="hq-visit-msg">{saveFlash}</p> : null}
+          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+            Cast off
+          </button>
+        </aside>
+      ) : null}
+
+      {visitable === 'outfitter' ? (
+        <aside className="hq-visit-panel hq-visit-panel--shop" role="dialog" aria-label="River Outfitter">
+          <p className="hq-visit-kicker">River Outfitter · 河畔衣鋪</p>
+          <h2 className="hq-visit-title">Outfits & handhelds</h2>
+          <p className="hq-visit-body">
+            {progressSnap.coins} ferry coins · earn more with correct casts
+          </p>
+          <div className="hq-shop-slots" role="tablist" aria-label="Gear slots">
+            {HARBOR_GEAR_SLOTS.map((slot) => (
+              <button
+                key={slot}
+                type="button"
+                role="tab"
+                aria-selected={shopSlot === slot}
+                className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
+                onClick={() => setShopSlot(slot)}
+              >
+                {slot}
+              </button>
+            ))}
+          </div>
+          <ul className="hq-shop-list">
+            {harborGearForSlot(shopSlot).map((item) => {
+              const owned = progressSnap.owned.includes(item.id)
+              const equipped = progressSnap.look[shopSlot] === item.id
+              return (
+                <li key={item.id} className={`hq-shop-item${equipped ? ' is-equipped' : ''}`}>
+                  <span
+                    className="hq-shop-swatch"
+                    style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
+                    aria-hidden="true"
+                  />
+                  <div className="hq-shop-meta">
+                    <span className="hq-shop-name">{item.name.en}</span>
+                    <span className="hq-shop-name-zh" lang="zh-HK">
+                      {item.name.zh}
+                    </span>
+                    <span className="hq-shop-price">
+                      {item.price === 0 ? 'Starter' : `${item.price} coins`}
+                      {owned ? ' · owned' : ''}
+                      {equipped ? ' · on' : ''}
+                    </span>
+                  </div>
+                  <div className="hq-shop-actions">
+                    {!owned ? (
+                      <button
+                        type="button"
+                        className="hq-btn hq-btn--primary hq-btn--tiny"
+                        disabled={progressSnap.coins < item.price}
+                        onClick={() => onBuy(item.id)}
+                      >
+                        Buy
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="hq-btn hq-btn--ghost hq-btn--tiny"
+                        disabled={equipped}
+                        onClick={() => onEquip(shopSlot, item.id)}
+                      >
+                        {equipped ? 'Wearing' : 'Wear'}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+          {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
+          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+            Cast off
+          </button>
+        </aside>
+      ) : null}
 
       {/* Persistent open-world control — always on stage, exits dialogue when talking */}
       <button

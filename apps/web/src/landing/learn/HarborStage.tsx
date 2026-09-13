@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
+import type { HarborLook } from './harborGear'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
+import type { HarborVisitableId } from './harborWorld'
 import { JyutpingChaoText } from './JyutpingChaoText'
 import type { HarborLevel } from './curriculum'
 
@@ -15,6 +17,10 @@ type HarborStageProps = {
   spotlight?: string
   /** Fill the viewport behind the quest HUD. */
   immersive?: boolean
+  /** Equipped River Scout look. */
+  look: HarborLook
+  /** Landmark visit (Save Shack / Outfitter). */
+  onVisitable?: (id: HarborVisitableId | null) => void
 }
 
 /** Harbor Quest stage — continuous low-poly river voyage behind the HUD. */
@@ -25,6 +31,8 @@ export function HarborStage({
   flash = null,
   spotlight,
   immersive = false,
+  look,
+  onVisitable,
 }: HarborStageProps) {
   const reduce = useReducedMotion()
   const total = Math.max(stepCount, 1)
@@ -40,6 +48,8 @@ export function HarborStage({
         flash={flash}
         hue={level.hue}
         reducedMotion={reduce}
+        look={look}
+        onVisitable={onVisitable}
       />
 
       {spotlight ? (

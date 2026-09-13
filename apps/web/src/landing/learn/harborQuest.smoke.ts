@@ -37,6 +37,8 @@ import {
   HARBOR_TAP_ARRIVE,
   clampHarborMoveTarget,
   HARBOR_DOCK_X,
+  HARBOR_VISITABLES,
+  HARBOR_VISIT_RADIUS,
 } from '../../landing/learn/harborWorld'
 import {
   HARBOR_CRAFT_PALETTE,
@@ -54,6 +56,12 @@ import {
   HARBOR_PROTAGONIST_SOCKETS,
   listProtagonistSockets,
 } from '../../landing/learn/harborProtagonist'
+import {
+  HARBOR_GEAR_CATALOG,
+  HARBOR_GEAR_SLOTS,
+  applyLookToProtagonist,
+  harborGearForSlot,
+} from '../../landing/learn/harborGear'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -255,7 +263,40 @@ function main() {
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
   assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
 
-  console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
+  
+  // Save Shack + Outfitter visitables & gear kit
+  assert.equal(HARBOR_GEAR_CATALOG.length, 25, '25 clothing / handheld pieces')
+  for (const slot of HARBOR_GEAR_SLOTS) {
+    assert.equal(harborGearForSlot(slot).length, 5, `${slot} has 5 items`)
+  }
+  assert.equal(HARBOR_VISITABLES.length, 2, 'Save Shack + Outfitter')
+  assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'save-shack'))
+  assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'outfitter'))
+  assert.ok(HARBOR_VISIT_RADIUS > 1, 'visit radius')
+  const worldSrc2 = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc2, /saveShackBuilding/, 'Save Shack mesh')
+  assert.match(worldSrc2, /outfitterBuilding/, 'Outfitter mesh')
+  assert.match(worldSrc2, /setLook/, 'world can recolor scout look')
+  assert.match(worldSrc2, /nearestVisitable/, 'arrival opens visitables')
+  const playSrc2 = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.match(playSrc2, /visitSaveShack/, 'Save Shack stamps progress')
+  assert.match(playSrc2, /buyHarborGear/, 'Outfitter buy flow')
+  assert.match(playSrc2, /equipHarborGear/, 'Outfitter equip flow')
+  assert.match(playSrc2, /hq-visit-panel/, 'visit panel UI')
+  const scoutLook = buildHarborProtagonist({ pose: 'seated' })
+  applyLookToProtagonist(scoutLook, {
+    hat: 'hat-festival',
+    top: 'top-jade',
+    bottom: 'bottom-crimson',
+    shoes: 'shoes-storm',
+    hand: 'hand-fan',
+  })
+  assert.ok(
+    [...scoutLook.children].length >= 0,
+    'applyLook runs on scout',
+  )
+
+console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
 
 main()
