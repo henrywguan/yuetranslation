@@ -5,6 +5,7 @@ import {
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
+import { biomeForChunk } from '../../landing/learn/harborWorld'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -53,6 +54,14 @@ function main() {
   assert.equal(enrichJyutpingWithChao('In Jyutping si1, what does the 1 mark?'), 'In Jyutping si1˥, what does the 1 mark?')
   assert.equal(enrichJyutpingWithChao('nei5 hou2'), 'nei5˩˧ hou2˧˥')
   assert.equal(enrichJyutpingWithChao('si1˥'), 'si1˥', 'do not double-append Chao')
+
+  // Continuous river biomes — deterministic cycle for the voyage chunks
+  const biomes = Array.from({ length: 14 }, (_, i) => biomeForChunk(i))
+  assert.equal(biomeForChunk(0), 'pier')
+  assert.equal(biomeForChunk(1), 'village')
+  assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
+  assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
+  assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
