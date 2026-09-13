@@ -21,7 +21,11 @@ export type JyutpingUiToneMode = 'obfuscated' | 'unicode' | 'svg'
 export const JYUTPING_UI_TONE_MODE: JyutpingUiToneMode = 'obfuscated'
 
 /** @deprecated Prefer `JYUTPING_UI_TONE_MODE === 'svg'`. Kept as a one-line reverse switch. */
-export const JYUTPING_UI_SVG_TONES = JYUTPING_UI_TONE_MODE === 'svg'
+export const JYUTPING_UI_SVG_TONES: boolean = modeIsSvg(JYUTPING_UI_TONE_MODE)
+
+function modeIsSvg(mode: JyutpingUiToneMode): boolean {
+  return mode === 'svg'
+}
 
 /**
  * Select/copy gate for Free/guest — flip to `false` to disable.
