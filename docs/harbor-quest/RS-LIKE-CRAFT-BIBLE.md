@@ -22,6 +22,19 @@
 
 ## 1. Geometry rules
 
+### 1.0 Hard engine ceilings (why the look exists)
+
+Community docs of the classic client’s rasterizer (Rune-Server “Rendering and Animation System”) cite practical ceilings that still shape authentic RS-like work:
+
+| Constraint | Typical classic client behavior |
+| --- | --- |
+| **~4096 triangles / model** | Above this, models often fail to draw (invisible) |
+| **~2000 triangles** when priority / anim metadata is present | Stricter path for animated pieces |
+| **Fixed-point / quantized verts** | Vertices closer than ~4 units can snap together — micro-detail collapses |
+| **Aggressive batching + CPU raster heritage** | High poly hurts tick time, not just GPU fill |
+
+Harbor Quest is **not** bound to those exact ints, but staying well under them is how you keep the silhouette language honest. Treat **silhouette + few large planes** as the art goal; treat the numbers as a smell test (“would a 2005 client choke?”).
+
 ### 1.1 Poly budgets (practical, silhouette-first)
 
 Hard format ceilings in classic RS model headers are far higher than art budgets (unsigned short → tens of thousands of verts/faces). The *look* comes from staying well below modern game counts.
@@ -280,7 +293,7 @@ From RSPS / OSRS pipeline lore (for *understanding* the look; Harbor Quest uses 
 
 ### 7.2 NOT SAFE (Jagex IP / policy)
 
-Per Jagex Terms, EULA, and Fan Content Policy (as of policy versions published on legal.jagex.com):
+Per Jagex Terms, EULA, and [Fan Content Policy](https://legal.jagex.com/docs/policies/fan-content-policy) (§6.1.3 as published):
 
 | Forbidden | Why |
 | --- | --- |
@@ -288,9 +301,9 @@ Per Jagex Terms, EULA, and Fan Content Policy (as of policy versions published o
 | Recolors / slight edits of Jagex models | Still derivative of Jagex Property |
 | Names: RuneScape, OSRS, Jagex, iconic item/NPC proper names, slogans | Trademarks / IP |
 | UI chrome cloned from OSRS (orb layout, side stone icons, exact fonts/widgets) | Protectable expression + brand confusion |
-| Private-server style redistribution of cache | Explicitly disallowed game/server creation using Jagex Property |
-| Marketing that implies Jagex endorsement | Fan Content Policy §6.1.6 |
-| “RuneScape clone” positioning | Competes / confuses; policy forbids games using Jagex Property |
+| **Making a video game / private server / port using Jagex Property** | Explicit Fan Content Policy ban (Dragonwilds mods are a separate, narrow exception) |
+| Marketing that implies Jagex endorsement | Fan Content Policy |
+| “RuneScape clone” positioning | Competes / confuses |
 
 **Harbor Quest naming:** Harbor / Jade / Ink brand language only. Describe style internally as “RS-like / era-low-poly,” never ship “RuneScape mode.”
 
@@ -299,6 +312,37 @@ Per Jagex Terms, EULA, and Fan Content Policy (as of policy versions published o
 - Tracing screenshots as modeling reference → prefer **original blockouts** from verbal proportion rules + original concept.
 - “Same silhouette as [specific OSRS item]” → redesign until a stranger would not identify the Jagex item.
 - Parody of specific quests, gods, skills → create Harbor Quest lore instead.
+
+---
+
+## 7b. Harbor Quest / Three.js translation (current stack)
+
+`harborWorld.ts` already encodes the right *spirit*: Lambert + `flatShading: true`, fog, chunky silhouettes, original kit (not Jagex IP). Tighten toward mastery:
+
+| RS-era principle | Harbor Quest practice |
+| --- | --- |
+| Face HSL colors | Locked swatch hexes in `mat()`; avoid subtle adjacent hues |
+| Flat vs Gouraud | Keep `flatShading: true` on architecture / docks / boats; allow smooth only on heads/rocks if needed |
+| Low vert counts | Prefer `BoxGeometry` / low-segment cylinders (6–8) over spheres with high segments |
+| Chunky walls | Extrude door/window frames as real boxes, never decals |
+| Quantized verts | Snap prop positions to 0.25–0.5 world units; avoid “CAD jitter” |
+| Texture triangles | Prefer untextured Lambert colors; if textured, 64–128 nearest-neighbor |
+| Readable orbit | Mobile finger-orbit already matches OSRS camera *feel* — keep silhouettes readable at that distance |
+| NPCs | Kitbash body + hat/prop; oversized head/hands; role reads at pier distance |
+
+**Do not** add PBR, ambient occlusion maps, or high-segment tubes to “look better” — that breaks the era contract.
+
+### 7c. Practical modeling drill (become fluent)
+
+Build these five original pieces on a 1× mannequin grid until they pass the smell tests in §8:
+
+1. **Crate** — thick walls, extruded lid lip, flat-shaded wood swatches (≤40 tris).
+2. **Pier pile + plank** — 6-gon post, plank module that tiles; snap to 0.5u grid.
+3. **Conical hat NPC bust** — oversized head, mitten hands, role color (≤800 tris).
+4. **Ferry canoe** — blunt bow, thick gunwale, single mast, jade sail plane (≤600 tris).
+5. **Jiangnan wall bay** — chunky wall, extruded window box, prism roof (≤200 tris).
+
+If any piece needs a normal map to “read,” it failed — thicken or recolor instead.
 
 ---
 
@@ -383,21 +427,9 @@ Return Blender source + glTF + checklist results A–G.
 | Source | Use |
 | --- | --- |
 | https://rsps.org/news/rsps-modeling-items-objects-guide | Metasequoia vs Blender; low-poly as engine constraint; revision differences; silhouette priorities |
-| https://rsps.org/news/why-osrs-low-poly | Nostalgia + readability rationale for keeping low poly |
-| https://rsps.org/news/rsps-modelers-getting-rare | Why authentic custom RS models are hard (budgets, formats, rigs) |
-| https://rune-server.org/threads/the-master-model-guide.693872/ | Datmaker/MQO pipeline; PRI/TSKIN/VSKIN; triangulate; material colors; sword-from-primitives |
-| https://rune-server.org/threads/osrs-modeling-and-rigging-tutorial.708258/ | OSRS rigging layers (PRI / TSKIN / VSKIN) explained |
-| https://rune-server.org/threads/texturing-models.604344/ | Pre-474 model format chunks; texture triangles; 64 tex-tri limit notes; HSL color words |
-| https://github.com/stone-temple-pilot/ob2blender | HSL16 bit layout; integer verts; PRI/TSKIN/VSKIN/ALPHA attributes; flat/smooth |
-| https://classic.runescape.wiki/w/OB3 | RSC scenery format; 15-bit color; n-gons; front/back fills |
-| https://classic.runescape.wiki/w/Update:3-D_Update | “Satisfyingly chunky” buildings; extruded windows (Jagex 2002) |
-| https://oldschool.runescape.wiki/w/Body_type | Oval/stocky vs slim jaw humanoid proportion notes |
-| https://static.runelite.net/runelite-api/apidocs/net/runelite/api/ModelData.html | `light(ambient, contrast, x,y,z)`; HSL face colors → lit model |
-| https://static.runelite.net/runelite-api/apidocs/net/runelite/api/Model.html | `faceColors1/2/3` Gouraud corners; priorities; texture faces |
-| https://legal.jagex.com/docs/policies/fan-content-policy | No games using Jagex Property; trademark limits; derivative rules |
-| https://legal.jagex.com/docs/terms/terms-and-conditions | Materials protected; trademark notices |
-| https://legal.jagex.com/docs/terms/eula | IP in code/art/animations/audio owned by Jagex / licensors |
-| Community texture threads (e.g. Elvarg texture fix) | OSRS textures commonly **128×128**; nearest-neighbor resize |
+| https://rsps.org/news/why-osrs-low-poly | Nostalgia + readability + accessibility rationale |
+| https://rune-server.org/threads/runescapes-rendering-and-animation-system.340745/ | ~4096/2000 tri ceilings; quantized verts; VSKIN/TSKIN/PRI lore |
+| https://legal.jagex.com/docs/policies/fan-content-policy | **No video games using Jagex Property**; trademark / derivative limits |
 
 ---
 
