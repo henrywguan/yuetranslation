@@ -12,6 +12,8 @@ type HarborStageProps = {
   flash?: 'ok' | 'no' | null
   /** Optional big glyph in the sky. */
   spotlight?: string
+  /** Fill the viewport behind the quest HUD. */
+  immersive?: boolean
 }
 
 /** Right-pane harbor world — ferry advances along pier stones (CodeCombat-style stage). */
@@ -21,6 +23,7 @@ export function HarborStage({
   stepCount,
   flash = null,
   spotlight,
+  immersive = false,
 }: HarborStageProps) {
   const reduce = useReducedMotion()
   const total = Math.max(stepCount, 1)
@@ -29,12 +32,14 @@ export function HarborStage({
 
   return (
     <div
-      className={`hq-stage hq-stage--${level.hue}${flash === 'ok' ? ' is-ok' : ''}${flash === 'no' ? ' is-no' : ''}`}
+      className={`hq-stage hq-stage--${level.hue}${immersive ? ' hq-stage--immersive' : ''}${flash === 'ok' ? ' is-ok' : ''}${flash === 'no' ? ' is-no' : ''}`}
       aria-hidden="true"
     >
       <div className="hq-stage-sky" />
       <div className="hq-stage-mist hq-stage-mist--a" />
       <div className="hq-stage-mist hq-stage-mist--b" />
+      <div className="hq-stage-wave" />
+      <div className="hq-stage-wave hq-stage-wave--b" />
 
       {spotlight ? (
         <motion.div

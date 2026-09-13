@@ -24,7 +24,7 @@ type LearnSessionProps = {
   onProgress: (p: HarborProgress) => void
 }
 
-/** Dual-pane CodeCombat-style session for one Harbor Quest level. */
+/** Fullscreen harbor session — stage fills the viewport; quest HUD overlays. */
 export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: LearnSessionProps) {
   const level = levelById(levelId)
   const [stepIndex, setStepIndex] = useState(0)
@@ -38,6 +38,14 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setCleared(false)
     setLastOk(false)
   }, [levelId])
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
 
   useEffect(() => {
     if (!level) return
@@ -90,9 +98,20 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         : undefined
 
   return (
-    <div className="hq-play">
-      <div className="hq-play-bar">
-        <button type="button" className="hq-btn hq-btn--ghost" onClick={onExit}>
+    <div className="hq-play hq-play--immersive" data-flash={flash ?? undefined}>
+      <div className="hq-play-stage" aria-hidden="true">
+        <HarborStage
+          level={level}
+          stepIndex={stepIndex}
+          stepCount={level.steps.length}
+          flash={flash}
+          spotlight={spotlight}
+          immersive
+        />
+      </div>
+
+      <header className="hq-play-hud-top">
+        <button type="button" className="hq-btn hq-btn--ghost hq-btn--hud" onClick={onExit}>
           ← Map
         </button>
         <div className="hq-play-bar-title">
@@ -103,16 +122,16 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           </span>
         </div>
         <a
-          className="hq-btn hq-btn--ghost hq-btn--link"
+          className="hq-btn hq-btn--ghost hq-btn--link hq-btn--hud"
           href={openCantoneseLessonUrl(level)}
           target="_blank"
           rel="noreferrer"
         >
           Textbook
         </a>
-      </div>
+      </header>
 
-      <div className="hq-play-grid">
+      <div className="hq-play-hud">
         <QuestPanel
           step={step}
           stepIndex={stepIndex}
@@ -120,13 +139,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           sourceUrl={openCantoneseLessonUrl(level)}
           onAdvance={advance}
           onResult={onResult}
-        />
-        <HarborStage
-          level={level}
-          stepIndex={stepIndex}
-          stepCount={level.steps.length}
-          flash={flash}
-          spotlight={spotlight}
+          overlay
         />
       </div>
     </div>
@@ -144,7 +157,7 @@ function LevelClear({
 }) {
   const next = nextLevelId(level.id)
   return (
-    <div className="hq-clear">
+    <div className="hq-clear hq-clear--immersive">
       <p className="hq-clear-kicker">Pier cleared</p>
       <h2 className="hq-clear-title">{level.title.en}</h2>
       <p className="hq-clear-zh" lang="zh-HK">

@@ -17,9 +17,11 @@ type QuestPanelProps = {
   onAdvance: () => void
   onResult: (ok: boolean) => void
   sourceUrl: string
+  /** Glass HUD over the fullscreen harbor stage. */
+  overlay?: boolean
 }
 
-/** Left-pane quest brief — teach / pick / build challenges. */
+/** Quest brief — teach / pick / build. Overlay mode floats over the harbor stage. */
 export function QuestPanel({
   step,
   stepIndex,
@@ -27,9 +29,10 @@ export function QuestPanel({
   onAdvance,
   onResult,
   sourceUrl,
+  overlay = false,
 }: QuestPanelProps) {
   return (
-    <div className="hq-quest">
+    <div className={`hq-quest${overlay ? ' hq-quest--overlay' : ''}`}>
       <div className="hq-quest-top">
         <span className="hq-quest-kicker">
           Quest {stepIndex + 1} / {stepCount}
@@ -152,7 +155,17 @@ function PickBody({
         <Line line={step.prompt} />
       </h2>
       <HearRow clips={step.hear} />
-      <div className="hq-choices" role="group" aria-label="Answers">
+      <motion.div
+        className="hq-choices"
+        role="group"
+        aria-label="Answers"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: {},
+          show: { transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
+        }}
+      >
         {step.choices.map((c) => {
           let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
           if (resolved) {
@@ -166,6 +179,11 @@ function PickBody({
               className={`hq-choice is-${state}`}
               disabled={resolved}
               onClick={() => submit(c.id)}
+              variants={{
+                hidden: { opacity: 0, y: 14 },
+                show: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.28, ease: inkEase }}
               whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
             >
               <span className="hq-choice-label">
@@ -179,7 +197,7 @@ function PickBody({
             </motion.button>
           )
         })}
-      </div>
+      </motion.div>
       {resolved ? (
         <div className={`hq-feedback${picked === step.correctId ? ' is-ok' : ' is-no'}`}>
           <Line line={step.explain} />

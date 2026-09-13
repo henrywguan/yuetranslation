@@ -11,6 +11,15 @@
   min-height: 100dvh;
 }
 
+/* Fullscreen game shell — no marketing chrome */
+.learn-page--immersive {
+  position: relative;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: #061018;
+}
+
 /* —— Hero —— */
 .hq-hero {
   position: relative;
@@ -370,6 +379,81 @@
   padding-top: 8rem;
 }
 
+/* Immersive: stage is the world; HUD floats on top */
+.hq-play--immersive {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  padding: 0;
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.hq-play-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hq-play-hud-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: max(0.65rem, env(safe-area-inset-top)) clamp(0.75rem, 2vw, 1.25rem) 0.55rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #041018 78%, transparent) 0%,
+    color-mix(in srgb, #041018 35%, transparent) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.hq-play-hud-top > * {
+  pointer-events: auto;
+}
+
+.hq-play-hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  padding: 0 clamp(0.65rem, 2vw, 1.25rem) max(0.65rem, env(safe-area-inset-bottom));
+  max-height: min(58dvh, 32rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+  background: linear-gradient(
+    0deg,
+    color-mix(in srgb, #041018 88%, transparent) 0%,
+    color-mix(in srgb, #041018 45%, transparent) 55%,
+    transparent 100%
+  );
+}
+
+.hq-play-hud > * {
+  pointer-events: auto;
+  max-height: min(54dvh, 30rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.hq-btn--hud {
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, #041018 55%, transparent) !important;
+  border-color: color-mix(in srgb, var(--glass-border, #ffffff) 35%, transparent) !important;
+}
+
 .hq-play-bar {
   display: flex;
   align-items: center;
@@ -384,6 +468,18 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.35rem 0.65rem;
+}
+
+.hq-play--immersive .hq-play-bar-title {
+  justify-content: center;
+  text-align: center;
+}
+
+.hq-play--immersive .hq-play-name,
+.hq-play--immersive .hq-play-ch,
+.hq-play--immersive .hq-play-name-zh {
+  color: color-mix(in srgb, #e8f7f4 92%, white);
+  text-shadow: 0 1px 8px color-mix(in srgb, #041018 70%, transparent);
 }
 
 .hq-play-ch {
@@ -418,6 +514,45 @@
   .hq-play-grid {
     grid-template-columns: 1fr;
     min-height: 0;
+  }
+
+  .hq-play-hud {
+    max-height: min(62dvh, 34rem);
+  }
+}
+
+.hq-quest--overlay {
+  border-radius: 1.35rem 1.35rem 1rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--jade) 32%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, #0a1c24 72%, transparent),
+      color-mix(in srgb, #07141c 88%, transparent)
+    );
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow:
+    0 -8px 40px color-mix(in srgb, #000 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--jade) 18%, transparent);
+  min-height: 0;
+  padding: 0.85rem 1rem 1rem;
+  animation: hqHudIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hqHudIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-quest--overlay {
+    animation: none;
   }
 }
 
@@ -829,6 +964,126 @@
 
 .hq-stage--ink {
   --hq-water-top: color-mix(in srgb, #243848 60%, transparent);
+}
+
+
+.hq-stage--immersive {
+  border-radius: 0;
+  border: none;
+  min-height: 100%;
+  height: 100%;
+  width: 100%;
+}
+
+.hq-stage--immersive .hq-stage-svg {
+  min-height: 100%;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  transform: scale(1.06);
+  transform-origin: center 62%;
+}
+
+.hq-stage--immersive .hq-stage-caption {
+  position: absolute;
+  left: 1rem;
+  bottom: calc(min(58dvh, 32rem) + 0.35rem);
+  z-index: 2;
+  margin: 0;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #041018 55%, transparent);
+  backdrop-filter: blur(8px);
+  font-size: 0.72rem;
+  color: color-mix(in srgb, #dff6ff 75%, transparent);
+}
+
+.hq-stage--immersive .hq-stage-meter {
+  position: absolute;
+  top: max(3.25rem, calc(env(safe-area-inset-top) + 2.75rem));
+  left: 1rem;
+  right: 1rem;
+  z-index: 2;
+  margin: 0;
+}
+
+.hq-stage--immersive .hq-stage-spotlight {
+  top: max(18%, calc(env(safe-area-inset-top) + 5.5rem));
+  font-size: clamp(1.85rem, 6vw, 3rem);
+  letter-spacing: 0.06em;
+}
+
+.hq-stage-wave {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 8%;
+  height: 22%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background:
+    radial-gradient(45% 60% at 20% 50%, color-mix(in srgb, #b8eefc 40%, transparent), transparent 70%),
+    radial-gradient(40% 55% at 80% 40%, color-mix(in srgb, #7ad4c4 30%, transparent), transparent 70%);
+  animation: hqWave 11s ease-in-out infinite alternate;
+  filter: blur(8px);
+}
+
+.hq-stage-wave--b {
+  bottom: 2%;
+  opacity: 0.18;
+  animation-duration: 15s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes hqWave {
+  from {
+    transform: translateX(-2%) translateY(0);
+  }
+  to {
+    transform: translateX(3%) translateY(-4%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-stage-wave {
+    animation: none;
+  }
+}
+
+.hq-play--immersive[data-flash='ok'] .hq-stage {
+  box-shadow: inset 0 0 80px color-mix(in srgb, var(--jade) 28%, transparent);
+}
+
+.hq-play--immersive[data-flash='no'] .hq-stage {
+  box-shadow: inset 0 0 80px color-mix(in srgb, #e07070 22%, transparent);
+}
+
+.hq-clear--immersive {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  max-width: none;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  background:
+    radial-gradient(50% 45% at 50% 35%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 70%),
+    #061018;
+  padding: 2rem 1.25rem;
+}
+
+.hq-choice {
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.hq-quest--overlay .hq-choice:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 35%, transparent);
 }
 
 /* —— Clear —— */
