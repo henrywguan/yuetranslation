@@ -175,7 +175,7 @@
   opacity: 0.88;
 }
 
-/* Fallout 4 plate: speaker name on its own line, dialogue beneath */
+/* Game plate: speaker name on its own line, dialogue beneath — Harbor palette only */
 .partner-lab-subtitles-speaker {
   display: block;
   margin: 0 0 0.2rem;
@@ -184,21 +184,21 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.2;
-  color: #4dfc4d;
+  color: var(--jade-bright);
   text-shadow:
-    0 0 2px #000,
-    1px 1px 0 #000,
-    -1px 1px 0 #000,
-    1px -1px 0 #000,
-    -1px -1px 0 #000;
+    0 0 2px color-mix(in srgb, var(--harbor) 90%, transparent),
+    1px 1px 0 color-mix(in srgb, var(--harbor) 75%, transparent),
+    -1px 1px 0 color-mix(in srgb, var(--harbor) 75%, transparent),
+    1px -1px 0 color-mix(in srgb, var(--harbor) 75%, transparent),
+    -1px -1px 0 color-mix(in srgb, var(--harbor) 75%, transparent);
 }
 
 .partner-lab-subtitles--you .partner-lab-subtitles-speaker {
-  color: #7ef0ff;
+  color: var(--mint);
 }
 
 .partner-lab-subtitles--system .partner-lab-subtitles-speaker {
-  color: #b8c4b0;
+  color: var(--muted);
 }
 
 .partner-lab-subtitles-role {
@@ -212,13 +212,13 @@
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: 0.01em;
-  color: #fff;
+  color: var(--ink-bright);
   text-shadow:
-    0 0 2px #000,
-    1px 1px 0 #000,
-    -1px 1px 0 #000,
-    1px -1px 0 #000,
-    -1px -1px 0 #000;
+    0 0 2px color-mix(in srgb, var(--harbor) 90%, transparent),
+    1px 1px 0 color-mix(in srgb, var(--harbor) 75%, transparent),
+    -1px 1px 0 color-mix(in srgb, var(--harbor) 75%, transparent),
+    1px -1px 0 color-mix(in srgb, var(--harbor) 75%, transparent),
+    -1px -1px 0 color-mix(in srgb, var(--harbor) 75%, transparent);
 }
 
 .partner-lab-subtitles-secondary {
@@ -227,8 +227,8 @@
   font-size: 0.82rem;
   line-height: 1.35;
   opacity: 0.72;
-  color: #fff;
-  text-shadow: 0 1px 2px #000;
+  color: var(--ink-bright);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--harbor) 80%, transparent);
 }
 
 .partner-lab-subtitles-secondary .partner-lab-subtitles-speaker {
@@ -239,7 +239,7 @@
 }
 
 .partner-lab-subtitles-secondary-text {
-  color: color-mix(in srgb, #fff 82%, transparent);
+  color: color-mix(in srgb, var(--ink-bright) 82%, transparent);
 }
 
 .partner-lab-status {
@@ -629,7 +629,7 @@
   );
 }
 
-/* Fallout / game subtitles — lower half, no plate, Pip-Boy green name */
+/* Game subtitles — lower half, no plate, jade speaker name */
 .partner-lab.is-fullscreen .partner-lab-subtitles {
   top: auto;
   bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 4.75rem));
