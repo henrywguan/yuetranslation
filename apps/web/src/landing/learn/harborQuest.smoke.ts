@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -188,11 +188,28 @@ function main() {
   const indexHtml = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8')
   assert.match(indexHtml, /text=%CB%A5%CB%A7%CB%A8%CB%A9/, 'Noto Sans Chao subset ˥˧˨˩')
   assert.doesNotMatch(indexHtml, /text=%CB%89%CB%87%CB%88%CB%A9/, 'old wrong Chao subset removed')
+  const indexCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../index.css'), 'utf8')
+  assert.match(indexCss, /font-family:\s*'Noto Sans Chao'/, 'dedicated Noto Sans Chao @font-face family')
+  assert.match(indexCss, /noto-sans-chao\.woff2/, 'self-hosted Chao woff2')
+  assert.match(indexCss, /\.chao-face\s*\{[^}]*Noto Sans Chao/, '.chao-face uses Noto Sans Chao')
+  const chaoFont = join(dirname(fileURLToPath(import.meta.url)), '../../../public/fonts/noto-sans-chao.woff2')
+  assert.ok(existsSync(chaoFont), 'public/fonts/noto-sans-chao.woff2 present')
+  const chaoTextSrc = readFileSync(new URL('./JyutpingChaoText.tsx', import.meta.url), 'utf8')
+  assert.match(chaoTextSrc, /JyutpingSylText/, 'free-text Jyutping uses hear-chip SylText path')
   const learnCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './learn.css'), 'utf8')
+  assert.match(learnCss, /\.hq-choice-sub[\s\S]*?Noto Sans/, 'choice subs force Noto Sans Latin stack')
+  assert.match(learnCss, /\.hq-feedback-text[\s\S]*?\.chao-face[\s\S]*?Noto Sans Chao/, 'jade feedback Chao uses Noto Sans Chao')
   assert.match(learnCss, /\.hq-play\.is-exploring[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'explore hides stage caption')
   assert.match(learnCss, /\.hq-play\.is-talking[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'talking hides stage caption')
-  assert.match(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(38dvh,\s*20rem\)/, 'talking HUD is a short bottom strip')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'OSRS talking strip height')
+  assert.match(
+    learnCss,
+    /\.hq-play-stage\s*\{[^}]*bottom:\s*var\(--hq-osrs-strip\)/,
+    'stage ends above OSRS strip so world stays fully visible',
+  )
+  assert.match(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*height:\s*var\(--hq-osrs-strip\)/, 'talking HUD docks as fixed strip')
   assert.doesNotMatch(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(62dvh/, 'old tall talking HUD removed')
+  assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
