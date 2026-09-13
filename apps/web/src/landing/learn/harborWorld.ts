@@ -1,9 +1,19 @@
 /**
  * Harbor Quest · continuous river voyage (original low-poly world).
- * OSRS-inspired constraints: Lambert, flat shading, fog, chunky silhouettes.
- * Original JyutTranslate Harbor kit — not Jagex IP.
+ * Built to docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md — chunky silhouettes,
+ * flat Lambert, locked palette, extruded openings. Original IP (not Jagex).
  */
 import * as THREE from 'three'
+import {
+  HARBOR_CRAFT_PALETTE as P,
+  hqBox,
+  hqCanopy,
+  hqMat,
+  hqPost,
+  hqRock,
+  hqWindow,
+} from './harborCraft'
+import { buildHarborProtagonist } from './harborProtagonist'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
@@ -120,23 +130,25 @@ function mulberry32(seed: number) {
 }
 
 function mat(color: number, extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0]) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: true, ...extra })
+  return hqMat(color, extra)
 }
 
+/** Faceted oak/pine stand-in — icosa canopy, 6-gon trunk (bible §4.2). */
 function tree(rng: () => number, leaf: number) {
   const g = new THREE.Group()
   const h = 1.1 + rng() * 0.9
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, h, 6), mat(0x5a3a22))
-  trunk.position.y = h / 2
-  g.add(trunk)
-  const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.55 + rng() * 0.45, 6, 5), mat(leaf))
-  canopy.position.y = h + 0.35
-  canopy.scale.y = 0.75 + rng() * 0.25
-  g.add(canopy)
+  g.add(hqPost(0.12, 0.2, h, P.woodMid, 0, h / 2, 0))
+  g.add(hqCanopy(0.55 + rng() * 0.4, leaf, 0, h + 0.35, 0))
   if (rng() > 0.55) {
-    const c2 = new THREE.Mesh(new THREE.SphereGeometry(0.35 + rng() * 0.25, 5, 4), mat(leaf))
-    c2.position.set((rng() - 0.5) * 0.5, h + 0.15, (rng() - 0.5) * 0.5)
-    g.add(c2)
+    g.add(
+      hqCanopy(
+        0.32 + rng() * 0.22,
+        leaf,
+        (rng() - 0.5) * 0.5,
+        h + 0.12,
+        (rng() - 0.5) * 0.5,
+      ),
+    )
   }
   return g
 }
@@ -145,43 +157,37 @@ function tree(rng: () => number, leaf: number) {
  * Jiangnan riverside dwelling — whitewash walls, dark tile hip roof, timber door.
  * Low-poly Cantonese / water-town village silhouette (original kit).
  */
+/**
+ * Jiangnan riverside dwelling — thick walls, extruded window/door,
+ * chunky hip roof (bible §4.1). Original kit.
+ */
 function house(rng: () => number) {
   const g = new THREE.Group()
   const w = 1.5 + rng() * 0.9
   const d = 1.15 + rng() * 0.45
   const h = 0.95 + rng() * 0.35
-  const wallTone = rng() > 0.45 ? 0xf0ebe0 : 0xe8e0d0
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(wallTone))
-  body.position.y = h / 2
-  g.add(body)
-
-  // Dark timber corner posts
+  const wall = rng() > 0.45 ? P.plaster : P.plasterWarm
+  g.add(hqBox(w, h, d, wall, 0, h / 2, 0))
+  // Thick timber corner posts
   for (const sx of [-1, 1] as const) {
     for (const sz of [-1, 1] as const) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.06, h, 0.06), mat(0x3a2a20))
-      post.position.set(sx * (w / 2 - 0.02), h / 2, sz * (d / 2 - 0.02))
-      g.add(post)
+      g.add(hqBox(0.08, h, 0.08, P.woodDeep, sx * (w / 2 - 0.02), h / 2, sz * (d / 2 - 0.02)))
     }
   }
-
   // Pitched tile roof (two slabs) + ridge
-  const roofMat = mat(rng() > 0.5 ? 0x2a2e32 : 0x3a3430)
+  const roofColor = rng() > 0.5 ? P.roofTile : 0x3a3430
   const pitch = 0.42 + rng() * 0.12
-  const overhang = 0.18
-  const left = new THREE.Mesh(new THREE.BoxGeometry(w + overhang * 2, 0.08, d * 0.72), roofMat)
-  left.position.set(0, h + pitch * 0.35, -d * 0.12)
+  const overhang = 0.2
+  const left = hqBox(w + overhang * 2, 0.1, d * 0.72, roofColor, 0, h + pitch * 0.35, -d * 0.12)
   left.rotation.x = 0.48
   g.add(left)
-  const right = new THREE.Mesh(new THREE.BoxGeometry(w + overhang * 2, 0.08, d * 0.72), roofMat)
-  right.position.set(0, h + pitch * 0.35, d * 0.12)
+  const right = hqBox(w + overhang * 2, 0.1, d * 0.72, roofColor, 0, h + pitch * 0.35, d * 0.12)
   right.rotation.x = -0.48
   g.add(right)
-  const ridge = new THREE.Mesh(new THREE.BoxGeometry(w + overhang * 2.2, 0.1, 0.12), mat(0x1a1c1e))
-  ridge.position.y = h + pitch * 0.72
-  g.add(ridge)
-  // Soft upturned eave tips (Lingnan / temple hint, still chunky)
+  g.add(hqBox(w + overhang * 2.2, 0.12, 0.14, P.ink, 0, h + pitch * 0.72, 0))
+  // Chunky eave tips
   for (const z of [-1, 1] as const) {
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 4), roofMat)
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 4), hqMat(roofColor))
     tip.position.set(w / 2 + overhang * 0.6, h + pitch * 0.45, z * (d * 0.35))
     tip.rotation.z = -0.9
     g.add(tip)
@@ -190,48 +196,33 @@ function house(rng: () => number) {
     tipL.rotation.z = 0.9
     g.add(tipL)
   }
-
-  // Door + lattice window
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.55, 0.05), mat(0x4a3020))
-  door.position.set(-w * 0.15, 0.3, d / 2 + 0.03)
-  g.add(door)
-  const win = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.28, 0.04), mat(0x1a3040))
-  win.position.set(w * 0.22, h * 0.55, d / 2 + 0.03)
-  g.add(win)
-  const lattice = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.03, 0.02), mat(0xc8b090))
-  lattice.position.copy(win.position)
-  lattice.position.z += 0.02
-  g.add(lattice)
-
+  // Extruded door slab
+  g.add(hqBox(0.34, 0.58, 0.08, P.woodDark, -w * 0.15, 0.3, d / 2 + 0.04))
+  // Extruded window (not a flat decal)
+  g.add(hqWindow(0.36, 0.3, P.trimGold, 0x1a3040, w * 0.22, h * 0.55, d / 2 + 0.05))
   // Stone plinth
-  const plinth = new THREE.Mesh(new THREE.BoxGeometry(w + 0.15, 0.12, d + 0.15), mat(0x8a8680))
-  plinth.position.y = 0.04
-  g.add(plinth)
+  g.add(hqBox(w + 0.18, 0.14, d + 0.18, P.stone, 0, 0.05, 0))
   return g
 }
 
-/** Compact courtyard wing / side house — grey brick, terracotta tiles. */
+
+/** Compact courtyard wing — grey brick, terracotta tiles, extruded door. */
 function courtyardWing(rng: () => number) {
   const g = new THREE.Group()
   const w = 1.1 + rng() * 0.5
   const d = 0.95 + rng() * 0.35
   const h = 0.75 + rng() * 0.25
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(0x9a9690))
-  body.position.y = h / 2
-  g.add(body)
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.25, 0.1, d + 0.2), mat(0x8a4030))
-  roof.position.y = h + 0.12
+  g.add(hqBox(w, h, d, P.brick, 0, h / 2, 0))
+  const roof = hqBox(w + 0.28, 0.12, d + 0.22, P.roofClay, 0, h + 0.14, 0)
   roof.rotation.x = -0.15
   g.add(roof)
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.42, 0.04), mat(0x3a2818))
-  door.position.set(0, 0.24, d / 2 + 0.02)
-  g.add(door)
+  g.add(hqBox(0.26, 0.44, 0.06, P.woodDeep, 0, 0.24, d / 2 + 0.03))
+  g.add(hqWindow(0.28, 0.24, P.trimGold, 0x1a3040, w * 0.28, h * 0.55, d / 2 + 0.04))
   return g
 }
 
-/**
- * Raised riverside shop / stilt house — timber frame over the bank.
- */
+
+/** Raised riverside shop — thick stilts, chunky deck, extruded banner. */
 function stiltShop(rng: () => number) {
   const g = new THREE.Group()
   const w = 1.2 + rng() * 0.5
@@ -240,28 +231,22 @@ function stiltShop(rng: () => number) {
   const h = 0.7 + rng() * 0.25
   for (const x of [-w * 0.4, w * 0.4] as const) {
     for (const z of [-d * 0.35, d * 0.35] as const) {
-      const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, deckY + 0.1, 5), mat(0x5a4030))
-      pile.position.set(x, (deckY + 0.1) / 2, z)
-      g.add(pile)
+      g.add(hqPost(0.06, 0.08, deckY + 0.12, P.woodDark, x, (deckY + 0.12) / 2, z, 5))
     }
   }
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(w + 0.15, 0.08, d + 0.15), mat(0x7a5a3a))
-  deck.position.y = deckY
-  g.add(deck)
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(0xd8c8a8))
-  body.position.y = deckY + h / 2 + 0.04
-  g.add(body)
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.08, d + 0.25), mat(0x2c3034))
-  roof.position.y = deckY + h + 0.2
+  g.add(hqBox(w + 0.18, 0.1, d + 0.18, P.woodLight, 0, deckY, 0))
+  g.add(hqBox(w, h, d, 0xd8c8a8, 0, deckY + h / 2 + 0.05, 0))
+  const roof = hqBox(w + 0.32, 0.1, d + 0.28, P.roofTile, 0, deckY + h + 0.22, 0)
   roof.rotation.x = -0.2
   g.add(roof)
-  const banner = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.45, 0.02), mat(0xc04040))
-  banner.position.set(w * 0.35, deckY + h * 0.7, d / 2 + 0.05)
-  g.add(banner)
+  g.add(hqBox(0.1, 0.48, 0.04, P.banner, w * 0.35, deckY + h * 0.7, d / 2 + 0.06))
+  g.add(hqWindow(0.3, 0.26, P.trimGold, 0x1a3040, -w * 0.2, deckY + h * 0.55, d / 2 + 0.04))
   return g
 }
 
+
 /** Round earth-building / watch hut — soft vernacular silhouette for hills. */
+/** Small tiled cottage — chunky roof slabs + extruded door (bible §4.1). */
 function hut(rng: () => number) {
   // Mix: half courtyard wing, half small tiled cottage so villages feel varied
   if (rng() > 0.55) return courtyardWing(rng)
@@ -269,192 +254,149 @@ function hut(rng: () => number) {
   const w = 1.0 + rng() * 0.4
   const d = 0.9 + rng() * 0.3
   const h = 0.7 + rng() * 0.3
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(0xf2eee6))
-  body.position.y = h / 2
-  g.add(body)
-  const roofL = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.07, d * 0.65), mat(0x2a2e32))
-  roofL.position.set(0, h + 0.18, -d * 0.1)
+  g.add(hqBox(w, h, d, P.plasterWarm, 0, h / 2, 0))
+  const roofL = hqBox(w + 0.32, 0.1, d * 0.65, P.roofTile, 0, h + 0.18, -d * 0.1)
   roofL.rotation.x = 0.5
   g.add(roofL)
-  const roofR = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.07, d * 0.65), mat(0x2a2e32))
-  roofR.position.set(0, h + 0.18, d * 0.1)
+  const roofR = hqBox(w + 0.32, 0.1, d * 0.65, P.roofTile, 0, h + 0.18, d * 0.1)
   roofR.rotation.x = -0.5
   g.add(roofR)
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.4, 0.04), mat(0x4a3020))
-  door.position.set(0, 0.22, d / 2 + 0.02)
-  g.add(door)
+  g.add(hqBox(0.24, 0.42, 0.06, P.woodDark, 0, 0.22, d / 2 + 0.03))
+  g.add(hqWindow(0.26, 0.22, P.trimGold, 0x1a3040, w * 0.22, h * 0.55, d / 2 + 0.04))
+  g.add(hqBox(w + 0.12, 0.1, d + 0.12, P.stone, 0, 0.04, 0))
   return g
 }
+
 
 /** Village home kinds placed along the voyage (smoke-tested). */
 export const HARBOR_VILLAGE_HOMES = ['jiangnan', 'courtyard', 'stilt', 'cottage'] as const
 export type HarborVillageHome = (typeof HARBOR_VILLAGE_HOMES)[number]
 
 function rock(rng: () => number) {
-  const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.25 + rng() * 0.35, 0), mat(0x6a7078))
-  mesh.scale.set(1 + rng() * 0.4, 0.55 + rng() * 0.4, 1 + rng() * 0.3)
-  mesh.rotation.set(rng() * 0.6, rng() * Math.PI, rng() * 0.4)
-  return mesh
+  return hqRock(rng, rng() > 0.5 ? P.rock : P.rockWarm)
 }
+
 
 function reed(rng: () => number) {
   const g = new THREE.Group()
   const n = 3 + Math.floor(rng() * 3)
   for (let i = 0; i < n; i++) {
     const h = 0.6 + rng() * 0.9
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, h, 4), mat(0x3d7a4a))
-    stem.position.set((rng() - 0.5) * 0.35, h / 2, (rng() - 0.5) * 0.35)
-    g.add(stem)
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.06, 4, 3), mat(0x8ab85a))
-    tip.position.set(stem.position.x, h + 0.04, stem.position.z)
-    g.add(tip)
+    g.add(hqPost(0.03, 0.04, h, P.reed, (rng() - 0.5) * 0.35, h / 2, (rng() - 0.5) * 0.35, 4))
+    g.add(hqBox(0.08, 0.1, 0.08, P.reedTip, (rng() - 0.5) * 0.35, h + 0.04, (rng() - 0.5) * 0.35))
   }
   return g
 }
+
 
 function flower(rng: () => number) {
   const g = new THREE.Group()
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 4), mat(0x2f6a3a))
-  stem.position.y = 0.18
-  g.add(stem)
-  const bloom = new THREE.Mesh(
-    new THREE.SphereGeometry(0.1, 5, 4),
-    mat(rng() > 0.5 ? 0xe8a0b8 : 0xf0d060),
-  )
-  bloom.position.y = 0.4
-  g.add(bloom)
+  g.add(hqPost(0.02, 0.03, 0.35, P.leafMid, 0, 0.18, 0, 4))
+  g.add(hqBox(0.14, 0.12, 0.14, rng() > 0.5 ? P.blossom : P.leafGold, 0, 0.4, 0))
   return g
 }
+
 
 function lantern() {
   const g = new THREE.Group()
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 1.5, 5), mat(0x4a3828))
-  post.position.y = 0.75
-  g.add(post)
-  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.28), mat(0xf0c060))
-  lamp.position.y = 1.55
-  g.add(lamp)
+  g.add(hqPost(0.05, 0.07, 1.5, P.woodDark, 0, 0.75, 0, 5))
+  g.add(hqBox(0.3, 0.34, 0.3, P.lantern, 0, 1.55, 0))
+  g.add(hqBox(0.34, 0.04, 0.34, P.woodDeep, 0, 1.74, 0))
   return g
 }
 
+
 function pierSegment() {
   const g = new THREE.Group()
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 3.6), mat(0x8a6a48))
-  deck.position.y = 0.55
-  g.add(deck)
-  // Short gangplank toward the river
-  const plank = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 1.1), mat(0x7a5a38))
-  plank.position.set(-0.9, 0.5, 0)
+  // Thick deck planks (readable boards, not a paper plane)
+  g.add(hqBox(2.4, 0.16, 3.6, P.woodLight, 0, 0.55, 0))
+  for (const z of [-1.1, 0, 1.1] as const) {
+    g.add(hqBox(2.35, 0.04, 0.08, P.woodDark, 0, 0.64, z))
+  }
+  // Gangplank toward the river
+  const plank = hqBox(0.95, 0.1, 1.15, P.woodMid, -0.95, 0.5, 0)
   plank.rotation.z = 0.12
   g.add(plank)
+  // Chunky piles (6-gon)
   for (const x of [-0.95, 0.95]) {
     for (const z of [-1.3, 1.3]) {
-      const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 1.1, 5), mat(0x5a4030))
-      pile.position.set(x, 0.15, z)
-      g.add(pile)
+      g.add(hqPost(0.11, 0.14, 1.15, P.woodDark, x, 0.15, z))
     }
   }
   // Bollard
-  const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.35, 6), mat(0x4a3828))
-  bollard.position.set(0.7, 0.72, 1.2)
-  g.add(bollard)
+  g.add(hqPost(0.08, 0.1, 0.38, P.woodDeep, 0.7, 0.74, 1.2))
   g.userData.pier = true
   return g
 }
 
+
 /**
- * Low-poly Chinese-styled figure — clothing varies by role
- * (villager jacket, scholar robe + hat, fisherman conical hat, etc.).
+ * Low-poly Chinese-styled figure — RS-era proportions (oversized head,
+ * mitten hands, 6-gon limbs) + Harbor clothing kit by role.
  */
 function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const g = new THREE.Group()
   const child = role === 'child'
   const scale = child ? 0.72 : 1
-  const skin = mat(0xe8c4a8)
-  const hair = mat(0x1a1410)
+  const skin = hqMat(P.skin)
+  const hair = hqMat(P.hair)
 
   const palette: Record<HarborNpcRole, { robe: number; trim: number; pants: number }> = {
-    villager: { robe: 0x2a3a6a, trim: 0xc4a060, pants: 0x3a3028 },
-    scholar: { robe: 0x6a7a8a, trim: 0xe8e0d0, pants: 0x4a4850 },
-    fisherman: { robe: 0x5a6a48, trim: 0xc8b070, pants: 0x4a3a28 },
-    merchant: { robe: 0x8a3048, trim: 0xd4a848, pants: 0x3a2820 },
-    child: { robe: 0xc45a48, trim: 0xf0d060, pants: 0x3a4a68 },
-    ferryman: { robe: 0x4a5a58, trim: 0x8a6a40, pants: 0x3a3028 },
+    villager: { robe: P.clothNavy, trim: P.trimGold, pants: P.pants },
+    scholar: { robe: P.clothGrey, trim: P.trimIvory, pants: 0x4a4850 },
+    fisherman: { robe: P.clothSage, trim: P.straw, pants: 0x4a3a28 },
+    merchant: { robe: P.clothCrimson, trim: P.trimGold, pants: 0x3a2820 },
+    child: { robe: P.clothChild, trim: P.trimChild, pants: 0x3a4a68 },
+    ferryman: { robe: P.clothTeal, trim: 0x8a6a40, pants: P.pants },
   }
   const colors = palette[role]
 
-  // Legs
-  for (const sx of [-0.08, 0.08] as const) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.42, 5), mat(colors.pants))
-    leg.position.set(sx, 0.21, 0)
-    g.add(leg)
+  // Short thick legs
+  for (const sx of [-0.1, 0.1] as const) {
+    g.add(hqPost(0.06, 0.07, 0.4, colors.pants, sx, 0.22, 0))
+    g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
   }
-  // Torso / robe
-  const torsoH = role === 'scholar' || role === 'merchant' ? 0.55 : 0.42
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.32, torsoH, 0.2), mat(colors.robe))
-  torso.position.y = 0.42 + torsoH / 2 - 0.05
-  g.add(torso)
-  // Sash / trim
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.22), mat(colors.trim))
-  sash.position.y = 0.55
-  g.add(sash)
-  // Scholar / merchant long hem
+  // Stocky torso
+  const torsoH = role === 'scholar' || role === 'merchant' ? 0.52 : 0.4
+  g.add(hqBox(0.36, torsoH, 0.24, colors.robe, 0, 0.42 + torsoH / 2 - 0.05, 0))
+  g.add(hqBox(0.38, 0.08, 0.26, colors.trim, 0, 0.55, 0))
   if (role === 'scholar' || role === 'merchant') {
-    const hem = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.28, 0.18), mat(colors.robe))
-    hem.position.y = 0.38
-    g.add(hem)
+    g.add(hqBox(0.36, 0.28, 0.2, colors.robe, 0, 0.38, 0))
   }
-  // Arms
-  for (const sx of [-0.2, 0.2] as const) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), mat(colors.robe))
-    arm.position.set(sx, 0.72, 0)
-    g.add(arm)
+  // Arms + mittens
+  for (const sx of [-1, 1] as const) {
+    g.add(hqPost(0.055, 0.065, 0.32, colors.robe, sx * 0.24, 0.72, 0))
+    g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
   }
-  // Head
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), skin)
-  head.position.y = 1.05
+  // Oversized head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+  head.position.y = 1.08
   g.add(head)
-  // Hair bun
   const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
-  bun.position.set(0, 1.16, -0.02)
+  bun.position.set(0, 1.2, -0.03)
   g.add(bun)
 
   if (role === 'scholar') {
-    // Square scholar hat
-    const hat = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.24), mat(0x1a1814))
-    hat.position.y = 1.2
-    g.add(hat)
-    const crown = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.14), mat(0x1a1814))
-    crown.position.y = 1.3
-    g.add(crown)
+    g.add(hqBox(0.3, 0.1, 0.26, P.ink, 0, 1.22, 0))
+    g.add(hqBox(0.15, 0.12, 0.15, P.ink, 0, 1.34, 0))
   } else if (role === 'fisherman' || role === 'ferryman') {
-    // Conical bamboo / straw hat
-    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.14, 7), mat(0xc4a860))
-    hat.position.y = 1.2
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.14, 7), hqMat(P.straw))
+    hat.position.y = 1.24
     g.add(hat)
   } else if (role === 'merchant') {
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.08, 6), mat(0x2a1810))
-    cap.position.y = 1.18
-    g.add(cap)
+    g.add(hqPost(0.11, 0.12, 0.08, 0x2a1810, 0, 1.2, 0))
   } else if (role === 'villager') {
-    // Soft cloth wrap
-    const wrap = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.22), mat(0x2a2820))
-    wrap.position.y = 1.16
-    g.add(wrap)
+    g.add(hqBox(0.28, 0.06, 0.24, 0x2a2820, 0, 1.18, 0))
   }
 
-  // Fisherman pole accent
   if (role === 'fisherman' && rng() > 0.35) {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 1.4, 4), mat(0x6a4a28))
-    pole.position.set(0.28, 0.85, 0)
+    const pole = hqPost(0.02, 0.025, 1.4, P.woodMid, 0.28, 0.85, 0, 4)
     pole.rotation.z = -0.55
     g.add(pole)
   }
-  // Scholar scroll
   if (role === 'scholar' && rng() > 0.4) {
-    const scroll = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.28, 5), mat(0xe8e0d0))
+    const scroll = hqPost(0.04, 0.04, 0.28, P.trimIvory, 0.22, 0.62, 0.12, 5)
     scroll.rotation.z = Math.PI / 2
-    scroll.position.set(0.22, 0.62, 0.12)
     g.add(scroll)
   }
 
@@ -463,46 +405,14 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   return g
 }
 
+
 function randomNpcRole(rng: () => number): HarborNpcRole {
   return HARBOR_NPC_ROLES[Math.floor(rng() * HARBOR_NPC_ROLES.length)]!
 }
 
-/** Traveler / player avatar seated in the canoe — jade sash marks “you”. */
+/** Seated River Scout — original RS-era-proportion mannequin (see harborProtagonist.ts). */
 function playerTraveler() {
-  const g = new THREE.Group()
-  const skin = mat(0xe8c4a8)
-  const robe = mat(0x2a4858)
-  const jade = mat(0x3dcfb6)
-  const hair = mat(0x1a1410)
-  // Seated legs (forward)
-  for (const sx of [-0.09, 0.09] as const) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.32), mat(0x3a3028))
-    leg.position.set(sx, 0.12, 0.12)
-    g.add(leg)
-  }
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.38, 0.2), robe)
-  torso.position.y = 0.38
-  g.add(torso)
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.07, 0.22), jade)
-  sash.position.y = 0.32
-  g.add(sash)
-  for (const sx of [-0.18, 0.18] as const) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.28, 0.09), robe)
-    arm.position.set(sx, 0.4, 0)
-    g.add(arm)
-  }
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 5), skin)
-  head.position.y = 0.68
-  g.add(head)
-  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), hair)
-  bun.position.set(0, 0.78, -0.02)
-  g.add(bun)
-  // Small conical traveler hat
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.1, 6), mat(0xc4a860))
-  hat.position.y = 0.82
-  g.add(hat)
-  g.userData.player = true
-  return g
+  return buildHarborProtagonist({ pose: 'seated' })
 }
 
 function bird() {
@@ -512,27 +422,21 @@ function bird() {
 }
 
 /** Low-poly deer silhouette along the bank. */
+/** Low-poly deer — box body, short faceted legs (readable bank fauna). */
 function deer(rng: () => number) {
   const g = new THREE.Group()
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.32, 0.22), mat(0x8a6040))
-  body.position.y = 0.55
-  g.add(body)
-  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.35, 0.12), mat(0x8a6040))
-  neck.position.set(0.28, 0.72, 0)
+  g.add(hqBox(0.55, 0.32, 0.24, 0x8a6040, 0, 0.55, 0))
+  const neck = hqBox(0.14, 0.35, 0.12, 0x8a6040, 0.28, 0.72, 0)
   neck.rotation.z = -0.35
   g.add(neck)
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.14), mat(0x7a5038))
-  head.position.set(0.42, 0.9, 0)
-  g.add(head)
+  g.add(hqBox(0.22, 0.14, 0.14, 0x7a5038, 0.42, 0.9, 0))
   for (const x of [-0.18, 0.12] as const) {
     for (const z of [-0.08, 0.08] as const) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.4, 4), mat(0x5a3a28))
-      leg.position.set(x, 0.2, z)
-      g.add(leg)
+      g.add(hqPost(0.03, 0.04, 0.4, 0x5a3a28, x, 0.2, z, 4))
     }
   }
   if (rng() > 0.45) {
-    const ant = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.28, 4), mat(0xc4a070))
+    const ant = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.28, 4), hqMat(0xc4a070))
     ant.position.set(0.4, 1.1, -0.05)
     g.add(ant)
     const ant2 = ant.clone()
@@ -542,6 +446,7 @@ function deer(rng: () => number) {
   return g
 }
 
+
 function fish() {
   const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 5), mat(0x5a9ab0))
   mesh.rotation.z = Math.PI / 2
@@ -550,119 +455,76 @@ function fish() {
 
 function pine(rng: () => number) {
   const g = new THREE.Group()
-  const h = 1.4 + rng() * 1.1
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, h, 5), mat(0x4a3220))
-  trunk.position.y = h / 2
-  g.add(trunk)
+  const h = 1.6 + rng() * 1.2
+  g.add(hqPost(0.1, 0.16, h, P.woodDark, 0, h / 2, 0, 5))
+  // Stacked cones / icosa for needle tiers
   for (let i = 0; i < 3; i++) {
-    const cone = new THREE.Mesh(
-      new THREE.ConeGeometry(0.55 - i * 0.12, 0.7 + rng() * 0.2, 6),
-      mat(0x1f5a38),
-    )
-    cone.position.y = h * 0.45 + i * 0.45
-    g.add(cone)
+    const y = h * (0.45 + i * 0.22)
+    const r = 0.55 - i * 0.12 + rng() * 0.08
+    const tier = new THREE.Mesh(new THREE.ConeGeometry(r, 0.55, 6), hqMat(P.leafDeep))
+    tier.position.y = y
+    g.add(tier)
   }
   return g
 }
+
 
 /** Low-poly sakura — dark trunk + clustered pink blossom clouds. */
 function cherryBlossom(rng: () => number) {
   const g = new THREE.Group()
-  const h = 1.2 + rng() * 0.7
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, h, 5), mat(0x3a2a28))
-  trunk.position.y = h / 2
-  g.add(trunk)
-  // Forked upper branch
-  const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.55, 4), mat(0x3a2a28))
-  fork.position.set(0.18, h + 0.1, 0)
-  fork.rotation.z = -0.55
+  const h = 1.2 + rng() * 0.8
+  g.add(hqPost(0.08, 0.14, h, 0x3a2a28, 0, h / 2, 0, 5))
+  const fork = hqPost(0.05, 0.08, 0.55, 0x3a2a28, 0.15, h + 0.1, 0, 4)
+  fork.rotation.z = -0.5
   g.add(fork)
-  const pinks = [0xf2a8c4, 0xe890b0, 0xf8c4d8, 0xffd0e0]
-  const cloudN = 4 + Math.floor(rng() * 3)
-  for (let i = 0; i < cloudN; i++) {
-    const blossom = new THREE.Mesh(
-      new THREE.SphereGeometry(0.28 + rng() * 0.22, 5, 4),
-      mat(pinks[Math.floor(rng() * pinks.length)]!),
-    )
-    blossom.position.set(
-      (rng() - 0.5) * 1.1,
-      h + 0.25 + rng() * 0.7,
-      (rng() - 0.5) * 1.1,
-    )
-    blossom.scale.y = 0.7 + rng() * 0.25
-    g.add(blossom)
-  }
-  // A few drifting petal chips (animated in the tick loop)
+  const pinks = [P.blossom, P.blossomDeep, 0xf0c0d0]
   for (let i = 0; i < 3; i++) {
-    const petal = new THREE.Mesh(
-      new THREE.CircleGeometry(0.06 + rng() * 0.03, 5),
-      mat(0xf4b8cc, { side: THREE.DoubleSide }),
+    g.add(
+      hqCanopy(
+        0.35 + rng() * 0.2,
+        pinks[Math.floor(rng() * pinks.length)]!,
+        (rng() - 0.5) * 0.5,
+        h + 0.25 + rng() * 0.25,
+        (rng() - 0.5) * 0.4,
+      ),
     )
-    petal.position.set((rng() - 0.5) * 1.4, h + 0.4 + rng() * 0.8, (rng() - 0.5) * 1.4)
-    petal.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI)
-    petal.userData.petal = true
-    petal.userData.phase = rng() * Math.PI * 2
-    petal.userData.baseY = petal.position.y
-    g.add(petal)
   }
   return g
 }
 
-/** Low-poly ginkgo — fan / umbrella canopy in gold–chartreuse. */
+
 function ginkgo(rng: () => number) {
   const g = new THREE.Group()
-  const h = 1.3 + rng() * 0.8
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, h, 5), mat(0x5a4030))
-  trunk.position.y = h / 2
-  g.add(trunk)
-  const golds = [0xd4c04a, 0xc8b038, 0xe0d060, 0xa8c050]
-  // Stacked cone “fans” — ginkgo’s broad triangular silhouette
-  for (let i = 0; i < 3; i++) {
-    const fan = new THREE.Mesh(
-      new THREE.ConeGeometry(0.85 - i * 0.18, 0.45 + rng() * 0.15, 6),
-      mat(golds[Math.floor(rng() * golds.length)]!),
-    )
-    fan.position.y = h * 0.55 + i * 0.38
-    fan.rotation.y = rng() * Math.PI
-    g.add(fan)
-  }
-  // Extra side fan for the classic split look
-  if (rng() > 0.4) {
-    const side = new THREE.Mesh(
-      new THREE.ConeGeometry(0.4, 0.35, 5),
-      mat(golds[Math.floor(rng() * golds.length)]!),
-    )
-    side.position.set((rng() > 0.5 ? 1 : -1) * 0.45, h + 0.15, 0)
-    side.rotation.z = (rng() > 0.5 ? 1 : -1) * 0.5
-    g.add(side)
+  const h = 1.3 + rng() * 0.9
+  g.add(hqPost(0.1, 0.16, h, P.woodMid, 0, h / 2, 0, 5))
+  const golds = [P.leafGold, 0xd4b050, 0xe8c060]
+  g.add(hqCanopy(0.7 + rng() * 0.25, golds[Math.floor(rng() * golds.length)]!, 0, h + 0.35, 0))
+  g.add(
+    hqCanopy(
+      0.4 + rng() * 0.15,
+      golds[Math.floor(rng() * golds.length)]!,
+      (rng() - 0.5) * 0.4,
+      h + 0.15,
+      (rng() - 0.5) * 0.3,
+    ),
+  )
+  return g
+}
+
+
+function poplar(rng: () => number) {
+  const g = new THREE.Group()
+  const h = 2.0 + rng() * 1.2
+  g.add(hqPost(0.07, 0.12, h, P.woodMid, 0, h / 2, 0, 5))
+  // Tall column of faceted blobs
+  const greens = [P.leafMid, P.leafLite, 0x4a8a50]
+  for (let i = 0; i < 4; i++) {
+    const y = h * (0.35 + i * 0.18)
+    g.add(hqCanopy(0.28 + rng() * 0.1, greens[Math.floor(rng() * greens.length)]!, 0, y, 0))
   }
   return g
 }
 
-/** Low-poly poplar — tall columnar canopy along the banks. */
-function poplar(rng: () => number) {
-  const g = new THREE.Group()
-  const h = 2.2 + rng() * 1.2
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.12, h, 5), mat(0x4a3828))
-  trunk.position.y = h / 2
-  g.add(trunk)
-  const greens = [0x3d8a48, 0x4a9a50, 0x2f7a40]
-  // Column of stretched spheres — slender upright silhouette
-  const layers = 5 + Math.floor(rng() * 2)
-  for (let i = 0; i < layers; i++) {
-    const canopy = new THREE.Mesh(
-      new THREE.SphereGeometry(0.32 + rng() * 0.08, 5, 4),
-      mat(greens[Math.floor(rng() * greens.length)]!),
-    )
-    const t = i / (layers - 1)
-    // Taper toward the tip
-    const w = 0.55 + Math.sin(t * Math.PI) * 0.45
-    canopy.scale.set(w * 0.7, 1.15, w * 0.7)
-    canopy.position.y = h * 0.35 + t * h * 0.7
-    g.add(canopy)
-  }
-  return g
-}
 
 /** Tree kinds placed along the voyage (smoke-tested). */
 export const HARBOR_SCENIC_TREES = ['cherry', 'ginkgo', 'poplar', 'pine', 'oak'] as const
@@ -689,26 +551,28 @@ function bridge() {
 
 function canoe() {
   const g = new THREE.Group()
-  const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 2.2, 4, 8), mat(0x6a4a30))
-  hull.rotation.z = Math.PI / 2
-  hull.position.y = 0.22
-  g.add(hull)
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.35), mat(0x4a3220))
-  seat.position.set(0, 0.38, 0)
-  g.add(seat)
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 1.1, 5), mat(0x3a2818))
-  mast.position.set(0.15, 0.9, 0)
-  g.add(mast)
-  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85), mat(0x3dcfb6))
-  sail.position.set(0.15, 0.95, 0.02)
+  // Boxy hull + blunt bow/stern (not a smooth capsule)
+  g.add(hqBox(2.2, 0.32, 0.72, P.woodMid, 0, 0.22, 0))
+  g.add(hqBox(0.35, 0.28, 0.55, P.woodDark, 1.15, 0.24, 0))
+  g.add(hqBox(0.35, 0.28, 0.55, P.woodDark, -1.15, 0.24, 0))
+  // Thick gunwales
+  g.add(hqBox(2.15, 0.08, 0.08, P.woodDeep, 0, 0.4, 0.34))
+  g.add(hqBox(2.15, 0.08, 0.08, P.woodDeep, 0, 0.4, -0.34))
+  // Seat plank
+  g.add(hqBox(0.55, 0.08, 0.4, P.woodDark, 0, 0.38, 0))
+  // Stubby mast + jade sail plane
+  g.add(hqPost(0.035, 0.045, 1.05, P.woodDeep, 0.12, 0.9, 0, 5))
+  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85), hqMat(P.jade))
+  sail.position.set(0.12, 0.95, 0.02)
   g.add(sail)
-  // You — seated traveler with jade sash
+  // You — original River Scout mannequin (seated)
   const you = playerTraveler()
   you.position.set(0, 0.38, -0.05)
   you.rotation.y = Math.PI
   g.add(you)
   return g
 }
+
 
 /**
  * Distant Wulingyuan-inspired sandstone pillars — tall thin karst stacks

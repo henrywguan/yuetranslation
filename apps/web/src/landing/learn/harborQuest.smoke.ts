@@ -29,6 +29,22 @@ import {
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
 } from '../../landing/learn/harborWorld'
+import {
+  HARBOR_CRAFT_PALETTE,
+  HARBOR_FACETS,
+  hqBox,
+  hqCanopy,
+  hqRock,
+  hqWindow,
+} from '../../landing/learn/harborCraft'
+import {
+  buildHarborProtagonist,
+  countProtagonistMeshes,
+  HARBOR_PROTAGONIST_ID,
+  HARBOR_PROTAGONIST_PALETTE,
+  HARBOR_PROTAGONIST_SOCKETS,
+  listProtagonistSockets,
+} from '../../landing/learn/harborProtagonist'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -128,6 +144,33 @@ function main() {
   assert.ok(HARBOR_NPC_ROLES.includes('fisherman'), 'fisherman NPCs')
   assert.ok(HARBOR_NPC_ROLES.includes('merchant'), 'merchant NPCs')
   assert.equal(HARBOR_NPC_ROLES.length, 6, 'Chinese clothing role kit')
+
+  // Craft bible kit — locked palette + faceted helpers
+  assert.equal(HARBOR_FACETS, 6, 'era cylinders stay 6-gon')
+  assert.ok(HARBOR_CRAFT_PALETTE.jade === 0x3dcfb6, 'brand jade in craft palette')
+  assert.ok(HARBOR_CRAFT_PALETTE.woodMid && HARBOR_CRAFT_PALETTE.roofTile, 'wood/roof swatches')
+  assert.ok(hqBox(1, 1, 1, HARBOR_CRAFT_PALETTE.stone).isMesh, 'hqBox builds meshes')
+  assert.ok(hqCanopy(0.5, HARBOR_CRAFT_PALETTE.leafMid).isMesh, 'hqCanopy faceted')
+  assert.ok(hqRock(() => 0.5).isMesh, 'hqRock boxy')
+  assert.ok(hqWindow(0.3, 0.3, HARBOR_CRAFT_PALETTE.trimGold, 0x102030, 0, 0, 0).isGroup, 'extruded window')
+
+  // Original River Scout protagonist (not Jagex Bob / cache mesh)
+  assert.equal(HARBOR_PROTAGONIST_ID, 'river-scout')
+  assert.ok(HARBOR_PROTAGONIST_PALETTE.jade === 0x3dcfb6, 'jade sash brand color')
+  assert.equal(HARBOR_PROTAGONIST_SOCKETS.length, 5, 'kitbash sockets')
+  const scout = buildHarborProtagonist({ pose: 'seated' })
+  assert.equal(scout.userData.protagonistId, HARBOR_PROTAGONIST_ID)
+  assert.equal(scout.userData.originalHarborAsset, true)
+  assert.equal(scout.userData.player, true)
+  const meshes = countProtagonistMeshes(scout)
+  assert.ok(meshes >= 18 && meshes <= 40, `mesh budget smell-test got ${meshes}`)
+  const sockets = listProtagonistSockets(scout)
+  for (const name of HARBOR_PROTAGONIST_SOCKETS) {
+    assert.ok(sockets.includes(name), `missing socket ${name}`)
+  }
+  const standing = buildHarborProtagonist({ pose: 'standing' })
+  assert.ok(countProtagonistMeshes(standing) >= meshes, 'standing has at least seated complexity')
+
   const dock0 = dockPoseForProgress(0)
   const dockMid = dockPoseForProgress(0.5)
   assert.ok(dockMid.z > dock0.z, 'later progress docks further downriver')
