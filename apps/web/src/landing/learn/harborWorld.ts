@@ -230,6 +230,109 @@ function pine(rng: () => number) {
   return g
 }
 
+/** Low-poly sakura — dark trunk + clustered pink blossom clouds. */
+function cherryBlossom(rng: () => number) {
+  const g = new THREE.Group()
+  const h = 1.2 + rng() * 0.7
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, h, 5), mat(0x3a2a28))
+  trunk.position.y = h / 2
+  g.add(trunk)
+  // Forked upper branch
+  const fork = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.55, 4), mat(0x3a2a28))
+  fork.position.set(0.18, h + 0.1, 0)
+  fork.rotation.z = -0.55
+  g.add(fork)
+  const pinks = [0xf2a8c4, 0xe890b0, 0xf8c4d8, 0xffd0e0]
+  const cloudN = 4 + Math.floor(rng() * 3)
+  for (let i = 0; i < cloudN; i++) {
+    const blossom = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28 + rng() * 0.22, 5, 4),
+      mat(pinks[Math.floor(rng() * pinks.length)]!),
+    )
+    blossom.position.set(
+      (rng() - 0.5) * 1.1,
+      h + 0.25 + rng() * 0.7,
+      (rng() - 0.5) * 1.1,
+    )
+    blossom.scale.y = 0.7 + rng() * 0.25
+    g.add(blossom)
+  }
+  // A few drifting petal chips (animated in the tick loop)
+  for (let i = 0; i < 3; i++) {
+    const petal = new THREE.Mesh(
+      new THREE.CircleGeometry(0.06 + rng() * 0.03, 5),
+      mat(0xf4b8cc, { side: THREE.DoubleSide }),
+    )
+    petal.position.set((rng() - 0.5) * 1.4, h + 0.4 + rng() * 0.8, (rng() - 0.5) * 1.4)
+    petal.rotation.set(rng() * Math.PI, rng() * Math.PI, rng() * Math.PI)
+    petal.userData.petal = true
+    petal.userData.phase = rng() * Math.PI * 2
+    petal.userData.baseY = petal.position.y
+    g.add(petal)
+  }
+  return g
+}
+
+/** Low-poly ginkgo — fan / umbrella canopy in gold–chartreuse. */
+function ginkgo(rng: () => number) {
+  const g = new THREE.Group()
+  const h = 1.3 + rng() * 0.8
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.16, h, 5), mat(0x5a4030))
+  trunk.position.y = h / 2
+  g.add(trunk)
+  const golds = [0xd4c04a, 0xc8b038, 0xe0d060, 0xa8c050]
+  // Stacked cone “fans” — ginkgo’s broad triangular silhouette
+  for (let i = 0; i < 3; i++) {
+    const fan = new THREE.Mesh(
+      new THREE.ConeGeometry(0.85 - i * 0.18, 0.45 + rng() * 0.15, 6),
+      mat(golds[Math.floor(rng() * golds.length)]!),
+    )
+    fan.position.y = h * 0.55 + i * 0.38
+    fan.rotation.y = rng() * Math.PI
+    g.add(fan)
+  }
+  // Extra side fan for the classic split look
+  if (rng() > 0.4) {
+    const side = new THREE.Mesh(
+      new THREE.ConeGeometry(0.4, 0.35, 5),
+      mat(golds[Math.floor(rng() * golds.length)]!),
+    )
+    side.position.set((rng() > 0.5 ? 1 : -1) * 0.45, h + 0.15, 0)
+    side.rotation.z = (rng() > 0.5 ? 1 : -1) * 0.5
+    g.add(side)
+  }
+  return g
+}
+
+/** Low-poly poplar — tall columnar canopy along the banks. */
+function poplar(rng: () => number) {
+  const g = new THREE.Group()
+  const h = 2.2 + rng() * 1.2
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.12, h, 5), mat(0x4a3828))
+  trunk.position.y = h / 2
+  g.add(trunk)
+  const greens = [0x3d8a48, 0x4a9a50, 0x2f7a40]
+  // Column of stretched spheres — slender upright silhouette
+  const layers = 5 + Math.floor(rng() * 2)
+  for (let i = 0; i < layers; i++) {
+    const canopy = new THREE.Mesh(
+      new THREE.SphereGeometry(0.32 + rng() * 0.08, 5, 4),
+      mat(greens[Math.floor(rng() * greens.length)]!),
+    )
+    const t = i / (layers - 1)
+    // Taper toward the tip
+    const w = 0.55 + Math.sin(t * Math.PI) * 0.45
+    canopy.scale.set(w * 0.7, 1.15, w * 0.7)
+    canopy.position.y = h * 0.35 + t * h * 0.7
+    g.add(canopy)
+  }
+  return g
+}
+
+/** Tree kinds placed along the voyage (smoke-tested). */
+export const HARBOR_SCENIC_TREES = ['cherry', 'ginkgo', 'poplar', 'pine', 'oak'] as const
+export type HarborScenicTree = (typeof HARBOR_SCENIC_TREES)[number]
+
 function bridge() {
   const g = new THREE.Group()
   const deck = new THREE.Mesh(new THREE.BoxGeometry(RIVER * 2.2, 0.12, 1.4), mat(0x7a5a3a))
@@ -316,8 +419,10 @@ function populateChunk(
   }
 
   if (biome === 'forest' || biome === 'hills') {
-    place(group, rng, 5, () => tree(rng, leaf), BANK - 0.2, BANK + 4.5, z0)
-    place(group, rng, 4, () => pine(rng), BANK, BANK + 5, z0)
+    place(group, rng, 4, () => tree(rng, leaf), BANK - 0.2, BANK + 4.5, z0)
+    place(group, rng, 3, () => pine(rng), BANK, BANK + 5, z0)
+    place(group, rng, 3, () => poplar(rng), BANK - 0.3, BANK + 3.5, z0)
+    place(group, rng, 2, () => ginkgo(rng), BANK + 0.5, BANK + 4.5, z0)
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
     place(group, rng, 5, () => flower(rng), BANK - 0.3, BANK + 2.5, z0)
     if (rng() > 0.4) place(group, rng, 1, () => deer(rng), BANK + 0.5, BANK + 3.5, z0)
@@ -325,7 +430,9 @@ function populateChunk(
   if (biome === 'village') {
     place(group, rng, 2, () => house(rng), BANK + 0.5, BANK + 4, z0)
     place(group, rng, 2, () => hut(rng), BANK + 1, BANK + 4.5, z0)
-    place(group, rng, 3, () => tree(rng, leaf), BANK + 2, BANK + 5, z0)
+    place(group, rng, 2, () => tree(rng, leaf), BANK + 2, BANK + 5, z0)
+    place(group, rng, 3, () => cherryBlossom(rng), BANK - 0.2, BANK + 3.5, z0)
+    place(group, rng, 1, () => ginkgo(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => lantern(), BANK - 0.2, BANK + 1.2, z0)
     place(group, rng, 4, () => flower(rng), BANK - 0.4, BANK + 2, z0)
     if (rng() > 0.55) {
@@ -337,7 +444,8 @@ function populateChunk(
   if (biome === 'reeds') {
     place(group, rng, 12, () => reed(rng), RIVER + 0.4, BANK + 1.5, z0)
     place(group, rng, 3, () => rock(rng), BANK, BANK + 2, z0)
-    place(group, rng, 2, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
+    place(group, rng, 3, () => poplar(rng), BANK + 0.5, BANK + 3.5, z0)
+    place(group, rng, 1, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
   }
   if (biome === 'pier') {
@@ -353,9 +461,11 @@ function populateChunk(
     place(group, rng, 2, () => lantern(), BANK - 0.5, BANK + 0.8, z0)
     place(group, rng, 2, () => house(rng), BANK + 1, BANK + 3.5, z0)
     place(group, rng, 1, () => hut(rng), BANK + 2, BANK + 4, z0)
+    place(group, rng, 2, () => cherryBlossom(rng), BANK + 0.5, BANK + 3, z0)
   }
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
+    place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
   }
 
   // Fauna: birds overhead + occasional fish leap near the canoe lane
@@ -538,6 +648,13 @@ export function createHarborWorld(
           const phase = (o.userData.phase as number) + waterPhase * 1.8
           o.position.y = 0.08 + Math.max(0, Math.sin(phase)) * 0.55
           o.rotation.z = Math.PI / 2 + Math.sin(phase) * 0.4
+        }
+        if (o.userData.petal && !reduced) {
+          const phase = (o.userData.phase as number) + waterPhase * 1.4
+          const baseY = (o.userData.baseY as number) ?? o.position.y
+          o.position.y = baseY + Math.sin(phase) * 0.25 - (phase % 2.4) * 0.08
+          o.position.x += Math.sin(phase * 0.7) * 0.008
+          o.rotation.z += 0.02
         }
       })
     }
