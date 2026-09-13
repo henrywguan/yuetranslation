@@ -64,6 +64,17 @@ Public guide for Cantonese educators / creators:
 - Covers: **Noto Sans HK** (漢字) + **Noto Sans** (Jyutping + Chao tone letters) downloads, Copy Jyutping + Chao tone letters steps (Family+), CapCut / Instagram / Canva / NLE font import
 - Nav + footer link: **Creators** — share this URL in creator outreach
 
+### Learn · Harbor Quest (`#/learn`)
+
+CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide:
+
+- Route: `#/learn` (hub) · `#/learn/<levelId>` (play) · page: [`apps/web/src/landing/learn/LearnPage.tsx`](apps/web/src/landing/learn/LearnPage.tsx)
+- Curriculum: [`apps/web/src/landing/learn/curriculum.ts`](apps/web/src/landing/learn/curriculum.ts) — Intro + Lessons 1–7 + Jyutping chart
+- Dual pane: quest brief (left) + harbor ferry stage (right); progress in `localStorage`
+- Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
+- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts`
+- Related: cinematic tones refresher remains `#/tones`
+
 ### Instagram / static social posts (approved look)
 
 When Henry asks for **IG posts, static feed graphics, Reels covers, or similar brand stills**, use the **instructional night/dark mode** Harbor look — **not** a new AI poster style.

@@ -21,6 +21,9 @@ const PricingPage = lazy(() =>
   import('./landing/PricingPage').then((m) => ({ default: m.PricingPage })),
 )
 const TonesPage = lazy(() => import('./landing/TonesPage').then((m) => ({ default: m.TonesPage })))
+const LearnPage = lazy(() =>
+  import('./landing/learn/LearnPage').then((m) => ({ default: m.LearnPage })),
+)
 const CreatorsPage = lazy(() =>
   import('./landing/CreatorsPage').then((m) => ({ default: m.CreatorsPage })),
 )
@@ -98,6 +101,7 @@ export default function App() {
   if (route === 'app') page = <TranslatorApp />
   else if (route === 'pricing') page = <PricingPage />
   else if (route === 'tones') page = <TonesPage />
+  else if (route === 'learn') page = <LearnPage />
   else if (route === 'creators') page = <CreatorsPage />
   else if (route === 'admin') page = <AdminPage />
   else if (route === 'privacy') page = <LegalPage doc="privacy" />
