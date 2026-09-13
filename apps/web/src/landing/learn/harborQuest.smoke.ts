@@ -11,7 +11,11 @@ import {
   HARBOR_FANFARE_NOTES,
   harborFanfareDurationMs,
 } from '../../landing/learn/harborFanfare'
+import { HARBOR_MISS_SRC } from '../../landing/learn/harborSfx'
 import { biomeForChunk } from '../../landing/learn/harborWorld'
+import { readFileSync, statSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -82,6 +86,16 @@ function main() {
       fanfareMs <= HARBOR_FANFARE_DURATION_BOUNDS_MS.max,
     `scheduled fanfare ${fanfareMs}ms out of 3–6s`,
   )
+
+  // Original miss SFX assets (procedural — not ripped game samples)
+  const publicRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../public')
+  for (const [style, url] of Object.entries(HARBOR_MISS_SRC)) {
+    const rel = url.replace(/^\//, '')
+    const abs = join(publicRoot, rel)
+    assert.ok(statSync(abs).size > 1000, `${style} wav too small`)
+    const hdr = readFileSync(abs).subarray(0, 4).toString('ascii')
+    assert.equal(hdr, 'RIFF', `${style} must be a WAV`)
+  }
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }

@@ -7,6 +7,7 @@ import {
   type HarborLevel,
 } from './curriculum'
 import { playHarborCorrectFanfare, stopHarborCorrectFanfare } from './harborFanfare'
+import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
 import { HarborStage } from './HarborStage'
 import {
   isLevelCleared,
@@ -43,9 +44,11 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    preloadHarborMissSfx()
     return () => {
       document.body.style.overflow = prev
       stopHarborCorrectFanfare()
+      stopHarborMiss()
     }
   }, [])
 
@@ -71,8 +74,13 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       setFlash(ok ? 'ok' : 'no')
       setLastOk(ok)
       if (ok) {
+        stopHarborMiss()
         onProgress(markCorrect())
         playHarborCorrectFanfare()
+      } else {
+        stopHarborCorrectFanfare()
+        // Default: RPG-style body hit. Pass 'oof' for the block-game vocal.
+        playHarborMiss('thud')
       }
       window.setTimeout(() => setFlash(null), 420)
     },
