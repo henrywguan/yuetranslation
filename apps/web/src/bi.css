@@ -378,7 +378,7 @@ button.jyutping {
   white-space: nowrap;
 }
 
-/* Digits + SVG contour (JYUTPING_UI_SVG_TONES) — Chao Unicode stays on clipboard only */
+/* Digits + tone mark (SVG / canvas) — Chao Unicode stays on clipboard only */
 .jyut-syl-ui {
   display: inline-flex;
   align-items: center;
@@ -390,28 +390,43 @@ button.jyutping {
   font-family: var(--font-english);
 }
 
+.jyut-syl-ui--obfuscated {
+  font-family: var(--font-english);
+}
+
 .jyut-syl-roman {
   flex: none;
   /* Soft gate — Free users who force-select still hit the copy upgrade message */
   user-select: none;
 }
 
-.jyut-tone-mark {
+.jyut-tone-mark,
+.jyut-chao-glyph {
   flex: none;
   width: 0.55em;
   height: 0.85em;
-  display: block;
+  display: inline-block;
   overflow: visible;
   user-select: none;
   pointer-events: none;
+  color: inherit;
 }
 
-.jyut-ruby--lg .jyut-tone-mark {
+.jyut-chao-glyph img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.jyut-ruby--lg .jyut-tone-mark,
+.jyut-ruby--lg .jyut-chao-glyph {
   width: 0.58em;
   height: 0.9em;
 }
 
-.jp-pop-syl .jyut-tone-mark {
+.jp-pop-syl .jyut-tone-mark,
+.jp-pop-syl .jyut-chao-glyph {
   width: 0.52em;
   height: 0.8em;
 }

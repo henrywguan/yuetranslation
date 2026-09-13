@@ -54,10 +54,10 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 - **Character drill-down**: tap a Han character when a definition exists → closable sheet with tone contour, Chao tone letters, character sense, and the phrase gloss  
   **单字下钻**：有释义时可点按汉字 → 弹出可关闭面板，含调型、调值字母、字义与短语释义
 
-Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`, `JYUTPING_UI_SVG_TONES`, `JYUTPING_SELECT_COPY_TRAP`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
+Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`, `JYUTPING_UI_TONE_MODE`, `JYUTPING_SELECT_COPY_TRAP`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
 
-**On-screen vs clipboard:** with `JYUTPING_UI_SVG_TONES = false` (default), ruby UI shows Unicode Chao (`teng1˥`) via Noto Sans. Set to `true` to draw SVG contours instead (no Chao in the DOM). Family **Copy Jyutping + Chao** always copies `teng1˥ …`.
+**On-screen vs clipboard:** with `JYUTPING_UI_TONE_MODE = 'obfuscated'` (default), ruby shows `teng1` plus a **canvas** Chao glyph painted with Noto Sans — no ˥˧˨˩ text nodes in the DOM (mild scrape friction; not real DRM). Set to `'unicode'` for classic `teng1˥` text, or `'svg'` for stroke contours. Family **Copy Jyutping + Chao** always copies `teng1˥ …` via `rubyJpSyllable()`. Cipher + painter are split across `chaoToneCipher.ts` and `chaoTonePaint.ts`.
 
 **Select/copy gate:** with `JYUTPING_SELECT_COPY_TRAP = true` (default), Free/guest users who select ruby and copy get: *Jyutping + Chao tone letters is a Family+ plan feature. Please upgrade to copy.* Family/Business exempt. Set to `false` to disable.
 
-实现于 `apps/web/src/lib/jyutping.ts`（`rubyJpSyllable`、`ensureJyutpingSegs`、`JYUTPING_UI_SVG_TONES`、`JYUTPING_SELECT_COPY_TRAP`）与 `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`。
+实现于 `apps/web/src/lib/jyutping.ts`（`rubyJpSyllable`、`ensureJyutpingSegs`、`JYUTPING_UI_TONE_MODE`、`JYUTPING_SELECT_COPY_TRAP`）与 `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`。
