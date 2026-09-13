@@ -79,13 +79,15 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
   if (typeof o.coins === 'number' && Number.isFinite(o.coins) && o.coins >= 0) {
     coins = Math.min(Math.floor(o.coins), 1_000_000)
   }
-  const look = { ...DEFAULT_LOOK }
+  const look: HarborQuestProgress['look'] = { ...DEFAULT_LOOK }
   if (o.look && typeof o.look === 'object') {
     const L = o.look as Record<string, unknown>
     for (const slot of ['hat', 'top', 'bottom', 'shoes', 'hand'] as const) {
       const id = L[slot]
       const prefix = slot === 'shoes' ? 'shoes-' : `${slot}-`
-      if (typeof id === 'string' && KNOWN_GEAR.has(id) && id.startsWith(prefix)) look[slot] = id
+      if (typeof id === 'string' && KNOWN_GEAR.has(id) && id.startsWith(prefix)) {
+        look[slot] = id
+      }
     }
   }
   const ownedSet = new Set<string>(STARTER_OWNED)
