@@ -1,6 +1,29 @@
 import { fetchTtsAudio } from './api'
+import { ensureSharedAudioContext } from './audioReactive'
 import type { Lang } from './types'
 import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalViVoice, readLocalYueVoice } from './ttsVoices'
+
+/** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
+const LOUD_PLAYBACK_GAIN = 2.75
+let ttsMediaSource: MediaElementAudioSourceNode | null = null
+let ttsGainNode: GainNode | null = null
+
+function setTtsPlaybackGain(loud: boolean) {
+  try {
+    const el = ensureSharedAudio()
+    const ctx = ensureSharedAudioContext()
+    if (!ttsMediaSource) {
+      ttsMediaSource = ctx.createMediaElementSource(el)
+      ttsGainNode = ctx.createGain()
+      ttsMediaSource.connect(ttsGainNode)
+      ttsGainNode.connect(ctx.destination)
+    }
+    if (ttsGainNode) ttsGainNode.gain.value = loud ? LOUD_PLAYBACK_GAIN : 1
+    if (ctx.state === 'suspended') void ctx.resume()
+  } catch {
+    /* Web Audio may be unavailable — HTMLAudioElement.volume=1 still applies. */
+  }
+}
 /** Tiny silent WAV — played during a user gesture to unlock later HTMLAudio playback (iOS). */
 const SILENT_WAV =
   'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA=='
@@ -277,8 +300,8 @@ const TTS_CACHE_MAX = 24
 const ttsBlobs = new Map<string, Blob>()
 const ttsInflight = new Map<string, Promise<Blob | null>>()
 
-function ttsCacheKey(text: string, lang: Lang, voice: string | null) {
-  return `${lang}|${voice || ''}|${text}`
+function ttsCacheKey(text: string, lang: Lang, voice: string | null, loud = false) {
+  return `${lang}|${voice || ''}|${loud ? 'loud' : 'norm'}|${text}`
 }
 
 function rememberTtsBlob(key: string, blob: Blob) {
@@ -309,11 +332,13 @@ export async function loadTtsAudio(
   text: string,
   lang: Lang,
   voice?: string | null,
+  opts?: { loud?: boolean },
 ): Promise<Blob | null> {
   const trimmed = text.trim()
   if (!trimmed) return null
   const resolved = preferredVoiceFor(lang, voice)
-  const key = ttsCacheKey(trimmed, lang, resolved)
+  const loud = Boolean(opts?.loud)
+  const key = ttsCacheKey(trimmed, lang, resolved, loud)
   const cached = ttsBlobs.get(key)
   if (cached) {
     ttsBlobs.delete(key)
@@ -322,7 +347,7 @@ export async function loadTtsAudio(
   }
   const pending = ttsInflight.get(key)
   if (pending) return pending
-  const next = fetchTtsAudio(trimmed, lang, resolved)
+  const next = fetchTtsAudio(trimmed, lang, resolved, { loud })
     .then((blob) => {
       if (blob && blob.size > 0) rememberTtsBlob(key, blob)
       return blob
@@ -341,7 +366,11 @@ export function prefetchTts(text: string, lang: Lang, voice?: string | null) {
   void loadTtsAudio(trimmed, lang, voice).catch(() => undefined)
 }
 
-async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed' | 'aborted'> {
+async function playAzureBlob(
+  blob: Blob,
+  g: number,
+  opts?: { loud?: boolean },
+): Promise<'played' | 'failed' | 'aborted'> {
   const objectUrl = URL.createObjectURL(blob)
   url = objectUrl
   // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
@@ -350,6 +379,7 @@ async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed'
   el.src = objectUrl
   el.volume = 1
   el.muted = false
+  setTtsPlaybackGain(Boolean(opts?.loud))
   return await new Promise<'played' | 'failed' | 'aborted'>((resolve) => {
     let settled = false
     const finish = (result: 'played' | 'failed' | 'aborted') => {
@@ -382,27 +412,34 @@ async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed'
   })
 }
 
-export async function speakText(text: string, lang: Lang, voice?: string | null) {
+export async function speakText(
+  text: string,
+  lang: Lang,
+  voice?: string | null,
+  opts?: { loud?: boolean },
+) {
   const trimmed = text.trim()
   if (!trimmed) return
   // Keep the shared element — audio.load() here added a visible gap before play.
   stopSpeaking({ preserveSession: true })
   const g = gen
+  const loud = Boolean(opts?.loud)
   playing = true
   let fetchError: Error | null = null
   try {
     let blob: Blob | null = null
     try {
-      blob = await loadTtsAudio(trimmed, lang, voice)
+      blob = await loadTtsAudio(trimmed, lang, voice, { loud })
     } catch (err) {
       fetchError = err instanceof Error ? err : new Error('Voice playback failed.')
     }
     if (g !== gen) return
     if (blob && blob.size > 0) {
-      const result = await playAzureBlob(blob, g)
+      const result = await playAzureBlob(blob, g, { loud })
       if (result === 'played' || result === 'aborted' || g !== gen) return
       // play() blocked (often missing gesture unlock) — try browser fallback.
     }
+    setTtsPlaybackGain(false)
     const spoke = await browserSpeak(trimmed, lang, g)
     if (spoke || g !== gen) return
     if (fetchError) throw fetchError
@@ -412,6 +449,9 @@ export async function speakText(text: string, lang: Lang, voice?: string | null)
       playing = false
       armTtsEchoTail()
     }
+    // Reset gain so normal translator speak is not left boosted.
+    if (!loud) setTtsPlaybackGain(false)
+    else if (g === gen) setTtsPlaybackGain(false)
   }
 }
 

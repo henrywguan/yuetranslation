@@ -189,7 +189,7 @@ export function AdminPracticePartnerLab() {
         // cannot leave the lab stuck on Speaking forever.
         try {
           await Promise.race([
-            speakText(reply, 'yue'),
+            speakText(reply, 'yue', null, { loud: true }),
             new Promise<never>((_, reject) => {
               window.setTimeout(
                 () => reject(new Error('Voice playback timed out — tap Talk again.')),

@@ -9,6 +9,7 @@ import {
 resetTtsClipCacheForTests()
 assert.equal(ttsClipCacheSizeForTests(), 0)
 assert.notEqual(ttsClipCacheKey('a', 'x'), ttsClipCacheKey('b', 'x'))
+assert.notEqual(ttsClipCacheKey('a', 'x'), ttsClipCacheKey('a', 'x', true), 'loud clips cache separately')
 
 rememberTtsClipForTests('voice-a', '你好', Buffer.from([1, 2, 3]))
 assert.equal(ttsClipCacheSizeForTests(), 1)

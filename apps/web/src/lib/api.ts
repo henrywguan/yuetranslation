@@ -272,10 +272,16 @@ export async function fetchTtsAudio(
   text: string,
   lang: Lang,
   voice?: string | null,
+  opts?: { loud?: boolean },
 ): Promise<Blob | null> {
   const res = await apiFetch('/tts', {
     method: 'POST',
-    body: JSON.stringify({ text, lang, ...(voice ? { voice } : {}) }),
+    body: JSON.stringify({
+      text,
+      lang,
+      ...(voice ? { voice } : {}),
+      ...(opts?.loud ? { loud: true } : {}),
+    }),
   })
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as { message?: string }
