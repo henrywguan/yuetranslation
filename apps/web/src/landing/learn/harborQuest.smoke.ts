@@ -5,6 +5,12 @@ import {
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
+import {
+  HARBOR_FANFARE_DURATION_BOUNDS_MS,
+  HARBOR_FANFARE_DURATION_MS,
+  HARBOR_FANFARE_NOTES,
+  harborFanfareDurationMs,
+} from '../../landing/learn/harborFanfare'
 import { biomeForChunk } from '../../landing/learn/harborWorld'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
@@ -62,6 +68,20 @@ function main() {
   assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
   assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
+
+  // Correct-answer trumpet jingle stays in the 3–6s window
+  assert.ok(HARBOR_FANFARE_NOTES.length >= 6, 'fanfare needs a real melody')
+  assert.ok(
+    HARBOR_FANFARE_DURATION_MS >= HARBOR_FANFARE_DURATION_BOUNDS_MS.min &&
+      HARBOR_FANFARE_DURATION_MS <= HARBOR_FANFARE_DURATION_BOUNDS_MS.max,
+    'fanfare duration must be 3–6s',
+  )
+  const fanfareMs = harborFanfareDurationMs()
+  assert.ok(
+    fanfareMs >= HARBOR_FANFARE_DURATION_BOUNDS_MS.min &&
+      fanfareMs <= HARBOR_FANFARE_DURATION_BOUNDS_MS.max,
+    `scheduled fanfare ${fanfareMs}ms out of 3–6s`,
+  )
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }

@@ -6,6 +6,7 @@ import {
   openCantoneseLessonUrl,
   type HarborLevel,
 } from './curriculum'
+import { playHarborCorrectFanfare, stopHarborCorrectFanfare } from './harborFanfare'
 import { HarborStage } from './HarborStage'
 import {
   isLevelCleared,
@@ -68,7 +69,10 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     (ok: boolean) => {
       setFlash(ok ? 'ok' : 'no')
       setLastOk(ok)
-      if (ok) onProgress(markCorrect())
+      if (ok) {
+        onProgress(markCorrect())
+        playHarborCorrectFanfare()
+      }
       window.setTimeout(() => setFlash(null), 420)
     },
     [onProgress],
