@@ -1005,9 +1005,10 @@ export function createHarborWorld(
     const dy = e.clientY - lastPtrY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
-    // Drag right → negative yaw → camera swings left (OSRS grab feel)
+    // Horizontal: drag right → camera left (grab-the-world)
     yawTarget -= dx * ORBIT_SENS
-    pitchTarget = clampOrbitPitch(pitchTarget - dy * ORBIT_SENS)
+    // Vertical: natural — drag down tips the view down
+    pitchTarget = clampOrbitPitch(pitchTarget + dy * ORBIT_SENS)
   }
   const endDrag = (e: PointerEvent) => {
     if (e.pointerId !== activePointer) return
