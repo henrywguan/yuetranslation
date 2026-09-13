@@ -1214,10 +1214,25 @@
   display: block;
   z-index: 0;
   pointer-events: none;
+  touch-action: none;
 }
 
 .hq-stage--immersive .hq-world-canvas {
   min-height: 100%;
+  /* Drag anywhere on the world to orbit (HUD controls still sit above). */
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.hq-stage--immersive .hq-world-canvas:active {
+  cursor: grabbing;
+}
+
+.hq-stage--immersive .hq-stage-meter,
+.hq-stage--immersive .hq-stage-caption,
+.hq-stage--immersive .hq-stage-spotlight {
+  pointer-events: none;
 }
 
 .hq-stage--immersive .hq-stage-svg {

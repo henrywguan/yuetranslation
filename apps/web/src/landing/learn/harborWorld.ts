@@ -54,6 +54,28 @@ export function biomeForChunk(i: number): BiomeId {
   return cycle[((i % cycle.length) + cycle.length) % cycle.length]
 }
 
+/** Mobile OSRS-style orbit: yaw wraps freely; pitch is clamped. */
+export const ORBIT_PITCH_MIN = 0.22
+export const ORBIT_PITCH_MAX = 1.12
+export const ORBIT_DISTANCE = 8.6
+
+export function clampOrbitPitch(pitch: number): number {
+  return Math.min(ORBIT_PITCH_MAX, Math.max(ORBIT_PITCH_MIN, pitch))
+}
+
+/**
+ * Camera offset from the look-at point.
+ * yaw 0 = behind the canoe (−Z), increasing yaw orbits clockwise when viewed from above.
+ */
+export function orbitCameraOffset(yaw: number, pitch: number, distance = ORBIT_DISTANCE) {
+  const cosP = Math.cos(pitch)
+  return {
+    x: Math.sin(yaw) * cosP * distance,
+    y: Math.sin(pitch) * distance,
+    z: -Math.cos(yaw) * cosP * distance,
+  }
+}
+
 function mulberry32(seed: number) {
   let a = seed >>> 0
   return () => {
@@ -695,6 +717,51 @@ export function createHarborWorld(
   let raf = 0
   let last = performance.now()
 
+  // Finger / mouse orbit (mobile OSRS-style 360° pan around the canoe)
+  let yaw = 0
+  let pitch = 0.52
+  let yawTarget = 0
+  let pitchTarget = 0.52
+  let dragging = false
+  let lastPtrX = 0
+  let lastPtrY = 0
+  let activePointer: number | null = null
+  const ORBIT_SENS = 0.0052
+
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return
+    if (activePointer !== null) return
+    activePointer = e.pointerId
+    dragging = true
+    lastPtrX = e.clientX
+    lastPtrY = e.clientY
+    canvas.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e: PointerEvent) => {
+    if (!dragging || e.pointerId !== activePointer) return
+    const dx = e.clientX - lastPtrX
+    const dy = e.clientY - lastPtrY
+    lastPtrX = e.clientX
+    lastPtrY = e.clientY
+    yawTarget -= dx * ORBIT_SENS
+    pitchTarget = clampOrbitPitch(pitchTarget + dy * ORBIT_SENS)
+  }
+  const endDrag = (e: PointerEvent) => {
+    if (e.pointerId !== activePointer) return
+    dragging = false
+    activePointer = null
+    try {
+      canvas.releasePointerCapture(e.pointerId)
+    } catch {
+      /* already released */
+    }
+  }
+  canvas.addEventListener('pointerdown', onPointerDown)
+  canvas.addEventListener('pointermove', onPointerMove)
+  canvas.addEventListener('pointerup', endDrag)
+  canvas.addEventListener('pointercancel', endDrag)
+  canvas.addEventListener('lostpointercapture', endDrag)
+
   const resize = () => {
     const w = canvas.clientWidth || canvas.width || 1
     const h = canvas.clientHeight || canvas.height || 1
@@ -741,12 +808,18 @@ export function createHarborWorld(
     water.position.z = voyageZ + 60
     water.position.y = 0.02 + Math.sin(waterPhase) * 0.015
 
-    camera.position.set(
-      boat.position.x * 0.35,
-      3.8 + (reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.08),
-      boat.position.z - 7.2,
-    )
-    camera.lookAt(boat.position.x, 0.6, boat.position.z + 4.5)
+    // Ease orbit toward finger drag (snappy, still smooth)
+    const orbitLerp = Math.min(1, dt * 14)
+    yaw += (yawTarget - yaw) * orbitLerp
+    pitch += (pitchTarget - pitch) * orbitLerp
+
+    const lookX = boat.position.x
+    const lookY = 0.75
+    const lookZ = boat.position.z + 1.2
+    const off = orbitCameraOffset(yaw, pitch)
+    const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
+    camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
+    camera.lookAt(lookX, lookY, lookZ)
 
     ensureChunks(voyageZ)
 
@@ -806,6 +879,11 @@ export function createHarborWorld(
     dispose() {
       disposed = true
       cancelAnimationFrame(raf)
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('pointermove', onPointerMove)
+      canvas.removeEventListener('pointerup', endDrag)
+      canvas.removeEventListener('pointercancel', endDrag)
+      canvas.removeEventListener('lostpointercapture', endDrag)
       for (const g of chunkGroups.values()) {
         g.traverse((o) => {
           if (o instanceof THREE.Mesh) o.geometry.dispose()
