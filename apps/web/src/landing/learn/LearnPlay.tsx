@@ -192,7 +192,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       <div className="hq-play hq-play--missing">
         <p>That pier isn’t on the chart.</p>
         <button type="button" className="hq-btn hq-btn--primary" onClick={onExit}>
-          Back to map
+          Pier chart
         </button>
       </div>
     )
@@ -230,7 +230,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
 
       <header className="hq-play-hud-top">
         <button type="button" className="hq-btn hq-btn--ghost hq-btn--hud" onClick={onExit}>
-          ← Map
+          Chart
         </button>
         <div className="hq-play-bar-title">
           <span className="hq-play-ch">Ch. {level.chapter}</span>
@@ -441,7 +441,7 @@ function LevelClear({
           </button>
         ) : null}
         <button type="button" className="hq-btn hq-btn--ghost" onClick={onExit}>
-          Return to map
+          Pier chart
         </button>
       </div>
     </div>

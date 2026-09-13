@@ -330,6 +330,16 @@ function main() {
   assert.match(playAudioSrc, /stopHarborBgm/, 'session stops BGM on exit')
   assert.match(playAudioSrc, /duckHarborBgm/, 'BGM ducks under fanfare')
 
+  // Direct launch — `#/learn` opens fullscreen play (no marketing hub)
+  const learnPageSrc = readFileSync(new URL('./LearnPage.tsx', import.meta.url), 'utf8')
+  assert.match(learnPageSrc, /continueHarborLevelId/, 'bare /learn continues into a pier')
+  assert.match(learnPageSrc, /hq-chart-overlay/, 'pier chart is an in-game overlay')
+  assert.doesNotMatch(learnPageSrc, /hq-hero/, 'marketing Learn hub hero removed')
+  assert.doesNotMatch(learnPageSrc, /MarketingPageShell|MarketingFooter/, 'no marketing shell on Learn')
+  assert.match(learnCss, /\.hq-chart-overlay/, 'chart overlay styles')
+  assert.match(progressSrc, /continueHarborLevelId/, 'continue helper exported')
+
+
 console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
 
