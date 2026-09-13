@@ -717,7 +717,7 @@ export function createHarborWorld(
   let raf = 0
   let last = performance.now()
 
-  // Finger / mouse orbit (mobile OSRS-style 360° pan around the canoe)
+  // Finger / mouse orbit (inverted: drag right → cam left, drag down → cam up)
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
@@ -743,8 +743,9 @@ export function createHarborWorld(
     const dy = e.clientY - lastPtrY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
-    yawTarget -= dx * ORBIT_SENS
-    pitchTarget = clampOrbitPitch(pitchTarget + dy * ORBIT_SENS)
+    // Inverted axes: opposite of drag direction
+    yawTarget += dx * ORBIT_SENS
+    pitchTarget = clampOrbitPitch(pitchTarget - dy * ORBIT_SENS)
   }
   const endDrag = (e: PointerEvent) => {
     if (e.pointerId !== activePointer) return
