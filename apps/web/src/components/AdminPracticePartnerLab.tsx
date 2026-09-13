@@ -7,7 +7,7 @@ import {
 import { postPracticePartnerChat, type PracticePartnerChatMessage } from '../lib/adminApi'
 import { createWebSpeechSession } from '../lib/webSpeech'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
-import { isTtsPlaying, speakText, stopSpeaking } from '../lib/tts'
+import { isTtsPlaying, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
 import type { LiveSession, SpeechEventHandlers } from '../lib/types'
 import './AdminPracticePartnerLab.css'
 
@@ -173,7 +173,26 @@ export function AdminPracticePartnerLab() {
         setMood('speaking')
         setCaption({ role: 'partner', text: reply })
         pushReel({ role: 'partner', text: reply })
-        await speakText(reply, 'yue')
+        // After the LLM round-trip we are outside the user gesture. Unlock must
+        // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
+        // cannot leave the lab stuck on Speaking forever.
+        try {
+          await Promise.race([
+            speakText(reply, 'yue'),
+            new Promise<never>((_, reject) => {
+              window.setTimeout(
+                () => reject(new Error('Voice playback timed out — tap Talk again.')),
+                25_000,
+              )
+            }),
+          ])
+        } catch (ttsErr) {
+          stopSpeaking()
+          const ttsMsg =
+            ttsErr instanceof Error ? ttsErr.message : 'Voice playback failed.'
+          setError(ttsMsg)
+          // Caption already shows the partner line; keep chatting even if TTS failed.
+        }
         setMood('idle')
         setCaption({
           role: 'system',
@@ -218,6 +237,8 @@ export function AdminPracticePartnerLab() {
     if (busy || listening || turnLockRef.current) return
     setError('')
     finalsRef.current = ''
+    // Must run in the Talk gesture so later Azure/browser TTS after DeepSeek is allowed.
+    unlockTtsPlayback()
 
     const handlers: SpeechEventHandlers = {
       onInterim: (_lang, text) => {
@@ -275,6 +296,8 @@ export function AdminPracticePartnerLab() {
 
   const toggleTalk = useCallback(() => {
     if (listening) {
+      // Fresh gesture unlock right before the DeepSeek → TTS path.
+      unlockTtsPlayback()
       void finishUtterance()
       return
     }
@@ -284,6 +307,8 @@ export function AdminPracticePartnerLab() {
   const sendDraft = useCallback(() => {
     const text = draft.trim()
     if (!text || busy) return
+    // Same gesture unlock as Talk — typed turns also auto-speak after the LLM.
+    unlockTtsPlayback()
     setDraft('')
     void runPartnerTurn(text)
   }, [draft, busy, runPartnerTurn])

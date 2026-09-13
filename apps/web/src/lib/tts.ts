@@ -236,14 +236,25 @@ function browserSpeak(text: string, lang: Lang, g: number): Promise<boolean> {
       resolve(false)
       return
     }
-    u.onend = () => {
+    let settled = false
+    const finish = (ok: boolean) => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(watchdog)
       if (g === gen) playing = false
-      resolve(true)
+      resolve(ok)
     }
-    u.onerror = () => {
-      if (g === gen) playing = false
-      resolve(false)
-    }
+    // iOS often accepts speak() outside a gesture then never fires end/error.
+    const watchdog = window.setTimeout(() => {
+      try {
+        window.speechSynthesis.cancel()
+      } catch {
+        /* ignore */
+      }
+      finish(false)
+    }, Math.min(60_000, Math.max(8_000, text.length * 180)))
+    u.onend = () => finish(true)
+    u.onerror = () => finish(false)
     playing = true
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(u)
@@ -344,6 +355,7 @@ async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed'
     const finish = (result: 'played' | 'failed' | 'aborted') => {
       if (settled) return
       settled = true
+      window.clearTimeout(watchdog)
       if (playbackWaiter === onEnded) playbackWaiter = null
       if (g === gen) playing = false
       resolve(result)
@@ -352,6 +364,15 @@ async function playAzureBlob(blob: Blob, g: number): Promise<'played' | 'failed'
     playbackWaiter = onEnded
     el.onended = onEnded
     el.onerror = () => finish('failed')
+    // Guard against play() resolving then never ending (broken/unlock races).
+    const watchdog = window.setTimeout(() => {
+      try {
+        el.pause()
+      } catch {
+        /* ignore */
+      }
+      finish('failed')
+    }, Math.min(90_000, Math.max(12_000, blob.size / 6)))
     void el.play().then(
       () => {
         // play() resolved — wait for onended; if gen changes, abort.
