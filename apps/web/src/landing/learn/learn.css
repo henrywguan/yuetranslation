@@ -1425,7 +1425,7 @@
   gap: 0.65rem;
 }
 
-/* Chao next to Jyutping tone digits — always Noto Sans (see .chao-face in index.css) */
+/* Chao next to Jyutping tone digits — dedicated Noto Sans Chao face (see index.css). */
 .hq-hear-jp .chao-face,
 .hq-build-jp .chao-face,
 .hq-tile .chao-face,
@@ -1438,8 +1438,20 @@
 .hq-dialog-spotlight .chao-face,
 .hq-dialog-hint .chao-face,
 .hq-feedback-text .chao-face {
-  font-family: 'Noto Sans', var(--font-english), system-ui, sans-serif;
+  font-family: 'Noto Sans Chao', 'Noto Sans', var(--font-english), system-ui, sans-serif !important;
+  font-weight: 400 !important;
   margin-left: 0.04em;
+}
+
+/* Match hear-chip Latin stack so choice / jade Jyutping isn’t painted in Syne. */
+.hq-choice-sub,
+.hq-feedback-text .hq-line-en,
+.hq-dialog-hint .hq-line-en,
+.hq-dialog .hq-line-en,
+.hq-dialog .jyut-syl-ui--unicode,
+.hq-choice-sub .jyut-syl-ui--unicode,
+.hq-feedback-text .jyut-syl-ui--unicode {
+  font-family: 'Noto Sans', var(--font-english), system-ui, sans-serif;
 }
 
 /* ——— Explore-first + OSRS-style NPC dialogue ——— */
