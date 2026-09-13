@@ -1,5 +1,6 @@
 import { fetchTtsAudio } from './api'
 import { ensureSharedAudioContext } from './audioReactive'
+import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
 import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalViVoice, readLocalYueVoice } from './ttsVoices'
 
@@ -11,15 +12,24 @@ let ttsGainNode: GainNode | null = null
 function setTtsPlaybackGain(loud: boolean) {
   try {
     const el = ensureSharedAudio()
+    el.volume = 1
+    // iPhone: createMediaElementSource permanently reroutes element output through
+    // AudioContext. After Practice Partner's LLM await that context is often still
+    // suspended outside the gesture → play() succeeds but TTS is silent, and busy
+    // stays true so the next mic tap no-ops. Azure SSML x-loud is enough on Apple.
+    if (isAppleTouchDevice()) return
     const ctx = ensureSharedAudioContext()
+    if (ctx.state === 'suspended') void ctx.resume()
+    // Only wire MediaElementSource while the context is running. Wiring while
+    // suspended mutes the element with no audible Web Audio output.
     if (!ttsMediaSource) {
+      if (ctx.state !== 'running') return
       ttsMediaSource = ctx.createMediaElementSource(el)
       ttsGainNode = ctx.createGain()
       ttsMediaSource.connect(ttsGainNode)
       ttsGainNode.connect(ctx.destination)
     }
     if (ttsGainNode) ttsGainNode.gain.value = loud ? LOUD_PLAYBACK_GAIN : 1
-    if (ctx.state === 'suspended') void ctx.resume()
   } catch {
     /* Web Audio may be unavailable — HTMLAudioElement.volume=1 still applies. */
   }
@@ -111,6 +121,13 @@ export function unlockTtsPlayback(): void {
   } catch {
     /* ignore */
   }
+  // Resume shared AudioContext in-gesture so later TTS is not stuck suspended
+  // after an async LLM gap (Practice Partner on iPhone).
+  try {
+    ensureSharedAudioContext()
+  } catch {
+    /* ignore */
+  }
   // Already unlocked / unlock in progress — keep the shared element warm.
   if (unlocked || unlockInFlight) return
   unlockInFlight = true
@@ -135,10 +152,11 @@ export function unlockTtsPlayback(): void {
           /* ignore */
         }
         // Drop silent src so the next speakText can set a blob URL cleanly.
+        // Do not el.load() — on iOS that resets the audio session and the next
+        // Web Speech start can show the orange pill with no capture.
         if (!playing) {
-          el.removeAttribute('src')
           try {
-            el.load()
+            el.removeAttribute('src')
           } catch {
             /* ignore */
           }

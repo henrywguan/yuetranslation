@@ -219,6 +219,10 @@ export function AdminPracticePartnerLab() {
         // After the LLM round-trip we are outside the user gesture. Unlock must
         // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
         // cannot leave the lab stuck on Speaking forever.
+        // Release busy/turn lock before TTS so a second mic tap can barge in.
+        // Silent/stuck loud TTS previously left busy=true and swallowed the next Talk.
+        setBusy(false)
+        turnLockRef.current = false
         try {
           await Promise.race([
             speakText(reply, 'yue', partnerVoice, { loud: true }),
@@ -280,7 +284,9 @@ export function AdminPracticePartnerLab() {
   }, [finishUtterance])
 
   const startListening = useCallback(async () => {
-    if (busy || listening || turnLockRef.current) return
+    if (listening) return
+    const canBargeIn = mood === 'speaking' || isTtsPlaying()
+    if ((busy || turnLockRef.current) && !canBargeIn) return
     setError('')
     finalsRef.current = ''
     // Must run in the Talk gesture so later Azure/browser TTS after DeepSeek is allowed.
@@ -346,7 +352,7 @@ export function AdminPracticePartnerLab() {
       setMood('idle')
       setError(e instanceof Error ? e.message : 'Could not start mic')
     }
-  }, [busy, listening, partnerHold, stopMic])
+  }, [busy, listening, mood, partnerHold, stopMic])
 
   const toggleTalk = useCallback(() => {
     if (listening) {
