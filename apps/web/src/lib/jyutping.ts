@@ -78,6 +78,14 @@ export function rubyJpSyllable(jp: string) {
   return `${parsed.roman}${TONE_LETTERS[parsed.tone]}`
 }
 
+/**
+ * Append Chao letters after bare Jyutping syllables in free text.
+ * `si1` → `si1˥`; leaves syllables that already carry Chao alone.
+ */
+export function enrichJyutpingWithChao(text: string): string {
+  return text.replace(/\b([A-Za-z]+[1-6])\b(?![\u02E5-\u02E9])/g, (syl) => rubyJpSyllable(syl))
+}
+
 type Api = {
   getJyutpingText: (t: string) => string
   getJyutpingList: (t: string) => [string, string | null][]

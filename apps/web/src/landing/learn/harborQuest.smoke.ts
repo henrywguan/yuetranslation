@@ -6,6 +6,7 @@ import {
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
+import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
 /** Offline: Harbor Quest curriculum integrity (no paid APIs). */
 function main() {
@@ -46,6 +47,12 @@ function main() {
     isLevelUnlocked('lesson-1', ids, { ...empty, cleared: ['introduction'] }),
     true,
   )
+
+
+  assert.equal(rubyJpSyllable('si1'), 'si1˥')
+  assert.equal(enrichJyutpingWithChao('In Jyutping si1, what does the 1 mark?'), 'In Jyutping si1˥, what does the 1 mark?')
+  assert.equal(enrichJyutpingWithChao('nei5 hou2'), 'nei5˩˧ hou2˧˥')
+  assert.equal(enrichJyutpingWithChao('si1˥'), 'si1˥', 'do not double-append Chao')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }

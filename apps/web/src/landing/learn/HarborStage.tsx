@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
+import { JyutpingChaoText } from './JyutpingChaoText'
 import type { HarborLevel } from './curriculum'
 
 type HarborStageProps = {
@@ -43,7 +44,7 @@ export function HarborStage({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.45, ease: inkEase }}
         >
-          {spotlight}
+          <JyutpingChaoText text={spotlight} />
         </motion.div>
       ) : null}
 
