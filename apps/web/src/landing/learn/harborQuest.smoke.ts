@@ -141,6 +141,8 @@ function main() {
   const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
+  assert.match(worldSrc, /HARBOR_FOG_DENSITY\s*=\s*0\.011/, 'daylight fog density (not a dark veil)')
+  assert.doesNotMatch(worldSrc, /FogExp2\([^)]*0\.022/, 'old dense dark fog removed')
 
   assert.ok(HARBOR_NPC_ROLES.includes('villager'), 'villager NPCs')
   assert.ok(HARBOR_NPC_ROLES.includes('scholar'), 'scholar NPCs')
@@ -199,9 +201,6 @@ function main() {
   assert.ok(existsSync(chaoFont), 'public/fonts/noto-sans-chao.woff2 present')
   const chaoTextSrc = readFileSync(new URL('./JyutpingChaoText.tsx', import.meta.url), 'utf8')
   assert.match(chaoTextSrc, /JyutpingSylText/, 'free-text Jyutping uses hear-chip SylText path')
-  const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
-  assert.match(worldSrc, /HARBOR_FOG_DENSITY\s*=\s*0\.011/, 'daylight fog density (not a dark veil)')
-  assert.doesNotMatch(worldSrc, /FogExp2\([^)]*0\.022/, 'old dense dark fog removed')
   const learnCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './learn.css'), 'utf8')
   assert.match(learnCss, /#041018 28%/, 'top HUD scrim is light (not a heavy overlay)')
   assert.match(learnCss, /\.hq-choice-sub[\s\S]*?Noto Sans/, 'choice subs force Noto Sans Latin stack')
