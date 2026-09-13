@@ -694,44 +694,46 @@ export function AdminPracticePartnerLab() {
 
       {error ? <p className="partner-lab-error">{error}</p> : null}
 
-      <aside className="partner-lab-transcript" aria-label="Caption history">
-        <h3>Caption reel</h3>
-        {reel.length ? (
-          <ul>
-            {reel.map((line, i) => (
-              <li key={`${line.role}-${i}-${line.text.slice(0, 12)}`}>
-                <span className={`partner-lab-transcript-role is-${line.role}`}>
-                  {ROLE_LABEL[line.role]}
-                </span>
-                <span className="partner-lab-transcript-text">{line.text}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="partner-lab-transcript-empty">
-            Turns appear here as you talk — You from STT, Partner from the LLM.
-          </p>
-        )}
-      </aside>
+      <div className="partner-lab-bottom">
+        <aside className="partner-lab-transcript" aria-label="Caption history">
+          <h3>Caption reel</h3>
+          {reel.length ? (
+            <ul>
+              {reel.map((line, i) => (
+                <li key={`${line.role}-${i}-${line.text.slice(0, 12)}`}>
+                  <span className={`partner-lab-transcript-role is-${line.role}`}>
+                    {ROLE_LABEL[line.role]}
+                  </span>
+                  <span className="partner-lab-transcript-text">{line.text}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="partner-lab-transcript-empty">
+              Turns appear here as you talk — You from STT, Partner from the LLM.
+            </p>
+          )}
+        </aside>
 
-      <aside className="partner-lab-notes">
-        <h3>How it knows what to reply</h3>
-        <ul>
-          <li>
-            <strong>Persona:</strong> fixed system prompt — “港灣”, a Cantonese practice partner
-          </li>
-          <li>
-            <strong>Memory:</strong> this session’s chat history (your lines + its replies)
-          </li>
-          <li>
-            <strong>Voice:</strong> same Azure TTS path as the translator (`yue` / zh-HK)
-          </li>
-          <li>
-            <strong>Not used:</strong> Azure Voice Live or Foundry Agent
-          </li>
-        </ul>
-        <p>Admin-only until entitlement + mic polish are ready for the consumer app.</p>
-      </aside>
+        <aside className="partner-lab-notes">
+          <h3>How it knows what to reply</h3>
+          <ul>
+            <li>
+              <strong>Persona:</strong> fixed system prompt — “港灣”, a Cantonese practice partner
+            </li>
+            <li>
+              <strong>Memory:</strong> this session’s chat history (your lines + its replies)
+            </li>
+            <li>
+              <strong>Voice:</strong> same Azure TTS path as the translator (`yue` / zh-HK)
+            </li>
+            <li>
+              <strong>Not used:</strong> Azure Voice Live or Foundry Agent
+            </li>
+          </ul>
+          <p>Admin-only until entitlement + mic polish are ready for the consumer app.</p>
+        </aside>
+      </div>
     </section>
   )
 }
