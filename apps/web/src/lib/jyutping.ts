@@ -9,13 +9,23 @@ export type CharBreakdown = {
 export { hasHan }
 
 /**
- * UI tone rendering — flip to reverse in one place:
- * - `false` → classic `teng1˥` Unicode Chao in the DOM (Noto Sans look; default)
- * - `true`  → ruby DOM is `teng1` + SVG contour (no Chao Unicode in HTML)
+ * On-screen tone rendering — pick one:
+ * - `obfuscated` (default) — roman+digit text + canvas Chao (Noto look, no Chao text nodes)
+ * - `unicode` — classic `teng1˥` in the DOM
+ * - `svg` — stroke contours (no Chao; does not match Noto letterforms)
  *
  * Family “Copy Jyutping + Chao” always uses Unicode Chao via `rubyJpSyllable()`.
  */
-export const JYUTPING_UI_SVG_TONES = false
+export type JyutpingUiToneMode = 'obfuscated' | 'unicode' | 'svg'
+
+export const JYUTPING_UI_TONE_MODE: JyutpingUiToneMode = 'obfuscated'
+
+/** @deprecated Prefer `JYUTPING_UI_TONE_MODE === 'svg'`. Kept as a one-line reverse switch. */
+export const JYUTPING_UI_SVG_TONES: boolean = modeIsSvg(JYUTPING_UI_TONE_MODE)
+
+function modeIsSvg(mode: JyutpingUiToneMode): boolean {
+  return mode === 'svg'
+}
 
 /**
  * Select/copy gate for Free/guest — flip to `false` to disable.
