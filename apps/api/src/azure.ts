@@ -50,13 +50,18 @@ export type SynthesizeOpts = {
   preferredTl?: string | null
   preferredEs?: string | null
   preferredVi?: string | null
+  /**
+   * Azure SSML `volume="x-loud"` — Practice Partner and other “fill the room”
+   * surfaces. Cached separately from normal clips.
+   */
+  loud?: boolean
 }
 
 const TTS_CLIP_CACHE_MAX = 48
 const ttsClipCache = new Map<string, Buffer>()
 
-export function ttsClipCacheKey(voice: string, text: string) {
-  return `${voice}\n${text}`
+export function ttsClipCacheKey(voice: string, text: string, loud = false) {
+  return `${voice}\n${loud ? 'loud' : 'norm'}\n${text}`
 }
 
 export function resetTtsClipCacheForTests() {
@@ -67,8 +72,8 @@ export function ttsClipCacheSizeForTests() {
   return ttsClipCache.size
 }
 
-export function rememberTtsClipForTests(voice: string, text: string, buf: Buffer) {
-  rememberTtsClip(ttsClipCacheKey(voice, text), buf)
+export function rememberTtsClipForTests(voice: string, text: string, buf: Buffer, loud = false) {
+  rememberTtsClip(ttsClipCacheKey(voice, text, loud), buf)
 }
 
 function rememberTtsClip(key: string, buf: Buffer) {
@@ -102,18 +107,17 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.voice,
     opts.preferredVi,
   )
-  const cacheKey = ttsClipCacheKey(pick.voice, text)
+  const loud = Boolean(opts.loud) || pick.xmlLang === 'fil-PH'
+  const cacheKey = ttsClipCacheKey(pick.voice, text, loud)
   const cached = cachedTtsClip(cacheKey)
   if (cached) return Buffer.from(cached)
 
   if (!env.azureSpeechKey) throw new Error('AZURE_SPEECH_KEY missing')
-  // fil-PH neural voices are much quieter than zh-HK / en-US on iPhone speakers
-  // (even at device max). Use Azure's loudest relative prosody so Tagalog speak
-  // is in the same ballpark as Cantonese/English without client-side gain nodes.
-  const spoken =
-    pick.xmlLang === 'fil-PH'
-      ? `<prosody volume="x-loud">${escapeXml(text)}</prosody>`
-      : escapeXml(text)
+  // fil-PH neural voices (and Practice Partner / loud mode) need Azure's max
+  // prosody — HTMLAudioElement.volume cannot go past 1.0.
+  const spoken = loud
+    ? `<prosody volume="x-loud">${escapeXml(text)}</prosody>`
+    : escapeXml(text)
   const ssml = `<speak version="1.0" xml:lang="${pick.xmlLang}"><voice name="${pick.voice}">${spoken}</voice></speak>`
   const url = `https://${env.azureSpeechRegion}.tts.speech.microsoft.com/cognitiveservices/v1`
   const res = await fetch(url, {

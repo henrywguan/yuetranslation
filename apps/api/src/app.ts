@@ -348,6 +348,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
     const text = String(req.body?.text || '').trim()
     const lang = String(req.body?.lang || 'yue')
     const voiceOverride = typeof req.body?.voice === 'string' ? req.body.voice.trim() : null
+    const loud = Boolean(req.body?.loud)
     if (!text) {
       res.status(400).json({ message: 'text required' })
       return
@@ -383,6 +384,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredTl: ent.prefs?.ttsVoiceTl,
       preferredEs: ent.prefs?.ttsVoiceEs,
       preferredVi: ent.prefs?.ttsVoiceVi,
+      loud,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
     if (!env.openMode) {
