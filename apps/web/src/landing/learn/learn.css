@@ -1368,9 +1368,9 @@
 
 .hq-stage--immersive .hq-world-canvas {
   min-height: 100%;
-  /* Drag anywhere on the world to orbit (HUD controls still sit above). */
+  /* Tap ground to move (OSRS); drag to orbit the camera. */
   pointer-events: auto;
-  cursor: grab;
+  cursor: crosshair;
   touch-action: none;
 }
 

@@ -32,6 +32,11 @@ import {
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
   pickHarborWeather,
+  HARBOR_TAP_SLOP_PX,
+  HARBOR_TAP_MOVE_SPEED,
+  HARBOR_TAP_ARRIVE,
+  clampHarborMoveTarget,
+  HARBOR_DOCK_X,
 } from '../../landing/learn/harborWorld'
 import {
   HARBOR_CRAFT_PALETTE,
@@ -145,6 +150,15 @@ function main() {
   const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
+  assert.equal(HARBOR_TAP_SLOP_PX, 10, 'tap vs drag pixel slop')
+  assert.ok(HARBOR_TAP_MOVE_SPEED > 2, 'tap-to-move has a walk/paddle speed')
+  assert.ok(HARBOR_TAP_ARRIVE > 0, 'arrival threshold')
+  assert.equal(clampHarborMoveTarget(99, -9).x, HARBOR_DOCK_X + 1.8, 'move target clamps to corridor')
+  assert.equal(clampHarborMoveTarget(0, 999).z, 248, 'move target clamps far Z')
+  assert.match(worldSrc, /HARBOR_TAP_SLOP_PX/, 'tap/drag discrimination uses slop constant')
+  assert.match(worldSrc, /tryTapMove/, 'tap raycasts to ground and sets destination')
+  assert.match(worldSrc, /userData\.clickMarker/, 'OSRS yellow destination marker')
+  assert.match(worldSrc, /playerDirected/, 'player tap overrides auto-dock path')
   assert.match(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*\+\s*dy/, 'pitch drag is natural (drag down → look down)')
   assert.doesNotMatch(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*-\s*dy/, 'inverted pitch drag removed')
   assert.equal(HARBOR_FOG_DENSITY, 0.0028, 'max-bright sunny fog (not a dark veil)')

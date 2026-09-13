@@ -219,6 +219,22 @@ export function orbitCameraOffset(yaw: number, pitch: number, distance = ORBIT_D
   }
 }
 
+/** Screen-pixel slop — motion under this is a tap, not an orbit drag (OSRS click). */
+export const HARBOR_TAP_SLOP_PX = 10
+/** Canoe paddle / walk speed in world units per second. */
+export const HARBOR_TAP_MOVE_SPEED = 4.2
+/** Stop when this close to the destination marker. */
+export const HARBOR_TAP_ARRIVE = 0.4
+
+/** Clamp a free-move point onto the playable river corridor. */
+export function clampHarborMoveTarget(x: number, z: number): { x: number; z: number } {
+  const maxX = HARBOR_DOCK_X + 1.8
+  return {
+    x: Math.min(maxX, Math.max(-maxX, x)),
+    z: Math.min(248, Math.max(-4, z)),
+  }
+}
+
 function mulberry32(seed: number) {
   let a = seed >>> 0
   return () => {
@@ -1034,6 +1050,25 @@ function populateChunk(
   }
 }
 
+
+/** OSRS-style yellow destination X on the ground plane. */
+function clickMarker() {
+  const g = new THREE.Group()
+  const m = mat(0xffe566, { transparent: true, opacity: 0.95, depthWrite: false })
+  const armA = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.045, 0.12), m)
+  armA.rotation.y = Math.PI / 4
+  const armB = armA.clone()
+  armB.rotation.y = -Math.PI / 4
+  g.add(armA, armB)
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.48, 16), m)
+  ring.rotation.x = -Math.PI / 2
+  ring.position.y = 0.02
+  g.add(ring)
+  g.visible = false
+  g.userData.clickMarker = true
+  return g
+}
+
 /**
  * Mount a continuous sailing river on a canvas.
  * Canoe stays framed; world scrolls along +Z. Quest progress eases travel;
@@ -1156,12 +1191,43 @@ export function createHarborWorld(
   let raf = 0
   let last = performance.now()
 
-  // Finger / mouse orbit — grab-the-world: drag right → camera left, drag down → camera up
+  // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target)
+  let moveTarget = { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
+  let playerDirected = false
+  const destMarker = clickMarker()
+  scene.add(destMarker)
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+  const ndc = new THREE.Vector2()
+  const hitPoint = new THREE.Vector3()
+  const raycaster = new THREE.Raycaster()
+
+  const setMoveTarget = (x: number, z: number, fromPlayer: boolean) => {
+    const clamped = clampHarborMoveTarget(x, z)
+    moveTarget = clamped
+    playerDirected = fromPlayer
+    destMarker.position.set(clamped.x, 0.06, clamped.z)
+    destMarker.visible = fromPlayer
+  }
+
+  const tryTapMove = (clientX: number, clientY: number) => {
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
+    ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
+    raycaster.setFromCamera(ndc, camera)
+    if (!raycaster.ray.intersectPlane(groundPlane, hitPoint)) return
+    setMoveTarget(hitPoint.x, hitPoint.z, true)
+  }
+
+  // Finger / mouse: drag = orbit camera; tap = OSRS move-to-location
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
   let pitchTarget = 0.52
   let dragging = false
+  let ptrDragged = false
+  let ptrStartX = 0
+  let ptrStartY = 0
   let lastPtrX = 0
   let lastPtrY = 0
   let activePointer: number | null = null
@@ -1172,6 +1238,9 @@ export function createHarborWorld(
     if (activePointer !== null) return
     activePointer = e.pointerId
     dragging = true
+    ptrDragged = false
+    ptrStartX = e.clientX
+    ptrStartY = e.clientY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
     canvas.setPointerCapture(e.pointerId)
@@ -1182,6 +1251,11 @@ export function createHarborWorld(
     const dy = e.clientY - lastPtrY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
+    if (!ptrDragged) {
+      const slop = Math.hypot(e.clientX - ptrStartX, e.clientY - ptrStartY)
+      if (slop < HARBOR_TAP_SLOP_PX) return
+      ptrDragged = true
+    }
     // Horizontal: drag right → camera left (grab-the-world)
     yawTarget -= dx * ORBIT_SENS
     // Vertical: natural — drag down tips the view down
@@ -1189,13 +1263,19 @@ export function createHarborWorld(
   }
   const endDrag = (e: PointerEvent) => {
     if (e.pointerId !== activePointer) return
+    const wasDrag = ptrDragged
+    const upX = e.clientX
+    const upY = e.clientY
     dragging = false
+    ptrDragged = false
     activePointer = null
     try {
       canvas.releasePointerCapture(e.pointerId)
     } catch {
       /* already released */
     }
+    // Tap (no meaningful drag) → paddle / walk to the ground hit
+    if (!wasDrag) tryTapMove(upX, upY)
   }
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
@@ -1227,27 +1307,43 @@ export function createHarborWorld(
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
 
-    // Sail toward the pier stop for this quest step, then ease sideways to dock
-    const dock = dockPoseForProgress(progress)
-    const distZ = dock.z - voyageZ
-    const approaching = Math.abs(distZ) < 10
-    const docked = Math.abs(distZ) < 1.25
-    voyageZ += distZ * Math.min(1, dt * 2.1)
-    // Light forward drift only while sailing between piers
-    if (!docked) {
-      const cruise = reduced ? 0.15 : 0.55
-      voyageZ += dt * cruise * Math.sign(distZ || 1)
+    // OSRS tap-to-move: paddle straight toward the destination (quest or player tap)
+    if (!playerDirected) {
+      const dock = dockPoseForProgress(progress)
+      moveTarget = { x: dock.side * HARBOR_DOCK_X, z: dock.z }
     }
-    const sway = reduced || approaching ? 0 : Math.sin(waterPhase * 0.7) * 0.18
-    const targetX = dock.side * HARBOR_DOCK_X * (approaching || docked ? 1 : 0.2) + sway
-    boatX += (targetX - boatX) * Math.min(1, dt * 3.2)
+    const dx = moveTarget.x - boatX
+    const dz = moveTarget.z - voyageZ
+    const dist = Math.hypot(dx, dz)
+    const arrived = dist < HARBOR_TAP_ARRIVE
+    if (!arrived) {
+      const speed = reduced ? HARBOR_TAP_MOVE_SPEED * 0.45 : HARBOR_TAP_MOVE_SPEED
+      const step = Math.min(dist, speed * dt)
+      boatX += (dx / dist) * step
+      voyageZ += (dz / dist) * step
+      const face = Math.atan2(dx, dz)
+      boat.rotation.y += (face - boat.rotation.y) * Math.min(1, dt * 6)
+    } else if (playerDirected) {
+      destMarker.visible = false
+    }
+    const docked = arrived && !playerDirected
+    const approaching = !playerDirected && dist < 10
+
+    // Pulse the yellow destination X while en route
+    if (destMarker.visible && !reduced) {
+      const pulse = 1 + Math.sin(now * 0.012) * 0.12
+      destMarker.scale.setScalar(pulse)
+    }
 
     waterPhase += dt * (reduced ? 0.4 : 1.2)
     const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
-    boat.position.set(boatX, 0.08 + bob, voyageZ)
-    // Nose toward the pier when docking
-    const yawBoat = docked || approaching ? dock.side * 0.35 : reduced ? 0 : Math.sin(waterPhase * 1.1) * 0.04
-    boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
+    const sway = reduced || approaching || playerDirected ? 0 : Math.sin(waterPhase * 0.7) * 0.18
+    boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
+    if (arrived && !playerDirected) {
+      const dock = dockPoseForProgress(progress)
+      const yawBoat = dock.side * 0.35
+      boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
+    }
     boat.rotation.z = reduced ? 0 : Math.sin(waterPhase * 1.7) * 0.03
 
     for (let i = 0; i < wakes.length; i++) {
@@ -1381,6 +1477,9 @@ export function createHarborWorld(
     weather,
     setProgress(t) {
       progress = Math.min(1, Math.max(0, t))
+      // Quest step change — auto path to the next pier (clears free-explore target)
+      const dock = dockPoseForProgress(progress)
+      setMoveTarget(dock.side * HARBOR_DOCK_X, dock.z, false)
     },
     setFlash(f) {
       flash = f
@@ -1408,6 +1507,12 @@ export function createHarborWorld(
         })
       }
       chunkGroups.clear()
+      destMarker.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.geometry.dispose()
+          ;(o.material as THREE.Material).dispose()
+        }
+      })
       water.geometry.dispose()
       waterMat.dispose()
       grassMat.dispose()
