@@ -101,15 +101,37 @@ Classic client path:
 - Avoid strong realtime shadows as the primary form-giver; form should read in lit vertex colors alone.
 - Slight **value banding** is acceptable; oversmooth gradients read modern.
 
+### 2.1b Three triangle modes (mastery — why faces “feel” RS)
+
+Classic RS2 software rasterizer only needs three filled-triangle modes (Medieval Software / Rune Synergy analysis of the Java client):
+
+| Mode | What the rasterizer does | Where you see it | Harbor Quest translation |
+| --- | --- | --- | --- |
+| **Flat** | One color for the whole face | Glass, simple panels, many scenery faces | `MeshLambertMaterial` + `flatShading: true` on docks, crates, walls |
+| **Smooth (Gouraud)** | Interpolates **palette lightness only** across the triangle | Cake, armor, soft props | Same material with smooth normals *or* baked vertex colors that only vary in **value**, not hue |
+| **Textured** | Projects a **128×128** square from a 3-point plane in model space (not freeform UVs); shading via pre-darkened texel copies + bitshifts | Chain, bucket, nets | Prefer face colors; if textured, 128 nearest albedo, few islands, no PBR |
+
+**Critical Gouraud quirk:** classic smooth shading does **not** independently lerp R, G, B. Colors are indices into an HSL palette; the draw loop only interpolates **lightness** along the palette’s X axis. Cross-hue blends on one triangle are illegal / ugly in-engine. **Author rule:** every smooth triangle’s three corners share hue+saturation and differ only in lightness — or use flat faces with hard material breaks instead.
+
+Indexed packing (community / client docs):
+
+```
+index = (hue << 10) | (saturation << 7) | lightness
+```
+
+Hue ≈ 6 bits, saturation ≈ 3 bits, lightness ≈ 7 bits → a coarse posterized world. Harbor Quest RGB hexes should still *behave* as if they lived in that table.
+
+**Textured shading trick (context only):** the client builds multiple darkened copies of each 128×128 texture and picks shade by bitshift (`rgb & 0xF8F8FF` clearing low R/G bits so shifts don’t spill channels). Harbor Quest should not reimplement that; the aesthetic lesson is **few discrete shade steps**, not continuous HDR lighting.
+
 ### 2.2 Color encoding lessons (even if you use RGB)
 
 Jagex HSL16 packing (community tooling / ob2blender):
 
 | Channel | Bits | Range |
 | --- | --- | --- |
-| Hue | 6 | 0–31 |
+| Hue | 6 | 0–31 (some docs say 0–63 depending on table) |
 | Saturation | 3 | 0–7 (very coarse) |
-| Lightness | 7 | 0–63 |
+| Lightness | 7 | 0–63 / 0–127 depending on table layout |
 
 **Practice:** pick colors that survive quantization. Saturation differences that are subtle in Blender can collapse. Prefer **distinct value steps** over adjacent hues. Build a Harbor Quest palette of ~32–64 locked swatches (wood, stone, water, cloth, metal, skin, foliage) and stick to it.
 
@@ -225,11 +247,18 @@ From RSPS / OSRS pipeline lore (for *understanding* the look; Harbor Quest uses 
 
 | Classic RS concept | Meaning | Harbor Quest translation |
 | --- | --- | --- |
-| **TSKIN** | Face/vert labels assigning parts to anim groups | Use clear bone influence groups; avoid mushy weights |
-| **VSKIN** | Weights; values >1.0 split across layers | Keep weights simple; max 2–3 influences |
+| **Label** | 0/1 membership of a vert/face in an anim group (not soft weights) | Hard-ish skinning; avoid mushy 4-bone blends |
+| **Base** | Set of Labels + transform type (origin / translate / rotate / scale / alpha) | One bone ≈ one Base; don’t invent freeform IK trees |
+| **Skeleton** | Container of Bases | One shared Harbor humanoid skeleton |
+| **Transform / Frame** | Per-tick ops on Bases (primary + optional secondary) | Snappy keyframes on a coarse tick feel (~20–50ms mental grid) |
+| **TSKIN** | Face labels for part groups / alpha bases | Clear mesh islands per clothing layer |
+| **VSKIN** | Vertex labels; multi-values split across layers | Max 2–3 influences; prefer 1 |
 | **PRI** | Face draw priority (order / “see-through” fix) | Sort translucent faces; avoid intersecting alpha |
-| Fixed anim indices | Client expects known skeleton | One shared humanoid rig for all Harbor NPCs |
+| Fixed anim indices | Client expects known skeleton | Reuse Harbor clips; don’t one-off unique rigs per NPC |
 | Item anim helpers | Swords/shields/hats auto-attached | Attachment sockets: `hand_r`, `hand_l`, `head`, `back` |
+| **Identikit** | Modular body parts composited into “Bob” | Kitbash head/torso/arms/legs + hat/tool props |
+
+**Why RSPS rigs fail (guide insight → Harbor rule):** classic rigs are **not** modern skeletal rigs. They assume hardcoded joint indices and vertex-group layouts. Custom items usually **reuse vanilla animations**. Harbor Quest should likewise: **one mannequin, shared clips, prop sockets** — not unique mocap per ferryman.
 
 **Pose language**
 
@@ -237,6 +266,7 @@ From RSPS / OSRS pipeline lore (for *understanding* the look; Harbor Quest uses 
 - Idle: slight sway or bob; avoid mocap micro-noise.
 - Walk: short stride, stamped contact; classic “puppet” timing.
 - Prefer **snappy** keys over floaty easing for combat tells.
+- Depth / priority: classic clients pre-bin faces into depth buckets (order-of-magnitude ~1500 depth slots × ~512 faces). Interpenetrating translucent gear is a known PRI failure mode — keep capes/sails as **single non-self-intersecting sheets**.
 
 **Do not** ship animations that only work because they were ripped from OSRS caches.
 
@@ -317,18 +347,20 @@ Per Jagex Terms, EULA, and [Fan Content Policy](https://legal.jagex.com/docs/pol
 
 ## 7b. Harbor Quest / Three.js translation (current stack)
 
-`harborWorld.ts` already encodes the right *spirit*: Lambert + `flatShading: true`, fog, chunky silhouettes, original kit (not Jagex IP). Tighten toward mastery:
+Harbor Quest world code (typically `harborWorld.ts` on Learn branches) should encode the right *spirit*: Lambert + `flatShading: true`, fog, chunky silhouettes, original kit (not Jagex IP). Tighten toward mastery:
 
 | RS-era principle | Harbor Quest practice |
 | --- | --- |
 | Face HSL colors | Locked swatch hexes in `mat()`; avoid subtle adjacent hues |
+| Lightness-only Gouraud | Vertex colors / lit corners vary **value**, not hue, on one face |
 | Flat vs Gouraud | Keep `flatShading: true` on architecture / docks / boats; allow smooth only on heads/rocks if needed |
 | Low vert counts | Prefer `BoxGeometry` / low-segment cylinders (6–8) over spheres with high segments |
 | Chunky walls | Extrude door/window frames as real boxes, never decals |
 | Quantized verts | Snap prop positions to 0.25–0.5 world units; avoid “CAD jitter” |
-| Texture triangles | Prefer untextured Lambert colors; if textured, 64–128 nearest-neighbor |
-| Readable orbit | Mobile finger-orbit already matches OSRS camera *feel* — keep silhouettes readable at that distance |
-| NPCs | Kitbash body + hat/prop; oversized head/hands; role reads at pier distance |
+| Texture triangles / 128 idiom | Prefer untextured Lambert colors; if textured, 64–128 nearest-neighbor |
+| Identikit modularity | Kitbash body + hat/prop; oversized head/hands; role reads at pier distance |
+| Shared anim skeleton | One humanoid clip set; sockets for tools — don’t unique-rig each NPC |
+| Readable orbit | Mobile finger-orbit matches OSRS camera *feel* — keep silhouettes readable at that distance |
 
 **Do not** add PBR, ambient occlusion maps, or high-segment tubes to “look better” — that breaks the era contract.
 
@@ -426,9 +458,11 @@ Return Blender source + glTF + checklist results A–G.
 
 | Source | Use |
 | --- | --- |
-| https://rsps.org/news/rsps-modeling-items-objects-guide | Metasequoia vs Blender; low-poly as engine constraint; revision differences; silhouette priorities |
-| https://rsps.org/news/why-osrs-low-poly | Nostalgia + readability + accessibility rationale |
-| https://rune-server.org/threads/runescapes-rendering-and-animation-system.340745/ | ~4096/2000 tri ceilings; quantized verts; VSKIN/TSKIN/PRI lore |
+| https://rsps.org/news/rsps-modeling-items-objects-guide | Metasequoia vs Blender; low-poly as engine constraint; revision differences; silhouette priorities; myths |
+| https://rsps.org/news/why-osrs-low-poly | Nostalgia + readability + accessibility rationale (why the look persists) |
+| https://rune-server.org/threads/runescapes-rendering-and-animation-system.340745/ | ~4096/2000 tri ceilings; quantized verts; VSKIN/TSKIN/PRI lore; Datmaker texture notes |
+| https://rune-server.org/threads/basis-for-a-software-based-3d-renderer.535618/ | HSL palette layout; lightness-only Gouraud; textured shade stacks |
+| https://medieval.software/rune-synergy-devblog-5 | Ground-truth triangle modes; 128×128 plane textures; Label/Base/Skeleton anim model; Identikit “Bob” |
 | https://legal.jagex.com/docs/policies/fan-content-policy | **No video games using Jagex Property**; trademark / derivative limits |
 
 ---
@@ -438,3 +472,90 @@ Return Blender source + glTF + checklist results A–G.
 - SFX already follow the same legal pattern: original synthesis inspired by *genre*, not ripped game audio (`apps/web/public/assets/harbor-quest/README.md`).
 - Prefer Harbor brand colors (Harbor / Jade / Ink) mapped into the locked RS-like palette rather than copying OSRS UI gold/stone chrome.
 - When in doubt: **reduce polygons, thicken forms, posterize color, enlarge the readable parts.**
+
+---
+
+## 12. Mastery notes — what the RSPS.org guide actually teaches
+
+The [RSPS Modeling Explained](https://rsps.org/news/rsps-modeling-items-objects-guide) article is **strategy**, not a Blender tutorial. Treat it as the *mindset* layer; §§1–8 are the *craft* layer.
+
+### 12.1 Thesis (memorize)
+
+> RSPS modeling is not modern game asset creation. It is reverse-engineered asset compatibility work.
+
+Harbor Quest paraphrase: **era-faithful original art under self-imposed legacy constraints** — not cache packing, not private-server shipping.
+
+### 12.2 Constraints that create the look
+
+The guide’s constraint list maps 1:1 to visual grammar:
+
+| Guide constraint | Visual consequence if you honor it |
+| --- | --- |
+| Client revision / fragile lighting | Flat + Gouraud only; no PBR “fix from roughness” |
+| Vertex / face limits | Clean silhouettes, minimal faces |
+| Texture formats | 128 idiom, few materials |
+| Animation / skeleton rules | Shared mannequin + sockets |
+| Cache / batching / CPU paths | Modular chunks, welded verts, no micro-geo |
+| Performance under player count | Same prop reused; readability over density |
+
+### 12.3 Tool philosophy (MQO vs Blender)
+
+- **Metasequoia won historically** because it matches the format: precise verts/faces, predictable triangulation, no hidden Blender transforms, fast export to Datmaker-class converters.
+- **Blender supplements, does not replace** final cleanup for RSPS. Direct Blender → cache causes flipped faces, shading artifacts, broken normals, anim jitter.
+- Harbor Quest: **Blender is fine as primary**, but finish like an MQO artist — apply transforms, triangulate, weld, flat-shade intentionally, validate in-engine.
+
+### 12.4 Revision matrix (pick one target feel)
+
+| Era | Modeling rules to imitate | Harbor Quest default? |
+| --- | --- | --- |
+| **317-ish** | Extremely low poly, flat-heavy, fragile lighting, careful scale | Optional “ultra chunky” props |
+| **474–602** | Still conservative; better textures/anim | Reference for slightly richer kit |
+| **OSRS-based** | Expanded formats but still legacy architecture | **Yes — primary target feel** |
+
+Never author one asset assuming “modern game” budgets then “decimate later.” Author at target.
+
+### 12.5 Myths → Harbor Quest laws
+
+| Myth (guide) | Law |
+| --- | --- |
+| Blender replaced Metasequoia | Finish assets with MQO-like discipline even in Blender |
+| Higher poly looks better | Higher poly breaks authenticity; silhouette wins |
+| One model fits all revisions | Lock Harbor to one era target (OSRS-feel) and don’t mix RS3 habits |
+| Modeling is easier than coding | Bad art silently destroys immersion; treat checklist as CI |
+
+### 12.6 Why “simple” custom items feel authentic
+
+Successful custom RSPS items look simple because they prioritize:
+
+1. Clean silhouette  
+2. Minimal faces  
+3. Efficient topology  
+4. **Consistent scale with the rest of the world**
+
+That fourth point is the one Harbor Quest agents miss most often — a “cool” boat that is 1.4× too tall breaks the entire pier.
+
+### 12.7 Structural, not cosmetic
+
+Guide close: players may not consciously notice good models, but they **feel** them. Bad modeling exposes custom content immediately, breaks combat/readability, causes anim jank, erodes credibility. For Harbor Quest Learn mode, the same is true of the river voyage: **the world is the product**.
+
+### 12.8 What the guide leaves out (go deeper here)
+
+The RSPS.org page does **not** teach HSL Gouraud, texture planes, or Label/Base animation — those live in §§2.1b and 5 and the Medieval / Rune-Server sources. A “master” of RS-like modeling knows both layers:
+
+1. **Pipeline mindset** (this §12 / the guide)  
+2. **Rasterizer + format physics** (§§1–2, 5)
+
+---
+
+## 13. Mastery curriculum (self-test)
+
+Complete in order. Pass = checklist §8 green + originality smell test.
+
+1. Recite the three triangle modes and the lightness-only Gouraud rule.  
+2. Build the five-piece drill (§7c) without normal maps.  
+3. Kitbash two NPCs from one mannequin + different hats/tools; shared idle/walk.  
+4. Author one textured prop at **exactly** 128×128 nearest; one untextured twin; prefer the twin if both read equally.  
+5. Explain in one paragraph why Jagex Fan Content Policy forbids shipping a game on Jagex Property — and how Harbor Quest stays on the SAFE side of §7.  
+6. Review a Harbor Quest mesh PR using only this bible; reject anything that needs PBR or soft subdivision to “look finished.”
+
+**North-star sentence (Jagex, Oct 2002, still true):** buildings should be “satisfyingly chunky,” windows “extruded from the walls, rather than being flat texture maps.”
