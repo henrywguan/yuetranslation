@@ -4,6 +4,7 @@
  * Original JyutTranslate Harbor kit — not Jagex IP.
  */
 import * as THREE from 'three'
+import { buildHarborProtagonist } from './harborProtagonist'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
@@ -467,42 +468,9 @@ function randomNpcRole(rng: () => number): HarborNpcRole {
   return HARBOR_NPC_ROLES[Math.floor(rng() * HARBOR_NPC_ROLES.length)]!
 }
 
-/** Traveler / player avatar seated in the canoe — jade sash marks “you”. */
+/** Seated River Scout — original RS-era-proportion mannequin (see harborProtagonist.ts). */
 function playerTraveler() {
-  const g = new THREE.Group()
-  const skin = mat(0xe8c4a8)
-  const robe = mat(0x2a4858)
-  const jade = mat(0x3dcfb6)
-  const hair = mat(0x1a1410)
-  // Seated legs (forward)
-  for (const sx of [-0.09, 0.09] as const) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.32), mat(0x3a3028))
-    leg.position.set(sx, 0.12, 0.12)
-    g.add(leg)
-  }
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.38, 0.2), robe)
-  torso.position.y = 0.38
-  g.add(torso)
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.07, 0.22), jade)
-  sash.position.y = 0.32
-  g.add(sash)
-  for (const sx of [-0.18, 0.18] as const) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.28, 0.09), robe)
-    arm.position.set(sx, 0.4, 0)
-    g.add(arm)
-  }
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 5), skin)
-  head.position.y = 0.68
-  g.add(head)
-  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), hair)
-  bun.position.set(0, 0.78, -0.02)
-  g.add(bun)
-  // Small conical traveler hat
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.1, 6), mat(0xc4a860))
-  hat.position.y = 0.82
-  g.add(hat)
-  g.userData.player = true
-  return g
+  return buildHarborProtagonist({ pose: 'seated' })
 }
 
 function bird() {
@@ -702,7 +670,7 @@ function canoe() {
   const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85), mat(0x3dcfb6))
   sail.position.set(0.15, 0.95, 0.02)
   g.add(sail)
-  // You — seated traveler with jade sash
+  // You — original River Scout mannequin (seated)
   const you = playerTraveler()
   you.position.set(0, 0.38, -0.05)
   you.rotation.y = Math.PI
