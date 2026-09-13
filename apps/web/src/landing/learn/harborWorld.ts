@@ -72,23 +72,26 @@ export function dockPoseForProgress(progress: number): { z: number; side: 1 | -1
 }
 
 const FOG: Record<HarborHue, number> = {
-  jade: 0x0a2a28,
-  harbor: 0x0a1c28,
-  ink: 0x0c1218,
-  gold: 0x1a1810,
+  jade: 0x6a9a90,
+  harbor: 0x6a8aa0,
+  ink: 0x5a6878,
+  gold: 0x8a8068,
 }
 const WATER: Record<HarborHue, number> = {
-  jade: 0x1a6b5c,
-  harbor: 0x1a5a78,
-  ink: 0x243848,
-  gold: 0x3a5a58,
+  jade: 0x2a8b7c,
+  harbor: 0x2a7a98,
+  ink: 0x3a5870,
+  gold: 0x4a7a78,
 }
 const SKY: Record<HarborHue, number> = {
-  jade: 0x143832,
-  harbor: 0x123040,
-  ink: 0x101820,
-  gold: 0x2a2818,
+  jade: 0x6ab0a0,
+  harbor: 0x6aa0b8,
+  ink: 0x5a7088,
+  gold: 0x9a9068,
 }
+
+/** Exp2 density — keep light so the pier stays readable (not a dark veil). */
+export const HARBOR_FOG_DENSITY = 0.011
 
 /** Deterministic biome for a chunk index (smoke-tested). */
 export function biomeForChunk(i: number): BiomeId {
@@ -897,18 +900,20 @@ export function createHarborWorld(
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
-  // Slightly softer fog so distant Wulingyuan pillars stay readable
-  scene.fog = new THREE.FogExp2(FOG[hue], 0.022)
+  // Soft daylight haze — dark Exp2 fog read as a UI overlay on the pier
+  scene.fog = new THREE.FogExp2(FOG[hue], HARBOR_FOG_DENSITY)
   scene.background = new THREE.Color(SKY[hue])
 
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 220)
   camera.position.set(0, 4.2, -6.5)
 
-  const amb = new THREE.AmbientLight(0xb8d4e0, 0.62)
+  const amb = new THREE.AmbientLight(0xd0e8f0, 0.92)
   scene.add(amb)
-  const sun = new THREE.DirectionalLight(0xfff2d8, 0.85)
+  const sun = new THREE.DirectionalLight(0xfff6e0, 1.15)
   sun.position.set(-4, 10, 2)
   scene.add(sun)
+  const fill = new THREE.HemisphereLight(0xc8e8f8, 0x4a6a58, 0.45)
+  scene.add(fill)
 
   const world = new THREE.Group()
   scene.add(world)
@@ -1031,7 +1036,7 @@ export function createHarborWorld(
 
   const applyHue = () => {
     scene.background = new THREE.Color(SKY[hue])
-    scene.fog = new THREE.FogExp2(FOG[hue], 0.022)
+    scene.fog = new THREE.FogExp2(FOG[hue], HARBOR_FOG_DENSITY)
     renderer.setClearColor(SKY[hue], 1)
     waterMat.color.setHex(WATER[hue])
   }
