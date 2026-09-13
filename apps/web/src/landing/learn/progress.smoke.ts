@@ -50,4 +50,26 @@ for (const slot of HARBOR_GEAR_SLOTS) {
   assert.equal(harborGearForSlot(slot).length, 5, `${slot} kit size`)
 }
 
+// Legacy cloud blob without gear fields
+const legacy = sanitizeHarborProgress({
+  cleared: ['introduction'],
+  stepCursor: { 'lesson-1': 1 },
+  correctCount: 2,
+})
+assert.equal(legacy.coins, 0, 'missing coins on existing progress → 0')
+assert.ok(legacy.owned.includes('hat-straw'))
+assert.equal(legacy.look.hat, 'hat-straw')
+
+const spent = sanitizeHarborProgress({
+  ...emptyHarborProgress(),
+  coins: 12,
+  owned: ['hat-straw', 'top-harbor', 'bottom-travel', 'shoes-leather', 'hand-none', 'hat-bamboo'],
+  look: { ...emptyHarborProgress().look, hat: 'hat-bamboo' },
+  lastSavedAt: 50,
+})
+const mergedLegacy = mergeHarborProgress(spent, legacy)
+assert.equal(mergedLegacy.coins, 12, 'merge must not refill spent coins from legacy cloud')
+assert.ok(mergedLegacy.owned.includes('hat-bamboo'))
+assert.equal(mergedLegacy.look.hat, 'hat-bamboo', 'local Save Shack look wins on newer stamp')
+
 console.log('harborProgress.smoke: ok')

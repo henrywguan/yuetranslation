@@ -74,7 +74,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     seen.add(id)
     clearedUnique.push(id)
   }
-  let coins = 40
+  // Missing coins on an existing blob → 0 (starter purse only on empty/null via EMPTY).
+  let coins = 0
   if (typeof o.coins === 'number' && Number.isFinite(o.coins) && o.coins >= 0) {
     coins = Math.min(Math.floor(o.coins), 1_000_000)
   }

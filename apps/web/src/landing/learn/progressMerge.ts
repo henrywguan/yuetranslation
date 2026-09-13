@@ -65,7 +65,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     seen.add(id)
     clearedUnique.push(id)
   }
-  let coins = 40
+  // Missing coins on an existing blob → 0 (not a starter grant). Starter 40 only via emptyHarborProgress().
+  let coins = 0
   if (typeof o.coins === 'number' && Number.isFinite(o.coins) && o.coins >= 0) {
     coins = Math.min(Math.floor(o.coins), 1_000_000)
   }
@@ -135,8 +136,8 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     stepCursor[k] = Math.max(stepCursor[k] ?? 0, v)
   }
   const owned = [...new Set([...A.owned, ...B.owned])]
-  // Prefer the look from the fresher Save Shack stamp
-  const look = (B.lastSavedAt ?? 0) >= (A.lastSavedAt ?? 0) ? B.look : A.look
+  // Prefer the look from the fresher Save Shack stamp (local wins on equal stamps)
+  const look = (B.lastSavedAt ?? 0) > (A.lastSavedAt ?? 0) ? B.look : A.look
   return {
     cleared,
     stepCursor,

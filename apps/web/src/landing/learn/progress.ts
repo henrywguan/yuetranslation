@@ -73,6 +73,18 @@ function scheduleCloudPush(p: HarborProgress) {
   }, 700)
 }
 
+/** Push the full progress blob to Supabase now (Save Shack / critical writes). */
+function flushHarborProgressCloud(p: HarborProgress) {
+  if (!persistLoggedIn) return
+  if (persistTimer) {
+    clearTimeout(persistTimer)
+    persistTimer = null
+  }
+  void putHarborQuestProgress(p).catch(() => {
+    /* offline — local still kept */
+  })
+}
+
 function commit(p: HarborProgress): HarborProgress {
   write(p)
   scheduleCloudPush(p)
@@ -108,12 +120,15 @@ export function markCorrect() {
 /** Stamp a visit to the Save Shack (persists look + progress timestamp). */
 export function visitSaveShack(): HarborProgress {
   const p = read()
-  return commit({
+  const next = commit({
     ...p,
     look: sanitizeHarborLook(p.look),
     owned: sanitizeOwnedGear(p.owned),
     lastSavedAt: Date.now(),
   })
+  // Save Shack is an explicit cloud checkpoint — don't wait on the debounce.
+  flushHarborProgressCloud(next)
+  return next
 }
 
 export function buyHarborGear(
@@ -129,15 +144,14 @@ export function buyHarborGear(
   if (coins < price) return { ok: false, reason: 'Not enough coins.' }
   owned.add(id)
   const look: HarborLook = { ...sanitizeHarborLook(p.look), [item.slot]: id }
-  return {
-    ok: true,
-    progress: commit({
-      ...p,
-      coins: coins - price,
-      owned: sanitizeOwnedGear([...owned]),
-      look: sanitizeHarborLook(look),
-    }),
-  }
+  const progress = commit({
+    ...p,
+    coins: coins - price,
+    owned: sanitizeOwnedGear([...owned]),
+    look: sanitizeHarborLook(look),
+  })
+  flushHarborProgressCloud(progress)
+  return { ok: true, progress }
 }
 
 export function equipHarborGear(
@@ -151,14 +165,13 @@ export function equipHarborGear(
   const owned = new Set(sanitizeOwnedGear(p.owned.length ? p.owned : [...HARBOR_STARTER_OWNED]))
   if (!owned.has(id)) return { ok: false, reason: 'Not owned — buy it first.' }
   const look: HarborLook = { ...sanitizeHarborLook(p.look), [slot]: id }
-  return {
-    ok: true,
-    progress: commit({
-      ...p,
-      owned: [...owned],
-      look: sanitizeHarborLook(look),
-    }),
-  }
+  const progress = commit({
+    ...p,
+    owned: [...owned],
+    look: sanitizeHarborLook(look),
+  })
+  flushHarborProgressCloud(progress)
+  return { ok: true, progress }
 }
 
 export function markLevelCleared(levelId: string) {

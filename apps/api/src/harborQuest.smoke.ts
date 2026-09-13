@@ -5,29 +5,51 @@ const empty = sanitizeHarborProgress(null)
 assert.deepEqual(empty.cleared, [])
 assert.deepEqual(empty.stepCursor, {})
 assert.equal(empty.correctCount, 0)
-assert.equal(empty.coins, 40)
+assert.equal(empty.coins, 40, 'null → starter coins')
 assert.ok(empty.owned.includes('hat-straw'))
 assert.equal(empty.look.hat, 'hat-straw')
 assert.equal(empty.lastSavedAt, 0)
 
-const cleaned = sanitizeHarborProgress({
+// Legacy cloud blob without gear fields must NOT invent a free 40-coin refill
+const legacy = sanitizeHarborProgress({
+  cleared: ['intro'],
+  stepCursor: { 'lesson-1': 2 },
+  correctCount: 5,
+})
+assert.equal(legacy.coins, 0, 'missing coins on existing progress → 0')
+assert.ok(legacy.owned.includes('hat-straw'), 'starter owned backfilled')
+assert.equal(legacy.look.top, 'top-harbor')
+assert.equal(legacy.lastSavedAt, 0)
+
+const full = sanitizeHarborProgress({
   cleared: ['intro', 'intro', '', 3, 'lesson-1'],
   stepCursor: { 'lesson-1': 2.9, bad: 'x', 'lesson-2': -1, ok: 4 },
   correctCount: 12.7,
   coins: 55.2,
   owned: ['hat-bamboo', 'nope', 'hand-fan'],
-  look: { hat: 'hat-festival', top: 'top-jade', bottom: 'bottom-ink', shoes: 'shoes-storm', hand: 'hand-oar', junk: 1 },
-  lastSavedAt: 1700000000000,
+  look: {
+    hat: 'hat-festival',
+    top: 'top-jade',
+    bottom: 'bottom-ink',
+    shoes: 'shoes-storm',
+    hand: 'hand-oar',
+    junk: 1,
+  },
+  lastSavedAt: 1_700_000_000_000,
 })
-assert.deepEqual(cleaned.cleared, ['intro', 'lesson-1'])
-assert.deepEqual(cleaned.stepCursor, { 'lesson-1': 2, ok: 4 })
-assert.equal(cleaned.correctCount, 12)
-assert.equal(cleaned.coins, 55)
-assert.ok(cleaned.owned.includes('hat-bamboo'))
-assert.ok(cleaned.owned.includes('hand-fan'))
-assert.ok(cleaned.owned.includes('hat-straw'), 'starter gear kept')
-assert.equal(cleaned.look.hat, 'hat-festival')
-assert.equal(cleaned.look.hand, 'hand-oar')
-assert.equal(cleaned.lastSavedAt, 1700000000000)
+assert.deepEqual(full.cleared, ['intro', 'lesson-1'])
+assert.deepEqual(full.stepCursor, { 'lesson-1': 2, ok: 4 })
+assert.equal(full.correctCount, 12)
+assert.equal(full.coins, 55)
+assert.ok(full.owned.includes('hat-bamboo'))
+assert.ok(full.owned.includes('hand-fan'))
+assert.ok(full.owned.includes('hat-straw'), 'starter gear kept')
+assert.equal(full.look.hat, 'hat-festival')
+assert.equal(full.look.hand, 'hand-oar')
+assert.equal(full.lastSavedAt, 1_700_000_000_000)
+
+// Round-trip: sanitized blob is idempotent (what Supabase stores is what we re-read)
+const again = sanitizeHarborProgress(full)
+assert.deepEqual(again, full)
 
 console.log('harborQuest.smoke: ok')
