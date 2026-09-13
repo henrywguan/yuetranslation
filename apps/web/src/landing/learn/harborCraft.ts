@@ -134,7 +134,7 @@ export function hqCanopy(r: number, color: number, x = 0, y = 0, z = 0): THREE.M
 }
 
 /** Faceted rock chunk (boxy, not organic subd). */
-export function hqRock(rng: () => number, color = HARBOR_CRAFT_PALETTE.rock): THREE.Mesh {
+export function hqRock(rng: () => number, color: number = HARBOR_CRAFT_PALETTE.rock): THREE.Mesh {
   const s = 0.35 + rng() * 0.45
   const m = new THREE.Mesh(new THREE.BoxGeometry(s, s * (0.55 + rng() * 0.35), s * (0.8 + rng() * 0.3)), hqMat(color))
   m.rotation.set(rng() * 0.4, rng() * Math.PI, rng() * 0.3)
