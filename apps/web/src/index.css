@@ -43,6 +43,12 @@
   color-scheme: dark;
 }
 
+/* Chao tone letters (˥ ˧˥ …) — HK font lacks these; always paint with Noto Sans. */
+.chao-face {
+  font-family: var(--font-english);
+  font-weight: inherit;
+}
+
 [data-theme='light'] {
   --harbor: #eef5f8;
   --harbor-mid: #e4eef4;

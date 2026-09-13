@@ -24,9 +24,11 @@ export function JyutChaoGlyph({ tone, className = '' }: Props) {
 
     const paint = () => {
       if (cancelled) return
-      const color = getComputedStyle(host).color || '#e8fff8'
-      const width = Math.max(8, host.clientWidth || 10)
-      const height = Math.max(12, host.clientHeight || 14)
+      const style = getComputedStyle(host)
+      const color = style.color || '#e8fff8'
+      const fontSize = parseFloat(style.fontSize) || 14
+      const width = Math.max(8, host.clientWidth || fontSize * 0.55)
+      const height = Math.max(12, host.clientHeight || fontSize * 0.85)
       void import('../lib/chaoTonePaint').then(({ paintChaoToneDataUrl }) => {
         if (cancelled) return
         const url = paintChaoToneDataUrl(tone, color, width, height)

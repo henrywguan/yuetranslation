@@ -56,7 +56,7 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 
 Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`, `JYUTPING_UI_TONE_MODE`, `JYUTPING_SELECT_COPY_TRAP`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
 
-**On-screen vs clipboard:** with `JYUTPING_UI_TONE_MODE = 'obfuscated'` (default), ruby shows `teng1` plus a **canvas** Chao glyph painted with Noto Sans — no ˥˧˨˩ text nodes in the DOM (mild scrape friction; not real DRM). Set to `'unicode'` for classic `teng1˥` text, or `'svg'` for stroke contours. Family **Copy Jyutping + Chao** always copies `teng1˥ …` via `rubyJpSyllable()`. Cipher + painter are split across `chaoToneCipher.ts` and `chaoTonePaint.ts`.
+**On-screen vs clipboard:** with `JYUTPING_UI_TONE_MODE = 'unicode'` (default), ruby shows `teng1` plus Chao letters in a `.chao-face` span (Noto Sans). Set to `'obfuscated'` for canvas-painted Chao (no ˥ text nodes), or `'svg'` for stroke contours. Family **Copy Jyutping + Chao** always copies `teng1˥ …` via `rubyJpSyllable()`. Mixed HK body copy uses `withChaoFace()` in `BiText` so 趙元任調號 stay on Noto Sans. Cipher + painter: `chaoToneCipher.ts` / `chaoTonePaint.ts`.
 
 **Select/copy gate:** with `JYUTPING_SELECT_COPY_TRAP = true` (default), Free/guest users who select ruby and copy get: *Jyutping + Chao tone letters is a Family+ plan feature. Please upgrade to copy.* Family/Business exempt. Set to `false` to disable.
 

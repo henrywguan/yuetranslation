@@ -7,6 +7,7 @@ import {
 } from '../lib/primaryUiGloss'
 import { ensurePinyinSegs, toPinyinCached } from '../lib/pinyin'
 import { useYueStore } from '../lib/store'
+import { withChaoFace } from '../lib/chaoFace'
 import { normalizeEnglishApostrophes } from '../lib/typography'
 import type { Bi } from '../lib/uiCopy'
 import { useJpPopup } from '../lib/useJpPopup'
@@ -97,7 +98,7 @@ export function BiText({
       className={`bi-zh-wrap${canJp ? ' bi-zh-wrap--hint' : ''}`}
       lang="zh-HK"
     >
-      <span className="bi-zh">{copy.zh}</span>
+      <span className="bi-zh">{withChaoFace(copy.zh)}</span>
       {canJp ? (
         <JpPop show={show} id={tipId} han={copy.zh} anchorRef={wrapRef} />
       ) : null}
@@ -107,7 +108,7 @@ export function BiText({
   const primaryAsSecondary =
     replaceZh && gloss ? (
       <span className="bi-zh-wrap" lang={primaryGlossHtmlLang(primaryLanguage)}>
-        <span className="bi-zh bi-zh--primary-lang">{gloss}</span>
+        <span className="bi-zh bi-zh--primary-lang">{withChaoFace(gloss)}</span>
       </span>
     ) : null
 
@@ -117,11 +118,13 @@ export function BiText({
   const tertiary =
     !replaceZh && gloss && wantPrimaryGloss ? (
       <span className="bi-primary" lang={primaryGlossHtmlLang(primaryLanguage)}>
-        {gloss}
+        {withChaoFace(gloss)}
       </span>
     ) : null
 
-  const enLine = <span className="bi-en">{normalizeEnglishApostrophes(copy.en)}</span>
+  const enLine = (
+    <span className="bi-en">{withChaoFace(normalizeEnglishApostrophes(copy.en))}</span>
+  )
 
   return (
     <Tag
