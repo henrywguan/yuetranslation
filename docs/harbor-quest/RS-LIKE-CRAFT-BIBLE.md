@@ -284,17 +284,60 @@ From RSPS / OSRS pipeline lore (for *understanding* the look; Harbor Quest uses 
 | **C# Model Viewer / Suic toolkit / Qodat / rsmv** | Higher-rev viewing, texture packing, cache exploration |
 | **ob2blender / RuneBlend forks** | Direct `.ob2`/`.dat` import-export; HSL16; attribute-based PRI/TSKIN/VSKIN/ALPHA |
 
+### 6.1b skillbert/rsmv — approved *study* tool (not an asset source)
+
+Upstream: [github.com/skillbert/rsmv](https://github.com/skillbert/rsmv) (“RuneScape Model Viewer (.js)” / package name `alt1cache`). TypeScript + Three.js cache downloader, decoder, Electron/web model viewer, and CLI extract modes. License field in `package.json` is listed as `GPL-4` (treat as copyleft — do not silently vendor into proprietary paths without license review).
+
+**What it is good for (Harbor Quest)**
+
+| Use | Why it helps |
+| --- | --- |
+| Orbit / inspect silhouettes at play-camera FOV | Train the eye on chunky proportions, limb thickness, weapon scale |
+| Count faces / materials on *reference* views | Smell-test poly budgets against §1.1 |
+| Compare flat vs shaded regions | Reinforce §2.1b triangle-mode grammar |
+| Study modular Identikit / avatar composition | Inform kitbash sockets — without copying parts |
+| Read how NXT/RS3 materials differ from OSRS-era | Know what **not** to imitate (PBR-ish later clients) |
+
+**What it must never be used for**
+
+| Forbidden | Why |
+| --- | --- |
+| Dumping Jagex models/textures/anims into Harbor Quest repo or CDN | Copyrighted Jagex Property (§7) |
+| “Retopo / recolor / decimate then ship” of cache meshes | Still derivative |
+| Auto-generating Harbor glTF from `extract` CLI output | Turns the viewer into a rip pipeline |
+| Committing OpenRS2 / live-cache dumps, item ID packs, or texture PNGs from the tool | Same IP problem; also bloats git |
+| Marketing screenshots that are clearly Jagex models as Harbor art | Brand / policy risk |
+
+**Operating rules for agents & artists**
+
+1. **Optional local install only** — clone `skillbert/rsmv` outside this monorepo (e.g. `~/tools/rsmv`). Do **not** submodule it into JyutTranslate unless Henry explicitly asks after GPL review.
+2. **Eyes and notes, not files.** Allowed outputs in-repo: written observations, poly-count notes, proportion ratios, palette swatches *recreated* as Harbor hexes. Disallowed: exported meshes, DDS/PNG textures from cache, animation curves.
+3. Prefer **OSRS-era / classic-feel** references when learning the Harbor look. rsmv leans NXT/RS3-capable (`rt5` / `rt7` mesh paths, JMAT materials). Later clients can mis-train you toward higher detail — always re-check against §0 era target.
+4. If Henry wants faster generation, improve **original** pipelines (Blender kitbash library, procedural box kits in `harborWorld`, locked palette), not cache→glTF converters.
+5. Author’s own note in the rsmv readme: Jagex knows wiki-style cache tools exist; do not share leaks/unreleased content. Harbor Quest goes further: **we do not ship any Jagex-decoded assets at all.**
+
+**Quick local study flow (human machine)**
+
+```sh
+git clone https://github.com/skillbert/rsmv.git ~/tools/rsmv
+cd ~/tools/rsmv && npm i && npm run buildnative && npm run web
+# serve dist; open viewer; look only — write notes into Harbor art tickets
+```
+
+CLI `extract` modes exist (`items`, `bin`, live/`openrs2` loaders). Treat them as **wiki/research tooling**, never as Harbor Quest ingest.
+
 ### 6.2 Harbor Quest recommended stack
 
 1. **Blender** (primary) — box model, kitbash, vertex color bake preview.
 2. Optional **Metasequoia** if an artist prefers classic RS muscle memory.
-3. Export **glTF 2.0** (or engine-native) with:
+3. Optional **rsmv** (local) — silhouette / budget / era *study only* (§6.1b).
+4. Export **glTF 2.0** (or engine-native) with:
    - triangulated mesh
    - applied transforms
    - welded verts
    - albedo (+ optional vertex colors)
    - no required metallic/roughness workflow
-4. Engine shader: **unlit albedo × vertex light** or custom Gouraud-ish material.
+5. Engine shader: **unlit albedo × vertex light** or custom Gouraud-ish material.
 
 ### 6.3 Export constraints checklist
 
@@ -328,6 +371,7 @@ Per Jagex Terms, EULA, and [Fan Content Policy](https://legal.jagex.com/docs/pol
 | Forbidden | Why |
 | --- | --- |
 | Extracting / shipping OSRS/RS meshes, textures, animations, audio, maps | Copyrighted materials |
+| Using **rsmv** (or any cache tool) as an ingest/export step into Harbor assets | Same as above — the open-source *viewer* does not license Jagex *content* |
 | Recolors / slight edits of Jagex models | Still derivative of Jagex Property |
 | Names: RuneScape, OSRS, Jagex, iconic item/NPC proper names, slogans | Trademarks / IP |
 | UI chrome cloned from OSRS (orb layout, side stone icons, exact fonts/widgets) | Protectable expression + brand confusion |
@@ -463,6 +507,7 @@ Return Blender source + glTF + checklist results A–G.
 | https://rune-server.org/threads/runescapes-rendering-and-animation-system.340745/ | ~4096/2000 tri ceilings; quantized verts; VSKIN/TSKIN/PRI lore; Datmaker texture notes |
 | https://rune-server.org/threads/basis-for-a-software-based-3d-renderer.535618/ | HSL palette layout; lightness-only Gouraud; textured shade stacks |
 | https://medieval.software/rune-synergy-devblog-5 | Ground-truth triangle modes; 128×128 plane textures; Label/Base/Skeleton anim model; Identikit “Bob” |
+| https://github.com/skillbert/rsmv | Optional local **study** viewer (cache decode / Three.js); never Harbor ingest — see §6.1b |
 | https://legal.jagex.com/docs/policies/fan-content-policy | **No video games using Jagex Property**; trademark / derivative limits |
 
 ---
