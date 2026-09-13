@@ -204,6 +204,12 @@ function main() {
   assert.ok(panelSrc.includes('Talk to'), 'Talk CTA to open dialogue')
   assert.ok(panelSrc.includes('Explore world'), 'Explore world dismisses dialogue')
 
+  const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.ok(playSrc.includes('hq-explore-fab'), 'open-world explore FAB on stage')
+  assert.ok(playSrc.includes('Open world exploration'), 'explore FAB accessible label')
+  assert.ok(playSrc.includes('ExploreWorldIcon'), 'compass icon for open-world explore')
+  assert.match(playSrc, /setTalking\(false\)/, 'explore FAB exits dialogue')
+
   // Chao tone letters must load via Noto Sans subset (latin cut omits U+02E5–U+02E9)
   const indexHtml = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8')
   assert.match(indexHtml, /text=%CB%A5%CB%A7%CB%A8%CB%A9/, 'Noto Sans Chao subset ˥˧˨˩')
@@ -232,6 +238,8 @@ function main() {
   assert.doesNotMatch(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(62dvh/, 'old tall talking HUD removed')
   assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
   assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
+  assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
+  assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
