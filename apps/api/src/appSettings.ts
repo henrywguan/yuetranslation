@@ -37,16 +37,30 @@ export function normalizeIncidentBanner(raw: unknown): IncidentBannerSettings {
   }
 }
 
+/** Short TTL so /api/health can share a banner read across concurrent boots. */
+const INCIDENT_BANNER_CACHE_MS = 30_000
+let incidentBannerCache: { at: number; value: IncidentBannerSettings } | null = null
+
 export async function getIncidentBanner(): Promise<IncidentBannerSettings> {
+  const now = Date.now()
+  if (incidentBannerCache && now - incidentBannerCache.at < INCIDENT_BANNER_CACHE_MS) {
+    return { ...incidentBannerCache.value }
+  }
   const client = getAdmin()
-  if (!client) return { ...DEFAULT_INCIDENT_BANNER }
+  if (!client) {
+    const fallback = { ...DEFAULT_INCIDENT_BANNER }
+    incidentBannerCache = { at: now, value: fallback }
+    return { ...fallback }
+  }
   const { data, error } = await client
     .from('app_settings')
     .select('value')
     .eq('key', INCIDENT_BANNER_KEY)
     .maybeSingle()
-  if (error || !data) return { ...DEFAULT_INCIDENT_BANNER }
-  return normalizeIncidentBanner(data.value)
+  const value =
+    error || !data ? { ...DEFAULT_INCIDENT_BANNER } : normalizeIncidentBanner(data.value)
+  incidentBannerCache = { at: now, value }
+  return { ...value }
 }
 
 export async function setIncidentBanner(
@@ -64,5 +78,6 @@ export async function setIncidentBanner(
     updated_by: updatedBy,
   })
   if (error) throw new Error(error.message || 'Failed to save incident banner')
+  incidentBannerCache = { at: Date.now(), value: next }
   return next
 }

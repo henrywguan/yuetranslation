@@ -137,9 +137,13 @@ function guestTrialMessage(kind: 'live' | 'camera') {
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
   const openai = openaiStatus()
-  const incidentBanner = await getIncidentBanner()
   // Public readiness only — keep entitlement + demo flag for SPA bootstrap.
   // Omit model names, lexicon dumps, notify config, and other targeting aids.
+  // Parallelize banner + entitlement (both may hit Supabase).
+  const [incidentBanner, entitlement] = await Promise.all([
+    getIncidentBanner(),
+    entitlementFor(req),
+  ])
   res.json({
     ok: true,
     product: 'jyut',
@@ -159,7 +163,7 @@ app.get('/api/health', async (req: AuthedRequest, res) => {
       configured: pushConfigured(),
     },
     incidentBanner,
-    entitlement: await entitlementFor(req),
+    entitlement,
   })
 })
 

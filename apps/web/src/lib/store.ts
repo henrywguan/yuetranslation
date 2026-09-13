@@ -928,8 +928,8 @@ export const useYueStore = create<State>((set, get) => {
       const prevPrimary = get().primaryLanguage
       const primaryChanged = nextPrimary !== prevPrimary
       const layout = layoutForPrimary(nextPrimary)
-      const { hydrateHistory } = await import('./historySync')
-      const history = await hydrateHistory(Boolean(ent.loggedIn))
+      // Unblock PlanChip "Connecting…" as soon as health returns — do not wait
+      // on history hydrate (extra round-trip / local work after sign-in).
       set({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
@@ -937,8 +937,10 @@ export const useYueStore = create<State>((set, get) => {
         autoSpeak: nextAutoSpeak,
         primaryLanguage: nextPrimary,
         ...(primaryChanged ? layout : {}),
-        history,
       })
+      const { hydrateHistory } = await import('./historySync')
+      const history = await hydrateHistory(Boolean(ent.loggedIn))
+      set({ history })
       // Sync TTS voices from server prefs (cross-device) into local cache.
       try {
         const {

@@ -17,12 +17,25 @@ export function getAdmin(): SupabaseClient | null {
   return admin
 }
 
+/** Short TTL so /api/health + history (same Bearer) do not double Auth round-trips. */
+const JWT_USER_CACHE_MS = 45_000
+const JWT_USER_CACHE_MAX = 200
+const jwtUserCache = new Map<string, { at: number; user: User | null }>()
+
 export async function getUserFromJwt(jwt: string): Promise<User | null> {
   const client = getAdmin()
   if (!client) return null
+  const now = Date.now()
+  const hit = jwtUserCache.get(jwt)
+  if (hit && now - hit.at < JWT_USER_CACHE_MS) return hit.user
   const { data, error } = await client.auth.getUser(jwt)
-  if (error || !data.user) return null
-  return data.user
+  const user = error || !data.user ? null : data.user
+  jwtUserCache.set(jwt, { at: now, user })
+  if (jwtUserCache.size > JWT_USER_CACHE_MAX) {
+    const oldest = jwtUserCache.keys().next().value
+    if (oldest !== undefined) jwtUserCache.delete(oldest)
+  }
+  return user
 }
 
 export type ProfileRow = {

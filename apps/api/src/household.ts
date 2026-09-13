@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { Resend } from 'resend'
 import { env, supportReplyTo } from './env.js'
-import { getAdmin, listProfiles } from './supabase.js'
+import { getAdmin, getAuthUserById, listProfiles } from './supabase.js'
 import { currentMonthKey, emptyUsage, type UsageSnapshot } from './usage.js'
 
 let loggedMissingHouseholdSchema = false
@@ -602,7 +602,16 @@ async function countOccupiedSeats(householdId: string): Promise<number> {
   return (members ?? 0) + (invites ?? 0)
 }
 
-async function listMembers(householdId: string): Promise<HouseholdSummary['members']> {
+/**
+ * Member rows for entitlement / household APIs.
+ * Health/bootstrap omits emails (no Auth fan-out). Account Hub and household
+ * mutations pass `includeEmails` and enrich via targeted `getUserById` only
+ * for this household's members (never `listUsers(1000)`).
+ */
+async function listMembers(
+  householdId: string,
+  opts?: { includeEmails?: boolean },
+): Promise<HouseholdSummary['members']> {
   const client = getAdmin()
   if (!client) return []
   const { data, error } = await client
@@ -616,13 +625,19 @@ async function listMembers(householdId: string): Promise<HouseholdSummary['membe
   }
 
   const emailById = new Map<string, string | null>()
-  try {
-    const { data: users } = await client.auth.admin.listUsers({ page: 1, perPage: 1000 })
-    for (const user of users?.users ?? []) {
-      emailById.set(user.id, user.email ?? null)
-    }
-  } catch (e) {
-    console.warn('[household] auth listUsers failed', e)
+  if (opts?.includeEmails) {
+    await Promise.all(
+      data.map(async (row) => {
+        const id = row.user_id as string
+        try {
+          const user = await getAuthUserById(id)
+          emailById.set(id, user?.email ?? null)
+        } catch (e) {
+          console.warn('[household] getUserById failed', id, e)
+          emailById.set(id, null)
+        }
+      }),
+    )
   }
 
   return data.map((row) => ({
@@ -656,11 +671,19 @@ async function listPendingInvites(
   }))
 }
 
-export async function getHouseholdSummary(userId: string): Promise<HouseholdSummary | null> {
+export type HouseholdSummaryOpts = {
+  /** Enrich member emails via Auth getUserById (Account Hub / mutations only). */
+  includeMemberEmails?: boolean
+}
+
+export async function getHouseholdSummary(
+  userId: string,
+  opts?: HouseholdSummaryOpts,
+): Promise<HouseholdSummary | null> {
   const found = await getMembershipForUser(userId)
   if (!found) return null
   const [members, pendingInvites] = await Promise.all([
-    listMembers(found.household.id),
+    listMembers(found.household.id, { includeEmails: Boolean(opts?.includeMemberEmails) }),
     listPendingInvites(found.household.id),
   ])
   return {
@@ -800,7 +823,7 @@ export async function createHouseholdInvite(input: {
     plan: household.plan,
     acceptUrl,
   })
-  const summary = await getHouseholdSummary(input.ownerUserId)
+  const summary = await getHouseholdSummary(input.ownerUserId, { includeMemberEmails: true })
   return { ok: true, invite, emailed, acceptUrl, summary: summary! }
 }
 
@@ -826,7 +849,10 @@ export async function revokeHouseholdInvite(input: {
   if (error || !data) {
     return { ok: false, code: 'not_found', message: 'Invite not found.' }
   }
-  return { ok: true, summary: (await getHouseholdSummary(input.ownerUserId))! }
+  return {
+    ok: true,
+    summary: (await getHouseholdSummary(input.ownerUserId, { includeMemberEmails: true }))!,
+  }
 }
 
 export async function removeHouseholdMember(input: {
@@ -853,7 +879,10 @@ export async function removeHouseholdMember(input: {
     console.error('[household] remove member failed', error.message)
     return { ok: false, code: 'remove_failed', message: 'Could not remove member.' }
   }
-  return { ok: true, summary: (await getHouseholdSummary(input.ownerUserId))! }
+  return {
+    ok: true,
+    summary: (await getHouseholdSummary(input.ownerUserId, { includeMemberEmails: true }))!,
+  }
 }
 
 export async function acceptHouseholdInvite(input: {
@@ -892,7 +921,10 @@ export async function acceptHouseholdInvite(input: {
   const already = await getMembershipForUser(input.userId)
   if (already) {
     if (already.household.id === row.household_id) {
-      return { ok: true, summary: (await getHouseholdSummary(input.userId))! }
+      return {
+        ok: true,
+        summary: (await getHouseholdSummary(input.userId, { includeMemberEmails: true }))!,
+      }
     }
     return {
       ok: false,
@@ -939,5 +971,8 @@ export async function acceptHouseholdInvite(input: {
     .update({ status: 'accepted', accepted_user_id: input.userId })
     .eq('id', row.id)
 
-  return { ok: true, summary: (await getHouseholdSummary(input.userId))! }
+  return {
+    ok: true,
+    summary: (await getHouseholdSummary(input.userId, { includeMemberEmails: true }))!,
+  }
 }
