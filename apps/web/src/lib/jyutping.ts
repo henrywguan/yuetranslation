@@ -10,12 +10,12 @@ export { hasHan }
 
 /**
  * UI tone rendering — flip to reverse in one place:
+ * - `false` → classic `teng1˥` Unicode Chao in the DOM (Noto Sans look; default)
  * - `true`  → ruby DOM is `teng1` + SVG contour (no Chao Unicode in HTML)
- * - `false` → classic `teng1˥` Unicode Chao in the DOM (previous look)
  *
  * Family “Copy Jyutping + Chao” always uses Unicode Chao via `rubyJpSyllable()`.
  */
-export const JYUTPING_UI_SVG_TONES = true
+export const JYUTPING_UI_SVG_TONES = false
 
 /**
  * Select/copy gate for Free/guest — flip to `false` to disable.

@@ -56,7 +56,7 @@ LSHK asks that tone numbers stay ordinary ASCII digits (not superscript). Color 
 
 Implemented in `apps/web/src/lib/jyutping.ts` (`rubyJpSyllable`, `ensureJyutpingSegs`, `JYUTPING_UI_SVG_TONES`, `JYUTPING_SELECT_COPY_TRAP`) and `apps/web/src/components/JyutRuby.tsx` / `JpPop.tsx`.
 
-**On-screen vs clipboard:** with `JYUTPING_UI_SVG_TONES = true` (default), ruby UI draws contours as SVG so inspect/select does not yield Chao Unicode; Family **Copy Jyutping + Chao** still copies `teng1˥ …`. Set the flag to `false` to restore Unicode Chao in the DOM.
+**On-screen vs clipboard:** with `JYUTPING_UI_SVG_TONES = false` (default), ruby UI shows Unicode Chao (`teng1˥`) via Noto Sans. Set to `true` to draw SVG contours instead (no Chao in the DOM). Family **Copy Jyutping + Chao** always copies `teng1˥ …`.
 
 **Select/copy gate:** with `JYUTPING_SELECT_COPY_TRAP = true` (default), Free/guest users who select ruby and copy get: *Jyutping + Chao tone letters is a Family+ plan feature. Please upgrade to copy.* Family/Business exempt. Set to `false` to disable.
 

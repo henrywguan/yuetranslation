@@ -372,6 +372,8 @@ button.jyutping {
   font-weight: 600;
   letter-spacing: 0;
   line-height: 1.05;
+  /* Noto Sans first — HK lacks Chao tone letters (˥ ˨˩ …) */
+  font-family: var(--font-english);
   color: color-mix(in srgb, var(--mint) 72%, transparent);
   white-space: nowrap;
 }
@@ -382,6 +384,10 @@ button.jyutping {
   align-items: center;
   gap: 0.06em;
   white-space: nowrap;
+}
+
+.jyut-syl-ui--unicode {
+  font-family: var(--font-english);
 }
 
 .jyut-syl-roman {
@@ -558,6 +564,7 @@ button.jyutping {
   font-weight: 600;
   letter-spacing: 0;
   line-height: 1.05;
+  font-family: var(--font-english);
   color: color-mix(in srgb, var(--mint) 88%, var(--ink));
   text-transform: none;
   white-space: nowrap;
