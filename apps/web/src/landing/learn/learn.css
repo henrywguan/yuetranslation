@@ -872,3 +872,16 @@
   justify-content: center;
   gap: 0.65rem;
 }
+
+/* Chao next to Jyutping tone digits — Noto Sans (see .chao-face in index.css) */
+.hq-hear-jp .chao-face,
+.hq-build-jp .chao-face,
+.hq-tile .chao-face,
+.hq-line .chao-face,
+.hq-choice-label .chao-face,
+.hq-choice-sub .chao-face,
+.hq-quest-spotlight-glyph .chao-face,
+.hq-stage-spotlight .chao-face {
+  font-family: var(--font-english);
+  margin-left: 0.04em;
+}

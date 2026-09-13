@@ -4,6 +4,11 @@ import { SpeakButton } from '../../components/SpeakButton'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { BuildStep, HearClip, PickStep, QuestStep, TeachStep } from './curriculum'
+import {
+  JyutpingChaoPhrase,
+  JyutpingChaoText,
+  ToneDigitWithChao,
+} from './JyutpingChaoText'
 
 type QuestPanelProps = {
   step: QuestStep
@@ -59,9 +64,11 @@ export function QuestPanel({
 function Line({ line, className }: { line: { en: string; zh: string }; className?: string }) {
   return (
     <span className={className ? `hq-line ${className}` : 'hq-line'}>
-      <span className="hq-line-en">{line.en}</span>
+      <span className="hq-line-en">
+        <JyutpingChaoText text={line.en} />
+      </span>
       <span className="hq-line-zh" lang="zh-HK">
-        {line.zh}
+        <JyutpingChaoText text={line.zh} />
       </span>
     </span>
   )
@@ -76,7 +83,7 @@ function HearRow({ clips }: { clips?: HearClip[] }) {
           <span className="hq-hear-han" lang="zh-HK">
             {clip.han}
           </span>
-          {clip.label ? <span className="hq-hear-jp">{clip.label}</span> : null}
+          {clip.label ? <JyutpingChaoPhrase jp={clip.label} className="hq-hear-jp" /> : null}
           <SpeakButton text={clip.han} lang="yue" className="hq-hear-speak" warm={false} />
         </div>
       ))}
@@ -96,7 +103,7 @@ function TeachBody({ step, onAdvance }: { step: TeachStep; onAdvance: () => void
       {step.spotlight ? (
         <div className="hq-quest-spotlight">
           <span className="hq-quest-spotlight-glyph" aria-hidden="true">
-            {step.spotlight}
+            <JyutpingChaoText text={step.spotlight} />
           </span>
           {step.spotlightHint ? (
             <Line line={step.spotlightHint} className="hq-quest-spotlight-hint" />
@@ -161,8 +168,14 @@ function PickBody({
               onClick={() => submit(c.id)}
               whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
             >
-              <span className="hq-choice-label">{c.label}</span>
-              {c.sub ? <span className="hq-choice-sub">{c.sub}</span> : null}
+              <span className="hq-choice-label">
+                <JyutpingChaoText text={c.label} />
+              </span>
+              {c.sub ? (
+                <span className="hq-choice-sub">
+                  <JyutpingChaoText text={c.sub} />
+                </span>
+              ) : null}
             </motion.button>
           )
         })}
@@ -232,7 +245,13 @@ function BuildBody({
       </h2>
       {!resolved ? <HearRow clips={step.hear} /> : null}
       <div className="hq-build-preview" aria-live="polite">
-        <span className="hq-build-jp">{resolved && ok ? step.resultJp : assembled}</span>
+        <span className="hq-build-jp">
+          {resolved && ok ? (
+            <JyutpingChaoPhrase jp={step.resultJp} />
+          ) : (
+            <JyutpingChaoText text={assembled} />
+          )}
+        </span>
         {resolved && ok && step.resultGloss ? (
           <Line line={step.resultGloss} className="hq-build-gloss" />
         ) : null}
@@ -261,7 +280,11 @@ function BuildBody({
                     disabled={resolved}
                     onClick={() => setSel((prev) => ({ ...prev, [slot.key]: opt }))}
                   >
-                    {opt}
+                    {slot.key === 'tone' ? (
+                      <ToneDigitWithChao digit={opt} />
+                    ) : (
+                      <JyutpingChaoText text={opt} />
+                    )}
                   </button>
                 )
               })}

@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
 import { copyableJyutpingChao, copyableText } from './copyText.ts'
-import { parseJyutpingTone, rubyJpSyllable } from './jyutping.ts'
+import { enrichJyutpingWithChao, parseJyutpingTone, rubyJpSyllable } from './jyutping.ts'
 
 assert.equal(rubyJpSyllable('teng1'), 'teng1˥')
 assert.equal(rubyJpSyllable('m4'), 'm4˨˩')
 assert.equal(rubyJpSyllable('hou2'), 'hou2˧˥')
 assert.equal(rubyJpSyllable('dak1'), 'dak1˥')
+assert.equal(enrichJyutpingWithChao('In Jyutping si1, what?'), 'In Jyutping si1˥, what?')
+assert.equal(enrichJyutpingWithChao('si1˥ already'), 'si1˥ already')
 
 assert.deepEqual(parseJyutpingTone('m4'), { roman: 'm4', tone: '4' })
 assert.equal(parseJyutpingTone('??'), null)
