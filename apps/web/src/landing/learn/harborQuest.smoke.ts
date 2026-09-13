@@ -8,8 +8,6 @@ import {
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import {
   HARBOR_FANFARE_DURATION_BOUNDS_MS,
   HARBOR_FANFARE_DURATION_MS,
@@ -17,19 +15,15 @@ import {
   harborFanfareDurationMs,
 } from '../../landing/learn/harborFanfare'
 import { HARBOR_MISS_SRC } from '../../landing/learn/harborSfx'
-import { biomeForChunk, HARBOR_SCENIC_TREES } from '../../landing/learn/harborWorld'
-=======
-import { biomeForChunk, HARBOR_SCENIC_TREES, HARBOR_VILLAGE_HOMES } from '../../landing/learn/harborWorld'
->>>>>>> 7841d90 (Harbor Quest: Chinese village homes along the river)
-=======
 import {
   biomeForChunk,
   clampOrbitPitch,
+  HARBOR_SCENIC_TREES,
+  HARBOR_VILLAGE_HOMES,
   orbitCameraOffset,
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
 } from '../../landing/learn/harborWorld'
->>>>>>> 0ee0a5e (Harbor Quest: mobile finger-drag 360° camera orbit)
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -78,7 +72,6 @@ function main() {
   assert.equal(enrichJyutpingWithChao('nei5 hou2'), 'nei5˩˧ hou2˧˥')
   assert.equal(enrichJyutpingWithChao('si1˥'), 'si1˥', 'do not double-append Chao')
 
-  // Continuous river biomes — deterministic cycle for the voyage chunks
   const biomes = Array.from({ length: 14 }, (_, i) => biomeForChunk(i))
   assert.equal(biomeForChunk(0), 'pier')
   assert.equal(biomeForChunk(1), 'village')
@@ -86,8 +79,6 @@ function main() {
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
   assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
 
-<<<<<<< HEAD
-  // Correct-answer trumpet jingle stays in the 3–6s window
   assert.ok(HARBOR_FANFARE_NOTES.length >= 6, 'fanfare needs a real melody')
   assert.ok(
     HARBOR_FANFARE_DURATION_MS >= HARBOR_FANFARE_DURATION_BOUNDS_MS.min &&
@@ -101,7 +92,6 @@ function main() {
     `scheduled fanfare ${fanfareMs}ms out of 3–6s`,
   )
 
-  // Original miss SFX assets (procedural — not ripped game samples)
   const publicRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../public')
   for (const [style, url] of Object.entries(HARBOR_MISS_SRC)) {
     const rel = url.replace(/^\//, '')
@@ -118,8 +108,7 @@ function main() {
   assert.ok(HARBOR_VILLAGE_HOMES.includes('jiangnan'), 'jiangnan homes')
   assert.ok(HARBOR_VILLAGE_HOMES.includes('stilt'), 'riverside stilt shops')
   assert.equal(HARBOR_VILLAGE_HOMES.length, 4, 'village home kit')
-=======
-  // Touch orbit math — full yaw circle, clamped pitch (mobile OSRS-style)
+
   assert.equal(clampOrbitPitch(ORBIT_PITCH_MIN - 1), ORBIT_PITCH_MIN)
   assert.equal(clampOrbitPitch(ORBIT_PITCH_MAX + 1), ORBIT_PITCH_MAX)
   const behind = orbitCameraOffset(0, Math.PI / 6)
@@ -128,7 +117,6 @@ function main() {
   assert.ok(Math.abs(side.x) > Math.abs(side.z), 'yaw π/2 swings to the side')
   const around = orbitCameraOffset(Math.PI * 2, Math.PI / 6)
   assert.ok(Math.abs(around.x - behind.x) < 1e-9 && Math.abs(around.z - behind.z) < 1e-9, 'yaw wraps 360°')
->>>>>>> 0ee0a5e (Harbor Quest: mobile finger-drag 360° camera orbit)
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
