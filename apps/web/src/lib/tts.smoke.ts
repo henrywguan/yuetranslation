@@ -93,6 +93,23 @@ export async function fetchTtsAudio() {
 )
 writeFileSync(join(dir, 'types.ts'), `export type Lang = 'en' | 'yue'\n`)
 writeFileSync(
+  join(dir, 'mediaAccess.ts'),
+  `export function isAppleTouchDevice() { return false }\n`,
+)
+writeFileSync(
+  join(dir, 'audioReactive.ts'),
+  `export function ensureSharedAudioContext() {
+  return {
+    state: 'running',
+    resume: async () => {},
+    get destination() { return {} },
+    createMediaElementSource() { throw new Error('no webaudio in smoke') },
+    createGain() { return { gain: { value: 1 }, connect() {} } },
+  }
+}
+export function resumeSharedAudioContext() {}\n`,
+)
+writeFileSync(
   join(dir, 'ttsVoices.ts'),
   `export function readLocalSichuanVoice() { return null }
 export function readLocalCmnVoice() { return null }
@@ -110,6 +127,8 @@ src = src
   .replace("from './api'", "from './api.ts'")
   .replace("from './types'", "from './types.ts'")
   .replace("from './ttsVoices'", "from './ttsVoices.ts'")
+  .replace("from './mediaAccess'", "from './mediaAccess.ts'")
+  .replace("from './audioReactive'", "from './audioReactive.ts'")
 writeFileSync(join(dir, 'tts.ts'), src)
 
 const tts = await import(pathToFileURL(join(dir, 'tts.ts')).href)
