@@ -9,6 +9,7 @@ import {
 import { playHarborCorrectFanfare, stopHarborCorrectFanfare } from './harborFanfare'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
 import { HarborStage } from './HarborStage'
+import { HARBOR_NPC_ROLES, type HarborNpcRole } from './harborWorld'
 import {
   isLevelCleared,
   isLevelUnlocked,
@@ -18,6 +19,11 @@ import {
   type HarborProgress,
 } from './progress'
 import { QuestPanel } from './QuestPanel'
+
+/** Rotate pier speakers by step so dialogue feels peopled. */
+function speakerForStep(stepIndex: number): HarborNpcRole {
+  return HARBOR_NPC_ROLES[stepIndex % HARBOR_NPC_ROLES.length]!
+}
 
 type LearnSessionProps = {
   levelId: string
@@ -33,12 +39,15 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [flash, setFlash] = useState<'ok' | 'no' | null>(null)
   const [cleared, setCleared] = useState(false)
   const [lastOk, setLastOk] = useState(false)
+  /** World-first: dialogue closed until the sailor chooses Talk. */
+  const [talking, setTalking] = useState(false)
 
   useEffect(() => {
     setStepIndex(0)
     setFlash(null)
     setCleared(false)
     setLastOk(false)
+    setTalking(false)
   }, [levelId])
 
   useEffect(() => {
@@ -111,14 +120,17 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         : undefined
 
   return (
-    <div className="hq-play hq-play--immersive" data-flash={flash ?? undefined}>
-      <div className="hq-play-stage" aria-hidden="true">
+    <div
+      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}`}
+      data-flash={flash ?? undefined}
+    >
+      <div className="hq-play-stage">
         <HarborStage
           level={level}
           stepIndex={stepIndex}
           stepCount={level.steps.length}
           flash={flash}
-          spotlight={spotlight}
+          spotlight={talking ? spotlight : undefined}
           immersive
         />
       </div>
@@ -144,7 +156,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         </a>
       </header>
 
-      <div className="hq-play-hud">
+      <div className={`hq-play-hud${talking ? ' is-talking' : ' is-exploring'}`}>
         <QuestPanel
           step={step}
           stepIndex={stepIndex}
@@ -153,6 +165,10 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           onAdvance={advance}
           onResult={onResult}
           overlay
+          talking={talking}
+          onTalk={() => setTalking(true)}
+          onExplore={() => setTalking(false)}
+          speakerRole={speakerForStep(stepIndex)}
         />
       </div>
     </div>

@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { SpeakButton } from '../../components/SpeakButton'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { BuildStep, HearClip, PickStep, QuestStep, TeachStep } from './curriculum'
+import type { HarborNpcRole } from './harborWorld'
 import {
   JyutpingChaoPhrase,
   JyutpingChaoText,
@@ -19,9 +20,24 @@ type QuestPanelProps = {
   sourceUrl: string
   /** Glass HUD over the fullscreen harbor stage. */
   overlay?: boolean
+  /** When false, world stays free to explore — dialogue is closed. */
+  talking: boolean
+  onTalk: () => void
+  onExplore: () => void
+  /** NPC clothing role for portrait + nameplate. */
+  speakerRole?: HarborNpcRole
 }
 
-/** Quest brief — teach / pick / build. Overlay mode floats over the harbor stage. */
+const SPEAKER: Record<HarborNpcRole, { en: string; zh: string }> = {
+  villager: { en: 'Villager', zh: '村民' },
+  scholar: { en: 'Scholar', zh: '書生' },
+  fisherman: { en: 'Fisherman', zh: '漁夫' },
+  merchant: { en: 'Merchant', zh: '商人' },
+  child: { en: 'Child', zh: '小孩' },
+  ferryman: { en: 'Ferryman', zh: '船家' },
+}
+
+/** Quest brief — collapsed by default; OSRS-style NPC dialogue when talking. */
 export function QuestPanel({
   step,
   stepIndex,
@@ -30,36 +46,72 @@ export function QuestPanel({
   onResult,
   sourceUrl,
   overlay = false,
+  talking,
+  onTalk,
+  onExplore,
+  speakerRole = 'ferryman',
 }: QuestPanelProps) {
-  return (
-    <div className={`hq-quest${overlay ? ' hq-quest--overlay' : ''}`}>
-      <div className="hq-quest-top">
-        <span className="hq-quest-kicker">
-          Quest {stepIndex + 1} / {stepCount}
-        </span>
-        <a className="hq-quest-source" href={sourceUrl} target="_blank" rel="noreferrer">
-          Open Cantonese ↗
-        </a>
-      </div>
+  const speaker = SPEAKER[speakerRole]
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.35, ease: inkEase }}
-          className="hq-quest-body"
-        >
-          {step.kind === 'teach' ? (
-            <TeachBody step={step} onAdvance={onAdvance} />
-          ) : step.kind === 'pick' ? (
-            <PickBody step={step} onAdvance={onAdvance} onResult={onResult} />
-          ) : (
-            <BuildBody step={step} onAdvance={onAdvance} onResult={onResult} />
-          )}
-        </motion.div>
-      </AnimatePresence>
+  return (
+    <div
+      className={`hq-quest${overlay ? ' hq-quest--overlay' : ''}${talking ? ' is-talking' : ' is-exploring'}`}
+    >
+      {!talking ? (
+        <div className="hq-explore-bar">
+          <p className="hq-explore-hint">Drag to look around the harbor</p>
+          <div className="hq-explore-actions">
+            <button type="button" className="hq-btn hq-btn--primary hq-btn--talk" onClick={onTalk}>
+              Talk to {speaker.en}
+            </button>
+            <a className="hq-explore-source" href={sourceUrl} target="_blank" rel="noreferrer">
+              Textbook ↗
+            </a>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="hq-quest-chrome">
+            <span className="hq-quest-kicker">
+              Quest {stepIndex + 1} / {stepCount}
+            </span>
+            <button type="button" className="hq-btn hq-btn--ghost hq-btn--chrome" onClick={onExplore}>
+              Explore world
+            </button>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.28, ease: inkEase }}
+              className="hq-quest-body"
+            >
+              {step.kind === 'teach' ? (
+                <TeachBody step={step} speaker={speaker} speakerRole={speakerRole} onAdvance={onAdvance} />
+              ) : step.kind === 'pick' ? (
+                <PickBody
+                  step={step}
+                  speaker={speaker}
+                  speakerRole={speakerRole}
+                  onAdvance={onAdvance}
+                  onResult={onResult}
+                />
+              ) : (
+                <BuildBody
+                  step={step}
+                  speaker={speaker}
+                  speakerRole={speakerRole}
+                  onAdvance={onAdvance}
+                  onResult={onResult}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </>
+      )}
     </div>
   )
 }
@@ -94,31 +146,99 @@ function HearRow({ clips }: { clips?: HearClip[] }) {
   )
 }
 
-function TeachBody({ step, onAdvance }: { step: TeachStep; onAdvance: () => void }) {
+/** Low-poly CSS bust for the dialogue portrait frame. */
+function NpcPortrait({ role }: { role: HarborNpcRole }) {
+  return (
+    <div className={`hq-dialog-portrait hq-dialog-portrait--${role}`} aria-hidden="true">
+      <span className="hq-dialog-portrait-hat" />
+      <span className="hq-dialog-portrait-head" />
+      <span className="hq-dialog-portrait-eye hq-dialog-portrait-eye--l" />
+      <span className="hq-dialog-portrait-eye hq-dialog-portrait-eye--r" />
+      <span className="hq-dialog-portrait-robe" />
+    </div>
+  )
+}
+
+function DialogBox({
+  speaker,
+  speakerRole,
+  children,
+  continueLabel,
+  onContinue,
+}: {
+  speaker: { en: string; zh: string }
+  speakerRole: HarborNpcRole
+  children: ReactNode
+  continueLabel?: string
+  onContinue?: () => void
+}) {
+  const inner = (
+    <>
+      <NpcPortrait role={speakerRole} />
+      <div className="hq-dialog-copy">
+        <p className="hq-dialog-name">
+          {speaker.en}
+          <span lang="zh-HK"> · {speaker.zh}</span>
+        </p>
+        <div className="hq-dialog-text">{children}</div>
+        {continueLabel ? <p className="hq-dialog-continue">{continueLabel}</p> : null}
+      </div>
+    </>
+  )
+
+  if (onContinue) {
+    return (
+      <button type="button" className="hq-dialog" onClick={onContinue} aria-label={continueLabel}>
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <div className="hq-dialog" role="group" aria-label={`${speaker.en} dialogue`}>
+      {inner}
+    </div>
+  )
+}
+
+function TeachBody({
+  step,
+  speaker,
+  speakerRole,
+  onAdvance,
+}: {
+  step: TeachStep
+  speaker: { en: string; zh: string }
+  speakerRole: HarborNpcRole
+  onAdvance: () => void
+}) {
   return (
     <>
-      <div className="hq-quest-prompt">
-        <h2 className="hq-quest-title">
+      <DialogBox
+        speaker={speaker}
+        speakerRole={speakerRole}
+        continueLabel="Click here to continue"
+        onContinue={onAdvance}
+      >
+        <p className="hq-dialog-lead">
           <Line line={step.title} />
-        </h2>
-        <p className="hq-quest-prose">
+        </p>
+        <p>
           <Line line={step.body} />
         </p>
         {step.spotlight ? (
-          <div className="hq-quest-spotlight">
-            <span className="hq-quest-spotlight-glyph" aria-hidden="true">
-              <JyutpingChaoText text={step.spotlight} />
-            </span>
-            {step.spotlightHint ? (
-              <Line line={step.spotlightHint} className="hq-quest-spotlight-hint" />
-            ) : null}
-            <HearRow clips={step.hear} />
-          </div>
-        ) : (
-          <HearRow clips={step.hear} />
-        )}
-      </div>
-      <div className="hq-quest-dock">
+          <p className="hq-dialog-spotlight" aria-hidden="true">
+            <JyutpingChaoText text={step.spotlight} />
+          </p>
+        ) : null}
+        {step.spotlightHint ? (
+          <p className="hq-dialog-hint">
+            <Line line={step.spotlightHint} />
+          </p>
+        ) : null}
+        <HearRow clips={step.hear} />
+      </DialogBox>
+      <div className="hq-dialog-options">
         <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
           Cast off →
         </button>
@@ -129,10 +249,14 @@ function TeachBody({ step, onAdvance }: { step: TeachStep; onAdvance: () => void
 
 function PickBody({
   step,
+  speaker,
+  speakerRole,
   onAdvance,
   onResult,
 }: {
   step: PickStep
+  speaker: { en: string; zh: string }
+  speakerRole: HarborNpcRole
   onAdvance: () => void
   onResult: (ok: boolean) => void
 }) {
@@ -150,23 +274,24 @@ function PickBody({
 
   return (
     <>
-      <div className="hq-quest-prompt">
+      <DialogBox speaker={speaker} speakerRole={speakerRole}>
         {step.tip ? (
-          <p className="hq-quest-tip">
+          <p className="hq-dialog-hint">
             <Line line={step.tip} />
           </p>
         ) : null}
-        <h2 className="hq-quest-title">
+        <p className="hq-dialog-lead">
           <Line line={step.prompt} />
-        </h2>
+        </p>
         <HearRow clips={step.hear} />
         {resolved ? (
           <p className={`hq-feedback-text${picked === step.correctId ? ' is-ok' : ' is-no'}`}>
             <Line line={step.explain} />
           </p>
         ) : null}
-      </div>
-      <div className="hq-quest-dock">
+      </DialogBox>
+
+      <div className="hq-dialog-options">
         <motion.div
           className="hq-choices"
           role="group"
@@ -175,7 +300,7 @@ function PickBody({
           animate="show"
           variants={{
             hidden: {},
-            show: { transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
+            show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
           }}
         >
           {step.choices.map((c) => {
@@ -192,10 +317,10 @@ function PickBody({
                 disabled={resolved}
                 onClick={() => submit(c.id)}
                 variants={{
-                  hidden: { opacity: 0, y: 14 },
+                  hidden: { opacity: 0, y: 10 },
                   show: { opacity: 1, y: 0 },
                 }}
-                transition={{ duration: 0.28, ease: inkEase }}
+                transition={{ duration: 0.24, ease: inkEase }}
                 whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
               >
                 <span className="hq-choice-label">
@@ -237,10 +362,14 @@ function PickBody({
 
 function BuildBody({
   step,
+  speaker,
+  speakerRole,
   onAdvance,
   onResult,
 }: {
   step: BuildStep
+  speaker: { en: string; zh: string }
+  speakerRole: HarborNpcRole
   onAdvance: () => void
   onResult: (ok: boolean) => void
 }) {
@@ -265,15 +394,15 @@ function BuildBody({
 
   return (
     <>
-      <div className="hq-quest-prompt">
+      <DialogBox speaker={speaker} speakerRole={speakerRole}>
         {step.tip ? (
-          <p className="hq-quest-tip">
+          <p className="hq-dialog-hint">
             <Line line={step.tip} />
           </p>
         ) : null}
-        <h2 className="hq-quest-title">
+        <p className="hq-dialog-lead">
           <Line line={step.prompt} />
-        </h2>
+        </p>
         {!resolved ? <HearRow clips={step.hear} /> : null}
         <div className="hq-build-preview" aria-live="polite">
           <span className="hq-build-jp">
@@ -293,8 +422,9 @@ function BuildBody({
             <Line line={step.explain} />
           </p>
         ) : null}
-      </div>
-      <div className="hq-quest-dock">
+      </DialogBox>
+
+      <div className="hq-dialog-options">
         <div className="hq-build-slots">
           {step.slots.map((slot) => (
             <div key={slot.key} className="hq-build-slot">

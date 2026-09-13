@@ -178,6 +178,12 @@ function main() {
   assert.equal(HARBOR_WULINGYUAN, true, 'Wulingyuan mountain backdrop')
   assert.equal(HARBOR_XIANGYUN, true, 'xiangyun auspicious sky clouds')
 
+  const panelSrc = readFileSync(new URL('./QuestPanel.tsx', import.meta.url), 'utf8')
+  assert.ok(panelSrc.includes('is-exploring'), 'quest panel starts in explore mode')
+  assert.ok(panelSrc.includes('hq-dialog'), 'OSRS-style NPC dialogue box')
+  assert.ok(panelSrc.includes('Talk to'), 'Talk CTA to open dialogue')
+  assert.ok(panelSrc.includes('Explore world'), 'Explore world dismisses dialogue')
+
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
 
