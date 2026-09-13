@@ -201,8 +201,15 @@ function main() {
   assert.match(learnCss, /\.hq-feedback-text[\s\S]*?\.chao-face[\s\S]*?Noto Sans Chao/, 'jade feedback Chao uses Noto Sans Chao')
   assert.match(learnCss, /\.hq-play\.is-exploring[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'explore hides stage caption')
   assert.match(learnCss, /\.hq-play\.is-talking[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'talking hides stage caption')
-  assert.match(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(38dvh,\s*20rem\)/, 'talking HUD is a short bottom strip')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'OSRS talking strip height')
+  assert.match(
+    learnCss,
+    /\.hq-play-stage\s*\{[^}]*bottom:\s*var\(--hq-osrs-strip\)/,
+    'stage ends above OSRS strip so world stays fully visible',
+  )
+  assert.match(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*height:\s*var\(--hq-osrs-strip\)/, 'talking HUD docks as fixed strip')
   assert.doesNotMatch(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(62dvh/, 'old tall talking HUD removed')
+  assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }

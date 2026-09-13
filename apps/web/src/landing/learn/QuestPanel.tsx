@@ -243,11 +243,7 @@ function TeachBody({
         ) : null}
         <HearRow clips={step.hear} />
       </DialogBox>
-      <div className="hq-dialog-options">
-        <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
-          Cast off →
-        </button>
-      </div>
+      {/* Teach advances via the parchment click — no second Cast-off row (OSRS). */}
     </>
   )
 }
