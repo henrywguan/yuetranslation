@@ -97,28 +97,32 @@ function HearRow({ clips }: { clips?: HearClip[] }) {
 function TeachBody({ step, onAdvance }: { step: TeachStep; onAdvance: () => void }) {
   return (
     <>
-      <h2 className="hq-quest-title">
-        <Line line={step.title} />
-      </h2>
-      <p className="hq-quest-prose">
-        <Line line={step.body} />
-      </p>
-      {step.spotlight ? (
-        <div className="hq-quest-spotlight">
-          <span className="hq-quest-spotlight-glyph" aria-hidden="true">
-            <JyutpingChaoText text={step.spotlight} />
-          </span>
-          {step.spotlightHint ? (
-            <Line line={step.spotlightHint} className="hq-quest-spotlight-hint" />
-          ) : null}
+      <div className="hq-quest-prompt">
+        <h2 className="hq-quest-title">
+          <Line line={step.title} />
+        </h2>
+        <p className="hq-quest-prose">
+          <Line line={step.body} />
+        </p>
+        {step.spotlight ? (
+          <div className="hq-quest-spotlight">
+            <span className="hq-quest-spotlight-glyph" aria-hidden="true">
+              <JyutpingChaoText text={step.spotlight} />
+            </span>
+            {step.spotlightHint ? (
+              <Line line={step.spotlightHint} className="hq-quest-spotlight-hint" />
+            ) : null}
+            <HearRow clips={step.hear} />
+          </div>
+        ) : (
           <HearRow clips={step.hear} />
-        </div>
-      ) : (
-        <HearRow clips={step.hear} />
-      )}
-      <button type="button" className="hq-btn hq-btn--primary" onClick={onAdvance}>
-        Cast off →
-      </button>
+        )}
+      </div>
+      <div className="hq-quest-dock">
+        <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
+          Cast off →
+        </button>
+      </div>
     </>
   )
 }
@@ -146,79 +150,87 @@ function PickBody({
 
   return (
     <>
-      {step.tip ? (
-        <p className="hq-quest-tip">
-          <Line line={step.tip} />
-        </p>
-      ) : null}
-      <h2 className="hq-quest-title">
-        <Line line={step.prompt} />
-      </h2>
-      <HearRow clips={step.hear} />
-      <motion.div
-        className="hq-choices"
-        role="group"
-        aria-label="Answers"
-        initial="hidden"
-        animate="show"
-        variants={{
-          hidden: {},
-          show: { transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
-        }}
-      >
-        {step.choices.map((c) => {
-          let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
-          if (resolved) {
-            if (c.id === step.correctId) state = picked === c.id ? 'ok' : 'reveal'
-            else if (picked === c.id) state = 'no'
-          }
-          return (
-            <motion.button
-              key={c.id}
-              type="button"
-              className={`hq-choice is-${state}`}
-              disabled={resolved}
-              onClick={() => submit(c.id)}
-              variants={{
-                hidden: { opacity: 0, y: 14 },
-                show: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.28, ease: inkEase }}
-              whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
-            >
-              <span className="hq-choice-label">
-                <JyutpingChaoText text={c.label} />
-              </span>
-              {c.sub ? (
-                <span className="hq-choice-sub">
-                  <JyutpingChaoText text={c.sub} />
+      <div className="hq-quest-prompt">
+        {step.tip ? (
+          <p className="hq-quest-tip">
+            <Line line={step.tip} />
+          </p>
+        ) : null}
+        <h2 className="hq-quest-title">
+          <Line line={step.prompt} />
+        </h2>
+        <HearRow clips={step.hear} />
+        {resolved ? (
+          <p className={`hq-feedback-text${picked === step.correctId ? ' is-ok' : ' is-no'}`}>
+            <Line line={step.explain} />
+          </p>
+        ) : null}
+      </div>
+      <div className="hq-quest-dock">
+        <motion.div
+          className="hq-choices"
+          role="group"
+          aria-label="Answers"
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: {},
+            show: { transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
+          }}
+        >
+          {step.choices.map((c) => {
+            let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
+            if (resolved) {
+              if (c.id === step.correctId) state = picked === c.id ? 'ok' : 'reveal'
+              else if (picked === c.id) state = 'no'
+            }
+            return (
+              <motion.button
+                key={c.id}
+                type="button"
+                className={`hq-choice is-${state}`}
+                disabled={resolved}
+                onClick={() => submit(c.id)}
+                variants={{
+                  hidden: { opacity: 0, y: 14 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: 0.28, ease: inkEase }}
+                whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
+              >
+                <span className="hq-choice-label">
+                  <JyutpingChaoText text={c.label} />
                 </span>
-              ) : null}
-            </motion.button>
-          )
-        })}
-      </motion.div>
-      {resolved ? (
-        <div className={`hq-feedback${picked === step.correctId ? ' is-ok' : ' is-no'}`}>
-          <Line line={step.explain} />
-          {picked === step.correctId ? (
-            <button type="button" className="hq-btn hq-btn--primary" onClick={onAdvance}>
-              Next gate →
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="hq-btn hq-btn--ghost"
-              onClick={() => {
-                setPicked(null)
-                setResolved(false)
-              }}
-            >
-              Try again
-            </button>
-          )}
-        </div>
-      ) : null}
+                {c.sub ? (
+                  <span className="hq-choice-sub">
+                    <JyutpingChaoText text={c.sub} />
+                  </span>
+                ) : null}
+              </motion.button>
+            )
+          })}
+        </motion.div>
+        {resolved ? (
+          <div className="hq-dock-actions">
+            {picked === step.correctId ? (
+              <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
+                Next gate →
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="hq-btn hq-btn--ghost hq-btn--dock"
+                onClick={() => {
+                  setPicked(null)
+                  setResolved(false)
+                }}
+              >
+                Try again
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
     </>
   )
 }
@@ -253,83 +265,89 @@ function BuildBody({
 
   return (
     <>
-      {step.tip ? (
-        <p className="hq-quest-tip">
-          <Line line={step.tip} />
-        </p>
-      ) : null}
-      <h2 className="hq-quest-title">
-        <Line line={step.prompt} />
-      </h2>
-      {!resolved ? <HearRow clips={step.hear} /> : null}
-      <div className="hq-build-preview" aria-live="polite">
-        <span className="hq-build-jp">
-          {resolved && ok ? (
-            <JyutpingChaoPhrase jp={step.resultJp} />
-          ) : (
-            <JyutpingChaoText text={assembled} />
-          )}
-        </span>
-        {resolved && ok && step.resultGloss ? (
-          <Line line={step.resultGloss} className="hq-build-gloss" />
+      <div className="hq-quest-prompt">
+        {step.tip ? (
+          <p className="hq-quest-tip">
+            <Line line={step.tip} />
+          </p>
         ) : null}
-        {resolved && ok ? <HearRow clips={step.hear} /> : null}
+        <h2 className="hq-quest-title">
+          <Line line={step.prompt} />
+        </h2>
+        {!resolved ? <HearRow clips={step.hear} /> : null}
+        <div className="hq-build-preview" aria-live="polite">
+          <span className="hq-build-jp">
+            {resolved && ok ? (
+              <JyutpingChaoPhrase jp={step.resultJp} />
+            ) : (
+              <JyutpingChaoText text={assembled} />
+            )}
+          </span>
+          {resolved && ok && step.resultGloss ? (
+            <Line line={step.resultGloss} className="hq-build-gloss" />
+          ) : null}
+          {resolved && ok ? <HearRow clips={step.hear} /> : null}
+        </div>
+        {resolved ? (
+          <p className={`hq-feedback-text${ok ? ' is-ok' : ' is-no'}`}>
+            <Line line={step.explain} />
+          </p>
+        ) : null}
       </div>
-      <div className="hq-build-slots">
-        {step.slots.map((slot) => (
-          <div key={slot.key} className="hq-build-slot">
-            <span className="hq-build-slot-label">{slot.label}</span>
-            <div className="hq-build-opts" role="group" aria-label={slot.label}>
-              {slot.options.map((opt) => {
-                const on = sel[slot.key] === opt
-                const reveal =
-                  resolved && step.correct[slot.key] === opt
-                    ? 'ok'
-                    : resolved && on
-                      ? 'no'
-                      : on
-                        ? 'on'
-                        : 'idle'
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    className={`hq-tile is-${reveal}`}
-                    disabled={resolved}
-                    onClick={() => setSel((prev) => ({ ...prev, [slot.key]: opt }))}
-                  >
-                    {slot.key === 'tone' ? (
-                      <ToneDigitWithChao digit={opt} />
-                    ) : (
-                      <JyutpingChaoText text={opt} />
-                    )}
-                  </button>
-                )
-              })}
+      <div className="hq-quest-dock">
+        <div className="hq-build-slots">
+          {step.slots.map((slot) => (
+            <div key={slot.key} className="hq-build-slot">
+              <span className="hq-build-slot-label">{slot.label}</span>
+              <div className="hq-build-opts" role="group" aria-label={slot.label}>
+                {slot.options.map((opt) => {
+                  const on = sel[slot.key] === opt
+                  const reveal =
+                    resolved && step.correct[slot.key] === opt
+                      ? 'ok'
+                      : resolved && on
+                        ? 'no'
+                        : on
+                          ? 'on'
+                          : 'idle'
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      className={`hq-tile is-${reveal}`}
+                      disabled={resolved}
+                      onClick={() => setSel((prev) => ({ ...prev, [slot.key]: opt }))}
+                    >
+                      {slot.key === 'tone' ? (
+                        <ToneDigitWithChao digit={opt} />
+                      ) : (
+                        <JyutpingChaoText text={opt} />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-      {!resolved ? (
-        <button
-          type="button"
-          className="hq-btn hq-btn--primary"
-          disabled={!complete}
-          onClick={check}
-        >
-          Launch ferry
-        </button>
-      ) : (
-        <div className={`hq-feedback${ok ? ' is-ok' : ' is-no'}`}>
-          <Line line={step.explain} />
-          {ok ? (
-            <button type="button" className="hq-btn hq-btn--primary" onClick={onAdvance}>
+          ))}
+        </div>
+        <div className="hq-dock-actions">
+          {!resolved ? (
+            <button
+              type="button"
+              className="hq-btn hq-btn--primary hq-btn--dock"
+              disabled={!complete}
+              onClick={check}
+            >
+              Launch ferry
+            </button>
+          ) : ok ? (
+            <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
               Next gate →
             </button>
           ) : (
             <button
               type="button"
-              className="hq-btn hq-btn--ghost"
+              className="hq-btn hq-btn--ghost hq-btn--dock"
               onClick={() => {
                 setSel({})
                 setResolved(false)
@@ -340,7 +358,7 @@ function BuildBody({
             </button>
           )}
         </div>
-      )}
+      </div>
     </>
   )
 }
