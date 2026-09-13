@@ -5,7 +5,17 @@ import {
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
+import {
+  HARBOR_FANFARE_DURATION_BOUNDS_MS,
+  HARBOR_FANFARE_DURATION_MS,
+  HARBOR_FANFARE_NOTES,
+  harborFanfareDurationMs,
+} from '../../landing/learn/harborFanfare'
+import { HARBOR_MISS_SRC } from '../../landing/learn/harborSfx'
 import { biomeForChunk } from '../../landing/learn/harborWorld'
+import { readFileSync, statSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
@@ -62,6 +72,30 @@ function main() {
   assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
   assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
+
+  // Correct-answer trumpet jingle stays in the 3–6s window
+  assert.ok(HARBOR_FANFARE_NOTES.length >= 6, 'fanfare needs a real melody')
+  assert.ok(
+    HARBOR_FANFARE_DURATION_MS >= HARBOR_FANFARE_DURATION_BOUNDS_MS.min &&
+      HARBOR_FANFARE_DURATION_MS <= HARBOR_FANFARE_DURATION_BOUNDS_MS.max,
+    'fanfare duration must be 3–6s',
+  )
+  const fanfareMs = harborFanfareDurationMs()
+  assert.ok(
+    fanfareMs >= HARBOR_FANFARE_DURATION_BOUNDS_MS.min &&
+      fanfareMs <= HARBOR_FANFARE_DURATION_BOUNDS_MS.max,
+    `scheduled fanfare ${fanfareMs}ms out of 3–6s`,
+  )
+
+  // Original miss SFX assets (procedural — not ripped game samples)
+  const publicRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../public')
+  for (const [style, url] of Object.entries(HARBOR_MISS_SRC)) {
+    const rel = url.replace(/^\//, '')
+    const abs = join(publicRoot, rel)
+    assert.ok(statSync(abs).size > 1000, `${style} wav too small`)
+    const hdr = readFileSync(abs).subarray(0, 4).toString('ascii')
+    assert.equal(hdr, 'RIFF', `${style} must be a WAV`)
+  }
 
   console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
