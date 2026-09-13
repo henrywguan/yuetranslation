@@ -16,6 +16,13 @@ import {
 } from '../../landing/learn/harborFanfare'
 import { HARBOR_MISS_SRC } from '../../landing/learn/harborSfx'
 import {
+  HARBOR_BGM_GAIN,
+  HARBOR_BGM_LOOP_SEC,
+  HARBOR_BGM_PHRASE,
+  HARBOR_BGM_SCALE_HZ,
+} from '../../landing/learn/harborBgm'
+import { HARBOR_COIN_CHING_GAIN } from '../../landing/learn/harborCoinSfx'
+import {
   biomeForChunk,
   clampOrbitPitch,
   dockPoseForProgress,
@@ -300,6 +307,28 @@ function main() {
     [...scoutLook.children].length >= 0,
     'applyLook runs on scout',
   )
+
+
+  // Coin reward feedback + Chinese-themed Harbor BGM
+  const progressSrc = readFileSync(new URL('./progress.ts', import.meta.url), 'utf8')
+  assert.match(progressSrc, /HARBOR_COINS_PER_CORRECT\s*=\s*\d+/, 'correct casts award ferry coins')
+  assert.ok(HARBOR_COIN_CHING_GAIN > 0 && HARBOR_COIN_CHING_GAIN < 0.5, 'coin ching stays soft')
+  assert.ok(HARBOR_BGM_GAIN > 0 && HARBOR_BGM_GAIN < 0.25, 'BGM stays under SFX')
+  assert.ok(HARBOR_BGM_LOOP_SEC >= 24 && HARBOR_BGM_LOOP_SEC <= 64, 'BGM loop length')
+  assert.equal(HARBOR_BGM_SCALE_HZ.length, 6, 'pentatonic + octave scale')
+  assert.ok(HARBOR_BGM_PHRASE.length >= 16, 'BGM phrase has pad + flute + pluck voices')
+  assert.ok(
+    HARBOR_BGM_PHRASE.some((v) => v.kind === 'flute') &&
+      HARBOR_BGM_PHRASE.some((v) => v.kind === 'pad') &&
+      HARBOR_BGM_PHRASE.some((v) => v.kind === 'pluck'),
+    'BGM uses flute / pad / pluck timbres',
+  )
+  const playAudioSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.match(playAudioSrc, /playHarborCoinChing/, 'correct answer plays coin ching')
+  assert.match(playAudioSrc, /hq-coin-pop/, 'floating +coin animation')
+  assert.match(playAudioSrc, /startHarborBgm/, 'session starts Chinese Harbor BGM')
+  assert.match(playAudioSrc, /stopHarborBgm/, 'session stops BGM on exit')
+  assert.match(playAudioSrc, /duckHarborBgm/, 'BGM ducks under fanfare')
 
 console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }

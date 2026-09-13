@@ -21,3 +21,13 @@ World meshes are authored in code (`harborCraft.ts`, `harborWorld.ts`, `harborPr
 Original Harbor / Jiangnan kit — **not** extracted from a RuneScape cache and **not** a recolor of Jagex models.
 
 Do not replace these with ripped game files.
+
+## Coin ching + BGM (Web Audio)
+
+Ferry-coin pickup and riverside BGM are synthesized in the browser (no WAV):
+
+- `harborCoinSfx.ts` — soft metal “ching” on correct casts
+- `harborBgm.ts` — original Chinese pentatonic ambient loop (RS-like pacing, not a Jagex track)
+
+Do not replace with ripped game audio.
+
