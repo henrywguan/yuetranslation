@@ -14,6 +14,11 @@ import {
   hqWindow,
 } from './harborCraft'
 import { buildHarborProtagonist } from './harborProtagonist'
+import {
+  applyLookToProtagonist,
+  HARBOR_DEFAULT_LOOK,
+  type HarborLook,
+} from './harborGear'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
@@ -26,6 +31,10 @@ export type HarborWorldOptions = {
   progress?: number
   /** Force a weather scene (otherwise random per session). */
   weather?: HarborWeather
+  /** Equipped character look (recolors River Scout + handheld). */
+  look?: HarborLook
+  /** Fires when the canoe enters / leaves a visitable landmark. */
+  onVisitable?: (id: HarborVisitableId | null) => void
 }
 
 export type HarborWorldHandle = {
@@ -35,6 +44,7 @@ export type HarborWorldHandle = {
   setFlash: (flash: 'ok' | 'no' | null) => void
   setHue: (hue: HarborHue) => void
   setReducedMotion: (on: boolean) => void
+  setLook: (look: HarborLook) => void
   resize: () => void
   dispose: () => void
 }
@@ -49,6 +59,35 @@ const RIVER = 3.4
 export const HARBOR_DOCK_SPACING = 22
 /** Sideways offset from river center when the canoe is docked. */
 export const HARBOR_DOCK_X = RIVER + 0.55
+
+/** In-world visitables — Save Shack + Outfitter (fixed riverside stops). */
+export type HarborVisitableId = 'save-shack' | 'outfitter'
+
+export type HarborVisitable = {
+  id: HarborVisitableId
+  name: { en: string; zh: string }
+  x: number
+  z: number
+}
+
+/** Fixed landmark poses — smoke-tested kit. */
+export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
+  {
+    id: 'save-shack',
+    name: { en: 'Save Shack', zh: '存檔小屋' },
+    x: HARBOR_DOCK_X + 1.1,
+    z: 3.5,
+  },
+  {
+    id: 'outfitter',
+    name: { en: 'River Outfitter', zh: '河畔衣鋪' },
+    x: -(HARBOR_DOCK_X + 1.1),
+    z: 16,
+  },
+] as const
+
+/** Arrival radius to open a visitable panel. */
+export const HARBOR_VISIT_RADIUS = 2.4
 
 /** Chinese clothing roles for bank / pier NPCs (smoke-tested). */
 export const HARBOR_NPC_ROLES = [
@@ -216,6 +255,22 @@ export function orbitCameraOffset(yaw: number, pitch: number, distance = ORBIT_D
     x: Math.sin(yaw) * cosP * distance,
     y: Math.sin(pitch) * distance,
     z: -Math.cos(yaw) * cosP * distance,
+  }
+}
+
+/** Screen-pixel slop — motion under this is a tap, not an orbit drag (OSRS click). */
+export const HARBOR_TAP_SLOP_PX = 10
+/** Canoe paddle / walk speed in world units per second. */
+export const HARBOR_TAP_MOVE_SPEED = 4.2
+/** Stop when this close to the destination marker. */
+export const HARBOR_TAP_ARRIVE = 0.4
+
+/** Clamp a free-move point onto the playable river corridor. */
+export function clampHarborMoveTarget(x: number, z: number): { x: number; z: number } {
+  const maxX = HARBOR_DOCK_X + 1.8
+  return {
+    x: Math.min(maxX, Math.max(-maxX, x)),
+    z: Math.min(248, Math.max(-4, z)),
   }
 }
 
@@ -1034,11 +1089,89 @@ function populateChunk(
   }
 }
 
+
+/** OSRS-style yellow destination X on the ground plane. */
+function clickMarker() {
+  const g = new THREE.Group()
+  const m = mat(0xffe566, { transparent: true, opacity: 0.95, depthWrite: false })
+  const armA = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.045, 0.12), m)
+  armA.rotation.y = Math.PI / 4
+  const armB = armA.clone()
+  armB.rotation.y = -Math.PI / 4
+  g.add(armA, armB)
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.48, 16), m)
+  ring.rotation.x = -Math.PI / 2
+  ring.position.y = 0.02
+  g.add(ring)
+  g.visible = false
+  g.userData.clickMarker = true
+  return g
+}
+
 /**
  * Mount a continuous sailing river on a canvas.
  * Canoe stays framed; world scrolls along +Z. Quest progress eases travel;
  * a gentle drift keeps scenery moving between answers.
  */
+
+/** Compact riverside Save Shack — visit to stamp progress + look. */
+function saveShackBuilding() {
+  const g = new THREE.Group()
+  g.name = 'save-shack'
+  g.userData.visitable = 'save-shack'
+  g.add(hqBox(1.4, 0.9, 1.2, P.plaster, 0, 0.55, 0))
+  const roof = hqBox(1.7, 0.12, 1.45, P.roofTile, 0, 1.15, 0)
+  roof.rotation.x = -0.18
+  g.add(roof)
+  g.add(hqBox(0.28, 0.5, 0.06, P.woodDark, 0, 0.35, 0.62))
+  g.add(hqWindow(0.28, 0.24, P.trimGold, 0x1a3040, 0.35, 0.7, 0.62))
+  // Jade lantern = “save” beacon
+  g.add(hqPost(0.03, 0.04, 0.7, P.woodDark, -0.55, 0.9, 0.55, 5))
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.16), hqMat(P.jade))
+  lamp.position.set(-0.55, 1.15, 0.55)
+  g.add(lamp)
+  // Pier plank leading to the door
+  g.add(hqBox(0.9, 0.08, 1.6, P.woodMid, 0, 0.08, 1.2))
+  return g
+}
+
+/** Riverside Outfitter shop — buy / equip hats, tops, bottoms, shoes, handhelds. */
+function outfitterBuilding() {
+  const g = new THREE.Group()
+  g.name = 'outfitter'
+  g.userData.visitable = 'outfitter'
+  for (const x of [-0.45, 0.45] as const) {
+    for (const z of [-0.35, 0.35] as const) {
+      g.add(hqPost(0.06, 0.08, 0.55, P.woodDark, x, 0.28, z, 5))
+    }
+  }
+  g.add(hqBox(1.5, 0.1, 1.3, P.woodLight, 0, 0.55, 0))
+  g.add(hqBox(1.35, 0.75, 1.15, 0xd8c8a8, 0, 0.98, 0))
+  const roof = hqBox(1.7, 0.1, 1.4, P.roofClay, 0, 1.5, 0)
+  roof.rotation.x = -0.2
+  g.add(roof)
+  g.add(hqBox(0.12, 0.55, 0.04, P.banner, 0.55, 1.15, 0.6))
+  g.add(hqWindow(0.32, 0.28, P.trimGold, 0x1a3040, -0.25, 1.05, 0.6))
+  g.add(hqBox(0.7, 0.04, 0.04, P.woodDark, 0, 1.2, -0.2))
+  g.add(hqBox(0.18, 0.35, 0.08, 0x2a6a58, -0.2, 1.0, -0.2))
+  g.add(hqBox(0.18, 0.35, 0.08, 0x5a2a48, 0.15, 1.0, -0.2))
+  g.add(hqBox(0.9, 0.08, 1.5, P.woodMid, 0, 0.08, 1.15))
+  return g
+}
+
+function nearestVisitable(x: number, z: number): HarborVisitableId | null {
+  let best: HarborVisitableId | null = null
+  let bestDist = HARBOR_VISIT_RADIUS
+  for (const v of HARBOR_VISITABLES) {
+    const d = Math.hypot(v.x - x, v.z - z)
+    if (d < bestDist) {
+      bestDist = d
+      best = v.id
+    }
+  }
+  return best
+}
+
 export function createHarborWorld(
   canvas: HTMLCanvasElement,
   options: HarborWorldOptions = {},
@@ -1126,6 +1259,30 @@ export function createHarborWorld(
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
+  // Fixed visitables — Save Shack + Outfitter (always on the chart)
+  const visitablesRoot = new THREE.Group()
+  visitablesRoot.name = 'harbor-visitables'
+  for (const v of HARBOR_VISITABLES) {
+    const building = v.id === 'save-shack' ? saveShackBuilding() : outfitterBuilding()
+    building.position.set(v.x, 0, v.z)
+    // Face the river
+    building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
+    visitablesRoot.add(building)
+  }
+  scene.add(visitablesRoot)
+
+  let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
+  const scout = boat.getObjectByName('river-scout') ?? boat
+  applyLookToProtagonist(scout, currentLook)
+
+  let activeVisitable: HarborVisitableId | null = null
+  const emitVisitable = (id: HarborVisitableId | null) => {
+    if (id === activeVisitable) return
+    activeVisitable = id
+    options.onVisitable?.(id)
+  }
+
+
   // Distant Wulingyuan-style karst pillars (parallax backdrop)
   const mountains = wulingyuanRange(42)
   scene.add(mountains)
@@ -1156,12 +1313,43 @@ export function createHarborWorld(
   let raf = 0
   let last = performance.now()
 
-  // Finger / mouse orbit — grab-the-world: drag right → camera left, drag down → camera up
+  // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target)
+  let moveTarget = { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
+  let playerDirected = false
+  const destMarker = clickMarker()
+  scene.add(destMarker)
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+  const ndc = new THREE.Vector2()
+  const hitPoint = new THREE.Vector3()
+  const raycaster = new THREE.Raycaster()
+
+  const setMoveTarget = (x: number, z: number, fromPlayer: boolean) => {
+    const clamped = clampHarborMoveTarget(x, z)
+    moveTarget = clamped
+    playerDirected = fromPlayer
+    destMarker.position.set(clamped.x, 0.06, clamped.z)
+    destMarker.visible = fromPlayer
+  }
+
+  const tryTapMove = (clientX: number, clientY: number) => {
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
+    ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
+    raycaster.setFromCamera(ndc, camera)
+    if (!raycaster.ray.intersectPlane(groundPlane, hitPoint)) return
+    setMoveTarget(hitPoint.x, hitPoint.z, true)
+  }
+
+  // Finger / mouse: drag = orbit camera; tap = OSRS move-to-location
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
   let pitchTarget = 0.52
   let dragging = false
+  let ptrDragged = false
+  let ptrStartX = 0
+  let ptrStartY = 0
   let lastPtrX = 0
   let lastPtrY = 0
   let activePointer: number | null = null
@@ -1172,6 +1360,9 @@ export function createHarborWorld(
     if (activePointer !== null) return
     activePointer = e.pointerId
     dragging = true
+    ptrDragged = false
+    ptrStartX = e.clientX
+    ptrStartY = e.clientY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
     canvas.setPointerCapture(e.pointerId)
@@ -1182,6 +1373,11 @@ export function createHarborWorld(
     const dy = e.clientY - lastPtrY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
+    if (!ptrDragged) {
+      const slop = Math.hypot(e.clientX - ptrStartX, e.clientY - ptrStartY)
+      if (slop < HARBOR_TAP_SLOP_PX) return
+      ptrDragged = true
+    }
     // Horizontal: drag right → camera left (grab-the-world)
     yawTarget -= dx * ORBIT_SENS
     // Vertical: natural — drag down tips the view down
@@ -1189,13 +1385,19 @@ export function createHarborWorld(
   }
   const endDrag = (e: PointerEvent) => {
     if (e.pointerId !== activePointer) return
+    const wasDrag = ptrDragged
+    const upX = e.clientX
+    const upY = e.clientY
     dragging = false
+    ptrDragged = false
     activePointer = null
     try {
       canvas.releasePointerCapture(e.pointerId)
     } catch {
       /* already released */
     }
+    // Tap (no meaningful drag) → paddle / walk to the ground hit
+    if (!wasDrag) tryTapMove(upX, upY)
   }
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
@@ -1227,27 +1429,45 @@ export function createHarborWorld(
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
 
-    // Sail toward the pier stop for this quest step, then ease sideways to dock
-    const dock = dockPoseForProgress(progress)
-    const distZ = dock.z - voyageZ
-    const approaching = Math.abs(distZ) < 10
-    const docked = Math.abs(distZ) < 1.25
-    voyageZ += distZ * Math.min(1, dt * 2.1)
-    // Light forward drift only while sailing between piers
-    if (!docked) {
-      const cruise = reduced ? 0.15 : 0.55
-      voyageZ += dt * cruise * Math.sign(distZ || 1)
+    // OSRS tap-to-move: paddle straight toward the destination (quest or player tap)
+    if (!playerDirected) {
+      const dock = dockPoseForProgress(progress)
+      moveTarget = { x: dock.side * HARBOR_DOCK_X, z: dock.z }
     }
-    const sway = reduced || approaching ? 0 : Math.sin(waterPhase * 0.7) * 0.18
-    const targetX = dock.side * HARBOR_DOCK_X * (approaching || docked ? 1 : 0.2) + sway
-    boatX += (targetX - boatX) * Math.min(1, dt * 3.2)
+    const dx = moveTarget.x - boatX
+    const dz = moveTarget.z - voyageZ
+    const dist = Math.hypot(dx, dz)
+    const arrived = dist < HARBOR_TAP_ARRIVE
+    if (!arrived) {
+      const speed = reduced ? HARBOR_TAP_MOVE_SPEED * 0.45 : HARBOR_TAP_MOVE_SPEED
+      const step = Math.min(dist, speed * dt)
+      boatX += (dx / dist) * step
+      voyageZ += (dz / dist) * step
+      const face = Math.atan2(dx, dz)
+      boat.rotation.y += (face - boat.rotation.y) * Math.min(1, dt * 6)
+    } else if (playerDirected) {
+      destMarker.visible = false
+    }
+    const docked = arrived && !playerDirected
+    const approaching = !playerDirected && dist < 10
+
+    // Pulse the yellow destination X while en route
+    if (destMarker.visible && !reduced) {
+      const pulse = 1 + Math.sin(now * 0.012) * 0.12
+      destMarker.scale.setScalar(pulse)
+    }
 
     waterPhase += dt * (reduced ? 0.4 : 1.2)
     const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
-    boat.position.set(boatX, 0.08 + bob, voyageZ)
-    // Nose toward the pier when docking
-    const yawBoat = docked || approaching ? dock.side * 0.35 : reduced ? 0 : Math.sin(waterPhase * 1.1) * 0.04
-    boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
+    const sway = reduced || approaching || playerDirected ? 0 : Math.sin(waterPhase * 0.7) * 0.18
+    boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
+    // Open Save Shack / Outfitter when the canoe paddles up
+    emitVisitable(nearestVisitable(boatX, voyageZ))
+    if (arrived && !playerDirected) {
+      const dock = dockPoseForProgress(progress)
+      const yawBoat = dock.side * 0.35
+      boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
+    }
     boat.rotation.z = reduced ? 0 : Math.sin(waterPhase * 1.7) * 0.03
 
     for (let i = 0; i < wakes.length; i++) {
@@ -1381,6 +1601,9 @@ export function createHarborWorld(
     weather,
     setProgress(t) {
       progress = Math.min(1, Math.max(0, t))
+      // Quest step change — auto path to the next pier (clears free-explore target)
+      const dock = dockPoseForProgress(progress)
+      setMoveTarget(dock.side * HARBOR_DOCK_X, dock.z, false)
     },
     setFlash(f) {
       flash = f
@@ -1392,6 +1615,10 @@ export function createHarborWorld(
     },
     setReducedMotion(on) {
       reduced = on
+    },
+    setLook(look) {
+      currentLook = { ...look }
+      applyLookToProtagonist(scout, currentLook)
     },
     resize,
     dispose() {
@@ -1408,6 +1635,12 @@ export function createHarborWorld(
         })
       }
       chunkGroups.clear()
+      destMarker.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.geometry.dispose()
+          ;(o.material as THREE.Material).dispose()
+        }
+      })
       water.geometry.dispose()
       waterMat.dispose()
       grassMat.dispose()

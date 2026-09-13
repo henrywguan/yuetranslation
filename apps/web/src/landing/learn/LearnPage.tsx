@@ -117,6 +117,7 @@ export function LearnPage() {
           <p className="hq-hero-progress">
             {cleared}/{total} piers cleared
             {progress.correctCount > 0 ? ` · ${progress.correctCount} correct casts` : ''}
+            {typeof progress.coins === 'number' ? ` · ${progress.coins} ferry coins` : ''}
           </p>
         </motion.div>
       </header>

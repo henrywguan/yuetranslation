@@ -466,6 +466,20 @@ export type HarborQuestProgressPayload = {
   cleared: string[]
   stepCursor: Record<string, number>
   correctCount: number
+  /** Ferry coins — always persisted in Supabase jsonb. */
+  coins: number
+  /** Owned gear ids — always persisted in Supabase jsonb. */
+  owned: string[]
+  /** Equipped look — always persisted in Supabase jsonb. */
+  look: {
+    hat: string
+    top: string
+    bottom: string
+    shoes: string
+    hand: string
+  }
+  /** Save Shack stamp (ms) — always persisted in Supabase jsonb. */
+  lastSavedAt: number
 }
 
 export async function fetchHarborQuestProgress(): Promise<HarborQuestProgressPayload | null> {
@@ -477,7 +491,21 @@ export async function fetchHarborQuestProgress(): Promise<HarborQuestProgressPay
   }
   const progress = data.progress
   if (!progress || typeof progress !== 'object') {
-    return { cleared: [], stepCursor: {}, correctCount: 0 }
+    return {
+      cleared: [],
+      stepCursor: {},
+      correctCount: 0,
+      coins: 40,
+      owned: ['hat-straw', 'top-harbor', 'bottom-travel', 'shoes-leather', 'hand-none'],
+      look: {
+        hat: 'hat-straw',
+        top: 'top-harbor',
+        bottom: 'bottom-travel',
+        shoes: 'shoes-leather',
+        hand: 'hand-none',
+      },
+      lastSavedAt: 0,
+    }
   }
   return progress as HarborQuestProgressPayload
 }

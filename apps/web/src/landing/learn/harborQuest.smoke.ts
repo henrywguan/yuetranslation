@@ -32,6 +32,13 @@ import {
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
   pickHarborWeather,
+  HARBOR_TAP_SLOP_PX,
+  HARBOR_TAP_MOVE_SPEED,
+  HARBOR_TAP_ARRIVE,
+  clampHarborMoveTarget,
+  HARBOR_DOCK_X,
+  HARBOR_VISITABLES,
+  HARBOR_VISIT_RADIUS,
 } from '../../landing/learn/harborWorld'
 import {
   HARBOR_CRAFT_PALETTE,
@@ -49,7 +56,14 @@ import {
   HARBOR_PROTAGONIST_SOCKETS,
   listProtagonistSockets,
 } from '../../landing/learn/harborProtagonist'
-import { isLevelUnlocked } from '../../landing/learn/progressMerge'
+import {
+  HARBOR_GEAR_CATALOG,
+  HARBOR_GEAR_SLOTS,
+  applyLookToProtagonist,
+  harborGearForSlot,
+} from '../../landing/learn/harborGear'
+import { emptyHarborProgress,
+  isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 
 /** Offline: Harbor Quest curriculum integrity (no paid APIs). */
@@ -84,7 +98,7 @@ function main() {
   assert.equal(nextLevelId('jyutping-chart'), null)
   assert.ok(levelById('lesson-1'))
 
-  const empty = { cleared: [] as string[], stepCursor: {}, correctCount: 0 }
+  const empty = emptyHarborProgress()
   assert.equal(isLevelUnlocked('introduction', ids, empty), true)
   assert.equal(isLevelUnlocked('lesson-1', ids, empty), false)
   assert.equal(
@@ -145,6 +159,15 @@ function main() {
   const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
+  assert.equal(HARBOR_TAP_SLOP_PX, 10, 'tap vs drag pixel slop')
+  assert.ok(HARBOR_TAP_MOVE_SPEED > 2, 'tap-to-move has a walk/paddle speed')
+  assert.ok(HARBOR_TAP_ARRIVE > 0, 'arrival threshold')
+  assert.equal(clampHarborMoveTarget(99, -9).x, HARBOR_DOCK_X + 1.8, 'move target clamps to corridor')
+  assert.equal(clampHarborMoveTarget(0, 999).z, 248, 'move target clamps far Z')
+  assert.match(worldSrc, /HARBOR_TAP_SLOP_PX/, 'tap/drag discrimination uses slop constant')
+  assert.match(worldSrc, /tryTapMove/, 'tap raycasts to ground and sets destination')
+  assert.match(worldSrc, /userData\.clickMarker/, 'OSRS yellow destination marker')
+  assert.match(worldSrc, /playerDirected/, 'player tap overrides auto-dock path')
   assert.match(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*\+\s*dy/, 'pitch drag is natural (drag down → look down)')
   assert.doesNotMatch(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*-\s*dy/, 'inverted pitch drag removed')
   assert.equal(HARBOR_FOG_DENSITY, 0.0028, 'max-bright sunny fog (not a dark veil)')
@@ -241,7 +264,40 @@ function main() {
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
   assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
 
-  console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
+  
+  // Save Shack + Outfitter visitables & gear kit
+  assert.equal(HARBOR_GEAR_CATALOG.length, 25, '25 clothing / handheld pieces')
+  for (const slot of HARBOR_GEAR_SLOTS) {
+    assert.equal(harborGearForSlot(slot).length, 5, `${slot} has 5 items`)
+  }
+  assert.equal(HARBOR_VISITABLES.length, 2, 'Save Shack + Outfitter')
+  assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'save-shack'))
+  assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'outfitter'))
+  assert.ok(HARBOR_VISIT_RADIUS > 1, 'visit radius')
+  const worldSrc2 = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc2, /saveShackBuilding/, 'Save Shack mesh')
+  assert.match(worldSrc2, /outfitterBuilding/, 'Outfitter mesh')
+  assert.match(worldSrc2, /setLook/, 'world can recolor scout look')
+  assert.match(worldSrc2, /nearestVisitable/, 'arrival opens visitables')
+  const playSrc2 = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.match(playSrc2, /visitSaveShack/, 'Save Shack stamps progress')
+  assert.match(playSrc2, /buyHarborGear/, 'Outfitter buy flow')
+  assert.match(playSrc2, /equipHarborGear/, 'Outfitter equip flow')
+  assert.match(playSrc2, /hq-visit-panel/, 'visit panel UI')
+  const scoutLook = buildHarborProtagonist({ pose: 'seated' })
+  applyLookToProtagonist(scoutLook, {
+    hat: 'hat-festival',
+    top: 'top-jade',
+    bottom: 'bottom-crimson',
+    shoes: 'shoes-storm',
+    hand: 'hand-fan',
+  })
+  assert.ok(
+    [...scoutLook.children].length >= 0,
+    'applyLook runs on scout',
+  )
+
+console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
 
 main()

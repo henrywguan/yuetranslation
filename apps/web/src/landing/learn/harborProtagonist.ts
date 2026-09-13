@@ -45,6 +45,12 @@ function mat(color: number) {
   return new THREE.MeshLambertMaterial({ color, flatShading: true })
 }
 
+/** Tag a mesh so lookColors / applyLook can recolor it. */
+function part(mesh: THREE.Mesh, harborPart: string) {
+  mesh.userData.harborPart = harborPart
+  return mesh
+}
+
 function socket(name: HarborProtagonistSocket, x: number, y: number, z: number) {
   const s = new THREE.Object3D()
   s.name = name
@@ -77,24 +83,24 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   // —— Legs (faceted 6-gon cylinders; short + thick) ——
   if (pose === 'standing') {
     for (const sx of [-0.1, 0.1] as const) {
-      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.28, 6), pants)
+      const thigh = part(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.28, 6), pants), 'bottom')
       thigh.position.set(sx, 0.28, 0)
       g.add(thigh)
-      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.26, 6), pants)
+      const shin = part(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.26, 6), pants), 'bottom')
       shin.position.set(sx, 0.08, 0.01)
       g.add(shin)
       // Chunky boot
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.18), leather)
+      const boot = part(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.18), leather), 'shoes')
       boot.position.set(sx, 0.04, 0.04)
       g.add(boot)
     }
   } else {
     // Seated: thighs forward along +Z (canoe sit)
     for (const sx of [-0.1, 0.1] as const) {
-      const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.34), pants)
+      const thigh = part(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.34), pants), 'bottom')
       thigh.position.set(sx, 0.14, 0.14)
       g.add(thigh)
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.14), leather)
+      const boot = part(new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.14), leather), 'shoes')
       boot.position.set(sx, 0.08, 0.34)
       g.add(boot)
     }
@@ -102,11 +108,11 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
 
   // —— Stocky torso slab ——
   const pelvisY = pose === 'standing' ? 0.48 : 0.28
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.24), robe)
+  const torso = part(new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.24), robe), 'top')
   torso.position.y = pelvisY + 0.22
   g.add(torso)
   // Collar / shoulder shelf (extruded, not a decal)
-  const collar = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.26), robeDeep)
+  const collar = part(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.26), robeDeep), 'topAccent')
   collar.position.y = pelvisY + 0.42
   g.add(collar)
   // Jade sash — Harbor Quest “you” signal
@@ -124,7 +130,7 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   // —— Arms + mitten hands ——
   const armY = pelvisY + 0.28
   for (const side of [-1, 1] as const) {
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.34, 6), robe)
+    const arm = part(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.34, 6), robe), 'top')
     arm.position.set(side * 0.24, armY, 0)
     g.add(arm)
     // Mitten (oversized readable hand)
@@ -153,13 +159,13 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(bun)
 
   // Straw traveler hat + jade bead tip (Harbor twist)
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 8), straw)
+  const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 8), straw), 'hat')
   brim.position.y = headY + 0.1
   g.add(brim)
-  const crown = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 7), straw)
+  const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 7), straw), 'hat')
   crown.position.y = headY + 0.18
   g.add(crown)
-  const bead = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), jade)
+  const bead = part(new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), jade), 'hatAccent')
   bead.position.y = headY + 0.26
   g.add(bead)
   g.add(socket('head', 0, headY + 0.28, 0))
