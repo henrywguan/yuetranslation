@@ -4,6 +4,7 @@ import { openHome, openLearn } from '../../lib/siteLinks'
 import { useDocumentMeta } from '../../lib/useDocumentMeta'
 import { learnLevelFromHash } from '../../lib/useHashRoute'
 import { HARBOR_LEVELS, levelById, levelCampaign } from './curriculum'
+import { HarborLeaderboard } from './HarborLeaderboard'
 import { HarborMap, LearnSession } from './LearnPlay'
 import {
   continueHarborLevelId,
@@ -138,6 +139,8 @@ export function LearnPage() {
                 onSelect={openLevel}
                 initialCampaign={levelCampaign(levelById(levelId) ?? HARBOR_LEVELS[0]!)}
               />
+
+              <HarborLeaderboard />
 
               <footer className="hq-chart-actions">
                 <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setChartOpen(false)}>

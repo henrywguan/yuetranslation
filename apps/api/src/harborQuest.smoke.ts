@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { sanitizeHarborProgress } from './harborQuest.js'
+import { compareLeaderboardScores, sanitizeHarborProgress } from './harborQuest.js'
 
 const empty = sanitizeHarborProgress(null)
 assert.deepEqual(empty.cleared, [])
@@ -63,5 +63,9 @@ assert.equal(full.lastSavedAt, 1_700_000_000_000)
 // Round-trip: sanitized blob is idempotent (what Supabase stores is what we re-read)
 const again = sanitizeHarborProgress(full)
 assert.deepEqual(again, full)
+
+assert.ok(compareLeaderboardScores({ gold: 20, correctCount: 1, clearedCount: 0 }, { gold: 10, correctCount: 99, clearedCount: 9 }) < 0)
+assert.ok(compareLeaderboardScores({ gold: 10, correctCount: 5, clearedCount: 0 }, { gold: 10, correctCount: 2, clearedCount: 9 }) < 0)
+assert.equal(compareLeaderboardScores({ gold: 1, correctCount: 1, clearedCount: 1 }, { gold: 1, correctCount: 1, clearedCount: 1 }), 0)
 
 console.log('harborQuest.smoke: ok')

@@ -469,6 +469,8 @@ function main() {
   assert.ok(existsSync(new URL('./MatchDefinitionModal.tsx', import.meta.url)), 'match modal')
   assert.match(learnCss, /\.hq-match-modal\s*\{/, 'match modal styles')
   assert.match(learnCss, /\.hq-gold-chip\s*\{/, 'gold chip styles')
+  assert.ok(existsSync(new URL('./HarborLeaderboard.tsx', import.meta.url)), 'leaderboard UI')
+  assert.match(learnCss, /\.hq-board\s*\{/, 'leaderboard styles')
   const scoutLook = buildHarborProtagonist({ pose: 'seated' })
   applyLookToProtagonist(scoutLook, {
     hat: 'hat-festival',

@@ -72,10 +72,12 @@ CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide
 - Curriculum: [`apps/web/src/landing/learn/curriculum.ts`](apps/web/src/landing/learn/curriculum.ts) — Intro + Lessons 1–7 + Jyutping chart
 - Dual pane: quest brief (left) + harbor ferry stage (right)
 - Progress: `localStorage` (`yue-harbor-quest-v1`) + cloud sync for signed-in users (`harbor_quest_progress` / `GET|PUT /api/harbor-quest`). Blob fields: `cleared`, `stepCursor`, `correctCount`, `coins`, `owned`, `look`, `lastSavedAt`. Merge is monotonic (union clears/owned, max step/correct/coins/lastSavedAt; look from fresher Save Shack stamp). Save Shack / shop writes flush to Supabase immediately.
-- Migrations: [`028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) (table) + [`029_harbor_quest_progress_gear_fields.sql`](supabase/migrations/029_harbor_quest_progress_gear_fields.sql) (backfill gear fields) — apply in Supabase SQL editor if not yet pushed
+- Migrations: [`028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) (table) + [`029_harbor_quest_progress_gear_fields.sql`](supabase/migrations/029_harbor_quest_progress_gear_fields.sql) (backfill gear fields) + [`030_harbor_quest_leaderboard.sql`](supabase/migrations/030_harbor_quest_leaderboard.sql) (global ranks) — apply in Supabase SQL editor if not yet pushed
+- Global leaderboard: `GET /api/harbor-quest/leaderboard` (public); scores upsert on signed-in `PUT /api/harbor-quest`. Shown on the pier chart overlay.
+- Blob also tracks arena `gold` from Match the Definition (擂台 portal).
 - Speaker buttons use existing Azure TTS (`SpeakButton` / `yue`) on hearable Han examples
 - Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
-- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`
+- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`
 - Related: cinematic tones refresher remains `#/tones`
 
 ### Instagram / static social posts (approved look)
