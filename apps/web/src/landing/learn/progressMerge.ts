@@ -7,6 +7,8 @@ export type HarborProgress = {
   stepCursor: Record<string, number>
   /** Total correct answers (lifetime). */
   correctCount: number
+  /** Gold earned from arena minigames (lifetime). */
+  gold: number
   /** Ferry coins for the riverside outfitter. */
   coins: number
   /** Carried gear ids (inventory — hats, tops, bottoms, shoes, handhelds). */
@@ -25,6 +27,7 @@ export function emptyHarborProgress(): HarborProgress {
     cleared: [],
     stepCursor: {},
     correctCount: 0,
+    gold: 0,
     coins: 40,
     owned: [
       'hat-straw',
@@ -65,6 +68,10 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     typeof o.correctCount === 'number' && Number.isFinite(o.correctCount) && o.correctCount >= 0
       ? Math.floor(o.correctCount)
       : 0
+  const gold =
+    typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
+      ? Math.min(Math.floor(o.gold), 10_000_000)
+      : 0
   const seen = new Set<string>()
   const clearedUnique: string[] = []
   for (const id of cleared) {
@@ -84,7 +91,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     typeof o.lastSavedAt === 'number' && Number.isFinite(o.lastSavedAt) && o.lastSavedAt >= 0
       ? Math.floor(o.lastSavedAt)
       : 0
-  return { cleared: clearedUnique, stepCursor, correctCount, coins, owned, banked, look, lastSavedAt }
+  return { cleared: clearedUnique, stepCursor, correctCount, gold, coins, owned, banked, look, lastSavedAt }
 }
 
 const LOOK_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'hand', 'boat', 'lantern'] as const
@@ -165,6 +172,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     cleared,
     stepCursor,
     correctCount: Math.max(A.correctCount, B.correctCount),
+    gold: Math.max(A.gold ?? 0, B.gold ?? 0),
     coins: Math.max(A.coins ?? 0, B.coins ?? 0),
     owned,
     banked,
@@ -175,6 +183,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
 
 export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boolean {
   if (a.correctCount !== b.correctCount) return false
+  if ((a.gold ?? 0) !== (b.gold ?? 0)) return false
   if (a.cleared.length !== b.cleared.length) return false
   const aClear = [...a.cleared].sort()
   const bClear = [...b.cleared].sort()

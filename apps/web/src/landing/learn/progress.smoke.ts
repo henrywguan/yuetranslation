@@ -17,11 +17,13 @@ const a = {
   cleared: ['introduction'],
   stepCursor: { 'lesson-1': 2 },
   correctCount: 3,
+  gold: 5,
 }
 const b = {
   cleared: ['lesson-1'],
   stepCursor: { 'lesson-1': 5, 'lesson-2': 1 },
   correctCount: 10,
+  gold: 40,
   coins: 80,
   owned: ['hat-bamboo', 'hand-fan'],
   look: {
@@ -40,6 +42,7 @@ assert.deepEqual([...merged.cleared].sort(), ['introduction', 'lesson-1'])
 assert.equal(merged.stepCursor['lesson-1'], 5)
 assert.equal(merged.stepCursor['lesson-2'], 1)
 assert.equal(merged.correctCount, 10)
+assert.equal(merged.gold, 40)
 assert.equal(merged.coins, 80)
 assert.ok(merged.owned.includes('hat-bamboo'))
 assert.equal(merged.look.hat, 'hat-bamboo')

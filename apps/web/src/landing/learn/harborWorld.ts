@@ -66,8 +66,8 @@ export const HARBOR_DOCK_SPACING = 22
 /** Sideways offset from river center when the canoe is docked. */
 export const HARBOR_DOCK_X = RIVER + 0.55
 
-/** In-world visitables — Save Shack + Outfitter + Bank (fixed riverside stops). */
-export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank'
+/** In-world visitables — Save Shack + Outfitter + Bank + Chinese Arena (fixed riverside stops). */
+export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank' | 'arena'
 
 export type HarborVisitable = {
   id: HarborVisitableId
@@ -95,6 +95,12 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
     name: { en: 'Harbor Bank', zh: '港灣錢莊' },
     x: HARBOR_DOCK_X + 1.1,
     z: 28,
+  },
+  {
+    id: 'arena',
+    name: { en: 'Chinese Arena', zh: '擂台' },
+    x: -(HARBOR_DOCK_X + 1.1),
+    z: 40,
   },
 ] as const
 
@@ -2318,6 +2324,103 @@ function bankBuilding(weather: HarborWeather = 'sunny') {
   return g
 }
 
+/** Chinese Arena (擂台) — crimson pavilion + amber portal for Match the Definition. */
+function arenaBuilding(weather: HarborWeather = 'sunny') {
+  const g = new THREE.Group()
+  g.name = 'arena'
+  g.userData.visitable = 'arena'
+  g.userData.uniqueLandmark = 'arena'
+
+  // Raised stone plinth
+  g.add(hqBox(2.5, 0.16, 2.4, P.stone, 0, 0.32, 0.1))
+  for (const x of [-0.95, 0.95] as const) {
+    for (const z of [-0.7, 0.8] as const) {
+      g.add(hqPost(0.1, 0.12, 0.65, P.woodDark, x, 0.18, z, 5))
+    }
+  }
+  // Deep crimson hall body
+  g.add(hqBox(2.0, 1.15, 1.65, 0x5a2a28, 0, 1.1, 0.05))
+  g.add(hqBox(2.15, 0.12, 1.8, 0x3a1515, 0, 0.52, 0.05))
+  // Gold-trim pagoda roof
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(1.4, 0.55, 6),
+    glowMat(0x8b2e2e, 0xc4a35a, 0.35),
+  )
+  roof.position.set(0, 1.95, 0.05)
+  g.add(roof)
+  g.add(hqPost(0.07, 0.09, 0.32, P.trimGold, 0, 2.35, 0.05, 5))
+  // Pillars framing the gate
+  for (const x of [-0.7, 0.7] as const) {
+    g.add(hqPost(0.12, 0.14, 1.2, 0x2a1810, x, 0.95, 0.85, 6))
+    g.add(hqPost(0.06, 0.07, 1.2, P.trimGold, x, 0.95, 0.92, 6))
+  }
+  g.add(hqBox(1.55, 0.1, 0.12, P.trimGold, 0, 1.55, 0.88))
+
+  // Hanging 擂 banner
+  g.add(hqPost(0.05, 0.06, 2.1, P.woodDark, -1.25, 1.15, 0.7, 5))
+  g.add(hqBox(0.08, 0.08, 0.7, P.woodMid, -0.85, 2.05, 0.7))
+  g.add(hqBox(0.7, 0.55, 0.08, 0x1a1010, -0.45, 1.9, 0.7))
+  g.add(hqBox(0.76, 0.08, 0.1, P.trimGold, -0.45, 2.2, 0.7))
+  g.add(hqBox(0.76, 0.08, 0.1, P.trimGold, -0.45, 1.6, 0.7))
+  g.add(hqBox(0.32, 0.08, 0.04, 0xf0d080, -0.45, 2.0, 0.75))
+  g.add(hqBox(0.08, 0.28, 0.04, 0xf0d080, -0.45, 1.85, 0.75))
+  g.add(hqBox(0.22, 0.08, 0.04, P.jade, -0.45, 1.72, 0.75))
+
+  // Amber / gold arena portal (distinct from Save gold + Bank jade)
+  const portal = new THREE.Group()
+  portal.name = 'arena-portal'
+  portal.userData.arenaPortal = true
+  portal.userData.amberPortal = true
+  portal.position.set(0, 0.48, 2.15)
+  for (const x of [-0.5, 0.5] as const) {
+    portal.add(hqPost(0.08, 0.1, 1.5, 0x3a1515, x, 0.75, 0, 6))
+    portal.add(hqPost(0.05, 0.06, 1.5, P.trimGold, x, 0.75, 0.06, 6))
+  }
+  portal.add(hqBox(1.2, 0.12, 0.12, P.trimGold, 0, 1.55, 0))
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4, 0.07, 6, 14),
+    glowMat(0xf0d080, 0xffa020, weather === 'night' ? 1.5 : 1.1),
+  )
+  ring.position.set(0, 0.82, 0.05)
+  portal.add(ring)
+  const inner = new THREE.Mesh(
+    new THREE.TorusGeometry(0.22, 0.04, 5, 12),
+    glowMat(0x3dcfb6, 0xf0d080, weather === 'night' ? 1.2 : 0.9),
+  )
+  inner.position.set(0, 0.82, 0.08)
+  portal.add(inner)
+  const veil = new THREE.Mesh(
+    new THREE.CircleGeometry(0.36, 14),
+    new THREE.MeshLambertMaterial({
+      color: 0xffe8a0,
+      emissive: 0xc07020,
+      emissiveIntensity: weather === 'night' ? 1.2 : 0.8,
+      transparent: true,
+      opacity: 0.52,
+      flatShading: true,
+      side: THREE.DoubleSide,
+    }),
+  )
+  veil.position.set(0, 0.82, 0)
+  portal.add(veil)
+  const portalLight = new THREE.PointLight(
+    0xffb040,
+    weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
+    9,
+    2,
+  )
+  portalLight.position.set(0, 0.88, 0.25)
+  portalLight.userData.harborLanternLight = true
+  portalLight.userData.baseIntensity = portalLight.intensity
+  portalLight.userData.portalGlow = true
+  portalLight.userData.arenaPortal = true
+  portal.add(portalLight)
+  g.add(portal)
+
+  g.add(hqBox(1.15, 0.1, 1.5, P.woodMid, 0, 0.12, 1.55))
+  return g
+}
+
 function nearestVisitable(x: number, z: number): HarborVisitableId | null {
   let best: HarborVisitableId | null = null
   let bestDist = HARBOR_VISIT_RADIUS
@@ -2435,7 +2538,7 @@ export function createHarborWorld(
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
-  // Fixed visitables — Save Shack + Outfitter + Bank (always on the chart)
+  // Fixed visitables — Save Shack + Outfitter + Bank + Arena (always on the chart)
   const visitablesRoot = new THREE.Group()
   visitablesRoot.name = 'harbor-visitables'
   for (const v of HARBOR_VISITABLES) {
@@ -2444,7 +2547,9 @@ export function createHarborWorld(
         ? saveShackBuilding(weather)
         : v.id === 'bank'
           ? bankBuilding(weather)
-          : outfitterBuilding(weather)
+          : v.id === 'arena'
+            ? arenaBuilding(weather)
+            : outfitterBuilding(weather)
     building.position.set(v.x, 0, v.z)
     // Face the river
     building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2

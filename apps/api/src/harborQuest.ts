@@ -8,6 +8,8 @@ export type HarborQuestProgress = {
   cleared: string[]
   stepCursor: Record<string, number>
   correctCount: number
+  /** Arena gold from Match the Definition (lifetime). */
+  gold: number
   coins: number
   owned: string[]
   banked: string[]
@@ -43,6 +45,7 @@ const EMPTY: HarborQuestProgress = {
   cleared: [],
   stepCursor: {},
   correctCount: 0,
+  gold: 0,
   coins: 40,
   owned: [...STARTER_OWNED],
   banked: [],
@@ -68,6 +71,10 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
   const correctCount =
     typeof o.correctCount === 'number' && Number.isFinite(o.correctCount) && o.correctCount >= 0
       ? Math.min(Math.floor(o.correctCount), 1_000_000)
+      : 0
+  const gold =
+    typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
+      ? Math.min(Math.floor(o.gold), 10_000_000)
       : 0
   const seen = new Set<string>()
   const clearedUnique: string[] = []
@@ -113,6 +120,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     cleared: clearedUnique,
     stepCursor,
     correctCount,
+    gold,
     coins,
     owned: [...ownedSet],
     banked: [...bankedSet],

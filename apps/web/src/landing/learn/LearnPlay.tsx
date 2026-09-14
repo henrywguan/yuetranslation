@@ -28,6 +28,7 @@ import {
   type HarborGearSlot,
 } from './harborGear'
 import { HarborStage } from './HarborStage'
+import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
   type HarborNpcRole,
@@ -42,6 +43,7 @@ import {
   equipHarborGear,
   loadHarborProgress,
   markCorrect,
+  markGoldEarned,
   markLevelCleared,
   markStepReached,
   visitSaveShack,
@@ -92,6 +94,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
+  const [arenaOpen, setArenaOpen] = useState(false)
 
   const closeChapterScroll = useCallback(() => {
     setScrollOpen(false)
@@ -197,6 +200,12 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   )
 
   const onVisitable = useCallback((id: HarborVisitableId | null) => {
+    if (id === 'arena') {
+      setArenaOpen(true)
+      setVisitable(null)
+      setInvOpen(false)
+      return
+    }
     setVisitable(id)
     if (id) setInvOpen(false)
     if (!id) {
@@ -205,6 +214,13 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       setBankMsg(null)
     }
   }, [])
+
+  const onEarnGold = useCallback(
+    (amount: number) => {
+      pushProgress(markGoldEarned(amount))
+    },
+    [pushProgress],
+  )
 
   const onSave = useCallback(() => {
     const p = visitSaveShack()
@@ -362,6 +378,22 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
               +{pop.amount}
             </span>
           ))}
+        </button>
+        <button
+          type="button"
+          className="hq-gold-chip"
+          title="Chinese arena gold — paddle to the 擂台 portal"
+          aria-label={`Arena gold ${progressSnap.gold ?? 0}. Open Match the Definition`}
+          onClick={() => {
+            setArenaOpen(true)
+            setVisitable(null)
+            setInvOpen(false)
+          }}
+        >
+          <span className="hq-gold-chip-icon" aria-hidden="true">
+            金
+          </span>
+          <span className="hq-gold-chip-val">{progressSnap.gold ?? 0}</span>
         </button>
         <button
           type="button"
@@ -759,6 +791,13 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           speakerRole={speakerForStep(stepIndex)}
         />
       </div>
+
+      <MatchDefinitionModal
+        open={arenaOpen}
+        gold={progressSnap.gold ?? 0}
+        onClose={() => setArenaOpen(false)}
+        onEarnGold={onEarnGold}
+      />
     </div>
   )
 }

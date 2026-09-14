@@ -129,6 +129,13 @@ export function markCorrect() {
   return commit(p)
 }
 
+export function markGoldEarned(amount: number) {
+  const p = read()
+  const n = Math.max(0, Math.floor(amount))
+  if (n > 0) p.gold = Math.max(0, Math.floor(p.gold ?? 0)) + n
+  return commit(p)
+}
+
 /** Stamp a visit to the Save Shack (persists look + progress timestamp). */
 export function visitSaveShack(): HarborProgress {
   const p = read()
