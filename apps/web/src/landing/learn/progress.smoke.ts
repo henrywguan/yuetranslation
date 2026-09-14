@@ -72,4 +72,18 @@ assert.equal(mergedLegacy.coins, 12, 'merge must not refill spent coins from leg
 assert.ok(mergedLegacy.owned.includes('hat-bamboo'))
 assert.equal(mergedLegacy.look.hat, 'hat-bamboo', 'local Save Shack look wins on newer stamp')
 
+
+// Banked gear stays out of carried inventory across merge
+const bankBlob = sanitizeHarborProgress({
+  ...emptyHarborProgress(),
+  owned: ['hat-straw', 'top-harbor', 'bottom-travel', 'shoes-leather', 'hand-none', 'hat-bamboo'],
+  banked: ['hat-bamboo'],
+  coins: 20,
+})
+assert.ok(!bankBlob.owned.includes('hat-bamboo'), 'banked gear removed from carried')
+assert.ok(bankBlob.banked.includes('hat-bamboo'))
+const mergedBank = mergeHarborProgress(bankBlob, emptyHarborProgress())
+assert.ok(mergedBank.banked.includes('hat-bamboo'))
+assert.ok(!mergedBank.owned.includes('hat-bamboo'))
+
 console.log('harborProgress.smoke: ok')

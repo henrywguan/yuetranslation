@@ -10,6 +10,7 @@ export type HarborQuestProgress = {
   correctCount: number
   coins: number
   owned: string[]
+  banked: string[]
   look: {
     hat: string
     top: string
@@ -44,13 +45,14 @@ const EMPTY: HarborQuestProgress = {
   correctCount: 0,
   coins: 40,
   owned: [...STARTER_OWNED],
+  banked: [],
   look: { ...DEFAULT_LOOK },
   lastSavedAt: 0,
 }
 
 /** Sanitize progress payloads from clients / DB. */
 export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
-  if (!raw || typeof raw !== 'object') return { ...EMPTY, cleared: [], stepCursor: { ...EMPTY.stepCursor }, owned: [...EMPTY.owned], look: { ...EMPTY.look } }
+  if (!raw || typeof raw !== 'object') return { ...EMPTY, cleared: [], stepCursor: { ...EMPTY.stepCursor }, owned: [...EMPTY.owned], banked: [], look: { ...EMPTY.look } }
   const o = raw as Record<string, unknown>
   const cleared = Array.isArray(o.cleared)
     ? o.cleared.filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length < 80)
@@ -90,10 +92,17 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
       }
     }
   }
+  const starterSet = new Set<string>(STARTER_OWNED)
+  const bankedSet = new Set<string>()
+  if (Array.isArray(o.banked)) {
+    for (const id of o.banked) {
+      if (typeof id === 'string' && KNOWN_GEAR.has(id) && !starterSet.has(id)) bankedSet.add(id)
+    }
+  }
   const ownedSet = new Set<string>(STARTER_OWNED)
   if (Array.isArray(o.owned)) {
     for (const id of o.owned) {
-      if (typeof id === 'string' && KNOWN_GEAR.has(id)) ownedSet.add(id)
+      if (typeof id === 'string' && KNOWN_GEAR.has(id) && !bankedSet.has(id)) ownedSet.add(id)
     }
   }
   const lastSavedAt =
@@ -106,6 +115,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     correctCount,
     coins,
     owned: [...ownedSet],
+    banked: [...bankedSet],
     look,
     lastSavedAt,
   }

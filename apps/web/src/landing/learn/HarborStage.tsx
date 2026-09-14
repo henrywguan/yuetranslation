@@ -19,7 +19,7 @@ type HarborStageProps = {
   immersive?: boolean
   /** Equipped River Scout look. */
   look: HarborLook
-  /** Landmark visit (Save Shack / Outfitter). */
+  /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
 }
 

@@ -7,6 +7,7 @@ assert.deepEqual(empty.stepCursor, {})
 assert.equal(empty.correctCount, 0)
 assert.equal(empty.coins, 40, 'null → starter coins')
 assert.ok(empty.owned.includes('hat-straw'))
+assert.deepEqual(empty.banked, [])
 assert.equal(empty.look.hat, 'hat-straw')
 assert.equal(empty.lastSavedAt, 0)
 
@@ -27,6 +28,7 @@ const full = sanitizeHarborProgress({
   correctCount: 12.7,
   coins: 55.2,
   owned: ['hat-bamboo', 'nope', 'hand-fan'],
+  banked: ['hat-festival', 'hat-straw', 'nope'],
   look: {
     hat: 'hat-festival',
     top: 'top-jade',
@@ -42,6 +44,9 @@ assert.deepEqual(full.stepCursor, { 'lesson-1': 2, ok: 4 })
 assert.equal(full.correctCount, 12)
 assert.equal(full.coins, 55)
 assert.ok(full.owned.includes('hat-bamboo'))
+assert.ok(full.banked.includes('hat-festival'))
+assert.ok(!full.banked.includes('hat-straw'), 'starters cannot be banked')
+assert.ok(!full.owned.includes('hat-festival'), 'banked gear not carried')
 assert.ok(full.owned.includes('hand-fan'))
 assert.ok(full.owned.includes('hat-straw'), 'starter gear kept')
 assert.equal(full.look.hat, 'hat-festival')

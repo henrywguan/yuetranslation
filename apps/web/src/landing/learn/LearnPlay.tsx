@@ -32,12 +32,14 @@ import {
   isLevelCleared,
   isLevelUnlocked,
   buyHarborGear,
+  depositHarborGear,
   equipHarborGear,
   loadHarborProgress,
   markCorrect,
   markLevelCleared,
   markStepReached,
   visitSaveShack,
+  withdrawHarborGear,
   type HarborProgress,
 } from './progress'
 import { QuestPanel } from './QuestPanel'
@@ -68,6 +70,8 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [shopSlot, setShopSlot] = useState<HarborGearSlot>('hat')
   const [saveFlash, setSaveFlash] = useState<string | null>(null)
   const [shopMsg, setShopMsg] = useState<string | null>(null)
+  const [invOpen, setInvOpen] = useState(false)
+  const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
 
   useEffect(() => {
@@ -79,6 +83,8 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setVisitable(null)
     setSaveFlash(null)
     setShopMsg(null)
+    setBankMsg(null)
+    setInvOpen(false)
     setCoinPops([])
   }, [levelId])
 
@@ -149,9 +155,11 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
 
   const onVisitable = useCallback((id: HarborVisitableId | null) => {
     setVisitable(id)
+    if (id) setInvOpen(false)
     if (!id) {
       setSaveFlash(null)
       setShopMsg(null)
+      setBankMsg(null)
     }
   }, [])
 
@@ -175,6 +183,46 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   )
 
   const onEquip = useCallback(
+    (slot: HarborGearSlot, id: HarborGearId) => {
+      const res = equipHarborGear(slot, id)
+      if (!res.ok) {
+        setShopMsg(res.reason)
+        return
+      }
+      pushProgress(res.progress)
+      setShopMsg(`Equipped ${harborGearById(id)?.name.en ?? id}.`)
+    },
+    [pushProgress],
+  )
+
+
+  const onDeposit = useCallback(
+    (id: HarborGearId) => {
+      const res = depositHarborGear(id)
+      if (!res.ok) {
+        setBankMsg(res.reason)
+        return
+      }
+      pushProgress(res.progress)
+      setBankMsg(`Banked ${harborGearById(id)?.name.en ?? id}.`)
+    },
+    [pushProgress],
+  )
+
+  const onWithdraw = useCallback(
+    (id: HarborGearId) => {
+      const res = withdrawHarborGear(id)
+      if (!res.ok) {
+        setBankMsg(res.reason)
+        return
+      }
+      pushProgress(res.progress)
+      setBankMsg(`Withdrew ${harborGearById(id)?.name.en ?? id}.`)
+    },
+    [pushProgress],
+  )
+
+  const onInvEquip = useCallback(
     (slot: HarborGearSlot, id: HarborGearId) => {
       const res = equipHarborGear(slot, id)
       if (!res.ok) {
@@ -262,6 +310,21 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
             </span>
           ))}
         </div>
+        <button
+          type="button"
+          className={`hq-inv-btn${invOpen ? ' is-open' : ''}`}
+          aria-label="Inventory"
+          aria-pressed={invOpen}
+          title="Inventory"
+          onClick={() => {
+            setInvOpen((v) => !v)
+            setVisitable(null)
+            setShopMsg(null)
+            setBankMsg(null)
+          }}
+        >
+          Pack
+        </button>
       </header>
 
       {visitable === 'save-shack' ? (
@@ -354,6 +417,158 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
             })}
           </ul>
           {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
+          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+            Cast off
+          </button>
+        </aside>
+      ) : null}
+
+      {invOpen ? (
+        <aside className="hq-visit-panel hq-visit-panel--inv" role="dialog" aria-label="Inventory">
+          <p className="hq-visit-kicker">Inventory · 行囊</p>
+          <h2 className="hq-visit-title">Your pack</h2>
+          <p className="hq-visit-body">
+            Gear you carry · wear it here · bank extras at the Harbor Bank portal
+          </p>
+          <div className="hq-shop-slots" role="tablist" aria-label="Gear slots">
+            {HARBOR_GEAR_SLOTS.map((slot) => (
+              <button
+                key={slot}
+                type="button"
+                role="tab"
+                aria-selected={shopSlot === slot}
+                className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
+                onClick={() => setShopSlot(slot)}
+              >
+                {slot}
+              </button>
+            ))}
+          </div>
+          <ul className="hq-shop-list">
+            {harborGearForSlot(shopSlot)
+              .filter((item) => progressSnap.owned.includes(item.id))
+              .map((item) => {
+                const equipped = progressSnap.look[shopSlot] === item.id
+                return (
+                  <li key={item.id} className={`hq-shop-item${equipped ? ' is-equipped' : ''}`}>
+                    <span
+                      className="hq-shop-swatch"
+                      style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
+                      aria-hidden="true"
+                    />
+                    <div className="hq-shop-meta">
+                      <span className="hq-shop-name">{item.name.en}</span>
+                      <span className="hq-shop-name-zh" lang="zh-HK">
+                        {item.name.zh}
+                      </span>
+                      <span className="hq-shop-price">{equipped ? 'Wearing' : 'In pack'}</span>
+                    </div>
+                    <div className="hq-shop-actions">
+                      <button
+                        type="button"
+                        className="hq-btn hq-btn--ghost hq-btn--tiny"
+                        disabled={equipped}
+                        onClick={() => onInvEquip(shopSlot, item.id)}
+                      >
+                        {equipped ? 'On' : 'Wear'}
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+          </ul>
+          {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
+          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setInvOpen(false)}>
+            Close pack
+          </button>
+        </aside>
+      ) : null}
+
+      {visitable === 'bank' ? (
+        <aside className="hq-visit-panel hq-visit-panel--bank" role="dialog" aria-label="Harbor Bank">
+          <p className="hq-visit-kicker">Harbor Bank · 港灣錢莊</p>
+          <h2 className="hq-visit-title">Jade vault</h2>
+          <p className="hq-visit-body">
+            Deposit gear through the cyan portal · starter kit stays on the Scout
+          </p>
+          <div className="hq-shop-slots" role="tablist" aria-label="Gear slots">
+            {HARBOR_GEAR_SLOTS.map((slot) => (
+              <button
+                key={slot}
+                type="button"
+                role="tab"
+                aria-selected={shopSlot === slot}
+                className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
+                onClick={() => setShopSlot(slot)}
+              >
+                {slot}
+              </button>
+            ))}
+          </div>
+          <p className="hq-bank-section">In pack</p>
+          <ul className="hq-shop-list">
+            {harborGearForSlot(shopSlot)
+              .filter((item) => progressSnap.owned.includes(item.id) && item.price > 0)
+              .map((item) => {
+                const equipped = progressSnap.look[shopSlot] === item.id
+                return (
+                  <li key={item.id} className={`hq-shop-item${equipped ? ' is-equipped' : ''}`}>
+                    <span
+                      className="hq-shop-swatch"
+                      style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
+                      aria-hidden="true"
+                    />
+                    <div className="hq-shop-meta">
+                      <span className="hq-shop-name">{item.name.en}</span>
+                      <span className="hq-shop-name-zh" lang="zh-HK">
+                        {item.name.zh}
+                      </span>
+                      <span className="hq-shop-price">{equipped ? 'Wearing' : 'Carried'}</span>
+                    </div>
+                    <div className="hq-shop-actions">
+                      <button
+                        type="button"
+                        className="hq-btn hq-btn--primary hq-btn--tiny"
+                        onClick={() => onDeposit(item.id)}
+                      >
+                        Bank
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+          </ul>
+          <p className="hq-bank-section">In vault</p>
+          <ul className="hq-shop-list">
+            {harborGearForSlot(shopSlot)
+              .filter((item) => (progressSnap.banked ?? []).includes(item.id))
+              .map((item) => (
+                <li key={item.id} className="hq-shop-item">
+                  <span
+                    className="hq-shop-swatch"
+                    style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
+                    aria-hidden="true"
+                  />
+                  <div className="hq-shop-meta">
+                    <span className="hq-shop-name">{item.name.en}</span>
+                    <span className="hq-shop-name-zh" lang="zh-HK">
+                      {item.name.zh}
+                    </span>
+                    <span className="hq-shop-price">Banked</span>
+                  </div>
+                  <div className="hq-shop-actions">
+                    <button
+                      type="button"
+                      className="hq-btn hq-btn--ghost hq-btn--tiny"
+                      onClick={() => onWithdraw(item.id)}
+                    >
+                      Take
+                    </button>
+                  </div>
+                </li>
+              ))}
+          </ul>
+          {bankMsg ? <p className="hq-visit-msg">{bankMsg}</p> : null}
           <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
             Cast off
           </button>

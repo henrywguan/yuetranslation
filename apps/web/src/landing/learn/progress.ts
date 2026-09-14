@@ -16,8 +16,11 @@ import {
 } from './progressMerge'
 import { HARBOR_LEVELS } from './curriculum'
 import {
+  HARBOR_DEFAULT_LOOK,
   HARBOR_STARTER_OWNED,
   harborGearById,
+  sanitizeBankedGear,
+  sanitizeCarriedGear,
   sanitizeHarborLook,
   sanitizeOwnedGear,
   type HarborGearId,
@@ -130,10 +133,12 @@ export function markCorrect() {
 /** Stamp a visit to the Save Shack (persists look + progress timestamp). */
 export function visitSaveShack(): HarborProgress {
   const p = read()
+  const banked = sanitizeBankedGear(p.banked)
   const next = commit({
     ...p,
     look: sanitizeHarborLook(p.look),
-    owned: sanitizeOwnedGear(p.owned),
+    owned: sanitizeCarriedGear(p.owned, banked),
+    banked,
     lastSavedAt: Date.now(),
   })
   // Save Shack is an explicit cloud checkpoint — don't wait on the debounce.
@@ -147,7 +152,9 @@ export function buyHarborGear(
   const item = harborGearById(id)
   if (!item) return { ok: false, reason: 'Unknown item.' }
   const p = read()
-  const owned = new Set(sanitizeOwnedGear(p.owned))
+  const banked = new Set(sanitizeBankedGear(p.banked))
+  if (banked.has(id)) return { ok: false, reason: 'Already in the bank — withdraw it first.' }
+  const owned = new Set(sanitizeCarriedGear(p.owned, banked))
   if (owned.has(id)) return { ok: false, reason: 'Already owned.' }
   const price = Math.max(0, Math.floor(item.price))
   const coins = Math.max(0, Math.floor(p.coins))
@@ -157,7 +164,8 @@ export function buyHarborGear(
   const progress = commit({
     ...p,
     coins: coins - price,
-    owned: sanitizeOwnedGear([...owned]),
+    owned: sanitizeCarriedGear([...owned], banked),
+    banked: [...banked] as HarborGearId[],
     look: sanitizeHarborLook(look),
   })
   flushHarborProgressCloud(progress)
@@ -172,13 +180,70 @@ export function equipHarborGear(
   if (!item) return { ok: false, reason: 'Unknown item.' }
   if (item.slot !== slot) return { ok: false, reason: 'Wrong slot.' }
   const p = read()
-  const owned = new Set(sanitizeOwnedGear(p.owned.length ? p.owned : [...HARBOR_STARTER_OWNED]))
-  if (!owned.has(id)) return { ok: false, reason: 'Not owned — buy it first.' }
+  const banked = sanitizeBankedGear(p.banked)
+  const owned = new Set(
+    sanitizeCarriedGear(p.owned.length ? p.owned : [...HARBOR_STARTER_OWNED], banked),
+  )
+  if (!owned.has(id)) return { ok: false, reason: 'Not in your pack — buy or withdraw it first.' }
   const look: HarborLook = { ...sanitizeHarborLook(p.look), [slot]: id }
   const progress = commit({
     ...p,
     owned: [...owned],
+    banked,
     look: sanitizeHarborLook(look),
+  })
+  flushHarborProgressCloud(progress)
+  return { ok: true, progress }
+}
+
+
+/** Move a carried piece into the Harbor Bank (starters stay on the Scout). */
+export function depositHarborGear(
+  id: HarborGearId,
+): { ok: true; progress: HarborProgress } | { ok: false; reason: string } {
+  const item = harborGearById(id)
+  if (!item) return { ok: false, reason: 'Unknown item.' }
+  if ((HARBOR_STARTER_OWNED as readonly string[]).includes(id)) {
+    return { ok: false, reason: 'Starter gear stays with the Scout.' }
+  }
+  const p = read()
+  const banked = new Set(sanitizeBankedGear(p.banked))
+  if (banked.has(id)) return { ok: false, reason: 'Already banked.' }
+  const owned = new Set(sanitizeCarriedGear(p.owned, banked))
+  if (!owned.has(id)) return { ok: false, reason: 'Not in your pack.' }
+  owned.delete(id)
+  banked.add(id)
+  let look = sanitizeHarborLook(p.look)
+  if (look[item.slot] === id) {
+    look = { ...look, [item.slot]: HARBOR_DEFAULT_LOOK[item.slot] }
+  }
+  const progress = commit({
+    ...p,
+    owned: sanitizeCarriedGear([...owned], banked),
+    banked: sanitizeBankedGear([...banked]),
+    look,
+  })
+  flushHarborProgressCloud(progress)
+  return { ok: true, progress }
+}
+
+/** Withdraw a banked piece back into the Scout's pack. */
+export function withdrawHarborGear(
+  id: HarborGearId,
+): { ok: true; progress: HarborProgress } | { ok: false; reason: string } {
+  const item = harborGearById(id)
+  if (!item) return { ok: false, reason: 'Unknown item.' }
+  const p = read()
+  const banked = new Set(sanitizeBankedGear(p.banked))
+  if (!banked.has(id)) return { ok: false, reason: 'Not in the bank.' }
+  banked.delete(id)
+  const owned = new Set(sanitizeCarriedGear(p.owned, banked))
+  owned.add(id)
+  const progress = commit({
+    ...p,
+    owned: sanitizeCarriedGear([...owned], banked),
+    banked: sanitizeBankedGear([...banked]),
+    look: sanitizeHarborLook(p.look),
   })
   flushHarborProgressCloud(progress)
   return { ok: true, progress }

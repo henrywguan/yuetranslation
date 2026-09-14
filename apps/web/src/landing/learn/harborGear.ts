@@ -121,6 +121,23 @@ export function sanitizeOwnedGear(raw: unknown): HarborGearId[] {
   return [...starter] as HarborGearId[]
 }
 
+/** Non-starter gear stored at the Harbor Bank (starters always stay on the Scout). */
+export function sanitizeBankedGear(raw: unknown): HarborGearId[] {
+  const starters = new Set<string>(HARBOR_STARTER_OWNED)
+  const set = new Set<string>()
+  if (!Array.isArray(raw)) return []
+  for (const id of raw) {
+    if (typeof id === 'string' && BY_ID.has(id) && !starters.has(id)) set.add(id)
+  }
+  return [...set] as HarborGearId[]
+}
+
+/** Carried inventory with banked pieces removed (starters always kept). */
+export function sanitizeCarriedGear(ownedRaw: unknown, bankedRaw: unknown = []): HarborGearId[] {
+  const banked = new Set(sanitizeBankedGear(bankedRaw))
+  return sanitizeOwnedGear(ownedRaw).filter((id) => !banked.has(id))
+}
+
 function mat(color: number) {
   return new THREE.MeshLambertMaterial({ color, flatShading: true })
 }

@@ -60,8 +60,8 @@ export const HARBOR_DOCK_SPACING = 22
 /** Sideways offset from river center when the canoe is docked. */
 export const HARBOR_DOCK_X = RIVER + 0.55
 
-/** In-world visitables — Save Shack + Outfitter (fixed riverside stops). */
-export type HarborVisitableId = 'save-shack' | 'outfitter'
+/** In-world visitables — Save Shack + Outfitter + Bank (fixed riverside stops). */
+export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank'
 
 export type HarborVisitable = {
   id: HarborVisitableId
@@ -83,6 +83,12 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
     name: { en: 'River Outfitter', zh: '河畔衣鋪' },
     x: -(HARBOR_DOCK_X + 1.1),
     z: 16,
+  },
+  {
+    id: 'bank',
+    name: { en: 'Harbor Bank', zh: '港灣錢莊' },
+    x: HARBOR_DOCK_X + 1.1,
+    z: 28,
   },
 ] as const
 
@@ -1371,6 +1377,114 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
   return g
 }
 
+
+/** Harbor Bank — jade vault + cyan portal (distinct from the Save Shack gold portal). */
+function bankBuilding(weather: HarborWeather = 'sunny') {
+  const g = new THREE.Group()
+  g.name = 'bank'
+  g.userData.visitable = 'bank'
+  g.userData.uniqueLandmark = 'bank'
+
+  // Raised stone plinth
+  g.add(hqBox(2.4, 0.18, 2.6, P.stone, 0, 0.35, 0.2))
+  for (const x of [-0.95, 0.95] as const) {
+    for (const z of [-0.7, 0.9] as const) {
+      g.add(hqPost(0.1, 0.12, 0.7, P.woodDark, x, 0.2, z, 5))
+    }
+  }
+  // Ink-stone vault body (deeper than Save Shack teal)
+  g.add(hqBox(1.9, 1.25, 1.7, 0x243038, 0, 1.15, 0.15))
+  g.add(hqBox(2.05, 0.14, 1.85, P.stone, 0, 0.55, 0.15))
+  // Jade ridge roof (not gold pagoda)
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(1.35, 0.5, 6),
+    glowMat(0x2a8a78, 0x3dcfb6, 0.35),
+  )
+  roof.position.set(0, 2.05, 0.15)
+  g.add(roof)
+  g.add(hqPost(0.07, 0.09, 0.3, P.jade, 0, 2.4, 0.15, 5))
+  // Iron vault door
+  g.add(hqBox(0.55, 0.85, 0.08, 0x1a2228, 0, 0.95, 1.0))
+  g.add(hqBox(0.12, 0.12, 0.06, P.jade, 0.12, 0.95, 1.05))
+  g.add(hqBox(0.35, 0.08, 0.05, P.trimGold, 0, 1.45, 1.05))
+
+  // Hanging 銀 bank sign (jade glyphs — distinct from Save 存)
+  g.add(hqPost(0.05, 0.06, 2.0, P.woodDark, 1.2, 1.15, 0.9, 5))
+  g.add(hqBox(0.08, 0.08, 0.65, P.woodMid, 0.85, 2.05, 0.9))
+  g.add(hqBox(0.7, 0.55, 0.08, 0x102028, 0.45, 1.9, 0.9))
+  g.add(hqBox(0.76, 0.08, 0.1, P.jade, 0.45, 2.2, 0.9))
+  g.add(hqBox(0.76, 0.08, 0.1, P.jade, 0.45, 1.6, 0.9))
+  g.add(hqBox(0.32, 0.08, 0.04, 0xa8ffe8, 0.45, 2.0, 0.95))
+  g.add(hqBox(0.08, 0.28, 0.04, 0xa8ffe8, 0.45, 1.85, 0.95))
+  g.add(hqBox(0.22, 0.08, 0.04, P.trimGold, 0.45, 1.72, 0.95))
+
+  // Coin relief on facade
+  for (const x of [-0.55, 0.55] as const) {
+    const coin = new THREE.Mesh(
+      new THREE.TorusGeometry(0.14, 0.04, 4, 10),
+      glowMat(0xd4a040, 0xffc050, 0.25),
+    )
+    coin.position.set(x, 1.25, 1.02)
+    g.add(coin)
+  }
+
+  // Jade / cyan portal — uniquely identifiable vs Save Shack gold portal
+  const portal = new THREE.Group()
+  portal.name = 'bank-portal'
+  portal.userData.jadePortal = true
+  portal.userData.bankPortal = true
+  portal.position.set(0, 0.5, 2.35)
+  for (const x of [-0.5, 0.5] as const) {
+    portal.add(hqPost(0.08, 0.1, 1.55, 0x1a4840, x, 0.78, 0, 6))
+    portal.add(hqPost(0.05, 0.06, 1.55, P.jade, x, 0.78, 0.06, 6))
+  }
+  portal.add(hqBox(1.2, 0.12, 0.12, P.jade, 0, 1.6, 0))
+  portal.add(hqBox(1.15, 0.06, 0.08, 0xa8ffe8, 0, 1.68, 0))
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4, 0.065, 6, 14),
+    glowMat(0x3dcfb6, 0x70ffe0, weather === 'night' ? 1.5 : 1.05),
+  )
+  ring.position.set(0, 0.85, 0.05)
+  portal.add(ring)
+  const inner = new THREE.Mesh(
+    new THREE.TorusGeometry(0.22, 0.035, 5, 12),
+    glowMat(0xa8ffe8, 0x3dcfb6, weather === 'night' ? 1.2 : 0.85),
+  )
+  inner.position.set(0, 0.85, 0.08)
+  portal.add(inner)
+  const veil = new THREE.Mesh(
+    new THREE.CircleGeometry(0.36, 14),
+    new THREE.MeshLambertMaterial({
+      color: 0x80ffe8,
+      emissive: 0x1a8a78,
+      emissiveIntensity: weather === 'night' ? 1.15 : 0.75,
+      transparent: true,
+      opacity: 0.5,
+      flatShading: true,
+      side: THREE.DoubleSide,
+    }),
+  )
+  veil.position.set(0, 0.85, 0)
+  portal.add(veil)
+  const portalLight = new THREE.PointLight(
+    0x50e8c8,
+    weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
+    9,
+    2,
+  )
+  portalLight.position.set(0, 0.9, 0.25)
+  portalLight.userData.harborLanternLight = true
+  portalLight.userData.baseIntensity = portalLight.intensity
+  portalLight.userData.portalGlow = true
+  portalLight.userData.jadePortal = true
+  portal.add(portalLight)
+  g.add(portal)
+
+  // Approach stones
+  g.add(hqBox(1.1, 0.1, 1.4, P.stone, 0, 0.12, 1.7))
+  return g
+}
+
 function nearestVisitable(x: number, z: number): HarborVisitableId | null {
   let best: HarborVisitableId | null = null
   let bestDist = HARBOR_VISIT_RADIUS
@@ -1471,11 +1585,16 @@ export function createHarborWorld(
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
-  // Fixed visitables — Save Shack + Outfitter (always on the chart)
+  // Fixed visitables — Save Shack + Outfitter + Bank (always on the chart)
   const visitablesRoot = new THREE.Group()
   visitablesRoot.name = 'harbor-visitables'
   for (const v of HARBOR_VISITABLES) {
-    const building = v.id === 'save-shack' ? saveShackBuilding(weather) : outfitterBuilding(weather)
+    const building =
+      v.id === 'save-shack'
+        ? saveShackBuilding(weather)
+        : v.id === 'bank'
+          ? bankBuilding(weather)
+          : outfitterBuilding(weather)
     building.position.set(v.x, 0, v.z)
     // Face the river
     building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
