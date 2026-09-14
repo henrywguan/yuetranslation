@@ -266,6 +266,20 @@ export function clampOrbitDistance(distance: number): number {
 }
 
 /**
+ * Maps-style pinch → orbit distance.
+ * Fingers spreading apart → zoom in (closer camera); pinching together → zoom out (farther).
+ */
+export function orbitDistanceFromPinch(
+  startDistance: number,
+  startSpan: number,
+  span: number,
+): number {
+  if (startSpan <= 1) return clampOrbitDistance(startDistance)
+  const scale = startSpan / Math.max(1, span)
+  return clampOrbitDistance(startDistance * scale)
+}
+
+/**
  * Camera offset from the look-at point.
  * yaw 0 = behind the canoe (−Z), increasing yaw orbits clockwise when viewed from above.
  */
@@ -2562,7 +2576,7 @@ export function createHarborWorld(
     }
   }
 
-  // Finger / mouse: drag = orbit; pinch / wheel = OSRS zoom; tap = move-to-location
+  // Finger / mouse: drag = orbit; pinch / wheel = zoom; tap = move-to-location
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
@@ -2579,7 +2593,7 @@ export function createHarborWorld(
   let activePointer: number | null = null
   const ORBIT_SENS = 0.0052
   const WHEEL_ZOOM_SENS = 0.012
-  /** Active pointers for OSRS-style pinch zoom (two fingers). */
+  /** Active pointers for maps-style pinch zoom (two fingers). */
   const pointers = new Map<number, { x: number; y: number }>()
   let pinchStartSpan = 0
   let pinchStartDistance = ORBIT_DISTANCE
@@ -2625,14 +2639,12 @@ export function createHarborWorld(
     if (!pointers.has(e.pointerId)) return
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
-    // Two-finger pinch → zoom (fingers apart = zoom out, like OSRS)
+    // Two-finger pinch → zoom (spread = zoom in, pinch = zoom out)
     if (pointers.size >= 2) {
       if (!pinching) beginPinch()
       const span = pointerSpan()
       if (pinchStartSpan > 1) {
-        // Fingers apart → zoom out (farther), fingers together → zoom in — OSRS-style
-        const scale = span / pinchStartSpan
-        distanceTarget = clampOrbitDistance(pinchStartDistance * scale)
+        distanceTarget = orbitDistanceFromPinch(pinchStartDistance, pinchStartSpan, span)
       }
       return
     }
