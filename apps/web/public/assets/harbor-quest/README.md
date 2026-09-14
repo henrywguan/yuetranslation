@@ -22,12 +22,13 @@ Original Harbor / Jiangnan kit — **not** extracted from a RuneScape cache and 
 
 Do not replace these with ripped game files.
 
-## Coin ching + BGM (Web Audio)
+## Coin ching + BGM + scroll (Web Audio)
 
-Ferry-coin pickup and riverside BGM are synthesized in the browser (no WAV):
+Ferry-coin pickup, riverside BGM, and chapter-scroll cues are synthesized in the browser (no WAV):
 
 - `harborCoinSfx.ts` — soft metal “ching” on correct casts
 - `harborBgm.ts` — original Chinese pentatonic ambient loop (RS-like pacing, not a Jagex track)
+- `harborScrollSfx.ts` — paper rustle + wood roller for chapter scroll open / close
 
 Do not replace with ripped game audio.
 

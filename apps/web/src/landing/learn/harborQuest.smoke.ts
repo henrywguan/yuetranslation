@@ -316,6 +316,10 @@ function main() {
   assert.ok(playSrc.includes('hq-compass-disc'), 'OSRS compass disc on explore FAB')
   assert.ok(playSrc.includes('hq-compass-sparkle'), 'gold sparkle animation on compass')
   assert.ok(playSrc.includes('hq-play-title-en'), 'chapter title condensed to English line + Chinese line')
+  assert.ok(playSrc.includes('hq-play-bar-title--tap'), 'chapter title is tappable')
+  assert.ok(playSrc.includes('hq-scroll-modal'), 'chapter opens Chinese scroll modal')
+  assert.ok(playSrc.includes('playHarborScrollOpen'), 'scroll open plays unfurl SFX')
+  assert.ok(playSrc.includes('playHarborScrollClose'), 'scroll close plays roll-up SFX')
   assert.ok(playSrc.includes('setInvOpen(true)'), 'coin chip opens inventory')
   assert.ok(playSrc.includes('Open inventory'), 'Save Shack opens inventory')
   assert.ok(playSrc.includes('Teleport to chapter'), 'Save Shack chapter teleport')
@@ -326,6 +330,10 @@ function main() {
   assert.doesNotMatch(playSrc, /hq-btn--hud[^>]*>\s*Textbook/, 'top Textbook button removed')
 
   assert.match(playSrc, /setTalking\(false\)/, 'explore FAB exits dialogue')
+
+  const scrollSfxSrc = readFileSync(new URL('./harborScrollSfx.ts', import.meta.url), 'utf8')
+  assert.match(scrollSfxSrc, /export function playHarborScrollOpen/, 'scroll open SFX export')
+  assert.match(scrollSfxSrc, /export function playHarborScrollClose/, 'scroll close SFX export')
 
   // Chao tone letters must load via Noto Sans subset (latin cut omits U+02E5–U+02E9)
   const indexHtml = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../index.html'), 'utf8')
@@ -340,6 +348,9 @@ function main() {
   const chaoTextSrc = readFileSync(new URL('./JyutpingChaoText.tsx', import.meta.url), 'utf8')
   assert.match(chaoTextSrc, /JyutpingSylText/, 'free-text Jyutping uses hear-chip SylText path')
   const learnCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), './learn.css'), 'utf8')
+  assert.match(learnCss, /\.hq-scroll-sheet\s*\{/, 'scroll sheet styles')
+  assert.match(learnCss, /hq-scroll-unfurl/, 'scroll unfurl animation')
+  assert.match(learnCss, /\.hq-play-bar-title--tap\s*\{/, 'tappable chapter title styles')
   assert.match(learnCss, /#041018 28%/, 'top HUD scrim is light (not a heavy overlay)')
   assert.match(learnCss, /\.hq-choice-sub[\s\S]*?Noto Sans/, 'choice subs force Noto Sans Latin stack')
   assert.match(learnCss, /\.hq-feedback-text[\s\S]*?\.chao-face[\s\S]*?Noto Sans Chao/, 'jade feedback Chao uses Noto Sans Chao')
