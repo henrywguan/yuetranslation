@@ -83,6 +83,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [saveFlash, setSaveFlash] = useState<string | null>(null)
   const [shopMsg, setShopMsg] = useState<string | null>(null)
   const [invOpen, setInvOpen] = useState(false)
+  const [teleportOpen, setTeleportOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
 
@@ -97,6 +98,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setShopMsg(null)
     setBankMsg(null)
     setInvOpen(false)
+    setTeleportOpen(false)
     setCoinPops([])
   }, [levelId])
 
@@ -356,6 +358,60 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
             Save progress & look
           </button>
           {saveFlash ? <p className="hq-visit-msg">{saveFlash}</p> : null}
+          <div className="hq-visit-actions">
+            <button
+              type="button"
+              className="hq-btn hq-btn--ghost"
+              onClick={() => {
+                setInvOpen(true)
+                setVisitable(null)
+                setTeleportOpen(false)
+                setShopMsg(null)
+                setBankMsg(null)
+              }}
+            >
+              Open inventory
+            </button>
+            <button
+              type="button"
+              className={`hq-btn hq-btn--ghost${teleportOpen ? ' is-on' : ''}`}
+              aria-expanded={teleportOpen}
+              onClick={() => setTeleportOpen((v) => !v)}
+            >
+              {teleportOpen ? 'Hide chapters' : 'Teleport to chapter'}
+            </button>
+          </div>
+          {teleportOpen ? (
+            <ul className="hq-teleport-list" aria-label="Campaign chapters">
+              {HARBOR_LEVELS.map((lv) => {
+                const ids = HARBOR_LEVELS.map((l) => l.id)
+                const unlocked = isLevelUnlocked(lv.id, ids, progressSnap)
+                const here = lv.id === levelId
+                return (
+                  <li key={lv.id}>
+                    <button
+                      type="button"
+                      className={`hq-teleport-btn${here ? ' is-here' : ''}${!unlocked ? ' is-locked' : ''}`}
+                      disabled={!unlocked || here}
+                      onClick={() => {
+                        setTeleportOpen(false)
+                        setVisitable(null)
+                        onOpenLevel(lv.id)
+                      }}
+                    >
+                      <span className="hq-teleport-ch">
+                        {lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}
+                      </span>
+                      <span className="hq-teleport-title">{lv.title.en}</span>
+                      <span className="hq-teleport-status">
+                        {here ? 'Here' : !unlocked ? 'Locked' : 'Teleport'}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : null}
           <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
             Cast off
           </button>

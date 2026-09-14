@@ -280,6 +280,20 @@ export const HARBOR_TAP_MOVE_SPEED = 4.2
 /** Stop when this close to the destination marker. */
 export const HARBOR_TAP_ARRIVE = 0.4
 
+/**
+ * |x| beyond this is walkable bank — the canoe stays in the river channel.
+ * Tap land to disembark; tap the moored boat (or water beside it) to board again.
+ */
+export const HARBOR_LAND_EDGE = RIVER + 0.9
+/** On-foot walk speed (OSRS click-to-walk). */
+export const HARBOR_WALK_SPEED = 3.4
+/** Reach the moored canoe to board again. */
+export const HARBOR_REBOARD_RADIUS = 1.75
+
+export function isHarborLand(x: number): boolean {
+  return Math.abs(x) >= HARBOR_LAND_EDGE
+}
+
 /** Clamp a free-move point onto the playable river corridor. */
 /** How far inland the Scout may walk (bank lanes → foothill roads). */
 export const HARBOR_EXPLORE_X = 14.5
@@ -288,6 +302,14 @@ export function clampHarborMoveTarget(x: number, z: number): { x: number; z: num
   const maxX = HARBOR_EXPLORE_X
   return {
     x: Math.min(maxX, Math.max(-maxX, x)),
+    z: Math.min(248, Math.max(-4, z)),
+  }
+}
+
+/** Keep the canoe in the river / pier lane (no driving through inland roads). */
+export function clampHarborBoatTarget(x: number, z: number): { x: number; z: number } {
+  return {
+    x: Math.min(HARBOR_LAND_EDGE, Math.max(-HARBOR_LAND_EDGE, x)),
     z: Math.min(248, Math.max(-4, z)),
   }
 }
@@ -2264,8 +2286,9 @@ export function createHarborWorld(
   }
   scene.add(visitablesRoot)
 
-    const scout = boat.getObjectByName('river-scout') ?? boat
-  applyLookToProtagonist(scout, currentLook)
+  let scout = boat.getObjectByName('river-scout') as THREE.Object3D | null
+  if (scout) applyLookToProtagonist(scout, currentLook)
+  else applyLookToProtagonist(boat, currentLook)
 
   let activeVisitable: HarborVisitableId | null = null
   const emitVisitable = (id: HarborVisitableId | null) => {
@@ -2305,9 +2328,16 @@ export function createHarborWorld(
   let raf = 0
   let last = performance.now()
 
-  // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target)
+    // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target)
   let moveTarget = { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
   let playerDirected = false
+  /** Crew the canoe (`boat`) or walk the Scout on land (`foot`). */
+  let travelMode: 'boat' | 'foot' = 'boat'
+  let footX = boatX
+  let footZ = voyageZ
+  let wantBoard = false
+  const scoutSeat = { x: 0, y: 0.38, z: -0.05 }
+
   const destMarker = clickMarker()
   scene.add(destMarker)
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
@@ -2316,11 +2346,38 @@ export function createHarborWorld(
   const raycaster = new THREE.Raycaster()
 
   const setMoveTarget = (x: number, z: number, fromPlayer: boolean) => {
-    const clamped = clampHarborMoveTarget(x, z)
+    const clamped =
+      travelMode === 'boat' ? clampHarborBoatTarget(x, z) : clampHarborMoveTarget(x, z)
     moveTarget = clamped
     playerDirected = fromPlayer
     destMarker.position.set(clamped.x, 0.06, clamped.z)
     destMarker.visible = fromPlayer
+  }
+
+  const disembark = (towardX: number) => {
+    if (travelMode === 'foot' || !scout) return
+    const side = towardX === 0 ? (boatX >= 0 ? 1 : -1) : Math.sign(towardX) || 1
+    boat.remove(scout)
+    scene.add(scout)
+    footX = boatX + side * 0.9
+    footZ = voyageZ
+    if (Math.abs(footX) < HARBOR_LAND_EDGE) footX = side * HARBOR_LAND_EDGE
+    scout.position.set(footX, 0, footZ)
+    scout.rotation.set(0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0)
+    travelMode = 'foot'
+    wantBoard = false
+  }
+
+  const boardBoat = () => {
+    if (travelMode !== 'foot' || !scout) return
+    scene.remove(scout)
+    boat.add(scout)
+    scout.position.set(scoutSeat.x, scoutSeat.y, scoutSeat.z)
+    scout.rotation.set(0, Math.PI, 0)
+    travelMode = 'boat'
+    wantBoard = false
+    footX = boatX
+    footZ = voyageZ
   }
 
   const tryTapMove = (clientX: number, clientY: number) => {
@@ -2330,7 +2387,27 @@ export function createHarborWorld(
     ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
     raycaster.setFromCamera(ndc, camera)
     if (!raycaster.ray.intersectPlane(groundPlane, hitPoint)) return
-    setMoveTarget(hitPoint.x, hitPoint.z, true)
+    const tx = hitPoint.x
+    const tz = hitPoint.z
+    if (travelMode === 'boat') {
+      if (isHarborLand(tx)) {
+        disembark(tx)
+        setMoveTarget(tx, tz, true)
+      } else {
+        setMoveTarget(tx, tz, true)
+      }
+      return
+    }
+    // On foot: walk inland, or return to the moored canoe to board
+    const distBoat = Math.hypot(tx - boatX, tz - voyageZ)
+    if (!isHarborLand(tx) || distBoat <= HARBOR_REBOARD_RADIUS * 0.7) {
+      wantBoard = true
+      const side = Math.sign(footX || boatX) || 1
+      setMoveTarget(boatX + side * 0.2, voyageZ, true)
+    } else {
+      wantBoard = false
+      setMoveTarget(tx, tz, true)
+    }
   }
 
   // Finger / mouse: drag = orbit; pinch / wheel = OSRS zoom; tap = move-to-location
@@ -2503,52 +2580,95 @@ export function createHarborWorld(
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
 
-    // OSRS tap-to-move: paddle straight toward the destination (quest or player tap)
-    if (!playerDirected) {
+    // OSRS tap-to-move: paddle on water or walk on land (quest docks when crewing)
+    if (!playerDirected && travelMode === 'boat') {
       const dock = dockPoseForProgress(progress)
       moveTarget = { x: dock.side * HARBOR_DOCK_X, z: dock.z }
     }
-    const dx = moveTarget.x - boatX
-    const dz = moveTarget.z - voyageZ
-    const dist = Math.hypot(dx, dz)
-    const arrived = dist < HARBOR_TAP_ARRIVE
-    if (!arrived) {
-      const speed = reduced ? HARBOR_TAP_MOVE_SPEED * 0.45 : HARBOR_TAP_MOVE_SPEED
-      const step = Math.min(dist, speed * dt)
-      boatX += (dx / dist) * step
-      voyageZ += (dz / dist) * step
-      const face = Math.atan2(dx, dz)
-      boat.rotation.y += (face - boat.rotation.y) * Math.min(1, dt * 6)
-    } else if (playerDirected) {
-      destMarker.visible = false
-    }
-    const docked = arrived && !playerDirected
-    const approaching = !playerDirected && dist < 10
 
-    // Pulse the yellow destination X while en route
-    if (destMarker.visible && !reduced) {
-      const pulse = 1 + Math.sin(now * 0.012) * 0.12
-      destMarker.scale.setScalar(pulse)
-    }
+    if (travelMode === 'boat') {
+      const dx = moveTarget.x - boatX
+      const dz = moveTarget.z - voyageZ
+      const dist = Math.hypot(dx, dz)
+      const arrived = dist < HARBOR_TAP_ARRIVE
+      if (!arrived) {
+        const speed = reduced ? HARBOR_TAP_MOVE_SPEED * 0.45 : HARBOR_TAP_MOVE_SPEED
+        const step = Math.min(dist, speed * dt)
+        boatX += (dx / dist) * step
+        voyageZ += (dz / dist) * step
+        const face = Math.atan2(dx, dz)
+        boat.rotation.y += (face - boat.rotation.y) * Math.min(1, dt * 6)
+      } else if (playerDirected) {
+        destMarker.visible = false
+      }
+      const approaching = !playerDirected && dist < 10
 
-    waterPhase += dt * (reduced ? 0.4 : 1.2)
-    const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
-    const sway = reduced || approaching || playerDirected ? 0 : Math.sin(waterPhase * 0.7) * 0.18
-    boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
-    // Open Save Shack / Outfitter when the canoe paddles up
-    emitVisitable(nearestVisitable(boatX, voyageZ))
-    if (arrived && !playerDirected) {
+      // Pulse the yellow destination X while en route
+      if (destMarker.visible && !reduced) {
+        const pulse = 1 + Math.sin(now * 0.012) * 0.12
+        destMarker.scale.setScalar(pulse)
+      }
+
+      waterPhase += dt * (reduced ? 0.4 : 1.2)
+      const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
+      const sway = reduced || approaching || playerDirected ? 0 : Math.sin(waterPhase * 0.7) * 0.18
+      boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
+      // Open Save Shack / Outfitter when the canoe paddles up
+      emitVisitable(nearestVisitable(boatX, voyageZ))
+    } else {
+      // On foot — OSRS click-to-walk toward the yellow X
+      const dx = moveTarget.x - footX
+      const dz = moveTarget.z - footZ
+      const dist = Math.hypot(dx, dz)
+      const arrived = dist < HARBOR_TAP_ARRIVE
+      if (!arrived) {
+        const speed = reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED
+        const step = Math.min(dist, speed * dt)
+        footX += (dx / dist) * step
+        footZ += (dz / dist) * step
+        const face = Math.atan2(dx, dz)
+        if (scout) {
+          scout.rotation.y += (face - scout.rotation.y) * Math.min(1, dt * 8)
+          const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
+          scout.position.set(footX, walkBob, footZ)
+        }
+      } else {
+        if (playerDirected) destMarker.visible = false
+        if (wantBoard) boardBoat()
+      }
+
+      if (destMarker.visible && !reduced) {
+        const pulse = 1 + Math.sin(now * 0.012) * 0.12
+        destMarker.scale.setScalar(pulse)
+      }
+
+      // Moored canoe bobbing at the bank
+      waterPhase += dt * (reduced ? 0.4 : 1.0)
+      const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.03
+      boat.position.set(boatX, 0.08 + bob, voyageZ)
+      emitVisitable(nearestVisitable(footX, footZ))
+    }
+    if (travelMode === 'boat' && !playerDirected) {
       const dock = dockPoseForProgress(progress)
-      const yawBoat = dock.side * 0.35
-      boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
+      const atDock =
+        Math.hypot(dock.side * HARBOR_DOCK_X - boatX, dock.z - voyageZ) < HARBOR_TAP_ARRIVE
+      if (atDock) {
+        const yawBoat = dock.side * 0.35
+        boat.rotation.y += (yawBoat - boat.rotation.y) * Math.min(1, dt * 4)
+      }
     }
-    boat.rotation.z = reduced ? 0 : Math.sin(waterPhase * 1.7) * 0.03
+    if (travelMode === 'boat') {
+      boat.rotation.z = reduced ? 0 : Math.sin(waterPhase * 1.7) * 0.03
+    } else {
+      boat.rotation.z *= Math.max(0, 1 - dt * 4)
+    }
 
     for (let i = 0; i < wakes.length; i++) {
       const w = wakes[i]!
       w.position.set(boat.position.x * (1 - i * 0.12), 0.04, boat.position.z - 0.7 - i * 0.55)
       w.scale.setScalar(1 + Math.sin(waterPhase * 3 + i) * 0.15)
-      ;(w.material as THREE.MeshLambertMaterial).opacity = docked ? 0.12 - i * 0.02 : 0.28 - i * 0.04
+      ;(w.material as THREE.MeshLambertMaterial).opacity =
+        travelMode === 'foot' ? 0.06 - i * 0.01 : 0.28 - i * 0.04
     }
 
     water.position.z = voyageZ + 60
@@ -2625,9 +2745,9 @@ export function createHarborWorld(
     pitch += (pitchTarget - pitch) * orbitLerp
     distance += (distanceTarget - distance) * orbitLerp
 
-    const lookX = boat.position.x
-    const lookY = 0.75
-    const lookZ = boat.position.z + 1.2
+    const lookX = travelMode === 'foot' && scout ? scout.position.x : boat.position.x
+    const lookY = travelMode === 'foot' ? 0.95 : 0.75
+    const lookZ = (travelMode === 'foot' && scout ? scout.position.z : boat.position.z) + 1.2
     const off = orbitCameraOffset(yaw, pitch, distance)
     const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
     camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
@@ -2746,7 +2866,7 @@ export function createHarborWorld(
     },
     setLook(look) {
       currentLook = { ...look }
-      applyLookToProtagonist(scout, currentLook)
+      if (scout) applyLookToProtagonist(scout, currentLook)
       applyVesselLook(boat, weather, currentLook)
     },
     resize,
