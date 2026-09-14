@@ -692,6 +692,44 @@ function pierSegment() {
 }
 
 
+
+/** Floating speech bubble — OSRS-style cue that this NPC has dialogue. */
+export const HARBOR_DIALOGUE_BUBBLE = true as const
+
+function speechBubbleIcon() {
+  const g = new THREE.Group()
+  g.name = 'speech-bubble'
+  g.userData.speechBubble = true
+  g.userData.billboard = true
+  // Parchment bubble body
+  g.add(hqBox(0.44, 0.32, 0.08, 0xfff8ec, 0, 0.1, 0))
+  g.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, 0.28, 0))
+  g.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, -0.08, 0))
+  // Soft gold rim (readable against sky / trees)
+  g.add(hqBox(0.5, 0.03, 0.06, P.trimGold, 0, 0.3, 0.01))
+  g.add(hqBox(0.5, 0.03, 0.06, P.trimGold, 0, -0.1, 0.01))
+  // Tail pointing down toward the head
+  g.add(hqBox(0.1, 0.1, 0.07, 0xfff8ec, -0.08, -0.18, 0))
+  g.add(hqBox(0.07, 0.08, 0.07, 0xfff8ec, -0.12, -0.26, 0))
+  // Three ink dots (…)
+  for (const x of [-0.12, 0, 0.12] as const) {
+    g.add(hqBox(0.06, 0.06, 0.05, 0x1a2830, x, 0.1, 0.05))
+  }
+  return g
+}
+
+/** Mark an NPC as talkable and hover a speech bubble above their head. */
+function attachDialogueBubble(npc: THREE.Object3D) {
+  npc.userData.hasDialogue = true
+  // Avoid double-attaching if chunk rebuilds call this twice
+  if (npc.getObjectByName('speech-bubble')) return
+  const bubble = speechBubbleIcon()
+  // Local Y sits above the oversized head (group scale still applies)
+  bubble.position.set(0.12, 1.68, 0.06)
+  bubble.userData.bubbleBaseY = bubble.position.y
+  npc.add(bubble)
+}
+
 /**
  * Low-poly Chinese-styled figure — RS-era proportions (oversized head,
  * mitten hands, 6-gon limbs) + Harbor clothing kit by role.
@@ -1240,6 +1278,8 @@ function placeDockStops(group: THREE.Group, chunkIndex: number, rng: () => numbe
     // Stand on the pier deck, facing the river
     npc.position.set(side * (RIVER + 1.55), 0.55, z + (rng() - 0.5) * 0.6)
     npc.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2
+    // Pier hosts are quest speakers — show Talk cue above their head
+    attachDialogueBubble(npc)
     group.add(npc)
 
     // Extra villager variety near the landing
@@ -2161,6 +2201,16 @@ export function createHarborWorld(
 
     for (const g of chunkGroups.values()) {
       g.traverse((o) => {
+        // Speech bubbles face the camera and gently bob (OSRS Talk cue)
+        if (o.userData.speechBubble) {
+          o.lookAt(camera.position)
+          const base = (o.userData.bubbleBaseY as number | undefined) ?? o.position.y
+          o.userData.bubbleBaseY = base
+          if (!reduced) {
+            o.position.y = base + Math.sin(waterPhase * 2.6 + base * 10) * 0.045
+          }
+          return
+        }
         if (!(o instanceof THREE.Mesh)) return
         if (o.userData.bird) {
           const phase = (o.userData.phase as number) + waterPhase
