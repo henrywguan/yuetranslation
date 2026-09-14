@@ -7,6 +7,8 @@
  * Source: https://opencantonese.org/books/cantonese-life-1/pronunciation-guide
  */
 
+import { LIFE0_LEVELS } from './curriculumLife0'
+
 export type LearnLine = { en: string; zh: string }
 
 /** Han clip for Azure Cantonese TTS (characters beat bare Jyutping). */
@@ -50,10 +52,22 @@ export type BuildStep = {
 
 export type QuestStep = TeachStep | PickStep | BuildStep
 
+/** Voyage campaign — Sounds = Pronunciation Guide; Life 0 = Unit 0 Getting started. */
+export type HarborCampaignId = 'sounds' | 'life0'
+
+/** World dressing — river harbor vs Lingnan bamboo academy garden. */
+export type HarborRealmId = 'river' | 'bamboo'
+
 export type HarborLevel = {
   id: string
-  /** Open Cantonese lesson slug under pronunciation-guide/. */
+  /** Open Cantonese lesson slug under the campaign book root. */
   ocLesson: string
+  /** Override book root (Unit 0 lives outside pronunciation-guide/). */
+  ocBase?: string
+  /** Campaign this pier belongs to (default: sounds). */
+  campaign?: HarborCampaignId
+  /** Voyage biome dressing (default from campaign). */
+  realm?: HarborRealmId
   chapter: number
   title: LearnLine
   blurb: LearnLine
@@ -66,11 +80,54 @@ export type HarborLevel = {
 
 const OC_BASE = 'https://opencantonese.org/books/cantonese-life-1/pronunciation-guide'
 
-export function openCantoneseLessonUrl(level: HarborLevel): string {
-  return `${OC_BASE}/${level.ocLesson}`
+export const HARBOR_CAMPAIGNS: {
+  id: HarborCampaignId
+  title: LearnLine
+  blurb: LearnLine
+  realm: HarborRealmId
+  ocHome: string
+}[] = [
+  {
+    id: 'sounds',
+    title: { en: 'Campaign 1 · Sounds', zh: '航線一 · 聲韻' },
+    blurb: {
+      en: 'Pronunciation Guide — initials, finals, and six tones.',
+      zh: '發音導讀——聲母、韻母、六聲。',
+    },
+    realm: 'river',
+    ocHome: OC_BASE,
+  },
+  {
+    id: 'life0',
+    title: { en: 'Campaign 2 · Life Unit 0', zh: '航線二 · 生活第0課' },
+    blurb: {
+      en: 'Getting started — listen-first classroom talk, daily phrases, numbers.',
+      zh: '開始——先聽課堂用語、日常說話、數字。',
+    },
+    realm: 'bamboo',
+    ocHome: 'https://opencantonese.org/books/cantonese-life-1/unit-0',
+  },
+]
+
+export function levelCampaign(level: HarborLevel): HarborCampaignId {
+  return level.campaign ?? 'sounds'
 }
 
-export const HARBOR_LEVELS: HarborLevel[] = [
+export function levelRealm(level: HarborLevel): HarborRealmId {
+  if (level.realm) return level.realm
+  return levelCampaign(level) === 'life0' ? 'bamboo' : 'river'
+}
+
+export function openCantoneseLessonUrl(level: HarborLevel): string {
+  const base = level.ocBase ?? OC_BASE
+  return `${base.replace(/\/$/, '')}/${level.ocLesson}`
+}
+
+export function levelsForCampaign(campaign: HarborCampaignId): HarborLevel[] {
+  return HARBOR_LEVELS.filter((l) => levelCampaign(l) === campaign)
+}
+
+const SOUNDS_LEVELS: HarborLevel[] = [
   {
     id: 'introduction',
     ocLesson: 'introduction',
@@ -871,16 +928,21 @@ export const HARBOR_LEVELS: HarborLevel[] = [
         },
       },
     ],
-  },
-]
+  },]
+
+export const HARBOR_LEVELS: HarborLevel[] = [...SOUNDS_LEVELS, ...LIFE0_LEVELS]
 
 export function levelById(id: string | null | undefined): HarborLevel | undefined {
   if (!id) return undefined
   return HARBOR_LEVELS.find((l) => l.id === id)
 }
 
+/** Next pier within the same campaign (not across campaigns). */
 export function nextLevelId(id: string): string | null {
-  const i = HARBOR_LEVELS.findIndex((l) => l.id === id)
-  if (i < 0 || i >= HARBOR_LEVELS.length - 1) return null
-  return HARBOR_LEVELS[i + 1]!.id
+  const cur = levelById(id)
+  if (!cur) return null
+  const list = levelsForCampaign(levelCampaign(cur))
+  const i = list.findIndex((l) => l.id === id)
+  if (i < 0 || i >= list.length - 1) return null
+  return list[i + 1]!.id
 }

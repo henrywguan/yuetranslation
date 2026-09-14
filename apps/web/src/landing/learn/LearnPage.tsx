@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { openHome, openLearn } from '../../lib/siteLinks'
 import { useDocumentMeta } from '../../lib/useDocumentMeta'
 import { learnLevelFromHash } from '../../lib/useHashRoute'
-import { HARBOR_LEVELS } from './curriculum'
+import { HARBOR_LEVELS, levelById, levelCampaign } from './curriculum'
 import { HarborMap, LearnSession } from './LearnPlay'
 import {
   continueHarborLevelId,
@@ -132,7 +132,11 @@ export function LearnPage() {
                 </a>
               </header>
 
-              <HarborMap progress={progress} onSelect={openLevel} />
+              <HarborMap
+                progress={progress}
+                onSelect={openLevel}
+                initialCampaign={levelCampaign(levelById(levelId) ?? HARBOR_LEVELS[0]!)}
+              />
 
               <footer className="hq-chart-actions">
                 <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setChartOpen(false)}>

@@ -23,6 +23,9 @@ import {
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
+/** Voyage dressing — river harbor vs Lingnan bamboo academy garden. */
+export type HarborRealmId = 'river' | 'bamboo'
+
 export type HarborWeather = 'sunny' | 'cloudy' | 'rainy' | 'night'
 
 export type HarborWorldOptions = {
@@ -34,6 +37,8 @@ export type HarborWorldOptions = {
   weather?: HarborWeather
   /** Equipped character look (recolors River Scout + handheld). */
   look?: HarborLook
+  /** Campaign biome dressing (flora / fauna / bank tint). */
+  realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
 }
@@ -1692,16 +1697,131 @@ function placeDockStops(group: THREE.Group, chunkIndex: number, rng: () => numbe
   }
 }
 
+
+/** Bamboo culm cluster — Lingnan academy garden (Campaign 2 realm). */
+function bambooClump(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'bamboo-clump'
+  const n = 3 + Math.floor(rng() * 3)
+  for (let i = 0; i < n; i++) {
+    const h = 1.4 + rng() * 1.8
+    const x = (rng() - 0.5) * 0.55
+    const z = (rng() - 0.5) * 0.55
+    g.add(hqPost(0.04, 0.055, h, 0x3a7a48, x, h / 2, z, 5))
+    // Node rings
+    for (let k = 1; k <= 3; k++) {
+      g.add(hqBox(0.07, 0.03, 0.07, 0x2a5a38, x, (h * k) / 4, z))
+    }
+    // Leaf sprays
+    g.add(hqCanopy(0.22 + rng() * 0.1, 0x4a9a58, x + 0.12, h * 0.85, z))
+    if (rng() > 0.4) g.add(hqCanopy(0.18, 0x3a8a48, x - 0.1, h * 0.7, z + 0.08))
+  }
+  return g
+}
+
+/** Osmanthus shrub — soft gold blossoms for the bamboo realm. */
+function osmanthusBush(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'osmanthus'
+  const h = 0.55 + rng() * 0.25
+  g.add(hqPost(0.04, 0.06, h * 0.5, 0x2a1c14, 0, h * 0.25, 0, 4))
+  g.add(hqCanopy(0.34 + rng() * 0.1, 0x3a6a40, 0, h * 0.55, 0))
+  const golds = [0xe8c060, 0xd4a848, 0xf0d078]
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 + rng() * 0.4
+    const r = 0.12 + rng() * 0.16
+    g.add(
+      hqBox(
+        0.07,
+        0.06,
+        0.07,
+        golds[Math.floor(rng() * golds.length)]!,
+        Math.cos(a) * r,
+        h * 0.65 + rng() * 0.12,
+        Math.sin(a) * r,
+      ),
+    )
+  }
+  return g
+}
+
+/** Lotus pad + bloom on pond margins (bamboo realm reeds/pier). */
+function lotusPad(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'lotus'
+  const pad = new THREE.Mesh(new THREE.CircleGeometry(0.28 + rng() * 0.12, 7), mat(0x2f7a48))
+  pad.rotation.x = -Math.PI / 2
+  pad.position.y = 0.04
+  g.add(pad)
+  if (rng() > 0.35) {
+    const bloom = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.16, 5), mat(0xf0c0d0))
+    bloom.position.y = 0.14
+    g.add(bloom)
+  }
+  return g
+}
+
+/** Magpie — classic Chinese omen bird for the bamboo realm. */
+function magpie(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'magpie'
+  g.userData.fauna = 'magpie'
+  g.userData.phase = rng() * Math.PI * 2
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.12, 5, 4), mat(0x1a1a22))
+  body.scale.set(1.2, 0.7, 0.8)
+  body.position.y = 0.2
+  g.add(body)
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 3), mat(0xf0f0f2))
+  belly.position.set(0, 0.16, 0.06)
+  g.add(belly)
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 0.12), mat(0x2a2a38))
+  wing.position.set(0, 0.22, 0)
+  g.add(wing)
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.22), mat(0x1a1a28))
+  tail.position.set(0, 0.2, -0.16)
+  g.add(tail)
+  return g
+}
+
+/** Koi flash under garden ponds (bamboo realm). */
+function koi(rng: () => number) {
+  const mesh = new THREE.Mesh(
+    new THREE.ConeGeometry(0.07, 0.26, 5),
+    mat(rng() > 0.5 ? 0xe85830 : 0xf0c040),
+  )
+  mesh.rotation.z = Math.PI / 2
+  mesh.name = 'koi'
+  mesh.userData.fauna = 'koi'
+  mesh.userData.fish = true
+  mesh.userData.phase = rng() * Math.PI * 2
+  return mesh
+}
+
+export const HARBOR_BAMBOO_FLORA = ['bamboo-clump', 'osmanthus', 'lotus'] as const
+export const HARBOR_BAMBOO_FAUNA = ['magpie', 'koi'] as const
+
 function populateChunk(
   chunkIndex: number,
   group: THREE.Group,
   mats: { grass: THREE.Material; sand: THREE.Material },
   weather: HarborWeather = 'sunny',
+  realm: HarborRealmId = 'river',
 ) {
   const biome = biomeForChunk(chunkIndex)
-  const rng = mulberry32((chunkIndex + 17) * 9973)
+  const rng = mulberry32((chunkIndex + 17) * 9973 + (realm === 'bamboo' ? 42 : 0))
   const z0 = chunkIndex * CHUNK
-  const leaf = biome === 'hills' ? 0x6a8a50 : biome === 'reeds' ? 0x4a8a58 : 0x2f7a48
+  const leaf =
+    realm === 'bamboo'
+      ? biome === 'hills'
+        ? 0x5a9a58
+        : biome === 'reeds'
+          ? 0x3a8a60
+          : 0x2f8a50
+      : biome === 'hills'
+        ? 0x6a8a50
+        : biome === 'reeds'
+          ? 0x4a8a58
+          : 0x2f7a48
 
   for (const side of [-1, 1] as const) {
     // Near bank (river edge)
@@ -1829,6 +1949,22 @@ function populateChunk(
     place(group, rng, 1, () => lantern(weather), BANK + 0.5, BANK + 2.2, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('scholar', rng), BANK + 1, BANK + 3, z0)
   }
+
+
+  // Campaign realm dressing — bamboo academy garden (still Chinese-themed)
+  if (realm === 'bamboo') {
+    if (biome === 'forest' || biome === 'hills' || biome === 'village') {
+      place(group, rng, 4, () => bambooClump(rng), BANK + 0.5, BANK + 6, z0)
+      place(group, rng, 2, () => osmanthusBush(rng), BANK - 0.2, BANK + 3.5, z0)
+    }
+    if (biome === 'reeds' || biome === 'pier') {
+      place(group, rng, 3, () => lotusPad(rng), RIVER + 0.5, BANK + 1.2, z0)
+      if (rng() > 0.4) place(group, rng, 1, () => koi(rng), RIVER * 0.4, RIVER + 0.8, z0)
+    }
+    if (rng() > 0.45) place(group, rng, 1, () => magpie(rng), BANK + 1, BANK + 5, z0)
+    // Soften river fauna mix — fewer tigers, more garden birds
+  }
+
 
   // Fauna: birds overhead + occasional fish leap near the canoe lane
   const birdCount = 1 + Math.floor(rng() * 2)
@@ -2188,6 +2324,7 @@ export function createHarborWorld(
   let hue: HarborHue = options.hue ?? 'harbor'
   let reduced = Boolean(options.reducedMotion)
   let progress = Math.min(1, Math.max(0, options.progress ?? 0))
+  const realm: HarborRealmId = options.realm ?? 'river'
   let flash: 'ok' | 'no' | null = null
   let flashUntil = 0
   let disposed = false
@@ -2226,8 +2363,23 @@ export function createHarborWorld(
   const world = new THREE.Group()
   scene.add(world)
 
+  // Bamboo academy: slightly greener pond + jade bank (still Chinese-themed).
   const waterTint =
-    weather === 'night' ? 0x1a3048 : weather === 'rainy' ? 0x3a6078 : weather === 'cloudy' ? 0x4a8898 : WATER[hue]
+    realm === 'bamboo'
+      ? weather === 'night'
+        ? 0x1a3840
+        : weather === 'rainy'
+          ? 0x3a7070
+          : weather === 'cloudy'
+            ? 0x4a9088
+            : 0x3a8878
+      : weather === 'night'
+        ? 0x1a3048
+        : weather === 'rainy'
+          ? 0x3a6078
+          : weather === 'cloudy'
+            ? 0x4a8898
+            : WATER[hue]
   const waterMat = mat(waterTint, {
     transparent: true,
     opacity: weather === 'rainy' ? 0.92 : weather === 'night' ? 0.9 : 0.88,
@@ -2237,8 +2389,8 @@ export function createHarborWorld(
   water.position.set(0, 0.02, 80)
   scene.add(water)
 
-  const grassMat = mat(0x2a5a38)
-  const sandMat = mat(0xc2b280)
+  const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
+  const sandMat = mat(realm === 'bamboo' ? 0xb8b078 : 0xc2b280)
   const chunkGroups = new Map<number, THREE.Group>()
   const ACTIVE = 6
 
@@ -2258,7 +2410,7 @@ export function createHarborWorld(
     for (const idx of need) {
       if (chunkGroups.has(idx)) continue
       const g = new THREE.Group()
-      populateChunk(idx, g, { grass: grassMat, sand: sandMat }, weather)
+      populateChunk(idx, g, { grass: grassMat, sand: sandMat }, weather, realm)
       world.add(g)
       chunkGroups.set(idx, g)
     }
@@ -2571,7 +2723,8 @@ export function createHarborWorld(
     scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
     renderer.setClearColor(look.sky, 1)
     if (weather === 'sunny') {
-      waterMat.color.setHex(WATER[hue])
+      // Bamboo realm keeps jade pond tint; Sounds campaign uses pier hue water.
+      waterMat.color.setHex(realm === 'bamboo' ? 0x3a8878 : WATER[hue])
     }
   }
 
@@ -2800,6 +2953,16 @@ export function createHarborWorld(
         if (fauna === 'deer' && !reduced) {
           const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.6
           o.rotation.y += Math.sin(phase) * 0.0015
+        }
+        if (fauna === 'magpie' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 1.4
+          o.position.y = 0.08 + Math.max(0, Math.sin(phase * 1.8)) * 0.18
+          o.rotation.y += Math.sin(phase) * 0.004
+        }
+        if (fauna === 'koi' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 1.6
+          o.position.y = 0.06 + Math.max(0, Math.sin(phase)) * 0.22
+          o.rotation.z = Math.PI / 2 + Math.sin(phase) * 0.25
         }
         if (!(o instanceof THREE.Mesh)) return
         if (o.userData.bird) {

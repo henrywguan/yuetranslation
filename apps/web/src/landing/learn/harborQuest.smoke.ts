@@ -3,8 +3,12 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
   levelById,
+  levelCampaign,
+  levelRealm,
+  levelsForCampaign,
   nextLevelId,
   openCantoneseLessonUrl,
 } from '../../landing/learn/curriculum'
@@ -33,6 +37,8 @@ import {
   HARBOR_DIALOGUE_BUBBLE,
   HARBOR_SCENIC_TREES,
   HARBOR_SCENIC_SHRUBS,
+  HARBOR_BAMBOO_FLORA,
+  HARBOR_BAMBOO_FAUNA,
   HARBOR_VILLAGE_HOMES,
   HARBOR_AMBIENT_FAUNA,
   HARBOR_WEATHER_LOOK,
@@ -90,8 +96,22 @@ import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
 /** Offline: Harbor Quest curriculum integrity (no paid APIs). */
 function main() {
   assert.ok(HARBOR_LEVELS.length >= 9, 'expected intro + 7 lessons + chart')
+  assert.equal(HARBOR_CAMPAIGNS.length, 2, 'Sounds + Life Unit 0 campaigns')
+  assert.equal(levelsForCampaign('life0').length, 5, 'Unit 0 campaign pier count')
+  assert.equal(levelCampaign(levelById('life0-guess')!), 'life0')
+  assert.equal(levelRealm(levelById('life0-classroom')!), 'bamboo')
+  assert.equal(nextLevelId('life0-guess'), 'life0-classroom', 'Life0 next stays in campaign')
+  const soundsLast = levelsForCampaign('sounds').at(-1)!.id
+  assert.equal(nextLevelId(soundsLast), null, 'Sounds campaign ends at final pier')
+  assert.match(
+    openCantoneseLessonUrl(levelById('life0-daily')!),
+    /unit-0\/3-daily-expressions/,
+    'Life0 OC urls point at unit-0',
+  )
+
   assert.equal(HARBOR_LEVELS[0]!.id, 'introduction')
-  assert.equal(HARBOR_LEVELS.at(-1)!.id, 'jyutping-chart')
+  assert.ok(HARBOR_LEVELS.some((l) => l.id === 'jyutping-chart'), 'Sounds chart pier remains')
+  assert.ok(HARBOR_LEVELS.some((l) => l.id === 'life0-intro'), 'Life0 closer pier present')
 
   const ids = HARBOR_LEVELS.map((l) => l.id)
   assert.equal(new Set(ids).size, ids.length, 'unique level ids')
@@ -169,6 +189,8 @@ function main() {
   assert.ok(HARBOR_SCENIC_SHRUBS.includes('hawthorn-berry'), 'hawthorn berry bushes')
   assert.ok(HARBOR_SCENIC_SHRUBS.includes('chinese-fringe-flower'), 'Chinese fringe flower shrubs')
   assert.equal(HARBOR_SCENIC_SHRUBS.length, 3, 'scenic shrub kit')
+  assert.ok(HARBOR_BAMBOO_FLORA.includes('bamboo-clump'), 'bamboo realm flora')
+  assert.ok(HARBOR_BAMBOO_FAUNA.includes('magpie'), 'bamboo realm fauna')
   assert.ok(HARBOR_VILLAGE_HOMES.includes('jiangnan'), 'jiangnan homes')
   assert.ok(HARBOR_VILLAGE_HOMES.includes('stilt'), 'riverside stilt shops')
   assert.equal(HARBOR_VILLAGE_HOMES.length, 4, 'village home kit')
@@ -188,6 +210,17 @@ function main() {
   const around = orbitCameraOffset(Math.PI * 2, Math.PI / 6)
   assert.ok(Math.abs(around.x - behind.x) < 1e-9 && Math.abs(around.z - behind.z) < 1e-9, 'yaw wraps 360°')
   const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc, /realm === 'bamboo'/, 'voyage dresses bamboo realm')
+  assert.match(worldSrc, /HARBOR_BAMBOO_FLORA/, 'bamboo flora dressing export')
+  assert.match(worldSrc, /function bambooClump/, 'bamboo clump mesh builder')
+  assert.match(worldSrc, /function magpie/, 'magpie mesh builder')
+  assert.match(worldSrc, /function koi/, 'koi mesh builder')
+  assert.match(worldSrc, /realm === 'bamboo' \? 0x2a6a42/, 'bamboo realm grass tint')
+  const stageSrc = readFileSync(new URL('./HarborStage.tsx', import.meta.url), 'utf8')
+  assert.match(stageSrc, /realm=\{levelRealm\(level\)\}/, 'HarborStage passes realm into canvas')
+  const canvasSrc = readFileSync(new URL('./HarborWorldCanvas.tsx', import.meta.url), 'utf8')
+  assert.match(canvasSrc, /realm\?: HarborRealmId/, 'HarborWorldCanvas accepts realm prop')
+  assert.match(canvasSrc, /\[realm\]/, 'canvas recreates world when realm changes')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
   assert.equal(HARBOR_TAP_SLOP_PX, 10, 'tap vs drag pixel slop')
@@ -272,6 +305,8 @@ function main() {
   assert.ok(playSrc.includes('setInvOpen(true)'), 'coin chip opens inventory')
   assert.ok(playSrc.includes('Open inventory'), 'Save Shack opens inventory')
   assert.ok(playSrc.includes('Teleport to chapter'), 'Save Shack chapter teleport')
+  assert.ok(playSrc.includes('hq-campaign-tabs'), 'pier chart campaign tabs')
+  assert.ok(playSrc.includes("levelsForCampaign"), 'map filters by campaign')
   assert.ok(playSrc.includes('hq-teleport-list'), 'chapter teleport list')
 
   assert.doesNotMatch(playSrc, /hq-btn--hud[^>]*>\s*Textbook/, 'top Textbook button removed')
