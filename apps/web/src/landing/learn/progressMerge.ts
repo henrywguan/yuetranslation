@@ -9,8 +9,10 @@ export type HarborProgress = {
   correctCount: number
   /** Ferry coins for the riverside outfitter. */
   coins: number
-  /** Owned gear ids (hats, tops, bottoms, shoes, handhelds). */
+  /** Carried gear ids (inventory — hats, tops, bottoms, shoes, handhelds). */
   owned: string[]
+  /** Gear stored at the Harbor Bank (not carried). */
+  banked: string[]
   /** Equipped look / character outfit. */
   look: import('./harborGear').HarborLook
   /** Last Save Shack stamp (ms). */
@@ -31,6 +33,7 @@ export function emptyHarborProgress(): HarborProgress {
       'shoes-leather',
       'hand-none',
     ],
+    banked: [],
     look: {
       hat: 'hat-straw',
       top: 'top-harbor',
@@ -71,12 +74,13 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     coins = Math.min(Math.floor(o.coins), 1_000_000)
   }
   const look = sanitizeLookInline(o.look)
-  const owned = sanitizeOwnedInline(o.owned)
+  const banked = sanitizeBankedInline(o.banked)
+  const owned = sanitizeOwnedInline(o.owned, banked)
   const lastSavedAt =
     typeof o.lastSavedAt === 'number' && Number.isFinite(o.lastSavedAt) && o.lastSavedAt >= 0
       ? Math.floor(o.lastSavedAt)
       : 0
-  return { cleared: clearedUnique, stepCursor, correctCount, coins, owned, look, lastSavedAt }
+  return { cleared: clearedUnique, stepCursor, correctCount, coins, owned, banked, look, lastSavedAt }
 }
 
 const LOOK_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'hand'] as const
@@ -116,11 +120,24 @@ function sanitizeLookInline(raw: unknown): HarborProgress['look'] {
   return base
 }
 
-function sanitizeOwnedInline(raw: unknown): string[] {
+function sanitizeOwnedInline(raw: unknown, banked: string[] = []): string[] {
+  const bankedSet = new Set(banked)
   const set = new Set<string>(STARTER_OWNED)
   if (Array.isArray(raw)) {
     for (const id of raw) {
-      if (typeof id === 'string' && KNOWN_GEAR.has(id)) set.add(id)
+      if (typeof id === 'string' && KNOWN_GEAR.has(id) && !bankedSet.has(id)) set.add(id)
+    }
+  }
+  return [...set]
+}
+
+/** Bank stores non-starter gear only (starters always stay on the Scout). */
+function sanitizeBankedInline(raw: unknown): string[] {
+  const set = new Set<string>()
+  const starters = new Set<string>(STARTER_OWNED)
+  if (Array.isArray(raw)) {
+    for (const id of raw) {
+      if (typeof id === 'string' && KNOWN_GEAR.has(id) && !starters.has(id)) set.add(id)
     }
   }
   return [...set]
@@ -135,7 +152,9 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
   for (const [k, v] of Object.entries(B.stepCursor)) {
     stepCursor[k] = Math.max(stepCursor[k] ?? 0, v)
   }
-  const owned = [...new Set([...A.owned, ...B.owned])]
+  // Prefer banked when either side has it stored — then drop from carried.
+  const banked = sanitizeBankedInline([...A.banked, ...B.banked])
+  const owned = sanitizeOwnedInline([...A.owned, ...B.owned], banked)
   // Prefer the look from the fresher Save Shack stamp (local wins on equal stamps)
   const look = (B.lastSavedAt ?? 0) > (A.lastSavedAt ?? 0) ? B.look : A.look
   return {
@@ -144,6 +163,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     correctCount: Math.max(A.correctCount, B.correctCount),
     coins: Math.max(A.coins ?? 0, B.coins ?? 0),
     owned,
+    banked,
     look: look ?? A.look,
     lastSavedAt: Math.max(A.lastSavedAt ?? 0, B.lastSavedAt ?? 0),
   }
@@ -167,6 +187,10 @@ export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boole
   const bOwn = [...(b.owned ?? [])].sort()
   if (aOwn.length !== bOwn.length) return false
   for (let i = 0; i < aOwn.length; i++) if (aOwn[i] !== bOwn[i]) return false
+  const aBank = [...(a.banked ?? [])].sort()
+  const bBank = [...(b.banked ?? [])].sort()
+  if (aBank.length !== bBank.length) return false
+  for (let i = 0; i < aBank.length; i++) if (aBank[i] !== bBank[i]) return false
   for (const slot of LOOK_SLOTS) {
     if ((a.look?.[slot] ?? '') !== (b.look?.[slot] ?? '')) return false
   }
