@@ -2449,3 +2449,9 @@
     max-height: min(82dvh, 48rem);
   }
 }
+
+
+/* Gear tier chip on outfitter rows */
+.hq-shop-price {
+  text-transform: none;
+}

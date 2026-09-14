@@ -16,6 +16,7 @@ import {
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
   applyLookToProtagonist,
+  harborGearById,
   HARBOR_DEFAULT_LOOK,
   type HarborLook,
 } from './harborGear'
@@ -520,20 +521,59 @@ function lantern(weather: HarborWeather = 'sunny') {
 }
 
 /** Compact gunwale lantern — lights the canoe so night reads as night, not underexposure. */
-function boatLantern(weather: HarborWeather = 'sunny') {
+function boatLantern(
+  weather: HarborWeather = 'sunny',
+  lanternId: string = HARBOR_DEFAULT_LOOK.lantern,
+) {
+  const item = harborGearById(lanternId) ?? harborGearById(HARBOR_DEFAULT_LOOK.lantern)!
+  const paper = item.color
+  const glowCol = item.accent ?? paper
   const g = new THREE.Group()
   g.userData.harborLantern = true
   g.userData.boatLantern = true
-  g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 5))
-  const lamp = new THREE.Mesh(
-    new THREE.BoxGeometry(0.18, 0.2, 0.18),
-    glowMat(P.lantern, 0xffa040, weather === 'sunny' ? 0.35 : 1.1),
-  )
-  lamp.position.set(0, 0.5, 0)
-  g.add(lamp)
-  g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
-  // Slightly hotter than roadside lanterns so the scout stays readable at night
-  attachLanternLight(g, weather, 0.5, 0xffb060, 1.25)
+  g.userData.vesselPart = true
+  g.name = 'boat-lantern'
+  const id = item.id
+  if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
+    g.add(hqPost(0.025, 0.035, 0.5, P.woodDark, 0, 0.26, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.12, 0.28, 6),
+      glowMat(paper, glowCol, weather === 'sunny' ? 0.4 : 1.2),
+    )
+    lamp.position.set(0, 0.55, 0)
+    g.add(lamp)
+    g.add(hqBox(0.14, 0.03, 0.14, P.woodDeep, 0, 0.7, 0))
+    attachLanternLight(g, weather, 0.55, glowCol, id === 'lantern-starlight' ? 1.55 : 1.3)
+  } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
+    g.add(hqPost(0.028, 0.038, 0.45, P.woodDark, 0, 0.24, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.12, 0),
+      glowMat(paper, glowCol, weather === 'sunny' ? 0.45 : 1.25),
+    )
+    lamp.position.set(0, 0.52, 0)
+    g.add(lamp)
+    attachLanternLight(g, weather, 0.52, glowCol, 1.35)
+  } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
+    g.add(hqPost(0.03, 0.04, 0.4, P.woodDark, 0, 0.22, 0, 5))
+    g.add(hqBox(0.16, 0.2, 0.16, paper, 0, 0.5, 0))
+    const core = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.12, 0.1),
+      glowMat(glowCol, glowCol, weather === 'sunny' ? 0.5 : 1.35),
+    )
+    core.position.set(0, 0.5, 0)
+    g.add(core)
+    attachLanternLight(g, weather, 0.5, glowCol, id === 'lantern-dragon' ? 1.5 : 1.2)
+  } else {
+    g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.2, 0.18),
+      glowMat(paper, glowCol, weather === 'sunny' ? 0.35 : 1.1),
+    )
+    lamp.position.set(0, 0.5, 0)
+    g.add(lamp)
+    g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
+    attachLanternLight(g, weather, 0.5, glowCol, 1.25)
+  }
   return g
 }
 
@@ -967,34 +1007,122 @@ function bridge() {
   return g
 }
 
-function canoe(weather: HarborWeather = 'sunny') {
+function buildBoatHull(boatId: string): THREE.Group {
+  const item = harborGearById(boatId) ?? harborGearById(HARBOR_DEFAULT_LOOK.boat)!
+  const hull = item.color
+  const trim = item.accent ?? P.jade
   const g = new THREE.Group()
-  // Boxy hull + blunt bow/stern (not a smooth capsule)
-  g.add(hqBox(2.2, 0.32, 0.72, P.woodMid, 0, 0.22, 0))
-  g.add(hqBox(0.35, 0.28, 0.55, P.woodDark, 1.15, 0.24, 0))
-  g.add(hqBox(0.35, 0.28, 0.55, P.woodDark, -1.15, 0.24, 0))
-  // Thick gunwales
-  g.add(hqBox(2.15, 0.08, 0.08, P.woodDeep, 0, 0.4, 0.34))
-  g.add(hqBox(2.15, 0.08, 0.08, P.woodDeep, 0, 0.4, -0.34))
-  // Seat plank
+  g.userData.vesselPart = true
+  g.name = 'boat-hull'
+  const id = item.id
+  const length =
+    id.includes('barge') || id.includes('imperial') || id.includes('pearl')
+      ? 2.7
+      : id.includes('junk') || id.includes('merchant') || id.includes('dragon')
+        ? 2.5
+        : id.includes('bamboo') || id.includes('reed')
+          ? 2.0
+          : 2.2
+  const width =
+    id.includes('barge') || id.includes('imperial')
+      ? 0.95
+      : id.includes('junk') || id.includes('merchant')
+        ? 0.85
+        : id.includes('reed') || id.includes('bamboo')
+          ? 0.62
+          : 0.72
+  const height = id.includes('pearl') || id.includes('imperial') ? 0.4 : 0.32
+  g.add(hqBox(length, height, width, hull, 0, 0.22, 0))
+  g.add(hqBox(0.35, height * 0.88, width * 0.78, P.woodDark, length * 0.52, 0.24, 0))
+  g.add(hqBox(0.35, height * 0.88, width * 0.78, P.woodDark, -length * 0.52, 0.24, 0))
+  g.add(hqBox(length * 0.98, 0.08, 0.08, P.woodDeep, 0, 0.4, width * 0.48))
+  g.add(hqBox(length * 0.98, 0.08, 0.08, P.woodDeep, 0, 0.4, -width * 0.48))
   g.add(hqBox(0.55, 0.08, 0.4, P.woodDark, 0, 0.38, 0))
-  // Stubby mast + jade sail plane
-  g.add(hqPost(0.035, 0.045, 1.05, P.woodDeep, 0.12, 0.9, 0, 5))
-  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85), hqMat(P.jade))
-  sail.position.set(0.12, 0.95, 0.02)
+  const mastH =
+    id.includes('imperial') || id.includes('pearl') ? 1.35 : id.includes('junk') || id.includes('merchant') ? 1.2 : 1.05
+  g.add(hqPost(0.035, 0.045, mastH, P.woodDeep, 0.12, 0.9, 0, 5))
+  const sailW = id.includes('barge') || id.includes('imperial') ? 0.95 : 0.7
+  const sailH = id.includes('junk') || id.includes('merchant') ? 1.05 : 0.85
+  const sail = new THREE.Mesh(new THREE.PlaneGeometry(sailW, sailH), hqMat(trim))
+  sail.position.set(0.12, 0.95 + (mastH - 1.05) * 0.35, 0.02)
   g.add(sail)
-  // You — original River Scout mannequin (seated)
+  if (id === 'boat-dragon' || id === 'boat-imperial') {
+    g.add(hqBox(0.45, 0.22, 0.28, trim, length * 0.55, 0.55, 0))
+    g.add(hqBox(0.18, 0.12, 0.12, 0xf0d060, length * 0.62, 0.68, 0))
+  }
+  if (id === 'boat-pearl' || id === 'boat-imperial') {
+    g.add(hqBox(0.9, 0.06, width * 0.9, trim, -0.15, 0.95, 0))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, width * 0.28, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, -width * 0.28, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, 0.2, 0.7, width * 0.28, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, 0.2, 0.7, -width * 0.28, 5))
+  }
+  if (id === 'boat-bamboo') {
+    for (const x of [-0.6, -0.2, 0.2, 0.6] as const) {
+      g.add(hqBox(0.08, 0.1, width * 0.95, trim, x, 0.3, 0))
+    }
+  }
+  if (id === 'boat-reed') {
+    g.add(hqBox(length * 0.8, 0.06, width * 1.05, trim, 0, 0.36, 0))
+  }
+  if (id === 'boat-junk' || id === 'boat-merchant') {
+    g.add(hqBox(0.55, 0.35, width * 0.7, hull, -length * 0.28, 0.55, 0))
+  }
+  if (id === 'boat-jade') {
+    g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, width * 0.5))
+    g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, -width * 0.5))
+  }
+  return g
+}
+
+function canoe(
+  weather: HarborWeather = 'sunny',
+  boatId: string = HARBOR_DEFAULT_LOOK.boat,
+  lanternId: string = HARBOR_DEFAULT_LOOK.lantern,
+) {
+  const g = new THREE.Group()
+  g.name = 'river-boat'
+  g.add(buildBoatHull(boatId))
   const you = playerTraveler()
+  you.name = 'river-scout'
   you.position.set(0, 0.38, -0.05)
   you.rotation.y = Math.PI
   g.add(you)
-  // Port + starboard gunwale lanterns — night should read as lit, not muddy
-  for (const z of [0.4, -0.4] as const) {
-    const lamp = boatLantern(weather)
+  const beam = boatId.includes('barge') || boatId.includes('imperial') ? 0.52 : 0.4
+  for (const z of [beam, -beam] as const) {
+    const lamp = boatLantern(weather, lanternId)
     lamp.position.set(0.25, 0.35, z)
     g.add(lamp)
   }
   return g
+}
+
+/** Rebuild hull + lanterns on an existing boat; keep the River Scout child. */
+function applyVesselLook(boat: THREE.Object3D, weather: HarborWeather, look: HarborLook) {
+  const doomed: THREE.Object3D[] = []
+  for (const child of boat.children) {
+    if (child.userData.vesselPart || child.userData.boatLantern || child.name === 'boat-hull' || child.name === 'boat-lantern') {
+      doomed.push(child)
+    }
+  }
+  for (const child of doomed) {
+    boat.remove(child)
+    child.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      mesh.geometry?.dispose?.()
+      const mat = mesh.material as THREE.Material | THREE.Material[]
+      if (Array.isArray(mat)) mat.forEach((m) => m.dispose?.())
+      else mat?.dispose?.()
+    })
+  }
+  boat.add(buildBoatHull(look.boat))
+  const beam = look.boat.includes('barge') || look.boat.includes('imperial') ? 0.52 : 0.4
+  for (const z of [beam, -beam] as const) {
+    const lamp = boatLantern(weather, look.lantern)
+    lamp.position.set(0.25, 0.35, z)
+    boat.add(lamp)
+  }
 }
 
 
@@ -1830,7 +1958,8 @@ export function createHarborWorld(
     }
   }
 
-  const boat = canoe(weather)
+    let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
+  const boat = canoe(weather, currentLook.boat, currentLook.lantern)
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
@@ -1851,8 +1980,7 @@ export function createHarborWorld(
   }
   scene.add(visitablesRoot)
 
-  let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
-  const scout = boat.getObjectByName('river-scout') ?? boat
+    const scout = boat.getObjectByName('river-scout') ?? boat
   applyLookToProtagonist(scout, currentLook)
 
   let activeVisitable: HarborVisitableId | null = null
@@ -2301,6 +2429,7 @@ export function createHarborWorld(
     setLook(look) {
       currentLook = { ...look }
       applyLookToProtagonist(scout, currentLook)
+      applyVesselLook(boat, weather, currentLook)
     },
     resize,
     dispose() {

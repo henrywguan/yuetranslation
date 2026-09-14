@@ -45,9 +45,10 @@ assert.equal(merged.lastSavedAt, 100)
 assert.equal(harborProgressEqual(merged, merged), true)
 assert.equal(harborProgressEqual(merged, sanitizeHarborProgress(a)), false)
 
-assert.equal(HARBOR_GEAR_CATALOG.length, 25, '5 slots × 5 items')
+assert.equal(HARBOR_GEAR_CATALOG.length, 49, '5 clothing slots × 5 + boats/lanterns × 12')
 for (const slot of HARBOR_GEAR_SLOTS) {
-  assert.equal(harborGearForSlot(slot).length, 5, `${slot} kit size`)
+  const n = harborGearForSlot(slot).length
+  assert.equal(n, slot === 'boat' || slot === 'lantern' ? 12 : 5, `${slot} kit size`)
 }
 
 // Legacy cloud blob without gear fields

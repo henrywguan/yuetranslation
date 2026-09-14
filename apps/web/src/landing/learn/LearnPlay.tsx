@@ -16,6 +16,7 @@ import { playHarborCoinChing } from './harborCoinSfx'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
 import {
   HARBOR_GEAR_SLOTS,
+  HARBOR_GEAR_TIER_LABEL,
   harborGearById,
   harborGearForSlot,
   type HarborGearId,
@@ -57,6 +58,17 @@ type LearnSessionProps = {
 }
 
 /** Fullscreen harbor session — stage fills the viewport; quest HUD overlays. */
+
+const HARBOR_SLOT_LABEL: Record<HarborGearSlot, string> = {
+  hat: 'Hat',
+  top: 'Top',
+  bottom: 'Bottom',
+  shoes: 'Shoes',
+  hand: 'Hand',
+  boat: 'Boat',
+  lantern: 'Lantern',
+}
+
 export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: LearnSessionProps) {
   const level = levelById(levelId)
   const [stepIndex, setStepIndex] = useState(0)
@@ -367,7 +379,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
                 className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
                 onClick={() => setShopSlot(slot)}
               >
-                {slot}
+                {HARBOR_SLOT_LABEL[slot]}
               </button>
             ))}
           </div>
@@ -388,6 +400,8 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
                       {item.name.zh}
                     </span>
                     <span className="hq-shop-price">
+                      {HARBOR_GEAR_TIER_LABEL[item.tier].en}
+                      {' · '}
                       {item.price === 0 ? 'Starter' : `${item.price} coins`}
                       {owned ? ' · owned' : ''}
                       {equipped ? ' · on' : ''}
@@ -442,7 +456,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
                 className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
                 onClick={() => setShopSlot(slot)}
               >
-                {slot}
+                {HARBOR_SLOT_LABEL[slot]}
               </button>
             ))}
           </div>
@@ -503,7 +517,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
                 className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
                 onClick={() => setShopSlot(slot)}
               >
-                {slot}
+                {HARBOR_SLOT_LABEL[slot]}
               </button>
             ))}
           </div>

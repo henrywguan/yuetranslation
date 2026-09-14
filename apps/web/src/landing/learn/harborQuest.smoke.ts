@@ -71,6 +71,8 @@ import {
 } from '../../landing/learn/harborProtagonist'
 import {
   HARBOR_GEAR_CATALOG,
+  HARBOR_DEFAULT_LOOK,
+  HARBOR_STARTER_OWNED,
   HARBOR_GEAR_SLOTS,
   applyLookToProtagonist,
   harborGearForSlot,
@@ -300,9 +302,23 @@ function main() {
 
   
   // Save Shack + Outfitter visitables & gear kit
-  assert.equal(HARBOR_GEAR_CATALOG.length, 25, '25 clothing / handheld pieces')
+  assert.equal(HARBOR_GEAR_CATALOG.length, 49, '25 clothing + 12 boats + 12 lanterns')
+  assert.ok(HARBOR_GEAR_SLOTS.includes('boat'), 'boat gear slot')
+  assert.ok(HARBOR_GEAR_SLOTS.includes('lantern'), 'boat-lantern gear slot')
+  assert.equal(HARBOR_GEAR_CATALOG.filter((i) => i.slot === 'boat').length, 12, '12 boats across 4 tiers')
+  assert.equal(HARBOR_GEAR_CATALOG.filter((i) => i.slot === 'lantern').length, 12, '12 boat lanterns across 4 tiers')
+  assert.equal(HARBOR_DEFAULT_LOOK.boat, 'boat-canoe')
+  assert.equal(HARBOR_DEFAULT_LOOK.lantern, 'lantern-paper-amber')
+  assert.ok(HARBOR_STARTER_OWNED.includes('boat-canoe'))
+  assert.ok(HARBOR_STARTER_OWNED.includes('lantern-paper-amber'))
+
   for (const slot of HARBOR_GEAR_SLOTS) {
-    assert.equal(harborGearForSlot(slot).length, 5, `${slot} has 5 items`)
+    const n = harborGearForSlot(slot).length
+    if (slot === 'boat' || slot === 'lantern') {
+      assert.equal(n, 12, `${slot} has 12 items (3 × 4 tiers)`)
+    } else {
+      assert.equal(n, 5, `${slot} has 5 items`)
+    }
   }
   assert.equal(HARBOR_VISITABLES.length, 3, 'Save Shack + Outfitter + Bank')
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'save-shack'))
@@ -327,8 +343,10 @@ function main() {
   assert.match(worldSrc2, /attachDialogueBubble\(npc\)/, 'bubbles attach to pier dialogue hosts')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
   assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
-  assert.match(worldSrc2, /canoe\(weather\)/, 'canoe receives weather for boat lanterns')
-  assert.match(worldSrc2, /boatLantern\(weather\)/, 'port+starboard boat lanterns mounted')
+  assert.match(worldSrc2, /function buildBoatHull/, 'tiered boat hull builder')
+  assert.match(worldSrc2, /applyVesselLook/, 'look swaps boat + lanterns')
+  assert.match(worldSrc2, /canoe\(weather, currentLook\.boat, currentLook\.lantern\)/, 'canoe uses equipped boat + lantern')
+  assert.match(worldSrc2, /boatLantern\(weather, lanternId\)/, 'port+starboard lanterns use lantern gear colors')
 
   assert.match(worldSrc2, /uniqueLandmark/, 'landmarks tagged unique vs village homes')
   assert.match(worldSrc2, /setLook/, 'world can recolor scout look')

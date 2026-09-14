@@ -17,6 +17,8 @@ export type HarborQuestProgress = {
     bottom: string
     shoes: string
     hand: string
+    boat: string
+    lantern: string
   }
   lastSavedAt: number
 }
@@ -27,16 +29,14 @@ const DEFAULT_LOOK = {
   bottom: 'bottom-travel',
   shoes: 'shoes-leather',
   hand: 'hand-none',
+  boat: 'boat-canoe',
+  lantern: 'lantern-paper-amber',
 } as const
 
 const STARTER_OWNED = Object.values(DEFAULT_LOOK)
 
 const KNOWN_GEAR = new Set([
-  'hat-straw','hat-bamboo','hat-scholar','hat-fisherman','hat-festival',
-  'top-harbor','top-jade','top-merchant','top-ferry','top-night',
-  'bottom-travel','bottom-slate','bottom-reed','bottom-crimson','bottom-ink',
-  'shoes-leather','shoes-straw','shoes-lacquer','shoes-jade','shoes-storm',
-  'hand-none','hand-fan','hand-lantern','hand-oar','hand-scroll',
+  'hat-straw','hat-bamboo','hat-scholar','hat-fisherman','hat-festival','top-harbor','top-jade','top-merchant','top-ferry','top-night','bottom-travel','bottom-slate','bottom-reed','bottom-crimson','bottom-ink','shoes-leather','shoes-straw','shoes-lacquer','shoes-jade','shoes-storm','hand-none','hand-fan','hand-lantern','hand-oar','hand-scroll','boat-canoe','boat-reed','boat-bamboo','boat-sampan','boat-barge','boat-junk','boat-scholar','boat-merchant','boat-jade','boat-dragon','boat-pearl','boat-imperial','lantern-paper-amber','lantern-paper-crimson','lantern-paper-jade','lantern-silk-gold','lantern-silk-azure','lantern-oil-iron','lantern-glass-ruby','lantern-glass-sapphire','lantern-porcelain','lantern-phoenix','lantern-dragon','lantern-starlight',
 ])
 
 const EMPTY: HarborQuestProgress = {
@@ -84,7 +84,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
   const look: HarborQuestProgress['look'] = { ...DEFAULT_LOOK }
   if (o.look && typeof o.look === 'object') {
     const L = o.look as Record<string, unknown>
-    for (const slot of ['hat', 'top', 'bottom', 'shoes', 'hand'] as const) {
+    for (const slot of ['hat', 'top', 'bottom', 'shoes', 'hand', 'boat', 'lantern'] as const) {
       const id = L[slot]
       const prefix = slot === 'shoes' ? 'shoes-' : `${slot}-`
       if (typeof id === 'string' && KNOWN_GEAR.has(id) && id.startsWith(prefix)) {
