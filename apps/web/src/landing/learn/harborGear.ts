@@ -5,7 +5,9 @@
  */
 import * as THREE from 'three'
 
-export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand'
+export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand' | 'boat' | 'lantern'
+
+export type HarborGearTier = 'common' | 'mid' | 'high' | 'vip'
 
 export type HarborGearItem = {
   id: string
@@ -13,48 +15,79 @@ export type HarborGearItem = {
   name: { en: string; zh: string }
   /** Primary Lambert color for the piece. */
   color: number
-  /** Optional accent (bead, trim, blade tip). */
+  /** Optional accent (bead, trim, blade tip / sail / glow). */
   accent?: number
   /** Price in ferry coins at the outfitter. */
   price: number
+  /** Shop tier — common → VIP. */
+  tier: HarborGearTier
 }
 
-/** Five pieces per slot — smoke-tested kit size. */
+/** Clothing (5/slot) + boats & boat-lanterns (3 per tier × 4 tiers). */
 export const HARBOR_GEAR_CATALOG: readonly HarborGearItem[] = [
   // —— Hats ——
-  { id: 'hat-straw', slot: 'hat', name: { en: 'Straw traveler hat', zh: '稻草旅笠' }, color: 0xc4a860, accent: 0x3dcfb6, price: 0 },
-  { id: 'hat-bamboo', slot: 'hat', name: { en: 'Bamboo coolie hat', zh: '竹笠' }, color: 0xd8c078, accent: 0x5a7a40, price: 8 },
-  { id: 'hat-scholar', slot: 'hat', name: { en: 'Scholar soft cap', zh: '書生軟帽' }, color: 0x2a3440, accent: 0xc4a35a, price: 12 },
-  { id: 'hat-fisherman', slot: 'hat', name: { en: 'Fisherman headscarf', zh: '漁夫頭巾' }, color: 0x3a6a88, accent: 0xe8d8b0, price: 10 },
-  { id: 'hat-festival', slot: 'hat', name: { en: 'Festival jade band', zh: '節慶玉箍' }, color: 0x1a2820, accent: 0x3dcfb6, price: 18 },
+  { id: 'hat-straw', slot: 'hat', name: { en: 'Straw traveler hat', zh: '稻草旅笠' }, color: 0xc4a860, accent: 0x3dcfb6, price: 0, tier: 'common' },
+  { id: 'hat-bamboo', slot: 'hat', name: { en: 'Bamboo coolie hat', zh: '竹笠' }, color: 0xd8c078, accent: 0x5a7a40, price: 8, tier: 'common' },
+  { id: 'hat-scholar', slot: 'hat', name: { en: 'Scholar soft cap', zh: '書生軟帽' }, color: 0x2a3440, accent: 0xc4a35a, price: 12, tier: 'mid' },
+  { id: 'hat-fisherman', slot: 'hat', name: { en: 'Fisherman headscarf', zh: '漁夫頭巾' }, color: 0x3a6a88, accent: 0xe8d8b0, price: 10, tier: 'common' },
+  { id: 'hat-festival', slot: 'hat', name: { en: 'Festival jade band', zh: '節慶玉箍' }, color: 0x1a2820, accent: 0x3dcfb6, price: 18, tier: 'vip' },
 
   // —— Tops ——
-  { id: 'top-harbor', slot: 'top', name: { en: 'Harbor ink robe', zh: '港灣墨袍' }, color: 0x1e3a48, accent: 0x162830, price: 0 },
-  { id: 'top-jade', slot: 'top', name: { en: 'Jade river tunic', zh: '玉河短褂' }, color: 0x2a6a58, accent: 0x3dcfb6, price: 14 },
-  { id: 'top-merchant', slot: 'top', name: { en: 'Merchant plum coat', zh: '商賈紫褂' }, color: 0x5a2a48, accent: 0xc4a35a, price: 16 },
-  { id: 'top-ferry', slot: 'top', name: { en: 'Ferry linen wrap', zh: '渡船麻衣' }, color: 0xd8c8a0, accent: 0x8a7050, price: 11 },
-  { id: 'top-night', slot: 'top', name: { en: 'Night watch vest', zh: '夜巡背心' }, color: 0x243048, accent: 0x3dcfb6, price: 20 },
+  { id: 'top-harbor', slot: 'top', name: { en: 'Harbor ink robe', zh: '港灣墨袍' }, color: 0x1e3a48, accent: 0x162830, price: 0, tier: 'common' },
+  { id: 'top-jade', slot: 'top', name: { en: 'Jade river tunic', zh: '玉河短褂' }, color: 0x2a6a58, accent: 0x3dcfb6, price: 14, tier: 'mid' },
+  { id: 'top-merchant', slot: 'top', name: { en: 'Merchant plum coat', zh: '商賈紫褂' }, color: 0x5a2a48, accent: 0xc4a35a, price: 16, tier: 'high' },
+  { id: 'top-ferry', slot: 'top', name: { en: 'Ferry linen wrap', zh: '渡船麻衣' }, color: 0xd8c8a0, accent: 0x8a7050, price: 11, tier: 'mid' },
+  { id: 'top-night', slot: 'top', name: { en: 'Night watch vest', zh: '夜巡背心' }, color: 0x243048, accent: 0x3dcfb6, price: 20, tier: 'vip' },
 
   // —— Bottoms ——
-  { id: 'bottom-travel', slot: 'bottom', name: { en: 'Travel trousers', zh: '旅褲' }, color: 0x3a3028, price: 0 },
-  { id: 'bottom-slate', slot: 'bottom', name: { en: 'Slate work pants', zh: '石板工褲' }, color: 0x3a4450, price: 9 },
-  { id: 'bottom-reed', slot: 'bottom', name: { en: 'Reed-dyed wrap', zh: '蘆染裹腿' }, color: 0x4a5a38, price: 11 },
-  { id: 'bottom-crimson', slot: 'bottom', name: { en: 'Crimson festival pants', zh: '節慶紅褲' }, color: 0x8a2a30, price: 15 },
-  { id: 'bottom-ink', slot: 'bottom', name: { en: 'Deep ink culottes', zh: '深墨闊褲' }, color: 0x1a2430, price: 17 },
+  { id: 'bottom-travel', slot: 'bottom', name: { en: 'Travel trousers', zh: '旅褲' }, color: 0x3a3028, price: 0, tier: 'common' },
+  { id: 'bottom-slate', slot: 'bottom', name: { en: 'Slate work pants', zh: '石板工褲' }, color: 0x3a4450, price: 9, tier: 'common' },
+  { id: 'bottom-reed', slot: 'bottom', name: { en: 'Reed-dyed wrap', zh: '蘆染裹腿' }, color: 0x4a5a38, price: 11, tier: 'mid' },
+  { id: 'bottom-crimson', slot: 'bottom', name: { en: 'Crimson festival pants', zh: '節慶紅褲' }, color: 0x8a2a30, price: 15, tier: 'high' },
+  { id: 'bottom-ink', slot: 'bottom', name: { en: 'Deep ink culottes', zh: '深墨闊褲' }, color: 0x1a2430, price: 17, tier: 'high' },
 
   // —— Shoes ——
-  { id: 'shoes-leather', slot: 'shoes', name: { en: 'Leather river boots', zh: '河皮靴' }, color: 0x6a4a30, price: 0 },
-  { id: 'shoes-straw', slot: 'shoes', name: { en: 'Straw sandals', zh: '草鞋' }, color: 0xc8b070, accent: 0x5a4a30, price: 6 },
-  { id: 'shoes-lacquer', slot: 'shoes', name: { en: 'Lacquer court shoes', zh: '漆木朝鞋' }, color: 0x1a1814, accent: 0xc4a35a, price: 14 },
-  { id: 'shoes-jade', slot: 'shoes', name: { en: 'Jade-stitched boots', zh: '玉線靴' }, color: 0x2a4038, accent: 0x3dcfb6, price: 16 },
-  { id: 'shoes-storm', slot: 'shoes', name: { en: 'Storm deck boots', zh: '風雨甲板靴' }, color: 0x2a3038, accent: 0x4a90a8, price: 18 },
+  { id: 'shoes-leather', slot: 'shoes', name: { en: 'Leather river boots', zh: '河皮靴' }, color: 0x6a4a30, price: 0, tier: 'common' },
+  { id: 'shoes-straw', slot: 'shoes', name: { en: 'Straw sandals', zh: '草鞋' }, color: 0xc8b070, accent: 0x5a4a30, price: 6, tier: 'common' },
+  { id: 'shoes-lacquer', slot: 'shoes', name: { en: 'Lacquer court shoes', zh: '漆木朝鞋' }, color: 0x1a1814, accent: 0xc4a35a, price: 14, tier: 'mid' },
+  { id: 'shoes-jade', slot: 'shoes', name: { en: 'Jade-stitched boots', zh: '玉線靴' }, color: 0x2a4038, accent: 0x3dcfb6, price: 16, tier: 'high' },
+  { id: 'shoes-storm', slot: 'shoes', name: { en: 'Storm deck boots', zh: '風雨甲板靴' }, color: 0x2a3038, accent: 0x4a90a8, price: 18, tier: 'vip' },
 
   // —— Handheld ——
-  { id: 'hand-none', slot: 'hand', name: { en: 'Empty hands', zh: '空手' }, color: 0xe8c4a8, price: 0 },
-  { id: 'hand-fan', slot: 'hand', name: { en: 'Paper folding fan', zh: '紙扇' }, color: 0xf0e0c0, accent: 0x3dcfb6, price: 8 },
-  { id: 'hand-lantern', slot: 'hand', name: { en: 'Jade paper lantern', zh: '玉紙燈籠' }, color: 0xe07040, accent: 0x3dcfb6, price: 12 },
-  { id: 'hand-oar', slot: 'hand', name: { en: 'Mini ferry oar', zh: '渡船小槳' }, color: 0x8a6038, accent: 0xc4a860, price: 10 },
-  { id: 'hand-scroll', slot: 'hand', name: { en: 'Lesson scroll', zh: '課卷' }, color: 0xe8d8b0, accent: 0x5a2a20, price: 9 },
+  { id: 'hand-none', slot: 'hand', name: { en: 'Empty hands', zh: '空手' }, color: 0xe8c4a8, price: 0, tier: 'common' },
+  { id: 'hand-fan', slot: 'hand', name: { en: 'Paper folding fan', zh: '紙扇' }, color: 0xf0e0c0, accent: 0x3dcfb6, price: 8, tier: 'common' },
+  { id: 'hand-lantern', slot: 'hand', name: { en: 'Jade paper lantern', zh: '玉紙燈籠' }, color: 0xe07040, accent: 0x3dcfb6, price: 12, tier: 'mid' },
+  { id: 'hand-oar', slot: 'hand', name: { en: 'Mini ferry oar', zh: '渡船小槳' }, color: 0x8a6038, accent: 0xc4a860, price: 10, tier: 'common' },
+  { id: 'hand-scroll', slot: 'hand', name: { en: 'Lesson scroll', zh: '課卷' }, color: 0xe8d8b0, accent: 0x5a2a20, price: 9, tier: 'common' },
+
+  // —— Boats (3 varieties × 4 tiers) ——
+  { id: 'boat-canoe', slot: 'boat', name: { en: 'Pine river canoe', zh: '松木河舟' }, color: 0x8a6038, accent: 0x3dcfb6, price: 0, tier: 'common' },
+  { id: 'boat-reed', slot: 'boat', name: { en: 'Reed bank skiff', zh: '蘆岸小艇' }, color: 0xa89050, accent: 0x5a7a40, price: 18, tier: 'common' },
+  { id: 'boat-bamboo', slot: 'boat', name: { en: 'Bamboo flat punt', zh: '竹排' }, color: 0xc4a860, accent: 0x6a8a40, price: 24, tier: 'common' },
+  { id: 'boat-sampan', slot: 'boat', name: { en: 'Lacquer sampan', zh: '漆木舢舨' }, color: 0x3a2818, accent: 0xc4a35a, price: 48, tier: 'mid' },
+  { id: 'boat-barge', slot: 'boat', name: { en: 'Ferry deck barge', zh: '渡船甲板' }, color: 0x6a4a30, accent: 0x4a90a8, price: 56, tier: 'mid' },
+  { id: 'boat-junk', slot: 'boat', name: { en: 'Fishing junk', zh: '漁船' }, color: 0x5a4030, accent: 0xe8d8b0, price: 64, tier: 'mid' },
+  { id: 'boat-scholar', slot: 'boat', name: { en: 'Scholar yacht', zh: '書生快艇' }, color: 0xd8c8a0, accent: 0x2a3440, price: 110, tier: 'high' },
+  { id: 'boat-merchant', slot: 'boat', name: { en: 'Merchant river junk', zh: '商賈河船' }, color: 0x5a2a48, accent: 0xc4a35a, price: 125, tier: 'high' },
+  { id: 'boat-jade', slot: 'boat', name: { en: 'Jade trim riverboat', zh: '玉飾河船' }, color: 0x2a4a40, accent: 0x3dcfb6, price: 140, tier: 'high' },
+  { id: 'boat-dragon', slot: 'boat', name: { en: 'Dragon-prow racer', zh: '龍頭快船' }, color: 0x8a2a30, accent: 0xf0d060, price: 240, tier: 'vip' },
+  { id: 'boat-pearl', slot: 'boat', name: { en: 'Pearl pavilion boat', zh: '珍珠舫' }, color: 0xe8e0d0, accent: 0x3dcfb6, price: 280, tier: 'vip' },
+  { id: 'boat-imperial', slot: 'boat', name: { en: 'Imperial gold barge', zh: '金龍御舫' }, color: 0xc4a35a, accent: 0xf5e6a8, price: 320, tier: 'vip' },
+
+  // —— Boat lanterns (types + colors, 3 × 4 tiers) ——
+  { id: 'lantern-paper-amber', slot: 'lantern', name: { en: 'Amber paper lantern', zh: '琥珀紙燈' }, color: 0xe07040, accent: 0xffa040, price: 0, tier: 'common' },
+  { id: 'lantern-paper-crimson', slot: 'lantern', name: { en: 'Crimson paper lantern', zh: '絳紅紙燈' }, color: 0xc03030, accent: 0xff6060, price: 14, tier: 'common' },
+  { id: 'lantern-paper-jade', slot: 'lantern', name: { en: 'Jade paper lantern', zh: '玉紙燈' }, color: 0x3dcfb6, accent: 0xa0ffe8, price: 16, tier: 'common' },
+  { id: 'lantern-silk-gold', slot: 'lantern', name: { en: 'Gold silk lantern', zh: '金絲燈籠' }, color: 0xf0d060, accent: 0xfff0a0, price: 36, tier: 'mid' },
+  { id: 'lantern-silk-azure', slot: 'lantern', name: { en: 'Azure silk lantern', zh: '天青絲燈' }, color: 0x4080d0, accent: 0xa0d0ff, price: 40, tier: 'mid' },
+  { id: 'lantern-oil-iron', slot: 'lantern', name: { en: 'Iron oil cage', zh: '鐵油燈籠' }, color: 0x4a4038, accent: 0xff9040, price: 44, tier: 'mid' },
+  { id: 'lantern-glass-ruby', slot: 'lantern', name: { en: 'Ruby glass lantern', zh: '紅寶玻璃燈' }, color: 0xa02040, accent: 0xff4060, price: 80, tier: 'high' },
+  { id: 'lantern-glass-sapphire', slot: 'lantern', name: { en: 'Sapphire glass lantern', zh: '藍寶玻璃燈' }, color: 0x2040a0, accent: 0x60a0ff, price: 90, tier: 'high' },
+  { id: 'lantern-porcelain', slot: 'lantern', name: { en: 'Celadon porcelain lantern', zh: '青瓷燈' }, color: 0x80b090, accent: 0xd0f0e0, price: 100, tier: 'high' },
+  { id: 'lantern-phoenix', slot: 'lantern', name: { en: 'Phoenix gold lantern', zh: '鳳凰金燈' }, color: 0xf0a020, accent: 0xffe080, price: 180, tier: 'vip' },
+  { id: 'lantern-dragon', slot: 'lantern', name: { en: 'Dragon emerald lantern', zh: '龍翠燈' }, color: 0x20a060, accent: 0x80ffc0, price: 200, tier: 'vip' },
+  { id: 'lantern-starlight', slot: 'lantern', name: { en: 'Starlight pearl lantern', zh: '星光珍珠燈' }, color: 0xe8f0ff, accent: 0xffffff, price: 220, tier: 'vip' },
+
 ] as const
 
 export type HarborGearId = (typeof HARBOR_GEAR_CATALOG)[number]['id']
@@ -65,6 +98,8 @@ export type HarborLook = {
   bottom: HarborGearId
   shoes: HarborGearId
   hand: HarborGearId
+  boat: HarborGearId
+  lantern: HarborGearId
 }
 
 /** Starter outfit — free defaults. */
@@ -74,6 +109,8 @@ export const HARBOR_DEFAULT_LOOK: HarborLook = {
   bottom: 'bottom-travel',
   shoes: 'shoes-leather',
   hand: 'hand-none',
+  boat: 'boat-canoe',
+  lantern: 'lantern-paper-amber',
 }
 
 /** Free starter kit (all price-0 pieces). */
@@ -87,7 +124,23 @@ export const HARBOR_GEAR_SLOTS: readonly HarborGearSlot[] = [
   'bottom',
   'shoes',
   'hand',
+  'boat',
+  'lantern',
 ] as const
+
+export const HARBOR_GEAR_TIER_ORDER: readonly HarborGearTier[] = [
+  'common',
+  'mid',
+  'high',
+  'vip',
+] as const
+
+export const HARBOR_GEAR_TIER_LABEL: Record<HarborGearTier, { en: string; zh: string }> = {
+  common: { en: 'Common', zh: '普通' },
+  mid: { en: 'Mid', zh: '中階' },
+  high: { en: 'High', zh: '高階' },
+  vip: { en: 'VIP', zh: '貴賓' },
+}
 
 const BY_ID = new Map(HARBOR_GEAR_CATALOG.map((i) => [i.id, i]))
 

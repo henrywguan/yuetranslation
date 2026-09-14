@@ -16,6 +16,7 @@ import {
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
   applyLookToProtagonist,
+  harborGearById,
   HARBOR_DEFAULT_LOOK,
   type HarborLook,
 } from './harborGear'
@@ -469,6 +470,124 @@ function flower(rng: () => number) {
   return g
 }
 
+/** China tea-cup rose — soft pink cups on a low leafy mound. */
+function chinaTeaCupRose(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'china-tea-cup-rose'
+  const h = 0.45 + rng() * 0.2
+  g.add(hqPost(0.04, 0.06, h * 0.55, 0x3a2a28, 0, h * 0.28, 0, 4))
+  g.add(hqCanopy(0.32 + rng() * 0.1, P.leafMid, 0, h * 0.55, 0))
+  g.add(
+    hqCanopy(
+      0.22 + rng() * 0.08,
+      P.leafDeep,
+      (rng() - 0.5) * 0.25,
+      h * 0.45,
+      (rng() - 0.5) * 0.25,
+    ),
+  )
+  const cups = [P.blossom, P.blossomDeep, 0xf8d0dc, 0xf0a8b8]
+  const n = 4 + Math.floor(rng() * 3)
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.4
+    const r = 0.12 + rng() * 0.18
+    const cup = new THREE.Mesh(
+      new THREE.ConeGeometry(0.06 + rng() * 0.03, 0.07 + rng() * 0.03, 5),
+      mat(cups[Math.floor(rng() * cups.length)]!),
+    )
+    cup.position.set(Math.cos(a) * r, h * 0.7 + rng() * 0.12, Math.sin(a) * r)
+    cup.rotation.x = Math.PI
+    g.add(cup)
+  }
+  return g
+}
+
+/** Hawthorn berry bush — white blossom clusters + red haws. */
+function hawthornBush(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'hawthorn-berry'
+  const h = 0.7 + rng() * 0.35
+  g.add(hqPost(0.05, 0.08, h * 0.65, 0x2e2418, 0, h * 0.32, 0, 5))
+  // Twiggy forks
+  for (let i = 0; i < 2; i++) {
+    const twig = hqPost(0.03, 0.04, 0.28, 0x2e2418, (i ? 0.12 : -0.1), h * 0.55, (rng() - 0.5) * 0.1, 4)
+    twig.rotation.z = (i ? -0.55 : 0.55)
+    g.add(twig)
+  }
+  const greens = [P.leafMid, P.leafDeep, 0x3a7048]
+  for (let i = 0; i < 3; i++) {
+    g.add(
+      hqCanopy(
+        0.28 + rng() * 0.12,
+        greens[Math.floor(rng() * greens.length)]!,
+        (rng() - 0.5) * 0.35,
+        h * (0.55 + i * 0.12),
+        (rng() - 0.5) * 0.35,
+      ),
+    )
+  }
+  // White spring blossom flecks
+  for (let i = 0; i < 5; i++) {
+    g.add(
+      hqBox(
+        0.06,
+        0.05,
+        0.06,
+        0xf5f0e8,
+        (rng() - 0.5) * 0.45,
+        h * 0.7 + rng() * 0.2,
+        (rng() - 0.5) * 0.45,
+      ),
+    )
+  }
+  // Red haws
+  for (let i = 0; i < 6; i++) {
+    const berry = new THREE.Mesh(
+      new THREE.SphereGeometry(0.035 + rng() * 0.015, 4, 3),
+      mat(rng() > 0.4 ? 0xc03028 : 0xa02020),
+    )
+    berry.position.set((rng() - 0.5) * 0.5, h * 0.55 + rng() * 0.35, (rng() - 0.5) * 0.5)
+    g.add(berry)
+  }
+  return g
+}
+
+/** Chinese fringe flower (Loropetalum) — burgundy foliage + magenta fringe. */
+function chineseFringeFlower(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'chinese-fringe-flower'
+  const h = 0.55 + rng() * 0.3
+  g.add(hqPost(0.045, 0.07, h * 0.5, 0x2a1c18, 0, h * 0.25, 0, 4))
+  const foliage = [0x4a2038, 0x3a1828, 0x5a2840]
+  for (let i = 0; i < 3; i++) {
+    g.add(
+      hqCanopy(
+        0.3 + rng() * 0.12,
+        foliage[Math.floor(rng() * foliage.length)]!,
+        (rng() - 0.5) * 0.28,
+        h * (0.5 + i * 0.1),
+        (rng() - 0.5) * 0.28,
+      ),
+    )
+  }
+  // Magenta fringe sprays (thin cones)
+  const fringe = [0xc02068, 0xd03878, 0xa01850]
+  const n = 5 + Math.floor(rng() * 3)
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.5
+    const r = 0.1 + rng() * 0.22
+    const spray = new THREE.Mesh(
+      new THREE.ConeGeometry(0.04, 0.14 + rng() * 0.06, 4),
+      mat(fringe[Math.floor(rng() * fringe.length)]!),
+    )
+    spray.position.set(Math.cos(a) * r, h * 0.75 + rng() * 0.1, Math.sin(a) * r)
+    spray.rotation.x = -0.35 + rng() * 0.2
+    spray.rotation.z = (rng() - 0.5) * 0.4
+    g.add(spray)
+  }
+  return g
+}
+
 
 /** Warm point-light strength — brighter at night / dark weather. */
 export function harborLanternIntensity(weather: HarborWeather): number {
@@ -520,20 +639,59 @@ function lantern(weather: HarborWeather = 'sunny') {
 }
 
 /** Compact gunwale lantern — lights the canoe so night reads as night, not underexposure. */
-function boatLantern(weather: HarborWeather = 'sunny') {
+function boatLantern(
+  weather: HarborWeather = 'sunny',
+  lanternId: string = HARBOR_DEFAULT_LOOK.lantern,
+) {
+  const item = harborGearById(lanternId) ?? harborGearById(HARBOR_DEFAULT_LOOK.lantern)!
+  const paper = item.color
+  const glowCol = item.accent ?? paper
   const g = new THREE.Group()
   g.userData.harborLantern = true
   g.userData.boatLantern = true
-  g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 5))
-  const lamp = new THREE.Mesh(
-    new THREE.BoxGeometry(0.18, 0.2, 0.18),
-    glowMat(P.lantern, 0xffa040, weather === 'sunny' ? 0.35 : 1.1),
-  )
-  lamp.position.set(0, 0.5, 0)
-  g.add(lamp)
-  g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
-  // Slightly hotter than roadside lanterns so the scout stays readable at night
-  attachLanternLight(g, weather, 0.5, 0xffb060, 1.25)
+  g.userData.vesselPart = true
+  g.name = 'boat-lantern'
+  const id = item.id
+  if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
+    g.add(hqPost(0.025, 0.035, 0.5, P.woodDark, 0, 0.26, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.12, 0.28, 6),
+      glowMat(paper, glowCol, weather === 'sunny' ? 0.4 : 1.2),
+    )
+    lamp.position.set(0, 0.55, 0)
+    g.add(lamp)
+    g.add(hqBox(0.14, 0.03, 0.14, P.woodDeep, 0, 0.7, 0))
+    attachLanternLight(g, weather, 0.55, glowCol, id === 'lantern-starlight' ? 1.55 : 1.3)
+  } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
+    g.add(hqPost(0.028, 0.038, 0.45, P.woodDark, 0, 0.24, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.12, 0),
+      glowMat(paper, glowCol, weather === 'sunny' ? 0.45 : 1.25),
+    )
+    lamp.position.set(0, 0.52, 0)
+    g.add(lamp)
+    attachLanternLight(g, weather, 0.52, glowCol, 1.35)
+  } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
+    g.add(hqPost(0.03, 0.04, 0.4, P.woodDark, 0, 0.22, 0, 5))
+    g.add(hqBox(0.16, 0.2, 0.16, paper, 0, 0.5, 0))
+    const core = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.12, 0.1),
+      glowMat(glowCol, glowCol, weather === 'sunny' ? 0.5 : 1.35),
+    )
+    core.position.set(0, 0.5, 0)
+    g.add(core)
+    attachLanternLight(g, weather, 0.5, glowCol, id === 'lantern-dragon' ? 1.5 : 1.2)
+  } else {
+    g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.2, 0.18),
+      glowMat(paper, glowCol, weather === 'sunny' ? 0.35 : 1.1),
+    )
+    lamp.position.set(0, 0.5, 0)
+    g.add(lamp)
+    g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
+    attachLanternLight(g, weather, 0.5, glowCol, 1.25)
+  }
   return g
 }
 
@@ -839,10 +997,10 @@ function bird() {
   return mesh
 }
 
-/** Low-poly deer silhouette along the bank. */
 /** Low-poly deer — box body, short faceted legs (readable bank fauna). */
 function deer(rng: () => number) {
   const g = new THREE.Group()
+  g.userData.fauna = 'deer'
   g.add(hqBox(0.55, 0.32, 0.24, 0x8a6040, 0, 0.55, 0))
   const neck = hqBox(0.14, 0.35, 0.12, 0x8a6040, 0.28, 0.72, 0)
   neck.rotation.z = -0.35
@@ -864,6 +1022,106 @@ function deer(rng: () => number) {
   return g
 }
 
+/** Giant panda — chunky black/white blocks (forest / hill banks). */
+function panda(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'panda'
+  g.add(hqBox(0.55, 0.38, 0.36, 0xf2f2f0, 0, 0.55, 0))
+  g.add(hqBox(0.28, 0.26, 0.26, 0xf2f2f0, 0.34, 0.78, 0))
+  // Ear patches + eye spots
+  g.add(hqBox(0.1, 0.1, 0.06, 0x1a1a1a, 0.42, 0.96, 0.1))
+  g.add(hqBox(0.1, 0.1, 0.06, 0x1a1a1a, 0.42, 0.96, -0.1))
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.46, 0.82, 0.08))
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.46, 0.82, -0.08))
+  // Black limbs
+  for (const x of [-0.16, 0.14] as const) {
+    for (const z of [-0.12, 0.12] as const) {
+      g.add(hqPost(0.07, 0.09, 0.36, 0x1a1a1a, x, 0.2, z, 5))
+    }
+  }
+  g.add(hqBox(0.18, 0.14, 0.22, 0x1a1a1a, -0.32, 0.62, 0)) // shoulder band
+  return g
+}
+
+/** South China tiger — amber coat, ink stripes (rare hill fauna). */
+function southChinaTiger(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'tiger'
+  const coat = 0xd4882a
+  g.add(hqBox(0.75, 0.34, 0.28, coat, 0, 0.55, 0))
+  const neck = hqBox(0.16, 0.28, 0.16, coat, 0.4, 0.7, 0)
+  neck.rotation.z = -0.25
+  g.add(neck)
+  g.add(hqBox(0.26, 0.18, 0.2, coat, 0.55, 0.86, 0))
+  // Stripe accents
+  for (const x of [-0.2, 0, 0.2] as const) {
+    g.add(hqBox(0.05, 0.28, 0.3, 0x2a1810, x, 0.56, 0))
+  }
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.64, 0.92, 0.07))
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.64, 0.92, -0.07))
+  for (const x of [-0.22, 0.18] as const) {
+    for (const z of [-0.09, 0.09] as const) {
+      g.add(hqPost(0.04, 0.05, 0.42, 0xc07020, x, 0.22, z, 4))
+    }
+  }
+  // Tail
+  const tail = hqBox(0.08, 0.08, 0.45, coat, -0.48, 0.62, 0)
+  g.add(tail)
+  return g
+}
+
+/** Crested ibis (朱鷶) — pale body, rose wash, crimson face/crest. */
+function crestedIbis(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'ibis'
+  g.userData.bird = true // shares gentle soar animation
+  g.add(hqBox(0.22, 0.14, 0.12, 0xf4ebe0, 0, 0.12, 0))
+  g.add(hqBox(0.14, 0.1, 0.1, 0xf0d8d0, 0.14, 0.16, 0))
+  // Crimson face + crest
+  g.add(hqBox(0.08, 0.07, 0.07, 0xc02828, 0.22, 0.2, 0))
+  const crest = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 4), hqMat(0xc02828))
+  crest.position.set(0.2, 0.3, 0)
+  g.add(crest)
+  // Long down-curved bill
+  const bill = hqBox(0.18, 0.03, 0.03, 0xc02828, 0.34, 0.16, 0)
+  bill.rotation.z = 0.35
+  g.add(bill)
+  // Wings (rose-washed)
+  g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, 0.16))
+  g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, -0.16))
+  // Legs
+  g.add(hqPost(0.015, 0.02, 0.18, 0xc02828, 0.02, 0.02, 0.04, 4))
+  g.add(hqPost(0.015, 0.02, 0.18, 0xc02828, 0.02, 0.02, -0.04, 4))
+  return g
+}
+
+/** Chinese giant salamander — long low body along the waterline. */
+function giantSalamander(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'salamander'
+  const skin = 0x6a5a48
+  g.add(hqBox(0.7, 0.14, 0.22, skin, 0, 0.1, 0))
+  g.add(hqBox(0.22, 0.14, 0.2, 0x5a4a3a, 0.4, 0.12, 0))
+  // Tiny eyes
+  g.add(hqBox(0.04, 0.04, 0.03, 0x1a1810, 0.48, 0.18, 0.06))
+  g.add(hqBox(0.04, 0.04, 0.03, 0x1a1810, 0.48, 0.18, -0.06))
+  // Frilled sides
+  g.add(hqBox(0.45, 0.04, 0.06, 0x4a3a30, 0, 0.1, 0.14))
+  g.add(hqBox(0.45, 0.04, 0.06, 0x4a3a30, 0, 0.1, -0.14))
+  // Short limbs
+  for (const x of [-0.2, 0.15] as const) {
+    for (const z of [-0.12, 0.12] as const) {
+      g.add(hqBox(0.08, 0.05, 0.1, skin, x, 0.05, z))
+    }
+  }
+  // Tail
+  g.add(hqBox(0.35, 0.1, 0.12, skin, -0.48, 0.09, 0))
+  return g
+}
+
+/** Ambient China-native fauna kinds (smoke-tested). */
+export const HARBOR_AMBIENT_FAUNA = ['panda', 'tiger', 'ibis', 'salamander', 'deer', 'bird', 'fish'] as const
+export type HarborAmbientFauna = (typeof HARBOR_AMBIENT_FAUNA)[number]
 
 function fish() {
   const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 5), mat(0x5a9ab0))
@@ -948,6 +1206,14 @@ function poplar(rng: () => number) {
 export const HARBOR_SCENIC_TREES = ['cherry', 'ginkgo', 'poplar', 'pine', 'oak'] as const
 export type HarborScenicTree = (typeof HARBOR_SCENIC_TREES)[number]
 
+/** Garden / roadside shrubs along the voyage (smoke-tested). */
+export const HARBOR_SCENIC_SHRUBS = [
+  'china-tea-cup-rose',
+  'hawthorn-berry',
+  'chinese-fringe-flower',
+] as const
+export type HarborScenicShrub = (typeof HARBOR_SCENIC_SHRUBS)[number]
+
 /** Distant Wulingyuan-style karst backdrop is present in the voyage. */
 export const HARBOR_WULINGYUAN = true as const
 
@@ -967,34 +1233,122 @@ function bridge() {
   return g
 }
 
-function canoe(weather: HarborWeather = 'sunny') {
+function buildBoatHull(boatId: string): THREE.Group {
+  const item = harborGearById(boatId) ?? harborGearById(HARBOR_DEFAULT_LOOK.boat)!
+  const hull = item.color
+  const trim = item.accent ?? P.jade
   const g = new THREE.Group()
-  // Boxy hull + blunt bow/stern (not a smooth capsule)
-  g.add(hqBox(2.2, 0.32, 0.72, P.woodMid, 0, 0.22, 0))
-  g.add(hqBox(0.35, 0.28, 0.55, P.woodDark, 1.15, 0.24, 0))
-  g.add(hqBox(0.35, 0.28, 0.55, P.woodDark, -1.15, 0.24, 0))
-  // Thick gunwales
-  g.add(hqBox(2.15, 0.08, 0.08, P.woodDeep, 0, 0.4, 0.34))
-  g.add(hqBox(2.15, 0.08, 0.08, P.woodDeep, 0, 0.4, -0.34))
-  // Seat plank
+  g.userData.vesselPart = true
+  g.name = 'boat-hull'
+  const id = item.id
+  const length =
+    id.includes('barge') || id.includes('imperial') || id.includes('pearl')
+      ? 2.7
+      : id.includes('junk') || id.includes('merchant') || id.includes('dragon')
+        ? 2.5
+        : id.includes('bamboo') || id.includes('reed')
+          ? 2.0
+          : 2.2
+  const width =
+    id.includes('barge') || id.includes('imperial')
+      ? 0.95
+      : id.includes('junk') || id.includes('merchant')
+        ? 0.85
+        : id.includes('reed') || id.includes('bamboo')
+          ? 0.62
+          : 0.72
+  const height = id.includes('pearl') || id.includes('imperial') ? 0.4 : 0.32
+  g.add(hqBox(length, height, width, hull, 0, 0.22, 0))
+  g.add(hqBox(0.35, height * 0.88, width * 0.78, P.woodDark, length * 0.52, 0.24, 0))
+  g.add(hqBox(0.35, height * 0.88, width * 0.78, P.woodDark, -length * 0.52, 0.24, 0))
+  g.add(hqBox(length * 0.98, 0.08, 0.08, P.woodDeep, 0, 0.4, width * 0.48))
+  g.add(hqBox(length * 0.98, 0.08, 0.08, P.woodDeep, 0, 0.4, -width * 0.48))
   g.add(hqBox(0.55, 0.08, 0.4, P.woodDark, 0, 0.38, 0))
-  // Stubby mast + jade sail plane
-  g.add(hqPost(0.035, 0.045, 1.05, P.woodDeep, 0.12, 0.9, 0, 5))
-  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.85), hqMat(P.jade))
-  sail.position.set(0.12, 0.95, 0.02)
+  const mastH =
+    id.includes('imperial') || id.includes('pearl') ? 1.35 : id.includes('junk') || id.includes('merchant') ? 1.2 : 1.05
+  g.add(hqPost(0.035, 0.045, mastH, P.woodDeep, 0.12, 0.9, 0, 5))
+  const sailW = id.includes('barge') || id.includes('imperial') ? 0.95 : 0.7
+  const sailH = id.includes('junk') || id.includes('merchant') ? 1.05 : 0.85
+  const sail = new THREE.Mesh(new THREE.PlaneGeometry(sailW, sailH), hqMat(trim))
+  sail.position.set(0.12, 0.95 + (mastH - 1.05) * 0.35, 0.02)
   g.add(sail)
-  // You — original River Scout mannequin (seated)
+  if (id === 'boat-dragon' || id === 'boat-imperial') {
+    g.add(hqBox(0.45, 0.22, 0.28, trim, length * 0.55, 0.55, 0))
+    g.add(hqBox(0.18, 0.12, 0.12, 0xf0d060, length * 0.62, 0.68, 0))
+  }
+  if (id === 'boat-pearl' || id === 'boat-imperial') {
+    g.add(hqBox(0.9, 0.06, width * 0.9, trim, -0.15, 0.95, 0))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, width * 0.28, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, -width * 0.28, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, 0.2, 0.7, width * 0.28, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, 0.2, 0.7, -width * 0.28, 5))
+  }
+  if (id === 'boat-bamboo') {
+    for (const x of [-0.6, -0.2, 0.2, 0.6] as const) {
+      g.add(hqBox(0.08, 0.1, width * 0.95, trim, x, 0.3, 0))
+    }
+  }
+  if (id === 'boat-reed') {
+    g.add(hqBox(length * 0.8, 0.06, width * 1.05, trim, 0, 0.36, 0))
+  }
+  if (id === 'boat-junk' || id === 'boat-merchant') {
+    g.add(hqBox(0.55, 0.35, width * 0.7, hull, -length * 0.28, 0.55, 0))
+  }
+  if (id === 'boat-jade') {
+    g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, width * 0.5))
+    g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, -width * 0.5))
+  }
+  return g
+}
+
+function canoe(
+  weather: HarborWeather = 'sunny',
+  boatId: string = HARBOR_DEFAULT_LOOK.boat,
+  lanternId: string = HARBOR_DEFAULT_LOOK.lantern,
+) {
+  const g = new THREE.Group()
+  g.name = 'river-boat'
+  g.add(buildBoatHull(boatId))
   const you = playerTraveler()
+  you.name = 'river-scout'
   you.position.set(0, 0.38, -0.05)
   you.rotation.y = Math.PI
   g.add(you)
-  // Port + starboard gunwale lanterns — night should read as lit, not muddy
-  for (const z of [0.4, -0.4] as const) {
-    const lamp = boatLantern(weather)
+  const beam = boatId.includes('barge') || boatId.includes('imperial') ? 0.52 : 0.4
+  for (const z of [beam, -beam] as const) {
+    const lamp = boatLantern(weather, lanternId)
     lamp.position.set(0.25, 0.35, z)
     g.add(lamp)
   }
   return g
+}
+
+/** Rebuild hull + lanterns on an existing boat; keep the River Scout child. */
+function applyVesselLook(boat: THREE.Object3D, weather: HarborWeather, look: HarborLook) {
+  const doomed: THREE.Object3D[] = []
+  for (const child of boat.children) {
+    if (child.userData.vesselPart || child.userData.boatLantern || child.name === 'boat-hull' || child.name === 'boat-lantern') {
+      doomed.push(child)
+    }
+  }
+  for (const child of doomed) {
+    boat.remove(child)
+    child.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      mesh.geometry?.dispose?.()
+      const mat = mesh.material as THREE.Material | THREE.Material[]
+      if (Array.isArray(mat)) mat.forEach((m) => m.dispose?.())
+      else mat?.dispose?.()
+    })
+  }
+  boat.add(buildBoatHull(look.boat))
+  const beam = look.boat.includes('barge') || look.boat.includes('imperial') ? 0.52 : 0.4
+  for (const z of [beam, -beam] as const) {
+    const lamp = boatLantern(weather, look.lantern)
+    lamp.position.set(0.25, 0.35, z)
+    boat.add(lamp)
+  }
 }
 
 
@@ -1363,7 +1717,14 @@ function populateChunk(
     place(group, rng, 2, () => ginkgo(rng), BANK + 0.5, BANK + 4.5, z0)
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
     place(group, rng, 5, () => flower(rng), BANK - 0.3, BANK + 2.5, z0)
+    place(group, rng, 2, () => hawthornBush(rng), BANK + 0.5, BANK + 4.5, z0)
+    place(group, rng, 2, () => chineseFringeFlower(rng), BANK + 1, BANK + 5.5, z0)
+    if (rng() > 0.55) place(group, rng, 1, () => chinaTeaCupRose(rng), BANK + 0.2, BANK + 2.8, z0)
     if (rng() > 0.4) place(group, rng, 1, () => deer(rng), BANK + 0.5, BANK + 3.5, z0)
+    // China-native ambient fauna
+    if (rng() > 0.45) place(group, rng, 1, () => panda(rng), BANK + 1.5, BANK + 5.5, z0)
+    if (biome === 'hills' && rng() > 0.62) place(group, rng, 1, () => southChinaTiger(rng), BANK + 2.5, BANK + 7, z0)
+    else if (rng() > 0.78) place(group, rng, 1, () => southChinaTiger(rng), BANK + 3, BANK + 8, z0)
     place(group, rng, 1, () => lantern(weather), BANK + 0.2, BANK + 1.8, z0)
   }
   if (biome === 'village') {
@@ -1375,6 +1736,10 @@ function populateChunk(
     place(group, rng, 1, () => ginkgo(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 3, () => lantern(weather), BANK - 0.2, BANK + 1.4, z0)
     place(group, rng, 4, () => flower(rng), BANK - 0.4, BANK + 2, z0)
+    // Village garden shrubs — tea roses, hawthorn, fringe flower
+    place(group, rng, 3, () => chinaTeaCupRose(rng), BANK - 0.3, BANK + 2.2, z0)
+    place(group, rng, 2, () => hawthornBush(rng), BANK + 0.8, BANK + 3.5, z0)
+    place(group, rng, 2, () => chineseFringeFlower(rng), BANK + 0.4, BANK + 2.8, z0)
     // Villagers & merchants strolling the lane
     place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK + 0.3, BANK + 2.5, z0)
     if (rng() > 0.55) {
@@ -1391,7 +1756,27 @@ function populateChunk(
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('fisherman', rng), RIVER + 0.8, BANK + 1.2, z0)
     place(group, rng, 1, () => lantern(weather), BANK - 0.3, BANK + 1.0, z0)
-  }
+  
+    // Waterline fauna — giant salamanders + crested ibis
+    if (rng() > 0.35) place(group, rng, 1, () => giantSalamander(rng), RIVER + 0.6, BANK + 0.8, z0)
+    if (rng() > 0.4) {
+      const nIbis = 1 + Math.floor(rng() * 2)
+      for (let i = 0; i < nIbis; i++) {
+        const ibis = crestedIbis(rng)
+        const side = rng() > 0.5 ? 1 : -1
+        const soar = rng() > 0.55
+        ibis.position.set(
+          side * (RIVER + 0.8 + rng() * 1.6),
+          soar ? 1.5 + rng() * 0.8 : 0.05,
+          z0 + 2 + rng() * (CHUNK - 4),
+        )
+        ibis.rotation.y = rng() * Math.PI * 2
+        ibis.userData.phase = rng() * Math.PI * 2
+        ibis.userData.baseX = ibis.position.x
+        group.add(ibis)
+      }
+    }
+}
   if (biome === 'pier') {
     for (const side of [-1, 1] as const) {
       const p1 = pierSegment()
@@ -1407,12 +1792,18 @@ function populateChunk(
     place(group, rng, 2, () => stiltShop(rng), BANK - 0.1, BANK + 2.2, z0)
     place(group, rng, 1, () => hut(rng), BANK + 2, BANK + 4, z0)
     place(group, rng, 2, () => cherryBlossom(rng), BANK + 0.5, BANK + 3, z0)
+    place(group, rng, 2, () => chinaTeaCupRose(rng), BANK - 0.2, BANK + 1.8, z0)
+    place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.5, BANK + 2.5, z0)
     place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK - 0.2, BANK + 1.5, z0)
     place(group, rng, 1, () => chineseNpc('ferryman', rng), RIVER + 1.2, RIVER + 2.2, z0)
-  }
+  
+    if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng), RIVER + 1.0, BANK + 1.8, z0)
+}
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
+    place(group, rng, 2, () => hawthornBush(rng), BANK + 1.2, BANK + 4, z0)
+    place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.8, BANK + 3.2, z0)
     place(group, rng, 1, () => lantern(weather), BANK + 0.5, BANK + 2.2, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('scholar', rng), BANK + 1, BANK + 3, z0)
   }
@@ -1435,6 +1826,27 @@ function populateChunk(
     f.userData.phase = rng() * Math.PI * 2
     group.add(f)
   }
+  // Crested ibis wading / short hops near the shore
+  if (rng() > 0.55) {
+    const ibis = crestedIbis(rng)
+    const side = rng() > 0.5 ? 1 : -1
+    ibis.position.set(side * (RIVER + 0.9 + rng() * 1.4), 0.05, z0 + 3 + rng() * (CHUNK - 6))
+    ibis.rotation.y = rng() * Math.PI * 2
+    ibis.userData.phase = rng() * Math.PI * 2
+    ibis.userData.baseX = ibis.position.x
+    group.add(ibis)
+  }
+  // Giant salamander along the wet bank
+  if (rng() > 0.6) {
+    const sal = giantSalamander(rng)
+    const side = rng() > 0.5 ? 1 : -1
+    sal.position.set(side * (RIVER + 0.55 + rng() * 0.7), 0.02, z0 + 2 + rng() * (CHUNK - 4))
+    sal.rotation.y = side > 0 ? 0.2 : Math.PI - 0.2
+    sal.userData.phase = rng() * Math.PI * 2
+    sal.userData.baseX = sal.position.x
+    group.add(sal)
+  }
+
 }
 
 
@@ -1830,7 +2242,8 @@ export function createHarborWorld(
     }
   }
 
-  const boat = canoe(weather)
+    let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
+  const boat = canoe(weather, currentLook.boat, currentLook.lantern)
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
@@ -1851,8 +2264,7 @@ export function createHarborWorld(
   }
   scene.add(visitablesRoot)
 
-  let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
-  const scout = boat.getObjectByName('river-scout') ?? boat
+    const scout = boat.getObjectByName('river-scout') ?? boat
   applyLookToProtagonist(scout, currentLook)
 
   let activeVisitable: HarborVisitableId | null = null
@@ -2235,6 +2647,40 @@ export function createHarborWorld(
           }
           return
         }
+        const fauna = o.userData.fauna as string | undefined
+        if (fauna === 'panda' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.7
+          o.rotation.y += Math.sin(phase) * 0.002
+          o.position.y = Math.sin(phase * 0.5) * 0.012
+        }
+        if (fauna === 'tiger' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.55
+          const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
+          o.userData.baseX = baseX
+          o.position.x = baseX + Math.sin(phase) * 0.35
+        }
+        if (fauna === 'ibis') {
+          const phase = ((o.userData.phase as number) ?? 0) + waterPhase * 1.6
+          // Alternate: short hop on bank vs low soar
+          if (o.userData.bird && o.position.y > 0.4) {
+            o.position.y = 1.4 + Math.sin(phase * 2) * 0.25
+            o.position.x += Math.sin(phase) * 0.012
+          } else if (!reduced) {
+            o.position.y = 0.05 + Math.max(0, Math.sin(phase * 1.2)) * 0.12
+            o.rotation.z = Math.sin(phase) * 0.08
+          }
+        }
+        if (fauna === 'salamander' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.8
+          const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
+          o.userData.baseX = baseX
+          o.position.x = baseX + Math.sin(phase) * 0.12
+          o.rotation.y += Math.sin(phase * 0.5) * 0.01
+        }
+        if (fauna === 'deer' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.6
+          o.rotation.y += Math.sin(phase) * 0.0015
+        }
         if (!(o instanceof THREE.Mesh)) return
         if (o.userData.bird) {
           const phase = (o.userData.phase as number) + waterPhase
@@ -2301,6 +2747,7 @@ export function createHarborWorld(
     setLook(look) {
       currentLook = { ...look }
       applyLookToProtagonist(scout, currentLook)
+      applyVesselLook(boat, weather, currentLook)
     },
     resize,
     dispose() {

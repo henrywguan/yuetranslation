@@ -32,6 +32,8 @@ export function emptyHarborProgress(): HarborProgress {
       'bottom-travel',
       'shoes-leather',
       'hand-none',
+      'boat-canoe',
+      'lantern-paper-amber',
     ],
     banked: [],
     look: {
@@ -40,6 +42,8 @@ export function emptyHarborProgress(): HarborProgress {
       bottom: 'bottom-travel',
       shoes: 'shoes-leather',
       hand: 'hand-none',
+      boat: 'boat-canoe',
+      lantern: 'lantern-paper-amber',
     },
     lastSavedAt: 0,
   }
@@ -83,13 +87,15 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
   return { cleared: clearedUnique, stepCursor, correctCount, coins, owned, banked, look, lastSavedAt }
 }
 
-const LOOK_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'hand'] as const
+const LOOK_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'hand', 'boat', 'lantern'] as const
 const STARTER_OWNED = [
   'hat-straw',
   'top-harbor',
   'bottom-travel',
   'shoes-leather',
   'hand-none',
+  'boat-canoe',
+  'lantern-paper-amber',
 ] as const
 const DEFAULT_LOOK = {
   hat: 'hat-straw',
@@ -97,13 +103,11 @@ const DEFAULT_LOOK = {
   bottom: 'bottom-travel',
   shoes: 'shoes-leather',
   hand: 'hand-none',
+  boat: 'boat-canoe',
+  lantern: 'lantern-paper-amber',
 } as const
 const KNOWN_GEAR = new Set([
-  'hat-straw','hat-bamboo','hat-scholar','hat-fisherman','hat-festival',
-  'top-harbor','top-jade','top-merchant','top-ferry','top-night',
-  'bottom-travel','bottom-slate','bottom-reed','bottom-crimson','bottom-ink',
-  'shoes-leather','shoes-straw','shoes-lacquer','shoes-jade','shoes-storm',
-  'hand-none','hand-fan','hand-lantern','hand-oar','hand-scroll',
+  'hat-straw','hat-bamboo','hat-scholar','hat-fisherman','hat-festival','top-harbor','top-jade','top-merchant','top-ferry','top-night','bottom-travel','bottom-slate','bottom-reed','bottom-crimson','bottom-ink','shoes-leather','shoes-straw','shoes-lacquer','shoes-jade','shoes-storm','hand-none','hand-fan','hand-lantern','hand-oar','hand-scroll','boat-canoe','boat-reed','boat-bamboo','boat-sampan','boat-barge','boat-junk','boat-scholar','boat-merchant','boat-jade','boat-dragon','boat-pearl','boat-imperial','lantern-paper-amber','lantern-paper-crimson','lantern-paper-jade','lantern-silk-gold','lantern-silk-azure','lantern-oil-iron','lantern-glass-ruby','lantern-glass-sapphire','lantern-porcelain','lantern-phoenix','lantern-dragon','lantern-starlight',
 ])
 
 function sanitizeLookInline(raw: unknown): HarborProgress['look'] {
