@@ -22,7 +22,6 @@ import {
   sanitizeBankedGear,
   sanitizeCarriedGear,
   sanitizeHarborLook,
-  sanitizeOwnedGear,
   type HarborGearId,
   type HarborGearSlot,
   type HarborLook,
