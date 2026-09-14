@@ -48,6 +48,10 @@ import {
   pickHarborWeather,
   HARBOR_TAP_SLOP_PX,
   HARBOR_TAP_MOVE_SPEED,
+  HARBOR_LAND_EDGE,
+  HARBOR_WALK_SPEED,
+  HARBOR_REBOARD_RADIUS,
+  isHarborLand,
   HARBOR_TAP_ARRIVE,
   clampHarborMoveTarget,
   HARBOR_EXPLORE_X,
@@ -266,6 +270,10 @@ function main() {
   assert.ok(playSrc.includes('hq-compass-sparkle'), 'gold sparkle animation on compass')
   assert.ok(playSrc.includes('hq-play-title-en'), 'chapter title condensed to English line + Chinese line')
   assert.ok(playSrc.includes('setInvOpen(true)'), 'coin chip opens inventory')
+  assert.ok(playSrc.includes('Open inventory'), 'Save Shack opens inventory')
+  assert.ok(playSrc.includes('Teleport to chapter'), 'Save Shack chapter teleport')
+  assert.ok(playSrc.includes('hq-teleport-list'), 'chapter teleport list')
+
   assert.doesNotMatch(playSrc, /hq-btn--hud[^>]*>\s*Textbook/, 'top Textbook button removed')
 
   assert.match(playSrc, /setTalking\(false\)/, 'explore FAB exits dialogue')
@@ -360,6 +368,14 @@ function main() {
   assert.match(worldSrc2, /function chinaTeaCupRose/, 'tea-cup rose mesh builder')
   assert.match(worldSrc2, /function hawthornBush/, 'hawthorn berry mesh builder')
   assert.match(worldSrc2, /function chineseFringeFlower/, 'Chinese fringe flower mesh builder')
+  assert.ok(HARBOR_LAND_EDGE > 3, 'land edge sits outside the river channel')
+  assert.ok(HARBOR_WALK_SPEED > 2, 'on-foot walk speed')
+  assert.ok(HARBOR_REBOARD_RADIUS > 1, 'reboard radius')
+  assert.equal(isHarborLand(HARBOR_LAND_EDGE), true, 'bank is land')
+  assert.equal(isHarborLand(0), false, 'river center is not land')
+  assert.match(worldSrc2, /travelMode === 'foot'/, 'on-foot travel mode')
+  assert.match(worldSrc2, /const disembark|function disembark|const boardBoat/, 'disembark / board helpers')
+
   assert.match(worldSrc2, /fauna === 'panda'/, 'panda idle animation')
   assert.match(worldSrc2, /fauna === 'tiger'/, 'tiger pace animation')
 

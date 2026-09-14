@@ -2241,6 +2241,72 @@
   font: 600 0.82rem/1.35 "Noto Sans", system-ui, sans-serif;
   color: #3dcfb6;
 }
+
+.hq-visit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.hq-visit-actions .hq-btn {
+  flex: 1 1 auto;
+}
+.hq-btn.is-on {
+  border-color: color-mix(in srgb, #3dcfb6 55%, transparent);
+  color: #3dcfb6;
+}
+.hq-teleport-list {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: min(40dvh, 16rem);
+  overflow: auto;
+}
+.hq-teleport-btn {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, #dff6ff 16%, transparent);
+  background: color-mix(in srgb, #041018 55%, transparent);
+  color: #e8f4f8;
+  cursor: pointer;
+  font: 500 0.8rem/1.25 "Noto Sans", system-ui, sans-serif;
+}
+.hq-teleport-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #3dcfb6 45%, transparent);
+}
+.hq-teleport-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.hq-teleport-btn.is-here {
+  border-color: color-mix(in srgb, #f0c75e 50%, transparent);
+}
+.hq-teleport-btn.is-locked {
+  opacity: 0.42;
+}
+.hq-teleport-ch {
+  font: 700 0.68rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3dcfb6;
+}
+.hq-teleport-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hq-teleport-status {
+  font: 600 0.68rem/1 Syne, system-ui, sans-serif;
+  color: color-mix(in srgb, #dff6ff 70%, transparent);
+}
 .hq-shop-slots {
   display: flex;
   flex-wrap: wrap;
