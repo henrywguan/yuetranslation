@@ -30,6 +30,8 @@ const b = {
     bottom: 'bottom-travel',
     shoes: 'shoes-leather',
     hand: 'hand-fan',
+    boat: 'boat-canoe',
+    lantern: 'lantern-paper-amber',
   },
   lastSavedAt: 100,
 }

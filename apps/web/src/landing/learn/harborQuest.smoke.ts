@@ -388,6 +388,8 @@ function main() {
     bottom: 'bottom-crimson',
     shoes: 'shoes-storm',
     hand: 'hand-fan',
+    boat: 'boat-canoe',
+    lantern: 'lantern-paper-amber',
   })
   assert.ok(
     [...scoutLook.children].length >= 0,
