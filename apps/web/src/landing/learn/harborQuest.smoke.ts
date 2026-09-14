@@ -30,6 +30,7 @@ import {
   HARBOR_DOCK_SPACING,
   HARBOR_FOG_DENSITY,
   HARBOR_NPC_ROLES,
+  HARBOR_DIALOGUE_BUBBLE,
   HARBOR_SCENIC_TREES,
   HARBOR_VILLAGE_HOMES,
   HARBOR_WEATHER_LOOK,
@@ -309,6 +310,10 @@ function main() {
   assert.match(worldSrc2, /mountainMist|foothill/, 'mountain foothills + mist veils')
   assert.match(worldSrc2, /inlandShelf|foothillShelf/, 'expanded bank shelves toward karst')
   assert.ok(HARBOR_EXPLORE_X > HARBOR_DOCK_X + 3, 'explore bound reaches inland roads')
+  assert.equal(HARBOR_DIALOGUE_BUBBLE, true, 'dialogue NPCs expose a speech-bubble cue')
+  assert.match(worldSrc2, /attachDialogueBubble|speechBubbleIcon/, 'Talkable NPCs get a speech bubble icon')
+  assert.match(worldSrc2, /hasDialogue/, 'dialogue NPCs tagged hasDialogue')
+  assert.match(worldSrc2, /attachDialogueBubble\(npc\)/, 'bubbles attach to pier dialogue hosts')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
   assert.match(worldSrc2, /uniqueLandmark/, 'landmarks tagged unique vs village homes')
   assert.match(worldSrc2, /setLook/, 'world can recolor scout look')
