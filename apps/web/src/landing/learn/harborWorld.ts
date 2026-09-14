@@ -266,8 +266,11 @@ export const HARBOR_TAP_MOVE_SPEED = 4.2
 export const HARBOR_TAP_ARRIVE = 0.4
 
 /** Clamp a free-move point onto the playable river corridor. */
+/** How far inland the Scout may walk (bank lanes → foothill roads). */
+export const HARBOR_EXPLORE_X = 14.5
+
 export function clampHarborMoveTarget(x: number, z: number): { x: number; z: number } {
-  const maxX = HARBOR_DOCK_X + 1.8
+  const maxX = HARBOR_EXPLORE_X
   return {
     x: Math.min(maxX, Math.max(-maxX, x)),
     z: Math.min(248, Math.max(-4, z)),
@@ -502,13 +505,67 @@ function lantern(weather: HarborWeather = 'sunny') {
   return g
 }
 
-/** Packed-earth lane with wheel ruts — runs along the bank. */
+/** Packed-earth lane with wheel ruts — riverside + inland walkways. */
 function dirtRoadStrip(length: number, width = 1.1) {
   const g = new THREE.Group()
   g.userData.dirtRoad = true
   g.add(hqBox(width, 0.05, length, 0x6a4828, 0, 0.06, 0))
   g.add(hqBox(0.12, 0.02, length * 0.96, 0x4a3018, -width * 0.22, 0.09, 0))
   g.add(hqBox(0.12, 0.02, length * 0.96, 0x4a3018, width * 0.22, 0.09, 0))
+  return g
+}
+
+/** Flagstone / cobble ribbon for village approaches (still walkable). */
+function stoneRoadStrip(length: number, width = 1.15) {
+  const g = new THREE.Group()
+  g.userData.dirtRoad = true
+  g.userData.stoneRoad = true
+  g.add(hqBox(width, 0.06, length, 0x7a7870, 0, 0.05, 0))
+  for (let i = 0; i < 5; i++) {
+    const z = -length * 0.35 + i * (length * 0.18)
+    g.add(hqBox(width * 0.42, 0.04, length * 0.12, i % 2 ? 0x8a8880 : 0x6a6860, -width * 0.18, 0.09, z))
+    g.add(hqBox(width * 0.42, 0.04, length * 0.12, i % 2 ? 0x6a6860 : 0x8a8880, width * 0.18, 0.09, z))
+  }
+  return g
+}
+
+/** Chinese roadside 路牌 — timber post + hanging board with glyph blocks. */
+const ROAD_SIGN_KINDS = [
+  { id: 'ferry', glyph: '渡', en: 'Ferry' },
+  { id: 'village', glyph: '村', en: 'Village' },
+  { id: 'mountain', glyph: '山', en: 'Mountain' },
+  { id: 'ford', glyph: '津', en: 'Ford' },
+  { id: 'pavilion', glyph: '亭', en: 'Pavilion' },
+  { id: 'road', glyph: '路', en: 'Road' },
+  { id: 'bridge', glyph: '橋', en: 'Bridge' },
+  { id: 'temple', glyph: '廟', en: 'Temple' },
+] as const
+
+function roadSign(kindIndex: number, rng: () => number) {
+  const kind = ROAD_SIGN_KINDS[kindIndex % ROAD_SIGN_KINDS.length]!
+  const g = new THREE.Group()
+  g.name = `road-sign-${kind.id}`
+  g.userData.roadSign = true
+  g.userData.roadSignKind = kind.id
+  g.userData.roadSignGlyph = kind.glyph
+  // Post + arm
+  g.add(hqPost(0.07, 0.09, 2.45, P.woodDark, 0, 1.22, 0, 5))
+  g.add(hqBox(0.95, 0.08, 0.08, P.woodMid, 0.35, 2.2, 0))
+  // Hanging lacquer board
+  g.add(hqBox(0.58, 0.78, 0.07, 0x142828, 0.7, 1.88, 0))
+  g.add(hqBox(0.64, 0.08, 0.09, P.trimGold, 0.7, 2.3, 0))
+  g.add(hqBox(0.64, 0.08, 0.09, P.trimGold, 0.7, 1.46, 0))
+  // Abstract Chinese glyph in jade / ivory blocks (readable as a character mark)
+  const ink = rng() > 0.45 ? P.jade : 0xf0e8d0
+  g.add(hqBox(0.28, 0.07, 0.04, ink, 0.7, 2.08, 0.05))
+  g.add(hqBox(0.07, 0.32, 0.04, ink, 0.7, 1.9, 0.05))
+  g.add(hqBox(0.22, 0.07, 0.04, ink, 0.7, 1.72, 0.05))
+  if (kind.id === 'mountain' || kind.id === 'temple') {
+    g.add(hqBox(0.18, 0.07, 0.04, P.trimGold, 0.7, 1.58, 0.05))
+  }
+  // Small roof cap on the post
+  g.add(hqBox(0.28, 0.06, 0.28, P.woodDeep, 0, 2.48, 0))
+  g.add(hqBox(0.18, 0.05, 0.18, P.trimGold, 0, 2.55, 0))
   return g
 }
 
@@ -520,28 +577,77 @@ function placeDirtRoads(
 ) {
   const z0 = chunkIndex * CHUNK
   const mid = z0 + CHUNK / 2
+  const inlandX = BANK + 6.4
   for (const side of [-1, 1] as const) {
-    const road = dirtRoadStrip(CHUNK - 0.35, 1.0 + rng() * 0.25)
-    road.position.set(side * (BANK + 0.2), 0, mid)
+    // Riverside packed-earth lane
+    const road = dirtRoadStrip(CHUNK - 0.35, 1.05 + rng() * 0.2)
+    road.position.set(side * (BANK + 0.25), 0, mid)
     group.add(road)
-    // Roadside lanterns — warm pools along the lane (brightest at night / rain)
-    for (const t of [0.22, 0.55, 0.82] as const) {
-      if (rng() > 0.35) continue
+    // Parallel inland walkway toward the karst foothills
+    const inland = dirtRoadStrip(CHUNK - 0.45, 0.95 + rng() * 0.15)
+    inland.userData.inlandRoad = true
+    inland.position.set(side * inlandX, 0.01, mid)
+    group.add(inland)
+    // Village chunks get a short stone approach on the inland road
+    if (biomeForChunk(chunkIndex) === 'village' && rng() > 0.35) {
+      const stone = stoneRoadStrip(CHUNK * 0.45, 1.2)
+      stone.position.set(side * inlandX, 0.02, z0 + CHUNK * 0.55)
+      group.add(stone)
+    }
+    // Cross-path linking river lane ↔ inland road (walkable roadway)
+    if (rng() > 0.2) {
+      const crossLen = inlandX - (BANK + 0.25)
+      const cross = dirtRoadStrip(crossLen, 0.85)
+      cross.userData.crossPath = true
+      cross.rotation.y = Math.PI / 2
+      cross.position.set(side * ((BANK + 0.25 + inlandX) / 2), 0.01, z0 + 4 + rng() * (CHUNK - 8))
+      group.add(cross)
+    }
+    // Spur toward shore / pier landings
+    if (rng() > 0.25) {
+      const spur = dirtRoadStrip(2.8, 0.8)
+      spur.rotation.y = Math.PI / 2
+      spur.position.set(side * (RIVER + 2.35), 0, z0 + 3.5 + rng() * (CHUNK - 7))
+      group.add(spur)
+    }
+    // Foothill path stub reaching toward mountain mist
+    if (rng() > 0.4) {
+      const foothillPath = dirtRoadStrip(3.4, 0.75)
+      foothillPath.userData.foothillPath = true
+      foothillPath.rotation.y = Math.PI / 2
+      foothillPath.position.set(side * (inlandX + 2.2), 0.03, z0 + 6 + rng() * (CHUNK - 10))
+      group.add(foothillPath)
+    }
+    // Roadside lanterns along both lanes
+    for (const t of [0.2, 0.5, 0.8] as const) {
+      if (rng() > 0.4) continue
       const lamp = lantern(weather)
+      const onInland = rng() > 0.45
+      const laneX = onInland ? inlandX : BANK + 0.25
       lamp.position.set(
-        side * (BANK + 0.2 + (rng() > 0.5 ? 0.55 : -0.55)),
+        side * (laneX + (rng() > 0.5 ? 0.55 : -0.55)),
         0,
         z0 + CHUNK * t + (rng() - 0.5) * 1.2,
       )
       lamp.rotation.y = rng() * Math.PI * 2
       group.add(lamp)
     }
-    // Spur toward shore / pier landings
-    if (rng() > 0.3) {
-      const spur = dirtRoadStrip(2.6, 0.8)
-      spur.rotation.y = Math.PI / 2
-      spur.position.set(side * (RIVER + 2.35), 0, z0 + 3.5 + rng() * (CHUNK - 7))
-      group.add(spur)
+    // Chinese road signs at junctions
+    if (rng() > 0.28) {
+      const sign = roadSign(Math.floor(rng() * ROAD_SIGN_KINDS.length), rng)
+      sign.position.set(
+        side * (BANK + 0.9 + rng() * 0.6),
+        0,
+        z0 + 5 + rng() * (CHUNK - 10),
+      )
+      sign.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2
+      group.add(sign)
+    }
+    if (rng() > 0.5) {
+      const sign2 = roadSign(Math.floor(rng() * ROAD_SIGN_KINDS.length), rng)
+      sign2.position.set(side * (inlandX + 0.7), 0, z0 + 8 + rng() * (CHUNK - 12))
+      sign2.rotation.y = side > 0 ? -0.4 : 0.4
+      group.add(sign2)
     }
   }
 }
@@ -858,29 +964,86 @@ function wulingPillar(rng: () => number) {
   return g
 }
 
-/** Parallax mountain range group — follows the voyage at a slower Z. */
-function wulingyuanRange(seed: number) {
+/** Soft fog veil that hides the empty foot of a karst pillar. */
+function mountainMistVeil(width: number, height: number, fogHex: number) {
+  const matMist = new THREE.MeshLambertMaterial({
+    color: fogHex,
+    transparent: true,
+    opacity: 0.42,
+    depthWrite: false,
+    flatShading: true,
+    side: THREE.DoubleSide,
+  })
+  const veil = new THREE.Mesh(new THREE.PlaneGeometry(width, height), matMist)
+  veil.userData.mountainMist = true
+  return veil
+}
+
+/** Parallax mountain range — foothills + fog veils so pillars no longer float. */
+function wulingyuanRange(seed: number, fogHex = 0xe8f8ff) {
   const root = new THREE.Group()
   const rng = mulberry32(seed)
-  const count = 28
+  const count = 32
   for (let i = 0; i < count; i++) {
     const pillar = wulingPillar(rng)
     const side = i % 2 === 0 ? 1 : -1
-    const x = side * (22 + rng() * 16 + (i % 5) * 1.2)
-    const z = (rng() - 0.5) * 90
-    pillar.position.set(x, -0.2, z)
-    pillar.scale.setScalar(0.85 + rng() * 0.55)
+    // Push the range farther inland so expanded banks meet the foothills
+    const x = side * (28 + rng() * 18 + (i % 5) * 1.4)
+    const z = (rng() - 0.5) * 110
+    pillar.position.set(x, 0.15, z)
+    pillar.scale.setScalar(0.9 + rng() * 0.6)
     root.add(pillar)
+    // Rocky / grassy foothill mound under each pillar (fills the empty base)
+    const mound = new THREE.Mesh(
+      new THREE.ConeGeometry(1.6 + rng() * 1.4, 1.1 + rng() * 0.9, 5),
+      hqMat(rng() > 0.5 ? 0x5a7a48 : 0x6a6860),
+    )
+    mound.position.set(x, 0.35, z)
+    mound.userData.foothill = true
+    root.add(mound)
+    // Horizontal fog sheet wrapping the base — reads as mist in the valleys
+    const mist = mountainMistVeil(5.5 + rng() * 3, 2.2 + rng() * 1.2, fogHex)
+    mist.position.set(x - side * 0.8, 1.1 + rng() * 0.4, z)
+    mist.rotation.y = side > 0 ? -0.5 : 0.5
+    root.add(mist)
   }
-  // A few closer “gateway” pillars for depth
-  for (let i = 0; i < 6; i++) {
+  // Closer gateway pillars with their own mist skirts
+  for (let i = 0; i < 8; i++) {
     const pillar = wulingPillar(rng)
     const side = i % 2 === 0 ? 1 : -1
-    pillar.position.set(side * (16 + rng() * 5), -0.1, -20 + i * 12)
-    pillar.scale.setScalar(0.7 + rng() * 0.35)
+    const x = side * (20 + rng() * 6)
+    const z = -24 + i * 14
+    pillar.position.set(x, 0.1, z)
+    pillar.scale.setScalar(0.75 + rng() * 0.4)
     root.add(pillar)
+    const mound = new THREE.Mesh(
+      new THREE.ConeGeometry(1.8, 1.0, 5),
+      hqMat(0x4a6a40),
+    )
+    mound.position.set(x, 0.3, z)
+    mound.userData.foothill = true
+    root.add(mound)
+    const mist = mountainMistVeil(6.5, 2.6, fogHex)
+    mist.position.set(x - side * 0.5, 1.2, z)
+    mist.rotation.y = side > 0 ? -0.35 : 0.35
+    root.add(mist)
+  }
+  // Continuous low ridge so the horizon never shows a bare gap
+  for (const side of [-1, 1] as const) {
+    const ridge = new THREE.Mesh(
+      new THREE.BoxGeometry(10, 1.4, 130),
+      hqMat(0x3a5a38),
+    )
+    ridge.position.set(side * 24, 0.2, 0)
+    ridge.userData.foothillRidge = true
+    root.add(ridge)
+    const ridgeMist = mountainMistVeil(14, 3.2, fogHex)
+    ridgeMist.position.set(side * 22, 1.6, 0)
+    ridgeMist.rotation.y = side > 0 ? -0.2 : 0.2
+    root.add(ridgeMist)
   }
   root.userData.wulingyuan = true
+  root.userData.mountainMist = true
   return root
 }
 
@@ -1087,23 +1250,37 @@ function populateChunk(
   const leaf = biome === 'hills' ? 0x6a8a50 : biome === 'reeds' ? 0x4a8a58 : 0x2f7a48
 
   for (const side of [-1, 1] as const) {
+    // Near bank (river edge)
     const bank = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, CHUNK + 0.2), mats.grass)
     bank.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK / 2)
     group.add(bank)
+    // Inland shelf — expands the walkable world toward the karst
+    const inland = new THREE.Mesh(new THREE.BoxGeometry(11, 0.32, CHUNK + 0.2), mats.grass)
+    inland.position.set(side * (BANK + 10.2), -0.06, z0 + CHUNK / 2)
+    inland.userData.inlandShelf = true
+    group.add(inland)
+    // Rising foothill berm (reads as land under distant mountains)
+    const foothill = new THREE.Mesh(
+      new THREE.BoxGeometry(9, 0.7, CHUNK + 0.2),
+      mats.grass,
+    )
+    foothill.position.set(side * (BANK + 17.5), 0.12, z0 + CHUNK / 2)
+    foothill.userData.foothillShelf = true
+    group.add(foothill)
     const shore = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, CHUNK + 0.2), mats.sand)
     shore.position.set(side * (RIVER + 1.1), 0.02, z0 + CHUNK / 2)
     group.add(shore)
   }
 
-  // Dirt roads along both banks (and occasional shore spurs)
+  // Dirt / stone roads, cross-paths, and Chinese road signs
   placeDirtRoads(group, chunkIndex, rng, weather)
 
   // Quiz pier landings (every chunk may host one or more dock slots)
   placeDockStops(group, chunkIndex, rng)
 
   if (biome === 'forest' || biome === 'hills') {
-    place(group, rng, 4, () => tree(rng, leaf), BANK - 0.2, BANK + 4.5, z0)
-    place(group, rng, 3, () => pine(rng), BANK, BANK + 5, z0)
+    place(group, rng, 5, () => tree(rng, leaf), BANK - 0.2, BANK + 9, z0)
+    place(group, rng, 4, () => pine(rng), BANK, BANK + 10, z0)
     place(group, rng, 3, () => poplar(rng), BANK - 0.3, BANK + 3.5, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 0.5, BANK + 4.5, z0)
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
@@ -1112,7 +1289,7 @@ function populateChunk(
     place(group, rng, 1, () => lantern(weather), BANK + 0.2, BANK + 1.8, z0)
   }
   if (biome === 'village') {
-    place(group, rng, 3, () => house(rng), BANK + 0.5, BANK + 4, z0)
+    place(group, rng, 3, () => house(rng), BANK + 0.5, BANK + 8, z0)
     place(group, rng, 2, () => hut(rng), BANK + 1, BANK + 4.5, z0)
     place(group, rng, 1, () => stiltShop(rng), BANK - 0.2, BANK + 1.8, z0)
     place(group, rng, 2, () => tree(rng, leaf), BANK + 2, BANK + 5, z0)
@@ -1415,7 +1592,7 @@ export function createHarborWorld(
   scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
   scene.background = new THREE.Color(look.sky)
 
-  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 220)
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 320)
   camera.position.set(0, 4.2, -6.5)
 
   const amb = new THREE.AmbientLight(look.amb, look.ambI)
@@ -1496,7 +1673,7 @@ export function createHarborWorld(
 
 
   // Distant Wulingyuan-style karst pillars (parallax backdrop)
-  const mountains = wulingyuanRange(42)
+  const mountains = wulingyuanRange(42, look.fog)
   scene.add(mountains)
 
   // 祥云 — density/tone follow the weather look

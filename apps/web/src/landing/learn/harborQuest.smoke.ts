@@ -43,6 +43,7 @@ import {
   HARBOR_TAP_MOVE_SPEED,
   HARBOR_TAP_ARRIVE,
   clampHarborMoveTarget,
+  HARBOR_EXPLORE_X,
   HARBOR_DOCK_X,
   HARBOR_VISITABLES,
   HARBOR_VISIT_RADIUS,
@@ -169,7 +170,7 @@ function main() {
   assert.equal(HARBOR_TAP_SLOP_PX, 10, 'tap vs drag pixel slop')
   assert.ok(HARBOR_TAP_MOVE_SPEED > 2, 'tap-to-move has a walk/paddle speed')
   assert.ok(HARBOR_TAP_ARRIVE > 0, 'arrival threshold')
-  assert.equal(clampHarborMoveTarget(99, -9).x, HARBOR_DOCK_X + 1.8, 'move target clamps to corridor')
+  assert.equal(clampHarborMoveTarget(99, -9).x, HARBOR_EXPLORE_X, 'move target clamps to inland explore bound')
   assert.equal(clampHarborMoveTarget(0, 999).z, 248, 'move target clamps far Z')
   assert.match(worldSrc, /HARBOR_TAP_SLOP_PX/, 'tap/drag discrimination uses slop constant')
   assert.match(worldSrc, /tryTapMove/, 'tap raycasts to ground and sets destination')
@@ -286,6 +287,11 @@ function main() {
   assert.match(worldSrc2, /outfitterBuilding/, 'Outfitter mesh')
   assert.match(worldSrc2, /goldenPortal|save-portal/, 'Save Shack golden portal')
   assert.match(worldSrc2, /dirtRoad|placeDirtRoads/, 'dirt roads on banks')
+  assert.match(worldSrc2, /inlandRoad|crossPath|foothillPath/, 'inland walkways + cross-paths')
+  assert.match(worldSrc2, /roadSign|ROAD_SIGN_KINDS/, 'Chinese roadside 路牌')
+  assert.match(worldSrc2, /mountainMist|foothill/, 'mountain foothills + mist veils')
+  assert.match(worldSrc2, /inlandShelf|foothillShelf/, 'expanded bank shelves toward karst')
+  assert.ok(HARBOR_EXPLORE_X > HARBOR_DOCK_X + 3, 'explore bound reaches inland roads')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
   assert.match(worldSrc2, /uniqueLandmark/, 'landmarks tagged unique vs village homes')
   assert.match(worldSrc2, /setLook/, 'world can recolor scout look')
