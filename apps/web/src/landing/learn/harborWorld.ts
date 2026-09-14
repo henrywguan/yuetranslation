@@ -245,10 +245,18 @@ export function biomeForChunk(i: number): BiomeId {
 /** Mobile OSRS-style orbit: yaw wraps freely; pitch is clamped. */
 export const ORBIT_PITCH_MIN = 0.22
 export const ORBIT_PITCH_MAX = 1.12
+/** Default camera distance (OSRS mid-zoom). */
 export const ORBIT_DISTANCE = 8.6
+/** Pinch / wheel zoom limits — close enough to read docks, far enough for the river. */
+export const ORBIT_DISTANCE_MIN = 4.2
+export const ORBIT_DISTANCE_MAX = 16.5
 
 export function clampOrbitPitch(pitch: number): number {
   return Math.min(ORBIT_PITCH_MAX, Math.max(ORBIT_PITCH_MIN, pitch))
+}
+
+export function clampOrbitDistance(distance: number): number {
+  return Math.min(ORBIT_DISTANCE_MAX, Math.max(ORBIT_DISTANCE_MIN, distance))
 }
 
 /**
@@ -1672,34 +1680,82 @@ export function createHarborWorld(
     setMoveTarget(hitPoint.x, hitPoint.z, true)
   }
 
-  // Finger / mouse: drag = orbit camera; tap = OSRS move-to-location
+  // Finger / mouse: drag = orbit; pinch / wheel = OSRS zoom; tap = move-to-location
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
   let pitchTarget = 0.52
+  let distance = ORBIT_DISTANCE
+  let distanceTarget = ORBIT_DISTANCE
   let dragging = false
   let ptrDragged = false
+  let pinching = false
   let ptrStartX = 0
   let ptrStartY = 0
   let lastPtrX = 0
   let lastPtrY = 0
   let activePointer: number | null = null
   const ORBIT_SENS = 0.0052
+  const WHEEL_ZOOM_SENS = 0.012
+  /** Active pointers for OSRS-style pinch zoom (two fingers). */
+  const pointers = new Map<number, { x: number; y: number }>()
+  let pinchStartSpan = 0
+  let pinchStartDistance = ORBIT_DISTANCE
+
+  const pointerSpan = () => {
+    if (pointers.size < 2) return 0
+    const [a, b] = pointers.values()
+    return Math.hypot(a.x - b.x, a.y - b.y)
+  }
+
+  const beginPinch = () => {
+    pinching = true
+    ptrDragged = true // suppress tap-to-move after a pinch
+    dragging = false
+    activePointer = null
+    pinchStartSpan = pointerSpan()
+    pinchStartDistance = distanceTarget
+  }
 
   const onPointerDown = (e: PointerEvent) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return
-    if (activePointer !== null) return
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    try {
+      canvas.setPointerCapture(e.pointerId)
+    } catch {
+      /* capture optional */
+    }
+    if (pointers.size >= 2) {
+      beginPinch()
+      return
+    }
+    // Single finger / mouse — start orbit drag (or pending tap)
     activePointer = e.pointerId
     dragging = true
     ptrDragged = false
+    pinching = false
     ptrStartX = e.clientX
     ptrStartY = e.clientY
     lastPtrX = e.clientX
     lastPtrY = e.clientY
-    canvas.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e: PointerEvent) => {
-    if (!dragging || e.pointerId !== activePointer) return
+    if (!pointers.has(e.pointerId)) return
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    // Two-finger pinch → zoom (fingers apart = zoom out, like OSRS)
+    if (pointers.size >= 2) {
+      if (!pinching) beginPinch()
+      const span = pointerSpan()
+      if (pinchStartSpan > 1) {
+        // Fingers apart → zoom out (farther), fingers together → zoom in — OSRS-style
+        const scale = span / pinchStartSpan
+        distanceTarget = clampOrbitDistance(pinchStartDistance * scale)
+      }
+      return
+    }
+
+    if (!dragging || e.pointerId !== activePointer || pinching) return
     const dx = e.clientX - lastPtrX
     const dy = e.clientY - lastPtrY
     lastPtrX = e.clientX
@@ -1715,26 +1771,60 @@ export function createHarborWorld(
     pitchTarget = clampOrbitPitch(pitchTarget + dy * ORBIT_SENS)
   }
   const endDrag = (e: PointerEvent) => {
-    if (e.pointerId !== activePointer) return
-    const wasDrag = ptrDragged
+    if (!pointers.has(e.pointerId)) return
+    const wasDrag = ptrDragged || pinching
     const upX = e.clientX
     const upY = e.clientY
-    dragging = false
-    ptrDragged = false
-    activePointer = null
+    pointers.delete(e.pointerId)
     try {
       canvas.releasePointerCapture(e.pointerId)
     } catch {
       /* already released */
     }
-    // Tap (no meaningful drag) → paddle / walk to the ground hit
-    if (!wasDrag) tryTapMove(upX, upY)
+
+    if (pointers.size >= 2) {
+      beginPinch()
+      return
+    }
+    if (pointers.size === 1) {
+      // Drop back to single-finger orbit with the remaining touch
+      const [id, pt] = [...pointers.entries()][0]!
+      pinching = false
+      pinchStartSpan = 0
+      activePointer = id
+      dragging = true
+      ptrDragged = true
+      lastPtrX = pt.x
+      lastPtrY = pt.y
+      ptrStartX = pt.x
+      ptrStartY = pt.y
+      return
+    }
+
+    // All pointers up
+    const allowTap = !wasDrag && !pinching
+    dragging = false
+    ptrDragged = false
+    pinching = false
+    pinchStartSpan = 0
+    activePointer = null
+    // Tap (no drag / pinch) → paddle / walk to the ground hit
+    if (allowTap) tryTapMove(upX, upY)
   }
+
+  /** Desktop / trackpad: scroll to zoom (OSRS mouse-wheel camera). */
+  const onWheel = (e: WheelEvent) => {
+    e.preventDefault()
+    // Scroll down / pinch-out on trackpad → zoom out (farther camera)
+    distanceTarget = clampOrbitDistance(distanceTarget + e.deltaY * WHEEL_ZOOM_SENS)
+  }
+
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
   canvas.addEventListener('pointerup', endDrag)
   canvas.addEventListener('pointercancel', endDrag)
   canvas.addEventListener('lostpointercapture', endDrag)
+  canvas.addEventListener('wheel', onWheel, { passive: false })
 
   const resize = () => {
     const w = canvas.clientWidth || canvas.width || 1
@@ -1880,11 +1970,12 @@ export function createHarborWorld(
     const orbitLerp = Math.min(1, dt * 14)
     yaw += (yawTarget - yaw) * orbitLerp
     pitch += (pitchTarget - pitch) * orbitLerp
+    distance += (distanceTarget - distance) * orbitLerp
 
     const lookX = boat.position.x
     const lookY = 0.75
     const lookZ = boat.position.z + 1.2
-    const off = orbitCameraOffset(yaw, pitch)
+    const off = orbitCameraOffset(yaw, pitch, distance)
     const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
     camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
     camera.lookAt(lookX, lookY, lookZ)
@@ -1969,6 +2060,7 @@ export function createHarborWorld(
       canvas.removeEventListener('pointerup', endDrag)
       canvas.removeEventListener('pointercancel', endDrag)
       canvas.removeEventListener('lostpointercapture', endDrag)
+      canvas.removeEventListener('wheel', onWheel)
       for (const g of chunkGroups.values()) {
         g.traverse((o) => {
           if (o instanceof THREE.Mesh) o.geometry.dispose()

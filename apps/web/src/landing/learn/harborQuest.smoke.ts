@@ -24,6 +24,7 @@ import {
 import { HARBOR_COIN_CHING_GAIN } from '../../landing/learn/harborCoinSfx'
 import {
   biomeForChunk,
+  clampOrbitDistance,
   clampOrbitPitch,
   dockPoseForProgress,
   HARBOR_DOCK_SPACING,
@@ -36,6 +37,9 @@ import {
   HARBOR_WULINGYUAN,
   HARBOR_XIANGYUN,
   orbitCameraOffset,
+  ORBIT_DISTANCE,
+  ORBIT_DISTANCE_MAX,
+  ORBIT_DISTANCE_MIN,
   ORBIT_PITCH_MAX,
   ORBIT_PITCH_MIN,
   pickHarborWeather,
@@ -157,6 +161,12 @@ function main() {
 
   assert.equal(clampOrbitPitch(ORBIT_PITCH_MIN - 1), ORBIT_PITCH_MIN)
   assert.equal(clampOrbitPitch(ORBIT_PITCH_MAX + 1), ORBIT_PITCH_MAX)
+  assert.equal(clampOrbitDistance(ORBIT_DISTANCE_MIN - 1), ORBIT_DISTANCE_MIN)
+  assert.equal(clampOrbitDistance(ORBIT_DISTANCE_MAX + 1), ORBIT_DISTANCE_MAX)
+  assert.ok(ORBIT_DISTANCE_MIN < ORBIT_DISTANCE && ORBIT_DISTANCE < ORBIT_DISTANCE_MAX, 'default zoom sits mid-range')
+  const near = orbitCameraOffset(0, Math.PI / 6, ORBIT_DISTANCE_MIN)
+  const far = orbitCameraOffset(0, Math.PI / 6, ORBIT_DISTANCE_MAX)
+  assert.ok(Math.hypot(far.x, far.y, far.z) > Math.hypot(near.x, near.y, near.z), 'farther distance pushes camera out')
   const behind = orbitCameraOffset(0, Math.PI / 6)
   assert.ok(behind.z < 0, 'yaw 0 sits behind the canoe')
   const side = orbitCameraOffset(Math.PI / 2, Math.PI / 6)
@@ -177,6 +187,10 @@ function main() {
   assert.match(worldSrc, /playerDirected/, 'player tap overrides auto-dock path')
   assert.match(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*\+\s*dy/, 'pitch drag is natural (drag down → look down)')
   assert.doesNotMatch(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*-\s*dy/, 'inverted pitch drag removed')
+  assert.match(worldSrc, /beginPinch|pinchStartSpan/, 'two-finger pinch zoom')
+  assert.match(worldSrc, /pinchStartDistance\s*\*\s*scale/, 'pinch-out zooms out (distance grows)')
+  assert.match(worldSrc, /onWheel|WHEEL_ZOOM_SENS/, 'mouse-wheel zoom')
+  assert.match(worldSrc, /orbitCameraOffset\(yaw,\s*pitch,\s*distance\)/, 'orbit uses live zoom distance')
   assert.equal(HARBOR_FOG_DENSITY, 0.0028, 'max-bright sunny fog (not a dark veil)')
   assert.equal(HARBOR_WEATHER_LOOK.sunny.ambI, 1.65, 'sunny ambient max-bright')
   assert.equal(HARBOR_WEATHER_LOOK.sunny.sunI, 2.55, 'sunny sun max-bright')
