@@ -40,6 +40,7 @@ import {
   HARBOR_WULINGYUAN,
   HARBOR_XIANGYUN,
   orbitCameraOffset,
+  orbitDistanceFromPinch,
   ORBIT_DISTANCE,
   ORBIT_DISTANCE_MAX,
   ORBIT_DISTANCE_MIN,
@@ -198,7 +199,20 @@ function main() {
   assert.match(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*\+\s*dy/, 'pitch drag is natural (drag down → look down)')
   assert.doesNotMatch(worldSrc, /pitchTarget\s*=\s*clampOrbitPitch\(pitchTarget\s*-\s*dy/, 'inverted pitch drag removed')
   assert.match(worldSrc, /beginPinch|pinchStartSpan/, 'two-finger pinch zoom')
-  assert.match(worldSrc, /pinchStartDistance\s*\*\s*scale/, 'pinch-out zooms out (distance grows)')
+  assert.match(worldSrc, /orbitDistanceFromPinch/, 'pinch uses maps-style distance helper')
+  assert.ok(
+    orbitDistanceFromPinch(ORBIT_DISTANCE, 100, 200) < ORBIT_DISTANCE,
+    'fingers spreading apart zooms in (closer camera)',
+  )
+  assert.ok(
+    orbitDistanceFromPinch(ORBIT_DISTANCE, 100, 50) > ORBIT_DISTANCE,
+    'pinching fingers together zooms out (farther camera)',
+  )
+  assert.equal(
+    orbitDistanceFromPinch(ORBIT_DISTANCE, 100, 100),
+    ORBIT_DISTANCE,
+    'unchanged span keeps distance',
+  )
   assert.match(worldSrc, /onWheel|WHEEL_ZOOM_SENS/, 'mouse-wheel zoom')
   assert.match(worldSrc, /orbitCameraOffset\(yaw,\s*pitch,\s*distance\)/, 'orbit uses live zoom distance')
   assert.equal(HARBOR_FOG_DENSITY, 0.0028, 'max-bright sunny fog (not a dark veil)')
