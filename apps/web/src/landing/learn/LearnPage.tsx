@@ -128,6 +128,7 @@ export function LearnPage() {
                   {progress.correctCount > 0 ? ` · ${progress.correctCount} correct casts` : ''}
                   {typeof progress.coins === 'number' ? ` · ${progress.coins} ferry coins` : ''}
                   {(progress.gold ?? 0) > 0 ? ` · ${progress.gold} arena gold` : ''}
+                  {(progress.xp ?? 0) > 0 ? ` · ${progress.xp} XP` : ''}
                 </p>
                 <a className="hq-chart-oc" href={OC_GUIDE} target="_blank" rel="noreferrer">
                   Open Cantonese textbook ↗

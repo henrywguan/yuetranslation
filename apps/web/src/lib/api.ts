@@ -468,6 +468,10 @@ export type HarborQuestProgressPayload = {
   correctCount: number
   /** Arena gold from Match the Definition (lifetime). */
   gold: number
+  /** Experience points (lifetime). */
+  xp: number
+  /** Times each mission/pier has been completed. */
+  missionClears: Record<string, number>
   /** Ferry coins — always persisted in Supabase jsonb. */
   coins: number
   /** Owned gear ids — always persisted in Supabase jsonb. */
@@ -498,6 +502,8 @@ export async function fetchHarborQuestProgress(): Promise<HarborQuestProgressPay
       stepCursor: {},
       correctCount: 0,
       gold: 0,
+      xp: 0,
+      missionClears: {},
       coins: 40,
       owned: ['hat-straw', 'top-harbor', 'bottom-travel', 'shoes-leather', 'hand-none'],
       look: {
@@ -529,6 +535,7 @@ export type HarborLeaderboardEntry = {
   rank: number
   userId: string
   displayName: string
+  xp: number
   gold: number
   correctCount: number
   clearedCount: number

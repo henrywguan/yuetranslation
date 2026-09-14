@@ -3182,3 +3182,51 @@
   font-size: 0.82rem;
   color: color-mix(in srgb, #e8dcc8 65%, transparent);
 }
+
+/* —— XP HUD + clear rewards —— */
+.hq-xp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 40%, transparent);
+  background: color-mix(in srgb, var(--jade) 12%, transparent);
+  font-family: 'Noto Sans', system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--jade-bright, #7aebd4) 85%, white);
+  cursor: default;
+}
+
+.hq-xp-chip-icon {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.hq-xp-chip-lv {
+  margin-left: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.hq-clear-xp {
+  margin: 0.75rem 0 0;
+  font-family: 'Noto Sans', system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--jade-bright, #7aebd4) 80%, white);
+}
+
+.hq-clear-xp-note {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.hq-board-xp {
+  font-weight: 700;
+  color: color-mix(in srgb, var(--jade-bright, #7aebd4) 85%, white);
+}

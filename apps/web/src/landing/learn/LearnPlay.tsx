@@ -51,6 +51,7 @@ import {
   type HarborProgress,
 } from './progress'
 import { QuestPanel } from './QuestPanel'
+import { missionBaseXp, sailorLevelFromXp } from './xpRewards'
 
 /** Rotate pier speakers by step so dialogue feels peopled. */
 function speakerForStep(stepIndex: number): HarborNpcRole {
@@ -95,6 +96,11 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
   const [arenaOpen, setArenaOpen] = useState(false)
+  const [clearReward, setClearReward] = useState<{
+    xpGained: number
+    repeat: boolean
+    clearCount: number
+  } | null>(null)
 
   const closeChapterScroll = useCallback(() => {
     setScrollOpen(false)
@@ -121,6 +127,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setInvOpen(false)
     setTeleportOpen(false)
     setCoinPops([])
+    setClearReward(null)
     setScrollOpen(false)
   }, [levelId])
 
@@ -164,7 +171,13 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const advance = useCallback(() => {
     if (!level) return
     if (stepIndex >= level.steps.length - 1) {
-      pushProgress(markLevelCleared(level.id))
+      const result = markLevelCleared(level.id, missionBaseXp(level))
+      setClearReward({
+        xpGained: result.xpGained,
+        repeat: result.repeat,
+        clearCount: result.clearCount,
+      })
+      pushProgress(result.progress)
       setCleared(true)
       return
     }
@@ -306,7 +319,22 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   }
 
   if (cleared) {
-    return <LevelClear level={level} onExit={onExit} onOpenLevel={onOpenLevel} />
+    return (
+      <LevelClear
+        level={level}
+        reward={clearReward}
+        onExit={onExit}
+        onOpenLevel={onOpenLevel}
+        onReplay={() => {
+          setClearReward(null)
+          setCleared(false)
+          setStepIndex(0)
+          setFlash(null)
+          setLastOk(false)
+          setTalking(false)
+        }}
+      />
+    )
   }
 
   const step = level.steps[stepIndex]!
@@ -355,6 +383,19 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           <span className="hq-play-name-zh" lang="zh-HK">
             {level.title.zh}
           </span>
+        </button>
+        <button
+          type="button"
+          className="hq-xp-chip"
+          title="Sailor experience"
+          aria-label={`Experience ${progressSnap.xp ?? 0}, level ${sailorLevelFromXp(progressSnap.xp ?? 0)}`}
+          aria-live="polite"
+        >
+          <span className="hq-xp-chip-icon" aria-hidden="true">
+            XP
+          </span>
+          <span className="hq-xp-chip-val">{progressSnap.xp ?? 0}</span>
+          <span className="hq-xp-chip-lv">Lv {sailorLevelFromXp(progressSnap.xp ?? 0)}</span>
         </button>
         <button
           type="button"
@@ -833,21 +874,40 @@ function ExploreWorldIcon() {
 
 function LevelClear({
   level,
+  reward,
   onExit,
   onOpenLevel,
+  onReplay,
 }: {
   level: HarborLevel
+  reward: { xpGained: number; repeat: boolean; clearCount: number } | null
   onExit: () => void
   onOpenLevel: (id: string) => void
+  onReplay: () => void
 }) {
   const next = nextLevelId(level.id)
+  const base = missionBaseXp(level)
+  const repeatXp = Math.floor(base * 0.5)
   return (
     <div className="hq-clear hq-clear--immersive">
-      <p className="hq-clear-kicker">Pier cleared</p>
+      <p className="hq-clear-kicker">{reward?.repeat ? 'Mission replayed' : 'Pier cleared'}</p>
       <h2 className="hq-clear-title">{level.title.en}</h2>
       <p className="hq-clear-zh" lang="zh-HK">
         {level.title.zh}
       </p>
+      {reward ? (
+        <p className="hq-clear-xp" aria-live="polite">
+          +{reward.xpGained} XP
+          {reward.repeat ? (
+            <span className="hq-clear-xp-note"> · repeat reward (50% of {base})</span>
+          ) : (
+            <span className="hq-clear-xp-note"> · first clear</span>
+          )}
+          {reward.clearCount > 1 ? (
+            <span className="hq-clear-xp-note"> · ×{reward.clearCount} clears</span>
+          ) : null}
+        </p>
+      ) : null}
       <p className="hq-clear-body">
         Syllables logged. The ferry holds at the next lantern
         {next ? ' — cast toward the following pier.' : ' — the chart is complete.'}
@@ -858,6 +918,9 @@ function LevelClear({
             Next pier →
           </button>
         ) : null}
+        <button type="button" className="hq-btn hq-btn--ghost" onClick={onReplay}>
+          Replay · {repeatXp} XP
+        </button>
         <button type="button" className="hq-btn hq-btn--ghost" onClick={onExit}>
           Pier chart
         </button>
@@ -909,6 +972,7 @@ export function HarborMap({
         {levels.map((level, i) => {
           const unlocked = isLevelUnlocked(level.id, ids, progress)
           const cleared = isLevelCleared(level.id, progress)
+          const base = missionBaseXp(level)
           return (
             <li key={level.id} className={`hq-map-node hq-map-node--${level.hue}`}>
               {i > 0 ? <span className="hq-map-bridge" aria-hidden="true" /> : null}
@@ -929,7 +993,11 @@ export function HarborMap({
                   ))}
                 </span>
                 <span className="hq-map-status">
-                  {!unlocked ? 'Locked' : cleared ? 'Cleared' : 'Sail'}
+                  {!unlocked
+                    ? 'Locked'
+                    : cleared
+                      ? `Replay · ${Math.floor(base * 0.5)} XP`
+                      : `Sail · ${base} XP`}
                 </span>
               </button>
             </li>

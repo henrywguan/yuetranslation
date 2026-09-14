@@ -471,6 +471,10 @@ function main() {
   assert.match(learnCss, /\.hq-gold-chip\s*\{/, 'gold chip styles')
   assert.ok(existsSync(new URL('./HarborLeaderboard.tsx', import.meta.url)), 'leaderboard UI')
   assert.match(learnCss, /\.hq-board\s*\{/, 'leaderboard styles')
+  assert.ok(existsSync(new URL('./xpRewards.ts', import.meta.url)), 'xp rewards')
+  assert.match(playSrc2, /missionBaseXp|sailorLevelFromXp/, 'XP on pier clear / HUD')
+  assert.match(playSrc2, /hq-xp-chip/, 'XP HUD chip')
+  assert.match(learnCss, /\.hq-xp-chip\s*\{/, 'XP chip styles')
   const scoutLook = buildHarborProtagonist({ pose: 'seated' })
   applyLookToProtagonist(scoutLook, {
     hat: 'hat-festival',

@@ -26,6 +26,7 @@ import {
   type HarborGearSlot,
   type HarborLook,
 } from './harborGear'
+import { missionXpAward } from './xpRewards'
 
 export type { HarborProgress }
 export {
@@ -255,10 +256,33 @@ export function withdrawHarborGear(
   return { ok: true, progress }
 }
 
-export function markLevelCleared(levelId: string) {
+export type MissionClearResult = {
+  progress: HarborProgress
+  /** XP granted for this clear (full on first, half on repeats). */
+  xpGained: number
+  /** True when this pier was already cleared before. */
+  repeat: boolean
+  /** Times completed after this clear. */
+  clearCount: number
+}
+
+/**
+ * Complete a pier mission.
+ * First clear → full `baseXp`; every repeat → 50% of `baseXp` (floored).
+ */
+export function markLevelCleared(levelId: string, baseXp = 0): MissionClearResult {
   const p = read()
+  const prior = p.missionClears[levelId] ?? 0
+  const award = missionXpAward(baseXp, prior)
+  p.missionClears[levelId] = prior + 1
   if (!p.cleared.includes(levelId)) p.cleared = [...p.cleared, levelId]
-  return commit(p)
+  if (award > 0) p.xp = Math.max(0, Math.floor(p.xp ?? 0)) + award
+  return {
+    progress: commit(p),
+    xpGained: award,
+    repeat: prior > 0,
+    clearCount: prior + 1,
+  }
 }
 
 export function resetHarborProgress() {

@@ -9,6 +9,10 @@ export type HarborProgress = {
   correctCount: number
   /** Gold earned from arena minigames (lifetime). */
   gold: number
+  /** Experience points (lifetime). */
+  xp: number
+  /** Times each mission/pier has been completed (for half-XP repeats). */
+  missionClears: Record<string, number>
   /** Ferry coins for the riverside outfitter. */
   coins: number
   /** Carried gear ids (inventory — hats, tops, bottoms, shoes, handhelds). */
@@ -28,6 +32,8 @@ export function emptyHarborProgress(): HarborProgress {
     stepCursor: {},
     correctCount: 0,
     gold: 0,
+    xp: 0,
+    missionClears: {},
     coins: 40,
     owned: [
       'hat-straw',
@@ -72,12 +78,28 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
       ? Math.min(Math.floor(o.gold), 10_000_000)
       : 0
+  const xp =
+    typeof o.xp === 'number' && Number.isFinite(o.xp) && o.xp >= 0
+      ? Math.min(Math.floor(o.xp), 100_000_000)
+      : 0
+  const missionClears: Record<string, number> = {}
+  if (o.missionClears && typeof o.missionClears === 'object' && !Array.isArray(o.missionClears)) {
+    for (const [k, v] of Object.entries(o.missionClears as Record<string, unknown>)) {
+      if (typeof k !== 'string' || !k || k.length >= 80) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      missionClears[k] = Math.min(Math.floor(v), 100_000)
+    }
+  }
   const seen = new Set<string>()
   const clearedUnique: string[] = []
   for (const id of cleared) {
     if (seen.has(id)) continue
     seen.add(id)
     clearedUnique.push(id)
+  }
+  // Backfill: if a pier is cleared but has no clear count, treat as 1.
+  for (const id of clearedUnique) {
+    if ((missionClears[id] ?? 0) < 1) missionClears[id] = 1
   }
   // Missing coins on an existing blob → 0 (not a starter grant). Starter 40 only via emptyHarborProgress().
   let coins = 0
@@ -91,7 +113,19 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     typeof o.lastSavedAt === 'number' && Number.isFinite(o.lastSavedAt) && o.lastSavedAt >= 0
       ? Math.floor(o.lastSavedAt)
       : 0
-  return { cleared: clearedUnique, stepCursor, correctCount, gold, coins, owned, banked, look, lastSavedAt }
+  return {
+    cleared: clearedUnique,
+    stepCursor,
+    correctCount,
+    gold,
+    xp,
+    missionClears,
+    coins,
+    owned,
+    banked,
+    look,
+    lastSavedAt,
+  }
 }
 
 const LOOK_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'hand', 'boat', 'lantern'] as const
@@ -168,11 +202,20 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
   const owned = sanitizeOwnedInline([...A.owned, ...B.owned], banked)
   // Prefer the look from the fresher Save Shack stamp (local wins on equal stamps)
   const look = (B.lastSavedAt ?? 0) > (A.lastSavedAt ?? 0) ? B.look : A.look
+  const missionClears: Record<string, number> = { ...A.missionClears }
+  for (const [k, v] of Object.entries(B.missionClears)) {
+    missionClears[k] = Math.max(missionClears[k] ?? 0, v)
+  }
+  for (const id of cleared) {
+    if ((missionClears[id] ?? 0) < 1) missionClears[id] = 1
+  }
   return {
     cleared,
     stepCursor,
     correctCount: Math.max(A.correctCount, B.correctCount),
     gold: Math.max(A.gold ?? 0, B.gold ?? 0),
+    xp: Math.max(A.xp ?? 0, B.xp ?? 0),
+    missionClears,
     coins: Math.max(A.coins ?? 0, B.coins ?? 0),
     owned,
     banked,
@@ -184,6 +227,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
 export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boolean {
   if (a.correctCount !== b.correctCount) return false
   if ((a.gold ?? 0) !== (b.gold ?? 0)) return false
+  if ((a.xp ?? 0) !== (b.xp ?? 0)) return false
   if (a.cleared.length !== b.cleared.length) return false
   const aClear = [...a.cleared].sort()
   const bClear = [...b.cleared].sort()
@@ -193,6 +237,12 @@ export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boole
   if (aKeys.length !== bKeys.length) return false
   for (const k of aKeys) {
     if ((a.stepCursor[k] ?? 0) !== (b.stepCursor[k] ?? 0)) return false
+  }
+  const aM = Object.keys(a.missionClears ?? {})
+  const bM = Object.keys(b.missionClears ?? {})
+  if (aM.length !== bM.length) return false
+  for (const k of aM) {
+    if ((a.missionClears[k] ?? 0) !== (b.missionClears[k] ?? 0)) return false
   }
   if ((a.coins ?? 0) !== (b.coins ?? 0)) return false
   if ((a.lastSavedAt ?? 0) !== (b.lastSavedAt ?? 0)) return false

@@ -10,6 +10,8 @@ import {
   HARBOR_GEAR_SLOTS,
   harborGearForSlot,
 } from './harborGear.ts'
+import { missionBaseXp, missionXpAward, sailorLevelFromXp } from './xpRewards.ts'
+import type { HarborLevel } from './curriculum.ts'
 
 assert.deepEqual(sanitizeHarborProgress(null), emptyHarborProgress())
 
@@ -18,12 +20,16 @@ const a = {
   stepCursor: { 'lesson-1': 2 },
   correctCount: 3,
   gold: 5,
+  xp: 100,
+  missionClears: { introduction: 1 },
 }
 const b = {
   cleared: ['lesson-1'],
   stepCursor: { 'lesson-1': 5, 'lesson-2': 1 },
   correctCount: 10,
   gold: 40,
+  xp: 250,
+  missionClears: { introduction: 2, 'lesson-1': 1 },
   coins: 80,
   owned: ['hat-bamboo', 'hand-fan'],
   look: {
@@ -43,6 +49,9 @@ assert.equal(merged.stepCursor['lesson-1'], 5)
 assert.equal(merged.stepCursor['lesson-2'], 1)
 assert.equal(merged.correctCount, 10)
 assert.equal(merged.gold, 40)
+assert.equal(merged.xp, 250)
+assert.equal(merged.missionClears.introduction, 2)
+assert.equal(merged.missionClears['lesson-1'], 1)
 assert.equal(merged.coins, 80)
 assert.ok(merged.owned.includes('hat-bamboo'))
 assert.equal(merged.look.hat, 'hat-bamboo')
@@ -65,6 +74,8 @@ const legacy = sanitizeHarborProgress({
 assert.equal(legacy.coins, 0, 'missing coins on existing progress → 0')
 assert.ok(legacy.owned.includes('hat-straw'))
 assert.equal(legacy.look.hat, 'hat-straw')
+assert.equal(legacy.missionClears.introduction, 1, 'cleared pier backfills missionClears')
+assert.equal(legacy.xp, 0)
 
 const spent = sanitizeHarborProgress({
   ...emptyHarborProgress(),
@@ -78,7 +89,6 @@ assert.equal(mergedLegacy.coins, 12, 'merge must not refill spent coins from leg
 assert.ok(mergedLegacy.owned.includes('hat-bamboo'))
 assert.equal(mergedLegacy.look.hat, 'hat-bamboo', 'local Save Shack look wins on newer stamp')
 
-
 // Banked gear stays out of carried inventory across merge
 const bankBlob = sanitizeHarborProgress({
   ...emptyHarborProgress(),
@@ -91,5 +101,18 @@ assert.ok(bankBlob.banked.includes('hat-bamboo'))
 const mergedBank = mergeHarborProgress(bankBlob, emptyHarborProgress())
 assert.ok(mergedBank.banked.includes('hat-bamboo'))
 assert.ok(!mergedBank.owned.includes('hat-bamboo'))
+
+assert.equal(missionXpAward(100, 0), 100)
+assert.equal(missionXpAward(100, 1), 50)
+assert.equal(missionXpAward(101, 2), 50)
+assert.equal(sailorLevelFromXp(0), 1)
+assert.ok(sailorLevelFromXp(400) >= 2)
+
+const fakeLevel = {
+  id: 'lesson-1',
+  chapter: 1,
+  steps: [{}, {}, {}],
+} as unknown as HarborLevel
+assert.ok(missionBaseXp(fakeLevel) > 80)
 
 console.log('harborProgress.smoke: ok')

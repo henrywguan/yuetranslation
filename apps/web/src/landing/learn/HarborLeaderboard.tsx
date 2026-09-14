@@ -45,7 +45,8 @@ export function HarborLeaderboard() {
           Harbor leaderboard
         </h2>
         <p className="hq-board-sub">
-          Ranked by arena gold, then correct casts, then piers cleared. Sign in to sync your score.
+          Ranked by XP, then arena gold, then correct casts, then piers cleared. Sign in to sync
+          your score.
         </p>
       </header>
 
@@ -78,7 +79,7 @@ export function HarborLeaderboard() {
       ) : null}
 
       {!signedIn && !loading ? (
-        <p className="hq-board-hint">Guests can browse the board; signed-in play syncs gold to Supabase.</p>
+        <p className="hq-board-hint">Guests can browse the board; signed-in play syncs XP & gold to Supabase.</p>
       ) : null}
     </section>
   )
@@ -95,6 +96,9 @@ function LeaderRow({ row }: { row: HarborLeaderboardEntry }) {
         {row.isYou ? <span className="hq-board-you">you</span> : null}
       </span>
       <span className="hq-board-stats">
+        <span className="hq-board-xp" title="Experience">
+          {row.xp} XP
+        </span>
         <span className="hq-board-gold" title="Gold">
           <span aria-hidden="true">金</span> {row.gold}
         </span>
