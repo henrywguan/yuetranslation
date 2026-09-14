@@ -505,40 +505,28 @@
   border-color: color-mix(in srgb, var(--glass-border, #ffffff) 35%, transparent) !important;
 }
 
-/* Open-world explore FAB — sits on the stage, above the chat / explore strip */
+/* Open-world explore — OSRS-style gold compass (no bordered FAB tile) */
 .hq-explore-fab {
   position: absolute;
   z-index: 5;
-  right: max(0.7rem, env(safe-area-inset-right));
-  bottom: calc(var(--hq-osrs-strip) + 1rem);
+  right: max(0.55rem, env(safe-area-inset-right));
+  bottom: calc(var(--hq-osrs-strip) + 0.85rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  width: 3.35rem;
-  height: 3.35rem;
-  padding: 0.35rem 0.25rem 0.3rem;
-  border: 1px solid color-mix(in srgb, #dff6ff 28%, transparent);
-  border-radius: 1rem;
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, #3dcfb6 22%, transparent),
-      color-mix(in srgb, #041018 72%, transparent) 55%,
-      color-mix(in srgb, #041018 82%, transparent)
-    );
-  color: #e8fff8;
-  box-shadow:
-    0 10px 28px color-mix(in srgb, #000 38%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 16%, transparent);
-  backdrop-filter: blur(12px);
+  gap: 0.22rem;
+  width: auto;
+  height: auto;
+  padding: 0.15rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #f5e6a8;
+  box-shadow: none;
+  backdrop-filter: none;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.2s ease, filter 0.2s ease;
   pointer-events: auto;
 }
 
@@ -548,53 +536,129 @@
 }
 
 .hq-explore-fab:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, #3dcfb6 55%, transparent);
+  transform: translateY(-2px) scale(1.04);
+  filter: brightness(1.08);
 }
 
 .hq-explore-fab:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
 }
 
-.hq-explore-fab.is-on {
-  border-color: color-mix(in srgb, #3dcfb6 70%, transparent);
-  color: #f4fffc;
+.hq-explore-fab.is-on .hq-compass-disc {
   box-shadow:
-    0 10px 28px color-mix(in srgb, #000 38%, transparent),
-    0 0 0 1px color-mix(in srgb, #3dcfb6 35%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent);
+    0 0 0 1px color-mix(in srgb, #f0d060 55%, transparent),
+    0 0 18px color-mix(in srgb, #f0d060 55%, transparent),
+    0 8px 20px color-mix(in srgb, #000 45%, transparent);
+}
+
+.hq-compass-disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.15rem;
+  height: 3.15rem;
+  border-radius: 50%;
   background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, #3dcfb6 42%, transparent),
-      color-mix(in srgb, #0a2a28 70%, transparent) 55%,
-      color-mix(in srgb, #041018 78%, transparent)
-    );
+    radial-gradient(circle at 35% 28%, color-mix(in srgb, #f0d060 28%, transparent), transparent 55%),
+    radial-gradient(circle at 50% 50%, #2a1c0c 0%, #120c06 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #c9a227 70%, transparent),
+    0 0 14px color-mix(in srgb, #f0d060 35%, transparent),
+    0 8px 18px color-mix(in srgb, #000 42%, transparent);
+  animation: hq-compass-glow 2.8s ease-in-out infinite;
 }
 
 .hq-explore-fab-icon {
   display: block;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, #f0d060 45%, transparent));
+}
+
+.hq-compass-sparkle {
+  position: absolute;
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8d0 0%, #f0d060 40%, transparent 70%);
+  box-shadow: 0 0 8px 2px color-mix(in srgb, #f0d060 80%, transparent);
+  pointer-events: none;
+  z-index: 2;
+  animation: hq-compass-sparkle 2.2s ease-in-out infinite;
+}
+
+.hq-compass-sparkle--a {
+  top: 0.15rem;
+  right: 0.45rem;
+}
+
+.hq-compass-sparkle--b {
+  bottom: 0.35rem;
+  left: 0.2rem;
+  animation-delay: 0.7s;
+  width: 0.28rem;
+  height: 0.28rem;
+}
+
+.hq-compass-sparkle--c {
+  top: 1.1rem;
+  right: 0.05rem;
+  animation-delay: 1.35s;
+  width: 0.22rem;
+  height: 0.22rem;
+}
+
+@keyframes hq-compass-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes hq-compass-sparkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.65);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  70% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
 }
 
 .hq-explore-fab-label {
   font-family: Syne, system-ui, sans-serif;
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1;
+  color: #f0d060;
+  text-shadow: 0 1px 6px color-mix(in srgb, #041018 85%, transparent);
 }
 
 @media (max-width: 420px) {
-  .hq-explore-fab {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.9rem;
+  .hq-compass-disc {
+    width: 2.85rem;
+    height: 2.85rem;
+  }
+
+  .hq-explore-fab-icon {
+    width: 24px;
+    height: 24px;
   }
 
   .hq-explore-fab-label {
-    font-size: 0.52rem;
+    font-size: 0.5rem;
   }
 }
 
@@ -609,41 +673,65 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 0.65rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.08rem;
+  overflow: hidden;
 }
 
 .hq-play--immersive .hq-play-bar-title {
-  justify-content: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.hq-play-title-en {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .hq-play--immersive .hq-play-name,
 .hq-play--immersive .hq-play-ch,
 .hq-play--immersive .hq-play-name-zh {
-  color: color-mix(in srgb, #e8f7f4 92%, white);
-  text-shadow: 0 1px 8px color-mix(in srgb, #041018 70%, transparent);
+  color: color-mix(in srgb, #e8f7f4 88%, white);
+  text-shadow: 0 1px 6px color-mix(in srgb, #041018 75%, transparent);
 }
 
 .hq-play-ch {
   font-family: Syne, system-ui, sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--jade);
+  flex-shrink: 0;
 }
 
 .hq-play-name {
   font-family: Syne, system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-weight: 650;
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .hq-play-name-zh {
-  font-size: 0.9rem;
-  opacity: 0.7;
+  display: block;
+  max-width: 100%;
+  font-size: 0.62rem;
+  line-height: 1.15;
+  opacity: 0.62;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hq-play-grid {
@@ -2061,6 +2149,13 @@
   font: 600 0.78rem/1 Syne, system-ui, sans-serif;
   letter-spacing: 0.04em;
   overflow: visible;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.hq-coin-chip:hover {
+  border-color: color-mix(in srgb, #f0d060 55%, transparent);
+  filter: brightness(1.06);
 }
 .hq-coin-chip-icon {
   color: #3dcfb6;

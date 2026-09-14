@@ -254,6 +254,12 @@ function main() {
   assert.ok(playSrc.includes('hq-explore-fab'), 'open-world explore FAB on stage')
   assert.ok(playSrc.includes('Open world exploration'), 'explore FAB accessible label')
   assert.ok(playSrc.includes('ExploreWorldIcon'), 'compass icon for open-world explore')
+  assert.ok(playSrc.includes('hq-compass-disc'), 'OSRS compass disc on explore FAB')
+  assert.ok(playSrc.includes('hq-compass-sparkle'), 'gold sparkle animation on compass')
+  assert.ok(playSrc.includes('hq-play-title-en'), 'chapter title condensed to English line + Chinese line')
+  assert.ok(playSrc.includes('setInvOpen(true)'), 'coin chip opens inventory')
+  assert.doesNotMatch(playSrc, /hq-btn--hud[^>]*>\s*Textbook/, 'top Textbook button removed')
+
   assert.match(playSrc, /setTalking\(false\)/, 'explore FAB exits dialogue')
 
   // Chao tone letters must load via Noto Sans subset (latin cut omits U+02E5–U+02E9)
@@ -286,6 +292,11 @@ function main() {
   assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
   assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
+  assert.match(learnCss, /\.hq-compass-disc\s*\{/, 'OSRS compass disc styles')
+  assert.match(learnCss, /@keyframes hq-compass-sparkle/, 'compass gold sparkle keyframes')
+  assert.match(learnCss, /\.hq-play-title-en\s*\{/, 'condensed chapter title styles')
+  assert.match(learnCss, /\.hq-coin-chip[^{]*\{[^}]*cursor:\s*pointer/, 'coin chip is clickable')
+
 
   
   // Save Shack + Outfitter visitables & gear kit
@@ -315,6 +326,10 @@ function main() {
   assert.match(worldSrc2, /hasDialogue/, 'dialogue NPCs tagged hasDialogue')
   assert.match(worldSrc2, /attachDialogueBubble\(npc\)/, 'bubbles attach to pier dialogue hosts')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
+  assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
+  assert.match(worldSrc2, /canoe\(weather\)/, 'canoe receives weather for boat lanterns')
+  assert.match(worldSrc2, /boatLantern\(weather\)/, 'port+starboard boat lanterns mounted')
+
   assert.match(worldSrc2, /uniqueLandmark/, 'landmarks tagged unique vs village homes')
   assert.match(worldSrc2, /setLook/, 'world can recolor scout look')
   assert.match(worldSrc2, /nearestVisitable/, 'arrival opens visitables')

@@ -519,6 +519,24 @@ function lantern(weather: HarborWeather = 'sunny') {
   return g
 }
 
+/** Compact gunwale lantern — lights the canoe so night reads as night, not underexposure. */
+function boatLantern(weather: HarborWeather = 'sunny') {
+  const g = new THREE.Group()
+  g.userData.harborLantern = true
+  g.userData.boatLantern = true
+  g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 5))
+  const lamp = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.2, 0.18),
+    glowMat(P.lantern, 0xffa040, weather === 'sunny' ? 0.35 : 1.1),
+  )
+  lamp.position.set(0, 0.5, 0)
+  g.add(lamp)
+  g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
+  // Slightly hotter than roadside lanterns so the scout stays readable at night
+  attachLanternLight(g, weather, 0.5, 0xffb060, 1.25)
+  return g
+}
+
 /** Packed-earth lane with wheel ruts — riverside + inland walkways. */
 function dirtRoadStrip(length: number, width = 1.1) {
   const g = new THREE.Group()
@@ -949,7 +967,7 @@ function bridge() {
   return g
 }
 
-function canoe() {
+function canoe(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
   // Boxy hull + blunt bow/stern (not a smooth capsule)
   g.add(hqBox(2.2, 0.32, 0.72, P.woodMid, 0, 0.22, 0))
@@ -970,6 +988,12 @@ function canoe() {
   you.position.set(0, 0.38, -0.05)
   you.rotation.y = Math.PI
   g.add(you)
+  // Port + starboard gunwale lanterns — night should read as lit, not muddy
+  for (const z of [0.4, -0.4] as const) {
+    const lamp = boatLantern(weather)
+    lamp.position.set(0.25, 0.35, z)
+    g.add(lamp)
+  }
   return g
 }
 
@@ -1806,7 +1830,7 @@ export function createHarborWorld(
     }
   }
 
-  const boat = canoe()
+  const boat = canoe(weather)
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 

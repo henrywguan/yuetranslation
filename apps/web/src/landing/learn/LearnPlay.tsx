@@ -281,24 +281,26 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           Chart
         </button>
         <div className="hq-play-bar-title">
-          <span className="hq-play-ch">Ch. {level.chapter}</span>
-          <span className="hq-play-name">{level.title.en}</span>
+          <span className="hq-play-title-en">
+            <span className="hq-play-ch">Ch. {level.chapter}</span>
+            <span className="hq-play-name">{level.title.en}</span>
+          </span>
           <span className="hq-play-name-zh" lang="zh-HK">
             {level.title.zh}
           </span>
         </div>
-        <a
-          className="hq-btn hq-btn--ghost hq-btn--link hq-btn--hud"
-          href={openCantoneseLessonUrl(level)}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Textbook
-        </a>
-        <div
+        <button
+          type="button"
           className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}`}
-          title="Ferry coins"
+          title="Open inventory"
+          aria-label={`Ferry coins ${progressSnap.coins}. Open inventory`}
           aria-live="polite"
+          onClick={() => {
+            setInvOpen(true)
+            setVisitable(null)
+            setShopMsg(null)
+            setBankMsg(null)
+          }}
         >
           <span className="hq-coin-chip-icon" aria-hidden="true">
             ◌
@@ -309,7 +311,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
               +{pop.amount}
             </span>
           ))}
-        </div>
+        </button>
         <button
           type="button"
           className={`hq-inv-btn${invOpen ? ' is-open' : ''}`}
@@ -575,7 +577,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         </aside>
       ) : null}
 
-      {/* Persistent open-world control — always on stage, exits dialogue when talking */}
+      {/* OSRS-style compass — free-look / exit dialogue */}
       <button
         type="button"
         className={`hq-explore-fab${!talking ? ' is-on' : ''}`}
@@ -584,7 +586,12 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         title="Open world exploration"
         onClick={() => setTalking(false)}
       >
-        <ExploreWorldIcon />
+        <span className="hq-compass-disc" aria-hidden="true">
+          <ExploreWorldIcon />
+          <span className="hq-compass-sparkle hq-compass-sparkle--a" />
+          <span className="hq-compass-sparkle hq-compass-sparkle--b" />
+          <span className="hq-compass-sparkle hq-compass-sparkle--c" />
+        </span>
         <span className="hq-explore-fab-label">Explore</span>
       </button>
 
@@ -607,23 +614,31 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   )
 }
 
-/** Compass rose for the open-world explore FAB. */
+/** OSRS-style compass rose for the open-world explore FAB. */
 function ExploreWorldIcon() {
   return (
-    <svg className="hq-explore-fab-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="12" cy="12" r="2.2" fill="currentColor" />
-      <path
-        d="M12 3.2 13.6 10.4 12 9.2 10.4 10.4Z"
-        fill="currentColor"
-      />
-      <path
-        d="M12 20.8 10.4 13.6 12 14.8 13.6 13.6Z"
-        fill="currentColor"
-        opacity="0.55"
-      />
-      <path d="M3.2 12 10.4 10.4 9.2 12 10.4 13.6Z" fill="currentColor" opacity="0.7" />
-      <path d="M20.8 12 13.6 13.6 14.8 12 13.6 10.4Z" fill="currentColor" opacity="0.7" />
+    <svg className="hq-explore-fab-icon" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+      <circle cx="16" cy="16" r="14.25" fill="#1a1208" stroke="#c9a227" strokeWidth="1.75" />
+      <circle cx="16" cy="16" r="11.2" fill="none" stroke="#8a7020" strokeWidth="0.7" opacity="0.85" />
+      {/* Cardinal ticks */}
+      <path d="M16 3.6v2.4M16 26v2.4M3.6 16h2.4M26 16h2.4" stroke="#e8d48a" strokeWidth="1.1" strokeLinecap="round" />
+      {/* North (gold) / south (muted) needle */}
+      <path d="M16 5.2 18.35 15.2 16 13.6 13.65 15.2Z" fill="#f0d060" />
+      <path d="M16 26.8 13.65 16.8 16 18.4 18.35 16.8Z" fill="#5a4a28" />
+      <path d="M5.2 16 15.2 13.65 13.6 16 15.2 18.35Z" fill="#b89840" opacity="0.85" />
+      <path d="M26.8 16 16.8 18.35 18.4 16 16.8 13.65Z" fill="#b89840" opacity="0.85" />
+      <circle cx="16" cy="16" r="2.15" fill="#f5e6a8" stroke="#8a7020" strokeWidth="0.7" />
+      <text
+        x="16"
+        y="9.1"
+        textAnchor="middle"
+        fill="#ffe9a0"
+        fontSize="4.2"
+        fontFamily="Syne, system-ui, sans-serif"
+        fontWeight="700"
+      >
+        N
+      </text>
     </svg>
   )
 }
