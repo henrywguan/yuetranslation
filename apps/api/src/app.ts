@@ -40,7 +40,11 @@ import {
 } from './usage.js'
 import { submitBugReport } from './bugReport.js'
 import { getHistory, putHistory } from './history.js'
-import { getHarborQuest, putHarborQuest } from './harborQuest.js'
+import {
+  getHarborQuest,
+  getHarborQuestLeaderboard,
+  putHarborQuest,
+} from './harborQuest.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
 import {
   upsertProfilePlan,
@@ -912,6 +916,7 @@ app.post('/api/billing/portal', startPortal)
 
 app.get('/api/history', getHistory)
 app.put('/api/history', putHistory)
+app.get('/api/harbor-quest/leaderboard', getHarborQuestLeaderboard)
 app.get('/api/harbor-quest', getHarborQuest)
 app.put('/api/harbor-quest', putHarborQuest)
 app.get('/api/household', getHousehold)

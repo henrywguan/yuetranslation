@@ -2,7 +2,7 @@ import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
 import { env } from './env.js'
-import { getAdmin } from './supabase.js'
+import { getAdmin, getProfile } from './supabase.js'
 
 export type HarborQuestProgress = {
   cleared: string[]
@@ -11,12 +11,25 @@ export type HarborQuestProgress = {
   gold: number
 }
 
+export type HarborLeaderboardEntry = {
+  rank: number
+  userId: string
+  displayName: string
+  gold: number
+  correctCount: number
+  clearedCount: number
+  isYou?: boolean
+}
+
 const EMPTY: HarborQuestProgress = {
   cleared: [],
   stepCursor: {},
   correctCount: 0,
   gold: 0,
 }
+
+const LEADERBOARD_DEFAULT_LIMIT = 25
+const LEADERBOARD_MAX_LIMIT = 50
 
 /** Sanitize progress payloads from clients / DB. */
 export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
@@ -52,6 +65,12 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
   return { cleared: clearedUnique, stepCursor, correctCount, gold }
 }
 
+function displayNameFromProfile(username: string | null | undefined, userId: string): string {
+  const u = typeof username === 'string' ? username.trim() : ''
+  if (u) return u.slice(0, 24)
+  return `Sailor-${userId.replace(/-/g, '').slice(0, 4)}`
+}
+
 async function persistProgress(userId: string, progress: HarborQuestProgress) {
   const admin = getAdmin()
   if (!admin) return { error: new Error('Harbor Quest sync unavailable.') }
@@ -64,6 +83,69 @@ async function persistProgress(userId: string, progress: HarborQuestProgress) {
     { onConflict: 'user_id' },
   )
   return { error }
+}
+
+/** Upsert denormalized leaderboard row from sanitized progress. */
+export async function syncHarborLeaderboard(userId: string, progress: HarborQuestProgress) {
+  const admin = getAdmin()
+  if (!admin) return { error: new Error('Harbor Quest sync unavailable.') }
+
+  let displayName = displayNameFromProfile(null, userId)
+  try {
+    const profile = await getProfile(userId)
+    displayName = displayNameFromProfile(profile?.username, userId)
+  } catch {
+    /* keep fallback name */
+  }
+
+  const { error } = await admin.from('harbor_quest_leaderboard').upsert(
+    {
+      user_id: userId,
+      display_name: displayName,
+      gold: progress.gold,
+      correct_count: progress.correctCount,
+      cleared_count: progress.cleared.length,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  )
+  return { error }
+}
+
+type LeaderboardRow = {
+  user_id: string
+  display_name: string
+  gold: number
+  correct_count: number
+  cleared_count: number
+}
+
+function rankRows(rows: LeaderboardRow[]): HarborLeaderboardEntry[] {
+  return rows.map((row, i) => ({
+    rank: i + 1,
+    userId: row.user_id,
+    displayName: row.display_name || 'Sailor',
+    gold: row.gold,
+    correctCount: row.correct_count,
+    clearedCount: row.cleared_count,
+  }))
+}
+
+/** Compare like the SQL index: gold → correct → cleared → older updated wins for ties. */
+export function compareLeaderboardScores(
+  a: { gold: number; correctCount: number; clearedCount: number },
+  b: { gold: number; correctCount: number; clearedCount: number },
+): number {
+  if (a.gold !== b.gold) return b.gold - a.gold
+  if (a.correctCount !== b.correctCount) return b.correctCount - a.correctCount
+  if (a.clearedCount !== b.clearedCount) return b.clearedCount - a.clearedCount
+  return 0
+}
+
+function parseLimit(raw: unknown): number {
+  const n = typeof raw === 'string' ? Number(raw) : typeof raw === 'number' ? raw : NaN
+  if (!Number.isFinite(n)) return LEADERBOARD_DEFAULT_LIMIT
+  return Math.min(LEADERBOARD_MAX_LIMIT, Math.max(1, Math.floor(n)))
 }
 
 /** GET /api/harbor-quest — signed-in Harbor Quest progress. */
@@ -96,7 +178,7 @@ export async function getHarborQuest(req: AuthedRequest, res: Response) {
   res.json({ progress: sanitizeHarborProgress(data?.progress) })
 }
 
-/** PUT /api/harbor-quest — replace account Harbor Quest progress. */
+/** PUT /api/harbor-quest — replace account Harbor Quest progress (+ leaderboard sync). */
 export async function putHarborQuest(req: AuthedRequest, res: Response) {
   const auth = requireAuth(req, res)
   if (!auth) return
@@ -120,5 +202,84 @@ export async function putHarborQuest(req: AuthedRequest, res: Response) {
     return
   }
 
+  // Best-effort leaderboard sync — progress save already succeeded.
+  const board = await syncHarborLeaderboard(auth.userId, progress)
+  if (board.error) {
+    console.warn('[harbor-quest] leaderboard sync failed', board.error.message)
+  }
+
   res.json({ ok: true, progress })
+}
+
+/**
+ * GET /api/harbor-quest/leaderboard — global ranks (public).
+ * Optional Bearer token marks the caller's row with `isYou` and returns `me`.
+ */
+export async function getHarborQuestLeaderboard(req: AuthedRequest, res: Response) {
+  const limit = parseLimit(req.query?.limit)
+
+  if (env.openMode) {
+    res.json({ entries: [], me: null, limit })
+    return
+  }
+
+  const admin = getAdmin()
+  if (!admin) {
+    res.status(503).json({ message: 'Harbor Quest leaderboard unavailable.' })
+    return
+  }
+
+  const { data, error } = await admin
+    .from('harbor_quest_leaderboard')
+    .select('user_id, display_name, gold, correct_count, cleared_count')
+    .order('gold', { ascending: false })
+    .order('correct_count', { ascending: false })
+    .order('cleared_count', { ascending: false })
+    .order('updated_at', { ascending: true })
+    .limit(limit)
+
+  if (error) {
+    res.status(500).json({ message: error.message })
+    return
+  }
+
+  const rows = (data ?? []) as LeaderboardRow[]
+  const viewerId = req.auth?.userId ?? null
+  const entries = rankRows(rows).map((e) =>
+    viewerId && e.userId === viewerId ? { ...e, isYou: true } : e,
+  )
+
+  let me: HarborLeaderboardEntry | null = null
+  if (viewerId) {
+    const onBoard = entries.find((e) => e.userId === viewerId)
+    if (onBoard) {
+      me = onBoard
+    } else {
+      // Viewer outside the top window — scan a wider ordered page for their rank.
+      const { data: wider } = await admin
+        .from('harbor_quest_leaderboard')
+        .select('user_id, display_name, gold, correct_count, cleared_count')
+        .order('gold', { ascending: false })
+        .order('correct_count', { ascending: false })
+        .order('cleared_count', { ascending: false })
+        .order('updated_at', { ascending: true })
+        .limit(2000)
+      const widerRows = (wider ?? []) as LeaderboardRow[]
+      const idx = widerRows.findIndex((r) => r.user_id === viewerId)
+      if (idx >= 0) {
+        const row = widerRows[idx]!
+        me = {
+          rank: idx + 1,
+          userId: row.user_id,
+          displayName: row.display_name || 'Sailor',
+          gold: row.gold,
+          correctCount: row.correct_count,
+          clearedCount: row.cleared_count,
+          isYou: true,
+        }
+      }
+    }
+  }
+
+  res.json({ entries, me, limit })
 }

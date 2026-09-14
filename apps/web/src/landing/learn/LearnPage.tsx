@@ -11,6 +11,7 @@ import { MarketingFooter } from '../MarketingFooter'
 import { MarketingPageShell } from '../MarketingPageShell'
 import { Reveal } from '../Reveal'
 import { HARBOR_LEVELS } from './curriculum'
+import { HarborLeaderboard } from './HarborLeaderboard'
 import { HarborMap, LearnSession } from './LearnPlay'
 import { hydrateHarborProgress, loadHarborProgress, type HarborProgress } from './progress'
 import '../landing.css'
@@ -125,6 +126,10 @@ export function LearnPage() {
           <HarborMap progress={progress} onSelect={openLevel} />
         </Reveal>
       </section>
+
+      <Reveal y={28}>
+        <HarborLeaderboard />
+      </Reveal>
 
       <section className="hq-how">
         <Reveal y={24}>

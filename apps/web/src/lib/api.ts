@@ -494,3 +494,36 @@ export async function putHarborQuestProgress(progress: HarborQuestProgressPayloa
     throw new Error(data.message || 'Failed to save Harbor Quest progress')
   }
 }
+
+export type HarborLeaderboardEntry = {
+  rank: number
+  userId: string
+  displayName: string
+  gold: number
+  correctCount: number
+  clearedCount: number
+  isYou?: boolean
+}
+
+export type HarborLeaderboardPayload = {
+  entries: HarborLeaderboardEntry[]
+  me: HarborLeaderboardEntry | null
+  limit: number
+}
+
+/** Global Harbor Quest ranks (public; signed-in callers get `me` / `isYou`). */
+export async function fetchHarborQuestLeaderboard(
+  limit = 25,
+): Promise<HarborLeaderboardPayload> {
+  const res = await apiFetch(`/harbor-quest/leaderboard?limit=${Math.min(50, Math.max(1, limit))}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to load Harbor Quest leaderboard')
+  }
+  const entries = Array.isArray(data.entries) ? (data.entries as HarborLeaderboardEntry[]) : []
+  const me =
+    data.me && typeof data.me === 'object' ? (data.me as HarborLeaderboardEntry) : null
+  const lim =
+    typeof data.limit === 'number' && Number.isFinite(data.limit) ? Math.floor(data.limit) : limit
+  return { entries, me, limit: lim }
+}
