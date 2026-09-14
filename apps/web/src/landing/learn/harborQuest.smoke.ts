@@ -39,7 +39,7 @@ function main() {
   assert.equal(nextLevelId('jyutping-chart'), null)
   assert.ok(levelById('lesson-1'))
 
-  const empty = { cleared: [] as string[], stepCursor: {}, correctCount: 0 }
+  const empty = { cleared: [] as string[], stepCursor: {}, correctCount: 0, gold: 0 }
   assert.equal(isLevelUnlocked('introduction', ids, empty), true)
   assert.equal(isLevelUnlocked('lesson-1', ids, empty), false)
   assert.equal(

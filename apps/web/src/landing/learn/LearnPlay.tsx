@@ -7,10 +7,13 @@ import {
   type HarborLevel,
 } from './curriculum'
 import { HarborStage } from './HarborStage'
+import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   isLevelCleared,
   isLevelUnlocked,
+  loadHarborProgress,
   markCorrect,
+  markGoldEarned,
   markLevelCleared,
   markStepReached,
   type HarborProgress,
@@ -31,6 +34,8 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [flash, setFlash] = useState<'ok' | 'no' | null>(null)
   const [cleared, setCleared] = useState(false)
   const [lastOk, setLastOk] = useState(false)
+  const [arenaOpen, setArenaOpen] = useState(false)
+  const [gold, setGold] = useState(() => loadHarborProgress().gold)
 
   useEffect(() => {
     setStepIndex(0)
@@ -62,6 +67,15 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       setLastOk(ok)
       if (ok) onProgress(markCorrect())
       window.setTimeout(() => setFlash(null), 420)
+    },
+    [onProgress],
+  )
+
+  const onEarnGold = useCallback(
+    (amount: number) => {
+      const next = markGoldEarned(amount)
+      setGold(next.gold)
+      onProgress(next)
     },
     [onProgress],
   )
@@ -102,14 +116,22 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
             {level.title.zh}
           </span>
         </div>
-        <a
-          className="hq-btn hq-btn--ghost hq-btn--link"
-          href={openCantoneseLessonUrl(level)}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Textbook
-        </a>
+        <div className="hq-play-bar-right">
+          <span className="hq-play-gold" title="Arena gold" aria-live="polite">
+            <span className="hq-play-gold-icon" aria-hidden="true">
+              金
+            </span>
+            {gold}
+          </span>
+          <a
+            className="hq-btn hq-btn--ghost hq-btn--link"
+            href={openCantoneseLessonUrl(level)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Textbook
+          </a>
+        </div>
       </div>
 
       <div className="hq-play-grid">
@@ -127,8 +149,16 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           stepCount={level.steps.length}
           flash={flash}
           spotlight={spotlight}
+          onOpenArena={() => setArenaOpen(true)}
         />
       </div>
+
+      <MatchDefinitionModal
+        open={arenaOpen}
+        gold={gold}
+        onClose={() => setArenaOpen(false)}
+        onEarnGold={onEarnGold}
+      />
     </div>
   )
 }

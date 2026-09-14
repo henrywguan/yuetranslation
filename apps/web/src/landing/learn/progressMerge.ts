@@ -7,10 +7,12 @@ export type HarborProgress = {
   stepCursor: Record<string, number>
   /** Total correct answers (lifetime). */
   correctCount: number
+  /** Gold earned from arena minigames (lifetime). */
+  gold: number
 }
 
 export function emptyHarborProgress(): HarborProgress {
-  return { cleared: [], stepCursor: {}, correctCount: 0 }
+  return { cleared: [], stepCursor: {}, correctCount: 0, gold: 0 }
 }
 
 export function sanitizeHarborProgress(raw: unknown): HarborProgress {
@@ -36,7 +38,11 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     seen.add(id)
     clearedUnique.push(id)
   }
-  return { cleared: clearedUnique, stepCursor, correctCount }
+  const gold =
+    typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
+      ? Math.floor(o.gold)
+      : 0
+  return { cleared: clearedUnique, stepCursor, correctCount, gold }
 }
 
 /** Merge two progress blobs without losing pier clears or step depth. */
@@ -50,11 +56,13 @@ export function mergeHarborProgress(a: HarborProgress, b: HarborProgress): Harbo
     cleared,
     stepCursor,
     correctCount: Math.max(a.correctCount, b.correctCount),
+    gold: Math.max(a.gold, b.gold),
   }
 }
 
 export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boolean {
   if (a.correctCount !== b.correctCount) return false
+  if (a.gold !== b.gold) return false
   if (a.cleared.length !== b.cleared.length) return false
   const aClear = [...a.cleared].sort()
   const bClear = [...b.cleared].sort()

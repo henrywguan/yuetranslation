@@ -466,6 +466,7 @@ export type HarborQuestProgressPayload = {
   cleared: string[]
   stepCursor: Record<string, number>
   correctCount: number
+  gold: number
 }
 
 export async function fetchHarborQuestProgress(): Promise<HarborQuestProgressPayload | null> {
@@ -477,7 +478,7 @@ export async function fetchHarborQuestProgress(): Promise<HarborQuestProgressPay
   }
   const progress = data.progress
   if (!progress || typeof progress !== 'object') {
-    return { cleared: [], stepCursor: {}, correctCount: 0 }
+    return { cleared: [], stepCursor: {}, correctCount: 0, gold: 0 }
   }
   return progress as HarborQuestProgressPayload
 }

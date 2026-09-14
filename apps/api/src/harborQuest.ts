@@ -8,12 +8,14 @@ export type HarborQuestProgress = {
   cleared: string[]
   stepCursor: Record<string, number>
   correctCount: number
+  gold: number
 }
 
 const EMPTY: HarborQuestProgress = {
   cleared: [],
   stepCursor: {},
   correctCount: 0,
+  gold: 0,
 }
 
 /** Sanitize progress payloads from clients / DB. */
@@ -43,7 +45,11 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     seen.add(id)
     clearedUnique.push(id)
   }
-  return { cleared: clearedUnique, stepCursor, correctCount }
+  const gold =
+    typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
+      ? Math.min(Math.floor(o.gold), 10_000_000)
+      : 0
+  return { cleared: clearedUnique, stepCursor, correctCount, gold }
 }
 
 async function persistProgress(userId: string, progress: HarborQuestProgress) {

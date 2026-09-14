@@ -92,6 +92,13 @@ export function markCorrect() {
   return commit(p)
 }
 
+export function markGoldEarned(amount: number) {
+  const p = read()
+  const n = Math.max(0, Math.floor(amount))
+  if (n > 0) p.gold += n
+  return commit(p)
+}
+
 export function markLevelCleared(levelId: string) {
   const p = read()
   if (!p.cleared.includes(levelId)) p.cleared = [...p.cleared, levelId]
