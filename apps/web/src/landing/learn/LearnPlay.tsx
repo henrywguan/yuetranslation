@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
   levelById,
+  levelCampaign,
+  levelsForCampaign,
   nextLevelId,
   openCantoneseLessonUrl,
+  type HarborCampaignId,
   type HarborLevel,
 } from './curriculum'
 import {
@@ -382,7 +386,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
             </button>
           </div>
           {teleportOpen ? (
-            <ul className="hq-teleport-list" aria-label="Campaign chapters">
+            <ul className="hq-teleport-list" aria-label="Campaign piers">
               {HARBOR_LEVELS.map((lv) => {
                 const ids = HARBOR_LEVELS.map((l) => l.id)
                 const unlocked = isLevelUnlocked(lv.id, ids, progressSnap)
@@ -400,7 +404,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
                       }}
                     >
                       <span className="hq-teleport-ch">
-                        {lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}
+                        {`${levelCampaign(lv) === 'life0' ? 'Life0' : 'Sounds'} · ${lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}`}
                       </span>
                       <span className="hq-teleport-title">{lv.title.en}</span>
                       <span className="hq-teleport-status">
@@ -752,42 +756,76 @@ function LevelClear({
 export function HarborMap({
   progress,
   onSelect,
+  initialCampaign,
 }: {
   progress: HarborProgress
   onSelect: (id: string) => void
+  /** Chart opens on the sailor’s active campaign when known. */
+  initialCampaign?: HarborCampaignId
 }) {
-  const ids = HARBOR_LEVELS.map((l) => l.id)
+  const [campaign, setCampaign] = useState<HarborCampaignId>(initialCampaign ?? 'sounds')
+  const levels = levelsForCampaign(campaign)
+  const ids = levels.map((l) => l.id)
+  const meta = HARBOR_CAMPAIGNS.find((c) => c.id === campaign)!
   return (
-    <ol className="hq-map" aria-label="Pronunciation guide piers">
-      {HARBOR_LEVELS.map((level, i) => {
-        const unlocked = isLevelUnlocked(level.id, ids, progress)
-        const cleared = isLevelCleared(level.id, progress)
-        return (
-          <li key={level.id} className={`hq-map-node hq-map-node--${level.hue}`}>
-            {i > 0 ? <span className="hq-map-bridge" aria-hidden="true" /> : null}
-            <button
-              type="button"
-              className={`hq-map-btn${cleared ? ' is-cleared' : ''}${!unlocked ? ' is-locked' : ''}`}
-              disabled={!unlocked}
-              onClick={() => onSelect(level.id)}
-            >
-              <span className="hq-map-ch">{level.chapter === 0 ? 'Intro' : `Ch ${level.chapter}`}</span>
-              <span className="hq-map-title">{level.title.en}</span>
-              <span className="hq-map-title-zh" lang="zh-HK">
-                {level.title.zh}
-              </span>
-              <span className="hq-map-tags">
-                {level.tags.map((t) => (
-                  <span key={t}>{t}</span>
-                ))}
-              </span>
-              <span className="hq-map-status">
-                {!unlocked ? 'Locked' : cleared ? 'Cleared' : 'Sail'}
-              </span>
-            </button>
-          </li>
-        )
-      })}
-    </ol>
+    <div className="hq-map-wrap">
+      <div className="hq-campaign-tabs" role="tablist" aria-label="Harbor campaigns">
+        {HARBOR_CAMPAIGNS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            role="tab"
+            aria-selected={campaign === c.id}
+            className={`hq-campaign-tab${campaign === c.id ? ' is-on' : ''}`}
+            onClick={() => setCampaign(c.id)}
+          >
+            <span className="hq-campaign-tab-en">{c.title.en}</span>
+            <span className="hq-campaign-tab-zh" lang="zh-HK">
+              {c.title.zh}
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="hq-campaign-blurb">
+        {meta.blurb.en}
+        <span aria-hidden="true"> · </span>
+        <span lang="zh-HK">{meta.blurb.zh}</span>
+      </p>
+      <ol className="hq-map" aria-label={`${meta.title.en} piers`}>
+        {levels.map((level, i) => {
+          const unlocked = isLevelUnlocked(level.id, ids, progress)
+          const cleared = isLevelCleared(level.id, progress)
+          return (
+            <li key={level.id} className={`hq-map-node hq-map-node--${level.hue}`}>
+              {i > 0 ? <span className="hq-map-bridge" aria-hidden="true" /> : null}
+              <button
+                type="button"
+                className={`hq-map-btn${cleared ? ' is-cleared' : ''}${!unlocked ? ' is-locked' : ''}`}
+                disabled={!unlocked}
+                onClick={() => onSelect(level.id)}
+              >
+                <span className="hq-map-ch">{level.chapter === 0 ? 'Intro' : `Ch ${level.chapter}`}</span>
+                <span className="hq-map-title">{level.title.en}</span>
+                <span className="hq-map-title-zh" lang="zh-HK">
+                  {level.title.zh}
+                </span>
+                <span className="hq-map-tags">
+                  {level.tags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </span>
+                <span className="hq-map-status">
+                  {!unlocked ? 'Locked' : cleared ? 'Cleared' : 'Sail'}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+      <a className="hq-campaign-oc" href={meta.ocHome} target="_blank" rel="noreferrer">
+        Open Cantonese source ↗
+      </a>
+    </div>
   )
 }
+

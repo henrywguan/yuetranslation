@@ -5,7 +5,7 @@ import type { HarborLook } from './harborGear'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
 import type { HarborVisitableId } from './harborWorld'
 import { JyutpingChaoText } from './JyutpingChaoText'
-import type { HarborLevel } from './curriculum'
+import { levelRealm, type HarborLevel } from './curriculum'
 
 type HarborStageProps = {
   level: HarborLevel
@@ -49,6 +49,7 @@ export function HarborStage({
         hue={level.hue}
         reducedMotion={reduce}
         look={look}
+        realm={levelRealm(level)}
         onVisitable={onVisitable}
       />
 

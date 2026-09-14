@@ -3,6 +3,7 @@ import type { HarborLook } from './harborGear'
 import {
   createHarborWorld,
   type HarborHue,
+  type HarborRealmId,
   type HarborVisitableId,
   type HarborWorldHandle,
 } from './harborWorld'
@@ -13,6 +14,7 @@ type Props = {
   hue: HarborHue
   reducedMotion: boolean
   look: HarborLook
+  realm?: HarborRealmId
   onVisitable?: (id: HarborVisitableId | null) => void
   className?: string
 }
@@ -24,6 +26,7 @@ export function HarborWorldCanvas({
   hue,
   reducedMotion,
   look,
+  realm = 'river',
   onVisitable,
   className,
 }: Props) {
@@ -39,6 +42,7 @@ export function HarborWorldCanvas({
       hue,
       reducedMotion,
       look,
+      realm,
       onVisitable: (id) => onVisitableRef.current?.(id),
     })
     worldRef.current = world
@@ -61,9 +65,10 @@ export function HarborWorldCanvas({
       world.dispose()
       worldRef.current = null
     }
-    // Recreate only when canvas mounts; hue / motion / flash / look sync via setters.
+    // Recreate when realm changes (Campaign 1 river vs Campaign 2 bamboo garden).
+    // Hue / motion / flash / look still sync via setters between recreations.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [realm])
 
   useEffect(() => {
     worldRef.current?.setProgress(progress)
