@@ -470,6 +470,124 @@ function flower(rng: () => number) {
   return g
 }
 
+/** China tea-cup rose — soft pink cups on a low leafy mound. */
+function chinaTeaCupRose(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'china-tea-cup-rose'
+  const h = 0.45 + rng() * 0.2
+  g.add(hqPost(0.04, 0.06, h * 0.55, 0x3a2a28, 0, h * 0.28, 0, 4))
+  g.add(hqCanopy(0.32 + rng() * 0.1, P.leafMid, 0, h * 0.55, 0))
+  g.add(
+    hqCanopy(
+      0.22 + rng() * 0.08,
+      P.leafDeep,
+      (rng() - 0.5) * 0.25,
+      h * 0.45,
+      (rng() - 0.5) * 0.25,
+    ),
+  )
+  const cups = [P.blossom, P.blossomDeep, 0xf8d0dc, 0xf0a8b8]
+  const n = 4 + Math.floor(rng() * 3)
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.4
+    const r = 0.12 + rng() * 0.18
+    const cup = new THREE.Mesh(
+      new THREE.ConeGeometry(0.06 + rng() * 0.03, 0.07 + rng() * 0.03, 5),
+      mat(cups[Math.floor(rng() * cups.length)]!),
+    )
+    cup.position.set(Math.cos(a) * r, h * 0.7 + rng() * 0.12, Math.sin(a) * r)
+    cup.rotation.x = Math.PI
+    g.add(cup)
+  }
+  return g
+}
+
+/** Hawthorn berry bush — white blossom clusters + red haws. */
+function hawthornBush(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'hawthorn-berry'
+  const h = 0.7 + rng() * 0.35
+  g.add(hqPost(0.05, 0.08, h * 0.65, 0x2e2418, 0, h * 0.32, 0, 5))
+  // Twiggy forks
+  for (let i = 0; i < 2; i++) {
+    const twig = hqPost(0.03, 0.04, 0.28, 0x2e2418, (i ? 0.12 : -0.1), h * 0.55, (rng() - 0.5) * 0.1, 4)
+    twig.rotation.z = (i ? -0.55 : 0.55)
+    g.add(twig)
+  }
+  const greens = [P.leafMid, P.leafDeep, 0x3a7048]
+  for (let i = 0; i < 3; i++) {
+    g.add(
+      hqCanopy(
+        0.28 + rng() * 0.12,
+        greens[Math.floor(rng() * greens.length)]!,
+        (rng() - 0.5) * 0.35,
+        h * (0.55 + i * 0.12),
+        (rng() - 0.5) * 0.35,
+      ),
+    )
+  }
+  // White spring blossom flecks
+  for (let i = 0; i < 5; i++) {
+    g.add(
+      hqBox(
+        0.06,
+        0.05,
+        0.06,
+        0xf5f0e8,
+        (rng() - 0.5) * 0.45,
+        h * 0.7 + rng() * 0.2,
+        (rng() - 0.5) * 0.45,
+      ),
+    )
+  }
+  // Red haws
+  for (let i = 0; i < 6; i++) {
+    const berry = new THREE.Mesh(
+      new THREE.SphereGeometry(0.035 + rng() * 0.015, 4, 3),
+      mat(rng() > 0.4 ? 0xc03028 : 0xa02020),
+    )
+    berry.position.set((rng() - 0.5) * 0.5, h * 0.55 + rng() * 0.35, (rng() - 0.5) * 0.5)
+    g.add(berry)
+  }
+  return g
+}
+
+/** Chinese fringe flower (Loropetalum) — burgundy foliage + magenta fringe. */
+function chineseFringeFlower(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'chinese-fringe-flower'
+  const h = 0.55 + rng() * 0.3
+  g.add(hqPost(0.045, 0.07, h * 0.5, 0x2a1c18, 0, h * 0.25, 0, 4))
+  const foliage = [0x4a2038, 0x3a1828, 0x5a2840]
+  for (let i = 0; i < 3; i++) {
+    g.add(
+      hqCanopy(
+        0.3 + rng() * 0.12,
+        foliage[Math.floor(rng() * foliage.length)]!,
+        (rng() - 0.5) * 0.28,
+        h * (0.5 + i * 0.1),
+        (rng() - 0.5) * 0.28,
+      ),
+    )
+  }
+  // Magenta fringe sprays (thin cones)
+  const fringe = [0xc02068, 0xd03878, 0xa01850]
+  const n = 5 + Math.floor(rng() * 3)
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.5
+    const r = 0.1 + rng() * 0.22
+    const spray = new THREE.Mesh(
+      new THREE.ConeGeometry(0.04, 0.14 + rng() * 0.06, 4),
+      mat(fringe[Math.floor(rng() * fringe.length)]!),
+    )
+    spray.position.set(Math.cos(a) * r, h * 0.75 + rng() * 0.1, Math.sin(a) * r)
+    spray.rotation.x = -0.35 + rng() * 0.2
+    spray.rotation.z = (rng() - 0.5) * 0.4
+    g.add(spray)
+  }
+  return g
+}
+
 
 /** Warm point-light strength — brighter at night / dark weather. */
 export function harborLanternIntensity(weather: HarborWeather): number {
@@ -1088,6 +1206,14 @@ function poplar(rng: () => number) {
 export const HARBOR_SCENIC_TREES = ['cherry', 'ginkgo', 'poplar', 'pine', 'oak'] as const
 export type HarborScenicTree = (typeof HARBOR_SCENIC_TREES)[number]
 
+/** Garden / roadside shrubs along the voyage (smoke-tested). */
+export const HARBOR_SCENIC_SHRUBS = [
+  'china-tea-cup-rose',
+  'hawthorn-berry',
+  'chinese-fringe-flower',
+] as const
+export type HarborScenicShrub = (typeof HARBOR_SCENIC_SHRUBS)[number]
+
 /** Distant Wulingyuan-style karst backdrop is present in the voyage. */
 export const HARBOR_WULINGYUAN = true as const
 
@@ -1591,6 +1717,9 @@ function populateChunk(
     place(group, rng, 2, () => ginkgo(rng), BANK + 0.5, BANK + 4.5, z0)
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
     place(group, rng, 5, () => flower(rng), BANK - 0.3, BANK + 2.5, z0)
+    place(group, rng, 2, () => hawthornBush(rng), BANK + 0.5, BANK + 4.5, z0)
+    place(group, rng, 2, () => chineseFringeFlower(rng), BANK + 1, BANK + 5.5, z0)
+    if (rng() > 0.55) place(group, rng, 1, () => chinaTeaCupRose(rng), BANK + 0.2, BANK + 2.8, z0)
     if (rng() > 0.4) place(group, rng, 1, () => deer(rng), BANK + 0.5, BANK + 3.5, z0)
     // China-native ambient fauna
     if (rng() > 0.45) place(group, rng, 1, () => panda(rng), BANK + 1.5, BANK + 5.5, z0)
@@ -1607,6 +1736,10 @@ function populateChunk(
     place(group, rng, 1, () => ginkgo(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 3, () => lantern(weather), BANK - 0.2, BANK + 1.4, z0)
     place(group, rng, 4, () => flower(rng), BANK - 0.4, BANK + 2, z0)
+    // Village garden shrubs — tea roses, hawthorn, fringe flower
+    place(group, rng, 3, () => chinaTeaCupRose(rng), BANK - 0.3, BANK + 2.2, z0)
+    place(group, rng, 2, () => hawthornBush(rng), BANK + 0.8, BANK + 3.5, z0)
+    place(group, rng, 2, () => chineseFringeFlower(rng), BANK + 0.4, BANK + 2.8, z0)
     // Villagers & merchants strolling the lane
     place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK + 0.3, BANK + 2.5, z0)
     if (rng() > 0.55) {
@@ -1659,6 +1792,8 @@ function populateChunk(
     place(group, rng, 2, () => stiltShop(rng), BANK - 0.1, BANK + 2.2, z0)
     place(group, rng, 1, () => hut(rng), BANK + 2, BANK + 4, z0)
     place(group, rng, 2, () => cherryBlossom(rng), BANK + 0.5, BANK + 3, z0)
+    place(group, rng, 2, () => chinaTeaCupRose(rng), BANK - 0.2, BANK + 1.8, z0)
+    place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.5, BANK + 2.5, z0)
     place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK - 0.2, BANK + 1.5, z0)
     place(group, rng, 1, () => chineseNpc('ferryman', rng), RIVER + 1.2, RIVER + 2.2, z0)
   
@@ -1667,6 +1802,8 @@ function populateChunk(
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
+    place(group, rng, 2, () => hawthornBush(rng), BANK + 1.2, BANK + 4, z0)
+    place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.8, BANK + 3.2, z0)
     place(group, rng, 1, () => lantern(weather), BANK + 0.5, BANK + 2.2, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('scholar', rng), BANK + 1, BANK + 3, z0)
   }

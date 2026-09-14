@@ -32,6 +32,7 @@ import {
   HARBOR_NPC_ROLES,
   HARBOR_DIALOGUE_BUBBLE,
   HARBOR_SCENIC_TREES,
+  HARBOR_SCENIC_SHRUBS,
   HARBOR_VILLAGE_HOMES,
   HARBOR_AMBIENT_FAUNA,
   HARBOR_WEATHER_LOOK,
@@ -160,6 +161,10 @@ function main() {
   assert.ok(HARBOR_SCENIC_TREES.includes('ginkgo'), 'ginkgo trees')
   assert.ok(HARBOR_SCENIC_TREES.includes('poplar'), 'poplar trees')
   assert.equal(HARBOR_SCENIC_TREES.length, 5, 'scenic tree kit')
+  assert.ok(HARBOR_SCENIC_SHRUBS.includes('china-tea-cup-rose'), 'China tea-cup rose bushes')
+  assert.ok(HARBOR_SCENIC_SHRUBS.includes('hawthorn-berry'), 'hawthorn berry bushes')
+  assert.ok(HARBOR_SCENIC_SHRUBS.includes('chinese-fringe-flower'), 'Chinese fringe flower shrubs')
+  assert.equal(HARBOR_SCENIC_SHRUBS.length, 3, 'scenic shrub kit')
   assert.ok(HARBOR_VILLAGE_HOMES.includes('jiangnan'), 'jiangnan homes')
   assert.ok(HARBOR_VILLAGE_HOMES.includes('stilt'), 'riverside stilt shops')
   assert.equal(HARBOR_VILLAGE_HOMES.length, 4, 'village home kit')
@@ -352,6 +357,9 @@ function main() {
   assert.match(worldSrc2, /function southChinaTiger/, 'South China tiger mesh builder')
   assert.match(worldSrc2, /function crestedIbis/, 'crested ibis mesh builder')
   assert.match(worldSrc2, /function giantSalamander/, 'giant salamander mesh builder')
+  assert.match(worldSrc2, /function chinaTeaCupRose/, 'tea-cup rose mesh builder')
+  assert.match(worldSrc2, /function hawthornBush/, 'hawthorn berry mesh builder')
+  assert.match(worldSrc2, /function chineseFringeFlower/, 'Chinese fringe flower mesh builder')
   assert.match(worldSrc2, /fauna === 'panda'/, 'panda idle animation')
   assert.match(worldSrc2, /fauna === 'tiger'/, 'tiger pace animation')
 
