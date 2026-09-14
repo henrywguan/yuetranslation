@@ -2347,7 +2347,7 @@ export function createHarborWorld(
     setMoveTarget(hitPoint.x, hitPoint.z, true)
   }
 
-  // Finger / mouse: drag = orbit; pinch / wheel = OSRS zoom; tap = move-to-location
+  // Finger / mouse: drag = orbit; pinch / wheel = zoom; tap = move-to-location
   let yaw = 0
   let pitch = 0.52
   let yawTarget = 0
