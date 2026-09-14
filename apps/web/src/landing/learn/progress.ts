@@ -14,6 +14,7 @@ import {
   sanitizeHarborProgress,
   type HarborProgress,
 } from './progressMerge'
+import { HARBOR_LEVELS } from './curriculum'
 import {
   HARBOR_STARTER_OWNED,
   harborGearById,
@@ -101,6 +102,15 @@ export function isLevelCleared(levelId: string, progress = read()): boolean {
 
 export function isLevelUnlocked(levelId: string, orderedIds: string[], progress = read()): boolean {
   return isLevelUnlockedPure(levelId, orderedIds, progress)
+}
+
+/** Next pier to sail: first unlocked uncleared level, else the final chart stop. */
+export function continueHarborLevelId(progress = read()): string {
+  const ids = HARBOR_LEVELS.map((l) => l.id)
+  for (const id of ids) {
+    if (!isLevelCleared(id, progress) && isLevelUnlocked(id, ids, progress)) return id
+  }
+  return ids[ids.length - 1] ?? ids[0]!
 }
 
 export function markStepReached(levelId: string, stepIndex: number) {

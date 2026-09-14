@@ -1,26 +1,24 @@
-import { MotionConfig, motion } from 'framer-motion'
+import { MotionConfig } from 'framer-motion'
 import { useCallback, useEffect, useState } from 'react'
-import { BiText } from '../../components/BiText'
-import { openApp, openHome, openLearn, openTones } from '../../lib/siteLinks'
-import { inkEase } from '../../lib/motion'
-import { ui } from '../../lib/uiCopy'
+import { openHome, openLearn } from '../../lib/siteLinks'
 import { useDocumentMeta } from '../../lib/useDocumentMeta'
 import { learnLevelFromHash } from '../../lib/useHashRoute'
-import { MarketingCtaBand } from '../MarketingCtaBand'
-import { MarketingFooter } from '../MarketingFooter'
-import { MarketingPageShell } from '../MarketingPageShell'
-import { Reveal } from '../Reveal'
 import { HARBOR_LEVELS } from './curriculum'
 import { HarborMap, LearnSession } from './LearnPlay'
-import { hydrateHarborProgress, loadHarborProgress, type HarborProgress } from './progress'
+import {
+  continueHarborLevelId,
+  hydrateHarborProgress,
+  loadHarborProgress,
+  type HarborProgress,
+} from './progress'
 import '../landing.css'
 import './learn.css'
 
 const OC_GUIDE = 'https://opencantonese.org/books/cantonese-life-1/pronunciation-guide'
 
 /**
- * Learn · Harbor Quest — CodeCombat-style Jyutping voyage
- * paced to the Open Cantonese Pronunciation Guide.
+ * Learn · Harbor Quest — launches straight into the fullscreen river voyage.
+ * Pier selection lives in an in-game chart overlay (no marketing hub).
  */
 export function LearnPage() {
   useDocumentMeta({
@@ -31,148 +29,123 @@ export function LearnPage() {
   })
 
   const [progress, setProgress] = useState<HarborProgress>(() => loadHarborProgress())
-  const [levelId, setLevelId] = useState<string | null>(() => learnLevelFromHash())
+  const [levelId, setLevelId] = useState<string>(
+    () => learnLevelFromHash() ?? continueHarborLevelId(loadHarborProgress()),
+  )
+  /** In-game pier chart (replaces the old marketing landing hub). */
+  const [chartOpen, setChartOpen] = useState(false)
 
   useEffect(() => {
-    const sync = () => setLevelId(learnLevelFromHash())
+    const sync = () => {
+      const fromHash = learnLevelFromHash()
+      if (fromHash) {
+        setLevelId(fromHash)
+        return
+      }
+      // Bare `#/learn` always resolves to a playable pier — never the old hub.
+      const next = continueHarborLevelId(loadHarborProgress())
+      openLearn(next)
+      setLevelId(next)
+    }
     window.addEventListener('hashchange', sync)
     return () => window.removeEventListener('hashchange', sync)
   }, [])
 
+  // Ensure the URL carries a level id on first paint of `#/learn`.
+  useEffect(() => {
+    if (!learnLevelFromHash()) {
+      openLearn(levelId)
+    }
+  }, [levelId])
+
   useEffect(() => {
     let cancelled = false
     void hydrateHarborProgress().then((p) => {
-      if (!cancelled) setProgress(p)
+      if (cancelled) return
+      setProgress(p)
+      // If the sailor is still on the auto-continue pier from local storage,
+      // prefer the cloud continue target when the hash was bare on entry.
+      if (!learnLevelFromHash()) {
+        const next = continueHarborLevelId(p)
+        if (next !== levelId) {
+          openLearn(next)
+          setLevelId(next)
+        }
+      }
     })
     return () => {
       cancelled = true
     }
+    // Only hydrate once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const openLevel = useCallback((id: string) => {
     openLearn(id)
     setLevelId(id)
+    setChartOpen(false)
   }, [])
 
-  const exitLevel = useCallback(() => {
-    openLearn()
-    setLevelId(null)
+  const openChart = useCallback(() => {
     setProgress(loadHarborProgress())
+    setChartOpen(true)
   }, [])
 
-  if (levelId) {
-    // Fullscreen game shell — no marketing nav/footer so the harbor fills the viewport.
-    return (
-      <MotionConfig reducedMotion="user">
-        <div className="learn-page learn-page--play learn-page--immersive">
-          <LearnSession
-            levelId={levelId}
-            onExit={exitLevel}
-            onOpenLevel={openLevel}
-            onProgress={setProgress}
-          />
-        </div>
-      </MotionConfig>
-    )
-  }
+  const leaveHarbor = useCallback(() => {
+    setChartOpen(false)
+    openHome()
+  }, [])
 
   const cleared = progress.cleared.length
   const total = HARBOR_LEVELS.length
 
   return (
-    <MarketingPageShell className="learn-page" onFeatures={() => openHome()}>
-      <header className="hq-hero">
-        <div className="hq-hero-wash" aria-hidden="true" />
-        <motion.div
-          className="hq-hero-inner"
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, ease: inkEase }}
-        >
-          <p className="hq-hero-brand">
-            <span className="hq-hero-brand-en">JyutTranslate</span>
-            <span className="hq-hero-brand-mark" aria-hidden="true">
-              ·
-            </span>
-            <span className="hq-hero-brand-game">Harbor Quest</span>
-          </p>
-          <h1 className="hq-hero-title">
-            <BiText copy={ui.learnHeroTitle} size="lg" />
-          </h1>
-          <p className="hq-hero-sub">
-            <BiText copy={ui.learnHeroSub} size="md" hideJp />
-          </p>
-          <div className="hq-hero-cta">
-            <button
-              type="button"
-              className="hq-btn hq-btn--primary hq-btn--lg"
-              onClick={() => openLevel(HARBOR_LEVELS[0]!.id)}
-            >
-              <BiText copy={ui.learnBegin} size="sm" hideJp only="en" />
-            </button>
-            <a className="hq-hero-oc" href={OC_GUIDE} target="_blank" rel="noreferrer">
-              <BiText copy={ui.learnOcLink} size="sm" hideJp only="en" />
-            </a>
+    <MotionConfig reducedMotion="user">
+      <div className="learn-page learn-page--play learn-page--immersive">
+        <LearnSession
+          levelId={levelId}
+          onExit={openChart}
+          onOpenLevel={openLevel}
+          onProgress={setProgress}
+        />
+
+        {chartOpen ? (
+          <div className="hq-chart-overlay" role="dialog" aria-label="Harbor pier chart">
+            <div className="hq-chart-sheet">
+              <header className="hq-chart-head">
+                <p className="hq-chart-brand">
+                  <span>JyutTranslate</span>
+                  <span aria-hidden="true"> · </span>
+                  <span>Harbor Quest</span>
+                </p>
+                <h2 className="hq-chart-title">Pier chart</h2>
+                <p className="hq-chart-sub" lang="zh-HK">
+                  碼頭航圖
+                </p>
+                <p className="hq-chart-progress">
+                  {cleared}/{total} piers cleared
+                  {progress.correctCount > 0 ? ` · ${progress.correctCount} correct casts` : ''}
+                  {typeof progress.coins === 'number' ? ` · ${progress.coins} ferry coins` : ''}
+                </p>
+                <a className="hq-chart-oc" href={OC_GUIDE} target="_blank" rel="noreferrer">
+                  Open Cantonese textbook ↗
+                </a>
+              </header>
+
+              <HarborMap progress={progress} onSelect={openLevel} />
+
+              <footer className="hq-chart-actions">
+                <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setChartOpen(false)}>
+                  Back to river
+                </button>
+                <button type="button" className="hq-btn hq-btn--ghost" onClick={leaveHarbor}>
+                  Leave harbor
+                </button>
+              </footer>
+            </div>
           </div>
-          <p className="hq-hero-progress">
-            {cleared}/{total} piers cleared
-            {progress.correctCount > 0 ? ` · ${progress.correctCount} correct casts` : ''}
-            {typeof progress.coins === 'number' ? ` · ${progress.coins} ferry coins` : ''}
-          </p>
-        </motion.div>
-      </header>
-
-      <section className="hq-campaign" aria-label={ui.navLearn.en}>
-        <Reveal y={28}>
-          <HarborMap progress={progress} onSelect={openLevel} />
-        </Reveal>
-      </section>
-
-      <section className="hq-how">
-        <Reveal y={24}>
-          <h2 className="hq-how-title">
-            <BiText copy={ui.learnHowTitle} size="md" />
-          </h2>
-          <p className="hq-how-body">
-            <BiText copy={ui.learnHowBody} size="sm" hideJp />
-          </p>
-          <ul className="hq-how-list">
-            <li>
-              <BiText copy={ui.learnHow1} size="sm" hideJp />
-            </li>
-            <li>
-              <BiText copy={ui.learnHow2} size="sm" hideJp />
-            </li>
-            <li>
-              <BiText copy={ui.learnHow3} size="sm" hideJp />
-            </li>
-          </ul>
-          <p className="hq-how-tones">
-            <button type="button" className="hq-text-link" onClick={() => openTones()}>
-              <BiText copy={ui.learnTonesLink} size="sm" hideJp only="en" />
-            </button>
-          </p>
-        </Reveal>
-      </section>
-
-      <p className="hq-credit">
-        Curriculum path from{' '}
-        <a href={OC_GUIDE} target="_blank" rel="noreferrer">
-          Open Cantonese — Cantonese Pronunciation Guide
-        </a>
-        . Game writing and Harbor Quest interaction are original to JyutTranslate. You are free to
-        use their books to learn or teach Cantonese.
-      </p>
-
-      <MarketingCtaBand
-        className="hq-cta"
-        title={ui.learnCtaTitle}
-        body={ui.learnCtaBody}
-        button={ui.learnOpenApp}
-        onClick={() => openApp()}
-      />
-
-      <MarketingFooter />
-    </MarketingPageShell>
+        ) : null}
+      </div>
+    </MotionConfig>
   )
 }
