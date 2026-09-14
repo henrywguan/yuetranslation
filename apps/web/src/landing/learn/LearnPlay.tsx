@@ -18,6 +18,7 @@ import {
 import { duckHarborBgm, startHarborBgm, stopHarborBgm } from './harborBgm'
 import { playHarborCoinChing } from './harborCoinSfx'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
+import { playHarborScrollClose, playHarborScrollOpen, stopHarborScrollSfx } from './harborScrollSfx'
 import {
   HARBOR_GEAR_SLOTS,
   HARBOR_GEAR_TIER_LABEL,
@@ -90,6 +91,19 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [teleportOpen, setTeleportOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
+  const [scrollOpen, setScrollOpen] = useState(false)
+
+  const closeChapterScroll = useCallback(() => {
+    setScrollOpen(false)
+    playHarborScrollClose()
+  }, [])
+
+  const openChapterScroll = useCallback(() => {
+    setScrollOpen(true)
+    setVisitable(null)
+    setInvOpen(false)
+    playHarborScrollOpen()
+  }, [])
 
   useEffect(() => {
     setStepIndex(0)
@@ -104,6 +118,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setInvOpen(false)
     setTeleportOpen(false)
     setCoinPops([])
+    setScrollOpen(false)
   }, [levelId])
 
   useEffect(() => {
@@ -116,9 +131,19 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
       document.body.style.overflow = prev
       stopHarborCorrectFanfare()
       stopHarborMiss()
+      stopHarborScrollSfx()
       stopHarborBgm()
     }
   }, [])
+
+  useEffect(() => {
+    if (!scrollOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeChapterScroll()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [scrollOpen, closeChapterScroll])
 
   const pushProgress = useCallback(
     (p: HarborProgress) => {
@@ -298,7 +323,15 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         <button type="button" className="hq-btn hq-btn--ghost hq-btn--hud" onClick={onExit}>
           Chart
         </button>
-        <div className="hq-play-bar-title">
+        <button
+          type="button"
+          className="hq-play-bar-title hq-play-bar-title--tap"
+          onClick={openChapterScroll}
+          aria-haspopup="dialog"
+          aria-expanded={scrollOpen}
+          aria-label={`Chapter scroll: ${level.title.en}`}
+          title="Open chapter scroll"
+        >
           <span className="hq-play-title-en">
             <span className="hq-play-ch">Ch. {level.chapter}</span>
             <span className="hq-play-name">{level.title.en}</span>
@@ -306,7 +339,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           <span className="hq-play-name-zh" lang="zh-HK">
             {level.title.zh}
           </span>
-        </div>
+        </button>
         <button
           type="button"
           className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}`}
@@ -346,6 +379,48 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           Pack
         </button>
       </header>
+
+      {scrollOpen ? (
+        <div
+          className="hq-scroll-modal"
+          role="presentation"
+          onClick={closeChapterScroll}
+        >
+          <div
+            className="hq-scroll-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hq-scroll-title-zh"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="hq-scroll-roller hq-scroll-roller--top" aria-hidden="true" />
+            <div className="hq-scroll-parchment">
+              <p className="hq-scroll-kicker">
+                {level.chapter === 0 ? 'Introduction · 序章' : `Chapter ${level.chapter} · 第${level.chapter}章`}
+              </p>
+              <h2 id="hq-scroll-title-zh" className="hq-scroll-title-zh" lang="zh-HK">
+                {level.title.zh}
+              </h2>
+              <p className="hq-scroll-title-en">{level.title.en}</p>
+              <p className="hq-scroll-blurb" lang="zh-HK">
+                {level.blurb.zh}
+              </p>
+              <p className="hq-scroll-blurb-en">{level.blurb.en}</p>
+              {level.tags.length ? (
+                <ul className="hq-scroll-tags" aria-label="Lesson tags">
+                  {level.tags.map((tag) => (
+                    <li key={tag}>{tag}</li>
+                  ))}
+                </ul>
+              ) : null}
+              <button type="button" className="hq-btn hq-btn--ghost hq-scroll-close" onClick={closeChapterScroll}>
+                Roll up · 收卷
+              </button>
+            </div>
+            <div className="hq-scroll-roller hq-scroll-roller--bottom" aria-hidden="true" />
+          </div>
+        </div>
+      ) : null}
 
       {visitable === 'save-shack' ? (
         <aside className="hq-visit-panel hq-visit-panel--save" role="dialog" aria-label="Save Shack">
