@@ -423,6 +423,8 @@ function main() {
   assert.equal(isHarborLand(HARBOR_LAND_EDGE), true, 'bank is land')
   assert.equal(isHarborLand(0), false, 'river center is not land')
   assert.match(worldSrc2, /travelMode === 'foot'/, 'on-foot travel mode')
+  assert.match(worldSrc2, /river-scout-walk/, 'standing walk Scout for land')
+  assert.match(worldSrc2, /pose: 'standing'/, 'standing protagonist pose on land')
   assert.match(worldSrc2, /const disembark|function disembark|const boardBoat/, 'disembark / board helpers')
 
   assert.match(worldSrc2, /fauna === 'panda'/, 'panda idle animation')

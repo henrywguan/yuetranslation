@@ -2455,6 +2455,12 @@ export function createHarborWorld(
   let scout = boat.getObjectByName('river-scout') as THREE.Object3D | null
   if (scout) applyLookToProtagonist(scout, currentLook)
   else applyLookToProtagonist(boat, currentLook)
+  // Standing Scout for banks / roads — canoe stays moored while they walk
+  const scoutWalk = buildHarborProtagonist({ pose: 'standing' })
+  scoutWalk.name = 'river-scout-walk'
+  scoutWalk.visible = false
+  scene.add(scoutWalk)
+  applyLookToProtagonist(scoutWalk, currentLook)
 
   let activeVisitable: HarborVisitableId | null = null
   const emitVisitable = (id: HarborVisitableId | null) => {
@@ -2523,21 +2529,22 @@ export function createHarborWorld(
   const disembark = (towardX: number) => {
     if (travelMode === 'foot' || !scout) return
     const side = towardX === 0 ? (boatX >= 0 ? 1 : -1) : Math.sign(towardX) || 1
-    boat.remove(scout)
-    scene.add(scout)
+    // Keep seated Scout in the moored canoe (hidden); walk with standing mesh
+    scout.visible = false
     footX = boatX + side * 0.9
     footZ = voyageZ
     if (Math.abs(footX) < HARBOR_LAND_EDGE) footX = side * HARBOR_LAND_EDGE
-    scout.position.set(footX, 0, footZ)
-    scout.rotation.set(0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0)
+    scoutWalk.visible = true
+    scoutWalk.position.set(footX, 0, footZ)
+    scoutWalk.rotation.set(0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0)
     travelMode = 'foot'
     wantBoard = false
   }
 
   const boardBoat = () => {
     if (travelMode !== 'foot' || !scout) return
-    scene.remove(scout)
-    boat.add(scout)
+    scoutWalk.visible = false
+    scout.visible = true
     scout.position.set(scoutSeat.x, scoutSeat.y, scoutSeat.z)
     scout.rotation.set(0, Math.PI, 0)
     travelMode = 'boat'
@@ -2792,11 +2799,9 @@ export function createHarborWorld(
         footX += (dx / dist) * step
         footZ += (dz / dist) * step
         const face = Math.atan2(dx, dz)
-        if (scout) {
-          scout.rotation.y += (face - scout.rotation.y) * Math.min(1, dt * 8)
-          const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
-          scout.position.set(footX, walkBob, footZ)
-        }
+        scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
+        const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
+        scoutWalk.position.set(footX, walkBob, footZ)
       } else {
         if (playerDirected) destMarker.visible = false
         if (wantBoard) boardBoat()
@@ -2910,9 +2915,9 @@ export function createHarborWorld(
     pitch += (pitchTarget - pitch) * orbitLerp
     distance += (distanceTarget - distance) * orbitLerp
 
-    const lookX = travelMode === 'foot' && scout ? scout.position.x : boat.position.x
+    const lookX = travelMode === 'foot' ? scoutWalk.position.x : boat.position.x
     const lookY = travelMode === 'foot' ? 0.95 : 0.75
-    const lookZ = (travelMode === 'foot' && scout ? scout.position.z : boat.position.z) + 1.2
+    const lookZ = (travelMode === 'foot' ? scoutWalk.position.z : boat.position.z) + 1.2
     const off = orbitCameraOffset(yaw, pitch, distance)
     const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
     camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
@@ -3042,11 +3047,21 @@ export function createHarborWorld(
     setLook(look) {
       currentLook = { ...look }
       if (scout) applyLookToProtagonist(scout, currentLook)
+      applyLookToProtagonist(scoutWalk, currentLook)
       applyVesselLook(boat, weather, currentLook)
     },
     resize,
     dispose() {
       disposed = true
+      scoutWalk.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.geometry.dispose()
+          const mat = o.material
+          if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
+          else mat.dispose()
+        }
+      })
+      scene.remove(scoutWalk)
       cancelAnimationFrame(raf)
       canvas.removeEventListener('pointerdown', onPointerDown)
       canvas.removeEventListener('pointermove', onPointerMove)
