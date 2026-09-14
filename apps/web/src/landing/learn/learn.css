@@ -2048,6 +2048,7 @@
 
 /* —— Save Shack + Outfitter visit panels —— */
 .hq-coin-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -2059,10 +2060,47 @@
   color: #f2e6c8;
   font: 600 0.78rem/1 Syne, system-ui, sans-serif;
   letter-spacing: 0.04em;
+  overflow: visible;
 }
 .hq-coin-chip-icon {
   color: #3dcfb6;
   font-size: 0.95rem;
+}
+.hq-coin-chip.is-earning {
+  animation: hq-coin-pulse 0.55s ease-out;
+  border-color: color-mix(in srgb, #f0d060 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #f0d060 35%, transparent);
+}
+.hq-coin-chip-val {
+  font-variant-numeric: tabular-nums;
+  min-width: 1.2em;
+}
+.hq-coin-pop {
+  position: absolute;
+  left: 50%;
+  top: 0.15rem;
+  transform: translate(-50%, 0);
+  pointer-events: none;
+  font: 700 0.95rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #f6e27a;
+  text-shadow:
+    0 1px 0 color-mix(in srgb, #3a2810 55%, transparent),
+    0 0 12px color-mix(in srgb, #f0c040 55%, transparent);
+  animation: hq-coin-float 1.35s ease-out forwards;
+  white-space: nowrap;
+  z-index: 2;
+}
+@keyframes hq-coin-float {
+  0% { opacity: 0; transform: translate(-50%, 0.35rem) scale(0.85); }
+  12% { opacity: 1; transform: translate(-50%, -0.15rem) scale(1.08); }
+  55% { opacity: 1; transform: translate(-50%, -1.15rem) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -1.85rem) scale(0.96); }
+}
+@keyframes hq-coin-pulse {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 .hq-visit-panel {
   position: absolute;

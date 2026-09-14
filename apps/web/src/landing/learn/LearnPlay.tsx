@@ -6,7 +6,13 @@ import {
   openCantoneseLessonUrl,
   type HarborLevel,
 } from './curriculum'
-import { playHarborCorrectFanfare, stopHarborCorrectFanfare } from './harborFanfare'
+import {
+  HARBOR_FANFARE_DURATION_MS,
+  playHarborCorrectFanfare,
+  stopHarborCorrectFanfare,
+} from './harborFanfare'
+import { duckHarborBgm, startHarborBgm, stopHarborBgm } from './harborBgm'
+import { playHarborCoinChing } from './harborCoinSfx'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
 import {
   HARBOR_GEAR_SLOTS,
@@ -22,6 +28,7 @@ import {
   type HarborVisitableId,
 } from './harborWorld'
 import {
+  HARBOR_COINS_PER_CORRECT,
   isLevelCleared,
   isLevelUnlocked,
   buyHarborGear,
@@ -61,6 +68,7 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
   const [shopSlot, setShopSlot] = useState<HarborGearSlot>('hat')
   const [saveFlash, setSaveFlash] = useState<string | null>(null)
   const [shopMsg, setShopMsg] = useState<string | null>(null)
+  const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
 
   useEffect(() => {
     setStepIndex(0)
@@ -71,16 +79,20 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
     setVisitable(null)
     setSaveFlash(null)
     setShopMsg(null)
+    setCoinPops([])
   }, [levelId])
 
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     preloadHarborMissSfx()
+    // BGM needs a user gesture on many browsers — also kicked from onResult.
+    startHarborBgm()
     return () => {
       document.body.style.overflow = prev
       stopHarborCorrectFanfare()
       stopHarborMiss()
+      stopHarborBgm()
     }
   }, [])
 
@@ -117,6 +129,14 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         stopHarborMiss()
         pushProgress(markCorrect())
         playHarborCorrectFanfare()
+        playHarborCoinChing()
+        duckHarborBgm(HARBOR_FANFARE_DURATION_MS)
+        startHarborBgm()
+        const id = Date.now() + Math.random()
+        setCoinPops((prev) => [...prev, { id, amount: HARBOR_COINS_PER_CORRECT }])
+        window.setTimeout(() => {
+          setCoinPops((prev) => prev.filter((p) => p.id !== id))
+        }, 1400)
       } else {
         stopHarborCorrectFanfare()
         // Default: RPG-style body hit. Pass 'oof' for the block-game vocal.
@@ -227,9 +247,20 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         >
           Textbook
         </a>
-        <div className="hq-coin-chip" title="Ferry coins">
-          <span className="hq-coin-chip-icon" aria-hidden="true">◌</span>
+        <div
+          className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}`}
+          title="Ferry coins"
+          aria-live="polite"
+        >
+          <span className="hq-coin-chip-icon" aria-hidden="true">
+            ◌
+          </span>
           <span className="hq-coin-chip-val">{progressSnap.coins}</span>
+          {coinPops.map((pop) => (
+            <span key={pop.id} className="hq-coin-pop" aria-hidden="true">
+              +{pop.amount}
+            </span>
+          ))}
         </div>
       </header>
 
