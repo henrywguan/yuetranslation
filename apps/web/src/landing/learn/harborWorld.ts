@@ -879,10 +879,10 @@ function bird() {
   return mesh
 }
 
-/** Low-poly deer silhouette along the bank. */
 /** Low-poly deer — box body, short faceted legs (readable bank fauna). */
 function deer(rng: () => number) {
   const g = new THREE.Group()
+  g.userData.fauna = 'deer'
   g.add(hqBox(0.55, 0.32, 0.24, 0x8a6040, 0, 0.55, 0))
   const neck = hqBox(0.14, 0.35, 0.12, 0x8a6040, 0.28, 0.72, 0)
   neck.rotation.z = -0.35
@@ -904,6 +904,106 @@ function deer(rng: () => number) {
   return g
 }
 
+/** Giant panda — chunky black/white blocks (forest / hill banks). */
+function panda(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'panda'
+  g.add(hqBox(0.55, 0.38, 0.36, 0xf2f2f0, 0, 0.55, 0))
+  g.add(hqBox(0.28, 0.26, 0.26, 0xf2f2f0, 0.34, 0.78, 0))
+  // Ear patches + eye spots
+  g.add(hqBox(0.1, 0.1, 0.06, 0x1a1a1a, 0.42, 0.96, 0.1))
+  g.add(hqBox(0.1, 0.1, 0.06, 0x1a1a1a, 0.42, 0.96, -0.1))
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.46, 0.82, 0.08))
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.46, 0.82, -0.08))
+  // Black limbs
+  for (const x of [-0.16, 0.14] as const) {
+    for (const z of [-0.12, 0.12] as const) {
+      g.add(hqPost(0.07, 0.09, 0.36, 0x1a1a1a, x, 0.2, z, 5))
+    }
+  }
+  g.add(hqBox(0.18, 0.14, 0.22, 0x1a1a1a, -0.32, 0.62, 0)) // shoulder band
+  return g
+}
+
+/** South China tiger — amber coat, ink stripes (rare hill fauna). */
+function southChinaTiger(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'tiger'
+  const coat = 0xd4882a
+  g.add(hqBox(0.75, 0.34, 0.28, coat, 0, 0.55, 0))
+  const neck = hqBox(0.16, 0.28, 0.16, coat, 0.4, 0.7, 0)
+  neck.rotation.z = -0.25
+  g.add(neck)
+  g.add(hqBox(0.26, 0.18, 0.2, coat, 0.55, 0.86, 0))
+  // Stripe accents
+  for (const x of [-0.2, 0, 0.2] as const) {
+    g.add(hqBox(0.05, 0.28, 0.3, 0x2a1810, x, 0.56, 0))
+  }
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.64, 0.92, 0.07))
+  g.add(hqBox(0.08, 0.06, 0.04, 0x1a1a1a, 0.64, 0.92, -0.07))
+  for (const x of [-0.22, 0.18] as const) {
+    for (const z of [-0.09, 0.09] as const) {
+      g.add(hqPost(0.04, 0.05, 0.42, 0xc07020, x, 0.22, z, 4))
+    }
+  }
+  // Tail
+  const tail = hqBox(0.08, 0.08, 0.45, coat, -0.48, 0.62, 0)
+  g.add(tail)
+  return g
+}
+
+/** Crested ibis (朱鷶) — pale body, rose wash, crimson face/crest. */
+function crestedIbis(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'ibis'
+  g.userData.bird = true // shares gentle soar animation
+  g.add(hqBox(0.22, 0.14, 0.12, 0xf4ebe0, 0, 0.12, 0))
+  g.add(hqBox(0.14, 0.1, 0.1, 0xf0d8d0, 0.14, 0.16, 0))
+  // Crimson face + crest
+  g.add(hqBox(0.08, 0.07, 0.07, 0xc02828, 0.22, 0.2, 0))
+  const crest = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 4), hqMat(0xc02828))
+  crest.position.set(0.2, 0.3, 0)
+  g.add(crest)
+  // Long down-curved bill
+  const bill = hqBox(0.18, 0.03, 0.03, 0xc02828, 0.34, 0.16, 0)
+  bill.rotation.z = 0.35
+  g.add(bill)
+  // Wings (rose-washed)
+  g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, 0.16))
+  g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, -0.16))
+  // Legs
+  g.add(hqPost(0.015, 0.02, 0.18, 0xc02828, 0.02, 0.02, 0.04, 4))
+  g.add(hqPost(0.015, 0.02, 0.18, 0xc02828, 0.02, 0.02, -0.04, 4))
+  return g
+}
+
+/** Chinese giant salamander — long low body along the waterline. */
+function giantSalamander(_rng: () => number) {
+  const g = new THREE.Group()
+  g.userData.fauna = 'salamander'
+  const skin = 0x6a5a48
+  g.add(hqBox(0.7, 0.14, 0.22, skin, 0, 0.1, 0))
+  g.add(hqBox(0.22, 0.14, 0.2, 0x5a4a3a, 0.4, 0.12, 0))
+  // Tiny eyes
+  g.add(hqBox(0.04, 0.04, 0.03, 0x1a1810, 0.48, 0.18, 0.06))
+  g.add(hqBox(0.04, 0.04, 0.03, 0x1a1810, 0.48, 0.18, -0.06))
+  // Frilled sides
+  g.add(hqBox(0.45, 0.04, 0.06, 0x4a3a30, 0, 0.1, 0.14))
+  g.add(hqBox(0.45, 0.04, 0.06, 0x4a3a30, 0, 0.1, -0.14))
+  // Short limbs
+  for (const x of [-0.2, 0.15] as const) {
+    for (const z of [-0.12, 0.12] as const) {
+      g.add(hqBox(0.08, 0.05, 0.1, skin, x, 0.05, z))
+    }
+  }
+  // Tail
+  g.add(hqBox(0.35, 0.1, 0.12, skin, -0.48, 0.09, 0))
+  return g
+}
+
+/** Ambient China-native fauna kinds (smoke-tested). */
+export const HARBOR_AMBIENT_FAUNA = ['panda', 'tiger', 'ibis', 'salamander', 'deer', 'bird', 'fish'] as const
+export type HarborAmbientFauna = (typeof HARBOR_AMBIENT_FAUNA)[number]
 
 function fish() {
   const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 5), mat(0x5a9ab0))
@@ -1492,6 +1592,10 @@ function populateChunk(
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
     place(group, rng, 5, () => flower(rng), BANK - 0.3, BANK + 2.5, z0)
     if (rng() > 0.4) place(group, rng, 1, () => deer(rng), BANK + 0.5, BANK + 3.5, z0)
+    // China-native ambient fauna
+    if (rng() > 0.45) place(group, rng, 1, () => panda(rng), BANK + 1.5, BANK + 5.5, z0)
+    if (biome === 'hills' && rng() > 0.62) place(group, rng, 1, () => southChinaTiger(rng), BANK + 2.5, BANK + 7, z0)
+    else if (rng() > 0.78) place(group, rng, 1, () => southChinaTiger(rng), BANK + 3, BANK + 8, z0)
     place(group, rng, 1, () => lantern(weather), BANK + 0.2, BANK + 1.8, z0)
   }
   if (biome === 'village') {
@@ -1519,7 +1623,27 @@ function populateChunk(
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
     if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('fisherman', rng), RIVER + 0.8, BANK + 1.2, z0)
     place(group, rng, 1, () => lantern(weather), BANK - 0.3, BANK + 1.0, z0)
-  }
+  
+    // Waterline fauna — giant salamanders + crested ibis
+    if (rng() > 0.35) place(group, rng, 1, () => giantSalamander(rng), RIVER + 0.6, BANK + 0.8, z0)
+    if (rng() > 0.4) {
+      const nIbis = 1 + Math.floor(rng() * 2)
+      for (let i = 0; i < nIbis; i++) {
+        const ibis = crestedIbis(rng)
+        const side = rng() > 0.5 ? 1 : -1
+        const soar = rng() > 0.55
+        ibis.position.set(
+          side * (RIVER + 0.8 + rng() * 1.6),
+          soar ? 1.5 + rng() * 0.8 : 0.05,
+          z0 + 2 + rng() * (CHUNK - 4),
+        )
+        ibis.rotation.y = rng() * Math.PI * 2
+        ibis.userData.phase = rng() * Math.PI * 2
+        ibis.userData.baseX = ibis.position.x
+        group.add(ibis)
+      }
+    }
+}
   if (biome === 'pier') {
     for (const side of [-1, 1] as const) {
       const p1 = pierSegment()
@@ -1537,7 +1661,9 @@ function populateChunk(
     place(group, rng, 2, () => cherryBlossom(rng), BANK + 0.5, BANK + 3, z0)
     place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK - 0.2, BANK + 1.5, z0)
     place(group, rng, 1, () => chineseNpc('ferryman', rng), RIVER + 1.2, RIVER + 2.2, z0)
-  }
+  
+    if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng), RIVER + 1.0, BANK + 1.8, z0)
+}
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
@@ -1563,6 +1689,27 @@ function populateChunk(
     f.userData.phase = rng() * Math.PI * 2
     group.add(f)
   }
+  // Crested ibis wading / short hops near the shore
+  if (rng() > 0.55) {
+    const ibis = crestedIbis(rng)
+    const side = rng() > 0.5 ? 1 : -1
+    ibis.position.set(side * (RIVER + 0.9 + rng() * 1.4), 0.05, z0 + 3 + rng() * (CHUNK - 6))
+    ibis.rotation.y = rng() * Math.PI * 2
+    ibis.userData.phase = rng() * Math.PI * 2
+    ibis.userData.baseX = ibis.position.x
+    group.add(ibis)
+  }
+  // Giant salamander along the wet bank
+  if (rng() > 0.6) {
+    const sal = giantSalamander(rng)
+    const side = rng() > 0.5 ? 1 : -1
+    sal.position.set(side * (RIVER + 0.55 + rng() * 0.7), 0.02, z0 + 2 + rng() * (CHUNK - 4))
+    sal.rotation.y = side > 0 ? 0.2 : Math.PI - 0.2
+    sal.userData.phase = rng() * Math.PI * 2
+    sal.userData.baseX = sal.position.x
+    group.add(sal)
+  }
+
 }
 
 
@@ -2362,6 +2509,40 @@ export function createHarborWorld(
             o.position.y = base + Math.sin(waterPhase * 2.6 + base * 10) * 0.045
           }
           return
+        }
+        const fauna = o.userData.fauna as string | undefined
+        if (fauna === 'panda' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.7
+          o.rotation.y += Math.sin(phase) * 0.002
+          o.position.y = Math.sin(phase * 0.5) * 0.012
+        }
+        if (fauna === 'tiger' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.55
+          const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
+          o.userData.baseX = baseX
+          o.position.x = baseX + Math.sin(phase) * 0.35
+        }
+        if (fauna === 'ibis') {
+          const phase = ((o.userData.phase as number) ?? 0) + waterPhase * 1.6
+          // Alternate: short hop on bank vs low soar
+          if (o.userData.bird && o.position.y > 0.4) {
+            o.position.y = 1.4 + Math.sin(phase * 2) * 0.25
+            o.position.x += Math.sin(phase) * 0.012
+          } else if (!reduced) {
+            o.position.y = 0.05 + Math.max(0, Math.sin(phase * 1.2)) * 0.12
+            o.rotation.z = Math.sin(phase) * 0.08
+          }
+        }
+        if (fauna === 'salamander' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.8
+          const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
+          o.userData.baseX = baseX
+          o.position.x = baseX + Math.sin(phase) * 0.12
+          o.rotation.y += Math.sin(phase * 0.5) * 0.01
+        }
+        if (fauna === 'deer' && !reduced) {
+          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.6
+          o.rotation.y += Math.sin(phase) * 0.0015
         }
         if (!(o instanceof THREE.Mesh)) return
         if (o.userData.bird) {

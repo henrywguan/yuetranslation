@@ -33,6 +33,7 @@ import {
   HARBOR_DIALOGUE_BUBBLE,
   HARBOR_SCENIC_TREES,
   HARBOR_VILLAGE_HOMES,
+  HARBOR_AMBIENT_FAUNA,
   HARBOR_WEATHER_LOOK,
   HARBOR_WEATHERS,
   HARBOR_WULINGYUAN,
@@ -342,6 +343,18 @@ function main() {
   assert.match(worldSrc2, /hasDialogue/, 'dialogue NPCs tagged hasDialogue')
   assert.match(worldSrc2, /attachDialogueBubble\(npc\)/, 'bubbles attach to pier dialogue hosts')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
+  
+  assert.ok(HARBOR_AMBIENT_FAUNA.includes('panda'), 'giant panda ambient fauna')
+  assert.ok(HARBOR_AMBIENT_FAUNA.includes('tiger'), 'South China tiger ambient fauna')
+  assert.ok(HARBOR_AMBIENT_FAUNA.includes('ibis'), 'crested ibis ambient fauna')
+  assert.ok(HARBOR_AMBIENT_FAUNA.includes('salamander'), 'giant salamander ambient fauna')
+  assert.match(worldSrc2, /function panda/, 'panda mesh builder')
+  assert.match(worldSrc2, /function southChinaTiger/, 'South China tiger mesh builder')
+  assert.match(worldSrc2, /function crestedIbis/, 'crested ibis mesh builder')
+  assert.match(worldSrc2, /function giantSalamander/, 'giant salamander mesh builder')
+  assert.match(worldSrc2, /fauna === 'panda'/, 'panda idle animation')
+  assert.match(worldSrc2, /fauna === 'tiger'/, 'tiger pace animation')
+
   assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
   assert.match(worldSrc2, /function buildBoatHull/, 'tiered boat hull builder')
   assert.match(worldSrc2, /applyVesselLook/, 'look swaps boat + lanterns')
