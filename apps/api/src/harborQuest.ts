@@ -9,12 +9,15 @@ export type HarborQuestProgress = {
   stepCursor: Record<string, number>
   correctCount: number
   gold: number
+  xp: number
+  missionClears: Record<string, number>
 }
 
 export type HarborLeaderboardEntry = {
   rank: number
   userId: string
   displayName: string
+  xp: number
   gold: number
   correctCount: number
   clearedCount: number
@@ -26,6 +29,8 @@ const EMPTY: HarborQuestProgress = {
   stepCursor: {},
   correctCount: 0,
   gold: 0,
+  xp: 0,
+  missionClears: {},
 }
 
 const LEADERBOARD_DEFAULT_LIMIT = 25
@@ -62,7 +67,22 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
       ? Math.min(Math.floor(o.gold), 10_000_000)
       : 0
-  return { cleared: clearedUnique, stepCursor, correctCount, gold }
+  const xp =
+    typeof o.xp === 'number' && Number.isFinite(o.xp) && o.xp >= 0
+      ? Math.min(Math.floor(o.xp), 100_000_000)
+      : 0
+  const missionClears: Record<string, number> = {}
+  if (o.missionClears && typeof o.missionClears === 'object' && !Array.isArray(o.missionClears)) {
+    for (const [k, v] of Object.entries(o.missionClears as Record<string, unknown>)) {
+      if (typeof k !== 'string' || !k || k.length >= 80) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      missionClears[k] = Math.min(Math.floor(v), 100_000)
+    }
+  }
+  for (const id of clearedUnique) {
+    if ((missionClears[id] ?? 0) < 1) missionClears[id] = 1
+  }
+  return { cleared: clearedUnique, stepCursor, correctCount, gold, xp, missionClears }
 }
 
 function displayNameFromProfile(username: string | null | undefined, userId: string): string {
@@ -102,6 +122,7 @@ export async function syncHarborLeaderboard(userId: string, progress: HarborQues
     {
       user_id: userId,
       display_name: displayName,
+      xp: progress.xp,
       gold: progress.gold,
       correct_count: progress.correctCount,
       cleared_count: progress.cleared.length,
@@ -115,6 +136,7 @@ export async function syncHarborLeaderboard(userId: string, progress: HarborQues
 type LeaderboardRow = {
   user_id: string
   display_name: string
+  xp: number
   gold: number
   correct_count: number
   cleared_count: number
@@ -125,6 +147,7 @@ function rankRows(rows: LeaderboardRow[]): HarborLeaderboardEntry[] {
     rank: i + 1,
     userId: row.user_id,
     displayName: row.display_name || 'Sailor',
+    xp: row.xp,
     gold: row.gold,
     correctCount: row.correct_count,
     clearedCount: row.cleared_count,
@@ -133,9 +156,10 @@ function rankRows(rows: LeaderboardRow[]): HarborLeaderboardEntry[] {
 
 /** Compare like the SQL index: gold → correct → cleared → older updated wins for ties. */
 export function compareLeaderboardScores(
-  a: { gold: number; correctCount: number; clearedCount: number },
-  b: { gold: number; correctCount: number; clearedCount: number },
+  a: { xp: number; gold: number; correctCount: number; clearedCount: number },
+  b: { xp: number; gold: number; correctCount: number; clearedCount: number },
 ): number {
+  if (a.xp !== b.xp) return b.xp - a.xp
   if (a.gold !== b.gold) return b.gold - a.gold
   if (a.correctCount !== b.correctCount) return b.correctCount - a.correctCount
   if (a.clearedCount !== b.clearedCount) return b.clearedCount - a.clearedCount
@@ -231,7 +255,8 @@ export async function getHarborQuestLeaderboard(req: AuthedRequest, res: Respons
 
   const { data, error } = await admin
     .from('harbor_quest_leaderboard')
-    .select('user_id, display_name, gold, correct_count, cleared_count')
+    .select('user_id, display_name, xp, gold, correct_count, cleared_count')
+    .order('xp', { ascending: false })
     .order('gold', { ascending: false })
     .order('correct_count', { ascending: false })
     .order('cleared_count', { ascending: false })
@@ -258,7 +283,8 @@ export async function getHarborQuestLeaderboard(req: AuthedRequest, res: Respons
       // Viewer outside the top window — scan a wider ordered page for their rank.
       const { data: wider } = await admin
         .from('harbor_quest_leaderboard')
-        .select('user_id, display_name, gold, correct_count, cleared_count')
+        .select('user_id, display_name, xp, gold, correct_count, cleared_count')
+        .order('xp', { ascending: false })
         .order('gold', { ascending: false })
         .order('correct_count', { ascending: false })
         .order('cleared_count', { ascending: false })
@@ -272,6 +298,7 @@ export async function getHarborQuestLeaderboard(req: AuthedRequest, res: Respons
           rank: idx + 1,
           userId: row.user_id,
           displayName: row.display_name || 'Sailor',
+          xp: row.xp,
           gold: row.gold,
           correctCount: row.correct_count,
           clearedCount: row.cleared_count,

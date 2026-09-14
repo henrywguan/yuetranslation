@@ -73,7 +73,8 @@ CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide
 - Dual pane: quest brief (left) + harbor ferry stage (right)
 - Progress: `localStorage` (`yue-harbor-quest-v1`) + cloud sync for signed-in users (`harbor_quest_progress` / `GET|PUT /api/harbor-quest`); merge is monotonic (union clears, max step/correct)
 - Migration: [`supabase/migrations/028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) — apply in Supabase SQL editor if not yet pushed
-- Global leaderboard: [`supabase/migrations/029_harbor_quest_leaderboard.sql`](supabase/migrations/029_harbor_quest_leaderboard.sql) + `GET /api/harbor-quest/leaderboard` (public); scores upsert on signed-in `PUT /api/harbor-quest`
+- XP: pier clears award full XP once; **repeatable missions grant 50% XP**; progress fields `xp` + `missionClears` sync with cloud
+- Global leaderboard: [`supabase/migrations/029_harbor_quest_leaderboard.sql`](supabase/migrations/029_harbor_quest_leaderboard.sql) + [`030_harbor_quest_xp.sql`](supabase/migrations/030_harbor_quest_xp.sql) + `GET /api/harbor-quest/leaderboard` (public; ranked by XP); scores upsert on signed-in `PUT /api/harbor-quest`
 - Speaker buttons use existing Azure TTS (`SpeakButton` / `yue`) on hearable Han examples
 - Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
 - Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`
