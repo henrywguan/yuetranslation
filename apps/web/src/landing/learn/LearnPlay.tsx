@@ -27,6 +27,7 @@ import {
   type HarborGearId,
   type HarborGearSlot,
 } from './harborGear'
+import { HarborGearCodex } from './HarborGearCodex'
 import { HarborStage } from './HarborStage'
 import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
 import { HarborCharacterCreate } from './HarborCharacterCreate'
@@ -116,6 +117,7 @@ export function LearnSession({
   const [saveFlash, setSaveFlash] = useState<string | null>(null)
   const [shopMsg, setShopMsg] = useState<string | null>(null)
   const [invOpen, setInvOpen] = useState(false)
+  const [codexOpen, setCodexOpen] = useState(false)
   const [teleportOpen, setTeleportOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
@@ -297,7 +299,18 @@ export function LearnSession({
     setScrollOpen(true)
     setVisitable(null)
     setInvOpen(false)
+    setCodexOpen(false)
     playHarborScrollOpen()
+  }, [])
+
+  const openGearCodex = useCallback(() => {
+    setCodexOpen(true)
+    setVisitable(null)
+    setInvOpen(false)
+    setScrollOpen(false)
+    setBarberOpen(false)
+    setArenaOpen(false)
+    setTeleportOpen(false)
   }, [])
 
   useEffect(() => {
@@ -311,6 +324,7 @@ export function LearnSession({
     setShopMsg(null)
     setBankMsg(null)
     setInvOpen(false)
+    setCodexOpen(false)
     setTeleportOpen(false)
     setCoinPops([])
     setClearReward(null)
@@ -404,6 +418,7 @@ export function LearnSession({
       setArenaOpen(true)
       setVisitable(null)
       setInvOpen(false)
+      setCodexOpen(false)
       return
     }
     // Barber NPC / portal → same character-create modal (restyle, keep name)
@@ -411,10 +426,14 @@ export function LearnSession({
       setBarberOpen(true)
       setVisitable(null)
       setInvOpen(false)
+      setCodexOpen(false)
       return
     }
     setVisitable(id)
-    if (id) setInvOpen(false)
+    if (id) {
+      setInvOpen(false)
+      setCodexOpen(false)
+    }
     if (!id) {
       setSaveFlash(null)
       setShopMsg(null)
@@ -617,6 +636,7 @@ export function LearnSession({
           paused={
             worldPaused ||
             invOpen ||
+            codexOpen ||
             scrollOpen ||
             arenaOpen ||
             barberOpen ||
@@ -634,7 +654,7 @@ export function LearnSession({
       <HarborMinimap
         pose={minimapPose}
         remotes={remotePlayers}
-        hidden={visitable !== null || invOpen || barberOpen || scrollOpen}
+        hidden={visitable !== null || invOpen || codexOpen || barberOpen || scrollOpen}
       />
 
       <header className="hq-play-hud-top">
@@ -681,6 +701,7 @@ export function LearnSession({
           onClick={() => {
             setInvOpen((v) => !v)
             setVisitable(null)
+            setCodexOpen(false)
             setShopMsg(null)
             setBankMsg(null)
           }}
@@ -704,6 +725,7 @@ export function LearnSession({
             setArenaOpen(true)
             setVisitable(null)
             setInvOpen(false)
+            setCodexOpen(false)
           }}
         >
           <span className="hq-gold-chip-icon" aria-hidden="true">
@@ -776,6 +798,7 @@ export function LearnSession({
               className="hq-btn hq-btn--ghost"
               onClick={() => {
                 setInvOpen(true)
+                setCodexOpen(false)
                 setVisitable(null)
                 setTeleportOpen(false)
                 setShopMsg(null)
@@ -901,9 +924,14 @@ export function LearnSession({
             })}
           </ul>
           {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
-          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
-            Cast off
-          </button>
+          <div className="hq-visit-actions">
+            <button type="button" className="hq-btn hq-btn--ghost" onClick={openGearCodex}>
+              Gear codex
+            </button>
+            <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+              Cast off
+            </button>
+          </div>
         </aside>
       ) : null}
 
@@ -956,10 +984,19 @@ export function LearnSession({
               })}
           </ul>
           {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
-          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setInvOpen(false)}>
-            Close
-          </button>
+          <div className="hq-visit-actions">
+            <button type="button" className="hq-btn hq-btn--ghost" onClick={openGearCodex}>
+              Gear codex
+            </button>
+            <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setInvOpen(false)}>
+              Close pack
+            </button>
+          </div>
         </aside>
+      ) : null}
+
+      {codexOpen ? (
+        <HarborGearCodex owned={progressSnap.owned} onClose={() => setCodexOpen(false)} />
       ) : null}
 
       {visitable === 'bank' ? (
@@ -1104,7 +1141,7 @@ export function LearnSession({
 
       <HarborChatBox
         lines={chatLines}
-        hidden={talking || barberOpen || scrollOpen || arenaOpen}
+        hidden={talking || barberOpen || scrollOpen || arenaOpen || codexOpen || invOpen}
         disabled={!chatReady}
         onSend={sendChat}
       />

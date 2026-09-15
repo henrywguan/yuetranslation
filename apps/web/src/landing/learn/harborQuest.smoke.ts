@@ -89,7 +89,9 @@ import {
   HARBOR_STARTER_OWNED,
   HARBOR_GEAR_SLOTS,
   applyLookToProtagonist,
+  harborGearCodexStats,
   harborGearForSlot,
+  harborGearMeshInfo,
 } from '../../landing/learn/harborGear'
 import { emptyHarborProgress,
   isLevelUnlocked } from '../../landing/learn/progressMerge'
@@ -415,6 +417,31 @@ function main() {
     } else {
       assert.equal(n, 5, `${slot} has 5 items`)
     }
+  }
+
+  // Gear mesh honesty — not every catalog ID is a unique silhouette
+  const codex = harborGearCodexStats()
+  assert.equal(codex.total, 49, 'codex covers full catalog')
+  assert.ok(codex.families >= 12, `expected mesh families, got ${codex.families}`)
+  assert.ok(codex.uniqueMeshes < codex.total, 'many items share mesh families (recolors)')
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-straw')!).uniqueMesh, false)
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hand-fan')!).uniqueMesh, true)
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'boat-sampan')!).family, 'hull-canoe')
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-phoenix')!).family, 'lantern-silk')
+  assert.match(learnCss, /\.hq-visit-panel--codex/, 'gear codex panel styles')
+  assert.match(learnCss, /\.hq-codex-list/, 'gear codex list styles')
+  {
+    const learnDir = dirname(fileURLToPath(import.meta.url))
+    assert.match(
+      readFileSync(join(learnDir, 'LearnPlay.tsx'), 'utf8'),
+      /HarborGearCodex/,
+      'LearnPlay mounts gear codex',
+    )
+    assert.match(
+      readFileSync(join(learnDir, 'HarborGearCodex.tsx'), 'utf8'),
+      /Gear Codex/,
+      'HarborGearCodex component present',
+    )
   }
   assert.equal(HARBOR_VISITABLES.length, 5, 'Save Shack + Outfitter + Bank + Arena + Barber')
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'save-shack'))
