@@ -170,12 +170,15 @@ type WeatherLook = {
   stars: boolean
 }
 
-/** Max-bright sunny + distinct cloudy / rainy / night looks. */
+/**
+ * Weather looks — fogDensity raised so distant chunks fade sooner (shorter draw).
+ * FogExp2 visibility ≈ 1/density; sunny ~180u (was ~360u).
+ */
 export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
   sunny: {
     sky: 0xc8f0ff,
     fog: 0xe8f8ff,
-    fogDensity: 0.0028,
+    fogDensity: 0.0056,
     amb: 0xffffff,
     ambI: 1.65,
     sun: 0xfffaf0,
@@ -192,7 +195,7 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
   cloudy: {
     sky: 0x9ab0c0,
     fog: 0xb0c0cc,
-    fogDensity: 0.008,
+    fogDensity: 0.012,
     amb: 0xd8e0e8,
     ambI: 1.15,
     sun: 0xe8eef4,
@@ -209,7 +212,7 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
   rainy: {
     sky: 0x6a7888,
     fog: 0x788898,
-    fogDensity: 0.014,
+    fogDensity: 0.018,
     amb: 0xb0bcc8,
     ambI: 0.95,
     sun: 0xc8d0d8,
@@ -226,7 +229,7 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
   night: {
     sky: 0x0a1830,
     fog: 0x102038,
-    fogDensity: 0.006,
+    fogDensity: 0.01,
     amb: 0x607898,
     ambI: 0.55,
     sun: 0xc8d8ff,
@@ -1031,10 +1034,6 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
 }
 
 
-function randomNpcRole(rng: () => number): HarborNpcRole {
-  return HARBOR_NPC_ROLES[Math.floor(rng() * HARBOR_NPC_ROLES.length)]!
-}
-
 /** Seated River Scout — original RS-era-proportion mannequin (see harborProtagonist.ts). */
 function playerTraveler() {
   return buildHarborProtagonist({ pose: 'seated' })
@@ -1708,14 +1707,7 @@ function placeDockStops(group: THREE.Group, chunkIndex: number, rng: () => numbe
     // Pier hosts are quest speakers — show Talk cue above their head
     attachDialogueBubble(npc)
     group.add(npc)
-
-    // Extra villager variety near the landing
-    if (rng() > 0.45) {
-      const extra = chineseNpc(randomNpcRole(rng), rng)
-      extra.position.set(side * (RIVER + 2.4 + rng() * 0.8), 0, z + (rng() - 0.5) * 1.4)
-      extra.rotation.y = side > 0 ? -Math.PI / 2 + (rng() - 0.5) * 0.6 : Math.PI / 2 + (rng() - 0.5) * 0.6
-      group.add(extra)
-    }
+    // Decorative bank NPCs removed — only dialogue hosts stay (GPU + clarity)
   }
 }
 
@@ -1904,8 +1896,7 @@ function populateChunk(
     place(group, rng, 3, () => chinaTeaCupRose(rng), BANK - 0.3, BANK + 2.2, z0)
     place(group, rng, 2, () => hawthornBush(rng), BANK + 0.8, BANK + 3.5, z0)
     place(group, rng, 2, () => chineseFringeFlower(rng), BANK + 0.4, BANK + 2.8, z0)
-    // Villagers & merchants strolling the lane
-    place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK + 0.3, BANK + 2.5, z0)
+    // Ambient lane NPCs omitted — pier dialogue hosts are the only people
     if (rng() > 0.55) {
       const br = bridge()
       br.position.set(0, 0, z0 + CHUNK * (0.35 + rng() * 0.3))
@@ -1918,7 +1909,6 @@ function populateChunk(
     place(group, rng, 3, () => poplar(rng), BANK + 0.5, BANK + 3.5, z0)
     place(group, rng, 1, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
-    if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('fisherman', rng), RIVER + 0.8, BANK + 1.2, z0)
     place(group, rng, 1, () => lantern(weather), BANK - 0.3, BANK + 1.0, z0)
   
     // Waterline fauna — giant salamanders + crested ibis
@@ -1958,9 +1948,7 @@ function populateChunk(
     place(group, rng, 2, () => cherryBlossom(rng), BANK + 0.5, BANK + 3, z0)
     place(group, rng, 2, () => chinaTeaCupRose(rng), BANK - 0.2, BANK + 1.8, z0)
     place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.5, BANK + 2.5, z0)
-    place(group, rng, 2, () => chineseNpc(randomNpcRole(rng), rng), BANK - 0.2, BANK + 1.5, z0)
-    place(group, rng, 1, () => chineseNpc('ferryman', rng), RIVER + 1.2, RIVER + 2.2, z0)
-  
+
     if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng), RIVER + 1.0, BANK + 1.8, z0)
 }
   if (biome === 'hills') {
@@ -1969,7 +1957,6 @@ function populateChunk(
     place(group, rng, 2, () => hawthornBush(rng), BANK + 1.2, BANK + 4, z0)
     place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.8, BANK + 3.2, z0)
     place(group, rng, 1, () => lantern(weather), BANK + 0.5, BANK + 2.2, z0)
-    if (rng() > 0.5) place(group, rng, 1, () => chineseNpc('scholar', rng), BANK + 1, BANK + 3, z0)
   }
 
 
@@ -2469,7 +2456,8 @@ export function createHarborWorld(
   scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
   scene.background = new THREE.Color(look.sky)
 
-  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 320)
+  // Far plane matches denser fog — no GPU spend past the veil
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 180)
   camera.position.set(0, 4.2, -6.5)
 
   const amb = new THREE.AmbientLight(look.amb, look.ambI)
