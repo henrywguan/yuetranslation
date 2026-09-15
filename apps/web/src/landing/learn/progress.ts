@@ -27,6 +27,12 @@ import {
   type HarborLook,
 } from './harborGear'
 import { missionXpAward } from './xpRewards'
+import {
+  sanitizeHarborAppearance,
+  sanitizeHarborGender,
+  type HarborAppearance,
+  type HarborGender,
+} from './harborAppearance'
 
 export type { HarborProgress }
 export {
@@ -293,6 +299,44 @@ export function resetHarborProgress() {
  * Load local + account progress after Learn open / sign-in.
  * Always writes the merged result locally; pushes cloud when local was ahead.
  */
+
+/** Persist first-time character creation (gender, looks, optional local username). */
+export function completeHarborCharacter(input: {
+  gender: HarborGender
+  appearance: HarborAppearance
+  look?: HarborLook
+  localUsername?: string | null
+}): HarborProgress {
+  const p = read()
+  const username =
+    typeof input.localUsername === 'string' && input.localUsername.trim()
+      ? input.localUsername.trim().slice(0, 24)
+      : p.localUsername
+  const next = commit({
+    ...p,
+    characterCreated: true,
+    gender: sanitizeHarborGender(input.gender),
+    appearance: sanitizeHarborAppearance(input.appearance),
+    look: input.look ? sanitizeHarborLook(input.look) : sanitizeHarborLook(p.look),
+    localUsername: username,
+    lastSavedAt: Date.now(),
+  })
+  flushHarborProgressCloud(next)
+  return next
+}
+
+/** Save a guest display name without re-running full character create. */
+export function setHarborLocalUsername(username: string): HarborProgress {
+  const p = read()
+  const next = commit({
+    ...p,
+    localUsername: username.trim().slice(0, 24) || null,
+    lastSavedAt: Date.now(),
+  })
+  flushHarborProgressCloud(next)
+  return next
+}
+
 export async function hydrateHarborProgress(loggedIn?: boolean): Promise<HarborProgress> {
   const session = loggedIn === undefined ? await getSession() : null
   const isLoggedIn = loggedIn ?? Boolean(session)

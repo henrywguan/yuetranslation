@@ -1,5 +1,14 @@
 /** Pure Harbor Quest progress helpers (no DOM / auth imports — smoke-safe). */
 
+import {
+  HARBOR_DEFAULT_APPEARANCE,
+  appearanceEqual,
+  sanitizeHarborAppearance,
+  sanitizeHarborGender,
+  type HarborAppearance,
+  type HarborGender,
+} from './harborAppearance'
+
 export type HarborProgress = {
   /** Level ids cleared (last step completed). */
   cleared: string[]
@@ -23,6 +32,17 @@ export type HarborProgress = {
   look: import('./harborGear').HarborLook
   /** Last Save Shack stamp (ms). */
   lastSavedAt: number
+  /** True once the sailor finishes first-time character creation. */
+  characterCreated: boolean
+  /** Body type chosen at creation. */
+  gender: HarborGender
+  /** Skin / hair cosmetics. */
+  appearance: HarborAppearance
+  /**
+   * Display name for guests (or before Account Hub username is set).
+   * Signed-in Account Hub username still wins in multiplayer nametags.
+   */
+  localUsername: string | null
 }
 
 export function emptyHarborProgress(): HarborProgress {
@@ -55,6 +75,10 @@ export function emptyHarborProgress(): HarborProgress {
       lantern: 'lantern-paper-amber',
     },
     lastSavedAt: 0,
+    characterCreated: false,
+    gender: 'male',
+    appearance: { ...HARBOR_DEFAULT_APPEARANCE },
+    localUsername: null,
   }
 }
 
@@ -113,6 +137,24 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     typeof o.lastSavedAt === 'number' && Number.isFinite(o.lastSavedAt) && o.lastSavedAt >= 0
       ? Math.floor(o.lastSavedAt)
       : 0
+  // Legacy sailors who already played before character create → treat as created.
+  const legacyPlayed =
+    clearedUnique.length > 0 ||
+    correctCount > 0 ||
+    gold > 0 ||
+    xp > 0 ||
+    lastSavedAt > 0
+  const characterCreated =
+    o.characterCreated === true || o.characterCreated === false
+      ? Boolean(o.characterCreated)
+      : legacyPlayed
+  const gender = sanitizeHarborGender(o.gender)
+  const appearance = sanitizeHarborAppearance(o.appearance)
+  let localUsername: string | null = null
+  if (typeof o.localUsername === 'string') {
+    const u = o.localUsername.trim().slice(0, 24)
+    if (u) localUsername = u
+  }
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -125,6 +167,10 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     banked,
     look,
     lastSavedAt,
+    characterCreated,
+    gender,
+    appearance,
+    localUsername,
   }
 }
 
@@ -209,6 +255,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
   for (const id of cleared) {
     if ((missionClears[id] ?? 0) < 1) missionClears[id] = 1
   }
+  const fresher = (B.lastSavedAt ?? 0) > (A.lastSavedAt ?? 0) ? B : A
   return {
     cleared,
     stepCursor,
@@ -221,6 +268,10 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     banked,
     look: look ?? A.look,
     lastSavedAt: Math.max(A.lastSavedAt ?? 0, B.lastSavedAt ?? 0),
+    characterCreated: A.characterCreated || B.characterCreated,
+    gender: fresher.gender,
+    appearance: fresher.appearance,
+    localUsername: fresher.localUsername ?? A.localUsername ?? B.localUsername,
   }
 }
 
@@ -257,6 +308,10 @@ export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boole
   for (const slot of LOOK_SLOTS) {
     if ((a.look?.[slot] ?? '') !== (b.look?.[slot] ?? '')) return false
   }
+  if (Boolean(a.characterCreated) !== Boolean(b.characterCreated)) return false
+  if (a.gender !== b.gender) return false
+  if (!appearanceEqual(a.appearance, b.appearance)) return false
+  if ((a.localUsername ?? null) !== (b.localUsername ?? null)) return false
   return true
 }
 

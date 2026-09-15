@@ -8,6 +8,16 @@
  * See docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md (§3 proportions, §7 legal).
  */
 import * as THREE from 'three'
+import {
+  HARBOR_DEFAULT_APPEARANCE,
+  HARBOR_HAIR_COLORS,
+  HARBOR_SKIN_TONES,
+  sanitizeHarborAppearance,
+  sanitizeHarborGender,
+  type HarborAppearance,
+  type HarborGender,
+  type HarborHairStyle,
+} from './harborAppearance'
 
 /** Stable id for smokes / future kitbash slots. */
 export const HARBOR_PROTAGONIST_ID = 'river-scout' as const
@@ -26,6 +36,10 @@ export type HarborProtagonistPose = 'standing' | 'seated'
 
 export type HarborProtagonistOptions = {
   pose?: HarborProtagonistPose
+  gender?: HarborGender
+  appearance?: HarborAppearance
+  /** Hide the straw traveler hat (character-create preview). */
+  bareHead?: boolean
 }
 
 /** Locked Harbor swatches — posterized, distinct value steps. */
@@ -58,20 +72,84 @@ function socket(name: HarborProtagonistSocket, x: number, y: number, z: number) 
   return s
 }
 
+function addHair(
+  g: THREE.Group,
+  style: HarborHairStyle,
+  headY: number,
+  hairMat: THREE.MeshLambertMaterial,
+  gender: HarborGender,
+) {
+  const hairRoot = new THREE.Group()
+  hairRoot.name = 'scout-hair'
+  hairRoot.userData.harborHair = true
+
+  const cap = part(new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4), hairMat), 'hair')
+  cap.position.set(0, headY + 0.06, -0.02)
+  cap.scale.set(1, 0.55, 1)
+  hairRoot.add(cap)
+
+  if (style === 'short') {
+    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.08), hairMat), 'hair')
+    fringe.position.set(0, headY + 0.04, 0.1)
+    hairRoot.add(fringe)
+  } else if (style === 'bun') {
+    const bun = part(new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hairMat), 'hair')
+    bun.position.set(0, headY + 0.12, -0.04)
+    hairRoot.add(bun)
+  } else if (style === 'topknot') {
+    const bun = part(new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hairMat), 'hair')
+    bun.position.set(0, headY + 0.16, 0)
+    hairRoot.add(bun)
+    const pin = part(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.02), hairMat), 'hair')
+    pin.position.set(0, headY + 0.2, 0)
+    hairRoot.add(pin)
+  } else if (style === 'long') {
+    const fall = part(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.28, 0.1), hairMat), 'hair')
+    fall.position.set(0, headY - 0.06, -0.12)
+    hairRoot.add(fall)
+    if (gender === 'female') {
+      const sideL = part(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.06), hairMat), 'hair')
+      sideL.position.set(-0.14, headY - 0.02, 0.02)
+      hairRoot.add(sideL)
+      const sideR = part(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.06), hairMat), 'hair')
+      sideR.position.set(0.14, headY - 0.02, 0.02)
+      hairRoot.add(sideR)
+    }
+  } else if (style === 'fringe') {
+    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.1), hairMat), 'hair')
+    fringe.position.set(0, headY + 0.05, 0.11)
+    hairRoot.add(fringe)
+    const back = part(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.1), hairMat), 'hair')
+    back.position.set(0, headY - 0.02, -0.12)
+    hairRoot.add(back)
+  }
+
+  g.add(hairRoot)
+}
+
 /**
  * Build the original River Scout mannequin.
  * Standing ~1.05u tall; seated is canoe-ready (legs forward).
  */
 export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THREE.Group {
   const pose: HarborProtagonistPose = opts.pose ?? 'standing'
+  const gender = sanitizeHarborGender(opts.gender ?? 'male')
+  const appearance = sanitizeHarborAppearance(opts.appearance ?? HARBOR_DEFAULT_APPEARANCE)
+  const bareHead = Boolean(opts.bareHead)
+
   const g = new THREE.Group()
   g.name = HARBOR_PROTAGONIST_ID
   g.userData.player = true
   g.userData.protagonistId = HARBOR_PROTAGONIST_ID
   g.userData.originalHarborAsset = true
+  g.userData.gender = gender
+  g.userData.appearance = appearance
 
-  const skin = mat(HARBOR_PROTAGONIST_PALETTE.skin)
-  const hair = mat(HARBOR_PROTAGONIST_PALETTE.hair)
+  const skinHex = HARBOR_SKIN_TONES[appearance.skinTone] ?? HARBOR_PROTAGONIST_PALETTE.skin
+  const hairHex = HARBOR_HAIR_COLORS[appearance.hairColor] ?? HARBOR_PROTAGONIST_PALETTE.hair
+
+  const skin = mat(skinHex)
+  const hairMat = mat(hairHex)
   const robe = mat(HARBOR_PROTAGONIST_PALETTE.robe)
   const robeDeep = mat(HARBOR_PROTAGONIST_PALETTE.robeShadow)
   const pants = mat(HARBOR_PROTAGONIST_PALETTE.pants)
@@ -79,6 +157,11 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   const straw = mat(HARBOR_PROTAGONIST_PALETTE.straw)
   const leather = mat(HARBOR_PROTAGONIST_PALETTE.leather)
   const chop = mat(HARBOR_PROTAGONIST_PALETTE.chop)
+
+  // Female silhouette: slightly narrower shoulders, wider hips (still chunky RS grammar).
+  const shoulder = gender === 'female' ? 0.34 : 0.38
+  const hip = gender === 'female' ? 0.4 : 0.38
+  const armSpread = gender === 'female' ? 0.22 : 0.24
 
   // —— Legs (faceted 6-gon cylinders; short + thick) ——
   if (pose === 'standing') {
@@ -89,13 +172,11 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
       const shin = part(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.26, 6), pants), 'bottom')
       shin.position.set(sx, 0.08, 0.01)
       g.add(shin)
-      // Chunky boot
       const boot = part(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.18), leather), 'shoes')
       boot.position.set(sx, 0.04, 0.04)
       g.add(boot)
     }
   } else {
-    // Seated: thighs forward along +Z (canoe sit)
     for (const sx of [-0.1, 0.1] as const) {
       const thigh = part(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.34), pants), 'bottom')
       thigh.position.set(sx, 0.14, 0.14)
@@ -108,18 +189,18 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
 
   // —— Stocky torso slab ——
   const pelvisY = pose === 'standing' ? 0.48 : 0.28
-  const torso = part(new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.24), robe), 'top')
+  const torso = part(new THREE.Mesh(new THREE.BoxGeometry(shoulder, 0.42, 0.24), robe), 'top')
   torso.position.y = pelvisY + 0.22
   g.add(torso)
-  // Collar / shoulder shelf (extruded, not a decal)
-  const collar = part(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.26), robeDeep), 'topAccent')
+  const collar = part(
+    new THREE.Mesh(new THREE.BoxGeometry(shoulder + 0.02, 0.08, 0.26), robeDeep),
+    'topAccent',
+  )
   collar.position.y = pelvisY + 0.42
   g.add(collar)
-  // Jade sash — Harbor Quest “you” signal
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.26), jade)
+  const sash = new THREE.Mesh(new THREE.BoxGeometry(hip, 0.08, 0.26), jade)
   sash.position.y = pelvisY + 0.12
   g.add(sash)
-  // Small jade chop pendant (Harbor twist — not a Jagex amulet)
   const pendant = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.03), chop)
   pendant.position.set(0, pelvisY + 0.28, 0.14)
   g.add(pendant)
@@ -131,46 +212,38 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   const armY = pelvisY + 0.28
   for (const side of [-1, 1] as const) {
     const arm = part(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.34, 6), robe), 'top')
-    arm.position.set(side * 0.24, armY, 0)
+    arm.position.set(side * armSpread, armY, 0)
     g.add(arm)
-    // Mitten (oversized readable hand)
-    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), skin)
-    hand.position.set(side * 0.24, armY - 0.2, 0.02)
+    const hand = part(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), skin), 'skin')
+    hand.position.set(side * armSpread, armY - 0.2, 0.02)
     g.add(hand)
-    g.add(socket(side > 0 ? 'hand_r' : 'hand_l', side * 0.24, armY - 0.2, 0.08))
+    g.add(socket(side > 0 ? 'hand_r' : 'hand_l', side * armSpread, armY - 0.2, 0.08))
   }
 
   // —— Oversized head (era grammar) ——
   const headY = pelvisY + 0.58
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+  const head = part(new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin), 'skin')
   head.position.y = headY
   g.add(head)
-  // Short neck stub
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.08, 6), skin)
+  const neck = part(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.08, 6), skin), 'skin')
   neck.position.y = headY - 0.14
   g.add(neck)
-  // Hair plate + bun
-  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4), hair)
-  hairCap.position.set(0, headY + 0.06, -0.02)
-  hairCap.scale.set(1, 0.55, 1)
-  g.add(hairCap)
-  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
-  bun.position.set(0, headY + 0.12, -0.04)
-  g.add(bun)
 
-  // Straw traveler hat + jade bead tip (Harbor twist)
-  const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 8), straw), 'hat')
-  brim.position.y = headY + 0.1
-  g.add(brim)
-  const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 7), straw), 'hat')
-  crown.position.y = headY + 0.18
-  g.add(crown)
-  const bead = part(new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), jade), 'hatAccent')
-  bead.position.y = headY + 0.26
-  g.add(bead)
+  addHair(g, appearance.hairStyle, headY, hairMat, gender)
+
+  if (!bareHead) {
+    const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 8), straw), 'hat')
+    brim.position.y = headY + 0.1
+    g.add(brim)
+    const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 7), straw), 'hat')
+    crown.position.y = headY + 0.18
+    g.add(crown)
+    const bead = part(new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), jade), 'hatAccent')
+    bead.position.y = headY + 0.26
+    g.add(bead)
+  }
   g.add(socket('head', 0, headY + 0.28, 0))
 
-  // Cloth satchel on left hip (readable prop, original)
   const bag = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.08), leather)
   bag.position.set(-0.26, pelvisY + 0.02, 0.06)
   bag.rotation.z = 0.15
