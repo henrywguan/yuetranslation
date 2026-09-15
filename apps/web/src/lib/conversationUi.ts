@@ -102,6 +102,18 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: 'Tu amigo mira hacia este lado',
     holdFacingYou: 'Sostén el teléfono mirándote',
   },
+  eses: {
+    htmlLang: 'es-ES',
+    mic: {
+      holdOrTapToSpeak: 'Mantén o toca para hablar',
+      releaseWhenDone: 'Escuchando — suelta al terminar',
+      tapListening: 'Escuchando — pausa o toca para parar',
+      speaking: 'Hablando…',
+      translating: 'Traduciendo',
+    },
+    friendLooksHere: 'Tu amigo mira hacia este lado',
+    holdFacingYou: 'Sujeta el teléfono mirándote',
+  },
   vi: {
     htmlLang: 'vi-VN',
     mic: {

@@ -15,6 +15,7 @@ const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
   { id: 'sichuan', copy: ui.dirSichuanese, mark: '川' },
   { id: 'tl', copy: ui.dirTagalog, mark: 'Tl' },
   { id: 'es', copy: ui.dirMexicanSpanish, mark: 'Mx' },
+  { id: 'eses', copy: ui.dirPeninsularSpanish, mark: 'Es' },
   { id: 'vi', copy: ui.dirVietnamese, mark: 'Vi' },
   { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
   { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
@@ -78,6 +79,7 @@ export function LangLabelButton({
               o.id === 'sichuan' ||
               o.id === 'tl' ||
               o.id === 'es' ||
+              o.id === 'eses' ||
               o.id === 'vi' ||
               isTextOnlyLang(o.id),
           )
@@ -149,7 +151,7 @@ export function LangLabelButton({
   const labelOnly =
     only === 'en'
       ? 'en'
-      : current.id === 'tl' || current.id === 'es' || current.id === 'vi'
+      : current.id === 'tl' || current.id === 'es' || current.id === 'eses' || current.id === 'vi'
         ? undefined
         : only === 'zh' ||
             current.id === 'yue' ||

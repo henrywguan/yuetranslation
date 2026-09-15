@@ -12,6 +12,7 @@ import {
 import { fetchHealth, getUpgradeUrl, saveAutoSpeakPref, savePrimaryLangPref, translateText } from './api'
 import { hasHan } from './charGloss'
 import { localFormalizeMexicanSpanish } from './mexicanSpanishPedagogy'
+import { localFormalizePeninsularSpanish } from './peninsularSpanishPedagogy'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
 import {
@@ -176,7 +177,7 @@ type State = {
   openBreakdown: (
     phrase: string,
     opts?: {
-      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+      lang?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
       translation?: string
       definition?: string
       definitions?: string[]
@@ -200,6 +201,15 @@ type State = {
    * Uses paid `/api/translate` — callers should only fire from explicit user taps.
    */
   formalizeMexicanSpanish: (opts: {
+    spanish: string
+    sourceText: string
+    sourceLang?: Lang
+  }) => Promise<void>
+  /**
+   * Re-translate the current Peninsular Spanish turn as formal register and swap it in.
+   * Uses paid `/api/translate` — callers should only fire from explicit user taps.
+   */
+  formalizePeninsularSpanish: (opts: {
     spanish: string
     sourceText: string
     sourceLang?: Lang
@@ -374,6 +384,7 @@ function resolveSourceLang(detected: Lang, direction: SpeakDirection): Lang {
   if (direction === 'sichuan') return 'sichuan'
   if (direction === 'tl') return 'tl'
   if (direction === 'es') return 'es'
+  if (direction === 'eses') return 'eses'
   if (direction === 'vi') return 'vi'
   return detected
 }
@@ -639,6 +650,7 @@ export const useYueStore = create<State>((set, get) => {
       speakDirection === 'sichuan' ||
       speakDirection === 'tl' ||
       speakDirection === 'es' ||
+      speakDirection === 'eses' ||
       speakDirection === 'vi'
         ? { speakDirection, chineseLang: speakDirection }
         : { speakDirection },
@@ -740,7 +752,7 @@ export const useYueStore = create<State>((set, get) => {
       nextLower = lang
     }
     const chinesePatch =
-      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'vi'
+      lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi'
         ? { chineseLang: lang }
         : {}
     const nextSpeak = resolveSpeakDirectionForSolo({
@@ -951,11 +963,13 @@ export const useYueStore = create<State>((set, get) => {
           writeLocalEnVoice,
           writeLocalTlVoice,
           writeLocalEsVoice,
+          writeLocalEsesVoice,
           writeLocalYueVoice,
           resolveCmnVoice,
           resolveEnVoice,
           resolveTlVoice,
           resolveEsVoice,
+          resolveEsesVoice,
           resolveYueVoice,
         } = await import('./ttsVoices')
         if (ent.prefs?.ttsVoiceYue) writeLocalYueVoice(resolveYueVoice(ent.prefs.ttsVoiceYue))
@@ -963,6 +977,7 @@ export const useYueStore = create<State>((set, get) => {
         if (ent.prefs?.ttsVoiceCmn) writeLocalCmnVoice(resolveCmnVoice(ent.prefs.ttsVoiceCmn))
         if (ent.prefs?.ttsVoiceTl) writeLocalTlVoice(resolveTlVoice(ent.prefs.ttsVoiceTl))
         if (ent.prefs?.ttsVoiceEs) writeLocalEsVoice(resolveEsVoice(ent.prefs.ttsVoiceEs))
+        if (ent.prefs?.ttsVoiceEses) writeLocalEsesVoice(resolveEsesVoice(ent.prefs.ttsVoiceEses))
       } catch {
         /* ignore */
       }
@@ -1038,6 +1053,7 @@ export const useYueStore = create<State>((set, get) => {
       direction === 'sichuan' ||
       direction === 'tl' ||
       direction === 'es' ||
+      direction === 'eses' ||
       direction === 'vi'
         ? direction
         : undefined)
@@ -1215,7 +1231,7 @@ export const useYueStore = create<State>((set, get) => {
       const d = get().speakDirection
       return (
         lock ||
-        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'sichuan' || d === 'tl' || d === 'es' || d === 'vi'
+        (d === 'en' || d === 'yue' || d === 'cmn' || d === 'wuu' || d === 'sichuan' || d === 'tl' || d === 'es' || d === 'eses' || d === 'vi'
           ? d
           : undefined)
       )
@@ -1563,7 +1579,7 @@ export const useYueStore = create<State>((set, get) => {
     const nextAltRoms = nextAlts.map((a) => romByPhrase.get(a) || '')
 
     const history = get().history
-    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'vi')
+    const zhTargets = latest && (latest.to === 'yue' || latest.to === 'cmn' || latest.to === 'wuu' || latest.to === 'sichuan' || latest.to === 'tl' || latest.to === 'es' || latest.to === 'eses' || latest.to === 'vi')
     const nextHistory =
       zhTargets
         ? [
@@ -1771,6 +1787,136 @@ export const useYueStore = create<State>((set, get) => {
             kind: 'phrase',
             phrase: formal,
             lang: 'es',
+            translation: pairedTranslation || undefined,
+            definition: result.definition || undefined,
+            definitions: result.definitions?.length ? result.definitions : undefined,
+            alternatives: alts.length ? alts : undefined,
+          },
+        ],
+        detailMinimized: false,
+        error: null,
+      })
+    } catch (e) {
+      set({
+        error: humanizeThrownError(e) || 'Could not formalize translation',
+      })
+      throw e
+    } finally {
+      set({ translating: false, translatingTo: null })
+    }
+  },
+
+  formalizePeninsularSpanish: async ({ spanish, sourceText, sourceLang = 'en' }) => {
+    const source = sourceText.trim()
+    const prev = spanish.trim()
+    if (!prev) return
+    set({ translating: true, translatingTo: 'eses', error: null })
+    try {
+      let result = await translateText(prev, 'eses', 'eses', {
+        includeAlternatives: true,
+        register: 'formal',
+      })
+      let formal = cleanFormalEs(result.text, prev)
+
+      if (!formal && source) {
+        const from: Lang = sourceLang === 'eses' ? 'en' : sourceLang
+        result = await translateText(source, from, 'eses', {
+          includeAlternatives: true,
+          register: 'formal',
+        })
+        formal = cleanFormalEs(result.text, prev)
+      }
+
+      if (!formal) {
+        const local = localFormalizePeninsularSpanish(prev)
+        formal = cleanFormalEs(local, prev) || (local !== prev ? local : null)
+        if (formal) {
+          result = {
+            text: formal,
+            alternatives: [prev],
+            definition: result.definition,
+            definitions: result.definitions,
+          }
+        }
+      }
+
+      if (!formal) {
+        throw new Error(
+          result.text?.trim()
+            ? 'Formal translation looked invalid — try again'
+            : 'Formal translation returned empty',
+        )
+      }
+
+      const alts = [prev, ...(result.alternatives || [])]
+        .map((a) => (a === prev ? prev : cleanFormalEs(a, prev)))
+        .filter((a): a is string => Boolean(a && a !== formal))
+        .filter((a, i, arr) => arr.indexOf(a) === i)
+        .slice(0, 3)
+      const history = get().history
+      const latest = history[0]
+      let nextHistory = history
+      if (latest?.to === 'eses') {
+        nextHistory = [
+          {
+            ...latest,
+            translation: formal,
+            definition: result.definition || latest.definition,
+            definitions: result.definitions?.length
+              ? result.definitions
+              : latest.definitions,
+            alternatives: alts.length ? alts : undefined,
+          },
+          ...history.slice(1),
+        ]
+      } else if (latest?.from === 'eses' && latest.source.trim() === prev) {
+        nextHistory = [
+          {
+            ...latest,
+            source: formal,
+          },
+          ...history.slice(1),
+        ]
+      }
+
+      const face = get().face
+      const nextFace =
+        get().mode === 'conversation'
+          ? {
+              ...face,
+              yueTranslation:
+                face.yueTranslation.trim() === prev ? formal : face.yueTranslation,
+              enTranslation:
+                face.enTranslation.trim() === prev ? formal : face.enTranslation,
+            }
+          : face
+
+      const detailTop = get().detailStack[0]
+      const pairedTranslation =
+        latest?.from === 'eses' && latest.to === 'en'
+          ? latest.translation
+          : source ||
+            (latest?.to === 'eses' ? latest.source : undefined) ||
+            (detailTop?.kind === 'phrase' ? detailTop.translation : undefined)
+
+      set({
+        enTranslation: get().enTranslation.trim() === prev ? formal : get().enTranslation,
+        enAlternatives:
+          get().soloUpperLang === 'eses' ? alts : get().enAlternatives,
+        yueTranslation: get().yueTranslation.trim() === prev ? formal : get().yueTranslation,
+        yueAlternatives:
+          get().soloLowerLang === 'eses' ? alts : get().yueAlternatives,
+        yueDefinition: result.definition || get().yueDefinition,
+        yueDefinitions: result.definitions?.length
+          ? result.definitions
+          : get().yueDefinitions,
+        history: nextHistory,
+        face: nextFace,
+        detailStack: [
+          {
+            kind: 'phrase',
+            phrase: formal,
+            lang: 'eses',
             translation: pairedTranslation || undefined,
             definition: result.definition || undefined,
             definitions: result.definitions?.length ? result.definitions : undefined,

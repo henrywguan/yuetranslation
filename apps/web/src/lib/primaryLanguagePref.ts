@@ -3,7 +3,7 @@ import type { ConversationLang, Lang, SpeakDirection } from './types'
 const STORAGE_KEY = 'yue-primary-lang'
 
 /** Languages that can be the app “primary” (your side of Solo / Conversation). */
-export const PRIMARY_LANGS = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi'] as const
+export const PRIMARY_LANGS = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi'] as const
 export type PrimaryLang = (typeof PRIMARY_LANGS)[number]
 
 export function isPrimaryLang(value: unknown): value is PrimaryLang {
@@ -102,6 +102,12 @@ export function primaryLangLabel(lang: PrimaryLang): {
         zh: '西班牙語（MX）語言工具',
         gloss: 'Herramienta de español (MX)',
       }
+    case 'eses':
+      return {
+        en: 'Spanish(ES) Language Tool',
+        zh: '西班牙語（ES）語言工具',
+        gloss: 'Herramienta de español (España)',
+      }
     case 'vi':
       return {
         en: 'Vietnamese Language Tool',
@@ -132,6 +138,8 @@ export function primaryLangShortCopy(lang: PrimaryLang): { en: string; zh: strin
       return { en: 'Tagalog', zh: '他加祿語' }
     case 'es':
       return { en: 'Spanish(MX)', zh: '西班牙語（MX）' }
+    case 'eses':
+      return { en: 'Spanish(ES)', zh: '西班牙語（ES）' }
     case 'vi':
       return { en: 'Vietnamese', zh: '越南語' }
     case 'yue':

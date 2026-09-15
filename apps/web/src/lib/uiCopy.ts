@@ -8,9 +8,12 @@ export type Bi = {
   jp: string
   tl?: string
   es?: string
+  /** Peninsular / Castilian Spanish (Spain) — `eses` primary. */
+  eses?: string
   vi?: string
   wuu?: string
   cmn?: string
+  sichuan?: string
 }
 
 export const ui = {
@@ -193,6 +196,7 @@ export const ui = {
   camTargetCmn: { en: 'To Mandarin', zh: '譯成普通話', jp: 'jik6 sing4 pou2 tung1 waa2' },
   camTargetTl: { en: 'To Tagalog', zh: '譯成他加祿語', jp: 'jik6 sing4 taa1 gaa1 luk6 jyu5' },
   camTargetEs: { en: 'To Spanish(MX)', zh: '譯成西班牙語（MX）', jp: 'jik6 sing4 sai1 baan1 ngaa4 jyu5 (MX)' },
+  camTargetEses: { en: 'To Spanish(ES)', zh: '譯成西班牙語（ES）', jp: 'jik6 sing4 sai1 baan1 ngaa4 jyu5 (ES)' },
   camTargetVi: { en: 'To Vietnamese', zh: '譯成越南話', jp: 'jik6 sing4 jyut6 naam4 waa2' },
   camTargetCeb: { en: 'To Cebuano', zh: '譯成宿霧話', jp: 'jik6 sing4 suk1 mou6 waa2' },
   camTargetIlo: { en: 'To Ilocano', zh: '譯成伊洛卡诺話', jp: 'jik6 sing4 ji1 lok6 kaa1 nok3 waa2' },
@@ -338,6 +342,7 @@ export const ui = {
   dirSichuanese: { en: 'Sichuanese', zh: '四川話', jp: 'sei3 cyun1 waa2' },
   dirTagalog: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   dirMexicanSpanish: { en: 'Spanish(MX)', zh: '西班牙語（MX）', jp: 'sai1 baan1 ngaa4 jyu5 (MX)' },
+  dirPeninsularSpanish: { en: 'Spanish(ES)', zh: '西班牙語（ES）', jp: 'sai1 baan1 ngaa4 jyu5 (ES)' },
   dirVietnamese: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
   dirCebuano: { en: 'Cebuano', zh: '宿霧話', jp: 'suk1 mou6 waa2' },
   dirIlocano: { en: 'Ilocano', zh: '伊洛卡诺話', jp: 'ji1 lok6 kaa1 nok3 waa2' },
@@ -357,11 +362,31 @@ export const ui = {
     vi: 'Câu này là Spanish(MX) thân mật.',
     wuu: '搿句是非正式西班牙语（MX）。',
   },
+  esesInformalNote: {
+    en: 'This line is informal Spanish(ES).',
+    zh: '呢句係非正式西班牙語（ES）。',
+    jp: 'ni1 geoi3 hai6 fei1 zing3 sik1 sai1 baan1 ngaa4 jyu5 (ES).',
+    es: 'Esta línea es español de España informal.',
+    eses: 'Esta línea es español de España informal.',
+    tl: 'Ang linya na ito ay informal na Spanish(ES).',
+    vi: 'Câu này là Spanish(ES) thân mật.',
+    wuu: '搿句是非正式西班牙语（ES）。',
+  },
   mxFormalize: {
     en: 'Make formal',
     zh: '改成正式',
     jp: 'goi2 sing4 zing3 sik1',
     es: 'Hacer formal',
+    tl: 'Gawing pormal',
+    vi: 'Chuyển sang trang trọng',
+    wuu: '改成正式',
+  },
+  esesFormalize: {
+    en: 'Make formal',
+    zh: '改成正式',
+    jp: 'goi2 sing4 zing3 sik1',
+    es: 'Hacer formal',
+    eses: 'Hacer formal',
     tl: 'Gawing pormal',
     vi: 'Chuyển sang trang trọng',
     wuu: '改成正式',
@@ -686,6 +711,7 @@ export const ui = {
   accountTtsCmn: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },
   accountTtsTl: { en: 'Tagalog', zh: '他加祿語', jp: 'taa1 gaa1 luk6 jyu5' },
   accountTtsEs: { en: 'Spanish(MX)', zh: '西班牙語（MX）', jp: 'sai1 baan1 ngaa4 jyu5 (MX)' },
+  accountTtsEses: { en: 'Spanish(ES)', zh: '西班牙語（ES）', jp: 'sai1 baan1 ngaa4 jyu5 (ES)' },
   accountTtsVi: { en: 'Vietnamese', zh: '越南話', jp: 'jyut6 naam4 waa2' },
   accountTtsWuu: { en: 'Shanghainese', zh: '上海話', jp: 'soeng6 hoi2 waa2' },
   accountTtsSichuan: { en: 'Sichuanese', zh: '四川話', jp: 'sei3 cyun1 waa2' },
@@ -1653,11 +1679,18 @@ export const ui = {
 
 export function biPlain(b: Bi, primary?: PrimaryLang): string {
   const lang = primary ?? (typeof localStorage !== 'undefined' ? readLocalPrimaryLang() : 'yue')
-  if (lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'wuu') {
-    const fromBi = b[lang]
+  if (
+    lang === 'tl' ||
+    lang === 'es' ||
+    lang === 'eses' ||
+    lang === 'vi' ||
+    lang === 'wuu' ||
+    lang === 'sichuan'
+  ) {
+    const fromBi = b[lang as 'tl' | 'es' | 'eses' | 'vi' | 'wuu' | 'sichuan']
     if (typeof fromBi === 'string' && fromBi.trim()) return `${b.en} ${fromBi.trim()}`
     const row = PRIMARY_UI_GLOSS[b.en]
-    const gloss = row?.[lang]
+    const gloss = row?.[lang as 'tl' | 'es' | 'eses' | 'vi' | 'wuu' | 'sichuan']
     if (typeof gloss === 'string' && gloss.trim()) return `${b.en} ${gloss.trim()}`
   }
   // Cantonese primary: Chinese leads (matches zh-first chrome).

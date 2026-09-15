@@ -22,6 +22,7 @@ export type PhilippineTranslateLang =
   | 'sichuan'
   | 'tl'
   | 'es'
+  | 'eses'
   | 'vi'
   | PhilippineRegionalLang
 

@@ -52,7 +52,15 @@ import {
   isUsernameTaken,
   getProfile,
 } from './supabase.js'
-import { isCmnVoice, isEnVoice, isEsVoice, isTlVoice, isViVoice, isYueVoice } from './ttsVoices.js'
+import {
+  isCmnVoice,
+  isEnVoice,
+  isEsVoice,
+  isEsesVoice,
+  isTlVoice,
+  isViVoice,
+  isYueVoice,
+} from './ttsVoices.js'
 import {
   adminArchiveEmailTemplate,
   adminBugReportAiAnswer,
@@ -374,11 +382,13 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
               ? 'zh-CN-sichuan'
               : lang === 'tl' || lang === 'fil' || lang === 'fil-PH'
                 ? 'fil-PH'
-                : lang === 'es' || lang === 'es-MX' || lang === 'es-mx'
-                  ? 'es-MX'
-                  : lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
-                    ? 'vi-VN'
-                    : 'zh-HK'
+                : lang === 'eses' || lang === 'es-ES' || lang === 'es-es'
+                  ? 'es-ES'
+                  : lang === 'es' || lang === 'es-MX' || lang === 'es-mx'
+                    ? 'es-MX'
+                    : lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
+                      ? 'vi-VN'
+                      : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
@@ -388,6 +398,7 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredSichuan: null,
       preferredTl: ent.prefs?.ttsVoiceTl,
       preferredEs: ent.prefs?.ttsVoiceEs,
+      preferredEses: ent.prefs?.ttsVoiceEses,
       preferredVi: ent.prefs?.ttsVoiceVi,
       loud,
     })
@@ -415,6 +426,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_cmn?: string
     tts_voice_tl?: string
     tts_voice_es?: string
+    tts_voice_eses?: string
     tts_voice_vi?: string
   } = {}
   if (body.ttsVoiceYue != null) {
@@ -457,6 +469,14 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_es = v
   }
+  if (body.ttsVoiceEses != null) {
+    const v = String(body.ttsVoiceEses).trim()
+    if (!isEsesVoice(v)) {
+      res.status(400).json({ message: 'Invalid Peninsular Spanish voice.' })
+      return
+    }
+    patch.tts_voice_eses = v
+  }
   if (body.ttsVoiceVi != null) {
     const v = String(body.ttsVoiceVi).trim()
     if (!isViVoice(v)) {
@@ -483,6 +503,7 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceCmn: patch.tts_voice_cmn || ent.prefs.ttsVoiceCmn,
         ttsVoiceTl: patch.tts_voice_tl || ent.prefs.ttsVoiceTl,
         ttsVoiceEs: patch.tts_voice_es || ent.prefs.ttsVoiceEs,
+        ttsVoiceEses: patch.tts_voice_eses || ent.prefs.ttsVoiceEses,
         ttsVoiceVi: patch.tts_voice_vi || ent.prefs.ttsVoiceVi,
         autoSpeak: ent.prefs.autoSpeak,
         primaryLang: ent.prefs.primaryLang,
@@ -550,9 +571,11 @@ app.patch('/api/prefs/primary-lang', async (req: AuthedRequest, res) => {
   const ent = await entitlementFor(req)
   const { normalizePrimaryLang } = await import('./entitlements.js')
   const raw = req.body?.primaryLang
-  const allowed = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi']
+  const allowed = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi']
   if (typeof raw !== 'string' || !allowed.includes(raw)) {
-    res.status(400).json({ message: 'primaryLang must be en, yue, cmn, wuu, sichuan, tl, es, or vi.' })
+    res
+      .status(400)
+      .json({ message: 'primaryLang must be en, yue, cmn, wuu, sichuan, tl, es, eses, or vi.' })
     return
   }
   const primaryLang = normalizePrimaryLang(raw)

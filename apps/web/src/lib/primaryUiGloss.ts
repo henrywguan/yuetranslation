@@ -16,7 +16,14 @@ export function isPrimaryGlossLang(lang: PrimaryLang): lang is PrimaryGlossLang 
  * secondary (pinyin stays tertiary).
  */
 export function primaryReplacesChinese(lang: PrimaryLang): boolean {
-  return lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'wuu' || lang === 'sichuan'
+  return (
+    lang === 'tl' ||
+    lang === 'es' ||
+    lang === 'eses' ||
+    lang === 'vi' ||
+    lang === 'wuu' ||
+    lang === 'sichuan'
+  )
 }
 
 /** BCP 47 / HTML lang for the primary gloss line. */
@@ -26,6 +33,8 @@ export function primaryGlossHtmlLang(lang: PrimaryLang): string {
       return 'tl'
     case 'es':
       return 'es-MX'
+    case 'eses':
+      return 'es-ES'
     case 'vi':
       return 'vi'
     case 'cmn':

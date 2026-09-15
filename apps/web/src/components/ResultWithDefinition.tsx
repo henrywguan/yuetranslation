@@ -4,6 +4,7 @@ import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
@@ -57,6 +58,8 @@ export function ResultWithDefinition({
             ? 'tl'
             : chineseLang === 'es'
               ? 'es'
+              : chineseLang === 'eses'
+                ? 'eses'
               : chineseLang === 'vi'
                 ? 'vi'
                 : chineseLang === 'ceb'
@@ -84,6 +87,14 @@ export function ResultWithDefinition({
               />
             ) : chineseLang === 'es' ? (
               <MexicanSpanishText
+                text={trimmed}
+                definition={def}
+                definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'eses' ? (
+              <PeninsularSpanishText
                 text={trimmed}
                 definition={def}
                 definitions={definitions}

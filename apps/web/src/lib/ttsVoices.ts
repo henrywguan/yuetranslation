@@ -10,6 +10,7 @@ export {
   DEFAULT_SICHUAN_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_ES_VOICE,
+  DEFAULT_ESES_VOICE,
   DEFAULT_VI_VOICE,
   YUE_VOICES,
   EN_VOICES,
@@ -18,6 +19,7 @@ export {
   SICHUAN_VOICES,
   TL_VOICES,
   ES_VOICES,
+  ES_ES_VOICES,
   VI_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
@@ -26,6 +28,7 @@ export {
   PREVIEW_SICHUAN,
   PREVIEW_TL,
   PREVIEW_ES,
+  PREVIEW_ESES,
   PREVIEW_VI,
   resolveYueVoice,
   resolveEnVoice,
@@ -34,6 +37,7 @@ export {
   resolveSichuanVoice,
   resolveTlVoice,
   resolveEsVoice,
+  resolveEsesVoice,
   resolveViVoice,
   isYueVoice,
   isEnVoice,
@@ -42,6 +46,7 @@ export {
   isSichuanVoice,
   isTlVoice,
   isEsVoice,
+  isEsesVoice,
   isViVoice,
   voiceMeta,
   type YueVoiceId,
@@ -51,6 +56,7 @@ export {
   type SichuanVoiceId,
   type TlVoiceId,
   type EsVoiceId,
+  type EsesVoiceId,
   type ViVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
@@ -60,6 +66,7 @@ import {
   DEFAULT_CMN_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_ES_VOICE,
+  DEFAULT_ESES_VOICE,
   DEFAULT_VI_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
@@ -68,6 +75,7 @@ import {
   resolveCmnVoice,
   resolveTlVoice,
   resolveEsVoice,
+  resolveEsesVoice,
   resolveViVoice,
   resolveEnVoice,
   resolveYueVoice,
@@ -77,6 +85,7 @@ import {
   type CmnVoiceId,
   type TlVoiceId,
   type EsVoiceId,
+  type EsesVoiceId,
   type ViVoiceId,
   type EnVoiceId,
   type YueVoiceId,
@@ -91,6 +100,7 @@ const STORAGE_WUU = 'yue-tts-voice-wuu'
 const STORAGE_SICHUAN = 'yue-tts-voice-sichuan'
 const STORAGE_TL = 'yue-tts-voice-tl'
 const STORAGE_ES = 'yue-tts-voice-es'
+const STORAGE_ESES = 'yue-tts-voice-eses'
 const STORAGE_VI = 'yue-tts-voice-vi'
 
 export function readLocalYueVoice(): YueVoiceId {
@@ -175,6 +185,24 @@ export function readLocalEsVoice(): EsVoiceId {
 export function writeLocalEsVoice(id: EsVoiceId) {
   try {
     localStorage.setItem(STORAGE_ES, resolveEsVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Peninsular / Castilian Spanish (Spain) — `eses` code, never Mexico. */
+export function readLocalEsesVoice(): EsesVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_ESES_VOICE
+  try {
+    return resolveEsesVoice(localStorage.getItem(STORAGE_ESES))
+  } catch {
+    return DEFAULT_ESES_VOICE
+  }
+}
+
+export function writeLocalEsesVoice(id: EsesVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_ESES, resolveEsesVoice(id))
   } catch {
     /* ignore */
   }

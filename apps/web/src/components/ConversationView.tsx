@@ -6,6 +6,7 @@ import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
@@ -21,6 +22,7 @@ import { normalizeEnglishApostrophes } from '../lib/typography'
 function langPlaceholder(lang: Lang): string {
   if (lang === 'tl') return ui.dirTagalog.en
   if (lang === 'es') return ui.dirMexicanSpanish.en
+  if (lang === 'eses') return ui.dirPeninsularSpanish.en
   if (lang === 'vi') return ui.dirVietnamese.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
@@ -127,6 +129,17 @@ export function ConversationView() {
     if (lang === 'es') {
       return (
         <MexicanSpanishText
+          text={text}
+          definition={face.yueDefinition}
+          definitions={face.yueDefinitions}
+          className={className}
+          onActivate={onActivate}
+        />
+      )
+    }
+    if (lang === 'eses') {
+      return (
+        <PeninsularSpanishText
           text={text}
           definition={face.yueDefinition}
           definitions={face.yueDefinitions}

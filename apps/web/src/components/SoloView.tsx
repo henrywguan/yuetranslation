@@ -30,6 +30,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'en') return ui.soloTapTypeEnglish.en
   if (lang === 'tl') return 'Mag-type ng Tagalog…'
   if (lang === 'es') return 'Escribe en español mexicano…'
+  if (lang === 'eses') return 'Escribe en español de España…'
   if (lang === 'vi') return 'Nhập tiếng Việt…'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
@@ -45,6 +46,7 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'en') return 'Speak English with the mic'
   if (lang === 'tl') return 'Speak Tagalog with the mic'
   if (lang === 'es') return 'Speak Spanish(MX) with the mic'
+  if (lang === 'eses') return 'Speak Spanish(ES) with the mic'
   if (lang === 'vi') return 'Speak Vietnamese with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
@@ -365,7 +367,7 @@ export function SoloView() {
     const t = (raw || '').trim()
     if (!t) return undefined
     const han = /[\u3400-\u9fff]/u.test(t)
-    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'vi' || paneLang === 'ceb' || paneLang === 'ilo' || paneLang === 'bcl') {
+    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'eses' || paneLang === 'vi' || paneLang === 'ceb' || paneLang === 'ilo' || paneLang === 'bcl') {
       // Latin panels: drop pure-Han paired glosses.
       if (han && !/[A-Za-z]/.test(t)) return undefined
       return t
@@ -433,7 +435,7 @@ export function SoloView() {
       soloLowerLang === 'wuu' ||
       soloLowerLang === 'sichuan' ||
       soloLowerLang === 'tl' ||
-      soloLowerLang === 'es' ||
+      soloLowerLang === 'es' || soloLowerLang === 'eses' ||
       soloLowerLang === 'vi' ||
       soloLowerLang === 'ceb' ||
       soloLowerLang === 'ilo' ||
@@ -447,7 +449,7 @@ export function SoloView() {
       soloUpperLang === 'wuu' ||
       soloUpperLang === 'sichuan' ||
       soloUpperLang === 'tl' ||
-      soloUpperLang === 'es' ||
+      soloUpperLang === 'es' || soloUpperLang === 'eses' ||
       soloUpperLang === 'vi' ||
       soloUpperLang === 'ceb' ||
       soloUpperLang === 'ilo' ||
@@ -478,7 +480,7 @@ export function SoloView() {
     const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'vi' || lang === 'ceb' || lang === 'ilo' || lang === 'bcl')) {
+    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi' || lang === 'ceb' || lang === 'ilo' || lang === 'bcl')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
@@ -714,7 +716,7 @@ export function SoloView() {
             soloLowerLang === 'wuu' ||
             soloLowerLang === 'sichuan' ||
             soloLowerLang === 'tl' ||
-            soloLowerLang === 'es' ||
+            soloLowerLang === 'es' || soloLowerLang === 'eses' ||
             soloLowerLang === 'vi') ? (
             <TranslationAlternatives
               alternatives={alts}

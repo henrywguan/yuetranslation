@@ -36,6 +36,7 @@ import { ResultActions } from './ResultActions'
 import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
+import { PeninsularSpanishRegisterPanel } from './PeninsularSpanishRegisterPanel'
 import { DetailDictionaryPanel } from './DetailDictionaryPanel'
 import { DetailCollapsible } from './DetailCollapsible'
 import { detailEmojiFor } from '../lib/detailEmoji'
@@ -89,6 +90,7 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'sichuan') return 'sichuan'
   if (detailLang === 'tl') return 'tl'
   if (detailLang === 'es') return 'es'
+  if (detailLang === 'eses') return 'eses'
   if (detailLang === 'vi') return 'vi'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
@@ -318,6 +320,7 @@ export function CharacterBreakdownHost() {
       detailLang === 'en' ||
       detailLang === 'tl' ||
       detailLang === 'es' ||
+      detailLang === 'eses' ||
       detailLang === 'vi' ||
       detailLang === 'ceb' ||
       detailLang === 'ilo' ||
@@ -404,10 +407,12 @@ export function CharacterBreakdownHost() {
   const isSichuanDetail = detailLang === 'sichuan'
   const isTlDetail = detailLang === 'tl'
   const isEsDetail = detailLang === 'es'
+  const isEsesDetail = detailLang === 'eses'
   const isViDetail = detailLang === 'vi'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
-  const isLatinDetail = isTlDetail || isEsDetail || isViDetail || isPhilippineRegionalDetail
+  const isLatinDetail =
+    isTlDetail || isEsDetail || isEsesDetail || isViDetail || isPhilippineRegionalDetail
   const phraseWugniu =
     top.kind === 'phrase'
       ? top.romanization?.trim() || ''
@@ -522,7 +527,9 @@ export function CharacterBreakdownHost() {
                   ? 'tl'
                   : isEsDetail
                     ? 'es-MX'
-                    : isViDetail
+                    : isEsesDetail
+                      ? 'es-ES'
+                      : isViDetail
                       ? 'vi'
                       : top.kind === 'char' || showRubyTitle || showWuuTitle || showSichuanTitle
                       ? isWuuDetail
@@ -618,8 +625,8 @@ export function CharacterBreakdownHost() {
                 ) : null
               })()}
             </p>
-          ) : ipa && isEsDetail ? (
-            <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="es-MX">
+          ) : ipa && (isEsDetail || isEsesDetail) ? (
+            <p className="detail-panel-ipa-line detail-panel-tl-pron" lang={isEsesDetail ? 'es-ES' : 'es-MX'}>
               <span title="Accented / stress form">{ipa}</span>
               {(() => {
                 const kind = mexicanStressClass(ipa || topLabel)
@@ -652,10 +659,10 @@ export function CharacterBreakdownHost() {
                 ) : null
               })()}
             </p>
-          ) : phraseAccented && isEsDetail ? (
+          ) : phraseAccented && (isEsDetail || isEsesDetail) ? (
             <p
               className="detail-panel-ipa-line detail-panel-tl-pron"
-              lang="es-MX"
+              lang={isEsesDetail ? 'es-ES' : 'es-MX'}
               title="Accented / stress forms"
             >
               <span>{phraseAccented}</span>
@@ -761,9 +768,11 @@ export function CharacterBreakdownHost() {
                           ? 'tl'
                           : isEsDetail
                             ? 'es'
-                            : isViDetail
+                            : isEsesDetail
+                              ? 'eses'
+                              : isViDetail
                               ? 'vi'
-                              : isCmnDetail
+                                : isCmnDetail
                                 ? 'cmn'
                                 : isWuuDetail
                                   ? 'wuu'
@@ -798,6 +807,22 @@ export function CharacterBreakdownHost() {
                 }
               />
             ) : null}
+            {isEsesDetail && pedagogy.extraPanels.includes('eses-register') ? (
+              <PeninsularSpanishRegisterPanel
+                text={topLabel}
+                sourceText={
+                  top.kind === 'phrase'
+                    ? top.translation ||
+                      (latestTurn?.to === 'eses' ? latestTurn.source : undefined)
+                    : undefined
+                }
+                sourceLang={
+                  latestTurn?.to === 'eses' && latestTurn.from !== 'eses'
+                    ? latestTurn.from
+                    : 'en'
+                }
+              />
+            ) : null}
             {loading && !rows.length ? (
               <p className="detail-panel-loading muted">Loading…</p>
             ) : showWordBreakdown ? (
@@ -818,9 +843,11 @@ export function CharacterBreakdownHost() {
                       ? 'tl'
                       : isEsDetail
                         ? 'es'
-                        : isViDetail
+                        : isEsesDetail
+                          ? 'eses'
+                          : isViDetail
                           ? 'vi'
-                          : isCmnDetail
+                            : isCmnDetail
                             ? 'cmn'
                             : isWuuDetail
                               ? 'wuu'
@@ -847,7 +874,9 @@ export function CharacterBreakdownHost() {
                               ? 'tl'
                               : isEsDetail
                                 ? 'es-MX'
-                                : isViDetail
+                                : isEsesDetail
+                                  ? 'es-ES'
+                                  : isViDetail
                                   ? 'vi'
                                   : isWuuDetail
                                     ? 'wuu-CN'
@@ -887,8 +916,8 @@ export function CharacterBreakdownHost() {
                                   )
                                 })()}
                               </span>
-                            ) : isEsDetail ? (
-                              <span className="detail-panel-tl-pron" lang="es-MX">
+                            ) : isEsDetail || isEsesDetail ? (
+                              <span className="detail-panel-tl-pron" lang={isEsesDetail ? 'es-ES' : 'es-MX'}>
                                 {row.jyutping ? (
                                   <span
                                     className="detail-panel-ipa"

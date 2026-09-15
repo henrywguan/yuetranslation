@@ -15,6 +15,7 @@ const OPTIONS: { id: CameraTarget; copy: Bi; mark: string }[] = [
   { id: 'sichuan', copy: ui.camTargetSichuan, mark: '川' },
   { id: 'tl', copy: ui.camTargetTl, mark: 'Tl' },
   { id: 'es', copy: ui.camTargetEs, mark: 'Mx' },
+  { id: 'eses', copy: ui.camTargetEses, mark: 'Es' },
   { id: 'vi', copy: ui.camTargetVi, mark: 'Vi' },
   { id: 'ceb', copy: ui.camTargetCeb, mark: 'Cb' },
   { id: 'ilo', copy: ui.camTargetIlo, mark: 'Il' },

@@ -13,6 +13,7 @@ export function isVoiceLang(lang: string | null | undefined): lang is VoiceLang 
     lang === 'sichuan' ||
     lang === 'tl' ||
     lang === 'es' ||
+    lang === 'eses' ||
     lang === 'vi'
   )
 }

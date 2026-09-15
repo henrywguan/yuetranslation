@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -202,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -700,6 +700,68 @@ async function esBreakdown(text: string) {
   }
 }
 
+async function esesBreakdown(text: string) {
+  const fallback = localEsBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'eses' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Peninsular (Spain) Spanish word-by-word for English-speaking learners.',
+    'Given a Peninsular Spanish phrase, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":"<form with written accents if needed, or null>","meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented: use standard Spanish orthographic accents (á é í ó ú ñ ü) when the written form differs from an unmarked token; null when already correct or for punctuation.',
+    '- Prefer Peninsular (Spain) Spanish senses when a word differs by region (e.g. ordenador not computadora, móvil not celular, coger is neutral not vulgar).',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words (de/la/el/que), still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char.toLowerCase() !== row.char.toLowerCase()) {
+        const byText = fallback.find((f) => f.char.toLowerCase() === row.char.toLowerCase())
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: row.jyutping || fb.jyutping,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'eses' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'eses' as const }
+  }
+}
+
 function tokenizeMexicanSpanish(text: string): string[] {
   const matches = text.match(/[A-Za-zÀ-ÿÜüÑñ]+(?:'[A-Za-zÀ-ÿÜüÑñ]+)?|[0-9]+|[^\sA-Za-zÀ-ÿÜüÑñ0-9]+/g)
   return (matches || []).filter((t) => t.trim())
@@ -1051,6 +1113,7 @@ export async function breakdown(input: unknown) {
   if (lang === 'en') return englishBreakdown(text)
   if (lang === 'tl') return tlBreakdown(text)
   if (lang === 'es') return esBreakdown(text)
+  if (lang === 'eses') return esesBreakdown(text)
   if (lang === 'vi') return viBreakdown(text)
   // Soft: Cebuano / Ilocano / Central Bikol — English glosses (not Cantonese englishBreakdown).
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {

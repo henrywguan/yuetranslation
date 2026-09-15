@@ -21,7 +21,7 @@ for (const entry of raw.entries) {
 }
 
 function lookupPhrase(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
 }): PhraseEntry | null {
@@ -74,7 +74,7 @@ function alternativeRomanizationsFor(
 }
 
 export function dictionaryTranslate(opts: {
-  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+  sourceLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
   targetLang: TargetLang
   source: string
   wantAlternatives?: boolean
@@ -97,6 +97,7 @@ export function dictionaryTranslate(opts: {
       entry.targetLang === 'sichuan' ||
       entry.targetLang === 'tl' ||
       entry.targetLang === 'es' ||
+      entry.targetLang === 'eses' ||
       entry.targetLang === 'vi' ||
       entry.targetLang === 'ceb' ||
       entry.targetLang === 'ilo' ||

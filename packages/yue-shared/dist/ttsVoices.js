@@ -7,7 +7,10 @@ export const DEFAULT_WUU_VOICE = 'wuu-CN-XiaotongNeural';
 /** Sichuanese (Chengdu) — Azure locale zh-CN-sichuan. */
 export const DEFAULT_SICHUAN_VOICE = 'zh-CN-sichuan-YunxiNeural';
 export const DEFAULT_TL_VOICE = 'fil-PH-BlessicaNeural';
+/** Mexican Spanish (es-MX) — always the `es` code. Never Spain. */
 export const DEFAULT_ES_VOICE = 'es-MX-DaliaNeural';
+/** Peninsular / Castilian Spanish (es-ES) — always the `eses` code. Never Mexico. */
+export const DEFAULT_ESES_VOICE = 'es-ES-ElviraNeural';
 export const DEFAULT_VI_VOICE = 'vi-VN-HoaiMyNeural';
 export const YUE_VOICES = [
     {
@@ -121,6 +124,24 @@ export const ES_VOICES = [
         gender: 'male',
     },
 ];
+export const ES_ES_VOICES = [
+    {
+        id: 'es-ES-ElviraNeural',
+        lang: 'eses',
+        xmlLang: 'es-ES',
+        labelEn: 'Elvira · Spain Female',
+        labelZh: 'Elvira · 西班牙女聲',
+        gender: 'female',
+    },
+    {
+        id: 'es-ES-AlvaroNeural',
+        lang: 'eses',
+        xmlLang: 'es-ES',
+        labelEn: 'Álvaro · Spain Male',
+        labelZh: 'Álvaro · 西班牙男聲',
+        gender: 'male',
+    },
+];
 export const VI_VOICES = [
     {
         id: 'vi-VN-HoaiMyNeural',
@@ -192,6 +213,7 @@ const WUU_SET = new Set(WUU_VOICES.map((v) => v.id));
 const SICHUAN_SET = new Set(SICHUAN_VOICES.map((v) => v.id));
 const TL_SET = new Set(TL_VOICES.map((v) => v.id));
 const ES_SET = new Set(ES_VOICES.map((v) => v.id));
+const ES_ES_SET = new Set(ES_ES_VOICES.map((v) => v.id));
 const VI_SET = new Set(VI_VOICES.map((v) => v.id));
 const ALL = new Map([
     ...YUE_VOICES,
@@ -201,6 +223,7 @@ const ALL = new Map([
     ...SICHUAN_VOICES,
     ...TL_VOICES,
     ...ES_VOICES,
+    ...ES_ES_VOICES,
     ...VI_VOICES,
 ].map((v) => [v.id, v]));
 export function isYueVoice(id) {
@@ -223,6 +246,9 @@ export function isTlVoice(id) {
 }
 export function isEsVoice(id) {
     return ES_SET.has(id);
+}
+export function isEsesVoice(id) {
+    return ES_ES_SET.has(id);
 }
 export function isViVoice(id) {
     return VI_SET.has(id);
@@ -248,6 +274,9 @@ export function resolveTlVoice(id) {
 export function resolveEsVoice(id) {
     return id && isEsVoice(id) ? id : DEFAULT_ES_VOICE;
 }
+export function resolveEsesVoice(id) {
+    return id && isEsesVoice(id) ? id : DEFAULT_ESES_VOICE;
+}
 export function resolveViVoice(id) {
     return id && isViVoice(id) ? id : DEFAULT_VI_VOICE;
 }
@@ -255,13 +284,16 @@ export function voiceMeta(id) {
     return ALL.get(id);
 }
 /** Pick Azure voice + xml:lang for a speak request. */
-export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi) {
+export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn, preferredWuu, preferredSichuan, preferredTl, preferredEs, override, preferredVi, preferredEses) {
     const isEn = lang === 'en' || lang === 'en-US' || lang === 'en-GB' || lang === 'en-AU';
     const isCmn = lang === 'cmn' || lang === 'zh-CN' || lang === 'zh-Hans';
     const isWuu = lang === 'wuu' || lang === 'wuu-CN';
     const isSichuan = lang === 'sichuan' || lang === 'zh-CN-sichuan';
     const isTl = lang === 'tl' || lang === 'fil' || lang === 'fil-PH';
-    const isEs = lang === 'es' || lang === 'es-MX' || lang === 'es-mx' || lang === 'es-ES';
+    /** Mexican Spanish only — es-ES belongs to `isEses`, never here. */
+    const isEs = lang === 'es' || lang === 'es-MX' || lang === 'es-mx';
+    /** Peninsular / Castilian Spanish (Spain) — `eses` code, es-ES locale. */
+    const isEses = lang === 'eses' || lang === 'es-ES' || lang === 'es-es';
     const isVi = lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn';
     if (override) {
         const meta = voiceMeta(override);
@@ -278,6 +310,8 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             if (isEs && meta.lang === 'es')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
+            if (isEses && meta.lang === 'eses')
+                return { voice: meta.id, xmlLang: meta.xmlLang };
             if (isVi && meta.lang === 'vi')
                 return { voice: meta.id, xmlLang: meta.xmlLang };
             if (!isEn &&
@@ -286,6 +320,7 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
                 !isSichuan &&
                 !isTl &&
                 !isEs &&
+                !isEses &&
                 !isVi &&
                 meta.lang === 'yue') {
                 return { voice: meta.id, xmlLang: meta.xmlLang };
@@ -312,6 +347,10 @@ export function resolveSpeakVoice(lang, preferredYue, preferredEn, preferredCmn,
         const id = resolveTlVoice(preferredTl);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
     }
+    if (isEses) {
+        const id = resolveEsesVoice(preferredEses);
+        return { voice: id, xmlLang: voiceMeta(id).xmlLang };
+    }
     if (isEs) {
         const id = resolveEsVoice(preferredEs);
         return { voice: id, xmlLang: voiceMeta(id).xmlLang };
@@ -330,4 +369,5 @@ export const PREVIEW_WUU = '侬好，欢迎用沪语翻译。';
 export const PREVIEW_SICHUAN = '你好，欢迎用四川话。';
 export const PREVIEW_TL = 'Kumusta — ito ang Tagalog voice mo.';
 export const PREVIEW_ES = 'Hola — esta es tu voz en español mexicano.';
+export const PREVIEW_ESES = 'Hola, tío — esta es tu voz en español de España. ¡Mola!';
 export const PREVIEW_VI = 'Xin chào — đây là giọng tiếng Việt của bạn.';

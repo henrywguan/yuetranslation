@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -109,6 +109,10 @@ function isTagalogTarget(to: CameraLang): boolean {
 
 function isMexicanTarget(to: CameraLang): boolean {
   return to === 'es'
+}
+
+function isPeninsularTarget(to: CameraLang): boolean {
+  return to === 'eses'
 }
 
 function isVietnameseTarget(to: CameraLang): boolean {
@@ -238,6 +242,27 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'eses') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Peninsular (Spain) Spanish (español de España).',
+      'Write for Spanish travelers/readers: everyday spoken Peninsular Spanish, not stiff textbook Latin American Spanish.',
+      'Prefer Spain vocabulary (e.g. ordenador, móvil, coger, vale) over Mexican-only wording when they differ.',
+      'Use Latin script only. Include written accents (á, é, í, ó, ú, ñ, ü) when standard orthography requires them.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → Registro / Check-in; Luggage → Equipaje.',
+      '- Safety: Wet floor → Suelo mojado / Suelo resbaladizo; Caution → Precaución.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Spanish output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Peninsular Spanish>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   if (to === 'vi') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Vietnamese (tiếng Việt).',
@@ -361,6 +386,9 @@ function demoTranslation(source: string, to: CameraLang): string {
   if (isMexicanTarget(to)) {
     return hasHan(source) ? `(demo Mx) ${source}` : `(demo) ${source}`
   }
+  if (isPeninsularTarget(to)) {
+    return hasHan(source) ? `(demo ES) ${source}` : `(demo) ${source}`
+  }
   if (isVietnameseTarget(to)) {
     return hasHan(source) ? `(demo VI) ${source}` : `(demo) ${source}`
   }
@@ -429,7 +457,9 @@ export async function translateCameraText(
       ? `(tr TL) ${source}`
       : isMexicanTarget(to)
         ? `(tr Mx) ${source}`
-        : isVietnameseTarget(to)
+        : isPeninsularTarget(to)
+          ? `(tr ES) ${source}`
+          : isVietnameseTarget(to)
           ? `(tr VI) ${source}`
           : isCebuanoTarget(to)
             ? `(tr CEB) ${source}`
@@ -456,6 +486,7 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'wuu') return 'Shanghainese 上海话 / 沪语'
   if (lang === 'tl') return 'Tagalog / Filipino (Latin script)'
   if (lang === 'es') return 'Mexican Spanish (Latin script, es-MX)'
+  if (lang === 'eses') return 'Peninsular Spanish (Latin script, es-ES)'
   if (lang === 'vi') return 'Vietnamese (Latin script / Quốc ngữ, vi-VN)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
@@ -508,7 +539,9 @@ export async function translateCameraBatch(
           ? `(tr TL) ${s}`
           : isMexicanTarget(to)
             ? `(tr Mx) ${s}`
-            : isVietnameseTarget(to)
+            : isPeninsularTarget(to)
+              ? `(tr ES) ${s}`
+              : isVietnameseTarget(to)
               ? `(tr VI) ${s}`
               : isCebuanoTarget(to)
                 ? `(tr CEB) ${s}`
@@ -526,6 +559,7 @@ export async function translateCameraBatch(
       else if (isChineseTarget(to) && t && !hasHan(t) && /[A-Za-z]/.test(src)) out[start + i] = src
       else if (isTagalogTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isPeninsularTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
@@ -547,7 +581,8 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (!lang) return undefined
   if (lang === 'zh' || lang === 'yue') return 'yue'
   if (lang === 'fil' || lang === 'tl') return 'tl'
-  if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
+  if (lang === 'eses' || lang === 'es-ES' || lang === 'es-es') return 'eses'
+  if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx' || lang === 'es-US' || lang === 'es-us') return 'es'
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'

@@ -23,6 +23,7 @@ export function createWebSpeechSession(
   let sichuanLocaleIndex = 0
   let tlLocaleIndex = 0
   let esLocaleIndex = 0
+  let esesLocaleIndex = 0
   let viLocaleIndex = 0
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
@@ -33,6 +34,8 @@ export function createWebSpeechSession(
   const sichuanLocales = ['zh-CN-sichuan', 'zh-CN']
   const tlLocales = ['fil-PH', 'tl-PH', 'fil']
   const esLocales = ['es-MX', 'es-US', 'es']
+  /** Peninsular Spanish (Spain) — Web Speech like es/vi, never Azure fixed-locale. */
+  const esesLocales = ['es-ES', 'es']
   const viLocales = ['vi-VN', 'vi']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
@@ -41,6 +44,7 @@ export function createWebSpeechSession(
   const sichuanLocale = () => sichuanLocales[sichuanLocaleIndex % sichuanLocales.length]
   const tlLocale = () => tlLocales[tlLocaleIndex % tlLocales.length]
   const esLocale = () => esLocales[esLocaleIndex % esLocales.length]
+  const esesLocale = () => esesLocales[esesLocaleIndex % esesLocales.length]
   const viLocale = () => viLocales[viLocaleIndex % viLocales.length]
   const startOne = () => {
     if (stopped) return
@@ -62,9 +66,11 @@ export function createWebSpeechSession(
                 ? tlLocale()
                 : activeLang === 'es'
                   ? esLocale()
-                  : activeLang === 'vi'
-                    ? viLocale()
-                    : 'en-US'
+                  : activeLang === 'eses'
+                    ? esesLocale()
+                    : activeLang === 'vi'
+                      ? viLocale()
+                      : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -127,6 +133,11 @@ export function createWebSpeechSession(
       }
       if (localeRejected && activeLang === 'es' && esLocaleIndex < esLocales.length - 1) {
         esLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'eses' && esesLocaleIndex < esesLocales.length - 1) {
+        esesLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
@@ -211,6 +222,7 @@ export function createWebSpeechSession(
       sichuanLocaleIndex = 0
       tlLocaleIndex = 0
       esLocaleIndex = 0
+      esesLocaleIndex = 0
       viLocaleIndex = 0
       startOne()
     },
