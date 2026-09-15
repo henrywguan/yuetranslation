@@ -14,6 +14,7 @@ import { HARBOR_LEVELS } from './curriculum'
 import { HarborLeaderboard } from './HarborLeaderboard'
 import { HarborMap, LearnSession } from './LearnPlay'
 import { hydrateHarborProgress, loadHarborProgress, type HarborProgress } from './progress'
+import { sailorLevelFromXp } from './xpRewards'
 import '../landing.css'
 import './learn.css'
 
@@ -115,6 +116,7 @@ export function LearnPage() {
           </div>
           <p className="hq-hero-progress">
             {cleared}/{total} piers cleared
+            {progress.xp > 0 ? ` · ${progress.xp} XP (Lv ${sailorLevelFromXp(progress.xp)})` : ''}
             {progress.correctCount > 0 ? ` · ${progress.correctCount} correct casts` : ''}
             {progress.gold > 0 ? ` · ${progress.gold} gold` : ''}
           </p>
