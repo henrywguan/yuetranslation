@@ -2060,7 +2060,10 @@
 }
 
 .hq-quest.is-talking .hq-choices {
-  gap: 0.3rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  align-items: stretch;
 }
 
 .hq-quest.is-talking .hq-choice {
@@ -2068,22 +2071,37 @@
   background: color-mix(in srgb, #0c2230 86%, transparent);
   color: #f2faf8;
   border-radius: 0.55rem;
-  padding: 0.45rem 0.7rem;
+  padding: 0.35rem 0.3rem;
+  aspect-ratio: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   backdrop-filter: blur(10px);
   box-shadow: 0 3px 10px color-mix(in srgb, #000 24%, transparent);
+}
+
+/* After a correct pick only one tile remains — don’t force a lonely square. */
+.hq-quest.is-talking .hq-choices:has(> .hq-choice:only-child) {
+  grid-template-columns: 1fr;
+}
+.hq-quest.is-talking .hq-choices:has(> .hq-choice:only-child) .hq-choice {
+  aspect-ratio: auto;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.7rem;
 }
 
 .hq-quest.is-talking .hq-choice-label {
   color: #fff;
   text-shadow: none;
-  font-size: 0.92rem;
-  line-height: 1.2;
+  font-size: 0.88rem;
+  line-height: 1.15;
 }
 
 .hq-quest.is-talking .hq-choice-sub {
   color: color-mix(in srgb, #dff6ff 70%, transparent);
-  font-size: 0.72rem;
-  line-height: 1.2;
+  font-size: 0.68rem;
+  line-height: 1.15;
 }
 
 .hq-quest.is-talking .hq-build-slots,
@@ -2118,20 +2136,23 @@
     font-size: 0.8rem;
   }
   .hq-quest.is-talking .hq-choice {
-    padding: 0.4rem 0.6rem;
+    padding: 0.28rem 0.22rem;
+  }
+  .hq-quest.is-talking .hq-choice-label {
+    font-size: 0.8rem;
   }
 }
 
-/* Wider viewports: put pick options in one row so the strip stays short. */
+/* Pick options stay three square tiles on one row (desktop too). */
 @media (min-width: 640px) {
   .hq-dialog-options .hq-choices {
-    flex-direction: row;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch;
   }
 
   .hq-quest.is-talking .hq-dialog-options .hq-choice {
-    flex: 1 1 0;
+    flex: unset;
     min-width: 0;
   }
 }
@@ -2154,9 +2175,10 @@
 }
 
 .hq-dialog-options .hq-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  align-items: stretch;
 }
 
 

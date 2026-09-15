@@ -683,6 +683,12 @@ function main() {
   assert.match(questPanelSrc, /picked === step\.correctId\) return c\.id === step\.correctId/, 'wrong answers hide on correct pick')
   assert.match(learnCss, /safe-area-inset-bottom\) \+ 0\.45rem/, 'chat dock clears home indicator')
   assert.match(learnCss, /hq-dock-actions--next-first/, 'next-first dock spacing')
+  assert.match(
+    learnCss,
+    /hq-dialog-options \.hq-choices[\s\S]*?grid-template-columns:\s*repeat\(3/,
+    'pronunciation picks are three square tiles in one row',
+  )
+  assert.match(learnCss, /aspect-ratio:\s*1/, 'talking pick tiles are square')
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
   assert.match(worldSrc, /tickRemoteSailorPose/, 'world lerps remote poses each frame')
