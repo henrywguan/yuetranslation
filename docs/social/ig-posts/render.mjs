@@ -45,6 +45,16 @@ const allJobs = [
   { html: 'primary-lang-02-solo-story.html', png: 'ig-story-primary-lang-02-solo.png', w: 1080, h: 1920 },
   { html: 'primary-lang-03-convo-story.html', png: 'ig-story-primary-lang-03-convo.png', w: 1080, h: 1920 },
   { html: 'primary-lang-04-cam-story.html', png: 'ig-story-primary-lang-04-cam.png', w: 1080, h: 1920 },
+  { html: 'harbor-quest-01-cover.html', png: 'ig-post-harbor-quest-01-cover.png', w: 1080, h: 1350 },
+  { html: 'harbor-quest-02-voyage.html', png: 'ig-post-harbor-quest-02-voyage.png', w: 1080, h: 1350 },
+  { html: 'harbor-quest-03-chart.html', png: 'ig-post-harbor-quest-03-chart.png', w: 1080, h: 1350 },
+  { html: 'harbor-quest-04-arena.html', png: 'ig-post-harbor-quest-04-arena.png', w: 1080, h: 1350 },
+  { html: 'harbor-quest-05-gear.html', png: 'ig-post-harbor-quest-05-gear.png', w: 1080, h: 1350 },
+  { html: 'harbor-quest-06-end.html', png: 'ig-post-harbor-quest-06-end.png', w: 1080, h: 1350 },
+  { html: 'harbor-quest-story-title.html', png: 'ig-story-harbor-quest-title.png', w: 1080, h: 1920 },
+  { html: 'harbor-quest-story-voyage.html', png: 'ig-story-harbor-quest-voyage.png', w: 1080, h: 1920 },
+  { html: 'harbor-quest-story-arena.html', png: 'ig-story-harbor-quest-arena.png', w: 1080, h: 1920 },
+  { html: 'harbor-quest-story-end.html', png: 'ig-story-harbor-quest-end.png', w: 1080, h: 1920 },
 ]
 
 const jobs = onlyFilter
@@ -250,4 +260,32 @@ jyuttranslate.com
 #PrimaryLanguage #JyutTranslate #Cantonese #LanguageLearning #Multilingual
 `
 writeFileSync(join(outDir, 'ig-post-primary-lang-caption.txt'), primaryLangCaption, 'utf8')
+
+const harborQuestCaption = `Harbor Quest is live inside JyutTranslate.
+
+Learn Cantonese pronunciation like a game: sail a low-poly harbor, clear piers of Jyutping, and race the Arena · 擂台 in Match the Definition.
+
+What you’ll find:
+• Voyage UI — talk to villagers, drag to explore, cast answers on each pier
+• Pier chart — Campaign 1 Sounds + Campaign 2 Life Unit 0 (Open Cantonese paced)
+• Arena gold — 15s rounds · see the word · hear it · pick the gloss
+• Ferry coins + outfitter — gear that travels with your save
+• XP / levels — progress syncs when you sign in
+
+Admin preview now → jyuttranslate.com/#/learn
+
+Swipe for real UI + short clips.
+
+#HarborQuest #JyutTranslate #Cantonese #Jyutping #LearnCantonese
+`
+writeFileSync(join(outDir, 'ig-post-harbor-quest-caption.txt'), harborQuestCaption, 'utf8')
+
+const harborQuestStoryCaption = `Harbor Quest · 10s reveal
+
+A Jyutping voyage on the docks — piers, arena gold, ferry coins.
+Open Learn → #/learn
+
+#HarborQuest #JyutTranslate #Cantonese #Jyutping #LearnCantonese
+`
+writeFileSync(join(outDir, 'ig-story-harbor-quest-caption.txt'), harborQuestStoryCaption, 'utf8')
 console.log('done →', outDir)

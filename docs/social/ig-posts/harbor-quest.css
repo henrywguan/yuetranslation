@@ -1,0 +1,209 @@
+/* Harbor Quest IG — instructional night + phone chrome */
+
+@import url('./lang-launch.css');
+
+.hq-ig {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 55% at 20% 10%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 58%),
+    radial-gradient(ellipse 70% 45% at 90% 90%, color-mix(in srgb, var(--harbor-blue) 50%, transparent), transparent 55%),
+    linear-gradient(165deg, var(--harbor-deep) 0%, var(--harbor) 48%, #041018 100%);
+  color: var(--ink);
+  font-family: var(--font-english);
+}
+
+.hq-ig--story {
+  width: 1080px;
+  height: 1920px;
+}
+
+.hq-ig__frame {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 48px 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.hq-ig--story .hq-ig__frame {
+  padding: 72px 48px 56px;
+  gap: 22px;
+}
+
+.hq-ig__copy {
+  flex: 0 0 auto;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hq-ig__kicker {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--jade);
+}
+
+.hq-ig__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 52px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  max-width: 960px;
+}
+
+.hq-ig--story .hq-ig__title {
+  font-size: 56px;
+}
+
+.hq-ig__sub {
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--ink-mute);
+  max-width: 920px;
+}
+
+.hq-ig__sub strong {
+  color: var(--jade-bright);
+  font-weight: 700;
+}
+
+.hq-ig__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.hq-ig .phone {
+  --phone-bezel: 14px;
+  --phone-radius: 54px;
+  --phone-screen-radius: 39px;
+  width: 450px !important;
+  height: auto;
+  max-height: 100%;
+  flex-shrink: 0;
+}
+
+.hq-ig--story .phone {
+  width: 560px !important;
+}
+
+.hq-ig__foot {
+  flex: 0 0 auto;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hq-ig__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hq-ig__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--jade) 30%, transparent);
+}
+
+.hq-ig__brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+}
+
+.hq-ig__cta {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--on-jade);
+  background: var(--jade);
+  padding: 14px 22px;
+  border-radius: 999px;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--jade) 35%, transparent);
+}
+
+.hq-ig__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hq-ig__chip {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jade-bright);
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 30%, transparent);
+  background: color-mix(in srgb, var(--harbor-deep) 45%, transparent);
+}
+
+.hq-ig__url {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-mute);
+}
+
+/* Cover / end cards without phone */
+.hq-ig--cover .hq-ig__stage,
+.hq-ig--end .hq-ig__stage {
+  flex-direction: column;
+  gap: 28px;
+}
+
+.hq-ig__mark {
+  width: 128px;
+  height: 128px;
+  border-radius: 28px;
+  object-fit: cover;
+  box-shadow: 0 20px 48px color-mix(in srgb, var(--jade) 35%, transparent);
+}
+
+.hq-ig__feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+  max-width: 920px;
+}
+
+.hq-ig__feature {
+  padding: 22px 20px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
+  background: color-mix(in srgb, var(--harbor-deep) 55%, transparent);
+}
+
+.hq-ig__feature h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0 0 8px;
+}
+
+.hq-ig__feature p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--ink-mute);
+}
