@@ -10,6 +10,7 @@ import {
   buildVipHandheldProp,
   harborVipSetFor,
 } from './harborVipGear'
+import { applyTierDetailOverlays, enrichHandheldProp } from './harborGearDetail'
 
 export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand' | 'boat' | 'lantern'
 
@@ -431,6 +432,7 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
     ribbon.position.set(0.08, 0.02, 0.04)
     g.add(ribbon)
   }
+  enrichHandheldProp(g, item)
   return g
 }
 
@@ -488,4 +490,10 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
   })
   applyHandheldToProtagonist(root, look)
   applyVipOverlaysToProtagonist(root, look)
+  applyTierDetailOverlays(root, {
+    hat: BY_ID.get(look.hat),
+    top: BY_ID.get(look.top),
+    bottom: BY_ID.get(look.bottom),
+    shoes: BY_ID.get(look.shoes),
+  })
 }

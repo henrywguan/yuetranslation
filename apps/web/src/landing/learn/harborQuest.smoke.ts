@@ -493,6 +493,68 @@ function main() {
   )
   assert.match(learnCss, /\.hq-shop-item\.is-vip/, 'outfitter VIP styling')
 
+  // Progressive tier detail — mid/high clothing denser than common; VIP skips
+  const detailSrc = readFileSync(new URL('./harborGearDetail.ts', import.meta.url), 'utf8')
+  assert.match(detailSrc, /applyTierDetailOverlays|enrichHandheldProp|enrichBoatHull|harborTierDetailLevel/, 'tier detail module')
+  assert.match(
+    readFileSync(new URL('./harborGear.ts', import.meta.url), 'utf8'),
+    /applyTierDetailOverlays/,
+    'look apply wires tier detail overlays',
+  )
+  {
+    const commonScout = buildHarborProtagonist({ pose: 'standing' })
+    applyLookToProtagonist(commonScout, {
+      hat: 'hat-straw',
+      top: 'top-harbor',
+      bottom: 'bottom-travel',
+      shoes: 'shoes-leather',
+      hand: 'hand-none',
+      boat: 'boat-canoe',
+      lantern: 'lantern-paper-amber',
+    })
+    let commonMeshes = 0
+    commonScout.traverse((o) => {
+      if (!o.userData.harborTierDetail) return
+      o.traverse((c) => {
+        if ((c as { isMesh?: boolean }).isMesh) commonMeshes += 1
+      })
+    })
+    const highScout = buildHarborProtagonist({ pose: 'standing' })
+    applyLookToProtagonist(highScout, {
+      hat: 'hat-scholar',
+      top: 'top-merchant',
+      bottom: 'bottom-ink',
+      shoes: 'shoes-jade',
+      hand: 'hand-lantern',
+      boat: 'boat-canoe',
+      lantern: 'lantern-paper-amber',
+    })
+    let highMeshes = 0
+    highScout.traverse((o) => {
+      if (!o.userData.harborTierDetail) return
+      o.traverse((c) => {
+        if ((c as { isMesh?: boolean }).isMesh) highMeshes += 1
+      })
+    })
+    assert.ok(commonMeshes > 0, 'common look still gets light detail')
+    assert.ok(highMeshes > commonMeshes, `high look denser than common (${highMeshes} > ${commonMeshes})`)
+    const vipScout = buildHarborProtagonist({ pose: 'standing' })
+    applyLookToProtagonist(vipScout, {
+      hat: 'hat-festival',
+      top: 'top-night',
+      bottom: 'bottom-phoenix',
+      shoes: 'shoes-storm',
+      hand: 'hand-phoenix-fan',
+      boat: 'boat-canoe',
+      lantern: 'lantern-paper-amber',
+    })
+    let vipTierParts = 0
+    vipScout.traverse((o) => {
+      if (o.userData.harborTierDetail) vipTierParts += 1
+    })
+    assert.equal(vipTierParts, 0, 'VIP clothing skips tier-detail overlays')
+  }
+
   // Gear mesh honesty — not every catalog ID is a unique silhouette
   const codex = harborGearCodexStats()
   assert.equal(codex.total, HARBOR_GEAR_CATALOG.length, 'codex covers full catalog')
@@ -536,6 +598,7 @@ function main() {
   )
   assert.ok(HARBOR_VISIT_RADIUS > 1, 'visit radius')
   const worldSrc2 = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc2, /enrichBoatHull/, 'boat hulls get mid/high trim')
   assert.match(worldSrc2, /tickVipGearAnims/, 'world ticks VIP anims')
   assert.match(worldSrc2, /attachVipBoatOrnaments/, 'VIP boats get animated ornaments')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'save-shack'/, 'Save Shack host NPC')

@@ -30,6 +30,7 @@ import {
   tagVipLanternAnim,
   tickVipGearAnims,
 } from './harborVipGear'
+import { enrichBoatHull } from './harborGearDetail'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
   buildChatBubbleSprite,
@@ -1785,6 +1786,8 @@ function buildBoatHull(boatId: string): THREE.Group {
   }
   if (id === 'boat-dragon' || id === 'boat-pearl' || id === 'boat-imperial') {
     attachVipBoatOrnaments(g, id)
+  } else {
+    enrichBoatHull(g, item, { length, width })
   }
   return g
 }
