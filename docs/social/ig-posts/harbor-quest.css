@@ -373,7 +373,9 @@
 }
 
 .hq-ig__feature-shot--arena img {
-  object-position: center 36%;
+  /* Frame Match the Definition intro: title → rules → Enter */
+  object-position: center 38%;
+  transform: scale(1.05);
 }
 
 .hq-ig__feature-shot--chart img {
