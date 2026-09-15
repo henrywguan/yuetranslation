@@ -96,20 +96,52 @@
   justify-content: center;
   overflow: hidden;
   z-index: 1;
+  padding: 8px 0 12px;
+  container-type: size;
 }
 
+/* Fit full phone chrome in the stage — fixed width was taller than the slot and
+   overflow:hidden clipped the bottom bezel (screenshot looked like it spilled). */
 .hq-ig .phone {
   --phone-bezel: 14px;
   --phone-radius: 54px;
   --phone-screen-radius: 39px;
-  width: 640px !important;
+  --phone-shot-w: 1170;
+  --phone-shot-h: 2532;
+  width: min(560px, calc((100cqh - 36px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
   height: auto;
-  max-height: 100%;
-  flex-shrink: 0;
+  max-height: calc(100% - 4px);
+  flex-shrink: 1;
+  /* Extra bottom chrome so the home-indicator / CTA zone doesn’t read as spilling onto the frame */
+  padding: var(--phone-bezel) var(--phone-bezel) calc(var(--phone-bezel) + 6px);
 }
 
 .hq-ig--story .phone {
-  width: 760px !important;
+  width: min(680px, calc((100cqh - 36px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
+}
+
+/* Hard-mask the screen so screenshot corners never paint over the metal bezel */
+.hq-ig .phone__bezel {
+  overflow: hidden;
+  border-radius: var(--phone-screen-radius);
+  clip-path: inset(0 round var(--phone-screen-radius));
+}
+
+.hq-ig .phone__screen {
+  /* 2px inset keeps the shot clearly inside the metal — avoids CTA/home zone
+     reading as if it’s painted on top of the bottom bezel */
+  inset: 2px;
+  overflow: hidden;
+  border-radius: calc(var(--phone-screen-radius) - 2px);
+  clip-path: inset(0 round calc(var(--phone-screen-radius) - 2px));
+}
+
+.hq-ig .phone__shot {
+  border-radius: calc(var(--phone-screen-radius) - 2px);
+}
+
+.hq-ig .phone__home {
+  bottom: calc(1.05% + 2px);
 }
 
 .hq-ig__foot {
