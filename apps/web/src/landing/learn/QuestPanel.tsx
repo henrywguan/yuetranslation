@@ -290,9 +290,6 @@ function PickBody({
             <Line line={step.explain} />
           </p>
         ) : null}
-      </DialogBox>
-
-      <div className="hq-dialog-options">
         {resolved && picked === step.correctId ? (
           <div className="hq-dock-actions hq-dock-actions--next-first">
             <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
@@ -300,55 +297,55 @@ function PickBody({
             </button>
           </div>
         ) : null}
-        <motion.div
-          className="hq-choices"
-          role="group"
-          aria-label="Answers"
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: {},
-            show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
-          }}
-        >
-          {step.choices
-            .filter((c) => {
-              // Correct pick: collapse to the winning answer so Next sits higher.
-              if (resolved && picked === step.correctId) return c.id === step.correctId
-              return true
-            })
-            .map((c) => {
-            let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
-            if (resolved) {
-              if (c.id === step.correctId) state = picked === c.id ? 'ok' : 'reveal'
-              else if (picked === c.id) state = 'no'
-            }
-            return (
-              <motion.button
-                key={c.id}
-                type="button"
-                className={`hq-choice is-${state}`}
-                disabled={resolved}
-                onClick={() => submit(c.id)}
-                variants={{
-                  hidden: { opacity: 0, y: 10 },
-                  show: { opacity: 1, y: 0 },
-                }}
-                transition={{ duration: 0.24, ease: inkEase }}
-                whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
-              >
-                <span className="hq-choice-label">
-                  <JyutpingChaoText text={c.label} />
-                </span>
-                {c.sub ? (
-                  <span className="hq-choice-sub">
-                    <JyutpingChaoText text={c.sub} />
+      </DialogBox>
+
+      <div className="hq-dialog-options">
+        {/* Wrong picks keep the full choice list + Try again; correct collapses away. */}
+        {!(resolved && picked === step.correctId) ? (
+          <motion.div
+            className="hq-choices"
+            role="group"
+            aria-label="Answers"
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
+            }}
+          >
+            {step.choices.map((c) => {
+              let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
+              if (resolved) {
+                if (c.id === step.correctId) state = picked === c.id ? 'ok' : 'reveal'
+                else if (picked === c.id) state = 'no'
+              }
+              return (
+                <motion.button
+                  key={c.id}
+                  type="button"
+                  className={`hq-choice is-${state}`}
+                  disabled={resolved}
+                  onClick={() => submit(c.id)}
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  transition={{ duration: 0.24, ease: inkEase }}
+                  whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
+                >
+                  <span className="hq-choice-label">
+                    <JyutpingChaoText text={c.label} />
                   </span>
-                ) : null}
-              </motion.button>
-            )
-          })}
-        </motion.div>
+                  {c.sub ? (
+                    <span className="hq-choice-sub">
+                      <JyutpingChaoText text={c.sub} />
+                    </span>
+                  ) : null}
+                </motion.button>
+              )
+            })}
+          </motion.div>
+        ) : null}
         {resolved && picked !== step.correctId ? (
           <div className="hq-dock-actions">
             <button
@@ -430,9 +427,6 @@ function BuildBody({
             <Line line={step.explain} />
           </p>
         ) : null}
-      </DialogBox>
-
-      <div className="hq-dialog-options">
         {resolved && ok ? (
           <div className="hq-dock-actions hq-dock-actions--next-first">
             <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
@@ -440,7 +434,10 @@ function BuildBody({
             </button>
           </div>
         ) : null}
-        {!resolved || !ok ? (
+      </DialogBox>
+
+      <div className="hq-dialog-options">
+        {!(resolved && ok) ? (
           <div className="hq-build-slots">
             {step.slots.map((slot) => (
               <div key={slot.key} className="hq-build-slot">

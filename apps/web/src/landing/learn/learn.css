@@ -1084,7 +1084,16 @@
 }
 
 .hq-dock-actions--next-first {
-  margin-bottom: 0.35rem;
+  margin: 0.45rem 0 0;
+}
+
+.hq-dialog-text .hq-dock-actions--next-first {
+  /* Keep Next in the speech strip under the explain line — no scroll hunt. */
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: 0.55rem;
+  padding-top: 0.25rem;
 }
 
 .hq-feedback-text {
@@ -4187,13 +4196,13 @@
 
 @media (max-width: 640px) {
   .hq-play {
-    --hq-explore-chrome: max(7.25rem, calc(env(safe-area-inset-bottom) + 6.5rem));
+    --hq-explore-chrome: max(9rem, calc(env(safe-area-inset-bottom) + 8.25rem));
   }
   .hq-chat {
-    width: min(17rem, calc(100vw - 5.25rem));
-    max-width: calc(100vw - 5.25rem);
+    width: min(16.5rem, calc(100vw - 5.5rem));
+    max-width: calc(100vw - 5.5rem);
   }
   .hq-chat-log {
-    max-height: 4.75rem;
+    max-height: 4.25rem;
   }
 }
