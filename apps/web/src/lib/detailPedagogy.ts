@@ -25,7 +25,7 @@ export type DetailPedagogy = {
   /** Client can build a local offline token list without /api/breakdown */
   localOffline: boolean
   /** Extra panels keyed by stable id (e.g. mx-register) */
-  extraPanels: ReadonlyArray<'mx-register'>
+  extraPanels: ReadonlyArray<'mx-register' | 'eses-register'>
 }
 
 export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
@@ -87,6 +87,14 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     rubyTitle: false,
     localOffline: true,
     extraPanels: ['mx-register'],
+  },
+  eses: {
+    htmlLang: 'es-ES',
+    pronField: 'accented',
+    defaultGlossLang: 'eses',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: ['eses-register'],
   },
   vi: {
     htmlLang: 'vi',

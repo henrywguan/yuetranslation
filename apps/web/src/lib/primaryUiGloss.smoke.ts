@@ -5,6 +5,9 @@ import { ui } from './uiCopy'
 /** Offline: Tagalog/Spanish/… replace Chinese; Mandarin keeps 漢字 + pinyin gloss. */
 function main() {
   assert.equal(primaryReplacesChinese('tl'), true)
+  assert.equal(primaryReplacesChinese('es'), true)
+  // eses (Peninsular Spanish) replaces Chinese with a Spain gloss like es/vi/tl.
+  assert.equal(primaryReplacesChinese('eses'), true)
   assert.equal(primaryReplacesChinese('cmn'), false)
   assert.equal(primaryReplacesChinese('yue'), false)
 

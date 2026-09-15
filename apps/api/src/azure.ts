@@ -49,6 +49,7 @@ export type SynthesizeOpts = {
   preferredSichuan?: string | null
   preferredTl?: string | null
   preferredEs?: string | null
+  preferredEses?: string | null
   preferredVi?: string | null
   /**
    * Azure SSML `volume="x-loud"` — Practice Partner and other “fill the room”
@@ -106,6 +107,7 @@ export async function synthesize(text: string, lang: string, opts: SynthesizeOpt
     opts.preferredEs,
     opts.voice,
     opts.preferredVi,
+    opts.preferredEses,
   )
   const loud = Boolean(opts.loud) || pick.xmlLang === 'fil-PH'
   const cacheKey = ttsClipCacheKey(pick.voice, text, loud)

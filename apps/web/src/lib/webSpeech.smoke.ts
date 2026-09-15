@@ -81,7 +81,7 @@ async function runCase(apple: boolean) {
   )
   writeFileSync(
     join(dir, 'types.ts'),
-    `export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi'
+    `export type Lang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
 export type LiveSession = { start(): Promise<void>; stop(): Promise<void>; setPlaybackActive(a: boolean): void }
 export type SpeechEventHandlers = {
   onInterim: (lang: Lang, text: string) => void
@@ -159,8 +159,25 @@ export type SpeechEventHandlers = {
   )
   await sichuanSession!.stop()
 
+  const esesSession = createWebSpeechSession(
+    {
+      onInterim: () => {},
+      onFinal: () => {},
+      onError: () => {},
+      onStatus: () => {},
+    },
+    'eses',
+  )
+  await esesSession!.start()
+  assert.equal(
+    instances[instances.length - 1]?.lang,
+    'es-ES',
+    'Peninsular Spanish lock must use es-ES, not es-MX',
+  )
+  await esesSession!.stop()
+
   if (apple) {
-    for (const lang of ['yue', 'en', 'es'] as const) {
+    for (const lang of ['yue', 'en', 'es', 'eses'] as const) {
       const errors: string[] = []
       const sticky = createWebSpeechSession(
         {

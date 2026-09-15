@@ -49,6 +49,7 @@ export function isLatinDetailLang(lang: Lang): boolean {
     lang === 'en' ||
     lang === 'tl' ||
     lang === 'es' ||
+    lang === 'eses' ||
     lang === 'vi' ||
     lang === 'ceb' ||
     lang === 'ilo' ||

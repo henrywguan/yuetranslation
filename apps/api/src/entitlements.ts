@@ -13,18 +13,20 @@ import {
   DEFAULT_CMN_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_ES_VOICE,
+  DEFAULT_ESES_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_VI_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
   resolveEsVoice,
+  resolveEsesVoice,
   resolveTlVoice,
   resolveViVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
-export type PrimaryLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi'
+export type PrimaryLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
 
 export function normalizePrimaryLang(value: unknown): PrimaryLang {
   if (
@@ -32,8 +34,10 @@ export function normalizePrimaryLang(value: unknown): PrimaryLang {
     value === 'yue' ||
     value === 'cmn' ||
     value === 'wuu' ||
+    value === 'sichuan' ||
     value === 'tl' ||
     value === 'es' ||
+    value === 'eses' ||
     value === 'vi'
   ) {
     return value
@@ -133,11 +137,12 @@ export type Entitlement = {
     ttsVoiceCmn: string
     ttsVoiceTl: string
     ttsVoiceEs: string
+    ttsVoiceEses: string
     ttsVoiceVi: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Primary non-English language for Solo / Conversation / Cam / brand. */
-    primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi'
+    primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
     /** Custom display username; null until the user sets one. */
     username: string | null
     /** ISO timestamp of last username change; null if never set. */
@@ -289,6 +294,7 @@ function buildSnapshot(
     ttsVoiceCmn?: string | null
     ttsVoiceTl?: string | null
     ttsVoiceEs?: string | null
+    ttsVoiceEses?: string | null
     ttsVoiceVi?: string | null
     autoSpeak?: boolean | null
     primaryLang?: string | null
@@ -309,6 +315,7 @@ function buildSnapshot(
     ttsVoiceCmn: resolveCmnVoice(opts.ttsVoiceCmn),
     ttsVoiceTl: resolveTlVoice(opts.ttsVoiceTl),
     ttsVoiceEs: resolveEsVoice(opts.ttsVoiceEs),
+    ttsVoiceEses: resolveEsesVoice(opts.ttsVoiceEses),
     ttsVoiceVi: resolveViVoice(opts.ttsVoiceVi),
     autoSpeak: Boolean(opts.autoSpeak),
     primaryLang: normalizePrimaryLang(opts.primaryLang),
@@ -421,6 +428,7 @@ function buildSnapshot(
         ttsVoiceCmn: DEFAULT_CMN_VOICE,
         ttsVoiceTl: DEFAULT_TL_VOICE,
         ttsVoiceEs: DEFAULT_ES_VOICE,
+        ttsVoiceEses: DEFAULT_ESES_VOICE,
         ttsVoiceVi: DEFAULT_VI_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
@@ -557,6 +565,7 @@ function localEntitlement(): Entitlement {
         ttsVoiceCmn: DEFAULT_CMN_VOICE,
         ttsVoiceTl: DEFAULT_TL_VOICE,
         ttsVoiceEs: DEFAULT_ES_VOICE,
+        ttsVoiceEses: DEFAULT_ESES_VOICE,
         ttsVoiceVi: DEFAULT_VI_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
@@ -637,6 +646,7 @@ export async function resolveEntitlement(
     ttsVoiceCmn: profile?.tts_voice_cmn,
     ttsVoiceTl: profile?.tts_voice_tl,
     ttsVoiceEs: profile?.tts_voice_es,
+    ttsVoiceEses: profile?.tts_voice_eses,
     ttsVoiceVi: profile?.tts_voice_vi,
     autoSpeak: profile?.auto_speak,
     primaryLang: profile?.primary_lang,

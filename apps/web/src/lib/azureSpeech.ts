@@ -98,6 +98,8 @@ function localeToLang(locale: string): Lang {
   if (l.startsWith('zh-cn') || l.includes('cmn') || l.includes('hans') || l === 'zh-cn') return 'cmn'
   if (l.startsWith('wuu') || l.includes('wuu')) return 'wuu'
   if (l.startsWith('fil') || l.startsWith('tl')) return 'tl'
+  // es-ES → eses (Peninsular Spanish); es-MX / es-US / bare es → es (Mexican).
+  if (l.startsWith('es-es')) return 'eses'
   if (l.startsWith('es')) return 'es'
   if (l.startsWith('vi')) return 'vi'
   // Generic zh without region — prefer Cantonese for HK product default.
@@ -112,6 +114,7 @@ function langToLocale(lang: Lang): string {
   if (lang === 'sichuan') return 'zh-CN-sichuan'
   if (lang === 'tl') return 'fil-PH'
   if (lang === 'es') return 'es-MX'
+  if (lang === 'eses') return 'es-ES'
   if (lang === 'vi') return 'vi-VN'
   return 'en-US'
 }

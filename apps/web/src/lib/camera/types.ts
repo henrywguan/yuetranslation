@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang. */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
@@ -33,6 +33,7 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'ilo') return 'ilo'
   if (lang === 'bcl') return 'bcl'
   if (lang === 'tl' || lang === 'fil') return 'tl'
+  if (lang === 'eses' || lang === 'es-ES' || lang === 'es-es') return 'eses'
   if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
   // Legacy `zh` and explicit yue → Cantonese
@@ -83,7 +84,7 @@ function isChineseCam(lang: CameraLang): boolean {
 }
 
 /** Latin non-Chinese Cam targets: translation is the Details subject; English is the hint. */
-const LATIN_DETAIL_CAM_LANGS = ['tl', 'es', 'vi', 'ceb', 'ilo', 'bcl'] as const
+const LATIN_DETAIL_CAM_LANGS = ['tl', 'es', 'eses', 'vi', 'ceb', 'ilo', 'bcl'] as const
 type LatinDetailCamLang = (typeof LATIN_DETAIL_CAM_LANGS)[number]
 
 function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
@@ -154,6 +155,7 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'yue') return 'yue'
   if (box.to === 'tl') return 'tl'
   if (box.to === 'es') return 'es'
+  if (box.to === 'eses') return 'eses'
   if (box.to === 'vi') return 'vi'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'

@@ -4,6 +4,8 @@ import { ShanghaineseText } from './ShanghaineseText'
 import { SichuaneseText } from './SichuaneseText'
 import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
+import { PeninsularSpanishText } from './PeninsularSpanishText'
+import { PeninsularSpanishRegisterPanel } from './PeninsularSpanishRegisterPanel'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { VietnameseText } from './VietnameseText'
 import { BiText } from './BiText'
@@ -17,6 +19,7 @@ function langShort(lang: Lang): string {
   if (lang === 'sichuan') return '川'
   if (lang === 'tl') return 'TL'
   if (lang === 'es') return 'Mx'
+  if (lang === 'eses') return 'Es'
   if (lang === 'vi') return 'Vi'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
@@ -103,6 +106,17 @@ function LangLine({
       />
     )
   }
+  if (lang === 'eses') {
+    return (
+      <PeninsularSpanishText
+        text={text}
+        definition={definition}
+        definitions={definitions}
+        className="history-card-line"
+        onActivate={onBreakdown}
+      />
+    )
+  }
   if (lang === 'vi') {
     return (
       <VietnameseText
@@ -156,6 +170,7 @@ function langLabel(lang: Lang) {
   if (lang === 'sichuan') return <BiText copy={ui.dirSichuanese} size="sm" only="zh" />
   if (lang === 'tl') return <BiText copy={ui.dirTagalog} size="sm" />
   if (lang === 'es') return <BiText copy={ui.dirMexicanSpanish} size="sm" />
+  if (lang === 'eses') return <BiText copy={ui.dirPeninsularSpanish} size="sm" />
   if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
@@ -183,6 +198,7 @@ export function HistoryCard({
     turn.to === 'sichuan' ||
     turn.to === 'tl' ||
     turn.to === 'es' ||
+    turn.to === 'eses' ||
     turn.to === 'vi'
       ? turn.translation
       : turn.from === 'yue' ||
@@ -191,6 +207,7 @@ export function HistoryCard({
           turn.from === 'sichuan' ||
           turn.from === 'tl' ||
           turn.from === 'es' ||
+          turn.from === 'eses' ||
           turn.from === 'vi'
         ? turn.source
         : ''
@@ -367,6 +384,12 @@ export function HistoryCard({
                         className="history-card-line"
                         onActivate={onBreakdown}
                       />
+                    ) : turn.to === 'eses' ? (
+                      <PeninsularSpanishText
+                        text={alt}
+                        className="history-card-line"
+                        onActivate={onBreakdown}
+                      />
                     ) : turn.to === 'vi' ? (
                       <VietnameseText
                         text={alt}
@@ -387,6 +410,14 @@ export function HistoryCard({
               text={zhPhrase}
               sourceText={turn.from !== 'es' ? turn.source : turn.translation}
               sourceLang={turn.from !== 'es' ? turn.from : 'en'}
+            />
+          ) : null}
+
+          {turn.to === 'eses' && zhPhrase ? (
+            <PeninsularSpanishRegisterPanel
+              text={zhPhrase}
+              sourceText={turn.from !== 'eses' ? turn.source : turn.translation}
+              sourceLang={turn.from !== 'eses' ? turn.from : 'en'}
             />
           ) : null}
 

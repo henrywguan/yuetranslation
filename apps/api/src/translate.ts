@@ -15,6 +15,7 @@ import {
 import { hasHan } from './canto/han.js'
 import { inferTagalogRegister } from './tagalogRegister.js'
 import { inferMexicanSpanishRegister } from './mexicanSpanishRegister.js'
+import { inferPeninsularSpanishRegister } from './peninsularSpanishRegister.js'
 import { inferVietnameseRegister } from './vietnameseRegister.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
@@ -38,7 +39,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'vi', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -78,7 +79,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -1620,6 +1621,393 @@ async function translateMexicanSpanish(opts: {
   )
 }
 
+/**
+ * EN↔Peninsular (Castilian) Spanish — colloquial Madrid street speech.
+ * Peer to `es` (Mexican) — never mixes vosotros/vale/tío into `es`, and never
+ * mixes órale/qué onda/ustedes-only wording into `eses`. Latin script only;
+ * orthographic stress (tilde), not tones.
+ */
+/** Deterministic colloquial→formal polish when the model is unavailable. */
+export function localFormalizePeninsularSpanish(text: string): string {
+  const src = text.trim()
+  if (!src) return src
+  let t = src
+    .replace(/\bvale\b/gi, 'de acuerdo')
+    .replace(/\btío\b/gi, '')
+    .replace(/\btía\b/gi, '')
+    .replace(/\bqué\s+guay\b/gi, 'muy bien')
+    .replace(/\bguay\b/gi, 'bien')
+    .replace(/\bmola\b/gi, 'está bien')
+    .replace(/\bflipante\b/gi, 'sorprendente')
+    .replace(/\bhostia\b/gi, '')
+    .replace(/,?\s*colega(?=[^\p{L}]|$)/giu, '')
+    .replace(/,?\s*tronco(?=[^\p{L}]|$)/giu, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([?!¡¿.,;])/g, '$1')
+    .trim()
+  if (!/usted/i.test(t) && /\b(qué tal|cómo estás)\b/i.test(t)) {
+    t = t.replace(/\bqué tal\b/gi, 'cómo está usted').replace(/\bcómo estás\b/gi, 'cómo está usted')
+  }
+  if (!t || t.toLowerCase() === src.toLowerCase()) {
+    // Last resort: a polite greeting that preserves intent of casual “vale, tío”.
+    if (/vale|tío|tía|guay|mola|colega|tronco/i.test(src)) return '¿Cómo está usted?'
+    return src
+  }
+  // Preserve leading ¿ / trailing ? when the source had them.
+  if (/^¿/.test(src) && !/^¿/.test(t)) t = `¿${t.replace(/^¿\s*/, '')}`
+  if (/\?\s*$/.test(src) && !/\?\s*$/.test(t)) t = `${t.replace(/\?\s*$/, '')}?`
+  // Capitalize first letter after ¿
+  t = t.replace(/^¿([a-záéíóúüñ])/u, (_, c: string) => `¿${c.toUpperCase()}`)
+  return t.trim()
+}
+
+async function rewritePeninsularSpanishFormal(opts: {
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+}): Promise<TranslateResult> {
+  const { text, stage, wantAlts } = opts
+  const client = openaiClient()
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+
+  if (!client) {
+    // Offline / no key: deterministic polish so Details formalize still works.
+    const formal = localFormalizePeninsularSpanish(text)
+    return {
+      text: formal,
+      definition: '',
+      alternatives: formal !== text ? [text] : [],
+      engine: 'demo',
+      from: 'eses',
+      to: 'eses',
+      stage,
+      meta: emptyMeta(['demo', 'es-es-formal-rewrite']),
+    }
+  }
+
+  const system = [
+    'You rewrite colloquial Peninsular (Spain) Spanish into POLITE formal Peninsular Spanish.',
+    'Keep the same meaning. Prefer usted / ustedes for formality. Avoid slang (vale, tío, tía, guay, mola, colega, tronco, hostia).',
+    'Peninsular vocabulary and grammar (vosotros is fine in genuinely plural informal contexts, but formal register should prefer ustedes). Keep required orthographic accents (tildes).',
+    'Do NOT use Mexicanisms (órale, qué onda, ahorita, no manches, güey). Do NOT use Chinese characters. Do NOT invent tone numbers.',
+    'Return ONLY valid JSON:',
+    wantAlts
+      ? '{"primary":"<best formal Peninsular Spanish>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}'
+      : '{"translation":"<formal Peninsular Spanish>","definition":"<short English gloss>"}',
+  ].join('\n')
+
+  const completion = await client.chat.completions.create({
+    model: env.openaiModel,
+    temperature: 0.25,
+    max_tokens: 400,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: text },
+    ],
+    ...(wantAlts ? { response_format: { type: 'json_object' as const } } : {}),
+    ...llmChatExtras(),
+  })
+  const raw = completion.choices[0]?.message?.content?.trim() || ''
+  let primary = ''
+  let alternatives: string[] = []
+  let definition = ''
+  if (wantAlts) {
+    const parsed = parseYuePayload(raw, text, false)
+    primary = parsed.text
+    alternatives = parsed.alternatives
+    definition = parsed.definition || ''
+  } else {
+    const payload = parsePayload(raw, text, '', false)
+    primary = payload.text
+    definition = payload.definition || ''
+  }
+  const outText = primary && !hasHan(primary) ? primary.trim() : ''
+  return {
+    text: outText || text,
+    definition,
+    alternatives: wantAlts
+      ? alternatives.filter((a) => a && !hasHan(a) && a !== outText).slice(0, 3)
+      : [],
+    engine,
+    from: 'eses',
+    to: 'eses',
+    stage,
+    meta: emptyMeta(outText ? ['es-es-formal-rewrite'] : ['es-es-formal-rewrite', 'no-eses-output']),
+  }
+}
+
+/**
+ * EN↔Peninsular (Castilian) Spanish — colloquial Madrid street speech.
+ * Not Mexican default. Latin script only; orthographic stress (tilde), not tones.
+ */
+async function translatePeninsularSpanish(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+  /** When set, skips source inference (details formalize control). */
+  registerOverride?: 'colloquial' | 'formal'
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition, registerOverride } = opts
+
+  const dictHit =
+    registerOverride === 'formal'
+      ? null
+      : dictionaryTranslate({
+          sourceLang: from,
+          targetLang: to,
+          source: text,
+          wantAlternatives: wantAlts,
+        })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'eses' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'es-es-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'eses' ? `(demo ES) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'eses' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'es-es-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toEses = to === 'eses'
+  const register = toEses
+    ? registerOverride || inferPeninsularSpanishRegister(text)
+    : 'colloquial'
+  const registerNote = register === 'formal' ? 'es-es-formal' : 'es-es-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toEses) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Peninsular (Spain) Spanish interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Peninsular Spanish (clear, respectful; ustedes for formality).',
+            'Avoid slang; keep Peninsular (not Mexican) vocabulary and spelling.',
+            'On the PRIMARY line, ALWAYS use correct orthographic accent marks (tildes) per RAE rules. Alternatives may omit optional styling but must keep required accents.',
+            'Do NOT use Mexicanisms (órale, qué onda, ahorita, güey). Do NOT use Chinese characters. Do NOT invent tone numbers.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Peninsular Spanish>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Peninsular (Spain) Spanish interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Peninsular Spanish (Madrid style — not Mexican, not Rioplatense).',
+            'Use everyday Peninsular wording when natural (vale, tío/tía, guay, mola, currar, flipar, colega, tronco). Use vosotros for plural “you” among peers when natural.',
+            'Use present perfect (pretérito perfecto compuesto: “he hecho”, “ha llegado”) for recent past, as is natural in Spain.',
+            'Do NOT use Mexicanisms (órale, qué onda, ahorita, no manches, güey, computadora, celular, camión for bus). Do NOT use Argentine vos.',
+            'On the PRIMARY line, ALWAYS use correct orthographic accent marks (tildes) per RAE rules on every word that needs them. Alternatives may be lighter but must keep required accents.',
+            'Do NOT use Chinese characters. Do NOT invent tone digits or IPA on the primary line.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Peninsular Spanish>","alternatives":["<other natural Peninsular variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEses = parseYuePayload(raw, text, false)
+    primary = parsedEses.text
+    alternatives = parsedEses.alternatives
+    if (parsedEses.definition) definition = parsedEses.definition
+  } else if (wantAlts && !toEses) {
+    const system = [
+      'You are a Peninsular (Spain) Spanish interpreter helping Spanish speakers learn English.',
+      'Translate colloquial Peninsular Spanish into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Peninsular Spanish gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toEses
+      ? register === 'formal'
+        ? [
+            'You are a Peninsular (Spain) Spanish interpreter for formal situations.',
+            'Translate into POLITE formal Peninsular Spanish (ustedes; Peninsular vocabulary; not Mexican).',
+            'ALWAYS use correct orthographic accent marks (tildes) per RAE rules.',
+            'Do NOT use Chinese characters or tone numbers.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Peninsular Spanish>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Peninsular (Spain) Spanish interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Peninsular Spanish (Madrid — not Mexican).',
+            'ALWAYS use correct orthographic accent marks (tildes) per RAE rules.',
+            'Do NOT use Chinese characters or tone numbers.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Peninsular Spanish>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Peninsular (Spain) Spanish interpreter.',
+          'Translate colloquial Peninsular Spanish into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toEses && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toEses ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toEses ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toEses) {
+    const outText = primary && !hasHan(primary) ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-eses-output']),
+      },
+      text,
+    )
+  }
+
+  // eses→en: reject Han / glossary dumps / Spanish echo; fall back to phrase memory when empty.
+  const cleanedEn = (primary || '').trim()
+  const sourceNorm = cleanedEn
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[¡¿?!.,;:'"“”‘’]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const inputNorm = text
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[¡¿?!.,;:'"“”‘’]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const echoedSource = Boolean(sourceNorm) && sourceNorm === inputNorm
+  if (!cleanedEn || looksLikeGlossDump(cleanedEn) || hasHan(cleanedEn) || echoedSource) {
+    const rescue = dictionaryTranslate({
+      sourceLang: 'eses',
+      targetLang: 'en',
+      source: text,
+      wantAlternatives: wantAlts,
+    })
+    if (rescue?.text) {
+      return withLearnerDefinitions(
+        {
+          text: rescue.text,
+          definition: '',
+          alternatives: wantAlts ? rescue.alternatives : [],
+          engine: 'dictionary',
+          from,
+          to,
+          stage,
+          meta: {
+            dictionaryHit: true,
+            scrubbed: false,
+            colloquialScore: 8,
+            rewritten: false,
+            notes: [`dict:${rescue.entry.id}`, registerNote, 'es-es-en-rescue'],
+          },
+        },
+        text,
+      )
+    }
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['eses-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: cleanedEn,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== cleanedEn) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
 
 /**
  * EN↔Vietnamese — colloquial everyday Vietnamese (Southern-friendly), full Quốc ngữ diacritics.
@@ -1862,6 +2250,15 @@ export async function translate(input: unknown) {
     })
   }
 
+  // Details “Make formal”: rewrite colloquial Peninsular Spanish → polite Peninsular Spanish in place.
+  if (from === 'eses' && to === 'eses' && parsed.register === 'formal') {
+    return rewritePeninsularSpanishFormal({
+      text,
+      stage,
+      wantAlts: Boolean(parsed.includeAlternatives),
+    })
+  }
+
   if (from === to) {
     return withLearnerDefinitions(
       {
@@ -1904,27 +2301,60 @@ export async function translate(input: unknown) {
     })
   }
 
+  if (to === 'eses' || (from === 'eses' && to === 'en')) {
+    return translatePeninsularSpanish({
+      from,
+      to,
+      text,
+      stage,
+      wantAlts,
+      fallbackDefinition,
+      registerOverride: parsed.register,
+    })
+  }
+
   if (to === 'vi' || (from === 'vi' && to === 'en')) {
     return translateVietnamese({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'ceb' || (from === 'ceb' && to === 'en')) {
     return withLearnerDefinitions(
-      await translateCebuano({ from, to, text, stage, wantAlts, fallbackDefinition }),
+      await translateCebuano({
+        from: from as 'en' | 'ceb',
+        to: to as 'en' | 'ceb',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }),
       text,
     )
   }
 
   if (to === 'ilo' || (from === 'ilo' && to === 'en')) {
     return withLearnerDefinitions(
-      await translateIlocano({ from, to, text, stage, wantAlts, fallbackDefinition }),
+      await translateIlocano({
+        from: from as 'en' | 'ilo',
+        to: to as 'en' | 'ilo',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }),
       text,
     )
   }
 
   if (to === 'bcl' || (from === 'bcl' && to === 'en')) {
     return withLearnerDefinitions(
-      await translateBikol({ from, to, text, stage, wantAlts, fallbackDefinition }),
+      await translateBikol({
+        from: from as 'en' | 'bcl',
+        to: to as 'en' | 'bcl',
+        text,
+        stage,
+        wantAlts,
+        fallbackDefinition,
+      }),
       text,
     )
   }

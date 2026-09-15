@@ -2,6 +2,8 @@
 
 Target variety for JyutTranslate when lang code is **`es`**: colloquial **central Mexican Spanish** (CDMX / altiplano), not Peninsular default and not generic “Latin American.”
 
+Peninsular / Castilian Spanish (Spain) is a separate peer language: code **`eses`**, UI label **Spanish(ES)** — see [`docs/peninsular-spanish.md`](./peninsular-spanish.md). Never route `es-ES` STT/TTS into Mexican `es`.
+
 Azure Speech locale: **`es-MX`** (TTS e.g. `es-MX-DaliaNeural`, `es-MX-JorgeNeural`).
 
 ## Product rules
