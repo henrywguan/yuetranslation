@@ -1,15 +1,13 @@
 Harbor Quest is live inside JyutTranslate.
 
-Learn Cantonese pronunciation like a game: sail a low-poly harbor, clear piers of Jyutping, and race the Arena · 擂台 in Match the Definition.
+Cantonese gamified voyage — Cantonese courses gamified for fun learning.
 
-What you’ll find:
-• Voyage UI — talk to villagers, drag to explore, cast answers on each pier
-• Pier chart — Campaign 1 Sounds + Campaign 2 Life Unit 0 (Open Cantonese paced)
-• Arena gold — 15s rounds · see the word · hear it · pick the gloss
-• Ferry coins + outfitter — gear that travels with your save
-• XP / levels — progress syncs when you sign in
+• Sail — Explore a low-poly world and speak with villagers between piers
+• Cast — Advance through the sections and chapters to complete “campaigns”
+• Arena — Match Chinese to definition — 15 second race for gold taels!
+• Chart — Chapters modeled after OpenCantonese.org book courses
 
-Admin preview now → jyuttranslate.com/#/learn
+Admin preview → jyuttranslate.com/#/learn
 
 Swipe for real UI + short clips.
 

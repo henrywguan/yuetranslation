@@ -10,7 +10,9 @@
 | `ig-posts/out/ig-story-harbor-quest-10s.mp4` | **Upload this** — ~10.0s · soft bed + UI clicks |
 | `ig-story-harbor-quest-caption.txt` | Story sticker / text overlay helper |
 
-Beats: title → voyage UI → arena → pier chart end CTA.
+Beats: title (PWA mark) → Sail UI → Arena → end CTA.
+
+Brand mark: `pwa-512.png` only (no favicon in this pack).
 
 Rebuild:
 
