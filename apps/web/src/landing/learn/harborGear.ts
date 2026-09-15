@@ -152,6 +152,128 @@ export function harborGearForSlot(slot: HarborGearSlot): HarborGearItem[] {
   return HARBOR_GEAR_CATALOG.filter((i) => i.slot === slot)
 }
 
+/**
+ * How this catalog row is drawn in 3D today.
+ * Clothing shares one River Scout mannequin (recolor). Hands/boats/lanterns
+ * have a handful of mesh families — many IDs are palette variants.
+ */
+export type HarborGearMeshKind =
+  | 'recolor'
+  | 'prop'
+  | 'empty'
+  | 'hull'
+  | 'lantern'
+
+export type HarborGearMeshInfo = {
+  kind: HarborGearMeshKind
+  /** Shared mesh family id (same silhouette / topology). */
+  family: string
+  /** Short label for the codex. */
+  label: string
+  /** True when this ID has its own topology branch (not just a palette swap). */
+  uniqueMesh: boolean
+}
+
+export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
+  const { id, slot } = item
+  if (slot === 'hat' || slot === 'top' || slot === 'bottom' || slot === 'shoes') {
+    return {
+      kind: 'recolor',
+      family: `scout-${slot}`,
+      label: 'Shared scout mesh · recolor',
+      uniqueMesh: false,
+    }
+  }
+  if (slot === 'hand') {
+    if (id === 'hand-none') {
+      return { kind: 'empty', family: 'hand-none', label: 'No prop', uniqueMesh: true }
+    }
+    if (id === 'hand-fan' || id === 'hand-lantern' || id === 'hand-oar' || id === 'hand-scroll') {
+      return { kind: 'prop', family: id, label: 'Dedicated handheld prop', uniqueMesh: true }
+    }
+    return { kind: 'prop', family: 'hand-unknown', label: 'Empty hand prop', uniqueMesh: false }
+  }
+  if (slot === 'boat') {
+    if (id === 'boat-reed') {
+      return { kind: 'hull', family: 'hull-reed', label: 'Reed deck hull', uniqueMesh: true }
+    }
+    if (id === 'boat-bamboo') {
+      return { kind: 'hull', family: 'hull-bamboo', label: 'Bamboo-slat hull', uniqueMesh: true }
+    }
+    if (id === 'boat-barge') {
+      return { kind: 'hull', family: 'hull-barge', label: 'Wide barge hull', uniqueMesh: true }
+    }
+    if (id === 'boat-junk' || id === 'boat-merchant') {
+      return {
+        kind: 'hull',
+        family: 'hull-junk',
+        label: id === 'boat-junk' ? 'Junk cabin hull' : 'Junk cabin hull · recolor',
+        uniqueMesh: id === 'boat-junk',
+      }
+    }
+    if (id === 'boat-jade') {
+      return { kind: 'hull', family: 'hull-jade', label: 'Jade-rail hull', uniqueMesh: true }
+    }
+    if (id === 'boat-dragon') {
+      return { kind: 'hull', family: 'hull-dragon', label: 'Dragon-prow hull', uniqueMesh: true }
+    }
+    if (id === 'boat-pearl') {
+      return { kind: 'hull', family: 'hull-pearl', label: 'Pavilion hull', uniqueMesh: true }
+    }
+    if (id === 'boat-imperial') {
+      return { kind: 'hull', family: 'hull-imperial', label: 'Imperial prow + pavilion', uniqueMesh: true }
+    }
+    // canoe / sampan / scholar share the default canoe silhouette
+    return {
+      kind: 'hull',
+      family: 'hull-canoe',
+      label: id === 'boat-canoe' ? 'Default canoe hull' : 'Canoe hull · recolor',
+      uniqueMesh: id === 'boat-canoe',
+    }
+  }
+  // lantern
+  if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
+    return {
+      kind: 'lantern',
+      family: 'lantern-silk',
+      label:
+        id === 'lantern-silk-gold'
+          ? 'Silk cylinder lantern'
+          : 'Silk cylinder · recolor',
+      uniqueMesh: id === 'lantern-silk-gold',
+    }
+  }
+  if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
+    return {
+      kind: 'lantern',
+      family: 'lantern-glass',
+      label: id === 'lantern-glass-ruby' ? 'Glass octahedron lantern' : 'Glass lantern · recolor',
+      uniqueMesh: id === 'lantern-glass-ruby',
+    }
+  }
+  if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
+    return {
+      kind: 'lantern',
+      family: 'lantern-iron',
+      label: id === 'lantern-oil-iron' ? 'Iron cage lantern' : 'Iron cage · recolor',
+      uniqueMesh: id === 'lantern-oil-iron',
+    }
+  }
+  return {
+    kind: 'lantern',
+    family: 'lantern-paper',
+    label: id === 'lantern-paper-amber' ? 'Paper box lantern' : 'Paper lantern · recolor',
+    uniqueMesh: id === 'lantern-paper-amber',
+  }
+}
+
+export function harborGearCodexStats() {
+  const rows = HARBOR_GEAR_CATALOG.map((item) => ({ item, mesh: harborGearMeshInfo(item) }))
+  const unique = rows.filter((r) => r.mesh.uniqueMesh).length
+  const families = new Set(rows.map((r) => r.mesh.family)).size
+  return { total: rows.length, uniqueMeshes: unique, families, rows }
+}
+
 export function sanitizeHarborLook(raw: unknown): HarborLook {
   const base = { ...HARBOR_DEFAULT_LOOK }
   if (!raw || typeof raw !== 'object') return base
