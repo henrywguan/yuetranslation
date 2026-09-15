@@ -51,6 +51,10 @@ function seedProgress() {
       lantern: 'lantern-paper-amber',
     },
     lastSavedAt: Date.now(),
+    characterCreated: true,
+    gender: 'male',
+    appearance: { skinTone: 0xe8c4a8, hairStyle: 'short', hairColor: 0x2a2218 },
+    localUsername: 'RiverScout',
   }
 }
 
