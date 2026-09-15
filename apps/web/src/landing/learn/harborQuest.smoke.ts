@@ -386,7 +386,10 @@ function main() {
   assert.match(learnCss, /\.hq-feedback-text[\s\S]*?\.chao-face[\s\S]*?Noto Sans Chao/, 'jade feedback Chao uses Noto Sans Chao')
   assert.match(learnCss, /\.hq-play\.is-exploring[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'explore hides stage caption')
   assert.match(learnCss, /\.hq-play\.is-talking[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'talking hides stage caption')
-  assert.match(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'OSRS talking strip height')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(48dvh,\s*26rem\)/, 'OSRS talking strip height fits large picks')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(52dvh,\s*28rem\)/, 'mobile talking strip grows for pick tiles')
+  assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'old short talking strip removed')
+  assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(32dvh,\s*17rem\)/, 'old short mobile talking strip removed')
   assert.match(
     learnCss,
     /\.hq-play-stage\s*\{[^}]*bottom:\s*var\(--hq-osrs-strip\)/,
@@ -701,6 +704,16 @@ function main() {
     'pronunciation picks are three square tiles in one row',
   )
   assert.match(learnCss, /aspect-ratio:\s*1/, 'talking pick tiles are square')
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-choice[\s\S]*?min-height:\s*clamp\(5\.25rem/,
+    'talking pick tiles have large phone tap targets',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-choice-label[\s\S]*?clamp\(1\.15rem/,
+    'talking pick labels are large enough to read',
+  )
   assert.match(
     learnCss,
     /\.hq-quest\.is-talking \.hq-build-slots[\s\S]*?grid-template-columns:\s*repeat\(3/,
