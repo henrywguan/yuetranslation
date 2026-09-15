@@ -74,6 +74,8 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
   root.userData.remotePlayer = true
   root.userData.remoteUserId = player.userId
   root.userData.remoteUsername = player.username
+  root.userData.remoteGender = player.gender
+  root.userData.remoteAppearance = player.appearance
 
   const body = buildHarborProtagonist({
     pose: player.mode === 'boat' ? 'seated' : 'standing',
@@ -121,6 +123,8 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
   root.userData.targetYaw = player.yaw
   root.userData.remoteMode = player.mode
   root.userData.remoteLook = player.look
+  root.userData.remoteGender = player.gender
+  root.userData.remoteAppearance = player.appearance
   root.userData.poseSeeded = true
   return root
 }
@@ -203,6 +207,10 @@ export function setRemoteSailorPoseTarget(
         yaw: pose.yaw,
         mode: pose.mode,
         look,
+        gender: (root.userData.remoteGender as HarborRemotePlayer['gender']) ?? 'male',
+        appearance:
+          (root.userData.remoteAppearance as HarborRemotePlayer['appearance'] | undefined) ??
+          ({ hairStyle: 'short', hairColor: 0, skinTone: 1 } as HarborRemotePlayer['appearance']),
         updatedAt: Date.now(),
       })
     }

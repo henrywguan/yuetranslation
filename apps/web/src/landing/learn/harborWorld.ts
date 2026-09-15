@@ -3667,6 +3667,8 @@ export function createHarborWorld(
           yaw: scoutWalk.rotation.y,
           mode: 'foot' as const,
           look: { ...currentLook },
+          gender: currentGender,
+          appearance: { ...currentAppearance },
         }
       }
       return {
@@ -3675,6 +3677,8 @@ export function createHarborWorld(
         yaw: boat.rotation.y,
         mode: 'boat' as const,
         look: { ...currentLook },
+        gender: currentGender,
+        appearance: { ...currentAppearance },
       }
     },
     setLocalUsername(username) {

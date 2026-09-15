@@ -481,7 +481,7 @@ export function LearnSession({
     return (
       <HarborCharacterCreate
         existingUsername={accountUsername || progressSnap.localUsername}
-        signedIn={Boolean(entitlement?.loggedIn || entitlement?.signedIn)}
+        signedIn={Boolean(entitlement?.loggedIn)}
         mode={needsCharacterCreate ? 'full' : 'username-only'}
         onComplete={(result) => {
           completeHarborCharacter({
