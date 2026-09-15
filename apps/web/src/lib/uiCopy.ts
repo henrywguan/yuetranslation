@@ -575,10 +575,10 @@ export const ui = {
   accountRole: { en: 'Role', zh: '角色', jp: 'gok3 sik1' },
   harborQuestLaunch: {
     en: 'Open Harbor Quest',
-    zh: '開啟 Harbor Quest',
-    jp: 'hoi1 hoi2 Harbor Quest',
+    zh: '開啟港灣任務',
+    jp: 'hoi1 hoi2 gong2 waan1 jam6 mou6',
   },
-  harborQuestShort: { en: 'Harbor Quest', zh: 'Harbor Quest', jp: 'Harbor Quest' },
+  harborQuestShort: { en: 'Harbor Quest', zh: '港灣任務', jp: 'gong2 waan1 jam6 mou6' },
   harborQuestBeta: { en: 'Beta', zh: '測試版', jp: 'Beta' },
 
 
@@ -1679,6 +1679,14 @@ export const ui = {
 
 export function biPlain(b: Bi, primary?: PrimaryLang): string {
   const lang = primary ?? (typeof localStorage !== 'undefined' ? readLocalPrimaryLang() : 'yue')
+  const joinDistinct = (a: string, bStr: string): string => {
+    const left = a.trim()
+    const right = bStr.trim()
+    if (!left) return right
+    if (!right) return left
+    if (left === right) return left
+    return `${left} ${right}`
+  }
   if (
     lang === 'tl' ||
     lang === 'es' ||
@@ -1688,14 +1696,14 @@ export function biPlain(b: Bi, primary?: PrimaryLang): string {
     lang === 'sichuan'
   ) {
     const fromBi = b[lang as 'tl' | 'es' | 'eses' | 'vi' | 'wuu' | 'sichuan']
-    if (typeof fromBi === 'string' && fromBi.trim()) return `${b.en} ${fromBi.trim()}`
+    if (typeof fromBi === 'string' && fromBi.trim()) return joinDistinct(b.en, fromBi)
     const row = PRIMARY_UI_GLOSS[b.en]
     const gloss = row?.[lang as 'tl' | 'es' | 'eses' | 'vi' | 'wuu' | 'sichuan']
-    if (typeof gloss === 'string' && gloss.trim()) return `${b.en} ${gloss.trim()}`
+    if (typeof gloss === 'string' && gloss.trim()) return joinDistinct(b.en, gloss)
   }
   // Cantonese primary: Chinese leads (matches zh-first chrome).
-  if (lang === 'yue') return `${b.zh} ${b.en}`
-  return `${b.en} ${b.zh}`
+  if (lang === 'yue') return joinDistinct(b.zh, b.en)
+  return joinDistinct(b.en, b.zh)
 }
 
 /** Cam → Documents progress lines for TranslateThinking (page-aware stages). */
