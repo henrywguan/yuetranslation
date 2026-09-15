@@ -3558,3 +3558,147 @@
     min-height: 14rem;
   }
 }
+
+
+/* —— Harbor minimap (top-left vicinity radar) —— */
+.hq-minimap {
+  position: absolute;
+  z-index: 5;
+  top: max(4.35rem, calc(env(safe-area-inset-top) + 3.55rem));
+  left: max(0.65rem, env(safe-area-inset-left));
+  width: min(10.5rem, 34vw);
+  padding: 0.45rem 0.5rem 0.55rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, #7ec8b8 28%, transparent);
+  background:
+    radial-gradient(120% 80% at 20% 0%, color-mix(in srgb, #1a4a44 55%, transparent), transparent 55%),
+    linear-gradient(165deg, color-mix(in srgb, #071820 90%, #1a5a50 8%), color-mix(in srgb, #040c12 94%, transparent));
+  box-shadow: 0 12px 28px color-mix(in srgb, #000 42%, transparent);
+  color: #e6f4f0;
+  pointer-events: none;
+}
+.hq-minimap-kicker {
+  margin: 0 0 0.3rem;
+  font: 600 0.62rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #7ec8b8 85%, #fff);
+}
+.hq-minimap-disc {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, #3dcfb6 35%, transparent);
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, #0e2a28 70%, transparent) 0%, color-mix(in srgb, #061418 92%, #000) 72%);
+  overflow: hidden;
+}
+.hq-minimap-ring {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, #3dcfb6 22%, transparent);
+  pointer-events: none;
+}
+.hq-minimap-ring--mid {
+  inset: 34%;
+  border-style: solid;
+  border-color: color-mix(in srgb, #3dcfb6 14%, transparent);
+}
+.hq-minimap-cross {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 49.2%, color-mix(in srgb, #3dcfb6 18%, transparent) 49.2% 50.8%, transparent 50.8%),
+    linear-gradient(0deg, transparent 49.2%, color-mix(in srgb, #3dcfb6 18%, transparent) 49.2% 50.8%, transparent 50.8%);
+  pointer-events: none;
+}
+.hq-minimap-n {
+  position: absolute;
+  top: 0.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font: 700 0.55rem/1 Syne, system-ui, sans-serif;
+  color: #f0d060;
+  letter-spacing: 0.04em;
+}
+.hq-minimap-blip {
+  position: absolute;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid color-mix(in srgb, #041018 55%, transparent);
+}
+.hq-minimap-blip--you {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 0.12rem;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-color: #041018;
+}
+.hq-minimap-blip--remote {
+  width: 0.36rem;
+  height: 0.36rem;
+  opacity: 0.9;
+}
+.hq-minimap-legend {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  max-height: 4.8rem;
+  overflow: auto;
+}
+.hq-minimap-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font: 500 0.68rem/1.2 "Noto Sans", system-ui, sans-serif;
+  color: color-mix(in srgb, #dff6ff 88%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-minimap-dot {
+  flex: 0 0 auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+}
+.hq-minimap-dot--remote {
+  background: #dff6ff;
+  box-shadow: 0 0 6px #dff6ff;
+}
+.hq-minimap-empty {
+  color: color-mix(in srgb, #dff6ff 55%, transparent);
+  font-style: italic;
+}
+
+.hq-visit-panel--barber {
+  border-color: color-mix(in srgb, #ff7090 35%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #1c1018 88%, #ff7090 10%), color-mix(in srgb, #0a0810 94%, transparent));
+}
+.hq-visit-panel--barber .hq-visit-kicker {
+  color: #ff90a8;
+}
+
+.hq-barber-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  background: color-mix(in srgb, #041018 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+.hq-barber-overlay .hq-charcreate {
+  flex: 1;
+  max-height: 100%;
+  overflow: auto;
+}

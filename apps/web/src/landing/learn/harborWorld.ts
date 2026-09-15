@@ -113,7 +113,7 @@ export const HARBOR_DOCK_SPACING = 22
 export const HARBOR_DOCK_X = RIVER + 0.55
 
 /** In-world visitables — Save Shack + Outfitter + Bank + Chinese Arena (fixed riverside stops). */
-export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank' | 'arena'
+export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank' | 'arena' | 'barber'
 
 export type HarborVisitable = {
   id: HarborVisitableId
@@ -147,6 +147,12 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
     name: { en: 'Chinese Arena', zh: '擂台' },
     x: -(HARBOR_DOCK_X + 1.1),
     z: 40,
+  },
+  {
+    id: 'barber',
+    name: { en: 'Harbor Barber', zh: '港灣理髮' },
+    x: HARBOR_DOCK_X + 1.1,
+    z: 52,
   },
 ] as const
 
@@ -1085,6 +1091,7 @@ export const HARBOR_LANDMARK_HOSTS = [
   'outfitter',
   'bank',
   'arena',
+  'barber',
 ] as const satisfies readonly HarborVisitableId[]
 export type HarborLandmarkHostId = (typeof HARBOR_LANDMARK_HOSTS)[number]
 
@@ -1093,6 +1100,7 @@ const LANDMARK_GLOW: Record<HarborLandmarkHostId, number> = {
   outfitter: 0xff80c0,
   bank: 0x60ffe0,
   arena: 0xff6040,
+  barber: 0xff7090,
 }
 
 /** Soft pulsing ground ring + aura light — flags a landmark host as special. */
@@ -1228,6 +1236,24 @@ function luBuHalberd() {
   return g
 }
 
+
+/** Open scissors — Barber host prop. */
+function barberScissors() {
+  const g = new THREE.Group()
+  g.name = 'scissors'
+  // Pivot handles
+  g.add(hqPost(0.012, 0.015, 0.28, 0xc0c8d0, -0.04, 0.14, 0, 5))
+  g.add(hqPost(0.012, 0.015, 0.28, 0xc0c8d0, 0.04, 0.14, 0, 5))
+  const bladeL = hqBox(0.04, 0.02, 0.22, 0xe8eef2, -0.03, 0.34, 0)
+  bladeL.rotation.z = 0.35
+  g.add(bladeL)
+  const bladeR = hqBox(0.04, 0.02, 0.22, 0xe8eef2, 0.03, 0.34, 0)
+  bladeR.rotation.z = -0.35
+  g.add(bladeR)
+  g.add(hqPost(0.025, 0.028, 0.04, 0xd4a040, 0, 0.18, 0, 6))
+  return g
+}
+
 /**
  * Landmark host figure — oversized-head RS proportions, unique kit per building.
  * Homage silhouettes (landlady / Lu Bu) — original low-poly kit, not ripped meshes.
@@ -1335,6 +1361,40 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     cig.rotation.z = 0.9
     cig.rotation.x = -0.3
     g.add(cig)
+  } else if (id === 'barber') {
+    // Harbor barber — striped apron, tidy topknot, scissors
+    for (const sx of [-0.1, 0.1] as const) {
+      g.add(hqPost(0.06, 0.07, 0.4, 0x1a2830, sx, 0.22, 0))
+      g.add(hqBox(0.11, 0.07, 0.16, 0x2a3840, sx, 0.04, 0.03))
+    }
+    g.add(hqBox(0.36, 0.5, 0.24, 0xf2efe8, 0, 0.62, 0))
+    // Red / white / blue apron stripes
+    for (const [y, c] of [
+      [0.48, 0xc02838],
+      [0.58, 0xf8f4ec],
+      [0.68, 0x2a58a8],
+      [0.78, 0xf8f4ec],
+    ] as const) {
+      g.add(hqBox(0.38, 0.05, 0.26, c, 0, y, 0))
+    }
+    for (const sx of [-1, 1] as const) {
+      g.add(hqPost(0.055, 0.065, 0.32, 0xf2efe8, sx * 0.24, 0.72, 0))
+      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
+    }
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+    head.position.y = 1.08
+    g.add(head)
+    const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), hair)
+    topknot.position.set(0, 1.26, -0.02)
+    g.add(topknot)
+    g.add(hqBox(0.3, 0.06, 0.26, 0x1a1a22, 0, 1.2, 0))
+    // Comb tucked in apron
+    g.add(hqBox(0.04, 0.16, 0.02, 0xd4a040, -0.2, 0.7, 0.14))
+    const shears = barberScissors()
+    shears.position.set(0.3, 0.55, 0.12)
+    shears.rotation.z = -0.7
+    shears.rotation.x = 0.25
+    g.add(shears)
   } else {
     // Arena Lu Bu homage — tall red/black armor, horned helm, halberd
     g.scale.setScalar(1.12)
@@ -1380,6 +1440,7 @@ function attachLandmarkHost(building: THREE.Group, id: HarborLandmarkHostId, wea
     outfitter: [0.95, 0.7, 1.15],
     bank: [0.95, 0.35, 1.55],
     arena: [1.05, 0.12, 1.35],
+    barber: [0.9, 0.4, 1.45],
   }
   const [x, y, z] = pose[id]
   host.position.set(x, y, z)
@@ -2777,6 +2838,152 @@ function arenaBuilding(weather: HarborWeather = 'sunny') {
   return g
 }
 
+
+/** Spinning barber pole — classic red / white / blue helix (animated in tick). */
+function spinningBarberPole(weather: HarborWeather) {
+  const pole = new THREE.Group()
+  pole.name = 'barber-pole'
+  pole.userData.barberPole = true
+  // Brass caps
+  pole.add(hqPost(0.07, 0.08, 0.12, 0xd4a040, 0, 0.06, 0, 8))
+  pole.add(hqPost(0.07, 0.08, 0.12, 0xd4a040, 0, 1.55, 0, 8))
+  // Striped barrel (stacked rings read as a helix when spinning)
+  const stripes: Array<[number, number]> = [
+    [0xc02838, 0.22],
+    [0xf8f4ec, 0.34],
+    [0x2a58a8, 0.46],
+    [0xf8f4ec, 0.58],
+    [0xc02838, 0.7],
+    [0xf8f4ec, 0.82],
+    [0x2a58a8, 0.94],
+    [0xf8f4ec, 1.06],
+    [0xc02838, 1.18],
+    [0xf8f4ec, 1.3],
+    [0x2a58a8, 1.42],
+  ]
+  for (const [color, y] of stripes) {
+    const ring = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.09, 0.12, 10),
+      glowMat(color, color === 0xf8f4ec ? 0xffe8e0 : color, weather === 'night' ? 0.55 : 0.25),
+    )
+    ring.position.y = y
+    pole.add(ring)
+  }
+  const tip = new THREE.PointLight(
+    0xff8098,
+    weather === 'night' ? 1.4 : weather === 'sunny' ? 0.45 : 0.85,
+    5,
+    2,
+  )
+  tip.position.set(0, 1.65, 0)
+  tip.userData.harborLanternLight = true
+  tip.userData.baseIntensity = tip.intensity
+  pole.add(tip)
+  return pole
+}
+
+/** Harbor Barber — striped shop, spinning pole, rose portal, barber NPC. */
+function barberBuilding(weather: HarborWeather = 'sunny') {
+  const g = new THREE.Group()
+  g.name = 'barber'
+  g.userData.visitable = 'barber'
+  g.userData.uniqueLandmark = 'barber'
+
+  // Raised plank walk
+  g.add(hqBox(2.3, 0.14, 2.2, P.woodLight, 0, 0.32, 0.15))
+  for (const x of [-0.9, 0.9] as const) {
+    for (const z of [-0.65, 0.75] as const) {
+      g.add(hqPost(0.09, 0.11, 0.65, P.woodDark, x, 0.18, z, 5))
+    }
+  }
+  // Cream shop body with rose trim
+  g.add(hqBox(1.85, 1.1, 1.55, 0xf4eee4, 0, 1.05, 0.05))
+  g.add(hqBox(2.0, 0.12, 1.7, 0xc02838, 0, 0.52, 0.05))
+  // Soft rose roof
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(1.3, 0.48, 6),
+    glowMat(0xa83858, 0xff7090, 0.3),
+  )
+  roof.position.set(0, 1.9, 0.05)
+  g.add(roof)
+  g.add(hqPost(0.06, 0.08, 0.28, 0xd4a040, 0, 2.25, 0.05, 5))
+  // Shop window + door
+  g.add(hqWindow(0.45, 0.4, 0xd4a040, 0x1a2840, -0.45, 1.1, 0.82))
+  g.add(hqBox(0.42, 0.7, 0.08, 0x3a2a28, 0.45, 0.9, 0.82))
+  g.add(hqBox(0.06, 0.06, 0.05, 0xd4a040, 0.58, 0.9, 0.86))
+
+  // Hanging 髮 banner
+  g.add(hqPost(0.05, 0.06, 2.0, P.woodDark, -1.2, 1.15, 0.65, 5))
+  g.add(hqBox(0.08, 0.08, 0.65, P.woodMid, -0.85, 2.05, 0.65))
+  g.add(hqBox(0.68, 0.55, 0.08, 0x1a1018, -0.45, 1.9, 0.65))
+  g.add(hqBox(0.74, 0.08, 0.1, 0xff7090, -0.45, 2.2, 0.65))
+  g.add(hqBox(0.74, 0.08, 0.1, 0xff7090, -0.45, 1.6, 0.65))
+  g.add(hqBox(0.3, 0.08, 0.04, 0xf8f4ec, -0.45, 2.0, 0.7))
+  g.add(hqBox(0.08, 0.28, 0.04, 0xf8f4ec, -0.45, 1.85, 0.7))
+  g.add(hqBox(0.22, 0.08, 0.04, 0x2a58a8, -0.45, 1.72, 0.7))
+
+  // Animated spinning pole out front
+  const pole = spinningBarberPole(weather)
+  pole.position.set(1.15, 0.45, 1.15)
+  g.add(pole)
+
+  // Rose / stripe portal (distinct from Save gold, Bank jade, Arena amber)
+  const portal = new THREE.Group()
+  portal.name = 'barber-portal'
+  portal.userData.barberPortal = true
+  portal.userData.rosePortal = true
+  portal.position.set(0, 0.48, 2.05)
+  for (const x of [-0.5, 0.5] as const) {
+    portal.add(hqPost(0.08, 0.1, 1.5, 0x3a1518, x, 0.75, 0, 6))
+    portal.add(hqPost(0.05, 0.06, 1.5, 0xff7090, x, 0.75, 0.06, 6))
+  }
+  portal.add(hqBox(1.2, 0.12, 0.12, 0xff7090, 0, 1.55, 0))
+  portal.add(hqBox(1.15, 0.05, 0.08, 0x2a58a8, 0, 1.62, 0))
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4, 0.07, 6, 14),
+    glowMat(0xff90a8, 0xff4060, weather === 'night' ? 1.5 : 1.1),
+  )
+  ring.position.set(0, 0.82, 0.05)
+  portal.add(ring)
+  const inner = new THREE.Mesh(
+    new THREE.TorusGeometry(0.22, 0.04, 5, 12),
+    glowMat(0xf8f4ec, 0x2a58a8, weather === 'night' ? 1.15 : 0.85),
+  )
+  inner.position.set(0, 0.82, 0.08)
+  portal.add(inner)
+  const veil = new THREE.Mesh(
+    new THREE.CircleGeometry(0.36, 14),
+    new THREE.MeshLambertMaterial({
+      color: 0xffd0d8,
+      emissive: 0xa03048,
+      emissiveIntensity: weather === 'night' ? 1.15 : 0.75,
+      transparent: true,
+      opacity: 0.52,
+      flatShading: true,
+      side: THREE.DoubleSide,
+    }),
+  )
+  veil.position.set(0, 0.82, 0)
+  portal.add(veil)
+  const portalLight = new THREE.PointLight(
+    0xff7090,
+    weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
+    9,
+    2,
+  )
+  portalLight.position.set(0, 0.88, 0.25)
+  portalLight.userData.harborLanternLight = true
+  portalLight.userData.baseIntensity = portalLight.intensity
+  portalLight.userData.portalGlow = true
+  portalLight.userData.barberPortal = true
+  portal.add(portalLight)
+  g.add(portal)
+
+  g.add(hqBox(1.15, 0.1, 1.45, P.woodMid, 0, 0.12, 1.5))
+  attachLandmarkHost(g, 'barber', weather)
+  return g
+}
+
 function nearestVisitable(x: number, z: number): HarborVisitableId | null {
   let best: HarborVisitableId | null = null
   let bestDist = HARBOR_VISIT_RADIUS
@@ -2924,7 +3131,9 @@ export function createHarborWorld(
           ? bankBuilding(weather)
           : v.id === 'arena'
             ? arenaBuilding(weather)
-            : outfitterBuilding(weather)
+            : v.id === 'barber'
+              ? barberBuilding(weather)
+              : outfitterBuilding(weather)
     building.position.set(v.x, 0, v.z)
     // Face the river
     building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
@@ -2943,7 +3152,8 @@ export function createHarborWorld(
         o.userData.fish ||
         o.userData.petal ||
         o.userData.specialHostGlow ||
-        o.userData.cigaretteSmoke
+        o.userData.cigaretteSmoke ||
+        o.userData.barberPole
       )
     const indexRoot = (root: THREE.Object3D) => {
       root.traverse((o) => {
@@ -3520,7 +3730,11 @@ export function createHarborWorld(
         o.rotation.z = Math.sin(waterPhase * 1.2 + o.id) * 0.08
         continue
       }
-      if (o.userData.cigaretteSmoke && !reduced) {
+            if (o.userData.barberPole && !reduced) {
+        o.rotation.y += 0.035
+        continue
+      }
+if (o.userData.cigaretteSmoke && !reduced) {
         o.traverse((child) => {
           if (!child.userData.smokePuff) return
           const i = (child.userData.smokeIndex as number) ?? 0

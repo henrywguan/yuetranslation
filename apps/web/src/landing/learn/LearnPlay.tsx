@@ -38,12 +38,13 @@ import {
 } from './harborPresence'
 import { getSession, getSupabaseClient } from '../../lib/auth'
 import { useYueStore } from '../../lib/store'
-import type { HarborWorldHandle } from './harborWorld'
+import { HarborMinimap, type HarborMinimapPose } from './HarborMinimap'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
   type HarborNpcRole,
   type HarborVisitableId,
+  type HarborWorldHandle,
 } from './harborWorld'
 import {
   HARBOR_COINS_PER_CORRECT,
@@ -116,6 +117,8 @@ export function LearnSession({
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
   const [arenaOpen, setArenaOpen] = useState(false)
+  const [barberOpen, setBarberOpen] = useState(false)
+  const [minimapPose, setMinimapPose] = useState<HarborMinimapPose | null>(null)
   const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [localUsername, setLocalUsername] = useState('sailor')
@@ -229,6 +232,35 @@ export function LearnSession({
     }
   }, [entitlement?.prefs?.username, entitlement?.loggedIn])
 
+  // Top-left minimap — poll local pose without re-rendering the WebGL tree
+  useEffect(() => {
+    let raf = 0
+    let alive = true
+    const tick = () => {
+      if (!alive) return
+      const pose = worldApiRef.current?.getLocalPose()
+      if (pose) {
+        setMinimapPose((prev) => {
+          if (
+            prev &&
+            Math.abs(prev.x - pose.x) < 0.04 &&
+            Math.abs(prev.z - pose.z) < 0.04 &&
+            Math.abs(prev.yaw - pose.yaw) < 0.05
+          ) {
+            return prev
+          }
+          return { x: pose.x, z: pose.z, yaw: pose.yaw }
+        })
+      }
+      raf = window.requestAnimationFrame(tick)
+    }
+    raf = window.requestAnimationFrame(tick)
+    return () => {
+      alive = false
+      window.cancelAnimationFrame(raf)
+    }
+  }, [])
+
   const closeChapterScroll = useCallback(() => {
     setScrollOpen(false)
     playHarborScrollClose()
@@ -256,6 +288,7 @@ export function LearnSession({
     setCoinPops([])
     setClearReward(null)
     setScrollOpen(false)
+    setBarberOpen(false)
   }, [levelId])
 
   useEffect(() => {
@@ -342,6 +375,13 @@ export function LearnSession({
   const onVisitable = useCallback((id: HarborVisitableId | null) => {
     if (id === 'arena') {
       setArenaOpen(true)
+      setVisitable(null)
+      setInvOpen(false)
+      return
+    }
+    // Barber NPC / portal → same character-create modal (restyle, keep name)
+    if (id === 'barber') {
+      setBarberOpen(true)
       setVisitable(null)
       setInvOpen(false)
       return
@@ -521,6 +561,7 @@ export function LearnSession({
             invOpen ||
             scrollOpen ||
             arenaOpen ||
+            barberOpen ||
             teleportOpen ||
             visitable !== null
           }
@@ -531,6 +572,12 @@ export function LearnSession({
           worldApiRef={worldApiRef}
         />
       </div>
+
+      <HarborMinimap
+        pose={minimapPose}
+        remotes={remotePlayers}
+        hidden={visitable !== null || invOpen || barberOpen || scrollOpen}
+      />
 
       <header className="hq-play-hud-top">
         <button type="button" className="hq-btn hq-btn--ghost hq-btn--hud" onClick={onExit}>
@@ -952,6 +999,37 @@ export function LearnSession({
             Cast off
           </button>
         </aside>
+      ) : null}
+
+      {barberOpen ? (
+        <div className="hq-barber-overlay" role="dialog" aria-modal="true" aria-label="Harbor Barber">
+          <HarborCharacterCreate
+            existingUsername={accountUsername || progressSnap.localUsername || localUsername}
+            signedIn={Boolean(entitlement?.loggedIn)}
+            mode="barber"
+            initialGender={progressSnap.gender}
+            initialAppearance={progressSnap.appearance}
+            initialLook={progressSnap.look}
+            onCancel={() => setBarberOpen(false)}
+            onComplete={(result) => {
+              completeHarborCharacter({
+                gender: result.gender,
+                appearance: result.appearance,
+                look: result.look,
+                localUsername: result.username,
+              })
+              const next = loadHarborProgress()
+              setProgressSnap(next)
+              worldApiRef.current?.setCharacter({
+                gender: result.gender,
+                appearance: result.appearance,
+              })
+              worldApiRef.current?.setLook(result.look)
+              onProgress(next)
+              setBarberOpen(false)
+            }}
+          />
+        </div>
       ) : null}
 
       {/* OSRS-style compass — free-look / exit dialogue */}
