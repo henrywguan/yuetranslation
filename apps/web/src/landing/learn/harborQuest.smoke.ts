@@ -64,6 +64,7 @@ import {
   HARBOR_EXPLORE_X,
   HARBOR_DOCK_X,
   HARBOR_VISITABLES,
+  HARBOR_LANDMARK_HOSTS,
   HARBOR_VISIT_RADIUS,
 } from '../../landing/learn/harborWorld'
 import {
@@ -411,8 +412,23 @@ function main() {
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'outfitter'))
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'bank'))
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'arena'))
+  assert.deepEqual(
+    [...HARBOR_LANDMARK_HOSTS],
+    ['save-shack', 'outfitter', 'bank', 'arena'],
+    'one landmark host per special building',
+  )
   assert.ok(HARBOR_VISIT_RADIUS > 1, 'visit radius')
   const worldSrc2 = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc2, /attachLandmarkHost\(g, 'save-shack'/, 'Save Shack host NPC')
+  assert.match(worldSrc2, /attachLandmarkHost\(g, 'outfitter'/, 'Outfitter landlady host')
+  assert.match(worldSrc2, /attachLandmarkHost\(g, 'bank'/, 'Banker host NPC')
+  assert.match(worldSrc2, /attachLandmarkHost\(g, 'arena'/, 'Arena Lu Bu host')
+  assert.match(worldSrc2, /glowingFloppyDisk/, 'Save host holds glowing floppy')
+  assert.match(worldSrc2, /goldTaelBag/, 'Bank host holds gold tael bag')
+  assert.match(worldSrc2, /cigaretteWithSmoke/, 'Outfitter host smokes cigarette')
+  assert.match(worldSrc2, /luBuHalberd/, 'Arena host carries Lu Bu-style halberd')
+  assert.match(worldSrc2, /specialHostGlow/, 'landmark hosts get glowing highlight')
+  assert.match(worldSrc2, /attachSpecialHostGlow/, 'special host glow helper')
   assert.match(worldSrc2, /saveShackBuilding/, 'Save Shack mesh')
   assert.match(worldSrc2, /outfitterBuilding/, 'Outfitter mesh')
   assert.match(worldSrc2, /bankBuilding/, 'Bank mesh')

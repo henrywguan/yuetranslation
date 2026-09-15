@@ -1034,6 +1034,316 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
 }
 
 
+
+/** Landmark host roles — one special NPC per visitable building (smoke-tested). */
+export const HARBOR_LANDMARK_HOSTS = [
+  'save-shack',
+  'outfitter',
+  'bank',
+  'arena',
+] as const satisfies readonly HarborVisitableId[]
+export type HarborLandmarkHostId = (typeof HARBOR_LANDMARK_HOSTS)[number]
+
+const LANDMARK_GLOW: Record<HarborLandmarkHostId, number> = {
+  'save-shack': 0xffd060,
+  outfitter: 0xff80c0,
+  bank: 0x60ffe0,
+  arena: 0xff6040,
+}
+
+/** Soft pulsing ground ring + aura light — flags a landmark host as special. */
+function attachSpecialHostGlow(npc: THREE.Object3D, tint: number, weather: HarborWeather) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.38, 0.55, 16),
+    new THREE.MeshLambertMaterial({
+      color: tint,
+      emissive: tint,
+      emissiveIntensity: weather === 'night' ? 1.35 : 0.85,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.75,
+      side: THREE.DoubleSide,
+    }),
+  )
+  ring.rotation.x = -Math.PI / 2
+  ring.position.y = 0.04
+  ring.name = 'special-host-glow'
+  ring.userData.specialHostGlow = true
+  ring.userData.glowBaseIntensity = weather === 'night' ? 1.35 : 0.85
+  npc.add(ring)
+
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.42, 0.045, 6, 14),
+    glowMat(tint, tint, weather === 'night' ? 1.2 : 0.7),
+  )
+  halo.rotation.x = Math.PI / 2
+  halo.position.y = 0.9
+  halo.name = 'special-host-halo'
+  halo.userData.specialHostGlow = true
+  halo.userData.glowBaseIntensity = weather === 'night' ? 1.2 : 0.7
+  npc.add(halo)
+
+  const light = new THREE.PointLight(
+    tint,
+    weather === 'night' ? 1.35 : weather === 'sunny' ? 0.45 : 0.85,
+    5.5,
+    2,
+  )
+  light.position.set(0, 1.15, 0.15)
+  light.userData.harborLanternLight = true
+  light.userData.baseIntensity = light.intensity
+  light.userData.specialHostLight = true
+  npc.add(light)
+}
+
+/** Golden glowing floppy disk — Save Shack prop. */
+function glowingFloppyDisk() {
+  const g = new THREE.Group()
+  g.name = 'floppy-disk'
+  g.add(hqBox(0.22, 0.02, 0.22, 0xd4a020, 0, 0, 0))
+  const face = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.015, 0.2),
+    glowMat(0xffe080, 0xffc020, 1.15),
+  )
+  face.position.y = 0.012
+  g.add(face)
+  g.add(hqBox(0.08, 0.02, 0.1, 0x1a2830, 0, 0.02, 0.02))
+  g.add(hqBox(0.05, 0.018, 0.05, 0xfff0a0, -0.05, 0.022, -0.06))
+  const spark = new THREE.PointLight(0xffd060, 0.55, 2.2, 2)
+  spark.position.set(0, 0.08, 0)
+  spark.userData.harborLanternLight = true
+  spark.userData.baseIntensity = 0.55
+  g.add(spark)
+  return g
+}
+
+/** Cloth sack spilling gold taels — Bank prop. */
+function goldTaelBag() {
+  const g = new THREE.Group()
+  g.name = 'tael-bag'
+  g.add(hqBox(0.18, 0.16, 0.16, 0x6a4428, 0, 0.08, 0))
+  g.add(hqBox(0.1, 0.06, 0.1, 0x8a5a30, 0, 0.18, 0))
+  // Drawstring
+  g.add(hqPost(0.015, 0.018, 0.08, 0xd4a040, 0, 0.24, 0, 5))
+  for (const [x, z] of [
+    [0.1, 0.02],
+    [0.08, -0.06],
+    [-0.02, 0.08],
+  ] as const) {
+    const coin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.015, 8),
+      glowMat(0xffd060, 0xffb020, 0.7),
+    )
+    coin.rotation.x = Math.PI / 2
+    coin.position.set(x, 0.04, z)
+    g.add(coin)
+  }
+  return g
+}
+
+/** Lit cigarette + rising smoke puffs (Outfitter host). */
+function cigaretteWithSmoke() {
+  const g = new THREE.Group()
+  g.name = 'cigarette'
+  g.userData.cigaretteSmoke = true
+  g.add(hqPost(0.012, 0.014, 0.14, 0xf0e8d0, 0, 0.07, 0, 5))
+  g.add(hqBox(0.02, 0.02, 0.02, 0xc04020, 0, 0.15, 0))
+  const ember = new THREE.Mesh(
+    new THREE.SphereGeometry(0.018, 5, 4),
+    glowMat(0xff6020, 0xff4010, 1.4),
+  )
+  ember.position.set(0, 0.16, 0)
+  g.add(ember)
+  for (let i = 0; i < 3; i++) {
+    const puff = new THREE.Mesh(
+      new THREE.SphereGeometry(0.035 + i * 0.012, 5, 4),
+      new THREE.MeshLambertMaterial({
+        color: 0xd8d8d8,
+        transparent: true,
+        opacity: 0.45 - i * 0.1,
+        flatShading: true,
+      }),
+    )
+    puff.position.set(0.02 + i * 0.01, 0.22 + i * 0.1, 0)
+    puff.userData.smokePuff = true
+    puff.userData.smokeIndex = i
+    g.add(puff)
+  }
+  return g
+}
+
+/** Long ji / halberd — Arena Lu Bu homage prop. */
+function luBuHalberd() {
+  const g = new THREE.Group()
+  g.name = 'halberd'
+  g.add(hqPost(0.03, 0.035, 1.55, 0x4a3020, 0, 0.78, 0, 5))
+  g.add(hqBox(0.08, 0.28, 0.04, 0xc0c8d0, 0.06, 1.45, 0))
+  g.add(hqBox(0.18, 0.08, 0.03, 0xa8b0b8, 0.14, 1.52, 0))
+  g.add(hqBox(0.05, 0.12, 0.03, 0xd4a040, 0, 1.3, 0))
+  g.rotation.z = -0.35
+  return g
+}
+
+/**
+ * Landmark host figure — oversized-head RS proportions, unique kit per building.
+ * Homage silhouettes (landlady / Lu Bu) — original low-poly kit, not ripped meshes.
+ */
+function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
+  const g = new THREE.Group()
+  g.name = `landmark-host-${id}`
+  g.userData.npc = id
+  g.userData.landmarkHost = id
+  g.userData.specialNpc = true
+
+  const skin = hqMat(P.skin)
+  const hair = hqMat(P.hair)
+
+  if (id === 'save-shack') {
+    // Vault keeper in teal robes, golden floppy disk
+    for (const sx of [-0.1, 0.1] as const) {
+      g.add(hqPost(0.06, 0.07, 0.4, 0x1a3a38, sx, 0.22, 0))
+      g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
+    }
+    g.add(hqBox(0.36, 0.48, 0.24, 0x1e5a58, 0, 0.62, 0))
+    g.add(hqBox(0.38, 0.08, 0.26, P.trimGold, 0, 0.55, 0))
+    g.add(hqBox(0.2, 0.14, 0.06, 0xffe080, 0, 0.78, 0.13)) // chest badge
+    for (const sx of [-1, 1] as const) {
+      g.add(hqPost(0.055, 0.065, 0.32, 0x1e5a58, sx * 0.24, 0.72, 0))
+      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
+    }
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+    head.position.y = 1.08
+    g.add(head)
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
+    bun.position.set(0, 1.2, -0.04)
+    g.add(bun)
+    g.add(hqBox(0.28, 0.08, 0.24, 0x1a3030, 0, 1.2, 0)) // cap
+    const disk = glowingFloppyDisk()
+    disk.position.set(0.28, 0.62, 0.14)
+    disk.rotation.x = -0.4
+    disk.rotation.z = 0.35
+    g.add(disk)
+  } else if (id === 'bank') {
+    // Banker — ink coat, gold trim, tael bag
+    for (const sx of [-0.1, 0.1] as const) {
+      g.add(hqPost(0.06, 0.07, 0.42, 0x1a1a22, sx, 0.22, 0))
+      g.add(hqBox(0.12, 0.07, 0.16, 0x2a2a30, sx, 0.04, 0.03))
+    }
+    g.add(hqBox(0.38, 0.55, 0.26, 0x1e2430, 0, 0.68, 0))
+    g.add(hqBox(0.4, 0.1, 0.28, P.trimGold, 0, 0.58, 0))
+    g.add(hqBox(0.42, 0.08, 0.08, P.jade, 0, 0.95, 0.1)) // collar jade
+    for (const sx of [-1, 1] as const) {
+      g.add(hqPost(0.055, 0.065, 0.34, 0x1e2430, sx * 0.25, 0.74, 0))
+      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.25, 0.54, 0.02))
+    }
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+    head.position.y = 1.1
+    g.add(head)
+    // Skullcap + queue nod (hair mat under ink cap)
+    const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), hair)
+    topknot.position.set(0, 1.28, -0.02)
+    g.add(topknot)
+    g.add(hqPost(0.12, 0.13, 0.1, 0x12141a, 0, 1.22, 0))
+    g.add(hqBox(0.04, 0.04, 0.22, 0x1a1a22, 0, 1.18, -0.16))
+    const bag = goldTaelBag()
+    bag.position.set(0.3, 0.42, 0.12)
+    bag.rotation.y = -0.4
+    g.add(bag)
+  } else if (id === 'outfitter') {
+    // Landlady homage — rollers, stern qipao stripes, cigarette
+    for (const sx of [-0.1, 0.1] as const) {
+      g.add(hqPost(0.06, 0.07, 0.38, 0x3a2030, sx, 0.2, 0))
+      g.add(hqBox(0.11, 0.06, 0.15, 0x2a1820, sx, 0.04, 0.03))
+    }
+    g.add(hqBox(0.36, 0.5, 0.24, 0xc04068, 0, 0.62, 0))
+    // Stripe trim
+    for (const y of [0.48, 0.62, 0.76] as const) {
+      g.add(hqBox(0.38, 0.04, 0.26, 0xf0e0c8, 0, y, 0))
+    }
+    for (const sx of [-1, 1] as const) {
+      g.add(hqPost(0.055, 0.065, 0.3, 0xc04068, sx * 0.24, 0.72, 0))
+      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
+    }
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+    head.position.y = 1.06
+    g.add(head)
+    // Hair rollers
+    for (const [x, z] of [
+      [-0.1, -0.02],
+      [0.1, -0.02],
+      [0, 0.06],
+      [-0.06, 0.08],
+      [0.06, 0.08],
+    ] as const) {
+      const roller = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.07, 6),
+        hqMat(0xf0d0e0),
+      )
+      roller.rotation.z = Math.PI / 2
+      roller.position.set(x, 1.22, z)
+      g.add(roller)
+    }
+    // Stern brows
+    g.add(hqBox(0.08, 0.02, 0.02, 0x1a1a22, -0.06, 1.1, 0.13))
+    g.add(hqBox(0.08, 0.02, 0.02, 0x1a1a22, 0.06, 1.1, 0.13))
+    const cig = cigaretteWithSmoke()
+    cig.position.set(0.3, 0.7, 0.12)
+    cig.rotation.z = 0.9
+    cig.rotation.x = -0.3
+    g.add(cig)
+  } else {
+    // Arena Lu Bu homage — tall red/black armor, horned helm, halberd
+    g.scale.setScalar(1.12)
+    for (const sx of [-0.12, 0.12] as const) {
+      g.add(hqPost(0.07, 0.08, 0.45, 0x1a1018, sx, 0.24, 0))
+      g.add(hqBox(0.14, 0.08, 0.18, 0x2a1820, sx, 0.04, 0.04))
+    }
+    g.add(hqBox(0.42, 0.55, 0.28, 0x8a1828, 0, 0.7, 0))
+    g.add(hqBox(0.46, 0.12, 0.3, 0xd4a040, 0, 0.58, 0))
+    g.add(hqBox(0.5, 0.08, 0.1, 0x1a1018, 0, 0.92, 0.12)) // chest plate
+    // Cape
+    g.add(hqBox(0.5, 0.7, 0.06, 0x5a1020, 0, 0.75, -0.18))
+    for (const sx of [-1, 1] as const) {
+      g.add(hqPost(0.06, 0.07, 0.36, 0x8a1828, sx * 0.28, 0.78, 0))
+      g.add(hqBox(0.11, 0.11, 0.11, P.skin, sx * 0.28, 0.56, 0.02))
+    }
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 6), skin)
+    head.position.y = 1.14
+    g.add(head)
+    // Horned helmet
+    g.add(hqBox(0.34, 0.14, 0.3, 0x2a1a20, 0, 1.28, 0))
+    for (const sx of [-1, 1] as const) {
+      const horn = hqPost(0.03, 0.04, 0.28, 0xd4a040, sx * 0.14, 1.42, -0.02, 5)
+      horn.rotation.z = sx * 0.55
+      g.add(horn)
+    }
+    const halberd = luBuHalberd()
+    halberd.position.set(0.38, 0.15, 0.05)
+    g.add(halberd)
+  }
+
+  attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
+  attachDialogueBubble(g)
+  return g
+}
+
+/** Place the matching landmark host just river-side of each special building. */
+function attachLandmarkHost(building: THREE.Group, id: HarborLandmarkHostId, weather: HarborWeather) {
+  const host = landmarkHostNpc(id, weather)
+  // Local +Z faces the river approach on every landmark mesh
+  const pose: Record<HarborLandmarkHostId, [number, number, number]> = {
+    'save-shack': [0.85, 0.5, 2.35],
+    outfitter: [0.95, 0.7, 1.15],
+    bank: [0.95, 0.35, 1.55],
+    arena: [1.05, 0.12, 1.35],
+  }
+  const [x, y, z] = pose[id]
+  host.position.set(x, y, z)
+  // Face slightly toward the river path
+  host.rotation.y = -0.35
+  building.add(host)
+}
+
 /** Seated River Scout — original RS-era-proportion mannequin (see harborProtagonist.ts). */
 function playerTraveler() {
   return buildHarborProtagonist({ pose: 'seated' })
@@ -2133,6 +2443,7 @@ function saveShackBuilding(weather: HarborWeather = 'sunny') {
   portal.add(portalLight)
   g.add(portal)
 
+  attachLandmarkHost(g, 'save-shack', weather)
   return g
 }
 
@@ -2202,6 +2513,7 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
   }
   // Approach plank
   g.add(hqBox(1.2, 0.1, 1.8, P.woodMid, 0, 0.12, 1.4))
+  attachLandmarkHost(g, 'outfitter', weather)
   return g
 }
 
@@ -2310,6 +2622,7 @@ function bankBuilding(weather: HarborWeather = 'sunny') {
 
   // Approach stones
   g.add(hqBox(1.1, 0.1, 1.4, P.stone, 0, 0.12, 1.7))
+  attachLandmarkHost(g, 'bank', weather)
   return g
 }
 
@@ -2407,6 +2720,7 @@ function arenaBuilding(weather: HarborWeather = 'sunny') {
   g.add(portal)
 
   g.add(hqBox(1.15, 0.1, 1.5, P.woodMid, 0, 0.12, 1.55))
+  attachLandmarkHost(g, 'arena', weather)
   return g
 }
 
@@ -2570,7 +2884,9 @@ export function createHarborWorld(
         o.userData.fauna ||
         o.userData.bird ||
         o.userData.fish ||
-        o.userData.petal
+        o.userData.petal ||
+        o.userData.specialHostGlow ||
+        o.userData.cigaretteSmoke
       )
     const indexRoot = (root: THREE.Object3D) => {
       root.traverse((o) => {
@@ -3072,6 +3388,27 @@ export function createHarborWorld(
         if (!reduced) {
           o.position.y = base + Math.sin(waterPhase * 2.6 + base * 10) * 0.045
         }
+        continue
+      }
+      if (o.userData.specialHostGlow && !reduced) {
+        const mat = (o as THREE.Mesh).material as THREE.MeshLambertMaterial | undefined
+        const base = (o.userData.glowBaseIntensity as number) ?? 0.85
+        if (mat && 'emissiveIntensity' in mat) {
+          mat.emissiveIntensity = base * (0.82 + Math.sin(waterPhase * 2.4 + o.id) * 0.18)
+        }
+        o.rotation.z = Math.sin(waterPhase * 1.2 + o.id) * 0.08
+        continue
+      }
+      if (o.userData.cigaretteSmoke && !reduced) {
+        o.traverse((child) => {
+          if (!child.userData.smokePuff) return
+          const i = (child.userData.smokeIndex as number) ?? 0
+          const t = waterPhase * 1.8 + i * 0.9
+          child.position.y = 0.22 + i * 0.1 + (t % 1.4) * 0.12
+          child.position.x = 0.02 + i * 0.01 + Math.sin(t) * 0.03
+          const m = (child as THREE.Mesh).material as THREE.MeshLambertMaterial
+          if (m && 'opacity' in m) m.opacity = Math.max(0.08, 0.45 - i * 0.1 - (t % 1.4) * 0.2)
+        })
         continue
       }
       const fauna = o.userData.fauna as string | undefined
