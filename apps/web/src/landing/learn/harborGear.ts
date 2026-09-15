@@ -4,6 +4,12 @@
  * and the Save Shack look snapshot.
  */
 import * as THREE from 'three'
+import {
+  HARBOR_VIP_MIN_PRICE,
+  applyVipOverlaysToProtagonist,
+  buildVipHandheldProp,
+  harborVipSetFor,
+} from './harborVipGear'
 
 export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand' | 'boat' | 'lantern'
 
@@ -23,21 +29,30 @@ export type HarborGearItem = {
   tier: HarborGearTier
 }
 
-/** Clothing (5/slot) + boats & boat-lanterns (3 per tier × 4 tiers). */
+export { HARBOR_VIP_MIN_PRICE, HARBOR_VIP_SETS, harborVipSetFor } from './harborVipGear'
+
+/** Clothing + boats & boat-lanterns. VIP sets cost ≥ HARBOR_VIP_MIN_PRICE. */
 export const HARBOR_GEAR_CATALOG: readonly HarborGearItem[] = [
   // —— Hats ——
   { id: 'hat-straw', slot: 'hat', name: { en: 'Straw traveler hat', zh: '稻草旅笠' }, color: 0xc4a860, accent: 0x3dcfb6, price: 0, tier: 'common' },
   { id: 'hat-bamboo', slot: 'hat', name: { en: 'Bamboo coolie hat', zh: '竹笠' }, color: 0xd8c078, accent: 0x5a7a40, price: 8, tier: 'common' },
   { id: 'hat-scholar', slot: 'hat', name: { en: 'Scholar soft cap', zh: '書生軟帽' }, color: 0x2a3440, accent: 0xc4a35a, price: 12, tier: 'mid' },
   { id: 'hat-fisherman', slot: 'hat', name: { en: 'Fisherman headscarf', zh: '漁夫頭巾' }, color: 0x3a6a88, accent: 0xe8d8b0, price: 10, tier: 'common' },
-  { id: 'hat-festival', slot: 'hat', name: { en: 'Festival jade band', zh: '節慶玉箍' }, color: 0x1a2820, accent: 0x3dcfb6, price: 18, tier: 'vip' },
+  // VIP · Phoenix Sovereign
+  { id: 'hat-festival', slot: 'hat', name: { en: 'Phoenix fire crown', zh: '鳳凰火冠' }, color: 0x8a2a30, accent: 0xf0d060, price: 5200, tier: 'vip' },
+  // VIP · Jade Immortal
+  { id: 'hat-jade-diadem', slot: 'hat', name: { en: 'Jade immortal diadem', zh: '玉仙冠' }, color: 0x1a4038, accent: 0x3dcfb6, price: 5400, tier: 'vip' },
+  // VIP · Starlit Admiral
+  { id: 'hat-starlit-helm', slot: 'hat', name: { en: 'Starlit admiral helm', zh: '星光提督盔' }, color: 0x1a2438, accent: 0xa0d0ff, price: 5600, tier: 'vip' },
 
   // —— Tops ——
   { id: 'top-harbor', slot: 'top', name: { en: 'Harbor ink robe', zh: '港灣墨袍' }, color: 0x1e3a48, accent: 0x162830, price: 0, tier: 'common' },
   { id: 'top-jade', slot: 'top', name: { en: 'Jade river tunic', zh: '玉河短褂' }, color: 0x2a6a58, accent: 0x3dcfb6, price: 14, tier: 'mid' },
   { id: 'top-merchant', slot: 'top', name: { en: 'Merchant plum coat', zh: '商賈紫褂' }, color: 0x5a2a48, accent: 0xc4a35a, price: 16, tier: 'high' },
   { id: 'top-ferry', slot: 'top', name: { en: 'Ferry linen wrap', zh: '渡船麻衣' }, color: 0xd8c8a0, accent: 0x8a7050, price: 11, tier: 'mid' },
-  { id: 'top-night', slot: 'top', name: { en: 'Night watch vest', zh: '夜巡背心' }, color: 0x243048, accent: 0x3dcfb6, price: 20, tier: 'vip' },
+  { id: 'top-night', slot: 'top', name: { en: 'Phoenix sovereign robe', zh: '鳳凰帝袍' }, color: 0x6a1828, accent: 0xf0d060, price: 5800, tier: 'vip' },
+  { id: 'top-jade-immortal', slot: 'top', name: { en: 'Jade immortal mantle', zh: '玉仙霞帔' }, color: 0x1e5a48, accent: 0x80ffe0, price: 6000, tier: 'vip' },
+  { id: 'top-starlit-coat', slot: 'top', name: { en: 'Starlit admiral coat', zh: '星光提督褂' }, color: 0x142038, accent: 0xa0d0ff, price: 6200, tier: 'vip' },
 
   // —— Bottoms ——
   { id: 'bottom-travel', slot: 'bottom', name: { en: 'Travel trousers', zh: '旅褲' }, color: 0x3a3028, price: 0, tier: 'common' },
@@ -45,13 +60,18 @@ export const HARBOR_GEAR_CATALOG: readonly HarborGearItem[] = [
   { id: 'bottom-reed', slot: 'bottom', name: { en: 'Reed-dyed wrap', zh: '蘆染裹腿' }, color: 0x4a5a38, price: 11, tier: 'mid' },
   { id: 'bottom-crimson', slot: 'bottom', name: { en: 'Crimson festival pants', zh: '節慶紅褲' }, color: 0x8a2a30, price: 15, tier: 'high' },
   { id: 'bottom-ink', slot: 'bottom', name: { en: 'Deep ink culottes', zh: '深墨闊褲' }, color: 0x1a2430, price: 17, tier: 'high' },
+  { id: 'bottom-phoenix', slot: 'bottom', name: { en: 'Phoenix flame wrap', zh: '鳳焰裹腿' }, color: 0x5a1018, accent: 0xf0a040, price: 5100, tier: 'vip' },
+  { id: 'bottom-jade-flow', slot: 'bottom', name: { en: 'Jade flow culottes', zh: '玉瀾闊褲' }, color: 0x163830, accent: 0x3dcfb6, price: 5200, tier: 'vip' },
+  { id: 'bottom-starlit-greaves', slot: 'bottom', name: { en: 'Starlit night greaves', zh: '星夜護腿' }, color: 0x101828, accent: 0x6080c0, price: 5300, tier: 'vip' },
 
   // —— Shoes ——
   { id: 'shoes-leather', slot: 'shoes', name: { en: 'Leather river boots', zh: '河皮靴' }, color: 0x6a4a30, price: 0, tier: 'common' },
   { id: 'shoes-straw', slot: 'shoes', name: { en: 'Straw sandals', zh: '草鞋' }, color: 0xc8b070, accent: 0x5a4a30, price: 6, tier: 'common' },
   { id: 'shoes-lacquer', slot: 'shoes', name: { en: 'Lacquer court shoes', zh: '漆木朝鞋' }, color: 0x1a1814, accent: 0xc4a35a, price: 14, tier: 'mid' },
   { id: 'shoes-jade', slot: 'shoes', name: { en: 'Jade-stitched boots', zh: '玉線靴' }, color: 0x2a4038, accent: 0x3dcfb6, price: 16, tier: 'high' },
-  { id: 'shoes-storm', slot: 'shoes', name: { en: 'Storm deck boots', zh: '風雨甲板靴' }, color: 0x2a3038, accent: 0x4a90a8, price: 18, tier: 'vip' },
+  { id: 'shoes-storm', slot: 'shoes', name: { en: 'Phoenix ash boots', zh: '鳳灰靴' }, color: 0x2a1818, accent: 0xf0a040, price: 5050, tier: 'vip' },
+  { id: 'shoes-jade-cloud', slot: 'shoes', name: { en: 'Jade cloud slippers', zh: '玉雲履' }, color: 0x204038, accent: 0xa0ffe8, price: 5150, tier: 'vip' },
+  { id: 'shoes-starlit-boots', slot: 'shoes', name: { en: 'Starlit deck boots', zh: '星光甲板靴' }, color: 0x141c28, accent: 0xa0d0ff, price: 5250, tier: 'vip' },
 
   // —— Handheld ——
   { id: 'hand-none', slot: 'hand', name: { en: 'Empty hands', zh: '空手' }, color: 0xe8c4a8, price: 0, tier: 'common' },
@@ -59,6 +79,9 @@ export const HARBOR_GEAR_CATALOG: readonly HarborGearItem[] = [
   { id: 'hand-lantern', slot: 'hand', name: { en: 'Jade paper lantern', zh: '玉紙燈籠' }, color: 0xe07040, accent: 0x3dcfb6, price: 12, tier: 'mid' },
   { id: 'hand-oar', slot: 'hand', name: { en: 'Mini ferry oar', zh: '渡船小槳' }, color: 0x8a6038, accent: 0xc4a860, price: 10, tier: 'common' },
   { id: 'hand-scroll', slot: 'hand', name: { en: 'Lesson scroll', zh: '課卷' }, color: 0xe8d8b0, accent: 0x5a2a20, price: 9, tier: 'common' },
+  { id: 'hand-phoenix-fan', slot: 'hand', name: { en: 'Phoenix fire fan', zh: '鳳凰火扇' }, color: 0x8a2a30, accent: 0xf0d060, price: 5500, tier: 'vip' },
+  { id: 'hand-jade-orb', slot: 'hand', name: { en: 'Jade immortal orb', zh: '玉仙寶珠' }, color: 0x2a8a6a, accent: 0x80ffe0, price: 5700, tier: 'vip' },
+  { id: 'hand-starlit-compass', slot: 'hand', name: { en: 'Starlit admiral compass', zh: '星光提督羅盤' }, color: 0x1a2840, accent: 0xffe080, price: 5900, tier: 'vip' },
 
   // —— Boats (3 varieties × 4 tiers) ——
   { id: 'boat-canoe', slot: 'boat', name: { en: 'Pine river canoe', zh: '松木河舟' }, color: 0x8a6038, accent: 0x3dcfb6, price: 0, tier: 'common' },
@@ -70,11 +93,11 @@ export const HARBOR_GEAR_CATALOG: readonly HarborGearItem[] = [
   { id: 'boat-scholar', slot: 'boat', name: { en: 'Scholar yacht', zh: '書生快艇' }, color: 0xd8c8a0, accent: 0x2a3440, price: 110, tier: 'high' },
   { id: 'boat-merchant', slot: 'boat', name: { en: 'Merchant river junk', zh: '商賈河船' }, color: 0x5a2a48, accent: 0xc4a35a, price: 125, tier: 'high' },
   { id: 'boat-jade', slot: 'boat', name: { en: 'Jade trim riverboat', zh: '玉飾河船' }, color: 0x2a4a40, accent: 0x3dcfb6, price: 140, tier: 'high' },
-  { id: 'boat-dragon', slot: 'boat', name: { en: 'Dragon-prow racer', zh: '龍頭快船' }, color: 0x8a2a30, accent: 0xf0d060, price: 240, tier: 'vip' },
-  { id: 'boat-pearl', slot: 'boat', name: { en: 'Pearl pavilion boat', zh: '珍珠舫' }, color: 0xe8e0d0, accent: 0x3dcfb6, price: 280, tier: 'vip' },
-  { id: 'boat-imperial', slot: 'boat', name: { en: 'Imperial gold barge', zh: '金龍御舫' }, color: 0xc4a35a, accent: 0xf5e6a8, price: 320, tier: 'vip' },
+  { id: 'boat-dragon', slot: 'boat', name: { en: 'Phoenix dragon racer', zh: '鳳龍快船' }, color: 0x8a2a30, accent: 0xf0d060, price: 7200, tier: 'vip' },
+  { id: 'boat-pearl', slot: 'boat', name: { en: 'Jade immortal pavilion', zh: '玉仙舫' }, color: 0xe8e0d0, accent: 0x3dcfb6, price: 7800, tier: 'vip' },
+  { id: 'boat-imperial', slot: 'boat', name: { en: 'Starlit imperial barge', zh: '星光御舫' }, color: 0xc4a35a, accent: 0xf5e6a8, price: 8500, tier: 'vip' },
 
-  // —— Boat lanterns (types + colors, 3 × 4 tiers) ——
+  // —— Boat lanterns ——
   { id: 'lantern-paper-amber', slot: 'lantern', name: { en: 'Amber paper lantern', zh: '琥珀紙燈' }, color: 0xe07040, accent: 0xffa040, price: 0, tier: 'common' },
   { id: 'lantern-paper-crimson', slot: 'lantern', name: { en: 'Crimson paper lantern', zh: '絳紅紙燈' }, color: 0xc03030, accent: 0xff6060, price: 14, tier: 'common' },
   { id: 'lantern-paper-jade', slot: 'lantern', name: { en: 'Jade paper lantern', zh: '玉紙燈' }, color: 0x3dcfb6, accent: 0xa0ffe8, price: 16, tier: 'common' },
@@ -84,10 +107,9 @@ export const HARBOR_GEAR_CATALOG: readonly HarborGearItem[] = [
   { id: 'lantern-glass-ruby', slot: 'lantern', name: { en: 'Ruby glass lantern', zh: '紅寶玻璃燈' }, color: 0xa02040, accent: 0xff4060, price: 80, tier: 'high' },
   { id: 'lantern-glass-sapphire', slot: 'lantern', name: { en: 'Sapphire glass lantern', zh: '藍寶玻璃燈' }, color: 0x2040a0, accent: 0x60a0ff, price: 90, tier: 'high' },
   { id: 'lantern-porcelain', slot: 'lantern', name: { en: 'Celadon porcelain lantern', zh: '青瓷燈' }, color: 0x80b090, accent: 0xd0f0e0, price: 100, tier: 'high' },
-  { id: 'lantern-phoenix', slot: 'lantern', name: { en: 'Phoenix gold lantern', zh: '鳳凰金燈' }, color: 0xf0a020, accent: 0xffe080, price: 180, tier: 'vip' },
-  { id: 'lantern-dragon', slot: 'lantern', name: { en: 'Dragon emerald lantern', zh: '龍翠燈' }, color: 0x20a060, accent: 0x80ffc0, price: 200, tier: 'vip' },
-  { id: 'lantern-starlight', slot: 'lantern', name: { en: 'Starlight pearl lantern', zh: '星光珍珠燈' }, color: 0xe8f0ff, accent: 0xffffff, price: 220, tier: 'vip' },
-
+  { id: 'lantern-phoenix', slot: 'lantern', name: { en: 'Phoenix gold lantern', zh: '鳳凰金燈' }, color: 0xf0a020, accent: 0xffe080, price: 5100, tier: 'vip' },
+  { id: 'lantern-dragon', slot: 'lantern', name: { en: 'Jade dragon lantern', zh: '玉龍燈' }, color: 0x20a060, accent: 0x80ffc0, price: 5400, tier: 'vip' },
+  { id: 'lantern-starlight', slot: 'lantern', name: { en: 'Starlight pearl lantern', zh: '星光珍珠燈' }, color: 0xe8f0ff, accent: 0xffffff, price: 5800, tier: 'vip' },
 ] as const
 
 export type HarborGearId = (typeof HARBOR_GEAR_CATALOG)[number]['id']
@@ -176,7 +198,39 @@ export type HarborGearMeshInfo = {
 
 export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
   const { id, slot } = item
-  if (slot === 'hat' || slot === 'top' || slot === 'bottom' || slot === 'shoes') {
+  if (slot === 'hat') {
+    if (id === 'hat-festival' || id === 'hat-jade-diadem' || id === 'hat-starlit-helm') {
+      return {
+        kind: 'prop',
+        family: `vip-hat-${id}`,
+        label: 'VIP crest overlay · animated',
+        uniqueMesh: true,
+      }
+    }
+    return {
+      kind: 'recolor',
+      family: `scout-${slot}`,
+      label: 'Shared scout mesh · recolor',
+      uniqueMesh: false,
+    }
+  }
+  if (slot === 'top') {
+    if (id === 'top-night' || id === 'top-jade-immortal' || id === 'top-starlit-coat') {
+      return {
+        kind: 'prop',
+        family: `vip-cape-${id}`,
+        label: 'VIP cape overlay · animated',
+        uniqueMesh: true,
+      }
+    }
+    return {
+      kind: 'recolor',
+      family: `scout-${slot}`,
+      label: 'Shared scout mesh · recolor',
+      uniqueMesh: false,
+    }
+  }
+  if (slot === 'bottom' || slot === 'shoes') {
     return {
       kind: 'recolor',
       family: `scout-${slot}`,
@@ -188,8 +242,23 @@ export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
     if (id === 'hand-none') {
       return { kind: 'empty', family: 'hand-none', label: 'No prop', uniqueMesh: true }
     }
-    if (id === 'hand-fan' || id === 'hand-lantern' || id === 'hand-oar' || id === 'hand-scroll') {
-      return { kind: 'prop', family: id, label: 'Dedicated handheld prop', uniqueMesh: true }
+    if (
+      id === 'hand-fan' ||
+      id === 'hand-lantern' ||
+      id === 'hand-oar' ||
+      id === 'hand-scroll' ||
+      id === 'hand-phoenix-fan' ||
+      id === 'hand-jade-orb' ||
+      id === 'hand-starlit-compass'
+    ) {
+      return {
+        kind: 'prop',
+        family: id,
+        label: id.startsWith('hand-phoenix') || id.startsWith('hand-jade') || id.startsWith('hand-starlit')
+          ? 'VIP handheld · animated'
+          : 'Dedicated handheld prop',
+        uniqueMesh: true,
+      }
     }
     return { kind: 'prop', family: 'hand-unknown', label: 'Empty hand prop', uniqueMesh: false }
   }
@@ -215,13 +284,13 @@ export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
       return { kind: 'hull', family: 'hull-jade', label: 'Jade-rail hull', uniqueMesh: true }
     }
     if (id === 'boat-dragon') {
-      return { kind: 'hull', family: 'hull-dragon', label: 'Dragon-prow hull', uniqueMesh: true }
+      return { kind: 'hull', family: 'hull-dragon', label: 'VIP dragon prow · animated', uniqueMesh: true }
     }
     if (id === 'boat-pearl') {
-      return { kind: 'hull', family: 'hull-pearl', label: 'Pavilion hull', uniqueMesh: true }
+      return { kind: 'hull', family: 'hull-pearl', label: 'VIP pavilion · animated', uniqueMesh: true }
     }
     if (id === 'boat-imperial') {
-      return { kind: 'hull', family: 'hull-imperial', label: 'Imperial prow + pavilion', uniqueMesh: true }
+      return { kind: 'hull', family: 'hull-imperial', label: 'VIP imperial · animated', uniqueMesh: true }
     }
     // canoe / sampan / scholar share the default canoe silhouette
     return {
@@ -237,10 +306,12 @@ export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
       kind: 'lantern',
       family: 'lantern-silk',
       label:
-        id === 'lantern-silk-gold'
-          ? 'Silk cylinder lantern'
-          : 'Silk cylinder · recolor',
-      uniqueMesh: id === 'lantern-silk-gold',
+        id === 'lantern-phoenix' || id === 'lantern-starlight'
+          ? 'VIP silk lantern · animated'
+          : id === 'lantern-silk-gold'
+            ? 'Silk cylinder lantern'
+            : 'Silk cylinder · recolor',
+      uniqueMesh: id === 'lantern-silk-gold' || id === 'lantern-phoenix' || id === 'lantern-starlight',
     }
   }
   if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
@@ -255,8 +326,8 @@ export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
     return {
       kind: 'lantern',
       family: 'lantern-iron',
-      label: id === 'lantern-oil-iron' ? 'Iron cage lantern' : 'Iron cage · recolor',
-      uniqueMesh: id === 'lantern-oil-iron',
+      label: id === 'lantern-dragon' ? 'VIP iron lantern · animated' : 'Iron cage lantern',
+      uniqueMesh: true,
     }
   }
   return {
@@ -321,6 +392,8 @@ function mat(color: number) {
 export function buildHandheldProp(itemId: string): THREE.Object3D | null {
   const item = BY_ID.get(itemId)
   if (!item || item.slot !== 'hand' || item.id === 'hand-none') return null
+  const vip = buildVipHandheldProp(item.id, item.color, item.accent ?? item.color)
+  if (vip) return vip
   const g = new THREE.Group()
   g.name = 'gear-hand'
   g.userData.harborGear = true
@@ -396,7 +469,7 @@ export function lookColors(look: HarborLook) {
 }
 
 
-/** Recolor tagged body parts + attach handheld from an equipped look. */
+/** Recolor tagged body parts + attach handheld + VIP overlays from an equipped look. */
 export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
   const colors = lookColors(look)
   root.traverse((o) => {
@@ -414,4 +487,5 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
     else if (part === 'shoes') mat.color.setHex(colors.shoes)
   })
   applyHandheldToProtagonist(root, look)
+  applyVipOverlaysToProtagonist(root, look)
 }

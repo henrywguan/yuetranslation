@@ -107,10 +107,13 @@ import {
   HARBOR_DEFAULT_LOOK,
   HARBOR_STARTER_OWNED,
   HARBOR_GEAR_SLOTS,
+  HARBOR_VIP_MIN_PRICE,
+  HARBOR_VIP_SETS,
   applyLookToProtagonist,
   harborGearCodexStats,
   harborGearForSlot,
   harborGearMeshInfo,
+  harborVipSetFor,
 } from '../../landing/learn/harborGear'
 import { emptyHarborProgress,
   isLevelUnlocked } from '../../landing/learn/progressMerge'
@@ -447,7 +450,7 @@ function main() {
 
   
   // Save Shack + Outfitter visitables & gear kit
-  assert.equal(HARBOR_GEAR_CATALOG.length, 49, '25 clothing + 12 boats + 12 lanterns')
+  assert.ok(HARBOR_GEAR_CATALOG.length >= 49, 'catalog covers clothing + boats + lanterns')
   assert.ok(HARBOR_GEAR_SLOTS.includes('boat'), 'boat gear slot')
   assert.ok(HARBOR_GEAR_SLOTS.includes('lantern'), 'boat-lantern gear slot')
   assert.equal(HARBOR_GEAR_CATALOG.filter((i) => i.slot === 'boat').length, 12, '12 boats across 4 tiers')
@@ -462,19 +465,45 @@ function main() {
     if (slot === 'boat' || slot === 'lantern') {
       assert.equal(n, 12, `${slot} has 12 items (3 × 4 tiers)`)
     } else {
-      assert.equal(n, 5, `${slot} has 5 items`)
+      assert.ok(n >= 5, `${slot} has at least 5 items (got ${n})`)
     }
   }
 
+  // VIP sets — animated overlays, locked behind >5k coins
+  assert.equal(HARBOR_VIP_MIN_PRICE, 5001, 'VIP lock floor')
+  assert.equal(HARBOR_VIP_SETS.length, 3, 'three VIP item sets')
+  for (const item of HARBOR_GEAR_CATALOG.filter((i) => i.tier === 'vip')) {
+    assert.ok(item.price >= HARBOR_VIP_MIN_PRICE, `${item.id} VIP priced ≥ floor`)
+    assert.ok(item.price > 5000, `${item.id} VIP over 5k coins`)
+    assert.ok(harborVipSetFor(item.id), `${item.id} belongs to a VIP set`)
+  }
+  for (const set of HARBOR_VIP_SETS) {
+    assert.ok(set.pieces.length >= 7, `${set.id} covers a full loadout`)
+    for (const id of set.pieces) {
+      const item = HARBOR_GEAR_CATALOG.find((i) => i.id === id)
+      assert.ok(item, `${set.id} piece ${id} in catalog`)
+      assert.equal(item!.tier, 'vip', `${id} is VIP tier`)
+      assert.ok(item!.price > 5000, `${id} costs over 5k`)
+    }
+  }
+  assert.match(
+    readFileSync(new URL('./harborVipGear.ts', import.meta.url), 'utf8'),
+    /tickVipGearAnims|attachVipBoatOrnaments|applyVipOverlaysToProtagonist/,
+    'VIP gear has animation + overlay builders',
+  )
+  assert.match(learnCss, /\.hq-shop-item\.is-vip/, 'outfitter VIP styling')
+
   // Gear mesh honesty — not every catalog ID is a unique silhouette
   const codex = harborGearCodexStats()
-  assert.equal(codex.total, 49, 'codex covers full catalog')
+  assert.equal(codex.total, HARBOR_GEAR_CATALOG.length, 'codex covers full catalog')
   assert.ok(codex.families >= 12, `expected mesh families, got ${codex.families}`)
   assert.ok(codex.uniqueMeshes < codex.total, 'many items share mesh families (recolors)')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-straw')!).uniqueMesh, false)
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hand-fan')!).uniqueMesh, true)
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'boat-sampan')!).family, 'hull-canoe')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-phoenix')!).family, 'lantern-silk')
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-festival')!).uniqueMesh, true)
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hand-phoenix-fan')!).uniqueMesh, true)
   assert.match(learnCss, /\.hq-codex-screen/, 'gear codex fullscreen styles')
   assert.match(learnCss, /\.hq-codex-grid/, 'gear codex card grid styles')
   assert.match(learnCss, /\.hq-codex-model/, 'gear codex model preview styles')
@@ -507,6 +536,8 @@ function main() {
   )
   assert.ok(HARBOR_VISIT_RADIUS > 1, 'visit radius')
   const worldSrc2 = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
+  assert.match(worldSrc2, /tickVipGearAnims/, 'world ticks VIP anims')
+  assert.match(worldSrc2, /attachVipBoatOrnaments/, 'VIP boats get animated ornaments')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'save-shack'/, 'Save Shack host NPC')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'outfitter'/, 'Outfitter landlady host')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'bank'/, 'Banker host NPC')

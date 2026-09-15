@@ -46,8 +46,10 @@ import { playHarborScrollClose, playHarborScrollOpen, stopHarborScrollSfx } from
 import {
   HARBOR_GEAR_SLOTS,
   HARBOR_GEAR_TIER_LABEL,
+  HARBOR_VIP_MIN_PRICE,
   harborGearById,
   harborGearForSlot,
+  harborVipSetFor,
   type HarborGearId,
   type HarborGearSlot,
 } from './harborGear'
@@ -1021,8 +1023,13 @@ export function LearnSession({
             {harborGearForSlot(shopSlot).map((item) => {
               const owned = progressSnap.owned.includes(item.id)
               const equipped = progressSnap.look[shopSlot] === item.id
+              const vipSet = item.tier === 'vip' ? harborVipSetFor(item.id) : undefined
+              const locked = !owned && progressSnap.coins < item.price
               return (
-                <li key={item.id} className={`hq-shop-item${equipped ? ' is-equipped' : ''}`}>
+                <li
+                  key={item.id}
+                  className={`hq-shop-item${equipped ? ' is-equipped' : ''}${item.tier === 'vip' ? ' is-vip' : ''}${locked ? ' is-locked' : ''}`}
+                >
                   <span
                     className="hq-shop-swatch"
                     style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
@@ -1033,10 +1040,16 @@ export function LearnSession({
                     <span className="hq-shop-name-zh" lang="zh-HK">
                       {item.name.zh}
                     </span>
+                    {vipSet ? (
+                      <span className="hq-shop-vip-set">
+                        VIP set · {vipSet.name.zh} · {vipSet.name.en}
+                      </span>
+                    ) : null}
                     <span className="hq-shop-price">
                       {HARBOR_GEAR_TIER_LABEL[item.tier].en}
                       {' · '}
-                      {item.price === 0 ? 'Starter' : `${item.price} coins`}
+                      {item.price === 0 ? 'Starter' : `${item.price.toLocaleString()} coins`}
+                      {item.tier === 'vip' ? ` · lock ≥${HARBOR_VIP_MIN_PRICE.toLocaleString()}` : ''}
                       {owned ? ' · owned' : ''}
                       {equipped ? ' · on' : ''}
                     </span>
@@ -1046,10 +1059,15 @@ export function LearnSession({
                       <button
                         type="button"
                         className="hq-btn hq-btn--primary hq-btn--tiny"
-                        disabled={progressSnap.coins < item.price}
+                        disabled={locked}
+                        title={
+                          locked
+                            ? `Need ${item.price.toLocaleString()} ferry coins (VIP lock)`
+                            : `Buy for ${item.price.toLocaleString()} coins`
+                        }
                         onClick={() => onBuy(item.id)}
                       >
-                        Buy
+                        {locked ? 'Locked' : 'Buy'}
                       </button>
                     ) : (
                       <button

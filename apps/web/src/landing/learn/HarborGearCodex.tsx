@@ -3,9 +3,11 @@ import {
   HARBOR_GEAR_CATALOG,
   HARBOR_GEAR_SLOTS,
   HARBOR_GEAR_TIER_LABEL,
+  HARBOR_VIP_MIN_PRICE,
   harborGearCodexStats,
   harborGearForSlot,
   harborGearMeshInfo,
+  harborVipSetFor,
   type HarborGearSlot,
 } from './harborGear'
 import { HarborGearModelIcon } from './HarborGearModelIcon'
@@ -92,8 +94,12 @@ export function HarborGearCodex({ owned, onClose }: Props) {
             {items.map((item) => {
               const mesh = harborGearMeshInfo(item)
               const have = ownedSet.has(item.id)
+              const vipSet = item.tier === 'vip' ? harborVipSetFor(item.id) : undefined
               return (
-                <li key={item.id} className={`hq-codex-card${have ? ' is-owned' : ''}`}>
+                <li
+                  key={item.id}
+                  className={`hq-codex-card${have ? ' is-owned' : ''}${item.tier === 'vip' ? ' is-vip' : ''}`}
+                >
                   <HarborGearModelIcon item={item} />
                   <div className="hq-codex-meta">
                     <span className="hq-codex-name">{item.name.en}</span>
@@ -103,6 +109,9 @@ export function HarborGearCodex({ owned, onClose }: Props) {
                     <span className="hq-codex-tags">
                       <span className="hq-codex-chip">{SLOT_LABEL[item.slot]}</span>
                       <span className="hq-codex-chip">{HARBOR_GEAR_TIER_LABEL[item.tier].en}</span>
+                      {vipSet ? (
+                        <span className="hq-codex-chip hq-codex-chip--vip">{vipSet.name.en}</span>
+                      ) : null}
                       <span
                         className={`hq-codex-chip hq-codex-chip--mesh${mesh.uniqueMesh ? ' is-unique' : ''}`}
                       >
@@ -113,8 +122,14 @@ export function HarborGearCodex({ owned, onClose }: Props) {
                     <span className="hq-codex-mesh">{mesh.label}</span>
                   </div>
                   <div className="hq-codex-side">
-                    <span className="hq-codex-price">{item.price === 0 ? 'Starter' : `${item.price}¢`}</span>
-                    <span className="hq-codex-own">{have ? 'Owned' : 'Locked'}</span>
+                    <span className="hq-codex-price">
+                      {item.price === 0
+                        ? 'Starter'
+                        : item.tier === 'vip'
+                          ? `${item.price.toLocaleString()}¢ · ≥${HARBOR_VIP_MIN_PRICE.toLocaleString()}`
+                          : `${item.price}¢`}
+                    </span>
+                    <span className="hq-codex-own">{have ? 'Owned' : item.tier === 'vip' ? 'VIP lock' : 'Locked'}</span>
                   </div>
                 </li>
               )
