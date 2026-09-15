@@ -367,7 +367,9 @@
 }
 
 .hq-ig__feature-shot--cast img {
-  object-position: center 6%;
+  /* Center on the chapter scroll body (title → tags), not the pier sky above it */
+  object-position: center 52%;
+  transform: scale(1.02);
 }
 
 .hq-ig__feature-shot--arena img {
