@@ -2538,18 +2538,276 @@
 
 /* —— Inventory / Bank panels (coin chip toggles inventory) —— */
 .hq-visit-panel--inv {
-  border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
+  border-color: color-mix(in srgb, #8a7355 55%, transparent);
   max-width: min(22rem, calc(100vw - 1.2rem));
-  /* Taller than shop panels so paperdoll + pack + actions fit on phones. */
-  max-height: min(78dvh, 40rem);
+  max-height: min(82dvh, 42rem);
+  padding: 0.55rem;
+  background:
+    linear-gradient(165deg, #3a342c 0%, #2a241c 40%, #1a1612 100%);
+  box-shadow:
+    0 18px 40px color-mix(in srgb, #000 50%, transparent),
+    inset 0 0 0 1px #8a7355,
+    inset 0 0 0 3px #1a1410;
 }
-.hq-visit-panel--inv .hq-visit-kicker,
-.hq-visit-panel--inv .hq-visit-title,
-.hq-visit-panel--inv .hq-visit-body,
 .hq-visit-panel--inv .hq-visit-msg,
-.hq-visit-panel--inv .hq-visit-actions,
-.hq-visit-panel--inv .hq-worn-pack-label {
+.hq-visit-panel--inv .hq-visit-actions {
   flex-shrink: 0;
+}
+
+/* OSRS-style bag chrome */
+.hq-bag {
+  gap: 0.45rem;
+}
+.hq-bag-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+  flex: 1;
+}
+.hq-bag-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.hq-bag-tab {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.2rem;
+  border: 2px solid #5a4a30;
+  background:
+    linear-gradient(180deg, #4a4030 0%, #2a2218 100%);
+  color: #e8d48a;
+  box-shadow:
+    inset 0 1px 0 #8a7355,
+    inset 0 -1px 0 #1a1410;
+  cursor: pointer;
+  font: 700 0.72rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hq-bag-tab.is-on {
+  background:
+    linear-gradient(180deg, #6a3020 0%, #3a1810 100%);
+  border-color: #8a4030;
+  color: #ffe9a0;
+  box-shadow:
+    inset 0 0 0 1px #c4a060,
+    inset 0 1px 0 #a06040;
+}
+.hq-bag-tab-icon {
+  display: grid;
+  place-items: center;
+  color: inherit;
+}
+.hq-bag-tab-label {
+  opacity: 0.95;
+}
+
+.hq-bag-grid-wrap {
+  display: grid;
+  grid-template-columns: 1.55rem minmax(0, 1fr) 1.55rem;
+  gap: 0.28rem;
+  align-items: stretch;
+  flex: 0 0 auto;
+}
+.hq-bag-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.1rem;
+  border-radius: 0.15rem;
+  border: 2px solid #5a4a30;
+  background: linear-gradient(180deg, #2a2218, #14100c);
+  box-shadow: inset 0 0 0 1px #3a3020;
+}
+.hq-bag-rail--hp {
+  color: #ff6a6a;
+}
+.hq-bag-rail--pray {
+  color: #c8c8d8;
+}
+.hq-bag-rail-glyph {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+.hq-bag-rail-num {
+  font: 700 0.68rem/1 Syne, system-ui, sans-serif;
+  color: #f2f2f2;
+  text-shadow: 0 1px 0 #000;
+}
+
+.hq-bag-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  gap: 0.12rem;
+  aspect-ratio: 4 / 7;
+  width: 100%;
+  border-radius: 0.15rem;
+  border: 2px solid #5a4a30;
+  background: #3a342c;
+  box-shadow:
+    inset 0 0 0 1px #1a1410,
+    inset 0 2px 8px color-mix(in srgb, #000 35%, transparent);
+}
+.hq-bag-cell {
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1;
+}
+.hq-bag-cell.is-empty {
+  background: color-mix(in srgb, #2a241c 70%, transparent);
+  border-radius: 0.08rem;
+}
+.hq-bag-item {
+  appearance: none;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0.12rem;
+  border: 0;
+  border-radius: 0.08rem;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.hq-bag-item.is-on {
+  outline: 2px solid #f0d060;
+  outline-offset: -2px;
+  background: color-mix(in srgb, #f0d060 12%, transparent);
+}
+.hq-bag-item.is-worn {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #3dcfb6 55%, transparent);
+}
+.hq-bag-worn-dot {
+  position: absolute;
+  top: 0.12rem;
+  right: 0.12rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: #3dcfb6;
+  box-shadow: 0 0 0 1px #041018;
+}
+.hq-bag-model {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.hq-bag-model-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, #000 55%, transparent));
+}
+
+.hq-bag-inspect {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.2rem;
+  border: 2px solid #5a4a30;
+  background: linear-gradient(180deg, #2a2218, #16120e);
+  flex-shrink: 0;
+}
+.hq-bag-inspect-copy {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+.hq-bag-inspect-name {
+  margin: 0;
+  font: 700 0.88rem/1.2 Syne, system-ui, sans-serif;
+  color: #ffe9a0;
+}
+.hq-bag-inspect-zh {
+  margin: 0;
+  font: 500 0.75rem/1.2 'Noto Sans HK', 'Noto Sans', sans-serif;
+  color: color-mix(in srgb, #e8d48a 75%, transparent);
+}
+.hq-bag-inspect-meta {
+  margin: 0;
+  font: 600 0.62rem/1.2 Syne, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #c4a060 85%, #fff 15%);
+}
+.hq-bag-inspect-hint {
+  margin: 0;
+  font: 500 0.78rem/1.35 'Noto Sans', system-ui, sans-serif;
+  color: color-mix(in srgb, #e8d48a 72%, transparent);
+}
+
+.hq-bag-worn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.25rem 0.15rem 0.45rem;
+  border-radius: 0.2rem;
+  border: 2px solid #5a4a30;
+  background: #2a2218;
+  flex-shrink: 0;
+}
+.hq-bag-worn-hint {
+  margin: 0;
+  padding: 0 0.55rem;
+  text-align: center;
+  font: 500 0.72rem/1.35 'Noto Sans', system-ui, sans-serif;
+  color: color-mix(in srgb, #e8d48a 70%, transparent);
+}
+
+.hq-bag-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.hq-bag-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.2rem 0.45rem 0.2rem 0.3rem;
+  border-radius: 0.15rem;
+  border: 1px solid #5a4a30;
+  background: #1a1410;
+}
+.hq-bag-coin-stack {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #ffe9a0, #c4a060 55%, #8a7020);
+  box-shadow: inset 0 -2px 0 #5a4a20;
+}
+.hq-bag-coin-qty {
+  font: 700 0.82rem/1 Syne, system-ui, sans-serif;
+  color: #ffe14a;
+  text-shadow: 0 1px 0 #000;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 640px) {
+  .hq-visit-panel--inv {
+    max-height: min(78dvh, 40rem);
+  }
 }
 
 /* OSRS Worn Equipment–style paperdoll (Harbor jade/ink chrome) */

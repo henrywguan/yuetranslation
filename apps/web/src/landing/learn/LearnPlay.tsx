@@ -28,6 +28,7 @@ import {
   type HarborGearSlot,
 } from './harborGear'
 import { HarborGearCodex } from './HarborGearCodex'
+import { HarborInventoryBag } from './HarborInventoryBag'
 import { HarborStage } from './HarborStage'
 import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
 import { HarborCharacterCreate } from './HarborCharacterCreate'
@@ -44,7 +45,6 @@ import { useYueStore } from '../../lib/store'
 import { HarborMinimap, type HarborMinimapPose } from './HarborMinimap'
 import { HarborChatBox, type HarborChatLine } from './HarborChatBox'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
-import { HarborWornBoard } from './HarborWornBoard'
 import {
   HARBOR_NPC_ROLES,
   type HarborNpcRole,
@@ -936,63 +936,17 @@ export function LearnSession({
       ) : null}
 
       {invOpen ? (
-        <aside className="hq-visit-panel hq-visit-panel--inv" role="dialog" aria-label="Worn equipment">
-          <p className="hq-visit-kicker">Worn Equipment · 裝備</p>
-          <h2 className="hq-visit-title">Worn equipment</h2>
-          <p className="hq-visit-body">
-            Tap a slot on the paperdoll, then wear a piece from your pack · bank extras at Harbor Bank
-          </p>
-          <HarborWornBoard
-            look={progressSnap.look}
-            selected={shopSlot}
-            onSelect={setShopSlot}
-          />
-          <p className="hq-worn-pack-label">
-            Pack · {HARBOR_SLOT_LABEL[shopSlot]}
-          </p>
-          <ul className="hq-shop-list hq-worn-pack-list">
-            {harborGearForSlot(shopSlot)
-              .filter((item) => progressSnap.owned.includes(item.id))
-              .map((item) => {
-                const equipped = progressSnap.look[shopSlot] === item.id
-                return (
-                  <li key={item.id} className={`hq-shop-item${equipped ? ' is-equipped' : ''}`}>
-                    <span
-                      className="hq-shop-swatch"
-                      style={{ background: `#${item.color.toString(16).padStart(6, '0')}` }}
-                      aria-hidden="true"
-                    />
-                    <div className="hq-shop-meta">
-                      <span className="hq-shop-name">{item.name.en}</span>
-                      <span className="hq-shop-name-zh" lang="zh-HK">
-                        {item.name.zh}
-                      </span>
-                      <span className="hq-shop-price">{equipped ? 'Wearing' : 'In pack'}</span>
-                    </div>
-                    <div className="hq-shop-actions">
-                      <button
-                        type="button"
-                        className="hq-btn hq-btn--ghost hq-btn--tiny"
-                        disabled={equipped}
-                        onClick={() => onInvEquip(shopSlot, item.id)}
-                      >
-                        {equipped ? 'On' : 'Wear'}
-                      </button>
-                    </div>
-                  </li>
-                )
-              })}
-          </ul>
-          {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
-          <div className="hq-visit-actions">
-            <button type="button" className="hq-btn hq-btn--ghost" onClick={openGearCodex}>
-              Gear codex
-            </button>
-            <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setInvOpen(false)}>
-              Close pack
-            </button>
-          </div>
-        </aside>
+        <HarborInventoryBag
+          owned={progressSnap.owned}
+          look={progressSnap.look}
+          coins={progressSnap.coins}
+          selectedSlot={shopSlot}
+          onSelectSlot={setShopSlot}
+          onWear={onInvEquip}
+          onOpenCodex={openGearCodex}
+          onClose={() => setInvOpen(false)}
+          message={shopMsg}
+        />
       ) : null}
 
       {codexOpen ? (
