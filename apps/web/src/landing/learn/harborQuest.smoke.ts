@@ -670,6 +670,32 @@ function main() {
   assert.match(remotesSrc, /buildNametagSprite/, 'local nametag sprite helper')
   assert.match(remotesSrc, /setRemoteSailorPoseTarget/, 'remote pose lerp target')
   assert.match(remotesSrc, /tickRemoteSailorPose/, 'remote pose tick lerp')
+  assert.match(remotesSrc, /osrsOverheadSay/, 'overhead say marked OSRS-style')
+  assert.match(remotesSrc, /#ffff00/, 'overhead say uses public-chat yellow')
+  assert.match(remotesSrc, /OSRS_OUTLINE_OFFSETS|OSRS_SAY_STROKE/, 'overhead say has hard black outline')
+  assert.doesNotMatch(
+    remotesSrc,
+    /ctx\.fillStyle = 'rgba\(8, 18, 24|by \+ bh \+ 12/,
+    'overhead say has no chat-bubble plate or tail',
+  )
+  const questPanelSrc = readFileSync(new URL('./QuestPanel.tsx', import.meta.url), 'utf8')
+  assert.match(questPanelSrc, /hq-dock-actions--next-first/, 'Next sits above collapsed choices on correct')
+  assert.match(questPanelSrc, /!\(resolved && picked === step\.correctId\)/, 'all answer tiles hide on correct pick')
+  assert.match(questPanelSrc, /Next gate/, 'Next gate control present after correct')
+  assert.match(learnCss, /--hq-explore-chrome/, 'shared explore chrome clearance token')
+  assert.match(learnCss, /bottom:\s*var\(--hq-explore-chrome\)/, 'chat docks above Talk/Explore chrome')
+  assert.match(learnCss, /hq-dock-actions--next-first/, 'next-first dock spacing')
+  assert.match(
+    learnCss,
+    /hq-dialog-options \.hq-choices[\s\S]*?grid-template-columns:\s*repeat\(3/,
+    'pronunciation picks are three square tiles in one row',
+  )
+  assert.match(learnCss, /aspect-ratio:\s*1/, 'talking pick tiles are square')
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-build-slots[\s\S]*?grid-template-columns:\s*repeat\(3/,
+    'build Initial/Final/Tone sit as three square columns',
+  )
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
   assert.match(worldSrc, /tickRemoteSailorPose/, 'world lerps remote poses each frame')

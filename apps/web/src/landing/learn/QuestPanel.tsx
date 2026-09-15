@@ -290,70 +290,74 @@ function PickBody({
             <Line line={step.explain} />
           </p>
         ) : null}
+        {resolved && picked === step.correctId ? (
+          <div className="hq-dock-actions hq-dock-actions--next-first">
+            <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
+              Next gate →
+            </button>
+          </div>
+        ) : null}
       </DialogBox>
 
       <div className="hq-dialog-options">
-        <motion.div
-          className="hq-choices"
-          role="group"
-          aria-label="Answers"
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: {},
-            show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
-          }}
-        >
-          {step.choices.map((c) => {
-            let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
-            if (resolved) {
-              if (c.id === step.correctId) state = picked === c.id ? 'ok' : 'reveal'
-              else if (picked === c.id) state = 'no'
-            }
-            return (
-              <motion.button
-                key={c.id}
-                type="button"
-                className={`hq-choice is-${state}`}
-                disabled={resolved}
-                onClick={() => submit(c.id)}
-                variants={{
-                  hidden: { opacity: 0, y: 10 },
-                  show: { opacity: 1, y: 0 },
-                }}
-                transition={{ duration: 0.24, ease: inkEase }}
-                whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
-              >
-                <span className="hq-choice-label">
-                  <JyutpingChaoText text={c.label} />
-                </span>
-                {c.sub ? (
-                  <span className="hq-choice-sub">
-                    <JyutpingChaoText text={c.sub} />
+        {/* Wrong picks keep the full choice list + Try again; correct collapses away. */}
+        {!(resolved && picked === step.correctId) ? (
+          <motion.div
+            className="hq-choices"
+            role="group"
+            aria-label="Answers"
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
+            }}
+          >
+            {step.choices.map((c) => {
+              let state: 'idle' | 'ok' | 'no' | 'reveal' = 'idle'
+              if (resolved) {
+                if (c.id === step.correctId) state = picked === c.id ? 'ok' : 'reveal'
+                else if (picked === c.id) state = 'no'
+              }
+              return (
+                <motion.button
+                  key={c.id}
+                  type="button"
+                  className={`hq-choice is-${state}`}
+                  disabled={resolved}
+                  onClick={() => submit(c.id)}
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  transition={{ duration: 0.24, ease: inkEase }}
+                  whileTap={reduce || resolved ? undefined : { scale: 0.98 }}
+                >
+                  <span className="hq-choice-label">
+                    <JyutpingChaoText text={c.label} />
                   </span>
-                ) : null}
-              </motion.button>
-            )
-          })}
-        </motion.div>
-        {resolved ? (
+                  {c.sub ? (
+                    <span className="hq-choice-sub">
+                      <JyutpingChaoText text={c.sub} />
+                    </span>
+                  ) : null}
+                </motion.button>
+              )
+            })}
+          </motion.div>
+        ) : null}
+        {resolved && picked !== step.correctId ? (
           <div className="hq-dock-actions">
-            {picked === step.correctId ? (
-              <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
-                Next gate →
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="hq-btn hq-btn--ghost hq-btn--dock"
-                onClick={() => {
-                  setPicked(null)
-                  setResolved(false)
-                }}
-              >
-                Try again
-              </button>
-            )}
+            <button
+              type="button"
+              className="hq-btn hq-btn--ghost hq-btn--dock"
+              onClick={() => {
+                setPicked(null)
+                setResolved(false)
+              }}
+            >
+              Try again
+            </button>
           </div>
         ) : null}
       </div>
@@ -423,44 +427,53 @@ function BuildBody({
             <Line line={step.explain} />
           </p>
         ) : null}
+        {resolved && ok ? (
+          <div className="hq-dock-actions hq-dock-actions--next-first">
+            <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
+              Next gate →
+            </button>
+          </div>
+        ) : null}
       </DialogBox>
 
       <div className="hq-dialog-options">
-        <div className="hq-build-slots">
-          {step.slots.map((slot) => (
-            <div key={slot.key} className="hq-build-slot">
-              <span className="hq-build-slot-label">{slot.label}</span>
-              <div className="hq-build-opts" role="group" aria-label={slot.label}>
-                {slot.options.map((opt) => {
-                  const on = sel[slot.key] === opt
-                  const reveal =
-                    resolved && step.correct[slot.key] === opt
-                      ? 'ok'
-                      : resolved && on
-                        ? 'no'
-                        : on
-                          ? 'on'
-                          : 'idle'
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      className={`hq-tile is-${reveal}`}
-                      disabled={resolved}
-                      onClick={() => setSel((prev) => ({ ...prev, [slot.key]: opt }))}
-                    >
-                      {slot.key === 'tone' ? (
-                        <ToneDigitWithChao digit={opt} />
-                      ) : (
-                        <JyutpingChaoText text={opt} />
-                      )}
-                    </button>
-                  )
-                })}
+        {!(resolved && ok) ? (
+          <div className="hq-build-slots">
+            {step.slots.map((slot) => (
+              <div key={slot.key} className="hq-build-slot">
+                <span className="hq-build-slot-label">{slot.label}</span>
+                <div className="hq-build-opts" role="group" aria-label={slot.label}>
+                  {slot.options.map((opt) => {
+                    const on = sel[slot.key] === opt
+                    const reveal =
+                      resolved && step.correct[slot.key] === opt
+                        ? 'ok'
+                        : resolved && on
+                          ? 'no'
+                          : on
+                            ? 'on'
+                            : 'idle'
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        className={`hq-tile is-${reveal}`}
+                        disabled={resolved}
+                        onClick={() => setSel((prev) => ({ ...prev, [slot.key]: opt }))}
+                      >
+                        {slot.key === 'tone' ? (
+                          <ToneDigitWithChao digit={opt} />
+                        ) : (
+                          <JyutpingChaoText text={opt} />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : null}
         <div className="hq-dock-actions">
           {!resolved ? (
             <button
@@ -471,11 +484,7 @@ function BuildBody({
             >
               Launch ferry
             </button>
-          ) : ok ? (
-            <button type="button" className="hq-btn hq-btn--primary hq-btn--dock" onClick={onAdvance}>
-              Next gate →
-            </button>
-          ) : (
+          ) : ok ? null : (
             <button
               type="button"
               className="hq-btn hq-btn--ghost hq-btn--dock"

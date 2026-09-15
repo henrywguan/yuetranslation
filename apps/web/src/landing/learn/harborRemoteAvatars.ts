@@ -292,46 +292,83 @@ export function disposeNametagSprite(tag: THREE.Sprite) {
 }
 
 
-/** Floating say-text above a sailor (RuneScape-style public chat). */
+/**
+ * OSRS public-chat overhead: bare outlined glyphs, no bubble / plate / tail.
+ * Default fill is classic public-chat yellow; black stroke keeps it readable.
+ */
+const OSRS_SAY_FILL = '#ffff00'
+const OSRS_SAY_STROKE = '#000000'
+const OSRS_SAY_MAX_CHARS = 48
+const OSRS_SAY_LINE_CHARS = 28
+
+function wrapSayLines(text: string): string[] {
+  const raw = text.length > OSRS_SAY_MAX_CHARS ? `${text.slice(0, OSRS_SAY_MAX_CHARS - 1)}…` : text
+  const words = raw.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return ['']
+  const lines: string[] = []
+  let cur = ''
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w
+    if (next.length > OSRS_SAY_LINE_CHARS && cur) {
+      lines.push(cur)
+      cur = w
+    } else {
+      cur = next
+    }
+  }
+  if (cur) lines.push(cur)
+  return lines.slice(0, 3)
+}
+
+/** 8-way hard outline — matches OSRS readable overhead better than soft stroke alone. */
+const OSRS_OUTLINE_OFFSETS: ReadonlyArray<readonly [number, number]> = [
+  [-2, -2],
+  [0, -2],
+  [2, -2],
+  [-2, 0],
+  [2, 0],
+  [-2, 2],
+  [0, 2],
+  [2, 2],
+  [-3, 0],
+  [3, 0],
+  [0, -3],
+  [0, 3],
+]
+
 function chatBubbleTexture(text: string): THREE.CanvasTexture {
+  const lines = wrapSayLines(text.trim())
   const canvas = document.createElement('canvas')
-  canvas.width = 384
-  canvas.height = 96
+  canvas.width = 512
+  canvas.height = 128
   const ctx = canvas.getContext('2d')!
-  ctx.clearRect(0, 0, 384, 96)
-  const label = text.length > 42 ? `${text.slice(0, 41)}…` : text
-  ctx.font = '600 20px "Noto Sans", system-ui, sans-serif'
-  const metrics = ctx.measureText(label)
-  const padX = 16
-  const bw = Math.min(368, Math.max(72, metrics.width + padX * 2))
-  const bh = 40
-  const bx = (384 - bw) / 2
-  const by = 18
-  ctx.fillStyle = 'rgba(8, 18, 24, 0.82)'
-  roundRect(ctx, bx, by, bw, bh, 12)
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(232, 212, 140, 0.55)'
-  ctx.lineWidth = 2
-  ctx.stroke()
-  // Tail
-  ctx.beginPath()
-  ctx.moveTo(192 - 8, by + bh)
-  ctx.lineTo(192, by + bh + 12)
-  ctx.lineTo(192 + 8, by + bh)
-  ctx.closePath()
-  ctx.fillStyle = 'rgba(8, 18, 24, 0.82)'
-  ctx.fill()
-  ctx.fillStyle = '#f4efe0'
+  // Transparent canvas only — no bubble plate / border / tail.
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.font = '700 28px "Noto Sans", system-ui, sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(label, 192, by + bh / 2 + 1)
+  const lineH = 32
+  const blockH = lines.length * lineH
+  let y = (canvas.height - blockH) / 2 + lineH / 2
+  const cx = canvas.width / 2
+  for (const line of lines) {
+    ctx.fillStyle = OSRS_SAY_STROKE
+    for (const [dx, dy] of OSRS_OUTLINE_OFFSETS) {
+      ctx.fillText(line, cx + dx, y + dy)
+    }
+    ctx.fillStyle = OSRS_SAY_FILL
+    ctx.fillText(line, cx, y)
+    y += lineH
+  }
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
   tex.needsUpdate = true
   return tex
 }
 
+/** Overhead say sprite (API name kept for callers / smoke). */
 export function buildChatBubbleSprite(text: string): THREE.Sprite {
+  const lines = wrapSayLines(text.trim())
   const sprite = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: chatBubbleTexture(text),
@@ -340,9 +377,12 @@ export function buildChatBubbleSprite(text: string): THREE.Sprite {
       sizeAttenuation: true,
     }),
   )
-  sprite.name = 'chat-bubble'
-  sprite.scale.set(2.4, 0.6, 1)
+  sprite.name = 'chat-say'
+  // Wider / shorter plate — text only, no bubble padding.
+  const h = 0.38 + Math.max(0, lines.length - 1) * 0.28
+  sprite.scale.set(2.8, h, 1)
   sprite.userData.chatBubble = true
+  sprite.userData.osrsOverheadSay = true
   return sprite
 }
 
