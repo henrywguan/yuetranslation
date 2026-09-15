@@ -47,7 +47,7 @@ export async function loadAuthConfig(): Promise<void> {
   if (!supabaseEnabled()) configLoad = null
 }
 
-function getSupabase(): SupabaseClient | null {
+export function getSupabaseClient(): SupabaseClient | null {
   if (!supabaseEnabled()) return null
   if (!client) {
     client = createClient(supabaseUrl, supabaseAnonKey, {
@@ -113,28 +113,28 @@ export function consumeAuthScreenDeepLink(): boolean {
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) return null
   const { data } = await sb.auth.getSession()
   return data.session?.access_token ?? null
 }
 
 export async function getSession(): Promise<Session | null> {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) return null
   const { data } = await sb.auth.getSession()
   return data.session
 }
 
 export function onAuthChange(callback: (session: Session | null) => void) {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) return () => {}
   const { data } = sb.auth.onAuthStateChange((_event, session) => callback(session))
   return () => data.subscription.unsubscribe()
 }
 
 export async function signIn(email: string, password: string) {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) throw new Error('Auth is not configured.')
   const { error } = await sb.auth.signInWithPassword({ email, password })
   if (error) throw error
@@ -184,7 +184,7 @@ export async function signInWithApple() {
 }
 
 async function signInWithOAuthProvider(provider: 'google' | 'apple') {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) throw new Error('Auth is not configured.')
   const { error } = await sb.auth.signInWithOAuth({
     provider,
@@ -196,7 +196,7 @@ async function signInWithOAuthProvider(provider: 'google' | 'apple') {
 /** Call on app boot so PKCE / implicit OAuth callbacks restore the session. */
 export async function bootstrapAuthSession(): Promise<Session | null> {
   await loadAuthConfig()
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) return null
   const fromCallback = isAuthCallback()
   let session = (await sb.auth.getSession()).data.session
@@ -212,7 +212,7 @@ export async function bootstrapAuthSession(): Promise<Session | null> {
 }
 
 export async function signUp(email: string, password: string) {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) throw new Error('Auth is not configured.')
   const { error } = await sb.auth.signUp({
     email,
@@ -223,7 +223,7 @@ export async function signUp(email: string, password: string) {
 }
 
 export async function signOut() {
-  const sb = getSupabase()
+  const sb = getSupabaseClient()
   if (!sb) return
   await sb.auth.signOut()
 }

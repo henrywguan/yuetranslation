@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
@@ -28,6 +28,16 @@ import {
   type HarborGearSlot,
 } from './harborGear'
 import { HarborStage } from './HarborStage'
+import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
+import {
+  harborDisplayUsername,
+  startHarborPresence,
+  type HarborPresenceSession,
+  type HarborRemotePlayer,
+} from './harborPresence'
+import { getSession, getSupabaseClient } from '../../lib/auth'
+import { useYueStore } from '../../lib/store'
+import type { HarborWorldHandle } from './harborWorld'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
@@ -104,11 +114,80 @@ export function LearnSession({
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
   const [arenaOpen, setArenaOpen] = useState(false)
+  const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  const [localUsername, setLocalUsername] = useState('sailor')
+  const worldApiRef = useRef<HarborWorldHandle | null>(null)
+  const presenceRef = useRef<HarborPresenceSession | null>(null)
+  const entitlement = useYueStore((s) => s.entitlement)
   const [clearReward, setClearReward] = useState<{
     xpGained: number
     repeat: boolean
     clearCount: number
   } | null>(null)
+
+
+  // Signed-in only: open-world presence (see everyone + nametags)
+  useEffect(() => {
+    let cancelled = false
+    let interval: number | undefined
+
+    const boot = async () => {
+      const session = await getSession()
+      const userId = session?.user?.id
+      const preferred = entitlement?.prefs?.username
+      if (!userId) {
+        // Guests still get a local nametag (stable fallback handle)
+        const guestName = harborDisplayUsername(preferred, 'guest-local')
+        if (!cancelled) {
+          setLocalUsername(guestName)
+          worldApiRef.current?.setLocalUsername(guestName)
+          setRemotePlayers([])
+        }
+        return
+      }
+      const username = harborDisplayUsername(preferred, userId)
+      if (!cancelled) {
+        setLocalUsername(username)
+        worldApiRef.current?.setLocalUsername(username)
+      }
+      const supabase = getSupabaseClient()
+      if (!supabase) return
+      const sessionPresence = startHarborPresence({
+        supabase,
+        userId,
+        username,
+        onRemotes: (remotes) => {
+          if (!cancelled) setRemotePlayers(remotes)
+        },
+      })
+      presenceRef.current = sessionPresence
+
+      const push = () => {
+        const pose = worldApiRef.current?.getLocalPose()
+        if (!pose) return
+        void sessionPresence.track({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          mode: pose.mode,
+          look: pose.look,
+          username,
+        })
+      }
+      push()
+      interval = window.setInterval(push, 900)
+    }
+
+    void boot()
+    return () => {
+      cancelled = true
+      if (interval) window.clearInterval(interval)
+      const s = presenceRef.current
+      presenceRef.current = null
+      void s?.stop()
+    }
+  }, [entitlement?.prefs?.username, entitlement?.loggedIn])
 
   const closeChapterScroll = useCallback(() => {
     setScrollOpen(false)
@@ -353,6 +432,11 @@ export function LearnSession({
         ? step.resultJp
         : undefined
 
+  const profilePlayer = profileUserId
+    ? remotePlayers.find((p) => p.userId === profileUserId) ?? null
+    : null
+
+
   return (
     <div
       className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}`}
@@ -376,6 +460,10 @@ export function LearnSession({
             visitable !== null
           }
           onVisitable={onVisitable}
+          remotePlayers={remotePlayers}
+          localUsername={localUsername}
+          onRemotePlayerSelect={setProfileUserId}
+          worldApiRef={worldApiRef}
         />
       </div>
 
@@ -840,6 +928,13 @@ export function LearnSession({
         gold={progressSnap.gold ?? 0}
         onClose={() => setArenaOpen(false)}
         onEarnGold={onEarnGold}
+      />
+
+      <HarborPlayerProfileModal
+        open={Boolean(profilePlayer)}
+        username={profilePlayer?.username ?? ''}
+        look={profilePlayer?.look ?? progressSnap.look}
+        onClose={() => setProfileUserId(null)}
       />
     </div>
   )

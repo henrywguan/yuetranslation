@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { HarborLook } from './harborGear'
+import type { HarborRemotePlayer } from './harborPresence'
 import {
   createHarborWorld,
   type HarborHue,
@@ -18,6 +19,14 @@ type Props = {
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Signed-in multiplayer: remote sailors to render. */
+  remotePlayers?: HarborRemotePlayer[]
+  /** Local nametag (all sailors show a name above their head). */
+  localUsername?: string
+  /** Tap a remote sailor → profile modal. */
+  onRemotePlayerSelect?: (userId: string) => void
+  /** Parent access for presence broadcast (getLocalPose). */
+  worldApiRef?: React.MutableRefObject<HarborWorldHandle | null>
   className?: string
 }
 
@@ -31,12 +40,18 @@ export function HarborWorldCanvas({
   realm = 'river',
   paused = false,
   onVisitable,
+  remotePlayers,
+  localUsername,
+  onRemotePlayerSelect,
+  worldApiRef,
   className,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const worldRef = useRef<HarborWorldHandle | null>(null)
   const onVisitableRef = useRef(onVisitable)
   onVisitableRef.current = onVisitable
+  const onRemoteSelectRef = useRef(onRemotePlayerSelect)
+  onRemoteSelectRef.current = onRemotePlayerSelect
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -47,8 +62,10 @@ export function HarborWorldCanvas({
       look,
       realm,
       onVisitable: (id) => onVisitableRef.current?.(id),
+      onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
     })
     worldRef.current = world
+    if (worldApiRef) worldApiRef.current = world
 
     const onResize = () => world.resize()
     window.addEventListener('resize', onResize)
@@ -67,6 +84,7 @@ export function HarborWorldCanvas({
       ro?.disconnect()
       world.dispose()
       worldRef.current = null
+      if (worldApiRef) worldApiRef.current = null
     }
     // Recreate when realm changes (Campaign 1 river vs Campaign 2 bamboo garden).
     // Hue / motion / flash / look still sync via setters between recreations.
@@ -96,6 +114,14 @@ export function HarborWorldCanvas({
   useEffect(() => {
     worldRef.current?.setPaused(paused)
   }, [paused])
+
+  useEffect(() => {
+    worldRef.current?.setRemotePlayers(remotePlayers ?? [])
+  }, [remotePlayers])
+
+  useEffect(() => {
+    if (localUsername) worldRef.current?.setLocalUsername(localUsername)
+  }, [localUsername])
 
   return (
     <canvas

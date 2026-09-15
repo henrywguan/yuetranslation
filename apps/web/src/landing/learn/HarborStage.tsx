@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
+import type { MutableRefObject } from 'react'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { HarborLook } from './harborGear'
+import type { HarborRemotePlayer } from './harborPresence'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
-import type { HarborVisitableId } from './harborWorld'
+import type { HarborVisitableId, HarborWorldHandle } from './harborWorld'
 import { JyutpingChaoText } from './JyutpingChaoText'
 import { levelRealm, type HarborLevel } from './curriculum'
 
@@ -23,6 +25,11 @@ type HarborStageProps = {
   paused?: boolean
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Signed-in multiplayer remotes. */
+  remotePlayers?: HarborRemotePlayer[]
+  localUsername?: string
+  onRemotePlayerSelect?: (userId: string) => void
+  worldApiRef?: MutableRefObject<HarborWorldHandle | null>
 }
 
 /** Harbor Quest stage — continuous low-poly river voyage behind the HUD. */
@@ -36,6 +43,10 @@ export function HarborStage({
   look,
   paused = false,
   onVisitable,
+  remotePlayers,
+  localUsername,
+  onRemotePlayerSelect,
+  worldApiRef,
 }: HarborStageProps) {
   const reduce = useReducedMotion()
   const total = Math.max(stepCount, 1)
@@ -55,6 +66,10 @@ export function HarborStage({
         realm={levelRealm(level)}
         paused={paused}
         onVisitable={onVisitable}
+        remotePlayers={remotePlayers}
+        localUsername={localUsername}
+        onRemotePlayerSelect={onRemotePlayerSelect}
+        worldApiRef={worldApiRef}
       />
 
       {spotlight ? (
