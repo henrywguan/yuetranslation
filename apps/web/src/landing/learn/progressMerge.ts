@@ -194,7 +194,13 @@ const DEFAULT_LOOK = {
   lantern: 'lantern-paper-amber',
 } as const
 const KNOWN_GEAR = new Set([
-  'hat-straw','hat-bamboo','hat-scholar','hat-fisherman','hat-festival','top-harbor','top-jade','top-merchant','top-ferry','top-night','bottom-travel','bottom-slate','bottom-reed','bottom-crimson','bottom-ink','shoes-leather','shoes-straw','shoes-lacquer','shoes-jade','shoes-storm','hand-none','hand-fan','hand-lantern','hand-oar','hand-scroll','boat-canoe','boat-reed','boat-bamboo','boat-sampan','boat-barge','boat-junk','boat-scholar','boat-merchant','boat-jade','boat-dragon','boat-pearl','boat-imperial','lantern-paper-amber','lantern-paper-crimson','lantern-paper-jade','lantern-silk-gold','lantern-silk-azure','lantern-oil-iron','lantern-glass-ruby','lantern-glass-sapphire','lantern-porcelain','lantern-phoenix','lantern-dragon','lantern-starlight',
+  'hat-straw','hat-bamboo','hat-scholar','hat-fisherman','hat-festival','hat-jade-diadem','hat-starlit-helm',
+  'top-harbor','top-jade','top-merchant','top-ferry','top-night','top-jade-immortal','top-starlit-coat',
+  'bottom-travel','bottom-slate','bottom-reed','bottom-crimson','bottom-ink','bottom-phoenix','bottom-jade-flow','bottom-starlit-greaves',
+  'shoes-leather','shoes-straw','shoes-lacquer','shoes-jade','shoes-storm','shoes-jade-cloud','shoes-starlit-boots',
+  'hand-none','hand-fan','hand-lantern','hand-oar','hand-scroll','hand-phoenix-fan','hand-jade-orb','hand-starlit-compass',
+  'boat-canoe','boat-reed','boat-bamboo','boat-sampan','boat-barge','boat-junk','boat-scholar','boat-merchant','boat-jade','boat-dragon','boat-pearl','boat-imperial',
+  'lantern-paper-amber','lantern-paper-crimson','lantern-paper-jade','lantern-silk-gold','lantern-silk-azure','lantern-oil-iron','lantern-glass-ruby','lantern-glass-sapphire','lantern-porcelain','lantern-phoenix','lantern-dragon','lantern-starlight',
 ])
 
 function sanitizeLookInline(raw: unknown): HarborProgress['look'] {

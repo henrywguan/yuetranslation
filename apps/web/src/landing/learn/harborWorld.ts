@@ -25,6 +25,12 @@ import {
   HARBOR_DEFAULT_LOOK,
   type HarborLook,
 } from './harborGear'
+import {
+  attachVipBoatOrnaments,
+  tagVipLanternAnim,
+  tickVipGearAnims,
+} from './harborVipGear'
+import { enrichBoatHull } from './harborGearDetail'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
   buildChatBubbleSprite,
@@ -803,6 +809,7 @@ function boatLantern(
     g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
     attachLanternLight(g, weather, 0.5, glowCol, 1.25)
   }
+  tagVipLanternAnim(g, id)
   return g
 }
 
@@ -1776,6 +1783,11 @@ function buildBoatHull(boatId: string): THREE.Group {
   if (id === 'boat-jade') {
     g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, width * 0.5))
     g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, -width * 0.5))
+  }
+  if (id === 'boat-dragon' || id === 'boat-pearl' || id === 'boat-imperial') {
+    attachVipBoatOrnaments(g, id)
+  } else {
+    enrichBoatHull(g, item, { length, width })
   }
   return g
 }
@@ -3777,6 +3789,11 @@ export function createHarborWorld(
 
     ensureChunks(voyageZ)
     if (fxIndexDirty) rebuildFxIndex()
+
+    if (!reduced) {
+      tickVipGearAnims(boat, waterPhase)
+      tickVipGearAnims(scoutWalk, waterPhase)
+    }
 
     for (const o of animNodes) {
       // Speech bubbles face the camera and gently bob (OSRS Talk cue)
