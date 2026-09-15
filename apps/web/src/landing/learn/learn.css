@@ -2527,13 +2527,26 @@
 .hq-visit-panel--inv {
   border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
   max-width: min(22rem, calc(100vw - 1.2rem));
+  /* Taller than shop panels so paperdoll + pack + actions fit on phones. */
+  max-height: min(78dvh, 40rem);
+}
+.hq-visit-panel--inv .hq-visit-kicker,
+.hq-visit-panel--inv .hq-visit-title,
+.hq-visit-panel--inv .hq-visit-body,
+.hq-visit-panel--inv .hq-visit-msg,
+.hq-visit-panel--inv .hq-visit-actions,
+.hq-visit-panel--inv .hq-worn-pack-label {
+  flex-shrink: 0;
 }
 
 /* OSRS Worn Equipment–style paperdoll (Harbor jade/ink chrome) */
 .hq-worn {
   position: relative;
+  /* Critical: default flex-shrink collapses this box while absolute slots
+     keep painting at their top offsets — overlapping the pack list. */
+  flex-shrink: 0;
   width: 12.5rem;
-  height: 17.25rem;
+  height: 17.5rem;
   margin: 0.35rem auto 0.55rem;
 }
 .hq-worn-frame {
@@ -2663,51 +2676,141 @@
   color: #3dcfb6;
 }
 .hq-worn-pack-list {
+  flex-shrink: 1;
+  min-height: 0;
   max-height: min(28dvh, 12rem);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 640px) {
+  .hq-visit-panel--inv {
+    max-height: min(72dvh, 36rem);
+  }
 }
 
-.hq-visit-panel--codex {
-  width: min(26rem, calc(100vw - 1.5rem));
-  border-color: color-mix(in srgb, #c4a35a 40%, transparent);
+/* Full-screen Gear Codex — covers the harbor while browsing the database. */
+.hq-codex-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 52;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  padding:
+    max(0.55rem, env(safe-area-inset-top, 0px))
+    max(0.7rem, env(safe-area-inset-right, 0px))
+    max(0.7rem, env(safe-area-inset-bottom, 0px))
+    max(0.7rem, env(safe-area-inset-left, 0px));
   background:
-    linear-gradient(165deg, color-mix(in srgb, #1a1410 90%, #c4a35a 8%), color-mix(in srgb, #041018 94%, transparent));
+    radial-gradient(ellipse 90% 55% at 18% 0%, color-mix(in srgb, var(--harbor) 42%, transparent), transparent 58%),
+    radial-gradient(ellipse 70% 45% at 92% 12%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 52%),
+    linear-gradient(165deg, color-mix(in srgb, #07141c 94%, var(--harbor)), #0a1822 55%, #061018);
+  color: #e8f2f0;
+  overflow: hidden;
+}
+.hq-codex-screen-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-width: 44rem;
+  width: 100%;
+  margin: 0 auto;
+  gap: 0.55rem;
+}
+.hq-codex-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  flex-shrink: 0;
+}
+.hq-codex-header-copy {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.hq-codex-header .hq-visit-kicker {
+  color: color-mix(in srgb, var(--jade) 78%, #fff);
+}
+.hq-codex-header .hq-visit-title {
+  color: #f4fbf8;
+  margin-top: 0.15rem;
+}
+.hq-codex-header .hq-visit-body {
+  color: color-mix(in srgb, #e8f2f0 72%, transparent);
+  max-width: 36rem;
+}
+.hq-codex-close {
+  flex: 0 0 auto;
+  min-height: 2.5rem;
 }
 .hq-codex-slots {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.35rem;
-  margin: 0.35rem 0 0.55rem;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.1rem 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
 }
-.hq-codex-list {
-  list-style: none;
-  margin: 0 0 0.65rem;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  max-height: min(42dvh, 22rem);
+.hq-codex-slots::-webkit-scrollbar {
+  display: none;
+}
+.hq-codex-scroll {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.1rem 0.05rem 0.35rem;
 }
-.hq-codex-row {
+.hq-codex-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: 1.15rem 1fr auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
-  align-items: start;
-  padding: 0.45rem 0.5rem;
-  border-radius: 0.65rem;
-  border: 1px solid color-mix(in srgb, #dff6ff 10%, transparent);
-  background: color-mix(in srgb, #061820 70%, transparent);
 }
-.hq-codex-row.is-owned {
-  border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
+@media (min-width: 520px) {
+  .hq-codex-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
-.hq-codex-swatch {
-  width: 1.15rem;
-  height: 1.15rem;
-  margin-top: 0.15rem;
-  border-radius: 0.3rem;
-  border: 1px solid color-mix(in srgb, #fff 25%, transparent);
+.hq-codex-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.4rem;
+  padding: 0.55rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, #dff6ff 12%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #123040 82%, transparent), color-mix(in srgb, #0a1a24 90%, transparent));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 28%, transparent);
+  min-width: 0;
+}
+.hq-codex-card.is-owned {
+  border-color: color-mix(in srgb, #3dcfb6 40%, transparent);
+}
+.hq-codex-model {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #fff 10%, transparent);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 38%, color-mix(in srgb, var(--harbor) 35%, transparent), transparent 70%),
+    linear-gradient(180deg, #152836, #0b1820);
+}
+.hq-codex-model-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 6px 10px color-mix(in srgb, #000 35%, transparent));
 }
 .hq-codex-meta {
   display: flex;
@@ -2722,11 +2825,6 @@
 .hq-codex-name-zh {
   font: 500 0.78rem/1.25 'Noto Sans HK', 'Noto Sans', sans-serif;
   color: color-mix(in srgb, #dff6ff 72%, transparent);
-}
-.hq-codex-id {
-  font: 500 0.62rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: color-mix(in srgb, #c4a35a 80%, #fff 20%);
-  letter-spacing: 0.02em;
 }
 .hq-codex-tags {
   display: flex;
@@ -2755,10 +2853,11 @@
 }
 .hq-codex-side {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.2rem;
-  padding-top: 0.1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.5rem;
+  padding-top: 0.05rem;
 }
 .hq-codex-price {
   font: 600 0.72rem/1 Syne, system-ui, sans-serif;
@@ -2770,7 +2869,7 @@
   text-transform: uppercase;
   color: color-mix(in srgb, #dff6ff 55%, transparent);
 }
-.hq-codex-row.is-owned .hq-codex-own {
+.hq-codex-card.is-owned .hq-codex-own {
   color: #3dcfb6;
 }
 .hq-visit-panel--bank {
