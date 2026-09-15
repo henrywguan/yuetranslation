@@ -96,7 +96,10 @@
   font-weight: 650;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--ink) 78%, var(--jade));
-  white-space: nowrap;
+  max-width: 5.75rem;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 @keyframes hq-launch-bob {
