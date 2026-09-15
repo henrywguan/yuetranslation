@@ -6,20 +6,37 @@ function hex(n: number) {
 }
 
 /**
- * Low-poly SVG “model card” for the Gear Codex — silhouette per mesh family,
- * tinted with the catalog color so every row shows a readable item shape
- * (not just a flat swatch + name).
+ * Low-poly SVG “model card” for Gear Codex / OSRS bag slots — silhouette per
+ * mesh family, tinted with the catalog color so every piece shows a readable
+ * shape (not just a flat swatch + name).
  */
-export function HarborGearModelIcon({ item }: { item: HarborGearItem }) {
+export function HarborGearModelIcon({
+  item,
+  compact = false,
+}: {
+  item: HarborGearItem
+  /** Bag / inventory slot — no card plate, fills the cell. */
+  compact?: boolean
+}) {
   const mesh = harborGearMeshInfo(item)
   const fill = hex(item.color)
   const accent = hex(item.accent ?? item.color)
   const family = mesh.family
 
   return (
-    <span className="hq-codex-model" aria-hidden="true" data-family={family} data-slot={item.slot}>
-      <svg viewBox="0 0 64 64" width="64" height="64" className="hq-codex-model-svg">
-        <rect width="64" height="64" rx="10" fill="rgba(4,16,24,0.72)" />
+    <span
+      className={compact ? 'hq-bag-model' : 'hq-codex-model'}
+      aria-hidden="true"
+      data-family={family}
+      data-slot={item.slot}
+    >
+      <svg
+        viewBox="0 0 64 64"
+        width="64"
+        height="64"
+        className={compact ? 'hq-bag-model-svg' : 'hq-codex-model-svg'}
+      >
+        {compact ? null : <rect width="64" height="64" rx="10" fill="rgba(4,16,24,0.72)" />}
         {drawSilhouette(item.slot, family, item.id, fill, accent)}
       </svg>
     </span>
