@@ -43,6 +43,7 @@ import { useYueStore } from '../../lib/store'
 import { HarborMinimap, type HarborMinimapPose } from './HarborMinimap'
 import { HarborChatBox, type HarborChatLine } from './HarborChatBox'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
+import { HarborWornBoard } from './HarborWornBoard'
 import {
   HARBOR_NPC_ROLES,
   type HarborNpcRole,
@@ -907,27 +908,21 @@ export function LearnSession({
       ) : null}
 
       {invOpen ? (
-        <aside className="hq-visit-panel hq-visit-panel--inv" role="dialog" aria-label="Inventory">
-          <p className="hq-visit-kicker">Inventory · 行囊</p>
-          <h2 className="hq-visit-title">Your pack</h2>
+        <aside className="hq-visit-panel hq-visit-panel--inv" role="dialog" aria-label="Worn equipment">
+          <p className="hq-visit-kicker">Worn Equipment · 裝備</p>
+          <h2 className="hq-visit-title">Worn equipment</h2>
           <p className="hq-visit-body">
-            Gear you carry · wear it here · bank extras at the Harbor Bank portal
+            Tap a slot on the paperdoll, then wear a piece from your pack · bank extras at Harbor Bank
           </p>
-          <div className="hq-shop-slots" role="tablist" aria-label="Gear slots">
-            {HARBOR_GEAR_SLOTS.map((slot) => (
-              <button
-                key={slot}
-                type="button"
-                role="tab"
-                aria-selected={shopSlot === slot}
-                className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
-                onClick={() => setShopSlot(slot)}
-              >
-                {HARBOR_SLOT_LABEL[slot]}
-              </button>
-            ))}
-          </div>
-          <ul className="hq-shop-list">
+          <HarborWornBoard
+            look={progressSnap.look}
+            selected={shopSlot}
+            onSelect={setShopSlot}
+          />
+          <p className="hq-worn-pack-label">
+            Pack · {HARBOR_SLOT_LABEL[shopSlot]}
+          </p>
+          <ul className="hq-shop-list hq-worn-pack-list">
             {harborGearForSlot(shopSlot)
               .filter((item) => progressSnap.owned.includes(item.id))
               .map((item) => {
@@ -962,7 +957,7 @@ export function LearnSession({
           </ul>
           {shopMsg ? <p className="hq-visit-msg">{shopMsg}</p> : null}
           <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setInvOpen(false)}>
-            Close pack
+            Close
           </button>
         </aside>
       ) : null}
