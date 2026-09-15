@@ -104,7 +104,7 @@ export type HarborWorldHandle = {
   }
   /** Username shown above the local scout (all sailors get nametags). */
   setLocalUsername: (username: string) => void
-  /** RuneScape-style say text floating above a sailor (local or remote userId). */
+  /** OSRS-style overhead say (outlined text, no bubble) above local or remote sailor. */
   showSpeechBubble: (who: 'local' | string, text: string, durationMs?: number) => void
   resize: () => void
   dispose: () => void
