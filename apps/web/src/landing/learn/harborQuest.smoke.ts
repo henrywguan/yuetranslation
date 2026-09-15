@@ -570,6 +570,35 @@ function main() {
   assert.match(progressSrc, /continueHarborLevelId/, 'continue helper exported')
 
 
+
+  // Open-world multiplayer (signed-in presence + nametags + profile modal)
+  const presenceSrc = readFileSync(new URL('./harborPresence.ts', import.meta.url), 'utf8')
+  assert.match(presenceSrc, /export function harborDisplayUsername/, 'username helper exported')
+  assert.match(presenceSrc, /export function startHarborPresence/, 'presence session starter')
+  assert.match(presenceSrc, /HARBOR_PRESENCE_CHANNEL/, 'shared river channel')
+  assert.match(presenceSrc, /HARBOR_POSE_EVENT/, 'broadcast pose event')
+  assert.match(presenceSrc, /broadcastPose/, 'high-frequency pose broadcast')
+  const remotesSrc = readFileSync(new URL('./harborRemoteAvatars.ts', import.meta.url), 'utf8')
+  assert.match(remotesSrc, /export function buildRemoteSailor/, 'remote sailor mesh builder')
+  assert.match(remotesSrc, /export function remoteUserIdFromHits/, 'remote pick helper')
+  assert.match(remotesSrc, /buildNametagSprite/, 'local nametag sprite helper')
+  assert.match(remotesSrc, /setRemoteSailorPoseTarget/, 'remote pose lerp target')
+  assert.match(remotesSrc, /tickRemoteSailorPose/, 'remote pose tick lerp')
+  assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
+  assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
+  assert.match(worldSrc, /tickRemoteSailorPose/, 'world lerps remote poses each frame')
+  assert.match(worldSrc, /getLocalPose/, 'world exposes local pose for presence')
+  assert.match(worldSrc, /setLocalUsername/, 'world shows local nametag')
+  assert.match(worldSrc, /onRemotePlayerSelect/, 'tap remote opens profile')
+  const modalSrc = readFileSync(new URL('./HarborPlayerProfileModal.tsx', import.meta.url), 'utf8')
+  assert.match(modalSrc, /HarborPlayerProfileModal/, 'player profile modal')
+  assert.match(modalSrc, /Drag to spin/, 'profile modal spin/zoom hint')
+  const playSrcMp = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.match(playSrcMp, /startHarborPresence/, 'Learn session starts presence when signed in')
+  assert.match(playSrcMp, /setInterval\(pushPose, 100\)/, 'pose broadcast ~10 Hz')
+  assert.match(playSrcMp, /broadcastPose/, 'Learn session broadcasts live pose')
+  assert.match(playSrcMp, /HarborPlayerProfileModal/, 'Learn session mounts profile modal')
+
 console.log('harborQuest.smoke: ok', HARBOR_LEVELS.length, 'levels')
 }
 

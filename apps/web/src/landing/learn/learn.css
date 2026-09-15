@@ -3223,3 +3223,67 @@
   font-weight: 700;
   color: color-mix(in srgb, var(--jade-bright, #7aebd4) 85%, white);
 }
+
+/* —— Remote sailor profile (multiplayer) —— */
+.hq-player-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: color-mix(in srgb, #040a10 72%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.hq-player-sheet {
+  width: min(26rem, 100%);
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--jade, #3dcfb6) 35%, transparent);
+  background:
+    radial-gradient(80% 55% at 15% 0%, color-mix(in srgb, #1a4a48 40%, transparent), transparent 55%),
+    color-mix(in srgb, #0a161c 94%, #102028);
+  box-shadow: 0 24px 64px color-mix(in srgb, #000 55%, transparent);
+  padding: 1.15rem 1.25rem 1.35rem;
+}
+
+.hq-player-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.hq-player-kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--jade, #3dcfb6) 70%, white);
+}
+
+.hq-player-name {
+  margin: 0.2rem 0 0;
+  font-family: Syne, 'Noto Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: color-mix(in srgb, #e8f7f4 92%, white);
+}
+
+.hq-player-viewport {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #3dcfb6 28%, transparent);
+  background: #0a1c24;
+  touch-action: none;
+}
+
+.hq-player-hint {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, #e8f7f4 55%, transparent);
+}

@@ -20,6 +20,19 @@ import {
   HARBOR_DEFAULT_LOOK,
   type HarborLook,
 } from './harborGear'
+import type { HarborRemotePlayer } from './harborPresence'
+import {
+  buildNametagSprite,
+  buildRemoteSailor,
+  disposeNametagSprite,
+  disposeRemoteSailor,
+  remoteUserIdFromHits,
+  setRemoteSailorPoseTarget,
+  tickRemoteSailorPose,
+  updateNametagSprite,
+  updateRemoteSailor,
+} from './harborRemoteAvatars'
+import type { HarborPosePacket } from './harborPresence'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
@@ -41,6 +54,8 @@ export type HarborWorldOptions = {
   realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Tap a remote sailor (signed-in multiplayer). */
+  onRemotePlayerSelect?: (userId: string) => void
 }
 
 export type HarborWorldHandle = {
@@ -53,6 +68,20 @@ export type HarborWorldHandle = {
   setLook: (look: HarborLook) => void
   /** Pause the render loop (chart overlay / background tab). */
   setPaused: (on: boolean) => void
+  /** Replace remote sailor avatars (open-world presence join/leave). */
+  setRemotePlayers: (players: HarborRemotePlayer[]) => void
+  /** High-frequency Broadcast pose — lerp toward target (no React). */
+  applyRemotePose: (pose: HarborPosePacket) => void
+  /** Local pose for presence / broadcast. */
+  getLocalPose: () => {
+    x: number
+    z: number
+    yaw: number
+    mode: 'boat' | 'foot'
+    look: HarborLook
+  }
+  /** Username shown above the local scout (all sailors get nametags). */
+  setLocalUsername: (username: string) => void
   resize: () => void
   dispose: () => void
 }
@@ -2913,6 +2942,48 @@ export function createHarborWorld(
   scene.add(scoutWalk)
   applyLookToProtagonist(scoutWalk, currentLook)
 
+  // Open-world multiplayer ghosts + local nametag
+  const remotesRoot = new THREE.Group()
+  remotesRoot.name = 'harbor-remotes'
+  scene.add(remotesRoot)
+  const remoteById = new Map<string, THREE.Group>()
+  let localUsername = 'sailor'
+  const localNametag = buildNametagSprite(localUsername)
+  scene.add(localNametag)
+
+  const syncRemotePlayers = (players: HarborRemotePlayer[]) => {
+    const keep = new Set(players.map((p) => p.userId))
+    for (const [id, root] of remoteById) {
+      if (keep.has(id)) continue
+      remotesRoot.remove(root)
+      disposeRemoteSailor(root)
+      remoteById.delete(id)
+    }
+    for (const player of players) {
+      const existing = remoteById.get(player.userId)
+      if (existing) {
+        updateRemoteSailor(existing, player)
+      } else {
+        const root = buildRemoteSailor(player)
+        root.userData.remoteUserId = player.userId
+        remotesRoot.add(root)
+        remoteById.set(player.userId, root)
+      }
+    }
+  }
+
+  const applyPoseToRemote = (pose: HarborPosePacket) => {
+    const root = remoteById.get(pose.userId)
+    if (!root) return
+    setRemoteSailorPoseTarget(root, {
+      x: pose.x,
+      z: pose.z,
+      yaw: pose.yaw,
+      mode: pose.mode,
+    })
+  }
+
+
   let activeVisitable: HarborVisitableId | null = null
   const emitVisitable = (id: HarborVisitableId | null) => {
     if (id === activeVisitable) return
@@ -3010,6 +3081,15 @@ export function createHarborWorld(
     ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
     ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
     raycaster.setFromCamera(ndc, camera)
+    // Prefer picking a remote sailor over ground move
+    if (remotesRoot.children.length > 0) {
+      const hits = raycaster.intersectObjects(remotesRoot.children, true)
+      const remoteId = remoteUserIdFromHits(hits)
+      if (remoteId) {
+        options.onRemotePlayerSelect?.(remoteId)
+        return
+      }
+    }
     if (!raycaster.ray.intersectPlane(groundPlane, hitPoint)) return
     const tx = hitPoint.x
     const tz = hitPoint.z
@@ -3376,6 +3456,19 @@ export function createHarborWorld(
     camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
     camera.lookAt(lookX, lookY, lookZ)
 
+    // Local username plate follows boat / walking scout
+    localNametag.position.set(
+      travelMode === 'foot' ? scoutWalk.position.x : boat.position.x,
+      travelMode === 'foot' ? 2.05 : 1.85,
+      travelMode === 'foot' ? scoutWalk.position.z : boat.position.z,
+    )
+
+    // Ease remote sailors toward latest Broadcast / Presence pose targets
+    for (const root of remoteById.values()) {
+      tickRemoteSailorPose(root, reduced ? 1 : 0.32)
+    }
+
+
     ensureChunks(voyageZ)
     if (fxIndexDirty) rebuildFxIndex()
 
@@ -3524,9 +3617,48 @@ export function createHarborWorld(
     setPaused(on) {
       paused = on
     },
+    setRemotePlayers(players) {
+      syncRemotePlayers(players)
+    },
+    applyRemotePose(pose) {
+      applyPoseToRemote(pose)
+    },
+    getLocalPose() {
+      if (travelMode === 'foot') {
+        return {
+          x: footX,
+          z: footZ,
+          yaw: scoutWalk.rotation.y,
+          mode: 'foot' as const,
+          look: { ...currentLook },
+        }
+      }
+      return {
+        x: boatX,
+        z: voyageZ,
+        yaw: boat.rotation.y,
+        mode: 'boat' as const,
+        look: { ...currentLook },
+      }
+    },
+    setLocalUsername(username) {
+      const next = username.trim() || localUsername
+      if (next === localUsername && localNametag.visible) return
+      localUsername = next
+      updateNametagSprite(localNametag, localUsername)
+      localNametag.visible = true
+    },
     resize,
     dispose() {
       disposed = true
+      for (const root of remoteById.values()) {
+        remotesRoot.remove(root)
+        disposeRemoteSailor(root)
+      }
+      remoteById.clear()
+      scene.remove(remotesRoot)
+      disposeNametagSprite(localNametag)
+      scene.remove(localNametag)
       scoutWalk.traverse((o) => {
         if (o instanceof THREE.Mesh) {
           o.geometry.dispose()

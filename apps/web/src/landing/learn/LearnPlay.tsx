@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
@@ -28,6 +28,16 @@ import {
   type HarborGearSlot,
 } from './harborGear'
 import { HarborStage } from './HarborStage'
+import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
+import {
+  harborDisplayUsername,
+  startHarborPresence,
+  type HarborPresenceSession,
+  type HarborRemotePlayer,
+} from './harborPresence'
+import { getSession, getSupabaseClient } from '../../lib/auth'
+import { useYueStore } from '../../lib/store'
+import type { HarborWorldHandle } from './harborWorld'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
@@ -104,11 +114,111 @@ export function LearnSession({
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
   const [arenaOpen, setArenaOpen] = useState(false)
+  const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  const [localUsername, setLocalUsername] = useState('sailor')
+  const worldApiRef = useRef<HarborWorldHandle | null>(null)
+  const presenceRef = useRef<HarborPresenceSession | null>(null)
+  const entitlement = useYueStore((s) => s.entitlement)
   const [clearReward, setClearReward] = useState<{
     xpGained: number
     repeat: boolean
     clearCount: number
   } | null>(null)
+
+
+  // Signed-in only: open-world presence (see everyone + nametags)
+  // Presence = who is online (slow). Broadcast = live pose (~10 Hz).
+  useEffect(() => {
+    let cancelled = false
+    let poseTimer: number | undefined
+    let presenceTimer: number | undefined
+    let lastSent = { x: 0, z: 0, yaw: 0, mode: 'boat' as 'boat' | 'foot' }
+
+    const boot = async () => {
+      const session = await getSession()
+      const userId = session?.user?.id
+      const preferred = entitlement?.prefs?.username
+      if (!userId) {
+        // Guests still get a local nametag (stable fallback handle)
+        const guestName = harborDisplayUsername(preferred, 'guest-local')
+        if (!cancelled) {
+          setLocalUsername(guestName)
+          worldApiRef.current?.setLocalUsername(guestName)
+          setRemotePlayers([])
+        }
+        return
+      }
+      const username = harborDisplayUsername(preferred, userId)
+      if (!cancelled) {
+        setLocalUsername(username)
+        worldApiRef.current?.setLocalUsername(username)
+      }
+      const supabase = getSupabaseClient()
+      if (!supabase) return
+      const sessionPresence = startHarborPresence({
+        supabase,
+        userId,
+        username,
+        onRemotes: (remotes) => {
+          if (!cancelled) setRemotePlayers(remotes)
+        },
+        onPose: (pose) => {
+          // Bypass React — push straight into the WebGL lerp targets
+          worldApiRef.current?.applyRemotePose(pose)
+        },
+      })
+      presenceRef.current = sessionPresence
+
+      const readPose = () => worldApiRef.current?.getLocalPose() ?? null
+
+      const pushPresence = () => {
+        const pose = readPose()
+        if (!pose) return
+        void sessionPresence.track({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          mode: pose.mode,
+          look: pose.look,
+          username,
+        })
+      }
+
+      const pushPose = () => {
+        const pose = readPose()
+        if (!pose) return
+        const moved =
+          Math.hypot(pose.x - lastSent.x, pose.z - lastSent.z) > 0.04 ||
+          Math.abs(pose.yaw - lastSent.yaw) > 0.05 ||
+          pose.mode !== lastSent.mode
+        if (!moved) return
+        lastSent = { x: pose.x, z: pose.z, yaw: pose.yaw, mode: pose.mode }
+        sessionPresence.broadcastPose({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          mode: pose.mode,
+        })
+      }
+
+      pushPresence()
+      pushPose()
+      // Live movement: ~10 Hz Broadcast (Presence stays ~0.5 Hz for roster/look)
+      poseTimer = window.setInterval(pushPose, 100)
+      presenceTimer = window.setInterval(pushPresence, 2000)
+    }
+
+    void boot()
+    return () => {
+      cancelled = true
+      if (poseTimer) window.clearInterval(poseTimer)
+      if (presenceTimer) window.clearInterval(presenceTimer)
+      const s = presenceRef.current
+      presenceRef.current = null
+      void s?.stop()
+    }
+  }, [entitlement?.prefs?.username, entitlement?.loggedIn])
 
   const closeChapterScroll = useCallback(() => {
     setScrollOpen(false)
@@ -353,6 +463,11 @@ export function LearnSession({
         ? step.resultJp
         : undefined
 
+  const profilePlayer = profileUserId
+    ? remotePlayers.find((p) => p.userId === profileUserId) ?? null
+    : null
+
+
   return (
     <div
       className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}`}
@@ -376,6 +491,10 @@ export function LearnSession({
             visitable !== null
           }
           onVisitable={onVisitable}
+          remotePlayers={remotePlayers}
+          localUsername={localUsername}
+          onRemotePlayerSelect={setProfileUserId}
+          worldApiRef={worldApiRef}
         />
       </div>
 
@@ -840,6 +959,13 @@ export function LearnSession({
         gold={progressSnap.gold ?? 0}
         onClose={() => setArenaOpen(false)}
         onEarnGold={onEarnGold}
+      />
+
+      <HarborPlayerProfileModal
+        open={Boolean(profilePlayer)}
+        username={profilePlayer?.username ?? ''}
+        look={profilePlayer?.look ?? progressSnap.look}
+        onClose={() => setProfileUserId(null)}
       />
     </div>
   )
