@@ -140,7 +140,9 @@ export function LearnSession({
 
   const worldApiRef = useRef<HarborWorldHandle | null>(null)
   const presenceRef = useRef<HarborPresenceSession | null>(null)
-    const [clearReward, setClearReward] = useState<{
+  const playRootRef = useRef<HTMLDivElement | null>(null)
+  const talkHudRef = useRef<HTMLDivElement | null>(null)
+  const [clearReward, setClearReward] = useState<{
     xpGained: number
     repeat: boolean
     clearCount: number
@@ -355,6 +357,29 @@ export function LearnSession({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [scrollOpen, closeChapterScroll])
+
+  /** Keep --hq-osrs-strip = measured talk HUD height so the stage/FAB hug content
+   *  (no empty black void under the parchment / pick tiles). */
+  useEffect(() => {
+    const play = playRootRef.current
+    const hud = talkHudRef.current
+    if (!play) return
+    if (!talking || !hud) {
+      play.style.removeProperty('--hq-osrs-strip')
+      return
+    }
+    const apply = () => {
+      const h = Math.ceil(hud.getBoundingClientRect().height)
+      if (h > 0) play.style.setProperty('--hq-osrs-strip', `${h}px`)
+    }
+    apply()
+    const ro = new ResizeObserver(apply)
+    ro.observe(hud)
+    return () => {
+      ro.disconnect()
+      play.style.removeProperty('--hq-osrs-strip')
+    }
+  }, [talking, stepIndex, lastOk, flash])
 
   const pushProgress = useCallback(
     (p: HarborProgress) => {
@@ -619,6 +644,7 @@ export function LearnSession({
 
   return (
     <div
+      ref={playRootRef}
       className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}`}
       data-flash={flash ?? undefined}
     >
@@ -1100,7 +1126,10 @@ export function LearnSession({
         onSend={sendChat}
       />
 
-      <div className={`hq-play-hud${talking ? ' is-talking' : ' is-exploring'}`}>
+      <div
+        ref={talkHudRef}
+        className={`hq-play-hud${talking ? ' is-talking' : ' is-exploring'}`}
+      >
         <QuestPanel
           step={step}
           stepIndex={stepIndex}

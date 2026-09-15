@@ -395,17 +395,24 @@ function main() {
   assert.match(learnCss, /\.hq-feedback-text[\s\S]*?\.chao-face[\s\S]*?Noto Sans Chao/, 'jade feedback Chao uses Noto Sans Chao')
   assert.match(learnCss, /\.hq-play\.is-exploring[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'explore hides stage caption')
   assert.match(learnCss, /\.hq-play\.is-talking[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'talking hides stage caption')
-  assert.match(learnCss, /--hq-osrs-strip:\s*min\(48dvh,\s*26rem\)/, 'OSRS talking strip height fits large picks')
-  assert.match(learnCss, /--hq-osrs-strip:\s*min\(52dvh,\s*28rem\)/, 'mobile talking strip grows for pick tiles')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(52dvh,\s*28rem\)/, 'OSRS talking strip fallback max')
   assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'old short talking strip removed')
   assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(32dvh,\s*17rem\)/, 'old short mobile talking strip removed')
+  assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(48dvh,\s*26rem\)/, 'old fixed tall talking strip removed')
   assert.match(
     learnCss,
     /\.hq-play-stage\s*\{[^}]*bottom:\s*var\(--hq-osrs-strip\)/,
     'stage ends above OSRS strip so world stays fully visible',
   )
-  assert.match(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*height:\s*var\(--hq-osrs-strip\)/, 'talking HUD docks as fixed strip')
+  assert.match(
+    learnCss,
+    /\.hq-play-hud\.is-talking\s*\{[^}]*height:\s*auto/s,
+    'talking HUD hugs content height',
+  )
   assert.doesNotMatch(learnCss, /\.hq-play-hud\.is-talking\s*\{[^}]*max-height:\s*min\(62dvh/, 'old tall talking HUD removed')
+  assert.match(playSrc, /ResizeObserver/, 'talk strip height measured live')
+  assert.match(playSrc, /talkHudRef/, 'talk HUD ref for strip measure')
+  assert.match(playSrc, /setProperty\('--hq-osrs-strip'/, 'writes measured strip CSS var')
   assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
   assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
