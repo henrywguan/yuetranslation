@@ -29,6 +29,7 @@ import {
 } from './harborGear'
 import { HarborStage } from './HarborStage'
 import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
+import { HarborCharacterCreate } from './HarborCharacterCreate'
 import {
   harborDisplayUsername,
   startHarborPresence,
@@ -51,6 +52,7 @@ import {
   buyHarborGear,
   depositHarborGear,
   equipHarborGear,
+  completeHarborCharacter,
   loadHarborProgress,
   markCorrect,
   markGoldEarned,
@@ -117,10 +119,15 @@ export function LearnSession({
   const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [localUsername, setLocalUsername] = useState('sailor')
+  const entitlement = useYueStore((s) => s.entitlement)
+  const accountUsername = entitlement?.prefs?.username?.trim() || null
+  const needsCharacterCreate = !progressSnap.characterCreated
+  const needsUsername = !accountUsername && !progressSnap.localUsername
+  const showCharacterCreate = needsCharacterCreate || needsUsername
+
   const worldApiRef = useRef<HarborWorldHandle | null>(null)
   const presenceRef = useRef<HarborPresenceSession | null>(null)
-  const entitlement = useYueStore((s) => s.entitlement)
-  const [clearReward, setClearReward] = useState<{
+    const [clearReward, setClearReward] = useState<{
     xpGained: number
     repeat: boolean
     clearCount: number
@@ -138,7 +145,7 @@ export function LearnSession({
     const boot = async () => {
       const session = await getSession()
       const userId = session?.user?.id
-      const preferred = entitlement?.prefs?.username
+      const preferred = entitlement?.prefs?.username?.trim() || progressSnap.localUsername
       if (!userId) {
         // Guests still get a local nametag (stable fallback handle)
         const guestName = harborDisplayUsername(preferred, 'guest-local')
@@ -181,6 +188,8 @@ export function LearnSession({
           yaw: pose.yaw,
           mode: pose.mode,
           look: pose.look,
+          gender: pose.gender,
+          appearance: pose.appearance,
           username,
         })
       }
@@ -468,6 +477,29 @@ export function LearnSession({
     : null
 
 
+  if (showCharacterCreate) {
+    return (
+      <HarborCharacterCreate
+        existingUsername={accountUsername || progressSnap.localUsername}
+        signedIn={Boolean(entitlement?.loggedIn || entitlement?.signedIn)}
+        mode={needsCharacterCreate ? 'full' : 'username-only'}
+        onComplete={(result) => {
+          completeHarborCharacter({
+            gender: result.gender,
+            appearance: result.appearance,
+            look: result.look,
+            localUsername: result.username,
+          })
+          const next = loadHarborProgress()
+          setProgressSnap(next)
+          setLocalUsername(result.username)
+          worldApiRef.current?.setLocalUsername(result.username)
+          onProgress(next)
+        }}
+      />
+    )
+  }
+
   return (
     <div
       className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}`}
@@ -482,6 +514,8 @@ export function LearnSession({
           spotlight={talking ? spotlight : undefined}
           immersive
           look={progressSnap.look}
+          gender={progressSnap.gender}
+          appearance={progressSnap.appearance}
           paused={
             worldPaused ||
             invOpen ||

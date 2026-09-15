@@ -77,6 +77,8 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
 
   const body = buildHarborProtagonist({
     pose: player.mode === 'boat' ? 'seated' : 'standing',
+    gender: player.gender,
+    appearance: player.appearance,
   })
   body.name = 'remote-body'
   applyLookToProtagonist(body, player.look)
