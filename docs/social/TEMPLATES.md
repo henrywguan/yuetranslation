@@ -48,5 +48,5 @@ When adding a new template: create its canon doc under `docs/social/` (or `ig-po
 | [`carousel-solo-convo/`](./carousel-solo-convo/) | Solo/Convo instructional carousel |
 | [`launch-unrestricted/`](./launch-unrestricted/) | Unrestricted launch commercial brief |
 | [`ig-posts/PRIMARY-LANG.md`](./ig-posts/PRIMARY-LANG.md) | Primary Language locale carousel + Stories (night instructional + real UI) |
-| [`harbor-quest-ig/BRIEF.md`](./harbor-quest-ig/BRIEF.md) | Harbor Quest 10s Story reveal + mixed image/video carousel |
+| [`harbor-quest-ig/BRIEF.md`](./harbor-quest-ig/BRIEF.md) | Harbor Quest 10s Story reveal + image-only carousel |
 | [`story-feature-tour/BRIEF.md`](./story-feature-tour/BRIEF.md) | Also listed above as a living template when rebuilding |

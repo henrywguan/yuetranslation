@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build Harbor Quest IG Story (10s) + carousel video slides (ffmpeg only — $0 credits).
+ * Build Harbor Quest IG Story (10s) — carousel is image-only (render.mjs).
  *
  *   node docs/social/ig-posts/render.mjs --only harbor-quest
  *   node docs/social/harbor-quest-ig/build.mjs
@@ -12,8 +12,6 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '../../..')
-const SRC = join(__dirname, 'source')
-const FRAMES = join(SRC, 'frames')
 const OUT = join(__dirname, 'out')
 const IG_OUT = join(ROOT, 'docs/social/ig-posts/out')
 mkdirSync(OUT, { recursive: true })
@@ -49,35 +47,7 @@ function clickSfx(path) {
   ])
 }
 
-// 1) Explore pan clip for carousel (≈6s @ 12fps from frames)
-const frame0 = join(FRAMES, 'explore-00.jpg')
-if (existsSync(frame0)) {
-  const explore = join(OUT, 'carousel-02-voyage.mp4')
-  run('ffmpeg', [
-    '-y',
-    '-framerate', '12',
-    '-i', join(FRAMES, 'explore-%02d.jpg'),
-    '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=0x07131f,fps=30',
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-t', '6', '-an',
-    explore,
-  ])
-  console.log('wrote', explore)
-}
-
-// 2) Ken Burns arena clip for carousel (≈5s)
-const arenaStill = join(SRC, '03-arena.jpg')
-const arenaVid = join(OUT, 'carousel-04-arena.mp4')
-run('ffmpeg', [
-  '-y',
-  '-loop', '1', '-i', arenaStill,
-  '-vf',
-  "scale=1200:2600,zoompan=z='min(1.12,1+0.0015*on)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=150:s=1080x1920:fps=30,format=yuv420p",
-  '-t', '5', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-an',
-  arenaVid,
-])
-console.log('wrote', arenaVid)
-
-// 3) 10s Story reveal — stitch title/voyage/arena/end PNGs if present, else stills
+// 10s Story reveal — stitch title/voyage/arena/end PNGs
 const storyBeats = [
   { img: join(IG_OUT, 'ig-story-harbor-quest-title.png'), dur: 2.2 },
   { img: join(IG_OUT, 'ig-story-harbor-quest-voyage.png'), dur: 3.0 },
@@ -129,12 +99,7 @@ if (missing.length) {
   ])
   copyFileSync(story, join(IG_OUT, 'ig-story-harbor-quest-10s.mp4'))
   console.log('wrote', story)
-
-  // Also copy carousel videos into ig-posts/out for publishing
-  for (const name of ['carousel-02-voyage.mp4', 'carousel-04-arena.mp4']) {
-    const src = join(OUT, name)
-    if (existsSync(src)) copyFileSync(src, join(IG_OUT, `ig-post-harbor-quest-${name}`))
-  }
 }
 
 console.log('done →', OUT)
+console.log('Carousel is image-only — upload PNGs from docs/social/ig-posts/out/ig-post-harbor-quest-0*.png')
