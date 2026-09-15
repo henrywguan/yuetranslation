@@ -108,6 +108,7 @@ export function LearnPage() {
           onExit={openChart}
           onOpenLevel={openLevel}
           onProgress={setProgress}
+          worldPaused={chartOpen}
         />
 
         {chartOpen ? (

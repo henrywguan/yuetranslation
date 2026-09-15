@@ -2179,6 +2179,10 @@
   border-color: color-mix(in srgb, #f0d060 55%, transparent);
   filter: brightness(1.06);
 }
+.hq-coin-chip.is-open {
+  border-color: color-mix(in srgb, #f0d060 65%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #3dcfb6 28%, transparent);
+}
 .hq-coin-chip-icon {
   color: #3dcfb6;
   font-size: 0.95rem;
@@ -2419,28 +2423,7 @@
 
 
 
-/* —— Inventory button + Bank / Pack panels —— */
-.hq-inv-btn {
-  margin-left: 0.4rem;
-  padding: 0.28rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, #3dcfb6 45%, transparent);
-  background: color-mix(in srgb, #041018 70%, #3dcfb6 14%);
-  color: #e8fff8;
-  font: 600 0.75rem/1 Syne, system-ui, sans-serif;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-.hq-inv-btn:hover {
-  border-color: color-mix(in srgb, #3dcfb6 70%, transparent);
-  background: color-mix(in srgb, #041018 55%, #3dcfb6 22%);
-}
-.hq-inv-btn.is-open {
-  border-color: #3dcfb6;
-  box-shadow: 0 0 0 1px color-mix(in srgb, #3dcfb6 40%, transparent);
-  color: #f5fffb;
-}
+/* —— Inventory / Bank panels (coin chip toggles inventory) —— */
 .hq-visit-panel--inv {
   border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
 }
@@ -2460,7 +2443,8 @@
 .hq-chart-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  /* Above immersive play (z-index 50) so Chart actually appears */
+  z-index: 90;
   display: grid;
   place-items: end center;
   padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
@@ -3183,33 +3167,42 @@
   color: color-mix(in srgb, #e8dcc8 65%, transparent);
 }
 
-/* —— XP HUD + clear rewards —— */
+/* —— XP HUD + clear rewards (flat text — not a pill) —— */
 .hq-xp-chip {
   display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--jade) 40%, transparent);
-  background: color-mix(in srgb, var(--jade) 12%, transparent);
+  align-items: baseline;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.1rem 0.15rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   font-family: 'Noto Sans', system-ui, sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--jade-bright, #7aebd4) 85%, white);
+  color: color-mix(in srgb, #e8f7f4 88%, white);
+  text-shadow: 0 1px 6px color-mix(in srgb, #041018 75%, transparent);
   cursor: default;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .hq-xp-chip-icon {
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  opacity: 0.85;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  opacity: 0.8;
+  color: var(--jade, #3dcfb6);
+}
+
+.hq-xp-chip-val {
+  font-variant-numeric: tabular-nums;
 }
 
 .hq-xp-chip-lv {
-  margin-left: 0.15rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  opacity: 0.75;
+  font-size: 0.68rem;
+  font-weight: 650;
+  opacity: 0.72;
 }
 
 .hq-clear-xp {
