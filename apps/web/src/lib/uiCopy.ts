@@ -13,6 +13,7 @@ export type Bi = {
   vi?: string
   wuu?: string
   cmn?: string
+  sichuan?: string
 }
 
 export const ui = {

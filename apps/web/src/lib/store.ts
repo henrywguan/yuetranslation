@@ -214,11 +214,6 @@ type State = {
     sourceText: string
     sourceLang?: Lang
   }) => Promise<void>
-  formalizePeninsularSpanish: (opts: {
-    spanish: string
-    sourceText: string
-    sourceLang?: Lang
-  }) => Promise<void>
   /** Clear Solo / Conversation active text only — keeps History. */
   clearCurrent: () => void
   /** Wipe History list (and persist empty to the account when signed in). */
