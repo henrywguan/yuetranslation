@@ -27,8 +27,10 @@ import {
 } from './harborGear'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
+  buildChatBubbleSprite,
   buildNametagSprite,
   buildRemoteSailor,
+  disposeChatBubbleSprite,
   disposeNametagSprite,
   disposeRemoteSailor,
   remoteUserIdFromHits,
@@ -90,6 +92,11 @@ export type HarborWorldHandle = {
     x: number
     z: number
     yaw: number
+    /**
+     * Orbit camera yaw (`orbitCameraOffset` φ). Minimap “up” = look direction past the boat.
+     * yaw 0 → looking +Z; increases clockwise from above.
+     */
+    viewYaw: number
     mode: 'boat' | 'foot'
     look: HarborLook
     gender: HarborGender
@@ -97,6 +104,8 @@ export type HarborWorldHandle = {
   }
   /** Username shown above the local scout (all sailors get nametags). */
   setLocalUsername: (username: string) => void
+  /** RuneScape-style say text floating above a sailor (local or remote userId). */
+  showSpeechBubble: (who: 'local' | string, text: string, durationMs?: number) => void
   resize: () => void
   dispose: () => void
 }
@@ -3188,6 +3197,44 @@ export function createHarborWorld(
   let localUsername = 'sailor'
   const localNametag = buildNametagSprite(localUsername)
   scene.add(localNametag)
+  let localSpeechBubble: THREE.Sprite | null = null
+  let localSpeechUntil = 0
+  const remoteSpeech = new Map<string, { sprite: THREE.Sprite; until: number }>()
+
+  const clearSpeechBubble = (sprite: THREE.Sprite | null, parent?: THREE.Object3D | null) => {
+    if (!sprite) return
+    parent?.remove(sprite)
+    if (sprite.parent) sprite.parent.remove(sprite)
+    disposeChatBubbleSprite(sprite)
+  }
+
+  const showSpeechBubble = (who: 'local' | string, text: string, durationMs = 4500) => {
+    const cleaned = text.trim()
+    if (!cleaned) return
+    const until = performance.now() + Math.max(1200, durationMs)
+    if (who === 'local') {
+      clearSpeechBubble(localSpeechBubble, scene)
+      localSpeechBubble = buildChatBubbleSprite(cleaned)
+      localSpeechBubble.position.copy(localNametag.position)
+      localSpeechBubble.position.y += 0.55
+      scene.add(localSpeechBubble)
+      localSpeechUntil = until
+      return
+    }
+    const root = remoteById.get(who)
+    if (!root) return
+    const prev = remoteSpeech.get(who)
+    if (prev) {
+      root.remove(prev.sprite)
+      disposeChatBubbleSprite(prev.sprite)
+    }
+    const sprite = buildChatBubbleSprite(cleaned)
+    const mode = (root.userData.remoteMode as string | undefined) ?? 'boat'
+    sprite.position.set(0, mode === 'foot' ? 2.55 : 2.35, 0)
+    root.add(sprite)
+    remoteSpeech.set(who, { sprite, until })
+  }
+
 
   const syncRemotePlayers = (players: HarborRemotePlayer[]) => {
     const keep = new Set(players.map((p) => p.userId))
@@ -3700,6 +3747,27 @@ export function createHarborWorld(
       travelMode === 'foot' ? 2.05 : 1.85,
       travelMode === 'foot' ? scoutWalk.position.z : boat.position.z,
     )
+    if (localSpeechBubble) {
+      localSpeechBubble.position.set(
+        localNametag.position.x,
+        localNametag.position.y + 0.55,
+        localNametag.position.z,
+      )
+      if (performance.now() > localSpeechUntil) {
+        clearSpeechBubble(localSpeechBubble, scene)
+        localSpeechBubble = null
+      }
+    }
+    if (remoteSpeech.size > 0) {
+      const now = performance.now()
+      for (const [id, entry] of remoteSpeech) {
+        if (now > entry.until) {
+          entry.sprite.parent?.remove(entry.sprite)
+          disposeChatBubbleSprite(entry.sprite)
+          remoteSpeech.delete(id)
+        }
+      }
+    }
 
     // Ease remote sailors toward latest Broadcast / Presence pose targets
     for (const root of remoteById.values()) {
@@ -3874,11 +3942,14 @@ if (o.userData.cigaretteSmoke && !reduced) {
       applyPoseToRemote(pose)
     },
     getLocalPose() {
+      // Orbit yaw drives minimap orientation (radar rotates with the camera, not only the hull).
+      const viewYaw = yaw
       if (travelMode === 'foot') {
         return {
           x: footX,
           z: footZ,
           yaw: scoutWalk.rotation.y,
+          viewYaw,
           mode: 'foot' as const,
           look: { ...currentLook },
           gender: currentGender,
@@ -3889,6 +3960,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
         x: boatX,
         z: voyageZ,
         yaw: boat.rotation.y,
+        viewYaw,
         mode: 'boat' as const,
         look: { ...currentLook },
         gender: currentGender,
@@ -3902,6 +3974,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       updateNametagSprite(localNametag, localUsername)
       localNametag.visible = true
     },
+    showSpeechBubble,
     resize,
     dispose() {
       disposed = true
@@ -3911,6 +3984,15 @@ if (o.userData.cigaretteSmoke && !reduced) {
       }
       remoteById.clear()
       scene.remove(remotesRoot)
+      if (localSpeechBubble) {
+        clearSpeechBubble(localSpeechBubble, scene)
+        localSpeechBubble = null
+      }
+      for (const entry of remoteSpeech.values()) {
+        entry.sprite.parent?.remove(entry.sprite)
+        disposeChatBubbleSprite(entry.sprite)
+      }
+      remoteSpeech.clear()
       disposeNametagSprite(localNametag)
       scene.remove(localNametag)
       scoutWalk.traverse((o) => {

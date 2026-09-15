@@ -1,158 +1,336 @@
-import { useMemo } from 'react'
-import {
-  HARBOR_VISITABLES,
-  type HarborVisitableId,
-} from './harborWorld'
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { HARBOR_VISITABLES, type HarborVisitableId } from './harborWorld'
 import type { HarborRemotePlayer } from './harborPresence'
-
-/** World units shown from the sailor to the minimap edge. */
-export const HARBOR_MINIMAP_RADIUS = 28
-
-const BLIP_COLOR: Record<HarborVisitableId, string> = {
-  'save-shack': '#ffd060',
-  outfitter: '#ff80c0',
-  bank: '#60ffe0',
-  arena: '#ff6040',
-  barber: '#ff7090',
-}
 
 export type HarborMinimapPose = {
   x: number
   z: number
   yaw: number
+  /** Orbit camera facing direction (world yaw of “look forward”). */
+  viewYaw: number
+}
+
+const STORAGE_KEY = 'harbor.minimap.layout.v1'
+const WORLD_RADIUS = 90
+const MIN_SIZE = 96
+const MAX_SIZE = 240
+const DEFAULT_SIZE = 120
+const COLLAPSED_H = 32
+
+type Layout = {
+  left: number
+  top: number
+  size: number
+  collapsed: boolean
+  locked: boolean
+  /** Color key — off by default so the radar stays quiet. */
+  legendOpen: boolean
+}
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n))
+}
+
+function loadLayout(): Layout {
+  const fallback: Layout = {
+    left: 12,
+    top: 72,
+    size: DEFAULT_SIZE,
+    collapsed: false,
+    locked: false,
+    legendOpen: false,
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return fallback
+    const parsed = JSON.parse(raw) as Partial<Layout>
+    return {
+      left: typeof parsed.left === 'number' ? parsed.left : fallback.left,
+      top: typeof parsed.top === 'number' ? parsed.top : fallback.top,
+      size: typeof parsed.size === 'number' ? clamp(parsed.size, MIN_SIZE, MAX_SIZE) : fallback.size,
+      collapsed: Boolean(parsed.collapsed),
+      locked: Boolean(parsed.locked),
+      // Prefer explicit false; missing key stays hidden (less intrusive default).
+      legendOpen: parsed.legendOpen === true,
+    }
+  } catch {
+    return fallback
+  }
+}
+
+function saveLayout(layout: Layout) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout))
+  } catch {
+    /* ignore */
+  }
+}
+
+function project(
+  dx: number,
+  dz: number,
+  viewYaw: number,
+  size: number,
+): { left: number; top: number; onMap: boolean } {
+  // Orbit φ: 0 = camera on −Z looking +Z. forward/right match lookDir past the boat.
+  const c = Math.cos(viewYaw)
+  const s = Math.sin(viewYaw)
+  const forward = -dx * s + dz * c
+  const right = dx * c + dz * s
+  const nx = right / WORLD_RADIUS
+  const ny = -forward / WORLD_RADIUS
+  const r = Math.hypot(nx, ny)
+  const scale = r > 1 ? 1 / r : 1
+  const cx = size / 2
+  const cy = size / 2
+  const rad = size * 0.42
+  return {
+    left: cx + nx * scale * rad,
+    top: cy + ny * scale * rad,
+    onMap: r <= 1.05,
+  }
+}
+
+const VISIT_DOT: Record<HarborVisitableId, string> = {
+  'save-shack': 'hq-minimap-dot--save-shack',
+  outfitter: 'hq-minimap-dot--outfitter',
+  bank: 'hq-minimap-dot--bank',
+  arena: 'hq-minimap-dot--arena',
+  barber: 'hq-minimap-dot--barber',
 }
 
 type Props = {
   pose: HarborMinimapPose | null
-  remotes?: readonly HarborRemotePlayer[]
-  /** Hide while a visit panel owns the left dock. */
+  remotes: HarborRemotePlayer[]
   hidden?: boolean
 }
 
-type Blip = {
-  key: string
-  kind: 'npc' | 'remote' | 'you'
-  label: string
-  color: string
-  /** Normalised -1…1 in map space (x right, y up = -world Z). */
-  nx: number
-  ny: number
-  inRange: boolean
-}
+export function HarborMinimap({ pose, remotes, hidden }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [layout, setLayout] = useState<Layout>(() => loadLayout())
+  const dragRef = useRef<{
+    kind: 'move' | 'resize'
+    pointerId: number
+    startX: number
+    startY: number
+    origLeft: number
+    origTop: number
+    origSize: number
+  } | null>(null)
 
-function project(
-  originX: number,
-  originZ: number,
-  yaw: number,
-  targetX: number,
-  targetZ: number,
-  radius: number,
-): { nx: number; ny: number; dist: number } {
-  const dx = targetX - originX
-  const dz = targetZ - originZ
-  const dist = Math.hypot(dx, dz)
-  // Rotate into sailor-forward frame (yaw 0 → -Z)
-  const c = Math.cos(yaw)
-  const s = Math.sin(yaw)
-  const localX = dx * c + dz * s
-  const localZ = -dx * s + dz * c
-  const scale = 0.92 / radius
-  return {
-    nx: localX * scale,
-    ny: -localZ * scale,
-    dist,
-  }
-}
+  useEffect(() => {
+    saveLayout(layout)
+  }, [layout])
 
-/**
- * Top-left vicinity radar — landmark host NPCs + nearby sailors.
- */
-export function HarborMinimap({ pose, remotes = [], hidden = false }: Props) {
-  const blips = useMemo(() => {
-    if (!pose) return [] as Blip[]
-    const out: Blip[] = []
-    out.push({
-      key: 'you',
-      kind: 'you',
-      label: 'You',
-      color: '#3dcfb6',
-      nx: 0,
-      ny: 0,
-      inRange: true,
-    })
-    for (const v of HARBOR_VISITABLES) {
-      const p = project(pose.x, pose.z, pose.yaw, v.x, v.z, HARBOR_MINIMAP_RADIUS)
-      if (p.dist > HARBOR_MINIMAP_RADIUS * 1.05) continue
-      out.push({
-        key: v.id,
-        kind: 'npc',
-        label: v.name.en,
-        color: BLIP_COLOR[v.id],
-        nx: Math.max(-0.92, Math.min(0.92, p.nx)),
-        ny: Math.max(-0.92, Math.min(0.92, p.ny)),
-        inRange: p.dist <= HARBOR_MINIMAP_RADIUS,
-      })
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const d = dragRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      const dx = e.clientX - d.startX
+      const dy = e.clientY - d.startY
+      if (d.kind === 'move') {
+        const el = rootRef.current
+        const w = el?.offsetWidth ?? layout.size
+        const h = el?.offsetHeight ?? (layout.collapsed ? COLLAPSED_H : layout.size + COLLAPSED_H)
+        setLayout((prev) => ({
+          ...prev,
+          left: clamp(d.origLeft + dx, 4, window.innerWidth - w - 4),
+          top: clamp(d.origTop + dy, 4, window.innerHeight - h - 4),
+        }))
+      } else {
+        const next = clamp(d.origSize + Math.max(dx, dy), MIN_SIZE, MAX_SIZE)
+        setLayout((prev) => ({ ...prev, size: next }))
+      }
     }
-    for (const r of remotes) {
-      const p = project(pose.x, pose.z, pose.yaw, r.x, r.z, HARBOR_MINIMAP_RADIUS)
-      if (p.dist > HARBOR_MINIMAP_RADIUS) continue
-      out.push({
-        key: `remote-${r.userId}`,
-        kind: 'remote',
-        label: r.username,
-        color: '#dff6ff',
-        nx: Math.max(-0.92, Math.min(0.92, p.nx)),
-        ny: Math.max(-0.92, Math.min(0.92, p.ny)),
-        inRange: true,
-      })
+    const onUp = (e: PointerEvent) => {
+      const d = dragRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      dragRef.current = null
     }
-    return out
-  }, [pose, remotes])
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+  }, [layout.collapsed, layout.size])
+
+  const beginMove = useCallback(
+    (e: ReactPointerEvent<HTMLElement>) => {
+      if (layout.locked) return
+      if ((e.target as HTMLElement).closest('button, .hq-minimap-resize')) return
+      e.preventDefault()
+      e.stopPropagation()
+      dragRef.current = {
+        kind: 'move',
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: layout.left,
+        origTop: layout.top,
+        origSize: layout.size,
+      }
+    },
+    [layout.locked, layout.left, layout.top, layout.size],
+  )
+
+  const beginResize = useCallback(
+    (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (layout.locked || layout.collapsed) return
+      e.preventDefault()
+      e.stopPropagation()
+      dragRef.current = {
+        kind: 'resize',
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: layout.left,
+        origTop: layout.top,
+        origSize: layout.size,
+      }
+    },
+    [layout.locked, layout.collapsed, layout.left, layout.top, layout.size],
+  )
 
   if (hidden) return null
 
-  const nearbyNpcs = blips.filter((b) => b.kind === 'npc')
-  const nearbyRemotes = blips.filter((b) => b.kind === 'remote')
+  const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
+  const size = layout.size
+
+  const nearbyVisits =
+    pose == null
+      ? []
+      : HARBOR_VISITABLES.filter((v) => {
+          const p = project(v.x - pose.x, v.z - pose.z, viewYaw, size)
+          return p.onMap
+        })
+  const nearbyRemotes =
+    pose == null
+      ? []
+      : remotes.filter((r) => {
+          const p = project(r.x - pose.x, r.z - pose.z, viewYaw, size)
+          return p.onMap
+        })
 
   return (
-    <div className="hq-minimap" role="img" aria-label="Harbor vicinity map">
-      <p className="hq-minimap-kicker">Vicinity · 附近</p>
-      <div className="hq-minimap-disc" aria-hidden="true">
-        <span className="hq-minimap-ring hq-minimap-ring--outer" />
-        <span className="hq-minimap-ring hq-minimap-ring--mid" />
-        <span className="hq-minimap-cross" />
-        <span className="hq-minimap-n">N</span>
-        {blips.map((b) => (
-          <span
-            key={b.key}
-            className={`hq-minimap-blip hq-minimap-blip--${b.kind}`}
-            style={{
-              left: `${50 + b.nx * 50}%`,
-              top: `${50 + b.ny * 50}%`,
-              background: b.color,
-              boxShadow: `0 0 8px ${b.color}`,
+    <div
+      ref={rootRef}
+      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}`}
+      style={{ left: layout.left, top: layout.top, width: size }}
+      aria-label="Harbor minimap"
+    >
+      <div className="hq-minimap-chrome" onPointerDown={beginMove}>
+        <button
+          type="button"
+          className="hq-minimap-tool"
+          aria-expanded={!layout.collapsed}
+          aria-label={layout.collapsed ? 'Expand minimap' : 'Collapse minimap'}
+          onClick={(e) => {
+            e.stopPropagation()
+            setLayout((prev) => ({ ...prev, collapsed: !prev.collapsed }))
+          }}
+        >
+          {layout.collapsed ? '+' : '–'}
+        </button>
+        <span className="hq-minimap-title">Nearby</span>
+        {!layout.collapsed && (
+          <button
+            type="button"
+            className={`hq-minimap-tool hq-minimap-tool--legend${layout.legendOpen ? ' is-on' : ''}`}
+            aria-expanded={layout.legendOpen}
+            aria-label={layout.legendOpen ? 'Hide legend' : 'Show legend'}
+            title={layout.legendOpen ? 'Hide legend' : 'Show legend'}
+            onClick={(e) => {
+              e.stopPropagation()
+              setLayout((prev) => ({ ...prev, legendOpen: !prev.legendOpen }))
             }}
-            title={b.label}
-          />
-        ))}
+          >
+            <span className="hq-minimap-legend-ico" aria-hidden />
+          </button>
+        )}
+        <button
+          type="button"
+          className={`hq-minimap-tool${layout.locked ? ' is-on' : ''}`}
+          aria-pressed={layout.locked}
+          aria-label={layout.locked ? 'Unlock minimap' : 'Lock minimap'}
+          title={layout.locked ? 'Unlock position & size' : 'Lock position & size'}
+          onClick={(e) => {
+            e.stopPropagation()
+            setLayout((prev) => ({ ...prev, locked: !prev.locked }))
+          }}
+        >
+          {layout.locked ? '●' : '○'}
+        </button>
       </div>
-      <ul className="hq-minimap-legend" aria-label="Nearby hosts">
-        {nearbyNpcs.length === 0 && nearbyRemotes.length === 0 ? (
-          <li className="hq-minimap-empty">No hosts nearby</li>
-        ) : null}
-        {nearbyNpcs.map((b) => (
-          <li key={b.key}>
-            <span className="hq-minimap-dot" style={{ background: b.color }} aria-hidden="true" />
-            <span>{b.label}</span>
-          </li>
-        ))}
-        {nearbyRemotes.map((b) => (
-          <li key={b.key}>
-            <span className="hq-minimap-dot hq-minimap-dot--remote" aria-hidden="true" />
-            <span>{b.label}</span>
-          </li>
-        ))}
-      </ul>
+
+      {!layout.collapsed && (
+        <>
+          <div className="hq-minimap-body">
+            <div className="hq-minimap-ring" aria-hidden />
+            <div className="hq-minimap-heading" aria-hidden title="Camera forward" />
+            {pose &&
+              HARBOR_VISITABLES.map((v) => {
+                const p = project(v.x - pose.x, v.z - pose.z, viewYaw, size)
+                if (!p.onMap) return null
+                return (
+                  <span
+                    key={v.id}
+                    className={`hq-minimap-dot ${VISIT_DOT[v.id]}`}
+                    style={{ left: p.left, top: p.top }}
+                    title={v.name.en}
+                  />
+                )
+              })}
+            {pose &&
+              remotes.map((r) => {
+                const p = project(r.x - pose.x, r.z - pose.z, viewYaw, size)
+                if (!p.onMap) return null
+                return (
+                  <span
+                    key={r.userId}
+                    className="hq-minimap-dot hq-minimap-dot--remote"
+                    style={{ left: p.left, top: p.top }}
+                    title={r.username}
+                  />
+                )
+              })}
+            <span className="hq-minimap-you" aria-hidden />
+            {!layout.locked && (
+              <button
+                type="button"
+                className="hq-minimap-resize"
+                aria-label="Resize minimap"
+                onPointerDown={beginResize}
+              />
+            )}
+          </div>
+
+          {layout.legendOpen && (
+            <ul className="hq-minimap-legend" aria-label="Minimap legend">
+              {nearbyVisits.length === 0 && nearbyRemotes.length === 0 ? (
+                <li className="hq-minimap-empty">Nothing nearby</li>
+              ) : (
+                <>
+                  {nearbyVisits.map((v) => (
+                    <li key={v.id}>
+                      <span className={`hq-minimap-legend-swatch ${VISIT_DOT[v.id]}`} />
+                      <span>{v.name.en}</span>
+                    </li>
+                  ))}
+                  {nearbyRemotes.map((r) => (
+                    <li key={r.userId}>
+                      <span className="hq-minimap-legend-swatch hq-minimap-dot--remote" />
+                      <span>{r.username}</span>
+                    </li>
+                  ))}
+                </>
+              )}
+            </ul>
+          )}
+        </>
+      )}
     </div>
   )
 }

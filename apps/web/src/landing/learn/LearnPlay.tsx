@@ -32,13 +32,16 @@ import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
 import { HarborCharacterCreate } from './HarborCharacterCreate'
 import {
   harborDisplayUsername,
+  sanitizeChatText,
   startHarborPresence,
+  type HarborChatPacket,
   type HarborPresenceSession,
   type HarborRemotePlayer,
 } from './harborPresence'
 import { getSession, getSupabaseClient } from '../../lib/auth'
 import { useYueStore } from '../../lib/store'
 import { HarborMinimap, type HarborMinimapPose } from './HarborMinimap'
+import { HarborChatBox, type HarborChatLine } from './HarborChatBox'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
@@ -122,6 +125,10 @@ export function LearnSession({
   const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [localUsername, setLocalUsername] = useState('sailor')
+  const [chatLines, setChatLines] = useState<HarborChatLine[]>([])
+  const chatSeqRef = useRef(0)
+  const localUserIdRef = useRef<string | null>(null)
+  const [chatReady, setChatReady] = useState(false)
   const entitlement = useYueStore((s) => s.entitlement)
   const accountUsername = entitlement?.prefs?.username?.trim() || null
   const needsCharacterCreate = !progressSnap.characterCreated
@@ -153,12 +160,16 @@ export function LearnSession({
         // Guests still get a local nametag (stable fallback handle)
         const guestName = harborDisplayUsername(preferred, 'guest-local')
         if (!cancelled) {
+          localUserIdRef.current = null
+          setChatReady(false)
           setLocalUsername(guestName)
           worldApiRef.current?.setLocalUsername(guestName)
           setRemotePlayers([])
         }
         return
       }
+      localUserIdRef.current = userId
+      if (!cancelled) setChatReady(true)
       const username = harborDisplayUsername(preferred, userId)
       if (!cancelled) {
         setLocalUsername(username)
@@ -166,6 +177,16 @@ export function LearnSession({
       }
       const supabase = getSupabaseClient()
       if (!supabase) return
+      const pushChatLine = (msg: HarborChatPacket, self = false) => {
+        chatSeqRef.current += 1
+        const id = `${msg.t}-${msg.userId}-${chatSeqRef.current}`
+        setChatLines((prev) => {
+          const next = [...prev, { id, userId: msg.userId, username: msg.username, text: msg.text, t: msg.t, self }]
+          return next.length > 40 ? next.slice(-40) : next
+        })
+        worldApiRef.current?.showSpeechBubble(self ? 'local' : msg.userId, msg.text)
+      }
+
       const sessionPresence = startHarborPresence({
         supabase,
         userId,
@@ -176,6 +197,10 @@ export function LearnSession({
         onPose: (pose) => {
           // Bypass React — push straight into the WebGL lerp targets
           worldApiRef.current?.applyRemotePose(pose)
+        },
+        onChat: (msg) => {
+          if (cancelled) return
+          pushChatLine(msg, false)
         },
       })
       presenceRef.current = sessionPresence
@@ -245,11 +270,12 @@ export function LearnSession({
             prev &&
             Math.abs(prev.x - pose.x) < 0.04 &&
             Math.abs(prev.z - pose.z) < 0.04 &&
-            Math.abs(prev.yaw - pose.yaw) < 0.05
+            Math.abs(prev.yaw - pose.yaw) < 0.05 &&
+            Math.abs(prev.viewYaw - pose.viewYaw) < 0.05
           ) {
             return prev
           }
-          return { x: pose.x, z: pose.z, yaw: pose.yaw }
+          return { x: pose.x, z: pose.z, yaw: pose.yaw, viewYaw: pose.viewYaw }
         })
       }
       raf = window.requestAnimationFrame(tick)
@@ -539,6 +565,37 @@ export function LearnSession({
       />
     )
   }
+
+
+  const sendChat = useCallback((raw: string) => {
+    const cleaned = sanitizeChatText(raw)
+    if (!cleaned) return
+    const userId = localUserIdRef.current ?? 'local'
+    const packet: HarborChatPacket = {
+      userId,
+      username: localUsername,
+      text: cleaned,
+      t: Date.now(),
+    }
+    chatSeqRef.current += 1
+    const id = `${packet.t}-self-${chatSeqRef.current}`
+    setChatLines((prev) => {
+      const next = [
+        ...prev,
+        {
+          id,
+          userId: packet.userId,
+          username: packet.username,
+          text: packet.text,
+          t: packet.t,
+          self: true,
+        },
+      ]
+      return next.length > 40 ? next.slice(-40) : next
+    })
+    worldApiRef.current?.showSpeechBubble('local', cleaned)
+    presenceRef.current?.broadcastChat(cleaned)
+  }, [localUsername])
 
   return (
     <div
@@ -1049,6 +1106,13 @@ export function LearnSession({
         </span>
         <span className="hq-explore-fab-label">Explore</span>
       </button>
+
+      <HarborChatBox
+        lines={chatLines}
+        hidden={talking || barberOpen || scrollOpen || arenaOpen}
+        disabled={!chatReady}
+        onSend={sendChat}
+      />
 
       <div className={`hq-play-hud${talking ? ' is-talking' : ' is-exploring'}`}>
         <QuestPanel

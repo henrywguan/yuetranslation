@@ -16,6 +16,8 @@ import {
 export const HARBOR_PRESENCE_CHANNEL = 'harbor-quest-river' as const
 /** Lightweight pose packets (no look / gear) — high frequency. */
 export const HARBOR_POSE_EVENT = 'harbor-pose' as const
+/** Player say / public chat (RuneScape-style). */
+export const HARBOR_CHAT_EVENT = 'harbor-chat' as const
 
 export type HarborTravelMode = 'boat' | 'foot'
 
@@ -43,6 +45,36 @@ export type HarborPosePacket = {
   yaw: number
   mode: HarborTravelMode
   t: number
+}
+
+export type HarborChatPacket = {
+  userId: string
+  username: string
+  text: string
+  t: number
+}
+
+export const HARBOR_CHAT_MAX_LEN = 80
+
+export function sanitizeChatPacket(raw: unknown): HarborChatPacket | null {
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  const userId = typeof o.userId === 'string' && o.userId ? o.userId : null
+  if (!userId) return null
+  const username = harborDisplayUsername(
+    typeof o.username === 'string' ? o.username : null,
+    userId,
+  )
+  const textRaw = typeof o.text === 'string' ? o.text.replace(/[\u0000-\u001f]/g, '').trim() : ''
+  if (!textRaw) return null
+  const text = textRaw.slice(0, HARBOR_CHAT_MAX_LEN)
+  const t = typeof o.t === 'number' && Number.isFinite(o.t) ? o.t : Date.now()
+  return { userId, username, text, t }
+}
+
+export function sanitizeChatText(raw: string): string | null {
+  const text = raw.replace(/[\u0000-\u001f]/g, '').trim().slice(0, HARBOR_CHAT_MAX_LEN)
+  return text.length > 0 ? text : null
 }
 
 const USERNAME_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -156,6 +188,8 @@ export type HarborPresenceSession = {
   ) => Promise<void>
   /** High-frequency pose Broadcast (no await / no Presence write). */
   broadcastPose: (pose: Omit<HarborPosePacket, 'userId' | 't'>) => void
+  /** Public chat say (local echo is handled by the caller). */
+  broadcastChat: (text: string) => void
   stop: () => Promise<void>
 }
 
@@ -170,8 +204,9 @@ export function startHarborPresence(opts: {
   username: string
   onRemotes: (remotes: HarborRemotePlayer[]) => void
   onPose?: (pose: HarborPosePacket) => void
+  onChat?: (msg: HarborChatPacket) => void
 }): HarborPresenceSession {
-  const { supabase, userId, username, onRemotes, onPose } = opts
+  const { supabase, userId, username, onRemotes, onPose, onChat } = opts
   const channel = supabase.channel(HARBOR_PRESENCE_CHANNEL, {
     config: {
       presence: { key: userId },
@@ -192,6 +227,11 @@ export function startHarborPresence(opts: {
       const pose = sanitizePosePacket(payload)
       if (!pose || pose.userId === userId) return
       onPose?.(pose)
+    })
+    .on('broadcast', { event: HARBOR_CHAT_EVENT }, ({ payload }) => {
+      const msg = sanitizeChatPacket(payload)
+      if (!msg || msg.userId === userId) return
+      onChat?.(msg)
     })
 
   void channel.subscribe()
@@ -226,6 +266,21 @@ export function startHarborPresence(opts: {
       void channel.send({
         type: 'broadcast',
         event: HARBOR_POSE_EVENT,
+        payload: packet,
+      })
+    },
+    broadcastChat(text) {
+      const cleaned = sanitizeChatText(text)
+      if (!cleaned) return
+      const packet: HarborChatPacket = {
+        userId,
+        username,
+        text: cleaned,
+        t: Date.now(),
+      }
+      void channel.send({
+        type: 'broadcast',
+        event: HARBOR_CHAT_EVENT,
         payload: packet,
       })
     },
