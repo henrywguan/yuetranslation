@@ -678,6 +678,11 @@ function main() {
     /ctx\.fillStyle = 'rgba\(8, 18, 24|by \+ bh \+ 12/,
     'overhead say has no chat-bubble plate or tail',
   )
+  const questPanelSrc = readFileSync(new URL('./QuestPanel.tsx', import.meta.url), 'utf8')
+  assert.match(questPanelSrc, /hq-dock-actions--next-first/, 'Next sits above collapsed choices on correct')
+  assert.match(questPanelSrc, /picked === step\.correctId\) return c\.id === step\.correctId/, 'wrong answers hide on correct pick')
+  assert.match(learnCss, /safe-area-inset-bottom\) \+ 0\.45rem/, 'chat dock clears home indicator')
+  assert.match(learnCss, /hq-dock-actions--next-first/, 'next-first dock spacing')
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
   assert.match(worldSrc, /tickRemoteSailorPose/, 'world lerps remote poses each frame')

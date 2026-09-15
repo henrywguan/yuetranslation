@@ -1083,6 +1083,10 @@
   gap: 0.45rem;
 }
 
+.hq-dock-actions--next-first {
+  margin-bottom: 0.35rem;
+}
+
 .hq-feedback-text {
   margin: 0;
   line-height: 1.45;
@@ -4058,7 +4062,8 @@
 .hq-chat {
   position: absolute;
   left: max(0.55rem, env(safe-area-inset-left));
-  bottom: max(0.55rem, env(safe-area-inset-bottom));
+  /* Keep clear of home indicator / browser chrome so the input isn't clipped. */
+  bottom: max(0.85rem, calc(env(safe-area-inset-bottom) + 0.45rem));
   z-index: 6;
   width: min(22rem, calc(100vw - 1.4rem));
   display: flex;
@@ -4067,6 +4072,8 @@
   pointer-events: none;
   opacity: 0.82;
   transition: opacity 0.15s ease;
+  /* Avoid the parent immersive overflow:hidden trimming the dock. */
+  padding-bottom: 0.15rem;
 }
 .hq-chat.is-focused,
 .hq-chat:hover {
@@ -4075,7 +4082,7 @@
 .hq-chat-log {
   max-height: 7.5rem;
   overflow: auto;
-  padding: 0.35rem 0.45rem;
+  padding: 0.4rem 0.5rem 0.55rem;
   border-radius: 0.45rem;
   border: 1px solid color-mix(in srgb, #c9a227 22%, transparent);
   background: color-mix(in srgb, #041018 72%, transparent);
@@ -4090,10 +4097,13 @@
   font-style: italic;
 }
 .hq-chat-line {
-  margin: 0 0 0.12rem;
-  font: 500 0.72rem/1.35 "Noto Sans", system-ui, sans-serif;
+  margin: 0 0 0.18rem;
+  font: 500 0.72rem/1.4 "Noto Sans", system-ui, sans-serif;
   color: #e8f4f0;
   word-break: break-word;
+}
+.hq-chat-line:last-child {
+  margin-bottom: 0;
 }
 .hq-chat-line.is-self .hq-chat-user {
   color: #f0d060;
@@ -4109,11 +4119,12 @@
   display: flex;
   gap: 0.28rem;
   pointer-events: auto;
+  flex-shrink: 0;
 }
 .hq-chat-input {
   flex: 1;
   min-width: 0;
-  height: 1.85rem;
+  height: 1.95rem;
   padding: 0 0.55rem;
   border-radius: 0.4rem;
   border: 1px solid color-mix(in srgb, #7ec8b8 28%, transparent);
@@ -4130,7 +4141,7 @@
 }
 .hq-chat-send {
   flex: 0 0 auto;
-  height: 1.85rem;
+  height: 1.95rem;
   padding: 0 0.7rem;
   border-radius: 0.4rem;
   border: 1px solid color-mix(in srgb, #c9a227 40%, transparent);
@@ -4149,7 +4160,7 @@
 @media (max-width: 640px) {
   .hq-chat {
     width: min(18rem, calc(100vw - 1.1rem));
-    bottom: max(3.4rem, calc(env(safe-area-inset-bottom) + 2.8rem));
+    bottom: max(3.75rem, calc(env(safe-area-inset-bottom) + 3.15rem));
   }
   .hq-chat-log {
     max-height: 5.5rem;

@@ -3750,7 +3750,7 @@ export function createHarborWorld(
     if (localSpeechBubble) {
       localSpeechBubble.position.set(
         localNametag.position.x,
-        localNametag.position.y + 0.55,
+        localNametag.position.y + 0.72,
         localNametag.position.z,
       )
       if (performance.now() > localSpeechUntil) {

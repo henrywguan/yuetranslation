@@ -194,6 +194,7 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
 
             <div className="hq-match-choices" role="group" aria-label="Definitions">
               {round.choices.map((choice, i) => {
+                if (phase === 'feedback' && correct && i !== round.correctIndex) return null
                 let cls = 'hq-match-choice'
                 if (phase === 'feedback') {
                   if (i === round.correctIndex) cls += ' is-correct'
