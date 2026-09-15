@@ -88,6 +88,7 @@ import {
   markGoldEarned,
   markLevelCleared,
   markStepReached,
+  exchangeGoldForCoins,
   visitSaveShack,
   withdrawHarborGear,
   type HarborProgress,
@@ -562,6 +563,21 @@ export function LearnSession({
     (amount: number) => {
       playHarborCoinChing()
       pushProgress(markGoldEarned(amount))
+    },
+    [pushProgress],
+  )
+
+  const onExchangeGold = useCallback(
+    (amount: number) => {
+      const res = exchangeGoldForCoins(amount)
+      if (!res.ok) return res
+      playHarborCoinChing()
+      pushProgress(res.progress)
+      return {
+        ok: true as const,
+        coinsGained: res.coinsGained,
+        goldSpent: res.goldSpent,
+      }
     },
     [pushProgress],
   )
@@ -1299,8 +1315,10 @@ export function LearnSession({
       <MatchDefinitionModal
         open={arenaOpen}
         gold={progressSnap.gold ?? 0}
+        coins={progressSnap.coins}
         onClose={() => setArenaOpen(false)}
         onEarnGold={onEarnGold}
+        onExchangeGold={onExchangeGold}
       />
 
       <HarborPlayerProfileModal
