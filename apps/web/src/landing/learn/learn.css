@@ -531,8 +531,8 @@
 }
 
 .hq-play.is-exploring .hq-explore-fab {
-  /* Clear the bottom explore bar while free-looking */
-  bottom: max(5.75rem, calc(env(safe-area-inset-bottom) + 5.25rem));
+  /* Match public-chat clearance above Talk / Textbook chrome */
+  bottom: var(--hq-explore-chrome);
 }
 
 .hq-explore-fab:hover {
@@ -4081,20 +4081,26 @@
 }
 
 /* —— Harbor public chat (RuneScape-style dock) —— */
+.hq-play {
+  /* Bottom chrome while exploring: Talk pill + explore hint + safe area.
+     Keep this taller than the explore bar so chat never sits under Talk. */
+  --hq-explore-chrome: max(8.25rem, calc(env(safe-area-inset-bottom) + 7.5rem));
+}
+
 .hq-chat {
   position: absolute;
   left: max(0.55rem, env(safe-area-inset-left));
-  /* Keep clear of home indicator / browser chrome so the input isn't clipped. */
-  bottom: max(0.85rem, calc(env(safe-area-inset-bottom) + 0.45rem));
+  /* Sit above Talk / Textbook / Explore chrome — never under them. */
+  bottom: var(--hq-explore-chrome);
   z-index: 6;
-  width: min(22rem, calc(100vw - 1.4rem));
+  width: min(22rem, calc(100vw - 5.5rem));
+  max-width: calc(100vw - 5.5rem);
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
   pointer-events: none;
   opacity: 0.82;
   transition: opacity 0.15s ease;
-  /* Avoid the parent immersive overflow:hidden trimming the dock. */
   padding-bottom: 0.15rem;
 }
 .hq-chat.is-focused,
@@ -4180,11 +4186,14 @@
 }
 
 @media (max-width: 640px) {
+  .hq-play {
+    --hq-explore-chrome: max(7.25rem, calc(env(safe-area-inset-bottom) + 6.5rem));
+  }
   .hq-chat {
-    width: min(18rem, calc(100vw - 1.1rem));
-    bottom: max(3.75rem, calc(env(safe-area-inset-bottom) + 3.15rem));
+    width: min(17rem, calc(100vw - 5.25rem));
+    max-width: calc(100vw - 5.25rem);
   }
   .hq-chat-log {
-    max-height: 5.5rem;
+    max-height: 4.75rem;
   }
 }

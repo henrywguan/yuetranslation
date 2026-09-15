@@ -681,7 +681,8 @@ function main() {
   const questPanelSrc = readFileSync(new URL('./QuestPanel.tsx', import.meta.url), 'utf8')
   assert.match(questPanelSrc, /hq-dock-actions--next-first/, 'Next sits above collapsed choices on correct')
   assert.match(questPanelSrc, /picked === step\.correctId\) return c\.id === step\.correctId/, 'wrong answers hide on correct pick')
-  assert.match(learnCss, /safe-area-inset-bottom\) \+ 0\.45rem/, 'chat dock clears home indicator')
+  assert.match(learnCss, /--hq-explore-chrome/, 'shared explore chrome clearance token')
+  assert.match(learnCss, /bottom:\s*var\(--hq-explore-chrome\)/, 'chat docks above Talk/Explore chrome')
   assert.match(learnCss, /hq-dock-actions--next-first/, 'next-first dock spacing')
   assert.match(
     learnCss,
