@@ -3287,3 +3287,274 @@
   font-size: 0.78rem;
   color: color-mix(in srgb, #e8f7f4 55%, transparent);
 }
+
+
+/* —— Character creation (OSRS-style arrow rows, Harbor ink/jade) —— */
+.hq-charcreate {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+.hq-charcreate-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(70% 55% at 50% 0%, color-mix(in srgb, #1a4a48 45%, transparent), transparent 60%),
+    linear-gradient(180deg, #061018 0%, #0a1c24 45%, #07141c 100%);
+}
+.hq-charcreate-frame {
+  position: relative;
+  width: min(56rem, 100%);
+  max-height: min(92dvh, 52rem);
+  overflow: auto;
+  border: 3px solid #5a3a18;
+  box-shadow:
+    inset 0 0 0 1px #c4a060,
+    inset 0 0 0 3px #3a2410,
+    0 28px 80px rgba(0, 0, 0, 0.55);
+  background:
+    linear-gradient(180deg, #f3e6c8 0%, #e8d5a8 42%, #dcc890 100%);
+  color: #1a1208;
+  padding: clamp(0.85rem, 2vw, 1.35rem);
+}
+.hq-charcreate-head {
+  margin-bottom: 0.15rem;
+}
+.hq-charcreate-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5a4030;
+  font-weight: 700;
+}
+.hq-charcreate-title {
+  margin: 0.2rem 0 0;
+  font-family: Syne, 'Noto Sans', sans-serif;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 700;
+  color: #1a1208;
+}
+.hq-charcreate-title-zh {
+  margin: 0.15rem 0 0;
+  font-family: 'Noto Sans HK', 'Noto Sans', sans-serif;
+  font-size: 0.95rem;
+  color: #5a4030;
+}
+.hq-charcreate-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+.hq-charcreate-steps li {
+  padding: 0.2rem 0.55rem;
+  border: 2px solid #5a3a18;
+  background: color-mix(in srgb, #fff8e8 70%, #dcc890);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.hq-charcreate-steps li.is-on {
+  opacity: 1;
+  background: color-mix(in srgb, #3dcfb6 28%, #fff8e8);
+  box-shadow: inset 0 0 0 1px #3a2410;
+}
+.hq-charcreate-body {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.9fr) minmax(16rem, 1.1fr);
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  margin-top: 1rem;
+  align-items: stretch;
+}
+.hq-charcreate-body.is-name-only {
+  grid-template-columns: 1fr;
+}
+.hq-charcreate-preview {
+  min-height: min(42dvh, 22rem);
+  border: 3px solid #3a2410;
+  background: #0a1c24;
+  box-shadow: inset 0 0 0 1px #c4a060;
+}
+.hq-charcreate-preview canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.hq-charcreate-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.hq-charcreate-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.hq-charcreate-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3a2410;
+}
+.hq-charcreate-input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 3px solid #5a3a18;
+  background: #fff8e8;
+  color: #1a1208;
+  font-family: Syne, 'Noto Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px #c4a060;
+}
+.hq-charcreate-input:focus {
+  outline: 2px solid #3dcfb6;
+  outline-offset: 1px;
+}
+.hq-charcreate-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #5a4030;
+}
+.hq-charcreate-error {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8a2a30;
+}
+.hq-charcreate-gender {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+.hq-charcreate-gender-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.85rem 0.5rem;
+  border: 3px solid #5a3a18;
+  background: #fff8e8;
+  color: #1a1208;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px #c4a060;
+}
+.hq-charcreate-gender-btn.is-on {
+  background: color-mix(in srgb, #3dcfb6 32%, #fff8e8);
+  box-shadow:
+    inset 0 0 0 1px #3a2410,
+    0 0 0 2px color-mix(in srgb, #3dcfb6 55%, transparent);
+}
+.hq-charcreate-gender-en {
+  font-family: Syne, 'Noto Sans', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.hq-charcreate-gender-zh {
+  font-family: 'Noto Sans HK', 'Noto Sans', sans-serif;
+  font-size: 0.9rem;
+  color: #5a4030;
+}
+.hq-charcreate-block--rows {
+  gap: 0.4rem;
+}
+.hq-charcreate-row {
+  display: grid;
+  grid-template-columns: 4.2rem 2.2rem minmax(0, 1fr) 2.2rem;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid color-mix(in srgb, #5a3a18 28%, transparent);
+}
+.hq-charcreate-row-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #3a2410;
+}
+.hq-charcreate-row-value {
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hq-charcreate-arrow {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 2px solid #5a3a18;
+  background: #fff8e8;
+  color: #1a1208;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px #c4a060;
+}
+.hq-charcreate-arrow:hover {
+  background: color-mix(in srgb, #3dcfb6 22%, #fff8e8);
+}
+.hq-charcreate-swatch {
+  justify-self: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 2px solid #3a2410;
+  box-shadow: inset 0 0 0 1px #c4a060;
+}
+.hq-charcreate-confirm-name {
+  margin: 0;
+  font-family: Syne, 'Noto Sans', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+.hq-charcreate-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+.hq-charcreate-accept {
+  min-width: 8rem;
+}
+.hq-charcreate .hq-btn {
+  border: 3px solid #5a3a18;
+  padding: 0.55rem 1rem;
+  font-family: Syne, 'Noto Sans', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px #c4a060;
+}
+.hq-charcreate .hq-btn--ghost {
+  background: transparent;
+  color: #3a2410;
+}
+.hq-charcreate .hq-btn--primary {
+  background: color-mix(in srgb, #3dcfb6 40%, #fff8e8);
+  color: #1a1208;
+}
+.hq-charcreate .hq-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+@media (max-width: 720px) {
+  .hq-charcreate-body {
+    grid-template-columns: 1fr;
+  }
+  .hq-charcreate-preview {
+    min-height: 14rem;
+  }
+}

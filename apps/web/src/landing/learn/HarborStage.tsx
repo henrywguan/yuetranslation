@@ -3,6 +3,7 @@ import type { MutableRefObject } from 'react'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { HarborLook } from './harborGear'
+import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
 import type { HarborVisitableId, HarborWorldHandle } from './harborWorld'
@@ -21,6 +22,8 @@ type HarborStageProps = {
   immersive?: boolean
   /** Equipped River Scout look. */
   look: HarborLook
+  gender?: HarborGender
+  appearance?: HarborAppearance
   /** Pause the WebGL voyage (chart overlay, inventory, etc.). */
   paused?: boolean
   /** Landmark visit (Save Shack / Outfitter / Bank). */
@@ -41,6 +44,8 @@ export function HarborStage({
   spotlight,
   immersive = false,
   look,
+  gender,
+  appearance,
   paused = false,
   onVisitable,
   remotePlayers,
@@ -63,6 +68,8 @@ export function HarborStage({
         hue={level.hue}
         reducedMotion={reduce}
         look={look}
+        gender={gender}
+        appearance={appearance}
         realm={levelRealm(level)}
         paused={paused}
         onVisitable={onVisitable}

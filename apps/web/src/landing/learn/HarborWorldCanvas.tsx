@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { HarborLook } from './harborGear'
+import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
   createHarborWorld,
@@ -15,6 +16,8 @@ type Props = {
   hue: HarborHue
   reducedMotion: boolean
   look: HarborLook
+  gender?: HarborGender
+  appearance?: HarborAppearance
   realm?: HarborRealmId
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
@@ -37,6 +40,8 @@ export function HarborWorldCanvas({
   hue,
   reducedMotion,
   look,
+  gender,
+  appearance,
   realm = 'river',
   paused = false,
   onVisitable,
@@ -60,6 +65,8 @@ export function HarborWorldCanvas({
       hue,
       reducedMotion,
       look,
+      gender,
+      appearance,
       realm,
       onVisitable: (id) => onVisitableRef.current?.(id),
       onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
@@ -110,6 +117,10 @@ export function HarborWorldCanvas({
   useEffect(() => {
     worldRef.current?.setLook(look)
   }, [look])
+
+  useEffect(() => {
+    worldRef.current?.setCharacter({ gender, appearance })
+  }, [gender, appearance])
 
   useEffect(() => {
     worldRef.current?.setPaused(paused)
