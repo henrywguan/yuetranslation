@@ -691,6 +691,11 @@ function main() {
     'pronunciation picks are three square tiles in one row',
   )
   assert.match(learnCss, /aspect-ratio:\s*1/, 'talking pick tiles are square')
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-build-slots[\s\S]*?grid-template-columns:\s*repeat\(3/,
+    'build Initial/Final/Tone sit as three square columns',
+  )
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
   assert.match(worldSrc, /tickRemoteSailorPose/, 'world lerps remote poses each frame')

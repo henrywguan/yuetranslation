@@ -958,7 +958,11 @@
 }
 
 .hq-quest--overlay .hq-build-slots {
-  gap: 0.55rem;
+  gap: 0.35rem;
+}
+
+.hq-quest--overlay.is-talking .hq-build-slots {
+  gap: 0.35rem;
 }
 
 .hq-quest--overlay .hq-build-slot {
@@ -966,6 +970,13 @@
   border-radius: 0.75rem;
   background: color-mix(in srgb, #041820 55%, transparent);
   border: 1px solid color-mix(in srgb, #fff 10%, transparent);
+}
+
+.hq-quest--overlay.is-talking .hq-build-slot {
+  padding: 0.35rem 0.3rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, #041820 72%, transparent);
+  border: 1px solid color-mix(in srgb, #dff6ff 18%, transparent);
 }
 
 .hq-quest--overlay .hq-build-slot-label {
@@ -1286,6 +1297,60 @@
 .hq-build-slots {
   display: grid;
   gap: 0.75rem;
+}
+
+/* Talk strip: Initial / Final / Tone as three square columns in one row. */
+.hq-quest.is-talking .hq-build-slots {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  align-items: stretch;
+  padding: 0.15rem 0;
+}
+
+.hq-quest.is-talking .hq-build-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0.35rem 0.3rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, #dff6ff 18%, transparent);
+  background: color-mix(in srgb, #041820 72%, transparent);
+  box-sizing: border-box;
+}
+
+.hq-quest.is-talking .hq-build-slot-label {
+  margin: 0;
+  text-align: center;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+  color: color-mix(in srgb, #dff6ff 80%, transparent);
+}
+
+.hq-quest.is-talking .hq-build-opts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.22rem;
+  min-height: 0;
+}
+
+.hq-quest.is-talking .hq-tile {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 0;
+  padding: 0.15rem 0.2rem;
+  border-radius: 0.4rem;
+  font-size: clamp(0.78rem, 2.8vw, 0.95rem);
+  line-height: 1.1;
+  display: grid;
+  place-items: center;
 }
 
 .hq-build-slot-label {
@@ -2115,7 +2180,7 @@
 
 .hq-quest.is-talking .hq-build-slots,
 .hq-quest.is-talking .hq-dock-actions {
-  padding: 0.25rem 0.15rem;
+  padding: 0.15rem 0.1rem;
 }
 
 .hq-quest.is-talking .hq-btn--dock {
