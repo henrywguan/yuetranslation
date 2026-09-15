@@ -15,6 +15,11 @@ import {
 } from './harborCraft'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
+  HARBOR_DEFAULT_APPEARANCE,
+  type HarborAppearance,
+  type HarborGender,
+} from './harborAppearance'
+import {
   applyLookToProtagonist,
   harborGearById,
   HARBOR_DEFAULT_LOOK,
@@ -50,6 +55,10 @@ export type HarborWorldOptions = {
   weather?: HarborWeather
   /** Equipped character look (recolors River Scout + handheld). */
   look?: HarborLook
+  /** Body type from character creation. */
+  gender?: HarborGender
+  /** Skin / hair cosmetics from character creation. */
+  appearance?: HarborAppearance
   /** Campaign biome dressing (flora / fauna / bank tint). */
   realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
@@ -66,6 +75,10 @@ export type HarborWorldHandle = {
   setHue: (hue: HarborHue) => void
   setReducedMotion: (on: boolean) => void
   setLook: (look: HarborLook) => void
+  setCharacter: (next: {
+    gender?: HarborGender
+    appearance?: HarborAppearance
+  }) => void
   /** Pause the render loop (chart overlay / background tab). */
   setPaused: (on: boolean) => void
   /** Replace remote sailor avatars (open-world presence join/leave). */
@@ -79,6 +92,8 @@ export type HarborWorldHandle = {
     yaw: number
     mode: 'boat' | 'foot'
     look: HarborLook
+    gender: HarborGender
+    appearance: HarborAppearance
   }
   /** Username shown above the local scout (all sailors get nametags). */
   setLocalUsername: (username: string) => void
@@ -1374,8 +1389,15 @@ function attachLandmarkHost(building: THREE.Group, id: HarborLandmarkHostId, wea
 }
 
 /** Seated River Scout — original RS-era-proportion mannequin (see harborProtagonist.ts). */
-function playerTraveler() {
-  return buildHarborProtagonist({ pose: 'seated' })
+function playerTraveler(opts?: {
+  gender?: HarborGender
+  appearance?: HarborAppearance
+}) {
+  return buildHarborProtagonist({
+    pose: 'seated',
+    gender: opts?.gender,
+    appearance: opts?.appearance,
+  })
 }
 
 function bird() {
@@ -1692,11 +1714,13 @@ function canoe(
   weather: HarborWeather = 'sunny',
   boatId: string = HARBOR_DEFAULT_LOOK.boat,
   lanternId: string = HARBOR_DEFAULT_LOOK.lantern,
+  gender: HarborGender = 'male',
+  appearance: HarborAppearance = HARBOR_DEFAULT_APPEARANCE,
 ) {
   const g = new THREE.Group()
   g.name = 'river-boat'
   g.add(buildBoatHull(boatId))
-  const you = playerTraveler()
+  const you = playerTraveler({ gender, appearance })
   you.name = 'river-scout'
   you.position.set(0, 0.38, -0.05)
   you.rotation.y = Math.PI
@@ -2881,7 +2905,11 @@ export function createHarborWorld(
   }
 
   let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
-  const boat = canoe(weather, currentLook.boat, currentLook.lantern)
+  let currentGender: HarborGender = options.gender === 'female' ? 'female' : 'male'
+  let currentAppearance: HarborAppearance = options.appearance
+    ? { ...options.appearance }
+    : { ...HARBOR_DEFAULT_APPEARANCE }
+  const boat = canoe(weather, currentLook.boat, currentLook.lantern, currentGender, currentAppearance)
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
@@ -2936,7 +2964,7 @@ export function createHarborWorld(
   if (scout) applyLookToProtagonist(scout, currentLook)
   else applyLookToProtagonist(boat, currentLook)
   // Standing Scout for banks / roads — canoe stays moored while they walk
-  const scoutWalk = buildHarborProtagonist({ pose: 'standing' })
+  const scoutWalk = buildHarborProtagonist({ pose: 'standing', gender: currentGender, appearance: currentAppearance })
   scoutWalk.name = 'river-scout-walk'
   scoutWalk.visible = false
   scene.add(scoutWalk)
@@ -3607,6 +3635,14 @@ export function createHarborWorld(
     },
     setReducedMotion(on) {
       reduced = on
+    },
+    setCharacter(next: {
+      gender?: HarborGender
+      appearance?: HarborAppearance
+    }) {
+      if (next.gender) currentGender = next.gender
+      if (next.appearance) currentAppearance = { ...next.appearance }
+      // Soft rebuild markers — next land/boat swap regenerates meshes with new silhouette.
     },
     setLook(look) {
       currentLook = { ...look }

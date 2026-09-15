@@ -27,6 +27,14 @@ export type HarborQuestProgress = {
     lantern: string
   }
   lastSavedAt: number
+  characterCreated?: boolean
+  gender?: 'male' | 'female'
+  appearance?: {
+    skinTone: number
+    hairStyle: string
+    hairColor: number
+  }
+  localUsername?: string | null
 }
 
 export type HarborLeaderboardEntry = {

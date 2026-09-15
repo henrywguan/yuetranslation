@@ -5,6 +5,13 @@
  */
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import { HARBOR_DEFAULT_LOOK, type HarborLook } from './harborGear'
+import {
+  HARBOR_DEFAULT_APPEARANCE,
+  sanitizeHarborAppearance,
+  sanitizeHarborGender,
+  type HarborAppearance,
+  type HarborGender,
+} from './harborAppearance'
 
 export const HARBOR_PRESENCE_CHANNEL = 'harbor-quest-river' as const
 /** Lightweight pose packets (no look / gear) — high frequency. */
@@ -21,6 +28,8 @@ export type HarborPresenceState = {
   yaw: number
   mode: HarborTravelMode
   look: HarborLook
+  gender: HarborGender
+  appearance: HarborAppearance
   updatedAt: number
 }
 
@@ -95,11 +104,13 @@ export function sanitizePresencePayload(
     userId,
   )
   const look = isLook(o.look) ? o.look : { ...HARBOR_DEFAULT_LOOK }
+  const gender = sanitizeHarborGender(o.gender)
+  const appearance = sanitizeHarborAppearance(o.appearance)
   const updatedAt =
     typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
       ? o.updatedAt
       : Date.now()
-  return { userId, username, x, z, yaw, mode, look, updatedAt }
+  return { userId, username, x, z, yaw, mode, look, gender, appearance, updatedAt }
 }
 
 export function sanitizePosePacket(raw: unknown): HarborPosePacket | null {
@@ -196,6 +207,8 @@ export function startHarborPresence(opts: {
         yaw: pose.yaw,
         mode: pose.mode,
         look: pose.look,
+        gender: pose.gender ?? 'male',
+        appearance: pose.appearance ?? { ...HARBOR_DEFAULT_APPEARANCE },
         updatedAt: Date.now(),
       }
       await channel.track(payload)
