@@ -407,14 +407,15 @@ function main() {
       assert.equal(n, 5, `${slot} has 5 items`)
     }
   }
-  assert.equal(HARBOR_VISITABLES.length, 4, 'Save Shack + Outfitter + Bank + Arena')
+  assert.equal(HARBOR_VISITABLES.length, 5, 'Save Shack + Outfitter + Bank + Arena + Barber')
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'save-shack'))
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'outfitter'))
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'bank'))
   assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'arena'))
+  assert.ok(HARBOR_VISITABLES.some((v) => v.id === 'barber'))
   assert.deepEqual(
     [...HARBOR_LANDMARK_HOSTS],
-    ['save-shack', 'outfitter', 'bank', 'arena'],
+    ['save-shack', 'outfitter', 'bank', 'arena', 'barber'],
     'one landmark host per special building',
   )
   assert.ok(HARBOR_VISIT_RADIUS > 1, 'visit radius')
@@ -436,6 +437,11 @@ function main() {
   assert.match(worldSrc2, /goldenPortal|save-portal/, 'Save Shack golden portal')
   assert.match(worldSrc2, /jadePortal|bank-portal/, 'Bank jade portal')
   assert.match(worldSrc2, /arenaPortal|arena-portal/, 'Arena amber portal')
+  assert.match(worldSrc2, /attachLandmarkHost\(g, 'barber'/, 'Barber host NPC')
+  assert.match(worldSrc2, /barberBuilding/, 'Barber shop mesh')
+  assert.match(worldSrc2, /spinningBarberPole|barberPole/, 'Spinning barber pole')
+  assert.match(worldSrc2, /barberPortal|barber-portal|rosePortal/, 'Barber rose portal')
+  assert.match(worldSrc2, /barberScissors/, 'Barber host holds scissors')
   assert.match(worldSrc2, /dirtRoad|placeDirtRoads/, 'dirt roads on banks')
   assert.match(worldSrc2, /inlandRoad|crossPath|foothillPath/, 'inland walkways + cross-paths')
   assert.match(worldSrc2, /roadSign|ROAD_SIGN_KINDS/, 'Chinese roadside 路牌')
@@ -582,6 +588,13 @@ function main() {
   assert.match(createSrc, /Female/, 'female gender choice')
   assert.match(playSrc2, /HarborCharacterCreate/, 'LearnSession gates on character create')
   assert.match(playSrc2, /completeHarborCharacter/, 'create completion persists progress')
+  assert.match(playSrc2, /visitable === 'barber'|Harbor Barber/, 'Barber visit panel')
+  assert.match(playSrc2, /mode="barber"|mode=\{'barber'\}/, 'Barber restyle opens character create')
+  const minimapSrc = readFileSync(new URL('./HarborMinimap.tsx', import.meta.url), 'utf8')
+  assert.match(minimapSrc, /export function HarborMinimap/, 'Harbor minimap component')
+  assert.match(minimapSrc, /HARBOR_VISITABLES/, 'minimap plots landmark hosts')
+  assert.match(playSrc2, /HarborMinimap/, 'Learn session mounts minimap')
+  assert.match(createSrc, /mode\?: 'full' \| 'username-only' \| 'barber'|barber/, 'character create supports barber mode')
   const mergeSrc = readFileSync(new URL('./progressMerge.ts', import.meta.url), 'utf8')
   assert.match(mergeSrc, /characterCreated/, 'progress tracks characterCreated')
   assert.match(mergeSrc, /localUsername/, 'progress stores localUsername')
