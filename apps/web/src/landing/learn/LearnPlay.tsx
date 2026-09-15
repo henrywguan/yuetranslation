@@ -133,7 +133,7 @@ export function LearnSession({
     let cancelled = false
     let poseTimer: number | undefined
     let presenceTimer: number | undefined
-    let lastSent = { x: 0, z: 0, yaw: 0, mode: 'boat' as const }
+    let lastSent = { x: 0, z: 0, yaw: 0, mode: 'boat' as 'boat' | 'foot' }
 
     const boot = async () => {
       const session = await getSession()
