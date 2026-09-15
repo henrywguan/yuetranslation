@@ -670,6 +670,14 @@ function main() {
   assert.match(remotesSrc, /buildNametagSprite/, 'local nametag sprite helper')
   assert.match(remotesSrc, /setRemoteSailorPoseTarget/, 'remote pose lerp target')
   assert.match(remotesSrc, /tickRemoteSailorPose/, 'remote pose tick lerp')
+  assert.match(remotesSrc, /osrsOverheadSay/, 'overhead say marked OSRS-style')
+  assert.match(remotesSrc, /#ffff00/, 'overhead say uses public-chat yellow')
+  assert.match(remotesSrc, /OSRS_OUTLINE_OFFSETS|OSRS_SAY_STROKE/, 'overhead say has hard black outline')
+  assert.doesNotMatch(
+    remotesSrc,
+    /ctx\.fillStyle = 'rgba\(8, 18, 24|by \+ bh \+ 12/,
+    'overhead say has no chat-bubble plate or tail',
+  )
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
   assert.match(worldSrc, /tickRemoteSailorPose/, 'world lerps remote poses each frame')
