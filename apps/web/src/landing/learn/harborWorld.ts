@@ -2814,8 +2814,8 @@ export function createHarborWorld(
   const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
   const sandMat = mat(realm === 'bamboo' ? 0xb8b078 : 0xc2b280)
   const chunkGroups = new Map<number, THREE.Group>()
-  /** Chunks ahead of the canoe — lower = less GPU; pop-in appears sooner. */
-  const ACTIVE = 4
+  /** Chunks ahead of the canoe — 3 = leaner GPU, earlier pop-in than 4. */
+  const ACTIVE = 3
   /** Cached PointLights for flicker (avoids full scene.traverse each frame). */
   const lanternLights: THREE.PointLight[] = []
   /** Cached fauna / bubbles / petals for idle motion (avoids per-chunk traverse). */
