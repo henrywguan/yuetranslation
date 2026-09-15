@@ -63,6 +63,8 @@ type LearnSessionProps = {
   onExit: () => void
   onOpenLevel: (id: string) => void
   onProgress: (p: HarborProgress) => void
+  /** Pier chart (or other page-level overlay) is open — pause the 3D voyage. */
+  worldPaused?: boolean
 }
 
 /** Fullscreen harbor session — stage fills the viewport; quest HUD overlays. */
@@ -77,7 +79,13 @@ const HARBOR_SLOT_LABEL: Record<HarborGearSlot, string> = {
   lantern: 'Lantern',
 }
 
-export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: LearnSessionProps) {
+export function LearnSession({
+  levelId,
+  onExit,
+  onOpenLevel,
+  onProgress,
+  worldPaused = false,
+}: LearnSessionProps) {
   const level = levelById(levelId)
   const [stepIndex, setStepIndex] = useState(0)
   const [flash, setFlash] = useState<'ok' | 'no' | null>(null)
@@ -359,6 +367,14 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
           spotlight={talking ? spotlight : undefined}
           immersive
           look={progressSnap.look}
+          paused={
+            worldPaused ||
+            invOpen ||
+            scrollOpen ||
+            arenaOpen ||
+            teleportOpen ||
+            visitable !== null
+          }
           onVisitable={onVisitable}
         />
       </div>
@@ -399,12 +415,13 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
         </button>
         <button
           type="button"
-          className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}`}
-          title="Open inventory"
-          aria-label={`Ferry coins ${progressSnap.coins}. Open inventory`}
+          className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}${invOpen ? ' is-open' : ''}`}
+          title={invOpen ? 'Close inventory' : 'Open inventory'}
+          aria-label={`Ferry coins ${progressSnap.coins}. ${invOpen ? 'Close' : 'Open'} inventory`}
+          aria-pressed={invOpen}
           aria-live="polite"
           onClick={() => {
-            setInvOpen(true)
+            setInvOpen((v) => !v)
             setVisitable(null)
             setShopMsg(null)
             setBankMsg(null)
@@ -435,21 +452,6 @@ export function LearnSession({ levelId, onExit, onOpenLevel, onProgress }: Learn
             金
           </span>
           <span className="hq-gold-chip-val">{progressSnap.gold ?? 0}</span>
-        </button>
-        <button
-          type="button"
-          className={`hq-inv-btn${invOpen ? ' is-open' : ''}`}
-          aria-label="Inventory"
-          aria-pressed={invOpen}
-          title="Inventory"
-          onClick={() => {
-            setInvOpen((v) => !v)
-            setVisitable(null)
-            setShopMsg(null)
-            setBankMsg(null)
-          }}
-        >
-          Pack
         </button>
       </header>
 

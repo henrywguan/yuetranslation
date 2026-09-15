@@ -51,6 +51,8 @@ export type HarborWorldHandle = {
   setHue: (hue: HarborHue) => void
   setReducedMotion: (on: boolean) => void
   setLook: (look: HarborLook) => void
+  /** Pause the render loop (chart overlay / background tab). */
+  setPaused: (on: boolean) => void
   resize: () => void
   dispose: () => void
 }
@@ -2445,6 +2447,7 @@ export function createHarborWorld(
   let flash: 'ok' | 'no' | null = null
   let flashUntil = 0
   let disposed = false
+  let paused = false
   const weather: HarborWeather = options.weather ?? pickHarborWeather()
   const look = HARBOR_WEATHER_LOOK[weather]
 
@@ -2454,7 +2457,7 @@ export function createHarborWorld(
     alpha: false,
     powerPreference: 'high-performance',
   })
-  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.5))
+  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.25))
   renderer.setClearColor(look.sky, 1)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -2501,7 +2504,7 @@ export function createHarborWorld(
     transparent: true,
     opacity: weather === 'rainy' ? 0.92 : weather === 'night' ? 0.9 : 0.88,
   })
-  const water = new THREE.Mesh(new THREE.PlaneGeometry(RIVER * 2.4, 400, 1, 40), waterMat)
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(RIVER * 2.4, 400, 1, 20), waterMat)
   water.rotation.x = -Math.PI / 2
   water.position.set(0, 0.02, 80)
   scene.add(water)
@@ -2509,12 +2512,22 @@ export function createHarborWorld(
   const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
   const sandMat = mat(realm === 'bamboo' ? 0xb8b078 : 0xc2b280)
   const chunkGroups = new Map<number, THREE.Group>()
-  const ACTIVE = 6
+  /** Chunks ahead of the canoe — lower = less GPU; pop-in appears sooner. */
+  const ACTIVE = 4
+  /** Cached PointLights for flicker (avoids full scene.traverse each frame). */
+  const lanternLights: THREE.PointLight[] = []
+  /** Cached fauna / bubbles / petals for idle motion (avoids per-chunk traverse). */
+  const animNodes: THREE.Object3D[] = []
+  let fxIndexDirty = true
+  let rebuildFxIndex: () => void = () => {
+    fxIndexDirty = true
+  }
 
   const ensureChunks = (centerZ: number) => {
     const center = Math.floor(centerZ / CHUNK)
     const need = new Set<number>()
     for (let i = center - 1; i <= center + ACTIVE; i++) need.add(i)
+    let dirty = false
     for (const [idx, g] of chunkGroups) {
       if (!need.has(idx)) {
         world.remove(g)
@@ -2522,6 +2535,7 @@ export function createHarborWorld(
           if (o instanceof THREE.Mesh) o.geometry.dispose()
         })
         chunkGroups.delete(idx)
+        dirty = true
       }
     }
     for (const idx of need) {
@@ -2530,10 +2544,12 @@ export function createHarborWorld(
       populateChunk(idx, g, { grass: grassMat, sand: sandMat }, weather, realm)
       world.add(g)
       chunkGroups.set(idx, g)
+      dirty = true
     }
+    if (dirty) fxIndexDirty = true
   }
 
-    let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
+  let currentLook: HarborLook = options.look ? { ...options.look } : { ...HARBOR_DEFAULT_LOOK }
   const boat = canoe(weather, currentLook.boat, currentLook.lantern)
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
@@ -2556,6 +2572,32 @@ export function createHarborWorld(
     visitablesRoot.add(building)
   }
   scene.add(visitablesRoot)
+
+  rebuildFxIndex = () => {
+    lanternLights.length = 0
+    animNodes.length = 0
+    const isAnimNode = (o: THREE.Object3D) =>
+      !!(
+        o.userData.speechBubble ||
+        o.userData.fauna ||
+        o.userData.bird ||
+        o.userData.fish ||
+        o.userData.petal
+      )
+    const indexRoot = (root: THREE.Object3D) => {
+      root.traverse((o) => {
+        if (o instanceof THREE.PointLight && o.userData.harborLanternLight) {
+          lanternLights.push(o)
+        } else if (isAnimNode(o)) {
+          animNodes.push(o)
+        }
+      })
+    }
+    for (const g of chunkGroups.values()) indexRoot(g)
+    indexRoot(visitablesRoot)
+    indexRoot(boat)
+    fxIndexDirty = false
+  }
 
   let scout = boat.getObjectByName('river-scout') as THREE.Object3D | null
   if (scout) applyLookToProtagonist(scout, currentLook)
@@ -2854,6 +2896,8 @@ export function createHarborWorld(
 
   const tick = (now: number) => {
     if (disposed) return
+    raf = requestAnimationFrame(tick)
+    if (paused || (typeof document !== 'undefined' && document.hidden)) return
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
 
@@ -3029,85 +3073,84 @@ export function createHarborWorld(
     camera.lookAt(lookX, lookY, lookZ)
 
     ensureChunks(voyageZ)
+    if (fxIndexDirty) rebuildFxIndex()
 
-    for (const g of chunkGroups.values()) {
-      g.traverse((o) => {
-        // Speech bubbles face the camera and gently bob (OSRS Talk cue)
-        if (o.userData.speechBubble) {
-          o.lookAt(camera.position)
-          const base = (o.userData.bubbleBaseY as number | undefined) ?? o.position.y
-          o.userData.bubbleBaseY = base
-          if (!reduced) {
-            o.position.y = base + Math.sin(waterPhase * 2.6 + base * 10) * 0.045
-          }
-          return
+    for (const o of animNodes) {
+      // Speech bubbles face the camera and gently bob (OSRS Talk cue)
+      if (o.userData.speechBubble) {
+        o.lookAt(camera.position)
+        const base = (o.userData.bubbleBaseY as number | undefined) ?? o.position.y
+        o.userData.bubbleBaseY = base
+        if (!reduced) {
+          o.position.y = base + Math.sin(waterPhase * 2.6 + base * 10) * 0.045
         }
-        const fauna = o.userData.fauna as string | undefined
-        if (fauna === 'panda' && !reduced) {
-          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.7
-          o.rotation.y += Math.sin(phase) * 0.002
-          o.position.y = Math.sin(phase * 0.5) * 0.012
+        continue
+      }
+      const fauna = o.userData.fauna as string | undefined
+      if (fauna === 'panda' && !reduced) {
+        const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.7
+        o.rotation.y += Math.sin(phase) * 0.002
+        o.position.y = Math.sin(phase * 0.5) * 0.012
+      }
+      if (fauna === 'tiger' && !reduced) {
+        const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.55
+        const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
+        o.userData.baseX = baseX
+        o.position.x = baseX + Math.sin(phase) * 0.35
+      }
+      if (fauna === 'ibis') {
+        const phase = ((o.userData.phase as number) ?? 0) + waterPhase * 1.6
+        // Alternate: short hop on bank vs low soar
+        if (o.userData.bird && o.position.y > 0.4) {
+          o.position.y = 1.4 + Math.sin(phase * 2) * 0.25
+          o.position.x += Math.sin(phase) * 0.012
+        } else if (!reduced) {
+          o.position.y = 0.05 + Math.max(0, Math.sin(phase * 1.2)) * 0.12
+          o.rotation.z = Math.sin(phase) * 0.08
         }
-        if (fauna === 'tiger' && !reduced) {
-          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.55
-          const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
-          o.userData.baseX = baseX
-          o.position.x = baseX + Math.sin(phase) * 0.35
-        }
-        if (fauna === 'ibis') {
-          const phase = ((o.userData.phase as number) ?? 0) + waterPhase * 1.6
-          // Alternate: short hop on bank vs low soar
-          if (o.userData.bird && o.position.y > 0.4) {
-            o.position.y = 1.4 + Math.sin(phase * 2) * 0.25
-            o.position.x += Math.sin(phase) * 0.012
-          } else if (!reduced) {
-            o.position.y = 0.05 + Math.max(0, Math.sin(phase * 1.2)) * 0.12
-            o.rotation.z = Math.sin(phase) * 0.08
-          }
-        }
-        if (fauna === 'salamander' && !reduced) {
-          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.8
-          const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
-          o.userData.baseX = baseX
-          o.position.x = baseX + Math.sin(phase) * 0.12
-          o.rotation.y += Math.sin(phase * 0.5) * 0.01
-        }
-        if (fauna === 'deer' && !reduced) {
-          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.6
-          o.rotation.y += Math.sin(phase) * 0.0015
-        }
-        if (fauna === 'magpie' && !reduced) {
-          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 1.4
-          o.position.y = 0.08 + Math.max(0, Math.sin(phase * 1.8)) * 0.18
-          o.rotation.y += Math.sin(phase) * 0.004
-        }
-        if (fauna === 'koi' && !reduced) {
-          const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 1.6
-          o.position.y = 0.06 + Math.max(0, Math.sin(phase)) * 0.22
-          o.rotation.z = Math.PI / 2 + Math.sin(phase) * 0.25
-        }
-        if (!(o instanceof THREE.Mesh)) return
-        if (o.userData.bird) {
-          const phase = (o.userData.phase as number) + waterPhase
-          o.position.y = 2.2 + Math.sin(phase * 2) * 0.35
-          o.position.x += Math.sin(phase) * 0.01
-        }
-        if (o.userData.fish) {
-          const phase = (o.userData.phase as number) + waterPhase * 1.8
-          o.position.y = 0.08 + Math.max(0, Math.sin(phase)) * 0.55
-          o.rotation.z = Math.PI / 2 + Math.sin(phase) * 0.4
-        }
-        if (o.userData.petal && !reduced) {
-          const phase = (o.userData.phase as number) + waterPhase * 1.4
-          const baseY = (o.userData.baseY as number) ?? o.position.y
-          o.position.y = baseY + Math.sin(phase) * 0.25 - (phase % 2.4) * 0.08
-          o.position.x += Math.sin(phase * 0.7) * 0.008
-          o.rotation.z += 0.02
-        }
-      })
+      }
+      if (fauna === 'salamander' && !reduced) {
+        const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.8
+        const baseX = (o.userData.baseX as number | undefined) ?? o.position.x
+        o.userData.baseX = baseX
+        o.position.x = baseX + Math.sin(phase) * 0.12
+        o.rotation.y += Math.sin(phase * 0.5) * 0.01
+      }
+      if (fauna === 'deer' && !reduced) {
+        const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 0.6
+        o.rotation.y += Math.sin(phase) * 0.0015
+      }
+      if (fauna === 'magpie' && !reduced) {
+        const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 1.4
+        o.position.y = 0.08 + Math.max(0, Math.sin(phase * 1.8)) * 0.18
+        o.rotation.y += Math.sin(phase) * 0.004
+      }
+      if (fauna === 'koi' && !reduced) {
+        const phase = ((o.userData.phase as number) ?? o.id) + waterPhase * 1.6
+        o.position.y = 0.06 + Math.max(0, Math.sin(phase)) * 0.22
+        o.rotation.z = Math.PI / 2 + Math.sin(phase) * 0.25
+      }
+      if (!(o instanceof THREE.Mesh)) continue
+      if (o.userData.bird) {
+        const phase = (o.userData.phase as number) + waterPhase
+        o.position.y = 2.2 + Math.sin(phase * 2) * 0.35
+        o.position.x += Math.sin(phase) * 0.01
+      }
+      if (o.userData.fish) {
+        const phase = (o.userData.phase as number) + waterPhase * 1.8
+        o.position.y = 0.08 + Math.max(0, Math.sin(phase)) * 0.55
+        o.rotation.z = Math.PI / 2 + Math.sin(phase) * 0.4
+      }
+      if (o.userData.petal && !reduced) {
+        const phase = (o.userData.phase as number) + waterPhase * 1.4
+        const baseY = (o.userData.baseY as number) ?? o.position.y
+        o.position.y = baseY + Math.sin(phase) * 0.25 - (phase % 2.4) * 0.08
+        o.position.x += Math.sin(phase * 0.7) * 0.008
+        o.rotation.z += 0.02
+      }
     }
 
-        if (flash && now < flashUntil) {
+    if (flash && now < flashUntil) {
       amb.color.lerp(new THREE.Color(flash === 'ok' ? 0x3dcfb6 : 0xe07070), 0.15)
     } else {
       amb.color.lerp(new THREE.Color(look.amb), 0.08)
@@ -3116,15 +3159,13 @@ export function createHarborWorld(
 
     // Lantern / portal flicker — reads strongest at night & dark weather
     if (!reduced) {
-      scene.traverse((o) => {
-        if (!(o instanceof THREE.PointLight) || !o.userData.harborLanternLight) return
-        const base = (o.userData.baseIntensity as number) ?? o.intensity
-        o.intensity = base * (0.88 + Math.sin(waterPhase * 3.2 + o.id) * 0.12)
-      })
+      for (const light of lanternLights) {
+        const base = (light.userData.baseIntensity as number) ?? light.intensity
+        light.intensity = base * (0.88 + Math.sin(waterPhase * 3.2 + light.id) * 0.12)
+      }
     }
 
     renderer.render(scene, camera)
-    raf = requestAnimationFrame(tick)
   }
 
   ensureChunks(voyageZ)
@@ -3154,6 +3195,9 @@ export function createHarborWorld(
       if (scout) applyLookToProtagonist(scout, currentLook)
       applyLookToProtagonist(scoutWalk, currentLook)
       applyVesselLook(boat, weather, currentLook)
+    },
+    setPaused(on) {
+      paused = on
     },
     resize,
     dispose() {

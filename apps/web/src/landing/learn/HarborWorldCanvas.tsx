@@ -15,6 +15,8 @@ type Props = {
   reducedMotion: boolean
   look: HarborLook
   realm?: HarborRealmId
+  /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
+  paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
   className?: string
 }
@@ -27,6 +29,7 @@ export function HarborWorldCanvas({
   reducedMotion,
   look,
   realm = 'river',
+  paused = false,
   onVisitable,
   className,
 }: Props) {
@@ -89,6 +92,10 @@ export function HarborWorldCanvas({
   useEffect(() => {
     worldRef.current?.setLook(look)
   }, [look])
+
+  useEffect(() => {
+    worldRef.current?.setPaused(paused)
+  }, [paused])
 
   return (
     <canvas

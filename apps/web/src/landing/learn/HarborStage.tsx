@@ -19,6 +19,8 @@ type HarborStageProps = {
   immersive?: boolean
   /** Equipped River Scout look. */
   look: HarborLook
+  /** Pause the WebGL voyage (chart overlay, inventory, etc.). */
+  paused?: boolean
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
 }
@@ -32,6 +34,7 @@ export function HarborStage({
   spotlight,
   immersive = false,
   look,
+  paused = false,
   onVisitable,
 }: HarborStageProps) {
   const reduce = useReducedMotion()
@@ -50,6 +53,7 @@ export function HarborStage({
         reducedMotion={reduce}
         look={look}
         realm={levelRealm(level)}
+        paused={paused}
         onVisitable={onVisitable}
       />
 
