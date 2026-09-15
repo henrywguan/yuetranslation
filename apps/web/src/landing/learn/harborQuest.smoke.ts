@@ -511,7 +511,7 @@ function main() {
     'XP is flat text — not a pill',
   )
   assert.match(learnCss, /\.hq-coin-chip\.is-open\s*\{/, 'coin chip open affordance')
-  assert.match(worldSrc2, /const ACTIVE = 4/, 'fewer active river chunks for GPU')
+  assert.match(worldSrc2, /const ACTIVE = 3/, 'leaner active river chunks for GPU')
   assert.match(worldSrc2, /setPixelRatio\([^)]*1\.25\)/, 'DPR capped at 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')
   assert.match(worldSrc2, /animNodes/, 'fauna motion uses cached nodes')
