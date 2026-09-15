@@ -7,12 +7,15 @@ import {
   HARBOR_GOLD_TO_COINS,
   MATCH_DIFFICULTIES,
   MATCH_DIFFICULTY,
+  MATCH_TOPIC,
+  MATCH_TOPICS,
   buildMatchRound,
   type MatchDifficulty,
   type MatchRound,
+  type MatchTopic,
 } from './matchDefinitionBank'
 
-type Phase = 'select' | 'play' | 'feedback'
+type Phase = 'topic' | 'difficulty' | 'play' | 'feedback'
 
 type Props = {
   open: boolean
@@ -25,7 +28,7 @@ type Props = {
     | { ok: false; reason: string }
 }
 
-/** Match the Definition — difficulty select, then timed gloss pick. */
+/** Match the Definition — topic → difficulty → timed gloss pick. */
 export function MatchDefinitionModal({
   open,
   gold,
@@ -34,7 +37,8 @@ export function MatchDefinitionModal({
   onEarnGold,
   onExchangeGold,
 }: Props) {
-  const [phase, setPhase] = useState<Phase>('select')
+  const [phase, setPhase] = useState<Phase>('topic')
+  const [topic, setTopic] = useState<MatchTopic | null>(null)
   const [difficulty, setDifficulty] = useState<MatchDifficulty | null>(null)
   const [round, setRound] = useState<MatchRound | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(MATCH_DIFFICULTY.easy.seconds)
@@ -44,34 +48,51 @@ export function MatchDefinitionModal({
   const [exchangeMsg, setExchangeMsg] = useState<string | null>(null)
   const speakManual = useYueStore((s) => s.speakManual)
 
-  const cfg = difficulty ? MATCH_DIFFICULTY[difficulty] : null
+  const topicCfg = topic ? MATCH_TOPIC[topic] : null
+  const diffCfg = difficulty ? MATCH_DIFFICULTY[difficulty] : null
 
-  const startRound = useCallback(
-    (diff: MatchDifficulty, prevId?: string) => {
-      const next = buildMatchRound(diff, prevId)
-      setRound(next)
-      setSecondsLeft(next.seconds)
-      setPicked(null)
-      setPhase('play')
-    },
-    [],
-  )
+  const startRound = useCallback((t: MatchTopic, diff: MatchDifficulty, prevId?: string) => {
+    const next = buildMatchRound(t, diff, prevId)
+    setRound(next)
+    setSecondsLeft(next.seconds)
+    setPicked(null)
+    setPhase('play')
+  }, [])
+
+  const pickTopic = useCallback((t: MatchTopic) => {
+    setTopic(t)
+    setDifficulty(null)
+    setRound(null)
+    setPicked(null)
+    setPhase('difficulty')
+    setExchangeMsg(null)
+  }, [])
 
   const enterDifficulty = useCallback(
     (diff: MatchDifficulty) => {
+      if (!topic) return
       unlockTtsPlayback()
       setDifficulty(diff)
       setSessionGold(0)
       setHits(0)
       setExchangeMsg(null)
-      startRound(diff)
+      startRound(topic, diff)
     },
-    [startRound],
+    [topic, startRound],
   )
 
-  const backToSelect = useCallback(() => {
+  const backToDifficulty = useCallback(() => {
     stopSpeaking()
-    setPhase('select')
+    setPhase('difficulty')
+    setDifficulty(null)
+    setRound(null)
+    setPicked(null)
+  }, [])
+
+  const backToTopic = useCallback(() => {
+    stopSpeaking()
+    setPhase('topic')
+    setTopic(null)
     setDifficulty(null)
     setRound(null)
     setPicked(null)
@@ -79,7 +100,8 @@ export function MatchDefinitionModal({
 
   useEffect(() => {
     if (!open) return
-    setPhase('select')
+    setPhase('topic')
+    setTopic(null)
     setDifficulty(null)
     setRound(null)
     setPicked(null)
@@ -104,12 +126,11 @@ export function MatchDefinitionModal({
   }, [open, phase, round, secondsLeft])
 
   useEffect(() => {
-    if (!open || phase !== 'feedback' || !round || !difficulty) return
-    const t = window.setTimeout(() => startRound(difficulty, round.word.id), 1100)
+    if (!open || phase !== 'feedback' || !round || !topic || !difficulty) return
+    const t = window.setTimeout(() => startRound(topic, difficulty, round.word.id), 1100)
     return () => window.clearTimeout(t)
-  }, [open, phase, round, difficulty, startRound])
+  }, [open, phase, round, topic, difficulty, startRound])
 
-  // Auto-play Cantonese TTS whenever a new arena prompt lands in play.
   useEffect(() => {
     if (!open || phase !== 'play' || !round) return
     const han = round.word.han.trim()
@@ -123,14 +144,14 @@ export function MatchDefinitionModal({
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (phase === 'play' || phase === 'feedback') backToSelect()
-        else onClose()
-      }
+      if (e.key !== 'Escape') return
+      if (phase === 'play' || phase === 'feedback') backToDifficulty()
+      else if (phase === 'difficulty') backToTopic()
+      else onClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose, phase, backToSelect])
+  }, [open, onClose, phase, backToDifficulty, backToTopic])
 
   if (!open) return null
 
@@ -158,7 +179,46 @@ export function MatchDefinitionModal({
   const timerPct = round ? Math.max(0, (secondsLeft / round.seconds) * 100) : 0
   const timedOut = picked === -1
   const correct = picked !== null && picked === round?.correctIndex
-  const goldPerHit = round?.goldPerHit ?? cfg?.goldPerHit ?? MATCH_DIFFICULTY.easy.goldPerHit
+  const goldPerHit = round?.goldPerHit ?? diffCfg?.goldPerHit ?? MATCH_DIFFICULTY.easy.goldPerHit
+
+  const exchangePanel = (
+    <div className="hq-match-exchange">
+      <p className="hq-match-exchange-title">
+        Exchange gold · 兌換金幣
+        <span className="hq-match-exchange-rate">
+          1 gold = {HARBOR_GOLD_TO_COINS} ferry coin
+          {HARBOR_GOLD_TO_COINS === 1 ? '' : 's'}
+        </span>
+      </p>
+      <div className="hq-match-exchange-actions">
+        <button
+          type="button"
+          className="hq-btn hq-btn--ghost"
+          disabled={gold < 10}
+          onClick={() => doExchange(10)}
+        >
+          10 → {10 * HARBOR_GOLD_TO_COINS}¢
+        </button>
+        <button
+          type="button"
+          className="hq-btn hq-btn--ghost"
+          disabled={gold < 50}
+          onClick={() => doExchange(50)}
+        >
+          50 → {50 * HARBOR_GOLD_TO_COINS}¢
+        </button>
+        <button
+          type="button"
+          className="hq-btn hq-btn--primary"
+          disabled={gold <= 0}
+          onClick={() => doExchange(0)}
+        >
+          Exchange all ({gold})
+        </button>
+      </div>
+      {exchangeMsg ? <p className="hq-match-exchange-msg">{exchangeMsg}</p> : null}
+    </div>
+  )
 
   return (
     <div className="hq-match-overlay" role="presentation" onClick={onClose}>
@@ -195,14 +255,59 @@ export function MatchDefinitionModal({
           </button>
         </header>
 
-        {phase === 'select' ? (
+        {phase === 'topic' ? (
           <div className="hq-match-intro">
             <p className="hq-match-intro-lead" lang="zh-HK">
-              揀難度 · 睇字 · 聽音 · 揀意思
+              揀主題 · 再揀難度
             </p>
             <p className="hq-match-intro-body">
-              Pick a difficulty. Each prompt auto-speaks — match the English meaning before time
-              runs out. Arena gold converts to ferry coins for the Outfitter.
+              Pick a topic first. Difficulty then scales inside that theme — words, phrases, then
+              full sentences. Arena gold converts to ferry coins for the Outfitter.
+            </p>
+
+            <div className="hq-match-topic-grid" role="group" aria-label="Topic">
+              {MATCH_TOPICS.map((id) => {
+                const t = MATCH_TOPIC[id]
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`hq-match-topic hq-match-topic--${id}`}
+                    onClick={() => pickTopic(id)}
+                  >
+                    <span className="hq-match-topic-label">
+                      <span lang="zh-HK">{t.label.zh}</span>
+                      <span>{t.label.en}</span>
+                    </span>
+                    <span className="hq-match-topic-blurb">
+                      <span lang="zh-HK">{t.blurb.zh}</span>
+                      <span>{t.blurb.en}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {exchangePanel}
+          </div>
+        ) : null}
+
+        {phase === 'difficulty' && topicCfg ? (
+          <div className="hq-match-intro">
+            <div className="hq-match-play-bar">
+              <button type="button" className="hq-btn hq-btn--ghost hq-btn--tiny" onClick={backToTopic}>
+                Topics
+              </button>
+              <span className={`hq-match-topic-pill hq-match-topic-pill--${topicCfg.id}`}>
+                {topicCfg.label.zh} · {topicCfg.label.en}
+              </span>
+            </div>
+            <p className="hq-match-intro-lead" lang="zh-HK">
+              揀難度
+            </p>
+            <p className="hq-match-intro-body">
+              Same topic, harder form — Easy words, Medium phrases, Hard sentences. More time and
+              gold as you climb.
             </p>
 
             <div className="hq-match-diff-grid" role="group" aria-label="Difficulty">
@@ -230,55 +335,31 @@ export function MatchDefinitionModal({
                 )
               })}
             </div>
-
-            <div className="hq-match-exchange">
-              <p className="hq-match-exchange-title">
-                Exchange gold · 兌換金幣
-                <span className="hq-match-exchange-rate">
-                  1 gold = {HARBOR_GOLD_TO_COINS} ferry coin
-                  {HARBOR_GOLD_TO_COINS === 1 ? '' : 's'}
-                </span>
-              </p>
-              <div className="hq-match-exchange-actions">
-                <button
-                  type="button"
-                  className="hq-btn hq-btn--ghost"
-                  disabled={gold < 10}
-                  onClick={() => doExchange(10)}
-                >
-                  10 → {10 * HARBOR_GOLD_TO_COINS}¢
-                </button>
-                <button
-                  type="button"
-                  className="hq-btn hq-btn--ghost"
-                  disabled={gold < 50}
-                  onClick={() => doExchange(50)}
-                >
-                  50 → {50 * HARBOR_GOLD_TO_COINS}¢
-                </button>
-                <button
-                  type="button"
-                  className="hq-btn hq-btn--primary"
-                  disabled={gold <= 0}
-                  onClick={() => doExchange(0)}
-                >
-                  Exchange all ({gold})
-                </button>
-              </div>
-              {exchangeMsg ? <p className="hq-match-exchange-msg">{exchangeMsg}</p> : null}
-            </div>
           </div>
-        ) : round ? (
+        ) : null}
+
+        {(phase === 'play' || phase === 'feedback') && round ? (
           <div className="hq-match-play">
             <div className="hq-match-play-bar">
-              <button type="button" className="hq-btn hq-btn--ghost hq-btn--tiny" onClick={backToSelect}>
+              <button
+                type="button"
+                className="hq-btn hq-btn--ghost hq-btn--tiny"
+                onClick={backToDifficulty}
+              >
                 Difficulty
               </button>
-              {cfg ? (
-                <span className={`hq-match-diff-pill hq-match-diff-pill--${cfg.id}`}>
-                  {cfg.label.en} · {cfg.blurb.en}
-                </span>
-              ) : null}
+              <span className="hq-match-session-pills">
+                {topicCfg ? (
+                  <span className={`hq-match-topic-pill hq-match-topic-pill--${topicCfg.id}`}>
+                    {topicCfg.label.en}
+                  </span>
+                ) : null}
+                {diffCfg ? (
+                  <span className={`hq-match-diff-pill hq-match-diff-pill--${diffCfg.id}`}>
+                    {diffCfg.label.en}
+                  </span>
+                ) : null}
+              </span>
             </div>
 
             <div className="hq-match-timer" aria-label={`${secondsLeft} seconds left`}>
@@ -291,7 +372,10 @@ export function MatchDefinitionModal({
 
             <div className="hq-match-prompt">
               <div className="hq-match-prompt-row">
-                <p className={`hq-match-han${round.difficulty === 'hard' ? ' is-sentence' : ''}`} lang="zh-HK">
+                <p
+                  className={`hq-match-han${round.difficulty === 'hard' ? ' is-sentence' : ''}`}
+                  lang="zh-HK"
+                >
                   {round.word.han}
                 </p>
                 <SpeakButton text={round.word.han} lang="yue" className="hq-match-speak" warm />
