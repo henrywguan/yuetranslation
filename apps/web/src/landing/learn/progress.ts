@@ -33,6 +33,7 @@ import {
   type HarborAppearance,
   type HarborGender,
 } from './harborAppearance'
+import { HARBOR_GOLD_TO_COINS } from './matchDefinitionBank'
 
 export type { HarborProgress }
 export {
@@ -142,6 +143,29 @@ export function markGoldEarned(amount: number) {
   if (n > 0) p.gold = Math.max(0, Math.floor(p.gold ?? 0)) + n
   return commit(p)
 }
+
+/** Arena gold → ferry coins for the River Outfitter. `goldAmount` of 0 exchanges all. */
+export function exchangeGoldForCoins(
+  goldAmount = 0,
+):
+  | { ok: true; progress: HarborProgress; coinsGained: number; goldSpent: number }
+  | { ok: false; reason: string } {
+  const p = read()
+  const have = Math.max(0, Math.floor(p.gold ?? 0))
+  if (have <= 0) return { ok: false, reason: 'No arena gold to exchange.' }
+  const want = goldAmount > 0 ? Math.floor(goldAmount) : have
+  const spend = Math.min(have, Math.max(0, want))
+  if (spend <= 0) return { ok: false, reason: 'Pick an amount of gold to exchange.' }
+  const coinsGained = spend * HARBOR_GOLD_TO_COINS
+  const progress = commit({
+    ...p,
+    gold: have - spend,
+    coins: Math.max(0, Math.floor(p.coins)) + coinsGained,
+  })
+  return { ok: true, progress, coinsGained, goldSpent: spend }
+}
+
+export { HARBOR_GOLD_TO_COINS }
 
 /** Stamp a visit to the Save Shack (persists look + progress timestamp). */
 export function visitSaveShack(): HarborProgress {
