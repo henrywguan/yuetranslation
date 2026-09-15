@@ -32,8 +32,13 @@ export type HarborCharacterCreateResult = {
 type Props = {
   existingUsername?: string | null
   signedIn: boolean
-  mode?: 'full' | 'username-only'
+  /** full = first create; username-only = claim a name; barber = restyle at the shop. */
+  mode?: 'full' | 'username-only' | 'barber'
+  initialGender?: HarborGender
+  initialAppearance?: HarborAppearance
+  initialLook?: HarborLook
   onComplete: (result: HarborCharacterCreateResult) => void
+  onCancel?: () => void
 }
 
 type Step = 'name' | 'body' | 'design' | 'confirm'
@@ -56,20 +61,40 @@ export function HarborCharacterCreate({
   existingUsername,
   signedIn,
   mode = 'full',
+  initialGender,
+  initialAppearance,
+  initialLook,
   onComplete,
+  onCancel,
 }: Props) {
-  const needsName = !existingUsername?.trim()
-  const [step, setStep] = useState<Step>(() => (needsName || mode === 'username-only' ? 'name' : 'body'))
+  const isBarber = mode === 'barber'
+  const needsName = !isBarber && !existingUsername?.trim()
+  const [step, setStep] = useState<Step>(() => {
+    if (isBarber) return 'body'
+    if (needsName || mode === 'username-only') return 'name'
+    return 'body'
+  })
   const [username, setUsername] = useState(existingUsername?.trim() ?? '')
   const [nameError, setNameError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [gender, setGender] = useState<HarborGender>('male')
-  const [appearance, setAppearance] = useState<HarborAppearance>({ ...HARBOR_DEFAULT_APPEARANCE })
-  const [topIdx, setTopIdx] = useState(0)
-  const [bottomIdx, setBottomIdx] = useState(0)
-  const [shoesIdx, setShoesIdx] = useState(0)
-  const [hatIdx, setHatIdx] = useState(0)
-  const [hatOn, setHatOn] = useState(true)
+  const [gender, setGender] = useState<HarborGender>(initialGender ?? 'male')
+  const [appearance, setAppearance] = useState<HarborAppearance>({
+    ...(initialAppearance ?? HARBOR_DEFAULT_APPEARANCE),
+  })
+  const seedLook = initialLook ?? HARBOR_DEFAULT_LOOK
+  const [topIdx, setTopIdx] = useState(() =>
+    Math.max(0, FREE_TOPS.findIndex((g) => g.id === seedLook.top)),
+  )
+  const [bottomIdx, setBottomIdx] = useState(() =>
+    Math.max(0, FREE_BOTTOMS.findIndex((g) => g.id === seedLook.bottom)),
+  )
+  const [shoesIdx, setShoesIdx] = useState(() =>
+    Math.max(0, FREE_SHOES.findIndex((g) => g.id === seedLook.shoes)),
+  )
+  const [hatIdx, setHatIdx] = useState(() =>
+    Math.max(0, FREE_HATS.findIndex((g) => g.id === seedLook.hat)),
+  )
+  const [hatOn, setHatOn] = useState(() => FREE_HATS.some((g) => g.id === seedLook.hat))
 
   const look = useMemo(() => {
     const next: HarborLook = { ...HARBOR_DEFAULT_LOOK }
@@ -197,8 +222,9 @@ export function HarborCharacterCreate({
   }
 
   const finish = async () => {
-    const normalized =
-      needsName || mode === 'username-only'
+    const normalized = isBarber
+      ? (existingUsername?.trim() || normalizeHarborUsernameInput(username) || 'sailor')
+      : needsName || mode === 'username-only'
         ? validateName()
         : normalizeHarborUsernameInput(username) ?? existingUsername?.trim() ?? null
     if (!normalized) {
@@ -209,7 +235,7 @@ export function HarborCharacterCreate({
     setNameError(null)
     let savedAccountUsername = false
     try {
-      if (signedIn && (needsName || mode === 'username-only')) {
+      if (!isBarber && signedIn && (needsName || mode === 'username-only')) {
         await saveUsername(normalized)
         savedAccountUsername = true
       }
@@ -228,8 +254,13 @@ export function HarborCharacterCreate({
     }
   }
 
-  const stepTitle =
-    step === 'name'
+  const stepTitle = isBarber
+    ? step === 'body'
+      ? 'Barber chair · pick a form'
+      : step === 'design'
+        ? 'Fresh cut & colors'
+        : 'Love the new look?'
+    : step === 'name'
       ? 'Choose your sailor name'
       : step === 'body'
         ? 'Choose your form'
@@ -237,8 +268,13 @@ export function HarborCharacterCreate({
           ? 'Design your River Scout'
           : 'Ready for the harbor?'
 
-  const stepZh =
-    step === 'name'
+  const stepZh = isBarber
+    ? step === 'body'
+      ? '理髮椅 · 選外形'
+      : step === 'design'
+        ? '新髮型與膚色'
+        : '滿意新造型？'
+    : step === 'name'
       ? '選水手名'
       : step === 'body'
         ? '選外形'
@@ -246,14 +282,15 @@ export function HarborCharacterCreate({
           ? '設計河上偵察'
           : '準備出航？'
 
-  const steps: Step[] = mode === 'username-only' ? ['name'] : ['name', 'body', 'design', 'confirm']
+  const steps: Step[] =
+    mode === 'username-only' ? ['name'] : isBarber ? ['body', 'design', 'confirm'] : ['name', 'body', 'design', 'confirm']
 
   return (
     <div className="hq-charcreate" role="dialog" aria-modal="true" aria-label="Harbor character creation">
       <div className="hq-charcreate-wash" aria-hidden="true" />
       <div className="hq-charcreate-frame">
         <header className="hq-charcreate-head">
-          <p className="hq-charcreate-kicker">Harbor Quest</p>
+          <p className="hq-charcreate-kicker">{isBarber ? 'Harbor Barber · 港灣理髮' : 'Harbor Quest'}</p>
           <h1 className="hq-charcreate-title">{stepTitle}</h1>
           <p className="hq-charcreate-title-zh" lang="zh-HK">
             {stepZh}
@@ -435,13 +472,27 @@ export function HarborCharacterCreate({
                   type="button"
                   className="hq-btn hq-btn--ghost"
                   disabled={busy}
-                  onClick={() => setStep(step === 'confirm' ? 'design' : step === 'design' ? 'body' : 'name')}
+                  onClick={() =>
+                    setStep(
+                      step === 'confirm' ? 'design' : step === 'design' ? 'body' : isBarber ? 'body' : 'name',
+                    )
+                  }
                 >
                   Back
                 </button>
               ) : (
                 <span />
               )}
+              {isBarber && onCancel ? (
+                <button
+                  type="button"
+                  className="hq-btn hq-btn--ghost"
+                  disabled={busy}
+                  onClick={onCancel}
+                >
+                  Leave chair
+                </button>
+              ) : null}
               {step === 'confirm' || (mode === 'username-only' && step === 'name') ? (
                 <button
                   type="button"
@@ -449,7 +500,7 @@ export function HarborCharacterCreate({
                   disabled={busy}
                   onClick={() => void finish()}
                 >
-                  {busy ? 'Saving…' : 'Accept'}
+                  {busy ? 'Saving…' : isBarber ? 'Done · 完成' : 'Accept'}
                 </button>
               ) : (
                 <button
