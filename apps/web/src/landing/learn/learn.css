@@ -2426,7 +2426,147 @@
 /* —— Inventory / Bank panels (coin chip toggles inventory) —— */
 .hq-visit-panel--inv {
   border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
+  max-width: min(22rem, calc(100vw - 1.2rem));
 }
+
+/* OSRS Worn Equipment–style paperdoll (Harbor jade/ink chrome) */
+.hq-worn {
+  position: relative;
+  width: 12.5rem;
+  height: 17.25rem;
+  margin: 0.35rem auto 0.55rem;
+}
+.hq-worn-frame {
+  position: absolute;
+  inset: 2.15rem 3.35rem 3.4rem;
+  border-radius: 0.35rem;
+  border: 1px solid color-mix(in srgb, #c9a227 28%, transparent);
+  background:
+    radial-gradient(80% 60% at 50% 30%, color-mix(in srgb, #1a3a40 55%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, #0a181c 88%, #1a4a44), color-mix(in srgb, #041018 92%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 35%, transparent);
+  pointer-events: none;
+}
+.hq-worn-figure {
+  position: absolute;
+  left: 50%;
+  top: 0.55rem;
+  transform: translateX(-50%);
+  width: 2.6rem;
+  height: 9.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+}
+.hq-worn-fig {
+  display: block;
+  border-radius: 0.2rem;
+  box-shadow: 0 1px 0 color-mix(in srgb, #000 40%, transparent);
+}
+.hq-worn-fig--hat {
+  width: 1.85rem;
+  height: 0.55rem;
+  border-radius: 0.35rem 0.35rem 0.12rem 0.12rem;
+}
+.hq-worn-fig--head {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: #e8c4a8;
+}
+.hq-worn-fig--torso {
+  width: 2.15rem;
+  height: 2.55rem;
+  border-radius: 0.35rem;
+}
+.hq-worn-fig--legs {
+  width: 1.85rem;
+  height: 2.85rem;
+  border-radius: 0.25rem;
+}
+.hq-worn-fig--feet {
+  width: 1.95rem;
+  height: 0.55rem;
+  border-radius: 0.15rem;
+}
+
+.hq-worn-slot {
+  position: absolute;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0.18rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  border-radius: 0.2rem;
+  border: 2px solid color-mix(in srgb, #8a7020 55%, #3dcfb6 20%);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #1a1408 70%, #3a3020), color-mix(in srgb, #0a1014 85%, transparent));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #f0d060 18%, transparent),
+    0 2px 6px color-mix(in srgb, #000 35%, transparent);
+  color: #e8d48a;
+  cursor: pointer;
+}
+.hq-worn-slot.is-on {
+  border-color: #f0d060;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #f0d060 45%, transparent),
+    0 0 10px color-mix(in srgb, #3dcfb6 35%, transparent);
+}
+.hq-worn-slot--hat { left: 50%; top: 0; transform: translateX(-50%); }
+.hq-worn-slot--lantern { left: 0; top: 2.75rem; }
+.hq-worn-slot--hand { right: 0; top: 2.75rem; }
+.hq-worn-slot--top { left: 50%; top: 5.5rem; transform: translateX(-50%); }
+.hq-worn-slot--bottom { left: 50%; top: 8.25rem; transform: translateX(-50%); }
+.hq-worn-slot--shoes { left: 50%; top: 11rem; transform: translateX(-50%); }
+.hq-worn-slot--boat { left: 50%; top: 13.75rem; transform: translateX(-50%); }
+
+.hq-worn-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.15rem;
+  border: 1px solid color-mix(in srgb, #041018 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 12%, transparent);
+}
+.hq-worn-empty {
+  font: 700 0.9rem/1 Syne, system-ui, sans-serif;
+  opacity: 0.45;
+}
+.hq-worn-slot-tag {
+  font: 600 0.48rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #e8d48a 75%, transparent);
+}
+.hq-worn-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.15rem;
+  margin: 0;
+  text-align: center;
+  font: 500 0.68rem/1.2 "Noto Sans", system-ui, sans-serif;
+  color: color-mix(in srgb, #dff6ff 78%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-worn-pack-label {
+  margin: 0.85rem 0 0.35rem;
+  font: 600 0.68rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3dcfb6;
+}
+.hq-worn-pack-list {
+  max-height: min(28dvh, 12rem);
+  overflow: auto;
+}
+
 .hq-visit-panel--bank {
   border-color: color-mix(in srgb, #50e8c8 40%, transparent);
   background:
