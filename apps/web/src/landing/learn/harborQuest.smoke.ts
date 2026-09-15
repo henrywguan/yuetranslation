@@ -342,6 +342,12 @@ function main() {
   assert.match(wornSrc, /hq-worn-figure/, 'worn board paperdoll')
   const wornCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
   assert.match(wornCss, /\.hq-worn\s*\{/, 'worn board styles')
+  assert.match(
+    wornCss,
+    /\.hq-worn\s*\{[^}]*flex-shrink:\s*0/s,
+    'worn board does not flex-shrink over pack',
+  )
+  assert.match(wornCss, /\.hq-visit-panel--inv[\s\S]*?max-height:\s*min\(78dvh/, 'inv panel taller for paperdoll')
   assert.match(wornCss, /\.hq-worn-slot--boat/, 'worn board boat slot')
   assert.doesNotMatch(playSrc, />\s*Pack\s*</, 'Pack label removed from HUD')
   assert.ok(playSrc.includes('worldPaused'), 'session accepts page-level world pause')

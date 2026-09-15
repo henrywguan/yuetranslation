@@ -2527,13 +2527,26 @@
 .hq-visit-panel--inv {
   border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
   max-width: min(22rem, calc(100vw - 1.2rem));
+  /* Taller than shop panels so paperdoll + pack + actions fit on phones. */
+  max-height: min(78dvh, 40rem);
+}
+.hq-visit-panel--inv .hq-visit-kicker,
+.hq-visit-panel--inv .hq-visit-title,
+.hq-visit-panel--inv .hq-visit-body,
+.hq-visit-panel--inv .hq-visit-msg,
+.hq-visit-panel--inv .hq-visit-actions,
+.hq-visit-panel--inv .hq-worn-pack-label {
+  flex-shrink: 0;
 }
 
 /* OSRS Worn Equipment–style paperdoll (Harbor jade/ink chrome) */
 .hq-worn {
   position: relative;
+  /* Critical: default flex-shrink collapses this box while absolute slots
+     keep painting at their top offsets — overlapping the pack list. */
+  flex-shrink: 0;
   width: 12.5rem;
-  height: 17.25rem;
+  height: 17.5rem;
   margin: 0.35rem auto 0.55rem;
 }
 .hq-worn-frame {
@@ -2663,8 +2676,16 @@
   color: #3dcfb6;
 }
 .hq-worn-pack-list {
+  flex-shrink: 1;
+  min-height: 0;
   max-height: min(28dvh, 12rem);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 640px) {
+  .hq-visit-panel--inv {
+    max-height: min(72dvh, 36rem);
+  }
 }
 
 /* Full-screen Gear Codex — covers the harbor while browsing the database. */
