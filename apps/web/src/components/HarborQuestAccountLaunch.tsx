@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { openLearn } from '../lib/siteLinks'
-import { biPlain, ui } from '../lib/uiCopy'
+import { ui } from '../lib/uiCopy'
 import './HarborQuestAccountLaunch.css'
 
 type Props = {
@@ -13,7 +13,10 @@ export function HarborQuestAccountLaunch({ onNavigate }: Props) {
   const uid = useId().replace(/:/g, '')
   const seaId = `hq-sea-${uid}`
   const jadeId = `hq-jade-${uid}`
-  const label = `${biPlain(ui.harborQuestLaunch)} (${biPlain(ui.harborQuestBeta)})`
+  // Brand label stays English-only (biPlain would print "Harbor Quest Harbor Quest").
+  const name = ui.harborQuestShort.en
+  const beta = ui.harborQuestBeta.en
+  const label = `${name} (${beta})`
   return (
     <button
       type="button"
@@ -61,8 +64,8 @@ export function HarborQuestAccountLaunch({ onNavigate }: Props) {
         </svg>
       </span>
       <span className="hq-account-launch-meta">
-        <span className="hq-account-launch-beta">{biPlain(ui.harborQuestBeta)}</span>
-        <span className="hq-account-launch-name">{biPlain(ui.harborQuestShort)}</span>
+        <span className="hq-account-launch-beta">{beta}</span>
+        <span className="hq-account-launch-name">{name}</span>
       </span>
     </button>
   )

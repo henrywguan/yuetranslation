@@ -539,11 +539,6 @@ export function PlanChip() {
                         {hubTitle}
                       </h2>
                     )}
-                    {entitlement.role ? (
-                      <div className="account-hub-header-role">
-                        <RoleBadge role={entitlement.role} />
-                      </div>
-                    ) : null}
                   </div>
                   {email ? <p className="account-hub-email">{email}</p> : null}
                 </div>
