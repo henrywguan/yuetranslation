@@ -16,7 +16,31 @@ import {
   stopHarborCorrectFanfare,
 } from './harborFanfare'
 import { duckHarborBgm, startHarborBgm, stopHarborBgm } from './harborBgm'
+import {
+  setHarborAmbientPaused,
+  setHarborAmbientTalking,
+  startHarborAmbient,
+  stopHarborAmbient,
+} from './harborAmbient'
 import { playHarborCoinChing } from './harborCoinSfx'
+import {
+  playHarborArenaOpen,
+  playHarborBagClose,
+  playHarborBagOpen,
+  playHarborBankDeposit,
+  playHarborBankWithdraw,
+  playHarborBarberSnip,
+  playHarborCastOff,
+  playHarborChatSend,
+  playHarborEquip,
+  playHarborExplore,
+  playHarborLandmarkOpen,
+  playHarborNpcGreet,
+  playHarborTalkStart,
+  playHarborTeleport,
+  playHarborUiClick,
+  tickHarborMoveSfx,
+} from './harborInteractSfx'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
 import { playHarborScrollClose, playHarborScrollOpen, stopHarborScrollSfx } from './harborScrollSfx'
 import {
@@ -336,16 +360,80 @@ export function LearnSession({
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     preloadHarborMissSfx()
-    // BGM needs a user gesture on many browsers — also kicked from onResult.
+    // BGM / ambient need a user gesture on many browsers — also kicked from onResult.
     startHarborBgm()
+    let ambientTries = 0
+    const ambientBoot = window.setInterval(() => {
+      ambientTries += 1
+      const w = worldApiRef.current?.weather
+      if (w) {
+        startHarborAmbient(w)
+        window.clearInterval(ambientBoot)
+      } else if (ambientTries > 40) {
+        startHarborAmbient('sunny')
+        window.clearInterval(ambientBoot)
+      }
+    }, 150)
     return () => {
       document.body.style.overflow = prev
+      window.clearInterval(ambientBoot)
       stopHarborCorrectFanfare()
       stopHarborMiss()
       stopHarborScrollSfx()
+      stopHarborAmbient()
       stopHarborBgm()
     }
   }, [])
+
+  useEffect(() => {
+    setHarborAmbientTalking(talking)
+  }, [talking])
+
+  useEffect(() => {
+    setHarborAmbientPaused(
+      Boolean(
+        worldPaused ||
+          invOpen ||
+          codexOpen ||
+          scrollOpen ||
+          arenaOpen ||
+          barberOpen ||
+          teleportOpen ||
+          visitable !== null,
+      ),
+    )
+  }, [
+    worldPaused,
+    invOpen,
+    codexOpen,
+    scrollOpen,
+    arenaOpen,
+    barberOpen,
+    teleportOpen,
+    visitable,
+  ])
+
+  /** Footsteps / paddle while exploring (OSRS-style local move cues). */
+  useEffect(() => {
+    let last = { x: 0, z: 0, primed: false }
+    const id = window.setInterval(() => {
+      if (talking || invOpen || codexOpen || scrollOpen || arenaOpen || barberOpen || visitable) {
+        return
+      }
+      const pose = worldApiRef.current?.getLocalPose()
+      if (!pose) return
+      if (!last.primed) {
+        last = { x: pose.x, z: pose.z, primed: true }
+        return
+      }
+      const dx = pose.x - last.x
+      const dz = pose.z - last.z
+      const moving = dx * dx + dz * dz > 0.00035
+      last = { x: pose.x, z: pose.z, primed: true }
+      tickHarborMoveSfx(moving, pose.mode)
+    }, 100)
+    return () => window.clearInterval(id)
+  }, [talking, invOpen, codexOpen, scrollOpen, arenaOpen, barberOpen, visitable])
 
   useEffect(() => {
     if (!scrollOpen) return
@@ -415,6 +503,8 @@ export function LearnSession({
 
   const onVisitable = useCallback((id: HarborVisitableId | null) => {
     if (id === 'arena') {
+      playHarborLandmarkOpen('arena')
+      playHarborArenaOpen()
       setArenaOpen(true)
       setVisitable(null)
       setInvOpen(false)
@@ -423,26 +513,29 @@ export function LearnSession({
     }
     // Barber NPC / portal → same character-create modal (restyle, keep name)
     if (id === 'barber') {
+      playHarborLandmarkOpen('barber')
       setBarberOpen(true)
       setVisitable(null)
       setInvOpen(false)
       setCodexOpen(false)
       return
     }
-    setVisitable(id)
     if (id) {
+      playHarborLandmarkOpen(id)
       setInvOpen(false)
       setCodexOpen(false)
-    }
-    if (!id) {
+    } else {
+      playHarborCastOff()
       setSaveFlash(null)
       setShopMsg(null)
       setBankMsg(null)
     }
+    setVisitable(id)
   }, [])
 
   const onEarnGold = useCallback(
     (amount: number) => {
+      playHarborCoinChing()
       pushProgress(markGoldEarned(amount))
     },
     [pushProgress],
@@ -461,6 +554,7 @@ export function LearnSession({
         setShopMsg(res.reason)
         return
       }
+      playHarborCoinChing()
       pushProgress(res.progress)
       setShopMsg(`Bought ${harborGearById(id)?.name.en ?? id}.`)
     },
@@ -474,6 +568,7 @@ export function LearnSession({
         setShopMsg(res.reason)
         return
       }
+      playHarborEquip()
       pushProgress(res.progress)
       setShopMsg(`Equipped ${harborGearById(id)?.name.en ?? id}.`)
     },
@@ -488,6 +583,7 @@ export function LearnSession({
         setBankMsg(res.reason)
         return
       }
+      playHarborBankDeposit()
       pushProgress(res.progress)
       setBankMsg(`Banked ${harborGearById(id)?.name.en ?? id}.`)
     },
@@ -501,6 +597,7 @@ export function LearnSession({
         setBankMsg(res.reason)
         return
       }
+      playHarborBankWithdraw()
       pushProgress(res.progress)
       setBankMsg(`Withdrew ${harborGearById(id)?.name.en ?? id}.`)
     },
@@ -514,6 +611,7 @@ export function LearnSession({
         setShopMsg(res.reason)
         return
       }
+      playHarborEquip()
       pushProgress(res.progress)
       setShopMsg(`Equipped ${harborGearById(id)?.name.en ?? id}.`)
     },
@@ -570,6 +668,7 @@ export function LearnSession({
         signedIn={Boolean(entitlement?.loggedIn)}
         mode={needsCharacterCreate ? 'full' : 'username-only'}
         onComplete={(result) => {
+          playHarborBarberSnip()
           completeHarborCharacter({
             gender: result.gender,
             appearance: result.appearance,
@@ -590,6 +689,7 @@ export function LearnSession({
   const sendChat = useCallback((raw: string) => {
     const cleaned = sanitizeChatText(raw)
     if (!cleaned) return
+    playHarborChatSend()
     const userId = localUserIdRef.current ?? 'local'
     const packet: HarborChatPacket = {
       userId,
@@ -699,7 +799,11 @@ export function LearnSession({
           aria-pressed={invOpen}
           aria-live="polite"
           onClick={() => {
-            setInvOpen((v) => !v)
+            setInvOpen((v) => {
+              if (v) playHarborBagClose()
+              else playHarborBagOpen()
+              return !v
+            })
             setVisitable(null)
             setCodexOpen(false)
             setShopMsg(null)
@@ -722,6 +826,7 @@ export function LearnSession({
           title="Chinese arena gold — paddle to the 擂台 portal"
           aria-label={`Arena gold ${progressSnap.gold ?? 0}. Open Match the Definition`}
           onClick={() => {
+            playHarborArenaOpen()
             setArenaOpen(true)
             setVisitable(null)
             setInvOpen(false)
@@ -797,6 +902,7 @@ export function LearnSession({
               type="button"
               className="hq-btn hq-btn--ghost"
               onClick={() => {
+                playHarborBagOpen()
                 setInvOpen(true)
                 setCodexOpen(false)
                 setVisitable(null)
@@ -829,6 +935,7 @@ export function LearnSession({
                       className={`hq-teleport-btn${here ? ' is-here' : ''}${!unlocked ? ' is-locked' : ''}`}
                       disabled={!unlocked || here}
                       onClick={() => {
+                        playHarborTeleport()
                         setTeleportOpen(false)
                         setVisitable(null)
                         onOpenLevel(lv.id)
@@ -847,7 +954,14 @@ export function LearnSession({
               })}
             </ul>
           ) : null}
-          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+          <button
+            type="button"
+            className="hq-btn hq-btn--ghost"
+            onClick={() => {
+              playHarborCastOff()
+              setVisitable(null)
+            }}
+          >
             Cast off
           </button>
         </aside>
@@ -868,7 +982,10 @@ export function LearnSession({
                 role="tab"
                 aria-selected={shopSlot === slot}
                 className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
-                onClick={() => setShopSlot(slot)}
+                onClick={() => {
+                  playHarborUiClick()
+                  setShopSlot(slot)
+                }}
               >
                 {HARBOR_SLOT_LABEL[slot]}
               </button>
@@ -928,7 +1045,14 @@ export function LearnSession({
             <button type="button" className="hq-btn hq-btn--ghost" onClick={openGearCodex}>
               Gear codex
             </button>
-            <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+            <button
+              type="button"
+              className="hq-btn hq-btn--ghost"
+              onClick={() => {
+                playHarborCastOff()
+                setVisitable(null)
+              }}
+            >
               Cast off
             </button>
           </div>
@@ -941,10 +1065,16 @@ export function LearnSession({
           look={progressSnap.look}
           coins={progressSnap.coins}
           selectedSlot={shopSlot}
-          onSelectSlot={setShopSlot}
+          onSelectSlot={(slot) => {
+            playHarborUiClick()
+            setShopSlot(slot)
+          }}
           onWear={onInvEquip}
           onOpenCodex={openGearCodex}
-          onClose={() => setInvOpen(false)}
+          onClose={() => {
+            playHarborBagClose()
+            setInvOpen(false)
+          }}
           message={shopMsg}
         />
       ) : null}
@@ -968,7 +1098,10 @@ export function LearnSession({
                 role="tab"
                 aria-selected={shopSlot === slot}
                 className={`hq-shop-slot${shopSlot === slot ? ' is-on' : ''}`}
-                onClick={() => setShopSlot(slot)}
+                onClick={() => {
+                  playHarborUiClick()
+                  setShopSlot(slot)
+                }}
               >
                 {HARBOR_SLOT_LABEL[slot]}
               </button>
@@ -1038,7 +1171,14 @@ export function LearnSession({
               ))}
           </ul>
           {bankMsg ? <p className="hq-visit-msg">{bankMsg}</p> : null}
-          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
+          <button
+            type="button"
+            className="hq-btn hq-btn--ghost"
+            onClick={() => {
+              playHarborCastOff()
+              setVisitable(null)
+            }}
+          >
             Cast off
           </button>
         </aside>
@@ -1055,6 +1195,7 @@ export function LearnSession({
             initialLook={progressSnap.look}
             onCancel={() => setBarberOpen(false)}
             onComplete={(result) => {
+              playHarborBarberSnip()
               completeHarborCharacter({
                 gender: result.gender,
                 appearance: result.appearance,
@@ -1082,7 +1223,10 @@ export function LearnSession({
         aria-label="Open world exploration"
         aria-pressed={!talking}
         title="Open world exploration"
-        onClick={() => setTalking(false)}
+        onClick={() => {
+          playHarborExplore()
+          setTalking(false)
+        }}
       >
         <span className="hq-compass-disc" aria-hidden="true">
           <ExploreWorldIcon />
@@ -1110,8 +1254,15 @@ export function LearnSession({
           onResult={onResult}
           overlay
           talking={talking}
-          onTalk={() => setTalking(true)}
-          onExplore={() => setTalking(false)}
+          onTalk={() => {
+            playHarborTalkStart()
+            playHarborNpcGreet()
+            setTalking(true)
+          }}
+          onExplore={() => {
+            playHarborExplore()
+            setTalking(false)
+          }}
           speakerRole={speakerForStep(stepIndex)}
         />
       </div>

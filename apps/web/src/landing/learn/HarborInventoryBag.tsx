@@ -7,6 +7,7 @@ import {
 } from './harborGear'
 import { HarborGearModelIcon } from './HarborGearModelIcon'
 import { HarborWornBoard } from './HarborWornBoard'
+import { playHarborUiClick } from './harborInteractSfx'
 
 /** Classic OSRS inventory capacity. */
 export const HARBOR_BAG_SLOTS = 28
@@ -73,7 +74,10 @@ export function HarborInventoryBag({
             role="tab"
             aria-selected={tab === 'bag'}
             className={`hq-bag-tab${tab === 'bag' ? ' is-on' : ''}`}
-            onClick={() => setTab('bag')}
+            onClick={() => {
+              playHarborUiClick()
+              setTab('bag')
+            }}
             title="Inventory"
           >
             <span className="hq-bag-tab-icon" aria-hidden="true">
@@ -86,7 +90,10 @@ export function HarborInventoryBag({
             role="tab"
             aria-selected={tab === 'worn'}
             className={`hq-bag-tab${tab === 'worn' ? ' is-on' : ''}`}
-            onClick={() => setTab('worn')}
+            onClick={() => {
+              playHarborUiClick()
+              setTab('worn')
+            }}
             title="Worn equipment"
           >
             <span className="hq-bag-tab-icon" aria-hidden="true">

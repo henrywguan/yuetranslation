@@ -27,6 +27,25 @@ import {
 } from '../../landing/learn/harborBgm'
 import { HARBOR_COIN_CHING_GAIN } from '../../landing/learn/harborCoinSfx'
 import {
+  HARBOR_AMBIENT_GAIN,
+  HARBOR_WILDLIFE_GAIN,
+  isHarborAmbientRunning,
+} from '../../landing/learn/harborAmbient'
+import {
+  HARBOR_INTERACT_SFX_GAIN,
+  playHarborBagClose,
+  playHarborBagOpen,
+  playHarborCastOff,
+  playHarborEquip,
+  playHarborExplore,
+  playHarborFootstep,
+  playHarborLandmarkOpen,
+  playHarborPaddle,
+  playHarborTalkStart,
+  playHarborUiClick,
+  tickHarborMoveSfx,
+} from '../../landing/learn/harborInteractSfx'
+import {
   biomeForChunk,
   clampOrbitDistance,
   clampOrbitPitch,
@@ -330,7 +349,9 @@ function main() {
   assert.ok(playSrc.includes('hq-scroll-modal'), 'chapter opens Chinese scroll modal')
   assert.ok(playSrc.includes('playHarborScrollOpen'), 'scroll open plays unfurl SFX')
   assert.ok(playSrc.includes('playHarborScrollClose'), 'scroll close plays roll-up SFX')
-  assert.ok(playSrc.includes('setInvOpen((v) => !v)'), 'coin chip toggles inventory open/close')
+  assert.ok(playSrc.includes('playHarborBagOpen'), 'coin chip / Save Shack play bag open')
+  assert.ok(playSrc.includes('playHarborBagClose'), 'coin chip / bag close play bag close')
+  assert.match(playSrc, /setInvOpen\(\(v\)\s*=>/, 'coin chip toggles inventory open/close')
   assert.ok(playSrc.includes('setInvOpen(true)'), 'Save Shack / visitables can open inventory')
   assert.ok(playSrc.includes('Open inventory'), 'Save Shack opens inventory')
   assert.ok(playSrc.includes('HarborInventoryBag'), 'inventory uses OSRS-style bag panel')
@@ -341,6 +362,7 @@ function main() {
   assert.match(bagSrc, /hq-bag-grid/, 'bag renders item grid')
   assert.match(bagSrc, /HarborGearModelIcon/, 'bag shows item model icons')
   assert.match(bagSrc, /HarborWornBoard/, 'bag Worn tab keeps paperdoll')
+  assert.match(bagSrc, /playHarborUiClick/, 'bag tabs tick UI click')
   const wornSrc = readFileSync(new URL('./HarborWornBoard.tsx', import.meta.url), 'utf8')
   assert.match(wornSrc, /export function HarborWornBoard/, 'worn board component')
   assert.match(wornSrc, /hq-worn-slot--hat/, 'worn board hat slot')
@@ -553,7 +575,7 @@ function main() {
   assert.match(playSrc2, /withdrawHarborGear/, 'Bank withdraw flow')
   assert.doesNotMatch(playSrc2, /hq-inv-btn/, 'Pack HUD button removed')
   assert.match(playSrc2, /hq-coin-chip.*is-open|is-open.*hq-coin-chip/, 'coin chip shows open state')
-  assert.match(playSrc2, /setInvOpen\(\(v\) => !v\)/, 'coin chip toggles inventory')
+  assert.match(playSrc2, /setInvOpen\(\(v\)\s*=>/, 'coin chip toggles inventory')
   assert.match(playSrc2, /hq-visit-panel--bank/, 'Bank visit panel')
   assert.match(playSrc2, /hq-visit-panel/, 'visit panel UI')
   assert.match(playSrc2, /MatchDefinitionModal/, 'Match the Definition modal')
@@ -628,6 +650,51 @@ function main() {
   assert.match(playAudioSrc, /startHarborBgm/, 'session starts Chinese Harbor BGM')
   assert.match(playAudioSrc, /stopHarborBgm/, 'session stops BGM on exit')
   assert.match(playAudioSrc, /duckHarborBgm/, 'BGM ducks under fanfare')
+
+  // Immersion audio tiers — ambient beds + interaction SFX (procedural, not Jagex)
+  assert.ok(HARBOR_AMBIENT_GAIN > 0 && HARBOR_AMBIENT_GAIN < 0.2, 'ambient bed stays soft under BGM')
+  assert.ok(HARBOR_WILDLIFE_GAIN > 0 && HARBOR_WILDLIFE_GAIN < 0.25, 'wildlife chirps stay soft')
+  assert.equal(isHarborAmbientRunning(), false, 'ambient idle until session start')
+  assert.ok(HARBOR_INTERACT_SFX_GAIN > 0 && HARBOR_INTERACT_SFX_GAIN < 0.5, 'interact SFX gain capped')
+  const ambientSrc = readFileSync(new URL('./harborAmbient.ts', import.meta.url), 'utf8')
+  assert.match(ambientSrc, /makeWaterBed/, 'ambient water bed')
+  assert.match(ambientSrc, /makeRainBed/, 'ambient rain bed')
+  assert.match(ambientSrc, /makeWindBed/, 'ambient wind bed')
+  assert.match(ambientSrc, /scheduleWildlife/, 'sparse wildlife scheduler')
+  assert.match(ambientSrc, /scheduleLantern/, 'lantern tick at night/rain')
+  assert.match(ambientSrc, /setHarborAmbientTalking/, 'ambient ducks while talking')
+  const interactSrc = readFileSync(new URL('./harborInteractSfx.ts', import.meta.url), 'utf8')
+  assert.match(interactSrc, /export function playHarborFootstep/, 'footstep SFX')
+  assert.match(interactSrc, /export function playHarborPaddle/, 'paddle SFX')
+  assert.match(interactSrc, /export function playHarborLandmarkOpen/, 'landmark door cues')
+  assert.match(interactSrc, /export function tickHarborMoveSfx/, 'move SFX driver')
+  assert.match(interactSrc, /case 'outfitter':/, 'outfitter shop bell')
+  assert.match(interactSrc, /case 'bank':/, 'bank jade chime')
+  assert.equal(typeof playHarborUiClick, 'function', 'UI click export')
+  assert.equal(typeof playHarborBagOpen, 'function', 'bag open export')
+  assert.equal(typeof playHarborBagClose, 'function', 'bag close export')
+  assert.equal(typeof playHarborEquip, 'function', 'equip export')
+  assert.equal(typeof playHarborTalkStart, 'function', 'talk start export')
+  assert.equal(typeof playHarborExplore, 'function', 'explore export')
+  assert.equal(typeof playHarborCastOff, 'function', 'cast off export')
+  assert.equal(typeof playHarborLandmarkOpen, 'function', 'landmark open export')
+  assert.equal(typeof playHarborFootstep, 'function', 'footstep export')
+  assert.equal(typeof playHarborPaddle, 'function', 'paddle export')
+  assert.equal(typeof tickHarborMoveSfx, 'function', 'move tick export')
+  assert.match(playAudioSrc, /startHarborAmbient/, 'session starts ambient beds')
+  assert.match(playAudioSrc, /stopHarborAmbient/, 'session stops ambient on exit')
+  assert.match(playAudioSrc, /setHarborAmbientTalking/, 'talk ducks ambient')
+  assert.match(playAudioSrc, /setHarborAmbientPaused/, 'overlays pause ambient wildlife')
+  assert.match(playAudioSrc, /tickHarborMoveSfx/, 'pose polling drives move SFX')
+  assert.match(playAudioSrc, /playHarborLandmarkOpen/, 'landmarks play door cues')
+  assert.match(playAudioSrc, /playHarborBagOpen/, 'inventory bag open SFX')
+  assert.match(playAudioSrc, /playHarborBagClose/, 'inventory bag close SFX')
+  assert.match(playAudioSrc, /playHarborTalkStart/, 'Talk mode SFX')
+  assert.match(playAudioSrc, /playHarborExplore/, 'Explore mode SFX')
+  assert.match(playAudioSrc, /playHarborNpcGreet/, 'NPC greet on Talk')
+  assert.match(playAudioSrc, /playHarborChatSend/, 'chat send SFX')
+  assert.match(playAudioSrc, /playHarborTeleport/, 'chapter teleport SFX')
+  assert.match(playAudioSrc, /playHarborBarberSnip/, 'barber confirm snip')
 
   // Direct launch — `#/learn` opens fullscreen play (no marketing hub)
   const learnPageSrc = readFileSync(new URL('./LearnPage.tsx', import.meta.url), 'utf8')
