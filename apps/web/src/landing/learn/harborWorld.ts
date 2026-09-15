@@ -90,6 +90,11 @@ export type HarborWorldHandle = {
     x: number
     z: number
     yaw: number
+    /**
+     * Orbit camera yaw (`orbitCameraOffset` φ). Minimap “up” = look direction past the boat.
+     * yaw 0 → looking +Z; increases clockwise from above.
+     */
+    viewYaw: number
     mode: 'boat' | 'foot'
     look: HarborLook
     gender: HarborGender
@@ -3874,11 +3879,14 @@ if (o.userData.cigaretteSmoke && !reduced) {
       applyPoseToRemote(pose)
     },
     getLocalPose() {
+      // Orbit yaw drives minimap orientation (radar rotates with the camera, not only the hull).
+      const viewYaw = yaw
       if (travelMode === 'foot') {
         return {
           x: footX,
           z: footZ,
           yaw: scoutWalk.rotation.y,
+          viewYaw,
           mode: 'foot' as const,
           look: { ...currentLook },
           gender: currentGender,
@@ -3889,6 +3897,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
         x: boatX,
         z: voyageZ,
         yaw: boat.rotation.y,
+        viewYaw,
         mode: 'boat' as const,
         look: { ...currentLook },
         gender: currentGender,

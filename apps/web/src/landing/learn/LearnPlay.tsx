@@ -245,11 +245,12 @@ export function LearnSession({
             prev &&
             Math.abs(prev.x - pose.x) < 0.04 &&
             Math.abs(prev.z - pose.z) < 0.04 &&
-            Math.abs(prev.yaw - pose.yaw) < 0.05
+            Math.abs(prev.yaw - pose.yaw) < 0.05 &&
+            Math.abs(prev.viewYaw - pose.viewYaw) < 0.05
           ) {
             return prev
           }
-          return { x: pose.x, z: pose.z, yaw: pose.yaw }
+          return { x: pose.x, z: pose.z, yaw: pose.yaw, viewYaw: pose.viewYaw }
         })
       }
       raf = window.requestAnimationFrame(tick)
