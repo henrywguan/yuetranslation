@@ -128,9 +128,12 @@ export function LearnSession({
 
 
   // Signed-in only: open-world presence (see everyone + nametags)
+  // Presence = who is online (slow). Broadcast = live pose (~10 Hz).
   useEffect(() => {
     let cancelled = false
-    let interval: number | undefined
+    let poseTimer: number | undefined
+    let presenceTimer: number | undefined
+    let lastSent = { x: 0, z: 0, yaw: 0, mode: 'boat' as const }
 
     const boot = async () => {
       const session = await getSession()
@@ -160,11 +163,17 @@ export function LearnSession({
         onRemotes: (remotes) => {
           if (!cancelled) setRemotePlayers(remotes)
         },
+        onPose: (pose) => {
+          // Bypass React — push straight into the WebGL lerp targets
+          worldApiRef.current?.applyRemotePose(pose)
+        },
       })
       presenceRef.current = sessionPresence
 
-      const push = () => {
-        const pose = worldApiRef.current?.getLocalPose()
+      const readPose = () => worldApiRef.current?.getLocalPose() ?? null
+
+      const pushPresence = () => {
+        const pose = readPose()
         if (!pose) return
         void sessionPresence.track({
           x: pose.x,
@@ -175,14 +184,36 @@ export function LearnSession({
           username,
         })
       }
-      push()
-      interval = window.setInterval(push, 900)
+
+      const pushPose = () => {
+        const pose = readPose()
+        if (!pose) return
+        const moved =
+          Math.hypot(pose.x - lastSent.x, pose.z - lastSent.z) > 0.04 ||
+          Math.abs(pose.yaw - lastSent.yaw) > 0.05 ||
+          pose.mode !== lastSent.mode
+        if (!moved) return
+        lastSent = { x: pose.x, z: pose.z, yaw: pose.yaw, mode: pose.mode }
+        sessionPresence.broadcastPose({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          mode: pose.mode,
+        })
+      }
+
+      pushPresence()
+      pushPose()
+      // Live movement: ~10 Hz Broadcast (Presence stays ~0.5 Hz for roster/look)
+      poseTimer = window.setInterval(pushPose, 100)
+      presenceTimer = window.setInterval(pushPresence, 2000)
     }
 
     void boot()
     return () => {
       cancelled = true
-      if (interval) window.clearInterval(interval)
+      if (poseTimer) window.clearInterval(poseTimer)
+      if (presenceTimer) window.clearInterval(presenceTimer)
       const s = presenceRef.current
       presenceRef.current = null
       void s?.stop()

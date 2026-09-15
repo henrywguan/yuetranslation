@@ -27,9 +27,12 @@ import {
   disposeNametagSprite,
   disposeRemoteSailor,
   remoteUserIdFromHits,
+  setRemoteSailorPoseTarget,
+  tickRemoteSailorPose,
   updateNametagSprite,
   updateRemoteSailor,
 } from './harborRemoteAvatars'
+import type { HarborPosePacket } from './harborPresence'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
@@ -65,9 +68,11 @@ export type HarborWorldHandle = {
   setLook: (look: HarborLook) => void
   /** Pause the render loop (chart overlay / background tab). */
   setPaused: (on: boolean) => void
-  /** Replace remote sailor avatars (open-world presence). */
+  /** Replace remote sailor avatars (open-world presence join/leave). */
   setRemotePlayers: (players: HarborRemotePlayer[]) => void
-  /** Local pose for presence broadcast. */
+  /** High-frequency Broadcast pose — lerp toward target (no React). */
+  applyRemotePose: (pose: HarborPosePacket) => void
+  /** Local pose for presence / broadcast. */
   getLocalPose: () => {
     x: number
     z: number
@@ -2960,10 +2965,22 @@ export function createHarborWorld(
         updateRemoteSailor(existing, player)
       } else {
         const root = buildRemoteSailor(player)
+        root.userData.remoteUserId = player.userId
         remotesRoot.add(root)
         remoteById.set(player.userId, root)
       }
     }
+  }
+
+  const applyPoseToRemote = (pose: HarborPosePacket) => {
+    const root = remoteById.get(pose.userId)
+    if (!root) return
+    setRemoteSailorPoseTarget(root, {
+      x: pose.x,
+      z: pose.z,
+      yaw: pose.yaw,
+      mode: pose.mode,
+    })
   }
 
 
@@ -3446,6 +3463,11 @@ export function createHarborWorld(
       travelMode === 'foot' ? scoutWalk.position.z : boat.position.z,
     )
 
+    // Ease remote sailors toward latest Broadcast / Presence pose targets
+    for (const root of remoteById.values()) {
+      tickRemoteSailorPose(root, reduced ? 1 : 0.32)
+    }
+
 
     ensureChunks(voyageZ)
     if (fxIndexDirty) rebuildFxIndex()
@@ -3597,6 +3619,9 @@ export function createHarborWorld(
     },
     setRemotePlayers(players) {
       syncRemotePlayers(players)
+    },
+    applyRemotePose(pose) {
+      applyPoseToRemote(pose)
     },
     getLocalPose() {
       if (travelMode === 'foot') {

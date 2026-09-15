@@ -114,17 +114,33 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
 
   root.position.set(player.x, 0, player.z)
   root.rotation.y = player.yaw
+  root.userData.targetX = player.x
+  root.userData.targetZ = player.z
+  root.userData.targetYaw = player.yaw
+  root.userData.remoteMode = player.mode
+  root.userData.remoteLook = player.look
+  root.userData.poseSeeded = true
   return root
 }
 
+/**
+ * Apply remote identity / look / mode. Pose is stored as a lerp *target*
+ * (targetX / targetZ / targetYaw) — the world tick eases the mesh toward it
+ * so Broadcast updates look continuous instead of teleporting.
+ */
 export function updateRemoteSailor(root: THREE.Group, player: HarborRemotePlayer) {
-  root.position.set(player.x, 0, player.z)
-  // Smooth yaw toward target
-  const cur = root.rotation.y
-  let dy = player.yaw - cur
-  while (dy > Math.PI) dy -= Math.PI * 2
-  while (dy < -Math.PI) dy += Math.PI * 2
-  root.rotation.y = cur + dy * 0.25
+  root.userData.targetX = player.x
+  root.userData.targetZ = player.z
+  root.userData.targetYaw = player.yaw
+  root.userData.remoteMode = player.mode
+  root.userData.remoteLook = player.look
+
+  // First sample: snap so new sailors don't ease in from the origin
+  if (root.userData.poseSeeded !== true) {
+    root.position.set(player.x, 0, player.z)
+    root.rotation.y = player.yaw
+    root.userData.poseSeeded = true
+  }
 
   const prevUser = root.userData.remoteUsername as string | undefined
   if (prevUser !== player.username) {
@@ -141,15 +157,70 @@ export function updateRemoteSailor(root: THREE.Group, player: HarborRemotePlayer
   const wantBoat = player.mode === 'boat'
   const hasBoat = Boolean(root.getObjectByName('remote-canoe'))
   if (wantBoat !== hasBoat) {
-    // Full rebuild is simplest
+    const keepX = root.position.x
+    const keepZ = root.position.z
+    const keepYaw = root.rotation.y
     while (root.children.length) root.remove(root.children[0]!)
     const fresh = buildRemoteSailor(player)
     while (fresh.children.length) root.add(fresh.children[0]!)
-    root.position.copy(fresh.position)
-    root.rotation.y = fresh.rotation.y
+    root.position.set(keepX, 0, keepZ)
+    root.rotation.y = keepYaw
+    root.userData.poseSeeded = true
   } else {
     const body = root.getObjectByName('remote-body')
     if (body) applyLookToProtagonist(body, player.look)
+  }
+}
+
+/** High-frequency Broadcast pose — update lerp target only (no React). */
+export function setRemoteSailorPoseTarget(
+  root: THREE.Group,
+  pose: { x: number; z: number; yaw: number; mode: 'boat' | 'foot' },
+) {
+  root.userData.targetX = pose.x
+  root.userData.targetZ = pose.z
+  root.userData.targetYaw = pose.yaw
+  if (root.userData.poseSeeded !== true) {
+    root.position.set(pose.x, 0, pose.z)
+    root.rotation.y = pose.yaw
+    root.userData.poseSeeded = true
+  }
+  const prevMode = root.userData.remoteMode as string | undefined
+  if (prevMode && prevMode !== pose.mode) {
+    const look = (root.userData.remoteLook as HarborRemotePlayer['look'] | undefined) ?? undefined
+    const username =
+      (root.userData.remoteUsername as string | undefined) ??
+      (root.userData.remoteUserId as string | undefined) ??
+      'sailor'
+    if (look) {
+      updateRemoteSailor(root, {
+        userId: String(root.userData.remoteUserId ?? ''),
+        username,
+        x: pose.x,
+        z: pose.z,
+        yaw: pose.yaw,
+        mode: pose.mode,
+        look,
+        updatedAt: Date.now(),
+      })
+    }
+  }
+  root.userData.remoteMode = pose.mode
+}
+
+/** Ease mesh toward Broadcast / Presence pose targets each frame. */
+export function tickRemoteSailorPose(root: THREE.Group, alpha = 0.28) {
+  const tx = root.userData.targetX as number | undefined
+  const tz = root.userData.targetZ as number | undefined
+  const tyaw = root.userData.targetYaw as number | undefined
+  if (tx == null || tz == null) return
+  root.position.x += (tx - root.position.x) * alpha
+  root.position.z += (tz - root.position.z) * alpha
+  if (tyaw != null) {
+    let dy = tyaw - root.rotation.y
+    while (dy > Math.PI) dy -= Math.PI * 2
+    while (dy < -Math.PI) dy += Math.PI * 2
+    root.rotation.y += dy * alpha
   }
 }
 
