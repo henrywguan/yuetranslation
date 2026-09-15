@@ -548,6 +548,15 @@ export const ui = {
   accountUsernameCancel: { en: 'Cancel', zh: '取消', jp: 'heoi2 siu1' },
   accountPlan: { en: 'Plan', zh: '計劃', jp: 'gai3 waak6' },
   accountRole: { en: 'Role', zh: '角色', jp: 'gok3 sik1' },
+  harborQuestLaunch: {
+    en: 'Open Harbor Quest',
+    zh: '開啟 Harbor Quest',
+    jp: 'hoi1 hoi2 Harbor Quest',
+  },
+  harborQuestShort: { en: 'Harbor Quest', zh: 'Harbor Quest', jp: 'Harbor Quest' },
+  harborQuestBeta: { en: 'Beta', zh: '測試版', jp: 'Beta' },
+
+
   accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },
   accountUsagePooled: {
     en: 'Shared this month',
