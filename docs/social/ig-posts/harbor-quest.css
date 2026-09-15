@@ -108,40 +108,46 @@
   --phone-screen-radius: 39px;
   --phone-shot-w: 1170;
   --phone-shot-h: 2532;
-  width: min(560px, calc((100cqh - 36px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
+  width: min(520px, calc((100cqh - 48px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
   height: auto;
-  max-height: calc(100% - 4px);
+  max-height: calc(100% - 8px);
   flex-shrink: 1;
-  /* Extra bottom chrome so the home-indicator / CTA zone doesn’t read as spilling onto the frame */
-  padding: var(--phone-bezel) var(--phone-bezel) calc(var(--phone-bezel) + 6px);
+  /* Tall bottom chin so list/CTA shots don’t read as painted on the frame */
+  padding: var(--phone-bezel) var(--phone-bezel) calc(var(--phone-bezel) + 14px);
 }
 
 .hq-ig--story .phone {
-  width: min(680px, calc((100cqh - 36px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
+  width: min(640px, calc((100cqh - 48px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
 }
 
 /* Hard-mask the screen so screenshot corners never paint over the metal bezel */
 .hq-ig .phone__bezel {
-  overflow: hidden;
+  overflow: hidden !important;
   border-radius: var(--phone-screen-radius);
   clip-path: inset(0 round var(--phone-screen-radius));
+  isolation: isolate;
 }
 
 .hq-ig .phone__screen {
-  /* 2px inset keeps the shot clearly inside the metal — avoids CTA/home zone
-     reading as if it’s painted on top of the bottom bezel */
-  inset: 2px;
-  overflow: hidden;
-  border-radius: calc(var(--phone-screen-radius) - 2px);
-  clip-path: inset(0 round calc(var(--phone-screen-radius) - 2px));
+  /* Extra bottom inset — list UIs (chart/cast) run into the home zone and
+     otherwise look like they spill onto the chin */
+  inset: 2px 2px 7px;
+  overflow: hidden !important;
+  border-radius: calc(var(--phone-screen-radius) - 3px);
+  clip-path: inset(0 round calc(var(--phone-screen-radius) - 3px));
 }
 
 .hq-ig .phone__shot {
-  border-radius: calc(var(--phone-screen-radius) - 2px);
+  border-radius: calc(var(--phone-screen-radius) - 3px);
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 
 .hq-ig .phone__home {
-  bottom: calc(1.05% + 2px);
+  bottom: calc(1.05% + 6px);
+  z-index: 6;
 }
 
 .hq-ig__foot {
