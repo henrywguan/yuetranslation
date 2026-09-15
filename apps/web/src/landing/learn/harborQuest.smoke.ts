@@ -717,7 +717,22 @@ function main() {
   assert.match(
     learnCss,
     /\.hq-quest\.is-talking \.hq-build-slots[\s\S]*?grid-template-columns:\s*repeat\(3/,
-    'build Initial/Final/Tone sit as three square columns',
+    'build Initial/Final/Tone sit as three columns',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-build-opts[\s\S]*?flex-wrap:\s*nowrap/,
+    'build opts stay one stacked column (no wrap mash)',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-tile[\s\S]*?min-height:\s*clamp\(2\.75rem/,
+    'build pick tiles have thumb-sized min height',
+  )
+  assert.doesNotMatch(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-build-slot\s*\{[^}]*aspect-ratio:\s*1/,
+    'build slots are not forced into tiny squares',
   )
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
