@@ -1,5 +1,8 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { JyutpingSylText } from '../../components/JyutpingSylText'
+import { SpeakButton } from '../../components/SpeakButton'
+import { useYueStore } from '../../lib/store'
+import { stopSpeaking, unlockTtsPlayback } from '../../lib/tts'
 import {
   MATCH_GOLD_PER_HIT,
   MATCH_ROUND_SECONDS,
@@ -24,6 +27,7 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
   const [picked, setPicked] = useState<number | null>(null)
   const [sessionGold, setSessionGold] = useState(0)
   const [hits, setHits] = useState(0)
+  const speakManual = useYueStore((s) => s.speakManual)
 
   const startRound = useCallback((prevId?: string) => {
     const next = buildMatchRound(prevId)
@@ -33,6 +37,12 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
     setPhase('play')
   }, [])
 
+  const enterArena = useCallback(() => {
+    // Unlock during the tap so the first auto-speak works on iOS Safari.
+    unlockTtsPlayback()
+    startRound()
+  }, [startRound])
+
   useEffect(() => {
     if (!open) return
     setPhase('intro')
@@ -41,6 +51,9 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
     setSessionGold(0)
     setHits(0)
     setSecondsLeft(MATCH_ROUND_SECONDS)
+    return () => {
+      stopSpeaking()
+    }
   }, [open])
 
   useEffect(() => {
@@ -59,6 +72,17 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
     const t = window.setTimeout(() => startRound(round.word.id), 1100)
     return () => window.clearTimeout(t)
   }, [open, phase, round, startRound])
+
+  // Auto-play Cantonese TTS whenever a new arena word lands in play.
+  useEffect(() => {
+    if (!open || phase !== 'play' || !round) return
+    const han = round.word.han.trim()
+    if (!han) return
+    void speakManual(han, 'yue')
+    return () => {
+      stopSpeaking()
+    }
+  }, [open, phase, round?.word.id, round?.word.han, speakManual])
 
   useEffect(() => {
     if (!open) return
@@ -121,8 +145,8 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
             </p>
             <p className="hq-match-intro-body">
               A Cantonese word appears with Chinese characters (Noto Sans HK) and Jyutping + Chao
-              tone letters (Noto Sans). Pick the matching English gloss before the lantern burns
-              out.
+              tone letters (Noto Sans). It speaks automatically — tap the speaker if you miss it —
+              then pick the matching English gloss before the lantern burns out.
             </p>
             <ul className="hq-match-rules">
               <li>
@@ -134,12 +158,11 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
               <li>
                 Each hit earns <strong>{MATCH_GOLD_PER_HIT} gold</strong>
               </li>
+              <li>
+                Each word <strong>auto-speaks</strong> — tap the speaker to hear again
+              </li>
             </ul>
-            <button
-              type="button"
-              className="hq-btn hq-btn--primary hq-btn--lg"
-              onClick={() => startRound()}
-            >
+            <button type="button" className="hq-btn hq-btn--primary hq-btn--lg" onClick={enterArena}>
               Enter the arena
             </button>
           </div>
@@ -154,9 +177,12 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
             </div>
 
             <div className="hq-match-prompt">
-              <p className="hq-match-han" lang="zh-HK">
-                {round.word.han}
-              </p>
+              <div className="hq-match-prompt-row">
+                <p className="hq-match-han" lang="zh-HK">
+                  {round.word.han}
+                </p>
+                <SpeakButton text={round.word.han} lang="yue" className="hq-match-speak" warm />
+              </div>
               <p className="hq-match-jp" aria-label={round.word.jp}>
                 {round.word.jp.split(/\s+/).map((syl, i) => (
                   <Fragment key={`${syl}-${i}`}>
