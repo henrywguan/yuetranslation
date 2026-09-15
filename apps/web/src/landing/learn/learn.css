@@ -3794,3 +3794,105 @@
   max-height: 100%;
   overflow: auto;
 }
+
+/* —— Harbor public chat (RuneScape-style dock) —— */
+.hq-chat {
+  position: absolute;
+  left: max(0.55rem, env(safe-area-inset-left));
+  bottom: max(0.55rem, env(safe-area-inset-bottom));
+  z-index: 6;
+  width: min(22rem, calc(100vw - 1.4rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  pointer-events: none;
+  opacity: 0.82;
+  transition: opacity 0.15s ease;
+}
+.hq-chat.is-focused,
+.hq-chat:hover {
+  opacity: 1;
+}
+.hq-chat-log {
+  max-height: 7.5rem;
+  overflow: auto;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, #c9a227 22%, transparent);
+  background: color-mix(in srgb, #041018 72%, transparent);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  scrollbar-width: thin;
+}
+.hq-chat-empty {
+  margin: 0;
+  font: 500 0.68rem/1.35 "Noto Sans", system-ui, sans-serif;
+  color: color-mix(in srgb, #dff6ff 55%, transparent);
+  font-style: italic;
+}
+.hq-chat-line {
+  margin: 0 0 0.12rem;
+  font: 500 0.72rem/1.35 "Noto Sans", system-ui, sans-serif;
+  color: #e8f4f0;
+  word-break: break-word;
+}
+.hq-chat-line.is-self .hq-chat-user {
+  color: #f0d060;
+}
+.hq-chat-user {
+  font-weight: 700;
+  color: #7ec8b8;
+}
+.hq-chat-sep {
+  color: color-mix(in srgb, #dff6ff 45%, transparent);
+}
+.hq-chat-form {
+  display: flex;
+  gap: 0.28rem;
+  pointer-events: auto;
+}
+.hq-chat-input {
+  flex: 1;
+  min-width: 0;
+  height: 1.85rem;
+  padding: 0 0.55rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, #7ec8b8 28%, transparent);
+  background: color-mix(in srgb, #041018 88%, transparent);
+  color: #e8f4f0;
+  font: 500 0.78rem/1 "Noto Sans", system-ui, sans-serif;
+}
+.hq-chat-input:focus {
+  outline: 1px solid color-mix(in srgb, #f0d060 55%, transparent);
+  outline-offset: 1px;
+}
+.hq-chat-input:disabled {
+  opacity: 0.55;
+}
+.hq-chat-send {
+  flex: 0 0 auto;
+  height: 1.85rem;
+  padding: 0 0.7rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, #c9a227 40%, transparent);
+  background: color-mix(in srgb, #1a4a44 70%, #041018);
+  color: #f0d060;
+  font: 700 0.72rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.hq-chat-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .hq-chat {
+    width: min(18rem, calc(100vw - 1.1rem));
+    bottom: max(3.4rem, calc(env(safe-area-inset-bottom) + 2.8rem));
+  }
+  .hq-chat-log {
+    max-height: 5.5rem;
+  }
+}

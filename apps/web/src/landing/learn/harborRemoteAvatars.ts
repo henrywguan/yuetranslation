@@ -291,4 +291,66 @@ export function disposeNametagSprite(tag: THREE.Sprite) {
   }
 }
 
+
+/** Floating say-text above a sailor (RuneScape-style public chat). */
+function chatBubbleTexture(text: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 384
+  canvas.height = 96
+  const ctx = canvas.getContext('2d')!
+  ctx.clearRect(0, 0, 384, 96)
+  const label = text.length > 42 ? `${text.slice(0, 41)}…` : text
+  ctx.font = '600 20px "Noto Sans", system-ui, sans-serif'
+  const metrics = ctx.measureText(label)
+  const padX = 16
+  const bw = Math.min(368, Math.max(72, metrics.width + padX * 2))
+  const bh = 40
+  const bx = (384 - bw) / 2
+  const by = 18
+  ctx.fillStyle = 'rgba(8, 18, 24, 0.82)'
+  roundRect(ctx, bx, by, bw, bh, 12)
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(232, 212, 140, 0.55)'
+  ctx.lineWidth = 2
+  ctx.stroke()
+  // Tail
+  ctx.beginPath()
+  ctx.moveTo(192 - 8, by + bh)
+  ctx.lineTo(192, by + bh + 12)
+  ctx.lineTo(192 + 8, by + bh)
+  ctx.closePath()
+  ctx.fillStyle = 'rgba(8, 18, 24, 0.82)'
+  ctx.fill()
+  ctx.fillStyle = '#f4efe0'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(label, 192, by + bh / 2 + 1)
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.needsUpdate = true
+  return tex
+}
+
+export function buildChatBubbleSprite(text: string): THREE.Sprite {
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: chatBubbleTexture(text),
+      transparent: true,
+      depthTest: false,
+      sizeAttenuation: true,
+    }),
+  )
+  sprite.name = 'chat-bubble'
+  sprite.scale.set(2.4, 0.6, 1)
+  sprite.userData.chatBubble = true
+  return sprite
+}
+
+export function disposeChatBubbleSprite(sprite: THREE.Sprite) {
+  if (sprite.material instanceof THREE.SpriteMaterial) {
+    sprite.material.map?.dispose()
+    sprite.material.dispose()
+  }
+}
+
 export type { HarborLook }
