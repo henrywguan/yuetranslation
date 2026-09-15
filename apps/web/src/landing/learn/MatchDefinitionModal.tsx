@@ -144,9 +144,8 @@ export function MatchDefinitionModal({ open, gold, onClose, onEarnGold }: Props)
               睇字、聽音、揀意思
             </p>
             <p className="hq-match-intro-body">
-              A Cantonese word appears with Chinese characters (Noto Sans HK) and Jyutping + Chao
-              tone letters (Noto Sans). It speaks automatically — tap the speaker if you miss it —
-              then pick the matching English gloss before the lantern burns out.
+              A Chinese character appears with Jyutping + Chao tone letters. Match the English
+              definition before the time runs out!
             </p>
             <ul className="hq-match-rules">
               <li>
