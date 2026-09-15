@@ -239,6 +239,67 @@
   border-bottom: 1px solid var(--glass-border);
 }
 
+
+.account-hub-identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  min-width: 0;
+}
+
+.account-hub-identity-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.account-hub-fold {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.account-hub-fold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.account-hub-fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-hub-fold-summary .account-hub-label {
+  margin: 0;
+}
+
+.account-hub-fold-chevron {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 1.5px solid color-mix(in srgb, var(--muted) 80%, var(--jade));
+  border-bottom: 1.5px solid color-mix(in srgb, var(--muted) 80%, var(--jade));
+  transform: rotate(45deg);
+  transition: transform 180ms ease;
+  opacity: 0.85;
+}
+
+.account-hub-fold[open] .account-hub-fold-chevron {
+  transform: rotate(225deg);
+  translate: 0 0.12rem;
+}
+
+.account-hub-fold-body {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
 .account-hub-title-row {
   display: flex;
   flex-wrap: wrap;
