@@ -379,6 +379,13 @@ export function LearnSession({
       setInvOpen(false)
       return
     }
+    // Barber NPC / portal → same character-create modal (restyle, keep name)
+    if (id === 'barber') {
+      setBarberOpen(true)
+      setVisitable(null)
+      setInvOpen(false)
+      return
+    }
     setVisitable(id)
     if (id) setInvOpen(false)
     if (!id) {
@@ -994,34 +1001,11 @@ export function LearnSession({
         </aside>
       ) : null}
 
-      {visitable === 'barber' ? (
-        <aside className="hq-visit-panel hq-visit-panel--barber" role="dialog" aria-label="Harbor Barber">
-          <p className="hq-visit-kicker">Harbor Barber · 港灣理髮</p>
-          <h2 className="hq-visit-title">Spin the pole, restyle</h2>
-          <p className="hq-visit-body">
-            The striped portal hums · take a seat for a fresh cut, skin tone, and kit — your sailor name stays.
-          </p>
-          <button
-            type="button"
-            className="hq-btn hq-btn--primary"
-            onClick={() => {
-              setBarberOpen(true)
-              setVisitable(null)
-            }}
-          >
-            Take a seat · 理髮
-          </button>
-          <button type="button" className="hq-btn hq-btn--ghost" onClick={() => setVisitable(null)}>
-            Cast off
-          </button>
-        </aside>
-      ) : null}
-
       {barberOpen ? (
-        <div className="hq-barber-overlay">
+        <div className="hq-barber-overlay" role="dialog" aria-modal="true" aria-label="Harbor Barber">
           <HarborCharacterCreate
             existingUsername={accountUsername || progressSnap.localUsername || localUsername}
-            signedIn={Boolean(entitlement?.loggedIn || entitlement?.signedIn)}
+            signedIn={Boolean(entitlement?.loggedIn)}
             mode="barber"
             initialGender={progressSnap.gender}
             initialAppearance={progressSnap.appearance}
