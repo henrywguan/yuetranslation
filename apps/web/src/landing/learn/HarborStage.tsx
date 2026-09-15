@@ -11,6 +11,8 @@ type HarborStageProps = {
   flash?: 'ok' | 'no' | null
   /** Optional big glyph in the sky. */
   spotlight?: string
+  /** Open the Chinese arena (Match the Definition). */
+  onOpenArena?: () => void
 }
 
 /** Right-pane harbor world — ferry advances along pier stones (CodeCombat-style stage). */
@@ -20,6 +22,7 @@ export function HarborStage({
   stepCount,
   flash = null,
   spotlight,
+  onOpenArena,
 }: HarborStageProps) {
   const reduce = useReducedMotion()
   const total = Math.max(stepCount, 1)
@@ -29,16 +32,16 @@ export function HarborStage({
   return (
     <div
       className={`hq-stage hq-stage--${level.hue}${flash === 'ok' ? ' is-ok' : ''}${flash === 'no' ? ' is-no' : ''}`}
-      aria-hidden="true"
     >
-      <div className="hq-stage-sky" />
-      <div className="hq-stage-mist hq-stage-mist--a" />
-      <div className="hq-stage-mist hq-stage-mist--b" />
+      <div className="hq-stage-sky" aria-hidden="true" />
+      <div className="hq-stage-mist hq-stage-mist--a" aria-hidden="true" />
+      <div className="hq-stage-mist hq-stage-mist--b" aria-hidden="true" />
 
       {spotlight ? (
         <motion.div
           key={spotlight}
           className="hq-stage-spotlight"
+          aria-hidden="true"
           initial={reduce ? false : { opacity: 0, y: 12, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.45, ease: inkEase }}
@@ -47,7 +50,7 @@ export function HarborStage({
         </motion.div>
       ) : null}
 
-      <svg className="hq-stage-svg" viewBox="0 0 640 360" role="presentation">
+      <svg className="hq-stage-svg" viewBox="0 0 640 360" role="presentation" aria-hidden="true">
         <defs>
           <linearGradient id="hqWater" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--hq-water-top)" />
@@ -57,6 +60,11 @@ export function HarborStage({
             <stop offset="0%" stopColor="var(--hq-pier-a)" />
             <stop offset="100%" stopColor="var(--hq-pier-b)" />
           </linearGradient>
+          <radialGradient id="hqPortalGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="color-mix(in srgb, #f0d080 75%, white)" stopOpacity="0.95" />
+            <stop offset="45%" stopColor="color-mix(in srgb, var(--jade) 55%, #c4a35a)" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </radialGradient>
         </defs>
 
         <rect x="0" y="200" width="640" height="160" fill="url(#hqWater)" />
@@ -65,6 +73,41 @@ export function HarborStage({
           fill="url(#hqWater)"
           opacity="0.85"
         />
+
+        {/* Chinese arena pavilion (shore left) */}
+        <g className="hq-arena-svg">
+          <ellipse cx="92" cy="228" rx="48" ry="10" fill="color-mix(in srgb, var(--ink) 28%, transparent)" />
+          <path
+            d="M48 210 L48 168 L136 168 L136 210 Z"
+            fill="color-mix(in srgb, #5a2a28 70%, #1a1010)"
+          />
+          <path
+            d="M40 168 L92 132 L144 168 Z"
+            fill="color-mix(in srgb, #8b2e2e 65%, #3a1515)"
+          />
+          <path
+            d="M52 168 L92 142 L132 168"
+            fill="none"
+            stroke="color-mix(in srgb, #c4a35a 55%, transparent)"
+            strokeWidth="2"
+          />
+          <rect x="58" y="176" width="12" height="34" rx="1" fill="color-mix(in srgb, #c4a35a 40%, #2a1810)" />
+          <rect x="114" y="176" width="12" height="34" rx="1" fill="color-mix(in srgb, #c4a35a 40%, #2a1810)" />
+          <circle cx="92" cy="188" r="22" fill="url(#hqPortalGlow)" className="hq-arena-portal-glow" />
+          <circle
+            cx="92"
+            cy="188"
+            r="14"
+            fill="color-mix(in srgb, #0a1820 70%, #1a3a4a)"
+            stroke="color-mix(in srgb, #f0d080 70%, var(--jade))"
+            strokeWidth="2.5"
+            className="hq-arena-portal-ring"
+          />
+          <circle cx="92" cy="188" r="7" fill="color-mix(in srgb, var(--jade-bright, #7aebd4) 55%, #f0d080)" opacity="0.85" />
+          <text x="92" y="126" textAnchor="middle" className="hq-arena-banner" fontSize="11">
+            擂台
+          </text>
+        </g>
 
         {/* Pier boardwalk */}
         <path
@@ -136,6 +179,23 @@ export function HarborStage({
           shake={flash === 'no'}
         />
       </svg>
+
+      {onOpenArena ? (
+        <button
+          type="button"
+          className="hq-arena-hit"
+          onClick={onOpenArena}
+          aria-label="Open Chinese arena — Match the Definition"
+        >
+          <span className="hq-arena-hit-pulse" aria-hidden="true" />
+          <span className="hq-arena-hit-label">
+            <span className="hq-arena-hit-zh" lang="zh-HK">
+              擂台
+            </span>
+            <span className="hq-arena-hit-en">Arena · portal</span>
+          </span>
+        </button>
+      ) : null}
 
       <div className="hq-stage-meter" role="presentation">
         <div className="hq-stage-meter-fill" style={{ width: `${progress * 100}%` }} />
