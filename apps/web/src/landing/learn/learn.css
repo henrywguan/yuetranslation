@@ -398,9 +398,10 @@
 }
 
 /* World viewport ends above the chat strip — dialogue does not cover the scene.
-   Tall enough for the parchment + three large square pick tiles. */
+   Strip height is measured live (see LearnPlay ResizeObserver); this is the
+   fallback max until the first layout pass. */
 .hq-play--immersive.is-talking {
-  --hq-osrs-strip: min(48dvh, 26rem);
+  --hq-osrs-strip: min(52dvh, 28rem);
 }
 
 .hq-play-stage {
@@ -451,14 +452,15 @@
 }
 
 /*
- * OSRS fixed chat: opaque strip under the world viewport.
- * No scrim over the pier — the stage already ends above this strip.
+ * OSRS chat strip under the world viewport.
+ * Height hugs dialogue + picks (no empty black void under the parchment).
+ * LearnPlay measures this node and writes --hq-osrs-strip for the stage/FAB.
  */
 .hq-play-hud.is-talking {
-  height: var(--hq-osrs-strip);
-  max-height: var(--hq-osrs-strip);
+  height: auto;
+  max-height: min(52dvh, 28rem);
   padding: 0.35rem 0.45rem max(0.35rem, env(safe-area-inset-bottom));
-  justify-content: stretch;
+  justify-content: flex-end;
   background:
     linear-gradient(180deg, #2a2218 0%, #1a1410 12%, #12100c 100%);
   border-top: 2px solid #5a4a30;
@@ -481,10 +483,10 @@
 }
 
 .hq-play-hud.is-talking > * {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
-  max-height: none;
-  height: 100%;
+  max-height: min(52dvh, 28rem);
+  height: auto;
   overflow: auto;
 }
 
@@ -1877,7 +1879,7 @@
   position: relative;
   gap: 0.25rem;
   padding: 0;
-  height: 100%;
+  height: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1887,7 +1889,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   overflow: auto;
 }
