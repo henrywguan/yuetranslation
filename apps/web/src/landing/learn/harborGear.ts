@@ -5,10 +5,8 @@
  */
 import * as THREE from 'three'
 import {
-  HARBOR_VIP_MIN_PRICE,
   applyVipOverlaysToProtagonist,
   buildVipHandheldProp,
-  harborVipSetFor,
 } from './harborVipGear'
 import { applyTierDetailOverlays, enrichHandheldProp } from './harborGearDetail'
 
