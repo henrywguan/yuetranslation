@@ -1,0 +1,141 @@
+.hq-account-launch {
+  flex: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0.15rem 0.2rem 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 14px;
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
+}
+
+.hq-account-launch:hover,
+.hq-account-launch:focus-visible {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--jade) 28%, transparent));
+  outline: none;
+}
+
+.hq-account-launch:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--jade) 55%, transparent);
+}
+
+.hq-account-launch-glyph {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+.hq-account-launch-svg {
+  display: block;
+  overflow: visible;
+}
+
+.hq-account-launch-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--jade) 55%, #f0c36a 20%);
+  stroke-width: 1.4;
+  opacity: 0.9;
+}
+
+.hq-account-launch-boat {
+  transform-origin: 20px 24px;
+  animation: hq-launch-bob 2.8s ease-in-out infinite;
+}
+
+.hq-account-launch-wave--a {
+  animation: hq-launch-wave 3.2s ease-in-out infinite;
+}
+
+.hq-account-launch-wave--b {
+  animation: hq-launch-wave 3.2s ease-in-out infinite 0.45s;
+}
+
+.hq-account-launch-lantern {
+  animation: hq-launch-glow 2.2s ease-in-out infinite;
+}
+
+.hq-account-launch-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  line-height: 1.1;
+}
+
+.hq-account-launch-beta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1rem;
+  padding: 0.08rem 0.38rem;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #07131f 82%, #f0c36a);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #f0c36a 88%, #fff),
+    color-mix(in srgb, #d4a24a 80%, #f5e6b8)
+  );
+  box-shadow: 0 0 0 1px color-mix(in srgb, #f0c36a 35%, transparent);
+}
+
+.hq-account-launch-name {
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--ink) 78%, var(--jade));
+  white-space: nowrap;
+}
+
+@keyframes hq-launch-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.2deg);
+  }
+  50% {
+    transform: translateY(-1.6px) rotate(1.4deg);
+  }
+}
+
+@keyframes hq-launch-wave {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(1.4px);
+  }
+}
+
+@keyframes hq-launch-glow {
+  0%,
+  100% {
+    fill: #f0c36a;
+    opacity: 0.85;
+  }
+  50% {
+    fill: #ffe29a;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-account-launch-boat,
+  .hq-account-launch-wave--a,
+  .hq-account-launch-wave--b,
+  .hq-account-launch-lantern {
+    animation: none;
+  }
+}

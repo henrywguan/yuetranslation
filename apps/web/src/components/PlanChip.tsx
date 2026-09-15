@@ -8,6 +8,7 @@ import { UsageMeters } from './UsageMeters'
 import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { AccountHubHousehold } from './AccountHubHousehold'
+import { HarborQuestAccountLaunch } from './HarborQuestAccountLaunch'
 import { AccountHubPrimarySelect } from './AccountHubPrimarySelect'
 import { AccountHubVoice } from './AccountHubVoice'
 import {
@@ -520,29 +521,36 @@ export function PlanChip() {
             </div>
           ) : (
             <>
-              <div className="account-hub-title-row">
-                {entitlement.loggedIn ? (
-                  <button
-                    type="button"
-                    id={titleId}
-                    className={`account-hub-title account-hub-title--btn${!username ? ' is-placeholder' : ''}`}
-                    onClick={startUsernameEdit}
-                    aria-label={biPlain(ui.accountUsernameEdit)}
-                  >
-                    {hubTitle}
-                  </button>
-                ) : (
-                  <h2 id={titleId} className="account-hub-title">
-                    {hubTitle}
-                  </h2>
-                )}
-                {entitlement.role ? (
-                  <div className="account-hub-header-role">
-                    <RoleBadge role={entitlement.role} />
+              <div className="account-hub-identity">
+                <div className="account-hub-identity-main">
+                  <div className="account-hub-title-row">
+                    {entitlement.loggedIn ? (
+                      <button
+                        type="button"
+                        id={titleId}
+                        className={`account-hub-title account-hub-title--btn${!username ? ' is-placeholder' : ''}`}
+                        onClick={startUsernameEdit}
+                        aria-label={biPlain(ui.accountUsernameEdit)}
+                      >
+                        {hubTitle}
+                      </button>
+                    ) : (
+                      <h2 id={titleId} className="account-hub-title">
+                        {hubTitle}
+                      </h2>
+                    )}
+                    {entitlement.role ? (
+                      <div className="account-hub-header-role">
+                        <RoleBadge role={entitlement.role} />
+                      </div>
+                    ) : null}
                   </div>
+                  {email ? <p className="account-hub-email">{email}</p> : null}
+                </div>
+                {entitlement.loggedIn ? (
+                  <HarborQuestAccountLaunch onNavigate={() => setOpen(false)} />
                 ) : null}
               </div>
-              {email ? <p className="account-hub-email">{email}</p> : null}
             </>
           )}
         </div>
@@ -557,115 +565,6 @@ export function PlanChip() {
       </header>
 
       <div className="account-hub-body">
-        <section
-          className="account-hub-section account-hub-area-autospeak"
-          aria-label={biPlain(canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily)}
-        >
-          <div className="account-hub-autospeak-row">
-            <div className="account-hub-autospeak-copy">
-              <p className="account-hub-label">
-                <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily} size="sm" />
-              </p>
-              <p className="account-hub-hint">
-                <BiText copy={ui.autoSpeakHint} size="sm" />
-              </p>
-            </div>
-            <label
-              className={`account-hub-autospeak-switch${speakOn ? ' is-on' : ''}${!canAutoSpeak ? ' is-disabled' : ''}`}
-            >
-              <input
-                type="checkbox"
-                checked={speakOn}
-                disabled={!canAutoSpeak}
-                onChange={(e) => setAutoSpeak(e.target.checked)}
-                aria-label={biPlain(canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily)}
-              />
-              <span className="account-hub-autospeak-ui" aria-hidden="true">
-                <span className="account-hub-autospeak-thumb" />
-              </span>
-            </label>
-          </div>
-        </section>
-
-        <HubSep />
-
-        <section className="account-hub-section" aria-label={biPlain(ui.primaryLanguage)}>
-          <p className="account-hub-label" id="account-hub-primary-lang-label">
-            <BiText copy={ui.primaryLanguage} size="sm" />
-          </p>
-          <p className="account-hub-hint">
-            <BiText copy={ui.primaryLanguageHint} size="sm" />
-          </p>
-          <AccountHubPrimarySelect
-            value={primaryLanguage}
-            onChange={setPrimaryLanguage}
-            labelledBy="account-hub-primary-lang-label"
-          />
-        </section>
-
-        <HubSep />
-
-        <section className="account-hub-section" aria-label="Notifications">
-          <div className="account-hub-autospeak-row">
-            <div className="account-hub-autospeak-copy">
-              <p className="account-hub-label">Notifications · 通知</p>
-              <p className="account-hub-hint">
-                {pushCap.needsIosInstall
-                  ? 'On iPhone: Share → Add to Home Screen, open JyutTranslate from that icon, then enable notifications here.'
-                  : pushSupported()
-                    ? 'Product updates on this device when JyutTranslate is closed. Each device must opt in separately.'
-                    : 'Push is not supported in this browser.'}
-              </p>
-              {pushError ? (
-                <p className="account-hub-username-error" role="alert">
-                  {pushError}
-                </p>
-              ) : null}
-            </div>
-            <label
-              className={`account-hub-autospeak-switch${pushOn ? ' is-on' : ''}${!pushSupported() || pushBusy ? ' is-disabled' : ''}`}
-            >
-              <input
-                type="checkbox"
-                checked={pushOn}
-                disabled={!pushSupported() || pushBusy}
-                onChange={(e) => {
-                  const on = e.target.checked
-                  setPushBusy(true)
-                  setPushError(null)
-                  void (async () => {
-                    try {
-                      if (on) {
-                        const result = await enablePushNotifications()
-                        if (!result.ok) {
-                          setPushError(result.message)
-                          setPushOn(false)
-                          return
-                        }
-                        setPushOn(true)
-                      } else {
-                        await disablePushNotifications()
-                        setPushOn(false)
-                      }
-                    } catch (err) {
-                      setPushError(err instanceof Error ? err.message : 'Push update failed')
-                      setPushOn(isPushOptIn())
-                    } finally {
-                      setPushBusy(false)
-                    }
-                  })()
-                }}
-                aria-label="Enable push notifications"
-              />
-              <span className="account-hub-autospeak-ui" aria-hidden="true">
-                <span className="account-hub-autospeak-thumb" />
-              </span>
-            </label>
-          </div>
-        </section>
-
-        <HubSep />
-
         <div className="account-hub-meta-grid account-hub-area-meta">
           <section className="account-hub-section account-hub-meta-col" aria-label={biPlain(ui.accountPlan)}>
             <p className="account-hub-label">
@@ -688,6 +587,127 @@ export function PlanChip() {
             )}
           </section>
         </div>
+
+        <HubSep />
+
+        <details className="account-hub-fold account-hub-section account-hub-area-autospeak">
+          <summary className="account-hub-fold-summary">
+            <span className="account-hub-label">
+              <BiText copy={canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily} size="sm" />
+            </span>
+            <span className="account-hub-fold-chevron" aria-hidden="true" />
+          </summary>
+          <div className="account-hub-fold-body">
+            <div className="account-hub-autospeak-row">
+              <div className="account-hub-autospeak-copy">
+                <p className="account-hub-hint">
+                  <BiText copy={ui.autoSpeakHint} size="sm" />
+                </p>
+              </div>
+              <label
+                className={`account-hub-autospeak-switch${speakOn ? ' is-on' : ''}${!canAutoSpeak ? ' is-disabled' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={speakOn}
+                  disabled={!canAutoSpeak}
+                  onChange={(e) => setAutoSpeak(e.target.checked)}
+                  aria-label={biPlain(canAutoSpeak ? ui.autoSpeak : ui.autoSpeakFamily)}
+                />
+                <span className="account-hub-autospeak-ui" aria-hidden="true">
+                  <span className="account-hub-autospeak-thumb" />
+                </span>
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <HubSep />
+
+        <details className="account-hub-fold account-hub-section">
+          <summary className="account-hub-fold-summary">
+            <span className="account-hub-label" id="account-hub-primary-lang-label">
+              <BiText copy={ui.primaryLanguage} size="sm" />
+            </span>
+            <span className="account-hub-fold-chevron" aria-hidden="true" />
+          </summary>
+          <div className="account-hub-fold-body">
+            <p className="account-hub-hint">
+              <BiText copy={ui.primaryLanguageHint} size="sm" />
+            </p>
+            <AccountHubPrimarySelect
+              value={primaryLanguage}
+              onChange={setPrimaryLanguage}
+              labelledBy="account-hub-primary-lang-label"
+            />
+          </div>
+        </details>
+
+        <HubSep />
+
+        <details className="account-hub-fold account-hub-section">
+          <summary className="account-hub-fold-summary">
+            <span className="account-hub-label">Notifications · 通知</span>
+            <span className="account-hub-fold-chevron" aria-hidden="true" />
+          </summary>
+          <div className="account-hub-fold-body">
+            <div className="account-hub-autospeak-row">
+              <div className="account-hub-autospeak-copy">
+                <p className="account-hub-hint">
+                  {pushCap.needsIosInstall
+                    ? 'On iPhone: Share → Add to Home Screen, open JyutTranslate from that icon, then enable notifications here.'
+                    : pushSupported()
+                      ? 'Product updates on this device when JyutTranslate is closed. Each device must opt in separately.'
+                      : 'Push is not supported in this browser.'}
+                </p>
+                {pushError ? (
+                  <p className="account-hub-username-error" role="alert">
+                    {pushError}
+                  </p>
+                ) : null}
+              </div>
+              <label
+                className={`account-hub-autospeak-switch${pushOn ? ' is-on' : ''}${!pushSupported() || pushBusy ? ' is-disabled' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={pushOn}
+                  disabled={!pushSupported() || pushBusy}
+                  onChange={(e) => {
+                    const on = e.target.checked
+                    setPushBusy(true)
+                    setPushError(null)
+                    void (async () => {
+                      try {
+                        if (on) {
+                          const result = await enablePushNotifications()
+                          if (!result.ok) {
+                            setPushError(result.message)
+                            setPushOn(false)
+                            return
+                          }
+                          setPushOn(true)
+                        } else {
+                          await disablePushNotifications()
+                          setPushOn(false)
+                        }
+                      } catch (err) {
+                        setPushError(err instanceof Error ? err.message : 'Push update failed')
+                        setPushOn(isPushOptIn())
+                      } finally {
+                        setPushBusy(false)
+                      }
+                    })()
+                  }}
+                  aria-label="Enable push notifications"
+                />
+                <span className="account-hub-autospeak-ui" aria-hidden="true">
+                  <span className="account-hub-autospeak-thumb" />
+                </span>
+              </label>
+            </div>
+          </div>
+        </details>
 
         <HubSep />
 
