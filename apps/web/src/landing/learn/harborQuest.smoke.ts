@@ -386,7 +386,10 @@ function main() {
   assert.match(learnCss, /\.hq-feedback-text[\s\S]*?\.chao-face[\s\S]*?Noto Sans Chao/, 'jade feedback Chao uses Noto Sans Chao')
   assert.match(learnCss, /\.hq-play\.is-exploring[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'explore hides stage caption')
   assert.match(learnCss, /\.hq-play\.is-talking[\s\S]*?\.hq-stage-caption[\s\S]*?display:\s*none/, 'talking hides stage caption')
-  assert.match(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'OSRS talking strip height')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(48dvh,\s*26rem\)/, 'OSRS talking strip height fits large picks')
+  assert.match(learnCss, /--hq-osrs-strip:\s*min\(52dvh,\s*28rem\)/, 'mobile talking strip grows for pick tiles')
+  assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(30dvh,\s*16\.5rem\)/, 'old short talking strip removed')
+  assert.doesNotMatch(learnCss, /--hq-osrs-strip:\s*min\(32dvh,\s*17rem\)/, 'old short mobile talking strip removed')
   assert.match(
     learnCss,
     /\.hq-play-stage\s*\{[^}]*bottom:\s*var\(--hq-osrs-strip\)/,
@@ -703,8 +706,33 @@ function main() {
   assert.match(learnCss, /aspect-ratio:\s*1/, 'talking pick tiles are square')
   assert.match(
     learnCss,
+    /\.hq-quest\.is-talking \.hq-choice[\s\S]*?min-height:\s*clamp\(5\.25rem/,
+    'talking pick tiles have large phone tap targets',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-choice-label[\s\S]*?clamp\(1\.15rem/,
+    'talking pick labels are large enough to read',
+  )
+  assert.match(
+    learnCss,
     /\.hq-quest\.is-talking \.hq-build-slots[\s\S]*?grid-template-columns:\s*repeat\(3/,
-    'build Initial/Final/Tone sit as three square columns',
+    'build Initial/Final/Tone sit as three columns',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-build-opts[\s\S]*?flex-wrap:\s*nowrap/,
+    'build opts stay one stacked column (no wrap mash)',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-tile[\s\S]*?min-height:\s*clamp\(2\.75rem/,
+    'build pick tiles have thumb-sized min height',
+  )
+  assert.doesNotMatch(
+    learnCss,
+    /\.hq-quest\.is-talking \.hq-build-slot\s*\{[^}]*aspect-ratio:\s*1/,
+    'build slots are not forced into tiny squares',
   )
   assert.match(worldSrc, /setRemotePlayers/, 'world accepts remote sailors')
   assert.match(worldSrc, /applyRemotePose/, 'world applies broadcast poses')
