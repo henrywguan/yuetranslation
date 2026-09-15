@@ -23,17 +23,17 @@
 .hq-ig__frame {
   height: 100%;
   box-sizing: border-box;
-  padding: 48px 48px 40px;
+  padding: 32px 32px 26px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   position: relative;
   z-index: 1;
 }
 
 .hq-ig--story .hq-ig__frame {
-  padding: 72px 48px 56px;
-  gap: 22px;
+  padding: 48px 36px 40px;
+  gap: 14px;
 }
 
 .hq-ig__copy {
@@ -41,14 +41,14 @@
   z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .hq-ig__kicker {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.16em;
+  font-size: 20px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--jade);
 }
@@ -56,22 +56,31 @@
 .hq-ig__title {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 52px;
-  line-height: 1.05;
+  font-size: 56px;
+  line-height: 1.02;
   letter-spacing: -0.03em;
-  max-width: 960px;
+  max-width: 1000px;
 }
 
 .hq-ig--story .hq-ig__title {
-  font-size: 56px;
+  font-size: 64px;
+}
+
+.hq-ig--cover .hq-ig__title {
+  font-size: 64px;
 }
 
 .hq-ig__sub {
-  font-size: 24px;
-  line-height: 1.35;
+  font-size: 26px;
+  line-height: 1.28;
   font-weight: 500;
   color: var(--ink-mute);
-  max-width: 920px;
+  max-width: 980px;
+}
+
+.hq-ig--cover .hq-ig__sub {
+  font-size: 28px;
+  max-width: 1000px;
 }
 
 .hq-ig__sub strong {
@@ -87,20 +96,58 @@
   justify-content: center;
   overflow: hidden;
   z-index: 1;
+  padding: 8px 0 12px;
+  container-type: size;
 }
 
+/* Fit full phone chrome in the stage — fixed width was taller than the slot and
+   overflow:hidden clipped the bottom bezel (screenshot looked like it spilled). */
 .hq-ig .phone {
   --phone-bezel: 14px;
   --phone-radius: 54px;
   --phone-screen-radius: 39px;
-  width: 450px !important;
+  --phone-shot-w: 1170;
+  --phone-shot-h: 2532;
+  width: min(520px, calc((100cqh - 48px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
   height: auto;
-  max-height: 100%;
-  flex-shrink: 0;
+  max-height: calc(100% - 8px);
+  flex-shrink: 1;
+  /* Tall bottom chin so list/CTA shots don’t read as painted on the frame */
+  padding: var(--phone-bezel) var(--phone-bezel) calc(var(--phone-bezel) + 14px);
 }
 
 .hq-ig--story .phone {
-  width: 560px !important;
+  width: min(640px, calc((100cqh - 48px) * var(--phone-shot-w) / var(--phone-shot-h))) !important;
+}
+
+/* Hard-mask the screen so screenshot corners never paint over the metal bezel */
+.hq-ig .phone__bezel {
+  overflow: hidden !important;
+  border-radius: var(--phone-screen-radius);
+  clip-path: inset(0 round var(--phone-screen-radius));
+  isolation: isolate;
+}
+
+.hq-ig .phone__screen {
+  /* Extra bottom inset — list UIs (chart/cast) run into the home zone and
+     otherwise look like they spill onto the chin */
+  inset: 2px 2px 7px;
+  overflow: hidden !important;
+  border-radius: calc(var(--phone-screen-radius) - 3px);
+  clip-path: inset(0 round calc(var(--phone-screen-radius) - 3px));
+}
+
+.hq-ig .phone__shot {
+  border-radius: calc(var(--phone-screen-radius) - 3px);
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.hq-ig .phone__home {
+  bottom: calc(1.05% + 6px);
+  z-index: 6;
 }
 
 .hq-ig__foot {
@@ -115,13 +162,13 @@
 .hq-ig__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .hq-ig__logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   object-fit: cover;
   box-shadow: 0 6px 16px color-mix(in srgb, var(--jade) 30%, transparent);
 }
@@ -129,16 +176,16 @@
 .hq-ig__brand-name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .hq-ig__cta {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 22px;
   color: var(--on-jade);
   background: var(--jade);
-  padding: 14px 22px;
+  padding: 16px 28px;
   border-radius: 999px;
   box-shadow: 0 10px 24px color-mix(in srgb, var(--jade) 35%, transparent);
 }
@@ -146,38 +193,76 @@
 .hq-ig__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .hq-ig__chip {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--jade-bright);
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--jade) 30%, transparent);
   background: color-mix(in srgb, var(--harbor-deep) 45%, transparent);
 }
 
 .hq-ig__url {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--ink-mute);
 }
 
-/* Cover / end cards without phone */
+/* Cover / end — fill the frame, less air */
+.hq-ig--cover .hq-ig__frame,
+.hq-ig--end .hq-ig__frame {
+  padding: 28px 28px 24px;
+  gap: 14px;
+}
+
 .hq-ig--cover .hq-ig__stage,
 .hq-ig--end .hq-ig__stage {
   flex-direction: column;
-  gap: 28px;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 12px;
+  padding-top: 0;
+}
+
+.hq-ig--end .hq-ig__stage {
+  gap: 20px;
 }
 
 .hq-ig__mark {
-  width: 128px;
-  height: 128px;
-  border-radius: 28px;
+  width: 180px;
+  height: 180px;
+  border-radius: 36px;
   object-fit: cover;
-  box-shadow: 0 20px 48px color-mix(in srgb, var(--jade) 35%, transparent);
+  align-self: center;
+  box-shadow: 0 22px 52px color-mix(in srgb, var(--jade) 40%, transparent);
+}
+
+.hq-ig--end .hq-ig__mark {
+  width: 260px;
+  height: 260px;
+  border-radius: 52px;
+}
+
+.hq-ig--story .hq-ig__mark {
+  width: 240px;
+  height: 240px;
+  border-radius: 48px;
+}
+
+.hq-ig--story.hq-ig--end .hq-ig__mark {
+  width: 280px;
+  height: 280px;
+  border-radius: 56px;
+}
+
+.hq-ig__mark--cover {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
 }
 
 .hq-ig__feature-grid {
@@ -185,25 +270,122 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   width: 100%;
-  max-width: 920px;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: stretch;
 }
 
 .hq-ig__feature {
   padding: 22px 20px;
-  border-radius: 20px;
+  border-radius: 22px;
   border: 1px solid color-mix(in srgb, var(--jade) 28%, transparent);
   background: color-mix(in srgb, var(--harbor-deep) 55%, transparent);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .hq-ig__feature h3 {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 26px;
   margin: 0 0 8px;
+  color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
 .hq-ig__feature p {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.35;
+  font-size: 18px;
+  line-height: 1.28;
   color: var(--ink-mute);
+  font-weight: 500;
+}
+
+/* Cover cards: copy on top, wide UI peek filling the rest */
+.hq-ig--cover .hq-ig__feature {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  min-height: 280px;
+}
+
+.hq-ig__feature-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  flex: 0 0 auto;
+  z-index: 1;
+}
+
+.hq-ig--cover .hq-ig__feature h3 {
+  font-size: 27px;
+  margin: 0 0 6px;
+}
+
+.hq-ig--cover .hq-ig__feature p {
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.hq-ig__feature-shot {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, transparent);
+  background: #041018;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 35%, transparent);
+  flex: 1 1 auto;
+  min-height: 190px;
+  width: 100%;
+  position: relative;
+}
+
+.hq-ig__feature-shot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, #041018 18%, transparent), transparent 35%);
+  pointer-events: none;
+}
+
+.hq-ig__feature-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  display: block;
+  transform: scale(1.14);
+}
+
+.hq-ig__feature-shot--sail img {
+  object-position: 40% 30%;
+}
+
+.hq-ig__feature-shot--cast img {
+  /* Center on the chapter scroll body (title → tags), not the pier sky above it */
+  object-position: center 52%;
+  transform: scale(1.02);
+}
+
+.hq-ig__feature-shot--arena img {
+  /* Frame Match the Definition intro: title → rules → Enter */
+  object-position: center 38%;
+  transform: scale(1.05);
+}
+
+.hq-ig__feature-shot--chart img {
+  object-position: center 10%;
+}
+
+.hq-ig--end .hq-ig__brand-name {
+  text-align: center;
+}
+
+.hq-ig--end .hq-ig__url {
+  text-align: center;
 }
