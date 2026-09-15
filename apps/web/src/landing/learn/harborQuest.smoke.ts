@@ -428,8 +428,9 @@ function main() {
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hand-fan')!).uniqueMesh, true)
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'boat-sampan')!).family, 'hull-canoe')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-phoenix')!).family, 'lantern-silk')
-  assert.match(learnCss, /\.hq-visit-panel--codex/, 'gear codex panel styles')
-  assert.match(learnCss, /\.hq-codex-list/, 'gear codex list styles')
+  assert.match(learnCss, /\.hq-codex-screen/, 'gear codex fullscreen styles')
+  assert.match(learnCss, /\.hq-codex-grid/, 'gear codex card grid styles')
+  assert.match(learnCss, /\.hq-codex-model/, 'gear codex model preview styles')
   {
     const learnDir = dirname(fileURLToPath(import.meta.url))
     assert.match(
@@ -437,10 +438,13 @@ function main() {
       /HarborGearCodex/,
       'LearnPlay mounts gear codex',
     )
+    const codexSrc = readFileSync(join(learnDir, 'HarborGearCodex.tsx'), 'utf8')
+    assert.match(codexSrc, /hq-codex-screen/, 'HarborGearCodex is fullscreen')
+    assert.match(codexSrc, /HarborGearModelIcon/, 'HarborGearCodex shows item models')
     assert.match(
-      readFileSync(join(learnDir, 'HarborGearCodex.tsx'), 'utf8'),
-      /Gear Codex/,
-      'HarborGearCodex component present',
+      readFileSync(join(learnDir, 'HarborGearModelIcon.tsx'), 'utf8'),
+      /drawSilhouette/,
+      'HarborGearModelIcon draws per-slot silhouettes',
     )
   }
   assert.equal(HARBOR_VISITABLES.length, 5, 'Save Shack + Outfitter + Bank + Arena + Barber')
