@@ -7,10 +7,17 @@ import * as THREE from 'three'
 import {
   HARBOR_CRAFT_PALETTE as P,
   hqBox,
+  hqBoxTex,
   hqCanopy,
+  hqCrate,
+  hqDoor,
   hqMat,
   hqPost,
   hqRock,
+  hqStampClutter,
+  hqStoneTexture,
+  hqThatchTexture,
+  hqWoodTexture,
   hqWindow,
 } from './harborCraft'
 import {
@@ -483,13 +490,17 @@ function house(rng: () => number) {
   const d = 1.15 + rng() * 0.45
   const h = 0.95 + rng() * 0.35
   const wall = rng() > 0.45 ? P.plaster : P.plasterWarm
+  const wood = hqWoodTexture()
+  const stone = hqStoneTexture()
   g.add(hqBox(w, h, d, wall, 0, h / 2, 0))
-  // Thick timber corner posts
+  // Thick timber corner posts (value steps)
   for (const sx of [-1, 1] as const) {
     for (const sz of [-1, 1] as const) {
       g.add(hqBox(0.08, h, 0.08, P.woodDeep, sx * (w / 2 - 0.02), h / 2, sz * (d / 2 - 0.02)))
     }
   }
+  // Mid-wall timber beam
+  g.add(hqBoxTex(w * 0.95, 0.06, 0.05, P.woodMid, wood, 0, h * 0.7, d / 2 + 0.02))
   // Pitched tile roof (two slabs) + ridge
   const roofColor = rng() > 0.5 ? P.roofTile : 0x3a3430
   const pitch = 0.42 + rng() * 0.12
@@ -501,7 +512,6 @@ function house(rng: () => number) {
   right.rotation.x = -0.48
   g.add(right)
   g.add(hqBox(w + overhang * 2.2, 0.12, 0.14, P.ink, 0, h + pitch * 0.72, 0))
-  // Chunky eave tips
   for (const z of [-1, 1] as const) {
     const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 4), hqMat(roofColor))
     tip.position.set(w / 2 + overhang * 0.6, h + pitch * 0.45, z * (d * 0.35))
@@ -512,12 +522,16 @@ function house(rng: () => number) {
     tipL.rotation.z = 0.9
     g.add(tipL)
   }
-  // Extruded door slab
-  g.add(hqBox(0.34, 0.58, 0.08, P.woodDark, -w * 0.15, 0.3, d / 2 + 0.04))
-  // Extruded window (not a flat decal)
-  g.add(hqWindow(0.36, 0.3, P.trimGold, 0x1a3040, w * 0.22, h * 0.55, d / 2 + 0.05))
-  // Stone plinth
-  g.add(hqBox(w + 0.18, 0.14, d + 0.18, P.stone, 0, 0.05, 0))
+  g.add(hqDoor(0.34, 0.58, -w * 0.15, 0.3, d / 2 + 0.04))
+  g.add(hqWindow(0.36, 0.3, P.trimGold, P.glass, w * 0.22, h * 0.55, d / 2 + 0.05))
+  g.add(hqBoxTex(w + 0.18, 0.14, d + 0.18, P.stone, stone, 0, 0.05, 0))
+  // Yard clutter
+  if (rng() > 0.45) {
+    const crate = hqCrate(rng)
+    crate.position.set(w * 0.45, 0.08, d * 0.55)
+    crate.scale.setScalar(0.65)
+    g.add(crate)
+  }
   return g
 }
 
@@ -551,12 +565,13 @@ function stiltShop(rng: () => number) {
     }
   }
   g.add(hqBox(w + 0.18, 0.1, d + 0.18, P.woodLight, 0, deckY, 0))
-  g.add(hqBox(w, h, d, 0xd8c8a8, 0, deckY + h / 2 + 0.05, 0))
-  const roof = hqBox(w + 0.32, 0.1, d + 0.28, P.roofTile, 0, deckY + h + 0.22, 0)
+  g.add(hqBox(w, h, d, P.plasterWarm, 0, deckY + h / 2 + 0.05, 0))
+  const roof = hqBoxTex(w + 0.32, 0.1, d + 0.28, P.straw, hqThatchTexture(), 0, deckY + h + 0.22, 0)
   roof.rotation.x = -0.2
   g.add(roof)
   g.add(hqBox(0.1, 0.48, 0.04, P.banner, w * 0.35, deckY + h * 0.7, d / 2 + 0.06))
-  g.add(hqWindow(0.3, 0.26, P.trimGold, 0x1a3040, -w * 0.2, deckY + h * 0.55, d / 2 + 0.04))
+  g.add(hqWindow(0.3, 0.26, P.trimGold, P.glass, -w * 0.2, deckY + h * 0.55, d / 2 + 0.04))
+  g.add(hqDoor(0.28, 0.48, w * 0.15, deckY + 0.28, d / 2 + 0.04))
   return g
 }
 
@@ -570,16 +585,17 @@ function hut(rng: () => number) {
   const w = 1.0 + rng() * 0.4
   const d = 0.9 + rng() * 0.3
   const h = 0.7 + rng() * 0.3
+  const thatch = hqThatchTexture()
   g.add(hqBox(w, h, d, P.plasterWarm, 0, h / 2, 0))
-  const roofL = hqBox(w + 0.32, 0.1, d * 0.65, P.roofTile, 0, h + 0.18, -d * 0.1)
+  const roofL = hqBoxTex(w + 0.32, 0.1, d * 0.65, P.straw, thatch, 0, h + 0.18, -d * 0.1)
   roofL.rotation.x = 0.5
   g.add(roofL)
-  const roofR = hqBox(w + 0.32, 0.1, d * 0.65, P.roofTile, 0, h + 0.18, d * 0.1)
+  const roofR = hqBoxTex(w + 0.32, 0.1, d * 0.65, P.strawDark, thatch, 0, h + 0.18, d * 0.1)
   roofR.rotation.x = -0.5
   g.add(roofR)
-  g.add(hqBox(0.24, 0.42, 0.06, P.woodDark, 0, 0.22, d / 2 + 0.03))
-  g.add(hqWindow(0.26, 0.22, P.trimGold, 0x1a3040, w * 0.22, h * 0.55, d / 2 + 0.04))
-  g.add(hqBox(w + 0.12, 0.1, d + 0.12, P.stone, 0, 0.04, 0))
+  g.add(hqDoor(0.24, 0.42, 0, 0.22, d / 2 + 0.03))
+  g.add(hqWindow(0.26, 0.22, P.trimGold, P.glass, w * 0.22, h * 0.55, d / 2 + 0.04))
+  g.add(hqBoxTex(w + 0.12, 0.1, d + 0.12, P.stone, hqStoneTexture(), 0, 0.04, 0))
   return g
 }
 
@@ -989,23 +1005,29 @@ function placeDirtRoads(
 
 function pierSegment() {
   const g = new THREE.Group()
+  const wood = hqWoodTexture()
   // Thick deck planks (readable boards, not a paper plane)
-  g.add(hqBox(2.4, 0.16, 3.6, P.woodLight, 0, 0.55, 0))
+  g.add(hqBoxTex(2.4, 0.16, 3.6, P.woodLight, wood, 0, 0.55, 0))
   for (const z of [-1.1, 0, 1.1] as const) {
     g.add(hqBox(2.35, 0.04, 0.08, P.woodDark, 0, 0.64, z))
   }
-  // Gangplank toward the river
-  const plank = hqBox(0.95, 0.1, 1.15, P.woodMid, -0.95, 0.5, 0)
+  // Alternate mid planks for value breakup
+  for (const z of [-0.55, 0.55] as const) {
+    g.add(hqBoxTex(2.2, 0.03, 0.35, P.woodMid, wood, 0, 0.64, z))
+  }
+  const plank = hqBoxTex(0.95, 0.1, 1.15, P.woodMid, wood, -0.95, 0.5, 0)
   plank.rotation.z = 0.12
   g.add(plank)
-  // Chunky piles (6-gon)
   for (const x of [-0.95, 0.95]) {
     for (const z of [-1.3, 1.3]) {
       g.add(hqPost(0.11, 0.14, 1.15, P.woodDark, x, 0.15, z))
     }
   }
-  // Bollard
   g.add(hqPost(0.08, 0.1, 0.38, P.woodDeep, 0.7, 0.74, 1.2))
+  const crate = hqCrate(() => 0.3)
+  crate.position.set(-0.55, 0.63, 0.9)
+  crate.scale.setScalar(0.7)
+  g.add(crate)
   g.userData.pier = true
   return g
 }
@@ -2382,6 +2404,9 @@ function populateChunk(
       br.position.set(0, 0, z0 + CHUNK * (0.35 + rng() * 0.3))
       group.add(br)
     }
+    // Yard / path clutter — crates, barrels, fence bits
+    hqStampClutter(group, rng, BANK + 2.5, z0 + CHUNK * 0.45, 3.5, 4)
+    hqStampClutter(group, rng, -(BANK + 2.5), z0 + CHUNK * 0.55, 3.5, 3)
   }
   if (biome === 'reeds') {
     place(group, rng, 12, () => reed(rng), RIVER + 0.4, BANK + 1.5, z0)
@@ -2429,7 +2454,13 @@ function populateChunk(
     place(group, rng, 2, () => chinaTeaCupRose(rng), BANK - 0.2, BANK + 1.8, z0)
     place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.5, BANK + 2.5, z0)
 
+<<<<<<< HEAD
     if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng, false), RIVER + 1.0, BANK + 1.8, z0)
+=======
+    if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng), RIVER + 1.0, BANK + 1.8, z0)
+    hqStampClutter(group, rng, BANK + 2, z0 + CHUNK * 0.5, 3.2, 5)
+    hqStampClutter(group, rng, -(BANK + 2), z0 + CHUNK * 0.6, 3.2, 4)
+>>>>>>> ec61618 (Harbor Quest: RS-era craft detail — props, textures, clutter.)
 }
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
