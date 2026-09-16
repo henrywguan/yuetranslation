@@ -3544,6 +3544,7 @@ export function createHarborWorld(
     if (guanScene) indexRoot(guanScene)
     indexRoot(visitablesRoot)
     indexRoot(boat)
+    indexRoot(scoutWalk)
     fxIndexDirty = false
   }
 
@@ -4383,6 +4384,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       if (scout) applyLookToProtagonist(scout, currentLook)
       applyLookToProtagonist(scoutWalk, currentLook)
       applyVesselLook(boat, weather, currentLook)
+      fxIndexDirty = true
     },
     setPaused(on) {
       paused = on
