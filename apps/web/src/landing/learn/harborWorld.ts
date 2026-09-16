@@ -1580,11 +1580,15 @@ function southChinaTiger(_rng: () => number) {
   return g
 }
 
-/** Crested ibis (朱鷶) — pale body, rose wash, crimson face/crest. */
-function crestedIbis(_rng: () => number) {
+/**
+ * Crested ibis (朱鷶) — pale body, rose wash, crimson face/crest.
+ * `soar`: outstretched wings + bird flag for air animation; otherwise folded
+ * wings for bank wading (avoids “flying on the grass”).
+ */
+function crestedIbis(_rng: () => number, soar = false) {
   const g = new THREE.Group()
   g.userData.fauna = 'ibis'
-  g.userData.bird = true // shares gentle soar animation
+  if (soar) g.userData.bird = true
   g.add(hqBox(0.22, 0.14, 0.12, 0xf4ebe0, 0, 0.12, 0))
   g.add(hqBox(0.14, 0.1, 0.1, 0xf0d8d0, 0.14, 0.16, 0))
   // Crimson face + crest
@@ -1596,10 +1600,16 @@ function crestedIbis(_rng: () => number) {
   const bill = hqBox(0.18, 0.03, 0.03, 0xc02828, 0.34, 0.16, 0)
   bill.rotation.z = 0.35
   g.add(bill)
-  // Wings (rose-washed)
-  g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, 0.16))
-  g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, -0.16))
-  // Legs
+  if (soar) {
+    // Outstretched wings for flight
+    g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, 0.16))
+    g.add(hqBox(0.08, 0.04, 0.28, 0xe8b0a8, -0.02, 0.14, -0.16))
+  } else {
+    // Folded against the body while wading
+    g.add(hqBox(0.16, 0.06, 0.08, 0xe8b0a8, -0.04, 0.16, 0.05))
+    g.add(hqBox(0.16, 0.06, 0.08, 0xe8b0a8, -0.04, 0.16, -0.05))
+  }
+  // Legs (hidden-ish in soar pose via animation height)
   g.add(hqPost(0.015, 0.02, 0.18, 0xc02828, 0.02, 0.02, 0.04, 4))
   g.add(hqPost(0.015, 0.02, 0.18, 0xc02828, 0.02, 0.02, -0.04, 4))
   return g
@@ -2385,12 +2395,12 @@ function populateChunk(
     if (rng() > 0.4) {
       const nIbis = 1 + Math.floor(rng() * 2)
       for (let i = 0; i < nIbis; i++) {
-        const ibis = crestedIbis(rng)
-        const side = rng() > 0.5 ? 1 : -1
         const soar = rng() > 0.55
+        const ibis = crestedIbis(rng, soar)
+        const side = rng() > 0.5 ? 1 : -1
         ibis.position.set(
           side * (RIVER + 0.8 + rng() * 1.6),
-          soar ? 1.5 + rng() * 0.8 : 0.05,
+          soar ? 2.2 + rng() * 1.2 : 0.05,
           z0 + 2 + rng() * (CHUNK - 4),
         )
         ibis.rotation.y = rng() * Math.PI * 2
@@ -2418,7 +2428,7 @@ function populateChunk(
     place(group, rng, 2, () => chinaTeaCupRose(rng), BANK - 0.2, BANK + 1.8, z0)
     place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.5, BANK + 2.5, z0)
 
-    if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng), RIVER + 1.0, BANK + 1.8, z0)
+    if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng, false), RIVER + 1.0, BANK + 1.8, z0)
 }
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
@@ -2462,11 +2472,16 @@ function populateChunk(
     f.userData.phase = rng() * Math.PI * 2
     group.add(f)
   }
-  // Crested ibis wading / short hops near the shore
+  // Crested ibis — wading on the bank, or soaring overhead (never “flying” on grass)
   if (rng() > 0.55) {
-    const ibis = crestedIbis(rng)
+    const soar = rng() > 0.45
+    const ibis = crestedIbis(rng, soar)
     const side = rng() > 0.5 ? 1 : -1
-    ibis.position.set(side * (RIVER + 0.9 + rng() * 1.4), 0.05, z0 + 3 + rng() * (CHUNK - 6))
+    ibis.position.set(
+      side * (RIVER + 0.9 + rng() * 1.4),
+      soar ? 2.3 + rng() * 1.1 : 0.05,
+      z0 + 3 + rng() * (CHUNK - 6),
+    )
     ibis.rotation.y = rng() * Math.PI * 2
     ibis.userData.phase = rng() * Math.PI * 2
     ibis.userData.baseX = ibis.position.x
@@ -3964,13 +3979,13 @@ if (o.userData.cigaretteSmoke && !reduced) {
       }
       if (fauna === 'ibis') {
         const phase = ((o.userData.phase as number) ?? 0) + waterPhase * 1.6
-        // Alternate: short hop on bank vs low soar
-        if (o.userData.bird && o.position.y > 0.4) {
-          o.position.y = 1.4 + Math.sin(phase * 2) * 0.25
+        // Soar birds stay aloft; waders hop on the bank (folded wings, no bird flag).
+        if (o.userData.bird) {
+          o.position.y = 2.2 + Math.sin(phase * 2) * 0.35
           o.position.x += Math.sin(phase) * 0.012
         } else if (!reduced) {
           o.position.y = 0.05 + Math.max(0, Math.sin(phase * 1.2)) * 0.12
-          o.rotation.z = Math.sin(phase) * 0.08
+          o.rotation.z = Math.sin(phase) * 0.05
         }
       }
       if (fauna === 'salamander' && !reduced) {

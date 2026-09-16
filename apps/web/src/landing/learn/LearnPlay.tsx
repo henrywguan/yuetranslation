@@ -685,6 +685,45 @@ export function LearnSession({
     [pushProgress],
   )
 
+  // Must stay above cleared / character-create early returns — otherwise React
+  // throws "fewer hooks than expected" and the Next-gate clear paints blank.
+  const sendChat = useCallback((raw: string) => {
+    const cleaned = sanitizeChatText(raw)
+    if (!cleaned) return
+    try {
+      playHarborChatSend()
+    } catch {
+      /* SFX must never block local echo / overhead say */
+    }
+    const userId = localUserIdRef.current ?? 'local'
+    const packet: HarborChatPacket = {
+      userId,
+      username: localUsername,
+      text: cleaned,
+      t: Date.now(),
+    }
+    chatSeqRef.current += 1
+    const id = `${packet.t}-self-${chatSeqRef.current}`
+    setChatLines((prev) => {
+      const next = [
+        ...prev,
+        {
+          id,
+          userId: packet.userId,
+          username: packet.username,
+          text: packet.text,
+          t: packet.t,
+          self: true,
+        },
+      ]
+      return next.length > 40 ? next.slice(-40) : next
+    })
+    // Overhead before keyboard dismiss (HarborChatBox blurs after onSend) so the
+    // sprite is already in the scene when the sailor is visible again.
+    worldApiRef.current?.showSpeechBubble('local', cleaned)
+    presenceRef.current?.broadcastChat(cleaned)
+  }, [localUsername])
+
   if (!level) {
     return (
       <div className="hq-play hq-play--missing">
@@ -752,43 +791,6 @@ export function LearnSession({
     )
   }
 
-
-  const sendChat = useCallback((raw: string) => {
-    const cleaned = sanitizeChatText(raw)
-    if (!cleaned) return
-    try {
-      playHarborChatSend()
-    } catch {
-      /* SFX must never block local echo / overhead say */
-    }
-    const userId = localUserIdRef.current ?? 'local'
-    const packet: HarborChatPacket = {
-      userId,
-      username: localUsername,
-      text: cleaned,
-      t: Date.now(),
-    }
-    chatSeqRef.current += 1
-    const id = `${packet.t}-self-${chatSeqRef.current}`
-    setChatLines((prev) => {
-      const next = [
-        ...prev,
-        {
-          id,
-          userId: packet.userId,
-          username: packet.username,
-          text: packet.text,
-          t: packet.t,
-          self: true,
-        },
-      ]
-      return next.length > 40 ? next.slice(-40) : next
-    })
-    // Overhead before keyboard dismiss (HarborChatBox blurs after onSend) so the
-    // sprite is already in the scene when the sailor is visible again.
-    worldApiRef.current?.showSpeechBubble('local', cleaned)
-    presenceRef.current?.broadcastChat(cleaned)
-  }, [localUsername])
 
   return (
     <div
