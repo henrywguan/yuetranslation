@@ -21,6 +21,7 @@ import {
   GUAN_BOAT_START,
   GUAN_RETURN_PORTAL,
   GUAN_TROPICAL_LOOK,
+  GUAN_WATER_PLANE,
 } from './harborGuanRealm'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
@@ -3163,11 +3164,16 @@ export function createHarborWorld(
           : 0.88,
   })
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(isGuan ? 56 : RIVER * 2.4, isGuan ? 56 : 400, 1, isGuan ? 1 : 20),
+    new THREE.PlaneGeometry(
+      isGuan ? GUAN_WATER_PLANE.size : RIVER * 2.4,
+      isGuan ? GUAN_WATER_PLANE.size : 400,
+      1,
+      isGuan ? 1 : 20,
+    ),
     waterMat,
   )
   water.rotation.x = -Math.PI / 2
-  water.position.set(0, 0.02, isGuan ? 6 : 80)
+  water.position.set(isGuan ? GUAN_WATER_PLANE.x : 0, 0.02, isGuan ? GUAN_WATER_PLANE.z : 80)
   scene.add(water)
 
   const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
@@ -3803,7 +3809,8 @@ export function createHarborWorld(
         travelMode === 'foot' ? 0.06 - i * 0.01 : 0.28 - i * 0.04
     }
 
-    water.position.z = isGuan ? 6 : voyageZ + 60
+    water.position.z = isGuan ? GUAN_WATER_PLANE.z : voyageZ + 60
+    if (isGuan) water.position.x = GUAN_WATER_PLANE.x
     water.position.y = 0.02 + Math.sin(waterPhase) * 0.015
 
     // Parallax: mountains drift slower than the canoe
