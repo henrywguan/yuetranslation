@@ -309,6 +309,12 @@ function main() {
   const canvasSrc = readFileSync(new URL('./HarborWorldCanvas.tsx', import.meta.url), 'utf8')
   assert.match(canvasSrc, /realm\?: HarborRealmId/, 'HarborWorldCanvas accepts realm prop')
   assert.match(canvasSrc, /\[realm\]/, 'canvas recreates world when realm changes')
+  assert.match(
+    canvasSrc,
+    /setLocalUsername\(name\)|setLocalUsername\(localUsernameRef/,
+    'realm remount restores local nametag (not default sailor)',
+  )
+  assert.match(canvasSrc, /localUsernameRef/, 'username kept across realm remount via ref')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
   assert.equal(HARBOR_TAP_SLOP_PX, 10, 'tap vs drag pixel slop')
