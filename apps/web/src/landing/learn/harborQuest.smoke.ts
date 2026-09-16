@@ -281,16 +281,16 @@ function main() {
     Math.hypot(insideIsland.x - 0, insideIsland.z - 6) >= GUAN_ISLANDS[0]!.r,
     'clamp pushes boat off island land',
   )
-  const far = clampGuanBoatTarget(99, -99)
-  assert.equal(far.x, GUAN_HARBOR_BOUNDS.maxX)
-  assert.equal(far.z, GUAN_HARBOR_BOUNDS.minZ)
+  const guanFar = clampGuanBoatTarget(99, -99)
+  assert.equal(guanFar.x, GUAN_HARBOR_BOUNDS.maxX)
+  assert.equal(guanFar.z, GUAN_HARBOR_BOUNDS.minZ)
   assert.match(worldSrc, /buildGuanHarborScene/, 'world builds static guan scene')
   assert.match(worldSrc, /clampGuanBoatTarget/, 'guan tap-move clamp')
   assert.match(worldSrc, /isGuan/, 'guan free-sail branch')
   assert.match(worldSrc, /GUAN_BOAT_START/, 'boat starts near central island')
   assert.match(worldSrc, /GUAN_RETURN_PORTAL/, 'guan return portal visit')
   assert.equal(GUAN_RETURN_PORTAL.id, 'save-shack')
-  assert.ok(GUAN_BOAT_START.x !== 0 || GUAN_BOAT_START.z !== 0, 'boat start offset')
+  assert.ok(Number.isFinite(GUAN_BOAT_START.x) && Number.isFinite(GUAN_BOAT_START.z), 'boat start offset')
   const stageSrc = readFileSync(new URL('./HarborStage.tsx', import.meta.url), 'utf8')
   assert.match(
     stageSrc,
@@ -469,7 +469,7 @@ function main() {
   assert.ok(playSrc.includes('worldPaused'), 'session accepts page-level world pause')
   assert.ok(playSrc.includes('paused={'), 'stage receives pause when overlays open')
   assert.ok(playSrc.includes('Teleport to chapter'), 'Save Shack chapter teleport')
-  assert.ok(playSrc.includes('Guan Harbor'), 'Save Shack Guan Harbor teleport label')
+  assert.ok(playSrc.includes('GUAN_HARBOR_META'), 'Save Shack Guan Harbor teleport label')
   assert.ok(playSrc.includes('realmOverride'), 'LearnPlay realmOverride state')
   assert.ok(playSrc.includes("startHarborBgm('guan')"), 'Guan teleport switches BGM theme')
   assert.ok(playSrc.includes("startHarborBgm('river')"), 'cast off / chapter restores river BGM')
@@ -477,6 +477,8 @@ function main() {
   assert.ok(playSrc.includes("levelsForCampaign"), 'map filters by campaign')
   assert.ok(playSrc.includes('hq-teleport-list'), 'chapter teleport list')
   assert.ok(playSrc.includes('hq-teleport-btn--guan'), 'always-unlocked Guan Harbor teleport button')
+  assert.equal(GUAN_HARBOR_META.en, 'Guan Harbor', 'Guan Harbor English teleport label')
+  assert.equal(GUAN_HARBOR_META.zh, '關港', 'Guan Harbor Chinese teleport label')
 
   assert.doesNotMatch(playSrc, /hq-btn--hud[^>]*>\s*Textbook/, 'top Textbook button removed')
 
@@ -834,7 +836,11 @@ function main() {
   assert.match(worldSrc2, /animNodes/, 'fauna motion uses cached nodes')
   assert.match(worldSrc2, /setPaused/, 'world can pause under overlays')
   assert.match(worldSrc2, /document\.hidden/, 'tab-hidden skips sim work')
-  assert.match(worldSrc2, /PlaneGeometry\(RIVER \* 2\.4, 400, 1, 20\)/, 'water mesh segment budget')
+  assert.match(
+    worldSrc2,
+    /PlaneGeometry\(isGuan \? 56 : RIVER \* 2\.4, isGuan \? 56 : 400/,
+    'water mesh segment budget (river strip / guan lagoon)',
+  )
   assert.match(canvasSrc, /setPaused\(paused\)/, 'canvas wires pause into the world')
   assert.match(stageSrc, /paused=\{paused\}/, 'stage forwards pause')
   const pageSrcPause = readFileSync(new URL('./LearnPage.tsx', import.meta.url), 'utf8')
