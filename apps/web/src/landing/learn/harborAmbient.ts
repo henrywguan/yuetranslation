@@ -23,6 +23,17 @@ export type HarborWildlifeKind =
   | 'panda'
   | 'tiger'
   | 'salamander'
+  /** Night-only birds */
+  | 'owl'
+  | 'nightjar'
+  | 'night-heron'
+
+/** Night wildlife is nocturnal birds only (no frogs / mammals / day birds). */
+export const HARBOR_NIGHT_BIRDS: readonly HarborWildlifeKind[] = [
+  'owl',
+  'nightjar',
+  'night-heron',
+]
 
 type AmbientHandles = {
   bus: GainNode
@@ -32,6 +43,7 @@ type AmbientHandles = {
 let ambient: AmbientHandles | null = null
 let wildlifeTimer: ReturnType<typeof setTimeout> | null = null
 let lanternTimer: ReturnType<typeof setTimeout> | null = null
+let rainDropTimer: ReturnType<typeof setTimeout> | null = null
 let weather: HarborWeather = 'sunny'
 let talking = false
 let paused = false
@@ -51,6 +63,13 @@ function clearLantern(): void {
   }
 }
 
+function clearRainDrops(): void {
+  if (rainDropTimer) {
+    clearTimeout(rainDropTimer)
+    rainDropTimer = null
+  }
+}
+
 function noiseBuffer(ctx: AudioContext, seconds: number): AudioBuffer {
   const n = Math.max(1, Math.floor(ctx.sampleRate * seconds))
   const buf = ctx.createBuffer(1, n, ctx.sampleRate)
@@ -59,26 +78,64 @@ function noiseBuffer(ctx: AudioContext, seconds: number): AudioBuffer {
   return buf
 }
 
-function makeWaterBed(ctx: AudioContext, dest: AudioNode): () => void {
+function loopNoiseBed(
+  ctx: AudioContext,
+  dest: AudioNode,
+  opts: {
+    seconds: number
+    type: BiquadFilterType
+    frequency: number
+    Q?: number
+    gain: number
+    peakHz?: number
+    peakQ?: number
+    peakGain?: number
+  },
+): () => void {
   const src = ctx.createBufferSource()
-  src.buffer = noiseBuffer(ctx, 2.5)
+  src.buffer = noiseBuffer(ctx, opts.seconds)
   src.loop = true
-  const bp = ctx.createBiquadFilter()
-  bp.type = 'bandpass'
-  bp.frequency.value = 380
-  bp.Q.value = 0.5
-  const lp = ctx.createBiquadFilter()
-  lp.type = 'lowpass'
-  lp.frequency.value = 1100
+  const f = ctx.createBiquadFilter()
+  f.type = opts.type
+  f.frequency.value = opts.frequency
+  f.Q.value = opts.Q ?? 0.7
   const g = ctx.createGain()
-  g.gain.value = 0.82
-  src.connect(bp)
-  bp.connect(lp)
-  lp.connect(g)
+  g.gain.value = opts.gain
+  src.connect(f)
+  let last: AudioNode = f
+  if (opts.peakHz != null) {
+    const peak = ctx.createBiquadFilter()
+    peak.type = 'peaking'
+    peak.frequency.value = opts.peakHz
+    peak.Q.value = opts.peakQ ?? 4
+    peak.gain.value = opts.peakGain ?? 8
+    f.connect(peak)
+    last = peak
+  }
+  last.connect(g)
   g.connect(dest)
   src.start()
+  return () => {
+    try {
+      src.stop()
+      src.disconnect()
+    } catch {
+      /* ignore */
+    }
+  }
+}
 
-  // Softer second layer — slower “lapping” for river presence.
+function makeWaterBed(ctx: AudioContext, dest: AudioNode, rainy = false): () => void {
+  // Under rain, keep a quieter river bed so surface rain reads clearly.
+  const main = rainy ? 0.38 : 0.82
+  const lap = rainy ? 0.18 : 0.38
+  const stop1 = loopNoiseBed(ctx, dest, {
+    seconds: 2.5,
+    type: 'bandpass',
+    frequency: 380,
+    Q: 0.5,
+    gain: main,
+  })
   const src2 = ctx.createBufferSource()
   src2.buffer = noiseBuffer(ctx, 3.2)
   src2.loop = true
@@ -87,94 +144,94 @@ function makeWaterBed(ctx: AudioContext, dest: AudioNode): () => void {
   bp2.frequency.value = 220
   bp2.Q.value = 0.7
   const g2 = ctx.createGain()
-  g2.gain.value = 0.38
+  g2.gain.value = lap
   src2.connect(bp2)
   bp2.connect(g2)
   g2.connect(dest)
   src2.start()
-
   return () => {
-    for (const s of [src, src2]) {
-      try {
-        s.stop()
-        s.disconnect()
-      } catch {
-        /* ignore */
-      }
+    stop1()
+    try {
+      src2.stop()
+      src2.disconnect()
+    } catch {
+      /* ignore */
     }
   }
 }
 
 /** Soft daytime bird bed — continuous high hush under sparse chirps. */
 function makeBirdBed(ctx: AudioContext, dest: AudioNode): () => void {
-  const src = ctx.createBufferSource()
-  src.buffer = noiseBuffer(ctx, 1.6)
-  src.loop = true
-  const bp = ctx.createBiquadFilter()
-  bp.type = 'bandpass'
-  bp.frequency.value = 3200
-  bp.Q.value = 1.2
-  const g = ctx.createGain()
-  g.gain.value = 0.16
-  src.connect(bp)
-  bp.connect(g)
-  g.connect(dest)
-  src.start()
-  return () => {
-    try {
-      src.stop()
-      src.disconnect()
-    } catch {
-      /* ignore */
-    }
-  }
+  return loopNoiseBed(ctx, dest, {
+    seconds: 1.6,
+    type: 'bandpass',
+    frequency: 3200,
+    Q: 1.2,
+    gain: 0.16,
+  })
 }
 
+/** Soft night hush — lower / darker than day birds. */
+function makeNightBirdBed(ctx: AudioContext, dest: AudioNode): () => void {
+  return loopNoiseBed(ctx, dest, {
+    seconds: 2.2,
+    type: 'bandpass',
+    frequency: 1800,
+    Q: 0.9,
+    gain: 0.12,
+  })
+}
+
+/**
+ * Rain on three surfaces — tin (bright metallic), grass (soft mid), water (ploppy).
+ * Combined stop keeps the public `makeRainBed` name for smoke.
+ */
 function makeRainBed(ctx: AudioContext, dest: AudioNode): () => void {
-  const src = ctx.createBufferSource()
-  src.buffer = noiseBuffer(ctx, 1.8)
-  src.loop = true
-  const hp = ctx.createBiquadFilter()
-  hp.type = 'highpass'
-  hp.frequency.value = 1600
-  const g = ctx.createGain()
-  g.gain.value = 0.4
-  src.connect(hp)
-  hp.connect(g)
-  g.connect(dest)
-  src.start()
+  const stops = [
+    // Tin roof — bright hiss + metallic ring peak
+    loopNoiseBed(ctx, dest, {
+      seconds: 1.4,
+      type: 'highpass',
+      frequency: 2200,
+      Q: 0.6,
+      gain: 0.42,
+      peakHz: 2800,
+      peakQ: 6,
+      peakGain: 10,
+    }),
+    // Grass / leaves — duller mid absorption
+    loopNoiseBed(ctx, dest, {
+      seconds: 1.9,
+      type: 'bandpass',
+      frequency: 1100,
+      Q: 0.55,
+      gain: 0.36,
+    }),
+    // Open water — lower ploppy wash
+    loopNoiseBed(ctx, dest, {
+      seconds: 2.1,
+      type: 'bandpass',
+      frequency: 420,
+      Q: 0.65,
+      gain: 0.4,
+      peakHz: 680,
+      peakQ: 2.5,
+      peakGain: 5,
+    }),
+  ]
   return () => {
-    try {
-      src.stop()
-      src.disconnect()
-    } catch {
-      /* ignore */
-    }
+    for (const s of stops) s()
   }
 }
 
 function makeWindBed(ctx: AudioContext, dest: AudioNode): () => void {
-  const src = ctx.createBufferSource()
-  src.buffer = noiseBuffer(ctx, 3)
-  src.loop = true
-  const bp = ctx.createBiquadFilter()
-  bp.type = 'bandpass'
-  bp.frequency.value = 280
-  bp.Q.value = 0.4
-  const g = ctx.createGain()
-  g.gain.value = 0.28
-  src.connect(bp)
-  bp.connect(g)
-  g.connect(dest)
-  src.start()
-  return () => {
-    try {
-      src.stop()
-      src.disconnect()
-    } catch {
-      /* ignore */
-    }
-  }
+  return loopNoiseBed(ctx, dest, {
+    seconds: 3,
+    type: 'bandpass',
+    frequency: 280,
+    Q: 0.4,
+    gain: 0.28,
+  })
 }
 
 function noiseBurst(
@@ -202,11 +259,135 @@ function noiseBurst(
   src.stop(t0 + dur + 0.02)
 }
 
+/** Discrete raindrop hits — tin ping, grass thud, water plop. */
+function playRainDrop(
+  ctx: AudioContext,
+  dest: AudioNode,
+  surface: 'tin' | 'grass' | 'water',
+): void {
+  const t0 = ctx.currentTime + 0.01
+  const bus = ctx.createGain()
+  bus.gain.value = 0.55
+  bus.connect(dest)
+
+  if (surface === 'tin') {
+    noiseBurst(ctx, bus, t0, 0.035, 3200, 0.55)
+    const o = ctx.createOscillator()
+    o.type = 'sine'
+    const f0 = 2400 + Math.random() * 900
+    o.frequency.setValueAtTime(f0, t0)
+    o.frequency.exponentialRampToValueAtTime(f0 * 0.7, t0 + 0.12)
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.0001, t0)
+    g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.008)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14)
+    o.connect(g)
+    g.connect(bus)
+    o.start(t0)
+    o.stop(t0 + 0.16)
+    return
+  }
+
+  if (surface === 'grass') {
+    noiseBurst(ctx, bus, t0, 0.05, 900 + Math.random() * 400, 0.45)
+    return
+  }
+
+  noiseBurst(ctx, bus, t0, 0.06, 500 + Math.random() * 200, 0.5)
+  const o = ctx.createOscillator()
+  o.type = 'sine'
+  o.frequency.setValueAtTime(180 + Math.random() * 40, t0)
+  o.frequency.exponentialRampToValueAtTime(90, t0 + 0.1)
+  const g = ctx.createGain()
+  g.gain.setValueAtTime(0.0001, t0)
+  g.gain.exponentialRampToValueAtTime(0.28, t0 + 0.01)
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12)
+  o.connect(g)
+  g.connect(bus)
+  o.start(t0)
+  o.stop(t0 + 0.14)
+}
+
+function scheduleRainDrops(ctx: AudioContext, dest: AudioNode): void {
+  clearRainDrops()
+  if (!running || paused || talking || weather !== 'rainy') return
+  const delay = 90 + Math.random() * 220
+  rainDropTimer = setTimeout(() => {
+    rainDropTimer = null
+    if (!running || paused || talking || weather !== 'rainy') return
+    const surfaces: Array<'tin' | 'grass' | 'water'> = ['tin', 'grass', 'water', 'tin', 'water']
+    playRainDrop(ctx, dest, surfaces[Math.floor(Math.random() * surfaces.length)]!)
+    if (Math.random() < 0.22) {
+      window.setTimeout(() => {
+        if (!running || paused || talking || weather !== 'rainy') return
+        playRainDrop(ctx, dest, 'tin')
+      }, 40 + Math.random() * 80)
+    }
+    scheduleRainDrops(ctx, dest)
+  }, delay)
+}
+
 function playChirp(ctx: AudioContext, dest: AudioNode, kind: HarborWildlifeKind): void {
   const t0 = ctx.currentTime + 0.01
   const bus = ctx.createGain()
   bus.gain.value = HARBOR_WILDLIFE_GAIN
   bus.connect(dest)
+
+  if (kind === 'owl') {
+    for (let i = 0; i < 2; i++) {
+      const o = ctx.createOscillator()
+      o.type = 'sine'
+      const f0 = i === 0 ? 320 : 280
+      o.frequency.setValueAtTime(f0, t0 + i * 0.28)
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.92, t0 + i * 0.28 + 0.22)
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.28)
+      g.gain.exponentialRampToValueAtTime(0.55, t0 + i * 0.28 + 0.04)
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.28 + 0.28)
+      o.connect(g)
+      g.connect(bus)
+      o.start(t0 + i * 0.28)
+      o.stop(t0 + i * 0.28 + 0.32)
+    }
+    return
+  }
+
+  if (kind === 'nightjar') {
+    for (let i = 0; i < 5; i++) {
+      const o = ctx.createOscillator()
+      o.type = 'triangle'
+      o.frequency.setValueAtTime(480 + (i % 2) * 40, t0 + i * 0.06)
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.06)
+      g.gain.exponentialRampToValueAtTime(0.28, t0 + i * 0.06 + 0.015)
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.06 + 0.07)
+      o.connect(g)
+      g.connect(bus)
+      o.start(t0 + i * 0.06)
+      o.stop(t0 + i * 0.06 + 0.09)
+    }
+    return
+  }
+
+  if (kind === 'night-heron') {
+    const o = ctx.createOscillator()
+    o.type = 'sawtooth'
+    o.frequency.setValueAtTime(420, t0)
+    o.frequency.exponentialRampToValueAtTime(260, t0 + 0.22)
+    const lp = ctx.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 900
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.0001, t0)
+    g.gain.exponentialRampToValueAtTime(0.38, t0 + 0.025)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28)
+    o.connect(lp)
+    lp.connect(g)
+    g.connect(bus)
+    o.start(t0)
+    o.stop(t0 + 0.32)
+    return
+  }
 
   if (kind === 'frog') {
     const o = ctx.createOscillator()
@@ -315,7 +496,6 @@ function playChirp(ctx: AudioContext, dest: AudioNode, kind: HarborWildlifeKind)
   }
 
   if (kind === 'tiger') {
-    // Distant soft growl — rare, kept quiet.
     const o = ctx.createOscillator()
     o.type = 'sawtooth'
     o.frequency.setValueAtTime(70, t0)
@@ -368,12 +548,14 @@ function playChirp(ctx: AudioContext, dest: AudioNode, kind: HarborWildlifeKind)
   o.stop(t0 + 0.28)
 }
 
-function wildlifePool(w: HarborWeather): HarborWildlifeKind[] {
+/** Weather → wildlife pool. Night is nocturnal birds only. */
+export function harborWildlifePool(w: HarborWeather): HarborWildlifeKind[] {
   if (w === 'night') {
-    return ['frog', 'cicada', 'salamander', 'heron', 'tiger', 'frog', 'ibis']
+    return [...HARBOR_NIGHT_BIRDS, 'owl', 'nightjar']
   }
   if (w === 'rainy') {
-    return ['frog', 'koi', 'gull', 'salamander', 'heron', 'koi']
+    // Rain fauna stays sparse under the rain beds — frogs + water stir
+    return ['frog', 'koi', 'salamander', 'frog', 'koi']
   }
   // sunny / cloudy — match visible bank fauna
   return ['magpie', 'gull', 'heron', 'deer', 'ibis', 'koi', 'panda', 'cicada', 'magpie', 'deer']
@@ -382,11 +564,16 @@ function wildlifePool(w: HarborWeather): HarborWildlifeKind[] {
 function scheduleWildlife(ctx: AudioContext, dest: AudioNode): void {
   clearWildlife()
   if (!running || paused || talking) return
-  const delay = 2800 + Math.random() * 5200
+  const delay =
+    weather === 'night'
+      ? 4500 + Math.random() * 8000
+      : weather === 'rainy'
+        ? 5000 + Math.random() * 9000
+        : 2800 + Math.random() * 5200
   wildlifeTimer = setTimeout(() => {
     wildlifeTimer = null
     if (!running || paused || talking) return
-    const pool = wildlifePool(weather)
+    const pool = harborWildlifePool(weather)
     playChirp(ctx, dest, pool[Math.floor(Math.random() * pool.length)]!)
     scheduleWildlife(ctx, dest)
   }, delay)
@@ -439,7 +626,6 @@ export function startHarborAmbient(nextWeather: HarborWeather): void {
   if (typeof window === 'undefined') return
   weather = nextWeather
   if (running) {
-    // Rebuild beds when weather changes mid-session (rare).
     stopHarborAmbient()
   }
   const ctx = ensureSharedAudioContext()
@@ -450,10 +636,12 @@ export function startHarborAmbient(nextWeather: HarborWeather): void {
   bus.gain.exponentialRampToValueAtTime(HARBOR_AMBIENT_GAIN, ctx.currentTime + 0.9)
   bus.connect(ctx.destination)
 
-  const stops: Array<() => void> = [makeWaterBed(ctx, bus)]
+  const rainy = weather === 'rainy'
+  const stops: Array<() => void> = [makeWaterBed(ctx, bus, rainy)]
   if (weather === 'sunny' || weather === 'cloudy') stops.push(makeBirdBed(ctx, bus))
-  if (weather === 'rainy') stops.push(makeRainBed(ctx, bus))
-  if (weather === 'cloudy' || weather === 'rainy') stops.push(makeWindBed(ctx, bus))
+  if (weather === 'night') stops.push(makeNightBirdBed(ctx, bus))
+  if (rainy) stops.push(makeRainBed(ctx, bus))
+  if (weather === 'cloudy' || rainy) stops.push(makeWindBed(ctx, bus))
   if (weather === 'night') stops.push(makeWindBed(ctx, bus))
 
   ambient = {
@@ -469,12 +657,14 @@ export function startHarborAmbient(nextWeather: HarborWeather): void {
   }
   scheduleWildlife(ctx, bus)
   scheduleLantern(ctx, bus)
+  if (rainy) scheduleRainDrops(ctx, bus)
 }
 
 export function stopHarborAmbient(): void {
   running = false
   clearWildlife()
   clearLantern()
+  clearRainDrops()
   const a = ambient
   ambient = null
   if (!a) return
@@ -502,10 +692,12 @@ export function setHarborAmbientTalking(on: boolean): void {
   if (on) {
     clearWildlife()
     clearLantern()
+    clearRainDrops()
   } else if (running && ambient) {
     const ctx = ensureSharedAudioContext()
     scheduleWildlife(ctx, ambient.bus)
     scheduleLantern(ctx, ambient.bus)
+    if (weather === 'rainy') scheduleRainDrops(ctx, ambient.bus)
   }
 }
 
@@ -515,10 +707,12 @@ export function setHarborAmbientPaused(on: boolean): void {
   if (on) {
     clearWildlife()
     clearLantern()
+    clearRainDrops()
   } else if (running && ambient && !talking) {
     const ctx = ensureSharedAudioContext()
     scheduleWildlife(ctx, ambient.bus)
     scheduleLantern(ctx, ambient.bus)
+    if (weather === 'rainy') scheduleRainDrops(ctx, ambient.bus)
   }
 }
 

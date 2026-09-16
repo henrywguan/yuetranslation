@@ -31,7 +31,9 @@ import {
 import { HARBOR_COIN_CHING_GAIN } from '../../landing/learn/harborCoinSfx'
 import {
   HARBOR_AMBIENT_GAIN,
+  HARBOR_NIGHT_BIRDS,
   HARBOR_WILDLIFE_GAIN,
+  harborWildlifePool,
   isHarborAmbientRunning,
 } from '../../landing/learn/harborAmbient'
 import {
@@ -1030,11 +1032,36 @@ function main() {
   assert.match(ambientSrc, /makeRainBed/, 'ambient rain bed')
   assert.match(ambientSrc, /makeWindBed/, 'ambient wind bed')
   assert.match(ambientSrc, /makeBirdBed/, 'daytime bird bed')
+  assert.match(ambientSrc, /makeNightBirdBed/, 'night bird bed')
   assert.match(ambientSrc, /scheduleWildlife/, 'sparse wildlife scheduler')
   assert.match(ambientSrc, /scheduleLantern/, 'lantern tick at night/rain')
+  assert.match(ambientSrc, /scheduleRainDrops/, 'discrete raindrop scheduler')
+  assert.match(ambientSrc, /playRainDrop/, 'raindrop one-shots')
+  assert.match(ambientSrc, /surface === 'tin'/, 'rain on tin')
+  assert.match(ambientSrc, /surface === 'grass'/, 'rain on grass')
+  assert.match(ambientSrc, /water plop|surface === 'water'|Open water/, 'rain on water')
   assert.match(ambientSrc, /setHarborAmbientTalking/, 'ambient ducks while talking')
   assert.match(ambientSrc, /magpie|deer|ibis|koi|panda|tiger|salamander/, 'fauna-matched wildlife kinds')
+  assert.match(ambientSrc, /owl|nightjar|night-heron/, 'nocturnal bird kinds')
   assert.match(ambientSrc, /primeHarborAmbientUnlock/, 'gesture unlock primer')
+  assert.deepEqual(
+    [...HARBOR_NIGHT_BIRDS].sort(),
+    ['night-heron', 'nightjar', 'owl'],
+    'night bird roster',
+  )
+  {
+    const nightPool = harborWildlifePool('night')
+    assert.ok(nightPool.length > 0, 'night wildlife pool non-empty')
+    for (const kind of nightPool) {
+      assert.ok(
+        (HARBOR_NIGHT_BIRDS as readonly string[]).includes(kind),
+        `night pool only night birds (got ${kind})`,
+      )
+    }
+    assert.ok(!nightPool.includes('magpie'), 'night excludes day magpie')
+    assert.ok(!nightPool.includes('frog'), 'night excludes frogs')
+    assert.ok(!nightPool.includes('gull'), 'night excludes gulls')
+  }
   assert.match(playAudioSrc, /unlockHarborAudio|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
   assert.match(playAudioSrc, /resumeSharedAudioContext/, 'gesture resumes shared AudioContext')
   const interactSrc = readFileSync(new URL('./harborInteractSfx.ts', import.meta.url), 'utf8')
