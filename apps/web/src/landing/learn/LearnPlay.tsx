@@ -884,6 +884,9 @@ export function LearnSession({
         pose={minimapPose}
         remotes={remotePlayers}
         hidden={visitable !== null || invOpen || codexOpen || barberOpen || scrollOpen}
+        onNavigate={(x, z) => {
+          worldApiRef.current?.moveToWorld(x, z)
+        }}
       />
 
       <header className="hq-play-hud-top">

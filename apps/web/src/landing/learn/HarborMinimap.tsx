@@ -91,6 +91,35 @@ function project(
   }
 }
 
+/**
+ * Inverse of `project` for OSRS-style minimap click-to-walk.
+ * Local pixel (left, top) inside the circular body → world (x, z).
+ * Returns null when the tap is outside the usable radar disc.
+ */
+export function unprojectMinimapTap(
+  localX: number,
+  localY: number,
+  pose: HarborMinimapPose,
+  size: number,
+): { x: number; z: number } | null {
+  const cx = size / 2
+  const cy = size / 2
+  const rad = size * 0.42
+  if (rad <= 0) return null
+  const nx = (localX - cx) / rad
+  const ny = (localY - cy) / rad
+  const r = Math.hypot(nx, ny)
+  if (r > 1.05) return null
+  const viewYaw = pose.viewYaw ?? pose.yaw
+  const c = Math.cos(viewYaw)
+  const s = Math.sin(viewYaw)
+  const right = WORLD_RADIUS * nx
+  const forward = -WORLD_RADIUS * ny
+  const dx = c * right - s * forward
+  const dz = s * right + c * forward
+  return { x: pose.x + dx, z: pose.z + dz }
+}
+
 const VISIT_DOT: Record<HarborVisitableId, string> = {
   'save-shack': 'hq-minimap-dot--save-shack',
   outfitter: 'hq-minimap-dot--outfitter',
@@ -103,11 +132,19 @@ type Props = {
   pose: HarborMinimapPose | null
   remotes: HarborRemotePlayer[]
   hidden?: boolean
+  /** OSRS minimap navigate — world (x, z) from a tap inside the radar disc. */
+  onNavigate?: (x: number, z: number) => void
 }
 
-export function HarborMinimap({ pose, remotes, hidden }: Props) {
+type TapMark = { left: number; top: number; id: number }
+
+export function HarborMinimap({ pose, remotes, hidden, onNavigate }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const [layout, setLayout] = useState<Layout>(() => loadLayout())
+  const [tapMark, setTapMark] = useState<TapMark | null>(null)
+  const tapSeqRef = useRef(0)
+  const navPointerRef = useRef<{ pointerId: number; x: number; y: number } | null>(null)
   const dragRef = useRef<{
     kind: 'move' | 'resize'
     pointerId: number
@@ -194,6 +231,41 @@ export function HarborMinimap({ pose, remotes, hidden }: Props) {
     [layout.locked, layout.collapsed, layout.left, layout.top, layout.size],
   )
 
+  const onBodyPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button, .hq-minimap-resize')) return
+    // Chrome drag owns move/resize; body taps are click-to-walk only.
+    if (dragRef.current) return
+    navPointerRef.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY }
+  }, [])
+
+  const onBodyPointerUp = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const start = navPointerRef.current
+      navPointerRef.current = null
+      if (!start || start.pointerId !== e.pointerId) return
+      if (!onNavigate || !pose || !bodyRef.current) return
+      // Ignore drags / sloppy presses — keep this a deliberate tap.
+      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) return
+      const rect = bodyRef.current.getBoundingClientRect()
+      const localX = e.clientX - rect.left
+      const localY = e.clientY - rect.top
+      // Use the painted disc size so center tap = stand still / sail in place.
+      const mapSize = Math.min(rect.width, rect.height)
+      const world = unprojectMinimapTap(localX, localY, pose, mapSize)
+      if (!world) return
+      e.preventDefault()
+      e.stopPropagation()
+      tapSeqRef.current += 1
+      const id = tapSeqRef.current
+      setTapMark({ left: localX, top: localY, id })
+      window.setTimeout(() => {
+        setTapMark((prev) => (prev?.id === id ? null : prev))
+      }, 700)
+      onNavigate(world.x, world.z)
+    },
+    [onNavigate, pose],
+  )
+
   if (hidden) return null
 
   const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
@@ -217,7 +289,7 @@ export function HarborMinimap({ pose, remotes, hidden }: Props) {
   return (
     <div
       ref={rootRef}
-      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}`}
+      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${onNavigate ? ' is-navigable' : ''}`}
       style={{ left: layout.left, top: layout.top, width: size }}
       aria-label="Harbor minimap"
     >
@@ -267,7 +339,19 @@ export function HarborMinimap({ pose, remotes, hidden }: Props) {
 
       {!layout.collapsed && (
         <>
-          <div className="hq-minimap-body">
+          <div
+            ref={bodyRef}
+            className="hq-minimap-body"
+            role={onNavigate ? 'button' : undefined}
+            tabIndex={onNavigate ? 0 : undefined}
+            aria-label={onNavigate ? 'Tap to walk or sail' : undefined}
+            title={onNavigate ? 'Tap to walk or sail' : undefined}
+            onPointerDown={onNavigate ? onBodyPointerDown : undefined}
+            onPointerUp={onNavigate ? onBodyPointerUp : undefined}
+            onPointerCancel={() => {
+              navPointerRef.current = null
+            }}
+          >
             <div className="hq-minimap-ring" aria-hidden />
             <div className="hq-minimap-heading" aria-hidden title="Camera forward" />
             {pose &&
@@ -297,6 +381,14 @@ export function HarborMinimap({ pose, remotes, hidden }: Props) {
                 )
               })}
             <span className="hq-minimap-you" aria-hidden />
+            {tapMark && (
+              <span
+                key={tapMark.id}
+                className="hq-minimap-tap-x"
+                style={{ left: tapMark.left, top: tapMark.top }}
+                aria-hidden
+              />
+            )}
             {!layout.locked && (
               <button
                 type="button"
