@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { HarborGearId, HarborGearSlot, HarborLook } from './harborGear'
 import { harborGearById, lookColors } from './harborGear'
 import { HarborGearModelIcon } from './HarborGearModelIcon'
@@ -36,20 +35,22 @@ function isCoarsePointer() {
 type Props = {
   look: HarborLook
   selected: HarborGearSlot
+  /** Shared tip id with the bag — gear id of the tip currently open, or null. */
+  tipId: HarborGearId | null
+  onTipId: (id: HarborGearId | null) => void
   onSelect: (slot: HarborGearSlot) => void
 }
 
 /**
  * OSRS-inspired Worn Equipment board: slots ring a silhouette that
  * recolors from the equipped look. Slot cells show item model icons
- * (not flat color swatches) with hover/tap examine tips.
+ * with hover/tap examine tips (not sticky on selection).
  */
-export function HarborWornBoard({ look, selected, onSelect }: Props) {
+export function HarborWornBoard({ look, selected, tipId, onTipId, onSelect }: Props) {
   const colors = lookColors(look)
   const hand = harborGearById(look.hand)
   const boat = harborGearById(look.boat)
   const lantern = harborGearById(look.lantern)
-  const [hoverSlot, setHoverSlot] = useState<HarborGearSlot | null>(null)
 
   return (
     <div className="hq-worn" role="group" aria-label="Worn equipment">
@@ -67,7 +68,7 @@ export function HarborWornBoard({ look, selected, onSelect }: Props) {
         const id = look[slot] as HarborGearId
         const item = harborGearById(id)
         const on = selected === slot
-        const tipOpen = Boolean(item) && (hoverSlot === slot || on)
+        const tipOpen = Boolean(item && tipId === item.id)
         const tipBelow = slot === 'hat'
         return (
           <button
@@ -77,14 +78,18 @@ export function HarborWornBoard({ look, selected, onSelect }: Props) {
             aria-pressed={on}
             aria-label={`${SLOT_LABEL[slot]}${item ? `: ${item.name.en}` : ''}`}
             onPointerEnter={() => {
-              if (!isCoarsePointer() && item) setHoverSlot(slot)
+              if (!isCoarsePointer() && item) onTipId(item.id)
             }}
             onPointerLeave={() => {
-              if (!isCoarsePointer()) setHoverSlot((cur) => (cur === slot ? null : cur))
+              if (!isCoarsePointer()) onTipId(null)
             }}
             onClick={() => {
               onSelect(slot)
-              if (isCoarsePointer() && item) setHoverSlot(slot)
+              if (isCoarsePointer() && item) {
+                onTipId(tipId === item.id ? null : item.id)
+              } else if (!item) {
+                onTipId(null)
+              }
             }}
           >
             {item ? (

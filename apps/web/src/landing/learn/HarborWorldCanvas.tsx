@@ -4,6 +4,7 @@ import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
   createHarborWorld,
+  type HarborDialogueTap,
   type HarborHue,
   type HarborRealmId,
   type HarborVisitableId,
@@ -22,6 +23,8 @@ type Props = {
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Tap a nearby talkable NPC / speech bubble. */
+  onDialogueNpc?: (tap: HarborDialogueTap) => void
   /** Signed-in multiplayer: remote sailors to render. */
   remotePlayers?: HarborRemotePlayer[]
   /** Local nametag (all sailors show a name above their head). */
@@ -45,6 +48,7 @@ export function HarborWorldCanvas({
   realm = 'river',
   paused = false,
   onVisitable,
+  onDialogueNpc,
   remotePlayers,
   localUsername,
   onRemotePlayerSelect,
@@ -55,6 +59,8 @@ export function HarborWorldCanvas({
   const worldRef = useRef<HarborWorldHandle | null>(null)
   const onVisitableRef = useRef(onVisitable)
   onVisitableRef.current = onVisitable
+  const onDialogueNpcRef = useRef(onDialogueNpc)
+  onDialogueNpcRef.current = onDialogueNpc
   const onRemoteSelectRef = useRef(onRemotePlayerSelect)
   onRemoteSelectRef.current = onRemotePlayerSelect
   // Kept fresh so realm remount (river ↔ guan) can re-apply nametag / remotes / progress.
@@ -78,6 +84,7 @@ export function HarborWorldCanvas({
       appearance,
       realm,
       onVisitable: (id) => onVisitableRef.current?.(id),
+      onDialogueNpc: (tap) => onDialogueNpcRef.current?.(tap),
       onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
     })
     worldRef.current = world

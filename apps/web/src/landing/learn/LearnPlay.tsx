@@ -16,14 +16,24 @@ import {
   playHarborCorrectFanfare,
   stopHarborCorrectFanfare,
 } from './harborFanfare'
-import { duckHarborBgm, startHarborBgm, stopHarborBgm } from './harborBgm'
+import {
+  duckHarborBgm,
+  harborBgmTheme,
+  isHarborBgmPlaying,
+  startHarborBgm,
+  stopHarborBgm,
+} from './harborBgm'
 import { GUAN_HARBOR_META } from './harborGuanRealm'
 import {
+  harborAmbientWeather,
+  isHarborAmbientRunning,
+  primeHarborAmbientUnlock,
   setHarborAmbientPaused,
   setHarborAmbientTalking,
   startHarborAmbient,
   stopHarborAmbient,
 } from './harborAmbient'
+import { resumeSharedAudioContext } from '../../lib/audioReactive'
 import { playHarborCoinChing } from './harborCoinSfx'
 import {
   playHarborArenaOpen,
@@ -75,6 +85,7 @@ import { HarborChatBox, type HarborChatLine } from './HarborChatBox'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
+  type HarborDialogueTap,
   type HarborNpcRole,
   type HarborVisitableId,
   type HarborWorldHandle,
@@ -385,9 +396,25 @@ export function LearnSession({
         window.clearInterval(ambientBoot)
       }
     }, 150)
+
+    /** iOS / Safari: AudioContext stays suspended until a real gesture. */
+    const unlockHarborAudio = () => {
+      resumeSharedAudioContext()
+      primeHarborAmbientUnlock()
+      if (!isHarborBgmPlaying()) startHarborBgm(harborBgmTheme())
+      const w = worldApiRef.current?.weather ?? harborAmbientWeather()
+      if (!isHarborAmbientRunning()) startHarborAmbient(w)
+    }
+    window.addEventListener('pointerdown', unlockHarborAudio, { capture: true })
+    window.addEventListener('keydown', unlockHarborAudio, { capture: true })
+    window.addEventListener('touchstart', unlockHarborAudio, { capture: true, passive: true })
+
     return () => {
       document.body.style.overflow = prev
       window.clearInterval(ambientBoot)
+      window.removeEventListener('pointerdown', unlockHarborAudio, true)
+      window.removeEventListener('keydown', unlockHarborAudio, true)
+      window.removeEventListener('touchstart', unlockHarborAudio, true)
       stopHarborCorrectFanfare()
       stopHarborMiss()
       stopHarborScrollSfx()
@@ -584,6 +611,30 @@ export function LearnSession({
     }
     setVisitable(id)
   }, [])
+
+  /** Tap a nearby NPC / speech bubble — open landmark UI or that pier's lesson. */
+  const onDialogueNpc = useCallback(
+    (tap: HarborDialogueTap) => {
+      if (tap.kind === 'landmark') {
+        onVisitable(tap.id)
+        return
+      }
+      if (!level) return
+      const slot = Math.max(0, Math.min(level.steps.length - 1, tap.dockSlot))
+      if (realmOverride) {
+        setRealmOverride(null)
+        startHarborBgm('river')
+      }
+      setStepIndex(slot)
+      playHarborTalkStart()
+      playHarborNpcGreet()
+      setTalking(true)
+      const snap = () => worldApiRef.current?.snapToQuestDock(slot)
+      snap()
+      requestAnimationFrame(() => requestAnimationFrame(snap))
+    },
+    [level, onVisitable, realmOverride],
+  )
 
   const onEarnGold = useCallback(
     (amount: number) => {
@@ -821,6 +872,7 @@ export function LearnSession({
             visitable !== null
           }
           onVisitable={onVisitable}
+          onDialogueNpc={onDialogueNpc}
           remotePlayers={remotePlayers}
           localUsername={localUsername}
           onRemotePlayerSelect={setProfileUserId}

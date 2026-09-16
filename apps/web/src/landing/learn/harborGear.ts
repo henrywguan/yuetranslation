@@ -16,6 +16,7 @@ import {
 import {
   applyVipOverlaysToProtagonist,
   buildVipHandheldProp,
+  tagVipLanternAnim,
 } from './harborVipGear'
 import { applyTierDetailOverlays, enrichHandheldProp } from './harborGearDetail'
 
@@ -179,7 +180,35 @@ export function harborGearById(id: string): HarborGearItem | undefined {
 }
 
 export function harborGearForSlot(slot: HarborGearSlot): HarborGearItem[] {
+  // Boat lanterns can also be held — list them under Hand in the outfitter.
+  if (slot === 'hand') {
+    return HARBOR_GEAR_CATALOG.filter((i) => i.slot === 'hand' || i.slot === 'lantern')
+  }
   return HARBOR_GEAR_CATALOG.filter((i) => i.slot === slot)
+}
+
+/** True when a catalog piece may be worn in the given look slot. */
+export function harborGearCanEquipToSlot(item: HarborGearItem, slot: HarborGearSlot): boolean {
+  if (item.slot === slot) return true
+  // Boat lanterns may also be held in the hand.
+  if (slot === 'hand' && item.slot === 'lantern') return true
+  return false
+}
+
+/** True when this piece is currently worn in any compatible slot. */
+export function harborGearIsWorn(look: HarborLook, item: HarborGearItem): boolean {
+  if (look[item.slot] === item.id) return true
+  if (item.slot === 'lantern' && look.hand === item.id) return true
+  return false
+}
+
+/** Prefer the selected worn slot when the piece can go there (lantern → hand). */
+export function harborGearWearTarget(
+  item: HarborGearItem,
+  selectedSlot: HarborGearSlot,
+): HarborGearSlot {
+  if (harborGearCanEquipToSlot(item, selectedSlot)) return selectedSlot
+  return item.slot
 }
 
 /**
@@ -361,7 +390,7 @@ export function sanitizeHarborLook(raw: unknown): HarborLook {
     const id = o[slot]
     if (typeof id !== 'string') continue
     const item = BY_ID.get(id)
-    if (item && item.slot === slot) base[slot] = item.id
+    if (item && harborGearCanEquipToSlot(item, slot)) base[slot] = item.id
   }
   return base
 }
@@ -392,10 +421,98 @@ export function sanitizeCarriedGear(ownedRaw: unknown, bankedRaw: unknown = []):
   return sanitizeOwnedGear(ownedRaw).filter((id) => !banked.has(id))
 }
 
+function handheldGlowMat(color: number, emissive: number, intensity = 0.9) {
+  return new THREE.MeshLambertMaterial({
+    color,
+    emissive,
+    emissiveIntensity: intensity,
+    flatShading: true,
+  })
+}
+
+function attachHandheldLanternLight(
+  parent: THREE.Object3D,
+  y: number,
+  color: number,
+  scale = 0.55,
+) {
+  const light = new THREE.PointLight(color, scale, 3.2, 2)
+  light.position.set(0.06, y, 0)
+  light.userData.harborLanternLight = true
+  light.userData.baseIntensity = scale
+  parent.add(light)
+  return light
+}
+
+/** Build boat-lantern mesh families at hand scale (paper / silk / glass / iron). */
+function buildHandheldBoatLantern(item: HarborGearItem): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'gear-hand'
+  g.userData.harborGear = true
+  g.userData.harborHandheldLantern = true
+  const wood = hqWoodTexture()
+  const paper = item.color
+  const glowCol = item.accent ?? paper
+  const id = item.id
+
+  if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
+    g.add(hqPost(0.012, 0.016, 0.1, P.woodDark, 0.06, 0.04, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.06, 0.14, 6),
+      handheldGlowMat(paper, glowCol, 0.85),
+    )
+    lamp.position.set(0.06, 0.14, 0)
+    g.add(lamp)
+    g.add(hqBoxTex(0.07, 0.02, 0.07, P.woodDeep, wood, 0.06, 0.22, 0))
+    g.add(hqBox(0.08, 0.015, 0.08, P.iron, 0.06, 0.2, 0))
+    g.add(hqBox(0.06, 0.015, 0.06, P.trimGold, 0.06, 0.08, 0))
+    attachHandheldLanternLight(g, 0.14, glowCol, id === 'lantern-starlight' ? 0.75 : 0.6)
+  } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
+    g.add(hqPost(0.014, 0.018, 0.09, P.woodDark, 0.06, 0.035, 0, 5))
+    const lamp = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.06, 0),
+      handheldGlowMat(paper, glowCol, 0.9),
+    )
+    lamp.position.set(0.06, 0.13, 0)
+    g.add(lamp)
+    g.add(hqBox(0.025, 0.025, 0.025, P.trimGold, 0.06, 0.19, 0))
+    attachHandheldLanternLight(g, 0.13, glowCol, 0.65)
+  } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
+    g.add(hqPost(0.014, 0.018, 0.08, P.woodDark, 0.06, 0.03, 0, 5))
+    g.add(hqBox(0.08, 0.1, 0.08, paper, 0.06, 0.12, 0))
+    g.add(hqBox(0.09, 0.02, 0.09, P.iron, 0.06, 0.07, 0))
+    g.add(hqBox(0.09, 0.02, 0.09, P.iron, 0.06, 0.17, 0))
+    const core = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.06, 0.05),
+      handheldGlowMat(glowCol, glowCol, 1.0),
+    )
+    core.position.set(0.06, 0.12, 0)
+    g.add(core)
+    attachHandheldLanternLight(g, 0.12, glowCol, id === 'lantern-dragon' ? 0.7 : 0.55)
+  } else {
+    // Paper box family (amber / crimson / jade) — same silhouette as hand-lantern
+    g.add(hqBox(0.1, 0.12, 0.1, paper, 0.06, 0.08, 0))
+    g.add(hqBoxTex(0.08, 0.03, 0.08, P.woodMid, wood, 0.06, 0.16, 0))
+    g.add(hqBox(0.11, 0.02, 0.11, P.iron, 0.06, 0.02, 0))
+    const glow = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.04, 0.04),
+      handheldGlowMat(glowCol, glowCol, 0.85),
+    )
+    glow.position.set(0.06, 0.08, 0.06)
+    g.add(glow)
+    attachHandheldLanternLight(g, 0.08, glowCol, 0.55)
+  }
+
+  tagVipLanternAnim(g, id)
+  return g
+}
+
 /** Build a handheld prop mesh for the hand_r socket. */
 export function buildHandheldProp(itemId: string): THREE.Object3D | null {
   const item = BY_ID.get(itemId)
-  if (!item || item.slot !== 'hand' || item.id === 'hand-none') return null
+  if (!item) return null
+  if (item.slot === 'lantern') return buildHandheldBoatLantern(item)
+  if (item.slot !== 'hand' || item.id === 'hand-none') return null
   const vip = buildVipHandheldProp(item.id, item.color, item.accent ?? item.color)
   if (vip) return vip
   const g = new THREE.Group()
@@ -414,7 +531,13 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
     g.add(hqBox(0.1, 0.12, 0.1, main, 0.06, 0.08, 0))
     g.add(hqBoxTex(0.08, 0.03, 0.08, P.woodMid, wood, 0.06, 0.16, 0))
     g.add(hqBox(0.11, 0.02, 0.11, P.iron, 0.06, 0.02, 0))
-    g.add(hqBox(0.04, 0.04, 0.04, accent, 0.06, 0.08, 0.06))
+    const glow = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.04, 0.04),
+      handheldGlowMat(accent, accent, 0.85),
+    )
+    glow.position.set(0.06, 0.08, 0.06)
+    g.add(glow)
+    attachHandheldLanternLight(g, 0.08, accent, 0.5)
   } else if (item.id === 'hand-oar') {
     const shaft = new THREE.Mesh(
       new THREE.BoxGeometry(0.03, 0.36, 0.03),
