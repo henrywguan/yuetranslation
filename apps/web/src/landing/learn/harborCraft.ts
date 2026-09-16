@@ -215,6 +215,71 @@ export function hqStoneTexture(): THREE.DataTexture {
   })
 }
 
+/** Tropical grass — soft value noise + darker blades (era 128 nearest). */
+export function hqGrassTexture(): THREE.DataTexture {
+  return make128DataTex('grass', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const n = ((x * 17 + y * 31) ^ (x * y)) & 7
+        if (n < 2) setPx(data, x, y, 0x1a, 0x5a, 0x30)
+        else if (n < 5) setPx(data, x, y, 0x2a, 0x6a, 0x38)
+        else setPx(data, x, y, 0x3a, 0x7a, 0x40)
+      }
+    }
+    for (let i = 0; i < 160; i++) {
+      const x = (i * 23) % 128
+      const y = (i * 47) % 128
+      for (let t = 0; t < 4; t++) setPx(data, x, y + t, 0x14, 0x48, 0x28)
+    }
+  })
+}
+
+/** Beach sand — warm grain + darker wet band speckles. */
+export function hqSandTexture(): THREE.DataTexture {
+  return make128DataTex('sand', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const n = (x + y * 3) & 3
+        if (n === 0) setPx(data, x, y, 0xb8, 0xa0, 0x70)
+        else if (n === 1) setPx(data, x, y, 0xd8, 0xc0, 0x90)
+        else setPx(data, x, y, 0xe8, 0xd4, 0xa8)
+      }
+    }
+  })
+}
+
+/** Shallow tropical water — cyan bands for UV scroll (classic water trick). */
+export function hqWaterTexture(): THREE.DataTexture {
+  const tex = make128DataTex('water', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const wave = Math.sin((x + y * 0.4) * 0.2) * 0.5 + 0.5
+        if (wave > 0.72) setPx(data, x, y, 0x58, 0xc8, 0xd8)
+        else if (wave > 0.4) setPx(data, x, y, 0x28, 0x98, 0xb0)
+        else setPx(data, x, y, 0x18, 0x68, 0x88)
+      }
+    }
+  })
+  tex.wrapS = THREE.RepeatWrapping
+  tex.wrapT = THREE.RepeatWrapping
+  tex.repeat.set(6, 6)
+  return tex
+}
+
+/** Dirt / packed path — brown speck for tropical tracks. */
+export function hqDirtTexture(): THREE.DataTexture {
+  return make128DataTex('dirt', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const n = (x * 7 + y * 11) & 3
+        if (n === 0) setPx(data, x, y, 0x6a, 0x4a, 0x28)
+        else if (n === 1) setPx(data, x, y, 0x8a, 0x68, 0x38)
+        else setPx(data, x, y, 0x5a, 0x3e, 0x22)
+      }
+    }
+  })
+}
+
 /** Flat material with optional 128px albedo (tint via color). */
 export function hqMatTex(
   color: number,

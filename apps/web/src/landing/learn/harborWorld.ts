@@ -12,12 +12,14 @@ import {
   hqCrate,
   hqDoor,
   hqMat,
+  hqMatTex,
   hqPost,
   hqRock,
   hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
   hqThatchTexture,
+  hqWaterTexture,
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
@@ -3436,27 +3438,29 @@ export function createHarborWorld(
           : weather === 'cloudy'
             ? 0x4a8898
             : WATER[hue]
-  const waterMat = mat(waterTint, {
-    transparent: true,
-    opacity: isGuan
-      ? GUAN_TROPICAL_LOOK.waterOpacity
-      : weather === 'rainy'
-        ? 0.92
-        : weather === 'night'
-          ? 0.9
-          : 0.88,
-  })
+  const waterMat = isGuan
+    ? hqMatTex(waterTint, hqWaterTexture(), {
+        transparent: true,
+        opacity: GUAN_TROPICAL_LOOK.waterOpacity,
+        flatShading: true,
+      })
+    : mat(waterTint, {
+        transparent: true,
+        opacity:
+          weather === 'rainy' ? 0.92 : weather === 'night' ? 0.9 : 0.88,
+      })
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(
       isGuan ? GUAN_WATER_PLANE.size : RIVER * 2.4,
       isGuan ? GUAN_WATER_PLANE.size : 400,
-      1,
-      isGuan ? 1 : 20,
+      isGuan ? 24 : 1,
+      isGuan ? 24 : 20,
     ),
     waterMat,
   )
   water.rotation.x = -Math.PI / 2
   water.position.set(isGuan ? GUAN_WATER_PLANE.x : 0, 0.02, isGuan ? GUAN_WATER_PLANE.z : 80)
+  if (isGuan) water.userData.guanWaterScroll = true
   scene.add(water)
 
   const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
@@ -4255,6 +4259,11 @@ export function createHarborWorld(
     water.position.z = isGuan ? GUAN_WATER_PLANE.z : voyageZ + 60
     if (isGuan) water.position.x = GUAN_WATER_PLANE.x
     water.position.y = 0.02 + Math.sin(waterPhase) * 0.015
+    // Classic UV scroll on Guan lagoon water
+    if (isGuan && waterMat.map) {
+      waterMat.map.offset.x = (waterPhase * 0.015) % 1
+      waterMat.map.offset.y = (waterPhase * 0.01) % 1
+    }
 
     // Parallax: mountains drift slower than the canoe
     if (mountains) {

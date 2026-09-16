@@ -308,7 +308,7 @@ function main() {
   assert.ok(GUAN_HARBOR_BOUNDS.maxX > GUAN_HARBOR_BOUNDS.minX, 'guan bounds')
   const guanScene = buildGuanHarborScene()
   assert.equal(guanScene.name, 'guan-harbor')
-  assert.ok(guanScene.children.length >= 8, 'guan scene has land / flora / pier / portal')
+  assert.ok(guanScene.children.length >= 40, 'guan scene has dense land / flora / towns / water shelves')
   assert.ok(
     guanScene.children.some((c) => c.name === 'guan-island-main'),
     'main Karamja-silhouette island mesh',
@@ -325,6 +325,33 @@ function main() {
     guanScene.children.some((c) => c.name === 'guan-island-cairn'),
     'Cairn islet SW of Shilo',
   )
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-dirt-path'),
+    'dirt paths link island towns',
+  )
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-shallow-shelf'),
+    'near-shore lagoon shelves',
+  )
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-tavern'),
+    'Brimhaven tavern building',
+  )
+  let tuftCount = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-grass-tuft') tuftCount++
+  })
+  assert.ok(tuftCount >= 80, 'dense grass tufts underfoot')
+  const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
+  assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
+  assert.match(guanSrc, /stampShoreDetail|guan-shore-foam/, 'shore foam / wet sand detail')
+  assert.match(guanSrc, /pirateTavern|layered thatch/, 'chunky town building craft')
+  const craftSrc = readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8')
+  assert.match(craftSrc, /export function hqGrassTexture/, 'shared grass 128 texture')
+  assert.match(craftSrc, /export function hqWaterTexture/, 'shared water 128 texture')
+  assert.match(craftSrc, /export function hqSandTexture/, 'shared sand 128 texture')
+  assert.match(craftSrc, /export function hqDirtTexture/, 'shared dirt path texture')
+  assert.match(worldSrc, /hqWaterTexture|guanWaterScroll|waterMat\.map\.offset/, 'Guan water UV scroll')
   // Inland jungle (near Tai Bwo Wannai) is land; Musa Passage water is not
   assert.equal(isGuanLand(-2.5, -1.5), true, 'Tai Bwo Wannai jungle is walkable land')
   assert.equal(isGuanLand(GUAN_LANDMARKS.musaPoint.x, GUAN_LANDMARKS.musaPoint.z), true, 'Musa Point is land')
@@ -468,10 +495,14 @@ function main() {
       assert.ok(o.userData?.harborChair, 'stamped chair is sit-able')
     },
   } as unknown as import('three').Group
-  hqStampChairs(chairRoot, [
-    { x: 1, z: 2, yaw: 0 },
-    { x: 3, z: 4, stool: true },
-  ])
+  hqStampChairs(
+    chairRoot,
+    [
+      { x: 1, z: 2, yaw: 0 },
+      { x: 3, z: 4, stool: true },
+    ],
+    () => 0.1,
+  )
   assert.deepEqual(chairAdded, ['hq-chair', 'hq-stool'], 'stamp chairs places chair + stool')
   assert.match(
     readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
