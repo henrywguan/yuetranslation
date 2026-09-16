@@ -857,6 +857,24 @@ function main() {
 
   assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
   assert.match(worldSrc2, /function buildBoatHull/, 'tiered boat hull builder')
+  assert.match(worldSrc2, /hqWoodTexture\(\)/, 'boat hull loads wood-grain albedo')
+  assert.match(worldSrc2, /hqBoxTex\(/, 'boat hull uses textured craft boxes')
+  assert.match(worldSrc2, /P\.iron/, 'boat hull iron band trim')
+  const gearSrcBoat = readFileSync(new URL('./harborGear.ts', import.meta.url), 'utf8')
+  assert.match(gearSrcBoat, /hqWoodTexture/, 'handhelds use craft wood texture')
+  assert.match(gearSrcBoat, /hqBoxTex/, 'handhelds use textured craft boxes')
+  assert.match(detailSrc, /hqMatSmooth/, 'tier detail uses smooth Lambert for beads')
+  assert.match(detailSrc, /hqMatTex/, 'boat tier enrich uses wood-textured trim')
+  assert.match(
+    readFileSync(new URL('./harborVipGear.ts', import.meta.url), 'utf8'),
+    /hqWoodTexture/,
+    'VIP handhelds use craft wood texture',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborGearModelIcon.tsx', import.meta.url), 'utf8'),
+    /Hull plank seams/,
+    'bag boat icons show plank seams',
+  )
   assert.match(worldSrc2, /applyVesselLook/, 'look swaps boat + lanterns')
   assert.match(worldSrc2, /canoe\(weather, currentLook\.boat, currentLook\.lantern,\s*currentGender,\s*currentAppearance\)/, 'canoe uses equipped boat + lantern')
   assert.match(worldSrc2, /boatLantern\(weather, lanternId\)/, 'port+starboard lanterns use lantern gear colors')

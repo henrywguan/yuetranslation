@@ -810,6 +810,7 @@ function boatLantern(
   g.userData.vesselPart = true
   g.name = 'boat-lantern'
   const id = item.id
+  const wood = hqWoodTexture()
   if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
     g.add(hqPost(0.025, 0.035, 0.5, P.woodDark, 0, 0.26, 0, 5))
     const lamp = new THREE.Mesh(
@@ -818,7 +819,9 @@ function boatLantern(
     )
     lamp.position.set(0, 0.55, 0)
     g.add(lamp)
-    g.add(hqBox(0.14, 0.03, 0.14, P.woodDeep, 0, 0.7, 0))
+    g.add(hqBoxTex(0.14, 0.03, 0.14, P.woodDeep, wood, 0, 0.7, 0))
+    g.add(hqBox(0.16, 0.02, 0.16, P.iron, 0, 0.66, 0))
+    g.add(hqBox(0.12, 0.02, 0.12, P.trimGold, 0, 0.42, 0))
     attachLanternLight(g, weather, 0.55, glowCol, id === 'lantern-starlight' ? 1.55 : 1.3)
   } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
     g.add(hqPost(0.028, 0.038, 0.45, P.woodDark, 0, 0.24, 0, 5))
@@ -828,10 +831,13 @@ function boatLantern(
     )
     lamp.position.set(0, 0.52, 0)
     g.add(lamp)
+    g.add(hqBox(0.04, 0.04, 0.04, P.trimGold, 0, 0.64, 0))
     attachLanternLight(g, weather, 0.52, glowCol, 1.35)
   } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
     g.add(hqPost(0.03, 0.04, 0.4, P.woodDark, 0, 0.22, 0, 5))
     g.add(hqBox(0.16, 0.2, 0.16, paper, 0, 0.5, 0))
+    g.add(hqBox(0.18, 0.03, 0.18, P.iron, 0, 0.4, 0))
+    g.add(hqBox(0.18, 0.03, 0.18, P.iron, 0, 0.6, 0))
     const core = new THREE.Mesh(
       new THREE.BoxGeometry(0.1, 0.12, 0.1),
       glowMat(glowCol, glowCol, weather === 'sunny' ? 0.5 : 1.35),
@@ -847,7 +853,8 @@ function boatLantern(
     )
     lamp.position.set(0, 0.5, 0)
     g.add(lamp)
-    g.add(hqBox(0.2, 0.03, 0.2, P.woodDeep, 0, 0.62, 0))
+    g.add(hqBoxTex(0.2, 0.03, 0.2, P.woodDeep, wood, 0, 0.62, 0))
+    g.add(hqBox(0.04, 0.04, 0.04, P.trimGold, 0, 0.4, 0.08))
     attachLanternLight(g, weather, 0.5, glowCol, 1.25)
   }
   tagVipLanternAnim(g, id)
@@ -1784,6 +1791,7 @@ function buildBoatHull(boatId: string): THREE.Group {
   g.userData.vesselPart = true
   g.name = 'boat-hull'
   const id = item.id
+  const wood = hqWoodTexture()
   const length =
     id.includes('barge') || id.includes('imperial') || id.includes('pearl')
       ? 2.7
@@ -1801,26 +1809,49 @@ function buildBoatHull(boatId: string): THREE.Group {
           ? 0.62
           : 0.72
   const height = id.includes('pearl') || id.includes('imperial') ? 0.4 : 0.32
-  g.add(hqBox(length, height, width, hull, 0, 0.22, 0))
-  g.add(hqBox(0.35, height * 0.88, width * 0.78, P.woodDark, length * 0.52, 0.24, 0))
-  g.add(hqBox(0.35, height * 0.88, width * 0.78, P.woodDark, -length * 0.52, 0.24, 0))
-  g.add(hqBox(length * 0.98, 0.08, 0.08, P.woodDeep, 0, 0.4, width * 0.48))
-  g.add(hqBox(length * 0.98, 0.08, 0.08, P.woodDeep, 0, 0.4, -width * 0.48))
-  g.add(hqBox(0.55, 0.08, 0.4, P.woodDark, 0, 0.38, 0))
+
+  // Hull shell — catalog tint × wood grain (value breakup, not one flat slab)
+  g.add(hqBoxTex(length, height, width, hull, wood, 0, 0.22, 0))
+  // Keel strip (darker value)
+  g.add(hqBoxTex(length * 0.92, 0.06, width * 0.35, P.woodDeep, wood, 0, 0.08, 0))
+  // Stem / stern blocks
+  g.add(hqBoxTex(0.35, height * 0.88, width * 0.78, P.woodDark, wood, length * 0.52, 0.24, 0))
+  g.add(hqBoxTex(0.35, height * 0.88, width * 0.78, P.woodDark, wood, -length * 0.52, 0.24, 0))
+  // Gunwales — light/mid alternating so rails read as planks
+  g.add(hqBoxTex(length * 0.98, 0.08, 0.08, P.woodLight, wood, 0, 0.4, width * 0.48))
+  g.add(hqBoxTex(length * 0.98, 0.08, 0.08, P.woodMid, wood, 0, 0.4, -width * 0.48))
+  // Deck runners (seam strips)
+  for (const z of [width * 0.18, -width * 0.18] as const) {
+    g.add(hqBox(length * 0.85, 0.025, 0.035, P.woodDeep, 0, 0.39, z))
+  }
+  // Thwart / seat
+  g.add(hqBoxTex(0.55, 0.08, 0.4, P.woodDark, wood, 0, 0.38, 0))
+  // Iron bollard bands on mid hull
+  g.add(hqBox(0.06, height * 0.7, width * 1.02, P.iron, length * 0.15, 0.22, 0))
+  g.add(hqBox(0.06, height * 0.7, width * 1.02, P.iron, -length * 0.15, 0.22, 0))
+
   const mastH =
     id.includes('imperial') || id.includes('pearl') ? 1.35 : id.includes('junk') || id.includes('merchant') ? 1.2 : 1.05
   g.add(hqPost(0.035, 0.045, mastH, P.woodDeep, 0.12, 0.9, 0, 5))
+  // Mast cap + yard
+  g.add(hqBox(0.08, 0.06, 0.08, P.woodLight, 0.12, 0.9 + mastH * 0.48, 0))
+  g.add(hqBoxTex(0.06, 0.05, 0.55, P.woodMid, wood, 0.12, 0.9 + mastH * 0.2, 0))
+
   const sailW = id.includes('barge') || id.includes('imperial') ? 0.95 : 0.7
   const sailH = id.includes('junk') || id.includes('merchant') ? 1.05 : 0.85
   const sail = new THREE.Mesh(new THREE.PlaneGeometry(sailW, sailH), hqMat(trim))
   sail.position.set(0.12, 0.95 + (mastH - 1.05) * 0.35, 0.02)
   g.add(sail)
+  // Sail boom + reef lines (extruded trim, not flat decal)
+  g.add(hqBox(sailW * 0.95, 0.03, 0.03, P.woodDark, 0.12, 0.95 + (mastH - 1.05) * 0.35 - sailH * 0.45, 0.03))
+  g.add(hqBox(0.02, sailH * 0.85, 0.02, P.rope, 0.12 - sailW * 0.4, 0.95 + (mastH - 1.05) * 0.35, 0.04))
+
   if (id === 'boat-dragon' || id === 'boat-imperial') {
-    g.add(hqBox(0.45, 0.22, 0.28, trim, length * 0.55, 0.55, 0))
-    g.add(hqBox(0.18, 0.12, 0.12, 0xf0d060, length * 0.62, 0.68, 0))
+    g.add(hqBoxTex(0.45, 0.22, 0.28, trim, wood, length * 0.55, 0.55, 0))
+    g.add(hqBox(0.18, 0.12, 0.12, P.trimGold, length * 0.62, 0.68, 0))
   }
   if (id === 'boat-pearl' || id === 'boat-imperial') {
-    g.add(hqBox(0.9, 0.06, width * 0.9, trim, -0.15, 0.95, 0))
+    g.add(hqBoxTex(0.9, 0.06, width * 0.9, trim, hqThatchTexture(), -0.15, 0.95, 0))
     g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, width * 0.28, 5))
     g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, -width * 0.28, 5))
     g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, 0.2, 0.7, width * 0.28, 5))
@@ -1828,18 +1859,23 @@ function buildBoatHull(boatId: string): THREE.Group {
   }
   if (id === 'boat-bamboo') {
     for (const x of [-0.6, -0.2, 0.2, 0.6] as const) {
-      g.add(hqBox(0.08, 0.1, width * 0.95, trim, x, 0.3, 0))
+      g.add(hqBoxTex(0.08, 0.1, width * 0.95, trim, wood, x, 0.3, 0))
     }
   }
   if (id === 'boat-reed') {
-    g.add(hqBox(length * 0.8, 0.06, width * 1.05, trim, 0, 0.36, 0))
+    g.add(hqBoxTex(length * 0.8, 0.06, width * 1.05, trim, hqThatchTexture(), 0, 0.36, 0))
   }
   if (id === 'boat-junk' || id === 'boat-merchant') {
-    g.add(hqBox(0.55, 0.35, width * 0.7, hull, -length * 0.28, 0.55, 0))
+    g.add(hqBoxTex(0.55, 0.35, width * 0.7, hull, wood, -length * 0.28, 0.55, 0))
+    g.add(hqBox(0.5, 0.04, width * 0.75, P.woodDeep, -length * 0.28, 0.74, 0))
+    g.add(hqWindow(0.16, 0.14, P.trimGold, P.glass, -length * 0.28, 0.58, width * 0.36))
   }
   if (id === 'boat-jade') {
     g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, width * 0.5))
     g.add(hqBox(length * 0.9, 0.04, 0.06, trim, 0, 0.45, -width * 0.5))
+  }
+  if (id === 'boat-sampan' || id === 'boat-scholar') {
+    g.add(hqBoxTex(0.4, 0.12, width * 0.55, P.woodMid, wood, -length * 0.2, 0.48, 0))
   }
   if (id === 'boat-dragon' || id === 'boat-pearl' || id === 'boat-imperial') {
     attachVipBoatOrnaments(g, id)

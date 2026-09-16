@@ -3,6 +3,7 @@
  * Original craft (not Jagex). Locked behind HARBOR_VIP_MIN_PRICE coins.
  */
 import * as THREE from 'three'
+import { hqBox, hqMat, hqMatSmooth, hqMatTex, hqWoodTexture, HARBOR_CRAFT_PALETTE as P } from './harborCraft'
 import type { HarborGearId, HarborLook } from './harborGear'
 
 /** Outfitter lock — every VIP catalog row must cost more than this. */
@@ -74,9 +75,15 @@ export function harborVipSetFor(id: string): HarborVipSet | undefined {
 }
 
 function mat(color: number, emissive?: number, intensity = 0.35) {
-  return new THREE.MeshLambertMaterial({
-    color,
-    flatShading: true,
+  return hqMat(color, {
+    ...(emissive != null
+      ? { emissive: new THREE.Color(emissive), emissiveIntensity: intensity }
+      : {}),
+  })
+}
+
+function matSmooth(color: number, emissive?: number, intensity = 0.35) {
+  return hqMatSmooth(color, {
     ...(emissive != null
       ? { emissive: new THREE.Color(emissive), emissiveIntensity: intensity }
       : {}),
@@ -105,7 +112,7 @@ function buildPhoenixHatOverlay(color: number, accent: number): THREE.Group {
     crest.add(feather)
   }
   g.add(crest)
-  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), mat(accent, 0xffe080, 0.9))
+  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), matSmooth(accent, 0xffe080, 0.9))
   gem.position.y = 0.08
   tagAnim(gem, 'pulse', 1.2)
   g.add(gem)
@@ -120,7 +127,7 @@ function buildJadeHatOverlay(color: number, accent: number): THREE.Group {
   g.add(band)
   const orbit = tagAnim(new THREE.Group(), 'spin-y', 0.9)
   for (let i = 0; i < 3; i++) {
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.028, 5, 4), mat(accent, accent, 0.85))
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.028, 5, 4), matSmooth(accent, accent, 0.85))
     const a = (i / 3) * Math.PI * 2
     orb.position.set(Math.cos(a) * 0.16, 0.06, Math.sin(a) * 0.16)
     orbit.add(orb)
@@ -132,7 +139,7 @@ function buildJadeHatOverlay(color: number, accent: number): THREE.Group {
 function buildStarlitHatOverlay(color: number, accent: number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'gear-vip-hat'
-  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.13, 7, 5), mat(color, accent, 0.4))
+  const helm = new THREE.Mesh(new THREE.SphereGeometry(0.13, 7, 5), matSmooth(color, accent, 0.4))
   helm.scale.set(1, 0.7, 1.05)
   g.add(helm)
   const plume = tagAnim(new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.22, 5), mat(accent, 0xffffff, 0.8)), 'bob', 0.5)
@@ -140,7 +147,7 @@ function buildStarlitHatOverlay(color: number, accent: number): THREE.Group {
   g.add(plume)
   for (let i = 0; i < 4; i++) {
     const star = tagAnim(
-      new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), mat(0xffffff, 0xffffff, 1)),
+      new THREE.Mesh(new THREE.OctahedronGeometry(0.02, 0), matSmooth(0xffffff, 0xffffff, 1)),
       'twinkle',
       i * 0.7,
     )
@@ -182,9 +189,14 @@ function buildPhoenixFan(color: number, accent: number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'gear-hand'
   g.userData.harborGear = true
-  const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.14, 5), mat(0x5a3020))
+  const wood = hqWoodTexture()
+  const stick = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.015, 0.14, 5),
+    hqMatTex(P.woodDark, wood),
+  )
   stick.position.set(0.04, 0, 0)
   g.add(stick)
+  g.add(hqBox(0.03, 0.02, 0.03, P.trimGold, 0.04, 0.06, 0))
   const fan = tagAnim(new THREE.Group(), 'fan-flutter', 0.3)
   fan.position.set(0.1, 0.08, 0)
   for (let i = 0; i < 7; i++) {
@@ -201,7 +213,7 @@ function buildJadeOrb(color: number, accent: number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'gear-hand'
   g.userData.harborGear = true
-  const core = tagAnim(new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), mat(color, accent, 0.9)), 'pulse', 0.4)
+  const core = tagAnim(new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), matSmooth(color, accent, 0.9)), 'pulse', 0.4)
   core.position.set(0.08, 0.06, 0)
   g.add(core)
   const ring = tagAnim(new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 4, 10), mat(accent, accent, 0.7)), 'spin-z', 0.6)
@@ -218,6 +230,12 @@ function buildStarlitCompass(color: number, accent: number): THREE.Group {
   body.position.set(0.08, 0.04, 0)
   body.rotation.x = Math.PI / 2
   g.add(body)
+  // Iron rim + glass face bead (value breakup on the dial)
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.01, 4, 10), mat(P.iron, accent, 0.35))
+  rim.position.set(0.08, 0.04, 0)
+  rim.rotation.x = Math.PI / 2
+  g.add(rim)
+  g.add(hqBox(0.04, 0.02, 0.02, P.trimGold, 0.08, 0.04, 0.03))
   const needle = tagAnim(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.01), mat(accent, 0xff6060, 0.8)), 'spin-z', 1.4)
   needle.position.set(0.08, 0.04, 0.02)
   g.add(needle)
@@ -326,13 +344,13 @@ export function attachVipBoatOrnaments(hull: THREE.Group, boatId: string): void 
     wing.position.set(0.4, 0.85, 0)
     hull.add(wing)
   } else if (boatId === 'boat-pearl') {
-    const dome = tagAnim(new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 4), mat(0xe8e0d0, 0x3dcfb6, 0.55)), 'pulse', 0.3)
+    const dome = tagAnim(new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 4), matSmooth(0xe8e0d0, 0x3dcfb6, 0.55)), 'pulse', 0.3)
     dome.position.set(-0.2, 1.05, 0)
     dome.scale.set(1, 0.55, 1)
     hull.add(dome)
     const orbit = tagAnim(new THREE.Group(), 'spin-y', 0.7)
     for (let i = 0; i < 4; i++) {
-      const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), mat(0xffffff, 0x3dcfb6, 0.8))
+      const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), matSmooth(0xffffff, 0x3dcfb6, 0.8))
       const a = (i / 4) * Math.PI * 2
       pearl.position.set(Math.cos(a) * 0.45, 1.0, Math.sin(a) * 0.35)
       orbit.add(pearl)
