@@ -73,7 +73,7 @@ export function isGuanLand(x: number, z: number): boolean {
 /** Keep walking sailors on island discs (or snap to nearest shore). */
 export function clampGuanFootTarget(x: number, z: number): { x: number; z: number } {
   if (isGuanLand(x, z)) return { x, z }
-  let best = GUAN_ISLANDS[0]!
+  let best: (typeof GUAN_ISLANDS)[number] = GUAN_ISLANDS[0]!
   let bestD = Infinity
   for (const island of GUAN_ISLANDS) {
     const d = Math.hypot(x - island.x, z - island.z)
