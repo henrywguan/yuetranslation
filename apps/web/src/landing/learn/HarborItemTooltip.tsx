@@ -30,13 +30,15 @@ export function HarborItemTooltip({
 }: Props) {
   if (!open) return null
   const slot = SLOT_LABEL[item.slot]
+  const isVip = item.tier === 'vip'
   const price =
-    item.price > 0 ? `${item.price}¢` : item.tier === 'vip' ? 'VIP' : 'Starter'
+    item.price > 0 ? `${item.price}¢` : isVip ? 'VIP' : 'Starter'
   return (
     <div
-      className={`hq-item-tip hq-item-tip--${placement}`}
+      className={`hq-item-tip hq-item-tip--${placement}${isVip ? ' is-vip' : ''}`}
       role="tooltip"
       data-item={item.id}
+      data-tier={item.tier}
     >
       <p className="hq-item-tip-name">{item.name.en}</p>
       <p className="hq-item-tip-zh" lang="zh-HK">

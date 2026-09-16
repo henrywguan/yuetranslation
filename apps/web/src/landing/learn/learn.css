@@ -2849,6 +2849,60 @@
   color: color-mix(in srgb, #c4a060 80%, #fff 20%);
 }
 
+/* VIP examine tip — pulsing gold border glow */
+.hq-item-tip.is-vip {
+  border-color: #e8c060;
+  background: linear-gradient(180deg, #2a2010 0%, #120e08 100%);
+  box-shadow:
+    0 0 0 1px #f0d080,
+    0 0 10px 2px color-mix(in srgb, #f0d080 55%, transparent),
+    0 0 22px 4px color-mix(in srgb, #c4a040 35%, transparent),
+    0 6px 16px color-mix(in srgb, #000 55%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #ffe9a0 35%, transparent);
+  animation: hq-item-tip-vip-glow 1.6s ease-in-out infinite;
+}
+.hq-item-tip.is-vip .hq-item-tip-name {
+  color: #ffe9a0;
+  text-shadow:
+    0 0 6px color-mix(in srgb, #f0d080 70%, transparent),
+    0 1px 0 #000;
+}
+.hq-item-tip.is-vip .hq-item-tip-meta {
+  color: #f0d080;
+}
+@keyframes hq-item-tip-vip-glow {
+  0%,
+  100% {
+    border-color: #c4a040;
+    box-shadow:
+      0 0 0 1px #c4a040,
+      0 0 6px 1px color-mix(in srgb, #f0d080 35%, transparent),
+      0 0 14px 2px color-mix(in srgb, #c4a040 22%, transparent),
+      0 6px 16px color-mix(in srgb, #000 55%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, #ffe9a0 20%, transparent);
+  }
+  50% {
+    border-color: #ffe9a0;
+    box-shadow:
+      0 0 0 1px #ffe9a0,
+      0 0 14px 3px color-mix(in srgb, #f0d080 70%, transparent),
+      0 0 28px 6px color-mix(in srgb, #e8c060 45%, transparent),
+      0 6px 16px color-mix(in srgb, #000 55%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, #fff0c0 45%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hq-item-tip.is-vip {
+    animation: none;
+    border-color: #e8c060;
+    box-shadow:
+      0 0 0 1px #f0d080,
+      0 0 12px 2px color-mix(in srgb, #f0d080 50%, transparent),
+      0 6px 16px color-mix(in srgb, #000 55%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, #ffe9a0 30%, transparent);
+  }
+}
+
 .hq-bag-inspect {
   display: flex;
   align-items: center;
