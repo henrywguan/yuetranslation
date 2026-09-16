@@ -140,10 +140,15 @@ import {
   HARBOR_VIP_MIN_PRICE,
   HARBOR_VIP_SETS,
   applyLookToProtagonist,
+  buildHandheldProp,
+  harborGearCanEquipToSlot,
   harborGearCodexStats,
   harborGearForSlot,
+  harborGearIsWorn,
   harborGearMeshInfo,
+  harborGearWearTarget,
   harborVipSetFor,
+  sanitizeHarborLook,
 } from '../../landing/learn/harborGear'
 import { emptyHarborProgress,
   isLevelUnlocked } from '../../landing/learn/progressMerge'
@@ -689,9 +694,56 @@ function main() {
     const n = harborGearForSlot(slot).length
     if (slot === 'boat' || slot === 'lantern') {
       assert.equal(n, 12, `${slot} has 12 items (3 × 4 tiers)`)
+    } else if (slot === 'hand') {
+      assert.equal(n, 20, 'hand lists dedicated handhelds + boat lanterns')
     } else {
       assert.ok(n >= 5, `${slot} has at least 5 items (got ${n})`)
     }
+  }
+
+  // Boat lanterns can be held in the hand (cross-slot equip)
+  {
+    const amber = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-paper-amber')!
+    const silk = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-silk-gold')!
+    const iron = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-oil-iron')!
+    const glass = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-glass-ruby')!
+    assert.equal(harborGearCanEquipToSlot(amber, 'hand'), true, 'paper lantern → hand')
+    assert.equal(harborGearCanEquipToSlot(amber, 'lantern'), true, 'paper lantern → boat lantern')
+    assert.equal(harborGearCanEquipToSlot(amber, 'hat'), false, 'lantern not a hat')
+    assert.equal(harborGearWearTarget(amber, 'hand'), 'hand', 'selected hand wears lantern in hand')
+    assert.equal(harborGearWearTarget(amber, 'lantern'), 'lantern', 'selected lantern hangs on boat')
+    const heldLook = sanitizeHarborLook({
+      ...HARBOR_DEFAULT_LOOK,
+      hand: 'lantern-paper-jade',
+      lantern: 'lantern-silk-azure',
+    })
+    assert.equal(heldLook.hand, 'lantern-paper-jade', 'sanitize keeps lantern id in hand')
+    assert.equal(heldLook.lantern, 'lantern-silk-azure', 'boat lantern slot stays independent')
+    assert.equal(harborGearIsWorn(heldLook, amber), false)
+    assert.equal(
+      harborGearIsWorn(heldLook, HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-paper-jade')!),
+      true,
+      'jade lantern worn when held',
+    )
+    for (const item of [amber, silk, iron, glass]) {
+      const prop = buildHandheldProp(item.id)
+      assert.ok(prop, `${item.id} builds a handheld mesh`)
+      let lights = 0
+      prop!.traverse((o) => {
+        if (o.type === 'PointLight' && o.userData.harborLanternLight) lights += 1
+      })
+      assert.ok(lights >= 1, `${item.id} handheld emits lantern light`)
+    }
+    const heldScout = buildHarborProtagonist({ pose: 'standing' })
+    applyLookToProtagonist(heldScout, {
+      ...HARBOR_DEFAULT_LOOK,
+      hand: 'lantern-phoenix',
+    })
+    let handProp = 0
+    heldScout.traverse((o) => {
+      if (o.name === 'gear-hand') handProp += 1
+    })
+    assert.equal(handProp, 1, 'VIP boat lantern attaches to hand_r')
   }
 
   // VIP sets — animated overlays, locked behind >5k coins

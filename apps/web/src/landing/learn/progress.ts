@@ -19,6 +19,7 @@ import {
   HARBOR_DEFAULT_LOOK,
   HARBOR_STARTER_OWNED,
   harborGearById,
+  harborGearCanEquipToSlot,
   sanitizeBankedGear,
   sanitizeCarriedGear,
   sanitizeHarborLook,
@@ -215,7 +216,7 @@ export function equipHarborGear(
 ): { ok: true; progress: HarborProgress } | { ok: false; reason: string } {
   const item = harborGearById(id)
   if (!item) return { ok: false, reason: 'Unknown item.' }
-  if (item.slot !== slot) return { ok: false, reason: 'Wrong slot.' }
+  if (!harborGearCanEquipToSlot(item, slot)) return { ok: false, reason: 'Wrong slot.' }
   const p = read()
   const banked = sanitizeBankedGear(p.banked)
   const owned = new Set(
@@ -253,6 +254,10 @@ export function depositHarborGear(
   let look = sanitizeHarborLook(p.look)
   if (look[item.slot] === id) {
     look = { ...look, [item.slot]: HARBOR_DEFAULT_LOOK[item.slot] }
+  }
+  // Lanterns may also be held — clear the hand if this piece was carried there.
+  if (item.slot === 'lantern' && look.hand === id) {
+    look = { ...look, hand: HARBOR_DEFAULT_LOOK.hand }
   }
   const progress = commit({
     ...p,

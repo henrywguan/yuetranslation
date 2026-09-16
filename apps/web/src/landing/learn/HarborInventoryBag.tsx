@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   harborGearById,
+  harborGearIsWorn,
+  harborGearWearTarget,
   type HarborGearId,
   type HarborGearSlot,
   type HarborLook,
@@ -71,7 +73,9 @@ export function HarborInventoryBag({
   }, [bagItems])
 
   const picked = pickedId ? harborGearById(pickedId) : null
-  const equipped = picked ? look[picked.slot] === picked.id : false
+  const wearSlot = picked ? harborGearWearTarget(picked, selectedSlot) : null
+  const equipped = picked && wearSlot ? look[wearSlot] === picked.id : false
+  const wornSomewhere = picked ? harborGearIsWorn(look, picked) : false
   const overflow = Math.max(0, bagItems.length - HARBOR_BAG_SLOTS)
 
   // Tap / click outside an item button dismisses the tip (keeps selection).
@@ -157,7 +161,7 @@ export function HarborInventoryBag({
                     )
                   }
                   const on = pickedId === item.id
-                  const wearing = look[item.slot] === item.id
+                  const wearing = harborGearIsWorn(look, item)
                   const tipOpen = tipId === item.id
                   // Top two rows tip below so they stay inside the panel.
                   const tipBelow = i < 8
@@ -178,14 +182,18 @@ export function HarborInventoryBag({
                         }}
                         onClick={() => {
                           setPickedId(item.id)
-                          onSelectSlot(item.slot)
+                          // Keep Hand selected so a lantern Wear/Hold can target the hand.
+                          if (!(selectedSlot === 'hand' && item.slot === 'lantern')) {
+                            onSelectSlot(item.slot)
+                          }
                           if (isCoarsePointer()) {
                             // Tap toggles tip; second tap on same piece hides it.
                             setTipId((cur) => (cur === item.id ? null : item.id))
                           }
                         }}
                         onDoubleClick={() => {
-                          if (!wearing) onWear(item.slot, item.id)
+                          const target = harborGearWearTarget(item, selectedSlot)
+                          if (look[target] !== item.id) onWear(target, item.id)
                         }}
                       >
                         <HarborGearModelIcon item={item} compact />
@@ -220,7 +228,8 @@ export function HarborInventoryBag({
                     </p>
                     <p className="hq-bag-inspect-meta">
                       {picked.slot.toUpperCase()}
-                      {equipped ? ' · wearing' : ' · in bag'}
+                      {wearSlot && wearSlot !== picked.slot ? ` → ${wearSlot.toUpperCase()}` : ''}
+                      {equipped ? ' · wearing' : wornSomewhere ? ' · worn elsewhere' : ' · in bag'}
                       {picked.price > 0 ? ` · ${picked.price}¢` : ' · starter'}
                     </p>
                   </div>
@@ -228,14 +237,21 @@ export function HarborInventoryBag({
                     type="button"
                     className="hq-btn hq-btn--primary hq-btn--tiny"
                     disabled={equipped}
-                    onClick={() => onWear(picked.slot, picked.id)}
+                    onClick={() => {
+                      if (!wearSlot) return
+                      onWear(wearSlot, picked.id)
+                    }}
                   >
-                    {equipped ? 'Worn' : 'Wear'}
+                    {equipped
+                      ? 'Worn'
+                      : wearSlot === 'hand' && picked.slot === 'lantern'
+                        ? 'Hold'
+                        : 'Wear'}
                   </button>
                 </>
               ) : (
                 <p className="hq-bag-inspect-hint">
-                  Hover or tap a piece to examine · tap away to hide · double-tap or Wear to equip
+                  Hover or tap a piece to examine · tap away to hide · select Hand then Hold a lantern
                   {overflow > 0 ? ` · +${overflow} banked off-grid` : ''}
                 </p>
               )}
