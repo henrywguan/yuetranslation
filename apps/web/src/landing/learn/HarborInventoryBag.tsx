@@ -6,6 +6,7 @@ import {
   type HarborLook,
 } from './harborGear'
 import { HarborGearModelIcon } from './HarborGearModelIcon'
+import { HarborItemTooltip } from './HarborItemTooltip'
 import { HarborWornBoard } from './HarborWornBoard'
 import { playHarborUiClick } from './harborInteractSfx'
 
@@ -26,9 +27,13 @@ type Props = {
   message?: string | null
 }
 
+function isCoarsePointer() {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+}
+
 /**
  * OSRS-style inventory / bag — stone frame, 4×7 item grid with visible
- * model icons per piece, plus a Worn tab for the paperdoll.
+ * model icons per piece, hover/tap examine tips, plus a Worn tab.
  */
 export function HarborInventoryBag({
   owned,
@@ -43,6 +48,7 @@ export function HarborInventoryBag({
 }: Props) {
   const [tab, setTab] = useState<Tab>('bag')
   const [pickedId, setPickedId] = useState<HarborGearId | null>(null)
+  const [hoverId, setHoverId] = useState<HarborGearId | null>(null)
 
   const bagItems = useMemo(() => {
     const ids = owned
@@ -77,6 +83,7 @@ export function HarborInventoryBag({
             onClick={() => {
               playHarborUiClick()
               setTab('bag')
+              setHoverId(null)
             }}
             title="Inventory"
           >
@@ -93,6 +100,7 @@ export function HarborInventoryBag({
             onClick={() => {
               playHarborUiClick()
               setTab('worn')
+              setHoverId(null)
             }}
             title="Worn equipment"
           >
@@ -117,6 +125,9 @@ export function HarborInventoryBag({
                   }
                   const on = pickedId === item.id
                   const wearing = look[item.slot] === item.id
+                  const tipOpen = hoverId === item.id || on
+                  // Top two rows tip below so they stay inside the panel.
+                  const tipBelow = i < 8
                   return (
                     <li key={item.id} className="hq-bag-cell">
                       <button
@@ -124,10 +135,18 @@ export function HarborInventoryBag({
                         className={`hq-bag-item${on ? ' is-on' : ''}${wearing ? ' is-worn' : ''}`}
                         aria-pressed={on}
                         aria-label={`${item.name.en}${wearing ? ' (wearing)' : ''}`}
-                        title={`${item.name.en} · ${item.name.zh}`}
+                        onPointerEnter={() => {
+                          if (!isCoarsePointer()) setHoverId(item.id)
+                        }}
+                        onPointerLeave={() => {
+                          if (!isCoarsePointer()) {
+                            setHoverId((cur) => (cur === item.id ? null : cur))
+                          }
+                        }}
                         onClick={() => {
                           setPickedId(item.id)
                           onSelectSlot(item.slot)
+                          if (isCoarsePointer()) setHoverId(item.id)
                         }}
                         onDoubleClick={() => {
                           if (!wearing) onWear(item.slot, item.id)
@@ -135,6 +154,12 @@ export function HarborInventoryBag({
                       >
                         <HarborGearModelIcon item={item} compact />
                         {wearing ? <span className="hq-bag-worn-dot" aria-hidden="true" /> : null}
+                        <HarborItemTooltip
+                          item={item}
+                          wearing={wearing}
+                          open={tipOpen}
+                          placement={tipBelow ? 'below' : 'above'}
+                        />
                       </button>
                     </li>
                   )
@@ -149,6 +174,9 @@ export function HarborInventoryBag({
             <div className="hq-bag-inspect">
               {picked ? (
                 <>
+                  <div className="hq-bag-inspect-icon" aria-hidden="true">
+                    <HarborGearModelIcon item={picked} compact />
+                  </div>
                   <div className="hq-bag-inspect-copy">
                     <p className="hq-bag-inspect-name">{picked.name.en}</p>
                     <p className="hq-bag-inspect-zh" lang="zh-HK">
@@ -171,7 +199,7 @@ export function HarborInventoryBag({
                 </>
               ) : (
                 <p className="hq-bag-inspect-hint">
-                  Tap a piece to inspect · double-tap or Wear to equip
+                  Hover or tap a piece to examine · double-tap or Wear to equip
                   {overflow > 0 ? ` · +${overflow} banked off-grid` : ''}
                 </p>
               )}
@@ -180,7 +208,7 @@ export function HarborInventoryBag({
         ) : (
           <div className="hq-bag-worn">
             <p className="hq-bag-worn-hint">
-              Tap a paperdoll slot, then switch to Bag and Wear a matching piece
+              Hover or tap a slot to examine · switch to Bag and Wear a matching piece
             </p>
             <HarborWornBoard look={look} selected={selectedSlot} onSelect={onSelectSlot} />
           </div>
