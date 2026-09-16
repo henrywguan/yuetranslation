@@ -2490,14 +2490,10 @@ function populateChunk(
     place(group, rng, 2, () => chinaTeaCupRose(rng), BANK - 0.2, BANK + 1.8, z0)
     place(group, rng, 1, () => chineseFringeFlower(rng), BANK + 0.5, BANK + 2.5, z0)
 
-<<<<<<< HEAD
     if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng, false), RIVER + 1.0, BANK + 1.8, z0)
-=======
-    if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng), RIVER + 1.0, BANK + 1.8, z0)
     hqStampClutter(group, rng, BANK + 2, z0 + CHUNK * 0.5, 3.2, 5)
     hqStampClutter(group, rng, -(BANK + 2), z0 + CHUNK * 0.6, 3.2, 4)
->>>>>>> ec61618 (Harbor Quest: RS-era craft detail — props, textures, clutter.)
-}
+  }
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 2, () => ginkgo(rng), BANK + 1, BANK + 4.5, z0)
