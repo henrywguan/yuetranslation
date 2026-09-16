@@ -2611,6 +2611,8 @@
   max-width: min(22rem, calc(100vw - 1.2rem));
   max-height: min(82dvh, 42rem);
   padding: 0.55rem;
+  /* Tips float outside bag cells — don't clip examine popups */
+  overflow: visible;
   background:
     linear-gradient(165deg, #3a342c 0%, #2a241c 40%, #1a1612 100%);
   box-shadow:
@@ -2729,12 +2731,15 @@
   box-shadow:
     inset 0 0 0 1px #1a1410,
     inset 0 2px 8px color-mix(in srgb, #000 35%, transparent);
+  overflow: visible;
 }
 .hq-bag-cell {
   margin: 0;
   min-width: 0;
   min-height: 0;
   aspect-ratio: 1;
+  position: relative;
+  overflow: visible;
 }
 .hq-bag-cell.is-empty {
   background: color-mix(in srgb, #2a241c 70%, transparent);
@@ -2752,6 +2757,14 @@
   cursor: pointer;
   display: grid;
   place-items: center;
+  /* Tips float outside the cell */
+  overflow: visible;
+  z-index: 0;
+}
+.hq-bag-item:hover,
+.hq-bag-item.is-on,
+.hq-bag-item:focus-visible {
+  z-index: 4;
 }
 .hq-bag-item.is-on {
   outline: 2px solid #f0d060;
@@ -2783,6 +2796,113 @@
   filter: drop-shadow(0 1px 1px color-mix(in srgb, #000 55%, transparent));
 }
 
+/* OSRS-style examine tip (hover desktop / tap mobile) */
+.hq-item-tip {
+  position: absolute;
+  left: 50%;
+  z-index: 20;
+  width: max-content;
+  max-width: 11rem;
+  min-width: 5.5rem;
+  padding: 0.35rem 0.45rem 0.4rem;
+  border-radius: 0.15rem;
+  border: 2px solid #5a4a30;
+  background: linear-gradient(180deg, #1a1810 0%, #0c0a08 100%);
+  box-shadow:
+    0 6px 16px color-mix(in srgb, #000 55%, transparent),
+    inset 0 0 0 1px #3a3020;
+  pointer-events: none;
+  text-align: left;
+}
+.hq-item-tip--above {
+  bottom: calc(100% + 0.28rem);
+  top: auto;
+  transform: translateX(-50%);
+}
+.hq-item-tip--below {
+  top: calc(100% + 0.28rem);
+  bottom: auto;
+  transform: translateX(-50%);
+}
+.hq-item-tip-name {
+  margin: 0;
+  font: 700 0.72rem/1.2 Syne, system-ui, sans-serif;
+  color: #ffe14a;
+  text-shadow: 0 1px 0 #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-item-tip-zh {
+  margin: 0.08rem 0 0;
+  font: 500 0.68rem/1.2 'Noto Sans HK', 'Noto Sans', sans-serif;
+  color: #e8d48a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-item-tip-meta {
+  margin: 0.18rem 0 0;
+  font: 600 0.58rem/1.2 Syne, system-ui, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #c4a060 80%, #fff 20%);
+}
+
+/* VIP examine tip — pulsing gold border glow */
+.hq-item-tip.is-vip {
+  border-color: #e8c060;
+  background: linear-gradient(180deg, #2a2010 0%, #120e08 100%);
+  box-shadow:
+    0 0 0 1px #f0d080,
+    0 0 10px 2px color-mix(in srgb, #f0d080 55%, transparent),
+    0 0 22px 4px color-mix(in srgb, #c4a040 35%, transparent),
+    0 6px 16px color-mix(in srgb, #000 55%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #ffe9a0 35%, transparent);
+  animation: hq-item-tip-vip-glow 1.6s ease-in-out infinite;
+}
+.hq-item-tip.is-vip .hq-item-tip-name {
+  color: #ffe9a0;
+  text-shadow:
+    0 0 6px color-mix(in srgb, #f0d080 70%, transparent),
+    0 1px 0 #000;
+}
+.hq-item-tip.is-vip .hq-item-tip-meta {
+  color: #f0d080;
+}
+@keyframes hq-item-tip-vip-glow {
+  0%,
+  100% {
+    border-color: #c4a040;
+    box-shadow:
+      0 0 0 1px #c4a040,
+      0 0 6px 1px color-mix(in srgb, #f0d080 35%, transparent),
+      0 0 14px 2px color-mix(in srgb, #c4a040 22%, transparent),
+      0 6px 16px color-mix(in srgb, #000 55%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, #ffe9a0 20%, transparent);
+  }
+  50% {
+    border-color: #ffe9a0;
+    box-shadow:
+      0 0 0 1px #ffe9a0,
+      0 0 14px 3px color-mix(in srgb, #f0d080 70%, transparent),
+      0 0 28px 6px color-mix(in srgb, #e8c060 45%, transparent),
+      0 6px 16px color-mix(in srgb, #000 55%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, #fff0c0 45%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hq-item-tip.is-vip {
+    animation: none;
+    border-color: #e8c060;
+    box-shadow:
+      0 0 0 1px #f0d080,
+      0 0 12px 2px color-mix(in srgb, #f0d080 50%, transparent),
+      0 6px 16px color-mix(in srgb, #000 55%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, #ffe9a0 30%, transparent);
+  }
+}
+
 .hq-bag-inspect {
   display: flex;
   align-items: center;
@@ -2793,6 +2913,22 @@
   border: 2px solid #5a4a30;
   background: linear-gradient(180deg, #2a2218, #16120e);
   flex-shrink: 0;
+}
+.hq-bag-inspect-icon {
+  flex: 0 0 2.4rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.15rem;
+  border: 1px solid #5a4a30;
+  background: #1a1410;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.hq-bag-inspect-icon .hq-bag-model,
+.hq-bag-inspect-icon .hq-bag-model-svg {
+  width: 100%;
+  height: 100%;
 }
 .hq-bag-inspect-copy {
   flex: 1;
@@ -2948,12 +3084,12 @@
   position: absolute;
   width: 2.55rem;
   height: 2.55rem;
-  padding: 0.18rem;
+  padding: 0.12rem 0.1rem 0.08rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.08rem;
+  gap: 0.02rem;
   border-radius: 0.2rem;
   border: 2px solid color-mix(in srgb, #8a7020 55%, #3dcfb6 20%);
   background:
@@ -2963,6 +3099,13 @@
     0 2px 6px color-mix(in srgb, #000 35%, transparent);
   color: #e8d48a;
   cursor: pointer;
+  overflow: visible;
+  z-index: 1;
+}
+.hq-worn-slot.is-on,
+.hq-worn-slot:hover,
+.hq-worn-slot:focus-visible {
+  z-index: 5;
 }
 .hq-worn-slot.is-on {
   border-color: #f0d060;
@@ -2978,12 +3121,17 @@
 .hq-worn-slot--shoes { left: 50%; top: 11rem; transform: translateX(-50%); }
 .hq-worn-slot--boat { left: 50%; top: 13.75rem; transform: translateX(-50%); }
 
-.hq-worn-swatch {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 0.15rem;
-  border: 1px solid color-mix(in srgb, #041018 55%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 12%, transparent);
+.hq-worn-model {
+  display: block;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: 0 0 auto;
+}
+.hq-worn-model .hq-bag-model,
+.hq-worn-model .hq-bag-model-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .hq-worn-empty {
   font: 700 0.9rem/1 Syne, system-ui, sans-serif;

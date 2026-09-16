@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import type { HarborGearId, HarborGearSlot, HarborLook } from './harborGear'
 import { harborGearById, lookColors } from './harborGear'
+import { HarborGearModelIcon } from './HarborGearModelIcon'
+import { HarborItemTooltip } from './HarborItemTooltip'
 
 const SLOT_LABEL: Record<HarborGearSlot, string> = {
   hat: 'Hat',
@@ -26,6 +29,10 @@ function hexCss(n: number) {
   return `#${n.toString(16).padStart(6, '0')}`
 }
 
+function isCoarsePointer() {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+}
+
 type Props = {
   look: HarborLook
   selected: HarborGearSlot
@@ -34,13 +41,15 @@ type Props = {
 
 /**
  * OSRS-inspired Worn Equipment board: slots ring a silhouette that
- * recolors from the equipped look (Harbor jade/ink chrome, not Jagex art).
+ * recolors from the equipped look. Slot cells show item model icons
+ * (not flat color swatches) with hover/tap examine tips.
  */
 export function HarborWornBoard({ look, selected, onSelect }: Props) {
   const colors = lookColors(look)
   const hand = harborGearById(look.hand)
   const boat = harborGearById(look.boat)
   const lantern = harborGearById(look.lantern)
+  const [hoverSlot, setHoverSlot] = useState<HarborGearSlot | null>(null)
 
   return (
     <div className="hq-worn" role="group" aria-label="Worn equipment">
@@ -58,6 +67,8 @@ export function HarborWornBoard({ look, selected, onSelect }: Props) {
         const id = look[slot] as HarborGearId
         const item = harborGearById(id)
         const on = selected === slot
+        const tipOpen = Boolean(item) && (hoverSlot === slot || on)
+        const tipBelow = slot === 'hat'
         return (
           <button
             key={slot}
@@ -65,21 +76,35 @@ export function HarborWornBoard({ look, selected, onSelect }: Props) {
             className={`hq-worn-slot ${className}${on ? ' is-on' : ''}${item ? ' has-item' : ''}`}
             aria-pressed={on}
             aria-label={`${SLOT_LABEL[slot]}${item ? `: ${item.name.en}` : ''}`}
-            title={item ? `${SLOT_LABEL[slot]} · ${item.name.en}` : SLOT_LABEL[slot]}
-            onClick={() => onSelect(slot)}
+            onPointerEnter={() => {
+              if (!isCoarsePointer() && item) setHoverSlot(slot)
+            }}
+            onPointerLeave={() => {
+              if (!isCoarsePointer()) setHoverSlot((cur) => (cur === slot ? null : cur))
+            }}
+            onClick={() => {
+              onSelect(slot)
+              if (isCoarsePointer() && item) setHoverSlot(slot)
+            }}
           >
             {item ? (
-              <span
-                className="hq-worn-swatch"
-                style={{ background: hexCss(item.color) }}
-                aria-hidden="true"
-              />
+              <span className="hq-worn-model" aria-hidden="true">
+                <HarborGearModelIcon item={item} compact />
+              </span>
             ) : (
               <span className="hq-worn-empty" aria-hidden="true">
                 ·
               </span>
             )}
             <span className="hq-worn-slot-tag">{SLOT_LABEL[slot]}</span>
+            {item ? (
+              <HarborItemTooltip
+                item={item}
+                wearing
+                open={tipOpen}
+                placement={tipBelow ? 'below' : 'above'}
+              />
+            ) : null}
           </button>
         )
       })}
