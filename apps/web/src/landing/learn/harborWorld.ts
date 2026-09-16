@@ -126,6 +126,11 @@ const RIVER = 3.4
 export const HARBOR_DOCK_SPACING = 22
 /** Sideways offset from river center when the canoe is docked. */
 export const HARBOR_DOCK_X = RIVER + 0.55
+/**
+ * Quest auto-sail uses one pier slot per gate (step 0 → pier 0, …).
+ * Caps the voyage so lessons stop at the next host instead of drifting to z≈240.
+ */
+export const HARBOR_MAX_QUEST_SLOTS = 24
 
 /** In-world visitables — Save Shack + Outfitter + Bank + Chinese Arena (fixed riverside stops). */
 export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank' | 'arena' | 'barber'
@@ -185,20 +190,24 @@ export const HARBOR_NPC_ROLES = [
 ] as const
 export type HarborNpcRole = (typeof HARBOR_NPC_ROLES)[number]
 
-/**
- * Discrete pier stop for a quest progress value (0…1).
- * Alternates bank so each answer docks at a fresh landing.
- */
-export function dockPoseForProgress(progress: number): { z: number; side: 1 | -1; slot: number } {
-  const t = Math.min(1, Math.max(0, progress))
-  const maxZ = 240
-  const rawZ = t * maxZ
-  const slot = Math.max(0, Math.round(rawZ / HARBOR_DOCK_SPACING))
+/** Discrete pier for a quest gate index — alternates bank each stop. */
+export function dockPoseForStep(stepIndex: number): { z: number; side: 1 | -1; slot: number } {
+  const slot = Math.max(0, Math.min(HARBOR_MAX_QUEST_SLOTS, Math.floor(stepIndex)))
   return {
     slot,
     z: slot * HARBOR_DOCK_SPACING + 6,
     side: slot % 2 === 0 ? 1 : -1,
   }
+}
+
+/**
+ * Discrete pier stop for a quest progress value (0…1).
+ * Encode stepIndex as `stepIndex / HARBOR_MAX_QUEST_SLOTS` so each gate = one pier.
+ */
+export function dockPoseForProgress(progress: number): { z: number; side: 1 | -1; slot: number } {
+  const t = Math.min(1, Math.max(0, progress))
+  const slot = Math.max(0, Math.round(t * HARBOR_MAX_QUEST_SLOTS))
+  return dockPoseForStep(slot)
 }
 
 /** Water tint per brand hue — weather may override for rain/night. */
@@ -3625,8 +3634,13 @@ export function createHarborWorld(
       const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
       const sway = reduced || approaching || playerDirected ? 0 : Math.sin(waterPhase * 0.7) * 0.18
       boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
-      // Open Save Shack / Outfitter when the canoe paddles up
-      emitVisitable(nearestVisitable(boatX, voyageZ))
+      // Landmark panels only when the sailor steered here and arrived —
+      // never while auto-quest sailing past Save / Outfitter / Bank / etc.
+      if (playerDirected && arrived) {
+        emitVisitable(nearestVisitable(boatX, voyageZ))
+      } else if (!playerDirected) {
+        emitVisitable(null)
+      }
     } else {
       // On foot — OSRS click-to-walk toward the yellow X
       const dx = moveTarget.x - footX
@@ -3642,9 +3656,12 @@ export function createHarborWorld(
         scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
         const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
         scoutWalk.position.set(footX, walkBob, footZ)
+        // Don't open landmarks mid-walk either
+        if (!playerDirected) emitVisitable(null)
       } else {
         if (playerDirected) destMarker.visible = false
         if (wantBoard) boardBoat()
+        emitVisitable(nearestVisitable(footX, footZ))
       }
 
       if (destMarker.visible && !reduced) {
@@ -3656,7 +3673,6 @@ export function createHarborWorld(
       waterPhase += dt * (reduced ? 0.4 : 1.0)
       const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.03
       boat.position.set(boatX, 0.08 + bob, voyageZ)
-      emitVisitable(nearestVisitable(footX, footZ))
     }
     if (travelMode === 'boat' && !playerDirected) {
       const dock = dockPoseForProgress(progress)
