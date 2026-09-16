@@ -50,6 +50,7 @@ import {
 } from '../../landing/learn/harborInteractSfx'
 import {
   biomeForChunk,
+  streamForkForChunk,
   clampOrbitDistance,
   clampOrbitPitch,
   dockPoseForProgress,
@@ -213,6 +214,19 @@ function main() {
   assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
   assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
+  assert.equal(streamForkForChunk(0), null, 'start chunk has no stream fork')
+  const forks = Array.from({ length: 24 }, (_, i) => streamForkForChunk(i)).filter(Boolean)
+  assert.ok(forks.length >= 8, 'river sprouts multiple side streams')
+  assert.ok(
+    forks.some((f) => f && f.kind === 'creek') &&
+      forks.some((f) => f && (f.kind === 'tributary' || f.kind === 'oxbow')),
+    'forks include creek + larger channels',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /function placeSideStream|hq-stream-creek|hq-stream-tributary|hq-stream-oxbow/,
+    'side-stream placer builds creek/tributary/oxbow meshes',
+  )
 
   assert.ok(HARBOR_FANFARE_NOTES.length >= 6, 'fanfare needs a real melody')
   assert.ok(
@@ -531,6 +545,9 @@ function main() {
   assert.match(bagSrc, /hq-bag-grid/, 'bag renders item grid')
   assert.match(bagSrc, /HarborGearModelIcon/, 'bag shows item model icons')
   assert.match(bagSrc, /HarborItemTooltip/, 'bag shows hover/tap item tooltips')
+  assert.match(bagSrc, /setTipId/, 'bag tip state is independent of selection')
+  assert.match(bagSrc, /pointerdown/, 'bag dismisses tip on tap-away')
+  assert.doesNotMatch(bagSrc, /tipOpen = hoverId === item\.id \|\| on/, 'tips are not sticky on selection')
   assert.match(bagSrc, /HarborWornBoard/, 'bag Worn tab keeps paperdoll')
   assert.match(bagSrc, /playHarborUiClick/, 'bag tabs tick UI click')
   const tipSrc = readFileSync(new URL('./HarborItemTooltip.tsx', import.meta.url), 'utf8')
@@ -543,6 +560,7 @@ function main() {
   assert.match(wornSrc, /hq-worn-figure/, 'worn board paperdoll')
   assert.match(wornSrc, /HarborGearModelIcon/, 'worn slots show item model icons')
   assert.match(wornSrc, /HarborItemTooltip/, 'worn slots show examine tips')
+  assert.match(wornSrc, /tipId === item\.id/, 'worn tips follow tipId only (not selection)')
   assert.doesNotMatch(wornSrc, /hq-worn-swatch/, 'worn color swatches removed')
   const wornCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
   assert.match(wornCss, /\.hq-worn\s*\{/, 'worn board styles')
