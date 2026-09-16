@@ -57,6 +57,15 @@ export function HarborWorldCanvas({
   onVisitableRef.current = onVisitable
   const onRemoteSelectRef = useRef(onRemotePlayerSelect)
   onRemoteSelectRef.current = onRemotePlayerSelect
+  // Kept fresh so realm remount (river ↔ guan) can re-apply nametag / remotes / progress.
+  const localUsernameRef = useRef(localUsername)
+  localUsernameRef.current = localUsername
+  const remotePlayersRef = useRef(remotePlayers)
+  remotePlayersRef.current = remotePlayers
+  const progressRef = useRef(progress)
+  progressRef.current = progress
+  const pausedRef = useRef(paused)
+  pausedRef.current = paused
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -73,6 +82,13 @@ export function HarborWorldCanvas({
     })
     worldRef.current = world
     if (worldApiRef) worldApiRef.current = world
+
+    // Realm remount must restore identity — otherwise nametag falls back to "sailor".
+    const name = localUsernameRef.current?.trim()
+    if (name) world.setLocalUsername(name)
+    world.setRemotePlayers(remotePlayersRef.current ?? [])
+    world.setProgress(progressRef.current)
+    world.setPaused(pausedRef.current)
 
     let resizeRaf = 0
     const scheduleResize = () => {
@@ -101,7 +117,7 @@ export function HarborWorldCanvas({
       worldRef.current = null
       if (worldApiRef) worldApiRef.current = null
     }
-    // Recreate when realm changes (Campaign 1 river vs Campaign 2 bamboo garden).
+    // Recreate when realm changes (river / bamboo / Guan Harbor).
     // Hue / motion / flash / look still sync via setters between recreations.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realm])
