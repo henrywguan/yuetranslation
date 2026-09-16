@@ -4947,5 +4947,8 @@
   }
   .hq-chat-log {
     max-height: 4.25rem;
+    /* backdrop-filter + WebGL + soft keyboard wedges iOS GPUs — opaque plate instead. */
+    backdrop-filter: none;
+    background: color-mix(in srgb, #041018 88%, transparent);
   }
 }

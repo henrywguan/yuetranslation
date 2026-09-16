@@ -862,10 +862,24 @@ function main() {
   assert.match(minimapSrc, /legendOpen/, 'minimap legend can open')
   const chatBoxSrc = readFileSync(new URL('./HarborChatBox.tsx', import.meta.url), 'utf8')
   assert.match(chatBoxSrc, /export function HarborChatBox/, 'RuneScape-style chat box')
+  assert.match(
+    chatBoxSrc,
+    /onPointerDown[\s\S]*preventDefault/,
+    'Say button keeps focus until submit (mobile keyboard click-steal guard)',
+  )
+  assert.match(chatBoxSrc, /enterKeyHint=["']send["']/, 'mobile keyboard offers Send')
+  assert.match(chatBoxSrc, /inputRef\.current\?\.blur\(\)/, 'chat blurs after send to reveal overhead')
+  assert.match(chatBoxSrc, /scrollTo\(0,\s*0\)/, 'chat snaps viewport after keyboard')
   assert.match(presenceSrc, /HARBOR_CHAT_EVENT/, 'presence broadcasts chat')
   assert.match(presenceSrc, /broadcastChat/, 'presence session can say')
   assert.match(worldSrc, /showSpeechBubble/, 'world shows speech above speakers')
+  assert.match(worldSrc, /if \(disposed\) return/, 'overhead say no-ops after world dispose')
   assert.match(playSrc2, /HarborChatBox/, 'Learn session mounts chat box')
+  assert.match(
+    playSrc2,
+    /showSpeechBubble\('local'/,
+    'local send paints overhead say before keyboard dismiss',
+  )
   assert.match(minimapSrc, /harbor\.minimap\.layout\.v1/, 'minimap layout persists')
   assert.match(playSrc2, /HarborMinimap/, 'Learn session mounts minimap')
   assert.match(playSrc2, /viewYaw/, 'Learn session polls camera viewYaw for minimap')
@@ -897,6 +911,11 @@ function main() {
   assert.match(questPanelSrc, /Next gate/, 'Next gate control present after correct')
   assert.match(learnCss, /--hq-explore-chrome/, 'shared explore chrome clearance token')
   assert.match(learnCss, /bottom:\s*var\(--hq-explore-chrome\)/, 'chat docks above Talk/Explore chrome')
+  assert.match(
+    learnCss,
+    /@media \(max-width:\s*640px\)[\s\S]*?\.hq-chat-log[\s\S]*?backdrop-filter:\s*none/,
+    'mobile chat log drops backdrop-filter (WebGL + keyboard GPU wedge)',
+  )
   assert.match(learnCss, /hq-dock-actions--next-first/, 'next-first dock spacing')
   assert.match(
     learnCss,
