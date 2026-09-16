@@ -90,6 +90,8 @@ export type HarborWorldOptions = {
   realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Tap a talkable NPC / speech bubble while in range. */
+  onDialogueNpc?: (tap: HarborDialogueTap) => void
   /** Tap a remote sailor (signed-in multiplayer). */
   onRemotePlayerSelect?: (userId: string) => void
 }
@@ -201,8 +203,10 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
   },
 ] as const
 
-/** Arrival radius to open a visitable panel. */
-export const HARBOR_VISIT_RADIUS = 2.4
+/** Arrival radius to open a visitable panel (proximity). */
+export const HARBOR_VISIT_RADIUS = 3.6
+/** Max distance to tap-open an NPC dialogue / landmark host UI. */
+export const HARBOR_NPC_TALK_RADIUS = 4.2
 
 /** Tap a chair within this range (on foot) to sit. */
 export const HARBOR_SIT_RADIUS = 1.85
@@ -217,6 +221,21 @@ export const HARBOR_NPC_ROLES = [
   'ferryman',
 ] as const
 export type HarborNpcRole = (typeof HARBOR_NPC_ROLES)[number]
+
+/** Tap target for in-world NPC interaction. */
+export type HarborDialogueTap =
+  | { kind: 'landmark'; id: HarborVisitableId }
+  | { kind: 'quest'; dockSlot: number; role: HarborNpcRole }
+
+/** Floating name labels for pier dialogue hosts. */
+export const HARBOR_NPC_ROLE_LABEL: Record<HarborNpcRole, string> = {
+  villager: 'Villager',
+  scholar: 'Scholar',
+  fisherman: 'Fisherman',
+  merchant: 'Merchant',
+  child: 'Child',
+  ferryman: 'Ferryman',
+}
 
 /** Discrete pier for a quest gate index — alternates bank each stop. */
 export function dockPoseForStep(stepIndex: number): { z: number; side: 1 | -1; slot: number } {
@@ -359,6 +378,29 @@ export function pickHarborWeather(seed?: number): HarborWeather {
 export function biomeForChunk(i: number): BiomeId {
   const cycle: BiomeId[] = ['pier', 'village', 'forest', 'reeds', 'hills', 'forest', 'village']
   return cycle[((i % cycle.length) + cycle.length) % cycle.length]
+}
+
+/** Side-channel kinds that break the straight river corridor. */
+export type HarborStreamForkKind = 'creek' | 'tributary' | 'oxbow'
+
+export type HarborStreamFork = {
+  side: 1 | -1
+  kind: HarborStreamForkKind
+}
+
+/**
+ * Deterministic river fork for a chunk — creeks / tributaries / oxbows peel
+ * inland so the voyage banks read as a branching watershed, not a tube.
+ * Chunk 0 stays clear for the starting pier.
+ */
+export function streamForkForChunk(i: number): HarborStreamFork | null {
+  if (i < 1) return null
+  const r = mulberry32((i + 3) * 7919 + 1301)()
+  // ~58% of chunks get a fork so the banks feel irregular
+  if (r < 0.42) return null
+  const side: 1 | -1 = i % 2 === 0 ? 1 : -1
+  const kind: HarborStreamForkKind = r > 0.82 ? 'oxbow' : r > 0.62 ? 'tributary' : 'creek'
+  return { side, kind }
 }
 
 /** Mobile OSRS-style orbit: yaw wraps freely; pitch is clamped. */
@@ -1049,11 +1091,24 @@ function pierSegment() {
 /** Floating speech bubble — OSRS-style cue that this NPC has dialogue. */
 export const HARBOR_DIALOGUE_BUBBLE = true as const
 
+/** Floating nametag above an NPC head (same plate language as sailor tags). */
+function attachNpcNametag(npc: THREE.Object3D, label: string) {
+  if (npc.getObjectByName('npc-nametag')) return
+  const tag = buildNametagSprite(label)
+  tag.name = 'npc-nametag'
+  tag.userData.npcNametag = true
+  // Sit just above the oversized head; speech bubble floats higher
+  tag.position.set(0, 1.9, 0)
+  tag.scale.set(1.55, 0.38, 1)
+  npc.add(tag)
+}
+
 function speechBubbleIcon() {
   const g = new THREE.Group()
   g.name = 'speech-bubble'
   g.userData.speechBubble = true
   g.userData.billboard = true
+  g.userData.hasDialogue = true
   // Parchment bubble body
   g.add(hqBox(0.44, 0.32, 0.08, 0xfff8ec, 0, 0.1, 0))
   g.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, 0.28, 0))
@@ -1071,14 +1126,15 @@ function speechBubbleIcon() {
   return g
 }
 
-/** Mark an NPC as talkable and hover a speech bubble above their head. */
-function attachDialogueBubble(npc: THREE.Object3D) {
+/** Mark an NPC as talkable, name them, and hover a speech bubble above their head. */
+function attachDialogueBubble(npc: THREE.Object3D, label?: string) {
   npc.userData.hasDialogue = true
+  if (label) attachNpcNametag(npc, label)
   // Avoid double-attaching if chunk rebuilds call this twice
   if (npc.getObjectByName('speech-bubble')) return
   const bubble = speechBubbleIcon()
-  // Local Y sits above the oversized head (group scale still applies)
-  bubble.position.set(0.12, 1.68, 0.06)
+  // Above the nametag so both stay readable
+  bubble.position.set(0.12, 2.32, 0.06)
   bubble.userData.bubbleBaseY = bubble.position.y
   npc.add(bubble)
 }
@@ -1169,6 +1225,15 @@ export const HARBOR_LANDMARK_HOSTS = [
   'barber',
 ] as const satisfies readonly HarborVisitableId[]
 export type HarborLandmarkHostId = (typeof HARBOR_LANDMARK_HOSTS)[number]
+
+/** Floating name labels for landmark hosts. */
+export const HARBOR_LANDMARK_HOST_LABEL: Record<HarborLandmarkHostId, string> = {
+  'save-shack': 'Save Keeper',
+  outfitter: 'Outfitter',
+  bank: 'Banker',
+  arena: 'Arena Master',
+  barber: 'Barber',
+}
 
 const LANDMARK_GLOW: Record<HarborLandmarkHostId, number> = {
   'save-shack': 0xffd060,
@@ -1502,7 +1567,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   }
 
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
-  attachDialogueBubble(g)
+  attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
   return g
 }
 
@@ -2247,8 +2312,9 @@ function placeDockStops(group: THREE.Group, chunkIndex: number, rng: () => numbe
     // Stand on the pier deck, facing the river
     npc.position.set(side * (RIVER + 1.55), 0.55, z + (rng() - 0.5) * 0.6)
     npc.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2
-    // Pier hosts are quest speakers — show Talk cue above their head
-    attachDialogueBubble(npc)
+    npc.userData.dockSlot = slot
+    // Pier hosts are quest speakers — nametag + Talk cue above their head
+    attachDialogueBubble(npc, HARBOR_NPC_ROLE_LABEL[role])
     group.add(npc)
     // Decorative bank NPCs removed — only dialogue hosts stay (GPU + clarity)
   }
@@ -2357,6 +2423,103 @@ function koi(rng: () => number) {
 export const HARBOR_BAMBOO_FLORA = ['bamboo-clump', 'osmanthus', 'lotus'] as const
 export const HARBOR_BAMBOO_FAUNA = ['magpie', 'koi'] as const
 
+/**
+ * Peel a creek / tributary / oxbow inland from the main channel.
+ * Chunk-local water so forks stream in/out with the voyage chunks.
+ */
+function placeSideStream(
+  group: THREE.Group,
+  chunkIndex: number,
+  fork: HarborStreamFork,
+  mats: { grass: THREE.Material; sand: THREE.Material },
+  weather: HarborWeather,
+  rng: () => number,
+) {
+  const z0 = chunkIndex * CHUNK
+  const zMid = z0 + CHUNK * (0.32 + rng() * 0.36)
+  const side = fork.side
+  const waterTint =
+    weather === 'night' ? 0x1a3048 : weather === 'rainy' ? 0x3a6078 : weather === 'cloudy' ? 0x4a8898 : 0x3aa8c8
+  const waterMat = mat(waterTint, { transparent: true, opacity: 0.9 })
+
+  if (fork.kind === 'oxbow') {
+    // Crescent lagoon parallel to the river, inland of the near bank
+    const lagoon = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.08, 7.5), waterMat)
+    lagoon.position.set(side * (RIVER + 5.2), 0.03, zMid)
+    lagoon.rotation.y = side * 0.18
+    lagoon.name = 'hq-stream-oxbow'
+    lagoon.userData.streamFork = fork.kind
+    group.add(lagoon)
+    // Sand rim
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.12, 8.6), mats.sand)
+    rim.position.set(side * (RIVER + 5.2), 0.01, zMid)
+    rim.rotation.y = side * 0.18
+    group.add(rim)
+    // Mouth channel back to the main river
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.07, 1.6), waterMat)
+    mouth.position.set(side * (RIVER + 2.4), 0.025, zMid - side * 2.2)
+    mouth.name = 'hq-stream-mouth'
+    group.add(mouth)
+    if (rng() > 0.35) {
+      const reedN = 4 + Math.floor(rng() * 3)
+      place(group, rng, reedN, () => reed(rng), RIVER + 3.5, RIVER + 7, z0)
+    }
+    return
+  }
+
+  const length = fork.kind === 'tributary' ? 11 + rng() * 3 : 7 + rng() * 2.5
+  const width = fork.kind === 'tributary' ? 2.1 + rng() * 0.4 : 1.15 + rng() * 0.25
+  const bend = (rng() - 0.5) * 0.35
+
+  // Main fork ribbon (runs roughly +X inland)
+  const channel = new THREE.Mesh(new THREE.BoxGeometry(length, 0.07, width), waterMat)
+  channel.position.set(side * (RIVER + 1.2 + length / 2), 0.025, zMid)
+  channel.rotation.y = side * bend
+  channel.name = fork.kind === 'tributary' ? 'hq-stream-tributary' : 'hq-stream-creek'
+  channel.userData.streamFork = fork.kind
+  group.add(channel)
+
+  // Optional second bend so tributaries feel like they split again
+  if (fork.kind === 'tributary' && rng() > 0.4) {
+    const armLen = 4.5 + rng() * 2
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(armLen, 0.065, width * 0.75), waterMat)
+    const armZ = zMid + side * (2.2 + rng() * 1.5)
+    arm.position.set(side * (RIVER + 1.2 + length * 0.65 + armLen * 0.35), 0.024, armZ)
+    arm.rotation.y = side * (0.55 + rng() * 0.35)
+    arm.name = 'hq-stream-branch'
+    arm.userData.streamFork = 'creek'
+    group.add(arm)
+    const armSand = new THREE.Mesh(new THREE.BoxGeometry(armLen + 0.6, 0.1, width * 0.75 + 0.7), mats.sand)
+    armSand.position.copy(arm.position)
+    armSand.position.y = 0.01
+    armSand.rotation.y = arm.rotation.y
+    group.add(armSand)
+  }
+
+  // Sand banks flanking the channel
+  const sandL = new THREE.Mesh(new THREE.BoxGeometry(length + 0.4, 0.1, 0.55), mats.sand)
+  sandL.position.set(side * (RIVER + 1.2 + length / 2), 0.015, zMid + width * 0.55)
+  sandL.rotation.y = side * bend
+  group.add(sandL)
+  const sandR = sandL.clone()
+  sandR.position.z = zMid - width * 0.55
+  group.add(sandR)
+
+  // Small footbridge over the creek near the mouth
+  if (fork.kind === 'creek' || rng() > 0.45) {
+    const wood = hqWoodTexture()
+    const plank = hqBoxTex(width + 0.8, 0.08, 0.55, P.woodMid, wood, side * (RIVER + 2.6), 0.22, zMid)
+    plank.name = 'hq-stream-bridge'
+    group.add(plank)
+    group.add(hqPost(0.04, 0.05, 0.4, P.woodDark, side * (RIVER + 2.6), 0.12, zMid + width * 0.4, 5))
+    group.add(hqPost(0.04, 0.05, 0.4, P.woodDark, side * (RIVER + 2.6), 0.12, zMid - width * 0.4, 5))
+  }
+
+  // Reed fringe + a rock at the mouth
+  place(group, rng, fork.kind === 'tributary' ? 5 : 3, () => reed(rng), RIVER + 1.5, RIVER + 4.5, z0)
+  if (rng() > 0.4) place(group, rng, 1, () => rock(rng), RIVER + 1.8, RIVER + 3.5, z0)
+}
+
 function populateChunk(
   chunkIndex: number,
   group: THREE.Group,
@@ -2367,6 +2530,7 @@ function populateChunk(
   const biome = biomeForChunk(chunkIndex)
   const rng = mulberry32((chunkIndex + 17) * 9973 + (realm === 'bamboo' ? 42 : 0))
   const z0 = chunkIndex * CHUNK
+  const fork = realm === 'guan' ? null : streamForkForChunk(chunkIndex)
   const leaf =
     realm === 'bamboo'
       ? biome === 'hills'
@@ -2381,10 +2545,22 @@ function populateChunk(
           : 0x2f7a48
 
   for (const side of [-1, 1] as const) {
-    // Near bank (river edge)
-    const bank = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, CHUNK + 0.2), mats.grass)
-    bank.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK / 2)
-    group.add(bank)
+    const forkOnSide = fork && fork.side === side
+    // Near bank (river edge) — split when a stream mouth cuts through
+    if (forkOnSide) {
+      const gap = 2.8
+      const half = (CHUNK - gap) / 2
+      const bankA = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, half), mats.grass)
+      bankA.position.set(side * (BANK + 2.2), -0.05, z0 + half / 2)
+      group.add(bankA)
+      const bankB = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, half), mats.grass)
+      bankB.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK - half / 2)
+      group.add(bankB)
+    } else {
+      const bank = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, CHUNK + 0.2), mats.grass)
+      bank.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK / 2)
+      group.add(bank)
+    }
     // Inland shelf — expands the walkable world toward the karst
     const inland = new THREE.Mesh(new THREE.BoxGeometry(11, 0.32, CHUNK + 0.2), mats.grass)
     inland.position.set(side * (BANK + 10.2), -0.06, z0 + CHUNK / 2)
@@ -2401,6 +2577,11 @@ function populateChunk(
     const shore = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, CHUNK + 0.2), mats.sand)
     shore.position.set(side * (RIVER + 1.1), 0.02, z0 + CHUNK / 2)
     group.add(shore)
+  }
+
+  // Branching streams / oxbows — break the straight corridor silhouette
+  if (fork) {
+    placeSideStream(group, chunkIndex, fork, mats, weather, rng)
   }
 
   // Dirt / stone roads, cross-paths, and Chinese road signs
@@ -3148,6 +3329,22 @@ function nearestVisitable(
   return best
 }
 
+/** Walk hit parents for a talkable NPC / speech bubble / landmark host. */
+function dialogueTapFromObject(obj: THREE.Object3D): HarborDialogueTap | null {
+  let cur: THREE.Object3D | null = obj
+  while (cur) {
+    const landmark = cur.userData.landmarkHost as HarborVisitableId | undefined
+    if (landmark) return { kind: 'landmark', id: landmark }
+    const dockSlot = cur.userData.dockSlot as number | undefined
+    if (cur.userData.hasDialogue && typeof dockSlot === 'number') {
+      const role = (cur.userData.npc as HarborNpcRole | undefined) ?? 'ferryman'
+      return { kind: 'quest', dockSlot, role }
+    }
+    cur = cur.parent
+  }
+  return null
+}
+
 export function createHarborWorld(
   canvas: HTMLCanvasElement,
   options: HarborWorldOptions = {},
@@ -3372,6 +3569,7 @@ export function createHarborWorld(
     if (guanScene) indexRoot(guanScene)
     indexRoot(visitablesRoot)
     indexRoot(boat)
+    indexRoot(scoutWalk)
     fxIndexDirty = false
   }
 
@@ -3690,6 +3888,38 @@ export function createHarborWorld(
           return
         }
         setMoveTarget(cx, cz, true)
+        return
+      }
+    }
+    // Talkable NPCs / speech bubbles — open UI when close enough
+    {
+      const pickRoots: THREE.Object3D[] = [visitablesRoot]
+      for (const g of chunkGroups.values()) pickRoots.push(g)
+      if (guanScene) pickRoots.push(guanScene)
+      const npcHits = raycaster.intersectObjects(pickRoots, true)
+      for (const hit of npcHits) {
+        const tap = dialogueTapFromObject(hit.object)
+        if (!tap) continue
+        // Resolve the NPC root for distance (landmark host or pier figure)
+        let root: THREE.Object3D | null = hit.object
+        while (root && !root.userData.hasDialogue && !root.userData.landmarkHost) {
+          root = root.parent
+        }
+        if (!root) continue
+        const worldPos = new THREE.Vector3()
+        root.getWorldPosition(worldPos)
+        const px = travelMode === 'foot' ? footX : boatX
+        const pz = travelMode === 'foot' ? footZ : voyageZ
+        const dist = Math.hypot(worldPos.x - px, worldPos.z - pz)
+        if (dist <= HARBOR_NPC_TALK_RADIUS) {
+          options.onDialogueNpc?.(tap)
+          return
+        }
+        // Too far — walk / paddle toward them instead of opening
+        if (travelMode === 'boat' && !isGuan && isHarborLand(worldPos.x)) {
+          disembark(worldPos.x)
+        }
+        setMoveTarget(worldPos.x, worldPos.z, true)
         return
       }
     }
@@ -4298,6 +4528,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       applyLookToProtagonist(scoutWalk, currentLook)
       if (scoutSit) applyLookToProtagonist(scoutSit, currentLook)
       applyVesselLook(boat, weather, currentLook)
+      fxIndexDirty = true
     },
     setPaused(on) {
       paused = on

@@ -7,8 +7,8 @@
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
 
-/** Bus gain — stays under SFX / fanfare. */
-export const HARBOR_BGM_GAIN = 0.11
+/** Bus gain — stays under SFX / fanfare, loud enough on phone speakers. */
+export const HARBOR_BGM_GAIN = 0.18
 
 /** One loop length in seconds (smoke-tested). */
 export const HARBOR_BGM_LOOP_SEC = 36

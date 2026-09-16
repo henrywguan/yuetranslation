@@ -6,7 +6,7 @@
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
 import type { HarborVisitableId } from './harborWorld'
 
-export const HARBOR_INTERACT_SFX_GAIN = 0.26
+export const HARBOR_INTERACT_SFX_GAIN = 0.34
 
 function busAt(gain: number): { ctx: AudioContext; bus: GainNode; t0: number } {
   const ctx = ensureSharedAudioContext()

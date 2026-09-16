@@ -31,7 +31,9 @@ import {
 import { HARBOR_COIN_CHING_GAIN } from '../../landing/learn/harborCoinSfx'
 import {
   HARBOR_AMBIENT_GAIN,
+  HARBOR_NIGHT_BIRDS,
   HARBOR_WILDLIFE_GAIN,
+  harborWildlifePool,
   isHarborAmbientRunning,
 } from '../../landing/learn/harborAmbient'
 import {
@@ -50,6 +52,7 @@ import {
 } from '../../landing/learn/harborInteractSfx'
 import {
   biomeForChunk,
+  streamForkForChunk,
   clampOrbitDistance,
   clampOrbitPitch,
   dockPoseForProgress,
@@ -143,10 +146,15 @@ import {
   HARBOR_VIP_MIN_PRICE,
   HARBOR_VIP_SETS,
   applyLookToProtagonist,
+  buildHandheldProp,
+  harborGearCanEquipToSlot,
   harborGearCodexStats,
   harborGearForSlot,
+  harborGearIsWorn,
   harborGearMeshInfo,
+  harborGearWearTarget,
   harborVipSetFor,
+  sanitizeHarborLook,
 } from '../../landing/learn/harborGear'
 import { emptyHarborProgress,
   isLevelUnlocked } from '../../landing/learn/progressMerge'
@@ -217,6 +225,19 @@ function main() {
   assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
   assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
+  assert.equal(streamForkForChunk(0), null, 'start chunk has no stream fork')
+  const forks = Array.from({ length: 24 }, (_, i) => streamForkForChunk(i)).filter(Boolean)
+  assert.ok(forks.length >= 8, 'river sprouts multiple side streams')
+  assert.ok(
+    forks.some((f) => f && f.kind === 'creek') &&
+      forks.some((f) => f && (f.kind === 'tributary' || f.kind === 'oxbow')),
+    'forks include creek + larger channels',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /function placeSideStream|hq-stream-creek|hq-stream-tributary|hq-stream-oxbow/,
+    'side-stream placer builds creek/tributary/oxbow meshes',
+  )
 
   assert.ok(HARBOR_FANFARE_NOTES.length >= 6, 'fanfare needs a real melody')
   assert.ok(
@@ -570,6 +591,9 @@ function main() {
   assert.match(bagSrc, /hq-bag-grid/, 'bag renders item grid')
   assert.match(bagSrc, /HarborGearModelIcon/, 'bag shows item model icons')
   assert.match(bagSrc, /HarborItemTooltip/, 'bag shows hover/tap item tooltips')
+  assert.match(bagSrc, /setTipId/, 'bag tip state is independent of selection')
+  assert.match(bagSrc, /pointerdown/, 'bag dismisses tip on tap-away')
+  assert.doesNotMatch(bagSrc, /tipOpen = hoverId === item\.id \|\| on/, 'tips are not sticky on selection')
   assert.match(bagSrc, /HarborWornBoard/, 'bag Worn tab keeps paperdoll')
   assert.match(bagSrc, /playHarborUiClick/, 'bag tabs tick UI click')
   const tipSrc = readFileSync(new URL('./HarborItemTooltip.tsx', import.meta.url), 'utf8')
@@ -582,6 +606,7 @@ function main() {
   assert.match(wornSrc, /hq-worn-figure/, 'worn board paperdoll')
   assert.match(wornSrc, /HarborGearModelIcon/, 'worn slots show item model icons')
   assert.match(wornSrc, /HarborItemTooltip/, 'worn slots show examine tips')
+  assert.match(wornSrc, /tipId === item\.id/, 'worn tips follow tipId only (not selection)')
   assert.doesNotMatch(wornSrc, /hq-worn-swatch/, 'worn color swatches removed')
   const wornCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
   assert.match(wornCss, /\.hq-worn\s*\{/, 'worn board styles')
@@ -710,9 +735,56 @@ function main() {
     const n = harborGearForSlot(slot).length
     if (slot === 'boat' || slot === 'lantern') {
       assert.equal(n, 12, `${slot} has 12 items (3 × 4 tiers)`)
+    } else if (slot === 'hand') {
+      assert.equal(n, 20, 'hand lists dedicated handhelds + boat lanterns')
     } else {
       assert.ok(n >= 5, `${slot} has at least 5 items (got ${n})`)
     }
+  }
+
+  // Boat lanterns can be held in the hand (cross-slot equip)
+  {
+    const amber = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-paper-amber')!
+    const silk = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-silk-gold')!
+    const iron = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-oil-iron')!
+    const glass = HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-glass-ruby')!
+    assert.equal(harborGearCanEquipToSlot(amber, 'hand'), true, 'paper lantern → hand')
+    assert.equal(harborGearCanEquipToSlot(amber, 'lantern'), true, 'paper lantern → boat lantern')
+    assert.equal(harborGearCanEquipToSlot(amber, 'hat'), false, 'lantern not a hat')
+    assert.equal(harborGearWearTarget(amber, 'hand'), 'hand', 'selected hand wears lantern in hand')
+    assert.equal(harborGearWearTarget(amber, 'lantern'), 'lantern', 'selected lantern hangs on boat')
+    const heldLook = sanitizeHarborLook({
+      ...HARBOR_DEFAULT_LOOK,
+      hand: 'lantern-paper-jade',
+      lantern: 'lantern-silk-azure',
+    })
+    assert.equal(heldLook.hand, 'lantern-paper-jade', 'sanitize keeps lantern id in hand')
+    assert.equal(heldLook.lantern, 'lantern-silk-azure', 'boat lantern slot stays independent')
+    assert.equal(harborGearIsWorn(heldLook, amber), false)
+    assert.equal(
+      harborGearIsWorn(heldLook, HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-paper-jade')!),
+      true,
+      'jade lantern worn when held',
+    )
+    for (const item of [amber, silk, iron, glass]) {
+      const prop = buildHandheldProp(item.id)
+      assert.ok(prop, `${item.id} builds a handheld mesh`)
+      let lights = 0
+      prop!.traverse((o) => {
+        if (o.type === 'PointLight' && o.userData.harborLanternLight) lights += 1
+      })
+      assert.ok(lights >= 1, `${item.id} handheld emits lantern light`)
+    }
+    const heldScout = buildHarborProtagonist({ pose: 'standing' })
+    applyLookToProtagonist(heldScout, {
+      ...HARBOR_DEFAULT_LOOK,
+      hand: 'lantern-phoenix',
+    })
+    let handProp = 0
+    heldScout.traverse((o) => {
+      if (o.name === 'gear-hand') handProp += 1
+    })
+    assert.equal(handProp, 1, 'VIP boat lantern attaches to hand_r')
   }
 
   // VIP sets — animated overlays, locked behind >5k coins
@@ -878,7 +950,12 @@ function main() {
   assert.equal(HARBOR_DIALOGUE_BUBBLE, true, 'dialogue NPCs expose a speech-bubble cue')
   assert.match(worldSrc2, /attachDialogueBubble|speechBubbleIcon/, 'Talkable NPCs get a speech bubble icon')
   assert.match(worldSrc2, /hasDialogue/, 'dialogue NPCs tagged hasDialogue')
-  assert.match(worldSrc2, /attachDialogueBubble\(npc\)/, 'bubbles attach to pier dialogue hosts')
+  assert.match(worldSrc2, /attachDialogueBubble\(npc/, 'bubbles attach to pier dialogue hosts')
+  assert.match(worldSrc2, /npc-nametag|attachNpcNametag/, 'NPCs get floating nametags')
+  assert.match(worldSrc2, /HARBOR_NPC_TALK_RADIUS/, 'tap-to-talk range constant')
+  assert.match(worldSrc2, /onDialogueNpc/, 'world reports NPC taps')
+  assert.match(worldSrc2, /dialogueTapFromObject/, 'raycast resolves NPC / bubble taps')
+  assert.ok(HARBOR_VISIT_RADIUS >= 3, 'visit radius reaches landmark hosts')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
   
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('panda'), 'giant panda ambient fauna')
@@ -936,6 +1013,7 @@ function main() {
   assert.match(worldSrc2, /setLook/, 'world can recolor scout look')
   assert.match(worldSrc2, /nearestVisitable/, 'arrival opens visitables')
   const playSrc2 = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.match(playSrc2, /onDialogueNpc/, 'LearnPlay handles NPC taps')
   assert.match(playSrc2, /visitSaveShack/, 'Save Shack stamps progress')
   assert.match(playSrc2, /buyHarborGear/, 'Outfitter buy flow')
   assert.match(playSrc2, /equipHarborGear/, 'Outfitter equip flow')
@@ -1068,9 +1146,39 @@ function main() {
   assert.match(ambientSrc, /makeWaterBed/, 'ambient water bed')
   assert.match(ambientSrc, /makeRainBed/, 'ambient rain bed')
   assert.match(ambientSrc, /makeWindBed/, 'ambient wind bed')
+  assert.match(ambientSrc, /makeBirdBed/, 'daytime bird bed')
+  assert.match(ambientSrc, /makeNightBirdBed/, 'night bird bed')
   assert.match(ambientSrc, /scheduleWildlife/, 'sparse wildlife scheduler')
   assert.match(ambientSrc, /scheduleLantern/, 'lantern tick at night/rain')
+  assert.match(ambientSrc, /scheduleRainDrops/, 'discrete raindrop scheduler')
+  assert.match(ambientSrc, /playRainDrop/, 'raindrop one-shots')
+  assert.match(ambientSrc, /surface === 'tin'/, 'rain on tin')
+  assert.match(ambientSrc, /surface === 'grass'/, 'rain on grass')
+  assert.match(ambientSrc, /water plop|surface === 'water'|Open water/, 'rain on water')
   assert.match(ambientSrc, /setHarborAmbientTalking/, 'ambient ducks while talking')
+  assert.match(ambientSrc, /magpie|deer|ibis|koi|panda|tiger|salamander/, 'fauna-matched wildlife kinds')
+  assert.match(ambientSrc, /owl|nightjar|night-heron/, 'nocturnal bird kinds')
+  assert.match(ambientSrc, /primeHarborAmbientUnlock/, 'gesture unlock primer')
+  assert.deepEqual(
+    [...HARBOR_NIGHT_BIRDS].sort(),
+    ['night-heron', 'nightjar', 'owl'],
+    'night bird roster',
+  )
+  {
+    const nightPool = harborWildlifePool('night')
+    assert.ok(nightPool.length > 0, 'night wildlife pool non-empty')
+    for (const kind of nightPool) {
+      assert.ok(
+        (HARBOR_NIGHT_BIRDS as readonly string[]).includes(kind),
+        `night pool only night birds (got ${kind})`,
+      )
+    }
+    assert.ok(!nightPool.includes('magpie'), 'night excludes day magpie')
+    assert.ok(!nightPool.includes('frog'), 'night excludes frogs')
+    assert.ok(!nightPool.includes('gull'), 'night excludes gulls')
+  }
+  assert.match(playAudioSrc, /unlockHarborAudio|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
+  assert.match(playAudioSrc, /resumeSharedAudioContext/, 'gesture resumes shared AudioContext')
   const interactSrc = readFileSync(new URL('./harborInteractSfx.ts', import.meta.url), 'utf8')
   assert.match(interactSrc, /export function playHarborFootstep/, 'footstep SFX')
   assert.match(interactSrc, /export function playHarborPaddle/, 'paddle SFX')
