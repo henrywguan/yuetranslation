@@ -121,6 +121,12 @@ export type HarborWorldHandle = {
   setLocalUsername: (username: string) => void
   /** OSRS-style overhead say (outlined text, no bubble) above local or remote sailor. */
   showSpeechBubble: (who: 'local' | string, text: string, durationMs?: number) => void
+  /**
+   * Instantly board the canoe (if on foot) and teleport to the quest pier dock.
+   * Pass `stepIndex` when continuing to the next gate so the snap matches that pier
+   * before React progress catches up. Used by Talk / Next gate.
+   */
+  snapToQuestDock: (stepIndex?: number) => void
   resize: () => void
   dispose: () => void
 }
@@ -4107,6 +4113,29 @@ if (o.userData.cigaretteSmoke && !reduced) {
       localNametag.visible = true
     },
     showSpeechBubble,
+    snapToQuestDock(stepIndex?: number) {
+      // Lesson Talk / Next gate — only on the river voyage (Guan stays free-sail).
+      if (isGuan || disposed) return
+      if (typeof stepIndex === 'number' && Number.isFinite(stepIndex)) {
+        progress = Math.min(Math.max(0, stepIndex) / HARBOR_MAX_QUEST_SLOTS, 1)
+      }
+      if (travelMode === 'foot') boardBoat()
+      const dock = dockPoseForProgress(progress)
+      const x = dock.side * HARBOR_DOCK_X
+      const z = dock.z
+      boatX = x
+      voyageZ = z
+      footX = x
+      footZ = z
+      boat.position.set(x, 0.08, z)
+      boat.rotation.y = dock.side * 0.35
+      boat.rotation.z = 0
+      moveTarget = { x, z }
+      playerDirected = false
+      destMarker.visible = false
+      emitVisitable(null)
+      ensureChunks(voyageZ)
+    },
     resize,
     dispose() {
       disposed = true

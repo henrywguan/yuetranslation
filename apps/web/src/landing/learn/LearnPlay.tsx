@@ -504,10 +504,28 @@ export function LearnSession({
       setCleared(true)
       return
     }
-    setStepIndex((i) => i + 1)
+    const next = stepIndex + 1
+    setStepIndex(next)
     setFlash(null)
     setLastOk(false)
+    // Keep talking at the next pier host — board + teleport to that dock.
+    worldApiRef.current?.snapToQuestDock(next)
   }, [level, stepIndex, pushProgress])
+
+  const beginTalk = useCallback(() => {
+    // Leave Guan paradise so the river pier snap can run on the remounted world.
+    if (realmOverride) {
+      setRealmOverride(null)
+      startHarborBgm('river')
+    }
+    playHarborTalkStart()
+    playHarborNpcGreet()
+    setTalking(true)
+    const snap = () => worldApiRef.current?.snapToQuestDock(stepIndex)
+    snap()
+    // If we just left Guan, the world remounts next frame — snap again then.
+    if (realmOverride) requestAnimationFrame(() => requestAnimationFrame(snap))
+  }, [realmOverride, stepIndex])
 
   const onResult = useCallback(
     (ok: boolean) => {
@@ -1358,11 +1376,7 @@ export function LearnSession({
           onResult={onResult}
           overlay
           talking={talking}
-          onTalk={() => {
-            playHarborTalkStart()
-            playHarborNpcGreet()
-            setTalking(true)
-          }}
+          onTalk={beginTalk}
           onExplore={() => {
             playHarborExplore()
             setTalking(false)

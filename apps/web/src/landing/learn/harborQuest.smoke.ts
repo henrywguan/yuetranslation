@@ -431,8 +431,11 @@ function main() {
   assert.ok(panelSrc.includes('hq-dialog'), 'OSRS-style NPC dialogue box')
   assert.ok(panelSrc.includes('Talk to'), 'Talk CTA to open dialogue')
   assert.ok(panelSrc.includes('Explore world'), 'Explore world dismisses dialogue')
+  assert.match(worldSrc, /snapToQuestDock/, 'world can teleport canoe to quest pier')
 
   const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
+  assert.match(playSrc, /snapToQuestDock/, 'Talk / Next gate snaps sailor to quest dock')
+  assert.match(playSrc, /beginTalk/, 'Talk CTA boards + docks before dialogue')
   assert.ok(playSrc.includes('hq-explore-fab'), 'open-world explore FAB on stage')
   assert.ok(playSrc.includes('Open world exploration'), 'explore FAB accessible label')
   assert.ok(playSrc.includes('ExploreWorldIcon'), 'compass icon for open-world explore')
