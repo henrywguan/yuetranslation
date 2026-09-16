@@ -392,10 +392,6 @@ export function sanitizeCarriedGear(ownedRaw: unknown, bankedRaw: unknown = []):
   return sanitizeOwnedGear(ownedRaw).filter((id) => !banked.has(id))
 }
 
-function mat(color: number) {
-  return hqMat(color)
-}
-
 /** Build a handheld prop mesh for the hand_r socket. */
 export function buildHandheldProp(itemId: string): THREE.Object3D | null {
   const item = BY_ID.get(itemId)

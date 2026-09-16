@@ -426,11 +426,12 @@ function main() {
   assert.ok(hqMarketStall(() => 0.2).name === 'hq-market-stall', 'market stall prop')
   assert.equal(hqWoodTexture().image.width, 128, 'wood albedo is 128×128 era size')
   assert.equal(hqWoodTexture().magFilter, 1003 /* NearestFilter */, 'wood uses nearest filter')
-  const clutterRoot = { add() {}, children: [] as unknown[] } as unknown as import('three').Group
   const added: string[] = []
-  ;(clutterRoot as { add: (o: { name?: string }) => void }).add = (o) => {
-    added.push(o.name ?? '')
-  }
+  const clutterRoot = {
+    add(o: { name?: string }) {
+      added.push(o.name ?? '')
+    },
+  } as unknown as import('three').Group
   hqStampClutter(clutterRoot, () => 0.5, 0, 0, 2, 3)
   assert.ok(added.length === 3, 'stamp clutter adds props')
   assert.match(
