@@ -3221,14 +3221,18 @@ export function createHarborWorld(
   }
 
   const showSpeechBubble = (who: 'local' | string, text: string, durationMs = 4500) => {
+    if (disposed) return
     const cleaned = text.trim()
     if (!cleaned) return
     const until = performance.now() + Math.max(1200, durationMs)
     if (who === 'local') {
       clearSpeechBubble(localSpeechBubble, scene)
       localSpeechBubble = buildChatBubbleSprite(cleaned)
-      localSpeechBubble.position.copy(localNametag.position)
-      localSpeechBubble.position.y += 0.55
+      // Prefer live scout/boat pose — nametag may still be at origin before first tick.
+      const lx = travelMode === 'foot' ? scoutWalk.position.x : boat.position.x
+      const ly = travelMode === 'foot' ? 2.05 : 1.85
+      const lz = travelMode === 'foot' ? scoutWalk.position.z : boat.position.z
+      localSpeechBubble.position.set(lx, ly + 0.72, lz)
       scene.add(localSpeechBubble)
       localSpeechUntil = until
       return
@@ -3555,9 +3559,15 @@ export function createHarborWorld(
   canvas.addEventListener('lostpointercapture', endDrag)
   canvas.addEventListener('wheel', onWheel, { passive: false })
 
+  let lastResizeW = 0
+  let lastResizeH = 0
   const resize = () => {
-    const w = canvas.clientWidth || canvas.width || 1
-    const h = canvas.clientHeight || canvas.height || 1
+    const w = Math.max(1, Math.floor(canvas.clientWidth || canvas.width || 1))
+    const h = Math.max(1, Math.floor(canvas.clientHeight || canvas.height || 1))
+    // Soft-keyboard open/close spams resize on mobile — skip no-ops to avoid WebGL thrash/freeze.
+    if (w === lastResizeW && h === lastResizeH) return
+    lastResizeW = w
+    lastResizeH = h
     renderer.setSize(w, h, false)
     camera.aspect = w / h
     camera.updateProjectionMatrix()

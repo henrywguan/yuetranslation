@@ -59,12 +59,27 @@ export function HarborChatBox({
 
   if (hidden) return null
 
+  /** iOS/Android leave the fixed game shell scrolled after the soft keyboard. */
+  const snapViewport = () => {
+    try {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    } catch {
+      /* ignore */
+    }
+  }
+
   const submit = (e?: FormEvent) => {
     e?.preventDefault()
     const cleaned = sanitizeChatText(draft)
     if (!cleaned || disabled) return
     onSend(cleaned)
     setDraft('')
+    // Dismiss keyboard *after* send so overhead say paints while layout is stable,
+    // then reveal the sailor (and free WASD / tap-to-move).
+    inputRef.current?.blur()
+    snapViewport()
   }
 
   const onInputKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -72,6 +87,7 @@ export function HarborChatBox({
       e.preventDefault()
       setDraft('')
       inputRef.current?.blur()
+      snapViewport()
     }
   }
 
@@ -101,13 +117,27 @@ export function HarborChatBox({
           placeholder={disabled ? 'Sign in to chat with other sailors' : placeholder}
           aria-label="Chat message"
           autoComplete="off"
+          enterKeyHint="send"
           spellCheck
           onChange={(e) => setDraft(e.target.value)}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => {
+            setFocused(false)
+            snapViewport()
+          }}
           onKeyDown={onInputKey}
         />
-        <button type="submit" className="hq-chat-send" disabled={disabled || !draft.trim()}>
+        <button
+          type="submit"
+          className="hq-chat-send"
+          disabled={disabled || !draft.trim()}
+          onPointerDown={(e) => {
+            // Keep the input focused until submit runs. On mobile, blurring first
+            // dismisses the keyboard, shifts the dock, and the click misses Say —
+            // the tap falls through to the world canvas (no overhead / feels frozen).
+            if (e.button === 0) e.preventDefault()
+          }}
+        >
           Say
         </button>
       </form>

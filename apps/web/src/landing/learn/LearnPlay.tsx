@@ -732,7 +732,11 @@ export function LearnSession({
   const sendChat = useCallback((raw: string) => {
     const cleaned = sanitizeChatText(raw)
     if (!cleaned) return
-    playHarborChatSend()
+    try {
+      playHarborChatSend()
+    } catch {
+      /* SFX must never block local echo / overhead say */
+    }
     const userId = localUserIdRef.current ?? 'local'
     const packet: HarborChatPacket = {
       userId,
@@ -756,6 +760,8 @@ export function LearnSession({
       ]
       return next.length > 40 ? next.slice(-40) : next
     })
+    // Overhead before keyboard dismiss (HarborChatBox blurs after onSend) so the
+    // sprite is already in the scene when the sailor is visible again.
     worldApiRef.current?.showSpeechBubble('local', cleaned)
     presenceRef.current?.broadcastChat(cleaned)
   }, [localUsername])

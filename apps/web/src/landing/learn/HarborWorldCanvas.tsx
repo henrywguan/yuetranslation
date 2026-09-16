@@ -74,20 +74,28 @@ export function HarborWorldCanvas({
     worldRef.current = world
     if (worldApiRef) worldApiRef.current = world
 
-    const onResize = () => world.resize()
-    window.addEventListener('resize', onResize)
+    let resizeRaf = 0
+    const scheduleResize = () => {
+      if (resizeRaf) return
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0
+        world.resize()
+      })
+    }
+    window.addEventListener('resize', scheduleResize)
     // Stage height changes when the OSRS chat strip docks — observe the parent box.
     const box = canvas.parentElement
     const ro =
       typeof ResizeObserver !== 'undefined' && box
-        ? new ResizeObserver(() => world.resize())
+        ? new ResizeObserver(scheduleResize)
         : null
     ro?.observe(box ?? canvas)
     // Layout may settle after mount (fullscreen HUD / strip toggle).
     requestAnimationFrame(() => world.resize())
 
     return () => {
-      window.removeEventListener('resize', onResize)
+      window.removeEventListener('resize', scheduleResize)
+      if (resizeRaf) cancelAnimationFrame(resizeRaf)
       ro?.disconnect()
       world.dispose()
       worldRef.current = null
