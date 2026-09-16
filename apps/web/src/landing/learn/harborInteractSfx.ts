@@ -203,6 +203,15 @@ export function playHarborPaddle(): void {
   tone(ctx, bus, t0 + 0.02, { type: 'sine', f0: 180, f1: 120, dur: 0.1, gain: 0.22 })
 }
 
+/** Wood creak when sitting on a chair / stool. */
+export function playHarborSit(): void {
+  if (typeof window === 'undefined') return
+  const { ctx, bus, t0 } = busAt(HARBOR_INTERACT_SFX_GAIN * 0.5)
+  noiseBurst(ctx, bus, t0, 0.07, 240, 0.4)
+  tone(ctx, bus, t0, { type: 'triangle', f0: 150, f1: 95, dur: 0.14, gain: 0.32 })
+  tone(ctx, bus, t0 + 0.05, { type: 'sine', f0: 220, f1: 160, dur: 0.1, gain: 0.18 })
+}
+
 /** Barber confirm snip. */
 export function playHarborBarberSnip(): void {
   if (typeof window === 'undefined') return
