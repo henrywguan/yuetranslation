@@ -137,6 +137,11 @@ export type HarborWorldHandle = {
    * before React progress catches up. Used by Talk / Next gate.
    */
   snapToQuestDock: (stepIndex?: number) => void
+  /**
+   * OSRS minimap / UI navigate — sail or walk toward a world (x,z).
+   * Same rules as tapping the ground (disembark on land, reboard near canoe).
+   */
+  moveToWorld: (x: number, z: number) => void
   resize: () => void
   dispose: () => void
 }
@@ -3694,10 +3699,13 @@ export function createHarborWorld(
       }
     }
     if (!raycaster.ray.intersectPlane(groundPlane, hitPoint)) return
-    const tx = hitPoint.x
-    const tz = hitPoint.z
+    commandMoveTo(hitPoint.x, hitPoint.z)
+  }
+
+  /** Shared by ground tap + minimap tap (OSRS-style click-to-walk). */
+  const commandMoveTo = (tx: number, tz: number) => {
+    if (disposed) return
     if (travelMode === 'boat') {
-      // Guan: tap an island to disembark ashore; otherwise free-sail the lagoon.
       if (isGuan && isGuanLand(tx, tz)) {
         disembark(tx, tz)
         setMoveTarget(tx, tz, true)
@@ -3709,7 +3717,6 @@ export function createHarborWorld(
       }
       return
     }
-    // On foot: stand up if seated, then walk / reboard
     exitSit()
     sitTarget = null
     const distBoat = Math.hypot(tx - boatX, tz - voyageZ)
@@ -4364,6 +4371,9 @@ if (o.userData.cigaretteSmoke && !reduced) {
       destMarker.visible = false
       emitVisitable(null)
       ensureChunks(voyageZ)
+    },
+    moveToWorld(x, z) {
+      commandMoveTo(x, z)
     },
     resize,
     dispose() {

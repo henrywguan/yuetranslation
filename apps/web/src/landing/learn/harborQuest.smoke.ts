@@ -1144,6 +1144,13 @@ function main() {
   assert.match(minimapSrc, /kind: 'move'|beginMove/, 'minimap is movable')
   assert.match(minimapSrc, /viewYaw/, 'minimap rotates with camera view')
   assert.match(minimapSrc, /legendOpen/, 'minimap legend can open')
+  assert.match(minimapSrc, /unprojectMinimapTap/, 'minimap tap unprojects to world coords')
+  assert.match(minimapSrc, /onNavigate/, 'minimap accepts navigate callback')
+  assert.match(minimapSrc, /hq-minimap-tap-x/, 'minimap shows tap destination X')
+  assert.match(minimapSrc, /Tap to walk or sail/, 'minimap tap affordance label')
+  assert.match(worldSrc, /moveToWorld/, 'world exposes moveToWorld for minimap navigate')
+  assert.match(worldSrc, /commandMoveTo/, 'ground tap and minimap share move command')
+  assert.match(playSrc2, /moveToWorld/, 'Learn session wires minimap tap to world move')
   const chatBoxSrc = readFileSync(new URL('./HarborChatBox.tsx', import.meta.url), 'utf8')
   assert.match(chatBoxSrc, /export function HarborChatBox/, 'RuneScape-style chat box')
   assert.match(
