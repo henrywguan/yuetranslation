@@ -7,6 +7,7 @@ import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
 import type { HarborVisitableId, HarborWorldHandle } from './harborWorld'
+import { HARBOR_MAX_QUEST_SLOTS } from './harborWorld'
 import { JyutpingChaoText } from './JyutpingChaoText'
 import { levelRealm, type HarborLevel } from './curriculum'
 
@@ -54,8 +55,8 @@ export function HarborStage({
   worldApiRef,
 }: HarborStageProps) {
   const reduce = useReducedMotion()
-  const total = Math.max(stepCount, 1)
-  const progress = Math.min(stepIndex / total, 1)
+  // One pier slot per quest gate — not stepIndex/stepCount along a 240u void.
+  const progress = Math.min(stepIndex / HARBOR_MAX_QUEST_SLOTS, 1)
 
   return (
     <div

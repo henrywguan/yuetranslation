@@ -51,6 +51,7 @@ import {
   clampOrbitPitch,
   dockPoseForProgress,
   HARBOR_DOCK_SPACING,
+  HARBOR_MAX_QUEST_SLOTS,
   HARBOR_FOG_DENSITY,
   HARBOR_NPC_ROLES,
   HARBOR_DIALOGUE_BUBBLE,
@@ -331,7 +332,36 @@ function main() {
   const dock0 = dockPoseForProgress(0)
   const dockMid = dockPoseForProgress(0.5)
   assert.ok(dockMid.z > dock0.z, 'later progress docks further downriver')
-  assert.notEqual(dock0.side, dockPoseForProgress(HARBOR_DOCK_SPACING / 240).side, 'adjacent slots alternate banks')
+  assert.equal(dockPoseForProgress(0).slot, 0, 'progress 0 → pier 0')
+  assert.equal(
+    dockPoseForProgress(1 / HARBOR_MAX_QUEST_SLOTS).slot,
+    1,
+    'one quest gate → next pier slot',
+  )
+  assert.notEqual(
+    dock0.side,
+    dockPoseForProgress(1 / HARBOR_MAX_QUEST_SLOTS).side,
+    'adjacent slots alternate banks',
+  )
+  assert.ok(
+    dockPoseForProgress(1).z <= HARBOR_MAX_QUEST_SLOTS * HARBOR_DOCK_SPACING + 6,
+    'quest auto-sail caps before empty downriver',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborStage.tsx', import.meta.url), 'utf8'),
+    /HARBOR_MAX_QUEST_SLOTS/,
+    'stage maps stepIndex to capped pier slots',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /playerDirected && arrived/,
+    'landmark modals only after player-directed arrival',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /!playerDirected\) \{\s*emitVisitable\(null\)/,
+    'auto-quest sail clears landmark visits',
+  )
   assert.equal(HARBOR_WULINGYUAN, true, 'Wulingyuan mountain backdrop')
   assert.equal(HARBOR_XIANGYUN, true, 'xiangyun auspicious sky clouds')
 
