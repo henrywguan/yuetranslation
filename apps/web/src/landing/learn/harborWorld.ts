@@ -88,6 +88,8 @@ export type HarborWorldOptions = {
   realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Tap a talkable NPC / speech bubble while in range. */
+  onDialogueNpc?: (tap: HarborDialogueTap) => void
   /** Tap a remote sailor (signed-in multiplayer). */
   onRemotePlayerSelect?: (userId: string) => void
 }
@@ -199,8 +201,10 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
   },
 ] as const
 
-/** Arrival radius to open a visitable panel. */
-export const HARBOR_VISIT_RADIUS = 2.4
+/** Arrival radius to open a visitable panel (proximity). */
+export const HARBOR_VISIT_RADIUS = 3.6
+/** Max distance to tap-open an NPC dialogue / landmark host UI. */
+export const HARBOR_NPC_TALK_RADIUS = 4.2
 
 /** Chinese clothing roles for bank / pier NPCs (smoke-tested). */
 export const HARBOR_NPC_ROLES = [
@@ -212,6 +216,21 @@ export const HARBOR_NPC_ROLES = [
   'ferryman',
 ] as const
 export type HarborNpcRole = (typeof HARBOR_NPC_ROLES)[number]
+
+/** Tap target for in-world NPC interaction. */
+export type HarborDialogueTap =
+  | { kind: 'landmark'; id: HarborVisitableId }
+  | { kind: 'quest'; dockSlot: number; role: HarborNpcRole }
+
+/** Floating name labels for pier dialogue hosts. */
+export const HARBOR_NPC_ROLE_LABEL: Record<HarborNpcRole, string> = {
+  villager: 'Villager',
+  scholar: 'Scholar',
+  fisherman: 'Fisherman',
+  merchant: 'Merchant',
+  child: 'Child',
+  ferryman: 'Ferryman',
+}
 
 /** Discrete pier for a quest gate index — alternates bank each stop. */
 export function dockPoseForStep(stepIndex: number): { z: number; side: 1 | -1; slot: number } {
@@ -1067,11 +1086,24 @@ function pierSegment() {
 /** Floating speech bubble — OSRS-style cue that this NPC has dialogue. */
 export const HARBOR_DIALOGUE_BUBBLE = true as const
 
+/** Floating nametag above an NPC head (same plate language as sailor tags). */
+function attachNpcNametag(npc: THREE.Object3D, label: string) {
+  if (npc.getObjectByName('npc-nametag')) return
+  const tag = buildNametagSprite(label)
+  tag.name = 'npc-nametag'
+  tag.userData.npcNametag = true
+  // Sit just above the oversized head; speech bubble floats higher
+  tag.position.set(0, 1.9, 0)
+  tag.scale.set(1.55, 0.38, 1)
+  npc.add(tag)
+}
+
 function speechBubbleIcon() {
   const g = new THREE.Group()
   g.name = 'speech-bubble'
   g.userData.speechBubble = true
   g.userData.billboard = true
+  g.userData.hasDialogue = true
   // Parchment bubble body
   g.add(hqBox(0.44, 0.32, 0.08, 0xfff8ec, 0, 0.1, 0))
   g.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, 0.28, 0))
@@ -1089,14 +1121,15 @@ function speechBubbleIcon() {
   return g
 }
 
-/** Mark an NPC as talkable and hover a speech bubble above their head. */
-function attachDialogueBubble(npc: THREE.Object3D) {
+/** Mark an NPC as talkable, name them, and hover a speech bubble above their head. */
+function attachDialogueBubble(npc: THREE.Object3D, label?: string) {
   npc.userData.hasDialogue = true
+  if (label) attachNpcNametag(npc, label)
   // Avoid double-attaching if chunk rebuilds call this twice
   if (npc.getObjectByName('speech-bubble')) return
   const bubble = speechBubbleIcon()
-  // Local Y sits above the oversized head (group scale still applies)
-  bubble.position.set(0.12, 1.68, 0.06)
+  // Above the nametag so both stay readable
+  bubble.position.set(0.12, 2.32, 0.06)
   bubble.userData.bubbleBaseY = bubble.position.y
   npc.add(bubble)
 }
@@ -1187,6 +1220,15 @@ export const HARBOR_LANDMARK_HOSTS = [
   'barber',
 ] as const satisfies readonly HarborVisitableId[]
 export type HarborLandmarkHostId = (typeof HARBOR_LANDMARK_HOSTS)[number]
+
+/** Floating name labels for landmark hosts. */
+export const HARBOR_LANDMARK_HOST_LABEL: Record<HarborLandmarkHostId, string> = {
+  'save-shack': 'Save Keeper',
+  outfitter: 'Outfitter',
+  bank: 'Banker',
+  arena: 'Arena Master',
+  barber: 'Barber',
+}
 
 const LANDMARK_GLOW: Record<HarborLandmarkHostId, number> = {
   'save-shack': 0xffd060,
@@ -1520,7 +1562,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   }
 
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
-  attachDialogueBubble(g)
+  attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
   return g
 }
 
@@ -2265,8 +2307,9 @@ function placeDockStops(group: THREE.Group, chunkIndex: number, rng: () => numbe
     // Stand on the pier deck, facing the river
     npc.position.set(side * (RIVER + 1.55), 0.55, z + (rng() - 0.5) * 0.6)
     npc.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2
-    // Pier hosts are quest speakers — show Talk cue above their head
-    attachDialogueBubble(npc)
+    npc.userData.dockSlot = slot
+    // Pier hosts are quest speakers — nametag + Talk cue above their head
+    attachDialogueBubble(npc, HARBOR_NPC_ROLE_LABEL[role])
     group.add(npc)
     // Decorative bank NPCs removed — only dialogue hosts stay (GPU + clarity)
   }
@@ -3268,6 +3311,22 @@ function nearestVisitable(
   return best
 }
 
+/** Walk hit parents for a talkable NPC / speech bubble / landmark host. */
+function dialogueTapFromObject(obj: THREE.Object3D): HarborDialogueTap | null {
+  let cur: THREE.Object3D | null = obj
+  while (cur) {
+    const landmark = cur.userData.landmarkHost as HarborVisitableId | undefined
+    if (landmark) return { kind: 'landmark', id: landmark }
+    const dockSlot = cur.userData.dockSlot as number | undefined
+    if (cur.userData.hasDialogue && typeof dockSlot === 'number') {
+      const role = (cur.userData.npc as HarborNpcRole | undefined) ?? 'ferryman'
+      return { kind: 'quest', dockSlot, role }
+    }
+    cur = cur.parent
+  }
+  return null
+}
+
 export function createHarborWorld(
   canvas: HTMLCanvasElement,
   options: HarborWorldOptions = {},
@@ -3701,6 +3760,38 @@ export function createHarborWorld(
       const remoteId = remoteUserIdFromHits(hits)
       if (remoteId) {
         options.onRemotePlayerSelect?.(remoteId)
+        return
+      }
+    }
+    // Talkable NPCs / speech bubbles — open UI when close enough
+    {
+      const pickRoots: THREE.Object3D[] = [visitablesRoot]
+      for (const g of chunkGroups.values()) pickRoots.push(g)
+      if (guanScene) pickRoots.push(guanScene)
+      const npcHits = raycaster.intersectObjects(pickRoots, true)
+      for (const hit of npcHits) {
+        const tap = dialogueTapFromObject(hit.object)
+        if (!tap) continue
+        // Resolve the NPC root for distance (landmark host or pier figure)
+        let root: THREE.Object3D | null = hit.object
+        while (root && !root.userData.hasDialogue && !root.userData.landmarkHost) {
+          root = root.parent
+        }
+        if (!root) continue
+        const worldPos = new THREE.Vector3()
+        root.getWorldPosition(worldPos)
+        const px = travelMode === 'foot' ? footX : boatX
+        const pz = travelMode === 'foot' ? footZ : voyageZ
+        const dist = Math.hypot(worldPos.x - px, worldPos.z - pz)
+        if (dist <= HARBOR_NPC_TALK_RADIUS) {
+          options.onDialogueNpc?.(tap)
+          return
+        }
+        // Too far — walk / paddle toward them instead of opening
+        if (travelMode === 'boat' && !isGuan && isHarborLand(worldPos.x)) {
+          disembark(worldPos.x)
+        }
+        setMoveTarget(worldPos.x, worldPos.z, true)
         return
       }
     }

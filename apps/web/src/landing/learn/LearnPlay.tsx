@@ -75,6 +75,7 @@ import { HarborChatBox, type HarborChatLine } from './HarborChatBox'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
   HARBOR_NPC_ROLES,
+  type HarborDialogueTap,
   type HarborNpcRole,
   type HarborVisitableId,
   type HarborWorldHandle,
@@ -585,6 +586,30 @@ export function LearnSession({
     setVisitable(id)
   }, [])
 
+  /** Tap a nearby NPC / speech bubble — open landmark UI or that pier's lesson. */
+  const onDialogueNpc = useCallback(
+    (tap: HarborDialogueTap) => {
+      if (tap.kind === 'landmark') {
+        onVisitable(tap.id)
+        return
+      }
+      if (!level) return
+      const slot = Math.max(0, Math.min(level.steps.length - 1, tap.dockSlot))
+      if (realmOverride) {
+        setRealmOverride(null)
+        startHarborBgm('river')
+      }
+      setStepIndex(slot)
+      playHarborTalkStart()
+      playHarborNpcGreet()
+      setTalking(true)
+      const snap = () => worldApiRef.current?.snapToQuestDock(slot)
+      snap()
+      requestAnimationFrame(() => requestAnimationFrame(snap))
+    },
+    [level, onVisitable, realmOverride],
+  )
+
   const onEarnGold = useCallback(
     (amount: number) => {
       playHarborCoinChing()
@@ -821,6 +846,7 @@ export function LearnSession({
             visitable !== null
           }
           onVisitable={onVisitable}
+          onDialogueNpc={onDialogueNpc}
           remotePlayers={remotePlayers}
           localUsername={localUsername}
           onRemotePlayerSelect={setProfileUserId}

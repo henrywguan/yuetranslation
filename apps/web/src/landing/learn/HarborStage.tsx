@@ -6,7 +6,7 @@ import type { HarborLook } from './harborGear'
 import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
-import type { HarborVisitableId, HarborWorldHandle } from './harborWorld'
+import type { HarborDialogueTap, HarborVisitableId, HarborWorldHandle } from './harborWorld'
 import { HARBOR_MAX_QUEST_SLOTS } from './harborWorld'
 import { JyutpingChaoText } from './JyutpingChaoText'
 import { levelRealm, type HarborLevel, type HarborRealmId } from './curriculum'
@@ -31,6 +31,8 @@ type HarborStageProps = {
   realmOverride?: HarborRealmId | null
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
+  /** Tap a nearby talkable NPC / speech bubble. */
+  onDialogueNpc?: (tap: HarborDialogueTap) => void
   /** Signed-in multiplayer remotes. */
   remotePlayers?: HarborRemotePlayer[]
   localUsername?: string
@@ -52,6 +54,7 @@ export function HarborStage({
   paused = false,
   realmOverride = null,
   onVisitable,
+  onDialogueNpc,
   remotePlayers,
   localUsername,
   onRemotePlayerSelect,
@@ -77,6 +80,7 @@ export function HarborStage({
         realm={realmOverride ?? levelRealm(level)}
         paused={paused}
         onVisitable={onVisitable}
+        onDialogueNpc={onDialogueNpc}
         remotePlayers={remotePlayers}
         localUsername={localUsername}
         onRemotePlayerSelect={onRemotePlayerSelect}
