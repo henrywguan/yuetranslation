@@ -216,9 +216,6 @@ export const HARBOR_NPC_TALK_RADIUS = 4.2
 /** Tap a chair within this range (on foot) to sit. */
 export const HARBOR_SIT_RADIUS = 1.85
 
-/** Tap a chair within this range (on foot) to sit. */
-export const HARBOR_SIT_RADIUS = 1.85
-
 /** Chinese clothing roles for bank / pier NPCs (smoke-tested). */
 export const HARBOR_NPC_ROLES = [
   'villager',
