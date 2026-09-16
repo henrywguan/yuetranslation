@@ -24,6 +24,9 @@ import {
   HARBOR_BGM_LOOP_SEC,
   HARBOR_BGM_PHRASE,
   HARBOR_BGM_SCALE_HZ,
+  GUAN_BGM_PHRASE,
+  GUAN_BGM_SCALE_HZ,
+  harborBgmTheme,
 } from '../../landing/learn/harborBgm'
 import { HARBOR_COIN_CHING_GAIN } from '../../landing/learn/harborCoinSfx'
 import {
@@ -87,6 +90,16 @@ import {
   HARBOR_LANDMARK_HOSTS,
   HARBOR_VISIT_RADIUS,
 } from '../../landing/learn/harborWorld'
+import {
+  buildGuanHarborScene,
+  clampGuanBoatTarget,
+  GUAN_BOAT_START,
+  GUAN_HARBOR_BOUNDS,
+  GUAN_HARBOR_META,
+  GUAN_ISLANDS,
+  GUAN_RETURN_PORTAL,
+  GUAN_TROPICAL_LOOK,
+} from '../../landing/learn/harborGuanRealm'
 import {
   HARBOR_CRAFT_PALETTE,
   HARBOR_FACETS,
@@ -228,8 +241,8 @@ function main() {
   assert.equal(clampOrbitDistance(ORBIT_DISTANCE_MAX + 1), ORBIT_DISTANCE_MAX)
   assert.ok(ORBIT_DISTANCE_MIN < ORBIT_DISTANCE && ORBIT_DISTANCE < ORBIT_DISTANCE_MAX, 'default zoom sits mid-range')
   const near = orbitCameraOffset(0, Math.PI / 6, ORBIT_DISTANCE_MIN)
-  const far = orbitCameraOffset(0, Math.PI / 6, ORBIT_DISTANCE_MAX)
-  assert.ok(Math.hypot(far.x, far.y, far.z) > Math.hypot(near.x, near.y, near.z), 'farther distance pushes camera out')
+  const farCam = orbitCameraOffset(0, Math.PI / 6, ORBIT_DISTANCE_MAX)
+  assert.ok(Math.hypot(farCam.x, farCam.y, farCam.z) > Math.hypot(near.x, near.y, near.z), 'farther distance pushes camera out')
   const behind = orbitCameraOffset(0, Math.PI / 6)
   assert.ok(behind.z < 0, 'yaw 0 sits behind the canoe')
   const side = orbitCameraOffset(Math.PI / 2, Math.PI / 6)
@@ -243,8 +256,47 @@ function main() {
   assert.match(worldSrc, /function magpie/, 'magpie mesh builder')
   assert.match(worldSrc, /function koi/, 'koi mesh builder')
   assert.match(worldSrc, /realm === 'bamboo' \? 0x2a6a42/, 'bamboo realm grass tint')
+  // Guan Harbor paradise pocket
+  assert.match(worldSrc, /HarborRealmId = 'river' \| 'bamboo' \| 'guan'/, 'realm id includes guan')
+  const curriculumSrc = readFileSync(new URL('./curriculum.ts', import.meta.url), 'utf8')
+  assert.match(curriculumSrc, /HarborRealmId = 'river' \| 'bamboo' \| 'guan'/, 'curriculum realm id includes guan')
+  assert.equal(GUAN_HARBOR_META.en, 'Guan Harbor')
+  assert.equal(GUAN_HARBOR_META.zh, '關港')
+  assert.equal(GUAN_ISLANDS.length, 4, 'central + 3 satellite islands')
+  assert.ok(GUAN_TROPICAL_LOOK.sky > 0 && GUAN_TROPICAL_LOOK.water > 0, 'tropical look constants')
+  assert.ok(GUAN_HARBOR_BOUNDS.maxX > GUAN_HARBOR_BOUNDS.minX, 'guan bounds')
+  const guanScene = buildGuanHarborScene()
+  assert.equal(guanScene.name, 'guan-harbor')
+  assert.ok(guanScene.children.length >= 8, 'guan scene has islands / flora / pier / portal')
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-island-central'),
+    'central paradise island',
+  )
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-gazebo' || c.name === 'guan-return-portal' || c.children?.length),
+    'guan builders include gathering / portal pieces',
+  )
+  const insideIsland = clampGuanBoatTarget(0, 6)
+  assert.ok(
+    Math.hypot(insideIsland.x - 0, insideIsland.z - 6) >= GUAN_ISLANDS[0]!.r,
+    'clamp pushes boat off island land',
+  )
+  const far = clampGuanBoatTarget(99, -99)
+  assert.equal(far.x, GUAN_HARBOR_BOUNDS.maxX)
+  assert.equal(far.z, GUAN_HARBOR_BOUNDS.minZ)
+  assert.match(worldSrc, /buildGuanHarborScene/, 'world builds static guan scene')
+  assert.match(worldSrc, /clampGuanBoatTarget/, 'guan tap-move clamp')
+  assert.match(worldSrc, /isGuan/, 'guan free-sail branch')
+  assert.match(worldSrc, /GUAN_BOAT_START/, 'boat starts near central island')
+  assert.match(worldSrc, /GUAN_RETURN_PORTAL/, 'guan return portal visit')
+  assert.equal(GUAN_RETURN_PORTAL.id, 'save-shack')
+  assert.ok(GUAN_BOAT_START.x !== 0 || GUAN_BOAT_START.z !== 0, 'boat start offset')
   const stageSrc = readFileSync(new URL('./HarborStage.tsx', import.meta.url), 'utf8')
-  assert.match(stageSrc, /realm=\{levelRealm\(level\)\}/, 'HarborStage passes realm into canvas')
+  assert.match(
+    stageSrc,
+    /realm=\{realmOverride \?\? levelRealm\(level\)\}/,
+    'HarborStage passes realmOverride ?? levelRealm into canvas',
+  )
   const canvasSrc = readFileSync(new URL('./HarborWorldCanvas.tsx', import.meta.url), 'utf8')
   assert.match(canvasSrc, /realm\?: HarborRealmId/, 'HarborWorldCanvas accepts realm prop')
   assert.match(canvasSrc, /\[realm\]/, 'canvas recreates world when realm changes')
@@ -417,9 +469,14 @@ function main() {
   assert.ok(playSrc.includes('worldPaused'), 'session accepts page-level world pause')
   assert.ok(playSrc.includes('paused={'), 'stage receives pause when overlays open')
   assert.ok(playSrc.includes('Teleport to chapter'), 'Save Shack chapter teleport')
+  assert.ok(playSrc.includes('Guan Harbor'), 'Save Shack Guan Harbor teleport label')
+  assert.ok(playSrc.includes('realmOverride'), 'LearnPlay realmOverride state')
+  assert.ok(playSrc.includes("startHarborBgm('guan')"), 'Guan teleport switches BGM theme')
+  assert.ok(playSrc.includes("startHarborBgm('river')"), 'cast off / chapter restores river BGM')
   assert.ok(playSrc.includes('hq-campaign-tabs'), 'pier chart campaign tabs')
   assert.ok(playSrc.includes("levelsForCampaign"), 'map filters by campaign')
   assert.ok(playSrc.includes('hq-teleport-list'), 'chapter teleport list')
+  assert.ok(playSrc.includes('hq-teleport-btn--guan'), 'always-unlocked Guan Harbor teleport button')
 
   assert.doesNotMatch(playSrc, /hq-btn--hud[^>]*>\s*Textbook/, 'top Textbook button removed')
 
@@ -812,6 +869,19 @@ function main() {
       HARBOR_BGM_PHRASE.some((v) => v.kind === 'pluck'),
     'BGM uses flute / pad / pluck timbres',
   )
+  assert.equal(GUAN_BGM_SCALE_HZ.length, 6, 'guan major/island scale')
+  assert.ok(GUAN_BGM_PHRASE.length >= 16, 'guan BGM phrase has pad + flute + pluck')
+  assert.ok(
+    GUAN_BGM_PHRASE.some((v) => v.kind === 'flute') &&
+      GUAN_BGM_PHRASE.some((v) => v.kind === 'pad') &&
+      GUAN_BGM_PHRASE.some((v) => v.kind === 'pluck'),
+    'guan BGM uses flute / pad / pluck timbres',
+  )
+  assert.equal(harborBgmTheme(), 'river', 'default BGM theme is river')
+  const bgmSrc = readFileSync(new URL('./harborBgm.ts', import.meta.url), 'utf8')
+  assert.match(bgmSrc, /HarborBgmTheme = 'river' \| 'guan'/, 'BGM theme union')
+  assert.match(bgmSrc, /startHarborBgm\(theme/, 'startHarborBgm accepts theme')
+  assert.match(bgmSrc, /GUAN_BGM_PHRASE/, 'guan phrase export')
   const playAudioSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
   assert.match(playAudioSrc, /playHarborCoinChing/, 'correct answer plays coin ching')
   assert.match(playAudioSrc, /hq-coin-pop/, 'floating +coin animation')

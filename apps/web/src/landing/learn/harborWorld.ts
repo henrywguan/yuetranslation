@@ -13,6 +13,13 @@ import {
   hqRock,
   hqWindow,
 } from './harborCraft'
+import {
+  buildGuanHarborScene,
+  clampGuanBoatTarget,
+  GUAN_BOAT_START,
+  GUAN_RETURN_PORTAL,
+  GUAN_TROPICAL_LOOK,
+} from './harborGuanRealm'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
   HARBOR_DEFAULT_APPEARANCE,
@@ -49,8 +56,8 @@ import type { HarborPosePacket } from './harborPresence'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
-/** Voyage dressing — river harbor vs Lingnan bamboo academy garden. */
-export type HarborRealmId = 'river' | 'bamboo'
+/** Voyage dressing — river harbor, Lingnan bamboo academy, or Guan tropical paradise. */
+export type HarborRealmId = 'river' | 'bamboo' | 'guan'
 
 export type HarborWeather = 'sunny' | 'cloudy' | 'rainy' | 'night'
 
@@ -3014,7 +3021,16 @@ function barberBuilding(weather: HarborWeather = 'sunny') {
   return g
 }
 
-function nearestVisitable(x: number, z: number): HarborVisitableId | null {
+function nearestVisitable(
+  x: number,
+  z: number,
+  realm: HarborRealmId = 'river',
+): HarborVisitableId | null {
+  // Guan paradise — only the return portal (reuses Save Shack panel / cast-off).
+  if (realm === 'guan') {
+    const d = Math.hypot(GUAN_RETURN_PORTAL.x - x, GUAN_RETURN_PORTAL.z - z)
+    return d < GUAN_RETURN_PORTAL.radius ? GUAN_RETURN_PORTAL.id : null
+  }
   let best: HarborVisitableId | null = null
   let bestDist = HARBOR_VISIT_RADIUS
   for (const v of HARBOR_VISITABLES) {
@@ -3035,12 +3051,31 @@ export function createHarborWorld(
   let reduced = Boolean(options.reducedMotion)
   let progress = Math.min(1, Math.max(0, options.progress ?? 0))
   const realm: HarborRealmId = options.realm ?? 'river'
+  const isGuan = realm === 'guan'
   let flash: 'ok' | 'no' | null = null
   let flashUntil = 0
   let disposed = false
   let paused = false
-  const weather: HarborWeather = options.weather ?? pickHarborWeather()
-  const look = HARBOR_WEATHER_LOOK[weather]
+  // Guan Harbor always forces sunny tropical daylight.
+  const weather: HarborWeather = isGuan ? 'sunny' : (options.weather ?? pickHarborWeather())
+  const baseLook = HARBOR_WEATHER_LOOK[weather]
+  const look = isGuan
+    ? {
+        ...baseLook,
+        sky: GUAN_TROPICAL_LOOK.sky,
+        fog: GUAN_TROPICAL_LOOK.fog,
+        fogDensity: GUAN_TROPICAL_LOOK.fogDensity,
+        amb: GUAN_TROPICAL_LOOK.amb,
+        ambI: GUAN_TROPICAL_LOOK.ambI,
+        sun: GUAN_TROPICAL_LOOK.sun,
+        sunI: GUAN_TROPICAL_LOOK.sunI,
+        hemiSky: GUAN_TROPICAL_LOOK.hemiSky,
+        hemiGround: GUAN_TROPICAL_LOOK.hemiGround,
+        hemiI: GUAN_TROPICAL_LOOK.hemiI,
+        rain: false,
+        stars: false,
+      }
+    : baseLook
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -3076,8 +3111,10 @@ export function createHarborWorld(
   scene.add(world)
 
   // Bamboo academy: slightly greener pond + jade bank (still Chinese-themed).
-  const waterTint =
-    realm === 'bamboo'
+  // Guan: forced tropical lagoon tint.
+  const waterTint = isGuan
+    ? GUAN_TROPICAL_LOOK.water
+    : realm === 'bamboo'
       ? weather === 'night'
         ? 0x1a3840
         : weather === 'rainy'
@@ -3094,11 +3131,20 @@ export function createHarborWorld(
             : WATER[hue]
   const waterMat = mat(waterTint, {
     transparent: true,
-    opacity: weather === 'rainy' ? 0.92 : weather === 'night' ? 0.9 : 0.88,
+    opacity: isGuan
+      ? GUAN_TROPICAL_LOOK.waterOpacity
+      : weather === 'rainy'
+        ? 0.92
+        : weather === 'night'
+          ? 0.9
+          : 0.88,
   })
-  const water = new THREE.Mesh(new THREE.PlaneGeometry(RIVER * 2.4, 400, 1, 20), waterMat)
+  const water = new THREE.Mesh(
+    new THREE.PlaneGeometry(isGuan ? 56 : RIVER * 2.4, isGuan ? 56 : 400, 1, isGuan ? 1 : 20),
+    waterMat,
+  )
   water.rotation.x = -Math.PI / 2
-  water.position.set(0, 0.02, 80)
+  water.position.set(0, 0.02, isGuan ? 6 : 80)
   scene.add(water)
 
   const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
@@ -3115,7 +3161,15 @@ export function createHarborWorld(
     fxIndexDirty = true
   }
 
+  let guanScene: THREE.Group | null = null
+  if (isGuan) {
+    guanScene = buildGuanHarborScene()
+    world.add(guanScene)
+    fxIndexDirty = true
+  }
+
   const ensureChunks = (centerZ: number) => {
+    if (isGuan) return
     const center = Math.floor(centerZ / CHUNK)
     const need = new Set<number>()
     for (let i = center - 1; i <= center + ACTIVE; i++) need.add(i)
@@ -3150,24 +3204,27 @@ export function createHarborWorld(
   boat.position.set(0, 0.05, 0)
   scene.add(boat)
 
-  // Fixed visitables — Save Shack + Outfitter + Bank + Arena (always on the chart)
+  // Fixed visitables — Save Shack + Outfitter + Bank + Arena (always on the chart).
+  // Guan paradise skips river landmarks; return portal is baked into the guan scene.
   const visitablesRoot = new THREE.Group()
   visitablesRoot.name = 'harbor-visitables'
-  for (const v of HARBOR_VISITABLES) {
-    const building =
-      v.id === 'save-shack'
-        ? saveShackBuilding(weather)
-        : v.id === 'bank'
-          ? bankBuilding(weather)
-          : v.id === 'arena'
-            ? arenaBuilding(weather)
-            : v.id === 'barber'
-              ? barberBuilding(weather)
-              : outfitterBuilding(weather)
-    building.position.set(v.x, 0, v.z)
-    // Face the river
-    building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
-    visitablesRoot.add(building)
+  if (!isGuan) {
+    for (const v of HARBOR_VISITABLES) {
+      const building =
+        v.id === 'save-shack'
+          ? saveShackBuilding(weather)
+          : v.id === 'bank'
+            ? bankBuilding(weather)
+            : v.id === 'arena'
+              ? arenaBuilding(weather)
+              : v.id === 'barber'
+                ? barberBuilding(weather)
+                : outfitterBuilding(weather)
+      building.position.set(v.x, 0, v.z)
+      // Face the river
+      building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
+      visitablesRoot.add(building)
+    }
   }
   scene.add(visitablesRoot)
 
@@ -3195,6 +3252,7 @@ export function createHarborWorld(
       })
     }
     for (const g of chunkGroups.values()) indexRoot(g)
+    if (guanScene) indexRoot(guanScene)
     indexRoot(visitablesRoot)
     indexRoot(boat)
     fxIndexDirty = false
@@ -3302,9 +3360,9 @@ export function createHarborWorld(
   }
 
 
-  // Distant Wulingyuan-style karst pillars (parallax backdrop)
-  const mountains = wulingyuanRange(42, look.fog)
-  scene.add(mountains)
+  // Distant Wulingyuan-style karst pillars (parallax backdrop) — skip in Guan lagoon
+  const mountains = isGuan ? null : wulingyuanRange(42, look.fog)
+  if (mountains) scene.add(mountains)
 
   // 祥云 — density/tone follow the weather look
   const clouds = xiangyunSky(77, look)
@@ -3326,15 +3384,18 @@ export function createHarborWorld(
   }
 
   const startDock = dockPoseForProgress(progress)
-  let voyageZ = startDock.z
-  let boatX = startDock.side * HARBOR_DOCK_X * 0.35
+  let voyageZ = isGuan ? GUAN_BOAT_START.z : startDock.z
+  let boatX = isGuan ? GUAN_BOAT_START.x : startDock.side * HARBOR_DOCK_X * 0.35
   let waterPhase = 0
   let raf = 0
   let last = performance.now()
 
-    // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target)
-  let moveTarget = { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
-  let playerDirected = false
+  // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target).
+  // Guan Harbor is always free-sail — no auto dock retargeting.
+  let moveTarget = isGuan
+    ? { x: GUAN_BOAT_START.x, z: GUAN_BOAT_START.z }
+    : { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
+  let playerDirected = isGuan
   /** Crew the canoe (`boat`) or walk the Scout on land (`foot`). */
   let travelMode: 'boat' | 'foot' = 'boat'
   let footX = boatX
@@ -3351,7 +3412,11 @@ export function createHarborWorld(
 
   const setMoveTarget = (x: number, z: number, fromPlayer: boolean) => {
     const clamped =
-      travelMode === 'boat' ? clampHarborBoatTarget(x, z) : clampHarborMoveTarget(x, z)
+      travelMode === 'boat'
+        ? isGuan
+          ? clampGuanBoatTarget(x, z)
+          : clampHarborBoatTarget(x, z)
+        : clampHarborMoveTarget(x, z)
     moveTarget = clamped
     playerDirected = fromPlayer
     destMarker.position.set(clamped.x, 0.06, clamped.z)
@@ -3404,7 +3469,8 @@ export function createHarborWorld(
     const tx = hitPoint.x
     const tz = hitPoint.z
     if (travelMode === 'boat') {
-      if (isHarborLand(tx)) {
+      // Guan lagoon is free-sail only — no river bank disembark.
+      if (!isGuan && isHarborLand(tx)) {
         disembark(tx)
         setMoveTarget(tx, tz, true)
       } else {
@@ -3589,8 +3655,10 @@ export function createHarborWorld(
     scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
     renderer.setClearColor(look.sky, 1)
     if (weather === 'sunny') {
-      // Bamboo realm keeps jade pond tint; Sounds campaign uses pier hue water.
-      waterMat.color.setHex(realm === 'bamboo' ? 0x3a8878 : WATER[hue])
+      // Guan keeps tropical lagoon; bamboo keeps jade pond; Sounds uses pier hue water.
+      waterMat.color.setHex(
+        isGuan ? GUAN_TROPICAL_LOOK.water : realm === 'bamboo' ? 0x3a8878 : WATER[hue],
+      )
     }
   }
 
@@ -3601,8 +3669,9 @@ export function createHarborWorld(
     const dt = Math.min(0.05, (now - last) / 1000)
     last = now
 
-    // OSRS tap-to-move: paddle on water or walk on land (quest docks when crewing)
-    if (!playerDirected && travelMode === 'boat') {
+    // OSRS tap-to-move: paddle on water or walk on land (quest docks when crewing).
+    // Guan Harbor disables auto-quest dock retargeting — always free sail.
+    if (!isGuan && !playerDirected && travelMode === 'boat') {
       const dock = dockPoseForProgress(progress)
       moveTarget = { x: dock.side * HARBOR_DOCK_X, z: dock.z }
     }
@@ -3636,8 +3705,9 @@ export function createHarborWorld(
       boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
       // Landmark panels only when the sailor steered here and arrived —
       // never while auto-quest sailing past Save / Outfitter / Bank / etc.
+      // Guan: return portal still uses the same arrival gate.
       if (playerDirected && arrived) {
-        emitVisitable(nearestVisitable(boatX, voyageZ))
+        emitVisitable(nearestVisitable(boatX, voyageZ, realm))
       } else if (!playerDirected) {
         emitVisitable(null)
       }
@@ -3661,7 +3731,7 @@ export function createHarborWorld(
       } else {
         if (playerDirected) destMarker.visible = false
         if (wantBoard) boardBoat()
-        emitVisitable(nearestVisitable(footX, footZ))
+        emitVisitable(nearestVisitable(footX, footZ, realm))
       }
 
       if (destMarker.visible && !reduced) {
@@ -3674,7 +3744,7 @@ export function createHarborWorld(
       const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.03
       boat.position.set(boatX, 0.08 + bob, voyageZ)
     }
-    if (travelMode === 'boat' && !playerDirected) {
+    if (!isGuan && travelMode === 'boat' && !playerDirected) {
       const dock = dockPoseForProgress(progress)
       const atDock =
         Math.hypot(dock.side * HARBOR_DOCK_X - boatX, dock.z - voyageZ) < HARBOR_TAP_ARRIVE
@@ -3697,12 +3767,14 @@ export function createHarborWorld(
         travelMode === 'foot' ? 0.06 - i * 0.01 : 0.28 - i * 0.04
     }
 
-    water.position.z = voyageZ + 60
+    water.position.z = isGuan ? 6 : voyageZ + 60
     water.position.y = 0.02 + Math.sin(waterPhase) * 0.015
 
     // Parallax: mountains drift slower than the canoe
-    mountains.position.z = voyageZ * 0.35
-    mountains.position.x = boatX * 0.15
+    if (mountains) {
+      mountains.position.z = voyageZ * 0.35
+      mountains.position.x = boatX * 0.15
+    }
 
     // 祥云 drift even slower — painted sky scrolls sliding with the voyage
     clouds.position.z = voyageZ * 0.22
@@ -3946,7 +4018,9 @@ if (o.userData.cigaretteSmoke && !reduced) {
     weather,
     setProgress(t) {
       progress = Math.min(1, Math.max(0, t))
-      // Quest step change — auto path to the next pier (clears free-explore target)
+      // Quest step change — auto path to the next pier (clears free-explore target).
+      // Guan Harbor stays free-sail (no dock retarget).
+      if (isGuan) return
       const dock = dockPoseForProgress(progress)
       setMoveTarget(dock.side * HARBOR_DOCK_X, dock.z, false)
     },

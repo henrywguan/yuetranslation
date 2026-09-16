@@ -55,8 +55,8 @@ export type QuestStep = TeachStep | PickStep | BuildStep
 /** Voyage campaign — Sounds = Pronunciation Guide; Life 0 = Unit 0 Getting started. */
 export type HarborCampaignId = 'sounds' | 'life0'
 
-/** World dressing — river harbor vs Lingnan bamboo academy garden. */
-export type HarborRealmId = 'river' | 'bamboo'
+/** World dressing — river harbor, Lingnan bamboo academy, or Guan tropical paradise. */
+export type HarborRealmId = 'river' | 'bamboo' | 'guan'
 
 export type HarborLevel = {
   id: string

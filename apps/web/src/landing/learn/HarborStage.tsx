@@ -9,7 +9,7 @@ import { HarborWorldCanvas } from './HarborWorldCanvas'
 import type { HarborVisitableId, HarborWorldHandle } from './harborWorld'
 import { HARBOR_MAX_QUEST_SLOTS } from './harborWorld'
 import { JyutpingChaoText } from './JyutpingChaoText'
-import { levelRealm, type HarborLevel } from './curriculum'
+import { levelRealm, type HarborLevel, type HarborRealmId } from './curriculum'
 
 type HarborStageProps = {
   level: HarborLevel
@@ -27,6 +27,8 @@ type HarborStageProps = {
   appearance?: HarborAppearance
   /** Pause the WebGL voyage (chart overlay, inventory, etc.). */
   paused?: boolean
+  /** Free-sail paradise pocket (Save Shack teleport) — overrides campaign realm. */
+  realmOverride?: HarborRealmId | null
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Signed-in multiplayer remotes. */
@@ -48,6 +50,7 @@ export function HarborStage({
   gender,
   appearance,
   paused = false,
+  realmOverride = null,
   onVisitable,
   remotePlayers,
   localUsername,
@@ -71,7 +74,7 @@ export function HarborStage({
         look={look}
         gender={gender}
         appearance={appearance}
-        realm={levelRealm(level)}
+        realm={realmOverride ?? levelRealm(level)}
         paused={paused}
         onVisitable={onVisitable}
         remotePlayers={remotePlayers}
