@@ -92,6 +92,7 @@ import {
   HARBOR_VISITABLES,
   HARBOR_LANDMARK_HOSTS,
   HARBOR_VISIT_RADIUS,
+  HARBOR_SIT_RADIUS,
 } from '../../landing/learn/harborWorld'
 import {
   buildGuanHarborScene,
@@ -114,6 +115,7 @@ import {
   hqBarrel,
   hqBox,
   hqCanopy,
+  hqChair,
   hqCrate,
   hqDoor,
   hqFence,
@@ -121,7 +123,9 @@ import {
   hqMarketStall,
   hqRock,
   hqSack,
+  hqStampChairs,
   hqStampClutter,
+  hqStool,
   hqWallWindow,
   hqWindow,
   hqWoodTexture,
@@ -437,7 +441,7 @@ function main() {
   assert.ok(hqWallWindow(1, 1, 0.2, HARBOR_CRAFT_PALETTE.plaster).name === 'hq-wall-window', 'wall+window panel')
   assert.deepEqual(
     [...HARBOR_CRAFT_PROPS],
-    ['crate', 'barrel', 'fence', 'sack', 'door', 'wall-window', 'market-stall'],
+    ['crate', 'barrel', 'fence', 'sack', 'door', 'wall-window', 'market-stall', 'chair', 'stool'],
     'modular craft prop kit',
   )
   assert.ok(hqCrate(() => 0.2).name === 'hq-crate', 'crate prop')
@@ -445,6 +449,8 @@ function main() {
   assert.ok(hqFence(2).name === 'hq-fence', 'fence prop')
   assert.ok(hqSack(() => 0.2).name === 'hq-sack', 'sack prop')
   assert.ok(hqMarketStall(() => 0.2).name === 'hq-market-stall', 'market stall prop')
+  assert.ok(hqChair().name === 'hq-chair' && hqChair().userData.harborChair, 'sit-able chair prop')
+  assert.ok(hqStool().name === 'hq-stool' && hqStool().userData.harborChair, 'sit-able stool prop')
   assert.equal(hqWoodTexture().image.width, 128, 'wood albedo is 128×128 era size')
   assert.equal(hqWoodTexture().magFilter, 1003 /* NearestFilter */, 'wood uses nearest filter')
   const added: string[] = []
@@ -455,15 +461,48 @@ function main() {
   } as unknown as import('three').Group
   hqStampClutter(clutterRoot, () => 0.5, 0, 0, 2, 3)
   assert.ok(added.length === 3, 'stamp clutter adds props')
+  const chairAdded: string[] = []
+  const chairRoot = {
+    add(o: { name?: string; userData?: { harborChair?: boolean } }) {
+      chairAdded.push(o.name ?? '')
+      assert.ok(o.userData?.harborChair, 'stamped chair is sit-able')
+    },
+  } as unknown as import('three').Group
+  hqStampChairs(chairRoot, [
+    { x: 1, z: 2, yaw: 0 },
+    { x: 3, z: 4, stool: true },
+  ])
+  assert.deepEqual(chairAdded, ['hq-chair', 'hq-stool'], 'stamp chairs places chair + stool')
   assert.match(
     readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
     /hqStampClutter/,
     'Guan stamps town clutter',
   )
   assert.match(
+    readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
+    /hqStampChairs/,
+    'Guan stamps sit-able chairs',
+  )
+  assert.match(
     readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
     /hqStampClutter/,
     'river pier/village stamps clutter',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /hqStampChairs/,
+    'river pier/village stamps chairs',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /HARBOR_SIT_RADIUS|enterSit|sitTarget/,
+    'tap-to-sit chair flow',
+  )
+  assert.ok(HARBOR_SIT_RADIUS > 1 && HARBOR_SIT_RADIUS < 3, 'sit radius is local')
+  assert.match(
+    readFileSync(new URL('./harborInteractSfx.ts', import.meta.url), 'utf8'),
+    /export function playHarborSit/,
+    'sit wood-creak SFX',
   )
 
   // Original River Scout protagonist (not Jagex Bob / cache mesh)

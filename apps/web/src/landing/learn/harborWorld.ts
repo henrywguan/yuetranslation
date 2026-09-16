@@ -14,6 +14,7 @@ import {
   hqMat,
   hqPost,
   hqRock,
+  hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
   hqThatchTexture,
@@ -42,6 +43,7 @@ import {
   HARBOR_DEFAULT_LOOK,
   type HarborLook,
 } from './harborGear'
+import { playHarborSit } from './harborInteractSfx'
 import {
   attachVipBoatOrnaments,
   tagVipLanternAnim,
@@ -205,6 +207,9 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
 export const HARBOR_VISIT_RADIUS = 3.6
 /** Max distance to tap-open an NPC dialogue / landmark host UI. */
 export const HARBOR_NPC_TALK_RADIUS = 4.2
+
+/** Tap a chair within this range (on foot) to sit. */
+export const HARBOR_SIT_RADIUS = 1.85
 
 /** Chinese clothing roles for bank / pier NPCs (smoke-tested). */
 export const HARBOR_NPC_ROLES = [
@@ -2624,6 +2629,13 @@ function populateChunk(
     // Yard / path clutter — crates, barrels, fence bits
     hqStampClutter(group, rng, BANK + 2.5, z0 + CHUNK * 0.45, 3.5, 4)
     hqStampClutter(group, rng, -(BANK + 2.5), z0 + CHUNK * 0.55, 3.5, 3)
+    // Sit-able yard chairs facing the lane / river
+    hqStampChairs(group, [
+      { x: BANK + 1.8, z: z0 + CHUNK * 0.4, yaw: -Math.PI / 2 },
+      { x: BANK + 2.4, z: z0 + CHUNK * 0.62, yaw: -Math.PI * 0.4, stool: true },
+      { x: -(BANK + 1.8), z: z0 + CHUNK * 0.48, yaw: Math.PI / 2 },
+      { x: -(BANK + 2.2), z: z0 + CHUNK * 0.7, yaw: Math.PI * 0.55, stool: rng() > 0.5 },
+    ], rng)
   }
   if (biome === 'reeds') {
     place(group, rng, 12, () => reed(rng), RIVER + 0.4, BANK + 1.5, z0)
@@ -2674,6 +2686,12 @@ function populateChunk(
     if (rng() > 0.4) place(group, rng, 1, () => crestedIbis(rng, false), RIVER + 1.0, BANK + 1.8, z0)
     hqStampClutter(group, rng, BANK + 2, z0 + CHUNK * 0.5, 3.2, 5)
     hqStampClutter(group, rng, -(BANK + 2), z0 + CHUNK * 0.6, 3.2, 4)
+    hqStampChairs(group, [
+      { x: BANK + 1.2, z: z0 + CHUNK * 0.38, yaw: -Math.PI / 2 },
+      { x: BANK + 1.5, z: z0 + CHUNK * 0.72, yaw: -Math.PI * 0.45, stool: true },
+      { x: -(BANK + 1.2), z: z0 + CHUNK * 0.42, yaw: Math.PI / 2 },
+      { x: -(BANK + 1.6), z: z0 + CHUNK * 0.68, yaw: Math.PI * 0.5 },
+    ], rng)
   }
   if (biome === 'hills') {
     place(group, rng, 2, () => hut(rng), BANK + 1.5, BANK + 4, z0)
@@ -3513,6 +3531,13 @@ export function createHarborWorld(
       // Face the river
       building.rotation.y = v.x > 0 ? -Math.PI / 2 : Math.PI / 2
       visitablesRoot.add(building)
+      // Yard chairs facing the river path — tap to sit while exploring
+      const side = Math.sign(v.x) || 1
+      const faceRiver = side > 0 ? -Math.PI / 2 : Math.PI / 2
+      hqStampChairs(visitablesRoot, [
+        { x: v.x - side * 1.55, z: v.z + 1.05, yaw: faceRiver },
+        { x: v.x - side * 1.7, z: v.z - 0.85, yaw: faceRiver + side * 0.25, stool: true },
+      ])
     }
   }
   scene.add(visitablesRoot)
@@ -3557,6 +3582,14 @@ export function createHarborWorld(
   scoutWalk.visible = false
   scene.add(scoutWalk)
   applyLookToProtagonist(scoutWalk, currentLook)
+  /** Seated land mesh — shown when the sailor sits on a chair / stool. */
+  let scoutSit: THREE.Object3D | null = null
+  let sitting = false
+  /** Walk-to-then-sit target (OSRS chair click). */
+  let sitTarget: THREE.Object3D | null = null
+  const chairWorldPos = new THREE.Vector3()
+  const chairWorldQuat = new THREE.Quaternion()
+  const chairEuler = new THREE.Euler()
 
   // Open-world multiplayer ghosts + local nametag
   const remotesRoot = new THREE.Group()
@@ -3586,9 +3619,9 @@ export function createHarborWorld(
       clearSpeechBubble(localSpeechBubble, scene)
       localSpeechBubble = buildChatBubbleSprite(cleaned)
       // Prefer live scout/boat pose — nametag may still be at origin before first tick.
-      const lx = travelMode === 'foot' ? scoutWalk.position.x : boat.position.x
-      const ly = travelMode === 'foot' ? 2.05 : 1.85
-      const lz = travelMode === 'foot' ? scoutWalk.position.z : boat.position.z
+      const lx = travelMode === 'foot' ? footX : boat.position.x
+      const ly = travelMode === 'foot' ? (sitting ? 1.7 : 2.05) : 1.85
+      const lz = travelMode === 'foot' ? footZ : boat.position.z
       localSpeechBubble.position.set(lx, ly + 0.72, lz)
       scene.add(localSpeechBubble)
       localSpeechUntil = until
@@ -3700,6 +3733,65 @@ export function createHarborWorld(
   const hitPoint = new THREE.Vector3()
   const raycaster = new THREE.Raycaster()
 
+  const ensureScoutSit = () => {
+    if (scoutSit) return scoutSit
+    const sit = buildHarborProtagonist({
+      pose: 'seated',
+      gender: currentGender,
+      appearance: currentAppearance,
+    })
+    sit.name = 'river-scout-sit'
+    sit.visible = false
+    scene.add(sit)
+    applyLookToProtagonist(sit, currentLook)
+    scoutSit = sit
+    return sit
+  }
+
+  const exitSit = () => {
+    if (!sitting) return
+    sitting = false
+    if (scoutSit) scoutSit.visible = false
+    if (travelMode === 'foot') {
+      scoutWalk.visible = true
+      scoutWalk.position.set(footX, 0, footZ)
+    }
+  }
+
+  const enterSit = (chair: THREE.Object3D) => {
+    if (travelMode !== 'foot') return
+    chair.getWorldPosition(chairWorldPos)
+    chair.getWorldQuaternion(chairWorldQuat)
+    chairEuler.setFromQuaternion(chairWorldQuat, 'YXZ')
+    const seatY = typeof chair.userData.seatY === 'number' ? chair.userData.seatY : 0.42
+    footX = chairWorldPos.x
+    footZ = chairWorldPos.z
+    sitting = true
+    sitTarget = null
+    playerDirected = false
+    destMarker.visible = false
+    wantBoard = false
+    scoutWalk.visible = false
+    const sit = ensureScoutSit()
+    sit.visible = true
+    sit.position.set(chairWorldPos.x, Math.max(0.28, seatY - 0.1), chairWorldPos.z)
+    sit.rotation.set(0, chairEuler.y, 0)
+    try {
+      playHarborSit()
+    } catch {
+      /* SFX must never block sit */
+    }
+  }
+
+  const chairFromObject = (obj: THREE.Object3D | null): THREE.Object3D | null => {
+    let o: THREE.Object3D | null = obj
+    while (o) {
+      if (o.userData.harborChair) return o
+      o = o.parent
+    }
+    return null
+  }
+
   const setMoveTarget = (x: number, z: number, fromPlayer: boolean) => {
     const clamped =
       travelMode === 'boat'
@@ -3717,6 +3809,7 @@ export function createHarborWorld(
 
   const disembark = (towardX: number, towardZ?: number) => {
     if (travelMode === 'foot' || !scout) return
+    exitSit()
     scout.visible = false
     if (isGuan && towardZ != null) {
       // Step onto the nearest island shore toward the tap
@@ -3735,11 +3828,15 @@ export function createHarborWorld(
     scoutWalk.position.set(footX, 0, footZ)
     travelMode = 'foot'
     wantBoard = false
+    sitTarget = null
   }
 
   const boardBoat = () => {
     if (travelMode !== 'foot' || !scout) return
+    exitSit()
+    sitTarget = null
     scoutWalk.visible = false
+    if (scoutSit) scoutSit.visible = false
     scout.visible = true
     scout.position.set(scoutSeat.x, scoutSeat.y, scoutSeat.z)
     scout.rotation.set(0, Math.PI, 0)
@@ -3761,6 +3858,36 @@ export function createHarborWorld(
       const remoteId = remoteUserIdFromHits(hits)
       if (remoteId) {
         options.onRemotePlayerSelect?.(remoteId)
+        return
+      }
+    }
+    // Tap a chair / stool → walk over and sit (OSRS-style)
+    {
+      const picks = raycaster.intersectObjects(scene.children, true)
+      for (const hit of picks) {
+        const chair = chairFromObject(hit.object)
+        if (!chair) continue
+        chair.getWorldPosition(chairWorldPos)
+        const cx = chairWorldPos.x
+        const cz = chairWorldPos.z
+        const onLand = isGuan ? isGuanLand(cx, cz) : isHarborLand(cx)
+        if (!onLand) break
+        if (travelMode === 'boat') {
+          disembark(cx, cz)
+        } else {
+          exitSit()
+        }
+        wantBoard = false
+        sitTarget = chair
+        // Instant sit when already close enough
+        if (
+          travelMode === 'foot' &&
+          Math.hypot(footX - cx, footZ - cz) <= HARBOR_SIT_RADIUS * 0.55
+        ) {
+          enterSit(chair)
+          return
+        }
+        setMoveTarget(cx, cz, true)
         return
       }
     }
@@ -3812,7 +3939,9 @@ export function createHarborWorld(
       }
       return
     }
-    // On foot: walk inland / island, or return to the moored canoe to board
+    // On foot: stand up if seated, then walk / reboard
+    exitSit()
+    sitTarget = null
     const distBoat = Math.hypot(tx - boatX, tz - voyageZ)
     const onLand = isGuan ? isGuanLand(tx, tz) : isHarborLand(tx)
     if (!onLand || distBoat <= HARBOR_REBOARD_RADIUS * 0.7) {
@@ -4047,31 +4176,44 @@ export function createHarborWorld(
         emitVisitable(null)
       }
     } else {
-      // On foot — OSRS click-to-walk toward the yellow X
-      const dx = moveTarget.x - footX
-      const dz = moveTarget.z - footZ
-      const dist = Math.hypot(dx, dz)
-      const arrived = dist < HARBOR_TAP_ARRIVE
-      if (!arrived) {
-        const speed = reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED
-        const step = Math.min(dist, speed * dt)
-        footX += (dx / dist) * step
-        footZ += (dz / dist) * step
-        const face = Math.atan2(dx, dz)
-        scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
-        const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
-        scoutWalk.position.set(footX, walkBob, footZ)
-        // Don't open landmarks mid-walk either
-        if (!playerDirected) emitVisitable(null)
+      // On foot — OSRS click-to-walk toward the yellow X (or idle while seated)
+      if (sitting) {
+        if (scoutSit) {
+          scoutSit.position.x = footX
+          scoutSit.position.z = footZ
+        }
+        if (destMarker.visible) destMarker.visible = false
       } else {
-        if (playerDirected) destMarker.visible = false
-        if (wantBoard) boardBoat()
-        emitVisitable(nearestVisitable(footX, footZ, realm))
-      }
+        const dx = moveTarget.x - footX
+        const dz = moveTarget.z - footZ
+        const dist = Math.hypot(dx, dz)
+        const arrived = dist < HARBOR_TAP_ARRIVE
+        if (!arrived) {
+          const speed = reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED
+          const step = Math.min(dist, speed * dt)
+          footX += (dx / dist) * step
+          footZ += (dz / dist) * step
+          const face = Math.atan2(dx, dz)
+          scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
+          const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
+          scoutWalk.position.set(footX, walkBob, footZ)
+          // Don't open landmarks mid-walk either
+          if (!playerDirected) emitVisitable(null)
+        } else {
+          if (playerDirected) destMarker.visible = false
+          if (sitTarget) {
+            enterSit(sitTarget)
+          } else if (wantBoard) {
+            boardBoat()
+          } else {
+            emitVisitable(nearestVisitable(footX, footZ, realm))
+          }
+        }
 
-      if (destMarker.visible && !reduced) {
-        const pulse = 1 + Math.sin(now * 0.012) * 0.12
-        destMarker.scale.setScalar(pulse)
+        if (destMarker.visible && !reduced) {
+          const pulse = 1 + Math.sin(now * 0.012) * 0.12
+          destMarker.scale.setScalar(pulse)
+        }
       }
 
       // Moored canoe bobbing at the bank
@@ -4179,19 +4321,19 @@ export function createHarborWorld(
     pitch += (pitchTarget - pitch) * orbitLerp
     distance += (distanceTarget - distance) * orbitLerp
 
-    const lookX = travelMode === 'foot' ? scoutWalk.position.x : boat.position.x
-    const lookY = travelMode === 'foot' ? 0.95 : 0.75
-    const lookZ = (travelMode === 'foot' ? scoutWalk.position.z : boat.position.z) + 1.2
+    const lookX = travelMode === 'foot' ? footX : boat.position.x
+    const lookY = travelMode === 'foot' ? (sitting ? 0.85 : 0.95) : 0.75
+    const lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
     const off = orbitCameraOffset(yaw, pitch, distance)
     const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
     camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
     camera.lookAt(lookX, lookY, lookZ)
 
-    // Local username plate follows boat / walking scout
+    // Local username plate follows boat / walking / seated scout
     localNametag.position.set(
-      travelMode === 'foot' ? scoutWalk.position.x : boat.position.x,
-      travelMode === 'foot' ? 2.05 : 1.85,
-      travelMode === 'foot' ? scoutWalk.position.z : boat.position.z,
+      travelMode === 'foot' ? footX : boat.position.x,
+      travelMode === 'foot' ? (sitting ? 1.7 : 2.05) : 1.85,
+      travelMode === 'foot' ? footZ : boat.position.z,
     )
     if (localSpeechBubble) {
       localSpeechBubble.position.set(
@@ -4227,6 +4369,7 @@ export function createHarborWorld(
     if (!reduced) {
       tickVipGearAnims(boat, waterPhase)
       tickVipGearAnims(scoutWalk, waterPhase)
+      if (scoutSit) tickVipGearAnims(scoutSit, waterPhase)
     }
 
     for (const o of animNodes) {
@@ -4383,6 +4526,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       currentLook = { ...look }
       if (scout) applyLookToProtagonist(scout, currentLook)
       applyLookToProtagonist(scoutWalk, currentLook)
+      if (scoutSit) applyLookToProtagonist(scoutSit, currentLook)
       applyVesselLook(boat, weather, currentLook)
       fxIndexDirty = true
     },
@@ -4402,7 +4546,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
         return {
           x: footX,
           z: footZ,
-          yaw: scoutWalk.rotation.y,
+          yaw: sitting && scoutSit ? scoutSit.rotation.y : scoutWalk.rotation.y,
           viewYaw,
           mode: 'foot' as const,
           look: { ...currentLook },
@@ -4481,6 +4625,18 @@ if (o.userData.cigaretteSmoke && !reduced) {
         }
       })
       scene.remove(scoutWalk)
+      if (scoutSit) {
+        scoutSit.traverse((o) => {
+          if (o instanceof THREE.Mesh) {
+            o.geometry.dispose()
+            const mat = o.material
+            if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
+            else mat.dispose()
+          }
+        })
+        scene.remove(scoutSit)
+        scoutSit = null
+      }
       cancelAnimationFrame(raf)
       canvas.removeEventListener('pointerdown', onPointerDown)
       canvas.removeEventListener('pointermove', onPointerMove)

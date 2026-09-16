@@ -86,6 +86,8 @@ export const HARBOR_CRAFT_PROPS = [
   'door',
   'wall-window',
   'market-stall',
+  'chair',
+  'stool',
 ] as const
 export type HarborCraftProp = (typeof HARBOR_CRAFT_PROPS)[number]
 
@@ -458,6 +460,63 @@ export function hqMarketStall(rng: () => number = Math.random): THREE.Group {
   crate.scale.setScalar(0.7)
   g.add(crate)
   return g
+}
+
+/**
+ * Low-poly wood chair — sit-able (userData.harborChair).
+ * Seat faces local +Z; backrest sits on −Z.
+ */
+export function hqChair(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'hq-chair'
+  g.userData.harborChair = true
+  g.userData.seatY = 0.42
+  const wood = hqWoodTexture()
+  for (const x of [-0.14, 0.14] as const) {
+    for (const z of [-0.14, 0.14] as const) {
+      g.add(hqPost(0.035, 0.04, 0.4, HARBOR_CRAFT_PALETTE.woodDark, x, 0.2, z, 5))
+    }
+  }
+  g.add(hqBoxTex(0.38, 0.05, 0.38, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, 0.42, 0))
+  g.add(hqBoxTex(0.38, 0.06, 0.05, HARBOR_CRAFT_PALETTE.woodLight, wood, 0, 0.45, 0.12))
+  // Backrest
+  g.add(hqPost(0.035, 0.04, 0.55, HARBOR_CRAFT_PALETTE.woodDeep, -0.15, 0.7, -0.16, 5))
+  g.add(hqPost(0.035, 0.04, 0.55, HARBOR_CRAFT_PALETTE.woodDeep, 0.15, 0.7, -0.16, 5))
+  g.add(hqBoxTex(0.36, 0.42, 0.04, HARBOR_CRAFT_PALETTE.woodDark, wood, 0, 0.72, -0.16))
+  g.add(hqBox(0.32, 0.04, 0.04, HARBOR_CRAFT_PALETTE.trimGold, 0, 0.92, -0.14))
+  return g
+}
+
+/** Backless stool — also sit-able. */
+export function hqStool(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'hq-stool'
+  g.userData.harborChair = true
+  g.userData.seatY = 0.4
+  const wood = hqWoodTexture()
+  for (const x of [-0.12, 0.12] as const) {
+    for (const z of [-0.12, 0.12] as const) {
+      g.add(hqPost(0.03, 0.035, 0.38, HARBOR_CRAFT_PALETTE.woodDark, x, 0.19, z, 5))
+    }
+  }
+  g.add(hqBoxTex(0.32, 0.05, 0.32, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, 0.4, 0))
+  g.add(hqBox(0.34, 0.03, 0.34, HARBOR_CRAFT_PALETTE.woodDeep, 0, 0.37, 0))
+  return g
+}
+
+/** Place sit-able chairs/stools at world spots (yaw = seat facing). */
+export function hqStampChairs(
+  root: THREE.Group,
+  spots: readonly { x: number; z: number; yaw?: number; stool?: boolean }[],
+  rng: () => number = Math.random,
+) {
+  for (const spot of spots) {
+    const useStool = spot.stool ?? rng() > 0.55
+    const chair = useStool ? hqStool() : hqChair()
+    chair.position.set(spot.x, 0.02, spot.z)
+    chair.rotation.y = spot.yaw ?? rng() * Math.PI * 2
+    root.add(chair)
+  }
 }
 
 /**

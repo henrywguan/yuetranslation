@@ -21,6 +21,7 @@ import {
   hqMatTex,
   hqPost,
   hqRock,
+  hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
   hqThatchTexture,
@@ -752,6 +753,22 @@ export function buildGuanHarborScene(): THREE.Group {
   hqStampClutter(root, rng, GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z, 2.8, 4, isGuanLand)
   hqStampClutter(root, rng, GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z, 3.0, 5, isGuanLand)
   hqStampClutter(root, rng, GUAN_LANDMARKS.shipYard.x, GUAN_LANDMARKS.shipYard.z, 2.2, 3, isGuanLand)
+
+  // Sit-able chairs / stools around town plazas
+  hqStampChairs(root, [
+    { x: GUAN_LANDMARKS.musaPoint.x - 1.6, z: GUAN_LANDMARKS.musaPoint.z + 0.8, yaw: Math.PI * 0.15 },
+    { x: GUAN_LANDMARKS.musaPoint.x - 2.2, z: GUAN_LANDMARKS.musaPoint.z - 0.4, yaw: -0.4, stool: true },
+    { x: GUAN_LANDMARKS.musaDock.x - 1.1, z: GUAN_LANDMARKS.musaDock.z - 0.8, yaw: Math.PI },
+    { x: GUAN_LANDMARKS.brimhaven.x + 1.4, z: GUAN_LANDMARKS.brimhaven.z - 0.6, yaw: 0.9 },
+    { x: GUAN_LANDMARKS.brimhaven.x + 0.6, z: GUAN_LANDMARKS.brimhaven.z + 1.5, yaw: Math.PI * 1.1, stool: true },
+    { x: GUAN_LANDMARKS.brimhaven.x - 1.2, z: GUAN_LANDMARKS.brimhaven.z + 0.4, yaw: -0.3 },
+    { x: GUAN_LANDMARKS.taiBwoWannai.x + 1.3, z: GUAN_LANDMARKS.taiBwoWannai.z + 0.9, yaw: Math.PI * 0.7 },
+    { x: GUAN_LANDMARKS.taiBwoWannai.x - 1.1, z: GUAN_LANDMARKS.taiBwoWannai.z - 0.8, yaw: -0.5, stool: true },
+    { x: GUAN_LANDMARKS.shilo.x + 1.5, z: GUAN_LANDMARKS.shilo.z + 0.5, yaw: Math.PI * 0.2 },
+    { x: GUAN_LANDMARKS.shilo.x - 1.0, z: GUAN_LANDMARKS.shilo.z + 1.2, yaw: Math.PI * 1.2, stool: true },
+    { x: GUAN_LANDMARKS.shipYard.x - 1.4, z: GUAN_LANDMARKS.shipYard.z + 0.6, yaw: Math.PI * 0.85 },
+    { x: GUAN_LANDMARKS.bananaGrove.x + 0.8, z: GUAN_LANDMARKS.bananaGrove.z - 1.2, yaw: -0.2, stool: true },
+  ], rng)
 
   const stall = hqMarketStall(rng)
   stall.position.set(GUAN_LANDMARKS.brimhaven.x + 2.2, 0.28, GUAN_LANDMARKS.brimhaven.z - 1.2)
