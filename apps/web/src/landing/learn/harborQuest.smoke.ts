@@ -561,6 +561,13 @@ function main() {
     'immersive clear ghost buttons stay readable on dark',
   )
   assert.match(playSrc, /hq-clear hq-clear--immersive/, 'LevelClear mounts immersive clear shell')
+  // sendChat must be declared before the cleared early return — otherwise React
+  // crashes with fewer-hooks and the Next-gate clear paints a blank dark screen.
+  {
+    const sendAt = playSrc.indexOf('const sendChat = useCallback')
+    const clearedAt = playSrc.indexOf('if (cleared)')
+    assert.ok(sendAt > 0 && clearedAt > sendAt, 'sendChat hook sits above cleared early return')
+  }
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
   assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
   assert.match(learnCss, /\.hq-compass-disc\s*\{/, 'OSRS compass disc styles')
@@ -763,6 +770,9 @@ function main() {
   assert.match(worldSrc2, /function panda/, 'panda mesh builder')
   assert.match(worldSrc2, /function southChinaTiger/, 'South China tiger mesh builder')
   assert.match(worldSrc2, /function crestedIbis/, 'crested ibis mesh builder')
+  assert.match(worldSrc2, /crestedIbis\(rng,\s*soar\)/, 'ibis builder takes soar flag')
+  assert.match(worldSrc2, /soar \? 2\.[0-9]/, 'soaring ibis spawn above bank (~bird height)')
+  assert.match(worldSrc2, /Folded against the body while wading/, 'wading ibis folds wings')
   assert.match(worldSrc2, /function giantSalamander/, 'giant salamander mesh builder')
   assert.match(worldSrc2, /function chinaTeaCupRose/, 'tea-cup rose mesh builder')
   assert.match(worldSrc2, /function hawthornBush/, 'hawthorn berry mesh builder')
