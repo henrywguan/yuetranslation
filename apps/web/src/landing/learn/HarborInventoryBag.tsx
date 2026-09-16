@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   harborGearById,
   type HarborGearId,
@@ -33,7 +33,8 @@ function isCoarsePointer() {
 
 /**
  * OSRS-style inventory / bag — stone frame, 4×7 item grid with visible
- * model icons per piece, hover/tap examine tips, plus a Worn tab.
+ * model icons per piece, hover/tap examine tips (dismiss on tap-away),
+ * plus a Worn tab.
  */
 export function HarborInventoryBag({
   owned,
@@ -46,9 +47,11 @@ export function HarborInventoryBag({
   onClose,
   message,
 }: Props) {
+  const rootRef = useRef<HTMLElement>(null)
   const [tab, setTab] = useState<Tab>('bag')
   const [pickedId, setPickedId] = useState<HarborGearId | null>(null)
-  const [hoverId, setHoverId] = useState<HarborGearId | null>(null)
+  /** Tip id — only set while hovering (desktop) or after an explicit tap (mobile). */
+  const [tipId, setTipId] = useState<HarborGearId | null>(null)
 
   const bagItems = useMemo(() => {
     const ids = owned
@@ -71,8 +74,32 @@ export function HarborInventoryBag({
   const equipped = picked ? look[picked.slot] === picked.id : false
   const overflow = Math.max(0, bagItems.length - HARBOR_BAG_SLOTS)
 
+  // Tap / click outside an item button dismisses the tip (keeps selection).
+  useEffect(() => {
+    const onPointerDown = (ev: PointerEvent) => {
+      const root = rootRef.current
+      if (!root) return
+      const t = ev.target as Node | null
+      if (!t || !root.contains(t)) {
+        setTipId(null)
+        return
+      }
+      const el = t instanceof Element ? t : t.parentElement
+      if (!el?.closest('.hq-bag-item, .hq-worn-slot')) {
+        setTipId(null)
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [])
+
   return (
-    <aside className="hq-visit-panel hq-visit-panel--inv hq-bag" role="dialog" aria-label="Inventory">
+    <aside
+      ref={rootRef}
+      className="hq-visit-panel hq-visit-panel--inv hq-bag"
+      role="dialog"
+      aria-label="Inventory"
+    >
       <div className="hq-bag-frame">
         <div className="hq-bag-tabs" role="tablist" aria-label="Inventory tabs">
           <button
@@ -83,7 +110,7 @@ export function HarborInventoryBag({
             onClick={() => {
               playHarborUiClick()
               setTab('bag')
-              setHoverId(null)
+              setTipId(null)
             }}
             title="Inventory"
           >
@@ -100,7 +127,7 @@ export function HarborInventoryBag({
             onClick={() => {
               playHarborUiClick()
               setTab('worn')
-              setHoverId(null)
+              setTipId(null)
             }}
             title="Worn equipment"
           >
@@ -121,11 +148,17 @@ export function HarborInventoryBag({
               <ul className="hq-bag-grid" aria-label="Bag items">
                 {slots.map((item, i) => {
                   if (!item) {
-                    return <li key={`empty-${i}`} className="hq-bag-cell is-empty" />
+                    return (
+                      <li
+                        key={`empty-${i}`}
+                        className="hq-bag-cell is-empty"
+                        onPointerDown={() => setTipId(null)}
+                      />
+                    )
                   }
                   const on = pickedId === item.id
                   const wearing = look[item.slot] === item.id
-                  const tipOpen = hoverId === item.id || on
+                  const tipOpen = tipId === item.id
                   // Top two rows tip below so they stay inside the panel.
                   const tipBelow = i < 8
                   return (
@@ -136,17 +169,20 @@ export function HarborInventoryBag({
                         aria-pressed={on}
                         aria-label={`${item.name.en}${wearing ? ' (wearing)' : ''}`}
                         onPointerEnter={() => {
-                          if (!isCoarsePointer()) setHoverId(item.id)
+                          if (!isCoarsePointer()) setTipId(item.id)
                         }}
                         onPointerLeave={() => {
                           if (!isCoarsePointer()) {
-                            setHoverId((cur) => (cur === item.id ? null : cur))
+                            setTipId((cur) => (cur === item.id ? null : cur))
                           }
                         }}
                         onClick={() => {
                           setPickedId(item.id)
                           onSelectSlot(item.slot)
-                          if (isCoarsePointer()) setHoverId(item.id)
+                          if (isCoarsePointer()) {
+                            // Tap toggles tip; second tap on same piece hides it.
+                            setTipId((cur) => (cur === item.id ? null : item.id))
+                          }
                         }}
                         onDoubleClick={() => {
                           if (!wearing) onWear(item.slot, item.id)
@@ -171,7 +207,7 @@ export function HarborInventoryBag({
               </div>
             </div>
 
-            <div className="hq-bag-inspect">
+            <div className="hq-bag-inspect" onPointerDown={() => setTipId(null)}>
               {picked ? (
                 <>
                   <div className="hq-bag-inspect-icon" aria-hidden="true">
@@ -199,7 +235,7 @@ export function HarborInventoryBag({
                 </>
               ) : (
                 <p className="hq-bag-inspect-hint">
-                  Hover or tap a piece to examine · double-tap or Wear to equip
+                  Hover or tap a piece to examine · tap away to hide · double-tap or Wear to equip
                   {overflow > 0 ? ` · +${overflow} banked off-grid` : ''}
                 </p>
               )}
@@ -208,15 +244,21 @@ export function HarborInventoryBag({
         ) : (
           <div className="hq-bag-worn">
             <p className="hq-bag-worn-hint">
-              Hover or tap a slot to examine · switch to Bag and Wear a matching piece
+              Hover or tap a slot to examine · tap away to hide · switch to Bag and Wear a matching piece
             </p>
-            <HarborWornBoard look={look} selected={selectedSlot} onSelect={onSelectSlot} />
+            <HarborWornBoard
+              look={look}
+              selected={selectedSlot}
+              tipId={tipId}
+              onTipId={setTipId}
+              onSelect={onSelectSlot}
+            />
           </div>
         )}
 
         {message ? <p className="hq-visit-msg">{message}</p> : null}
 
-        <div className="hq-bag-footer">
+        <div className="hq-bag-footer" onPointerDown={() => setTipId(null)}>
           <div className="hq-bag-coins" title="Ferry coins">
             <span className="hq-bag-coin-stack" aria-hidden="true" />
             <span className="hq-bag-coin-qty">{coins}</span>
