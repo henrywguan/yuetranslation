@@ -373,9 +373,9 @@
 }
 
 .hq-ig__feature-shot--arena img {
-  /* Frame Match the Definition intro: title → rules → Enter */
-  object-position: center 38%;
-  transform: scale(1.05);
+  /* Frame topic-picker intro: lead + Kids/Animals topics */
+  object-position: center 28%;
+  transform: scale(1.08);
 }
 
 .hq-ig__feature-shot--chart img {
