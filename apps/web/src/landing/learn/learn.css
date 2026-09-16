@@ -1667,6 +1667,12 @@
 }
 
 .hq-clear--immersive {
+  /* Own dark palette — do not inherit light-page --ink (#07131f) onto #061018. */
+  --ink: #e8f4ff;
+  --ink-bright: #e8fff8;
+  --muted: rgba(232, 244, 255, 0.58);
+  --jade: #3dcfb6;
+  --jade-bright: #7ef0dc;
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -1678,6 +1684,45 @@
     radial-gradient(50% 45% at 50% 35%, color-mix(in srgb, var(--jade) 22%, transparent), transparent 70%),
     #061018;
   padding: 2rem 1.25rem;
+  color: color-mix(in srgb, #e8f7f4 92%, white);
+}
+
+.hq-clear--immersive .hq-clear-kicker {
+  color: color-mix(in srgb, var(--jade) 85%, white);
+}
+
+.hq-clear--immersive .hq-clear-title {
+  color: color-mix(in srgb, #e8f7f4 96%, white);
+}
+
+.hq-clear--immersive .hq-clear-zh {
+  color: color-mix(in srgb, #e8f7f4 72%, transparent);
+  opacity: 1;
+}
+
+.hq-clear--immersive .hq-clear-body {
+  color: color-mix(in srgb, #e8f7f4 78%, transparent);
+}
+
+.hq-clear--immersive .hq-clear-xp {
+  color: color-mix(in srgb, var(--jade-bright) 80%, white);
+}
+
+.hq-clear--immersive .hq-btn--primary {
+  background: color-mix(in srgb, var(--jade) 82%, #0c2a28);
+  color: #041210;
+  border-color: color-mix(in srgb, var(--jade-bright) 50%, transparent);
+}
+
+.hq-clear--immersive .hq-btn--ghost {
+  background: color-mix(in srgb, #dff6ff 8%, transparent);
+  border-color: color-mix(in srgb, #dff6ff 22%, transparent);
+  color: color-mix(in srgb, #e8f7f4 92%, white);
+}
+
+.hq-clear--immersive .hq-btn--ghost:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--jade) 55%, transparent);
+  background: color-mix(in srgb, #dff6ff 12%, transparent);
 }
 
 .hq-choice {

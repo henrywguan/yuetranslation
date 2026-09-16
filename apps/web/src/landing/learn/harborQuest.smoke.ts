@@ -440,6 +440,20 @@ function main() {
   assert.match(playSrc, /setProperty\('--hq-osrs-strip'/, 'writes measured strip CSS var')
   assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
   assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
+  // LevelClear fullscreen overlay is #061018 — must not inherit light-page --ink (#07131f).
+  assert.match(learnCss, /\.hq-clear--immersive\s*\{[^}]*--ink:\s*#e8f4ff/s, 'immersive clear resets --ink for dark panel')
+  assert.match(learnCss, /\.hq-clear--immersive\s*\{[^}]*#061018/s, 'immersive clear keeps dark harbor wash')
+  assert.match(
+    learnCss,
+    /\.hq-clear--immersive\s*\{[^}]*color:\s*color-mix\(in srgb,\s*#e8f7f4/s,
+    'immersive clear base text is light-on-dark',
+  )
+  assert.match(
+    learnCss,
+    /\.hq-clear--immersive \.hq-btn--ghost\s*\{[^}]*color:\s*color-mix\(in srgb,\s*#e8f7f4/s,
+    'immersive clear ghost buttons stay readable on dark',
+  )
+  assert.match(playSrc, /hq-clear hq-clear--immersive/, 'LevelClear mounts immersive clear shell')
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
   assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
   assert.match(learnCss, /\.hq-compass-disc\s*\{/, 'OSRS compass disc styles')
