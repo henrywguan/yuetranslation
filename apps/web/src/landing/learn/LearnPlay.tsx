@@ -16,14 +16,24 @@ import {
   playHarborCorrectFanfare,
   stopHarborCorrectFanfare,
 } from './harborFanfare'
-import { duckHarborBgm, startHarborBgm, stopHarborBgm } from './harborBgm'
+import {
+  duckHarborBgm,
+  harborBgmTheme,
+  isHarborBgmPlaying,
+  startHarborBgm,
+  stopHarborBgm,
+} from './harborBgm'
 import { GUAN_HARBOR_META } from './harborGuanRealm'
 import {
+  harborAmbientWeather,
+  isHarborAmbientRunning,
+  primeHarborAmbientUnlock,
   setHarborAmbientPaused,
   setHarborAmbientTalking,
   startHarborAmbient,
   stopHarborAmbient,
 } from './harborAmbient'
+import { resumeSharedAudioContext } from '../../lib/audioReactive'
 import { playHarborCoinChing } from './harborCoinSfx'
 import {
   playHarborArenaOpen,
@@ -386,9 +396,25 @@ export function LearnSession({
         window.clearInterval(ambientBoot)
       }
     }, 150)
+
+    /** iOS / Safari: AudioContext stays suspended until a real gesture. */
+    const unlockHarborAudio = () => {
+      resumeSharedAudioContext()
+      primeHarborAmbientUnlock()
+      if (!isHarborBgmPlaying()) startHarborBgm(harborBgmTheme())
+      const w = worldApiRef.current?.weather ?? harborAmbientWeather()
+      if (!isHarborAmbientRunning()) startHarborAmbient(w)
+    }
+    window.addEventListener('pointerdown', unlockHarborAudio, { capture: true })
+    window.addEventListener('keydown', unlockHarborAudio, { capture: true })
+    window.addEventListener('touchstart', unlockHarborAudio, { capture: true, passive: true })
+
     return () => {
       document.body.style.overflow = prev
       window.clearInterval(ambientBoot)
+      window.removeEventListener('pointerdown', unlockHarborAudio, true)
+      window.removeEventListener('keydown', unlockHarborAudio, true)
+      window.removeEventListener('touchstart', unlockHarborAudio, true)
       stopHarborCorrectFanfare()
       stopHarborMiss()
       stopHarborScrollSfx()
