@@ -16,6 +16,8 @@ import {
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
+  clampGuanFootTarget,
+  isGuanLand,
   GUAN_BOAT_START,
   GUAN_RETURN_PORTAL,
   GUAN_TROPICAL_LOOK,
@@ -3416,24 +3418,33 @@ export function createHarborWorld(
         ? isGuan
           ? clampGuanBoatTarget(x, z)
           : clampHarborBoatTarget(x, z)
-        : clampHarborMoveTarget(x, z)
+        : isGuan
+          ? clampGuanFootTarget(x, z)
+          : clampHarborMoveTarget(x, z)
     moveTarget = clamped
     playerDirected = fromPlayer
     destMarker.position.set(clamped.x, 0.06, clamped.z)
     destMarker.visible = fromPlayer
   }
 
-  const disembark = (towardX: number) => {
+  const disembark = (towardX: number, towardZ?: number) => {
     if (travelMode === 'foot' || !scout) return
-    const side = towardX === 0 ? (boatX >= 0 ? 1 : -1) : Math.sign(towardX) || 1
-    // Keep seated Scout in the moored canoe (hidden); walk with standing mesh
     scout.visible = false
-    footX = boatX + side * 0.9
-    footZ = voyageZ
-    if (Math.abs(footX) < HARBOR_LAND_EDGE) footX = side * HARBOR_LAND_EDGE
+    if (isGuan && towardZ != null) {
+      // Step onto the nearest island shore toward the tap
+      const shore = clampGuanFootTarget(towardX, towardZ)
+      footX = shore.x
+      footZ = shore.z
+      scoutWalk.rotation.set(0, Math.atan2(shore.x - boatX, shore.z - voyageZ), 0)
+    } else {
+      const side = towardX === 0 ? (boatX >= 0 ? 1 : -1) : Math.sign(towardX) || 1
+      footX = boatX + side * 0.9
+      footZ = voyageZ
+      if (Math.abs(footX) < HARBOR_LAND_EDGE) footX = side * HARBOR_LAND_EDGE
+      scoutWalk.rotation.set(0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0)
+    }
     scoutWalk.visible = true
     scoutWalk.position.set(footX, 0, footZ)
-    scoutWalk.rotation.set(0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0)
     travelMode = 'foot'
     wantBoard = false
   }
@@ -3469,8 +3480,11 @@ export function createHarborWorld(
     const tx = hitPoint.x
     const tz = hitPoint.z
     if (travelMode === 'boat') {
-      // Guan lagoon is free-sail only — no river bank disembark.
-      if (!isGuan && isHarborLand(tx)) {
+      // Guan: tap an island to disembark ashore; otherwise free-sail the lagoon.
+      if (isGuan && isGuanLand(tx, tz)) {
+        disembark(tx, tz)
+        setMoveTarget(tx, tz, true)
+      } else if (!isGuan && isHarborLand(tx)) {
         disembark(tx)
         setMoveTarget(tx, tz, true)
       } else {
@@ -3478,9 +3492,10 @@ export function createHarborWorld(
       }
       return
     }
-    // On foot: walk inland, or return to the moored canoe to board
+    // On foot: walk inland / island, or return to the moored canoe to board
     const distBoat = Math.hypot(tx - boatX, tz - voyageZ)
-    if (!isHarborLand(tx) || distBoat <= HARBOR_REBOARD_RADIUS * 0.7) {
+    const onLand = isGuan ? isGuanLand(tx, tz) : isHarborLand(tx)
+    if (!onLand || distBoat <= HARBOR_REBOARD_RADIUS * 0.7) {
       wantBoard = true
       const side = Math.sign(footX || boatX) || 1
       setMoveTarget(boatX + side * 0.2, voyageZ, true)

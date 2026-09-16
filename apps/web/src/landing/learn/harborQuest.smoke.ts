@@ -93,6 +93,8 @@ import {
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
+  clampGuanFootTarget,
+  isGuanLand,
   GUAN_BOAT_START,
   GUAN_HARBOR_BOUNDS,
   GUAN_HARBOR_META,
@@ -281,13 +283,20 @@ function main() {
     Math.hypot(insideIsland.x - 0, insideIsland.z - 6) >= GUAN_ISLANDS[0]!.r,
     'clamp pushes boat off island land',
   )
+  assert.equal(isGuanLand(0, 6), true, 'central island is walkable land')
+  assert.equal(isGuanLand(14, 4), true, 'east satellite is walkable land')
+  assert.equal(isGuanLand(0, 0), false, 'open lagoon is not land')
+  const shore = clampGuanFootTarget(0, 0)
+  assert.ok(isGuanLand(shore.x, shore.z), 'foot clamp snaps onto an island')
   const guanFar = clampGuanBoatTarget(99, -99)
   assert.equal(guanFar.x, GUAN_HARBOR_BOUNDS.maxX)
   assert.equal(guanFar.z, GUAN_HARBOR_BOUNDS.minZ)
   assert.match(worldSrc, /buildGuanHarborScene/, 'world builds static guan scene')
   assert.match(worldSrc, /clampGuanBoatTarget/, 'guan tap-move clamp')
   assert.match(worldSrc, /isGuan/, 'guan free-sail branch')
-  assert.match(worldSrc, /GUAN_BOAT_START/, 'boat starts near central island')
+  assert.match(worldSrc, /isGuanLand/, 'guan islands are walkable land')
+  assert.match(worldSrc, /clampGuanFootTarget/, 'guan foot clamp on islands')
+  assert.match(worldSrc, /isGuan && isGuanLand/, 'tap island to disembark in guan')
   assert.match(worldSrc, /GUAN_RETURN_PORTAL/, 'guan return portal visit')
   assert.equal(GUAN_RETURN_PORTAL.id, 'save-shack')
   assert.ok(Number.isFinite(GUAN_BOAT_START.x) && Number.isFinite(GUAN_BOAT_START.z), 'boat start offset')

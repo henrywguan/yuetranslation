@@ -54,13 +54,40 @@ export const GUAN_RETURN_PORTAL = {
   radius: 2.4,
 } as const
 
-/** Island land discs — boat stays outside these radii. */
+/** Island land discs — boat stays outside these radii; foot can walk inside. */
 export const GUAN_ISLANDS = [
   { id: 'central', x: 0, z: 6, r: 5.2 },
   { id: 'east', x: 14, z: 4, r: 3.4 },
   { id: 'west', x: -13, z: 8, r: 3.1 },
   { id: 'north', x: 2, z: 18, r: 3.6 },
 ] as const
+
+/** True when (x,z) is on a Guan island disc (for disembark / foot clamp). */
+export function isGuanLand(x: number, z: number): boolean {
+  for (const island of GUAN_ISLANDS) {
+    if (Math.hypot(x - island.x, z - island.z) <= island.r * 0.92) return true
+  }
+  return false
+}
+
+/** Keep walking sailors on island discs (or snap to nearest shore). */
+export function clampGuanFootTarget(x: number, z: number): { x: number; z: number } {
+  if (isGuanLand(x, z)) return { x, z }
+  let best = GUAN_ISLANDS[0]!
+  let bestD = Infinity
+  for (const island of GUAN_ISLANDS) {
+    const d = Math.hypot(x - island.x, z - island.z)
+    if (d < bestD) {
+      bestD = d
+      best = island
+    }
+  }
+  const dx = x - best.x
+  const dz = z - best.z
+  const d = Math.hypot(dx, dz) || 1
+  const shore = best.r * 0.85
+  return { x: best.x + (dx / d) * shore, z: best.z + (dz / d) * shore }
+}
 
 function mulberry32(seed: number) {
   let a = seed >>> 0
