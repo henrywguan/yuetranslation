@@ -1,7 +1,10 @@
 /**
- * Guan Harbor · tropical paradise voyage pocket (original RS-like craft).
- * Central island + three satellites, free-sail lagoon, return portal home.
- * Chunks stay lean: hqBox / hqPost / hqCanopy / hqRock, flat Lambert.
+ * Guan Harbor · tropical voyage pocket.
+ * Land silhouette + landmark layout mirrors classic Karamja geography
+ * (Musa Point NE dock, Brimhaven NW, volcano between them, Musa Passage
+ * inlet, southern jungle / Tai Bwo Wannai / Shilo, Cairn islet SW) —
+ * original low-poly craft only (see RS-LIKE-CRAFT-BIBLE.md). User-facing
+ * name stays Guan Harbor / 關港.
  */
 import * as THREE from 'three'
 import {
@@ -15,79 +18,108 @@ import {
 
 export const GUAN_HARBOR_META = { en: 'Guan Harbor', zh: '關港' } as const
 
-/** Playable lagoon AABB (boat clamp outer fence). */
+/** Playable ocean AABB (boat clamp outer fence). */
 export const GUAN_HARBOR_BOUNDS = {
-  minX: -22,
-  maxX: 22,
-  minZ: -18,
-  maxZ: 28,
+  minX: -20,
+  maxX: 18,
+  minZ: -22,
+  maxZ: 24,
 } as const
+
+/** Water plane centre / size — keep in sync with createHarborWorld. */
+export const GUAN_WATER_PLANE = { x: 0, z: 2, size: 72 } as const
 
 /** Forced sunny tropical look — sky / fog / water (createHarborWorld applies these). */
 export const GUAN_TROPICAL_LOOK = {
-  sky: 0x7ec8f0,
-  fog: 0xb8e8ff,
-  fogDensity: 0.0085,
-  amb: 0xfff8f0,
-  ambI: 1.75,
-  sun: 0xfff0d0,
-  sunI: 2.7,
-  hemiSky: 0xd8f0ff,
-  hemiGround: 0x88b868,
-  hemiI: 1.15,
-  water: 0x2a98b8,
-  waterOpacity: 0.9,
-  sand: 0xe8d4a0,
-  grass: 0x2a8a48,
-  lagoon: 0x3ab8c8,
+  sky: 0x6eb8e8,
+  fog: 0xa8d8f0,
+  fogDensity: 0.0075,
+  amb: 0xfff4e8,
+  ambI: 1.65,
+  sun: 0xffe8c0,
+  sunI: 2.55,
+  hemiSky: 0xc8e8ff,
+  hemiGround: 0x4a8a40,
+  hemiI: 1.1,
+  water: 0x1a7898,
+  waterOpacity: 0.92,
+  sand: 0xd8c090,
+  grass: 0x1f6a38,
+  jungle: 0x165828,
+  lagoon: 0x2a98a8,
 } as const
 
-/** Boat spawn just off the central pier. */
-export const GUAN_BOAT_START = { x: 2.4, z: 1.2 } as const
+/**
+ * Named landmark anchors (Karamja layout, compressed to play scale).
+ * +Z = north (ferry approach), +X = east.
+ */
+export const GUAN_LANDMARKS = {
+  musaPoint: { x: 9.2, z: 14.5 },
+  musaDock: { x: 9.5, z: 16.2 },
+  bananaGrove: { x: 7.5, z: 12.2 },
+  volcano: { x: -1.2, z: 11.5 },
+  brimhaven: { x: -11.2, z: 12.0 },
+  brimhavenDock: { x: -13.5, z: 14.2 },
+  taiBwoWannai: { x: -2.5, z: -1.5 },
+  shipYard: { x: 8.5, z: -3.5 },
+  shilo: { x: 1.0, z: -14.0 },
+  cairnIsle: { x: -12.5, z: -11.5, r: 2.2 },
+  musaPassage: { x: 6.5, z: 3.5 },
+} as const
 
-/** Return portal — opens Save Shack (cast off → river). */
+/** Boat spawn just off the Musa Point pier (north approach). */
+export const GUAN_BOAT_START = { x: 10.2, z: 19.4 } as const
+
+/** Return portal — Customs at Musa Point (cast off → river / Save Shack). */
 export const GUAN_RETURN_PORTAL = {
   id: 'save-shack' as const,
   name: GUAN_HARBOR_META,
-  x: -1.2,
-  z: -2.8,
-  radius: 2.4,
+  x: 8.2,
+  z: 14.8,
+  radius: 2.6,
 } as const
 
-/** Island land discs — boat stays outside these radii; foot can walk inside. */
+/**
+ * Main island outline (CCW). East-facing notch = Musa Passage separating
+ * northern lobe (Musa / volcano / Brimhaven) from southern jungle / Shilo.
+ */
+export const GUAN_LAND_OUTLINE: readonly { x: number; z: number }[] = [
+  { x: 9.0, z: 18.5 }, // Musa Point tip
+  { x: 11.5, z: 16.5 },
+  { x: 12.5, z: 13.0 },
+  { x: 12.0, z: 9.0 },
+  { x: 10.5, z: 7.0 }, // passage N lip
+  { x: 4.5, z: 5.5 },
+  { x: 1.5, z: 4.8 }, // passage inner N
+  { x: 1.5, z: 2.2 }, // passage inner S
+  { x: 4.5, z: 1.5 },
+  { x: 10.5, z: 0.0 }, // passage S lip
+  { x: 12.0, z: -3.5 }, // ship yard coast
+  { x: 11.0, z: -9.0 },
+  { x: 7.5, z: -14.5 },
+  { x: 3.0, z: -17.5 }, // Shilo tip
+  { x: -2.0, z: -17.0 },
+  { x: -6.5, z: -14.0 },
+  { x: -10.0, z: -9.5 },
+  { x: -12.5, z: -4.0 },
+  { x: -14.0, z: 2.0 },
+  { x: -14.5, z: 8.0 },
+  { x: -15.0, z: 12.5 }, // Brimhaven west
+  { x: -12.5, z: 16.0 },
+  { x: -7.0, z: 18.0 },
+  { x: -2.0, z: 19.0 }, // north of volcano
+  { x: 3.5, z: 19.2 },
+  { x: 7.0, z: 18.8 },
+]
+
+/** @deprecated Prefer GUAN_LAND_OUTLINE + GUAN_LANDMARKS — kept for smoke/compat. */
 export const GUAN_ISLANDS = [
-  { id: 'central', x: 0, z: 6, r: 5.2 },
-  { id: 'east', x: 14, z: 4, r: 3.4 },
-  { id: 'west', x: -13, z: 8, r: 3.1 },
-  { id: 'north', x: 2, z: 18, r: 3.6 },
+  { id: 'musa', x: GUAN_LANDMARKS.musaPoint.x, z: GUAN_LANDMARKS.musaPoint.z, r: 4.2 },
+  { id: 'brimhaven', x: GUAN_LANDMARKS.brimhaven.x, z: GUAN_LANDMARKS.brimhaven.z, r: 3.8 },
+  { id: 'volcano', x: GUAN_LANDMARKS.volcano.x, z: GUAN_LANDMARKS.volcano.z, r: 3.2 },
+  { id: 'shilo', x: GUAN_LANDMARKS.shilo.x, z: GUAN_LANDMARKS.shilo.z, r: 3.5 },
+  { id: 'cairn', x: GUAN_LANDMARKS.cairnIsle.x, z: GUAN_LANDMARKS.cairnIsle.z, r: GUAN_LANDMARKS.cairnIsle.r },
 ] as const
-
-/** True when (x,z) is on a Guan island disc (for disembark / foot clamp). */
-export function isGuanLand(x: number, z: number): boolean {
-  for (const island of GUAN_ISLANDS) {
-    if (Math.hypot(x - island.x, z - island.z) <= island.r * 0.92) return true
-  }
-  return false
-}
-
-/** Keep walking sailors on island discs (or snap to nearest shore). */
-export function clampGuanFootTarget(x: number, z: number): { x: number; z: number } {
-  if (isGuanLand(x, z)) return { x, z }
-  let best: (typeof GUAN_ISLANDS)[number] = GUAN_ISLANDS[0]!
-  let bestD = Infinity
-  for (const island of GUAN_ISLANDS) {
-    const d = Math.hypot(x - island.x, z - island.z)
-    if (d < bestD) {
-      bestD = d
-      best = island
-    }
-  }
-  const dx = x - best.x
-  const dz = z - best.z
-  const d = Math.hypot(dx, dz) || 1
-  const shore = best.r * 0.85
-  return { x: best.x + (dx / d) * shore, z: best.z + (dz / d) * shore }
-}
 
 function mulberry32(seed: number) {
   let a = seed >>> 0
@@ -100,24 +132,118 @@ function mulberry32(seed: number) {
   }
 }
 
-/** Keep the canoe in navigable lagoon water (outside island discs, inside bounds). */
+function pointInPoly(x: number, z: number, poly: readonly { x: number; z: number }[]): boolean {
+  let inside = false
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i]!.x
+    const zi = poly[i]!.z
+    const xj = poly[j]!.x
+    const zj = poly[j]!.z
+    const intersect = zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi + 1e-12) + xi
+    if (intersect) inside = !inside
+  }
+  return inside
+}
+
+function distPointSeg(
+  px: number,
+  pz: number,
+  ax: number,
+  az: number,
+  bx: number,
+  bz: number,
+): { x: number; z: number; d: number } {
+  const abx = bx - ax
+  const abz = bz - az
+  const t = Math.max(0, Math.min(1, ((px - ax) * abx + (pz - az) * abz) / (abx * abx + abz * abz + 1e-12)))
+  const x = ax + abx * t
+  const z = az + abz * t
+  return { x, z, d: Math.hypot(px - x, pz - z) }
+}
+
+function nearestOnOutline(
+  x: number,
+  z: number,
+  poly: readonly { x: number; z: number }[],
+): { x: number; z: number; d: number } {
+  let best = { x: poly[0]!.x, z: poly[0]!.z, d: Infinity }
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i]!
+    const b = poly[(i + 1) % poly.length]!
+    const hit = distPointSeg(x, z, a.x, a.z, b.x, b.z)
+    if (hit.d < best.d) best = hit
+  }
+  return best
+}
+
+function isCairnLand(x: number, z: number): boolean {
+  const c = GUAN_LANDMARKS.cairnIsle
+  return Math.hypot(x - c.x, z - c.z) <= c.r * 0.92
+}
+
+/** True when (x,z) is on the main island or Cairn islet. */
+export function isGuanLand(x: number, z: number): boolean {
+  return pointInPoly(x, z, GUAN_LAND_OUTLINE) || isCairnLand(x, z)
+}
+
+/** Keep walking sailors on land (snap to nearest shore if they step off). */
+export function clampGuanFootTarget(x: number, z: number): { x: number; z: number } {
+  if (isGuanLand(x, z)) return { x, z }
+  const main = nearestOnOutline(x, z, GUAN_LAND_OUTLINE)
+  const c = GUAN_LANDMARKS.cairnIsle
+  const cairnD = Math.hypot(x - c.x, z - c.z)
+  const cairnShore = Math.abs(cairnD - c.r * 0.85)
+  if (cairnShore < main.d) {
+    const d = cairnD || 1
+    return { x: c.x + ((x - c.x) / d) * c.r * 0.85, z: c.z + ((z - c.z) / d) * c.r * 0.85 }
+  }
+  // Nudge slightly inland from the edge
+  const midX = (GUAN_HARBOR_BOUNDS.minX + GUAN_HARBOR_BOUNDS.maxX) * 0.5
+  const midZ = (GUAN_HARBOR_BOUNDS.minZ + GUAN_HARBOR_BOUNDS.maxZ) * 0.35
+  const ix = midX - main.x
+  const iz = midZ - main.z
+  const il = Math.hypot(ix, iz) || 1
+  return { x: main.x + (ix / il) * 0.35, z: main.z + (iz / il) * 0.35 }
+}
+
+/** Keep the canoe in navigable water (outside land, inside ocean bounds). */
 export function clampGuanBoatTarget(x: number, z: number): { x: number; z: number } {
   let cx = Math.min(GUAN_HARBOR_BOUNDS.maxX, Math.max(GUAN_HARBOR_BOUNDS.minX, x))
   let cz = Math.min(GUAN_HARBOR_BOUNDS.maxZ, Math.max(GUAN_HARBOR_BOUNDS.minZ, z))
-  for (const island of GUAN_ISLANDS) {
-    const dx = cx - island.x
-    const dz = cz - island.z
-    const d = Math.hypot(dx, dz)
-    const minR = island.r + 0.55
-    if (d < minR && d > 1e-4) {
-      const s = minR / d
-      cx = island.x + dx * s
-      cz = island.z + dz * s
-    } else if (d <= 1e-4) {
-      cx = island.x + minR
-      cz = island.z
+
+  if (pointInPoly(cx, cz, GUAN_LAND_OUTLINE)) {
+    const edge = nearestOnOutline(cx, cz, GUAN_LAND_OUTLINE)
+    const ox = cx - edge.x
+    const oz = cz - edge.z
+    const ol = Math.hypot(ox, oz)
+    if (ol > 1e-4) {
+      cx = edge.x - (ox / ol) * 0.7
+      cz = edge.z - (oz / ol) * 0.7
+    } else {
+      cx = edge.x + 0.7
+      cz = edge.z
+    }
+    // If still inland (concave notch), push east into Musa Passage / open sea
+    if (pointInPoly(cx, cz, GUAN_LAND_OUTLINE)) {
+      cx = Math.max(cx, 11.5)
+      cz = GUAN_LANDMARKS.musaPassage.z
     }
   }
+
+  const c = GUAN_LANDMARKS.cairnIsle
+  const dx = cx - c.x
+  const dz = cz - c.z
+  const d = Math.hypot(dx, dz)
+  const minR = c.r + 0.55
+  if (d < minR && d > 1e-4) {
+    const s = minR / d
+    cx = c.x + dx * s
+    cz = c.z + dz * s
+  } else if (d <= 1e-4) {
+    cx = c.x + minR
+    cz = c.z
+  }
+
   cx = Math.min(GUAN_HARBOR_BOUNDS.maxX, Math.max(GUAN_HARBOR_BOUNDS.minX, cx))
   cz = Math.min(GUAN_HARBOR_BOUNDS.maxZ, Math.max(GUAN_HARBOR_BOUNDS.minZ, cz))
   return { x: cx, z: cz }
@@ -138,53 +264,25 @@ function palmTree(rng: () => number): THREE.Group {
     frond.position.set(Math.cos(a) * 0.12, h + 0.02, Math.sin(a) * 0.12)
     g.add(frond)
   }
-  // Coconut cluster
   g.add(hqCanopy(0.12, 0x4a3020, 0.05, h - 0.05, 0.04))
   return g
 }
 
-function hibiscus(rng: () => number): THREE.Group {
+/** Musa Point banana plant — broad upright leaves + fruit bunch. */
+function bananaPlant(rng: () => number): THREE.Group {
   const g = new THREE.Group()
-  g.name = 'guan-hibiscus'
-  const h = 0.45 + rng() * 0.2
-  g.add(hqPost(0.03, 0.04, h * 0.55, 0x2a1c14, 0, h * 0.28, 0, 4))
-  g.add(hqCanopy(0.22 + rng() * 0.08, 0x2f7a40, 0, h * 0.5, 0))
-  const petals = [0xe84878, 0xf06090, 0xff7098, 0xd03860]
+  g.name = 'guan-banana'
+  const h = 1.1 + rng() * 0.35
+  g.add(hqPost(0.06, 0.1, h, 0x5a7a30, 0, h / 2, 0, 5))
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2
-    g.add(
-      hqBox(
-        0.09,
-        0.05,
-        0.09,
-        petals[Math.floor(rng() * petals.length)]!,
-        Math.cos(a) * 0.1,
-        h * 0.62,
-        Math.sin(a) * 0.1,
-      ),
-    )
-  }
-  g.add(hqBox(0.05, 0.05, 0.05, 0xf0d040, 0, h * 0.68, 0))
-  return g
-}
-
-function birdOfParadise(rng: () => number): THREE.Group {
-  const g = new THREE.Group()
-  g.name = 'guan-bop'
-  const h = 0.7 + rng() * 0.25
-  g.add(hqPost(0.035, 0.05, h, 0x2a6a38, 0, h / 2, 0, 4))
-  // Fan leaves
-  for (let i = 0; i < 3; i++) {
-    const leaf = hqBox(0.06, 0.02, 0.42, 0x3a9a50, 0, h * 0.55, 0)
-    leaf.rotation.y = (i - 1) * 0.55
-    leaf.rotation.x = -0.4
-    leaf.position.set((i - 1) * 0.08, h * 0.7, 0.05)
+    const leaf = hqBox(0.12, 0.03, 0.7, 0x3a9a40, 0, h * 0.75, 0)
+    leaf.rotation.y = a
+    leaf.rotation.x = -0.35
+    leaf.position.set(Math.cos(a) * 0.1, h * 0.7, Math.sin(a) * 0.1)
     g.add(leaf)
   }
-  // Bright “bird” bloom
-  g.add(hqBox(0.14, 0.06, 0.08, 0xf0a020, 0.12, h * 0.85, 0.02))
-  g.add(hqBox(0.08, 0.05, 0.06, 0xe83848, 0.2, h * 0.9, 0.02))
-  g.add(hqBox(0.04, 0.1, 0.03, 0x3060c0, 0.16, h * 0.98, 0))
+  g.add(hqBox(0.14, 0.18, 0.1, 0xe8d040, 0.12, h * 0.55, 0))
   return g
 }
 
@@ -202,78 +300,111 @@ function fernClump(rng: () => number): THREE.Group {
   return g
 }
 
-function coralTip(rng: () => number): THREE.Group {
+function pineapplePlant(rng: () => number): THREE.Group {
   const g = new THREE.Group()
-  g.name = 'guan-coral'
-  const tones = [0xe87090, 0xf09070, 0xd05080, 0xf0a060]
-  const c = tones[Math.floor(rng() * tones.length)]!
-  g.add(hqPost(0.04, 0.07, 0.28 + rng() * 0.15, c, 0, 0.18, 0, 5))
-  g.add(hqPost(0.03, 0.04, 0.18, c, 0.08, 0.22, 0.04, 4))
-  g.add(hqPost(0.03, 0.04, 0.16, c, -0.06, 0.2, -0.05, 4))
+  g.name = 'guan-pineapple'
+  g.add(hqPost(0.04, 0.05, 0.35, 0x3a6a28, 0, 0.2, 0, 4))
+  g.add(hqBox(0.16, 0.22, 0.16, 0xd4a020, 0, 0.45, 0))
+  g.add(hqBox(0.08, 0.12, 0.04, 0x2a8a38, 0, 0.62, 0))
+  if (rng() > 0.3) g.add(hqBox(0.08, 0.12, 0.04, 0x2a8a38, 0.04, 0.6, 0.03))
   return g
 }
 
-function islandDisc(
-  radius: number,
-  sandColor: number,
-  grassColor: number,
-  rng: () => number,
-): THREE.Group {
+function thatchHut(rng: () => number, wide = false): THREE.Group {
   const g = new THREE.Group()
-  // Chunky stepped discs (not smooth cylinders)
-  const sand = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius * 1.08, 0.28, 8),
-    hqMat(sandColor),
+  g.name = 'guan-hut'
+  const w = wide ? 1.4 : 1.0
+  const d = wide ? 1.1 : 0.85
+  g.add(hqBox(w, 0.7, d, 0x8a6a48, 0, 0.45, 0))
+  g.add(hqBox(w * 1.15, 0.12, d * 1.15, P.straw, 0, 0.95, 0))
+  g.add(hqBox(w * 0.7, 0.1, d * 0.7, 0xb89050, 0, 1.1, 0))
+  g.add(hqBox(0.22, 0.4, 0.08, P.woodDark, w * 0.15, 0.35, d * 0.52))
+  if (rng() > 0.4) g.add(hqBox(0.18, 0.18, 0.06, 0x1a2030, -w * 0.25, 0.55, d * 0.52))
+  return g
+}
+
+function pirateHouse(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-pirate-house'
+  const w = 1.3 + rng() * 0.3
+  g.add(hqBox(w, 0.85, 1.1, 0x7a6858, 0, 0.5, 0))
+  g.add(hqBox(w * 1.1, 0.14, 1.2, P.roofClay, 0, 1.05, 0))
+  g.add(hqBox(0.2, 0.45, 0.08, P.woodDark, 0.2, 0.35, 0.58))
+  g.add(hqBox(0.2, 0.2, 0.06, 0x1a2838, -0.3, 0.6, 0.58))
+  // Pirate banner scrap
+  g.add(hqBox(0.08, 0.35, 0.04, 0x1a1a1a, w * 0.45, 1.25, 0))
+  g.add(hqBox(0.22, 0.12, 0.03, P.banner, w * 0.45, 1.15, 0.02))
+  return g
+}
+
+function volcanoCone(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-volcano'
+  const rock = 0x4a4540
+  const ash = 0x3a3834
+  const base = new THREE.Mesh(new THREE.ConeGeometry(3.4, 2.2, 7), hqMat(rock))
+  base.position.y = 1.1
+  g.add(base)
+  const mid = new THREE.Mesh(new THREE.ConeGeometry(2.1, 1.6, 6), hqMat(ash))
+  mid.position.y = 2.4
+  g.add(mid)
+  // Crater rim
+  const rim = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.0, 1.35, 0.35, 6),
+    hqMat(0x2a2824),
   )
-  sand.position.y = 0.08
-  g.add(sand)
-  const grass = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 0.72, radius * 0.78, 0.22, 7),
-    hqMat(grassColor),
+  rim.position.y = 3.15
+  g.add(rim)
+  // Lava glow in crater
+  const lava = new THREE.Mesh(
+    new THREE.CircleGeometry(0.75, 6),
+    hqMat(0xff6020, { emissive: 0xe04010, emissiveIntensity: 0.9 }),
   )
-  grass.position.y = 0.28
-  g.add(grass)
-  // Beach rocks
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2 + rng() * 0.5
-    const r = radius * (0.85 + rng() * 0.15)
-    const rock = hqRock(rng, rng() > 0.5 ? P.rock : P.rockWarm)
-    rock.position.set(Math.cos(a) * r, 0.12, Math.sin(a) * r)
-    rock.scale.setScalar(0.7 + rng() * 0.5)
-    g.add(rock)
+  lava.rotation.x = -Math.PI / 2
+  lava.position.y = 3.05
+  lava.userData.specialHostGlow = true
+  lava.userData.glowBaseIntensity = 0.9
+  g.add(lava)
+  // Dead trees on slopes
+  for (const [x, z] of [
+    [-1.6, 0.8],
+    [1.4, -0.6],
+    [0.2, 1.5],
+  ] as const) {
+    g.add(hqPost(0.04, 0.05, 0.55, 0x3a3028, x, 1.6, z, 4))
   }
   return g
 }
 
-function pierGazebo(): THREE.Group {
+function musaPier(): THREE.Group {
   const g = new THREE.Group()
-  g.name = 'guan-gazebo'
-  // Pier planks toward open water (−Z from island edge)
-  for (let i = 0; i < 5; i++) {
-    g.add(hqBox(1.4, 0.08, 0.55, P.woodMid, 0, 0.18, -i * 0.55))
+  g.name = 'guan-musa-pier'
+  // Planks extending north into the approach water
+  for (let i = 0; i < 6; i++) {
+    g.add(hqBox(1.6, 0.08, 0.55, P.woodMid, 0, 0.2, i * 0.55))
   }
-  // Posts in water
-  for (const x of [-0.55, 0.55]) {
-    for (const z of [0, -1.1, -2.2]) {
-      g.add(hqPost(0.06, 0.07, 0.55, P.woodDark, x, 0.05, z, 5))
+  for (const x of [-0.6, 0.6]) {
+    for (let i = 0; i < 4; i++) {
+      g.add(hqPost(0.07, 0.08, 0.55, P.woodDark, x, 0.05, i * 0.7, 5))
     }
   }
-  // Gazebo canopy at pier head
-  const gz = -2.4
-  for (const [x, z] of [
-    [-0.55, gz - 0.4],
-    [0.55, gz - 0.4],
-    [-0.55, gz + 0.35],
-    [0.55, gz + 0.35],
-  ] as const) {
-    g.add(hqPost(0.05, 0.06, 1.1, P.woodLight, x, 0.7, z, 5))
+  // Customs hut at pier root
+  g.add(hqBox(1.2, 0.75, 1.0, 0x9a8a70, 0, 0.5, -0.9))
+  g.add(hqBox(1.35, 0.1, 1.15, P.roofTile, 0, 0.95, -0.9))
+  g.add(hqBox(0.25, 0.4, 0.08, P.woodDark, 0.15, 0.35, -0.35))
+  return g
+}
+
+function brimhavenDock(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-brimhaven-dock'
+  for (let i = 0; i < 4; i++) {
+    g.add(hqBox(1.2, 0.08, 0.5, P.woodMid, 0, 0.18, i * 0.5))
   }
-  g.add(hqBox(1.5, 0.08, 1.2, P.straw, 0, 1.35, gz))
-  // Peak
-  g.add(hqBox(0.9, 0.08, 0.7, 0xd4b070, 0, 1.48, gz))
-  g.add(hqBox(0.12, 0.2, 0.12, P.trimGold, 0, 1.62, gz))
-  // Bench
-  g.add(hqBox(0.9, 0.08, 0.28, P.woodMid, 0, 0.42, gz + 0.1))
+  for (const x of [-0.45, 0.45]) {
+    g.add(hqPost(0.06, 0.07, 0.5, P.woodDark, x, 0.05, 0.3, 5))
+    g.add(hqPost(0.06, 0.07, 0.5, P.woodDark, x, 0.05, 1.3, 5))
+  }
   return g
 }
 
@@ -283,7 +414,6 @@ function returnPortalMarker(): THREE.Group {
   g.add(hqPost(0.08, 0.1, 1.4, P.woodDark, -0.45, 0.7, 0, 5))
   g.add(hqPost(0.08, 0.1, 1.4, P.woodDark, 0.45, 0.7, 0, 5))
   g.add(hqBox(1.1, 0.12, 0.12, P.woodMid, 0, 1.35, 0))
-  // Gold portal glow pane
   const pane = new THREE.Mesh(
     new THREE.PlaneGeometry(0.75, 1.0),
     hqMat(0xffe080, { emissive: 0xffc020, emissiveIntensity: 0.85, transparent: true, opacity: 0.85 }),
@@ -301,96 +431,274 @@ function returnPortalMarker(): THREE.Group {
   ring.userData.specialHostGlow = true
   ring.userData.glowBaseIntensity = 0.7
   g.add(ring)
-  // Small jade chop on the lintel
   g.add(hqBox(0.22, 0.18, 0.06, 0x3dcfb6, 0, 1.5, 0.08))
   return g
 }
 
-function dressIsland(
+function shipHullWreck(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-ship-yard'
+  g.add(hqBox(2.4, 0.35, 0.9, P.woodDark, 0, 0.25, 0))
+  g.add(hqBox(2.0, 0.25, 0.7, P.woodMid, 0, 0.5, 0))
+  g.add(hqPost(0.06, 0.08, 1.4, P.woodLight, 0.3, 1.0, 0, 5))
+  if (rng() > 0.3) g.add(hqBox(0.08, 0.9, 0.5, 0xc8c0b0, 0.3, 1.4, 0.05))
+  return g
+}
+
+function buildLandMesh(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-island-main'
+
+  // Shape is XY; Extrude +Z then rotateX(-90) mirrors Z — feed −z so map north stays +Z.
+  const shape = new THREE.Shape()
+  const first = GUAN_LAND_OUTLINE[0]!
+  shape.moveTo(first.x, -first.z)
+  for (let i = 1; i < GUAN_LAND_OUTLINE.length; i++) {
+    const p = GUAN_LAND_OUTLINE[i]!
+    shape.lineTo(p.x, -p.z)
+  }
+  shape.closePath()
+
+  const sandGeo = new THREE.ExtrudeGeometry(shape, {
+    depth: 0.28,
+    bevelEnabled: false,
+    curveSegments: 1,
+    steps: 1,
+  })
+  sandGeo.rotateX(-Math.PI / 2)
+  const sand = new THREE.Mesh(sandGeo, hqMat(GUAN_TROPICAL_LOOK.sand))
+  sand.position.y = 0.02
+  g.add(sand)
+
+  // Inset grass plate (scaled about centroid)
+  let cx = 0
+  let cz = 0
+  for (const p of GUAN_LAND_OUTLINE) {
+    cx += p.x
+    cz += p.z
+  }
+  cx /= GUAN_LAND_OUTLINE.length
+  cz /= GUAN_LAND_OUTLINE.length
+  const grassShape = new THREE.Shape()
+  const scale = 0.82
+  const g0x = cx + (first.x - cx) * scale
+  const g0z = cz + (first.z - cz) * scale
+  grassShape.moveTo(g0x, -g0z)
+  for (let i = 1; i < GUAN_LAND_OUTLINE.length; i++) {
+    const p = GUAN_LAND_OUTLINE[i]!
+    grassShape.lineTo(cx + (p.x - cx) * scale, -(cz + (p.z - cz) * scale))
+  }
+  grassShape.closePath()
+  const grassGeo = new THREE.ExtrudeGeometry(grassShape, {
+    depth: 0.2,
+    bevelEnabled: false,
+    curveSegments: 1,
+    steps: 1,
+  })
+  grassGeo.rotateX(-Math.PI / 2)
+  const grass = new THREE.Mesh(grassGeo, hqMat(GUAN_TROPICAL_LOOK.grass))
+  grass.position.y = 0.28
+  g.add(grass)
+
+  return g
+}
+
+function buildCairnIsle(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-island-cairn'
+  const c = GUAN_LANDMARKS.cairnIsle
+  const sand = new THREE.Mesh(
+    new THREE.CylinderGeometry(c.r, c.r * 1.08, 0.28, 7),
+    hqMat(GUAN_TROPICAL_LOOK.sand),
+  )
+  sand.position.y = 0.1
+  g.add(sand)
+  const grass = new THREE.Mesh(
+    new THREE.CylinderGeometry(c.r * 0.7, c.r * 0.75, 0.2, 6),
+    hqMat(0x2a7a40),
+  )
+  grass.position.y = 0.28
+  g.add(grass)
+  const palm = palmTree(rng)
+  palm.position.set(0.3, 0.25, -0.2)
+  g.add(palm)
+  g.add(hqRock(rng, P.rock))
+  g.children[g.children.length - 1]!.position.set(-0.8, 0.15, 0.5)
+  g.position.set(c.x, 0, c.z)
+  return g
+}
+
+function scatterJungle(
   root: THREE.Group,
-  island: (typeof GUAN_ISLANDS)[number],
   rng: () => number,
-  heavy: boolean,
+  cx: number,
+  cz: number,
+  radius: number,
+  count: number,
+  heavy = false,
 ) {
-  const palms = heavy ? 5 : 3
-  for (let i = 0; i < palms; i++) {
-    const a = (i / palms) * Math.PI * 2 + rng() * 0.4
-    const r = island.r * (0.35 + rng() * 0.4)
-    const p = palmTree(rng)
-    p.position.set(island.x + Math.cos(a) * r, 0.25, island.z + Math.sin(a) * r)
-    p.rotation.y = rng() * Math.PI
-    root.add(p)
-  }
-  const shrubs = heavy ? 6 : 3
-  for (let i = 0; i < shrubs; i++) {
+  for (let i = 0; i < count; i++) {
     const a = rng() * Math.PI * 2
-    const r = island.r * (0.2 + rng() * 0.45)
-    const flower = rng() > 0.45 ? hibiscus(rng) : birdOfParadise(rng)
-    flower.position.set(island.x + Math.cos(a) * r, 0.28, island.z + Math.sin(a) * r)
-    root.add(flower)
-  }
-  for (let i = 0; i < (heavy ? 4 : 2); i++) {
-    const a = rng() * Math.PI * 2
-    const r = island.r * (0.25 + rng() * 0.35)
-    const f = fernClump(rng)
-    f.position.set(island.x + Math.cos(a) * r, 0.28, island.z + Math.sin(a) * r)
-    root.add(f)
+    const r = radius * (0.15 + rng() * 0.75)
+    const x = cx + Math.cos(a) * r
+    const z = cz + Math.sin(a) * r
+    if (!isGuanLand(x, z)) continue
+    const roll = rng()
+    let plant: THREE.Group
+    if (roll > 0.55) plant = palmTree(rng)
+    else if (roll > 0.3) plant = fernClump(rng)
+    else plant = pineapplePlant(rng)
+    plant.position.set(x, 0.3, z)
+    plant.rotation.y = rng() * Math.PI
+    if (heavy) plant.scale.setScalar(0.9 + rng() * 0.35)
+    root.add(plant)
   }
 }
 
-/** Static Guan Harbor scene — central paradise + 3 satellites + pier + return portal. */
+/** Static Guan Harbor scene — Karamja silhouette + landmark towns. */
 export function buildGuanHarborScene(): THREE.Group {
   const root = new THREE.Group()
   root.name = 'guan-harbor'
-  const rng = mulberry32(0x6775616e) // 'guan'
+  const rng = mulberry32(0x6b617261) // 'kara'
 
-  for (const island of GUAN_ISLANDS) {
-    const disc = islandDisc(
-      island.r,
-      GUAN_TROPICAL_LOOK.sand,
-      island.id === 'central' ? GUAN_TROPICAL_LOOK.grass : 0x2f7a42,
-      rng,
-    )
-    disc.position.set(island.x, 0, island.z)
-    disc.name = `guan-island-${island.id}`
-    root.add(disc)
-    dressIsland(root, island, rng, island.id === 'central')
-  }
+  root.add(buildLandMesh())
+  root.add(buildCairnIsle(rng))
 
-  // Lagoon rocks + coral tips between islands
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2
-    const r = 7.5 + (i % 3) * 1.2
-    const rock = hqRock(rng, i % 2 ? 0x7a8078 : 0x6a7080)
-    rock.position.set(Math.cos(a) * r, 0.05, 6 + Math.sin(a) * r * 0.7)
-    rock.scale.setScalar(0.55 + rng() * 0.4)
-    root.add(rock)
-    if (i % 2 === 0) {
-      const coral = coralTip(rng)
-      coral.position.set(Math.cos(a + 0.3) * (r + 0.8), 0.02, 6 + Math.sin(a + 0.3) * (r * 0.7 + 0.5))
-      root.add(coral)
-    }
-  }
-
-  // Gathering pier / gazebo on the south edge of the central island
-  const pier = pierGazebo()
-  pier.position.set(0.2, 0, 6 - 4.6)
+  // —— Musa Point (NE) ——
+  const pier = musaPier()
+  pier.position.set(GUAN_LANDMARKS.musaDock.x, 0, GUAN_LANDMARKS.musaDock.z)
   root.add(pier)
 
-  // Return portal near boat spawn / south lagoon
   const portal = returnPortalMarker()
   portal.position.set(GUAN_RETURN_PORTAL.x, 0, GUAN_RETURN_PORTAL.z)
-  portal.rotation.y = Math.PI * 0.15
+  portal.rotation.y = Math.PI * 0.1
   root.add(portal)
 
-  // Soft lagoon shelf ring (visual only)
-  const shelf = new THREE.Mesh(
-    new THREE.RingGeometry(9.5, 11.2, 12),
-    hqMat(0xc8b888, { transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2
+    const r = 1.2 + (i % 3) * 0.55
+    const ban = bananaPlant(rng)
+    ban.position.set(
+      GUAN_LANDMARKS.bananaGrove.x + Math.cos(a) * r,
+      0.3,
+      GUAN_LANDMARKS.bananaGrove.z + Math.sin(a) * r * 0.7,
+    )
+    root.add(ban)
+  }
+
+  // —— Volcano (between Musa & Brimhaven) ——
+  const volcano = volcanoCone()
+  volcano.position.set(GUAN_LANDMARKS.volcano.x, 0, GUAN_LANDMARKS.volcano.z)
+  root.add(volcano)
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2
+    const rock = hqRock(rng, i % 2 ? 0x4a4540 : P.rock)
+    rock.position.set(
+      GUAN_LANDMARKS.volcano.x + Math.cos(a) * (3.6 + rng() * 0.6),
+      0.15,
+      GUAN_LANDMARKS.volcano.z + Math.sin(a) * (3.6 + rng() * 0.6),
+    )
+    rock.scale.setScalar(0.8 + rng() * 0.5)
+    root.add(rock)
+  }
+
+  // —— Brimhaven (NW pirate town) ——
+  for (let i = 0; i < 5; i++) {
+    const house = pirateHouse(rng)
+    const a = (i / 5) * Math.PI * 1.2 - 0.4
+    house.position.set(
+      GUAN_LANDMARKS.brimhaven.x + Math.cos(a) * 1.8,
+      0.28,
+      GUAN_LANDMARKS.brimhaven.z + Math.sin(a) * 1.5,
+    )
+    house.rotation.y = a + Math.PI
+    root.add(house)
+  }
+  const bDock = brimhavenDock()
+  bDock.position.set(GUAN_LANDMARKS.brimhavenDock.x, 0, GUAN_LANDMARKS.brimhavenDock.z)
+  bDock.rotation.y = -0.6
+  root.add(bDock)
+  for (let i = 0; i < 4; i++) {
+    const pine = pineapplePlant(rng)
+    pine.position.set(
+      GUAN_LANDMARKS.brimhaven.x + 1.5 + rng() * 2,
+      0.3,
+      GUAN_LANDMARKS.brimhaven.z - 2.5 - rng() * 2,
+    )
+    root.add(pine)
+  }
+
+  // —— Tai Bwo Wannai (central southern jungle village) ——
+  for (let i = 0; i < 4; i++) {
+    const hut = thatchHut(rng, i === 0)
+    const a = (i / 4) * Math.PI * 2
+    hut.position.set(
+      GUAN_LANDMARKS.taiBwoWannai.x + Math.cos(a) * 1.6,
+      0.28,
+      GUAN_LANDMARKS.taiBwoWannai.z + Math.sin(a) * 1.6,
+    )
+    hut.rotation.y = a + Math.PI
+    root.add(hut)
+  }
+  // Cooking fire
+  const fire = hqBox(0.35, 0.15, 0.35, 0x3a3020, 0, 0.35, 0)
+  fire.position.set(GUAN_LANDMARKS.taiBwoWannai.x, 0.28, GUAN_LANDMARKS.taiBwoWannai.z)
+  root.add(fire)
+  const flame = new THREE.Mesh(
+    new THREE.ConeGeometry(0.12, 0.35, 4),
+    hqMat(0xff8020, { emissive: 0xff5010, emissiveIntensity: 0.8 }),
   )
-  shelf.rotation.x = -Math.PI / 2
-  shelf.position.set(0, 0.04, 6)
-  root.add(shelf)
+  flame.position.set(GUAN_LANDMARKS.taiBwoWannai.x, 0.55, GUAN_LANDMARKS.taiBwoWannai.z)
+  flame.userData.specialHostGlow = true
+  flame.userData.glowBaseIntensity = 0.8
+  root.add(flame)
+
+  // —— Ship Yard (SE coast, south of Musa Passage) ——
+  const ship = shipHullWreck(rng)
+  ship.position.set(GUAN_LANDMARKS.shipYard.x, 0.15, GUAN_LANDMARKS.shipYard.z)
+  ship.rotation.y = 0.4
+  root.add(ship)
+
+  // —— Shilo Village (southern tip) ——
+  for (let i = 0; i < 5; i++) {
+    const hut = thatchHut(rng, i % 2 === 0)
+    const a = (i / 5) * Math.PI * 2
+    hut.position.set(
+      GUAN_LANDMARKS.shilo.x + Math.cos(a) * 1.8,
+      0.28,
+      GUAN_LANDMARKS.shilo.z + Math.sin(a) * 1.5,
+    )
+    hut.rotation.y = a + Math.PI
+    root.add(hut)
+  }
+
+  // Jungle fill — northern fringe, passage banks, southern canopy
+  scatterJungle(root, rng, GUAN_LANDMARKS.volcano.x, GUAN_LANDMARKS.volcano.z - 4, 5, 10)
+  scatterJungle(root, rng, GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z, 6, 18, true)
+  scatterJungle(root, rng, GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z + 4, 5, 12, true)
+  scatterJungle(root, rng, -8, 4, 4, 8)
+  scatterJungle(root, rng, 6, 10, 3.5, 6)
+
+  // Musa Passage shoreline rocks
+  for (let i = 0; i < 5; i++) {
+    const rock = hqRock(rng, i % 2 ? P.rock : P.rockWarm)
+    rock.position.set(3.5 + i * 1.2, 0.08, 3.5 + (i % 2) * 0.8)
+    rock.scale.setScalar(0.55 + rng() * 0.4)
+    root.add(rock)
+  }
+
+  // Grapple islet in Musa Passage (visual only)
+  const grapple = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.7, 0.85, 0.35, 6),
+    hqMat(0x6a7060),
+  )
+  grapple.position.set(GUAN_LANDMARKS.musaPassage.x, 0.12, GUAN_LANDMARKS.musaPassage.z)
+  grapple.name = 'guan-grapple-isle'
+  root.add(grapple)
+  const strongTree = palmTree(rng)
+  strongTree.position.set(GUAN_LANDMARKS.musaPassage.x, 0.25, GUAN_LANDMARKS.musaPassage.z)
+  strongTree.scale.setScalar(0.75)
+  root.add(strongTree)
 
   return root
 }

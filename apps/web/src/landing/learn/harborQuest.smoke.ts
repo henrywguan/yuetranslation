@@ -99,6 +99,8 @@ import {
   GUAN_HARBOR_BOUNDS,
   GUAN_HARBOR_META,
   GUAN_ISLANDS,
+  GUAN_LAND_OUTLINE,
+  GUAN_LANDMARKS,
   GUAN_RETURN_PORTAL,
   GUAN_TROPICAL_LOOK,
 } from '../../landing/learn/harborGuanRealm'
@@ -258,36 +260,46 @@ function main() {
   assert.match(worldSrc, /function magpie/, 'magpie mesh builder')
   assert.match(worldSrc, /function koi/, 'koi mesh builder')
   assert.match(worldSrc, /realm === 'bamboo' \? 0x2a6a42/, 'bamboo realm grass tint')
-  // Guan Harbor paradise pocket
+  // Guan Harbor — Karamja silhouette (Musa / Brimhaven / volcano / Shilo)
   assert.match(worldSrc, /HarborRealmId = 'river' \| 'bamboo' \| 'guan'/, 'realm id includes guan')
   const curriculumSrc = readFileSync(new URL('./curriculum.ts', import.meta.url), 'utf8')
   assert.match(curriculumSrc, /HarborRealmId = 'river' \| 'bamboo' \| 'guan'/, 'curriculum realm id includes guan')
   assert.equal(GUAN_HARBOR_META.en, 'Guan Harbor')
   assert.equal(GUAN_HARBOR_META.zh, '關港')
-  assert.equal(GUAN_ISLANDS.length, 4, 'central + 3 satellite islands')
+  assert.ok(GUAN_ISLANDS.length >= 4, 'named Guan landmark regions')
+  assert.ok(GUAN_LAND_OUTLINE.length >= 16, 'Karamja-style land outline has enough verts')
   assert.ok(GUAN_TROPICAL_LOOK.sky > 0 && GUAN_TROPICAL_LOOK.water > 0, 'tropical look constants')
   assert.ok(GUAN_HARBOR_BOUNDS.maxX > GUAN_HARBOR_BOUNDS.minX, 'guan bounds')
   const guanScene = buildGuanHarborScene()
   assert.equal(guanScene.name, 'guan-harbor')
-  assert.ok(guanScene.children.length >= 8, 'guan scene has islands / flora / pier / portal')
+  assert.ok(guanScene.children.length >= 8, 'guan scene has land / flora / pier / portal')
   assert.ok(
-    guanScene.children.some((c) => c.name === 'guan-island-central'),
-    'central paradise island',
+    guanScene.children.some((c) => c.name === 'guan-island-main'),
+    'main Karamja-silhouette island mesh',
   )
   assert.ok(
-    guanScene.children.some((c) => c.name === 'guan-gazebo' || c.name === 'guan-return-portal' || c.children?.length),
-    'guan builders include gathering / portal pieces',
+    guanScene.children.some((c) => c.name === 'guan-volcano'),
+    'volcano landmark between Musa and Brimhaven',
   )
-  const insideIsland = clampGuanBoatTarget(0, 6)
   assert.ok(
-    Math.hypot(insideIsland.x - 0, insideIsland.z - 6) >= GUAN_ISLANDS[0]!.r,
-    'clamp pushes boat off island land',
+    guanScene.children.some((c) => c.name === 'guan-musa-pier' || c.name === 'guan-return-portal'),
+    'Musa Point pier / return portal',
   )
-  assert.equal(isGuanLand(0, 6), true, 'central island is walkable land')
-  assert.equal(isGuanLand(14, 4), true, 'east satellite is walkable land')
-  assert.equal(isGuanLand(0, 0), false, 'open lagoon is not land')
-  const shore = clampGuanFootTarget(0, 0)
-  assert.ok(isGuanLand(shore.x, shore.z), 'foot clamp snaps onto an island')
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-island-cairn'),
+    'Cairn islet SW of Shilo',
+  )
+  // Inland jungle (near Tai Bwo Wannai) is land; Musa Passage water is not
+  assert.equal(isGuanLand(-2.5, -1.5), true, 'Tai Bwo Wannai jungle is walkable land')
+  assert.equal(isGuanLand(GUAN_LANDMARKS.musaPoint.x, GUAN_LANDMARKS.musaPoint.z), true, 'Musa Point is land')
+  assert.equal(isGuanLand(GUAN_LANDMARKS.brimhaven.x, GUAN_LANDMARKS.brimhaven.z), true, 'Brimhaven is land')
+  assert.equal(isGuanLand(GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z), true, 'Shilo Village is land')
+  assert.equal(isGuanLand(6.5, 3.5), false, 'Musa Passage channel is water')
+  assert.equal(isGuanLand(0, 22), false, 'open sea north of Musa is not land')
+  const insideIsland = clampGuanBoatTarget(GUAN_LANDMARKS.volcano.x, GUAN_LANDMARKS.volcano.z)
+  assert.equal(isGuanLand(insideIsland.x, insideIsland.z), false, 'clamp pushes boat off island land')
+  const shore = clampGuanFootTarget(0, 22)
+  assert.ok(isGuanLand(shore.x, shore.z), 'foot clamp snaps onto the island')
   const guanFar = clampGuanBoatTarget(99, -99)
   assert.equal(guanFar.x, GUAN_HARBOR_BOUNDS.maxX)
   assert.equal(guanFar.z, GUAN_HARBOR_BOUNDS.minZ)
@@ -298,8 +310,10 @@ function main() {
   assert.match(worldSrc, /clampGuanFootTarget/, 'guan foot clamp on islands')
   assert.match(worldSrc, /isGuan && isGuanLand/, 'tap island to disembark in guan')
   assert.match(worldSrc, /GUAN_RETURN_PORTAL/, 'guan return portal visit')
+  assert.match(worldSrc, /GUAN_WATER_PLANE/, 'guan water plane follows island bounds')
   assert.equal(GUAN_RETURN_PORTAL.id, 'save-shack')
   assert.ok(Number.isFinite(GUAN_BOAT_START.x) && Number.isFinite(GUAN_BOAT_START.z), 'boat start offset')
+  assert.ok(GUAN_BOAT_START.z > GUAN_LANDMARKS.musaDock.z, 'boat spawns north of Musa pier')
   const stageSrc = readFileSync(new URL('./HarborStage.tsx', import.meta.url), 'utf8')
   assert.match(
     stageSrc,
@@ -856,8 +870,8 @@ function main() {
   assert.match(worldSrc2, /document\.hidden/, 'tab-hidden skips sim work')
   assert.match(
     worldSrc2,
-    /PlaneGeometry\(isGuan \? 56 : RIVER \* 2\.4, isGuan \? 56 : 400/,
-    'water mesh segment budget (river strip / guan lagoon)',
+    /PlaneGeometry\(\s*isGuan \? GUAN_WATER_PLANE\.size : RIVER \* 2\.4/,
+    'water mesh segment budget (river strip / guan ocean)',
   )
   assert.match(canvasSrc, /setPaused\(paused\)/, 'canvas wires pause into the world')
   assert.match(stageSrc, /paused=\{paused\}/, 'stage forwards pause')
