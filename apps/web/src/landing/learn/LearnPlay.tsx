@@ -9,6 +9,7 @@ import {
   openCantoneseLessonUrl,
   type HarborCampaignId,
   type HarborLevel,
+  type HarborRealmId,
 } from './curriculum'
 import {
   HARBOR_FANFARE_DURATION_MS,
@@ -16,6 +17,7 @@ import {
   stopHarborCorrectFanfare,
 } from './harborFanfare'
 import { duckHarborBgm, startHarborBgm, stopHarborBgm } from './harborBgm'
+import { GUAN_HARBOR_META } from './harborGuanRealm'
 import {
   setHarborAmbientPaused,
   setHarborAmbientTalking,
@@ -146,6 +148,8 @@ export function LearnSession({
   const [invOpen, setInvOpen] = useState(false)
   const [codexOpen, setCodexOpen] = useState(false)
   const [teleportOpen, setTeleportOpen] = useState(false)
+  /** Free-sail paradise pocket — overrides campaign realm until cast off / chapter teleport. */
+  const [realmOverride, setRealmOverride] = useState<HarborRealmId | null>(null)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
@@ -355,6 +359,8 @@ export function LearnSession({
     setInvOpen(false)
     setCodexOpen(false)
     setTeleportOpen(false)
+    setRealmOverride(null)
+    startHarborBgm('river')
     setCoinPops([])
     setClearReward(null)
     setScrollOpen(false)
@@ -498,10 +504,28 @@ export function LearnSession({
       setCleared(true)
       return
     }
-    setStepIndex((i) => i + 1)
+    const next = stepIndex + 1
+    setStepIndex(next)
     setFlash(null)
     setLastOk(false)
+    // Keep talking at the next pier host — board + teleport to that dock.
+    worldApiRef.current?.snapToQuestDock(next)
   }, [level, stepIndex, pushProgress])
+
+  const beginTalk = useCallback(() => {
+    // Leave Guan paradise so the river pier snap can run on the remounted world.
+    if (realmOverride) {
+      setRealmOverride(null)
+      startHarborBgm('river')
+    }
+    playHarborTalkStart()
+    playHarborNpcGreet()
+    setTalking(true)
+    const snap = () => worldApiRef.current?.snapToQuestDock(stepIndex)
+    snap()
+    // If we just left Guan, the world remounts next frame — snap again then.
+    if (realmOverride) requestAnimationFrame(() => requestAnimationFrame(snap))
+  }, [realmOverride, stepIndex])
 
   const onResult = useCallback(
     (ok: boolean) => {
@@ -783,6 +807,7 @@ export function LearnSession({
           look={progressSnap.look}
           gender={progressSnap.gender}
           appearance={progressSnap.appearance}
+          realmOverride={realmOverride}
           paused={
             worldPaused ||
             invOpen ||
@@ -974,10 +999,34 @@ export function LearnSession({
           </div>
           {teleportOpen ? (
             <ul className="hq-teleport-list" aria-label="Campaign piers">
+              <li>
+                <button
+                  type="button"
+                  className={`hq-teleport-btn hq-teleport-btn--guan${realmOverride === 'guan' ? ' is-here' : ''}`}
+                  disabled={realmOverride === 'guan'}
+                  onClick={() => {
+                    playHarborTeleport()
+                    setRealmOverride('guan')
+                    startHarborBgm('guan')
+                    setTeleportOpen(false)
+                    setVisitable(null)
+                  }}
+                >
+                  <span className="hq-teleport-ch">Paradise · 樂園</span>
+                  <span className="hq-teleport-title">
+                    {GUAN_HARBOR_META.en}
+                    <span aria-hidden="true"> · </span>
+                    <span lang="zh-HK">{GUAN_HARBOR_META.zh}</span>
+                  </span>
+                  <span className="hq-teleport-status">
+                    {realmOverride === 'guan' ? 'Here' : 'Teleport'}
+                  </span>
+                </button>
+              </li>
               {HARBOR_LEVELS.map((lv) => {
                 const ids = HARBOR_LEVELS.map((l) => l.id)
                 const unlocked = isLevelUnlocked(lv.id, ids, progressSnap)
-                const here = lv.id === levelId
+                const here = lv.id === levelId && realmOverride == null
                 return (
                   <li key={lv.id}>
                     <button
@@ -986,6 +1035,8 @@ export function LearnSession({
                       disabled={!unlocked || here}
                       onClick={() => {
                         playHarborTeleport()
+                        setRealmOverride(null)
+                        startHarborBgm('river')
                         setTeleportOpen(false)
                         setVisitable(null)
                         onOpenLevel(lv.id)
@@ -1009,6 +1060,8 @@ export function LearnSession({
             className="hq-btn hq-btn--ghost"
             onClick={() => {
               playHarborCastOff()
+              setRealmOverride(null)
+              startHarborBgm('river')
               setVisitable(null)
             }}
           >
@@ -1323,11 +1376,7 @@ export function LearnSession({
           onResult={onResult}
           overlay
           talking={talking}
-          onTalk={() => {
-            playHarborTalkStart()
-            playHarborNpcGreet()
-            setTalking(true)
-          }}
+          onTalk={beginTalk}
           onExplore={() => {
             playHarborExplore()
             setTalking(false)
