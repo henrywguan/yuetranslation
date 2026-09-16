@@ -106,11 +106,22 @@ import {
 } from '../../landing/learn/harborGuanRealm'
 import {
   HARBOR_CRAFT_PALETTE,
+  HARBOR_CRAFT_PROPS,
   HARBOR_FACETS,
+  hqBarrel,
   hqBox,
   hqCanopy,
+  hqCrate,
+  hqDoor,
+  hqFence,
+  hqMatSmooth,
+  hqMarketStall,
   hqRock,
+  hqSack,
+  hqStampClutter,
+  hqWallWindow,
   hqWindow,
+  hqWoodTexture,
 } from '../../landing/learn/harborCraft'
 import {
   buildHarborProtagonist,
@@ -384,14 +395,55 @@ function main() {
   assert.ok(HARBOR_NPC_ROLES.includes('merchant'), 'merchant NPCs')
   assert.equal(HARBOR_NPC_ROLES.length, 6, 'Chinese clothing role kit')
 
-  // Craft bible kit — locked palette + faceted helpers
+  // Craft bible kit — locked palette + faceted helpers + modular props
   assert.equal(HARBOR_FACETS, 6, 'era cylinders stay 6-gon')
   assert.ok(HARBOR_CRAFT_PALETTE.jade === 0x3dcfb6, 'brand jade in craft palette')
   assert.ok(HARBOR_CRAFT_PALETTE.woodMid && HARBOR_CRAFT_PALETTE.roofTile, 'wood/roof swatches')
+  assert.ok(HARBOR_CRAFT_PALETTE.woodLight && HARBOR_CRAFT_PALETTE.woodDeep, 'wood value steps')
+  assert.ok(HARBOR_CRAFT_PALETTE.strawLite && HARBOR_CRAFT_PALETTE.strawDark, 'thatch value steps')
+  assert.ok(HARBOR_CRAFT_PALETTE.glass && HARBOR_CRAFT_PALETTE.lava, 'glass / lava swatches')
   assert.ok(hqBox(1, 1, 1, HARBOR_CRAFT_PALETTE.stone).isMesh, 'hqBox builds meshes')
   assert.ok(hqCanopy(0.5, HARBOR_CRAFT_PALETTE.leafMid).isMesh, 'hqCanopy faceted')
   assert.ok(hqRock(() => 0.5).isMesh, 'hqRock boxy')
+  assert.equal(
+    (hqRock(() => 0.5).material as { flatShading?: boolean }).flatShading,
+    false,
+    'rocks use smooth Gouraud-style Lambert',
+  )
+  assert.ok(hqMatSmooth(0xff0000).flatShading === false, 'hqMatSmooth is smooth')
   assert.ok(hqWindow(0.3, 0.3, HARBOR_CRAFT_PALETTE.trimGold, 0x102030, 0, 0, 0).isGroup, 'extruded window')
+  assert.ok(hqDoor().name === 'hq-door', 'extruded door prop')
+  assert.ok(hqWallWindow(1, 1, 0.2, HARBOR_CRAFT_PALETTE.plaster).name === 'hq-wall-window', 'wall+window panel')
+  assert.deepEqual(
+    [...HARBOR_CRAFT_PROPS],
+    ['crate', 'barrel', 'fence', 'sack', 'door', 'wall-window', 'market-stall'],
+    'modular craft prop kit',
+  )
+  assert.ok(hqCrate(() => 0.2).name === 'hq-crate', 'crate prop')
+  assert.ok(hqBarrel(() => 0.2).name === 'hq-barrel', 'barrel prop')
+  assert.ok(hqFence(2).name === 'hq-fence', 'fence prop')
+  assert.ok(hqSack(() => 0.2).name === 'hq-sack', 'sack prop')
+  assert.ok(hqMarketStall(() => 0.2).name === 'hq-market-stall', 'market stall prop')
+  assert.equal(hqWoodTexture().image.width, 128, 'wood albedo is 128×128 era size')
+  assert.equal(hqWoodTexture().magFilter, 1003 /* NearestFilter */, 'wood uses nearest filter')
+  const added: string[] = []
+  const clutterRoot = {
+    add(o: { name?: string }) {
+      added.push(o.name ?? '')
+    },
+  } as unknown as import('three').Group
+  hqStampClutter(clutterRoot, () => 0.5, 0, 0, 2, 3)
+  assert.ok(added.length === 3, 'stamp clutter adds props')
+  assert.match(
+    readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
+    /hqStampClutter/,
+    'Guan stamps town clutter',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /hqStampClutter/,
+    'river pier/village stamps clutter',
+  )
 
   // Original River Scout protagonist (not Jagex Bob / cache mesh)
   assert.equal(HARBOR_PROTAGONIST_ID, 'river-scout')
@@ -806,6 +858,24 @@ function main() {
 
   assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
   assert.match(worldSrc2, /function buildBoatHull/, 'tiered boat hull builder')
+  assert.match(worldSrc2, /hqWoodTexture\(\)/, 'boat hull loads wood-grain albedo')
+  assert.match(worldSrc2, /hqBoxTex\(/, 'boat hull uses textured craft boxes')
+  assert.match(worldSrc2, /P\.iron/, 'boat hull iron band trim')
+  const gearSrcBoat = readFileSync(new URL('./harborGear.ts', import.meta.url), 'utf8')
+  assert.match(gearSrcBoat, /hqWoodTexture/, 'handhelds use craft wood texture')
+  assert.match(gearSrcBoat, /hqBoxTex/, 'handhelds use textured craft boxes')
+  assert.match(detailSrc, /hqMatSmooth/, 'tier detail uses smooth Lambert for beads')
+  assert.match(detailSrc, /hqMatTex/, 'boat tier enrich uses wood-textured trim')
+  assert.match(
+    readFileSync(new URL('./harborVipGear.ts', import.meta.url), 'utf8'),
+    /hqWoodTexture/,
+    'VIP handhelds use craft wood texture',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborGearModelIcon.tsx', import.meta.url), 'utf8'),
+    /Hull plank seams/,
+    'bag boat icons show plank seams',
+  )
   assert.match(worldSrc2, /applyVesselLook/, 'look swaps boat + lanterns')
   assert.match(worldSrc2, /canoe\(weather, currentLook\.boat, currentLook\.lantern,\s*currentGender,\s*currentAppearance\)/, 'canoe uses equipped boat + lantern')
   assert.match(worldSrc2, /boatLantern\(weather, lanternId\)/, 'port+starboard lanterns use lantern gear colors')

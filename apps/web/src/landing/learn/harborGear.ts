@@ -5,6 +5,15 @@
  */
 import * as THREE from 'three'
 import {
+  HARBOR_CRAFT_PALETTE as P,
+  hqBox,
+  hqBoxTex,
+  hqMat,
+  hqMatTex,
+  hqPost,
+  hqWoodTexture,
+} from './harborCraft'
+import {
   applyVipOverlaysToProtagonist,
   buildVipHandheldProp,
 } from './harborVipGear'
@@ -383,10 +392,6 @@ export function sanitizeCarriedGear(ownedRaw: unknown, bankedRaw: unknown = []):
   return sanitizeOwnedGear(ownedRaw).filter((id) => !banked.has(id))
 }
 
-function mat(color: number) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: true })
-}
-
 /** Build a handheld prop mesh for the hand_r socket. */
 export function buildHandheldProp(itemId: string): THREE.Object3D | null {
   const item = BY_ID.get(itemId)
@@ -396,39 +401,48 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
   const g = new THREE.Group()
   g.name = 'gear-hand'
   g.userData.harborGear = true
-  const main = mat(item.color)
-  const accent = mat(item.accent ?? item.color)
+  const wood = hqWoodTexture()
+  const main = item.color
+  const accent = item.accent ?? item.color
   if (item.id === 'hand-fan') {
-    const fan = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.02, 0.12), main)
-    fan.position.set(0.08, 0.02, 0)
-    g.add(fan)
-    const stick = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.02), accent)
-    stick.position.set(0, -0.02, 0)
-    g.add(stick)
+    // Leaf panels with value steps + stick
+    g.add(hqBox(0.22, 0.02, 0.12, main, 0.08, 0.02, 0))
+    g.add(hqBox(0.18, 0.015, 0.1, accent, 0.08, 0.035, 0))
+    g.add(hqBoxTex(0.02, 0.12, 0.02, P.woodDark, wood, 0, -0.01, 0))
+    g.add(hqBox(0.03, 0.02, 0.03, P.trimGold, 0, 0.04, 0))
   } else if (item.id === 'hand-lantern') {
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.1), main)
-    body.position.set(0.06, 0.08, 0)
-    g.add(body)
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.03, 0.08), accent)
-    cap.position.set(0.06, 0.16, 0)
-    g.add(cap)
+    g.add(hqBox(0.1, 0.12, 0.1, main, 0.06, 0.08, 0))
+    g.add(hqBoxTex(0.08, 0.03, 0.08, P.woodMid, wood, 0.06, 0.16, 0))
+    g.add(hqBox(0.11, 0.02, 0.11, P.iron, 0.06, 0.02, 0))
+    g.add(hqBox(0.04, 0.04, 0.04, accent, 0.06, 0.08, 0.06))
   } else if (item.id === 'hand-oar') {
-    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.36, 0.03), main)
+    const shaft = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.36, 0.03),
+      hqMatTex(main, wood),
+    )
     shaft.position.set(0.05, 0.1, 0)
     shaft.rotation.z = 0.4
     g.add(shaft)
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.02), accent)
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.02), hqMat(accent))
     blade.position.set(0.14, 0.26, 0)
     blade.rotation.z = 0.4
     g.add(blade)
+    // Blade spine
+    const spine = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.025), hqMat(P.woodDeep))
+    spine.position.set(0.14, 0.26, 0.01)
+    spine.rotation.z = 0.4
+    g.add(spine)
   } else if (item.id === 'hand-scroll') {
-    const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.18, 6), main)
+    const roll = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 0.18, 6),
+      hqMatTex(main, wood),
+    )
     roll.rotation.z = Math.PI / 2
     roll.position.set(0.08, 0.02, 0)
     g.add(roll)
-    const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.06), accent)
-    ribbon.position.set(0.08, 0.02, 0.04)
-    g.add(ribbon)
+    g.add(hqBox(0.04, 0.02, 0.06, accent, 0.08, 0.02, 0.04))
+    g.add(hqPost(0.035, 0.035, 0.02, P.woodDeep, -0.01, 0.02, 0, 6))
+    g.add(hqPost(0.035, 0.035, 0.02, P.woodDeep, 0.17, 0.02, 0, 6))
   }
   enrichHandheldProp(g, item)
   return g

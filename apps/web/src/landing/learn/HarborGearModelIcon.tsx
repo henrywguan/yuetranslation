@@ -114,7 +114,10 @@ function drawSilhouette(
       return (
         <>
           <path d="M32 48 L14 24 Q32 12 50 24 Z" fill={fill} />
+          <path d="M32 48 L20 28 Q32 20 44 28 Z" fill={accent} opacity="0.55" />
           <line x1="32" y1="48" x2="32" y2="22" stroke={accent} strokeWidth="3" />
+          <line x1="32" y1="46" x2="22" y2="28" stroke={accent} strokeWidth="1.2" opacity="0.7" />
+          <line x1="32" y1="46" x2="42" y2="28" stroke={accent} strokeWidth="1.2" opacity="0.7" />
         </>
       )
     }
@@ -123,6 +126,8 @@ function drawSilhouette(
         <>
           <rect x="22" y="22" width="20" height="24" rx="3" fill={fill} />
           <rect x="26" y="16" width="12" height="8" rx="2" fill={accent} />
+          <rect x="20" y="22" width="24" height="3" fill={accent} opacity="0.7" />
+          <rect x="20" y="43" width="24" height="3" fill={accent} opacity="0.7" />
           <rect x="28" y="28" width="8" height="10" rx="1" fill={accent} opacity="0.8" />
         </>
       )
@@ -131,7 +136,9 @@ function drawSilhouette(
       return (
         <>
           <rect x="28" y="10" width="6" height="36" rx="2" fill={fill} transform="rotate(25 32 32)" />
+          <rect x="29" y="14" width="4" height="8" fill={accent} transform="rotate(25 32 32)" opacity="0.7" />
           <ellipse cx="42" cy="14" rx="10" ry="6" fill={accent} transform="rotate(25 42 14)" />
+          <line x1="36" y1="12" x2="48" y2="16" stroke={fill} strokeWidth="1.5" opacity="0.6" />
         </>
       )
     }
@@ -139,6 +146,8 @@ function drawSilhouette(
     return (
       <>
         <rect x="16" y="26" width="32" height="12" rx="6" fill={fill} />
+        <rect x="14" y="24" width="6" height="16" rx="3" fill={accent} />
+        <rect x="44" y="24" width="6" height="16" rx="3" fill={accent} />
         <rect x="28" y="28" width="8" height="8" rx="1" fill={accent} />
       </>
     )
@@ -149,11 +158,24 @@ function drawSilhouette(
     return (
       <>
         <path d="M8 40 Q32 52 56 40 L50 34 H14 Z" fill={fill} />
+        {/* Hull plank seams — bag icons need value breakup too */}
+        <path d="M14 38 Q32 46 50 38" fill="none" stroke={accent} strokeWidth="1.2" opacity="0.45" />
+        <path d="M16 36 Q32 42 48 36" fill="none" stroke={accent} strokeWidth="1" opacity="0.35" />
         <rect x="28" y={tall ? 14 : 20} width="4" height={tall ? 22 : 16} fill={accent} />
+        <rect x="26" y={tall ? 18 : 24} width="8" height="2" rx="1" fill={fill} opacity="0.7" />
         <path
           d={tall ? 'M30 16 L48 24 L30 28 Z' : 'M30 22 L44 28 L30 32 Z'}
           fill={accent}
           opacity="0.9"
+        />
+        <line
+          x1="32"
+          y1={tall ? 18 : 24}
+          x2="32"
+          y2={tall ? 34 : 36}
+          stroke={fill}
+          strokeWidth="1"
+          opacity="0.5"
         />
         {family.includes('dragon') || family.includes('imperial') ? (
           <path d="M50 34 L58 28 L54 36 Z" fill={accent} />
@@ -165,7 +187,14 @@ function drawSilhouette(
             <rect x="38" y="36" width="3" height="8" fill={accent} />
           </>
         ) : null}
-        {family.includes('junk') ? <rect x="16" y="24" width="14" height="10" rx="1" fill={fill} /> : null}
+        {family.includes('junk') ? (
+          <>
+            <rect x="16" y="24" width="14" height="10" rx="1" fill={fill} />
+            <rect x="18" y="26" width="4" height="4" fill={accent} opacity="0.7" />
+          </>
+        ) : null}
+        {/* Gunwale highlight */}
+        <path d="M12 36 Q32 32 52 36" fill="none" stroke={accent} strokeWidth="1.5" opacity="0.55" />
       </>
     )
   }

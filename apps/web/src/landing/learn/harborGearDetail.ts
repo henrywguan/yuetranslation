@@ -1,11 +1,12 @@
 /**
  * Harbor Quest · progressive gear detail overlays (common → mid → high).
  * More expensive pieces get more mesh parts so upgrades feel visible.
- * Original craft — chunky RS grammar, flat Lambert (not Jagex).
+ * Original craft — chunky RS grammar, flat + smooth Lambert (not Jagex).
  *
  * Takes resolved catalog pieces as args (no import of harborGear) to avoid cycles.
  */
 import * as THREE from 'three'
+import { hqMat, hqMatSmooth, hqMatTex, hqWoodTexture, HARBOR_CRAFT_PALETTE as P } from './harborCraft'
 
 /** Minimal catalog shape — avoids importing harborGear (cycle with overlays). */
 export type HarborDetailPiece = {
@@ -16,7 +17,11 @@ export type HarborDetailPiece = {
 }
 
 function mat(color: number) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: true })
+  return hqMat(color)
+}
+
+function matSmooth(color: number) {
+  return hqMatSmooth(color)
 }
 
 function findSocket(root: THREE.Object3D, name: string): THREE.Object3D | null {
@@ -63,7 +68,7 @@ function hatDetail(item: HarborDetailPiece): THREE.Group | null {
     cord.position.set(0.12, -0.06, 0.04)
     cord.rotation.z = 0.35
     g.add(cord)
-    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), mat(a))
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), matSmooth(a))
     knot.position.set(0.14, -0.12, 0.05)
     g.add(knot)
   }
@@ -258,7 +263,8 @@ export function applyTierDetailOverlays(root: THREE.Object3D, pieces: HarborTier
 export function enrichHandheldProp(g: THREE.Group, item: HarborDetailPiece): void {
   const level = harborTierDetailLevel(item.tier)
   if (level < 1 || item.tier === 'vip') return
-  const a = mat(item.accent ?? item.color)
+  const accent = item.accent ?? item.color
+  const a = mat(accent)
 
   if (item.id === 'hand-fan') {
     // Common+: fold crease
@@ -290,7 +296,7 @@ export function enrichHandheldProp(g: THREE.Group, item: HarborDetailPiece): voi
   }
   if (item.id === 'hand-oar') {
     // Common+: butt knob
-    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), a)
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), matSmooth(accent))
     knob.position.set(-0.02, -0.04, 0)
     g.add(knob)
     if (level >= 2) {
@@ -327,10 +333,11 @@ export function enrichBoatHull(
   if (level < 1 || item.tier === 'vip') return
   const a = item.accent ?? item.color
   const { length, width } = dims
+  const wood = hqWoodTexture()
 
   // Common: small bow bead
   if (level >= 1) {
-    const bead = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), mat(a))
+    const bead = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), matSmooth(a))
     bead.position.set(length * 0.48, 0.42, 0)
     bead.userData.harborTierDetail = true
     g.add(bead)
@@ -339,7 +346,10 @@ export function enrichBoatHull(
   if (level >= 2) {
     for (const z of [width * 0.42, -width * 0.42] as const) {
       for (const x of [-length * 0.25, length * 0.2] as const) {
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.22, 5), mat(a))
+        const post = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.025, 0.03, 0.22, 5),
+          hqMatTex(P.woodDark, wood),
+        )
         post.position.set(x, 0.5, z)
         post.userData.harborTierDetail = true
         g.add(post)
@@ -349,10 +359,15 @@ export function enrichBoatHull(
     plaque.position.set(-length * 0.5, 0.48, 0)
     plaque.userData.harborTierDetail = true
     g.add(plaque)
+    // Iron stud on plaque
+    const stud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), mat(P.iron))
+    stud.position.set(-length * 0.5, 0.48, 0.03)
+    stud.userData.harborTierDetail = true
+    g.add(stud)
   }
   // High: cabin ridge + twin bow fins + deck runners
   if (level >= 3) {
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, width * 0.55), mat(a))
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, width * 0.55), hqMatTex(a, wood))
     ridge.position.set(-0.2, 0.72, 0)
     ridge.userData.harborTierDetail = true
     g.add(ridge)
@@ -363,7 +378,10 @@ export function enrichBoatHull(
       g.add(fin)
     }
     for (const z of [width * 0.3, -width * 0.3] as const) {
-      const runner = new THREE.Mesh(new THREE.BoxGeometry(length * 0.7, 0.03, 0.04), mat(a))
+      const runner = new THREE.Mesh(
+        new THREE.BoxGeometry(length * 0.7, 0.03, 0.04),
+        hqMatTex(P.woodMid, wood),
+      )
       runner.position.set(0, 0.36, z)
       runner.userData.harborTierDetail = true
       g.add(runner)
