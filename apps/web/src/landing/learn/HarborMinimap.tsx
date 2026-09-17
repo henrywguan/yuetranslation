@@ -126,6 +126,7 @@ const VISIT_DOT: Record<HarborVisitableId, string> = {
   bank: 'hq-minimap-dot--bank',
   arena: 'hq-minimap-dot--arena',
   barber: 'hq-minimap-dot--barber',
+  'cape-loom': 'hq-minimap-dot--cape-loom',
 }
 
 type Props = {

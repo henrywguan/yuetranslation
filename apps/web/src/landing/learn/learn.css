@@ -5330,6 +5330,7 @@
 .hq-minimap-dot--bank { background: #6ecbff; box-shadow: 0 0 5px #6ecbff; }
 .hq-minimap-dot--arena { background: #a78bfa; box-shadow: 0 0 5px #a78bfa; }
 .hq-minimap-dot--barber { background: #ff7090; box-shadow: 0 0 5px #ff7090; }
+.hq-minimap-dot--cape-loom { background: #e8c547; box-shadow: 0 0 5px #e8c547; }
 .hq-minimap-dot--remote {
   width: 0.32rem;
   height: 0.32rem;

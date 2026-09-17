@@ -1429,6 +1429,7 @@ function main() {
   const minimapSrc = readFileSync(new URL('./HarborMinimap.tsx', import.meta.url), 'utf8')
   assert.match(minimapSrc, /export function HarborMinimap/, 'Harbor minimap component')
   assert.match(minimapSrc, /HARBOR_VISITABLES/, 'minimap plots landmark hosts')
+  assert.match(minimapSrc, /'cape-loom':/, 'minimap VISIT_DOT includes Cape Loom')
   assert.match(minimapSrc, /legendOpen/, 'minimap legend toggles open/closed')
   assert.match(minimapSrc, /legendOpen: false|parsed\.legendOpen === true/, 'legend hidden by default')
   assert.match(minimapSrc, /hq-minimap-tool--legend|Show legend/, 'opaque legend toggle icon')
