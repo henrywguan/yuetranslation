@@ -2,10 +2,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { SpeakButton } from '../../components/SpeakButton'
 import { inkEase } from '../../lib/motion'
-import { useYueStore } from '../../lib/store'
 import { stopSpeaking } from '../../lib/tts'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { BuildStep, HearClip, PickStep, QuestStep, TeachStep } from './curriculum'
+import { speakHarborTts } from './harborSpeak'
 import type { HarborNpcRole } from './harborWorld'
 import {
   JyutpingChaoPhrase,
@@ -137,19 +137,18 @@ function Line({ line, className }: { line: { en: string; zh: string }; className
 }
 
 function HearRow({ clips, autoPlay = true }: { clips?: HearClip[]; autoPlay?: boolean }) {
-  const speakManual = useYueStore((s) => s.speakManual)
   const clipKey = clips?.map((c) => c.han).join('|') ?? ''
 
-  // Immersive Harbor learning: auto-play hear chips (replay via SpeakButton).
+  // Harbor Quest always auto-plays hear chips (independent of Account Auto-speak).
   useEffect(() => {
     if (!autoPlay || !clips?.length) return
     const first = clips[0]?.han?.trim()
     if (!first) return
-    void speakManual(first, 'yue')
+    void speakHarborTts(first, 'yue')
     return () => {
       stopSpeaking()
     }
-  }, [autoPlay, clipKey, speakManual, clips])
+  }, [autoPlay, clipKey, clips])
 
   if (!clips?.length) return null
   return (
@@ -160,7 +159,13 @@ function HearRow({ clips, autoPlay = true }: { clips?: HearClip[]; autoPlay?: bo
             {clip.han}
           </span>
           {clip.label ? <JyutpingChaoPhrase jp={clip.label} className="hq-hear-jp" /> : null}
-          <SpeakButton text={clip.han} lang="yue" className="hq-hear-speak" warm={false} />
+          <SpeakButton
+            text={clip.han}
+            lang="yue"
+            className="hq-hear-speak"
+            warm={false}
+            playText={speakHarborTts}
+          />
         </div>
       ))}
     </div>

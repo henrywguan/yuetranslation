@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SpeakButton } from '../../components/SpeakButton'
-import { useYueStore } from '../../lib/store'
 import { stopSpeaking, unlockTtsPlayback } from '../../lib/tts'
 import {
   buildHarborDelve,
@@ -11,6 +10,7 @@ import {
   HARBOR_DELVE_OUTRO_OK,
   type HarborDelveRound,
 } from './harborDelve'
+import { speakHarborTts } from './harborSpeak'
 
 type Phase = 'intro' | 'play' | 'feedback' | 'done'
 
@@ -29,7 +29,6 @@ export function HarborDelveModal({ open, alone, onClose, onHit, onComplete }: Pr
   const [idx, setIdx] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [hits, setHits] = useState(0)
-  const speakManual = useYueStore((s) => s.speakManual)
 
   const round = rounds[idx] ?? null
 
@@ -42,16 +41,16 @@ export function HarborDelveModal({ open, alone, onClose, onHit, onComplete }: Pr
     setHits(0)
   }, [open])
 
-  // Auto-play Cantonese hear clip each round (immersive — replay via SpeakButton).
+  // Harbor Quest always auto-plays Cantonese hear clips (independent of Account Auto-speak).
   useEffect(() => {
     if (!open || phase !== 'play' || !round?.hearHan) return
     const han = round.hearHan.trim()
     if (!han) return
-    void speakManual(han, 'yue')
+    void speakHarborTts(han, 'yue')
     return () => {
       stopSpeaking()
     }
-  }, [open, phase, round?.id, round?.hearHan, speakManual])
+  }, [open, phase, round?.id, round?.hearHan])
 
   const progressLabel = useMemo(() => {
     if (!rounds.length) return ''
@@ -142,7 +141,7 @@ export function HarborDelveModal({ open, alone, onClose, onHit, onComplete }: Pr
             </p>
             {round.hearHan ? (
               <div className="hq-delve-hear">
-                <SpeakButton text={round.hearHan} lang="yue" />
+                <SpeakButton text={round.hearHan} lang="yue" playText={speakHarborTts} />
               </div>
             ) : null}
             <ul className="hq-delve-choices">
