@@ -190,6 +190,13 @@ export function playHarborLandmarkOpen(id: HarborVisitableId): void {
       tone(ctx, bus, t0 + 0.06, { type: 'sine', f0: 784, dur: 0.32, gain: 0.22 })
       tone(ctx, bus, t0 + 0.12, { type: 'sine', f0: 1047, dur: 0.22, gain: 0.14 })
       break
+    case 'fishing-hut':
+    case 'fishing-spot':
+      // Soft splash + jade ping
+      noiseBurst(ctx, bus, t0, 0.12, 500, 0.35)
+      tone(ctx, bus, t0 + 0.04, { type: 'sine', f0: 660, dur: 0.25, gain: 0.28 })
+      tone(ctx, bus, t0 + 0.1, { type: 'triangle', f0: 990, dur: 0.2, gain: 0.16 })
+      break
   }
 }
 

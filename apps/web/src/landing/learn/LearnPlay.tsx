@@ -4,6 +4,7 @@ import {
   HARBOR_LEVELS,
   levelById,
   levelCampaign,
+  levelRealm,
   levelsForCampaign,
   nextLevelId,
   openCantoneseLessonUrl,
@@ -23,6 +24,12 @@ import {
   stopHarborBgm,
 } from './harborBgm'
 import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
+import { HarborFishingPanel } from './HarborFishingPanel'
+import {
+  emptyHarborFishingBag,
+  nearestGuanFishSpot,
+  type HarborFishSpotId,
+} from './harborFishing'
 import {
   harborAmbientWeather,
   primeHarborAmbientUnlock,
@@ -107,6 +114,7 @@ import {
   exchangeGoldForCoins,
   visitSaveShack,
   withdrawHarborGear,
+  updateHarborFishing,
   type HarborProgress,
 } from './progress'
 import { QuestPanel } from './QuestPanel'
@@ -158,6 +166,9 @@ export function LearnSession({
   const [arenaOpen, setArenaOpen] = useState(false)
   const [barberOpen, setBarberOpen] = useState(false)
   const [minimapPose, setMinimapPose] = useState<HarborMinimapPose | null>(null)
+  /** Active Guan fishing spot when casting at a buoy. */
+  const [activeFishSpotId, setActiveFishSpotId] = useState<HarborFishSpotId | null>(null)
+  const [fishCasting, setFishCasting] = useState(false)
   /** Crew canoe vs walk land — drives Explore ↔ Boat FAB. */
   const [travelMode, setTravelMode] = useState<'boat' | 'foot'>('boat')
   const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
@@ -621,6 +632,7 @@ export function LearnSession({
       setVisitable(null)
       setInvOpen(false)
       setCodexOpen(false)
+      setActiveFishSpotId(null)
       return
     }
     // Barber NPC / portal → same character-create modal (restyle, keep name)
@@ -630,7 +642,17 @@ export function LearnSession({
       setVisitable(null)
       setInvOpen(false)
       setCodexOpen(false)
+      setActiveFishSpotId(null)
       return
+    }
+    if (id === 'fishing-spot') {
+      const pose = worldApiRef.current?.getLocalPose()
+      const spot = pose ? nearestGuanFishSpot(pose.x, pose.z, 2.6) : null
+      setActiveFishSpotId(spot?.id ?? null)
+    } else if (id === 'fishing-hut') {
+      setActiveFishSpotId(null)
+    } else {
+      setActiveFishSpotId(null)
     }
     if (id) {
       playHarborLandmarkOpen(id)
@@ -958,6 +980,7 @@ export function LearnSession({
       <HarborMinimap
         pose={minimapPose}
         remotes={remotePlayers}
+        realm={realmOverride ?? (level ? levelRealm(level) : null)}
         hidden={visitable !== null || invOpen || codexOpen || barberOpen || scrollOpen}
         onNavigate={(x, z) => {
           worldApiRef.current?.moveToWorld(x, z)
@@ -1304,6 +1327,29 @@ export function LearnSession({
             Cast off
           </button>
         </aside>
+      ) : null}
+
+      {visitable === 'fishing-hut' || visitable === 'fishing-spot' ? (
+        <HarborFishingPanel
+          mode={visitable === 'fishing-hut' ? 'lodge' : 'spot'}
+          spotId={activeFishSpotId}
+          bag={progressSnap.fishing ?? emptyHarborFishingBag()}
+          coins={progressSnap.coins}
+          casting={fishCasting}
+          onBagChange={(bag, coinsDelta) => {
+            pushProgress(updateHarborFishing(bag, coinsDelta ?? 0))
+          }}
+          onCastAnim={() => {
+            setFishCasting(true)
+            worldApiRef.current?.playFishingCast()
+            window.setTimeout(() => setFishCasting(false), 950)
+          }}
+          onClose={() => {
+            playHarborCastOff()
+            setVisitable(null)
+            setActiveFishSpotId(null)
+          }}
+        />
       ) : null}
 
       {barberOpen ? (

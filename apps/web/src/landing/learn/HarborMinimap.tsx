@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { HARBOR_VISITABLES, type HarborVisitableId } from './harborWorld'
+import { HARBOR_VISITABLES, type HarborVisitable, type HarborVisitableId } from './harborWorld'
+import type { HarborRealmId } from './harborWorld'
+import { GUAN_CAPE_LOOM, GUAN_RETURN_PORTAL } from './harborGuanRealm'
+import { GUAN_FISH_SPOTS, GUAN_FISHING_HUT } from './harborFishing'
 import type { HarborRemotePlayer } from './harborPresence'
 
 export type HarborMinimapPose = {
@@ -127,19 +130,53 @@ const VISIT_DOT: Record<HarborVisitableId, string> = {
   arena: 'hq-minimap-dot--arena',
   barber: 'hq-minimap-dot--barber',
   'cape-loom': 'hq-minimap-dot--cape-loom',
+  'fishing-hut': 'hq-minimap-dot--fishing-hut',
+  'fishing-spot': 'hq-minimap-dot--fishing-spot',
+}
+
+function minimapVisitables(realm: HarborRealmId | null | undefined): readonly HarborVisitable[] {
+  if (realm !== 'guan') return HARBOR_VISITABLES
+  return [
+    {
+      id: GUAN_RETURN_PORTAL.id,
+      name: { en: 'Customs', zh: '關口' },
+      x: GUAN_RETURN_PORTAL.x,
+      z: GUAN_RETURN_PORTAL.z,
+    },
+    {
+      id: GUAN_CAPE_LOOM.id,
+      name: GUAN_CAPE_LOOM.name,
+      x: GUAN_CAPE_LOOM.x,
+      z: GUAN_CAPE_LOOM.z,
+    },
+    {
+      id: GUAN_FISHING_HUT.id,
+      name: GUAN_FISHING_HUT.name,
+      x: GUAN_FISHING_HUT.x,
+      z: GUAN_FISHING_HUT.z,
+    },
+    ...GUAN_FISH_SPOTS.map((s) => ({
+      id: 'fishing-spot' as const,
+      name: s.name,
+      x: s.x,
+      z: s.z,
+    })),
+  ]
 }
 
 type Props = {
   pose: HarborMinimapPose | null
   remotes: HarborRemotePlayer[]
   hidden?: boolean
+  /** Active voyage pocket — Guan shows fishing lodge / spots. */
+  realm?: HarborRealmId | null
   /** OSRS minimap navigate — world (x, z) from a tap inside the radar disc. */
   onNavigate?: (x: number, z: number) => void
 }
 
 type TapMark = { left: number; top: number; id: number }
 
-export function HarborMinimap({ pose, remotes, hidden, onNavigate }: Props) {
+export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const [layout, setLayout] = useState<Layout>(() => loadLayout())
@@ -272,10 +309,12 @@ export function HarborMinimap({ pose, remotes, hidden, onNavigate }: Props) {
   const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
   const size = layout.size
 
+  const visitables = minimapVisitables(realm)
+
   const nearbyVisits =
     pose == null
       ? []
-      : HARBOR_VISITABLES.filter((v) => {
+      : visitables.filter((v) => {
           const p = project(v.x - pose.x, v.z - pose.z, viewYaw, size)
           return p.onMap
         })
@@ -356,12 +395,12 @@ export function HarborMinimap({ pose, remotes, hidden, onNavigate }: Props) {
             <div className="hq-minimap-ring" aria-hidden />
             <div className="hq-minimap-heading" aria-hidden title="Camera forward" />
             {pose &&
-              HARBOR_VISITABLES.map((v) => {
+              visitables.map((v) => {
                 const p = project(v.x - pose.x, v.z - pose.z, viewYaw, size)
                 if (!p.onMap) return null
                 return (
                   <span
-                    key={v.id}
+                    key={`${v.id}:${v.x.toFixed(2)}:${v.z.toFixed(2)}`}
                     className={`hq-minimap-dot ${VISIT_DOT[v.id]}`}
                     style={{ left: p.left, top: p.top }}
                     title={v.name.en}
