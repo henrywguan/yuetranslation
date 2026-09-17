@@ -37,6 +37,7 @@ import {
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
+import { buildNametagSprite } from './harborRemoteAvatars'
 
 export const GUAN_HARBOR_META = { en: 'Guan Harbor', zh: '關港' } as const
 
@@ -113,10 +114,15 @@ export const GUAN_BOAT_START = { x: 10.2, z: 19.4 } as const
 export const GUAN_RETURN_PORTAL = {
   id: 'save-shack' as const,
   name: GUAN_HARBOR_META,
-  x: 8.2,
-  z: 14.8,
-  radius: 2.6,
+  /** Inland of the pier so stepping onto the dock does not auto-open Customs. */
+  x: 7.0,
+  z: 13.4,
+  /** Tight stand-in radius — tap the officer / portal to open; pier stays clear. */
+  radius: 1.05,
 } as const
+
+/** Display name above the Guan Customs officer. */
+export const GUAN_CUSTOMS_OFFICER_NAME = '關吏 · Customs' as const
 
 /**
  * Main island outline (CCW). East-facing notch = Musa Passage separating
@@ -430,17 +436,17 @@ function spearPlant(rng: () => number): THREE.Group {
 function spikyBush(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-spiky-bush'
-  const n = 10 + Math.floor(rng() * 6)
+  const n = 5 + Math.floor(rng() * 3)
   for (let i = 0; i < n; i++) {
-    const h = 0.28 + rng() * 0.28
+    const h = 0.26 + rng() * 0.24
     g.add(
       grassBlade(
         h,
         i % 2 ? GUAN_TROPICAL_LOOK.grassDeep : GUAN_TROPICAL_LOOK.jungleDeep,
-        (rng() - 0.5) * 0.28,
-        (rng() - 0.5) * 0.28,
-        (rng() - 0.5) * 0.55,
-        (rng() - 0.5) * 0.4,
+        (rng() - 0.5) * 0.24,
+        (rng() - 0.5) * 0.24,
+        (rng() - 0.5) * 0.5,
+        (rng() - 0.5) * 0.35,
       ),
     )
   }
@@ -481,7 +487,7 @@ function pineapplePlant(rng: () => number): THREE.Group {
   return g
 }
 
-/** Pointed low-poly blade — crossed flat triangles (Habitat turf read). */
+/** Pointed low-poly blade — single tapered cone (cheap Habitat turf read). */
 function grassBlade(
   h: number,
   color: number,
@@ -489,28 +495,23 @@ function grassBlade(
   z: number,
   leanX = 0,
   leanZ = 0,
-): THREE.Group {
-  const g = new THREE.Group()
-  // Two thin triangles crossed = classic billboard tuft without photo textures
-  const w = 0.04 + h * 0.04
-  for (let i = 0; i < 2; i++) {
-    const blade = new THREE.Mesh(new THREE.ConeGeometry(w, h, 3), hqMat(color))
-    blade.rotation.y = (i * Math.PI) / 2
-    g.add(blade)
-  }
-  g.position.set(hqSnap(x), hqSnap(h / 2), hqSnap(z))
-  g.rotation.z = leanX
-  g.rotation.x = leanZ
-  return g
+): THREE.Mesh {
+  const w = 0.035 + h * 0.03
+  const blade = new THREE.Mesh(new THREE.ConeGeometry(w, h, 3), hqMat(color))
+  blade.position.set(hqSnap(x), hqSnap(h / 2), hqSnap(z))
+  blade.rotation.z = leanX
+  blade.rotation.x = leanZ
+  return blade
 }
 
 /** Dense RS-style grass tuft — bright blades over mottled turf, readable at foot level. */
 function grassTuft(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-grass-tuft'
-  const n = 7 + Math.floor(rng() * 5)
+  // Lean blade count — look stays fuzzy; GPU stays calm
+  const n = 3 + Math.floor(rng() * 2)
   for (let i = 0; i < n; i++) {
-    const h = 0.24 + rng() * 0.34
+    const h = 0.22 + rng() * 0.28
     const lite = i % 3 !== 0
     const color = lite
       ? GUAN_TROPICAL_LOOK.grassBlade
@@ -521,10 +522,10 @@ function grassTuft(rng: () => number): THREE.Group {
       grassBlade(
         h,
         color,
-        (rng() - 0.5) * 0.24,
-        (rng() - 0.5) * 0.24,
-        (rng() - 0.5) * 0.4,
-        (rng() - 0.5) * 0.28,
+        (rng() - 0.5) * 0.2,
+        (rng() - 0.5) * 0.2,
+        (rng() - 0.5) * 0.35,
+        (rng() - 0.5) * 0.25,
       ),
     )
   }
@@ -538,32 +539,31 @@ function grassTuft(rng: () => number): THREE.Group {
 function tallGrassClump(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-tall-grass'
-  const n = 8 + Math.floor(rng() * 6)
+  const n = 4 + Math.floor(rng() * 3)
   for (let i = 0; i < n; i++) {
-    const h = 0.38 + rng() * 0.45
-    const broad = i % 4 === 0
-    if (broad) {
+    const h = 0.34 + rng() * 0.38
+    if (i === 0) {
       const blade = hqBox(
-        0.05 + rng() * 0.03,
+        0.05 + rng() * 0.02,
         h,
         0.018,
         GUAN_TROPICAL_LOOK.grassDeep,
-        (rng() - 0.5) * 0.28,
+        (rng() - 0.5) * 0.22,
         h / 2,
-        (rng() - 0.5) * 0.28,
+        (rng() - 0.5) * 0.22,
       )
-      blade.rotation.z = (rng() - 0.5) * 0.45
-      blade.rotation.x = (rng() - 0.5) * 0.25
+      blade.rotation.z = (rng() - 0.5) * 0.4
+      blade.rotation.x = (rng() - 0.5) * 0.22
       g.add(blade)
     } else {
       g.add(
         grassBlade(
           h,
           i % 2 ? GUAN_TROPICAL_LOOK.grassBlade : GUAN_TROPICAL_LOOK.grassLite,
+          (rng() - 0.5) * 0.26,
+          (rng() - 0.5) * 0.26,
+          (rng() - 0.5) * 0.45,
           (rng() - 0.5) * 0.3,
-          (rng() - 0.5) * 0.3,
-          (rng() - 0.5) * 0.5,
-          (rng() - 0.5) * 0.35,
         ),
       )
     }
@@ -912,27 +912,160 @@ function brimhavenDock(): THREE.Group {
 function returnPortalMarker(): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-return-portal'
-  g.add(hqPost(0.08, 0.1, 1.4, P.woodDark, -0.45, 0.7, 0, 5))
-  g.add(hqPost(0.08, 0.1, 1.4, P.woodDark, 0.45, 0.7, 0, 5))
-  g.add(hqBox(1.1, 0.12, 0.12, P.woodMid, 0, 1.35, 0))
+
+  // Glowing jade/gold portal arch (cast-off gate)
+  g.add(hqPost(0.1, 0.12, 1.65, P.woodDark, -0.55, 0.82, 0, 5))
+  g.add(hqPost(0.1, 0.12, 1.65, P.woodDark, 0.55, 0.82, 0, 5))
+  g.add(hqBox(1.35, 0.14, 0.14, P.trimGold, 0, 1.6, 0))
+  g.add(hqBox(1.2, 0.06, 0.1, P.jade, 0, 1.48, 0.02))
+
   const pane = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.75, 1.0),
-    hqMat(0xffe080, { emissive: 0xffc020, emissiveIntensity: 0.85, transparent: true, opacity: 0.85 }),
+    new THREE.PlaneGeometry(0.9, 1.25),
+    hqMat(0x5ec8e0, {
+      emissive: 0x3dcfb6,
+      emissiveIntensity: 1.15,
+      transparent: true,
+      opacity: 0.78,
+      side: THREE.DoubleSide,
+    }),
   )
-  pane.position.set(0, 0.75, 0.02)
+  pane.position.set(0, 0.85, 0.02)
   pane.userData.specialHostGlow = true
-  pane.userData.glowBaseIntensity = 0.85
+  pane.userData.glowBaseIntensity = 1.15
+  pane.name = 'guan-portal-veil'
   g.add(pane)
+
+  // Second shimmer plane (offset) for richer glow without heavy shaders
+  const shimmer = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.7, 1.05),
+    hqMat(0xffe080, {
+      emissive: 0xffc020,
+      emissiveIntensity: 0.9,
+      transparent: true,
+      opacity: 0.45,
+      side: THREE.DoubleSide,
+    }),
+  )
+  shimmer.position.set(0, 0.85, -0.03)
+  shimmer.userData.specialHostGlow = true
+  shimmer.userData.glowBaseIntensity = 0.9
+  g.add(shimmer)
+
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(0.55, 0.72, 8),
-    hqMat(0xffd060, { emissive: 0xffa020, emissiveIntensity: 0.7, side: THREE.DoubleSide }),
+    new THREE.RingGeometry(0.7, 0.95, 10),
+    hqMat(0xffd060, {
+      emissive: 0xffa020,
+      emissiveIntensity: 0.95,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+    }),
   )
   ring.rotation.x = -Math.PI / 2
-  ring.position.y = 0.06
+  ring.position.y = 0.05
   ring.userData.specialHostGlow = true
-  ring.userData.glowBaseIntensity = 0.7
+  ring.userData.glowBaseIntensity = 0.95
   g.add(ring)
-  g.add(hqBox(0.22, 0.18, 0.06, 0x3dcfb6, 0, 1.5, 0.08))
+
+  const portalLight = new THREE.PointLight(0x5ec8e0, 1.8, 8, 2)
+  portalLight.position.set(0, 1.0, 0.35)
+  portalLight.userData.harborLanternLight = true
+  portalLight.userData.baseIntensity = 1.8
+  portalLight.userData.portalGlow = true
+  g.add(portalLight)
+
+  g.add(hqBox(0.28, 0.2, 0.08, 0x3dcfb6, 0, 1.72, 0.1))
+  g.add(hqBox(0.5, 0.08, 0.06, P.trimGold, 0, 1.72, 0.12))
+
+  // Unique Customs officer — tropical kit, distinct from river Save Keeper
+  const officer = customsOfficer()
+  officer.position.set(0.95, 0, 0.55)
+  officer.rotation.y = -0.55
+  g.add(officer)
+
+  return g
+}
+
+/**
+ * Guan Customs officer — talkable landmark host (opens Save / cast-off panel).
+ * Unique tropical silhouette + username plate + Talk bubble.
+ */
+function customsOfficer(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-customs-officer'
+  // Reuse save-shack landmark id so Talk opens the cast-off / Save panel
+  g.userData.landmarkHost = 'save-shack'
+  g.userData.hasDialogue = true
+  g.userData.specialNpc = true
+  g.userData.npc = 'save-shack'
+
+  const skin = hqMat(P.skin)
+  // Legs + sandals
+  for (const sx of [-0.1, 0.1] as const) {
+    g.add(hqPost(0.06, 0.07, 0.4, 0x2a4a58, sx, 0.22, 0))
+    g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
+  }
+  // Teal customs tunic + ivory sash (distinct from river vault keeper)
+  g.add(hqBox(0.38, 0.5, 0.26, 0x1a6870, 0, 0.64, 0))
+  g.add(hqBox(0.4, 0.1, 0.28, P.trimIvory, 0, 0.52, 0))
+  g.add(hqBox(0.42, 0.08, 0.08, P.jade, 0, 0.88, 0.12))
+  // Clipboard
+  g.add(hqBox(0.14, 0.18, 0.03, P.woodLight, 0.28, 0.7, 0.14))
+  g.add(hqBox(0.1, 0.12, 0.02, 0xfff8ec, 0.28, 0.7, 0.16))
+  for (const sx of [-1, 1] as const) {
+    g.add(hqPost(0.055, 0.065, 0.34, 0x1a6870, sx * 0.24, 0.72, 0))
+    g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
+  }
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+  head.position.y = 1.1
+  g.add(head)
+  // Straw customs hat
+  g.add(hqBox(0.42, 0.05, 0.42, P.straw, 0, 1.24, 0))
+  g.add(hqPost(0.12, 0.14, 0.12, P.strawLite, 0, 1.32, 0, 6))
+  g.add(hqBox(0.08, 0.04, 0.2, P.trimGold, 0, 1.22, 0.18))
+
+  // Username plate — canvas sprite in browser; mesh placard for smoke / SSR
+  if (typeof document !== 'undefined') {
+    const tag = buildNametagSprite(GUAN_CUSTOMS_OFFICER_NAME)
+    tag.name = 'npc-nametag'
+    tag.userData.npcNametag = true
+    tag.position.set(0, 1.95, 0)
+    tag.scale.set(1.85, 0.4, 1)
+    g.add(tag)
+  } else {
+    const plate = hqBox(0.85, 0.16, 0.04, 0x1a2830, 0, 1.95, 0)
+    plate.name = 'npc-nametag'
+    plate.userData.npcNametag = true
+    g.add(plate)
+    g.add(hqBox(0.78, 0.1, 0.03, P.trimGold, 0, 1.95, 0.02))
+  }
+
+  // Talk cue bubble
+  const bubble = new THREE.Group()
+  bubble.name = 'speech-bubble'
+  bubble.userData.speechBubble = true
+  bubble.userData.billboard = true
+  bubble.userData.hasDialogue = true
+  bubble.userData.landmarkHost = 'save-shack'
+  bubble.add(hqBox(0.44, 0.32, 0.08, 0xfff8ec, 0, 0.1, 0))
+  bubble.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, 0.28, 0))
+  bubble.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, -0.08, 0))
+  bubble.add(hqBox(0.5, 0.03, 0.06, P.trimGold, 0, 0.3, 0.01))
+  for (const x of [-0.12, 0, 0.12] as const) {
+    bubble.add(hqBox(0.06, 0.06, 0.05, 0x1a2830, x, 0.1, 0.05))
+  }
+  bubble.position.set(0.12, 2.4, 0.06)
+  bubble.userData.bubbleBaseY = bubble.position.y
+  g.add(bubble)
+
+  // Soft host glow on tunic trim
+  const glow = new THREE.PointLight(0x3dcfb6, 0.85, 4, 2)
+  glow.position.set(0, 1.0, 0.3)
+  glow.userData.harborLanternLight = true
+  glow.userData.baseIntensity = 0.85
+  glow.userData.specialHostGlow = true
+  g.add(glow)
+
   return g
 }
 
@@ -1237,10 +1370,10 @@ function scatterGrassTufts(root: THREE.Group, rng: () => number, count: number) 
 
 /** Habitat-style tall grass + dirt beds + stone-ring ponds on walkable terraces. */
 function scatterHabitatGround(root: THREE.Group, rng: () => number) {
-  // Tall grass clumps (meadow density)
+  // Tall grass clumps (meadow density — kept light for mobile GPU)
   let tall = 0
   let guard = 0
-  while (tall < 90 && guard < 360) {
+  while (tall < 28 && guard < 140) {
     guard++
     const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
     const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
@@ -1258,7 +1391,7 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
   // Spear-leaf plants + spiky scrub for Habitat clearing variety
   let flora = 0
   guard = 0
-  while (flora < 28 && guard < 120) {
+  while (flora < 14 && guard < 70) {
     guard++
     const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
     const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
@@ -1321,12 +1454,10 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
       }
     }
   }
-  // Stone-ring meadow ponds with dense grass carpets (Habitat clearing vignette)
+  // Stone-ring meadow ponds (two clearings — same look, less grass load)
   const ponds: { x: number; z: number; r: number }[] = [
     { x: 5.8, z: 9.2, r: 1.15 },
     { x: -8.2, z: 7.5, r: 0.95 },
-    { x: 1.5, z: -9.0, r: 1.05 },
-    { x: -5.5, z: -6.5, r: 0.85 },
   ]
   for (const p of ponds) {
     if (!isGuanLand(p.x, p.z)) continue
@@ -1381,11 +1512,11 @@ function stoneRingPond(rng: () => number, x: number, z: number, radius: number):
     g.add(rock)
   }
 
-  // Dense overlapping grass carpet around the pond (Habitat fuzzy turf)
-  const carpet = 55 + Math.floor(rng() * 20)
+  // Dense overlapping grass carpet around the pond (Habitat fuzzy turf — light count)
+  const carpet = 12 + Math.floor(rng() * 6)
   for (let i = 0; i < carpet; i++) {
     const a = rng() * Math.PI * 2
-    const d = radius * (1.15 + rng() * 1.6)
+    const d = radius * (1.15 + rng() * 1.4)
     const lx = Math.cos(a) * d
     const lz = Math.sin(a) * d
     const wx = x + lx
@@ -1609,7 +1740,7 @@ export function buildGuanHarborScene(): THREE.Group {
   scatterJungle(root, rng, 6, 10, 4, 12)
   scatterJungle(root, rng, 3, -8, 5, 16, true)
   scatterJungle(root, rng, -6, -6, 4.5, 12, true)
-  scatterGrassTufts(root, rng, 280)
+  scatterGrassTufts(root, rng, 90)
   scatterHabitatGround(root, rng)
 
   for (let i = 0; i < 8; i++) {

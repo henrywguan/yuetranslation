@@ -3455,7 +3455,8 @@ export function createHarborWorld(
           : 0.88,
   })
   // Guan: denser ocean grid for a gentle vertex-wave (local Z → world Y after rot).
-  const waterSeg = isGuan ? 48 : 1
+  // 32 segments keeps the ripple without the prior 48² vertex tax.
+  const waterSeg = isGuan ? 32 : 1
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(
       isGuan ? GUAN_WATER_PLANE.size : RIVER * 2.4,
@@ -3470,6 +3471,7 @@ export function createHarborWorld(
   scene.add(water)
   /** Base local-Z (height) for Guan ocean vertex waves — null on river strip. */
   let oceanBaseZ: Float32Array | null = null
+  let oceanNormalTick = 0
   if (isGuan) {
     const pos = water.geometry.getAttribute('position') as THREE.BufferAttribute
     oceanBaseZ = new Float32Array(pos.count)
@@ -3917,8 +3919,10 @@ export function createHarborWorld(
         return
       }
     }
-    // Talkable NPCs / speech bubbles — open UI when close enough
-    {
+    // Talkable NPCs / speech bubbles — open UI when close enough.
+    // Guan: skip while still on the canoe so pier / bridge taps disembark instead of
+    // opening Customs through the glowing portal veil.
+    if (!(isGuan && travelMode === 'boat')) {
       const pickRoots: THREE.Object3D[] = [visitablesRoot]
       for (const g of chunkGroups.values()) pickRoots.push(g)
       if (guanScene) pickRoots.push(guanScene)
@@ -4200,7 +4204,8 @@ export function createHarborWorld(
       // never while auto-quest sailing past Save / Outfitter / Bank / etc.
       // Guan: return portal still uses the same arrival gate.
       if (playerDirected && arrived) {
-        emitVisitable(nearestVisitable(boatX, voyageZ, realm))
+        // Guan Customs opens via officer tap — not by sailing near the pier
+        emitVisitable(isGuan ? null : nearestVisitable(boatX, voyageZ, realm))
       } else if (!playerDirected) {
         emitVisitable(null)
       }
@@ -4292,7 +4297,9 @@ export function createHarborWorld(
         pos.setZ(i, oceanBaseZ[i]! + wave)
       }
       pos.needsUpdate = true
-      water.geometry.computeVertexNormals()
+      // Normals every other frame — flat Lambert still reads; halves ocean CPU
+      oceanNormalTick++
+      if (oceanNormalTick % 2 === 0) water.geometry.computeVertexNormals()
     }
 
     // Parallax: mountains drift slower than the canoe

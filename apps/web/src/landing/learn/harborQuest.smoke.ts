@@ -343,8 +343,8 @@ function main() {
     if (o.name === 'guan-tall-grass') tallGrass++
     if (o.name === 'guan-dirt-patch') dirtBeds++
   })
-  assert.ok(tuftCount >= 120, 'dense grass tufts underfoot')
-  assert.ok(tallGrass >= 40, 'Habitat-style tall grass clumps')
+  assert.ok(tuftCount >= 60, 'grass tufts underfoot (perf-trimmed density)')
+  assert.ok(tallGrass >= 18, 'Habitat-style tall grass clumps')
   assert.ok(dirtBeds >= 8, 'irregular dirt beds in the meadows')
   let herbStalks = 0
   let habitatCrates = 0
@@ -357,19 +357,27 @@ function main() {
   let ponds = 0
   let spears = 0
   let canopyTrees = 0
+  let customs = 0
   guanScene.traverse((o) => {
     if (o.name === 'guan-stone-pond') ponds++
     if (o.name === 'guan-spear-plant') spears++
     if (o.name === 'guan-canopy-tree') canopyTrees++
+    if (o.name === 'guan-customs-officer') customs++
   })
   assert.ok(ponds >= 2, 'stone-ring meadow ponds')
-  assert.ok(spears >= 8, 'spear-leaf Habitat plants')
+  assert.ok(spears >= 5, 'spear-leaf Habitat plants')
   assert.ok(canopyTrees >= 3, 'rounded canopy shade trees')
+  assert.equal(customs, 1, 'visible Guan Customs officer at return portal')
+  assert.ok(
+    guanScene.children.some((c) => c.name === 'guan-return-portal'),
+    'glowing return portal group',
+  )
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
   assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
   assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
   assert.match(guanSrc, /stoneRingPond|hqPondTexture|spearPlant|canopyTree/, 'Habitat pond clearing craft')
+  assert.match(guanSrc, /customsOfficer|GUAN_CUSTOMS_OFFICER_NAME|guan-portal-veil/, 'Customs officer + glowing portal')
   assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
@@ -405,11 +413,21 @@ function main() {
   assert.match(worldSrc, /clampGuanFootTarget/, 'guan foot clamp on islands')
   assert.match(worldSrc, /isGuan && isGuanLand/, 'tap island to disembark in guan')
   assert.match(worldSrc, /GUAN_RETURN_PORTAL/, 'guan return portal visit')
+  assert.match(worldSrc, /isGuan && travelMode === 'boat'/, 'Guan skips NPC pick while crewing')
+  assert.match(worldSrc, /emitVisitable\(isGuan \? null/, 'Guan boat arrival does not auto-open Customs')
   assert.match(worldSrc, /GUAN_WATER_PLANE/, 'guan water plane follows island bounds')
   assert.match(worldSrc, /guanGroundY/, 'foot Y follows Guan terrace height')
   assert.match(worldSrc, /oceanBaseZ/, 'Guan ocean stores base verts for waves')
   assert.match(worldSrc, /returnToBoat/, 'Boat FAB can walk sailor back to canoe')
   assert.equal(GUAN_RETURN_PORTAL.id, 'save-shack')
+  assert.ok(GUAN_RETURN_PORTAL.radius <= 1.2, 'Customs stand-in radius stays clear of the pier')
+  assert.ok(
+    Math.hypot(
+      GUAN_RETURN_PORTAL.x - GUAN_LANDMARKS.musaDock.x,
+      GUAN_RETURN_PORTAL.z - GUAN_LANDMARKS.musaDock.z,
+    ) > GUAN_RETURN_PORTAL.radius + 1.2,
+    'Customs portal sits inland of Musa pier',
+  )
   assert.ok(Number.isFinite(GUAN_BOAT_START.x) && Number.isFinite(GUAN_BOAT_START.z), 'boat start offset')
   assert.ok(GUAN_BOAT_START.z > GUAN_LANDMARKS.musaDock.z, 'boat spawns north of Musa pier')
   // Layered island height — sand < grass < jungle; volcano ash is highest
