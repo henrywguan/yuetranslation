@@ -556,11 +556,13 @@ export function hqStampChairs(
   root: THREE.Group,
   spots: readonly { x: number; z: number; yaw?: number; stool?: boolean }[],
   rng: () => number = Math.random,
+  groundY?: (x: number, z: number) => number,
 ) {
   for (const spot of spots) {
     const useStool = spot.stool ?? rng() > 0.55
     const chair = useStool ? hqStool() : hqChair()
-    chair.position.set(spot.x, 0.02, spot.z)
+    const y = groundY ? groundY(spot.x, spot.z) : 0.02
+    chair.position.set(spot.x, y, spot.z)
     chair.rotation.y = spot.yaw ?? rng() * Math.PI * 2
     root.add(chair)
   }
@@ -569,6 +571,7 @@ export function hqStampChairs(
 /**
  * Stamp a few props around (cx,cz) on dry land.
  * `isLand` optional — when provided, skip wet samples.
+ * `groundY` optional — terrace / height-map foot for layered islands.
  */
 export function hqStampClutter(
   root: THREE.Group,
@@ -578,6 +581,7 @@ export function hqStampClutter(
   radius: number,
   count: number,
   isLand?: (x: number, z: number) => boolean,
+  groundY?: (x: number, z: number) => number,
 ) {
   for (let i = 0; i < count; i++) {
     const a = rng() * Math.PI * 2
@@ -594,7 +598,8 @@ export function hqStampClutter(
       prop = hqFence(1 + Math.floor(rng() * 2))
       prop.rotation.y = a
     }
-    prop.position.set(x, 0.02, z)
+    const y = groundY ? groundY(x, z) : 0.02
+    prop.position.set(x, y, z)
     prop.rotation.y += rng() * Math.PI * 0.5
     if (prop.name !== 'hq-fence') prop.scale.setScalar(0.85 + rng() * 0.3)
     root.add(prop)

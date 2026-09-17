@@ -554,6 +554,31 @@
     0 8px 20px color-mix(in srgb, #000 45%, transparent);
 }
 
+.hq-explore-fab.is-boat .hq-compass-disc {
+  animation: hq-boat-fab-bob 2.4s ease-in-out infinite;
+}
+
+.hq-explore-fab.is-boat.is-on .hq-compass-disc {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #5ec8e0 55%, transparent),
+    0 0 18px color-mix(in srgb, #5ec8e0 45%, transparent),
+    0 8px 20px color-mix(in srgb, #000 45%, transparent);
+}
+
+.hq-explore-fab.is-boat .hq-explore-fab-label {
+  color: #7ad4ea;
+}
+
+@keyframes hq-boat-fab-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
 .hq-compass-disc {
   position: relative;
   display: grid;

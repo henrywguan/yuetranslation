@@ -211,6 +211,50 @@ export function isGuanLand(x: number, z: number): boolean {
   return pointInPoly(x, z, GUAN_LAND_OUTLINE) || isCairnLand(x, z)
 }
 
+/**
+ * Walkable terrace tops (OSRS-style height layers).
+ * Sand → grass → jungle / ash — mesh tops and foot Y must stay in sync.
+ */
+export const GUAN_HEIGHT = {
+  sand: 0.2,
+  grass: 0.46,
+  jungle: 0.72,
+  ash: 0.8,
+  cairnSand: 0.18,
+  cairnGrass: 0.4,
+} as const
+
+function scaledOutline(scale: number): { x: number; z: number }[] {
+  const c = outlineCentroid()
+  return GUAN_LAND_OUTLINE.map((p) => ({
+    x: c.x + (p.x - c.x) * scale,
+    z: c.z + (p.z - c.z) * scale,
+  }))
+}
+
+function inScaledOutline(x: number, z: number, scale: number): boolean {
+  return pointInPoly(x, z, scaledOutline(scale))
+}
+
+/**
+ * Foot / prop ground height for Guan Harbor.
+ * Outside land returns 0 (ocean). Never let the scout sink through a terrace.
+ */
+export function guanGroundY(x: number, z: number): number {
+  const cairn = GUAN_LANDMARKS.cairnIsle
+  const cd = Math.hypot(x - cairn.x, z - cairn.z)
+  if (cd <= cairn.r * 0.92) {
+    return cd <= cairn.r * 0.7 ? GUAN_HEIGHT.cairnGrass : GUAN_HEIGHT.cairnSand
+  }
+  if (!pointInPoly(x, z, GUAN_LAND_OUTLINE)) return 0
+  if (Math.hypot(x - GUAN_LANDMARKS.volcano.x, z - GUAN_LANDMARKS.volcano.z) < 4.1) {
+    return GUAN_HEIGHT.ash
+  }
+  if (inScaledOutline(x, z, 0.55)) return GUAN_HEIGHT.jungle
+  if (inScaledOutline(x, z, 0.84)) return GUAN_HEIGHT.grass
+  return GUAN_HEIGHT.sand
+}
+
 /** Keep walking sailors on land (snap to nearest shore if they step off). */
 export function clampGuanFootTarget(x: number, z: number): { x: number; z: number } {
   if (isGuanLand(x, z)) return { x, z }
@@ -669,13 +713,14 @@ function dirtPath(
     new THREE.BoxGeometry(width, 0.06, len),
     hqMatTex(GUAN_TROPICAL_LOOK.dirt, dirt),
   )
-  mesh.position.set((ax + bx) / 2, 0.34, (az + bz) / 2)
+  const midY = (guanGroundY(ax, az) + guanGroundY(bx, bz)) * 0.5 + 0.04
+  mesh.position.set((ax + bx) / 2, midY, (az + bz) / 2)
   mesh.rotation.y = Math.atan2(dx, dz)
   mesh.name = 'guan-dirt-path'
   return mesh
 }
 
-/** Wet-sand strips along the coastline (land lip — no foam / shelf water). */
+/** Wet-sand strips on the beach terrace lip. */
 function stampShoreDetail(root: THREE.Group) {
   const wetMat = hqMatTex(GUAN_TROPICAL_LOOK.sandWet, hqSandTexture())
   for (let i = 0; i < GUAN_LAND_OUTLINE.length; i++) {
@@ -686,9 +731,32 @@ function stampShoreDetail(root: THREE.Group) {
     const len = Math.hypot(b.x - a.x, b.z - a.z)
     const ang = Math.atan2(b.x - a.x, b.z - a.z)
     const wet = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.05, len * 0.95), wetMat)
-    wet.position.set(mx, 0.26, mz)
+    wet.position.set(mx, GUAN_HEIGHT.sand + 0.02, mz)
     wet.rotation.y = ang
     root.add(wet)
+  }
+}
+
+/** Vertical cliff band between two terrace outlines (readable height steps). */
+function stampCliffRing(
+  root: THREE.Group,
+  scale: number,
+  y0: number,
+  y1: number,
+  color: number,
+) {
+  const poly = scaledOutline(scale)
+  const h = Math.max(0.08, y1 - y0)
+  const midY = (y0 + y1) * 0.5
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i]!
+    const b = poly[(i + 1) % poly.length]!
+    const len = Math.hypot(b.x - a.x, b.z - a.z)
+    if (len < 0.05) continue
+    const cliff = hqBox(0.14, h, len * 0.98, color, (a.x + b.x) / 2, midY, (a.z + b.z) / 2)
+    cliff.rotation.y = Math.atan2(b.x - a.x, b.z - a.z)
+    cliff.name = 'guan-cliff'
+    root.add(cliff)
   }
 }
 
@@ -707,22 +775,32 @@ function buildLandMesh(rng: () => number): THREE.Group {
   grassTex.wrapT = THREE.RepeatWrapping
   grassTex.repeat.set(5, 5)
 
-  const sandGeo = extrudeOutline(GUAN_LAND_OUTLINE, 0.3, null, 1)
+  // Layer 1 — beach sand plate (full silhouette)
+  const sandGeo = extrudeOutline(GUAN_LAND_OUTLINE, GUAN_HEIGHT.sand, null, 1)
   const sand = new THREE.Mesh(sandGeo, hqMatTex(GUAN_TROPICAL_LOOK.sand, sandTex))
-  sand.position.y = 0.02
+  sand.position.y = 0.01
+  sand.name = 'guan-layer-sand'
   g.add(sand)
 
-  const grassGeo = extrudeOutline(GUAN_LAND_OUTLINE, 0.22, c, 0.84)
+  // Layer 2 — grass terrace (inset) sitting atop sand
+  const grassThick = GUAN_HEIGHT.grass - GUAN_HEIGHT.sand
+  const grassGeo = extrudeOutline(GUAN_LAND_OUTLINE, grassThick, c, 0.84)
   const grass = new THREE.Mesh(grassGeo, hqMatTex(GUAN_TROPICAL_LOOK.grass, grassTex))
-  grass.position.y = 0.3
+  grass.position.y = GUAN_HEIGHT.sand
+  grass.name = 'guan-layer-grass'
   g.add(grass)
+  stampCliffRing(g, 0.84, GUAN_HEIGHT.sand, GUAN_HEIGHT.grass, 0x5a6a40)
 
-  const jungleGeo = extrudeOutline(GUAN_LAND_OUTLINE, 0.16, c, 0.55)
+  // Layer 3 — jungle plateau
+  const jungleThick = GUAN_HEIGHT.jungle - GUAN_HEIGHT.grass
+  const jungleGeo = extrudeOutline(GUAN_LAND_OUTLINE, jungleThick, c, 0.55)
   const jungle = new THREE.Mesh(jungleGeo, hqMat(GUAN_TROPICAL_LOOK.jungle))
-  jungle.position.y = 0.38
+  jungle.position.y = GUAN_HEIGHT.grass
   jungle.name = 'guan-jungle-plate'
   g.add(jungle)
+  stampCliffRing(g, 0.55, GUAN_HEIGHT.grass, GUAN_HEIGHT.jungle, 0x3a4a28)
 
+  // Meadow patches on the grass terrace (northern towns)
   for (const [x, z, w, d] of [
     [8.5, 13.5, 5.5, 4.5],
     [-10.5, 11.5, 5.0, 4.0],
@@ -732,16 +810,22 @@ function buildLandMesh(rng: () => number): THREE.Group {
       new THREE.BoxGeometry(w, 0.08, d),
       hqMatTex(GUAN_TROPICAL_LOOK.grassLite, grassTex),
     )
-    patch.position.set(x, 0.36, z)
+    patch.position.set(x, GUAN_HEIGHT.grass + 0.04, z)
     patch.rotation.y = (rng() - 0.5) * 0.3
     g.add(patch)
   }
 
+  // Volcano ash apron (highest local terrace)
   const ash = new THREE.Mesh(
-    new THREE.CylinderGeometry(4.2, 4.8, 0.12, 7),
+    new THREE.CylinderGeometry(4.2, 4.8, GUAN_HEIGHT.ash - GUAN_HEIGHT.grass, 7),
     hqMat(P.ash),
   )
-  ash.position.set(GUAN_LANDMARKS.volcano.x, 0.4, GUAN_LANDMARKS.volcano.z)
+  ash.position.set(
+    GUAN_LANDMARKS.volcano.x,
+    (GUAN_HEIGHT.grass + GUAN_HEIGHT.ash) * 0.5,
+    GUAN_LANDMARKS.volcano.z,
+  )
+  ash.name = 'guan-layer-ash'
   g.add(ash)
 
   return g
@@ -752,29 +836,32 @@ function buildCairnIsle(rng: () => number): THREE.Group {
   g.name = 'guan-island-cairn'
   const c = GUAN_LANDMARKS.cairnIsle
   const sand = new THREE.Mesh(
-    new THREE.CylinderGeometry(c.r, c.r * 1.08, 0.3, 7),
+    new THREE.CylinderGeometry(c.r, c.r * 1.08, GUAN_HEIGHT.cairnSand, 7),
     hqMatTex(GUAN_TROPICAL_LOOK.sand, hqSandTexture()),
   )
-  sand.position.y = 0.1
+  sand.position.y = GUAN_HEIGHT.cairnSand * 0.5
   g.add(sand)
+  const grassThick = GUAN_HEIGHT.cairnGrass - GUAN_HEIGHT.cairnSand
   const grass = new THREE.Mesh(
-    new THREE.CylinderGeometry(c.r * 0.72, c.r * 0.78, 0.2, 6),
+    new THREE.CylinderGeometry(c.r * 0.72, c.r * 0.78, grassThick, 6),
     hqMatTex(GUAN_TROPICAL_LOOK.grass, hqGrassTexture()),
   )
-  grass.position.y = 0.3
+  grass.position.y = GUAN_HEIGHT.cairnSand + grassThick * 0.5
   g.add(grass)
   for (let i = 0; i < 3; i++) {
     const palm = palmTree(rng)
     const a = (i / 3) * Math.PI * 2
-    palm.position.set(Math.cos(a) * 0.55, 0.28, Math.sin(a) * 0.55)
+    const lx = Math.cos(a) * 0.55
+    const lz = Math.sin(a) * 0.55
+    palm.position.set(lx, GUAN_HEIGHT.cairnGrass, lz)
     palm.scale.setScalar(0.75 + rng() * 0.2)
     g.add(palm)
   }
   const tuft = grassTuft(rng)
-  tuft.position.set(-0.4, 0.28, 0.3)
+  tuft.position.set(-0.4, GUAN_HEIGHT.cairnGrass, 0.3)
   g.add(tuft)
   g.add(hqRock(rng, P.rock))
-  g.children[g.children.length - 1]!.position.set(-0.8, 0.15, 0.5)
+  g.children[g.children.length - 1]!.position.set(-0.8, GUAN_HEIGHT.cairnSand, 0.5)
   g.position.set(c.x, 0, c.z)
   return g
 }
@@ -800,7 +887,7 @@ function scatterJungle(
     else if (roll > 0.42) plant = bush(rng)
     else if (roll > 0.22) plant = fernClump(rng)
     else plant = pineapplePlant(rng)
-    plant.position.set(x, 0.32, z)
+    plant.position.set(x, guanGroundY(x, z), z)
     plant.rotation.y = rng() * Math.PI
     if (heavy) plant.scale.setScalar(0.95 + rng() * 0.4)
     root.add(plant)
@@ -822,7 +909,7 @@ function scatterGrassTufts(root: THREE.Group, rng: () => number, count: number) 
       Math.hypot(x - GUAN_LANDMARKS.taiBwoWannai.x, z - GUAN_LANDMARKS.taiBwoWannai.z) < 1.2
     if (nearTown && rng() > 0.35) continue
     const tuft = grassTuft(rng)
-    tuft.position.set(x, 0.34, z)
+    tuft.position.set(x, guanGroundY(x, z), z)
     tuft.rotation.y = rng() * Math.PI
     root.add(tuft)
     placed++
@@ -890,17 +977,19 @@ export function buildGuanHarborScene(): THREE.Group {
   root.add(pier)
 
   const portal = returnPortalMarker()
-  portal.position.set(GUAN_RETURN_PORTAL.x, 0, GUAN_RETURN_PORTAL.z)
+  portal.position.set(
+    GUAN_RETURN_PORTAL.x,
+    guanGroundY(GUAN_RETURN_PORTAL.x, GUAN_RETURN_PORTAL.z),
+    GUAN_RETURN_PORTAL.z,
+  )
   portal.rotation.y = Math.PI * 0.1
   root.add(portal)
 
   for (let i = 0; i < 3; i++) {
     const hut = thatchHut(rng, i === 0)
-    hut.position.set(
-      GUAN_LANDMARKS.musaPoint.x - 1.2 - i * 1.1,
-      0.28,
-      GUAN_LANDMARKS.musaPoint.z - 0.5 + (i % 2) * 1.2,
-    )
+    const hx = GUAN_LANDMARKS.musaPoint.x - 1.2 - i * 1.1
+    const hz = GUAN_LANDMARKS.musaPoint.z - 0.5 + (i % 2) * 1.2
+    hut.position.set(hx, guanGroundY(hx, hz), hz)
     hut.rotation.y = 0.3 + i * 0.4
     root.add(hut)
   }
@@ -909,41 +998,39 @@ export function buildGuanHarborScene(): THREE.Group {
     const a = (i / 10) * Math.PI * 2
     const r = 1.0 + (i % 4) * 0.45
     const ban = bananaPlant(rng)
-    ban.position.set(
-      GUAN_LANDMARKS.bananaGrove.x + Math.cos(a) * r,
-      0.32,
-      GUAN_LANDMARKS.bananaGrove.z + Math.sin(a) * r * 0.75,
-    )
+    const bx = GUAN_LANDMARKS.bananaGrove.x + Math.cos(a) * r
+    const bz = GUAN_LANDMARKS.bananaGrove.z + Math.sin(a) * r * 0.75
+    ban.position.set(bx, guanGroundY(bx, bz), bz)
     root.add(ban)
   }
 
   const volcano = volcanoCone()
-  volcano.position.set(GUAN_LANDMARKS.volcano.x, 0, GUAN_LANDMARKS.volcano.z)
+  volcano.position.set(GUAN_LANDMARKS.volcano.x, GUAN_HEIGHT.ash, GUAN_LANDMARKS.volcano.z)
   root.add(volcano)
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2
     const rock = hqRock(rng, i % 2 ? 0x4a4540 : P.rock)
-    rock.position.set(
-      GUAN_LANDMARKS.volcano.x + Math.cos(a) * (3.5 + rng() * 1.2),
-      0.18,
-      GUAN_LANDMARKS.volcano.z + Math.sin(a) * (3.5 + rng() * 1.2),
-    )
+    const rx = GUAN_LANDMARKS.volcano.x + Math.cos(a) * (3.5 + rng() * 1.2)
+    const rz = GUAN_LANDMARKS.volcano.z + Math.sin(a) * (3.5 + rng() * 1.2)
+    rock.position.set(rx, guanGroundY(rx, rz), rz)
     rock.scale.setScalar(0.75 + rng() * 0.55)
     root.add(rock)
   }
 
   const tavern = pirateTavern()
-  tavern.position.set(GUAN_LANDMARKS.brimhaven.x - 0.4, 0.28, GUAN_LANDMARKS.brimhaven.z + 0.3)
+  {
+    const tx = GUAN_LANDMARKS.brimhaven.x - 0.4
+    const tz = GUAN_LANDMARKS.brimhaven.z + 0.3
+    tavern.position.set(tx, guanGroundY(tx, tz), tz)
+  }
   tavern.rotation.y = 0.35
   root.add(tavern)
   for (let i = 0; i < 7; i++) {
     const house = pirateHouse(rng)
     const a = (i / 7) * Math.PI * 1.4 - 0.5
-    house.position.set(
-      GUAN_LANDMARKS.brimhaven.x + Math.cos(a) * (2.0 + (i % 3) * 0.35),
-      0.28,
-      GUAN_LANDMARKS.brimhaven.z + Math.sin(a) * (1.7 + (i % 2) * 0.4),
-    )
+    const hx = GUAN_LANDMARKS.brimhaven.x + Math.cos(a) * (2.0 + (i % 3) * 0.35)
+    const hz = GUAN_LANDMARKS.brimhaven.z + Math.sin(a) * (1.7 + (i % 2) * 0.4)
+    house.position.set(hx, guanGroundY(hx, hz), hz)
     house.rotation.y = a + Math.PI
     root.add(house)
   }
@@ -953,50 +1040,56 @@ export function buildGuanHarborScene(): THREE.Group {
   root.add(bDock)
   for (let i = 0; i < 7; i++) {
     const pine = pineapplePlant(rng)
-    pine.position.set(
-      GUAN_LANDMARKS.brimhaven.x + 1.2 + rng() * 2.5,
-      0.32,
-      GUAN_LANDMARKS.brimhaven.z - 2.2 - rng() * 2.5,
-    )
+    const px = GUAN_LANDMARKS.brimhaven.x + 1.2 + rng() * 2.5
+    const pz = GUAN_LANDMARKS.brimhaven.z - 2.2 - rng() * 2.5
+    pine.position.set(px, guanGroundY(px, pz), pz)
     root.add(pine)
   }
 
   for (let i = 0; i < 6; i++) {
     const hut = thatchHut(rng, i === 0 || i === 3)
     const a = (i / 6) * Math.PI * 2
-    hut.position.set(
-      GUAN_LANDMARKS.taiBwoWannai.x + Math.cos(a) * (1.7 + (i % 2) * 0.35),
-      0.28,
-      GUAN_LANDMARKS.taiBwoWannai.z + Math.sin(a) * (1.7 + (i % 2) * 0.35),
-    )
+    const hx = GUAN_LANDMARKS.taiBwoWannai.x + Math.cos(a) * (1.7 + (i % 2) * 0.35)
+    const hz = GUAN_LANDMARKS.taiBwoWannai.z + Math.sin(a) * (1.7 + (i % 2) * 0.35)
+    hut.position.set(hx, guanGroundY(hx, hz), hz)
     hut.rotation.y = a + Math.PI
     root.add(hut)
   }
   const fire = hqBox(0.4, 0.16, 0.4, 0x3a3020, 0, 0.35, 0)
-  fire.position.set(GUAN_LANDMARKS.taiBwoWannai.x, 0.3, GUAN_LANDMARKS.taiBwoWannai.z)
+  fire.position.set(
+    GUAN_LANDMARKS.taiBwoWannai.x,
+    guanGroundY(GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z),
+    GUAN_LANDMARKS.taiBwoWannai.z,
+  )
   root.add(fire)
   const flame = new THREE.Mesh(
     new THREE.ConeGeometry(0.14, 0.4, 4),
     hqMat(0xff8020, { emissive: 0xff5010, emissiveIntensity: 0.85 }),
   )
-  flame.position.set(GUAN_LANDMARKS.taiBwoWannai.x, 0.58, GUAN_LANDMARKS.taiBwoWannai.z)
+  flame.position.set(
+    GUAN_LANDMARKS.taiBwoWannai.x,
+    guanGroundY(GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z) + 0.28,
+    GUAN_LANDMARKS.taiBwoWannai.z,
+  )
   flame.userData.specialHostGlow = true
   flame.userData.glowBaseIntensity = 0.85
   root.add(flame)
 
   const ship = shipHullWreck(rng)
-  ship.position.set(GUAN_LANDMARKS.shipYard.x, 0.15, GUAN_LANDMARKS.shipYard.z)
+  ship.position.set(
+    GUAN_LANDMARKS.shipYard.x,
+    guanGroundY(GUAN_LANDMARKS.shipYard.x, GUAN_LANDMARKS.shipYard.z),
+    GUAN_LANDMARKS.shipYard.z,
+  )
   ship.rotation.y = 0.4
   root.add(ship)
 
   for (let i = 0; i < 7; i++) {
     const hut = thatchHut(rng, i % 2 === 0)
     const a = (i / 7) * Math.PI * 2
-    hut.position.set(
-      GUAN_LANDMARKS.shilo.x + Math.cos(a) * (1.9 + (i % 3) * 0.25),
-      0.28,
-      GUAN_LANDMARKS.shilo.z + Math.sin(a) * (1.6 + (i % 2) * 0.3),
-    )
+    const hx = GUAN_LANDMARKS.shilo.x + Math.cos(a) * (1.9 + (i % 3) * 0.25)
+    const hz = GUAN_LANDMARKS.shilo.z + Math.sin(a) * (1.6 + (i % 2) * 0.3)
+    hut.position.set(hx, guanGroundY(hx, hz), hz)
     hut.rotation.y = a + Math.PI
     root.add(hut)
   }
@@ -1012,7 +1105,9 @@ export function buildGuanHarborScene(): THREE.Group {
 
   for (let i = 0; i < 8; i++) {
     const rock = hqRock(rng, i % 2 ? P.rock : P.rockWarm)
-    rock.position.set(3.2 + i * 1.05, 0.08, 3.2 + (i % 2) * 1.0)
+    const rx = 3.2 + i * 1.05
+    const rz = 3.2 + (i % 2) * 1.0
+    rock.position.set(rx, guanGroundY(rx, rz), rz)
     rock.scale.setScalar(0.5 + rng() * 0.45)
     root.add(rock)
   }
@@ -1029,11 +1124,11 @@ export function buildGuanHarborScene(): THREE.Group {
   strongTree.scale.setScalar(0.8)
   root.add(strongTree)
 
-  hqStampClutter(root, rng, GUAN_LANDMARKS.musaPoint.x, GUAN_LANDMARKS.musaPoint.z, 3.5, 8, isGuanLand)
-  hqStampClutter(root, rng, GUAN_LANDMARKS.brimhaven.x, GUAN_LANDMARKS.brimhaven.z, 4.0, 10, isGuanLand)
-  hqStampClutter(root, rng, GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z, 3.0, 6, isGuanLand)
-  hqStampClutter(root, rng, GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z, 3.2, 7, isGuanLand)
-  hqStampClutter(root, rng, GUAN_LANDMARKS.shipYard.x, GUAN_LANDMARKS.shipYard.z, 2.5, 5, isGuanLand)
+  hqStampClutter(root, rng, GUAN_LANDMARKS.musaPoint.x, GUAN_LANDMARKS.musaPoint.z, 3.5, 8, isGuanLand, guanGroundY)
+  hqStampClutter(root, rng, GUAN_LANDMARKS.brimhaven.x, GUAN_LANDMARKS.brimhaven.z, 4.0, 10, isGuanLand, guanGroundY)
+  hqStampClutter(root, rng, GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z, 3.0, 6, isGuanLand, guanGroundY)
+  hqStampClutter(root, rng, GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z, 3.2, 7, isGuanLand, guanGroundY)
+  hqStampClutter(root, rng, GUAN_LANDMARKS.shipYard.x, GUAN_LANDMARKS.shipYard.z, 2.5, 5, isGuanLand, guanGroundY)
 
   hqStampChairs(root, [
     { x: GUAN_LANDMARKS.musaPoint.x - 1.6, z: GUAN_LANDMARKS.musaPoint.z + 0.8, yaw: Math.PI * 0.15 },
@@ -1048,20 +1143,32 @@ export function buildGuanHarborScene(): THREE.Group {
     { x: GUAN_LANDMARKS.shilo.x - 1.0, z: GUAN_LANDMARKS.shilo.z + 1.2, yaw: Math.PI * 1.2, stool: true },
     { x: GUAN_LANDMARKS.shipYard.x - 1.4, z: GUAN_LANDMARKS.shipYard.z + 0.6, yaw: Math.PI * 0.85 },
     { x: GUAN_LANDMARKS.bananaGrove.x + 0.8, z: GUAN_LANDMARKS.bananaGrove.z - 1.2, yaw: -0.2, stool: true },
-  ], rng)
+  ], rng, guanGroundY)
 
   const stall = hqMarketStall(rng)
-  stall.position.set(GUAN_LANDMARKS.brimhaven.x + 2.2, 0.28, GUAN_LANDMARKS.brimhaven.z - 1.2)
+  {
+    const sx = GUAN_LANDMARKS.brimhaven.x + 2.2
+    const sz = GUAN_LANDMARKS.brimhaven.z - 1.2
+    stall.position.set(sx, guanGroundY(sx, sz), sz)
+  }
   stall.rotation.y = 0.6
   root.add(stall)
 
   const stall2 = hqMarketStall(rng)
-  stall2.position.set(GUAN_LANDMARKS.brimhaven.x - 2.0, 0.28, GUAN_LANDMARKS.brimhaven.z + 1.0)
+  {
+    const sx = GUAN_LANDMARKS.brimhaven.x - 2.0
+    const sz = GUAN_LANDMARKS.brimhaven.z + 1.0
+    stall2.position.set(sx, guanGroundY(sx, sz), sz)
+  }
   stall2.rotation.y = -0.8
   root.add(stall2)
 
   const musaStall = hqMarketStall(rng)
-  musaStall.position.set(GUAN_LANDMARKS.bananaGrove.x - 1.8, 0.28, GUAN_LANDMARKS.bananaGrove.z + 0.5)
+  {
+    const sx = GUAN_LANDMARKS.bananaGrove.x - 1.8
+    const sz = GUAN_LANDMARKS.bananaGrove.z + 0.5
+    musaStall.position.set(sx, guanGroundY(sx, sz), sz)
+  }
   musaStall.rotation.y = -0.4
   root.add(musaStall)
 

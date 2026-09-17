@@ -165,6 +165,8 @@ export function LearnSession({
   const [arenaOpen, setArenaOpen] = useState(false)
   const [barberOpen, setBarberOpen] = useState(false)
   const [minimapPose, setMinimapPose] = useState<HarborMinimapPose | null>(null)
+  /** Crew canoe vs walk land — drives Explore ↔ Boat FAB. */
+  const [travelMode, setTravelMode] = useState<'boat' | 'foot'>('boat')
   const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [localUsername, setLocalUsername] = useState('sailor')
@@ -310,6 +312,7 @@ export function LearnSession({
       if (!alive) return
       const pose = worldApiRef.current?.getLocalPose()
       if (pose) {
+        setTravelMode((prev) => (prev === pose.mode ? prev : pose.mode))
         setMinimapPose((prev) => {
           if (
             prev &&
@@ -362,6 +365,7 @@ export function LearnSession({
     setLastOk(false)
     setTalking(false)
     setVisitable(null)
+    setTravelMode('boat')
     setSaveFlash(null)
     setShopMsg(null)
     setBankMsg(null)
@@ -1423,25 +1427,28 @@ export function LearnSession({
         </div>
       ) : null}
 
-      {/* OSRS-style compass — free-look / exit dialogue */}
+      {/* OSRS-style compass / boat — free-look on water; return to canoe on land */}
       <button
         type="button"
-        className={`hq-explore-fab${!talking ? ' is-on' : ''}`}
-        aria-label="Open world exploration"
+        className={`hq-explore-fab${travelMode === 'foot' ? ' is-boat' : ''}${!talking ? ' is-on' : ''}`}
+        aria-label={travelMode === 'foot' ? 'Return to boat' : 'Open world exploration'}
         aria-pressed={!talking}
-        title="Open world exploration"
+        title={travelMode === 'foot' ? 'Return to boat' : 'Open world exploration'}
         onClick={() => {
           playHarborExplore()
           setTalking(false)
+          if (travelMode === 'foot') {
+            worldApiRef.current?.returnToBoat()
+          }
         }}
       >
         <span className="hq-compass-disc" aria-hidden="true">
-          <ExploreWorldIcon />
+          {travelMode === 'foot' ? <BoatFabIcon /> : <ExploreWorldIcon />}
           <span className="hq-compass-sparkle hq-compass-sparkle--a" />
           <span className="hq-compass-sparkle hq-compass-sparkle--b" />
           <span className="hq-compass-sparkle hq-compass-sparkle--c" />
         </span>
-        <span className="hq-explore-fab-label">Explore</span>
+        <span className="hq-explore-fab-label">{travelMode === 'foot' ? 'Boat' : 'Explore'}</span>
       </button>
 
       <HarborChatBox
@@ -1517,6 +1524,28 @@ function ExploreWorldIcon() {
       >
         N
       </text>
+    </svg>
+  )
+}
+
+/** Simple canoe glyph for the land → boat FAB variant. */
+function BoatFabIcon() {
+  return (
+    <svg className="hq-explore-fab-icon" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+      <circle cx="16" cy="16" r="14.25" fill="#0c2430" stroke="#5ec8e0" strokeWidth="1.75" />
+      <circle cx="16" cy="16" r="11.2" fill="none" stroke="#2a7088" strokeWidth="0.7" opacity="0.9" />
+      {/* Hull */}
+      <path
+        d="M7.5 18.2c1.2 3.2 4.2 5.1 8.5 5.1s7.3-1.9 8.5-5.1c-2.4.9-5.4 1.35-8.5 1.35s-6.1-.45-8.5-1.35Z"
+        fill="#c9a06a"
+        stroke="#8a6840"
+        strokeWidth="0.7"
+      />
+      <path d="M9.2 17.6h13.6" stroke="#e8d48a" strokeWidth="1.1" strokeLinecap="round" />
+      {/* Mast + sail */}
+      <path d="M16 9.2v8.2" stroke="#e8d48a" strokeWidth="1.15" strokeLinecap="round" />
+      <path d="M16.2 10.2 21.5 16.4H16.2Z" fill="#f0d060" opacity="0.95" />
+      <path d="M15.8 11.1 12.2 16.4h3.6Z" fill="#b89840" opacity="0.85" />
     </svg>
   )
 }
