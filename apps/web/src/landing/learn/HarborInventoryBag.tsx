@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import {
   HARBOR_GEAR_SLOTS,
   harborGearById,
@@ -16,8 +23,23 @@ import { playHarborUiClick } from './harborInteractSfx'
 /** Classic OSRS inventory capacity (minimum grid pad). */
 export const HARBOR_BAG_SLOTS = 28
 
+const STORAGE_KEY = 'harbor.inv.layout.v1'
+const MIN_W = 280
+const MIN_H = 340
+const MAX_W = 520
+const MAX_H = 780
+const DEFAULT_W = 340
+const DEFAULT_H = 520
+
 type Tab = 'bag' | 'worn'
 type BagFilter = HarborGearSlot | 'all'
+
+type Layout = {
+  left: number
+  top: number
+  width: number
+  height: number
+}
 
 type Props = {
   owned: readonly string[]
@@ -41,13 +63,70 @@ const SLOT_LABEL: Record<HarborGearSlot, string> = {
   lantern: 'Lantern',
 }
 
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n))
+}
+
+function defaultLayout(): Layout {
+  if (typeof window === 'undefined') {
+    return { left: 16, top: 72, width: DEFAULT_W, height: DEFAULT_H }
+  }
+  const width = clamp(DEFAULT_W, MIN_W, Math.min(MAX_W, window.innerWidth - 24))
+  const height = clamp(
+    Math.min(DEFAULT_H, window.innerHeight - 96),
+    MIN_H,
+    Math.min(MAX_H, window.innerHeight - 48),
+  )
+  return {
+    left: clamp(16, 8, window.innerWidth - width - 8),
+    top: clamp(72, 8, window.innerHeight - height - 8),
+    width,
+    height,
+  }
+}
+
+function loadLayout(): Layout {
+  const fallback = defaultLayout()
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return fallback
+    const parsed = JSON.parse(raw) as Partial<Layout>
+    const width = typeof parsed.width === 'number' ? clamp(parsed.width, MIN_W, MAX_W) : fallback.width
+    const height =
+      typeof parsed.height === 'number' ? clamp(parsed.height, MIN_H, MAX_H) : fallback.height
+    return {
+      left:
+        typeof parsed.left === 'number'
+          ? clamp(parsed.left, 4, Math.max(4, window.innerWidth - width - 4))
+          : fallback.left,
+      top:
+        typeof parsed.top === 'number'
+          ? clamp(parsed.top, 4, Math.max(4, window.innerHeight - height - 4))
+          : fallback.top,
+      width,
+      height,
+    }
+  } catch {
+    return fallback
+  }
+}
+
+function saveLayout(layout: Layout) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout))
+  } catch {
+    /* ignore */
+  }
+}
+
 function isCoarsePointer() {
   return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }
 
 /**
  * OSRS-style inventory / bag — stone frame, scrollable 4-col item grid with
- * slot filters, hover/tap examine tips, plus a Worn tab.
+ * slot filters, hover/tap examine tips, plus a Worn tab. Floating panel is
+ * draggable / resizable and stays inside the viewport.
  */
 export function HarborInventoryBag({
   owned,
@@ -66,6 +145,17 @@ export function HarborInventoryBag({
   const [pickedId, setPickedId] = useState<HarborGearId | null>(null)
   /** Tip id — only set while hovering (desktop) or after an explicit tap (mobile). */
   const [tipId, setTipId] = useState<HarborGearId | null>(null)
+  const [layout, setLayout] = useState<Layout>(() => loadLayout())
+  const dragRef = useRef<{
+    kind: 'move' | 'resize'
+    pointerId: number
+    startX: number
+    startY: number
+    origLeft: number
+    origTop: number
+    origWidth: number
+    origHeight: number
+  } | null>(null)
 
   const bagItems = useMemo(() => {
     const ids = owned
@@ -95,6 +185,102 @@ export function HarborInventoryBag({
   const equipped = picked && wearSlot ? look[wearSlot] === picked.id : false
   const wornSomewhere = picked ? harborGearIsWorn(look, picked) : false
 
+  useEffect(() => {
+    saveLayout(layout)
+  }, [layout])
+
+  // Keep panel inside the viewport on resize / orientation change.
+  useEffect(() => {
+    const onWinResize = () => {
+      setLayout((prev) => {
+        const width = clamp(prev.width, MIN_W, Math.min(MAX_W, window.innerWidth - 16))
+        const height = clamp(prev.height, MIN_H, Math.min(MAX_H, window.innerHeight - 16))
+        return {
+          width,
+          height,
+          left: clamp(prev.left, 4, Math.max(4, window.innerWidth - width - 4)),
+          top: clamp(prev.top, 4, Math.max(4, window.innerHeight - height - 4)),
+        }
+      })
+    }
+    window.addEventListener('resize', onWinResize)
+    return () => window.removeEventListener('resize', onWinResize)
+  }, [])
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const d = dragRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      const dx = e.clientX - d.startX
+      const dy = e.clientY - d.startY
+      if (d.kind === 'move') {
+        setLayout((prev) => ({
+          ...prev,
+          left: clamp(d.origLeft + dx, 4, window.innerWidth - prev.width - 4),
+          top: clamp(d.origTop + dy, 4, window.innerHeight - prev.height - 4),
+        }))
+      } else {
+        const width = clamp(d.origWidth + dx, MIN_W, Math.min(MAX_W, window.innerWidth - d.origLeft - 4))
+        const height = clamp(
+          d.origHeight + dy,
+          MIN_H,
+          Math.min(MAX_H, window.innerHeight - d.origTop - 4),
+        )
+        setLayout((prev) => ({ ...prev, width, height }))
+      }
+    }
+    const onUp = (e: PointerEvent) => {
+      const d = dragRef.current
+      if (!d || e.pointerId !== d.pointerId) return
+      dragRef.current = null
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+  }, [])
+
+  const beginMove = useCallback(
+    (e: ReactPointerEvent<HTMLElement>) => {
+      if ((e.target as HTMLElement).closest('button, .hq-bag-resize')) return
+      e.preventDefault()
+      e.stopPropagation()
+      dragRef.current = {
+        kind: 'move',
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: layout.left,
+        origTop: layout.top,
+        origWidth: layout.width,
+        origHeight: layout.height,
+      }
+    },
+    [layout.left, layout.top, layout.width, layout.height],
+  )
+
+  const beginResize = useCallback(
+    (e: ReactPointerEvent<HTMLButtonElement>) => {
+      e.preventDefault()
+      e.stopPropagation()
+      dragRef.current = {
+        kind: 'resize',
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: layout.left,
+        origTop: layout.top,
+        origWidth: layout.width,
+        origHeight: layout.height,
+      }
+    },
+    [layout.left, layout.top, layout.width, layout.height],
+  )
+
   // Tap / click outside an item button dismisses the tip (keeps selection).
   useEffect(() => {
     const onPointerDown = (ev: PointerEvent) => {
@@ -102,6 +288,8 @@ export function HarborInventoryBag({
       if (!root) return
       const t = ev.target as Node | null
       if (!t || !root.contains(t)) {
+        // Portaled tips live on body — don't clear when tapping the tip itself.
+        if (t instanceof Element && t.closest('.hq-item-tip')) return
         setTipId(null)
         return
       }
@@ -117,10 +305,33 @@ export function HarborInventoryBag({
   return (
     <aside
       ref={rootRef}
-      className="hq-visit-panel hq-visit-panel--inv hq-bag"
+      className="hq-visit-panel hq-visit-panel--inv hq-bag hq-bag--float"
       role="dialog"
       aria-label="Inventory"
+      style={{
+        left: layout.left,
+        top: layout.top,
+        width: layout.width,
+        height: layout.height,
+      }}
     >
+      <div className="hq-bag-chrome" onPointerDown={beginMove}>
+        <span className="hq-bag-chrome-title">Inventory</span>
+        <button
+          type="button"
+          className="hq-bag-close"
+          aria-label="Close inventory"
+          title="Close"
+          onClick={(e) => {
+            e.stopPropagation()
+            playHarborUiClick()
+            onClose()
+          }}
+        >
+          ×
+        </button>
+      </div>
+
       <div className="hq-bag-frame">
         <div className="hq-bag-tabs" role="tablist" aria-label="Inventory tabs">
           <button
@@ -213,7 +424,7 @@ export function HarborInventoryBag({
                   const on = pickedId === item.id
                   const wearing = harborGearIsWorn(look, item)
                   const tipOpen = tipId === item.id
-                  // First two rows tip below so they stay inside the panel.
+                  // First two rows tip below so they stay readable near the chrome.
                   const tipBelow = i < 8
                   return (
                     <li key={item.id} className="hq-bag-cell">
@@ -341,6 +552,14 @@ export function HarborInventoryBag({
           </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        className="hq-bag-resize"
+        aria-label="Resize inventory"
+        title="Drag to resize"
+        onPointerDown={beginResize}
+      />
     </aside>
   )
 }
