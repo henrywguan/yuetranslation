@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SpeakButton } from '../../components/SpeakButton'
-import { unlockTtsPlayback } from '../../lib/tts'
+import { useYueStore } from '../../lib/store'
+import { stopSpeaking, unlockTtsPlayback } from '../../lib/tts'
 import {
   buildHarborDelve,
   HARBOR_DELVE_CLEAR_TITLE,
@@ -28,6 +29,7 @@ export function HarborDelveModal({ open, alone, onClose, onHit, onComplete }: Pr
   const [idx, setIdx] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [hits, setHits] = useState(0)
+  const speakManual = useYueStore((s) => s.speakManual)
 
   const round = rounds[idx] ?? null
 
@@ -39,6 +41,17 @@ export function HarborDelveModal({ open, alone, onClose, onHit, onComplete }: Pr
     setPicked(null)
     setHits(0)
   }, [open])
+
+  // Auto-play Cantonese hear clip each round (immersive — replay via SpeakButton).
+  useEffect(() => {
+    if (!open || phase !== 'play' || !round?.hearHan) return
+    const han = round.hearHan.trim()
+    if (!han) return
+    void speakManual(han, 'yue')
+    return () => {
+      stopSpeaking()
+    }
+  }, [open, phase, round?.id, round?.hearHan, speakManual])
 
   const progressLabel = useMemo(() => {
     if (!rounds.length) return ''

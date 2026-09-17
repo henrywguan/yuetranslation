@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { SpeakButton } from '../../components/SpeakButton'
 import { inkEase } from '../../lib/motion'
+import { useYueStore } from '../../lib/store'
+import { stopSpeaking } from '../../lib/tts'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { BuildStep, HearClip, PickStep, QuestStep, TeachStep } from './curriculum'
 import type { HarborNpcRole } from './harborWorld'
@@ -134,7 +136,21 @@ function Line({ line, className }: { line: { en: string; zh: string }; className
   )
 }
 
-function HearRow({ clips }: { clips?: HearClip[] }) {
+function HearRow({ clips, autoPlay = true }: { clips?: HearClip[]; autoPlay?: boolean }) {
+  const speakManual = useYueStore((s) => s.speakManual)
+  const clipKey = clips?.map((c) => c.han).join('|') ?? ''
+
+  // Immersive Harbor learning: auto-play hear chips (replay via SpeakButton).
+  useEffect(() => {
+    if (!autoPlay || !clips?.length) return
+    const first = clips[0]?.han?.trim()
+    if (!first) return
+    void speakManual(first, 'yue')
+    return () => {
+      stopSpeaking()
+    }
+  }, [autoPlay, clipKey, speakManual, clips])
+
   if (!clips?.length) return null
   return (
     <div className="hq-hear" role="group" aria-label="Listen">

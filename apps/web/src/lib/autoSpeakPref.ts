@@ -1,12 +1,17 @@
 const STORAGE_KEY = 'yue-auto-speak'
 
-/** Device cache so Auto-speak survives reloads before entitlement hydrates. */
+/**
+ * Device cache so Auto-speak survives reloads before entitlement hydrates.
+ * Default ON (immersive learning) when the key has never been set.
+ */
 export function readLocalAutoSpeak(): boolean {
-  if (typeof localStorage === 'undefined') return false
+  if (typeof localStorage === 'undefined') return true
   try {
-    return localStorage.getItem(STORAGE_KEY) === '1'
+    const v = localStorage.getItem(STORAGE_KEY)
+    if (v === null) return true
+    return v === '1'
   } catch {
-    return false
+    return true
   }
 }
 

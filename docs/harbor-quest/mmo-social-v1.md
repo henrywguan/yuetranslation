@@ -40,6 +40,7 @@
 4. **Showoff is pedagogy.** Capes, dances, and poses celebrate real Cantonese skills the sailor actually ground.
 5. **Authoritative for contested social.** Presence may stay Realtime; invites, fleet ranks, trades, queues, and skill XP awards that affect leaderboards resolve server-side.
 6. **Feel bar.** Do not strip live feedback, motion, or polish to “lean the pipeline” — flag Henry first (see `AGENTS.md`).
+7. **Immersive TTS.** Harbor pier hear chips, arena words, and 港灣 delve clips **auto-play** Azure TTS (`speakManual`); SpeakButton remains for replay. Account Auto-speak defaults **ON** when unset (Family still gates Solo auto-speak entitlement).
 
 ---
 
