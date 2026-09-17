@@ -930,7 +930,20 @@ function main() {
     /tickVipGearAnims|attachVipBoatOrnaments|applyVipOverlaysToProtagonist/,
     'VIP gear has animation + overlay builders',
   )
-  assert.match(learnCss, /\.hq-shop-item\.is-vip/, 'outfitter VIP styling')
+  assert.match(learnCss, /\.hq-shop-cell-btn\.is-vip/, 'outfitter VIP styling')
+  assert.match(learnCss, /\.hq-shop-grid/, 'RS-style shop item grid')
+  assert.match(learnCss, /\.hq-shop-stock/, 'yellow shop stock badges')
+  assert.match(learnCss, /\.hq-shop-qty-btn/, 'shop quantity buttons')
+  assert.match(
+    readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8'),
+    /HarborGearModelIcon|HARBOR_SHOP_QTY|Value check/,
+    'shop shelf shows item icons + RS controls',
+  )
+  assert.match(
+    readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8'),
+    /HarborShopShelf/,
+    'Outfitter + Bank use HarborShopShelf',
+  )
 
   // Progressive tier detail — mid/high clothing denser than common; VIP skips
   const detailSrc = readFileSync(new URL('./harborGearDetail.ts', import.meta.url), 'utf8')
@@ -1145,8 +1158,13 @@ function main() {
   assert.doesNotMatch(playSrc2, /hq-inv-btn/, 'Pack HUD button removed')
   assert.match(playSrc2, /hq-coin-chip.*is-open|is-open.*hq-coin-chip/, 'coin chip shows open state')
   assert.match(playSrc2, /setInvOpen\(\(v\)\s*=>/, 'coin chip toggles inventory')
-  assert.match(playSrc2, /hq-visit-panel--bank/, 'Bank visit panel')
-  assert.match(playSrc2, /hq-visit-panel/, 'visit panel UI')
+  assert.match(playSrc2, /HarborShopShelf/, 'Outfitter + Bank use shop shelf')
+  assert.match(
+    readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8'),
+    /hq-visit-panel--bank/,
+    'Bank visit panel',
+  )
+  assert.match(playSrc2, /hq-visit-panel|HarborShopShelf/, 'visit panel UI')
   assert.match(playSrc2, /MatchDefinitionModal/, 'Match the Definition modal')
   assert.match(playSrc2, /markGoldEarned/, 'arena gold awards')
   assert.match(playSrc2, /exchangeGoldForCoins/, 'arena gold exchanges to ferry coins')
