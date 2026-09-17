@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  HARBOR_GEAR_SLOTS,
   harborGearById,
   harborGearIsWorn,
   harborGearWearTarget,
@@ -12,10 +13,11 @@ import { HarborItemTooltip } from './HarborItemTooltip'
 import { HarborWornBoard } from './HarborWornBoard'
 import { playHarborUiClick } from './harborInteractSfx'
 
-/** Classic OSRS inventory capacity. */
+/** Classic OSRS inventory capacity (minimum grid pad). */
 export const HARBOR_BAG_SLOTS = 28
 
 type Tab = 'bag' | 'worn'
+type BagFilter = HarborGearSlot | 'all'
 
 type Props = {
   owned: readonly string[]
@@ -29,14 +31,23 @@ type Props = {
   message?: string | null
 }
 
+const SLOT_LABEL: Record<HarborGearSlot, string> = {
+  hat: 'Hat',
+  top: 'Top',
+  bottom: 'Bottom',
+  shoes: 'Shoes',
+  hand: 'Hand',
+  boat: 'Boat',
+  lantern: 'Lantern',
+}
+
 function isCoarsePointer() {
   return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }
 
 /**
- * OSRS-style inventory / bag — stone frame, 4×7 item grid with visible
- * model icons per piece, hover/tap examine tips (dismiss on tap-away),
- * plus a Worn tab.
+ * OSRS-style inventory / bag — stone frame, scrollable 4-col item grid with
+ * slot filters, hover/tap examine tips, plus a Worn tab.
  */
 export function HarborInventoryBag({
   owned,
@@ -51,6 +62,7 @@ export function HarborInventoryBag({
 }: Props) {
   const rootRef = useRef<HTMLElement>(null)
   const [tab, setTab] = useState<Tab>('bag')
+  const [filter, setFilter] = useState<BagFilter>('all')
   const [pickedId, setPickedId] = useState<HarborGearId | null>(null)
   /** Tip id — only set while hovering (desktop) or after an explicit tap (mobile). */
   const [tipId, setTipId] = useState<HarborGearId | null>(null)
@@ -64,19 +76,24 @@ export function HarborInventoryBag({
     return ids
   }, [owned])
 
+  const filteredItems = useMemo(() => {
+    if (filter === 'all') return bagItems
+    return bagItems.filter((item) => item.slot === filter)
+  }, [bagItems, filter])
+
   const slots = useMemo(() => {
-    const cells: (typeof bagItems[number] | null)[] = Array.from({ length: HARBOR_BAG_SLOTS }, () => null)
-    bagItems.slice(0, HARBOR_BAG_SLOTS).forEach((item, i) => {
+    const pad = Math.max(HARBOR_BAG_SLOTS, Math.ceil(filteredItems.length / 4) * 4)
+    const cells: (typeof filteredItems[number] | null)[] = Array.from({ length: pad }, () => null)
+    filteredItems.forEach((item, i) => {
       cells[i] = item
     })
     return cells
-  }, [bagItems])
+  }, [filteredItems])
 
   const picked = pickedId ? harborGearById(pickedId) : null
   const wearSlot = picked ? harborGearWearTarget(picked, selectedSlot) : null
   const equipped = picked && wearSlot ? look[wearSlot] === picked.id : false
   const wornSomewhere = picked ? harborGearIsWorn(look, picked) : false
-  const overflow = Math.max(0, bagItems.length - HARBOR_BAG_SLOTS)
 
   // Tap / click outside an item button dismisses the tip (keeps selection).
   useEffect(() => {
@@ -144,6 +161,39 @@ export function HarborInventoryBag({
 
         {tab === 'bag' ? (
           <>
+            <div className="hq-bag-filters" role="tablist" aria-label="Slot filters">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filter === 'all'}
+                className={`hq-bag-filter${filter === 'all' ? ' is-on' : ''}`}
+                onClick={() => {
+                  playHarborUiClick()
+                  setFilter('all')
+                  setTipId(null)
+                }}
+              >
+                All
+              </button>
+              {HARBOR_GEAR_SLOTS.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === slot}
+                  className={`hq-bag-filter${filter === slot ? ' is-on' : ''}`}
+                  onClick={() => {
+                    playHarborUiClick()
+                    setFilter(slot)
+                    onSelectSlot(slot)
+                    setTipId(null)
+                  }}
+                >
+                  {SLOT_LABEL[slot]}
+                </button>
+              ))}
+            </div>
+
             <div className="hq-bag-grid-wrap">
               <div className="hq-bag-rail hq-bag-rail--hp" aria-hidden="true">
                 <span className="hq-bag-rail-glyph">♥</span>
@@ -163,7 +213,7 @@ export function HarborInventoryBag({
                   const on = pickedId === item.id
                   const wearing = harborGearIsWorn(look, item)
                   const tipOpen = tipId === item.id
-                  // Top two rows tip below so they stay inside the panel.
+                  // First two rows tip below so they stay inside the panel.
                   const tipBelow = i < 8
                   return (
                     <li key={item.id} className="hq-bag-cell">
@@ -211,7 +261,7 @@ export function HarborInventoryBag({
               </ul>
               <div className="hq-bag-rail hq-bag-rail--pray" aria-hidden="true">
                 <span className="hq-bag-rail-glyph">✦</span>
-                <span className="hq-bag-rail-num">{Math.min(99, bagItems.length)}</span>
+                <span className="hq-bag-rail-num">{Math.min(99, filteredItems.length)}</span>
               </div>
             </div>
 
@@ -252,7 +302,9 @@ export function HarborInventoryBag({
               ) : (
                 <p className="hq-bag-inspect-hint">
                   Hover or tap a piece to examine · tap away to hide · select Hand then Hold a lantern
-                  {overflow > 0 ? ` · +${overflow} banked off-grid` : ''}
+                  {filter !== 'all'
+                    ? ` · ${filteredItems.length} ${SLOT_LABEL[filter].toLowerCase()}`
+                    : ` · ${bagItems.length} carried`}
                 </p>
               )}
             </div>
