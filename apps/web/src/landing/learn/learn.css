@@ -5791,3 +5791,243 @@
   font-size: 0.82rem;
   color: #7a9aac;
 }
+
+/* —— Harbor Quest cinematic splash / title —— */
+.hq-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  overflow: hidden;
+  color: #e8f4ff;
+  background: #07131f;
+  isolation: isolate;
+}
+.hq-splash-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 12%, color-mix(in srgb, #3dcfb6 28%, transparent), transparent 62%),
+    radial-gradient(ellipse 55% 45% at 88% 18%, color-mix(in srgb, #1a4054 55%, transparent), transparent 58%),
+    radial-gradient(ellipse 90% 50% at 50% 100%, color-mix(in srgb, #0c2430 80%, transparent), transparent 55%),
+    linear-gradient(180deg, #0a1828 0%, #07131f 42%, #041018 100%);
+}
+.hq-splash-mist {
+  position: absolute;
+  inset: auto -15% 18% -15%;
+  height: 42%;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 40% 60% at 30% 50%, color-mix(in srgb, #dff6ff 10%, transparent), transparent 70%),
+    radial-gradient(ellipse 45% 55% at 70% 60%, color-mix(in srgb, #3dcfb6 8%, transparent), transparent 72%);
+  filter: blur(18px);
+  opacity: 0.55;
+}
+.hq-splash-mist--a {
+  animation: hq-splash-mist-drift 18s ease-in-out infinite alternate;
+}
+.hq-splash-mist--b {
+  inset: auto -20% 8% -10%;
+  height: 36%;
+  opacity: 0.4;
+  animation: hq-splash-mist-drift 24s ease-in-out infinite alternate-reverse;
+}
+.hq-splash-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28%;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent 0%, color-mix(in srgb, #0c2430 55%, transparent) 28%, #061820 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #3dcfb6 18%, transparent);
+}
+.hq-splash-water::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 48px,
+      color-mix(in srgb, #7ef0dc 6%, transparent) 50px,
+      transparent 52px
+    );
+  opacity: 0.35;
+  animation: hq-splash-water-shimmer 10s linear infinite;
+}
+.hq-splash-lanterns {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.hq-splash-lantern {
+  position: absolute;
+  width: 0.55rem;
+  height: 0.75rem;
+  border-radius: 0.12rem 0.12rem 0.2rem 0.2rem;
+  background: radial-gradient(circle at 40% 30%, #ffe9a0, #e07040 70%);
+  box-shadow:
+    0 0 12px color-mix(in srgb, #f0a040 70%, transparent),
+    0 0 28px color-mix(in srgb, #e07040 35%, transparent);
+  opacity: 0.75;
+}
+.hq-splash-lantern--1 {
+  left: 18%;
+  top: 38%;
+  animation: hq-splash-lantern-float 7.5s ease-in-out infinite;
+}
+.hq-splash-lantern--2 {
+  left: 72%;
+  top: 28%;
+  width: 0.42rem;
+  height: 0.58rem;
+  animation: hq-splash-lantern-float 9s ease-in-out infinite 1.2s;
+}
+.hq-splash-lantern--3 {
+  left: 54%;
+  top: 48%;
+  width: 0.36rem;
+  height: 0.5rem;
+  opacity: 0.55;
+  animation: hq-splash-lantern-float 11s ease-in-out infinite 2.4s;
+}
+.hq-splash-inner {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.55rem;
+  padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  max-width: 36rem;
+  pointer-events: none;
+}
+.hq-splash-brand {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem 0.5rem;
+  font: 600 0.78rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3dcfb6;
+}
+.hq-splash-brand-dot {
+  opacity: 0.55;
+}
+.hq-splash-brand-zh {
+  font-family: "Noto Sans HK", "Noto Sans TC", "Noto Sans", system-ui, sans-serif;
+  letter-spacing: 0.2em;
+}
+.hq-splash-title {
+  margin: 0.15rem 0 0;
+  font: 800 clamp(2.4rem, 9vw, 4.25rem)/1.05 Syne, system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #f5fbff;
+  text-shadow:
+    0 0 40px color-mix(in srgb, #3dcfb6 28%, transparent),
+    0 12px 40px color-mix(in srgb, #000 45%, transparent);
+}
+.hq-splash-sub {
+  margin: 0;
+  font: 500 1.05rem/1.3 "Noto Sans HK", "Noto Sans TC", "Noto Sans", system-ui, sans-serif;
+  letter-spacing: 0.28em;
+  color: color-mix(in srgb, #dff6ff 62%, transparent);
+}
+.hq-splash-enter {
+  appearance: none;
+  pointer-events: auto;
+  margin-top: 1.65rem;
+  padding: 0.55rem 0.2rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: 700 clamp(1rem, 3.6vw, 1.35rem)/1.2 Syne, system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7ef0dc;
+  text-shadow: 0 0 18px color-mix(in srgb, #3dcfb6 45%, transparent);
+  animation: hq-splash-enter-pulse 2.8s ease-in-out infinite;
+}
+.hq-splash-enter:hover,
+.hq-splash-enter:focus-visible {
+  color: #f5fbff;
+  outline: none;
+}
+.hq-splash-enter.is-reduced {
+  animation: none;
+  opacity: 0.92;
+  border-bottom: 1px solid color-mix(in srgb, #7ef0dc 45%, transparent);
+}
+.hq-splash-hint {
+  margin: 0.35rem 0 0;
+  font: 500 0.68rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #dff6ff 38%, transparent);
+}
+
+@keyframes hq-splash-enter-pulse {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+@keyframes hq-splash-mist-drift {
+  from {
+    transform: translateX(-3%) translateY(0);
+  }
+  to {
+    transform: translateX(4%) translateY(-2%);
+  }
+}
+@keyframes hq-splash-water-shimmer {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-52px);
+  }
+}
+@keyframes hq-splash-lantern-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(-14px) scale(1.05);
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-splash-mist--a,
+  .hq-splash-mist--b,
+  .hq-splash-water::after,
+  .hq-splash-lantern,
+  .hq-splash-enter {
+    animation: none !important;
+  }
+  .hq-splash-enter {
+    opacity: 0.92;
+    border-bottom: 1px solid color-mix(in srgb, #7ef0dc 45%, transparent);
+  }
+}

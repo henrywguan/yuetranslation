@@ -1271,7 +1271,7 @@ function main() {
   assert.match(canvasSrc, /setPaused\(paused\)/, 'canvas wires pause into the world')
   assert.match(stageSrc, /paused=\{paused\}/, 'stage forwards pause')
   const pageSrcPause = readFileSync(new URL('./LearnPage.tsx', import.meta.url), 'utf8')
-  assert.match(pageSrcPause, /worldPaused=\{chartOpen\}/, 'chart open pauses the voyage')
+  assert.match(pageSrcPause, /worldPaused=\{chartOpen \|\| splashOpen\}/, 'chart/splash pause the voyage')
   const scoutLook = buildHarborProtagonist({ pose: 'seated' })
   applyLookToProtagonist(scoutLook, {
     hat: 'hat-festival',
@@ -1409,14 +1409,23 @@ function main() {
   assert.match(playAudioSrc, /playHarborTeleport/, 'chapter teleport SFX')
   assert.match(playAudioSrc, /playHarborBarberSnip/, 'barber confirm snip')
 
-  // Direct launch — `#/learn` opens fullscreen play (no marketing hub)
+  // Direct launch — `#/learn` opens splash then fullscreen play (no marketing hub)
   const learnPageSrc = readFileSync(new URL('./LearnPage.tsx', import.meta.url), 'utf8')
   assert.match(learnPageSrc, /continueHarborLevelId/, 'bare /learn continues into a pier')
   assert.match(learnPageSrc, /hq-chart-overlay/, 'pier chart is an in-game overlay')
+  assert.match(learnPageSrc, /HarborSplash/, 'Learn mounts cinematic splash')
+  assert.match(learnPageSrc, /splashOpen/, 'splash gates world pause until enter')
   assert.match(learnCss, /\.hq-chart-overlay\s*\{[^}]*z-index:\s*90/s, 'chart overlays above immersive play')
   assert.doesNotMatch(learnPageSrc, /hq-hero/, 'marketing Learn hub hero removed')
   assert.doesNotMatch(learnPageSrc, /MarketingPageShell|MarketingFooter/, 'no marketing shell on Learn')
   assert.match(learnCss, /\.hq-chart-overlay/, 'chart overlay styles')
+  assert.match(learnCss, /\.hq-splash\s*\{/, 'splash screen styles')
+  assert.match(learnCss, /hq-splash-enter-pulse/, 'slow flashing Enter cue')
+  assert.match(learnCss, /z-index:\s*100/, 'splash above chart overlay')
+  const splashSrc = readFileSync(new URL('./HarborSplash.tsx', import.meta.url), 'utf8')
+  assert.match(splashSrc, /export function HarborSplash/, 'splash component')
+  assert.match(splashSrc, /Enter HarborQuest/, 'splash Enter HarborQuest CTA')
+  assert.match(splashSrc, /Harbor Quest/, 'splash brand title')
   assert.match(progressSrc, /continueHarborLevelId/, 'continue helper exported')
 
 
