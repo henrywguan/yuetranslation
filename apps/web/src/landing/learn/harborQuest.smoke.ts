@@ -330,10 +330,6 @@ function main() {
     'dirt paths link island towns',
   )
   assert.ok(
-    guanScene.children.some((c) => c.name === 'guan-shallow-shelf'),
-    'near-shore lagoon shelves',
-  )
-  assert.ok(
     guanScene.children.some((c) => c.name === 'guan-tavern'),
     'Brimhaven tavern building',
   )
@@ -344,14 +340,16 @@ function main() {
   assert.ok(tuftCount >= 80, 'dense grass tufts underfoot')
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
-  assert.match(guanSrc, /stampShoreDetail|guan-shore-foam/, 'shore foam / wet sand detail')
+  assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
+  assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
+  assert.doesNotMatch(guanSrc, /guan-shore-foam/, 'no shore foam meshes')
   assert.match(guanSrc, /pirateTavern|layered thatch/, 'chunky town building craft')
   const craftSrc = readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8')
   assert.match(craftSrc, /export function hqGrassTexture/, 'shared grass 128 texture')
-  assert.match(craftSrc, /export function hqWaterTexture/, 'shared water 128 texture')
+  assert.doesNotMatch(craftSrc, /export function hqWaterTexture/, 'no Guan water scroll texture')
   assert.match(craftSrc, /export function hqSandTexture/, 'shared sand 128 texture')
   assert.match(craftSrc, /export function hqDirtTexture/, 'shared dirt path texture')
-  assert.match(worldSrc, /hqWaterTexture|guanWaterScroll|waterMat\.map\.offset/, 'Guan water UV scroll')
+  assert.doesNotMatch(worldSrc, /hqWaterTexture|guanWaterScroll/, 'Guan uses plain tinted water')
   // Inland jungle (near Tai Bwo Wannai) is land; Musa Passage water is not
   assert.equal(isGuanLand(-2.5, -1.5), true, 'Tai Bwo Wannai jungle is walkable land')
   assert.equal(isGuanLand(GUAN_LANDMARKS.musaPoint.x, GUAN_LANDMARKS.musaPoint.z), true, 'Musa Point is land')

@@ -64,8 +64,6 @@ export const GUAN_TROPICAL_LOOK = {
   /** Deep ocean plate */
   water: 0x146888,
   waterOpacity: 0.94,
-  /** Near-shore lagoon shelf */
-  lagoonShallow: 0x3ab8c8,
   sand: 0xd8c090,
   sandWet: 0xb89868,
   grass: 0x2a7a40,
@@ -73,7 +71,6 @@ export const GUAN_TROPICAL_LOOK = {
   jungle: 0x165828,
   jungleDeep: 0x0e4820,
   dirt: 0x7a5830,
-  foam: 0xc8e8f0,
   lagoon: 0x2a98a8,
 } as const
 
@@ -678,9 +675,8 @@ function dirtPath(
   return mesh
 }
 
-/** Foam / wet-sand strips along the coastline. */
-function stampShoreDetail(root: THREE.Group, rng: () => number) {
-  const foamMat = hqMat(GUAN_TROPICAL_LOOK.foam, { transparent: true, opacity: 0.75 })
+/** Wet-sand strips along the coastline (land lip — no foam / shelf water). */
+function stampShoreDetail(root: THREE.Group) {
   const wetMat = hqMatTex(GUAN_TROPICAL_LOOK.sandWet, hqSandTexture())
   for (let i = 0; i < GUAN_LAND_OUTLINE.length; i++) {
     const a = GUAN_LAND_OUTLINE[i]!
@@ -693,40 +689,6 @@ function stampShoreDetail(root: THREE.Group, rng: () => number) {
     wet.position.set(mx, 0.26, mz)
     wet.rotation.y = ang
     root.add(wet)
-    if (rng() > 0.15) {
-      const foam = new THREE.Mesh(new THREE.BoxGeometry(0.35 + rng() * 0.2, 0.03, len * 0.7), foamMat)
-      const nx = -(b.z - a.z) / (len || 1)
-      const nz = (b.x - a.x) / (len || 1)
-      const c = outlineCentroid()
-      const outward = (mx - c.x) * nx + (mz - c.z) * nz > 0 ? 1 : -1
-      foam.position.set(mx + nx * 0.45 * outward, 0.05, mz + nz * 0.45 * outward)
-      foam.rotation.y = ang
-      foam.name = 'guan-shore-foam'
-      root.add(foam)
-    }
-  }
-}
-
-/** Near-shore lagoon shelves — turquoise water you read when walking the beach. */
-function stampShallowShelves(root: THREE.Group) {
-  const shallow = hqMat(GUAN_TROPICAL_LOOK.lagoonShallow, {
-    transparent: true,
-    opacity: 0.72,
-  })
-  const spots: { x: number; z: number; w: number; d: number; yaw: number }[] = [
-    { x: 10.5, z: 17.5, w: 4.5, d: 3.2, yaw: 0.2 },
-    { x: -13.5, z: 14.5, w: 3.8, d: 3.0, yaw: -0.5 },
-    { x: 11.5, z: -2.5, w: 3.5, d: 4.0, yaw: 0.1 },
-    { x: 2.0, z: -16.5, w: 5.0, d: 2.8, yaw: 0 },
-    { x: -11.5, z: -10.0, w: 3.2, d: 3.2, yaw: 0.4 },
-    { x: 6.5, z: 3.5, w: 2.8, d: 3.5, yaw: 0 },
-  ]
-  for (const s of spots) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(s.w, 0.06, s.d), shallow)
-    m.position.set(s.x, 0.04, s.z)
-    m.rotation.y = s.yaw
-    m.name = 'guan-shallow-shelf'
-    root.add(m)
   }
 }
 
@@ -874,8 +836,7 @@ export function buildGuanHarborScene(): THREE.Group {
   const rng = mulberry32(0x6b617261) // 'kara'
 
   root.add(buildLandMesh(rng))
-  stampShoreDetail(root, rng)
-  stampShallowShelves(root)
+  stampShoreDetail(root)
   root.add(buildCairnIsle(rng))
 
   root.add(
