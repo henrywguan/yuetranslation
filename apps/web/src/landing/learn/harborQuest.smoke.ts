@@ -336,21 +336,31 @@ function main() {
     'Brimhaven tavern building',
   )
   let tuftCount = 0
+  let tallGrass = 0
+  let dirtBeds = 0
   guanScene.traverse((o) => {
     if (o.name === 'guan-grass-tuft') tuftCount++
+    if (o.name === 'guan-tall-grass') tallGrass++
+    if (o.name === 'guan-dirt-patch') dirtBeds++
   })
-  assert.ok(tuftCount >= 80, 'dense grass tufts underfoot')
+  assert.ok(tuftCount >= 120, 'dense grass tufts underfoot')
+  assert.ok(tallGrass >= 40, 'Habitat-style tall grass clumps')
+  assert.ok(dirtBeds >= 8, 'irregular dirt beds in the meadows')
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
+  assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
+  assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
   assert.doesNotMatch(guanSrc, /guan-shore-foam/, 'no shore foam meshes')
   assert.match(guanSrc, /pirateTavern|layered thatch/, 'chunky town building craft')
   const craftSrc = readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8')
   assert.match(craftSrc, /export function hqGrassTexture/, 'shared grass 128 texture')
+  assert.match(craftSrc, /Painted upright blade strokes|mottled/, 'richer grass albedo detail')
   assert.doesNotMatch(craftSrc, /export function hqWaterTexture/, 'no Guan water scroll texture')
   assert.match(craftSrc, /export function hqSandTexture/, 'shared sand 128 texture')
   assert.match(craftSrc, /export function hqDirtTexture/, 'shared dirt path texture')
+  assert.match(craftSrc, /clump blobs|Pebble grit/, 'richer dirt albedo detail')
   assert.doesNotMatch(worldSrc, /hqWaterTexture|guanWaterScroll/, 'Guan uses plain tinted water')
   // Inland jungle (near Tai Bwo Wannai) is land; Musa Passage water is not
   assert.equal(isGuanLand(-2.5, -1.5), true, 'Tai Bwo Wannai jungle is walkable land')

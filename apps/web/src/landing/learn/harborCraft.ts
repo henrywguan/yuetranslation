@@ -215,49 +215,115 @@ export function hqStoneTexture(): THREE.DataTexture {
   })
 }
 
-/** Tropical grass — soft value noise + darker blades (era 128 nearest). */
+/** Tropical grass turf — mottled painterly greens + short blade strokes (era 128). */
 export function hqGrassTexture(): THREE.DataTexture {
   return make128DataTex('grass', (data) => {
+    // Base mottled turf (several value steps — not flat green)
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
-        const n = ((x * 17 + y * 31) ^ (x * y)) & 7
-        if (n < 2) setPx(data, x, y, 0x1a, 0x5a, 0x30)
-        else if (n < 5) setPx(data, x, y, 0x2a, 0x6a, 0x38)
-        else setPx(data, x, y, 0x3a, 0x7a, 0x40)
+        const n = ((x * 17 + y * 31) ^ (x * y * 3)) & 15
+        const blotch = (((x >> 3) * 13 + (y >> 3) * 7) ^ (x + y)) & 7
+        if (blotch < 2) setPx(data, x, y, 0x14, 0x48, 0x28)
+        else if (n < 3) setPx(data, x, y, 0x1a, 0x5a, 0x30)
+        else if (n < 7) setPx(data, x, y, 0x2a, 0x6e, 0x38)
+        else if (n < 11) setPx(data, x, y, 0x34, 0x7c, 0x40)
+        else if (n < 14) setPx(data, x, y, 0x3e, 0x8a, 0x48)
+        else setPx(data, x, y, 0x4a, 0x98, 0x52)
       }
     }
-    for (let i = 0; i < 160; i++) {
+    // Soft irregular darker soil freckles under the blades
+    for (let i = 0; i < 48; i++) {
+      const cx = (i * 37) % 128
+      const cy = (i * 53) % 128
+      const rad = 2 + (i % 4)
+      for (let y = cy - rad; y <= cy + rad; y++) {
+        for (let x = cx - rad; x <= cx + rad; x++) {
+          if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= rad * rad) {
+            setPx(data, x, y, 0x3a, 0x58, 0x28)
+          }
+        }
+      }
+    }
+    // Painted upright blade strokes (darker + lime tips)
+    for (let i = 0; i < 220; i++) {
       const x = (i * 23) % 128
       const y = (i * 47) % 128
-      for (let t = 0; t < 4; t++) setPx(data, x, y + t, 0x14, 0x48, 0x28)
+      const h = 3 + (i % 5)
+      for (let t = 0; t < h; t++) {
+        if (t < h - 1) setPx(data, x, y + t, 0x12, 0x42, 0x24)
+        else setPx(data, x, y + t, 0x58, 0xa0, 0x48)
+      }
+      if (i % 4 === 0) {
+        for (let t = 0; t < h - 1; t++) setPx(data, x + 1, y + t, 0x1a, 0x52, 0x2a)
+      }
     }
   })
 }
 
-/** Beach sand — warm grain + darker wet band speckles. */
+/** Beach sand — warm grain, pebble freckles, wetter speckles. */
 export function hqSandTexture(): THREE.DataTexture {
   return make128DataTex('sand', (data) => {
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
-        const n = (x + y * 3) & 3
-        if (n === 0) setPx(data, x, y, 0xb8, 0xa0, 0x70)
-        else if (n === 1) setPx(data, x, y, 0xd8, 0xc0, 0x90)
-        else setPx(data, x, y, 0xe8, 0xd4, 0xa8)
+        const n = (x * 5 + y * 11) & 7
+        if (n === 0) setPx(data, x, y, 0xa8, 0x90, 0x62)
+        else if (n === 1) setPx(data, x, y, 0xb8, 0xa0, 0x70)
+        else if (n === 2) setPx(data, x, y, 0xc8, 0xb0, 0x80)
+        else if (n === 3) setPx(data, x, y, 0xd8, 0xc0, 0x90)
+        else if (n < 6) setPx(data, x, y, 0xe4, 0xd0, 0xa0)
+        else setPx(data, x, y, 0xf0, 0xde, 0xb0)
+      }
+    }
+    // Darker wet speckles + tiny pebble dots
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 29) % 128
+      const y = (i * 41) % 128
+      if (i % 3 === 0) {
+        setPx(data, x, y, 0x9a, 0x80, 0x58)
+        setPx(data, x + 1, y, 0x9a, 0x80, 0x58)
+      } else {
+        setPx(data, x, y, 0x8a, 0x78, 0x58)
       }
     }
   })
 }
 
-/** Dirt / packed path — brown speck for tropical tracks. */
+/** Dirt / packed path — clumpy brown with pebble grit (Habitat-style soil). */
 export function hqDirtTexture(): THREE.DataTexture {
   return make128DataTex('dirt', (data) => {
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
-        const n = (x * 7 + y * 11) & 3
-        if (n === 0) setPx(data, x, y, 0x6a, 0x4a, 0x28)
-        else if (n === 1) setPx(data, x, y, 0x8a, 0x68, 0x38)
-        else setPx(data, x, y, 0x5a, 0x3e, 0x22)
+        const n = (x * 7 + y * 11) & 7
+        if (n === 0) setPx(data, x, y, 0x4a, 0x32, 0x1a)
+        else if (n === 1) setPx(data, x, y, 0x5a, 0x3e, 0x22)
+        else if (n === 2) setPx(data, x, y, 0x6a, 0x4a, 0x28)
+        else if (n === 3) setPx(data, x, y, 0x7a, 0x58, 0x30)
+        else if (n < 6) setPx(data, x, y, 0x8a, 0x68, 0x38)
+        else setPx(data, x, y, 0x9a, 0x78, 0x44)
       }
+    }
+    // Soft clump blobs (richer soil patches)
+    for (let i = 0; i < 36; i++) {
+      const cx = (i * 41) % 128
+      const cy = (i * 59) % 128
+      const rad = 3 + (i % 5)
+      const dark = i % 2 === 0
+      for (let y = cy - rad; y <= cy + rad; y++) {
+        for (let x = cx - rad; x <= cx + rad; x++) {
+          if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= rad * rad) {
+            if (dark) setPx(data, x, y, 0x3a, 0x28, 0x14)
+            else setPx(data, x, y, 0xa8, 0x80, 0x48)
+          }
+        }
+      }
+    }
+    // Pebble grit
+    for (let i = 0; i < 140; i++) {
+      const x = (i * 19) % 128
+      const y = (i * 47) % 128
+      if (i % 5 === 0) setPx(data, x, y, 0xb0, 0xa0, 0x80)
+      else if (i % 3 === 0) setPx(data, x, y, 0x2a, 0x1e, 0x12)
+      else setPx(data, x, y, 0x6a, 0x52, 0x30)
     }
   })
 }

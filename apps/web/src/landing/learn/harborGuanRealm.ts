@@ -28,6 +28,7 @@ import {
   hqPost,
   hqRock,
   hqSandTexture,
+  hqSnap,
   hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
@@ -67,10 +68,13 @@ export const GUAN_TROPICAL_LOOK = {
   sand: 0xd8c090,
   sandWet: 0xb89868,
   grass: 0x2a7a40,
-  grassLite: 0x3a8a48,
+  grassLite: 0x4a9a50,
+  grassBlade: 0x6ab058,
+  grassDeep: 0x1a5a30,
   jungle: 0x165828,
   jungleDeep: 0x0e4820,
   dirt: 0x7a5830,
+  dirtRich: 0x5a3e22,
   lagoon: 0x2a98a8,
 } as const
 
@@ -394,25 +398,122 @@ function pineapplePlant(rng: () => number): THREE.Group {
   return g
 }
 
-/** Dense RS-style grass tuft — readable at foot level when running. */
+/** Pointed low-poly blade — Habitat-style tall grass silhouette (original craft). */
+function grassBlade(
+  h: number,
+  color: number,
+  x: number,
+  z: number,
+  leanX = 0,
+  leanZ = 0,
+): THREE.Mesh {
+  // 3-sided cone reads as a tapered blade at play camera (cheaper than many boxes)
+  const m = new THREE.Mesh(new THREE.ConeGeometry(0.028, h, 3), hqMat(color))
+  m.position.set(hqSnap(x), hqSnap(h / 2), hqSnap(z))
+  m.rotation.z = leanX
+  m.rotation.x = leanZ
+  return m
+}
+
+/** Dense RS-style grass tuft — bright blades over mottled turf, readable at foot level. */
 function grassTuft(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-grass-tuft'
-  const n = 4 + Math.floor(rng() * 3)
+  const n = 6 + Math.floor(rng() * 5)
   for (let i = 0; i < n; i++) {
-    const h = 0.18 + rng() * 0.22
-    const blade = hqBox(
-      0.03 + rng() * 0.02,
+    const h = 0.22 + rng() * 0.32
+    const lite = i % 3 !== 0
+    const color = lite
+      ? GUAN_TROPICAL_LOOK.grassBlade
+      : i % 2
+        ? GUAN_TROPICAL_LOOK.grassLite
+        : GUAN_TROPICAL_LOOK.grassDeep
+    const blade = grassBlade(
       h,
-      0.02,
-      i % 2 ? GUAN_TROPICAL_LOOK.grassLite : GUAN_TROPICAL_LOOK.grass,
-      (rng() - 0.5) * 0.16,
-      h / 2,
-      (rng() - 0.5) * 0.16,
+      color,
+      (rng() - 0.5) * 0.22,
+      (rng() - 0.5) * 0.22,
+      (rng() - 0.5) * 0.4,
+      (rng() - 0.5) * 0.28,
     )
-    blade.rotation.z = (rng() - 0.5) * 0.35
-    blade.rotation.x = (rng() - 0.5) * 0.2
     g.add(blade)
+  }
+  return g
+}
+
+/**
+ * Taller Habitat-style grass clump — broader dark blades + lime tips.
+ * Used in meadows / beside dirt patches (original craft, not Jagex meshes).
+ */
+function tallGrassClump(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-tall-grass'
+  const n = 8 + Math.floor(rng() * 6)
+  for (let i = 0; i < n; i++) {
+    const h = 0.38 + rng() * 0.45
+    const broad = i % 4 === 0
+    if (broad) {
+      // Wider flat blade for silhouette variety
+      const blade = hqBox(
+        0.05 + rng() * 0.03,
+        h,
+        0.018,
+        GUAN_TROPICAL_LOOK.grassDeep,
+        (rng() - 0.5) * 0.28,
+        h / 2,
+        (rng() - 0.5) * 0.28,
+      )
+      blade.rotation.z = (rng() - 0.5) * 0.45
+      blade.rotation.x = (rng() - 0.5) * 0.25
+      g.add(blade)
+    } else {
+      g.add(
+        grassBlade(
+          h,
+          i % 2 ? GUAN_TROPICAL_LOOK.grassBlade : GUAN_TROPICAL_LOOK.grassLite,
+          (rng() - 0.5) * 0.3,
+          (rng() - 0.5) * 0.3,
+          (rng() - 0.5) * 0.5,
+          (rng() - 0.5) * 0.35,
+        ),
+      )
+    }
+  }
+  return g
+}
+
+/** Irregular oval dirt patch set into grass (Habitat soil bed — original craft). */
+function dirtPatch(rng: () => number, radius = 0.55): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-dirt-patch'
+  const dirt = hqDirtTexture()
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.92, radius, 0.07, 7),
+    hqMatTex(GUAN_TROPICAL_LOOK.dirtRich, dirt),
+  )
+  base.position.y = 0.02
+  g.add(base)
+  // Jagged rim — overlapping disks so the edge isn't a perfect circle
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + rng() * 0.4
+    const r = radius * (0.55 + rng() * 0.35)
+    const blob = new THREE.Mesh(
+      new THREE.CylinderGeometry(r * 0.45, r * 0.5, 0.05, 6),
+      hqMatTex(GUAN_TROPICAL_LOOK.dirt, dirt),
+    )
+    blob.position.set(Math.cos(a) * radius * 0.55, 0.025, Math.sin(a) * radius * 0.55)
+    g.add(blob)
+  }
+  // Tall grass sprouting from the soil
+  const clump = tallGrassClump(rng)
+  clump.position.y = 0.04
+  clump.scale.setScalar(0.85 + rng() * 0.25)
+  g.add(clump)
+  if (rng() > 0.45) {
+    const clump2 = tallGrassClump(rng)
+    clump2.position.set((rng() - 0.5) * 0.35, 0.04, (rng() - 0.5) * 0.35)
+    clump2.scale.setScalar(0.7)
+    g.add(clump2)
   }
   return g
 }
@@ -700,7 +801,9 @@ function dirtPath(
   bx: number,
   bz: number,
   width = 0.85,
-): THREE.Mesh {
+): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-dirt-path'
   const dx = bx - ax
   const dz = bz - az
   const len = Math.hypot(dx, dz)
@@ -708,16 +811,26 @@ function dirtPath(
   dirt.needsUpdate = true
   dirt.wrapS = THREE.RepeatWrapping
   dirt.wrapT = THREE.RepeatWrapping
-  dirt.repeat.set(Math.max(1, len * 0.6), 1)
+  dirt.repeat.set(Math.max(1.5, len * 0.85), 1.4)
+  const midY = (guanGroundY(ax, az) + guanGroundY(bx, bz)) * 0.5 + 0.04
+  const ang = Math.atan2(dx, dz)
+  // Main packed track
   const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(width, 0.06, len),
+    new THREE.BoxGeometry(width, 0.07, len),
     hqMatTex(GUAN_TROPICAL_LOOK.dirt, dirt),
   )
-  const midY = (guanGroundY(ax, az) + guanGroundY(bx, bz)) * 0.5 + 0.04
   mesh.position.set((ax + bx) / 2, midY, (az + bz) / 2)
-  mesh.rotation.y = Math.atan2(dx, dz)
-  mesh.name = 'guan-dirt-path'
-  return mesh
+  mesh.rotation.y = ang
+  g.add(mesh)
+  // Soft shoulder ruts (slightly darker / offset)
+  const shoulder = new THREE.Mesh(
+    new THREE.BoxGeometry(width * 1.22, 0.04, len * 0.98),
+    hqMatTex(GUAN_TROPICAL_LOOK.dirtRich, dirt),
+  )
+  shoulder.position.set((ax + bx) / 2, midY - 0.02, (az + bz) / 2)
+  shoulder.rotation.y = ang
+  g.add(shoulder)
+  return g
 }
 
 /** Wet-sand strips on the beach terrace lip. */
@@ -768,12 +881,12 @@ function buildLandMesh(rng: () => number): THREE.Group {
   sandTex.needsUpdate = true
   sandTex.wrapS = THREE.RepeatWrapping
   sandTex.wrapT = THREE.RepeatWrapping
-  sandTex.repeat.set(4, 4)
+  sandTex.repeat.set(6, 6)
   const grassTex = hqGrassTexture().clone()
   grassTex.needsUpdate = true
   grassTex.wrapS = THREE.RepeatWrapping
   grassTex.wrapT = THREE.RepeatWrapping
-  grassTex.repeat.set(5, 5)
+  grassTex.repeat.set(8, 8)
 
   // Layer 1 — beach sand plate (full silhouette)
   const sandGeo = extrudeOutline(GUAN_LAND_OUTLINE, GUAN_HEIGHT.sand, null, 1)
@@ -791,16 +904,24 @@ function buildLandMesh(rng: () => number): THREE.Group {
   g.add(grass)
   stampCliffRing(g, 0.84, GUAN_HEIGHT.sand, GUAN_HEIGHT.grass, 0x5a6a40)
 
-  // Layer 3 — jungle plateau
+  // Layer 3 — jungle plateau (textured deep turf, not flat color)
   const jungleThick = GUAN_HEIGHT.jungle - GUAN_HEIGHT.grass
   const jungleGeo = extrudeOutline(GUAN_LAND_OUTLINE, jungleThick, c, 0.55)
-  const jungle = new THREE.Mesh(jungleGeo, hqMat(GUAN_TROPICAL_LOOK.jungle))
+  const jungleTex = hqGrassTexture().clone()
+  jungleTex.needsUpdate = true
+  jungleTex.wrapS = THREE.RepeatWrapping
+  jungleTex.wrapT = THREE.RepeatWrapping
+  jungleTex.repeat.set(7, 7)
+  const jungle = new THREE.Mesh(
+    jungleGeo,
+    hqMatTex(GUAN_TROPICAL_LOOK.jungle, jungleTex),
+  )
   jungle.position.y = GUAN_HEIGHT.grass
   jungle.name = 'guan-jungle-plate'
   g.add(jungle)
   stampCliffRing(g, 0.55, GUAN_HEIGHT.grass, GUAN_HEIGHT.jungle, 0x3a4a28)
 
-  // Meadow patches on the grass terrace (northern towns)
+  // Meadow patches on the grass terrace (northern towns) — brighter turf islands
   for (const [x, z, w, d] of [
     [8.5, 13.5, 5.5, 4.5],
     [-10.5, 11.5, 5.0, 4.0],
@@ -913,6 +1034,50 @@ function scatterGrassTufts(root: THREE.Group, rng: () => number, count: number) 
     tuft.rotation.y = rng() * Math.PI
     root.add(tuft)
     placed++
+  }
+}
+
+/** Habitat-style tall grass + dirt beds scattered on walkable terraces. */
+function scatterHabitatGround(root: THREE.Group, rng: () => number) {
+  // Tall grass clumps (meadow density)
+  let tall = 0
+  let guard = 0
+  while (tall < 55 && guard < 220) {
+    guard++
+    const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
+    const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
+    if (!isGuanLand(x, z)) continue
+    // Prefer grass / jungle terraces over beach sand
+    const gy = guanGroundY(x, z)
+    if (gy < GUAN_HEIGHT.grass - 0.02) continue
+    const clump = tallGrassClump(rng)
+    clump.position.set(x, gy, z)
+    clump.rotation.y = rng() * Math.PI
+    clump.scale.setScalar(0.9 + rng() * 0.35)
+    root.add(clump)
+    tall++
+  }
+  // Irregular dirt patches with grass sprouting out
+  const beds: { x: number; z: number; r: number }[] = [
+    { x: 7.2, z: 12.8, r: 0.62 },
+    { x: 10.0, z: 11.5, r: 0.48 },
+    { x: -9.5, z: 10.5, r: 0.7 },
+    { x: -11.8, z: 13.2, r: 0.45 },
+    { x: -3.5, z: 0.5, r: 0.58 },
+    { x: -1.0, z: -3.2, r: 0.5 },
+    { x: 2.2, z: -12.5, r: 0.65 },
+    { x: -0.5, z: -15.0, r: 0.42 },
+    { x: 5.5, z: -5.5, r: 0.55 },
+    { x: -7.0, z: 4.0, r: 0.5 },
+    { x: 4.0, z: 8.5, r: 0.4 },
+    { x: 8.8, z: -1.5, r: 0.48 },
+  ]
+  for (const bed of beds) {
+    if (!isGuanLand(bed.x, bed.z)) continue
+    const patch = dirtPatch(rng, bed.r)
+    patch.position.set(bed.x, guanGroundY(bed.x, bed.z), bed.z)
+    patch.rotation.y = rng() * Math.PI
+    root.add(patch)
   }
 }
 
@@ -1101,7 +1266,8 @@ export function buildGuanHarborScene(): THREE.Group {
   scatterJungle(root, rng, 6, 10, 4, 12)
   scatterJungle(root, rng, 3, -8, 5, 16, true)
   scatterJungle(root, rng, -6, -6, 4.5, 12, true)
-  scatterGrassTufts(root, rng, 140)
+  scatterGrassTufts(root, rng, 220)
+  scatterHabitatGround(root, rng)
 
   for (let i = 0; i < 8; i++) {
     const rock = hqRock(rng, i % 2 ? P.rock : P.rockWarm)
