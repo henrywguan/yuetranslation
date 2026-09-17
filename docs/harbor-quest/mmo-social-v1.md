@@ -14,7 +14,7 @@
 | Speaking skill | **No** — not in roster (no mic/STT skill track) |
 | 99 pacing | **Completable in ~1 week** of focused daily play (tune XP curve + daily board) |
 | Cape slot | **Yes** — 8th gear slot: hat / top / bottom / shoes / hand / boat / lantern / **cape** |
-| Trim cape | **Open** — see §4.4; Henry to choose after reading the plain-language note |
+| Trim cape | **99 → base cape; pay 10k ferry coins** at Cape Loom to trim (per cape, cosmetic only) |
 
 ---
 
@@ -216,20 +216,27 @@ At **skill level 99**, the sailor unlocks that skill’s **Skillcape** (new gear
 - **Voyage cape** — all Sounds (+ Life 0) piers cleared (quest-cape analogue)
 - **Fleet edge** — optional fleet color on nametag / cape hem only
 
-### 4.2 What “trim” means (plain language)
+### 4.2 Trim (locked · pay-to-flex)
 
-In classic MMOs (OSRS especially), a **normal skillcape** means “I maxed *this one* skill.” A **trimmed skillcape** is a fancier recolor / gold edge of that same cape that means “I didn’t only max this one — I’m broadly maxed / near-maxed overall.”
+At **99**, the sailor claims the **base skillcape** free (or symbolic loom fee only if we add one later).
 
-For Harbor, **trim is optional prestige cosmetics**, not a second slot:
+They may then spend **10,000 ferry coins** at the Cape Loom to **trim** that cape:
 
-| Option | Unlock idea | What the player sees |
+| | Base 99 | Trimmed |
 |---|---|---|
-| **A · Soft trim** | Own any 99 cape, and every *other shipped* skill is ≥ 50 | Same cape mesh + gold/jade edge + slightly longer dance |
-| **B · Hard trim** | All shipped skills at 99 | Same as A but rarer; true “maxed sailor” flex |
-| **C · No trim** | Skip the system | Only base 99 capes + Voyage cape later |
+| Unlock | Skill level 99 | Own base cape for that skill + **10k coins** |
+| Look | Standard skill motif | Gold/jade edge + richer cloth detail |
+| Dance | Standard 3–5s emote | Same emote, slightly longer / one extra flourish |
+| Power | None | None — cosmetic only |
 
-Trim does **not** change learning power — only look + maybe dance length.  
-**Henry: pick A, B, or C** when ready; until then implementation ships base 99 capes only.
+Rules:
+
+- Trim is **per cape** (Tones trim does not auto-trim Initials).
+- Spend is coins already earned in Harbor (outfitter / arena / drills) — not a real-money SKU; VIP cash does not bypass the 99 gate.
+- Trim is permanent for that cape once paid (no refund); bank/equip like any gear.
+- If the sailor cannot afford 10k yet, they keep the base cape and grind coins — no other skill-level gate.
+
+This replaces the soft/hard “broadly maxed” trim ideas from classic MMOs.
 
 ### 4.3 Animation system
 
@@ -256,14 +263,14 @@ Trim does **not** change learning power — only look + maybe dance length.
 2. Crew invite + crew chat  
 3. Skills blob + **4 trainers** (`tones`, `initials`, `finals`, `jyutping`) + skill panel  
 4. Deeds stubs (5–10) + title equip  
-5. **`cape` as 8th gear slot** + mesh pipeline + **one** 99 cape (Tones) as proof  
+5. **`cape` as 8th gear slot** + mesh pipeline + **one** 99 cape (Tones) as proof + **10k coin trim** purchase at Cape Loom  
 6. Study Finder stub (Tone Spar only) + AI fallback  
 7. XP curve tuned so **one 99 ≈ one focused week**
 
 ### Explicitly out
 
 - Speaking / mic skill (cancelled)  
-- Trim cape variants until Henry picks §4.2 A / B / C  
+- Soft/hard “all skills high” trim gates (replaced by 10k coin trim)  
 - Listening / Reading / Lexicon / Colloquial trainers (later wave)  
 - Full combat / PvP / Honor  
 - Guild bank, marketplace with power items, web3  
@@ -279,7 +286,7 @@ PR2  Crew channels + invites
 PR3  skills{} on progress + Tone trainer drill + skill panel UI
 PR4  Initials / Finals / Jyutping trainers (shared drill shell)
 PR5  Book of Deeds v0 + titles on nametag
-PR6  cape slot + Tones skillcape mesh + Tone Wave dance
+PR6  cape slot + Tones skillcape mesh + Tone Wave dance + 10k trim purchase
 PR7  Study Finder · Tone Spar + AI fallback
 PR8  Fleet from Family household + MOTD
 PR9  Remaining skills + capes + Reliquary shelves
@@ -293,6 +300,7 @@ PR10 Prestige + total-level board column
 | Surface | Approach |
 |---|---|
 | Progress skills / title / prestige | Extend `harbor_quest_progress.progress` JSONB + sanitize/merge |
+| Cape trim flags | `owned` includes `cape-tones` / `cape-tones-trim` (or `look.cape` + owned ids); deduct 10k coins server-side on trim |
 | Friends / fleets / requests | New Supabase tables + RLS (own rows / membership) |
 | Leaderboard | Keep XP primary; add `prestige`, later `total_skill_level` |
 | Whispers / crew chat | Realtime broadcast (rate-limit + sanitize like public chat) |
@@ -314,9 +322,9 @@ Migrations follow existing Harbor style (`028`…`031`): additive columns, monot
 
 ## 9. Open questions for Henry
 
-1. **Trim cape:** A (soft ≥50), B (all 99), or C (no trim)? — see §4.2  
-2. **Public Fleets** moderation — reuse chat sanitize + offensive-name screen?  
-3. Symbolic loom fee in coins at 99 claim, or free unlock?
+1. **Public Fleets** moderation — reuse chat sanitize + offensive-name screen?  
+2. Base 99 claim: completely free, or a small symbolic loom fee *plus* the separate 10k trim?  
+3. 10k trim — confirm currency is **ferry coins** (not arena gold)?
 
 ---
 
