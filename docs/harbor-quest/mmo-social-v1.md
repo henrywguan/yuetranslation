@@ -6,6 +6,16 @@
 
 **Product north star:** Keep sailors on JyutTranslate because **other sailors are here**, while every pier / skill grind remains **soloable**. Group content is optional glue, never a gate.
 
+### Locked decisions (2026-09-17 · Henry)
+
+| Decision | Lock |
+|---|---|
+| First skills ship | **4 trainers:** `tones`, `initials`, `finals`, `jyutping` |
+| Speaking skill | **No** — not in roster (no mic/STT skill track) |
+| 99 pacing | **Completable in ~1 week** of focused daily play (tune XP curve + daily board) |
+| Cape slot | **Yes** — 8th gear slot: hat / top / bottom / shoes / hand / boat / lantern / **cape** |
+| Trim cape | **Open** — see §4.4; Henry to choose after reading the plain-language note |
+
 ---
 
 ## 0. What we already have
@@ -118,9 +128,9 @@ After curriculum + soft sailor level soft-cap, lifetime XP continues → **Prest
 
 OSRS-shaped **skill levels 1–99** with a Harbor XP curve, but every action is a real Cantonese drill. Skills are **orthogonal** to pier campaign progress: piers teach the voyage; skills are the endless dockside grind.
 
-### 3.1 Proposed skill roster (v1)
+### 3.1 Skill roster
 
-Start with **8 skills** (enough for identity + cape fantasy; not a second MMO).
+**Ship first (locked):** four trainers.
 
 | Id | Skill | EN / 粵 | What you grind | Primary loop |
 |---|---|---|---|---|
@@ -128,20 +138,21 @@ Start with **8 skills** (enough for identity + cape fantasy; not a second MMO).
 | `initials` | Initials | Initials / 聲母 | Aspiration + place | Minimal-pair pick (b/p, d/t, g/k…) |
 | `finals` | Finals | Finals / 韻母 | aa/a, ng endings, diphthongs | Hear / build final |
 | `jyutping` | Jyutping | Jyutping / 粵拼 | Syllable literacy | Parse / type / order slots |
-| `listening` | Listening | Listening / 聽力 | Comprehension under TTS | Hear Han → pick gloss or Jyutping |
-| `reading` | Reading | Reading / 識字 | Traditional Han ↔ Jyutping | Match char, ruby recall |
-| `lexicon` | Lexicon | Lexicon / 詞彙 | Vocab breadth | Match Definition + banked cards |
-| `colloquial` | Colloquial | Colloquial / 口語 | Particles, classifiers, 口語 vs 書面 | Pick natural HK line |
 
-**v1.5 / showoff skills (after core ships):**
+**Later skills (after the four + first cape land) — still no Speaking:**
 
-| Id | Skill | Why it’s sticky |
-|---|---|---|
-| `speaking` | Speaking / 開口 | Mic + STT match target Jyutping (**needs Henry OK for Azure in cloud testing**; local Web Speech OK for Yue) |
-| `particles` | Particles / 助詞 | 啦嘅喎咋囉 — highly grindable, very “HK” |
-| `classifiers` | Classifiers / 量詞 | 個隻條件… endless drills |
-| `sandbox` | Tone sandhi / 變調 | Advanced prestige grind |
-| `calligraphy` | Brush / 寫字 | Stroke-order minigame — pure showoff, optional |
+| Id | Skill | EN / 粵 | Why it’s sticky |
+|---|---|---|---|
+| `listening` | Listening | Listening / 聽力 | TTS → gloss or Jyutping |
+| `reading` | Reading | Reading / 識字 | Traditional Han ↔ Jyutping |
+| `lexicon` | Lexicon | Lexicon / 詞彙 | Match Definition + vocab bank |
+| `colloquial` | Colloquial | Colloquial / 口語 | Particles, classifiers, 口語 vs 書面 |
+| `particles` | Particles | Particles / 助詞 | 啦嘅喎咋囉 — optional split from colloquial |
+| `classifiers` | Classifiers | Classifiers / 量詞 | 個隻條件… optional split |
+| `sandhi` | Tone sandhi | Sandhi / 變調 | Advanced prestige grind |
+| `calligraphy` | Brush | Brush / 寫字 | Stroke-order minigame — pure showoff |
+
+**Cancelled:** `speaking` / 開口 — Henry lock 2026-09-17. Mic practice stays in Live Solo / Conversation, not a Harbor skill.
 
 ### 3.2 How XP is earned (no empty grind)
 
@@ -155,16 +166,19 @@ Every skill action must teach:
 
 **Anti-cheat / fairness:** server validates skill XP awards from known drill result tokens; client may preview. No buyable skill XP.
 
-### 3.3 Soft level curve (sketch)
+### 3.3 Soft level curve (locked pacing)
 
-Reuse sailor-level feel, per skill:
+**Target:** a focused sailor can hit **one skill 99 in about one week** (~45–90 min/day of trainers + dailies), not a month-long slog and not a same-day binge.
+
+Sketch to tune in implementation (numbers are starting points — smoke-test against the week target):
 
 ```text
-xp_to_reach(level) ≈ 100 * level^2      // level 1→2 cheap; 90→99 spicy
-total_xp_to_99 ≈ sum — tune so a focused sailor hits 99 in weeks of daily play, not hours
+xp_to_reach(level) ≈ 40 * level^2        // softer than classic OSRS
+daily board bonus ≈ 1.5–2× normal drills for pinned skill
+pier drip          small but constant so voyage helps
 ```
 
-Display: skill panel (OSRS-like grid, Harbor chrome) + total level on profile.
+Display: skill panel (4 tiles first) + total level on profile. Capes still gate on 99 only.
 
 ### 3.4 Progress blob extension
 
@@ -197,13 +211,27 @@ At **skill level 99**, the sailor unlocks that skill’s **Skillcape** (new gear
 | Lexicon 99 | Market-stall ribbon cape | Vendor presentational stance | **Gloss Shuffle** — card-fan hand dance |
 | Colloquial 99 | Neon night pier lights | Casual lean on invisible rail | **Particle Pop** — 啦／嘅／喎 subtitle bursts |
 
-**Trim / maxed showoff (later):**
+**Other showoff layers (later, separate from trim):**
 
-- **Trimmed skillcape** — any 99 + all other skills ≥ 50 (or total level threshold)
 - **Voyage cape** — all Sounds (+ Life 0) piers cleared (quest-cape analogue)
-- **Fleet trim** — fleet MOTD color edge only
+- **Fleet edge** — optional fleet color on nametag / cape hem only
 
-### 4.2 Animation system
+### 4.2 What “trim” means (plain language)
+
+In classic MMOs (OSRS especially), a **normal skillcape** means “I maxed *this one* skill.” A **trimmed skillcape** is a fancier recolor / gold edge of that same cape that means “I didn’t only max this one — I’m broadly maxed / near-maxed overall.”
+
+For Harbor, **trim is optional prestige cosmetics**, not a second slot:
+
+| Option | Unlock idea | What the player sees |
+|---|---|---|
+| **A · Soft trim** | Own any 99 cape, and every *other shipped* skill is ≥ 50 | Same cape mesh + gold/jade edge + slightly longer dance |
+| **B · Hard trim** | All shipped skills at 99 | Same as A but rarer; true “maxed sailor” flex |
+| **C · No trim** | Skip the system | Only base 99 capes + Voyage cape later |
+
+Trim does **not** change learning power — only look + maybe dance length.  
+**Henry: pick A, B, or C** when ready; until then implementation ships base 99 capes only.
+
+### 4.3 Animation system
 
 - Capes are `HarborGearSlot = 'cape'` meshes on the protagonist + remotes.
 - **Idle pose** swaps when cape equipped and sailor is standing still ≥1.5s.
@@ -211,7 +239,7 @@ At **skill level 99**, the sailor unlocks that skill’s **Skillcape** (new gear
 - Prefer **procedural / keyframed Three.js** bone or group transforms (Harbor craft style) over heavy mocap files.
 - Mobile: large Emote FAB; dances must read at explore-camera distance.
 
-### 4.3 Showoff surfaces
+### 4.4 Showoff surfaces
 
 - Nametag: title + optional small cape icon
 - Profile modal: equipped cape + “Play dance” preview
@@ -226,17 +254,19 @@ At **skill level 99**, the sailor unlocks that skill’s **Skillcape** (new gear
 
 1. Friends + whispers + away  
 2. Crew invite + crew chat  
-3. Skills blob + 4 trainers (`tones`, `initials`, `finals`, `jyutping`) + skill panel  
+3. Skills blob + **4 trainers** (`tones`, `initials`, `finals`, `jyutping`) + skill panel  
 4. Deeds stubs (5–10) + title equip  
-5. Cape slot mesh pipeline + **one** 99 cape (Tones) as proof  
+5. **`cape` as 8th gear slot** + mesh pipeline + **one** 99 cape (Tones) as proof  
 6. Study Finder stub (Tone Spar only) + AI fallback  
+7. XP curve tuned so **one 99 ≈ one focused week**
 
-### Explicitly out (until Henry greenlights)
+### Explicitly out
 
+- Speaking / mic skill (cancelled)  
+- Trim cape variants until Henry picks §4.2 A / B / C  
+- Listening / Reading / Lexicon / Colloquial trainers (later wave)  
 - Full combat / PvP / Honor  
 - Guild bank, marketplace with power items, web3  
-- Speaking skill if it forces unpaid Azure STT in cloud  
-- All eight capes + trim in one PR  
 - Authoritative movement server (Realtime presence stays)
 
 ---
@@ -282,14 +312,11 @@ Migrations follow existing Harbor style (`028`…`031`): additive columns, monot
 
 ---
 
-## 9. Risks & open questions for Henry
+## 9. Open questions for Henry
 
-1. **Skill count:** ship 4 or all 8 in the first skills PR?  
-2. **Speaking skill:** Web Speech only vs Azure — confirm before building.  
-3. **99 difficulty:** weeks of dailies vs weekend binge — which audience?  
-4. **Cape slot vs back item:** confirm `cape` as 8th gear slot (hat/top/bottom/shoes/hand/boat/lantern/**cape**).  
-5. **Public Fleets** moderation — reuse chat sanitize + offensive-name screen?  
-6. Should **trim cape** require all skills 99 (true maxed) or the softer ≥50 rule?
+1. **Trim cape:** A (soft ≥50), B (all 99), or C (no trim)? — see §4.2  
+2. **Public Fleets** moderation — reuse chat sanitize + offensive-name screen?  
+3. Symbolic loom fee in coins at 99 claim, or free unlock?
 
 ---
 
