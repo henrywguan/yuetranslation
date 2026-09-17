@@ -260,6 +260,28 @@ export function hqGrassTexture(): THREE.DataTexture {
   })
 }
 
+/** Shallow pond water — soft horizontal ripples (era 128 nearest). */
+export function hqPondTexture(): THREE.DataTexture {
+  return make128DataTex('pond', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const band = Math.floor(y / 4 + Math.sin(x * 0.18) * 1.2) & 3
+        if (band === 0) setPx(data, x, y, 0x6a, 0x8a, 0xa0)
+        else if (band === 1) setPx(data, x, y, 0x7a, 0x9a, 0xb0)
+        else if (band === 2) setPx(data, x, y, 0x8a, 0xaa, 0xc0)
+        else setPx(data, x, y, 0x5a, 0x7a, 0x90)
+      }
+    }
+    // Specular flecks
+    for (let i = 0; i < 40; i++) {
+      const x = (i * 31) % 128
+      const y = (i * 47) % 128
+      setPx(data, x, y, 0xb0, 0xc8, 0xd8)
+      setPx(data, x + 1, y, 0xa0, 0xb8, 0xc8)
+    }
+  })
+}
+
 /** Beach sand — warm grain, pebble freckles, wetter speckles. */
 export function hqSandTexture(): THREE.DataTexture {
   return make128DataTex('sand', (data) => {

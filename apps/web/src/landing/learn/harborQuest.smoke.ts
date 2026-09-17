@@ -354,10 +354,22 @@ function main() {
   })
   assert.ok(herbStalks >= 20, 'tan herb stalks with cream crowns on dirt beds')
   assert.ok(habitatCrates >= 4, 'open braced Habitat crates beside beds')
+  let ponds = 0
+  let spears = 0
+  let canopyTrees = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-stone-pond') ponds++
+    if (o.name === 'guan-spear-plant') spears++
+    if (o.name === 'guan-canopy-tree') canopyTrees++
+  })
+  assert.ok(ponds >= 2, 'stone-ring meadow ponds')
+  assert.ok(spears >= 8, 'spear-leaf Habitat plants')
+  assert.ok(canopyTrees >= 3, 'rounded canopy shade trees')
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
   assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
   assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
+  assert.match(guanSrc, /stoneRingPond|hqPondTexture|spearPlant|canopyTree/, 'Habitat pond clearing craft')
   assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
@@ -366,6 +378,7 @@ function main() {
   const craftSrc = readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8')
   assert.match(craftSrc, /export function hqGrassTexture/, 'shared grass 128 texture')
   assert.match(craftSrc, /Painted upright blade strokes|mottled/, 'richer grass albedo detail')
+  assert.match(craftSrc, /export function hqPondTexture/, 'shared pond ripple texture')
   assert.doesNotMatch(craftSrc, /export function hqWaterTexture/, 'no Guan water scroll texture')
   assert.match(craftSrc, /export function hqSandTexture/, 'shared sand 128 texture')
   assert.match(craftSrc, /export function hqDirtTexture/, 'shared dirt path texture')

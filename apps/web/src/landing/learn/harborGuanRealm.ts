@@ -25,6 +25,7 @@ import {
   hqMat,
   hqMatSmooth,
   hqMatTex,
+  hqPondTexture,
   hqPost,
   hqRock,
   hqSandTexture,
@@ -80,6 +81,11 @@ export const GUAN_TROPICAL_LOOK = {
   dirt: 0x7a5830,
   dirtRich: 0x5a3e22,
   lagoon: 0x2a98a8,
+  /** Shallow meadow pond (Habitat clearing read). */
+  pond: 0x7a9ab0,
+  pondDeep: 0x5a8098,
+  stone: 0x8a8680,
+  stoneLite: 0xa8a49a,
 } as const
 
 /**
@@ -389,6 +395,79 @@ function fernClump(rng: () => number): THREE.Group {
     fr.position.set(Math.cos(a) * 0.09, 0.18, Math.sin(a) * 0.09)
     g.add(fr)
   }
+  return g
+}
+
+/**
+ * Broad spear-leaf plant — Habitat clearing foreground foliage (original craft).
+ */
+function spearPlant(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-spear-plant'
+  const n = 5 + Math.floor(rng() * 3)
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rng() * 0.4
+    const len = 0.42 + rng() * 0.28
+    const leaf = hqBox(
+      0.1 + rng() * 0.04,
+      0.025,
+      len,
+      i % 2 ? GUAN_TROPICAL_LOOK.grassDeep : GUAN_TROPICAL_LOOK.jungle,
+      0,
+      0.22,
+      0,
+    )
+    leaf.rotation.y = a
+    leaf.rotation.x = -0.55 - rng() * 0.35
+    leaf.position.set(Math.cos(a) * 0.08, 0.12 + rng() * 0.1, Math.sin(a) * 0.08)
+    g.add(leaf)
+  }
+  g.add(hqPost(0.03, 0.04, 0.2, GUAN_TROPICAL_LOOK.grassDeep, 0, 0.1, 0, 4))
+  return g
+}
+
+/** Dark spiky clump — short Habitat scrub near ponds. */
+function spikyBush(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-spiky-bush'
+  const n = 10 + Math.floor(rng() * 6)
+  for (let i = 0; i < n; i++) {
+    const h = 0.28 + rng() * 0.28
+    g.add(
+      grassBlade(
+        h,
+        i % 2 ? GUAN_TROPICAL_LOOK.grassDeep : GUAN_TROPICAL_LOOK.jungleDeep,
+        (rng() - 0.5) * 0.28,
+        (rng() - 0.5) * 0.28,
+        (rng() - 0.5) * 0.55,
+        (rng() - 0.5) * 0.4,
+      ),
+    )
+  }
+  return g
+}
+
+/**
+ * Rounded canopy tree — thick trunk + intersecting leaf blobs
+ * (Habitat clearing shade tree — original craft).
+ */
+function canopyTree(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-canopy-tree'
+  const h = 1.35 + rng() * 0.55
+  const wood = hqWoodTexture()
+  g.add(hqBoxTex(0.22, h, 0.22, P.woodDeep, wood, 0, h / 2, 0))
+  g.add(hqBoxTex(0.26, 0.08, 0.26, P.woodDark, wood, 0, h * 0.35, 0))
+  // Dense rounded canopy as a few overlapping faceted blobs
+  const canopyCols = [GUAN_TROPICAL_LOOK.jungle, GUAN_TROPICAL_LOOK.grassDeep, GUAN_TROPICAL_LOOK.jungleDeep]
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2
+    const r = 0.38 + rng() * 0.12
+    const blob = hqCanopy(r, canopyCols[i % canopyCols.length]!, Math.cos(a) * 0.22, h + 0.15 + (i % 2) * 0.12, Math.sin(a) * 0.22)
+    blob.scale.set(1.1, 0.75 + rng() * 0.2, 1.1)
+    g.add(blob)
+  }
+  g.add(hqCanopy(0.48, GUAN_TROPICAL_LOOK.grassLite, 0, h + 0.35, 0))
   return g
 }
 
@@ -1156,12 +1235,12 @@ function scatterGrassTufts(root: THREE.Group, rng: () => number, count: number) 
   }
 }
 
-/** Habitat-style tall grass + dirt beds scattered on walkable terraces. */
+/** Habitat-style tall grass + dirt beds + stone-ring ponds on walkable terraces. */
 function scatterHabitatGround(root: THREE.Group, rng: () => number) {
   // Tall grass clumps (meadow density)
   let tall = 0
   let guard = 0
-  while (tall < 55 && guard < 220) {
+  while (tall < 90 && guard < 360) {
     guard++
     const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
     const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
@@ -1175,6 +1254,38 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
     clump.scale.setScalar(0.9 + rng() * 0.35)
     root.add(clump)
     tall++
+  }
+  // Spear-leaf plants + spiky scrub for Habitat clearing variety
+  let flora = 0
+  guard = 0
+  while (flora < 28 && guard < 120) {
+    guard++
+    const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
+    const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
+    if (!isGuanLand(x, z)) continue
+    const gy = guanGroundY(x, z)
+    if (gy < GUAN_HEIGHT.grass - 0.02) continue
+    const plant = rng() > 0.45 ? spearPlant(rng) : spikyBush(rng)
+    plant.position.set(x, gy, z)
+    plant.rotation.y = rng() * Math.PI
+    plant.scale.setScalar(0.85 + rng() * 0.35)
+    root.add(plant)
+    flora++
+  }
+  // Rounded canopy shade trees in meadow clearings
+  for (const [tx, tz] of [
+    [6.5, 10.5],
+    [-8.5, 9.0],
+    [0.5, -10.5],
+    [-4.5, 2.5],
+    [5.0, -7.0],
+  ] as const) {
+    if (!isGuanLand(tx, tz)) continue
+    const tree = canopyTree(rng)
+    tree.position.set(tx, guanGroundY(tx, tz), tz)
+    tree.rotation.y = rng() * Math.PI
+    tree.scale.setScalar(0.9 + rng() * 0.25)
+    root.add(tree)
   }
   // Irregular dirt patches with grass sprouting out
   const beds: { x: number; z: number; r: number }[] = [
@@ -1210,6 +1321,107 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
       }
     }
   }
+  // Stone-ring meadow ponds with dense grass carpets (Habitat clearing vignette)
+  const ponds: { x: number; z: number; r: number }[] = [
+    { x: 5.8, z: 9.2, r: 1.15 },
+    { x: -8.2, z: 7.5, r: 0.95 },
+    { x: 1.5, z: -9.0, r: 1.05 },
+    { x: -5.5, z: -6.5, r: 0.85 },
+  ]
+  for (const p of ponds) {
+    if (!isGuanLand(p.x, p.z)) continue
+    // Keep ponds on grass terrace (not ash / open sand)
+    if (guanGroundY(p.x, p.z) < GUAN_HEIGHT.grass - 0.02) continue
+    root.add(stoneRingPond(rng, p.x, p.z, p.r))
+  }
+}
+
+/**
+ * Circular meadow pond with rippled water + individual stone border + fuzzy grass carpet.
+ * Original craft mirroring Habitat clearing silhouette (not Jagex meshes).
+ */
+function stoneRingPond(rng: () => number, x: number, z: number, radius: number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-stone-pond'
+  const gy = guanGroundY(x, z)
+  g.position.set(x, gy, z)
+
+  const pondTex = hqPondTexture().clone()
+  pondTex.needsUpdate = true
+  pondTex.wrapS = THREE.RepeatWrapping
+  pondTex.wrapT = THREE.RepeatWrapping
+  pondTex.repeat.set(2, 2)
+
+  // Water disc slightly recessed into the terrace
+  const water = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.92, radius * 0.95, 0.08, 12),
+    hqMatTex(GUAN_TROPICAL_LOOK.pond, pondTex, { transparent: true, opacity: 0.92 }),
+  )
+  water.position.y = 0.02
+  water.name = 'guan-pond-water'
+  g.add(water)
+
+  // Deeper centre tint
+  const deep = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.45, radius * 0.5, 0.05, 8),
+    hqMat(GUAN_TROPICAL_LOOK.pondDeep, { transparent: true, opacity: 0.85 }),
+  )
+  deep.position.y = 0.04
+  g.add(deep)
+
+  // Individual low-poly stones around the rim
+  const stoneN = 14 + Math.floor(rng() * 6)
+  for (let i = 0; i < stoneN; i++) {
+    const a = (i / stoneN) * Math.PI * 2 + (rng() - 0.5) * 0.15
+    const rr = radius * (0.95 + rng() * 0.12)
+    const rock = hqRock(rng, i % 2 ? GUAN_TROPICAL_LOOK.stone : GUAN_TROPICAL_LOOK.stoneLite)
+    rock.position.set(Math.cos(a) * rr, 0.06 + rng() * 0.04, Math.sin(a) * rr)
+    rock.scale.setScalar(0.35 + rng() * 0.35)
+    rock.rotation.y = rng() * Math.PI
+    g.add(rock)
+  }
+
+  // Dense overlapping grass carpet around the pond (Habitat fuzzy turf)
+  const carpet = 55 + Math.floor(rng() * 20)
+  for (let i = 0; i < carpet; i++) {
+    const a = rng() * Math.PI * 2
+    const d = radius * (1.15 + rng() * 1.6)
+    const lx = Math.cos(a) * d
+    const lz = Math.sin(a) * d
+    const wx = x + lx
+    const wz = z + lz
+    if (!isGuanLand(wx, wz)) continue
+    const tuft = rng() > 0.55 ? tallGrassClump(rng) : grassTuft(rng)
+    // Local Y relative to pond group (group sits on gy)
+    tuft.position.set(lx, guanGroundY(wx, wz) - gy, lz)
+    tuft.rotation.y = rng() * Math.PI
+    tuft.scale.setScalar(0.85 + rng() * 0.4)
+    g.add(tuft)
+  }
+
+  // Spear / spiky accents at the water's edge
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + rng() * 0.5
+    const d = radius * (1.35 + rng() * 0.4)
+    const plant = i % 2 ? spearPlant(rng) : spikyBush(rng)
+    plant.position.set(Math.cos(a) * d, 0.02, Math.sin(a) * d)
+    plant.rotation.y = a
+    plant.scale.setScalar(0.9 + rng() * 0.3)
+    g.add(plant)
+  }
+
+  // One palm or canopy tree nearby for the vignette silhouette
+  if (rng() > 0.3) {
+    const a = rng() * Math.PI * 2
+    const d = radius * (2.2 + rng() * 0.6)
+    const tree = rng() > 0.5 ? canopyTree(rng) : palmTree(rng)
+    tree.position.set(Math.cos(a) * d, 0.02, Math.sin(a) * d)
+    tree.rotation.y = a + Math.PI
+    tree.scale.setScalar(0.85 + rng() * 0.2)
+    g.add(tree)
+  }
+
+  return g
 }
 
 /** Static Guan Harbor scene — dense tropical island sim (original craft). */
@@ -1397,7 +1609,7 @@ export function buildGuanHarborScene(): THREE.Group {
   scatterJungle(root, rng, 6, 10, 4, 12)
   scatterJungle(root, rng, 3, -8, 5, 16, true)
   scatterJungle(root, rng, -6, -6, 4.5, 12, true)
-  scatterGrassTufts(root, rng, 220)
+  scatterGrassTufts(root, rng, 280)
   scatterHabitatGround(root, rng)
 
   for (let i = 0; i < 8; i++) {
