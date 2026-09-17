@@ -132,6 +132,15 @@ Family/Business: `ttsUnlimited: true` and `limits.tts_chars: 0`. Business: `came
 
 Signed-in `prefs.autoSpeak` syncs across devices via `PATCH /api/prefs/auto-speak` (column `profiles.auto_speak`). Playback is still gated by `allowed.autoSpeak` (Family/Business). Guests keep a device-local cache only.
 
+## Harbor Quest & Practice Partner (admin view-only)
+
+| Meter | What increments | Hard cap |
+| --- | --- | --- |
+| `harbor_quest_count` / `harborQuestCount` | Harbor Quest **correct answers** (delta on `PUT /api/harbor-quest`) | None — admin Users table + usage detail only |
+| `practice_partner_count` / `practicePartnerCount` | Each Practice Partner LLM chat turn (`POST /api/admin/practice-partner/chat`) | None — admin Users table + usage detail only |
+
+TTS from Harbor Speak buttons and Practice Partner playback still counts toward the normal `tts_chars` meter. Migration: `034_harbor_practice_usage.sql` (apply in Supabase SQL editor if not yet pushed).
+
 ## Gate points / 闸门
 
 | Endpoint | Gate |

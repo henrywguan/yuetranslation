@@ -932,6 +932,24 @@ export function AdminPage() {
                     </button>
                   </th>
                   <th>
+                    <button
+                      type="button"
+                      className="admin-sort"
+                      onClick={() => onSort('harborQuestCount')}
+                    >
+                      Harbor{sort === 'harborQuestCount' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                  <th>
+                    <button
+                      type="button"
+                      className="admin-sort"
+                      onClick={() => onSort('practicePartnerCount')}
+                    >
+                      Partner{sort === 'practicePartnerCount' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                  <th>
                     <button type="button" className="admin-sort" onClick={() => onSort('docsPages')}>
                       Docs{sort === 'docsPages' ? (dir === 'asc' ? ' ↑' : ' ↓') : ''}
                     </button>
@@ -1038,6 +1056,12 @@ export function AdminPage() {
                     <td title="Multimodal LLM OCR fallbacks (view-only; no hard cap)">
                       {(u.aiVisionCount ?? 0).toLocaleString()}
                     </td>
+                    <td title="Harbor Quest correct answers (view-only; no hard cap)">
+                      {(u.harborQuestCount ?? 0).toLocaleString()}
+                    </td>
+                    <td title="Practice Partner LLM chat turns (view-only; no hard cap)">
+                      {(u.practicePartnerCount ?? 0).toLocaleString()}
+                    </td>
                     <td
                       title={
                         u.docsLimitPages > 0
@@ -1129,7 +1153,9 @@ export function AdminPage() {
                   {usageTotal.ttsChars.toLocaleString()} · Translate{' '}
                   {usageTotal.translateCount.toLocaleString()} · Cam{' '}
                   {formatExactDuration(usageTotal.cameraSeconds)} · AI vision{' '}
-                  {(usageTotal.aiVisionCount ?? 0).toLocaleString()} · Docs{' '}
+                  {(usageTotal.aiVisionCount ?? 0).toLocaleString()} · Harbor{' '}
+                  {(usageTotal.harborQuestCount ?? 0).toLocaleString()} · Partner{' '}
+                  {(usageTotal.practicePartnerCount ?? 0).toLocaleString()} · Docs{' '}
                   {(usageTotal.docsPages ?? 0).toLocaleString()} pages
                 </p>
               ) : null}
@@ -1148,6 +1174,8 @@ export function AdminPage() {
                           : ''}
                       </span>
                       <span>AI vision {(m.aiVisionCount ?? 0).toLocaleString()}</span>
+                      <span>Harbor {(m.harborQuestCount ?? 0).toLocaleString()}</span>
+                      <span>Partner {(m.practicePartnerCount ?? 0).toLocaleString()}</span>
                       <span>Docs {(m.docsPages ?? 0).toLocaleString()} pages</span>
                     </li>
                   ))

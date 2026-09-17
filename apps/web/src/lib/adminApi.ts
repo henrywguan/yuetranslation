@@ -43,6 +43,8 @@ export type AdminUser = {
   cameraTranslateCount: number
   docsPages: number
   aiVisionCount: number
+  harborQuestCount: number
+  practicePartnerCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
   cameraLimitScans: number
@@ -96,6 +98,8 @@ export type AdminUsageMonth = {
   cameraTranslateCount: number
   docsPages: number
   aiVisionCount: number
+  harborQuestCount?: number
+  practicePartnerCount?: number
 }
 
 export type AdminUsageRangeQuery = {
