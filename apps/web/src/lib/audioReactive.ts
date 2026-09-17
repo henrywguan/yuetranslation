@@ -23,10 +23,20 @@ function isUsableContext(c: AudioContext | null): c is AudioContext {
   return Boolean(c && c.state !== 'closed')
 }
 
+function AudioContextCtor(): typeof AudioContext {
+  const w = globalThis as typeof globalThis & {
+    AudioContext?: typeof AudioContext
+    webkitAudioContext?: typeof AudioContext
+  }
+  const Ctor = w.AudioContext ?? w.webkitAudioContext
+  if (!Ctor) throw new Error('AudioContext unavailable')
+  return Ctor
+}
+
 /** Create or reuse the page-lifetime AudioContext. Safe to call in a gesture. */
 export function ensureSharedAudioContext(): AudioContext {
   if (!isUsableContext(ctx)) {
-    ctx = new AudioContext()
+    ctx = new (AudioContextCtor())()
   }
   if (ctx.state === 'suspended') {
     void ctx.resume()
@@ -34,10 +44,18 @@ export function ensureSharedAudioContext(): AudioContext {
   return ctx
 }
 
-/** Gesture-time resume so the next STT turn is not stuck in a suspended context. */
-export function resumeSharedAudioContext(): void {
-  if (!isUsableContext(ctx)) return
-  if (ctx.state === 'suspended') void ctx.resume()
+/**
+ * Gesture-time resume. Creates the shared context if needed (iPhone Safari
+ * never unlocked a null context before — resume alone was a no-op).
+ * Returns a promise that settles after `resume()` so Harbor BGM can restart
+ * on a running context.
+ */
+export function resumeSharedAudioContext(): Promise<void> {
+  const c = ensureSharedAudioContext()
+  if (c.state === 'suspended') {
+    return c.resume().then(() => undefined)
+  }
+  return Promise.resolve()
 }
 
 export function getSharedAudioSampleRate(): number {

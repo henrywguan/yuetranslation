@@ -726,21 +726,36 @@ export function harborAmbientWeather(): HarborWeather {
 
 /**
  * Play a near-silent buffer so iOS / Safari unlock the AudioContext on gesture.
- * Safe to call repeatedly.
+ * Safe to call repeatedly. Prefer calling after `await resumeSharedAudioContext()`.
  */
 export function primeHarborAmbientUnlock(): void {
   if (typeof window === 'undefined') return
   const ctx = ensureSharedAudioContext()
-  const o = ctx.createOscillator()
-  const g = ctx.createGain()
-  g.gain.value = 0.00001
-  o.connect(g)
-  g.connect(ctx.destination)
-  const t = ctx.currentTime
+  // Buffer source unlocks more reliably than a zero-gain oscillator on iOS.
   try {
-    o.start(t)
-    o.stop(t + 0.04)
+    const n = Math.max(1, Math.floor(ctx.sampleRate * 0.05))
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+    const data = buf.getChannelData(0)
+    for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * 0.0004
+    const src = ctx.createBufferSource()
+    const g = ctx.createGain()
+    g.gain.value = 0.02
+    src.buffer = buf
+    src.connect(g)
+    g.connect(ctx.destination)
+    src.start(0)
   } catch {
-    /* ignore */
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    g.gain.value = 0.0001
+    o.connect(g)
+    g.connect(ctx.destination)
+    const t = ctx.currentTime
+    try {
+      o.start(t)
+      o.stop(t + 0.05)
+    } catch {
+      /* ignore */
+    }
   }
 }

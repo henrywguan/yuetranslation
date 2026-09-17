@@ -19,21 +19,19 @@ import {
 import {
   duckHarborBgm,
   harborBgmTheme,
-  isHarborBgmPlaying,
   startHarborBgm,
   stopHarborBgm,
 } from './harborBgm'
 import { GUAN_HARBOR_META } from './harborGuanRealm'
 import {
   harborAmbientWeather,
-  isHarborAmbientRunning,
   primeHarborAmbientUnlock,
   setHarborAmbientPaused,
   setHarborAmbientTalking,
   startHarborAmbient,
   stopHarborAmbient,
 } from './harborAmbient'
-import { resumeSharedAudioContext } from '../../lib/audioReactive'
+import { ensureSharedAudioContext, resumeSharedAudioContext } from '../../lib/audioReactive'
 import { playHarborCoinChing } from './harborCoinSfx'
 import {
   playHarborArenaOpen,
@@ -382,7 +380,7 @@ export function LearnSession({
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     preloadHarborMissSfx()
-    // BGM / ambient need a user gesture on many browsers — also kicked from onResult.
+    // Soft-start on browsers that allow autoplay; iPhone stays silent until unlock.
     startHarborBgm()
     let ambientTries = 0
     const ambientBoot = window.setInterval(() => {
@@ -397,13 +395,46 @@ export function LearnSession({
       }
     }, 150)
 
-    /** iOS / Safari: AudioContext stays suspended until a real gesture. */
+    /**
+     * iOS / Safari: AudioContext is created suspended on mount, BGM marks
+     * itself "playing", then unlock used to no-op restart — silent forever.
+     * Await resume, prime a buffer, then force-restart beds on a running ctx.
+     */
+    let harborAudioUnlocked = false
+    let unlockInFlight = false
     const unlockHarborAudio = () => {
-      resumeSharedAudioContext()
-      primeHarborAmbientUnlock()
-      if (!isHarborBgmPlaying()) startHarborBgm(harborBgmTheme())
-      const w = worldApiRef.current?.weather ?? harborAmbientWeather()
-      if (!isHarborAmbientRunning()) startHarborAmbient(w)
+      if (unlockInFlight) return
+      const needsKick =
+        !harborAudioUnlocked ||
+        (() => {
+          try {
+            return ensureSharedAudioContext().state !== 'running'
+          } catch {
+            return true
+          }
+        })()
+      if (!needsKick) {
+        void resumeSharedAudioContext()
+        return
+      }
+      unlockInFlight = true
+      void resumeSharedAudioContext()
+        .then(() => {
+          primeHarborAmbientUnlock()
+          // Always rebuild graphs after unlock — mount-time nodes were silent.
+          stopHarborBgm()
+          startHarborBgm(harborBgmTheme())
+          const w = worldApiRef.current?.weather ?? harborAmbientWeather()
+          stopHarborAmbient()
+          startHarborAmbient(w)
+          harborAudioUnlocked = true
+        })
+        .catch(() => {
+          /* ignore */
+        })
+        .finally(() => {
+          unlockInFlight = false
+        })
     }
     window.addEventListener('pointerdown', unlockHarborAudio, { capture: true })
     window.addEventListener('keydown', unlockHarborAudio, { capture: true })
