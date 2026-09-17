@@ -5401,6 +5401,15 @@
   color: #ff90a8;
 }
 
+.hq-visit-panel--loom {
+  border-color: color-mix(in srgb, #c4a060 40%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #1a1410 86%, #c4a060 12%), color-mix(in srgb, #0a1218 94%, transparent));
+}
+.hq-visit-panel--loom .hq-visit-kicker {
+  color: #e8c878;
+}
+
 .hq-barber-overlay {
   position: absolute;
   inset: 0;

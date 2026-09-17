@@ -126,6 +126,22 @@ export const GUAN_RETURN_PORTAL = {
 export const GUAN_CUSTOMS_OFFICER_NAME = '關吏 · Customs' as const
 
 /**
+ * Cape Loom — Brimhaven town trimmer (skillcape base claim + 10k coin trim).
+ * Walkable landmark; tap the Trimmer NPC or stand in radius to open the panel.
+ */
+export const GUAN_CAPE_LOOM = {
+  id: 'cape-loom' as const,
+  name: { en: 'Cape Loom', zh: '披風金邊' },
+  /** East of the Brimhaven tavern — cloth stall on the town path. */
+  x: GUAN_LANDMARKS.brimhaven.x + 1.45,
+  z: GUAN_LANDMARKS.brimhaven.z - 1.15,
+  radius: 1.2,
+} as const
+
+/** Display name above the Guan Cape Trimmer. */
+export const GUAN_CAPE_TRIMMER_NAME = '補邊匠 · Trimmer' as const
+
+/**
  * Main island outline (CCW). East-facing notch = Musa Passage separating
  * northern lobe (Musa / volcano / Brimhaven) from southern jungle / Shilo.
  */
@@ -1070,6 +1086,149 @@ function customsOfficer(): THREE.Group {
   return g
 }
 
+/**
+ * Brimhaven Cape Loom — market stall + Trimmer NPC.
+ * Talk / stand-in opens the cape-loom panel (99 claim + 10k trim).
+ */
+function capeLoomStall(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-cape-loom'
+  g.userData.visitable = 'cape-loom'
+  g.userData.uniqueLandmark = 'cape-loom'
+  g.userData.landmarkHost = 'cape-loom'
+
+  // Cloth stall body (original Harbor craft — not Jagex)
+  const wood = hqWoodTexture()
+  g.add(hqBoxTex(1.35, 0.12, 0.85, P.woodDark, wood, 0, 0.55, 0))
+  g.add(hqPost(0.06, 0.07, 1.05, P.woodMid, -0.55, 0.55, -0.3, 5))
+  g.add(hqPost(0.06, 0.07, 1.05, P.woodMid, 0.55, 0.55, -0.3, 5))
+  g.add(hqPost(0.06, 0.07, 0.85, P.woodMid, -0.55, 0.45, 0.32, 5))
+  g.add(hqPost(0.06, 0.07, 0.85, P.woodMid, 0.55, 0.45, 0.32, 5))
+  // Awning — jade + gold trim (skillcape motif tease)
+  g.add(hqBox(1.5, 0.06, 1.05, 0x1a5a48, 0, 1.15, 0))
+  g.add(hqBox(1.55, 0.04, 0.12, P.trimGold, 0, 1.18, -0.48))
+  g.add(hqBox(1.55, 0.04, 0.12, P.trimGold, 0, 1.18, 0.48))
+  // Loom frame + hanging cape swatches
+  g.add(hqBox(0.7, 0.55, 0.08, P.woodLight, 0, 0.85, -0.25))
+  g.add(hqBox(0.55, 0.42, 0.04, 0x1e3a48, 0, 0.85, -0.2))
+  g.add(hqBox(0.5, 0.08, 0.05, P.jade, 0, 1.02, -0.18))
+  g.add(hqBox(0.5, 0.06, 0.05, P.trimGold, 0, 0.72, -0.18))
+  // Thread spools
+  g.add(hqPost(0.07, 0.08, 0.12, P.trimGold, -0.4, 0.68, 0.15, 6))
+  g.add(hqPost(0.07, 0.08, 0.12, P.jade, -0.22, 0.68, 0.18, 6))
+  g.add(hqPost(0.07, 0.08, 0.12, 0xc04068, 0.22, 0.68, 0.15, 6))
+
+  // Soft loom glow
+  const glow = new THREE.PointLight(0xc4a060, 1.1, 6, 2)
+  glow.position.set(0, 1.0, 0.2)
+  glow.userData.harborLanternLight = true
+  glow.userData.baseIntensity = 1.1
+  glow.userData.specialHostGlow = true
+  g.add(glow)
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.42, 0.58, 16),
+    new THREE.MeshLambertMaterial({
+      color: 0xc4a060,
+      emissive: 0xc4a060,
+      emissiveIntensity: 0.75,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide,
+    }),
+  )
+  ring.rotation.x = -Math.PI / 2
+  ring.position.y = 0.04
+  ring.userData.specialHostGlow = true
+  ring.userData.glowBaseIntensity = 0.75
+  g.add(ring)
+
+  const trimmer = capeTrimmerNpc()
+  trimmer.position.set(0.55, 0, 0.55)
+  trimmer.rotation.y = -0.7
+  g.add(trimmer)
+
+  return g
+}
+
+/**
+ * Guan Cape Trimmer — talkable host for skillcape claim / trim.
+ * Tropical clothier kit; distinct from Customs officer.
+ */
+function capeTrimmerNpc(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-cape-trimmer'
+  g.userData.landmarkHost = 'cape-loom'
+  g.userData.hasDialogue = true
+  g.userData.specialNpc = true
+  g.userData.npc = 'cape-loom'
+
+  const skin = hqMat(P.skin)
+  for (const sx of [-0.1, 0.1] as const) {
+    g.add(hqPost(0.06, 0.07, 0.4, 0x3a3028, sx, 0.22, 0))
+    g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
+  }
+  // Plum clothier robe + gold sash + jade needle pouch
+  g.add(hqBox(0.38, 0.5, 0.26, 0x5a2a48, 0, 0.64, 0))
+  g.add(hqBox(0.4, 0.1, 0.28, P.trimGold, 0, 0.52, 0))
+  g.add(hqBox(0.14, 0.16, 0.08, P.jade, 0.22, 0.7, 0.14))
+  for (const sx of [-1, 1] as const) {
+    g.add(hqPost(0.055, 0.065, 0.34, 0x5a2a48, sx * 0.24, 0.72, 0))
+    g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
+  }
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
+  head.position.y = 1.1
+  g.add(head)
+  // Soft clothier cap
+  g.add(hqBox(0.34, 0.08, 0.3, 0x2a1828, 0, 1.22, 0))
+  g.add(hqBox(0.12, 0.06, 0.12, P.trimGold, 0, 1.28, 0.02))
+  // Gold needle + thread in hand
+  g.add(hqBox(0.03, 0.22, 0.03, P.trimGold, -0.28, 0.78, 0.12))
+  g.add(hqPost(0.05, 0.06, 0.08, P.jade, -0.28, 0.62, 0.12, 6))
+
+  if (typeof document !== 'undefined') {
+    const tag = buildNametagSprite(GUAN_CAPE_TRIMMER_NAME)
+    tag.name = 'npc-nametag'
+    tag.userData.npcNametag = true
+    tag.position.set(0, 1.95, 0)
+    tag.scale.set(1.85, 0.4, 1)
+    g.add(tag)
+  } else {
+    const plate = hqBox(0.85, 0.16, 0.04, 0x1a2830, 0, 1.95, 0)
+    plate.name = 'npc-nametag'
+    plate.userData.npcNametag = true
+    g.add(plate)
+    g.add(hqBox(0.78, 0.1, 0.03, P.trimGold, 0, 1.95, 0.02))
+  }
+
+  const bubble = new THREE.Group()
+  bubble.name = 'speech-bubble'
+  bubble.userData.speechBubble = true
+  bubble.userData.billboard = true
+  bubble.userData.hasDialogue = true
+  bubble.userData.landmarkHost = 'cape-loom'
+  bubble.add(hqBox(0.44, 0.32, 0.08, 0xfff8ec, 0, 0.1, 0))
+  bubble.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, 0.28, 0))
+  bubble.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, -0.08, 0))
+  bubble.add(hqBox(0.5, 0.03, 0.06, P.trimGold, 0, 0.3, 0.01))
+  for (const x of [-0.12, 0, 0.12] as const) {
+    bubble.add(hqBox(0.06, 0.06, 0.05, 0x1a2830, x, 0.1, 0.05))
+  }
+  bubble.position.set(0.12, 2.4, 0.06)
+  bubble.userData.bubbleBaseY = bubble.position.y
+  g.add(bubble)
+
+  const hostGlow = new THREE.PointLight(0xc4a060, 0.9, 4, 2)
+  hostGlow.position.set(0, 1.0, 0.3)
+  hostGlow.userData.harborLanternLight = true
+  hostGlow.userData.baseIntensity = 0.9
+  hostGlow.userData.specialHostGlow = true
+  g.add(hostGlow)
+
+  return g
+}
+
 function shipHullWreck(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-ship-yard'
@@ -1665,6 +1824,18 @@ export function buildGuanHarborScene(): THREE.Group {
   }
   tavern.rotation.y = 0.35
   root.add(tavern)
+
+  // Cape Loom stall + Trimmer NPC (skillcape claim / 10k trim — see mmo-social-v1.md)
+  {
+    const loom = capeLoomStall()
+    loom.position.set(
+      GUAN_CAPE_LOOM.x,
+      guanGroundY(GUAN_CAPE_LOOM.x, GUAN_CAPE_LOOM.z),
+      GUAN_CAPE_LOOM.z,
+    )
+    loom.rotation.y = -0.85
+    root.add(loom)
+  }
   for (let i = 0; i < 7; i++) {
     const house = pirateHouse(rng)
     const a = (i / 7) * Math.PI * 1.4 - 0.5

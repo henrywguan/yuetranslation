@@ -14,7 +14,7 @@
 | Speaking skill | **No** — not in roster (no mic/STT skill track) |
 | 99 pacing | **Completable in ~1 week** of focused daily play (tune XP curve + daily board) |
 | Cape slot | **Yes** — 8th gear slot: hat / top / bottom / shoes / hand / boat / lantern / **cape** |
-| Trim cape | **99 → base cape; pay 10k ferry coins** at Cape Loom to trim (per cape, cosmetic only) |
+| Trim cape | **99 → base cape; pay 10k ferry coins** at Guan Brimhaven **補邊匠 · Trimmer** (`cape-loom`) |
 
 ---
 
@@ -220,11 +220,11 @@ At **skill level 99**, the sailor unlocks that skill’s **Skillcape** (new gear
 
 At **99**, the sailor claims the **base skillcape** free (or symbolic loom fee only if we add one later).
 
-They may then spend **10,000 ferry coins** at the Cape Loom to **trim** that cape:
+They then visit the **Cape Loom** in **Guan Harbor · Brimhaven** — NPC **補邊匠 · Trimmer** (`GUAN_CAPE_TRIMMER_NAME`, landmark `cape-loom`) — and may spend **10,000 ferry coins** to **trim** that cape:
 
 | | Base 99 | Trimmed |
 |---|---|---|
-| Unlock | Skill level 99 | Own base cape for that skill + **10k coins** |
+| Unlock | Skill level 99 | Own base cape for that skill + **10k coins** at Cape Loom |
 | Look | Standard skill motif | Gold/jade edge + richer cloth detail |
 | Dance | Standard 3–5s emote | Same emote, slightly longer / one extra flourish |
 | Power | None | None — cosmetic only |
@@ -235,6 +235,7 @@ Rules:
 - Spend is coins already earned in Harbor (outfitter / arena / drills) — not a real-money SKU; VIP cash does not bypass the 99 gate.
 - Trim is permanent for that cape once paid (no refund); bank/equip like any gear.
 - If the sailor cannot afford 10k yet, they keep the base cape and grind coins — no other skill-level gate.
+- World hook: `GUAN_CAPE_LOOM` stall east of the Brimhaven tavern; tap Trimmer or stand in radius → loom panel.
 
 This replaces the soft/hard “broadly maxed” trim ideas from classic MMOs.
 
@@ -324,7 +325,7 @@ Migrations follow existing Harbor style (`028`…`031`): additive columns, monot
 
 1. **Public Fleets** moderation — reuse chat sanitize + offensive-name screen?  
 2. Base 99 claim: completely free, or a small symbolic loom fee *plus* the separate 10k trim?  
-3. 10k trim — confirm currency is **ferry coins** (not arena gold)?
+3. ~~10k trim currency~~ — **locked: ferry coins** (Harbor purse), not arena gold.
 
 ---
 

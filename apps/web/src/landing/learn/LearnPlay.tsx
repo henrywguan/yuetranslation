@@ -22,7 +22,7 @@ import {
   startHarborBgm,
   stopHarborBgm,
 } from './harborBgm'
-import { GUAN_HARBOR_META } from './harborGuanRealm'
+import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
 import {
   harborAmbientWeather,
   primeHarborAmbientUnlock,
@@ -1220,6 +1220,36 @@ export function LearnSession({
           }}
           message={bankMsg}
         />
+      ) : null}
+
+      {visitable === 'cape-loom' ? (
+        <aside className="hq-visit-panel hq-visit-panel--loom" role="dialog" aria-label="Cape Loom">
+          <p className="hq-visit-kicker">
+            {GUAN_CAPE_LOOM.name.en} · <span lang="zh-HK">{GUAN_CAPE_LOOM.name.zh}</span>
+          </p>
+          <h2 className="hq-visit-title">{GUAN_CAPE_TRIMMER_NAME}</h2>
+          <p className="hq-visit-body">
+            Hit skill level 99 to claim that skill’s cape. Spend{' '}
+            <strong>10,000 ferry coins</strong> here to trim it — gold/jade edge and a longer dance.
+            Cosmetic only; VIP cash cannot skip the 99.
+          </p>
+          <p className="hq-visit-body">
+            Your purse · <strong>{progressSnap.coins ?? 0}</strong> coins
+          </p>
+          <p className="hq-visit-msg">
+            Skill trainers and capes are docking next — the loom is ready in Brimhaven when you are.
+          </p>
+          <button
+            type="button"
+            className="hq-btn hq-btn--ghost"
+            onClick={() => {
+              playHarborCastOff()
+              setVisitable(null)
+            }}
+          >
+            Cast off
+          </button>
+        </aside>
       ) : null}
 
       {barberOpen ? (

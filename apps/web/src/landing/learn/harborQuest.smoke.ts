@@ -102,6 +102,8 @@ import {
   GUAN_HEIGHT,
   isGuanLand,
   GUAN_BOAT_START,
+  GUAN_CAPE_LOOM,
+  GUAN_CAPE_TRIMMER_NAME,
   GUAN_HARBOR_BOUNDS,
   GUAN_HARBOR_META,
   GUAN_ISLANDS,
@@ -377,12 +379,31 @@ function main() {
     Array.isArray(guanScene.userData.guanPatrolList) && guanScene.userData.guanPatrolList.length === 6,
     'patrol list cached for tick',
   )
+  let trimmers = 0
+  let looms = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-cape-trimmer') trimmers++
+    if (o.name === 'guan-cape-loom') looms++
+  })
+  assert.equal(trimmers, 1, 'visible Cape Trimmer NPC in Brimhaven')
+  assert.equal(looms, 1, 'Cape Loom stall in Brimhaven')
+  assert.equal(GUAN_CAPE_LOOM.id, 'cape-loom')
+  assert.ok(GUAN_CAPE_TRIMMER_NAME.includes('Trimmer'), 'trimmer nametag')
+  assert.ok(
+    Math.hypot(
+      GUAN_CAPE_LOOM.x - GUAN_LANDMARKS.brimhaven.x,
+      GUAN_CAPE_LOOM.z - GUAN_LANDMARKS.brimhaven.z,
+    ) < 4,
+    'Cape Loom sits in Brimhaven town',
+  )
   assert.ok(
     guanScene.children.some((c) => c.name === 'guan-return-portal'),
     'glowing return portal group',
   )
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
+  assert.match(guanSrc, /capeLoomStall|capeTrimmerNpc|GUAN_CAPE_LOOM/, 'Cape Loom craft wired')
+  assert.match(worldSrc, /GUAN_CAPE_LOOM/, 'world nearestVisitable knows Cape Loom')
   assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
   assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
   assert.match(guanSrc, /stoneRingPond|hqPondTexture|spearPlant|canopyTree/, 'Habitat pond clearing craft')
@@ -683,6 +704,7 @@ function main() {
 
   const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
   assert.match(playSrc, /snapToQuestDock/, 'Talk / Next gate snaps sailor to quest dock')
+  assert.match(playSrc, /cape-loom|GUAN_CAPE_TRIMMER_NAME/, 'LearnPlay Cape Loom panel')
   assert.match(playSrc, /beginTalk/, 'Talk CTA boards + docks before dialogue')
   assert.ok(playSrc.includes('hq-explore-fab'), 'open-world explore FAB on stage')
   assert.ok(playSrc.includes('Open world exploration'), 'explore FAB accessible label')

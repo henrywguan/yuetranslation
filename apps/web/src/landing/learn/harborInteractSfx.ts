@@ -184,6 +184,12 @@ export function playHarborLandmarkOpen(id: HarborVisitableId): void {
       noiseBurst(ctx, bus, t0, 0.16, 1200, 0.4)
       tone(ctx, bus, t0 + 0.06, { type: 'triangle', f0: 280, f1: 220, dur: 0.1, gain: 0.25 })
       break
+    case 'cape-loom':
+      // Soft loom / gold thread chime
+      tone(ctx, bus, t0, { type: 'triangle', f0: 523, dur: 0.28, gain: 0.28 })
+      tone(ctx, bus, t0 + 0.06, { type: 'sine', f0: 784, dur: 0.32, gain: 0.22 })
+      tone(ctx, bus, t0 + 0.12, { type: 'sine', f0: 1047, dur: 0.22, gain: 0.14 })
+      break
   }
 }
 

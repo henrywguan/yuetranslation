@@ -28,6 +28,7 @@ import {
   guanGroundY,
   isGuanLand,
   GUAN_BOAT_START,
+  GUAN_CAPE_LOOM,
   GUAN_RETURN_PORTAL,
   GUAN_TROPICAL_LOOK,
   GUAN_WATER_PLANE,
@@ -171,8 +172,14 @@ export const HARBOR_DOCK_X = RIVER + 0.55
  */
 export const HARBOR_MAX_QUEST_SLOTS = 24
 
-/** In-world visitables — Save Shack + Outfitter + Bank + Chinese Arena (fixed riverside stops). */
-export type HarborVisitableId = 'save-shack' | 'outfitter' | 'bank' | 'arena' | 'barber'
+/** In-world visitables — Save Shack + Outfitter + Bank + Arena + Barber (+ Guan Cape Loom). */
+export type HarborVisitableId =
+  | 'save-shack'
+  | 'outfitter'
+  | 'bank'
+  | 'arena'
+  | 'barber'
+  | 'cape-loom'
 
 export type HarborVisitable = {
   id: HarborVisitableId
@@ -3324,10 +3331,13 @@ function nearestVisitable(
   z: number,
   realm: HarborRealmId = 'river',
 ): HarborVisitableId | null {
-  // Guan paradise — only the return portal (reuses Save Shack panel / cast-off).
+  // Guan paradise — Customs return portal + Brimhaven Cape Loom (trimmer).
   if (realm === 'guan') {
-    const d = Math.hypot(GUAN_RETURN_PORTAL.x - x, GUAN_RETURN_PORTAL.z - z)
-    return d < GUAN_RETURN_PORTAL.radius ? GUAN_RETURN_PORTAL.id : null
+    const dCustoms = Math.hypot(GUAN_RETURN_PORTAL.x - x, GUAN_RETURN_PORTAL.z - z)
+    if (dCustoms < GUAN_RETURN_PORTAL.radius) return GUAN_RETURN_PORTAL.id
+    const dLoom = Math.hypot(GUAN_CAPE_LOOM.x - x, GUAN_CAPE_LOOM.z - z)
+    if (dLoom < GUAN_CAPE_LOOM.radius) return GUAN_CAPE_LOOM.id
+    return null
   }
   let best: HarborVisitableId | null = null
   let bestDist = HARBOR_VISIT_RADIUS
