@@ -1433,7 +1433,10 @@ export function LearnSession({
         open={Boolean(profilePlayer)}
         username={profilePlayer?.username ?? ''}
         look={profilePlayer?.look ?? progressSnap.look}
-        giftableLanterns={(progressSnap.owned ?? []).filter(isGiftableLanternId)}
+        giftableLanterns={[
+          ...(progressSnap.owned ?? []),
+          ...(progressSnap.banked ?? []),
+        ].filter(isGiftableLanternId)}
         giftableTitles={progressSnap.ownedTitles ?? []}
         giftBusy={giftBusy}
         giftMsg={giftMsg}
