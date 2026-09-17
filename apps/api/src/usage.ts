@@ -11,6 +11,8 @@ export type UsageRow = {
   camera_translate_count?: number
   docs_pages?: number
   ai_vision_count?: number
+  harbor_quest_count?: number
+  practice_partner_count?: number
 }
 
 export type UsageSnapshot = {
@@ -23,6 +25,10 @@ export type UsageSnapshot = {
   docsPages: number
   /** Multimodal LLM OCR fallback invocations (view-only meter). */
   aiVisionCount: number
+  /** Harbor Quest correct answers this month (admin view-only). */
+  harborQuestCount: number
+  /** Practice Partner chat turns this month (admin view-only). */
+  practicePartnerCount: number
 }
 
 function asInt(value: unknown): number {
@@ -44,6 +50,8 @@ export function emptyUsage(month = currentMonthKey()): UsageSnapshot {
     cameraTranslateCount: 0,
     docsPages: 0,
     aiVisionCount: 0,
+    harborQuestCount: 0,
+    practicePartnerCount: 0,
   }
 }
 
@@ -57,6 +65,8 @@ function rowToSnapshot(row: UsageRow): UsageSnapshot {
     cameraTranslateCount: asInt(row.camera_translate_count),
     docsPages: asInt(row.docs_pages),
     aiVisionCount: asInt(row.ai_vision_count),
+    harborQuestCount: asInt(row.harbor_quest_count),
+    practicePartnerCount: asInt(row.practice_partner_count),
   }
 }
 
@@ -130,6 +140,8 @@ export async function getPersonalUsageByMonth(
       camera_translate_count: asInt(row.camera_translate_count),
       docs_pages: asInt(row.docs_pages),
       ai_vision_count: asInt(row.ai_vision_count),
+      harbor_quest_count: asInt(row.harbor_quest_count),
+      practice_partner_count: asInt(row.practice_partner_count),
     })
   }
   return byMonth
@@ -149,6 +161,8 @@ async function incrementUsage(
     cameraTranslateCount?: number
     docsPages?: number
     aiVisionCount?: number
+    harborQuestCount?: number
+    practicePartnerCount?: number
   },
 ) {
   const client = getAdmin()
@@ -160,6 +174,8 @@ async function incrementUsage(
   const cameraTranslateCount = asInt(delta.cameraTranslateCount)
   const docsPages = asInt(delta.docsPages)
   const aiVisionCount = asInt(delta.aiVisionCount)
+  const harborQuestCount = asInt(delta.harborQuestCount)
+  const practicePartnerCount = asInt(delta.practicePartnerCount)
   if (
     liveSeconds +
       ttsChars +
@@ -167,7 +183,9 @@ async function incrementUsage(
       cameraSeconds +
       cameraTranslateCount +
       docsPages +
-      aiVisionCount <=
+      aiVisionCount +
+      harborQuestCount +
+      practicePartnerCount <=
     0
   ) {
     return
@@ -186,6 +204,8 @@ async function incrementUsage(
       cameraTranslateCount,
       docsPages,
       aiVisionCount,
+      harborQuestCount,
+      practicePartnerCount,
     })
     await incrementPersonalAttribution(userId, month, {
       liveSeconds,
@@ -195,6 +215,8 @@ async function incrementUsage(
       cameraTranslateCount,
       docsPages,
       aiVisionCount,
+      harborQuestCount,
+      practicePartnerCount,
     })
     return
   }
@@ -209,6 +231,8 @@ async function incrementUsage(
     p_camera_translate_count: cameraTranslateCount,
     p_docs_pages: docsPages,
     p_ai_vision_count: aiVisionCount,
+    p_harbor_quest_count: harborQuestCount,
+    p_practice_partner_count: practicePartnerCount,
   })
   if (!rpcError) return
 
@@ -224,6 +248,8 @@ async function incrementUsage(
   }
   if (docsPages) patch.docs_pages = usage.docsPages + docsPages
   if (aiVisionCount) patch.ai_vision_count = usage.aiVisionCount + aiVisionCount
+  if (harborQuestCount) patch.harbor_quest_count = usage.harborQuestCount + harborQuestCount
+  if (practicePartnerCount) patch.practice_partner_count = usage.practicePartnerCount + practicePartnerCount
 
   const { error: profileError } = await client.from('profiles').upsert(
     { id: userId, plan: 'free' },
@@ -255,6 +281,8 @@ async function incrementPersonalAttribution(
     cameraTranslateCount?: number
     docsPages?: number
     aiVisionCount?: number
+    harborQuestCount?: number
+    practicePartnerCount?: number
   },
 ) {
   const client = getAdmin()
@@ -267,6 +295,8 @@ async function incrementPersonalAttribution(
   const cameraTranslateCount = asInt(delta.cameraTranslateCount)
   const docsPages = asInt(delta.docsPages)
   const aiVisionCount = asInt(delta.aiVisionCount)
+  const harborQuestCount = asInt(delta.harborQuestCount)
+  const practicePartnerCount = asInt(delta.practicePartnerCount)
   if (
     liveSeconds +
       ttsChars +
@@ -274,7 +304,9 @@ async function incrementPersonalAttribution(
       cameraSeconds +
       cameraTranslateCount +
       docsPages +
-      aiVisionCount <=
+      aiVisionCount +
+      harborQuestCount +
+      practicePartnerCount <=
     0
   ) {
     return
@@ -290,6 +322,8 @@ async function incrementPersonalAttribution(
     p_camera_translate_count: cameraTranslateCount,
     p_docs_pages: docsPages,
     p_ai_vision_count: aiVisionCount,
+    p_harbor_quest_count: harborQuestCount,
+    p_practice_partner_count: practicePartnerCount,
   })
   if (!rpcError) return
 
@@ -305,6 +339,8 @@ async function incrementPersonalAttribution(
   }
   if (docsPages) patch.docs_pages = usage.docsPages + docsPages
   if (aiVisionCount) patch.ai_vision_count = usage.aiVisionCount + aiVisionCount
+  if (harborQuestCount) patch.harbor_quest_count = usage.harborQuestCount + harborQuestCount
+  if (practicePartnerCount) patch.practice_partner_count = usage.practicePartnerCount + practicePartnerCount
 
   const { error: upsertError } = await client
     .from('usage_months')
@@ -342,6 +378,16 @@ export async function addDocsPages(userId: string, pages = 1) {
 /** Count multimodal LLM OCR fallback invocations (hard monthly cap in entitlements). */
 export async function addAiVisionCount(userId: string, count = 1) {
   await incrementUsage(userId, { aiVisionCount: count })
+}
+
+/** Harbor Quest correct-answer increments (admin view-only). */
+export async function addHarborQuestCount(userId: string, count = 1) {
+  await incrementUsage(userId, { harborQuestCount: count })
+}
+
+/** Practice Partner LLM chat turns (admin view-only). */
+export async function addPracticePartnerCount(userId: string, count = 1) {
+  await incrementUsage(userId, { practicePartnerCount: count })
 }
 
 export type UsagePatch = {
@@ -384,6 +430,8 @@ export async function setUsageMonth(
     camera_translate_count: current.cameraTranslateCount,
     docs_pages: patch.docsPages ?? current.docsPages,
     ai_vision_count: current.aiVisionCount,
+    harbor_quest_count: current.harborQuestCount,
+    practice_partner_count: current.practicePartnerCount,
   }
 
   const { error } = await client.from('usage_months').upsert(row, { onConflict: 'user_id,month' })
@@ -412,6 +460,8 @@ function guestRowToSnapshot(row: GuestUsageRow): UsageSnapshot {
     cameraTranslateCount: asInt(row.camera_translate_count),
     docsPages: asInt(row.docs_pages),
     aiVisionCount: asInt(row.ai_vision_count),
+    harborQuestCount: 0,
+    practicePartnerCount: 0,
   }
 }
 
@@ -445,6 +495,8 @@ async function incrementGuestUsage(
     cameraTranslateCount?: number
     docsPages?: number
     aiVisionCount?: number
+    harborQuestCount?: number
+    practicePartnerCount?: number
   },
 ) {
   const client = getAdmin()
@@ -456,6 +508,8 @@ async function incrementGuestUsage(
   const cameraTranslateCount = asInt(delta.cameraTranslateCount)
   const docsPages = asInt(delta.docsPages)
   const aiVisionCount = asInt(delta.aiVisionCount)
+  const harborQuestCount = asInt(delta.harborQuestCount)
+  const practicePartnerCount = asInt(delta.practicePartnerCount)
   if (
     liveSeconds +
       ttsChars +
@@ -463,7 +517,9 @@ async function incrementGuestUsage(
       cameraSeconds +
       cameraTranslateCount +
       docsPages +
-      aiVisionCount <=
+      aiVisionCount +
+      harborQuestCount +
+      practicePartnerCount <=
     0
   ) {
     return
@@ -480,6 +536,8 @@ async function incrementGuestUsage(
     p_camera_translate_count: cameraTranslateCount,
     p_docs_pages: docsPages,
     p_ai_vision_count: aiVisionCount,
+    p_harbor_quest_count: harborQuestCount,
+    p_practice_partner_count: practicePartnerCount,
   })
   if (!rpcError) return
 
@@ -499,6 +557,8 @@ async function incrementGuestUsage(
   }
   if (docsPages) patch.docs_pages = usage.docsPages + docsPages
   if (aiVisionCount) patch.ai_vision_count = usage.aiVisionCount + aiVisionCount
+  if (harborQuestCount) patch.harbor_quest_count = usage.harborQuestCount + harborQuestCount
+  if (practicePartnerCount) patch.practice_partner_count = usage.practicePartnerCount + practicePartnerCount
 
   const { data: existing } = await client
     .from('guest_usage_months')

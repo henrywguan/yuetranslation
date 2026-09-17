@@ -69,6 +69,8 @@ export type AdminUserRow = {
   cameraTranslateCount: number
   docsPages: number
   aiVisionCount: number
+  harborQuestCount: number
+  practicePartnerCount: number
   liveLimitSeconds: number
   ttsLimitChars: number
   /** Hard cap seconds for Free; 0 means unlimited (Family/Business) or disabled. */
@@ -143,6 +145,8 @@ async function usageSnapshotForAdminUser(
   cameraTranslateCount: number
   docsPages: number
   aiVisionCount: number
+  harborQuestCount: number
+  practicePartnerCount: number
 }> {
   const monthList = months.length ? months : [currentMonthKey()]
   const membership = await getMembershipForUser(userId)
@@ -161,6 +165,8 @@ async function usageSnapshotForAdminUser(
       cameraTranslateCount: usage.cameraTranslateCount,
       docsPages: usage.docsPages,
       aiVisionCount: usage.aiVisionCount,
+      harborQuestCount: usage.harborQuestCount,
+      practicePartnerCount: usage.practicePartnerCount,
     }
   }
 
@@ -174,6 +180,8 @@ async function usageSnapshotForAdminUser(
     cameraTranslateCount: usage.cameraTranslateCount,
     docsPages: usage.docsPages,
     aiVisionCount: usage.aiVisionCount,
+    harborQuestCount: usage.harborQuestCount,
+    practicePartnerCount: usage.practicePartnerCount,
   }
 }
 
@@ -205,6 +213,8 @@ async function buildAdminUsers(range: AdminUsageRange): Promise<AdminUserRow[]> 
     const cameraTranslateCount = usage.cameraTranslateCount
     const docsPages = usage.docsPages
     const aiVisionCount = usage.aiVisionCount
+    const harborQuestCount = usage.harborQuestCount
+    const practicePartnerCount = usage.practicePartnerCount
     const liveLim = liveLimitSeconds(plan)
     const ttsLim = ttsLimitChars(plan)
     const camLim = cameraLimitScans(plan)
@@ -239,6 +249,8 @@ async function buildAdminUsers(range: AdminUsageRange): Promise<AdminUserRow[]> 
       cameraTranslateCount,
       docsPages,
       aiVisionCount,
+      harborQuestCount,
+      practicePartnerCount,
       liveLimitSeconds: liveLim,
       ttsLimitChars: ttsLim,
       cameraLimitScans: camLim,
@@ -260,6 +272,8 @@ type SortKey =
   | 'cameraSeconds'
   | 'docsPages'
   | 'aiVisionCount'
+  | 'harborQuestCount'
+  | 'practicePartnerCount'
 
 function sortUsers(rows: AdminUserRow[], sort: SortKey, dir: 'asc' | 'desc') {
   const mul = dir === 'asc' ? 1 : -1
@@ -337,6 +351,8 @@ export async function adminListUsers(req: AuthedRequest, res: Response) {
       'cameraSeconds',
       'docsPages',
       'aiVisionCount',
+      'harborQuestCount',
+      'practicePartnerCount',
     ]
     const sortKey = allowedSort.includes(sort) ? sort : 'createdAt'
 
@@ -387,6 +403,8 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
       'cameraSeconds',
       'cameraTranslateCount',
       'aiVisionCount',
+      'harborQuestCount',
+      'practicePartnerCount',
       'docsPages',
       'liveLimitSeconds',
       'ttsLimitChars',
@@ -418,6 +436,8 @@ export async function adminExportUsersCsv(req: AuthedRequest, res: Response) {
           r.cameraSeconds,
           r.cameraTranslateCount,
           r.aiVisionCount,
+          r.harborQuestCount,
+          r.practicePartnerCount,
           r.docsPages,
           r.liveLimitSeconds,
           r.ttsLimitChars,
@@ -1164,6 +1184,10 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
   }
   try {
     const result = await generatePracticePartnerReply(parsed.data.messages)
+    const { addPracticePartnerCount } = await import('./usage.js')
+    void addPracticePartnerCount(auth.userId, 1).catch((e) => {
+      console.warn('[practice-partner] usage meter failed', e)
+    })
     await writeAuditLog({
       actorId: auth.userId,
       actorEmail: auth.email,

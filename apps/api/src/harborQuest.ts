@@ -3,6 +3,7 @@ import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
 import { env } from './env.js'
 import { getAdmin, getProfile } from './supabase.js'
+import { addHarborQuestCount } from './usage.js'
 
 export type HarborQuestProgress = {
   cleared: string[]
@@ -309,10 +310,30 @@ export async function putHarborQuest(req: AuthedRequest, res: Response) {
     return
   }
 
+  // Meter engagement from correct-answer deltas (admin view-only).
+  let prevCorrect = 0
+  try {
+    const { data: prevRow } = await admin
+      .from('harbor_quest_progress')
+      .select('progress')
+      .eq('user_id', auth.userId)
+      .maybeSingle()
+    prevCorrect = sanitizeHarborProgress(prevRow?.progress).correctCount
+  } catch {
+    prevCorrect = 0
+  }
+  const correctDelta = Math.max(0, progress.correctCount - prevCorrect)
+
   const { error } = await persistProgress(auth.userId, progress)
   if (error) {
     res.status(500).json({ message: error.message })
     return
+  }
+
+  if (correctDelta > 0) {
+    void addHarborQuestCount(auth.userId, correctDelta).catch((e) => {
+      console.warn('[harbor-quest] usage meter failed', e)
+    })
   }
 
   // Best-effort leaderboard sync — progress save already succeeded.

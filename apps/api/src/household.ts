@@ -39,7 +39,9 @@ function usageHasAny(usage: UsageSnapshot): boolean {
       usage.cameraSeconds +
       usage.cameraTranslateCount +
       usage.docsPages +
-      usage.aiVisionCount >
+      usage.aiVisionCount +
+      usage.harborQuestCount +
+      usage.practicePartnerCount >
     0
   )
 }
@@ -149,6 +151,8 @@ function usageFromRow(row: Record<string, unknown> | null | undefined, month: st
     cameraTranslateCount: asInt(row.camera_translate_count),
     docsPages: asInt(row.docs_pages),
     aiVisionCount: asInt(row.ai_vision_count),
+    harborQuestCount: asInt(row.harbor_quest_count),
+    practicePartnerCount: asInt(row.practice_partner_count),
   }
 }
 
@@ -225,6 +229,8 @@ function sumUsageSnapshots(month: string, rows: UsageSnapshot[]): UsageSnapshot 
     total.cameraTranslateCount += row.cameraTranslateCount
     total.docsPages += row.docsPages
     total.aiVisionCount += row.aiVisionCount
+    total.harborQuestCount += row.harborQuestCount
+    total.practicePartnerCount += row.practicePartnerCount
   }
   return total
 }
@@ -240,6 +246,8 @@ function maxUsageSnapshots(month: string, a: UsageSnapshot, b: UsageSnapshot): U
     cameraTranslateCount: Math.max(a.cameraTranslateCount, b.cameraTranslateCount),
     docsPages: Math.max(a.docsPages, b.docsPages),
     aiVisionCount: Math.max(a.aiVisionCount, b.aiVisionCount),
+    harborQuestCount: Math.max(a.harborQuestCount, b.harborQuestCount),
+    practicePartnerCount: Math.max(a.practicePartnerCount, b.practicePartnerCount),
   }
 }
 
@@ -289,6 +297,8 @@ async function persistHouseholdUsage(householdId: string, usage: UsageSnapshot):
       camera_translate_count: usage.cameraTranslateCount,
       docs_pages: usage.docsPages,
       ai_vision_count: usage.aiVisionCount,
+      harbor_quest_count: usage.harborQuestCount,
+      practice_partner_count: usage.practicePartnerCount,
     },
     { onConflict: 'household_id,month' },
   )
@@ -439,6 +449,8 @@ export async function incrementHouseholdUsage(
     cameraTranslateCount?: number
     docsPages?: number
     aiVisionCount?: number
+    harborQuestCount?: number
+    practicePartnerCount?: number
   },
 ) {
   const client = getAdmin()
@@ -451,6 +463,8 @@ export async function incrementHouseholdUsage(
   const cameraTranslateCount = asInt(delta.cameraTranslateCount)
   const docsPages = asInt(delta.docsPages)
   const aiVisionCount = asInt(delta.aiVisionCount)
+  const harborQuestCount = asInt(delta.harborQuestCount)
+  const practicePartnerCount = asInt(delta.practicePartnerCount)
   if (
     liveSeconds +
       ttsChars +
@@ -458,7 +472,9 @@ export async function incrementHouseholdUsage(
       cameraSeconds +
       cameraTranslateCount +
       docsPages +
-      aiVisionCount <=
+      aiVisionCount +
+      harborQuestCount +
+      practicePartnerCount <=
     0
   ) {
     return
@@ -475,6 +491,8 @@ export async function incrementHouseholdUsage(
     p_camera_translate_count: cameraTranslateCount,
     p_docs_pages: docsPages,
     p_ai_vision_count: aiVisionCount,
+    p_harbor_quest_count: harborQuestCount,
+    p_practice_partner_count: practicePartnerCount,
   })
   if (!rpcError) return
 
@@ -491,6 +509,8 @@ export async function incrementHouseholdUsage(
       camera_translate_count: usage.cameraTranslateCount + cameraTranslateCount,
       docs_pages: usage.docsPages + docsPages,
       ai_vision_count: usage.aiVisionCount + aiVisionCount,
+      harbor_quest_count: usage.harborQuestCount + harborQuestCount,
+      practice_partner_count: usage.practicePartnerCount + practicePartnerCount,
     },
     { onConflict: 'household_id,month' },
   )

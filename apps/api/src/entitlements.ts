@@ -85,6 +85,10 @@ export type Entitlement = {
     docsPages: number
     /** Multimodal LLM OCR fallback calls this month. */
     aiVisionCount: number
+    /** Harbor Quest correct answers (admin view-only). */
+    harborQuestCount: number
+    /** Practice Partner chat turns (admin view-only). */
+    practicePartnerCount: number
   }
   /** Your share of pooled household usage this month (Family/Business only). */
   usageSelf?: {
@@ -96,6 +100,8 @@ export type Entitlement = {
     cameraTranslateCount: number
     docsPages: number
     aiVisionCount: number
+    harborQuestCount: number
+    practicePartnerCount: number
   } | null
   remaining: {
     liveSeconds: number
@@ -542,6 +548,8 @@ function localEntitlement(): Entitlement {
         cameraTranslateCount: 0,
         docsPages: 0,
         aiVisionCount: 0,
+        harborQuestCount: 0,
+        practicePartnerCount: 0,
       },
       remaining: { liveSeconds: 9999 * 60, ttsChars: 999999, cameraScans: -1, cameraSeconds: -1, docsPages: -1, aiVisionCount: 999999 },
       ttsUnlimited: true,

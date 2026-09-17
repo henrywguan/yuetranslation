@@ -48,6 +48,10 @@ export type Entitlement = {
     docsPages?: number
     /** Multimodal LLM OCR fallback calls this month. */
     aiVisionCount?: number
+    /** Harbor Quest correct answers this month (admin view-only). */
+    harborQuestCount?: number
+    /** Practice Partner chat turns this month (admin view-only). */
+    practicePartnerCount?: number
   }
   /** Your share of pooled household usage this month (Family/Business only). */
   usageSelf?: {
@@ -59,6 +63,8 @@ export type Entitlement = {
     cameraTranslateCount?: number
     docsPages?: number
     aiVisionCount?: number
+    harborQuestCount?: number
+    practicePartnerCount?: number
   } | null
   remaining: {
     liveSeconds: number

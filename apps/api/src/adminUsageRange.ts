@@ -123,6 +123,8 @@ export function sumUsageSnapshots(snapshots: UsageSnapshot[]): UsageSnapshot {
     cameraTranslateCount: 0,
     docsPages: 0,
     aiVisionCount: 0,
+    harborQuestCount: 0,
+    practicePartnerCount: 0,
   }
   for (const row of snapshots) {
     total.liveSeconds += row.liveSeconds
@@ -132,6 +134,8 @@ export function sumUsageSnapshots(snapshots: UsageSnapshot[]): UsageSnapshot {
     total.cameraTranslateCount += row.cameraTranslateCount
     total.docsPages += row.docsPages
     total.aiVisionCount += row.aiVisionCount
+    total.harborQuestCount += row.harborQuestCount
+    total.practicePartnerCount += row.practicePartnerCount
   }
   return total
 }
