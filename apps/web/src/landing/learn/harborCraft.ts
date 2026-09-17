@@ -248,24 +248,6 @@ export function hqSandTexture(): THREE.DataTexture {
   })
 }
 
-/** Shallow tropical water — cyan bands for UV scroll (classic water trick). */
-export function hqWaterTexture(): THREE.DataTexture {
-  const tex = make128DataTex('water', (data) => {
-    for (let y = 0; y < 128; y++) {
-      for (let x = 0; x < 128; x++) {
-        const wave = Math.sin((x + y * 0.4) * 0.2) * 0.5 + 0.5
-        if (wave > 0.72) setPx(data, x, y, 0x58, 0xc8, 0xd8)
-        else if (wave > 0.4) setPx(data, x, y, 0x28, 0x98, 0xb0)
-        else setPx(data, x, y, 0x18, 0x68, 0x88)
-      }
-    }
-  })
-  tex.wrapS = THREE.RepeatWrapping
-  tex.wrapT = THREE.RepeatWrapping
-  tex.repeat.set(6, 6)
-  return tex
-}
-
 /** Dirt / packed path — brown speck for tropical tracks. */
 export function hqDirtTexture(): THREE.DataTexture {
   return make128DataTex('dirt', (data) => {
