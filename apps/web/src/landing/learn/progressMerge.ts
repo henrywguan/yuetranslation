@@ -8,6 +8,7 @@ import {
   type HarborAppearance,
   type HarborGender,
 } from './harborAppearance'
+import { sanitizeOwnedTitles, sanitizeTitleId } from './harborTitles'
 
 export type HarborProgress = {
   /** Level ids cleared (last step completed). */
@@ -43,6 +44,10 @@ export type HarborProgress = {
    * Signed-in Account Hub username still wins in multiplayer nametags.
    */
   localUsername: string | null
+  /** Cosmetic titles owned (giftable). */
+  ownedTitles: string[]
+  /** Equipped title id (must be in ownedTitles). */
+  titleId: string | null
 }
 
 export function emptyHarborProgress(): HarborProgress {
@@ -79,6 +84,8 @@ export function emptyHarborProgress(): HarborProgress {
     gender: 'male',
     appearance: { ...HARBOR_DEFAULT_APPEARANCE },
     localUsername: null,
+    ownedTitles: ['title-river-scout'],
+    titleId: 'title-river-scout',
   }
 }
 
@@ -155,6 +162,12 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     const u = o.localUsername.trim().slice(0, 24)
     if (u) localUsername = u
   }
+  let ownedTitles = sanitizeOwnedTitles(o.ownedTitles)
+  // Legacy / new sailors get River Scout once they have a character.
+  if (characterCreated && !ownedTitles.includes('title-river-scout')) {
+    ownedTitles = [...ownedTitles, 'title-river-scout']
+  }
+  const titleId = sanitizeTitleId(o.titleId, ownedTitles)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -171,6 +184,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     gender,
     appearance,
     localUsername,
+    ownedTitles,
+    titleId,
   }
 }
 
@@ -262,6 +277,17 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     if ((missionClears[id] ?? 0) < 1) missionClears[id] = 1
   }
   const fresher = (B.lastSavedAt ?? 0) > (A.lastSavedAt ?? 0) ? B : A
+  const ownedTitles = [...new Set([...A.ownedTitles, ...B.ownedTitles])]
+  const titleId =
+    fresher.titleId && ownedTitles.includes(fresher.titleId)
+      ? fresher.titleId
+      : A.titleId && ownedTitles.includes(A.titleId)
+        ? A.titleId
+        : B.titleId && ownedTitles.includes(B.titleId)
+          ? B.titleId
+          : ownedTitles.includes('title-river-scout')
+            ? 'title-river-scout'
+            : null
   return {
     cleared,
     stepCursor,
@@ -278,6 +304,8 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     gender: fresher.gender,
     appearance: fresher.appearance,
     localUsername: fresher.localUsername ?? A.localUsername ?? B.localUsername,
+    ownedTitles,
+    titleId,
   }
 }
 
@@ -318,6 +346,11 @@ export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boole
   if (a.gender !== b.gender) return false
   if (!appearanceEqual(a.appearance, b.appearance)) return false
   if ((a.localUsername ?? null) !== (b.localUsername ?? null)) return false
+  const aT = [...(a.ownedTitles ?? [])].sort()
+  const bT = [...(b.ownedTitles ?? [])].sort()
+  if (aT.length !== bT.length) return false
+  for (let i = 0; i < aT.length; i++) if (aT[i] !== bT[i]) return false
+  if ((a.titleId ?? null) !== (b.titleId ?? null)) return false
   return true
 }
 

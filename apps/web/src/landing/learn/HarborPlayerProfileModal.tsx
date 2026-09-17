@@ -1,26 +1,71 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import * as THREE from 'three'
-import { applyLookToProtagonist, type HarborLook } from './harborGear'
+import { applyLookToProtagonist, harborGearById, type HarborLook } from './harborGear'
+import { isGiftableLanternId } from './harborGift'
 import { buildHarborProtagonist } from './harborProtagonist'
+import { harborTitleById } from './harborTitles'
+
+type GiftKind = 'lantern' | 'title'
 
 type Props = {
   open: boolean
   username: string
   look: HarborLook
+  /** Giftable lantern ids the local sailor currently owns. */
+  giftableLanterns: string[]
+  /** Giftable title ids the local sailor currently owns. */
+  giftableTitles: string[]
+  giftBusy?: boolean
+  giftMsg?: string | null
+  signedIn?: boolean
+  onGift?: (kind: GiftKind, itemId: string) => void
   onClose: () => void
 }
 
 /**
- * Profile sheet for a remote sailor — username + spin/zoom 3D scout preview.
+ * Profile sheet for a remote sailor — username + spin/zoom 3D scout preview
+ * + cosmetic gift (lantern / title).
  */
-export function HarborPlayerProfileModal({ open, username, look, onClose }: Props) {
+export function HarborPlayerProfileModal({
+  open,
+  username,
+  look,
+  giftableLanterns,
+  giftableTitles,
+  giftBusy,
+  giftMsg,
+  signedIn,
+  onGift,
+  onClose,
+}: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
+  const [giftOpen, setGiftOpen] = useState(false)
+  const [giftKind, setGiftKind] = useState<GiftKind>('lantern')
   const dragRef = useRef({
     dragging: false,
     lastX: 0,
     yaw: 0.4,
     distance: 3.2,
   })
+
+  const lanternOptions = useMemo(
+    () => giftableLanterns.filter(isGiftableLanternId).map((id) => harborGearById(id)!),
+    [giftableLanterns],
+  )
+  const titleOptions = useMemo(
+    () =>
+      giftableTitles
+        .map((id) => harborTitleById(id))
+        .filter((t): t is NonNullable<typeof t> => Boolean(t)),
+    [giftableTitles],
+  )
+
+  useEffect(() => {
+    if (!open) {
+      setGiftOpen(false)
+      return
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -170,6 +215,88 @@ export function HarborPlayerProfileModal({ open, username, look, onClose }: Prop
         </header>
         <div ref={hostRef} className="hq-player-viewport" aria-hidden="true" />
         <p className="hq-player-hint">Drag to spin · scroll to zoom</p>
+
+        {signedIn && onGift ? (
+          <div className="hq-player-gift">
+            <button
+              type="button"
+              className={`hq-btn hq-btn--ghost${giftOpen ? ' is-on' : ''}`}
+              aria-expanded={giftOpen}
+              disabled={giftBusy}
+              onClick={() => setGiftOpen((v) => !v)}
+            >
+              {giftOpen ? 'Hide gifts' : 'Gift cosmetic'}
+            </button>
+            {giftOpen ? (
+              <div className="hq-player-gift-panel">
+                <p className="hq-player-gift-note">
+                  Lanterns &amp; titles only — never XP or answers. Household mates preferred;
+                  dock gifts work until Fleets ship.
+                </p>
+                <div className="hq-player-gift-tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    className={`hq-shop-slot${giftKind === 'lantern' ? ' is-on' : ''}`}
+                    aria-selected={giftKind === 'lantern'}
+                    onClick={() => setGiftKind('lantern')}
+                  >
+                    Lantern
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    className={`hq-shop-slot${giftKind === 'title' ? ' is-on' : ''}`}
+                    aria-selected={giftKind === 'title'}
+                    onClick={() => setGiftKind('title')}
+                  >
+                    Title
+                  </button>
+                </div>
+                {giftKind === 'lantern' ? (
+                  <ul className="hq-player-gift-list">
+                    {lanternOptions.length === 0 ? (
+                      <li className="hq-player-gift-empty">No giftable lanterns in your pack.</li>
+                    ) : (
+                      lanternOptions.map((item) => (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            className="hq-btn hq-btn--ghost hq-btn--tiny"
+                            disabled={giftBusy}
+                            onClick={() => onGift('lantern', item.id)}
+                          >
+                            Gift {item.name.en}
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                ) : (
+                  <ul className="hq-player-gift-list">
+                    {titleOptions.length === 0 ? (
+                      <li className="hq-player-gift-empty">No titles to share yet.</li>
+                    ) : (
+                      titleOptions.map((t) => (
+                        <li key={t.id}>
+                          <button
+                            type="button"
+                            className="hq-btn hq-btn--ghost hq-btn--tiny"
+                            disabled={giftBusy}
+                            onClick={() => onGift('title', t.id)}
+                          >
+                            Share {t.name.en}
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+                {giftMsg ? <p className="hq-visit-msg">{giftMsg}</p> : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   )

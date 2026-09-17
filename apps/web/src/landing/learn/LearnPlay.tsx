@@ -63,6 +63,10 @@ import { HarborInventoryBag } from './HarborInventoryBag'
 import { HarborShopShelf } from './HarborShopShelf'
 import { HarborStage } from './HarborStage'
 import { HarborPlayerProfileModal } from './HarborPlayerProfileModal'
+import { HarborDelveModal } from './HarborDelveModal'
+import { isGiftableLanternId } from './harborGift'
+import { HARBOR_DELVE_CLEAR_TITLE } from './harborDelve'
+import { postHarborQuestGift } from '../../lib/api'
 import { HarborCharacterCreate } from './HarborCharacterCreate'
 import {
   harborDisplayUsername,
@@ -95,8 +99,11 @@ import {
   loadHarborProgress,
   markCorrect,
   markGoldEarned,
+  markDelveHit,
   markLevelCleared,
   markStepReached,
+  awardHarborTitle,
+  replaceHarborProgress,
   exchangeGoldForCoins,
   visitSaveShack,
   withdrawHarborGear,
@@ -155,6 +162,9 @@ export function LearnSession({
   const [travelMode, setTravelMode] = useState<'boat' | 'foot'>('boat')
   const [remotePlayers, setRemotePlayers] = useState<HarborRemotePlayer[]>([])
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  const [delveOpen, setDelveOpen] = useState(false)
+  const [giftBusy, setGiftBusy] = useState(false)
+  const [giftMsg, setGiftMsg] = useState<string | null>(null)
   const [localUsername, setLocalUsername] = useState('sailor')
   const [chatLines, setChatLines] = useState<HarborChatLine[]>([])
   const chatSeqRef = useRef(0)
@@ -458,6 +468,7 @@ export function LearnSession({
           arenaOpen ||
           barberOpen ||
           teleportOpen ||
+          delveOpen ||
           visitable !== null,
       ),
     )
@@ -469,6 +480,7 @@ export function LearnSession({
     arenaOpen,
     barberOpen,
     teleportOpen,
+    delveOpen,
     visitable,
   ])
 
@@ -678,6 +690,48 @@ export function LearnSession({
       }
     },
     [pushProgress],
+  )
+
+  const onDelveHit = useCallback(
+    (coins: number) => {
+      playHarborCoinChing()
+      pushProgress(markDelveHit(coins))
+    },
+    [pushProgress],
+  )
+
+  const onDelveComplete = useCallback(
+    (_hits: number) => {
+      const next = awardHarborTitle(HARBOR_DELVE_CLEAR_TITLE)
+      pushProgress(next)
+    },
+    [pushProgress],
+  )
+
+  const onGiftCosmetic = useCallback(
+    async (kind: 'lantern' | 'title', itemId: string) => {
+      if (!profileUserId) return
+      setGiftBusy(true)
+      setGiftMsg(null)
+      try {
+        const result = await postHarborQuestGift({
+          toUserId: profileUserId,
+          kind,
+          itemId,
+        })
+        pushProgress(replaceHarborProgress(result.progress as HarborProgress))
+        setGiftMsg(
+          result.householdMate
+            ? 'Gift sent to household mate.'
+            : 'Gift sent to dock sailor.',
+        )
+      } catch (e) {
+        setGiftMsg(e instanceof Error ? e.message : 'Gift failed')
+      } finally {
+        setGiftBusy(false)
+      }
+    },
+    [profileUserId, pushProgress],
   )
 
   const onSave = useCallback(() => {
@@ -1308,9 +1362,30 @@ export function LearnSession({
         <span className="hq-explore-fab-label">{travelMode === 'foot' ? 'Boat' : 'Explore'}</span>
       </button>
 
+      <button
+        type="button"
+        className={`hq-delve-fab${remotePlayers.length === 0 ? ' is-alone' : ''}${delveOpen ? ' is-on' : ''}`}
+        aria-label="Practice with 港灣 companion"
+        title={
+          remotePlayers.length === 0
+            ? 'Dock is quiet — practice with 港灣'
+            : 'Practice with 港灣'
+        }
+        onClick={() => {
+          playHarborUiClick()
+          setDelveOpen(true)
+          setTalking(false)
+        }}
+      >
+        <span className="hq-delve-fab-glyph" aria-hidden="true">
+          港
+        </span>
+        <span className="hq-delve-fab-label">港灣</span>
+      </button>
+
       <HarborChatBox
         lines={chatLines}
-        hidden={talking || barberOpen || scrollOpen || arenaOpen || codexOpen || invOpen}
+        hidden={talking || barberOpen || scrollOpen || arenaOpen || codexOpen || invOpen || delveOpen}
         disabled={!chatReady}
         onSend={sendChat}
       />
@@ -1346,11 +1421,28 @@ export function LearnSession({
         onExchangeGold={onExchangeGold}
       />
 
+      <HarborDelveModal
+        open={delveOpen}
+        alone={remotePlayers.length === 0}
+        onClose={() => setDelveOpen(false)}
+        onHit={onDelveHit}
+        onComplete={onDelveComplete}
+      />
+
       <HarborPlayerProfileModal
         open={Boolean(profilePlayer)}
         username={profilePlayer?.username ?? ''}
         look={profilePlayer?.look ?? progressSnap.look}
-        onClose={() => setProfileUserId(null)}
+        giftableLanterns={(progressSnap.owned ?? []).filter(isGiftableLanternId)}
+        giftableTitles={progressSnap.ownedTitles ?? []}
+        giftBusy={giftBusy}
+        giftMsg={giftMsg}
+        signedIn={Boolean(entitlement?.loggedIn)}
+        onGift={onGiftCosmetic}
+        onClose={() => {
+          setProfileUserId(null)
+          setGiftMsg(null)
+        }}
       />
     </div>
   )

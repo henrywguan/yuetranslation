@@ -5546,3 +5546,182 @@
     background: color-mix(in srgb, #041018 88%, transparent);
   }
 }
+
+/* —— 港灣 companion delve —— */
+.hq-delve-fab {
+  position: absolute;
+  z-index: 5;
+  right: max(0.55rem, env(safe-area-inset-right));
+  bottom: calc(var(--hq-osrs-strip) + 5.4rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.2rem;
+  border: none;
+  background: transparent;
+  color: #3dcfb6;
+  cursor: pointer;
+}
+.hq-play.is-exploring .hq-delve-fab {
+  bottom: calc(var(--hq-explore-chrome) + 4.2rem);
+}
+.hq-delve-fab-glyph {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #0a1c24 82%, #3dcfb6 18%);
+  border: 1.5px solid color-mix(in srgb, #3dcfb6 55%, transparent);
+  font-family: "Noto Sans HK", "Noto Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #e8f7f4;
+}
+.hq-delve-fab.is-alone .hq-delve-fab-glyph {
+  box-shadow: 0 0 12px color-mix(in srgb, #3dcfb6 45%, transparent);
+}
+.hq-delve-fab-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #a8e8d8;
+}
+.hq-delve-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, #041018 62%, transparent);
+  backdrop-filter: blur(3px);
+}
+.hq-delve-sheet {
+  width: min(420px, 100%);
+  max-height: min(90vh, 640px);
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #3dcfb6 35%, transparent);
+  background: linear-gradient(165deg, #0e2430, #07141c);
+  padding: 1rem 1.1rem 1.2rem;
+  color: #e8f4ff;
+}
+.hq-delve-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+.hq-delve-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3dcfb6;
+}
+.hq-delve-title {
+  margin: 0.15rem 0 0;
+  font-family: Syne, system-ui, sans-serif;
+  font-size: 1.25rem;
+}
+.hq-delve-sub {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #9ab4c4;
+}
+.hq-delve-coach {
+  margin: 0 0 0.35rem;
+  line-height: 1.45;
+}
+.hq-delve-coach--ok { color: #7fdc4f; }
+.hq-delve-coach--no { color: #ffb070; }
+.hq-delve-coach-zh {
+  margin: 0 0 0.85rem;
+  color: #a8c8d8;
+  font-size: 0.92rem;
+}
+.hq-delve-progress {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: #7a9aac;
+}
+.hq-delve-choices {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.hq-delve-choice {
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #3dcfb6 28%, transparent);
+  background: color-mix(in srgb, #102830 88%, transparent);
+  color: inherit;
+  cursor: pointer;
+}
+.hq-delve-choice:hover {
+  border-color: #3dcfb6;
+}
+.hq-delve-choice-label {
+  display: block;
+  font-weight: 700;
+}
+.hq-delve-choice-sub {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: #8aacbc;
+}
+.hq-delve-score {
+  margin: 0.75rem 0 0.35rem;
+  font-weight: 700;
+}
+.hq-delve-title-hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: #9ab4c4;
+}
+.hq-delve-hear {
+  margin: 0.35rem 0 0.5rem;
+}
+
+/* Profile cosmetic gift */
+.hq-player-gift {
+  margin-top: 0.75rem;
+}
+.hq-player-gift-panel {
+  margin-top: 0.55rem;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #c4a060 30%, transparent);
+  background: color-mix(in srgb, #101820 90%, transparent);
+}
+.hq-player-gift-note {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  color: #9ab4c4;
+  line-height: 1.4;
+}
+.hq-player-gift-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+.hq-player-gift-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.hq-player-gift-empty {
+  font-size: 0.82rem;
+  color: #7a9aac;
+}

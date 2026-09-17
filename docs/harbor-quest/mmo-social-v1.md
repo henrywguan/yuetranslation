@@ -95,9 +95,12 @@ harbor_fleets(id, name, motto, motd, owner_id, created_at)
 harbor_fleet_members(fleet_id, user_id, rank, joined_at)
 ```
 
-### 2.4 Phase D — Study Finder
+### 2.4 Phase D — Study Finder + AI companion delve (partially shipped)
 
-Dungeon Finder remixed for learning:
+Dungeon Finder remixed for learning (queues TBD). **Shipped now:**
+
+- **港灣 companion delve** — scripted coached drills (`HarborDelveModal`) when the dock is quiet (FAB always available). Offline / no paid LLM.
+- Practice Partner (DeepSeek) remains admin-only until Henry wires a metered user path.
 
 | Queue | What happens |
 |---|---|
@@ -106,7 +109,14 @@ Dungeon Finder remixed for learning:
 | Arena Duo | Match Definition co-op |
 | Review Pier | Same cleared pier practice together |
 
-**Always** offer **AI companion fallback** (Practice Partner / local drill bot) so queue wait never blocks. ClaudeCraft’s “Tessa in delves” pattern — Harbor’s coach is Cantonese, not combat.
+**Always** offer **AI companion fallback** (港灣 delve today; Practice Partner later) so queue wait never blocks.
+
+### 2.4b Cosmetic gifts (shipped)
+
+- Tap a remote sailor → **Gift cosmetic** — lanterns (priced) or titles.
+- Server: `POST /api/harbor-quest/gift` — never XP / coins-as-power / answers.
+- Household mates preferred (Family fleet seed); dock gifts allowed until Fleets ship.
+- First lantern gift awards **Lantern Giver** / **Dock Mate** titles.
 
 ### 2.5 Phase E — Book of Deeds + Reliquary
 

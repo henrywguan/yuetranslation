@@ -532,6 +532,33 @@ export async function putHarborQuestProgress(progress: HarborQuestProgressPayloa
   }
 }
 
+export type HarborGiftKind = 'lantern' | 'title'
+
+export type HarborGiftResult = {
+  ok: true
+  progress: HarborQuestProgressPayload
+  householdMate: boolean
+  giverTitleAward: string | null
+  receiverTitleAward: string | null
+}
+
+/** Cosmetic lantern / title gift to another sailor (server-authoritative). */
+export async function postHarborQuestGift(input: {
+  toUserId: string
+  kind: HarborGiftKind
+  itemId: string
+}): Promise<HarborGiftResult> {
+  const res = await apiFetch('/harbor-quest/gift', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.message || 'Gift failed')
+  }
+  return data as HarborGiftResult
+}
+
 export type HarborLeaderboardEntry = {
   rank: number
   userId: string

@@ -2,6 +2,8 @@ import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
 import { env } from './env.js'
+import { applyCosmeticGift, type HarborGiftKind } from './harborGift.js'
+import { getMembershipForUser } from './household.js'
 import { getAdmin, getProfile } from './supabase.js'
 
 export type HarborQuestProgress = {
@@ -35,6 +37,10 @@ export type HarborQuestProgress = {
     hairColor: number
   }
   localUsername?: string | null
+  /** Cosmetic titles owned (giftable). */
+  ownedTitles?: string[]
+  /** Equipped title. */
+  titleId?: string | null
 }
 
 export type HarborLeaderboardEntry = {
@@ -159,6 +165,25 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     typeof o.lastSavedAt === 'number' && Number.isFinite(o.lastSavedAt) && o.lastSavedAt >= 0
       ? Math.floor(o.lastSavedAt)
       : 0
+  const titleSet = new Set<string>()
+  if (Array.isArray(o.ownedTitles)) {
+    for (const id of o.ownedTitles) {
+      if (
+        typeof id === 'string' &&
+        (id === 'title-river-scout' ||
+          id === 'title-harbor-coach' ||
+          id === 'title-generous' ||
+          id === 'title-dock-mate')
+      ) {
+        titleSet.add(id)
+      }
+    }
+  }
+  const ownedTitles = [...titleSet]
+  let titleId: string | null = null
+  if (typeof o.titleId === 'string' && ownedTitles.includes(o.titleId)) {
+    titleId = o.titleId
+  }
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -171,6 +196,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     banked: [...bankedSet],
     look,
     lastSavedAt,
+    ownedTitles,
+    titleId,
   }
 }
 
@@ -397,4 +424,124 @@ export async function getHarborQuestLeaderboard(req: AuthedRequest, res: Respons
   }
 
   res.json({ entries, me, limit })
+}
+
+async function loadProgressBlob(userId: string): Promise<HarborQuestProgress> {
+  const admin = getAdmin()
+  if (!admin) return sanitizeHarborProgress(null)
+  const { data } = await admin
+    .from('harbor_quest_progress')
+    .select('progress')
+    .eq('user_id', userId)
+    .maybeSingle()
+  return sanitizeHarborProgress(data?.progress)
+}
+
+async function sameHousehold(a: string, b: string): Promise<boolean> {
+  const [ma, mb] = await Promise.all([getMembershipForUser(a), getMembershipForUser(b)])
+  if (!ma || !mb) return false
+  return ma.household.id === mb.household.id
+}
+
+/**
+ * POST /api/harbor-quest/gift — cosmetic lantern / title gift.
+ * Prefer household (Family fleet seed); also allow dock gifts to any signed-in sailor.
+ * Never transfers XP, coins, or answer credit.
+ */
+export async function postHarborQuestGift(req: AuthedRequest, res: Response) {
+  const auth = requireAuth(req, res)
+  if (!auth) return
+
+  const toUserId = typeof req.body?.toUserId === 'string' ? req.body.toUserId.trim() : ''
+  const kindRaw = req.body?.kind
+  const itemId = typeof req.body?.itemId === 'string' ? req.body.itemId.trim() : ''
+  const kind: HarborGiftKind | null =
+    kindRaw === 'lantern' || kindRaw === 'title' ? kindRaw : null
+
+  if (!toUserId || toUserId.length > 80 || !kind || !itemId || itemId.length > 80) {
+    res.status(400).json({ message: 'Invalid gift payload.' })
+    return
+  }
+  if (toUserId === auth.userId) {
+    res.status(400).json({ message: 'You cannot gift yourself.' })
+    return
+  }
+
+  if (env.openMode) {
+    res.status(503).json({ message: 'Gifts require signed-in sync (open mode has no accounts).' })
+    return
+  }
+
+  const admin = getAdmin()
+  if (!admin) {
+    res.status(503).json({ message: 'Harbor Quest sync unavailable.' })
+    return
+  }
+
+  const householdMate = await sameHousehold(auth.userId, toUserId)
+
+  const [fromProg, toProg] = await Promise.all([
+    loadProgressBlob(auth.userId),
+    loadProgressBlob(toUserId),
+  ])
+
+  const applied = applyCosmeticGift({
+    fromOwned: fromProg.owned,
+    fromBanked: fromProg.banked,
+    fromLookLantern: fromProg.look.lantern,
+    fromTitles: fromProg.ownedTitles ?? [],
+    toOwned: toProg.owned,
+    toBanked: toProg.banked,
+    toTitles: toProg.ownedTitles ?? [],
+    kind,
+    itemId,
+  })
+
+  if (!applied.ok) {
+    res.status(400).json({ message: applied.reason })
+    return
+  }
+
+  const nextFrom: HarborQuestProgress = {
+    ...fromProg,
+    owned: applied.fromOwned,
+    banked: applied.fromBanked,
+    look: { ...fromProg.look, lantern: applied.fromLookLantern },
+    ownedTitles: applied.fromTitles,
+    titleId:
+      fromProg.titleId && applied.fromTitles.includes(fromProg.titleId)
+        ? fromProg.titleId
+        : applied.fromTitles[0] ?? null,
+    lastSavedAt: Date.now(),
+  }
+  const nextTo: HarborQuestProgress = {
+    ...toProg,
+    owned: applied.toOwned,
+    banked: applied.toBanked,
+    ownedTitles: applied.toTitles,
+    titleId:
+      toProg.titleId && applied.toTitles.includes(toProg.titleId)
+        ? toProg.titleId
+        : toProg.titleId,
+    lastSavedAt: Date.now(),
+  }
+
+  const saveFrom = await persistProgress(auth.userId, nextFrom)
+  if (saveFrom.error) {
+    res.status(500).json({ message: saveFrom.error.message })
+    return
+  }
+  const saveTo = await persistProgress(toUserId, nextTo)
+  if (saveTo.error) {
+    res.status(500).json({ message: saveTo.error.message })
+    return
+  }
+
+  res.json({
+    ok: true,
+    progress: nextFrom,
+    householdMate,
+    giverTitleAward: applied.giverTitleAward ?? null,
+    receiverTitleAward: applied.receiverTitleAward ?? null,
+  })
 }
