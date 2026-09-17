@@ -1188,6 +1188,7 @@ function main() {
   assert.match(ambientSrc, /magpie|deer|ibis|koi|panda|tiger|salamander/, 'fauna-matched wildlife kinds')
   assert.match(ambientSrc, /owl|nightjar|night-heron/, 'nocturnal bird kinds')
   assert.match(ambientSrc, /primeHarborAmbientUnlock/, 'gesture unlock primer')
+  assert.match(ambientSrc, /createBufferSource|sampleRate \* 0\.05/, 'iOS unlock uses buffer prime')
   assert.deepEqual(
     [...HARBOR_NIGHT_BIRDS].sort(),
     ['night-heron', 'nightjar', 'owl'],
@@ -1208,6 +1209,9 @@ function main() {
   }
   assert.match(playAudioSrc, /unlockHarborAudio|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
   assert.match(playAudioSrc, /resumeSharedAudioContext/, 'gesture resumes shared AudioContext')
+  assert.match(playAudioSrc, /stopHarborBgm\(\)[\s\S]*startHarborBgm/, 'unlock force-restarts BGM after resume')
+  assert.match(playAudioSrc, /stopHarborAmbient\(\)[\s\S]*startHarborAmbient/, 'unlock force-restarts ambient')
+  assert.match(playAudioSrc, /harborAudioUnlocked/, 'tracks iOS unlock so mount-silent beds restart once')
   const interactSrc = readFileSync(new URL('./harborInteractSfx.ts', import.meta.url), 'utf8')
   assert.match(interactSrc, /export function playHarborFootstep/, 'footstep SFX')
   assert.match(interactSrc, /export function playHarborPaddle/, 'paddle SFX')
