@@ -368,6 +368,15 @@ function main() {
   assert.ok(spears >= 5, 'spear-leaf Habitat plants')
   assert.ok(canopyTrees >= 3, 'rounded canopy shade trees')
   assert.equal(customs, 1, 'visible Guan Customs officer at return portal')
+  let patrols = 0
+  guanScene.traverse((o) => {
+    if (typeof o.name === 'string' && o.name.startsWith('guan-patrol-')) patrols++
+  })
+  assert.equal(patrols, 6, 'six original armored patrol brothers on Guan')
+  assert.ok(
+    Array.isArray(guanScene.userData.guanPatrolList) && guanScene.userData.guanPatrolList.length === 6,
+    'patrol list cached for tick',
+  )
   assert.ok(
     guanScene.children.some((c) => c.name === 'guan-return-portal'),
     'glowing return portal group',
@@ -378,11 +387,19 @@ function main() {
   assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
   assert.match(guanSrc, /stoneRingPond|hqPondTexture|spearPlant|canopyTree/, 'Habitat pond clearing craft')
   assert.match(guanSrc, /customsOfficer|GUAN_CUSTOMS_OFFICER_NAME|guan-portal-veil/, 'Customs officer + glowing portal')
+  assert.match(guanSrc, /stampGuanArmoredPatrol/, 'Guan stamps armored patrol brothers')
+  assert.doesNotMatch(guanSrc, /Ahrim|Dharok|Guthan|Karil|Torag|Verac|Barrows/i, 'no Jagex Barrows names in Guan')
   assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
   assert.doesNotMatch(guanSrc, /guan-shore-foam/, 'no shore foam meshes')
   assert.match(guanSrc, /pirateTavern|layered thatch/, 'chunky town building craft')
+  const patrolSrc = readFileSync(new URL('./harborGuanPatrol.ts', import.meta.url), 'utf8')
+  assert.match(patrolSrc, /GUAN_PATROL_IDS/, 'patrol id roster')
+  assert.match(patrolSrc, /tickGuanArmoredPatrol/, 'patrol walk tick export')
+  assert.match(patrolSrc, /Ironmound|Ashlance|Nightbow|Emberrod|Chainreap|Jadeguard/, 'original Harbor patrol names')
+  assert.doesNotMatch(patrolSrc, /Ahrim|Dharok|Guthan|Karil|Torag|Verac|Barrows/i, 'patrol module avoids Jagex names')
+  assert.match(worldSrc, /tickGuanArmoredPatrol/, 'world ticks Guan patrol walk cycles')
   const craftSrc = readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8')
   assert.match(craftSrc, /export function hqGrassTexture/, 'shared grass 128 texture')
   assert.match(craftSrc, /Painted upright blade strokes|mottled/, 'richer grass albedo detail')

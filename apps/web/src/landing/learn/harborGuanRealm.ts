@@ -37,6 +37,7 @@ import {
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
+import { stampGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildNametagSprite } from './harborRemoteAvatars'
 
 export const GUAN_HARBOR_META = { en: 'Guan Harbor', zh: '關港' } as const
@@ -1811,6 +1812,9 @@ export function buildGuanHarborScene(): THREE.Group {
   }
   musaStall.rotation.y = -0.4
   root.add(musaStall)
+
+  // Original armored patrol brothers — roam with walk cycles (not Jagex IP)
+  stampGuanArmoredPatrol(root, rng)
 
   return root
 }

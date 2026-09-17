@@ -32,6 +32,7 @@ import {
   GUAN_TROPICAL_LOOK,
   GUAN_WATER_PLANE,
 } from './harborGuanRealm'
+import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
   HARBOR_DEFAULT_APPEARANCE,
@@ -4421,6 +4422,11 @@ export function createHarborWorld(
       } else {
         root.position.y = 0
       }
+    }
+
+    // Guan armored patrol brothers — roam + limb walk cycle
+    if (isGuan && guanScene) {
+      tickGuanArmoredPatrol(guanScene, dt, reduced)
     }
 
 
