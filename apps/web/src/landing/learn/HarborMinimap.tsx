@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { HARBOR_VISITABLES, type HarborVisitable, type HarborVisitableId } from './harborWorld'
 import type { HarborRealmId } from './harborWorld'
 import { GUAN_CAPE_LOOM, GUAN_RETURN_PORTAL } from './harborGuanRealm'
 import { GUAN_FISH_SPOTS, GUAN_FISHING_HUT } from './harborFishing'
+import {
+  MINIMAP_CARDINALS,
+  buildMinimapGeoFeatures,
+  resolveHarborMinimapPlace,
+} from './harborMinimapGeo'
 import type { HarborRemotePlayer } from './harborPresence'
 
 export type HarborMinimapPose = {
@@ -18,7 +23,7 @@ const WORLD_RADIUS = 90
 const MIN_SIZE = 96
 const MAX_SIZE = 240
 const DEFAULT_SIZE = 120
-const COLLAPSED_H = 32
+const COLLAPSED_H = 52
 
 type Layout = {
   left: number
@@ -121,6 +126,41 @@ export function unprojectMinimapTap(
   const dx = c * right - s * forward
   const dz = s * right + c * forward
   return { x: pose.x + dx, z: pose.z + dz }
+}
+
+/** Place a world-fixed cardinal on the radar rim. */
+function cardinalRimPos(
+  dx: number,
+  dz: number,
+  viewYaw: number,
+  size: number,
+): { left: number; top: number } {
+  const p = project(dx * WORLD_RADIUS * 0.85, dz * WORLD_RADIUS * 0.85, viewYaw, size)
+  const cx = size / 2
+  const cy = size / 2
+  const vx = p.left - cx
+  const vy = p.top - cy
+  const len = Math.hypot(vx, vy) || 1
+  const rad = size * 0.42
+  return { left: cx + (vx / len) * rad * 0.96, top: cy + (vy / len) * rad * 0.96 }
+}
+
+function geoPathD(
+  points: readonly { x: number; z: number }[],
+  pose: HarborMinimapPose,
+  viewYaw: number,
+  size: number,
+  closed: boolean,
+): string | null {
+  if (points.length < 2) return null
+  const parts: string[] = []
+  for (let i = 0; i < points.length; i++) {
+    const pt = points[i]!
+    const p = project(pt.x - pose.x, pt.z - pose.z, viewYaw, size)
+    parts.push(`${i === 0 ? 'M' : 'L'}${p.left.toFixed(2)} ${p.top.toFixed(2)}`)
+  }
+  if (closed) parts.push('Z')
+  return parts.join(' ')
 }
 
 const VISIT_DOT: Record<HarborVisitableId, string> = {
@@ -304,6 +344,16 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
     [onNavigate, pose],
   )
 
+  const place = useMemo(() => {
+    if (!pose) return { en: 'Charting…', zh: '定位中', kind: 'sea' as const }
+    return resolveHarborMinimapPlace(pose.x, pose.z, realm)
+  }, [pose, realm])
+
+  const geoFeatures = useMemo(() => {
+    if (!pose) return []
+    return buildMinimapGeoFeatures(realm, pose.x, pose.z)
+  }, [pose, realm])
+
   if (hidden) return null
 
   const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
@@ -333,6 +383,13 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
       style={{ left: layout.left, top: layout.top, width: size }}
       aria-label="Harbor minimap"
     >
+      <div className={`hq-minimap-place hq-minimap-place--${place.kind}`} title={`${place.en} · ${place.zh}`}>
+        <span className="hq-minimap-place-en">{place.en}</span>
+        <span className="hq-minimap-place-zh" lang="zh-HK">
+          {place.zh}
+        </span>
+      </div>
+
       <div className="hq-minimap-chrome" onPointerDown={beginMove}>
         <button
           type="button"
@@ -393,7 +450,42 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
             }}
           >
             <div className="hq-minimap-ring" aria-hidden />
+            {pose ? (
+              <svg
+                className="hq-minimap-geo"
+                width={size}
+                height={size}
+                viewBox={`0 0 ${size} ${size}`}
+                aria-hidden
+              >
+                {geoFeatures.map((f) => {
+                  const d = geoPathD(f.points, pose, viewYaw, size, f.closed)
+                  if (!d) return null
+                  return (
+                    <path
+                      key={f.id}
+                      className={`hq-minimap-geo-path hq-minimap-geo-path--${f.kind}`}
+                      d={d}
+                    />
+                  )
+                })}
+              </svg>
+            ) : null}
             <div className="hq-minimap-heading" aria-hidden title="Camera forward" />
+            {pose &&
+              MINIMAP_CARDINALS.map((c) => {
+                const p = cardinalRimPos(c.dx, c.dz, viewYaw, size)
+                return (
+                  <span
+                    key={c.id}
+                    className={`hq-minimap-cardinal hq-minimap-cardinal--${c.id.toLowerCase()}`}
+                    style={{ left: p.left, top: p.top }}
+                    aria-hidden
+                  >
+                    {c.label}
+                  </span>
+                )
+              })}
             {pose &&
               visitables.map((v) => {
                 const p = project(v.x - pose.x, v.z - pose.z, viewYaw, size)
@@ -446,7 +538,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
               ) : (
                 <>
                   {nearbyVisits.map((v) => (
-                    <li key={v.id}>
+                    <li key={`${v.id}:${v.x}:${v.z}`}>
                       <span className={`hq-minimap-legend-swatch ${VISIT_DOT[v.id]}`} />
                       <span>{v.name.en}</span>
                     </li>
