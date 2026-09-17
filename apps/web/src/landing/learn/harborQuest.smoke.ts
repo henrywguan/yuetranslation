@@ -1223,13 +1223,19 @@ function main() {
       HARBOR_BGM_PHRASE.some((v) => v.kind === 'pluck'),
     'BGM uses flute / pad / pluck timbres',
   )
-  assert.equal(GUAN_BGM_SCALE_HZ.length, 6, 'guan major/island scale')
+  assert.equal(GUAN_BGM_SCALE_HZ.length, 6, 'guan Aeolian/island scale')
   assert.ok(GUAN_BGM_PHRASE.length >= 16, 'guan BGM phrase has pad + flute + pluck')
   assert.ok(
     GUAN_BGM_PHRASE.some((v) => v.kind === 'flute') &&
       GUAN_BGM_PHRASE.some((v) => v.kind === 'pad') &&
-      GUAN_BGM_PHRASE.some((v) => v.kind === 'pluck'),
-    'guan BGM uses flute / pad / pluck timbres',
+      GUAN_BGM_PHRASE.some((v) => v.kind === 'pluck') &&
+      GUAN_BGM_PHRASE.some((v) => v.kind === 'drum'),
+    'guan BGM uses flute / pad / pluck / drum timbres',
+  )
+  assert.match(
+    readFileSync(new URL('./harborBgm.ts', import.meta.url), 'utf8'),
+    /kind === 'drum'|v\.kind === 'drum'/,
+    'guan BGM schedules hand-drum voice',
   )
   assert.equal(harborBgmTheme(), 'river', 'default BGM theme is river')
   const bgmSrc = readFileSync(new URL('./harborBgm.ts', import.meta.url), 'utf8')
