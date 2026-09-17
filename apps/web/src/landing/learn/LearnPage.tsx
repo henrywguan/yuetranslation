@@ -5,6 +5,7 @@ import { useDocumentMeta } from '../../lib/useDocumentMeta'
 import { learnLevelFromHash } from '../../lib/useHashRoute'
 import { HARBOR_LEVELS, levelById, levelCampaign } from './curriculum'
 import { HarborLeaderboard } from './HarborLeaderboard'
+import { HarborSplash } from './HarborSplash'
 import { HarborMap, LearnSession } from './LearnPlay'
 import {
   continueHarborLevelId,
@@ -18,7 +19,7 @@ import './learn.css'
 const OC_GUIDE = 'https://opencantonese.org/books/cantonese-life-1/pronunciation-guide'
 
 /**
- * Learn · Harbor Quest — launches straight into the fullscreen river voyage.
+ * Learn · Harbor Quest — cinematic splash, then fullscreen river voyage.
  * Pier selection lives in an in-game chart overlay (no marketing hub).
  */
 export function LearnPage() {
@@ -33,6 +34,8 @@ export function LearnPage() {
   const [levelId, setLevelId] = useState<string>(
     () => learnLevelFromHash() ?? continueHarborLevelId(loadHarborProgress()),
   )
+  /** Title splash before the voyage — once per Learn page mount. */
+  const [splashOpen, setSplashOpen] = useState(true)
   /** In-game pier chart (replaces the old marketing landing hub). */
   const [chartOpen, setChartOpen] = useState(false)
 
@@ -97,6 +100,10 @@ export function LearnPage() {
     openHome()
   }, [])
 
+  const enterHarbor = useCallback(() => {
+    setSplashOpen(false)
+  }, [])
+
   const cleared = progress.cleared.length
   const total = HARBOR_LEVELS.length
 
@@ -108,8 +115,10 @@ export function LearnPage() {
           onExit={openChart}
           onOpenLevel={openLevel}
           onProgress={setProgress}
-          worldPaused={chartOpen}
+          worldPaused={chartOpen || splashOpen}
         />
+
+        <HarborSplash open={splashOpen} onEnter={enterHarbor} />
 
         {chartOpen ? (
           <div className="hq-chart-overlay" role="dialog" aria-label="Harbor pier chart">
