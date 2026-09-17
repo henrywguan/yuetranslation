@@ -921,7 +921,7 @@ export function LearnSession({
   return (
     <div
       ref={playRootRef}
-      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}`}
+      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}${invOpen ? ' is-bag-open' : ''}`}
       data-flash={flash ?? undefined}
     >
       <div className="hq-play-stage">
