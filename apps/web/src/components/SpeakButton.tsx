@@ -11,12 +11,18 @@ export function SpeakButton({
   lang,
   className = '',
   warm = true,
+  playText,
 }: {
   text: string
   lang: Lang
   className?: string
   /** Prefetch Azure audio while the line is on screen. Off for alts / breakdown lists. */
   warm?: boolean
+  /**
+   * Override playback (e.g. Harbor `speakHarborTts`).
+   * Default is Account `speakManual` — never Solo Auto-speak.
+   */
+  playText?: (text: string, lang: Lang) => Promise<void>
 }) {
   const trimmed = text.trim()
   const speakManual = useYueStore((s) => s.speakManual)
@@ -25,6 +31,7 @@ export function SpeakButton({
   const entitlement = useYueStore((s) => s.entitlement)
   const canTts = (!entitlement || entitlement.allowed.tts) && supportsTts(lang)
   const speaking = status === 'speaking' && speakingText === trimmed
+  const play = playText ?? speakManual
 
   useEffect(() => {
     if (!warm || !canTts || !trimmed || !supportsTts(lang)) return
@@ -47,7 +54,7 @@ export function SpeakButton({
         // Unlock during the tap gesture so async Azure MP3 play works on iOS
         // (and so Tagalog does not silently die when browserSpeak has no fil-PH voice).
         unlockTtsPlayback()
-        void speakManual(trimmed, lang)
+        void play(trimmed, lang)
       }}
     >
       <svg className="speak-btn-icon" viewBox="0 0 24 24" aria-hidden="true">

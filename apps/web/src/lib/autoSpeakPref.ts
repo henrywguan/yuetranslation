@@ -1,6 +1,10 @@
 const STORAGE_KEY = 'yue-auto-speak'
 
-/** Device cache so Auto-speak survives reloads before entitlement hydrates. */
+/**
+ * Device cache so Auto-speak survives reloads before entitlement hydrates.
+ * Default OFF — Solo / Conversation Auto-speak is a separate Family opt-in.
+ * Harbor Quest always auto-plays via `speakHarborTts` (not this pref).
+ */
 export function readLocalAutoSpeak(): boolean {
   if (typeof localStorage === 'undefined') return false
   try {

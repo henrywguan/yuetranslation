@@ -43,6 +43,7 @@ import { getHistory, putHistory } from './history.js'
 import {
   getHarborQuest,
   getHarborQuestLeaderboard,
+  postHarborQuestGift,
   putHarborQuest,
 } from './harborQuest.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
@@ -942,6 +943,7 @@ app.put('/api/history', putHistory)
 app.get('/api/harbor-quest/leaderboard', getHarborQuestLeaderboard)
 app.get('/api/harbor-quest', getHarborQuest)
 app.put('/api/harbor-quest', putHarborQuest)
+app.post('/api/harbor-quest/gift', postHarborQuestGift)
 app.get('/api/household', getHousehold)
 app.post('/api/household/invites', postHouseholdInvite)
 app.delete('/api/household/invites/:inviteId', deleteHouseholdInvite)

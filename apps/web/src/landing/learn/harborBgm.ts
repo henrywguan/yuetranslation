@@ -180,7 +180,25 @@ let running = false
 let bus: GainNode | null = null
 let loopTimer: ReturnType<typeof setTimeout> | null = null
 let duckUntil = 0
+/** Nested hold count — Harbor TTS ducks BGM until every speak finishes. */
+let duckHoldCount = 0
 let currentTheme: HarborBgmTheme = 'river'
+
+const HARBOR_BGM_DUCK_GAIN = HARBOR_BGM_GAIN * 0.28
+
+function applyHarborBgmGain(target: number, timeConstant: number): void {
+  if (!bus || !running) return
+  const ctx = ensureSharedAudioContext()
+  bus.gain.cancelScheduledValues(ctx.currentTime)
+  bus.gain.setTargetAtTime(target, ctx.currentTime, timeConstant)
+}
+
+function restoreHarborBgmIfClear(): void {
+  if (!bus || !running || duckHoldCount > 0) return
+  const ctx = ensureSharedAudioContext()
+  if (ctx.currentTime + 0.05 < duckUntil) return
+  applyHarborBgmGain(HARBOR_BGM_GAIN, 0.35)
+}
 
 function activePhrase(): readonly Voice[] {
   return currentTheme === 'guan' ? GUAN_BGM_PHRASE : HARBOR_BGM_PHRASE
@@ -336,6 +354,8 @@ function hardStopBus(): void {
   const b = bus
   bus = null
   running = false
+  duckHoldCount = 0
+  duckUntil = 0
   if (!b) return
   try {
     b.disconnect()
@@ -406,13 +426,26 @@ export function duckHarborBgm(ms = 4200): void {
   const ctx = ensureSharedAudioContext()
   const now = ctx.currentTime
   duckUntil = Math.max(duckUntil, now + ms / 1000)
-  bus.gain.cancelScheduledValues(now)
-  bus.gain.setTargetAtTime(HARBOR_BGM_GAIN * 0.28, now, 0.08)
+  applyHarborBgmGain(HARBOR_BGM_DUCK_GAIN, 0.08)
   const restoreAt = (duckUntil - now) * 1000
   window.setTimeout(() => {
-    if (!bus || !running) return
-    const t = ensureSharedAudioContext().currentTime
-    if (t + 0.05 < duckUntil) return
-    bus.gain.setTargetAtTime(HARBOR_BGM_GAIN, t, 0.35)
+    restoreHarborBgmIfClear()
   }, restoreAt + 40)
+}
+
+/** Hold BGM ducked while Harbor TTS plays (nestable). */
+export function holdHarborBgmDuck(): void {
+  duckHoldCount += 1
+  if (!bus || !running) return
+  applyHarborBgmGain(HARBOR_BGM_DUCK_GAIN, 0.08)
+}
+
+/** Release one TTS duck hold; restore BGM when idle. */
+export function releaseHarborBgmDuck(): void {
+  if (duckHoldCount > 0) duckHoldCount -= 1
+  restoreHarborBgmIfClear()
+}
+
+export function harborBgmDuckHeld(): boolean {
+  return duckHoldCount > 0
 }

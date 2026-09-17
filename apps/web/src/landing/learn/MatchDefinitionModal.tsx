@@ -1,8 +1,8 @@
 import { Fragment, useCallback, useEffect, useState } from 'react'
 import { JyutpingSylText } from '../../components/JyutpingSylText'
 import { SpeakButton } from '../../components/SpeakButton'
-import { useYueStore } from '../../lib/store'
 import { stopSpeaking, unlockTtsPlayback } from '../../lib/tts'
+import { speakHarborTts } from './harborSpeak'
 import {
   HARBOR_GOLD_TO_COINS,
   MATCH_DIFFICULTIES,
@@ -46,7 +46,6 @@ export function MatchDefinitionModal({
   const [sessionGold, setSessionGold] = useState(0)
   const [hits, setHits] = useState(0)
   const [exchangeMsg, setExchangeMsg] = useState<string | null>(null)
-  const speakManual = useYueStore((s) => s.speakManual)
 
   const topicCfg = topic ? MATCH_TOPIC[topic] : null
   const diffCfg = difficulty ? MATCH_DIFFICULTY[difficulty] : null
@@ -97,7 +96,6 @@ export function MatchDefinitionModal({
     setRound(null)
     setPicked(null)
   }, [])
-
   useEffect(() => {
     if (!open) return
     setPhase('topic')
@@ -135,11 +133,11 @@ export function MatchDefinitionModal({
     if (!open || phase !== 'play' || !round) return
     const han = round.word.han.trim()
     if (!han) return
-    void speakManual(han, 'yue')
+    void speakHarborTts(han, 'yue')
     return () => {
       stopSpeaking()
     }
-  }, [open, phase, round?.word.id, round?.word.han, speakManual])
+  }, [open, phase, round?.word.id, round?.word.han])
 
   useEffect(() => {
     if (!open) return
@@ -378,7 +376,7 @@ export function MatchDefinitionModal({
                 >
                   {round.word.han}
                 </p>
-                <SpeakButton text={round.word.han} lang="yue" className="hq-match-speak" warm />
+                <SpeakButton text={round.word.han} lang="yue" className="hq-match-speak" warm playText={speakHarborTts} />
               </div>
               <p className="hq-match-jp" aria-label={round.word.jp}>
                 {round.word.jp.split(/\s+/).map((syl, i) => (

@@ -138,6 +138,32 @@ export function markCorrect() {
   return commit(p)
 }
 
+/** Delve hit: +1 correctCount and delve coins (not pier coin amount). */
+export function markDelveHit(coins: number): HarborProgress {
+  const p = read()
+  const n = Math.max(0, Math.floor(coins))
+  p.correctCount += 1
+  p.coins = Math.max(0, Math.floor(p.coins)) + n
+  return commit(p)
+}
+
+/** Grant a cosmetic title if not already owned. */
+export function awardHarborTitle(titleId: string): HarborProgress {
+  const p = read()
+  const owned = [...(p.ownedTitles ?? [])]
+  if (!owned.includes(titleId)) owned.push(titleId)
+  return commit({
+    ...p,
+    ownedTitles: owned,
+    titleId: p.titleId ?? titleId,
+  })
+}
+
+/** Replace local progress after a server gift response. */
+export function replaceHarborProgress(next: HarborProgress): HarborProgress {
+  return commit(sanitizeHarborProgress(next))
+}
+
 export function markGoldEarned(amount: number) {
   const p = read()
   const n = Math.max(0, Math.floor(amount))
@@ -341,6 +367,8 @@ export function completeHarborCharacter(input: {
     typeof input.localUsername === 'string' && input.localUsername.trim()
       ? input.localUsername.trim().slice(0, 24)
       : p.localUsername
+  const titles = [...(p.ownedTitles ?? [])]
+  if (!titles.includes('title-river-scout')) titles.push('title-river-scout')
   const next = commit({
     ...p,
     characterCreated: true,
@@ -348,6 +376,8 @@ export function completeHarborCharacter(input: {
     appearance: sanitizeHarborAppearance(input.appearance),
     look: input.look ? sanitizeHarborLook(input.look) : sanitizeHarborLook(p.look),
     localUsername: username,
+    ownedTitles: titles,
+    titleId: p.titleId ?? 'title-river-scout',
     lastSavedAt: Date.now(),
   })
   flushHarborProgressCloud(next)

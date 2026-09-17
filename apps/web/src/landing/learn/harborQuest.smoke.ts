@@ -102,6 +102,8 @@ import {
   GUAN_HEIGHT,
   isGuanLand,
   GUAN_BOAT_START,
+  GUAN_CAPE_LOOM,
+  GUAN_CAPE_TRIMMER_NAME,
   GUAN_HARBOR_BOUNDS,
   GUAN_HARBOR_META,
   GUAN_ISLANDS,
@@ -377,12 +379,31 @@ function main() {
     Array.isArray(guanScene.userData.guanPatrolList) && guanScene.userData.guanPatrolList.length === 6,
     'patrol list cached for tick',
   )
+  let trimmers = 0
+  let looms = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-cape-trimmer') trimmers++
+    if (o.name === 'guan-cape-loom') looms++
+  })
+  assert.equal(trimmers, 1, 'visible Cape Trimmer NPC in Brimhaven')
+  assert.equal(looms, 1, 'Cape Loom stall in Brimhaven')
+  assert.equal(GUAN_CAPE_LOOM.id, 'cape-loom')
+  assert.ok(GUAN_CAPE_TRIMMER_NAME.includes('Trimmer'), 'trimmer nametag')
+  assert.ok(
+    Math.hypot(
+      GUAN_CAPE_LOOM.x - GUAN_LANDMARKS.brimhaven.x,
+      GUAN_CAPE_LOOM.z - GUAN_LANDMARKS.brimhaven.z,
+    ) < 4,
+    'Cape Loom sits in Brimhaven town',
+  )
   assert.ok(
     guanScene.children.some((c) => c.name === 'guan-return-portal'),
     'glowing return portal group',
   )
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
+  assert.match(guanSrc, /capeLoomStall|capeTrimmerNpc|GUAN_CAPE_LOOM/, 'Cape Loom craft wired')
+  assert.match(worldSrc, /GUAN_CAPE_LOOM/, 'world nearestVisitable knows Cape Loom')
   assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
   assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
   assert.match(guanSrc, /stoneRingPond|hqPondTexture|spearPlant|canopyTree/, 'Habitat pond clearing craft')
@@ -679,10 +700,23 @@ function main() {
   assert.ok(panelSrc.includes('hq-dialog'), 'OSRS-style NPC dialogue box')
   assert.ok(panelSrc.includes('Talk to'), 'Talk CTA to open dialogue')
   assert.ok(panelSrc.includes('Explore world'), 'Explore world dismisses dialogue')
+  assert.match(panelSrc, /speakHarborTts/, 'pier hear chips auto-play Harbor TTS')
+  assert.match(panelSrc, /stopSpeaking/, 'pier hear cleanup stops TTS on step change')
   assert.match(worldSrc, /snapToQuestDock/, 'world can teleport canoe to quest pier')
 
   const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
   assert.match(playSrc, /snapToQuestDock/, 'Talk / Next gate snaps sailor to quest dock')
+  assert.match(playSrc, /cape-loom|GUAN_CAPE_TRIMMER_NAME/, 'LearnPlay Cape Loom panel')
+  assert.match(playSrc, /HarborDelveModal|hq-delve-fab/, '港灣 companion delve FAB')
+  const delveModalSrc = readFileSync(new URL('./HarborDelveModal.tsx', import.meta.url), 'utf8')
+  assert.match(delveModalSrc, /speakHarborTts/, 'delve auto-plays hearHan Harbor TTS')
+  const autoSpeakSrc = readFileSync(new URL('../../lib/autoSpeakPref.ts', import.meta.url), 'utf8')
+  assert.match(autoSpeakSrc, /return false/, 'Auto-speak defaults OFF when unset')
+  assert.match(autoSpeakSrc, /speakHarborTts/, 'Auto-speak pref documents Harbor separation')
+  const harborSpeakSrc = readFileSync(new URL('./harborSpeak.ts', import.meta.url), 'utf8')
+  assert.match(harborSpeakSrc, /holdHarborBgmDuck/, 'Harbor TTS ducks BGM')
+  assert.match(harborSpeakSrc, /speakManual/, 'Harbor TTS uses speakManual (not Auto-speak)')
+  assert.doesNotMatch(harborSpeakSrc, /autoSpeak/, 'Harbor TTS ignores Auto-speak pref')
   assert.match(playSrc, /beginTalk/, 'Talk CTA boards + docks before dialogue')
   assert.ok(playSrc.includes('hq-explore-fab'), 'open-world explore FAB on stage')
   assert.ok(playSrc.includes('Open world exploration'), 'explore FAB accessible label')
@@ -1173,7 +1207,7 @@ function main() {
   assert.ok(existsSync(new URL('./MatchDefinitionModal.tsx', import.meta.url)), 'match modal')
   assert.match(learnCss, /\.hq-match-modal\s*\{/, 'match modal styles')
   const matchModalSrc = readFileSync(new URL('./MatchDefinitionModal.tsx', import.meta.url), 'utf8')
-  assert.match(matchModalSrc, /speakManual/, 'arena auto-plays TTS for each word')
+  assert.match(matchModalSrc, /speakHarborTts/, 'arena auto-plays Harbor TTS for each word')
   assert.match(matchModalSrc, /SpeakButton/, 'arena has replay speaker icon')
   assert.match(matchModalSrc, /unlockTtsPlayback/, 'arena unlocks TTS on Enter')
   assert.match(matchModalSrc, /hq-match-speak/, 'arena speaker control class')
@@ -1283,6 +1317,8 @@ function main() {
   assert.match(playAudioSrc, /startHarborBgm/, 'session starts Chinese Harbor BGM')
   assert.match(playAudioSrc, /stopHarborBgm/, 'session stops BGM on exit')
   assert.match(playAudioSrc, /duckHarborBgm/, 'BGM ducks under fanfare')
+  assert.match(bgmSrc, /holdHarborBgmDuck/, 'BGM hold-duck for Harbor TTS')
+  assert.match(bgmSrc, /releaseHarborBgmDuck/, 'BGM release-duck after Harbor TTS')
 
   // Immersion audio tiers — ambient beds + interaction SFX (procedural, not Jagex)
   assert.ok(HARBOR_AMBIENT_GAIN > 0 && HARBOR_AMBIENT_GAIN < 0.2, 'ambient bed stays soft under BGM')
