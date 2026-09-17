@@ -71,6 +71,10 @@ export const GUAN_TROPICAL_LOOK = {
   grassLite: 0x4a9a50,
   grassBlade: 0x6ab058,
   grassDeep: 0x1a5a30,
+  /** Tan herb stalk + cream trifurcated crown (Habitat meadow read — original). */
+  herbStalk: 0xd4b878,
+  herbStalkDeep: 0xb89858,
+  herbCrown: 0xf5f0e0,
   jungle: 0x165828,
   jungleDeep: 0x0e4820,
   dirt: 0x7a5830,
@@ -398,7 +402,7 @@ function pineapplePlant(rng: () => number): THREE.Group {
   return g
 }
 
-/** Pointed low-poly blade — Habitat-style tall grass silhouette (original craft). */
+/** Pointed low-poly blade — crossed flat triangles (Habitat turf read). */
 function grassBlade(
   h: number,
   color: number,
@@ -406,37 +410,44 @@ function grassBlade(
   z: number,
   leanX = 0,
   leanZ = 0,
-): THREE.Mesh {
-  // 3-sided cone reads as a tapered blade at play camera (cheaper than many boxes)
-  const m = new THREE.Mesh(new THREE.ConeGeometry(0.028, h, 3), hqMat(color))
-  m.position.set(hqSnap(x), hqSnap(h / 2), hqSnap(z))
-  m.rotation.z = leanX
-  m.rotation.x = leanZ
-  return m
+): THREE.Group {
+  const g = new THREE.Group()
+  // Two thin triangles crossed = classic billboard tuft without photo textures
+  const w = 0.04 + h * 0.04
+  for (let i = 0; i < 2; i++) {
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(w, h, 3), hqMat(color))
+    blade.rotation.y = (i * Math.PI) / 2
+    g.add(blade)
+  }
+  g.position.set(hqSnap(x), hqSnap(h / 2), hqSnap(z))
+  g.rotation.z = leanX
+  g.rotation.x = leanZ
+  return g
 }
 
 /** Dense RS-style grass tuft — bright blades over mottled turf, readable at foot level. */
 function grassTuft(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-grass-tuft'
-  const n = 6 + Math.floor(rng() * 5)
+  const n = 7 + Math.floor(rng() * 5)
   for (let i = 0; i < n; i++) {
-    const h = 0.22 + rng() * 0.32
+    const h = 0.24 + rng() * 0.34
     const lite = i % 3 !== 0
     const color = lite
       ? GUAN_TROPICAL_LOOK.grassBlade
       : i % 2
         ? GUAN_TROPICAL_LOOK.grassLite
         : GUAN_TROPICAL_LOOK.grassDeep
-    const blade = grassBlade(
-      h,
-      color,
-      (rng() - 0.5) * 0.22,
-      (rng() - 0.5) * 0.22,
-      (rng() - 0.5) * 0.4,
-      (rng() - 0.5) * 0.28,
+    g.add(
+      grassBlade(
+        h,
+        color,
+        (rng() - 0.5) * 0.24,
+        (rng() - 0.5) * 0.24,
+        (rng() - 0.5) * 0.4,
+        (rng() - 0.5) * 0.28,
+      ),
     )
-    g.add(blade)
   }
   return g
 }
@@ -453,7 +464,6 @@ function tallGrassClump(rng: () => number): THREE.Group {
     const h = 0.38 + rng() * 0.45
     const broad = i % 4 === 0
     if (broad) {
-      // Wider flat blade for silhouette variety
       const blade = hqBox(
         0.05 + rng() * 0.03,
         h,
@@ -482,7 +492,104 @@ function tallGrassClump(rng: () => number): THREE.Group {
   return g
 }
 
-/** Irregular oval dirt patch set into grass (Habitat soil bed — original craft). */
+/**
+ * Meadow herb stalk — segmented tan cane + cream trifurcated crown.
+ * Original craft mirroring Habitat soil-bed silhouette (not Jagex meshes).
+ */
+function herbStalk(rng: () => number, h = 0.85): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-herb-stalk'
+  const segs = 3 + Math.floor(rng() * 2)
+  const segH = h / segs
+  for (let i = 0; i < segs; i++) {
+    const y = segH * i + segH * 0.5
+    g.add(
+      hqBox(
+        0.045 - i * 0.004,
+        segH * 0.92,
+        0.045 - i * 0.004,
+        i % 2 ? GUAN_TROPICAL_LOOK.herbStalk : GUAN_TROPICAL_LOOK.herbStalkDeep,
+        0,
+        y,
+        0,
+      ),
+    )
+    // Node ring between segments
+    if (i > 0) {
+      g.add(hqBox(0.06, 0.025, 0.06, GUAN_TROPICAL_LOOK.herbStalkDeep, 0, segH * i, 0))
+    }
+  }
+  // Cream three-prong crown (reads at distance like Habitat herbs)
+  const crownY = h + 0.02
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2
+    const petal = hqBox(0.07, 0.03, 0.12, GUAN_TROPICAL_LOOK.herbCrown, 0, crownY, 0.06)
+    petal.rotation.y = a
+    petal.rotation.x = -0.55
+    g.add(petal)
+  }
+  g.add(hqBox(0.05, 0.04, 0.05, GUAN_TROPICAL_LOOK.herbCrown, 0, crownY, 0))
+  g.rotation.z = (rng() - 0.5) * 0.12
+  g.rotation.x = (rng() - 0.5) * 0.1
+  return g
+}
+
+/** Broad green basal leaf under herb beds. */
+function basalLeaf(rng: () => number): THREE.Mesh {
+  const leaf = hqBox(
+    0.08 + rng() * 0.04,
+    0.02,
+    0.16 + rng() * 0.08,
+    rng() > 0.5 ? GUAN_TROPICAL_LOOK.grassDeep : GUAN_TROPICAL_LOOK.grassLite,
+    0,
+    0.04,
+    0.06,
+  )
+  leaf.rotation.x = -0.35 - rng() * 0.25
+  leaf.rotation.y = rng() * Math.PI * 2
+  leaf.rotation.z = (rng() - 0.5) * 0.4
+  return leaf
+}
+
+/**
+ * Open braced shipping crate with herb poles leaning out —
+ * Habitat meadow prop vignette (original craft).
+ */
+function habitatCrate(rng: () => number): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'guan-habitat-crate'
+  const wood = hqWoodTexture()
+  const s = 0.42
+  // Body — vertical plank feel via wood texel + side boards
+  g.add(hqBoxTex(s, s * 0.78, s, P.woodMid, wood, 0, s * 0.39, 0))
+  // Dark trim frame
+  g.add(hqBox(s * 1.04, 0.04, s * 1.04, P.woodDeep, 0, 0.04, 0))
+  g.add(hqBox(s * 1.04, 0.04, s * 1.04, P.woodDeep, 0, s * 0.78, 0))
+  // Cross braces on +Z / −Z faces
+  for (const side of [-1, 1] as const) {
+    const braceA = hqBox(0.04, s * 0.7, 0.03, P.woodDeep, 0, s * 0.4, side * (s * 0.52))
+    braceA.rotation.z = 0.55 * side
+    g.add(braceA)
+    const braceB = hqBox(0.04, s * 0.7, 0.03, P.woodDeep, 0, s * 0.4, side * (s * 0.52))
+    braceB.rotation.z = -0.55 * side
+    g.add(braceB)
+  }
+  // Open top rim (no full lid)
+  g.add(hqBoxTex(s * 1.02, 0.035, 0.05, P.woodLight, wood, 0, s * 0.8, s * 0.45))
+  g.add(hqBoxTex(s * 1.02, 0.035, 0.05, P.woodLight, wood, 0, s * 0.8, -s * 0.45))
+  // Herb poles sticking out
+  for (let i = 0; i < 3; i++) {
+    const stalk = herbStalk(rng, 0.55 + rng() * 0.25)
+    stalk.position.set((i - 1) * 0.1, s * 0.55, 0.05 + (i % 2) * 0.06)
+    stalk.rotation.x = -0.35 - rng() * 0.25
+    stalk.rotation.z = (rng() - 0.5) * 0.3
+    stalk.scale.setScalar(0.75)
+    g.add(stalk)
+  }
+  return g
+}
+
+/** Irregular oval dirt patch with herb stalks (Habitat soil bed — original craft). */
 function dirtPatch(rng: () => number, radius = 0.55): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-dirt-patch'
@@ -504,16 +611,28 @@ function dirtPatch(rng: () => number, radius = 0.55): THREE.Group {
     blob.position.set(Math.cos(a) * radius * 0.55, 0.025, Math.sin(a) * radius * 0.55)
     g.add(blob)
   }
-  // Tall grass sprouting from the soil
-  const clump = tallGrassClump(rng)
-  clump.position.y = 0.04
-  clump.scale.setScalar(0.85 + rng() * 0.25)
-  g.add(clump)
-  if (rng() > 0.45) {
-    const clump2 = tallGrassClump(rng)
-    clump2.position.set((rng() - 0.5) * 0.35, 0.04, (rng() - 0.5) * 0.35)
-    clump2.scale.setScalar(0.7)
-    g.add(clump2)
+  // Broad green leaves at the soil line
+  const leafN = 4 + Math.floor(rng() * 3)
+  for (let i = 0; i < leafN; i++) {
+    const leaf = basalLeaf(rng)
+    const a = (i / leafN) * Math.PI * 2 + rng() * 0.3
+    leaf.position.set(Math.cos(a) * radius * 0.35, 0.03, Math.sin(a) * radius * 0.35)
+    g.add(leaf)
+  }
+  // Cluster of tan herb stalks with cream crowns
+  const stalks = 3 + Math.floor(rng() * 3)
+  for (let i = 0; i < stalks; i++) {
+    const stalk = herbStalk(rng, 0.7 + rng() * 0.45)
+    stalk.position.set((rng() - 0.5) * radius * 0.7, 0.04, (rng() - 0.5) * radius * 0.7)
+    stalk.scale.setScalar(0.85 + rng() * 0.25)
+    g.add(stalk)
+  }
+  // A little green grass mixed at the bed edge
+  if (rng() > 0.35) {
+    const edge = tallGrassClump(rng)
+    edge.position.set(radius * 0.55, 0.04, (rng() - 0.5) * 0.2)
+    edge.scale.setScalar(0.55)
+    g.add(edge)
   }
   return g
 }
@@ -1078,6 +1197,18 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
     patch.position.set(bed.x, guanGroundY(bed.x, bed.z), bed.z)
     patch.rotation.y = rng() * Math.PI
     root.add(patch)
+    // Open braced crate beside many beds (Habitat vignette pairing)
+    if (rng() > 0.35) {
+      const crate = habitatCrate(rng)
+      const a = rng() * Math.PI * 2
+      const cx = bed.x + Math.cos(a) * (bed.r + 0.55)
+      const cz = bed.z + Math.sin(a) * (bed.r + 0.55)
+      if (isGuanLand(cx, cz)) {
+        crate.position.set(cx, guanGroundY(cx, cz), cz)
+        crate.rotation.y = a + Math.PI
+        root.add(crate)
+      }
+    }
   }
 }
 

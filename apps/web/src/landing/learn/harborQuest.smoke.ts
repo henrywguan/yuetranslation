@@ -346,9 +346,18 @@ function main() {
   assert.ok(tuftCount >= 120, 'dense grass tufts underfoot')
   assert.ok(tallGrass >= 40, 'Habitat-style tall grass clumps')
   assert.ok(dirtBeds >= 8, 'irregular dirt beds in the meadows')
+  let herbStalks = 0
+  let habitatCrates = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-herb-stalk') herbStalks++
+    if (o.name === 'guan-habitat-crate') habitatCrates++
+  })
+  assert.ok(herbStalks >= 20, 'tan herb stalks with cream crowns on dirt beds')
+  assert.ok(habitatCrates >= 4, 'open braced Habitat crates beside beds')
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
   assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
+  assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
   assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
