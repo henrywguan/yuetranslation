@@ -307,12 +307,6 @@
   gap: 0.55rem 0.65rem;
 }
 
-.account-hub-header-role {
-  flex: none;
-  display: flex;
-  align-items: center;
-}
-
 .account-hub-titles {
   min-width: 0;
   flex: 1;
