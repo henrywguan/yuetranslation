@@ -25,6 +25,7 @@ import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
   clampGuanFootTarget,
+  guanGroundY,
   isGuanLand,
   GUAN_BOAT_START,
   GUAN_RETURN_PORTAL,
@@ -144,6 +145,11 @@ export type HarborWorldHandle = {
    * Same rules as tapping the ground (disembark on land, reboard near canoe).
    */
   moveToWorld: (x: number, z: number) => void
+  /**
+   * On foot: stand up and walk back to the moored canoe (Boat FAB).
+   * No-op while already crewing.
+   */
+  returnToBoat: () => void
   resize: () => void
   dispose: () => void
 }
@@ -3359,6 +3365,8 @@ export function createHarborWorld(
   let progress = Math.min(1, Math.max(0, options.progress ?? 0))
   const realm: HarborRealmId = options.realm ?? 'river'
   const isGuan = realm === 'guan'
+  /** Terrace / bank height under walking scouts (0 on flat river banks). */
+  const groundYAt = (x: number, z: number) => (isGuan ? guanGroundY(x, z) : 0)
   let flash: 'ok' | 'no' | null = null
   let flashUntil = 0
   let disposed = false
@@ -3446,18 +3454,27 @@ export function createHarborWorld(
           ? 0.9
           : 0.88,
   })
+  // Guan: denser ocean grid for a gentle vertex-wave (local Z → world Y after rot).
+  const waterSeg = isGuan ? 48 : 1
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(
       isGuan ? GUAN_WATER_PLANE.size : RIVER * 2.4,
       isGuan ? GUAN_WATER_PLANE.size : 400,
-      1,
-      isGuan ? 1 : 20,
+      isGuan ? waterSeg : 1,
+      isGuan ? waterSeg : 20,
     ),
     waterMat,
   )
   water.rotation.x = -Math.PI / 2
   water.position.set(isGuan ? GUAN_WATER_PLANE.x : 0, 0.02, isGuan ? GUAN_WATER_PLANE.z : 80)
   scene.add(water)
+  /** Base local-Z (height) for Guan ocean vertex waves — null on river strip. */
+  let oceanBaseZ: Float32Array | null = null
+  if (isGuan) {
+    const pos = water.geometry.getAttribute('position') as THREE.BufferAttribute
+    oceanBaseZ = new Float32Array(pos.count)
+    for (let i = 0; i < pos.count; i++) oceanBaseZ[i] = pos.getZ(i)
+  }
 
   const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
   const sandMat = mat(realm === 'bamboo' ? 0xb8b078 : 0xc2b280)
@@ -3625,7 +3642,10 @@ export function createHarborWorld(
       localSpeechBubble = buildChatBubbleSprite(cleaned)
       // Prefer live scout/boat pose — nametag may still be at origin before first tick.
       const lx = travelMode === 'foot' ? footX : boat.position.x
-      const ly = travelMode === 'foot' ? (sitting ? 1.7 : 2.05) : 1.85
+      const ly =
+        travelMode === 'foot'
+          ? groundYAt(footX, footZ) + (sitting ? 1.7 : 2.05)
+          : 1.85
       const lz = travelMode === 'foot' ? footZ : boat.position.z
       localSpeechBubble.position.set(lx, ly + 0.72, lz)
       scene.add(localSpeechBubble)
@@ -3759,7 +3779,7 @@ export function createHarborWorld(
     if (scoutSit) scoutSit.visible = false
     if (travelMode === 'foot') {
       scoutWalk.visible = true
-      scoutWalk.position.set(footX, 0, footZ)
+      scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
     }
   }
 
@@ -3779,7 +3799,8 @@ export function createHarborWorld(
     scoutWalk.visible = false
     const sit = ensureScoutSit()
     sit.visible = true
-    sit.position.set(chairWorldPos.x, Math.max(0.28, seatY - 0.1), chairWorldPos.z)
+    // seatY is local to the chair group — stack on chair world Y so terraces don't clip
+    sit.position.set(chairWorldPos.x, chairWorldPos.y + seatY - 0.1, chairWorldPos.z)
     sit.rotation.set(0, chairEuler.y, 0)
     try {
       playHarborSit()
@@ -3808,7 +3829,7 @@ export function createHarborWorld(
           : clampHarborMoveTarget(x, z)
     moveTarget = clamped
     playerDirected = fromPlayer
-    destMarker.position.set(clamped.x, 0.06, clamped.z)
+    destMarker.position.set(clamped.x, groundYAt(clamped.x, clamped.z) + 0.06, clamped.z)
     destMarker.visible = fromPlayer
   }
 
@@ -3830,7 +3851,7 @@ export function createHarborWorld(
       scoutWalk.rotation.set(0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0)
     }
     scoutWalk.visible = true
-    scoutWalk.position.set(footX, 0, footZ)
+    scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
     travelMode = 'foot'
     wantBoard = false
     sitTarget = null
@@ -4185,6 +4206,7 @@ export function createHarborWorld(
       }
     } else {
       // On foot — OSRS click-to-walk toward the yellow X (or idle while seated)
+      const gy = groundYAt(footX, footZ)
       if (sitting) {
         if (scoutSit) {
           scoutSit.position.x = footX
@@ -4204,10 +4226,11 @@ export function createHarborWorld(
           const face = Math.atan2(dx, dz)
           scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
           const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
-          scoutWalk.position.set(footX, walkBob, footZ)
+          scoutWalk.position.set(footX, groundYAt(footX, footZ) + walkBob, footZ)
           // Don't open landmarks mid-walk either
           if (!playerDirected) emitVisitable(null)
         } else {
+          scoutWalk.position.set(footX, gy, footZ)
           if (playerDirected) destMarker.visible = false
           if (sitTarget) {
             enterSit(sitTarget)
@@ -4254,7 +4277,23 @@ export function createHarborWorld(
 
     water.position.z = isGuan ? GUAN_WATER_PLANE.z : voyageZ + 60
     if (isGuan) water.position.x = GUAN_WATER_PLANE.x
+    // Soft whole-plane bob; Guan also ripples vertex heights for a living ocean
     water.position.y = 0.02 + Math.sin(waterPhase) * 0.015
+    if (oceanBaseZ && !reduced) {
+      const pos = water.geometry.getAttribute('position') as THREE.BufferAttribute
+      const t = waterPhase
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i)
+        const y = pos.getY(i)
+        const wave =
+          Math.sin(x * 0.22 + t * 1.35) * 0.07 +
+          Math.cos(y * 0.18 + t * 1.05) * 0.05 +
+          Math.sin((x + y) * 0.11 + t * 0.7) * 0.035
+        pos.setZ(i, oceanBaseZ[i]! + wave)
+      }
+      pos.needsUpdate = true
+      water.geometry.computeVertexNormals()
+    }
 
     // Parallax: mountains drift slower than the canoe
     if (mountains) {
@@ -4329,8 +4368,9 @@ export function createHarborWorld(
     pitch += (pitchTarget - pitch) * orbitLerp
     distance += (distanceTarget - distance) * orbitLerp
 
+    const footGy = travelMode === 'foot' ? groundYAt(footX, footZ) : 0
     const lookX = travelMode === 'foot' ? footX : boat.position.x
-    const lookY = travelMode === 'foot' ? (sitting ? 0.85 : 0.95) : 0.75
+    const lookY = travelMode === 'foot' ? footGy + (sitting ? 0.85 : 0.95) : 0.75
     const lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
     const off = orbitCameraOffset(yaw, pitch, distance)
     const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
@@ -4340,7 +4380,7 @@ export function createHarborWorld(
     // Local username plate follows boat / walking / seated scout
     localNametag.position.set(
       travelMode === 'foot' ? footX : boat.position.x,
-      travelMode === 'foot' ? (sitting ? 1.7 : 2.05) : 1.85,
+      travelMode === 'foot' ? footGy + (sitting ? 1.7 : 2.05) : 1.85,
       travelMode === 'foot' ? footZ : boat.position.z,
     )
     if (localSpeechBubble) {
@@ -4368,6 +4408,12 @@ export function createHarborWorld(
     // Ease remote sailors toward latest Broadcast / Presence pose targets
     for (const root of remoteById.values()) {
       tickRemoteSailorPose(root, reduced ? 1 : 0.32)
+      // Match terrace height so remote scouts don't clip into Guan land layers
+      if (isGuan && root.userData.remoteMode === 'foot') {
+        root.position.y = guanGroundY(root.position.x, root.position.z)
+      } else {
+        root.position.y = 0
+      }
     }
 
 
@@ -4606,6 +4652,15 @@ if (o.userData.cigaretteSmoke && !reduced) {
     },
     moveToWorld(x, z) {
       commandMoveTo(x, z)
+    },
+    returnToBoat() {
+      if (disposed || travelMode !== 'foot') return
+      exitSit()
+      sitTarget = null
+      wantBoard = true
+      const side = Math.sign(footX || boatX) || 1
+      // Walk to the canoe; boardBoat fires on arrival (same as tapping the hull)
+      setMoveTarget(boatX + (isGuan ? 0 : side * 0.2), voyageZ, true)
     },
     resize,
     dispose() {

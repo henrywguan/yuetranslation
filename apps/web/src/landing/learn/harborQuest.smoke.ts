@@ -98,6 +98,8 @@ import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
   clampGuanFootTarget,
+  guanGroundY,
+  GUAN_HEIGHT,
   isGuanLand,
   GUAN_BOAT_START,
   GUAN_HARBOR_BOUNDS,
@@ -334,21 +336,53 @@ function main() {
     'Brimhaven tavern building',
   )
   let tuftCount = 0
+  let tallGrass = 0
+  let dirtBeds = 0
   guanScene.traverse((o) => {
     if (o.name === 'guan-grass-tuft') tuftCount++
+    if (o.name === 'guan-tall-grass') tallGrass++
+    if (o.name === 'guan-dirt-patch') dirtBeds++
   })
-  assert.ok(tuftCount >= 80, 'dense grass tufts underfoot')
+  assert.ok(tuftCount >= 120, 'dense grass tufts underfoot')
+  assert.ok(tallGrass >= 40, 'Habitat-style tall grass clumps')
+  assert.ok(dirtBeds >= 8, 'irregular dirt beds in the meadows')
+  let herbStalks = 0
+  let habitatCrates = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-herb-stalk') herbStalks++
+    if (o.name === 'guan-habitat-crate') habitatCrates++
+  })
+  assert.ok(herbStalks >= 20, 'tan herb stalks with cream crowns on dirt beds')
+  assert.ok(habitatCrates >= 4, 'open braced Habitat crates beside beds')
+  let ponds = 0
+  let spears = 0
+  let canopyTrees = 0
+  guanScene.traverse((o) => {
+    if (o.name === 'guan-stone-pond') ponds++
+    if (o.name === 'guan-spear-plant') spears++
+    if (o.name === 'guan-canopy-tree') canopyTrees++
+  })
+  assert.ok(ponds >= 2, 'stone-ring meadow ponds')
+  assert.ok(spears >= 8, 'spear-leaf Habitat plants')
+  assert.ok(canopyTrees >= 3, 'rounded canopy shade trees')
   const guanSrc = readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8')
   assert.match(guanSrc, /hqGrassTexture|scatterGrassTufts/, 'textured grass + tuft scatter')
+  assert.match(guanSrc, /scatterHabitatGround|tallGrassClump|dirtPatch/, 'Habitat ground detail scatter')
+  assert.match(guanSrc, /herbStalk|habitatCrate|herbCrown/, 'Habitat herb + crate vignette craft')
+  assert.match(guanSrc, /stoneRingPond|hqPondTexture|spearPlant|canopyTree/, 'Habitat pond clearing craft')
+  assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
   assert.doesNotMatch(guanSrc, /guan-shore-foam/, 'no shore foam meshes')
   assert.match(guanSrc, /pirateTavern|layered thatch/, 'chunky town building craft')
   const craftSrc = readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8')
   assert.match(craftSrc, /export function hqGrassTexture/, 'shared grass 128 texture')
+  assert.match(craftSrc, /Painted upright blade strokes|mottled/, 'richer grass albedo detail')
+  assert.match(craftSrc, /export function hqPondTexture/, 'shared pond ripple texture')
   assert.doesNotMatch(craftSrc, /export function hqWaterTexture/, 'no Guan water scroll texture')
   assert.match(craftSrc, /export function hqSandTexture/, 'shared sand 128 texture')
   assert.match(craftSrc, /export function hqDirtTexture/, 'shared dirt path texture')
+  assert.match(craftSrc, /clump blobs|Pebble grit/, 'richer dirt albedo detail')
   assert.doesNotMatch(worldSrc, /hqWaterTexture|guanWaterScroll/, 'Guan uses plain tinted water')
   // Inland jungle (near Tai Bwo Wannai) is land; Musa Passage water is not
   assert.equal(isGuanLand(-2.5, -1.5), true, 'Tai Bwo Wannai jungle is walkable land')
@@ -372,9 +406,27 @@ function main() {
   assert.match(worldSrc, /isGuan && isGuanLand/, 'tap island to disembark in guan')
   assert.match(worldSrc, /GUAN_RETURN_PORTAL/, 'guan return portal visit')
   assert.match(worldSrc, /GUAN_WATER_PLANE/, 'guan water plane follows island bounds')
+  assert.match(worldSrc, /guanGroundY/, 'foot Y follows Guan terrace height')
+  assert.match(worldSrc, /oceanBaseZ/, 'Guan ocean stores base verts for waves')
+  assert.match(worldSrc, /returnToBoat/, 'Boat FAB can walk sailor back to canoe')
   assert.equal(GUAN_RETURN_PORTAL.id, 'save-shack')
   assert.ok(Number.isFinite(GUAN_BOAT_START.x) && Number.isFinite(GUAN_BOAT_START.z), 'boat start offset')
   assert.ok(GUAN_BOAT_START.z > GUAN_LANDMARKS.musaDock.z, 'boat spawns north of Musa pier')
+  // Layered island height — sand < grass < jungle; volcano ash is highest
+  assert.ok(GUAN_HEIGHT.sand < GUAN_HEIGHT.grass, 'sand terrace below grass')
+  assert.ok(GUAN_HEIGHT.grass < GUAN_HEIGHT.jungle, 'grass terrace below jungle')
+  assert.equal(
+    guanGroundY(GUAN_LANDMARKS.musaDock.x, GUAN_LANDMARKS.musaDock.z),
+    GUAN_HEIGHT.sand,
+    'Musa dock beach is sand height',
+  )
+  assert.ok(
+    guanGroundY(GUAN_LANDMARKS.volcano.x, GUAN_LANDMARKS.volcano.z) >= GUAN_HEIGHT.ash,
+    'volcano apron uses ash terrace',
+  )
+  assert.equal(guanGroundY(0, 22), 0, 'open ocean ground Y is 0')
+  assert.match(guanSrc, /stampCliffRing/, 'readable cliff bands between terraces')
+  assert.match(guanSrc, /guan-layer-sand|guan-layer-grass/, 'named land height layers')
   const stageSrc = readFileSync(new URL('./HarborStage.tsx', import.meta.url), 'utf8')
   assert.match(
     stageSrc,
@@ -600,6 +652,10 @@ function main() {
   assert.ok(playSrc.includes('hq-explore-fab'), 'open-world explore FAB on stage')
   assert.ok(playSrc.includes('Open world exploration'), 'explore FAB accessible label')
   assert.ok(playSrc.includes('ExploreWorldIcon'), 'compass icon for open-world explore')
+  assert.ok(playSrc.includes('BoatFabIcon'), 'boat icon when walking on land')
+  assert.ok(playSrc.includes('Return to boat'), 'boat FAB accessible label on land')
+  assert.ok(playSrc.includes('returnToBoat'), 'land FAB boards the canoe')
+  assert.ok(playSrc.includes('is-boat'), 'boat FAB variant class')
   assert.ok(playSrc.includes('hq-compass-disc'), 'OSRS compass disc on explore FAB')
   assert.ok(playSrc.includes('hq-compass-sparkle'), 'gold sparkle animation on compass')
   assert.ok(playSrc.includes('hq-play-title-en'), 'chapter title condensed to English line + Chinese line')
@@ -742,6 +798,7 @@ function main() {
   }
   assert.match(learnCss, /\.hq-explore-fab\s*\{/, 'open-world explore FAB styles')
   assert.match(learnCss, /\.hq-explore-fab\.is-on/, 'explore FAB active state while free-looking')
+  assert.match(learnCss, /\.hq-explore-fab\.is-boat/, 'boat FAB variant styles on land')
   assert.match(learnCss, /\.hq-compass-disc\s*\{/, 'OSRS compass disc styles')
   assert.match(learnCss, /@keyframes hq-compass-sparkle/, 'compass gold sparkle keyframes')
   assert.match(learnCss, /\.hq-play-title-en\s*\{/, 'condensed chapter title styles')
@@ -1010,6 +1067,8 @@ function main() {
   assert.match(worldSrc2, /river-scout-walk/, 'standing walk Scout for land')
   assert.match(worldSrc2, /pose: 'standing'/, 'standing protagonist pose on land')
   assert.match(worldSrc2, /const disembark|function disembark|const boardBoat/, 'disembark / board helpers')
+  assert.match(worldSrc2, /returnToBoat\(\)/, 'API returns sailor to moored canoe')
+  assert.match(worldSrc2, /groundYAt/, 'foot placement uses ground height helper')
 
   assert.match(worldSrc2, /fauna === 'panda'/, 'panda idle animation')
   assert.match(worldSrc2, /fauna === 'tiger'/, 'tiger pace animation')
