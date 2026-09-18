@@ -1447,6 +1447,10 @@ function main() {
   assert.match(splashSrc, /export function HarborSplash/, 'splash component')
   assert.match(splashSrc, /Enter HarborQuest/, 'splash Enter HarborQuest CTA')
   assert.match(splashSrc, /Harbor Quest/, 'splash brand title')
+  assert.match(splashSrc, /buildSplashLanterns|HARBOR_GEAR_CATALOG/, 'splash uses in-game lantern catalog')
+  assert.match(splashSrc, /hq-splash-village|hq-splash-smoke/, 'splash has village + smoke layers')
+  assert.match(learnCss, /hq-splash-lantern--lantern-paper|hq-splash-lantern--lantern-silk/, 'splash lantern design variants')
+  assert.match(learnCss, /hq-splash-smoke-drift|hq-splash-window-flicker/, 'splash looping fog + window motion')
   assert.match(progressSrc, /continueHarborLevelId/, 'continue helper exported')
 
 
