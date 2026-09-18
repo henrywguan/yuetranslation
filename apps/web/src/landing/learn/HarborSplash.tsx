@@ -56,27 +56,27 @@ function buildSplashLanterns(): SplashLantern[] {
     drift: number
     depth: SplashLantern['depth']
   }> = [
-    // Far — small beads of light toward the moon
-    { pick: 5, depthT: 0.08, lane: -0.08, size: 0.55, delay: 2.4, duration: 16, drift: 10, depth: 'far' },
-    { pick: 8, depthT: 0.12, lane: 0.12, size: 0.5, delay: 3.1, duration: 17, drift: 12, depth: 'far' },
-    { pick: 3, depthT: 0.16, lane: -0.18, size: 0.62, delay: 1.8, duration: 15, drift: 14, depth: 'far' },
-    { pick: 11, depthT: 0.2, lane: 0.06, size: 0.58, delay: 2.8, duration: 18, drift: 11, depth: 'far' },
+    // Far — beads converging under the moon
+    { pick: 5, depthT: 0.06, lane: -0.1, size: 0.85, delay: 2.4, duration: 16, drift: 6, depth: 'far' },
+    { pick: 8, depthT: 0.1, lane: 0.14, size: 0.8, delay: 3.1, duration: 17, drift: 7, depth: 'far' },
+    { pick: 3, depthT: 0.14, lane: -0.2, size: 0.95, delay: 1.8, duration: 15, drift: 8, depth: 'far' },
+    { pick: 11, depthT: 0.18, lane: 0.05, size: 0.9, delay: 2.8, duration: 18, drift: 6, depth: 'far' },
     // Mid path
-    { pick: 1, depthT: 0.32, lane: -0.22, size: 0.95, delay: 1.2, duration: 13, drift: 16, depth: 'mid' },
-    { pick: 6, depthT: 0.36, lane: 0.2, size: 1.05, delay: 0.6, duration: 12.5, drift: 15, depth: 'mid' },
-    { pick: 4, depthT: 0.42, lane: -0.05, size: 1.15, delay: 0.9, duration: 11, drift: 14, depth: 'mid' },
-    { pick: 7, depthT: 0.48, lane: 0.28, size: 1.2, delay: 1.5, duration: 12, drift: 18, depth: 'mid' },
-    { pick: 2, depthT: 0.54, lane: -0.3, size: 1.35, delay: 0.4, duration: 10.5, drift: 13, depth: 'mid' },
-    { pick: 9, depthT: 0.58, lane: 0.1, size: 1.4, delay: 1.1, duration: 11.5, drift: 12, depth: 'mid' },
+    { pick: 1, depthT: 0.28, lane: -0.26, size: 1.55, delay: 1.2, duration: 13, drift: 10, depth: 'mid' },
+    { pick: 6, depthT: 0.34, lane: 0.24, size: 1.7, delay: 0.6, duration: 12.5, drift: 9, depth: 'mid' },
+    { pick: 4, depthT: 0.4, lane: -0.06, size: 1.9, delay: 0.9, duration: 11, drift: 8, depth: 'mid' },
+    { pick: 7, depthT: 0.46, lane: 0.3, size: 2.05, delay: 1.5, duration: 12, drift: 10, depth: 'mid' },
+    { pick: 2, depthT: 0.52, lane: -0.28, size: 2.25, delay: 0.4, duration: 10.5, drift: 8, depth: 'mid' },
+    { pick: 9, depthT: 0.58, lane: 0.12, size: 2.4, delay: 1.1, duration: 11.5, drift: 7, depth: 'mid' },
     // Near — large glowing path into the cockpit
-    { pick: 0, depthT: 0.68, lane: -0.18, size: 2.1, delay: 0.2, duration: 9.5, drift: 10, depth: 'near' },
-    { pick: 10, depthT: 0.72, lane: 0.22, size: 2.0, delay: 0.7, duration: 10, drift: 11, depth: 'near' },
-    { pick: 3, depthT: 0.78, lane: -0.02, size: 2.35, delay: 0.35, duration: 9, drift: 9, depth: 'near' },
-    { pick: 4, depthT: 0.84, lane: 0.32, size: 2.2, delay: 1.0, duration: 9.8, drift: 10, depth: 'near' },
-    { pick: 1, depthT: 0.88, lane: -0.34, size: 2.45, delay: 0.5, duration: 8.8, drift: 8, depth: 'near' },
-    { pick: 6, depthT: 0.92, lane: 0.08, size: 2.7, delay: 0.15, duration: 8.5, drift: 7, depth: 'near' },
-    { pick: 8, depthT: 0.96, lane: -0.15, size: 2.55, delay: 0.85, duration: 9.2, drift: 8, depth: 'near' },
-    { pick: 2, depthT: 0.99, lane: 0.2, size: 2.85, delay: 0.25, duration: 8.2, drift: 6, depth: 'near' },
+    { pick: 0, depthT: 0.66, lane: -0.22, size: 3.4, delay: 0.2, duration: 9.5, drift: 7, depth: 'near' },
+    { pick: 10, depthT: 0.72, lane: 0.26, size: 3.6, delay: 0.7, duration: 10, drift: 8, depth: 'near' },
+    { pick: 3, depthT: 0.78, lane: -0.04, size: 4.1, delay: 0.35, duration: 9, drift: 6, depth: 'near' },
+    { pick: 4, depthT: 0.84, lane: 0.3, size: 3.9, delay: 1.0, duration: 9.8, drift: 7, depth: 'near' },
+    { pick: 1, depthT: 0.88, lane: -0.32, size: 4.4, delay: 0.5, duration: 8.8, drift: 5, depth: 'near' },
+    { pick: 6, depthT: 0.92, lane: 0.1, size: 4.8, delay: 0.15, duration: 8.5, drift: 5, depth: 'near' },
+    { pick: 8, depthT: 0.96, lane: -0.16, size: 4.5, delay: 0.85, duration: 9.2, drift: 5, depth: 'near' },
+    { pick: 2, depthT: 0.99, lane: 0.22, size: 5.2, delay: 0.25, duration: 8.2, drift: 4, depth: 'near' },
   ]
   return rows.map((row, i) => {
     const item = catalog[row.pick % catalog.length]!
@@ -98,10 +98,10 @@ function buildSplashLanterns(): SplashLantern[] {
 /** Map depth/lane → CSS % for a vanishing-point river path under the moon. */
 function lanternStyle(L: SplashLantern): CSSProperties {
   const t = L.depthT
-  // Horizon ~28% from top; prow water ~78% — perspective squash toward center
-  const top = 28 + t * 48
+  // Horizon sits just under the moon (~34%); prow water ~82%
+  const top = 34 + t * 48
   const center = 50
-  const spread = 4 + t * 38
+  const spread = 2.5 + t * 34
   const left = center + L.lane * spread
   return {
     left: `${left}%`,
