@@ -1,34 +1,25 @@
-# Harbor Quest assets (original)
+# Harbor Quest assets (original + cinematic)
+
+## Splash cinematic
+
+`splash/lantern-canoe-fpov.mp4` + `splash/lantern-canoe-fpov-b.png` — Higgsfield first-person lantern canoe night (wired in `HarborSplash.tsx`).
 
 ## SFX
 
-Procedurally synthesized for JyutTranslate Harbor Quest.
+- `miss-thud.wav` / `miss-oof.wav` — original synth miss cues (`scripts/gen-harbor-miss-sfx.py`)
+- `sfx-coin-chime.mp3` · `sfx-water-splash.mp3` · `sfx-ui-whoosh.mp3` — Higgsfield Mirelo (wired into coin / fish / UI)
 
-- `miss-thud.wav` — original body-hit / grunt cue inspired by classic fantasy-RPG combat hits (not a RuneScape / Jagex asset).
-- `miss-oof.wav` — original short vocal “oof” inspired by block-game hurt cues (not a Minecraft / Mojang asset).
+## BGM
 
-Regenerate: `python3 scripts/gen-harbor-miss-sfx.py`
+- `bgm-harbor-night.m4a` — cinematic river bed (Sonilo); loops under soft synth in `harborBgm.ts`
+- `bgm-outfitter.m4a` — Outfitter boutique bed while the shop panel is open
 
-## 3D craft
+## VO
 
-World meshes are authored in code (`harborCraft.ts`, `harborWorld.ts`, `harborProtagonist.ts`) against **`docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md`**:
+Seed Audio lines: `vo-scout-welcome.wav`, `vo-outfitter-dressup.wav`, `vo-pier-cleared.wav`, `vo-nice-catch.wav`, `vo-save-shack.wav`, `vo-male-sail.wav` — see `harborVo.ts`.
 
-- Locked posterized palette
-- Flat Lambert / faceted cylinders (6-gon)
-- Extruded windows & chunky architecture
-- Oversized-head NPC / River Scout mannequin grammar
+## 3D
 
-Original Harbor / Jiangnan kit — **not** extracted from a RuneScape cache and **not** a recolor of Jagex models.
+- `scout-female.glb` / `scout-male.glb` — Meshy image→3D (Henry-approved). Standing Scout uses these via `harborProtagonistGlb.ts`; seated canoe stays procedural. Unique wardrobe silhouettes temporarily fall back to procedural body.
 
-Do not replace these with ripped game files.
-
-## Coin ching + BGM + scroll (Web Audio)
-
-Ferry-coin pickup, riverside BGM, and chapter-scroll cues are synthesized in the browser (no WAV):
-
-- `harborCoinSfx.ts` — soft metal “ching” on correct casts
-- `harborBgm.ts` — original Chinese pentatonic ambient loop (RS-like pacing, not a Jagex track)
-- `harborScrollSfx.ts` — paper rustle + wood roller for chapter scroll open / close
-
-Do not replace with ripped game audio.
-
+World architecture remains procedural craft (`harborCraft.ts` / craft bible). Original Harbor IP — never Jagex meshes.

@@ -21,25 +21,13 @@ import {
   duckHarborBgm,
   harborBgmTheme,
   isHarborBgmPlaying,
+  preloadHarborBgmSamples,
   startHarborBgm,
+  startHarborOutfitterBgm,
   stopHarborBgm,
+  stopHarborOutfitterBgm,
 } from './harborBgm'
-import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
-import { HarborFishingPanel } from './HarborFishingPanel'
-import {
-  emptyHarborFishingBag,
-  nearestGuanFishSpot,
-  type HarborFishSpotId,
-} from './harborFishing'
-import {
-  harborAmbientWeather,
-  unlockHarborAudioBeds,
-  setHarborAmbientPaused,
-  setHarborAmbientTalking,
-  stopHarborAmbient,
-} from './harborAmbient'
-import { ensureSharedAudioContext } from '../../lib/audioReactive'
-import { playHarborCoinChing } from './harborCoinSfx'
+import { playHarborCoinChing, preloadHarborCoinSfx } from './harborCoinSfx'
 import {
   playHarborArenaOpen,
   playHarborBagClose,
@@ -56,8 +44,27 @@ import {
   playHarborTalkStart,
   playHarborTeleport,
   playHarborUiClick,
+  preloadHarborInteractSamples,
   tickHarborMoveSfx,
 } from './harborInteractSfx'
+import { playHarborVo, preloadHarborVo } from './harborVo'
+import { preloadHarborScoutGlbs } from './harborProtagonistGlb'
+import { preloadHarborFishSfx } from './harborFishingSfx'
+import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
+import { HarborFishingPanel } from './HarborFishingPanel'
+import {
+  emptyHarborFishingBag,
+  nearestGuanFishSpot,
+  type HarborFishSpotId,
+} from './harborFishing'
+import {
+  harborAmbientWeather,
+  unlockHarborAudioBeds,
+  setHarborAmbientPaused,
+  setHarborAmbientTalking,
+  stopHarborAmbient,
+} from './harborAmbient'
+import { ensureSharedAudioContext } from '../../lib/audioReactive'
 import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSfx'
 import { playHarborScrollClose, playHarborScrollOpen, stopHarborScrollSfx } from './harborScrollSfx'
 import {
@@ -411,6 +418,12 @@ export function LearnSession({
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     preloadHarborMissSfx()
+    preloadHarborBgmSamples()
+    preloadHarborCoinSfx()
+    preloadHarborInteractSamples()
+    preloadHarborVo()
+    preloadHarborFishSfx()
+    preloadHarborScoutGlbs()
     // Do NOT soft-start BGM/ambient on mount — iPhone creates a suspended
     // AudioContext and schedules silent graphs that never recover. Beds start
     // only from unlockHarborAudioBeds inside a real user gesture (splash Enter
@@ -446,7 +459,10 @@ export function LearnSession({
         theme: harborBgmTheme(),
         weather: worldApiRef.current?.weather ?? harborAmbientWeather(),
       })
-      if (ok) harborAudioUnlocked = true
+      if (ok) {
+        harborAudioUnlocked = true
+        playHarborVo('welcome')
+      }
     }
     window.addEventListener('pointerdown', unlockHarborAudio, { capture: true })
     window.addEventListener('keydown', unlockHarborAudio, { capture: true })
@@ -475,6 +491,7 @@ export function LearnSession({
       stopHarborScrollSfx()
       stopHarborAmbient()
       stopHarborBgm()
+      stopHarborOutfitterBgm()
     }
   }, [])
 
@@ -620,6 +637,7 @@ export function LearnSession({
         pushProgress(markCorrect())
         playHarborCorrectFanfare()
         playHarborCoinChing()
+        playHarborVo('pierCleared')
         duckHarborBgm(HARBOR_FANFARE_DURATION_MS)
         startHarborBgm()
         const id = Date.now() + Math.random()
@@ -671,8 +689,17 @@ export function LearnSession({
       playHarborLandmarkOpen(id)
       setInvOpen(false)
       setCodexOpen(false)
+      if (id === 'outfitter') {
+        startHarborOutfitterBgm()
+        playHarborVo('outfitter')
+      } else {
+        stopHarborOutfitterBgm()
+      }
+      if (id === 'save-shack') playHarborVo('saveShack')
     } else {
+      stopHarborOutfitterBgm()
       playHarborCastOff()
+      playHarborVo('maleSail')
       setSaveFlash(null)
       setShopMsg(null)
       setBankMsg(null)
@@ -1362,6 +1389,7 @@ export function LearnSession({
           onOpenCodex={openGearCodex}
           onClose={() => {
             playHarborCastOff()
+            stopHarborOutfitterBgm()
             setVisitable(null)
           }}
           message={shopMsg}

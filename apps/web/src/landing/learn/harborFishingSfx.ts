@@ -1,9 +1,17 @@
 /**
- * Harbor Quest · fishing cast / splash / catch cues (Web Audio, no assets).
+ * Harbor Quest · fishing cast / splash / catch cues.
+ * Splash prefers cinematic Higgsfield water sample.
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
+import { playHarborSample, preloadHarborSamples } from './harborSampleAudio'
 
 const GAIN = 0.22
+
+export const HARBOR_FISH_SPLASH_SAMPLE = '/assets/harbor-quest/sfx-water-splash.mp3'
+
+export function preloadHarborFishSfx(): void {
+  preloadHarborSamples([HARBOR_FISH_SPLASH_SAMPLE])
+}
 
 function busAt(g = GAIN) {
   const ctx = ensureSharedAudioContext()
@@ -64,14 +72,16 @@ export function playHarborFishCast(): void {
 /** Water splash / bite. */
 export function playHarborFishSplash(): void {
   if (typeof window === 'undefined') return
-  const { ctx, bus, t0 } = busAt(0.24)
-  noiseBurst(ctx, bus, t0, 0.18, 400, 0.45)
-  tone(ctx, bus, t0 + 0.02, { type: 'sine', f0: 220, f1: 90, dur: 0.2, gain: 0.28 })
+  playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.7, channel: 'harbor-splash' })
+  const { ctx, bus, t0 } = busAt(0.14)
+  noiseBurst(ctx, bus, t0, 0.18, 400, 0.3)
+  tone(ctx, bus, t0 + 0.02, { type: 'sine', f0: 220, f1: 90, dur: 0.2, gain: 0.18 })
 }
 
 /** Successful catch chime. */
 export function playHarborFishCatch(): void {
   if (typeof window === 'undefined') return
+  playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.45, channel: 'harbor-splash' })
   const { ctx, bus, t0 } = busAt(0.26)
   tone(ctx, bus, t0, { type: 'sine', f0: 660, dur: 0.18, gain: 0.32 })
   tone(ctx, bus, t0 + 0.08, { type: 'sine', f0: 990, dur: 0.22, gain: 0.22 })

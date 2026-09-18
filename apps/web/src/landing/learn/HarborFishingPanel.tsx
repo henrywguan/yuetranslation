@@ -22,6 +22,7 @@ import {
   playHarborFishMiss,
   playHarborFishSplash,
 } from './harborFishingSfx'
+import { playHarborVo } from './harborVo'
 import { playHarborUiClick } from './harborInteractSfx'
 
 type Mode = 'lodge' | 'spot'
@@ -197,6 +198,7 @@ export function HarborFishingPanel({
       const result = attemptHarborFishCast(bag, spotId)
       if (result.ok) {
         playHarborFishCatch()
+        playHarborVo('niceCatch')
         onBagChange(result.bag)
         setMsg(result.message)
       } else {

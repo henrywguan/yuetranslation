@@ -1,13 +1,13 @@
 /**
  * Harbor Quest · v1 silhouette wardrobe — unique clothing meshes per family.
- * Original RS-like chunk; not Jagex kit. Applied by applyLookToProtagonist.
+ * Soft anime materials to match River Scout dress-up body. Not Jagex kit.
  */
 import * as THREE from 'three'
-import { harborFigureTorso } from './harborFigure'
+import { harborFigureMat, harborFigureTorso } from './harborFigure'
 import type { HarborGearSlot } from './harborGear'
 
 function mat(color: number) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: true })
+  return harborFigureMat(color)
 }
 
 function wrap(family: string): THREE.Group {
@@ -26,7 +26,7 @@ function tag(mesh: THREE.Mesh, harborPart: string) {
 export type ClothingBuildOpts = {
   color: number
   accent: number
-  /** Standing pelvis Y on River Scout (~0.48). */
+  /** Standing pelvis Y on River Scout (~0.72 anime fashion). */
   pelvisY?: number
   headY?: number
   gender?: 'male' | 'female'
@@ -169,7 +169,7 @@ function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
   const g = wrap(family)
   const c = mat(opts.color)
   const a = mat(opts.accent)
-  const pelvisY = opts.pelvisY ?? 0.48
+  const pelvisY = opts.pelvisY ?? 0.72
   const shoulder = opts.gender === 'female' ? 0.34 : 0.38
   const armSpread = opts.gender === 'female' ? 0.22 : 0.24
   const armY = pelvisY + 0.28

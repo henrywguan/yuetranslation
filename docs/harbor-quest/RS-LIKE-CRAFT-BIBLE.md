@@ -172,22 +172,24 @@ Optional Harbor Quest path that strongly sells the era:
 
 ## 3. Proportion language
 
-### 3.1 Humanoids (OSRS / 2007 player grammar)
+### 3.1 Humanoids (**characters = anime dress-up**; NPCs share the kit)
 
-From OSRS body-type docs + common visual analysis of the 2007 model:
+**Locked pivot (Henry 2026-09-18):** River Scout and dress-up characters are **anime-like, smooth, high-resolution**. Do **not** apply classic OSRS “potato head / stocky slab / mitten” grammar to `harborFigure` / `harborProtagonist`. That rulebook was blocking upgrades from feeling appealing.
 
-- **Head:** oversized oval (Body type A) or pointed-chin oval (Body type B); facial features are **planes + color**, not sculpted pores.
-- **Torso:** stocky rectangle / slab; shoulders slightly wider than hips; little waist pinch on type A.
-- **Limbs:** short relative to torso; thick cylinders (faceted).
-- **Hands / feet:** conspicuously large (“chunky hands”); mittens > articulated fingers unless close-up hero.
-- **Neck:** short stub.
-- **Stance:** slightly bow-legged / planted; idle reads as toy-soldier, not fashion mannequin.
+Anime dress-up grammar (characters only):
 
-**Harbor Quest characters** should obey this grammar even when costumes differ — that is the readable “RS-like” signal.
+- **Head:** smooth oval / sphere (high segment count); large expressive eyes with catchlights; soft blush; tiny nose/mouth.
+- **Torso:** soft fashion silhouette with a readable waist pinch (especially female).
+- **Limbs:** longer, slimmer than era chunk; soft hands (not cube fists, not mitten blobs).
+- **Neck:** visible column — never neckless chibi.
+- **Stance:** upright fashion plant; idle should feel like a dress-up doll you’d want to outfit.
+- **Materials:** smooth shading (`MeshStandardMaterial`, `flatShading: false`) — not posterized flat Lambert facets.
 
-**Anti–Minecraft smell test:** if the silhouette still reads as stacked equal cubes (Steve), push further — potato head (faceted icosa, not a box), slab torso with almost no waist, bent thick limbs, blob mittens, bow stance. Equal-cube limbs = wrong era.
+**World / props / architecture** still use era-chunky language below (§3.2–§4). Characters are the exception.
 
-**Reference study (never import):** public “RS bot” printables / Pinshape STLs may be used as *proportion study only*. Do **not** download, convert, or ship those meshes — they are Jagex player geometry redistributed by fans (§7). Harbor ships original procedural kit (`harborFigure` / `harborProtagonist`).
+**Anti–Minecraft / anti–RS-mannequin smell test (characters):** if the Scout still reads as a faceted potato toy or stacked cubes, push further toward anime appeal — bigger eyes, softer hair volumes, longer legs, smooth skin.
+
+**Reference study (never import):** public “RS bot” printables / Pinshape STLs are **not** the character target anymore (study-only for world props if needed). Do **not** download, convert, or ship those meshes (§7). Harbor ships original procedural kit (`harborFigure` / `harborProtagonist`).
 
 ### 3.2 Items & gear scale
 

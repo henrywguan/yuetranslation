@@ -687,7 +687,7 @@ export function lookColors(look: HarborLook) {
  */
 export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
   const gender = (root.userData.gender as 'male' | 'female' | undefined) ?? 'male'
-  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.48
+  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.72
   const headY = typeof root.userData.headY === 'number' ? root.userData.headY : pelvisY + 0.58
 
   clearHarborClothingMeshes(root)
@@ -731,6 +731,11 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
       else if (part === 'shoes') mesh.visible = !swapped.has('shoes')
     })
   }
+
+  // Cinematic GLB body: hide when unique wardrobe silhouettes are worn.
+  void import('./harborProtagonistGlb').then(({ syncScoutGlbWithLook }) => {
+    syncScoutGlbWithLook(root, anySwap)
+  })
 
   const colors = lookColors(look)
   root.traverse((o) => {

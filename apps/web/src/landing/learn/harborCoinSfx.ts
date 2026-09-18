@@ -1,13 +1,20 @@
 /**
- * Harbor Quest · soft ferry-coin “ching” (Web Audio, no assets).
- * Quiet metal sparkle — non-intrusive reward cue when coins are earned.
+ * Harbor Quest · soft ferry-coin “ching”.
+ * Prefers cinematic Higgsfield coin sample; falls back to soft synth.
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
+import { playHarborSample, preloadHarborSamples } from './harborSampleAudio'
 
 /** Peak gain for the coin ching (kept soft under fanfare / BGM). */
 export const HARBOR_COIN_CHING_GAIN = 0.22
 
+export const HARBOR_COIN_SAMPLE = '/assets/harbor-quest/sfx-coin-chime.mp3'
+
 let activeStop: (() => void) | null = null
+
+export function preloadHarborCoinSfx(): void {
+  preloadHarborSamples([HARBOR_COIN_SAMPLE])
+}
 
 /**
  * Play a brief money / ching cue. Safe from click handlers.
@@ -15,12 +22,13 @@ let activeStop: (() => void) | null = null
  */
 export function playHarborCoinChing(): void {
   if (typeof window === 'undefined') return
+  playHarborSample(HARBOR_COIN_SAMPLE, { gain: 0.75, channel: 'harbor-coin' })
   stopHarborCoinChing()
 
   const ctx = ensureSharedAudioContext()
   const t0 = ctx.currentTime + 0.01
   const bus = ctx.createGain()
-  bus.gain.setValueAtTime(HARBOR_COIN_CHING_GAIN, t0)
+  bus.gain.setValueAtTime(HARBOR_COIN_CHING_GAIN * 0.55, t0)
   bus.connect(ctx.destination)
 
   // Bright metallic stack (detuned sines) — soft “bling”
