@@ -1,6 +1,7 @@
 /**
- * Harbor Quest · v4 protagonist locomotion (KayKit-style clip vocabulary).
- * Procedural limb swings now; clip names reserved for future CC0 KayKit retarget.
+ * Harbor Quest · protagonist locomotion (standard MMO walk / idle / sit).
+ * Procedural limb swings — grounded feet, no root hop.
+ * Clip names reserved for future CC0 KayKit retarget.
  */
 import * as THREE from 'three'
 
@@ -18,6 +19,9 @@ export type HarborProtagonistAnimState = {
   /** Phase in seconds. */
   t: number
 }
+
+/** Walk cycle angular speed — ~1.15 strides/sec, MMO jog feel (not frantic hop). */
+export const HARBOR_WALK_CADENCE = 7.2
 
 const LIMB_NAMES = ['hips', 'thigh_l', 'thigh_r', 'shin_l', 'shin_r', 'arm_l', 'arm_r', 'spine'] as const
 
@@ -53,9 +57,14 @@ function findNamed(root: THREE.Object3D, name: string): THREE.Object3D | null {
   return found
 }
 
+function dampRotX(o: THREE.Object3D | null, dt: number, rate = 8): void {
+  if (!o) return
+  o.rotation.x *= Math.max(0, 1 - dt * rate)
+}
+
 /**
  * Tick idle / walk / sit on a standing Scout.
- * Walk: alternating thigh + arm counter-swing (replaces world-only Y bob as the primary read).
+ * Walk: alternating leg + arm counter-swing with **feet planted** (no root / hip hop).
  */
 export function tickHarborProtagonistAnim(
   root: THREE.Object3D,
@@ -66,7 +75,7 @@ export function tickHarborProtagonistAnim(
   ensureHarborProtagonistLimbs(root)
   const reduced = Boolean(opts.reduced)
   const next = { ...state, t: state.t + dt }
-  const amp = reduced ? 0.15 : 1
+  const amp = reduced ? 0.12 : 1
 
   const thighL = findNamed(root, 'thigh_l')
   const thighR = findNamed(root, 'thigh_r')
@@ -74,45 +83,45 @@ export function tickHarborProtagonistAnim(
   const armR = findNamed(root, 'arm_r')
   const spine = findNamed(root, 'spine')
   const hips = findNamed(root, 'hips')
+  const legL = findNamed(root, 'hq-leg-l')
+  const legR = findNamed(root, 'hq-leg-r')
+  const meshArmL = findNamed(root, 'hq-arm-l')
+  const meshArmR = findNamed(root, 'hq-arm-r')
+
+  // Keep hips locked to pelvis — never bounce the root for “walk feel”.
+  if (hips) {
+    hips.position.y = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.48
+  }
 
   if (state.mode === 'walk') {
-    const swing = Math.sin(next.t * 9) * 0.45 * amp
+    const swing = Math.sin(next.t * HARBOR_WALK_CADENCE) * 0.38 * amp
     if (thighL) thighL.rotation.x = swing
     if (thighR) thighR.rotation.x = -swing
-    if (armL) armL.rotation.x = -swing * 0.7
-    if (armR) armR.rotation.x = swing * 0.7
-    if (spine) spine.rotation.y = Math.sin(next.t * 9) * 0.04 * amp
-    // Soft mesh bob for legs that aren't reparented yet
-    root.traverse((o) => {
-      const mesh = o as THREE.Mesh
-      if (!mesh.isMesh || !mesh.userData.harborPart) return
-      if (mesh.userData.harborPart === 'bottom' || mesh.userData.harborPart === 'shoes') {
-        const side = mesh.position.x < 0 ? -1 : 1
-        mesh.rotation.x = side * swing * 0.35
-      }
-      if (mesh.userData.harborPart === 'top' && Math.abs(mesh.position.x) > 0.15) {
-        const side = mesh.position.x < 0 ? -1 : 1
-        mesh.rotation.x = -side * swing * 0.25
-      }
-    })
-    if (hips) hips.position.y = (typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.48) + Math.abs(Math.sin(next.t * 9)) * 0.02 * amp
+    if (armL) armL.rotation.x = -swing * 0.65
+    if (armR) armR.rotation.x = swing * 0.65
+    if (spine) spine.rotation.y = Math.sin(next.t * HARBOR_WALK_CADENCE) * 0.03 * amp
+
+    // Prefer whole-limb groups (anime kit) over per-mesh pivots that look like hopping.
+    if (legL) legL.rotation.x = swing * 0.55
+    if (legR) legR.rotation.x = -swing * 0.55
+    if (meshArmL) meshArmL.rotation.x = -swing * 0.4
+    if (meshArmR) meshArmR.rotation.x = swing * 0.4
+
+    // Fallback when groups are missing (older NPCs): gentle limb empties only — no shoe mesh twist.
   } else if (state.mode === 'idle') {
-    const breath = Math.sin(next.t * 2.2) * 0.02 * amp
+    const breath = Math.sin(next.t * 2.0) * 0.015 * amp
     if (spine) spine.position.y = 0.22 + breath
     if (armL) armL.rotation.z = 0.04 + breath
     if (armR) armR.rotation.z = -0.04 - breath
-    root.traverse((o) => {
-      const mesh = o as THREE.Mesh
-      if (!mesh.isMesh) return
-      if (mesh.userData.harborPart === 'bottom' || mesh.userData.harborPart === 'shoes') {
-        mesh.rotation.x *= Math.max(0, 1 - dt * 8)
-      }
-      if (mesh.userData.harborPart === 'top' && Math.abs(mesh.position.x) > 0.15) {
-        mesh.rotation.x *= Math.max(0, 1 - dt * 8)
-      }
-    })
-    if (thighL) thighL.rotation.x *= Math.max(0, 1 - dt * 8)
-    if (thighR) thighR.rotation.x *= Math.max(0, 1 - dt * 8)
+    dampRotX(thighL, dt)
+    dampRotX(thighR, dt)
+    dampRotX(armL, dt)
+    dampRotX(armR, dt)
+    dampRotX(legL, dt)
+    dampRotX(legR, dt)
+    dampRotX(meshArmL, dt)
+    dampRotX(meshArmR, dt)
+    if (spine) spine.rotation.y *= Math.max(0, 1 - dt * 8)
   } else {
     // sit — limbs settle
     for (const n of ['thigh_l', 'thigh_r', 'arm_l', 'arm_r'] as const) {
@@ -122,6 +131,10 @@ export function tickHarborProtagonistAnim(
         b.rotation.z *= Math.max(0, 1 - dt * 6)
       }
     }
+    dampRotX(legL, dt, 6)
+    dampRotX(legR, dt, 6)
+    dampRotX(meshArmL, dt, 6)
+    dampRotX(meshArmR, dt, 6)
   }
 
   return next

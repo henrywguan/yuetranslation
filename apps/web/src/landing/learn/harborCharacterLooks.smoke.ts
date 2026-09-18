@@ -178,10 +178,15 @@ assert.ok(!plan.visibleBody.includes('under_top'))
 assert.ok(harborModularPartNames().includes('slot_hat'))
 
 ensureHarborProtagonistLimbs(scout)
+const hipsY0 =
+  (scout.getObjectByName('hips') as { position: { y: number } } | undefined)?.position.y ?? 0
 let walked = tickHarborProtagonistAnim(scout, { mode: 'walk', t: 0 }, 0.05)
 walked = tickHarborProtagonistAnim(scout, walked, 0.05)
+const hipsY1 =
+  (scout.getObjectByName('hips') as { position: { y: number } } | undefined)?.position.y ?? 0
 assert.equal(harborProtagonistClipName('walk'), HARBOR_PROTAGONIST_CLIPS.walk)
 assert.ok(walked.t > 0)
+assert.ok(Math.abs(hipsY1 - hipsY0) < 1e-6, 'walk keeps hips planted (no hop bounce)')
 
 const codex = harborGearCodexStats()
 assert.ok(codex.uniqueMeshes > 20, 'v1 raises unique clothing mesh count')

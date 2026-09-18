@@ -524,10 +524,25 @@ export const HARBOR_TAP_ARRIVE = 0.4
  * Tap land to disembark; tap the moored boat (or water beside it) to board again.
  */
 export const HARBOR_LAND_EDGE = RIVER + 0.9
-/** On-foot walk speed (OSRS click-to-walk). */
+/** On-foot walk speed (standard MMO click-to-move). */
 export const HARBOR_WALK_SPEED = 3.4
+/** Ease walk speed down inside this distance of the destination (no hard stop hop). */
+export const HARBOR_WALK_ARRIVE_SLOW = 1.35
 /** Reach the moored canoe to board again. */
 export const HARBOR_REBOARD_RADIUS = 1.75
+
+/** MMO on-foot walk step — grounded, eases into arrival. */
+export function harborWalkStep(
+  dist: number,
+  dt: number,
+  opts: { reduced?: boolean } = {},
+): number {
+  if (dist <= 0 || dt <= 0) return 0
+  const base = opts.reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED
+  const slow = Math.min(1, dist / HARBOR_WALK_ARRIVE_SLOW)
+  const speed = base * (0.4 + 0.6 * slow)
+  return Math.min(dist, speed * dt)
+}
 
 export function isHarborLand(x: number): boolean {
   return Math.abs(x) >= HARBOR_LAND_EDGE
@@ -4396,15 +4411,14 @@ export function createHarborWorld(
         const dist = Math.hypot(dx, dz)
         const arrived = dist < HARBOR_TAP_ARRIVE
         if (!arrived) {
-          const speed = reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED
-          const step = Math.min(dist, speed * dt)
+          const step = harborWalkStep(dist, dt, { reduced })
           footX += (dx / dist) * step
           footZ += (dz / dist) * step
           const face = Math.atan2(dx, dz)
-          scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
+          scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 10)
           scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, { reduced })
-          const walkBob = reduced ? 0 : Math.abs(Math.sin(scoutAnim.t * 9)) * 0.04
-          scoutWalk.position.set(footX, groundYAt(footX, footZ) + walkBob, footZ)
+          // Plant feet on ground — no vertical root bounce (standard MMO locomotion).
+          scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
           // Don't open landmarks mid-walk either
           if (!playerDirected) emitVisitable(null)
         } else {
@@ -4556,7 +4570,9 @@ export function createHarborWorld(
     const lookY = travelMode === 'foot' ? footGy + (sitting ? 0.85 : 0.95) : 0.75
     const lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
     const off = orbitCameraOffset(yaw, pitch, distance)
-    const bobY = reduced ? 0 : Math.sin(waterPhase * 0.5) * 0.06
+    // Boat gets a soft water bob; on-foot camera stays stable (no hop / sway).
+    const bobY =
+      travelMode === 'boat' && !reduced ? Math.sin(waterPhase * 0.5) * 0.045 : 0
     camera.position.set(lookX + off.x, lookY + off.y + bobY, lookZ + off.z)
     camera.lookAt(lookX, lookY, lookZ)
 

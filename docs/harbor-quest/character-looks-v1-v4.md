@@ -113,7 +113,7 @@ Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes
 ### Rules
 
 1. Standing Scout gains a **limb hierarchy** (`hips` → `thigh_l/r` → `shin_l/r`, `spine` → `arm_l/r`) even while meshes stay procedural.
-2. Replace world `walkBob`-only with `tickHarborProtagonistAnim(root, { mode: 'idle'|'walk', dt, t })` rotating limbs.
+2. Replace world root hop with `tickHarborProtagonistAnim(root, { mode: 'idle'|'walk', dt, t })` rotating limbs — **feet planted**, no `walkBob`.
 3. Clip vocabulary (names only for now): `Idle`, `Walking_A` — compatible with future CC0 KayKit Character Animations retarget onto a Harbor rig GLB.
 4. Seated canoe pose stays a separate mannequin (or seated clip later); do not break boat sit.
 5. Remotes use the same tick (cheap) so other sailors look alive.
