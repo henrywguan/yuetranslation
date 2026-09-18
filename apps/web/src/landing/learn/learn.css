@@ -4680,6 +4680,16 @@
   border-color: color-mix(in srgb, #e07060 40%, transparent);
 }
 
+.hq-match-diff--native {
+  background: color-mix(in srgb, #2e4a8b 24%, #0c1018);
+  border-color: color-mix(in srgb, #6a9ae0 45%, transparent);
+}
+
+.hq-match-diff-pill--native {
+  border-color: color-mix(in srgb, #6a9ae0 50%, transparent);
+  color: #b8d4ff;
+}
+
 .hq-match-diff-label {
   display: flex;
   gap: 0.45rem;
@@ -4842,6 +4852,39 @@
 .hq-match-prompt {
   text-align: center;
   margin-bottom: 1.15rem;
+}
+
+.hq-match-gloss-prompt {
+  margin: 0;
+  font-family: Syne, system-ui, sans-serif;
+  font-size: clamp(1.15rem, 3.6vw, 1.45rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: color-mix(in srgb, #fff8ee 95%, white);
+  max-width: 36rem;
+  margin-inline: auto;
+}
+
+.hq-match-gloss-hint {
+  margin: 0.45rem 0 0;
+  font-family: 'Noto Sans HK', 'Noto Sans', sans-serif;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, #f0d080 75%, #e8dcc8);
+}
+
+.hq-match-native-reveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.hq-match-choices--native .hq-match-choice.is-han {
+  font-family: 'Noto Sans HK', 'Noto Sans', sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .hq-match-prompt-row {

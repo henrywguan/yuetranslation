@@ -1,6 +1,8 @@
 /** Offline themed bank for Harbor Quest · Match the Definition arena. */
 
-export type MatchDifficulty = 'easy' | 'medium' | 'hard'
+import { MATCH_DEFINITION_BANK_NATIVE } from './matchDefinitionBankNative'
+
+export type MatchDifficulty = 'easy' | 'medium' | 'hard' | 'native'
 export type MatchTopic = 'kids' | 'animals' | 'nature' | 'food' | 'harbor'
 
 export type MatchWord = {
@@ -8,7 +10,7 @@ export type MatchWord = {
   han: string
   /** Space-separated Jyutping syllables with tone digits (e.g. `nei5 hou2`). */
   jp: string
-  /** English gloss shown as a choice. */
+  /** English gloss — choice text on Easy/Medium/Hard; prompt text on Native. */
   def: string
   topic: MatchTopic
   difficulty: MatchDifficulty
@@ -61,7 +63,7 @@ export const MATCH_TOPIC: Record<MatchTopic, MatchTopicConfig> = {
 
 export const MATCH_TOPICS: MatchTopic[] = ['kids', 'animals', 'nature', 'food', 'harbor']
 
-/** Easy = simple words · Medium = phrases · Hard = full sentences. */
+/** Easy = simple words · Medium = phrases · Hard = sentences · Native = news-desk Cantonese choices. */
 export const MATCH_DIFFICULTY: Record<MatchDifficulty, MatchDifficultyConfig> = {
   easy: {
     id: 'easy',
@@ -84,15 +86,22 @@ export const MATCH_DIFFICULTY: Record<MatchDifficulty, MatchDifficultyConfig> = 
     seconds: 30,
     goldPerHit: 30,
   },
+  native: {
+    id: 'native',
+    label: { en: 'Native', zh: '母語' },
+    blurb: { en: 'News-desk Cantonese choices', zh: '新聞腔粵語選項' },
+    seconds: 28,
+    goldPerHit: 40,
+  },
 }
 
-export const MATCH_DIFFICULTIES: MatchDifficulty[] = ['easy', 'medium', 'hard']
+export const MATCH_DIFFICULTIES: MatchDifficulty[] = ['easy', 'medium', 'hard', 'native']
 
 /**
  * Themed starter set — Open Cantonese + Harbor Quest flavour.
  * Definitions are short learner glosses (not full dictionary senses).
  */
-export const MATCH_DEFINITION_BANK: MatchWord[] = [
+export const MATCH_DEFINITION_BANK_CORE: MatchWord[] = [
   // ════════ Kids ════════
   { id: 'k-e-baa1', han: '爸', jp: 'baa1', def: 'dad / father', topic: 'kids', difficulty: 'easy' },
   { id: 'k-e-maa1', han: '媽', jp: 'maa1', def: 'mom / mother', topic: 'kids', difficulty: 'easy' },
@@ -534,6 +543,11 @@ export const MATCH_DEFINITION_BANK: MatchWord[] = [
   },
 ]
 
+export const MATCH_DEFINITION_BANK: MatchWord[] = [
+  ...MATCH_DEFINITION_BANK_CORE,
+  ...MATCH_DEFINITION_BANK_NATIVE,
+]
+
 /** Ferry coins granted per 1 arena gold exchanged. */
 export const HARBOR_GOLD_TO_COINS = 1
 
@@ -554,11 +568,16 @@ export type MatchRound = {
   word: MatchWord
   topic: MatchTopic
   difficulty: MatchDifficulty
-  /** Three definitions; exactly one matches `word.def`. */
+  /**
+   * Three options. Easy/Medium/Hard: English glosses.
+   * Native: news-desk Cantonese lines (`han`).
+   */
   choices: string[]
   correctIndex: number
   seconds: number
   goldPerHit: number
+  /** Native flips the prompt: English gloss up top, Cantonese in the choices. */
+  promptMode: 'han' | 'gloss'
 }
 
 /** Build one timed round — distractors stay in the same topic + difficulty. */
@@ -572,7 +591,12 @@ export function buildMatchRound(
   const pool = excludeId ? bank.filter((w) => w.id !== excludeId) : bank
   const source = pool.length > 0 ? pool : bank
   const word = source[Math.floor(Math.random() * source.length)]!
-  const distractors = shuffle(bank.filter((w) => w.id !== word.id).map((w) => w.def)).slice(0, 2)
+  const native = difficulty === 'native'
+  const key = native ? 'han' : 'def'
+  const answer = word[key]
+  const distractors = shuffle(
+    bank.filter((w) => w.id !== word.id).map((w) => w[key]),
+  ).slice(0, 2)
   // Pad from same topic other difficulties, then whole bank.
   while (distractors.length < 2) {
     const extra =
@@ -580,23 +604,24 @@ export function buildMatchRound(
         (w) =>
           w.topic === topic &&
           w.id !== word.id &&
-          !distractors.includes(w.def) &&
-          w.def !== word.def,
+          !distractors.includes(w[key]) &&
+          w[key] !== answer,
       ) ??
       MATCH_DEFINITION_BANK.find(
-        (w) => w.id !== word.id && !distractors.includes(w.def) && w.def !== word.def,
+        (w) => w.id !== word.id && !distractors.includes(w[key]) && w[key] !== answer,
       )
     if (!extra) break
-    distractors.push(extra.def)
+    distractors.push(extra[key])
   }
-  const choices = shuffle([word.def, ...distractors])
+  const choices = shuffle([answer, ...distractors])
   return {
     word,
     topic,
     difficulty,
     choices,
-    correctIndex: choices.indexOf(word.def),
+    correctIndex: choices.indexOf(answer),
     seconds: cfg.seconds,
     goldPerHit: cfg.goldPerHit,
+    promptMode: native ? 'gloss' : 'han',
   }
 }

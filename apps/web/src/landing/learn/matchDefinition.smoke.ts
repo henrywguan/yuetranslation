@@ -16,9 +16,10 @@ assert.equal(MATCH_DIFFICULTY.easy.goldPerHit, 10)
 assert.equal(HARBOR_GOLD_TO_COINS, 1)
 
 assert.deepEqual(MATCH_TOPICS, ['kids', 'animals', 'nature', 'food', 'harbor'])
-assert.deepEqual(MATCH_DIFFICULTIES, ['easy', 'medium', 'hard'])
+assert.deepEqual(MATCH_DIFFICULTIES, ['easy', 'medium', 'hard', 'native'])
 assert.ok(MATCH_DIFFICULTY.medium.seconds > MATCH_DIFFICULTY.easy.seconds)
 assert.ok(MATCH_DIFFICULTY.hard.seconds > MATCH_DIFFICULTY.medium.seconds)
+assert.ok(MATCH_DIFFICULTY.native.goldPerHit > MATCH_DIFFICULTY.hard.goldPerHit)
 assert.ok(MATCH_DIFFICULTY.medium.goldPerHit > MATCH_DIFFICULTY.easy.goldPerHit)
 assert.ok(MATCH_DIFFICULTY.hard.goldPerHit > MATCH_DIFFICULTY.medium.goldPerHit)
 
@@ -39,7 +40,17 @@ for (const topic of MATCH_TOPICS) {
     assert.equal(round.difficulty, diff)
     assert.equal(round.choices.length, 3)
     assert.equal(new Set(round.choices).size, 3)
-    assert.equal(round.choices[round.correctIndex], round.word.def)
+    if (diff === 'native') {
+      assert.equal(round.promptMode, 'gloss')
+      assert.equal(round.choices[round.correctIndex], round.word.han)
+      assert.ok(
+        bank.every((w) => w.han.length >= 8),
+        `${topic}/native lines stay news-length`,
+      )
+    } else {
+      assert.equal(round.promptMode, 'han')
+      assert.equal(round.choices[round.correctIndex], round.word.def)
+    }
     assert.equal(round.seconds, MATCH_DIFFICULTY[diff].seconds)
     assert.equal(round.goldPerHit, MATCH_DIFFICULTY[diff].goldPerHit)
     const again = buildMatchRound(topic, diff, round.word.id)
