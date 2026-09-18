@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { HarborBaitId, HarborFishId, HarborFishMethod, HarborFishSpotId, HarborFishToolId, HarborFishingBag } from './harborFishing'
 import {
   GUAN_FISHING_OVERSEER_NAME,
@@ -16,6 +16,8 @@ import {
   sellHarborFish,
 } from './harborFishing'
 import { HarborFishModelIcon } from './HarborFishModelIcon'
+import { HarborItemTooltip } from './HarborItemTooltip'
+import { type HarborShopQty } from './harborShopQty'
 import {
   playHarborFishCast,
   playHarborFishCatch,
@@ -50,8 +52,16 @@ type TileProps = {
   selected?: boolean
   /** Compact RS bank/shop cell (icon + badges only). */
   compact?: boolean
+  tipOpen?: boolean
+  tipPlacement?: 'above' | 'below'
+  shop?: Parameters<typeof HarborItemTooltip>[0]['shop']
   onClick?: () => void
+  onPointerEnter?: () => void
   as?: 'button' | 'div'
+}
+
+function isCoarsePointer() {
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }
 
 function FishItemTile({
@@ -66,12 +76,27 @@ function FishItemTile({
   locked = false,
   selected = false,
   compact = false,
+  tipOpen = false,
+  tipPlacement = 'above',
+  shop,
   onClick,
+  onPointerEnter,
   as = onClick ? 'button' : 'div',
 }: TileProps) {
   const className = compact
     ? `hq-shop-cell-btn hq-fish-cell-btn${selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}${onClick ? ' is-action' : ''}`
     : `hq-fish-tile${selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}${onClick ? ' is-action' : ''}`
+
+  const tip = (
+    <HarborItemTooltip
+      tipId={id}
+      name={{ en: label, zh: zh ?? '' }}
+      meta={meta}
+      open={Boolean(tipOpen && (compact || shop))}
+      placement={tipPlacement}
+      shop={shop}
+    />
+  )
 
   const body = compact ? (
     <>
@@ -86,6 +111,7 @@ function FishItemTile({
           {price}
         </span>
       ) : null}
+      {tip}
     </>
   ) : (
     <>
@@ -99,6 +125,7 @@ function FishItemTile({
         ) : null}
         {meta ? <span className="hq-fish-tile-meta">{meta}</span> : null}
       </span>
+      {shop ? tip : null}
     </>
   )
 
@@ -108,6 +135,7 @@ function FishItemTile({
         type="button"
         className={className}
         onClick={onClick}
+        onPointerEnter={onPointerEnter}
         aria-pressed={selected || undefined}
         aria-label={meta ? `${label} · ${meta}` : label}
         title={meta ? `${label} · ${meta}` : label}
@@ -117,7 +145,13 @@ function FishItemTile({
     )
   }
   return (
-    <div className={className} role="group" aria-label={label} title={meta ? `${label} · ${meta}` : label}>
+    <div
+      className={className}
+      role="group"
+      aria-label={label}
+      title={meta ? `${label} · ${meta}` : label}
+      onPointerEnter={onPointerEnter}
+    >
       {body}
     </div>
   )
@@ -147,9 +181,12 @@ export function HarborFishingPanel({
   onCastAnim,
   onClose,
 }: Props) {
+  const rootRef = useRef<HTMLElement>(null)
   const [tab, setTab] = useState<'cast' | 'gear' | 'log' | 'sell'>(mode === 'spot' ? 'cast' : 'gear')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [tipId, setTipId] = useState<string | null>(null)
+  const [qty, setQty] = useState<HarborShopQty>(1)
 
   const level = fishingXpToLevel(bag.fishingXp)
   const nextXp = fishingXpForLevel(Math.min(99, level + 1))
@@ -163,7 +200,29 @@ export function HarborFishingPanel({
   useEffect(() => {
     setTab(mode === 'spot' ? 'cast' : 'gear')
     setMsg(null)
+    setTipId(null)
   }, [mode, spotId])
+
+  useEffect(() => {
+    setTipId(null)
+  }, [tab])
+
+  useEffect(() => {
+    const onPointerDown = (ev: PointerEvent) => {
+      const root = rootRef.current
+      if (!root) return
+      const t = ev.target as Node | null
+      if (!t || !root.contains(t)) {
+        if (t instanceof Element && t.closest('.hq-item-tip')) return
+        setTipId(null)
+        return
+      }
+      const el = t instanceof Element ? t : t.parentElement
+      if (!el?.closest('.hq-shop-cell-btn, .hq-fish-tile')) setTipId(null)
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [])
 
   const fishRows = useMemo(() => {
     return HARBOR_FISH_CATALOG.map((f) => ({
@@ -186,6 +245,26 @@ export function HarborFishingPanel({
     mode === 'lodge'
       ? 'Fishing Lodge · 漁寮'
       : `${spot?.name.en ?? 'Fishing spot'} · ${spot?.name.zh ?? ''}`
+
+  const openTip = (id: string) => {
+    if (isCoarsePointer()) {
+      setTipId((cur) => (cur === id ? null : id))
+    } else {
+      setTipId(id)
+    }
+  }
+
+  const resolveBuyPacks = (unitPrice: number): number => {
+    if (qty === 50) {
+      return Math.max(1, Math.floor(coins / Math.max(1, unitPrice)))
+    }
+    return qty
+  }
+
+  const resolveSellQty = (have: number): number => {
+    if (qty === 50) return have
+    return Math.min(have, qty)
+  }
 
   const cast = () => {
     if (!spotId || busy || casting) return
@@ -215,6 +294,7 @@ export function HarborFishingPanel({
 
   return (
     <aside
+      ref={rootRef}
       className="hq-visit-panel hq-visit-panel--shop hq-shop-shelf hq-shop-shelf--bank-chrome hq-visit-panel--fish"
       role="dialog"
       aria-label="Guan fishing"
@@ -290,7 +370,7 @@ export function HarborFishingPanel({
           <div className="hq-fish-req" aria-label="Fish that bite here">
             <p className="hq-fish-req-label">Bites here</p>
             <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Bites here">
-              {biteFish.map((f) => (
+              {biteFish.map((f, i) => (
                 <FishShopCell key={f.id}>
                   <FishItemTile
                     compact
@@ -299,8 +379,37 @@ export function HarborFishingPanel({
                     method={f.method}
                     label={f.name.en}
                     zh={f.name.zh}
-                    meta={`Lv ${f.level}`}
+                    meta={`Lv ${f.level} · ${f.value}¢`}
                     badge={`Lv${f.level}`}
+                    tipOpen={tipId === f.id}
+                    tipPlacement={i < 8 ? 'below' : 'above'}
+                    onPointerEnter={() => {
+                      if (!isCoarsePointer()) setTipId(f.id)
+                    }}
+                    onClick={() => openTip(f.id)}
+                    shop={{
+                      qty,
+                      onQtyChange: setQty,
+                      buyLabel: 'Buy',
+                      sellLabel: 'Sell',
+                      buyDisabled: true,
+                      sellDisabled: (bag.fish[f.id] ?? 0) < 1,
+                      buyTitle: 'Catch this fish at the shore',
+                      sellTitle:
+                        (bag.fish[f.id] ?? 0) < 1
+                          ? 'No catch in the bag yet'
+                          : `Sell ${resolveSellQty(bag.fish[f.id] ?? 0)}× for ${f.value}¢ each`,
+                      onSell: () => {
+                        const have = bag.fish[f.id] ?? 0
+                        const r = sellHarborFish(bag, f.id as HarborFishId, resolveSellQty(have))
+                        if (r.sold < 1) {
+                          setMsg('No catch in the bag yet')
+                          return
+                        }
+                        onBagChange(r.bag, r.coins)
+                        setMsg(`Sold ${r.sold}× ${f.name.en} for ${r.coins}¢`)
+                      },
+                    }}
                   />
                 </FishShopCell>
               ))}
@@ -322,9 +431,10 @@ export function HarborFishingPanel({
         <div className="hq-fish-gear">
           <p className="hq-fish-req-label">Tools</p>
           <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Fishing tools">
-            {HARBOR_FISH_TOOLS.map((tool) => {
+            {HARBOR_FISH_TOOLS.map((tool, i) => {
               const owned = bag.tools.includes(tool.id)
               const eq = bag.equippedTool === tool.id
+              const locked = !owned && coins < tool.price
               return (
                 <FishShopCell key={tool.id}>
                   <FishItemTile
@@ -334,24 +444,48 @@ export function HarborFishingPanel({
                     method={tool.method}
                     label={tool.name.en}
                     zh={tool.name.zh}
-                    meta={owned ? (eq ? 'Equipped' : 'Equip') : `${tool.price}¢ · Lv ${tool.level}`}
+                    meta={owned ? (eq ? 'Equipped' : 'Owned') : `${tool.price}¢ · Lv ${tool.level}`}
                     badge={owned ? (eq ? '✓' : '1') : '0'}
                     price={owned ? undefined : String(tool.price)}
+                    locked={locked}
                     selected={eq}
+                    tipOpen={tipId === tool.id}
+                    tipPlacement={i < 8 ? 'below' : 'above'}
+                    onPointerEnter={() => {
+                      if (!isCoarsePointer()) setTipId(tool.id)
+                    }}
                     onClick={() => {
                       playHarborUiClick()
+                      openTip(tool.id)
                       if (owned) {
                         onBagChange({ ...bag, equippedTool: tool.id })
                         setMsg(`Equipped ${tool.name.en}`)
-                        return
                       }
-                      const r = buyHarborFishTool(bag, tool.id as HarborFishToolId, coins)
-                      if (!r.ok) {
-                        setMsg(r.message)
-                        return
-                      }
-                      onBagChange(r.bag, r.coins - coins)
-                      setMsg(`Bought ${tool.name.en}`)
+                    }}
+                    shop={{
+                      qty,
+                      onQtyChange: setQty,
+                      qtyHint: 'Unique tool · buys 1',
+                      buyLabel: owned ? 'Owned' : locked ? `Buy · ${tool.price}¢` : 'Buy',
+                      sellLabel: '—',
+                      buyDisabled: owned,
+                      sellDisabled: true,
+                      buyTitle: owned
+                        ? 'Already owned — click cell to equip'
+                        : locked
+                          ? `Need ${tool.price}¢ — tap Buy to confirm`
+                          : `Buy for ${tool.price}¢ · Lv ${tool.level}`,
+                      sellTitle: 'Tools stay in the lodge kit',
+                      onBuy: () => {
+                        if (owned) return
+                        const r = buyHarborFishTool(bag, tool.id as HarborFishToolId, coins)
+                        if (!r.ok) {
+                          setMsg(r.message)
+                          return
+                        }
+                        onBagChange(r.bag, r.coins - coins)
+                        setMsg(`Bought ${tool.name.en}`)
+                      },
                     }}
                   />
                 </FishShopCell>
@@ -360,9 +494,11 @@ export function HarborFishingPanel({
           </ul>
           <p className="hq-fish-req-label">Bait</p>
           <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Fishing bait">
-            {HARBOR_FISH_BAITS.filter((b) => b.id !== 'bait-none').map((bait) => {
-              const qty = bag.bait[bait.id] ?? 0
+            {HARBOR_FISH_BAITS.filter((b) => b.id !== 'bait-none').map((bait, i) => {
+              const have = bag.bait[bait.id] ?? 0
               const eq = bag.equippedBait === bait.id
+              const locked = coins < bait.price
+              const packs = resolveBuyPacks(bait.price)
               return (
                 <FishShopCell key={bait.id}>
                   <FishItemTile
@@ -372,29 +508,57 @@ export function HarborFishingPanel({
                     label={bait.name.en}
                     zh={bait.name.zh}
                     meta={
-                      qty > 0
+                      have > 0
                         ? eq
-                          ? `×${qty} · Selected`
-                          : `×${qty} · Select`
+                          ? `×${have} · Selected`
+                          : `×${have} · Select`
                         : `${bait.price}¢ / ${bait.pack}`
                     }
-                    badge={qty > 0 ? String(qty) : '0'}
-                    price={qty > 0 ? undefined : String(bait.price)}
+                    badge={have > 0 ? String(have) : '0'}
+                    price={String(bait.price)}
+                    locked={locked && have < 1}
                     selected={eq}
+                    tipOpen={tipId === bait.id}
+                    tipPlacement={i < 8 ? 'below' : 'above'}
+                    onPointerEnter={() => {
+                      if (!isCoarsePointer()) setTipId(bait.id)
+                    }}
                     onClick={() => {
                       playHarborUiClick()
-                      if (qty > 0) {
+                      openTip(bait.id)
+                      if (have > 0) {
                         onBagChange({ ...bag, equippedBait: bait.id as HarborBaitId })
                         setMsg(`Using ${bait.name.en}`)
-                        return
                       }
-                      const r = buyHarborFishBait(bag, bait.id as HarborBaitId, coins)
-                      if (!r.ok) {
-                        setMsg(r.message)
-                        return
-                      }
-                      onBagChange(r.bag, r.coins - coins)
-                      setMsg(`Bought ${bait.pack}× ${bait.name.en}`)
+                    }}
+                    shop={{
+                      qty,
+                      onQtyChange: setQty,
+                      qtyHint: `Pack ×${bait.pack} · ${bait.price}¢ each`,
+                      buyLabel: locked ? `Buy · ${bait.price}¢` : `Buy ×${packs}`,
+                      sellLabel: '—',
+                      buyDisabled: false,
+                      sellDisabled: true,
+                      buyTitle: locked
+                        ? `Need ${bait.price}¢ — tap Buy to confirm`
+                        : `Buy ${packs} pack${packs === 1 ? '' : 's'} (${packs * bait.pack} bait)`,
+                      sellTitle: 'Bait is spent on casts — no sell-back',
+                      onBuy: () => {
+                        const r = buyHarborFishBait(
+                          bag,
+                          bait.id as HarborBaitId,
+                          coins,
+                          resolveBuyPacks(bait.price),
+                        )
+                        if (!r.ok) {
+                          setMsg(r.message)
+                          return
+                        }
+                        onBagChange(r.bag, r.coins - coins)
+                        setMsg(
+                          `Bought ${r.packsBought} pack${r.packsBought === 1 ? '' : 's'} · ${bait.name.en}`,
+                        )
+                      },
                     }}
                   />
                 </FishShopCell>
@@ -432,28 +596,50 @@ export function HarborFishingPanel({
             <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Sell fish">
               {fishRows
                 .filter((f) => f.qty > 0)
-                .map((f) => (
-                  <FishShopCell key={f.id}>
-                    <FishItemTile
-                      compact
-                      kind="fish"
-                      id={f.id}
-                      method={f.method}
-                      label={f.name.en}
-                      zh={f.name.zh}
-                      meta={`×${f.qty} · Sell 1 · ${f.value}¢`}
-                      badge={String(f.qty)}
-                      price={String(f.value)}
-                      onClick={() => {
-                        playHarborUiClick()
-                        const r = sellHarborFish(bag, f.id as HarborFishId, 1)
-                        if (r.sold < 1) return
-                        onBagChange(r.bag, r.coins)
-                        setMsg(`Sold ${f.name.en} for ${r.coins}¢`)
-                      }}
-                    />
-                  </FishShopCell>
-                ))}
+                .map((f, i) => {
+                  const sellN = resolveSellQty(f.qty)
+                  return (
+                    <FishShopCell key={f.id}>
+                      <FishItemTile
+                        compact
+                        kind="fish"
+                        id={f.id}
+                        method={f.method}
+                        label={f.name.en}
+                        zh={f.name.zh}
+                        meta={`×${f.qty} · ${f.value}¢ each`}
+                        badge={String(f.qty)}
+                        price={String(f.value)}
+                        tipOpen={tipId === f.id}
+                        tipPlacement={i < 8 ? 'below' : 'above'}
+                        onPointerEnter={() => {
+                          if (!isCoarsePointer()) setTipId(f.id)
+                        }}
+                        onClick={() => {
+                          playHarborUiClick()
+                          openTip(f.id)
+                        }}
+                        shop={{
+                          qty,
+                          onQtyChange: setQty,
+                          qtyHint: `Have ×${f.qty} · ${f.value}¢ each`,
+                          buyLabel: 'Buy',
+                          sellLabel: `Sell ×${sellN}`,
+                          buyDisabled: true,
+                          sellDisabled: f.qty < 1,
+                          buyTitle: 'Catch more at a shore spot',
+                          sellTitle: `Sell ${sellN}× for ${sellN * f.value}¢`,
+                          onSell: () => {
+                            const r = sellHarborFish(bag, f.id as HarborFishId, sellN)
+                            if (r.sold < 1) return
+                            onBagChange(r.bag, r.coins)
+                            setMsg(`Sold ${r.sold}× ${f.name.en} for ${r.coins}¢`)
+                          },
+                        }}
+                      />
+                    </FishShopCell>
+                  )
+                })}
             </ul>
           )}
         </div>

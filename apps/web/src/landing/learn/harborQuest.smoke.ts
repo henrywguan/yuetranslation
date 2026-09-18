@@ -849,10 +849,25 @@ function main() {
   assert.match(playSrc, /is-bag-open/, 'LearnPlay marks bag-open on play shell')
   const tipSrc = readFileSync(new URL('./HarborItemTooltip.tsx', import.meta.url), 'utf8')
   assert.match(tipSrc, /export function HarborItemTooltip/, 'item tooltip component')
-  assert.match(tipSrc, /role="tooltip"/, 'tooltip uses tooltip role')
+  assert.match(tipSrc, /role=\{shop \? 'dialog' : 'tooltip'\}|role="tooltip"/, 'tooltip uses tooltip role')
+  assert.match(tipSrc, /HarborTipShopActions|hq-item-tip-shop/, 'shop tips expose Buy/Sell + qty')
+  assert.match(tipSrc, /is-shop/, 'interactive shop tip class')
   assert.match(tipSrc, /is-vip/, 'VIP tips get gold glow class')
   assert.match(tipSrc, /createPortal/, 'tips portal above bag overflow')
   assert.match(tipSrc, /position: fixed|hq-item-tip--fixed/, 'tips use fixed positioning')
+  const shopShelfSrc = readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8')
+  assert.match(shopShelfSrc, /shop=\{shopActions\}/, 'outfitter/bank cells pass shop tip actions')
+  assert.match(shopShelfSrc, /onSell/, 'outfitter tip can sell gear')
+  assert.match(shopShelfSrc, /closest\('\.hq-item-tip'\)/, 'shop tip stays open when tapping Buy/Sell')
+  assert.match(
+    readFileSync(new URL('./progress.ts', import.meta.url), 'utf8'),
+    /export function sellHarborGear/,
+    'Outfitter sell-back helper',
+  )
+  assert.match(playSrc, /sellHarborGear|onSell/, 'LearnPlay wires gear sell')
+  const fishPanelTipSrc = readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8')
+  assert.match(fishPanelTipSrc, /HarborItemTooltip/, 'fishing shop cells show item tips')
+  assert.match(fishPanelTipSrc, /shop=\{\{/, 'fishing tips include Buy/Sell + qty')
   const wornSrc = readFileSync(new URL('./HarborWornBoard.tsx', import.meta.url), 'utf8')
   assert.match(wornSrc, /export function HarborWornBoard/, 'worn board component')
   assert.match(wornSrc, /hq-worn-slot--hat/, 'worn board hat slot')
@@ -862,6 +877,9 @@ function main() {
   assert.match(wornSrc, /tipId === item\.id/, 'worn tips follow tipId only (not selection)')
   assert.doesNotMatch(wornSrc, /hq-worn-swatch/, 'worn color swatches removed')
   const wornCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
+  assert.match(wornCss, /\.hq-item-tip\.is-shop/, 'interactive shop tip styles')
+  assert.match(wornCss, /\.hq-item-tip-action/, 'shop tip Buy/Sell buttons')
+  assert.match(wornCss, /\.hq-item-tip-qty-btn/, 'shop tip quantity toggles')
   assert.match(wornCss, /\.hq-worn\s*\{/, 'worn board styles')
   assert.match(
     wornCss,

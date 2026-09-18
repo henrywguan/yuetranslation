@@ -100,6 +100,7 @@ import {
   isLevelCleared,
   isLevelUnlocked,
   buyHarborGear,
+  sellHarborGear,
   depositHarborGear,
   equipHarborGear,
   completeHarborCharacter,
@@ -789,6 +790,20 @@ export function LearnSession({
     [pushProgress],
   )
 
+  const onSell = useCallback(
+    (id: HarborGearId) => {
+      const res = sellHarborGear(id)
+      if (!res.ok) {
+        setShopMsg(res.reason)
+        return
+      }
+      playHarborCoinChing()
+      pushProgress(res.progress)
+      setShopMsg(`Sold ${harborGearById(id)?.name.en ?? id} for ${res.refund.toLocaleString()}¢.`)
+    },
+    [pushProgress],
+  )
+
   const onEquip = useCallback(
     (slot: HarborGearSlot, id: HarborGearId) => {
       const res = equipHarborGear(slot, id)
@@ -1358,6 +1373,7 @@ export function LearnSession({
             setShopSlot(slot)
           }}
           onBuy={onBuy}
+          onSell={onSell}
           onEquip={onEquip}
           onOpenCodex={openGearCodex}
           onClose={() => {

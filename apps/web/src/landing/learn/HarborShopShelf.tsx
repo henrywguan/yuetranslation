@@ -11,18 +11,10 @@ import {
 } from './harborGear'
 import { HarborGearModelIcon } from './HarborGearModelIcon'
 import { HarborItemTooltip } from './HarborItemTooltip'
+import { HARBOR_SHOP_QTY, HARBOR_SHOP_QTY_LABEL, type HarborShopQty } from './harborShopQty'
 import { playHarborUiClick } from './harborInteractSfx'
 
-/** RS bank / general-store qty toggles (Harbor gear is unique — buy still takes 1). */
-export const HARBOR_SHOP_QTY = [1, 5, 10, 50] as const
-export type HarborShopQty = (typeof HARBOR_SHOP_QTY)[number]
-
-const QTY_LABEL: Record<HarborShopQty, string> = {
-  1: '1',
-  5: '5',
-  10: '10',
-  50: 'All',
-}
+export { HARBOR_SHOP_QTY, type HarborShopQty } from './harborShopQty'
 
 const SLOT_LABEL: Record<HarborGearSlot, string> = {
   hat: 'Hat',
@@ -52,6 +44,7 @@ type Props = {
   selectedSlot: HarborGearSlot
   onSelectSlot: (slot: HarborGearSlot) => void
   onBuy?: (id: HarborGearId) => void
+  onSell?: (id: HarborGearId) => void
   onEquip?: (slot: HarborGearSlot, id: HarborGearId) => void
   onDeposit?: (id: HarborGearId) => void
   onWithdraw?: (id: HarborGearId) => void
@@ -80,6 +73,7 @@ export function HarborShopShelf({
   selectedSlot,
   onSelectSlot,
   onBuy,
+  onSell,
   onEquip,
   onDeposit,
   onWithdraw,
@@ -136,6 +130,8 @@ export function HarborShopShelf({
       if (!root) return
       const t = ev.target as Node | null
       if (!t || !root.contains(t)) {
+        // Portaled tips live on body — keep open when tapping Buy/Sell/Qty.
+        if (t instanceof Element && t.closest('.hq-item-tip')) return
         setTipId(null)
         return
       }
@@ -156,8 +152,11 @@ export function HarborShopShelf({
   const onCellActivate = (item: HarborGearItem) => {
     setPickedId(item.id)
     onSelectSlot(item.slot)
+    // Always open tip on tap (mobile + desktop) so Buy/Sell stay reachable.
     if (isCoarsePointer()) {
       setTipId((cur) => (cur === item.id ? null : item.id))
+    } else {
+      setTipId(item.id)
     }
     if (valueCheck) {
       const vip = item.tier === 'vip' ? harborVipSetFor(item.id) : undefined
@@ -173,8 +172,6 @@ export function HarborShopShelf({
       return
     }
     setValueFlash(null)
-    // Double-click / RS left-click buy path via primary action below;
-    // single click selects + examines.
   }
 
   const runPrimary = () => {
@@ -194,17 +191,15 @@ export function HarborShopShelf({
   const primaryLabel = (() => {
     if (!picked) return kind === 'outfitter' ? 'Buy' : bankTab === 'pack' ? 'Bank' : 'Take'
     if (kind === 'outfitter') {
-      if (!ownedPicked) return lockedPicked ? 'Locked' : 'Buy'
+      if (!ownedPicked) return 'Buy'
       return equippedPicked ? 'Wearing' : 'Wear'
     }
     return bankTab === 'pack' ? 'Bank' : 'Take'
   })()
 
+  // Unaffordable items stay actionable — Buy surfaces "Not enough coins" via onBuy.
   const primaryDisabled =
-    !picked ||
-    valueCheck ||
-    (kind === 'outfitter' && ownedPicked && equippedPicked) ||
-    (kind === 'outfitter' && !ownedPicked && lockedPicked)
+    !picked || valueCheck || (kind === 'outfitter' && ownedPicked && equippedPicked)
 
   const statusLine = valueFlash ?? message
 
@@ -308,22 +303,63 @@ export function HarborShopShelf({
             const tipOpen = tipId === item.id
             const tipBelow = i < SHOP_GRID_COLS
             const vip = item.tier === 'vip'
-            const showPrice =
-              kind === 'outfitter' && !ownedItem && item.price > 0
+            const showPrice = kind === 'outfitter' && !ownedItem && item.price > 0
+            const sellRefund = item.price > 0 ? Math.max(1, Math.floor(item.price / 2)) : 0
+            const shopActions =
+              kind === 'outfitter'
+                ? {
+                    qty,
+                    onQtyChange: setQty,
+                    qtyHint: 'Unique gear · buys / sells 1',
+                    buyLabel: ownedItem ? 'Owned' : locked ? `Buy · ${item.price.toLocaleString()}¢` : 'Buy',
+                    sellLabel: item.price <= 0 ? 'Starter' : `Sell · ${sellRefund.toLocaleString()}¢`,
+                    buyDisabled: ownedItem || valueCheck,
+                    sellDisabled: !ownedItem || item.price <= 0 || valueCheck,
+                    buyTitle: ownedItem
+                      ? 'Already owned'
+                      : locked
+                        ? `Need ${item.price.toLocaleString()} ferry coins — tap Buy to confirm`
+                        : `Buy for ${item.price.toLocaleString()}¢`,
+                    sellTitle:
+                      item.price <= 0
+                        ? 'Starter kit stays with the Scout'
+                        : ownedItem
+                          ? `Sell for ${sellRefund.toLocaleString()}¢ (half price)`
+                          : 'Buy this piece first',
+                    onBuy: () => {
+                      setPickedId(item.id)
+                      onBuy?.(item.id)
+                    },
+                    onSell: () => {
+                      setPickedId(item.id)
+                      onSell?.(item.id)
+                    },
+                  }
+                : {
+                    qty,
+                    onQtyChange: setQty,
+                    qtyHint: 'Unique gear · moves 1',
+                    buyLabel: bankTab === 'pack' ? 'Bank' : 'Take',
+                    sellLabel: '—',
+                    buyDisabled: valueCheck,
+                    sellDisabled: true,
+                    buyTitle: bankTab === 'pack' ? 'Deposit into vault' : 'Withdraw to pack',
+                    sellTitle: 'Bank moves gear — no sell here',
+                    onBuy: () => {
+                      setPickedId(item.id)
+                      if (bankTab === 'pack') onDeposit?.(item.id)
+                      else onWithdraw?.(item.id)
+                    },
+                  }
             return (
               <li key={item.id} className="hq-shop-cell">
                 <button
                   type="button"
                   className={`hq-shop-cell-btn${on ? ' is-on' : ''}${equipped ? ' is-equipped' : ''}${vip ? ' is-vip' : ''}${locked ? ' is-locked' : ''}${ownedItem && kind === 'outfitter' ? ' is-owned' : ''}`}
                   aria-pressed={on}
-                  aria-label={`${item.name.en}${equipped ? ' (wearing)' : ''}${locked ? ' (locked)' : ''}`}
+                  aria-label={`${item.name.en}${equipped ? ' (wearing)' : ''}${locked ? ' (need coins)' : ''}`}
                   onPointerEnter={() => {
                     if (!isCoarsePointer()) setTipId(item.id)
-                  }}
-                  onPointerLeave={() => {
-                    if (!isCoarsePointer()) {
-                      setTipId((cur) => (cur === item.id ? null : cur))
-                    }
                   }}
                   onClick={() => onCellActivate(item)}
                   onDoubleClick={() => {
@@ -354,6 +390,7 @@ export function HarborShopShelf({
                     wearing={equipped}
                     open={tipOpen}
                     placement={tipBelow ? 'below' : 'above'}
+                    shop={shopActions}
                   />
                 </button>
               </li>
@@ -381,6 +418,7 @@ export function HarborShopShelf({
                 {picked.tier === 'vip' && harborVipSetFor(picked.id)
                   ? ` · ${harborVipSetFor(picked.id)!.name.en}`
                   : ''}
+                {lockedPicked ? ' · need coins' : ''}
               </p>
             </div>
             <button
@@ -401,7 +439,7 @@ export function HarborShopShelf({
           </>
         ) : (
           <p className="hq-shop-inspect-hint">
-            Tap an item to examine · double-tap to{' '}
+            Hover or tap an item for Buy / Sell · double-tap to{' '}
             {kind === 'outfitter' ? 'buy / wear' : bankTab === 'pack' ? 'bank' : 'withdraw'}
           </p>
         )}
@@ -427,7 +465,7 @@ export function HarborShopShelf({
           </button>
         </div>
         <div className="hq-shop-qty" role="group" aria-label="Quantity">
-          <span className="hq-shop-foot-label">Withdraw:</span>
+          <span className="hq-shop-foot-label">Qty:</span>
           {HARBOR_SHOP_QTY.map((n) => (
             <button
               key={n}
@@ -439,7 +477,7 @@ export function HarborShopShelf({
                 setQty(n)
               }}
             >
-              {QTY_LABEL[n]}
+              {HARBOR_SHOP_QTY_LABEL[n]}
             </button>
           ))}
         </div>

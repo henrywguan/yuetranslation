@@ -261,6 +261,35 @@ export function buyHarborGear(
   return { ok: true, progress }
 }
 
+/** Sell carried gear back to the Outfitter for half price (starters stay with the Scout). */
+export function sellHarborGear(
+  id: HarborGearId,
+): { ok: true; progress: HarborProgress; refund: number } | { ok: false; reason: string } {
+  const item = harborGearById(id)
+  if (!item) return { ok: false, reason: 'Unknown item.' }
+  if (item.price <= 0) return { ok: false, reason: 'Starter kit stays with the Scout.' }
+  const p = read()
+  const banked = new Set(sanitizeBankedGear(p.banked))
+  if (banked.has(id)) return { ok: false, reason: 'Withdraw from the bank first.' }
+  const owned = new Set(sanitizeCarriedGear(p.owned, banked))
+  if (!owned.has(id)) return { ok: false, reason: 'Not in your pack.' }
+  owned.delete(id)
+  const refund = Math.max(1, Math.floor(item.price / 2))
+  let look = sanitizeHarborLook(p.look)
+  if (look[item.slot] === id) {
+    look = { ...look, [item.slot]: HARBOR_DEFAULT_LOOK[item.slot] }
+  }
+  const progress = commit({
+    ...p,
+    coins: Math.max(0, Math.floor(p.coins)) + refund,
+    owned: sanitizeCarriedGear([...owned], banked),
+    banked: [...banked] as HarborGearId[],
+    look,
+  })
+  flushHarborProgressCloud(progress)
+  return { ok: true, progress, refund }
+}
+
 export function equipHarborGear(
   slot: HarborGearSlot,
   id: HarborGearId,

@@ -55,6 +55,11 @@ if (bought.ok) assert.ok(bought.bag.tools.includes('tool-rod'))
 
 const bait = buyHarborFishBait(bag0, 'bait-feather', 100)
 assert.equal(bait.ok, true)
+if (bait.ok) assert.equal(bait.packsBought, 1)
+
+const baitMulti = buyHarborFishBait(bag0, 'bait-feather', 1000, 5)
+assert.equal(baitMulti.ok, true)
+if (baitMulti.ok) assert.equal(baitMulti.packsBought, 5)
 
 const near = nearestGuanFishSpot(GUAN_FISH_SPOTS[0]!.x, GUAN_FISH_SPOTS[0]!.z, 3)
 assert.ok(near)
@@ -65,6 +70,7 @@ assert.ok(merged.fishingXp >= bag0.fishingXp)
 const panelSrc = readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8')
 assert.match(panelSrc, /HarborFishModelIcon/, 'fishing panel shows model icons')
 assert.match(panelSrc, /hq-fish-tile|FishItemTile/, 'fishing panel uses contained item tiles')
+assert.match(panelSrc, /HarborItemTooltip/, 'fishing shop tips')
 assert.match(panelSrc, /Bites here/, 'cast tab labels bites')
 assert.doesNotMatch(panelSrc, /Tool · <strong>|Bites here:\s*\{/, 'cast tab is not plain text lists')
 
