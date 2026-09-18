@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { HARBOR_VISITABLES, type HarborVisitable, type HarborVisitableId } from './harborWorld'
 import type { HarborRealmId } from './harborWorld'
 import { GUAN_CAPE_LOOM, GUAN_RETURN_PORTAL } from './harborGuanRealm'
@@ -24,6 +24,8 @@ const MIN_SIZE = 96
 const MAX_SIZE = 240
 const DEFAULT_SIZE = 120
 const COLLAPSED_H = 52
+/** Hide the "Nearby" chrome label when tools leave too little room. */
+const COMPACT_TITLE_BELOW = 148
 
 type Layout = {
   left: number
@@ -358,6 +360,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
 
   const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
   const size = layout.size
+  const compact = size < COMPACT_TITLE_BELOW
 
   const visitables = minimapVisitables(realm)
 
@@ -379,8 +382,15 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   return (
     <div
       ref={rootRef}
-      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${onNavigate ? ' is-navigable' : ''}`}
-      style={{ left: layout.left, top: layout.top, width: size }}
+      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${compact ? ' is-compact' : ''}${onNavigate ? ' is-navigable' : ''}`}
+      style={
+        {
+          left: layout.left,
+          top: layout.top,
+          width: size,
+          '--hq-minimap-size': `${size}px`,
+        } as CSSProperties
+      }
       aria-label="Harbor minimap"
     >
       <div className={`hq-minimap-place hq-minimap-place--${place.kind}`} title={`${place.en} · ${place.zh}`}>
@@ -403,7 +413,8 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
         >
           {layout.collapsed ? '+' : '–'}
         </button>
-        <span className="hq-minimap-title">Nearby</span>
+        {!compact && <span className="hq-minimap-title">Nearby</span>}
+        {compact && <span className="hq-minimap-chrome-spacer" aria-hidden />}
         {!layout.collapsed && (
           <button
             type="button"

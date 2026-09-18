@@ -1480,6 +1480,14 @@ function main() {
   assert.match(minimapSrc, /'fishing-hut':|'fishing-spot':/, 'minimap VISIT_DOT includes fishing')
   assert.match(minimapSrc, /GUAN_FISH_SPOTS|minimapVisitables/, 'Guan fishing spots on minimap')
   assert.match(minimapSrc, /hq-minimap-place|resolveHarborMinimapPlace/, 'minimap location strip')
+  assert.match(minimapSrc, /--hq-minimap-size|COMPACT_TITLE_BELOW|is-compact/, 'minimap place fonts scale; Nearby hides when narrow')
+  const minimapCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
+  assert.match(minimapCss, /\.hq-minimap-place-en[\s\S]*?overflow-wrap:\s*anywhere/, 'place EN wraps instead of ellipsis')
+  assert.doesNotMatch(
+    minimapCss.match(/\.hq-minimap-place-en\s*\{[^}]+\}/)?.[0] ?? '',
+    /text-overflow:\s*ellipsis/,
+    'place EN has no ellipsis',
+  )
   assert.match(minimapSrc, /MINIMAP_CARDINALS|hq-minimap-cardinal/, 'minimap cardinal directions')
   assert.match(minimapSrc, /hq-minimap-geo|buildMinimapGeoFeatures/, 'minimap topography layer')
   assert.match(minimapSrc, /legendOpen/, 'minimap legend toggles open/closed')
