@@ -365,21 +365,27 @@ function hardStopBus(): void {
 }
 
 /**
- * Start looping Harbor BGM (idempotent per theme).
+ * Start looping Harbor BGM (idempotent per theme unless `force`).
  * Pass `'guan'` for the tropical paradise theme; default is riverside.
  */
-export function startHarborBgm(theme: HarborBgmTheme = 'river'): void {
+export function startHarborBgm(theme: HarborBgmTheme = 'river', force = false): void {
   if (typeof window === 'undefined') return
-  if (running && currentTheme === theme) return
+  if (!force && running && currentTheme === theme) return
   if (running) hardStopBus()
   currentTheme = theme
   const ctx = ensureSharedAudioContext()
   running = true
   bus = ctx.createGain()
+  // Audible quickly — long 1.4s fade-in felt like “no music” on phones.
   bus.gain.setValueAtTime(0.0001, ctx.currentTime)
-  bus.gain.exponentialRampToValueAtTime(HARBOR_BGM_GAIN, ctx.currentTime + 1.4)
+  bus.gain.exponentialRampToValueAtTime(HARBOR_BGM_GAIN, ctx.currentTime + 0.35)
   bus.connect(ctx.destination)
   scheduleLoop(ctx)
+}
+
+/** Immediate teardown for gesture rebuilds (no delayed disconnect race). */
+export function stopHarborBgmHard(): void {
+  hardStopBus()
 }
 
 /** Fade out and stop Harbor BGM. */
