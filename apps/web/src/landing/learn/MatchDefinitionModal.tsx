@@ -139,13 +139,25 @@ export function MatchDefinitionModal({
 
   useEffect(() => {
     if (!open || phase !== 'play' || !round) return
+    // Native: English prompt — don't auto-speak the Cantonese answer.
+    if (round.promptMode === 'gloss') return
     const han = round.word.han.trim()
     if (!han) return
     void speakHarborTts(han, 'yue')
     return () => {
       stopSpeaking()
     }
-  }, [open, phase, round?.word.id, round?.word.han])
+  }, [open, phase, round?.word.id, round?.word.han, round?.promptMode])
+
+  useEffect(() => {
+    if (!open || phase !== 'feedback' || !round || round.promptMode !== 'gloss') return
+    const han = round.word.han.trim()
+    if (!han) return
+    void speakHarborTts(han, 'yue')
+    return () => {
+      stopSpeaking()
+    }
+  }, [open, phase, round?.word.id, round?.word.han, round?.promptMode])
 
   useEffect(() => {
     if (!open) return
@@ -312,8 +324,8 @@ export function MatchDefinitionModal({
               揀難度
             </p>
             <p className="hq-match-intro-body">
-              Same topic, harder form — Easy words, Medium phrases, Hard sentences. More time and
-              gold as you climb.
+              Same topic, harder form — Easy words, Medium phrases, Hard sentences, then Native
+              news-desk Cantonese choices. More gold as you climb.
             </p>
 
             <div className="hq-match-diff-grid" role="group" aria-label="Difficulty">
@@ -377,29 +389,51 @@ export function MatchDefinitionModal({
             </div>
 
             <div className="hq-match-prompt">
-              <div className="hq-match-prompt-row">
-                <p
-                  className={`hq-match-han${round.difficulty === 'hard' ? ' is-sentence' : ''}`}
-                  lang="zh-HK"
-                >
-                  {round.word.han}
-                </p>
-                <SpeakButton text={round.word.han} lang="yue" className="hq-match-speak" warm playText={speakHarborTts} />
-              </div>
-              <p className="hq-match-jp" aria-label={round.word.jp}>
-                {round.word.jp.split(/\s+/).map((syl, i) => (
-                  <Fragment key={`${syl}-${i}`}>
-                    {i > 0 ? ' ' : null}
-                    <JyutpingSylText jp={syl} />
-                  </Fragment>
-                ))}
-              </p>
+              {round.promptMode === 'gloss' ? (
+                <>
+                  <p className="hq-match-gloss-prompt">{round.word.def}</p>
+                  <p className="hq-match-gloss-hint" lang="zh-HK">
+                    揀最似新聞報導嘅粵語
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="hq-match-prompt-row">
+                    <p
+                      className={`hq-match-han${round.difficulty === 'hard' || round.difficulty === 'native' ? ' is-sentence' : ''}`}
+                      lang="zh-HK"
+                    >
+                      {round.word.han}
+                    </p>
+                    <SpeakButton
+                      text={round.word.han}
+                      lang="yue"
+                      className="hq-match-speak"
+                      warm
+                      playText={speakHarborTts}
+                    />
+                  </div>
+                  <p className="hq-match-jp" aria-label={round.word.jp}>
+                    {round.word.jp.split(/\s+/).map((syl, i) => (
+                      <Fragment key={`${syl}-${i}`}>
+                        {i > 0 ? ' ' : null}
+                        <JyutpingSylText jp={syl} />
+                      </Fragment>
+                    ))}
+                  </p>
+                </>
+              )}
             </div>
 
-            <div className="hq-match-choices" role="group" aria-label="Definitions">
+            <div
+              className={`hq-match-choices${round.promptMode === 'gloss' ? ' hq-match-choices--native' : ''}`}
+              role="group"
+              aria-label={round.promptMode === 'gloss' ? 'Cantonese lines' : 'Definitions'}
+            >
               {round.choices.map((choice, i) => {
                 if (phase === 'feedback' && correct && i !== round.correctIndex) return null
                 let cls = 'hq-match-choice'
+                if (round.promptMode === 'gloss') cls += ' is-han'
                 if (phase === 'feedback') {
                   if (i === round.correctIndex) cls += ' is-correct'
                   else if (i === picked) cls += ' is-wrong'
@@ -410,6 +444,7 @@ export function MatchDefinitionModal({
                     type="button"
                     className={cls}
                     disabled={phase !== 'play'}
+                    lang={round.promptMode === 'gloss' ? 'zh-HK' : undefined}
                     onClick={() => onPick(i)}
                   >
                     {choice}
@@ -417,6 +452,26 @@ export function MatchDefinitionModal({
                 )
               })}
             </div>
+
+            {phase === 'feedback' && round.promptMode === 'gloss' ? (
+              <div className="hq-match-native-reveal">
+                <p className="hq-match-jp" aria-label={round.word.jp}>
+                  {round.word.jp.split(/\s+/).map((syl, i) => (
+                    <Fragment key={`${syl}-${i}`}>
+                      {i > 0 ? ' ' : null}
+                      <JyutpingSylText jp={syl} />
+                    </Fragment>
+                  ))}
+                </p>
+                <SpeakButton
+                  text={round.word.han}
+                  lang="yue"
+                  className="hq-match-speak"
+                  warm
+                  playText={speakHarborTts}
+                />
+              </div>
+            ) : null}
 
             <p className="hq-match-session" aria-live="polite">
               {phase === 'feedback'
