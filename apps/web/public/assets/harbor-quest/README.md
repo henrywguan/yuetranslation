@@ -1,5 +1,9 @@
 # Harbor Quest assets (original + cinematic)
 
+## Splash cinematic
+
+`splash/lantern-canoe-fpov.mp4` + `splash/lantern-canoe-fpov-b.png` — Higgsfield first-person lantern canoe night (wired in `HarborSplash.tsx`).
+
 ## SFX
 
 - `miss-thud.wav` / `miss-oof.wav` — original synth miss cues (`scripts/gen-harbor-miss-sfx.py`)
