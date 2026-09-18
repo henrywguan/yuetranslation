@@ -195,9 +195,24 @@ export function HarborInventoryBag({
             </div>
 
             <div className="hq-bag-grid-wrap">
-              <div className="hq-bag-rail hq-bag-rail--hp" aria-hidden="true">
-                <span className="hq-bag-rail-glyph">♥</span>
-                <span className="hq-bag-rail-num">{Math.min(99, Math.max(1, Math.floor(coins / 4) + 10))}</span>
+              <div
+                className="hq-bag-rail hq-bag-rail--hp"
+                role="img"
+                aria-label={`Hitpoints ${Math.min(99, Math.max(1, Math.floor(coins / 4) + 10))}`}
+                tabIndex={0}
+              >
+                <span className="hq-bag-rail-glyph" aria-hidden="true">
+                  ♥
+                </span>
+                <span className="hq-bag-rail-num" aria-hidden="true">
+                  {Math.min(99, Math.max(1, Math.floor(coins / 4) + 10))}
+                </span>
+                <div className="hq-bag-rail-tip" role="tooltip">
+                  <p className="hq-bag-rail-tip-name">Hitpoints</p>
+                  <p className="hq-bag-rail-tip-body">
+                    Sailor vitality — flavor score from your ferry purse (cosmetic).
+                  </p>
+                </div>
               </div>
               <ul className="hq-bag-grid" aria-label="Bag items">
                 {slots.map((item, i) => {
@@ -259,9 +274,24 @@ export function HarborInventoryBag({
                   )
                 })}
               </ul>
-              <div className="hq-bag-rail hq-bag-rail--pray" aria-hidden="true">
-                <span className="hq-bag-rail-glyph">✦</span>
-                <span className="hq-bag-rail-num">{Math.min(99, filteredItems.length)}</span>
+              <div
+                className="hq-bag-rail hq-bag-rail--pray"
+                role="img"
+                aria-label={`Carried ${Math.min(99, filteredItems.length)}`}
+                tabIndex={0}
+              >
+                <span className="hq-bag-rail-glyph" aria-hidden="true">
+                  ✦
+                </span>
+                <span className="hq-bag-rail-num" aria-hidden="true">
+                  {Math.min(99, filteredItems.length)}
+                </span>
+                <div className="hq-bag-rail-tip" role="tooltip">
+                  <p className="hq-bag-rail-tip-name">Carried</p>
+                  <p className="hq-bag-rail-tip-body">
+                    Gear pieces showing in this bag filter (All / Hat / Top / …).
+                  </p>
+                </div>
               </div>
             </div>
 
