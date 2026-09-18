@@ -14,6 +14,13 @@ import {
   sanitizeHarborFishingBag,
   type HarborFishingBag,
 } from './harborFishing'
+import { harborBeautyStarterOwned, sanitizeHarborBeautyOwned } from './harborBeauty'
+import {
+  emptyHarborShowoffBag,
+  mergeHarborShowoffBag,
+  sanitizeHarborShowoffBag,
+  type HarborShowoffBag,
+} from './harborShowoff'
 import { sanitizeOwnedTitles, sanitizeTitleId } from './harborTitles'
 
 export type HarborProgress = {
@@ -56,6 +63,10 @@ export type HarborProgress = {
   titleId: string | null
   /** Guan fishing bag — tools, bait, catches, log, Fishing XP. */
   fishing: HarborFishingBag
+  /** Unlocked beauty salon SKUs (premium dyes / rare styles). */
+  beautyOwned: string[]
+  /** Showoff cosmetics — nametag, bubble, chair, pet, emotes + event claims. */
+  showoff: HarborShowoffBag
 }
 
 export function emptyHarborProgress(): HarborProgress {
@@ -95,6 +106,8 @@ export function emptyHarborProgress(): HarborProgress {
     ownedTitles: ['title-river-scout'],
     titleId: 'title-river-scout',
     fishing: emptyHarborFishingBag(),
+    beautyOwned: harborBeautyStarterOwned(),
+    showoff: emptyHarborShowoffBag(),
   }
 }
 
@@ -178,6 +191,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
   }
   const titleId = sanitizeTitleId(o.titleId, ownedTitles)
   const fishing = sanitizeHarborFishingBag(o.fishing)
+  const beautyOwned = sanitizeHarborBeautyOwned(o.beautyOwned)
+  const showoff = sanitizeHarborShowoffBag(o.showoff)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -197,6 +212,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     ownedTitles,
     titleId,
     fishing,
+    beautyOwned,
+    showoff,
   }
 }
 
@@ -318,6 +335,11 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     ownedTitles,
     titleId,
     fishing: mergeHarborFishingBag(A.fishing ?? emptyHarborFishingBag(), B.fishing ?? emptyHarborFishingBag()),
+    beautyOwned: sanitizeHarborBeautyOwned([...(A.beautyOwned ?? []), ...(B.beautyOwned ?? [])]),
+    showoff: mergeHarborShowoffBag(
+      A.showoff ?? emptyHarborShowoffBag(),
+      B.showoff ?? emptyHarborShowoffBag(),
+    ),
   }
 }
 
@@ -363,6 +385,15 @@ export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boole
   if (aT.length !== bT.length) return false
   for (let i = 0; i < aT.length; i++) if (aT[i] !== bT[i]) return false
   if ((a.titleId ?? null) !== (b.titleId ?? null)) return false
+  const aB = [...(a.beautyOwned ?? [])].sort()
+  const bB = [...(b.beautyOwned ?? [])].sort()
+  if (aB.length !== bB.length) return false
+  for (let i = 0; i < aB.length; i++) if (aB[i] !== bB[i]) return false
+  const aS = [...(a.showoff?.owned ?? [])].sort()
+  const bS = [...(b.showoff?.owned ?? [])].sort()
+  if (aS.length !== bS.length) return false
+  for (let i = 0; i < aS.length; i++) if (aS[i] !== bS[i]) return false
+  if ((a.showoff?.look.nametag ?? '') !== (b.showoff?.look.nametag ?? '')) return false
   return true
 }
 

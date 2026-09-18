@@ -95,6 +95,8 @@ export type HarborWorldOptions = {
   gender?: HarborGender
   /** Skin / hair cosmetics from character creation. */
   appearance?: HarborAppearance
+  /** Showoff nametag frame id (from harborShowoff). */
+  nametagFrame?: string
   /** Campaign biome dressing (flora / fauna / bank tint). */
   realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
@@ -139,7 +141,8 @@ export type HarborWorldHandle = {
     appearance: HarborAppearance
   }
   /** Username shown above the local scout (all sailors get nametags). */
-  setLocalUsername: (username: string) => void
+  setLocalUsername: (username: string, nametagFrame?: string) => void
+  setNametagFrame: (frameId: string) => void
   /** OSRS-style overhead say (outlined text, no bubble) above local or remote sailor. */
   showSpeechBubble: (who: 'local' | string, text: string, durationMs?: number) => void
   /**
@@ -3652,7 +3655,7 @@ export function createHarborWorld(
   scene.add(remotesRoot)
   const remoteById = new Map<string, THREE.Group>()
   let localUsername = 'sailor'
-  const localNametag = buildNametagSprite(localUsername)
+  const localNametag = buildNametagSprite(localUsername, options.nametagFrame ?? 'tag-plain')
   scene.add(localNametag)
   let localSpeechBubble: THREE.Sprite | null = null
   let localSpeechUntil = 0
@@ -4726,12 +4729,23 @@ if (o.userData.cigaretteSmoke && !reduced) {
         appearance: { ...currentAppearance },
       }
     },
-    setLocalUsername(username) {
+    setLocalUsername(username, nametagFrame) {
       const next = username.trim() || localUsername
-      if (next === localUsername && localNametag.visible) return
+      const frame =
+        typeof nametagFrame === 'string' && nametagFrame
+          ? nametagFrame
+          : typeof localNametag.userData.nametagFrame === 'string'
+            ? localNametag.userData.nametagFrame
+            : 'tag-plain'
+      if (next === localUsername && localNametag.visible && localNametag.userData.nametagFrame === frame) {
+        return
+      }
       localUsername = next
-      updateNametagSprite(localNametag, localUsername)
+      updateNametagSprite(localNametag, localUsername, frame)
       localNametag.visible = true
+    },
+    setNametagFrame(frameId) {
+      updateNametagSprite(localNametag, localUsername, frameId || 'tag-plain')
     },
     showSpeechBubble,
     snapToQuestDock(stepIndex?: number) {

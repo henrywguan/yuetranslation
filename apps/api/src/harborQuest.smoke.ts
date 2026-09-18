@@ -76,4 +76,21 @@ assert.ok(compareLeaderboardScores({ xp: 10, gold: 20, correctCount: 1, clearedC
 assert.ok(compareLeaderboardScores({ xp: 10, gold: 10, correctCount: 5, clearedCount: 0 }, { xp: 10, gold: 10, correctCount: 2, clearedCount: 9 }) < 0)
 assert.equal(compareLeaderboardScores({ xp: 1, gold: 1, correctCount: 1, clearedCount: 1 }, { xp: 1, gold: 1, correctCount: 1, clearedCount: 1 }), 0)
 
+const beautyShow = sanitizeHarborProgress({
+  beautyOwned: ['beauty-hair-twin', 'nope'],
+  showoff: {
+    owned: ['tag-jade', 'tag-lantern-fest', 'hack'],
+    look: { nametag: 'tag-jade', bubble: 'bubble-plain', chair: 'chair-stool', pet: 'pet-none', emote: null },
+    claimedEvents: ['event-lantern-fest', 'event-bogus'],
+  },
+})
+assert.ok(beautyShow.beautyOwned?.includes('beauty-hair-twin'))
+assert.ok(!beautyShow.beautyOwned?.includes('nope'))
+assert.ok(beautyShow.showoff?.owned.includes('tag-jade'))
+assert.ok(beautyShow.showoff?.owned.includes('tag-lantern-fest'))
+assert.ok(!beautyShow.showoff?.owned.includes('hack'))
+assert.equal(beautyShow.showoff?.look.nametag, 'tag-jade')
+assert.ok(beautyShow.showoff?.claimedEvents.includes('event-lantern-fest'))
+assert.ok(!beautyShow.showoff?.claimedEvents.includes('event-bogus'))
+
 console.log('harborQuest.smoke: ok')

@@ -122,4 +122,26 @@ const fakeLevel = {
 } as unknown as HarborLevel
 assert.ok(missionBaseXp(fakeLevel) > 80)
 
+// Beauty / showoff progress fields survive sanitize + merge
+const withLooks = sanitizeHarborProgress({
+  ...emptyHarborProgress(),
+  beautyOwned: ['beauty-hair-twin'],
+  showoff: {
+    owned: ['tag-plain', 'tag-jade'],
+    look: {
+      nametag: 'tag-jade',
+      bubble: 'bubble-plain',
+      chair: 'chair-stool',
+      pet: 'pet-none',
+      emote: null,
+    },
+    claimedEvents: [],
+  },
+})
+assert.ok(withLooks.beautyOwned.includes('beauty-hair-twin'))
+assert.equal(withLooks.showoff.look.nametag, 'tag-jade')
+const mergedLooks = mergeHarborProgress(emptyHarborProgress(), withLooks)
+assert.ok(mergedLooks.beautyOwned.includes('beauty-hair-twin'))
+assert.equal(mergedLooks.showoff.look.nametag, 'tag-jade')
+
 console.log('harborProgress.smoke: ok')

@@ -13,14 +13,18 @@
 | Ship **v1 → v4** as one program | Silhouette wardrobe → modular compose → barber depth → KayKit-style locomotion |
 | KayKit-style idle/walk | **In scope** (v4) — leave pure bob-mannequin behind |
 | Aesthetic | Harbor / Jade / RS-like chunk — **not** Maple chibi paste, **not** Jagex meshes |
-| Monetization | Cosmetic-only (no learning power). Maple *systems* (overlay, beauty loop, showoff) — ethical Harbor pricing (prefer deterministic sets; gacha optional later) |
+| Monetization | **All gear is cosmetic** — no item stats, ever. No separate “fashion overlay” layer. |
+| Beauty loop (C) | **Yes** — deepen barber / create (styles, dyes, eyes, faces); premium beauty SKUs OK |
+| Showoff layer (D) | **Yes** — nametag frames, chat bubbles, pier chairs, pets, emotes |
+| Shop cadence (E) | **Free event cosmetics = yes.** Gacha / surprise style boxes = **deferred** (undecided) |
+| Paid silhouettes (B) | **Yes** — mid/high/VIP must change mesh shape |
 | Asset source | Procedural Three.js first; optional CC0 KayKit *animation clips* / rig ideas later — never Jagex cache |
 
 ---
 
 ## Why (problem)
 
-Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes IDs are **recolors**. VIP boats/lanterns already prove unique meshes sell; clothing does not. MapleStory’s cash shop works because every paid piece **changes what others see**. Harbor must do the same.
+Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes IDs are **recolors**. VIP boats/lanterns already prove unique meshes sell; clothing does not. MapleStory’s cash shop works because every paid piece **changes what others see**. Harbor must do the same — while staying **pure cosmetic** (no power gear / overlay split).
 
 ---
 
@@ -30,11 +34,22 @@ Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes
 |---|---|---|---|
 | **v1** | Silhouette wardrobe | Mid / high / VIP clothing = distinct mesh families; common may stay scout-base + light detail | `harborClothingMeshes.ts`, `harborGear.ts`, `applyLookToProtagonist` |
 | **v2** | Modular compose | One body + slot parts assembled by look (ClaudeCraft `assembleModular` pattern, Harbor-scale) | `harborModularLook.ts`, sockets on protagonist |
-| **v3** | Barber that matters | Hair volumes, eyes, face variants, dyes — create/barber change identity at distance | `harborAppearance.ts`, `harborProtagonist.ts`, `HarborCharacterCreate` |
+| **v3** | Barber that matters | Hair volumes, eyes, face variants, dyes — create/barber change identity at distance | `harborAppearance.ts`, `harborBeauty.ts`, `HarborCharacterCreate` |
 | **v4** | Locomotion clips | Idle + walk driven by limb hierarchy (KayKit-style clip vocabulary); seated canoe kept | `harborProtagonistAnim.ts`, `harborWorld.ts` tick |
+| **v5** | Showoff cosmetics | Nametag frame, chat bubble, pier chair, pet, emotes — social visibility | `harborShowoff.ts`, remotes / chat / world |
+| **v6** | Free event drops | Seasonal free cosmetic grants (no gacha required) | `harborShowoff.ts` events + progress |
 
-Showoff cosmetics (nametag frames, chairs, pets) stay in the Maple remapping backlog — **after** v1–v4 silhouettes exist.
+---
 
+## Maple remaps (locked 2026-09-18)
+
+| Idea | Harbor |
+|---|---|
+| **A. Fashion overlay** | **Rejected.** Items never gain combat/learning stats → every slot is already “cash look.” |
+| **B. Unique paid silhouettes** | **Shipped in v1** — keep expanding families. |
+| **C. Beauty salon loop** | **Build** — barber + create; premium dye / rare face SKUs. |
+| **D. Showoff toys** | **Build** — nametag, bubble, chair, pet, emotes. |
+| **E. Catalog cadence** | Free event items **yes**; gacha boxes **not yet**. Deterministic outfitter / VIP sets remain. |
 ---
 
 ## v1 — Silhouette wardrobe
@@ -111,21 +126,23 @@ Showoff cosmetics (nametag frames, chairs, pets) stay in the Maple remapping bac
 
 ## Maple systems we still want (post v1–v4)
 
-Documented for sequencing — not blocking this program:
+~~1. Style overlay layer~~ — **rejected** (all items cosmetic).
 
-1. Style **overlay** layer (mask look without changing skill/gear identity)
-2. Outfit **presets** + try-on
-3. Seasonal drops + optional style box (ethics review)
-4. Showoff: nametag frame, chat bubble, pier chair, pet
+1. Outfit **presets** + try-on (outfitter polish)
+2. **Free seasonal event** cosmetics (v6) — Mid-Autumn, Lunar New Year, Dragon Boat, Harbor Fest
+3. Showoff (v5): nametag frame, chat bubble, pier chair, pet, emotes
+4. Gacha / surprise style box — **deferred** until Henry decides
 
 ---
 
 ## Non-goals
 
+- Fashion overlay / transparent “mask gear” layer (unnecessary without stats)
 - P2W cosmetics that buy pier clears, XP, or TTS skips
 - Jagex meshes / OSRS player kitbash
 - Full ClaudeCraft skinned LOD / morph union pipeline in v1
 - Abandoning RS-like proportion grammar for soft PBR fashion dolls
+- Shipping gacha before an explicit yes
 
 ---
 
@@ -134,9 +151,11 @@ Documented for sequencing — not blocking this program:
 1. PRD (this file)  
 2. v1 clothing mesh library + `applyLook` swap  
 3. v2 modular scaffold (part roots + compose entry)  
-4. v3 appearance fields + eyes/hair volume bump  
+4. v3 appearance fields + eyes/hair volume bump + beauty SKU table  
 5. v4 limb hierarchy + world/remote tick  
-6. Smokes + outfitter visual check (Henry local)
+6. v5 showoff catalog + nametag/bubble/chair/pet/emote hooks  
+7. v6 free event grant helper  
+8. Smokes + outfitter visual check (Henry local)
 
 ---
 

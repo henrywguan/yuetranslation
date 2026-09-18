@@ -35,6 +35,18 @@ import {
   type HarborAppearance,
   type HarborGender,
 } from './harborAppearance'
+import {
+  harborBeautyIsUnlocked,
+  harborBeautySkuById,
+  harborBeautyUnlockCost,
+  sanitizeHarborBeautyOwned,
+} from './harborBeauty'
+import {
+  claimHarborFreeEvent,
+  harborShowoffById,
+  sanitizeHarborShowoffBag,
+  type HarborEventId,
+} from './harborShowoff'
 import { HARBOR_GOLD_TO_COINS } from './matchDefinitionBank'
 
 export type { HarborProgress }
@@ -407,6 +419,85 @@ export function setHarborLocalUsername(username: string): HarborProgress {
   })
   flushHarborProgressCloud(next)
   return next
+}
+
+/**
+ * Unlock one beauty salon SKU with ferry coins.
+ * Returns null when already owned, unknown, or purse too light.
+ */
+export function purchaseHarborBeautySku(skuId: string): HarborProgress | null {
+  const p = read()
+  const sku = harborBeautySkuById(skuId)
+  if (!sku) return null
+  if (harborBeautyIsUnlocked(skuId, p.beautyOwned)) return null
+  if (p.coins < sku.price) return null
+  const next = commit({
+    ...p,
+    coins: p.coins - sku.price,
+    beautyOwned: sanitizeHarborBeautyOwned([...p.beautyOwned, skuId]),
+    lastSavedAt: Date.now(),
+  })
+  flushHarborProgressCloud(next)
+  return next
+}
+
+/**
+ * Unlock every still-locked beauty SKU required for an appearance (barber Accept).
+ * Returns null if the purse cannot cover the bundle.
+ */
+export function purchaseHarborBeautyForAppearance(
+  appearance: HarborAppearance,
+): HarborProgress | null {
+  const p = read()
+  const { cost, missing } = harborBeautyUnlockCost(appearance, p.beautyOwned)
+  if (missing.length === 0) return p
+  if (p.coins < cost) return null
+  const next = commit({
+    ...p,
+    coins: p.coins - cost,
+    beautyOwned: sanitizeHarborBeautyOwned([...p.beautyOwned, ...missing]),
+    lastSavedAt: Date.now(),
+  })
+  flushHarborProgressCloud(next)
+  return next
+}
+
+/** Equip a showoff cosmetic the sailor already owns. */
+export function equipHarborShowoff(
+  kind: 'nametag' | 'bubble' | 'chair' | 'pet',
+  id: string,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborShowoffBag(p.showoff)
+  const item = harborShowoffById(id)
+  if (!item || item.kind !== kind) return null
+  if (!bag.owned.includes(id)) return null
+  const look = { ...bag.look, [kind]: id }
+  const next = commit({
+    ...p,
+    showoff: { ...bag, look },
+    lastSavedAt: Date.now(),
+  })
+  flushHarborProgressCloud(next)
+  return next
+}
+
+/** Claim a free seasonal event once — grants cosmetics into the showoff bag. */
+export function claimHarborFreeEventProgress(eventId: HarborEventId): {
+  progress: HarborProgress
+  granted: string[]
+  already: boolean
+} {
+  const p = read()
+  const { bag, granted, already } = claimHarborFreeEvent(p.showoff, eventId)
+  if (already) return { progress: p, granted: [], already: true }
+  const next = commit({
+    ...p,
+    showoff: bag,
+    lastSavedAt: Date.now(),
+  })
+  flushHarborProgressCloud(next)
+  return { progress: next, granted, already: false }
 }
 
 export async function hydrateHarborProgress(loggedIn?: boolean): Promise<HarborProgress> {

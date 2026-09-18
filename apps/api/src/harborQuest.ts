@@ -52,6 +52,20 @@ export type HarborQuestProgress = {
     equippedTool: string
     equippedBait: string
   }
+  /** Unlocked beauty salon SKUs (premium dyes / rare styles). */
+  beautyOwned?: string[]
+  /** Showoff cosmetics — nametag, bubble, chair, pet, emotes + event claims. */
+  showoff?: {
+    owned: string[]
+    look: {
+      nametag: string
+      bubble: string
+      chair: string
+      pet: string
+      emote: string | null
+    }
+    claimedEvents: string[]
+  }
 }
 
 export type HarborLeaderboardEntry = {
@@ -177,6 +191,103 @@ function sanitizeFishing(raw: unknown): NonNullable<HarborQuestProgress['fishing
   return { tools, bait, fish, log, fishingXp, equippedTool, equippedBait }
 }
 
+const KNOWN_SHOWOFF = new Set([
+  'tag-plain',
+  'tag-jade',
+  'tag-ink',
+  'tag-phoenix',
+  'tag-lantern-fest',
+  'bubble-plain',
+  'bubble-jade',
+  'bubble-phoenix',
+  'bubble-midautumn',
+  'chair-stool',
+  'chair-bamboo',
+  'chair-jade-throne',
+  'chair-dragonboat',
+  'pet-none',
+  'pet-river-cat',
+  'pet-jade-carp',
+  'pet-lantern-fox',
+  'emote-wave',
+  'emote-bow',
+  'emote-clap',
+  'emote-lantern-raise',
+  'emote-phoenix-spin',
+])
+const KNOWN_EVENTS = new Set(['event-lantern-fest', 'event-midautumn', 'event-dragonboat'])
+const DEFAULT_SHOWOFF_LOOK = {
+  nametag: 'tag-plain',
+  bubble: 'bubble-plain',
+  chair: 'chair-stool',
+  pet: 'pet-none',
+  emote: null as string | null,
+}
+const STARTER_SHOWOFF = [
+  'tag-plain',
+  'bubble-plain',
+  'chair-stool',
+  'pet-none',
+  'emote-wave',
+  'emote-bow',
+]
+
+function isBeautySkuId(id: string): boolean {
+  return (
+    id.startsWith('beauty-hair-') ||
+    id.startsWith('beauty-dye-hair-') ||
+    id.startsWith('beauty-eye-') ||
+    id.startsWith('beauty-dye-eye-') ||
+    id.startsWith('beauty-face-')
+  ) && id.length < 64
+}
+
+function sanitizeBeautyOwned(raw: unknown): string[] {
+  const out = new Set<string>()
+  if (!Array.isArray(raw)) return []
+  for (const id of raw) {
+    if (typeof id !== 'string' || !isBeautySkuId(id)) continue
+    out.add(id)
+    if (out.size >= 80) break
+  }
+  return [...out]
+}
+
+function sanitizeShowoff(raw: unknown): NonNullable<HarborQuestProgress['showoff']> {
+  const owned = new Set<string>(STARTER_SHOWOFF)
+  const look = { ...DEFAULT_SHOWOFF_LOOK }
+  const claimedEvents: string[] = []
+  if (!raw || typeof raw !== 'object') {
+    return { owned: [...owned], look, claimedEvents }
+  }
+  const o = raw as Record<string, unknown>
+  if (Array.isArray(o.owned)) {
+    for (const id of o.owned) {
+      if (typeof id === 'string' && KNOWN_SHOWOFF.has(id)) owned.add(id)
+    }
+  }
+  if (o.look && typeof o.look === 'object' && !Array.isArray(o.look)) {
+    const L = o.look as Record<string, unknown>
+    for (const key of ['nametag', 'bubble', 'chair', 'pet'] as const) {
+      const id = L[key]
+      if (typeof id === 'string' && owned.has(id) && KNOWN_SHOWOFF.has(id)) look[key] = id
+    }
+    if (typeof L.emote === 'string' && KNOWN_SHOWOFF.has(L.emote) && owned.has(L.emote)) {
+      look.emote = L.emote
+    } else {
+      look.emote = null
+    }
+  }
+  if (Array.isArray(o.claimedEvents)) {
+    for (const id of o.claimedEvents) {
+      if (typeof id === 'string' && KNOWN_EVENTS.has(id) && !claimedEvents.includes(id)) {
+        claimedEvents.push(id)
+      }
+    }
+  }
+  return { owned: [...owned], look, claimedEvents }
+}
+
 const LEADERBOARD_DEFAULT_LIMIT = 25
 const LEADERBOARD_MAX_LIMIT = 50
 
@@ -278,6 +389,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     titleId = o.titleId
   }
   const fishing = sanitizeFishing(o.fishing)
+  const beautyOwned = sanitizeBeautyOwned(o.beautyOwned)
+  const showoff = sanitizeShowoff(o.showoff)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -293,6 +406,8 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     ownedTitles,
     titleId,
     fishing,
+    beautyOwned,
+    showoff,
   }
 }
 

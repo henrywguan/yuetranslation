@@ -29,6 +29,8 @@ type Props = {
   remotePlayers?: HarborRemotePlayer[]
   /** Local nametag (all sailors show a name above their head). */
   localUsername?: string
+  /** Showoff nametag frame id (harborShowoff). */
+  nametagFrame?: string
   /** Tap a remote sailor → profile modal. */
   onRemotePlayerSelect?: (userId: string) => void
   /** Parent access for presence broadcast (getLocalPose). */
@@ -51,6 +53,7 @@ export function HarborWorldCanvas({
   onDialogueNpc,
   remotePlayers,
   localUsername,
+  nametagFrame,
   onRemotePlayerSelect,
   worldApiRef,
   className,
@@ -66,6 +69,8 @@ export function HarborWorldCanvas({
   // Kept fresh so realm remount (river ↔ guan) can re-apply nametag / remotes / progress.
   const localUsernameRef = useRef(localUsername)
   localUsernameRef.current = localUsername
+  const nametagFrameRef = useRef(nametagFrame)
+  nametagFrameRef.current = nametagFrame
   const remotePlayersRef = useRef(remotePlayers)
   remotePlayersRef.current = remotePlayers
   const progressRef = useRef(progress)
@@ -83,6 +88,7 @@ export function HarborWorldCanvas({
       gender,
       appearance,
       realm,
+      nametagFrame: nametagFrameRef.current,
       onVisitable: (id) => onVisitableRef.current?.(id),
       onDialogueNpc: (tap) => onDialogueNpcRef.current?.(tap),
       onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
@@ -92,7 +98,9 @@ export function HarborWorldCanvas({
 
     // Realm remount must restore identity — otherwise nametag falls back to "sailor".
     const name = localUsernameRef.current?.trim()
-    if (name) world.setLocalUsername(name)
+    const frame = nametagFrameRef.current
+    if (name) world.setLocalUsername(name, frame)
+    else if (frame) world.setNametagFrame(frame)
     world.setRemotePlayers(remotePlayersRef.current ?? [])
     world.setProgress(progressRef.current)
     world.setPaused(pausedRef.current)
@@ -162,8 +170,12 @@ export function HarborWorldCanvas({
   }, [remotePlayers])
 
   useEffect(() => {
-    if (localUsername) worldRef.current?.setLocalUsername(localUsername)
-  }, [localUsername])
+    if (localUsername) {
+      worldRef.current?.setLocalUsername(localUsername, nametagFrame)
+    } else if (nametagFrame) {
+      worldRef.current?.setNametagFrame(nametagFrame)
+    }
+  }, [localUsername, nametagFrame])
 
   return (
     <canvas

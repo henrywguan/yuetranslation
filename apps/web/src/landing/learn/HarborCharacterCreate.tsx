@@ -18,6 +18,12 @@ import {
   type HarborGender,
 } from './harborAppearance'
 import {
+  harborBeautyIsUnlocked,
+  harborBeautyLockedSku,
+  harborBeautyStarterOwned,
+  harborBeautyUnlockCost,
+} from './harborBeauty'
+import {
   HARBOR_DEFAULT_LOOK,
   applyLookToProtagonist,
   harborGearForSlot,
@@ -42,6 +48,20 @@ type Props = {
   initialGender?: HarborGender
   initialAppearance?: HarborAppearance
   initialLook?: HarborLook
+  /** Unlocked beauty SKUs — premium dyes / rare styles stay locked until owned. */
+  beautyOwned?: string[]
+  /** Ferry coins (barber can unlock premium beauty). */
+  coins?: number
+  /**
+   * Unlock a single beauty SKU (barber tip Buy). Return true on success.
+   * Parent updates `beautyOwned` + coins.
+   */
+  onUnlockBeauty?: (skuId: string) => boolean
+  /**
+   * Unlock every SKU needed for the accepted appearance (barber Accept).
+   * Return false if the purse cannot cover the bundle.
+   */
+  onUnlockBeautyBundle?: (appearance: HarborAppearance) => boolean
   onComplete: (result: HarborCharacterCreateResult) => void
   onCancel?: () => void
 }
@@ -69,10 +89,15 @@ export function HarborCharacterCreate({
   initialGender,
   initialAppearance,
   initialLook,
+  beautyOwned,
+  coins = 0,
+  onUnlockBeauty,
+  onUnlockBeautyBundle,
   onComplete,
   onCancel,
 }: Props) {
   const isBarber = mode === 'barber'
+  const unlockedBeauty = beautyOwned ?? harborBeautyStarterOwned()
   const needsName = !isBarber && !existingUsername?.trim()
   const [step, setStep] = useState<Step>(() => {
     if (isBarber) return 'body'
@@ -81,6 +106,7 @@ export function HarborCharacterCreate({
   })
   const [username, setUsername] = useState(existingUsername?.trim() ?? '')
   const [nameError, setNameError] = useState<string | null>(null)
+  const [beautyError, setBeautyError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [gender, setGender] = useState<HarborGender>(initialGender ?? 'male')
   const [appearance, setAppearance] = useState<HarborAppearance>({
@@ -210,13 +236,43 @@ export function HarborCharacterCreate({
     previewRef.current?.dispatchEvent(new Event('hq-preview-rebuild'))
   }, [gender, appearance, look, hatOn])
 
-  const hairStyleIndex = Math.max(0, HARBOR_HAIR_STYLES.indexOf(appearance.hairStyle))
-  const eyeStyleIndex = Math.max(0, HARBOR_EYE_STYLES.indexOf(appearance.eyeStyle))
-  const faceStyleIndex = Math.max(0, HARBOR_FACE_STYLES.indexOf(appearance.faceStyle))
+  const cycleUnlocked = <T extends string>(
+    list: readonly T[],
+    current: T,
+    dir: -1 | 1,
+    skuId: (v: T) => string,
+  ): T => {
+    let i = Math.max(0, list.indexOf(current))
+    for (let n = 0; n < list.length; n++) {
+      i = cycleIndex(list.length, i, dir)
+      const next = list[i]!
+      // Barber: preview every style (including premium). Create: free / owned only.
+      if (isBarber || harborBeautyIsUnlocked(skuId(next), unlockedBeauty)) return next
+    }
+    return current
+  }
+
+  const cycleUnlockedIndex = (
+    length: number,
+    current: number,
+    dir: -1 | 1,
+    skuId: (i: number) => string,
+  ): number => {
+    let i = current
+    for (let n = 0; n < length; n++) {
+      i = cycleIndex(length, i, dir)
+      if (isBarber || harborBeautyIsUnlocked(skuId(i), unlockedBeauty)) return i
+    }
+    return current
+  }
 
   const bumpAppearance = (patch: Partial<HarborAppearance>) => {
+    setBeautyError(null)
     setAppearance((a) => ({ ...a, ...patch }))
   }
+
+  const lockedSku = isBarber ? harborBeautyLockedSku(appearance, unlockedBeauty) : null
+  const unlockBundle = isBarber ? harborBeautyUnlockCost(appearance, unlockedBeauty) : null
 
   const validateName = (): string | null => {
     const normalized = normalizeHarborUsernameInput(username)
@@ -237,6 +293,17 @@ export function HarborCharacterCreate({
     if (!normalized) {
       setStep('name')
       return
+    }
+    if (isBarber && unlockBundle && unlockBundle.missing.length > 0) {
+      const ok = onUnlockBeautyBundle?.(appearance) ?? false
+      if (!ok) {
+        setBeautyError(
+          `Need ${unlockBundle.cost} ferry coins for this look · you have ${coins.toLocaleString()}`,
+        )
+        setStep('design')
+        return
+      }
+      setBeautyError(null)
     }
     setBusy(true)
     setNameError(null)
@@ -388,12 +455,22 @@ export function HarborCharacterCreate({
                   value={HARBOR_HAIR_STYLE_LABEL[appearance.hairStyle].en}
                   onPrev={() =>
                     bumpAppearance({
-                      hairStyle: HARBOR_HAIR_STYLES[cycleIndex(HARBOR_HAIR_STYLES.length, hairStyleIndex, -1)]!,
+                      hairStyle: cycleUnlocked(
+                        HARBOR_HAIR_STYLES,
+                        appearance.hairStyle,
+                        -1,
+                        (s) => `beauty-hair-${s}`,
+                      ),
                     })
                   }
                   onNext={() =>
                     bumpAppearance({
-                      hairStyle: HARBOR_HAIR_STYLES[cycleIndex(HARBOR_HAIR_STYLES.length, hairStyleIndex, 1)]!,
+                      hairStyle: cycleUnlocked(
+                        HARBOR_HAIR_STYLES,
+                        appearance.hairStyle,
+                        1,
+                        (s) => `beauty-hair-${s}`,
+                      ),
                     })
                   }
                 />
@@ -413,10 +490,24 @@ export function HarborCharacterCreate({
                   colors={HARBOR_HAIR_COLORS}
                   index={appearance.hairColor}
                   onPrev={() =>
-                    bumpAppearance({ hairColor: cycleIndex(HARBOR_HAIR_COLORS.length, appearance.hairColor, -1) })
+                    bumpAppearance({
+                      hairColor: cycleUnlockedIndex(
+                        HARBOR_HAIR_COLORS.length,
+                        appearance.hairColor,
+                        -1,
+                        (i) => `beauty-dye-hair-${i}`,
+                      ),
+                    })
                   }
                   onNext={() =>
-                    bumpAppearance({ hairColor: cycleIndex(HARBOR_HAIR_COLORS.length, appearance.hairColor, 1) })
+                    bumpAppearance({
+                      hairColor: cycleUnlockedIndex(
+                        HARBOR_HAIR_COLORS.length,
+                        appearance.hairColor,
+                        1,
+                        (i) => `beauty-dye-hair-${i}`,
+                      ),
+                    })
                   }
                 />
                 <ArrowRow
@@ -424,12 +515,22 @@ export function HarborCharacterCreate({
                   value={HARBOR_EYE_STYLE_LABEL[appearance.eyeStyle].en}
                   onPrev={() =>
                     bumpAppearance({
-                      eyeStyle: HARBOR_EYE_STYLES[cycleIndex(HARBOR_EYE_STYLES.length, eyeStyleIndex, -1)]!,
+                      eyeStyle: cycleUnlocked(
+                        HARBOR_EYE_STYLES,
+                        appearance.eyeStyle,
+                        -1,
+                        (s) => `beauty-eye-${s}`,
+                      ),
                     })
                   }
                   onNext={() =>
                     bumpAppearance({
-                      eyeStyle: HARBOR_EYE_STYLES[cycleIndex(HARBOR_EYE_STYLES.length, eyeStyleIndex, 1)]!,
+                      eyeStyle: cycleUnlocked(
+                        HARBOR_EYE_STYLES,
+                        appearance.eyeStyle,
+                        1,
+                        (s) => `beauty-eye-${s}`,
+                      ),
                     })
                   }
                 />
@@ -438,10 +539,24 @@ export function HarborCharacterCreate({
                   colors={HARBOR_EYE_COLORS}
                   index={appearance.eyeColor}
                   onPrev={() =>
-                    bumpAppearance({ eyeColor: cycleIndex(HARBOR_EYE_COLORS.length, appearance.eyeColor, -1) })
+                    bumpAppearance({
+                      eyeColor: cycleUnlockedIndex(
+                        HARBOR_EYE_COLORS.length,
+                        appearance.eyeColor,
+                        -1,
+                        (i) => `beauty-dye-eye-${i}`,
+                      ),
+                    })
                   }
                   onNext={() =>
-                    bumpAppearance({ eyeColor: cycleIndex(HARBOR_EYE_COLORS.length, appearance.eyeColor, 1) })
+                    bumpAppearance({
+                      eyeColor: cycleUnlockedIndex(
+                        HARBOR_EYE_COLORS.length,
+                        appearance.eyeColor,
+                        1,
+                        (i) => `beauty-dye-eye-${i}`,
+                      ),
+                    })
                   }
                 />
                 <ArrowRow
@@ -449,12 +564,22 @@ export function HarborCharacterCreate({
                   value={HARBOR_FACE_STYLE_LABEL[appearance.faceStyle].en}
                   onPrev={() =>
                     bumpAppearance({
-                      faceStyle: HARBOR_FACE_STYLES[cycleIndex(HARBOR_FACE_STYLES.length, faceStyleIndex, -1)]!,
+                      faceStyle: cycleUnlocked(
+                        HARBOR_FACE_STYLES,
+                        appearance.faceStyle,
+                        -1,
+                        (s) => `beauty-face-${s}`,
+                      ),
                     })
                   }
                   onNext={() =>
                     bumpAppearance({
-                      faceStyle: HARBOR_FACE_STYLES[cycleIndex(HARBOR_FACE_STYLES.length, faceStyleIndex, 1)]!,
+                      faceStyle: cycleUnlocked(
+                        HARBOR_FACE_STYLES,
+                        appearance.faceStyle,
+                        1,
+                        (s) => `beauty-face-${s}`,
+                      ),
                     })
                   }
                 />
@@ -496,6 +621,38 @@ export function HarborCharacterCreate({
                   onPrev={() => setShoesIdx((i) => cycleIndex(FREE_SHOES.length, i, -1))}
                   onNext={() => setShoesIdx((i) => cycleIndex(FREE_SHOES.length, i, 1))}
                 />
+                {isBarber && lockedSku ? (
+                  <div className="hq-charcreate-beauty-tip" role="status">
+                    <p className="hq-charcreate-hint">
+                      Premium · {lockedSku.name.en}
+                      <span aria-hidden="true"> · </span>
+                      {lockedSku.price} ferry coins
+                      <span aria-hidden="true"> · </span>
+                      purse {coins.toLocaleString()}
+                    </p>
+                    <button
+                      type="button"
+                      className="hq-btn hq-btn--ghost hq-btn--compact"
+                      disabled={busy || coins < lockedSku.price || !onUnlockBeauty}
+                      onClick={() => {
+                        const ok = onUnlockBeauty?.(lockedSku.id) ?? false
+                        if (!ok) {
+                          setBeautyError(
+                            `Need ${lockedSku.price} ferry coins · you have ${coins.toLocaleString()}`,
+                          )
+                          return
+                        }
+                        setBeautyError(null)
+                      }}
+                    >
+                      Unlock {lockedSku.name.en}
+                    </button>
+                    {beautyError ? <p className="hq-charcreate-error">{beautyError}</p> : null}
+                  </div>
+                ) : null}
+                {isBarber && beautyError && !lockedSku ? (
+                  <p className="hq-charcreate-error">{beautyError}</p>
+                ) : null}
               </div>
             ) : null}
 
