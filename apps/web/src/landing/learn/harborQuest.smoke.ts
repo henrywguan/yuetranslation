@@ -89,6 +89,9 @@ import {
   HARBOR_TAP_ARRIVE,
   clampHarborMoveTarget,
   HARBOR_EXPLORE_X,
+  HARBOR_VOYAGE_Z_MAX,
+  HARBOR_VOYAGE_Z_MIN,
+  HARBOR_SOCIAL_SIT_CLUSTER,
   HARBOR_DOCK_X,
   HARBOR_MAP_LANGUAGE,
   HARBOR_VISITABLES,
@@ -545,7 +548,7 @@ function main() {
   assert.ok(HARBOR_TAP_MOVE_SPEED > 2, 'tap-to-move has a walk/paddle speed')
   assert.ok(HARBOR_TAP_ARRIVE > 0, 'arrival threshold')
   assert.equal(clampHarborMoveTarget(99, -9).x, HARBOR_EXPLORE_X, 'move target clamps to inland explore bound')
-  assert.equal(clampHarborMoveTarget(0, 999).z, 248, 'move target clamps far Z')
+  assert.equal(clampHarborMoveTarget(0, 999).z, HARBOR_VOYAGE_Z_MAX, 'move target clamps far Z')
   assert.match(worldSrc, /HARBOR_TAP_SLOP_PX/, 'tap/drag discrimination uses slop constant')
   assert.match(worldSrc, /tryTapMove/, 'tap raycasts to ground and sets destination')
   assert.match(worldSrc, /userData\.clickMarker/, 'OSRS yellow destination marker')
@@ -1380,13 +1383,18 @@ function main() {
   assert.match(worldSrc2, /mountainMist|foothill/, 'mountain foothills + mist veils')
   assert.match(worldSrc2, /inlandShelf|foothillShelf|terraceShelf/, 'expanded bank shelves toward karst')
   assert.match(worldSrc2, /hqAnimeHipRoof/, 'anime hip roofs on harbor buildings')
-  assert.ok(HARBOR_EXPLORE_X >= 20, 'explore bound reaches foothill terraces')
+  assert.ok(HARBOR_EXPLORE_X >= 30, 'explore bound reaches far foothill terraces')
+  assert.ok(HARBOR_VOYAGE_Z_MAX >= 320, 'voyage Z spans a long river')
+  assert.match(worldSrc2, /RIVER_FISH_SPOTS|placeRiverFishSpots/, 'main-river fishing buoys')
+  assert.match(worldSrc2, /HARBOR_SOCIAL_SIT_CLUSTER|HARBOR_VOYAGE_Z_MAX/, 'world extent social/voyage locks')
   assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32/, 'anime tapered boat hulls')
   assert.match(worldSrc2, /Soft role sash|anime volumes — not box belts/, 'landmark host soft sashes')
   assert.match(worldSrc2, /terraceRoad|terraceClimb/, 'terrace roads for layered stroll')
   assert.match(worldSrc2, /HARBOR_MAP_LANGUAGE/, 'map language lock exported')
   assert.match(worldSrc2, /function scenicPavilion/, 'scenic pavilion vista kit')
   assert.match(worldSrc2, /function terracePlaza/, 'terrace plaza relax/chat kit')
+  assert.match(worldSrc2, /terracePlaza[\s\S]*hqStampChairs/, 'plaza sit rings for relax/chat')
+  assert.ok(HARBOR_SOCIAL_SIT_CLUSTER >= 2, 'social sit cluster radius')
   assert.match(worldSrc2, /function windingDirtLane/, 'winding S-curve paths')
   assert.match(worldSrc2, /function valleyMistRibbon/, 'valley mist between land layers')
   assert.match(worldSrc2, /placeScenicMapFeatures/, 'scenic features placed per chunk')
@@ -1559,7 +1567,8 @@ function main() {
     'XP is flat text — not a pill',
   )
   assert.match(learnCss, /\.hq-coin-chip\.is-open\s*\{/, 'coin chip open affordance')
-  assert.match(worldSrc2, /const ACTIVE = 3/, 'leaner active river chunks for GPU')
+  assert.match(worldSrc2, /const ACTIVE = 4/, 'wider active river chunks for long voyage')
+  assert.match(worldSrc2, /center - 2; i <= center \+ ACTIVE/, 'chunk window ±2 around sailor')
   assert.match(worldSrc2, /setPixelRatio\([^)]*1\.25\)/, 'DPR capped at 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')
   assert.match(worldSrc2, /animNodes/, 'fauna motion uses cached nodes')

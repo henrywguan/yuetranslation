@@ -53,7 +53,13 @@ import {
   GUAN_TROPICAL_LOOK,
   GUAN_WATER_PLANE,
 } from './harborGuanRealm'
-import { GUAN_FISHING_HUT, nearestGuanFishSpot } from './harborFishing'
+import {
+  GUAN_FISHING_HUT,
+  RIVER_FISH_SPOTS,
+  nearestGuanFishSpot,
+  nearestRiverFishSpot,
+} from './harborFishing'
+import { fishingSpotBuoy } from './harborGuanFishingRealm'
 import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
@@ -258,7 +264,7 @@ export const HARBOR_VISITABLES: readonly HarborVisitable[] = [
 /** Arrival radius to open a visitable panel (proximity). */
 export const HARBOR_VISIT_RADIUS = 3.6
 /** Max distance to tap-open an NPC dialogue / landmark host UI. */
-export const HARBOR_NPC_TALK_RADIUS = 4.2
+export const HARBOR_NPC_TALK_RADIUS = 5.2
 
 /** Tap a chair within this range (on foot) to sit. */
 export const HARBOR_SIT_RADIUS = 1.85
@@ -551,14 +557,23 @@ export function isHarborLand(x: number): boolean {
 }
 
 /** Clamp a free-move point onto the playable river corridor. */
-/** How far inland the Scout may walk (bank lanes → foothill roads / terraces). */
-export const HARBOR_EXPLORE_X = 22
+/**
+ * Playable world extent — big enough to explore, fish, relax, and chat.
+ * Inland X reaches far foothills; Z spans a long river voyage.
+ */
+export const HARBOR_EXPLORE_X = 32
+/** Furthest +Z the Scout / canoe may travel on the main river. */
+export const HARBOR_VOYAGE_Z_MAX = 360
+/** Furthest −Z (slightly upstream of start). */
+export const HARBOR_VOYAGE_Z_MIN = -8
+/** Extra sit / chat gather radius around plaza stools. */
+export const HARBOR_SOCIAL_SIT_CLUSTER = 2.4
 
 export function clampHarborMoveTarget(x: number, z: number): { x: number; z: number } {
   const maxX = HARBOR_EXPLORE_X
   return {
     x: Math.min(maxX, Math.max(-maxX, x)),
-    z: Math.min(248, Math.max(-4, z)),
+    z: Math.min(HARBOR_VOYAGE_Z_MAX, Math.max(HARBOR_VOYAGE_Z_MIN, z)),
   }
 }
 
@@ -566,7 +581,7 @@ export function clampHarborMoveTarget(x: number, z: number): { x: number; z: num
 export function clampHarborBoatTarget(x: number, z: number): { x: number; z: number } {
   return {
     x: Math.min(HARBOR_LAND_EDGE, Math.max(-HARBOR_LAND_EDGE, x)),
-    z: Math.min(248, Math.max(-4, z)),
+    z: Math.min(HARBOR_VOYAGE_Z_MAX, Math.max(HARBOR_VOYAGE_Z_MIN, z)),
   }
 }
 
@@ -1068,14 +1083,15 @@ function terracePlaza(rng: () => number) {
   g.name = 'terrace-plaza'
   g.userData.terracePlaza = true
   const stone = hqStoneTexture()
+  const discR = 1.1 + rng() * 0.25
   const disc = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.1 + rng() * 0.25, 1.15, 0.08, 16),
+    new THREE.CylinderGeometry(discR, discR + 0.05, 0.08, 16),
     hqMatTex(P.stone, stone),
   )
   disc.position.y = 0.06
   g.add(disc)
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(1.05, 0.04, 6, 18),
+    new THREE.TorusGeometry(discR - 0.05, 0.04, 6, 18),
     hqMat(P.stoneDark),
   )
   ring.rotation.x = Math.PI / 2
@@ -1089,6 +1105,18 @@ function terracePlaza(rng: () => number) {
   )
   flame.position.y = 0.58
   g.add(flame)
+  // Sit cluster around the lantern — friends can gather to relax / chat
+  const seatR = Math.min(discR * 0.72, HARBOR_SOCIAL_SIT_CLUSTER * 0.45)
+  hqStampChairs(
+    g,
+    [
+      { x: seatR, z: 0.05, yaw: -Math.PI / 2 },
+      { x: -seatR, z: -0.05, yaw: Math.PI / 2, stool: true },
+      { x: 0.08, z: seatR, yaw: Math.PI, stool: true },
+      { x: -0.05, z: -seatR, yaw: 0 },
+    ],
+    rng,
+  )
   return g
 }
 
@@ -1207,7 +1235,7 @@ function placeDirtRoads(
   const z0 = chunkIndex * CHUNK
   const mid = z0 + CHUNK / 2
   const inlandX = BANK + 6.4
-  const terraceX = BANK + 14.5
+  const terraceX = BANK + 18.5
   for (const side of [-1, 1] as const) {
     // Riverside packed-earth lane
     const road = dirtRoadStrip(CHUNK - 0.35, 1.05 + rng() * 0.2)
@@ -1299,6 +1327,19 @@ function placeDirtRoads(
 
 
 
+/** Drop fishing buoys whose Z falls in this chunk (main-river fish loop). */
+function placeRiverFishSpots(group: THREE.Group, chunkIndex: number) {
+  const z0 = chunkIndex * CHUNK
+  const z1 = z0 + CHUNK
+  for (const spot of RIVER_FISH_SPOTS) {
+    if (spot.z < z0 - 1 || spot.z >= z1 + 1) continue
+    const buoy = fishingSpotBuoy(spot.id)
+    buoy.position.set(spot.x, 0.05, spot.z)
+    buoy.userData.riverFishSpot = true
+    group.add(buoy)
+  }
+}
+
 /** Place scenic pavilions + terrace plazas for overlook / relax / chat. */
 function placeScenicMapFeatures(
   group: THREE.Group,
@@ -1314,7 +1355,7 @@ function placeScenicMapFeatures(
       if (rng() > 0.55 && biome !== 'hills') continue
       const pav = scenicPavilion(rng)
       pav.position.set(
-        side * (BANK + 15.5 + rng() * 2.2),
+        side * (BANK + 19.5 + rng() * 3.5),
         0.12,
         z0 + 6 + rng() * (CHUNK - 12),
       )
@@ -1323,7 +1364,7 @@ function placeScenicMapFeatures(
       if (rng() > 0.4) {
         const plaza = terracePlaza(rng)
         plaza.position.set(
-          side * (BANK + 14.0 + rng() * 1.5),
+          side * (BANK + 18.0 + rng() * 2.5),
           0.1,
           z0 + 10 + rng() * (CHUNK - 14),
         )
@@ -2624,7 +2665,7 @@ function wulingyuanRange(seed: number, fogHex = 0xe8f8ff) {
     const pillar = wulingPillar(rng)
     const side = i % 2 === 0 ? 1 : -1
     // Push the range farther inland so expanded banks meet the foothills
-    const x = side * (28 + rng() * 18 + (i % 5) * 1.4)
+    const x = side * (36 + rng() * 22 + (i % 5) * 1.6)
     const z = (rng() - 0.5) * 110
     pillar.position.set(x, 0.15, z)
     pillar.scale.setScalar(0.9 + rng() * 0.6)
@@ -2650,7 +2691,7 @@ function wulingyuanRange(seed: number, fogHex = 0xe8f8ff) {
   for (let i = 0; i < 8; i++) {
     const pillar = wulingPillar(rng)
     const side = i % 2 === 0 ? 1 : -1
-    const x = side * (20 + rng() * 6)
+    const x = side * (26 + rng() * 8)
     const z = -24 + i * 14
     pillar.position.set(x, 0.1, z)
     pillar.scale.setScalar(0.75 + rng() * 0.4)
@@ -2673,11 +2714,11 @@ function wulingyuanRange(seed: number, fogHex = 0xe8f8ff) {
       new THREE.BoxGeometry(10, 1.4, 130),
       hqMat(0x3a5a38),
     )
-    ridge.position.set(side * 24, 0.2, 0)
+    ridge.position.set(side * 32, 0.2, 0)
     ridge.userData.foothillRidge = true
     root.add(ridge)
     const ridgeMist = mountainMistVeil(14, 3.2, fogHex)
-    ridgeMist.position.set(side * 22, 1.6, 0)
+    ridgeMist.position.set(side * 30, 1.6, 0)
     ridgeMist.rotation.y = side > 0 ? -0.2 : 0.2
     root.add(ridgeMist)
   }
@@ -3129,34 +3170,34 @@ function populateChunk(
       const padLen = CHUNK / pads
       const scallop = i % 2 === 0 ? 0.7 : -0.55
       const inland = new THREE.Mesh(
-        new THREE.BoxGeometry(13.5 + (i % 2) * 0.8, 0.32, padLen + 0.2),
+        new THREE.BoxGeometry(15 + (i % 2) * 0.9, 0.32, padLen + 0.2),
         mats.grass,
       )
-      inland.position.set(side * (BANK + 11.5 + scallop), -0.06, z0 + padLen * (i + 0.5))
+      inland.position.set(side * (BANK + 12.5 + scallop), -0.06, z0 + padLen * (i + 0.5))
       inland.userData.inlandShelf = true
       group.add(inland)
       const terrace = new THREE.Mesh(
-        new THREE.BoxGeometry(7.5 + (i % 2) * 0.6, 0.45, padLen + 0.15),
+        new THREE.BoxGeometry(9 + (i % 2) * 0.7, 0.45, padLen + 0.15),
         mats.grass,
       )
-      terrace.position.set(side * (BANK + 16.8 + scallop * 0.6), 0.05 + i * 0.02, z0 + padLen * (i + 0.5))
+      terrace.position.set(side * (BANK + 19.5 + scallop * 0.6), 0.05 + i * 0.02, z0 + padLen * (i + 0.5))
       terrace.userData.terraceShelf = true
       group.add(terrace)
       const foothill = new THREE.Mesh(
-        new THREE.BoxGeometry(9.5 + (i % 2) * 0.7, 0.85 + i * 0.08, padLen + 0.15),
+        new THREE.BoxGeometry(12 + (i % 2) * 0.8, 0.9 + i * 0.08, padLen + 0.15),
         mats.grass,
       )
-      foothill.position.set(side * (BANK + 22.5 + scallop * 0.4), 0.22 + i * 0.04, z0 + padLen * (i + 0.5))
+      foothill.position.set(side * (BANK + 28.5 + scallop * 0.4), 0.22 + i * 0.04, z0 + padLen * (i + 0.5))
       foothill.userData.foothillShelf = true
       group.add(foothill)
     }
     // Valley mist between bank → terrace → foothill (layered depth read)
     const fogHex = HARBOR_WEATHER_LOOK[weather].fog
     const mistLow = valleyMistRibbon(4.5, CHUNK * 0.92, fogHex)
-    mistLow.position.set(side * (BANK + 13.5), 0.35, z0 + CHUNK / 2)
+    mistLow.position.set(side * (BANK + 15.5), 0.35, z0 + CHUNK / 2)
     group.add(mistLow)
     const mistHigh = valleyMistRibbon(5.5, CHUNK * 0.9, fogHex)
-    mistHigh.position.set(side * (BANK + 19.5), 0.7, z0 + CHUNK / 2)
+    mistHigh.position.set(side * (BANK + 24.5), 0.7, z0 + CHUNK / 2)
     group.add(mistHigh)
     const shore = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, CHUNK + 0.2), mats.sand)
     shore.position.set(side * (RIVER + 1.1), 0.02, z0 + CHUNK / 2)
@@ -3173,6 +3214,9 @@ function populateChunk(
 
   // Scenic pavilions + terrace plazas (Where Winds Meet vista language)
   placeScenicMapFeatures(group, chunkIndex, rng, biome)
+
+  // River fishing buoys in this chunk's Z span
+  placeRiverFishSpots(group, chunkIndex)
 
   // Quiz pier landings (every chunk may host one or more dock slots)
   placeDockStops(group, chunkIndex, rng)
@@ -3227,8 +3271,10 @@ function populateChunk(
       { x: -(BANK + 1.8), z: z0 + CHUNK * 0.48, yaw: Math.PI / 2 },
       { x: -(BANK + 2.2), z: z0 + CHUNK * 0.7, yaw: Math.PI * 0.55, stool: rng() > 0.5 },
       // Terrace overlook seats — relax / chat with river view
-      { x: BANK + 14.2, z: z0 + CHUNK * 0.42, yaw: -Math.PI / 2 },
-      { x: -(BANK + 14.2), z: z0 + CHUNK * 0.58, yaw: Math.PI / 2, stool: true },
+      { x: BANK + 18.5, z: z0 + CHUNK * 0.42, yaw: -Math.PI / 2 },
+      { x: -(BANK + 18.5), z: z0 + CHUNK * 0.58, yaw: Math.PI / 2, stool: true },
+      { x: BANK + 22.0, z: z0 + CHUNK * 0.55, yaw: -Math.PI * 0.45, stool: true },
+      { x: -(BANK + 22.0), z: z0 + CHUNK * 0.35, yaw: Math.PI * 0.55 },
     ], rng)
   }
   if (biome === 'reeds') {
@@ -3898,6 +3944,8 @@ function nearestVisitable(
     if (spot) return 'fishing-spot'
     return null
   }
+  const riverSpot = nearestRiverFishSpot(x, z, 2.0)
+  if (riverSpot) return 'fishing-spot'
   let best: HarborVisitableId | null = null
   let bestDist = HARBOR_VISIT_RADIUS
   for (const v of HARBOR_VISITABLES) {
@@ -4030,7 +4078,7 @@ export function createHarborWorld(
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(
       isGuan ? GUAN_WATER_PLANE.size : RIVER * 2.4,
-      isGuan ? GUAN_WATER_PLANE.size : 400,
+      isGuan ? GUAN_WATER_PLANE.size : 560,
       isGuan ? waterSeg : 1,
       isGuan ? waterSeg : 20,
     ),
@@ -4061,7 +4109,7 @@ export function createHarborWorld(
   )
   const chunkGroups = new Map<number, THREE.Group>()
   /** Chunks ahead of the canoe — 3 = leaner GPU, earlier pop-in than 4. */
-  const ACTIVE = 3
+  const ACTIVE = 4
   /** Cached PointLights for flicker (avoids full scene.traverse each frame). */
   const lanternLights: THREE.PointLight[] = []
   /** Cached fauna / bubbles / petals for idle motion (avoids per-chunk traverse). */
@@ -4082,7 +4130,7 @@ export function createHarborWorld(
     if (isGuan) return
     const center = Math.floor(centerZ / CHUNK)
     const need = new Set<number>()
-    for (let i = center - 1; i <= center + ACTIVE; i++) need.add(i)
+    for (let i = center - 2; i <= center + ACTIVE; i++) need.add(i)
     let dirty = false
     for (const [idx, g] of chunkGroups) {
       if (!need.has(idx)) {
@@ -4506,11 +4554,9 @@ export function createHarborWorld(
         }
         wantBoard = false
         sitTarget = chair
-        // Instant sit when already close enough
-        if (
-          travelMode === 'foot' &&
-          Math.hypot(footX - cx, footZ - cz) <= HARBOR_SIT_RADIUS * 0.55
-        ) {
+        // Instant sit when already close enough (social cluster is more forgiving for chat)
+        const sitArrive = Math.max(HARBOR_SIT_RADIUS * 0.55, HARBOR_SOCIAL_SIT_CLUSTER * 0.45)
+        if (travelMode === 'foot' && Math.hypot(footX - cx, footZ - cz) <= sitArrive) {
           enterSit(chair)
           return
         }

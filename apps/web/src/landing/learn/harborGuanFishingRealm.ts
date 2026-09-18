@@ -80,7 +80,7 @@ function faunaHeron(): THREE.Group {
   return g
 }
 
-function fishingSpotBuoy(spotId: string): THREE.Group {
+export function fishingSpotBuoy(spotId: string): THREE.Group {
   const g = new THREE.Group()
   g.name = `guan-fish-spot-${spotId}`
   g.userData.landmarkHost = 'fishing-spot'

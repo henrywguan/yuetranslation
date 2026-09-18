@@ -32,3 +32,7 @@
 - Do not paste WWM map screenshots into the repo as assets
 - Do not rename Harbor landmarks after WWM places
 - Voxel / Minecraft flat shelves are a regression
+
+## World scale
+
+See [`WORLD-SCALE.md`](./WORLD-SCALE.md) for explore / fish / relax / chat extent locks.
