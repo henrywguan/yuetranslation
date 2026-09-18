@@ -6,6 +6,8 @@
 
 **Product north star:** Sailors *want* to dress up and pay because outfits change **silhouette**, beauty changes **identity**, and motion makes the body feel alive — not because a box got a new hex color.
 
+**Cinematic canon (Higgsfield):** See [`assets/README.md`](./assets/README.md) for River Scout character sheets, turnaround, night pier mood, and dress-up VO. Procedural meshes should chase that appeal.
+
 ### Locked decisions (2026-09-18 · Henry)
 
 | Decision | Lock |
