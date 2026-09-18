@@ -805,6 +805,16 @@ function main() {
   assert.match(wornCss, /\.hq-play\.is-bag-open/, 'bag-open hides Talk/Explore chrome')
   assert.match(wornCss, /\.hq-bag--float/, 'floating bag layout styles')
   assert.match(wornCss, /\.hq-bag--docked/, 'mobile docked bag layout styles')
+  assert.match(
+    wornCss,
+    /\.hq-visit-panel\.hq-bag--docked[^{]*\{[^}]*transform:\s*none/s,
+    'docked bag clears visit-panel mobile translateX centering',
+  )
+  assert.match(
+    wornCss,
+    /\.hq-visit-panel\.hq-bag--float[^{]*\{[^}]*transform:\s*none/s,
+    'float bag clears visit-panel mobile translateX centering',
+  )
   assert.match(wornCss, /\.hq-bag-close/, 'brown X close styles')
   assert.match(wornCss, /\.hq-bag-resize/, 'bag resize handle styles')
   assert.match(wornCss, /\.hq-item-tip--fixed/, 'fixed portaled tip styles')
