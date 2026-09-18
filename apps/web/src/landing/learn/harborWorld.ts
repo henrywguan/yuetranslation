@@ -1049,6 +1049,7 @@ function placeDirtRoads(
   const z0 = chunkIndex * CHUNK
   const mid = z0 + CHUNK / 2
   const inlandX = BANK + 6.4
+  const terraceX = BANK + 14.5
   for (const side of [-1, 1] as const) {
     // Riverside packed-earth lane
     const road = dirtRoadStrip(CHUNK - 0.35, 1.05 + rng() * 0.2)
@@ -1059,6 +1060,12 @@ function placeDirtRoads(
     inland.userData.inlandRoad = true
     inland.position.set(side * inlandX, 0.01, mid)
     group.add(inland)
+    // High terrace path — Where Winds Meet layered map depth
+    const terrace = dirtRoadStrip(CHUNK - 0.55, 0.8 + rng() * 0.12)
+    terrace.userData.terraceRoad = true
+    terrace.userData.inlandRoad = true
+    terrace.position.set(side * terraceX, 0.08, mid)
+    group.add(terrace)
     // Village chunks get a short stone approach on the inland road
     if (biomeForChunk(chunkIndex) === 'village' && rng() > 0.35) {
       const stone = stoneRoadStrip(CHUNK * 0.45, 1.2)
@@ -1083,11 +1090,20 @@ function placeDirtRoads(
     }
     // Foothill path stub reaching toward mountain mist
     if (rng() > 0.4) {
-      const foothillPath = dirtRoadStrip(3.4, 0.75)
+      const foothillPath = dirtRoadStrip(8.2, 0.75)
       foothillPath.userData.foothillPath = true
       foothillPath.rotation.y = Math.PI / 2
-      foothillPath.position.set(side * (inlandX + 2.2), 0.03, z0 + 6 + rng() * (CHUNK - 10))
+      foothillPath.position.set(side * (inlandX + 5.5), 0.05, z0 + 6 + rng() * (CHUNK - 10))
       group.add(foothillPath)
+      // Cross-link inland → terrace for stroll / chat loops
+      if (rng() > 0.35) {
+        const climb = dirtRoadStrip(terraceX - inlandX, 0.7)
+        climb.userData.crossPath = true
+        climb.userData.terraceClimb = true
+        climb.rotation.y = Math.PI / 2
+        climb.position.set(side * ((inlandX + terraceX) / 2), 0.05, z0 + 5 + rng() * (CHUNK - 9))
+        group.add(climb)
+      }
     }
     // Roadside lanterns along both lanes
     for (const t of [0.2, 0.5, 0.8] as const) {
@@ -2975,6 +2991,9 @@ function populateChunk(
       { x: BANK + 2.4, z: z0 + CHUNK * 0.62, yaw: -Math.PI * 0.4, stool: true },
       { x: -(BANK + 1.8), z: z0 + CHUNK * 0.48, yaw: Math.PI / 2 },
       { x: -(BANK + 2.2), z: z0 + CHUNK * 0.7, yaw: Math.PI * 0.55, stool: rng() > 0.5 },
+      // Terrace overlook seats — relax / chat with river view
+      { x: BANK + 14.2, z: z0 + CHUNK * 0.42, yaw: -Math.PI / 2 },
+      { x: -(BANK + 14.2), z: z0 + CHUNK * 0.58, yaw: Math.PI / 2, stool: true },
     ], rng)
   }
   if (biome === 'reeds') {

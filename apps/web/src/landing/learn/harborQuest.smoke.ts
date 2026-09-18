@@ -1380,6 +1380,7 @@ function main() {
   assert.ok(HARBOR_EXPLORE_X >= 20, 'explore bound reaches foothill terraces')
   assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32/, 'anime tapered boat hulls')
   assert.match(worldSrc2, /Soft role sash|anime volumes — not box belts/, 'landmark host soft sashes')
+  assert.match(worldSrc2, /terraceRoad|terraceClimb/, 'terrace roads for layered stroll')
   assert.ok(HARBOR_EXPLORE_X > HARBOR_DOCK_X + 3, 'explore bound reaches inland roads')
   assert.equal(HARBOR_DIALOGUE_BUBBLE, true, 'dialogue NPCs expose a speech-bubble cue')
   assert.match(worldSrc2, /attachDialogueBubble|speechBubbleIcon/, 'Talkable NPCs get a speech bubble icon')

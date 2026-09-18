@@ -45,4 +45,5 @@
 | NPCs | Soft sash cylinders; role hair volumes (no box hats); landmark hosts unique soft kits |
 | Hair | Scout styles polished toward v2 sheets (short / topknot / long / fringe / curtains / ridge / pony / twin / wave) |
 | Clothes | VIP families get soft emissive sheen on silhouette meshes |
-| Map | `HARBOR_EXPLORE_X` → 22; inland terrace shelf; denser village/forest inland (Where Winds Meet depth — original Harbor geometry) |
+| Map | `HARBOR_EXPLORE_X` → 22; inland terrace shelf + terrace roads; denser village/forest inland; overlook chairs (Where Winds Meet depth — original Harbor geometry) |
+| VIP gear | Soft cape cylinders, fan leaf arcs, boat ornament spheres |

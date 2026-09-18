@@ -162,22 +162,40 @@ function buildStarlitHatOverlay(color: number, accent: number): THREE.Group {
 function buildVipCape(color: number, accent: number, set: HarborVipSetId): THREE.Group {
   const g = new THREE.Group()
   g.name = 'gear-vip-cape'
-  const cape = tagAnim(new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.5, 0.04), mat(color, accent, 0.35)), 'sway', 0.2)
-  cape.position.set(0, -0.1, -0.02)
+  // Soft flowing cape shell (not a flat board)
+  const cape = tagAnim(
+    new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 0.5, 12), mat(color, accent, 0.35)),
+    'sway',
+    0.2,
+  )
+  cape.scale.set(1.55, 1, 0.28)
+  cape.position.set(0, -0.1, -0.06)
   g.add(cape)
   if (set === 'phoenix-sovereign') {
-    const trim = tagAnim(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.05), mat(accent, accent, 0.7)), 'sway', 0.8)
-    trim.position.set(0, 0.12, -0.02)
+    const trim = tagAnim(
+      new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 16), mat(accent, accent, 0.7)),
+      'sway',
+      0.8,
+    )
+    trim.rotation.x = Math.PI / 2.4
+    trim.position.set(0, 0.12, -0.04)
     g.add(trim)
   } else if (set === 'jade-immortal') {
-    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.35, 0.03), mat(accent, accent, 0.5))
-    panel.position.set(0, -0.05, -0.04)
+    const panel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.12, 0.35, 12),
+      mat(accent, accent, 0.5),
+    )
+    panel.scale.set(1.2, 1, 0.35)
+    panel.position.set(0, -0.05, -0.08)
     g.add(panel)
   } else {
     const bars = tagAnim(new THREE.Group(), 'sway', 1.1)
     for (const x of [-0.1, 0.1] as const) {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.03), mat(accent, 0xa0d0ff, 0.55))
-      bar.position.set(x, -0.08, -0.04)
+      const bar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.035, 0.42, 10),
+        mat(accent, 0xa0d0ff, 0.55),
+      )
+      bar.position.set(x, -0.08, -0.06)
       bars.add(bar)
     }
     g.add(bars)
@@ -200,9 +218,14 @@ function buildPhoenixFan(color: number, accent: number): THREE.Group {
   const fan = tagAnim(new THREE.Group(), 'fan-flutter', 0.3)
   fan.position.set(0.1, 0.08, 0)
   for (let i = 0; i < 7; i++) {
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.16, 0.01), mat(i % 2 ? color : accent, accent, 0.55))
-    blade.rotation.z = -0.7 + (i / 6) * 1.4
-    blade.position.set(Math.sin(-0.7 + (i / 6) * 1.4) * 0.06, Math.cos(-0.7 + (i / 6) * 1.4) * 0.04, 0)
+    const blade = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 10, 8, 0, Math.PI),
+      mat(i % 2 ? color : accent, accent, 0.55),
+    )
+    blade.scale.set(0.35, 0.15, 1)
+    const ang = -0.7 + (i / 6) * 1.4
+    blade.rotation.z = ang
+    blade.position.set(Math.sin(ang) * 0.06, Math.cos(ang) * 0.04, 0)
     fan.add(blade)
   }
   g.add(fan)
@@ -236,7 +259,11 @@ function buildStarlitCompass(color: number, accent: number): THREE.Group {
   rim.rotation.x = Math.PI / 2
   g.add(rim)
   g.add(hqBox(0.04, 0.02, 0.02, P.trimGold, 0.08, 0.04, 0.03))
-  const needle = tagAnim(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.01), mat(accent, 0xff6060, 0.8)), 'spin-z', 1.4)
+  const needle = tagAnim(
+    new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.1, 8), mat(accent, 0xff6060, 0.8)),
+    'spin-z',
+    1.4,
+  )
   needle.position.set(0.08, 0.04, 0.02)
   g.add(needle)
   return g
@@ -340,7 +367,12 @@ export function attachVipBoatOrnaments(hull: THREE.Group, boatId: string): void 
     flame.position.set(1.35, 0.75, 0)
     flame.rotation.z = -Math.PI / 2
     hull.add(flame)
-    const wing = tagAnim(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.35), mat(0xf0d060, 0xffe080, 0.5)), 'sail-ripple', 0.2)
+    const wing = tagAnim(
+      new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), mat(0xf0d060, 0xffe080, 0.5)),
+      'sail-ripple',
+      0.2,
+    )
+    wing.scale.set(1.3, 0.25, 0.9)
     wing.position.set(0.4, 0.85, 0)
     hull.add(wing)
   } else if (boatId === 'boat-pearl') {
@@ -357,7 +389,12 @@ export function attachVipBoatOrnaments(hull: THREE.Group, boatId: string): void 
     }
     hull.add(orbit)
   } else if (boatId === 'boat-imperial') {
-    const prow = tagAnim(new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 0.2), mat(0xf5e6a8, 0xfff0c0, 0.7)), 'prow-nod', 0.4)
+    const prow = tagAnim(
+      new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), mat(0xf5e6a8, 0xfff0c0, 0.7)),
+      'prow-nod',
+      0.4,
+    )
+    prow.scale.set(1.4, 0.9, 0.85)
     prow.position.set(1.4, 0.7, 0)
     hull.add(prow)
     const banner = tagAnim(new THREE.Mesh(new THREE.PlaneGeometry(0.25, 0.45), mat(0xc4a35a, 0xffe080, 0.45)), 'sail-ripple', 1)
