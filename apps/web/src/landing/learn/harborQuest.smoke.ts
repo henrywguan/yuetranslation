@@ -91,6 +91,10 @@ import {
   HARBOR_DOCK_X,
   HARBOR_VISITABLES,
   HARBOR_LANDMARK_HOSTS,
+  HARBOR_LANDMARK_HOST_GENDER,
+  HARBOR_LANDMARK_HOST_LABEL,
+  HARBOR_NPC_ROLE_GENDER,
+  HARBOR_NPC_ROLE_LABEL,
   HARBOR_VISIT_RADIUS,
   HARBOR_SIT_RADIUS,
 } from '../../landing/learn/harborWorld'
@@ -583,6 +587,21 @@ function main() {
   assert.ok(HARBOR_NPC_ROLES.includes('fisherman'), 'fisherman NPCs')
   assert.ok(HARBOR_NPC_ROLES.includes('merchant'), 'merchant NPCs')
   assert.equal(HARBOR_NPC_ROLES.length, 6, 'Chinese clothing role kit')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.villager, 'female', 'villager female Ping')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.scholar, 'female', 'scholar female An')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.merchant, 'female', 'merchant female Rui')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.ferryman, 'male', 'ferryman male Bo')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.fisherman, 'male', 'fisherman male Hao')
+  assert.match(HARBOR_NPC_ROLE_LABEL.villager, /Ping/, 'named villager')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.outfitter, 'female', 'Mei Lin Outfitter')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER['save-shack'], 'female', 'Yun Save Keeper')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.barber, 'male', 'Wei Barber')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.bank, 'male', 'Jin Banker')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.arena, 'male', 'Arena Master')
+  assert.match(HARBOR_LANDMARK_HOST_LABEL.outfitter, /Mei Lin/, 'named Outfitter')
+  assert.match(worldSrc, /characterStyle = 'anime-dressup'/, 'NPC anime dress-up style')
+  assert.match(worldSrc, /harborFigureLegStanding/, 'NPC fashion legs')
+  assert.doesNotMatch(worldSrc, /RS-era proportions \(oversized potato/, 'NPC potato comment removed')
 
   // Craft bible kit — locked palette + faceted helpers + modular props
   assert.equal(HARBOR_FACETS, 6, 'era cylinders stay 6-gon')
