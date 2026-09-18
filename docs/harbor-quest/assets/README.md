@@ -67,12 +67,12 @@ Henry opened full creative audio control for Harbor Quest. These beds/cues are *
 | File | Role |
 |---|---|
 | [`scout-female.glb`](./scout-female.glb) | Meshy image→3D from female A-pose — textured, PBR, humanoid-rigged |
-| [`scout-male.glb`](./scout-male.glb) | Meshy image→3D from male A-pose (when present) |
+| [`scout-male.glb`](./scout-male.glb) | Meshy image→3D from male A-pose — textured, PBR, humanoid-rigged |
 
 Wire via a future GLB protagonist loader — do **not** replace procedural Scout until Henry OKs the mesh in-game.
 
 Female Meshy job: `b17e9020-8f33-465e-a3c5-e220153b42c8` (completed)  
-Male Meshy job: `75c9d9ae-f8a9-420b-b2e2-d76c1dca452a`
+Male Meshy job: `75c9d9ae-f8a9-420b-b2e2-d76c1dca452a` (completed)
 
 ---
 
