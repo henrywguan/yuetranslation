@@ -67,7 +67,7 @@ Procedural meshes in `harborWorld.ts` (`chineseNpc` / `landmarkHostNpc`) chase t
 
 | File | Line |
 |---|---|
-| [`vo-scout-welcome.wav`](./vo-scout-welcome.wav) | “Welcome to Jyut Harbor…” |
+| [`vo-scout-welcome.wav`](./vo-scout-welcome.wav) | “Welcome to Harbor Quest.” |
 | [`vo-outfitter-dressup.wav`](./vo-outfitter-dressup.wav) | “Try on something beautiful…” |
 | [`vo-pier-cleared.wav`](./vo-pier-cleared.wav) | “Pier cleared. The ferry lights are waiting for you.” |
 | [`vo-nice-catch.wav`](./vo-nice-catch.wav) | “Nice catch! Bring it to the pier market.” |
@@ -114,7 +114,7 @@ Male Meshy job: `75c9d9ae-f8a9-420b-b2e2-d76c1dca452a` (completed)
 | `7f040761-…` | gpt_image_2_5 | female A-pose |
 | `04e5b503-…` | soul_location | night pier |
 | `d2ef1fbc-…` | soul_cast | male sheet |
-| `3e32f6fb-…` | seed_audio | welcome VO |
+| `469ee524-…` | seed_audio | welcome VO (“Welcome to Harbor Quest.”) |
 | `173808eb-…` | seed_audio | outfitter VO |
 | `b17e9020-…` | image_to_3d | female Scout GLB |
 | `ca3ab311-…` | gpt_image_2_5 | male A-pose |
