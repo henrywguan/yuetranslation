@@ -30,8 +30,8 @@ export type HarborBeautySku = {
 
 /** Free styles always unlocked; premium dyes/faces require purchase or event grant. */
 export const HARBOR_BEAUTY_SKUS: readonly HarborBeautySku[] = [
-  // Hair styles — base free, twin/wave premium silhouette
-  ...HARBOR_HAIR_STYLES.filter((s) => s !== 'twin' && s !== 'wave').map(
+  // Hair styles — base free; twin / wave / ridge are premium silhouettes
+  ...HARBOR_HAIR_STYLES.filter((s) => s !== 'twin' && s !== 'wave' && s !== 'ridge').map(
     (s): HarborBeautySku => ({
       id: `beauty-hair-${s}`,
       kind: 'hairStyle',
@@ -55,6 +55,14 @@ export const HARBOR_BEAUTY_SKUS: readonly HarborBeautySku[] = [
     ref: 'wave' satisfies HarborHairStyle,
     name: { en: 'Harbor wave', zh: '港灣波浪' },
     price: 56,
+    premium: true,
+  },
+  {
+    id: 'beauty-hair-ridge',
+    kind: 'hairStyle',
+    ref: 'ridge' satisfies HarborHairStyle,
+    name: { en: 'Tide ridge', zh: '潮脊' },
+    price: 52,
     premium: true,
   },
   // Hair dyes — first four free; festival/jade/pearl premium

@@ -2,15 +2,29 @@
  * Harbor Quest · shared RS2/OSRS-*era* humanoid figure kit.
  *
  * Angular low-poly (faceted spheres, 6-gon limbs, mitten hands) — not voxel
- * cubes, not Jagex meshes. Eyes are flush face planes (no jutting spheres).
+ * cubes, not Jagex meshes. Eyes are flush face inserts (no jutting spheres).
  * See docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md §4.4.
  */
 import * as THREE from 'three'
+import type { HarborEyeStyle } from './harborAppearance'
 
 export const HARBOR_FIGURE_HEAD_R = 0.155
 
-function figureMat(color: number, flat = true) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: flat })
+/** World-space skull extents after the default head scale. */
+export function harborFigureHeadExtents(r = HARBOR_FIGURE_HEAD_R) {
+  return {
+    x: r * 0.95,
+    y: r * 1.08,
+    z: r * 0.92,
+  }
+}
+
+function figureMat(color: number, flat = true, doubleSide = false) {
+  return new THREE.MeshLambertMaterial({
+    color,
+    flatShading: flat,
+    ...(doubleSide ? { side: THREE.DoubleSide } : null),
+  })
 }
 
 /** Faceted head — elongated icosa (readable skull, not a smooth ball / cube). */
@@ -39,34 +53,39 @@ export function harborFigureNeck(skin: THREE.Material, headY: number, r = HARBOR
 export function harborFigureEars(skin: THREE.Material, headY: number, r = HARBOR_FIGURE_HEAD_R): THREE.Group {
   const g = new THREE.Group()
   g.name = 'hq-figure-ears'
+  const ex = harborFigureHeadExtents(r).x
   for (const sx of [-1, 1] as const) {
     const ear = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.07, 0.045), skin)
-    ear.position.set(sx * (r * 0.88), headY + 0.01, 0)
+    ear.position.set(sx * (ex + 0.012), headY + 0.01, 0)
     ear.rotation.z = sx * 0.15
     g.add(ear)
   }
   return g
 }
 
+type FaceOpts = {
+  iris?: number
+  sclera?: number
+  brow?: number
+  lip?: number
+  eyeStyle?: HarborEyeStyle
+  /** @deprecated Prefer eyeStyle — kept for NPC callers that pass sizes. */
+  eyeW?: number
+  eyeH?: number
+  eyeY?: number
+  showBrows?: boolean
+  showMouth?: boolean
+  blush?: number | null
+}
+
 /**
- * Flush face — thin eye planes on the skull surface + small nose wedge.
- * Depth stays tiny so nothing “orbits” off the head.
+ * Flush face inserts — RS-era color regions on the skull surface.
+ * Eye styles must read as different silhouettes at barber / play-camera range.
  */
 export function harborFigureFace(
   skin: THREE.Material,
   headY: number,
-  opts: {
-    iris?: number
-    sclera?: number
-    brow?: number
-    lip?: number
-    eyeW?: number
-    eyeH?: number
-    eyeY?: number
-    showBrows?: boolean
-    showMouth?: boolean
-    blush?: number | null
-  } = {},
+  opts: FaceOpts = {},
 ): THREE.Group {
   const g = new THREE.Group()
   g.name = 'hq-figure-face'
@@ -74,53 +93,102 @@ export function harborFigureFace(
 
   const iris = opts.iris ?? 0x1a1814
   const scleraC = opts.sclera ?? 0xf2f0e6
-  const eyeW = opts.eyeW ?? 0.048
-  const eyeH = opts.eyeH ?? 0.032
-  const eyeY = headY + (opts.eyeY ?? 0.015)
-  // Front of scaled head ≈ r * 0.92 * 0.92 — park decals just proud of skin
-  const faceZ = HARBOR_FIGURE_HEAD_R * 0.78
-  const white = figureMat(scleraC)
-  const pupil = figureMat(iris)
+  const style: HarborEyeStyle = opts.eyeStyle ?? 'round'
+  const extents = harborFigureHeadExtents()
+  // Sit just proud of the scaled skull front — never buried inside
+  const faceZ = extents.z + 0.006
+  const white = figureMat(scleraC, true, true)
+  const pupil = figureMat(iris, true, true)
+  const lidMat = figureMat(opts.brow ?? 0x2a2018, true, true)
+
+  const eyeYBase =
+    headY +
+    (opts.eyeY ??
+      (style === 'sleepy' ? -0.005 : style === 'bright' ? 0.02 : 0.012))
+  const eyeSpread = style === 'bright' ? 0.055 : style === 'almond' ? 0.05 : 0.048
 
   for (const sx of [-1, 1] as const) {
-    const x = sx * 0.048
-    // Paper-thin planes — flush RS face paint, not boxes sticking out
-    const sclera = new THREE.Mesh(new THREE.PlaneGeometry(eyeW + 0.012, eyeH + 0.008), white)
-    sclera.position.set(x, eyeY, faceZ)
-    g.add(sclera)
-    const dot = new THREE.Mesh(new THREE.PlaneGeometry(eyeW * 0.42, eyeH * 0.55), pupil)
-    dot.position.set(x, eyeY, faceZ + 0.001)
-    g.add(dot)
+    const x = sx * eyeSpread
+    if (style === 'round') {
+      // Classic RS round inserts
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.028, 8), white)
+      sclera.position.set(x, eyeYBase, faceZ)
+      g.add(sclera)
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.014, 7), pupil)
+      dot.position.set(x, eyeYBase, faceZ + 0.0015)
+      g.add(dot)
+    } else if (style === 'almond') {
+      // Tilted pointed ovals — silhouette ≠ round at a glance
+      const sclera = new THREE.Mesh(new THREE.PlaneGeometry(0.062, 0.026), white)
+      sclera.position.set(x, eyeYBase, faceZ)
+      sclera.rotation.z = sx * -0.38
+      sclera.scale.set(1.15, 0.72, 1)
+      g.add(sclera)
+      const dot = new THREE.Mesh(new THREE.PlaneGeometry(0.022, 0.014), pupil)
+      dot.position.set(x + sx * 0.004, eyeYBase, faceZ + 0.0015)
+      dot.rotation.z = sx * -0.38
+      g.add(dot)
+    } else if (style === 'bright') {
+      // Large whites + iris + catchlight
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.036, 8), white)
+      sclera.position.set(x, eyeYBase, faceZ)
+      g.add(sclera)
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.018, 7), pupil)
+      dot.position.set(x, eyeYBase - 0.002, faceZ + 0.0015)
+      g.add(dot)
+      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.007, 5), figureMat(0xffffff, true, true))
+      spark.position.set(x - sx * 0.008, eyeYBase + 0.008, faceZ + 0.0025)
+      g.add(spark)
+    } else {
+      // Sleepy — half-lidded: iris peeks under a heavy lid
+      const sclera = new THREE.Mesh(new THREE.PlaneGeometry(0.056, 0.022), white)
+      sclera.position.set(x, eyeYBase - 0.004, faceZ)
+      g.add(sclera)
+      const dot = new THREE.Mesh(new THREE.PlaneGeometry(0.02, 0.01), pupil)
+      dot.position.set(x, eyeYBase - 0.006, faceZ + 0.0015)
+      g.add(dot)
+      const lid = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.02), lidMat)
+      lid.position.set(x, eyeYBase + 0.01, faceZ + 0.002)
+      g.add(lid)
+    }
   }
 
-  // Soft nose wedge — short depth, sits on the face
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.045, 0.05), skin)
-  nose.position.set(0, headY - 0.02, faceZ + 0.012)
-  nose.rotation.x = -0.35
+  // Soft nose wedge — short depth, sits on the face (not eye-like boxes)
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.04, 0.04), skin)
+  nose.position.set(0, headY - 0.025, faceZ + 0.01)
+  nose.rotation.x = -0.4
   g.add(nose)
 
   if (opts.showBrows !== false) {
-    const brow = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.012, 0.012),
-      figureMat(opts.brow ?? 0x2a2018),
-    )
-    brow.position.set(0, eyeY + eyeH * 0.85, faceZ + 0.002)
-    g.add(brow)
+    for (const sx of [-1, 1] as const) {
+      const brow = new THREE.Mesh(
+        new THREE.BoxGeometry(0.065, 0.01, 0.01),
+        figureMat(opts.brow ?? 0x2a2018),
+      )
+      brow.position.set(
+        sx * eyeSpread,
+        eyeYBase + (style === 'sleepy' ? 0.028 : 0.034),
+        faceZ + 0.002,
+      )
+      brow.rotation.z = sx * (opts.showBrows === true ? -0.28 : -0.12)
+      g.add(brow)
+    }
   }
 
   if (opts.showMouth !== false) {
+    const mouthW = opts.blush != null ? 0.07 : 0.05
     const mouth = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.055, 0.012),
-      figureMat(opts.lip ?? 0x8a4050),
+      new THREE.PlaneGeometry(mouthW, opts.blush != null ? 0.016 : 0.01),
+      figureMat(opts.lip ?? 0x8a4050, true, true),
     )
-    mouth.position.set(0, headY - 0.055, faceZ + 0.001)
+    mouth.position.set(0, headY - 0.058, faceZ + 0.001)
     g.add(mouth)
   }
 
   if (opts.blush != null) {
     for (const sx of [-1, 1] as const) {
-      const blush = new THREE.Mesh(new THREE.PlaneGeometry(0.035, 0.018), figureMat(opts.blush))
-      blush.position.set(sx * 0.075, headY - 0.035, faceZ + 0.001)
+      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.018, 6), figureMat(opts.blush, true, true))
+      blush.position.set(sx * 0.078, headY - 0.038, faceZ + 0.001)
       g.add(blush)
     }
   }

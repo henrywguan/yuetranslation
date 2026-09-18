@@ -6,7 +6,19 @@
 
 export type HarborGender = 'male' | 'female'
 
-export type HarborHairStyle = 'short' | 'bun' | 'long' | 'fringe' | 'topknot' | 'twin' | 'wave'
+export type HarborHairStyle =
+  | 'short'
+  | 'bun'
+  | 'long'
+  | 'fringe'
+  | 'topknot'
+  | 'twin'
+  | 'wave'
+  /** Hairdresser silhouette grammar — original Harbor meshes. */
+  | 'bald'
+  | 'curtains'
+  | 'ridge'
+  | 'pony'
 
 export type HarborEyeStyle = 'round' | 'almond' | 'bright' | 'sleepy'
 
@@ -24,20 +36,28 @@ export type HarborAppearance = {
 
 export const HARBOR_HAIR_STYLES: readonly HarborHairStyle[] = [
   'short',
+  'bald',
+  'fringe',
+  'curtains',
   'bun',
   'long',
-  'fringe',
+  'pony',
   'topknot',
+  'ridge',
   'twin',
   'wave',
 ] as const
 
 export const HARBOR_HAIR_STYLE_LABEL: Record<HarborHairStyle, { en: string; zh: string }> = {
   short: { en: 'Short crop', zh: '短髮' },
+  bald: { en: 'River tonsure', zh: '河僧頂' },
   bun: { en: 'Traveler bun', zh: '旅人髻' },
   long: { en: 'River length', zh: '河長髮' },
   fringe: { en: 'Fringe cut', zh: '劉海' },
+  curtains: { en: 'Pier curtains', zh: '碼頭簾髮' },
   topknot: { en: 'Jade topknot', zh: '玉頂髻' },
+  ridge: { en: 'Tide ridge', zh: '潮脊' },
+  pony: { en: 'Wake ponytail', zh: '尾浪馬尾' },
   twin: { en: 'Twin loops', zh: '雙環髻' },
   wave: { en: 'Harbor wave', zh: '港灣波浪' },
 }

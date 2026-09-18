@@ -684,13 +684,23 @@ function main() {
   assert.ok(meshes >= 18 && meshes <= 48, `mesh budget smell-test got ${meshes}`)
   assert.match(
     readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8'),
-    /harborFigureFace|PlaneGeometry/,
-    'shared figure kit uses flush face planes',
+    /harborFigureFace|(CircleGeometry|PlaneGeometry)/,
+    'shared figure kit uses flush face inserts',
+  )
+  assert.match(
+    readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8'),
+    /eyeStyle|HarborEyeStyle/,
+    'face kit branches on eye style',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
     /harborFigureHead|IcosahedronGeometry|harborFigureFace/,
     'scout uses faceted head + flush face kit',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
+    /harborFigureHeadExtents|bangZ/,
+    'scout hair sits outside skull extents',
   )
   assert.doesNotMatch(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
