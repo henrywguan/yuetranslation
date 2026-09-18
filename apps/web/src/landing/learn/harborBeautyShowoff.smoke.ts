@@ -27,6 +27,10 @@ const starter = harborBeautyStarterOwned()
 assert.ok(starter.every((id) => harborBeautyIsUnlocked(id, starter)))
 assert.equal(harborBeautyIsUnlocked('beauty-hair-twin', starter), false, 'twin hair is premium')
 assert.equal(harborBeautyIsUnlocked('beauty-hair-wave', starter), false, 'wave hair is premium')
+assert.equal(harborBeautyIsUnlocked('beauty-hair-ridge', starter), false, 'ridge hair is premium')
+assert.equal(harborBeautyIsUnlocked('beauty-hair-bald', starter), true, 'tonsure is free')
+assert.equal(harborBeautyIsUnlocked('beauty-hair-curtains', starter), true, 'curtains are free')
+assert.equal(harborBeautyIsUnlocked('beauty-hair-pony', starter), true, 'ponytail is free')
 
 const locked = harborBeautyLockedSku(
   { ...HARBOR_DEFAULT_APPEARANCE, hairStyle: 'twin' },

@@ -32,6 +32,14 @@ import {
 } from './harborProtagonistAnim'
 
 assert.ok(HARBOR_HAIR_STYLES.includes('twin') && HARBOR_HAIR_STYLES.includes('wave'), 'v3 hair styles')
+assert.ok(
+  HARBOR_HAIR_STYLES.includes('bald') &&
+    HARBOR_HAIR_STYLES.includes('curtains') &&
+    HARBOR_HAIR_STYLES.includes('ridge') &&
+    HARBOR_HAIR_STYLES.includes('pony'),
+  'hairdresser silhouette set (bald/curtains/ridge/pony)',
+)
+assert.ok(HARBOR_HAIR_STYLES.length >= 11, 'salon catalog covers classic silhouette families')
 assert.ok(HARBOR_EYE_STYLES.length >= 4 && HARBOR_FACE_STYLES.length >= 4, 'v3 eyes/faces')
 assert.equal(sanitizeHarborAppearance({}).eyeStyle, 'round')
 assert.equal(appearanceEqual(HARBOR_DEFAULT_APPEARANCE, sanitizeHarborAppearance({})), true)
