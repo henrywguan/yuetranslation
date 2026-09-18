@@ -19,10 +19,10 @@ import {
   hqCrate,
   hqDoor,
   hqFence,
-  hqGuanDirtTexture,
-  hqGuanGrassTexture,
-  hqGuanSandTexture,
-  hqGuanThatchTexture,
+  hqSoftDirtTexture,
+  hqSoftGrassTexture,
+  hqSoftSandTexture,
+  hqSoftThatchTexture,
   hqLavaTexture,
   hqMarketStall,
   hqMat,
@@ -734,7 +734,7 @@ function habitatCrate(rng: () => number): THREE.Group {
 function dirtPatch(rng: () => number, radius = 0.55): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-dirt-patch'
-  const dirt = hqGuanDirtTexture()
+  const dirt = hqSoftDirtTexture()
   const base = new THREE.Mesh(
     new THREE.CylinderGeometry(radius * 0.92, radius, 0.07, 7),
     hqMatTex(GUAN_TROPICAL_LOOK.dirtRich, dirt),
@@ -792,7 +792,7 @@ function thatchHut(rng: () => number, wide = false): THREE.Group {
   g.name = 'guan-hut'
   const w = wide ? 1.55 : 1.1
   const d = wide ? 1.25 : 0.95
-  const thatch = hqGuanThatchTexture()
+  const thatch = hqSoftThatchTexture()
   const wood = hqWoodTexture()
   const stone = hqStoneTexture()
   // Raised stilts / plinth
@@ -840,7 +840,7 @@ function pirateHouse(rng: () => number): THREE.Group {
   // Course banding
   g.add(hqBox(w * 1.02, 0.08, d * 1.02, P.brickDark, 0, 0.35, 0))
   g.add(hqBox(w * 1.02, 0.06, d * 1.02, P.brickDark, 0, 0.75, 0))
-  g.add(hqBoxTex(w * 1.18, 0.16, d * 1.18, P.roofClay, hqGuanThatchTexture(), 0, 1.18, 0))
+  g.add(hqBoxTex(w * 1.18, 0.16, d * 1.18, P.roofClay, hqSoftThatchTexture(), 0, 1.18, 0))
   g.add(hqBox(w * 0.7, 0.1, d * 0.7, P.roofTile, 0, 1.32, 0))
   g.add(hqDoor(0.32, 0.55, 0.12, 0.38, d * 0.52))
   g.add(hqWindow(0.28, 0.26, P.trimGold, P.glass, -w * 0.3, 0.68, d * 0.52))
@@ -865,7 +865,7 @@ function pirateTavern(): THREE.Group {
   g.add(hqBoxTex(2.4, 0.18, 1.8, P.stone, stone, 0, 0.1, 0))
   g.add(hqBox(2.2, 1.15, 1.6, P.brick, 0, 0.7, 0))
   g.add(hqBox(2.25, 0.1, 1.65, P.brickDark, 0, 0.4, 0))
-  g.add(hqBoxTex(2.5, 0.2, 1.9, P.roofClay, hqGuanThatchTexture(), 0, 1.4, 0))
+  g.add(hqBoxTex(2.5, 0.2, 1.9, P.roofClay, hqSoftThatchTexture(), 0, 1.4, 0))
   g.add(hqBox(1.4, 0.12, 1.1, P.roofTile, 0, 1.58, 0))
   g.add(hqDoor(0.36, 0.65, 0, 0.42, 0.85))
   g.add(hqWindow(0.32, 0.3, P.trimGold, P.glass, -0.7, 0.8, 0.85))
@@ -1343,7 +1343,7 @@ function dirtPath(
   const dx = bx - ax
   const dz = bz - az
   const len = Math.hypot(dx, dz)
-  const dirt = hqGuanDirtTexture().clone()
+  const dirt = hqSoftDirtTexture().clone()
   dirt.needsUpdate = true
   dirt.wrapS = THREE.RepeatWrapping
   dirt.wrapT = THREE.RepeatWrapping
@@ -1371,7 +1371,7 @@ function dirtPath(
 
 /** Wet-sand lip + soft lagoon color shelves (shore → shallow → mid). */
 function stampShoreDetail(root: THREE.Group) {
-  const wetMat = hqMatTex(GUAN_TROPICAL_LOOK.sandWet, hqGuanSandTexture())
+  const wetMat = hqMatTex(GUAN_TROPICAL_LOOK.sandWet, hqSoftSandTexture())
   for (let i = 0; i < GUAN_LAND_OUTLINE.length; i++) {
     const a = GUAN_LAND_OUTLINE[i]!
     const b = GUAN_LAND_OUTLINE[(i + 1) % GUAN_LAND_OUTLINE.length]!
@@ -1429,12 +1429,12 @@ function buildLandMesh(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-island-main'
   const c = outlineCentroid()
-  const sandTex = hqGuanSandTexture().clone()
+  const sandTex = hqSoftSandTexture().clone()
   sandTex.needsUpdate = true
   sandTex.wrapS = THREE.RepeatWrapping
   sandTex.wrapT = THREE.RepeatWrapping
   sandTex.repeat.set(2.4, 2.4)
-  const grassTex = hqGuanGrassTexture().clone()
+  const grassTex = hqSoftGrassTexture().clone()
   grassTex.needsUpdate = true
   grassTex.wrapS = THREE.RepeatWrapping
   grassTex.wrapT = THREE.RepeatWrapping
@@ -1459,7 +1459,7 @@ function buildLandMesh(rng: () => number): THREE.Group {
   // Layer 3 — jungle plateau (textured deep turf, not flat color)
   const jungleThick = GUAN_HEIGHT.jungle - GUAN_HEIGHT.grass
   const jungleGeo = extrudeOutline(GUAN_LAND_OUTLINE, jungleThick, c, 0.55)
-  const jungleTex = hqGuanGrassTexture().clone()
+  const jungleTex = hqSoftGrassTexture().clone()
   jungleTex.needsUpdate = true
   jungleTex.wrapS = THREE.RepeatWrapping
   jungleTex.wrapT = THREE.RepeatWrapping
@@ -1510,14 +1510,14 @@ function buildCairnIsle(rng: () => number): THREE.Group {
   const c = GUAN_LANDMARKS.cairnIsle
   const sand = new THREE.Mesh(
     new THREE.CylinderGeometry(c.r, c.r * 1.08, GUAN_HEIGHT.cairnSand, 7),
-    hqMatTex(GUAN_TROPICAL_LOOK.sand, hqGuanSandTexture()),
+    hqMatTex(GUAN_TROPICAL_LOOK.sand, hqSoftSandTexture()),
   )
   sand.position.y = GUAN_HEIGHT.cairnSand * 0.5
   g.add(sand)
   const grassThick = GUAN_HEIGHT.cairnGrass - GUAN_HEIGHT.cairnSand
   const grass = new THREE.Mesh(
     new THREE.CylinderGeometry(c.r * 0.72, c.r * 0.78, grassThick, 6),
-    hqMatTex(GUAN_TROPICAL_LOOK.grass, hqGuanGrassTexture()),
+    hqMatTex(GUAN_TROPICAL_LOOK.grass, hqSoftGrassTexture()),
   )
   grass.position.y = GUAN_HEIGHT.cairnSand + grassThick * 0.5
   g.add(grass)

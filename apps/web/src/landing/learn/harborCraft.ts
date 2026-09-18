@@ -129,8 +129,9 @@ function make128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.Da
 }
 
 /**
- * Soft 128 albedo — LinearFilter for Guan Harbor painterly look (no nearest
- * pixel stair-steps). River / era props keep `make128DataTex` nearest.
+ * Soft 128 albedo — LinearFilter painterly look (no nearest pixel stair-steps).
+ * Used for world ground / roofs (river banks + Guan). Wood / stone / lava stay
+ * on `make128DataTex` nearest for chunky prop read.
  */
 function makeSoft128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.DataTexture {
   const hit = texCache.get(key)
@@ -407,11 +408,11 @@ export function hqDirtTexture(): THREE.DataTexture {
 }
 
 /**
- * Guan Harbor soft sand — cream beach with gentle value noise (no stroke lines).
- * LinearFilter so tiled ground reads smooth like tropical RS3 lagoons.
+ * Soft sand — cream beach / riverbank with gentle value noise (no stroke lines).
+ * LinearFilter so tiled ground reads smooth (Guan lagoon + river voyage).
  */
-export function hqGuanSandTexture(): THREE.DataTexture {
-  return makeSoft128DataTex('guan-sand-soft', (data) => {
+export function hqSoftSandTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('soft-sand', (data) => {
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
         const n = softNoise2(x, y)
@@ -439,10 +440,10 @@ export function hqGuanSandTexture(): THREE.DataTexture {
 }
 
 /**
- * Guan soft grass turf — lush saturated greens via soft discs (no blade strokes).
+ * Soft grass turf — lush saturated greens via soft discs (no blade strokes).
  */
-export function hqGuanGrassTexture(): THREE.DataTexture {
-  return makeSoft128DataTex('guan-grass-soft', (data) => {
+export function hqSoftGrassTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('soft-grass', (data) => {
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
         const n = softNoise2(x * 0.7, y * 0.7)
@@ -470,10 +471,10 @@ export function hqGuanGrassTexture(): THREE.DataTexture {
 }
 
 /**
- * Guan soft dirt path — chocolate soil with rounded stone blotches (no grit lines).
+ * Soft dirt path — chocolate soil with rounded stone blotches (no grit lines).
  */
-export function hqGuanDirtTexture(): THREE.DataTexture {
-  return makeSoft128DataTex('guan-dirt-soft', (data) => {
+export function hqSoftDirtTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('soft-dirt', (data) => {
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
         const n = softNoise2(x * 0.55, y * 0.5)
@@ -505,10 +506,10 @@ export function hqGuanDirtTexture(): THREE.DataTexture {
 }
 
 /**
- * Guan soft thatch — golden roof with gentle value bands (no diagonal straw lines).
+ * Soft thatch — golden roof with gentle value bands (no diagonal straw lines).
  */
-export function hqGuanThatchTexture(): THREE.DataTexture {
-  return makeSoft128DataTex('guan-thatch-soft', (data) => {
+export function hqSoftThatchTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('soft-thatch', (data) => {
     for (let y = 0; y < 128; y++) {
       for (let x = 0; x < 128; x++) {
         const band = softNoise2(x * 0.08, y * 0.35)
@@ -530,6 +531,12 @@ export function hqGuanThatchTexture(): THREE.DataTexture {
     }
   })
 }
+
+/** @deprecated Prefer hqSoft* — kept for call sites mid-rename. */
+export const hqGuanSandTexture = hqSoftSandTexture
+export const hqGuanGrassTexture = hqSoftGrassTexture
+export const hqGuanDirtTexture = hqSoftDirtTexture
+export const hqGuanThatchTexture = hqSoftThatchTexture
 
 /** Flat material with optional 128px albedo (tint via color). */
 export function hqMatTex(
@@ -763,7 +770,7 @@ export function hqMarketStall(rng: () => number = Math.random): THREE.Group {
   const g = new THREE.Group()
   g.name = 'hq-market-stall'
   const wood = hqWoodTexture()
-  const thatch = hqThatchTexture()
+  const thatch = hqSoftThatchTexture()
   g.add(hqBoxTex(1.2, 0.08, 0.55, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, 0.55, 0))
   for (const x of [-0.5, 0.5] as const) {
     g.add(hqPost(0.04, 0.05, 0.55, HARBOR_CRAFT_PALETTE.woodDark, x, 0.28, 0.2, 5))

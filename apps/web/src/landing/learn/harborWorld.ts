@@ -12,12 +12,16 @@ import {
   hqCrate,
   hqDoor,
   hqMat,
+  hqMatTex,
   hqPost,
   hqRock,
+  hqSoftDirtTexture,
+  hqSoftGrassTexture,
+  hqSoftSandTexture,
+  hqSoftThatchTexture,
   hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
-  hqThatchTexture,
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
@@ -535,6 +539,16 @@ function mat(color: number, extra?: ConstructorParameters<typeof THREE.MeshLambe
   return hqMat(color, extra)
 }
 
+/** Soft painterly ground map (LinearFilter) with low UV repeat — matches Guan. */
+function softTiledMat(color: number, tex: THREE.DataTexture, repeat = 2.6) {
+  const map = tex.clone()
+  map.needsUpdate = true
+  map.wrapS = THREE.RepeatWrapping
+  map.wrapT = THREE.RepeatWrapping
+  map.repeat.set(repeat, repeat)
+  return hqMatTex(color, map)
+}
+
 /** Faceted oak/pine stand-in — icosa canopy, 6-gon trunk (bible §4.2). */
 function tree(rng: () => number, leaf: number) {
   const g = new THREE.Group()
@@ -645,7 +659,7 @@ function stiltShop(rng: () => number) {
   }
   g.add(hqBox(w + 0.18, 0.1, d + 0.18, P.woodLight, 0, deckY, 0))
   g.add(hqBox(w, h, d, P.plasterWarm, 0, deckY + h / 2 + 0.05, 0))
-  const roof = hqBoxTex(w + 0.32, 0.1, d + 0.28, P.straw, hqThatchTexture(), 0, deckY + h + 0.22, 0)
+  const roof = hqBoxTex(w + 0.32, 0.1, d + 0.28, P.straw, hqSoftThatchTexture(), 0, deckY + h + 0.22, 0)
   roof.rotation.x = -0.2
   g.add(roof)
   g.add(hqBox(0.1, 0.48, 0.04, P.banner, w * 0.35, deckY + h * 0.7, d / 2 + 0.06))
@@ -664,7 +678,7 @@ function hut(rng: () => number) {
   const w = 1.0 + rng() * 0.4
   const d = 0.9 + rng() * 0.3
   const h = 0.7 + rng() * 0.3
-  const thatch = hqThatchTexture()
+  const thatch = hqSoftThatchTexture()
   g.add(hqBox(w, h, d, P.plasterWarm, 0, h / 2, 0))
   const roofL = hqBoxTex(w + 0.32, 0.1, d * 0.65, P.straw, thatch, 0, h + 0.18, -d * 0.1)
   roofL.rotation.x = 0.5
@@ -944,9 +958,10 @@ function boatLantern(
 function dirtRoadStrip(length: number, width = 1.1) {
   const g = new THREE.Group()
   g.userData.dirtRoad = true
-  g.add(hqBox(width, 0.05, length, 0x6a4828, 0, 0.06, 0))
-  g.add(hqBox(0.12, 0.02, length * 0.96, 0x4a3018, -width * 0.22, 0.09, 0))
-  g.add(hqBox(0.12, 0.02, length * 0.96, 0x4a3018, width * 0.22, 0.09, 0))
+  const dirt = hqSoftDirtTexture()
+  g.add(hqBoxTex(width, 0.05, length, 0x6a4828, dirt, 0, 0.06, 0))
+  g.add(hqBoxTex(0.12, 0.02, length * 0.96, 0x4a3018, dirt, -width * 0.22, 0.09, 0))
+  g.add(hqBoxTex(0.12, 0.02, length * 0.96, 0x4a3018, dirt, width * 0.22, 0.09, 0))
   return g
 }
 
@@ -1953,7 +1968,7 @@ function buildBoatHull(boatId: string): THREE.Group {
     g.add(hqBox(0.18, 0.12, 0.12, P.trimGold, length * 0.62, 0.68, 0))
   }
   if (id === 'boat-pearl' || id === 'boat-imperial') {
-    g.add(hqBoxTex(0.9, 0.06, width * 0.9, trim, hqThatchTexture(), -0.15, 0.95, 0))
+    g.add(hqBoxTex(0.9, 0.06, width * 0.9, trim, hqSoftThatchTexture(), -0.15, 0.95, 0))
     g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, width * 0.28, 5))
     g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, -0.45, 0.7, -width * 0.28, 5))
     g.add(hqPost(0.04, 0.05, 0.55, P.woodDeep, 0.2, 0.7, width * 0.28, 5))
@@ -1965,7 +1980,7 @@ function buildBoatHull(boatId: string): THREE.Group {
     }
   }
   if (id === 'boat-reed') {
-    g.add(hqBoxTex(length * 0.8, 0.06, width * 1.05, trim, hqThatchTexture(), 0, 0.36, 0))
+    g.add(hqBoxTex(length * 0.8, 0.06, width * 1.05, trim, hqSoftThatchTexture(), 0, 0.36, 0))
   }
   if (id === 'boat-junk' || id === 'boat-merchant') {
     g.add(hqBoxTex(0.55, 0.35, width * 0.7, hull, wood, -length * 0.28, 0.55, 0))
@@ -2112,9 +2127,12 @@ function wulingyuanRange(seed: number, fogHex = 0xe8f8ff) {
     pillar.scale.setScalar(0.9 + rng() * 0.6)
     root.add(pillar)
     // Rocky / grassy foothill mound under each pillar (fills the empty base)
+    const grassy = rng() > 0.5
     const mound = new THREE.Mesh(
       new THREE.ConeGeometry(1.6 + rng() * 1.4, 1.1 + rng() * 0.9, 5),
-      hqMat(rng() > 0.5 ? 0x5a7a48 : 0x6a6860),
+      grassy
+        ? softTiledMat(0x5a8a50, hqSoftGrassTexture(), 1.8)
+        : hqMatTex(0x6a6860, hqStoneTexture()),
     )
     mound.position.set(x, 0.35, z)
     mound.userData.foothill = true
@@ -3506,8 +3524,17 @@ export function createHarborWorld(
     for (let i = 0; i < pos.count; i++) oceanBaseZ[i] = pos.getZ(i)
   }
 
-  const grassMat = mat(realm === 'bamboo' ? 0x2a6a42 : 0x2a5a38)
-  const sandMat = mat(realm === 'bamboo' ? 0xb8b078 : 0xc2b280)
+  // Soft painterly bank / beach mats (same LinearFilter albedos as Guan Harbor).
+  const grassMat = softTiledMat(
+    realm === 'bamboo' ? 0x2e7a48 : 0x2e6a40,
+    hqSoftGrassTexture(),
+    2.8,
+  )
+  const sandMat = softTiledMat(
+    realm === 'bamboo' ? 0xd0c090 : 0xe0d0a0,
+    hqSoftSandTexture(),
+    2.4,
+  )
   const chunkGroups = new Map<number, THREE.Group>()
   /** Chunks ahead of the canoe — 3 = leaner GPU, earlier pop-in than 4. */
   const ACTIVE = 3
