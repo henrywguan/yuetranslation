@@ -5,6 +5,7 @@
 - [ ] `npx tsc --noEmit -p apps/web/tsconfig.json` (and/or API) when TS changed
 - [ ] Offline `npm run smoke:all` (or at least `smoke:canto`) when API / entitlements touched
 - [ ] Manual check of the affected UI / API path
+- [ ] Confirm GitHub check **Wait for Vercel Preview** is green (or Vercel status Success)
 - [ ] If STT / mic / TTS changed: tap stays listening (every language) until second tap or ~2s silence after speech; mic tap during auto-speak barges in without killing capture; Home / switcher must drop the orange Safari mic pill — see `AGENTS.md` Live mic
 
 ## Notes
