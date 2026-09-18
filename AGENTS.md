@@ -44,7 +44,7 @@ Standing security / leak / token-abuse review for every PR and scheduled full-re
 - Bugbot rules: [`.cursor/BUGBOT.md`](.cursor/BUGBOT.md)
 - Safe health probe (no paid APIs): `npm run security:api-health` → `./scripts/security-api-health.sh`
 
-Henry activates **Security Reviewer**, **Vulnerability Scanner**, and the API-health custom automation in [cursor.com/automations](https://cursor.com/automations) (cloud agents cannot create standing Automations via API).
+Henry activates **Security Reviewer**, **Vulnerability Scanner**, the API-health custom automation, and **Vercel Deploy Guardian** in [cursor.com/automations](https://cursor.com/automations) (cloud agents cannot create standing Automations via API). Vercel PR gate: [`.github/workflows/vercel-preview.yml`](.github/workflows/vercel-preview.yml) · brief: [`docs/agents/vercel-deploy-guardian.md`](docs/agents/vercel-deploy-guardian.md).
 
 ### Cantonese Creator Scout (audience / partner research)
 

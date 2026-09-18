@@ -35,7 +35,12 @@ export default defineConfig({
         'pwa-screenshots/desktop-app-wide.png',
       ],
       injectManifest: {
+        // App shell + icons only — Harbor Quest media (splash PNGs, GLB, audio) is
+        // runtime-fetched and must not enter the SW precache (2 MiB default cap;
+        // #591 splash art broke production builds).
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest,txt}'],
+        globIgnores: ['**/assets/harbor-quest/**'],
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
         additionalManifestEntries: [
           { url: `${base}app-build.txt`.replace(/\/+/g, '/'), revision: appBuild },
         ],
