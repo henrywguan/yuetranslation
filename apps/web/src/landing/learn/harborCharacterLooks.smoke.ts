@@ -46,34 +46,48 @@ assert.equal(appearanceEqual(HARBOR_DEFAULT_APPEARANCE, sanitizeHarborAppearance
 
 // Distinct eye silhouettes + hair clear of skull
 const eyeGeom = new Set<string>()
+let browCount = 0
 for (const eyeStyle of HARBOR_EYE_STYLES) {
-  const s = buildHarborProtagonist({
-    pose: 'standing',
-    bareHead: true,
-    appearance: { ...HARBOR_DEFAULT_APPEARANCE, eyeStyle },
-  })
-  s.traverse((o) => {
-    const m = o as import('three').Mesh
-    if (!m.isMesh || !m.geometry) return
-    let p: import('three').Object3D | null = m
-    let underEyes = false
-    while (p) {
-      if (p.userData?.harborEyes || p.name === 'scout-eyes') underEyes = true
-      p = p.parent
-    }
-    if (underEyes) eyeGeom.add(m.geometry.type)
-  })
+  for (const faceStyle of HARBOR_FACE_STYLES) {
+    const s = buildHarborProtagonist({
+      pose: 'standing',
+      bareHead: true,
+      appearance: { ...HARBOR_DEFAULT_APPEARANCE, eyeStyle, faceStyle },
+    })
+    s.traverse((o) => {
+      const m = o as import('three').Mesh
+      if (!m.isMesh || !m.geometry) return
+      let p: import('three').Object3D | null = m
+      let underEyes = false
+      while (p) {
+        if (p.userData?.harborEyes || p.name === 'scout-eyes') underEyes = true
+        p = p.parent
+      }
+      if (!underEyes) return
+      eyeGeom.add(m.geometry.type)
+      if (m.userData?.harborBrow) browCount += 1
+    })
+  }
 }
-assert.ok(eyeGeom.has('CircleGeometry'), 'round/bright eyes use circle inserts')
-assert.ok(eyeGeom.has('PlaneGeometry'), 'almond/sleepy eyes use plane inserts')
-assert.ok(eyeGeom.size >= 2, 'eye styles use more than one geometry family')
+assert.ok(eyeGeom.has('CircleGeometry'), 'eyes use circle inserts (round/almond/bright/sleepy)')
+assert.ok(browCount >= HARBOR_EYE_STYLES.length * HARBOR_FACE_STYLES.length * 2, 'every face style keeps eyebrows')
+assert.ok(
+  !readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8').includes(
+    "faceStyle === 'sharp' || appearance.faceStyle === 'calm'",
+  ),
+  'brows no longer gated to sharp/calm only',
+)
 
 const fringeScout = buildHarborProtagonist({
   pose: 'standing',
   bareHead: true,
   appearance: { ...HARBOR_DEFAULT_APPEARANCE, hairStyle: 'fringe' },
 })
-const skullZ = 0.155 * 0.92
+const { z: skullZ } = (() => {
+  // Match harborFigureHeadExtents() after potato-head scale
+  const r = 0.19
+  return { z: r * 0.98 }
+})()
 let bangOk = false
 fringeScout.traverse((o) => {
   if (!o.userData?.harborHair && o.parent && !(o.parent as { userData?: { harborHair?: boolean } }).userData?.harborHair) {
@@ -86,11 +100,39 @@ fringeScout.traverse((o) => {
 })
 assert.ok(bangOk, 'fringe bang clears the skull front')
 
+// Traveler bun must cover the crown (no friar bald patch)
+const bunScout = buildHarborProtagonist({
+  pose: 'standing',
+  bareHead: true,
+  appearance: { ...HARBOR_DEFAULT_APPEARANCE, hairStyle: 'bun' },
+})
+const headY = typeof bunScout.userData.headY === 'number' ? bunScout.userData.headY : 0.8
+const crownTop = headY + 0.19 * 1.02
+let hairAboveCrown = 0
+bunScout.traverse((o) => {
+  const m = o as import('three').Mesh
+  if (!m.isMesh) return
+  let p: import('three').Object3D | null = m
+  let underHair = false
+  while (p) {
+    if (p.userData?.harborHair || p.name === 'scout-hair') underHair = true
+    p = p.parent
+  }
+  if (!underHair) return
+  // World-ish local y — hair pieces parented under root at absolute y
+  if (m.position.y >= crownTop - 0.02) hairAboveCrown += 1
+})
+assert.ok(hairAboveCrown >= 1, 'traveler bun places hair on/above the crown (not a tonsure)')
+
 const figureSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
 assert.match(figureSrc, /harborFigureHeadExtents/, 'shared skull extents for hair/face')
 assert.match(figureSrc, /eyeStyle/, 'face builder reads eyeStyle')
+assert.match(figureSrc, /harborBrow|Eyebrows always/, 'face kit always builds brows')
+assert.match(figureSrc, /half-lidded crescents|never black sunglass/, 'sleepy eyes redesigned off sunglass bars')
 const proSrc = readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8')
 assert.match(proSrc, /bangZ|harborFigureHeadExtents/, 'hair uses skull-clear bang depth')
+assert.match(proSrc, /full scalp cover|never a friar/, 'bun docs forbid friar ring')
+assert.match(proSrc, /showBrows:\s*true/, 'protagonist always enables brows')
 
 const bamboo = HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-bamboo')!
 assert.equal(harborGearMeshInfo(bamboo).uniqueMesh, true, 'bamboo hat unique silhouette')

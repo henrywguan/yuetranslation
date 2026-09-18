@@ -115,42 +115,62 @@ function addHair(
   const bangZ = sz + 0.045
   const backZ = -(sz + 0.04)
 
-  const addCrownShell = (scaleY = 0.62) => {
+  const addCrownShell = (scaleY = 0.78) => {
+    // Must clear the oversized potato crown — a too-flat shell leaves a
+    // friar’s bald patch (bug with Traveler bun after headR bump).
     const cap = part(
-      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.12, 0), hairMat),
+      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.22, 0), hairMat),
       'hair',
     )
-    cap.position.set(0, headY + sy * 0.22, -0.01)
-    cap.scale.set(1.08, scaleY, 1.06)
+    cap.position.set(0, headY + sy * 0.38, -0.015)
+    cap.scale.set(1.16, scaleY, 1.14)
     hairRoot.add(cap)
   }
 
   if (style === 'bald') {
     // River tonsure — thin ring only (monk / shaved grammar)
-    const ring = part(new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.022, 5, 10), hairMat), 'hair')
+    const ring = part(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.024, 5, 10), hairMat), 'hair')
     ring.position.set(0, crownY - 0.02, 0)
     ring.rotation.x = Math.PI / 2
     hairRoot.add(ring)
   } else if (style === 'short') {
-    addCrownShell(0.5)
-    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.04), hairMat), 'hair')
+    addCrownShell(0.72)
+    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.045, 0.04), hairMat), 'hair')
     fringe.position.set(0, headY + 0.04, bangZ)
     hairRoot.add(fringe)
   } else if (style === 'bun') {
-    addCrownShell(0.55)
-    const bun = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.07, 0), hairMat), 'hair')
-    bun.position.set(0, crownY + 0.02, -0.02)
+    // Traveler bun — full scalp cover + crown knot (never a friar ring)
+    const scalp = part(
+      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.24, 0), hairMat),
+      'hair',
+    )
+    scalp.scale.set(1.18, 0.88, 1.14)
+    scalp.position.set(0, headY + sy * 0.32, -0.02)
+    hairRoot.add(scalp)
+    for (const side of [-1, 1] as const) {
+      const sideHair = part(new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.085), hairMat), 'hair')
+      sideHair.position.set(side * (sx + 0.025), headY - 0.01, sz * 0.12)
+      hairRoot.add(sideHair)
+    }
+    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.04), hairMat), 'hair')
+    fringe.position.set(0, headY + 0.045, bangZ)
+    hairRoot.add(fringe)
+    const bunBase = part(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.035, 6), hairMat), 'hair')
+    bunBase.position.set(0, crownY + 0.04, -0.04)
+    hairRoot.add(bunBase)
+    const bun = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), hairMat), 'hair')
+    bun.position.set(0, crownY + 0.1, -0.045)
     hairRoot.add(bun)
   } else if (style === 'topknot') {
-    addCrownShell(0.55)
-    const knot = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.055, 0), hairMat), 'hair')
-    knot.position.set(0, crownY + 0.06, 0)
+    addCrownShell(0.75)
+    const knot = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.06, 0), hairMat), 'hair')
+    knot.position.set(0, crownY + 0.08, 0)
     hairRoot.add(knot)
     const pin = part(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.018, 0.018), hairMat), 'hair')
-    pin.position.set(0, crownY + 0.1, 0)
+    pin.position.set(0, crownY + 0.12, 0)
     hairRoot.add(pin)
   } else if (style === 'long') {
-    addCrownShell(0.58)
+    addCrownShell(0.78)
     const fall = part(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.08), hairMat), 'hair')
     fall.position.set(0, headY - 0.04, backZ)
     hairRoot.add(fall)
@@ -165,7 +185,7 @@ function addHair(
     bang.position.set(0, headY + 0.05, bangZ)
     hairRoot.add(bang)
   } else if (style === 'fringe') {
-    addCrownShell(0.58)
+    addCrownShell(0.78)
     const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.07, 0.045), hairMat), 'hair')
     fringe.position.set(0, headY + 0.045, bangZ)
     hairRoot.add(fringe)
@@ -179,7 +199,7 @@ function addHair(
     hairRoot.add(back)
   } else if (style === 'curtains') {
     // Pier curtains — long side falls framing the face (classic salon silhouette)
-    addCrownShell(0.52)
+    addCrownShell(0.72)
     for (const side of [-1, 1] as const) {
       const fall = part(new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.3, 0.07), hairMat), 'hair')
       fall.position.set(side * (sx + 0.04), headY - 0.04, sz * 0.25)
@@ -203,7 +223,7 @@ function addHair(
     }
   } else if (style === 'pony') {
     // Wake ponytail — short crown + queue down the back
-    addCrownShell(0.5)
+    addCrownShell(0.72)
     const bang = part(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.035), hairMat), 'hair')
     bang.position.set(0, headY + 0.045, bangZ)
     hairRoot.add(bang)
@@ -214,7 +234,7 @@ function addHair(
     tail.position.set(0, headY - 0.06, backZ - 0.01)
     hairRoot.add(tail)
   } else if (style === 'twin') {
-    addCrownShell(0.5)
+    addCrownShell(0.72)
     for (const side of [-1, 1] as const) {
       const loop = part(new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.022, 5, 8), hairMat), 'hair')
       loop.position.set(side * 0.1, crownY + 0.01, -0.01)
@@ -227,11 +247,11 @@ function addHair(
   } else if (style === 'wave') {
     // Harbor wave — piled crown + swept quiff
     const mound = part(
-      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.05, 0), hairMat),
+      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.2, 0), hairMat),
       'hair',
     )
-    mound.scale.set(1.15, 0.7, 1.08)
-    mound.position.set(0, headY + sy * 0.35, -0.01)
+    mound.scale.set(1.2, 0.82, 1.12)
+    mound.position.set(0, headY + sy * 0.4, -0.015)
     hairRoot.add(mound)
     const wave = part(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.05), hairMat), 'hair')
     wave.position.set(0, headY + 0.03, bangZ)
@@ -249,18 +269,21 @@ function addHair(
 
 function addEyes(g: THREE.Group, appearance: HarborAppearance, headY: number, skin: THREE.Material) {
   const iris = HARBOR_EYE_COLORS[appearance.eyeColor] ?? 0x1a1814
+  const browHex = HARBOR_HAIR_COLORS[appearance.hairColor] ?? HARBOR_PROTAGONIST_PALETTE.hair
   const face = harborFigureFace(skin, headY, {
     iris,
     eyeStyle: appearance.eyeStyle,
-    showBrows: appearance.faceStyle === 'sharp' || appearance.faceStyle === 'calm',
+    // Always show brows — Soft/Cheerful used to hide them and faces looked blank.
+    showBrows: true,
     showMouth: appearance.faceStyle !== 'calm',
     blush: appearance.faceStyle === 'cheerful' ? 0xe8a090 : null,
-    brow: 0x2a2018,
+    brow: browHex,
     lip: appearance.faceStyle === 'cheerful' ? 0xa04858 : 0x8a4050,
   })
   face.name = 'scout-eyes'
   face.userData.harborEyes = true
   face.userData.harborEyeStyle = appearance.eyeStyle
+  face.userData.harborBrows = true
   face.traverse((o) => {
     const m = o as THREE.Mesh
     if (!m.isMesh) return

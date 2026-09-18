@@ -145,44 +145,49 @@ export function harborFigureFace(
     const x = sx * eyeSpread
     if (style === 'round') {
       // Classic RS round inserts
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.032, 8), white)
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.03, 8), white)
       sclera.position.set(x, eyeYBase, faceZ)
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.016, 7), pupil)
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.014, 7), pupil)
       dot.position.set(x, eyeYBase, faceZ + 0.0015)
       g.add(dot)
     } else if (style === 'almond') {
       // Tilted pointed ovals — silhouette ≠ round at a glance
-      const sclera = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.028), white)
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.028, 8), white)
+      sclera.scale.set(1.35, 0.7, 1)
       sclera.position.set(x, eyeYBase, faceZ)
-      sclera.rotation.z = sx * -0.38
-      sclera.scale.set(1.15, 0.72, 1)
+      sclera.rotation.z = sx * -0.35
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.PlaneGeometry(0.024, 0.015), pupil)
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.012, 7), pupil)
+      dot.scale.set(1.2, 0.75, 1)
       dot.position.set(x + sx * 0.004, eyeYBase, faceZ + 0.0015)
-      dot.rotation.z = sx * -0.38
+      dot.rotation.z = sx * -0.35
       g.add(dot)
     } else if (style === 'bright') {
       // Large whites + iris + catchlight
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.04, 8), white)
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.038, 8), white)
       sclera.position.set(x, eyeYBase, faceZ)
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.02, 7), pupil)
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.018, 7), pupil)
       dot.position.set(x, eyeYBase - 0.002, faceZ + 0.0015)
       g.add(dot)
-      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.008, 5), figureMat(0xffffff, true, true))
-      spark.position.set(x - sx * 0.009, eyeYBase + 0.009, faceZ + 0.0025)
+      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.007, 5), figureMat(0xffffff, true, true))
+      spark.position.set(x - sx * 0.008, eyeYBase + 0.008, faceZ + 0.0025)
       g.add(spark)
     } else {
-      // Sleepy — half-lidded: iris peeks under a heavy lid
-      const sclera = new THREE.Mesh(new THREE.PlaneGeometry(0.062, 0.024), white)
-      sclera.position.set(x, eyeYBase - 0.004, faceZ)
+      // Sleepy — soft half-lidded crescents (never black sunglass bars)
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.026, 8), white)
+      sclera.scale.set(1.25, 0.5, 1)
+      sclera.position.set(x, eyeYBase - 0.002, faceZ)
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.PlaneGeometry(0.022, 0.011), pupil)
-      dot.position.set(x, eyeYBase - 0.006, faceZ + 0.0015)
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.011, 7), pupil)
+      dot.scale.set(1.15, 0.55, 1)
+      dot.position.set(x, eyeYBase - 0.005, faceZ + 0.0015)
       g.add(dot)
-      const lid = new THREE.Mesh(new THREE.PlaneGeometry(0.066, 0.022), lidMat)
-      lid.position.set(x, eyeYBase + 0.011, faceZ + 0.002)
+      // Thin upper lid — hair/brow tint, not a wide dark plane
+      const lid = new THREE.Mesh(new THREE.CircleGeometry(0.028, 8), lidMat)
+      lid.scale.set(1.3, 0.38, 1)
+      lid.position.set(x, eyeYBase + 0.01, faceZ + 0.002)
       g.add(lid)
     }
   }
@@ -193,18 +198,20 @@ export function harborFigureFace(
   nose.position.set(0, headY - 0.028, faceZ + 0.012)
   g.add(nose)
 
+  // Eyebrows always — arched strips in brow/hair color
   if (opts.showBrows !== false) {
     for (const sx of [-1, 1] as const) {
       const brow = new THREE.Mesh(
-        new THREE.BoxGeometry(0.07, 0.012, 0.01),
+        new THREE.BoxGeometry(0.078, 0.016, 0.012),
         figureMat(opts.brow ?? 0x2a2018),
       )
       brow.position.set(
         sx * eyeSpread,
-        eyeYBase + (style === 'sleepy' ? 0.03 : 0.036),
-        faceZ + 0.002,
+        eyeYBase + (style === 'sleepy' ? 0.032 : 0.04),
+        faceZ + 0.003,
       )
-      brow.rotation.z = sx * (opts.showBrows === true ? -0.28 : -0.12)
+      brow.rotation.z = sx * -0.24
+      brow.userData.harborBrow = true
       g.add(brow)
     }
   }
