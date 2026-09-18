@@ -16,7 +16,7 @@
 
 ## VO
 
-Seed Audio lines: `vo-scout-welcome.wav`, `vo-outfitter-dressup.wav`, `vo-pier-cleared.wav`, `vo-nice-catch.wav`, `vo-save-shack.wav`, `vo-male-sail.wav` — see `harborVo.ts`.
+Seed Audio lines: `vo-scout-welcome.wav` (“Welcome to Harbor Quest.”), `vo-outfitter-dressup.wav`, `vo-pier-cleared.wav`, `vo-nice-catch.wav`, `vo-save-shack.wav`, `vo-male-sail.wav` — see `harborVo.ts`.
 
 ## 3D
 
