@@ -2,6 +2,7 @@
  * Offline smoke for Guan fishing catalog + cast rules.
  */
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   GUAN_FISH_SPOTS,
   GUAN_FISHING_HUT,
@@ -60,5 +61,14 @@ assert.ok(near)
 
 const merged = mergeHarborFishingBag(bag0, sanitizeHarborFishingBag(catchOk.ok ? catchOk.bag : bag0))
 assert.ok(merged.fishingXp >= bag0.fishingXp)
+
+const panelSrc = readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8')
+assert.match(panelSrc, /HarborFishModelIcon/, 'fishing panel shows model icons')
+assert.match(panelSrc, /hq-fish-tile|FishItemTile/, 'fishing panel uses contained item tiles')
+assert.match(panelSrc, /Bites here/, 'cast tab labels bites')
+assert.doesNotMatch(panelSrc, /Tool · <strong>|Bites here:\s*\{/, 'cast tab is not plain text lists')
+
+const iconSrc = readFileSync(new URL('./HarborFishModelIcon.tsx', import.meta.url), 'utf8')
+assert.match(iconSrc, /drawFish|drawTool|drawBait/, 'fish model icon draws silhouettes')
 
 console.log('harborFishing.smoke: ok', HARBOR_FISH_CATALOG.length, 'fish', GUAN_FISH_SPOTS.length, 'spots')

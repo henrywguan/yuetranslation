@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { HarborBaitId, HarborFishId, HarborFishMethod, HarborFishSpotId, HarborFishToolId, HarborFishingBag } from './harborFishing'
 import {
   GUAN_FISHING_OVERSEER_NAME,
   HARBOR_FISH_BAITS,
@@ -9,14 +10,12 @@ import {
   buyHarborFishTool,
   fishingXpForLevel,
   fishingXpToLevel,
+  harborFishBaitById,
   harborFishSpotById,
+  harborFishToolById,
   sellHarborFish,
-  type HarborBaitId,
-  type HarborFishId,
-  type HarborFishSpotId,
-  type HarborFishToolId,
-  type HarborFishingBag,
 } from './harborFishing'
+import { HarborFishModelIcon } from './HarborFishModelIcon'
 import {
   playHarborFishCast,
   playHarborFishCatch,
@@ -38,8 +37,63 @@ type Props = {
   onClose: () => void
 }
 
+type TileProps = {
+  kind: 'fish' | 'tool' | 'bait'
+  id: string
+  label: string
+  zh?: string
+  meta?: string
+  method?: HarborFishMethod
+  locked?: boolean
+  selected?: boolean
+  onClick?: () => void
+  as?: 'button' | 'div'
+}
+
+function FishItemTile({
+  kind,
+  id,
+  label,
+  zh,
+  meta,
+  method,
+  locked = false,
+  selected = false,
+  onClick,
+  as = onClick ? 'button' : 'div',
+}: TileProps) {
+  const className = `hq-fish-tile${selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}${onClick ? ' is-action' : ''}`
+  const body = (
+    <>
+      <HarborFishModelIcon kind={kind} id={id} method={method} locked={locked} />
+      <span className="hq-fish-tile-copy">
+        <span className="hq-fish-tile-label">{label}</span>
+        {zh ? (
+          <span className="hq-fish-tile-zh" lang="zh-HK">
+            {zh}
+          </span>
+        ) : null}
+        {meta ? <span className="hq-fish-tile-meta">{meta}</span> : null}
+      </span>
+    </>
+  )
+  if (as === 'button' && onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick} aria-pressed={selected || undefined}>
+        {body}
+      </button>
+    )
+  }
+  return (
+    <div className={className} role="group" aria-label={label}>
+      {body}
+    </div>
+  )
+}
+
 /**
  * Fishing Lodge (overseer) + shore spot cast UI — collection log, gear, bait, sell.
+ * Cast / gear / log / sell use contained model tiles so tools, bait, and fish are visible.
  */
 export function HarborFishingPanel({
   mode,
@@ -58,6 +112,11 @@ export function HarborFishingPanel({
   const level = fishingXpToLevel(bag.fishingXp)
   const nextXp = fishingXpForLevel(Math.min(99, level + 1))
   const spot = spotId ? harborFishSpotById(spotId) : null
+  const equippedTool = harborFishToolById(bag.equippedTool)
+  const equippedBait = harborFishBaitById(bag.equippedBait)
+  const baitLeft = bag.bait[bag.equippedBait] ?? 0
+  const baitMeta =
+    bag.equippedBait === 'bait-none' ? 'no bait' : baitLeft > 0 ? `${baitLeft} left` : 'empty'
 
   useEffect(() => {
     setTab(mode === 'spot' ? 'cast' : 'gear')
@@ -71,6 +130,13 @@ export function HarborFishingPanel({
       logged: bag.log.includes(f.id),
     }))
   }, [bag.fish, bag.log])
+
+  const biteFish = useMemo(() => {
+    if (!spot) return []
+    return spot.fish
+      .map((id) => HARBOR_FISH_CATALOG.find((f) => f.id === id))
+      .filter((f): f is (typeof HARBOR_FISH_CATALOG)[number] => Boolean(f))
+  }, [spot])
 
   const cast = () => {
     if (!spotId || busy || casting) return
@@ -137,22 +203,46 @@ export function HarborFishingPanel({
 
       {tab === 'cast' && spot ? (
         <div className="hq-fish-cast">
-          <p className="hq-visit-body">
-            Tool · <strong>{bag.equippedTool.replace('tool-', '')}</strong>
-            {' · '}
-            Bait · <strong>{bag.equippedBait.replace('bait-', '')}</strong>
-            {' · '}
-            {(bag.bait[bag.equippedBait] ?? 0) > 0 || bag.equippedBait === 'bait-none'
-              ? `${bag.bait[bag.equippedBait] ?? '∞'} left`
-              : 'empty'}
-          </p>
-          <p className="hq-visit-body">
-            Bites here:{' '}
-            {spot.fish
-              .map((id) => HARBOR_FISH_CATALOG.find((f) => f.id === id)?.name.en)
-              .filter(Boolean)
-              .join(', ')}
-          </p>
+          <div className="hq-fish-req" aria-label="Equipped for this cast">
+            <p className="hq-fish-req-label">Ready</p>
+            <div className="hq-fish-tile-row">
+              <FishItemTile
+                kind="tool"
+                id={bag.equippedTool}
+                method={equippedTool?.method}
+                label={equippedTool?.name.en ?? bag.equippedTool}
+                zh={equippedTool?.name.zh}
+                meta="Tool"
+                selected
+              />
+              <FishItemTile
+                kind="bait"
+                id={bag.equippedBait}
+                label={equippedBait?.name.en ?? bag.equippedBait}
+                zh={equippedBait?.name.zh}
+                meta={baitMeta}
+                selected
+              />
+            </div>
+          </div>
+
+          <div className="hq-fish-req" aria-label="Fish that bite here">
+            <p className="hq-fish-req-label">Bites here</p>
+            <div className="hq-fish-tile-grid">
+              {biteFish.map((f) => (
+                <FishItemTile
+                  key={f.id}
+                  kind="fish"
+                  id={f.id}
+                  method={f.method}
+                  label={f.name.en}
+                  zh={f.name.zh}
+                  meta={`Lv ${f.level}`}
+                />
+              ))}
+            </div>
+          </div>
+
           <button
             type="button"
             className={`hq-btn hq-btn--primary${busy || casting ? ' is-casting' : ''}`}
@@ -166,130 +256,125 @@ export function HarborFishingPanel({
 
       {tab === 'gear' ? (
         <div className="hq-fish-gear">
-          <p className="hq-visit-body">Tools</p>
-          <ul className="hq-fish-list">
+          <p className="hq-fish-req-label">Tools</p>
+          <div className="hq-fish-tile-grid hq-fish-tile-grid--gear">
             {HARBOR_FISH_TOOLS.map((tool) => {
               const owned = bag.tools.includes(tool.id)
               const eq = bag.equippedTool === tool.id
               return (
-                <li key={tool.id}>
-                  <button
-                    type="button"
-                    className={`hq-fish-row${eq ? ' is-on' : ''}`}
-                    onClick={() => {
-                      playHarborUiClick()
-                      if (owned) {
-                        onBagChange({ ...bag, equippedTool: tool.id })
-                        setMsg(`Equipped ${tool.name.en}`)
-                        return
-                      }
-                      const r = buyHarborFishTool(bag, tool.id as HarborFishToolId, coins)
-                      if (!r.ok) {
-                        setMsg(r.message)
-                        return
-                      }
-                      onBagChange(r.bag, r.coins - coins)
-                      setMsg(`Bought ${tool.name.en}`)
-                    }}
-                  >
-                    <span>
-                      {tool.name.en}
-                      <small lang="zh-HK"> {tool.name.zh}</small>
-                    </span>
-                    <span>
-                      {owned ? (eq ? 'Equipped' : 'Equip') : `${tool.price}¢ · Lv ${tool.level}`}
-                    </span>
-                  </button>
-                </li>
+                <FishItemTile
+                  key={tool.id}
+                  kind="tool"
+                  id={tool.id}
+                  method={tool.method}
+                  label={tool.name.en}
+                  zh={tool.name.zh}
+                  meta={owned ? (eq ? 'Equipped' : 'Equip') : `${tool.price}¢ · Lv ${tool.level}`}
+                  selected={eq}
+                  onClick={() => {
+                    playHarborUiClick()
+                    if (owned) {
+                      onBagChange({ ...bag, equippedTool: tool.id })
+                      setMsg(`Equipped ${tool.name.en}`)
+                      return
+                    }
+                    const r = buyHarborFishTool(bag, tool.id as HarborFishToolId, coins)
+                    if (!r.ok) {
+                      setMsg(r.message)
+                      return
+                    }
+                    onBagChange(r.bag, r.coins - coins)
+                    setMsg(`Bought ${tool.name.en}`)
+                  }}
+                />
               )
             })}
-          </ul>
-          <p className="hq-visit-body">Bait</p>
-          <ul className="hq-fish-list">
+          </div>
+          <p className="hq-fish-req-label">Bait</p>
+          <div className="hq-fish-tile-grid hq-fish-tile-grid--gear">
             {HARBOR_FISH_BAITS.filter((b) => b.id !== 'bait-none').map((bait) => {
               const qty = bag.bait[bait.id] ?? 0
               const eq = bag.equippedBait === bait.id
               return (
-                <li key={bait.id}>
-                  <button
-                    type="button"
-                    className={`hq-fish-row${eq ? ' is-on' : ''}`}
-                    onClick={() => {
-                      playHarborUiClick()
-                      if (qty > 0) {
-                        onBagChange({ ...bag, equippedBait: bait.id as HarborBaitId })
-                        setMsg(`Using ${bait.name.en}`)
-                        return
-                      }
-                      const r = buyHarborFishBait(bag, bait.id as HarborBaitId, coins)
-                      if (!r.ok) {
-                        setMsg(r.message)
-                        return
-                      }
-                      onBagChange(r.bag, r.coins - coins)
-                      setMsg(`Bought ${bait.pack}× ${bait.name.en}`)
-                    }}
-                  >
-                    <span>
-                      {bait.name.en}
-                      <small>
-                        {' '}
-                        ×{qty}
-                      </small>
-                    </span>
-                    <span>{qty > 0 ? (eq ? 'Selected' : 'Select') : `${bait.price}¢ / ${bait.pack}`}</span>
-                  </button>
-                </li>
+                <FishItemTile
+                  key={bait.id}
+                  kind="bait"
+                  id={bait.id}
+                  label={bait.name.en}
+                  zh={bait.name.zh}
+                  meta={qty > 0 ? (eq ? `×${qty} · Selected` : `×${qty} · Select`) : `${bait.price}¢ / ${bait.pack}`}
+                  selected={eq}
+                  onClick={() => {
+                    playHarborUiClick()
+                    if (qty > 0) {
+                      onBagChange({ ...bag, equippedBait: bait.id as HarborBaitId })
+                      setMsg(`Using ${bait.name.en}`)
+                      return
+                    }
+                    const r = buyHarborFishBait(bag, bait.id as HarborBaitId, coins)
+                    if (!r.ok) {
+                      setMsg(r.message)
+                      return
+                    }
+                    onBagChange(r.bag, r.coins - coins)
+                    setMsg(`Bought ${bait.pack}× ${bait.name.en}`)
+                  }}
+                />
               )
             })}
-          </ul>
+          </div>
         </div>
       ) : null}
 
       {tab === 'log' ? (
-        <ul className="hq-fish-log" aria-label="Collection log">
+        <div className="hq-fish-tile-grid hq-fish-tile-grid--log" aria-label="Collection log">
           {fishRows.map((f) => (
-            <li key={f.id} className={f.logged ? 'is-logged' : 'is-locked'}>
-              <span>{f.logged ? f.name.en : '???'}</span>
-              <span lang="zh-HK">{f.logged ? f.name.zh : '？？'}</span>
-              <span>{f.logged ? `${f.value}¢` : `Lv ${f.level}`}</span>
-            </li>
+            <FishItemTile
+              key={f.id}
+              kind="fish"
+              id={f.id}
+              method={f.method}
+              label={f.logged ? f.name.en : '???'}
+              zh={f.logged ? f.name.zh : '？？'}
+              meta={f.logged ? `${f.value}¢` : `Lv ${f.level}`}
+              locked={!f.logged}
+            />
           ))}
-        </ul>
+        </div>
       ) : null}
 
       {tab === 'sell' ? (
-        <ul className="hq-fish-list" aria-label="Sell fish">
+        <div className="hq-fish-tile-grid hq-fish-tile-grid--gear" aria-label="Sell fish">
           {fishRows
             .filter((f) => f.qty > 0)
             .map((f) => (
-              <li key={f.id}>
-                <button
-                  type="button"
-                  className="hq-fish-row"
-                  onClick={() => {
-                    playHarborUiClick()
-                    const r = sellHarborFish(bag, f.id as HarborFishId, 1)
-                    if (r.sold < 1) return
-                    onBagChange(r.bag, r.coins)
-                    setMsg(`Sold ${f.name.en} for ${r.coins}¢`)
-                  }}
-                >
-                  <span>
-                    {f.name.en} ×{f.qty}
-                  </span>
-                  <span>Sell 1 · {f.value}¢</span>
-                </button>
-              </li>
+              <FishItemTile
+                key={f.id}
+                kind="fish"
+                id={f.id}
+                method={f.method}
+                label={f.name.en}
+                zh={f.name.zh}
+                meta={`×${f.qty} · Sell 1 · ${f.value}¢`}
+                onClick={() => {
+                  playHarborUiClick()
+                  const r = sellHarborFish(bag, f.id as HarborFishId, 1)
+                  if (r.sold < 1) return
+                  onBagChange(r.bag, r.coins)
+                  setMsg(`Sold ${f.name.en} for ${r.coins}¢`)
+                }}
+              />
             ))}
           {fishRows.every((f) => f.qty < 1) ? (
-            <li className="hq-fish-empty">No fish in the bag — cast at a shore spot.</li>
+            <p className="hq-fish-empty">No fish in the bag — cast at a shore spot.</p>
           ) : null}
-        </ul>
+        </div>
       ) : null}
 
       {msg ? <p className="hq-visit-msg">{msg}</p> : null}
-      <p className="hq-visit-body">Purse · <strong>{coins}</strong> ferry coins</p>
+      <p className="hq-visit-body">
+        Purse · <strong>{coins}</strong> ferry coins
+      </p>
       <button type="button" className="hq-btn hq-btn--ghost" onClick={onClose}>
         Close
       </button>
