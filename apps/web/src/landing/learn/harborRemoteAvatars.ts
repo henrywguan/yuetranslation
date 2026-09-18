@@ -227,6 +227,8 @@ export function setRemoteSailorPoseTarget(
         appearance:
           (root.userData.remoteAppearance as HarborRemotePlayer['appearance'] | undefined) ??
           ({ hairStyle: 'short', hairColor: 0, skinTone: 1 } as HarborRemotePlayer['appearance']),
+        nametagFrame:
+          (root.userData.remoteNametagFrame as string | undefined) ?? 'tag-plain',
         updatedAt: Date.now(),
       })
     }

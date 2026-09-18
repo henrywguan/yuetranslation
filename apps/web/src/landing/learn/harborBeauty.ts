@@ -58,7 +58,7 @@ export const HARBOR_BEAUTY_SKUS: readonly HarborBeautySku[] = [
     premium: true,
   },
   // Hair dyes — first four free; festival/jade/pearl premium
-  ...HARBOR_HAIR_COLORS.map((hex, i): HarborBeautySku => ({
+  ...HARBOR_HAIR_COLORS.map((_hex, i): HarborBeautySku => ({
     id: `beauty-dye-hair-${i}`,
     kind: 'hairDye',
     ref: i,
