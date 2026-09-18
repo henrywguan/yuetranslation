@@ -24,6 +24,7 @@ import {
 } from './harborGear'
 import { harborModularPartNames, planHarborModularCompose } from './harborModularLook'
 import { buildHarborProtagonist } from './harborProtagonist'
+import { harborFigureHeadExtents } from './harborFigure'
 import {
   HARBOR_PROTAGONIST_CLIPS,
   ensureHarborProtagonistLimbs,
@@ -83,11 +84,7 @@ const fringeScout = buildHarborProtagonist({
   bareHead: true,
   appearance: { ...HARBOR_DEFAULT_APPEARANCE, hairStyle: 'fringe' },
 })
-const { z: skullZ } = (() => {
-  // Match harborFigureHeadExtents() after potato-head scale
-  const r = 0.152
-  return { z: r * 0.98 }
-})()
+const { z: skullZ } = harborFigureHeadExtents()
 let bangOk = false
 fringeScout.traverse((o) => {
   if (!o.userData?.harborHair && o.parent && !(o.parent as { userData?: { harborHair?: boolean } }).userData?.harborHair) {
@@ -107,7 +104,7 @@ const bunScout = buildHarborProtagonist({
   appearance: { ...HARBOR_DEFAULT_APPEARANCE, hairStyle: 'bun' },
 })
 const headY = typeof bunScout.userData.headY === 'number' ? bunScout.userData.headY : 0.8
-const crownTop = headY + 0.152 * 1.02
+const crownTop = headY + harborFigureHeadExtents().y * 0.95
 let hairAboveCrown = 0
 bunScout.traverse((o) => {
   const m = o as import('three').Mesh

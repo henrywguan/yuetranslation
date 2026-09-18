@@ -61,7 +61,6 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
   const clone = root.clone(true)
   wrap.add(clone)
 
-  // Bake world transforms into a measurable box
   wrap.updateMatrixWorld(true)
   const box = new THREE.Box3().setFromObject(wrap)
   if (box.isEmpty()) return null
@@ -197,7 +196,6 @@ export function setProceduralBodyVisible(root: THREE.Object3D, visible: boolean)
     }
     const m = o as THREE.Mesh
     if (m.isMesh) m.visible = visible
-    // Hair / face groups
     if (o.userData.harborHair || o.userData.harborFace || o.userData.harborEyes) {
       o.visible = visible
     }

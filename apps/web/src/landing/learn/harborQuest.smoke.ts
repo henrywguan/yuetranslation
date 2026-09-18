@@ -147,6 +147,7 @@ import {
   HARBOR_PROTAGONIST_SOCKETS,
   listProtagonistSockets,
 } from '../../landing/learn/harborProtagonist'
+import { HARBOR_FIGURE_PROPORTIONS } from '../../landing/learn/harborFigure'
 import * as THREE from 'three'
 import {
   HARBOR_GEAR_CATALOG,
@@ -722,15 +723,17 @@ function main() {
   {
     const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
     assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
-    assert.match(figSrc, /headR:\s*0\.148/, 'anime head radius')
-    assert.match(figSrc, /neckH:\s*0\.085/, 'explicit visible neck height')
-    assert.match(figSrc, /SphereGeometry\([^)]+24/, 'smooth high-segment head (not faceted potato)')
+    assert.match(figSrc, /headR:\s*0\.112/, 'anime head radius (~7-head fashion)')
+    assert.match(figSrc, /neckH:\s*0\.095/, 'explicit visible neck height')
+    assert.match(figSrc, /standingH:\s*1\.68/, 'taller anime standing height')
+    assert.match(figSrc, /pelvisY:\s*0\.9/, 'long-leg pelvis')
+    assert.match(figSrc, /SphereGeometry\([^)]+28/, 'smooth high-segment head (not faceted potato)')
     assert.match(figSrc, /MeshStandardMaterial|harborFigureMat/, 'soft lit materials for dress-up')
     assert.match(figSrc, /flatShading:\s*false/, 'no flatShading on character kit')
     assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
     assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses face inserts')
     assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
-    assert.match(figSrc, /anime|dress-up|dressup/i, 'figure kit docs lock anime dress-up')
+    assert.match(figSrc, /anime|dress-up|dressup|Genshin|Honkai/i, 'figure kit docs lock anime dress-up')
     assert.doesNotMatch(
       figSrc,
       /BoxGeometry\(0\.08,\s*0\.09,\s*0\.1\)/,
@@ -769,8 +772,12 @@ function main() {
     const headY = standing.userData.headY as number
     const torsoTop = standing.userData.torsoTop as number
     assert.ok(headY - torsoTop >= 0.08, 'visible neck gap between torso top and head')
-    assert.ok(pelvisY >= 0.65, 'fashion legs tall enough for anime silhouette')
-    assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 0.9, 'torso+neck stack is proportioned')
+    assert.ok(pelvisY >= 0.85, 'fashion legs tall enough for ~7-head anime silhouette')
+    assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 1.0, 'torso+neck stack is proportioned')
+    assert.ok(
+      HARBOR_FIGURE_PROPORTIONS.standingH >= 1.6,
+      'standing height targets ~7-head anime fashion',
+    )
     let hasNeck = false
     standing.traverse((o) => {
       if (o.name === 'hq-figure-neck') hasNeck = true
@@ -1595,11 +1602,26 @@ function main() {
   assert.match(playAudioSrc, /playHarborVo\('pierCleared'\)/, 'pier-cleared VO on correct cast')
   assert.match(playAudioSrc, /preloadHarborScoutGlbs/, 'Scout GLB preload on learn mount')
   assert.match(playAudioSrc, /startHarborOutfitterBgm/, 'Outfitter opens boutique BGM')
-  assert.match(
-    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /scout-female\.glb|HARBOR_SCOUT_GLB_SRC/,
-    'Scout GLB public URLs',
-  )
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /scout-female\.glb|HARBOR_SCOUT_GLB_SRC/,
+  'Scout GLB public URLs',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /HARBOR_SCOUT_GLB_ENABLED = false/,
+  'Scout GLB gated off so land procedural Scout stays visible',
+)
+assert.match(
+  readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+  /softTopShell|harborFigureTorso/,
+  'wardrobe uses soft anime shells not box slabs',
+)
+assert.doesNotMatch(
+  readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+  /BoxGeometry\(shoulder/,
+  'clothing tops no longer use shoulder BoxGeometry slabs',
+)
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
     /HARBOR_SCOUT_GLB_ENABLED = false/,

@@ -24,7 +24,11 @@
 | Paid silhouettes (B) | **Yes** — mid/high/VIP must change mesh shape |
 | Asset source | Procedural Three.js first (smooth anime kit); optional CC0 KayKit *animation clips* / rig ideas later — never Jagex cache |
 
-**Pivot note (2026-09-18):** Prior RS-era “potato head / slab torso” grammar was killing dress-up desire. Characters now follow anime appeal; world architecture may remain era-chunky (craft bible §4). Agents must **not** re-apply RS mannequin proportions to `harborFigure` / `harborProtagonist`.
+**Pivot note (2026-09-18):** Prior RS-era “potato head / slab torso” grammar was killing dress-up desire. Characters follow anime appeal.
+
+**Full anime revamp (2026-09-18 · Henry):** Break voxel / low-poly for **characters and world**. Target = premium Chinese anime open-world dress-up (Genshin / Honkai / Where Winds Meet *feel*, original Harbor IP). Procedural kit ≈ **7 heads tall**; wardrobe uses soft tapered meshes (no box-slab coats). Higgsfield sheets: `scout-*-anime-sheet-v2.png` + `guan-harbor-anime-keyart-v2.png`. See [`ANIME-ASSET-REVAMP.md`](./ANIME-ASSET-REVAMP.md).
+
+Agents must **not** re-apply RS mannequin proportions or Minecraft clothing slabs to `harborFigure` / `harborProtagonist` / `harborClothingMeshes`.
 
 ---
 

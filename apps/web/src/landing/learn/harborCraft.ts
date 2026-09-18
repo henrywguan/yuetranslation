@@ -99,7 +99,8 @@ export function hqMat(
   color: number,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return applyHarborCel(new THREE.MeshLambertMaterial({ color, flatShading: true, ...extra }), {
+  // Soft world (no RS facets) + Harbor cel (iOS-safe Lambert path).
+  return applyHarborCel(new THREE.MeshLambertMaterial({ color, flatShading: false, ...extra }), {
     preset: extra?.emissive && extra.emissiveIntensity ? 'lantern' : 'terrain',
   })
 }
@@ -582,7 +583,7 @@ export function hqMatTex(
     new THREE.MeshLambertMaterial({
       color,
       map,
-      flatShading: true,
+      flatShading: false,
       ...extra,
     }),
     { preset: 'terrain' },

@@ -1264,7 +1264,7 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   }
 
   const torsoH = HARBOR_FIGURE_PROPORTIONS.torsoH + (role === 'scholar' || role === 'merchant' ? 0.04 : 0)
-  const pelvisY = 0.72
+  const pelvisY = HARBOR_FIGURE_PROPORTIONS.pelvisY
   const shoulder = female ? 0.14 : 0.16
   const waist = female ? 0.105 : 0.12
   g.add(
@@ -1586,7 +1586,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   }
 
   const torsoH = HARBOR_FIGURE_PROPORTIONS.torsoH + (id === 'arena' ? 0.06 : 0.02)
-  const pelvisY = 0.72
+  const pelvisY = HARBOR_FIGURE_PROPORTIONS.pelvisY
   const shoulder = female ? 0.138 : id === 'arena' ? 0.175 : 0.158
   const waist = female ? 0.1 : id === 'arena' ? 0.13 : 0.118
   g.add(

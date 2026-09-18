@@ -691,8 +691,8 @@ export function lookColors(look: HarborLook) {
  */
 export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
   const gender = (root.userData.gender as 'male' | 'female' | undefined) ?? 'male'
-  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.72
-  const headY = typeof root.userData.headY === 'number' ? root.userData.headY : pelvisY + 0.58
+  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.9
+  const headY = typeof root.userData.headY === 'number' ? root.userData.headY : pelvisY + 0.55
 
   clearHarborClothingMeshes(root)
 
