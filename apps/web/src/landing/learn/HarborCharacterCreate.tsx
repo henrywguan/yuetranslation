@@ -139,6 +139,11 @@ export function HarborCharacterCreate({
   const previewRef = useRef<HTMLDivElement>(null)
   const previewState = useRef({ gender, appearance, look, hatOn })
   previewState.current = { gender, appearance, look, hatOn }
+  const [previewRotating, setPreviewRotating] = useState(true)
+  const [previewDistance, setPreviewDistance] = useState(3.05)
+  const previewControls = useRef({ rotating: true, distance: 3.05 })
+  previewControls.current.rotating = previewRotating
+  previewControls.current.distance = previewDistance
 
   useEffect(() => {
     const host = previewRef.current
@@ -209,13 +214,22 @@ export function HarborCharacterCreate({
     const paint = () => {
       if (disposed) return
       raf = requestAnimationFrame(paint)
-      yaw += 0.012
-      const d = 3.1
-      camera.position.set(Math.sin(yaw) * d, 1.25, Math.cos(yaw) * d)
-      camera.lookAt(0, 0.82, 0)
+      if (previewControls.current.rotating) yaw += 0.012
+      const d = previewControls.current.distance
+      const camY = 1.15 + (d - 2.4) * 0.12
+      camera.position.set(Math.sin(yaw) * d, camY, Math.cos(yaw) * d)
+      camera.lookAt(0, 0.95, 0)
       renderer.render(scene, camera)
     }
     paint()
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const next = Math.min(4.8, Math.max(1.75, previewControls.current.distance + e.deltaY * 0.004))
+      previewControls.current.distance = next
+      setPreviewDistance(next)
+    }
+    host.addEventListener('wheel', onWheel, { passive: false })
 
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null
     ro?.observe(host)
@@ -226,6 +240,7 @@ export function HarborCharacterCreate({
       disposed = true
       cancelAnimationFrame(raf)
       host.removeEventListener('hq-preview-rebuild', onVis)
+      host.removeEventListener('wheel', onWheel)
       ro?.disconnect()
       renderer.dispose()
       if (renderer.domElement.parentElement === host) host.removeChild(renderer.domElement)
@@ -235,6 +250,9 @@ export function HarborCharacterCreate({
   useEffect(() => {
     previewRef.current?.dispatchEvent(new Event('hq-preview-rebuild'))
   }, [gender, appearance, look, hatOn])
+
+  const beautyLocked = (skuId: string) =>
+    isBarber && !harborBeautyIsUnlocked(skuId, unlockedBeauty)
 
   const cycleUnlocked = <T extends string>(
     list: readonly T[],
@@ -380,7 +398,39 @@ export function HarborCharacterCreate({
 
         <div className={`hq-charcreate-body${mode === 'username-only' ? ' is-name-only' : ''}`}>
           {mode !== 'username-only' ? (
-            <div className="hq-charcreate-preview" ref={previewRef} aria-hidden="true" />
+            <div className="hq-charcreate-preview-wrap">
+              <div className="hq-charcreate-preview" ref={previewRef} aria-hidden="true" />
+              <div className="hq-charcreate-preview-tools" role="toolbar" aria-label="Preview camera">
+                <button
+                  type="button"
+                  className={`hq-charcreate-preview-tool${previewRotating ? '' : ' is-on'}`}
+                  aria-pressed={!previewRotating}
+                  aria-label={previewRotating ? 'Pause rotation' : 'Resume rotation'}
+                  title={previewRotating ? 'Pause spin' : 'Spin'}
+                  onClick={() => setPreviewRotating((v) => !v)}
+                >
+                  {previewRotating ? '❚❚' : '▶'}
+                </button>
+                <button
+                  type="button"
+                  className="hq-charcreate-preview-tool"
+                  aria-label="Zoom in"
+                  title="Zoom in"
+                  onClick={() => setPreviewDistance((d) => Math.max(1.75, d - 0.35))}
+                >
+                  ＋
+                </button>
+                <button
+                  type="button"
+                  className="hq-charcreate-preview-tool"
+                  aria-label="Zoom out"
+                  title="Zoom out"
+                  onClick={() => setPreviewDistance((d) => Math.min(4.8, d + 0.35))}
+                >
+                  －
+                </button>
+              </div>
+            </div>
           ) : null}
 
           <div className="hq-charcreate-panel">
@@ -453,6 +503,7 @@ export function HarborCharacterCreate({
                 <ArrowRow
                   label="Head"
                   value={HARBOR_HAIR_STYLE_LABEL[appearance.hairStyle].en}
+                  locked={beautyLocked(`beauty-hair-${appearance.hairStyle}`)}
                   onPrev={() =>
                     bumpAppearance({
                       hairStyle: cycleUnlocked(
@@ -489,6 +540,7 @@ export function HarborCharacterCreate({
                   label="Hair"
                   colors={HARBOR_HAIR_COLORS}
                   index={appearance.hairColor}
+                  locked={beautyLocked(`beauty-dye-hair-${appearance.hairColor}`)}
                   onPrev={() =>
                     bumpAppearance({
                       hairColor: cycleUnlockedIndex(
@@ -513,6 +565,7 @@ export function HarborCharacterCreate({
                 <ArrowRow
                   label="Eyes"
                   value={HARBOR_EYE_STYLE_LABEL[appearance.eyeStyle].en}
+                  locked={beautyLocked(`beauty-eye-${appearance.eyeStyle}`)}
                   onPrev={() =>
                     bumpAppearance({
                       eyeStyle: cycleUnlocked(
@@ -538,6 +591,7 @@ export function HarborCharacterCreate({
                   label="Iris"
                   colors={HARBOR_EYE_COLORS}
                   index={appearance.eyeColor}
+                  locked={beautyLocked(`beauty-dye-eye-${appearance.eyeColor}`)}
                   onPrev={() =>
                     bumpAppearance({
                       eyeColor: cycleUnlockedIndex(
@@ -562,6 +616,7 @@ export function HarborCharacterCreate({
                 <ArrowRow
                   label="Face"
                   value={HARBOR_FACE_STYLE_LABEL[appearance.faceStyle].en}
+                  locked={beautyLocked(`beauty-face-${appearance.faceStyle}`)}
                   onPrev={() =>
                     bumpAppearance({
                       faceStyle: cycleUnlocked(
@@ -734,11 +789,13 @@ export function HarborCharacterCreate({
 function ArrowRow({
   label,
   value,
+  locked = false,
   onPrev,
   onNext,
 }: {
   label: string
   value: string
+  locked?: boolean
   onPrev: () => void
   onNext: () => void
 }) {
@@ -748,7 +805,12 @@ function ArrowRow({
       <button type="button" className="hq-charcreate-arrow" onClick={onPrev} aria-label={`Previous ${label}`}>
         ‹
       </button>
-      <span className="hq-charcreate-row-value">{value}</span>
+      <span
+        className={`hq-charcreate-row-value${locked ? ' is-premium-locked' : ''}`}
+        title={locked ? 'Premium — unlock to keep' : undefined}
+      >
+        {value}
+      </span>
       <button type="button" className="hq-charcreate-arrow" onClick={onNext} aria-label={`Next ${label}`}>
         ›
       </button>
@@ -760,12 +822,14 @@ function SwatchRow({
   label,
   colors,
   index,
+  locked = false,
   onPrev,
   onNext,
 }: {
   label: string
   colors: readonly number[]
   index: number
+  locked?: boolean
   onPrev: () => void
   onNext: () => void
 }) {
@@ -776,7 +840,11 @@ function SwatchRow({
       <button type="button" className="hq-charcreate-arrow" onClick={onPrev} aria-label={`Previous ${label}`}>
         ‹
       </button>
-      <span className="hq-charcreate-swatch" style={{ background: hex }} title={hex} />
+      <span
+        className={`hq-charcreate-swatch${locked ? ' is-premium-locked' : ''}`}
+        style={{ background: hex }}
+        title={locked ? `Premium dye · ${hex}` : hex}
+      />
       <button type="button" className="hq-charcreate-arrow" onClick={onNext} aria-label={`Next ${label}`}>
         ›
       </button>

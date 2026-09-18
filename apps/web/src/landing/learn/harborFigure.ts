@@ -13,30 +13,33 @@ import * as THREE from 'three'
 import type { HarborEyeStyle } from './harborAppearance'
 
 /**
- * Locked mannequin ratios (unitless height ≈ 1.0 to crown).
- * Smell-tested against craft bible §3.1 — head reads ~30% of height.
+ * Locked mannequin ratios (unitless height ≈ 1.18 to crown).
+ * Classic RS-era: oversized head, visible neck stub, readable legs —
+ * not a neckless Oompa Loompa chibi.
  */
 export const HARBOR_FIGURE_PROPORTIONS = {
   /** Skull radius before cheek scale. */
-  headR: 0.19,
+  headR: 0.152,
   /** Total standing height to crown (approx). */
-  standingH: 1.02,
+  standingH: 1.18,
   /** Torso height (slab). */
-  torsoH: 0.34,
+  torsoH: 0.4,
+  /** Visible neck column between collar and chin. */
+  neckH: 0.1,
   /** Shoulder half-width. */
-  shoulder: 0.21,
+  shoulder: 0.18,
   /** Waist half-width (type-A: little pinch). */
-  waist: 0.19,
+  waist: 0.16,
   /** Chest depth. */
-  depth: 0.28,
+  depth: 0.24,
   /** Upper-arm length. */
-  upperArm: 0.15,
+  upperArm: 0.18,
   /** Lower-arm length. */
-  lowerArm: 0.14,
+  lowerArm: 0.16,
   /** Limb shaft radius. */
-  limbR: 0.062,
+  limbR: 0.052,
   /** Mitten palm size. */
-  hand: 0.095,
+  hand: 0.078,
 } as const
 
 export const HARBOR_FIGURE_HEAD_R: number = HARBOR_FIGURE_PROPORTIONS.headR
@@ -76,10 +79,13 @@ export function harborFigureHead(
   return mesh
 }
 
-/** Short neck stump under the head. */
+/** Visible neck column under the chin (must clear the torso collar). */
 export function harborFigureNeck(skin: THREE.Material, headY: number, r: number = HARBOR_FIGURE_HEAD_R): THREE.Mesh {
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.055, 6), skin)
-  neck.position.y = headY - r * 0.88
+  const neckH = HARBOR_FIGURE_PROPORTIONS.neckH
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.058, neckH, 6), skin)
+  // Top meets chin; bottom clears collar so the neck reads at barber distance.
+  neck.position.y = headY - r * 0.82 - neckH * 0.48
+  neck.name = 'hq-figure-neck'
   return neck
 }
 
@@ -299,36 +305,36 @@ export function harborFigureArm(
   return g
 }
 
-/** Standing leg: short thick thigh/shin, slight bow, chunky boot wedge. */
+/** Standing leg: readable thigh/shin (not stubby chibi posts), slight bow. */
 export function harborFigureLegStanding(
   pants: THREE.Material,
   shoes: THREE.Material,
   side: -1 | 1,
-  xSpread = 0.11,
+  xSpread = 0.1,
 ): THREE.Group {
   const g = new THREE.Group()
   g.name = side > 0 ? 'hq-leg-r' : 'hq-leg-l'
   const x = side * xSpread
-  const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.15
+  const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.1
 
-  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 1.1, limbR * 1.15, 0.22, 6), pants)
-  thigh.position.set(x, 0.28, 0)
-  thigh.rotation.z = side * 0.14
+  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 1.08, limbR * 1.12, 0.3, 6), pants)
+  thigh.position.set(x, 0.4, 0)
+  thigh.rotation.z = side * 0.1
   g.add(thigh)
 
-  const shin = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 0.9, limbR, 0.2, 6), pants)
-  shin.position.set(x + side * 0.025, 0.1, 0.02)
-  shin.rotation.z = side * -0.06
+  const shin = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 0.9, limbR, 0.28, 6), pants)
+  shin.position.set(x + side * 0.02, 0.14, 0.015)
+  shin.rotation.z = side * -0.05
   g.add(shin)
 
   // Boot as a rounded wedge (not a Minecraft foot cube)
-  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.14, 6), shoes)
+  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.13, 6), shoes)
   boot.rotation.x = Math.PI / 2
-  boot.position.set(x + side * 0.02, 0.04, 0.06)
+  boot.position.set(x + side * 0.015, 0.04, 0.055)
   g.add(boot)
-  const toe = new THREE.Mesh(new THREE.IcosahedronGeometry(0.045, 0), shoes)
+  const toe = new THREE.Mesh(new THREE.IcosahedronGeometry(0.04, 0), shoes)
   toe.scale.set(1.1, 0.7, 1.3)
-  toe.position.set(x + side * 0.02, 0.035, 0.13)
+  toe.position.set(x + side * 0.015, 0.035, 0.12)
   g.add(toe)
   return g
 }
@@ -338,18 +344,18 @@ export function harborFigureLegSeated(
   pants: THREE.Material,
   shoes: THREE.Material,
   side: -1 | 1,
-  xSpread = 0.11,
+  xSpread = 0.1,
 ): THREE.Group {
   const g = new THREE.Group()
   const x = side * xSpread
-  const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.1
-  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR, limbR * 1.05, 0.3, 6), pants)
+  const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.05
+  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR, limbR * 1.05, 0.34, 6), pants)
   thigh.rotation.x = Math.PI / 2
-  thigh.position.set(x, 0.14, 0.14)
+  thigh.position.set(x, 0.16, 0.16)
   g.add(thigh)
-  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.12, 6), shoes)
+  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.06, 0.12, 6), shoes)
   boot.rotation.x = Math.PI / 2
-  boot.position.set(x, 0.08, 0.34)
+  boot.position.set(x, 0.09, 0.38)
   g.add(boot)
   return g
 }

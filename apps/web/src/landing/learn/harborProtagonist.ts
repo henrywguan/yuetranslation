@@ -294,7 +294,7 @@ function addEyes(g: THREE.Group, appearance: HarborAppearance, headY: number, sk
 
 /**
  * Build the original River Scout mannequin.
- * Standing ~1.05u tall; seated is canoe-ready (legs forward).
+ * Standing ~1.18u tall with a visible neck; seated is canoe-ready.
  */
 export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THREE.Group {
   const pose: HarborProtagonistPose = opts.pose ?? 'standing'
@@ -309,12 +309,15 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.userData.originalHarborAsset = true
   g.userData.gender = gender
   g.userData.appearance = appearance
-  // Stubby mannequin — pelvis low, head large (bible §3.1).
-  const pelvisY = pose === 'standing' ? 0.42 : 0.26
+  // Readable RS mannequin — taller legs + explicit neck gap (not neckless chibi).
+  const pelvisY = pose === 'standing' ? 0.55 : 0.28
   const torsoH = HARBOR_FIGURE_PROPORTIONS.torsoH
-  const headY = pelvisY + torsoH * 0.55 + HARBOR_FIGURE_HEAD_R * 0.95
+  const neckH = HARBOR_FIGURE_PROPORTIONS.neckH
+  const torsoTop = pelvisY + torsoH
+  const headY = torsoTop + neckH + HARBOR_FIGURE_HEAD_R * 0.82
   g.userData.pelvisY = pelvisY
   g.userData.headY = headY
+  g.userData.torsoTop = torsoTop
   g.userData.harborModular = true
   g.userData.figureProportions = HARBOR_FIGURE_PROPORTIONS
 
@@ -331,10 +334,10 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   const leather = mat(HARBOR_PROTAGONIST_PALETTE.leather)
   const chop = mat(HARBOR_PROTAGONIST_PALETTE.chop)
 
-  const shoulder = gender === 'female' ? 0.19 : HARBOR_FIGURE_PROPORTIONS.shoulder
-  const waist = gender === 'female' ? 0.175 : HARBOR_FIGURE_PROPORTIONS.waist
-  const armSpread = gender === 'female' ? 0.25 : 0.27
-  const hip = gender === 'female' ? 0.42 : 0.4
+  const shoulder = gender === 'female' ? 0.165 : HARBOR_FIGURE_PROPORTIONS.shoulder
+  const waist = gender === 'female' ? 0.15 : HARBOR_FIGURE_PROPORTIONS.waist
+  const armSpread = gender === 'female' ? 0.23 : 0.25
+  const hip = gender === 'female' ? 0.38 : 0.36
   const depth = HARBOR_FIGURE_PROPORTIONS.depth
 
   // —— Legs ——
@@ -368,18 +371,18 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(torso)
   const collar = part(
     harborFigureTorso(robeDeep, pelvisY + torsoH * 0.92, {
-      shoulder: shoulder + 0.015,
+      shoulder: shoulder + 0.012,
       waist: shoulder,
-      h: 0.07,
-      depth: depth + 0.02,
+      h: 0.065,
+      depth: depth + 0.015,
     }),
     'topAccent',
   )
   g.add(collar)
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(hip, 0.065, depth + 0.02), jade)
-  sash.position.y = pelvisY + 0.06
+  const sash = new THREE.Mesh(new THREE.BoxGeometry(hip, 0.06, depth + 0.015), jade)
+  sash.position.y = pelvisY + 0.05
   g.add(sash)
-  const pendant = new THREE.Mesh(new THREE.IcosahedronGeometry(0.04, 0), chop)
+  const pendant = new THREE.Mesh(new THREE.IcosahedronGeometry(0.035, 0), chop)
   pendant.scale.set(1, 1.2, 0.6)
   pendant.position.set(0, pelvisY + torsoH * 0.45, depth * 0.52)
   g.add(pendant)
@@ -388,7 +391,7 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(cord)
 
   // —— Segmented arms + mitten blobs ——
-  const armY = pelvisY + torsoH * 0.78
+  const armY = pelvisY + torsoH * 0.82
   for (const side of [-1, 1] as const) {
     const arm = harborFigureArm(robe, skin, side, armY, armSpread)
     arm.traverse((o) => {
@@ -397,12 +400,12 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
       m.userData.harborPart = m.material === skin ? 'skin' : 'top'
     })
     g.add(arm)
-    const handY = typeof arm.userData.handY === 'number' ? arm.userData.handY : armY - 0.28
+    const handY = typeof arm.userData.handY === 'number' ? arm.userData.handY : armY - 0.3
     const handZ = typeof arm.userData.handZ === 'number' ? arm.userData.handZ : 0.1
     g.add(socket(side > 0 ? 'hand_r' : 'hand_l', side * armSpread, handY, handZ))
   }
 
-  // —— Faceted potato head + flush face ——
+  // —— Faceted head + visible neck + flush face ——
   const head = part(harborFigureHead(skin, headY), 'skin')
   g.add(head)
   const neck = part(harborFigureNeck(skin, headY), 'skin')
@@ -415,27 +418,27 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   addEyes(g, appearance, headY, skin)
 
   if (!bareHead) {
-    const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.04, 8), straw), 'hat')
+    const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.04, 8), straw), 'hat')
     brim.position.y = headY + HARBOR_FIGURE_HEAD_R * 0.55
     g.add(brim)
-    const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.15, 7), straw), 'hat')
+    const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 7), straw), 'hat')
     crown.position.y = headY + HARBOR_FIGURE_HEAD_R * 0.95
     g.add(crown)
-    const bead = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.038, 0), jade), 'hatAccent')
+    const bead = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.035, 0), jade), 'hatAccent')
     bead.position.y = headY + HARBOR_FIGURE_HEAD_R * 1.35
     g.add(bead)
   }
   g.add(socket('head', 0, headY + HARBOR_FIGURE_HEAD_R * 1.45, 0))
 
-  const bag = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), leather)
+  const bag = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08, 0), leather)
   bag.scale.set(1.1, 1.25, 0.85)
-  bag.position.set(-0.28, pelvisY + 0.02, 0.06)
+  bag.position.set(-0.26, pelvisY + 0.02, 0.06)
   bag.rotation.z = 0.15
   g.add(bag)
-  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.045, 0.09), mat(0x5a3a22))
-  flap.position.set(-0.28, pelvisY + 0.1, 0.06)
+  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, 0.08), mat(0x5a3a22))
+  flap.position.set(-0.26, pelvisY + 0.09, 0.06)
   g.add(flap)
-  g.add(socket('hip_l', -0.28, pelvisY + 0.02, 0.1))
+  g.add(socket('hip_l', -0.26, pelvisY + 0.02, 0.1))
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
   return g

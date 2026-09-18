@@ -685,9 +685,11 @@ function main() {
   {
     const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
     assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
-    assert.match(figSrc, /headR:\s*0\.19/, 'oversized potato head radius')
+    assert.match(figSrc, /headR:\s*0\.152/, 'readable head radius (not chibi balloon)')
+    assert.match(figSrc, /neckH:\s*0\.1/, 'explicit visible neck height')
     assert.match(figSrc, /IcosahedronGeometry\([^,]+,\s*0\)/, 'detail-0 faceted head (not smooth ball)')
     assert.match(figSrc, /bow|rotation\.z = side/, 'bow-legged plant')
+    assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
     assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses flush face inserts')
     assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
     assert.doesNotMatch(
@@ -722,12 +724,19 @@ function main() {
   }
   const standing = buildHarborProtagonist({ pose: 'standing' })
   assert.ok(countProtagonistMeshes(standing) >= meshes, 'standing has at least seated complexity')
-  assert.ok(
-    typeof standing.userData.headY === 'number' &&
-      typeof standing.userData.pelvisY === 'number' &&
-      standing.userData.headY - standing.userData.pelvisY < 0.55,
-    'stubby torso — head sits close above pelvis (anti-Minecraft tall stack)',
-  )
+  {
+    const pelvisY = standing.userData.pelvisY as number
+    const headY = standing.userData.headY as number
+    const torsoTop = standing.userData.torsoTop as number
+    assert.ok(headY - torsoTop >= 0.08, 'visible neck gap between torso top and head')
+    assert.ok(pelvisY >= 0.5, 'legs tall enough to avoid Oompa Loompa stub')
+    assert.ok(headY - pelvisY > 0.45 && headY - pelvisY < 0.85, 'torso+neck stack is proportioned')
+    let hasNeck = false
+    standing.traverse((o) => {
+      if (o.name === 'hq-figure-neck') hasNeck = true
+    })
+    assert.ok(hasNeck, 'standing scout includes neck mesh')
+  }
 
   const dock0 = dockPoseForProgress(0)
   const dockMid = dockPoseForProgress(0.5)
