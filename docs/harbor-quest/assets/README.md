@@ -28,6 +28,32 @@
 | [`scout-male-sheet.png`](./scout-male-sheet.png) | Soul Cast split-sheet — male dress-up target |
 | [`scout-male-a-pose.png`](./scout-male-a-pose.png) | A-pose source for Meshy image→3D |
 
+## NPC cast (unique female / male)
+
+**Appeal north star:** MapleStory fashion charm · Where Winds Meet elegance · Genshin silhouette beauty · Black Desert face/outfit polish · Elder Scrolls Online noble variety — **original Harbor OCs only** (never copy those IPs’ characters).
+
+Procedural meshes in `harborWorld.ts` (`chineseNpc` / `landmarkHostNpc`) chase these sheets with the shared anime `harborFigure` kit + gender mix.
+
+### Landmark hosts
+
+| File | Name | Gender | Role |
+|---|---|---|---|
+| [`npcs/mei-lin-outfitter.png`](./npcs/mei-lin-outfitter.png) | Mei Lin | ♀ | River Outfitter |
+| [`npcs/wei-barber.png`](./npcs/wei-barber.png) | Wei | ♂ | Harbor Barber |
+| [`npcs/yun-save-keeper.png`](./npcs/yun-save-keeper.png) | Yun | ♀ | Save Keeper |
+| [`npcs/jin-banker.png`](./npcs/jin-banker.png) | Master Jin | ♂ | Banker |
+| [`npcs/arena-master.png`](./npcs/arena-master.png) | Arena Master | ♂ | Arena host |
+
+### Pier role NPCs
+
+| File | Name | Gender | Role |
+|---|---|---|---|
+| [`npcs/an-scholar.png`](./npcs/an-scholar.png) | An | ♀ | Scholar |
+| [`npcs/bo-ferryman.png`](./npcs/bo-ferryman.png) | Bo | ♂ | Ferryman |
+| [`npcs/rui-merchant.png`](./npcs/rui-merchant.png) | Rui | ♀ | Merchant |
+| [`npcs/hao-fisherman.png`](./npcs/hao-fisherman.png) | Hao | ♂ | Fisherman |
+| [`npcs/ping-villager.png`](./npcs/ping-villager.png) | Ping | ♀ | Villager |
+
 ## Environment & splash
 
 | File | Role |
@@ -104,4 +130,13 @@ Male Meshy job: `75c9d9ae-f8a9-420b-b2e2-d76c1dca452a` (completed)
 | `cd76841b-…` | sonilo_music | Outfitter BGM |
 | `81631b8c-…` | mirelo_text_to_audio | coin chime |
 | `2e439dc6-…` | mirelo_text_to_audio | water splash |
-| `00fc0d0f-…` | mirelo_text_to_audio | UI whoosh |
+| `7990a046-…` | soul_cast | Scholar An |
+| `db4fc736-…` | soul_cast | Ferryman Bo |
+| `0a13a2c3-…` | soul_cast | Merchant Rui |
+| `dcfed29d-…` | soul_cast | Fisherman Hao |
+| `2072b5f0-…` | soul_cast | Villager Ping |
+| `307760a0-…` | soul_cast | Outfitter Mei Lin |
+| `7029b875-…` | soul_cast | Barber Wei |
+| `a8295071-…` | soul_cast | Save Keeper Yun |
+| `82a47839-…` | soul_cast | Banker Jin |
+| `5ca1b81e-…` | soul_cast | Arena Master |

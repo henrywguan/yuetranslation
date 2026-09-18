@@ -6,7 +6,9 @@
 
 **Product north star:** Sailors *want* to dress up and pay because outfits change **silhouette**, beauty changes **identity**, and motion makes the body feel alive — not because a box got a new hex color.
 
-**Cinematic canon (Higgsfield):** See [`assets/README.md`](./assets/README.md) for River Scout character sheets, turnaround, night pier mood, and dress-up VO. Procedural meshes should chase that appeal.
+**Cinematic canon (Higgsfield):** See [`assets/README.md`](./assets/README.md) for River Scout sheets + **named NPC cast** (Mei Lin, Wei, Yun, Jin, Arena Master, An, Bo, Rui, Hao, Ping). Procedural meshes chase that appeal.
+
+**NPC beauty lock (2026-09-18 · Henry):** Landmark hosts + pier roles must be **attractive and unique** female/male anime dress-up figures — not RS potato clones. Reference *feel* from MapleStory / Where Winds Meet / Genshin / Black Desert / ESO (silhouette, fashion, face polish) without copying those IPs.
 
 ### Locked decisions (2026-09-18 · Henry)
 
