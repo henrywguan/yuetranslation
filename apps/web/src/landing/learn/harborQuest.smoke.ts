@@ -678,7 +678,22 @@ function main() {
   assert.equal(scout.userData.originalHarborAsset, true)
   assert.equal(scout.userData.player, true)
   const meshes = countProtagonistMeshes(scout)
-  assert.ok(meshes >= 18 && meshes <= 40, `mesh budget smell-test got ${meshes}`)
+  assert.ok(meshes >= 18 && meshes <= 48, `mesh budget smell-test got ${meshes}`)
+  assert.match(
+    readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8'),
+    /harborFigureFace|PlaneGeometry/,
+    'shared figure kit uses flush face planes',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
+    /harborFigureHead|IcosahedronGeometry|harborFigureFace/,
+    'scout uses faceted head + flush face kit',
+  )
+  assert.doesNotMatch(
+    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
+    /SphereGeometry\(0\.15/,
+    'scout head is no longer a smooth sphere ball',
+  )
   const sockets = listProtagonistSockets(scout)
   for (const name of HARBOR_PROTAGONIST_SOCKETS) {
     assert.ok(sockets.includes(name), `missing socket ${name}`)

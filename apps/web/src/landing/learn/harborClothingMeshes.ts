@@ -3,6 +3,7 @@
  * Original RS-like chunk; not Jagex kit. Applied by applyLookToProtagonist.
  */
 import * as THREE from 'three'
+import { harborFigureTorso } from './harborFigure'
 import type { HarborGearSlot } from './harborGear'
 
 function mat(color: number) {
@@ -272,12 +273,26 @@ function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
     return g
   }
 
-  // Default ink robe
-  const torso = tag(new THREE.Mesh(new THREE.BoxGeometry(shoulder, 0.42, 0.24), c), 'top')
-  torso.position.y = pelvisY + 0.22
+  // Default ink robe — tapered 6-gon torso (matches scout figure kit)
+  const torso = tag(
+    harborFigureTorso(c, pelvisY + 0.22, {
+      shoulder: shoulder * 0.5,
+      waist: shoulder * 0.42,
+      h: 0.42,
+      depth: 0.24,
+    }),
+    'top',
+  )
   g.add(torso)
-  const collar = tag(new THREE.Mesh(new THREE.BoxGeometry(shoulder + 0.02, 0.08, 0.26), a), 'topAccent')
-  collar.position.y = pelvisY + 0.42
+  const collar = tag(
+    harborFigureTorso(a, pelvisY + 0.42, {
+      shoulder: shoulder * 0.52,
+      waist: shoulder * 0.5,
+      h: 0.08,
+      depth: 0.26,
+    }),
+    'topAccent',
+  )
   g.add(collar)
   for (const side of [-1, 1] as const) {
     const arm = tag(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.34, 6), c), 'top')

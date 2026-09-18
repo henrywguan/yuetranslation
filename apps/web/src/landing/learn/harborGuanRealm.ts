@@ -39,6 +39,12 @@ import {
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
+import {
+  harborFigureEars,
+  harborFigureFace,
+  harborFigureHead,
+  harborFigureNeck,
+} from './harborFigure'
 import { stampGuanArmoredPatrol } from './harborGuanPatrol'
 import { isGuanSatelliteLand, guanSatelliteGroundY, stampGuanFishingRealm } from './harborGuanFishingRealm'
 import { GUAN_SATELLITE_ISLANDS } from './harborFishing'
@@ -1079,9 +1085,10 @@ function customsOfficer(): THREE.Group {
     g.add(hqPost(0.055, 0.065, 0.34, 0x1a6870, sx * 0.24, 0.72, 0))
     g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
   }
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-  head.position.y = 1.1
-  g.add(head)
+  g.add(harborFigureHead(skin, 1.1))
+  g.add(harborFigureNeck(skin, 1.1))
+  g.add(harborFigureEars(skin, 1.1))
+  g.add(harborFigureFace(skin, 1.1, { showBrows: true, showMouth: true }))
   // Straw customs hat
   g.add(hqBox(0.42, 0.05, 0.42, P.straw, 0, 1.24, 0))
   g.add(hqPost(0.12, 0.14, 0.12, P.strawLite, 0, 1.32, 0, 6))
@@ -1223,9 +1230,10 @@ function capeTrimmerNpc(): THREE.Group {
     g.add(hqPost(0.055, 0.065, 0.34, 0x5a2a48, sx * 0.24, 0.72, 0))
     g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
   }
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-  head.position.y = 1.1
-  g.add(head)
+  g.add(harborFigureHead(skin, 1.1))
+  g.add(harborFigureNeck(skin, 1.1))
+  g.add(harborFigureEars(skin, 1.1))
+  g.add(harborFigureFace(skin, 1.1, { showBrows: true, showMouth: true }))
   // Soft clothier cap
   g.add(hqBox(0.34, 0.08, 0.3, 0x2a1828, 0, 1.22, 0))
   g.add(hqBox(0.12, 0.06, 0.12, P.trimGold, 0, 1.28, 0.02))
