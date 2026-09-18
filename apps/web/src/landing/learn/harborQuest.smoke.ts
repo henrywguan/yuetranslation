@@ -1439,13 +1439,24 @@ function main() {
   assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
   assert.match(worldSrc2, /function buildBoatHull/, 'tiered boat hull builder')
   assert.match(worldSrc2, /hqWoodTexture\(\)/, 'boat hull loads wood-grain albedo')
-  assert.match(worldSrc2, /hqBoxTex\(/, 'boat hull uses textured craft boxes')
-  assert.match(worldSrc2, /P\.iron/, 'boat hull iron band trim')
+  assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32|hqMatTex\(/, 'anime boat hull uses tapered soft shell')
+  assert.match(worldSrc2, /P\.iron|P\.woodDeep/, 'boat hull trim palette')
   const gearSrcBoat = readFileSync(new URL('./harborGear.ts', import.meta.url), 'utf8')
   assert.match(gearSrcBoat, /hqWoodTexture/, 'handhelds use craft wood texture')
-  assert.match(gearSrcBoat, /hqBoxTex/, 'handhelds use textured craft boxes')
+  assert.match(gearSrcBoat, /CylinderGeometry|SphereGeometry|TorusGeometry/, 'handhelds use soft anime volumes')
   assert.match(detailSrc, /hqMatSmooth/, 'tier detail uses smooth Lambert for beads')
   assert.match(detailSrc, /hqMatTex/, 'boat tier enrich uses wood-textured trim')
+  assert.doesNotMatch(detailSrc, /BoxGeometry/, 'tier detail overlays have no box slabs')
+  assert.match(
+    readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8'),
+    /Soft boulder|SphereGeometry\(s \* 0\.55/,
+    'rocks are soft spheres not boxes',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /CylinderGeometry\(0\.14,\s*0\.16,\s*0\.34/,
+    'shore lanterns are soft cylinders',
+  )
   assert.match(
     readFileSync(new URL('./harborVipGear.ts', import.meta.url), 'utf8'),
     /hqWoodTexture/,

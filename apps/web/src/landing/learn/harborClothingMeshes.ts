@@ -96,13 +96,13 @@ function buildHat(family: string, opts: ClothingBuildOpts): THREE.Group {
   const headY = opts.headY ?? 1.45
 
   if (family.includes('bamboo') || family.includes('coolie')) {
-    const brim = tag(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.03, 10), c), 'hat')
+    const brim = tag(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.03, 16), c), 'hat')
     brim.position.y = headY + 0.08
     g.add(brim)
-    const cone = tag(new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.18, 8), c), 'hat')
+    const cone = tag(new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.18, 14), c), 'hat')
     cone.position.y = headY + 0.18
     g.add(cone)
-    const knot = tag(new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), a), 'hatAccent')
+    const knot = tag(new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), a), 'hatAccent')
     knot.position.set(0, headY + 0.06, 0.12)
     g.add(knot)
     return g
@@ -314,9 +314,13 @@ function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
     return g
   }
 
-  // Default ink robe — soft fashion torso (matches scout figure kit)
+  // Default ink robe — soft fashion torso + hem ribbon
   const shell = softTopShell(c, a, pelvisY, shoulderR, waistR, 0.4, 0.13, armSpread, armY, 0.05)
   while (shell.children.length) g.add(shell.children[0]!)
+  const hem = tag(new THREE.Mesh(new THREE.TorusGeometry(waistR + 0.02, 0.012, 8, 16), a), 'topAccent')
+  hem.rotation.x = Math.PI / 2
+  hem.position.set(0, pelvisY + 0.06, 0.02)
+  g.add(hem)
   return g
 }
 

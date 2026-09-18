@@ -896,14 +896,19 @@ function attachLanternLight(
 function lantern(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
   g.userData.harborLantern = true
-  g.add(hqPost(0.05, 0.07, 1.5, P.woodDark, 0, 0.75, 0, 5))
+  g.add(hqPost(0.05, 0.07, 1.5, P.woodDark, 0, 0.75, 0, 8))
   const lamp = new THREE.Mesh(
-    new THREE.BoxGeometry(0.3, 0.34, 0.3),
+    new THREE.CylinderGeometry(0.14, 0.16, 0.34, 14),
     glowMat(P.lantern, 0xffa040, weather === 'sunny' ? 0.28 : 0.95),
   )
   lamp.position.set(0, 1.55, 0)
   g.add(lamp)
-  g.add(hqBox(0.34, 0.04, 0.34, P.woodDeep, 0, 1.74, 0))
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.05, 12), hqMat(P.woodDeep))
+  cap.position.set(0, 1.74, 0)
+  g.add(cap)
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), hqMat(P.trimGold))
+  tip.position.set(0, 1.82, 0)
+  g.add(tip)
   attachLanternLight(g, weather, 1.55)
   auditHarborObject(g, 'lantern')
   return g
@@ -925,49 +930,69 @@ function boatLantern(
   const id = item.id
   const wood = hqWoodTexture()
   if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
-    g.add(hqPost(0.025, 0.035, 0.5, P.woodDark, 0, 0.26, 0, 5))
+    g.add(hqPost(0.025, 0.035, 0.5, P.woodDark, 0, 0.26, 0, 8))
     const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.1, 0.12, 0.28, 6),
+      new THREE.CylinderGeometry(0.1, 0.12, 0.28, 14),
       glowMat(paper, glowCol, weather === 'sunny' ? 0.4 : 1.2),
     )
     lamp.position.set(0, 0.55, 0)
     g.add(lamp)
-    g.add(hqBoxTex(0.14, 0.03, 0.14, P.woodDeep, wood, 0, 0.7, 0))
-    g.add(hqBox(0.16, 0.02, 0.16, P.iron, 0, 0.66, 0))
-    g.add(hqBox(0.12, 0.02, 0.12, P.trimGold, 0, 0.42, 0))
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.04, 12), hqMatTex(P.woodDeep, wood))
+    cap.position.set(0, 0.7, 0)
+    g.add(cap)
+    const iron = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 14), hqMat(P.iron))
+    iron.rotation.x = Math.PI / 2
+    iron.position.set(0, 0.66, 0)
+    g.add(iron)
+    const gold = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.01, 6, 12), hqMat(P.trimGold))
+    gold.rotation.x = Math.PI / 2
+    gold.position.set(0, 0.42, 0)
+    g.add(gold)
     attachLanternLight(g, weather, 0.55, glowCol, id === 'lantern-starlight' ? 1.55 : 1.3)
   } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
-    g.add(hqPost(0.028, 0.038, 0.45, P.woodDark, 0, 0.24, 0, 5))
+    g.add(hqPost(0.028, 0.038, 0.45, P.woodDark, 0, 0.24, 0, 8))
     const lamp = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.12, 0),
+      new THREE.SphereGeometry(0.11, 14, 12),
       glowMat(paper, glowCol, weather === 'sunny' ? 0.45 : 1.25),
     )
     lamp.position.set(0, 0.52, 0)
     g.add(lamp)
-    g.add(hqBox(0.04, 0.04, 0.04, P.trimGold, 0, 0.64, 0))
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), hqMat(P.trimGold))
+    tip.position.set(0, 0.64, 0)
+    g.add(tip)
     attachLanternLight(g, weather, 0.52, glowCol, 1.35)
   } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
-    g.add(hqPost(0.03, 0.04, 0.4, P.woodDark, 0, 0.22, 0, 5))
-    g.add(hqBox(0.16, 0.2, 0.16, paper, 0, 0.5, 0))
-    g.add(hqBox(0.18, 0.03, 0.18, P.iron, 0, 0.4, 0))
-    g.add(hqBox(0.18, 0.03, 0.18, P.iron, 0, 0.6, 0))
+    g.add(hqPost(0.03, 0.04, 0.4, P.woodDark, 0, 0.22, 0, 8))
+    const cage = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.2, 12), hqMat(paper))
+    cage.position.set(0, 0.5, 0)
+    g.add(cage)
+    for (const y of [0.4, 0.6] as const) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.015, 6, 14), hqMat(P.iron))
+      ring.rotation.x = Math.PI / 2
+      ring.position.set(0, y, 0)
+      g.add(ring)
+    }
     const core = new THREE.Mesh(
-      new THREE.BoxGeometry(0.1, 0.12, 0.1),
+      new THREE.SphereGeometry(0.07, 12, 10),
       glowMat(glowCol, glowCol, weather === 'sunny' ? 0.5 : 1.35),
     )
     core.position.set(0, 0.5, 0)
     g.add(core)
     attachLanternLight(g, weather, 0.5, glowCol, id === 'lantern-dragon' ? 1.5 : 1.2)
   } else {
-    g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 5))
+    g.add(hqPost(0.03, 0.04, 0.42, P.woodDark, 0, 0.22, 0, 8))
     const lamp = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.2, 0.18),
+      new THREE.CylinderGeometry(0.09, 0.1, 0.2, 14),
       glowMat(paper, glowCol, weather === 'sunny' ? 0.35 : 1.1),
     )
     lamp.position.set(0, 0.5, 0)
     g.add(lamp)
-    g.add(hqBoxTex(0.2, 0.03, 0.2, P.woodDeep, wood, 0, 0.62, 0))
-    g.add(hqBox(0.04, 0.04, 0.04, P.trimGold, 0, 0.4, 0.08))
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.1, 0.04, 12), hqMatTex(P.woodDeep, wood))
+    cap.position.set(0, 0.62, 0)
+    g.add(cap)
+    const bead = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), hqMat(P.trimGold))
+    bead.position.set(0, 0.4, 0.08)
+    g.add(bead)
     attachLanternLight(g, weather, 0.5, glowCol, 1.25)
   }
   tagVipLanternAnim(g, id)
@@ -1034,9 +1059,8 @@ function roadSign(kindIndex: number, rng: () => number) {
   if (kind.id === 'mountain' || kind.id === 'temple') {
     g.add(hqBox(0.18, 0.07, 0.04, P.trimGold, 0.7, 1.58, 0.05))
   }
-  // Small roof cap on the post
-  g.add(hqBox(0.28, 0.06, 0.28, P.woodDeep, 0, 2.48, 0))
-  g.add(hqBox(0.18, 0.05, 0.18, P.trimGold, 0, 2.55, 0))
+  // Soft hip roof cap on the post
+  g.add(hqAnimeHipRoof(0.22, 0.22, 2.35, P.woodDeep, { pitch: 0.22, overhang: 0.06, ridgeColor: P.trimGold }))
   return g
 }
 
@@ -2212,8 +2236,13 @@ function buildBoatHull(boatId: string): THREE.Group {
 
   const sailW = id.includes('barge') || id.includes('imperial') ? 0.95 : 0.7
   const sailH = id.includes('junk') || id.includes('merchant') ? 1.05 : 0.85
-  // Soft curved sail (slightly bent cylinder segment via scaled plane + side bows)
-  const sail = new THREE.Mesh(new THREE.PlaneGeometry(sailW, sailH, 4, 2), hqMat(trim))
+  // Soft curved anime sail — billowed sphere shell
+  const sail = new THREE.Mesh(
+    new THREE.SphereGeometry(sailW * 0.55, 14, 10, 0, Math.PI),
+    hqMat(trim),
+  )
+  sail.scale.set(1, sailH / (sailW * 0.9), 0.35)
+  sail.rotation.y = Math.PI / 2
   sail.position.set(0.12, 0.95 + (mastH - 1.05) * 0.35, 0.02)
   g.add(sail)
   const boom = new THREE.Mesh(
@@ -3291,7 +3320,7 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
   // Warm shop lanterns under the awning
   for (const x of [-0.7, 0.7] as const) {
     const lamp = new THREE.Mesh(
-      new THREE.BoxGeometry(0.2, 0.24, 0.2),
+      new THREE.CylinderGeometry(0.1, 0.11, 0.24, 12),
       glowMat(P.lantern, 0xff9040, weather === 'sunny' ? 0.3 : 1.0),
     )
     lamp.position.set(x, 1.58, 0.95)

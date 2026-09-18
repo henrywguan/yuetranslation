@@ -3,7 +3,7 @@
  * Original craft (not Jagex). Locked behind HARBOR_VIP_MIN_PRICE coins.
  */
 import * as THREE from 'three'
-import { hqBox, hqMat, hqMatSmooth, hqMatTex, hqWoodTexture, HARBOR_CRAFT_PALETTE as P } from './harborCraft'
+import { hqMat, hqMatSmooth, hqMatTex, hqWoodTexture, HARBOR_CRAFT_PALETTE as P } from './harborCraft'
 import type { HarborGearId, HarborLook } from './harborGear'
 
 /** Outfitter lock — every VIP catalog row must cost more than this. */
@@ -214,7 +214,9 @@ function buildPhoenixFan(color: number, accent: number): THREE.Group {
   )
   stick.position.set(0.04, 0, 0)
   g.add(stick)
-  g.add(hqBox(0.03, 0.02, 0.03, P.trimGold, 0.04, 0.06, 0))
+  const pivot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), hqMat(P.trimGold))
+  pivot.position.set(0.04, 0.06, 0)
+  g.add(pivot)
   const fan = tagAnim(new THREE.Group(), 'fan-flutter', 0.3)
   fan.position.set(0.1, 0.08, 0)
   for (let i = 0; i < 7; i++) {
@@ -258,7 +260,9 @@ function buildStarlitCompass(color: number, accent: number): THREE.Group {
   rim.position.set(0.08, 0.04, 0)
   rim.rotation.x = Math.PI / 2
   g.add(rim)
-  g.add(hqBox(0.04, 0.02, 0.02, P.trimGold, 0.08, 0.04, 0.03))
+  const dialBead = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 6), hqMat(P.trimGold))
+  dialBead.position.set(0.08, 0.04, 0.03)
+  g.add(dialBead)
   const needle = tagAnim(
     new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.1, 8), mat(accent, 0xff6060, 0.8)),
     'spin-z',

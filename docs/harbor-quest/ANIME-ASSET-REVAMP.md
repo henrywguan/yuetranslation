@@ -47,3 +47,14 @@
 | Clothes | VIP families get soft emissive sheen on silhouette meshes |
 | Map | `HARBOR_EXPLORE_X` → 22; inland terrace shelf + terrace roads; denser village/forest inland; overlook chairs (Where Winds Meet depth — original Harbor geometry) |
 | VIP gear | Soft cape cylinders, fan leaf arcs, boat ornament spheres |
+
+
+## Wave 3 — everything softforms
+
+| Layer | Change |
+|---|---|
+| Tier detail | All mid/high overlays cylinders/spheres/tori — **zero BoxGeometry** |
+| Handhelds | Soft lanterns, fan leaf arcs, oar cylinders |
+| Shore + boat lanterns | Cylinder / sphere / torus kits |
+| Craft props | Soft rocks, hoop-banded crates, round chairs/stools, anime stall roofs |
+| Sails | Billowed hemisphere shells |

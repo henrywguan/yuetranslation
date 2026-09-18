@@ -1,7 +1,7 @@
 /**
  * Harbor Quest · progressive gear detail overlays (common → mid → high).
  * More expensive pieces get more mesh parts so upgrades feel visible.
- * Original craft — chunky RS grammar, flat + smooth Lambert (not Jagex).
+ * Soft anime volumes — cylinders / spheres / tori (not box slabs).
  *
  * Takes resolved catalog pieces as args (no import of harborGear) to avoid cycles.
  */
@@ -62,33 +62,34 @@ function hatDetail(item: HarborDetailPiece): THREE.Group | null {
   const c = item.color
   const a = item.accent ?? item.color
 
-  // Common: chin cord / side knot
+  // Common: soft chin cord / side knot
   if (level >= 1) {
-    const cord = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.12, 0.02), mat(a))
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.01, 0.12, 8), mat(a))
     cord.position.set(0.12, -0.06, 0.04)
     cord.rotation.z = 0.35
     g.add(cord)
-    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), matSmooth(a))
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), matSmooth(a))
     knot.position.set(0.14, -0.12, 0.05)
     g.add(knot)
   }
   // Mid: folded brim ring + side stud
   if (level >= 2) {
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 4, 10), mat(c))
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 8, 14), mat(c))
     rim.rotation.x = Math.PI / 2
     rim.position.y = -0.02
     g.add(rim)
-    const stud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.03), mat(a))
+    const stud = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), mat(a))
     stud.position.set(-0.12, 0.02, 0.08)
     g.add(stud)
   }
   // High: front plaque + twin tassels
   if (level >= 3) {
-    const plaque = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.03), mat(a))
+    const plaque = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), mat(a))
+    plaque.scale.set(1.3, 0.7, 0.55)
     plaque.position.set(0, 0.04, 0.12)
     g.add(plaque)
     for (const sx of [-0.1, 0.1] as const) {
-      const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.1, 5), mat(a))
+      const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.1, 8), mat(a))
       tassel.position.set(sx, -0.14, 0.06)
       g.add(tassel)
     }
@@ -103,36 +104,34 @@ function topDetail(item: HarborDetailPiece): THREE.Group | null {
   const c = item.color
   const a = item.accent ?? item.color
 
-  // Common: simple chest clasp
+  // Common: soft chest clasp
   if (level >= 1) {
-    const clasp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.03), mat(a))
+    const clasp = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), mat(a))
+    clasp.scale.set(1.1, 0.9, 0.55)
     clasp.position.set(0, 0.08, 0.14)
     g.add(clasp)
   }
-  // Mid: sleeve cuffs + shoulder pads
+  // Mid: sleeve cuffs + soft shoulder pads
   if (level >= 2) {
     for (const sx of [-0.22, 0.22] as const) {
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.05, 6), mat(a))
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.05, 12), mat(a))
       cuff.position.set(sx, -0.12, 0)
       g.add(cuff)
-      const pad = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.1), mat(c))
+      const pad = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), mat(c))
+      pad.scale.set(1.3, 0.55, 1.1)
       pad.position.set(sx * 0.85, 0.16, 0)
       g.add(pad)
     }
   }
-  // High: lapel layers + hanging sash ends
+  // High: soft lapel layers + hanging sash ends
   if (level >= 3) {
-    const lapelL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.03), mat(a))
-    lapelL.position.set(-0.1, 0.05, 0.13)
-    lapelL.rotation.z = 0.2
-    g.add(lapelL)
-    const lapelR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.03), mat(a))
-    lapelR.position.set(0.1, 0.05, 0.13)
-    lapelR.rotation.z = -0.2
-    g.add(lapelR)
-    for (const sx of [-0.08, 0.08] as const) {
-      const sash = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.18, 0.02), mat(a))
-      sash.position.set(sx, -0.22, 0.12)
+    for (const side of [-1, 1] as const) {
+      const lapel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.22, 10), mat(a))
+      lapel.position.set(side * 0.1, 0.05, 0.13)
+      lapel.rotation.z = side * -0.2
+      g.add(lapel)
+      const sash = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.022, 0.18, 10), mat(a))
+      sash.position.set(side * 0.08, -0.22, 0.12)
       g.add(sash)
     }
   }
@@ -146,16 +145,18 @@ function bottomDetail(item: HarborDetailPiece): THREE.Group | null {
   const c = item.color
   const a = item.accent ?? item.color
 
-  // Common: waist tie knot
+  // Common: soft waist tie knot
   if (level >= 1) {
-    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.04), mat(a))
+    const tie = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), mat(a))
+    tie.scale.set(1.4, 0.7, 0.8)
     tie.position.set(0.12, 0.2, 0.1)
     g.add(tie)
   }
-  // Mid: pocket flaps
+  // Mid: soft pocket flaps
   if (level >= 2) {
     for (const sx of [-0.12, 0.12] as const) {
-      const flap = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.03), mat(c))
+      const flap = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), mat(c))
+      flap.scale.set(1.2, 0.7, 0.5)
       flap.position.set(sx, 0.05, 0.1)
       g.add(flap)
     }
@@ -163,10 +164,10 @@ function bottomDetail(item: HarborDetailPiece): THREE.Group | null {
   // High: side stripes + ankle cuffs
   if (level >= 3) {
     for (const sx of [-0.14, 0.14] as const) {
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.28, 0.02), mat(a))
+      const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.28, 8), mat(a))
       stripe.position.set(sx, -0.05, 0.08)
       g.add(stripe)
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.07, 0.04, 6), mat(a))
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.07, 0.04, 12), mat(a))
       cuff.position.set(sx * 0.75, -0.22, 0.02)
       g.add(cuff)
     }
@@ -180,29 +181,31 @@ function shoesDetail(item: HarborDetailPiece): THREE.Group | null {
   const g = wrap('gear-tier-shoes')
   const a = item.accent ?? item.color
 
-  // Common: toe stitch bar
+  // Common: soft toe stitch
   if (level >= 1) {
     for (const sx of [-0.1, 0.1] as const) {
-      const stitch = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.03), mat(a))
+      const stitch = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 8), mat(a))
+      stitch.rotation.x = Math.PI / 2
       stitch.position.set(sx, 0.02, 0.1)
       g.add(stitch)
     }
   }
-  // Mid: buckle
+  // Mid: soft buckle
   if (level >= 2) {
     for (const sx of [-0.1, 0.1] as const) {
-      const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.04), mat(a))
+      const buckle = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.008, 6, 10), mat(a))
       buckle.position.set(sx, 0.05, 0.06)
       g.add(buckle)
     }
   }
-  // High: shaft wrap + heel plate
+  // High: shaft wrap + soft heel
   if (level >= 3) {
     for (const sx of [-0.1, 0.1] as const) {
-      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.1, 6), mat(item.color))
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.1, 12), mat(item.color))
       shaft.position.set(sx, 0.1, 0.02)
       g.add(shaft)
-      const heel = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.06), mat(a))
+      const heel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.03, 10), mat(a))
+      heel.rotation.x = Math.PI / 2
       heel.position.set(sx, 0.01, -0.04)
       g.add(heel)
     }
@@ -267,12 +270,14 @@ export function enrichHandheldProp(g: THREE.Group, item: HarborDetailPiece): voi
   const a = mat(accent)
 
   if (item.id === 'hand-fan') {
-    // Common+: fold crease
-    const crease = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.008, 0.008), a)
+    // Common+: soft fold crease
+    const crease = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.2, 8), a)
+    crease.rotation.z = Math.PI / 2
     crease.position.set(0.08, 0.03, 0.02)
     g.add(crease)
     if (level >= 2) {
-      const ribs = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.015, 0.015), a)
+      const ribs = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.008, 0.18, 8), a)
+      ribs.rotation.z = Math.PI / 2
       ribs.position.set(0.08, 0.04, 0)
       g.add(ribs)
     }
@@ -280,27 +285,28 @@ export function enrichHandheldProp(g: THREE.Group, item: HarborDetailPiece): voi
   if (item.id === 'hand-lantern') {
     // Mid+: hanging ring + tassel
     if (level >= 2) {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.01, 4, 8), a)
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.01, 6, 12), a)
       ring.position.set(0.06, 0.14, 0)
       ring.rotation.x = Math.PI / 2
       g.add(ring)
-      const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.06, 5), a)
+      const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.06, 8), a)
       tassel.position.set(0.06, 0.02, 0)
       g.add(tassel)
     }
     if (level >= 3) {
-      const pane = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.02), a)
+      const pane = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), a)
+      pane.scale.set(0.7, 1.1, 0.35)
       pane.position.set(0.06, 0.08, 0.06)
       g.add(pane)
     }
   }
   if (item.id === 'hand-oar') {
     // Common+: butt knob
-    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), matSmooth(accent))
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), matSmooth(accent))
     knob.position.set(-0.02, -0.04, 0)
     g.add(knob)
     if (level >= 2) {
-      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.06, 5), a)
+      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.06, 10), a)
       grip.position.set(0.02, 0.0, 0)
       grip.rotation.z = 0.4
       g.add(grip)
@@ -308,11 +314,11 @@ export function enrichHandheldProp(g: THREE.Group, item: HarborDetailPiece): voi
   }
   if (item.id === 'hand-scroll') {
     // Common+: wax seal
-    const seal = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), a)
+    const seal = new THREE.Mesh(new THREE.SphereGeometry(0.02, 10, 8), a)
     seal.position.set(0.08, 0.05, 0.03)
     g.add(seal)
     if (level >= 2) {
-      const endcap = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 6), a)
+      const endcap = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 12), a)
       endcap.rotation.z = Math.PI / 2
       endcap.position.set(0.17, 0.02, 0)
       g.add(endcap)
@@ -337,17 +343,17 @@ export function enrichBoatHull(
 
   // Common: small bow bead
   if (level >= 1) {
-    const bead = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), matSmooth(a))
+    const bead = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), matSmooth(a))
     bead.position.set(length * 0.48, 0.42, 0)
     bead.userData.harborTierDetail = true
     g.add(bead)
   }
-  // Mid: side rail posts + stern plaque
+  // Mid: side rail posts + soft stern plaque
   if (level >= 2) {
     for (const z of [width * 0.42, -width * 0.42] as const) {
       for (const x of [-length * 0.25, length * 0.2] as const) {
         const post = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.025, 0.03, 0.22, 5),
+          new THREE.CylinderGeometry(0.025, 0.03, 0.22, 10),
           hqMatTex(P.woodDark, wood),
         )
         post.position.set(x, 0.5, z)
@@ -355,33 +361,40 @@ export function enrichBoatHull(
         g.add(post)
       }
     }
-    const plaque = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.04), mat(a))
+    const plaque = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mat(a))
+    plaque.scale.set(0.9, 0.8, 0.45)
     plaque.position.set(-length * 0.5, 0.48, 0)
     plaque.userData.harborTierDetail = true
     g.add(plaque)
-    // Iron stud on plaque
-    const stud = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.02), mat(P.iron))
+    // Soft iron stud on plaque
+    const stud = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), mat(P.iron))
     stud.position.set(-length * 0.5, 0.48, 0.03)
     stud.userData.harborTierDetail = true
     g.add(stud)
   }
-  // High: cabin ridge + twin bow fins + deck runners
+  // High: soft cabin ridge + twin bow fins + deck runners
   if (level >= 3) {
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, width * 0.55), hqMatTex(a, wood))
+    const ridge = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.05, 0.7, 12),
+      hqMatTex(a, wood),
+    )
+    ridge.rotation.z = Math.PI / 2
     ridge.position.set(-0.2, 0.72, 0)
     ridge.userData.harborTierDetail = true
     g.add(ridge)
     for (const z of [width * 0.22, -width * 0.22] as const) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.05), mat(a))
+      const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.28, 10), mat(a))
+      fin.rotation.z = Math.PI / 2
       fin.position.set(length * 0.5, 0.5, z)
       fin.userData.harborTierDetail = true
       g.add(fin)
     }
     for (const z of [width * 0.3, -width * 0.3] as const) {
       const runner = new THREE.Mesh(
-        new THREE.BoxGeometry(length * 0.7, 0.03, 0.04),
+        new THREE.CylinderGeometry(0.015, 0.018, length * 0.7, 8),
         hqMatTex(P.woodMid, wood),
       )
+      runner.rotation.z = Math.PI / 2
       runner.position.set(0, 0.36, z)
       runner.userData.harborTierDetail = true
       g.add(runner)

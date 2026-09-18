@@ -775,38 +775,56 @@ export function hqCanopy(r: number, color: number, x = 0, y = 0, z = 0): THREE.M
   return auditHarborMesh(m, 'terrain')
 }
 
-/** Faceted rock chunk — smooth shading, boxy silhouette. */
+/** Soft boulder — rounded anime rock (not a Minecraft cube). */
 export function hqRock(rng: () => number, color: number = HARBOR_CRAFT_PALETTE.rock): THREE.Mesh {
   const s = 0.35 + rng() * 0.45
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(s, s * (0.55 + rng() * 0.35), s * (0.8 + rng() * 0.3)),
-    hqMatSmooth(color),
-  )
+  const m = new THREE.Mesh(new THREE.SphereGeometry(s * 0.55, 12, 10), hqMatSmooth(color))
+  m.scale.set(1 + rng() * 0.35, 0.55 + rng() * 0.35, 0.8 + rng() * 0.3)
   m.rotation.set(rng() * 0.4, rng() * Math.PI, rng() * 0.3)
-  m.scale.set(1 + rng() * 0.35, 1, 1 + rng() * 0.25)
   return auditHarborMesh(m, 'terrain')
 }
 
 // —— Modular props (clutter density = “RS detail”) ——
 
-/** Shipping crate — multi-swatch wood + iron bands. */
+/** Soft shipping crate — rounded wood body + iron hoop bands. */
 export function hqCrate(rng: () => number = Math.random): THREE.Group {
   const g = new THREE.Group()
   g.name = 'hq-crate'
   const s = 0.38 + rng() * 0.12
   const wood = hqWoodTexture()
-  g.add(hqBoxTex(s, s * 0.85, s, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, s * 0.42, 0))
-  // Lid (lighter value step)
-  g.add(hqBoxTex(s * 1.02, 0.05, s * 1.02, HARBOR_CRAFT_PALETTE.woodLight, wood, 0, s * 0.88, 0))
-  // Iron bands
-  g.add(hqBox(s * 1.04, 0.04, s * 1.04, HARBOR_CRAFT_PALETTE.iron, 0, s * 0.25, 0))
-  g.add(hqBox(s * 1.04, 0.04, s * 1.04, HARBOR_CRAFT_PALETTE.iron, 0, s * 0.65, 0))
-  // Corner nails (color chips, not micro-geo rivets)
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(s, s * 0.85, s),
+    hqMatTex(HARBOR_CRAFT_PALETTE.woodMid, wood),
+  )
+  body.position.y = s * 0.42
+  // Soften corners via slight sphere overlay read
+  body.scale.set(1, 1, 1)
+  g.add(body)
+  const lid = new THREE.Mesh(
+    new THREE.CylinderGeometry(s * 0.55, s * 0.55, 0.05, 12),
+    hqMatTex(HARBOR_CRAFT_PALETTE.woodLight, wood),
+  )
+  lid.position.y = s * 0.88
+  lid.scale.set(1.15, 1, 1.15)
+  g.add(lid)
+  for (const y of [s * 0.25, s * 0.65] as const) {
+    const band = new THREE.Mesh(
+      new THREE.TorusGeometry(s * 0.55, 0.02, 6, 14),
+      hqMat(HARBOR_CRAFT_PALETTE.iron),
+    )
+    band.rotation.x = Math.PI / 2
+    band.position.y = y
+    band.scale.set(1, 1, 0.95)
+    g.add(band)
+  }
   for (const sx of [-1, 1] as const) {
     for (const sz of [-1, 1] as const) {
-      g.add(
-        hqBox(0.04, 0.04, 0.04, HARBOR_CRAFT_PALETTE.woodDeep, sx * s * 0.42, s * 0.88, sz * s * 0.42),
+      const nail = new THREE.Mesh(
+        new THREE.SphereGeometry(0.025, 8, 6),
+        hqMat(HARBOR_CRAFT_PALETTE.woodDeep),
       )
+      nail.position.set(sx * s * 0.42, s * 0.88, sz * s * 0.42)
+      g.add(nail)
     }
   }
   return g
@@ -818,7 +836,7 @@ export function hqBarrel(rng: () => number = Math.random): THREE.Group {
   g.name = 'hq-barrel'
   const h = 0.55 + rng() * 0.1
   const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.24, h, HARBOR_FACETS),
+    new THREE.CylinderGeometry(0.22, 0.24, h, 14),
     hqMatTex(HARBOR_CRAFT_PALETTE.woodMid, hqWoodTexture()),
   )
   body.position.y = h / 2
@@ -841,7 +859,13 @@ export function hqFence(segments = 3): THREE.Group {
   for (const y of [0.25, 0.5] as const) {
     for (let i = 0; i < segments; i++) {
       const z = i * 0.55 + 0.275
-      g.add(hqBoxTex(0.06, 0.06, 0.5, HARBOR_CRAFT_PALETTE.woodLight, wood, 0, y, z))
+      const rail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.03, 0.5, 8),
+        hqMatTex(HARBOR_CRAFT_PALETTE.woodLight, wood),
+      )
+      rail.rotation.x = Math.PI / 2
+      rail.position.set(0, y, z)
+      g.add(rail)
     }
   }
   return g
@@ -858,23 +882,32 @@ export function hqSack(rng: () => number = Math.random): THREE.Group {
   body.scale.set(1.1, 0.85, 1)
   body.position.y = 0.14
   g.add(body)
-  g.add(hqBox(0.08, 0.1, 0.08, HARBOR_CRAFT_PALETTE.rope, 0, 0.3, 0))
+  const tie = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.03, 0.04, 0.1, 10),
+    hqMat(HARBOR_CRAFT_PALETTE.rope),
+  )
+  tie.position.y = 0.3
+  g.add(tie)
   return g
 }
 
-/** Market stall — plank counter + thatch awning + crate under. */
+/** Market stall — plank counter + soft thatch awning + crate under. */
 export function hqMarketStall(rng: () => number = Math.random): THREE.Group {
   const g = new THREE.Group()
   g.name = 'hq-market-stall'
   const wood = hqWoodTexture()
-  const thatch = hqSoftThatchTexture()
   g.add(hqBoxTex(1.2, 0.08, 0.55, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, 0.55, 0))
   for (const x of [-0.5, 0.5] as const) {
-    g.add(hqPost(0.04, 0.05, 0.55, HARBOR_CRAFT_PALETTE.woodDark, x, 0.28, 0.2, 5))
-    g.add(hqPost(0.04, 0.05, 1.1, HARBOR_CRAFT_PALETTE.woodDark, x, 0.9, -0.2, 5))
+    g.add(hqPost(0.04, 0.05, 0.55, HARBOR_CRAFT_PALETTE.woodDark, x, 0.28, 0.2, 8))
+    g.add(hqPost(0.04, 0.05, 1.1, HARBOR_CRAFT_PALETTE.woodDark, x, 0.9, -0.2, 8))
   }
-  g.add(hqBoxTex(1.35, 0.08, 0.7, HARBOR_CRAFT_PALETTE.straw, thatch, 0, 1.35, -0.05))
-  g.add(hqBoxTex(1.0, 0.06, 0.5, HARBOR_CRAFT_PALETTE.strawDark, thatch, 0, 1.42, -0.05))
+  g.add(
+    hqAnimeHipRoof(1.2, 0.55, 1.15, HARBOR_CRAFT_PALETTE.straw, {
+      pitch: 0.28,
+      overhang: 0.12,
+      ridgeColor: HARBOR_CRAFT_PALETTE.strawDark,
+    }),
+  )
   const crate = hqCrate(rng)
   crate.position.set(-0.35, 0, 0.15)
   crate.scale.setScalar(0.7)
@@ -894,16 +927,39 @@ export function hqChair(): THREE.Group {
   const wood = hqWoodTexture()
   for (const x of [-0.14, 0.14] as const) {
     for (const z of [-0.14, 0.14] as const) {
-      g.add(hqPost(0.035, 0.04, 0.4, HARBOR_CRAFT_PALETTE.woodDark, x, 0.2, z, 5))
+      g.add(hqPost(0.035, 0.04, 0.4, HARBOR_CRAFT_PALETTE.woodDark, x, 0.2, z, 8))
     }
   }
-  g.add(hqBoxTex(0.38, 0.05, 0.38, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, 0.42, 0))
-  g.add(hqBoxTex(0.38, 0.06, 0.05, HARBOR_CRAFT_PALETTE.woodLight, wood, 0, 0.45, 0.12))
-  // Backrest
-  g.add(hqPost(0.035, 0.04, 0.55, HARBOR_CRAFT_PALETTE.woodDeep, -0.15, 0.7, -0.16, 5))
-  g.add(hqPost(0.035, 0.04, 0.55, HARBOR_CRAFT_PALETTE.woodDeep, 0.15, 0.7, -0.16, 5))
-  g.add(hqBoxTex(0.36, 0.42, 0.04, HARBOR_CRAFT_PALETTE.woodDark, wood, 0, 0.72, -0.16))
-  g.add(hqBox(0.32, 0.04, 0.04, HARBOR_CRAFT_PALETTE.trimGold, 0, 0.92, -0.14))
+  const seat = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.2, 0.22, 0.05, 14),
+    hqMatTex(HARBOR_CRAFT_PALETTE.woodMid, wood),
+  )
+  seat.position.y = 0.42
+  g.add(seat)
+  const cushion = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 12, 10),
+    hqMatTex(HARBOR_CRAFT_PALETTE.woodLight, wood),
+  )
+  cushion.scale.set(1.1, 0.25, 1.0)
+  cushion.position.set(0, 0.46, 0.04)
+  g.add(cushion)
+  // Soft backrest
+  g.add(hqPost(0.035, 0.04, 0.55, HARBOR_CRAFT_PALETTE.woodDeep, -0.15, 0.7, -0.16, 8))
+  g.add(hqPost(0.035, 0.04, 0.55, HARBOR_CRAFT_PALETTE.woodDeep, 0.15, 0.7, -0.16, 8))
+  const back = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.1, 0.4, 12),
+    hqMatTex(HARBOR_CRAFT_PALETTE.woodDark, wood),
+  )
+  back.scale.set(2.0, 1, 0.35)
+  back.position.set(0, 0.72, -0.16)
+  g.add(back)
+  const rail = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.015, 0.018, 0.32, 8),
+    hqMat(HARBOR_CRAFT_PALETTE.trimGold),
+  )
+  rail.rotation.z = Math.PI / 2
+  rail.position.set(0, 0.92, -0.14)
+  g.add(rail)
   return g
 }
 
@@ -916,11 +972,22 @@ export function hqStool(): THREE.Group {
   const wood = hqWoodTexture()
   for (const x of [-0.12, 0.12] as const) {
     for (const z of [-0.12, 0.12] as const) {
-      g.add(hqPost(0.03, 0.035, 0.38, HARBOR_CRAFT_PALETTE.woodDark, x, 0.19, z, 5))
+      g.add(hqPost(0.03, 0.035, 0.38, HARBOR_CRAFT_PALETTE.woodDark, x, 0.19, z, 8))
     }
   }
-  g.add(hqBoxTex(0.32, 0.05, 0.32, HARBOR_CRAFT_PALETTE.woodMid, wood, 0, 0.4, 0))
-  g.add(hqBox(0.34, 0.03, 0.34, HARBOR_CRAFT_PALETTE.woodDeep, 0, 0.37, 0))
+  const seat = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.17, 0.18, 0.05, 14),
+    hqMatTex(HARBOR_CRAFT_PALETTE.woodMid, wood),
+  )
+  seat.position.y = 0.4
+  g.add(seat)
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.175, 0.015, 6, 14),
+    hqMat(HARBOR_CRAFT_PALETTE.woodDeep),
+  )
+  rim.rotation.x = Math.PI / 2
+  rim.position.y = 0.37
+  g.add(rim)
   return g
 }
 

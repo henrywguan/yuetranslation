@@ -7,8 +7,6 @@ import * as THREE from 'three'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
   HARBOR_CRAFT_PALETTE as P,
-  hqBox,
-  hqBoxTex,
   hqMat,
   hqMatTex,
   hqPost,
@@ -542,9 +540,20 @@ function buildHandheldBoatLantern(item: HarborGearItem): THREE.Group {
     )
     lamp.position.set(0.06, 0.14, 0)
     g.add(lamp)
-    g.add(hqBoxTex(0.07, 0.02, 0.07, P.woodDeep, wood, 0.06, 0.22, 0))
-    g.add(hqBox(0.08, 0.015, 0.08, P.iron, 0.06, 0.2, 0))
-    g.add(hqBox(0.06, 0.015, 0.06, P.trimGold, 0.06, 0.08, 0))
+    const woodCap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.038, 0.02, 10),
+      hqMatTex(P.woodDeep, wood),
+    )
+    woodCap.position.set(0.06, 0.22, 0)
+    g.add(woodCap)
+    const ironRing = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 12), hqMat(P.iron))
+    ironRing.rotation.x = Math.PI / 2
+    ironRing.position.set(0.06, 0.2, 0)
+    g.add(ironRing)
+    const goldRing = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 6, 10), hqMat(P.trimGold))
+    goldRing.rotation.x = Math.PI / 2
+    goldRing.position.set(0.06, 0.08, 0)
+    g.add(goldRing)
     attachHandheldLanternLight(g, 0.14, glowCol, id === 'lantern-starlight' ? 0.75 : 0.6)
   } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
     g.add(hqPost(0.014, 0.018, 0.09, P.woodDark, 0.06, 0.035, 0, 5))
@@ -554,7 +563,9 @@ function buildHandheldBoatLantern(item: HarborGearItem): THREE.Group {
     )
     lamp.position.set(0.06, 0.13, 0)
     g.add(lamp)
-    g.add(hqBox(0.025, 0.025, 0.025, P.trimGold, 0.06, 0.19, 0))
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), hqMat(P.trimGold))
+    tip.position.set(0.06, 0.19, 0)
+    g.add(tip)
     attachHandheldLanternLight(g, 0.13, glowCol, 0.65)
   } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
     g.add(hqPost(0.014, 0.018, 0.08, P.woodDark, 0.06, 0.03, 0, 8))
@@ -692,7 +703,9 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
     roll.rotation.z = Math.PI / 2
     roll.position.set(0.08, 0.02, 0)
     g.add(roll)
-    g.add(hqBox(0.04, 0.02, 0.06, accent, 0.08, 0.02, 0.04))
+    const seal = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), hqMat(accent))
+    seal.position.set(0.08, 0.02, 0.04)
+    g.add(seal)
     g.add(hqPost(0.035, 0.035, 0.02, P.woodDeep, -0.01, 0.02, 0, 6))
     g.add(hqPost(0.035, 0.035, 0.02, P.woodDeep, 0.17, 0.02, 0, 6))
   }
