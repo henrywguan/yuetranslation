@@ -351,7 +351,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
 
   const geoFeatures = useMemo(() => {
     if (!pose) return []
-    return buildMinimapGeoFeatures(realm, pose.x, pose.z)
+    return buildMinimapGeoFeatures(realm, pose.z)
   }, [pose, realm])
 
   if (hidden) return null

@@ -10,7 +10,6 @@ import {
   GUAN_SATELLITE_ISLANDS,
 } from './harborFishing'
 import {
-  HARBOR_CRAFT_PALETTE as P,
   hqBox,
   hqCanopy,
   hqMat,
@@ -112,10 +111,7 @@ function fishingSpotBuoy(spotId: string): THREE.Group {
   g.add(icon)
 
   if (typeof document !== 'undefined') {
-    const bubble = buildNametagSprite('Fish', {
-      fontSize: 28,
-      color: '#7ef0dc',
-    })
+    const bubble = buildNametagSprite('Fish')
     bubble.position.y = 1.45
     bubble.userData.billboard = true
     bubble.userData.speechBubble = true
@@ -167,12 +163,12 @@ function fishingOverseer(): THREE.Group {
   g.add(iconRoot)
 
   if (typeof document !== 'undefined') {
-    const tag = buildNametagSprite(GUAN_FISHING_OVERSEER_NAME, { fontSize: 26, color: '#7ef0dc' })
+    const tag = buildNametagSprite(GUAN_FISHING_OVERSEER_NAME)
     tag.position.set(0.85, 1.95, 0.55)
     tag.userData.billboard = true
     g.add(tag)
 
-    const speech = buildNametagSprite('Fish', { fontSize: 22, color: '#ffe9a0' })
+    const speech = buildNametagSprite('Fish')
     speech.position.set(0.85, 2.25, 0.55)
     speech.userData.billboard = true
     speech.userData.speechBubble = true
@@ -341,7 +337,7 @@ function stampSatelliteIsland(
   }
 
   if (typeof document !== 'undefined') {
-    const label = buildNametagSprite(`${island.name.en}`, { fontSize: 24, color: '#e8f4ff' })
+    const label = buildNametagSprite(`${island.name.en}`)
     label.position.set(island.x, 2.2, island.z)
     label.userData.billboard = true
     root.add(label)

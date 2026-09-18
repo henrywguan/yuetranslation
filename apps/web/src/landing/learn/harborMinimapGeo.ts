@@ -149,7 +149,6 @@ export function resolveHarborMinimapPlace(
 /** Topography polygons / polylines for the radar disc (world xz). */
 export function buildMinimapGeoFeatures(
   realm: HarborRealmId | null | undefined,
-  poseX: number,
   poseZ: number,
 ): MinimapGeoFeature[] {
   if (realm === 'guan') {

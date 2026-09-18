@@ -24,12 +24,12 @@ const pearl = GUAN_SATELLITE_ISLANDS.find((s) => s.id === 'pearl-cay')!
 const cay = resolveHarborMinimapPlace(pearl.x, pearl.z, 'guan')
 assert.match(cay.en, /Pearl/)
 
-const guanGeo = buildMinimapGeoFeatures('guan', 0, 0)
+const guanGeo = buildMinimapGeoFeatures('guan', 0)
 assert.ok(guanGeo.some((f) => f.id === 'guan-main' && f.closed))
 assert.ok(guanGeo.some((f) => f.id.startsWith('sat-')))
 assert.ok(guanGeo.some((f) => f.kind === 'ash'))
 
-const riverGeo = buildMinimapGeoFeatures('river', 0, 20)
+const riverGeo = buildMinimapGeoFeatures('river', 20)
 assert.ok(riverGeo.some((f) => f.id === 'river' && f.kind === 'water'))
 assert.ok(riverGeo.some((f) => f.id === 'west-bank'))
 
