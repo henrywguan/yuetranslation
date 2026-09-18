@@ -1,0 +1,62 @@
+# Wait for Vercel Preview on every PR
+#
+# Fails the check when the Vercel GitHub integration reports a failed/error
+# Preview deployment for the PR head SHA. No Vercel token required — uses
+# GitHub Deployments + commit statuses published by vercel[bot].
+#
+# Companion Cursor Automation brief: docs/agents/vercel-deploy-guardian.md
+
+name: Vercel preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: read
+  statuses: read
+
+jobs:
+  wait-vercel:
+    name: Wait for Vercel Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Wait for Vercel Preview deployment
+        id: vercel
+        uses: vercel/wait-for-deployment-action@0e2b0c5c5cce31f1648108aeec56467187aca037
+        with:
+          environment: preview
+          timeout: 900
+          check-interval: 15
+          # Still useful when status URL parsing fails; deployment success is enough.
+          require-deployment-id: false
+
+      - name: Confirm Preview URL responds
+        env:
+          URL: ${{ steps.vercel.outputs.deployment-url }}
+          STATE: ${{ steps.vercel.outputs.deployment-state }}
+        run: |
+          set -euo pipefail
+          echo "deployment-state=${STATE}"
+          echo "deployment-url=${URL}"
+          if [ -z "${URL}" ]; then
+            echo "::error::Vercel Preview URL missing after wait"
+            exit 1
+          fi
+          # SPA root should be 200; /api/health may 404 on pure static edge cases —
+          # only assert the shell loads.
+          code=$(curl -fsS -o /dev/null -w '%{http_code}' --max-time 30 "${URL}/" || true)
+          echo "GET / → HTTP ${code}"
+          case "${code}" in
+            200|304) exit 0 ;;
+            *)
+              echo "::error::Preview shell did not return 200/304 (got ${code})"
+              exit 1
+              ;;
+          esac
