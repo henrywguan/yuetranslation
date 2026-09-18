@@ -732,6 +732,11 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
     })
   }
 
+  // Cinematic GLB body: hide when unique wardrobe silhouettes are worn.
+  void import('./harborProtagonistGlb').then(({ syncScoutGlbWithLook }) => {
+    syncScoutGlbWithLook(root, anySwap)
+  })
+
   const colors = lookColors(look)
   root.traverse((o) => {
     const mesh = o as THREE.Mesh

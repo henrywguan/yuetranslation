@@ -442,6 +442,14 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(socket('hip_l', -0.22, pelvisY + 0.02, 0.08))
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
+  // Standing: attach Meshy cinematic GLB when available (Henry-approved import).
+  // Seated canoe keeps procedural (A-pose mesh is standing-only).
+  if (pose === 'standing' && typeof window !== 'undefined') {
+    void import('./harborProtagonistGlb').then(({ attachHarborScoutGlb }) => {
+      void attachHarborScoutGlb(g, gender)
+    })
+  }
+
   return g
 }
 

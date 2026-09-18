@@ -1,15 +1,26 @@
 /**
- * Harbor Quest · Chinese-themed ambient BGM (Web Audio, no assets).
- * Sparse, looping riverside music in the spirit of classic RuneScape
- * area themes — pentatonic flute / soft pad / plucked accents.
- * Guan Harbor: original tribal-island loop (soft hand-drums, steel flute,
- * warm pads) — mood-adjacent to classic jungle/barbarian *era* cues, not a
- * Jagex melody or arrangement. See RS-LIKE-CRAFT-BIBLE.md §7.
+ * Harbor Quest · Chinese-themed ambient BGM.
+ * River: cinematic Higgsfield bed (`bgm-harbor-night.m4a`) layered under a soft
+ * synth phrase. Guan: original tribal-island synth loop.
+ * See RS-LIKE-CRAFT-BIBLE.md §7.
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
+import {
+  startHarborSampleLoop,
+  type HarborSampleLoopHandle,
+  preloadHarborSamples,
+} from './harborSampleAudio'
 
 /** Bus gain — stays under SFX / fanfare, loud enough on phone speakers. */
 export const HARBOR_BGM_GAIN = 0.34
+
+/** Cinematic river bed (Higgsfield Sonilo) — loops under the synth phrase. */
+export const HARBOR_BGM_RIVER_SAMPLE = '/assets/harbor-quest/bgm-harbor-night.m4a'
+/** Outfitter boutique bed — started from LearnPlay when the shop opens. */
+export const HARBOR_BGM_OUTFITTER_SAMPLE = '/assets/harbor-quest/bgm-outfitter.m4a'
+/** Sample bed gain (under fanfare; leaves room for synth accents). */
+export const HARBOR_BGM_SAMPLE_GAIN = 0.22
+export const HARBOR_BGM_OUTFITTER_GAIN = 0.2
 
 /** One loop length in seconds (smoke-tested). */
 export const HARBOR_BGM_LOOP_SEC = 36
@@ -183,8 +194,42 @@ let duckUntil = 0
 /** Nested hold count — Harbor TTS ducks BGM until every speak finishes. */
 let duckHoldCount = 0
 let currentTheme: HarborBgmTheme = 'river'
+let riverSample: HarborSampleLoopHandle | null = null
+let outfitterSample: HarborSampleLoopHandle | null = null
 
 const HARBOR_BGM_DUCK_GAIN = HARBOR_BGM_GAIN * 0.28
+
+export function preloadHarborBgmSamples(): void {
+  preloadHarborSamples([HARBOR_BGM_RIVER_SAMPLE, HARBOR_BGM_OUTFITTER_SAMPLE])
+}
+
+function stopRiverSample(): void {
+  riverSample?.stop(400)
+  riverSample = null
+}
+
+function ensureRiverSample(): void {
+  if (currentTheme !== 'river' || !running) {
+    stopRiverSample()
+    return
+  }
+  if (riverSample) return
+  riverSample = startHarborSampleLoop(HARBOR_BGM_RIVER_SAMPLE, { gain: HARBOR_BGM_SAMPLE_GAIN })
+}
+
+/** Boutique bed while Outfitter panel is open (ducks under river sample). */
+export function startHarborOutfitterBgm(): void {
+  if (typeof window === 'undefined') return
+  if (outfitterSample) return
+  outfitterSample = startHarborSampleLoop(HARBOR_BGM_OUTFITTER_SAMPLE, {
+    gain: HARBOR_BGM_OUTFITTER_GAIN,
+  })
+}
+
+export function stopHarborOutfitterBgm(): void {
+  outfitterSample?.stop(350)
+  outfitterSample = null
+}
 
 function applyHarborBgmGain(target: number, timeConstant: number): void {
   if (!bus || !running) return
@@ -351,6 +396,7 @@ function hardStopBus(): void {
     clearTimeout(loopTimer)
     loopTimer = null
   }
+  stopRiverSample()
   const b = bus
   bus = null
   running = false
@@ -378,9 +424,12 @@ export function startHarborBgm(theme: HarborBgmTheme = 'river', force = false): 
   bus = ctx.createGain()
   // Audible quickly — long 1.4s fade-in felt like “no music” on phones.
   bus.gain.setValueAtTime(0.0001, ctx.currentTime)
-  bus.gain.exponentialRampToValueAtTime(HARBOR_BGM_GAIN, ctx.currentTime + 0.35)
+  // Soften synth when cinematic river bed is present.
+  const synthGain = theme === 'river' ? HARBOR_BGM_GAIN * 0.45 : HARBOR_BGM_GAIN
+  bus.gain.exponentialRampToValueAtTime(synthGain, ctx.currentTime + 0.35)
   bus.connect(ctx.destination)
   scheduleLoop(ctx)
+  ensureRiverSample()
 }
 
 /** Immediate teardown for gesture rebuilds (no delayed disconnect race). */
@@ -393,6 +442,7 @@ export function stopHarborBgm(): void {
   running = false
   duckHoldCount = 0
   duckUntil = 0
+  stopRiverSample()
   if (loopTimer) {
     clearTimeout(loopTimer)
     loopTimer = null

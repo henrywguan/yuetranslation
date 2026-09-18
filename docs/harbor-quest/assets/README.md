@@ -78,7 +78,7 @@ Female VO: Brielle preset · Male VO: Holden preset.
 
 ## Music & SFX (game pipeline)
 
-Henry opened full creative audio control for Harbor Quest. These beds/cues are **canon references** — wire into `harborBgm` / `harborAmbient` / UI only after a deliberate audio pass (decode formats, loop points, ducking).
+Henry opened full creative audio control for Harbor Quest. These beds/cues are **wired** into runtime (`apps/web/public/assets/harbor-quest/` + `harborBgm` / `harborVo` / sample SFX).
 
 | File | Role |
 |---|---|
@@ -95,7 +95,9 @@ Henry opened full creative audio control for Harbor Quest. These beds/cues are *
 | [`scout-female.glb`](./scout-female.glb) | Meshy image→3D from female A-pose — textured, PBR, humanoid-rigged |
 | [`scout-male.glb`](./scout-male.glb) | Meshy image→3D from male A-pose — textured, PBR, humanoid-rigged |
 
-Wire via a future GLB protagonist loader — do **not** replace procedural Scout until Henry OKs the mesh in-game.
+Wire via `harborProtagonistGlb.ts` (standing Scout). Seated canoe stays procedural. Unique wardrobe silhouettes temporarily fall back to the procedural body.
+
+**Runtime audio** (copied to `apps/web/public/assets/harbor-quest/`): BGM beds + SFX + VO are wired through `harborBgm.ts` / `harborSampleAudio.ts` / `harborVo.ts` / coin·fish·UI SFX modules.
 
 Female Meshy job: `b17e9020-8f33-465e-a3c5-e220153b42c8` (completed)  
 Male Meshy job: `75c9d9ae-f8a9-420b-b2e2-d76c1dca452a` (completed)

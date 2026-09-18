@@ -1503,8 +1503,29 @@ function main() {
   assert.match(bgmSrc, /HarborBgmTheme = 'river' \| 'guan'/, 'BGM theme union')
   assert.match(bgmSrc, /startHarborBgm\(theme/, 'startHarborBgm accepts theme')
   assert.match(bgmSrc, /GUAN_BGM_PHRASE/, 'guan phrase export')
+  assert.match(bgmSrc, /HARBOR_BGM_RIVER_SAMPLE|bgm-harbor-night/, 'cinematic river BGM sample wired')
+  assert.match(bgmSrc, /startHarborOutfitterBgm/, 'Outfitter boutique BGM export')
   const playAudioSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
   assert.match(playAudioSrc, /playHarborCoinChing/, 'correct answer plays coin ching')
+  assert.match(playAudioSrc, /playHarborVo\('welcome'\)/, 'welcome VO on audio unlock')
+  assert.match(playAudioSrc, /playHarborVo\('pierCleared'\)/, 'pier-cleared VO on correct cast')
+  assert.match(playAudioSrc, /preloadHarborScoutGlbs/, 'Scout GLB preload on learn mount')
+  assert.match(playAudioSrc, /startHarborOutfitterBgm/, 'Outfitter opens boutique BGM')
+  assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /scout-female\.glb|HARBOR_SCOUT_GLB_SRC/,
+    'Scout GLB public URLs',
+  )
+  assert.match(
+    readFileSync(new URL('./harborVo.ts', import.meta.url), 'utf8'),
+    /vo-scout-welcome/,
+    'VO welcome sample path',
+  )
+  assert.match(
+    readFileSync(new URL('./harborCoinSfx.ts', import.meta.url), 'utf8'),
+    /sfx-coin-chime/,
+    'coin sample path',
+  )
   assert.match(playAudioSrc, /hq-coin-pop/, 'floating +coin animation')
   assert.match(playAudioSrc, /startHarborBgm/, 'session starts Chinese Harbor BGM')
   assert.match(playAudioSrc, /stopHarborBgm/, 'session stops BGM on exit')
