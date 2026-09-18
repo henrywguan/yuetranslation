@@ -36,7 +36,6 @@ import {
   unlockHarborAudioBeds,
   setHarborAmbientPaused,
   setHarborAmbientTalking,
-  startHarborAmbient,
   stopHarborAmbient,
 } from './harborAmbient'
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
@@ -399,7 +398,9 @@ export function LearnSession({
     setCodexOpen(false)
     setTeleportOpen(false)
     setRealmOverride(null)
-    startHarborBgm('river')
+    // Only retarget BGM if beds are already unlocked/playing — never soft-start
+    // from a non-gesture effect (iPhone silent forever).
+    if (isHarborBgmPlaying()) startHarborBgm('river')
     setCoinPops([])
     setClearReward(null)
     setScrollOpen(false)
@@ -410,27 +411,15 @@ export function LearnSession({
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     preloadHarborMissSfx()
-    // Soft-start on browsers that allow autoplay; iPhone stays silent until unlock.
-    startHarborBgm()
-    let ambientTries = 0
-    const ambientBoot = window.setInterval(() => {
-      ambientTries += 1
-      const w = worldApiRef.current?.weather
-      if (w) {
-        startHarborAmbient(w)
-        window.clearInterval(ambientBoot)
-      } else if (ambientTries > 40) {
-        startHarborAmbient('sunny')
-        window.clearInterval(ambientBoot)
-      }
-    }, 150)
+    // Do NOT soft-start BGM/ambient on mount — iPhone creates a suspended
+    // AudioContext and schedules silent graphs that never recover. Beds start
+    // only from unlockHarborAudioBeds inside a real user gesture (splash Enter
+    // or first tap/key in-session).
 
     /**
-     * iOS / Safari: AudioContext is created suspended on mount, BGM marks
-     * itself "playing", then unlock used to no-op restart — silent forever.
-     * Await resume, prime a buffer, then force-restart beds on a running ctx.
-     * Keep kicking on later gestures if the context flipped back to suspended
-     * (iPhone silent switch / background / Control Center).
+     * iOS / Safari: unlock must resume + rebuild beds synchronously in the
+     * gesture. Keep kicking on later gestures if the context flips back to
+     * suspended (silent switch / background / Control Center).
      */
     let harborAudioUnlocked = false
     let unlockInFlight = false
@@ -445,10 +434,13 @@ export function LearnSession({
       const needsKick =
         !harborAudioUnlocked || ctxState !== 'running' || !isHarborBgmPlaying()
       if (!needsKick) {
-        void unlockHarborAudioBeds({
-          theme: harborBgmTheme(),
-          weather: worldApiRef.current?.weather ?? harborAmbientWeather(),
-        })
+        // Already running — light resume only (don't tear down beds every tap).
+        try {
+          const c = ensureSharedAudioContext()
+          if (c.state === 'suspended') void c.resume().catch(() => undefined)
+        } catch {
+          /* ignore */
+        }
         return
       }
       unlockInFlight = true
@@ -473,7 +465,6 @@ export function LearnSession({
 
     return () => {
       document.body.style.overflow = prev
-      window.clearInterval(ambientBoot)
       window.removeEventListener('pointerdown', unlockHarborAudio, true)
       window.removeEventListener('keydown', unlockHarborAudio, true)
       window.removeEventListener('touchstart', unlockHarborAudio, true)

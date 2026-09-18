@@ -1482,6 +1482,8 @@ function main() {
     assert.ok(!nightPool.includes('gull'), 'night excludes gulls')
   }
   assert.match(ambientSrc, /unlockHarborAudioBeds/, 'shared gesture unlock helper')
+  assert.match(ambientSrc, /rebuildHarborAudioBeds|stopHarborBgm\(\)/, 'unlock rebuilds BGM sync (no dynamic import gate)')
+  assert.match(ambientSrc, /from '\.\/harborBgm'/, 'ambient statically imports BGM for gesture-safe start')
   assert.match(playAudioSrc, /unlockHarborAudioBeds|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
   assert.match(playAudioSrc, /resumeSharedAudioContext|unlockHarborAudioBeds/, 'gesture resumes shared AudioContext')
   assert.match(playAudioSrc, /stopHarborBgm\(\)[\s\S]*startHarborBgm|unlockHarborAudioBeds/, 'unlock force-restarts BGM after resume')
@@ -1489,6 +1491,16 @@ function main() {
   assert.match(playAudioSrc, /harborAudioUnlocked/, 'tracks iOS unlock so mount-silent beds restart once')
   assert.match(playAudioSrc, /isHarborBgmPlaying|unlockHarborAudioBeds/, 'unlock re-kicks when BGM marked stopped')
   assert.match(playAudioSrc, /visibilitychange/, 'returning to the tab re-unlocks Harbor audio')
+  assert.match(
+    playAudioSrc,
+    /Do NOT soft-start BGM\/ambient on mount/,
+    'session never soft-starts beds before a gesture',
+  )
+  assert.doesNotMatch(
+    playAudioSrc,
+    /preloadHarborMissSfx\(\)\s*\n\s*startHarborBgm\(\)/,
+    'no mount-time startHarborBgm before unlock',
+  )
   assert.match(
     readFileSync(new URL('./HarborSplash.tsx', import.meta.url), 'utf8'),
     /unlockHarborAudioBeds/,
@@ -1525,7 +1537,7 @@ function main() {
   assert.equal(typeof playHarborFootstep, 'function', 'footstep export')
   assert.equal(typeof playHarborPaddle, 'function', 'paddle export')
   assert.equal(typeof tickHarborMoveSfx, 'function', 'move tick export')
-  assert.match(playAudioSrc, /startHarborAmbient/, 'session starts ambient beds')
+  assert.match(playAudioSrc, /unlockHarborAudioBeds/, 'session starts ambient beds via gesture unlock')
   assert.match(playAudioSrc, /stopHarborAmbient/, 'session stops ambient on exit')
   assert.match(playAudioSrc, /setHarborAmbientTalking/, 'talk ducks ambient')
   assert.match(playAudioSrc, /setHarborAmbientPaused/, 'overlays pause ambient wildlife')
