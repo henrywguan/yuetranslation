@@ -10,7 +10,7 @@ import {
   matchBankFor,
 } from './matchDefinitionBank.ts'
 
-assert.ok(MATCH_DEFINITION_BANK.length >= 100)
+assert.ok(MATCH_DEFINITION_BANK.length >= 400, `bank should be deep for 10-round runs (got ${MATCH_DEFINITION_BANK.length})`)
 assert.equal(MATCH_DIFFICULTY.easy.seconds, 15)
 assert.equal(MATCH_DIFFICULTY.easy.goldPerHit, 10)
 assert.equal(HARBOR_GOLD_TO_COINS, 1)
@@ -27,7 +27,15 @@ for (const topic of MATCH_TOPICS) {
   assert.ok(MATCH_TOPIC[topic].label.en, topic)
   for (const diff of MATCH_DIFFICULTIES) {
     const bank = matchBankFor(topic, diff)
-    assert.ok(bank.length >= 8, `${topic}/${diff} bank size`)
+    const minSize = diff === 'native' ? 10 : 25
+    assert.ok(
+      bank.length >= minSize,
+      `${topic}/${diff} bank size (got ${bank.length}, need ≥${minSize} for 10-round runs)`,
+    )
+    const ids = new Set(bank.map((w) => w.id))
+    assert.equal(ids.size, bank.length, `${topic}/${diff} unique ids`)
+    const defs = new Set(bank.map((w) => w.def))
+    assert.ok(defs.size >= bank.length - 2, `${topic}/${diff} mostly unique defs`)
     for (const w of bank) {
       assert.equal(w.topic, topic, w.id)
       assert.equal(w.difficulty, diff, w.id)
@@ -53,8 +61,12 @@ for (const topic of MATCH_TOPICS) {
     }
     assert.equal(round.seconds, MATCH_DIFFICULTY[diff].seconds)
     assert.equal(round.goldPerHit, MATCH_DIFFICULTY[diff].goldPerHit)
-    const again = buildMatchRound(topic, diff, round.word.id)
-    assert.notEqual(again.word.id, round.word.id)
+    const used = [round.word.id]
+    for (let i = 0; i < 9; i++) {
+      const again = buildMatchRound(topic, diff, used)
+      assert.ok(!used.includes(again.word.id), `${topic}/${diff} round ${i + 2} repeats ${again.word.id}`)
+      used.push(again.word.id)
+    }
   }
 }
 

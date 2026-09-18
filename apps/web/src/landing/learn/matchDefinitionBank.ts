@@ -1,5 +1,6 @@
 /** Offline themed bank for Harbor Quest · Match the Definition arena. */
 
+import { MATCH_DEFINITION_BANK_EXTRA } from './matchDefinitionBankExtra'
 import { MATCH_DEFINITION_BANK_NATIVE } from './matchDefinitionBankNative'
 
 export type MatchDifficulty = 'easy' | 'medium' | 'hard' | 'native'
@@ -100,9 +101,10 @@ export const MATCH_DIFFICULTIES: MatchDifficulty[] = ['easy', 'medium', 'hard', 
 /**
  * Themed starter set — Open Cantonese + Harbor Quest flavour.
  * Definitions are short learner glosses (not full dictionary senses).
+ * Extra variety lives in `matchDefinitionBankExtra.ts` (session de-dupe needs depth).
+ * Native news-desk lines live in `matchDefinitionBankNative.ts`.
  */
-export const MATCH_DEFINITION_BANK_CORE: MatchWord[] = [
-  // ════════ Kids ════════
+const MATCH_DEFINITION_BANK_CORE: MatchWord[] = [  // ════════ Kids ════════
   { id: 'k-e-baa1', han: '爸', jp: 'baa1', def: 'dad / father', topic: 'kids', difficulty: 'easy' },
   { id: 'k-e-maa1', han: '媽', jp: 'maa1', def: 'mom / mother', topic: 'kids', difficulty: 'easy' },
   { id: 'k-e-go1', han: '哥', jp: 'go1', def: 'older brother', topic: 'kids', difficulty: 'easy' },
@@ -545,6 +547,7 @@ export const MATCH_DEFINITION_BANK_CORE: MatchWord[] = [
 
 export const MATCH_DEFINITION_BANK: MatchWord[] = [
   ...MATCH_DEFINITION_BANK_CORE,
+  ...MATCH_DEFINITION_BANK_EXTRA,
   ...MATCH_DEFINITION_BANK_NATIVE,
 ]
 
@@ -584,11 +587,19 @@ export type MatchRound = {
 export function buildMatchRound(
   topic: MatchTopic,
   difficulty: MatchDifficulty,
-  excludeId?: string,
+  excludeIdOrIds?: string | readonly string[],
 ): MatchRound {
   const cfg = MATCH_DIFFICULTY[difficulty]
   const bank = matchBankFor(topic, difficulty)
-  const pool = excludeId ? bank.filter((w) => w.id !== excludeId) : bank
+  const excluded = new Set(
+    typeof excludeIdOrIds === 'string'
+      ? excludeIdOrIds
+        ? [excludeIdOrIds]
+        : []
+      : excludeIdOrIds ?? [],
+  )
+  const pool = excluded.size > 0 ? bank.filter((w) => !excluded.has(w.id)) : bank
+  // Prefer unused words; if the session exhausted the pool, reshuffle the full bank.
   const source = pool.length > 0 ? pool : bank
   const word = source[Math.floor(Math.random() * source.length)]!
   const native = difficulty === 'native'

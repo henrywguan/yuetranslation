@@ -1,12 +1,18 @@
 /**
- * Harbor Quest · immersion interaction SFX (Web Audio, no assets).
- * OSRS-style local cues: move, doors, UI, equip, bank, talk, chat.
+ * Harbor Quest · immersion interaction SFX.
+ * OSRS-style local cues + cinematic Higgsfield whoosh sample for UI/bag.
  * Original synthesis — not Jagex audio.
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
 import type { HarborVisitableId } from './harborWorld'
+import { playHarborSample, preloadHarborSamples } from './harborSampleAudio'
 
 export const HARBOR_INTERACT_SFX_GAIN = 0.34
+export const HARBOR_UI_WHOOSH_SAMPLE = '/assets/harbor-quest/sfx-ui-whoosh.mp3'
+
+export function preloadHarborInteractSamples(): void {
+  preloadHarborSamples([HARBOR_UI_WHOOSH_SAMPLE])
+}
 
 function busAt(gain: number): { ctx: AudioContext; bus: GainNode; t0: number } {
   const ctx = ensureSharedAudioContext()
@@ -78,13 +84,15 @@ function noiseBurst(
 /** Soft UI tick (tabs, filters). */
 export function playHarborUiClick(): void {
   if (typeof window === 'undefined') return
-  const { ctx, bus, t0 } = busAt(HARBOR_INTERACT_SFX_GAIN * 0.55)
-  tone(ctx, bus, t0, { type: 'triangle', f0: 880, f1: 660, dur: 0.05, gain: 0.35 })
+  playHarborSample(HARBOR_UI_WHOOSH_SAMPLE, { gain: 0.35, channel: 'harbor-ui' })
+  const { ctx, bus, t0 } = busAt(HARBOR_INTERACT_SFX_GAIN * 0.4)
+  tone(ctx, bus, t0, { type: 'triangle', f0: 880, f1: 660, dur: 0.05, gain: 0.28 })
 }
 
-/** Inventory bag open — soft leather / wood. */
+/** Inventory bag open — soft leather / wood + cinematic whoosh. */
 export function playHarborBagOpen(): void {
   if (typeof window === 'undefined') return
+  playHarborSample(HARBOR_UI_WHOOSH_SAMPLE, { gain: 0.55, channel: 'harbor-ui' })
   const { ctx, bus, t0 } = busAt(HARBOR_INTERACT_SFX_GAIN)
   noiseBurst(ctx, bus, t0, 0.1, 600, 0.45)
   tone(ctx, bus, t0 + 0.04, { type: 'triangle', f0: 220, f1: 160, dur: 0.12, gain: 0.4 })

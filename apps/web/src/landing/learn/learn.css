@@ -3525,6 +3525,85 @@
   color: color-mix(in srgb, #c4a060 80%, #fff 20%);
 }
 
+/* Interactive shop tip — Buy / Sell + qty (Outfitter, Fishing Lodge, Bank) */
+.hq-item-tip.is-shop {
+  pointer-events: auto;
+  max-width: 13.5rem;
+  min-width: 8.5rem;
+  padding-bottom: 0.45rem;
+}
+.hq-item-tip-shop {
+  margin-top: 0.35rem;
+  display: grid;
+  gap: 0.28rem;
+}
+.hq-item-tip-qty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.18rem;
+}
+.hq-item-tip-qty-label {
+  font: 700 0.52rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #c4a060 75%, #fff 25%);
+  margin-right: 0.1rem;
+}
+.hq-item-tip-qty-btn {
+  appearance: none;
+  min-width: 1.35rem;
+  padding: 0.12rem 0.28rem;
+  border: 1px solid #5a4a30;
+  border-radius: 0.08rem;
+  background: linear-gradient(180deg, #2a2218, #14100c);
+  color: #e8d48a;
+  font: 700 0.58rem/1 Syne, system-ui, sans-serif;
+  cursor: pointer;
+}
+.hq-item-tip-qty-btn.is-on,
+.hq-item-tip-qty-btn:hover {
+  border-color: #f0d060;
+  color: #ffe14a;
+  background: color-mix(in srgb, #f0d060 14%, #1a1410);
+}
+.hq-item-tip-qty-hint {
+  margin: 0;
+  font: 500 0.52rem/1.25 Syne, system-ui, sans-serif;
+  color: color-mix(in srgb, #a89060 70%, #fff 30%);
+}
+.hq-item-tip-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+.hq-item-tip-action {
+  appearance: none;
+  padding: 0.28rem 0.35rem;
+  border: 1px solid #5a4a30;
+  border-radius: 0.08rem;
+  background: linear-gradient(180deg, #3a3020, #1a1410);
+  color: #ffe14a;
+  font: 700 0.62rem/1.1 Syne, system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-item-tip-action--buy:not(:disabled):hover {
+  border-color: #7dffc8;
+  color: #b8ffe0;
+}
+.hq-item-tip-action--sell:not(:disabled):hover {
+  border-color: #f0a060;
+  color: #ffd0a0;
+}
+.hq-item-tip-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: #8a7a55;
+}
+
 /* VIP examine tip — pulsing gold border glow */
 .hq-item-tip.is-vip {
   border-color: #e8c060;
@@ -6615,7 +6694,7 @@
 }
 
 /* —— Harbor Quest cinematic splash / title —— */
-/* First-person boat night — dark timber room, lantern river path, huge moon */
+/* First-person boat night — Higgsfield lantern canoe cinematic */
 .hq-splash {
   position: fixed;
   inset: 0;
@@ -6627,6 +6706,25 @@
   color: #e8f4ff;
   background: #010308;
   isolation: isolate;
+}
+.hq-splash-cinematic {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  pointer-events: none;
+  background: #010308;
+}
+.hq-splash-cinematic--still {
+  display: block;
+}
+.hq-splash--cinematic .hq-splash-vignette {
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, transparent 30%, color-mix(in srgb, #000 55%, transparent) 100%),
+    linear-gradient(180deg, color-mix(in srgb, #000 35%, transparent) 0%, transparent 28%, transparent 48%, color-mix(in srgb, #000 72%, transparent) 100%);
 }
 .hq-splash--boat-night .hq-splash-sky {
   background:

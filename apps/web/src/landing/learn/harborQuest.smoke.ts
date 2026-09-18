@@ -91,6 +91,10 @@ import {
   HARBOR_DOCK_X,
   HARBOR_VISITABLES,
   HARBOR_LANDMARK_HOSTS,
+  HARBOR_LANDMARK_HOST_GENDER,
+  HARBOR_LANDMARK_HOST_LABEL,
+  HARBOR_NPC_ROLE_GENDER,
+  HARBOR_NPC_ROLE_LABEL,
   HARBOR_VISIT_RADIUS,
   HARBOR_SIT_RADIUS,
 } from '../../landing/learn/harborWorld'
@@ -142,6 +146,7 @@ import {
   HARBOR_PROTAGONIST_SOCKETS,
   listProtagonistSockets,
 } from '../../landing/learn/harborProtagonist'
+import * as THREE from 'three'
 import {
   HARBOR_GEAR_CATALOG,
   HARBOR_DEFAULT_LOOK,
@@ -582,6 +587,21 @@ function main() {
   assert.ok(HARBOR_NPC_ROLES.includes('fisherman'), 'fisherman NPCs')
   assert.ok(HARBOR_NPC_ROLES.includes('merchant'), 'merchant NPCs')
   assert.equal(HARBOR_NPC_ROLES.length, 6, 'Chinese clothing role kit')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.villager, 'female', 'villager female Ping')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.scholar, 'female', 'scholar female An')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.merchant, 'female', 'merchant female Rui')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.ferryman, 'male', 'ferryman male Bo')
+  assert.equal(HARBOR_NPC_ROLE_GENDER.fisherman, 'male', 'fisherman male Hao')
+  assert.match(HARBOR_NPC_ROLE_LABEL.villager, /Ping/, 'named villager')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.outfitter, 'female', 'Mei Lin Outfitter')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER['save-shack'], 'female', 'Yun Save Keeper')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.barber, 'male', 'Wei Barber')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.bank, 'male', 'Jin Banker')
+  assert.equal(HARBOR_LANDMARK_HOST_GENDER.arena, 'male', 'Arena Master')
+  assert.match(HARBOR_LANDMARK_HOST_LABEL.outfitter, /Mei Lin/, 'named Outfitter')
+  assert.match(worldSrc, /characterStyle = 'anime-dressup'/, 'NPC anime dress-up style')
+  assert.match(worldSrc, /harborFigureLegStanding/, 'NPC fashion legs')
+  assert.doesNotMatch(worldSrc, /RS-era proportions \(oversized potato/, 'NPC potato comment removed')
 
   // Craft bible kit — locked palette + faceted helpers + modular props
   assert.equal(HARBOR_FACETS, 6, 'era cylinders stay 6-gon')
@@ -681,27 +701,29 @@ function main() {
   assert.equal(scout.userData.originalHarborAsset, true)
   assert.equal(scout.userData.player, true)
   const meshes = countProtagonistMeshes(scout)
-  assert.ok(meshes >= 18 && meshes <= 56, `mesh budget smell-test got ${meshes}`)
+  assert.ok(meshes >= 18 && meshes <= 72, `mesh budget smell-test got ${meshes}`)
   {
     const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
     assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
-    assert.match(figSrc, /headR:\s*0\.152/, 'readable head radius (not chibi balloon)')
-    assert.match(figSrc, /neckH:\s*0\.1/, 'explicit visible neck height')
-    assert.match(figSrc, /IcosahedronGeometry\([^,]+,\s*0\)/, 'detail-0 faceted head (not smooth ball)')
-    assert.match(figSrc, /bow|rotation\.z = side/, 'bow-legged plant')
+    assert.match(figSrc, /headR:\s*0\.148/, 'anime head radius')
+    assert.match(figSrc, /neckH:\s*0\.085/, 'explicit visible neck height')
+    assert.match(figSrc, /SphereGeometry\([^)]+24/, 'smooth high-segment head (not faceted potato)')
+    assert.match(figSrc, /MeshStandardMaterial|harborFigureMat/, 'soft lit materials for dress-up')
+    assert.match(figSrc, /flatShading:\s*false/, 'no flatShading on character kit')
     assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
-    assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses flush face inserts')
+    assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses face inserts')
     assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
+    assert.match(figSrc, /anime|dress-up|dressup/i, 'figure kit docs lock anime dress-up')
     assert.doesNotMatch(
       figSrc,
       /BoxGeometry\(0\.08,\s*0\.09,\s*0\.1\)/,
-      'hands are mitten blobs, not Steve cubes',
+      'hands are soft spheres, not Steve cubes',
     )
   }
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /harborFigureHead|IcosahedronGeometry|harborFigureFace/,
-    'scout uses faceted head + flush face kit',
+    /harborFigureHead|SphereGeometry|harborFigureFace/,
+    'scout uses smooth head + anime face kit',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
@@ -710,13 +732,13 @@ function main() {
   )
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /study-only|Not Jagex IP/,
-    'protagonist docs forbid Jagex STL import',
+    /anime|dress-up|never Jagex/i,
+    'protagonist docs lock anime + forbid Jagex STL import',
   )
-  assert.doesNotMatch(
+  assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /SphereGeometry\(0\.15/,
-    'scout head is no longer a smooth sphere ball',
+    /characterStyle\s*=\s*'anime-dressup'/,
+    'scout tags anime-dressup style',
   )
   const sockets = listProtagonistSockets(scout)
   for (const name of HARBOR_PROTAGONIST_SOCKETS) {
@@ -729,13 +751,22 @@ function main() {
     const headY = standing.userData.headY as number
     const torsoTop = standing.userData.torsoTop as number
     assert.ok(headY - torsoTop >= 0.08, 'visible neck gap between torso top and head')
-    assert.ok(pelvisY >= 0.5, 'legs tall enough to avoid Oompa Loompa stub')
-    assert.ok(headY - pelvisY > 0.45 && headY - pelvisY < 0.85, 'torso+neck stack is proportioned')
+    assert.ok(pelvisY >= 0.65, 'fashion legs tall enough for anime silhouette')
+    assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 0.9, 'torso+neck stack is proportioned')
     let hasNeck = false
     standing.traverse((o) => {
       if (o.name === 'hq-figure-neck') hasNeck = true
     })
     assert.ok(hasNeck, 'standing scout includes neck mesh')
+    // Soft materials on skin meshes
+    let softSkin = false
+    standing.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (!m.isMesh || m.userData.harborPart !== 'skin') return
+      const mat = m.material as THREE.MeshStandardMaterial
+      if (mat && mat.flatShading === false) softSkin = true
+    })
+    assert.ok(softSkin, 'skin uses smooth (non-flat) shading')
   }
 
   const dock0 = dockPoseForProgress(0)
@@ -849,10 +880,25 @@ function main() {
   assert.match(playSrc, /is-bag-open/, 'LearnPlay marks bag-open on play shell')
   const tipSrc = readFileSync(new URL('./HarborItemTooltip.tsx', import.meta.url), 'utf8')
   assert.match(tipSrc, /export function HarborItemTooltip/, 'item tooltip component')
-  assert.match(tipSrc, /role="tooltip"/, 'tooltip uses tooltip role')
+  assert.match(tipSrc, /role=\{shop \? 'dialog' : 'tooltip'\}|role="tooltip"/, 'tooltip uses tooltip role')
+  assert.match(tipSrc, /HarborTipShopActions|hq-item-tip-shop/, 'shop tips expose Buy/Sell + qty')
+  assert.match(tipSrc, /is-shop/, 'interactive shop tip class')
   assert.match(tipSrc, /is-vip/, 'VIP tips get gold glow class')
   assert.match(tipSrc, /createPortal/, 'tips portal above bag overflow')
   assert.match(tipSrc, /position: fixed|hq-item-tip--fixed/, 'tips use fixed positioning')
+  const shopShelfSrc = readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8')
+  assert.match(shopShelfSrc, /shop=\{shopActions\}/, 'outfitter/bank cells pass shop tip actions')
+  assert.match(shopShelfSrc, /onSell/, 'outfitter tip can sell gear')
+  assert.match(shopShelfSrc, /closest\('\.hq-item-tip'\)/, 'shop tip stays open when tapping Buy/Sell')
+  assert.match(
+    readFileSync(new URL('./progress.ts', import.meta.url), 'utf8'),
+    /export function sellHarborGear/,
+    'Outfitter sell-back helper',
+  )
+  assert.match(playSrc, /sellHarborGear|onSell/, 'LearnPlay wires gear sell')
+  const fishPanelTipSrc = readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8')
+  assert.match(fishPanelTipSrc, /HarborItemTooltip/, 'fishing shop cells show item tips')
+  assert.match(fishPanelTipSrc, /shop=\{\{/, 'fishing tips include Buy/Sell + qty')
   const wornSrc = readFileSync(new URL('./HarborWornBoard.tsx', import.meta.url), 'utf8')
   assert.match(wornSrc, /export function HarborWornBoard/, 'worn board component')
   assert.match(wornSrc, /hq-worn-slot--hat/, 'worn board hat slot')
@@ -862,6 +908,9 @@ function main() {
   assert.match(wornSrc, /tipId === item\.id/, 'worn tips follow tipId only (not selection)')
   assert.doesNotMatch(wornSrc, /hq-worn-swatch/, 'worn color swatches removed')
   const wornCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
+  assert.match(wornCss, /\.hq-item-tip\.is-shop/, 'interactive shop tip styles')
+  assert.match(wornCss, /\.hq-item-tip-action/, 'shop tip Buy/Sell buttons')
+  assert.match(wornCss, /\.hq-item-tip-qty-btn/, 'shop tip quantity toggles')
   assert.match(wornCss, /\.hq-worn\s*\{/, 'worn board styles')
   assert.match(
     wornCss,
@@ -1479,8 +1528,29 @@ function main() {
   assert.match(bgmSrc, /HarborBgmTheme = 'river' \| 'guan'/, 'BGM theme union')
   assert.match(bgmSrc, /startHarborBgm\(theme/, 'startHarborBgm accepts theme')
   assert.match(bgmSrc, /GUAN_BGM_PHRASE/, 'guan phrase export')
+  assert.match(bgmSrc, /HARBOR_BGM_RIVER_SAMPLE|bgm-harbor-night/, 'cinematic river BGM sample wired')
+  assert.match(bgmSrc, /startHarborOutfitterBgm/, 'Outfitter boutique BGM export')
   const playAudioSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
   assert.match(playAudioSrc, /playHarborCoinChing/, 'correct answer plays coin ching')
+  assert.match(playAudioSrc, /playHarborVo\('welcome'\)/, 'welcome VO on audio unlock')
+  assert.match(playAudioSrc, /playHarborVo\('pierCleared'\)/, 'pier-cleared VO on correct cast')
+  assert.match(playAudioSrc, /preloadHarborScoutGlbs/, 'Scout GLB preload on learn mount')
+  assert.match(playAudioSrc, /startHarborOutfitterBgm/, 'Outfitter opens boutique BGM')
+  assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /scout-female\.glb|HARBOR_SCOUT_GLB_SRC/,
+    'Scout GLB public URLs',
+  )
+  assert.match(
+    readFileSync(new URL('./harborVo.ts', import.meta.url), 'utf8'),
+    /vo-scout-welcome/,
+    'VO welcome sample path',
+  )
+  assert.match(
+    readFileSync(new URL('./harborCoinSfx.ts', import.meta.url), 'utf8'),
+    /sfx-coin-chime/,
+    'coin sample path',
+  )
   assert.match(playAudioSrc, /hq-coin-pop/, 'floating +coin animation')
   assert.match(playAudioSrc, /startHarborBgm/, 'session starts Chinese Harbor BGM')
   assert.match(playAudioSrc, /stopHarborBgm/, 'session stops BGM on exit')
@@ -1635,15 +1705,16 @@ function main() {
   assert.match(splashSrc, /export function HarborSplash/, 'splash component')
   assert.match(splashSrc, /Enter HarborQuest/, 'splash Enter HarborQuest CTA')
   assert.match(splashSrc, /Harbor Quest/, 'splash brand title')
-  assert.match(splashSrc, /buildSplashLanterns|HARBOR_GEAR_CATALOG/, 'splash uses in-game lantern catalog')
   assert.match(splashSrc, /hq-splash--boat-night/, 'splash first-person boat night scene')
-  assert.match(splashSrc, /hq-splash-moon|hq-splash-boat/, 'splash huge moon + boat cockpit')
-  assert.match(splashSrc, /hq-splash-moon-path|hq-splash-lantern-path/, 'splash moonlight + lantern water paths')
-  assert.match(splashSrc, /hq-splash-village|hq-splash-smoke/, 'splash has distant village + smoke layers')
-  assert.match(learnCss, /hq-splash-lantern--lantern-paper|hq-splash-lantern--lantern-silk/, 'splash lantern design variants')
-  assert.match(learnCss, /hq-splash-moon-disc|hq-splash-boat-gunwale/, 'splash moon + gunwale cockpit styles')
-  assert.match(learnCss, /hq-splash-smoke-drift|hq-splash-window-flicker/, 'splash looping fog + window motion')
-  assert.match(learnCss, /hq-splash-moon-path-shimmer|hq-splash-lantern-path-pulse/, 'splash water reflection motion')
+  assert.match(splashSrc, /hq-splash--cinematic/, 'splash cinematic media mode')
+  assert.match(splashSrc, /HARBOR_SPLASH_VIDEO_SRC|lantern-canoe-fpov\.mp4/, 'splash lantern canoe video')
+  assert.match(splashSrc, /HARBOR_SPLASH_POSTER_SRC|lantern-canoe-fpov-b\.png/, 'splash canoe poster still')
+  assert.match(splashSrc, /<video|videoRef/, 'splash plays cinematic video')
+  assert.match(learnCss, /hq-splash-cinematic/, 'splash cinematic cover styles')
+  assert.match(learnCss, /object-fit:\s*cover/, 'splash cinematic object-fit cover')
+  assert.match(learnCss, /hq-splash-moon-disc|hq-splash-boat-gunwale/, 'legacy splash moon/gunwale styles retained')
+  assert.match(learnCss, /hq-splash-smoke-drift|hq-splash-window-flicker/, 'legacy splash motion keyframes retained')
+  assert.match(learnCss, /hq-splash-moon-path-shimmer|hq-splash-lantern-path-pulse/, 'legacy splash water reflection keyframes retained')
   assert.match(progressSrc, /continueHarborLevelId/, 'continue helper exported')
 
 

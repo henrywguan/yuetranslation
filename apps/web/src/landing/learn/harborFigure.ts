@@ -1,70 +1,74 @@
 /**
- * Harbor Quest · shared RS2/OSRS-*era* humanoid figure kit.
+ * Harbor Quest · anime dress-up figure kit (River Scout body).
  *
- * Proportion grammar (study notes from classic era player silhouettes —
- * including public “bot” print references used as *ratio* study only):
- *   oversized faceted potato head · stocky slab torso · short thick limbs ·
- *   mitten hands · short neck · slight bow-legged plant.
+ * North star (Henry 2026-09-18): characters must feel **addictively dressable** —
+ * anime-like proportions, expressive faces, smooth high-resolution meshes.
+ * World / architecture may stay era-chunky; **characters do not** follow the
+ * RS low-poly mannequin grammar anymore.
  *
- * Original Harbor meshes — not voxel Steve cubes, not Jagex cache / STL imports.
- * See docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md §3 + §7.
+ * Original Harbor meshes — never Jagex cache / STL imports.
+ * See docs/harbor-quest/character-looks-v1-v4.md · RS-LIKE-CRAFT-BIBLE.md §3.1.
  */
 import * as THREE from 'three'
 import type { HarborEyeStyle } from './harborAppearance'
 
 /**
- * Locked mannequin ratios (unitless height ≈ 1.18 to crown).
- * Classic RS-era: oversized head, visible neck stub, readable legs —
- * not a neckless Oompa Loompa chibi.
+ * Anime fashion proportions (unitless height ≈ 1.42 to crown).
+ * Larger expressive head, visible neck, long legs, soft waist — dress-up first.
  */
 export const HARBOR_FIGURE_PROPORTIONS = {
   /** Skull radius before cheek scale. */
-  headR: 0.152,
+  headR: 0.148,
   /** Total standing height to crown (approx). */
-  standingH: 1.18,
-  /** Torso height (slab). */
-  torsoH: 0.4,
+  standingH: 1.42,
+  /** Torso height. */
+  torsoH: 0.36,
   /** Visible neck column between collar and chin. */
-  neckH: 0.1,
+  neckH: 0.085,
   /** Shoulder half-width. */
-  shoulder: 0.18,
-  /** Waist half-width (type-A: little pinch). */
-  waist: 0.16,
+  shoulder: 0.155,
+  /** Waist half-width (soft anime pinch). */
+  waist: 0.118,
   /** Chest depth. */
-  depth: 0.24,
+  depth: 0.16,
   /** Upper-arm length. */
-  upperArm: 0.18,
+  upperArm: 0.22,
   /** Lower-arm length. */
-  lowerArm: 0.16,
-  /** Limb shaft radius. */
-  limbR: 0.052,
-  /** Mitten palm size. */
-  hand: 0.078,
+  lowerArm: 0.2,
+  /** Limb shaft radius (slimmer than RS chunk). */
+  limbR: 0.036,
+  /** Soft hand size. */
+  hand: 0.048,
 } as const
 
 export const HARBOR_FIGURE_HEAD_R: number = HARBOR_FIGURE_PROPORTIONS.headR
 
-/** World-space skull extents after the default head scale (cheeky potato). */
+/** World-space skull extents after the default head scale (soft anime oval). */
 export function harborFigureHeadExtents(r: number = HARBOR_FIGURE_HEAD_R) {
-  // Wider cheeks + flatter crown — classic era “bot” silhouette, not a cube.
   return {
-    x: r * 1.12,
-    y: r * 1.02,
-    z: r * 0.98,
+    x: r * 1.05,
+    y: r * 1.08,
+    z: r * 0.95,
   }
 }
 
-function figureMat(color: number, flat = true, doubleSide = false) {
-  return new THREE.MeshLambertMaterial({
+/** Soft lit materials — no flatShading (dress-up camera needs polish). */
+export function harborFigureMat(color: number, doubleSide = false) {
+  return new THREE.MeshStandardMaterial({
     color,
-    flatShading: flat,
+    roughness: 0.55,
+    metalness: 0.02,
+    flatShading: false,
     ...(doubleSide ? { side: THREE.DoubleSide } : null),
   })
 }
 
+function figureMat(color: number, _flat = false, doubleSide = false) {
+  return harborFigureMat(color, doubleSide)
+}
+
 /**
- * Faceted potato head — detail-0 icosa (20 tris) reads angular at pier distance.
- * Not a Minecraft cube, not a smooth ball.
+ * Smooth anime skull — high-segment sphere (not a faceted potato / Minecraft cube).
  */
 export function harborFigureHead(
   skin: THREE.Material,
@@ -72,8 +76,8 @@ export function harborFigureHead(
   opts: { r?: number; name?: string } = {},
 ): THREE.Mesh {
   const r = opts.r ?? HARBOR_FIGURE_HEAD_R
-  const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), skin)
-  mesh.scale.set(1.12, 1.02, 0.98)
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 20), skin)
+  mesh.scale.set(1.05, 1.08, 0.95)
   mesh.position.y = y
   if (opts.name) mesh.name = opts.name
   return mesh
@@ -82,22 +86,21 @@ export function harborFigureHead(
 /** Visible neck column under the chin (must clear the torso collar). */
 export function harborFigureNeck(skin: THREE.Material, headY: number, r: number = HARBOR_FIGURE_HEAD_R): THREE.Mesh {
   const neckH = HARBOR_FIGURE_PROPORTIONS.neckH
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.058, neckH, 6), skin)
-  // Top meets chin; bottom clears collar so the neck reads at barber distance.
-  neck.position.y = headY - r * 0.82 - neckH * 0.48
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.042, neckH, 12), skin)
+  neck.position.y = headY - r * 0.88 - neckH * 0.48
   neck.name = 'hq-figure-neck'
   return neck
 }
 
-/** Ear flaps flush on the skull sides — soft wedges, not cubes. */
+/** Soft ear lobes flush on the skull sides. */
 export function harborFigureEars(skin: THREE.Material, headY: number, r: number = HARBOR_FIGURE_HEAD_R): THREE.Group {
   const g = new THREE.Group()
   g.name = 'hq-figure-ears'
   const ex = harborFigureHeadExtents(r).x
   for (const sx of [-1, 1] as const) {
-    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.032, 0.06, 5), skin)
-    ear.rotation.z = sx * (Math.PI / 2)
-    ear.position.set(sx * (ex + 0.01), headY + 0.005, 0.01)
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 8), skin)
+    ear.scale.set(0.55, 1.05, 0.7)
+    ear.position.set(sx * (ex + 0.008), headY + 0.002, 0.01)
     g.add(ear)
   }
   return g
@@ -119,8 +122,8 @@ type FaceOpts = {
 }
 
 /**
- * Flush face inserts — RS-era color regions on the skull surface.
- * Eye styles must read as different silhouettes at barber / play-camera range.
+ * Anime face plates — large expressive eyes, soft blush, tiny nose/mouth.
+ * Must read as different silhouettes per eyeStyle at barber / dress-up range.
  */
 export function harborFigureFace(
   skin: THREE.Material,
@@ -131,111 +134,120 @@ export function harborFigureFace(
   g.name = 'hq-figure-face'
   g.userData.harborFace = true
 
-  const iris = opts.iris ?? 0x1a1814
-  const scleraC = opts.sclera ?? 0xf2f0e6
+  const iris = opts.iris ?? 0x2a3a5a
+  const scleraC = opts.sclera ?? 0xfff8f2
   const style: HarborEyeStyle = opts.eyeStyle ?? 'round'
   const extents = harborFigureHeadExtents()
-  // Sit just proud of the scaled skull front — never buried inside
-  const faceZ = extents.z + 0.008
-  const white = figureMat(scleraC, true, true)
-  const pupil = figureMat(iris, true, true)
-  const lidMat = figureMat(opts.brow ?? 0x2a2018, true, true)
+  const faceZ = extents.z + 0.006
+  const white = figureMat(scleraC, false, true)
+  const pupil = figureMat(iris, false, true)
+  const lidMat = figureMat(opts.brow ?? 0x2a2018, false, true)
+  const sparkMat = figureMat(0xffffff, false, true)
 
   const eyeYBase =
     headY +
     (opts.eyeY ??
-      (style === 'sleepy' ? -0.008 : style === 'bright' ? 0.018 : 0.01))
-  const eyeSpread = style === 'bright' ? 0.062 : style === 'almond' ? 0.058 : 0.055
+      (style === 'sleepy' ? 0.002 : style === 'bright' ? 0.022 : 0.014))
+  const eyeSpread = style === 'bright' ? 0.058 : style === 'almond' ? 0.055 : 0.052
 
   for (const sx of [-1, 1] as const) {
     const x = sx * eyeSpread
     if (style === 'round') {
-      // Classic RS round inserts
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.03, 8), white)
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.042, 20), white)
+      sclera.scale.set(0.92, 1.15, 1)
       sclera.position.set(x, eyeYBase, faceZ)
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.014, 7), pupil)
-      dot.position.set(x, eyeYBase, faceZ + 0.0015)
-      g.add(dot)
+      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.024, 16), pupil)
+      irisMesh.position.set(x, eyeYBase - 0.004, faceZ + 0.0015)
+      g.add(irisMesh)
+      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.009, 10), sparkMat)
+      spark.position.set(x - sx * 0.01, eyeYBase + 0.01, faceZ + 0.0025)
+      g.add(spark)
     } else if (style === 'almond') {
-      // Tilted pointed ovals — silhouette ≠ round at a glance
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.028, 8), white)
-      sclera.scale.set(1.35, 0.7, 1)
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.038, 18), white)
+      sclera.scale.set(1.45, 0.78, 1)
       sclera.position.set(x, eyeYBase, faceZ)
-      sclera.rotation.z = sx * -0.35
+      sclera.rotation.z = sx * -0.28
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.012, 7), pupil)
-      dot.scale.set(1.2, 0.75, 1)
-      dot.position.set(x + sx * 0.004, eyeYBase, faceZ + 0.0015)
-      dot.rotation.z = sx * -0.35
-      g.add(dot)
-    } else if (style === 'bright') {
-      // Large whites + iris + catchlight
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.038, 8), white)
-      sclera.position.set(x, eyeYBase, faceZ)
-      g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.018, 7), pupil)
-      dot.position.set(x, eyeYBase - 0.002, faceZ + 0.0015)
-      g.add(dot)
-      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.007, 5), figureMat(0xffffff, true, true))
+      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.02, 14), pupil)
+      irisMesh.scale.set(1.25, 0.8, 1)
+      irisMesh.position.set(x + sx * 0.004, eyeYBase - 0.002, faceZ + 0.0015)
+      irisMesh.rotation.z = sx * -0.28
+      g.add(irisMesh)
+      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.007, 8), sparkMat)
       spark.position.set(x - sx * 0.008, eyeYBase + 0.008, faceZ + 0.0025)
       g.add(spark)
+    } else if (style === 'bright') {
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.05, 22), white)
+      sclera.scale.set(0.95, 1.2, 1)
+      sclera.position.set(x, eyeYBase, faceZ)
+      g.add(sclera)
+      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.028, 16), pupil)
+      irisMesh.position.set(x, eyeYBase - 0.004, faceZ + 0.0015)
+      g.add(irisMesh)
+      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.011, 10), sparkMat)
+      spark.position.set(x - sx * 0.012, eyeYBase + 0.012, faceZ + 0.0025)
+      g.add(spark)
+      const spark2 = new THREE.Mesh(new THREE.CircleGeometry(0.005, 8), sparkMat)
+      spark2.position.set(x + sx * 0.006, eyeYBase - 0.006, faceZ + 0.0025)
+      g.add(spark2)
     } else {
-      // Sleepy — soft half-lidded crescents (never black sunglass bars)
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.026, 8), white)
-      sclera.scale.set(1.25, 0.5, 1)
+      // Sleepy — soft half-lidded
+      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.036, 18), white)
+      sclera.scale.set(1.2, 0.55, 1)
       sclera.position.set(x, eyeYBase - 0.002, faceZ)
       g.add(sclera)
-      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.011, 7), pupil)
-      dot.scale.set(1.15, 0.55, 1)
-      dot.position.set(x, eyeYBase - 0.005, faceZ + 0.0015)
-      g.add(dot)
-      // Thin upper lid — hair/brow tint, not a wide dark plane
-      const lid = new THREE.Mesh(new THREE.CircleGeometry(0.028, 8), lidMat)
-      lid.scale.set(1.3, 0.38, 1)
-      lid.position.set(x, eyeYBase + 0.01, faceZ + 0.002)
+      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.016, 12), pupil)
+      irisMesh.scale.set(1.15, 0.55, 1)
+      irisMesh.position.set(x, eyeYBase - 0.006, faceZ + 0.0015)
+      g.add(irisMesh)
+      const lid = new THREE.Mesh(new THREE.CircleGeometry(0.038, 16), lidMat)
+      lid.scale.set(1.25, 0.32, 1)
+      lid.position.set(x, eyeYBase + 0.012, faceZ + 0.002)
       g.add(lid)
     }
   }
 
-  // Soft nose wedge — short depth, sits on the face (not eye-like boxes)
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.045, 4), skin)
-  nose.rotation.x = Math.PI / 2
-  nose.position.set(0, headY - 0.028, faceZ + 0.012)
+  // Tiny soft nose tip
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), skin)
+  nose.scale.set(0.9, 0.7, 1.1)
+  nose.position.set(0, headY - 0.02, faceZ + 0.014)
   g.add(nose)
 
-  // Eyebrows always — arched strips in brow/hair color
   if (opts.showBrows !== false) {
     for (const sx of [-1, 1] as const) {
       const brow = new THREE.Mesh(
-        new THREE.BoxGeometry(0.078, 0.016, 0.012),
+        new THREE.BoxGeometry(0.07, 0.01, 0.008),
         figureMat(opts.brow ?? 0x2a2018),
       )
       brow.position.set(
         sx * eyeSpread,
-        eyeYBase + (style === 'sleepy' ? 0.032 : 0.04),
+        eyeYBase + (style === 'sleepy' ? 0.038 : 0.048),
         faceZ + 0.003,
       )
-      brow.rotation.z = sx * -0.24
+      brow.rotation.z = sx * -0.18
       brow.userData.harborBrow = true
       g.add(brow)
     }
   }
 
   if (opts.showMouth !== false) {
-    const mouthW = opts.blush != null ? 0.078 : 0.055
+    const mouthW = opts.blush != null ? 0.055 : 0.042
     const mouth = new THREE.Mesh(
-      new THREE.PlaneGeometry(mouthW, opts.blush != null ? 0.018 : 0.012),
-      figureMat(opts.lip ?? 0x8a4050, true, true),
+      new THREE.CircleGeometry(mouthW * 0.5, 12),
+      figureMat(opts.lip ?? 0xc86878, false, true),
     )
-    mouth.position.set(0, headY - 0.068, faceZ + 0.001)
+    mouth.scale.set(1.6, 0.45, 1)
+    mouth.position.set(0, headY - 0.062, faceZ + 0.001)
     g.add(mouth)
   }
 
-  if (opts.blush != null) {
+  // Soft cheek blush (default for anime appeal when not overridden off)
+  const blushC = opts.blush === null ? null : (opts.blush ?? 0xffb0b8)
+  if (blushC != null) {
     for (const sx of [-1, 1] as const) {
-      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.02, 6), figureMat(opts.blush, true, true))
-      blush.position.set(sx * 0.09, headY - 0.042, faceZ + 0.001)
+      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.022, 12), figureMat(blushC, false, true))
+      blush.position.set(sx * 0.078, headY - 0.032, faceZ + 0.0005)
       g.add(blush)
     }
   }
@@ -244,8 +256,7 @@ export function harborFigureFace(
 }
 
 /**
- * Stocky slab torso — type-A rectangle with a whisper of shoulder flare.
- * Reads as classic era body volume, not a Steve cube stack.
+ * Soft fashion torso — gentle waist pinch, higher segment count.
  */
 export function harborFigureTorso(
   cloth: THREE.Material,
@@ -256,14 +267,13 @@ export function harborFigureTorso(
   const waist = opts.waist ?? HARBOR_FIGURE_PROPORTIONS.waist
   const h = opts.h ?? HARBOR_FIGURE_PROPORTIONS.torsoH
   const depth = opts.depth ?? HARBOR_FIGURE_PROPORTIONS.depth
-  // 6-gon keeps flatShading facets; almost no waist pinch (type A).
-  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(shoulder, waist, h, 6), cloth)
-  mesh.scale.z = depth / (shoulder + waist)
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(shoulder, waist, h, 16), cloth)
+  mesh.scale.z = depth / ((shoulder + waist) * 0.5)
   mesh.position.y = y
   return mesh
 }
 
-/** Upper + lower arm with baked elbow bend + mitten blob (not a cube fist). */
+/** Slim arm with soft hand (dress-up silhouette). */
 export function harborFigureArm(
   cloth: THREE.Material,
   skin: THREE.Material,
@@ -277,64 +287,61 @@ export function harborFigureArm(
   const x = side * spread
   const limbR = P.limbR
 
-  // Upper hangs slightly out from the slab (toy-soldier, not T-pose cubes)
-  const upper = new THREE.Mesh(new THREE.CylinderGeometry(limbR, limbR * 1.05, P.upperArm, 6), cloth)
+  const upper = new THREE.Mesh(new THREE.CylinderGeometry(limbR, limbR * 0.95, P.upperArm, 12), cloth)
   upper.position.set(x, shoulderY - P.upperArm * 0.35, 0.01)
-  upper.rotation.z = side * 0.12
-  upper.rotation.x = 0.08
+  upper.rotation.z = side * 0.08
+  upper.rotation.x = 0.06
   g.add(upper)
 
   const elbowY = shoulderY - P.upperArm * 0.85
-  const lower = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 0.92, limbR, P.lowerArm, 6), cloth)
-  lower.position.set(x + side * 0.02, elbowY - P.lowerArm * 0.35, 0.04)
-  lower.rotation.x = 0.42
-  lower.rotation.z = side * 0.08
+  const lower = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 0.9, limbR * 0.85, P.lowerArm, 12), cloth)
+  lower.position.set(x + side * 0.015, elbowY - P.lowerArm * 0.35, 0.03)
+  lower.rotation.x = 0.28
+  lower.rotation.z = side * 0.06
   g.add(lower)
 
-  // Mitten — faceted blob palm + thumb nub (RS chunky hand, not Steve cube)
-  const palm = new THREE.Mesh(new THREE.IcosahedronGeometry(P.hand * 0.55, 0), skin)
-  palm.scale.set(1.15, 0.95, 1.25)
-  palm.position.set(x + side * 0.025, elbowY - P.lowerArm * 0.85, 0.09)
+  const palm = new THREE.Mesh(new THREE.SphereGeometry(P.hand * 0.55, 12, 10), skin)
+  palm.scale.set(1.05, 0.9, 1.15)
+  palm.position.set(x + side * 0.02, elbowY - P.lowerArm * 0.85, 0.07)
   g.add(palm)
-  const thumb = new THREE.Mesh(new THREE.IcosahedronGeometry(P.hand * 0.22, 0), skin)
-  thumb.position.set(x + side * 0.07, elbowY - P.lowerArm * 0.7, 0.12)
+  const thumb = new THREE.Mesh(new THREE.SphereGeometry(P.hand * 0.2, 8, 6), skin)
+  thumb.position.set(x + side * 0.05, elbowY - P.lowerArm * 0.72, 0.09)
   g.add(thumb)
 
   g.userData.handY = elbowY - P.lowerArm * 0.85
-  g.userData.handZ = 0.1
+  g.userData.handZ = 0.08
   return g
 }
 
-/** Standing leg: readable thigh/shin (not stubby chibi posts), slight bow. */
+/** Standing fashion legs — long thigh/shin for dress-up silhouette. */
 export function harborFigureLegStanding(
   pants: THREE.Material,
   shoes: THREE.Material,
   side: -1 | 1,
-  xSpread = 0.1,
+  xSpread = 0.085,
 ): THREE.Group {
   const g = new THREE.Group()
   g.name = side > 0 ? 'hq-leg-r' : 'hq-leg-l'
   const x = side * xSpread
-  const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.1
+  const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.05
 
-  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 1.08, limbR * 1.12, 0.3, 6), pants)
-  thigh.position.set(x, 0.4, 0)
-  thigh.rotation.z = side * 0.1
+  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 1.12, limbR * 1.05, 0.38, 12), pants)
+  thigh.position.set(x, 0.52, 0)
+  thigh.rotation.z = side * 0.04
   g.add(thigh)
 
-  const shin = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 0.9, limbR, 0.28, 6), pants)
-  shin.position.set(x + side * 0.02, 0.14, 0.015)
-  shin.rotation.z = side * -0.05
+  const shin = new THREE.Mesh(new THREE.CylinderGeometry(limbR * 0.95, limbR * 0.88, 0.36, 12), pants)
+  shin.position.set(x + side * 0.01, 0.18, 0.01)
+  shin.rotation.z = side * -0.02
   g.add(shin)
 
-  // Boot as a rounded wedge (not a Minecraft foot cube)
-  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.13, 6), shoes)
+  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.048, 0.12, 12), shoes)
   boot.rotation.x = Math.PI / 2
-  boot.position.set(x + side * 0.015, 0.04, 0.055)
+  boot.position.set(x + side * 0.008, 0.04, 0.05)
   g.add(boot)
-  const toe = new THREE.Mesh(new THREE.IcosahedronGeometry(0.04, 0), shoes)
-  toe.scale.set(1.1, 0.7, 1.3)
-  toe.position.set(x + side * 0.015, 0.035, 0.12)
+  const toe = new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), shoes)
+  toe.scale.set(1.05, 0.65, 1.25)
+  toe.position.set(x + side * 0.008, 0.035, 0.11)
   g.add(toe)
   return g
 }
@@ -344,18 +351,18 @@ export function harborFigureLegSeated(
   pants: THREE.Material,
   shoes: THREE.Material,
   side: -1 | 1,
-  xSpread = 0.1,
+  xSpread = 0.085,
 ): THREE.Group {
   const g = new THREE.Group()
   const x = side * xSpread
   const limbR = HARBOR_FIGURE_PROPORTIONS.limbR * 1.05
-  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR, limbR * 1.05, 0.34, 6), pants)
+  const thigh = new THREE.Mesh(new THREE.CylinderGeometry(limbR, limbR * 1.02, 0.4, 12), pants)
   thigh.rotation.x = Math.PI / 2
-  thigh.position.set(x, 0.16, 0.16)
+  thigh.position.set(x, 0.18, 0.18)
   g.add(thigh)
-  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.06, 0.12, 6), shoes)
+  const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.046, 0.11, 12), shoes)
   boot.rotation.x = Math.PI / 2
-  boot.position.set(x, 0.09, 0.38)
+  boot.position.set(x, 0.1, 0.42)
   g.add(boot)
   return g
 }

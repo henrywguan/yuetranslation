@@ -27,10 +27,13 @@ import {
   hqWindow,
 } from './harborCraft'
 import {
+  HARBOR_FIGURE_PROPORTIONS,
   harborFigureArm,
   harborFigureEars,
   harborFigureFace,
   harborFigureHead,
+  harborFigureLegStanding,
+  harborFigureMat,
   harborFigureNeck,
   harborFigureTorso,
 } from './harborFigure'
@@ -274,12 +277,22 @@ export type HarborDialogueTap =
 
 /** Floating name labels for pier dialogue hosts. */
 export const HARBOR_NPC_ROLE_LABEL: Record<HarborNpcRole, string> = {
-  villager: 'Villager',
-  scholar: 'Scholar',
-  fisherman: 'Fisherman',
-  merchant: 'Merchant',
+  villager: 'Ping · Villager',
+  scholar: 'An · Scholar',
+  fisherman: 'Hao · Fisherman',
+  merchant: 'Rui · Merchant',
   child: 'Child',
-  ferryman: 'Ferryman',
+  ferryman: 'Bo · Ferryman',
+}
+
+/** Canon gender mix for pier role NPCs (Higgsfield cast). */
+export const HARBOR_NPC_ROLE_GENDER: Record<HarborNpcRole, 'female' | 'male'> = {
+  villager: 'female',
+  scholar: 'female',
+  fisherman: 'male',
+  merchant: 'female',
+  child: 'female',
+  ferryman: 'male',
 }
 
 /** Discrete pier for a quest gate index — alternates bank each stop. */
@@ -1195,16 +1208,20 @@ function attachDialogueBubble(npc: THREE.Object3D, label?: string) {
 }
 
 /**
- * Low-poly Chinese-styled figure — RS-era proportions (oversized potato head,
- * stocky slab, short thick limbs, mitten blobs) + Harbor clothing kit by role.
+ * Quest / pier dialogue NPCs — anime dress-up body (same kit as River Scout).
+ * Distinct silhouettes + gender mix so the pier cast feels unique and attractive
+ * (Maple / Genshin / WWM / BDO appeal — original Harbor OCs only).
  */
+const NPC_ROLE_GENDER = HARBOR_NPC_ROLE_GENDER
+
 function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const g = new THREE.Group()
   const child = role === 'child'
-  const scale = child ? 0.72 : 1
-  const skin = hqMat(P.skin)
-  const hair = hqMat(P.hair)
-  const robeMat = (hex: number) => hqMat(hex)
+  const gender = NPC_ROLE_GENDER[role]
+  const scale = child ? 0.72 : gender === 'female' ? 0.96 + rng() * 0.04 : 1 + rng() * 0.05
+  const skin = harborFigureMat(P.skin)
+  const hair = harborFigureMat(P.hair)
+  const shoes = harborFigureMat(P.woodDark)
 
   const palette: Record<HarborNpcRole, { robe: number; trim: number; pants: number }> = {
     villager: { robe: P.clothNavy, trim: P.trimGold, pants: P.pants },
@@ -1215,80 +1232,108 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
     ferryman: { robe: P.clothTeal, trim: 0x8a6a40, pants: P.pants },
   }
   const colors = palette[role]
-  const cloth = robeMat(colors.robe)
+  const cloth = harborFigureMat(colors.robe)
+  const pantsMat = harborFigureMat(colors.pants)
+  const female = gender === 'female'
 
-  // Readable legs (not stubby chibi posts)
   for (const side of [-1, 1] as const) {
-    const sx = side * 0.1
-    const thigh = hqPost(0.06, 0.065, 0.28, colors.pants, sx, 0.4, 0)
-    thigh.rotation.z = side * 0.1
-    g.add(thigh)
-    g.add(hqPost(0.052, 0.058, 0.26, colors.pants, sx + side * 0.015, 0.14, 0.015))
-    const boot = hqPost(0.05, 0.06, 0.12, P.woodDark, sx + side * 0.015, 0.04, 0.05)
-    boot.rotation.x = Math.PI / 2
-    g.add(boot)
+    g.add(harborFigureLegStanding(pantsMat, shoes, side, female ? 0.078 : 0.088))
   }
-  // Stocky slab torso + visible neck gap
-  const torsoH = role === 'scholar' || role === 'merchant' ? 0.42 : 0.4
-  const pelvisY = 0.55
-  const torso = harborFigureTorso(cloth, pelvisY + torsoH / 2, {
-    shoulder: 0.18,
-    waist: 0.16,
-    h: torsoH,
-    depth: 0.24,
-  })
-  g.add(torso)
-  g.add(hqBox(0.36, 0.06, 0.24, colors.trim, 0, pelvisY + 0.05, 0))
+
+  const torsoH = HARBOR_FIGURE_PROPORTIONS.torsoH + (role === 'scholar' || role === 'merchant' ? 0.04 : 0)
+  const pelvisY = 0.72
+  const shoulder = female ? 0.14 : 0.16
+  const waist = female ? 0.105 : 0.12
+  g.add(
+    harborFigureTorso(cloth, pelvisY + torsoH / 2, {
+      shoulder,
+      waist,
+      h: torsoH,
+      depth: female ? 0.145 : 0.16,
+    }),
+  )
+  g.add(hqBox(female ? 0.3 : 0.34, 0.05, 0.2, colors.trim, 0, pelvisY + 0.04, 0.02))
   if (role === 'scholar' || role === 'merchant') {
     g.add(
-      harborFigureTorso(cloth, pelvisY + 0.12, {
-        shoulder: 0.17,
-        waist: 0.155,
-        h: 0.22,
-        depth: 0.2,
+      harborFigureTorso(cloth, pelvisY + 0.1, {
+        shoulder: shoulder * 0.95,
+        waist: waist * 1.05,
+        h: 0.2,
+        depth: female ? 0.13 : 0.15,
       }),
     )
   }
-  // Segmented arms + mitten blobs
+
+  const shoulderY = pelvisY + torsoH * 0.82
   for (const side of [-1, 1] as const) {
-    g.add(harborFigureArm(cloth, skin, side, pelvisY + torsoH * 0.82, 0.24))
+    g.add(harborFigureArm(cloth, skin, side, shoulderY, female ? 0.22 : 0.24))
   }
-  // Head sits above a visible neck column
-  const headY = pelvisY + torsoH + 0.1 + 0.152 * 0.82
+
+  const headY = pelvisY + torsoH + HARBOR_FIGURE_PROPORTIONS.neckH + HARBOR_FIGURE_PROPORTIONS.headR * 0.55
   g.add(harborFigureHead(skin, headY))
   g.add(harborFigureNeck(skin, headY))
   g.add(harborFigureEars(skin, headY))
-  g.add(harborFigureFace(skin, headY, { showBrows: true, showMouth: true }))
-  const bun = new THREE.Mesh(new THREE.IcosahedronGeometry(0.06, 0), hair)
-  bun.position.set(0, headY + 0.12, -0.035)
-  g.add(bun)
+  g.add(
+    harborFigureFace(skin, headY, {
+      showBrows: true,
+      showMouth: true,
+      eyeStyle: female ? (role === 'merchant' ? 'bright' : 'round') : role === 'ferryman' ? 'bright' : 'almond',
+      blush: female ? 0xffb0b8 : role === 'child' ? 0xffc0c8 : null,
+    }),
+  )
 
+  // Distinct hair / hat silhouettes per role
   if (role === 'scholar') {
-    g.add(hqBox(0.28, 0.09, 0.24, P.ink, 0, headY + 0.14, 0))
-    g.add(hqBox(0.14, 0.1, 0.14, P.ink, 0, headY + 0.24, 0))
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), hair)
+    bun.position.set(0, headY + 0.11, -0.04)
+    g.add(bun)
+    g.add(hqBox(0.26, 0.07, 0.22, P.ink, 0, headY + 0.12, 0))
+    g.add(hqBox(0.12, 0.08, 0.12, P.ink, 0, headY + 0.2, 0))
   } else if (role === 'fisherman' || role === 'ferryman') {
-    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.14, 7), hqMat(P.straw))
-    hat.position.y = headY + 0.16
+    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), hair)
+    fringe.scale.set(1.15, 0.55, 0.85)
+    fringe.position.set(0, headY + 0.02, 0.06)
+    g.add(fringe)
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.12, 16), harborFigureMat(P.straw))
+    hat.position.y = headY + 0.15
     g.add(hat)
   } else if (role === 'merchant') {
-    g.add(hqPost(0.1, 0.11, 0.07, 0x2a1810, 0, headY + 0.12, 0))
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), hair)
+    bun.position.set(0.06, headY + 0.1, -0.02)
+    g.add(bun)
+    g.add(hqPost(0.09, 0.1, 0.06, 0x2a1810, 0, headY + 0.12, 0))
+    // Jade earring glint
+    g.add(hqBox(0.02, 0.04, 0.02, P.jade, 0.1, headY - 0.02, 0.04))
   } else if (role === 'villager') {
-    g.add(hqBox(0.26, 0.05, 0.22, 0x2a2820, 0, headY + 0.1, 0))
+    const bob = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 12), hair)
+    bob.scale.set(1.05, 0.85, 1)
+    bob.position.set(0, headY + 0.02, -0.01)
+    g.add(bob)
+    const bang = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), hair)
+    bang.scale.set(1.4, 0.45, 0.7)
+    bang.position.set(0, headY + 0.04, 0.08)
+    g.add(bang)
+  } else {
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), hair)
+    bun.position.set(0, headY + 0.1, -0.03)
+    g.add(bun)
   }
 
   if (role === 'fisherman' && rng() > 0.35) {
-    const pole = hqPost(0.02, 0.025, 1.4, P.woodMid, 0.28, 0.85, 0, 4)
+    const pole = hqPost(0.018, 0.022, 1.35, P.woodMid, 0.26, 0.9, 0, 8)
     pole.rotation.z = -0.55
     g.add(pole)
   }
   if (role === 'scholar' && rng() > 0.4) {
-    const scroll = hqPost(0.04, 0.04, 0.28, P.trimIvory, 0.22, 0.62, 0.12, 5)
+    const scroll = hqPost(0.035, 0.035, 0.26, P.trimIvory, 0.2, 0.7, 0.1, 8)
     scroll.rotation.z = Math.PI / 2
     g.add(scroll)
   }
 
-  g.scale.setScalar(scale * (0.92 + rng() * 0.12))
+  g.scale.setScalar(scale)
   g.userData.npc = role
+  g.userData.npcGender = gender
+  g.userData.characterStyle = 'anime-dressup'
   return g
 }
 
@@ -1306,11 +1351,20 @@ export type HarborLandmarkHostId = (typeof HARBOR_LANDMARK_HOSTS)[number]
 
 /** Floating name labels for landmark hosts. */
 export const HARBOR_LANDMARK_HOST_LABEL: Record<HarborLandmarkHostId, string> = {
-  'save-shack': 'Save Keeper',
-  outfitter: 'Outfitter',
-  bank: 'Banker',
+  'save-shack': 'Yun · Save Keeper',
+  outfitter: 'Mei Lin · Outfitter',
+  bank: 'Jin · Banker',
   arena: 'Arena Master',
-  barber: 'Barber',
+  barber: 'Wei · Barber',
+}
+
+/** Canon gender mix — unique attractive female/male hosts (Higgsfield cast). */
+export const HARBOR_LANDMARK_HOST_GENDER: Record<HarborLandmarkHostId, 'female' | 'male'> = {
+  'save-shack': 'female',
+  outfitter: 'female',
+  bank: 'male',
+  arena: 'male',
+  barber: 'male',
 }
 
 const LANDMARK_GLOW: Record<HarborLandmarkHostId, number> = {
@@ -1473,182 +1527,191 @@ function barberScissors() {
 }
 
 /**
- * Landmark host figure — oversized-head RS proportions, unique kit per building.
- * Homage silhouettes (landlady / Lu Bu) — original low-poly kit, not ripped meshes.
+ * Landmark host figure — anime dress-up body + unique kit per building.
+ * Named cast (Mei Lin / Wei / Yun / Jin / Arena Master) — original OCs;
+ * appeal north star: Maple / Genshin / Where Winds Meet / BDO / ESO beauty.
  */
+const LANDMARK_HOST_GENDER = HARBOR_LANDMARK_HOST_GENDER
+
 function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   const g = new THREE.Group()
   g.name = `landmark-host-${id}`
   g.userData.npc = id
   g.userData.landmarkHost = id
   g.userData.specialNpc = true
+  g.userData.characterStyle = 'anime-dressup'
+  g.userData.npcGender = LANDMARK_HOST_GENDER[id]
 
-  const skin = hqMat(P.skin)
-  const hair = hqMat(P.hair)
+  const female = LANDMARK_HOST_GENDER[id] === 'female'
+  const skin = harborFigureMat(P.skin)
+  const hair = harborFigureMat(P.hair)
+  const shoes = harborFigureMat(P.woodDark)
+
+  const robeHex =
+    id === 'save-shack'
+      ? 0x1e5a58
+      : id === 'bank'
+        ? 0x1e2430
+        : id === 'outfitter'
+          ? 0xc04068
+          : id === 'barber'
+            ? 0xf2efe8
+            : 0x8a1828
+  const pantsHex =
+    id === 'outfitter' ? 0x3a2030 : id === 'barber' ? 0x1a2830 : id === 'arena' ? 0x1a1018 : 0x1a3a38
+  const cloth = harborFigureMat(robeHex)
+  const pantsMat = harborFigureMat(pantsHex)
+
+  const bodyScale = id === 'arena' ? 1.12 : female ? 0.98 : 1.02
+  for (const side of [-1, 1] as const) {
+    g.add(harborFigureLegStanding(pantsMat, shoes, side, female ? 0.078 : 0.09))
+  }
+
+  const torsoH = HARBOR_FIGURE_PROPORTIONS.torsoH + (id === 'arena' ? 0.06 : 0.02)
+  const pelvisY = 0.72
+  const shoulder = female ? 0.138 : id === 'arena' ? 0.175 : 0.158
+  const waist = female ? 0.1 : id === 'arena' ? 0.13 : 0.118
+  g.add(
+    harborFigureTorso(cloth, pelvisY + torsoH / 2, {
+      shoulder,
+      waist,
+      h: torsoH,
+      depth: female ? 0.14 : 0.17,
+    }),
+  )
+
+  // Role sash / trim
+  const trim =
+    id === 'save-shack'
+      ? P.trimGold
+      : id === 'bank'
+        ? P.trimGold
+        : id === 'outfitter'
+          ? 0xf0e0c8
+          : id === 'barber'
+            ? 0xc02838
+            : 0xd4a040
+  g.add(hqBox(female ? 0.3 : 0.36, 0.05, 0.2, trim, 0, pelvisY + 0.04, 0.02))
+
+  if (id === 'outfitter') {
+    for (const y of [pelvisY + 0.12, pelvisY + 0.22, pelvisY + 0.32] as const) {
+      g.add(hqBox(0.32, 0.035, 0.22, 0xf0e0c8, 0, y, 0.01))
+    }
+  }
+  if (id === 'barber') {
+    for (const [y, c] of [
+      [pelvisY + 0.1, 0xc02838],
+      [pelvisY + 0.18, 0xf8f4ec],
+      [pelvisY + 0.26, 0x2a58a8],
+      [pelvisY + 0.34, 0xf8f4ec],
+    ] as const) {
+      g.add(hqBox(0.34, 0.04, 0.22, c, 0, y, 0.02))
+    }
+  }
+  if (id === 'arena') {
+    g.add(hqBox(0.42, 0.08, 0.1, 0x1a1018, 0, pelvisY + torsoH * 0.75, 0.1))
+    g.add(hqBox(0.44, 0.55, 0.05, 0x5a1020, 0, pelvisY + 0.28, -0.14)) // cape
+  }
+  if (id === 'bank') {
+    g.add(hqBox(0.36, 0.06, 0.08, P.jade, 0, pelvisY + torsoH * 0.85, 0.08))
+  }
+  if (id === 'save-shack') {
+    g.add(hqBox(0.16, 0.12, 0.05, 0xffe080, 0, pelvisY + torsoH * 0.7, 0.12))
+  }
+
+  const shoulderY = pelvisY + torsoH * 0.82
+  for (const side of [-1, 1] as const) {
+    g.add(harborFigureArm(cloth, skin, side, shoulderY, female ? 0.22 : 0.26))
+  }
+
+  const headY = pelvisY + torsoH + HARBOR_FIGURE_PROPORTIONS.neckH + HARBOR_FIGURE_PROPORTIONS.headR * 0.55
+  g.add(harborFigureHead(skin, headY))
+  g.add(harborFigureNeck(skin, headY))
+  g.add(harborFigureEars(skin, headY))
+  g.add(
+    harborFigureFace(skin, headY, {
+      showBrows: true,
+      showMouth: true,
+      eyeStyle: id === 'outfitter' || id === 'save-shack' ? 'bright' : id === 'arena' ? 'almond' : 'round',
+      blush: female ? 0xffb0b8 : null,
+      brow: id === 'outfitter' ? 0x1a1a22 : undefined,
+    }),
+  )
 
   if (id === 'save-shack') {
-    // Vault keeper in teal robes, golden floppy disk
-    for (const sx of [-0.1, 0.1] as const) {
-      g.add(hqPost(0.06, 0.07, 0.4, 0x1a3a38, sx, 0.22, 0))
-      g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
-    }
-    g.add(hqBox(0.36, 0.48, 0.24, 0x1e5a58, 0, 0.62, 0))
-    g.add(hqBox(0.38, 0.08, 0.26, P.trimGold, 0, 0.55, 0))
-    g.add(hqBox(0.2, 0.14, 0.06, 0xffe080, 0, 0.78, 0.13)) // chest badge
-    for (const sx of [-1, 1] as const) {
-      g.add(hqPost(0.055, 0.065, 0.32, 0x1e5a58, sx * 0.24, 0.72, 0))
-      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
-    }
-    g.add(harborFigureHead(skin, 1.08))
-    g.add(harborFigureNeck(skin, 1.08))
-    g.add(harborFigureEars(skin, 1.08))
-    g.add(harborFigureFace(skin, 1.08, { showBrows: true, showMouth: true }))
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
-    bun.position.set(0, 1.2, -0.04)
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), hair)
+    bun.position.set(0, headY + 0.1, -0.035)
     g.add(bun)
-    g.add(hqBox(0.28, 0.08, 0.24, 0x1a3030, 0, 1.2, 0)) // cap
+    g.add(hqBox(0.26, 0.06, 0.22, 0x1a3030, 0, headY + 0.1, 0))
     const disk = glowingFloppyDisk()
-    disk.position.set(0.28, 0.62, 0.14)
+    disk.position.set(0.26, pelvisY + 0.35, 0.12)
     disk.rotation.x = -0.4
     disk.rotation.z = 0.35
     g.add(disk)
   } else if (id === 'bank') {
-    // Banker — ink coat, gold trim, tael bag
-    for (const sx of [-0.1, 0.1] as const) {
-      g.add(hqPost(0.06, 0.07, 0.42, 0x1a1a22, sx, 0.22, 0))
-      g.add(hqBox(0.12, 0.07, 0.16, 0x2a2a30, sx, 0.04, 0.03))
-    }
-    g.add(hqBox(0.38, 0.55, 0.26, 0x1e2430, 0, 0.68, 0))
-    g.add(hqBox(0.4, 0.1, 0.28, P.trimGold, 0, 0.58, 0))
-    g.add(hqBox(0.42, 0.08, 0.08, P.jade, 0, 0.95, 0.1)) // collar jade
-    for (const sx of [-1, 1] as const) {
-      g.add(hqPost(0.055, 0.065, 0.34, 0x1e2430, sx * 0.25, 0.74, 0))
-      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.25, 0.54, 0.02))
-    }
-    g.add(harborFigureHead(skin, 1.1))
-    g.add(harborFigureNeck(skin, 1.1))
-    g.add(harborFigureEars(skin, 1.1))
-    g.add(harborFigureFace(skin, 1.1, { showBrows: true, showMouth: true }))
-    // Skullcap + queue nod (hair mat under ink cap)
-    const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), hair)
-    topknot.position.set(0, 1.28, -0.02)
+    const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), hair)
+    topknot.position.set(0, headY + 0.12, -0.02)
     g.add(topknot)
-    g.add(hqPost(0.12, 0.13, 0.1, 0x12141a, 0, 1.22, 0))
-    g.add(hqBox(0.04, 0.04, 0.22, 0x1a1a22, 0, 1.18, -0.16))
+    g.add(hqPost(0.1, 0.11, 0.08, 0x12141a, 0, headY + 0.08, 0))
+    g.add(hqBox(0.035, 0.035, 0.2, 0x1a1a22, 0, headY + 0.04, -0.14))
     const bag = goldTaelBag()
-    bag.position.set(0.3, 0.42, 0.12)
+    bag.position.set(0.28, pelvisY + 0.15, 0.1)
     bag.rotation.y = -0.4
     g.add(bag)
   } else if (id === 'outfitter') {
-    // Landlady homage — rollers, stern qipao stripes, cigarette
-    for (const sx of [-0.1, 0.1] as const) {
-      g.add(hqPost(0.06, 0.07, 0.38, 0x3a2030, sx, 0.2, 0))
-      g.add(hqBox(0.11, 0.06, 0.15, 0x2a1820, sx, 0.04, 0.03))
-    }
-    g.add(hqBox(0.36, 0.5, 0.24, 0xc04068, 0, 0.62, 0))
-    // Stripe trim
-    for (const y of [0.48, 0.62, 0.76] as const) {
-      g.add(hqBox(0.38, 0.04, 0.26, 0xf0e0c8, 0, y, 0))
-    }
-    for (const sx of [-1, 1] as const) {
-      g.add(hqPost(0.055, 0.065, 0.3, 0xc04068, sx * 0.24, 0.72, 0))
-      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
-    }
-    g.add(harborFigureHead(skin, 1.06))
-    g.add(harborFigureNeck(skin, 1.06))
-    g.add(harborFigureEars(skin, 1.06))
-    g.add(harborFigureFace(skin, 1.06, { showBrows: true, showMouth: true }))
-    // Hair rollers
+    // Hair rollers — glamorous landlady silhouette
     for (const [x, z] of [
-      [-0.1, -0.02],
-      [0.1, -0.02],
-      [0, 0.06],
-      [-0.06, 0.08],
-      [0.06, 0.08],
+      [-0.09, -0.02],
+      [0.09, -0.02],
+      [0, 0.05],
+      [-0.055, 0.07],
+      [0.055, 0.07],
     ] as const) {
       const roller = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.035, 0.07, 6),
-        hqMat(0xf0d0e0),
+        new THREE.CylinderGeometry(0.032, 0.032, 0.065, 10),
+        harborFigureMat(0xf0d0e0),
       )
       roller.rotation.z = Math.PI / 2
-      roller.position.set(x, 1.22, z)
+      roller.position.set(x, headY + 0.12, z)
       g.add(roller)
     }
-    // Stern brows
-    g.add(hqBox(0.08, 0.02, 0.02, 0x1a1a22, -0.06, 1.1, 0.13))
-    g.add(hqBox(0.08, 0.02, 0.02, 0x1a1a22, 0.06, 1.1, 0.13))
     const cig = cigaretteWithSmoke()
-    cig.position.set(0.3, 0.7, 0.12)
+    cig.position.set(0.28, pelvisY + 0.42, 0.1)
     cig.rotation.z = 0.9
     cig.rotation.x = -0.3
     g.add(cig)
   } else if (id === 'barber') {
-    // Harbor barber — striped apron, tidy topknot, scissors
-    for (const sx of [-0.1, 0.1] as const) {
-      g.add(hqPost(0.06, 0.07, 0.4, 0x1a2830, sx, 0.22, 0))
-      g.add(hqBox(0.11, 0.07, 0.16, 0x2a3840, sx, 0.04, 0.03))
-    }
-    g.add(hqBox(0.36, 0.5, 0.24, 0xf2efe8, 0, 0.62, 0))
-    // Red / white / blue apron stripes
-    for (const [y, c] of [
-      [0.48, 0xc02838],
-      [0.58, 0xf8f4ec],
-      [0.68, 0x2a58a8],
-      [0.78, 0xf8f4ec],
-    ] as const) {
-      g.add(hqBox(0.38, 0.05, 0.26, c, 0, y, 0))
-    }
-    for (const sx of [-1, 1] as const) {
-      g.add(hqPost(0.055, 0.065, 0.32, 0xf2efe8, sx * 0.24, 0.72, 0))
-      g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
-    }
-    g.add(harborFigureHead(skin, 1.08))
-    g.add(harborFigureNeck(skin, 1.08))
-    g.add(harborFigureEars(skin, 1.08))
-    g.add(harborFigureFace(skin, 1.08, { showBrows: true, showMouth: true }))
-    const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), hair)
-    topknot.position.set(0, 1.26, -0.02)
+    const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), hair)
+    topknot.position.set(0, headY + 0.11, -0.02)
     g.add(topknot)
-    g.add(hqBox(0.3, 0.06, 0.26, 0x1a1a22, 0, 1.2, 0))
-    // Comb tucked in apron
-    g.add(hqBox(0.04, 0.16, 0.02, 0xd4a040, -0.2, 0.7, 0.14))
+    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), hair)
+    fringe.scale.set(1.3, 0.4, 0.7)
+    fringe.position.set(0, headY + 0.03, 0.07)
+    g.add(fringe)
+    g.add(hqBox(0.04, 0.14, 0.02, 0xd4a040, -0.18, pelvisY + 0.38, 0.12))
     const shears = barberScissors()
-    shears.position.set(0.3, 0.55, 0.12)
+    shears.position.set(0.28, pelvisY + 0.28, 0.1)
     shears.rotation.z = -0.7
     shears.rotation.x = 0.25
     g.add(shears)
   } else {
-    // Arena Lu Bu homage — tall red/black armor, horned helm, halberd
-    g.scale.setScalar(1.12)
-    for (const sx of [-0.12, 0.12] as const) {
-      g.add(hqPost(0.07, 0.08, 0.45, 0x1a1018, sx, 0.24, 0))
-      g.add(hqBox(0.14, 0.08, 0.18, 0x2a1820, sx, 0.04, 0.04))
-    }
-    g.add(hqBox(0.42, 0.55, 0.28, 0x8a1828, 0, 0.7, 0))
-    g.add(hqBox(0.46, 0.12, 0.3, 0xd4a040, 0, 0.58, 0))
-    g.add(hqBox(0.5, 0.08, 0.1, 0x1a1018, 0, 0.92, 0.12)) // chest plate
-    // Cape
-    g.add(hqBox(0.5, 0.7, 0.06, 0x5a1020, 0, 0.75, -0.18))
+    // Arena Master — helm + halberd (face stays visible for beauty)
+    g.add(hqBox(0.3, 0.12, 0.26, 0x2a1a20, 0, headY + 0.14, 0))
     for (const sx of [-1, 1] as const) {
-      g.add(hqPost(0.06, 0.07, 0.36, 0x8a1828, sx * 0.28, 0.78, 0))
-      g.add(hqBox(0.11, 0.11, 0.11, P.skin, sx * 0.28, 0.56, 0.02))
-    }
-    g.add(harborFigureHead(skin, 1.14))
-    g.add(harborFigureNeck(skin, 1.14))
-    g.add(harborFigureEars(skin, 1.14))
-    g.add(harborFigureFace(skin, 1.14, { showBrows: true, showMouth: true }))
-    // Horned helmet
-    g.add(hqBox(0.34, 0.14, 0.3, 0x2a1a20, 0, 1.28, 0))
-    for (const sx of [-1, 1] as const) {
-      const horn = hqPost(0.03, 0.04, 0.28, 0xd4a040, sx * 0.14, 1.42, -0.02, 5)
+      const horn = hqPost(0.025, 0.035, 0.24, 0xd4a040, sx * 0.12, headY + 0.26, -0.02, 8)
       horn.rotation.z = sx * 0.55
       g.add(horn)
     }
+    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), hair)
+    fringe.scale.set(1.2, 0.45, 0.7)
+    fringe.position.set(0, headY + 0.02, 0.06)
+    g.add(fringe)
     const halberd = luBuHalberd()
-    halberd.position.set(0.38, 0.15, 0.05)
+    halberd.position.set(0.36, 0.12, 0.04)
     g.add(halberd)
   }
 
+  g.scale.setScalar(bodyScale)
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
   attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
   return g
