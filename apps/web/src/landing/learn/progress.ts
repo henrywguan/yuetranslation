@@ -14,6 +14,7 @@ import {
   sanitizeHarborProgress,
   type HarborProgress,
 } from './progressMerge'
+import { sanitizeHarborFishingBag, type HarborFishingBag } from './harborFishing'
 import { HARBOR_LEVELS } from './curriculum'
 import {
   HARBOR_DEFAULT_LOOK,
@@ -162,6 +163,18 @@ export function awardHarborTitle(titleId: string): HarborProgress {
 /** Replace local progress after a server gift response. */
 export function replaceHarborProgress(next: HarborProgress): HarborProgress {
   return commit(sanitizeHarborProgress(next))
+}
+
+/** Persist Guan fishing bag (+ optional coin delta from buy/sell). */
+export function updateHarborFishing(fishing: HarborFishingBag, coinsDelta = 0): HarborProgress {
+  const p = read()
+  const coins = Math.max(0, Math.floor((p.coins ?? 0) + coinsDelta))
+  return commit({
+    ...p,
+    fishing: sanitizeHarborFishingBag(fishing),
+    coins,
+    lastSavedAt: Date.now(),
+  })
 }
 
 export function markGoldEarned(amount: number) {

@@ -38,20 +38,25 @@ import {
   hqWindow,
 } from './harborCraft'
 import { stampGuanArmoredPatrol } from './harborGuanPatrol'
+import { isGuanSatelliteLand, guanSatelliteGroundY, stampGuanFishingRealm } from './harborGuanFishingRealm'
+import { GUAN_SATELLITE_ISLANDS } from './harborFishing'
 import { buildNametagSprite } from './harborRemoteAvatars'
+
+/** Local alias so foot clamp can snap to satellite shores. */
+const GUAN_SATELLITE_ISLANDS_FOOT = GUAN_SATELLITE_ISLANDS
 
 export const GUAN_HARBOR_META = { en: 'Guan Harbor', zh: '關港' } as const
 
 /** Playable ocean AABB (boat clamp outer fence). */
 export const GUAN_HARBOR_BOUNDS = {
-  minX: -20,
-  maxX: 18,
-  minZ: -22,
-  maxZ: 24,
+  minX: -32,
+  maxX: 30,
+  minZ: -34,
+  maxZ: 32,
 } as const
 
 /** Water plane centre / size — keep in sync with createHarborWorld. */
-export const GUAN_WATER_PLANE = { x: 0, z: 2, size: 72 } as const
+export const GUAN_WATER_PLANE = { x: 0, z: 0, size: 96 } as const
 
 /** Forced sunny tropical look — sky / fog / water (createHarborWorld applies these). */
 export const GUAN_TROPICAL_LOOK = {
@@ -243,9 +248,9 @@ function isCairnLand(x: number, z: number): boolean {
   return Math.hypot(x - c.x, z - c.z) <= c.r * 0.92
 }
 
-/** True when (x,z) is on the main island or Cairn islet. */
+/** True when (x,z) is on the main island, Cairn islet, or satellite fishing isles. */
 export function isGuanLand(x: number, z: number): boolean {
-  return pointInPoly(x, z, GUAN_LAND_OUTLINE) || isCairnLand(x, z)
+  return pointInPoly(x, z, GUAN_LAND_OUTLINE) || isCairnLand(x, z) || isGuanSatelliteLand(x, z)
 }
 
 /**
@@ -278,6 +283,8 @@ function inScaledOutline(x: number, z: number, scale: number): boolean {
  * Outside land returns 0 (ocean). Never let the scout sink through a terrace.
  */
 export function guanGroundY(x: number, z: number): number {
+  const satY = guanSatelliteGroundY(x, z)
+  if (satY != null) return satY
   const cairn = GUAN_LANDMARKS.cairnIsle
   const cd = Math.hypot(x - cairn.x, z - cairn.z)
   if (cd <= cairn.r * 0.92) {
@@ -299,6 +306,24 @@ export function clampGuanFootTarget(x: number, z: number): { x: number; z: numbe
   const c = GUAN_LANDMARKS.cairnIsle
   const cairnD = Math.hypot(x - c.x, z - c.z)
   const cairnShore = Math.abs(cairnD - c.r * 0.85)
+
+  // Prefer nearest satellite shore when closer than main / Cairn.
+  let bestSat: { x: number; z: number; d: number } | null = null
+  for (const island of GUAN_SATELLITE_ISLANDS_FOOT) {
+    const d = Math.hypot(x - island.x, z - island.z)
+    const shore = Math.abs(d - island.r * 0.85)
+    if (!bestSat || shore < bestSat.d) {
+      const len = d || 1
+      bestSat = {
+        x: island.x + ((x - island.x) / len) * island.r * 0.85,
+        z: island.z + ((z - island.z) / len) * island.r * 0.85,
+        d: shore,
+      }
+    }
+  }
+  if (bestSat && bestSat.d < main.d && bestSat.d <= cairnShore) {
+    return { x: bestSat.x, z: bestSat.z }
+  }
   if (cairnShore < main.d) {
     const d = cairnD || 1
     return { x: c.x + ((x - c.x) / d) * c.r * 0.85, z: c.z + ((z - c.z) / d) * c.r * 0.85 }
@@ -348,6 +373,22 @@ export function clampGuanBoatTarget(x: number, z: number): { x: number; z: numbe
   } else if (d <= 1e-4) {
     cx = c.x + minR
     cz = c.z
+  }
+
+  // Keep canoe clear of satellite island disks
+  for (const island of GUAN_SATELLITE_ISLANDS_FOOT) {
+    const sx = cx - island.x
+    const sz = cz - island.z
+    const sd = Math.hypot(sx, sz)
+    const keep = island.r + 0.55
+    if (sd < keep && sd > 1e-4) {
+      const s = keep / sd
+      cx = island.x + sx * s
+      cz = island.z + sz * s
+    } else if (sd <= 1e-4) {
+      cx = island.x + keep
+      cz = island.z
+    }
   }
 
   cx = Math.min(GUAN_HARBOR_BOUNDS.maxX, Math.max(GUAN_HARBOR_BOUNDS.minX, cx))
@@ -1986,6 +2027,9 @@ export function buildGuanHarborScene(): THREE.Group {
 
   // Original armored patrol brothers — roam with walk cycles (not Jagex IP)
   stampGuanArmoredPatrol(root, rng)
+
+  // Fishing lodge, shore spots, Pearl Cay / Mist Atoll / Jade Skerry / Ember Shoal
+  stampGuanFishingRealm(root)
 
   return root
 }

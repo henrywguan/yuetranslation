@@ -8,6 +8,12 @@ import {
   type HarborAppearance,
   type HarborGender,
 } from './harborAppearance'
+import {
+  emptyHarborFishingBag,
+  mergeHarborFishingBag,
+  sanitizeHarborFishingBag,
+  type HarborFishingBag,
+} from './harborFishing'
 import { sanitizeOwnedTitles, sanitizeTitleId } from './harborTitles'
 
 export type HarborProgress = {
@@ -48,6 +54,8 @@ export type HarborProgress = {
   ownedTitles: string[]
   /** Equipped title id (must be in ownedTitles). */
   titleId: string | null
+  /** Guan fishing bag — tools, bait, catches, log, Fishing XP. */
+  fishing: HarborFishingBag
 }
 
 export function emptyHarborProgress(): HarborProgress {
@@ -86,6 +94,7 @@ export function emptyHarborProgress(): HarborProgress {
     localUsername: null,
     ownedTitles: ['title-river-scout'],
     titleId: 'title-river-scout',
+    fishing: emptyHarborFishingBag(),
   }
 }
 
@@ -168,6 +177,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     ownedTitles = [...ownedTitles, 'title-river-scout']
   }
   const titleId = sanitizeTitleId(o.titleId, ownedTitles)
+  const fishing = sanitizeHarborFishingBag(o.fishing)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -186,6 +196,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     localUsername,
     ownedTitles,
     titleId,
+    fishing,
   }
 }
 
@@ -306,6 +317,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
     localUsername: fresher.localUsername ?? A.localUsername ?? B.localUsername,
     ownedTitles,
     titleId,
+    fishing: mergeHarborFishingBag(A.fishing ?? emptyHarborFishingBag(), B.fishing ?? emptyHarborFishingBag()),
   }
 }
 

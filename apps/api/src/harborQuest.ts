@@ -42,6 +42,16 @@ export type HarborQuestProgress = {
   ownedTitles?: string[]
   /** Equipped title. */
   titleId?: string | null
+  /** Guan fishing bag (tools, bait, fish, log, XP). */
+  fishing?: {
+    tools: string[]
+    bait: Record<string, number>
+    fish: Record<string, number>
+    log: string[]
+    fishingXp: number
+    equippedTool: string
+    equippedBait: string
+  }
 }
 
 export type HarborLeaderboardEntry = {
@@ -83,6 +93,88 @@ const EMPTY: HarborQuestProgress = {
   banked: [],
   look: { ...DEFAULT_LOOK },
   lastSavedAt: 0,
+  fishing: {
+    tools: ['tool-net'],
+    bait: { 'bait-none': 0, 'bait-rice': 20 },
+    fish: {},
+    log: [],
+    fishingXp: 0,
+    equippedTool: 'tool-net',
+    equippedBait: 'bait-rice',
+  },
+}
+
+const KNOWN_FISH_TOOLS = new Set([
+  'tool-net',
+  'tool-rod',
+  'tool-fly',
+  'tool-harpoon',
+  'tool-cage',
+  'tool-heavy-cage',
+])
+const KNOWN_FISH_BAITS = new Set(['bait-none', 'bait-rice', 'bait-feather', 'bait-worm', 'bait-paste'])
+const KNOWN_FISH = new Set([
+  'fish-shrimp',
+  'fish-anchovy',
+  'fish-sardine',
+  'fish-herring',
+  'fish-trout',
+  'fish-salmon',
+  'fish-tuna',
+  'fish-lobster',
+  'fish-swordfish',
+  'fish-shark',
+  'fish-oyster',
+  'fish-ash-crab',
+  'fish-mist-eel',
+  'fish-jade-carp',
+  'fish-reed-perch',
+  'fish-wreck-bass',
+])
+
+function sanitizeFishing(raw: unknown): NonNullable<HarborQuestProgress['fishing']> {
+  const base = EMPTY.fishing!
+  if (!raw || typeof raw !== 'object') return { ...base, bait: { ...base.bait }, fish: {}, log: [], tools: [...base.tools] }
+  const o = raw as Record<string, unknown>
+  const tools = ['tool-net']
+  if (Array.isArray(o.tools)) {
+    for (const id of o.tools) {
+      if (typeof id === 'string' && KNOWN_FISH_TOOLS.has(id) && !tools.includes(id)) tools.push(id)
+    }
+  }
+  const bait: Record<string, number> = { 'bait-none': 0 }
+  if (o.bait && typeof o.bait === 'object' && !Array.isArray(o.bait)) {
+    for (const [k, v] of Object.entries(o.bait as Record<string, unknown>)) {
+      if (!KNOWN_FISH_BAITS.has(k)) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      bait[k] = Math.min(Math.floor(v), 50_000)
+    }
+  }
+  const fish: Record<string, number> = {}
+  if (o.fish && typeof o.fish === 'object' && !Array.isArray(o.fish)) {
+    for (const [k, v] of Object.entries(o.fish as Record<string, unknown>)) {
+      if (!KNOWN_FISH.has(k)) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      fish[k] = Math.min(Math.floor(v), 50_000)
+    }
+  }
+  const log: string[] = []
+  if (Array.isArray(o.log)) {
+    for (const id of o.log) {
+      if (typeof id === 'string' && KNOWN_FISH.has(id) && !log.includes(id)) log.push(id)
+    }
+  }
+  const fishingXp =
+    typeof o.fishingXp === 'number' && Number.isFinite(o.fishingXp) && o.fishingXp >= 0
+      ? Math.min(Math.floor(o.fishingXp), 20_000_000)
+      : 0
+  const equippedTool =
+    typeof o.equippedTool === 'string' && tools.includes(o.equippedTool) ? o.equippedTool : 'tool-net'
+  const equippedBait =
+    typeof o.equippedBait === 'string' && KNOWN_FISH_BAITS.has(o.equippedBait)
+      ? o.equippedBait
+      : 'bait-rice'
+  return { tools, bait, fish, log, fishingXp, equippedTool, equippedBait }
 }
 
 const LEADERBOARD_DEFAULT_LIMIT = 25
@@ -185,6 +277,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
   if (typeof o.titleId === 'string' && ownedTitles.includes(o.titleId)) {
     titleId = o.titleId
   }
+  const fishing = sanitizeFishing(o.fishing)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -199,6 +292,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     lastSavedAt,
     ownedTitles,
     titleId,
+    fishing,
   }
 }
 

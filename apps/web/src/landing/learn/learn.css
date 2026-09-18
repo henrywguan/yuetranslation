@@ -5333,6 +5333,35 @@
 .hq-minimap.is-locked .hq-minimap-chrome {
   cursor: default;
 }
+.hq-minimap-place {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.28rem 0.4rem 0.22rem;
+  border-bottom: 1px solid color-mix(in srgb, #7ec8b8 12%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #123028 55%, transparent), color-mix(in srgb, #041018 20%, transparent));
+  min-width: 0;
+}
+.hq-minimap-place-en {
+  font: 700 0.62rem/1.15 Syne, system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  color: #e8fff6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-minimap-place-zh {
+  font: 500 0.55rem/1.1 "Noto Sans HK", "Noto Sans", system-ui, sans-serif;
+  color: color-mix(in srgb, #7ec8b8 78%, #fff);
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hq-minimap-place--sea .hq-minimap-place-en { color: #b8e8ff; }
+.hq-minimap-place--river .hq-minimap-place-en { color: #9ad8c8; }
+.hq-minimap-place--land .hq-minimap-place-en { color: #d8f0c8; }
 .hq-minimap-chrome {
   display: flex;
   align-items: center;
@@ -5399,8 +5428,56 @@
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, #3dcfb6 28%, transparent);
   background:
-    radial-gradient(circle at 50% 50%, color-mix(in srgb, #0e2a28 55%, transparent) 0%, color-mix(in srgb, #061418 78%, transparent) 72%);
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, #0a3848 62%, transparent) 0%, color-mix(in srgb, #061820 88%, transparent) 72%);
   overflow: hidden;
+}
+.hq-minimap-geo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.hq-minimap-geo-path--land {
+  fill: color-mix(in srgb, #2a6a48 55%, transparent);
+  stroke: color-mix(in srgb, #5aaa70 45%, transparent);
+  stroke-width: 1;
+}
+.hq-minimap-geo-path--sand {
+  fill: color-mix(in srgb, #c4a878 42%, transparent);
+  stroke: color-mix(in srgb, #e0c898 35%, transparent);
+  stroke-width: 0.8;
+}
+.hq-minimap-geo-path--ash {
+  fill: color-mix(in srgb, #5a4840 50%, transparent);
+  stroke: color-mix(in srgb, #8a6860 40%, transparent);
+  stroke-width: 0.8;
+}
+.hq-minimap-geo-path--ridge {
+  fill: color-mix(in srgb, #3a2820 55%, transparent);
+  stroke: color-mix(in srgb, #a06040 50%, transparent);
+  stroke-width: 1;
+}
+.hq-minimap-geo-path--water {
+  fill: color-mix(in srgb, #1a6888 48%, transparent);
+  stroke: color-mix(in srgb, #3aa8c8 35%, transparent);
+  stroke-width: 0.75;
+}
+.hq-minimap-cardinal {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  font: 700 0.52rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, #dff6ff 72%, transparent);
+  text-shadow: 0 1px 2px color-mix(in srgb, #000 65%, transparent);
+  pointer-events: none;
+  opacity: 0.88;
+}
+.hq-minimap-cardinal--n {
+  color: #f0d060;
+  opacity: 1;
 }
 .hq-minimap.is-navigable .hq-minimap-body {
   cursor: crosshair;
@@ -5444,6 +5521,7 @@
   border-radius: 50%;
   border: 1px dashed color-mix(in srgb, #3dcfb6 18%, transparent);
   pointer-events: none;
+  z-index: 1;
 }
 .hq-minimap-heading {
   position: absolute;
@@ -5457,6 +5535,7 @@
   filter: drop-shadow(0 0 3px color-mix(in srgb, #f0d060 40%, transparent));
   pointer-events: none;
   transform: translateX(-50%);
+  z-index: 2;
 }
 .hq-minimap-you {
   position: absolute;
@@ -5465,6 +5544,7 @@
   width: 0.48rem;
   height: 0.48rem;
   border-radius: 0.1rem;
+  z-index: 3;
   background: #7ec8b8;
   border: 1px solid #041018;
   box-shadow: 0 0 6px color-mix(in srgb, #7ec8b8 55%, transparent);
@@ -5479,6 +5559,7 @@
   transform: translate(-50%, -50%);
   border: 1px solid color-mix(in srgb, #041018 55%, transparent);
   pointer-events: none;
+  z-index: 3;
 }
 .hq-minimap-dot--save-shack { background: #c9a227; box-shadow: 0 0 5px #c9a227; }
 .hq-minimap-dot--outfitter { background: #ff8a5c; box-shadow: 0 0 5px #ff8a5c; }
@@ -5486,6 +5567,8 @@
 .hq-minimap-dot--arena { background: #a78bfa; box-shadow: 0 0 5px #a78bfa; }
 .hq-minimap-dot--barber { background: #ff7090; box-shadow: 0 0 5px #ff7090; }
 .hq-minimap-dot--cape-loom { background: #e8c547; box-shadow: 0 0 5px #e8c547; }
+.hq-minimap-dot--fishing-hut { background: #3dcfb6; box-shadow: 0 0 5px #3dcfb6; }
+.hq-minimap-dot--fishing-spot { background: #7ef0dc; box-shadow: 0 0 5px #7ef0dc; }
 .hq-minimap-dot--remote {
   width: 0.32rem;
   height: 0.32rem;
@@ -5564,6 +5647,95 @@
 }
 .hq-visit-panel--loom .hq-visit-kicker {
   color: #e8c878;
+}
+
+.hq-visit-panel--fish {
+  border-color: color-mix(in srgb, #3dcfb6 42%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #0c1818 88%, #3dcfb6 10%), color-mix(in srgb, #061018 94%, transparent));
+  max-height: min(78vh, 36rem);
+  overflow: auto;
+}
+.hq-visit-panel--fish .hq-visit-kicker {
+  color: #7ef0dc;
+}
+.hq-fish-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin: 0.35rem 0 0.55rem;
+}
+.hq-fish-tab {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, #3dcfb6 28%, transparent);
+  background: color-mix(in srgb, #0a1418 70%, transparent);
+  color: #c8f0e8;
+  font: 600 0.68rem/1.2 "Noto Sans", system-ui, sans-serif;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+.hq-fish-tab.is-on {
+  background: color-mix(in srgb, #3dcfb6 28%, #0a1418);
+  border-color: #3dcfb6;
+  color: #e8fff8;
+}
+.hq-fish-list,
+.hq-fish-log {
+  list-style: none;
+  margin: 0.35rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  max-height: 12rem;
+  overflow: auto;
+}
+.hq-fish-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  appearance: none;
+  border: 1px solid color-mix(in srgb, #3dcfb6 18%, transparent);
+  background: color-mix(in srgb, #081218 75%, transparent);
+  color: #dff8f0;
+  font: 500 0.72rem/1.3 "Noto Sans", system-ui, sans-serif;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  text-align: left;
+}
+.hq-fish-row.is-on {
+  border-color: #7ef0dc;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #7ef0dc 35%, transparent);
+}
+.hq-fish-row small {
+  opacity: 0.75;
+  font-weight: 500;
+}
+.hq-fish-log li {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr auto;
+  gap: 0.35rem;
+  font: 500 0.7rem/1.3 "Noto Sans", system-ui, sans-serif;
+  color: #c8e8e0;
+  padding: 0.28rem 0.2rem;
+  border-bottom: 1px solid color-mix(in srgb, #3dcfb6 12%, transparent);
+}
+.hq-fish-log li.is-locked {
+  opacity: 0.45;
+  font-style: italic;
+}
+.hq-fish-empty {
+  font: 500 0.72rem/1.35 "Noto Sans", system-ui, sans-serif;
+  color: color-mix(in srgb, #dff6ff 55%, transparent);
+  padding: 0.4rem 0.2rem;
+}
+.hq-btn.is-casting {
+  opacity: 0.75;
+  pointer-events: none;
 }
 
 .hq-barber-overlay {

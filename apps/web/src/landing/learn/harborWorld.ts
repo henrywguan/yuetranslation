@@ -33,6 +33,7 @@ import {
   GUAN_TROPICAL_LOOK,
   GUAN_WATER_PLANE,
 } from './harborGuanRealm'
+import { GUAN_FISHING_HUT, nearestGuanFishSpot } from './harborFishing'
 import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
@@ -152,6 +153,8 @@ export type HarborWorldHandle = {
    * No-op while already crewing.
    */
   returnToBoat: () => void
+  /** Brief cast / splash pose for Guan fishing. */
+  playFishingCast: () => void
   resize: () => void
   dispose: () => void
 }
@@ -172,7 +175,7 @@ export const HARBOR_DOCK_X = RIVER + 0.55
  */
 export const HARBOR_MAX_QUEST_SLOTS = 24
 
-/** In-world visitables — Save Shack + Outfitter + Bank + Arena + Barber (+ Guan Cape Loom). */
+/** In-world visitables — Save Shack + Outfitter + Bank + Arena + Barber (+ Guan Cape Loom / Fishing). */
 export type HarborVisitableId =
   | 'save-shack'
   | 'outfitter'
@@ -180,6 +183,8 @@ export type HarborVisitableId =
   | 'arena'
   | 'barber'
   | 'cape-loom'
+  | 'fishing-hut'
+  | 'fishing-spot'
 
 export type HarborVisitable = {
   id: HarborVisitableId
@@ -3331,12 +3336,16 @@ function nearestVisitable(
   z: number,
   realm: HarborRealmId = 'river',
 ): HarborVisitableId | null {
-  // Guan paradise — Customs return portal + Brimhaven Cape Loom (trimmer).
+  // Guan paradise — Customs, Cape Loom, Fishing Lodge, fishing spots.
   if (realm === 'guan') {
     const dCustoms = Math.hypot(GUAN_RETURN_PORTAL.x - x, GUAN_RETURN_PORTAL.z - z)
     if (dCustoms < GUAN_RETURN_PORTAL.radius) return GUAN_RETURN_PORTAL.id
     const dLoom = Math.hypot(GUAN_CAPE_LOOM.x - x, GUAN_CAPE_LOOM.z - z)
     if (dLoom < GUAN_CAPE_LOOM.radius) return GUAN_CAPE_LOOM.id
+    const dHut = Math.hypot(GUAN_FISHING_HUT.x - x, GUAN_FISHING_HUT.z - z)
+    if (dHut < GUAN_FISHING_HUT.radius) return GUAN_FISHING_HUT.id
+    const spot = nearestGuanFishSpot(x, z, 1.8)
+    if (spot) return 'fishing-spot'
     return null
   }
   let best: HarborVisitableId | null = null
@@ -3589,7 +3598,11 @@ export function createHarborWorld(
         o.userData.petal ||
         o.userData.specialHostGlow ||
         o.userData.cigaretteSmoke ||
-        o.userData.barberPole
+        o.userData.barberPole ||
+        o.userData.fishIconFloat ||
+        o.userData.fishIconSpin ||
+        o.userData.fishSpotBob ||
+        o.userData.mistPulse
       )
     const indexRoot = (root: THREE.Object3D) => {
       root.traverse((o) => {
@@ -3637,6 +3650,20 @@ export function createHarborWorld(
   let localSpeechBubble: THREE.Sprite | null = null
   let localSpeechUntil = 0
   const remoteSpeech = new Map<string, { sprite: THREE.Sprite; until: number }>()
+
+  /** Guan fishing cast splash ring (brief). */
+  let fishingCastUntil = 0
+  const fishSplashMat = new THREE.MeshBasicMaterial({
+    color: 0x7ef0dc,
+    transparent: true,
+    opacity: 0.7,
+    depthWrite: false,
+  })
+  const fishSplash = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.045, 6, 18), fishSplashMat)
+  fishSplash.rotation.x = Math.PI / 2
+  fishSplash.visible = false
+  fishSplash.name = 'guan-fish-cast-splash'
+  scene.add(fishSplash)
 
   const clearSpeechBubble = (sprite: THREE.Sprite | null, parent?: THREE.Object3D | null) => {
     if (!sprite) return
@@ -4469,6 +4496,29 @@ export function createHarborWorld(
         o.rotation.z = Math.sin(waterPhase * 1.2 + o.id) * 0.08
         continue
       }
+      if (o.userData.fishIconFloat && !reduced) {
+        const base = (o.userData.fishIconBaseY as number | undefined) ?? o.position.y
+        o.userData.fishIconBaseY = base
+        o.position.y = base + Math.sin(waterPhase * 2.2) * 0.12
+        o.rotation.y = waterPhase * 1.4
+        continue
+      }
+      if (o.userData.fishIconSpin && !reduced) {
+        o.rotation.y += 0.04
+        o.rotation.x = Math.sin(waterPhase * 3) * 0.15
+        continue
+      }
+      if (o.userData.fishSpotBob && !reduced) {
+        const base = (o.userData.fishSpotBaseY as number | undefined) ?? o.position.y
+        o.userData.fishSpotBaseY = base
+        o.position.y = base + Math.sin(waterPhase * 2.8 + o.position.x) * 0.05
+        continue
+      }
+      if (o.userData.mistPulse && !reduced) {
+        const m = (o as THREE.Mesh).material as THREE.MeshBasicMaterial
+        if (m && 'opacity' in m) m.opacity = 0.08 + Math.sin(waterPhase * 0.8) * 0.05
+        continue
+      }
             if (o.userData.barberPole && !reduced) {
         o.rotation.y += 0.035
         continue
@@ -4547,6 +4597,29 @@ if (o.userData.cigaretteSmoke && !reduced) {
         o.position.x += Math.sin(phase * 0.7) * 0.008
         o.rotation.z += 0.02
       }
+    }
+
+    // Fishing cast splash + scout lean
+    if (fishingCastUntil > now) {
+      const t = 1 - (fishingCastUntil - now) / 900
+      const px = travelMode === 'foot' ? footX : boatX
+      const pz = travelMode === 'foot' ? footZ : voyageZ
+      const py = travelMode === 'foot' ? groundYAt(px, pz) + 0.1 : 0.14
+      fishSplash.visible = true
+      fishSplash.position.set(px, py, pz)
+      fishSplash.scale.setScalar(0.55 + t * 1.55)
+      fishSplash.rotation.z = waterPhase * 2
+      fishSplashMat.opacity = Math.max(0, 0.78 * (1 - t))
+      if (travelMode === 'foot' && scoutWalk.visible && !reduced) {
+        scoutWalk.rotation.x = Math.sin(t * Math.PI) * -0.2
+      } else if (travelMode === 'boat' && scout && !reduced) {
+        scout.rotation.x = Math.sin(t * Math.PI) * -0.12
+      }
+    } else if (fishSplash.visible) {
+      fishSplash.visible = false
+      fishSplashMat.opacity = 0.7
+      if (travelMode === 'foot') scoutWalk.rotation.x = 0
+      if (scout) scout.rotation.x = 0
     }
 
     if (flash && now < flashUntil) {
@@ -4685,9 +4758,17 @@ if (o.userData.cigaretteSmoke && !reduced) {
       // Walk to the canoe; boardBoat fires on arrival (same as tapping the hull)
       setMoveTarget(boatX + (isGuan ? 0 : side * 0.2), voyageZ, true)
     },
+    playFishingCast() {
+      if (disposed) return
+      fishingCastUntil = performance.now() + 900
+    },
     resize,
     dispose() {
       disposed = true
+      fishSplash.visible = false
+      scene.remove(fishSplash)
+      fishSplash.geometry.dispose()
+      fishSplashMat.dispose()
       for (const root of remoteById.values()) {
         remotesRoot.remove(root)
         disposeRemoteSailor(root)
