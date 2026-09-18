@@ -41,9 +41,13 @@
 
 ## 3D
 
-Meshy `image_to_3d` job from `scout-female-a-pose.png` (textured + PBR + humanoid rig). When the GLB lands, store as `scout-female.glb` in this folder and wire via a future GLB protagonist loader — do **not** replace procedural Scout until Henry OKs the mesh in-game.
+| File | Role |
+|---|---|
+| [`scout-female.glb`](./scout-female.glb) | Meshy image→3D from A-pose — textured, PBR, humanoid-rigged |
 
-Higgsfield job id: `b17e9020-8f33-465e-a3c5-e220153b42c8`
+Wire via a future GLB protagonist loader — do **not** replace procedural Scout until Henry OKs the mesh in-game.
+
+Higgsfield job id: `b17e9020-8f33-465e-a3c5-e220153b42c8` (completed)
 
 ---
 
