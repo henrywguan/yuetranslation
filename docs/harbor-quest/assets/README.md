@@ -71,7 +71,8 @@ Henry opened full creative audio control for Harbor Quest. These beds/cues are *
 
 Wire via a future GLB protagonist loader — do **not** replace procedural Scout until Henry OKs the mesh in-game.
 
-Female Meshy job: `b17e9020-8f33-465e-a3c5-e220153b42c8` (completed)
+Female Meshy job: `b17e9020-8f33-465e-a3c5-e220153b42c8` (completed)  
+Male Meshy job: `75c9d9ae-f8a9-420b-b2e2-d76c1dca452a`
 
 ---
 
