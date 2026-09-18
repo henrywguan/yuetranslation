@@ -821,6 +821,21 @@ function main() {
   assert.doesNotMatch(wornCss, /grid-template-rows:\s*repeat\(7/, 'fixed 7-row bag grid removed for scroll')
   assert.match(wornCss, /\.hq-bag-grid[^{]*\{[^}]*overflow-y:\s*auto/s, 'bag grid scrolls')
   assert.match(wornCss, /scrollbar-width:\s*thin/, 'bag scrollbar visible')
+  assert.match(
+    wornCss,
+    /\.hq-bag-cell[^{]*\{[^}]*overflow:\s*hidden/s,
+    'bag cells clip SVG icons (no spill across slots)',
+  )
+  assert.match(
+    wornCss,
+    /\.hq-visit-panel\.hq-bag--docked \.hq-bag-grid[^{]*\{[^}]*max-height:\s*100%/s,
+    'docked bag keeps max-height so the grid scrolls instead of spilling',
+  )
+  assert.doesNotMatch(
+    wornCss,
+    /\.hq-visit-panel\.hq-bag--docked \.hq-bag-grid[^{]*\{[^}]*max-height:\s*none/s,
+    'docked bag no longer removes max-height',
+  )
   assert.match(wornCss, /\.hq-play\.is-bag-open/, 'bag-open hides Talk/Explore chrome')
   assert.match(wornCss, /\.hq-bag--float/, 'floating bag layout styles')
   assert.match(wornCss, /\.hq-bag--docked/, 'mobile docked bag layout styles')
@@ -1443,6 +1458,14 @@ function main() {
   assert.match(playAudioSrc, /stopHarborBgm\(\)[\s\S]*startHarborBgm/, 'unlock force-restarts BGM after resume')
   assert.match(playAudioSrc, /stopHarborAmbient\(\)[\s\S]*startHarborAmbient/, 'unlock force-restarts ambient')
   assert.match(playAudioSrc, /harborAudioUnlocked/, 'tracks iOS unlock so mount-silent beds restart once')
+  assert.match(playAudioSrc, /isHarborBgmPlaying/, 'unlock re-kicks when BGM marked stopped')
+  assert.match(playAudioSrc, /visibilitychange/, 'returning to the tab re-unlocks Harbor audio')
+  assert.match(craftSrc, /export function hqSoftMapRepeat/, 'soft UV-repeat helper (no Texture.clone)')
+  assert.match(craftSrc, /generateMipmaps = false/, 'soft DataTextures skip mipmaps (mobile white fix)')
+  assert.doesNotMatch(craftSrc, /LinearMipmapLinearFilter/, 'soft maps no longer use mipmap filter')
+  assert.match(worldSrc, /hqSoftMapRepeat/, 'river soft mats use safe repeat helper')
+  assert.match(guanSrc, /hqSoftMapRepeat/, 'Guan soft mats use safe repeat helper')
+  assert.doesNotMatch(guanSrc, /hqSoft\w+Texture\(\)\.clone\(/, 'Guan no longer clones soft DataTextures')
   const interactSrc = readFileSync(new URL('./harborInteractSfx.ts', import.meta.url), 'utf8')
   assert.match(interactSrc, /export function playHarborFootstep/, 'footstep SFX')
   assert.match(interactSrc, /export function playHarborPaddle/, 'paddle SFX')

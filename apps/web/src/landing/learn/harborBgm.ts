@@ -385,6 +385,8 @@ export function startHarborBgm(theme: HarborBgmTheme = 'river'): void {
 /** Fade out and stop Harbor BGM. */
 export function stopHarborBgm(): void {
   running = false
+  duckHoldCount = 0
+  duckUntil = 0
   if (loopTimer) {
     clearTimeout(loopTimer)
     loopTimer = null

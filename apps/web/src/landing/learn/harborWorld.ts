@@ -17,6 +17,7 @@ import {
   hqRock,
   hqSoftDirtTexture,
   hqSoftGrassTexture,
+  hqSoftMapRepeat,
   hqSoftSandTexture,
   hqSoftThatchTexture,
   hqStampChairs,
@@ -541,12 +542,7 @@ function mat(color: number, extra?: ConstructorParameters<typeof THREE.MeshLambe
 
 /** Soft painterly ground map (LinearFilter) with low UV repeat — matches Guan. */
 function softTiledMat(color: number, tex: THREE.DataTexture, repeat = 2.6) {
-  const map = tex.clone()
-  map.needsUpdate = true
-  map.wrapS = THREE.RepeatWrapping
-  map.wrapT = THREE.RepeatWrapping
-  map.repeat.set(repeat, repeat)
-  return hqMatTex(color, map)
+  return hqMatTex(color, hqSoftMapRepeat(tex, repeat))
 }
 
 /** Faceted oak/pine stand-in — icosa canopy, 6-gon trunk (bible §4.2). */

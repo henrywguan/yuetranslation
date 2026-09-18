@@ -132,6 +132,9 @@ function make128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.Da
  * Soft 128 albedo — LinearFilter painterly look (no nearest pixel stair-steps).
  * Used for world ground / roofs (river banks + Guan). Wood / stone / lava stay
  * on `make128DataTex` nearest for chunky prop read.
+ *
+ * No mipmaps: DataTexture + mipmapped linear clones go white on many
+ * mobile GPUs (iOS Safari). Mag/min LinearFilter is enough for soft blotches.
  */
 function makeSoft128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.DataTexture {
   const hit = texCache.get(key)
@@ -140,13 +143,35 @@ function makeSoft128DataTex(key: string, fill: (data: Uint8Array) => void): THRE
   fill(data)
   const tex = new THREE.DataTexture(data, 128, 128)
   tex.magFilter = THREE.LinearFilter
-  tex.minFilter = THREE.LinearMipmapLinearFilter
-  tex.generateMipmaps = true
+  tex.minFilter = THREE.LinearFilter
+  tex.generateMipmaps = false
   tex.colorSpace = THREE.SRGBColorSpace
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.needsUpdate = true
   texCache.set(key, tex)
   return tex
+}
+
+/**
+ * Unique UV-repeat view of a DataTexture.
+ * Shares the pixel buffer (read-only GPU upload) — avoids Texture.clone()
+ * dropping image data / going white on mobile. Preserves mag/min filters.
+ */
+export function hqSoftMapRepeat(
+  tex: THREE.DataTexture,
+  repeatU: number,
+  repeatV = repeatU,
+): THREE.DataTexture {
+  const img = tex.image as { data: Uint8Array; width: number; height: number }
+  const map = new THREE.DataTexture(img.data, img.width, img.height)
+  map.magFilter = tex.magFilter
+  map.minFilter = tex.minFilter
+  map.generateMipmaps = false
+  map.colorSpace = tex.colorSpace
+  map.wrapS = map.wrapT = THREE.RepeatWrapping
+  map.repeat.set(repeatU, repeatV)
+  map.needsUpdate = true
+  return map
 }
 
 function setPx(data: Uint8Array, x: number, y: number, r: number, g: number, b: number) {
