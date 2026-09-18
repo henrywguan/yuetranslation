@@ -27,6 +27,14 @@ import {
   hqWindow,
 } from './harborCraft'
 import {
+  harborFigureArm,
+  harborFigureEars,
+  harborFigureFace,
+  harborFigureHead,
+  harborFigureNeck,
+  harborFigureTorso,
+} from './harborFigure'
+import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
   clampGuanFootTarget,
@@ -1183,8 +1191,8 @@ function attachDialogueBubble(npc: THREE.Object3D, label?: string) {
 }
 
 /**
- * Low-poly Chinese-styled figure — RS-era proportions (oversized head,
- * mitten hands, 6-gon limbs) + Harbor clothing kit by role.
+ * Low-poly Chinese-styled figure — RS-era proportions (faceted head, flush
+ * face eyes, 6-gon limbs, mitten hands) + Harbor clothing kit by role.
  */
 function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const g = new THREE.Group()
@@ -1192,6 +1200,7 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const scale = child ? 0.72 : 1
   const skin = hqMat(P.skin)
   const hair = hqMat(P.hair)
+  const robeMat = (hex: number) => hqMat(hex)
 
   const palette: Record<HarborNpcRole, { robe: number; trim: number; pants: number }> = {
     villager: { robe: P.clothNavy, trim: P.trimGold, pants: P.pants },
@@ -1202,29 +1211,44 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
     ferryman: { robe: P.clothTeal, trim: 0x8a6a40, pants: P.pants },
   }
   const colors = palette[role]
+  const cloth = robeMat(colors.robe)
 
-  // Short thick legs
+  // Short thick legs (6-gon posts)
   for (const sx of [-0.1, 0.1] as const) {
     g.add(hqPost(0.06, 0.07, 0.4, colors.pants, sx, 0.22, 0))
     g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
   }
-  // Stocky torso
-  const torsoH = role === 'scholar' || role === 'merchant' ? 0.52 : 0.4
-  g.add(hqBox(0.36, torsoH, 0.24, colors.robe, 0, 0.42 + torsoH / 2 - 0.05, 0))
+  // Tapered 6-gon torso
+  const torsoH = role === 'scholar' || role === 'merchant' ? 0.5 : 0.4
+  const torso = harborFigureTorso(cloth, 0.42 + torsoH / 2 - 0.05, {
+    shoulder: 0.18,
+    waist: 0.15,
+    h: torsoH,
+    depth: 0.24,
+  })
+  g.add(torso)
   g.add(hqBox(0.38, 0.08, 0.26, colors.trim, 0, 0.55, 0))
   if (role === 'scholar' || role === 'merchant') {
-    g.add(hqBox(0.36, 0.28, 0.2, colors.robe, 0, 0.38, 0))
+    g.add(
+      harborFigureTorso(cloth, 0.38, {
+        shoulder: 0.17,
+        waist: 0.16,
+        h: 0.28,
+        depth: 0.2,
+      }),
+    )
   }
-  // Arms + mittens
-  for (const sx of [-1, 1] as const) {
-    g.add(hqPost(0.055, 0.065, 0.32, colors.robe, sx * 0.24, 0.72, 0))
-    g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
+  // Segmented arms + mittens
+  for (const side of [-1, 1] as const) {
+    g.add(harborFigureArm(cloth, skin, side, 0.78, 0.24))
   }
-  // Oversized head
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-  head.position.y = 1.08
-  g.add(head)
-  const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
+  // Faceted head + flush face (no jutting eye orbs)
+  const headY = 1.08
+  g.add(harborFigureHead(skin, headY))
+  g.add(harborFigureNeck(skin, headY))
+  g.add(harborFigureEars(skin, headY))
+  g.add(harborFigureFace(skin, headY, { showBrows: true, showMouth: true }))
+  const bun = new THREE.Mesh(new THREE.IcosahedronGeometry(0.065, 0), hair)
   bun.position.set(0, 1.2, -0.03)
   g.add(bun)
 
@@ -1464,9 +1488,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       g.add(hqPost(0.055, 0.065, 0.32, 0x1e5a58, sx * 0.24, 0.72, 0))
       g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
     }
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-    head.position.y = 1.08
-    g.add(head)
+    g.add(harborFigureHead(skin, 1.08))
+    g.add(harborFigureNeck(skin, 1.08))
+    g.add(harborFigureEars(skin, 1.08))
+    g.add(harborFigureFace(skin, 1.08, { showBrows: true, showMouth: true }))
     const bun = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), hair)
     bun.position.set(0, 1.2, -0.04)
     g.add(bun)
@@ -1489,9 +1514,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       g.add(hqPost(0.055, 0.065, 0.34, 0x1e2430, sx * 0.25, 0.74, 0))
       g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.25, 0.54, 0.02))
     }
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-    head.position.y = 1.1
-    g.add(head)
+    g.add(harborFigureHead(skin, 1.1))
+    g.add(harborFigureNeck(skin, 1.1))
+    g.add(harborFigureEars(skin, 1.1))
+    g.add(harborFigureFace(skin, 1.1, { showBrows: true, showMouth: true }))
     // Skullcap + queue nod (hair mat under ink cap)
     const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), hair)
     topknot.position.set(0, 1.28, -0.02)
@@ -1517,9 +1543,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       g.add(hqPost(0.055, 0.065, 0.3, 0xc04068, sx * 0.24, 0.72, 0))
       g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
     }
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-    head.position.y = 1.06
-    g.add(head)
+    g.add(harborFigureHead(skin, 1.06))
+    g.add(harborFigureNeck(skin, 1.06))
+    g.add(harborFigureEars(skin, 1.06))
+    g.add(harborFigureFace(skin, 1.06, { showBrows: true, showMouth: true }))
     // Hair rollers
     for (const [x, z] of [
       [-0.1, -0.02],
@@ -1564,9 +1591,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       g.add(hqPost(0.055, 0.065, 0.32, 0xf2efe8, sx * 0.24, 0.72, 0))
       g.add(hqBox(0.1, 0.1, 0.1, P.skin, sx * 0.24, 0.52, 0.02))
     }
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 6), skin)
-    head.position.y = 1.08
-    g.add(head)
+    g.add(harborFigureHead(skin, 1.08))
+    g.add(harborFigureNeck(skin, 1.08))
+    g.add(harborFigureEars(skin, 1.08))
+    g.add(harborFigureFace(skin, 1.08, { showBrows: true, showMouth: true }))
     const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), hair)
     topknot.position.set(0, 1.26, -0.02)
     g.add(topknot)
@@ -1594,9 +1622,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       g.add(hqPost(0.06, 0.07, 0.36, 0x8a1828, sx * 0.28, 0.78, 0))
       g.add(hqBox(0.11, 0.11, 0.11, P.skin, sx * 0.28, 0.56, 0.02))
     }
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 6), skin)
-    head.position.y = 1.14
-    g.add(head)
+    g.add(harborFigureHead(skin, 1.14))
+    g.add(harborFigureNeck(skin, 1.14))
+    g.add(harborFigureEars(skin, 1.14))
+    g.add(harborFigureFace(skin, 1.14, { showBrows: true, showMouth: true }))
     // Horned helmet
     g.add(hqBox(0.34, 0.14, 0.3, 0x2a1a20, 0, 1.28, 0))
     for (const sx of [-1, 1] as const) {

@@ -17,6 +17,7 @@ import {
   hqPost,
   hqRock,
 } from './harborCraft'
+import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
 import { buildNametagSprite } from './harborRemoteAvatars'
 
 function mulberry32(seed: number) {
@@ -141,9 +142,14 @@ function fishingOverseer(): THREE.Group {
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.7, 6), hqMat(0x1e3a48))
   body.position.set(0.85, 0.45, 0.55)
   g.add(body)
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 5), hqMatSmooth(0xe8c4a8))
-  head.position.set(0.85, 0.95, 0.55)
-  g.add(head)
+  const fishSkin = hqMat(0xe8c4a8)
+  const bust = new THREE.Group()
+  bust.position.set(0.85, 0.95, 0.55)
+  bust.add(harborFigureHead(fishSkin, 0, { r: 0.16 }))
+  bust.add(harborFigureNeck(fishSkin, 0, 0.16))
+  bust.add(harborFigureEars(fishSkin, 0, 0.16))
+  bust.add(harborFigureFace(fishSkin, 0, { showBrows: true, showMouth: true }))
+  g.add(bust)
 
   // Floating fishing icon above overseer (animated in world tick)
   const iconRoot = new THREE.Group()

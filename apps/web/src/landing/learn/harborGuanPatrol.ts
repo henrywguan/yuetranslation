@@ -11,6 +11,7 @@ import {
   hqMat,
   hqPost,
 } from './harborCraft'
+import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { clampGuanFootTarget, guanGroundY, GUAN_LANDMARKS, isGuanLand } from './harborGuanRealm'
 
@@ -146,9 +147,10 @@ function armoredChassis(kit: PatrolKit): {
   armR.add(hqBox(0.1, 0.1, 0.1, P.skin, 0, -0.38, 0.02))
   root.add(armR)
 
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 6), skin)
-  head.position.y = 1.18
-  root.add(head)
+  root.add(harborFigureHead(skin, 1.18, { r: 0.16 }))
+  root.add(harborFigureNeck(skin, 1.18, 0.16))
+  root.add(harborFigureEars(skin, 1.18, 0.16))
+  root.add(harborFigureFace(skin, 1.18, { showBrows: true, showMouth: false }))
 
   return { root, legL, legR, armL, armR }
 }
