@@ -1,16 +1,25 @@
 /**
  * Harbor Quest character appearance — original River Scout cosmetics.
  * OSRS-style creation grammar (gender + arrow rows); not Jagex IP.
+ * v3: eyes + face styles so barber / create change identity at distance.
  */
 
 export type HarborGender = 'male' | 'female'
 
-export type HarborHairStyle = 'short' | 'bun' | 'long' | 'fringe' | 'topknot'
+export type HarborHairStyle = 'short' | 'bun' | 'long' | 'fringe' | 'topknot' | 'twin' | 'wave'
+
+export type HarborEyeStyle = 'round' | 'almond' | 'bright' | 'sleepy'
+
+export type HarborFaceStyle = 'soft' | 'sharp' | 'cheerful' | 'calm'
 
 export type HarborAppearance = {
   skinTone: number
   hairStyle: HarborHairStyle
   hairColor: number
+  eyeStyle: HarborEyeStyle
+  /** Index into HARBOR_EYE_COLORS. */
+  eyeColor: number
+  faceStyle: HarborFaceStyle
 }
 
 export const HARBOR_HAIR_STYLES: readonly HarborHairStyle[] = [
@@ -19,6 +28,8 @@ export const HARBOR_HAIR_STYLES: readonly HarborHairStyle[] = [
   'long',
   'fringe',
   'topknot',
+  'twin',
+  'wave',
 ] as const
 
 export const HARBOR_HAIR_STYLE_LABEL: Record<HarborHairStyle, { en: string; zh: string }> = {
@@ -27,6 +38,36 @@ export const HARBOR_HAIR_STYLE_LABEL: Record<HarborHairStyle, { en: string; zh: 
   long: { en: 'River length', zh: '河長髮' },
   fringe: { en: 'Fringe cut', zh: '劉海' },
   topknot: { en: 'Jade topknot', zh: '玉頂髻' },
+  twin: { en: 'Twin loops', zh: '雙環髻' },
+  wave: { en: 'Harbor wave', zh: '港灣波浪' },
+}
+
+export const HARBOR_EYE_STYLES: readonly HarborEyeStyle[] = [
+  'round',
+  'almond',
+  'bright',
+  'sleepy',
+] as const
+
+export const HARBOR_EYE_STYLE_LABEL: Record<HarborEyeStyle, { en: string; zh: string }> = {
+  round: { en: 'Round', zh: '圓眼' },
+  almond: { en: 'Almond', zh: '杏眼' },
+  bright: { en: 'Bright', zh: '亮眼' },
+  sleepy: { en: 'Sleepy', zh: '慵眼' },
+}
+
+export const HARBOR_FACE_STYLES: readonly HarborFaceStyle[] = [
+  'soft',
+  'sharp',
+  'cheerful',
+  'calm',
+] as const
+
+export const HARBOR_FACE_STYLE_LABEL: Record<HarborFaceStyle, { en: string; zh: string }> = {
+  soft: { en: 'Soft', zh: '柔和' },
+  sharp: { en: 'Sharp', zh: '分明' },
+  cheerful: { en: 'Cheerful', zh: '開朗' },
+  calm: { en: 'Calm', zh: '沉靜' },
 }
 
 /** Posterized skin tones (Harbor swatches). */
@@ -51,10 +92,23 @@ export const HARBOR_HAIR_COLORS: readonly number[] = [
   0xe8e0d0, // pearl white
 ] as const
 
+/** Eye dyes. */
+export const HARBOR_EYE_COLORS: readonly number[] = [
+  0x1a1814, // ink
+  0x3a2818, // brown
+  0x2a4a58, // harbor
+  0x3dcfb6, // jade
+  0x4a6aaa, // dusk blue
+  0x8a2a30, // festival
+] as const
+
 export const HARBOR_DEFAULT_APPEARANCE: HarborAppearance = {
   skinTone: 1,
   hairStyle: 'bun',
   hairColor: 0,
+  eyeStyle: 'round',
+  eyeColor: 0,
+  faceStyle: 'soft',
 }
 
 export function sanitizeHarborGender(raw: unknown): HarborGender {
@@ -76,11 +130,28 @@ export function sanitizeHarborAppearance(raw: unknown): HarborAppearance {
     const i = Math.floor(o.hairColor)
     if (i >= 0 && i < HARBOR_HAIR_COLORS.length) base.hairColor = i
   }
+  if (typeof o.eyeStyle === 'string' && (HARBOR_EYE_STYLES as readonly string[]).includes(o.eyeStyle)) {
+    base.eyeStyle = o.eyeStyle as HarborEyeStyle
+  }
+  if (typeof o.eyeColor === 'number' && Number.isFinite(o.eyeColor)) {
+    const i = Math.floor(o.eyeColor)
+    if (i >= 0 && i < HARBOR_EYE_COLORS.length) base.eyeColor = i
+  }
+  if (typeof o.faceStyle === 'string' && (HARBOR_FACE_STYLES as readonly string[]).includes(o.faceStyle)) {
+    base.faceStyle = o.faceStyle as HarborFaceStyle
+  }
   return base
 }
 
 export function appearanceEqual(a: HarborAppearance, b: HarborAppearance): boolean {
-  return a.skinTone === b.skinTone && a.hairStyle === b.hairStyle && a.hairColor === b.hairColor
+  return (
+    a.skinTone === b.skinTone &&
+    a.hairStyle === b.hairStyle &&
+    a.hairColor === b.hairColor &&
+    a.eyeStyle === b.eyeStyle &&
+    a.eyeColor === b.eyeColor &&
+    a.faceStyle === b.faceStyle
+  )
 }
 
 /** Guest / local display name rules (mirrors Account Hub: 3–24, start alnum). */

@@ -37,6 +37,11 @@ import { GUAN_FISHING_HUT, nearestGuanFishSpot } from './harborFishing'
 import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
+  ensureHarborProtagonistLimbs,
+  tickHarborProtagonistAnim,
+  type HarborProtagonistAnimState,
+} from './harborProtagonistAnim'
+import {
   HARBOR_DEFAULT_APPEARANCE,
   type HarborAppearance,
   type HarborGender,
@@ -3630,6 +3635,8 @@ export function createHarborWorld(
   scoutWalk.visible = false
   scene.add(scoutWalk)
   applyLookToProtagonist(scoutWalk, currentLook)
+  ensureHarborProtagonistLimbs(scoutWalk)
+  let scoutAnim: HarborProtagonistAnimState = { mode: 'idle', t: 0 }
   /** Seated land mesh — shown when the sailor sits on a chair / stool. */
   let scoutSit: THREE.Object3D | null = null
   let sitting = false
@@ -4268,11 +4275,15 @@ export function createHarborWorld(
           footZ += (dz / dist) * step
           const face = Math.atan2(dx, dz)
           scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
-          const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
+          scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, { reduced })
+          const walkBob = reduced ? 0 : Math.abs(Math.sin(scoutAnim.t * 9)) * 0.04
           scoutWalk.position.set(footX, groundYAt(footX, footZ) + walkBob, footZ)
           // Don't open landmarks mid-walk either
           if (!playerDirected) emitVisitable(null)
         } else {
+          scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: sitting ? 'sit' : 'idle' }, dt, {
+            reduced,
+          })
           scoutWalk.position.set(footX, gy, footZ)
           if (playerDirected) destMarker.visible = false
           if (sitTarget) {

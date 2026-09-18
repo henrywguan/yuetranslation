@@ -10,6 +10,7 @@
 import * as THREE from 'three'
 import {
   HARBOR_DEFAULT_APPEARANCE,
+  HARBOR_EYE_COLORS,
   HARBOR_HAIR_COLORS,
   HARBOR_SKIN_TONES,
   sanitizeHarborAppearance,
@@ -122,9 +123,66 @@ function addHair(
     const back = part(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.1), hairMat), 'hair')
     back.position.set(0, headY - 0.02, -0.12)
     hairRoot.add(back)
+  } else if (style === 'twin') {
+    for (const sx of [-0.12, 0.12] as const) {
+      const loop = part(new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.025, 5, 8), hairMat), 'hair')
+      loop.position.set(sx, headY + 0.1, -0.02)
+      loop.rotation.y = Math.PI / 2
+      hairRoot.add(loop)
+    }
+    const bang = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.08), hairMat), 'hair')
+    bang.position.set(0, headY + 0.04, 0.1)
+    hairRoot.add(bang)
+  } else if (style === 'wave') {
+    const mound = part(new THREE.Mesh(new THREE.SphereGeometry(0.14, 7, 5), hairMat), 'hair')
+    mound.scale.set(1.15, 0.7, 1.1)
+    mound.position.set(0, headY + 0.08, -0.02)
+    hairRoot.add(mound)
+    const wave = part(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.1, 0.12), hairMat), 'hair')
+    wave.position.set(0, headY + 0.02, 0.1)
+    wave.rotation.x = -0.25
+    hairRoot.add(wave)
   }
 
   g.add(hairRoot)
+}
+
+function addEyes(
+  g: THREE.Group,
+  appearance: HarborAppearance,
+  headY: number,
+) {
+  const eyeRoot = new THREE.Group()
+  eyeRoot.name = 'scout-eyes'
+  eyeRoot.userData.harborEyes = true
+  const iris = HARBOR_EYE_COLORS[appearance.eyeColor] ?? 0x1a1814
+  const eyeMat = mat(iris)
+  const white = mat(0xf0f0e8)
+  const style = appearance.eyeStyle
+  const w = style === 'almond' ? 0.045 : style === 'bright' ? 0.055 : 0.05
+  const h = style === 'sleepy' ? 0.025 : style === 'almond' ? 0.035 : 0.04
+  const yOff = style === 'sleepy' ? -0.01 : 0
+  for (const sx of [-0.05, 0.05] as const) {
+    const sclera = part(new THREE.Mesh(new THREE.BoxGeometry(w + 0.015, h + 0.01, 0.02), white), 'skin')
+    sclera.position.set(sx, headY + yOff, 0.13)
+    eyeRoot.add(sclera)
+    const pupil = part(new THREE.Mesh(new THREE.BoxGeometry(w * 0.55, h * 0.7, 0.022), eyeMat), 'skin')
+    pupil.position.set(sx, headY + yOff, 0.14)
+    eyeRoot.add(pupil)
+  }
+  if (appearance.faceStyle === 'cheerful') {
+    const blushL = part(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.015), mat(0xe8a090)), 'skin')
+    blushL.position.set(-0.08, headY - 0.04, 0.12)
+    eyeRoot.add(blushL)
+    const blushR = part(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.015), mat(0xe8a090)), 'skin')
+    blushR.position.set(0.08, headY - 0.04, 0.12)
+    eyeRoot.add(blushR)
+  } else if (appearance.faceStyle === 'sharp') {
+    const brow = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.015, 0.02), mat(0x2a2018)), 'hair')
+    brow.position.set(0, headY + 0.05, 0.13)
+    eyeRoot.add(brow)
+  }
+  g.add(eyeRoot)
 }
 
 /**
@@ -144,6 +202,9 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.userData.originalHarborAsset = true
   g.userData.gender = gender
   g.userData.appearance = appearance
+  g.userData.pelvisY = pose === 'standing' ? 0.48 : 0.28
+  g.userData.headY = (pose === 'standing' ? 0.48 : 0.28) + 0.58
+  g.userData.harborModular = true
 
   const skinHex = HARBOR_SKIN_TONES[appearance.skinTone] ?? HARBOR_PROTAGONIST_PALETTE.skin
   const hairHex = HARBOR_HAIR_COLORS[appearance.hairColor] ?? HARBOR_PROTAGONIST_PALETTE.hair
@@ -230,6 +291,7 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(neck)
 
   addHair(g, appearance.hairStyle, headY, hairMat, gender)
+  addEyes(g, appearance, headY)
 
   if (!bareHead) {
     const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 8), straw), 'hat')

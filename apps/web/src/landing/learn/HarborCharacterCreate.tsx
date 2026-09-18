@@ -3,6 +3,11 @@ import * as THREE from 'three'
 import { saveUsername } from '../../lib/api'
 import {
   HARBOR_DEFAULT_APPEARANCE,
+  HARBOR_EYE_COLORS,
+  HARBOR_EYE_STYLE_LABEL,
+  HARBOR_EYE_STYLES,
+  HARBOR_FACE_STYLE_LABEL,
+  HARBOR_FACE_STYLES,
   HARBOR_HAIR_COLORS,
   HARBOR_HAIR_STYLE_LABEL,
   HARBOR_HAIR_STYLES,
@@ -206,6 +211,8 @@ export function HarborCharacterCreate({
   }, [gender, appearance, look, hatOn])
 
   const hairStyleIndex = Math.max(0, HARBOR_HAIR_STYLES.indexOf(appearance.hairStyle))
+  const eyeStyleIndex = Math.max(0, HARBOR_EYE_STYLES.indexOf(appearance.eyeStyle))
+  const faceStyleIndex = Math.max(0, HARBOR_FACE_STYLES.indexOf(appearance.faceStyle))
 
   const bumpAppearance = (patch: Partial<HarborAppearance>) => {
     setAppearance((a) => ({ ...a, ...patch }))
@@ -410,6 +417,45 @@ export function HarborCharacterCreate({
                   }
                   onNext={() =>
                     bumpAppearance({ hairColor: cycleIndex(HARBOR_HAIR_COLORS.length, appearance.hairColor, 1) })
+                  }
+                />
+                <ArrowRow
+                  label="Eyes"
+                  value={HARBOR_EYE_STYLE_LABEL[appearance.eyeStyle].en}
+                  onPrev={() =>
+                    bumpAppearance({
+                      eyeStyle: HARBOR_EYE_STYLES[cycleIndex(HARBOR_EYE_STYLES.length, eyeStyleIndex, -1)]!,
+                    })
+                  }
+                  onNext={() =>
+                    bumpAppearance({
+                      eyeStyle: HARBOR_EYE_STYLES[cycleIndex(HARBOR_EYE_STYLES.length, eyeStyleIndex, 1)]!,
+                    })
+                  }
+                />
+                <SwatchRow
+                  label="Iris"
+                  colors={HARBOR_EYE_COLORS}
+                  index={appearance.eyeColor}
+                  onPrev={() =>
+                    bumpAppearance({ eyeColor: cycleIndex(HARBOR_EYE_COLORS.length, appearance.eyeColor, -1) })
+                  }
+                  onNext={() =>
+                    bumpAppearance({ eyeColor: cycleIndex(HARBOR_EYE_COLORS.length, appearance.eyeColor, 1) })
+                  }
+                />
+                <ArrowRow
+                  label="Face"
+                  value={HARBOR_FACE_STYLE_LABEL[appearance.faceStyle].en}
+                  onPrev={() =>
+                    bumpAppearance({
+                      faceStyle: HARBOR_FACE_STYLES[cycleIndex(HARBOR_FACE_STYLES.length, faceStyleIndex, -1)]!,
+                    })
+                  }
+                  onNext={() =>
+                    bumpAppearance({
+                      faceStyle: HARBOR_FACE_STYLES[cycleIndex(HARBOR_FACE_STYLES.length, faceStyleIndex, 1)]!,
+                    })
                   }
                 />
                 <ArrowRow

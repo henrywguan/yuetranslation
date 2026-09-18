@@ -1081,6 +1081,17 @@ function main() {
   assert.ok(codex.families >= 12, `expected mesh families, got ${codex.families}`)
   assert.ok(codex.uniqueMeshes < codex.total, 'many items share mesh families (recolors)')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-straw')!).uniqueMesh, false)
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-bamboo')!).uniqueMesh, true)
+  assert.match(
+    readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+    /buildClothingMesh/,
+    'v1 silhouette wardrobe builders',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+    /tickHarborProtagonistAnim|Walking_A/,
+    'v4 KayKit-style walk clip vocabulary',
+  )
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hand-fan')!).uniqueMesh, true)
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'boat-sampan')!).family, 'hull-canoe')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-phoenix')!).family, 'lantern-silk')

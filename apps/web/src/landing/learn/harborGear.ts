@@ -19,6 +19,12 @@ import {
   tagVipLanternAnim,
 } from './harborVipGear'
 import { applyTierDetailOverlays, enrichHandheldProp } from './harborGearDetail'
+import {
+  buildClothingMesh,
+  clearHarborClothingMeshes,
+  clothingUsesScoutBase,
+  setScoutBaseClothingVisible,
+} from './harborClothingMeshes'
 
 export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand' | 'boat' | 'lantern'
 
@@ -240,14 +246,23 @@ export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
       return {
         kind: 'prop',
         family: `vip-hat-${id}`,
-        label: 'VIP crest overlay · animated',
+        label: 'VIP crest overlay · unique silhouette',
         uniqueMesh: true,
       }
     }
+    if (id === 'hat-bamboo') {
+      return { kind: 'prop', family: 'hat-bamboo-coolie', label: 'Bamboo coolie cone', uniqueMesh: true }
+    }
+    if (id === 'hat-scholar') {
+      return { kind: 'prop', family: 'hat-scholar-soft-cap', label: 'Scholar soft cap', uniqueMesh: true }
+    }
+    if (id === 'hat-fisherman') {
+      return { kind: 'prop', family: 'hat-fisherman-scarf', label: 'Fisherman headscarf', uniqueMesh: true }
+    }
     return {
       kind: 'recolor',
-      family: `scout-${slot}`,
-      label: 'Shared scout mesh · recolor',
+      family: 'scout-hat',
+      label: 'Shared scout straw · recolor',
       uniqueMesh: false,
     }
   }
@@ -255,23 +270,83 @@ export function harborGearMeshInfo(item: HarborGearItem): HarborGearMeshInfo {
     if (id === 'top-night' || id === 'top-jade-immortal' || id === 'top-starlit-coat') {
       return {
         kind: 'prop',
-        family: `vip-cape-${id}`,
-        label: 'VIP cape overlay · animated',
+        family: id === 'top-night' ? 'top-phoenix-sovereign' : id === 'top-jade-immortal' ? 'top-jade-immortal-mantle' : 'top-starlit-admiral-coat',
+        label: 'VIP robe · unique silhouette',
+        uniqueMesh: true,
+      }
+    }
+    if (id === 'top-jade') {
+      return { kind: 'prop', family: 'top-jade-river-tunic', label: 'Jade river tunic', uniqueMesh: true }
+    }
+    if (id === 'top-merchant') {
+      return { kind: 'prop', family: 'top-merchant-plum', label: 'Merchant plum coat', uniqueMesh: true }
+    }
+    if (id === 'top-ferry') {
+      return { kind: 'prop', family: 'top-ferry-linen-wrap', label: 'Ferry linen wrap', uniqueMesh: true }
+    }
+    return {
+      kind: 'recolor',
+      family: 'scout-top',
+      label: 'Shared scout robe · recolor',
+      uniqueMesh: false,
+    }
+  }
+  if (slot === 'bottom') {
+    if (id === 'bottom-phoenix' || id === 'bottom-jade-flow' || id === 'bottom-starlit-greaves') {
+      return {
+        kind: 'prop',
+        family:
+          id === 'bottom-phoenix'
+            ? 'bottom-phoenix-flame'
+            : id === 'bottom-jade-flow'
+              ? 'bottom-jade-flow-culotte'
+              : 'bottom-starlit-greaves',
+        label: 'VIP legs · unique silhouette',
+        uniqueMesh: true,
+      }
+    }
+    if (id === 'bottom-reed' || id === 'bottom-crimson' || id === 'bottom-ink') {
+      return {
+        kind: 'prop',
+        family: id === 'bottom-reed' ? 'bottom-reed-wrap' : id === 'bottom-crimson' ? 'bottom-crimson-festival' : 'bottom-ink-culotte',
+        label: 'Wide wrap / culotte',
         uniqueMesh: true,
       }
     }
     return {
       kind: 'recolor',
-      family: `scout-${slot}`,
-      label: 'Shared scout mesh · recolor',
+      family: 'scout-bottom',
+      label: 'Shared scout trousers · recolor',
       uniqueMesh: false,
     }
   }
-  if (slot === 'bottom' || slot === 'shoes') {
+  if (slot === 'shoes') {
+    if (id === 'shoes-storm' || id === 'shoes-jade-cloud' || id === 'shoes-starlit-boots') {
+      return {
+        kind: 'prop',
+        family:
+          id === 'shoes-storm'
+            ? 'shoes-phoenix-ash'
+            : id === 'shoes-jade-cloud'
+              ? 'shoes-jade-cloud-slipper'
+              : 'shoes-starlit-deck',
+        label: 'VIP footwear · unique silhouette',
+        uniqueMesh: true,
+      }
+    }
+    if (id === 'shoes-straw') {
+      return { kind: 'prop', family: 'shoes-straw-sandal', label: 'Straw sandals', uniqueMesh: true }
+    }
+    if (id === 'shoes-lacquer') {
+      return { kind: 'prop', family: 'shoes-lacquer-court', label: 'Lacquer court shoes', uniqueMesh: true }
+    }
+    if (id === 'shoes-jade') {
+      return { kind: 'prop', family: 'shoes-jade-stitch', label: 'Jade-stitched boots', uniqueMesh: true }
+    }
     return {
       kind: 'recolor',
-      family: `scout-${slot}`,
-      label: 'Shared scout mesh · recolor',
+      family: 'scout-shoes',
+      label: 'Shared scout boots · recolor',
       uniqueMesh: false,
     }
   }
@@ -606,12 +681,61 @@ export function lookColors(look: HarborLook) {
 }
 
 
-/** Recolor tagged body parts + attach handheld + VIP overlays from an equipped look. */
+/**
+ * Apply wardrobe: swap unique clothing silhouettes (v1), recolor tagged parts,
+ * attach handheld + VIP overlays + tier detail.
+ */
 export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
+  const gender = (root.userData.gender as 'male' | 'female' | undefined) ?? 'male'
+  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.48
+  const headY = typeof root.userData.headY === 'number' ? root.userData.headY : pelvisY + 0.58
+
+  clearHarborClothingMeshes(root)
+
+  const slots: HarborGearSlot[] = ['hat', 'top', 'bottom', 'shoes']
+  let anySwap = false
+  for (const slot of slots) {
+    const id = look[slot]
+    const item = BY_ID.get(id) ?? BY_ID.get(HARBOR_DEFAULT_LOOK[slot])!
+    const meshInfo = harborGearMeshInfo(item)
+    if (clothingUsesScoutBase(meshInfo.family)) continue
+    const piece = buildClothingMesh(slot, meshInfo.family, {
+      color: item.color,
+      accent: item.accent ?? item.color,
+      pelvisY,
+      headY,
+      gender,
+    })
+    if (piece) {
+      root.add(piece)
+      anySwap = true
+    }
+  }
+  // When any slot uses a custom silhouette, hide the overlapping scout base clothes.
+  setScoutBaseClothingVisible(root, !anySwap)
+  // If only some slots swap, still hide base parts for swapped slots only.
+  if (anySwap) {
+    const swapped = new Set<string>()
+    for (const slot of slots) {
+      const item = BY_ID.get(look[slot]) ?? BY_ID.get(HARBOR_DEFAULT_LOOK[slot])!
+      if (!clothingUsesScoutBase(harborGearMeshInfo(item).family)) swapped.add(slot)
+    }
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh || mesh.userData.harborClothing) return
+      const part = mesh.userData.harborPart as string | undefined
+      if (!part) return
+      if (part === 'hat' || part === 'hatAccent') mesh.visible = !swapped.has('hat')
+      else if (part === 'top' || part === 'topAccent') mesh.visible = !swapped.has('top')
+      else if (part === 'bottom') mesh.visible = !swapped.has('bottom')
+      else if (part === 'shoes') mesh.visible = !swapped.has('shoes')
+    })
+  }
+
   const colors = lookColors(look)
   root.traverse((o) => {
     const mesh = o as THREE.Mesh
-    if (!mesh.isMesh) return
+    if (!mesh.isMesh || !mesh.visible) return
     const part = mesh.userData.harborPart as string | undefined
     if (!part) return
     const mat = mesh.material as THREE.MeshLambertMaterial
