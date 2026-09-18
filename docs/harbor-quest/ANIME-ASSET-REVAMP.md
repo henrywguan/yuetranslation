@@ -34,3 +34,15 @@
 - `apps/web/src/landing/learn/harborClothingMeshes.ts` — silhouette wardrobe
 - `apps/web/src/landing/learn/harborWorld.ts` — lighting / architecture softness
 - `docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md` §3.1 / §4 — characters + world anime lock overrides era-chunky defaults
+
+
+## Wave 2+ (2026-09-18 cont.)
+
+| Layer | Change |
+|---|---|
+| Roofs | `hqAnimeHipRoof` on village homes + all landmark buildings (Save / Outfitter / Bank / Arena / Barber) + boat cabins |
+| Boats | Tapered cylinder hulls, soft prow cones, cylinder gunwales — not box barges |
+| NPCs | Soft sash cylinders; role hair volumes (no box hats); landmark hosts unique soft kits |
+| Hair | Scout styles polished toward v2 sheets (short / topknot / long / fringe / curtains / ridge / pony / twin / wave) |
+| Clothes | VIP families get soft emissive sheen on silhouette meshes |
+| Map | `HARBOR_EXPLORE_X` → 22; inland terrace shelf; denser village/forest inland (Where Winds Meet depth — original Harbor geometry) |

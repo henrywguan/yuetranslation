@@ -1375,7 +1375,11 @@ function main() {
   assert.match(worldSrc2, /inlandRoad|crossPath|foothillPath/, 'inland walkways + cross-paths')
   assert.match(worldSrc2, /roadSign|ROAD_SIGN_KINDS/, 'Chinese roadside 路牌')
   assert.match(worldSrc2, /mountainMist|foothill/, 'mountain foothills + mist veils')
-  assert.match(worldSrc2, /inlandShelf|foothillShelf/, 'expanded bank shelves toward karst')
+  assert.match(worldSrc2, /inlandShelf|foothillShelf|terraceShelf/, 'expanded bank shelves toward karst')
+  assert.match(worldSrc2, /hqAnimeHipRoof/, 'anime hip roofs on harbor buildings')
+  assert.ok(HARBOR_EXPLORE_X >= 20, 'explore bound reaches foothill terraces')
+  assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32/, 'anime tapered boat hulls')
+  assert.match(worldSrc2, /Soft role sash|anime volumes — not box belts/, 'landmark host soft sashes')
   assert.ok(HARBOR_EXPLORE_X > HARBOR_DOCK_X + 3, 'explore bound reaches inland roads')
   assert.equal(HARBOR_DIALOGUE_BUBBLE, true, 'dialogue NPCs expose a speech-bubble cue')
   assert.match(worldSrc2, /attachDialogueBubble|speechBubbleIcon/, 'Talkable NPCs get a speech bubble icon')
@@ -1617,6 +1621,11 @@ assert.match(
   /softTopShell|harborFigureTorso/,
   'wardrobe uses soft anime shells not box slabs',
 )
+assert.match(
+  readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+  /vipFamily|emissiveIntensity:\s*0\.12/,
+  'VIP wardrobe gets soft emissive sheen',
+)
 assert.doesNotMatch(
   readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
   /BoxGeometry\(shoulder/,
@@ -1768,6 +1777,8 @@ assert.doesNotMatch(
   assert.match(craftSrc, /export function hqSoftMapRepeat/, 'soft UV-repeat helper (no Texture.clone)')
   assert.match(craftSrc, /generateMipmaps = false/, 'soft DataTextures skip mipmaps (mobile white fix)')
   assert.doesNotMatch(craftSrc, /LinearMipmapLinearFilter/, 'soft maps no longer use mipmap filter')
+  assert.match(craftSrc, /export function hqAnimeHipRoof/, 'anime curved hip roof kit')
+  assert.match(craftSrc, /userData\.animeRoof|hq-anime-roof/, 'anime roof marker on craft kit')
   assert.match(worldSrc, /hqSoftMapRepeat/, 'river soft mats use safe repeat helper')
   assert.match(guanSrc, /hqSoftMapRepeat/, 'Guan soft mats use safe repeat helper')
   assert.doesNotMatch(guanSrc, /hqSoft\w+Texture\(\)\.clone\(/, 'Guan no longer clones soft DataTextures')

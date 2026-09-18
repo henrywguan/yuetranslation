@@ -7,8 +7,20 @@ import { applyHarborCel } from './harborCelShader'
 import { harborFigureMat, harborFigureTorso } from './harborFigure'
 import type { HarborGearSlot } from './harborGear'
 
-function mat(color: number) {
-  return applyHarborCel(harborFigureMat(color), { preset: 'cloth' })
+function mat(color: number, sheen = false) {
+  const base = sheen
+    ? new THREE.MeshLambertMaterial({
+        color,
+        flatShading: false,
+        emissive: color,
+        emissiveIntensity: 0.12,
+      })
+    : harborFigureMat(color)
+  return applyHarborCel(base, { preset: 'cloth' })
+}
+
+function vipFamily(family: string): boolean {
+  return /phoenix|sovereign|immortal|night|admiral|starlit|jade-river|plum/.test(family)
 }
 
 function wrap(family: string): THREE.Group {
@@ -78,8 +90,9 @@ export function buildClothingMesh(
 
 function buildHat(family: string, opts: ClothingBuildOpts): THREE.Group {
   const g = wrap(family)
-  const c = mat(opts.color)
-  const a = mat(opts.accent)
+  const sheen = vipFamily(family)
+  const c = mat(opts.color, sheen)
+  const a = mat(opts.accent, sheen)
   const headY = opts.headY ?? 1.45
 
   if (family.includes('bamboo') || family.includes('coolie')) {
@@ -220,8 +233,9 @@ function softTopShell(
 
 function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
   const g = wrap(family)
-  const c = mat(opts.color)
-  const a = mat(opts.accent)
+  const sheen = vipFamily(family)
+  const c = mat(opts.color, sheen)
+  const a = mat(opts.accent, sheen)
   const pelvisY = opts.pelvisY ?? 0.9
   const shoulderR = opts.gender === 'female' ? 0.12 : 0.135
   const waistR = opts.gender === 'female' ? 0.085 : 0.1
@@ -308,8 +322,9 @@ function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
 
 function buildBottom(family: string, opts: ClothingBuildOpts): THREE.Group {
   const g = wrap(family)
-  const c = mat(opts.color)
-  const a = mat(opts.accent)
+  const sheen = vipFamily(family)
+  const c = mat(opts.color, sheen)
+  const a = mat(opts.accent, sheen)
   const hip = 0.078
 
   if (family.includes('wrap') || family.includes('reed') || family.includes('culotte') || family.includes('festival-pants') || family.includes('crimson')) {
@@ -352,8 +367,9 @@ function buildBottom(family: string, opts: ClothingBuildOpts): THREE.Group {
 
 function buildShoes(family: string, opts: ClothingBuildOpts): THREE.Group {
   const g = wrap(family)
-  const c = mat(opts.color)
-  const a = mat(opts.accent)
+  const sheen = vipFamily(family)
+  const c = mat(opts.color, sheen)
+  const a = mat(opts.accent, sheen)
   const hip = 0.078
 
   if (family.includes('sandal') || family.includes('straw')) {

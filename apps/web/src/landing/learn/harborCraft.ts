@@ -679,6 +679,65 @@ export function hqDoor(
   return g
 }
 
+/**
+ * Soft Chinese anime hip roof — stepped curved plates + upturned eaves + ridge.
+ * Replaces flat RS roof slabs for Harbor Quest buildings (Henry anime revamp).
+ */
+export function hqAnimeHipRoof(
+  w: number,
+  d: number,
+  wallH: number,
+  color: number,
+  opts: { pitch?: number; overhang?: number; ridgeColor?: number } = {},
+): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'hq-anime-roof'
+  g.userData.animeRoof = true
+  const pitch = opts.pitch ?? 0.48
+  const overhang = opts.overhang ?? 0.24
+  const ridgeColor = opts.ridgeColor ?? 0x1a1c22
+  const ridgeY = wallH + pitch * 0.88
+
+  const ridge = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.07, 0.085, w + overhang * 2.3, 14),
+    hqMat(ridgeColor),
+  )
+  ridge.rotation.z = Math.PI / 2
+  ridge.position.y = ridgeY
+  g.add(ridge)
+
+  for (const side of [-1, 1] as const) {
+    for (let i = 0; i < 3; i++) {
+      const t = i / 2
+      const plateW = w + overhang * 2 - i * 0.1
+      const plateD = d * (0.4 - i * 0.04)
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(plateW, 0.065, plateD), hqMat(color))
+      plate.position.set(0, wallH + pitch * (0.78 - t * 0.32), side * (d * (0.1 + t * 0.3)))
+      plate.rotation.x = side * (-0.52 + t * 0.14)
+      g.add(plate)
+    }
+    for (const sx of [-1, 1] as const) {
+      const tip = new THREE.Mesh(
+        new THREE.TorusGeometry(0.11, 0.035, 8, 14, Math.PI * 0.55),
+        hqMat(color),
+      )
+      tip.position.set(sx * (w * 0.5 + overhang * 0.55), wallH + pitch * 0.38, side * (d * 0.42))
+      tip.rotation.y = sx > 0 ? Math.PI / 2 : -Math.PI / 2
+      tip.rotation.z = side * 0.35
+      g.add(tip)
+    }
+  }
+
+  for (const sx of [-1, 1] as const) {
+    const gable = new THREE.Mesh(new THREE.ConeGeometry(d * 0.28, pitch * 0.7, 10), hqMat(color))
+    gable.position.set(sx * (w * 0.48 + overhang * 0.15), wallH + pitch * 0.45, 0)
+    gable.rotation.z = sx * -0.15
+    g.add(gable)
+  }
+
+  return g
+}
+
 /** Wall panel with optional extruded window — modular building brick. */
 export function hqWallWindow(
   w: number,
