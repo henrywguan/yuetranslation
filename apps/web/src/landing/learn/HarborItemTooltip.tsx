@@ -45,22 +45,25 @@ export function HarborItemTooltip({
       const anchor = anchorRef.current
       if (!anchor) return
       const r = anchor.getBoundingClientRect()
+      if (r.width < 1 && r.height < 1) return
       // Prefer requested placement; flip if it would leave the viewport.
       let place = placement
-      const tipH = 72
+      const tipH = 78
       if (place === 'above' && r.top < tipH + 8) place = 'below'
       if (place === 'below' && window.innerHeight - r.bottom < tipH + 8) place = 'above'
       setCoords({
-        left: r.left + r.width / 2,
+        left: Math.min(window.innerWidth - 12, Math.max(12, r.left + r.width / 2)),
         top: place === 'below' ? r.bottom + 6 : r.top - 6,
         placement: place,
       })
     }
     update()
+    // Second pass after layout/paint — docked bag cells settle a frame late on iOS.
+    const raf = window.requestAnimationFrame(() => update())
     window.addEventListener('resize', update)
-    // Capture scroll from bag grid / nested overflow parents.
     window.addEventListener('scroll', update, true)
     return () => {
+      window.cancelAnimationFrame(raf)
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
     }
@@ -71,7 +74,7 @@ export function HarborItemTooltip({
   const price = item.price > 0 ? `${item.price}¢` : isVip ? 'VIP' : 'Starter'
 
   return (
-    <>
+    <span className="hq-item-tip-host" aria-hidden={!open}>
       <span ref={anchorRef} className="hq-item-tip-anchor" aria-hidden="true" />
       {open && coords
         ? createPortal(
@@ -95,6 +98,6 @@ export function HarborItemTooltip({
             document.body,
           )
         : null}
-    </>
+    </span>
   )
 }

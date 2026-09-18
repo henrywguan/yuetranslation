@@ -32,9 +32,12 @@ export function HarborGearModelIcon({
     >
       <svg
         viewBox="0 0 64 64"
-        width="64"
-        height="64"
+        // Compact bag slots must NOT ship intrinsic 64×64 — that blows mobile
+        // grid cells and spills silhouettes across neighbors (Safari especially).
+        width={compact ? undefined : 64}
+        height={compact ? undefined : 64}
         className={compact ? 'hq-bag-model-svg' : 'hq-codex-model-svg'}
+        preserveAspectRatio="xMidYMid meet"
       >
         {compact ? null : <rect width="64" height="64" rx="10" fill="rgba(4,16,24,0.72)" />}
         {drawSilhouette(item.slot, family, item.id, fill, accent)}

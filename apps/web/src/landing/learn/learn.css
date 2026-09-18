@@ -2922,12 +2922,26 @@
   overflow: hidden;
 }
 .hq-visit-panel.hq-bag--docked .hq-bag-grid {
-  /* Keep scroll inside the dock — unbounded height let icons spill across cells. */
+  /* Fixed square tracks + scroll — never let content grow the row. */
   max-height: 100%;
   height: 100%;
   min-height: 0;
+  grid-auto-rows: minmax(2.85rem, 3.35rem);
   overflow-x: hidden;
   overflow-y: auto;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-cell {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  max-height: 3.35rem;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-model,
+.hq-visit-panel.hq-bag--docked .hq-bag-model-svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
 }
 .hq-bag-chrome {
   display: flex;
@@ -3181,8 +3195,8 @@
   padding: 0.35rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  /* Fixed OSRS 4×7 rhythm — prevents row collapse / icon spill on mobile dock. */
-  grid-auto-rows: minmax(0, 1fr);
+  /* Fixed row track — auto/1fr + intrinsic SVG size let icons blow cells. */
+  grid-auto-rows: 3.15rem;
   gap: 0.12rem;
   width: 100%;
   min-height: 0;
@@ -3276,6 +3290,10 @@
   max-width: 100%;
   max-height: 100%;
   display: block;
+  object-fit: contain;
+  /* Kill intrinsic SVG sizing that fights % in Safari bag cells. */
+  min-width: 0;
+  min-height: 0;
   filter: drop-shadow(0 1px 1px color-mix(in srgb, #000 55%, transparent));
 }
 
@@ -3285,6 +3303,12 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
+}
+.hq-bag-cell > .hq-item-tip-anchor,
+.hq-bag-cell > span.hq-item-tip-host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 .hq-item-tip {
   position: absolute;
