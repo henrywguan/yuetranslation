@@ -441,12 +441,16 @@ export function streamForkForChunk(i: number): HarborStreamFork | null {
 }
 
 /** Mobile OSRS-style orbit: yaw wraps freely; pitch is clamped. */
-export const ORBIT_PITCH_MIN = 0.22
+export const ORBIT_PITCH_MIN = 0.16
 export const ORBIT_PITCH_MAX = 1.12
 /** Default camera distance (OSRS mid-zoom). */
 export const ORBIT_DISTANCE = 8.6
-/** Pinch / wheel zoom limits — close enough to read docks, far enough for the river. */
-export const ORBIT_DISTANCE_MIN = 4.2
+/**
+ * Pinch / wheel zoom limits.
+ * Min is tight enough for OSRS-style huddles (several sailors fill the frame);
+ * max keeps the river / Guan lagoon readable.
+ */
+export const ORBIT_DISTANCE_MIN = 2.15
 export const ORBIT_DISTANCE_MAX = 16.5
 
 export function clampOrbitPitch(pitch: number): number {
