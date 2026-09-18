@@ -2863,11 +2863,13 @@
     inset 0 0 0 3px #1a1410;
 }
 /* Floating bag — fixed box sized by JS; stays inside the viewport. */
-.hq-bag--float {
+.hq-visit-panel.hq-bag--float {
   position: fixed;
   z-index: 40;
   right: auto;
   bottom: auto;
+  /* Kill visit-panel mobile centering — it shifts JS left/top off-screen. */
+  transform: none;
   max-height: none;
   width: auto;
   min-width: 17.5rem;
@@ -2876,6 +2878,51 @@
   flex-direction: column;
   gap: 0.35rem;
   box-sizing: border-box;
+}
+/* Mobile dock — fully on-screen, no drag/resize, ignores saved desktop layout. */
+.hq-visit-panel.hq-bag--docked {
+  position: fixed;
+  z-index: 40;
+  left: max(0.4rem, env(safe-area-inset-left));
+  right: max(0.4rem, env(safe-area-inset-right));
+  top: max(3.5rem, calc(env(safe-area-inset-top) + 3.1rem));
+  bottom: max(0.45rem, env(safe-area-inset-bottom));
+  /* Critical: .hq-visit-panel @≤640px uses translateX(-50%) for shop/NPC
+     panels — that pulls a left-inset bag halfway off the left edge. */
+  transform: none;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-chrome {
+  cursor: default;
+  touch-action: manipulation;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-frame {
+  overflow: hidden;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-worn {
+  overflow: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-grid-wrap {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.hq-visit-panel.hq-bag--docked .hq-bag-grid {
+  max-height: none;
+  flex: 1 1 auto;
 }
 .hq-bag-chrome {
   display: flex;
@@ -2890,7 +2937,7 @@
   user-select: none;
   border-bottom: 1px solid color-mix(in srgb, #8a7355 45%, transparent);
 }
-.hq-bag-chrome:active {
+.hq-bag--float .hq-bag-chrome:active {
   cursor: grabbing;
 }
 .hq-bag-chrome-title {
@@ -3456,9 +3503,22 @@
 }
 
 @media (max-width: 640px) {
-  .hq-visit-panel--inv.hq-bag--float {
-    /* Still floating; slightly tighter min size on phones. */
-    min-width: min(17rem, calc(100vw - 0.9rem));
+  .hq-visit-panel.hq-bag--docked {
+    left: max(0.35rem, env(safe-area-inset-left));
+    right: max(0.35rem, env(safe-area-inset-right));
+    top: max(3.35rem, calc(env(safe-area-inset-top) + 2.95rem));
+    bottom: max(0.4rem, env(safe-area-inset-bottom));
+    transform: none;
+    width: auto;
+    max-height: none;
+    padding: 0.4rem;
+  }
+  .hq-visit-panel.hq-bag--float {
+    transform: none;
+  }
+  .hq-visit-panel.hq-bag--docked .hq-bag-filters {
+    max-height: 4.2rem;
+    overflow: auto;
   }
 }
 

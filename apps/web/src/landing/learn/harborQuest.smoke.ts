@@ -783,6 +783,8 @@ function main() {
   assert.match(bagSrc, /beginResize|kind: 'resize'/, 'bag is resizable')
   assert.match(bagSrc, /hq-bag-close/, 'bag has brown X close')
   assert.match(bagSrc, /hq-bag--float/, 'bag uses floating layout')
+  assert.match(bagSrc, /hq-bag--docked|mobileDock|isMobileBagViewport/, 'mobile bag docks on-screen')
+  assert.match(bagSrc, /mobileDock \? null/, 'mobile bag hides resize handle')
   assert.doesNotMatch(bagSrc, /banked off-grid/, 'bag no longer hides overflow off-grid')
   assert.match(playSrc, /is-bag-open/, 'LearnPlay marks bag-open on play shell')
   const tipSrc = readFileSync(new URL('./HarborItemTooltip.tsx', import.meta.url), 'utf8')
@@ -813,6 +815,17 @@ function main() {
   assert.match(wornCss, /scrollbar-width:\s*thin/, 'bag scrollbar visible')
   assert.match(wornCss, /\.hq-play\.is-bag-open/, 'bag-open hides Talk/Explore chrome')
   assert.match(wornCss, /\.hq-bag--float/, 'floating bag layout styles')
+  assert.match(wornCss, /\.hq-bag--docked/, 'mobile docked bag layout styles')
+  assert.match(
+    wornCss,
+    /\.hq-visit-panel\.hq-bag--docked[^{]*\{[^}]*transform:\s*none/s,
+    'docked bag clears visit-panel mobile translateX centering',
+  )
+  assert.match(
+    wornCss,
+    /\.hq-visit-panel\.hq-bag--float[^{]*\{[^}]*transform:\s*none/s,
+    'float bag clears visit-panel mobile translateX centering',
+  )
   assert.match(wornCss, /\.hq-bag-close/, 'brown X close styles')
   assert.match(wornCss, /\.hq-bag-resize/, 'bag resize handle styles')
   assert.match(wornCss, /\.hq-item-tip--fixed/, 'fixed portaled tip styles')
