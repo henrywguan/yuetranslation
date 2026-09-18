@@ -1605,7 +1605,7 @@ function LevelClear({
   )
 }
 
-/** Campaign pier map for the Learn hub. */
+/** Campaign pier map for the in-game chart overlay. */
 export function HarborMap({
   progress,
   onSelect,

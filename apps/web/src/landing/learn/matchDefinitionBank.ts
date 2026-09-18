@@ -534,11 +534,6 @@ export const MATCH_DEFINITION_BANK: MatchWord[] = [
   },
 ]
 
-/** @deprecated Prefer MATCH_DIFFICULTY.easy — kept for older smoke imports. */
-export const MATCH_ROUND_SECONDS = MATCH_DIFFICULTY.easy.seconds
-/** @deprecated Prefer MATCH_DIFFICULTY.easy — kept for older smoke imports. */
-export const MATCH_GOLD_PER_HIT = MATCH_DIFFICULTY.easy.goldPerHit
-
 /** Ferry coins granted per 1 arena gold exchanged. */
 export const HARBOR_GOLD_TO_COINS = 1
 

@@ -88,11 +88,11 @@ Product `Lang`: `en` · `yue` · `cmn` · `wuu` · `tl` · `es` · `vi`.
 | **Solo** | Hold-to-talk + text; multi-lang pairs; text mode folded into Solo |
 | **Conversation** | Two-sided live; same glass chrome as Solo |
 | **Cam** | AR / Upload / Documents chooser; Documents still require sign-in for guests |
-| **Account Hub** | Plan, meters, auto-speak, **primary language** |
+| **Account Hub** | Username, plan + role, meters, household, auto-speak, voice settings, **primary language**, Harbor Quest launcher (Free+ beta) |
 | **Marketing** | Landing, pricing, tones — orbital shell |
 | **Legal** | `#/privacy`, `#/terms`, `#/delete-account` — Harbor/Jade, no orbital |
 
-**Primary language gloss:** Account Hub `primaryLang` can replace the Chinese line in `BiText` for `tl` / `es` / `vi` / `wuu` (Tagalog, Spanish MX, Vietnamese, Shanghainese). Mandarin (`cmn`) and Cantonese (`yue`) keep Chinese chrome. Source: `primaryUiGloss` + `uiCopy`.
+**Primary language gloss:** Account Hub `primaryLang` can replace the Chinese line in `BiText` for `tl` / `es` / `eses` / `vi` / `wuu` / `sichuan` (Tagalog, Spanish MX/ES, Vietnamese, Shanghainese, Sichuanese). Mandarin (`cmn`) and Cantonese (`yue`) keep Chinese chrome. Source: `primaryUiGloss` + `uiCopy`.
 
 **Pedagogy (Learn / detail panel):** Jyutping · Pinyin · Wugniu · Tagalog stress chips · Vietnamese tone chips · MX Spanish stress/register — all use the language font map above (chips inherit `--font-english` / body; Han stays `--font-body`).
 

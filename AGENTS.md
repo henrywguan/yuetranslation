@@ -68,7 +68,7 @@ Public guide for Cantonese educators / creators:
 
 CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide. **Not in public marketing nav** yet — signed-in **Free+** users open it from **Account Hub** (Harbor Quest launcher + Beta pill) or `#/learn` directly. Admins still have **Admin → Harbor Quest**.
 
-- Route: `#/learn` (hub) · `#/learn/<levelId>` (play) · page: [`apps/web/src/landing/learn/LearnPage.tsx`](apps/web/src/landing/learn/LearnPage.tsx)
+- Route: `#/learn` (splash / continue) · `#/learn/<levelId>` (play) · page: [`apps/web/src/landing/learn/LearnPage.tsx`](apps/web/src/landing/learn/LearnPage.tsx)
 - Curriculum: [`apps/web/src/landing/learn/curriculum.ts`](apps/web/src/landing/learn/curriculum.ts) — Intro + Lessons 1–7 + Jyutping chart
 - Hub splash → fullscreen voyage (Sail / Cast / Arena / Chart); in-game pier chart overlay for leaderboard
 - Progress: `localStorage` (`yue-harbor-quest-v1`) + cloud sync for signed-in users (`harbor_quest_progress` / `GET|PUT /api/harbor-quest`). Blob fields: `cleared`, `stepCursor`, `correctCount`, `coins`, `owned`, `look`, `lastSavedAt`. Merge is monotonic (union clears/owned, max step/correct/coins/lastSavedAt; look from fresher Save Shack stamp). Save Shack / shop writes flush to Supabase immediately.

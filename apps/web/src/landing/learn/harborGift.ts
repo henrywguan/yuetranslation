@@ -22,12 +22,6 @@ export function isGiftableTitleId(id: string): boolean {
 
 export type HarborGiftKind = 'lantern' | 'title'
 
-export type HarborGiftRequest = {
-  toUserId: string
-  kind: HarborGiftKind
-  itemId: string
-}
-
 export type HarborGiftApplyInput = {
   fromOwned: string[]
   fromBanked: string[]
