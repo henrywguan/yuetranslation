@@ -142,6 +142,7 @@ import {
   HARBOR_PROTAGONIST_SOCKETS,
   listProtagonistSockets,
 } from '../../landing/learn/harborProtagonist'
+import * as THREE from 'three'
 import {
   HARBOR_GEAR_CATALOG,
   HARBOR_DEFAULT_LOOK,
@@ -681,27 +682,29 @@ function main() {
   assert.equal(scout.userData.originalHarborAsset, true)
   assert.equal(scout.userData.player, true)
   const meshes = countProtagonistMeshes(scout)
-  assert.ok(meshes >= 18 && meshes <= 56, `mesh budget smell-test got ${meshes}`)
+  assert.ok(meshes >= 18 && meshes <= 72, `mesh budget smell-test got ${meshes}`)
   {
     const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
     assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
-    assert.match(figSrc, /headR:\s*0\.152/, 'readable head radius (not chibi balloon)')
-    assert.match(figSrc, /neckH:\s*0\.1/, 'explicit visible neck height')
-    assert.match(figSrc, /IcosahedronGeometry\([^,]+,\s*0\)/, 'detail-0 faceted head (not smooth ball)')
-    assert.match(figSrc, /bow|rotation\.z = side/, 'bow-legged plant')
+    assert.match(figSrc, /headR:\s*0\.148/, 'anime head radius')
+    assert.match(figSrc, /neckH:\s*0\.085/, 'explicit visible neck height')
+    assert.match(figSrc, /SphereGeometry\([^)]+24/, 'smooth high-segment head (not faceted potato)')
+    assert.match(figSrc, /MeshStandardMaterial|harborFigureMat/, 'soft lit materials for dress-up')
+    assert.match(figSrc, /flatShading:\s*false/, 'no flatShading on character kit')
     assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
-    assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses flush face inserts')
+    assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses face inserts')
     assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
+    assert.match(figSrc, /anime|dress-up|dressup/i, 'figure kit docs lock anime dress-up')
     assert.doesNotMatch(
       figSrc,
       /BoxGeometry\(0\.08,\s*0\.09,\s*0\.1\)/,
-      'hands are mitten blobs, not Steve cubes',
+      'hands are soft spheres, not Steve cubes',
     )
   }
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /harborFigureHead|IcosahedronGeometry|harborFigureFace/,
-    'scout uses faceted head + flush face kit',
+    /harborFigureHead|SphereGeometry|harborFigureFace/,
+    'scout uses smooth head + anime face kit',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
@@ -710,13 +713,13 @@ function main() {
   )
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /study-only|Not Jagex IP/,
-    'protagonist docs forbid Jagex STL import',
+    /anime|dress-up|never Jagex/i,
+    'protagonist docs lock anime + forbid Jagex STL import',
   )
-  assert.doesNotMatch(
+  assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /SphereGeometry\(0\.15/,
-    'scout head is no longer a smooth sphere ball',
+    /characterStyle\s*=\s*'anime-dressup'/,
+    'scout tags anime-dressup style',
   )
   const sockets = listProtagonistSockets(scout)
   for (const name of HARBOR_PROTAGONIST_SOCKETS) {
@@ -729,13 +732,22 @@ function main() {
     const headY = standing.userData.headY as number
     const torsoTop = standing.userData.torsoTop as number
     assert.ok(headY - torsoTop >= 0.08, 'visible neck gap between torso top and head')
-    assert.ok(pelvisY >= 0.5, 'legs tall enough to avoid Oompa Loompa stub')
-    assert.ok(headY - pelvisY > 0.45 && headY - pelvisY < 0.85, 'torso+neck stack is proportioned')
+    assert.ok(pelvisY >= 0.65, 'fashion legs tall enough for anime silhouette')
+    assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 0.9, 'torso+neck stack is proportioned')
     let hasNeck = false
     standing.traverse((o) => {
       if (o.name === 'hq-figure-neck') hasNeck = true
     })
     assert.ok(hasNeck, 'standing scout includes neck mesh')
+    // Soft materials on skin meshes
+    let softSkin = false
+    standing.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (!m.isMesh || m.userData.harborPart !== 'skin') return
+      const mat = m.material as THREE.MeshStandardMaterial
+      if (mat && mat.flatShading === false) softSkin = true
+    })
+    assert.ok(softSkin, 'skin uses smooth (non-flat) shading')
   }
 
   const dock0 = dockPoseForProgress(0)

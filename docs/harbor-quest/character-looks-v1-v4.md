@@ -12,13 +12,15 @@
 |---|---|
 | Ship **v1 → v4** as one program | Silhouette wardrobe → modular compose → barber depth → KayKit-style locomotion |
 | KayKit-style idle/walk | **In scope** (v4) — leave pure bob-mannequin behind |
-| Aesthetic | Harbor / Jade / RS-like chunk — **not** Maple chibi paste, **not** Jagex meshes |
+| Aesthetic | **Anime dress-up** — smooth high-res, expressive faces, fashion silhouette. **Not** RS low-poly chunk, **not** Minecraft voxels, **not** Jagex meshes |
 | Monetization | **All gear is cosmetic** — no item stats, ever. No separate “fashion overlay” layer. |
 | Beauty loop (C) | **Yes** — deepen barber / create (styles, dyes, eyes, faces); premium beauty SKUs OK |
 | Showoff layer (D) | **Yes** — nametag frames, chat bubbles, pier chairs, pets, emotes |
 | Shop cadence (E) | **Free event cosmetics = yes.** Gacha / surprise style boxes = **deferred** (undecided) |
 | Paid silhouettes (B) | **Yes** — mid/high/VIP must change mesh shape |
-| Asset source | Procedural Three.js first; optional CC0 KayKit *animation clips* / rig ideas later — never Jagex cache |
+| Asset source | Procedural Three.js first (smooth anime kit); optional CC0 KayKit *animation clips* / rig ideas later — never Jagex cache |
+
+**Pivot note (2026-09-18):** Prior RS-era “potato head / slab torso” grammar was killing dress-up desire. Characters now follow anime appeal; world architecture may remain era-chunky (craft bible §4). Agents must **not** re-apply RS mannequin proportions to `harborFigure` / `harborProtagonist`.
 
 ---
 
@@ -60,7 +62,7 @@ Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes
 2. **Non-common** hat / top / bottom / shoes get `uniqueMesh: true` *or* a shared family that is still a **different silhouette** from the default scout straw/robe/pants/boots (e.g. all mid hats may share `hat-scholar-cap` family, but that family ≠ straw traveler).
 3. `applyLookToProtagonist` **swaps** clothing meshes (hide base tagged parts, attach family builds), then applies palette + VIP overlays + tier detail.
 4. Outfitter / character-create preview must show the **same** silhouette as the world Scout.
-5. Poly budget: worn piece ~80–600 tris (craft bible). Prefer chunky planes over bevel spam.
+5. Poly budget: worn piece may be denser than era props — prioritize silhouette readability + dress-up polish over RS triangle austerity.
 
 ### Acceptance
 
@@ -141,7 +143,7 @@ Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes
 - P2W cosmetics that buy pier clears, XP, or TTS skips
 - Jagex meshes / OSRS player kitbash
 - Full ClaudeCraft skinned LOD / morph union pipeline in v1
-- Abandoning RS-like proportion grammar for soft PBR fashion dolls
+- Reverting characters to RS low-poly / voxel / Minecraft mannequin grammar
 - Shipping gacha before an explicit yes
 
 ---
