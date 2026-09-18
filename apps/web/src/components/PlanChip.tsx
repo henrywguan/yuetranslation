@@ -909,9 +909,13 @@ export function PlanChip() {
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={`plan-chip plan-${plan}`}>
-          <BiText copy={planLabel(plan)} size="sm" hideJp />
-        </span>
+        {entitlement.role ? (
+          <RoleBadge role={entitlement.role} />
+        ) : (
+          <span className={`plan-chip plan-${plan}`}>
+            <BiText copy={planLabel(plan)} size="sm" hideJp />
+          </span>
+        )}
         {activeBadgeMetric ? (
           <span className="plan-remain">
             <BiText copy={badgeCopyFor(activeBadgeMetric, entitlement)} size="sm" hideJp />
