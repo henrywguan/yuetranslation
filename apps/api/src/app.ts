@@ -836,7 +836,7 @@ app.post('/api/docs/segments', async (req: AuthedRequest, res) => {
   }
   try {
     const segments = Array.isArray(req.body?.segments) ? (req.body.segments as unknown[]) : []
-    const totalChars = segments.reduce(
+    const totalChars = segments.reduce<number>(
       (n, s) => n + (typeof s === 'string' ? s.length : 0),
       0,
     )

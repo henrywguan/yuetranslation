@@ -20,7 +20,7 @@ export function tagalogStressClass(word: string): TagalogStressClass | null {
   if (CIRC.test(w)) return 'maragsa'
   if (GRAVE.test(w)) return 'malumi'
   if (ACUTE.test(w)) return 'mabilis'
-  if (/^[A-Za-zÑñ'\-]+$/i.test(w)) return 'malumay'
+  if (/^[A-Za-zÑñ'-]+$/i.test(w)) return 'malumay'
   return null
 }
 

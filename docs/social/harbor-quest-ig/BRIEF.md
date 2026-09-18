@@ -48,7 +48,7 @@ Caption: `ig-posts/out/ig-post-harbor-quest-caption.txt` (exactly **5** hashtags
 
 ## Product notes for copy
 
-- Route: `#/learn` (admin preview — not public nav yet)
+- Route: `#/learn` (Free+ beta via Account Hub · also Admin → Harbor Quest; not in public marketing nav yet)
 - Real UI: Sail (low-poly harbor), Cast (campaigns/chapters), Arena (Match the Definition), Chart (OpenCantonese.org)
 - Copy pillars: Sail / Cast / Arena / Chart
 - Do **not** call paid `/api/tts` for this shoot unless Henry approves

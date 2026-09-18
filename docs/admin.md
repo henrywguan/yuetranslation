@@ -170,7 +170,22 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 14. `supabase/migrations/014_rename_max_plan_to_business.sql` — `max` → `business` plan id
 15. `supabase/migrations/015_backfill_household_usage_from_legacy.sql` — fold pre-pooling per-user usage into household pools (safe to re-run)
 16. `supabase/migrations/016_app_settings.sql` — app settings (incident banner, etc.)
-17. `supabase/migrations/026_translation_history_ttl.sql` — prune Solo/Conversation history turns older than **14 days** (`prune_stale_translation_history()`); app GET/PUT also prune per user. Optional: enable the commented `pg_cron` daily job on Pro.
+17. `supabase/migrations/017_guest_usage.sql` — guest trial usage months
+18. `supabase/migrations/018_auto_speak.sql` — auto-speak preference
+19. `supabase/migrations/019_tts_voice_cmn.sql` — Mandarin TTS voice pref
+20. `supabase/migrations/020_tts_voice_tl.sql` — Tagalog TTS voice pref
+21. `supabase/migrations/021_translation_history.sql` — Solo/Conversation cloud history
+22. `supabase/migrations/022_tts_voice_es.sql` — Spanish (MX) TTS voice pref
+23. `supabase/migrations/023_tts_voice_vi.sql` — Vietnamese TTS voice pref
+24. `supabase/migrations/024_push_notifications.sql` — PWA Web Push subscriptions
+25. `supabase/migrations/025_guest_identity_anchors.sql` — guest device/network trial anchors
+26. `supabase/migrations/025_primary_lang.sql` — Account Hub primary language
+27. `supabase/migrations/026_translation_history_ttl.sql` — prune Solo/Conversation history turns older than **14 days** (`prune_stale_translation_history()`); app GET/PUT also prune per user. Optional: enable the commented `pg_cron` daily job on Pro.
+28. `supabase/migrations/027_primary_lang_sichuan.sql` — Sichuan primary lang
+29. `supabase/migrations/028`–`031` — Harbor Quest progress, gear fields, leaderboard, XP
+30. `supabase/migrations/032_tts_voice_eses.sql` — Peninsular Spanish TTS voice pref
+31. `supabase/migrations/033_primary_lang_eses.sql` — Peninsular Spanish primary lang
+32. `supabase/migrations/034_harbor_practice_usage.sql` — `harbor_quest_count` + `practice_partner_count` (admin view-only meters)
 
 **If you see** `Could not find the table 'public.households' in the schema cache` — migrations `011`–`015` are not applied. Paste and run the one-shot file `supabase/migrations/apply_011_through_015_household.sql` in **Supabase → SQL Editor** (creates `households` / members / invites / pooled usage, renames plans, backfills legacy meters, then reloads the PostgREST schema cache).
 
@@ -205,9 +220,9 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 | Feature | Notes |
 | --- | --- |
-| User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count, cam time (+ scan count), **docs pages**. Allowlisted emails show an animated **admin** badge (with current plan). Click the badge to open the plan dropdown. |
+| User list | Email, name, plan, live `Hh Mm Ss`, TTS chars, translate count, cam time (+ scan count), **AI vision**, **Harbor** (correct answers), **Partner** (Practice Partner turns), **docs pages**. Allowlisted emails show an animated **admin** badge (with current plan). Click the badge to open the plan dropdown. |
 | Search / filter | Email/name/id, plan, over-quota, banned |
-| Sort | Email, plan, live, TTS, translate, cam, docs, joined |
+| Sort | Email, plan, live, TTS, translate, cam, AI vision, Harbor, Partner, docs, joined |
 | Change plan | `free` / `family` / `business` |
 | Reset month usage | Zeros live / TTS / translate / cam / docs for the selected month |
 | Stripe link | Opens Dashboard customer page when `stripe_customer_id` exists |
@@ -216,11 +231,12 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates (minimizable), compose, preview, contacts / custom / full audience send |
 | Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
-| Practice Partner | Live admin lab: Harbor orb + captions. Mic → Web Speech STT → DeepSeek (persona + chat history) → existing Azure TTS. No Voice Live / Foundry. Not in the consumer app. |
-| CSV export | Current filters + month (includes camera + docs fields) |
+| Practice Partner | Live admin lab: Harbor orb + captions. Mic → Web Speech STT → DeepSeek (persona + chat history) → existing Azure TTS. No Voice Live / Foundry. Not in the consumer app. Chat turns meter `practice_partner_count` (admin view-only). |
+| CSV export | Current filters + month (includes camera, docs, Harbor, Partner fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |
 | AI vision metering | `POST /api/camera/scan` when LLM OCR fallback runs → `ai_vision_count` (hard monthly cap; Cam + Documents). Migration `010_ai_vision_usage.sql` |
+| Harbor Quest metering | `PUT /api/harbor-quest` correct-answer deltas → `harbor_quest_count` (view-only). Migration `034_harbor_practice_usage.sql` |
 | Docs metering | `POST /api/docs/translate` / `POST /api/docs/commit` → `docs_pages` (success only) |
 
 ## API

@@ -64,17 +64,18 @@ Public guide for Cantonese educators / creators:
 - Covers: **Noto Sans HK** (漢字) + **Noto Sans** (Jyutping + Chao tone letters) downloads, Copy Jyutping + Chao tone letters steps (Family+), CapCut / Instagram / Canva / NLE font import
 - Nav + footer link: **Creators** — share this URL in creator outreach
 
-### Learn · Harbor Quest (`#/learn`) — admin preview
+### Learn · Harbor Quest (`#/learn`) — Free+ beta
 
-CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide. **Not in public nav** yet — open from **Admin → Harbor Quest** (or `#/learn` directly).
+CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide. **Not in public marketing nav** yet — signed-in **Free+** users open it from **Account Hub** (Harbor Quest launcher + Beta pill) or `#/learn` directly. Admins still have **Admin → Harbor Quest**.
 
 - Route: `#/learn` (hub) · `#/learn/<levelId>` (play) · page: [`apps/web/src/landing/learn/LearnPage.tsx`](apps/web/src/landing/learn/LearnPage.tsx)
 - Curriculum: [`apps/web/src/landing/learn/curriculum.ts`](apps/web/src/landing/learn/curriculum.ts) — Intro + Lessons 1–7 + Jyutping chart
-- Dual pane: quest brief (left) + harbor ferry stage (right)
+- Hub splash → fullscreen voyage (Sail / Cast / Arena / Chart); in-game pier chart overlay for leaderboard
 - Progress: `localStorage` (`yue-harbor-quest-v1`) + cloud sync for signed-in users (`harbor_quest_progress` / `GET|PUT /api/harbor-quest`). Blob fields: `cleared`, `stepCursor`, `correctCount`, `coins`, `owned`, `look`, `lastSavedAt`. Merge is monotonic (union clears/owned, max step/correct/coins/lastSavedAt; look from fresher Save Shack stamp). Save Shack / shop writes flush to Supabase immediately.
-- Migrations: [`028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) (table) + [`029_harbor_quest_progress_gear_fields.sql`](supabase/migrations/029_harbor_quest_progress_gear_fields.sql) (backfill gear fields) + [`030_harbor_quest_leaderboard.sql`](supabase/migrations/030_harbor_quest_leaderboard.sql) (global ranks) — apply in Supabase SQL editor if not yet pushed
+- Migrations: [`028_harbor_quest_progress.sql`](supabase/migrations/028_harbor_quest_progress.sql) (table) + [`029_harbor_quest_progress_gear_fields.sql`](supabase/migrations/029_harbor_quest_progress_gear_fields.sql) (backfill gear fields) + [`030_harbor_quest_leaderboard.sql`](supabase/migrations/030_harbor_quest_leaderboard.sql) (global ranks) + [`031_harbor_quest_xp.sql`](supabase/migrations/031_harbor_quest_xp.sql) (XP ranks) + [`034_harbor_practice_usage.sql`](supabase/migrations/034_harbor_practice_usage.sql) (admin Harbor / Practice Partner meters) — apply in Supabase SQL editor if not yet pushed
 - Global leaderboard: `GET /api/harbor-quest/leaderboard` (public); scores upsert on signed-in `PUT /api/harbor-quest`. Shown on the pier chart overlay. Ranked by XP → gold → hits → piers (`031_harbor_quest_xp.sql`).
 - Blob also tracks arena `gold` (Match the Definition 擂台) and `xp` / `missionClears` (full XP first clear, half XP on repeats).
+- Admin metering (view-only): `harbor_quest_count` (correct-answer deltas) · Practice Partner `practice_partner_count` (LLM turns) — see [docs/entitlements.md](docs/entitlements.md)
 - Speaker buttons use existing Azure TTS (`SpeakButton` / `yue`) on hearable Han examples
 - Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
 - Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`

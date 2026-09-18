@@ -1225,7 +1225,7 @@ function main() {
   assert.match(matchModalSrc, /MATCH_DIFFICULTIES/, 'arena lists Easy/Medium/Hard')
   assert.match(matchModalSrc, /hq-match-topic/, 'arena topic picker')
   assert.match(matchModalSrc, /MATCH_TOPICS/, 'arena lists topics')
-  assert.match(matchModalSrc, /phase === 'topic'|phase === \"topic\"|'topic'/, 'opens on topic select')
+  assert.match(matchModalSrc, /phase === 'topic'|phase === "topic"|'topic'/, 'opens on topic select')
   assert.match(matchModalSrc, /hq-match-exchange/, 'arena gold exchange UI')
   assert.match(matchModalSrc, /onExchangeGold/, 'arena can convert gold to coins')
   assert.match(learnCss, /\.hq-match-speak\s*\{/, 'arena speaker styles')

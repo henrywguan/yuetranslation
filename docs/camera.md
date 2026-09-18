@@ -39,7 +39,7 @@ Migration: `004_camera_usage.sql` (reuses `camera_translate_count`; no new colum
 
 ### Documents (separate meter)
 
-Same **access gate** as camera; **not** shared with camera minutes. Canonical numbers: [entitlements.md](./entitlements.md).
+Same **access gate** as camera; **not** shared with Cam **scan credits**. Canonical numbers: [entitlements.md](./entitlements.md).
 
 | Plan | Documents | Cap | Counted |
 | --- | --- | --- | --- |

@@ -8,7 +8,7 @@ import {
   type HouseholdSummary,
 } from './household.js'
 import { getProfile, supabaseConfigured } from './supabase.js'
-import { emptyUsage, getGuestUsage, getUsage, type UsageSnapshot } from './usage.js'
+import { emptyUsage, getGuestUsage, getUsage } from './usage.js'
 import {
   DEFAULT_CMN_VOICE,
   DEFAULT_EN_VOICE,
