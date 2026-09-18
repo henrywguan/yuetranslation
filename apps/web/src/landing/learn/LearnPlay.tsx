@@ -1251,64 +1251,6 @@ export function LearnSession({
               {teleportOpen ? 'Hide chapters' : 'Teleport to chapter'}
             </button>
           </div>
-          {teleportOpen ? (
-            <ul className="hq-teleport-list" aria-label="Campaign piers">
-              <li>
-                <button
-                  type="button"
-                  className={`hq-teleport-btn hq-teleport-btn--guan${realmOverride === 'guan' ? ' is-here' : ''}`}
-                  disabled={realmOverride === 'guan'}
-                  onClick={() => {
-                    playHarborTeleport()
-                    setRealmOverride('guan')
-                    startHarborBgm('guan')
-                    setTeleportOpen(false)
-                    setVisitable(null)
-                  }}
-                >
-                  <span className="hq-teleport-ch">Paradise · 樂園</span>
-                  <span className="hq-teleport-title">
-                    {GUAN_HARBOR_META.en}
-                    <span aria-hidden="true"> · </span>
-                    <span lang="zh-HK">{GUAN_HARBOR_META.zh}</span>
-                  </span>
-                  <span className="hq-teleport-status">
-                    {realmOverride === 'guan' ? 'Here' : 'Teleport'}
-                  </span>
-                </button>
-              </li>
-              {HARBOR_LEVELS.map((lv) => {
-                const ids = HARBOR_LEVELS.map((l) => l.id)
-                const unlocked = isLevelUnlocked(lv.id, ids, progressSnap)
-                const here = lv.id === levelId && realmOverride == null
-                return (
-                  <li key={lv.id}>
-                    <button
-                      type="button"
-                      className={`hq-teleport-btn${here ? ' is-here' : ''}${!unlocked ? ' is-locked' : ''}`}
-                      disabled={!unlocked || here}
-                      onClick={() => {
-                        playHarborTeleport()
-                        setRealmOverride(null)
-                        startHarborBgm('river')
-                        setTeleportOpen(false)
-                        setVisitable(null)
-                        onOpenLevel(lv.id)
-                      }}
-                    >
-                      <span className="hq-teleport-ch">
-                        {`${levelCampaign(lv) === 'life0' ? 'Life0' : 'Sounds'} · ${lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}`}
-                      </span>
-                      <span className="hq-teleport-title">{lv.title.en}</span>
-                      <span className="hq-teleport-status">
-                        {here ? 'Here' : !unlocked ? 'Locked' : 'Teleport'}
-                      </span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : null}
           <button
             type="button"
             className="hq-btn hq-btn--ghost"
@@ -1321,6 +1263,83 @@ export function LearnSession({
           >
             Cast off
           </button>
+        </aside>
+      ) : null}
+
+      {teleportOpen ? (
+        <aside
+          className="hq-visit-panel hq-visit-panel--teleport"
+          role="dialog"
+          aria-label="Teleport to chapter"
+        >
+          <div className="hq-teleport-head">
+            <p className="hq-visit-kicker">Chapters · 章節</p>
+            <button
+              type="button"
+              className="hq-btn hq-btn--ghost hq-btn--tiny"
+              onClick={() => setTeleportOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+          <h2 className="hq-visit-title">Teleport to pier</h2>
+          <p className="hq-visit-body">Jump to Guan Harbor or any unlocked campaign pier.</p>
+          <ul className="hq-teleport-list" aria-label="Campaign piers">
+            <li>
+              <button
+                type="button"
+                className={`hq-teleport-btn hq-teleport-btn--guan${realmOverride === 'guan' ? ' is-here' : ''}`}
+                disabled={realmOverride === 'guan'}
+                onClick={() => {
+                  playHarborTeleport()
+                  setRealmOverride('guan')
+                  startHarborBgm('guan')
+                  setTeleportOpen(false)
+                  setVisitable(null)
+                }}
+              >
+                <span className="hq-teleport-ch">Paradise · 樂園</span>
+                <span className="hq-teleport-title">
+                  {GUAN_HARBOR_META.en}
+                  <span aria-hidden="true"> · </span>
+                  <span lang="zh-HK">{GUAN_HARBOR_META.zh}</span>
+                </span>
+                <span className="hq-teleport-status">
+                  {realmOverride === 'guan' ? 'Here' : 'Teleport'}
+                </span>
+              </button>
+            </li>
+            {HARBOR_LEVELS.map((lv) => {
+              const ids = HARBOR_LEVELS.map((l) => l.id)
+              const unlocked = isLevelUnlocked(lv.id, ids, progressSnap)
+              const here = lv.id === levelId && realmOverride == null
+              return (
+                <li key={lv.id}>
+                  <button
+                    type="button"
+                    className={`hq-teleport-btn${here ? ' is-here' : ''}${!unlocked ? ' is-locked' : ''}`}
+                    disabled={!unlocked || here}
+                    onClick={() => {
+                      playHarborTeleport()
+                      setRealmOverride(null)
+                      startHarborBgm('river')
+                      setTeleportOpen(false)
+                      setVisitable(null)
+                      onOpenLevel(lv.id)
+                    }}
+                  >
+                    <span className="hq-teleport-ch">
+                      {`${levelCampaign(lv) === 'life0' ? 'Life0' : 'Sounds'} · ${lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}`}
+                    </span>
+                    <span className="hq-teleport-title">{lv.title.en}</span>
+                    <span className="hq-teleport-status">
+                      {here ? 'Here' : !unlocked ? 'Locked' : 'Teleport'}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
         </aside>
       ) : null}
 
