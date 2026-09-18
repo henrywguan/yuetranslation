@@ -6344,7 +6344,7 @@
   inset: 0;
   z-index: 100;
   display: grid;
-  place-items: center;
+  place-items: end center;
   cursor: pointer;
   overflow: hidden;
   color: #e8f4ff;
@@ -6353,10 +6353,10 @@
 }
 .hq-splash--boat-night .hq-splash-sky {
   background:
-    radial-gradient(ellipse 70% 55% at 50% 22%, color-mix(in srgb, #1a2840 55%, transparent), transparent 72%),
-    radial-gradient(ellipse 45% 35% at 18% 8%, color-mix(in srgb, #0c1828 40%, transparent), transparent 65%),
-    radial-gradient(ellipse 40% 30% at 82% 10%, color-mix(in srgb, #14101c 35%, transparent), transparent 60%),
-    linear-gradient(180deg, #02060c 0%, #010408 42%, #000204 100%);
+    radial-gradient(ellipse 55% 42% at 50% 16%, color-mix(in srgb, #2a3a58 70%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 18% 8%, color-mix(in srgb, #0c1828 45%, transparent), transparent 65%),
+    radial-gradient(ellipse 40% 28% at 82% 10%, color-mix(in srgb, #14101c 38%, transparent), transparent 60%),
+    linear-gradient(180deg, #0a1424 0%, #040a14 36%, #010408 68%, #000204 100%);
 }
 .hq-splash-sky {
   position: absolute;
@@ -6387,53 +6387,54 @@
   animation: hq-splash-stars-twinkle 8s ease-in-out infinite alternate;
 }
 
-/* Huge moon dead ahead — first-person horizon focal */
+/* Huge moon dead ahead — sits in the open cabin window (above boat frame) */
 .hq-splash-moon {
   position: absolute;
   left: 50%;
-  top: 18%;
-  z-index: 1;
-  width: min(52vw, 22rem);
-  height: min(52vw, 22rem);
-  transform: translate(-50%, -42%);
+  top: 10%;
+  z-index: 4;
+  width: min(78vw, 28rem);
+  height: min(78vw, 28rem);
+  transform: translate(-50%, -18%);
   pointer-events: none;
 }
 .hq-splash-moon-disc {
   position: absolute;
-  inset: 18%;
+  inset: 12%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 38% 34%, #f8f4e8 0%, #e8e0c8 42%, #c8c0a0 78%, #a8a088 100%);
+    radial-gradient(circle at 36% 32%, #fffef6 0%, #f4eed8 38%, #e0d6b4 72%, #c8bc94 100%);
   box-shadow:
-    0 0 40px color-mix(in srgb, #f0ead0 55%, transparent),
-    0 0 90px color-mix(in srgb, #d8d0b0 35%, transparent),
-    0 0 160px color-mix(in srgb, #a8b8d0 22%, transparent),
-    inset -8px -12px 24px color-mix(in srgb, #807860 28%, transparent);
+    0 0 28px #fff8e0,
+    0 0 70px color-mix(in srgb, #f0ead0 85%, transparent),
+    0 0 140px color-mix(in srgb, #d8d0b0 55%, transparent),
+    0 0 220px color-mix(in srgb, #a8b8d0 35%, transparent),
+    inset -10px -14px 28px color-mix(in srgb, #807860 22%, transparent);
   animation: hq-splash-moon-breathe 14s ease-in-out infinite;
 }
 .hq-splash-moon-halo {
   position: absolute;
-  inset: 0;
+  inset: -6%;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, #f0ead8 28%, transparent) 0%,
-    color-mix(in srgb, #c8d0e0 12%, transparent) 38%,
-    transparent 68%
+    color-mix(in srgb, #fff8e8 45%, transparent) 0%,
+    color-mix(in srgb, #d0d8e8 18%, transparent) 42%,
+    transparent 70%
   );
   animation: hq-splash-moon-halo 18s ease-in-out infinite alternate;
 }
 .hq-splash-moon-haze {
   position: absolute;
-  inset: -18%;
+  inset: -28%;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, #d0d8e8 10%, transparent) 0%,
-    transparent 55%
+    color-mix(in srgb, #e8f0ff 18%, transparent) 0%,
+    transparent 58%
   );
-  filter: blur(12px);
-  opacity: 0.7;
+  filter: blur(16px);
+  opacity: 0.9;
 }
 
 /* Dark riverbank walls — “dark room” edges */
@@ -6474,10 +6475,10 @@
   pointer-events: none;
 }
 .hq-splash-village--far {
-  bottom: 48%;
-  opacity: 0.38;
-  filter: blur(1.1px);
-  transform: scale(0.72);
+  bottom: 52%;
+  opacity: 0.45;
+  filter: blur(0.8px);
+  transform: scale(0.65);
   transform-origin: 50% 100%;
 }
 .hq-splash-village--near {
@@ -6611,64 +6612,66 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 58%;
+  height: 62%;
   z-index: 5;
   pointer-events: none;
   background:
     linear-gradient(
       180deg,
       transparent 0%,
-      color-mix(in srgb, #040c14 35%, transparent) 8%,
-      color-mix(in srgb, #020810 70%, transparent) 32%,
-      #010408 72%,
-      #000204 100%
+      color-mix(in srgb, #061420 45%, transparent) 6%,
+      color-mix(in srgb, #040c18 78%, transparent) 28%,
+      #020810 62%,
+      #000306 100%
     );
   overflow: hidden;
-  perspective: 900px;
 }
+/* Bright moon reflection — trapezoid path (no 3D transform so it always shows) */
 .hq-splash-moon-path {
   position: absolute;
   left: 50%;
-  top: 0;
-  width: 28%;
-  height: 100%;
-  transform: translateX(-50%) perspective(600px) rotateX(58deg);
-  transform-origin: 50% 0;
+  top: -2%;
+  width: min(46vw, 14rem);
+  height: 108%;
+  transform: translateX(-50%);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, #f0ead8 42%, transparent) 0%,
-    color-mix(in srgb, #d8d0b8 22%, transparent) 28%,
-    color-mix(in srgb, #a8b0c0 10%, transparent) 58%,
-    transparent 88%
+    color-mix(in srgb, #fff8e0 88%, transparent) 0%,
+    color-mix(in srgb, #f0ead0 62%, transparent) 12%,
+    color-mix(in srgb, #d8d0b0 38%, transparent) 38%,
+    color-mix(in srgb, #a8b0c8 18%, transparent) 68%,
+    transparent 96%
   );
-  filter: blur(1.5px);
-  opacity: 0.72;
+  clip-path: polygon(38% 0%, 62% 0%, 92% 100%, 8% 100%);
+  filter: blur(0.5px);
+  opacity: 0.92;
   animation: hq-splash-moon-path-shimmer 10s ease-in-out infinite alternate;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 28%, #000 72%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  box-shadow: 0 0 40px color-mix(in srgb, #fff8e0 35%, transparent);
 }
 .hq-splash-lantern-path {
   position: absolute;
   left: 50%;
-  top: 8%;
-  width: 42%;
-  height: 92%;
-  transform: translateX(-50%) perspective(600px) rotateX(56deg);
-  transform-origin: 50% 0;
+  top: 6%;
+  width: min(58vw, 18rem);
+  height: 96%;
+  transform: translateX(-50%);
   background:
-    radial-gradient(ellipse 40% 18% at 42% 22%, color-mix(in srgb, #f0a040 28%, transparent), transparent 70%),
-    radial-gradient(ellipse 35% 16% at 58% 38%, color-mix(in srgb, #3dcfb6 18%, transparent), transparent 68%),
-    radial-gradient(ellipse 48% 20% at 48% 58%, color-mix(in srgb, #ffa040 32%, transparent), transparent 72%),
-    radial-gradient(ellipse 55% 24% at 50% 82%, color-mix(in srgb, #e07040 38%, transparent), transparent 75%),
+    radial-gradient(ellipse 42% 16% at 40% 20%, color-mix(in srgb, #f0a040 42%, transparent), transparent 70%),
+    radial-gradient(ellipse 38% 14% at 60% 36%, color-mix(in srgb, #3dcfb6 28%, transparent), transparent 68%),
+    radial-gradient(ellipse 52% 18% at 48% 56%, color-mix(in srgb, #ffa040 48%, transparent), transparent 72%),
+    radial-gradient(ellipse 60% 22% at 50% 82%, color-mix(in srgb, #e07040 52%, transparent), transparent 75%),
     linear-gradient(
       180deg,
-      color-mix(in srgb, #f0a040 8%, transparent) 0%,
-      color-mix(in srgb, #e07040 16%, transparent) 45%,
-      color-mix(in srgb, #ffa060 22%, transparent) 100%
+      color-mix(in srgb, #f0a040 12%, transparent) 0%,
+      color-mix(in srgb, #e07040 22%, transparent) 45%,
+      color-mix(in srgb, #ffa060 30%, transparent) 100%
     );
-  filter: blur(6px);
-  opacity: 0.55;
+  clip-path: polygon(34% 0%, 66% 0%, 100% 100%, 0% 100%);
+  filter: blur(5px);
+  opacity: 0.7;
   animation: hq-splash-lantern-path-pulse 7s ease-in-out infinite alternate;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
 }
 .hq-splash-ripple {
   position: absolute;
@@ -6678,21 +6681,22 @@
       95deg,
       transparent 0,
       transparent 48px,
-      color-mix(in srgb, #c8d0e0 6%, transparent) 50px,
+      color-mix(in srgb, #e8f0ff 10%, transparent) 50px,
       transparent 54px
     );
-  opacity: 0.22;
+  opacity: 0.35;
   animation: hq-splash-water-shimmer 14s linear infinite;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
   mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
 }
 .hq-splash-ripple--b {
-  opacity: 0.16;
+  opacity: 0.22;
   background:
     repeating-linear-gradient(
       -88deg,
       transparent 0,
       transparent 64px,
-      color-mix(in srgb, #f0a040 5%, transparent) 66px,
+      color-mix(in srgb, #f0a040 8%, transparent) 66px,
       transparent 70px
     );
   animation: hq-splash-water-shimmer 22s linear infinite reverse;
@@ -6849,7 +6853,7 @@
   border-radius: 40%;
 }
 
-/* First-person boat cockpit — dark timber framing the view */
+/* First-person boat cockpit — warm timber framing an open cabin window */
 .hq-splash-boat {
   position: absolute;
   inset: 0;
@@ -6861,111 +6865,135 @@
   left: 0;
   right: 0;
   top: 0;
-  height: 18%;
+  height: 14%;
   background:
     linear-gradient(
       180deg,
-      #050308 0%,
-      color-mix(in srgb, #1a100c 92%, transparent) 42%,
-      color-mix(in srgb, #0a0604 55%, transparent) 78%,
-      transparent 100%
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 28px,
-      color-mix(in srgb, #2a1810 18%, transparent) 29px,
-      transparent 31px
-    );
-  box-shadow: inset 0 -18px 40px color-mix(in srgb, #000 55%, transparent);
-}
-.hq-splash-boat-gunwale {
-  position: absolute;
-  top: 8%;
-  bottom: 0;
-  width: 22%;
-  background:
-    linear-gradient(
-      90deg,
-      #08040a 0%,
-      #1a100c 28%,
-      color-mix(in srgb, #2a1a12 70%, transparent) 58%,
-      transparent 100%
-    );
-  box-shadow: inset -12px 0 28px color-mix(in srgb, #000 50%, transparent);
-}
-.hq-splash-boat-gunwale--left {
-  left: 0;
-  clip-path: polygon(0 0, 100% 6%, 88% 100%, 0 100%);
-}
-.hq-splash-boat-gunwale--right {
-  right: 0;
-  background:
-    linear-gradient(
-      270deg,
-      #08040a 0%,
-      #1a100c 28%,
-      color-mix(in srgb, #2a1a12 70%, transparent) 58%,
-      transparent 100%
-    );
-  clip-path: polygon(0 6%, 100% 0, 100% 100%, 12% 100%);
-  box-shadow: inset 12px 0 28px color-mix(in srgb, #000 50%, transparent);
-}
-.hq-splash-boat-prow {
-  position: absolute;
-  left: 50%;
-  bottom: 14%;
-  width: 48%;
-  height: 12%;
-  transform: translateX(-50%);
-  background:
-    radial-gradient(ellipse 70% 90% at 50% 100%, color-mix(in srgb, #1a100c 80%, transparent), transparent 70%);
-  opacity: 0.85;
-}
-.hq-splash-boat-rib {
-  position: absolute;
-  top: 14%;
-  bottom: 22%;
-  width: 3px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, #3a2818 55%, transparent),
-    color-mix(in srgb, #1a100c 70%, transparent) 50%,
-    color-mix(in srgb, #0a0604 40%, transparent)
-  );
-  opacity: 0.45;
-  border-radius: 2px;
-}
-.hq-splash-boat-rib--l {
-  left: 18%;
-  transform: rotate(4deg);
-}
-.hq-splash-boat-rib--r {
-  right: 18%;
-  transform: rotate(-4deg);
-}
-.hq-splash-boat-deck {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 22%;
-  background:
-    linear-gradient(
-      0deg,
-      #050208 0%,
-      #120c08 38%,
-      color-mix(in srgb, #1a120c 75%, transparent) 72%,
+      #1c100c 0%,
+      #2a1810 38%,
+      color-mix(in srgb, #1a100c 70%, transparent) 78%,
       transparent 100%
     ),
     repeating-linear-gradient(
       90deg,
       transparent 0,
       transparent 22px,
-      color-mix(in srgb, #2a1a10 22%, transparent) 23px,
-      transparent 25px
+      color-mix(in srgb, #4a3020 35%, transparent) 23px,
+      transparent 26px
     );
-  box-shadow: inset 0 24px 48px color-mix(in srgb, #000 60%, transparent);
+  box-shadow:
+    inset 0 -10px 28px color-mix(in srgb, #000 40%, transparent),
+    0 8px 24px color-mix(in srgb, #000 45%, transparent);
+  /* Leave a soft arch so the moon stays visible through the cabin opening */
+  -webkit-mask-image: radial-gradient(ellipse 72% 140% at 50% 130%, transparent 42%, #000 58%);
+  mask-image: radial-gradient(ellipse 72% 140% at 50% 130%, transparent 42%, #000 58%);
+}
+.hq-splash-boat-gunwale {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: min(26vw, 7.5rem);
+  background:
+    linear-gradient(
+      90deg,
+      #120a08 0%,
+      #2a1810 22%,
+      #3a2418 48%,
+      color-mix(in srgb, #4a3020 55%, transparent) 78%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 18px,
+      color-mix(in srgb, #5a3c28 28%, transparent) 19px,
+      transparent 21px
+    );
+  box-shadow: inset -8px 0 20px color-mix(in srgb, #000 35%, transparent);
+}
+.hq-splash-boat-gunwale--left {
+  left: 0;
+  clip-path: polygon(0 0, 100% 4%, 78% 100%, 0 100%);
+}
+.hq-splash-boat-gunwale--right {
+  right: 0;
+  background:
+    linear-gradient(
+      270deg,
+      #120a08 0%,
+      #2a1810 22%,
+      #3a2418 48%,
+      color-mix(in srgb, #4a3020 55%, transparent) 78%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 18px,
+      color-mix(in srgb, #5a3c28 28%, transparent) 19px,
+      transparent 21px
+    );
+  clip-path: polygon(0 4%, 100% 0, 100% 100%, 22% 100%);
+  box-shadow: inset 8px 0 20px color-mix(in srgb, #000 35%, transparent);
+}
+.hq-splash-boat-prow {
+  position: absolute;
+  left: 50%;
+  bottom: 16%;
+  width: 56%;
+  height: 14%;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 80% 100% at 50% 100%, color-mix(in srgb, #3a2418 70%, transparent), transparent 72%);
+  opacity: 0.9;
+}
+.hq-splash-boat-rib {
+  position: absolute;
+  top: 12%;
+  bottom: 20%;
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #5a3c28 70%, transparent),
+    color-mix(in srgb, #2a1810 80%, transparent) 50%,
+    color-mix(in srgb, #1a100c 45%, transparent)
+  );
+  opacity: 0.65;
+  border-radius: 2px;
+  box-shadow: 1px 0 0 color-mix(in srgb, #000 40%, transparent);
+}
+.hq-splash-boat-rib--l {
+  left: max(14%, 3.2rem);
+  transform: rotate(5deg);
+}
+.hq-splash-boat-rib--r {
+  right: max(14%, 3.2rem);
+  transform: rotate(-5deg);
+}
+.hq-splash-boat-deck {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26%;
+  background:
+    linear-gradient(
+      0deg,
+      #0e0806 0%,
+      #1c100c 28%,
+      #2a1810 55%,
+      color-mix(in srgb, #3a2418 70%, transparent) 82%,
+      transparent 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 16px,
+      color-mix(in srgb, #4a3020 40%, transparent) 17px,
+      transparent 20px
+    );
+  box-shadow: inset 0 28px 48px color-mix(in srgb, #000 45%, transparent);
+  clip-path: polygon(0 28%, 12% 0, 88% 0, 100% 28%, 100% 100%, 0 100%);
 }
 
 .hq-splash-vignette {
@@ -6974,9 +7002,9 @@
   z-index: 9;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 58% 52% at 50% 40%, transparent 28%, color-mix(in srgb, #000204 78%, transparent) 100%),
-    linear-gradient(180deg, color-mix(in srgb, #000204 55%, transparent) 0%, transparent 16%, transparent 62%, color-mix(in srgb, #000204 70%, transparent) 100%),
-    linear-gradient(90deg, color-mix(in srgb, #000204 62%, transparent) 0%, transparent 18%, transparent 82%, color-mix(in srgb, #000204 62%, transparent) 100%);
+    radial-gradient(ellipse 62% 55% at 50% 36%, transparent 36%, color-mix(in srgb, #000204 55%, transparent) 100%),
+    linear-gradient(180deg, color-mix(in srgb, #000204 28%, transparent) 0%, transparent 14%, transparent 58%, color-mix(in srgb, #000204 50%, transparent) 100%),
+    linear-gradient(90deg, color-mix(in srgb, #000204 45%, transparent) 0%, transparent 16%, transparent 84%, color-mix(in srgb, #000204 45%, transparent) 100%);
 }
 
 .hq-splash-inner {
@@ -6987,10 +7015,13 @@
   align-items: center;
   text-align: center;
   gap: 0.55rem;
-  padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  padding: 0 1.25rem max(1.5rem, env(safe-area-inset-bottom));
   max-width: 36rem;
   pointer-events: none;
-  margin-top: min(12vh, 5.5rem);
+  /* Anchored to bottom so the moon + river path own the upper half */
+  margin-top: 0;
+  margin-bottom: max(4.5rem, calc(env(safe-area-inset-bottom) + 2.5rem));
+  align-self: end;
 }
 .hq-splash-brand {
   margin: 0;
@@ -7099,12 +7130,10 @@
 }
 @keyframes hq-splash-moon-path-shimmer {
   from {
-    opacity: 0.55;
-    filter: blur(1.2px);
+    opacity: 0.72;
   }
   to {
-    opacity: 0.82;
-    filter: blur(2px);
+    opacity: 0.98;
   }
 }
 @keyframes hq-splash-lantern-path-pulse {
@@ -7216,17 +7245,24 @@
 
 @media (max-width: 640px) {
   .hq-splash-moon {
-    width: min(68vw, 16rem);
-    height: min(68vw, 16rem);
-    top: 16%;
+    width: min(88vw, 22rem);
+    height: min(88vw, 22rem);
+    top: 8%;
   }
   .hq-splash-boat-gunwale {
-    width: 16%;
+    width: min(28vw, 5.5rem);
+  }
+  .hq-splash-boat-deck {
+    height: 24%;
   }
   .hq-splash-bank {
-    width: 18%;
+    width: 14%;
   }
   .hq-splash-inner {
-    margin-top: min(8vh, 3.5rem);
+    margin-top: 0;
+    margin-bottom: max(5.5rem, calc(env(safe-area-inset-bottom) + 3.5rem));
+  }
+  .hq-splash-moon-path {
+    width: min(52vw, 12rem);
   }
 }
