@@ -273,30 +273,32 @@ function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
     return g
   }
 
-  // Default ink robe — tapered 6-gon torso (matches scout figure kit)
+  // Default ink robe — stocky slab torso (matches scout figure kit)
   const torso = tag(
-    harborFigureTorso(c, pelvisY + 0.22, {
-      shoulder: shoulder * 0.5,
-      waist: shoulder * 0.42,
-      h: 0.42,
-      depth: 0.24,
+    harborFigureTorso(c, pelvisY + 0.17, {
+      shoulder: shoulder * 0.52,
+      waist: shoulder * 0.48,
+      h: 0.34,
+      depth: 0.28,
     }),
     'top',
   )
   g.add(torso)
   const collar = tag(
-    harborFigureTorso(a, pelvisY + 0.42, {
-      shoulder: shoulder * 0.52,
-      waist: shoulder * 0.5,
-      h: 0.08,
-      depth: 0.26,
+    harborFigureTorso(a, pelvisY + 0.34, {
+      shoulder: shoulder * 0.54,
+      waist: shoulder * 0.52,
+      h: 0.07,
+      depth: 0.3,
     }),
     'topAccent',
   )
   g.add(collar)
   for (const side of [-1, 1] as const) {
-    const arm = tag(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.34, 6), c), 'top')
-    arm.position.set(side * armSpread, armY, 0)
+    const arm = tag(new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.07, 0.3, 6), c), 'top')
+    arm.position.set(side * armSpread, armY, 0.02)
+    arm.rotation.z = side * 0.1
+    arm.rotation.x = 0.35
     g.add(arm)
   }
   return g

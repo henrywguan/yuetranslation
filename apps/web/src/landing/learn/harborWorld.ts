@@ -1195,8 +1195,8 @@ function attachDialogueBubble(npc: THREE.Object3D, label?: string) {
 }
 
 /**
- * Low-poly Chinese-styled figure — RS-era proportions (faceted head, flush
- * face eyes, 6-gon limbs, mitten hands) + Harbor clothing kit by role.
+ * Low-poly Chinese-styled figure — RS-era proportions (oversized potato head,
+ * stocky slab, short thick limbs, mitten blobs) + Harbor clothing kit by role.
  */
 function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const g = new THREE.Group()
@@ -1217,56 +1217,62 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const colors = palette[role]
   const cloth = robeMat(colors.robe)
 
-  // Short thick legs (6-gon posts)
-  for (const sx of [-0.1, 0.1] as const) {
-    g.add(hqPost(0.06, 0.07, 0.4, colors.pants, sx, 0.22, 0))
-    g.add(hqBox(0.11, 0.07, 0.16, P.woodDark, sx, 0.04, 0.03))
+  // Short thick bow-legged posts
+  for (const side of [-1, 1] as const) {
+    const sx = side * 0.11
+    const thigh = hqPost(0.07, 0.075, 0.22, colors.pants, sx, 0.28, 0)
+    thigh.rotation.z = side * 0.12
+    g.add(thigh)
+    g.add(hqPost(0.06, 0.065, 0.18, colors.pants, sx + side * 0.02, 0.1, 0.02))
+    const boot = hqPost(0.055, 0.07, 0.12, P.woodDark, sx + side * 0.02, 0.04, 0.05)
+    boot.rotation.x = Math.PI / 2
+    g.add(boot)
   }
-  // Tapered 6-gon torso
-  const torsoH = role === 'scholar' || role === 'merchant' ? 0.5 : 0.4
-  const torso = harborFigureTorso(cloth, 0.42 + torsoH / 2 - 0.05, {
-    shoulder: 0.18,
-    waist: 0.15,
+  // Stocky slab torso (type-A little waist pinch)
+  const torsoH = role === 'scholar' || role === 'merchant' ? 0.38 : 0.34
+  const torso = harborFigureTorso(cloth, 0.4 + torsoH / 2, {
+    shoulder: 0.2,
+    waist: 0.18,
     h: torsoH,
-    depth: 0.24,
+    depth: 0.28,
   })
   g.add(torso)
-  g.add(hqBox(0.38, 0.08, 0.26, colors.trim, 0, 0.55, 0))
+  g.add(hqBox(0.4, 0.07, 0.28, colors.trim, 0, 0.48, 0))
   if (role === 'scholar' || role === 'merchant') {
     g.add(
-      harborFigureTorso(cloth, 0.38, {
-        shoulder: 0.17,
-        waist: 0.16,
-        h: 0.28,
-        depth: 0.2,
+      harborFigureTorso(cloth, 0.36, {
+        shoulder: 0.19,
+        waist: 0.175,
+        h: 0.22,
+        depth: 0.22,
       }),
     )
   }
-  // Segmented arms + mittens
+  // Segmented arms + mitten blobs
   for (const side of [-1, 1] as const) {
-    g.add(harborFigureArm(cloth, skin, side, 0.78, 0.24))
+    g.add(harborFigureArm(cloth, skin, side, 0.72, 0.26))
   }
-  // Faceted head + flush face (no jutting eye orbs)
-  const headY = 1.08
+  // Oversized potato head + flush face
+  const headY = 0.98
   g.add(harborFigureHead(skin, headY))
   g.add(harborFigureNeck(skin, headY))
   g.add(harborFigureEars(skin, headY))
   g.add(harborFigureFace(skin, headY, { showBrows: true, showMouth: true }))
-  const bun = new THREE.Mesh(new THREE.IcosahedronGeometry(0.065, 0), hair)
-  bun.position.set(0, 1.2, -0.03)
+  const bun = new THREE.Mesh(new THREE.IcosahedronGeometry(0.07, 0), hair)
+  bun.position.set(0, headY + 0.14, -0.04)
   g.add(bun)
 
   if (role === 'scholar') {
-    g.add(hqBox(0.3, 0.1, 0.26, P.ink, 0, 1.22, 0))
-    g.add(hqBox(0.15, 0.12, 0.15, P.ink, 0, 1.34, 0))
+    g.add(hqBox(0.32, 0.1, 0.28, P.ink, 0, headY + 0.16, 0))
+    g.add(hqBox(0.16, 0.12, 0.16, P.ink, 0, headY + 0.28, 0))
   } else if (role === 'fisherman' || role === 'ferryman') {
-    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.14, 7), hqMat(P.straw))
-    hat.position.y = 1.24
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.15, 7), hqMat(P.straw))
+    hat.position.y = headY + 0.18
     g.add(hat)
   } else if (role === 'merchant') {
-    g.add(hqPost(0.11, 0.12, 0.08, 0x2a1810, 0, 1.2, 0))
+    g.add(hqPost(0.12, 0.13, 0.08, 0x2a1810, 0, headY + 0.14, 0))
   } else if (role === 'villager') {
-    g.add(hqBox(0.28, 0.06, 0.24, 0x2a2820, 0, 1.18, 0))
+    g.add(hqBox(0.3, 0.06, 0.26, 0x2a2820, 0, headY + 0.12, 0))
   }
 
   if (role === 'fisherman' && rng() > 0.35) {

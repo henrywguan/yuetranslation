@@ -681,17 +681,21 @@ function main() {
   assert.equal(scout.userData.originalHarborAsset, true)
   assert.equal(scout.userData.player, true)
   const meshes = countProtagonistMeshes(scout)
-  assert.ok(meshes >= 18 && meshes <= 48, `mesh budget smell-test got ${meshes}`)
-  assert.match(
-    readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8'),
-    /harborFigureFace|(CircleGeometry|PlaneGeometry)/,
-    'shared figure kit uses flush face inserts',
-  )
-  assert.match(
-    readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8'),
-    /eyeStyle|HarborEyeStyle/,
-    'face kit branches on eye style',
-  )
+  assert.ok(meshes >= 18 && meshes <= 56, `mesh budget smell-test got ${meshes}`)
+  {
+    const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
+    assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
+    assert.match(figSrc, /headR:\s*0\.19/, 'oversized potato head radius')
+    assert.match(figSrc, /IcosahedronGeometry\([^,]+,\s*0\)/, 'detail-0 faceted head (not smooth ball)')
+    assert.match(figSrc, /bow|rotation\.z = side/, 'bow-legged plant')
+    assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses flush face inserts')
+    assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
+    assert.doesNotMatch(
+      figSrc,
+      /BoxGeometry\(0\.08,\s*0\.09,\s*0\.1\)/,
+      'hands are mitten blobs, not Steve cubes',
+    )
+  }
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
     /harborFigureHead|IcosahedronGeometry|harborFigureFace/,
@@ -701,6 +705,11 @@ function main() {
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
     /harborFigureHeadExtents|bangZ/,
     'scout hair sits outside skull extents',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
+    /study-only|Not Jagex IP/,
+    'protagonist docs forbid Jagex STL import',
   )
   assert.doesNotMatch(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
@@ -713,6 +722,12 @@ function main() {
   }
   const standing = buildHarborProtagonist({ pose: 'standing' })
   assert.ok(countProtagonistMeshes(standing) >= meshes, 'standing has at least seated complexity')
+  assert.ok(
+    typeof standing.userData.headY === 'number' &&
+      typeof standing.userData.pelvisY === 'number' &&
+      standing.userData.headY - standing.userData.pelvisY < 0.55,
+    'stubby torso — head sits close above pelvis (anti-Minecraft tall stack)',
+  )
 
   const dock0 = dockPoseForProgress(0)
   const dockMid = dockPoseForProgress(0.5)
