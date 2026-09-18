@@ -85,7 +85,7 @@ const fringeScout = buildHarborProtagonist({
 })
 const { z: skullZ } = (() => {
   // Match harborFigureHeadExtents() after potato-head scale
-  const r = 0.19
+  const r = 0.152
   return { z: r * 0.98 }
 })()
 let bangOk = false
@@ -107,7 +107,7 @@ const bunScout = buildHarborProtagonist({
   appearance: { ...HARBOR_DEFAULT_APPEARANCE, hairStyle: 'bun' },
 })
 const headY = typeof bunScout.userData.headY === 'number' ? bunScout.userData.headY : 0.8
-const crownTop = headY + 0.19 * 1.02
+const crownTop = headY + 0.152 * 1.02
 let hairAboveCrown = 0
 bunScout.traverse((o) => {
   const m = o as import('three').Mesh
@@ -124,15 +124,25 @@ bunScout.traverse((o) => {
 })
 assert.ok(hairAboveCrown >= 1, 'traveler bun places hair on/above the crown (not a tonsure)')
 
+const createSrc = readFileSync(new URL('./HarborCharacterCreate.tsx', import.meta.url), 'utf8')
+assert.match(createSrc, /previewRotating|Pause rotation/, 'barber preview can pause spin')
+assert.match(createSrc, /Zoom in|previewDistance|setPreviewDistance/, 'barber preview zoom controls')
+assert.match(createSrc, /is-premium-locked/, 'unowned premium beauty labels mark locked')
+const createCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
+assert.match(createCss, /hq-premium-gold-shimmer/, 'gold shimmer for locked beauty text')
+assert.match(createCss, /hq-charcreate-preview-tools/, 'preview camera toolbar styles')
+
 const figureSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
 assert.match(figureSrc, /harborFigureHeadExtents/, 'shared skull extents for hair/face')
 assert.match(figureSrc, /eyeStyle/, 'face builder reads eyeStyle')
 assert.match(figureSrc, /harborBrow|Eyebrows always/, 'face kit always builds brows')
 assert.match(figureSrc, /half-lidded crescents|never black sunglass/, 'sleepy eyes redesigned off sunglass bars')
+assert.match(figureSrc, /neckH:\s*0\.1/, 'visible neck height locked')
 const proSrc = readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8')
 assert.match(proSrc, /bangZ|harborFigureHeadExtents/, 'hair uses skull-clear bang depth')
 assert.match(proSrc, /full scalp cover|never a friar/, 'bun docs forbid friar ring')
 assert.match(proSrc, /showBrows:\s*true/, 'protagonist always enables brows')
+assert.match(proSrc, /visible neck|torsoTop/, 'protagonist lays out an explicit neck gap')
 
 const bamboo = HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-bamboo')!
 assert.equal(harborGearMeshInfo(bamboo).uniqueMesh, true, 'bamboo hat unique silhouette')
