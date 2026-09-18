@@ -1105,10 +1105,23 @@ function main() {
   assert.match(learnCss, /\.hq-shop-grid/, 'RS-style shop item grid')
   assert.match(learnCss, /\.hq-shop-stock/, 'yellow shop stock badges')
   assert.match(learnCss, /\.hq-shop-qty-btn/, 'shop quantity buttons')
+  assert.match(learnCss, /\.hq-shop-head--bank/, 'bank-chrome shop header')
+  assert.match(learnCss, /grid-template-columns:\s*repeat\(8/, '8-column RS bank/shop grid')
+  assert.match(learnCss, /\.hq-shop-price-badge/, 'shop price badges under icons')
   assert.match(
     readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8'),
-    /HarborGearModelIcon|HARBOR_SHOP_QTY|Value check/,
+    /hq-shop-shelf--bank-chrome|hq-shop-head--bank/,
+    'Outfitter/Bank use bank chrome header',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8'),
+    /HarborGearModelIcon|HARBOR_SHOP_QTY|Value:/,
     'shop shelf shows item icons + RS controls',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8'),
+    /hq-shop-shelf--bank-chrome|hq-fish-shop-grid/,
+    'Fishing Lodge uses bank/shop chrome grids',
   )
   assert.match(
     readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8'),

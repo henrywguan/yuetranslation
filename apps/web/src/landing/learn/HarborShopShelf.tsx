@@ -13,9 +13,16 @@ import { HarborGearModelIcon } from './HarborGearModelIcon'
 import { HarborItemTooltip } from './HarborItemTooltip'
 import { playHarborUiClick } from './harborInteractSfx'
 
-/** RS general-store style buy quantities (Harbor gear is unique — buy still takes 1). */
+/** RS bank / general-store qty toggles (Harbor gear is unique — buy still takes 1). */
 export const HARBOR_SHOP_QTY = [1, 5, 10, 50] as const
 export type HarborShopQty = (typeof HARBOR_SHOP_QTY)[number]
+
+const QTY_LABEL: Record<HarborShopQty, string> = {
+  1: '1',
+  5: '5',
+  10: '10',
+  50: 'All',
+}
 
 const SLOT_LABEL: Record<HarborGearSlot, string> = {
   hat: 'Hat',
@@ -27,8 +34,9 @@ const SLOT_LABEL: Record<HarborGearSlot, string> = {
   lantern: 'Lantern',
 }
 
-/** How many empty cells to pad so the shelf reads like an RS store grid. */
-const SHOP_GRID_MIN = 16
+/** Pad to a full RS-style plate (8 columns × 3 rows minimum). */
+const SHOP_GRID_COLS = 8
+const SHOP_GRID_MIN = 24
 
 type ShelfKind = 'outfitter' | 'bank'
 
@@ -102,10 +110,12 @@ export function HarborShopShelf({
   const cells = useMemo(() => {
     const list: (HarborGearItem | null)[] = [...items]
     while (list.length < SHOP_GRID_MIN) list.push(null)
-    // Round up to a full row of 4 so the stone plate doesn’t look ragged.
-    while (list.length % 4 !== 0) list.push(null)
+    while (list.length % SHOP_GRID_COLS !== 0) list.push(null)
     return list
   }, [items])
+
+  const filledCount = items.length
+  const capacityLabel = `${filledCount} / ${cells.length}`
 
   const picked = pickedId ? items.find((i) => i.id === pickedId) ?? null : null
   const ownedPicked = picked ? owned.includes(picked.id) : false
@@ -201,63 +211,64 @@ export function HarborShopShelf({
   return (
     <aside
       ref={rootRef}
-      className={`hq-visit-panel hq-visit-panel--shop hq-shop-shelf${kind === 'bank' ? ' hq-visit-panel--bank hq-shop-shelf--bank' : ''}`}
+      className={`hq-visit-panel hq-visit-panel--shop hq-shop-shelf hq-shop-shelf--bank-chrome${kind === 'bank' ? ' hq-visit-panel--bank hq-shop-shelf--bank' : ''}`}
       role="dialog"
       aria-label={title}
     >
-      <header className="hq-shop-head">
-        <div className="hq-shop-head-copy">
-          <p className="hq-visit-kicker">{kicker}</p>
+      <header className="hq-shop-head hq-shop-head--bank">
+        <p className="hq-shop-capacity" title={body}>
+          {capacityLabel}
+        </p>
+        <div className="hq-shop-head-center">
           <h2 className="hq-shop-title">{title}</h2>
-          <p className="hq-visit-body">{body}</p>
+          <p className="hq-shop-sub">{kicker}</p>
         </div>
         <button
           type="button"
           className="hq-shop-close"
-          aria-label="Cast off"
-          title="Cast off"
+          aria-label="Close"
+          title="Close"
           onClick={onClose}
         >
           ×
         </button>
       </header>
 
-      {kind === 'bank' ? (
-        <div className="hq-shop-mode-tabs" role="tablist" aria-label="Bank shelves">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={bankTab === 'pack'}
-            className={`hq-shop-mode-tab${bankTab === 'pack' ? ' is-on' : ''}`}
-            onClick={() => {
-              playHarborUiClick()
-              setBankTab('pack')
-              setPickedId(null)
-              setTipId(null)
-              setValueFlash(null)
-            }}
-          >
-            Pack
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={bankTab === 'vault'}
-            className={`hq-shop-mode-tab${bankTab === 'vault' ? ' is-on' : ''}`}
-            onClick={() => {
-              playHarborUiClick()
-              setBankTab('vault')
-              setPickedId(null)
-              setTipId(null)
-              setValueFlash(null)
-            }}
-          >
-            Vault
-          </button>
-        </div>
-      ) : null}
-
-      <div className="hq-shop-slot-tabs" role="tablist" aria-label="Gear slots">
+      <div className="hq-shop-tab-strip" role="tablist" aria-label={kind === 'bank' ? 'Bank shelves' : 'Gear slots'}>
+        {kind === 'bank' ? (
+          <>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={bankTab === 'pack'}
+              className={`hq-shop-mode-tab${bankTab === 'pack' ? ' is-on' : ''}`}
+              onClick={() => {
+                playHarborUiClick()
+                setBankTab('pack')
+                setPickedId(null)
+                setTipId(null)
+                setValueFlash(null)
+              }}
+            >
+              Pack
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={bankTab === 'vault'}
+              className={`hq-shop-mode-tab${bankTab === 'vault' ? ' is-on' : ''}`}
+              onClick={() => {
+                playHarborUiClick()
+                setBankTab('vault')
+                setPickedId(null)
+                setTipId(null)
+                setValueFlash(null)
+              }}
+            >
+              Vault
+            </button>
+          </>
+        ) : null}
         {HARBOR_GEAR_SLOTS.map((slot) => (
           <button
             key={slot}
@@ -295,8 +306,10 @@ export function HarborShopShelf({
             const locked = kind === 'outfitter' && !ownedItem && coins < item.price
             const on = pickedId === item.id
             const tipOpen = tipId === item.id
-            const tipBelow = i < 8
+            const tipBelow = i < SHOP_GRID_COLS
             const vip = item.tier === 'vip'
+            const showPrice =
+              kind === 'outfitter' && !ownedItem && item.price > 0
             return (
               <li key={item.id} className="hq-shop-cell">
                 <button
@@ -331,6 +344,11 @@ export function HarborShopShelf({
                     {stockBadge(item)}
                   </span>
                   <HarborGearModelIcon item={item} compact />
+                  {showPrice ? (
+                    <span className="hq-shop-price-badge" aria-hidden="true">
+                      {item.price.toLocaleString()}
+                    </span>
+                  ) : null}
                   <HarborItemTooltip
                     item={item}
                     wearing={equipped}
@@ -367,7 +385,7 @@ export function HarborShopShelf({
             </div>
             <button
               type="button"
-              className="hq-btn hq-btn--primary hq-btn--tiny"
+              className="hq-shop-action-btn"
               disabled={primaryDisabled}
               title={
                 valueCheck
@@ -389,11 +407,11 @@ export function HarborShopShelf({
         )}
       </div>
 
-      {statusLine ? <p className="hq-visit-msg">{statusLine}</p> : null}
+      {statusLine ? <p className="hq-shop-status">{statusLine}</p> : null}
 
       <footer className="hq-shop-foot">
         <div className="hq-shop-value">
-          <span className="hq-shop-foot-label">Value check:</span>
+          <span className="hq-shop-foot-label">Value:</span>
           <button
             type="button"
             className={`hq-shop-value-btn${valueCheck ? ' is-on' : ''}`}
@@ -409,7 +427,7 @@ export function HarborShopShelf({
           </button>
         </div>
         <div className="hq-shop-qty" role="group" aria-label="Quantity">
-          <span className="hq-shop-foot-label">Quantity:</span>
+          <span className="hq-shop-foot-label">Withdraw:</span>
           {HARBOR_SHOP_QTY.map((n) => (
             <button
               key={n}
@@ -421,27 +439,20 @@ export function HarborShopShelf({
                 setQty(n)
               }}
             >
-              {n}
+              {QTY_LABEL[n]}
             </button>
           ))}
         </div>
-      </footer>
-
-      <div className="hq-shop-coins" title="Ferry coins">
-        <span className="hq-bag-coin-stack" aria-hidden="true" />
-        <span className="hq-bag-coin-qty">{coins.toLocaleString()} coins</span>
-      </div>
-
-      <div className="hq-visit-actions">
+        <div className="hq-shop-coins" title="Ferry coins">
+          <span className="hq-bag-coin-stack" aria-hidden="true" />
+          <span className="hq-bag-coin-qty">{coins.toLocaleString()}</span>
+        </div>
         {onOpenCodex ? (
-          <button type="button" className="hq-btn hq-btn--ghost" onClick={onOpenCodex}>
-            Gear codex
+          <button type="button" className="hq-shop-foot-link" onClick={onOpenCodex}>
+            Codex
           </button>
         ) : null}
-        <button type="button" className="hq-btn hq-btn--ghost" onClick={onClose}>
-          Cast off
-        </button>
-      </div>
+      </footer>
     </aside>
   )
 }
