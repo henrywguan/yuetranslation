@@ -4,8 +4,6 @@ import {
   MATCH_DEFINITION_BANK,
   MATCH_DIFFICULTIES,
   MATCH_DIFFICULTY,
-  MATCH_GOLD_PER_HIT,
-  MATCH_ROUND_SECONDS,
   MATCH_TOPICS,
   MATCH_TOPIC,
   buildMatchRound,
@@ -13,8 +11,8 @@ import {
 } from './matchDefinitionBank.ts'
 
 assert.ok(MATCH_DEFINITION_BANK.length >= 100)
-assert.equal(MATCH_ROUND_SECONDS, MATCH_DIFFICULTY.easy.seconds)
-assert.equal(MATCH_GOLD_PER_HIT, MATCH_DIFFICULTY.easy.goldPerHit)
+assert.equal(MATCH_DIFFICULTY.easy.seconds, 15)
+assert.equal(MATCH_DIFFICULTY.easy.goldPerHit, 10)
 assert.equal(HARBOR_GOLD_TO_COINS, 1)
 
 assert.deepEqual(MATCH_TOPICS, ['kids', 'animals', 'nature', 'food', 'harbor'])

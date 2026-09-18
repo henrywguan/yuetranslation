@@ -236,7 +236,7 @@ function sumUsageSnapshots(month: string, rows: UsageSnapshot[]): UsageSnapshot 
 }
 
 /** Per-field max — avoids double-counting when personal rows overlap the household pool. */
-function maxUsageSnapshots(month: string, a: UsageSnapshot, b: UsageSnapshot): UsageSnapshot {
+export function maxUsageSnapshots(month: string, a: UsageSnapshot, b: UsageSnapshot): UsageSnapshot {
   return {
     month,
     liveSeconds: Math.max(a.liveSeconds, b.liveSeconds),
@@ -249,14 +249,6 @@ function maxUsageSnapshots(month: string, a: UsageSnapshot, b: UsageSnapshot): U
     harborQuestCount: Math.max(a.harborQuestCount, b.harborQuestCount),
     practicePartnerCount: Math.max(a.practicePartnerCount, b.practicePartnerCount),
   }
-}
-
-/** @deprecated Prefer maxUsageSnapshots in resolveHouseholdUsage. */
-export function mergePooledWithPersonal(
-  pool: UsageSnapshot,
-  personalSum: UsageSnapshot,
-): UsageSnapshot {
-  return maxUsageSnapshots(pool.month, pool, personalSum)
 }
 
 

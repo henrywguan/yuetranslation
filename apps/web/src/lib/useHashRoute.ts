@@ -83,7 +83,7 @@ export function navigate(route: Route) {
   window.scrollTo({ top: 0 })
 }
 
-/** Level id from `#/learn/<id>` (hub when absent). */
+/** Level id from `#/learn/<id>` (null on bare `#/learn` → splash / continue). */
 export function learnLevelFromHash(hash = typeof window === 'undefined' ? '' : window.location.hash): string | null {
   const path = hashPath(hash)
   if (!path.startsWith('learn')) return null

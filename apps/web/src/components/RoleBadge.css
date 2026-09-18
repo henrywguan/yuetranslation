@@ -47,14 +47,6 @@
   --role-ink: #3d2a08;
 }
 
-.role-badge-wrap {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  vertical-align: middle;
-}
-
 .role-badge--btn {
   appearance: none;
   margin: 0;
@@ -70,14 +62,6 @@
 
 .role-badge--family.role-badge--btn:focus-visible {
   outline-color: color-mix(in srgb, #ffd700 75%, transparent);
-}
-
-.role-badge-sub {
-  font-size: 0.62rem;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 .role-badge:hover {

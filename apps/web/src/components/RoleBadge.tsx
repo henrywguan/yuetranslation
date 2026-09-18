@@ -4,8 +4,6 @@ type Props = {
   role: UserRole
   className?: string
   onClick?: () => void
-  /** Shown under the badge (e.g. current plan in admin table). */
-  subtitle?: string
 }
 
 function CrownIcon({ shiny }: { shiny?: boolean }) {
@@ -31,7 +29,7 @@ function CrownIcon({ shiny }: { shiny?: boolean }) {
 /**
  * Neo-brutalist role badge — admin (jade) or 家 family (gold), crown + twinkling stars.
  */
-export function RoleBadge({ role, className = '', onClick, subtitle }: Props) {
+export function RoleBadge({ role, className = '', onClick }: Props) {
   const label = role === 'admin' ? 'admin' : '家'
   const variant = role === 'admin' ? 'admin' : 'family'
   const title = onClick ? `${label} role — click to change` : `${label} role`
@@ -45,29 +43,23 @@ export function RoleBadge({ role, className = '', onClick, subtitle }: Props) {
     </span>
   )
 
-  const badge = onClick ? (
-    <button
-      type="button"
-      className={`role-badge role-badge--${variant} role-badge--btn ${className}`.trim()}
-      title={title}
-      aria-label={title}
-      onClick={onClick}
-    >
-      {face}
-    </button>
-  ) : (
-    <span
-      className={`role-badge role-badge--${variant} ${className}`.trim()}
-      title={title}
-    >
-      {face}
-    </span>
-  )
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={`role-badge role-badge--${variant} role-badge--btn ${className}`.trim()}
+        title={title}
+        aria-label={title}
+        onClick={onClick}
+      >
+        {face}
+      </button>
+    )
+  }
 
   return (
-    <span className="role-badge-wrap">
-      {badge}
-      {subtitle ? <span className="role-badge-sub">{subtitle}</span> : null}
+    <span className={`role-badge role-badge--${variant} ${className}`.trim()} title={title}>
+      {face}
     </span>
   )
 }
