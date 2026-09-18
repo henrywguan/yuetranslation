@@ -115,8 +115,17 @@ import {
   visitSaveShack,
   withdrawHarborGear,
   updateHarborFishing,
+  purchaseHarborBeautySku,
+  purchaseHarborBeautyForAppearance,
+  equipHarborShowoff,
+  claimHarborFreeEventProgress,
   type HarborProgress,
 } from './progress'
+import {
+  HARBOR_FREE_EVENTS,
+  harborShowoffForKind,
+  type HarborEventId,
+} from './harborShowoff'
 import { QuestPanel } from './QuestPanel'
 import { missionBaseXp, sailorLevelFromXp } from './xpRewards'
 
@@ -189,6 +198,8 @@ export function LearnSession({
 
   const worldApiRef = useRef<HarborWorldHandle | null>(null)
   const presenceRef = useRef<HarborPresenceSession | null>(null)
+  const nametagFrameRef = useRef(progressSnap.showoff?.look.nametag ?? 'tag-plain')
+  nametagFrameRef.current = progressSnap.showoff?.look.nametag ?? 'tag-plain'
   const playRootRef = useRef<HTMLDivElement | null>(null)
   const talkHudRef = useRef<HTMLDivElement | null>(null)
   const [clearReward, setClearReward] = useState<{
@@ -217,7 +228,10 @@ export function LearnSession({
           localUserIdRef.current = null
           setChatReady(false)
           setLocalUsername(guestName)
-          worldApiRef.current?.setLocalUsername(guestName)
+          worldApiRef.current?.setLocalUsername(
+            guestName,
+            nametagFrameRef.current,
+          )
           setRemotePlayers([])
         }
         return
@@ -227,7 +241,10 @@ export function LearnSession({
       const username = harborDisplayUsername(preferred, userId)
       if (!cancelled) {
         setLocalUsername(username)
-        worldApiRef.current?.setLocalUsername(username)
+        worldApiRef.current?.setLocalUsername(
+          username,
+          nametagFrameRef.current,
+        )
       }
       const supabase = getSupabaseClient()
       if (!supabase) return
@@ -272,6 +289,7 @@ export function LearnSession({
           look: pose.look,
           gender: pose.gender,
           appearance: pose.appearance,
+          nametagFrame: nametagFrameRef.current,
           username,
         })
       }
@@ -921,6 +939,15 @@ export function LearnSession({
         existingUsername={accountUsername || progressSnap.localUsername}
         signedIn={Boolean(entitlement?.loggedIn)}
         mode={needsCharacterCreate ? 'full' : 'username-only'}
+        beautyOwned={progressSnap.beautyOwned}
+        coins={progressSnap.coins}
+        onUnlockBeauty={(skuId) => {
+          const next = purchaseHarborBeautySku(skuId)
+          if (!next) return false
+          setProgressSnap(next)
+          onProgress(next)
+          return true
+        }}
         onComplete={(result) => {
           playHarborBarberSnip()
           completeHarborCharacter({
@@ -932,7 +959,10 @@ export function LearnSession({
           const next = loadHarborProgress()
           setProgressSnap(next)
           setLocalUsername(result.username)
-          worldApiRef.current?.setLocalUsername(result.username)
+          worldApiRef.current?.setLocalUsername(
+            result.username,
+            next.showoff?.look.nametag ?? 'tag-plain',
+          )
           onProgress(next)
         }}
       />
@@ -972,6 +1002,7 @@ export function LearnSession({
           onDialogueNpc={onDialogueNpc}
           remotePlayers={remotePlayers}
           localUsername={localUsername}
+          nametagFrame={progressSnap.showoff?.look.nametag ?? 'tag-plain'}
           onRemotePlayerSelect={setProfileUserId}
           worldApiRef={worldApiRef}
         />
@@ -1127,6 +1158,79 @@ export function LearnSession({
             Save progress & look
           </button>
           {saveFlash ? <p className="hq-visit-msg">{saveFlash}</p> : null}
+          <div className="hq-festival-block">
+            <p className="hq-visit-kicker">Free festival gifts · 節慶贈禮</p>
+            <ul className="hq-festival-list" aria-label="Free event cosmetics">
+              {HARBOR_FREE_EVENTS.map((ev) => {
+                const claimed = progressSnap.showoff?.claimedEvents?.includes(ev.id) ?? false
+                return (
+                  <li key={ev.id}>
+                    <button
+                      type="button"
+                      className={`hq-festival-btn${claimed ? ' is-claimed' : ''}`}
+                      disabled={claimed}
+                      onClick={() => {
+                        playHarborUiClick()
+                        const { progress, granted, already } = claimHarborFreeEventProgress(
+                          ev.id as HarborEventId,
+                        )
+                        setProgressSnap(progress)
+                        onProgress(progress)
+                        if (already || granted.length === 0) {
+                          setSaveFlash(already ? 'Already claimed' : 'Nothing new to grant')
+                        } else {
+                          setSaveFlash(`Claimed ${granted.length} gift${granted.length === 1 ? '' : 's'}`)
+                        }
+                        window.setTimeout(() => setSaveFlash(null), 2200)
+                      }}
+                    >
+                      <span className="hq-festival-en">{ev.name.en}</span>
+                      <span className="hq-festival-zh" lang="zh-HK">
+                        {ev.name.zh}
+                      </span>
+                      <span className="hq-festival-status">{claimed ? 'Claimed' : 'Claim free'}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+          <div className="hq-showoff-block">
+            <p className="hq-visit-kicker">Nametag plate · 名牌</p>
+            <ul className="hq-showoff-plates" aria-label="Nametag frames">
+              {harborShowoffForKind('nametag').map((item) => {
+                const owned = progressSnap.showoff?.owned?.includes(item.id) ?? false
+                const on = progressSnap.showoff?.look.nametag === item.id
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className={`hq-showoff-plate${on ? ' is-on' : ''}${!owned ? ' is-locked' : ''}`}
+                      disabled={!owned || on}
+                      title={owned ? item.name.en : `${item.name.en} · locked`}
+                      onClick={() => {
+                        playHarborUiClick()
+                        const next = equipHarborShowoff('nametag', item.id)
+                        if (!next) return
+                        setProgressSnap(next)
+                        onProgress(next)
+                        worldApiRef.current?.setNametagFrame(item.id)
+                      }}
+                    >
+                      <span
+                        className="hq-showoff-swatch"
+                        style={{
+                          background: `#${item.accent.toString(16).padStart(6, '0')}`,
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span className="hq-showoff-label">{item.name.en}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
           <div className="hq-visit-actions">
             <button
               type="button"
@@ -1361,6 +1465,22 @@ export function LearnSession({
             initialGender={progressSnap.gender}
             initialAppearance={progressSnap.appearance}
             initialLook={progressSnap.look}
+            beautyOwned={progressSnap.beautyOwned}
+            coins={progressSnap.coins}
+            onUnlockBeauty={(skuId) => {
+              const next = purchaseHarborBeautySku(skuId)
+              if (!next) return false
+              setProgressSnap(next)
+              onProgress(next)
+              return true
+            }}
+            onUnlockBeautyBundle={(appearance) => {
+              const next = purchaseHarborBeautyForAppearance(appearance)
+              if (!next) return false
+              setProgressSnap(next)
+              onProgress(next)
+              return true
+            }}
             onCancel={() => setBarberOpen(false)}
             onComplete={(result) => {
               playHarborBarberSnip()

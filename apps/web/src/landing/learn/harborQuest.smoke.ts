@@ -513,10 +513,13 @@ function main() {
   assert.match(canvasSrc, /\[realm\]/, 'canvas recreates world when realm changes')
   assert.match(
     canvasSrc,
-    /setLocalUsername\(name\)|setLocalUsername\(localUsernameRef/,
+    /setLocalUsername\(name(?:,\s*frame)?\)|setLocalUsername\(localUsernameRef/,
     'realm remount restores local nametag (not default sailor)',
   )
+  assert.match(canvasSrc, /nametagFrame/, 'canvas accepts showoff nametagFrame')
   assert.match(canvasSrc, /localUsernameRef/, 'username kept across realm remount via ref')
+  assert.match(stageSrc, /nametagFrame=\{nametagFrame\}/, 'HarborStage forwards nametagFrame')
+  assert.match(worldSrc, /setNametagFrame/, 'world can swap nametag frame')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
   assert.doesNotMatch(worldSrc, /yawTarget\s*\+=\s*dx\s*\*\s*ORBIT_SENS/, 'non-inverted yaw drag removed')
   assert.equal(HARBOR_TAP_SLOP_PX, 10, 'tap vs drag pixel slop')
@@ -1105,6 +1108,17 @@ function main() {
   assert.ok(codex.families >= 12, `expected mesh families, got ${codex.families}`)
   assert.ok(codex.uniqueMeshes < codex.total, 'many items share mesh families (recolors)')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-straw')!).uniqueMesh, false)
+  assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hat-bamboo')!).uniqueMesh, true)
+  assert.match(
+    readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+    /buildClothingMesh/,
+    'v1 silhouette wardrobe builders',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+    /tickHarborProtagonistAnim|Walking_A/,
+    'v4 KayKit-style walk clip vocabulary',
+  )
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'hand-fan')!).uniqueMesh, true)
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'boat-sampan')!).family, 'hull-canoe')
   assert.equal(harborGearMeshInfo(HARBOR_GEAR_CATALOG.find((i) => i.id === 'lantern-phoenix')!).family, 'lantern-silk')

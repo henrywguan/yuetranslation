@@ -5,20 +5,31 @@ import * as THREE from 'three'
 import { applyLookToProtagonist, type HarborLook } from './harborGear'
 import { buildHarborProtagonist } from './harborProtagonist'
 import type { HarborRemotePlayer } from './harborPresence'
+import { harborShowoffAccent } from './harborShowoff'
 
-function nametagTexture(username: string): THREE.CanvasTexture {
+function nametagTexture(username: string, frameId = 'tag-plain'): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 256
   canvas.height = 64
   const ctx = canvas.getContext('2d')!
   ctx.clearRect(0, 0, 256, 64)
+  const accent = harborShowoffAccent(frameId)
+  const r = (accent >> 16) & 0xff
+  const g = (accent >> 8) & 0xff
+  const b = accent & 0xff
   // Soft plate behind the name
   ctx.fillStyle = 'rgba(4, 16, 24, 0.72)'
   roundRect(ctx, 8, 12, 240, 40, 10)
   ctx.fill()
-  ctx.strokeStyle = 'rgba(61, 207, 182, 0.55)'
-  ctx.lineWidth = 2
+  ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.75)`
+  ctx.lineWidth = frameId === 'tag-plain' ? 2 : 3
   ctx.stroke()
+  if (frameId.includes('phoenix') || frameId.includes('fest')) {
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`
+    ctx.lineWidth = 5
+    roundRect(ctx, 4, 8, 248, 48, 12)
+    ctx.stroke()
+  }
   ctx.fillStyle = '#e8f7f4'
   ctx.font = '700 22px "Noto Sans", system-ui, sans-serif'
   ctx.textAlign = 'center'
@@ -103,13 +114,14 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
 
   const tag = new THREE.Sprite(
     new THREE.SpriteMaterial({
-      map: nametagTexture(player.username),
+      map: nametagTexture(player.username, player.nametagFrame ?? 'tag-plain'),
       transparent: true,
       depthTest: false,
       sizeAttenuation: true,
     }),
   )
   tag.name = 'remote-nametag'
+  tag.userData.nametagFrame = player.nametagFrame ?? 'tag-plain'
   tag.position.set(0, player.mode === 'boat' ? 1.85 : 2.05, 0)
   tag.scale.set(1.7, 0.42, 1)
   tag.userData.remotePlayer = true
@@ -149,12 +161,16 @@ export function updateRemoteSailor(root: THREE.Group, player: HarborRemotePlayer
   }
 
   const prevUser = root.userData.remoteUsername as string | undefined
-  if (prevUser !== player.username) {
+  const prevFrame = root.userData.remoteNametagFrame as string | undefined
+  const nextFrame = player.nametagFrame ?? 'tag-plain'
+  if (prevUser !== player.username || prevFrame !== nextFrame) {
     root.userData.remoteUsername = player.username
+    root.userData.remoteNametagFrame = nextFrame
     const tag = root.getObjectByName('remote-nametag') as THREE.Sprite | undefined
     if (tag?.material instanceof THREE.SpriteMaterial && tag.material.map) {
       tag.material.map.dispose()
-      tag.material.map = nametagTexture(player.username)
+      tag.material.map = nametagTexture(player.username, nextFrame)
+      tag.userData.nametagFrame = nextFrame
       tag.material.needsUpdate = true
     }
   }
@@ -263,24 +279,28 @@ export function remoteUserIdFromHits(hits: THREE.Intersection[]): string | null 
 }
 
 /** Nametag sprite for the local sailor (same look as remotes). */
-export function buildNametagSprite(username: string): THREE.Sprite {
+export function buildNametagSprite(username: string, frameId = 'tag-plain'): THREE.Sprite {
   const tag = new THREE.Sprite(
     new THREE.SpriteMaterial({
-      map: nametagTexture(username),
+      map: nametagTexture(username, frameId),
       transparent: true,
       depthTest: false,
       sizeAttenuation: true,
     }),
   )
   tag.name = 'local-nametag'
+  tag.userData.nametagFrame = frameId
   tag.scale.set(1.7, 0.42, 1)
   return tag
 }
 
-export function updateNametagSprite(tag: THREE.Sprite, username: string) {
+export function updateNametagSprite(tag: THREE.Sprite, username: string, frameId?: string) {
   if (!(tag.material instanceof THREE.SpriteMaterial)) return
+  const frame =
+    frameId ?? (typeof tag.userData.nametagFrame === 'string' ? tag.userData.nametagFrame : 'tag-plain')
   if (tag.material.map) tag.material.map.dispose()
-  tag.material.map = nametagTexture(username)
+  tag.material.map = nametagTexture(username, frame)
+  tag.userData.nametagFrame = frame
   tag.material.needsUpdate = true
 }
 

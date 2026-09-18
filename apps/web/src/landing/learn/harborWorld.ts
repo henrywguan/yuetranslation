@@ -37,6 +37,11 @@ import { GUAN_FISHING_HUT, nearestGuanFishSpot } from './harborFishing'
 import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
+  ensureHarborProtagonistLimbs,
+  tickHarborProtagonistAnim,
+  type HarborProtagonistAnimState,
+} from './harborProtagonistAnim'
+import {
   HARBOR_DEFAULT_APPEARANCE,
   type HarborAppearance,
   type HarborGender,
@@ -90,6 +95,8 @@ export type HarborWorldOptions = {
   gender?: HarborGender
   /** Skin / hair cosmetics from character creation. */
   appearance?: HarborAppearance
+  /** Showoff nametag frame id (from harborShowoff). */
+  nametagFrame?: string
   /** Campaign biome dressing (flora / fauna / bank tint). */
   realm?: HarborRealmId
   /** Fires when the canoe enters / leaves a visitable landmark. */
@@ -134,7 +141,8 @@ export type HarborWorldHandle = {
     appearance: HarborAppearance
   }
   /** Username shown above the local scout (all sailors get nametags). */
-  setLocalUsername: (username: string) => void
+  setLocalUsername: (username: string, nametagFrame?: string) => void
+  setNametagFrame: (frameId: string) => void
   /** OSRS-style overhead say (outlined text, no bubble) above local or remote sailor. */
   showSpeechBubble: (who: 'local' | string, text: string, durationMs?: number) => void
   /**
@@ -3630,6 +3638,8 @@ export function createHarborWorld(
   scoutWalk.visible = false
   scene.add(scoutWalk)
   applyLookToProtagonist(scoutWalk, currentLook)
+  ensureHarborProtagonistLimbs(scoutWalk)
+  let scoutAnim: HarborProtagonistAnimState = { mode: 'idle', t: 0 }
   /** Seated land mesh — shown when the sailor sits on a chair / stool. */
   let scoutSit: THREE.Object3D | null = null
   let sitting = false
@@ -3645,7 +3655,7 @@ export function createHarborWorld(
   scene.add(remotesRoot)
   const remoteById = new Map<string, THREE.Group>()
   let localUsername = 'sailor'
-  const localNametag = buildNametagSprite(localUsername)
+  const localNametag = buildNametagSprite(localUsername, options.nametagFrame ?? 'tag-plain')
   scene.add(localNametag)
   let localSpeechBubble: THREE.Sprite | null = null
   let localSpeechUntil = 0
@@ -4268,11 +4278,15 @@ export function createHarborWorld(
           footZ += (dz / dist) * step
           const face = Math.atan2(dx, dz)
           scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 8)
-          const walkBob = reduced ? 0 : Math.abs(Math.sin(now * 0.014)) * 0.05
+          scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, { reduced })
+          const walkBob = reduced ? 0 : Math.abs(Math.sin(scoutAnim.t * 9)) * 0.04
           scoutWalk.position.set(footX, groundYAt(footX, footZ) + walkBob, footZ)
           // Don't open landmarks mid-walk either
           if (!playerDirected) emitVisitable(null)
         } else {
+          scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: sitting ? 'sit' : 'idle' }, dt, {
+            reduced,
+          })
           scoutWalk.position.set(footX, gy, footZ)
           if (playerDirected) destMarker.visible = false
           if (sitTarget) {
@@ -4715,12 +4729,23 @@ if (o.userData.cigaretteSmoke && !reduced) {
         appearance: { ...currentAppearance },
       }
     },
-    setLocalUsername(username) {
+    setLocalUsername(username, nametagFrame) {
       const next = username.trim() || localUsername
-      if (next === localUsername && localNametag.visible) return
+      const frame =
+        typeof nametagFrame === 'string' && nametagFrame
+          ? nametagFrame
+          : typeof localNametag.userData.nametagFrame === 'string'
+            ? localNametag.userData.nametagFrame
+            : 'tag-plain'
+      if (next === localUsername && localNametag.visible && localNametag.userData.nametagFrame === frame) {
+        return
+      }
       localUsername = next
-      updateNametagSprite(localNametag, localUsername)
+      updateNametagSprite(localNametag, localUsername, frame)
       localNametag.visible = true
+    },
+    setNametagFrame(frameId) {
+      updateNametagSprite(localNametag, localUsername, frameId || 'tag-plain')
     },
     showSpeechBubble,
     snapToQuestDock(stepIndex?: number) {

@@ -32,6 +32,8 @@ export type HarborPresenceState = {
   look: HarborLook
   gender: HarborGender
   appearance: HarborAppearance
+  /** Showoff nametag frame id. */
+  nametagFrame: string
   updatedAt: number
 }
 
@@ -138,11 +140,27 @@ export function sanitizePresencePayload(
   const look = isLook(o.look) ? o.look : { ...HARBOR_DEFAULT_LOOK }
   const gender = sanitizeHarborGender(o.gender)
   const appearance = sanitizeHarborAppearance(o.appearance)
+  const nametagFrame =
+    typeof o.nametagFrame === 'string' && o.nametagFrame.trim()
+      ? o.nametagFrame.trim().slice(0, 48)
+      : 'tag-plain'
   const updatedAt =
     typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
       ? o.updatedAt
       : Date.now()
-  return { userId, username, x, z, yaw, mode, look, gender, appearance, updatedAt }
+  return {
+    userId,
+    username,
+    x,
+    z,
+    yaw,
+    mode,
+    look,
+    gender,
+    appearance,
+    nametagFrame,
+    updatedAt,
+  }
 }
 
 export function sanitizePosePacket(raw: unknown): HarborPosePacket | null {
@@ -249,6 +267,10 @@ export function startHarborPresence(opts: {
         look: pose.look,
         gender: pose.gender ?? 'male',
         appearance: pose.appearance ?? { ...HARBOR_DEFAULT_APPEARANCE },
+        nametagFrame:
+          typeof pose.nametagFrame === 'string' && pose.nametagFrame.trim()
+            ? pose.nametagFrame.trim().slice(0, 48)
+            : 'tag-plain',
         updatedAt: Date.now(),
       }
       await channel.track(payload)

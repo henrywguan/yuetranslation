@@ -36,6 +36,8 @@ type HarborStageProps = {
   /** Signed-in multiplayer remotes. */
   remotePlayers?: HarborRemotePlayer[]
   localUsername?: string
+  /** Showoff nametag frame id (harborShowoff). */
+  nametagFrame?: string
   onRemotePlayerSelect?: (userId: string) => void
   worldApiRef?: MutableRefObject<HarborWorldHandle | null>
 }
@@ -57,6 +59,7 @@ export function HarborStage({
   onDialogueNpc,
   remotePlayers,
   localUsername,
+  nametagFrame,
   onRemotePlayerSelect,
   worldApiRef,
 }: HarborStageProps) {
@@ -83,6 +86,7 @@ export function HarborStage({
         onDialogueNpc={onDialogueNpc}
         remotePlayers={remotePlayers}
         localUsername={localUsername}
+        nametagFrame={nametagFrame}
         onRemotePlayerSelect={onRemotePlayerSelect}
         worldApiRef={worldApiRef}
       />
