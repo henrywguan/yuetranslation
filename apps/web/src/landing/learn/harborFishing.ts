@@ -492,14 +492,23 @@ export function buyHarborFishBait(
   bagIn: HarborFishingBag,
   baitId: HarborBaitId,
   coins: number,
-): { ok: true; bag: HarborFishingBag; coins: number } | { ok: false; message: string } {
+  packs = 1,
+): { ok: true; bag: HarborFishingBag; coins: number; packsBought: number } | { ok: false; message: string } {
   const bag = sanitizeHarborFishingBag(structuredClone(bagIn))
   const bait = harborFishBaitById(baitId)
   if (!bait || baitId === 'bait-none') return { ok: false, message: 'Cannot buy that.' }
-  if (coins < bait.price) return { ok: false, message: 'Not enough ferry coins.' }
-  bag.bait[baitId] = (bag.bait[baitId] ?? 0) + bait.pack
+  const want = Math.max(1, Math.floor(packs))
+  let purse = coins
+  let bought = 0
+  for (let i = 0; i < want; i++) {
+    if (purse < bait.price) break
+    purse -= bait.price
+    bag.bait[baitId] = (bag.bait[baitId] ?? 0) + bait.pack
+    bought += 1
+  }
+  if (bought < 1) return { ok: false, message: 'Not enough ferry coins.' }
   bag.equippedBait = baitId
-  return { ok: true, bag, coins: coins - bait.price }
+  return { ok: true, bag, coins: purse, packsBought: bought }
 }
 
 /** Satellite island defs for Guan expansion (unique biomes). */
