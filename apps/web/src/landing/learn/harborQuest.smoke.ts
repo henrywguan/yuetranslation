@@ -1535,9 +1535,14 @@ function main() {
   assert.match(splashSrc, /Enter HarborQuest/, 'splash Enter HarborQuest CTA')
   assert.match(splashSrc, /Harbor Quest/, 'splash brand title')
   assert.match(splashSrc, /buildSplashLanterns|HARBOR_GEAR_CATALOG/, 'splash uses in-game lantern catalog')
-  assert.match(splashSrc, /hq-splash-village|hq-splash-smoke/, 'splash has village + smoke layers')
+  assert.match(splashSrc, /hq-splash--boat-night/, 'splash first-person boat night scene')
+  assert.match(splashSrc, /hq-splash-moon|hq-splash-boat/, 'splash huge moon + boat cockpit')
+  assert.match(splashSrc, /hq-splash-moon-path|hq-splash-lantern-path/, 'splash moonlight + lantern water paths')
+  assert.match(splashSrc, /hq-splash-village|hq-splash-smoke/, 'splash has distant village + smoke layers')
   assert.match(learnCss, /hq-splash-lantern--lantern-paper|hq-splash-lantern--lantern-silk/, 'splash lantern design variants')
+  assert.match(learnCss, /hq-splash-moon-disc|hq-splash-boat-gunwale/, 'splash moon + gunwale cockpit styles')
   assert.match(learnCss, /hq-splash-smoke-drift|hq-splash-window-flicker/, 'splash looping fog + window motion')
+  assert.match(learnCss, /hq-splash-moon-path-shimmer|hq-splash-lantern-path-pulse/, 'splash water reflection motion')
   assert.match(progressSrc, /continueHarborLevelId/, 'continue helper exported')
 
 
