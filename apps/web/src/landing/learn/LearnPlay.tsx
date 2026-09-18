@@ -33,13 +33,13 @@ import {
 } from './harborFishing'
 import {
   harborAmbientWeather,
-  primeHarborAmbientUnlock,
+  unlockHarborAudioBeds,
   setHarborAmbientPaused,
   setHarborAmbientTalking,
   startHarborAmbient,
   stopHarborAmbient,
 } from './harborAmbient'
-import { ensureSharedAudioContext, resumeSharedAudioContext } from '../../lib/audioReactive'
+import { ensureSharedAudioContext } from '../../lib/audioReactive'
 import { playHarborCoinChing } from './harborCoinSfx'
 import {
   playHarborArenaOpen,
@@ -445,23 +445,19 @@ export function LearnSession({
       const needsKick =
         !harborAudioUnlocked || ctxState !== 'running' || !isHarborBgmPlaying()
       if (!needsKick) {
-        void resumeSharedAudioContext()
+        void unlockHarborAudioBeds({
+          theme: harborBgmTheme(),
+          weather: worldApiRef.current?.weather ?? harborAmbientWeather(),
+        })
         return
       }
       unlockInFlight = true
-      void resumeSharedAudioContext()
-        .then(() => {
-          primeHarborAmbientUnlock()
-          // Always rebuild graphs after unlock — mount-time nodes were silent.
-          stopHarborBgm()
-          startHarborBgm(harborBgmTheme())
-          const w = worldApiRef.current?.weather ?? harborAmbientWeather()
-          stopHarborAmbient()
-          startHarborAmbient(w)
-          harborAudioUnlocked = true
-        })
-        .catch(() => {
-          /* ignore */
+      void unlockHarborAudioBeds({
+        theme: harborBgmTheme(),
+        weather: worldApiRef.current?.weather ?? harborAmbientWeather(),
+      })
+        .then((ok) => {
+          if (ok) harborAudioUnlocked = true
         })
         .finally(() => {
           unlockInFlight = false

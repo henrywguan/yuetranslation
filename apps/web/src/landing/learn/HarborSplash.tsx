@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, type CSSProperties } from 'react'
-import { resumeSharedAudioContext } from '../../lib/audioReactive'
+import { unlockHarborAudioBeds } from './harborAmbient'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import { HARBOR_GEAR_CATALOG, harborGearMeshInfo, type HarborGearItem } from './harborGear'
@@ -95,7 +95,7 @@ export function HarborSplash({ open, onEnter }: Props) {
 
   const enter = useCallback(() => {
     playHarborUiClick()
-    void resumeSharedAudioContext()
+    void unlockHarborAudioBeds({ theme: 'river' })
     onEnter()
   }, [onEnter])
 

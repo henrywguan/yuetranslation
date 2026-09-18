@@ -759,3 +759,36 @@ export function primeHarborAmbientUnlock(): void {
     }
   }
 }
+
+/**
+ * Gesture-time unlock used by Splash + LearnPlay.
+ * Waits until the shared AudioContext is actually `running` (iPhone often
+ * leaves it suspended through the first resume tick), primes a buffer, then
+ * force-rebuilds BGM/ambient so mount-time silent graphs aren't stuck.
+ */
+export async function unlockHarborAudioBeds(opts?: {
+  theme?: 'river' | 'guan'
+  weather?: HarborWeather
+}): Promise<boolean> {
+  if (typeof window === 'undefined') return false
+  try {
+    let ctx = ensureSharedAudioContext()
+    // Up to ~600ms of resume retries — first gesture on iOS is flaky.
+    for (let i = 0; i < 8; i++) {
+      if (ctx.state === 'closed') ctx = ensureSharedAudioContext()
+      if (ctx.state === 'running') break
+      await ctx.resume().catch(() => undefined)
+      await new Promise<void>((r) => window.setTimeout(r, 40 + i * 20))
+    }
+    if (ctx.state !== 'running') return false
+    primeHarborAmbientUnlock()
+    const { stopHarborBgm, startHarborBgm, harborBgmTheme } = await import('./harborBgm')
+    stopHarborBgm()
+    startHarborBgm(opts?.theme ?? harborBgmTheme())
+    stopHarborAmbient()
+    startHarborAmbient(opts?.weather ?? weather)
+    return true
+  } catch {
+    return false
+  }
+}

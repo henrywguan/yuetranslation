@@ -494,8 +494,8 @@ export function HarborInventoryBag({
                             onSelectSlot(item.slot)
                           }
                           if (isCoarsePointer()) {
-                            // Tap toggles tip; second tap on same piece hides it.
-                            setTipId((cur) => (cur === item.id ? null : item.id))
+                            // Always show examine on tap — “tap away to hide” clears it.
+                            setTipId(item.id)
                           }
                         }}
                         onDoubleClick={() => {
@@ -505,13 +505,13 @@ export function HarborInventoryBag({
                       >
                         <HarborGearModelIcon item={item} compact />
                         {wearing ? <span className="hq-bag-worn-dot" aria-hidden="true" /> : null}
-                        <HarborItemTooltip
-                          item={item}
-                          wearing={wearing}
-                          open={tipOpen}
-                          placement={tipBelow ? 'below' : 'above'}
-                        />
                       </button>
+                      <HarborItemTooltip
+                        item={item}
+                        wearing={wearing}
+                        open={tipOpen}
+                        placement={tipBelow ? 'below' : 'above'}
+                      />
                     </li>
                   )
                 })}

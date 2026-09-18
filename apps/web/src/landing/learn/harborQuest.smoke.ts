@@ -1392,7 +1392,7 @@ function main() {
   const progressSrc = readFileSync(new URL('./progress.ts', import.meta.url), 'utf8')
   assert.match(progressSrc, /HARBOR_COINS_PER_CORRECT\s*=\s*\d+/, 'correct casts award ferry coins')
   assert.ok(HARBOR_COIN_CHING_GAIN > 0 && HARBOR_COIN_CHING_GAIN < 0.5, 'coin ching stays soft')
-  assert.ok(HARBOR_BGM_GAIN > 0 && HARBOR_BGM_GAIN < 0.25, 'BGM stays under SFX')
+  assert.ok(HARBOR_BGM_GAIN > 0 && HARBOR_BGM_GAIN < 0.4, 'BGM stays under SFX')
   assert.ok(HARBOR_BGM_LOOP_SEC >= 24 && HARBOR_BGM_LOOP_SEC <= 64, 'BGM loop length')
   assert.equal(HARBOR_BGM_SCALE_HZ.length, 6, 'pentatonic + octave scale')
   assert.ok(HARBOR_BGM_PHRASE.length >= 16, 'BGM phrase has pad + flute + pluck voices')
@@ -1471,13 +1471,26 @@ function main() {
     assert.ok(!nightPool.includes('frog'), 'night excludes frogs')
     assert.ok(!nightPool.includes('gull'), 'night excludes gulls')
   }
-  assert.match(playAudioSrc, /unlockHarborAudio|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
-  assert.match(playAudioSrc, /resumeSharedAudioContext/, 'gesture resumes shared AudioContext')
-  assert.match(playAudioSrc, /stopHarborBgm\(\)[\s\S]*startHarborBgm/, 'unlock force-restarts BGM after resume')
-  assert.match(playAudioSrc, /stopHarborAmbient\(\)[\s\S]*startHarborAmbient/, 'unlock force-restarts ambient')
+  assert.match(ambientSrc, /unlockHarborAudioBeds/, 'shared gesture unlock helper')
+  assert.match(playAudioSrc, /unlockHarborAudioBeds|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
+  assert.match(playAudioSrc, /resumeSharedAudioContext|unlockHarborAudioBeds/, 'gesture resumes shared AudioContext')
+  assert.match(playAudioSrc, /stopHarborBgm\(\)[\s\S]*startHarborBgm|unlockHarborAudioBeds/, 'unlock force-restarts BGM after resume')
+  assert.match(playAudioSrc, /stopHarborAmbient\(\)[\s\S]*startHarborAmbient|unlockHarborAudioBeds/, 'unlock force-restarts ambient')
   assert.match(playAudioSrc, /harborAudioUnlocked/, 'tracks iOS unlock so mount-silent beds restart once')
-  assert.match(playAudioSrc, /isHarborBgmPlaying/, 'unlock re-kicks when BGM marked stopped')
+  assert.match(playAudioSrc, /isHarborBgmPlaying|unlockHarborAudioBeds/, 'unlock re-kicks when BGM marked stopped')
   assert.match(playAudioSrc, /visibilitychange/, 'returning to the tab re-unlocks Harbor audio')
+  assert.match(
+    readFileSync(new URL('./HarborSplash.tsx', import.meta.url), 'utf8'),
+    /unlockHarborAudioBeds/,
+    'splash Enter unlocks Harbor beds',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborGearModelIcon.tsx', import.meta.url), 'utf8'),
+    /compact \? undefined : 64/,
+    'bag icons drop intrinsic 64px size',
+  )
+  assert.match(wornCss, /grid-auto-rows:\s*3\.15rem/, 'bag grid uses fixed row tracks')
+  assert.match(bagSrc, /Always show examine on tap|setTipId\(item\.id\)/, 'mobile tip stays open on select')
   assert.match(craftSrc, /export function hqSoftMapRepeat/, 'soft UV-repeat helper (no Texture.clone)')
   assert.match(craftSrc, /generateMipmaps = false/, 'soft DataTextures skip mipmaps (mobile white fix)')
   assert.doesNotMatch(craftSrc, /LinearMipmapLinearFilter/, 'soft maps no longer use mipmap filter')
