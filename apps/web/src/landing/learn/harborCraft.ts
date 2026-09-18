@@ -128,12 +128,68 @@ function make128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.Da
   return tex
 }
 
+/**
+ * Soft 128 albedo — LinearFilter for Guan Harbor painterly look (no nearest
+ * pixel stair-steps). River / era props keep `make128DataTex` nearest.
+ */
+function makeSoft128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.DataTexture {
+  const hit = texCache.get(key)
+  if (hit) return hit
+  const data = new Uint8Array(128 * 128 * 4)
+  fill(data)
+  const tex = new THREE.DataTexture(data, 128, 128)
+  tex.magFilter = THREE.LinearFilter
+  tex.minFilter = THREE.LinearMipmapLinearFilter
+  tex.generateMipmaps = true
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+  tex.needsUpdate = true
+  texCache.set(key, tex)
+  return tex
+}
+
 function setPx(data: Uint8Array, x: number, y: number, r: number, g: number, b: number) {
   const i = ((y & 127) * 128 + (x & 127)) * 4
   data[i] = r
   data[i + 1] = g
   data[i + 2] = b
   data[i + 3] = 255
+}
+
+/** Soft-edge disc blend (painterly blotches — no hard rings). */
+function softBlendDisc(
+  data: Uint8Array,
+  cx: number,
+  cy: number,
+  rad: number,
+  r: number,
+  g: number,
+  b: number,
+  strength = 0.85,
+) {
+  const r2 = rad * rad
+  const y0 = Math.floor(cy - rad)
+  const y1 = Math.ceil(cy + rad)
+  const x0 = Math.floor(cx - rad)
+  const x1 = Math.ceil(cx + rad)
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy)
+      if (d2 > r2) continue
+      const t = (1 - Math.sqrt(d2) / rad) * strength
+      const i = ((y & 127) * 128 + (x & 127)) * 4
+      data[i] = Math.round(data[i]! * (1 - t) + r * t)
+      data[i + 1] = Math.round(data[i + 1]! * (1 - t) + g * t)
+      data[i + 2] = Math.round(data[i + 2]! * (1 - t) + b * t)
+      data[i + 3] = 255
+    }
+  }
+}
+
+/** Low-frequency value noise in 0..1 (no XOR line artifacts). */
+function softNoise2(x: number, y: number): number {
+  const n = Math.sin(x * 0.11 + y * 0.07) * 12.9898 + Math.cos(x * 0.05 - y * 0.13) * 78.233
+  return n - Math.floor(n)
 }
 
 /** Wood grain — vertical value bands (hand-painted feel, not photo scan). */
@@ -346,6 +402,131 @@ export function hqDirtTexture(): THREE.DataTexture {
       if (i % 5 === 0) setPx(data, x, y, 0xb0, 0xa0, 0x80)
       else if (i % 3 === 0) setPx(data, x, y, 0x2a, 0x1e, 0x12)
       else setPx(data, x, y, 0x6a, 0x52, 0x30)
+    }
+  })
+}
+
+/**
+ * Guan Harbor soft sand — cream beach with gentle value noise (no stroke lines).
+ * LinearFilter so tiled ground reads smooth like tropical RS3 lagoons.
+ */
+export function hqGuanSandTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('guan-sand-soft', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const n = softNoise2(x, y)
+        const n2 = softNoise2(x * 0.45 + 20, y * 0.4 + 8)
+        const v = 0.72 + n * 0.12 + n2 * 0.08
+        setPx(
+          data,
+          x,
+          y,
+          Math.round(0xe8 * v + 18),
+          Math.round(0xd4 * v + 14),
+          Math.round(0xb0 * v + 10),
+        )
+      }
+    }
+    // Large soft warm / cool patches (painterly, not freckles)
+    for (let i = 0; i < 14; i++) {
+      const cx = (i * 47 + 11) % 128
+      const cy = (i * 61 + 7) % 128
+      const rad = 14 + (i % 5) * 3
+      if (i % 2 === 0) softBlendDisc(data, cx, cy, rad, 0xf4, 0xe4, 0xc0, 0.35)
+      else softBlendDisc(data, cx, cy, rad, 0xd0, 0xb8, 0x90, 0.3)
+    }
+  })
+}
+
+/**
+ * Guan soft grass turf — lush saturated greens via soft discs (no blade strokes).
+ */
+export function hqGuanGrassTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('guan-grass-soft', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const n = softNoise2(x * 0.7, y * 0.7)
+        const n2 = softNoise2(x * 0.25 + 40, y * 0.3)
+        const v = 0.78 + n * 0.14 + n2 * 0.1
+        setPx(
+          data,
+          x,
+          y,
+          Math.round(0x28 * v),
+          Math.round(0x88 * v + 20),
+          Math.round(0x38 * v + 8),
+        )
+      }
+    }
+    for (let i = 0; i < 18; i++) {
+      const cx = (i * 37 + 5) % 128
+      const cy = (i * 53 + 19) % 128
+      const rad = 12 + (i % 6) * 3
+      if (i % 3 === 0) softBlendDisc(data, cx, cy, rad, 0x12, 0x58, 0x28, 0.45)
+      else if (i % 3 === 1) softBlendDisc(data, cx, cy, rad, 0x48, 0xb0, 0x52, 0.4)
+      else softBlendDisc(data, cx, cy, rad, 0x1a, 0x70, 0x34, 0.4)
+    }
+  })
+}
+
+/**
+ * Guan soft dirt path — chocolate soil with rounded stone blotches (no grit lines).
+ */
+export function hqGuanDirtTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('guan-dirt-soft', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const n = softNoise2(x * 0.55, y * 0.5)
+        const v = 0.7 + n * 0.18
+        setPx(
+          data,
+          x,
+          y,
+          Math.round(0x6a * v + 8),
+          Math.round(0x48 * v + 6),
+          Math.round(0x2e * v + 4),
+        )
+      }
+    }
+    // Soft purple-brown stones + richer soil pools
+    for (let i = 0; i < 22; i++) {
+      const cx = (i * 41 + 9) % 128
+      const cy = (i * 59 + 13) % 128
+      const rad = 5 + (i % 5) * 2
+      if (i % 2 === 0) softBlendDisc(data, cx, cy, rad, 0x5a, 0x48, 0x42, 0.55)
+      else softBlendDisc(data, cx, cy, rad, 0x3a, 0x28, 0x18, 0.5)
+    }
+    for (let i = 0; i < 10; i++) {
+      const cx = (i * 71 + 23) % 128
+      const cy = (i * 83 + 31) % 128
+      softBlendDisc(data, cx, cy, 8 + (i % 4), 0x8a, 0x68, 0x40, 0.35)
+    }
+  })
+}
+
+/**
+ * Guan soft thatch — golden roof with gentle value bands (no diagonal straw lines).
+ */
+export function hqGuanThatchTexture(): THREE.DataTexture {
+  return makeSoft128DataTex('guan-thatch-soft', (data) => {
+    for (let y = 0; y < 128; y++) {
+      for (let x = 0; x < 128; x++) {
+        const band = softNoise2(x * 0.08, y * 0.35)
+        const n = softNoise2(x * 0.4, y * 0.15)
+        const v = 0.78 + band * 0.14 + n * 0.08
+        setPx(
+          data,
+          x,
+          y,
+          Math.round(0xe0 * v + 12),
+          Math.round(0xb8 * v + 8),
+          Math.round(0x58 * v + 4),
+        )
+      }
+    }
+    for (let i = 0; i < 12; i++) {
+      const cy = (i * 11 + 6) % 128
+      softBlendDisc(data, 64, cy, 28 + (i % 4) * 4, 0xc8, 0x98, 0x48, 0.22)
     }
   })
 }
