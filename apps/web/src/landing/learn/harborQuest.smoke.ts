@@ -90,6 +90,7 @@ import {
   clampHarborMoveTarget,
   HARBOR_EXPLORE_X,
   HARBOR_DOCK_X,
+  HARBOR_MAP_LANGUAGE,
   HARBOR_VISITABLES,
   HARBOR_LANDMARK_HOSTS,
   HARBOR_LANDMARK_HOST_GENDER,
@@ -231,12 +232,14 @@ function main() {
   assert.equal(enrichJyutpingWithChao('nei5 hou2'), 'nei5˩˧ hou2˧˥')
   assert.equal(enrichJyutpingWithChao('si1˥'), 'si1˥', 'do not double-append Chao')
 
-  const biomes = Array.from({ length: 14 }, (_, i) => biomeForChunk(i))
+  const biomes = Array.from({ length: 16 }, (_, i) => biomeForChunk(i))
   assert.equal(biomeForChunk(0), 'pier')
   assert.equal(biomeForChunk(1), 'village')
-  assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
+  assert.equal(biomeForChunk(2), 'hills', 'early hills for vista rhythm')
+  assert.equal(biomeForChunk(8), biomeForChunk(0), 'biome cycle repeats')
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
-  assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
+  assert.ok(biomes.filter((b) => b === 'hills').length >= 2, 'hills appear often for vertical vistas')
+  assert.equal(biomeForChunk(-1), biomeForChunk(7), 'negative chunk wraps')
   assert.equal(streamForkForChunk(0), null, 'start chunk has no stream fork')
   const forks = Array.from({ length: 24 }, (_, i) => streamForkForChunk(i)).filter(Boolean)
   assert.ok(forks.length >= 8, 'river sprouts multiple side streams')
@@ -1381,6 +1384,16 @@ function main() {
   assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32/, 'anime tapered boat hulls')
   assert.match(worldSrc2, /Soft role sash|anime volumes — not box belts/, 'landmark host soft sashes')
   assert.match(worldSrc2, /terraceRoad|terraceClimb/, 'terrace roads for layered stroll')
+  assert.match(worldSrc2, /HARBOR_MAP_LANGUAGE/, 'map language lock exported')
+  assert.match(worldSrc2, /function scenicPavilion/, 'scenic pavilion vista kit')
+  assert.match(worldSrc2, /function terracePlaza/, 'terrace plaza relax/chat kit')
+  assert.match(worldSrc2, /function windingDirtLane/, 'winding S-curve paths')
+  assert.match(worldSrc2, /function valleyMistRibbon/, 'valley mist between land layers')
+  assert.match(worldSrc2, /placeScenicMapFeatures/, 'scenic features placed per chunk')
+  assert.match(worldSrc2, /windingPath|scenicPavilion/, 'WWM path/pavilion markers')
+  assert.equal(HARBOR_MAP_LANGUAGE.scenicPavilions, true, 'scenic pavilions enabled')
+  assert.equal(HARBOR_MAP_LANGUAGE.windingPaths, true, 'winding paths enabled')
+  assert.equal(HARBOR_MAP_LANGUAGE.valleyMist, true, 'valley mist enabled')
   assert.ok(HARBOR_EXPLORE_X > HARBOR_DOCK_X + 3, 'explore bound reaches inland roads')
   assert.equal(HARBOR_DIALOGUE_BUBBLE, true, 'dialogue NPCs expose a speech-bubble cue')
   assert.match(worldSrc2, /attachDialogueBubble|speechBubbleIcon/, 'Talkable NPCs get a speech bubble icon')

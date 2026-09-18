@@ -58,3 +58,8 @@
 | Shore + boat lanterns | Cylinder / sphere / torus kits |
 | Craft props | Soft rocks, hoop-banded crates, round chairs/stools, anime stall roofs |
 | Sails | Billowed hemisphere shells |
+
+
+## Map language
+
+See [`MAP-LANGUAGE.md`](./MAP-LANGUAGE.md) — Where Winds Meet *feel* for level / map design (layered terraces, winding paths, scenic pavilions, valley mist). Original Harbor only.

@@ -438,7 +438,8 @@ export function pickHarborWeather(seed?: number): HarborWeather {
 }
 /** Deterministic biome for a chunk index (smoke-tested). */
 export function biomeForChunk(i: number): BiomeId {
-  const cycle: BiomeId[] = ['pier', 'village', 'forest', 'reeds', 'hills', 'forest', 'village']
+  // Hills appear twice per cycle for WWM vertical / vista rhythm
+  const cycle: BiomeId[] = ['pier', 'village', 'hills', 'forest', 'reeds', 'hills', 'forest', 'village']
   return cycle[((i % cycle.length) + cycle.length) % cycle.length]
 }
 
@@ -712,6 +713,18 @@ function hut(rng: () => number) {
 /** Village home kinds placed along the voyage (smoke-tested). */
 export const HARBOR_VILLAGE_HOMES = ['jiangnan', 'courtyard', 'stilt', 'cottage'] as const
 export type HarborVillageHome = (typeof HARBOR_VILLAGE_HOMES)[number]
+
+/**
+ * Map language lock — Where Winds Meet *atmosphere* (layered terraces, winding
+ * paths, scenic pavilions, valley mist). Original Harbor geometry only.
+ */
+export const HARBOR_MAP_LANGUAGE = {
+  layeredTerraces: true,
+  windingPaths: true,
+  scenicPavilions: true,
+  valleyMist: true,
+  switchbackClimbs: true,
+} as const
 
 function rock(rng: () => number) {
   return hqRock(rng, rng() > 0.5 ? P.rock : P.rockWarm)
@@ -1000,6 +1013,127 @@ function boatLantern(
   return g
 }
 
+/**
+ * Open-air scenic pavilion — terrace overlook / rest stop.
+ * Where Winds Meet *vista* feel; original Harbor kit.
+ */
+function scenicPavilion(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'scenic-pavilion'
+  g.userData.scenicPavilion = true
+  const stone = hqStoneTexture()
+  // Raised stone plinth
+  g.add(hqBoxTex(1.6, 0.12, 1.6, P.stone, stone, 0, 0.08, 0))
+  g.add(hqBoxTex(1.35, 0.08, 1.35, P.stoneLite, stone, 0, 0.16, 0))
+  // Four timber posts
+  for (const sx of [-0.55, 0.55] as const) {
+    for (const sz of [-0.55, 0.55] as const) {
+      g.add(hqPost(0.06, 0.08, 1.15, P.woodDark, sx, 0.7, sz, 8))
+    }
+  }
+  // Soft anime hip roof
+  g.add(
+    hqAnimeHipRoof(1.4, 1.4, 1.25, rng() > 0.5 ? P.roofTile : P.straw, {
+      pitch: 0.38,
+      overhang: 0.2,
+      ridgeColor: P.trimGold,
+    }),
+  )
+  // Stone bench facing the river (+Z)
+  const bench = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.14, 0.9, 12),
+    hqMatTex(P.stone, stone),
+  )
+  bench.rotation.z = Math.PI / 2
+  bench.position.set(0, 0.32, 0.35)
+  bench.userData.harborChair = true
+  bench.userData.seatY = 0.32
+  g.add(bench)
+  // Jade / gold rail accents
+  for (const sx of [-0.55, 0.55] as const) {
+    const rail = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.025, 1.0, 8),
+      hqMat(P.trimGold),
+    )
+    rail.rotation.x = Math.PI / 2
+    rail.position.set(sx, 0.95, 0)
+    g.add(rail)
+  }
+  return g
+}
+
+/** Stone plaza disc — relax / chat circle on a terrace. */
+function terracePlaza(rng: () => number) {
+  const g = new THREE.Group()
+  g.name = 'terrace-plaza'
+  g.userData.terracePlaza = true
+  const stone = hqStoneTexture()
+  const disc = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.1 + rng() * 0.25, 1.15, 0.08, 16),
+    hqMatTex(P.stone, stone),
+  )
+  disc.position.y = 0.06
+  g.add(disc)
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(1.05, 0.04, 6, 18),
+    hqMat(P.stoneDark),
+  )
+  ring.rotation.x = Math.PI / 2
+  ring.position.y = 0.1
+  g.add(ring)
+  // Central lantern pedestal
+  g.add(hqPost(0.08, 0.1, 0.45, P.stoneDark, 0, 0.3, 0, 8))
+  const flame = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 10, 8),
+    glowMat(P.lantern, 0xff9040, 0.55),
+  )
+  flame.position.y = 0.58
+  g.add(flame)
+  return g
+}
+
+/** Soft valley mist ribbon between land layers (WWM layered depth). */
+function valleyMistRibbon(width: number, length: number, fogHex: number) {
+  const matMist = new THREE.MeshLambertMaterial({
+    color: fogHex,
+    transparent: true,
+    opacity: 0.38,
+    depthWrite: false,
+    flatShading: false,
+    side: THREE.DoubleSide,
+  })
+  const veil = new THREE.Mesh(new THREE.PlaneGeometry(width, length), matMist)
+  veil.rotation.x = -Math.PI / 2
+  veil.userData.valleyMist = true
+  veil.userData.mountainMist = true
+  return veil
+}
+
+/**
+ * Winding dirt lane — S-curve segments (not a ruler-straight corridor).
+ * Where Winds Meet path language; still walkable packed earth.
+ */
+function windingDirtLane(
+  length: number,
+  width: number,
+  zigAmp: number,
+  segs = 3,
+): THREE.Group {
+  const g = new THREE.Group()
+  g.userData.dirtRoad = true
+  g.userData.windingPath = true
+  const segLen = length / segs
+  for (let i = 0; i < segs; i++) {
+    const t = (i + 0.5) / segs
+    const zig = Math.sin(t * Math.PI * 2) * zigAmp
+    const strip = dirtRoadStrip(segLen - 0.12, width)
+    strip.position.set(zig, 0, segLen * (i + 0.5) - length / 2)
+    strip.rotation.y = zig * 0.12
+    g.add(strip)
+  }
+  return g
+}
+
 /** Packed-earth lane with wheel ruts — riverside + inland walkways. */
 function dirtRoadStrip(length: number, width = 1.1) {
   const g = new THREE.Group()
@@ -1079,13 +1213,13 @@ function placeDirtRoads(
     const road = dirtRoadStrip(CHUNK - 0.35, 1.05 + rng() * 0.2)
     road.position.set(side * (BANK + 0.25), 0, mid)
     group.add(road)
-    // Parallel inland walkway toward the karst foothills
-    const inland = dirtRoadStrip(CHUNK - 0.45, 0.95 + rng() * 0.15)
+    // Winding inland walkway toward the karst (S-curve, not a ruler line)
+    const inland = windingDirtLane(CHUNK - 0.45, 0.95 + rng() * 0.15, 0.55 + rng() * 0.35)
     inland.userData.inlandRoad = true
     inland.position.set(side * inlandX, 0.01, mid)
     group.add(inland)
-    // High terrace path — Where Winds Meet layered map depth
-    const terrace = dirtRoadStrip(CHUNK - 0.55, 0.8 + rng() * 0.12)
+    // High terrace path — layered map depth + gentle weave
+    const terrace = windingDirtLane(CHUNK - 0.55, 0.8 + rng() * 0.12, 0.7 + rng() * 0.4)
     terrace.userData.terraceRoad = true
     terrace.userData.inlandRoad = true
     terrace.position.set(side * terraceX, 0.08, mid)
@@ -1164,6 +1298,49 @@ function placeDirtRoads(
 }
 
 
+
+/** Place scenic pavilions + terrace plazas for overlook / relax / chat. */
+function placeScenicMapFeatures(
+  group: THREE.Group,
+  chunkIndex: number,
+  rng: () => number,
+  biome: BiomeId,
+) {
+  if (!HARBOR_MAP_LANGUAGE.scenicPavilions) return
+  const z0 = chunkIndex * CHUNK
+  // Hills + forest + village get vista pavilions on the high terrace
+  if (biome === 'hills' || biome === 'forest' || biome === 'village') {
+    for (const side of [-1, 1] as const) {
+      if (rng() > 0.55 && biome !== 'hills') continue
+      const pav = scenicPavilion(rng)
+      pav.position.set(
+        side * (BANK + 15.5 + rng() * 2.2),
+        0.12,
+        z0 + 6 + rng() * (CHUNK - 12),
+      )
+      pav.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2
+      group.add(pav)
+      if (rng() > 0.4) {
+        const plaza = terracePlaza(rng)
+        plaza.position.set(
+          side * (BANK + 14.0 + rng() * 1.5),
+          0.1,
+          z0 + 10 + rng() * (CHUNK - 14),
+        )
+        group.add(plaza)
+      }
+    }
+  }
+  // Reeds get a lone waterside pavilion for fishing rest
+  if (biome === 'reeds' && rng() > 0.45) {
+    const side = rng() > 0.5 ? 1 : -1
+    const pav = scenicPavilion(rng)
+    pav.position.set(side * (BANK + 3.5), 0.05, z0 + CHUNK * 0.5)
+    pav.rotation.y = side > 0 ? -0.4 : 0.4
+    pav.scale.setScalar(0.85)
+    group.add(pav)
+  }
+}
 
 function pierSegment() {
   const g = new THREE.Group()
@@ -2819,20 +2996,29 @@ function placeSideStream(
   const waterMat = mat(waterTint, { transparent: true, opacity: 0.9 })
 
   if (fork.kind === 'oxbow') {
-    // Crescent lagoon parallel to the river, inland of the near bank
-    const lagoon = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.08, 7.5), waterMat)
+    // Soft crescent lagoon — rounded water body (WWM wetland read)
+    const lagoon = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.4, 2.6, 0.08, 18),
+      waterMat,
+    )
+    lagoon.scale.set(1.1, 1, 1.55)
     lagoon.position.set(side * (RIVER + 5.2), 0.03, zMid)
     lagoon.rotation.y = side * 0.18
     lagoon.name = 'hq-stream-oxbow'
     lagoon.userData.streamFork = fork.kind
     group.add(lagoon)
-    // Sand rim
-    const rim = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.12, 8.6), mats.sand)
+    // Soft sand rim
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 3.1, 0.1, 16), mats.sand)
+    rim.scale.set(1.15, 1, 1.6)
     rim.position.set(side * (RIVER + 5.2), 0.01, zMid)
     rim.rotation.y = side * 0.18
     group.add(rim)
-    // Mouth channel back to the main river
-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.07, 1.6), waterMat)
+    // Soft mouth channel back to the main river
+    const mouth = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.7, 0.85, 3.2, 12),
+      waterMat,
+    )
+    mouth.rotation.z = Math.PI / 2
     mouth.position.set(side * (RIVER + 2.4), 0.025, zMid - side * 2.2)
     mouth.name = 'hq-stream-mouth'
     group.add(mouth)
@@ -2937,24 +3123,41 @@ function populateChunk(
       bank.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK / 2)
       group.add(bank)
     }
-    // Inland shelf — walkable terrace toward the karst (Where Winds Meet depth)
-    const inland = new THREE.Mesh(new THREE.BoxGeometry(14, 0.32, CHUNK + 0.2), mats.grass)
-    inland.position.set(side * (BANK + 11.5), -0.06, z0 + CHUNK / 2)
-    inland.userData.inlandShelf = true
-    group.add(inland)
-    // Mid terrace step — soft height break for layered map read
-    const terrace = new THREE.Mesh(new THREE.BoxGeometry(8, 0.45, CHUNK + 0.2), mats.grass)
-    terrace.position.set(side * (BANK + 16.8), 0.05, z0 + CHUNK / 2)
-    terrace.userData.terraceShelf = true
-    group.add(terrace)
-    // Rising foothill berm (reads as land under distant mountains)
-    const foothill = new THREE.Mesh(
-      new THREE.BoxGeometry(10, 0.85, CHUNK + 0.2),
-      mats.grass,
-    )
-    foothill.position.set(side * (BANK + 22.5), 0.22, z0 + CHUNK / 2)
-    foothill.userData.foothillShelf = true
-    group.add(foothill)
+    // Staggered inland shelves — scalloped pads (WWM layered land, not one slab)
+    const pads = 3
+    for (let i = 0; i < pads; i++) {
+      const padLen = CHUNK / pads
+      const scallop = i % 2 === 0 ? 0.7 : -0.55
+      const inland = new THREE.Mesh(
+        new THREE.BoxGeometry(13.5 + (i % 2) * 0.8, 0.32, padLen + 0.2),
+        mats.grass,
+      )
+      inland.position.set(side * (BANK + 11.5 + scallop), -0.06, z0 + padLen * (i + 0.5))
+      inland.userData.inlandShelf = true
+      group.add(inland)
+      const terrace = new THREE.Mesh(
+        new THREE.BoxGeometry(7.5 + (i % 2) * 0.6, 0.45, padLen + 0.15),
+        mats.grass,
+      )
+      terrace.position.set(side * (BANK + 16.8 + scallop * 0.6), 0.05 + i * 0.02, z0 + padLen * (i + 0.5))
+      terrace.userData.terraceShelf = true
+      group.add(terrace)
+      const foothill = new THREE.Mesh(
+        new THREE.BoxGeometry(9.5 + (i % 2) * 0.7, 0.85 + i * 0.08, padLen + 0.15),
+        mats.grass,
+      )
+      foothill.position.set(side * (BANK + 22.5 + scallop * 0.4), 0.22 + i * 0.04, z0 + padLen * (i + 0.5))
+      foothill.userData.foothillShelf = true
+      group.add(foothill)
+    }
+    // Valley mist between bank → terrace → foothill (layered depth read)
+    const fogHex = HARBOR_WEATHER_LOOK[weather].fog
+    const mistLow = valleyMistRibbon(4.5, CHUNK * 0.92, fogHex)
+    mistLow.position.set(side * (BANK + 13.5), 0.35, z0 + CHUNK / 2)
+    group.add(mistLow)
+    const mistHigh = valleyMistRibbon(5.5, CHUNK * 0.9, fogHex)
+    mistHigh.position.set(side * (BANK + 19.5), 0.7, z0 + CHUNK / 2)
+    group.add(mistHigh)
     const shore = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, CHUNK + 0.2), mats.sand)
     shore.position.set(side * (RIVER + 1.1), 0.02, z0 + CHUNK / 2)
     group.add(shore)
@@ -2967,6 +3170,9 @@ function populateChunk(
 
   // Dirt / stone roads, cross-paths, and Chinese road signs
   placeDirtRoads(group, chunkIndex, rng, weather)
+
+  // Scenic pavilions + terrace plazas (Where Winds Meet vista language)
+  placeScenicMapFeatures(group, chunkIndex, rng, biome)
 
   // Quiz pier landings (every chunk may host one or more dock slots)
   placeDockStops(group, chunkIndex, rng)
