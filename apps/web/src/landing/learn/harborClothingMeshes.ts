@@ -169,7 +169,7 @@ function buildTop(family: string, opts: ClothingBuildOpts): THREE.Group {
   const g = wrap(family)
   const c = mat(opts.color)
   const a = mat(opts.accent)
-  const pelvisY = opts.pelvisY ?? 0.48
+  const pelvisY = opts.pelvisY ?? 0.72
   const shoulder = opts.gender === 'female' ? 0.34 : 0.38
   const armSpread = opts.gender === 'female' ? 0.22 : 0.24
   const armY = pelvisY + 0.28
