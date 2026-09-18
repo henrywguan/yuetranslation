@@ -44,13 +44,22 @@ Uses novel phrases so DeepSeek is actually hit (not phrase memory). Cloud agents
 ## Offline smoke tests / 离线冒烟测试
 
 ```bash
-npm run smoke:all       # entitlements + usage + household + canto
+npm run smoke:all       # API offline suite (entitlements, usage, household, history, canto, …)
 npm run smoke:canto     # dictionary / lexicon only
 ```
 
-Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, entitlements helpers, usage increment shape, and household usage merge.
+Covers phrase memory, scrub, attestation, lexicon exact-only 粵→EN, entitlements helpers, usage increment shape, household usage merge, and history TTL.
 
-覆盖短语记忆、书面语清洗、词条核验、词库仅整词粤→英，以及把 `stage: interim` 强制改为终稿。
+覆盖短语记忆、书面语清洗、词条核验、词库仅整词粤→英、权益与用量形状、家庭池合并、历史 TTL。
+
+Harbor Quest offline smokes (also listed in `AGENTS.md`):
+
+```bash
+npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts
+npx tsx apps/web/src/landing/learn/progress.smoke.ts
+npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts
+npx tsx apps/api/src/harborQuest.smoke.ts
+```
 
 ## Manual mic check / 手动麦克风检查
 

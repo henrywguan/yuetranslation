@@ -4,7 +4,7 @@ import {
   resetTtsClipCacheForTests,
   ttsClipCacheKey,
   ttsClipCacheSizeForTests,
-} from './azure.ts'
+} from './azure.js'
 
 resetTtsClipCacheForTests()
 assert.equal(ttsClipCacheSizeForTests(), 0)

@@ -5,8 +5,6 @@ import { env } from './env.js'
 import { sanitizeTurns, turnsChanged, type HistoryTurn } from './historyExpiry.js'
 import { getAdmin } from './supabase.js'
 
-export { HISTORY_TTL_MS } from './historyExpiry.js'
-
 async function persistTurns(userId: string, turns: HistoryTurn[]) {
   const admin = getAdmin()
   if (!admin) return { error: new Error('History sync unavailable.') }

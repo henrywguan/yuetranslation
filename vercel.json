@@ -11,7 +11,7 @@
     "YUE_FREE_LIVE_MINUTES": "60",
     "YUE_FAMILY_LIVE_MINUTES": "480",
     "YUE_GUEST_LIVE_MINUTES": "30",
-    "YUE_GUEST_CAMERA_MINUTES": "30"
+    "YUE_GUEST_CAMERA_SCANS": "30"
   },
   "redirects": [
     {

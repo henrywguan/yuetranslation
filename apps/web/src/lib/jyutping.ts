@@ -20,13 +20,6 @@ export type JyutpingUiToneMode = 'obfuscated' | 'unicode' | 'svg'
 
 export const JYUTPING_UI_TONE_MODE: JyutpingUiToneMode = 'unicode'
 
-/** @deprecated Prefer `JYUTPING_UI_TONE_MODE === 'svg'`. Kept as a one-line reverse switch. */
-export const JYUTPING_UI_SVG_TONES: boolean = modeIsSvg(JYUTPING_UI_TONE_MODE)
-
-function modeIsSvg(mode: JyutpingUiToneMode): boolean {
-  return mode === 'svg'
-}
-
 /**
  * Select/copy gate for Free/guest — flip to `false` to disable.
  * Selecting Jyutping ruby and copying replaces the clipboard with a Family+ upgrade line
@@ -172,17 +165,6 @@ async function ensureJyutpingList(text: string): Promise<[string, string | null]
   } catch {
     listCache.set(t, [])
     return []
-  }
-}
-
-export async function ensureIpa(jp: string) {
-  const t = jp.trim()
-  if (!t) return ''
-  try {
-    const api = await load()
-    return api.jyutpingToIPA(t) || ''
-  } catch {
-    return ''
   }
 }
 

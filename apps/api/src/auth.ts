@@ -2,8 +2,6 @@ import type { Request, Response, NextFunction } from 'express'
 import { isAdminEmail } from './env.js'
 import { getProfile, getUserFromJwt } from './supabase.js'
 
-export type UserRole = 'admin' | 'family'
-
 export type AuthContext = {
   userId: string
   email: string | null

@@ -7,7 +7,6 @@ import { Resend } from 'resend'
 import { env, supportReplyTo } from './env.js'
 import {
   BUILTIN_TEMPLATES,
-  getBuiltinTemplate,
   mergeCampaignFields,
   type BuiltinTemplateMeta,
   type CampaignFields,
@@ -63,13 +62,6 @@ export type EmailSendRow = {
   provider_id: string | null
   detail: Record<string, unknown> | null
   created_by: string | null
-}
-
-function parseSendFields(detail: Record<string, unknown> | null | undefined): CampaignFields | null {
-  if (!detail || typeof detail !== 'object') return null
-  const raw = detail.fields
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
-  return raw as CampaignFields
 }
 
 export async function getLastEmailSend(opts?: {

@@ -285,6 +285,7 @@ export type AuditAction =
   | 'unban'
   | 'resend_audience_sync'
   | 'email_send_recipients'
+  | 'email_send_custom'
   | 'email_send_audience'
   | 'email_template_save'
   | 'email_ai_draft'

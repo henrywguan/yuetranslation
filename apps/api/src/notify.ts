@@ -58,11 +58,6 @@ export function notifyStatus() {
   }
 }
 
-/** True when Resend + from address can send user-facing auth emails. */
-export function userEmailConfigured(): boolean {
-  return Boolean(getResend() && env.notifyFromEmail)
-}
-
 /** Resolve compiled React Email modules reliably on Vercel (includeFiles + bundled handler). */
 async function importCompiledEmail<T>(basename: string): Promise<T> {
   const rel = `./emails/compiled/${basename}.js`

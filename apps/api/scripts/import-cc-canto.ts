@@ -4,7 +4,7 @@
  *
  * Source: https://cccanto.org/ (CC-BY-SA 3.0) via GitHub mirror.
  */
-import { createWriteStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createWriteStream, mkdirSync, writeFileSync } from 'node:fs'
 import { pipeline } from 'node:stream/promises'
 import { createGzip } from 'node:zlib'
 import { Readable } from 'node:stream'

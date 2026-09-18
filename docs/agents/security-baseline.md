@@ -129,7 +129,7 @@ Updated: **2026-09-08** — speech-token prepaid debit, IP-bound guest ids, docs
 
 ## Healthy controls already in place
 
-- Production `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, guest live/cam 30 minutes
+- Production `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, guest live **30 min** + Cam **30 scan credits**
 - Code default `YUE_OPEN_MODE=0` (fail-closed)
 - Live speech token gated on `ent.allowed.live`; Cam/docs on `allowed.camera` / `allowed.docs`
 - Admin routes use `requireAdmin` (email allowlist + role)

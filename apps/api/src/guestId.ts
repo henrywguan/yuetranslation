@@ -171,11 +171,6 @@ export async function resolveGuestIdentity(req: Request): Promise<ResolvedGuestI
   return { guestId, deviceId, mergeCandidates: [...candidates] }
 }
 
-/** @deprecated Prefer resolveGuestIdentity — sync IP-only helper for tests. */
-export function guestIdForRequest(req: Request): string {
-  return guestIdForIp(clientIp(req))
-}
-
 /** Test helper: clear in-memory anchor caches. */
 export function resetGuestIdentityMemoryForTests() {
   memNetwork.clear()
