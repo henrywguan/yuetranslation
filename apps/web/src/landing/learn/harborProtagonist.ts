@@ -1,8 +1,9 @@
 /**
  * Harbor Quest · original player mannequin (“River Scout”).
  *
- * RS2/OSRS-*era* proportion grammar (chunky head/hands, faceted limbs,
- * tapered torso) — modeled from scratch via harborFigure kit. Not Jagex IP.
+ * RS2/OSRS-*era* proportion grammar (oversized potato head, stocky slab,
+ * short thick limbs, mitten hands) — modeled from scratch via harborFigure
+ * kit. Not Jagex IP; public “bot” STLs are study-only (never imported).
  *
  * See docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md (§3 proportions, §7 legal).
  */
@@ -29,6 +30,7 @@ import {
   harborFigureNeck,
   harborFigureTorso,
   HARBOR_FIGURE_HEAD_R,
+  HARBOR_FIGURE_PROPORTIONS,
 } from './harborFigure'
 
 /** Stable id for smokes / future kitbash slots. */
@@ -113,42 +115,62 @@ function addHair(
   const bangZ = sz + 0.045
   const backZ = -(sz + 0.04)
 
-  const addCrownShell = (scaleY = 0.62) => {
+  const addCrownShell = (scaleY = 0.78) => {
+    // Must clear the oversized potato crown — a too-flat shell leaves a
+    // friar’s bald patch (bug with Traveler bun after headR bump).
     const cap = part(
-      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.12, 0), hairMat),
+      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.22, 0), hairMat),
       'hair',
     )
-    cap.position.set(0, headY + sy * 0.22, -0.01)
-    cap.scale.set(1.08, scaleY, 1.06)
+    cap.position.set(0, headY + sy * 0.38, -0.015)
+    cap.scale.set(1.16, scaleY, 1.14)
     hairRoot.add(cap)
   }
 
   if (style === 'bald') {
     // River tonsure — thin ring only (monk / shaved grammar)
-    const ring = part(new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.022, 5, 10), hairMat), 'hair')
+    const ring = part(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.024, 5, 10), hairMat), 'hair')
     ring.position.set(0, crownY - 0.02, 0)
     ring.rotation.x = Math.PI / 2
     hairRoot.add(ring)
   } else if (style === 'short') {
-    addCrownShell(0.5)
-    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.04), hairMat), 'hair')
+    addCrownShell(0.72)
+    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.045, 0.04), hairMat), 'hair')
     fringe.position.set(0, headY + 0.04, bangZ)
     hairRoot.add(fringe)
   } else if (style === 'bun') {
-    addCrownShell(0.55)
-    const bun = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.07, 0), hairMat), 'hair')
-    bun.position.set(0, crownY + 0.02, -0.02)
+    // Traveler bun — full scalp cover + crown knot (never a friar ring)
+    const scalp = part(
+      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.24, 0), hairMat),
+      'hair',
+    )
+    scalp.scale.set(1.18, 0.88, 1.14)
+    scalp.position.set(0, headY + sy * 0.32, -0.02)
+    hairRoot.add(scalp)
+    for (const side of [-1, 1] as const) {
+      const sideHair = part(new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.16, 0.085), hairMat), 'hair')
+      sideHair.position.set(side * (sx + 0.025), headY - 0.01, sz * 0.12)
+      hairRoot.add(sideHair)
+    }
+    const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.04), hairMat), 'hair')
+    fringe.position.set(0, headY + 0.045, bangZ)
+    hairRoot.add(fringe)
+    const bunBase = part(new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.035, 6), hairMat), 'hair')
+    bunBase.position.set(0, crownY + 0.04, -0.04)
+    hairRoot.add(bunBase)
+    const bun = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), hairMat), 'hair')
+    bun.position.set(0, crownY + 0.1, -0.045)
     hairRoot.add(bun)
   } else if (style === 'topknot') {
-    addCrownShell(0.55)
-    const knot = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.055, 0), hairMat), 'hair')
-    knot.position.set(0, crownY + 0.06, 0)
+    addCrownShell(0.75)
+    const knot = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.06, 0), hairMat), 'hair')
+    knot.position.set(0, crownY + 0.08, 0)
     hairRoot.add(knot)
     const pin = part(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.018, 0.018), hairMat), 'hair')
-    pin.position.set(0, crownY + 0.1, 0)
+    pin.position.set(0, crownY + 0.12, 0)
     hairRoot.add(pin)
   } else if (style === 'long') {
-    addCrownShell(0.58)
+    addCrownShell(0.78)
     const fall = part(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.08), hairMat), 'hair')
     fall.position.set(0, headY - 0.04, backZ)
     hairRoot.add(fall)
@@ -163,7 +185,7 @@ function addHair(
     bang.position.set(0, headY + 0.05, bangZ)
     hairRoot.add(bang)
   } else if (style === 'fringe') {
-    addCrownShell(0.58)
+    addCrownShell(0.78)
     const fringe = part(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.07, 0.045), hairMat), 'hair')
     fringe.position.set(0, headY + 0.045, bangZ)
     hairRoot.add(fringe)
@@ -177,7 +199,7 @@ function addHair(
     hairRoot.add(back)
   } else if (style === 'curtains') {
     // Pier curtains — long side falls framing the face (classic salon silhouette)
-    addCrownShell(0.52)
+    addCrownShell(0.72)
     for (const side of [-1, 1] as const) {
       const fall = part(new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.3, 0.07), hairMat), 'hair')
       fall.position.set(side * (sx + 0.04), headY - 0.04, sz * 0.25)
@@ -201,7 +223,7 @@ function addHair(
     }
   } else if (style === 'pony') {
     // Wake ponytail — short crown + queue down the back
-    addCrownShell(0.5)
+    addCrownShell(0.72)
     const bang = part(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.035), hairMat), 'hair')
     bang.position.set(0, headY + 0.045, bangZ)
     hairRoot.add(bang)
@@ -212,7 +234,7 @@ function addHair(
     tail.position.set(0, headY - 0.06, backZ - 0.01)
     hairRoot.add(tail)
   } else if (style === 'twin') {
-    addCrownShell(0.5)
+    addCrownShell(0.72)
     for (const side of [-1, 1] as const) {
       const loop = part(new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.022, 5, 8), hairMat), 'hair')
       loop.position.set(side * 0.1, crownY + 0.01, -0.01)
@@ -225,11 +247,11 @@ function addHair(
   } else if (style === 'wave') {
     // Harbor wave — piled crown + swept quiff
     const mound = part(
-      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.05, 0), hairMat),
+      new THREE.Mesh(new THREE.IcosahedronGeometry(HARBOR_FIGURE_HEAD_R * 1.2, 0), hairMat),
       'hair',
     )
-    mound.scale.set(1.15, 0.7, 1.08)
-    mound.position.set(0, headY + sy * 0.35, -0.01)
+    mound.scale.set(1.2, 0.82, 1.12)
+    mound.position.set(0, headY + sy * 0.4, -0.015)
     hairRoot.add(mound)
     const wave = part(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.05), hairMat), 'hair')
     wave.position.set(0, headY + 0.03, bangZ)
@@ -247,18 +269,21 @@ function addHair(
 
 function addEyes(g: THREE.Group, appearance: HarborAppearance, headY: number, skin: THREE.Material) {
   const iris = HARBOR_EYE_COLORS[appearance.eyeColor] ?? 0x1a1814
+  const browHex = HARBOR_HAIR_COLORS[appearance.hairColor] ?? HARBOR_PROTAGONIST_PALETTE.hair
   const face = harborFigureFace(skin, headY, {
     iris,
     eyeStyle: appearance.eyeStyle,
-    showBrows: appearance.faceStyle === 'sharp' || appearance.faceStyle === 'calm',
+    // Always show brows — Soft/Cheerful used to hide them and faces looked blank.
+    showBrows: true,
     showMouth: appearance.faceStyle !== 'calm',
     blush: appearance.faceStyle === 'cheerful' ? 0xe8a090 : null,
-    brow: 0x2a2018,
+    brow: browHex,
     lip: appearance.faceStyle === 'cheerful' ? 0xa04858 : 0x8a4050,
   })
   face.name = 'scout-eyes'
   face.userData.harborEyes = true
   face.userData.harborEyeStyle = appearance.eyeStyle
+  face.userData.harborBrows = true
   face.traverse((o) => {
     const m = o as THREE.Mesh
     if (!m.isMesh) return
@@ -284,9 +309,14 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.userData.originalHarborAsset = true
   g.userData.gender = gender
   g.userData.appearance = appearance
-  g.userData.pelvisY = pose === 'standing' ? 0.48 : 0.28
-  g.userData.headY = (pose === 'standing' ? 0.48 : 0.28) + 0.58
+  // Stubby mannequin — pelvis low, head large (bible §3.1).
+  const pelvisY = pose === 'standing' ? 0.42 : 0.26
+  const torsoH = HARBOR_FIGURE_PROPORTIONS.torsoH
+  const headY = pelvisY + torsoH * 0.55 + HARBOR_FIGURE_HEAD_R * 0.95
+  g.userData.pelvisY = pelvisY
+  g.userData.headY = headY
   g.userData.harborModular = true
+  g.userData.figureProportions = HARBOR_FIGURE_PROPORTIONS
 
   const skinHex = HARBOR_SKIN_TONES[appearance.skinTone] ?? HARBOR_PROTAGONIST_PALETTE.skin
   const hairHex = HARBOR_HAIR_COLORS[appearance.hairColor] ?? HARBOR_PROTAGONIST_PALETTE.hair
@@ -301,10 +331,11 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   const leather = mat(HARBOR_PROTAGONIST_PALETTE.leather)
   const chop = mat(HARBOR_PROTAGONIST_PALETTE.chop)
 
-  const shoulder = gender === 'female' ? 0.17 : 0.19
-  const waist = gender === 'female' ? 0.155 : 0.16
-  const armSpread = gender === 'female' ? 0.22 : 0.24
-  const hip = gender === 'female' ? 0.4 : 0.38
+  const shoulder = gender === 'female' ? 0.19 : HARBOR_FIGURE_PROPORTIONS.shoulder
+  const waist = gender === 'female' ? 0.175 : HARBOR_FIGURE_PROPORTIONS.waist
+  const armSpread = gender === 'female' ? 0.25 : 0.27
+  const hip = gender === 'female' ? 0.42 : 0.4
+  const depth = HARBOR_FIGURE_PROPORTIONS.depth
 
   // —— Legs ——
   if (pose === 'standing') {
@@ -329,35 +360,35 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
     }
   }
 
-  // —— Tapered torso (6-gon) ——
-  const pelvisY = pose === 'standing' ? 0.48 : 0.28
+  // —— Stocky slab torso ——
   const torso = part(
-    harborFigureTorso(robe, pelvisY + 0.22, { shoulder, waist, h: 0.42, depth: 0.24 }),
+    harborFigureTorso(robe, pelvisY + torsoH * 0.5, { shoulder, waist, h: torsoH, depth }),
     'top',
   )
   g.add(torso)
   const collar = part(
-    harborFigureTorso(robeDeep, pelvisY + 0.42, {
-      shoulder: shoulder + 0.01,
+    harborFigureTorso(robeDeep, pelvisY + torsoH * 0.92, {
+      shoulder: shoulder + 0.015,
       waist: shoulder,
-      h: 0.08,
-      depth: 0.26,
+      h: 0.07,
+      depth: depth + 0.02,
     }),
     'topAccent',
   )
   g.add(collar)
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(hip, 0.07, 0.26), jade)
-  sash.position.y = pelvisY + 0.1
+  const sash = new THREE.Mesh(new THREE.BoxGeometry(hip, 0.065, depth + 0.02), jade)
+  sash.position.y = pelvisY + 0.06
   g.add(sash)
-  const pendant = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.03), chop)
-  pendant.position.set(0, pelvisY + 0.26, 0.13)
+  const pendant = new THREE.Mesh(new THREE.IcosahedronGeometry(0.04, 0), chop)
+  pendant.scale.set(1, 1.2, 0.6)
+  pendant.position.set(0, pelvisY + torsoH * 0.45, depth * 0.52)
   g.add(pendant)
-  const cord = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.02), jade)
-  cord.position.set(0, pelvisY + 0.32, 0.12)
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 5), jade)
+  cord.position.set(0, pelvisY + torsoH * 0.62, depth * 0.48)
   g.add(cord)
 
-  // —— Segmented arms + mittens ——
-  const armY = pelvisY + 0.34
+  // —— Segmented arms + mitten blobs ——
+  const armY = pelvisY + torsoH * 0.78
   for (const side of [-1, 1] as const) {
     const arm = harborFigureArm(robe, skin, side, armY, armSpread)
     arm.traverse((o) => {
@@ -366,11 +397,12 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
       m.userData.harborPart = m.material === skin ? 'skin' : 'top'
     })
     g.add(arm)
-    g.add(socket(side > 0 ? 'hand_r' : 'hand_l', side * armSpread, armY - 0.3, 0.08))
+    const handY = typeof arm.userData.handY === 'number' ? arm.userData.handY : armY - 0.28
+    const handZ = typeof arm.userData.handZ === 'number' ? arm.userData.handZ : 0.1
+    g.add(socket(side > 0 ? 'hand_r' : 'hand_l', side * armSpread, handY, handZ))
   }
 
-  // —— Faceted head + flush face ——
-  const headY = pelvisY + 0.58
+  // —— Faceted potato head + flush face ——
   const head = part(harborFigureHead(skin, headY), 'skin')
   g.add(head)
   const neck = part(harborFigureNeck(skin, headY), 'skin')
@@ -383,27 +415,28 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   addEyes(g, appearance, headY, skin)
 
   if (!bareHead) {
-    const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.04, 8), straw), 'hat')
-    brim.position.y = headY + 0.1
+    const brim = part(new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.04, 8), straw), 'hat')
+    brim.position.y = headY + HARBOR_FIGURE_HEAD_R * 0.55
     g.add(brim)
-    const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.14, 7), straw), 'hat')
-    crown.position.y = headY + 0.18
+    const crown = part(new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.15, 7), straw), 'hat')
+    crown.position.y = headY + HARBOR_FIGURE_HEAD_R * 0.95
     g.add(crown)
-    const bead = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.035, 0), jade), 'hatAccent')
-    bead.position.y = headY + 0.26
+    const bead = part(new THREE.Mesh(new THREE.IcosahedronGeometry(0.038, 0), jade), 'hatAccent')
+    bead.position.y = headY + HARBOR_FIGURE_HEAD_R * 1.35
     g.add(bead)
   }
-  g.add(socket('head', 0, headY + 0.28, 0))
+  g.add(socket('head', 0, headY + HARBOR_FIGURE_HEAD_R * 1.45, 0))
 
-  const bag = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.08), leather)
-  bag.position.set(-0.26, pelvisY + 0.02, 0.06)
+  const bag = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), leather)
+  bag.scale.set(1.1, 1.25, 0.85)
+  bag.position.set(-0.28, pelvisY + 0.02, 0.06)
   bag.rotation.z = 0.15
   g.add(bag)
-  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 0.09), mat(0x5a3a22))
-  flap.position.set(-0.26, pelvisY + 0.1, 0.06)
+  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.045, 0.09), mat(0x5a3a22))
+  flap.position.set(-0.28, pelvisY + 0.1, 0.06)
   g.add(flap)
-  g.add(socket('hip_l', -0.26, pelvisY + 0.02, 0.1))
-  g.add(socket('back', 0, pelvisY + 0.3, -0.14))
+  g.add(socket('hip_l', -0.28, pelvisY + 0.02, 0.1))
+  g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
   return g
 }

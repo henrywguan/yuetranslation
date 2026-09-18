@@ -185,6 +185,10 @@ From OSRS body-type docs + common visual analysis of the 2007 model:
 
 **Harbor Quest characters** should obey this grammar even when costumes differ — that is the readable “RS-like” signal.
 
+**Anti–Minecraft smell test:** if the silhouette still reads as stacked equal cubes (Steve), push further — potato head (faceted icosa, not a box), slab torso with almost no waist, bent thick limbs, blob mittens, bow stance. Equal-cube limbs = wrong era.
+
+**Reference study (never import):** public “RS bot” printables / Pinshape STLs may be used as *proportion study only*. Do **not** download, convert, or ship those meshes — they are Jagex player geometry redistributed by fans (§7). Harbor ships original procedural kit (`harborFigure` / `harborProtagonist`).
+
 ### 3.2 Items & gear scale
 
 - Weapons are **oversized** vs real life (especially blades / hilts) so they read in third person.
