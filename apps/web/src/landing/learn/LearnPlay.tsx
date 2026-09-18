@@ -418,13 +418,12 @@ export function LearnSession({
 
     /**
      * iOS / Safari: unlock must resume + rebuild beds synchronously in the
-     * gesture. Keep kicking on later gestures if the context flips back to
-     * suspended (silent switch / background / Control Center).
+     * gesture — never `.then` / await (boolean return; post-gesture rebuild
+     * marks beds “playing” while mute). Keep kicking on later gestures if the
+     * context flips back to suspended (silent switch / Control Center).
      */
     let harborAudioUnlocked = false
-    let unlockInFlight = false
     const unlockHarborAudio = () => {
-      if (unlockInFlight) return
       let ctxState: AudioContext['state'] | 'missing' = 'missing'
       try {
         ctxState = ensureSharedAudioContext().state
@@ -443,23 +442,25 @@ export function LearnSession({
         }
         return
       }
-      unlockInFlight = true
-      void unlockHarborAudioBeds({
+      const ok = unlockHarborAudioBeds({
         theme: harborBgmTheme(),
         weather: worldApiRef.current?.weather ?? harborAmbientWeather(),
       })
-        .then((ok) => {
-          if (ok) harborAudioUnlocked = true
-        })
-        .finally(() => {
-          unlockInFlight = false
-        })
+      if (ok) harborAudioUnlocked = true
     }
     window.addEventListener('pointerdown', unlockHarborAudio, { capture: true })
     window.addEventListener('keydown', unlockHarborAudio, { capture: true })
     window.addEventListener('touchstart', unlockHarborAudio, { capture: true, passive: true })
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') unlockHarborAudio()
+      // Visibility is NOT a user gesture — only resume; never rebuild beds here
+      // or iPhone marks “playing” while silent until the next real tap.
+      if (document.visibilityState !== 'visible') return
+      try {
+        const c = ensureSharedAudioContext()
+        if (c.state === 'suspended') void c.resume().catch(() => undefined)
+      } catch {
+        /* ignore */
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
 

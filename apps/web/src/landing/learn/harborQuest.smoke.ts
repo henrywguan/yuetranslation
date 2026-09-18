@@ -1482,15 +1482,33 @@ function main() {
     assert.ok(!nightPool.includes('gull'), 'night excludes gulls')
   }
   assert.match(ambientSrc, /unlockHarborAudioBeds/, 'shared gesture unlock helper')
-  assert.match(ambientSrc, /rebuildHarborAudioBeds|stopHarborBgm\(\)/, 'unlock rebuilds BGM sync (no dynamic import gate)')
+  assert.match(ambientSrc, /export function unlockHarborAudioBeds/, 'unlock is sync (not async)')
+  assert.doesNotMatch(ambientSrc, /export async function unlockHarborAudioBeds/, 'no async unlock helper')
+  assert.doesNotMatch(
+    ambientSrc,
+    /await ctx\.resume|await new Promise/,
+    'unlock never awaits resume outside the gesture',
+  )
+  assert.match(ambientSrc, /stopHarborBgmHard/, 'gesture rebuild hard-stops BGM (no fade race)')
+  assert.match(ambientSrc, /rebuildHarborAudioBeds|stopHarborBgmHard/, 'unlock rebuilds BGM sync (no dynamic import gate)')
   assert.match(ambientSrc, /from '\.\/harborBgm'/, 'ambient statically imports BGM for gesture-safe start')
   assert.match(playAudioSrc, /unlockHarborAudioBeds|primeHarborAmbientUnlock/, 'session unlocks audio on gesture')
-  assert.match(playAudioSrc, /resumeSharedAudioContext|unlockHarborAudioBeds/, 'gesture resumes shared AudioContext')
+  assert.match(playAudioSrc, /resumeSharedAudioContext|unlockHarborAudioBeds|ensureSharedAudioContext/, 'gesture resumes shared AudioContext')
+  assert.doesNotMatch(
+    playAudioSrc,
+    /unlockHarborAudioBeds\([\s\S]*?\)\s*\.then/,
+    'LearnPlay does not treat sync unlock as a Promise',
+  )
   assert.match(playAudioSrc, /stopHarborBgm\(\)[\s\S]*startHarborBgm|unlockHarborAudioBeds/, 'unlock force-restarts BGM after resume')
   assert.match(playAudioSrc, /stopHarborAmbient\(\)[\s\S]*startHarborAmbient|unlockHarborAudioBeds/, 'unlock force-restarts ambient')
   assert.match(playAudioSrc, /harborAudioUnlocked/, 'tracks iOS unlock so mount-silent beds restart once')
   assert.match(playAudioSrc, /isHarborBgmPlaying|unlockHarborAudioBeds/, 'unlock re-kicks when BGM marked stopped')
-  assert.match(playAudioSrc, /visibilitychange/, 'returning to the tab re-unlocks Harbor audio')
+  assert.match(playAudioSrc, /visibilitychange/, 'returning to the tab resumes Harbor AudioContext')
+  assert.match(
+    playAudioSrc,
+    /visibilityState !== 'visible'[\s\S]*resume\(\)|visibilitychange[\s\S]*resume/,
+    'visibility only resumes — never rebuilds beds outside a gesture',
+  )
   assert.match(
     playAudioSrc,
     /Do NOT soft-start BGM\/ambient on mount/,

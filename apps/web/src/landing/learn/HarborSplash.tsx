@@ -125,8 +125,8 @@ export function HarborSplash({ open, onEnter }: Props) {
 
   const enter = useCallback(() => {
     // Sync resume + audible chirp + BGM/ambient rebuild must run inside this
-    // gesture (iPhone). unlockHarborAudioBeds does that before any await.
-    void unlockHarborAudioBeds({ theme: 'river' })
+    // gesture (iPhone). No await / void-Promise — helper is fully synchronous.
+    unlockHarborAudioBeds({ theme: 'river' })
     onEnter()
   }, [onEnter])
 
