@@ -4,7 +4,6 @@ import { unlockHarborAudioBeds } from './harborAmbient'
 import { inkEase } from '../../lib/motion'
 import { useReducedMotion } from '../../lib/useReducedMotion'
 import { HARBOR_GEAR_CATALOG, harborGearMeshInfo, type HarborGearItem } from './harborGear'
-import { playHarborUiClick } from './harborInteractSfx'
 
 type Props = {
   open: boolean
@@ -125,7 +124,8 @@ export function HarborSplash({ open, onEnter }: Props) {
   const lanterns = useMemo(() => buildSplashLanterns(), [])
 
   const enter = useCallback(() => {
-    playHarborUiClick()
+    // Sync resume + audible chirp + BGM/ambient rebuild must run inside this
+    // gesture (iPhone). unlockHarborAudioBeds does that before any await.
     void unlockHarborAudioBeds({ theme: 'river' })
     onEnter()
   }, [onEnter])

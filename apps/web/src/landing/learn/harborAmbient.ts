@@ -4,10 +4,11 @@
  * Original synthesis — not Jagex audio.
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
+import { harborBgmTheme, startHarborBgm, stopHarborBgm } from './harborBgm'
 import type { HarborWeather } from './harborWorld'
 
 /** Bus gain — audible under BGM but never overpowering. */
-export const HARBOR_AMBIENT_GAIN = 0.15
+export const HARBOR_AMBIENT_GAIN = 0.18
 /** One-shot fauna chirps / splashes. */
 export const HARBOR_WILDLIFE_GAIN = 0.18
 
@@ -725,35 +726,42 @@ export function harborAmbientWeather(): HarborWeather {
 }
 
 /**
- * Play a near-silent buffer so iOS / Safari unlock the AudioContext on gesture.
- * Safe to call repeatedly. Prefer calling after `await resumeSharedAudioContext()`.
+ * Play a short audible chirp so iOS / Safari unlock the AudioContext on gesture.
+ * Must stay synchronous inside the tap/keydown handler (no await before start).
  */
 export function primeHarborAmbientUnlock(): void {
   if (typeof window === 'undefined') return
   const ctx = ensureSharedAudioContext()
-  // Buffer source unlocks more reliably than a zero-gain oscillator on iOS.
+  // Kick resume immediately — do not await; gesture stack must stay hot.
+  if (ctx.state === 'suspended') void ctx.resume().catch(() => undefined)
   try {
-    const n = Math.max(1, Math.floor(ctx.sampleRate * 0.05))
-    const buf = ctx.createBuffer(1, n, ctx.sampleRate)
-    const data = buf.getChannelData(0)
-    for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * 0.0004
-    const src = ctx.createBufferSource()
-    const g = ctx.createGain()
-    g.gain.value = 0.02
-    src.buffer = buf
-    src.connect(g)
-    g.connect(ctx.destination)
-    src.start(0)
-  } catch {
+    const t0 = ctx.currentTime
+    // Audible-enough click (not near-silent) so the user hears Enter / first tap.
     const o = ctx.createOscillator()
+    o.type = 'triangle'
+    o.frequency.setValueAtTime(880, t0)
+    o.frequency.exponentialRampToValueAtTime(520, t0 + 0.08)
     const g = ctx.createGain()
-    g.gain.value = 0.0001
+    g.gain.setValueAtTime(0.0001, t0)
+    g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.008)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.1)
     o.connect(g)
     g.connect(ctx.destination)
-    const t = ctx.currentTime
+    o.start(t0)
+    o.stop(t0 + 0.12)
+  } catch {
     try {
-      o.start(t)
-      o.stop(t + 0.05)
+      const n = Math.max(1, Math.floor(ctx.sampleRate * 0.04))
+      const buf = ctx.createBuffer(1, n, ctx.sampleRate)
+      const data = buf.getChannelData(0)
+      for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * 0.15 * (1 - i / n)
+      const src = ctx.createBufferSource()
+      const g = ctx.createGain()
+      g.gain.value = 0.1
+      src.buffer = buf
+      src.connect(g)
+      g.connect(ctx.destination)
+      src.start(0)
     } catch {
       /* ignore */
     }
@@ -761,10 +769,27 @@ export function primeHarborAmbientUnlock(): void {
 }
 
 /**
+ * Synchronously rebuild BGM + ambient on the shared context.
+ * Call from a user gesture after `primeHarborAmbientUnlock()` / `resume()`.
+ */
+function rebuildHarborAudioBeds(opts?: {
+  theme?: 'river' | 'guan'
+  weather?: HarborWeather
+}): void {
+  stopHarborBgm()
+  startHarborBgm(opts?.theme ?? harborBgmTheme())
+  stopHarborAmbient()
+  startHarborAmbient(opts?.weather ?? weather)
+}
+
+/**
  * Gesture-time unlock used by Splash + LearnPlay.
- * Waits until the shared AudioContext is actually `running` (iPhone often
- * leaves it suspended through the first resume tick), primes a buffer, then
- * force-rebuilds BGM/ambient so mount-time silent graphs aren't stuck.
+ *
+ * iPhone Safari only allows starting audio inside the gesture stack. Any
+ * `await` (setTimeout / dynamic import) before `start()` leaves the stack and
+ * the beds stay silent forever. So we: resume + chirp + rebuild beds
+ * synchronously first, then optionally retry if the context was still
+ * suspended on the first tick.
  */
 export async function unlockHarborAudioBeds(opts?: {
   theme?: 'river' | 'guan'
@@ -773,21 +798,29 @@ export async function unlockHarborAudioBeds(opts?: {
   if (typeof window === 'undefined') return false
   try {
     let ctx = ensureSharedAudioContext()
-    // Up to ~600ms of resume retries — first gesture on iOS is flaky.
-    for (let i = 0; i < 8; i++) {
-      if (ctx.state === 'closed') ctx = ensureSharedAudioContext()
-      if (ctx.state === 'running') break
-      await ctx.resume().catch(() => undefined)
-      await new Promise<void>((r) => window.setTimeout(r, 40 + i * 20))
-    }
-    if (ctx.state !== 'running') return false
+    if (ctx.state === 'suspended') void ctx.resume().catch(() => undefined)
     primeHarborAmbientUnlock()
-    const { stopHarborBgm, startHarborBgm, harborBgmTheme } = await import('./harborBgm')
-    stopHarborBgm()
-    startHarborBgm(opts?.theme ?? harborBgmTheme())
-    stopHarborAmbient()
-    startHarborAmbient(opts?.weather ?? weather)
-    return true
+    // Sync rebuild while still in the gesture (or immediately after resume kick).
+    rebuildHarborAudioBeds(opts)
+
+    if (ctx.state === 'running') return true
+
+    // Rare: first resume tick left us suspended — wait briefly, then rebuild again.
+    for (let i = 0; i < 10; i++) {
+      if (ctx.state === 'closed') ctx = ensureSharedAudioContext()
+      if (ctx.state === 'running') {
+        rebuildHarborAudioBeds(opts)
+        return true
+      }
+      await ctx.resume().catch(() => undefined)
+      await new Promise<void>((r) => window.setTimeout(r, 30 + i * 15))
+    }
+    ctx = ensureSharedAudioContext()
+    if (ctx.state === 'running') {
+      rebuildHarborAudioBeds(opts)
+      return true
+    }
+    return false
   } catch {
     return false
   }
