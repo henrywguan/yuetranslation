@@ -1611,6 +1611,11 @@ function main() {
     'GLB attach restores procedural body when gated or invalid',
   )
   assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /applyHarborCelToObject|HARBOR_CEL_SHADE_ENABLED/,
+    'Scout GLB applies anime cel foundation',
+  )
+  assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
     /skipScoutGlb/,
     'protagonist opts can skip Scout GLB for Barber preview',
@@ -1619,6 +1624,16 @@ function main() {
     readFileSync(new URL('./HarborCharacterCreate.tsx', import.meta.url), 'utf8'),
     /skipScoutGlb:\s*true/,
     'Barber / character-create preview keeps procedural Scout',
+  )
+  assert.match(
+    readFileSync(new URL('./harborCelMaterial.ts', import.meta.url), 'utf8'),
+    /createHarborCelMaterial|uRimStrength|gradientMap/,
+    'anime cel material module',
+  )
+  assert.match(
+    readFileSync(new URL('./harborGlbAssets.ts', import.meta.url), 'utf8'),
+    /loadHarborGlb/,
+    'generic GLB asset loader for game-asset MCP drops',
   )
   assert.match(
     readFileSync(new URL('./harborVo.ts', import.meta.url), 'utf8'),
