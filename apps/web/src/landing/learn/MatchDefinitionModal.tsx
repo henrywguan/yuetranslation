@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { JyutpingSylText } from '../../components/JyutpingSylText'
 import { SpeakButton } from '../../components/SpeakButton'
 import { stopSpeaking, unlockTtsPlayback } from '../../lib/tts'
@@ -46,12 +46,15 @@ export function MatchDefinitionModal({
   const [sessionGold, setSessionGold] = useState(0)
   const [hits, setHits] = useState(0)
   const [exchangeMsg, setExchangeMsg] = useState<string | null>(null)
+  /** Word ids already served this difficulty run — avoid 10-round repeats. */
+  const usedIdsRef = useRef<string[]>([])
 
   const topicCfg = topic ? MATCH_TOPIC[topic] : null
   const diffCfg = difficulty ? MATCH_DIFFICULTY[difficulty] : null
 
-  const startRound = useCallback((t: MatchTopic, diff: MatchDifficulty, prevId?: string) => {
-    const next = buildMatchRound(t, diff, prevId)
+  const startRound = useCallback((t: MatchTopic, diff: MatchDifficulty, alreadyUsed: readonly string[] = []) => {
+    const next = buildMatchRound(t, diff, alreadyUsed)
+    usedIdsRef.current = [...alreadyUsed, next.word.id]
     setRound(next)
     setSecondsLeft(next.seconds)
     setPicked(null)
@@ -63,6 +66,7 @@ export function MatchDefinitionModal({
     setDifficulty(null)
     setRound(null)
     setPicked(null)
+    usedIdsRef.current = []
     setPhase('difficulty')
     setExchangeMsg(null)
   }, [])
@@ -74,8 +78,9 @@ export function MatchDefinitionModal({
       setDifficulty(diff)
       setSessionGold(0)
       setHits(0)
+      usedIdsRef.current = []
       setExchangeMsg(null)
-      startRound(topic, diff)
+      startRound(topic, diff, [])
     },
     [topic, startRound],
   )
@@ -86,6 +91,7 @@ export function MatchDefinitionModal({
     setDifficulty(null)
     setRound(null)
     setPicked(null)
+    usedIdsRef.current = []
   }, [])
 
   const backToTopic = useCallback(() => {
@@ -95,6 +101,7 @@ export function MatchDefinitionModal({
     setDifficulty(null)
     setRound(null)
     setPicked(null)
+    usedIdsRef.current = []
   }, [])
   useEffect(() => {
     if (!open) return
@@ -105,6 +112,7 @@ export function MatchDefinitionModal({
     setPicked(null)
     setSessionGold(0)
     setHits(0)
+    usedIdsRef.current = []
     setExchangeMsg(null)
     setSecondsLeft(MATCH_DIFFICULTY.easy.seconds)
     return () => {
@@ -125,7 +133,7 @@ export function MatchDefinitionModal({
 
   useEffect(() => {
     if (!open || phase !== 'feedback' || !round || !topic || !difficulty) return
-    const t = window.setTimeout(() => startRound(topic, difficulty, round.word.id), 1100)
+    const t = window.setTimeout(() => startRound(topic, difficulty, usedIdsRef.current), 1100)
     return () => window.clearTimeout(t)
   }, [open, phase, round, topic, difficulty, startRound])
 

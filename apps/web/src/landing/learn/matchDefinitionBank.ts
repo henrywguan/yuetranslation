@@ -91,8 +91,11 @@ export const MATCH_DIFFICULTIES: MatchDifficulty[] = ['easy', 'medium', 'hard']
 /**
  * Themed starter set — Open Cantonese + Harbor Quest flavour.
  * Definitions are short learner glosses (not full dictionary senses).
+ * Extra variety lives in `matchDefinitionBankExtra.ts` (session de-dupe needs depth).
  */
-export const MATCH_DEFINITION_BANK: MatchWord[] = [
+import { MATCH_DEFINITION_BANK_EXTRA } from './matchDefinitionBankExtra'
+
+const MATCH_DEFINITION_BANK_CORE: MatchWord[] = [
   // ════════ Kids ════════
   { id: 'k-e-baa1', han: '爸', jp: 'baa1', def: 'dad / father', topic: 'kids', difficulty: 'easy' },
   { id: 'k-e-maa1', han: '媽', jp: 'maa1', def: 'mom / mother', topic: 'kids', difficulty: 'easy' },
@@ -534,6 +537,11 @@ export const MATCH_DEFINITION_BANK: MatchWord[] = [
   },
 ]
 
+export const MATCH_DEFINITION_BANK: MatchWord[] = [
+  ...MATCH_DEFINITION_BANK_CORE,
+  ...MATCH_DEFINITION_BANK_EXTRA,
+]
+
 /** Ferry coins granted per 1 arena gold exchanged. */
 export const HARBOR_GOLD_TO_COINS = 1
 
@@ -565,11 +573,19 @@ export type MatchRound = {
 export function buildMatchRound(
   topic: MatchTopic,
   difficulty: MatchDifficulty,
-  excludeId?: string,
+  excludeIdOrIds?: string | readonly string[],
 ): MatchRound {
   const cfg = MATCH_DIFFICULTY[difficulty]
   const bank = matchBankFor(topic, difficulty)
-  const pool = excludeId ? bank.filter((w) => w.id !== excludeId) : bank
+  const excluded = new Set(
+    typeof excludeIdOrIds === 'string'
+      ? excludeIdOrIds
+        ? [excludeIdOrIds]
+        : []
+      : excludeIdOrIds ?? [],
+  )
+  const pool = excluded.size > 0 ? bank.filter((w) => !excluded.has(w.id)) : bank
+  // Prefer unused words; if the session exhausted the pool, reshuffle the full bank.
   const source = pool.length > 0 ? pool : bank
   const word = source[Math.floor(Math.random() * source.length)]!
   const distractors = shuffle(bank.filter((w) => w.id !== word.id).map((w) => w.def)).slice(0, 2)
