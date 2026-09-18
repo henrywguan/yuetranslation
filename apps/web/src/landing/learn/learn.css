@@ -2379,6 +2379,25 @@
   border-color: color-mix(in srgb, #3dcfb6 55%, transparent);
   color: #3dcfb6;
 }
+.hq-visit-panel--teleport {
+  z-index: 28;
+  width: min(24rem, calc(100vw - 1.5rem));
+  max-height: min(82dvh, 40rem);
+  overflow: hidden;
+  border-color: color-mix(in srgb, #3dcfb6 38%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #0a1c24 90%, #3dcfb6 10%), color-mix(in srgb, #041018 96%, transparent));
+  box-shadow:
+    0 22px 48px color-mix(in srgb, #000 55%, transparent),
+    0 0 0 1px color-mix(in srgb, #3dcfb6 18%, transparent);
+}
+.hq-teleport-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
 .hq-teleport-list {
   list-style: none;
   margin: 0.15rem 0 0;
@@ -2388,6 +2407,12 @@
   gap: 0.35rem;
   max-height: min(40dvh, 16rem);
   overflow: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  -webkit-overflow-scrolling: touch;
+}
+.hq-visit-panel--teleport .hq-teleport-list {
+  max-height: none;
 }
 .hq-teleport-btn {
   width: 100%;
@@ -2842,6 +2867,10 @@
     width: min(22rem, calc(100vw - 1rem));
     top: max(3.8rem, calc(env(safe-area-inset-top) + 3.2rem));
     max-height: min(58dvh, 28rem);
+  }
+  .hq-visit-panel--teleport {
+    width: min(24rem, calc(100vw - 1rem));
+    max-height: min(78dvh, 36rem);
   }
 }
 
