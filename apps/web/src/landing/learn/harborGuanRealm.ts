@@ -21,6 +21,7 @@ import {
   hqFence,
   hqSoftDirtTexture,
   hqSoftGrassTexture,
+  hqSoftMapRepeat,
   hqSoftSandTexture,
   hqSoftThatchTexture,
   hqLavaTexture,
@@ -1343,11 +1344,7 @@ function dirtPath(
   const dx = bx - ax
   const dz = bz - az
   const len = Math.hypot(dx, dz)
-  const dirt = hqSoftDirtTexture().clone()
-  dirt.needsUpdate = true
-  dirt.wrapS = THREE.RepeatWrapping
-  dirt.wrapT = THREE.RepeatWrapping
-  dirt.repeat.set(Math.max(1.2, len * 0.45), 0.9)
+  const dirt = hqSoftMapRepeat(hqSoftDirtTexture(), Math.max(1.2, len * 0.45), 0.9)
   const midY = (guanGroundY(ax, az) + guanGroundY(bx, bz)) * 0.5 + 0.04
   const ang = Math.atan2(dx, dz)
   // Main packed track
@@ -1429,16 +1426,8 @@ function buildLandMesh(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'guan-island-main'
   const c = outlineCentroid()
-  const sandTex = hqSoftSandTexture().clone()
-  sandTex.needsUpdate = true
-  sandTex.wrapS = THREE.RepeatWrapping
-  sandTex.wrapT = THREE.RepeatWrapping
-  sandTex.repeat.set(2.4, 2.4)
-  const grassTex = hqSoftGrassTexture().clone()
-  grassTex.needsUpdate = true
-  grassTex.wrapS = THREE.RepeatWrapping
-  grassTex.wrapT = THREE.RepeatWrapping
-  grassTex.repeat.set(2.8, 2.8)
+  const sandTex = hqSoftMapRepeat(hqSoftSandTexture(), 2.4)
+  const grassTex = hqSoftMapRepeat(hqSoftGrassTexture(), 2.8)
 
   // Layer 1 — beach sand plate (full silhouette)
   const sandGeo = extrudeOutline(GUAN_LAND_OUTLINE, GUAN_HEIGHT.sand, null, 1)
@@ -1459,11 +1448,7 @@ function buildLandMesh(rng: () => number): THREE.Group {
   // Layer 3 — jungle plateau (textured deep turf, not flat color)
   const jungleThick = GUAN_HEIGHT.jungle - GUAN_HEIGHT.grass
   const jungleGeo = extrudeOutline(GUAN_LAND_OUTLINE, jungleThick, c, 0.55)
-  const jungleTex = hqSoftGrassTexture().clone()
-  jungleTex.needsUpdate = true
-  jungleTex.wrapS = THREE.RepeatWrapping
-  jungleTex.wrapT = THREE.RepeatWrapping
-  jungleTex.repeat.set(2.6, 2.6)
+  const jungleTex = hqSoftMapRepeat(hqSoftGrassTexture(), 2.6)
   const jungle = new THREE.Mesh(
     jungleGeo,
     hqMatTex(GUAN_TROPICAL_LOOK.jungle, jungleTex),
@@ -1698,11 +1683,7 @@ function stoneRingPond(rng: () => number, x: number, z: number, radius: number):
   const gy = guanGroundY(x, z)
   g.position.set(x, gy, z)
 
-  const pondTex = hqPondTexture().clone()
-  pondTex.needsUpdate = true
-  pondTex.wrapS = THREE.RepeatWrapping
-  pondTex.wrapT = THREE.RepeatWrapping
-  pondTex.repeat.set(2, 2)
+  const pondTex = hqSoftMapRepeat(hqPondTexture(), 2)
 
   // Water disc slightly recessed into the terrace
   const water = new THREE.Mesh(

@@ -2919,10 +2919,15 @@
 .hq-visit-panel.hq-bag--docked .hq-bag-grid-wrap {
   min-height: 0;
   flex: 1 1 auto;
+  overflow: hidden;
 }
 .hq-visit-panel.hq-bag--docked .hq-bag-grid {
-  max-height: none;
-  flex: 1 1 auto;
+  /* Keep scroll inside the dock — unbounded height let icons spill across cells. */
+  max-height: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .hq-bag-chrome {
   display: flex;
@@ -3176,7 +3181,8 @@
   padding: 0.35rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: auto;
+  /* Fixed OSRS 4×7 rhythm — prevents row collapse / icon spill on mobile dock. */
+  grid-auto-rows: minmax(0, 1fr);
   gap: 0.12rem;
   width: 100%;
   min-height: 0;
@@ -3211,7 +3217,8 @@
   min-height: 0;
   aspect-ratio: 1;
   position: relative;
-  overflow: visible;
+  /* Clip SVG silhouettes — tips portal to body, so overflow visible is unnecessary. */
+  overflow: hidden;
 }
 .hq-bag-cell.is-empty {
   background: color-mix(in srgb, #2a241c 70%, transparent);
@@ -3229,8 +3236,7 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  /* Tips float outside the cell */
-  overflow: visible;
+  overflow: hidden;
   z-index: 0;
 }
 .hq-bag-item:hover,
@@ -3260,10 +3266,15 @@
   display: block;
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 .hq-bag-model-svg {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   display: block;
   filter: drop-shadow(0 1px 1px color-mix(in srgb, #000 55%, transparent));
 }

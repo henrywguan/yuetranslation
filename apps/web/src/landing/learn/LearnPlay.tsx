@@ -20,6 +20,7 @@ import {
 import {
   duckHarborBgm,
   harborBgmTheme,
+  isHarborBgmPlaying,
   startHarborBgm,
   stopHarborBgm,
 } from './harborBgm'
@@ -428,20 +429,21 @@ export function LearnSession({
      * iOS / Safari: AudioContext is created suspended on mount, BGM marks
      * itself "playing", then unlock used to no-op restart — silent forever.
      * Await resume, prime a buffer, then force-restart beds on a running ctx.
+     * Keep kicking on later gestures if the context flipped back to suspended
+     * (iPhone silent switch / background / Control Center).
      */
     let harborAudioUnlocked = false
     let unlockInFlight = false
     const unlockHarborAudio = () => {
       if (unlockInFlight) return
+      let ctxState: AudioContext['state'] | 'missing' = 'missing'
+      try {
+        ctxState = ensureSharedAudioContext().state
+      } catch {
+        ctxState = 'missing'
+      }
       const needsKick =
-        !harborAudioUnlocked ||
-        (() => {
-          try {
-            return ensureSharedAudioContext().state !== 'running'
-          } catch {
-            return true
-          }
-        })()
+        !harborAudioUnlocked || ctxState !== 'running' || !isHarborBgmPlaying()
       if (!needsKick) {
         void resumeSharedAudioContext()
         return
@@ -468,6 +470,10 @@ export function LearnSession({
     window.addEventListener('pointerdown', unlockHarborAudio, { capture: true })
     window.addEventListener('keydown', unlockHarborAudio, { capture: true })
     window.addEventListener('touchstart', unlockHarborAudio, { capture: true, passive: true })
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') unlockHarborAudio()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
 
     return () => {
       document.body.style.overflow = prev
@@ -475,6 +481,7 @@ export function LearnSession({
       window.removeEventListener('pointerdown', unlockHarborAudio, true)
       window.removeEventListener('keydown', unlockHarborAudio, true)
       window.removeEventListener('touchstart', unlockHarborAudio, true)
+      document.removeEventListener('visibilitychange', onVisibility)
       stopHarborCorrectFanfare()
       stopHarborMiss()
       stopHarborScrollSfx()
