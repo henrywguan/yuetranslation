@@ -4567,7 +4567,7 @@ export function createHarborWorld(
 
     const footGy = travelMode === 'foot' ? groundYAt(footX, footZ) : 0
     const lookX = travelMode === 'foot' ? footX : boat.position.x
-    const lookY = travelMode === 'foot' ? footGy + (sitting ? 0.85 : 0.95) : 0.75
+    const lookY = travelMode === 'foot' ? footGy + (sitting ? 0.95 : 1.15) : 0.75
     const lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
     const off = orbitCameraOffset(yaw, pitch, distance)
     // Boat gets a soft water bob; on-foot camera stays stable (no hop / sway).
@@ -4579,7 +4579,7 @@ export function createHarborWorld(
     // Local username plate follows boat / walking / seated scout
     localNametag.position.set(
       travelMode === 'foot' ? footX : boat.position.x,
-      travelMode === 'foot' ? footGy + (sitting ? 1.7 : 2.05) : 1.85,
+      travelMode === 'foot' ? footGy + (sitting ? 1.85 : 2.25) : 1.85,
       travelMode === 'foot' ? footZ : boat.position.z,
     )
     if (localSpeechBubble) {
