@@ -2877,6 +2877,38 @@
   gap: 0.35rem;
   box-sizing: border-box;
 }
+/* Mobile dock — fully on-screen, no drag/resize, ignores saved desktop layout. */
+.hq-bag--docked {
+  position: fixed;
+  z-index: 40;
+  left: max(0.4rem, env(safe-area-inset-left));
+  right: max(0.4rem, env(safe-area-inset-right));
+  top: max(3.5rem, calc(env(safe-area-inset-top) + 3.1rem));
+  bottom: max(0.45rem, env(safe-area-inset-bottom));
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.hq-bag--docked .hq-bag-chrome {
+  cursor: default;
+  touch-action: manipulation;
+}
+.hq-bag--docked .hq-bag-frame {
+  overflow: hidden;
+}
+.hq-bag--docked .hq-bag-worn {
+  overflow: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+}
 .hq-bag-chrome {
   display: flex;
   align-items: center;
@@ -2890,7 +2922,7 @@
   user-select: none;
   border-bottom: 1px solid color-mix(in srgb, #8a7355 45%, transparent);
 }
-.hq-bag-chrome:active {
+.hq-bag--float .hq-bag-chrome:active {
   cursor: grabbing;
 }
 .hq-bag-chrome-title {
@@ -3456,9 +3488,16 @@
 }
 
 @media (max-width: 640px) {
-  .hq-visit-panel--inv.hq-bag--float {
-    /* Still floating; slightly tighter min size on phones. */
-    min-width: min(17rem, calc(100vw - 0.9rem));
+  .hq-bag--docked {
+    left: max(0.35rem, env(safe-area-inset-left));
+    right: max(0.35rem, env(safe-area-inset-right));
+    top: max(3.35rem, calc(env(safe-area-inset-top) + 2.95rem));
+    bottom: max(0.4rem, env(safe-area-inset-bottom));
+    padding: 0.4rem;
+  }
+  .hq-bag--docked .hq-bag-filters {
+    max-height: 4.2rem;
+    overflow: auto;
   }
 }
 

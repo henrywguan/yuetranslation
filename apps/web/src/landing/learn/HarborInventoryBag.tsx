@@ -123,10 +123,15 @@ function isCoarsePointer() {
   return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
 }
 
+/** Phones / narrow viewports — bag docks full-frame; no drag or resize. */
+function isMobileBagViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+}
+
 /**
  * OSRS-style inventory / bag — stone frame, scrollable 4-col item grid with
- * slot filters, hover/tap examine tips, plus a Worn tab. Floating panel is
- * draggable / resizable and stays inside the viewport.
+ * slot filters, hover/tap examine tips, plus a Worn tab. Desktop: floating
+ * panel is draggable / resizable. Mobile: fixed dock, fully on-screen.
  */
 export function HarborInventoryBag({
   owned,
@@ -145,6 +150,7 @@ export function HarborInventoryBag({
   const [pickedId, setPickedId] = useState<HarborGearId | null>(null)
   /** Tip id — only set while hovering (desktop) or after an explicit tap (mobile). */
   const [tipId, setTipId] = useState<HarborGearId | null>(null)
+  const [mobileDock, setMobileDock] = useState(() => isMobileBagViewport())
   const [layout, setLayout] = useState<Layout>(() => loadLayout())
   const dragRef = useRef<{
     kind: 'move' | 'resize'
@@ -186,12 +192,27 @@ export function HarborInventoryBag({
   const wornSomewhere = picked ? harborGearIsWorn(look, picked) : false
 
   useEffect(() => {
-    saveLayout(layout)
-  }, [layout])
+    const mq = window.matchMedia('(max-width: 640px)')
+    const sync = () => {
+      setMobileDock(mq.matches)
+      // Cancel any in-flight desktop drag when flipping to mobile.
+      if (mq.matches) dragRef.current = null
+    }
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
 
-  // Keep panel inside the viewport on resize / orientation change.
+  useEffect(() => {
+    // Only persist desktop floating layout — mobile is CSS-docked.
+    if (mobileDock) return
+    saveLayout(layout)
+  }, [layout, mobileDock])
+
+  // Keep desktop panel inside the viewport on resize / orientation change.
   useEffect(() => {
     const onWinResize = () => {
+      if (isMobileBagViewport()) return
       setLayout((prev) => {
         const width = clamp(prev.width, MIN_W, Math.min(MAX_W, window.innerWidth - 16))
         const height = clamp(prev.height, MIN_H, Math.min(MAX_H, window.innerHeight - 16))
@@ -209,6 +230,7 @@ export function HarborInventoryBag({
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
+      if (isMobileBagViewport()) return
       const d = dragRef.current
       if (!d || e.pointerId !== d.pointerId) return
       const dx = e.clientX - d.startX
@@ -246,6 +268,7 @@ export function HarborInventoryBag({
 
   const beginMove = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
+      if (mobileDock) return
       if ((e.target as HTMLElement).closest('button, .hq-bag-resize')) return
       e.preventDefault()
       e.stopPropagation()
@@ -260,11 +283,12 @@ export function HarborInventoryBag({
         origHeight: layout.height,
       }
     },
-    [layout.left, layout.top, layout.width, layout.height],
+    [mobileDock, layout.left, layout.top, layout.width, layout.height],
   )
 
   const beginResize = useCallback(
     (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (mobileDock) return
       e.preventDefault()
       e.stopPropagation()
       dragRef.current = {
@@ -278,7 +302,7 @@ export function HarborInventoryBag({
         origHeight: layout.height,
       }
     },
-    [layout.left, layout.top, layout.width, layout.height],
+    [mobileDock, layout.left, layout.top, layout.width, layout.height],
   )
 
   // Tap / click outside an item button dismisses the tip (keeps selection).
@@ -305,17 +329,24 @@ export function HarborInventoryBag({
   return (
     <aside
       ref={rootRef}
-      className="hq-visit-panel hq-visit-panel--inv hq-bag hq-bag--float"
+      className={`hq-visit-panel hq-visit-panel--inv hq-bag${mobileDock ? ' hq-bag--docked' : ' hq-bag--float'}`}
       role="dialog"
       aria-label="Inventory"
-      style={{
-        left: layout.left,
-        top: layout.top,
-        width: layout.width,
-        height: layout.height,
-      }}
+      style={
+        mobileDock
+          ? undefined
+          : {
+              left: layout.left,
+              top: layout.top,
+              width: layout.width,
+              height: layout.height,
+            }
+      }
     >
-      <div className="hq-bag-chrome" onPointerDown={beginMove}>
+      <div
+        className="hq-bag-chrome"
+        onPointerDown={mobileDock ? undefined : beginMove}
+      >
         <span className="hq-bag-chrome-title">Inventory</span>
         <button
           type="button"
@@ -583,13 +614,15 @@ export function HarborInventoryBag({
         </div>
       </div>
 
-      <button
-        type="button"
-        className="hq-bag-resize"
-        aria-label="Resize inventory"
-        title="Drag to resize"
-        onPointerDown={beginResize}
-      />
+      {mobileDock ? null : (
+        <button
+          type="button"
+          className="hq-bag-resize"
+          aria-label="Resize inventory"
+          title="Drag to resize"
+          onPointerDown={beginResize}
+        />
+      )}
     </aside>
   )
 }
