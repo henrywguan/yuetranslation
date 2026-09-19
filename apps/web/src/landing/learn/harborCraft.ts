@@ -7,6 +7,9 @@
  * not from raising poly counts.
  */
 import * as THREE from 'three'
+import { applyHarborCel } from './harborCelShader'
+import { revampHarborAlbedoRgba } from './harborTextureRevamp'
+import { auditHarborMesh } from './harborMeshAudit'
 
 /** Posterized Harbor swatches (~era HSL survival). Prefer these over one-off hexes. */
 export const HARBOR_CRAFT_PALETTE = {
@@ -91,23 +94,27 @@ export const HARBOR_CRAFT_PROPS = [
 ] as const
 export type HarborCraftProp = (typeof HARBOR_CRAFT_PROPS)[number]
 
-/** Flat Lambert — architecture / planks / armor plates. */
+/** Flat Lambert + Harbor cel — architecture / planks / armor plates. */
 export function hqMat(
   color: number,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: true, ...extra })
+  return applyHarborCel(new THREE.MeshLambertMaterial({ color, flatShading: true, ...extra }), {
+    preset: extra?.emissive && extra.emissiveIntensity ? 'lantern' : 'terrain',
+  })
 }
 
 /**
- * Smooth Lambert — rocks, fruit, heads, lava blobs.
- * Keep a single hue; let lighting vary value only (era Gouraud habit).
+ * Smooth Lambert + Harbor cel — rocks, fruit, heads, lava blobs.
+ * Cel ramp owns value steps; albedo stays a single hue.
  */
 export function hqMatSmooth(
   color: number,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: false, ...extra })
+  return applyHarborCel(new THREE.MeshLambertMaterial({ color, flatShading: false, ...extra }), {
+    preset: 'item',
+  })
 }
 
 /** Procedural 128×128 albedo cache (nearest — era idiom size). */
@@ -118,6 +125,7 @@ function make128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.Da
   if (hit) return hit
   const data = new Uint8Array(128 * 128 * 4)
   fill(data)
+  revampHarborAlbedoRgba(data, 128, 128, { radius: 1, saturation: 1.18, blackLift: 0.04 })
   const tex = new THREE.DataTexture(data, 128, 128)
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestFilter
@@ -141,6 +149,7 @@ function makeSoft128DataTex(key: string, fill: (data: Uint8Array) => void): THRE
   if (hit) return hit
   const data = new Uint8Array(128 * 128 * 4)
   fill(data)
+  revampHarborAlbedoRgba(data, 128, 128, { radius: 2, saturation: 1.28, blackLift: 0.07 })
   const tex = new THREE.DataTexture(data, 128, 128)
   tex.magFilter = THREE.LinearFilter
   tex.minFilter = THREE.LinearFilter
@@ -563,18 +572,21 @@ export const hqGuanGrassTexture = hqSoftGrassTexture
 export const hqGuanDirtTexture = hqSoftDirtTexture
 export const hqGuanThatchTexture = hqSoftThatchTexture
 
-/** Flat material with optional 128px albedo (tint via color). */
+/** Flat material with optional 128px albedo (tint via color) + Harbor cel. */
 export function hqMatTex(
   color: number,
   map: THREE.Texture,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return new THREE.MeshLambertMaterial({
-    color,
-    map,
-    flatShading: true,
-    ...extra,
-  })
+  return applyHarborCel(
+    new THREE.MeshLambertMaterial({
+      color,
+      map,
+      flatShading: true,
+      ...extra,
+    }),
+    { preset: 'terrain' },
+  )
 }
 
 /** Snap to coarse grid so verts feel integer-ish at play scale. */
@@ -700,7 +712,7 @@ export function hqCanopy(r: number, color: number, x = 0, y = 0, z = 0): THREE.M
   const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), hqMat(color))
   m.position.set(hqSnap(x), hqSnap(y), hqSnap(z))
   m.scale.y = 0.7
-  return m
+  return auditHarborMesh(m, 'terrain')
 }
 
 /** Faceted rock chunk — smooth shading, boxy silhouette. */
@@ -712,7 +724,7 @@ export function hqRock(rng: () => number, color: number = HARBOR_CRAFT_PALETTE.r
   )
   m.rotation.set(rng() * 0.4, rng() * Math.PI, rng() * 0.3)
   m.scale.set(1 + rng() * 0.35, 1, 1 + rng() * 0.25)
-  return m
+  return auditHarborMesh(m, 'terrain')
 }
 
 // —— Modular props (clutter density = “RS detail”) ——

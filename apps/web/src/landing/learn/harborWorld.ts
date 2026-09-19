@@ -37,6 +37,8 @@ import {
   harborFigureNeck,
   harborFigureTorso,
 } from './harborFigure'
+import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
+import { auditHarborObject } from './harborMeshAudit'
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
@@ -870,12 +872,15 @@ export function harborLanternIntensity(weather: HarborWeather): number {
 }
 
 function glowMat(color: number, emissive: number, intensity = 0.9) {
-  return new THREE.MeshLambertMaterial({
-    color,
-    emissive,
-    emissiveIntensity: intensity,
-    flatShading: true,
-  })
+  return applyHarborCel(
+    new THREE.MeshLambertMaterial({
+      color,
+      emissive,
+      emissiveIntensity: intensity,
+      flatShading: false,
+    }),
+    { preset: 'lantern', ilmMap: makeHarborIlmMap('lantern') },
+  )
 }
 
 function attachLanternLight(
@@ -907,6 +912,7 @@ function lantern(weather: HarborWeather = 'sunny') {
   g.add(lamp)
   g.add(hqBox(0.34, 0.04, 0.34, P.woodDeep, 0, 1.74, 0))
   attachLanternLight(g, weather, 1.55)
+  auditHarborObject(g, 'lantern')
   return g
 }
 
@@ -972,6 +978,7 @@ function boatLantern(
     attachLanternLight(g, weather, 0.5, glowCol, 1.25)
   }
   tagVipLanternAnim(g, id)
+  auditHarborObject(g, 'lantern')
   return g
 }
 
