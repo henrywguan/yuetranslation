@@ -9,6 +9,7 @@ import {
   levelCampaign,
   levelRealm,
   levelsForCampaign,
+  nextCampaignStartId,
   nextLevelId,
   openCantoneseLessonUrl,
   type HarborCampaignId,
@@ -190,6 +191,13 @@ function main() {
   assert.equal(levelRealm(levelById('life0-classroom')!), 'bamboo')
   assert.equal(levelRealm(levelById('life1-l1')!), 'bamboo')
   assert.equal(nextLevelId('life0-guess'), 'life0-classroom', 'Life0 next stays in campaign')
+  assert.equal(nextLevelId('life0-intro'), null, 'Life0 closer has no in-campaign next')
+  assert.equal(nextCampaignStartId('life0-intro'), 'life1-l1', 'Life0 closer offers Life1 campaign start')
+  assert.equal(
+    nextCampaignStartId(levelsForCampaign('sounds').at(-1)!.id),
+    'life0-guess',
+    'Sounds finale offers Life0 first pier',
+  )
   assert.equal(nextLevelId('life1-l1'), 'life1-l2', 'Life1 next stays in campaign')
   assert.equal(nextLevelId('life1-l4'), null, 'Life1 campaign ends at lesson 4')
   const soundsLast = levelsForCampaign('sounds').at(-1)!.id
@@ -1119,19 +1127,24 @@ function main() {
   assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
   assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
   // LevelClear fullscreen overlay is #061018 — must not inherit light-page --ink (#07131f).
-  assert.match(learnCss, /\.hq-clear--immersive\s*\{[^}]*--ink:\s*#e8f4ff/s, 'immersive clear resets --ink for dark panel')
-  assert.match(learnCss, /\.hq-clear--immersive\s*\{[^}]*#061018/s, 'immersive clear keeps dark harbor wash')
+  // Dual-class selector must beat `.hq-clear { max-width: 28rem }` or desktop shows sunny gutters.
+  assert.match(learnCss, /\.hq-clear\.hq-clear--immersive\s*\{[^}]*--ink:\s*#e8f4ff/s, 'immersive clear resets --ink for dark panel')
+  assert.match(learnCss, /\.hq-clear\.hq-clear--immersive\s*\{[^}]*#061018/s, 'immersive clear keeps dark harbor wash')
+  assert.match(learnCss, /\.hq-clear\.hq-clear--immersive\s*\{[^}]*max-width:\s*none/s, 'immersive clear beats 28rem phone max-width')
+  assert.match(learnCss, /\.hq-clear\.hq-clear--immersive\s*\{[^}]*width:\s*100%/s, 'immersive clear full viewport width')
   assert.match(
     learnCss,
-    /\.hq-clear--immersive\s*\{[^}]*color:\s*color-mix\(in srgb,\s*#e8f7f4/s,
+    /\.hq-clear\.hq-clear--immersive\s*\{[^}]*color:\s*color-mix\(in srgb,\s*#e8f7f4/s,
     'immersive clear base text is light-on-dark',
   )
   assert.match(
     learnCss,
-    /\.hq-clear--immersive \.hq-btn--ghost\s*\{[^}]*color:\s*color-mix\(in srgb,\s*#e8f7f4/s,
+    /\.hq-clear\.hq-clear--immersive \.hq-btn--ghost\s*\{[^}]*color:\s*color-mix\(in srgb,\s*#e8f7f4/s,
     'immersive clear ghost buttons stay readable on dark',
   )
   assert.match(playSrc, /hq-clear hq-clear--immersive/, 'LevelClear mounts immersive clear shell')
+  assert.match(playSrc, /Keep sailing/, 'campaign-end clear offers keep sailing')
+  assert.match(playSrc, /nextCampaignStartId|continueHarborLevelId/, 'clear can sail next open pier')
   // sendChat must be declared before the cleared early return — otherwise React
   // crashes with fewer-hooks and the Next-gate clear paints a blank dark screen.
   {
