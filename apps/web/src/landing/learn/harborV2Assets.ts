@@ -124,35 +124,43 @@ async function fetchHarborV2Asset(id: HarborV2AssetId): Promise<THREE.Group | nu
 }
 
 /**
+ * After a uniform height rescale, re-center XZ and plant feet on local y=0.
+ * Authored GLBs are origin-centered — scaling without re-planting buries them.
+ */
+export function rescaleAndReplantHarborV2Clone(
+  clone: THREE.Group,
+  targetHeight: number,
+): void {
+  if (!(targetHeight > 0)) return
+  // Drop prior plant offset so scale is measured from the raw mesh frame.
+  clone.position.set(0, 0, 0)
+  clone.updateMatrixWorld(true)
+  const box = new THREE.Box3().setFromObject(clone)
+  const size = new THREE.Vector3()
+  box.getSize(size)
+  if (!(size.y > 0.001)) return
+  clone.scale.multiplyScalar(targetHeight / size.y)
+  clone.updateMatrixWorld(true)
+  const box2 = new THREE.Box3().setFromObject(clone)
+  clone.position.x -= (box2.min.x + box2.max.x) * 0.5
+  clone.position.z -= (box2.min.z + box2.max.z) * 0.5
+  clone.position.y -= box2.min.y
+}
+
+/**
  * Instance a V2 asset. Returns null if the GLB is missing (caller may keep v1).
- * Always returns a fresh clone.
+ * Always returns a fresh clone with feet planted on local y=0.
  */
 export async function instanceHarborV2Asset(
   id: HarborV2AssetId,
   opts: { targetHeight?: number; name?: string } = {},
 ): Promise<THREE.Group | null> {
   if (!HARBOR_V2_MESH_ONLY) return null
-  const hit = ready.get(id)
-  if (hit) {
-    const clone = hit.clone(true)
-    if (opts.targetHeight != null && opts.targetHeight > 0) {
-      const box = new THREE.Box3().setFromObject(clone)
-      const size = new THREE.Vector3()
-      box.getSize(size)
-      if (size.y > 0.001) clone.scale.multiplyScalar(opts.targetHeight / size.y)
-    }
-    if (opts.name) clone.name = opts.name
-    clone.userData.harborV2Asset = id
-    return clone
-  }
-  const g = await fetchHarborV2Asset(id)
-  if (!g) return null
-  const clone = g.clone(true)
+  const base = ready.get(id) ?? (await fetchHarborV2Asset(id))
+  if (!base) return null
+  const clone = base.clone(true)
   if (opts.targetHeight != null && opts.targetHeight > 0) {
-    const box = new THREE.Box3().setFromObject(clone)
-    const size = new THREE.Vector3()
-    box.getSize(size)
-    if (size.y > 0.001) clone.scale.multiplyScalar(opts.targetHeight / size.y)
+    rescaleAndReplantHarborV2Clone(clone, opts.targetHeight)
   }
   if (opts.name) clone.name = opts.name
   clone.userData.harborV2Asset = id
@@ -180,7 +188,16 @@ export function mountHarborV2Asset(
 
   void instanceHarborV2Asset(id, { targetHeight: opts.targetHeight, name: opts.name }).then((g) => {
     if (!g) return
-    g.position.copy(placeholder.position)
+    // Compose mount pose with the clone's plant offset — never overwrite plant Y
+    // (that buried origin-centered houses so only roofs poked through the dirt).
+    const plantX = g.position.x
+    const plantY = g.position.y
+    const plantZ = g.position.z
+    g.position.set(
+      placeholder.position.x + plantX,
+      placeholder.position.y + plantY,
+      placeholder.position.z + plantZ,
+    )
     g.rotation.copy(placeholder.rotation)
     g.userData.harborV2Asset = id
     placeholder.parent?.add(g)

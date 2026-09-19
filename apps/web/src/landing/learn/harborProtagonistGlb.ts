@@ -1,8 +1,8 @@
 /**
  * Harbor Quest · Meshy Scout GLB import (Henry-approved 2026-09-18).
- * Standing pose *may* use cinematic mesh; seated canoe stays procedural.
- * Land: do not attach until the mesh path is validated — procedural Scout stays visible.
- * When a GLB does load, apply harborCelMaterial (anime / wuxia cel foundation).
+ * Standing + canoe voyage attach the cinematic mesh (Lambert + cel).
+ * Land: do not hide procedural until a validated GLB is on the root.
+ * `setProceduralBodyVisible` must never toggle Scout GLB child meshes.
  */
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -211,32 +211,37 @@ export async function attachHarborScoutGlb(
 }
 
 /**
- * Sink the standing Scout so the pelvis sits on the canoe seat and hide
- * limb verts below deck — A-pose legs must not poke through the hull.
+ * Sink the standing Scout so the pelvis sits on the canoe seat.
+ * Meshy Scout is a single mesh — do not hide by world AABB (that used to
+ * vanish the sailor when the boat left the origin).
  */
 export function plantScoutGlbInCanoe(glb: THREE.Group): void {
+  // Idempotent — re-attach / wardrobe sync must not stack scale.
+  if (glb.userData.scoutGlbCanoe) return
   glb.userData.scoutGlbCanoe = true
   // Seat height relative to boat local origin (canoe places scout at y≈0.38).
   glb.position.y = -0.55
   glb.scale.multiplyScalar(0.92)
-  glb.updateMatrixWorld(true)
-  const deckY = 0.12
-  glb.traverse((o) => {
-    const m = o as THREE.Mesh
-    if (!m.isMesh) return
-    m.updateMatrixWorld(true)
-    const box = new THREE.Box3().setFromObject(m)
-    if (box.max.y < deckY) {
-      m.visible = false
-      m.userData.scoutGlbCanoeHidden = true
-    }
-  })
 }
 
-/** Show/hide procedural body parts (keep sockets + clothing overlays). */
+/** True when `o` is the Scout GLB root or any mesh under it. */
+function isScoutGlbSubtree(o: THREE.Object3D): boolean {
+  let cur: THREE.Object3D | null = o
+  while (cur) {
+    if (cur.name === 'scout-glb' || cur.userData.scoutGlb || cur.userData.scoutGlbMesh) return true
+    cur = cur.parent
+  }
+  return false
+}
+
+/**
+ * Show/hide procedural body parts (keep sockets + clothing overlays).
+ * Never touch Scout GLB meshes — traverse visits children even when the
+ * `scout-glb` root returns early, which previously hid the whole character.
+ */
 export function setProceduralBodyVisible(root: THREE.Object3D, visible: boolean): void {
   root.traverse((o) => {
-    if (o.name === 'scout-glb' || o.userData.scoutGlb) return
+    if (isScoutGlbSubtree(o)) return
     if (o.userData.harborClothing || o.userData.harborGear) return
     if (
       o.name === 'hand_r' ||
