@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three'
 import { applyHarborCel } from './harborCelShader'
+import { revampHarborAlbedoRgba } from './harborTextureRevamp'
 
 /** Posterized Harbor swatches (~era HSL survival). Prefer these over one-off hexes. */
 export const HARBOR_CRAFT_PALETTE = {
@@ -123,6 +124,7 @@ function make128DataTex(key: string, fill: (data: Uint8Array) => void): THREE.Da
   if (hit) return hit
   const data = new Uint8Array(128 * 128 * 4)
   fill(data)
+  revampHarborAlbedoRgba(data, 128, 128, { radius: 1, saturation: 1.18, blackLift: 0.04 })
   const tex = new THREE.DataTexture(data, 128, 128)
   tex.magFilter = THREE.NearestFilter
   tex.minFilter = THREE.NearestFilter
@@ -146,6 +148,7 @@ function makeSoft128DataTex(key: string, fill: (data: Uint8Array) => void): THRE
   if (hit) return hit
   const data = new Uint8Array(128 * 128 * 4)
   fill(data)
+  revampHarborAlbedoRgba(data, 128, 128, { radius: 2, saturation: 1.28, blackLift: 0.07 })
   const tex = new THREE.DataTexture(data, 128, 128)
   tex.magFilter = THREE.LinearFilter
   tex.minFilter = THREE.LinearFilter
