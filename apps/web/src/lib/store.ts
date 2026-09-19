@@ -1309,6 +1309,9 @@ export const useYueStore = create<State>((set, get) => {
 
         if (!keepHoldOrSticky(gen, set)) {
           cancelHoldStart(set)
+          set({
+            error: 'Microphone was interrupted. Tap the mic again and allow access if prompted.',
+          })
           return
         }
 
@@ -1330,6 +1333,9 @@ export const useYueStore = create<State>((set, get) => {
         }
       }
       cancelHoldStart(set)
+      set({
+        error: 'Microphone was interrupted. Tap the mic again and allow access if prompted.',
+      })
       return
     }
     if (!next) {
@@ -1363,6 +1369,9 @@ export const useYueStore = create<State>((set, get) => {
           /* ignore */
         }
         cancelHoldStart(set)
+        set({
+          error: 'Microphone was interrupted. Tap the mic again and allow access if prompted.',
+        })
         return
       }
       startingHold = false
@@ -1429,6 +1438,19 @@ export const useYueStore = create<State>((set, get) => {
     // Prevent concurrent teardown (double release / double tap).
     if (flushingHold) return
     if (!holding && !startingHold && !get().live && !tapSticky && !pendingStickyTap) return
+
+    // Desktop: OS mic permission / slow Azure start often outlasts HOLD_THRESHOLD.
+    // pointercancel/up would call endHold while startingHold — previously that
+    // cleared sticky flags and startHold finished with cancelHoldStart (no error,
+    // no listening). Promote to sticky tap so permission can complete.
+    if (startingHold && !get().live && !get().session) {
+      pendingStickyTap = true
+      tapSticky = true
+      holding = false
+      set({ liveInteraction: 'tap' })
+      return
+    }
+
     const gen = holdGen
     holding = false
     tapSticky = false

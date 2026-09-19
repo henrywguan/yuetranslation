@@ -40,7 +40,13 @@ export async function unlockMicrophone(): Promise<MediaStream | null> {
         noiseSuppression: true,
       },
     })
-  } catch {
+  } catch (err) {
+    // Surface NotAllowedError via startHold’s null → permission banner.
+    // Other failures (NotFoundError, etc.) also map to that path.
+    if (typeof console !== 'undefined' && console.warn) {
+      const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : 'Error'
+      console.warn('[mic] getUserMedia failed:', name)
+    }
     return null
   }
 }
