@@ -168,6 +168,7 @@ import {
 import { emptyHarborProgress,
   isLevelUnlocked } from '../../landing/learn/progressMerge'
 import { enrichJyutpingWithChao, rubyJpSyllable } from '../../lib/jyutping'
+import { clampHarborTipBox } from '../../landing/learn/HarborItemTooltip'
 
 /** Offline: Harbor Quest curriculum integrity (no paid APIs). */
 function main() {
@@ -895,12 +896,34 @@ function main() {
   assert.match(playSrc, /is-bag-open/, 'LearnPlay marks bag-open on play shell')
   const tipSrc = readFileSync(new URL('./HarborItemTooltip.tsx', import.meta.url), 'utf8')
   assert.match(tipSrc, /export function HarborItemTooltip/, 'item tooltip component')
+  assert.match(tipSrc, /export function clampHarborTipBox/, 'tips clamp into the viewport')
   assert.match(tipSrc, /role=\{shop \? 'dialog' : 'tooltip'\}|role="tooltip"/, 'tooltip uses tooltip role')
   assert.match(tipSrc, /HarborTipShopActions|hq-item-tip-shop/, 'shop tips expose Buy/Sell + qty')
   assert.match(tipSrc, /is-shop/, 'interactive shop tip class')
   assert.match(tipSrc, /is-vip/, 'VIP tips get gold glow class')
   assert.match(tipSrc, /createPortal/, 'tips portal above bag overflow')
   assert.match(tipSrc, /position: fixed|hq-item-tip--fixed/, 'tips use fixed positioning')
+  {
+    const phone = { width: 390, height: 844, pad: 12 }
+    const shopTip = { width: 216, height: 168 }
+    const leftCell = clampHarborTipBox(
+      { left: 28, top: 210, width: 52, height: 52, bottom: 262 },
+      shopTip,
+      phone,
+      'below',
+    )
+    assert.ok(leftCell.left >= 12, 'sell-fish tip stays on-screen from a left grid cell')
+    assert.ok(leftCell.left + shopTip.width <= phone.width - 12, 'sell-fish tip does not overflow the right')
+    assert.equal(leftCell.placement, 'below')
+    const rightCell = clampHarborTipBox(
+      { left: 318, top: 210, width: 52, height: 52, bottom: 262 },
+      shopTip,
+      phone,
+      'below',
+    )
+    assert.ok(rightCell.left >= 12, 'right-edge shop tip stays on-screen')
+    assert.ok(rightCell.left + shopTip.width <= phone.width - 12, 'right-edge shop tip does not overflow')
+  }
   const shopShelfSrc = readFileSync(new URL('./HarborShopShelf.tsx', import.meta.url), 'utf8')
   assert.match(shopShelfSrc, /shop=\{shopActions\}/, 'outfitter/bank cells pass shop tip actions')
   assert.match(shopShelfSrc, /onSell/, 'outfitter tip can sell gear')
@@ -968,6 +991,11 @@ function main() {
   assert.match(wornCss, /\.hq-bag-close/, 'brown X close styles')
   assert.match(wornCss, /\.hq-bag-resize/, 'bag resize handle styles')
   assert.match(wornCss, /\.hq-item-tip--fixed/, 'fixed portaled tip styles')
+  assert.match(
+    wornCss,
+    /\.hq-item-tip--fixed\.hq-item-tip--above[\s\S]*?transform:\s*none/,
+    'fixed tips do not translateX(-50%) off the phone',
+  )
   assert.match(wornCss, /z-index:\s*10050/, 'tips stack above inventory chrome')
   assert.match(wornCss, /\.hq-bag-filters/, 'bag filter chip styles')
   assert.match(wornCss, /\.hq-bag-model/, 'compact bag model icon styles')
