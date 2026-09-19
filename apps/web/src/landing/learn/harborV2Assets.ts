@@ -210,3 +210,56 @@ export function mountHarborV2Asset(
 export function isHarborV2AssetReady(id: HarborV2AssetId): boolean {
   return Boolean(ready.get(id))
 }
+
+/** Recolor a V2 instance toward a landmark palette (clones materials). */
+export function tintHarborV2Asset(root: THREE.Object3D, hex: number, amount = 0.42): void {
+  const target = new THREE.Color(hex)
+  root.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh) return
+    const apply = (mat: THREE.Material): THREE.Material => {
+      const next = mat.clone()
+      if ('color' in next && next.color instanceof THREE.Color) {
+        next.color.lerp(target, amount)
+      }
+      return next
+    }
+    m.material = Array.isArray(m.material) ? m.material.map(apply) : apply(m.material)
+  })
+}
+
+const v2Maps = new Map<string, THREE.Texture>()
+
+/** Authored seamless bank / path maps — swap onto Lambert after load. */
+export const HARBOR_V2_TEX = {
+  grass: '/assets/harbor-quest/v2/tex-grass.png',
+  dirt: '/assets/harbor-quest/v2/tex-dirt.png',
+} as const
+
+/** Paint a repeating V2 albedo onto an existing Lambert (keeps fallback until load). */
+export function applyHarborV2Map(
+  material: THREE.MeshLambertMaterial,
+  kind: keyof typeof HARBOR_V2_TEX,
+  repeat = 2.6,
+): void {
+  if (!HARBOR_V2_MESH_ONLY) return
+  if (typeof window === 'undefined') return
+  const url = HARBOR_V2_TEX[kind]
+  const hit = v2Maps.get(url)
+  if (hit) {
+    material.map = hit
+    material.needsUpdate = true
+    return
+  }
+  const loader = new THREE.TextureLoader()
+  loader.load(url, (tex) => {
+    tex.wrapS = THREE.RepeatWrapping
+    tex.wrapT = THREE.RepeatWrapping
+    tex.repeat.set(repeat, repeat)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.needsUpdate = true
+    v2Maps.set(url, tex)
+    material.map = tex
+    material.needsUpdate = true
+  })
+}

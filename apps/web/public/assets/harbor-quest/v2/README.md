@@ -13,6 +13,8 @@ Authored GLBs for the mesh-only river rebirth. Procedural `hqBox` craft is **v1 
 | `outfitter.glb` | River Outfitter shop |
 | `willow.glb` | Weeping willow |
 | `bridge-arch.glb` | Stone arch bridge |
+| `tex-grass.png` | Seamless bank grass |
+| `tex-dirt.png` | Seamless packed-earth path |
 
 Concept sheets (same folder in `docs/harbor-quest/assets/v2/`): matching `*.png`.
 

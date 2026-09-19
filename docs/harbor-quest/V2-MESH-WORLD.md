@@ -39,7 +39,9 @@
 | `willow` | `v2/willow.glb` | Riverside willow |
 | `bridge-arch` | `v2/bridge-arch.glb` | Stone arch bridge |
 
-Scout characters: `scout-female.glb` / `scout-male.glb` (standing + canoe plant).
+First-camera wave: pier NPCs + landmark hosts attach Scout GLBs (`attachHarborCastGlb`). Bank / Arena / Barber reuse house + Save shells with palette tints. Banks and dirt lanes swap in `v2/tex-grass.png` + `v2/tex-dirt.png`.
+
+Scout characters: `scout-female.glb` / `scout-male.glb` (standing + canoe plant + NPC cast).
 
 ## Credit reality
 
