@@ -1986,6 +1986,20 @@ assert.doesNotMatch(
   const worldMapSceneSrc = readFileSync(new URL('./harborWorldMapScene.ts', import.meta.url), 'utf8')
   assert.match(worldMapSceneSrc, /HARBOR_WORLD_MAP_GLB|createHarborWorldMapScene/, 'wuxia world map 3D scene')
   assert.match(worldMapSceneSrc, /setContinentGlow|glowEmissive/, 'continent hover glow')
+  const worldMapUiSrc = readFileSync(new URL('./HarborWorldMap.tsx', import.meta.url), 'utf8')
+  assert.match(worldMapUiSrc, /ContinentDetail|hq-worldmap-detail/, 'continent drill-down view')
+  assert.match(worldMapUiSrc, /voyageChapterNodes|hq-worldmap-dot/, 'chapter progress dots')
+  assert.match(worldMapUiSrc, /Begin navigation/, 'region begin-navigation CTA')
+  const nodesSrc = readFileSync(new URL('./harborWorldMapNodes.ts', import.meta.url), 'utf8')
+  assert.match(nodesSrc, /voyageChapterNodes|guanLandmarkNodes/, 'world map node helpers')
+  assert.ok(
+    existsSync(join(dirname(fileURLToPath(import.meta.url)), '../../../public/assets/harbor-quest/world-map/harbor-continent-voyage.png')),
+    'voyage continent art present',
+  )
+  assert.ok(
+    existsSync(join(dirname(fileURLToPath(import.meta.url)), '../../../public/assets/harbor-quest/world-map/harbor-continent-guan.png')),
+    'guan continent art present',
+  )
   assert.ok(
     existsSync(join(dirname(fileURLToPath(import.meta.url)), '../../../public/assets/harbor-quest/world-map/harbor-world-map.glb')),
     'world map GLB asset present',

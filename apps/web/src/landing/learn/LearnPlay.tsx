@@ -1081,6 +1081,8 @@ export function LearnSession({
       <HarborWorldMap
         open={worldMapOpen}
         current={realmOverride === 'guan' ? 'guan' : 'voyage'}
+        activeLevelId={levelId}
+        progress={progressSnap}
         onClose={() => setWorldMapOpen(false)}
         onTravel={(dest) => {
           playHarborTeleport()
@@ -1094,6 +1096,15 @@ export function LearnSession({
           setWorldMapOpen(false)
           setVisitable(null)
           setTeleportOpen(false)
+        }}
+        onOpenChapter={(id) => {
+          playHarborTeleport()
+          setRealmOverride(null)
+          startHarborBgm('river')
+          setWorldMapOpen(false)
+          setVisitable(null)
+          setTeleportOpen(false)
+          onOpenLevel(id)
         }}
       />
 
