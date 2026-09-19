@@ -41,6 +41,8 @@
 
 First-camera wave: pier NPCs + landmark hosts keep the **procedural anime dress-up** cast (role hair, props, robe palettes) so land walk / idle can run. Scout GLBs are static T-pose (no skin/clips) — `HARBOR_SCOUT_GLB_LAND = false`; canoe still plants `scout-*.glb`. Bank / Arena / Barber reuse house + Save shells with palette tints. Banks and dirt lanes swap in `v2/tex-grass.png` + `v2/tex-dirt.png`.
 
+Env-kit wave (no new paid meshes): scenic pavilions mount `house-village` + `lantern-paper` (sit bench kept). Pine / cherry / ginkgo / poplar and garden shrubs tint the willow kit. Rocks, reeds, stone lanes, plazas, bamboo culms, and lotus pads take V2 grass/dirt maps. Unique fauna, authored bamboo culms, and 3D Jutsu catalog imports still wait on Henry.
+
 Scout characters: `scout-female.glb` / `scout-male.glb` (canoe plant; land cast waits on skinned + animated GLBs).
 
 ## Credit reality
