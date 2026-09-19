@@ -2,15 +2,17 @@
  * Harbor Quest · Higgsfield / Meshy Scout GLB import (Henry-approved 2026-09-18).
  * Anime Scout is the only on-screen body — canoe, land, pier, Barber, profile.
  * Procedural dress-up stays as a load/fallback scaffold (hidden once GLB lands).
- * Scout GLBs are single-mesh (no skin / clips) — land walk uses root sway/bob
- * in `tickHarborProtagonistAnim` so the mesh never freezes in T-pose.
+ * Scout GLBs ship unskinned — `rigHarborScoutGlb` paints a humanoid armature
+ * so walk / idle / fish rotate bones instead of a frozen T-pose.
  * `setProceduralBodyVisible` must never toggle Scout GLB child meshes.
  */
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { HarborGender } from './harborAppearance'
 import { applyHarborCel } from './harborCelShader'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
+import { rigHarborScoutGlb } from './harborScoutRig'
 
 export const HARBOR_SCOUT_GLB_SRC = {
   female: '/assets/harbor-quest/scout-female.glb',
@@ -26,7 +28,7 @@ export const HARBOR_SCOUT_GLB_ENABLED = true
 
 /**
  * Land / standing / pier NPCs use the authored anime Scout GLB.
- * Walk feel comes from scout-glb sway/bob (no AnimationMixer until skinned).
+ * Walk / fish use the auto-rig armature (`harborScoutRig`).
  */
 export const HARBOR_SCOUT_GLB_LAND = true
 
@@ -99,7 +101,14 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
   })
 
   if (!isValidNormalizedScoutGlb(wrap)) return null
+  rigHarborScoutGlb(wrap)
   return wrap
+}
+
+function cloneScoutGlb(src: THREE.Group): THREE.Group {
+  const cloned = (src.userData.scoutRigged ? cloneSkeleton(src) : src.clone(true)) as THREE.Group
+  cloned.userData = { ...src.userData }
+  return cloned
 }
 
 /**
@@ -133,11 +142,11 @@ export function harborGlbMaterialToLambertCel(
 async function fetchScoutGlb(gender: HarborGender): Promise<THREE.Group | null> {
   if (!HARBOR_SCOUT_GLB_ENABLED) return null
   const hit = cache.get(gender)
-  if (hit) return hit.clone(true)
+  if (hit) return cloneScoutGlb(hit)
   const pending = inflight.get(gender)
   if (pending) {
     const g = await pending
-    return g ? g.clone(true) : null
+    return g ? cloneScoutGlb(g) : null
   }
   const job = (async () => {
     try {
@@ -156,7 +165,7 @@ async function fetchScoutGlb(gender: HarborGender): Promise<THREE.Group | null> 
   })()
   inflight.set(gender, job)
   const g = await job
-  return g ? g.clone(true) : null
+  return g ? cloneScoutGlb(g) : null
 }
 
 /** Warm both gender meshes after a user gesture / learn mount. */
@@ -210,6 +219,7 @@ export async function attachHarborScoutGlb(
       return false
     }
     existing.visible = true
+    if (!existing.userData.scoutRigged) rigHarborScoutGlb(existing as THREE.Group)
     setProceduralBodyVisible(root, false)
     hideGlbRedundantClothing(root)
     root.userData.usesScoutGlb = true
