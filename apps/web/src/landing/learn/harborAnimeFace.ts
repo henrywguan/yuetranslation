@@ -55,8 +55,6 @@ function ellipse(
   const x1 = Math.min(w - 1, Math.ceil(cx + rx + 1))
   const y0 = Math.max(0, Math.floor(cy - ry - 1))
   const y1 = Math.min(w - 1, Math.ceil(cy + ry + 1))
-  const rx2 = rx * rx
-  const ry2 = ry * ry
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const u = (x - cx) / rx
