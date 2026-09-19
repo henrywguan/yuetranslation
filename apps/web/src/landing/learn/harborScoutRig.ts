@@ -279,17 +279,22 @@ export function tickScoutSkeletonLocomotion(
     damp(shinL)
     damp(shinR)
   } else {
-    // sit — fold thighs so the canoe plant is not a standing T-pose
-    thighL.rotation.x = 1.15 * amp
-    thighR.rotation.x = 1.15 * amp
-    if (shinL) shinL.rotation.x = 0.35 * amp
-    if (shinR) shinR.rotation.x = 0.35 * amp
-    armL.rotation.set(0.15 * amp, 0, 0.35 * amp)
-    armR.rotation.set(0.15 * amp, 0, -0.35 * amp)
-    if (lowL) lowL.rotation.set(0, 0, 0.2 * amp)
-    if (lowR) lowR.rotation.set(0, 0, -0.2 * amp)
-    if (spine) spine.rotation.set(0.12 * amp, 0, 0)
-    if (hips) hips.rotation.set(0.08 * amp, 0, 0)
+    // sit — canoe / stool: fold thighs forward, drop arms off T-pose bind
+    thighL.rotation.x = 1.38 * amp
+    thighR.rotation.x = 1.38 * amp
+    if (shinL) shinL.rotation.x = 0.62 * amp
+    if (shinR) shinR.rotation.x = 0.62 * amp
+    const footL = findScoutBone(root, SCOUT_BONE.footL)
+    const footR = findScoutBone(root, SCOUT_BONE.footR)
+    if (footL) footL.rotation.x = -0.28 * amp
+    if (footR) footR.rotation.x = -0.28 * amp
+    // Hands rest toward the lap / gunwales (bind is arms straight out).
+    armL.rotation.set(0.42 * amp, 0.18 * amp, 0.55 * amp)
+    armR.rotation.set(0.42 * amp, -0.18 * amp, -0.55 * amp)
+    if (lowL) lowL.rotation.set(0.2 * amp, 0.12 * amp, 0.28 * amp)
+    if (lowR) lowR.rotation.set(0.2 * amp, -0.12 * amp, -0.28 * amp)
+    if (spine) spine.rotation.set(0.18 * amp, 0, 0)
+    if (hips) hips.rotation.set(0.14 * amp, 0, 0)
   }
   return true
 }

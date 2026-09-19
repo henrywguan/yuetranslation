@@ -6,6 +6,7 @@ import { mountHarborCanoeHull } from './harborBoatKit'
 import { applyLookToProtagonist, harborGearById, HARBOR_DEFAULT_LOOK, type HarborLook } from './harborGear'
 import { buildHarborProtagonist } from './harborProtagonist'
 import { tickHarborProtagonistAnim } from './harborProtagonistAnim'
+import { HARBOR_CANOE_SCOUT_SEAT_Y } from './harborProtagonistGlb'
 import type { HarborRemotePlayer } from './harborPresence'
 import { harborShowoffAccent } from './harborShowoff'
 
@@ -111,7 +112,9 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
 
   if (player.mode === 'boat') {
     const boat = remoteCanoe(player.look.boat)
-    body.position.set(0, 0.22, 0)
+    // Match local river-scout seat so remotes don't T-pose above/under the hull.
+    body.position.set(0, HARBOR_CANOE_SCOUT_SEAT_Y, -0.05)
+    body.rotation.y = Math.PI
     boat.add(body)
     root.add(boat)
   } else {

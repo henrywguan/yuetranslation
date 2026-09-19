@@ -63,6 +63,14 @@ tickScoutSkeletonLocomotion(wrap, 'idle', 0.4, 0.016, 1, 7.2)
 assert.ok(Math.abs(armR.rotation.z) > 0.1, 'idle drops arms off T-pose')
 assert.notEqual(armR.rotation.z, idleArmZ0)
 
+{
+  const thigh0 = thighL.rotation.x
+  assert.equal(tickScoutSkeletonLocomotion(wrap, 'sit', 0.2, 0.016, 1, 7.2), true, 'sit tick')
+  assert.ok(thighL.rotation.x > 1.0, `sit folds thighs (got ${thighL.rotation.x})`)
+  assert.ok(Math.abs(thighL.rotation.x - thigh0) > 0.5, 'sit differs from idle/walk thighs')
+  assert.ok(Math.abs(armR.rotation.z) > 0.35, 'sit drops arms off T-pose bind')
+}
+
 assert.equal(tickScoutSkeletonFish(wrap, 'wait', 0.4, 1), true, 'fish wait pose')
 const waitX = armR.rotation.x
 const waitY = armR.rotation.y
@@ -116,6 +124,8 @@ assert.match(fishAnimSrc, /scout-bone-hand-r|SCOUT_BONE\.handR/, 'rod parents to
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /rigHarborScoutGlb/, 'normalize auto-rigs Scout GLB')
 assert.match(glbSrc, /cloneSkeleton|SkeletonUtils/, 'rigged clones keep the skeleton')
+assert.match(glbSrc, /tickScoutSkeletonLocomotion\(glb,\s*'sit'/, 'canoe plant applies sit bones')
+assert.match(glbSrc, /HARBOR_CANOE_GLB_SINK_Y/, 'canoe sink constant exported')
 
 const here = dirname(fileURLToPath(import.meta.url))
 const femaleGlb = join(here, '../../../public/assets/harbor-quest/scout-female.glb')
