@@ -86,6 +86,8 @@ import {
 } from './harborProtagonistAnim'
 import {
   HARBOR_DEFAULT_APPEARANCE,
+  HARBOR_HAIR_COLORS,
+  HARBOR_SKIN_TONES,
   type HarborAppearance,
   type HarborGender,
 } from './harborAppearance'
@@ -1574,8 +1576,11 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   const child = role === 'child'
   const gender = NPC_ROLE_GENDER[role]
   const scale = child ? 0.72 : gender === 'female' ? 0.96 + rng() * 0.04 : 1 + rng() * 0.05
-  const skin = harborFigureMat(P.skin)
-  const hair = harborFigureMat(P.hair)
+  // Per-spawn skin / hair so villagers aren't identical clones of one another.
+  const skinHex = HARBOR_SKIN_TONES[Math.floor(rng() * HARBOR_SKIN_TONES.length)] ?? P.skin
+  const hairHex = HARBOR_HAIR_COLORS[Math.floor(rng() * HARBOR_HAIR_COLORS.length)] ?? P.hair
+  const skin = harborFigureMat(skinHex)
+  const hair = harborFigureMat(hairHex)
   const shoes = harborFigureMat(P.woodDark)
 
   const palette: Record<HarborNpcRole, { robe: number; trim: number; pants: number }> = {
@@ -5450,7 +5455,7 @@ export function createHarborWorld(
 
     // Ease remote sailors toward latest Broadcast / Presence pose targets
     for (const root of remoteById.values()) {
-      tickRemoteSailorPose(root, reduced ? 1 : 0.32)
+      tickRemoteSailorPose(root, reduced ? 1 : 0.32, dt)
       // Match terrace height so remote scouts don't clip into Guan land layers
       if (isGuan && root.userData.remoteMode === 'foot') {
         root.position.y = guanGroundY(root.position.x, root.position.z)

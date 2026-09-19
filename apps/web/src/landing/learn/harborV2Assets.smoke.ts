@@ -42,7 +42,7 @@ const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf
 assert.match(worldSrc, /HARBOR_V2_MESH_ONLY/, 'world prefers V2 mesh lock')
 assert.match(worldSrc, /mountHarborV2Asset/, 'world mounts V2 assets')
 assert.match(worldSrc, /house-village|pier-module|canoe/, 'core river kits wired')
-assert.match(worldSrc, /attachHarborCastGlb/, 'pier + landmark NPCs use Scout GLB')
+assert.match(worldSrc, /attachHarborCastGlb/, 'pier + landmark NPCs keep cast-GLB hook')
 assert.match(worldSrc, /applyHarborV2Map/, 'banks and paths use V2 albedos')
 assert.match(worldSrc, /v2-bank|v2-arena|v2-barber/, 'remaining landmarks use V2 shells')
 
@@ -50,10 +50,12 @@ const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8'
 assert.match(playSrc, /preloadHarborV2Assets/, 'learn preloads V2 kit')
 
 const proSrc = readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8')
-assert.match(proSrc, /mode: pose === 'seated' \? 'canoe'/, 'canoe Scout uses GLB plant')
+assert.match(proSrc, /mode: wantCanoeGlb \? 'canoe'/, 'canoe Scout uses GLB plant')
+assert.match(proSrc, /HARBOR_SCOUT_GLB_LAND/, 'standing Scout respects land GLB gate')
 
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /plantScoutGlbInCanoe/, 'canoe plant helper')
+assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = false/, 'land cast stays procedural until skinned GLBs')
 assert.match(glbSrc, /isScoutGlbSubtree|scoutGlbMesh/, 'procedural hide skips Scout GLB meshes')
 assert.match(glbSrc, /attachHarborCastGlb/, 'cast attach helper')
 assert.match(glbSrc, /isKeptCastProp/, 'NPC props survive procedural hide')

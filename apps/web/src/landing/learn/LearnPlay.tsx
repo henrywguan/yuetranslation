@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   campaignShortLabel,
+  HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
   isLifeBookCampaign,
   levelById,

@@ -1,7 +1,9 @@
 /**
  * Harbor Quest · Meshy Scout GLB import (Henry-approved 2026-09-18).
- * Standing + canoe voyage attach the cinematic mesh (Lambert + cel).
- * Land: do not hide procedural until a validated GLB is on the root.
+ * Canoe voyage plants the authored mesh (Lambert + cel).
+ * Land / pier cast stay on the procedural anime dress-up kit — Scout GLBs are
+ * static T-pose (no skin, no clips), so attaching them freezes walk and makes
+ * every sailor identical. Re-enable land GLB only with skinned + animated assets.
  * `setProceduralBodyVisible` must never toggle Scout GLB child meshes.
  */
 import * as THREE from 'three'
@@ -16,11 +18,17 @@ export const HARBOR_SCOUT_GLB_SRC = {
 } as const
 
 /**
- * Standing Scout uses the authored character GLB (textured mesh, not stacked
- * primitives). Materials are converted to Lambert + harborCel — MeshStandard /
- * MeshToon cel still fails to compile on iOS Safari and hid the body.
+ * Scout GLB gate — canoe plant + future skinned cast.
+ * Materials convert to Lambert + harborCel (MeshStandard / MeshToon + cel
+ * still fails to compile on iOS Safari and hid the body).
  */
 export const HARBOR_SCOUT_GLB_ENABLED = true
+
+/**
+ * Land / standing / pier NPCs must NOT use the static Scout GLB — it has no
+ * skeleton or walk clips, so attach hid the dress-up limbs and left T-poses.
+ */
+export const HARBOR_SCOUT_GLB_LAND = false
 
 /** Target standing height (feet → crown) matching procedural fashion kit. */
 export const HARBOR_SCOUT_GLB_TARGET_H = HARBOR_FIGURE_PROPORTIONS.standingH
@@ -182,6 +190,15 @@ export async function attachHarborScoutGlb(
     return false
   }
   const mode = opts.mode ?? 'standing'
+  // Static T-pose Scout has no walk skin — keep dress-up limbs on land.
+  if (mode === 'standing' && !HARBOR_SCOUT_GLB_LAND) {
+    const stale = root.getObjectByName('scout-glb')
+    if (stale) stale.removeFromParent()
+    setProceduralBodyVisible(root, true)
+    root.userData.usesScoutGlb = false
+    root.userData.characterStyle = 'anime-dressup'
+    return false
+  }
   const existing = root.getObjectByName('scout-glb')
   if (existing) {
     if (!isValidNormalizedScoutGlb(existing as THREE.Group)) {
@@ -213,6 +230,7 @@ export async function attachHarborScoutGlb(
 /**
  * Tint a Scout/cast GLB toward a robe color so pier NPCs and landmark hosts
  * don't all wear the same Scout default. Clones materials so the cache stays clean.
+ * Kept for future skinned cast GLBs (`HARBOR_SCOUT_GLB_LAND`).
  */
 export function tintHarborCastGlb(root: THREE.Object3D, hex: number, amount = 0.38): void {
   const target = new THREE.Color(hex)
@@ -232,6 +250,7 @@ export function tintHarborCastGlb(root: THREE.Object3D, hex: number, amount = 0.
 
 /**
  * Attach the authored Scout mesh to a pier NPC / landmark host, then tint.
+ * No-op while `HARBOR_SCOUT_GLB_LAND` is false — dress-up cast stays unique + walkable.
  * Held props must be tagged `userData.harborGear` so they stay visible.
  */
 export async function attachHarborCastGlb(
@@ -239,6 +258,12 @@ export async function attachHarborCastGlb(
   gender: HarborGender,
   opts: { tint?: number; tintAmount?: number } = {},
 ): Promise<boolean> {
+  if (!HARBOR_SCOUT_GLB_LAND) {
+    setProceduralBodyVisible(root, true)
+    root.userData.usesScoutGlb = false
+    root.userData.characterStyle = 'anime-dressup'
+    return false
+  }
   const ok = await attachHarborScoutGlb(root, gender, { mode: 'standing' })
   if (!ok) return false
   if (opts.tint != null) tintHarborCastGlb(root, opts.tint, opts.tintAmount ?? 0.38)

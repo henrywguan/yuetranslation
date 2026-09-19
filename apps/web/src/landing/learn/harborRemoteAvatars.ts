@@ -4,6 +4,7 @@
 import * as THREE from 'three'
 import { applyLookToProtagonist, type HarborLook } from './harborGear'
 import { buildHarborProtagonist } from './harborProtagonist'
+import { tickHarborProtagonistAnim } from './harborProtagonistAnim'
 import type { HarborRemotePlayer } from './harborPresence'
 import { harborShowoffAccent } from './harborShowoff'
 
@@ -237,11 +238,13 @@ export function setRemoteSailorPoseTarget(
 }
 
 /** Ease mesh toward Broadcast / Presence pose targets each frame. */
-export function tickRemoteSailorPose(root: THREE.Group, alpha = 0.28) {
+export function tickRemoteSailorPose(root: THREE.Group, alpha = 0.28, dt = 1 / 60) {
   const tx = root.userData.targetX as number | undefined
   const tz = root.userData.targetZ as number | undefined
   const tyaw = root.userData.targetYaw as number | undefined
   if (tx == null || tz == null) return
+  const prevX = root.position.x
+  const prevZ = root.position.z
   root.position.x += (tx - root.position.x) * alpha
   root.position.z += (tz - root.position.z) * alpha
   if (tyaw != null) {
@@ -249,6 +252,26 @@ export function tickRemoteSailorPose(root: THREE.Group, alpha = 0.28) {
     while (dy > Math.PI) dy -= Math.PI * 2
     while (dy < -Math.PI) dy += Math.PI * 2
     root.rotation.y += dy * alpha
+  }
+
+  // Foot remotes: drive dress-up limb walk when easing toward a distant target.
+  if (root.userData.remoteMode === 'foot') {
+    const body = root.getObjectByName('remote-body')
+    if (body) {
+      const moved = Math.hypot(root.position.x - prevX, root.position.z - prevZ)
+      const remaining = Math.hypot(tx - root.position.x, tz - root.position.z)
+      const walking = moved > 0.002 || remaining > 0.12
+      const prev =
+        (root.userData.remoteAnim as { mode: 'idle' | 'walk' | 'sit'; t: number } | undefined) ?? {
+          mode: 'idle' as const,
+          t: 0,
+        }
+      root.userData.remoteAnim = tickHarborProtagonistAnim(
+        body,
+        { ...prev, mode: walking ? 'walk' : 'idle' },
+        dt,
+      )
+    }
   }
 }
 

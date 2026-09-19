@@ -40,7 +40,8 @@ assert.match(glbSrc, /harborGlbMaterialToLambertCel/, 'GLB loader converts to La
 assert.match(glbSrc, /HARBOR_GLB_PUBLIC_ROOT/, 'public assets root')
 
 assert.match(scoutSrc, /harborGlbMaterialToLambertCel/, 'Scout GLB convert to Lambert + cel')
-assert.match(scoutSrc, /HARBOR_SCOUT_GLB_ENABLED = true/, 'standing Scout uses the authored GLB')
+assert.match(scoutSrc, /HARBOR_SCOUT_GLB_ENABLED = true/, 'Scout GLB gate stays on for canoe plant')
+assert.match(scoutSrc, /HARBOR_SCOUT_GLB_LAND = false/, 'land standing stays dress-up until skinned')
 
 assert.match(docSrc, /game-asset MCP/, 'foundation doc mentions game-asset MCP')
 assert.match(docSrc, /GLSL/, 'doc clarifies GLSL not HLSL for Three.js')
