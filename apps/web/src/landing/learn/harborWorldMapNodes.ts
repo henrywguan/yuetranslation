@@ -3,10 +3,17 @@
  * Positions are normalized 0–1 over the region chart (MapleStory-style dots).
  */
 import { HARBOR_CAMPAIGNS, HARBOR_LEVELS, levelCampaign, type HarborCampaignId } from './curriculum'
+import {
+  GUAN_FISHING_HUT,
+  fishingXpToLevel,
+  guanFishSpotsByLevel,
+  harborFishSpotMinLevel,
+  type HarborFishSpotId,
+} from './harborFishing'
 import type { HarborProgress } from './progressMerge'
 import { isLevelCleared, isLevelUnlocked } from './progressMerge'
 
-export type WorldMapNodeKind = 'chapter' | 'landmark'
+export type WorldMapNodeKind = 'chapter' | 'landmark' | 'fish-spot'
 
 export type WorldMapNode = {
   id: string
@@ -19,6 +26,11 @@ export type WorldMapNode = {
   /** For chapter nodes — first pier id to open. */
   levelId?: string
   campaign?: HarborCampaignId
+  /** Guan fish-spot teleport target (world xz). */
+  fishSpotId?: HarborFishSpotId | 'fishing-hut'
+  fishLevel?: number
+  worldX?: number
+  worldZ?: number
   /** Cleared / current / locked / landmark. */
   status: 'cleared' | 'current' | 'unlocked' | 'locked' | 'here' | 'landmark'
 }
@@ -91,21 +103,68 @@ export function voyageProgressSummary(progress: HarborProgress): { cleared: numb
   return { cleared, total }
 }
 
-/** Guan Harbor landmark nodes (not curriculum chapters). */
-export function guanLandmarkNodes(here: boolean): WorldMapNode[] {
-  const spots: { id: string; en: string; zh: string; x: number; y: number }[] = [
-    { id: 'guan-customs', en: 'Customs', zh: '關口', x: 0.22, y: 0.55 },
-    { id: 'guan-dock', en: 'Musa Dock', zh: '碼頭', x: 0.34, y: 0.68 },
-    { id: 'guan-loom', en: 'Cape Loom', zh: '海角織坊', x: 0.58, y: 0.32 },
-    { id: 'guan-fish', en: 'Fishing Lodge', zh: '釣魚屋', x: 0.72, y: 0.58 },
-    { id: 'guan-lagoon', en: 'Lagoon', zh: '潟湖', x: 0.78, y: 0.74 },
+/**
+ * Guan Harbor nodes — Fishing Lodge + cast spots ordered by fishing level (1 → 99 path).
+ * Selecting a fish-spot node teleports the canoe to that water.
+ */
+export function guanLandmarkNodes(
+  here: boolean,
+  opts?: { fishingXp?: number; nearSpotId?: string | null },
+): WorldMapNode[] {
+  const fishingLevel = fishingXpToLevel(opts?.fishingXp ?? 0)
+  const nearId = opts?.nearSpotId ?? null
+  const spots = guanFishSpotsByLevel()
+  // Lodge first (gear), then spots by bite-level band toward 99.
+  const entries: Array<{
+    id: string
+    fishSpotId: HarborFishSpotId | 'fishing-hut'
+    en: string
+    zh: string
+    level: number
+    x: number
+    z: number
+  }> = [
+    {
+      id: 'guan-fish-lodge',
+      fishSpotId: 'fishing-hut',
+      en: GUAN_FISHING_HUT.name.en,
+      zh: GUAN_FISHING_HUT.name.zh,
+      level: 1,
+      x: GUAN_FISHING_HUT.x,
+      z: GUAN_FISHING_HUT.z,
+    },
+    ...spots.map((s) => ({
+      id: s.id,
+      fishSpotId: s.id as HarborFishSpotId,
+      en: s.name.en,
+      zh: s.name.zh,
+      level: harborFishSpotMinLevel(s),
+      x: s.x,
+      z: s.z,
+    })),
   ]
-  return spots.map((s) => ({
-    id: s.id,
-    kind: 'landmark' as const,
-    title: { en: s.en, zh: s.zh },
-    x: s.x,
-    y: s.y,
-    status: here ? ('here' as const) : ('landmark' as const),
-  }))
+  const pts = pathPoints(entries.length, { x0: 0.14, x1: 0.88, y0: 0.18, y1: 0.84 })
+  return entries.map((s, i) => {
+    const unlocked = fishingLevel >= s.level
+    let status: WorldMapNode['status'] = 'locked'
+    if (nearId && (nearId === s.id || nearId === s.fishSpotId)) status = 'here'
+    else if (!unlocked) status = 'locked'
+    else if (here) status = 'unlocked'
+    else status = 'landmark'
+    return {
+      id: s.id,
+      kind: 'fish-spot' as const,
+      title: {
+        en: `Lv ${s.level} · ${s.en}`,
+        zh: `Lv ${s.level} · ${s.zh}`,
+      },
+      x: pts[i]!.x,
+      y: pts[i]!.y,
+      fishSpotId: s.fishSpotId,
+      fishLevel: s.level,
+      worldX: s.x,
+      worldZ: s.z,
+      status,
+    }
+  })
 }

@@ -217,6 +217,8 @@ export function LearnSession({
   const worldApiRef = useRef<HarborWorldHandle | null>(null)
   const presenceRef = useRef<HarborPresenceSession | null>(null)
   const nametagFrameRef = useRef(progressSnap.showoff?.look.nametag ?? 'tag-plain')
+  /** World-map fish-spot teleport — applied after Guan realm remount. */
+  const pendingGuanSnapRef = useRef<{ x: number; z: number } | null>(null)
   nametagFrameRef.current = progressSnap.showoff?.look.nametag ?? 'tag-plain'
   const playRootRef = useRef<HTMLDivElement | null>(null)
   const talkHudRef = useRef<HTMLDivElement | null>(null)
@@ -416,6 +418,7 @@ export function LearnSession({
     setCodexOpen(false)
     setTeleportOpen(false)
     setRealmOverride(null)
+    pendingGuanSnapRef.current = null
     // Only retarget BGM if beds are already unlocked/playing — never soft-start
     // from a non-gesture effect (iPhone silent forever).
     if (isHarborBgmPlaying()) startHarborBgm('river')
@@ -424,6 +427,16 @@ export function LearnSession({
     setScrollOpen(false)
     setBarberOpen(false)
   }, [levelId])
+
+  /** After Guan remount, apply pending fish-spot teleport from the world map. */
+  useEffect(() => {
+    if (realmOverride !== 'guan') return
+    const p = pendingGuanSnapRef.current
+    if (!p) return
+    pendingGuanSnapRef.current = null
+    const snap = () => worldApiRef.current?.snapToGuan(p.x, p.z)
+    requestAnimationFrame(() => requestAnimationFrame(snap))
+  }, [realmOverride])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -1094,9 +1107,11 @@ export function LearnSession({
         current={realmOverride === 'guan' ? 'guan' : 'voyage'}
         activeLevelId={levelId}
         progress={progressSnap}
+        fishingXp={progressSnap.fishing?.fishingXp ?? 0}
         onClose={() => setWorldMapOpen(false)}
         onTravel={(dest) => {
           playHarborTeleport()
+          pendingGuanSnapRef.current = null
           if (dest === 'guan') {
             setRealmOverride('guan')
             startHarborBgm('guan')
@@ -1108,8 +1123,24 @@ export function LearnSession({
           setVisitable(null)
           setTeleportOpen(false)
         }}
+        onTravelFishSpot={(spot) => {
+          playHarborTeleport()
+          pendingGuanSnapRef.current = { x: spot.x, z: spot.z }
+          const alreadyGuan = realmOverride === 'guan'
+          setRealmOverride('guan')
+          startHarborBgm('guan')
+          setWorldMapOpen(false)
+          setVisitable(null)
+          setTeleportOpen(false)
+          if (alreadyGuan) {
+            const p = pendingGuanSnapRef.current
+            pendingGuanSnapRef.current = null
+            if (p) worldApiRef.current?.snapToGuan(p.x, p.z)
+          }
+        }}
         onOpenChapter={(id) => {
           playHarborTeleport()
+          pendingGuanSnapRef.current = null
           setRealmOverride(null)
           startHarborBgm('river')
           setWorldMapOpen(false)

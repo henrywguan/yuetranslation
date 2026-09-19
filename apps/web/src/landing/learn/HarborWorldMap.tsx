@@ -28,6 +28,10 @@ type Props = {
   onTravel: (dest: HarborWorldMapDest) => void
   /** Open a campaign pier from a chapter dot (Learning voyage). */
   onOpenChapter?: (levelId: string) => void
+  /** Teleport canoe to a Guan fishing lodge / spot (world xz). */
+  onTravelFishSpot?: (spot: { id: string; x: number; z: number; level: number }) => void
+  /** Player fishing XP — gates Guan fish-spot dots. */
+  fishingXp?: number
 }
 
 type View = 'overview' | HarborWorldMapDest
@@ -41,6 +45,7 @@ function ContinentDetail({
   onBack,
   onTravel,
   onOpenChapter,
+  onTravelFishSpot,
 }: {
   dest: HarborWorldMapDest
   nodes: WorldMapNode[]
@@ -50,6 +55,7 @@ function ContinentDetail({
   onBack: () => void
   onTravel: (dest: HarborWorldMapDest) => void
   onOpenChapter?: (levelId: string) => void
+  onTravelFishSpot?: (spot: { id: string; x: number; z: number; level: number }) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [hoverId, setHoverId] = useState<string | null>(null)
@@ -182,12 +188,29 @@ function ContinentDetail({
                   onClick={() => {
                     if (n.kind === 'chapter' && n.levelId && n.status !== 'locked') {
                       onOpenChapter?.(n.levelId)
+                    } else if (
+                      n.kind === 'fish-spot' &&
+                      n.status !== 'locked' &&
+                      typeof n.worldX === 'number' &&
+                      typeof n.worldZ === 'number'
+                    ) {
+                      onTravelFishSpot?.({
+                        id: n.fishSpotId ?? n.id,
+                        x: n.worldX,
+                        z: n.worldZ,
+                        level: n.fishLevel ?? 1,
+                      })
                     } else if (n.kind === 'landmark') {
                       onTravel(dest)
                     }
                   }}
                 >
                   <span className="hq-worldmap-dot-core" />
+                  {typeof n.fishLevel === 'number' ? (
+                    <span className="hq-worldmap-dot-lv" aria-hidden>
+                      {n.fishLevel}
+                    </span>
+                  ) : null}
                 </button>
                 <span className="hq-worldmap-dot-label">
                   {n.title.en}
@@ -209,7 +232,7 @@ function ContinentDetail({
             }`
           : dest === 'voyage'
             ? 'Tap a chapter dot to sail that pier · 撳航點開章'
-            : 'Tap a landmark, or Begin navigation · 撳地標或開始航行'}
+            : 'Tap a Lv spot to teleport there · 撳釣級航點傳送'}
       </p>
     </div>
   )
@@ -223,6 +246,8 @@ export function HarborWorldMap({
   onClose,
   onTravel,
   onOpenChapter,
+  onTravelFishSpot,
+  fishingXp,
 }: Props) {
   const [view, setView] = useState<View>('overview')
   const [hover, setHover] = useState<HarborWorldMapDest | null>(null)
@@ -232,7 +257,13 @@ export function HarborWorldMap({
     () => voyageChapterNodes(progress, activeLevelId),
     [progress, activeLevelId],
   )
-  const guanNodes = useMemo(() => guanLandmarkNodes(current === 'guan'), [current])
+  const guanNodes = useMemo(
+    () =>
+      guanLandmarkNodes(current === 'guan', {
+        fishingXp: fishingXp ?? progress.fishing?.fishingXp ?? 0,
+      }),
+    [current, fishingXp, progress.fishing?.fishingXp],
+  )
   const voyageProg = useMemo(() => voyageProgressSummary(progress), [progress])
 
   useEffect(() => {
@@ -406,6 +437,7 @@ export function HarborWorldMap({
             onBack={() => setView('overview')}
             onTravel={onTravel}
             onOpenChapter={onOpenChapter}
+            onTravelFishSpot={onTravelFishSpot}
           />
         )}
       </div>
