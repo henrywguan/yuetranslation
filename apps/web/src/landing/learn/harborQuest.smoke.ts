@@ -83,6 +83,7 @@ import {
   HARBOR_TAP_MOVE_SPEED,
   HARBOR_LAND_EDGE,
   HARBOR_WALK_SPEED,
+  harborWalkStep,
   HARBOR_REBOARD_RADIUS,
   isHarborLand,
   HARBOR_TAP_ARRIVE,
@@ -1396,6 +1397,20 @@ function main() {
   assert.match(worldSrc2, /function chineseFringeFlower/, 'Chinese fringe flower mesh builder')
   assert.ok(HARBOR_LAND_EDGE > 3, 'land edge sits outside the river channel')
   assert.ok(HARBOR_WALK_SPEED > 2, 'on-foot walk speed')
+  assert.match(worldSrc2, /harborWalkStep|HARBOR_WALK_ARRIVE_SLOW/, 'MMO walk eases into arrival')
+  assert.doesNotMatch(worldSrc2, /walkBob\s*=/, 'no vertical walkBob hop on foot')
+  assert.ok(harborWalkStep(2, 1 / 60) > 0, 'walk step advances mid-path')
+  assert.ok(harborWalkStep(0.2, 1 / 60) < harborWalkStep(2, 1 / 60), 'walk eases near destination')
+  assert.match(
+    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+    /HARBOR_WALK_CADENCE|feet planted/,
+    'walk anim docs lock grounded MMO locomotion',
+  )
+  assert.doesNotMatch(
+    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+    /Math\.abs\(\s*Math\.sin/,
+    'walk anim has no abs-sin hip bounce',
+  )
   assert.ok(HARBOR_REBOARD_RADIUS > 1, 'reboard radius')
   assert.equal(isHarborLand(HARBOR_LAND_EDGE), true, 'bank is land')
   assert.equal(isHarborLand(0), false, 'river center is not land')
