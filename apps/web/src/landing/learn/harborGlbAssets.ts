@@ -10,7 +10,7 @@
  */
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { applyHarborCelToObject, HARBOR_CEL_SHADE_ENABLED } from './harborCelMaterial'
+import { harborGlbMaterialToLambertCel } from './harborProtagonistGlb'
 
 /** Public URL root for Harbor Quest binary assets. */
 export const HARBOR_GLB_PUBLIC_ROOT = '/assets/harbor-quest'
@@ -57,10 +57,8 @@ function normalizeGlb(root: THREE.Object3D, opts: HarborGlbLoadOpts): THREE.Grou
     m.castShadow = false
     m.receiveShadow = false
     m.userData.harborGlbMesh = true
+    if (opts.celShade !== false) m.material = harborGlbMaterialToLambertCel(m.material)
   })
-
-  const useCel = opts.celShade ?? HARBOR_CEL_SHADE_ENABLED
-  if (useCel) applyHarborCelToObject(wrap, true)
 
   return wrap
 }

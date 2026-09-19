@@ -35,6 +35,7 @@ import {
   HARBOR_FIGURE_HEAD_R,
   HARBOR_FIGURE_PROPORTIONS,
 } from './harborFigure'
+import { attachHarborScoutGlb, HARBOR_SCOUT_GLB_ENABLED } from './harborProtagonistGlb'
 
 /** Stable id for smokes / future kitbash slots. */
 export const HARBOR_PROTAGONIST_ID = 'river-scout' as const
@@ -414,7 +415,8 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
     'topAccent',
   )
   g.add(collar)
-  const sash = new THREE.Mesh(new THREE.BoxGeometry(hip, 0.05, depth + 0.012), jade)
+  const sash = new THREE.Mesh(new THREE.TorusGeometry(hip * 0.48, 0.016, 8, 20), jade)
+  sash.rotation.x = Math.PI / 2
   sash.position.y = pelvisY + 0.04
   g.add(sash)
   const pendant = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), chop)
@@ -476,11 +478,13 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(socket('hip_l', -0.22, pelvisY + 0.02, 0.08))
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
-  // Standing voyage uses the dress-up figure kit (not the Meshy GLB).
+  // Standing voyage attaches the authored character GLB (Lambert + cel).
   // Barber / create / profile pass skipScoutGlb so previews stay procedural.
-  // Never attach — GLB + cel hid the body on iPhone.
   g.userData.usesScoutGlb = false
   g.userData.skipScoutGlb = Boolean(opts.skipScoutGlb)
+  if (pose === 'standing' && !opts.skipScoutGlb && HARBOR_SCOUT_GLB_ENABLED) {
+    void attachHarborScoutGlb(g, gender)
+  }
 
   return g
 }

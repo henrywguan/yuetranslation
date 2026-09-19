@@ -7,7 +7,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { HarborGender } from './harborAppearance'
-import { applyHarborCelToObject, HARBOR_CEL_SHADE_ENABLED } from './harborCelMaterial'
+import { applyHarborCel } from './harborCelShader'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
 
 export const HARBOR_SCOUT_GLB_SRC = {
@@ -16,10 +16,11 @@ export const HARBOR_SCOUT_GLB_SRC = {
 } as const
 
 /**
- * Gate: off until standing GLB is proven visible in-scene.
- * When false, attach/preload are no-ops and procedural body stays shown.
+ * Standing Scout uses the authored character GLB (textured mesh, not stacked
+ * primitives). Materials are converted to Lambert + harborCel — MeshStandard /
+ * MeshToon cel still fails to compile on iOS Safari and hid the body.
  */
-export const HARBOR_SCOUT_GLB_ENABLED = false
+export const HARBOR_SCOUT_GLB_ENABLED = true
 
 /** Target standing height (feet → crown) matching procedural fashion kit. */
 export const HARBOR_SCOUT_GLB_TARGET_H = HARBOR_FIGURE_PROPORTIONS.standingH
@@ -86,17 +87,39 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
     m.receiveShadow = false
     m.frustumCulled = false
     m.userData.scoutGlbMesh = true
-    const mat = m.material as THREE.Material | THREE.Material[]
-    const mats = Array.isArray(mat) ? mat : [mat]
-    for (const mm of mats) {
-      if ('flatShading' in mm) (mm as THREE.MeshStandardMaterial).flatShading = false
-      mm.needsUpdate = true
-    }
+    m.material = harborGlbMaterialToLambertCel(m.material)
   })
 
   if (!isValidNormalizedScoutGlb(wrap)) return null
-  if (HARBOR_CEL_SHADE_ENABLED) applyHarborCelToObject(wrap, true)
   return wrap
+}
+
+/**
+ * iOS-safe GLB materials: copy albedo onto MeshLambert, then Harbor cel.
+ * Never leave MeshStandard / MeshToon + cel on imported characters.
+ */
+export function harborGlbMaterialToLambertCel(
+  material: THREE.Material | THREE.Material[],
+): THREE.Material | THREE.Material[] {
+  const convert = (src: THREE.Material): THREE.Material => {
+    if (src.userData.harborCelApplied && src instanceof THREE.MeshLambertMaterial) return src
+    const color =
+      'color' in src && src.color instanceof THREE.Color ? src.color.getHex() : 0xffffff
+    const map = 'map' in src && src.map instanceof THREE.Texture ? src.map : null
+    const lambert = new THREE.MeshLambertMaterial({
+      color,
+      map,
+      flatShading: false,
+      transparent: src.transparent,
+      opacity: src.opacity,
+      side: src.side,
+      alphaTest: src.alphaTest,
+    })
+    lambert.name = src.name || 'harbor-glb-lambert'
+    lambert.userData = { ...src.userData }
+    return applyHarborCel(lambert, { preset: 'character' })
+  }
+  return Array.isArray(material) ? material.map(convert) : convert(material)
 }
 
 async function fetchScoutGlb(gender: HarborGender): Promise<THREE.Group | null> {

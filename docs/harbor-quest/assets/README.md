@@ -95,8 +95,9 @@ Henry opened full creative audio control for Harbor Quest. These beds/cues are *
 
 | File | Role |
 |---|---|
-| [`scout-female.glb`](./scout-female.glb) | Meshy image→3D from female A-pose — textured, PBR, humanoid-rigged |
-| [`scout-male.glb`](./scout-male.glb) | Meshy image→3D from male A-pose — textured, PBR, humanoid-rigged |
+| [`scout-female.glb`](./scout-female.glb) | Meshy v7 image→3D from female A-pose — textured albedo, Lambert+cel at runtime |
+| [`scout-male.glb`](./scout-male.glb) | Meshy v7 image→3D from anime male A-pose v2 — textured albedo, Lambert+cel at runtime |
+| [`scout-male-a-pose-v2.png`](./scout-male-a-pose-v2.png) | Anime male A-pose used for the v2 male GLB |
 
 Wire via `harborProtagonistGlb.ts` (standing Scout). Seated canoe stays procedural. Unique wardrobe silhouettes temporarily fall back to the procedural body.
 
