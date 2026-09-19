@@ -1,7 +1,7 @@
 /**
  * Harbor Quest · wuxia world-map diorama (Learning voyage ↔ Guan Harbor).
  *
- * Procedural two-continent relief with the painted Harbor World parchment as a
+ * Procedural two-continent relief with the painted Harbor Quest parchment as a
  * floating backdrop. Hover / tap either continent for jade or gold glow.
  */
 import * as THREE from 'three'

@@ -131,7 +131,7 @@ function ContinentDetail({
     <div className={`hq-worldmap-detail hq-worldmap-detail--${dest}`}>
       <div className="hq-worldmap-detail-toolbar">
         <button type="button" className="hq-book-back" onClick={onBack}>
-          ← Harbor World
+          ← Harbor Quest
         </button>
         <div className="hq-worldmap-detail-titles">
           <h3 className="hq-worldmap-detail-title">{title.en}</h3>
@@ -342,15 +342,15 @@ export function HarborWorldMap({
   }
 
   return (
-    <div className="hq-worldmap" role="dialog" aria-label="Harbor world map" aria-modal="true">
+    <div className="hq-worldmap" role="dialog" aria-label="Harbor Quest world map" aria-modal="true">
       <div className="hq-worldmap-veil" onClick={onClose} aria-hidden />
       <div className="hq-worldmap-sheet">
         <header className="hq-worldmap-head">
           <div>
             <p className="hq-worldmap-kicker">World map · 世界地圖</p>
-            <h2 className="hq-worldmap-title">Harbor World</h2>
+            <h2 className="hq-worldmap-title">Harbor Quest</h2>
             <p className="hq-worldmap-sub" lang="zh-HK">
-              港灣世界 · wuxia voyage chart
+              Harbor Quest · wuxia voyage chart
             </p>
           </div>
           <button type="button" className="hq-btn hq-btn--ghost" onClick={onClose}>
@@ -376,7 +376,7 @@ export function HarborWorldMap({
               {!ready && !loadErr ? <p className="hq-worldmap-loading">Charting seas…</p> : null}
               {loadErr ? (
                 <div className="hq-worldmap-fallback">
-                  <img src={HARBOR_WORLD_MAP_ART} alt="Harbor World map" />
+                  <img src={HARBOR_WORLD_MAP_ART} alt="Harbor Quest world map" />
                   <button
                     type="button"
                     className={`hq-worldmap-hotspot hq-worldmap-hotspot--voyage${hover === 'voyage' ? ' is-glow' : ''}`}

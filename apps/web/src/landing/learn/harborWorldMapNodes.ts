@@ -1,5 +1,5 @@
 /**
- * Harbor World map · chapter / landmark nodes for continent drill-down.
+ * Harbor Quest map · chapter / landmark nodes for continent drill-down.
  * Positions are normalized 0–1 over the region chart (MapleStory-style dots).
  */
 import { HARBOR_CAMPAIGNS, HARBOR_LEVELS, levelCampaign, type HarborCampaignId } from './curriculum'
