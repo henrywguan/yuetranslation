@@ -6887,6 +6887,18 @@
   border-color: #5a4a30;
   max-height: min(88dvh, 48rem);
   overflow: hidden;
+  transition: max-height 0.35s ease, box-shadow 0.35s ease;
+}
+.hq-visit-panel--fish.is-casting-focus {
+  max-height: min(34dvh, 16rem);
+  box-shadow: 0 -8px 28px color-mix(in srgb, #0a1c22 55%, transparent);
+}
+.hq-visit-panel--fish.is-casting-focus .hq-fish-spot-blurb,
+.hq-visit-panel--fish.is-casting-focus .hq-fish-tabs,
+.hq-visit-panel--fish.is-casting-focus .hq-fish-xp-line,
+.hq-visit-panel--fish.is-casting-focus .hq-fish-req--gear,
+.hq-visit-panel--fish.is-casting-focus .hq-fish-req--bites {
+  display: none;
 }
 .hq-visit-panel--fish.hq-shop-shelf {
   background:
@@ -7006,7 +7018,82 @@
   font-size: 0.78rem;
 }
 .hq-fish-cast-btn.is-casting {
-  opacity: 0.75;
+  opacity: 0.85;
+  letter-spacing: 0.08em;
+}
+.hq-fish-cast-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 0.2rem;
+  min-height: 4.5rem;
+  margin: 0.15rem 0 0.35rem;
+  padding: 0.65rem 0.75rem 0.75rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, #3dcfb6 35%, transparent);
+  background:
+    radial-gradient(ellipse at 50% 70%, color-mix(in srgb, #3dcfb6 22%, transparent), transparent 65%),
+    color-mix(in srgb, #0a1c22 88%, #123038);
+  overflow: hidden;
+}
+.hq-fish-cast-ripples {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hq-fish-cast-ripples span {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: -0.6rem 0 0 -0.6rem;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, #7ef0dc 70%, transparent);
+  opacity: 0;
+  animation: hq-fish-cast-ripple 1.6s ease-out infinite;
+}
+.hq-fish-cast-ripples span:nth-child(2) {
+  animation-delay: 0.45s;
+}
+.hq-fish-cast-ripples span:nth-child(3) {
+  animation-delay: 0.9s;
+}
+@keyframes hq-fish-cast-ripple {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+.hq-fish-cast-stage-label {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font: 700 0.95rem/1.2 Syne, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  color: #ffe14a;
+  text-shadow: 0 0 10px color-mix(in srgb, #f0d060 45%, transparent);
+}
+.hq-fish-cast-stage-hint {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font: 500 0.62rem/1.3 "Noto Sans", system-ui, sans-serif;
+  color: #7ef0dc;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hq-fish-cast-ripples span {
+    animation: none;
+    opacity: 0.35;
+    transform: scale(1.4);
+  }
+  .hq-visit-panel--fish {
+    transition: none;
+  }
 }
 .hq-fish-tile-grid {
   display: grid;

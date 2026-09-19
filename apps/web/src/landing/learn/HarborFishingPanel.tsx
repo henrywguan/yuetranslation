@@ -28,9 +28,14 @@ import {
   playHarborFishCast,
   playHarborFishCatch,
   playHarborFishMiss,
+  playHarborFishNibble,
   playHarborFishSplash,
 } from './harborFishingSfx'
-import { HARBOR_FISH_CAST_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAnim'
+import {
+  HARBOR_FISH_CAST_MS,
+  HARBOR_FISH_CATCH_MS,
+  HARBOR_FISH_RESOLVE_MS,
+} from './harborFishingAnim'
 import { playHarborVo } from './harborVo'
 import { playHarborUiClick } from './harborInteractSfx'
 
@@ -197,6 +202,7 @@ export function HarborFishingPanel({
   const [tab, setTab] = useState<'cast' | 'gear' | 'log' | 'sell'>(mode === 'spot' ? 'cast' : 'gear')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [castPhase, setCastPhase] = useState<'idle' | 'cast' | 'wait' | 'result'>('idle')
   const [tipId, setTipId] = useState<string | null>(null)
   const [qty, setQty] = useState<HarborShopQty>(1)
 
@@ -208,6 +214,7 @@ export function HarborFishingPanel({
     setTab(mode === 'spot' ? 'cast' : 'gear')
     setMsg(null)
     setTipId(null)
+    setCastPhase('idle')
   }, [mode, spotId])
 
   useEffect(() => {
@@ -295,12 +302,20 @@ export function HarborFishingPanel({
   const cast = () => {
     if (!spotId || busy || casting) return
     setBusy(true)
+    setCastPhase('cast')
+    setMsg(null)
     playHarborFishCast()
     onCastAnim?.()
-    // Splash as the bobber lands, then resolve the bite after wait
-    window.setTimeout(() => playHarborFishSplash(), HARBOR_FISH_CAST_MS)
+    // Splash as the bobber lands, nibbles while waiting, then resolve
+    window.setTimeout(() => {
+      playHarborFishSplash()
+      setCastPhase('wait')
+    }, HARBOR_FISH_CAST_MS)
+    window.setTimeout(() => playHarborFishNibble(), HARBOR_FISH_CAST_MS + 380)
+    window.setTimeout(() => playHarborFishNibble(), HARBOR_FISH_CAST_MS + 720)
     window.setTimeout(() => {
       const result = attemptHarborFishCast(bag, spotId)
+      setCastPhase('result')
       if (result.ok) {
         playHarborFishCatch()
         playHarborVo('niceCatch')
@@ -314,8 +329,11 @@ export function HarborFishingPanel({
         setMsg(result.message)
       }
       setBusy(false)
+      window.setTimeout(() => setCastPhase('idle'), HARBOR_FISH_CATCH_MS)
     }, HARBOR_FISH_RESOLVE_MS)
   }
+
+  const castingFocus = busy || casting || castPhase !== 'idle'
 
   const tabs =
     mode === 'spot'
@@ -325,9 +343,10 @@ export function HarborFishingPanel({
   return (
     <aside
       ref={rootRef}
-      className="hq-visit-panel hq-visit-panel--shop hq-shop-shelf hq-shop-shelf--bank-chrome hq-visit-panel--fish"
+      className={`hq-visit-panel hq-visit-panel--shop hq-shop-shelf hq-shop-shelf--bank-chrome hq-visit-panel--fish${castingFocus ? ' is-casting-focus' : ''}`}
       role="dialog"
       aria-label="Guan fishing"
+      aria-busy={castingFocus || undefined}
     >
       <header className="hq-shop-head hq-shop-head--bank">
         <p className="hq-shop-capacity" title={`Fishing Lv ${level}`}>
@@ -382,8 +401,27 @@ export function HarborFishingPanel({
       </div>
 
       {tab === 'cast' && spot ? (
-        <div className="hq-fish-cast">
-          <div className="hq-fish-req" aria-label="Gear required for this spot">
+        <div className={`hq-fish-cast${castingFocus ? ' is-casting' : ''}`}>
+          {castingFocus ? (
+            <div className="hq-fish-cast-stage" aria-live="polite">
+              <div className="hq-fish-cast-ripples" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <p className="hq-fish-cast-stage-label">
+                {castPhase === 'cast'
+                  ? 'Casting…'
+                  : castPhase === 'wait'
+                    ? 'Waiting for a bite…'
+                    : castPhase === 'result'
+                      ? 'Reeling in…'
+                      : 'Fishing…'}
+              </p>
+              <p className="hq-fish-cast-stage-hint">Watch the sailor on the shore</p>
+            </div>
+          ) : null}
+          <div className="hq-fish-req hq-fish-req--gear" aria-label="Gear required for this spot">
             <p className="hq-fish-req-label">Required</p>
             <p className="hq-fish-req-hint">
               {spot.methods.map((m) => HARBOR_FISH_METHOD_LABEL[m]).join(' · ')}
@@ -469,7 +507,7 @@ export function HarborFishingPanel({
             </div>
           </div>
 
-          <div className="hq-fish-req" aria-label="Fish that bite here">
+          <div className="hq-fish-req hq-fish-req--bites" aria-label="Fish that bite here">
             <p className="hq-fish-req-label">Bites here</p>
             <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Bites here">
               {biteFish.map((f, i) => {
@@ -500,11 +538,17 @@ export function HarborFishingPanel({
 
           <button
             type="button"
-            className={`hq-shop-action-btn hq-fish-cast-btn${busy || casting ? ' is-casting' : ''}`}
+            className={`hq-shop-action-btn hq-fish-cast-btn${castingFocus ? ' is-casting' : ''}`}
             disabled={busy || casting}
             onClick={cast}
           >
-            {busy || casting ? 'Fishing…' : 'Cast'}
+            {castingFocus
+              ? castPhase === 'wait'
+                ? 'Waiting…'
+                : castPhase === 'result'
+                  ? 'Reel…'
+                  : 'Casting…'
+              : 'Cast'}
           </button>
         </div>
       ) : null}

@@ -2,11 +2,11 @@
  * Harbor Quest · fishing cast / splash / catch cues.
  * Splash prefers cinematic water sample; catch layers coin reward chime.
  */
-import { ensureSharedAudioContext } from '../../lib/audioReactive'
+import { ensureSharedAudioContext, resumeSharedAudioContext } from '../../lib/audioReactive'
 import { playHarborCoinChing, preloadHarborCoinSfx } from './harborCoinSfx'
 import { playHarborSample, preloadHarborSamples } from './harborSampleAudio'
 
-const GAIN = 0.22
+const GAIN = 0.28
 
 export const HARBOR_FISH_SPLASH_SAMPLE = '/assets/harbor-quest/sfx-water-splash.mp3'
 
@@ -63,38 +63,59 @@ function noiseBurst(ctx: AudioContext, dest: AudioNode, t: number, dur: number, 
   src.stop(t + dur + 0.02)
 }
 
+/** Unlock audio on the Cast tap, then play sync in the gesture. */
+function withFishAudio(play: () => void): void {
+  if (typeof window === 'undefined') return
+  void resumeSharedAudioContext().catch(() => undefined)
+  play()
+}
+
 /** Cast line / swing net. */
 export function playHarborFishCast(): void {
-  if (typeof window === 'undefined') return
-  const { ctx, bus, t0 } = busAt(0.2)
-  tone(ctx, bus, t0, { type: 'triangle', f0: 420, f1: 180, dur: 0.22, gain: 0.35 })
-  noiseBurst(ctx, bus, t0 + 0.05, 0.12, 900, 0.25)
+  withFishAudio(() => {
+    const { ctx, bus, t0 } = busAt(0.32)
+    tone(ctx, bus, t0, { type: 'triangle', f0: 480, f1: 160, dur: 0.28, gain: 0.42 })
+    tone(ctx, bus, t0 + 0.04, { type: 'sine', f0: 320, f1: 140, dur: 0.2, gain: 0.2 })
+    noiseBurst(ctx, bus, t0 + 0.04, 0.16, 800, 0.32)
+  })
 }
 
 /** Water splash / bite. */
 export function playHarborFishSplash(): void {
-  if (typeof window === 'undefined') return
-  playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.7, channel: 'harbor-splash' })
-  const { ctx, bus, t0 } = busAt(0.14)
-  noiseBurst(ctx, bus, t0, 0.18, 400, 0.3)
-  tone(ctx, bus, t0 + 0.02, { type: 'sine', f0: 220, f1: 90, dur: 0.2, gain: 0.18 })
+  withFishAudio(() => {
+    playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.85, channel: 'harbor-splash' })
+    const { ctx, bus, t0 } = busAt(0.22)
+    noiseBurst(ctx, bus, t0, 0.22, 350, 0.38)
+    tone(ctx, bus, t0 + 0.02, { type: 'sine', f0: 240, f1: 80, dur: 0.24, gain: 0.22 })
+  })
+}
+
+/** Soft nibble while the bobber waits. */
+export function playHarborFishNibble(): void {
+  withFishAudio(() => {
+    const { ctx, bus, t0 } = busAt(0.14)
+    tone(ctx, bus, t0, { type: 'sine', f0: 380, f1: 220, dur: 0.09, gain: 0.2 })
+    noiseBurst(ctx, bus, t0 + 0.02, 0.06, 1200, 0.12)
+  })
 }
 
 /** Successful catch chime + ferry-coin reward bling. */
 export function playHarborFishCatch(): void {
-  if (typeof window === 'undefined') return
-  playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.4, channel: 'harbor-splash' })
-  const { ctx, bus, t0 } = busAt(0.26)
-  tone(ctx, bus, t0, { type: 'sine', f0: 660, dur: 0.18, gain: 0.32 })
-  tone(ctx, bus, t0 + 0.08, { type: 'sine', f0: 990, dur: 0.22, gain: 0.22 })
-  tone(ctx, bus, t0 + 0.16, { type: 'triangle', f0: 1320, dur: 0.28, gain: 0.16 })
-  // Reward layer — soft RPG coin pickup
-  window.setTimeout(() => playHarborCoinChing(), 90)
+  withFishAudio(() => {
+    playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.5, channel: 'harbor-splash' })
+    const { ctx, bus, t0 } = busAt(0.34)
+    tone(ctx, bus, t0, { type: 'sine', f0: 660, dur: 0.2, gain: 0.38 })
+    tone(ctx, bus, t0 + 0.08, { type: 'sine', f0: 990, dur: 0.24, gain: 0.28 })
+    tone(ctx, bus, t0 + 0.16, { type: 'triangle', f0: 1320, dur: 0.32, gain: 0.2 })
+    window.setTimeout(() => playHarborCoinChing(), 90)
+  })
 }
 
 /** Empty bite / fail. */
 export function playHarborFishMiss(): void {
-  if (typeof window === 'undefined') return
-  const { ctx, bus, t0 } = busAt(0.16)
-  tone(ctx, bus, t0, { type: 'triangle', f0: 180, f1: 90, dur: 0.25, gain: 0.22 })
+  withFishAudio(() => {
+    const { ctx, bus, t0 } = busAt(0.22)
+    tone(ctx, bus, t0, { type: 'triangle', f0: 200, f1: 70, dur: 0.32, gain: 0.3 })
+    noiseBurst(ctx, bus, t0 + 0.05, 0.14, 500, 0.18)
+  })
 }

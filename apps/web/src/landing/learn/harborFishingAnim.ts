@@ -15,10 +15,10 @@ export type HarborFishAnimState = {
   faceYaw: number
 }
 
-export const HARBOR_FISH_CAST_MS = 550
-export const HARBOR_FISH_WAIT_MS = 700
-export const HARBOR_FISH_CATCH_MS = 900
-export const HARBOR_FISH_MISS_MS = 550
+export const HARBOR_FISH_CAST_MS = 650
+export const HARBOR_FISH_WAIT_MS = 1100
+export const HARBOR_FISH_CATCH_MS = 1100
+export const HARBOR_FISH_MISS_MS = 700
 
 /** Full panel cast window: wind-up → splash → bite resolve. */
 export const HARBOR_FISH_RESOLVE_MS = HARBOR_FISH_CAST_MS + HARBOR_FISH_WAIT_MS

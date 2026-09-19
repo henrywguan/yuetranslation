@@ -70,6 +70,7 @@ import {
 import { fishingSpotBuoy } from './harborGuanFishingRealm'
 import {
   HARBOR_FISH_CAST_MS,
+  HARBOR_FISH_WAIT_MS,
   createHarborFishingPropKit,
   disposeHarborFishingPropKit,
   startHarborFishCast,
@@ -4652,13 +4653,21 @@ export function createHarborWorld(
     }
     const faceYaw = Math.atan2(fishWaterTarget.x - px, fishWaterTarget.z - pz)
     fishAnim = startHarborFishCast(faceYaw)
-    fishingCastUntil = performance.now() + HARBOR_FISH_CAST_MS + 200
+    fishingCastUntil = performance.now() + HARBOR_FISH_CAST_MS + HARBOR_FISH_WAIT_MS + 400
+    // Keep the walking scout visible so rod / bobber aren't casting into thin air
     if (travelMode === 'foot') {
       exitSit()
       sitTarget = null
       moveTarget.x = footX
       moveTarget.z = footZ
+      scoutWalk.visible = true
+      if (scoutSit) scoutSit.visible = false
     }
+    // Aim orbit toward the splash so the cast reads past the docked panel
+    const toSplash = Math.atan2(fishWaterTarget.x - px, fishWaterTarget.z - pz)
+    yawTarget = toSplash + Math.PI
+    pitchTarget = clampOrbitPitch(0.42)
+    distanceTarget = clampOrbitDistance(Math.min(distanceTarget, 7.2))
   }
 
   const clearSpeechBubble = (sprite: THREE.Sprite | null, parent?: THREE.Object3D | null) => {
@@ -5415,9 +5424,16 @@ export function createHarborWorld(
     distance += (distanceTarget - distance) * orbitLerp
 
     const footGy = travelMode === 'foot' ? groundYAt(footX, footZ) : 0
-    const lookX = travelMode === 'foot' ? footX : boat.position.x
-    const lookY = travelMode === 'foot' ? footGy + (sitting ? 0.95 : 1.15) : 0.75
-    const lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
+    let lookX = travelMode === 'foot' ? footX : boat.position.x
+    let lookY = travelMode === 'foot' ? footGy + (sitting ? 0.95 : 1.15) : 0.75
+    let lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
+    // During a cast, bias the look-at toward the splash so rod + bobber stay in frame
+    if (fishAnim.phase !== 'idle') {
+      const blend = fishAnim.phase === 'cast' ? 0.72 : 0.55
+      lookX = lookX * (1 - blend) + fishWaterTarget.x * blend
+      lookY = lookY * (1 - blend) + (fishWaterTarget.y + 0.55) * blend
+      lookZ = lookZ * (1 - blend) + fishWaterTarget.z * blend
+    }
     const off = orbitCameraOffset(yaw, pitch, distance)
     // Boat gets a soft water bob; on-foot camera stays stable (no hop / sway).
     const bobY =
