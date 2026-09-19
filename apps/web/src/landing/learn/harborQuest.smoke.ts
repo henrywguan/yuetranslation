@@ -643,7 +643,7 @@ function main() {
   assert.equal(HARBOR_LANDMARK_HOST_GENDER.bank, 'male', 'Jin Banker')
   assert.equal(HARBOR_LANDMARK_HOST_GENDER.arena, 'male', 'Arena Master')
   assert.match(HARBOR_LANDMARK_HOST_LABEL.outfitter, /Mei Lin/, 'named Outfitter')
-  assert.match(worldSrc, /characterStyle = 'anime-dressup'/, 'NPC anime dress-up style')
+  assert.match(worldSrc, /characterStyle = 'anime-dressup-glb'/, 'NPC plants anime Scout GLB')
   assert.match(worldSrc, /harborFigureLegStanding/, 'NPC fashion legs')
   assert.doesNotMatch(worldSrc, /RS-era proportions \(oversized potato/, 'NPC potato comment removed')
 
@@ -806,7 +806,7 @@ function main() {
   }
   const standing = buildHarborProtagonist({ pose: 'standing' })
   assert.ok(countProtagonistMeshes(standing) >= meshes, 'standing has at least seated complexity')
-  assert.equal(standing.userData.usesScoutGlb, false, 'standing scout keeps the dress-up figure visible')
+  assert.equal(standing.userData.usesScoutGlb, false, 'Scout GLB attach is async — starts dress-up until mesh lands')
   {
     const pelvisY = standing.userData.pelvisY as number
     const headY = standing.userData.headY as number
@@ -1398,6 +1398,8 @@ function main() {
   assert.match(worldSrc2, /enrichBoatHull/, 'boat hulls get mid/high trim')
   assert.match(worldSrc2, /tickVipGearAnims/, 'world ticks VIP anims')
   assert.match(worldSrc2, /attachVipBoatOrnaments/, 'VIP boats get animated ornaments')
+  assert.match(worldSrc2, /mountHarborCanoeHull/, 'player hull uses authored canoe GLB + SKU tint')
+  assert.match(worldSrc2, /mountHarborPaperLantern/, 'gunwale lanterns tint the authored paper lantern')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'save-shack'/, 'Save Shack host NPC')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'outfitter'/, 'Outfitter landlady host')
   assert.match(worldSrc2, /attachLandmarkHost\(g, 'bank'/, 'Banker host NPC')
@@ -1696,8 +1698,8 @@ assert.match(
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-  /HARBOR_SCOUT_GLB_LAND = false/,
-  'land standing stays dress-up until skinned GLBs',
+  /HARBOR_SCOUT_GLB_LAND = true/,
+  'land standing plants anime Scout GLB',
 )
 assert.match(
   readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
@@ -1721,8 +1723,18 @@ assert.doesNotMatch(
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /HARBOR_SCOUT_GLB_LAND = false/,
-    'land cast does not attach static T-pose Scout GLB',
+    /HARBOR_SCOUT_GLB_LAND = true/,
+    'land cast plants anime Scout GLB with sway walk',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+    /tickScoutGlbLocomotion|scout-glb/,
+    'Scout GLB walk uses sway/bob locomotion',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /travelMode === 'foot' \? footZ : boat\.position\.z/,
+    'orbit look target is centered on the player (no Z bias)',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
@@ -1734,15 +1746,20 @@ assert.doesNotMatch(
     /harborGlbMaterialToLambertCel|MeshLambertMaterial/,
     'Scout GLB converts to Lambert + cel (iOS-visible)',
   )
-  assert.match(
-    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /skipScoutGlb/,
-    'protagonist opts can skip Scout GLB for Barber preview',
-  )
-  assert.match(
+  assert.doesNotMatch(
     readFileSync(new URL('./HarborCharacterCreate.tsx', import.meta.url), 'utf8'),
     /skipScoutGlb:\s*true/,
-    'Barber / character-create preview keeps procedural Scout',
+    'Barber / character-create preview plants anime Scout GLB',
+  )
+  assert.doesNotMatch(
+    readFileSync(new URL('./HarborPlayerProfileModal.tsx', import.meta.url), 'utf8'),
+    /skipScoutGlb:\s*true/,
+    'profile preview plants anime Scout GLB',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /hideGlbRedundantClothing|never fall back to dress-up/,
+    'wardrobe keeps anime GLB (no dress-up swap-back)',
   )
   assert.match(
     readFileSync(new URL('./harborCelMaterial.ts', import.meta.url), 'utf8'),
@@ -2048,6 +2065,8 @@ assert.doesNotMatch(
   assert.match(presenceSrc, /broadcastPose/, 'high-frequency pose broadcast')
   const remotesSrc = readFileSync(new URL('./harborRemoteAvatars.ts', import.meta.url), 'utf8')
   assert.match(remotesSrc, /export function buildRemoteSailor/, 'remote sailor mesh builder')
+  assert.match(remotesSrc, /mountHarborCanoeHull/, 'remote boats use authored canoe GLB')
+  assert.doesNotMatch(remotesSrc, /function simpleCanoe|BoxGeometry\(0\.55/, 'remote boats no longer use box hulls')
   assert.match(remotesSrc, /export function remoteUserIdFromHits/, 'remote pick helper')
   assert.match(remotesSrc, /buildNametagSprite/, 'local nametag sprite helper')
   assert.match(remotesSrc, /setRemoteSailorPoseTarget/, 'remote pose lerp target')

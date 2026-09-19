@@ -174,7 +174,6 @@ export function HarborCharacterCreate({
       gender: previewState.current.gender,
       appearance: previewState.current.appearance,
       bareHead: !previewState.current.hatOn,
-      skipScoutGlb: true,
     })
     applyLookToProtagonist(scout, previewState.current.look)
     scene.add(scout)
@@ -207,7 +206,6 @@ export function HarborCharacterCreate({
         gender: previewState.current.gender,
         appearance: previewState.current.appearance,
         bareHead: !previewState.current.hatOn,
-        skipScoutGlb: true,
       })
       applyLookToProtagonist(scout, previewState.current.look)
       scene.add(scout)

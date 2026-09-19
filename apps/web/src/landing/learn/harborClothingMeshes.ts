@@ -85,6 +85,7 @@ export function buildClothingMesh(
           : slot === 'shoes'
             ? buildShoes(family, opts)
             : null
+  if (built) built.userData.harborClothSlot = slot
   return built
 }
 

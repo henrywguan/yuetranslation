@@ -98,7 +98,7 @@ export function HarborPlayerProfileModal({
     floor.position.y = 0.01
     scene.add(floor)
 
-    const scout = buildHarborProtagonist({ pose: 'standing', skipScoutGlb: true })
+    const scout = buildHarborProtagonist({ pose: 'standing' })
     applyLookToProtagonist(scout, look)
     scout.position.y = 0
     scene.add(scout)

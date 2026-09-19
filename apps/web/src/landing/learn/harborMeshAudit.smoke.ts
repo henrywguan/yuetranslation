@@ -62,7 +62,7 @@ function main() {
     if ((o as THREE.Mesh).isMesh && o.userData.harborMeshAudited === 'character') scoutAudited += 1
   })
   assert.equal(scoutAudited, 0, 'scout figure is not welded/simplified')
-  assert.equal(scout.userData.usesScoutGlb, false, 'voyage scout is the dress-up figure, not the Meshy GLB')
+  assert.equal(scout.userData.usesScoutGlb, false, 'Scout GLB attach is async — starts dress-up until mesh lands')
 
   const group = new THREE.Group()
   group.add(new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), new THREE.MeshLambertMaterial({ flatShading: true })))

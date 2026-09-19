@@ -105,6 +105,7 @@ import {
   tickVipGearAnims,
 } from './harborVipGear'
 import { enrichBoatHull } from './harborGearDetail'
+import { mountHarborCanoeHull, mountHarborPaperLantern } from './harborBoatKit'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
   buildChatBubbleSprite,
@@ -1035,7 +1036,8 @@ function boatLantern(
   g.userData.vesselPart = true
   g.name = 'boat-lantern'
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'lantern-paper', {
+    mountHarborPaperLantern(g, {
+      color: paper,
       targetHeight: 0.32,
       name: 'v2-boat-lantern',
       position: [0, 0.15, 0],
@@ -1721,10 +1723,8 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   g.scale.setScalar(scale)
   g.userData.npc = role
   g.userData.npcGender = gender
-  g.userData.characterStyle = 'anime-dressup'
-  if (HARBOR_V2_MESH_ONLY) {
-    void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
-  }
+  g.userData.characterStyle = 'anime-dressup-glb'
+  void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
   return g
 }
 
@@ -1948,7 +1948,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   g.userData.npc = id
   g.userData.landmarkHost = id
   g.userData.specialNpc = true
-  g.userData.characterStyle = 'anime-dressup'
+  g.userData.characterStyle = 'anime-dressup-glb'
   g.userData.npcGender = LANDMARK_HOST_GENDER[id]
 
   const female = LANDMARK_HOST_GENDER[id] === 'female'
@@ -2202,12 +2202,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   g.scale.setScalar(bodyScale)
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
   attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
-  if (HARBOR_V2_MESH_ONLY) {
-    void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
-      tint: robeHex,
-      tintAmount: 0.4,
-    })
-  }
+  void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
+    tint: robeHex,
+    tintAmount: 0.4,
+  })
   return g
 }
 
@@ -2541,12 +2539,16 @@ function buildBoatHull(boatId: string): THREE.Group {
   g.userData.vesselPart = true
   g.name = 'boat-hull'
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'canoe', {
-      targetHeight: 0.55,
-      name: 'v2-canoe-hull',
-      rotationY: Math.PI / 2,
-    })
-    // Soft recolor pass once the mesh lands (tint toward equipped hull color).
+    mountHarborCanoeHull(g, boatId, { color: hull, name: 'v2-canoe-hull' })
+    if (item.id === 'boat-dragon' || item.id === 'boat-pearl' || item.id === 'boat-imperial') {
+      attachVipBoatOrnaments(g, item.id)
+      mountHarborPaperLantern(g, {
+        color: trim,
+        targetHeight: 0.22,
+        name: 'v2-vip-prow-lantern',
+        position: [0.85, 0.42, 0],
+      })
+    }
     return g
   }
   const id = item.id
@@ -5424,9 +5426,10 @@ export function createHarborWorld(
     distance += (distanceTarget - distance) * orbitLerp
 
     const footGy = travelMode === 'foot' ? groundYAt(footX, footZ) : 0
+    // Look target = player feet / boat — no Z bias (was pushing the scout off-center).
     let lookX = travelMode === 'foot' ? footX : boat.position.x
     let lookY = travelMode === 'foot' ? footGy + (sitting ? 0.95 : 1.15) : 0.75
-    let lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
+    let lookZ = travelMode === 'foot' ? footZ : boat.position.z
     // During a cast, bias the look-at toward the splash so rod + bobber stay in frame
     if (fishAnim.phase !== 'idle') {
       const blend = fishAnim.phase === 'cast' ? 0.72 : 0.55

@@ -12,7 +12,8 @@ import {
   rescaleAndReplantHarborV2Clone,
   type HarborV2AssetId,
 } from './harborV2Assets'
-import { setProceduralBodyVisible } from './harborProtagonistGlb'
+import { setProceduralBodyVisible, syncScoutGlbWithLook } from './harborProtagonistGlb'
+import { harborBoatHullScale } from './harborBoatKit'
 
 assert.equal(HARBOR_V2_MESH_ONLY, true, 'V2 mesh-only is the live lock')
 
@@ -55,10 +56,17 @@ assert.match(proSrc, /HARBOR_SCOUT_GLB_LAND/, 'standing Scout respects land GLB 
 
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /plantScoutGlbInCanoe/, 'canoe plant helper')
-assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = false/, 'land cast stays procedural until skinned GLBs')
+assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = true/, 'land cast plants anime Scout GLB')
 assert.match(glbSrc, /isScoutGlbSubtree|scoutGlbMesh/, 'procedural hide skips Scout GLB meshes')
 assert.match(glbSrc, /attachHarborCastGlb/, 'cast attach helper')
 assert.match(glbSrc, /isKeptCastProp/, 'NPC props survive procedural hide')
+
+assert.ok(harborBoatHullScale('boat-barge').sx > harborBoatHullScale('boat-canoe').sx, 'barge wider than canoe')
+assert.ok(harborBoatHullScale('boat-reed').sz < 1, 'reed skiff is shorter')
+assert.ok(harborBoatHullScale('boat-imperial').sy > 1, 'VIP imperial is taller')
+const kitSrc = readFileSync(new URL('./harborBoatKit.ts', import.meta.url), 'utf8')
+assert.match(kitSrc, /tintHarborV2Asset/, 'boat kit tints authored GLBs')
+assert.doesNotMatch(kitSrc, /generate_3d|loadAsync/, 'boat kit reuses cached V2 instances')
 
 const v2Src = readFileSync(new URL('./harborV2Assets.ts', import.meta.url), 'utf8')
 assert.match(v2Src, /rescaleAndReplantHarborV2Clone/, 'V2 rescales re-plant')
@@ -99,6 +107,31 @@ assert.match(doc, /V1/, 'v1 classified as archive')
   assert.equal(body.visible, false, 'procedural hidden')
   assert.equal(glbMesh.visible, true, 'Scout GLB mesh stays visible')
   assert.equal(glb.visible, true, 'Scout GLB root stays visible')
+}
+
+// Wardrobe apply must not hide the anime Scout mesh.
+{
+  const root = new THREE.Group()
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.3), new THREE.MeshLambertMaterial())
+  root.add(body)
+  const glb = new THREE.Group()
+  glb.name = 'scout-glb'
+  glb.userData.scoutGlb = true
+  const glbMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.6, 0.35), new THREE.MeshLambertMaterial())
+  glbMesh.userData.scoutGlbMesh = true
+  glb.add(glbMesh)
+  root.add(glb)
+  const cloth = new THREE.Group()
+  cloth.userData.harborClothing = true
+  cloth.userData.harborClothSlot = 'top'
+  const clothMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.2), new THREE.MeshLambertMaterial())
+  cloth.add(clothMesh)
+  root.add(cloth)
+  syncScoutGlbWithLook(root, true)
+  assert.equal(glb.visible, true, 'wardrobe swap keeps anime Scout GLB')
+  assert.equal(root.userData.usesScoutGlb, true, 'wardrobe swap keeps usesScoutGlb')
+  assert.equal(body.visible, false, 'wardrobe swap keeps dress-up body hidden')
+  assert.equal(cloth.visible, false, 'GLB hides redundant top/bottom/shoes overlays')
 }
 
 console.log('harborV2Assets.smoke: ok', ids.length, 'kits')

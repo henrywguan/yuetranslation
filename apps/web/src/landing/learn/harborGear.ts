@@ -4,7 +4,6 @@
  * and the Save Shack look snapshot.
  */
 import * as THREE from 'three'
-import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
   HARBOR_CRAFT_PALETTE as P,
   hqMat,
@@ -24,6 +23,7 @@ import {
   clothingUsesScoutBase,
   setScoutBaseClothingVisible,
 } from './harborClothingMeshes'
+import { mountHarborPaperLantern } from './harborBoatKit'
 
 export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand' | 'boat' | 'lantern'
 
@@ -495,18 +495,6 @@ export function sanitizeCarriedGear(ownedRaw: unknown, bankedRaw: unknown = []):
   return sanitizeOwnedGear(ownedRaw).filter((id) => !banked.has(id))
 }
 
-function handheldGlowMat(color: number, emissive: number, intensity = 0.9) {
-  return applyHarborCel(
-    new THREE.MeshLambertMaterial({
-      color,
-      emissive,
-      emissiveIntensity: intensity,
-      flatShading: false,
-    }),
-    { preset: 'lantern', ilmMap: makeHarborIlmMap('lantern') },
-  )
-}
-
 function attachHandheldLanternLight(
   parent: THREE.Object3D,
   y: number,
@@ -527,93 +515,22 @@ function buildHandheldBoatLantern(item: HarborGearItem): THREE.Group {
   g.name = 'gear-hand'
   g.userData.harborGear = true
   g.userData.harborHandheldLantern = true
-  const wood = hqWoodTexture()
   const paper = item.color
   const glowCol = item.accent ?? paper
   const id = item.id
-
-  if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
-    g.add(hqPost(0.012, 0.016, 0.1, P.woodDark, 0.06, 0.04, 0, 5))
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.06, 0.14, 6),
-      handheldGlowMat(paper, glowCol, 0.85),
-    )
-    lamp.position.set(0.06, 0.14, 0)
-    g.add(lamp)
-    const woodCap = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.038, 0.02, 10),
-      hqMatTex(P.woodDeep, wood),
-    )
-    woodCap.position.set(0.06, 0.22, 0)
-    g.add(woodCap)
-    const ironRing = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 12), hqMat(P.iron))
-    ironRing.rotation.x = Math.PI / 2
-    ironRing.position.set(0.06, 0.2, 0)
-    g.add(ironRing)
-    const goldRing = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 6, 10), hqMat(P.trimGold))
-    goldRing.rotation.x = Math.PI / 2
-    goldRing.position.set(0.06, 0.08, 0)
-    g.add(goldRing)
-    attachHandheldLanternLight(g, 0.14, glowCol, id === 'lantern-starlight' ? 0.75 : 0.6)
-  } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
-    g.add(hqPost(0.014, 0.018, 0.09, P.woodDark, 0.06, 0.035, 0, 5))
-    const lamp = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.06, 0),
-      handheldGlowMat(paper, glowCol, 0.9),
-    )
-    lamp.position.set(0.06, 0.13, 0)
-    g.add(lamp)
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), hqMat(P.trimGold))
-    tip.position.set(0.06, 0.19, 0)
-    g.add(tip)
-    attachHandheldLanternLight(g, 0.13, glowCol, 0.65)
-  } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
-    g.add(hqPost(0.014, 0.018, 0.08, P.woodDark, 0.06, 0.03, 0, 8))
-    const cage = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.05, 0.1, 10),
-      hqMat(paper),
-    )
-    cage.position.set(0.06, 0.12, 0)
-    g.add(cage)
-    for (const y of [0.07, 0.17] as const) {
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.048, 0.01, 6, 12),
-        hqMat(P.iron),
-      )
-      ring.rotation.x = Math.PI / 2
-      ring.position.set(0.06, y, 0)
-      g.add(ring)
-    }
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(0.035, 10, 8),
-      handheldGlowMat(glowCol, glowCol, 1.0),
-    )
-    core.position.set(0.06, 0.12, 0)
-    g.add(core)
-    attachHandheldLanternLight(g, 0.12, glowCol, id === 'lantern-dragon' ? 0.7 : 0.55)
-  } else {
-    // Soft paper lantern cylinder (anime — not a box cube)
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.055, 0.12, 12),
-      handheldGlowMat(paper, glowCol, 0.85),
-    )
-    lamp.position.set(0.06, 0.1, 0)
-    g.add(lamp)
-    const cap = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.048, 0.025, 10),
-      hqMatTex(P.woodMid, wood),
-    )
-    cap.position.set(0.06, 0.17, 0)
-    g.add(cap)
-    const base = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.052, 0.02, 10),
-      hqMat(P.iron),
-    )
-    base.position.set(0.06, 0.04, 0)
-    g.add(base)
-    attachHandheldLanternLight(g, 0.1, glowCol, 0.55)
-  }
-
+  // Authored V2 lantern for every SKU — tint only (no new gens).
+  mountHarborPaperLantern(g, {
+    color: paper,
+    targetHeight: 0.16,
+    name: 'v2-hand-lantern',
+    position: [0.06, 0.02, 0],
+  })
+  attachHandheldLanternLight(
+    g,
+    0.1,
+    glowCol,
+    id === 'lantern-starlight' || id === 'lantern-phoenix' || id === 'lantern-dragon' ? 0.7 : 0.55,
+  )
   tagVipLanternAnim(g, id)
   return g
 }
@@ -660,24 +577,12 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
     pivot.position.set(0, 0.04, 0)
     g.add(pivot)
   } else if (item.id === 'hand-lantern') {
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.055, 0.12, 12),
-      handheldGlowMat(main, accent, 0.85),
-    )
-    lamp.position.set(0.06, 0.1, 0)
-    g.add(lamp)
-    const cap = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.048, 0.025, 10),
-      hqMatTex(P.woodMid, wood),
-    )
-    cap.position.set(0.06, 0.17, 0)
-    g.add(cap)
-    const base = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.052, 0.02, 10),
-      hqMat(P.iron),
-    )
-    base.position.set(0.06, 0.04, 0)
-    g.add(base)
+    mountHarborPaperLantern(g, {
+      color: main,
+      targetHeight: 0.16,
+      name: 'v2-hand-lantern',
+      position: [0.06, 0.02, 0],
+    })
     attachHandheldLanternLight(g, 0.1, accent, 0.5)
   } else if (item.id === 'hand-oar') {
     const shaft = new THREE.Mesh(
@@ -774,6 +679,8 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
       gender,
     })
     if (piece) {
+      // Hats sit on the authored Scout crown (slightly above dress-up headY).
+      if (slot === 'hat') piece.position.y += 0.06
       root.add(piece)
       anySwap = true
     }
@@ -799,7 +706,7 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
     })
   }
 
-  // Cinematic GLB body: hide when unique wardrobe silhouettes are worn.
+  // Anime Scout GLB stays on; wardrobe never swaps back to dress-up primitives.
   void import('./harborProtagonistGlb').then(({ syncScoutGlbWithLook }) => {
     syncScoutGlbWithLook(root, anySwap)
   })

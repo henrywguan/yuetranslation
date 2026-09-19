@@ -2,7 +2,8 @@
  * Remote sailor meshes + canvas nametags for Harbor Quest multiplayer.
  */
 import * as THREE from 'three'
-import { applyLookToProtagonist, type HarborLook } from './harborGear'
+import { mountHarborCanoeHull } from './harborBoatKit'
+import { applyLookToProtagonist, harborGearById, HARBOR_DEFAULT_LOOK, type HarborLook } from './harborGear'
 import { buildHarborProtagonist } from './harborProtagonist'
 import { tickHarborProtagonistAnim } from './harborProtagonistAnim'
 import type { HarborRemotePlayer } from './harborPresence'
@@ -61,22 +62,26 @@ function roundRect(
   ctx.closePath()
 }
 
-function simpleCanoe(): THREE.Group {
+function remoteHullColor(boatId: string): number {
+  return (harborGearById(boatId) ?? harborGearById(HARBOR_DEFAULT_LOOK.boat))?.color ?? 0x8a6038
+}
+
+function remoteCanoe(boatId: string): THREE.Group {
   const g = new THREE.Group()
   g.name = 'remote-canoe'
-  const hull = new THREE.Mesh(
-    new THREE.BoxGeometry(0.55, 0.18, 1.35),
-    new THREE.MeshLambertMaterial({ color: 0x8a6038, flatShading: true }),
-  )
-  hull.position.y = 0.1
-  g.add(hull)
-  const gun = new THREE.Mesh(
-    new THREE.BoxGeometry(0.48, 0.06, 1.2),
-    new THREE.MeshLambertMaterial({ color: 0x6a4828, flatShading: true }),
-  )
-  gun.position.y = 0.2
-  g.add(gun)
+  mountHarborCanoeHull(g, boatId, { color: remoteHullColor(boatId), name: 'v2-remote-canoe-hull' })
   return g
+}
+
+function refreshRemoteCanoeHull(boat: THREE.Object3D, boatId: string): void {
+  const doomed: THREE.Object3D[] = []
+  boat.traverse((o) => {
+    if (o === boat) return
+    if (o.name === 'remote-body') return
+    if (o.userData.harborV2Asset === 'canoe' || o.userData.harborV2Pending === 'canoe') doomed.push(o)
+  })
+  for (const o of doomed) o.parent?.remove(o)
+  mountHarborCanoeHull(boat, boatId, { color: remoteHullColor(boatId), name: 'v2-remote-canoe-hull' })
 }
 
 /** Build (or refresh) a clickable remote sailor group. */
@@ -105,7 +110,7 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
   })
 
   if (player.mode === 'boat') {
-    const boat = simpleCanoe()
+    const boat = remoteCanoe(player.look.boat)
     body.position.set(0, 0.22, 0)
     boat.add(body)
     root.add(boat)
@@ -192,6 +197,11 @@ export function updateRemoteSailor(root: THREE.Group, player: HarborRemotePlayer
   } else {
     const body = root.getObjectByName('remote-body')
     if (body) applyLookToProtagonist(body, player.look)
+    const prevLook = root.userData.remoteLook as HarborLook | undefined
+    if (prevLook && prevLook.boat !== player.look.boat) {
+      const boat = root.getObjectByName('remote-canoe')
+      if (boat) refreshRemoteCanoeHull(boat, player.look.boat)
+    }
   }
 }
 
