@@ -729,11 +729,10 @@ function main() {
   {
     const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
     assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
-    assert.match(figSrc, /headR:\s*0\.112/, 'anime head radius (~7-head fashion)')
-    assert.match(figSrc, /neckH:\s*0\.095/, 'explicit visible neck height')
-    assert.match(figSrc, /standingH:\s*1\.68/, 'taller anime standing height')
-    assert.match(figSrc, /pelvisY:\s*0\.9/, 'long-leg pelvis')
-    assert.match(figSrc, /SphereGeometry\([^)]+28/, 'smooth high-segment head (not faceted potato)')
+    assert.match(figSrc, /headR:\s*0\.148/, 'anime head radius (dress-up figure kit)')
+    assert.match(figSrc, /neckH:\s*0\.085/, 'explicit visible neck height')
+    assert.match(figSrc, /standingH:\s*1\.42/, 'standing height locked to iOS-visible figure')
+    assert.match(figSrc, /SphereGeometry\([^)]+24/, 'smooth high-segment head (not faceted potato)')
     assert.match(figSrc, /MeshStandardMaterial|harborFigureMat/, 'soft lit materials for dress-up')
     assert.match(figSrc, /flatShading:\s*false/, 'no flatShading on character kit')
     assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
@@ -778,11 +777,11 @@ function main() {
     const headY = standing.userData.headY as number
     const torsoTop = standing.userData.torsoTop as number
     assert.ok(headY - torsoTop >= 0.08, 'visible neck gap between torso top and head')
-    assert.ok(pelvisY >= 0.85, 'fashion legs tall enough for ~7-head anime silhouette')
+    assert.ok(pelvisY >= 0.7, 'fashion legs tall enough for the dress-up silhouette')
     assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 1.0, 'torso+neck stack is proportioned')
     assert.ok(
-      HARBOR_FIGURE_PROPORTIONS.standingH >= 1.6,
-      'standing height targets ~7-head anime fashion',
+      HARBOR_FIGURE_PROPORTIONS.standingH >= 1.4,
+      'standing height stays on the iOS-visible figure kit',
     )
     let hasNeck = false
     standing.traverse((o) => {

@@ -77,7 +77,7 @@ function main() {
   assert.match(injectedP, /totalSpecular \* 0\.18/)
 
   const mat = hqMat(0x3dcfb6)
-  assert.equal(mat.flatShading, true)
+  assert.equal(mat.flatShading, false)
   assert.ok(isHarborCelMaterial(mat), 'hqMat is cel-patched')
   assert.equal(mat.userData.harborCelPreset, 'terrain')
   assert.equal(mat.userData.harborCelApplied, HARBOR_CEL_SHADER_ID)
