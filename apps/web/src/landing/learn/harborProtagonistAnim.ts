@@ -96,7 +96,8 @@ function tickScoutGlbLocomotion(
     const phase = t * HARBOR_WALK_CADENCE
     const sway = Math.sin(phase) * 0.07 * amp
     const lean = Math.sin(phase * 2) * 0.035 * amp
-    const bob = Math.abs(Math.sin(phase)) * 0.028 * amp
+    // Soft stride bob (no Math.abs hip hop — feet stay grounded).
+    const bob = (1 - Math.cos(phase * 2)) * 0.014 * amp
     glb.rotation.z = baseRZ + sway
     glb.rotation.x = baseRX + lean
     glb.position.y = baseY + bob
