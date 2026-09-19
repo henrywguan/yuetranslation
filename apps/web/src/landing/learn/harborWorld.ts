@@ -641,6 +641,30 @@ function softTiledMat(
   return m
 }
 
+/** Recolor a willow clone so stand-in trees / shrubs do not all read as one mesh. */
+function mountTintedWillow(
+  parent: THREE.Group,
+  rng: () => number,
+  opts: { height: number; name: string; tint: number; amount?: number },
+) {
+  mountHarborV2Asset(parent, 'willow', {
+    targetHeight: opts.height,
+    name: opts.name,
+    rotationY: rng() * Math.PI * 2,
+    onReady: (mesh) => tintHarborV2Asset(mesh, opts.tint, opts.amount ?? 0.46),
+  })
+}
+
+/** Paint a V2 bank/path albedo onto Lambert children (rocks, reeds, plazas). */
+function paintHarborV2Map(root: THREE.Object3D, kind: 'grass' | 'dirt', repeat = 2.2) {
+  root.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh) return
+    const mat = Array.isArray(m.material) ? m.material[0] : m.material
+    if (mat instanceof THREE.MeshLambertMaterial) applyHarborV2Map(mat, kind, repeat)
+  })
+}
+
 /** River willow — V2 mesh when available; v1 faceted canopy fallback. */
 function tree(rng: () => number, leaf: number) {
   const g = new THREE.Group()
@@ -817,7 +841,9 @@ export const HARBOR_MAP_LANGUAGE = {
 } as const
 
 function rock(rng: () => number) {
-  return hqRock(rng, rng() > 0.5 ? P.rock : P.rockWarm)
+  const m = hqRock(rng, rng() > 0.5 ? P.rock : P.rockWarm)
+  if (HARBOR_V2_MESH_ONLY) paintHarborV2Map(m, 'dirt', 1.6)
+  return m
 }
 
 
@@ -829,21 +855,41 @@ function reed(rng: () => number) {
     g.add(hqPost(0.03, 0.04, h, P.reed, (rng() - 0.5) * 0.35, h / 2, (rng() - 0.5) * 0.35, 4))
     g.add(hqBox(0.08, 0.1, 0.08, P.reedTip, (rng() - 0.5) * 0.35, h + 0.04, (rng() - 0.5) * 0.35))
   }
+  // Dense waterline clumps — paint grass, do not instance willow 12× per chunk.
+  if (HARBOR_V2_MESH_ONLY) paintHarborV2Map(g, 'grass', 2.4)
   return g
 }
 
 
 function flower(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountTintedWillow(g, rng, {
+      height: 0.5 + rng() * 0.22,
+      name: 'v2-flower-standin',
+      tint: rng() > 0.5 ? P.blossom : P.leafGold,
+      amount: 0.52,
+    })
+    return g
+  }
   g.add(hqPost(0.02, 0.03, 0.35, P.leafMid, 0, 0.18, 0, 4))
   g.add(hqBox(0.14, 0.12, 0.14, rng() > 0.5 ? P.blossom : P.leafGold, 0, 0.4, 0))
   return g
 }
 
-/** China tea-cup rose — soft pink cups on a low leafy mound. */
+/** China tea-cup rose — V2 willow shrub in blossom pink; v1 cups as fallback. */
 function chinaTeaCupRose(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'china-tea-cup-rose'
+  if (HARBOR_V2_MESH_ONLY) {
+    mountTintedWillow(g, rng, {
+      height: 0.78 + rng() * 0.22,
+      name: 'v2-rose-standin',
+      tint: P.blossom,
+      amount: 0.5,
+    })
+    return g
+  }
   const h = 0.45 + rng() * 0.2
   g.add(hqPost(0.04, 0.06, h * 0.55, 0x3a2a28, 0, h * 0.28, 0, 4))
   g.add(hqCanopy(0.32 + rng() * 0.1, P.leafMid, 0, h * 0.55, 0))
@@ -872,10 +918,19 @@ function chinaTeaCupRose(rng: () => number) {
   return g
 }
 
-/** Hawthorn berry bush — white blossom clusters + red haws. */
+/** Hawthorn berry bush — V2 willow shrub with berry-green tint. */
 function hawthornBush(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'hawthorn-berry'
+  if (HARBOR_V2_MESH_ONLY) {
+    mountTintedWillow(g, rng, {
+      height: 0.95 + rng() * 0.28,
+      name: 'v2-hawthorn-standin',
+      tint: 0x3a7048,
+      amount: 0.42,
+    })
+    return g
+  }
   const h = 0.7 + rng() * 0.35
   g.add(hqPost(0.05, 0.08, h * 0.65, 0x2e2418, 0, h * 0.32, 0, 5))
   // Twiggy forks
@@ -922,10 +977,19 @@ function hawthornBush(rng: () => number) {
   return g
 }
 
-/** Chinese fringe flower (Loropetalum) — burgundy foliage + magenta fringe. */
+/** Chinese fringe flower (Loropetalum) — V2 willow shrub in burgundy. */
 function chineseFringeFlower(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'chinese-fringe-flower'
+  if (HARBOR_V2_MESH_ONLY) {
+    mountTintedWillow(g, rng, {
+      height: 0.8 + rng() * 0.25,
+      name: 'v2-fringe-standin',
+      tint: 0x8a2858,
+      amount: 0.5,
+    })
+    return g
+  }
   const h = 0.55 + rng() * 0.3
   g.add(hqPost(0.045, 0.07, h * 0.5, 0x2a1c18, 0, h * 0.25, 0, 4))
   const foliage = [0x4a2038, 0x3a1828, 0x5a2840]
@@ -1132,6 +1196,31 @@ function scenicPavilion(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'scenic-pavilion'
   g.userData.scenicPavilion = true
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'house-village', {
+      targetHeight: 1.7 + rng() * 0.28,
+      name: 'v2-scenic-pavilion',
+      position: [0, 0, -0.35],
+      rotationY: (rng() - 0.5) * 0.18,
+    })
+    mountHarborV2Asset(g, 'lantern-paper', {
+      targetHeight: 0.3,
+      name: 'v2-pavilion-lantern',
+      position: [0.58, 1.02, 0.4],
+    })
+    // Sit collider stays — gameplay raycast, not the v1 hip roof.
+    const bench = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.14, 0.9, 12),
+      hqMatTex(P.stone, hqStoneTexture()),
+    )
+    bench.rotation.z = Math.PI / 2
+    bench.position.set(0, 0.32, 0.42)
+    bench.userData.harborChair = true
+    bench.userData.seatY = 0.32
+    paintHarborV2Map(bench, 'dirt', 1.8)
+    g.add(bench)
+    return g
+  }
   const stone = hqStoneTexture()
   // Raised stone plinth
   g.add(hqBoxTex(1.6, 0.12, 1.6, P.stone, stone, 0, 0.08, 0))
@@ -1186,6 +1275,7 @@ function terracePlaza(rng: () => number) {
   )
   disc.position.y = 0.06
   g.add(disc)
+  if (HARBOR_V2_MESH_ONLY) paintHarborV2Map(disc, 'dirt', 2.2)
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(discR - 0.05, 0.04, 6, 18),
     hqMat(P.stoneDark),
@@ -1195,12 +1285,20 @@ function terracePlaza(rng: () => number) {
   g.add(ring)
   // Central lantern pedestal
   g.add(hqPost(0.08, 0.1, 0.45, P.stoneDark, 0, 0.3, 0, 8))
-  const flame = new THREE.Mesh(
-    new THREE.SphereGeometry(0.08, 10, 8),
-    glowMat(P.lantern, 0xff9040, 0.55),
-  )
-  flame.position.y = 0.58
-  g.add(flame)
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'lantern-paper', {
+      targetHeight: 0.3,
+      name: 'v2-plaza-lantern',
+      position: [0, 0.52, 0],
+    })
+  } else {
+    const flame = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 10, 8),
+      glowMat(P.lantern, 0xff9040, 0.55),
+    )
+    flame.position.y = 0.58
+    g.add(flame)
+  }
   // Sit cluster around the lantern — friends can gather to relax / chat
   const seatR = Math.min(discR * 0.72, HARBOR_SOCIAL_SIT_CLUSTER * 0.45)
   hqStampChairs(
@@ -1284,6 +1382,7 @@ function stoneRoadStrip(length: number, width = 1.15) {
     g.add(hqBox(width * 0.42, 0.04, length * 0.12, i % 2 ? 0x8a8880 : 0x6a6860, -width * 0.18, 0.09, z))
     g.add(hqBox(width * 0.42, 0.04, length * 0.12, i % 2 ? 0x6a6860 : 0x8a8880, width * 0.18, 0.09, z))
   }
+  if (HARBOR_V2_MESH_ONLY) paintHarborV2Map(g, 'dirt', Math.max(1.3, length * 0.32))
   return g
 }
 
@@ -2398,10 +2497,11 @@ function fish() {
 function pine(rng: () => number) {
   const g = new THREE.Group()
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'willow', {
-      targetHeight: 2.8 + rng() * 1.4,
+    mountTintedWillow(g, rng, {
+      height: 2.8 + rng() * 1.4,
       name: 'v2-pine-standin',
-      rotationY: rng() * Math.PI * 2,
+      tint: P.leafDeep,
+      amount: 0.44,
     })
     return g
   }
@@ -2423,10 +2523,11 @@ function pine(rng: () => number) {
 function cherryBlossom(rng: () => number) {
   const g = new THREE.Group()
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'willow', {
-      targetHeight: 2.2 + rng() * 0.9,
+    mountTintedWillow(g, rng, {
+      height: 2.2 + rng() * 0.9,
       name: 'v2-cherry-standin',
-      rotationY: rng() * Math.PI * 2,
+      tint: P.blossom,
+      amount: 0.5,
     })
     return g
   }
@@ -2454,10 +2555,11 @@ function cherryBlossom(rng: () => number) {
 function ginkgo(rng: () => number) {
   const g = new THREE.Group()
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'willow', {
-      targetHeight: 2.4 + rng() * 1.0,
+    mountTintedWillow(g, rng, {
+      height: 2.4 + rng() * 1.0,
       name: 'v2-ginkgo-standin',
-      rotationY: rng() * Math.PI * 2,
+      tint: P.leafGold,
+      amount: 0.5,
     })
     return g
   }
@@ -2481,10 +2583,11 @@ function ginkgo(rng: () => number) {
 function poplar(rng: () => number) {
   const g = new THREE.Group()
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'willow', {
-      targetHeight: 3.0 + rng() * 1.2,
+    mountTintedWillow(g, rng, {
+      height: 3.0 + rng() * 1.2,
       name: 'v2-poplar-standin',
-      rotationY: rng() * Math.PI * 2,
+      tint: P.leafLite,
+      amount: 0.4,
     })
     return g
   }
@@ -3113,13 +3216,24 @@ function bambooClump(rng: () => number) {
     g.add(hqCanopy(0.22 + rng() * 0.1, 0x4a9a58, x + 0.12, h * 0.85, z))
     if (rng() > 0.4) g.add(hqCanopy(0.18, 0x3a8a48, x - 0.1, h * 0.7, z + 0.08))
   }
+  // Culms stay procedural (willow silhouette is a tree, not bamboo). Paint grass.
+  if (HARBOR_V2_MESH_ONLY) paintHarborV2Map(g, 'grass', 2.6)
   return g
 }
 
-/** Osmanthus shrub — soft gold blossoms for the bamboo realm. */
+/** Osmanthus shrub — V2 willow in gold blossom; v1 cups as fallback. */
 function osmanthusBush(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'osmanthus'
+  if (HARBOR_V2_MESH_ONLY) {
+    mountTintedWillow(g, rng, {
+      height: 0.72 + rng() * 0.22,
+      name: 'v2-osmanthus-standin',
+      tint: P.leafGold,
+      amount: 0.48,
+    })
+    return g
+  }
   const h = 0.55 + rng() * 0.25
   g.add(hqPost(0.04, 0.06, h * 0.5, 0x2a1c14, 0, h * 0.25, 0, 4))
   g.add(hqCanopy(0.34 + rng() * 0.1, 0x3a6a40, 0, h * 0.55, 0))
@@ -3155,6 +3269,7 @@ function lotusPad(rng: () => number) {
     bloom.position.y = 0.14
     g.add(bloom)
   }
+  if (HARBOR_V2_MESH_ONLY) paintHarborV2Map(g, 'grass', 1.8)
   return g
 }
 
@@ -3418,7 +3533,7 @@ function populateChunk(
     if (rng() > 0.45) place(group, rng, 1, () => panda(rng), BANK + 1.5, BANK + 5.5, z0)
     if (biome === 'hills' && rng() > 0.62) place(group, rng, 1, () => southChinaTiger(rng), BANK + 2.5, BANK + 7, z0)
     else if (rng() > 0.78) place(group, rng, 1, () => southChinaTiger(rng), BANK + 3, BANK + 8, z0)
-    place(group, rng, 1, () => lantern(weather), BANK + 0.2, BANK + 1.8, z0)
+    place(group, rng, 2, () => lantern(weather), BANK + 0.2, BANK + 1.8, z0)
   }
   if (biome === 'village') {
     place(group, rng, 3, () => house(rng), BANK + 0.5, BANK + 8, z0)
@@ -3463,7 +3578,7 @@ function populateChunk(
     place(group, rng, 3, () => poplar(rng), BANK + 0.5, BANK + 3.5, z0)
     place(group, rng, 1, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
     place(group, rng, 3, () => flower(rng), BANK - 0.2, BANK + 1.8, z0)
-    place(group, rng, 1, () => lantern(weather), BANK - 0.3, BANK + 1.0, z0)
+    place(group, rng, 2, () => lantern(weather), BANK - 0.3, BANK + 1.0, z0)
   
     // Waterline fauna — giant salamanders + crested ibis
     if (rng() > 0.35) place(group, rng, 1, () => giantSalamander(rng), RIVER + 0.6, BANK + 0.8, z0)

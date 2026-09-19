@@ -46,6 +46,10 @@ assert.match(worldSrc, /house-village|pier-module|canoe/, 'core river kits wired
 assert.match(worldSrc, /attachHarborCastGlb/, 'pier + landmark NPCs keep cast-GLB hook')
 assert.match(worldSrc, /applyHarborV2Map/, 'banks and paths use V2 albedos')
 assert.match(worldSrc, /v2-bank|v2-arena|v2-barber/, 'remaining landmarks use V2 shells')
+assert.match(worldSrc, /v2-scenic-pavilion/, 'vista pavilions use house-village shell')
+assert.match(worldSrc, /mountTintedWillow/, 'tree / shrub stand-ins tint the willow kit')
+assert.match(worldSrc, /paintHarborV2Map/, 'rocks / reeds / plazas take V2 maps')
+assert.match(worldSrc, /v2-plaza-lantern/, 'terrace plazas mount paper lanterns')
 
 const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
 assert.match(playSrc, /preloadHarborV2Assets/, 'learn preloads V2 kit')
