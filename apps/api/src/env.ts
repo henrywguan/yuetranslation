@@ -129,6 +129,11 @@ export const env = {
   guestRlBreakdownPerMin: Number(process.env.YUE_GUEST_RL_BREAKDOWN_PER_MIN || 20),
   guestRlSpeechTokenPerMin: Number(process.env.YUE_GUEST_RL_SPEECH_TOKEN_PER_MIN || 12),
   guestRlCameraScanPerMin: Number(process.env.YUE_GUEST_RL_CAMERA_SCAN_PER_MIN || 20),
+  /** Public Web Push subscribe — all callers by IP. Set 0 to disable. */
+  pushSubscribeRlPerMin: Number(process.env.YUE_PUSH_SUBSCRIBE_RL_PER_MIN || 20),
+  /** Harbor Quest cloud sync / gift — per signed-in user. Set 0 to disable. */
+  harborPutRlPerMin: Number(process.env.YUE_HARBOR_PUT_RL_PER_MIN || 120),
+  harborGiftRlPerMin: Number(process.env.YUE_HARBOR_GIFT_RL_PER_MIN || 30),
   familyLiveMinutes: Number(
     process.env.YUE_FAMILY_LIVE_MINUTES || process.env.YUE_PRO_LIVE_MINUTES || 480,
   ),

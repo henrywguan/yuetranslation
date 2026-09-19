@@ -243,6 +243,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 All routes require Bearer JWT + allowlisted email:
 
+- `POST /api/admin/practice-partner/chat` — admin Practice Partner lab (DeepSeek); meters `practice_partner_count` (view-only)
 - `GET /api/admin/me`
 - `GET /api/admin/users` — query `from` / `to` (`YYYY-MM-DD`, default start of current month → today UTC). Usage columns sum **whole calendar months** overlapping the range. Legacy `month=YYYY_MM` still works.
 - `GET /api/admin/users.csv`

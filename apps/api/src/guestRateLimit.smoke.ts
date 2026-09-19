@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import type { Response } from 'express'
-import { allowGuestIpOrReject, resetGuestRateLimitWindowsForTests } from './guestRateLimit.js'
+import {
+  allowGuestIpOrReject,
+  allowIpRateOrReject,
+  allowUserRateOrReject,
+  resetGuestRateLimitWindowsForTests,
+} from './guestRateLimit.js'
 import type { AuthedRequest } from './auth.js'
 import { env } from './env.js'
 
@@ -70,6 +75,27 @@ const signedIn = {
 const signedRes = mockRes()
 assert.equal(allowGuestIpOrReject(signedIn, signedRes, 'translate'), true)
 
+resetGuestRateLimitWindowsForTests()
+const pushLimit = Math.min(3, env.pushSubscribeRlPerMin || 3)
+assert.ok(env.pushSubscribeRlPerMin > 0)
+for (let i = 0; i < pushLimit; i++) {
+  assert.equal(allowIpRateOrReject(guestReq, mockRes(), 'pushSubscribe', pushLimit), true)
+}
+const pushBlocked = mockRes()
+assert.equal(allowIpRateOrReject(guestReq, pushBlocked, 'pushSubscribe', pushLimit), false)
+assert.equal(pushBlocked.statusCode, 429)
+
+resetGuestRateLimitWindowsForTests()
+const harborLimit = Math.min(3, env.harborGiftRlPerMin || 3)
+for (let i = 0; i < harborLimit; i++) {
+  assert.equal(allowUserRateOrReject(mockRes(), 'user-1', 'harborGift', harborLimit), true)
+}
+const harborBlocked = mockRes()
+assert.equal(allowUserRateOrReject(harborBlocked, 'user-1', 'harborGift', harborLimit), false)
+assert.equal(harborBlocked.statusCode, 429)
+// Different user still allowed
+assert.equal(allowUserRateOrReject(mockRes(), 'user-2', 'harborGift', harborLimit), true)
+
 console.log(
   JSON.stringify({
     ok: true,
@@ -77,5 +103,8 @@ console.log(
     guestRlBreakdownPerMin: env.guestRlBreakdownPerMin,
     guestRlSpeechTokenPerMin: env.guestRlSpeechTokenPerMin,
     guestRlCameraScanPerMin: env.guestRlCameraScanPerMin,
+    pushSubscribeRlPerMin: env.pushSubscribeRlPerMin,
+    harborPutRlPerMin: env.harborPutRlPerMin,
+    harborGiftRlPerMin: env.harborGiftRlPerMin,
   }),
 )

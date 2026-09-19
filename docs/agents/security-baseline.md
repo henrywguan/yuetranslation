@@ -4,11 +4,11 @@ Full-project Security Guardian pass (code review + safe `/api/health` + `npm aud
 Re-run via **Vulnerability Scanner** automation or chat: follow `docs/agents/security-guardian.md`.
 
 Date: 2026-09-04 · Scope: repo `main` + local cloud env health (not production HTTP)  
-Updated: **2026-09-08** — speech-token prepaid debit, IP-bound guest ids, docs/segments page metering, slim health, JSON body split; `¡No manches!` phrase rescue
+Updated: **2026-09-19** — Harbor Quest + Practice Partner full-repo rescan; push subscribe RL; Harbor sync/gift RL; progress RLS service-role writes; Practice Partner meter await + hide model from client
 
 ---
 
-## Executive summary (2026-09-08)
+## Executive summary (2026-09-19)
 
 | Area | Status |
 | --- | --- |
@@ -16,114 +16,141 @@ Updated: **2026-09-08** — speech-token prepaid debit, IP-bound guest ids, docs
 | Open mode / login defaults | **Healthy** — `YUE_OPEN_MODE` fail-closed `'0'`; `vercel.json` pins `0` + `YUE_REQUIRE_LOGIN=1` |
 | CORS | **Healthy** — allowlist (not `origin: true`) |
 | Admin / Stripe / auth webhooks | **Healthy** — `requireAdmin`; Stripe `constructEvent`; Standard Webhooks on auth hooks |
-| Guest / paid-API abuse | **Hardened** — guest IP RL + **IP-bound guest ids** (cookie wipe no longer refreshes trial); speech-token **prepay** live seconds; docs/segments bills pages |
-| Health info disclosure | **Hardened** — public health is readiness + entitlement + incident banner (no model/lexicon/notify dump) |
-
-**Safe health probe:** `npm run security:api-health` → fail=0.
+| Guest / paid-API abuse | **Hardened** — guest IP RL + device/network guest ids; speech-token prepaid; docs page metering |
+| Harbor Quest | **New focus** — auth on sync/gift OK; **client-trusted scores** remain High (product); RL + RLS hardenings shipped this pass |
+| Practice Partner | **Admin-only** — guests cannot reach DeepSeek; uncapped admin turns remain NEEDS_HUMAN |
+| Health info disclosure | **Healthy** — slim readiness; entitlement snapshot for SPA bootstrap |
+| Safe health probe | `npm run security:api-health` → **fail=0** (2026-09-19) |
+| `npm audit --omit=dev` | **web: 0**; **api: 3 moderate** (`qs` via Express — see Low) |
 
 ---
 
-## Critical / High
+## Critical
 
-### [High] Guest `#/app` translate can burn DeepSeek with no per-IP rate limit — HARDENED (app RL)
-- **Status:** Guest-only per-IP limits shipped 2026-09-06 — translate **30**/min, breakdown **20**/min, speech-token **12**/min, camera scan **20**/min (`YUE_GUEST_RL_*`). TTS intentionally uncapped by IP (product). In-memory windows are best-effort on multi-instance Vercel; keep edge Firewall if configured.
+None.
+
+---
+
+## High
+
+### [High] Harbor Quest client-trusted progress drives global leaderboard
 - **Category:** abuse
-- **Evidence:** `allowGuestIpOrReject` in `apps/api/src/guestRateLimit.ts` on guest translate/breakdown/speech-token/camera.
-- **Residual:** Cookie rotation still refreshes trial meters; signed-in users not limited by these buckets; serverless cold starts reset memory.
-- **Fixability:** NEEDS_HUMAN for Redis/Upstash shared limiter or cookie↔IP binding if abuse continues.
+- **Evidence:** `PUT /api/harbor-quest` accepts client `xp` / `gold` / `correctCount` / inventory (sanitized caps only) then `syncHarborLeaderboard` upserts absolute values. No server verification of pier/arena clears.
+- **Impact:** Any signed-in Free account can max the public leaderboard and invent cosmetics within allowlists.
+- **Fix:** Server-authoritative awards (event log / signed deltas), or stop accepting absolute XP/gold; monotonic `greatest()` on board upsert; anti-cheat rate caps on score deltas.
+- **Fixability:** NEEDS_HUMAN
+- **Why:** Trust model and schema design are product decisions — not a one-line patch.
 
-### [High] Guest TTS is unlimited + was uncapped per request — ACCEPTED (product) + length cap
-- **Status:** Henry accepted unlimited guest TTS (2026-09-06). Per-request max **2000** chars remains. No guest IP RL on TTS by design.
+### [High] Guest TTS uncapped per-IP — ACCEPTED (product) + Harbor amplification
 - **Category:** abuse / metering
-- **Evidence:** Guests get `ttsUnlimited: true`; usage counted; `/api/tts` rejects text > 2000 chars.
-- **Residual:** High-volume short TTS still possible; rely on edge Firewall / provider limits if needed.
-- **Fixability:** NEEDS_HUMAN only if costs appear — otherwise leave as-is.
+- **Evidence:** Guests get `ttsUnlimited: true`; no guest IP RL on `/api/tts` (2000 char/request cap). Harbor `#/learn` auto-speak / pier audio calls the same path (`harborSpeak.ts`).
+- **Impact:** Guest or scripted Harbor play can burn Azure TTS harder than Solo tap-to-speak.
+- **Fix:** Guest TTS IP RL and/or Harbor-only daily budget; or local samples for drills.
+- **Fixability:** NEEDS_HUMAN
+- **Why:** Unlimited guest TTS is an explicit product choice.
 
-### [High] `/api/breakdown` hit the model with no metering — FIXED (metering)
-- **Status:** Fixed 2026-09-06 — breakdown now increments the same translate counters as `/api/translate`.
-- **Category:** abuse / metering
-- **Evidence (was):** Guest-reachable LLM path with no `addTranslateCount`.
-- **Residual:** Still no IP rate limit (same as translate).
-
-### [High] Speech token issued without consuming live minutes — FIXED (prepaid debit)
-- **Status:** Fixed 2026-09-08 — `GET /api/speech-token` requires ≥15s remaining, advertises TTL ≤180s, and **debits up to 60 live seconds** on mint (user + guest). Heartbeats still record session time.
-- **Category:** metering
-- **Residual:** Heartbeats can slightly over-count after prepaid debit; Family still has a finite live minutes cap.
-- **Fixability:** Done
-
-### [High] Camera OCR/scan without camera-minute burn — FIXED (scan credits)
-- **Status:** Fixed 2026-09-06 — Cam hard gate is monthly **scan credits** (`camera_translate_count`): Guest 30 / Free 120 / Family 800 / Business unlimited. Each successful non-docs `/api/camera/scan` costs 1 credit (pre-check + charge on success). Heartbeats still write `cameraSeconds` for admin logging only and no longer gate Cam.
-- **Category:** metering
-- **Residual:** Guest IP change still starts a new trial identity (see guest binding).
-
-### [High] Guest cookie rotation resets trial meters — FIXED (device + network anchors)
-- **Status:** Fixed 2026-09-08 — guest id resolved via (1) durable `X-Yue-Guest-Device` / `localStorage`, (2) `guest_network_trials` IP hash registry, (3) IP-derived fallback. Migration `025_guest_identity_anchors.sql`.
-- **Category:** abuse / metering
-- **Residual:** Full site-data clear **and** new IP still yields a new trial; café NAT shares one network trial.
-- **Fixability:** Done (further: Firewall / captcha — NEEDS_HUMAN if abuse continues)
-
-### [High] `/api/docs/segments` model spend without page metering — FIXED
-- **Status:** Fixed 2026-09-08 — segments pre-checks remaining docs pages, bills `ceil(chars/1800)` (min 1) on success; PDF hybrid passes `prepaidPages` into `/api/docs/commit` so pages are not double-billed.
-- **Category:** metering
-- **Residual:** Abandoned segment calls still consume pages (fair — model already ran).
-- **Fixability:** Done
-
-### [High] `/api/health` disclosed `envFile` — FIXED (earlier)
-- **Status:** Fixed — public health has no `envFile`. Probe script fails if it reappears.
-
-### [Medium→High in misconfig] `YUE_OPEN_MODE` fail-open default — FIXED (earlier)
-- **Status:** Fixed — code default `'0'`; `vercel.json` pins `0`.
+### [High] In-memory guest IP RL reset on cold start / multi-instance — residual
+- **Category:** abuse
+- **Evidence:** `guestRateLimit.ts` Map windows; best-effort on Vercel.
+- **Impact:** Scrapers can exceed per-instance limits across isolates.
+- **Fix:** Redis/Upstash shared limiter + keep edge Firewall.
+- **Fixability:** NEEDS_HUMAN
 
 ---
 
 ## Medium
 
-### [Medium] CORS `origin: true` — FIXED (earlier)
-- **Status:** Fixed — allowlist via `corsOrigins.ts`.
-
-### [Medium] `ai_vision_count` uncapped — FIXED (earlier)
-- **Status:** Fixed — Free / Family / Business monthly hard caps; guests `aiVision: false`.
-
-### [Medium] Global JSON body limit (`12mb`) — FIXED (split parser)
-- **Status:** Fixed 2026-09-08 — default JSON limit **256kb**; Cam scan + docs routes keep **12mb**.
+### [Medium] Harbor inventory / gift economy spoofable
 - **Category:** abuse
-- **Fixability:** Done
+- **Evidence:** Sanitize accepts allowlisted gear into `owned`/`banked`; `POST /api/harbor-quest/gift` transfers lanterns/titles to any signed-in UUID (leaderboard exposes `userId`).
+- **Impact:** Infinite cosmetics within allowlist; gift spam.
+- **Fix:** Server ownership ledger; gift rate already added this pass — further economy rules need product OK.
+- **Fixability:** NEEDS_HUMAN
+- **Why:** Economy policy.
 
-### [Medium] `/api/health` still returns engines, models, full entitlement — HARDENED
-- **Status:** 2026-09-08 — public health keeps `ok` / `cloudReady` / engine booleans / `entitlement` / `incidentBanner` / push configured for SPA bootstrap; removed model names, lexicon/gloss dumps, notify config shape.
-- **Category:** leak / health
-- **Residual:** Entitlement snapshot still public (needed for `#/app` bootstrap).
-- **Fixability:** Done / residual accepted
+### [Medium] Admin Practice Partner LLM uncapped + no RPM
+- **Category:** abuse / metering
+- **Evidence:** `POST /api/admin/practice-partner/chat` — `requireAdmin` only; `practice_partner_count` view-only; no IP/user RL.
+- **Impact:** Stolen admin JWT burns DeepSeek (and follow-on TTS) without a product brake.
+- **Fix:** Per-admin RPM + optional monthly hard cap before consumer launch.
+- **Fixability:** NEEDS_HUMAN
+- **Why:** Admin policy / numbers.
+
+### [Medium] Practice Partner client-controlled chat history (injection)
+- **Category:** injection
+- **Evidence:** Client sends full `{role,content}[]`; server only prepends fixed system prompt.
+- **Impact:** Low while admin-only; **High** if reused for consumer Practice Partner.
+- **Fix:** Server-side session store before consumer launch.
+- **Fixability:** NEEDS_HUMAN for consumer design; scaffolding AUTOMATED later.
+
+### [Medium] Signed-in Free accounts skip guest IP RL on paid paths
+- **Category:** abuse
+- **Evidence:** `allowGuestIpOrReject` returns true when Bearer present.
+- **Impact:** Free scrapers hit plan caps without IP throttling.
+- **Fix:** Per-user RL buckets or WAF.
+- **Fixability:** NEEDS_HUMAN
+
+### [Medium] `/api/docs/*` has no IP rate limit
+- **Category:** abuse
+- **Evidence:** Login + page meters only.
+- **Impact:** Burst Vision/model until pages exhaust.
+- **Fixability:** NEEDS_HUMAN
+
+### [Medium] Unauthenticated push subscribe — HARDENED (IP RL)
+- **Status:** Fixed 2026-09-19 — `allowIpRateOrReject` on subscribe/unsubscribe (default **20**/min, `YUE_PUSH_SUBSCRIBE_RL_PER_MIN`).
+- **Residual:** Still optional-auth; bots can fill table slowly within RL.
+- **Fixability:** Done / further auth-required = NEEDS_HUMAN
 
 ---
 
 ## Low
 
+### [Low] Public leaderboard returns account UUIDs
+- **Category:** leak
+- **Evidence:** `userId` on each entry; used for gifts/presence.
+- **Fixability:** NEEDS_HUMAN (identity design)
+
+### [Low] Harbor / push 500s returned raw DB messages — HARDENED
+- **Status:** Fixed 2026-09-19 — generic client messages; details logged server-side.
+
+### [Low] Practice Partner returned model name to UI — HARDENED
+- **Status:** Fixed 2026-09-19 — model stays in audit only; UI no longer shows it.
+
+### [Low] Practice Partner usage meter was fire-and-forget — HARDENED
+- **Status:** Fixed 2026-09-19 — `await addPracticePartnerCount` (still fail-open on meter errors).
+
+### [Low] `X-Powered-By: Express` — HARDENED
+- **Status:** Fixed 2026-09-19 — `app.disable('x-powered-by')`.
+
+### [Low] Harbor progress RLS allowed client writes bypassing API sanitize — HARDENED
+- **Status:** Fixed 2026-09-19 — migration `035_harbor_quest_progress_service_role_writes.sql` drops insert/update/delete policies (keep SELECT). **Apply in Supabase SQL Editor.**
+- **Fixability:** Done (ops: apply migration)
+
 ### [Low] Public `GET /api/auth-config` returns anon key — by design
 - **Fixability:** NEEDS_HUMAN (Supabase RLS audit)
 
-### [Low] Docs / social agent markdown if GitHub Pages covers `/docs`
-- **Fixability:** NEEDS_HUMAN
+### [Low] Duplicate migration prefix `025_*.sql`
+- **Fixability:** NEEDS_HUMAN if not already applied
 
-### [Low] Legal markdown `javascript:` hrefs — HARDENED 2026-09-06
-- **Status:** `rewriteLegalHref` now allowlists `http(s):`, `mailto:`, and `#/` only.
-
-### [Low] Azure Vision `Operation-Location` host not pinned — HARDENED 2026-09-06
-- **Status:** Poll URL host must match configured Vision endpoint (https only).
-
-### [Low] Internal DB webhook secret compared with `!==` — HARDENED 2026-09-06
-- **Status:** `timingSafeEqual` on `x-notify-secret` in `signupNotify.ts`.
+### [Low] `npm audit` api: moderate `qs` via Express 4.22.2
+- **Category:** other
+- **Evidence:** `npm audit --omit=dev` in `apps/api` — GHSA-x5fp-wj9c-mxmx / GHSA-4mjr-xmp4-gh2g; web clean.
+- **Impact:** DoS/array-limit issues in querystring parsing — mitigated somewhat by JSON body limits; still worth upgrading when Express patches land.
+- **Fix:** `npm audit fix` / bump Express when compatible.
+- **Fixability:** NEEDS_HUMAN (dependency bump / lockfile review)
 
 ---
 
-## AUTOMATED hardenings shipped in this re-scan
+## AUTOMATED hardenings shipped this pass (2026-09-19)
 
-1. Meter `/api/breakdown` like translate  
-2. Cap `/api/tts` text at 2000 characters  
-3. Constant-time compare for signup DB webhook secret  
-4. Pin Azure Vision operation-location host  
-5. Block non-http(s)/mailto/hash hrefs in legal markdown
-6. Guest per-IP rate limits on translate / breakdown / speech-token / camera scan (TTS excluded by product choice)  
+1. Harbor PUT / gift per-user rate limits (`YUE_HARBOR_PUT_RL_PER_MIN` default 120, gift 30)
+2. Push subscribe/unsubscribe IP rate limit (default 20/min)
+3. Generic Harbor / push error messages (no raw Supabase strings to clients)
+4. `app.disable('x-powered-by')`
+5. Practice Partner: await usage meter; omit `model` from JSON response
+6. Migration `035` — Harbor progress writes service-role only
+7. Docs: list `POST /api/admin/practice-partner/chat` in `docs/admin.md`
+8. Extended `guestRateLimit.smoke.ts` for IP + user buckets
 
 ---
 
@@ -131,25 +158,39 @@ Updated: **2026-09-08** — speech-token prepaid debit, IP-bound guest ids, docs
 
 - Production `vercel.json`: `YUE_OPEN_MODE=0`, `YUE_REQUIRE_LOGIN=1`, guest live **30 min** + Cam **30 scan credits**
 - Code default `YUE_OPEN_MODE=0` (fail-closed)
-- Live speech token gated on `ent.allowed.live`; Cam/docs on `allowed.camera` / `allowed.docs`
-- Admin routes use `requireAdmin` (email allowlist + role)
-- Stripe webhook: raw body + signature verification
-- Auth send-email + signup auth hook: Standard Webhooks
-- Bug reports: auth + 10/hour + screenshot size strip
-- `.gitignore` excludes `.env` / `apps/api/.env`
-- Public `/api/health` no longer exposes `envFile`
-- CORS allowlist (no ephemeral `*-git-*.vercel.app`)
-- Guest AI vision hard-off
-- Offline smokes + `npm run security:api-health` (no paid APIs)
+- Live speech token gated + prepaid debit; Cam scan credits; docs page metering
+- Guest IP RL: translate / breakdown / speech-token / camera
+- Guest identity anchors (device + network)
+- Admin routes: `requireAdmin` (email allowlist + role) — including Practice Partner
+- Practice Partner: **not** in consumer app; no public `/api/practice*`
+- Harbor GET/PUT/gift require auth; public leaderboard is read-only by design
+- Leaderboard table: RLS SELECT public, no client writes
+- Stripe webhook signature; auth hooks Standard Webhooks; signup notify `timingSafeEqual`
+- CORS allowlist; JSON body 256kb default / 12mb Cam+docs
+- History 14-day TTL prune (client + API + `026`)
+- `.gitignore` excludes `.env`
+- `npm run security:api-health` fail=0
 - Cloud `AGENTS.md` forbids unapproved metered API calls from agents
-- `npm audit --omit=dev` → **0 vulnerabilities** (2026-09-06)
+
+---
+
+## Harbor Quest / Practice Partner — gate matrix
+
+| Surface | Guest | Free signed-in | Admin |
+| --- | --- | --- | --- |
+| `#/learn` play (local) | Yes | Yes | Yes |
+| `PUT /api/harbor-quest` | 401 | Yes (scores client-trusted) | Yes |
+| Leaderboard GET | Public | Public | Public |
+| Harbor gift | 401 | Yes | Yes |
+| Practice Partner LLM | 401 | 403 | Yes (uncapped) |
+| Harbor TTS via `/api/tts` | Unlimited (product) | Plan meters | Plan meters |
 
 ---
 
 ## Recommended next actions for Henry (NEEDS_HUMAN)
 
-1. Confirm guest IP RL defaults feel right in real Solo use (or tweak `YUE_GUEST_RL_*`).  
-2. **Bind guest trials to IP** (or drop cookieless live/cam) if cookie wipe abuse shows up.  
-3. **Align live/cam meters** with actual Azure spend (token debit / per-scan charge) — see #4.  
-4. Meter or soft-cap `/api/docs/segments` — see #5.  
-5. Optional: slim `/api/health`; route-specific JSON body limits; Supabase RLS audit; Upstash shared RL.
+1. **Decide Harbor trust model** — accept cosmetic leaderboard spoofing for beta, or design server-authoritative XP/gold.
+2. Apply **`035_harbor_quest_progress_service_role_writes.sql`** in Supabase SQL Editor (and earlier gaps `022`/`023` TTS columns if still missing).
+3. Before consumer Practice Partner: hard turn cap + RPM + server-side history.
+4. Optional: guest TTS IP RL if Harbor auto-speak costs spike; Upstash shared RL; Express/`qs` bump when ready.
+5. Confirm Vercel `YUE_APP_URL=https://www.jyuttranslate.com` for CORS.

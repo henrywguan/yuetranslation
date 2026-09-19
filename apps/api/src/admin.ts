@@ -1185,9 +1185,11 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
   try {
     const result = await generatePracticePartnerReply(parsed.data.messages)
     const { addPracticePartnerCount } = await import('./usage.js')
-    void addPracticePartnerCount(auth.userId, 1).catch((e) => {
+    try {
+      await addPracticePartnerCount(auth.userId, 1)
+    } catch (e) {
       console.warn('[practice-partner] usage meter failed', e)
-    })
+    }
     await writeAuditLog({
       actorId: auth.userId,
       actorEmail: auth.email,
@@ -1198,11 +1200,14 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         replyChars: result.reply.length,
       },
     })
-    res.json({ ok: true, reply: result.reply, model: result.model })
+    // Model id stays in audit only — omit from client response.
+    res.json({ ok: true, reply: result.reply })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Practice partner chat failed'
     const status = /not configured|unavailable/i.test(msg) ? 503 : 500
-    res.status(status).json({ message: msg })
+    res.status(status).json({
+      message: status === 503 ? msg : 'Practice partner chat failed',
+    })
   }
 }
 

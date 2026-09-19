@@ -99,6 +99,7 @@ import { getIncidentBanner } from './appSettings.js'
 import { pushConfigured } from './pushNotifications.js'
 
 export const app = express()
+app.disable('x-powered-by')
 app.use(cors({ origin: corsOriginDelegate, credentials: true }))
 
 // Stripe webhook must read the raw body before JSON parsing.
