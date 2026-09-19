@@ -49,6 +49,7 @@ import {
 } from './harborInteractSfx'
 import { playHarborVo, preloadHarborVo } from './harborVo'
 import { preloadHarborScoutGlbs } from './harborProtagonistGlb'
+import { preloadHarborV2Assets } from './harborV2Assets'
 import { preloadHarborFishSfx } from './harborFishingSfx'
 import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
 import { HarborFishingPanel } from './HarborFishingPanel'
@@ -425,6 +426,7 @@ export function LearnSession({
     preloadHarborVo()
     preloadHarborFishSfx()
     preloadHarborScoutGlbs()
+    preloadHarborV2Assets()
     // Do NOT soft-start BGM/ambient on mount — iPhone creates a suspended
     // AudioContext and schedules silent graphs that never recover. Beds start
     // only from unlockHarborAudioBeds inside a real user gesture (splash Enter
