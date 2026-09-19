@@ -9,6 +9,7 @@
 import * as THREE from 'three'
 import { applyHarborCel } from './harborCelShader'
 import { revampHarborAlbedoRgba } from './harborTextureRevamp'
+import { auditHarborMesh } from './harborMeshAudit'
 
 /** Posterized Harbor swatches (~era HSL survival). Prefer these over one-off hexes. */
 export const HARBOR_CRAFT_PALETTE = {
@@ -711,7 +712,7 @@ export function hqCanopy(r: number, color: number, x = 0, y = 0, z = 0): THREE.M
   const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), hqMat(color))
   m.position.set(hqSnap(x), hqSnap(y), hqSnap(z))
   m.scale.y = 0.7
-  return m
+  return auditHarborMesh(m, 'terrain')
 }
 
 /** Faceted rock chunk — smooth shading, boxy silhouette. */
@@ -723,7 +724,7 @@ export function hqRock(rng: () => number, color: number = HARBOR_CRAFT_PALETTE.r
   )
   m.rotation.set(rng() * 0.4, rng() * Math.PI, rng() * 0.3)
   m.scale.set(1 + rng() * 0.35, 1, 1 + rng() * 0.25)
-  return m
+  return auditHarborMesh(m, 'terrain')
 }
 
 // —— Modular props (clutter density = “RS detail”) ——

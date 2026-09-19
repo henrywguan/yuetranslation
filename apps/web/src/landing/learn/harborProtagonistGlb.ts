@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { HarborGender } from './harborAppearance'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
+import { auditHarborObject } from './harborMeshAudit'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
 
 export const HARBOR_SCOUT_GLB_SRC = {
@@ -60,6 +61,7 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
       mm.needsUpdate = true
     }
   })
+  auditHarborObject(wrap, 'character')
 
   return wrap
 }

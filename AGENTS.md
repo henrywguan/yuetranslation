@@ -78,7 +78,7 @@ CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide
 - Admin metering (view-only): `harbor_quest_count` (correct-answer deltas) · Practice Partner `practice_partner_count` (LLM turns) — see [docs/entitlements.md](docs/entitlements.md)
 - Speaker buttons use existing Azure TTS (`SpeakButton` / `yue`) on hearable Han examples
 - Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
-- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts`
+- Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts` · anime revamp: `npx tsx apps/web/src/landing/learn/harborCelShader.smoke.ts` · `npx tsx apps/web/src/landing/learn/harborTextureRevamp.smoke.ts` · `npx tsx apps/web/src/landing/learn/harborMeshAudit.smoke.ts` · `python3 scripts/harbor-revamp-textures.py --self-test` · `python3 scripts/harbor-revamp-meshes.py --self-test`
 - Related: cinematic tones refresher remains `#/tones`
 
 ### Instagram / static social posts (approved look)

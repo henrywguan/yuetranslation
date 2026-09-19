@@ -299,7 +299,8 @@ export function applyHarborCel<T extends THREE.Material>(material: T, opts: Harb
     const o = material.userData.harborCel as HarborCelOptions | undefined
     return `${prevKey()}|${HARBOR_CEL_SHADER_ID}|ramp:${o?.lightRamp ? 1 : 0}|ilm:${o?.ilmMap ? 1 : 0}`
   }
-  if (opts.ilmMap && !('map' in material && (material as THREE.MeshLambertMaterial).map)) {
+  const mapped = material as THREE.Material & { map?: THREE.Texture | null }
+  if (opts.ilmMap && !mapped.map) {
     material.defines = { ...(material.defines ?? {}), USE_UV: '' }
   }
   material.userData.harborCelApplied = HARBOR_CEL_SHADER_ID

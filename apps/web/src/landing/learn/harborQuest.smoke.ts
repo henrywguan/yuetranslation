@@ -629,6 +629,11 @@ function main() {
     /uHarborIlmMap/,
     'cel-shader supports ILM light-ramp maps',
   )
+  assert.match(
+    readFileSync(new URL('./harborMeshAudit.ts', import.meta.url), 'utf8'),
+    /applyWeightedNormals/,
+    'mesh audit writes weighted normals for cel shadow lines',
+  )
   assert.ok(hqWindow(0.3, 0.3, HARBOR_CRAFT_PALETTE.trimGold, 0x102030, 0, 0, 0).isGroup, 'extruded window')
   assert.ok(hqDoor().name === 'hq-door', 'extruded door prop')
   assert.ok(hqWallWindow(1, 1, 0.2, HARBOR_CRAFT_PALETTE.plaster).name === 'hq-wall-window', 'wall+window panel')

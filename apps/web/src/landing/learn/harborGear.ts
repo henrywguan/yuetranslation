@@ -503,7 +503,7 @@ function handheldGlowMat(color: number, emissive: number, intensity = 0.9) {
       color,
       emissive,
       emissiveIntensity: intensity,
-      flatShading: true,
+      flatShading: false,
     }),
     { preset: 'lantern', ilmMap: makeHarborIlmMap('lantern') },
   )

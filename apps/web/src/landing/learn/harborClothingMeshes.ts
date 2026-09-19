@@ -5,6 +5,7 @@
 import * as THREE from 'three'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import { harborFigureMat, harborFigureTorso } from './harborFigure'
+import { auditHarborObject } from './harborMeshAudit'
 import type { HarborGearSlot } from './harborGear'
 
 function mat(color: number) {
@@ -63,11 +64,18 @@ export function buildClothingMesh(
   family: string,
   opts: ClothingBuildOpts,
 ): THREE.Group | null {
-  if (slot === 'hat') return buildHat(family, opts)
-  if (slot === 'top') return buildTop(family, opts)
-  if (slot === 'bottom') return buildBottom(family, opts)
-  if (slot === 'shoes') return buildShoes(family, opts)
-  return null
+  const built =
+    slot === 'hat'
+      ? buildHat(family, opts)
+      : slot === 'top'
+        ? buildTop(family, opts)
+        : slot === 'bottom'
+          ? buildBottom(family, opts)
+          : slot === 'shoes'
+            ? buildShoes(family, opts)
+            : null
+  if (built) auditHarborObject(built, 'clothing')
+  return built
 }
 
 function buildHat(family: string, opts: ClothingBuildOpts): THREE.Group {
