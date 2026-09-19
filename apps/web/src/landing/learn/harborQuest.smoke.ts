@@ -11,6 +11,7 @@ import {
   levelsForCampaign,
   nextLevelId,
   openCantoneseLessonUrl,
+  type HarborCampaignId,
 } from '../../landing/learn/curriculum'
 import {
   HARBOR_FANFARE_DURATION_BOUNDS_MS,
@@ -178,12 +179,19 @@ import { clampHarborTipBox } from '../../landing/learn/HarborItemTooltip'
 
 /** Offline: Harbor Quest curriculum integrity (no paid APIs). */
 function main() {
-  assert.ok(HARBOR_LEVELS.length >= 9, 'expected intro + 7 lessons + chart')
-  assert.equal(HARBOR_CAMPAIGNS.length, 2, 'Sounds + Life Unit 0 campaigns')
+  assert.ok(HARBOR_LEVELS.length >= 58, 'Sounds + Life0 + Life1–11 piers')
+  assert.equal(HARBOR_CAMPAIGNS.length, 13, 'Sounds + Life Units 0–11 campaigns')
   assert.equal(levelsForCampaign('life0').length, 5, 'Unit 0 campaign pier count')
+  assert.equal(levelsForCampaign('life1').length, 4, 'Unit 1 campaign pier count')
+  assert.equal(levelsForCampaign('life11').length, 4, 'Unit 11 campaign pier count')
   assert.equal(levelCampaign(levelById('life0-guess')!), 'life0')
+  assert.equal(levelCampaign(levelById('life1-l1')!), 'life1')
+  assert.equal(levelCampaign(levelById('life11-l54')!), 'life11')
   assert.equal(levelRealm(levelById('life0-classroom')!), 'bamboo')
+  assert.equal(levelRealm(levelById('life1-l1')!), 'bamboo')
   assert.equal(nextLevelId('life0-guess'), 'life0-classroom', 'Life0 next stays in campaign')
+  assert.equal(nextLevelId('life1-l1'), 'life1-l2', 'Life1 next stays in campaign')
+  assert.equal(nextLevelId('life1-l4'), null, 'Life1 campaign ends at lesson 4')
   const soundsLast = levelsForCampaign('sounds').at(-1)!.id
   assert.equal(nextLevelId(soundsLast), null, 'Sounds campaign ends at final pier')
   assert.match(
@@ -191,10 +199,27 @@ function main() {
     /unit-0\/3-daily-expressions/,
     'Life0 OC urls point at unit-0',
   )
+  assert.match(
+    openCantoneseLessonUrl(levelById('life1-l1')!),
+    /unit-1\/lesson-1$/,
+    'Life1 OC urls point at unit-1 lessons',
+  )
+  assert.match(
+    openCantoneseLessonUrl(levelById('life11-l54')!),
+    /unit-11\/lesson-54$/,
+    'Life11 OC urls point at unit-11 lessons',
+  )
 
   assert.equal(HARBOR_LEVELS[0]!.id, 'introduction')
   assert.ok(HARBOR_LEVELS.some((l) => l.id === 'jyutping-chart'), 'Sounds chart pier remains')
   assert.ok(HARBOR_LEVELS.some((l) => l.id === 'life0-intro'), 'Life0 closer pier present')
+  assert.ok(HARBOR_LEVELS.some((l) => l.id === 'life1-l1'), 'Life1 opener pier present')
+  assert.ok(HARBOR_LEVELS.some((l) => l.id === 'life11-l54'), 'Life11 closer pier present')
+
+  for (let u = 1; u <= 11; u++) {
+    const camp = `life${u}` as HarborCampaignId
+    assert.equal(levelsForCampaign(camp).length, 4, `Unit ${u} has 4 lesson piers`)
+  }
 
   const ids = HARBOR_LEVELS.map((l) => l.id)
   assert.equal(new Set(ids).size, ids.length, 'unique level ids')

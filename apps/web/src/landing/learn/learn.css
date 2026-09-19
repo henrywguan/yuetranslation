@@ -4244,8 +4244,11 @@
 }
 .hq-campaign-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
   gap: 0.4rem;
+  max-height: min(40vh, 18rem);
+  overflow-y: auto;
+  padding-right: 0.15rem;
 }
 .hq-campaign-tab {
   display: flex;

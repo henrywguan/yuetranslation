@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  campaignShortLabel,
   HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
   levelById,
@@ -1373,7 +1374,7 @@ export function LearnSession({
                     }}
                   >
                     <span className="hq-teleport-ch">
-                      {`${levelCampaign(lv) === 'life0' ? 'Life0' : 'Sounds'} · ${lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}`}
+                      {`${campaignShortLabel(levelCampaign(lv))} · ${lv.chapter === 0 ? 'Intro' : `Ch. ${lv.chapter}`}`}
                     </span>
                     <span className="hq-teleport-title">{lv.title.en}</span>
                     <span className="hq-teleport-status">
