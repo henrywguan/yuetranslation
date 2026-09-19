@@ -214,11 +214,48 @@ type Props = {
   realm?: HarborRealmId | null
   /** OSRS minimap navigate — world (x, z) from a tap inside the radar disc. */
   onNavigate?: (x: number, z: number) => void
+  /**
+   * Opens the fullscreen wuxia world map (Learning voyage ↔ Guan Harbor).
+   * When omitted, the corner world-map control is hidden.
+   */
+  onOpenWorldMap?: () => void
 }
+
+export type HarborWorldTravelDest = 'voyage' | 'guan'
 
 type TapMark = { left: number; top: number; id: number }
 
-export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate }: Props) {
+function WorldMapGlyph() {
+  return (
+    <svg className="hq-minimap-world-glyph" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <ellipse cx="12" cy="12" rx="4.2" ry="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <path
+        d="M3.5 9.5h17M3.5 14.5h17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 5.2c1.4 1.6 2.2 4 2.2 6.8S8.4 17.2 7 18.8M17 5.2c-1.4 1.6-2.2 4-2.2 6.8s.8 5.2 2.2 6.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export function HarborMinimap({
+  pose,
+  remotes,
+  hidden,
+  realm = null,
+  onNavigate,
+  onOpenWorldMap,
+}: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const [layout, setLayout] = useState<Layout>(() => loadLayout())
@@ -277,7 +314,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   const beginMove = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
       if (layout.locked) return
-      if ((e.target as HTMLElement).closest('button, .hq-minimap-resize')) return
+      if ((e.target as HTMLElement).closest('button, .hq-minimap-resize, .hq-minimap-world')) return
       e.preventDefault()
       e.stopPropagation()
       dragRef.current = {
@@ -312,7 +349,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   )
 
   const onBodyPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button, .hq-minimap-resize')) return
+    if ((e.target as HTMLElement).closest('button, .hq-minimap-resize, .hq-minimap-world')) return
     // Chrome drag owns move/resize; body taps are click-to-walk only.
     if (dragRef.current) return
     navPointerRef.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY }
@@ -361,6 +398,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
   const size = layout.size
   const compact = size < COMPACT_TITLE_BELOW
+  const inGuan = realm === 'guan'
 
   const visitables = minimapVisitables(realm)
 
@@ -566,6 +604,23 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
           )}
         </>
       )}
+
+      {onOpenWorldMap ? (
+        <div className="hq-minimap-world">
+          <button
+            type="button"
+            className={`hq-minimap-world-btn${inGuan ? ' is-guan' : ''}`}
+            aria-label="Open world map"
+            title="World map"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenWorldMap()
+            }}
+          >
+            <WorldMapGlyph />
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

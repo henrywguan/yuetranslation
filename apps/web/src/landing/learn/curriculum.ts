@@ -8,6 +8,7 @@
  */
 
 import { LIFE0_LEVELS } from './curriculumLife0'
+import { HARBOR_LIFE_CAMPAIGNS, LIFE_BOOK_LEVELS } from './curriculumLifeBook'
 
 export type LearnLine = { en: string; zh: string }
 
@@ -52,8 +53,21 @@ export type BuildStep = {
 
 export type QuestStep = TeachStep | PickStep | BuildStep
 
-/** Voyage campaign — Sounds = Pronunciation Guide; Life 0 = Unit 0 Getting started. */
-export type HarborCampaignId = 'sounds' | 'life0'
+/** Voyage campaign — Sounds guide, then Life 1 Units 0–11. */
+export type HarborCampaignId =
+  | 'sounds'
+  | 'life0'
+  | 'life1'
+  | 'life2'
+  | 'life3'
+  | 'life4'
+  | 'life5'
+  | 'life6'
+  | 'life7'
+  | 'life8'
+  | 'life9'
+  | 'life10'
+  | 'life11'
 
 /** World dressing — river harbor, Lingnan bamboo academy, or Guan tropical paradise. */
 export type HarborRealmId = 'river' | 'bamboo' | 'guan'
@@ -107,7 +121,20 @@ export const HARBOR_CAMPAIGNS: {
     realm: 'bamboo',
     ocHome: 'https://opencantonese.org/books/cantonese-life-1/unit-0',
   },
+  ...HARBOR_LIFE_CAMPAIGNS,
 ]
+
+/** Short label for teleport / map chrome (Sounds · Life0 · Life1 …). */
+export function campaignShortLabel(id: HarborCampaignId): string {
+  if (id === 'sounds') return 'Sounds'
+  if (id.startsWith('life')) return `Life${id.slice(4)}`
+  return id
+}
+
+/** True for Cantonese Life 1 Units 1–11 (not Sounds / Unit 0). */
+export function isLifeBookCampaign(id: HarborCampaignId): boolean {
+  return id !== 'sounds' && id !== 'life0'
+}
 
 export function levelCampaign(level: HarborLevel): HarborCampaignId {
   return level.campaign ?? 'sounds'
@@ -115,7 +142,10 @@ export function levelCampaign(level: HarborLevel): HarborCampaignId {
 
 export function levelRealm(level: HarborLevel): HarborRealmId {
   if (level.realm) return level.realm
-  return levelCampaign(level) === 'life0' ? 'bamboo' : 'river'
+  const camp = levelCampaign(level)
+  if (camp === 'sounds') return 'river'
+  // Life Unit 0+ default to bamboo academy when realm omitted.
+  return 'bamboo'
 }
 
 export function openCantoneseLessonUrl(level: HarborLevel): string {
@@ -930,7 +960,11 @@ const SOUNDS_LEVELS: HarborLevel[] = [
     ],
   },]
 
-export const HARBOR_LEVELS: HarborLevel[] = [...SOUNDS_LEVELS, ...LIFE0_LEVELS]
+export const HARBOR_LEVELS: HarborLevel[] = [
+  ...SOUNDS_LEVELS,
+  ...LIFE0_LEVELS,
+  ...LIFE_BOOK_LEVELS,
+]
 
 export function levelById(id: string | null | undefined): HarborLevel | undefined {
   if (!id) return undefined
