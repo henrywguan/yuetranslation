@@ -359,6 +359,89 @@ export function harborFishSpotById(id: string): HarborFishSpotDef | undefined {
   return SPOT_BY_ID.get(id as HarborFishSpotId)
 }
 
+export const HARBOR_FISH_METHOD_LABEL: Record<HarborFishMethod, string> = {
+  net: 'Net',
+  bait: 'Rod + bait',
+  lure: 'Fly rod + lure',
+  harpoon: 'Harpoon',
+  cage: 'Cage',
+}
+
+/** Cheapest tool per method accepted at this spot (Ready / requirement UI). */
+export function harborFishToolsRequiredForSpot(spot: HarborFishSpotDef): HarborFishToolDef[] {
+  const out: HarborFishToolDef[] = []
+  for (const method of spot.methods) {
+    const tools = HARBOR_FISH_TOOLS.filter((t) => t.method === method).sort((a, b) => a.level - b.level)
+    const pick = tools[0]
+    if (pick) out.push(pick)
+  }
+  return out
+}
+
+/** Distinct baits used by fish that bite here (skip bait-none). */
+export function harborFishBaitsRequiredForSpot(spot: HarborFishSpotDef): HarborBaitDef[] {
+  const ids = new Set<HarborBaitId>()
+  for (const fid of spot.fish) {
+    const f = harborFishById(fid)
+    if (f && f.bait !== 'bait-none') ids.add(f.bait)
+  }
+  return [...ids]
+    .map((id) => harborFishBaitById(id))
+    .filter((b): b is HarborBaitDef => Boolean(b))
+}
+
+/** Human-readable “what’s required” for this spot (and optional current mismatch). */
+export function harborFishSpotRequirementText(
+  spot: HarborFishSpotDef,
+  bag?: HarborFishingBag,
+): string {
+  const tools = harborFishToolsRequiredForSpot(spot)
+  const toolNames = tools.map((t) => t.name.en)
+  const toolPart =
+    toolNames.length <= 1
+      ? toolNames[0] ?? 'a matching tool'
+      : `${toolNames.slice(0, -1).join(', ')} or ${toolNames[toolNames.length - 1]}`
+  if (!bag) return `Need ${toolPart} for this spot.`
+  const tool = harborFishToolById(bag.equippedTool)
+  if (!tool || !spot.methods.includes(tool.method)) {
+    return `Need ${toolPart} for this spot.`
+  }
+  const needBait = tool.method === 'bait' || tool.method === 'lure'
+  if (needBait) {
+    const bait = harborFishBaitById(bag.equippedBait)
+    if (!bait || bag.equippedBait === 'bait-none') {
+      return `Need bait with ${tool.name.en} for this spot.`
+    }
+    if ((bag.bait[bag.equippedBait] ?? 0) < 1) {
+      return `Out of ${bait.name.en} — restock at the lodge.`
+    }
+  }
+  return `Need ${toolPart} for this spot.`
+}
+
+/** True when the equipped setup is blocked for this spot (wrong tool / empty bait). */
+export function harborFishSpotSetupBlocked(
+  bag: HarborFishingBag,
+  spot: HarborFishSpotDef,
+): boolean {
+  const tool = harborFishToolById(bag.equippedTool)
+  if (!tool || !spot.methods.includes(tool.method)) return true
+  const needBait = tool.method === 'bait' || tool.method === 'lure'
+  if (!needBait) return false
+  if (bag.equippedBait === 'bait-none') return true
+  return (bag.bait[bag.equippedBait] ?? 0) < 1
+}
+
+/** Examine-line for a fish tile tip (name/price/lore). */
+export function harborFishExamineMeta(fish: HarborFishDef): string {
+  const method = HARBOR_FISH_METHOD_LABEL[fish.method]
+  const bait =
+    fish.bait === 'bait-none'
+      ? 'no bait'
+      : (harborFishBaitById(fish.bait)?.name.en ?? fish.bait)
+  return `Sell ${fish.value}¢ · Lv ${fish.level} · ${method} · ${bait} · +${fish.xp} XP`
+}
+
 /** Classic-ish curve: ~week to high 70s with daily casts; soft cap toward 99. */
 export function fishingXpToLevel(xp: number): number {
   const x = Math.max(0, xp)
@@ -507,7 +590,7 @@ export function attemptHarborFishCast(
   const tool = harborFishToolById(bag.equippedTool)
   if (!tool) return { ok: false, bag, message: 'Equip a fishing tool at the lodge.' }
   if (!spot.methods.includes(tool.method)) {
-    return { ok: false, bag, message: `${tool.name.en} cannot work this spot.` }
+    return { ok: false, bag, message: harborFishSpotRequirementText(spot, bag) }
   }
   const level = fishingXpToLevel(bag.fishingXp)
   if (level < tool.level) {
@@ -519,10 +602,12 @@ export function attemptHarborFishCast(
   if (needBait) {
     const bait = harborFishBaitById(baitId)
     if (!bait || baitId === 'bait-none') {
-      return { ok: false, bag, message: 'Select bait at the lodge.' }
+      return { ok: false, bag, message: harborFishSpotRequirementText(spot, bag) }
     }
     const have = bag.bait[baitId] ?? 0
-    if (have < 1) return { ok: false, bag, message: `Out of ${bait.name.en}.` }
+    if (have < 1) {
+      return { ok: false, bag, message: harborFishSpotRequirementText(spot, bag) }
+    }
   }
 
   const candidates = spot.fish

@@ -80,8 +80,18 @@ assert.match(panelSrc, /HarborFishModelIcon/, 'fishing panel shows model icons')
 assert.match(panelSrc, /hq-fish-tile|FishItemTile/, 'fishing panel uses contained item tiles')
 assert.match(panelSrc, /HarborItemTooltip/, 'fishing shop tips')
 assert.match(panelSrc, /Bites here/, 'cast tab labels bites')
+assert.match(panelSrc, /Required|harborFishToolsRequiredForSpot/, 'cast shows required gear for spot')
+assert.match(panelSrc, /harborFishExamineMeta|tipOpen=\{tipId === f\.id\}/, 'bites fish open examine tips')
+assert.match(panelSrc, /hq-fish-req-warn/, 'requirement status pulses gold')
 assert.match(panelSrc, /onCastResult|HARBOR_FISH_RESOLVE_MS/, 'cast drives world catch pose')
 assert.doesNotMatch(panelSrc, /Tool · <strong>|Bites here:\s*\{/, 'cast tab is not plain text lists')
+
+const fishSrc = readFileSync(new URL('./harborFishing.ts', import.meta.url), 'utf8')
+assert.match(fishSrc, /harborFishSpotRequirementText/, 'cast fail names required gear')
+assert.doesNotMatch(fishSrc, /cannot work this spot/, 'old net-cannot-work copy removed')
+
+const cssSrc = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
+assert.match(cssSrc, /hq-fish-req-gold-pulse|hq-fish-req-warn/, 'gold pulse for fishing req warn')
 
 const sfxSrc = readFileSync(new URL('./harborFishingSfx.ts', import.meta.url), 'utf8')
 assert.match(sfxSrc, /playHarborCoinChing/, 'successful catch layers coin reward')
