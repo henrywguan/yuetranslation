@@ -930,6 +930,32 @@ function main() {
   assert.match(bagSrc, /hq-bag-rail--hp|Hitpoints/, 'bag HP rail has Hitpoints tip')
   assert.match(bagSrc, /hq-bag-rail--pray|Carried/, 'bag star rail has Carried tip')
   assert.match(bagSrc, /hq-bag-rail-tip/, 'bag rails expose hover tooltips')
+  const bagRailCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
+  assert.match(
+    bagRailCss,
+    /\.hq-bag-grid-wrap[^{]*\{[^}]*padding-left:\s*1\.65rem/s,
+    'bag wrap reserves side padding for HP/Carried orbs',
+  )
+  assert.match(
+    bagRailCss,
+    /\.hq-bag-rail--hp[^{]*\{[^}]*left:\s*0/s,
+    'HP orb hangs on the left of the bag grid',
+  )
+  assert.match(
+    bagRailCss,
+    /\.hq-bag-rail--pray[^{]*\{[^}]*right:\s*0/s,
+    'Carried orb hangs on the right of the bag grid',
+  )
+  assert.match(
+    bagRailCss,
+    /\.hq-bag-rail--hp \.hq-bag-rail-tip[^{]*\{[^}]*left:\s*calc\(100%\s*\+\s*0\.35rem\)/s,
+    'HP tip opens inward over the grid (avoids docked overflow clip)',
+  )
+  assert.match(
+    bagRailCss,
+    /\.hq-bag-rail--pray \.hq-bag-rail-tip[^{]*\{[^}]*right:\s*calc\(100%\s*\+\s*0\.35rem\)/s,
+    'Carried tip opens inward over the grid (avoids docked overflow clip)',
+  )
   assert.match(bagSrc, /HARBOR_BAG_SLOTS\s*=\s*28/, 'OSRS 28-slot bag capacity')
   assert.match(bagSrc, /hq-bag-grid/, 'bag renders item grid')
   assert.match(bagSrc, /hq-bag-filters/, 'bag has slot filters')
