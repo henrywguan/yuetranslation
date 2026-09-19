@@ -761,6 +761,7 @@ function main() {
   }
   const standing = buildHarborProtagonist({ pose: 'standing' })
   assert.ok(countProtagonistMeshes(standing) >= meshes, 'standing has at least seated complexity')
+  assert.equal(standing.userData.usesScoutGlb, false, 'standing scout keeps the dress-up figure visible')
   {
     const pelvisY = standing.userData.pelvisY as number
     const headY = standing.userData.headY as number

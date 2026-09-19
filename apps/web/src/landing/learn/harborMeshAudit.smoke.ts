@@ -41,8 +41,8 @@ function main() {
   assert.equal(terrain.userData.harborMeshAudited, 'terrain')
 
   const head = harborFigureHead(harborFigureMat(0xe8c4a8), 1)
-  assert.equal(head.userData.harborMeshAudited, 'character')
-  assert.ok(head.geometry.getAttribute('normal'))
+  assert.ok(head.geometry.getAttribute('normal'), 'figure head keeps authored smooth normals')
+  assert.ok(!head.userData.harborMeshAudited, 'figure kit is not position-welded (kept the dress-up mesh)')
 
   const rock = hqRock(() => 0.4)
   assert.equal(rock.userData.harborMeshAudited, 'terrain')
@@ -54,14 +54,15 @@ function main() {
   cloth.traverse((o) => {
     if ((o as THREE.Mesh).isMesh && o.userData.harborMeshAudited === 'clothing') clothAudited += 1
   })
-  assert.ok(clothAudited >= 1, 'clothing meshes run the weighted-normal audit')
+  assert.equal(clothAudited, 0, 'wardrobe meshes skip the weld audit so silhouettes stay authored')
 
   const scout = buildHarborProtagonist({ pose: 'standing' })
   let scoutAudited = 0
   scout.traverse((o) => {
     if ((o as THREE.Mesh).isMesh && o.userData.harborMeshAudited === 'character') scoutAudited += 1
   })
-  assert.ok(scoutAudited >= 8, `scout figure parts audited (got ${scoutAudited})`)
+  assert.equal(scoutAudited, 0, 'scout figure is not welded/simplified')
+  assert.equal(scout.userData.usesScoutGlb, false, 'voyage scout is the dress-up figure, not the Meshy GLB')
 
   const group = new THREE.Group()
   group.add(new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), new THREE.MeshLambertMaterial({ flatShading: true })))
@@ -70,7 +71,7 @@ function main() {
   assert.equal((lamp.material as THREE.MeshLambertMaterial).flatShading, false, 'lantern audit clears flatShading')
 
   const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
-  assert.match(figSrc, /auditHarborMesh/, 'figure kit calls the mesh audit')
+  assert.doesNotMatch(figSrc, /auditHarborMesh/, 'figure kit no longer runs the mesh audit')
   const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
   assert.match(worldSrc, /auditHarborObject\(g, 'lantern'\)/, 'pier + boat lanterns audited')
 

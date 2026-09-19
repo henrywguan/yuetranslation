@@ -11,8 +11,7 @@
  */
 import * as THREE from 'three'
 import type { HarborEyeStyle } from './harborAppearance'
-import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
-import { auditHarborMesh, auditHarborObject } from './harborMeshAudit'
+import { applyHarborCel } from './harborCelShader'
 
 /**
  * Anime fashion proportions (unitless height ≈ 1.42 to crown).
@@ -54,13 +53,15 @@ export function harborFigureHeadExtents(r: number = HARBOR_FIGURE_HEAD_R) {
   }
 }
 
-/** Soft lit materials — no flatShading (dress-up camera needs polish). */
+/**
+ * Soft lit materials — no flatShading (dress-up camera needs polish).
+ * Lambert + cel (same path as world props). MeshStandardMaterial + cel still
+ * fails to compile on iOS Safari, which made every sailor invisible.
+ */
 export function harborFigureMat(color: number, doubleSide = false) {
   return applyHarborCel(
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshLambertMaterial({
       color,
-      roughness: 0.55,
-      metalness: 0.02,
       flatShading: false,
       ...(doubleSide ? { side: THREE.DoubleSide } : null),
     }),
@@ -80,13 +81,12 @@ export function harborFigureHead(
   y: number,
   opts: { r?: number; name?: string } = {},
 ): THREE.Mesh {
-  applyHarborCel(skin, { preset: 'character', ilmMap: makeHarborIlmMap('face') })
   const r = opts.r ?? HARBOR_FIGURE_HEAD_R
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 20), skin)
   mesh.scale.set(1.05, 1.08, 0.95)
   mesh.position.y = y
   if (opts.name) mesh.name = opts.name
-  return auditHarborMesh(mesh, 'character')
+  return mesh
 }
 
 /** Visible neck column under the chin (must clear the torso collar). */
@@ -95,7 +95,7 @@ export function harborFigureNeck(skin: THREE.Material, headY: number, r: number 
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.042, neckH, 12), skin)
   neck.position.y = headY - r * 0.88 - neckH * 0.48
   neck.name = 'hq-figure-neck'
-  return auditHarborMesh(neck, 'character')
+  return neck
 }
 
 /** Soft ear lobes flush on the skull sides. */
@@ -109,7 +109,6 @@ export function harborFigureEars(skin: THREE.Material, headY: number, r: number 
     ear.position.set(sx * (ex + 0.008), headY + 0.002, 0.01)
     g.add(ear)
   }
-  auditHarborObject(g, 'character')
   return g
 }
 
@@ -277,7 +276,7 @@ export function harborFigureTorso(
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(shoulder, waist, h, 16), cloth)
   mesh.scale.z = depth / ((shoulder + waist) * 0.5)
   mesh.position.y = y
-  return auditHarborMesh(mesh, 'character')
+  return mesh
 }
 
 /** Slim arm with soft hand (dress-up silhouette). */
@@ -317,7 +316,6 @@ export function harborFigureArm(
 
   g.userData.handY = elbowY - P.lowerArm * 0.85
   g.userData.handZ = 0.08
-  auditHarborObject(g, 'character')
   return g
 }
 
@@ -351,7 +349,6 @@ export function harborFigureLegStanding(
   toe.scale.set(1.05, 0.65, 1.25)
   toe.position.set(x + side * 0.008, 0.035, 0.11)
   g.add(toe)
-  auditHarborObject(g, 'character')
   return g
 }
 
@@ -373,6 +370,5 @@ export function harborFigureLegSeated(
   boot.rotation.x = Math.PI / 2
   boot.position.set(x, 0.1, 0.42)
   g.add(boot)
-  auditHarborObject(g, 'character')
   return g
 }
