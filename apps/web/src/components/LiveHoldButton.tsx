@@ -4,6 +4,7 @@ import { BiText } from './BiText'
 import { useYueStore } from '../lib/store'
 import { openAuthScreen } from '../lib/auth'
 import { unlockTtsPlayback } from '../lib/tts'
+import { agentDebugLog } from '../lib/agentDebugLog'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import {
   conversationLabelHtmlLang,
@@ -182,7 +183,21 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     // Touch/pen: accept primary contact (some WebViews report button as -1).
     // Mouse: only the primary (left) button.
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) return
+    if (needsLogin || (!canLive && !live && !stickyHere) || otherSideBusy) {
+      // #region agent log
+      agentDebugLog('E', 'LiveHoldButton.tsx:onPointerDown:blocked', 'pointerdown ignored', {
+        needsLogin,
+        canLive,
+        live,
+        stickyHere,
+        otherSideBusy,
+        side: side ?? null,
+        entitlementLive: entitlement?.allowed?.live ?? null,
+        entitlementReason: entitlement?.reason ?? null,
+      })
+      // #endregion
+      return
+    }
     if (activePointer.current != null) return
 
     // Avoid iOS callout / synthetic mouse after touch stealing the gesture.
@@ -211,6 +226,13 @@ export function LiveHoldButton({ side, labelLang = 'bi', className = '' }: Props
     unlockTtsPlayback()
     // startHold must own getUserMedia + recognition.start() in this gesture turn.
     // Do not unlock+stop a competing stream here — that races and leaves STT silent.
+    // #region agent log
+    agentDebugLog('E', 'LiveHoldButton.tsx:onPointerDown:start', 'calling startHold', {
+      side: side ?? null,
+      pointerType: e.pointerType,
+      canLive,
+    })
+    // #endregion
     void startHold(side)
   }
 

@@ -1,5 +1,7 @@
 import cors from 'cors'
 import express from 'express'
+import { appendFileSync, mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { ZodError } from 'zod'
 import { cloudReady, env, openaiStatus, visionConfigured, visionLlmConfigured } from './env.js'
 import { corsOriginDelegate } from './corsOrigins.js'
@@ -148,6 +150,26 @@ function guestTrialMessage(kind: 'live' | 'camera') {
     ? 'Guest live minutes used up. Sign in to continue on the Free plan.'
     : 'Guest camera scans used up. Sign in to continue on the Free plan.'
 }
+
+// DEV-only NDJSON sink for cloud-agent mic debugging (never in production).
+app.post('/api/_agent_debug_log', (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !env.openMode) {
+    res.status(404).end()
+    return
+  }
+  try {
+    const logPath = '/opt/cursor/logs/debug.log'
+    mkdirSync(dirname(logPath), { recursive: true })
+    const line = JSON.stringify({
+      ...(typeof req.body === 'object' && req.body ? req.body : {}),
+      serverTs: Date.now(),
+    })
+    appendFileSync(logPath, `${line}\n`)
+  } catch {
+    /* ignore write failures */
+  }
+  res.status(204).end()
+})
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
   const openai = openaiStatus()
