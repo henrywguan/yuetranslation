@@ -37,7 +37,13 @@ function main() {
   assert.match(src, /uHarborLightRamp/, 'custom light-ramp texture')
   assert.match(HARBOR_CEL_UNIFORMS_GLSL, /harborCelRamp/)
   assert.match(HARBOR_CEL_UNIFORMS_GLSL, /harborCelComposite/)
+  assert.doesNotMatch(
+    HARBOR_CEL_UNIFORMS_GLSL,
+    /directionalLights/,
+    'helpers must not touch lights before lights_pars exists (iOS compile kill)',
+  )
   assert.match(HARBOR_CEL_APPLY_LAMBERT_GLSL, /harborCelComposite/)
+  assert.match(HARBOR_CEL_APPLY_LAMBERT_GLSL, /NUM_DIR_LIGHTS/)
   assert.match(HARBOR_CEL_APPLY_PHYSICAL_GLSL, /totalSpecular \* 0\.18/)
 
   const p = resolveHarborCelParams({ preset: 'character' })
@@ -51,6 +57,8 @@ function main() {
 
   const dummyLambert = [
     '#include <common>',
+    '#include <uv_pars_fragment>',
+    '#include <lights_pars_begin>',
     'void main() {',
     LAMBERT_OUTGOING,
     '}',
@@ -59,6 +67,10 @@ function main() {
   assert.match(injectedL, /uHarborCelThreshold/)
   assert.match(injectedL, /harborCelComposite/)
   assert.doesNotMatch(injectedL, new RegExp(LAMBERT_OUTGOING.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  const lightsAt = injectedL.indexOf('#include <lights_pars_begin>')
+  const helpersAt = injectedL.indexOf('harborCelComposite')
+  const mainAt = injectedL.indexOf('void main()')
+  assert.ok(lightsAt >= 0 && helpersAt > lightsAt && helpersAt < mainAt, 'cel helpers land after lights pars, before main')
 
   const dummyPhys = ['#include <common>', PHYSICAL_OUTGOING].join('\n')
   const injectedP = injectHarborCelFragment(dummyPhys)

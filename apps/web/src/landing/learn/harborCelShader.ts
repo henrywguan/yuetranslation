@@ -89,7 +89,13 @@ export const HARBOR_CEL_PRESETS: Record<HarborCelPresetId, HarborCelParams> = {
   },
 }
 
-/** GLSL uniforms + helpers injected after `#include <common>`. */
+/**
+ * GLSL uniforms + helpers. Injected immediately before `void main()` so
+ * `vUv` / `vMapUv` / `directionalLights` already exist.
+ *
+ * Do NOT inject after `#include <common>` — that is before UV + lights pars,
+ * and iOS Safari WebGL rejects the program (meshes vanish; only fog + sprites).
+ */
 export const HARBOR_CEL_UNIFORMS_GLSL = /* glsl */ `
 uniform float uHarborCelThreshold;
 uniform float uHarborCelSoftness;
@@ -98,90 +104,74 @@ uniform float uHarborShadowLift;
 uniform vec3 uHarborRimColor;
 uniform float uHarborRimPower;
 uniform float uHarborRimStrength;
-uniform float uHarborUseLightRamp;
+#ifdef USE_HARBOR_LIGHT_RAMP
 uniform sampler2D uHarborLightRamp;
-uniform float uHarborUseIlm;
+#endif
+#ifdef USE_HARBOR_ILM
 uniform sampler2D uHarborIlmMap;
+#endif
 
-float harborCelLuma(vec3 c) {
-  return dot(c, vec3(0.2126, 0.7152, 0.0722));
-}
-
-vec2 harborCelIlmUv() {
-  #ifdef USE_MAP
-    return vMapUv;
-  #elif defined(USE_UV)
-    return vUv;
-  #else
-    return vec2(0.5);
-  #endif
-}
-
-/**
- * Sharp two-tone ramp. When a light-ramp texture is bound, it replaces the
- * analytic smoothstep so artists can paint extra mid-tone bands.
- */
 float harborCelRamp(float litness, float threshold, float softness) {
-  if (uHarborUseLightRamp > 0.5) {
-    return texture2D(uHarborLightRamp, vec2(clamp(litness, 0.0, 1.0), 0.5)).r;
-  }
-  float w = max(softness, 1e-4);
-  return smoothstep(threshold - w, threshold + w, litness);
+#ifdef USE_HARBOR_LIGHT_RAMP
+	return texture2D(uHarborLightRamp, vec2(clamp(litness, 0.0, 1.0), 0.5)).r;
+#else
+	float w = max(softness, 1e-4);
+	return smoothstep(threshold - w, threshold + w, litness);
+#endif
 }
 
 vec4 harborCelIlmSample() {
-  if (uHarborUseIlm < 0.5) {
-    return vec4(0.5, 0.5, 1.0, 1.0);
-  }
-  return texture2D(uHarborIlmMap, harborCelIlmUv());
+#ifdef USE_HARBOR_ILM
+	#ifdef USE_MAP
+	return texture2D(uHarborIlmMap, vMapUv);
+	#elif defined( USE_UV )
+	return texture2D(uHarborIlmMap, vUv);
+	#else
+	return texture2D(uHarborIlmMap, vec2(0.5));
+	#endif
+#else
+	return vec4(0.5, 0.5, 1.0, 1.0);
+#endif
 }
 
-float harborCelNdotL(vec3 geomNormal) {
-  float ndotl = 0.55;
-  #if (NUM_DIR_LIGHTS > 0)
-    ndotl = saturate(dot(geomNormal, directionalLights[0].direction));
-  #endif
-  return ndotl;
+vec3 harborCelComposite(vec3 litColor, vec3 albedo, vec3 geomNormal, vec3 viewDir, vec3 emissive, float ndotl) {
+	vec4 ilm = harborCelIlmSample();
+	float threshold = clamp(uHarborCelThreshold + (ilm.r - 0.5) * 0.72, 0.05, 0.95);
+	float softness = max(uHarborCelSoftness * mix(0.28, 1.7, ilm.g), 0.001);
+	float ramp = harborCelRamp(ndotl, threshold, softness);
+
+	vec3 shadowColor = albedo * uHarborShadowTint * uHarborShadowLift;
+	shadowColor += litColor * uHarborShadowTint * 0.22;
+	vec3 cel = mix(shadowColor, litColor, ramp);
+
+	float fresnel = pow(1.0 - saturate(dot(geomNormal, viewDir)), max(uHarborRimPower, 0.25));
+	float rim = fresnel * uHarborRimStrength * ilm.b * mix(1.0, 0.55, ramp);
+	cel += uHarborRimColor * rim;
+	return cel + emissive;
 }
+`
 
-/**
- * Cel composite: posterized key light + tinted inner shadow + Fresnel rim.
- * \`litColor\` is the engine's already-lit diffuse (Lambert or Standard).
- */
-vec3 harborCelComposite(vec3 litColor, vec3 albedo, vec3 geomNormal, vec3 viewDir, vec3 emissive) {
-  vec4 ilm = harborCelIlmSample();
-  float ndotl = harborCelNdotL(geomNormal);
-  // ILM.R shifts the shadow threshold so faces / folds keep painted zones.
-  float threshold = clamp(uHarborCelThreshold + (ilm.r - 0.5) * 0.72, 0.05, 0.95);
-  float softness = max(uHarborCelSoftness * mix(0.28, 1.7, ilm.g), 0.001);
-  float ramp = harborCelRamp(ndotl, threshold, softness);
-
-  vec3 shadowColor = albedo * uHarborShadowTint * uHarborShadowLift;
-  // Keep a whisper of indirect so night scenes do not crush to a flat plate.
-  shadowColor += litColor * uHarborShadowTint * 0.22;
-  vec3 cel = mix(shadowColor, litColor, ramp);
-
-  float fresnel = pow(1.0 - saturate(dot(geomNormal, viewDir)), max(uHarborRimPower, 0.25));
-  float rimMask = ilm.b;
-  // Rim is stronger on the shadow side so silhouettes read against dark water.
-  float rim = fresnel * uHarborRimStrength * rimMask * mix(1.0, 0.55, ramp);
-  cel += uHarborRimColor * rim;
-  return cel + emissive;
-}
+/** N·L is computed here (after lights pars), not in a helper defined too early. */
+const HARBOR_CEL_NDOTL_GLSL = /* glsl */ `
+	float harborCelNdotL = 0.55;
+	#if NUM_DIR_LIGHTS > 0
+		harborCelNdotL = saturate(dot(normal, directionalLights[0].direction));
+	#endif
+	vec3 harborCelViewDir = normalize(vViewPosition);
 `
 
 /** Replaces Lambert `outgoingLight` assignment. */
 export const HARBOR_CEL_APPLY_LAMBERT_GLSL = /* glsl */ `
-	vec3 harborCelViewDir = normalize(vViewPosition);
+${HARBOR_CEL_NDOTL_GLSL}
 	vec3 harborCelLit = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
-	vec3 outgoingLight = harborCelComposite(harborCelLit, diffuseColor.rgb, normal, harborCelViewDir, totalEmissiveRadiance);
+	vec3 outgoingLight = harborCelComposite(harborCelLit, diffuseColor.rgb, normal, harborCelViewDir, totalEmissiveRadiance, harborCelNdotL);
 `
 
 /** Replaces Standard / Physical `outgoingLight` assignment (keeps a sliver of spec). */
 export const HARBOR_CEL_APPLY_PHYSICAL_GLSL = /* glsl */ `
-	vec3 harborCelViewDir = normalize(vViewPosition);
+${HARBOR_CEL_NDOTL_GLSL}
 	vec3 harborCelLit = totalDiffuse;
-	vec3 outgoingLight = harborCelComposite(harborCelLit, diffuseColor.rgb, normal, harborCelViewDir, totalEmissiveRadiance) + totalSpecular * 0.18;
+	vec3 outgoingLight = harborCelComposite(harborCelLit, diffuseColor.rgb, normal, harborCelViewDir, totalEmissiveRadiance, harborCelNdotL) + totalSpecular * 0.18;
 `
 
 const LAMBERT_OUTGOING =
@@ -235,11 +225,27 @@ export function createHarborCelUniforms(opts: HarborCelOptions = {}): HarborCelU
   }
 }
 
+function syncHarborCelDefines(material: THREE.Material, opts: HarborCelOptions) {
+  const defs = { ...(material.defines ?? {}) }
+  if (opts.lightRamp) defs.USE_HARBOR_LIGHT_RAMP = ''
+  else delete defs.USE_HARBOR_LIGHT_RAMP
+  if (opts.ilmMap) defs.USE_HARBOR_ILM = ''
+  else delete defs.USE_HARBOR_ILM
+  const mapped = material as THREE.Material & { map?: THREE.Texture | null }
+  if (opts.ilmMap && !mapped.map) defs.USE_UV = ''
+  material.defines = defs
+}
+
 /** Inject cel uniforms + composite into a Three.js stock fragment shader. */
 export function injectHarborCelFragment(fragmentShader: string): string {
   let src = fragmentShader
   if (!src.includes('uHarborCelThreshold')) {
-    src = src.replace('#include <common>', `#include <common>\n${HARBOR_CEL_UNIFORMS_GLSL}`)
+    // Before main() — after UV / lights pars have been included (or still as chunks).
+    if (src.includes('void main()')) {
+      src = src.replace('void main()', `${HARBOR_CEL_UNIFORMS_GLSL}\nvoid main()`)
+    } else {
+      src = `${HARBOR_CEL_UNIFORMS_GLSL}\n${src}`
+    }
   }
   if (src.includes(LAMBERT_OUTGOING)) {
     src = src.replace(LAMBERT_OUTGOING, HARBOR_CEL_APPLY_LAMBERT_GLSL)
@@ -278,6 +284,7 @@ export function applyHarborCel<T extends THREE.Material>(material: T, opts: Harb
   if (opts.ilmMap) resolved.ilmMap = opts.ilmMap
   material.userData.harborCel = resolved
   material.userData.harborCelPreset = opts.preset ?? 'item'
+  syncHarborCelDefines(material, resolved)
 
   if (isHarborCelMaterial(material)) {
     const bag = material.userData.harborCelUniforms as HarborCelUniformBag | undefined
@@ -289,8 +296,12 @@ export function applyHarborCel<T extends THREE.Material>(material: T, opts: Harb
   const prevCompile = material.onBeforeCompile
   material.onBeforeCompile = (shader, renderer) => {
     prevCompile?.call(material, shader, renderer)
-    const bag = createHarborCelUniforms(material.userData.harborCel as HarborCelOptions)
+    const celOpts = material.userData.harborCel as HarborCelOptions
+    const bag = createHarborCelUniforms(celOpts)
     Object.assign(shader.uniforms, bag)
+    // Never leave a sampler2D pointing at null — iOS drops the program.
+    if (!celOpts.lightRamp) delete shader.uniforms.uHarborLightRamp
+    if (!celOpts.ilmMap) delete shader.uniforms.uHarborIlmMap
     material.userData.harborCelUniforms = shader.uniforms
     shader.fragmentShader = injectHarborCelFragment(shader.fragmentShader)
   }
@@ -298,10 +309,6 @@ export function applyHarborCel<T extends THREE.Material>(material: T, opts: Harb
   material.customProgramCacheKey = () => {
     const o = material.userData.harborCel as HarborCelOptions | undefined
     return `${prevKey()}|${HARBOR_CEL_SHADER_ID}|ramp:${o?.lightRamp ? 1 : 0}|ilm:${o?.ilmMap ? 1 : 0}`
-  }
-  const mapped = material as THREE.Material & { map?: THREE.Texture | null }
-  if (opts.ilmMap && !mapped.map) {
-    material.defines = { ...(material.defines ?? {}), USE_UV: '' }
   }
   material.userData.harborCelApplied = HARBOR_CEL_SHADER_ID
   material.needsUpdate = true
