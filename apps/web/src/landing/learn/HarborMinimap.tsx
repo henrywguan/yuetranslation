@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { HARBOR_VISITABLES, type HarborVisitable, type HarborVisitableId } from './harborWorld'
 import type { HarborRealmId } from './harborWorld'
-import { GUAN_CAPE_LOOM, GUAN_HARBOR_META, GUAN_RETURN_PORTAL } from './harborGuanRealm'
+import { GUAN_CAPE_LOOM, GUAN_RETURN_PORTAL } from './harborGuanRealm'
 import { GUAN_FISH_SPOTS, GUAN_FISHING_HUT } from './harborFishing'
 import {
   MINIMAP_CARDINALS,
@@ -215,10 +215,10 @@ type Props = {
   /** OSRS minimap navigate — world (x, z) from a tap inside the radar disc. */
   onNavigate?: (x: number, z: number) => void
   /**
-   * World-map travel — voyage learning area (clear Guan override) or Guan Harbor.
+   * Opens the fullscreen wuxia world map (Learning voyage ↔ Guan Harbor).
    * When omitted, the corner world-map control is hidden.
    */
-  onWorldTravel?: (dest: 'voyage' | 'guan') => void
+  onOpenWorldMap?: () => void
 }
 
 export type HarborWorldTravelDest = 'voyage' | 'guan'
@@ -254,13 +254,12 @@ export function HarborMinimap({
   hidden,
   realm = null,
   onNavigate,
-  onWorldTravel,
+  onOpenWorldMap,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const [layout, setLayout] = useState<Layout>(() => loadLayout())
   const [tapMark, setTapMark] = useState<TapMark | null>(null)
-  const [worldOpen, setWorldOpen] = useState(false)
   const tapSeqRef = useRef(0)
   const navPointerRef = useRef<{ pointerId: number; x: number; y: number } | null>(null)
   const dragRef = useRef<{
@@ -276,25 +275,6 @@ export function HarborMinimap({
   useEffect(() => {
     saveLayout(layout)
   }, [layout])
-
-  useEffect(() => {
-    if (!worldOpen) return
-    const onDoc = (e: PointerEvent) => {
-      const root = rootRef.current
-      if (!root) return
-      if (e.target instanceof Node && root.contains(e.target)) return
-      setWorldOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setWorldOpen(false)
-    }
-    window.addEventListener('pointerdown', onDoc)
-    window.addEventListener('keydown', onKey)
-    return () => {
-      window.removeEventListener('pointerdown', onDoc)
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [worldOpen])
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -403,15 +383,6 @@ export function HarborMinimap({
     [onNavigate, pose],
   )
 
-  const travel = useCallback(
-    (dest: HarborWorldTravelDest) => {
-      if (!onWorldTravel) return
-      setWorldOpen(false)
-      onWorldTravel(dest)
-    },
-    [onWorldTravel],
-  )
-
   const place = useMemo(() => {
     if (!pose) return { en: 'Charting…', zh: '定位中', kind: 'sea' as const }
     return resolveHarborMinimapPlace(pose.x, pose.z, realm)
@@ -449,7 +420,7 @@ export function HarborMinimap({
   return (
     <div
       ref={rootRef}
-      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${compact ? ' is-compact' : ''}${onNavigate ? ' is-navigable' : ''}${worldOpen ? ' is-world-open' : ''}`}
+      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${compact ? ' is-compact' : ''}${onNavigate ? ' is-navigable' : ''}`}
       style={
         {
           left: layout.left,
@@ -634,59 +605,20 @@ export function HarborMinimap({
         </>
       )}
 
-      {onWorldTravel ? (
+      {onOpenWorldMap ? (
         <div className="hq-minimap-world">
           <button
             type="button"
-            className={`hq-minimap-world-btn${worldOpen ? ' is-on' : ''}${inGuan ? ' is-guan' : ''}`}
-            aria-expanded={worldOpen}
-            aria-haspopup="menu"
-            aria-label="World map — choose Learning voyage or Guan Harbor"
+            className={`hq-minimap-world-btn${inGuan ? ' is-guan' : ''}`}
+            aria-label="Open world map"
             title="World map"
             onClick={(e) => {
               e.stopPropagation()
-              setWorldOpen((v) => !v)
+              onOpenWorldMap()
             }}
           >
             <WorldMapGlyph />
           </button>
-          {worldOpen ? (
-            <div className="hq-minimap-world-menu" role="menu" aria-label="Travel destinations">
-              <p className="hq-minimap-world-kicker">World map · 世界地圖</p>
-              <button
-                type="button"
-                role="menuitem"
-                className={`hq-minimap-world-dest${!inGuan ? ' is-here' : ''}`}
-                disabled={!inGuan}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  travel('voyage')
-                }}
-              >
-                <span className="hq-minimap-world-dest-en">Learning voyage</span>
-                <span className="hq-minimap-world-dest-zh" lang="zh-HK">
-                  學習航線
-                </span>
-                <span className="hq-minimap-world-dest-status">{!inGuan ? 'Here' : 'Travel'}</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={`hq-minimap-world-dest hq-minimap-world-dest--guan${inGuan ? ' is-here' : ''}`}
-                disabled={inGuan}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  travel('guan')
-                }}
-              >
-                <span className="hq-minimap-world-dest-en">{GUAN_HARBOR_META.en}</span>
-                <span className="hq-minimap-world-dest-zh" lang="zh-HK">
-                  {GUAN_HARBOR_META.zh}
-                </span>
-                <span className="hq-minimap-world-dest-status">{inGuan ? 'Here' : 'Travel'}</span>
-              </button>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </div>

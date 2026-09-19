@@ -96,6 +96,7 @@ import {
 import { getSession, getSupabaseClient } from '../../lib/auth'
 import { useYueStore } from '../../lib/store'
 import { HarborMinimap, type HarborMinimapPose } from './HarborMinimap'
+import { HarborWorldMap } from './HarborWorldMap'
 import { HarborChatBox, type HarborChatLine } from './HarborChatBox'
 import { MatchDefinitionModal } from './MatchDefinitionModal'
 import {
@@ -180,6 +181,8 @@ export function LearnSession({
   const [teleportOpen, setTeleportOpen] = useState(false)
   /** Free-sail paradise pocket — overrides campaign realm until cast off / chapter teleport. */
   const [realmOverride, setRealmOverride] = useState<HarborRealmId | null>(null)
+  /** Fullscreen wuxia world map (minimap globe). */
+  const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([])
   const [scrollOpen, setScrollOpen] = useState(false)
@@ -514,6 +517,7 @@ export function LearnSession({
           arenaOpen ||
           barberOpen ||
           teleportOpen ||
+          worldMapOpen ||
           delveOpen ||
           visitable !== null,
       ),
@@ -526,6 +530,7 @@ export function LearnSession({
     arenaOpen,
     barberOpen,
     teleportOpen,
+    worldMapOpen,
     delveOpen,
     visitable,
   ])
@@ -1037,6 +1042,7 @@ export function LearnSession({
             arenaOpen ||
             barberOpen ||
             teleportOpen ||
+            worldMapOpen ||
             visitable !== null
           }
           onVisitable={onVisitable}
@@ -1053,11 +1059,30 @@ export function LearnSession({
         pose={minimapPose}
         remotes={remotePlayers}
         realm={realmOverride ?? (level ? levelRealm(level) : null)}
-        hidden={visitable !== null || invOpen || codexOpen || barberOpen || scrollOpen}
+        hidden={
+          visitable !== null ||
+          invOpen ||
+          codexOpen ||
+          barberOpen ||
+          scrollOpen ||
+          worldMapOpen
+        }
         onNavigate={(x, z) => {
           worldApiRef.current?.moveToWorld(x, z)
         }}
-        onWorldTravel={(dest) => {
+        onOpenWorldMap={() => {
+          playHarborUiClick()
+          setWorldMapOpen(true)
+          setTeleportOpen(false)
+          setVisitable(null)
+        }}
+      />
+
+      <HarborWorldMap
+        open={worldMapOpen}
+        current={realmOverride === 'guan' ? 'guan' : 'voyage'}
+        onClose={() => setWorldMapOpen(false)}
+        onTravel={(dest) => {
           playHarborTeleport()
           if (dest === 'guan') {
             setRealmOverride('guan')
@@ -1066,6 +1091,7 @@ export function LearnSession({
             setRealmOverride(null)
             startHarborBgm('river')
           }
+          setWorldMapOpen(false)
           setVisitable(null)
           setTeleportOpen(false)
         }}
