@@ -211,6 +211,42 @@ export async function attachHarborScoutGlb(
 }
 
 /**
+ * Tint a Scout/cast GLB toward a robe color so pier NPCs and landmark hosts
+ * don't all wear the same Scout default. Clones materials so the cache stays clean.
+ */
+export function tintHarborCastGlb(root: THREE.Object3D, hex: number, amount = 0.38): void {
+  const target = new THREE.Color(hex)
+  root.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh || !m.userData.scoutGlbMesh) return
+    const apply = (mat: THREE.Material): THREE.Material => {
+      const next = mat.clone()
+      if ('color' in next && next.color instanceof THREE.Color) {
+        next.color.lerp(target, amount)
+      }
+      return next
+    }
+    m.material = Array.isArray(m.material) ? m.material.map(apply) : apply(m.material)
+  })
+}
+
+/**
+ * Attach the authored Scout mesh to a pier NPC / landmark host, then tint.
+ * Held props must be tagged `userData.harborGear` so they stay visible.
+ */
+export async function attachHarborCastGlb(
+  root: THREE.Group,
+  gender: HarborGender,
+  opts: { tint?: number; tintAmount?: number } = {},
+): Promise<boolean> {
+  const ok = await attachHarborScoutGlb(root, gender, { mode: 'standing' })
+  if (!ok) return false
+  if (opts.tint != null) tintHarborCastGlb(root, opts.tint, opts.tintAmount ?? 0.38)
+  root.userData.characterStyle = 'anime-dressup-glb'
+  return true
+}
+
+/**
  * Sink the standing Scout so the pelvis sits on the canoe seat.
  * Meshy Scout is a single mesh — do not hide by world AABB (that used to
  * vanish the sailor when the boat left the origin).
@@ -234,6 +270,24 @@ function isScoutGlbSubtree(o: THREE.Object3D): boolean {
   return false
 }
 
+/** True when `o` sits under clothing, held props, speech bubbles, or host glow. */
+function isKeptCastProp(o: THREE.Object3D): boolean {
+  let cur: THREE.Object3D | null = o
+  while (cur) {
+    if (
+      cur.userData.harborClothing ||
+      cur.userData.harborGear ||
+      cur.userData.speechBubble ||
+      cur.userData.specialHostGlow ||
+      cur.userData.npcNametag
+    ) {
+      return true
+    }
+    cur = cur.parent
+  }
+  return false
+}
+
 /**
  * Show/hide procedural body parts (keep sockets + clothing overlays).
  * Never touch Scout GLB meshes — traverse visits children even when the
@@ -242,7 +296,7 @@ function isScoutGlbSubtree(o: THREE.Object3D): boolean {
 export function setProceduralBodyVisible(root: THREE.Object3D, visible: boolean): void {
   root.traverse((o) => {
     if (isScoutGlbSubtree(o)) return
-    if (o.userData.harborClothing || o.userData.harborGear) return
+    if (isKeptCastProp(o)) return
     if (
       o.name === 'hand_r' ||
       o.name === 'hand_l' ||

@@ -30,8 +30,11 @@ import {
 } from './harborCraft'
 import {
   HARBOR_V2_MESH_ONLY,
+  applyHarborV2Map,
   mountHarborV2Asset,
+  tintHarborV2Asset,
 } from './harborV2Assets'
+import { attachHarborCastGlb } from './harborProtagonistGlb'
 import {
   HARBOR_FIGURE_PROPORTIONS,
   harborFigureArm,
@@ -606,8 +609,15 @@ function mat(color: number, extra?: ConstructorParameters<typeof THREE.MeshLambe
 }
 
 /** Soft painterly ground map (LinearFilter) with low UV repeat — matches Guan. */
-function softTiledMat(color: number, tex: THREE.DataTexture, repeat = 2.6) {
-  return hqMatTex(color, hqSoftMapRepeat(tex, repeat))
+function softTiledMat(
+  color: number,
+  tex: THREE.DataTexture,
+  repeat = 2.6,
+  v2Kind?: 'grass' | 'dirt',
+) {
+  const m = hqMatTex(color, hqSoftMapRepeat(tex, repeat))
+  if (v2Kind) applyHarborV2Map(m, v2Kind, repeat)
+  return m
 }
 
 /** River willow — V2 mesh when available; v1 faceted canopy fallback. */
@@ -1231,7 +1241,11 @@ function dirtRoadStrip(length: number, width = 1.1) {
   const g = new THREE.Group()
   g.userData.dirtRoad = true
   const dirt = hqSoftDirtTexture()
-  g.add(hqBoxTex(width, 0.05, length, 0x6a4828, dirt, 0, 0.06, 0))
+  const bed = hqBoxTex(width, 0.05, length, 0x6a4828, dirt, 0, 0.06, 0)
+  if (bed.material instanceof THREE.MeshLambertMaterial) {
+    applyHarborV2Map(bed.material, 'dirt', Math.max(1.4, length * 0.35))
+  }
+  g.add(bed)
   g.add(hqBoxTex(0.12, 0.02, length * 0.96, 0x4a3018, dirt, -width * 0.22, 0.09, 0))
   g.add(hqBoxTex(0.12, 0.02, length * 0.96, 0x4a3018, dirt, width * 0.22, 0.09, 0))
   return g
@@ -1506,6 +1520,7 @@ function speechBubbleIcon() {
   g.userData.speechBubble = true
   g.userData.billboard = true
   g.userData.hasDialogue = true
+  g.userData.harborGear = true
   // Parchment bubble body
   g.add(hqBox(0.44, 0.32, 0.08, 0xfff8ec, 0, 0.1, 0))
   g.add(hqBox(0.48, 0.05, 0.09, 0xe8d8c0, 0, 0.28, 0))
@@ -1676,11 +1691,13 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   if (role === 'fisherman' && rng() > 0.35) {
     const pole = hqPost(0.018, 0.022, 1.35, P.woodMid, 0.26, 0.9, 0, 8)
     pole.rotation.z = -0.55
+    pole.userData.harborGear = true
     g.add(pole)
   }
   if (role === 'scholar' && rng() > 0.4) {
     const scroll = hqPost(0.035, 0.035, 0.26, P.trimIvory, 0.2, 0.7, 0.1, 8)
     scroll.rotation.z = Math.PI / 2
+    scroll.userData.harborGear = true
     g.add(scroll)
   }
 
@@ -1688,6 +1705,9 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   g.userData.npc = role
   g.userData.npcGender = gender
   g.userData.characterStyle = 'anime-dressup'
+  if (HARBOR_V2_MESH_ONLY) {
+    void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
+  }
   return g
 }
 
@@ -1747,6 +1767,7 @@ function attachSpecialHostGlow(npc: THREE.Object3D, tint: number, weather: Harbo
   ring.position.y = 0.04
   ring.name = 'special-host-glow'
   ring.userData.specialHostGlow = true
+  ring.userData.harborGear = true
   ring.userData.glowBaseIntensity = weather === 'night' ? 1.35 : 0.85
   npc.add(ring)
 
@@ -1758,6 +1779,7 @@ function attachSpecialHostGlow(npc: THREE.Object3D, tint: number, weather: Harbo
   halo.position.y = 0.9
   halo.name = 'special-host-halo'
   halo.userData.specialHostGlow = true
+  halo.userData.harborGear = true
   halo.userData.glowBaseIntensity = weather === 'night' ? 1.2 : 0.7
   npc.add(halo)
 
@@ -2066,6 +2088,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     disk.position.set(0.26, pelvisY + 0.35, 0.12)
     disk.rotation.x = -0.4
     disk.rotation.z = 0.35
+    disk.userData.harborGear = true
     g.add(disk)
   } else if (id === 'bank') {
     const scalp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 12), hair)
@@ -2086,6 +2109,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     const bag = goldTaelBag()
     bag.position.set(0.28, pelvisY + 0.15, 0.1)
     bag.rotation.y = -0.4
+    bag.userData.harborGear = true
     g.add(bag)
   } else if (id === 'outfitter') {
     // Soft scalp under rollers — glamorous landlady silhouette
@@ -2112,6 +2136,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     cig.position.set(0.28, pelvisY + 0.42, 0.1)
     cig.rotation.z = 0.9
     cig.rotation.x = -0.3
+    cig.userData.harborGear = true
     g.add(cig)
   } else if (id === 'barber') {
     const scalp = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 12), hair)
@@ -2133,6 +2158,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     shears.position.set(0.28, pelvisY + 0.28, 0.1)
     shears.rotation.z = -0.7
     shears.rotation.x = 0.25
+    shears.userData.harborGear = true
     g.add(shears)
   } else {
     // Arena Master — soft helm + horns (face stays visible for beauty)
@@ -2152,12 +2178,19 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     g.add(harborFigureForeheadBangs(hair, headY, { clumps: 3 }))
     const halberd = luBuHalberd()
     halberd.position.set(0.36, 0.12, 0.04)
+    halberd.userData.harborGear = true
     g.add(halberd)
   }
 
   g.scale.setScalar(bodyScale)
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
   attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
+  if (HARBOR_V2_MESH_ONLY) {
+    void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
+      tint: robeHex,
+      tintAmount: 0.4,
+    })
+  }
   return g
 }
 
@@ -3785,6 +3818,46 @@ function bankBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'bank'
   g.userData.uniqueLandmark = 'bank'
 
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'save-shack', {
+      targetHeight: 2.7,
+      name: 'v2-bank',
+      onReady: (mesh) => tintHarborV2Asset(mesh, 0x2a8a78, 0.48),
+    })
+    g.add(hqBox(1.1, 0.1, 1.4, P.stone, 0, 0.12, 1.7))
+    const portal = new THREE.Group()
+    portal.name = 'bank-portal'
+    portal.userData.jadePortal = true
+    portal.userData.bankPortal = true
+    portal.position.set(0, 0.5, 2.35)
+    for (const x of [-0.5, 0.5] as const) {
+      portal.add(hqPost(0.08, 0.1, 1.55, 0x1a4840, x, 0.78, 0, 6))
+      portal.add(hqPost(0.05, 0.06, 1.55, P.jade, x, 0.78, 0.06, 6))
+    }
+    portal.add(hqBox(1.2, 0.12, 0.12, P.jade, 0, 1.6, 0))
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.4, 0.065, 6, 14),
+      glowMat(0x3dcfb6, 0x70ffe0, weather === 'night' ? 1.5 : 1.05),
+    )
+    ring.position.set(0, 0.85, 0.05)
+    portal.add(ring)
+    const portalLight = new THREE.PointLight(
+      0x50e8c8,
+      weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
+      9,
+      2,
+    )
+    portalLight.position.set(0, 0.9, 0.25)
+    portalLight.userData.harborLanternLight = true
+    portalLight.userData.baseIntensity = portalLight.intensity
+    portalLight.userData.portalGlow = true
+    portalLight.userData.jadePortal = true
+    portal.add(portalLight)
+    g.add(portal)
+    attachLandmarkHost(g, 'bank', weather)
+    return g
+  }
+
   // Raised stone plinth
   g.add(hqBox(2.4, 0.18, 2.6, P.stone, 0, 0.35, 0.2))
   for (const x of [-0.95, 0.95] as const) {
@@ -3887,6 +3960,45 @@ function arenaBuilding(weather: HarborWeather = 'sunny') {
   g.name = 'arena'
   g.userData.visitable = 'arena'
   g.userData.uniqueLandmark = 'arena'
+
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'house-village', {
+      targetHeight: 2.65,
+      name: 'v2-arena',
+      onReady: (mesh) => tintHarborV2Asset(mesh, 0x8b2e2e, 0.52),
+    })
+    g.add(hqBox(1.15, 0.1, 1.5, P.woodMid, 0, 0.12, 1.55))
+    const portal = new THREE.Group()
+    portal.name = 'arena-portal'
+    portal.userData.arenaPortal = true
+    portal.userData.amberPortal = true
+    portal.position.set(0, 0.48, 2.15)
+    for (const x of [-0.5, 0.5] as const) {
+      portal.add(hqPost(0.08, 0.1, 1.5, 0x3a1515, x, 0.75, 0, 6))
+    }
+    portal.add(hqBox(1.2, 0.12, 0.12, P.trimGold, 0, 1.55, 0))
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.4, 0.07, 6, 14),
+      glowMat(0xf0d080, 0xffa020, weather === 'night' ? 1.5 : 1.1),
+    )
+    ring.position.set(0, 0.82, 0.05)
+    portal.add(ring)
+    const portalLight = new THREE.PointLight(
+      0xffb040,
+      weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
+      9,
+      2,
+    )
+    portalLight.position.set(0, 0.88, 0.25)
+    portalLight.userData.harborLanternLight = true
+    portalLight.userData.baseIntensity = portalLight.intensity
+    portalLight.userData.portalGlow = true
+    portalLight.userData.arenaPortal = true
+    portal.add(portalLight)
+    g.add(portal)
+    attachLandmarkHost(g, 'arena', weather)
+    return g
+  }
 
   // Raised stone plinth
   g.add(hqBox(2.5, 0.16, 2.4, P.stone, 0, 0.32, 0.1))
@@ -4024,6 +4136,48 @@ function barberBuilding(weather: HarborWeather = 'sunny') {
   g.name = 'barber'
   g.userData.visitable = 'barber'
   g.userData.uniqueLandmark = 'barber'
+
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'house-village', {
+      targetHeight: 2.45,
+      name: 'v2-barber',
+      onReady: (mesh) => tintHarborV2Asset(mesh, 0xa83858, 0.45),
+    })
+    const pole = spinningBarberPole(weather)
+    pole.position.set(1.15, 0.45, 1.15)
+    g.add(pole)
+    g.add(hqBox(1.15, 0.1, 1.45, P.woodMid, 0, 0.12, 1.5))
+    const portal = new THREE.Group()
+    portal.name = 'barber-portal'
+    portal.userData.barberPortal = true
+    portal.userData.rosePortal = true
+    portal.position.set(0, 0.48, 2.05)
+    for (const x of [-0.5, 0.5] as const) {
+      portal.add(hqPost(0.08, 0.1, 1.5, 0x3a1518, x, 0.75, 0, 6))
+    }
+    portal.add(hqBox(1.2, 0.12, 0.12, 0xff7090, 0, 1.55, 0))
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.4, 0.07, 6, 14),
+      glowMat(0xff90a8, 0xff4060, weather === 'night' ? 1.5 : 1.1),
+    )
+    ring.position.set(0, 0.82, 0.05)
+    portal.add(ring)
+    const portalLight = new THREE.PointLight(
+      0xff7090,
+      weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
+      9,
+      2,
+    )
+    portalLight.position.set(0, 0.88, 0.25)
+    portalLight.userData.harborLanternLight = true
+    portalLight.userData.baseIntensity = portalLight.intensity
+    portalLight.userData.portalGlow = true
+    portalLight.userData.barberPortal = true
+    portal.add(portalLight)
+    g.add(portal)
+    attachLandmarkHost(g, 'barber', weather)
+    return g
+  }
 
   // Raised plank walk
   g.add(hqBox(2.3, 0.14, 2.2, P.woodLight, 0, 0.32, 0.15))
@@ -4289,11 +4443,13 @@ export function createHarborWorld(
     realm === 'bamboo' ? 0x2e7a48 : 0x2e6a40,
     hqSoftGrassTexture(),
     2.8,
+    'grass',
   )
   const sandMat = softTiledMat(
     realm === 'bamboo' ? 0xd0c090 : 0xe0d0a0,
     hqSoftSandTexture(),
     2.4,
+    'dirt',
   )
   const chunkGroups = new Map<number, THREE.Group>()
   /** Chunks ahead of the canoe — 3 = leaner GPU, earlier pop-in than 4. */
