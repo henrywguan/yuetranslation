@@ -164,6 +164,10 @@ export async function instanceHarborV2Asset(
   }
   if (opts.name) clone.name = opts.name
   clone.userData.harborV2Asset = id
+  clone.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (m.isMesh) m.userData.harborV2SharedGeo = true
+  })
   return clone
 }
 
@@ -211,17 +215,35 @@ export function isHarborV2AssetReady(id: HarborV2AssetId): boolean {
   return Boolean(ready.get(id))
 }
 
-/** Recolor a V2 instance toward a landmark palette (clones materials). */
+/** True when chunk/voyage dispose must not free this GPU buffer (shared GLB / grass). */
+export function isHarborSharedGpuMesh(o: THREE.Object3D): boolean {
+  const m = o as THREE.Mesh
+  if (!m.isMesh) return false
+  return Boolean(
+    m.userData.sharedGrassGeo ||
+      m.userData.harborGlbMesh ||
+      m.userData.harborV2SharedGeo ||
+      m.userData.scoutGlbMesh,
+  )
+}
+
+const tintMatCache = new Map<string, THREE.Material>()
+
+/** Recolor a V2 instance toward a landmark palette (shared tinted materials). */
 export function tintHarborV2Asset(root: THREE.Object3D, hex: number, amount = 0.42): void {
   const target = new THREE.Color(hex)
   root.traverse((o) => {
     const m = o as THREE.Mesh
     if (!m.isMesh) return
     const apply = (mat: THREE.Material): THREE.Material => {
+      const key = `${mat.uuid}:${hex.toString(16)}:${amount.toFixed(2)}`
+      const hit = tintMatCache.get(key)
+      if (hit) return hit
       const next = mat.clone()
       if ('color' in next && next.color instanceof THREE.Color) {
         next.color.lerp(target, amount)
       }
+      tintMatCache.set(key, next)
       return next
     }
     m.material = Array.isArray(m.material) ? m.material.map(apply) : apply(m.material)

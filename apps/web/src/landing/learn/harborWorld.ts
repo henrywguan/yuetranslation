@@ -37,6 +37,7 @@ import {
 import {
   HARBOR_V2_MESH_ONLY,
   applyHarborV2Map,
+  isHarborSharedGpuMesh,
   mountHarborV2Asset,
   tintHarborV2Asset,
 } from './harborV2Assets'
@@ -873,33 +874,16 @@ function reed(rng: () => number) {
 
 function flower(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
-    mountTintedWillow(g, rng, {
-      height: 0.5 + rng() * 0.22,
-      name: 'v2-flower-standin',
-      tint: rng() > 0.5 ? P.blossom : P.leafGold,
-      amount: 0.52,
-    })
-    return g
-  }
+  // Cheap craft — a 4MB willow GLB per blossom OOM'd iPhone WebGL (black screen).
   g.add(hqPost(0.02, 0.03, 0.35, P.leafMid, 0, 0.18, 0, 4))
   g.add(hqBox(0.14, 0.12, 0.14, rng() > 0.5 ? P.blossom : P.leafGold, 0, 0.4, 0))
   return g
 }
 
-/** China tea-cup rose — V2 willow shrub in blossom pink; v1 cups as fallback. */
+/** China tea-cup rose — soft pink cups on a low leafy mound. */
 function chinaTeaCupRose(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'china-tea-cup-rose'
-  if (HARBOR_V2_MESH_ONLY) {
-    mountTintedWillow(g, rng, {
-      height: 0.78 + rng() * 0.22,
-      name: 'v2-rose-standin',
-      tint: P.blossom,
-      amount: 0.5,
-    })
-    return g
-  }
   const h = 0.45 + rng() * 0.2
   g.add(hqPost(0.04, 0.06, h * 0.55, 0x3a2a28, 0, h * 0.28, 0, 4))
   g.add(hqCanopy(0.32 + rng() * 0.1, P.leafMid, 0, h * 0.55, 0))
@@ -928,19 +912,10 @@ function chinaTeaCupRose(rng: () => number) {
   return g
 }
 
-/** Hawthorn berry bush — V2 willow shrub with berry-green tint. */
+/** Hawthorn berry bush — white blossom clusters + red haws. */
 function hawthornBush(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'hawthorn-berry'
-  if (HARBOR_V2_MESH_ONLY) {
-    mountTintedWillow(g, rng, {
-      height: 0.95 + rng() * 0.28,
-      name: 'v2-hawthorn-standin',
-      tint: 0x3a7048,
-      amount: 0.42,
-    })
-    return g
-  }
   const h = 0.7 + rng() * 0.35
   g.add(hqPost(0.05, 0.08, h * 0.65, 0x2e2418, 0, h * 0.32, 0, 5))
   // Twiggy forks
@@ -987,19 +962,10 @@ function hawthornBush(rng: () => number) {
   return g
 }
 
-/** Chinese fringe flower (Loropetalum) — V2 willow shrub in burgundy. */
+/** Chinese fringe flower (Loropetalum) — burgundy foliage + magenta fringe. */
 function chineseFringeFlower(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'chinese-fringe-flower'
-  if (HARBOR_V2_MESH_ONLY) {
-    mountTintedWillow(g, rng, {
-      height: 0.8 + rng() * 0.25,
-      name: 'v2-fringe-standin',
-      tint: 0x8a2858,
-      amount: 0.5,
-    })
-    return g
-  }
   const h = 0.55 + rng() * 0.3
   g.add(hqPost(0.045, 0.07, h * 0.5, 0x2a1c18, 0, h * 0.25, 0, 4))
   const foliage = [0x4a2038, 0x3a1828, 0x5a2840]
@@ -3241,19 +3207,10 @@ function bambooClump(rng: () => number) {
   return g
 }
 
-/** Osmanthus shrub — V2 willow in gold blossom; v1 cups as fallback. */
+/** Osmanthus shrub — soft gold blossoms for the bamboo realm. */
 function osmanthusBush(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'osmanthus'
-  if (HARBOR_V2_MESH_ONLY) {
-    mountTintedWillow(g, rng, {
-      height: 0.72 + rng() * 0.22,
-      name: 'v2-osmanthus-standin',
-      tint: P.leafGold,
-      amount: 0.48,
-    })
-    return g
-  }
   const h = 0.55 + rng() * 0.25
   g.add(hqPost(0.04, 0.06, h * 0.5, 0x2a1c14, 0, h * 0.25, 0, 4))
   g.add(hqCanopy(0.34 + rng() * 0.1, 0x3a6a40, 0, h * 0.55, 0))
@@ -4531,6 +4488,14 @@ export function createHarborWorld(
     alpha: false,
     powerPreference: 'high-performance',
   })
+  // Allow restore instead of a dead black canvas after a GPU reset.
+  canvas.addEventListener(
+    'webglcontextlost',
+    (ev) => {
+      ev.preventDefault()
+    },
+    false,
+  )
   renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.25))
   renderer.setClearColor(look.sky, 1)
   renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -4655,8 +4620,9 @@ export function createHarborWorld(
       if (!need.has(idx)) {
         world.remove(g)
         g.traverse((o) => {
-          // Skip shared grass cone — disposing it breaks every other tuft
-          if (o instanceof THREE.Mesh && !o.userData.sharedGrassGeo) o.geometry.dispose()
+          // Shared grass / V2 / Scout GLB buffers — disposing one chunk
+          // poisons every remaining clone and blacks iPhone WebGL.
+          if (o instanceof THREE.Mesh && !isHarborSharedGpuMesh(o)) o.geometry.dispose()
         })
         chunkGroups.delete(idx)
         dirty = true
@@ -6051,7 +6017,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       disposeNametagSprite(localNametag)
       scene.remove(localNametag)
       scoutWalk.traverse((o) => {
-        if (o instanceof THREE.Mesh) {
+        if (o instanceof THREE.Mesh && !isHarborSharedGpuMesh(o)) {
           o.geometry.dispose()
           const mat = o.material
           if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
@@ -6061,7 +6027,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       scene.remove(scoutWalk)
       if (scoutSit) {
         scoutSit.traverse((o) => {
-          if (o instanceof THREE.Mesh) {
+          if (o instanceof THREE.Mesh && !isHarborSharedGpuMesh(o)) {
             o.geometry.dispose()
             const mat = o.material
             if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
@@ -6080,7 +6046,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       canvas.removeEventListener('wheel', onWheel)
       for (const g of chunkGroups.values()) {
         g.traverse((o) => {
-          if (o instanceof THREE.Mesh && !o.userData.sharedGrassGeo) o.geometry.dispose()
+          if (o instanceof THREE.Mesh && !isHarborSharedGpuMesh(o)) o.geometry.dispose()
         })
       }
       chunkGroups.clear()
