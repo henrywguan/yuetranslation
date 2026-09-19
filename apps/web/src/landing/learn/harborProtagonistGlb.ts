@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { HarborGender } from './harborAppearance'
 import { applyHarborCel } from './harborCelShader'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
@@ -106,7 +106,7 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
 }
 
 function cloneScoutGlb(src: THREE.Group): THREE.Group {
-  const cloned = (src.userData.scoutRigged ? SkeletonUtils.clone(src) : src.clone(true)) as THREE.Group
+  const cloned = (src.userData.scoutRigged ? cloneSkeleton(src) : src.clone(true)) as THREE.Group
   cloned.userData = { ...src.userData }
   return cloned
 }

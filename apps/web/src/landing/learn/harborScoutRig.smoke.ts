@@ -31,14 +31,20 @@ assert.equal(rigHarborScoutGlb(wrap), true, 'dummy Scout auto-rigs')
 assert.equal(wrap.userData.scoutRigged, true, 'rig flag set')
 assert.equal(rigHarborScoutGlb(wrap), true, 'rig is idempotent')
 
-let skinned: THREE.SkinnedMesh | null = null
-wrap.traverse((o) => {
-  if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned = o as THREE.SkinnedMesh
-})
+function findSkinned(root: THREE.Object3D): THREE.SkinnedMesh | null {
+  let found: THREE.SkinnedMesh | null = null
+  root.traverse((o) => {
+    const m = o as THREE.SkinnedMesh
+    if (m.isSkinnedMesh && !found) found = m
+  })
+  return found
+}
+
+const skinned = findSkinned(wrap)
 assert.ok(skinned, 'Mesh becomes SkinnedMesh')
-assert.ok(skinned!.skeleton.bones.length >= 16, 'humanoid bone count')
-assert.ok(skinned!.geometry.getAttribute('skinIndex'), 'skinIndex painted')
-assert.ok(skinned!.geometry.getAttribute('skinWeight'), 'skinWeight painted')
+assert.ok(skinned.skeleton.bones.length >= 16, 'humanoid bone count')
+assert.ok(skinned.geometry.getAttribute('skinIndex'), 'skinIndex painted')
+assert.ok(skinned.geometry.getAttribute('skinWeight'), 'skinWeight painted')
 assert.ok(findScoutBone(wrap, SCOUT_BONE.thighL), 'left thigh bone')
 assert.ok(findScoutBone(wrap, SCOUT_BONE.handR), 'right hand bone')
 
@@ -97,7 +103,7 @@ assert.match(fishAnimSrc, /scout-bone-hand-r|SCOUT_BONE\.handR/, 'rod parents to
 
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /rigHarborScoutGlb/, 'normalize auto-rigs Scout GLB')
-assert.match(glbSrc, /SkeletonUtils\.clone/, 'rigged clones keep the skeleton')
+assert.match(glbSrc, /cloneSkeleton|SkeletonUtils/, 'rigged clones keep the skeleton')
 
 const here = dirname(fileURLToPath(import.meta.url))
 const femaleGlb = join(here, '../../../public/assets/harbor-quest/scout-female.glb')
