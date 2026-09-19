@@ -20,6 +20,7 @@ import {
 import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
+import { stampHarborNpcRoam } from './harborNpcRoam'
 
 function mulberry32(seed: number) {
   let a = seed >>> 0
@@ -156,6 +157,7 @@ function fishingOverseer(): THREE.Group {
   bust.add(harborFigureEars(fishSkin, 0, 0.16))
   bust.add(harborFigureFace(fishSkin, 0, { showBrows: true, showMouth: true }))
   keeper.add(bust)
+  stampHarborNpcRoam(keeper, { roam: 1.1, faceYaw: 0 })
   g.add(keeper)
   void attachHarborCastGlb(keeper, 'male', { tint: 0x1e3a48, tintAmount: 0.36 })
 

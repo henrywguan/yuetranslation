@@ -44,6 +44,7 @@ import {
   attachHarborCastGlb,
   HARBOR_CANOE_SCOUT_SEAT_Y,
 } from './harborProtagonistGlb'
+import { stampHarborNpcRoam, tickHarborNpcRoam } from './harborNpcRoam'
 import {
   HARBOR_FIGURE_PROPORTIONS,
   harborFigureArm,
@@ -2340,6 +2341,11 @@ function attachLandmarkHost(building: THREE.Group, id: HarborLandmarkHostId, wea
   host.position.set(x, y, z)
   // Face slightly toward the river path
   host.rotation.y = -0.35
+  // Pace the porch — stay near this building, don't wander the bank.
+  stampHarborNpcRoam(host, {
+    roam: id === 'arena' ? 1.8 : 1.4,
+    faceYaw: -0.35,
+  })
   building.add(host)
 }
 
@@ -5651,9 +5657,10 @@ export function createHarborWorld(
       tickGuanArmoredPatrol(guanScene, dt, reduced)
     }
 
-    // Cloned Scout NPCs share the player armature (idle breath / weight).
+    // Cloned Scout NPCs share the player armature (idle breath / walk when roaming).
     for (const npc of scoutCastNpcs) {
-      tickHarborCastAnim(npc, dt, { reduced, mode: 'idle' })
+      if (npc.userData.npcRoam) tickHarborNpcRoam(npc, dt, reduced)
+      else tickHarborCastAnim(npc, dt, { reduced, mode: 'idle' })
     }
 
 

@@ -1764,6 +1764,13 @@ assert.match(
 assert.match(worldSrc, /tickHarborCastAnim/, 'world ticks Scout-cast NPC idle')
 assert.match(worldSrc, /scoutCastNpcs/, 'world indexes scoutCast clones')
 assert.match(worldSrc, /userData\.scoutCast = true/, 'pier + landmark hosts mark scoutCast')
+assert.match(worldSrc, /stampHarborNpcRoam/, 'landmark hosts stamp building-local roam')
+assert.match(worldSrc, /tickHarborNpcRoam/, 'world ticks landmark host roam')
+assert.match(
+  readFileSync(new URL('./harborNpcRoam.ts', import.meta.url), 'utf8'),
+  /tickHarborCastAnim/,
+  'NPC roam drives Scout walk/idle armature',
+)
 assert.match(
   readFileSync(new URL('./harborRemoteAvatars.ts', import.meta.url), 'utf8'),
   /mode: 'sit'/,

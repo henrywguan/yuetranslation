@@ -50,6 +50,7 @@ import { isGuanSatelliteLand, guanSatelliteGroundY, stampGuanFishingRealm } from
 import { GUAN_SATELLITE_ISLANDS } from './harborFishing'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
+import { stampHarborNpcRoam } from './harborNpcRoam'
 
 /** Local alias so foot clamp can snap to satellite shores. */
 const GUAN_SATELLITE_ISLANDS_FOOT = GUAN_SATELLITE_ISLANDS
@@ -996,6 +997,7 @@ function returnPortalMarker(): THREE.Group {
   const officer = customsOfficer()
   officer.position.set(0.95, 0, 0.55)
   officer.rotation.y = -0.55
+  stampHarborNpcRoam(officer, { roam: 1.5, faceYaw: -0.55 })
   g.add(officer)
 
   return g
@@ -1148,6 +1150,7 @@ function capeLoomStall(): THREE.Group {
   const trimmer = capeTrimmerNpc()
   trimmer.position.set(0.55, 0, 0.55)
   trimmer.rotation.y = -0.7
+  stampHarborNpcRoam(trimmer, { roam: 1.25, faceYaw: -0.7 })
   g.add(trimmer)
 
   return g
