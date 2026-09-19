@@ -1979,6 +1979,11 @@ assert.doesNotMatch(
     /showSpeechBubble\('local'/,
     'local send paints overhead say before keyboard dismiss',
   )
+  assert.match(minimapSrc, /onWorldTravel|hq-minimap-world/, 'minimap world-map travel control')
+  assert.match(minimapSrc, /Learning voyage|Guan Harbor/, 'world-map dest labels')
+  assert.match(minimapCss, /\.hq-minimap-world-btn/, 'world-map button styles')
+  assert.match(playSrc2, /onWorldTravel/, 'Learn session wires minimap world travel')
+  assert.match(playSrc2, /setRealmOverride\('guan'\)/, 'world travel can open Guan Harbor')
   assert.match(minimapSrc, /harbor\.minimap\.layout\.v1/, 'minimap layout persists')
   assert.match(playSrc2, /HarborMinimap/, 'Learn session mounts minimap')
   assert.match(playSrc2, /viewYaw/, 'Learn session polls camera viewYaw for minimap')

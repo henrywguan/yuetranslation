@@ -1057,6 +1057,18 @@ export function LearnSession({
         onNavigate={(x, z) => {
           worldApiRef.current?.moveToWorld(x, z)
         }}
+        onWorldTravel={(dest) => {
+          playHarborTeleport()
+          if (dest === 'guan') {
+            setRealmOverride('guan')
+            startHarborBgm('guan')
+          } else {
+            setRealmOverride(null)
+            startHarborBgm('river')
+          }
+          setVisitable(null)
+          setTeleportOpen(false)
+        }}
       />
 
       <header className="hq-play-hud-top">

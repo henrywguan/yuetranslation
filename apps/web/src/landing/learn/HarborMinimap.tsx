@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { HARBOR_VISITABLES, type HarborVisitable, type HarborVisitableId } from './harborWorld'
 import type { HarborRealmId } from './harborWorld'
-import { GUAN_CAPE_LOOM, GUAN_RETURN_PORTAL } from './harborGuanRealm'
+import { GUAN_CAPE_LOOM, GUAN_HARBOR_META, GUAN_RETURN_PORTAL } from './harborGuanRealm'
 import { GUAN_FISH_SPOTS, GUAN_FISHING_HUT } from './harborFishing'
 import {
   MINIMAP_CARDINALS,
@@ -214,15 +214,53 @@ type Props = {
   realm?: HarborRealmId | null
   /** OSRS minimap navigate — world (x, z) from a tap inside the radar disc. */
   onNavigate?: (x: number, z: number) => void
+  /**
+   * World-map travel — voyage learning area (clear Guan override) or Guan Harbor.
+   * When omitted, the corner world-map control is hidden.
+   */
+  onWorldTravel?: (dest: 'voyage' | 'guan') => void
 }
+
+export type HarborWorldTravelDest = 'voyage' | 'guan'
 
 type TapMark = { left: number; top: number; id: number }
 
-export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate }: Props) {
+function WorldMapGlyph() {
+  return (
+    <svg className="hq-minimap-world-glyph" viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <ellipse cx="12" cy="12" rx="4.2" ry="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <path
+        d="M3.5 9.5h17M3.5 14.5h17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 5.2c1.4 1.6 2.2 4 2.2 6.8S8.4 17.2 7 18.8M17 5.2c-1.4 1.6-2.2 4-2.2 6.8s.8 5.2 2.2 6.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+export function HarborMinimap({
+  pose,
+  remotes,
+  hidden,
+  realm = null,
+  onNavigate,
+  onWorldTravel,
+}: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const [layout, setLayout] = useState<Layout>(() => loadLayout())
   const [tapMark, setTapMark] = useState<TapMark | null>(null)
+  const [worldOpen, setWorldOpen] = useState(false)
   const tapSeqRef = useRef(0)
   const navPointerRef = useRef<{ pointerId: number; x: number; y: number } | null>(null)
   const dragRef = useRef<{
@@ -238,6 +276,25 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   useEffect(() => {
     saveLayout(layout)
   }, [layout])
+
+  useEffect(() => {
+    if (!worldOpen) return
+    const onDoc = (e: PointerEvent) => {
+      const root = rootRef.current
+      if (!root) return
+      if (e.target instanceof Node && root.contains(e.target)) return
+      setWorldOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setWorldOpen(false)
+    }
+    window.addEventListener('pointerdown', onDoc)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('pointerdown', onDoc)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [worldOpen])
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -277,7 +334,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   const beginMove = useCallback(
     (e: ReactPointerEvent<HTMLElement>) => {
       if (layout.locked) return
-      if ((e.target as HTMLElement).closest('button, .hq-minimap-resize')) return
+      if ((e.target as HTMLElement).closest('button, .hq-minimap-resize, .hq-minimap-world')) return
       e.preventDefault()
       e.stopPropagation()
       dragRef.current = {
@@ -312,7 +369,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   )
 
   const onBodyPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button, .hq-minimap-resize')) return
+    if ((e.target as HTMLElement).closest('button, .hq-minimap-resize, .hq-minimap-world')) return
     // Chrome drag owns move/resize; body taps are click-to-walk only.
     if (dragRef.current) return
     navPointerRef.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY }
@@ -346,6 +403,15 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
     [onNavigate, pose],
   )
 
+  const travel = useCallback(
+    (dest: HarborWorldTravelDest) => {
+      if (!onWorldTravel) return
+      setWorldOpen(false)
+      onWorldTravel(dest)
+    },
+    [onWorldTravel],
+  )
+
   const place = useMemo(() => {
     if (!pose) return { en: 'Charting…', zh: '定位中', kind: 'sea' as const }
     return resolveHarborMinimapPlace(pose.x, pose.z, realm)
@@ -361,6 +427,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   const viewYaw = pose?.viewYaw ?? pose?.yaw ?? 0
   const size = layout.size
   const compact = size < COMPACT_TITLE_BELOW
+  const inGuan = realm === 'guan'
 
   const visitables = minimapVisitables(realm)
 
@@ -382,7 +449,7 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
   return (
     <div
       ref={rootRef}
-      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${compact ? ' is-compact' : ''}${onNavigate ? ' is-navigable' : ''}`}
+      className={`hq-minimap${layout.collapsed ? ' is-collapsed' : ''}${layout.locked ? ' is-locked' : ''}${layout.legendOpen ? ' is-legend-open' : ''}${compact ? ' is-compact' : ''}${onNavigate ? ' is-navigable' : ''}${worldOpen ? ' is-world-open' : ''}`}
       style={
         {
           left: layout.left,
@@ -566,6 +633,62 @@ export function HarborMinimap({ pose, remotes, hidden, realm = null, onNavigate 
           )}
         </>
       )}
+
+      {onWorldTravel ? (
+        <div className="hq-minimap-world">
+          <button
+            type="button"
+            className={`hq-minimap-world-btn${worldOpen ? ' is-on' : ''}${inGuan ? ' is-guan' : ''}`}
+            aria-expanded={worldOpen}
+            aria-haspopup="menu"
+            aria-label="World map — choose Learning voyage or Guan Harbor"
+            title="World map"
+            onClick={(e) => {
+              e.stopPropagation()
+              setWorldOpen((v) => !v)
+            }}
+          >
+            <WorldMapGlyph />
+          </button>
+          {worldOpen ? (
+            <div className="hq-minimap-world-menu" role="menu" aria-label="Travel destinations">
+              <p className="hq-minimap-world-kicker">World map · 世界地圖</p>
+              <button
+                type="button"
+                role="menuitem"
+                className={`hq-minimap-world-dest${!inGuan ? ' is-here' : ''}`}
+                disabled={!inGuan}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  travel('voyage')
+                }}
+              >
+                <span className="hq-minimap-world-dest-en">Learning voyage</span>
+                <span className="hq-minimap-world-dest-zh" lang="zh-HK">
+                  學習航線
+                </span>
+                <span className="hq-minimap-world-dest-status">{!inGuan ? 'Here' : 'Travel'}</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={`hq-minimap-world-dest hq-minimap-world-dest--guan${inGuan ? ' is-here' : ''}`}
+                disabled={inGuan}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  travel('guan')
+                }}
+              >
+                <span className="hq-minimap-world-dest-en">{GUAN_HARBOR_META.en}</span>
+                <span className="hq-minimap-world-dest-zh" lang="zh-HK">
+                  {GUAN_HARBOR_META.zh}
+                </span>
+                <span className="hq-minimap-world-dest-status">{inGuan ? 'Here' : 'Travel'}</span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

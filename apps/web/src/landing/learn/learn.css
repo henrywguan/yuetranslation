@@ -6324,6 +6324,125 @@
   opacity: 1;
 }
 
+/* World-map corner control — travel between Learning voyage and Guan Harbor */
+.hq-minimap-world {
+  position: absolute;
+  right: 0.28rem;
+  bottom: 0.28rem;
+  z-index: 8;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 0.28rem;
+  pointer-events: auto;
+}
+.hq-minimap-world-btn {
+  display: grid;
+  place-items: center;
+  width: clamp(1.45rem, calc(var(--hq-minimap-size, 120px) * 0.18), 2rem);
+  height: clamp(1.45rem, calc(var(--hq-minimap-size, 120px) * 0.18), 2rem);
+  padding: 0;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, #7ec8b8 40%, transparent);
+  background:
+    radial-gradient(120% 100% at 30% 20%, color-mix(in srgb, #1a4a44 55%, transparent), transparent 60%),
+    linear-gradient(160deg, color-mix(in srgb, #0c2430 90%, transparent), color-mix(in srgb, #061018 95%, transparent));
+  color: #b8efe0;
+  cursor: pointer;
+  box-shadow: 0 4px 12px color-mix(in srgb, #000 35%, transparent);
+  transition: border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+.hq-minimap-world-btn:hover {
+  border-color: color-mix(in srgb, #3dcfb6 65%, transparent);
+  color: #e8fff8;
+  transform: translateY(-1px);
+}
+.hq-minimap-world-btn.is-on {
+  border-color: color-mix(in srgb, #3dcfb6 70%, transparent);
+  color: #f5fffc;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #3dcfb6 30%, transparent);
+}
+.hq-minimap-world-btn.is-guan {
+  border-color: color-mix(in srgb, #e2c56a 50%, transparent);
+  color: #f0d78c;
+}
+.hq-minimap-world-glyph {
+  width: 68%;
+  height: 68%;
+  display: block;
+}
+.hq-minimap-world-menu {
+  min-width: 10.5rem;
+  padding: 0.4rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, #7ec8b8 28%, transparent);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, #0a1820 94%, transparent), color-mix(in srgb, #041018 96%, transparent));
+  box-shadow: 0 10px 24px color-mix(in srgb, #000 45%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+.hq-minimap-world-kicker {
+  margin: 0 0.15rem 0.1rem;
+  font: 600 0.58rem/1 Syne, system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #7ec8b8 80%, #dff6ff);
+}
+.hq-minimap-world-dest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, #dff6ff 12%, transparent);
+  background: color-mix(in srgb, #071820 70%, transparent);
+  color: #e6f4f0;
+  cursor: pointer;
+  text-align: left;
+}
+.hq-minimap-world-dest:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #3dcfb6 45%, transparent);
+}
+.hq-minimap-world-dest:disabled,
+.hq-minimap-world-dest.is-here {
+  opacity: 0.85;
+  cursor: default;
+  border-color: color-mix(in srgb, #3dcfb6 35%, transparent);
+}
+.hq-minimap-world-dest--guan {
+  border-color: color-mix(in srgb, #c9a227 22%, transparent);
+}
+.hq-minimap-world-dest--guan.is-here,
+.hq-minimap-world-dest--guan:disabled {
+  border-color: color-mix(in srgb, #e2c56a 45%, transparent);
+}
+.hq-minimap-world-dest-en {
+  font: 700 0.72rem/1.2 Syne, system-ui, sans-serif;
+}
+.hq-minimap-world-dest-zh {
+  font: 500 0.65rem/1.2 "Noto Sans TC", "Noto Sans", system-ui, sans-serif;
+  opacity: 0.85;
+}
+.hq-minimap-world-dest-status {
+  margin-top: 0.1rem;
+  font: 600 0.58rem/1 Syne, system-ui, sans-serif;
+  color: #3dcfb6;
+}
+.hq-minimap-world-dest--guan .hq-minimap-world-dest-status {
+  color: #e2c56a;
+}
+.hq-minimap.is-world-open {
+  opacity: 0.98;
+  z-index: 12;
+}
+.hq-minimap.is-collapsed .hq-minimap-world {
+  bottom: 0.2rem;
+}
+
 .hq-visit-panel--barber {
   border-color: color-mix(in srgb, #ff7090 35%, transparent);
   background:
