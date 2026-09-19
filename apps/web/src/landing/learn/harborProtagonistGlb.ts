@@ -1,6 +1,11 @@
 /**
  * Harbor Quest · Meshy Scout GLB import (Henry-approved 2026-09-18).
- * Standing pose uses cinematic mesh; seated canoe stays procedural.
+ * Standing pose *may* use cinematic mesh; seated canoe stays procedural.
+ *
+ * Land visibility (2026-09-18): Meshy GLBs currently hide the procedural body
+ * while the imported mesh often fails to draw (skinned/material/culling), leaving
+ * only the nametag on foot. Keep the kit + URLs, but do not attach until the mesh
+ * path is validated — procedural Scout must stay visible on land.
  */
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -12,13 +17,43 @@ export const HARBOR_SCOUT_GLB_SRC = {
   male: '/assets/harbor-quest/scout-male.glb',
 } as const
 
+/**
+ * Gate: off until standing GLB is proven visible in-scene.
+ * When false, attach/preload are no-ops and procedural body stays shown.
+ */
+export const HARBOR_SCOUT_GLB_ENABLED = false
+
 /** Target standing height (feet → crown) matching procedural fashion kit. */
 export const HARBOR_SCOUT_GLB_TARGET_H = HARBOR_FIGURE_PROPORTIONS.standingH
+
+/** Reject normalized meshes that are empty / collapsed / absurdly scaled. */
+const MIN_VALID_GLB_H = HARBOR_SCOUT_GLB_TARGET_H * 0.35
+const MAX_VALID_GLB_H = HARBOR_SCOUT_GLB_TARGET_H * 2.5
 
 const cache = new Map<HarborGender, THREE.Group>()
 const inflight = new Map<HarborGender, Promise<THREE.Group | null>>()
 
-function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Group {
+function countScoutGlbMeshes(root: THREE.Object3D): number {
+  let n = 0
+  root.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) n += 1
+  })
+  return n
+}
+
+function isValidNormalizedScoutGlb(wrap: THREE.Group): boolean {
+  if (countScoutGlbMeshes(wrap) < 1) return false
+  wrap.updateMatrixWorld(true)
+  const box = new THREE.Box3().setFromObject(wrap)
+  if (box.isEmpty()) return false
+  const size = new THREE.Vector3()
+  box.getSize(size)
+  if (!(size.y >= MIN_VALID_GLB_H && size.y <= MAX_VALID_GLB_H)) return false
+  if (!(size.x > 0.05 && size.z > 0.05)) return false
+  return true
+}
+
+function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Group | null {
   const wrap = new THREE.Group()
   wrap.name = 'scout-glb'
   wrap.userData.scoutGlb = true
@@ -31,14 +66,17 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
   // Bake world transforms into a measurable box
   wrap.updateMatrixWorld(true)
   const box = new THREE.Box3().setFromObject(wrap)
+  if (box.isEmpty()) return null
   const size = new THREE.Vector3()
   box.getSize(size)
-  const h = Math.max(0.001, size.y)
+  const h = size.y
+  if (!(h > 0.05)) return null
   const scale = HARBOR_SCOUT_GLB_TARGET_H / h
   wrap.scale.setScalar(scale)
   wrap.updateMatrixWorld(true)
 
   const box2 = new THREE.Box3().setFromObject(wrap)
+  if (box2.isEmpty()) return null
   // Feet on y=0, centered on XZ
   wrap.position.x -= (box2.min.x + box2.max.x) * 0.5
   wrap.position.z -= (box2.min.z + box2.max.z) * 0.5
@@ -49,6 +87,7 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
     if (!m.isMesh) return
     m.castShadow = false
     m.receiveShadow = false
+    m.frustumCulled = false
     m.userData.scoutGlbMesh = true
     // Keep materials; soft lighting already in scene.
     const mat = m.material as THREE.Material | THREE.Material[]
@@ -59,10 +98,12 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
     }
   })
 
+  if (!isValidNormalizedScoutGlb(wrap)) return null
   return wrap
 }
 
 async function fetchScoutGlb(gender: HarborGender): Promise<THREE.Group | null> {
+  if (!HARBOR_SCOUT_GLB_ENABLED) return null
   const hit = cache.get(gender)
   if (hit) return hit.clone(true)
   const pending = inflight.get(gender)
@@ -76,6 +117,7 @@ async function fetchScoutGlb(gender: HarborGender): Promise<THREE.Group | null> 
       const loader = new GLTFLoader()
       const gltf = await loader.loadAsync(url)
       const normalized = normalizeScoutGlb(gltf.scene, gender)
+      if (!normalized) return null
       cache.set(gender, normalized)
       return normalized
     } catch {
@@ -91,6 +133,7 @@ async function fetchScoutGlb(gender: HarborGender): Promise<THREE.Group | null> 
 
 /** Warm both gender meshes after a user gesture / learn mount. */
 export function preloadHarborScoutGlbs(): void {
+  if (!HARBOR_SCOUT_GLB_ENABLED) return
   if (typeof window === 'undefined') return
   void fetchScoutGlb('female')
   void fetchScoutGlb('male')
@@ -102,21 +145,37 @@ export function isHarborScoutGlbCached(gender: HarborGender): boolean {
 
 /**
  * Attach cinematic Scout mesh to a procedural protagonist group.
- * Hides procedural body meshes while GLB is visible (sockets stay).
+ * Hides procedural body meshes only after a validated GLB is on the root.
+ * On failure / disabled gate: leave procedural visible (land nametag-only bug).
  */
 export async function attachHarborScoutGlb(
   root: THREE.Group,
   gender: HarborGender,
 ): Promise<boolean> {
+  if (!HARBOR_SCOUT_GLB_ENABLED) {
+    setProceduralBodyVisible(root, true)
+    root.userData.usesScoutGlb = false
+    return false
+  }
   const existing = root.getObjectByName('scout-glb')
   if (existing) {
+    if (!isValidNormalizedScoutGlb(existing as THREE.Group)) {
+      existing.removeFromParent()
+      setProceduralBodyVisible(root, true)
+      root.userData.usesScoutGlb = false
+      return false
+    }
     existing.visible = true
     setProceduralBodyVisible(root, false)
     root.userData.usesScoutGlb = true
     return true
   }
   const mesh = await fetchScoutGlb(gender)
-  if (!mesh) return false
+  if (!mesh || !isValidNormalizedScoutGlb(mesh)) {
+    setProceduralBodyVisible(root, true)
+    root.userData.usesScoutGlb = false
+    return false
+  }
   root.add(mesh)
   setProceduralBodyVisible(root, false)
   root.userData.usesScoutGlb = true
@@ -151,11 +210,13 @@ export function setProceduralBodyVisible(root: THREE.Object3D, visible: boolean)
 export function syncScoutGlbWithLook(root: THREE.Object3D, anyClothingSwap: boolean): void {
   const glb = root.getObjectByName('scout-glb')
   if (!glb) return
-  if (anyClothingSwap) {
+  if (!HARBOR_SCOUT_GLB_ENABLED || anyClothingSwap || !isValidNormalizedScoutGlb(glb as THREE.Group)) {
     glb.visible = false
     setProceduralBodyVisible(root, true)
-  } else {
-    glb.visible = true
-    setProceduralBodyVisible(root, false)
+    root.userData.usesScoutGlb = false
+    return
   }
+  glb.visible = true
+  setProceduralBodyVisible(root, false)
+  root.userData.usesScoutGlb = true
 }

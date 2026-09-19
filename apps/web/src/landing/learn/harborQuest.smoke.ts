@@ -1601,6 +1601,26 @@ function main() {
     'Scout GLB public URLs',
   )
   assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /HARBOR_SCOUT_GLB_ENABLED = false/,
+    'Scout GLB gated off so land procedural Scout stays visible',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /setProceduralBodyVisible\(root, true\)/,
+    'GLB attach restores procedural body when gated or invalid',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
+    /skipScoutGlb/,
+    'protagonist opts can skip Scout GLB for Barber preview',
+  )
+  assert.match(
+    readFileSync(new URL('./HarborCharacterCreate.tsx', import.meta.url), 'utf8'),
+    /skipScoutGlb:\s*true/,
+    'Barber / character-create preview keeps procedural Scout',
+  )
+  assert.match(
     readFileSync(new URL('./harborVo.ts', import.meta.url), 'utf8'),
     /vo-scout-welcome/,
     'VO welcome sample path',

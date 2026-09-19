@@ -57,6 +57,11 @@ export type HarborProtagonistOptions = {
   appearance?: HarborAppearance
   /** Hide the straw traveler hat (character-create preview). */
   bareHead?: boolean
+  /**
+   * Never attach Meshy Scout GLB (Barber / character-create / profile previews).
+   * Dress-up cameras must keep the procedural kit so hair/skin edits stay visible.
+   */
+  skipScoutGlb?: boolean
 }
 
 /** Locked Harbor swatches — soft anime dress-up palette. */
@@ -424,8 +429,10 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
   // Standing voyage uses the dress-up figure kit (not the Meshy GLB).
-  // The GLB + cel/audit path hid this body and then failed to draw on iPhone.
+  // Barber / create / profile pass skipScoutGlb so previews stay procedural.
+  // Never attach — GLB + cel hid the body on iPhone.
   g.userData.usesScoutGlb = false
+  g.userData.skipScoutGlb = Boolean(opts.skipScoutGlb)
 
   return g
 }
