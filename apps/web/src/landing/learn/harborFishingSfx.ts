@@ -1,8 +1,9 @@
 /**
  * Harbor Quest · fishing cast / splash / catch cues.
- * Splash prefers cinematic Higgsfield water sample.
+ * Splash prefers cinematic water sample; catch layers coin reward chime.
  */
 import { ensureSharedAudioContext } from '../../lib/audioReactive'
+import { playHarborCoinChing, preloadHarborCoinSfx } from './harborCoinSfx'
 import { playHarborSample, preloadHarborSamples } from './harborSampleAudio'
 
 const GAIN = 0.22
@@ -11,6 +12,7 @@ export const HARBOR_FISH_SPLASH_SAMPLE = '/assets/harbor-quest/sfx-water-splash.
 
 export function preloadHarborFishSfx(): void {
   preloadHarborSamples([HARBOR_FISH_SPLASH_SAMPLE])
+  preloadHarborCoinSfx()
 }
 
 function busAt(g = GAIN) {
@@ -78,14 +80,16 @@ export function playHarborFishSplash(): void {
   tone(ctx, bus, t0 + 0.02, { type: 'sine', f0: 220, f1: 90, dur: 0.2, gain: 0.18 })
 }
 
-/** Successful catch chime. */
+/** Successful catch chime + ferry-coin reward bling. */
 export function playHarborFishCatch(): void {
   if (typeof window === 'undefined') return
-  playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.45, channel: 'harbor-splash' })
+  playHarborSample(HARBOR_FISH_SPLASH_SAMPLE, { gain: 0.4, channel: 'harbor-splash' })
   const { ctx, bus, t0 } = busAt(0.26)
   tone(ctx, bus, t0, { type: 'sine', f0: 660, dur: 0.18, gain: 0.32 })
   tone(ctx, bus, t0 + 0.08, { type: 'sine', f0: 990, dur: 0.22, gain: 0.22 })
   tone(ctx, bus, t0 + 0.16, { type: 'triangle', f0: 1320, dur: 0.28, gain: 0.16 })
+  // Reward layer — soft RPG coin pickup
+  window.setTimeout(() => playHarborCoinChing(), 90)
 }
 
 /** Empty bite / fail. */

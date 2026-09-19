@@ -1506,7 +1506,10 @@ export function LearnSession({
           onCastAnim={() => {
             setFishCasting(true)
             worldApiRef.current?.playFishingCast()
-            window.setTimeout(() => setFishCasting(false), 950)
+            window.setTimeout(() => setFishCasting(false), 2200)
+          }}
+          onCastResult={(ok) => {
+            worldApiRef.current?.playFishingCatch(ok)
           }}
           onClose={() => {
             playHarborCastOff()

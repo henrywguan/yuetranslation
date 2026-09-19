@@ -80,7 +80,12 @@ assert.match(panelSrc, /HarborFishModelIcon/, 'fishing panel shows model icons')
 assert.match(panelSrc, /hq-fish-tile|FishItemTile/, 'fishing panel uses contained item tiles')
 assert.match(panelSrc, /HarborItemTooltip/, 'fishing shop tips')
 assert.match(panelSrc, /Bites here/, 'cast tab labels bites')
+assert.match(panelSrc, /onCastResult|HARBOR_FISH_RESOLVE_MS/, 'cast drives world catch pose')
 assert.doesNotMatch(panelSrc, /Tool · <strong>|Bites here:\s*\{/, 'cast tab is not plain text lists')
+
+const sfxSrc = readFileSync(new URL('./harborFishingSfx.ts', import.meta.url), 'utf8')
+assert.match(sfxSrc, /playHarborCoinChing/, 'successful catch layers coin reward')
+assert.match(sfxSrc, /playHarborFishCatch/, 'catch SFX export')
 
 const iconSrc = readFileSync(new URL('./HarborFishModelIcon.tsx', import.meta.url), 'utf8')
 assert.match(iconSrc, /drawFish|drawTool|drawBait/, 'fish model icon draws silhouettes')
