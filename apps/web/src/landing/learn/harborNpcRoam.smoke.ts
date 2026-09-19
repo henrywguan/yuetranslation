@@ -8,6 +8,7 @@ import {
   hasHarborNpcRoam,
   stampHarborNpcRoam,
   tickHarborNpcRoam,
+  type HarborNpcRoamState,
 } from './harborNpcRoam'
 
 const npc = new THREE.Group()
@@ -17,7 +18,7 @@ npc.rotation.y = -0.35
 stampHarborNpcRoam(npc, { roam: 1.4, faceYaw: -0.35, rng: () => 0.42 })
 assert.equal(hasHarborNpcRoam(npc), true, 'stamp sets npcRoam')
 stampHarborNpcRoam(npc, { roam: 9 })
-const state = npc.userData.npcRoam as { roam: number; homeX: number; homeZ: number }
+const state = npc.userData.npcRoam as HarborNpcRoamState
 assert.equal(state.roam, 1.4, 'stamp is idempotent')
 assert.equal(state.homeX, 0.9, 'home X from pose')
 assert.equal(state.homeZ, 2.0, 'home Z from pose')
