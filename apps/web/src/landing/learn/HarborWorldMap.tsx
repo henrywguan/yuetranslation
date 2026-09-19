@@ -1,14 +1,9 @@
 /**
  * Harbor Quest · fullscreen wuxia world map (minimap globe).
- * Overview continents → drill into region chart with chapter / landmark dots.
+ * Overview shows the painted chart full-bleed → drill into region chart with chapter / landmark dots.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  createHarborWorldMapScene,
-  type HarborWorldMapDest,
-  type HarborWorldMapScene,
-  HARBOR_WORLD_MAP_ART,
-} from './harborWorldMapScene'
+import { type HarborWorldMapDest, HARBOR_WORLD_MAP_ART } from './harborWorldMapScene'
 import { GUAN_HARBOR_META } from './harborGuanRealm'
 import {
   guanLandmarkNodes,
@@ -229,13 +224,9 @@ export function HarborWorldMap({
   onTravel,
   onOpenChapter,
 }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<HarborWorldMapScene | null>(null)
   const [view, setView] = useState<View>('overview')
   const [hover, setHover] = useState<HarborWorldMapDest | null>(null)
-  const [ready, setReady] = useState(false)
-  const [loadErr, setLoadErr] = useState(false)
+  const [artReady, setArtReady] = useState(false)
 
   const voyageNodes = useMemo(
     () => voyageChapterNodes(progress, activeLevelId),
@@ -247,61 +238,11 @@ export function HarborWorldMap({
   useEffect(() => {
     if (!open) {
       setView('overview')
+      setHover(null)
+      setArtReady(false)
       return
     }
   }, [open])
-
-  useEffect(() => {
-    if (!open || view !== 'overview') return
-    const canvas = canvasRef.current
-    const wrap = wrapRef.current
-    if (!canvas || !wrap) return
-    let alive = true
-    let raf = 0
-    let scene: HarborWorldMapScene | null = null
-
-    const resize = () => {
-      if (!scene || !wrap) return
-      const w = Math.max(1, wrap.clientWidth)
-      const h = Math.max(1, wrap.clientHeight)
-      scene.renderer.setSize(w, h, false)
-      scene.camera.aspect = w / h
-      scene.camera.updateProjectionMatrix()
-    }
-
-    ;(async () => {
-      try {
-        scene = await createHarborWorldMapScene(canvas)
-        if (!alive) {
-          scene.dispose()
-          return
-        }
-        sceneRef.current = scene
-        setReady(true)
-        setLoadErr(false)
-        resize()
-        const loop = (t: number) => {
-          if (!alive || !scene) return
-          scene.tick(t)
-          scene.renderer.render(scene.scene, scene.camera)
-          raf = requestAnimationFrame(loop)
-        }
-        raf = requestAnimationFrame(loop)
-      } catch {
-        if (alive) setLoadErr(true)
-      }
-    })()
-
-    window.addEventListener('resize', resize)
-    return () => {
-      alive = false
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', resize)
-      scene?.dispose()
-      sceneRef.current = null
-      setReady(false)
-    }
-  }, [open, view])
 
   useEffect(() => {
     if (!open) return
@@ -324,17 +265,7 @@ export function HarborWorldMap({
         ? { en: `Drill into ${GUAN_HARBOR_META.en}`, zh: `打開${GUAN_HARBOR_META.zh}詳圖` }
         : { en: 'Hover or tap a continent to drill down', zh: '將滑鼠移上或撳大陸深入' }
 
-  const applyHover = (id: HarborWorldMapDest | null) => {
-    setHover(id)
-    sceneRef.current?.setHover(id)
-  }
-
-  const onPointer = (clientX: number, clientY: number) => {
-    const el = wrapRef.current
-    const scene = sceneRef.current
-    if (!el || !scene) return null
-    return scene.pick(clientX, clientY, el)
-  }
+  const applyHover = (id: HarborWorldMapDest | null) => setHover(id)
 
   const drill = (dest: HarborWorldMapDest) => {
     setView(dest)
@@ -344,7 +275,7 @@ export function HarborWorldMap({
   return (
     <div className="hq-worldmap" role="dialog" aria-label="Harbor Quest world map" aria-modal="true">
       <div className="hq-worldmap-veil" onClick={onClose} aria-hidden />
-      <div className="hq-worldmap-sheet">
+      <div className="hq-worldmap-sheet hq-worldmap-sheet--hero">
         <header className="hq-worldmap-head">
           <div>
             <p className="hq-worldmap-kicker">World map · 世界地圖</p>
@@ -361,44 +292,40 @@ export function HarborWorldMap({
         {view === 'overview' ? (
           <>
             <div
-              ref={wrapRef}
-              className={`hq-worldmap-stage${hover ? ` is-glow-${hover}` : ''}${ready ? ' is-ready' : ''}`}
-              onPointerMove={(e) => {
-                applyHover(onPointer(e.clientX, e.clientY))
-              }}
-              onPointerLeave={() => applyHover(null)}
-              onClick={(e) => {
-                const id = onPointer(e.clientX, e.clientY)
-                if (id) drill(id)
-              }}
+              className={`hq-worldmap-stage hq-worldmap-stage--hero${hover ? ` is-glow-${hover}` : ''}${
+                artReady ? ' is-ready' : ''
+              }`}
             >
-              <canvas ref={canvasRef} className="hq-worldmap-canvas" />
-              {!ready && !loadErr ? <p className="hq-worldmap-loading">Charting seas…</p> : null}
-              {loadErr ? (
-                <div className="hq-worldmap-fallback">
-                  <img src={HARBOR_WORLD_MAP_ART} alt="Harbor Quest world map" />
-                  <button
-                    type="button"
-                    className={`hq-worldmap-hotspot hq-worldmap-hotspot--voyage${hover === 'voyage' ? ' is-glow' : ''}`}
-                    onMouseEnter={() => applyHover('voyage')}
-                    onFocus={() => applyHover('voyage')}
-                    onClick={() => drill('voyage')}
-                  >
-                    Learning voyage
-                  </button>
-                  <button
-                    type="button"
-                    className={`hq-worldmap-hotspot hq-worldmap-hotspot--guan${hover === 'guan' ? ' is-glow' : ''}`}
-                    onMouseEnter={() => applyHover('guan')}
-                    onFocus={() => applyHover('guan')}
-                    onClick={() => drill('guan')}
-                  >
-                    {GUAN_HARBOR_META.en}
-                  </button>
-                </div>
-              ) : null}
+              {!artReady ? <p className="hq-worldmap-loading">Charting seas…</p> : null}
+              <div className="hq-worldmap-hero">
+                <img
+                  src={HARBOR_WORLD_MAP_ART}
+                  alt="Harbor Quest world map"
+                  className="hq-worldmap-hero-art"
+                  onLoad={() => setArtReady(true)}
+                />
+                <button
+                  type="button"
+                  className={`hq-worldmap-hotspot hq-worldmap-hotspot--voyage${hover === 'voyage' ? ' is-glow' : ''}`}
+                  aria-label="Learning voyage"
+                  onMouseEnter={() => applyHover('voyage')}
+                  onFocus={() => applyHover('voyage')}
+                  onMouseLeave={() => applyHover(null)}
+                  onBlur={() => applyHover(null)}
+                  onClick={() => drill('voyage')}
+                />
+                <button
+                  type="button"
+                  className={`hq-worldmap-hotspot hq-worldmap-hotspot--guan${hover === 'guan' ? ' is-glow' : ''}`}
+                  aria-label={GUAN_HARBOR_META.en}
+                  onMouseEnter={() => applyHover('guan')}
+                  onFocus={() => applyHover('guan')}
+                  onMouseLeave={() => applyHover(null)}
+                  onBlur={() => applyHover(null)}
+                  onClick={() => drill('guan')}
+                />
+              </div>
 
-              {/* Overview chapter-progress dots floating on continents */}
               <div className="hq-worldmap-overview-dots" aria-hidden>
                 <div className="hq-worldmap-overview-cluster hq-worldmap-overview-cluster--voyage">
                   {voyageNodes.slice(0, 8).map((n) => (
@@ -427,7 +354,7 @@ export function HarborWorldMap({
                 </div>
               </div>
 
-              <div className="hq-worldmap-legend" aria-hidden={!ready}>
+              <div className="hq-worldmap-legend">
                 <button
                   type="button"
                   className={`hq-worldmap-chip hq-worldmap-chip--voyage${hover === 'voyage' ? ' is-on' : ''}`}
@@ -465,7 +392,7 @@ export function HarborWorldMap({
                 <span lang="zh-HK">{hint.zh}</span>
               </p>
               <p className="hq-worldmap-credit">
-                Drill down for region charts · chapter dots mark campaign progress
+                Full voyage chart · drill down for region maps and chapter dots
               </p>
             </footer>
           </>

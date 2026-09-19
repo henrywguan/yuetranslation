@@ -1,8 +1,9 @@
 /**
- * Harbor Quest · wuxia world-map diorama (Learning voyage ↔ Guan Harbor).
+ * Harbor Quest · world-map asset paths + optional 3D diorama helpers.
  *
- * Procedural two-continent relief with the painted Harbor Quest parchment as a
- * floating backdrop. Hover / tap either continent for jade or gold glow.
+ * Overview UI shows `HARBOR_WORLD_MAP_ART` full-bleed in HarborWorldMap.
+ * `createHarborWorldMapScene` remains for experiments / fallback relief;
+ * continent drill-down uses its own GLB peeks.
  */
 import * as THREE from 'three'
 import { GUAN_HARBOR_META } from './harborGuanRealm'
