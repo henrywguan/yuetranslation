@@ -1,8 +1,33 @@
 import assert from 'node:assert/strict'
-import { bindMicBackgroundRelease, shouldReleaseMicForVisibility } from './micPrivacy.ts'
+import {
+  bindMicBackgroundRelease,
+  shouldForceReleaseMicOnBackground,
+  shouldReleaseMicForVisibility,
+} from './micPrivacy.ts'
 
 assert.equal(shouldReleaseMicForVisibility('hidden'), true)
 assert.equal(shouldReleaseMicForVisibility('visible'), false)
+
+assert.equal(
+  shouldForceReleaseMicOnBackground({ apple: true, live: false, hasSession: false }),
+  true,
+  'iPhone must always release (orange pill)',
+)
+assert.equal(
+  shouldForceReleaseMicOnBackground({ apple: false, live: false, hasSession: false }),
+  false,
+  'desktop must not abort during mic permission / startHold',
+)
+assert.equal(
+  shouldForceReleaseMicOnBackground({ apple: false, live: true, hasSession: false }),
+  true,
+  'desktop releases once listening',
+)
+assert.equal(
+  shouldForceReleaseMicOnBackground({ apple: false, live: false, hasSession: true }),
+  true,
+  'desktop releases when a session exists',
+)
 
 const listeners = new Map<string, Set<EventListenerOrEventListenerObject>>()
 function add(target: string, type: string, fn: EventListenerOrEventListenerObject) {

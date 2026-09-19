@@ -38,7 +38,7 @@ In `apps/web/src/lib/store.ts`:
   `audio.load()`, silent-WAV unlock, or `getUserMedia` until STT has started — those
   abort Safari capture (pill on, no audio). Do not arm the 600ms echo tail on user
   barge-in. Skip auto-speak if a new mic turn is already live.
-- **Background privacy:** Home / app switcher / Control Center must **stop tracks immediately** (`releaseCaptureOnBackground`). Do not wait for `session.stop()` — iOS can freeze JS and leave the orange “Safari Websites” pill on. Do not `loadBootstrap` on hide.
+- **Background privacy:** Home / app switcher / Control Center must **stop tracks immediately** (`releaseCaptureOnBackground`). Do not wait for `session.stop()` — iOS can freeze JS and leave the orange “Safari Websites” pill on. Do not `loadBootstrap` on hide. **Desktop:** do not force-release on `visibilitychange` during the mic-permission / `startHold` handshake (no live session yet) — Chrome’s permission UI can mark the document hidden and abort Solo/Conversation with no error. Once `live`/session exists, desktop still releases on hide.
 
 In `apps/web/src/lib/tts.ts`:
 

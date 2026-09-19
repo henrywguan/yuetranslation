@@ -12,7 +12,8 @@ import { isDisplayStandalone } from './lib/pwaInstall'
 import { bootstrapPwaLaunch } from './lib/pwaLaunch'
 import { listenPushNavigate, syncPushSubscriptionIfEnabled } from './lib/pushNotifications'
 import { loadSiteConfig } from './lib/siteLinks'
-import { bindMicBackgroundRelease } from './lib/micPrivacy'
+import { bindMicBackgroundRelease, shouldForceReleaseMicOnBackground } from './lib/micPrivacy'
+import { isAppleTouchDevice } from './lib/mediaAccess'
 import { useYueStore } from './lib/store'
 import { hashPath, navigate, useRoute } from './lib/useHashRoute'
 
@@ -74,7 +75,19 @@ export default function App() {
 
   useEffect(() => {
     return bindMicBackgroundRelease(() => {
-      useYueStore.getState().releaseCaptureOnBackground()
+      const s = useYueStore.getState()
+      // Desktop mic-permission UI can briefly mark the document hidden; don't
+      // abort startHold before a session exists (iPhone still always releases).
+      if (
+        !shouldForceReleaseMicOnBackground({
+          apple: isAppleTouchDevice(),
+          live: s.live,
+          hasSession: Boolean(s.session),
+        })
+      ) {
+        return
+      }
+      s.releaseCaptureOnBackground()
     })
   }, [])
 
