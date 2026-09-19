@@ -120,7 +120,6 @@ export function AdminPracticePartnerLab() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [draft, setDraft] = useState('')
-  const [lastModel, setLastModel] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
   const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
@@ -204,13 +203,12 @@ export function AdminPracticePartnerLab() {
       pushReel({ role: 'you', text })
 
       try {
-        const { reply, model } = await postPracticePartnerChat(nextMessages)
+        const { reply } = await postPracticePartnerChat(nextMessages)
         const withReply: PracticePartnerChatMessage[] = [
           ...nextMessages,
           { role: 'assistant', content: reply },
         ]
         setMessages(withReply)
-        setLastModel(model)
         setMood('speaking')
         setPartnerHold(reply)
         setYouLive(null)
@@ -381,7 +379,6 @@ export function AdminPracticePartnerLab() {
     setBusy(false)
     setMessages([])
     setReel([])
-    setLastModel('')
     setError('')
     setPartnerHold(null)
     setYouLive(null)
@@ -556,7 +553,6 @@ export function AdminPracticePartnerLab() {
         <p className="partner-lab-status" aria-live="polite">
           <span className="partner-lab-status-mood">{moodMeta.label}</span>
           <span className="partner-lab-status-hint">{moodMeta.hint}</span>
-          {lastModel ? <span className="partner-lab-status-hint"> · {lastModel}</span> : null}
         </p>
       </div>
 

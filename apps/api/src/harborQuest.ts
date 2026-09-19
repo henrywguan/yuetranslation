@@ -2,10 +2,13 @@ import type { Response } from 'express'
 import type { AuthedRequest } from './auth.js'
 import { requireAuth } from './auth.js'
 import { env } from './env.js'
+import { allowUserRateOrReject } from './guestRateLimit.js'
 import { applyCosmeticGift, type HarborGiftKind } from './harborGift.js'
 import { getMembershipForUser } from './household.js'
 import { getAdmin, getProfile } from './supabase.js'
 import { addHarborQuestCount } from './usage.js'
+
+const HARBOR_ERR = 'Harbor Quest sync failed. Please try again.'
 
 export type HarborQuestProgress = {
   cleared: string[]
@@ -521,7 +524,8 @@ export async function getHarborQuest(req: AuthedRequest, res: Response) {
     .maybeSingle()
 
   if (error) {
-    res.status(500).json({ message: error.message })
+    console.warn('[harbor-quest] get failed', error.message)
+    res.status(500).json({ message: HARBOR_ERR })
     return
   }
 
@@ -532,6 +536,8 @@ export async function getHarborQuest(req: AuthedRequest, res: Response) {
 export async function putHarborQuest(req: AuthedRequest, res: Response) {
   const auth = requireAuth(req, res)
   if (!auth) return
+
+  if (!allowUserRateOrReject(res, auth.userId, 'harborPut', env.harborPutRlPerMin)) return
 
   const progress = sanitizeHarborProgress(req.body?.progress)
 
@@ -562,7 +568,8 @@ export async function putHarborQuest(req: AuthedRequest, res: Response) {
 
   const { error } = await persistProgress(auth.userId, progress)
   if (error) {
-    res.status(500).json({ message: error.message })
+    console.warn('[harbor-quest] put failed', error.message)
+    res.status(500).json({ message: HARBOR_ERR })
     return
   }
 
@@ -610,7 +617,8 @@ export async function getHarborQuestLeaderboard(req: AuthedRequest, res: Respons
     .limit(limit)
 
   if (error) {
-    res.status(500).json({ message: error.message })
+    console.warn('[harbor-quest] leaderboard failed', error.message)
+    res.status(500).json({ message: 'Harbor Quest leaderboard unavailable.' })
     return
   }
 
@@ -681,6 +689,8 @@ async function sameHousehold(a: string, b: string): Promise<boolean> {
 export async function postHarborQuestGift(req: AuthedRequest, res: Response) {
   const auth = requireAuth(req, res)
   if (!auth) return
+
+  if (!allowUserRateOrReject(res, auth.userId, 'harborGift', env.harborGiftRlPerMin)) return
 
   const toUserId = typeof req.body?.toUserId === 'string' ? req.body.toUserId.trim() : ''
   const kindRaw = req.body?.kind
@@ -758,12 +768,14 @@ export async function postHarborQuestGift(req: AuthedRequest, res: Response) {
 
   const saveFrom = await persistProgress(auth.userId, nextFrom)
   if (saveFrom.error) {
-    res.status(500).json({ message: saveFrom.error.message })
+    console.warn('[harbor-quest] gift giver save failed', saveFrom.error.message)
+    res.status(500).json({ message: HARBOR_ERR })
     return
   }
   const saveTo = await persistProgress(toUserId, nextTo)
   if (saveTo.error) {
-    res.status(500).json({ message: saveTo.error.message })
+    console.warn('[harbor-quest] gift receiver save failed', saveTo.error.message)
+    res.status(500).json({ message: HARBOR_ERR })
     return
   }
 

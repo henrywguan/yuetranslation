@@ -50,21 +50,18 @@ function pruneIfStale(key: string, now: number) {
 }
 
 /**
- * Rate-limit **guests only** (no Bearer user). Signed-in users skip.
+ * Fixed-window rate limit for an arbitrary key (IP, user id, …).
  * Returns true if the request may proceed; otherwise writes 429 and returns false.
  */
-export function allowGuestIpOrReject(
-  req: AuthedRequest,
+export function allowKeyedRateOrReject(
   res: Response,
-  bucket: GuestRateBucket,
+  key: string,
+  limit: number,
+  bucket: string,
 ): boolean {
-  if (req.auth?.userId) return true
-  const limit = limitFor(bucket)
   if (!Number.isFinite(limit) || limit <= 0) return true
 
   const now = Date.now()
-  const ip = clientIp(req)
-  const key = `${bucket}|${ip}`
   pruneIfStale(key, now)
 
   let state = windows.get(key)
@@ -77,7 +74,7 @@ export function allowGuestIpOrReject(
     const retryAfterSec = Math.max(1, Math.ceil((state.resetAt - now) / 1000))
     res.setHeader('Retry-After', String(retryAfterSec))
     res.status(429).json({
-      message: 'Too many requests from this network — wait a moment and try again.',
+      message: 'Too many requests — wait a moment and try again.',
       retryAfterSeconds: retryAfterSec,
       bucket,
       limitPerMinute: limit,
@@ -87,6 +84,40 @@ export function allowGuestIpOrReject(
 
   state.count += 1
   return true
+}
+
+/**
+ * Rate-limit **guests only** (no Bearer user). Signed-in users skip.
+ * Returns true if the request may proceed; otherwise writes 429 and returns false.
+ */
+export function allowGuestIpOrReject(
+  req: AuthedRequest,
+  res: Response,
+  bucket: GuestRateBucket,
+): boolean {
+  if (req.auth?.userId) return true
+  const limit = limitFor(bucket)
+  return allowKeyedRateOrReject(res, `${bucket}|${clientIp(req)}`, limit, bucket)
+}
+
+/** Rate-limit any caller by client IP (used for public push subscribe). */
+export function allowIpRateOrReject(
+  req: Request,
+  res: Response,
+  bucket: string,
+  limit: number,
+): boolean {
+  return allowKeyedRateOrReject(res, `${bucket}|ip|${clientIp(req)}`, limit, bucket)
+}
+
+/** Rate-limit a signed-in user by user id (Harbor sync / gift). */
+export function allowUserRateOrReject(
+  res: Response,
+  userId: string,
+  bucket: string,
+  limit: number,
+): boolean {
+  return allowKeyedRateOrReject(res, `${bucket}|user|${userId}`, limit, bucket)
 }
 
 /** Test helper — clear windows between smokes. */

@@ -4,6 +4,8 @@
 import type { Response } from 'express'
 import { z } from 'zod'
 import type { AuthedRequest } from './auth.js'
+import { env } from './env.js'
+import { allowIpRateOrReject } from './guestRateLimit.js'
 import { publicPushConfig } from './pushNotifications.js'
 
 export async function getPushConfig(_req: AuthedRequest, res: Response) {
@@ -11,6 +13,7 @@ export async function getPushConfig(_req: AuthedRequest, res: Response) {
 }
 
 export async function subscribePush(req: AuthedRequest, res: Response) {
+  if (!allowIpRateOrReject(req, res, 'pushSubscribe', env.pushSubscribeRlPerMin)) return
   const parsed = z
     .object({
       endpoint: z.string().url(),
@@ -45,11 +48,13 @@ export async function subscribePush(req: AuthedRequest, res: Response) {
     })
     res.json({ ok: true, id: saved.id })
   } catch (e) {
-    res.status(500).json({ message: e instanceof Error ? e.message : 'Subscribe failed' })
+    console.warn('[push] subscribe failed', e instanceof Error ? e.message : e)
+    res.status(500).json({ message: 'Subscribe failed' })
   }
 }
 
 export async function unsubscribePush(req: AuthedRequest, res: Response) {
+  if (!allowIpRateOrReject(req, res, 'pushUnsubscribe', env.pushSubscribeRlPerMin)) return
   const parsed = z
     .object({
       endpoint: z.string().url(),
@@ -69,6 +74,7 @@ export async function unsubscribePush(req: AuthedRequest, res: Response) {
     }
     res.json({ ok: true })
   } catch (e) {
-    res.status(500).json({ message: e instanceof Error ? e.message : 'Unsubscribe failed' })
+    console.warn('[push] unsubscribe failed', e instanceof Error ? e.message : e)
+    res.status(500).json({ message: 'Unsubscribe failed' })
   }
 }

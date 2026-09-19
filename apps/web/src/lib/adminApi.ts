@@ -685,7 +685,7 @@ export type PracticePartnerChatMessage = {
 /** Admin Practice Partner turn — DeepSeek/OpenAI reply for Azure TTS + captions. */
 export async function postPracticePartnerChat(
   messages: PracticePartnerChatMessage[],
-): Promise<{ ok: boolean; reply: string; model: string }> {
+): Promise<{ ok: boolean; reply: string }> {
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
     body: JSON.stringify({ messages }),
@@ -694,5 +694,7 @@ export async function postPracticePartnerChat(
   if (!res.ok) {
     throw new Error((data as { message?: string }).message || 'Practice partner chat failed')
   }
-  return data as { ok: boolean; reply: string; model: string }
+  const reply = typeof (data as { reply?: unknown }).reply === 'string' ? (data as { reply: string }).reply : ''
+  if (!reply.trim()) throw new Error('Practice partner returned an empty reply')
+  return { ok: true, reply }
 }
