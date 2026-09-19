@@ -105,6 +105,7 @@ import {
   tickVipGearAnims,
 } from './harborVipGear'
 import { enrichBoatHull } from './harborGearDetail'
+import { mountHarborCanoeHull, mountHarborPaperLantern } from './harborBoatKit'
 import type { HarborRemotePlayer } from './harborPresence'
 import {
   buildChatBubbleSprite,
@@ -1035,7 +1036,8 @@ function boatLantern(
   g.userData.vesselPart = true
   g.name = 'boat-lantern'
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'lantern-paper', {
+    mountHarborPaperLantern(g, {
+      color: paper,
       targetHeight: 0.32,
       name: 'v2-boat-lantern',
       position: [0, 0.15, 0],
@@ -2537,12 +2539,16 @@ function buildBoatHull(boatId: string): THREE.Group {
   g.userData.vesselPart = true
   g.name = 'boat-hull'
   if (HARBOR_V2_MESH_ONLY) {
-    mountHarborV2Asset(g, 'canoe', {
-      targetHeight: 0.55,
-      name: 'v2-canoe-hull',
-      rotationY: Math.PI / 2,
-    })
-    // Soft recolor pass once the mesh lands (tint toward equipped hull color).
+    mountHarborCanoeHull(g, boatId, { color: hull, name: 'v2-canoe-hull' })
+    if (item.id === 'boat-dragon' || item.id === 'boat-pearl' || item.id === 'boat-imperial') {
+      attachVipBoatOrnaments(g, item.id)
+      mountHarborPaperLantern(g, {
+        color: trim,
+        targetHeight: 0.22,
+        name: 'v2-vip-prow-lantern',
+        position: [0.85, 0.42, 0],
+      })
+    }
     return g
   }
   const id = item.id

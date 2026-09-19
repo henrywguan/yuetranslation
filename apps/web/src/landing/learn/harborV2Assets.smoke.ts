@@ -13,6 +13,7 @@ import {
   type HarborV2AssetId,
 } from './harborV2Assets'
 import { setProceduralBodyVisible, syncScoutGlbWithLook } from './harborProtagonistGlb'
+import { harborBoatHullScale } from './harborBoatKit'
 
 assert.equal(HARBOR_V2_MESH_ONLY, true, 'V2 mesh-only is the live lock')
 
@@ -59,6 +60,13 @@ assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = true/, 'land cast plants anime Sco
 assert.match(glbSrc, /isScoutGlbSubtree|scoutGlbMesh/, 'procedural hide skips Scout GLB meshes')
 assert.match(glbSrc, /attachHarborCastGlb/, 'cast attach helper')
 assert.match(glbSrc, /isKeptCastProp/, 'NPC props survive procedural hide')
+
+assert.ok(harborBoatHullScale('boat-barge').sx > harborBoatHullScale('boat-canoe').sx, 'barge wider than canoe')
+assert.ok(harborBoatHullScale('boat-reed').sz < 1, 'reed skiff is shorter')
+assert.ok(harborBoatHullScale('boat-imperial').sy > 1, 'VIP imperial is taller')
+const kitSrc = readFileSync(new URL('./harborBoatKit.ts', import.meta.url), 'utf8')
+assert.match(kitSrc, /tintHarborV2Asset/, 'boat kit tints authored GLBs')
+assert.doesNotMatch(kitSrc, /generate_3d|loadAsync/, 'boat kit reuses cached V2 instances')
 
 const v2Src = readFileSync(new URL('./harborV2Assets.ts', import.meta.url), 'utf8')
 assert.match(v2Src, /rescaleAndReplantHarborV2Clone/, 'V2 rescales re-plant')
