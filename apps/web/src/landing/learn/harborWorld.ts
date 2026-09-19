@@ -37,6 +37,7 @@ import {
   harborFigureNeck,
   harborFigureTorso,
 } from './harborFigure'
+import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
@@ -870,12 +871,15 @@ export function harborLanternIntensity(weather: HarborWeather): number {
 }
 
 function glowMat(color: number, emissive: number, intensity = 0.9) {
-  return new THREE.MeshLambertMaterial({
-    color,
-    emissive,
-    emissiveIntensity: intensity,
-    flatShading: true,
-  })
+  return applyHarborCel(
+    new THREE.MeshLambertMaterial({
+      color,
+      emissive,
+      emissiveIntensity: intensity,
+      flatShading: true,
+    }),
+    { preset: 'lantern', ilmMap: makeHarborIlmMap('lantern') },
+  )
 }
 
 function attachLanternLight(

@@ -11,6 +11,7 @@
  */
 import * as THREE from 'three'
 import type { HarborEyeStyle } from './harborAppearance'
+import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 
 /**
  * Anime fashion proportions (unitless height ≈ 1.42 to crown).
@@ -54,13 +55,16 @@ export function harborFigureHeadExtents(r: number = HARBOR_FIGURE_HEAD_R) {
 
 /** Soft lit materials — no flatShading (dress-up camera needs polish). */
 export function harborFigureMat(color: number, doubleSide = false) {
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness: 0.55,
-    metalness: 0.02,
-    flatShading: false,
-    ...(doubleSide ? { side: THREE.DoubleSide } : null),
-  })
+  return applyHarborCel(
+    new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.55,
+      metalness: 0.02,
+      flatShading: false,
+      ...(doubleSide ? { side: THREE.DoubleSide } : null),
+    }),
+    { preset: 'character' },
+  )
 }
 
 function figureMat(color: number, _flat = false, doubleSide = false) {
@@ -75,6 +79,7 @@ export function harborFigureHead(
   y: number,
   opts: { r?: number; name?: string } = {},
 ): THREE.Mesh {
+  applyHarborCel(skin, { preset: 'character', ilmMap: makeHarborIlmMap('face') })
   const r = opts.r ?? HARBOR_FIGURE_HEAD_R
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 20), skin)
   mesh.scale.set(1.05, 1.08, 0.95)

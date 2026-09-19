@@ -3,11 +3,12 @@
  * Soft anime materials to match River Scout dress-up body. Not Jagex kit.
  */
 import * as THREE from 'three'
+import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import { harborFigureMat, harborFigureTorso } from './harborFigure'
 import type { HarborGearSlot } from './harborGear'
 
 function mat(color: number) {
-  return harborFigureMat(color)
+  return applyHarborCel(harborFigureMat(color), { preset: 'cloth', ilmMap: makeHarborIlmMap('cloth') })
 }
 
 function wrap(family: string): THREE.Group {

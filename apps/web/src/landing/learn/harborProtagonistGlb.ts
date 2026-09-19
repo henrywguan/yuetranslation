@@ -5,6 +5,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { HarborGender } from './harborAppearance'
+import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
 
 export const HARBOR_SCOUT_GLB_SRC = {
@@ -55,6 +56,7 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
     const mats = Array.isArray(mat) ? mat : [mat]
     for (const mm of mats) {
       if ('flatShading' in mm) (mm as THREE.MeshStandardMaterial).flatShading = false
+      applyHarborCel(mm, { preset: 'character', ilmMap: makeHarborIlmMap('face') })
       mm.needsUpdate = true
     }
   })

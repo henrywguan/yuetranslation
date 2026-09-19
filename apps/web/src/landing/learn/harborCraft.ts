@@ -7,6 +7,7 @@
  * not from raising poly counts.
  */
 import * as THREE from 'three'
+import { applyHarborCel } from './harborCelShader'
 
 /** Posterized Harbor swatches (~era HSL survival). Prefer these over one-off hexes. */
 export const HARBOR_CRAFT_PALETTE = {
@@ -91,23 +92,27 @@ export const HARBOR_CRAFT_PROPS = [
 ] as const
 export type HarborCraftProp = (typeof HARBOR_CRAFT_PROPS)[number]
 
-/** Flat Lambert — architecture / planks / armor plates. */
+/** Flat Lambert + Harbor cel — architecture / planks / armor plates. */
 export function hqMat(
   color: number,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: true, ...extra })
+  return applyHarborCel(new THREE.MeshLambertMaterial({ color, flatShading: true, ...extra }), {
+    preset: extra?.emissive && extra.emissiveIntensity ? 'lantern' : 'terrain',
+  })
 }
 
 /**
- * Smooth Lambert — rocks, fruit, heads, lava blobs.
- * Keep a single hue; let lighting vary value only (era Gouraud habit).
+ * Smooth Lambert + Harbor cel — rocks, fruit, heads, lava blobs.
+ * Cel ramp owns value steps; albedo stays a single hue.
  */
 export function hqMatSmooth(
   color: number,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return new THREE.MeshLambertMaterial({ color, flatShading: false, ...extra })
+  return applyHarborCel(new THREE.MeshLambertMaterial({ color, flatShading: false, ...extra }), {
+    preset: 'item',
+  })
 }
 
 /** Procedural 128×128 albedo cache (nearest — era idiom size). */
@@ -563,18 +568,21 @@ export const hqGuanGrassTexture = hqSoftGrassTexture
 export const hqGuanDirtTexture = hqSoftDirtTexture
 export const hqGuanThatchTexture = hqSoftThatchTexture
 
-/** Flat material with optional 128px albedo (tint via color). */
+/** Flat material with optional 128px albedo (tint via color) + Harbor cel. */
 export function hqMatTex(
   color: number,
   map: THREE.Texture,
   extra?: ConstructorParameters<typeof THREE.MeshLambertMaterial>[0],
 ) {
-  return new THREE.MeshLambertMaterial({
-    color,
-    map,
-    flatShading: true,
-    ...extra,
-  })
+  return applyHarborCel(
+    new THREE.MeshLambertMaterial({
+      color,
+      map,
+      flatShading: true,
+      ...extra,
+    }),
+    { preset: 'terrain' },
+  )
 }
 
 /** Snap to coarse grid so verts feel integer-ish at play scale. */

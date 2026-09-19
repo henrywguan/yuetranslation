@@ -4,6 +4,7 @@
  * and the Save Shack look snapshot.
  */
 import * as THREE from 'three'
+import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
   HARBOR_CRAFT_PALETTE as P,
   hqBox,
@@ -497,12 +498,15 @@ export function sanitizeCarriedGear(ownedRaw: unknown, bankedRaw: unknown = []):
 }
 
 function handheldGlowMat(color: number, emissive: number, intensity = 0.9) {
-  return new THREE.MeshLambertMaterial({
-    color,
-    emissive,
-    emissiveIntensity: intensity,
-    flatShading: true,
-  })
+  return applyHarborCel(
+    new THREE.MeshLambertMaterial({
+      color,
+      emissive,
+      emissiveIntensity: intensity,
+      flatShading: true,
+    }),
+    { preset: 'lantern', ilmMap: makeHarborIlmMap('lantern') },
+  )
 }
 
 function attachHandheldLanternLight(
