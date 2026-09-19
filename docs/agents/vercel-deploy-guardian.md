@@ -47,6 +47,7 @@ You never call paid `/api/translate`, `/api/tts`, `/api/speech-token`, Vision, o
 | Serverless Function unzipped > 250 MB | Over-broad `functions["api/index.ts"].includeFiles` (e.g. `packages/yue-shared/**` pulling `node_modules`) | Narrow to `dist` / canto data / email assets only |
 | Build OOM / timeout | Huge `docs/harbor-quest/assets` accidentally copied into output | Confirm `outputDirectory` stays `apps/web/dist`; never set output to repo root |
 | Preview OK, Production fail | Different env / retention / alias — rare for this Vite+Express setup | Compare both Resources views; check `vercel.json` env |
+| `Wait for Vercel Preview` red, Vercel status Ready, `GET / → 302` | Canonical / protection redirect on `*.vercel.app` — deploy is live | Gate accepts 301/302/307/308; do **not** treat as a build failure |
 | Install fail | `npm ci` lockfile drift in a workspace | Fix lockfile; do not `--force` |
 
 ---

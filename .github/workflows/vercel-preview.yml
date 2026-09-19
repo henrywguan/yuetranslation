@@ -49,14 +49,15 @@ jobs:
             echo "::error::Vercel Preview URL missing after wait"
             exit 1
           fi
-          # SPA root should be 200; /api/health may 404 on pure static edge cases —
-          # only assert the shell loads.
-          code=$(curl -fsS -o /dev/null -w '%{http_code}' --max-time 30 "${URL}/" || true)
+          # SPA root is usually 200. Preview *.vercel.app often 301/302s (www
+          # canonical, trailing slash, deployment-protection handshake) even
+          # when Vercel already marked the deploy Ready — treat those as live.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${URL}/" || true)
           echo "GET / → HTTP ${code}"
           case "${code}" in
-            200|304) exit 0 ;;
+            200|304|301|302|307|308) exit 0 ;;
             *)
-              echo "::error::Preview shell did not return 200/304 (got ${code})"
+              echo "::error::Preview shell did not respond (got ${code})"
               exit 1
               ;;
           esac

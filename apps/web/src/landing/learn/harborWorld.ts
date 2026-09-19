@@ -31,6 +31,7 @@ import {
   harborFigureArm,
   harborFigureEars,
   harborFigureFace,
+  harborFigureForeheadBangs,
   harborFigureHead,
   harborFigureLegStanding,
   harborFigureMat,
@@ -1285,6 +1286,7 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
       showBrows: true,
       showMouth: true,
       eyeStyle: female ? (role === 'merchant' ? 'bright' : 'round') : role === 'ferryman' ? 'bright' : 'almond',
+      faceStyle: role === 'merchant' ? 'cheerful' : role === 'scholar' ? 'calm' : 'soft',
       blush: female ? 0xffb0b8 : role === 'child' ? 0xffc0c8 : null,
     }),
   )
@@ -1297,10 +1299,7 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
     g.add(hqBox(0.26, 0.07, 0.22, P.ink, 0, headY + 0.12, 0))
     g.add(hqBox(0.12, 0.08, 0.12, P.ink, 0, headY + 0.2, 0))
   } else if (role === 'fisherman' || role === 'ferryman') {
-    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), hair)
-    fringe.scale.set(1.15, 0.55, 0.85)
-    fringe.position.set(0, headY + 0.02, 0.06)
-    g.add(fringe)
+    g.add(harborFigureForeheadBangs(hair, headY, { clumps: 3 }))
     const hat = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.12, 16), harborFigureMat(P.straw))
     hat.position.y = headY + 0.15
     g.add(hat)
@@ -1313,13 +1312,10 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
     g.add(hqBox(0.02, 0.04, 0.02, P.jade, 0.1, headY - 0.02, 0.04))
   } else if (role === 'villager') {
     const bob = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 12), hair)
-    bob.scale.set(1.05, 0.85, 1)
-    bob.position.set(0, headY + 0.02, -0.01)
+    bob.scale.set(1.02, 0.7, 0.92)
+    bob.position.set(0, headY + 0.06, -0.05)
     g.add(bob)
-    const bang = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), hair)
-    bang.scale.set(1.4, 0.45, 0.7)
-    bang.position.set(0, headY + 0.04, 0.08)
-    g.add(bang)
+    g.add(harborFigureForeheadBangs(hair, headY, { clumps: 4 }))
   } else {
     const bun = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), hair)
     bun.position.set(0, headY + 0.1, -0.03)
@@ -1640,6 +1636,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       showBrows: true,
       showMouth: true,
       eyeStyle: id === 'outfitter' || id === 'save-shack' ? 'bright' : id === 'arena' ? 'almond' : 'round',
+      faceStyle: id === 'outfitter' ? 'cheerful' : id === 'arena' ? 'sharp' : 'soft',
       blush: female ? 0xffb0b8 : null,
       brow: id === 'outfitter' ? 0x1a1a22 : undefined,
     }),
@@ -1691,10 +1688,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
     const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), hair)
     topknot.position.set(0, headY + 0.11, -0.02)
     g.add(topknot)
-    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), hair)
-    fringe.scale.set(1.3, 0.4, 0.7)
-    fringe.position.set(0, headY + 0.03, 0.07)
-    g.add(fringe)
+    g.add(harborFigureForeheadBangs(hair, headY, { clumps: 4 }))
     g.add(hqBox(0.04, 0.14, 0.02, 0xd4a040, -0.18, pelvisY + 0.38, 0.12))
     const shears = barberScissors()
     shears.position.set(0.28, pelvisY + 0.28, 0.1)
@@ -1709,10 +1703,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
       horn.rotation.z = sx * 0.55
       g.add(horn)
     }
-    const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), hair)
-    fringe.scale.set(1.2, 0.45, 0.7)
-    fringe.position.set(0, headY + 0.02, 0.06)
-    g.add(fringe)
+    g.add(harborFigureForeheadBangs(hair, headY, { clumps: 3 }))
     const halberd = luBuHalberd()
     halberd.position.set(0.36, 0.12, 0.04)
     g.add(halberd)

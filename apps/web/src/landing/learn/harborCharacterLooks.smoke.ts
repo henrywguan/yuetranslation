@@ -69,7 +69,7 @@ for (const eyeStyle of HARBOR_EYE_STYLES) {
     })
   }
 }
-assert.ok(eyeGeom.has('CircleGeometry'), 'eyes use circle inserts (round/almond/bright/sleepy)')
+assert.ok(eyeGeom.has('PlaneGeometry'), 'eyes use painted anime face card')
 assert.ok(browCount >= HARBOR_EYE_STYLES.length * HARBOR_FACE_STYLES.length * 2, 'every face style keeps eyebrows')
 assert.ok(
   !readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8').includes(
@@ -137,7 +137,8 @@ assert.match(figureSrc, /harborFigureHeadExtents/, 'shared skull extents for hai
 assert.match(figureSrc, /eyeStyle/, 'face builder reads eyeStyle')
 assert.match(figureSrc, /harborBrow|Eyebrows always/, 'face kit always builds brows')
 assert.match(figureSrc, /half-lidded crescents|never black sunglass/, 'sleepy eyes redesigned off sunglass bars')
-assert.match(figureSrc, /neckH:\s*0\.1/, 'visible neck height locked')
+assert.match(figureSrc, /neckH:\s*0\.085/, 'visible neck height locked')
+assert.match(figureSrc, /makeHarborAnimeFaceTexture|harborAnimeFace/, 'face kit paints an anime face card')
 const proSrc = readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8')
 assert.match(proSrc, /bangZ|harborFigureHeadExtents/, 'hair uses skull-clear bang depth')
 assert.match(proSrc, /full scalp cover|never a friar/, 'bun docs forbid friar ring')

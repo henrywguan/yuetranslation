@@ -10,9 +10,9 @@
  * See docs/harbor-quest/character-looks-v1-v4.md · RS-LIKE-CRAFT-BIBLE.md §3.1.
  */
 import * as THREE from 'three'
-import type { HarborEyeStyle } from './harborAppearance'
-import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
-import { auditHarborMesh, auditHarborObject } from './harborMeshAudit'
+import type { HarborEyeStyle, HarborFaceStyle } from './harborAppearance'
+import { makeHarborAnimeFaceTexture } from './harborAnimeFace'
+import { applyHarborCel } from './harborCelShader'
 
 /**
  * Anime fashion proportions (unitless height ≈ 1.42 to crown).
@@ -54,13 +54,15 @@ export function harborFigureHeadExtents(r: number = HARBOR_FIGURE_HEAD_R) {
   }
 }
 
-/** Soft lit materials — no flatShading (dress-up camera needs polish). */
+/**
+ * Soft lit materials — no flatShading (dress-up camera needs polish).
+ * Lambert + cel (same path as world props). MeshStandardMaterial + cel still
+ * fails to compile on iOS Safari, which made every sailor invisible.
+ */
 export function harborFigureMat(color: number, doubleSide = false) {
   return applyHarborCel(
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshLambertMaterial({
       color,
-      roughness: 0.55,
-      metalness: 0.02,
       flatShading: false,
       ...(doubleSide ? { side: THREE.DoubleSide } : null),
     }),
@@ -72,6 +74,24 @@ function figureMat(color: number, _flat = false, doubleSide = false) {
   return harborFigureMat(color, doubleSide)
 }
 
+function materialHex(mat: THREE.Material, fallback: number): number {
+  const color = (mat as THREE.MeshLambertMaterial).color
+  return color && typeof color.getHex === 'function' ? color.getHex() : fallback
+}
+
+/** Lambert + painted albedo — same iOS-safe path as world maps. */
+export function harborFigureMapMat(map: THREE.Texture, doubleSide = false) {
+  return applyHarborCel(
+    new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      map,
+      flatShading: false,
+      ...(doubleSide ? { side: THREE.DoubleSide } : null),
+    }),
+    { preset: 'character' },
+  )
+}
+
 /**
  * Smooth anime skull — high-segment sphere (not a faceted potato / Minecraft cube).
  */
@@ -80,13 +100,12 @@ export function harborFigureHead(
   y: number,
   opts: { r?: number; name?: string } = {},
 ): THREE.Mesh {
-  applyHarborCel(skin, { preset: 'character', ilmMap: makeHarborIlmMap('face') })
   const r = opts.r ?? HARBOR_FIGURE_HEAD_R
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 20), skin)
   mesh.scale.set(1.05, 1.08, 0.95)
   mesh.position.y = y
   if (opts.name) mesh.name = opts.name
-  return auditHarborMesh(mesh, 'character')
+  return mesh
 }
 
 /** Visible neck column under the chin (must clear the torso collar). */
@@ -95,7 +114,7 @@ export function harborFigureNeck(skin: THREE.Material, headY: number, r: number 
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.042, neckH, 12), skin)
   neck.position.y = headY - r * 0.88 - neckH * 0.48
   neck.name = 'hq-figure-neck'
-  return auditHarborMesh(neck, 'character')
+  return neck
 }
 
 /** Soft ear lobes flush on the skull sides. */
@@ -109,7 +128,6 @@ export function harborFigureEars(skin: THREE.Material, headY: number, r: number 
     ear.position.set(sx * (ex + 0.008), headY + 0.002, 0.01)
     g.add(ear)
   }
-  auditHarborObject(g, 'character')
   return g
 }
 
@@ -118,7 +136,9 @@ type FaceOpts = {
   sclera?: number
   brow?: number
   lip?: number
+  skin?: number
   eyeStyle?: HarborEyeStyle
+  faceStyle?: HarborFaceStyle
   /** @deprecated Prefer eyeStyle — kept for NPC callers that pass sizes. */
   eyeW?: number
   eyeH?: number
@@ -129,8 +149,10 @@ type FaceOpts = {
 }
 
 /**
- * Anime face plates — large expressive eyes, soft blush, tiny nose/mouth.
+ * Painted anime face card — large irises, lash line, catchlights, blush.
+ * Sleepy uses half-lidded crescents (never black sunglass bars).
  * Must read as different silhouettes per eyeStyle at barber / dress-up range.
+ * Eyebrows always sit on the card (and as thin 3D strokes when showBrows).
  */
 export function harborFigureFace(
   skin: THREE.Material,
@@ -142,123 +164,86 @@ export function harborFigureFace(
   g.userData.harborFace = true
 
   const iris = opts.iris ?? 0x2a3a5a
-  const scleraC = opts.sclera ?? 0xfff8f2
   const style: HarborEyeStyle = opts.eyeStyle ?? 'round'
+  const faceStyle: HarborFaceStyle = opts.faceStyle ?? 'soft'
   const extents = harborFigureHeadExtents()
-  const faceZ = extents.z + 0.006
-  const white = figureMat(scleraC, false, true)
-  const pupil = figureMat(iris, false, true)
-  const lidMat = figureMat(opts.brow ?? 0x2a2018, false, true)
-  const sparkMat = figureMat(0xffffff, false, true)
+  const faceZ = extents.z + 0.004
+  g.userData.harborEyeStyle = style
+  g.userData.harborFaceStyle = faceStyle
+
+  const skinHex = opts.skin ?? materialHex(skin, 0xf0d0b8)
+  const faceTex = makeHarborAnimeFaceTexture({
+    skin: skinHex,
+    iris,
+    brow: opts.brow ?? 0x2a2018,
+    lip: opts.lip ?? 0xc86878,
+    eyeStyle: style,
+    faceStyle,
+    blush: opts.blush,
+  })
+  const card = new THREE.Mesh(
+    new THREE.PlaneGeometry(extents.x * 1.58, extents.y * 1.62),
+    harborFigureMapMat(faceTex),
+  )
+  card.position.set(0, headY - 0.006, faceZ)
+  card.userData.harborAnimeFace = true
+  card.userData.harborEyes = true
+  g.add(card)
+
+  // Tiny soft nose tip — reads in profile when the card is edge-on.
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), skin)
+  nose.scale.set(0.85, 0.62, 1.05)
+  nose.position.set(0, headY - 0.018, faceZ + 0.012)
+  g.add(nose)
 
   const eyeYBase =
     headY +
-    (opts.eyeY ??
-      (style === 'sleepy' ? 0.002 : style === 'bright' ? 0.022 : 0.014))
+    (opts.eyeY ?? (style === 'sleepy' ? 0.002 : style === 'bright' ? 0.022 : 0.014))
   const eyeSpread = style === 'bright' ? 0.058 : style === 'almond' ? 0.055 : 0.052
-
-  for (const sx of [-1, 1] as const) {
-    const x = sx * eyeSpread
-    if (style === 'round') {
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.042, 20), white)
-      sclera.scale.set(0.92, 1.15, 1)
-      sclera.position.set(x, eyeYBase, faceZ)
-      g.add(sclera)
-      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.024, 16), pupil)
-      irisMesh.position.set(x, eyeYBase - 0.004, faceZ + 0.0015)
-      g.add(irisMesh)
-      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.009, 10), sparkMat)
-      spark.position.set(x - sx * 0.01, eyeYBase + 0.01, faceZ + 0.0025)
-      g.add(spark)
-    } else if (style === 'almond') {
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.038, 18), white)
-      sclera.scale.set(1.45, 0.78, 1)
-      sclera.position.set(x, eyeYBase, faceZ)
-      sclera.rotation.z = sx * -0.28
-      g.add(sclera)
-      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.02, 14), pupil)
-      irisMesh.scale.set(1.25, 0.8, 1)
-      irisMesh.position.set(x + sx * 0.004, eyeYBase - 0.002, faceZ + 0.0015)
-      irisMesh.rotation.z = sx * -0.28
-      g.add(irisMesh)
-      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.007, 8), sparkMat)
-      spark.position.set(x - sx * 0.008, eyeYBase + 0.008, faceZ + 0.0025)
-      g.add(spark)
-    } else if (style === 'bright') {
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.05, 22), white)
-      sclera.scale.set(0.95, 1.2, 1)
-      sclera.position.set(x, eyeYBase, faceZ)
-      g.add(sclera)
-      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.028, 16), pupil)
-      irisMesh.position.set(x, eyeYBase - 0.004, faceZ + 0.0015)
-      g.add(irisMesh)
-      const spark = new THREE.Mesh(new THREE.CircleGeometry(0.011, 10), sparkMat)
-      spark.position.set(x - sx * 0.012, eyeYBase + 0.012, faceZ + 0.0025)
-      g.add(spark)
-      const spark2 = new THREE.Mesh(new THREE.CircleGeometry(0.005, 8), sparkMat)
-      spark2.position.set(x + sx * 0.006, eyeYBase - 0.006, faceZ + 0.0025)
-      g.add(spark2)
-    } else {
-      // Sleepy — soft half-lidded
-      const sclera = new THREE.Mesh(new THREE.CircleGeometry(0.036, 18), white)
-      sclera.scale.set(1.2, 0.55, 1)
-      sclera.position.set(x, eyeYBase - 0.002, faceZ)
-      g.add(sclera)
-      const irisMesh = new THREE.Mesh(new THREE.CircleGeometry(0.016, 12), pupil)
-      irisMesh.scale.set(1.15, 0.55, 1)
-      irisMesh.position.set(x, eyeYBase - 0.006, faceZ + 0.0015)
-      g.add(irisMesh)
-      const lid = new THREE.Mesh(new THREE.CircleGeometry(0.038, 16), lidMat)
-      lid.scale.set(1.25, 0.32, 1)
-      lid.position.set(x, eyeYBase + 0.012, faceZ + 0.002)
-      g.add(lid)
-    }
-  }
-
-  // Tiny soft nose tip
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), skin)
-  nose.scale.set(0.9, 0.7, 1.1)
-  nose.position.set(0, headY - 0.02, faceZ + 0.014)
-  g.add(nose)
 
   if (opts.showBrows !== false) {
     for (const sx of [-1, 1] as const) {
       const brow = new THREE.Mesh(
-        new THREE.BoxGeometry(0.07, 0.01, 0.008),
+        new THREE.BoxGeometry(0.052, 0.006, 0.004),
         figureMat(opts.brow ?? 0x2a2018),
       )
       brow.position.set(
         sx * eyeSpread,
-        eyeYBase + (style === 'sleepy' ? 0.038 : 0.048),
+        eyeYBase + (style === 'sleepy' ? 0.04 : 0.05),
         faceZ + 0.003,
       )
-      brow.rotation.z = sx * -0.18
+      brow.rotation.z = sx * (faceStyle === 'sharp' ? -0.28 : -0.16)
       brow.userData.harborBrow = true
       g.add(brow)
     }
   }
 
-  if (opts.showMouth !== false) {
-    const mouthW = opts.blush != null ? 0.055 : 0.042
-    const mouth = new THREE.Mesh(
-      new THREE.CircleGeometry(mouthW * 0.5, 12),
-      figureMat(opts.lip ?? 0xc86878, false, true),
-    )
-    mouth.scale.set(1.6, 0.45, 1)
-    mouth.position.set(0, headY - 0.062, faceZ + 0.001)
-    g.add(mouth)
-  }
+  return g
+}
 
-  // Soft cheek blush (default for anime appeal when not overridden off)
-  const blushC = opts.blush === null ? null : (opts.blush ?? 0xffb0b8)
-  if (blushC != null) {
-    for (const sx of [-1, 1] as const) {
-      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.022, 12), figureMat(blushC, false, true))
-      blush.position.set(sx * 0.078, headY - 0.032, faceZ + 0.0005)
-      g.add(blush)
-    }
+/**
+ * Thin forehead bangs that sit *above* the eyes — never a helmet over the face.
+ */
+export function harborFigureForeheadBangs(
+  hairMat: THREE.Material,
+  headY: number,
+  opts: { clumps?: number; spread?: number } = {},
+): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'hq-figure-bangs'
+  g.userData.harborHair = true
+  const { y: sy, z: sz } = harborFigureHeadExtents()
+  const foreheadY = headY + sy * 0.62
+  const bangZ = sz + 0.04
+  const clumps = opts.clumps ?? 3
+  const spread = opts.spread ?? 0.042
+  const mid = (clumps - 1) / 2
+  for (let i = 0; i < clumps; i++) {
+    const lock = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.05, 4, 8), hairMat)
+    lock.rotation.x = 0.72
+    lock.position.set((i - mid) * spread, foreheadY, bangZ)
+    g.add(lock)
   }
-
   return g
 }
 
@@ -277,7 +262,7 @@ export function harborFigureTorso(
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(shoulder, waist, h, 16), cloth)
   mesh.scale.z = depth / ((shoulder + waist) * 0.5)
   mesh.position.y = y
-  return auditHarborMesh(mesh, 'character')
+  return mesh
 }
 
 /** Slim arm with soft hand (dress-up silhouette). */
@@ -317,7 +302,6 @@ export function harborFigureArm(
 
   g.userData.handY = elbowY - P.lowerArm * 0.85
   g.userData.handZ = 0.08
-  auditHarborObject(g, 'character')
   return g
 }
 
@@ -351,7 +335,6 @@ export function harborFigureLegStanding(
   toe.scale.set(1.05, 0.65, 1.25)
   toe.position.set(x + side * 0.008, 0.035, 0.11)
   g.add(toe)
-  auditHarborObject(g, 'character')
   return g
 }
 
@@ -373,6 +356,5 @@ export function harborFigureLegSeated(
   boot.rotation.x = Math.PI / 2
   boot.position.set(x, 0.1, 0.42)
   g.add(boot)
-  auditHarborObject(g, 'character')
   return g
 }

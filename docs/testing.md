@@ -58,6 +58,8 @@ Harbor Quest offline smokes (also listed in `AGENTS.md`):
 npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts
 npx tsx apps/web/src/landing/learn/progress.smoke.ts
 npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts
+npx tsx apps/web/src/landing/learn/harborAnimeFace.smoke.ts
+npx tsx apps/web/src/landing/learn/harborCharacterLooks.smoke.ts
 npx tsx apps/api/src/harborQuest.smoke.ts
 ```
 
