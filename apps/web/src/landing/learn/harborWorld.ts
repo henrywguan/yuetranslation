@@ -1721,10 +1721,8 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   g.scale.setScalar(scale)
   g.userData.npc = role
   g.userData.npcGender = gender
-  g.userData.characterStyle = 'anime-dressup'
-  if (HARBOR_V2_MESH_ONLY) {
-    void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
-  }
+  g.userData.characterStyle = 'anime-dressup-glb'
+  void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
   return g
 }
 
@@ -1948,7 +1946,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   g.userData.npc = id
   g.userData.landmarkHost = id
   g.userData.specialNpc = true
-  g.userData.characterStyle = 'anime-dressup'
+  g.userData.characterStyle = 'anime-dressup-glb'
   g.userData.npcGender = LANDMARK_HOST_GENDER[id]
 
   const female = LANDMARK_HOST_GENDER[id] === 'female'
@@ -2202,12 +2200,10 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   g.scale.setScalar(bodyScale)
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
   attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
-  if (HARBOR_V2_MESH_ONLY) {
-    void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
-      tint: robeHex,
-      tintAmount: 0.4,
-    })
-  }
+  void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
+    tint: robeHex,
+    tintAmount: 0.4,
+  })
   return g
 }
 

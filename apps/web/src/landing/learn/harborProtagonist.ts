@@ -63,8 +63,8 @@ export type HarborProtagonistOptions = {
   /** Hide the straw traveler hat (character-create preview). */
   bareHead?: boolean
   /**
-   * Never attach Meshy Scout GLB (Barber / character-create / profile previews).
-   * Dress-up cameras must keep the procedural kit so hair/skin edits stay visible.
+   * @deprecated Anime Scout GLB is always attached. Kept so older smoke callers
+   * still type-check; the flag is ignored.
    */
   skipScoutGlb?: boolean
 }
@@ -482,13 +482,12 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(socket('hip_l', -0.22, pelvisY + 0.02, 0.08))
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
-  // Canoe + land plant the authored anime Scout GLB (land walk = sway/bob).
-  // Barber / create / profile pass skipScoutGlb so previews stay procedural.
+  // Always plant the authored anime Scout GLB (land walk = sway/bob).
   g.userData.usesScoutGlb = false
-  g.userData.skipScoutGlb = Boolean(opts.skipScoutGlb)
+  g.userData.skipScoutGlb = false
   const wantCanoeGlb = pose === 'seated'
   const wantLandGlb = pose === 'standing' && HARBOR_SCOUT_GLB_LAND
-  if (!opts.skipScoutGlb && HARBOR_SCOUT_GLB_ENABLED && (wantCanoeGlb || wantLandGlb)) {
+  if (HARBOR_SCOUT_GLB_ENABLED && (wantCanoeGlb || wantLandGlb)) {
     void attachHarborScoutGlb(g, gender, { mode: wantCanoeGlb ? 'canoe' : 'standing' })
   }
 

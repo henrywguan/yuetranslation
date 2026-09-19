@@ -1,6 +1,7 @@
 /**
  * Harbor Quest · Higgsfield / Meshy Scout GLB import (Henry-approved 2026-09-18).
- * Canoe + land / pier cast plant the authored anime mesh (Lambert + cel).
+ * Anime Scout is the only on-screen body — canoe, land, pier, Barber, profile.
+ * Procedural dress-up stays as a load/fallback scaffold (hidden once GLB lands).
  * Scout GLBs are single-mesh (no skin / clips) — land walk uses root sway/bob
  * in `tickHarborProtagonistAnim` so the mesh never freezes in T-pose.
  * `setProceduralBodyVisible` must never toggle Scout GLB child meshes.
@@ -189,7 +190,6 @@ export async function attachHarborScoutGlb(
     return false
   }
   const mode = opts.mode ?? 'standing'
-  // Land + canoe both plant the anime Scout; land walk = sway/bob on scout-glb.
   if (mode === 'standing' && !HARBOR_SCOUT_GLB_LAND) {
     const stale = root.getObjectByName('scout-glb')
     if (stale) stale.removeFromParent()
@@ -198,6 +198,9 @@ export async function attachHarborScoutGlb(
     root.userData.characterStyle = 'anime-dressup'
     return false
   }
+  // Hide dress-up immediately so iPhone never flashes blocky primitives.
+  setProceduralBodyVisible(root, false)
+  hideGlbRedundantClothing(root)
   const existing = root.getObjectByName('scout-glb')
   if (existing) {
     if (!isValidNormalizedScoutGlb(existing as THREE.Group)) {
@@ -208,6 +211,7 @@ export async function attachHarborScoutGlb(
     }
     existing.visible = true
     setProceduralBodyVisible(root, false)
+    hideGlbRedundantClothing(root)
     root.userData.usesScoutGlb = true
     if (mode === 'canoe') plantScoutGlbInCanoe(existing as THREE.Group)
     return true
@@ -220,6 +224,7 @@ export async function attachHarborScoutGlb(
   }
   root.add(mesh)
   setProceduralBodyVisible(root, false)
+  hideGlbRedundantClothing(root)
   root.userData.usesScoutGlb = true
   root.userData.characterStyle = 'anime-dressup-glb'
   if (mode === 'canoe') plantScoutGlbInCanoe(mesh)
@@ -338,11 +343,23 @@ export function setProceduralBodyVisible(root: THREE.Object3D, visible: boolean)
   })
 }
 
-/** Toggle GLB vs procedural when wardrobe swaps unique silhouettes. */
-export function syncScoutGlbWithLook(root: THREE.Object3D, anyClothingSwap: boolean): void {
+/**
+ * Hide dress-up tops / bottoms / shoes that would sit on top of the anime mesh.
+ * Hats + handheld gear stay as accessories.
+ */
+function hideGlbRedundantClothing(root: THREE.Object3D): void {
+  root.traverse((o) => {
+    if (!o.userData.harborClothing) return
+    const slot = o.userData.harborClothSlot as string | undefined
+    if (slot === 'top' || slot === 'bottom' || slot === 'shoes') o.visible = false
+  })
+}
+
+/** Keep the anime Scout GLB on after wardrobe apply — never fall back to dress-up. */
+export function syncScoutGlbWithLook(root: THREE.Object3D, _anyClothingSwap = false): void {
   const glb = root.getObjectByName('scout-glb')
   if (!glb) return
-  if (!HARBOR_SCOUT_GLB_ENABLED || anyClothingSwap || !isValidNormalizedScoutGlb(glb as THREE.Group)) {
+  if (!HARBOR_SCOUT_GLB_ENABLED || !isValidNormalizedScoutGlb(glb as THREE.Group)) {
     glb.visible = false
     setProceduralBodyVisible(root, true)
     root.userData.usesScoutGlb = false
@@ -350,5 +367,7 @@ export function syncScoutGlbWithLook(root: THREE.Object3D, anyClothingSwap: bool
   }
   glb.visible = true
   setProceduralBodyVisible(root, false)
+  hideGlbRedundantClothing(root)
   root.userData.usesScoutGlb = true
+  root.userData.characterStyle = 'anime-dressup-glb'
 }

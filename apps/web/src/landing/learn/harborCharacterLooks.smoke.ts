@@ -125,7 +125,7 @@ assert.ok(hairAboveCrown >= 1, 'traveler bun places hair on/above the crown (not
 const createSrc = readFileSync(new URL('./HarborCharacterCreate.tsx', import.meta.url), 'utf8')
 assert.match(createSrc, /previewRotating|Pause rotation/, 'barber preview can pause spin')
 assert.match(createSrc, /Zoom in|previewDistance|setPreviewDistance/, 'barber preview zoom controls')
-assert.match(createSrc, /skipScoutGlb:\s*true/, 'barber preview skips Scout GLB (stay procedural)')
+assert.doesNotMatch(createSrc, /skipScoutGlb:\s*true/, 'barber preview plants anime Scout GLB')
 assert.match(createSrc, /is-premium-locked/, 'unowned premium beauty labels mark locked')
 const createCss = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
 assert.match(createCss, /hq-premium-gold-shimmer/, 'gold shimmer for locked beauty text')

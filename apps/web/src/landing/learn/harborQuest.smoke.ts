@@ -643,7 +643,7 @@ function main() {
   assert.equal(HARBOR_LANDMARK_HOST_GENDER.bank, 'male', 'Jin Banker')
   assert.equal(HARBOR_LANDMARK_HOST_GENDER.arena, 'male', 'Arena Master')
   assert.match(HARBOR_LANDMARK_HOST_LABEL.outfitter, /Mei Lin/, 'named Outfitter')
-  assert.match(worldSrc, /characterStyle = 'anime-dressup'/, 'NPC anime dress-up style')
+  assert.match(worldSrc, /characterStyle = 'anime-dressup-glb'/, 'NPC plants anime Scout GLB')
   assert.match(worldSrc, /harborFigureLegStanding/, 'NPC fashion legs')
   assert.doesNotMatch(worldSrc, /RS-era proportions \(oversized potato/, 'NPC potato comment removed')
 
@@ -1744,15 +1744,20 @@ assert.doesNotMatch(
     /harborGlbMaterialToLambertCel|MeshLambertMaterial/,
     'Scout GLB converts to Lambert + cel (iOS-visible)',
   )
-  assert.match(
-    readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),
-    /skipScoutGlb/,
-    'protagonist opts can skip Scout GLB for Barber preview',
-  )
-  assert.match(
+  assert.doesNotMatch(
     readFileSync(new URL('./HarborCharacterCreate.tsx', import.meta.url), 'utf8'),
     /skipScoutGlb:\s*true/,
-    'Barber / character-create preview keeps procedural Scout',
+    'Barber / character-create preview plants anime Scout GLB',
+  )
+  assert.doesNotMatch(
+    readFileSync(new URL('./HarborPlayerProfileModal.tsx', import.meta.url), 'utf8'),
+    /skipScoutGlb:\s*true/,
+    'profile preview plants anime Scout GLB',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /hideGlbRedundantClothing|never fall back to dress-up/,
+    'wardrobe keeps anime GLB (no dress-up swap-back)',
   )
   assert.match(
     readFileSync(new URL('./harborCelMaterial.ts', import.meta.url), 'utf8'),

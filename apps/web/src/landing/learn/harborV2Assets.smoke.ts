@@ -12,7 +12,7 @@ import {
   rescaleAndReplantHarborV2Clone,
   type HarborV2AssetId,
 } from './harborV2Assets'
-import { setProceduralBodyVisible } from './harborProtagonistGlb'
+import { setProceduralBodyVisible, syncScoutGlbWithLook } from './harborProtagonistGlb'
 
 assert.equal(HARBOR_V2_MESH_ONLY, true, 'V2 mesh-only is the live lock')
 
@@ -99,6 +99,31 @@ assert.match(doc, /V1/, 'v1 classified as archive')
   assert.equal(body.visible, false, 'procedural hidden')
   assert.equal(glbMesh.visible, true, 'Scout GLB mesh stays visible')
   assert.equal(glb.visible, true, 'Scout GLB root stays visible')
+}
+
+// Wardrobe apply must not hide the anime Scout mesh.
+{
+  const root = new THREE.Group()
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.3), new THREE.MeshLambertMaterial())
+  root.add(body)
+  const glb = new THREE.Group()
+  glb.name = 'scout-glb'
+  glb.userData.scoutGlb = true
+  const glbMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.6, 0.35), new THREE.MeshLambertMaterial())
+  glbMesh.userData.scoutGlbMesh = true
+  glb.add(glbMesh)
+  root.add(glb)
+  const cloth = new THREE.Group()
+  cloth.userData.harborClothing = true
+  cloth.userData.harborClothSlot = 'top'
+  const clothMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.2), new THREE.MeshLambertMaterial())
+  cloth.add(clothMesh)
+  root.add(cloth)
+  syncScoutGlbWithLook(root, true)
+  assert.equal(glb.visible, true, 'wardrobe swap keeps anime Scout GLB')
+  assert.equal(root.userData.usesScoutGlb, true, 'wardrobe swap keeps usesScoutGlb')
+  assert.equal(body.visible, false, 'wardrobe swap keeps dress-up body hidden')
+  assert.equal(cloth.visible, false, 'GLB hides redundant top/bottom/shoes overlays')
 }
 
 console.log('harborV2Assets.smoke: ok', ids.length, 'kits')

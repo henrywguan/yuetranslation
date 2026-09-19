@@ -799,7 +799,7 @@ export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
     })
   }
 
-  // Cinematic GLB body: hide when unique wardrobe silhouettes are worn.
+  // Anime Scout GLB stays on; wardrobe never swaps back to dress-up primitives.
   void import('./harborProtagonistGlb').then(({ syncScoutGlbWithLook }) => {
     syncScoutGlbWithLook(root, anySwap)
   })

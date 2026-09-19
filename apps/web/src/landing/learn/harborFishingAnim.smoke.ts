@@ -29,7 +29,7 @@ assert.ok(rod.children.length >= 3, 'rod has grip/shaft/reel')
 const kit = createHarborFishingPropKit()
 assert.ok(kit.rod && kit.line && kit.bobber && kit.catchFish, 'prop kit parts')
 
-const scout = buildHarborProtagonist({ pose: 'standing', skipScoutGlb: true })
+const scout = buildHarborProtagonist({ pose: 'standing' })
 let state = startHarborFishCast(0)
 assert.equal(state.phase, 'cast')
 
