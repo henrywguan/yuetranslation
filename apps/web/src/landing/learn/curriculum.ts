@@ -131,6 +131,11 @@ export function campaignShortLabel(id: HarborCampaignId): string {
   return id
 }
 
+/** True for Cantonese Life 1 Units 1–11 (not Sounds / Unit 0). */
+export function isLifeBookCampaign(id: HarborCampaignId): boolean {
+  return id !== 'sounds' && id !== 'life0'
+}
+
 export function levelCampaign(level: HarborLevel): HarborCampaignId {
   return level.campaign ?? 'sounds'
 }

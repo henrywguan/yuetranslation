@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   campaignShortLabel,
-  HARBOR_CAMPAIGNS,
   HARBOR_LEVELS,
+  isLifeBookCampaign,
   levelById,
   levelCampaign,
   levelRealm,
@@ -13,6 +13,7 @@ import {
   type HarborLevel,
   type HarborRealmId,
 } from './curriculum'
+import { HARBOR_LIFE_CAMPAIGNS, LIFE_BOOK_SHELF, type LifeUnitId } from './curriculumLifeBook'
 import {
   HARBOR_FANFARE_DURATION_MS,
   playHarborCorrectFanfare,
@@ -1797,71 +1798,194 @@ export function HarborMap({
   /** Chart opens on the sailor’s active campaign when known. */
   initialCampaign?: HarborCampaignId
 }) {
-  const [campaign, setCampaign] = useState<HarborCampaignId>(initialCampaign ?? 'sounds')
-  const levels = levelsForCampaign(campaign)
+  type TopTab = 'sounds' | 'life0' | 'lifeBook'
+  const initialTop: TopTab =
+    !initialCampaign || initialCampaign === 'sounds'
+      ? 'sounds'
+      : initialCampaign === 'life0'
+        ? 'life0'
+        : 'lifeBook'
+  const initialUnit: LifeUnitId | null =
+    initialCampaign && isLifeBookCampaign(initialCampaign) ? (initialCampaign as LifeUnitId) : null
+
+  const [topTab, setTopTab] = useState<TopTab>(initialTop)
+  const [lifeUnit, setLifeUnit] = useState<LifeUnitId | null>(initialUnit)
+
+  const campaign: HarborCampaignId =
+    topTab === 'lifeBook' ? (lifeUnit ?? 'life1') : topTab
+  const showingUnitShelf = topTab === 'lifeBook' && lifeUnit === null
+  const levels = showingUnitShelf ? [] : levelsForCampaign(campaign)
   const ids = levels.map((l) => l.id)
-  const meta = HARBOR_CAMPAIGNS.find((c) => c.id === campaign)!
+  const unitMeta = lifeUnit ? HARBOR_LIFE_CAMPAIGNS.find((c) => c.id === lifeUnit) : undefined
+  const blurb = showingUnitShelf
+    ? LIFE_BOOK_SHELF.blurb
+    : topTab === 'lifeBook' && unitMeta
+      ? unitMeta.blurb
+      : topTab === 'sounds'
+        ? {
+            en: 'Pronunciation Guide — initials, finals, and six tones.',
+            zh: '發音導讀——聲母、韻母、六聲。',
+          }
+        : {
+            en: 'Getting started — listen-first classroom talk, daily phrases, numbers.',
+            zh: '開始——先聽課堂用語、日常說話、數字。',
+          }
+  const ocHome = showingUnitShelf
+    ? LIFE_BOOK_SHELF.ocHome
+    : topTab === 'lifeBook' && unitMeta
+      ? unitMeta.ocHome
+      : topTab === 'sounds'
+        ? 'https://opencantonese.org/books/cantonese-life-1/pronunciation-guide'
+        : 'https://opencantonese.org/books/cantonese-life-1/unit-0'
+  const mapLabel = showingUnitShelf
+    ? LIFE_BOOK_SHELF.title.en
+    : topTab === 'lifeBook' && unitMeta
+      ? unitMeta.title.en
+      : topTab === 'sounds'
+        ? 'Campaign 1 · Sounds'
+        : 'Campaign 2 · Life Unit 0'
+
   return (
     <div className="hq-map-wrap">
-      <div className="hq-campaign-tabs" role="tablist" aria-label="Harbor campaigns">
-        {HARBOR_CAMPAIGNS.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            role="tab"
-            aria-selected={campaign === c.id}
-            className={`hq-campaign-tab${campaign === c.id ? ' is-on' : ''}`}
-            onClick={() => setCampaign(c.id)}
-          >
-            <span className="hq-campaign-tab-en">{c.title.en}</span>
+      <div className="hq-campaign-tabs" role="tablist" aria-label="Harbor voyage books">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={topTab === 'sounds'}
+          className={`hq-campaign-tab${topTab === 'sounds' ? ' is-on' : ''}`}
+          onClick={() => {
+            setTopTab('sounds')
+            setLifeUnit(null)
+          }}
+        >
+          <span className="hq-campaign-tab-en">Campaign 1 · Sounds</span>
+          <span className="hq-campaign-tab-zh" lang="zh-HK">
+            航線一 · 聲韻
+          </span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={topTab === 'life0'}
+          className={`hq-campaign-tab${topTab === 'life0' ? ' is-on' : ''}`}
+          onClick={() => {
+            setTopTab('life0')
+            setLifeUnit(null)
+          }}
+        >
+          <span className="hq-campaign-tab-en">Campaign 2 · Life Unit 0</span>
+          <span className="hq-campaign-tab-zh" lang="zh-HK">
+            航線二 · 生活第0課
+          </span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={topTab === 'lifeBook'}
+          className={`hq-campaign-tab hq-campaign-tab--book${topTab === 'lifeBook' ? ' is-on' : ''}`}
+          onClick={() => {
+            setTopTab('lifeBook')
+            setLifeUnit(null)
+          }}
+          aria-label="Cantonese Life 1, Units 1 to 11"
+        >
+          <span className="hq-book-spine" aria-hidden="true">
+            <span className="hq-book-spine-mark">粵</span>
+          </span>
+          <span className="hq-book-cover">
+            <span className="hq-book-cover-kicker">Open Cantonese</span>
+            <span className="hq-campaign-tab-en">{LIFE_BOOK_SHELF.title.en}</span>
             <span className="hq-campaign-tab-zh" lang="zh-HK">
-              {c.title.zh}
+              {LIFE_BOOK_SHELF.title.zh}
             </span>
-          </button>
-        ))}
+            <span className="hq-book-cover-range">{LIFE_BOOK_SHELF.spine.en}</span>
+          </span>
+        </button>
       </div>
+
       <p className="hq-campaign-blurb">
-        {meta.blurb.en}
+        {blurb.en}
         <span aria-hidden="true"> · </span>
-        <span lang="zh-HK">{meta.blurb.zh}</span>
+        <span lang="zh-HK">{blurb.zh}</span>
       </p>
-      <ol className="hq-map" aria-label={`${meta.title.en} piers`}>
-        {levels.map((level, i) => {
-          const unlocked = isLevelUnlocked(level.id, ids, progress)
-          const cleared = isLevelCleared(level.id, progress)
-          const base = missionBaseXp(level)
-          return (
-            <li key={level.id} className={`hq-map-node hq-map-node--${level.hue}`}>
-              {i > 0 ? <span className="hq-map-bridge" aria-hidden="true" /> : null}
-              <button
-                type="button"
-                className={`hq-map-btn${cleared ? ' is-cleared' : ''}${!unlocked ? ' is-locked' : ''}`}
-                disabled={!unlocked}
-                onClick={() => onSelect(level.id)}
-              >
-                <span className="hq-map-ch">{level.chapter === 0 ? 'Intro' : `Ch ${level.chapter}`}</span>
-                <span className="hq-map-title">{level.title.en}</span>
-                <span className="hq-map-title-zh" lang="zh-HK">
-                  {level.title.zh}
-                </span>
-                <span className="hq-map-tags">
-                  {level.tags.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </span>
-                <span className="hq-map-status">
-                  {!unlocked
-                    ? 'Locked'
-                    : cleared
-                      ? `Replay · ${Math.floor(base * 0.5)} XP`
-                      : `Sail · ${base} XP`}
-                </span>
+
+      {showingUnitShelf ? (
+        <div className="hq-book-shelf" aria-label="Cantonese Life 1 units">
+          <p className="hq-book-shelf-lead">Pick a unit to open its chapters.</p>
+          <ol className="hq-book-units">
+            {HARBOR_LIFE_CAMPAIGNS.map((unit, i) => {
+              const num = i + 1
+              return (
+                <li key={unit.id}>
+                  <button
+                    type="button"
+                    className={`hq-book-unit hq-book-unit--${unit.realm}`}
+                    onClick={() => setLifeUnit(unit.id)}
+                  >
+                    <span className="hq-book-unit-num">Unit {num}</span>
+                    <span className="hq-book-unit-title">{unit.title.en.replace(/^Campaign \d+ · /, '')}</span>
+                    <span className="hq-book-unit-zh" lang="zh-HK">
+                      {unit.title.zh.replace(/^航線[^·]+ · /, '')}
+                    </span>
+                    <span className="hq-book-unit-go">Open chapters →</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      ) : (
+        <>
+          {topTab === 'lifeBook' && unitMeta ? (
+            <div className="hq-book-crumb">
+              <button type="button" className="hq-book-back" onClick={() => setLifeUnit(null)}>
+                ← {LIFE_BOOK_SHELF.title.en}
               </button>
-            </li>
-          )
-        })}
-      </ol>
-      <a className="hq-campaign-oc" href={meta.ocHome} target="_blank" rel="noreferrer">
+              <span className="hq-book-crumb-unit">{unitMeta.title.en}</span>
+            </div>
+          ) : null}
+          <ol className="hq-map" aria-label={`${mapLabel} piers`}>
+            {levels.map((level, i) => {
+              const unlocked = isLevelUnlocked(level.id, ids, progress)
+              const cleared = isLevelCleared(level.id, progress)
+              const base = missionBaseXp(level)
+              return (
+                <li key={level.id} className={`hq-map-node hq-map-node--${level.hue}`}>
+                  {i > 0 ? <span className="hq-map-bridge" aria-hidden="true" /> : null}
+                  <button
+                    type="button"
+                    className={`hq-map-btn${cleared ? ' is-cleared' : ''}${!unlocked ? ' is-locked' : ''}`}
+                    disabled={!unlocked}
+                    onClick={() => onSelect(level.id)}
+                  >
+                    <span className="hq-map-ch">
+                      {level.chapter === 0 ? 'Intro' : `Ch ${level.chapter}`}
+                    </span>
+                    <span className="hq-map-title">{level.title.en}</span>
+                    <span className="hq-map-title-zh" lang="zh-HK">
+                      {level.title.zh}
+                    </span>
+                    <span className="hq-map-tags">
+                      {level.tags.map((tag) => (
+                        <span key={tag}>{tag}</span>
+                      ))}
+                    </span>
+                    <span className="hq-map-status">
+                      {!unlocked
+                        ? 'Locked'
+                        : cleared
+                          ? `Replay · ${Math.floor(base * 0.5)} XP`
+                          : `Sail · ${base} XP`}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        </>
+      )}
+
+      <a className="hq-campaign-oc" href={ocHome} target="_blank" rel="noreferrer">
         Open Cantonese source ↗
       </a>
     </div>

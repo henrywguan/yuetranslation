@@ -816,3 +816,14 @@ export const LIFE_BOOK_LEVELS: HarborLevel[] = LIFE_BOOK_UNITS.flatMap((u) =>
 )
 
 export const LIFE_BOOK_LEVEL_COUNT = LIFE_BOOK_LEVELS.length
+
+/** Pier-chart shelf meta for the Cantonese Life 1 book (Units 1–11). */
+export const LIFE_BOOK_SHELF = {
+  title: { en: 'Cantonese Life 1', zh: '生活粵語 1' } as LearnLine,
+  blurb: {
+    en: 'Units 1–11 — open the book, then pick a unit’s chapters.',
+    zh: '第1–11課——打開書，再揀單元章節。',
+  } as LearnLine,
+  spine: { en: 'Units 1–11', zh: '第1–11課' } as LearnLine,
+  ocHome: OC_LIFE1_BOOK,
+}
