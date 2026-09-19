@@ -359,6 +359,235 @@ export function harborFishSpotById(id: string): HarborFishSpotDef | undefined {
   return SPOT_BY_ID.get(id as HarborFishSpotId)
 }
 
+export const HARBOR_FISH_METHOD_LABEL: Record<HarborFishMethod, string> = {
+  net: 'Net',
+  bait: 'Rod + bait',
+  lure: 'Fly rod + lure',
+  harpoon: 'Harpoon',
+  cage: 'Cage',
+}
+
+/** Short place flavor — composed into the full spot description. */
+const HARBOR_FISH_SPOT_FLAVOR: Record<HarborFishSpotId, { en: string; zh: string }> = {
+  'spot-musa-pier': {
+    en: 'Warm pier water off Musa Point — nets and rice bait work the rails.',
+    zh: '巫沙碼頭暖水，網與米餌可沿欄釣。',
+  },
+  'spot-brim-dock': {
+    en: 'Smoky Brimhaven docks — cages and bait rods share the pilings.',
+    zh: '焰灣煙碼頭，籠與釣竿同佔木樁。',
+  },
+  'spot-cairn-shore': {
+    en: 'Tidal rock pools on Cairn Isle — nets for shrimp, fly rod for trout.',
+    zh: '石塚潮潭，網捕蝦、蠅竿釣鱒。',
+  },
+  'spot-pearl-cay': {
+    en: 'Clear Pearl Cay lagoon — nets for oysters & anchovy; harpoons for deeper blues.',
+    zh: '珠嶼清潟湖：網取蠔與鯷，叉取深水藍魚。',
+  },
+  'spot-mist-atoll': {
+    en: 'Foggy Mist Atoll deeps — worm bait for eels, harpoons for the big pelagics.',
+    zh: '霧嶼深水：蟲餌釣鱔，叉取大型遠洋魚。',
+  },
+  'spot-jade-skerry': {
+    en: 'Jade Skerry reed flats — fly rods and bait rods only; no nets here.',
+    zh: '玉磯蘆岸：只宜蠅竿與釣竿，無網位。',
+  },
+  'spot-ember-shoal': {
+    en: 'Hot Ember Shoal vents — cages for crabs, harpoons through the steam.',
+    zh: '焰灘噴口：籠捕蟹，蒸氣中使叉。',
+  },
+  'spot-shipyard-bay': {
+    en: 'Busy shipyard shallows — bait rods and lobster cages along the hulls.',
+    zh: '船塢淺灘：釣竿與蝦籠靠船殼。',
+  },
+  'spot-reed-key': {
+    en: 'Reed Key shallows — lure for perch, nets for the fringe shrimp.',
+    zh: '蘆鑰淺灘：蠅竿釣鱸，岸邊網蝦。',
+  },
+  'spot-wreck-cay': {
+    en: 'Wreck Cay reefs — harpoons and cages among the iron bones.',
+    zh: '沉舟礁：鐵骨之間使叉與籠。',
+  },
+  'spot-guan-horizon-east': {
+    en: 'Open Horizon East shoal — harpoons and nets on the long swell.',
+    zh: '東極灘：長湧上使叉與網。',
+  },
+  'spot-guan-horizon-west': {
+    en: 'Dark Horizon West deeps — harpoons and worm bait for sharks and eels.',
+    zh: '西極深水：叉與蟲餌對鯊與鱔。',
+  },
+  'spot-river-reed-a': {
+    en: 'North reed bank on the main river — nets and fly rods in the grass.',
+    zh: '主河蘆岸北：草間網與蠅竿。',
+  },
+  'spot-river-reed-b': {
+    en: 'South reed pools — fly and bait rods for perch and herring.',
+    zh: '南蘆潭：蠅竿與釣竿對鱸與青魚。',
+  },
+  'spot-river-pier-a': {
+    en: 'East pier shallows — starter nets and rice bait under the lanterns.',
+    zh: '東碼頭淺灘：燈下網與米餌。',
+  },
+  'spot-river-pier-b': {
+    en: 'West pier cages — lobster pots and bait rods by the ferry rail.',
+    zh: '西碼頭籠位：渡輪欄旁蝦籠與釣竿。',
+  },
+  'spot-river-oxbow': {
+    en: 'Quiet oxbow lagoon — bait and lure for carp, trout, and salmon.',
+    zh: '牛軛湖靜水：釣與蠅竿對鯉、鱒、鮭。',
+  },
+  'spot-river-far': {
+    en: 'Far upstream pool — fly rods and harpoons where the current deepens.',
+    zh: '上游深潭：水流加深處蠅竿與叉。',
+  },
+}
+
+/**
+ * Generated spot blurb for the cast panel — flavor + methods + bite level band.
+ */
+export function harborFishSpotDescription(spot: HarborFishSpotDef): { en: string; zh: string } {
+  const flavor = HARBOR_FISH_SPOT_FLAVOR[spot.id] ?? {
+    en: `${spot.region} fishing water.`,
+    zh: `${spot.name.zh}釣位。`,
+  }
+  const methods = spot.methods.map((m) => HARBOR_FISH_METHOD_LABEL[m]).join(' · ')
+  const bites = spot.fish
+    .map((id) => harborFishById(id))
+    .filter((f): f is HarborFishDef => Boolean(f))
+  const minLv = bites.length ? Math.min(...bites.map((f) => f.level)) : 1
+  const maxLv = bites.length ? Math.max(...bites.map((f) => f.level)) : 1
+  return {
+    en: `${flavor.en} Gear: ${methods}. Bites Fishing ${minLv}–${maxLv}.`,
+    zh: `${flavor.zh} 裝備：${methods}。咬口釣魚等級 ${minLv}–${maxLv}。`,
+  }
+}
+
+/**
+ * Why this cast found no candidates (level / bait / method mismatch).
+ */
+export function harborFishEmptyBiteMessage(
+  spot: HarborFishSpotDef,
+  bag: HarborFishingBag,
+): string {
+  const tool = harborFishToolById(bag.equippedTool)
+  if (!tool || !spot.methods.includes(tool.method)) {
+    return harborFishSpotRequirementText(spot, bag)
+  }
+  const level = fishingXpToLevel(bag.fishingXp)
+  const needBait = tool.method === 'bait' || tool.method === 'lure'
+  const baitId = needBait ? bag.equippedBait : 'bait-none'
+
+  const byMethod = spot.fish
+    .map((id) => harborFishById(id))
+    .filter((f): f is HarborFishDef => Boolean(f))
+    .filter((f) => f.method === tool.method)
+
+  if (!byMethod.length) {
+    return harborFishSpotRequirementText(spot, bag)
+  }
+
+  const byBait = byMethod.filter((f) =>
+    needBait ? f.bait === baitId : f.bait === 'bait-none' || f.bait === baitId,
+  )
+  if (!byBait.length) {
+    const wanted = [
+      ...new Set(
+        byMethod
+          .map((f) => harborFishBaitById(f.bait)?.name.en)
+          .filter((n): n is string => Boolean(n) && n !== 'No bait'),
+      ),
+    ]
+    if (wanted.length) {
+      return `Wrong bait — try ${wanted.join(' or ')} with ${tool.name.en}.`
+    }
+    return `Wrong bait for ${tool.name.en} at ${spot.region}.`
+  }
+
+  const locked = byBait.filter((f) => f.level > level).sort((a, b) => a.level - b.level)
+  if (locked.length) {
+    const next = locked[0]!
+    return `Need Fishing ${next.level} for ${next.name.en} here · you are Lv ${level}.`
+  }
+
+  return `Nothing bites at ${spot.region} with this setup — check Gear.`
+}
+
+/** Cheapest tool per method accepted at this spot (Ready / requirement UI). */
+export function harborFishToolsRequiredForSpot(spot: HarborFishSpotDef): HarborFishToolDef[] {
+  const out: HarborFishToolDef[] = []
+  for (const method of spot.methods) {
+    const tools = HARBOR_FISH_TOOLS.filter((t) => t.method === method).sort((a, b) => a.level - b.level)
+    const pick = tools[0]
+    if (pick) out.push(pick)
+  }
+  return out
+}
+
+/** Distinct baits used by fish that bite here (skip bait-none). */
+export function harborFishBaitsRequiredForSpot(spot: HarborFishSpotDef): HarborBaitDef[] {
+  const ids = new Set<HarborBaitId>()
+  for (const fid of spot.fish) {
+    const f = harborFishById(fid)
+    if (f && f.bait !== 'bait-none') ids.add(f.bait)
+  }
+  return [...ids]
+    .map((id) => harborFishBaitById(id))
+    .filter((b): b is HarborBaitDef => Boolean(b))
+}
+
+/** Human-readable “what’s required” for this spot (and optional current mismatch). */
+export function harborFishSpotRequirementText(
+  spot: HarborFishSpotDef,
+  bag?: HarborFishingBag,
+): string {
+  const tools = harborFishToolsRequiredForSpot(spot)
+  const toolNames = tools.map((t) => t.name.en)
+  const toolPart =
+    toolNames.length <= 1
+      ? toolNames[0] ?? 'a matching tool'
+      : `${toolNames.slice(0, -1).join(', ')} or ${toolNames[toolNames.length - 1]}`
+  if (!bag) return `Need ${toolPart} for this spot.`
+  const tool = harborFishToolById(bag.equippedTool)
+  if (!tool || !spot.methods.includes(tool.method)) {
+    return `Need ${toolPart} for this spot.`
+  }
+  const needBait = tool.method === 'bait' || tool.method === 'lure'
+  if (needBait) {
+    const bait = harborFishBaitById(bag.equippedBait)
+    if (!bait || bag.equippedBait === 'bait-none') {
+      return `Need bait with ${tool.name.en} for this spot.`
+    }
+    if ((bag.bait[bag.equippedBait] ?? 0) < 1) {
+      return `Out of ${bait.name.en} — restock at the lodge.`
+    }
+  }
+  return `Need ${toolPart} for this spot.`
+}
+
+/** True when the equipped setup is blocked for this spot (wrong tool / empty bait). */
+export function harborFishSpotSetupBlocked(
+  bag: HarborFishingBag,
+  spot: HarborFishSpotDef,
+): boolean {
+  const tool = harborFishToolById(bag.equippedTool)
+  if (!tool || !spot.methods.includes(tool.method)) return true
+  const needBait = tool.method === 'bait' || tool.method === 'lure'
+  if (!needBait) return false
+  if (bag.equippedBait === 'bait-none') return true
+  return (bag.bait[bag.equippedBait] ?? 0) < 1
+}
+
+/** Examine-line for a fish tile tip (name/price/lore). */
+export function harborFishExamineMeta(fish: HarborFishDef): string {
+  const method = HARBOR_FISH_METHOD_LABEL[fish.method]
+  const bait =
+    fish.bait === 'bait-none'
+      ? 'no bait'
+      : (harborFishBaitById(fish.bait)?.name.en ?? fish.bait)
+  return `Sell ${fish.value}¢ · Lv ${fish.level} · ${method} · ${bait} · +${fish.xp} XP`
+}
+
 /** Classic-ish curve: ~week to high 70s with daily casts; soft cap toward 99. */
 export function fishingXpToLevel(xp: number): number {
   const x = Math.max(0, xp)
@@ -507,7 +736,7 @@ export function attemptHarborFishCast(
   const tool = harborFishToolById(bag.equippedTool)
   if (!tool) return { ok: false, bag, message: 'Equip a fishing tool at the lodge.' }
   if (!spot.methods.includes(tool.method)) {
-    return { ok: false, bag, message: `${tool.name.en} cannot work this spot.` }
+    return { ok: false, bag, message: harborFishSpotRequirementText(spot, bag) }
   }
   const level = fishingXpToLevel(bag.fishingXp)
   if (level < tool.level) {
@@ -519,10 +748,12 @@ export function attemptHarborFishCast(
   if (needBait) {
     const bait = harborFishBaitById(baitId)
     if (!bait || baitId === 'bait-none') {
-      return { ok: false, bag, message: 'Select bait at the lodge.' }
+      return { ok: false, bag, message: harborFishSpotRequirementText(spot, bag) }
     }
     const have = bag.bait[baitId] ?? 0
-    if (have < 1) return { ok: false, bag, message: `Out of ${bait.name.en}.` }
+    if (have < 1) {
+      return { ok: false, bag, message: harborFishSpotRequirementText(spot, bag) }
+    }
   }
 
   const candidates = spot.fish
@@ -533,7 +764,7 @@ export function attemptHarborFishCast(
     .filter((f) => level >= f.level)
 
   if (!candidates.length) {
-    return { ok: false, bag, message: 'Nothing bites with this setup.' }
+    return { ok: false, bag, message: harborFishEmptyBiteMessage(spot, bag) }
   }
 
   // Consume bait on attempt

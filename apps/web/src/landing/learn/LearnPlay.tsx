@@ -55,6 +55,7 @@ import { playHarborVo, preloadHarborVo } from './harborVo'
 import { preloadHarborScoutGlbs } from './harborProtagonistGlb'
 import { preloadHarborV2Assets } from './harborV2Assets'
 import { preloadHarborFishSfx } from './harborFishingSfx'
+import { HARBOR_FISH_CATCH_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAnim'
 import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
@@ -1567,7 +1568,11 @@ export function LearnSession({
           onCastAnim={() => {
             setFishCasting(true)
             worldApiRef.current?.playFishingCast()
-            window.setTimeout(() => setFishCasting(false), 2200)
+            // Keep casting flag through cast + wait + catch celebration
+            window.setTimeout(
+              () => setFishCasting(false),
+              HARBOR_FISH_RESOLVE_MS + HARBOR_FISH_CATCH_MS + 250,
+            )
           }}
           onCastResult={(ok) => {
             worldApiRef.current?.playFishingCatch(ok)

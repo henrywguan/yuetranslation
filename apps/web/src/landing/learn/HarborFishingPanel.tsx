@@ -4,15 +4,21 @@ import {
   GUAN_FISHING_OVERSEER_NAME,
   HARBOR_FISH_BAITS,
   HARBOR_FISH_CATALOG,
+  HARBOR_FISH_METHOD_LABEL,
   HARBOR_FISH_TOOLS,
   attemptHarborFishCast,
   buyHarborFishBait,
   buyHarborFishTool,
   fishingXpForLevel,
   fishingXpToLevel,
-  harborFishBaitById,
+  harborFishBaitsRequiredForSpot,
+  harborFishExamineMeta,
+  harborFishEmptyBiteMessage,
   harborFishSpotById,
-  harborFishToolById,
+  harborFishSpotDescription,
+  harborFishSpotRequirementText,
+  harborFishSpotSetupBlocked,
+  harborFishToolsRequiredForSpot,
   sellHarborFish,
 } from './harborFishing'
 import { HarborFishModelIcon } from './HarborFishModelIcon'
@@ -22,9 +28,14 @@ import {
   playHarborFishCast,
   playHarborFishCatch,
   playHarborFishMiss,
+  playHarborFishNibble,
   playHarborFishSplash,
 } from './harborFishingSfx'
-import { HARBOR_FISH_CAST_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAnim'
+import {
+  HARBOR_FISH_CAST_MS,
+  HARBOR_FISH_CATCH_MS,
+  HARBOR_FISH_RESOLVE_MS,
+} from './harborFishingAnim'
 import { playHarborVo } from './harborVo'
 import { playHarborUiClick } from './harborInteractSfx'
 
@@ -97,7 +108,7 @@ function FishItemTile({
       tipId={id}
       name={{ en: label, zh: zh ?? '' }}
       meta={meta}
-      open={Boolean(tipOpen && (compact || shop))}
+      open={Boolean(tipOpen)}
       placement={tipPlacement}
       shop={shop}
     />
@@ -130,7 +141,7 @@ function FishItemTile({
         ) : null}
         {meta ? <span className="hq-fish-tile-meta">{meta}</span> : null}
       </span>
-      {shop ? tip : null}
+      {tip}
     </>
   )
 
@@ -191,22 +202,19 @@ export function HarborFishingPanel({
   const [tab, setTab] = useState<'cast' | 'gear' | 'log' | 'sell'>(mode === 'spot' ? 'cast' : 'gear')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [castPhase, setCastPhase] = useState<'idle' | 'cast' | 'wait' | 'result'>('idle')
   const [tipId, setTipId] = useState<string | null>(null)
   const [qty, setQty] = useState<HarborShopQty>(1)
 
   const level = fishingXpToLevel(bag.fishingXp)
   const nextXp = fishingXpForLevel(Math.min(99, level + 1))
   const spot = spotId ? harborFishSpotById(spotId) : null
-  const equippedTool = harborFishToolById(bag.equippedTool)
-  const equippedBait = harborFishBaitById(bag.equippedBait)
-  const baitLeft = bag.bait[bag.equippedBait] ?? 0
-  const baitMeta =
-    bag.equippedBait === 'bait-none' ? 'no bait' : baitLeft > 0 ? `${baitLeft} left` : 'empty'
 
   useEffect(() => {
     setTab(mode === 'spot' ? 'cast' : 'gear')
     setMsg(null)
     setTipId(null)
+    setCastPhase('idle')
   }, [mode, spotId])
 
   useEffect(() => {
@@ -245,6 +253,25 @@ export function HarborFishingPanel({
       .filter((f): f is (typeof HARBOR_FISH_CATALOG)[number] => Boolean(f))
   }, [spot])
 
+  const requiredTools = useMemo(
+    () => (spot ? harborFishToolsRequiredForSpot(spot) : []),
+    [spot],
+  )
+  const requiredBaits = useMemo(
+    () => (spot ? harborFishBaitsRequiredForSpot(spot) : []),
+    [spot],
+  )
+  const setupBlocked = Boolean(spot && harborFishSpotSetupBlocked(bag, spot))
+  const requirementText = spot ? harborFishSpotRequirementText(spot, bag) : null
+  const spotBlurb = spot ? harborFishSpotDescription(spot) : null
+  const emptyBiteHint =
+    spot && !setupBlocked ? harborFishEmptyBiteMessage(spot, bag) : null
+  const showCastHint = Boolean(
+    tab === 'cast' && spot && (setupBlocked ? requirementText : emptyBiteHint?.startsWith('Need ')),
+  )
+  const statusIsRequirement =
+    Boolean(msg && /^(Need |Out of |Wrong bait)/i.test(msg)) || showCastHint
+
   const logCount = bag.log.length
   const title = mode === 'lodge' ? GUAN_FISHING_OVERSEER_NAME : (spot?.region ?? 'Cast')
   const kicker =
@@ -275,12 +302,20 @@ export function HarborFishingPanel({
   const cast = () => {
     if (!spotId || busy || casting) return
     setBusy(true)
+    setCastPhase('cast')
+    setMsg(null)
     playHarborFishCast()
     onCastAnim?.()
-    // Splash as the bobber lands, then resolve the bite after wait
-    window.setTimeout(() => playHarborFishSplash(), HARBOR_FISH_CAST_MS)
+    // Splash as the bobber lands, nibbles while waiting, then resolve
+    window.setTimeout(() => {
+      playHarborFishSplash()
+      setCastPhase('wait')
+    }, HARBOR_FISH_CAST_MS)
+    window.setTimeout(() => playHarborFishNibble(), HARBOR_FISH_CAST_MS + 380)
+    window.setTimeout(() => playHarborFishNibble(), HARBOR_FISH_CAST_MS + 720)
     window.setTimeout(() => {
       const result = attemptHarborFishCast(bag, spotId)
+      setCastPhase('result')
       if (result.ok) {
         playHarborFishCatch()
         playHarborVo('niceCatch')
@@ -294,8 +329,11 @@ export function HarborFishingPanel({
         setMsg(result.message)
       }
       setBusy(false)
+      window.setTimeout(() => setCastPhase('idle'), HARBOR_FISH_CATCH_MS)
     }, HARBOR_FISH_RESOLVE_MS)
   }
+
+  const castingFocus = busy || casting || castPhase !== 'idle'
 
   const tabs =
     mode === 'spot'
@@ -305,9 +343,10 @@ export function HarborFishingPanel({
   return (
     <aside
       ref={rootRef}
-      className="hq-visit-panel hq-visit-panel--shop hq-shop-shelf hq-shop-shelf--bank-chrome hq-visit-panel--fish"
+      className={`hq-visit-panel hq-visit-panel--shop hq-shop-shelf hq-shop-shelf--bank-chrome hq-visit-panel--fish${castingFocus ? ' is-casting-focus' : ''}`}
       role="dialog"
       aria-label="Guan fishing"
+      aria-busy={castingFocus || undefined}
     >
       <header className="hq-shop-head hq-shop-head--bank">
         <p className="hq-shop-capacity" title={`Fishing Lv ${level}`}>
@@ -334,6 +373,15 @@ export function HarborFishingPanel({
         {mode === 'lodge' ? ` · log ${logCount}/${HARBOR_FISH_CATALOG.length}` : ''}
       </p>
 
+      {spotBlurb && mode === 'spot' ? (
+        <div className="hq-fish-spot-blurb">
+          <p className="hq-fish-spot-blurb-en">{spotBlurb.en}</p>
+          <p className="hq-fish-spot-blurb-zh" lang="zh-HK">
+            {spotBlurb.zh}
+          </p>
+        </div>
+      ) : null}
+
       <div className="hq-shop-tab-strip hq-fish-tabs" role="tablist" aria-label="Fishing panels">
         {tabs.map((t) => (
           <button
@@ -353,86 +401,154 @@ export function HarborFishingPanel({
       </div>
 
       {tab === 'cast' && spot ? (
-        <div className="hq-fish-cast">
-          <div className="hq-fish-req" aria-label="Equipped for this cast">
-            <p className="hq-fish-req-label">Ready</p>
-            <div className="hq-fish-tile-row">
-              <FishItemTile
-                kind="tool"
-                id={bag.equippedTool}
-                method={equippedTool?.method}
-                label={equippedTool?.name.en ?? bag.equippedTool}
-                zh={equippedTool?.name.zh}
-                meta="Tool"
-                selected
-              />
-              <FishItemTile
-                kind="bait"
-                id={bag.equippedBait}
-                label={equippedBait?.name.en ?? bag.equippedBait}
-                zh={equippedBait?.name.zh}
-                meta={baitMeta}
-                selected
-              />
+        <div className={`hq-fish-cast${castingFocus ? ' is-casting' : ''}`}>
+          {castingFocus ? (
+            <div className="hq-fish-cast-stage" aria-live="polite">
+              <div className="hq-fish-cast-ripples" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <p className="hq-fish-cast-stage-label">
+                {castPhase === 'cast'
+                  ? 'Casting…'
+                  : castPhase === 'wait'
+                    ? 'Waiting for a bite…'
+                    : castPhase === 'result'
+                      ? 'Reeling in…'
+                      : 'Fishing…'}
+              </p>
+              <p className="hq-fish-cast-stage-hint">Watch the sailor on the shore</p>
+            </div>
+          ) : null}
+          <div className="hq-fish-req hq-fish-req--gear" aria-label="Gear required for this spot">
+            <p className="hq-fish-req-label">Required</p>
+            <p className="hq-fish-req-hint">
+              {spot.methods.map((m) => HARBOR_FISH_METHOD_LABEL[m]).join(' · ')}
+            </p>
+            <div
+              className={`hq-fish-tile-row hq-fish-tile-row--req${requiredTools.length + requiredBaits.length > 2 ? ' is-wide' : ''}`}
+            >
+              {requiredTools.map((tool) => {
+                const owned = bag.tools.includes(tool.id)
+                const eq = bag.equippedTool === tool.id
+                return (
+                  <FishItemTile
+                    key={tool.id}
+                    kind="tool"
+                    id={tool.id}
+                    method={tool.method}
+                    label={tool.name.en}
+                    zh={tool.name.zh}
+                    meta={
+                      eq
+                        ? 'Equipped · works here'
+                        : owned
+                          ? `Owned · Lv ${tool.level}`
+                          : `Buy ${tool.price}¢ · Lv ${tool.level}`
+                    }
+                    locked={!owned}
+                    selected={eq}
+                    tipOpen={tipId === `req-${tool.id}`}
+                    onPointerEnter={() => {
+                      if (!isCoarsePointer()) setTipId(`req-${tool.id}`)
+                    }}
+                    onClick={() => {
+                      playHarborUiClick()
+                      openTip(`req-${tool.id}`)
+                      if (owned) {
+                        onBagChange({ ...bag, equippedTool: tool.id })
+                        setMsg(`Equipped ${tool.name.en}`)
+                      } else {
+                        setTab('gear')
+                        setMsg(`Buy ${tool.name.en} on the Gear tab`)
+                      }
+                    }}
+                  />
+                )
+              })}
+              {requiredBaits.map((bait) => {
+                const have = bag.bait[bait.id] ?? 0
+                const eq = bag.equippedBait === bait.id
+                return (
+                  <FishItemTile
+                    key={bait.id}
+                    kind="bait"
+                    id={bait.id}
+                    label={bait.name.en}
+                    zh={bait.name.zh}
+                    meta={
+                      have > 0
+                        ? eq
+                          ? `${have} left · selected`
+                          : `${have} left · tap to use`
+                        : `Buy ${bait.price}¢ / ${bait.pack}`
+                    }
+                    locked={have < 1}
+                    selected={eq}
+                    tipOpen={tipId === `req-${bait.id}`}
+                    onPointerEnter={() => {
+                      if (!isCoarsePointer()) setTipId(`req-${bait.id}`)
+                    }}
+                    onClick={() => {
+                      playHarborUiClick()
+                      openTip(`req-${bait.id}`)
+                      if (have > 0) {
+                        onBagChange({ ...bag, equippedBait: bait.id })
+                        setMsg(`Using ${bait.name.en}`)
+                      } else {
+                        setTab('gear')
+                        setMsg(`Buy ${bait.name.en} on the Gear tab`)
+                      }
+                    }}
+                  />
+                )
+              })}
             </div>
           </div>
 
-          <div className="hq-fish-req" aria-label="Fish that bite here">
+          <div className="hq-fish-req hq-fish-req--bites" aria-label="Fish that bite here">
             <p className="hq-fish-req-label">Bites here</p>
             <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Bites here">
-              {biteFish.map((f, i) => (
-                <FishShopCell key={f.id}>
-                  <FishItemTile
-                    compact
-                    kind="fish"
-                    id={f.id}
-                    method={f.method}
-                    label={f.name.en}
-                    zh={f.name.zh}
-                    meta={`Lv ${f.level} · ${f.value}¢`}
-                    badge={`Lv${f.level}`}
-                    tipOpen={tipId === f.id}
-                    tipPlacement={i < 8 ? 'below' : 'above'}
-                    onPointerEnter={() => {
-                      if (!isCoarsePointer()) setTipId(f.id)
-                    }}
-                    onClick={() => openTip(f.id)}
-                    shop={{
-                      qty,
-                      onQtyChange: setQty,
-                      buyLabel: 'Buy',
-                      sellLabel: 'Sell',
-                      buyDisabled: true,
-                      sellDisabled: (bag.fish[f.id] ?? 0) < 1,
-                      buyTitle: 'Catch this fish at the shore',
-                      sellTitle:
-                        (bag.fish[f.id] ?? 0) < 1
-                          ? 'No catch in the bag yet'
-                          : `Sell ${resolveSellQty(bag.fish[f.id] ?? 0)}× for ${f.value}¢ each`,
-                      onSell: () => {
-                        const have = bag.fish[f.id] ?? 0
-                        const r = sellHarborFish(bag, f.id as HarborFishId, resolveSellQty(have))
-                        if (r.sold < 1) {
-                          setMsg('No catch in the bag yet')
-                          return
-                        }
-                        onBagChange(r.bag, r.coins)
-                        setMsg(`Sold ${r.sold}× ${f.name.en} for ${r.coins}¢`)
-                      },
-                    }}
-                  />
-                </FishShopCell>
-              ))}
+              {biteFish.map((f, i) => {
+                const examine = harborFishExamineMeta(f)
+                return (
+                  <FishShopCell key={f.id}>
+                    <FishItemTile
+                      compact
+                      kind="fish"
+                      id={f.id}
+                      method={f.method}
+                      label={f.name.en}
+                      zh={f.name.zh}
+                      meta={examine}
+                      badge={`Lv${f.level}`}
+                      tipOpen={tipId === f.id}
+                      tipPlacement={i < 8 ? 'below' : 'above'}
+                      onPointerEnter={() => {
+                        if (!isCoarsePointer()) setTipId(f.id)
+                      }}
+                      onClick={() => openTip(f.id)}
+                    />
+                  </FishShopCell>
+                )
+              })}
             </ul>
           </div>
 
           <button
             type="button"
-            className={`hq-shop-action-btn hq-fish-cast-btn${busy || casting ? ' is-casting' : ''}`}
+            className={`hq-shop-action-btn hq-fish-cast-btn${castingFocus ? ' is-casting' : ''}`}
             disabled={busy || casting}
             onClick={cast}
           >
-            {busy || casting ? 'Fishing…' : 'Cast'}
+            {castingFocus
+              ? castPhase === 'wait'
+                ? 'Waiting…'
+                : castPhase === 'result'
+                  ? 'Reel…'
+                  : 'Casting…'
+              : 'Cast'}
           </button>
         </div>
       ) : null}
@@ -655,7 +771,14 @@ export function HarborFishingPanel({
         </div>
       ) : null}
 
-      {msg ? <p className="hq-shop-status">{msg}</p> : null}
+      {msg || (tab === 'cast' && showCastHint) ? (
+        <p
+          className={`hq-shop-status${statusIsRequirement ? ' hq-fish-req-warn' : ''}`}
+          role={statusIsRequirement ? 'status' : undefined}
+        >
+          {msg ?? (setupBlocked ? requirementText : emptyBiteHint)}
+        </p>
+      ) : null}
 
       <footer className="hq-shop-foot">
         <span className="hq-shop-foot-label">Purse</span>
