@@ -60,6 +60,15 @@ import {
   nearestRiverFishSpot,
 } from './harborFishing'
 import { fishingSpotBuoy } from './harborGuanFishingRealm'
+import {
+  HARBOR_FISH_CAST_MS,
+  createHarborFishingPropKit,
+  disposeHarborFishingPropKit,
+  startHarborFishCast,
+  startHarborFishCatch,
+  tickHarborFishingAnim,
+  type HarborFishAnimState,
+} from './harborFishingAnim'
 import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
@@ -187,8 +196,10 @@ export type HarborWorldHandle = {
    * No-op while already crewing.
    */
   returnToBoat: () => void
-  /** Brief cast / splash pose for Guan fishing. */
+  /** Cast pose: rod swing, flying bobber, splash. */
   playFishingCast: () => void
+  /** After the bite resolves — reel-in celebration or miss. */
+  playFishingCatch: (ok: boolean) => void
   resize: () => void
   dispose: () => void
 }
@@ -4260,8 +4271,12 @@ export function createHarborWorld(
   let localSpeechUntil = 0
   const remoteSpeech = new Map<string, { sprite: THREE.Sprite; until: number }>()
 
-  /** Guan fishing cast splash ring (brief). */
+  /** Guan / river fishing cast splash ring + rod kit. */
   let fishingCastUntil = 0
+  let fishAnim: HarborFishAnimState = { phase: 'idle', t: 0, faceYaw: 0 }
+  let fishWaterTarget = { x: 0, y: 0.08, z: 0 }
+  const fishKit = createHarborFishingPropKit()
+  scene.add(fishKit.root)
   const fishSplashMat = new THREE.MeshBasicMaterial({
     color: 0x7ef0dc,
     transparent: true,
@@ -4273,6 +4288,29 @@ export function createHarborWorld(
   fishSplash.visible = false
   fishSplash.name = 'guan-fish-cast-splash'
   scene.add(fishSplash)
+
+  const beginFishingCast = () => {
+    if (disposed) return
+    const px = travelMode === 'foot' ? footX : boatX
+    const pz = travelMode === 'foot' ? footZ : voyageZ
+    // Cast toward river / ocean center from the sailor
+    const towardWater = px === 0 ? -1 : -Math.sign(px)
+    const reach = isGuan ? 2.4 : 2.8
+    fishWaterTarget = {
+      x: px + towardWater * reach,
+      y: travelMode === 'foot' ? 0.06 : 0.1,
+      z: pz + (isGuan ? 0.4 : 0.15),
+    }
+    const faceYaw = Math.atan2(fishWaterTarget.x - px, fishWaterTarget.z - pz)
+    fishAnim = startHarborFishCast(faceYaw)
+    fishingCastUntil = performance.now() + HARBOR_FISH_CAST_MS + 200
+    if (travelMode === 'foot') {
+      exitSit()
+      sitTarget = null
+      moveTarget.x = footX
+      moveTarget.z = footZ
+    }
+  }
 
   const clearSpeechBubble = (sprite: THREE.Sprite | null, parent?: THREE.Object3D | null) => {
     if (!sprite) return
@@ -4873,16 +4911,20 @@ export function createHarborWorld(
           footX += (dx / dist) * step
           footZ += (dz / dist) * step
           const face = Math.atan2(dx, dz)
-          scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 10)
-          scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, { reduced })
+          if (fishAnim.phase === 'idle') {
+            scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 10)
+            scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, { reduced })
+          }
           // Plant feet on ground — no vertical root bounce (standard MMO locomotion).
           scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
           // Don't open landmarks mid-walk either
           if (!playerDirected) emitVisitable(null)
         } else {
-          scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: sitting ? 'sit' : 'idle' }, dt, {
-            reduced,
-          })
+          if (fishAnim.phase === 'idle') {
+            scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: sitting ? 'sit' : 'idle' }, dt, {
+              reduced,
+            })
+          }
           scoutWalk.position.set(footX, gy, footZ)
           if (playerDirected) destMarker.visible = false
           if (sitTarget) {
@@ -5211,28 +5253,49 @@ if (o.userData.cigaretteSmoke && !reduced) {
       }
     }
 
-    // Fishing cast splash + scout lean
-    if (fishingCastUntil > now) {
-      const t = 1 - (fishingCastUntil - now) / 900
+    // Fishing cast / wait / catch — rod, line, bobber + splash ring
+    if (fishAnim.phase !== 'idle') {
       const px = travelMode === 'foot' ? footX : boatX
       const pz = travelMode === 'foot' ? footZ : voyageZ
-      const py = travelMode === 'foot' ? groundYAt(px, pz) + 0.1 : 0.14
-      fishSplash.visible = true
-      fishSplash.position.set(px, py, pz)
-      fishSplash.scale.setScalar(0.55 + t * 1.55)
-      fishSplash.rotation.z = waterPhase * 2
-      fishSplashMat.opacity = Math.max(0, 0.78 * (1 - t))
-      if (travelMode === 'foot' && scoutWalk.visible && !reduced) {
-        scoutWalk.rotation.x = Math.sin(t * Math.PI) * -0.2
-      } else if (travelMode === 'boat' && scout && !reduced) {
-        scout.rotation.x = Math.sin(t * Math.PI) * -0.12
+      const py = travelMode === 'foot' ? groundYAt(px, pz) : 0.08
+      const fishScout = travelMode === 'foot' ? scoutWalk : scout
+      fishAnim = tickHarborFishingAnim(fishScout, fishKit, fishAnim, dt, {
+        reduced,
+        x: px,
+        y: py,
+        z: pz,
+        waterX: fishWaterTarget.x,
+        waterY: fishWaterTarget.y,
+        waterZ: fishWaterTarget.z,
+      })
+      if (fishAnim.phase === 'cast' || (fishAnim.phase === 'wait' && fishAnim.t < 0.35)) {
+        const castU =
+          fishAnim.phase === 'cast'
+            ? Math.min(1, fishAnim.t / (HARBOR_FISH_CAST_MS / 1000))
+            : 1
+        if (castU > 0.4) {
+          const t = castU
+          fishSplash.visible = true
+          fishSplash.position.set(fishWaterTarget.x, fishWaterTarget.y, fishWaterTarget.z)
+          fishSplash.scale.setScalar(0.55 + t * 1.55)
+          fishSplash.rotation.z = waterPhase * 2
+          fishSplashMat.opacity = Math.max(0, 0.78 * (1 - (t - 0.4) / 0.6))
+        }
+      } else if (fishAnim.phase === 'catch' && fishAnim.t < 0.25) {
+        fishSplash.visible = true
+        fishSplash.position.set(fishWaterTarget.x, fishWaterTarget.y, fishWaterTarget.z)
+        fishSplash.scale.setScalar(0.9 + fishAnim.t * 2)
+        fishSplashMat.opacity = Math.max(0, 0.55 * (1 - fishAnim.t / 0.25))
+      } else if (fishSplash.visible && fishAnim.phase !== 'wait') {
+        fishSplash.visible = false
+        fishSplashMat.opacity = 0.7
       }
     } else if (fishSplash.visible) {
       fishSplash.visible = false
       fishSplashMat.opacity = 0.7
-      if (travelMode === 'foot') scoutWalk.rotation.x = 0
-      if (scout) scout.rotation.x = 0
     }
+    fishingCastUntil = fishAnim.phase === 'idle' ? 0 : fishingCastUntil
+
 
     if (flash && now < flashUntil) {
       amb.color.lerp(new THREE.Color(flash === 'ok' ? 0x3dcfb6 : 0xe07070), 0.15)
@@ -5382,16 +5445,23 @@ if (o.userData.cigaretteSmoke && !reduced) {
       setMoveTarget(boatX + (isGuan ? 0 : side * 0.2), voyageZ, true)
     },
     playFishingCast() {
+      beginFishingCast()
+    },
+    playFishingCatch(ok: boolean) {
       if (disposed) return
-      fishingCastUntil = performance.now() + 900
+      if (fishAnim.phase === 'idle') beginFishingCast()
+      fishAnim = startHarborFishCatch(fishAnim, ok)
+      fishingCastUntil = performance.now() + (ok ? 900 : 550)
     },
     resize,
     dispose() {
       disposed = true
+      fishAnim = { phase: 'idle', t: 0, faceYaw: 0 }
       fishSplash.visible = false
       scene.remove(fishSplash)
       fishSplash.geometry.dispose()
       fishSplashMat.dispose()
+      disposeHarborFishingPropKit(fishKit)
       for (const root of remoteById.values()) {
         remotesRoot.remove(root)
         disposeRemoteSailor(root)
