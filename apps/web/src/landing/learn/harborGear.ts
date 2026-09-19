@@ -7,8 +7,6 @@ import * as THREE from 'three'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
   HARBOR_CRAFT_PALETTE as P,
-  hqBox,
-  hqBoxTex,
   hqMat,
   hqMatTex,
   hqPost,
@@ -542,9 +540,20 @@ function buildHandheldBoatLantern(item: HarborGearItem): THREE.Group {
     )
     lamp.position.set(0.06, 0.14, 0)
     g.add(lamp)
-    g.add(hqBoxTex(0.07, 0.02, 0.07, P.woodDeep, wood, 0.06, 0.22, 0))
-    g.add(hqBox(0.08, 0.015, 0.08, P.iron, 0.06, 0.2, 0))
-    g.add(hqBox(0.06, 0.015, 0.06, P.trimGold, 0.06, 0.08, 0))
+    const woodCap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.038, 0.02, 10),
+      hqMatTex(P.woodDeep, wood),
+    )
+    woodCap.position.set(0.06, 0.22, 0)
+    g.add(woodCap)
+    const ironRing = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 12), hqMat(P.iron))
+    ironRing.rotation.x = Math.PI / 2
+    ironRing.position.set(0.06, 0.2, 0)
+    g.add(ironRing)
+    const goldRing = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 6, 10), hqMat(P.trimGold))
+    goldRing.rotation.x = Math.PI / 2
+    goldRing.position.set(0.06, 0.08, 0)
+    g.add(goldRing)
     attachHandheldLanternLight(g, 0.14, glowCol, id === 'lantern-starlight' ? 0.75 : 0.6)
   } else if (id.startsWith('lantern-glass') || id === 'lantern-porcelain') {
     g.add(hqPost(0.014, 0.018, 0.09, P.woodDark, 0.06, 0.035, 0, 5))
@@ -554,32 +563,55 @@ function buildHandheldBoatLantern(item: HarborGearItem): THREE.Group {
     )
     lamp.position.set(0.06, 0.13, 0)
     g.add(lamp)
-    g.add(hqBox(0.025, 0.025, 0.025, P.trimGold, 0.06, 0.19, 0))
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), hqMat(P.trimGold))
+    tip.position.set(0.06, 0.19, 0)
+    g.add(tip)
     attachHandheldLanternLight(g, 0.13, glowCol, 0.65)
   } else if (id === 'lantern-oil-iron' || id === 'lantern-dragon') {
-    g.add(hqPost(0.014, 0.018, 0.08, P.woodDark, 0.06, 0.03, 0, 5))
-    g.add(hqBox(0.08, 0.1, 0.08, paper, 0.06, 0.12, 0))
-    g.add(hqBox(0.09, 0.02, 0.09, P.iron, 0.06, 0.07, 0))
-    g.add(hqBox(0.09, 0.02, 0.09, P.iron, 0.06, 0.17, 0))
+    g.add(hqPost(0.014, 0.018, 0.08, P.woodDark, 0.06, 0.03, 0, 8))
+    const cage = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.05, 0.1, 10),
+      hqMat(paper),
+    )
+    cage.position.set(0.06, 0.12, 0)
+    g.add(cage)
+    for (const y of [0.07, 0.17] as const) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.048, 0.01, 6, 12),
+        hqMat(P.iron),
+      )
+      ring.rotation.x = Math.PI / 2
+      ring.position.set(0.06, y, 0)
+      g.add(ring)
+    }
     const core = new THREE.Mesh(
-      new THREE.BoxGeometry(0.05, 0.06, 0.05),
+      new THREE.SphereGeometry(0.035, 10, 8),
       handheldGlowMat(glowCol, glowCol, 1.0),
     )
     core.position.set(0.06, 0.12, 0)
     g.add(core)
     attachHandheldLanternLight(g, 0.12, glowCol, id === 'lantern-dragon' ? 0.7 : 0.55)
   } else {
-    // Paper box family (amber / crimson / jade) — same silhouette as hand-lantern
-    g.add(hqBox(0.1, 0.12, 0.1, paper, 0.06, 0.08, 0))
-    g.add(hqBoxTex(0.08, 0.03, 0.08, P.woodMid, wood, 0.06, 0.16, 0))
-    g.add(hqBox(0.11, 0.02, 0.11, P.iron, 0.06, 0.02, 0))
-    const glow = new THREE.Mesh(
-      new THREE.BoxGeometry(0.04, 0.04, 0.04),
-      handheldGlowMat(glowCol, glowCol, 0.85),
+    // Soft paper lantern cylinder (anime — not a box cube)
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.055, 0.12, 12),
+      handheldGlowMat(paper, glowCol, 0.85),
     )
-    glow.position.set(0.06, 0.08, 0.06)
-    g.add(glow)
-    attachHandheldLanternLight(g, 0.08, glowCol, 0.55)
+    lamp.position.set(0.06, 0.1, 0)
+    g.add(lamp)
+    const cap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.048, 0.025, 10),
+      hqMatTex(P.woodMid, wood),
+    )
+    cap.position.set(0.06, 0.17, 0)
+    g.add(cap)
+    const base = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.052, 0.02, 10),
+      hqMat(P.iron),
+    )
+    base.position.set(0.06, 0.04, 0)
+    g.add(base)
+    attachHandheldLanternLight(g, 0.1, glowCol, 0.55)
   }
 
   tagVipLanternAnim(g, id)
@@ -601,39 +633,68 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
   const main = item.color
   const accent = item.accent ?? item.color
   if (item.id === 'hand-fan') {
-    // Leaf panels with value steps + stick
-    g.add(hqBox(0.22, 0.02, 0.12, main, 0.08, 0.02, 0))
-    g.add(hqBox(0.18, 0.015, 0.1, accent, 0.08, 0.035, 0))
-    g.add(hqBoxTex(0.02, 0.12, 0.02, P.woodDark, wood, 0, -0.01, 0))
-    g.add(hqBox(0.03, 0.02, 0.03, P.trimGold, 0, 0.04, 0))
-  } else if (item.id === 'hand-lantern') {
-    g.add(hqBox(0.1, 0.12, 0.1, main, 0.06, 0.08, 0))
-    g.add(hqBoxTex(0.08, 0.03, 0.08, P.woodMid, wood, 0.06, 0.16, 0))
-    g.add(hqBox(0.11, 0.02, 0.11, P.iron, 0.06, 0.02, 0))
-    const glow = new THREE.Mesh(
-      new THREE.BoxGeometry(0.04, 0.04, 0.04),
-      handheldGlowMat(accent, accent, 0.85),
+    // Soft folding fan — leaf arcs + stick
+    const leaf = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 12, 8, 0, Math.PI),
+      hqMat(main),
     )
-    glow.position.set(0.06, 0.08, 0.06)
-    g.add(glow)
-    attachHandheldLanternLight(g, 0.08, accent, 0.5)
+    leaf.scale.set(1.1, 0.2, 0.7)
+    leaf.position.set(0.1, 0.04, 0)
+    leaf.rotation.x = -Math.PI / 2
+    g.add(leaf)
+    const leaf2 = new THREE.Mesh(
+      new THREE.SphereGeometry(0.085, 10, 8, 0, Math.PI),
+      hqMat(accent),
+    )
+    leaf2.scale.set(1.05, 0.15, 0.65)
+    leaf2.position.set(0.1, 0.055, 0)
+    leaf2.rotation.x = -Math.PI / 2
+    g.add(leaf2)
+    const stick = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.01, 0.012, 0.12, 8),
+      hqMatTex(P.woodDark, wood),
+    )
+    stick.position.set(0, 0.0, 0)
+    g.add(stick)
+    const pivot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), hqMat(P.trimGold))
+    pivot.position.set(0, 0.04, 0)
+    g.add(pivot)
+  } else if (item.id === 'hand-lantern') {
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.055, 0.12, 12),
+      handheldGlowMat(main, accent, 0.85),
+    )
+    lamp.position.set(0.06, 0.1, 0)
+    g.add(lamp)
+    const cap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.048, 0.025, 10),
+      hqMatTex(P.woodMid, wood),
+    )
+    cap.position.set(0.06, 0.17, 0)
+    g.add(cap)
+    const base = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.052, 0.02, 10),
+      hqMat(P.iron),
+    )
+    base.position.set(0.06, 0.04, 0)
+    g.add(base)
+    attachHandheldLanternLight(g, 0.1, accent, 0.5)
   } else if (item.id === 'hand-oar') {
     const shaft = new THREE.Mesh(
-      new THREE.BoxGeometry(0.03, 0.36, 0.03),
+      new THREE.CylinderGeometry(0.012, 0.015, 0.36, 10),
       hqMatTex(main, wood),
     )
     shaft.position.set(0.05, 0.1, 0)
     shaft.rotation.z = 0.4
     g.add(shaft)
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.12, 0.02), hqMat(accent))
+    const blade = new THREE.Mesh(
+      new THREE.SphereGeometry(0.06, 10, 8),
+      hqMat(accent),
+    )
+    blade.scale.set(0.7, 1.3, 0.25)
     blade.position.set(0.14, 0.26, 0)
     blade.rotation.z = 0.4
     g.add(blade)
-    // Blade spine
-    const spine = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.025), hqMat(P.woodDeep))
-    spine.position.set(0.14, 0.26, 0.01)
-    spine.rotation.z = 0.4
-    g.add(spine)
   } else if (item.id === 'hand-scroll') {
     const roll = new THREE.Mesh(
       new THREE.CylinderGeometry(0.03, 0.03, 0.18, 6),
@@ -642,7 +703,9 @@ export function buildHandheldProp(itemId: string): THREE.Object3D | null {
     roll.rotation.z = Math.PI / 2
     roll.position.set(0.08, 0.02, 0)
     g.add(roll)
-    g.add(hqBox(0.04, 0.02, 0.06, accent, 0.08, 0.02, 0.04))
+    const seal = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), hqMat(accent))
+    seal.position.set(0.08, 0.02, 0.04)
+    g.add(seal)
     g.add(hqPost(0.035, 0.035, 0.02, P.woodDeep, -0.01, 0.02, 0, 6))
     g.add(hqPost(0.035, 0.035, 0.02, P.woodDeep, 0.17, 0.02, 0, 6))
   }
@@ -691,8 +754,8 @@ export function lookColors(look: HarborLook) {
  */
 export function applyLookToProtagonist(root: THREE.Object3D, look: HarborLook) {
   const gender = (root.userData.gender as 'male' | 'female' | undefined) ?? 'male'
-  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.72
-  const headY = typeof root.userData.headY === 'number' ? root.userData.headY : pelvisY + 0.58
+  const pelvisY = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.9
+  const headY = typeof root.userData.headY === 'number' ? root.userData.headY : pelvisY + 0.55
 
   clearHarborClothingMeshes(root)
 

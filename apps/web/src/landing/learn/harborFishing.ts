@@ -43,6 +43,14 @@ export type HarborFishSpotId =
   | 'spot-shipyard-bay'
   | 'spot-reed-key'
   | 'spot-wreck-cay'
+  | 'spot-guan-horizon-east'
+  | 'spot-guan-horizon-west'
+  | 'spot-river-reed-a'
+  | 'spot-river-reed-b'
+  | 'spot-river-pier-a'
+  | 'spot-river-pier-b'
+  | 'spot-river-oxbow'
+  | 'spot-river-far'
 
 export type HarborFishDef = {
   id: HarborFishId
@@ -238,12 +246,105 @@ export const GUAN_FISH_SPOTS: readonly HarborFishSpotDef[] = [
     methods: ['harpoon', 'cage'],
     fish: ['fish-wreck-bass', 'fish-swordfish', 'fish-lobster', 'fish-tuna'],
   },
+  {
+    id: 'spot-guan-horizon-east',
+    name: { en: 'Horizon East shoal', zh: '東極灘' },
+    x: 34.0,
+    z: 18.0,
+    radius: 1.6,
+    region: 'Horizon East',
+    methods: ['harpoon', 'net'],
+    fish: ['fish-tuna', 'fish-swordfish', 'fish-anchovy', 'fish-oyster'],
+  },
+  {
+    id: 'spot-guan-horizon-west',
+    name: { en: 'Horizon West deeps', zh: '西極深水' },
+    x: -36.0,
+    z: -22.0,
+    radius: 1.6,
+    region: 'Horizon West',
+    methods: ['harpoon', 'bait'],
+    fish: ['fish-shark', 'fish-mist-eel', 'fish-tuna', 'fish-swordfish'],
+  },
+] as const
+
+/**
+ * Main-river fishing buoys — explore / fish without leaving the voyage.
+ * Placed near reed flats, piers, and oxbow water.
+ */
+export const RIVER_FISH_SPOTS: readonly HarborFishSpotDef[] = [
+  {
+    id: 'spot-river-reed-a',
+    name: { en: 'Reed bank nets', zh: '蘆岸網位' },
+    x: 4.2,
+    z: 112,
+    radius: 1.5,
+    region: 'River Reeds',
+    methods: ['net', 'lure'],
+    fish: ['fish-shrimp', 'fish-reed-perch', 'fish-trout', 'fish-anchovy'],
+  },
+  {
+    id: 'spot-river-reed-b',
+    name: { en: 'South reed pools', zh: '南蘆潭' },
+    x: -4.4,
+    z: 224,
+    radius: 1.5,
+    region: 'River Reeds',
+    methods: ['lure', 'bait'],
+    fish: ['fish-reed-perch', 'fish-trout', 'fish-herring', 'fish-sardine'],
+  },
+  {
+    id: 'spot-river-pier-a',
+    name: { en: 'East pier shallows', zh: '東碼頭淺灘' },
+    x: 4.6,
+    z: 56,
+    radius: 1.45,
+    region: 'River Pier',
+    methods: ['net', 'bait'],
+    fish: ['fish-shrimp', 'fish-sardine', 'fish-herring', 'fish-anchovy'],
+  },
+  {
+    id: 'spot-river-pier-b',
+    name: { en: 'West pier cages', zh: '西碼頭籠位' },
+    x: -4.8,
+    z: 168,
+    radius: 1.45,
+    region: 'River Pier',
+    methods: ['cage', 'bait'],
+    fish: ['fish-lobster', 'fish-sardine', 'fish-herring'],
+  },
+  {
+    id: 'spot-river-oxbow',
+    name: { en: 'Oxbow lagoon', zh: '牛軛湖' },
+    x: 8.5,
+    z: 140,
+    radius: 1.55,
+    region: 'River Oxbow',
+    methods: ['bait', 'lure'],
+    fish: ['fish-jade-carp', 'fish-trout', 'fish-salmon', 'fish-herring'],
+  },
+  {
+    id: 'spot-river-far',
+    name: { en: 'Far upstream pool', zh: '上游深潭' },
+    x: -5.0,
+    z: 308,
+    radius: 1.5,
+    region: 'Upstream',
+    methods: ['lure', 'harpoon'],
+    fish: ['fish-salmon', 'fish-trout', 'fish-tuna', 'fish-reed-perch'],
+  },
+] as const
+
+/** All castable spots (Guan ocean + main river). */
+export const HARBOR_ALL_FISH_SPOTS: readonly HarborFishSpotDef[] = [
+  ...GUAN_FISH_SPOTS,
+  ...RIVER_FISH_SPOTS,
 ] as const
 
 const FISH_BY_ID = new Map(HARBOR_FISH_CATALOG.map((f) => [f.id, f]))
 const TOOL_BY_ID = new Map(HARBOR_FISH_TOOLS.map((t) => [t.id, t]))
 const BAIT_BY_ID = new Map(HARBOR_FISH_BAITS.map((b) => [b.id, b]))
-const SPOT_BY_ID = new Map(GUAN_FISH_SPOTS.map((s) => [s.id, s]))
+const SPOT_BY_ID = new Map(HARBOR_ALL_FISH_SPOTS.map((s) => [s.id, s]))
 
 export function harborFishById(id: string): HarborFishDef | undefined {
   return FISH_BY_ID.get(id as HarborFishId)
@@ -363,10 +464,15 @@ export function mergeHarborFishingBag(a: HarborFishingBag, b: HarborFishingBag):
   return { tools, bait, fish, log, fishingXp, equippedTool, equippedBait }
 }
 
-export function nearestGuanFishSpot(x: number, z: number, maxDist = 2.2): HarborFishSpotDef | null {
+export function nearestHarborFishSpot(
+  x: number,
+  z: number,
+  maxDist = 2.2,
+  spots: readonly HarborFishSpotDef[] = HARBOR_ALL_FISH_SPOTS,
+): HarborFishSpotDef | null {
   let best: HarborFishSpotDef | null = null
   let bestD = maxDist
-  for (const s of GUAN_FISH_SPOTS) {
+  for (const s of spots) {
     const d = Math.hypot(s.x - x, s.z - z)
     if (d < Math.max(bestD, s.radius)) {
       bestD = d
@@ -374,6 +480,15 @@ export function nearestGuanFishSpot(x: number, z: number, maxDist = 2.2): Harbor
     }
   }
   return best
+}
+
+/** @deprecated Prefer nearestHarborFishSpot — Guan ocean only. */
+export function nearestGuanFishSpot(x: number, z: number, maxDist = 2.2): HarborFishSpotDef | null {
+  return nearestHarborFishSpot(x, z, maxDist, GUAN_FISH_SPOTS)
+}
+
+export function nearestRiverFishSpot(x: number, z: number, maxDist = 2.2): HarborFishSpotDef | null {
+  return nearestHarborFishSpot(x, z, maxDist, RIVER_FISH_SPOTS)
 }
 
 export type HarborFishCastResult =

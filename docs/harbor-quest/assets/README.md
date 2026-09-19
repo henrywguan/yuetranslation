@@ -11,7 +11,8 @@
 
 | File | Role |
 |---|---|
-| [`scout-female-sheet-a.png`](./scout-female-sheet-a.png) | Soul Cast split-sheet (full + portrait) — primary identity |
+| [`scout-female-anime-sheet-v2.png`](./scout-female-anime-sheet-v2.png) | **2026-09-18 revamp** — Soul Cast anime sheet (~7-head fashion) |
+| [`scout-female-sheet-a.png`](./scout-female-sheet-a.png) | Soul Cast split-sheet (full + portrait) — prior identity |
 | [`scout-female-sheet-b.png`](./scout-female-sheet-b.png) | Soul Cast variant |
 | [`scout-female-turnaround.png`](./scout-female-turnaround.png) | Anime turnaround (front / ¾ / side / back) |
 | [`scout-female-a-pose.png`](./scout-female-a-pose.png) | A-pose source for Meshy image→3D |
@@ -19,13 +20,14 @@
 | [`scout-female-outfit-rain.png`](./scout-female-outfit-rain.png) | Rain-traveler cloak dress-up still |
 | [`scout-female-outfit-evening.png`](./scout-female-outfit-evening.png) | Modest pier-evening silk jacket look |
 
-**Design notes for agents:** large expressive eyes, soft blush, traveler bun + bangs, ink-harbor blue robe, jade sash + pendant, straw hat, slim fashion legs. Match `harborFigure` / beauty barber toward this feel — never RS potato mannequin.
+**Design notes for agents:** large expressive eyes, soft blush, traveler topknot + face strands, ink-harbor blue robe, jade sash + pendant, ~7-heads-tall fashion legs. Match `harborFigure` toward **v2** sheets — never RS potato / voxel mannequin. See [`../ANIME-ASSET-REVAMP.md`](../ANIME-ASSET-REVAMP.md).
 
 ## Character — River Scout (male)
 
 | File | Role |
 |---|---|
-| [`scout-male-sheet.png`](./scout-male-sheet.png) | Soul Cast split-sheet — male dress-up target |
+| [`scout-male-anime-sheet-v2.png`](./scout-male-anime-sheet-v2.png) | **2026-09-18 revamp** — Soul Cast anime sheet (~7-head fashion) |
+| [`scout-male-sheet.png`](./scout-male-sheet.png) | Soul Cast split-sheet — prior male dress-up target |
 | [`scout-male-a-pose.png`](./scout-male-a-pose.png) | A-pose source for Meshy image→3D |
 
 ## NPC cast (unique female / male)
@@ -59,6 +61,7 @@ Procedural meshes in `harborWorld.ts` (`chineseNpc` / `landmarkHostNpc`) chase t
 | File | Role |
 |---|---|
 | [`harbor-night-pier.png`](./harbor-night-pier.png) | Cinematic night pier mood |
+| [`guan-harbor-anime-keyart-v2.png`](./guan-harbor-anime-keyart-v2.png) | **2026-09-18 revamp** — anime Guan Harbor world target |
 | [`harbor-dawn-pier.png`](./harbor-dawn-pier.png) | Dawn pier / loading mood |
 | [`harbor-outfitter-interior.png`](./harbor-outfitter-interior.png) | Outfitter boutique interior |
 | [`harbor-splash-keyart.png`](./harbor-splash-keyart.png) | Splash / title key art (Scout on night pier) |

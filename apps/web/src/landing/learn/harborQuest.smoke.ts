@@ -89,7 +89,11 @@ import {
   HARBOR_TAP_ARRIVE,
   clampHarborMoveTarget,
   HARBOR_EXPLORE_X,
+  HARBOR_VOYAGE_Z_MAX,
+  HARBOR_VOYAGE_Z_MIN,
+  HARBOR_SOCIAL_SIT_CLUSTER,
   HARBOR_DOCK_X,
+  HARBOR_MAP_LANGUAGE,
   HARBOR_VISITABLES,
   HARBOR_LANDMARK_HOSTS,
   HARBOR_LANDMARK_HOST_GENDER,
@@ -147,6 +151,7 @@ import {
   HARBOR_PROTAGONIST_SOCKETS,
   listProtagonistSockets,
 } from '../../landing/learn/harborProtagonist'
+import { HARBOR_FIGURE_PROPORTIONS } from '../../landing/learn/harborFigure'
 import * as THREE from 'three'
 import {
   HARBOR_GEAR_CATALOG,
@@ -230,12 +235,14 @@ function main() {
   assert.equal(enrichJyutpingWithChao('nei5 hou2'), 'nei5˩˧ hou2˧˥')
   assert.equal(enrichJyutpingWithChao('si1˥'), 'si1˥', 'do not double-append Chao')
 
-  const biomes = Array.from({ length: 14 }, (_, i) => biomeForChunk(i))
+  const biomes = Array.from({ length: 16 }, (_, i) => biomeForChunk(i))
   assert.equal(biomeForChunk(0), 'pier')
   assert.equal(biomeForChunk(1), 'village')
-  assert.equal(biomeForChunk(7), biomeForChunk(0), 'biome cycle repeats')
+  assert.equal(biomeForChunk(2), 'hills', 'early hills for vista rhythm')
+  assert.equal(biomeForChunk(8), biomeForChunk(0), 'biome cycle repeats')
   assert.ok(new Set(biomes).size >= 5, 'voyage should visit multiple biomes')
-  assert.equal(biomeForChunk(-1), biomeForChunk(6), 'negative chunk wraps')
+  assert.ok(biomes.filter((b) => b === 'hills').length >= 2, 'hills appear often for vertical vistas')
+  assert.equal(biomeForChunk(-1), biomeForChunk(7), 'negative chunk wraps')
   assert.equal(streamForkForChunk(0), null, 'start chunk has no stream fork')
   const forks = Array.from({ length: 24 }, (_, i) => streamForkForChunk(i)).filter(Boolean)
   assert.ok(forks.length >= 8, 'river sprouts multiple side streams')
@@ -541,7 +548,8 @@ function main() {
   assert.ok(HARBOR_TAP_MOVE_SPEED > 2, 'tap-to-move has a walk/paddle speed')
   assert.ok(HARBOR_TAP_ARRIVE > 0, 'arrival threshold')
   assert.equal(clampHarborMoveTarget(99, -9).x, HARBOR_EXPLORE_X, 'move target clamps to inland explore bound')
-  assert.equal(clampHarborMoveTarget(0, 999).z, 248, 'move target clamps far Z')
+  assert.equal(clampHarborMoveTarget(0, 999).z, HARBOR_VOYAGE_Z_MAX, 'move target clamps far Z')
+  assert.equal(clampHarborMoveTarget(0, -99).z, HARBOR_VOYAGE_Z_MIN, 'move target clamps near Z')
   assert.match(worldSrc, /HARBOR_TAP_SLOP_PX/, 'tap/drag discrimination uses slop constant')
   assert.match(worldSrc, /tryTapMove/, 'tap raycasts to ground and sets destination')
   assert.match(worldSrc, /userData\.clickMarker/, 'OSRS yellow destination marker')
@@ -722,15 +730,16 @@ function main() {
   {
     const figSrc = readFileSync(new URL('./harborFigure.ts', import.meta.url), 'utf8')
     assert.match(figSrc, /HARBOR_FIGURE_PROPORTIONS/, 'locked figure proportion constants')
-    assert.match(figSrc, /headR:\s*0\.148/, 'anime head radius')
+    assert.match(figSrc, /headR:\s*0\.148/, 'anime head radius (dress-up figure kit)')
     assert.match(figSrc, /neckH:\s*0\.085/, 'explicit visible neck height')
+    assert.match(figSrc, /standingH:\s*1\.42/, 'standing height locked to iOS-visible figure')
     assert.match(figSrc, /SphereGeometry\([^)]+24/, 'smooth high-segment head (not faceted potato)')
     assert.match(figSrc, /MeshStandardMaterial|harborFigureMat/, 'soft lit materials for dress-up')
     assert.match(figSrc, /flatShading:\s*false/, 'no flatShading on character kit')
     assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
     assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses face inserts')
     assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
-    assert.match(figSrc, /anime|dress-up|dressup/i, 'figure kit docs lock anime dress-up')
+    assert.match(figSrc, /anime|dress-up|dressup|Genshin|Honkai/i, 'figure kit docs lock anime dress-up')
     assert.doesNotMatch(
       figSrc,
       /BoxGeometry\(0\.08,\s*0\.09,\s*0\.1\)/,
@@ -769,8 +778,12 @@ function main() {
     const headY = standing.userData.headY as number
     const torsoTop = standing.userData.torsoTop as number
     assert.ok(headY - torsoTop >= 0.08, 'visible neck gap between torso top and head')
-    assert.ok(pelvisY >= 0.65, 'fashion legs tall enough for anime silhouette')
-    assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 0.9, 'torso+neck stack is proportioned')
+    assert.ok(pelvisY >= 0.7, 'fashion legs tall enough for the dress-up silhouette')
+    assert.ok(headY - pelvisY > 0.4 && headY - pelvisY < 1.0, 'torso+neck stack is proportioned')
+    assert.ok(
+      HARBOR_FIGURE_PROPORTIONS.standingH >= 1.4,
+      'standing height stays on the iOS-visible figure kit',
+    )
     let hasNeck = false
     standing.traverse((o) => {
       if (o.name === 'hq-figure-neck') hasNeck = true
@@ -1368,7 +1381,28 @@ function main() {
   assert.match(worldSrc2, /inlandRoad|crossPath|foothillPath/, 'inland walkways + cross-paths')
   assert.match(worldSrc2, /roadSign|ROAD_SIGN_KINDS/, 'Chinese roadside 路牌')
   assert.match(worldSrc2, /mountainMist|foothill/, 'mountain foothills + mist veils')
-  assert.match(worldSrc2, /inlandShelf|foothillShelf/, 'expanded bank shelves toward karst')
+  assert.match(worldSrc2, /inlandShelf|foothillShelf|terraceShelf/, 'expanded bank shelves toward karst')
+  assert.match(worldSrc2, /hqAnimeHipRoof/, 'anime hip roofs on harbor buildings')
+  assert.ok(HARBOR_EXPLORE_X >= 30, 'explore bound reaches far foothill terraces')
+  assert.ok(HARBOR_VOYAGE_Z_MAX >= 320, 'voyage Z spans a long river')
+  assert.ok(HARBOR_VOYAGE_Z_MIN <= -4, 'voyage Z allows a little upriver room')
+  assert.match(worldSrc2, /RIVER_FISH_SPOTS|placeRiverFishSpots/, 'main-river fishing buoys')
+  assert.match(worldSrc2, /HARBOR_SOCIAL_SIT_CLUSTER|HARBOR_VOYAGE_Z_MAX/, 'world extent social/voyage locks')
+  assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32/, 'anime tapered boat hulls')
+  assert.match(worldSrc2, /Soft role sash|anime volumes — not box belts/, 'landmark host soft sashes')
+  assert.match(worldSrc2, /terraceRoad|terraceClimb/, 'terrace roads for layered stroll')
+  assert.match(worldSrc2, /HARBOR_MAP_LANGUAGE/, 'map language lock exported')
+  assert.match(worldSrc2, /function scenicPavilion/, 'scenic pavilion vista kit')
+  assert.match(worldSrc2, /function terracePlaza/, 'terrace plaza relax/chat kit')
+  assert.match(worldSrc2, /terracePlaza[\s\S]*hqStampChairs/, 'plaza sit rings for relax/chat')
+  assert.ok(HARBOR_SOCIAL_SIT_CLUSTER >= 2, 'social sit cluster radius')
+  assert.match(worldSrc2, /function windingDirtLane/, 'winding S-curve paths')
+  assert.match(worldSrc2, /function valleyMistRibbon/, 'valley mist between land layers')
+  assert.match(worldSrc2, /placeScenicMapFeatures/, 'scenic features placed per chunk')
+  assert.match(worldSrc2, /windingPath|scenicPavilion/, 'WWM path/pavilion markers')
+  assert.equal(HARBOR_MAP_LANGUAGE.scenicPavilions, true, 'scenic pavilions enabled')
+  assert.equal(HARBOR_MAP_LANGUAGE.windingPaths, true, 'winding paths enabled')
+  assert.equal(HARBOR_MAP_LANGUAGE.valleyMist, true, 'valley mist enabled')
   assert.ok(HARBOR_EXPLORE_X > HARBOR_DOCK_X + 3, 'explore bound reaches inland roads')
   assert.equal(HARBOR_DIALOGUE_BUBBLE, true, 'dialogue NPCs expose a speech-bubble cue')
   assert.match(worldSrc2, /attachDialogueBubble|speechBubbleIcon/, 'Talkable NPCs get a speech bubble icon')
@@ -1427,13 +1461,24 @@ function main() {
   assert.match(worldSrc2, /function boatLantern/, 'boat gunwale lantern helper')
   assert.match(worldSrc2, /function buildBoatHull/, 'tiered boat hull builder')
   assert.match(worldSrc2, /hqWoodTexture\(\)/, 'boat hull loads wood-grain albedo')
-  assert.match(worldSrc2, /hqBoxTex\(/, 'boat hull uses textured craft boxes')
-  assert.match(worldSrc2, /P\.iron/, 'boat hull iron band trim')
+  assert.match(worldSrc2, /CylinderGeometry\(width \* 0\.32|hqMatTex\(/, 'anime boat hull uses tapered soft shell')
+  assert.match(worldSrc2, /P\.iron|P\.woodDeep/, 'boat hull trim palette')
   const gearSrcBoat = readFileSync(new URL('./harborGear.ts', import.meta.url), 'utf8')
   assert.match(gearSrcBoat, /hqWoodTexture/, 'handhelds use craft wood texture')
-  assert.match(gearSrcBoat, /hqBoxTex/, 'handhelds use textured craft boxes')
+  assert.match(gearSrcBoat, /CylinderGeometry|SphereGeometry|TorusGeometry/, 'handhelds use soft anime volumes')
   assert.match(detailSrc, /hqMatSmooth/, 'tier detail uses smooth Lambert for beads')
   assert.match(detailSrc, /hqMatTex/, 'boat tier enrich uses wood-textured trim')
+  assert.doesNotMatch(detailSrc, /BoxGeometry/, 'tier detail overlays have no box slabs')
+  assert.match(
+    readFileSync(new URL('./harborCraft.ts', import.meta.url), 'utf8'),
+    /Soft boulder|SphereGeometry\(s \* 0\.55/,
+    'rocks are soft spheres not boxes',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /CylinderGeometry\(0\.14,\s*0\.16,\s*0\.34/,
+    'shore lanterns are soft cylinders',
+  )
   assert.match(
     readFileSync(new URL('./harborVipGear.ts', import.meta.url), 'utf8'),
     /hqWoodTexture/,
@@ -1523,7 +1568,8 @@ function main() {
     'XP is flat text — not a pill',
   )
   assert.match(learnCss, /\.hq-coin-chip\.is-open\s*\{/, 'coin chip open affordance')
-  assert.match(worldSrc2, /const ACTIVE = 3/, 'leaner active river chunks for GPU')
+  assert.match(worldSrc2, /const ACTIVE = 4/, 'wider active river chunks for long voyage')
+  assert.match(worldSrc2, /center - 2; i <= center \+ ACTIVE/, 'chunk window ±2 around sailor')
   assert.match(worldSrc2, /setPixelRatio\([^)]*1\.25\)/, 'DPR capped at 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')
   assert.match(worldSrc2, /animNodes/, 'fauna motion uses cached nodes')
@@ -1595,11 +1641,31 @@ function main() {
   assert.match(playAudioSrc, /playHarborVo\('pierCleared'\)/, 'pier-cleared VO on correct cast')
   assert.match(playAudioSrc, /preloadHarborScoutGlbs/, 'Scout GLB preload on learn mount')
   assert.match(playAudioSrc, /startHarborOutfitterBgm/, 'Outfitter opens boutique BGM')
-  assert.match(
-    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /scout-female\.glb|HARBOR_SCOUT_GLB_SRC/,
-    'Scout GLB public URLs',
-  )
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /scout-female\.glb|HARBOR_SCOUT_GLB_SRC/,
+  'Scout GLB public URLs',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /HARBOR_SCOUT_GLB_ENABLED = false/,
+  'Scout GLB gated off so land procedural Scout stays visible',
+)
+assert.match(
+  readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+  /softTopShell|harborFigureTorso/,
+  'wardrobe uses soft anime shells not box slabs',
+)
+assert.match(
+  readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+  /vipFamily|emissiveIntensity:\s*0\.12/,
+  'VIP wardrobe gets soft emissive sheen',
+)
+assert.doesNotMatch(
+  readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
+  /BoxGeometry\(shoulder/,
+  'clothing tops no longer use shoulder BoxGeometry slabs',
+)
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
     /HARBOR_SCOUT_GLB_ENABLED = false/,
@@ -1746,6 +1812,8 @@ function main() {
   assert.match(craftSrc, /export function hqSoftMapRepeat/, 'soft UV-repeat helper (no Texture.clone)')
   assert.match(craftSrc, /generateMipmaps = false/, 'soft DataTextures skip mipmaps (mobile white fix)')
   assert.doesNotMatch(craftSrc, /LinearMipmapLinearFilter/, 'soft maps no longer use mipmap filter')
+  assert.match(craftSrc, /export function hqAnimeHipRoof/, 'anime curved hip roof kit')
+  assert.match(craftSrc, /userData\.animeRoof|hq-anime-roof/, 'anime roof marker on craft kit')
   assert.match(worldSrc, /hqSoftMapRepeat/, 'river soft mats use safe repeat helper')
   assert.match(guanSrc, /hqSoftMapRepeat/, 'Guan soft mats use safe repeat helper')
   assert.doesNotMatch(guanSrc, /hqSoft\w+Texture\(\)\.clone\(/, 'Guan no longer clones soft DataTextures')

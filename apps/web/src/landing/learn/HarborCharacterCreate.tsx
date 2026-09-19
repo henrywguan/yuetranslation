@@ -218,9 +218,9 @@ export function HarborCharacterCreate({
       raf = requestAnimationFrame(paint)
       if (previewControls.current.rotating) yaw += 0.012
       const d = previewControls.current.distance
-      const camY = 1.15 + (d - 2.4) * 0.12
+      const camY = 1.25 + (d - 2.4) * 0.14
       camera.position.set(Math.sin(yaw) * d, camY, Math.cos(yaw) * d)
-      camera.lookAt(0, 0.95, 0)
+      camera.lookAt(0, 1.05, 0)
       renderer.render(scene, camera)
     }
     paint()

@@ -187,11 +187,11 @@ Anime dress-up grammar (characters only):
 - **Stance:** upright fashion plant; idle should feel like a dress-up doll you’d want to outfit.
 - **Materials:** smooth shading (`MeshStandardMaterial`, `flatShading: false`) — not posterized flat Lambert facets.
 
-**World / props / architecture** still use era-chunky language below (§3.2–§4). Characters are the exception.
+**World / props / architecture** also follow the anime harbor lock (Henry 2026-09-18 full revamp) — soft shading, painterly silhouette, **not** RS voxel chunk. See [`ANIME-ASSET-REVAMP.md`](./ANIME-ASSET-REVAMP.md). Era-chunky helpers remain available for optional props but are no longer the default world grammar.
 
-**Anti–Minecraft / anti–RS-mannequin smell test (characters):** if the Scout still reads as a faceted potato toy or stacked cubes, push further toward anime appeal — bigger eyes, softer hair volumes, longer legs, smooth skin.
+**Anti–Minecraft / anti–RS-mannequin smell test (characters):** if the Scout still reads as a faceted potato toy or stacked cubes, push further toward anime appeal — bigger eyes, softer hair volumes, longer legs, smooth skin, soft wardrobe (no box-slab coats).
 
-**Reference study (never import):** public “RS bot” printables / Pinshape STLs are **not** the character target anymore (study-only for world props if needed). Do **not** download, convert, or ship those meshes (§7). Harbor ships original procedural kit (`harborFigure` / `harborProtagonist`).
+**Reference study (never import):** public “RS bot” printables / Pinshape STLs are **not** the character target anymore. Do **not** download, convert, or ship those meshes (§7). Harbor ships original procedural kit (`harborFigure` / `harborProtagonist`) chasing Higgsfield anime sheets.
 
 ### 3.2 Items & gear scale
 

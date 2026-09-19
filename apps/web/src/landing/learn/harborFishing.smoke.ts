@@ -7,6 +7,8 @@ import {
   GUAN_FISH_SPOTS,
   GUAN_FISHING_HUT,
   GUAN_SATELLITE_ISLANDS,
+  HARBOR_ALL_FISH_SPOTS,
+  RIVER_FISH_SPOTS,
   HARBOR_FISH_BAITS,
   HARBOR_FISH_CATALOG,
   HARBOR_FISH_TOOLS,
@@ -17,6 +19,8 @@ import {
   fishingXpToLevel,
   mergeHarborFishingBag,
   nearestGuanFishSpot,
+  nearestHarborFishSpot,
+  nearestRiverFishSpot,
   sanitizeHarborFishingBag,
   sellHarborFish,
 } from './harborFishing'
@@ -24,8 +28,12 @@ import {
 assert.ok(HARBOR_FISH_CATALOG.length >= 12, 'fish catalog breadth')
 assert.ok(HARBOR_FISH_TOOLS.length >= 5, 'tool breadth')
 assert.ok(HARBOR_FISH_BAITS.length >= 4, 'bait breadth')
-assert.ok(GUAN_FISH_SPOTS.length >= 6, 'spot breadth')
+assert.ok(GUAN_FISH_SPOTS.length >= 8, 'Guan spot breadth')
+assert.ok(RIVER_FISH_SPOTS.length >= 4, 'main-river fish spots')
+assert.ok(HARBOR_ALL_FISH_SPOTS.length >= GUAN_FISH_SPOTS.length + RIVER_FISH_SPOTS.length - 1, 'all spots union')
 assert.ok(GUAN_SATELLITE_ISLANDS.length >= 4, 'satellite islands')
+assert.ok(nearestRiverFishSpot(4.2, 112, 3), 'river reed spot resolves')
+assert.ok(nearestHarborFishSpot(34, 18, 3), 'horizon east spot resolves')
 assert.equal(GUAN_FISHING_HUT.id, 'fishing-hut')
 
 assert.equal(fishingXpToLevel(0), 1)
@@ -77,4 +85,4 @@ assert.doesNotMatch(panelSrc, /Tool · <strong>|Bites here:\s*\{/, 'cast tab is 
 const iconSrc = readFileSync(new URL('./HarborFishModelIcon.tsx', import.meta.url), 'utf8')
 assert.match(iconSrc, /drawFish|drawTool|drawBait/, 'fish model icon draws silhouettes')
 
-console.log('harborFishing.smoke: ok', HARBOR_FISH_CATALOG.length, 'fish', GUAN_FISH_SPOTS.length, 'spots')
+console.log('harborFishing.smoke: ok', HARBOR_FISH_CATALOG.length, 'fish', HARBOR_ALL_FISH_SPOTS.length, 'spots')

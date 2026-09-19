@@ -88,11 +88,13 @@ const GUAN_PLACES: readonly { en: string; zh: string; x: number; z: number; r: n
 ]
 
 const RIVER_BIOME_LABEL: Record<string, MinimapPlace> = {
+  // hills reads as terrace / vista on the minimap header
+
   pier: { en: 'Harbor Piers', zh: '港灣碼頭', kind: 'river' },
   village: { en: 'River Village', zh: '河畔村', kind: 'river' },
   forest: { en: 'Bamboo Bank', zh: '竹岸', kind: 'river' },
   reeds: { en: 'Reed Flats', zh: '蘆灘', kind: 'river' },
-  hills: { en: 'River Hills', zh: '河丘', kind: 'river' },
+  hills: { en: 'Terrace Vista', zh: '台地远眺', kind: 'river' },
 }
 
 function circlePoints(cx: number, cz: number, r: number, n = 12): { x: number; z: number }[] {

@@ -107,15 +107,15 @@ export function HarborPlayerProfileModal({
     let disposed = false
     const state = dragRef.current
     state.yaw = 0.4
-    state.distance = 3.2
+    state.distance = 3.4
 
     const paint = () => {
       if (disposed) return
       raf = requestAnimationFrame(paint)
       if (!state.dragging) state.yaw += 0.008
       const d = state.distance
-      camera.position.set(Math.sin(state.yaw) * d, 1.35 + d * 0.12, Math.cos(state.yaw) * d)
-      camera.lookAt(0, 0.85, 0)
+      camera.position.set(Math.sin(state.yaw) * d, 1.45 + d * 0.12, Math.cos(state.yaw) * d)
+      camera.lookAt(0, 1.05, 0)
       renderer.render(scene, camera)
     }
     paint()

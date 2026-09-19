@@ -57,14 +57,14 @@ export const GUAN_HARBOR_META = { en: 'Guan Harbor', zh: '關港' } as const
 
 /** Playable ocean AABB (boat clamp outer fence). */
 export const GUAN_HARBOR_BOUNDS = {
-  minX: -32,
-  maxX: 30,
-  minZ: -34,
-  maxZ: 32,
+  minX: -44,
+  maxX: 42,
+  minZ: -46,
+  maxZ: 44,
 } as const
 
 /** Water plane centre / size — keep in sync with createHarborWorld. */
-export const GUAN_WATER_PLANE = { x: 0, z: 0, size: 96 } as const
+export const GUAN_WATER_PLANE = { x: 0, z: 0, size: 128 } as const
 
 /** Forced sunny tropical look — sky / fog / water (createHarborWorld applies these). */
 export const GUAN_TROPICAL_LOOK = {

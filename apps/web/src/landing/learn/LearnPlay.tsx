@@ -54,7 +54,7 @@ import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harb
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
   emptyHarborFishingBag,
-  nearestGuanFishSpot,
+  nearestHarborFishSpot,
   type HarborFishSpotId,
 } from './harborFishing'
 import {
@@ -679,7 +679,7 @@ export function LearnSession({
     }
     if (id === 'fishing-spot') {
       const pose = worldApiRef.current?.getLocalPose()
-      const spot = pose ? nearestGuanFishSpot(pose.x, pose.z, 2.6) : null
+      const spot = pose ? nearestHarborFishSpot(pose.x, pose.z, 2.6) : null
       setActiveFishSpotId(spot?.id ?? null)
     } else if (id === 'fishing-hut') {
       setActiveFishSpotId(null)
