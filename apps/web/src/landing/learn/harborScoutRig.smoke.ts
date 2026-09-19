@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as THREE from 'three'
-import { tickHarborProtagonistAnim } from './harborProtagonistAnim'
+import { tickHarborCastAnim, tickHarborProtagonistAnim } from './harborProtagonistAnim'
 import {
   findScoutBone,
   rigHarborScoutGlb,
@@ -96,6 +96,18 @@ assert.match(panelSrc, /Reeling in/, 'reel status stays')
 const animSrc = readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8')
 assert.match(animSrc, /tickScoutSkeletonLocomotion/, 'walk ticks auto-rig bones')
 assert.match(animSrc, /scoutRigged/, 'rigged Scout skips whole-mesh sway')
+assert.match(animSrc, /tickHarborCastAnim/, 'NPC clones share player armature tick')
+
+{
+  const npc = dummyScoutMesh()
+  assert.equal(rigHarborScoutGlb(npc), true)
+  const a0 = findScoutBone(npc, SCOUT_BONE.upperArmR)!.rotation.z
+  tickHarborCastAnim(npc, 0.08, { mode: 'idle' })
+  tickHarborCastAnim(npc, 0.08, { mode: 'idle' })
+  const arm = findScoutBone(npc, SCOUT_BONE.upperArmR)!
+  assert.ok(Math.abs(arm.rotation.z) > 0.05, 'cast idle drops NPC arms off T-pose')
+  assert.notEqual(arm.rotation.z, a0)
+}
 
 const fishAnimSrc = readFileSync(new URL('./harborFishingAnim.ts', import.meta.url), 'utf8')
 assert.match(fishAnimSrc, /tickScoutSkeletonFish/, 'cast/reel drive auto-rig bones')

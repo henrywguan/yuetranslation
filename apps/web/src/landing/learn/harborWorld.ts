@@ -82,6 +82,7 @@ import { tickGuanArmoredPatrol } from './harborGuanPatrol'
 import { buildHarborProtagonist } from './harborProtagonist'
 import {
   ensureHarborProtagonistLimbs,
+  tickHarborCastAnim,
   tickHarborProtagonistAnim,
   type HarborProtagonistAnimState,
 } from './harborProtagonistAnim'
@@ -1724,6 +1725,7 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   g.userData.npc = role
   g.userData.npcGender = gender
   g.userData.characterStyle = 'anime-dressup-glb'
+  g.userData.scoutCast = true
   void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
   return g
 }
@@ -1950,6 +1952,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   g.userData.specialNpc = true
   g.userData.characterStyle = 'anime-dressup-glb'
   g.userData.npcGender = LANDMARK_HOST_GENDER[id]
+  g.userData.scoutCast = true
 
   const female = LANDMARK_HOST_GENDER[id] === 'female'
   const skin = harborFigureMat(P.skin)
@@ -4477,6 +4480,8 @@ export function createHarborWorld(
   const lanternLights: THREE.PointLight[] = []
   /** Cached fauna / bubbles / petals for idle motion (avoids per-chunk traverse). */
   const animNodes: THREE.Object3D[] = []
+  /** Pier / landmark / Guan Scout clones — idle on the player armature. */
+  const scoutCastNpcs: THREE.Object3D[] = []
   let fxIndexDirty = true
   let rebuildFxIndex: () => void = () => {
     fxIndexDirty = true
@@ -4559,6 +4564,7 @@ export function createHarborWorld(
   rebuildFxIndex = () => {
     lanternLights.length = 0
     animNodes.length = 0
+    scoutCastNpcs.length = 0
     const isAnimNode = (o: THREE.Object3D) =>
       !!(
         o.userData.speechBubble ||
@@ -4581,6 +4587,7 @@ export function createHarborWorld(
         } else if (isAnimNode(o)) {
           animNodes.push(o)
         }
+        if (o.userData.scoutCast) scoutCastNpcs.push(o)
       })
     }
     for (const g of chunkGroups.values()) indexRoot(g)
@@ -5486,6 +5493,11 @@ export function createHarborWorld(
     // Guan armored patrol brothers — roam + limb walk cycle
     if (isGuan && guanScene) {
       tickGuanArmoredPatrol(guanScene, dt, reduced)
+    }
+
+    // Cloned Scout NPCs share the player armature (idle breath / weight).
+    for (const npc of scoutCastNpcs) {
+      tickHarborCastAnim(npc, dt, { reduced, mode: 'idle' })
     }
 
 
