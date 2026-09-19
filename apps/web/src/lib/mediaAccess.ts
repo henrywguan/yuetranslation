@@ -1,7 +1,5 @@
 /** Microphone / camera / secure-context helpers. */
 
-import { agentDebugLog } from './agentDebugLog'
-
 export function canUseMicrophone(): boolean {
   try {
     return Boolean(
@@ -34,57 +32,15 @@ export function isAppleTouchDevice(): boolean {
  * and getUserMedia / Web Speech then fail silently.
  */
 export async function unlockMicrophone(): Promise<MediaStream | null> {
-  // #region agent log
-  agentDebugLog('A', 'mediaAccess.ts:unlockMicrophone:entry', 'unlockMicrophone called', {
-    canUse: canUseMicrophone(),
-    secureContext: typeof window !== 'undefined' ? window.isSecureContext : null,
-    protocol: typeof location !== 'undefined' ? location.protocol : null,
-    host: typeof location !== 'undefined' ? location.hostname : null,
-    displayMode:
-      typeof window !== 'undefined' && window.matchMedia
-        ? window.matchMedia('(display-mode: standalone)').matches
-          ? 'standalone'
-          : 'browser'
-        : null,
-    permState:
-      typeof navigator !== 'undefined' && navigator.permissions
-        ? 'queryable'
-        : 'no-permissions-api',
-  })
-  // #endregion
-  if (!canUseMicrophone()) {
-    // #region agent log
-    agentDebugLog('D', 'mediaAccess.ts:unlockMicrophone:blocked', 'canUseMicrophone false', {
-      micBlocked: micBlockedMessage(),
-    })
-    // #endregion
-    return null
-  }
+  if (!canUseMicrophone()) return null
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
+    return await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
       },
     })
-    // #region agent log
-    agentDebugLog('A', 'mediaAccess.ts:unlockMicrophone:ok', 'getUserMedia granted', {
-      tracks: stream.getAudioTracks().map((t) => ({
-        label: t.label ? '(set)' : '',
-        readyState: t.readyState,
-        enabled: t.enabled,
-        muted: t.muted,
-      })),
-    })
-    // #endregion
-    return stream
-  } catch (err) {
-    // #region agent log
-    agentDebugLog('A', 'mediaAccess.ts:unlockMicrophone:fail', 'getUserMedia failed', {
-      name: err instanceof Error ? err.name : 'unknown',
-      message: err instanceof Error ? err.message : String(err),
-    })
-    // #endregion
+  } catch {
     return null
   }
 }

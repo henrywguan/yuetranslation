@@ -1,7 +1,6 @@
 import { stopSpeaking } from './tts'
 import { createEchoGuard } from './echoGuard'
 import { isAppleTouchDevice } from './mediaAccess'
-import { agentDebugLog } from './agentDebugLog'
 import type { Lang, LiveSession, SpeechEventHandlers } from './types'
 
 /** After this many silent no-speech ends on desktop, stop instead of restarting forever. */
@@ -94,13 +93,6 @@ export function createWebSpeechSession(
       }
     }
     rec.onerror = (e) => {
-      // #region agent log
-      agentDebugLog('C', 'webSpeech.ts:onerror', 'SpeechRecognition error', {
-        error: e.error,
-        activeLang,
-        apple,
-      })
-      // #endregion
       if (e.error === 'aborted') return
       if (e.error === 'no-speech') {
         // iOS often fires no-speech then onend; restart is handled in onend.
@@ -221,13 +213,6 @@ export function createWebSpeechSession(
      * user gesture (before any await) or Safari starts “listening” with no audio.
      */
     async start() {
-      // #region agent log
-      agentDebugLog('C', 'webSpeech.ts:start', 'Web Speech start()', {
-        lockLang: lockLang ?? null,
-        apple,
-        hasSR: Boolean(SR),
-      })
-      // #endregion
       stopped = false
       emptyRestarts = 0
       heardSpeech = false

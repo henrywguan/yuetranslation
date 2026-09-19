@@ -14,7 +14,6 @@ import { hasHan } from './charGloss'
 import { localFormalizeMexicanSpanish } from './mexicanSpanishPedagogy'
 import { localFormalizePeninsularSpanish } from './peninsularSpanishPedagogy'
 import { micBlockedMessage, unlockMicrophone, stopMediaStream, isAppleTouchDevice } from './mediaAccess'
-import { agentDebugLog } from './agentDebugLog'
 import { connectMicAnalyser, disconnectMicAnalyser, ensureSharedAudioContext } from './audioReactive'
 import {
   appleFallsBackToAzure,
@@ -1070,31 +1069,6 @@ export const useYueStore = create<State>((set, get) => {
       ttsPlaying: bargingIn,
     })
 
-    // #region agent log
-    agentDebugLog('B', 'store.ts:startHold:entry', 'startHold entered', {
-      side: side ?? null,
-      apple,
-      bargingIn,
-      webSpeechFirst,
-      deferTtsStop,
-      intendedLock: intendedLock ?? null,
-      flags: {
-        holding,
-        startingHold,
-        flushingHold,
-        tapSticky,
-        pendingStickyTap,
-        live: get().live,
-      },
-      entitlementLive: get().entitlement?.allowed?.live ?? null,
-      hasLiveSessionFactory: Boolean(liveSessionFactory),
-      hasSR: Boolean(
-        typeof window !== 'undefined' &&
-          (window.SpeechRecognition || window.webkitSpeechRecognition),
-      ),
-    })
-    // #endregion
-
     // Gesture-time unlocks first — must run before any await on this turn (iOS).
     // Do not steal the shared audio element while auto-speak is playing.
     if (!bargingIn) unlockTtsPlayback()
@@ -1113,14 +1087,6 @@ export const useYueStore = create<State>((set, get) => {
     let micPriming: Promise<MediaStream | null> | null = null
     const skipMicPrimeNow =
       Boolean(liveSessionFactory) || (webSpeechFirst && !appleFollowUp) || deferTtsStop
-    // #region agent log
-    agentDebugLog('A', 'store.ts:startHold:micPrime', 'mic prime decision', {
-      skipMicPrimeNow,
-      appleFollowUp,
-      deferTtsStop,
-      liveSessionFactory: Boolean(liveSessionFactory),
-    })
-    // #endregion
     if (!skipMicPrimeNow) {
       micPriming = unlockMicrophone()
     }
@@ -1157,17 +1123,6 @@ export const useYueStore = create<State>((set, get) => {
       (tapSticky && !pendingStickyTap) ||
       (get().live && !bargedLive)
     ) {
-      // #region agent log
-      agentDebugLog('B', 'store.ts:startHold:earlyReturn', 'silent early return on flags', {
-        holding,
-        startingHold,
-        flushingHold,
-        tapSticky,
-        pendingStickyTap,
-        live: get().live,
-        bargedLive,
-      })
-      // #endregion
       return
     }
     const { entitlement } = get()
@@ -1343,14 +1298,6 @@ export const useYueStore = create<State>((set, get) => {
       } else {
         // Open mic in this gesture turn and keep the tracks for Azure (no second mic open).
         const primed = await micPriming!
-        // #region agent log
-        agentDebugLog('C', 'store.ts:startHold:primed', 'desktop/Azure mic prime result', {
-          primed: Boolean(primed),
-          micPrimingNull: micPriming == null,
-          apple,
-          intendedLock: intendedLock ?? null,
-        })
-        // #endregion
         if (!primed) {
           cancelHoldStart(set)
           set({
@@ -1361,48 +1308,20 @@ export const useYueStore = create<State>((set, get) => {
         heldMicStream = primed
 
         if (!keepHoldOrSticky(gen, set)) {
-          // #region agent log
-          agentDebugLog('F', 'store.ts:startHold:cancelAfterPrime', 'keepHoldOrSticky false after prime', {
-            gen,
-            holdGen,
-            holding,
-            tapSticky,
-            pendingStickyTap,
-          })
-          // #endregion
           cancelHoldStart(set)
           return
         }
 
         next = await createAzureLiveSession(handlers, primed, webSpeechLock())
-        // #region agent log
-        agentDebugLog('C', 'store.ts:startHold:azureSession', 'Azure session create', {
-          hasAzure: Boolean(next),
-        })
-        // #endregion
         if (!next) {
           // Free the exclusive mic lock so Web Speech can open its own input.
           releaseHeldMic()
           next = createWebSpeechSession(handlers, webSpeechLock())
-          // #region agent log
-          agentDebugLog('C', 'store.ts:startHold:webSpeechFallback', 'Web Speech fallback after Azure null', {
-            hasWebSpeech: Boolean(next),
-          })
-          // #endregion
         }
       }
     }
 
     if (!keepHoldOrSticky(gen, set)) {
-      // #region agent log
-      agentDebugLog('F', 'store.ts:startHold:cancelBeforeStart', 'keepHoldOrSticky false before start', {
-        gen,
-        holdGen,
-        holding,
-        tapSticky,
-        hasNext: Boolean(next),
-      })
-      // #endregion
       if (next) {
         try {
           await next.stop()
