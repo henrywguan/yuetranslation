@@ -101,6 +101,8 @@ Classic client path:
 - Avoid strong realtime shadows as the primary form-giver; form should read in lit vertex colors alone.
 - Slight **value banding** is acceptable; oversmooth gradients read modern.
 
+**Anime / wuxia parallel track (cinematic GLBs):** step-ramp cel + rim — see [`ANIME-CEL-FOUNDATION.md`](./ANIME-CEL-FOUNDATION.md). Do **not** silently replace this RS Lambert target on world craft.
+
 ### 2.1b Three triangle modes (mastery — why faces “feel” RS)
 
 Classic RS2 software rasterizer only needs three filled-triangle modes (Medieval Software / Rune Synergy analysis of the Java client):

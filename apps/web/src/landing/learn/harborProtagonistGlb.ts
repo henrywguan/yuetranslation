@@ -1,15 +1,13 @@
 /**
  * Harbor Quest · Meshy Scout GLB import (Henry-approved 2026-09-18).
  * Standing pose *may* use cinematic mesh; seated canoe stays procedural.
- *
- * Land visibility (2026-09-18): Meshy GLBs currently hide the procedural body
- * while the imported mesh often fails to draw (skinned/material/culling), leaving
- * only the nametag on foot. Keep the kit + URLs, but do not attach until the mesh
- * path is validated — procedural Scout must stay visible on land.
+ * Land: do not attach until the mesh path is validated — procedural Scout stays visible.
+ * When a GLB does load, apply harborCelMaterial (anime / wuxia cel foundation).
  */
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { HarborGender } from './harborAppearance'
+import { applyHarborCelToObject, HARBOR_CEL_SHADE_ENABLED } from './harborCelMaterial'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
 
 export const HARBOR_SCOUT_GLB_SRC = {
@@ -89,7 +87,6 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
     m.receiveShadow = false
     m.frustumCulled = false
     m.userData.scoutGlbMesh = true
-    // Keep materials; soft lighting already in scene.
     const mat = m.material as THREE.Material | THREE.Material[]
     const mats = Array.isArray(mat) ? mat : [mat]
     for (const mm of mats) {
@@ -99,6 +96,7 @@ function normalizeScoutGlb(root: THREE.Object3D, gender: HarborGender): THREE.Gr
   })
 
   if (!isValidNormalizedScoutGlb(wrap)) return null
+  if (HARBOR_CEL_SHADE_ENABLED) applyHarborCelToObject(wrap, true)
   return wrap
 }
 
