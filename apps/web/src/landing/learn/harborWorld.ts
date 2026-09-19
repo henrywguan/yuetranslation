@@ -1,7 +1,8 @@
 /**
- * Harbor Quest · continuous river voyage (original low-poly world).
- * Built to docs/harbor-quest/RS-LIKE-CRAFT-BIBLE.md — chunky silhouettes,
- * flat Lambert, locked palette, extruded openings. Original IP (not Jagex).
+ * Harbor Quest · continuous river voyage.
+ * V2 live look = authored GLBs (`harborV2Assets`). Procedural hqBox craft is
+ * the v1 archive fallback when a mesh is still downloading.
+ * See docs/harbor-quest/V2-MESH-WORLD.md
  */
 import * as THREE from 'three'
 import {
@@ -27,6 +28,10 @@ import {
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
+import {
+  HARBOR_V2_MESH_ONLY,
+  mountHarborV2Asset,
+} from './harborV2Assets'
 import {
   HARBOR_FIGURE_PROPORTIONS,
   harborFigureArm,
@@ -605,9 +610,17 @@ function softTiledMat(color: number, tex: THREE.DataTexture, repeat = 2.6) {
   return hqMatTex(color, hqSoftMapRepeat(tex, repeat))
 }
 
-/** Faceted oak/pine stand-in — icosa canopy, 6-gon trunk (bible §4.2). */
+/** River willow — V2 mesh when available; v1 faceted canopy fallback. */
 function tree(rng: () => number, leaf: number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'willow', {
+      targetHeight: 2.6 + rng() * 1.1,
+      name: 'v2-willow',
+      rotationY: rng() * Math.PI * 2,
+    })
+    return g
+  }
   const h = 1.1 + rng() * 0.9
   g.add(hqPost(0.12, 0.2, h, P.woodMid, 0, h / 2, 0))
   g.add(hqCanopy(0.55 + rng() * 0.4, leaf, 0, h + 0.35, 0))
@@ -626,11 +639,18 @@ function tree(rng: () => number, leaf: number) {
 }
 
 /**
- * Jiangnan riverside dwelling — soft anime hip roof, whitewash walls, timber door.
- * Original Harbor kit (not RS voxel slabs).
+ * Jiangnan riverside dwelling — V2 mesh house when available; v1 craft fallback.
  */
 function house(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'house-village', {
+      targetHeight: 1.8 + rng() * 0.5,
+      name: 'v2-house',
+      rotationY: (rng() - 0.5) * 0.2,
+    })
+    return g
+  }
   const w = 1.5 + rng() * 0.9
   const d = 1.15 + rng() * 0.45
   const h = 0.95 + rng() * 0.35
@@ -659,9 +679,17 @@ function house(rng: () => number) {
 }
 
 
-/** Compact courtyard wing — grey brick, soft anime terracotta roof, extruded door. */
+/** Compact courtyard wing — V2 house mesh when available. */
 function courtyardWing(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'house-village', {
+      targetHeight: 1.35 + rng() * 0.4,
+      name: 'v2-courtyard',
+      rotationY: (rng() - 0.5) * 0.5,
+    })
+    return g
+  }
   const w = 1.1 + rng() * 0.5
   const d = 0.95 + rng() * 0.35
   const h = 0.75 + rng() * 0.25
@@ -673,9 +701,17 @@ function courtyardWing(rng: () => number) {
 }
 
 
-/** Raised riverside shop — thick stilts, chunky deck, extruded banner. */
+/** Raised riverside shop — V2 market stall mesh when available. */
 function stiltShop(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'stall-market', {
+      targetHeight: 1.5 + rng() * 0.35,
+      name: 'v2-stall',
+      rotationY: (rng() - 0.5) * 0.4,
+    })
+    return g
+  }
   const w = 1.2 + rng() * 0.5
   const d = 1.0 + rng() * 0.35
   const deckY = 0.45 + rng() * 0.15
@@ -707,6 +743,14 @@ function hut(rng: () => number) {
   // Mix: half courtyard wing, half small tiled cottage so villages feel varied
   if (rng() > 0.55) return courtyardWing(rng)
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'house-village', {
+      targetHeight: 1.4 + rng() * 0.45,
+      name: 'v2-hut',
+      rotationY: (rng() - 0.5) * 0.35,
+    })
+    return g
+  }
   const w = 1.0 + rng() * 0.4
   const d = 0.9 + rng() * 0.3
   const h = 0.7 + rng() * 0.3
@@ -924,6 +968,17 @@ function attachLanternLight(
 function lantern(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
   g.userData.harborLantern = true
+  if (HARBOR_V2_MESH_ONLY) {
+    g.add(hqPost(0.05, 0.07, 1.35, P.woodDark, 0, 0.68, 0, 8))
+    mountHarborV2Asset(g, 'lantern-paper', {
+      targetHeight: 0.34,
+      name: 'v2-shore-lantern',
+      position: [0, 1.42, 0],
+    })
+    attachLanternLight(g, weather, 1.55)
+    auditHarborObject(g, 'lantern')
+    return g
+  }
   g.add(hqPost(0.05, 0.07, 1.5, P.woodDark, 0, 0.75, 0, 8))
   const lamp = new THREE.Mesh(
     new THREE.CylinderGeometry(0.14, 0.16, 0.34, 14),
@@ -955,6 +1010,15 @@ function boatLantern(
   g.userData.boatLantern = true
   g.userData.vesselPart = true
   g.name = 'boat-lantern'
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'lantern-paper', {
+      targetHeight: 0.32,
+      name: 'v2-boat-lantern',
+      position: [0, 0.15, 0],
+    })
+    attachLanternLight(g, weather, 0.45, glowCol, 1.15)
+    return g
+  }
   const id = item.id
   const wood = hqWoodTexture()
   if (id.startsWith('lantern-silk') || id === 'lantern-phoenix' || id === 'lantern-starlight') {
@@ -1385,6 +1449,14 @@ function placeScenicMapFeatures(
 
 function pierSegment() {
   const g = new THREE.Group()
+  g.userData.pier = true
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'pier-module', {
+      targetHeight: 1.05,
+      name: 'v2-pier',
+    })
+    return g
+  }
   const wood = hqWoodTexture()
   // Thick deck planks (readable boards, not a paper plane)
   g.add(hqBoxTex(2.4, 0.16, 3.6, P.woodLight, wood, 0, 0.55, 0))
@@ -1408,7 +1480,6 @@ function pierSegment() {
   crate.position.set(-0.55, 0.63, 0.9)
   crate.scale.setScalar(0.7)
   g.add(crate)
-  g.userData.pier = true
   return g
 }
 
@@ -2270,6 +2341,14 @@ function fish() {
 
 function pine(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'willow', {
+      targetHeight: 2.8 + rng() * 1.4,
+      name: 'v2-pine-standin',
+      rotationY: rng() * Math.PI * 2,
+    })
+    return g
+  }
   const h = 1.6 + rng() * 1.2
   g.add(hqPost(0.1, 0.16, h, P.woodDark, 0, h / 2, 0, 5))
   // Stacked cones / icosa for needle tiers
@@ -2287,6 +2366,14 @@ function pine(rng: () => number) {
 /** Low-poly sakura — dark trunk + clustered pink blossom clouds. */
 function cherryBlossom(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'willow', {
+      targetHeight: 2.2 + rng() * 0.9,
+      name: 'v2-cherry-standin',
+      rotationY: rng() * Math.PI * 2,
+    })
+    return g
+  }
   const h = 1.2 + rng() * 0.8
   g.add(hqPost(0.08, 0.14, h, 0x3a2a28, 0, h / 2, 0, 5))
   const fork = hqPost(0.05, 0.08, 0.55, 0x3a2a28, 0.15, h + 0.1, 0, 4)
@@ -2310,6 +2397,14 @@ function cherryBlossom(rng: () => number) {
 
 function ginkgo(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'willow', {
+      targetHeight: 2.4 + rng() * 1.0,
+      name: 'v2-ginkgo-standin',
+      rotationY: rng() * Math.PI * 2,
+    })
+    return g
+  }
   const h = 1.3 + rng() * 0.9
   g.add(hqPost(0.1, 0.16, h, P.woodMid, 0, h / 2, 0, 5))
   const golds = [P.leafGold, 0xd4b050, 0xe8c060]
@@ -2329,6 +2424,14 @@ function ginkgo(rng: () => number) {
 
 function poplar(rng: () => number) {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'willow', {
+      targetHeight: 3.0 + rng() * 1.2,
+      name: 'v2-poplar-standin',
+      rotationY: rng() * Math.PI * 2,
+    })
+    return g
+  }
   const h = 2.0 + rng() * 1.2
   g.add(hqPost(0.07, 0.12, h, P.woodMid, 0, h / 2, 0, 5))
   // Tall column of faceted blobs
@@ -2361,6 +2464,14 @@ export const HARBOR_XIANGYUN = true as const
 
 function bridge() {
   const g = new THREE.Group()
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'bridge-arch', {
+      targetHeight: 1.7,
+      name: 'v2-bridge',
+      rotationY: Math.PI / 2,
+    })
+    return g
+  }
   const deck = new THREE.Mesh(new THREE.BoxGeometry(RIVER * 2.2, 0.12, 1.4), mat(0x7a5a3a))
   deck.position.y = 0.85
   g.add(deck)
@@ -2379,6 +2490,15 @@ function buildBoatHull(boatId: string): THREE.Group {
   const g = new THREE.Group()
   g.userData.vesselPart = true
   g.name = 'boat-hull'
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'canoe', {
+      targetHeight: 0.55,
+      name: 'v2-canoe-hull',
+      rotationY: Math.PI / 2,
+    })
+    // Soft recolor pass once the mesh lands (tint toward equipped hull color).
+    return g
+  }
   const id = item.id
   const wood = hqWoodTexture()
   const length =
@@ -3435,6 +3555,56 @@ function saveShackBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'save-shack'
   g.userData.uniqueLandmark = 'save-shack'
 
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'save-shack', {
+      targetHeight: 2.75,
+      name: 'v2-save-shack',
+    })
+    // Keep the golden portal tip so Save still reads as interactive.
+    const portal = new THREE.Group()
+    portal.name = 'save-portal'
+    portal.userData.goldenPortal = true
+    portal.position.set(0, 0.55, 2.85)
+    for (const x of [-0.55, 0.55] as const) {
+      portal.add(hqPost(0.07, 0.09, 1.5, P.trimGold, x, 0.75, 0, 6))
+    }
+    portal.add(hqBox(1.3, 0.12, 0.12, P.trimGold, 0, 1.55, 0))
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.42, 0.07, 6, 12),
+      glowMat(0xffe080, 0xffc020, weather === 'night' ? 1.4 : 1.0),
+    )
+    ring.position.set(0, 0.85, 0.05)
+    portal.add(ring)
+    const veil = new THREE.Mesh(
+      new THREE.CircleGeometry(0.38, 12),
+      new THREE.MeshLambertMaterial({
+        color: 0xffe8a0,
+        emissive: 0xffb020,
+        emissiveIntensity: weather === 'night' ? 1.2 : 0.7,
+        transparent: true,
+        opacity: 0.55,
+        flatShading: true,
+        side: THREE.DoubleSide,
+      }),
+    )
+    veil.position.set(0, 0.85, 0)
+    portal.add(veil)
+    const portalLight = new THREE.PointLight(
+      0xffc040,
+      weather === 'night' ? 2.2 : weather === 'sunny' ? 0.85 : 1.4,
+      9,
+      2,
+    )
+    portalLight.position.set(0, 0.9, 0.2)
+    portalLight.userData.harborLanternLight = true
+    portalLight.userData.baseIntensity = portalLight.intensity
+    portalLight.userData.portalGlow = true
+    portal.add(portalLight)
+    g.add(portal)
+    attachLandmarkHost(g, 'save-shack', weather)
+    return g
+  }
+
   // Long pier dock toward the river (+Z)
   g.add(hqBox(2.2, 0.14, 4.2, P.woodLight, 0, 0.42, 1.6))
   for (const z of [0.2, 1.4, 2.6, 3.6] as const) {
@@ -3525,6 +3695,24 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
   g.name = 'outfitter'
   g.userData.visitable = 'outfitter'
   g.userData.uniqueLandmark = 'outfitter'
+
+  if (HARBOR_V2_MESH_ONLY) {
+    mountHarborV2Asset(g, 'outfitter', {
+      targetHeight: 2.55,
+      name: 'v2-outfitter',
+    })
+    // Keep a soft approach plank + warm lanterns for night readability.
+    g.add(hqBox(1.2, 0.1, 1.6, P.woodMid, 0, 0.12, 1.35))
+    for (const x of [-0.65, 0.65] as const) {
+      const light = new THREE.PointLight(0xffa050, harborLanternIntensity(weather) * 0.85, 6.5, 2)
+      light.position.set(x, 1.7, 0.9)
+      light.userData.harborLanternLight = true
+      light.userData.baseIntensity = light.intensity
+      g.add(light)
+    }
+    attachLandmarkHost(g, 'outfitter', weather)
+    return g
+  }
 
   // Wide raised deck
   for (const x of [-0.9, 0, 0.9] as const) {

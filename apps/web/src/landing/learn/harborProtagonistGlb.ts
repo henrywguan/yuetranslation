@@ -167,16 +167,21 @@ export function isHarborScoutGlbCached(gender: HarborGender): boolean {
  * Attach cinematic Scout mesh to a procedural protagonist group.
  * Hides procedural body meshes only after a validated GLB is on the root.
  * On failure / disabled gate: leave procedural visible (land nametag-only bug).
+ *
+ * `mode: 'canoe'` plants the standing A-pose mesh and hides geometry below the
+ * deck line so the sailor sits in the boat without standing through the hull.
  */
 export async function attachHarborScoutGlb(
   root: THREE.Group,
   gender: HarborGender,
+  opts: { mode?: 'standing' | 'canoe' } = {},
 ): Promise<boolean> {
   if (!HARBOR_SCOUT_GLB_ENABLED) {
     setProceduralBodyVisible(root, true)
     root.userData.usesScoutGlb = false
     return false
   }
+  const mode = opts.mode ?? 'standing'
   const existing = root.getObjectByName('scout-glb')
   if (existing) {
     if (!isValidNormalizedScoutGlb(existing as THREE.Group)) {
@@ -188,6 +193,7 @@ export async function attachHarborScoutGlb(
     existing.visible = true
     setProceduralBodyVisible(root, false)
     root.userData.usesScoutGlb = true
+    if (mode === 'canoe') plantScoutGlbInCanoe(existing as THREE.Group)
     return true
   }
   const mesh = await fetchScoutGlb(gender)
@@ -200,7 +206,31 @@ export async function attachHarborScoutGlb(
   setProceduralBodyVisible(root, false)
   root.userData.usesScoutGlb = true
   root.userData.characterStyle = 'anime-dressup-glb'
+  if (mode === 'canoe') plantScoutGlbInCanoe(mesh)
   return true
+}
+
+/**
+ * Sink the standing Scout so the pelvis sits on the canoe seat and hide
+ * limb verts below deck — A-pose legs must not poke through the hull.
+ */
+export function plantScoutGlbInCanoe(glb: THREE.Group): void {
+  glb.userData.scoutGlbCanoe = true
+  // Seat height relative to boat local origin (canoe places scout at y≈0.38).
+  glb.position.y = -0.55
+  glb.scale.multiplyScalar(0.92)
+  glb.updateMatrixWorld(true)
+  const deckY = 0.12
+  glb.traverse((o) => {
+    const m = o as THREE.Mesh
+    if (!m.isMesh) return
+    m.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(m)
+    if (box.max.y < deckY) {
+      m.visible = false
+      m.userData.scoutGlbCanoeHidden = true
+    }
+  })
 }
 
 /** Show/hide procedural body parts (keep sockets + clothing overlays). */
