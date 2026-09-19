@@ -209,3 +209,27 @@ export function tickHarborProtagonistAnim(
 export function harborProtagonistClipName(mode: HarborProtagonistAnimMode): string {
   return HARBOR_PROTAGONIST_CLIPS[mode === 'walk' ? 'walk' : mode === 'sit' ? 'sit' : 'idle']
 }
+
+/**
+ * Drive a cloned Scout NPC (pier / landmark / Guan host) on the same
+ * armature as the player. Seeds a desynced phase so the dock doesn't breathe
+ * as one chorus.
+ */
+export function tickHarborCastAnim(
+  root: THREE.Object3D,
+  dt: number,
+  opts: { reduced?: boolean; mode?: HarborProtagonistAnimMode } = {},
+): HarborProtagonistAnimState {
+  const prev = (root.userData.castAnim as HarborProtagonistAnimState | undefined) ?? {
+    mode: 'idle',
+    t: (root.id % 97) * 0.37,
+  }
+  const next = tickHarborProtagonistAnim(
+    root,
+    { ...prev, mode: opts.mode ?? prev.mode ?? 'idle' },
+    dt,
+    { reduced: opts.reduced },
+  )
+  root.userData.castAnim = next
+  return next
+}

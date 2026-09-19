@@ -1714,6 +1714,29 @@ assert.match(
   'walk drives auto-rig bones',
 )
 assert.match(
+  readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+  /tickHarborCastAnim/,
+  'cloned Scout NPCs share player armature',
+)
+assert.match(worldSrc, /tickHarborCastAnim/, 'world ticks Scout-cast NPC idle')
+assert.match(worldSrc, /scoutCastNpcs/, 'world indexes scoutCast clones')
+assert.match(worldSrc, /userData\.scoutCast = true/, 'pier + landmark hosts mark scoutCast')
+assert.match(
+  readFileSync(new URL('./harborRemoteAvatars.ts', import.meta.url), 'utf8'),
+  /mode: 'sit'/,
+  'boat remotes sit on the Scout armature',
+)
+assert.match(
+  readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
+  /attachHarborCastGlb/,
+  'Guan customs + trimmer use Scout cast GLB',
+)
+assert.match(
+  readFileSync(new URL('./harborGuanFishingRealm.ts', import.meta.url), 'utf8'),
+  /attachHarborCastGlb/,
+  'Fisher Overseer keeper uses Scout cast GLB',
+)
+assert.match(
   readFileSync(new URL('./harborFishingAnim.ts', import.meta.url), 'utf8'),
   /tickScoutSkeletonFish/,
   'cast/reel drive auto-rig bones',

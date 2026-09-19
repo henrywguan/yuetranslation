@@ -19,6 +19,7 @@ import {
 } from './harborCraft'
 import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
 import { buildNametagSprite } from './harborRemoteAvatars'
+import { attachHarborCastGlb } from './harborProtagonistGlb'
 
 function mulberry32(seed: number) {
   let a = seed >>> 0
@@ -139,17 +140,24 @@ function fishingOverseer(): THREE.Group {
   roof.position.y = 1.25
   g.add(roof)
 
+  const keeper = new THREE.Group()
+  keeper.name = 'guan-fishing-keeper'
+  keeper.position.set(0.85, 0, 0.55)
+  keeper.userData.scoutCast = true
+  keeper.userData.npc = 'fishing-hut'
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.7, 6), hqMat(0x1e3a48))
-  body.position.set(0.85, 0.45, 0.55)
-  g.add(body)
+  body.position.set(0, 0.45, 0)
+  keeper.add(body)
   const fishSkin = hqMat(0xe8c4a8)
   const bust = new THREE.Group()
-  bust.position.set(0.85, 0.95, 0.55)
+  bust.position.set(0, 0.95, 0)
   bust.add(harborFigureHead(fishSkin, 0, { r: 0.16 }))
   bust.add(harborFigureNeck(fishSkin, 0, 0.16))
   bust.add(harborFigureEars(fishSkin, 0, 0.16))
   bust.add(harborFigureFace(fishSkin, 0, { showBrows: true, showMouth: true }))
-  g.add(bust)
+  keeper.add(bust)
+  g.add(keeper)
+  void attachHarborCastGlb(keeper, 'male', { tint: 0x1e3a48, tintAmount: 0.36 })
 
   // Floating fishing icon above overseer (animated in world tick)
   const iconRoot = new THREE.Group()

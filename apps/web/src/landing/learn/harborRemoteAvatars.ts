@@ -264,23 +264,25 @@ export function tickRemoteSailorPose(root: THREE.Group, alpha = 0.28, dt = 1 / 6
     root.rotation.y += dy * alpha
   }
 
-  // Foot remotes: drive dress-up limb walk when easing toward a distant target.
-  if (root.userData.remoteMode === 'foot') {
-    const body = root.getObjectByName('remote-body')
-    if (body) {
+  // Remotes: same Scout armature as the local sailor (walk / idle / sit).
+  const body = root.getObjectByName('remote-body')
+  if (body) {
+    const prev =
+      (root.userData.remoteAnim as { mode: 'idle' | 'walk' | 'sit'; t: number } | undefined) ?? {
+        mode: 'idle' as const,
+        t: 0,
+      }
+    if (root.userData.remoteMode === 'foot') {
       const moved = Math.hypot(root.position.x - prevX, root.position.z - prevZ)
       const remaining = Math.hypot(tx - root.position.x, tz - root.position.z)
       const walking = moved > 0.002 || remaining > 0.12
-      const prev =
-        (root.userData.remoteAnim as { mode: 'idle' | 'walk' | 'sit'; t: number } | undefined) ?? {
-          mode: 'idle' as const,
-          t: 0,
-        }
       root.userData.remoteAnim = tickHarborProtagonistAnim(
         body,
         { ...prev, mode: walking ? 'walk' : 'idle' },
         dt,
       )
+    } else {
+      root.userData.remoteAnim = tickHarborProtagonistAnim(body, { ...prev, mode: 'sit' }, dt)
     }
   }
 }

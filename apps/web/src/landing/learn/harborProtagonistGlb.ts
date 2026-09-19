@@ -276,10 +276,12 @@ export async function attachHarborCastGlb(
     root.userData.characterStyle = 'anime-dressup'
     return false
   }
+  root.userData.scoutCast = true
   const ok = await attachHarborScoutGlb(root, gender, { mode: 'standing' })
   if (!ok) return false
   if (opts.tint != null) tintHarborCastGlb(root, opts.tint, opts.tintAmount ?? 0.38)
   root.userData.characterStyle = 'anime-dressup-glb'
+  root.userData.scoutCast = true
   return true
 }
 

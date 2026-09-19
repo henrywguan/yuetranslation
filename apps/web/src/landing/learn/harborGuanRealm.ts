@@ -49,6 +49,7 @@ import { stampGuanArmoredPatrol } from './harborGuanPatrol'
 import { isGuanSatelliteLand, guanSatelliteGroundY, stampGuanFishingRealm } from './harborGuanFishingRealm'
 import { GUAN_SATELLITE_ISLANDS } from './harborFishing'
 import { buildNametagSprite } from './harborRemoteAvatars'
+import { attachHarborCastGlb } from './harborProtagonistGlb'
 
 /** Local alias so foot clamp can snap to satellite shores. */
 const GUAN_SATELLITE_ISLANDS_FOOT = GUAN_SATELLITE_ISLANDS
@@ -1067,6 +1068,7 @@ function customsOfficer(): THREE.Group {
   g.userData.hasDialogue = true
   g.userData.specialNpc = true
   g.userData.npc = 'save-shack'
+  g.userData.scoutCast = true
 
   const skin = hqMat(P.skin)
   // Legs + sandals
@@ -1136,6 +1138,7 @@ function customsOfficer(): THREE.Group {
   glow.userData.specialHostGlow = true
   g.add(glow)
 
+  void attachHarborCastGlb(g, 'male', { tint: 0x1a6870, tintAmount: 0.36 })
   return g
 }
 
@@ -1216,6 +1219,7 @@ function capeTrimmerNpc(): THREE.Group {
   g.userData.hasDialogue = true
   g.userData.specialNpc = true
   g.userData.npc = 'cape-loom'
+  g.userData.scoutCast = true
 
   const skin = hqMat(P.skin)
   for (const sx of [-0.1, 0.1] as const) {
@@ -1280,6 +1284,7 @@ function capeTrimmerNpc(): THREE.Group {
   hostGlow.userData.specialHostGlow = true
   g.add(hostGlow)
 
+  void attachHarborCastGlb(g, 'female', { tint: 0x5a2a48, tintAmount: 0.36 })
   return g
 }
 
