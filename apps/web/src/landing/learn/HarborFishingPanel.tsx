@@ -402,137 +402,145 @@ export function HarborFishingPanel({
 
       {tab === 'cast' && spot ? (
         <div className={`hq-fish-cast${castingFocus ? ' is-casting' : ''}`}>
-          {castingFocus ? (
-            <div className="hq-fish-cast-stage" aria-live="polite">
-              <div className="hq-fish-cast-ripples" aria-hidden="true">
-                <span />
-                <span />
-                <span />
+          <div className="hq-fish-cast-body">
+            {castingFocus ? (
+              <div className="hq-fish-cast-stage" aria-live="polite">
+                <div className="hq-fish-cast-ripples" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <p className="hq-fish-cast-stage-label">
+                  {castPhase === 'cast'
+                    ? 'Casting…'
+                    : castPhase === 'wait'
+                      ? 'Waiting for a bite…'
+                      : castPhase === 'result'
+                        ? 'Reeling in…'
+                        : 'Fishing…'}
+                </p>
               </div>
-              <p className="hq-fish-cast-stage-label">
-                {castPhase === 'cast'
-                  ? 'Casting…'
-                  : castPhase === 'wait'
-                    ? 'Waiting for a bite…'
-                    : castPhase === 'result'
-                      ? 'Reeling in…'
-                      : 'Fishing…'}
+            ) : null}
+            <div className="hq-fish-req hq-fish-req--gear" aria-label="Gear required for this spot">
+              <p className="hq-fish-req-label">Required</p>
+              <p className="hq-fish-req-hint">
+                {spot.methods.map((m) => HARBOR_FISH_METHOD_LABEL[m]).join(' · ')}
               </p>
+              <div className="hq-fish-tile-row hq-fish-tile-row--req">
+                {requiredTools.map((tool) => {
+                  const owned = bag.tools.includes(tool.id)
+                  const eq = bag.equippedTool === tool.id
+                  return (
+                    <div key={tool.id} className="hq-fish-req-cell">
+                      <FishItemTile
+                        compact
+                        kind="tool"
+                        id={tool.id}
+                        method={tool.method}
+                        label={tool.name.en}
+                        zh={tool.name.zh}
+                        meta={
+                          eq
+                            ? 'Equipped · works here'
+                            : owned
+                              ? `Owned · Lv ${tool.level}`
+                              : `Buy ${tool.price}¢ · Lv ${tool.level}`
+                        }
+                        badge={eq ? '✓' : owned ? '1' : '0'}
+                        locked={!owned}
+                        selected={eq}
+                        tipOpen={tipId === `req-${tool.id}`}
+                        tipPlacement="below"
+                        onPointerEnter={() => {
+                          if (!isCoarsePointer()) setTipId(`req-${tool.id}`)
+                        }}
+                        onClick={() => {
+                          playHarborUiClick()
+                          openTip(`req-${tool.id}`)
+                          if (owned) {
+                            onBagChange({ ...bag, equippedTool: tool.id })
+                            setMsg(`Equipped ${tool.name.en}`)
+                          } else {
+                            setTab('gear')
+                            setMsg(`Buy ${tool.name.en} on the Gear tab`)
+                          }
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+                {requiredBaits.map((bait) => {
+                  const have = bag.bait[bait.id] ?? 0
+                  const eq = bag.equippedBait === bait.id
+                  return (
+                    <div key={bait.id} className="hq-fish-req-cell">
+                      <FishItemTile
+                        compact
+                        kind="bait"
+                        id={bait.id}
+                        label={bait.name.en}
+                        zh={bait.name.zh}
+                        meta={
+                          have > 0
+                            ? eq
+                              ? `${have} left · selected`
+                              : `${have} left · tap to use`
+                            : `Buy ${bait.price}¢ / ${bait.pack}`
+                        }
+                        badge={have > 0 ? String(have) : '0'}
+                        locked={have < 1}
+                        selected={eq}
+                        tipOpen={tipId === `req-${bait.id}`}
+                        tipPlacement="below"
+                        onPointerEnter={() => {
+                          if (!isCoarsePointer()) setTipId(`req-${bait.id}`)
+                        }}
+                        onClick={() => {
+                          playHarborUiClick()
+                          openTip(`req-${bait.id}`)
+                          if (have > 0) {
+                            onBagChange({ ...bag, equippedBait: bait.id })
+                            setMsg(`Using ${bait.name.en}`)
+                          } else {
+                            setTab('gear')
+                            setMsg(`Buy ${bait.name.en} on the Gear tab`)
+                          }
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          ) : null}
-          <div className="hq-fish-req hq-fish-req--gear" aria-label="Gear required for this spot">
-            <p className="hq-fish-req-label">Required</p>
-            <p className="hq-fish-req-hint">
-              {spot.methods.map((m) => HARBOR_FISH_METHOD_LABEL[m]).join(' · ')}
-            </p>
-            <div
-              className={`hq-fish-tile-row hq-fish-tile-row--req${requiredTools.length + requiredBaits.length > 2 ? ' is-wide' : ''}`}
-            >
-              {requiredTools.map((tool) => {
-                const owned = bag.tools.includes(tool.id)
-                const eq = bag.equippedTool === tool.id
-                return (
-                  <FishItemTile
-                    key={tool.id}
-                    kind="tool"
-                    id={tool.id}
-                    method={tool.method}
-                    label={tool.name.en}
-                    zh={tool.name.zh}
-                    meta={
-                      eq
-                        ? 'Equipped · works here'
-                        : owned
-                          ? `Owned · Lv ${tool.level}`
-                          : `Buy ${tool.price}¢ · Lv ${tool.level}`
-                    }
-                    locked={!owned}
-                    selected={eq}
-                    tipOpen={tipId === `req-${tool.id}`}
-                    onPointerEnter={() => {
-                      if (!isCoarsePointer()) setTipId(`req-${tool.id}`)
-                    }}
-                    onClick={() => {
-                      playHarborUiClick()
-                      openTip(`req-${tool.id}`)
-                      if (owned) {
-                        onBagChange({ ...bag, equippedTool: tool.id })
-                        setMsg(`Equipped ${tool.name.en}`)
-                      } else {
-                        setTab('gear')
-                        setMsg(`Buy ${tool.name.en} on the Gear tab`)
-                      }
-                    }}
-                  />
-                )
-              })}
-              {requiredBaits.map((bait) => {
-                const have = bag.bait[bait.id] ?? 0
-                const eq = bag.equippedBait === bait.id
-                return (
-                  <FishItemTile
-                    key={bait.id}
-                    kind="bait"
-                    id={bait.id}
-                    label={bait.name.en}
-                    zh={bait.name.zh}
-                    meta={
-                      have > 0
-                        ? eq
-                          ? `${have} left · selected`
-                          : `${have} left · tap to use`
-                        : `Buy ${bait.price}¢ / ${bait.pack}`
-                    }
-                    locked={have < 1}
-                    selected={eq}
-                    tipOpen={tipId === `req-${bait.id}`}
-                    onPointerEnter={() => {
-                      if (!isCoarsePointer()) setTipId(`req-${bait.id}`)
-                    }}
-                    onClick={() => {
-                      playHarborUiClick()
-                      openTip(`req-${bait.id}`)
-                      if (have > 0) {
-                        onBagChange({ ...bag, equippedBait: bait.id })
-                        setMsg(`Using ${bait.name.en}`)
-                      } else {
-                        setTab('gear')
-                        setMsg(`Buy ${bait.name.en} on the Gear tab`)
-                      }
-                    }}
-                  />
-                )
-              })}
-            </div>
-          </div>
 
-          <div className="hq-fish-req hq-fish-req--bites" aria-label="Fish that bite here">
-            <p className="hq-fish-req-label">Bites here</p>
-            <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Bites here">
-              {biteFish.map((f, i) => {
-                const examine = harborFishExamineMeta(f)
-                return (
-                  <FishShopCell key={f.id}>
-                    <FishItemTile
-                      compact
-                      kind="fish"
-                      id={f.id}
-                      method={f.method}
-                      label={f.name.en}
-                      zh={f.name.zh}
-                      meta={examine}
-                      badge={`Lv${f.level}`}
-                      tipOpen={tipId === f.id}
-                      tipPlacement={i < 8 ? 'below' : 'above'}
-                      onPointerEnter={() => {
-                        if (!isCoarsePointer()) setTipId(f.id)
-                      }}
-                      onClick={() => openTip(f.id)}
-                    />
-                  </FishShopCell>
-                )
-              })}
-            </ul>
+            <div className="hq-fish-req hq-fish-req--bites" aria-label="Fish that bite here">
+              <p className="hq-fish-req-label">Bites here</p>
+              <ul className="hq-shop-grid hq-fish-shop-grid" aria-label="Bites here">
+                {biteFish.map((f, i) => {
+                  const examine = harborFishExamineMeta(f)
+                  return (
+                    <FishShopCell key={f.id}>
+                      <FishItemTile
+                        compact
+                        kind="fish"
+                        id={f.id}
+                        method={f.method}
+                        label={f.name.en}
+                        zh={f.name.zh}
+                        meta={examine}
+                        badge={`Lv${f.level}`}
+                        tipOpen={tipId === f.id}
+                        tipPlacement={i < 8 ? 'below' : 'above'}
+                        onPointerEnter={() => {
+                          if (!isCoarsePointer()) setTipId(f.id)
+                        }}
+                        onClick={() => openTip(f.id)}
+                      />
+                    </FishShopCell>
+                  )
+                })}
+              </ul>
+            </div>
           </div>
 
           <button
