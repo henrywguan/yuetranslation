@@ -1907,6 +1907,16 @@ assert.doesNotMatch(
   const learnPageSrc = readFileSync(new URL('./LearnPage.tsx', import.meta.url), 'utf8')
   assert.match(learnPageSrc, /continueHarborLevelId/, 'bare /learn continues into a pier')
   assert.match(learnPageSrc, /hq-chart-overlay/, 'pier chart is an in-game overlay')
+  assert.match(
+    learnPageSrc,
+    /hq-chart-overlay[\s\S]*onClick=\{\(\) => setChartOpen\(false\)\}/,
+    'pier chart closes when tapping outside the sheet',
+  )
+  assert.match(
+    learnPageSrc,
+    /hq-chart-sheet[\s\S]*stopPropagation/,
+    'pier chart sheet clicks do not dismiss overlay',
+  )
   assert.match(learnPageSrc, /HarborSplash/, 'Learn mounts cinematic splash')
   assert.match(learnPageSrc, /splashOpen/, 'splash gates world pause until enter')
   assert.match(learnCss, /\.hq-chart-overlay\s*\{[^}]*z-index:\s*90/s, 'chart overlays above immersive play')

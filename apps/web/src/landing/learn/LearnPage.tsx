@@ -121,8 +121,18 @@ export function LearnPage() {
         <HarborSplash open={splashOpen} onEnter={enterHarbor} />
 
         {chartOpen ? (
-          <div className="hq-chart-overlay" role="dialog" aria-label="Harbor pier chart">
-            <div className="hq-chart-sheet">
+          <div
+            className="hq-chart-overlay"
+            role="presentation"
+            onClick={() => setChartOpen(false)}
+          >
+            <div
+              className="hq-chart-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Harbor pier chart"
+              onClick={(e) => e.stopPropagation()}
+            >
               <header className="hq-chart-head">
                 <p className="hq-chart-brand">
                   <span>JyutTranslate</span>
