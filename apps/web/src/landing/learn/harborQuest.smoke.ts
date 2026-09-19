@@ -9,6 +9,7 @@ import {
   levelCampaign,
   levelRealm,
   levelsForCampaign,
+  nextCampaignStartId,
   nextLevelId,
   openCantoneseLessonUrl,
   type HarborCampaignId,
@@ -190,8 +191,18 @@ function main() {
   assert.equal(levelRealm(levelById('life0-classroom')!), 'bamboo')
   assert.equal(levelRealm(levelById('life1-l1')!), 'bamboo')
   assert.equal(nextLevelId('life0-guess'), 'life0-classroom', 'Life0 next stays in campaign')
+<<<<<<< HEAD
   assert.equal(nextLevelId('life1-l1'), 'life1-l2', 'Life1 next stays in campaign')
   assert.equal(nextLevelId('life1-l4'), null, 'Life1 campaign ends at lesson 4')
+=======
+  assert.equal(nextLevelId('life0-intro'), null, 'Life0 closer has no in-campaign next')
+  assert.equal(nextCampaignStartId('life0-intro'), null, 'Life0 is last campaign — no next campaign start')
+  assert.equal(
+    nextCampaignStartId(levelsForCampaign('sounds').at(-1)!.id),
+    'life0-guess',
+    'Sounds finale offers Life0 first pier',
+  )
+>>>>>>> 6fa4da0 (Harbor Quest: fix campaign-end clear dead end after final pier.)
   const soundsLast = levelsForCampaign('sounds').at(-1)!.id
   assert.equal(nextLevelId(soundsLast), null, 'Sounds campaign ends at final pier')
   assert.match(
@@ -1132,6 +1143,8 @@ function main() {
     'immersive clear ghost buttons stay readable on dark',
   )
   assert.match(playSrc, /hq-clear hq-clear--immersive/, 'LevelClear mounts immersive clear shell')
+  assert.match(playSrc, /Keep sailing/, 'campaign-end clear offers keep sailing')
+  assert.match(playSrc, /nextCampaignStartId|continueHarborLevelId/, 'clear can sail next open pier')
   // sendChat must be declared before the cleared early return — otherwise React
   // crashes with fewer-hooks and the Next-gate clear paints a blank dark screen.
   {

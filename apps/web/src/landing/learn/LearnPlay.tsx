@@ -7,6 +7,7 @@ import {
   levelCampaign,
   levelRealm,
   levelsForCampaign,
+  nextCampaignStartId,
   nextLevelId,
   openCantoneseLessonUrl,
   type HarborCampaignId,
@@ -108,6 +109,7 @@ import {
 } from './harborWorld'
 import {
   HARBOR_COINS_PER_CORRECT,
+  continueHarborLevelId,
   isLevelCleared,
   isLevelUnlocked,
   buyHarborGear,
@@ -954,6 +956,13 @@ export function LearnSession({
         reward={clearReward}
         onExit={onExit}
         onOpenLevel={onOpenLevel}
+        onKeepSailing={() => {
+          setClearReward(null)
+          setCleared(false)
+          setFlash(null)
+          setLastOk(false)
+          setTalking(false)
+        }}
         onReplay={() => {
           setClearReward(null)
           setCleared(false)
@@ -1788,19 +1797,33 @@ function LevelClear({
   onExit,
   onOpenLevel,
   onReplay,
+  onKeepSailing,
 }: {
   level: HarborLevel
   reward: { xpGained: number; repeat: boolean; clearCount: number } | null
   onExit: () => void
   onOpenLevel: (id: string) => void
   onReplay: () => void
+  /** Dismiss the clear card and return to free sail on this pier. */
+  onKeepSailing: () => void
 }) {
   const next = nextLevelId(level.id)
+  const nextCampaign = !next ? nextCampaignStartId(level.id) : null
+  const continueId = continueHarborLevelId()
+  const sailElsewhere =
+    !next && continueId && continueId !== level.id ? continueId : null
+  const campaignDone = !next
   const base = missionBaseXp(level)
   const repeatXp = Math.floor(base * 0.5)
+  const campMeta = HARBOR_CAMPAIGNS.find((c) => c.id === levelCampaign(level))
+  const sailTarget = nextCampaign ?? sailElsewhere
+  const sailLevel = sailTarget ? levelById(sailTarget) : undefined
+
   return (
     <div className="hq-clear hq-clear--immersive">
-      <p className="hq-clear-kicker">{reward?.repeat ? 'Mission replayed' : 'Pier cleared'}</p>
+      <p className="hq-clear-kicker">
+        {reward?.repeat ? 'Mission replayed' : campaignDone ? 'Campaign pier complete' : 'Pier cleared'}
+      </p>
       <h2 className="hq-clear-title">{level.title.en}</h2>
       <p className="hq-clear-zh" lang="zh-HK">
         {level.title.zh}
@@ -1819,15 +1842,29 @@ function LevelClear({
         </p>
       ) : null}
       <p className="hq-clear-body">
-        Syllables logged. The ferry holds at the next lantern
-        {next ? ' — cast toward the following pier.' : ' — the chart is complete.'}
+        {next
+          ? 'Syllables logged. The ferry holds at the next lantern — cast toward the following pier.'
+          : sailTarget && sailLevel
+            ? `Syllables logged. ${campMeta?.title.en ?? 'This campaign'} is charted — sail ${sailLevel.title.en}, keep exploring, or open the pier chart.`
+            : `Syllables logged. ${campMeta?.title.en ?? 'This campaign'} is charted — keep sailing the harbor or open the pier chart.`}
       </p>
       <div className="hq-clear-actions">
         {next ? (
           <button type="button" className="hq-btn hq-btn--primary" onClick={() => onOpenLevel(next)}>
             Next pier →
           </button>
+        ) : sailTarget && sailLevel ? (
+          <button
+            type="button"
+            className="hq-btn hq-btn--primary"
+            onClick={() => onOpenLevel(sailTarget)}
+          >
+            Sail {sailLevel.title.en} →
+          </button>
         ) : null}
+        <button type="button" className="hq-btn hq-btn--ghost" onClick={onKeepSailing}>
+          Keep sailing
+        </button>
         <button type="button" className="hq-btn hq-btn--ghost" onClick={onReplay}>
           Replay · {repeatXp} XP
         </button>

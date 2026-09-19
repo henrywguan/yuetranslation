@@ -980,3 +980,17 @@ export function nextLevelId(id: string): string | null {
   if (i < 0 || i >= list.length - 1) return null
   return list[i + 1]!.id
 }
+
+/**
+ * First pier of the next campaign in `HARBOR_CAMPAIGNS` order, if any.
+ * Life0 is currently last — returns null after Unit 0 closer.
+ */
+export function nextCampaignStartId(id: string): string | null {
+  const cur = levelById(id)
+  if (!cur) return null
+  const camp = levelCampaign(cur)
+  const i = HARBOR_CAMPAIGNS.findIndex((c) => c.id === camp)
+  if (i < 0 || i >= HARBOR_CAMPAIGNS.length - 1) return null
+  const nextCamp = HARBOR_CAMPAIGNS[i + 1]!
+  return levelsForCampaign(nextCamp.id)[0]?.id ?? null
+}
