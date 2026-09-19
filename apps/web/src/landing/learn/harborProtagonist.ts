@@ -482,8 +482,7 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(socket('hip_l', -0.22, pelvisY + 0.02, 0.08))
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
-  // Canoe plants the authored Scout GLB. Land standing stays procedural so
-  // limb walk / idle can run (Scout GLBs are static T-pose, no skin/clips).
+  // Canoe + land plant the authored anime Scout GLB (land walk = sway/bob).
   // Barber / create / profile pass skipScoutGlb so previews stay procedural.
   g.userData.usesScoutGlb = false
   g.userData.skipScoutGlb = Boolean(opts.skipScoutGlb)

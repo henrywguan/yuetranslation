@@ -20,7 +20,7 @@ Seed Audio lines: `vo-scout-welcome.wav` (“Welcome to Harbor Quest.”), `vo-o
 
 ## 3D
 
-- `scout-female.glb` / `scout-male.glb` — Meshy v7 image→3D from A-pose sheets. Standing + canoe Scout attach via `harborProtagonistGlb.ts` (Lambert + cel; canoe plant hides below-deck verts).
+- `scout-female.glb` / `scout-male.glb` — Meshy v7 image→3D from A-pose sheets (Higgsfield anime). Land + canoe Scout attach via `harborProtagonistGlb.ts` (Lambert + cel; land walk = sway/bob; canoe plant sinks seat). Concept sheets / keyart live under `docs/harbor-quest/assets/` only (not shipped in public).
 - **`v2/`** — Harbor Quest **mesh-only** world kit (canoe, pier, house, lantern, stall, save-shack, outfitter, willow, bridge). Loaded by `harborV2Assets.ts`. Procedural `hqBox` craft is **v1 archive**. See [`docs/harbor-quest/V2-MESH-WORLD.md`](../../../../docs/harbor-quest/V2-MESH-WORLD.md).
 
 Original Harbor IP — never Jagex meshes.

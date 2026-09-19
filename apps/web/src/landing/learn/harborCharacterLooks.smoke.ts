@@ -3,6 +3,7 @@
  */
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import * as THREE from 'three'
 import {
   HARBOR_DEFAULT_APPEARANCE,
   HARBOR_EYE_STYLES,
@@ -185,6 +186,20 @@ const hipsY1 =
 assert.equal(harborProtagonistClipName('walk'), HARBOR_PROTAGONIST_CLIPS.walk)
 assert.ok(walked.t > 0)
 assert.ok(Math.abs(hipsY1 - hipsY0) < 1e-6, 'walk keeps hips planted (no hop bounce)')
+
+// Anime Scout GLB walk: sway/bob the mesh child, keep root planted.
+{
+  const root = new THREE.Group()
+  const glb = new THREE.Group()
+  glb.name = 'scout-glb'
+  glb.userData.scoutGlb = true
+  glb.position.y = 0
+  root.add(glb)
+  let st = tickHarborProtagonistAnim(root, { mode: 'walk', t: 0 }, 0.08)
+  st = tickHarborProtagonistAnim(root, st, 0.08)
+  assert.ok(Math.abs(glb.rotation.z) > 1e-4 || Math.abs(glb.position.y) > 1e-4, 'GLB walk sways or bobs')
+  assert.equal(root.position.y, 0, 'GLB walk keeps protagonist root planted')
+}
 
 const codex = harborGearCodexStats()
 assert.ok(codex.uniqueMeshes > 20, 'v1 raises unique clothing mesh count')

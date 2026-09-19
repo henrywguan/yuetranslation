@@ -1,6 +1,7 @@
 /**
  * Harbor Quest · protagonist locomotion (standard MMO walk / idle / sit).
- * Procedural limb swings — grounded feet, no root hop.
+ * Procedural limb swings when dress-up is visible; anime Scout GLB gets
+ * grounded sway / bob (single-mesh, no skin clips yet).
  * Clip names reserved for future CC0 KayKit retarget.
  */
 import * as THREE from 'three'
@@ -62,9 +63,61 @@ function dampRotX(o: THREE.Object3D | null, dt: number, rate = 8): void {
   o.rotation.x *= Math.max(0, 1 - dt * rate)
 }
 
+/** Capture plant pose once so walk/idle bob never drifts the canoe sink. */
+function ensureScoutGlbAnimBase(glb: THREE.Object3D): void {
+  if (glb.userData.scoutGlbAnimBaseReady) return
+  glb.userData.scoutGlbAnimBaseY = glb.position.y
+  glb.userData.scoutGlbAnimBaseRotX = glb.rotation.x
+  glb.userData.scoutGlbAnimBaseRotZ = glb.rotation.z
+  glb.userData.scoutGlbAnimBaseReady = true
+}
+
+/**
+ * Single-mesh anime Scout: stride sway + light bob without leaving the ground.
+ * Root stay planted; only the `scout-glb` child moves.
+ */
+function tickScoutGlbLocomotion(
+  root: THREE.Object3D,
+  mode: HarborProtagonistAnimMode,
+  t: number,
+  dt: number,
+  amp: number,
+): void {
+  const glb = findNamed(root, 'scout-glb')
+  if (!glb || !glb.visible) return
+  ensureScoutGlbAnimBase(glb)
+  const baseY = typeof glb.userData.scoutGlbAnimBaseY === 'number' ? glb.userData.scoutGlbAnimBaseY : 0
+  const baseRX =
+    typeof glb.userData.scoutGlbAnimBaseRotX === 'number' ? glb.userData.scoutGlbAnimBaseRotX : 0
+  const baseRZ =
+    typeof glb.userData.scoutGlbAnimBaseRotZ === 'number' ? glb.userData.scoutGlbAnimBaseRotZ : 0
+
+  if (mode === 'walk') {
+    const phase = t * HARBOR_WALK_CADENCE
+    const sway = Math.sin(phase) * 0.07 * amp
+    const lean = Math.sin(phase * 2) * 0.035 * amp
+    const bob = Math.abs(Math.sin(phase)) * 0.028 * amp
+    glb.rotation.z = baseRZ + sway
+    glb.rotation.x = baseRX + lean
+    glb.position.y = baseY + bob
+  } else if (mode === 'idle') {
+    const breath = Math.sin(t * 2.0) * 0.012 * amp
+    glb.position.y = baseY + breath
+    glb.rotation.x = baseRX + breath * 0.4
+    glb.rotation.z = baseRZ + (glb.rotation.z - baseRZ) * Math.max(0, 1 - dt * 8)
+  } else {
+    // sit — settle toward plant pose
+    const ease = Math.max(0, 1 - dt * 6)
+    glb.position.y = baseY + (glb.position.y - baseY) * ease
+    glb.rotation.x = baseRX + (glb.rotation.x - baseRX) * ease
+    glb.rotation.z = baseRZ + (glb.rotation.z - baseRZ) * ease
+  }
+}
+
 /**
  * Tick idle / walk / sit on a standing Scout.
  * Walk: alternating leg + arm counter-swing with **feet planted** (no root / hip hop).
+ * When the anime Scout GLB is showing, also sway/bob that mesh.
  */
 export function tickHarborProtagonistAnim(
   root: THREE.Object3D,
@@ -92,6 +145,8 @@ export function tickHarborProtagonistAnim(
   if (hips) {
     hips.position.y = typeof root.userData.pelvisY === 'number' ? root.userData.pelvisY : 0.48
   }
+
+  tickScoutGlbLocomotion(root, state.mode, next.t, dt, amp)
 
   if (state.mode === 'walk') {
     const swing = Math.sin(next.t * HARBOR_WALK_CADENCE) * 0.38 * amp

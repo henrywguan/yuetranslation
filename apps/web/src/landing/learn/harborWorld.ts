@@ -5424,9 +5424,10 @@ export function createHarborWorld(
     distance += (distanceTarget - distance) * orbitLerp
 
     const footGy = travelMode === 'foot' ? groundYAt(footX, footZ) : 0
+    // Look target = player feet / boat — no Z bias (was pushing the scout off-center).
     let lookX = travelMode === 'foot' ? footX : boat.position.x
     let lookY = travelMode === 'foot' ? footGy + (sitting ? 0.95 : 1.15) : 0.75
-    let lookZ = (travelMode === 'foot' ? footZ : boat.position.z) + 1.2
+    let lookZ = travelMode === 'foot' ? footZ : boat.position.z
     // During a cast, bias the look-at toward the splash so rod + bobber stay in frame
     if (fishAnim.phase !== 'idle') {
       const blend = fishAnim.phase === 'cast' ? 0.72 : 0.55

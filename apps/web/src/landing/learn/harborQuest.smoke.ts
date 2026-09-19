@@ -1696,8 +1696,8 @@ assert.match(
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-  /HARBOR_SCOUT_GLB_LAND = false/,
-  'land standing stays dress-up until skinned GLBs',
+  /HARBOR_SCOUT_GLB_LAND = true/,
+  'land standing plants anime Scout GLB',
 )
 assert.match(
   readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
@@ -1721,8 +1721,18 @@ assert.doesNotMatch(
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /HARBOR_SCOUT_GLB_LAND = false/,
-    'land cast does not attach static T-pose Scout GLB',
+    /HARBOR_SCOUT_GLB_LAND = true/,
+    'land cast plants anime Scout GLB with sway walk',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+    /tickScoutGlbLocomotion|scout-glb/,
+    'Scout GLB walk uses sway/bob locomotion',
+  )
+  assert.match(
+    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+    /travelMode === 'foot' \? footZ : boat\.position\.z/,
+    'orbit look target is centered on the player (no Z bias)',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),

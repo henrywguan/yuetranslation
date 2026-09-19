@@ -55,7 +55,7 @@ assert.match(proSrc, /HARBOR_SCOUT_GLB_LAND/, 'standing Scout respects land GLB 
 
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /plantScoutGlbInCanoe/, 'canoe plant helper')
-assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = false/, 'land cast stays procedural until skinned GLBs')
+assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = true/, 'land cast plants anime Scout GLB')
 assert.match(glbSrc, /isScoutGlbSubtree|scoutGlbMesh/, 'procedural hide skips Scout GLB meshes')
 assert.match(glbSrc, /attachHarborCastGlb/, 'cast attach helper')
 assert.match(glbSrc, /isKeptCastProp/, 'NPC props survive procedural hide')
