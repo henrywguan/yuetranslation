@@ -35,7 +35,11 @@ import {
   HARBOR_FIGURE_HEAD_R,
   HARBOR_FIGURE_PROPORTIONS,
 } from './harborFigure'
-import { attachHarborScoutGlb, HARBOR_SCOUT_GLB_ENABLED } from './harborProtagonistGlb'
+import {
+  attachHarborScoutGlb,
+  HARBOR_SCOUT_GLB_ENABLED,
+  HARBOR_SCOUT_GLB_LAND,
+} from './harborProtagonistGlb'
 
 /** Stable id for smokes / future kitbash slots. */
 export const HARBOR_PROTAGONIST_ID = 'river-scout' as const
@@ -478,12 +482,15 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   g.add(socket('hip_l', -0.22, pelvisY + 0.02, 0.08))
   g.add(socket('back', 0, pelvisY + torsoH * 0.55, -depth * 0.55))
 
-  // Standing / canoe voyage attaches the authored character GLB (Lambert + cel).
+  // Canoe plants the authored Scout GLB. Land standing stays procedural so
+  // limb walk / idle can run (Scout GLBs are static T-pose, no skin/clips).
   // Barber / create / profile pass skipScoutGlb so previews stay procedural.
   g.userData.usesScoutGlb = false
   g.userData.skipScoutGlb = Boolean(opts.skipScoutGlb)
-  if (!opts.skipScoutGlb && HARBOR_SCOUT_GLB_ENABLED) {
-    void attachHarborScoutGlb(g, gender, { mode: pose === 'seated' ? 'canoe' : 'standing' })
+  const wantCanoeGlb = pose === 'seated'
+  const wantLandGlb = pose === 'standing' && HARBOR_SCOUT_GLB_LAND
+  if (!opts.skipScoutGlb && HARBOR_SCOUT_GLB_ENABLED && (wantCanoeGlb || wantLandGlb)) {
+    void attachHarborScoutGlb(g, gender, { mode: wantCanoeGlb ? 'canoe' : 'standing' })
   }
 
   return g

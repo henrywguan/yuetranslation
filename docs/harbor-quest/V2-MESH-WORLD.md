@@ -21,7 +21,7 @@
 | Module | Role |
 |---|---|
 | `harborV2Assets.ts` | Manifest + preload + instance helpers |
-| `harborProtagonistGlb.ts` | Scout GLBs (standing + canoe plant) |
+| `harborProtagonistGlb.ts` | Scout GLBs (canoe plant; land gated off until skinned) |
 | `harborGlbAssets.ts` | Generic GLB load + Lambert/cel convert |
 | `harborWorld.ts` | Prefer V2 instances for canoe / pier / village / landmarks / trees / bridges |
 
@@ -39,9 +39,9 @@
 | `willow` | `v2/willow.glb` | Riverside willow |
 | `bridge-arch` | `v2/bridge-arch.glb` | Stone arch bridge |
 
-First-camera wave: pier NPCs + landmark hosts attach Scout GLBs (`attachHarborCastGlb`). Bank / Arena / Barber reuse house + Save shells with palette tints. Banks and dirt lanes swap in `v2/tex-grass.png` + `v2/tex-dirt.png`.
+First-camera wave: pier NPCs + landmark hosts keep the **procedural anime dress-up** cast (role hair, props, robe palettes) so land walk / idle can run. Scout GLBs are static T-pose (no skin/clips) — `HARBOR_SCOUT_GLB_LAND = false`; canoe still plants `scout-*.glb`. Bank / Arena / Barber reuse house + Save shells with palette tints. Banks and dirt lanes swap in `v2/tex-grass.png` + `v2/tex-dirt.png`.
 
-Scout characters: `scout-female.glb` / `scout-male.glb` (standing + canoe plant + NPC cast).
+Scout characters: `scout-female.glb` / `scout-male.glb` (canoe plant; land cast waits on skinned + animated GLBs).
 
 ## Credit reality
 

@@ -1692,7 +1692,12 @@ assert.match(
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
   /HARBOR_SCOUT_GLB_ENABLED = true/,
-  'Scout standing mesh uses the authored character GLB',
+  'Scout GLB gate stays on for canoe plant',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /HARBOR_SCOUT_GLB_LAND = false/,
+  'land standing stays dress-up until skinned GLBs',
 )
 assert.match(
   readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
@@ -1712,7 +1717,12 @@ assert.doesNotMatch(
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
     /HARBOR_SCOUT_GLB_ENABLED = true/,
-    'Scout standing mesh uses the authored character GLB',
+    'Scout GLB gate stays on for canoe plant',
+  )
+  assert.match(
+    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+    /HARBOR_SCOUT_GLB_LAND = false/,
+    'land cast does not attach static T-pose Scout GLB',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
