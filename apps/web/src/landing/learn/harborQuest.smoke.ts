@@ -1758,6 +1758,21 @@ assert.match(
   'boat remotes sit on the Scout armature',
 )
 assert.match(
+  worldSrc,
+  /tickHarborProtagonistAnim\(scout,\s*\{\s*\.\.\.scoutAnim,\s*mode:\s*'sit'/,
+  'local canoe Scout ticks sit on the auto-rig',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /tickScoutSkeletonLocomotion\(glb,\s*'sit'/,
+  'canoe plant folds sit bones (no T-pose bind)',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /HARBOR_CANOE_GLB_SINK_Y/,
+  'canoe plant uses a shared deck sink',
+)
+assert.match(
   readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
   /attachHarborCastGlb/,
   'Guan customs + trimmer use Scout cast GLB',

@@ -34,7 +34,10 @@ import {
   mountHarborV2Asset,
   tintHarborV2Asset,
 } from './harborV2Assets'
-import { attachHarborCastGlb } from './harborProtagonistGlb'
+import {
+  attachHarborCastGlb,
+  HARBOR_CANOE_SCOUT_SEAT_Y,
+} from './harborProtagonistGlb'
 import {
   HARBOR_FIGURE_PROPORTIONS,
   harborFigureArm,
@@ -2738,7 +2741,7 @@ function canoe(
   g.add(buildBoatHull(boatId))
   const you = playerTraveler({ gender, appearance })
   you.name = 'river-scout'
-  you.position.set(0, 0.38, -0.05)
+  you.position.set(0, HARBOR_CANOE_SCOUT_SEAT_Y, -0.05)
   you.rotation.y = Math.PI
   g.add(you)
   const beam = boatId.includes('barge') || boatId.includes('imperial') ? 0.52 : 0.4
@@ -4808,7 +4811,7 @@ export function createHarborWorld(
   let footX = boatX
   let footZ = voyageZ
   let wantBoard = false
-  const scoutSeat = { x: 0, y: 0.38, z: -0.05 }
+  const scoutSeat = { x: 0, y: HARBOR_CANOE_SCOUT_SEAT_Y, z: -0.05 }
 
   const destMarker = clickMarker()
   scene.add(destMarker)
@@ -5255,6 +5258,11 @@ export function createHarborWorld(
       const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.04
       const sway = reduced || approaching || playerDirected ? 0 : Math.sin(waterPhase * 0.7) * 0.18
       boat.position.set(boatX + sway, 0.08 + bob, voyageZ)
+      // Fold Scout armature into a canoe sit — without this the GLB stays T-pose.
+      if (scout && fishAnim.phase === 'idle') {
+        scout.visible = true
+        scoutAnim = tickHarborProtagonistAnim(scout, { ...scoutAnim, mode: 'sit' }, dt, { reduced })
+      }
       // Landmark panels only when the sailor steered here and arrived —
       // never while auto-quest sailing past Save / Outfitter / Bank / etc.
       // Guan: return portal still uses the same arrival gate.
@@ -5271,6 +5279,11 @@ export function createHarborWorld(
         if (scoutSit) {
           scoutSit.position.x = footX
           scoutSit.position.z = footZ
+          if (fishAnim.phase === 'idle') {
+            scoutAnim = tickHarborProtagonistAnim(scoutSit, { ...scoutAnim, mode: 'sit' }, dt, {
+              reduced,
+            })
+          }
         }
         if (destMarker.visible) destMarker.visible = false
       } else {

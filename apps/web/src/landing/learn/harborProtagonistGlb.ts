@@ -12,7 +12,12 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 import type { HarborGender } from './harborAppearance'
 import { applyHarborCel } from './harborCelShader'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
-import { rigHarborScoutGlb } from './harborScoutRig'
+import { rigHarborScoutGlb, tickScoutSkeletonLocomotion } from './harborScoutRig'
+
+/** Scout group Y inside the canoe (matches local river-scout seat). */
+export const HARBOR_CANOE_SCOUT_SEAT_Y = 0.38
+/** Sink the standing-normalized GLB so folded sit hips rest on the deck. */
+export const HARBOR_CANOE_GLB_SINK_Y = -0.42
 
 export const HARBOR_SCOUT_GLB_SRC = {
   female: '/assets/harbor-quest/scout-female.glb',
@@ -286,19 +291,25 @@ export async function attachHarborCastGlb(
 }
 
 /**
- * Sink the standing Scout so the pelvis sits on the canoe seat.
+ * Sink the standing Scout so the pelvis sits on the canoe seat, then fold
+ * the auto-rig into a sit pose (bind is T-pose — without this the sailor
+ * stands through / above the hull with arms out).
  * Meshy Scout is a single mesh — do not hide by world AABB (that used to
  * vanish the sailor when the boat left the origin).
  */
 export function plantScoutGlbInCanoe(glb: THREE.Group): void {
-  // Idempotent — re-attach / wardrobe sync must not stack scale.
-  if (glb.userData.scoutGlbCanoe) return
-  glb.userData.scoutGlbCanoe = true
-  // Seat height relative to boat local origin (canoe places scout at y≈0.38).
-  glb.position.y = -0.55
-  glb.scale.multiplyScalar(0.92)
-  // Re-capture plant pose after canoe sink so walk/idle bob stays relative.
-  glb.userData.scoutGlbAnimBaseReady = false
+  // Idempotent plant — re-attach / wardrobe sync must not stack scale.
+  if (!glb.userData.scoutGlbCanoe) {
+    glb.userData.scoutGlbCanoe = true
+    // Seat height relative to boat local origin (canoe places scout at y≈0.38).
+    glb.position.y = HARBOR_CANOE_GLB_SINK_Y
+    glb.scale.multiplyScalar(0.92)
+    // Re-capture plant pose after canoe sink so walk/idle bob stays relative.
+    glb.userData.scoutGlbAnimBaseReady = false
+  }
+  // Always refresh sit bones (idempotent plant used to leave a frozen T-pose).
+  if (!glb.userData.scoutRigged) rigHarborScoutGlb(glb)
+  tickScoutSkeletonLocomotion(glb, 'sit', 0, 1 / 60, 1, 7.2)
 }
 
 /** True when `o` is the Scout GLB root or any mesh under it. */
