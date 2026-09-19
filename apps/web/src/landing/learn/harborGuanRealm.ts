@@ -32,13 +32,13 @@ import {
   hqPondTexture,
   hqPost,
   hqRock,
-  hqSnap,
   hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
   hqWoodTexture,
   hqWindow,
 } from './harborCraft'
+import { hqGrassBlade, hqGrassTuft, hqTallGrassClump } from './harborGrass'
 import {
   harborFigureEars,
   harborFigureFace,
@@ -557,7 +557,7 @@ function pineapplePlant(rng: () => number): THREE.Group {
   return g
 }
 
-/** Pointed low-poly blade — single tapered cone (cheap Habitat turf read). */
+/** Pointed low-poly blade — shared cone via harborGrass (cheap Habitat turf). */
 function grassBlade(
   h: number,
   color: number,
@@ -566,39 +566,13 @@ function grassBlade(
   leanX = 0,
   leanZ = 0,
 ): THREE.Mesh {
-  const w = 0.035 + h * 0.03
-  const blade = new THREE.Mesh(new THREE.ConeGeometry(w, h, 3), hqMat(color))
-  blade.position.set(hqSnap(x), hqSnap(h / 2), hqSnap(z))
-  blade.rotation.z = leanX
-  blade.rotation.x = leanZ
-  return blade
+  return hqGrassBlade(h, color, x, z, leanX, leanZ)
 }
 
 /** Dense RS-style grass tuft — bright blades over mottled turf, readable at foot level. */
 function grassTuft(rng: () => number): THREE.Group {
-  const g = new THREE.Group()
+  const g = hqGrassTuft(rng)
   g.name = 'guan-grass-tuft'
-  // Lean blade count — look stays fuzzy; GPU stays calm
-  const n = 3 + Math.floor(rng() * 2)
-  for (let i = 0; i < n; i++) {
-    const h = 0.22 + rng() * 0.28
-    const lite = i % 3 !== 0
-    const color = lite
-      ? GUAN_TROPICAL_LOOK.grassBlade
-      : i % 2
-        ? GUAN_TROPICAL_LOOK.grassLite
-        : GUAN_TROPICAL_LOOK.grassDeep
-    g.add(
-      grassBlade(
-        h,
-        color,
-        (rng() - 0.5) * 0.2,
-        (rng() - 0.5) * 0.2,
-        (rng() - 0.5) * 0.35,
-        (rng() - 0.5) * 0.25,
-      ),
-    )
-  }
   return g
 }
 
@@ -607,37 +581,8 @@ function grassTuft(rng: () => number): THREE.Group {
  * Used in meadows / beside dirt patches (original craft, not Jagex meshes).
  */
 function tallGrassClump(rng: () => number): THREE.Group {
-  const g = new THREE.Group()
+  const g = hqTallGrassClump(rng)
   g.name = 'guan-tall-grass'
-  const n = 4 + Math.floor(rng() * 3)
-  for (let i = 0; i < n; i++) {
-    const h = 0.34 + rng() * 0.38
-    if (i === 0) {
-      const blade = hqBox(
-        0.05 + rng() * 0.02,
-        h,
-        0.018,
-        GUAN_TROPICAL_LOOK.grassDeep,
-        (rng() - 0.5) * 0.22,
-        h / 2,
-        (rng() - 0.5) * 0.22,
-      )
-      blade.rotation.z = (rng() - 0.5) * 0.4
-      blade.rotation.x = (rng() - 0.5) * 0.22
-      g.add(blade)
-    } else {
-      g.add(
-        grassBlade(
-          h,
-          i % 2 ? GUAN_TROPICAL_LOOK.grassBlade : GUAN_TROPICAL_LOOK.grassLite,
-          (rng() - 0.5) * 0.26,
-          (rng() - 0.5) * 0.26,
-          (rng() - 0.5) * 0.45,
-          (rng() - 0.5) * 0.3,
-        ),
-      )
-    }
-  }
   return g
 }
 

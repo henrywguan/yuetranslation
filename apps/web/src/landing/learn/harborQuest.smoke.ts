@@ -65,6 +65,7 @@ import {
   HARBOR_DIALOGUE_BUBBLE,
   HARBOR_SCENIC_TREES,
   HARBOR_SCENIC_SHRUBS,
+  HARBOR_NATURE_GRASS,
   HARBOR_BAMBOO_FLORA,
   HARBOR_BAMBOO_FAUNA,
   HARBOR_VILLAGE_HOMES,
@@ -325,6 +326,9 @@ function main() {
   assert.ok(HARBOR_SCENIC_SHRUBS.includes('hawthorn-berry'), 'hawthorn berry bushes')
   assert.ok(HARBOR_SCENIC_SHRUBS.includes('chinese-fringe-flower'), 'Chinese fringe flower shrubs')
   assert.equal(HARBOR_SCENIC_SHRUBS.length, 3, 'scenic shrub kit')
+  assert.ok(HARBOR_NATURE_GRASS.includes('grass-tuft'), 'river grass tufts')
+  assert.ok(HARBOR_NATURE_GRASS.includes('habitat-tall-grass'), 'Habitat tall-grass soil beds')
+  assert.equal(HARBOR_NATURE_GRASS.length, 2, 'nature grass kit')
   assert.ok(HARBOR_BAMBOO_FLORA.includes('bamboo-clump'), 'bamboo realm flora')
   assert.ok(HARBOR_BAMBOO_FAUNA.includes('magpie'), 'bamboo realm fauna')
   assert.ok(HARBOR_VILLAGE_HOMES.includes('jiangnan'), 'jiangnan homes')
@@ -480,7 +484,11 @@ function main() {
   assert.match(guanSrc, /customsOfficer|GUAN_CUSTOMS_OFFICER_NAME|guan-portal-veil/, 'Customs officer + glowing portal')
   assert.match(guanSrc, /stampGuanArmoredPatrol/, 'Guan stamps armored patrol brothers')
   assert.doesNotMatch(guanSrc, /Ahrim|Dharok|Guthan|Karil|Torag|Verac|Barrows/i, 'no Jagex Barrows names in Guan')
-  assert.match(guanSrc, /ConeGeometry/, 'tapered grass blades')
+  assert.match(guanSrc, /hqGrassBlade|hqGrassTuft/, 'shared tapered grass blades')
+  const grassSrc = readFileSync(new URL('./harborGrass.ts', import.meta.url), 'utf8')
+  assert.match(grassSrc, /ConeGeometry|BLADE_GEO/, 'shared grass blade cone')
+  assert.match(grassSrc, /hqHabitatTallGrass|herb-stalk|habitat-tall-grass/, 'Habitat tall-grass soil bed craft')
+  assert.match(grassSrc, /sharedGrassGeo/, 'shared geo marker for safe dispose')
   assert.match(guanSrc, /stampShoreDetail/, 'wet sand shore lip')
   assert.doesNotMatch(guanSrc, /stampShallowShelves|guan-shallow-shelf/, 'no shallow water shelves')
   assert.doesNotMatch(guanSrc, /guan-shore-foam/, 'no shore foam meshes')
@@ -625,6 +633,9 @@ function main() {
   assert.ok(HARBOR_WEATHER_LOOK.night.stars, 'night look enables shooting stars')
   assert.match(worldSrc, /pickHarborWeather/, 'session weather is randomized')
   assert.match(worldSrc, /function rainField/, 'rain particle field')
+  assert.match(worldSrc, /const count = 400/, 'lean rain particle budget')
+  assert.match(worldSrc, /hqGrassTuft|hqHabitatTallGrass/, 'river plants Habitat-style grass')
+  assert.match(worldSrc, /sharedGrassGeo/, 'chunk dispose skips shared grass geo')
   assert.match(worldSrc, /userData\.shooting/, 'shooting-star streaks')
   assert.doesNotMatch(worldSrc, /FogExp2\([^)]*0\.022/, 'old dense dark fog removed')
   assert.match(worldSrc, /PerspectiveCamera\(48,\s*1,\s*0\.1,\s*180\)/, 'camera far matches fog veil')
@@ -1651,6 +1662,7 @@ function main() {
   assert.match(worldSrc2, /setPixelRatio\([^)]*1\.25\)/, 'DPR capped at 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')
   assert.match(worldSrc2, /animNodes/, 'fauna motion uses cached nodes')
+  assert.match(worldSrc2, /48 \* 48/, 'far fauna/petals skip anim work')
   assert.match(worldSrc2, /setPaused/, 'world can pause under overlays')
   assert.match(worldSrc2, /document\.hidden/, 'tab-hidden skips sim work')
   assert.match(

@@ -29,6 +29,12 @@ import {
   hqWindow,
 } from './harborCraft'
 import {
+  HARBOR_NATURE_GRASS,
+  hqGrassTuft,
+  hqHabitatTallGrass,
+  hqTallGrassClump,
+} from './harborGrass'
+import {
   HARBOR_V2_MESH_ONLY,
   applyHarborV2Map,
   mountHarborV2Asset,
@@ -2618,6 +2624,10 @@ export const HARBOR_SCENIC_SHRUBS = [
 ] as const
 export type HarborScenicShrub = (typeof HARBOR_SCENIC_SHRUBS)[number]
 
+/** Habitat-style grass kinds along river banks / meadows (re-export). */
+export { HARBOR_NATURE_GRASS }
+export type { HarborNatureGrass } from './harborGrass'
+
 /** Distant Wulingyuan-style karst backdrop is present in the voyage. */
 export const HARBOR_WULINGYUAN = true as const
 
@@ -3084,7 +3094,8 @@ function xiangyunSky(seed: number, look: WeatherLook) {
 /** Falling rain streaks parented near the canoe. */
 function rainField(seed: number) {
   const rng = mulberry32(seed)
-  const count = 700
+  // Lean particle budget — still reads as rain, less CPU on position rewrite
+  const count = 400
   const positions = new Float32Array(count * 3)
   for (let i = 0; i < count; i++) {
     positions[i * 3] = (rng() - 0.5) * 36
@@ -3104,7 +3115,7 @@ function rainField(seed: number) {
     }),
   )
   pts.userData.rain = true
-  pts.frustumCulled = false
+  pts.frustumCulled = true
   return pts
 }
 
@@ -3528,6 +3539,11 @@ function populateChunk(
     place(group, rng, 2, () => ginkgo(rng), BANK + 0.5, BANK + 4.5, z0)
     place(group, rng, 5, () => rock(rng), BANK - 0.5, BANK + 3, z0)
     place(group, rng, 5, () => flower(rng), BANK - 0.3, BANK + 2.5, z0)
+    // Habitat-style grass underfoot along banks + inland meadow beds
+    place(group, rng, 10, () => hqGrassTuft(rng), BANK - 0.4, BANK + 6, z0)
+    place(group, rng, 6, () => hqGrassTuft(rng), BANK + 8, BANK + 18, z0)
+    place(group, rng, 3, () => hqHabitatTallGrass(rng), BANK + 1.5, BANK + 8, z0)
+    place(group, rng, 2, () => hqTallGrassClump(rng), BANK + 0.5, BANK + 4, z0)
     place(group, rng, 2, () => hawthornBush(rng), BANK + 0.5, BANK + 4.5, z0)
     place(group, rng, 2, () => chineseFringeFlower(rng), BANK + 1, BANK + 5.5, z0)
     if (rng() > 0.55) place(group, rng, 1, () => chinaTeaCupRose(rng), BANK + 0.2, BANK + 2.8, z0)
@@ -3549,6 +3565,9 @@ function populateChunk(
     place(group, rng, 1, () => ginkgo(rng), BANK + 1.5, BANK + 4, z0)
     place(group, rng, 3, () => lantern(weather), BANK - 0.2, BANK + 1.4, z0)
     place(group, rng, 4, () => flower(rng), BANK - 0.4, BANK + 2, z0)
+    // Yard grass + a few Habitat tall-grass soil beds
+    place(group, rng, 8, () => hqGrassTuft(rng), BANK - 0.4, BANK + 5, z0)
+    place(group, rng, 2, () => hqHabitatTallGrass(rng), BANK + 1, BANK + 6, z0)
     // Village garden shrubs — tea roses, hawthorn, fringe flower
     place(group, rng, 3, () => chinaTeaCupRose(rng), BANK - 0.3, BANK + 2.2, z0)
     place(group, rng, 2, () => hawthornBush(rng), BANK + 0.8, BANK + 3.5, z0)
@@ -3577,6 +3596,9 @@ function populateChunk(
   }
   if (biome === 'reeds') {
     place(group, rng, 12, () => reed(rng), RIVER + 0.4, BANK + 1.5, z0)
+    place(group, rng, 8, () => hqGrassTuft(rng), RIVER + 0.8, BANK + 3, z0)
+    place(group, rng, 4, () => hqTallGrassClump(rng), BANK - 0.2, BANK + 2.5, z0)
+    place(group, rng, 2, () => hqHabitatTallGrass(rng), BANK + 0.5, BANK + 4, z0)
     place(group, rng, 3, () => rock(rng), BANK, BANK + 2, z0)
     place(group, rng, 3, () => poplar(rng), BANK + 0.5, BANK + 3.5, z0)
     place(group, rng, 1, () => tree(rng, 0x4a7a40), BANK + 1, BANK + 4, z0)
@@ -4627,7 +4649,8 @@ export function createHarborWorld(
       if (!need.has(idx)) {
         world.remove(g)
         g.traverse((o) => {
-          if (o instanceof THREE.Mesh) o.geometry.dispose()
+          // Skip shared grass cone — disposing it breaks every other tuft
+          if (o instanceof THREE.Mesh && !o.userData.sharedGrassGeo) o.geometry.dispose()
         })
         chunkGroups.delete(idx)
         dirty = true
@@ -5644,6 +5667,17 @@ export function createHarborWorld(
     }
 
     for (const o of animNodes) {
+      // Skip far fauna / petals — keeps latency calm without killing near motion
+      const dx = o.position.x - camera.position.x
+      const dz = o.position.z - camera.position.z
+      const farAnim =
+        !o.userData.speechBubble &&
+        !o.userData.specialHostGlow &&
+        !o.userData.fishIconFloat &&
+        !o.userData.fishIconSpin &&
+        !o.userData.fishSpotBob &&
+        dx * dx + dz * dz > 48 * 48
+      if (farAnim) continue
       // Speech bubbles face the camera and gently bob (OSRS Talk cue)
       if (o.userData.speechBubble) {
         o.lookAt(camera.position)
@@ -6039,7 +6073,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       canvas.removeEventListener('wheel', onWheel)
       for (const g of chunkGroups.values()) {
         g.traverse((o) => {
-          if (o instanceof THREE.Mesh) o.geometry.dispose()
+          if (o instanceof THREE.Mesh && !o.userData.sharedGrassGeo) o.geometry.dispose()
         })
       }
       chunkGroups.clear()
