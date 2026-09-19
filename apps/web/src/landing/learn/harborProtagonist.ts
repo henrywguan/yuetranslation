@@ -24,6 +24,7 @@ import {
   harborFigureArm,
   harborFigureEars,
   harborFigureFace,
+  harborFigureForeheadBangs,
   harborFigureHead,
   harborFigureHeadExtents,
   harborFigureLegSeated,
@@ -96,9 +97,10 @@ function socket(name: HarborProtagonistSocket, x: number, y: number, z: number) 
 }
 
 /**
- * Anime hair volumes — soft shells + bangs sitting outside skull extents.
- * Silhouette categories (bald / curtains / ridge / pony…) stay distinct at
- * dress-up distance — original Harbor meshes.
+ * Anime hair volumes — crown sits on the back of the skull; bangs sit
+ * above the eyes (bangZ / harborFigureHeadExtents). Full scalp cover on
+ * traveler bun — never a friar bald patch. Silhouette categories stay
+ * distinct at dress-up distance — original Harbor meshes.
  */
 function addHair(
   g: THREE.Group,
@@ -112,18 +114,25 @@ function addHair(
   hairRoot.userData.harborHair = true
 
   const { x: sx, y: sy, z: sz } = harborFigureHeadExtents()
-  const crownY = headY + sy * 0.55
-  const bangZ = sz + 0.04
-  const backZ = -(sz + 0.035)
+  const crownY = headY + sy * 0.62
+  const bangZ = sz + 0.03
+  const backZ = -(sz + 0.04)
 
-  const addCrownShell = (scaleY = 0.82) => {
+  const addCrownShell = (scaleY = 0.7) => {
     const cap = part(
-      new THREE.Mesh(new THREE.SphereGeometry(HARBOR_FIGURE_HEAD_R * 1.18, 20, 16), hairMat),
+      new THREE.Mesh(new THREE.SphereGeometry(HARBOR_FIGURE_HEAD_R * 1.12, 20, 16), hairMat),
       'hair',
     )
-    cap.position.set(0, headY + sy * 0.35, -0.012)
-    cap.scale.set(1.12, scaleY, 1.1)
+    // Pushed up and back so the painted face stays open.
+    cap.position.set(0, headY + sy * 0.48, -0.05)
+    cap.scale.set(1.05, scaleY, 0.95)
     hairRoot.add(cap)
+  }
+
+  const addBangs = (clumps = 3) => {
+    const bangs = harborFigureForeheadBangs(hairMat, headY, { clumps })
+    tagTree(bangs, 'hair')
+    hairRoot.add(bangs)
   }
 
   if (style === 'bald') {
@@ -132,134 +141,105 @@ function addHair(
     ring.rotation.x = Math.PI / 2
     hairRoot.add(ring)
   } else if (style === 'short') {
-    addCrownShell(0.78)
-    const fringe = part(new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), hairMat), 'hair')
-    fringe.scale.set(1.15, 0.35, 0.4)
-    fringe.position.set(0, headY + 0.04, bangZ)
-    hairRoot.add(fringe)
+    addCrownShell(0.66)
+    addBangs(3)
   } else if (style === 'bun') {
     const scalp = part(
-      new THREE.Mesh(new THREE.SphereGeometry(HARBOR_FIGURE_HEAD_R * 1.2, 20, 16), hairMat),
+      new THREE.Mesh(new THREE.SphereGeometry(HARBOR_FIGURE_HEAD_R * 1.14, 20, 16), hairMat),
       'hair',
     )
-    scalp.scale.set(1.14, 0.9, 1.1)
-    scalp.position.set(0, headY + sy * 0.3, -0.015)
+    scalp.scale.set(1.08, 0.72, 1.0)
+    scalp.position.set(0, headY + sy * 0.42, -0.048)
     hairRoot.add(scalp)
     for (const side of [-1, 1] as const) {
-      const sideHair = part(new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), hairMat), 'hair')
-      sideHair.scale.set(0.7, 1.4, 0.9)
-      sideHair.position.set(side * (sx + 0.02), headY - 0.01, sz * 0.1)
+      const sideHair = part(new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.11, 4, 8), hairMat), 'hair')
+      sideHair.position.set(side * (sx + 0.018), headY + 0.01, sz * 0.05)
       hairRoot.add(sideHair)
     }
-    const fringe = part(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), hairMat), 'hair')
-    fringe.scale.set(1.2, 0.35, 0.4)
-    fringe.position.set(0, headY + 0.045, bangZ)
-    hairRoot.add(fringe)
+    addBangs(3)
     const bun = part(new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), hairMat), 'hair')
-    bun.position.set(0, crownY + 0.1, -0.04)
+    bun.position.set(0, crownY + 0.1, -0.05)
     hairRoot.add(bun)
   } else if (style === 'topknot') {
-    addCrownShell(0.8)
+    addCrownShell(0.68)
     const knot = part(new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), hairMat), 'hair')
-    knot.position.set(0, crownY + 0.08, 0)
+    knot.position.set(0, crownY + 0.08, -0.02)
     hairRoot.add(knot)
     const pin = part(new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.1, 8), hairMat), 'hair')
     pin.rotation.z = Math.PI / 2
-    pin.position.set(0, crownY + 0.12, 0)
+    pin.position.set(0, crownY + 0.12, -0.02)
     hairRoot.add(pin)
   } else if (style === 'long') {
-    addCrownShell(0.82)
+    addCrownShell(0.7)
     const fall = part(new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), hairMat), 'hair')
     fall.scale.set(0.95, 1.8, 0.55)
     fall.position.set(0, headY - 0.06, backZ)
     hairRoot.add(fall)
     if (gender === 'female') {
       for (const side of [-1, 1] as const) {
-        const curtain = part(new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), hairMat), 'hair')
-        curtain.scale.set(0.65, 2.2, 0.7)
-        curtain.position.set(side * (sx + 0.03), headY - 0.04, 0.02)
+        const curtain = part(new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.16, 4, 8), hairMat), 'hair')
+        curtain.position.set(side * (sx + 0.028), headY - 0.02, 0.01)
         hairRoot.add(curtain)
       }
     }
-    const bang = part(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), hairMat), 'hair')
-    bang.scale.set(1.15, 0.4, 0.4)
-    bang.position.set(0, headY + 0.05, bangZ)
-    hairRoot.add(bang)
+    addBangs(4)
   } else if (style === 'fringe') {
-    addCrownShell(0.82)
-    const fringe = part(new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), hairMat), 'hair')
-    fringe.scale.set(1.25, 0.45, 0.4)
-    fringe.position.set(0, headY + 0.04, bangZ)
-    hairRoot.add(fringe)
+    addCrownShell(0.68)
+    addBangs(5)
     for (const side of [-1, 1] as const) {
-      const temple = part(new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), hairMat), 'hair')
-      temple.scale.set(0.7, 1.2, 0.8)
-      temple.position.set(side * (sx + 0.025), headY + 0.015, sz * 0.3)
+      const temple = part(new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.08, 4, 8), hairMat), 'hair')
+      temple.position.set(side * (sx + 0.02), headY + 0.02, sz * 0.15)
       hairRoot.add(temple)
     }
     const back = part(new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), hairMat), 'hair')
-    back.scale.set(1, 1.1, 0.55)
-    back.position.set(0, headY - 0.01, backZ)
+    back.scale.set(1, 1.05, 0.5)
+    back.position.set(0, headY + 0.02, backZ)
     hairRoot.add(back)
   } else if (style === 'curtains') {
-    addCrownShell(0.78)
+    addCrownShell(0.66)
     for (const side of [-1, 1] as const) {
-      const fall = part(new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), hairMat), 'hair')
-      fall.scale.set(0.7, 2.4, 0.75)
-      fall.position.set(side * (sx + 0.035), headY - 0.05, sz * 0.2)
+      const fall = part(new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.18, 4, 8), hairMat), 'hair')
+      fall.position.set(side * (sx + 0.032), headY - 0.03, sz * 0.08)
       hairRoot.add(fall)
     }
-    const midBang = part(new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), hairMat), 'hair')
-    midBang.scale.set(1.1, 0.4, 0.4)
-    midBang.position.set(0, headY + 0.05, bangZ)
-    hairRoot.add(midBang)
+    addBangs(2)
   } else if (style === 'ridge') {
     const crest = part(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), hairMat), 'hair')
-    crest.scale.set(0.45, 1.1, 1.4)
-    crest.position.set(0, crownY + 0.02, 0.02)
+    crest.scale.set(0.4, 1.05, 1.25)
+    crest.position.set(0, crownY + 0.02, -0.02)
     hairRoot.add(crest)
-    const tip = part(new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), hairMat), 'hair')
-    tip.position.set(0, crownY + 0.1, bangZ - 0.02)
+    const tip = part(new THREE.Mesh(new THREE.SphereGeometry(0.036, 10, 8), hairMat), 'hair')
+    tip.position.set(0, crownY + 0.1, bangZ - 0.04)
     hairRoot.add(tip)
   } else if (style === 'pony') {
-    addCrownShell(0.78)
-    const bang = part(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), hairMat), 'hair')
-    bang.scale.set(1.1, 0.35, 0.4)
-    bang.position.set(0, headY + 0.045, bangZ)
-    hairRoot.add(bang)
+    addCrownShell(0.66)
+    addBangs(3)
     const tie = part(new THREE.Mesh(new THREE.SphereGeometry(0.032, 10, 8), hairMat), 'hair')
-    tie.position.set(0, headY + sy * 0.15, backZ + 0.02)
+    tie.position.set(0, headY + sy * 0.2, backZ + 0.02)
     hairRoot.add(tie)
-    const tail = part(new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), hairMat), 'hair')
-    tail.scale.set(0.75, 2.4, 0.75)
-    tail.position.set(0, headY - 0.08, backZ - 0.01)
+    const tail = part(new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.2, 4, 8), hairMat), 'hair')
+    tail.position.set(0, headY - 0.06, backZ - 0.01)
     hairRoot.add(tail)
   } else if (style === 'twin') {
-    addCrownShell(0.78)
+    addCrownShell(0.66)
     for (const side of [-1, 1] as const) {
       const loop = part(new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), hairMat), 'hair')
-      loop.position.set(side * 0.1, crownY + 0.02, -0.01)
+      loop.position.set(side * 0.1, crownY + 0.02, -0.03)
       hairRoot.add(loop)
     }
-    const bang = part(new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), hairMat), 'hair')
-    bang.scale.set(1.2, 0.4, 0.4)
-    bang.position.set(0, headY + 0.04, bangZ)
-    hairRoot.add(bang)
+    addBangs(3)
   } else if (style === 'wave') {
     const mound = part(
-      new THREE.Mesh(new THREE.SphereGeometry(HARBOR_FIGURE_HEAD_R * 1.18, 18, 14), hairMat),
+      new THREE.Mesh(new THREE.SphereGeometry(HARBOR_FIGURE_HEAD_R * 1.12, 18, 14), hairMat),
       'hair',
     )
-    mound.scale.set(1.15, 0.88, 1.08)
-    mound.position.set(0, headY + sy * 0.38, -0.012)
+    mound.scale.set(1.06, 0.7, 0.95)
+    mound.position.set(0, headY + sy * 0.5, -0.05)
     hairRoot.add(mound)
-    const wave = part(new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), hairMat), 'hair')
-    wave.scale.set(1.2, 0.5, 0.45)
-    wave.position.set(0, headY + 0.03, bangZ)
-    hairRoot.add(wave)
-    const sideSweep = part(new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), hairMat), 'hair')
-    sideSweep.scale.set(0.8, 1.3, 0.7)
-    sideSweep.position.set(0.11, headY + 0.02, sz * 0.35)
+    addBangs(4)
+    const sideSweep = part(new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.1, 4, 8), hairMat), 'hair')
+    sideSweep.rotation.z = -0.35
+    sideSweep.position.set(0.1, headY + 0.03, sz * 0.2)
     hairRoot.add(sideSweep)
   }
 
@@ -273,6 +253,7 @@ function addEyes(g: THREE.Group, appearance: HarborAppearance, headY: number, sk
   const face = harborFigureFace(skin, headY, {
     iris,
     eyeStyle: appearance.eyeStyle,
+    faceStyle: appearance.faceStyle,
     showBrows: true,
     showMouth: appearance.faceStyle !== 'calm',
     // Soft anime blush always — Cheerful is stronger
