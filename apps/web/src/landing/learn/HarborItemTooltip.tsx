@@ -52,6 +52,53 @@ type Props = {
 
 type TipCoords = { left: number; top: number; placement: 'above' | 'below' }
 
+export type HarborTipAnchorBox = {
+  left: number
+  top: number
+  width: number
+  height: number
+  bottom: number
+}
+
+export type HarborTipSize = { width: number; height: number }
+
+export type HarborTipViewport = { width: number; height: number; pad?: number }
+
+const TIP_PAD = 12
+const TIP_ESTIMATE: HarborTipSize = { width: 176, height: 78 }
+const SHOP_TIP_ESTIMATE: HarborTipSize = { width: 216, height: 168 }
+
+/**
+ * Pin a portaled examine tip inside the viewport.
+ * `left`/`top` are the box's top-left (no translateX(-50%)).
+ */
+export function clampHarborTipBox(
+  anchor: HarborTipAnchorBox,
+  tip: HarborTipSize,
+  viewport: HarborTipViewport,
+  prefer: 'above' | 'below',
+): TipCoords {
+  const pad = viewport.pad ?? TIP_PAD
+  const vw = Math.max(1, viewport.width)
+  const vh = Math.max(1, viewport.height)
+  const tw = Math.min(Math.max(1, tip.width), Math.max(1, vw - pad * 2))
+  const th = Math.max(1, tip.height)
+
+  const spaceAbove = anchor.top - pad
+  const spaceBelow = vh - anchor.bottom - pad
+  let place = prefer
+  if (place === 'above' && spaceAbove < th && spaceBelow >= Math.min(th, spaceAbove)) place = 'below'
+  if (place === 'below' && spaceBelow < th && spaceAbove > spaceBelow) place = 'above'
+
+  const center = anchor.left + anchor.width / 2
+  const left = Math.min(Math.max(center - tw / 2, pad), vw - pad - tw)
+
+  let top = place === 'below' ? anchor.bottom + 6 : anchor.top - 6 - th
+  top = Math.min(Math.max(top, pad), Math.max(pad, vh - pad - th))
+
+  return { left, top, placement: place }
+}
+
 /**
  * OSRS-style item examine tip — yellow name, Chinese line, slot/price meta.
  * Optional shop Buy/Sell + qty. Portaled to document.body with position:fixed
@@ -69,6 +116,7 @@ export function HarborItemTooltip({
   shop,
 }: Props) {
   const anchorRef = useRef<HTMLSpanElement>(null)
+  const tipRef = useRef<HTMLDivElement>(null)
   const [coords, setCoords] = useState<TipCoords | null>(null)
 
   const en = item?.name.en ?? name?.en ?? ''
@@ -93,15 +141,27 @@ export function HarborItemTooltip({
       if (!anchor) return
       const r = anchor.getBoundingClientRect()
       if (r.width < 1 && r.height < 1) return
-      // Prefer requested placement; flip if it would leave the viewport.
-      let place = placement
-      const tipH = shop ? 148 : 78
-      if (place === 'above' && r.top < tipH + 8) place = 'below'
-      if (place === 'below' && window.innerHeight - r.bottom < tipH + 8) place = 'above'
-      setCoords({
-        left: Math.min(window.innerWidth - 12, Math.max(12, r.left + r.width / 2)),
-        top: place === 'below' ? r.bottom + 6 : r.top - 6,
-        placement: place,
+      const measured = tipRef.current?.getBoundingClientRect()
+      const estimate = shop ? SHOP_TIP_ESTIMATE : TIP_ESTIMATE
+      const next = clampHarborTipBox(
+        r,
+        {
+          width: measured && measured.width > 1 ? measured.width : estimate.width,
+          height: measured && measured.height > 1 ? measured.height : estimate.height,
+        },
+        { width: window.innerWidth, height: window.innerHeight, pad: TIP_PAD },
+        placement,
+      )
+      setCoords((prev) => {
+        if (
+          prev &&
+          Math.abs(prev.left - next.left) < 0.5 &&
+          Math.abs(prev.top - next.top) < 0.5 &&
+          prev.placement === next.placement
+        ) {
+          return prev
+        }
+        return next
       })
     }
     update()
@@ -182,6 +242,7 @@ export function HarborItemTooltip({
       {open && coords
         ? createPortal(
             <div
+              ref={tipRef}
               className={`hq-item-tip hq-item-tip--fixed hq-item-tip--${coords.placement}${isVip ? ' is-vip' : ''}${shop ? ' is-shop' : ''}`}
               role={shop ? 'dialog' : 'tooltip'}
               data-item={id}
