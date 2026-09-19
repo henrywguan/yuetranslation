@@ -349,8 +349,8 @@ export function HarborFishingPanel({
       aria-busy={castingFocus || undefined}
     >
       <header className="hq-shop-head hq-shop-head--bank">
-        <p className="hq-shop-capacity" title={`Fishing Lv ${level}`}>
-          Lv {level}
+        <p className="hq-shop-capacity hq-fish-level" title={`Fishing level: Lv${level}`}>
+          Fishing level: Lv{level}
         </p>
         <div className="hq-shop-head-center">
           <h2 className="hq-shop-title">{title}</h2>
@@ -418,7 +418,6 @@ export function HarborFishingPanel({
                       ? 'Reeling in…'
                       : 'Fishing…'}
               </p>
-              <p className="hq-fish-cast-stage-hint">Watch the sailor on the shore</p>
             </div>
           ) : null}
           <div className="hq-fish-req hq-fish-req--gear" aria-label="Gear required for this spot">

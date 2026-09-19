@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three'
 import { HARBOR_CRAFT_PALETTE as P, hqMat, hqMatSmooth, hqWoodTexture, hqMatTex } from './harborCraft'
+import { findScoutBone, SCOUT_BONE, tickScoutSkeletonFish } from './harborScoutRig'
 
 export type HarborFishAnimPhase = 'idle' | 'cast' | 'wait' | 'catch' | 'miss'
 
@@ -159,20 +160,23 @@ export function disposeHarborFishingPropKit(kit: HarborFishingPropKit): void {
 }
 
 function attachRodToScout(scout: THREE.Object3D, rod: THREE.Group): THREE.Object3D {
+  const boneHand = findScoutBone(scout, SCOUT_BONE.handR)
   let hand: THREE.Object3D | null = null
   let armR: THREE.Object3D | null = null
   scout.traverse((o) => {
     if (o.name === 'hand_r') hand = o
     if (o.name === 'hq-arm-r') armR = o
   })
-  // Prefer the arm group so cast swings carry the rod; fall back to hand socket / root.
-  const parent = armR ?? hand ?? scout
+  // Prefer the auto-rig wrist so the rod rides the cast / reel bones.
+  const parent = boneHand ?? armR ?? hand ?? scout
   if (rod.parent !== parent) {
     rod.parent?.remove(rod)
     parent.add(rod)
   }
-  if (parent === armR) {
-    // Approximate hand offset along the right arm
+  if (parent === boneHand) {
+    rod.position.set(0.02, 0.01, 0.04)
+    rod.rotation.set(0.55, 0.15, -1.15)
+  } else if (parent === armR) {
     rod.position.set(0.18, -0.42, 0.06)
     rod.rotation.set(0.35, 0.1, -0.55)
   } else if (parent === hand) {
@@ -247,6 +251,7 @@ export function tickHarborFishingAnim(
   const reduced = Boolean(opts.reduced)
   const armR = scout ? findNamed(scout, 'hq-arm-r') : null
   const armL = scout ? findNamed(scout, 'hq-arm-l') : null
+  const skinned = Boolean(scout && tickScoutSkeletonFish(scout, state.phase, next.t, reduced ? 0.25 : 1))
   const tipLocal = new THREE.Vector3(0, 0.78, 0)
 
   if (state.phase === 'idle') {
@@ -280,11 +285,11 @@ export function tickHarborFishingAnim(
     // Wind-up then fling
     const wind = u < 0.35 ? easeInOut(u / 0.35) : 1
     const fling = u < 0.35 ? 0 : easeOutCubic((u - 0.35) / 0.65)
-    if (armR && !reduced) {
+    if (armR && !reduced && !skinned) {
       armR.rotation.x = -0.85 * wind + 1.15 * fling
       armR.rotation.z = -0.25 + 0.35 * fling
     }
-    if (armL && !reduced) {
+    if (armL && !reduced && !skinned) {
       armL.rotation.x = 0.15 * fling
       armL.rotation.z = 0.12
     }
@@ -304,7 +309,7 @@ export function tickHarborFishingAnim(
     }
   } else if (state.phase === 'wait') {
     const bob = Math.sin(next.t * 5.5) * (reduced ? 0.02 : 0.045)
-    if (armR && !reduced) {
+    if (armR && !reduced && !skinned) {
       armR.rotation.x = 0.35 + bob * 0.4
       armR.rotation.z = 0.12
     }
@@ -327,11 +332,11 @@ export function tickHarborFishingAnim(
     const dur = HARBOR_FISH_CATCH_MS / 1000
     const u = Math.min(1, next.t / dur)
     const lift = easeOutCubic(u)
-    if (armR && !reduced) {
+    if (armR && !reduced && !skinned) {
       armR.rotation.x = 0.35 - 1.35 * lift
       armR.rotation.z = 0.12 - 0.2 * lift
     }
-    if (armL && !reduced) {
+    if (armL && !reduced && !skinned) {
       armL.rotation.x = -0.25 * lift
       armL.rotation.z = -0.15 * lift
     }
@@ -371,7 +376,7 @@ export function tickHarborFishingAnim(
     const dur = HARBOR_FISH_MISS_MS / 1000
     const u = Math.min(1, next.t / dur)
     const drop = easeInOut(u)
-    if (armR && !reduced) {
+    if (armR && !reduced && !skinned) {
       armR.rotation.x = 0.35 * (1 - drop)
       armR.rotation.z = 0.12 * (1 - drop)
     }

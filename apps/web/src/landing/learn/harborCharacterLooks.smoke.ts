@@ -187,7 +187,7 @@ assert.equal(harborProtagonistClipName('walk'), HARBOR_PROTAGONIST_CLIPS.walk)
 assert.ok(walked.t > 0)
 assert.ok(Math.abs(hipsY1 - hipsY0) < 1e-6, 'walk keeps hips planted (no hop bounce)')
 
-// Anime Scout GLB walk: sway/bob the mesh child, keep root planted.
+// Unrigged fallback: sway/bob the mesh child, keep root planted.
 {
   const root = new THREE.Group()
   const glb = new THREE.Group()
@@ -199,6 +199,30 @@ assert.ok(Math.abs(hipsY1 - hipsY0) < 1e-6, 'walk keeps hips planted (no hop bou
   st = tickHarborProtagonistAnim(root, st, 0.08)
   assert.ok(Math.abs(glb.rotation.z) > 1e-4 || Math.abs(glb.position.y) > 1e-4, 'GLB walk sways or bobs')
   assert.equal(root.position.y, 0, 'GLB walk keeps protagonist root planted')
+}
+
+// Auto-rigged Scout: bones walk, mesh root stays planted (no T-pose sway).
+{
+  const root = new THREE.Group()
+  const glb = new THREE.Group()
+  glb.name = 'scout-glb'
+  glb.userData.scoutGlb = true
+  glb.userData.scoutRigged = true
+  const thighL = new THREE.Bone()
+  thighL.name = 'scout-bone-thigh-l'
+  const thighR = new THREE.Bone()
+  thighR.name = 'scout-bone-thigh-r'
+  const armL = new THREE.Bone()
+  armL.name = 'scout-bone-upper-arm-l'
+  const armR = new THREE.Bone()
+  armR.name = 'scout-bone-upper-arm-r'
+  glb.add(thighL, thighR, armL, armR)
+  root.add(glb)
+  let st = tickHarborProtagonistAnim(root, { mode: 'walk', t: 0 }, 0.08)
+  st = tickHarborProtagonistAnim(root, st, 0.08)
+  assert.ok(Math.abs(thighL.rotation.x) > 0.05, 'rigged walk swings thigh bone')
+  assert.equal(glb.position.y, 0, 'rigged walk keeps Scout GLB planted')
+  assert.equal(Math.abs(glb.rotation.z) < 1e-8, true, 'rigged walk skips mesh-root sway')
 }
 
 const codex = harborGearCodexStats()

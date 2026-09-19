@@ -1702,6 +1702,31 @@ assert.match(
   'land standing plants anime Scout GLB',
 )
 assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /rigHarborScoutGlb/,
+  'Scout GLB auto-rigs a humanoid skeleton',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+  /tickScoutSkeletonLocomotion/,
+  'walk drives auto-rig bones',
+)
+assert.match(
+  readFileSync(new URL('./harborFishingAnim.ts', import.meta.url), 'utf8'),
+  /tickScoutSkeletonFish/,
+  'cast/reel drive auto-rig bones',
+)
+assert.match(
+  readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8'),
+  /Fishing level: Lv\{level\}/,
+  'fishing header says Fishing level: LvN',
+)
+assert.doesNotMatch(
+  readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8'),
+  /Watch the sailor on the shore/,
+  'fishing panel drops the cheap shore hint',
+)
+assert.match(
   readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
   /softTopShell|harborFigureTorso/,
   'wardrobe uses soft anime shells not box slabs',

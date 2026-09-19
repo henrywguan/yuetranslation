@@ -69,6 +69,8 @@ assert.match(panelSrc, /HARBOR_FISH_RESOLVE_MS/, 'panel waits for cast+wait')
 assert.match(panelSrc, /onCastResult/, 'panel notifies world of catch/miss')
 assert.match(panelSrc, /is-casting-focus|hq-fish-cast-stage/, 'panel collapses to show 3D cast')
 assert.match(panelSrc, /playHarborFishNibble/, 'panel schedules nibble SFX')
+assert.match(panelSrc, /Fishing level: Lv\{level\}/, 'header is Fishing level: LvN')
+assert.doesNotMatch(panelSrc, /Watch the sailor on the shore/, 'no cheap shore hint')
 
 const sfxSrc = readFileSync(new URL('./harborFishingSfx.ts', import.meta.url), 'utf8')
 assert.match(sfxSrc, /playHarborCoinChing/, 'catch plays coin reward chime')

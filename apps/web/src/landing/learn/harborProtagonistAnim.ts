@@ -1,10 +1,11 @@
 /**
  * Harbor Quest · protagonist locomotion (standard MMO walk / idle / sit).
- * Procedural limb swings when dress-up is visible; anime Scout GLB gets
- * grounded sway / bob (single-mesh, no skin clips yet).
+ * Procedural limb swings when dress-up is visible; auto-rigged Scout GLB
+ * walks on a humanoid armature (heat-weighted bones).
  * Clip names reserved for future CC0 KayKit retarget.
  */
 import * as THREE from 'three'
+import { tickScoutSkeletonLocomotion } from './harborScoutRig'
 
 /** Clip vocabulary aligned with KayKit Character Animations naming. */
 export const HARBOR_PROTAGONIST_CLIPS = {
@@ -92,6 +93,14 @@ function tickScoutGlbLocomotion(
   const baseRZ =
     typeof glb.userData.scoutGlbAnimBaseRotZ === 'number' ? glb.userData.scoutGlbAnimBaseRotZ : 0
 
+  if (glb.userData.scoutRigged) {
+    // Armature owns walk/idle — keep the root planted (no T-pose sway).
+    glb.position.y = baseY
+    glb.rotation.x = baseRX
+    glb.rotation.z = baseRZ
+    return
+  }
+
   if (mode === 'walk') {
     const phase = t * HARBOR_WALK_CADENCE
     const sway = Math.sin(phase) * 0.07 * amp
@@ -148,6 +157,7 @@ export function tickHarborProtagonistAnim(
   }
 
   tickScoutGlbLocomotion(root, state.mode, next.t, dt, amp)
+  tickScoutSkeletonLocomotion(root, state.mode, next.t, dt, amp, HARBOR_WALK_CADENCE)
 
   if (state.mode === 'walk') {
     const swing = Math.sin(next.t * HARBOR_WALK_CADENCE) * 0.38 * amp
