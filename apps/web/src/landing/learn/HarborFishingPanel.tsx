@@ -24,6 +24,7 @@ import {
   playHarborFishMiss,
   playHarborFishSplash,
 } from './harborFishingSfx'
+import { HARBOR_FISH_CAST_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAnim'
 import { playHarborVo } from './harborVo'
 import { playHarborUiClick } from './harborInteractSfx'
 
@@ -36,7 +37,10 @@ type Props = {
   coins: number
   casting?: boolean
   onBagChange: (bag: HarborFishingBag, coinsDelta?: number) => void
+  /** World cast pose (rod swing + bobber). */
   onCastAnim?: () => void
+  /** World catch / miss reel-in after the bite resolves. */
+  onCastResult?: (ok: boolean) => void
   onClose: () => void
 }
 
@@ -180,6 +184,7 @@ export function HarborFishingPanel({
   casting = false,
   onBagChange,
   onCastAnim,
+  onCastResult,
   onClose,
 }: Props) {
   const rootRef = useRef<HTMLElement>(null)
@@ -272,21 +277,24 @@ export function HarborFishingPanel({
     setBusy(true)
     playHarborFishCast()
     onCastAnim?.()
+    // Splash as the bobber lands, then resolve the bite after wait
+    window.setTimeout(() => playHarborFishSplash(), HARBOR_FISH_CAST_MS)
     window.setTimeout(() => {
-      playHarborFishSplash()
       const result = attemptHarborFishCast(bag, spotId)
       if (result.ok) {
         playHarborFishCatch()
         playHarborVo('niceCatch')
+        onCastResult?.(true)
         onBagChange(result.bag)
         setMsg(result.message)
       } else {
         playHarborFishMiss()
+        onCastResult?.(false)
         onBagChange(result.bag)
         setMsg(result.message)
       }
       setBusy(false)
-    }, 900)
+    }, HARBOR_FISH_RESOLVE_MS)
   }
 
   const tabs =

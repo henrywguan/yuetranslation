@@ -426,6 +426,7 @@ function main() {
   assert.match(worldSrc, /GUAN_CAPE_LOOM/, 'world nearestVisitable knows Cape Loom')
   assert.match(worldSrc, /GUAN_FISHING_HUT|nearestGuanFishSpot|fishing-hut/, 'world nearestVisitable knows Fishing Lodge')
   assert.match(worldSrc, /playFishingCast|fishIconFloat|fishSpotBob/, 'fishing cast splash + icon anims')
+  assert.match(worldSrc, /playFishingCatch|tickHarborFishingAnim/, 'fishing catch reel-in pose')
   assert.match(guanSrc, /stampGuanFishingRealm/, 'Guan stamps fishing realm expansion')
   const fishSrc = readFileSync(new URL('./harborFishing.ts', import.meta.url), 'utf8')
   assert.match(fishSrc, /GUAN_SATELLITE_ISLANDS/, 'satellite islands catalog')
