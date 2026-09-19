@@ -20,6 +20,6 @@ Seed Audio lines: `vo-scout-welcome.wav` (“Welcome to Harbor Quest.”), `vo-o
 
 ## 3D
 
-- `scout-female.glb` / `scout-male.glb` — Meshy image→3D (Henry-approved). Standing Scout uses these via `harborProtagonistGlb.ts`; seated canoe stays procedural. Unique wardrobe silhouettes temporarily fall back to procedural body.
+- `scout-female.glb` / `scout-male.glb` — Meshy v7 image→3D from A-pose sheets. Standing Scout attaches these via `harborProtagonistGlb.ts` (Lambert + cel). Seated canoe stays procedural. Unique wardrobe silhouettes temporarily fall back to the procedural body.
 
 World architecture remains procedural craft (`harborCraft.ts` / craft bible). Original Harbor IP — never Jagex meshes.

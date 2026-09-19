@@ -70,7 +70,7 @@ for (const eyeStyle of HARBOR_EYE_STYLES) {
     })
   }
 }
-assert.ok(eyeGeom.has('PlaneGeometry'), 'eyes use painted anime face card')
+assert.ok(eyeGeom.has('SphereGeometry'), 'eyes use a wrapped painted face shell')
 assert.ok(browCount >= HARBOR_EYE_STYLES.length * HARBOR_FACE_STYLES.length * 2, 'every face style keeps eyebrows')
 assert.ok(
   !readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8').includes(

@@ -181,19 +181,21 @@ export function harborFigureFace(
     faceStyle,
     blush: opts.blush,
   })
+  // Front skull shell — painted face wraps the head instead of a floating card.
+  const r = HARBOR_FIGURE_HEAD_R
   const card = new THREE.Mesh(
-    new THREE.PlaneGeometry(extents.x * 1.58, extents.y * 1.62),
+    new THREE.SphereGeometry(r * 1.012, 28, 20, Math.PI * 0.28, Math.PI * 0.44, Math.PI * 0.32, Math.PI * 0.44),
     harborFigureMapMat(faceTex),
   )
-  card.position.set(0, headY - 0.006, faceZ)
+  card.scale.set(1.05, 1.08, 0.95)
+  card.position.set(0, headY, 0)
   card.userData.harborAnimeFace = true
   card.userData.harborEyes = true
   g.add(card)
 
-  // Tiny soft nose tip — reads in profile when the card is edge-on.
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), skin)
   nose.scale.set(0.85, 0.62, 1.05)
-  nose.position.set(0, headY - 0.018, faceZ + 0.012)
+  nose.position.set(0, headY - 0.018, faceZ + 0.006)
   g.add(nose)
 
   const eyeYBase =

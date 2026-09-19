@@ -737,7 +737,7 @@ function main() {
     assert.match(figSrc, /MeshStandardMaterial|harborFigureMat/, 'soft lit materials for dress-up')
     assert.match(figSrc, /flatShading:\s*false/, 'no flatShading on character kit')
     assert.match(figSrc, /hq-figure-neck|Visible neck/, 'neck mesh is named / documented')
-    assert.match(figSrc, /harborFigureFace|(CircleGeometry|PlaneGeometry)/, 'shared figure kit uses face inserts')
+    assert.match(figSrc, /harborFigureFace|SphereGeometry/, 'shared figure kit uses a wrapped face shell')
     assert.match(figSrc, /eyeStyle|HarborEyeStyle/, 'face kit branches on eye style')
     assert.match(figSrc, /anime|dress-up|dressup|Genshin|Honkai/i, 'figure kit docs lock anime dress-up')
     assert.doesNotMatch(
@@ -1648,8 +1648,8 @@ assert.match(
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-  /HARBOR_SCOUT_GLB_ENABLED = false/,
-  'Scout GLB gated off so land procedural Scout stays visible',
+  /HARBOR_SCOUT_GLB_ENABLED = true/,
+  'Scout standing mesh uses the authored character GLB',
 )
 assert.match(
   readFileSync(new URL('./harborClothingMeshes.ts', import.meta.url), 'utf8'),
@@ -1668,8 +1668,8 @@ assert.doesNotMatch(
 )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /HARBOR_SCOUT_GLB_ENABLED = false/,
-    'Scout GLB gated off so land procedural Scout stays visible',
+    /HARBOR_SCOUT_GLB_ENABLED = true/,
+    'Scout standing mesh uses the authored character GLB',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
@@ -1678,8 +1678,8 @@ assert.doesNotMatch(
   )
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /applyHarborCelToObject|HARBOR_CEL_SHADE_ENABLED/,
-    'Scout GLB applies anime cel foundation',
+    /harborGlbMaterialToLambertCel|MeshLambertMaterial/,
+    'Scout GLB converts to Lambert + cel (iOS-visible)',
   )
   assert.match(
     readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8'),

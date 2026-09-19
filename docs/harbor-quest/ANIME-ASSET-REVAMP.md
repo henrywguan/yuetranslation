@@ -11,7 +11,7 @@
 | Wardrobe | Soft tapered / rounded meshes — **no box-slab clothing** that re-imposes Minecraft silhouettes |
 | World | Stylized painted anime harbor — soft shading, curved roofs, mist, jade/ink palette — **not** chunky RS voxels |
 | Assets | Higgsfield sheets + keyart under `docs/harbor-quest/assets/` drive procedural chase |
-| Meshy GLB | Gated off until standing mesh is proven visible (`HARBOR_SCOUT_GLB_ENABLED`) |
+| Character GLB | Standing Scout uses authored Meshy v7 GLBs from A-pose sheets (`HARBOR_SCOUT_GLB_ENABLED`). Materials convert to Lambert + harbor cel — never MeshStandard/MeshToon on iOS. |
 
 ## Smell tests (fail = reject)
 
