@@ -32,7 +32,6 @@ import {
   hqPondTexture,
   hqPost,
   hqRock,
-  hqSnap,
   hqStampChairs,
   hqStampClutter,
   hqStoneTexture,
