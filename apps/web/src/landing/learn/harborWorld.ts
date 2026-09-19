@@ -200,6 +200,11 @@ export type HarborWorldHandle = {
    */
   snapToQuestDock: (stepIndex?: number) => void
   /**
+   * Instant canoe teleport inside Guan Harbor (fish-spot / lodge from world map).
+   * No-op outside Guan — caller must set realmOverride to guan first.
+   */
+  snapToGuan: (x: number, z: number) => void
+  /**
    * OSRS minimap / UI navigate — sail or walk toward a world (x,z).
    * Same rules as tapping the ground (disembark on land, reboard near canoe).
    */
@@ -5811,6 +5816,23 @@ if (o.userData.cigaretteSmoke && !reduced) {
       destMarker.visible = false
       emitVisitable(null)
       ensureChunks(voyageZ)
+    },
+    snapToGuan(x: number, z: number) {
+      if (!isGuan || disposed) return
+      exitSit()
+      sitTarget = null
+      if (travelMode === 'foot') boardBoat()
+      const c = clampGuanBoatTarget(x, z)
+      boatX = c.x
+      voyageZ = c.z
+      footX = c.x
+      footZ = c.z
+      boat.position.set(c.x, 0.08, c.z)
+      boat.rotation.z = 0
+      moveTarget = { x: c.x, z: c.z }
+      playerDirected = false
+      destMarker.visible = false
+      emitVisitable(nearestVisitable(c.x, c.z, 'guan'))
     },
     moveToWorld(x, z) {
       commandMoveTo(x, z)

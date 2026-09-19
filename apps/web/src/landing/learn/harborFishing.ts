@@ -446,17 +446,36 @@ const HARBOR_FISH_SPOT_FLAVOR: Record<HarborFishSpotId, { en: string; zh: string
 /**
  * Generated spot blurb for the cast panel — flavor + methods + bite level band.
  */
+export function harborFishSpotMinLevel(spot: HarborFishSpotDef): number {
+  const bites = spot.fish
+    .map((id) => harborFishById(id))
+    .filter((f): f is HarborFishDef => Boolean(f))
+  return bites.length ? Math.min(...bites.map((f) => f.level)) : 1
+}
+
+export function harborFishSpotMaxLevel(spot: HarborFishSpotDef): number {
+  const bites = spot.fish
+    .map((id) => harborFishById(id))
+    .filter((f): f is HarborFishDef => Boolean(f))
+  return bites.length ? Math.max(...bites.map((f) => f.level)) : 1
+}
+
+/** Guan spots sorted for the world-map fishing path (Lv 1 → endgame toward 99). */
+export function guanFishSpotsByLevel(): readonly HarborFishSpotDef[] {
+  return [...GUAN_FISH_SPOTS].sort((a, b) => {
+    const d = harborFishSpotMinLevel(a) - harborFishSpotMinLevel(b)
+    return d !== 0 ? d : a.id.localeCompare(b.id)
+  })
+}
+
 export function harborFishSpotDescription(spot: HarborFishSpotDef): { en: string; zh: string } {
   const flavor = HARBOR_FISH_SPOT_FLAVOR[spot.id] ?? {
     en: `${spot.region} fishing water.`,
     zh: `${spot.name.zh}釣位。`,
   }
   const methods = spot.methods.map((m) => HARBOR_FISH_METHOD_LABEL[m]).join(' · ')
-  const bites = spot.fish
-    .map((id) => harborFishById(id))
-    .filter((f): f is HarborFishDef => Boolean(f))
-  const minLv = bites.length ? Math.min(...bites.map((f) => f.level)) : 1
-  const maxLv = bites.length ? Math.max(...bites.map((f) => f.level)) : 1
+  const minLv = harborFishSpotMinLevel(spot)
+  const maxLv = harborFishSpotMaxLevel(spot)
   return {
     en: `${flavor.en} Gear: ${methods}. Bites Fishing ${minLv}–${maxLv}.`,
     zh: `${flavor.zh} 裝備：${methods}。咬口釣魚等級 ${minLv}–${maxLv}。`,

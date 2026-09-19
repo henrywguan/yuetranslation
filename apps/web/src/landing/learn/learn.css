@@ -6744,12 +6744,17 @@
 .hq-worldmap-dot {
   display: grid;
   place-items: center;
+  position: relative;
   width: 0.85rem;
   height: 0.85rem;
   padding: 0;
   border: none;
   background: transparent;
   cursor: pointer;
+}
+.hq-worldmap-dot:has(.hq-worldmap-dot-lv) {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 .hq-worldmap-dot--mini {
   width: 0.55rem;
@@ -6763,6 +6768,19 @@
   background: #c9a227;
   box-shadow: 0 0 6px color-mix(in srgb, #c9a227 55%, transparent);
   border: 1.5px solid color-mix(in srgb, #fff 55%, transparent);
+}
+.hq-worldmap-dot-lv {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 700 0.5rem/1 Syne, system-ui, sans-serif;
+  color: #041018;
+  pointer-events: none;
+  z-index: 1;
+}
+.hq-worldmap-dot--locked .hq-worldmap-dot-lv {
+  color: color-mix(in srgb, #dff6ff 50%, transparent);
 }
 .hq-worldmap-dot--cleared .hq-worldmap-dot-core {
   background: #e2c56a;

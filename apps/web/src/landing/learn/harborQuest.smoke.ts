@@ -124,6 +124,11 @@ import {
   GUAN_TROPICAL_LOOK,
 } from '../../landing/learn/harborGuanRealm'
 import {
+  guanFishSpotsByLevel,
+  harborFishSpotMinLevel,
+} from '../../landing/learn/harborFishing'
+import { guanLandmarkNodes } from '../../landing/learn/harborWorldMapNodes'
+import {
   HARBOR_CRAFT_PALETTE,
   HARBOR_CRAFT_PROPS,
   HARBOR_FACETS,
@@ -2097,9 +2102,27 @@ assert.doesNotMatch(
   assert.match(worldMapUiSrc, /ContinentDetail|hq-worldmap-detail/, 'continent drill-down view')
   assert.match(worldMapUiSrc, /voyageChapterNodes|hq-worldmap-dot/, 'chapter progress dots')
   assert.match(worldMapUiSrc, /Begin navigation/, 'region begin-navigation CTA')
+  assert.match(worldMapUiSrc, /onTravelFishSpot/, 'world map UI exposes fish-spot travel')
+  assert.match(worldMapUiSrc, /hq-worldmap-dot-lv/, 'fish-spot dots show fishing level')
   assert.match(learnCss, /hq-worldmap-sheet--hero|object-fit:\s*contain/, 'hero sheet sizes map with contain')
+
   const nodesSrc = readFileSync(new URL('./harborWorldMapNodes.ts', import.meta.url), 'utf8')
   assert.match(nodesSrc, /voyageChapterNodes|guanLandmarkNodes/, 'world map node helpers')
+  assert.match(nodesSrc, /guanFishSpotsByLevel|fishLevel|fish-spot/, 'Guan map dots ordered by fishing level')
+  assert.match(worldSrc, /snapToGuan/, 'world can teleport canoe to Guan fish spot')
+  assert.match(playSrc2, /onTravelFishSpot|snapToGuan/, 'world map fish-spot teleport wired')
+  const orderedSpots = guanFishSpotsByLevel()
+  assert.ok(orderedSpots.length >= 8, 'Guan fish spots for map path')
+  for (let i = 1; i < orderedSpots.length; i++) {
+    assert.ok(
+      harborFishSpotMinLevel(orderedSpots[i]!) >= harborFishSpotMinLevel(orderedSpots[i - 1]!),
+      'Guan map spots sorted ascending by fishing level',
+    )
+  }
+  const guanNodes = guanLandmarkNodes(true, { fishingXp: 0 })
+  assert.ok(guanNodes[0]?.fishLevel === 1, 'first Guan map node is Lv 1 lodge/spot')
+  assert.ok(guanNodes.every((n) => n.kind === 'fish-spot'), 'Guan detail nodes are fish-spot teleports')
+  assert.ok(guanNodes.some((n) => typeof n.worldX === 'number' && typeof n.worldZ === 'number'), 'fish nodes carry world xz')
   assert.ok(
     existsSync(join(dirname(fileURLToPath(import.meta.url)), '../../../public/assets/harbor-quest/world-map/harbor-continent-voyage.png')),
     'voyage continent art present',
