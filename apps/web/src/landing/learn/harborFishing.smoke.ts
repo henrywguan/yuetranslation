@@ -17,6 +17,8 @@ import {
   buyHarborFishTool,
   emptyHarborFishingBag,
   fishingXpToLevel,
+  harborFishSpotById,
+  harborFishSpotDescription,
   mergeHarborFishingBag,
   nearestGuanFishSpot,
   nearestHarborFishSpot,
@@ -83,15 +85,39 @@ assert.match(panelSrc, /Bites here/, 'cast tab labels bites')
 assert.match(panelSrc, /Required|harborFishToolsRequiredForSpot/, 'cast shows required gear for spot')
 assert.match(panelSrc, /harborFishExamineMeta|tipOpen=\{tipId === f\.id\}/, 'bites fish open examine tips')
 assert.match(panelSrc, /hq-fish-req-warn/, 'requirement status pulses gold')
+assert.match(panelSrc, /harborFishSpotDescription|hq-fish-spot-blurb/, 'each spot shows generated description')
 assert.match(panelSrc, /onCastResult|HARBOR_FISH_RESOLVE_MS/, 'cast drives world catch pose')
 assert.doesNotMatch(panelSrc, /Tool · <strong>|Bites here:\s*\{/, 'cast tab is not plain text lists')
 
 const fishSrc = readFileSync(new URL('./harborFishing.ts', import.meta.url), 'utf8')
 assert.match(fishSrc, /harborFishSpotRequirementText/, 'cast fail names required gear')
-assert.doesNotMatch(fishSrc, /cannot work this spot/, 'old net-cannot-work copy removed')
+assert.match(fishSrc, /harborFishSpotDescription|HARBOR_FISH_SPOT_FLAVOR/, 'spot blurbs generated per location')
+assert.match(fishSrc, /harborFishEmptyBiteMessage/, 'empty bite explains level or bait')
+assert.doesNotMatch(fishSrc, /Nothing bites with this setup\./, 'generic nothing-bites copy removed')
 
 const cssSrc = readFileSync(new URL('./learn.css', import.meta.url), 'utf8')
 assert.match(cssSrc, /hq-fish-req-gold-pulse|hq-fish-req-warn/, 'gold pulse for fishing req warn')
+assert.match(cssSrc, /hq-fish-spot-blurb/, 'spot description styles')
+
+// Runtime: every spot has a generated description + Pearl Cay empty-bite is level-aware
+{
+  const pearl = harborFishSpotById('spot-pearl-cay')
+  assert.ok(pearl)
+  const blurb = harborFishSpotDescription(pearl!)
+  assert.match(blurb.en, /Pearl Cay|lagoon|Net/i, 'pearl description mentions place + gear')
+  assert.ok(blurb.zh.length > 4, 'pearl zh blurb')
+  for (const s of HARBOR_ALL_FISH_SPOTS) {
+    const d = harborFishSpotDescription(s)
+    assert.ok(d.en.length > 20, `${s.id} has en description`)
+    assert.ok(d.zh.length > 4, `${s.id} has zh description`)
+  }
+  const low = emptyHarborFishingBag()
+  const miss = attemptHarborFishCast(low, 'spot-pearl-cay', () => 0)
+  assert.equal(miss.ok, false)
+  if (!miss.ok) {
+    assert.match(miss.message, /Need Fishing \d+/i, 'pearl net at low level names next fish level')
+  }
+}
 
 const sfxSrc = readFileSync(new URL('./harborFishingSfx.ts', import.meta.url), 'utf8')
 assert.match(sfxSrc, /playHarborCoinChing/, 'successful catch layers coin reward')

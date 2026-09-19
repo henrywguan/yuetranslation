@@ -6933,6 +6933,23 @@
   letter-spacing: 0.04em;
   color: color-mix(in srgb, #7ef0dc 70%, #fff 30%);
 }
+.hq-fish-spot-blurb {
+  margin: 0.15rem 0.35rem 0.35rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.35rem;
+  border: 1px solid color-mix(in srgb, #3dcfb6 28%, transparent);
+  background: color-mix(in srgb, #0a1c22 82%, #123038);
+}
+.hq-fish-spot-blurb-en {
+  margin: 0;
+  font: 500 0.68rem/1.35 "Noto Sans", system-ui, sans-serif;
+  color: #d8f4ef;
+}
+.hq-fish-spot-blurb-zh {
+  margin: 0.2rem 0 0;
+  font: 500 0.64rem/1.35 "Noto Sans HK", "Noto Sans", sans-serif;
+  color: color-mix(in srgb, #7ef0dc 75%, #fff 25%);
+}
 .hq-fish-tile-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

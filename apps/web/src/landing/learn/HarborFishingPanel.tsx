@@ -13,7 +13,9 @@ import {
   fishingXpToLevel,
   harborFishBaitsRequiredForSpot,
   harborFishExamineMeta,
+  harborFishEmptyBiteMessage,
   harborFishSpotById,
+  harborFishSpotDescription,
   harborFishSpotRequirementText,
   harborFishSpotSetupBlocked,
   harborFishToolsRequiredForSpot,
@@ -254,8 +256,14 @@ export function HarborFishingPanel({
   )
   const setupBlocked = Boolean(spot && harborFishSpotSetupBlocked(bag, spot))
   const requirementText = spot ? harborFishSpotRequirementText(spot, bag) : null
+  const spotBlurb = spot ? harborFishSpotDescription(spot) : null
+  const emptyBiteHint =
+    spot && !setupBlocked ? harborFishEmptyBiteMessage(spot, bag) : null
+  const showCastHint = Boolean(
+    tab === 'cast' && spot && (setupBlocked ? requirementText : emptyBiteHint?.startsWith('Need ')),
+  )
   const statusIsRequirement =
-    Boolean(msg && /^(Need |Out of )/i.test(msg)) || (setupBlocked && !msg)
+    Boolean(msg && /^(Need |Out of |Wrong bait)/i.test(msg)) || showCastHint
 
   const logCount = bag.log.length
   const title = mode === 'lodge' ? GUAN_FISHING_OVERSEER_NAME : (spot?.region ?? 'Cast')
@@ -345,6 +353,15 @@ export function HarborFishingPanel({
         {level < 99 ? ` · next ${nextXp}` : ' · max'}
         {mode === 'lodge' ? ` · log ${logCount}/${HARBOR_FISH_CATALOG.length}` : ''}
       </p>
+
+      {spotBlurb && mode === 'spot' ? (
+        <div className="hq-fish-spot-blurb">
+          <p className="hq-fish-spot-blurb-en">{spotBlurb.en}</p>
+          <p className="hq-fish-spot-blurb-zh" lang="zh-HK">
+            {spotBlurb.zh}
+          </p>
+        </div>
+      ) : null}
 
       <div className="hq-shop-tab-strip hq-fish-tabs" role="tablist" aria-label="Fishing panels">
         {tabs.map((t) => (
@@ -710,12 +727,12 @@ export function HarborFishingPanel({
         </div>
       ) : null}
 
-      {msg || (tab === 'cast' && setupBlocked && requirementText) ? (
+      {msg || (tab === 'cast' && showCastHint) ? (
         <p
-          className={`hq-shop-status${statusIsRequirement || (setupBlocked && !msg) ? ' hq-fish-req-warn' : ''}`}
-          role={statusIsRequirement || (setupBlocked && !msg) ? 'status' : undefined}
+          className={`hq-shop-status${statusIsRequirement ? ' hq-fish-req-warn' : ''}`}
+          role={statusIsRequirement ? 'status' : undefined}
         >
-          {msg ?? requirementText}
+          {msg ?? (setupBlocked ? requirementText : emptyBiteHint)}
         </p>
       ) : null}
 
