@@ -886,6 +886,8 @@ function main() {
   const fishPanelSrc = readFileSync(new URL('./HarborFishingPanel.tsx', import.meta.url), 'utf8')
   assert.match(fishPanelSrc, /HarborFishModelIcon|hq-fish-tile/, 'fishing dialogue shows item model tiles')
   assert.match(fishPanelSrc, /Bites here/, 'fishing cast shows bites section')
+  assert.match(fishPanelSrc, /hq-fish-cast-body/, 'cast tab pins Cast below a scroll body')
+  assert.match(fishPanelSrc, /hq-fish-req-cell/, 'required items use compact cells')
   assert.match(playSrc, /HarborDelveModal|hq-delve-fab/, '港灣 companion delve FAB')
   const delveModalSrc = readFileSync(new URL('./HarborDelveModal.tsx', import.meta.url), 'utf8')
   assert.match(delveModalSrc, /speakHarborTts/, 'delve auto-plays hearHan Harbor TTS')
@@ -2036,7 +2038,11 @@ assert.doesNotMatch(
   assert.match(worldSrc, /commandMoveTo/, 'ground tap and minimap share move command')
   assert.match(playSrc2, /moveToWorld/, 'Learn session wires minimap tap to world move')
   const chatBoxSrc = readFileSync(new URL('./HarborChatBox.tsx', import.meta.url), 'utf8')
-  assert.match(chatBoxSrc, /export function HarborChatBox/, 'RuneScape-style chat box')
+  assert.match(chatBoxSrc, /export function HarborChatBox/, 'Harbor public chat box')
+  assert.match(chatBoxSrc, /hq-chat-edge-tab/, 'chat collapses to a History-style edge tab')
+  assert.match(chatBoxSrc, /hq-chat-drawer/, 'chat expands into a side drawer')
+  assert.match(chatBoxSrc, /useFloatingPanel/, 'desktop chat rail is draggable')
+  assert.match(chatBoxSrc, /EDGE_Y_KEY|edgeY/, 'edge tab is vertically draggable')
   assert.match(
     chatBoxSrc,
     /onPointerDown[\s\S]*preventDefault/,
@@ -2119,12 +2125,11 @@ assert.doesNotMatch(
   assert.match(questPanelSrc, /!\(resolved && picked === step\.correctId\)/, 'all answer tiles hide on correct pick')
   assert.match(questPanelSrc, /Next gate/, 'Next gate control present after correct')
   assert.match(learnCss, /--hq-explore-chrome/, 'shared explore chrome clearance token')
-  assert.match(learnCss, /bottom:\s*var\(--hq-explore-chrome\)/, 'chat docks above Talk/Explore chrome')
-  assert.match(
-    learnCss,
-    /@media \(max-width:\s*640px\)[\s\S]*?\.hq-chat-log[\s\S]*?backdrop-filter:\s*none/,
-    'mobile chat log drops backdrop-filter (WebGL + keyboard GPU wedge)',
-  )
+  assert.match(learnCss, /hq-chat-edge-tab/, 'chat edge tab styles')
+  assert.match(learnCss, /hq-chat-drawer/, 'chat drawer styles')
+  assert.match(learnCss, /hq-chat-rail/, 'desktop chat rail styles')
+  assert.match(learnCss, /\.hq-fish-cast-body/, 'fishing cast body scrolls above pinned Cast')
+  assert.match(learnCss, /\.hq-fish-req-cell/, 'required fishing items are compact cells')
   assert.match(learnCss, /hq-dock-actions--next-first/, 'next-first dock spacing')
   assert.match(
     learnCss,
