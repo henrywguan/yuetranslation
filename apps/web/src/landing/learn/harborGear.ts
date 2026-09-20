@@ -24,6 +24,7 @@ import {
   setScoutBaseClothingVisible,
 } from './harborClothingMeshes'
 import { mountHarborPaperLantern } from './harborBoatKit'
+import { isHarborConstrainedGpu } from './harborIosGpu'
 
 export type HarborGearSlot = 'hat' | 'top' | 'bottom' | 'shoes' | 'hand' | 'boat' | 'lantern'
 
@@ -501,6 +502,7 @@ function attachHandheldLanternLight(
   color: number,
   scale = 0.55,
 ) {
+  if (isHarborConstrainedGpu()) return null
   const light = new THREE.PointLight(color, scale, 3.2, 2)
   light.position.set(0.06, y, 0)
   light.userData.harborLanternLight = true

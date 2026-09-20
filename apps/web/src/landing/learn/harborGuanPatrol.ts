@@ -14,6 +14,7 @@ import {
 import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { clampGuanFootTarget, guanGroundY, GUAN_LANDMARKS, isGuanLand } from './harborGuanRealm'
+import { isHarborConstrainedGpu } from './harborIosGpu'
 
 export const GUAN_PATROL_IDS = [
   'ironmound',
@@ -211,11 +212,13 @@ function kitEmberrod(root: THREE.Group, armR: THREE.Group, kit: PatrolKit) {
   tip.userData.specialHostGlow = true
   tip.userData.glowBaseIntensity = 0.9
   staff.add(tip)
-  const glow = new THREE.PointLight(kit.accent, 0.7, 3.5, 2)
-  glow.position.set(0, 0.65, 0)
-  glow.userData.harborLanternLight = true
-  glow.userData.baseIntensity = 0.7
-  staff.add(glow)
+  if (!isHarborConstrainedGpu()) {
+    const glow = new THREE.PointLight(kit.accent, 0.7, 3.5, 2)
+    glow.position.set(0, 0.65, 0)
+    glow.userData.harborLanternLight = true
+    glow.userData.baseIntensity = 0.7
+    staff.add(glow)
+  }
   staff.position.set(0.04, -0.25, 0.1)
   armR.add(staff)
 }

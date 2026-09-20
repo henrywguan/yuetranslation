@@ -1493,6 +1493,13 @@
   touch-action: none;
 }
 
+/* Context-lost / boot-fail: hide the dead black WebGL surface so the
+   immersive sky (#c8f0ff) and HUD stay visible instead of a black tab. */
+.hq-world-canvas[data-harbor-boot-failed] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .hq-stage--immersive .hq-world-canvas {
   min-height: 100%;
   /* Tap ground to move (OSRS); drag to orbit the camera. */

@@ -18,6 +18,7 @@ import {
   hqRock,
 } from './harborCraft'
 import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
+import { isHarborConstrainedGpu } from './harborIosGpu'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
 import { stampHarborNpcRoam } from './harborNpcRoam'
@@ -345,11 +346,13 @@ function stampSatelliteIsland(
     const fern = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.5, 5), hqMat(0x3a5028))
     fern.position.set(island.x, 0.55, island.z)
     root.add(fern)
-    const ember = new THREE.PointLight(0xff8040, 0.55, 6)
-    ember.position.set(island.x, 1.2, island.z)
-    ember.userData.specialHostGlow = true
-    ember.userData.glowBaseIntensity = 0.55
-    root.add(ember)
+    if (!isHarborConstrainedGpu()) {
+      const ember = new THREE.PointLight(0xff8040, 0.55, 6)
+      ember.position.set(island.x, 1.2, island.z)
+      ember.userData.specialHostGlow = true
+      ember.userData.glowBaseIntensity = 0.55
+      root.add(ember)
+    }
   }
 
   if (typeof document !== 'undefined') {

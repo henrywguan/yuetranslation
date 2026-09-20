@@ -60,6 +60,7 @@ import {
   harborFigureTorso,
 } from './harborFigure'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
+import { isHarborConstrainedGpu } from './harborIosGpu'
 import { auditHarborObject } from './harborMeshAudit'
 import {
   buildGuanHarborScene,
@@ -1010,6 +1011,29 @@ export function harborLanternIntensity(weather: HarborWeather): number {
   return 0.22
 }
 
+/**
+ * Add a lantern / portal PointLight, or skip on iPhone.
+ * iOS WebGL dies when Lambert+cel compiles with dozens of these.
+ */
+function addHarborLanternPointLight(
+  parent: THREE.Object3D,
+  color: number,
+  intensity: number,
+  distance: number,
+  position: readonly [number, number, number],
+  extra: Record<string, unknown> = {},
+): THREE.PointLight | null {
+  if (isHarborConstrainedGpu()) return null
+  const light = new THREE.PointLight(color, intensity, distance, 2)
+  light.position.set(position[0], position[1], position[2])
+  light.userData.harborLanternLight = true
+  light.userData.baseIntensity = intensity
+  light.userData.baseDistance = distance
+  Object.assign(light.userData, extra)
+  parent.add(light)
+  return light
+}
+
 function glowMat(color: number, emissive: number, intensity = 0.9) {
   return applyHarborCel(
     new THREE.MeshLambertMaterial({
@@ -1030,13 +1054,13 @@ function attachLanternLight(
   scale = 1,
 ) {
   const base = harborLanternIntensity(weather) * scale
-  const light = new THREE.PointLight(color, base, weather === 'night' ? 9.5 : weather === 'rainy' ? 8.2 : 7.5, 2)
-  light.position.set(0, y, 0)
-  light.userData.harborLanternLight = true
-  light.userData.baseIntensity = base
-  light.userData.baseDistance = light.distance
-  parent.add(light)
-  return light
+  return addHarborLanternPointLight(
+    parent,
+    color,
+    base,
+    weather === 'night' ? 9.5 : weather === 'rainy' ? 8.2 : 7.5,
+    [0, y, 0],
+  )
 }
 
 /** Paper lantern on a post — emits ambiance light (stronger at night / rain). */
@@ -1887,18 +1911,14 @@ function attachSpecialHostGlow(npc: THREE.Object3D, tint: number, weather: Harbo
   halo.userData.glowBaseIntensity = weather === 'night' ? 1.2 : 0.7
   npc.add(halo)
 
-  const light = new THREE.PointLight(
+  addHarborLanternPointLight(
+    npc,
     tint,
     weather === 'night' ? 1.75 : weather === 'sunny' ? 0.62 : 1.05,
     weather === 'night' ? 7.2 : 5.8,
-    2,
+    [0, 1.15, 0.15],
+    { specialHostLight: true },
   )
-  light.position.set(0, 1.15, 0.15)
-  light.userData.harborLanternLight = true
-  light.userData.baseIntensity = light.intensity
-  light.userData.baseDistance = light.distance
-  light.userData.specialHostLight = true
-  npc.add(light)
 }
 
 /** Golden glowing floppy disk — Save Shack prop. */
@@ -1925,11 +1945,7 @@ function glowingFloppyDisk() {
   chip.scale.set(1, 0.4, 1)
   chip.position.set(-0.05, 0.022, -0.06)
   g.add(chip)
-  const spark = new THREE.PointLight(0xffd060, 0.55, 2.2, 2)
-  spark.position.set(0, 0.08, 0)
-  spark.userData.harborLanternLight = true
-  spark.userData.baseIntensity = 0.55
-  g.add(spark)
+  addHarborLanternPointLight(g, 0xffd060, 0.55, 2.2, [0, 0.08, 0])
   return g
 }
 
@@ -3759,17 +3775,14 @@ function saveShackBuilding(weather: HarborWeather = 'sunny') {
     )
     veil.position.set(0, 0.85, 0)
     portal.add(veil)
-    const portalLight = new THREE.PointLight(
+    addHarborLanternPointLight(
+      portal,
       0xffc040,
       weather === 'night' ? 2.2 : weather === 'sunny' ? 0.85 : 1.4,
       9,
-      2,
+      [0, 0.9, 0.2],
+      { portalGlow: true },
     )
-    portalLight.position.set(0, 0.9, 0.2)
-    portalLight.userData.harborLanternLight = true
-    portalLight.userData.baseIntensity = portalLight.intensity
-    portalLight.userData.portalGlow = true
-    portal.add(portalLight)
     g.add(portal)
     attachLandmarkHost(g, 'save-shack', weather)
     return g
@@ -3842,17 +3855,14 @@ function saveShackBuilding(weather: HarborWeather = 'sunny') {
   )
   veil.position.set(0, 0.85, 0)
   portal.add(veil)
-  const portalLight = new THREE.PointLight(
+  addHarborLanternPointLight(
+    portal,
     0xffc040,
     weather === 'night' ? 2.2 : weather === 'sunny' ? 0.85 : 1.4,
     9,
-    2,
+    [0, 0.9, 0.2],
+    { portalGlow: true },
   )
-  portalLight.position.set(0, 0.9, 0.2)
-  portalLight.userData.harborLanternLight = true
-  portalLight.userData.baseIntensity = portalLight.intensity
-  portalLight.userData.portalGlow = true
-  portal.add(portalLight)
   g.add(portal)
 
   attachLandmarkHost(g, 'save-shack', weather)
@@ -3874,11 +3884,7 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
     // Keep a soft approach plank + warm lanterns for night readability.
     g.add(hqBox(1.2, 0.1, 1.6, P.woodMid, 0, 0.12, 1.35))
     for (const x of [-0.65, 0.65] as const) {
-      const light = new THREE.PointLight(0xffa050, harborLanternIntensity(weather) * 0.85, 6.5, 2)
-      light.position.set(x, 1.7, 0.9)
-      light.userData.harborLanternLight = true
-      light.userData.baseIntensity = light.intensity
-      g.add(light)
+      addHarborLanternPointLight(g, 0xffa050, harborLanternIntensity(weather) * 0.85, 6.5, [x, 1.7, 0.9])
     }
     attachLandmarkHost(g, 'outfitter', weather)
     return g
@@ -3935,11 +3941,13 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
     )
     lamp.position.set(x, 1.58, 0.95)
     g.add(lamp)
-    const light = new THREE.PointLight(0xffa050, harborLanternIntensity(weather) * 0.85, 6.5, 2)
-    light.position.copy(lamp.position)
-    light.userData.harborLanternLight = true
-    light.userData.baseIntensity = light.intensity
-    g.add(light)
+    addHarborLanternPointLight(
+      g,
+      0xffa050,
+      harborLanternIntensity(weather) * 0.85,
+      6.5,
+      [lamp.position.x, lamp.position.y, lamp.position.z],
+    )
   }
   // Approach plank
   g.add(hqBox(1.2, 0.1, 1.8, P.woodMid, 0, 0.12, 1.4))
@@ -3978,18 +3986,14 @@ function bankBuilding(weather: HarborWeather = 'sunny') {
     )
     ring.position.set(0, 0.85, 0.05)
     portal.add(ring)
-    const portalLight = new THREE.PointLight(
+    addHarborLanternPointLight(
+      portal,
       0x50e8c8,
       weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
       9,
-      2,
+      [0, 0.9, 0.25],
+      { portalGlow: true, jadePortal: true },
     )
-    portalLight.position.set(0, 0.9, 0.25)
-    portalLight.userData.harborLanternLight = true
-    portalLight.userData.baseIntensity = portalLight.intensity
-    portalLight.userData.portalGlow = true
-    portalLight.userData.jadePortal = true
-    portal.add(portalLight)
     g.add(portal)
     attachLandmarkHost(g, 'bank', weather)
     return g
@@ -4071,18 +4075,14 @@ function bankBuilding(weather: HarborWeather = 'sunny') {
   )
   veil.position.set(0, 0.85, 0)
   portal.add(veil)
-  const portalLight = new THREE.PointLight(
+  addHarborLanternPointLight(
+    portal,
     0x50e8c8,
     weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
     9,
-    2,
+    [0, 0.9, 0.25],
+    { portalGlow: true, jadePortal: true },
   )
-  portalLight.position.set(0, 0.9, 0.25)
-  portalLight.userData.harborLanternLight = true
-  portalLight.userData.baseIntensity = portalLight.intensity
-  portalLight.userData.portalGlow = true
-  portalLight.userData.jadePortal = true
-  portal.add(portalLight)
   g.add(portal)
 
   // Approach stones
@@ -4120,18 +4120,14 @@ function arenaBuilding(weather: HarborWeather = 'sunny') {
     )
     ring.position.set(0, 0.82, 0.05)
     portal.add(ring)
-    const portalLight = new THREE.PointLight(
+    addHarborLanternPointLight(
+      portal,
       0xffb040,
       weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
       9,
-      2,
+      [0, 0.88, 0.25],
+      { portalGlow: true, arenaPortal: true },
     )
-    portalLight.position.set(0, 0.88, 0.25)
-    portalLight.userData.harborLanternLight = true
-    portalLight.userData.baseIntensity = portalLight.intensity
-    portalLight.userData.portalGlow = true
-    portalLight.userData.arenaPortal = true
-    portal.add(portalLight)
     g.add(portal)
     attachLandmarkHost(g, 'arena', weather)
     return g
@@ -4204,18 +4200,14 @@ function arenaBuilding(weather: HarborWeather = 'sunny') {
   )
   veil.position.set(0, 0.82, 0)
   portal.add(veil)
-  const portalLight = new THREE.PointLight(
+  addHarborLanternPointLight(
+    portal,
     0xffb040,
     weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
     9,
-    2,
+    [0, 0.88, 0.25],
+    { portalGlow: true, arenaPortal: true },
   )
-  portalLight.position.set(0, 0.88, 0.25)
-  portalLight.userData.harborLanternLight = true
-  portalLight.userData.baseIntensity = portalLight.intensity
-  portalLight.userData.portalGlow = true
-  portalLight.userData.arenaPortal = true
-  portal.add(portalLight)
   g.add(portal)
 
   g.add(hqBox(1.15, 0.1, 1.5, P.woodMid, 0, 0.12, 1.55))
@@ -4254,16 +4246,13 @@ function spinningBarberPole(weather: HarborWeather) {
     ring.position.y = y
     pole.add(ring)
   }
-  const tip = new THREE.PointLight(
+  addHarborLanternPointLight(
+    pole,
     0xff8098,
     weather === 'night' ? 1.4 : weather === 'sunny' ? 0.45 : 0.85,
     5,
-    2,
+    [0, 1.65, 0],
   )
-  tip.position.set(0, 1.65, 0)
-  tip.userData.harborLanternLight = true
-  tip.userData.baseIntensity = tip.intensity
-  pole.add(tip)
   return pole
 }
 
@@ -4299,18 +4288,14 @@ function barberBuilding(weather: HarborWeather = 'sunny') {
     )
     ring.position.set(0, 0.82, 0.05)
     portal.add(ring)
-    const portalLight = new THREE.PointLight(
+    addHarborLanternPointLight(
+      portal,
       0xff7090,
       weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
       9,
-      2,
+      [0, 0.88, 0.25],
+      { portalGlow: true, barberPortal: true },
     )
-    portalLight.position.set(0, 0.88, 0.25)
-    portalLight.userData.harborLanternLight = true
-    portalLight.userData.baseIntensity = portalLight.intensity
-    portalLight.userData.portalGlow = true
-    portalLight.userData.barberPortal = true
-    portal.add(portalLight)
     g.add(portal)
     attachLandmarkHost(g, 'barber', weather)
     return g
@@ -4387,18 +4372,14 @@ function barberBuilding(weather: HarborWeather = 'sunny') {
   )
   veil.position.set(0, 0.82, 0)
   portal.add(veil)
-  const portalLight = new THREE.PointLight(
+  addHarborLanternPointLight(
+    portal,
     0xff7090,
     weather === 'night' ? 2.4 : weather === 'sunny' ? 0.95 : 1.5,
     9,
-    2,
+    [0, 0.88, 0.25],
+    { portalGlow: true, barberPortal: true },
   )
-  portalLight.position.set(0, 0.88, 0.25)
-  portalLight.userData.harborLanternLight = true
-  portalLight.userData.baseIntensity = portalLight.intensity
-  portalLight.userData.portalGlow = true
-  portalLight.userData.barberPortal = true
-  portal.add(portalLight)
   g.add(portal)
 
   g.add(hqBox(1.15, 0.1, 1.45, P.woodMid, 0, 0.12, 1.5))
@@ -4489,21 +4470,28 @@ export function createHarborWorld(
       }
     : baseLook
 
+  const constrainedGpu = isHarborConstrainedGpu()
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false,
     alpha: false,
-    powerPreference: 'high-performance',
+    // high-performance on iPhone can kill the GPU process (pitch-black tab).
+    powerPreference: constrainedGpu ? 'default' : 'high-performance',
+    precision: constrainedGpu ? 'mediump' : 'highp',
+    failIfMajorPerformanceCaveat: false,
   })
   // Allow restore instead of a dead black canvas after a GPU reset.
   canvas.addEventListener(
     'webglcontextlost',
     (ev) => {
       ev.preventDefault()
+      canvas.dataset.harborBootFailed = '1'
     },
     false,
   )
-  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.25))
+  renderer.setPixelRatio(
+    Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, constrainedGpu ? 1 : 1.25),
+  )
   renderer.setClearColor(look.sky, 1)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -4602,8 +4590,9 @@ export function createHarborWorld(
     'dirt',
   )
   const chunkGroups = new Map<number, THREE.Group>()
-  /** Chunks ahead of the canoe — 3 = leaner GPU, earlier pop-in than 4. */
-  const ACTIVE = 4
+  /** Chunks ahead of the canoe — iPhone boots 4 live chunks, desktop 7. */
+  const ACTIVE = constrainedGpu ? 2 : 4
+  const LOOK_BEHIND = constrainedGpu ? 1 : 2
   /** Cached PointLights for flicker (avoids full scene.traverse each frame). */
   const lanternLights: THREE.PointLight[] = []
   /** Cached fauna / bubbles / petals for idle motion (avoids per-chunk traverse). */
@@ -4626,7 +4615,7 @@ export function createHarborWorld(
     if (isGuan) return
     const center = Math.floor(centerZ / CHUNK)
     const need = new Set<number>()
-    for (let i = center - 2; i <= center + ACTIVE; i++) need.add(i)
+    for (let i = center - LOOK_BEHIND; i <= center + ACTIVE; i++) need.add(i)
     let dirty = false
     for (const [idx, g] of chunkGroups) {
       if (!need.has(idx)) {
