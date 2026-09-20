@@ -111,7 +111,9 @@ import {
   HARBOR_CAMERA_FAR_IOS,
   HARBOR_ORBIT_DISTANCE_MAX,
   HARBOR_ORBIT_DISTANCE_MAX_IOS,
+  harborAllowNpcScoutGlb,
   harborAllowV2BankMeshes,
+  harborAllowV2Landmarks,
   harborAllowV2ScenicTrees,
   harborCameraFar,
   harborIosDrawRadius,
@@ -1561,6 +1563,12 @@ function main() {
   assert.ok(HARBOR_V2_IOS_SKIP_PRELOAD.includes('willow'), 'iPhone does not preload willow GLBs')
   assert.match(worldSrc2, /harborAllowV2BankMeshes\(\)/, 'village houses / piers / lanterns gate on iPhone')
   assert.match(worldSrc2, /harborIosDrawRadius\(distance\)/, 'iPhone hides far chunk props while orbiting')
+  assert.equal(harborAllowV2Landmarks(), true, 'Node allows V2 landmark shells')
+  assert.equal(harborAllowNpcScoutGlb(), true, 'Node allows NPC Scout GLBs')
+  assert.ok(HARBOR_V2_IOS_SKIP_PRELOAD.includes('save-shack'), 'iPhone does not preload Save Shack GLB')
+  assert.match(worldSrc2, /harborAllowV2Landmarks\(\)/, 'Save / Outfitter / Bank / Arena / Barber gate on iPhone')
+  assert.match(worldSrc2, /harborAllowNpcScoutGlb\(\)/, 'landmark hosts skip Scout GLB on iPhone')
+  assert.match(worldSrc2, /visitablesRoot\.children/, 'iPhone LOD hides far landmark buildings')
   
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('panda'), 'giant panda ambient fauna')
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('tiger'), 'South China tiger ambient fauna')

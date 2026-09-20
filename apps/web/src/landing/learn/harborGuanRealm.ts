@@ -51,7 +51,7 @@ import { GUAN_SATELLITE_ISLANDS } from './harborFishing'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
 import { stampHarborNpcRoam } from './harborNpcRoam'
-import { isHarborConstrainedGpu } from './harborIosGpu'
+import { harborAllowNpcScoutGlb, isHarborConstrainedGpu } from './harborIosGpu'
 
 /** Local alias so foot clamp can snap to satellite shores. */
 const GUAN_SATELLITE_ISLANDS_FOOT = GUAN_SATELLITE_ISLANDS
@@ -1091,7 +1091,9 @@ function customsOfficer(): THREE.Group {
     g.add(glow)
   }
 
-  void attachHarborCastGlb(g, 'male', { tint: 0x1a6870, tintAmount: 0.36 })
+  if (harborAllowNpcScoutGlb()) {
+    void attachHarborCastGlb(g, 'male', { tint: 0x1a6870, tintAmount: 0.36 })
+  }
   return g
 }
 
@@ -1242,7 +1244,9 @@ function capeTrimmerNpc(): THREE.Group {
     g.add(hostGlow)
   }
 
-  void attachHarborCastGlb(g, 'female', { tint: 0x5a2a48, tintAmount: 0.36 })
+  if (harborAllowNpcScoutGlb()) {
+    void attachHarborCastGlb(g, 'female', { tint: 0x5a2a48, tintAmount: 0.36 })
+  }
   return g
 }
 
