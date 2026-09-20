@@ -17,10 +17,11 @@ Do **not** keep a second copy under `apps/web` — `LegalPage` imports these fil
 **Operator:** Henry Guan, d/b/a JyutTranslate  
 **Privacy contact:** Help@JyutTranslate.com  
 **Governing law (Terms):** California  
-**Age:** 13+
+**Age:** 13+  
+**Last legal refresh:** September 20, 2026 (multi-lang product, guest live/Cam trials, cloud History 14-day TTL, Harbor Quest, Web Push)
 
 **Placeholder:** physical / PO Box notice address — add when available.
 
 Footer links (Privacy · Terms · Delete account · Contact) and auth-panel “agree to Terms and Privacy” are wired.
 
-Re-audit Privacy / Terms after material product changes (new plans, vendors, data types, auth/billing, push). Keep this folder as the single source of truth imported by `LegalPage`.
+Re-audit Privacy / Terms after material product changes (new plans, vendors, data types, auth/billing, push, cloud history, Harbor Quest). Keep this folder as the single source of truth imported by `LegalPage`.

@@ -2,7 +2,7 @@
 
 **App / service:** JyutTranslate (https://www.jyuttranslate.com)  
 **Developer / operator:** Henry Guan, doing business as JyutTranslate  
-**Last updated:** September 5, 2026
+**Last updated:** September 20, 2026
 
 This page explains how to request deletion of your **JyutTranslate** account and associated personal data. Use this URL for Google Play Data safety and other store listings that require an account-deletion request link.
 
@@ -30,13 +30,16 @@ You can also start from Contact in the site footer (`mailto:Help@JyutTranslate.c
 
 When we approve an account deletion request, we delete or de-identify account-linked personal data we control, including where applicable:
 
-- Account and profile information (email, auth identifiers, optional username, saved voice preferences, plan/status flags)
+- Account and profile information (email, auth identifiers, optional username, primary language, saved voice preferences, plan/status flags)
 - Household membership and invite records tied to your account (and related household records when you are the only remaining member / owner, as applicable)
 - Usage / entitlement meters linked to your account (and household pooled meters where they exist solely for that household)
+- Cloud-synced Solo / Conversation **translation history** turns
+- **Harbor Quest** cloud progress and related leaderboard rows
+- **Web Push** subscriptions tied to your account
 - Bug reports you submitted (including optional screenshots/notes)
 - Admin/security records we are not legally required to retain
 
-Translation text, microphone audio, photos, and documents submitted for translation are **not** kept by us as a lasting content archive after processing; there is no separate “translation history” database to delete beyond ephemeral technical handling.
+Microphone audio, photos, and document files submitted for translation are **not** kept by us as a lasting media library after processing. Signed-in History text turns are deleted with the account (they are also pruned after about **14 days** while the account is active). Local browser copies on your devices are cleared only when you clear site data / uninstall; we cannot erase other devices you used.
 
 ---
 

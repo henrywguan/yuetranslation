@@ -2,7 +2,7 @@
 
 **JyutTranslate**  
 **Effective date:** September 1, 2026  
-**Last updated:** September 3, 2026
+**Last updated:** September 20, 2026
 
 These Terms of Service (“**Terms**”) are a contract between you and **Henry Guan, doing business as JyutTranslate** (“**JyutTranslate**,” “**we**,” “**us**,” or “**our**”) governing your use of **https://www.jyuttranslate.com** and related apps, pages, and services that link to these Terms (the “**Service**”).
 
@@ -18,18 +18,20 @@ We do not currently list a physical mailing address. When we obtain a PO Box or 
 
 ## 1. The Service
 
-JyutTranslate provides English ↔ Hong Kong Cantonese (粵語) translation tools, which may include:
+JyutTranslate provides translation and language-learning tools centered on Hong Kong Cantonese (粵語), with additional languages and modes that may include Mandarin, Shanghainese, Sichuanese, Tagalog, Mexican and Peninsular Spanish, Vietnamese, and text-only Philippine languages. Features may include:
 
-- Solo / text translation and Jyutping romanization
-- Interactive character breakdown (tap-to-learn)
+- Solo / text translation and romanization (for example Jyutping)
+- Interactive character breakdown (tap-to-learn) and related pedagogy
 - Conversation / live microphone translation
 - Text-to-speech (tap-to-play and, on eligible plans, auto-speak)
 - Camera features (AR, image upload) and document translation
+- Account Hub preferences (username, voices, primary language, optional Web Push)
+- **Harbor Quest** (`#/learn`) — a Free+ beta Cantonese learning voyage with optional cloud progress sync and public leaderboards
 - Installable progressive web app (PWA) use, including opening shared text or files into the Service where supported by your device
 
-On some devices, live speech may use your browser’s built-in speech recognition when cloud speech services are unavailable.
+On some devices, live speech may use your browser’s built-in speech recognition when cloud speech services are unavailable or for certain locales.
 
-Features, limits, and availability may vary by plan, device, browser permissions (microphone/camera), geography, and configuration. We may modify, suspend, or discontinue features with or without notice, to the extent permitted by law.
+Features, limits, and availability may vary by plan, device, browser permissions (microphone/camera/notifications), geography, and configuration. We may modify, suspend, or discontinue features with or without notice, to the extent permitted by law.
 
 The Service is provided on an **“as available”** basis. We do not guarantee uninterrupted uptime or error-free operation.
 
@@ -56,13 +58,22 @@ You agree to:
 
 We may refuse registration, restrict features, or suspend/terminate accounts for suspected fraud, abuse, non-payment, legal risk, or Terms violations.
 
-To request account deletion, email [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com) (self-serve deletion may not yet be available in the product UI).
+When you are signed in, Solo / Conversation **History** may sync recent translation turns to our servers (about a 14-day retention window), and Harbor Quest progress may sync so gameplay can follow your account. See the Privacy Policy for details.
+
+To request account deletion, follow [Account & data deletion](./account-deletion.md) or email [Help@JyutTranslate.com](mailto:Help@JyutTranslate.com) (self-serve deletion may not yet be available in the product UI).
 
 ---
 
 ## 4. Guest use
 
-Limited features may be available without signing in (for example, certain text translation and tap-to-play voice, subject to change). Guest use is still covered by these Terms and the Privacy Policy. Live microphone and camera/document features generally require sign-in.
+Limited features are available without signing in. Guests may use, subject to change and technical limits:
+
+- Text translation and related pedagogy (metered)
+- Tap-to-play TTS (metered)
+- A monthly **live microphone** trial (for example **30 minutes** / month, as configured)
+- A monthly **Cam AR / Upload** trial measured in **scan credits** (for example **30 scans** / month, as configured)
+
+**Documents** generally require sign-in. Auto-speak remains a paid-plan feature. When a guest trial is exhausted, the Service may ask you to sign in and continue on Free. Guest use is still covered by these Terms and the Privacy Policy. Guest trial identity (cookie, device id, and related server mappings) is described in the Privacy Policy.
 
 ---
 
@@ -70,7 +81,7 @@ Limited features may be available without signing in (for example, certain text 
 
 ### 5.1 Plans
 
-We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, Cam scan credits, document pages, auto-speak, household seats, and similar), and feature comparisons are described on the Service’s pricing page and may change over time.
+We offer Free and paid plans (such as Family and Business). Current pricing, included allowances (live minutes, TTS, Cam scan credits, document pages, auto-speak, household seats, Harbor Quest Free+ beta access, and similar), and feature comparisons are described on the Service’s pricing page and may change over time.
 
 Paid subscriptions are billed through **Stripe** on a recurring monthly or annual basis, as selected at checkout.
 
@@ -121,6 +132,7 @@ You agree not to:
 - Upload malware or infringing content
 - Misrepresent your identity or affiliation
 - Use microphone, camera, or document features to capture others’ private information without appropriate rights/permissions
+- Abuse Harbor Quest (for example, cheating, harassing other sailors via gifts or displays, or manipulating leaderboards) in ways that harm other users or the Service
 - Use outputs as a substitute for professional advice where licensed expertise is required (medical, legal, immigration, emergency, etc.)
 
 We may throttle, suspend, or terminate access for abuse, including excessive use that harms service stability—even on high or “unlimited” tiers that remain metered for fairness and operations.
@@ -129,9 +141,9 @@ We may throttle, suspend, or terminate access for abuse, including excessive use
 
 ## 7. Your content and permissions
 
-You retain ownership of content you submit (text, audio, images, documents).
+You retain ownership of content you submit (text, audio, images, documents), including text that appears in Solo / Conversation History.
 
-You grant JyutTranslate a worldwide, non-exclusive, royalty-free license to host, process, transmit, and display that content **solely as needed to provide the Service you request** (including via subprocessors such as speech, vision, and language-model providers).
+You grant JyutTranslate a worldwide, non-exclusive, royalty-free license to host, process, transmit, and display that content **solely as needed to provide the Service you request** (including History sync for signed-in users, Harbor Quest progress sync, and via subprocessors such as speech, vision, and language-model providers).
 
 **We do not claim ownership of your translations’ source content.**  
 **We do not use your content to train JyutTranslate’s own AI models.**  
