@@ -67,6 +67,7 @@ import {
   harborAllowV2ScenicTrees,
   harborCameraFar,
   harborIosDrawRadius,
+  harborKeepLodChild,
   harborOrbitDistanceMax,
   harborPlaceCount,
   isHarborConstrainedGpu,
@@ -1449,32 +1450,36 @@ function placeDirtRoads(
   const mid = z0 + CHUNK / 2
   const inlandX = BANK + 6.4
   const terraceX = BANK + 18.5
+  const keep = (o: THREE.Object3D) => {
+    o.userData.harborLodKeep = true
+    return o
+  }
   for (const side of [-1, 1] as const) {
     // Riverside packed-earth lane
-    const road = dirtRoadStrip(CHUNK - 0.35, 1.05 + rng() * 0.2)
+    const road = keep(dirtRoadStrip(CHUNK - 0.35, 1.05 + rng() * 0.2))
     road.position.set(side * (BANK + 0.25), 0, mid)
     group.add(road)
     // Winding inland walkway toward the karst (S-curve, not a ruler line)
-    const inland = windingDirtLane(CHUNK - 0.45, 0.95 + rng() * 0.15, 0.55 + rng() * 0.35)
+    const inland = keep(windingDirtLane(CHUNK - 0.45, 0.95 + rng() * 0.15, 0.55 + rng() * 0.35))
     inland.userData.inlandRoad = true
     inland.position.set(side * inlandX, 0.01, mid)
     group.add(inland)
     // High terrace path — layered map depth + gentle weave
-    const terrace = windingDirtLane(CHUNK - 0.55, 0.8 + rng() * 0.12, 0.7 + rng() * 0.4)
+    const terrace = keep(windingDirtLane(CHUNK - 0.55, 0.8 + rng() * 0.12, 0.7 + rng() * 0.4))
     terrace.userData.terraceRoad = true
     terrace.userData.inlandRoad = true
     terrace.position.set(side * terraceX, 0.08, mid)
     group.add(terrace)
     // Village chunks get a short stone approach on the inland road
     if (biomeForChunk(chunkIndex) === 'village' && rng() > 0.35) {
-      const stone = stoneRoadStrip(CHUNK * 0.45, 1.2)
+      const stone = keep(stoneRoadStrip(CHUNK * 0.45, 1.2))
       stone.position.set(side * inlandX, 0.02, z0 + CHUNK * 0.55)
       group.add(stone)
     }
     // Cross-path linking river lane ↔ inland road (walkable roadway)
     if (rng() > 0.2) {
       const crossLen = inlandX - (BANK + 0.25)
-      const cross = dirtRoadStrip(crossLen, 0.85)
+      const cross = keep(dirtRoadStrip(crossLen, 0.85))
       cross.userData.crossPath = true
       cross.rotation.y = Math.PI / 2
       cross.position.set(side * ((BANK + 0.25 + inlandX) / 2), 0.01, z0 + 4 + rng() * (CHUNK - 8))
@@ -1482,21 +1487,21 @@ function placeDirtRoads(
     }
     // Spur toward shore / pier landings
     if (rng() > 0.25) {
-      const spur = dirtRoadStrip(2.8, 0.8)
+      const spur = keep(dirtRoadStrip(2.8, 0.8))
       spur.rotation.y = Math.PI / 2
       spur.position.set(side * (RIVER + 2.35), 0, z0 + 3.5 + rng() * (CHUNK - 7))
       group.add(spur)
     }
     // Foothill path stub reaching toward mountain mist
     if (rng() > 0.4) {
-      const foothillPath = dirtRoadStrip(8.2, 0.75)
+      const foothillPath = keep(dirtRoadStrip(8.2, 0.75))
       foothillPath.userData.foothillPath = true
       foothillPath.rotation.y = Math.PI / 2
       foothillPath.position.set(side * (inlandX + 5.5), 0.05, z0 + 6 + rng() * (CHUNK - 10))
       group.add(foothillPath)
       // Cross-link inland → terrace for stroll / chat loops
       if (rng() > 0.35) {
-        const climb = dirtRoadStrip(terraceX - inlandX, 0.7)
+        const climb = keep(dirtRoadStrip(terraceX - inlandX, 0.7))
         climb.userData.crossPath = true
         climb.userData.terraceClimb = true
         climb.rotation.y = Math.PI / 2
@@ -3467,13 +3472,16 @@ function populateChunk(
       const half = (CHUNK - gap) / 2
       const bankA = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, half), mats.grass)
       bankA.position.set(side * (BANK + 2.2), -0.05, z0 + half / 2)
+      bankA.userData.harborLodKeep = true
       group.add(bankA)
       const bankB = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, half), mats.grass)
       bankB.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK - half / 2)
+      bankB.userData.harborLodKeep = true
       group.add(bankB)
     } else {
       const bank = new THREE.Mesh(new THREE.BoxGeometry(10, 0.35, CHUNK + 0.2), mats.grass)
       bank.position.set(side * (BANK + 2.2), -0.05, z0 + CHUNK / 2)
+      bank.userData.harborLodKeep = true
       group.add(bank)
     }
     // Staggered inland shelves — scalloped pads (WWM layered land, not one slab)
@@ -3487,6 +3495,7 @@ function populateChunk(
       )
       inland.position.set(side * (BANK + 12.5 + scallop), -0.06, z0 + padLen * (i + 0.5))
       inland.userData.inlandShelf = true
+      inland.userData.harborLodKeep = true
       group.add(inland)
       const terrace = new THREE.Mesh(
         new THREE.BoxGeometry(9 + (i % 2) * 0.7, 0.45, padLen + 0.15),
@@ -3494,6 +3503,7 @@ function populateChunk(
       )
       terrace.position.set(side * (BANK + 19.5 + scallop * 0.6), 0.05 + i * 0.02, z0 + padLen * (i + 0.5))
       terrace.userData.terraceShelf = true
+      terrace.userData.harborLodKeep = true
       group.add(terrace)
       const foothill = new THREE.Mesh(
         new THREE.BoxGeometry(12 + (i % 2) * 0.8, 0.9 + i * 0.08, padLen + 0.15),
@@ -3501,6 +3511,7 @@ function populateChunk(
       )
       foothill.position.set(side * (BANK + 28.5 + scallop * 0.4), 0.22 + i * 0.04, z0 + padLen * (i + 0.5))
       foothill.userData.foothillShelf = true
+      foothill.userData.harborLodKeep = true
       group.add(foothill)
     }
     // Valley mist between bank → terrace → foothill (layered depth read)
@@ -3513,6 +3524,7 @@ function populateChunk(
     group.add(mistHigh)
     const shore = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, CHUNK + 0.2), mats.sand)
     shore.position.set(side * (RIVER + 1.1), 0.02, z0 + CHUNK / 2)
+    shore.userData.harborLodKeep = true
     group.add(shore)
   }
 
@@ -4963,6 +4975,7 @@ export function createHarborWorld(
     if (scoutSit) return scoutSit
     const sit = buildHarborProtagonist({
       pose: 'seated',
+      seat: 'chair',
       gender: currentGender,
       appearance: currentAppearance,
     })
@@ -5001,8 +5014,8 @@ export function createHarborWorld(
     scoutWalk.visible = false
     const sit = ensureScoutSit()
     sit.visible = true
-    // seatY is local to the chair group — stack on chair world Y so terraces don't clip
-    sit.position.set(chairWorldPos.x, chairWorldPos.y + seatY - 0.1, chairWorldPos.z)
+    // Seat top in world — GLB chair plant drops hips onto this, not through it.
+    sit.position.set(chairWorldPos.x, chairWorldPos.y + seatY, chairWorldPos.z)
     sit.rotation.set(0, chairEuler.y, 0)
     try {
       playHarborSit()
@@ -5668,10 +5681,14 @@ export function createHarborWorld(
     if (constrainedGpu) {
       const lodR = harborIosDrawRadius(distance)
       const lodR2 = lodR * lodR
-      const lodX = lookX
-      const lodZ = lookZ
+      const lodX = travelMode === 'foot' ? footX : boatX
+      const lodZ = travelMode === 'foot' ? footZ : voyageZ
       for (const g of chunkGroups.values()) {
         for (const child of g.children) {
+          if (harborKeepLodChild(child)) {
+            child.visible = true
+            continue
+          }
           const dx = child.position.x - lodX
           const dz = child.position.z - lodZ
           child.visible = dx * dx + dz * dz <= lodR2

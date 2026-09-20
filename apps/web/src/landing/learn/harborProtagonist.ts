@@ -63,6 +63,11 @@ export type HarborProtagonistOptions = {
   /** Hide the straw traveler hat (character-create preview). */
   bareHead?: boolean
   /**
+   * Land stool vs canoe. Seated defaults to canoe so the boat Scout keeps
+   * the deck plant. Chair sit must not reuse that sink.
+   */
+  seat?: 'canoe' | 'chair'
+  /**
    * @deprecated Anime Scout GLB is always attached. Kept so older smoke callers
    * still type-check; the flag is ignored.
    */
@@ -485,10 +490,12 @@ export function buildHarborProtagonist(opts: HarborProtagonistOptions = {}): THR
   // Always plant the authored anime Scout GLB (land walk = sway/bob).
   g.userData.usesScoutGlb = false
   g.userData.skipScoutGlb = false
-  const wantCanoeGlb = pose === 'seated'
+  const wantChairGlb = pose === 'seated' && opts.seat === 'chair'
+  const wantCanoeGlb = pose === 'seated' && !wantChairGlb
   const wantLandGlb = pose === 'standing' && HARBOR_SCOUT_GLB_LAND
-  if (HARBOR_SCOUT_GLB_ENABLED && (wantCanoeGlb || wantLandGlb)) {
-    void attachHarborScoutGlb(g, gender, { mode: wantCanoeGlb ? 'canoe' : 'standing' })
+  if (HARBOR_SCOUT_GLB_ENABLED && (wantCanoeGlb || wantChairGlb || wantLandGlb)) {
+    const glbMode = wantChairGlb ? 'chair' : wantCanoeGlb ? 'canoe' : 'standing'
+    void attachHarborScoutGlb(g, gender, { mode: glbMode })
   }
 
   return g

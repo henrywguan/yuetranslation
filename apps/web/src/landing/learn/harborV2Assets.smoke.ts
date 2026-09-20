@@ -66,11 +66,14 @@ const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8'
 assert.match(playSrc, /preloadHarborV2Assets/, 'learn preloads V2 kit')
 
 const proSrc = readFileSync(new URL('./harborProtagonist.ts', import.meta.url), 'utf8')
-assert.match(proSrc, /mode: wantCanoeGlb \? 'canoe'/, 'canoe Scout uses GLB plant')
+assert.match(proSrc, /glbMode|wantChairGlb \? 'chair'/, 'land chair Scout uses chair plant')
+assert.match(proSrc, /wantCanoeGlb \? 'canoe'/, 'canoe Scout uses GLB plant')
 assert.match(proSrc, /HARBOR_SCOUT_GLB_LAND/, 'standing Scout respects land GLB gate')
 
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /plantScoutGlbInCanoe/, 'canoe plant helper')
+assert.match(glbSrc, /plantScoutGlbOnChair/, 'land chair plant helper')
+assert.match(glbSrc, /HARBOR_CHAIR_GLB_SINK_Y/, 'chair sink is not the canoe deck sink')
 assert.match(glbSrc, /HARBOR_SCOUT_GLB_LAND = true/, 'land cast plants anime Scout GLB')
 assert.match(glbSrc, /isScoutGlbSubtree|scoutGlbMesh/, 'procedural hide skips Scout GLB meshes')
 assert.match(glbSrc, /attachHarborCastGlb/, 'cast attach helper')

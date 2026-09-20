@@ -1563,6 +1563,9 @@ function main() {
   assert.ok(HARBOR_V2_IOS_SKIP_PRELOAD.includes('willow'), 'iPhone does not preload willow GLBs')
   assert.match(worldSrc2, /harborAllowV2BankMeshes\(\)/, 'village houses / piers / lanterns gate on iPhone')
   assert.match(worldSrc2, /harborIosDrawRadius\(distance\)/, 'iPhone hides far chunk props while orbiting')
+  assert.match(worldSrc2, /harborKeepLodChild|harborLodKeep/, 'iPhone LOD never hides bank / road slabs')
+  assert.match(worldSrc2, /lodX = travelMode === 'foot' \? footX : boatX/, 'iPhone LOD is sailor-centered')
+  assert.match(worldSrc2, /seat: 'chair'/, 'land sit does not reuse the canoe GLB sink')
   assert.equal(harborAllowV2Landmarks(), true, 'Node allows V2 landmark shells')
   assert.equal(harborAllowNpcScoutGlb(), true, 'Node allows NPC Scout GLBs')
   assert.ok(HARBOR_V2_IOS_SKIP_PRELOAD.includes('save-shack'), 'iPhone does not preload Save Shack GLB')
@@ -1857,6 +1860,11 @@ assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
   /HARBOR_CANOE_GLB_SINK_Y/,
   'canoe plant uses a shared deck sink',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /HARBOR_CHAIR_GLB_SINK_Y/,
+  'land chairs use a separate sit sink',
 )
 assert.match(
   readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
