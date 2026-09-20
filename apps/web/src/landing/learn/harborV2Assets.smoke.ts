@@ -87,6 +87,7 @@ const v2Src = readFileSync(new URL('./harborV2Assets.ts', import.meta.url), 'utf
 assert.match(v2Src, /rescaleAndReplantHarborV2Clone/, 'V2 rescales re-plant')
 assert.match(v2Src, /placeholder\.position\.y \+ plantY/, 'mount keeps plant Y')
 assert.match(v2Src, /HARBOR_V2_IOS_SKIP_PRELOAD/, 'iPhone preload skips willow / pier / stall / bridge / lantern kits')
+assert.match(v2Src, /save-shack|HARBOR_V2_IOS_SKIP_PRELOAD/, 'iPhone preload list includes landmark kits')
 
 const doc = readFileSync(new URL('../../../../../docs/harbor-quest/V2-MESH-WORLD.md', import.meta.url), 'utf8')
 assert.match(doc, /mesh-only/i, 'V2 doc locked')

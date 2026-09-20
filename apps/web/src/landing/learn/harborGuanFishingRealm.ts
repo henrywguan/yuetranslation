@@ -18,7 +18,7 @@ import {
   hqRock,
 } from './harborCraft'
 import { harborFigureEars, harborFigureFace, harborFigureHead, harborFigureNeck } from './harborFigure'
-import { isHarborConstrainedGpu } from './harborIosGpu'
+import { harborAllowNpcScoutGlb, isHarborConstrainedGpu } from './harborIosGpu'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
 import { stampHarborNpcRoam } from './harborNpcRoam'
@@ -160,7 +160,9 @@ function fishingOverseer(): THREE.Group {
   keeper.add(bust)
   stampHarborNpcRoam(keeper, { roam: 1.1, faceYaw: 0 })
   g.add(keeper)
-  void attachHarborCastGlb(keeper, 'male', { tint: 0x1e3a48, tintAmount: 0.36 })
+  if (harborAllowNpcScoutGlb()) {
+    void attachHarborCastGlb(keeper, 'male', { tint: 0x1e3a48, tintAmount: 0.36 })
+  }
 
   // Floating fishing icon above overseer (animated in world tick)
   const iconRoot = new THREE.Group()

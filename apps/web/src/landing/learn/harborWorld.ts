@@ -61,7 +61,9 @@ import {
 } from './harborFigure'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
+  harborAllowNpcScoutGlb,
   harborAllowV2BankMeshes,
+  harborAllowV2Landmarks,
   harborAllowV2ScenicTrees,
   harborCameraFar,
   harborIosDrawRadius,
@@ -1845,7 +1847,9 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   g.userData.characterStyle = 'anime-dressup-glb'
   g.userData.scoutCast = true
   attachHarborContactShadow(g, { radius: 0.34, opacity: 0.28 })
-  void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
+  if (harborAllowNpcScoutGlb()) {
+    void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
+  }
   return g
 }
 
@@ -2318,10 +2322,12 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   attachHarborContactShadow(g, { radius: 0.36, opacity: 0.3 })
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
   attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
-  void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
-    tint: robeHex,
-    tintAmount: 0.4,
-  })
+  if (harborAllowNpcScoutGlb()) {
+    void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
+      tint: robeHex,
+      tintAmount: 0.4,
+    })
+  }
   return g
 }
 
@@ -3752,7 +3758,7 @@ function saveShackBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'save-shack'
   g.userData.uniqueLandmark = 'save-shack'
 
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2Landmarks()) {
     mountHarborV2Asset(g, 'save-shack', {
       targetHeight: 2.75,
       name: 'v2-save-shack',
@@ -3887,7 +3893,7 @@ function outfitterBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'outfitter'
   g.userData.uniqueLandmark = 'outfitter'
 
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2Landmarks()) {
     mountHarborV2Asset(g, 'outfitter', {
       targetHeight: 2.55,
       name: 'v2-outfitter',
@@ -3974,7 +3980,7 @@ function bankBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'bank'
   g.userData.uniqueLandmark = 'bank'
 
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2Landmarks()) {
     mountHarborV2Asset(g, 'save-shack', {
       targetHeight: 2.7,
       name: 'v2-bank',
@@ -4109,7 +4115,7 @@ function arenaBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'arena'
   g.userData.uniqueLandmark = 'arena'
 
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2Landmarks()) {
     mountHarborV2Asset(g, 'house-village', {
       targetHeight: 2.65,
       name: 'v2-arena',
@@ -4274,7 +4280,7 @@ function barberBuilding(weather: HarborWeather = 'sunny') {
   g.userData.visitable = 'barber'
   g.userData.uniqueLandmark = 'barber'
 
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2Landmarks()) {
     mountHarborV2Asset(g, 'house-village', {
       targetHeight: 2.45,
       name: 'v2-barber',
@@ -4690,6 +4696,14 @@ export function createHarborWorld(
     }
   }
   scene.add(visitablesRoot)
+  if (constrainedGpu) {
+    const bootR2 = harborIosDrawRadius(8.6) ** 2
+    for (const child of visitablesRoot.children) {
+      const dx = child.position.x
+      const dz = child.position.z
+      child.visible = dx * dx + dz * dz <= bootR2
+    }
+  }
 
   rebuildFxIndex = () => {
     lanternLights.length = 0
@@ -5662,6 +5676,11 @@ export function createHarborWorld(
           const dz = child.position.z - lodZ
           child.visible = dx * dx + dz * dz <= lodR2
         }
+      }
+      for (const child of visitablesRoot.children) {
+        const dx = child.position.x - lodX
+        const dz = child.position.z - lodZ
+        child.visible = dx * dx + dz * dz <= lodR2
       }
     }
 

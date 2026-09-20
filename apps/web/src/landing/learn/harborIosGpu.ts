@@ -6,10 +6,13 @@
  * 2. Zoom-out of 4MB willow GLBs → Safari “A problem repeatedly occurred”.
  * 3. Orbit pan while zoomed out → frustum reveals a river of house-village
  *    GLBs; first-draw shader compile + fill-rate Jetsams the tab.
+ * 4. Walk back to Save Shack after a mission → first-draws the always-live
+ *    landmark GLB cluster (Save / Outfitter / Bank / Arena / Barber + hosts).
  *
- * On constrained GPUs: skip PointLights, skip scenic/bank V2 kits (craft
- * stays), cap zoom, shorten far plane, thin `place()`, hide chunk props
- * beyond a player-centered radius (stable while orbiting). Desktop unchanged.
+ * On constrained GPUs: skip PointLights, skip scenic/bank/landmark V2 kits
+ * (craft stays), skip NPC Scout GLBs, cap zoom, shorten far plane, thin
+ * `place()`, hide chunk + landmark props beyond a player-centered radius.
+ * Desktop unchanged.
  */
 export function isHarborConstrainedGpu(): boolean {
   if (typeof navigator === 'undefined') return false
@@ -34,16 +37,19 @@ export const HARBOR_CAMERA_FAR_IOS = 95
 export const HARBOR_IOS_DRAW_RADIUS = 22
 export const HARBOR_IOS_DRAW_RADIUS_ZOOMED = 15
 
-/** V2 kits iPhone may still instance (canoe + a handful of landmarks). */
-export const HARBOR_V2_IOS_KEEP = ['canoe', 'save-shack', 'outfitter', 'house-village'] as const
+/** V2 kits iPhone may still instance (the canoe only). */
+export const HARBOR_V2_IOS_KEEP = ['canoe'] as const
 
-/** Kits we do not even fetch on iPhone (village houses use craft, not this list’s house-village). */
+/** Kits we do not even fetch on iPhone — landmarks use craft so Save Shack is safe. */
 export const HARBOR_V2_IOS_SKIP_PRELOAD = [
   'willow',
   'pier-module',
   'stall-market',
   'bridge-arch',
   'lantern-paper',
+  'house-village',
+  'save-shack',
+  'outfitter',
 ] as const
 
 /** Scenic willow / pine / cherry / ginkgo / poplar GLBs — iPhone uses craft. */
@@ -54,9 +60,18 @@ export function harborAllowV2ScenicTrees(): boolean {
 /**
  * Village houses, huts, stalls, piers, bridges, shore lanterns, pavilions.
  * iPhone uses the v1 craft fallback so a pan cannot submit a wall of GLBs.
- * Landmarks (Save / Outfitter / Arena / Barber / Bank) still mount V2.
  */
 export function harborAllowV2BankMeshes(): boolean {
+  return !isHarborConstrainedGpu()
+}
+
+/** Save / Outfitter / Bank / Arena / Barber shells — craft on iPhone. */
+export function harborAllowV2Landmarks(): boolean {
+  return !isHarborConstrainedGpu()
+}
+
+/** Pier + landmark hosts skip the Scout GLB on iPhone (procedural body stays). */
+export function harborAllowNpcScoutGlb(): boolean {
   return !isHarborConstrainedGpu()
 }
 
