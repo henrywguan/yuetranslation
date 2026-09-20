@@ -215,12 +215,13 @@ export function isHarborV2AssetReady(id: HarborV2AssetId): boolean {
   return Boolean(ready.get(id))
 }
 
-/** True when chunk/voyage dispose must not free this GPU buffer (shared GLB / grass). */
+/** True when chunk/voyage dispose must not free this GPU buffer (shared GLB / grass / contact shadow). */
 export function isHarborSharedGpuMesh(o: THREE.Object3D): boolean {
   const m = o as THREE.Mesh
   if (!m.isMesh) return false
   return Boolean(
     m.userData.sharedGrassGeo ||
+      m.userData.sharedContactShadowGeo ||
       m.userData.harborGlbMesh ||
       m.userData.harborV2SharedGeo ||
       m.userData.scoutGlbMesh,

@@ -15,7 +15,19 @@
 | Reduced motion | `setReducedMotion` | Honors `prefers-reduced-motion` |
 | No realtime shadow maps | lights + GLB flags | Shadows are the usual mobile killer |
 
-## Grass / nature (this pass)
+## Dynamic light (no shadow maps)
+
+| Lever | Detail |
+|---|---|
+| Weather key vs fill | Lower ambient / stronger sun + darker hemi ground → longer cel bands |
+| Angled directional sun | Not straight-down noon — form reads while sailing |
+| Fake contact discs | Soft dark circles under Scout / canoe / NPCs / remotes (`harborContactShadow.ts`) |
+| Lantern pool pulse | Intensity + distance breathe; night/rain ranges longer |
+| Cel preset punch | Higher thresholds / deeper shadowLift on character & terrain |
+
+**Still avoided:** realtime `PCFSoftShadowMap` / cast+receive on voyage meshes (mobile killer).
+
+## Grass / nature
 
 | Lever | Detail |
 |---|---|
