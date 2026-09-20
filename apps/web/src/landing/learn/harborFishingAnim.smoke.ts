@@ -81,6 +81,7 @@ const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf
 assert.match(worldSrc, /playFishingCatch/, 'world exposes catch pose API')
 assert.match(worldSrc, /tickHarborFishingAnim/, 'world ticks fishing anim')
 assert.match(worldSrc, /yawTarget = toSplash/, 'cast aims camera at splash')
+assert.match(worldSrc, /keep the sailor in frame/, 'cast camera keeps the sailor on screen')
 assert.match(worldSrc, /scoutWalk\.visible = true/, 'foot cast keeps scout visible')
 
 console.log('harborFishingAnim.smoke: ok')

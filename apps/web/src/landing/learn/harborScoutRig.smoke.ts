@@ -56,31 +56,30 @@ assert.equal(
   'walk tick finds bones',
 )
 assert.ok(Math.abs(thighL.rotation.x) > 0.15, `walk swings thigh (got ${thighL.rotation.x})`)
-assert.ok(Math.abs(armR.rotation.y) > 0.1, `walk swings arm (got ${armR.rotation.y})`)
+assert.ok(Math.abs(armR.rotation.x) > 0.15, `walk swings hanging A-pose arm (got ${armR.rotation.x})`)
 
-const idleArmZ0 = armR.rotation.z
+const idleArmX0 = armR.rotation.x
 tickScoutSkeletonLocomotion(wrap, 'idle', 0.4, 0.016, 1, 7.2)
-assert.ok(Math.abs(armR.rotation.z) > 0.1, 'idle drops arms off T-pose')
-assert.notEqual(armR.rotation.z, idleArmZ0)
+assert.ok(Math.abs(armR.rotation.x) < 0.2, 'idle keeps A-pose hang (no T-pose drop)')
+assert.notEqual(armR.rotation.x, idleArmX0)
 
 {
   const thigh0 = thighL.rotation.x
   assert.equal(tickScoutSkeletonLocomotion(wrap, 'sit', 0.2, 0.016, 1, 7.2), true, 'sit tick')
   assert.ok(thighL.rotation.x > 1.0, `sit folds thighs (got ${thighL.rotation.x})`)
   assert.ok(Math.abs(thighL.rotation.x - thigh0) > 0.5, 'sit differs from idle/walk thighs')
-  assert.ok(Math.abs(armR.rotation.z) > 0.35, 'sit drops arms off T-pose bind')
+  assert.ok(armR.rotation.x > 0.35, 'sit brings A-pose hands onto the lap')
 }
 
 assert.equal(tickScoutSkeletonFish(wrap, 'wait', 0.4, 1), true, 'fish wait pose')
 const waitX = armR.rotation.x
-const waitY = armR.rotation.y
-assert.ok(Math.abs(waitY) > 0.4, 'wait holds the rod forward, not T-pose')
+assert.ok(waitX > 0.6, 'wait holds the rod forward from an A-pose hang')
 tickScoutSkeletonFish(wrap, 'catch', 0.55, 1)
-assert.ok(Math.abs(armR.rotation.x - waitX) > 0.2, 'reel pose differs from wait')
+assert.ok(Math.abs(armR.rotation.x - waitX) > 0.4, 'reel pose differs from wait')
 assert.ok(armR.rotation.x < waitX, 'reel lifts the rod')
 
 tickScoutSkeletonFish(wrap, 'cast', 0.15, 1)
-assert.ok(armR.rotation.x < -0.3, 'cast winds the rod back')
+assert.ok(armR.rotation.x < -0.5, 'cast winds the hanging arm back')
 
 {
   const root = new THREE.Group()
@@ -109,23 +108,74 @@ assert.match(animSrc, /tickHarborCastAnim/, 'NPC clones share player armature ti
 {
   const npc = dummyScoutMesh()
   assert.equal(rigHarborScoutGlb(npc), true)
-  const a0 = findScoutBone(npc, SCOUT_BONE.upperArmR)!.rotation.z
+  const a0 = findScoutBone(npc, SCOUT_BONE.upperArmR)!.rotation.x
   tickHarborCastAnim(npc, 0.08, { mode: 'idle' })
   tickHarborCastAnim(npc, 0.08, { mode: 'idle' })
   const arm = findScoutBone(npc, SCOUT_BONE.upperArmR)!
-  assert.ok(Math.abs(arm.rotation.z) > 0.05, 'cast idle drops NPC arms off T-pose')
-  assert.notEqual(arm.rotation.z, a0)
+  assert.ok(Math.abs(arm.rotation.x) > 0.02, 'cast idle breathes NPC A-pose arms')
+  assert.notEqual(arm.rotation.x, a0)
+}
+
+{
+  // A-pose bind: hanging-arm region (right hip sleeve) must move on cast.
+  let mesh: THREE.SkinnedMesh | null = null
+  wrap.traverse((o) => {
+    const m = o as THREE.SkinnedMesh
+    if (m.isSkinnedMesh && !mesh) mesh = m
+  })
+  assert.ok(mesh, 'dummy has SkinnedMesh')
+  const worldSkin = (pred: (v: THREE.Vector3) => boolean) => {
+    mesh!.updateMatrixWorld(true)
+    mesh!.skeleton.update()
+    const pos = mesh!.geometry.getAttribute('position')
+    const idx = mesh!.geometry.getAttribute('skinIndex')
+    const wgt = mesh!.geometry.getAttribute('skinWeight')
+    const bones = mesh!.skeleton.bones
+    const inv = mesh!.skeleton.boneInverses
+    const out: THREE.Vector3[] = []
+    for (let i = 0; i < pos.count; i++) {
+      const v = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i))
+      if (!pred(v)) continue
+      const acc = new THREE.Vector3()
+      for (let k = 0; k < 4; k++) {
+        const w = wgt.array[i * 4 + k]
+        if (w <= 0) continue
+        acc.add(
+          v
+            .clone()
+            .applyMatrix4(new THREE.Matrix4().multiplyMatrices(bones[idx.array[i * 4 + k]].matrixWorld, inv[idx.array[i * 4 + k]]))
+            .multiplyScalar(w),
+        )
+      }
+      out.push(acc)
+    }
+    return out
+  }
+  const sleeve = (v: THREE.Vector3) => v.x > 0.12 && v.y > 0.45 && v.y < 1.15
+  tickScoutSkeletonFish(wrap, 'idle', 0, 1)
+  const bind = worldSkin(sleeve)
+  tickScoutSkeletonFish(wrap, 'cast', 0.18, 1)
+  const wind = worldSkin(sleeve)
+  let max = 0
+  for (let i = 0; i < bind.length; i++) max = Math.max(max, bind[i]!.distanceTo(wind[i]!))
+  assert.ok(bind.length > 8, 'hanging-arm verts exist on dummy')
+  assert.ok(max > 0.18, `cast moves hanging-arm verts (max ${max.toFixed(3)})`)
 }
 
 const fishAnimSrc = readFileSync(new URL('./harborFishingAnim.ts', import.meta.url), 'utf8')
 assert.match(fishAnimSrc, /tickScoutSkeletonFish/, 'cast/reel drive auto-rig bones')
 assert.match(fishAnimSrc, /scout-bone-hand-r|SCOUT_BONE\.handR/, 'rod parents to wrist bone')
+assert.match(fishAnimSrc, /Extra readable torso|glb\.rotation\.x/, 'cast leans the Scout mesh')
 
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /rigHarborScoutGlb/, 'normalize auto-rigs Scout GLB')
 assert.match(glbSrc, /cloneSkeleton|SkeletonUtils/, 'rigged clones keep the skeleton')
 assert.match(glbSrc, /tickScoutSkeletonLocomotion\(glb,\s*'sit'/, 'canoe plant applies sit bones')
 assert.match(glbSrc, /HARBOR_CANOE_GLB_SINK_Y/, 'canoe sink constant exported')
+
+const rigSrc = readFileSync(new URL('./harborScoutRig.ts', import.meta.url), 'utf8')
+assert.match(rigSrc, /A-pose \(sleeves hang/, 'auto-rig places arm bones on hanging sleeves')
+assert.match(rigSrc, /refreshScoutSkeleton/, 'posed bones flush to the SkinnedMesh')
 
 const here = dirname(fileURLToPath(import.meta.url))
 const femaleGlb = join(here, '../../../public/assets/harbor-quest/scout-female.glb')

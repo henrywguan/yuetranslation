@@ -1851,7 +1851,7 @@ assert.match(
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
   /tickScoutSkeletonLocomotion\(glb,\s*'sit'/,
-  'canoe plant folds sit bones (no T-pose bind)',
+  'canoe plant folds sit bones (no frozen A-pose bind)',
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),

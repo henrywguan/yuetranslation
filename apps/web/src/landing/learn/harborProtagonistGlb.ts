@@ -292,8 +292,8 @@ export async function attachHarborCastGlb(
 
 /**
  * Sink the standing Scout so the pelvis sits on the canoe seat, then fold
- * the auto-rig into a sit pose (bind is T-pose — without this the sailor
- * stands through / above the hull with arms out).
+ * the auto-rig into a sit pose (bind is A-pose — without this the sailor
+ * stands through / above the hull).
  * Meshy Scout is a single mesh — do not hide by world AABB (that used to
  * vanish the sailor when the boat left the origin).
  */

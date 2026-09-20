@@ -174,8 +174,9 @@ function attachRodToScout(scout: THREE.Object3D, rod: THREE.Group): THREE.Object
     parent.add(rod)
   }
   if (parent === boneHand) {
-    rod.position.set(0.02, 0.01, 0.04)
-    rod.rotation.set(0.55, 0.15, -1.15)
+    // A-pose wrist hangs by the hip — plant the grip in the palm, shaft up.
+    rod.position.set(0.03, 0.02, 0.05)
+    rod.rotation.set(-0.35, 0.35, -0.85)
   } else if (parent === armR) {
     rod.position.set(0.18, -0.42, 0.06)
     rod.rotation.set(0.35, 0.1, -0.55)
@@ -251,8 +252,23 @@ export function tickHarborFishingAnim(
   const reduced = Boolean(opts.reduced)
   const armR = scout ? findNamed(scout, 'hq-arm-r') : null
   const armL = scout ? findNamed(scout, 'hq-arm-l') : null
-  const skinned = Boolean(scout && tickScoutSkeletonFish(scout, state.phase, next.t, reduced ? 0.25 : 1))
+  const skinned = Boolean(scout && tickScoutSkeletonFish(scout, state.phase, next.t, reduced ? 0.35 : 1))
   const tipLocal = new THREE.Vector3(0, 0.78, 0)
+  const glb = scout ? findNamed(scout, 'scout-glb') : null
+  if (glb && state.phase !== 'idle') {
+    // Extra readable torso even if a sleeve weight is shy — wind back, fling forward.
+    const u = state.phase === 'cast' ? Math.min(1, next.t / (HARBOR_FISH_CAST_MS / 1000)) : 1
+    const wind = state.phase === 'cast' ? (u < 0.35 ? easeInOut(u / 0.35) : 1) : 0
+    const fling = state.phase === 'cast' ? (u < 0.35 ? 0 : easeOutCubic((u - 0.35) / 0.65)) : 0
+    const baseRX = typeof glb.userData.scoutGlbAnimBaseRotX === 'number' ? glb.userData.scoutGlbAnimBaseRotX : 0
+    if (state.phase === 'cast') glb.rotation.x = baseRX + (-0.22 * wind + 0.32 * fling)
+    else if (state.phase === 'wait') glb.rotation.x = baseRX + 0.08
+    else if (state.phase === 'catch') glb.rotation.x = baseRX - 0.16 * easeOutCubic(Math.min(1, next.t / 1.1))
+    else glb.rotation.x = baseRX + 0.1 * (1 - easeInOut(Math.min(1, next.t / 0.7)))
+  } else if (glb && state.phase === 'idle') {
+    const baseRX = typeof glb.userData.scoutGlbAnimBaseRotX === 'number' ? glb.userData.scoutGlbAnimBaseRotX : 0
+    glb.rotation.x = baseRX
+  }
 
   if (state.phase === 'idle') {
     kit.rod.visible = false
@@ -286,12 +302,12 @@ export function tickHarborFishingAnim(
     const wind = u < 0.35 ? easeInOut(u / 0.35) : 1
     const fling = u < 0.35 ? 0 : easeOutCubic((u - 0.35) / 0.65)
     if (armR && !reduced && !skinned) {
-      armR.rotation.x = -0.85 * wind + 1.15 * fling
-      armR.rotation.z = -0.25 + 0.35 * fling
+      armR.rotation.x = -1.15 * wind + 1.55 * fling
+      armR.rotation.z = -0.28 + 0.22 * fling
     }
     if (armL && !reduced && !skinned) {
-      armL.rotation.x = 0.15 * fling
-      armL.rotation.z = 0.12
+      armL.rotation.x = 0.28 * fling
+      armL.rotation.z = 0.14
     }
     kit.rod.rotation.x = -0.4 * wind + 0.55 * fling
     kit.rod.rotation.z = -0.35 + 0.2 * fling
