@@ -43,7 +43,7 @@ First-camera wave: pier NPCs + landmark hosts keep the **procedural anime dress-
 
 Env-kit wave (no new paid meshes): scenic pavilions mount `house-village` + `lantern-paper` (sit bench kept). Pine / cherry / ginkgo / poplar tint the willow kit. Rocks, reeds, stone lanes, plazas, bamboo culms, and lotus pads take V2 grass/dirt maps. Garden shrubs stay cheap craft — a willow GLB per blossom OOMs iPhone WebGL. Chunk dispose must skip shared GLB / grass buffers (`isHarborSharedGpuMesh`). Unique fauna, authored bamboo culms, and 3D Jutsu catalog imports still wait on Henry.
 
-Scout characters: `scout-female.glb` / `scout-male.glb` (canoe plant; land cast waits on skinned + animated GLBs).
+Scout characters: `scout-female.glb` / `scout-male.glb` (Meshy, unskinned A-pose — runtime auto-rig in `harborScoutRig.ts`). Frozen cast/reel on a new mesh → [`GLB-ANIMATION.md`](./GLB-ANIMATION.md).
 
 ## Credit reality
 

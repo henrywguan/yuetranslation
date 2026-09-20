@@ -132,6 +132,8 @@ Today River Scout is a **shared box mannequin**. Most hat / top / bottom / shoes
 
 [KayKit Character Animations](https://kaylousberg.itch.io/kaykit-character-animations) / Character Packs are **CC0**. Harbor may later load clip-only GLBs and retarget onto an original Harbor skeleton. **Do not** ship KayKit knight/mage bodies as Harbor sailors.
 
+How to hand an agent Mixamo/KayKit clips, stills, or a skinned GLB: [`GLB-ANIMATION.md`](./GLB-ANIMATION.md).
+
 ---
 
 ## Maple systems we still want (post v1–v4)

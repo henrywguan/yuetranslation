@@ -99,7 +99,7 @@ Henry opened full creative audio control for Harbor Quest. These beds/cues are *
 | [`scout-male.glb`](./scout-male.glb) | Meshy v7 image→3D from anime male A-pose v2 — textured albedo, Lambert+cel at runtime |
 | [`scout-male-a-pose-v2.png`](./scout-male-a-pose-v2.png) | Anime male A-pose used for the v2 male GLB |
 
-Wire via `harborProtagonistGlb.ts` (standing Scout). Seated canoe stays procedural. Unique wardrobe silhouettes temporarily fall back to the procedural body.
+Wire via `harborProtagonistGlb.ts` (standing Scout) + runtime auto-rig in `harborScoutRig.ts`. These Meshy files are **unskinned A-pose** — not T-pose, no clips. Frozen cast/reel or how to hand the agent new motion: [`../GLB-ANIMATION.md`](../GLB-ANIMATION.md).
 
 **Runtime audio** (copied to `apps/web/public/assets/harbor-quest/`): BGM beds + SFX + VO are wired through `harborBgm.ts` / `harborSampleAudio.ts` / `harborVo.ts` / coin·fish·UI SFX modules.
 
