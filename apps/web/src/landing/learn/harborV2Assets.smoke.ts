@@ -9,6 +9,7 @@ import * as THREE from 'three'
 import {
   HARBOR_V2_ASSETS,
   HARBOR_V2_MESH_ONLY,
+  isHarborSharedGpuMesh,
   rescaleAndReplantHarborV2Clone,
   type HarborV2AssetId,
 } from './harborV2Assets'
@@ -16,6 +17,14 @@ import { setProceduralBodyVisible, syncScoutGlbWithLook } from './harborProtagon
 import { harborBoatHullScale } from './harborBoatKit'
 
 assert.equal(HARBOR_V2_MESH_ONLY, true, 'V2 mesh-only is the live lock')
+
+{
+  const shared = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1))
+  shared.userData.harborGlbMesh = true
+  const unique = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1))
+  assert.equal(isHarborSharedGpuMesh(shared), true, 'GLB mesh is shared GPU')
+  assert.equal(isHarborSharedGpuMesh(unique), false, 'craft mesh may dispose')
+}
 
 const ids = Object.keys(HARBOR_V2_ASSETS) as HarborV2AssetId[]
 assert.ok(ids.includes('canoe'), 'canoe kit')
@@ -47,9 +56,11 @@ assert.match(worldSrc, /attachHarborCastGlb/, 'pier + landmark NPCs keep cast-GL
 assert.match(worldSrc, /applyHarborV2Map/, 'banks and paths use V2 albedos')
 assert.match(worldSrc, /v2-bank|v2-arena|v2-barber/, 'remaining landmarks use V2 shells')
 assert.match(worldSrc, /v2-scenic-pavilion/, 'vista pavilions use house-village shell')
-assert.match(worldSrc, /mountTintedWillow/, 'tree / shrub stand-ins tint the willow kit')
+assert.match(worldSrc, /mountTintedWillow/, 'scenic tree stand-ins tint the willow kit')
 assert.match(worldSrc, /paintHarborV2Map/, 'rocks / reeds / plazas take V2 maps')
 assert.match(worldSrc, /v2-plaza-lantern/, 'terrace plazas mount paper lanterns')
+assert.match(worldSrc, /isHarborSharedGpuMesh/, 'chunk dispose skips shared V2 / Scout GPU buffers')
+assert.doesNotMatch(worldSrc, /v2-flower-standin|v2-rose-standin|v2-hawthorn-standin/, 'dense shrubs are not full willow GLBs')
 
 const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
 assert.match(playSrc, /preloadHarborV2Assets/, 'learn preloads V2 kit')

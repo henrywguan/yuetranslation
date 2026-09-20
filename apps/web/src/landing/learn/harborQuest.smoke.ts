@@ -635,7 +635,7 @@ function main() {
   assert.match(worldSrc, /function rainField/, 'rain particle field')
   assert.match(worldSrc, /const count = 400/, 'lean rain particle budget')
   assert.match(worldSrc, /hqGrassTuft|hqHabitatTallGrass/, 'river plants Habitat-style grass')
-  assert.match(worldSrc, /sharedGrassGeo/, 'chunk dispose skips shared grass geo')
+  assert.match(worldSrc, /sharedGrassGeo|isHarborSharedGpuMesh/, 'chunk dispose skips shared grass / V2 geo')
   assert.match(worldSrc, /userData\.shooting/, 'shooting-star streaks')
   assert.doesNotMatch(worldSrc, /FogExp2\([^)]*0\.022/, 'old dense dark fog removed')
   assert.match(worldSrc, /PerspectiveCamera\(48,\s*1,\s*0\.1,\s*180\)/, 'camera far matches fog veil')
