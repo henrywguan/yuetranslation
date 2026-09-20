@@ -106,7 +106,17 @@ import {
   HARBOR_VISIT_RADIUS,
   HARBOR_SIT_RADIUS,
 } from '../../landing/learn/harborWorld'
-import { isHarborConstrainedGpu } from '../../landing/learn/harborIosGpu'
+import {
+  HARBOR_CAMERA_FAR,
+  HARBOR_CAMERA_FAR_IOS,
+  HARBOR_ORBIT_DISTANCE_MAX,
+  HARBOR_ORBIT_DISTANCE_MAX_IOS,
+  harborAllowV2ScenicTrees,
+  harborCameraFar,
+  harborOrbitDistanceMax,
+  harborPlaceCount,
+  isHarborConstrainedGpu,
+} from '../../landing/learn/harborIosGpu'
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
@@ -646,7 +656,7 @@ function main() {
   assert.match(worldSrc, /sharedGrassGeo|isHarborSharedGpuMesh/, 'chunk dispose skips shared grass / V2 geo')
   assert.match(worldSrc, /userData\.shooting/, 'shooting-star streaks')
   assert.doesNotMatch(worldSrc, /FogExp2\([^)]*0\.022/, 'old dense dark fog removed')
-  assert.match(worldSrc, /PerspectiveCamera\(48,\s*1,\s*0\.1,\s*180\)/, 'camera far matches fog veil')
+  assert.match(worldSrc, /PerspectiveCamera\(48,\s*1,\s*0\.1,\s*harborCameraFar\(\)\)/, 'camera far matches fog veil')
   assert.match(worldSrc, /only dialogue hosts stay|pier dialogue hosts are the only people/, 'decorative NPCs culled')
   assert.doesNotMatch(worldSrc, /Extra villager variety|Villagers & merchants strolling/, 'ambient NPC placement removed')
 
@@ -1523,6 +1533,21 @@ function main() {
   const iosGpuSrc = readFileSync(new URL('./harborIosGpu.ts', import.meta.url), 'utf8')
   assert.match(iosGpuSrc, /iPhone\|iPad\|iPod/, 'constrained-GPU detect covers iPhone / iPad')
   assert.equal(isHarborConstrainedGpu(), false, 'Node smoke is not an iPhone GPU')
+  assert.equal(harborOrbitDistanceMax(), HARBOR_ORBIT_DISTANCE_MAX, 'Node uses desktop zoom max')
+  assert.equal(harborCameraFar(), HARBOR_CAMERA_FAR, 'Node uses desktop camera far')
+  assert.equal(harborAllowV2ScenicTrees(), true, 'Node allows V2 scenic willows')
+  assert.equal(harborPlaceCount(10), 10, 'Node keeps full place() counts')
+  assert.ok(HARBOR_ORBIT_DISTANCE_MAX_IOS < HARBOR_ORBIT_DISTANCE_MAX, 'iPhone zoom-out is shorter than desktop')
+  assert.ok(HARBOR_ORBIT_DISTANCE_MAX_IOS > ORBIT_DISTANCE, 'iPhone can still pinch past mid-zoom')
+  assert.ok(HARBOR_CAMERA_FAR_IOS < HARBOR_CAMERA_FAR, 'iPhone far plane is shorter')
+  assert.match(worldSrc2, /harborAllowV2ScenicTrees\(\)/, 'scenic willow GLBs gate on iPhone')
+  assert.match(worldSrc2, /harborPlaceCount\(n\)/, 'place() thins bank scatter on iPhone')
+  assert.match(worldSrc2, /clampOrbitDistance|harborOrbitDistanceMax/, 'pinch zoom honors iPhone max')
+  assert.match(
+    worldSrc2,
+    /isHarborConstrainedGpu\(\) && side < 0/,
+    'iPhone skips the far-bank terrace pavilion GLB',
+  )
   
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('panda'), 'giant panda ambient fauna')
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('tiger'), 'South China tiger ambient fauna')
@@ -1677,7 +1702,7 @@ function main() {
     'XP is flat text — not a pill',
   )
   assert.match(learnCss, /\.hq-coin-chip\.is-open\s*\{/, 'coin chip open affordance')
-  assert.match(worldSrc2, /const ACTIVE = constrainedGpu \? 2 : 4/, 'iPhone boots 4 live chunks, desktop 7')
+  assert.match(worldSrc2, /const ACTIVE = constrainedGpu \? 1 : 4/, 'iPhone boots 3 live chunks, desktop 7')
   assert.match(worldSrc2, /center - LOOK_BEHIND; i <= center \+ ACTIVE/, 'chunk window uses LOOK_BEHIND')
   assert.match(worldSrc2, /constrainedGpu \? 1 : 1\.25/, 'iPhone DPR capped at 1, desktop 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')
