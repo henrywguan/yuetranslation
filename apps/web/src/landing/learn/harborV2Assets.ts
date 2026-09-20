@@ -6,6 +6,7 @@
  */
 import * as THREE from 'three'
 import { loadHarborGlb } from './harborGlbAssets'
+import { HARBOR_V2_IOS_SKIP_PRELOAD, isHarborConstrainedGpu } from './harborIosGpu'
 
 /** Master switch — when true, river prefers GLB kits over hqBox craft. */
 export const HARBOR_V2_MESH_ONLY = true
@@ -98,7 +99,9 @@ const inflight = new Map<HarborV2AssetId, Promise<THREE.Group | null>>()
 export function preloadHarborV2Assets(): void {
   if (!HARBOR_V2_MESH_ONLY) return
   if (typeof window === 'undefined') return
+  const skip = isHarborConstrainedGpu() ? new Set<string>(HARBOR_V2_IOS_SKIP_PRELOAD) : null
   for (const id of Object.keys(HARBOR_V2_ASSETS) as HarborV2AssetId[]) {
+    if (skip?.has(id)) continue
     void fetchHarborV2Asset(id)
   }
 }

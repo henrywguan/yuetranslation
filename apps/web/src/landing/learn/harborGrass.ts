@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three'
 import { hqBox, hqMat, hqMatTex, hqSoftDirtTexture } from './harborCraft'
+import { harborSkipBankGrass } from './harborIosGpu'
 
 /** Palette locked to Habitat meadow read (lime rim / deep leaf / tan cane). */
 export const HARBOR_GRASS_LOOK = {
@@ -68,6 +69,7 @@ export function hqGrassBlade(
 export function hqGrassTuft(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'grass-tuft'
+  if (harborSkipBankGrass()) return g
   const n = 3 + Math.floor(rng() * 3)
   for (let i = 0; i < n; i++) {
     const h = 0.2 + rng() * 0.32
@@ -95,6 +97,7 @@ export function hqGrassTuft(rng: () => number): THREE.Group {
 export function hqTallGrassClump(rng: () => number): THREE.Group {
   const g = new THREE.Group()
   g.name = 'tall-grass'
+  if (harborSkipBankGrass()) return g
   const n = 4 + Math.floor(rng() * 3)
   for (let i = 0; i < n; i++) {
     const h = 0.34 + rng() * 0.4
@@ -187,6 +190,7 @@ function basalLeaf(rng: () => number): THREE.Mesh {
 export function hqHabitatTallGrass(rng: () => number, radius = 0.48): THREE.Group {
   const g = new THREE.Group()
   g.name = 'habitat-tall-grass'
+  if (harborSkipBankGrass()) return g
   const dirt = hqSoftDirtTexture()
   const base = new THREE.Mesh(
     new THREE.CylinderGeometry(radius * 0.92, radius, 0.08, 7),
