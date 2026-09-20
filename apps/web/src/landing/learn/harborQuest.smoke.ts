@@ -111,10 +111,16 @@ import {
   HARBOR_CAMERA_FAR_IOS,
   HARBOR_ORBIT_DISTANCE_MAX,
   HARBOR_ORBIT_DISTANCE_MAX_IOS,
+  harborAllowV2BankMeshes,
   harborAllowV2ScenicTrees,
   harborCameraFar,
+  harborIosDrawRadius,
   harborOrbitDistanceMax,
   harborPlaceCount,
+  harborSkipBankGrass,
+  HARBOR_IOS_DRAW_RADIUS,
+  HARBOR_IOS_DRAW_RADIUS_ZOOMED,
+  HARBOR_V2_IOS_SKIP_PRELOAD,
   isHarborConstrainedGpu,
 } from '../../landing/learn/harborIosGpu'
 import {
@@ -1548,6 +1554,13 @@ function main() {
     /isHarborConstrainedGpu\(\) && side < 0/,
     'iPhone skips the far-bank terrace pavilion GLB',
   )
+  assert.equal(harborAllowV2BankMeshes(), true, 'Node allows V2 bank houses')
+  assert.equal(harborSkipBankGrass(), false, 'Node keeps Habitat grass')
+  assert.ok(HARBOR_IOS_DRAW_RADIUS_ZOOMED < HARBOR_IOS_DRAW_RADIUS, 'zoomed-out iPhone draw bubble shrinks')
+  assert.ok(harborIosDrawRadius(8.6) > harborIosDrawRadius(10.8), 'pinch-out tightens the iPhone LOD radius')
+  assert.ok(HARBOR_V2_IOS_SKIP_PRELOAD.includes('willow'), 'iPhone does not preload willow GLBs')
+  assert.match(worldSrc2, /harborAllowV2BankMeshes\(\)/, 'village houses / piers / lanterns gate on iPhone')
+  assert.match(worldSrc2, /harborIosDrawRadius\(distance\)/, 'iPhone hides far chunk props while orbiting')
   
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('panda'), 'giant panda ambient fauna')
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('tiger'), 'South China tiger ambient fauna')
@@ -1702,7 +1715,8 @@ function main() {
     'XP is flat text — not a pill',
   )
   assert.match(learnCss, /\.hq-coin-chip\.is-open\s*\{/, 'coin chip open affordance')
-  assert.match(worldSrc2, /const ACTIVE = constrainedGpu \? 1 : 4/, 'iPhone boots 3 live chunks, desktop 7')
+  assert.match(worldSrc2, /const ACTIVE = constrainedGpu \? 1 : 4/, 'iPhone boots 2 live chunks, desktop 7')
+  assert.match(worldSrc2, /LOOK_BEHIND = constrainedGpu \? 0 : 2/, 'iPhone keeps only the chunk ahead')
   assert.match(worldSrc2, /center - LOOK_BEHIND; i <= center \+ ACTIVE/, 'chunk window uses LOOK_BEHIND')
   assert.match(worldSrc2, /constrainedGpu \? 1 : 1\.25/, 'iPhone DPR capped at 1, desktop 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')

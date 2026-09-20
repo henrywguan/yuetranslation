@@ -61,8 +61,10 @@ import {
 } from './harborFigure'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
 import {
+  harborAllowV2BankMeshes,
   harborAllowV2ScenicTrees,
   harborCameraFar,
+  harborIosDrawRadius,
   harborOrbitDistanceMax,
   harborPlaceCount,
   isHarborConstrainedGpu,
@@ -718,7 +720,7 @@ function tree(rng: () => number, leaf: number) {
  */
 function house(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'house-village', {
       targetHeight: 1.8 + rng() * 0.5,
       name: 'v2-house',
@@ -757,7 +759,7 @@ function house(rng: () => number) {
 /** Compact courtyard wing — V2 house mesh when available. */
 function courtyardWing(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'house-village', {
       targetHeight: 1.35 + rng() * 0.4,
       name: 'v2-courtyard',
@@ -779,7 +781,7 @@ function courtyardWing(rng: () => number) {
 /** Raised riverside shop — V2 market stall mesh when available. */
 function stiltShop(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'stall-market', {
       targetHeight: 1.5 + rng() * 0.35,
       name: 'v2-stall',
@@ -818,7 +820,7 @@ function hut(rng: () => number) {
   // Mix: half courtyard wing, half small tiled cottage so villages feel varied
   if (rng() > 0.55) return courtyardWing(rng)
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'house-village', {
       targetHeight: 1.4 + rng() * 0.45,
       name: 'v2-hut',
@@ -1073,7 +1075,7 @@ function attachLanternLight(
 function lantern(weather: HarborWeather = 'sunny') {
   const g = new THREE.Group()
   g.userData.harborLantern = true
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     g.add(hqPost(0.05, 0.07, 1.35, P.woodDark, 0, 0.68, 0, 8))
     mountHarborV2Asset(g, 'lantern-paper', {
       targetHeight: 0.34,
@@ -1206,7 +1208,7 @@ function scenicPavilion(rng: () => number) {
   const g = new THREE.Group()
   g.name = 'scenic-pavilion'
   g.userData.scenicPavilion = true
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'house-village', {
       targetHeight: 1.7 + rng() * 0.28,
       name: 'v2-scenic-pavilion',
@@ -1295,7 +1297,7 @@ function terracePlaza(rng: () => number) {
   g.add(ring)
   // Central lantern pedestal
   g.add(hqPost(0.08, 0.1, 0.45, P.stoneDark, 0, 0.3, 0, 8))
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'lantern-paper', {
       targetHeight: 0.3,
       name: 'v2-plaza-lantern',
@@ -1597,7 +1599,7 @@ function placeScenicMapFeatures(
 function pierSegment() {
   const g = new THREE.Group()
   g.userData.pier = true
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'pier-module', {
       targetHeight: 1.05,
       name: 'v2-pier',
@@ -2639,7 +2641,7 @@ export const HARBOR_XIANGYUN = true as const
 
 function bridge() {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2BankMeshes()) {
     mountHarborV2Asset(g, 'bridge-arch', {
       targetHeight: 1.7,
       name: 'v2-bridge',
@@ -4599,9 +4601,9 @@ export function createHarborWorld(
     'dirt',
   )
   const chunkGroups = new Map<number, THREE.Group>()
-  /** Chunks ahead of the canoe — iPhone boots 3 live chunks, desktop 7. */
+  /** Chunks ahead of the canoe — iPhone boots 2 live chunks, desktop 7. */
   const ACTIVE = constrainedGpu ? 1 : 4
-  const LOOK_BEHIND = constrainedGpu ? 1 : 2
+  const LOOK_BEHIND = constrainedGpu ? 0 : 2
   /** Cached PointLights for flicker (avoids full scene.traverse each frame). */
   const lanternLights: THREE.PointLight[] = []
   /** Cached fauna / bubbles / petals for idle motion (avoids per-chunk traverse). */
@@ -5646,6 +5648,22 @@ export function createHarborWorld(
 
     ensureChunks(voyageZ)
     if (fxIndexDirty) rebuildFxIndex()
+
+    // iPhone: hide chunk props outside a sailor-centered bubble so an orbit
+    // pan cannot first-draw a whole river of meshes (shader compile + Jetsam).
+    if (constrainedGpu) {
+      const lodR = harborIosDrawRadius(distance)
+      const lodR2 = lodR * lodR
+      const lodX = lookX
+      const lodZ = lookZ
+      for (const g of chunkGroups.values()) {
+        for (const child of g.children) {
+          const dx = child.position.x - lodX
+          const dz = child.position.z - lodZ
+          child.visible = dx * dx + dz * dz <= lodR2
+        }
+      }
+    }
 
     if (!reduced) {
       tickVipGearAnims(boat, waterPhase)
