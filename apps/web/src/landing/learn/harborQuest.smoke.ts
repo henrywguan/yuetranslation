@@ -106,6 +106,7 @@ import {
   HARBOR_VISIT_RADIUS,
   HARBOR_SIT_RADIUS,
 } from '../../landing/learn/harborWorld'
+import { isHarborConstrainedGpu } from '../../landing/learn/harborIosGpu'
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
@@ -587,6 +588,8 @@ function main() {
   )
   assert.match(canvasSrc, /nametagFrame/, 'canvas accepts showoff nametagFrame')
   assert.match(canvasSrc, /localUsernameRef/, 'username kept across realm remount via ref')
+  assert.match(canvasSrc, /try \{[\s\S]*createHarborWorld/, 'canvas catches WebGL boot so iPhone stays on the HUD')
+  assert.match(canvasSrc, /harborBootFailed/, 'failed boot marks the canvas so CSS can hide the black surface')
   assert.match(stageSrc, /nametagFrame=\{nametagFrame\}/, 'HarborStage forwards nametagFrame')
   assert.match(worldSrc, /setNametagFrame/, 'world can swap nametag frame')
   assert.match(worldSrc, /yawTarget\s*-=\s*dx\s*\*\s*ORBIT_SENS/, 'drag right decreases yaw (camera swings left)')
@@ -1175,6 +1178,11 @@ function main() {
   assert.match(playSrc, /setProperty\('--hq-osrs-strip'/, 'writes measured strip CSS var')
   assert.doesNotMatch(panelSrc, /Cast off/, 'teach has no second Cast-off row under parchment')
   assert.match(learnCss, /\.learn-page--immersive[\s\S]*?background:\s*#c8f0ff/, 'immersive shell uses max-bright sunny clear color')
+  assert.match(
+    learnCss,
+    /\.hq-world-canvas\[data-harbor-boot-failed\][\s\S]*?visibility:\s*hidden/,
+    'dead WebGL canvas hides so the sky + HUD stay visible',
+  )
   // LevelClear fullscreen overlay is #061018 — must not inherit light-page --ink (#07131f).
   // Dual-class selector must beat `.hq-clear { max-width: 28rem }` or desktop shows sunny gutters.
   assert.match(learnCss, /\.hq-clear\.hq-clear--immersive\s*\{[^}]*--ink:\s*#e8f4ff/s, 'immersive clear resets --ink for dark panel')
@@ -1508,6 +1516,13 @@ function main() {
   assert.match(worldSrc2, /dialogueTapFromObject/, 'raycast resolves NPC / bubble taps')
   assert.ok(HARBOR_VISIT_RADIUS >= 3, 'visit radius reaches landmark hosts')
   assert.match(worldSrc2, /harborLanternIntensity|PointLight/, 'lantern ambiance lights')
+  assert.match(worldSrc2, /function addHarborLanternPointLight/, 'lantern PointLights go through one iOS-safe factory')
+  assert.match(worldSrc2, /isHarborConstrainedGpu\(\)\) return null/, 'iPhone skips PointLights (cel + NUM_POINT_LIGHTS crash)')
+  assert.match(worldSrc2, /constrainedGpu \? 'default' : 'high-performance'/, 'iPhone uses default GPU powerPreference')
+  assert.match(worldSrc2, /constrainedGpu \? 'mediump' : 'highp'/, 'iPhone uses mediump shaders')
+  const iosGpuSrc = readFileSync(new URL('./harborIosGpu.ts', import.meta.url), 'utf8')
+  assert.match(iosGpuSrc, /iPhone\|iPad\|iPod/, 'constrained-GPU detect covers iPhone / iPad')
+  assert.equal(isHarborConstrainedGpu(), false, 'Node smoke is not an iPhone GPU')
   
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('panda'), 'giant panda ambient fauna')
   assert.ok(HARBOR_AMBIENT_FAUNA.includes('tiger'), 'South China tiger ambient fauna')
@@ -1662,9 +1677,9 @@ function main() {
     'XP is flat text — not a pill',
   )
   assert.match(learnCss, /\.hq-coin-chip\.is-open\s*\{/, 'coin chip open affordance')
-  assert.match(worldSrc2, /const ACTIVE = 4/, 'wider active river chunks for long voyage')
-  assert.match(worldSrc2, /center - 2; i <= center \+ ACTIVE/, 'chunk window ±2 around sailor')
-  assert.match(worldSrc2, /setPixelRatio\([^)]*1\.25\)/, 'DPR capped at 1.25')
+  assert.match(worldSrc2, /const ACTIVE = constrainedGpu \? 2 : 4/, 'iPhone boots 4 live chunks, desktop 7')
+  assert.match(worldSrc2, /center - LOOK_BEHIND; i <= center \+ ACTIVE/, 'chunk window uses LOOK_BEHIND')
+  assert.match(worldSrc2, /constrainedGpu \? 1 : 1\.25/, 'iPhone DPR capped at 1, desktop 1.25')
   assert.match(worldSrc2, /lanternLights/, 'lantern flicker uses cached lights')
   assert.match(worldSrc2, /animNodes/, 'fauna motion uses cached nodes')
   assert.match(worldSrc2, /48 \* 48/, 'far fauna/petals skip anim work')

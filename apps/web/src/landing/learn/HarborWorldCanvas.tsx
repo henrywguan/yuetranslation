@@ -81,18 +81,26 @@ export function HarborWorldCanvas({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const world = createHarborWorld(canvas, {
-      hue,
-      reducedMotion,
-      look,
-      gender,
-      appearance,
-      realm,
-      nametagFrame: nametagFrameRef.current,
-      onVisitable: (id) => onVisitableRef.current?.(id),
-      onDialogueNpc: (tap) => onDialogueNpcRef.current?.(tap),
-      onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
-    })
+    let world: HarborWorldHandle
+    try {
+      world = createHarborWorld(canvas, {
+        hue,
+        reducedMotion,
+        look,
+        gender,
+        appearance,
+        realm,
+        nametagFrame: nametagFrameRef.current,
+        onVisitable: (id) => onVisitableRef.current?.(id),
+        onDialogueNpc: (tap) => onDialogueNpcRef.current?.(tap),
+        onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
+      })
+    } catch (err) {
+      // Uncaught boot used to unmount the immersive page to a black void.
+      console.error('[harbor] WebGL boot failed', err)
+      canvas.dataset.harborBootFailed = '1'
+      return
+    }
     worldRef.current = world
     if (worldApiRef) worldApiRef.current = world
 

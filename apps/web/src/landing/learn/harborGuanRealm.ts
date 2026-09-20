@@ -51,6 +51,7 @@ import { GUAN_SATELLITE_ISLANDS } from './harborFishing'
 import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
 import { stampHarborNpcRoam } from './harborNpcRoam'
+import { isHarborConstrainedGpu } from './harborIosGpu'
 
 /** Local alias so foot clamp can snap to satellite shores. */
 const GUAN_SATELLITE_ISLANDS_FOOT = GUAN_SATELLITE_ISLANDS
@@ -984,12 +985,14 @@ function returnPortalMarker(): THREE.Group {
   ring.userData.glowBaseIntensity = 0.95
   g.add(ring)
 
-  const portalLight = new THREE.PointLight(0x5ec8e0, 1.8, 8, 2)
-  portalLight.position.set(0, 1.0, 0.35)
-  portalLight.userData.harborLanternLight = true
-  portalLight.userData.baseIntensity = 1.8
-  portalLight.userData.portalGlow = true
-  g.add(portalLight)
+  if (!isHarborConstrainedGpu()) {
+    const portalLight = new THREE.PointLight(0x5ec8e0, 1.8, 8, 2)
+    portalLight.position.set(0, 1.0, 0.35)
+    portalLight.userData.harborLanternLight = true
+    portalLight.userData.baseIntensity = 1.8
+    portalLight.userData.portalGlow = true
+    g.add(portalLight)
+  }
 
   g.add(hqBox(0.28, 0.2, 0.08, 0x3dcfb6, 0, 1.72, 0.1))
   g.add(hqBox(0.5, 0.08, 0.06, P.trimGold, 0, 1.72, 0.12))
@@ -1079,12 +1082,14 @@ function customsOfficer(): THREE.Group {
   g.add(bubble)
 
   // Soft host glow on tunic trim
-  const glow = new THREE.PointLight(0x3dcfb6, 0.85, 4, 2)
-  glow.position.set(0, 1.0, 0.3)
-  glow.userData.harborLanternLight = true
-  glow.userData.baseIntensity = 0.85
-  glow.userData.specialHostGlow = true
-  g.add(glow)
+  if (!isHarborConstrainedGpu()) {
+    const glow = new THREE.PointLight(0x3dcfb6, 0.85, 4, 2)
+    glow.position.set(0, 1.0, 0.3)
+    glow.userData.harborLanternLight = true
+    glow.userData.baseIntensity = 0.85
+    glow.userData.specialHostGlow = true
+    g.add(glow)
+  }
 
   void attachHarborCastGlb(g, 'male', { tint: 0x1a6870, tintAmount: 0.36 })
   return g
@@ -1123,12 +1128,14 @@ function capeLoomStall(): THREE.Group {
   g.add(hqPost(0.07, 0.08, 0.12, 0xc04068, 0.22, 0.68, 0.15, 6))
 
   // Soft loom glow
-  const glow = new THREE.PointLight(0xc4a060, 1.1, 6, 2)
-  glow.position.set(0, 1.0, 0.2)
-  glow.userData.harborLanternLight = true
-  glow.userData.baseIntensity = 1.1
-  glow.userData.specialHostGlow = true
-  g.add(glow)
+  if (!isHarborConstrainedGpu()) {
+    const glow = new THREE.PointLight(0xc4a060, 1.1, 6, 2)
+    glow.position.set(0, 1.0, 0.2)
+    glow.userData.harborLanternLight = true
+    glow.userData.baseIntensity = 1.1
+    glow.userData.specialHostGlow = true
+    g.add(glow)
+  }
 
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.42, 0.58, 16),
@@ -1226,12 +1233,14 @@ function capeTrimmerNpc(): THREE.Group {
   bubble.userData.bubbleBaseY = bubble.position.y
   g.add(bubble)
 
-  const hostGlow = new THREE.PointLight(0xc4a060, 0.9, 4, 2)
-  hostGlow.position.set(0, 1.0, 0.3)
-  hostGlow.userData.harborLanternLight = true
-  hostGlow.userData.baseIntensity = 0.9
-  hostGlow.userData.specialHostGlow = true
-  g.add(hostGlow)
+  if (!isHarborConstrainedGpu()) {
+    const hostGlow = new THREE.PointLight(0xc4a060, 0.9, 4, 2)
+    hostGlow.position.set(0, 1.0, 0.3)
+    hostGlow.userData.harborLanternLight = true
+    hostGlow.userData.baseIntensity = 0.9
+    hostGlow.userData.specialHostGlow = true
+    g.add(hostGlow)
+  }
 
   void attachHarborCastGlb(g, 'female', { tint: 0x5a2a48, tintAmount: 0.36 })
   return g
