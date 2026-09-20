@@ -60,7 +60,13 @@ import {
   harborFigureTorso,
 } from './harborFigure'
 import { applyHarborCel, makeHarborIlmMap } from './harborCelShader'
-import { isHarborConstrainedGpu } from './harborIosGpu'
+import {
+  harborAllowV2ScenicTrees,
+  harborCameraFar,
+  harborOrbitDistanceMax,
+  harborPlaceCount,
+  isHarborConstrainedGpu,
+} from './harborIosGpu'
 import { auditHarborObject } from './harborMeshAudit'
 import {
   buildGuanHarborScene,
@@ -533,7 +539,7 @@ export function clampOrbitPitch(pitch: number): number {
 }
 
 export function clampOrbitDistance(distance: number): number {
-  return Math.min(ORBIT_DISTANCE_MAX, Math.max(ORBIT_DISTANCE_MIN, distance))
+  return Math.min(harborOrbitDistanceMax(), Math.max(ORBIT_DISTANCE_MIN, distance))
 }
 
 /**
@@ -682,7 +688,7 @@ function paintHarborV2Map(root: THREE.Object3D, kind: 'grass' | 'dirt', repeat =
 /** River willow — V2 mesh when available; v1 faceted canopy fallback. */
 function tree(rng: () => number, leaf: number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2ScenicTrees()) {
     mountHarborV2Asset(g, 'willow', {
       targetHeight: 2.6 + rng() * 1.1,
       name: 'v2-willow',
@@ -1555,6 +1561,8 @@ function placeScenicMapFeatures(
   // Hills + forest + village get vista pavilions on the high terrace
   if (biome === 'hills' || biome === 'forest' || biome === 'village') {
     for (const side of [-1, 1] as const) {
+      // iPhone: one terrace pavilion per chunk — each is a house-village GLB.
+      if (isHarborConstrainedGpu() && side < 0) continue
       if (rng() > 0.55 && biome !== 'hills') continue
       const pav = scenicPavilion(rng)
       pav.position.set(
@@ -2500,7 +2508,7 @@ function fish() {
 
 function pine(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2ScenicTrees()) {
     mountTintedWillow(g, rng, {
       height: 2.8 + rng() * 1.4,
       name: 'v2-pine-standin',
@@ -2526,7 +2534,7 @@ function pine(rng: () => number) {
 /** Low-poly sakura — dark trunk + clustered pink blossom clouds. */
 function cherryBlossom(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2ScenicTrees()) {
     mountTintedWillow(g, rng, {
       height: 2.2 + rng() * 0.9,
       name: 'v2-cherry-standin',
@@ -2558,7 +2566,7 @@ function cherryBlossom(rng: () => number) {
 
 function ginkgo(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2ScenicTrees()) {
     mountTintedWillow(g, rng, {
       height: 2.4 + rng() * 1.0,
       name: 'v2-ginkgo-standin',
@@ -2586,7 +2594,7 @@ function ginkgo(rng: () => number) {
 
 function poplar(rng: () => number) {
   const g = new THREE.Group()
-  if (HARBOR_V2_MESH_ONLY) {
+  if (HARBOR_V2_MESH_ONLY && harborAllowV2ScenicTrees()) {
     mountTintedWillow(g, rng, {
       height: 3.0 + rng() * 1.2,
       name: 'v2-poplar-standin',
@@ -3169,7 +3177,8 @@ function place(
   xMax: number,
   z0: number,
 ) {
-  for (let i = 0; i < n; i++) {
+  const count = harborPlaceCount(n)
+  for (let i = 0; i < count; i++) {
     const obj = factory()
     const side = rng() > 0.5 ? 1 : -1
     obj.position.set(side * (xMin + rng() * (xMax - xMin)), 0, z0 + 1.5 + rng() * (CHUNK - 3))
@@ -4500,11 +4509,11 @@ export function createHarborWorld(
     weather === 'sunny' ? 1.42 : weather === 'cloudy' ? 1.12 : weather === 'rainy' ? 1.0 : 0.92
 
   const scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(look.fog, look.fogDensity)
+  scene.fog = new THREE.FogExp2(look.fog, look.fogDensity * (constrainedGpu ? 1.35 : 1))
   scene.background = new THREE.Color(look.sky)
 
   // Far plane matches denser fog — no GPU spend past the veil
-  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 180)
+  const camera = new THREE.PerspectiveCamera(48, 1, 0.1, harborCameraFar())
   camera.position.set(0, 4.2, -6.5)
 
   const amb = new THREE.AmbientLight(look.amb, look.ambI)
@@ -4590,8 +4599,8 @@ export function createHarborWorld(
     'dirt',
   )
   const chunkGroups = new Map<number, THREE.Group>()
-  /** Chunks ahead of the canoe — iPhone boots 4 live chunks, desktop 7. */
-  const ACTIVE = constrainedGpu ? 2 : 4
+  /** Chunks ahead of the canoe — iPhone boots 3 live chunks, desktop 7. */
+  const ACTIVE = constrainedGpu ? 1 : 4
   const LOOK_BEHIND = constrainedGpu ? 1 : 2
   /** Cached PointLights for flicker (avoids full scene.traverse each frame). */
   const lanternLights: THREE.PointLight[] = []
