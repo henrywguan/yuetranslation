@@ -34,6 +34,7 @@ import {
   hqHabitatTallGrass,
   hqTallGrassClump,
 } from './harborGrass'
+import { attachHarborContactShadow } from './harborContactShadow'
 import {
   HARBOR_V2_MESH_ONLY,
   applyHarborV2Map,
@@ -409,12 +410,13 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
     fog: 0xe8f8ff,
     fogDensity: 0.0056,
     amb: 0xffffff,
-    ambI: 1.65,
-    sun: 0xfffaf0,
-    sunI: 2.55,
+    // Lower fill vs key → longer cel lit/shadow bands (dynamic daylight)
+    ambI: 1.32,
+    sun: 0xfff2dc,
+    sunI: 2.95,
     hemiSky: 0xf0fbff,
-    hemiGround: 0x98b878,
-    hemiI: 1.05,
+    hemiGround: 0x6a9050,
+    hemiI: 0.92,
     cloudTones: [0xffffff, 0xfffaf5, 0xfff5e8],
     cloudCount: 9,
     cloudOpacity: 0.92,
@@ -425,13 +427,13 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
     sky: 0x9ab0c0,
     fog: 0xb0c0cc,
     fogDensity: 0.012,
-    amb: 0xd8e0e8,
-    ambI: 1.15,
+    amb: 0xd0d8e0,
+    ambI: 0.98,
     sun: 0xe8eef4,
-    sunI: 0.75,
+    sunI: 0.95,
     hemiSky: 0xc8d4e0,
-    hemiGround: 0x6a7a68,
-    hemiI: 0.7,
+    hemiGround: 0x4a5a48,
+    hemiI: 0.62,
     cloudTones: [0xd0d4d8, 0xc0c8d0, 0xb8c0c8, 0xe0e4e8],
     cloudCount: 18,
     cloudOpacity: 0.88,
@@ -442,13 +444,13 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
     sky: 0x6a7888,
     fog: 0x788898,
     fogDensity: 0.018,
-    amb: 0xb0bcc8,
-    ambI: 0.95,
+    amb: 0xa8b4c0,
+    ambI: 0.82,
     sun: 0xc8d0d8,
-    sunI: 0.45,
+    sunI: 0.55,
     hemiSky: 0x98a8b8,
-    hemiGround: 0x4a5a50,
-    hemiI: 0.55,
+    hemiGround: 0x3a4a40,
+    hemiI: 0.48,
     cloudTones: [0x687888, 0x788898, 0x586878, 0x8898a8],
     cloudCount: 20,
     cloudOpacity: 0.9,
@@ -459,13 +461,13 @@ export const HARBOR_WEATHER_LOOK: Record<HarborWeather, WeatherLook> = {
     sky: 0x0a1830,
     fog: 0x102038,
     fogDensity: 0.01,
-    amb: 0x607898,
-    ambI: 0.55,
+    amb: 0x506888,
+    ambI: 0.48,
     sun: 0xc8d8ff,
-    sunI: 0.35,
+    sunI: 0.42,
     hemiSky: 0x183058,
-    hemiGround: 0x1a2830,
-    hemiI: 0.4,
+    hemiGround: 0x121820,
+    hemiI: 0.36,
     cloudTones: [0x304868, 0x283858, 0x406080],
     cloudCount: 7,
     cloudOpacity: 0.55,
@@ -1001,10 +1003,11 @@ function chineseFringeFlower(rng: () => number) {
 
 /** Warm point-light strength — brighter at night / dark weather. */
 export function harborLanternIntensity(weather: HarborWeather): number {
-  if (weather === 'night') return 1.65
-  if (weather === 'rainy') return 1.1
-  if (weather === 'cloudy') return 0.55
-  return 0.14
+  if (weather === 'night') return 2.05
+  if (weather === 'rainy') return 1.35
+  if (weather === 'cloudy') return 0.78
+  // Day still gets a soft pool so banks feel lit, not washed flat
+  return 0.22
 }
 
 function glowMat(color: number, emissive: number, intensity = 0.9) {
@@ -1027,10 +1030,11 @@ function attachLanternLight(
   scale = 1,
 ) {
   const base = harborLanternIntensity(weather) * scale
-  const light = new THREE.PointLight(color, base, 7.5, 2)
+  const light = new THREE.PointLight(color, base, weather === 'night' ? 9.5 : weather === 'rainy' ? 8.2 : 7.5, 2)
   light.position.set(0, y, 0)
   light.userData.harborLanternLight = true
   light.userData.baseIntensity = base
+  light.userData.baseDistance = light.distance
   parent.add(light)
   return light
 }
@@ -1806,6 +1810,7 @@ function chineseNpc(role: HarborNpcRole, rng: () => number) {
   g.userData.npcGender = gender
   g.userData.characterStyle = 'anime-dressup-glb'
   g.userData.scoutCast = true
+  attachHarborContactShadow(g, { radius: 0.34, opacity: 0.28 })
   void attachHarborCastGlb(g, gender, { tint: colors.robe, tintAmount: 0.34 })
   return g
 }
@@ -1884,13 +1889,14 @@ function attachSpecialHostGlow(npc: THREE.Object3D, tint: number, weather: Harbo
 
   const light = new THREE.PointLight(
     tint,
-    weather === 'night' ? 1.35 : weather === 'sunny' ? 0.45 : 0.85,
-    5.5,
+    weather === 'night' ? 1.75 : weather === 'sunny' ? 0.62 : 1.05,
+    weather === 'night' ? 7.2 : 5.8,
     2,
   )
   light.position.set(0, 1.15, 0.15)
   light.userData.harborLanternLight = true
   light.userData.baseIntensity = light.intensity
+  light.userData.baseDistance = light.distance
   light.userData.specialHostLight = true
   npc.add(light)
 }
@@ -2283,6 +2289,7 @@ function landmarkHostNpc(id: HarborLandmarkHostId, weather: HarborWeather) {
   }
 
   g.scale.setScalar(bodyScale)
+  attachHarborContactShadow(g, { radius: 0.36, opacity: 0.3 })
   attachSpecialHostGlow(g, LANDMARK_GLOW[id], weather)
   attachDialogueBubble(g, HARBOR_LANDMARK_HOST_LABEL[id])
   void attachHarborCastGlb(g, LANDMARK_HOST_GENDER[id], {
@@ -4515,7 +4522,12 @@ export function createHarborWorld(
   const amb = new THREE.AmbientLight(look.amb, look.ambI)
   scene.add(amb)
   const sun = new THREE.DirectionalLight(look.sun, look.sunI)
-  sun.position.set(weather === 'night' ? 2 : -4, weather === 'night' ? 6 : 14, 2)
+  // Angled key light — longer cel bands than straight-down noon
+  sun.position.set(
+    weather === 'night' ? 2.5 : weather === 'sunny' ? -7.5 : -5,
+    weather === 'night' ? 5.5 : weather === 'sunny' ? 10.5 : 12,
+    weather === 'night' ? -1.5 : weather === 'sunny' ? 5.5 : 2.5,
+  )
   scene.add(sun)
   const fill = new THREE.HemisphereLight(look.hemiSky, look.hemiGround, look.hemiI)
   scene.add(fill)
@@ -4719,6 +4731,8 @@ export function createHarborWorld(
   let scout = boat.getObjectByName('river-scout') as THREE.Object3D | null
   if (scout) applyLookToProtagonist(scout, currentLook)
   else applyLookToProtagonist(boat, currentLook)
+  // Soft contact disc under the canoe (no realtime shadow map)
+  attachHarborContactShadow(boat, { radius: 0.55, opacity: 0.26, scaleX: 1.7, scaleZ: 0.72, y: 0.02 })
   // Standing Scout for banks / roads — canoe stays moored while they walk
   const scoutWalk = buildHarborProtagonist({ pose: 'standing', gender: currentGender, appearance: currentAppearance })
   scoutWalk.name = 'river-scout-walk'
@@ -4726,6 +4740,7 @@ export function createHarborWorld(
   scene.add(scoutWalk)
   applyLookToProtagonist(scoutWalk, currentLook)
   ensureHarborProtagonistLimbs(scoutWalk)
+  attachHarborContactShadow(scoutWalk, { radius: 0.38, opacity: 0.32 })
   let scoutAnim: HarborProtagonistAnimState = { mode: 'idle', t: 0 }
   /** Seated land mesh — shown when the sailor sits on a chair / stool. */
   let scoutSit: THREE.Object3D | null = null
@@ -4941,6 +4956,7 @@ export function createHarborWorld(
     sit.visible = false
     scene.add(sit)
     applyLookToProtagonist(sit, currentLook)
+    attachHarborContactShadow(sit, { radius: 0.42, opacity: 0.3, scaleX: 1.15, scaleZ: 0.85 })
     scoutSit = sit
     return sit
   }
@@ -5824,11 +5840,18 @@ if (o.userData.cigaretteSmoke && !reduced) {
       if (now >= flashUntil) flash = null
     }
 
-    // Lantern / portal flicker — reads strongest at night & dark weather
+    // Lantern / portal flicker — warm breathing pools (strongest at night)
     if (!reduced) {
       for (const light of lanternLights) {
         const base = (light.userData.baseIntensity as number) ?? light.intensity
-        light.intensity = base * (0.88 + Math.sin(waterPhase * 3.2 + light.id) * 0.12)
+        const dist = (light.userData.baseDistance as number) ?? light.distance
+        const pulse =
+          0.76 +
+          Math.sin(waterPhase * 4.2 + light.id) * 0.16 +
+          Math.sin(waterPhase * 7.6 + light.id * 1.7) * 0.08
+        light.intensity = base * pulse
+        // Soft range pulse so pools bloom without shadow maps
+        light.distance = dist * (0.94 + Math.sin(waterPhase * 2.1 + light.id * 0.6) * 0.06)
       }
     }
 

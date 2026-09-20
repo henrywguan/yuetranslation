@@ -74,12 +74,13 @@ export const GUAN_TROPICAL_LOOK = {
   fog: 0xb8c8e8,
   fogDensity: 0.0072,
   amb: 0xfff6ec,
-  ambI: 1.85,
+  // Stronger key vs fill — readable cel bands on lagoon scouts
+  ambI: 1.52,
   sun: 0xffecc8,
-  sunI: 2.85,
+  sunI: 3.15,
   hemiSky: 0xd0ecff,
-  hemiGround: 0x58a048,
-  hemiI: 1.25,
+  hemiGround: 0x3a7840,
+  hemiI: 1.05,
   /** Vibrant lagoon turquoise (deep plate) */
   water: 0x1a98b0,
   waterOpacity: 0.9,

@@ -9,6 +9,7 @@ import { tickHarborProtagonistAnim } from './harborProtagonistAnim'
 import { HARBOR_CANOE_SCOUT_SEAT_Y } from './harborProtagonistGlb'
 import type { HarborRemotePlayer } from './harborPresence'
 import { harborShowoffAccent } from './harborShowoff'
+import { attachHarborContactShadow } from './harborContactShadow'
 
 function nametagTexture(username: string, frameId = 'tag-plain'): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
@@ -116,9 +117,11 @@ export function buildRemoteSailor(player: HarborRemotePlayer): THREE.Group {
     body.position.set(0, HARBOR_CANOE_SCOUT_SEAT_Y, -0.05)
     body.rotation.y = Math.PI
     boat.add(body)
+    attachHarborContactShadow(boat, { radius: 0.55, opacity: 0.24, scaleX: 1.7, scaleZ: 0.72, y: 0.02 })
     root.add(boat)
   } else {
     root.add(body)
+    attachHarborContactShadow(root, { radius: 0.38, opacity: 0.3 })
   }
 
   const tag = new THREE.Sprite(
