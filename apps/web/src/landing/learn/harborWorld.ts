@@ -4819,11 +4819,12 @@ export function createHarborWorld(
       scoutWalk.visible = true
       if (scoutSit) scoutSit.visible = false
     }
-    // Aim orbit toward the splash so the cast reads past the docked panel
+    // Aim past the splash but keep the sailor in frame — the cast / reel
+    // skeleton has to read above the collapsed fishing panel.
     const toSplash = Math.atan2(fishWaterTarget.x - px, fishWaterTarget.z - pz)
     yawTarget = toSplash + Math.PI
-    pitchTarget = clampOrbitPitch(0.42)
-    distanceTarget = clampOrbitDistance(Math.min(distanceTarget, 7.2))
+    pitchTarget = clampOrbitPitch(0.52)
+    distanceTarget = clampOrbitDistance(Math.min(distanceTarget, 6.4))
   }
 
   const clearSpeechBubble = (sprite: THREE.Sprite | null, parent?: THREE.Object3D | null) => {
@@ -5595,11 +5596,11 @@ export function createHarborWorld(
     let lookX = travelMode === 'foot' ? footX : boat.position.x
     let lookY = travelMode === 'foot' ? footGy + (sitting ? 0.95 : 1.15) : 0.75
     let lookZ = travelMode === 'foot' ? footZ : boat.position.z
-    // During a cast, bias the look-at toward the splash so rod + bobber stay in frame
+    // During a cast, ease toward the splash without losing the sailor's body.
     if (fishAnim.phase !== 'idle') {
-      const blend = fishAnim.phase === 'cast' ? 0.72 : 0.55
+      const blend = fishAnim.phase === 'cast' ? 0.32 : 0.22
       lookX = lookX * (1 - blend) + fishWaterTarget.x * blend
-      lookY = lookY * (1 - blend) + (fishWaterTarget.y + 0.55) * blend
+      lookY = lookY * (1 - blend) + (fishWaterTarget.y + 0.95) * blend + 0.22
       lookZ = lookZ * (1 - blend) + fishWaterTarget.z * blend
     }
     const off = orbitCameraOffset(yaw, pitch, distance)

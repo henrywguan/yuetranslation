@@ -11,7 +11,7 @@
 | Wardrobe | Soft tapered / rounded meshes — **no box-slab clothing** that re-imposes Minecraft silhouettes |
 | World | Stylized painted anime harbor — soft shading, curved roofs, mist, jade/ink palette — **not** chunky RS voxels |
 | Assets | Higgsfield sheets + keyart under `docs/harbor-quest/assets/` drive procedural chase |
-| Character GLB | Canoe Scout plants authored Meshy v7 GLBs (`HARBOR_SCOUT_GLB_ENABLED`). Land standing stays procedural (`HARBOR_SCOUT_GLB_LAND = false`) until skinned + animated assets exist — static T-pose GLBs hid walk limbs. Materials convert to Lambert + harbor cel — never MeshStandard/MeshToon on iOS. |
+| Character GLB | Canoe + land Scout plant authored Meshy v7 GLBs. They are **unskinned A-pose** — `harborScoutRig.ts` paints the armature. Do not assume T-pose. Frozen fishing / sit / arm swing: [`GLB-ANIMATION.md`](./GLB-ANIMATION.md). Materials convert to Lambert + harbor cel — never MeshStandard/MeshToon on iOS. |
 
 ## Smell tests (fail = reject)
 

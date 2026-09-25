@@ -80,6 +80,7 @@ CodeCombat-style Jyutping voyage paced to the Open Cantonese Pronunciation Guide
 - Attribution + links back to [Open Cantonese](https://opencantonese.org/books/cantonese-life-1/pronunciation-guide); game copy is original
 - Smoke: `npx tsx apps/web/src/landing/learn/harborQuest.smoke.ts` · `npx tsx apps/web/src/landing/learn/progress.smoke.ts` · `npx tsx apps/web/src/landing/learn/matchDefinition.smoke.ts` · `npx tsx apps/api/src/harborQuest.smoke.ts` · anime revamp: `npx tsx apps/web/src/landing/learn/harborCelShader.smoke.ts` · `npx tsx apps/web/src/landing/learn/harborTextureRevamp.smoke.ts` · `npx tsx apps/web/src/landing/learn/harborMeshAudit.smoke.ts` · `npx tsx apps/web/src/landing/learn/harborAnimeFace.smoke.ts` · `npx tsx apps/web/src/landing/learn/harborCharacterLooks.smoke.ts` · `python3 scripts/harbor-revamp-textures.py --self-test` · `python3 scripts/harbor-revamp-meshes.py --self-test`
 - Related: cinematic tones refresher remains `#/tones`
+- Scout GLB motion / frozen cast-reel (A-pose vs T-pose) + how to hand clips: [`docs/harbor-quest/GLB-ANIMATION.md`](docs/harbor-quest/GLB-ANIMATION.md)
 
 ### Instagram / static social posts (approved look)
 

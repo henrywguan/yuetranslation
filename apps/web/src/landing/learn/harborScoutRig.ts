@@ -1,7 +1,7 @@
 /**
  * Harbor Quest · auto-rig the baked Scout GLB (Meshy, no skins).
  * Distance-to-bone heat weights → SkinnedMesh so walk / idle / fish
- * can rotate a real armature instead of T-pose + root sway.
+ * can rotate a real armature instead of a frozen A-pose + root sway.
  */
 import * as THREE from 'three'
 
@@ -35,11 +35,34 @@ type BoneDef = {
 
 function findMesh(root: THREE.Object3D): THREE.Mesh | null {
   let found: THREE.Mesh | null = null
+  let best = 0
   root.traverse((o) => {
     const m = o as THREE.Mesh
-    if (m.isMesh && m.userData.scoutGlbMesh && !found) found = m
+    if (!m.isMesh || !m.userData.scoutGlbMesh) return
+    const n = m.geometry?.getAttribute('position')?.count ?? 0
+    if (n >= best) {
+      found = m
+      best = n
+    }
   })
   return found
+}
+
+function findSkinnedMesh(root: THREE.Object3D): THREE.SkinnedMesh | null {
+  let found: THREE.SkinnedMesh | null = null
+  root.traverse((o) => {
+    const m = o as THREE.SkinnedMesh
+    if (m.isSkinnedMesh && m.userData.scoutGlbMesh && !found) found = m
+  })
+  return found
+}
+
+/** Push posed bones into the SkinnedMesh before the next draw. */
+export function refreshScoutSkeleton(root: THREE.Object3D): void {
+  const mesh = findSkinnedMesh(root)
+  if (!mesh) return
+  root.updateMatrixWorld(true)
+  mesh.skeleton.update()
 }
 
 export function findScoutBone(root: THREE.Object3D, name: ScoutBoneId): THREE.Bone | null {
@@ -66,24 +89,27 @@ function layoutBones(min: THREE.Vector3, size: THREE.Vector3): BoneDef[] {
   const H = size.y
   const W = Math.max(size.x, 0.2)
   const feet = min.y
-  const xL = -W * 0.11
-  const xR = W * 0.11
+  const xL = -W * 0.1
+  const xR = W * 0.1
+  // Meshy Scout is A-pose (sleeves hang at the hips). A T-pose chain sat in
+  // empty air beside the head, so cast / reel never moved the visible arms.
   const shY = feet + H * 0.78
-  const shX = W * 0.22
-  const elY = feet + H * 0.76
-  const wrY = feet + H * 0.74
-  const wrX = W * 0.46
+  const shX = W * 0.2
+  const elY = feet + H * 0.61
+  const elX = W * 0.3
+  const wrY = feet + H * 0.46
+  const wrX = W * 0.42
   return [
     { name: SCOUT_BONE.hips, parent: null, p: new THREE.Vector3(0, feet + H * 0.5, 0) },
     { name: SCOUT_BONE.spine, parent: SCOUT_BONE.hips, p: new THREE.Vector3(0, feet + H * 0.62, 0) },
     { name: SCOUT_BONE.chest, parent: SCOUT_BONE.spine, p: new THREE.Vector3(0, feet + H * 0.72, 0) },
     { name: SCOUT_BONE.head, parent: SCOUT_BONE.chest, p: new THREE.Vector3(0, feet + H * 0.9, 0) },
     { name: SCOUT_BONE.upperArmL, parent: SCOUT_BONE.chest, p: new THREE.Vector3(-shX, shY, 0) },
-    { name: SCOUT_BONE.lowerArmL, parent: SCOUT_BONE.upperArmL, p: new THREE.Vector3(-W * 0.34, elY, 0) },
-    { name: SCOUT_BONE.handL, parent: SCOUT_BONE.lowerArmL, p: new THREE.Vector3(-wrX, wrY, 0) },
+    { name: SCOUT_BONE.lowerArmL, parent: SCOUT_BONE.upperArmL, p: new THREE.Vector3(-elX, elY, 0.03) },
+    { name: SCOUT_BONE.handL, parent: SCOUT_BONE.lowerArmL, p: new THREE.Vector3(-wrX, wrY, 0.06) },
     { name: SCOUT_BONE.upperArmR, parent: SCOUT_BONE.chest, p: new THREE.Vector3(shX, shY, 0) },
-    { name: SCOUT_BONE.lowerArmR, parent: SCOUT_BONE.upperArmR, p: new THREE.Vector3(W * 0.34, elY, 0) },
-    { name: SCOUT_BONE.handR, parent: SCOUT_BONE.lowerArmR, p: new THREE.Vector3(wrX, wrY, 0) },
+    { name: SCOUT_BONE.lowerArmR, parent: SCOUT_BONE.upperArmR, p: new THREE.Vector3(elX, elY, 0.03) },
+    { name: SCOUT_BONE.handR, parent: SCOUT_BONE.lowerArmR, p: new THREE.Vector3(wrX, wrY, 0.06) },
     { name: SCOUT_BONE.thighL, parent: SCOUT_BONE.hips, p: new THREE.Vector3(xL, feet + H * 0.48, 0) },
     { name: SCOUT_BONE.shinL, parent: SCOUT_BONE.thighL, p: new THREE.Vector3(xL, feet + H * 0.25, 0) },
     { name: SCOUT_BONE.footL, parent: SCOUT_BONE.shinL, p: new THREE.Vector3(xL, feet + H * 0.03, 0.04) },
@@ -144,28 +170,61 @@ export function rigHarborScoutGlb(wrap: THREE.Group): boolean {
   const n = pos.count
   const skinIndex = new THREE.BufferAttribute(new Uint16Array(n * 4), 4)
   const skinWeight = new THREE.BufferAttribute(new Float32Array(n * 4), 4)
-  const sigma = size.y * 0.09
-  const inv2s = 1 / (2 * sigma * sigma)
+  const sigmaBody = size.y * 0.08
+  const sigmaLimb = size.y * 0.05
+  const inv2Body = 1 / (2 * sigmaBody * sigmaBody)
+  const inv2Limb = 1 / (2 * sigmaLimb * sigmaLimb)
   const v = new THREE.Vector3()
-  const segs: { i: number; a: THREE.Vector3; b: THREE.Vector3 }[] = []
+  const limbNames = new Set<string>([
+    SCOUT_BONE.upperArmL,
+    SCOUT_BONE.lowerArmL,
+    SCOUT_BONE.handL,
+    SCOUT_BONE.upperArmR,
+    SCOUT_BONE.lowerArmR,
+    SCOUT_BONE.handR,
+    SCOUT_BONE.thighL,
+    SCOUT_BONE.shinL,
+    SCOUT_BONE.footL,
+    SCOUT_BONE.thighR,
+    SCOUT_BONE.shinR,
+    SCOUT_BONE.footR,
+  ])
+  const segs: { i: number; a: THREE.Vector3; b: THREE.Vector3; limb: boolean; sideX: number }[] = []
   const hipsDef = defs[0]!
   segs.push({
     i: 0,
     a: new THREE.Vector3(0, bb.min.y + size.y * 0.42, 0),
     b: hipsDef.p,
+    limb: false,
+    sideX: 0,
   })
   for (const d of defs) {
     if (!d.parent) continue
     const parent = defs.find((x) => x.name === d.parent)!
-    segs.push({ i: defs.indexOf(d), a: parent.p, b: d.p })
+    segs.push({
+      i: defs.indexOf(d),
+      a: parent.p,
+      b: d.p,
+      limb: limbNames.has(d.name),
+      sideX: (parent.p.x + d.p.x) * 0.5,
+    })
   }
 
+  const headY = bb.min.y + size.y * 0.86
   for (let i = 0; i < n; i++) {
     v.fromBufferAttribute(pos, i)
     const scored: { i: number; w: number }[] = []
     for (const s of segs) {
       const dist = distToSegment(v, s.a, s.b)
-      scored.push({ i: s.i, w: Math.exp(-dist * dist * inv2s) })
+      const inv2 = s.limb ? inv2Limb : inv2Body
+      let w = Math.exp(-dist * dist * inv2)
+      if (s.limb && Math.abs(s.sideX) > 0.03) {
+        const same = v.x * s.sideX
+        if (same < 0 && Math.abs(v.x) > 0.04) w *= 0.06
+        else if (same > 0) w *= 1.45
+      }
+      if (s.limb && v.y > headY) w *= 0.05
+      scored.push({ i: s.i, w })
     }
     scored.sort((a, b) => b.w - a.w)
     let sum = 0
@@ -253,15 +312,11 @@ export function tickScoutSkeletonLocomotion(
     thighR.rotation.x = -swing
     if (shinL) shinL.rotation.x = knee
     if (shinR) shinR.rotation.x = kneeR
-    // T-pose bind: drop arms toward the body, then swing opposite the legs.
-    armL.rotation.z = 0.42 * amp
-    armR.rotation.z = -0.42 * amp
-    armL.rotation.y = -swing * 0.85
-    armR.rotation.y = -swing * 0.85
-    armL.rotation.x = 0
-    armR.rotation.x = 0
-    if (lowL) lowL.rotation.set(0, swing * 0.22, 0.18 * amp)
-    if (lowR) lowR.rotation.set(0, swing * 0.22, -0.18 * amp)
+    // A-pose bind: sleeves already hang. Swing them forward / back opposite the legs.
+    armL.rotation.set(-swing * 0.95, 0.08 * amp, 0.08 * amp)
+    armR.rotation.set(swing * 0.95, -0.08 * amp, -0.08 * amp)
+    if (lowL) lowL.rotation.set(0.22 * amp + Math.max(0, -swing) * 0.18, 0, 0.04 * amp)
+    if (lowR) lowR.rotation.set(0.22 * amp + Math.max(0, swing) * 0.18, 0, -0.04 * amp)
     if (spine) {
       spine.rotation.y = Math.sin(phase) * 0.1 * amp
       spine.rotation.x = Math.sin(phase * 2) * 0.04 * amp
@@ -270,16 +325,16 @@ export function tickScoutSkeletonLocomotion(
   } else if (mode === 'idle') {
     const breath = Math.sin(t * 2.0) * 0.03 * amp
     if (spine) spine.rotation.set(breath, 0, 0)
-    armL.rotation.set(0, 0, 0.28 * amp + breath)
-    armR.rotation.set(0, 0, -0.28 * amp - breath)
-    if (lowL) lowL.rotation.set(0, 0, 0.1 * amp)
-    if (lowR) lowR.rotation.set(0, 0, -0.1 * amp)
+    armL.rotation.set(0.06 * amp + breath, 0.04 * amp, 0.05 * amp)
+    armR.rotation.set(0.06 * amp + breath, -0.04 * amp, -0.05 * amp)
+    if (lowL) lowL.rotation.set(0.16 * amp, 0, 0.04 * amp)
+    if (lowR) lowR.rotation.set(0.16 * amp, 0, -0.04 * amp)
     damp(thighL)
     damp(thighR)
     damp(shinL)
     damp(shinR)
   } else {
-    // sit — canoe / stool: fold thighs forward, drop arms off T-pose bind
+    // sit — canoe / stool: fold thighs forward; A-pose hands rest on the lap.
     thighL.rotation.x = 1.38 * amp
     thighR.rotation.x = 1.38 * amp
     if (shinL) shinL.rotation.x = 0.62 * amp
@@ -288,14 +343,14 @@ export function tickScoutSkeletonLocomotion(
     const footR = findScoutBone(root, SCOUT_BONE.footR)
     if (footL) footL.rotation.x = -0.28 * amp
     if (footR) footR.rotation.x = -0.28 * amp
-    // Hands rest toward the lap / gunwales (bind is arms straight out).
-    armL.rotation.set(0.42 * amp, 0.18 * amp, 0.55 * amp)
-    armR.rotation.set(0.42 * amp, -0.18 * amp, -0.55 * amp)
-    if (lowL) lowL.rotation.set(0.2 * amp, 0.12 * amp, 0.28 * amp)
-    if (lowR) lowR.rotation.set(0.2 * amp, -0.12 * amp, -0.28 * amp)
+    armL.rotation.set(0.55 * amp, 0.14 * amp, 0.2 * amp)
+    armR.rotation.set(0.55 * amp, -0.14 * amp, -0.2 * amp)
+    if (lowL) lowL.rotation.set(0.48 * amp, 0.08 * amp, 0.1 * amp)
+    if (lowR) lowR.rotation.set(0.48 * amp, -0.08 * amp, -0.1 * amp)
     if (spine) spine.rotation.set(0.18 * amp, 0, 0)
     if (hips) hips.rotation.set(0.14 * amp, 0, 0)
   }
+  refreshScoutSkeleton(root)
   return true
 }
 
@@ -322,11 +377,12 @@ export function tickScoutSkeletonFish(
   }
 
   if (phase === 'idle') {
-    armR.rotation.set(0, 0, -0.28 * amp)
-    if (lowR) lowR.rotation.set(0, 0, -0.08 * amp)
-    if (armL) armL.rotation.set(0, 0, 0.28 * amp)
+    armR.rotation.set(0.06 * amp, -0.04 * amp, -0.05 * amp)
+    if (lowR) lowR.rotation.set(0.16 * amp, 0, -0.04 * amp)
+    if (armL) armL.rotation.set(0.06 * amp, 0.04 * amp, 0.05 * amp)
     if (spine) spine.rotation.set(0, 0, 0)
     if (hips) hips.rotation.set(0, 0, 0)
+    refreshScoutSkeleton(root)
     return true
   }
 
@@ -334,50 +390,54 @@ export function tickScoutSkeletonFish(
     const u = Math.min(1, t / 0.65)
     const wind = u < 0.35 ? easeInOut(u / 0.35) : 1
     const fling = u < 0.35 ? 0 : easeOut((u - 0.35) / 0.65)
-    // Wind the rod back over the shoulder, then fling toward the water.
+    // A-pose: lift the hanging rod-arm up and back, then whip it toward the water.
     armR.rotation.set(
-      (-1.15 * wind + 1.55 * fling) * amp,
-      (0.55 * wind - 0.95 * fling) * amp,
-      (-0.55 + 0.12 * fling) * amp,
+      (-1.55 * wind + 2.05 * fling) * amp,
+      (0.22 * wind - 0.55 * fling) * amp,
+      (-0.42 * wind + 0.06 * fling) * amp,
     )
-    if (lowR) lowR.rotation.set(0, (0.55 * wind - 0.05 * fling) * amp, -0.2 * amp)
-    if (armL) armL.rotation.set(0.28 * fling * amp, 0.2 * fling * amp, 0.32 * amp)
-    if (spine) spine.rotation.set((0.18 * wind - 0.28 * fling) * amp, 0.12 * wind * amp, 0)
-    if (hips) hips.rotation.set(0.04 * wind * amp, 0.08 * wind * amp, 0)
+    if (lowR) lowR.rotation.set((0.95 * wind + 0.12 * fling) * amp, 0.12 * wind * amp, -0.08 * amp)
+    if (armL) armL.rotation.set((-0.15 + 0.55 * fling) * amp, 0.18 * fling * amp, 0.12 * amp)
+    if (spine) spine.rotation.set((-0.28 * wind + 0.38 * fling) * amp, 0.16 * wind * amp, 0)
+    if (hips) hips.rotation.set((-0.08 * wind + 0.1 * fling) * amp, 0.1 * wind * amp, 0)
+    refreshScoutSkeleton(root)
     return true
   }
 
   if (phase === 'wait') {
-    const bob = Math.sin(t * 5.5) * 0.08 * amp
-    const hold = Math.sin(t * 2.2) * 0.04 * amp
-    armR.rotation.set((0.22 + bob) * amp, (-0.85 + hold) * amp, -0.55 * amp)
-    if (lowR) lowR.rotation.set(0, (0.35 + bob) * amp, -0.15 * amp)
-    if (armL) armL.rotation.set(0.18 * amp, 0.42 * amp, 0.38 * amp)
-    if (spine) spine.rotation.set(0.16 * amp, 0.06 * amp, 0)
-    if (hips) hips.rotation.set(0.04 * amp, 0, 0)
+    const bob = Math.sin(t * 5.5) * 0.1 * amp
+    const hold = Math.sin(t * 2.2) * 0.05 * amp
+    armR.rotation.set((0.95 + bob) * amp, (-0.42 + hold) * amp, -0.16 * amp)
+    if (lowR) lowR.rotation.set((0.62 + bob) * amp, 0.06 * amp, -0.06 * amp)
+    if (armL) armL.rotation.set(0.22 * amp, 0.18 * amp, 0.12 * amp)
+    if (spine) spine.rotation.set(0.12 * amp, 0.08 * amp, 0)
+    if (hips) hips.rotation.set(0.05 * amp, 0, 0)
+    refreshScoutSkeleton(root)
     return true
   }
 
   if (phase === 'catch') {
     const u = Math.min(1, t / 1.1)
     const lift = easeOut(u)
-    const crank = Math.sin(t * 14) * 0.42 * amp
-    // Reel: lift the rod and crank the right forearm.
-    armR.rotation.set((-1.05 * lift + crank * 0.35) * amp, (-0.55 + 0.2 * lift) * amp, -0.28 * amp)
-    if (lowR) lowR.rotation.set(crank * 0.25, (0.25 + 0.55 * lift + crank) * amp, -0.12 * amp)
-    if (armL) armL.rotation.set((-0.65 * lift) * amp, 0.2 * amp, 0.28 * amp)
-    if (spine) spine.rotation.set((-0.22 * lift) * amp, 0.08 * lift * amp, 0)
-    if (hips) hips.rotation.set((-0.1 * lift) * amp, 0, 0)
+    const crank = Math.sin(t * 14) * 0.55 * amp
+    // Reel: hoist the rod overhead and crank the right forearm.
+    armR.rotation.set((-1.35 * lift + crank * 0.4) * amp, (-0.28 + 0.12 * lift) * amp, -0.22 * amp)
+    if (lowR) lowR.rotation.set((0.75 * lift + crank) * amp, 0.08 * amp, -0.08 * amp)
+    if (armL) armL.rotation.set((-0.85 * lift) * amp, 0.12 * amp, 0.1 * amp)
+    if (spine) spine.rotation.set((-0.32 * lift) * amp, 0.1 * lift * amp, 0)
+    if (hips) hips.rotation.set((-0.12 * lift) * amp, 0, 0)
+    refreshScoutSkeleton(root)
     return true
   }
 
-  // miss — rod drops, shoulders sag
+  // miss — rod drops, shoulders sag back to A-pose hang
   const u = Math.min(1, t / 0.7)
   const drop = easeInOut(u)
-  armR.rotation.set(0.22 * (1 - drop) * amp, -0.85 * (1 - drop) * amp, (-0.55 + 0.2 * drop) * amp)
-  if (lowR) lowR.rotation.set(0, 0.35 * (1 - drop) * amp, -0.1 * (1 - drop) * amp)
-  if (armL) armL.rotation.set(0, 0.2 * (1 - drop) * amp, (0.38 - 0.1 * drop) * amp)
-  if (spine) spine.rotation.set((0.16 - 0.22 * drop) * amp, 0, 0)
+  armR.rotation.set(0.95 * (1 - drop) * amp, -0.42 * (1 - drop) * amp, -0.16 * (1 - drop) * amp)
+  if (lowR) lowR.rotation.set(0.62 * (1 - drop) * amp, 0, -0.06 * (1 - drop) * amp)
+  if (armL) armL.rotation.set(0.22 * (1 - drop) * amp, 0.12 * (1 - drop) * amp, 0.1 * amp)
+  if (spine) spine.rotation.set((0.12 - 0.18 * drop) * amp, 0, 0)
   if (hips) hips.rotation.set(0, 0, 0)
+  refreshScoutSkeleton(root)
   return true
 }
