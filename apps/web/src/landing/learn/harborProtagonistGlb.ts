@@ -18,6 +18,14 @@ import { rigHarborScoutGlb, tickScoutSkeletonLocomotion } from './harborScoutRig
 export const HARBOR_CANOE_SCOUT_SEAT_Y = 0.38
 /** Sink the standing-normalized GLB so folded sit hips rest on the deck. */
 export const HARBOR_CANOE_GLB_SINK_Y = -0.42
+/**
+ * Land chair sit root is already at seat height. Canoe sink (−0.42) stacked on
+ * that and put the sailor under the stool / in the water. Drop standing hips
+ * onto the seat only.
+ */
+export const HARBOR_CHAIR_GLB_SINK_Y = -0.68
+
+export type HarborScoutGlbMode = 'standing' | 'canoe' | 'chair'
 
 export const HARBOR_SCOUT_GLB_SRC = {
   female: '/assets/harbor-quest/scout-female.glb',
@@ -190,13 +198,13 @@ export function isHarborScoutGlbCached(gender: HarborGender): boolean {
  * Hides procedural body meshes only after a validated GLB is on the root.
  * On failure / disabled gate: leave procedural visible (land nametag-only bug).
  *
- * `mode: 'canoe'` plants the standing A-pose mesh and hides geometry below the
- * deck line so the sailor sits in the boat without standing through the hull.
+ * `mode: 'canoe'` plants the standing mesh so the sailor sits in the boat.
+ * `mode: 'chair'` folds sit bones on a land stool without the canoe deck sink.
  */
 export async function attachHarborScoutGlb(
   root: THREE.Group,
   gender: HarborGender,
-  opts: { mode?: 'standing' | 'canoe' } = {},
+  opts: { mode?: HarborScoutGlbMode } = {},
 ): Promise<boolean> {
   if (!HARBOR_SCOUT_GLB_ENABLED) {
     setProceduralBodyVisible(root, true)
@@ -228,7 +236,7 @@ export async function attachHarborScoutGlb(
     setProceduralBodyVisible(root, false)
     hideGlbRedundantClothing(root)
     root.userData.usesScoutGlb = true
-    if (mode === 'canoe') plantScoutGlbInCanoe(existing as THREE.Group)
+    applyScoutGlbPlant(existing as THREE.Group, mode)
     return true
   }
   const mesh = await fetchScoutGlb(gender)
@@ -242,8 +250,13 @@ export async function attachHarborScoutGlb(
   hideGlbRedundantClothing(root)
   root.userData.usesScoutGlb = true
   root.userData.characterStyle = 'anime-dressup-glb'
-  if (mode === 'canoe') plantScoutGlbInCanoe(mesh)
+  applyScoutGlbPlant(mesh, mode)
   return true
+}
+
+function applyScoutGlbPlant(glb: THREE.Group, mode: HarborScoutGlbMode): void {
+  if (mode === 'canoe') plantScoutGlbInCanoe(glb)
+  else if (mode === 'chair') plantScoutGlbOnChair(glb)
 }
 
 /**
@@ -308,6 +321,20 @@ export function plantScoutGlbInCanoe(glb: THREE.Group): void {
     glb.userData.scoutGlbAnimBaseReady = false
   }
   // Always refresh sit bones (idempotent plant used to leave a frozen T-pose).
+  if (!glb.userData.scoutRigged) rigHarborScoutGlb(glb)
+  tickScoutSkeletonLocomotion(glb, 'sit', 0, 1 / 60, 1, 7.2)
+}
+
+/**
+ * Land stool / chair — sit root is already at `seatY`. Fold the armature
+ * without the canoe deck sink (that stacked offset sat the sailor in the water).
+ */
+export function plantScoutGlbOnChair(glb: THREE.Group): void {
+  if (!glb.userData.scoutGlbChair) {
+    glb.userData.scoutGlbChair = true
+    glb.position.y = HARBOR_CHAIR_GLB_SINK_Y
+    glb.userData.scoutGlbAnimBaseReady = false
+  }
   if (!glb.userData.scoutRigged) rigHarborScoutGlb(glb)
   tickScoutSkeletonLocomotion(glb, 'sit', 0, 1 / 60, 1, 7.2)
 }

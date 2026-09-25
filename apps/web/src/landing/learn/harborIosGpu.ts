@@ -100,3 +100,9 @@ export function harborIosDrawRadius(orbitDistance: number): number {
   const t = Math.min(1, Math.max(0, (orbitDistance - mid) / Math.max(0.01, max - mid)))
   return HARBOR_IOS_DRAW_RADIUS + (HARBOR_IOS_DRAW_RADIUS_ZOOMED - HARBOR_IOS_DRAW_RADIUS) * t
 }
+
+/** Ground slabs / roads stay drawn — their origin is the chunk center, which
+ *  sits outside the sailor bubble and used to vanish the whole bank. */
+export function harborKeepLodChild(o: { userData?: { harborLodKeep?: boolean } }): boolean {
+  return Boolean(o.userData?.harborLodKeep)
+}
