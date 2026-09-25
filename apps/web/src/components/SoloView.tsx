@@ -461,7 +461,6 @@ export function SoloView() {
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
   const showLowerRuby = showLowerResult && isRubyDisplayLang(soloLowerLang)
-  const showUpperRuby = showUpperResult && isRubyDisplayLang(soloUpperLang)
 
   useLayoutEffect(() => {
     if (!showUpperResult) fitSoloTextarea(upperInputRef.current)
