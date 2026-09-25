@@ -2239,7 +2239,11 @@ assert.doesNotMatch(
   assert.match(worldMapUiSrc, /Begin navigation/, 'region begin-navigation CTA')
   assert.match(worldMapUiSrc, /onTravelFishSpot/, 'world map UI exposes fish-spot travel')
   assert.match(worldMapUiSrc, /hq-worldmap-dot-lv/, 'fish-spot dots show fishing level')
+  assert.doesNotMatch(worldMapUiSrc, /wuxia voyage chart/, 'no wuxia voyage chart subtitle')
+  assert.doesNotMatch(worldMapUiSrc, /hq-worldmap-detail-relief|3D relief/, 'no 3D relief pane')
+  assert.match(worldMapUiSrc, /useMapZoom|hq-worldmap-zoom/, 'maps support pinch/wheel zoom')
   assert.match(learnCss, /hq-worldmap-sheet--hero|object-fit:\s*contain/, 'hero sheet sizes map with contain')
+  assert.match(learnCss, /hq-worldmap-zoom-frame|touch-action:\s*none/, 'zoom frame captures gestures')
 
   const nodesSrc = readFileSync(new URL('./harborWorldMapNodes.ts', import.meta.url), 'utf8')
   assert.match(nodesSrc, /voyageChapterNodes|guanLandmarkNodes/, 'world map node helpers')
