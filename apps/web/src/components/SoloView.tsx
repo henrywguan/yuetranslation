@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { ClearIconButton } from './ClearIconButton'
@@ -37,6 +37,29 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'bcl') return 'I-type nin Bikol…'
   if (lang === 'cmn') return ui.soloTapTypeChinese.zh
   return ui.soloTapTypeChinese.zh
+}
+
+function isRubyDisplayLang(lang: Lang): boolean {
+  return (
+    lang === 'yue' ||
+    lang === 'cmn' ||
+    lang === 'wuu' ||
+    lang === 'sichuan' ||
+    lang === 'tl' ||
+    lang === 'es' ||
+    lang === 'eses' ||
+    lang === 'vi' ||
+    lang === 'ceb' ||
+    lang === 'ilo' ||
+    lang === 'bcl'
+  )
+}
+
+/** Grow the type-to-edit field with the draft so results are never clipped to 3 rows. */
+function fitSoloTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return
+  el.style.height = '0px'
+  el.style.height = `${el.scrollHeight}px`
 }
 
 function ariaForPane(lang: Lang): string {
@@ -429,34 +452,21 @@ export function SoloView() {
     (translating && translatingTo === soloLowerLang) ||
     (typedBusy && editingRef.current === 'upper')
   const inputLocked = live
-  const showLowerRuby =
-    (soloLowerLang === 'yue' ||
-      soloLowerLang === 'cmn' ||
-      soloLowerLang === 'wuu' ||
-      soloLowerLang === 'sichuan' ||
-      soloLowerLang === 'tl' ||
-      soloLowerLang === 'es' || soloLowerLang === 'eses' ||
-      soloLowerLang === 'vi' ||
-      soloLowerLang === 'ceb' ||
-      soloLowerLang === 'ilo' ||
-      soloLowerLang === 'bcl') &&
+  const showLowerResult =
     Boolean(lowerDraft.trim()) &&
     !lowerEditing &&
     (!inputLocked || Boolean(yueInterim.trim()))
-  const showUpperRuby =
-    (soloUpperLang === 'yue' ||
-      soloUpperLang === 'cmn' ||
-      soloUpperLang === 'wuu' ||
-      soloUpperLang === 'sichuan' ||
-      soloUpperLang === 'tl' ||
-      soloUpperLang === 'es' || soloUpperLang === 'eses' ||
-      soloUpperLang === 'vi' ||
-      soloUpperLang === 'ceb' ||
-      soloUpperLang === 'ilo' ||
-      soloUpperLang === 'bcl') &&
+  const showUpperResult =
     Boolean(upperDraft.trim()) &&
     !upperEditing &&
     (!inputLocked || Boolean(enInterim.trim()))
+  const showLowerRuby = showLowerResult && isRubyDisplayLang(soloLowerLang)
+  const showUpperRuby = showUpperResult && isRubyDisplayLang(soloUpperLang)
+
+  useLayoutEffect(() => {
+    if (!showUpperResult) fitSoloTextarea(upperInputRef.current)
+    if (!showLowerResult) fitSoloTextarea(lowerInputRef.current)
+  }, [upperDraft, lowerDraft, showUpperResult, showLowerResult, upperThinking, lowerThinking])
 
   const canClear =
     Boolean(upperDraft.trim()) ||
@@ -471,25 +481,26 @@ export function SoloView() {
     lang: Lang
     draft: string
     thinking: boolean
-    showRuby: boolean
+    showResult: boolean
     inputRef: React.RefObject<HTMLTextAreaElement | null>
     onChange: (v: string) => void
     onEdit: () => void
     onBlurEdit: () => void
   }) => {
-    const { pane, lang, draft, thinking, showRuby, inputRef, onChange, onEdit, onBlurEdit } = opts
+    const { pane, lang, draft, thinking, showResult, inputRef, onChange, onEdit, onBlurEdit } = opts
     if (thinking) return <TranslateThinking className="solo-thinking" />
 
-    if (showRuby && (lang === 'yue' || lang === 'cmn' || lang === 'wuu' || lang === 'sichuan' || lang === 'tl' || lang === 'es' || lang === 'eses' || lang === 'vi' || lang === 'ceb' || lang === 'ilo' || lang === 'bcl')) {
+    if (showResult && (isRubyDisplayLang(lang) || lang === 'en')) {
       const def = pane === 'lower' ? lowerDef : ''
       const defs = pane === 'lower' ? lowerDefs : undefined
       const paneAlts = pane === 'lower' ? alts : []
       return (
-        <div className="solo-translation">
+        <div className={`solo-translation${lang === 'en' ? ' solo-translation--en' : ''}`}>
           <ResultWithDefinition
             text={draft}
             definition={def}
             definitions={defs}
+            cantonese={lang !== 'en'}
             chineseLang={lang}
             romanization={
               lang === 'wuu' || lang === 'sichuan' ? latest?.romanization : undefined
@@ -522,16 +533,12 @@ export function SoloView() {
       )
     }
 
-    if (lang === 'en' && draft.trim() && !thinking) {
-      // Plain English stays in the textarea for type-to-edit.
-    }
-
     return (
       <textarea
         ref={inputRef}
         className={`solo-input ${lang === 'en' ? 'solo-input--en' : 'solo-input--yue'}`}
         value={draft}
-        rows={3}
+        rows={1}
         disabled={inputLocked}
         placeholder={placeholderFor(lang)}
         aria-label={placeholderFor(lang)}
@@ -541,12 +548,16 @@ export function SoloView() {
           else setLowerEditing(true)
           // Text-only panes keep the keyboard; mic side stays on a voice lang.
           if (isVoiceLang(lang)) setSpeakDirection(lang)
+          queueMicrotask(() => fitSoloTextarea(inputRef.current))
         }}
         onBlur={() => {
           if (editingRef.current === pane) editingRef.current = null
           onBlurEdit()
         }}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value)
+          fitSoloTextarea(e.currentTarget)
+        }}
         onKeyDown={(e) => {
           if (e.key !== 'Enter' || e.shiftKey) return
           e.preventDefault()
@@ -626,7 +637,7 @@ export function SoloView() {
             lang: soloUpperLang,
             draft: upperDraft,
             thinking: upperThinking,
-            showRuby: showUpperRuby,
+            showResult: showUpperResult,
             inputRef: upperInputRef,
             onChange: onUpperChange,
             onEdit: () => {
@@ -693,7 +704,7 @@ export function SoloView() {
             lang: soloLowerLang,
             draft: lowerDraft,
             thinking: lowerThinking,
-            showRuby: showLowerRuby,
+            showResult: showLowerResult,
             inputRef: lowerInputRef,
             onChange: onLowerChange,
             onEdit: () => {
