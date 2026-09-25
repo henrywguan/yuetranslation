@@ -12,18 +12,25 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 import type { HarborGender } from './harborAppearance'
 import { applyHarborCel } from './harborCelShader'
 import { HARBOR_FIGURE_PROPORTIONS } from './harborFigure'
-import { rigHarborScoutGlb, tickScoutSkeletonLocomotion } from './harborScoutRig'
+import { findScoutBone, rigHarborScoutGlb, SCOUT_BONE, tickScoutSkeletonLocomotion } from './harborScoutRig'
 
 /** Scout group Y inside the canoe (matches local river-scout seat). */
-export const HARBOR_CANOE_SCOUT_SEAT_Y = 0.38
-/** Sink the standing-normalized GLB so folded sit hips rest on the deck. */
-export const HARBOR_CANOE_GLB_SINK_Y = -0.42
+export const HARBOR_CANOE_SCOUT_SEAT_Y = 0.52
 /**
- * Land chair sit root is already at seat height. Canoe sink (−0.42) stacked on
- * that and put the sailor under the stool / in the water. Drop standing hips
- * onto the seat only.
+ * After sit bones fold, hips should sit this far above the scout/canoe seat
+ * root (gunwale-readable torso, not clipped through the hull floor).
  */
-export const HARBOR_CHAIR_GLB_SINK_Y = -0.68
+export const HARBOR_CANOE_HIP_ABOVE_SEAT = 0.12
+/**
+ * Land chair: sit root is already at the seat cushion. Hips rest a finger
+ * above that so the folded mesh sits on the stool, not under it.
+ */
+export const HARBOR_CHAIR_HIP_ABOVE_SEAT = 0.1
+
+/** @deprecated Prefer hip-align plant — kept for smoke / call-site grep. */
+export const HARBOR_CANOE_GLB_SINK_Y = 0.08
+/** @deprecated Prefer hip-align plant — kept for smoke / call-site grep. */
+export const HARBOR_CHAIR_GLB_SINK_Y = -0.18
 
 export type HarborScoutGlbMode = 'standing' | 'canoe' | 'chair'
 
@@ -304,39 +311,57 @@ export async function attachHarborCastGlb(
 }
 
 /**
- * Sink the standing Scout so the pelvis sits on the canoe seat, then fold
- * the auto-rig into a sit pose (bind is A-pose — without this the sailor
- * stands through / above the hull).
- * Meshy Scout is a single mesh — do not hide by world AABB (that used to
- * vanish the sailor when the boat left the origin).
+ * Fold sit bones, then shift the GLB so the hip bone rests `hipAboveSeat`
+ * above the parent seat origin (local Y = 0 on the sit / canoe scout root).
  */
-export function plantScoutGlbInCanoe(glb: THREE.Group): void {
-  // Idempotent plant — re-attach / wardrobe sync must not stack scale.
-  if (!glb.userData.scoutGlbCanoe) {
-    glb.userData.scoutGlbCanoe = true
-    // Seat height relative to boat local origin (canoe places scout at y≈0.38).
-    glb.position.y = HARBOR_CANOE_GLB_SINK_Y
-    glb.scale.multiplyScalar(0.92)
-    // Re-capture plant pose after canoe sink so walk/idle bob stays relative.
-    glb.userData.scoutGlbAnimBaseReady = false
-  }
-  // Always refresh sit bones (idempotent plant used to leave a frozen T-pose).
+export function alignScoutGlbHipsToSeat(glb: THREE.Group, hipAboveSeat: number): void {
   if (!glb.userData.scoutRigged) rigHarborScoutGlb(glb)
   tickScoutSkeletonLocomotion(glb, 'sit', 0, 1 / 60, 1, 7.2)
+  glb.updateMatrixWorld(true)
+  const hips = findScoutBone(glb, SCOUT_BONE.hips)
+  if (!hips) {
+    glb.position.y = hipAboveSeat
+    glb.userData.scoutGlbAnimBaseReady = false
+    return
+  }
+  // Hip Y in the GLB's parent space (scout / sit root).
+  const hipWorld = new THREE.Vector3()
+  hips.getWorldPosition(hipWorld)
+  const parent = glb.parent
+  if (parent) {
+    parent.worldToLocal(hipWorld)
+  } else {
+    hipWorld.y -= glb.position.y
+  }
+  // hipWorld.y is current hip height in parent space; move GLB so hip = hipAboveSeat.
+  glb.position.y += hipAboveSeat - hipWorld.y
+  glb.userData.scoutGlbAnimBaseReady = false
 }
 
 /**
- * Land stool / chair — sit root is already at `seatY`. Fold the armature
- * without the canoe deck sink (that stacked offset sat the sailor in the water).
+ * Sink the standing Scout so the pelvis sits on the canoe seat, then fold
+ * the auto-rig into a sit pose (bind is A-pose — without this the sailor
+ * stands through / above the hull).
+ */
+export function plantScoutGlbInCanoe(glb: THREE.Group): void {
+  if (!glb.userData.scoutGlbCanoe) {
+    glb.userData.scoutGlbCanoe = true
+    glb.userData.scoutGlbChair = false
+    glb.scale.multiplyScalar(0.92)
+  }
+  alignScoutGlbHipsToSeat(glb, HARBOR_CANOE_HIP_ABOVE_SEAT)
+}
+
+/**
+ * Land stool / chair — sit root is already at `seatY`. Fold the armature and
+ * park hips on the cushion (do not reuse the canoe deck sink).
  */
 export function plantScoutGlbOnChair(glb: THREE.Group): void {
   if (!glb.userData.scoutGlbChair) {
     glb.userData.scoutGlbChair = true
-    glb.position.y = HARBOR_CHAIR_GLB_SINK_Y
-    glb.userData.scoutGlbAnimBaseReady = false
+    glb.userData.scoutGlbCanoe = false
   }
-  if (!glb.userData.scoutRigged) rigHarborScoutGlb(glb)
-  tickScoutSkeletonLocomotion(glb, 'sit', 0, 1 / 60, 1, 7.2)
+  alignScoutGlbHipsToSeat(glb, HARBOR_CHAIR_HIP_ABOVE_SEAT)
 }
 
 /** True when `o` is the Scout GLB root or any mesh under it. */

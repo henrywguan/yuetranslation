@@ -1853,19 +1853,20 @@ assert.match(
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-  /tickScoutSkeletonLocomotion\(glb,\s*'sit'/,
-  'canoe plant folds sit bones (no frozen A-pose bind)',
+  /alignScoutGlbHipsToSeat/,
+  'canoe/chair plant hip-aligns after sit fold',
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-  /HARBOR_CANOE_GLB_SINK_Y/,
-  'canoe plant uses a shared deck sink',
+  /HARBOR_CANOE_HIP_ABOVE_SEAT/,
+  'canoe hips sit above the deck, not through the hull',
 )
 assert.match(
   readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-  /HARBOR_CHAIR_GLB_SINK_Y/,
-  'land chairs use a separate sit sink',
+  /HARBOR_CHAIR_HIP_ABOVE_SEAT/,
+  'chair hips sit on the cushion, not under the stool',
 )
+assert.match(worldSrc, /sitChair/, 'land sit keeps a chair ref to lock seat Y')
 assert.match(
   readFileSync(new URL('./harborGuanRealm.ts', import.meta.url), 'utf8'),
   /attachHarborCastGlb/,

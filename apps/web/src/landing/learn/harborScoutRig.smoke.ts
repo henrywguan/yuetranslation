@@ -8,7 +8,15 @@ import { fileURLToPath } from 'node:url'
 import * as THREE from 'three'
 import { tickHarborCastAnim, tickHarborProtagonistAnim } from './harborProtagonistAnim'
 import {
+  alignScoutGlbHipsToSeat,
+  HARBOR_CANOE_HIP_ABOVE_SEAT,
+  HARBOR_CHAIR_HIP_ABOVE_SEAT,
+  plantScoutGlbInCanoe,
+  plantScoutGlbOnChair,
+} from './harborProtagonistGlb'
+import {
   findScoutBone,
+  refreshScoutSkeleton,
   rigHarborScoutGlb,
   SCOUT_BONE,
   tickScoutSkeletonFish,
@@ -170,8 +178,53 @@ assert.match(fishAnimSrc, /Extra readable torso|glb\.rotation\.x/, 'cast leans t
 const glbSrc = readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8')
 assert.match(glbSrc, /rigHarborScoutGlb/, 'normalize auto-rigs Scout GLB')
 assert.match(glbSrc, /cloneSkeleton|SkeletonUtils/, 'rigged clones keep the skeleton')
-assert.match(glbSrc, /tickScoutSkeletonLocomotion\(glb,\s*'sit'/, 'canoe plant applies sit bones')
-assert.match(glbSrc, /HARBOR_CANOE_GLB_SINK_Y/, 'canoe sink constant exported')
+assert.match(glbSrc, /alignScoutGlbHipsToSeat/, 'sit plants hip-align after fold')
+assert.match(glbSrc, /HARBOR_CANOE_HIP_ABOVE_SEAT/, 'canoe hip seat constant')
+assert.match(glbSrc, /HARBOR_CHAIR_HIP_ABOVE_SEAT/, 'chair hip seat constant')
+
+{
+  const seat = new THREE.Group()
+  const glb = dummyScoutMesh()
+  assert.equal(rigHarborScoutGlb(glb), true)
+  seat.add(glb)
+  plantScoutGlbOnChair(glb)
+  refreshScoutSkeleton(glb)
+  seat.updateMatrixWorld(true)
+  const hips = findScoutBone(glb, SCOUT_BONE.hips)!
+  const hipWorld = new THREE.Vector3()
+  hips.getWorldPosition(hipWorld)
+  seat.worldToLocal(hipWorld)
+  assert.ok(
+    Math.abs(hipWorld.y - HARBOR_CHAIR_HIP_ABOVE_SEAT) < 0.08,
+    `chair hips on cushion (got ${hipWorld.y.toFixed(3)}, want ~${HARBOR_CHAIR_HIP_ABOVE_SEAT})`,
+  )
+
+  const canoe = new THREE.Group()
+  const glb2 = dummyScoutMesh()
+  assert.equal(rigHarborScoutGlb(glb2), true)
+  canoe.add(glb2)
+  plantScoutGlbInCanoe(glb2)
+  refreshScoutSkeleton(glb2)
+  canoe.updateMatrixWorld(true)
+  const hips2 = findScoutBone(glb2, SCOUT_BONE.hips)!
+  const hip2 = new THREE.Vector3()
+  hips2.getWorldPosition(hip2)
+  canoe.worldToLocal(hip2)
+  assert.ok(
+    Math.abs(hip2.y - HARBOR_CANOE_HIP_ABOVE_SEAT) < 0.08,
+    `canoe hips on deck (got ${hip2.y.toFixed(3)}, want ~${HARBOR_CANOE_HIP_ABOVE_SEAT})`,
+  )
+  // Second align is stable (idempotent).
+  alignScoutGlbHipsToSeat(glb2, HARBOR_CANOE_HIP_ABOVE_SEAT)
+  refreshScoutSkeleton(glb2)
+  canoe.updateMatrixWorld(true)
+  hips2.getWorldPosition(hip2)
+  canoe.worldToLocal(hip2)
+  assert.ok(
+    Math.abs(hip2.y - HARBOR_CANOE_HIP_ABOVE_SEAT) < 0.08,
+    `canoe hip align stays stable (got ${hip2.y.toFixed(3)})`,
+  )
+}
 
 const rigSrc = readFileSync(new URL('./harborScoutRig.ts', import.meta.url), 'utf8')
 assert.match(rigSrc, /A-pose \(sleeves hang/, 'auto-rig places arm bones on hanging sleeves')
