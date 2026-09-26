@@ -1,3 +1,5 @@
+@import './pointerGlow.css';
+
 .landing {
   position: relative;
   min-height: 100dvh;
@@ -204,6 +206,7 @@
 .landing > .ln-nav,
 .landing > .scroll-progress,
 .landing > .ln-hero,
+.landing > .ln-lang-marquee,
 .landing > .ln-section,
 .landing > .ln-demo-band,
 .landing > .ln-cta-band,
@@ -613,7 +616,7 @@
   height: 2.35rem;
   padding-left: 0.15rem;
   color: var(--jade-bright, var(--jade));
-  animation: ln-multilang-lizard-spin 7.2s infinite;
+  animation: ln-multilang-lizard-fade 0.4s ease;
 }
 
 .ln-multilang-lizard-name {
@@ -645,42 +648,144 @@
   flex: 0 0 auto;
 }
 
-/*
- * 6 langs + duplicate first = 7 slots (0..6).
- * Hold each step, then snap to next — same cadence as fresh-lizard-20.
- */
-@keyframes ln-multilang-lizard-spin {
-  0%,
-  10% {
-    transform: translateY(0%);
+@keyframes ln-multilang-lizard-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  12.5%,
-  22.5% {
-    transform: translateY(-100%);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  25%,
-  35% {
-    transform: translateY(-200%);
+}
+
+/* Aceternity Infinite Moving Cards — all supported langs, Harbor jade chips. */
+.ln-lang-marquee {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 4px 0 28px;
+}
+
+.ln-lang-marquee-viewport {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+
+.ln-lang-marquee-fade {
+  display: none;
+}
+
+.ln-lang-marquee-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  animation: ln-lang-marquee-scroll 42s linear infinite;
+}
+
+.ln-lang-marquee-viewport:hover .ln-lang-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes ln-lang-marquee-scroll {
+  from {
+    transform: translateX(0);
   }
-  37.5%,
-  47.5% {
-    transform: translateY(-300%);
+  to {
+    transform: translateX(-50%);
   }
-  50%,
-  60% {
-    transform: translateY(-400%);
+}
+
+.ln-lang-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 12px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+  background: color-mix(in srgb, var(--harbor-mid, #0a1c2c) 78%, var(--jade) 10%);
+  white-space: nowrap;
+}
+
+.ln-lang-chip.is-text {
+  border-color: color-mix(in srgb, var(--ink) 16%, var(--glass-border));
+  background: color-mix(in srgb, var(--harbor-mid, #0a1c2c) 86%, transparent);
+}
+
+.ln-lang-chip-mark {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--jade) 22%, transparent);
+  color: var(--jade-bright, var(--jade));
+}
+
+.ln-lang-chip-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.ln-lang-chip-copy strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-bright, var(--ink));
+}
+
+.ln-lang-chip-copy em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.ln-lang-chip-kind {
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--muted);
+}
+
+[data-theme='light'] .ln-lang-chip {
+  background: color-mix(in srgb, #fff 82%, var(--jade) 10%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-lang-marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 6px 20px;
+    gap: 10px;
   }
-  62.5%,
-  72.5% {
-    transform: translateY(-500%);
+
+  .ln-lang-marquee-track [data-dup] {
+    display: none;
   }
-  75%,
-  85% {
-    transform: translateY(-600%);
+
+  .ln-lang-marquee-viewport {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
-  87.5%,
-  100% {
-    transform: translateY(-600%);
+
+  .ln-multilang-lizard-word {
+    animation: none;
   }
 }
 

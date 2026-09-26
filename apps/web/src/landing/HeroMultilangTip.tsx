@@ -1,32 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ui } from '../lib/uiCopy'
+import { SUPPORTED_LANG_CARDS } from './supportedLangs'
 
 const LANG_REQUEST_MAIL =
   'mailto:help@jyuttranslate.com?subject=' +
   encodeURIComponent('Multi-Language Support: Language Request')
-
-type SupportedLang = {
-  flag: string
-  name: string
-  native: string
-}
-
-const SUPPORTED_LANGS: SupportedLang[] = [
-  { flag: '🇺🇸', name: 'English', native: 'English' },
-  { flag: '🇭🇰', name: 'Cantonese', native: '粵語 / 廣東話' },
-  { flag: '🇨🇳', name: 'Mandarin', native: '普通話 / 国语' },
-  { flag: '🇵🇭', name: 'Tagalog', native: 'Tagalog / Filipino' },
-  { flag: '🇲🇽', name: 'Spanish(MX)', native: 'Español (MX)' },
-  { flag: '🇪🇸', name: 'Spanish(ES)', native: 'Español (España)' },
-  { flag: '🇻🇳', name: 'Vietnamese', native: 'Tiếng Việt' },
-  { flag: '🇹🇭', name: 'Thai', native: 'ไทย' },
-  { flag: '🇱🇦', name: 'Lao', native: 'ລາວ' },
-  { flag: '🇨🇳', name: 'Shanghainese', native: '上海話 / 沪语' },
-]
-
-/** Duplicate first item so the vertical spin can loop seamlessly (uiverse lizard pattern). */
-const SPIN_LANGS = [...SUPPORTED_LANGS, SUPPORTED_LANGS[0]]
 
 /**
  * Centered rich tip under hero CTAs (uiverse-inspired card + lizard word spin).
@@ -38,6 +17,7 @@ export function HeroMultilangTip() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+  const [spinIndex, setSpinIndex] = useState(0)
 
   const place = () => {
     const el = rootRef.current
@@ -93,6 +73,14 @@ export function HeroMultilangTip() {
     }
   }, [open, tipId])
 
+  useEffect(() => {
+    if (!open) return
+    const id = window.setInterval(() => {
+      setSpinIndex((i) => (i + 1) % SUPPORTED_LANG_CARDS.length)
+    }, 1500)
+    return () => window.clearInterval(id)
+  }, [open])
+
   const tip =
     open && coords && typeof document !== 'undefined'
       ? createPortal(
@@ -108,26 +96,29 @@ export function HeroMultilangTip() {
               <h3 className="ln-multilang-tip-title">{ui.heroMultilangTipTitle.en}</h3>
               <p className="ln-multilang-tip-lead">{ui.heroMultilangTipLead.en}</p>
 
-              {/* kennyotsu/fresh-lizard-20–style vertical word spin */}
+              {/* kennyotsu/fresh-lizard-20–style word cycle — all supported langs */}
               <div className="ln-multilang-lizard" aria-hidden="true">
                 <span className="ln-multilang-lizard-label">{ui.heroMultilangTipLoading.en}</span>
                 <span className="ln-multilang-lizard-words">
-                  {SPIN_LANGS.map((lang, i) => (
-                    <span className="ln-multilang-lizard-word" key={`${lang.name}-${i}`}>
-                      <span className="ln-multilang-tip-flag">{lang.flag}</span>
-                      <span className="ln-multilang-lizard-name">
-                        <strong>{lang.name}</strong>
-                        <em>{lang.native}</em>
+                  {(() => {
+                    const lang = SUPPORTED_LANG_CARDS[spinIndex]
+                    return (
+                      <span className="ln-multilang-lizard-word" key={lang.id}>
+                        <span className="ln-multilang-tip-flag">{lang.flag}</span>
+                        <span className="ln-multilang-lizard-name">
+                          <strong>{lang.en}</strong>
+                          <em>{lang.native}</em>
+                        </span>
                       </span>
-                    </span>
-                  ))}
+                    )
+                  })()}
                 </span>
               </div>
 
               <ul className="ln-multilang-tip-langs ln-multilang-tip-langs--sr">
-                {SUPPORTED_LANGS.map((lang) => (
-                  <li key={lang.name}>
-                    {lang.flag} {lang.name} — {lang.native}
+                {SUPPORTED_LANG_CARDS.map((lang) => (
+                  <li key={lang.id}>
+                    {lang.flag} {lang.en} — {lang.native}
                   </li>
                 ))}
               </ul>

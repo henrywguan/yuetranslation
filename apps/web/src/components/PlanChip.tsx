@@ -3,12 +3,13 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BiText } from './BiText'
 import { GlowRotateButton } from './GlowRotateButton'
+import { StatefulButton, type ButtonPhase } from './StatefulButton'
 import { RoleBadge } from './RoleBadge'
 import { UsageMeters } from './UsageMeters'
 import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { AccountHubHousehold } from './AccountHubHousehold'
-import { HarborQuestAccountLaunch } from './HarborQuestAccountLaunch'
+import { AccountHubLearnCarousel } from './AccountHubLearnCarousel'
 import { AccountHubPrimarySelect } from './AccountHubPrimarySelect'
 import { AccountHubVoice } from './AccountHubVoice'
 import {
@@ -117,7 +118,9 @@ export function PlanChip() {
   const [usernameDraft, setUsernameDraft] = useState('')
   const [usernameEditing, setUsernameEditing] = useState(false)
   const [usernameBusy, setUsernameBusy] = useState(false)
+  const [usernamePhase, setUsernamePhase] = useState<ButtonPhase>('idle')
   const [usernameError, setUsernameError] = useState<string | null>(null)
+  const usernameSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [busy, setBusy] = useState(false)
   const [badgeMetric, setBadgeMetric] = useState<BadgeUsageMetric>(() => readBadgeUsageMetric())
   const [yueVoice, setYueVoice] = useState<YueVoiceId>(() => readLocalYueVoice())
@@ -153,6 +156,12 @@ export function PlanChip() {
 
   useEffect(() => {
     prefetchPushConfig()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (usernameSaveTimer.current) clearTimeout(usernameSaveTimer.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -453,26 +462,29 @@ export function PlanChip() {
     if (!entitlement.loggedIn) return
     setUsernameError(null)
     setUsernameDraft(username)
+    setUsernamePhase('idle')
     setUsernameEditing(true)
   }
 
   const cancelUsernameEdit = () => {
+    if (usernameSaveTimer.current) clearTimeout(usernameSaveTimer.current)
     setUsernameEditing(false)
     setUsernameDraft(username)
     setUsernameError(null)
+    setUsernamePhase('idle')
   }
 
   const persistUsername = async () => {
     if (!entitlement.loggedIn) return
     const next = usernameDraft.trim()
     setUsernameBusy(true)
+    setUsernamePhase('loading')
     setUsernameError(null)
     try {
       const data = await saveUsername(next)
       const saved = data.prefs?.username || next
       setUsername(saved)
       setUsernameDraft(saved)
-      setUsernameEditing(false)
       if (data.entitlement) {
         useYueStore.setState({ entitlement: data.entitlement })
       } else {
@@ -494,10 +506,17 @@ export function PlanChip() {
           },
         })
       }
+      setUsernamePhase('success')
+      if (usernameSaveTimer.current) clearTimeout(usernameSaveTimer.current)
+      usernameSaveTimer.current = setTimeout(() => {
+        setUsernameEditing(false)
+        setUsernamePhase('idle')
+        setUsernameBusy(false)
+      }, 720)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not save username'
       setUsernameError(message)
-    } finally {
+      setUsernamePhase('idle')
       setUsernameBusy(false)
     }
   }
@@ -560,14 +579,16 @@ export function PlanChip() {
                 </p>
               ) : null}
               <div className="account-hub-username-actions">
-                <button
-                  type="button"
+                <StatefulButton
                   className="account-hub-btn account-hub-btn--primary account-hub-btn--compact"
-                  disabled={usernameBusy || !usernameDraft.trim()}
+                  phase={usernamePhase}
+                  disabled={!usernameDraft.trim()}
+                  loadingLabel={<BiText copy={ui.accountUsernameSaving} size="sm" hideJp />}
+                  successLabel={<BiText copy={ui.accountUsernameSaved} size="sm" hideJp />}
                   onClick={() => void persistUsername()}
                 >
                   <BiText copy={ui.accountUsernameSave} size="sm" hideJp />
-                </button>
+                </StatefulButton>
                 <button
                   type="button"
                   className="account-hub-btn account-hub-btn--compact"
@@ -602,7 +623,7 @@ export function PlanChip() {
                   {email ? <p className="account-hub-email">{email}</p> : null}
                 </div>
                 {entitlement.loggedIn ? (
-                  <HarborQuestAccountLaunch onNavigate={() => setOpen(false)} />
+                  <AccountHubLearnCarousel onNavigate={() => setOpen(false)} />
                 ) : null}
               </div>
             </>

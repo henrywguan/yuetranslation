@@ -190,5 +190,84 @@ await tts.loadTtsAudio('cache-me', 'en')
 assert.equal(apiMod.fetchCount(), before + 1, 'replay must not refetch TTS')
 assert.equal(tts.ttsAudioCacheSizeForTests(), 1)
 
+// --- iPhone loud path: Web Audio BufferSource, not HTMLAudio ---
+const appleDir = join(tmpdir(), `tts-smoke-apple-${Date.now()}`)
+mkdirSync(appleDir, { recursive: true })
+writeFileSync(join(appleDir, 'api.ts'), readFileSync(join(dir, 'api.ts'), 'utf8'))
+writeFileSync(join(appleDir, 'types.ts'), `export type Lang = 'en' | 'yue'\n`)
+writeFileSync(join(appleDir, 'mediaAccess.ts'), `export function isAppleTouchDevice() { return true }\n`)
+writeFileSync(
+  join(appleDir, 'ttsVoices.ts'),
+  readFileSync(join(dir, 'ttsVoices.ts'), 'utf8'),
+)
 rmSync(dir, { recursive: true, force: true })
-console.log('tts.smoke: ok (barge-in preserveSession + clip cache)')
+
+const appleCtx = {
+  state: 'running' as string,
+  resume: async () => {
+    appleCtx.state = 'running'
+  },
+  destination: {},
+  decodeCalls: 0,
+  bufferStarts: 0,
+  oscStarts: 0,
+  async decodeAudioData(_buf: ArrayBuffer) {
+    appleCtx.decodeCalls += 1
+    return { duration: 0.4, sampleRate: 16000, numberOfChannels: 1, length: 64 }
+  },
+  createOscillator() {
+    return {
+      frequency: { value: 0 },
+      connect() {},
+      disconnect() {},
+      start() {
+        appleCtx.oscStarts += 1
+      },
+      stop() {},
+    }
+  },
+  createGain() {
+    return { gain: { value: 1 }, connect() {}, disconnect() {} }
+  },
+  createBufferSource() {
+    return {
+      buffer: null as unknown,
+      playbackRate: { value: 1 },
+      onended: null as (() => void) | null,
+      connect() {},
+      disconnect() {},
+      start() {
+        appleCtx.bufferStarts += 1
+        queueMicrotask(() => this.onended?.())
+      },
+      stop() {},
+    }
+  },
+  createMediaElementSource() {
+    throw new Error('iPhone loud path must not wire MediaElementSource')
+  },
+}
+
+writeFileSync(
+  join(appleDir, 'audioReactive.ts'),
+  `const ctx = globalThis.__appleTtsCtx
+export function ensureSharedAudioContext() { return ctx }
+export function resumeSharedAudioContext() { return ctx.resume() }
+`,
+)
+;(globalThis as unknown as { __appleTtsCtx: typeof appleCtx }).__appleTtsCtx = appleCtx
+
+writeFileSync(join(appleDir, 'tts.ts'), src)
+const appleTts = await import(pathToFileURL(join(appleDir, 'tts.ts')).href)
+
+appleTts.unlockTtsPlayback({ force: true })
+assert.ok(appleTts.ttsKeepAliveArmedForTests(), 'force unlock arms iPhone keep-alive')
+assert.ok(appleCtx.oscStarts >= 1, 'keep-alive oscillator starts in the gesture')
+
+appleTts.resetTtsAudioCacheForTests()
+await appleTts.speakText('louder please', 'yue', null, { loud: true })
+assert.ok(appleCtx.decodeCalls >= 1, 'loud iPhone TTS decodes through Web Audio')
+assert.ok(appleCtx.bufferStarts >= 1, 'loud iPhone TTS starts a BufferSource')
+
+rmSync(appleDir, { recursive: true, force: true })
+console.log('tts.smoke: ok (barge-in preserveSession + clip cache + iPhone loud Web Audio)')
