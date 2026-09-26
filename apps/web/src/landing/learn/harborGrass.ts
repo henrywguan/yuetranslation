@@ -41,6 +41,15 @@ function bladeMat(color: number) {
   return m
 }
 
+/** Shared cone + Lambert — InstancedMesh tufts must not clone a new geo per blade. */
+export function harborGrassBladeGeo(): THREE.BufferGeometry {
+  return BLADE_GEO
+}
+
+export function harborGrassBladeMat(color: number): THREE.MeshLambertMaterial {
+  return bladeMat(color)
+}
+
 /**
  * Pointed low-poly blade — scaled shared cone (cheap Habitat turf read).
  * Callers own lean via rotation; do not dispose the shared geometry.

@@ -424,8 +424,9 @@ function main() {
     if (o.name === 'guan-tall-grass') tallGrass++
     if (o.name === 'guan-dirt-patch') dirtBeds++
   })
-  assert.ok(tuftCount >= 60, 'grass tufts underfoot (perf-trimmed density)')
-  assert.ok(tallGrass >= 18, 'Habitat-style tall grass clumps')
+  const tuftPlaces = Number(guanScene.userData.guanTuftPlaces ?? 0) + tuftCount
+  assert.ok(tuftPlaces >= 36, 'grass tufts underfoot (instanced budget + pond carpets)')
+  assert.ok(tallGrass >= 12, 'Habitat-style tall grass clumps')
   assert.ok(dirtBeds >= 8, 'irregular dirt beds in the meadows')
   let herbStalks = 0
   let habitatCrates = 0
@@ -1562,7 +1563,12 @@ function main() {
   assert.ok(harborIosDrawRadius(8.6) > harborIosDrawRadius(10.8), 'pinch-out tightens the iPhone LOD radius')
   assert.ok(HARBOR_V2_IOS_SKIP_PRELOAD.includes('willow'), 'iPhone does not preload willow GLBs')
   assert.match(worldSrc2, /harborAllowV2BankMeshes\(\)/, 'village houses / piers / lanterns gate on iPhone')
-  assert.match(worldSrc2, /harborIosDrawRadius\(distance\)/, 'iPhone hides far chunk props while orbiting')
+  assert.match(worldSrc2, /harborVoyageCullRadii\(distance\)/, 'voyage hides far chunk props while orbiting')
+  assert.match(
+    readFileSync(new URL('./harborDrawBudget.ts', import.meta.url), 'utf8'),
+    /harborIosDrawRadius\(orbitDistance\)/,
+    'iPhone prop ring still tightens when pinched out',
+  )
   assert.match(worldSrc2, /harborKeepLodChild|harborLodKeep/, 'iPhone LOD never hides bank / road slabs')
   assert.match(worldSrc2, /lodX = travelMode === 'foot' \? footX : boatX/, 'iPhone LOD is sailor-centered')
   assert.match(worldSrc2, /seat: 'chair'/, 'land sit does not reuse the canoe GLB sink')

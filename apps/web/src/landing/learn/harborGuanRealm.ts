@@ -52,6 +52,12 @@ import { buildNametagSprite } from './harborRemoteAvatars'
 import { attachHarborCastGlb } from './harborProtagonistGlb'
 import { stampHarborNpcRoam } from './harborNpcRoam'
 import { harborAllowNpcScoutGlb, isHarborConstrainedGpu } from './harborIosGpu'
+import {
+  guanScatterCount,
+  makeGuanTuftMesh,
+  tagGuanDrawNodes,
+  type GuanTuftBlade,
+} from './harborDrawBudget'
 
 /** Local alias so foot clamp can snap to satellite shores. */
 const GUAN_SATELLITE_ISLANDS_FOOT = GUAN_SATELLITE_ISLANDS
@@ -419,16 +425,13 @@ function palmTree(rng: () => number): THREE.Group {
   const trunk = hqPost(0.05, 0.1, h, 0x6a4a28, 0, h / 2, 0, 5)
   trunk.rotation.z = lean
   g.add(trunk)
-  // Trunk ring bands (value steps — era “detail without verts”)
-  for (let i = 0; i < 3; i++) {
-    const y = h * (0.25 + i * 0.22)
-    g.add(hqBox(0.14 + i * 0.02, 0.05, 0.14 + i * 0.02, i % 2 ? P.woodDark : P.woodDeep, lean * y * 0.3, y, 0))
-  }
+  // One trunk band — extra rings were draw calls, not silhouette
+  g.add(hqBox(0.16, 0.05, 0.16, P.woodDark, lean * h * 0.35, h * 0.45, 0))
   const leaf = 0x2a8a40
   const leafLite = 0x3aaa50
   const leafDeep = 0x1a6a30
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * Math.PI * 2 + rng() * 0.25
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + rng() * 0.25
     const frond = hqBox(0.07, 0.035, 0.62 + rng() * 0.28, i % 3 === 0 ? leafDeep : i % 2 ? leaf : leafLite, 0, h + 0.05, 0)
     frond.rotation.y = a
     frond.rotation.x = -0.5 - rng() * 0.35
@@ -1528,9 +1531,10 @@ function scatterJungle(
 }
 
 function scatterGrassTufts(root: THREE.Group, rng: () => number, count: number) {
+  const blades: GuanTuftBlade[] = []
   let placed = 0
   let guard = 0
-  while (placed < count && guard < count * 4) {
+  while (placed < count && guard < count * 16) {
     guard++
     const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
     const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
@@ -1541,11 +1545,30 @@ function scatterGrassTufts(root: THREE.Group, rng: () => number, count: number) 
       Math.hypot(x - GUAN_LANDMARKS.shilo.x, z - GUAN_LANDMARKS.shilo.z) < 1.3 ||
       Math.hypot(x - GUAN_LANDMARKS.taiBwoWannai.x, z - GUAN_LANDMARKS.taiBwoWannai.z) < 1.2
     if (nearTown && rng() > 0.35) continue
-    const tuft = grassTuft(rng)
-    tuft.position.set(x, guanGroundY(x, z), z)
-    tuft.rotation.y = rng() * Math.PI
-    root.add(tuft)
+    const y = guanGroundY(x, z)
+    const n = 3 + Math.floor(rng() * 2)
+    for (let i = 0; i < n; i++) {
+      const h = 0.2 + rng() * 0.32
+      const w = 0.035 + h * 0.03
+      blades.push({
+        x: x + (rng() - 0.5) * 0.22,
+        y,
+        z: z + (rng() - 0.5) * 0.22,
+        sx: w,
+        sy: h,
+        sz: w,
+        rx: (rng() - 0.5) * 0.28,
+        ry: rng() * Math.PI,
+        rz: (rng() - 0.5) * 0.4,
+        slot: (i % 3) as 0 | 1 | 2,
+      })
+    }
     placed++
+  }
+  root.userData.guanTuftPlaces = placed
+  for (const slot of [0, 1, 2] as const) {
+    if (!blades.some((b) => b.slot === slot)) continue
+    root.add(makeGuanTuftMesh(blades, slot))
   }
 }
 
@@ -1554,7 +1577,7 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
   // Tall grass clumps (meadow density — kept light for mobile GPU)
   let tall = 0
   let guard = 0
-  while (tall < 28 && guard < 140) {
+  while (tall < guanScatterCount(22) && guard < 140) {
     guard++
     const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
     const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
@@ -1572,7 +1595,7 @@ function scatterHabitatGround(root: THREE.Group, rng: () => number) {
   // Spear-leaf plants + spiky scrub for Habitat clearing variety
   let flora = 0
   guard = 0
-  while (flora < 14 && guard < 70) {
+  while (flora < guanScatterCount(10) && guard < 70) {
     guard++
     const x = GUAN_HARBOR_BOUNDS.minX + rng() * (GUAN_HARBOR_BOUNDS.maxX - GUAN_HARBOR_BOUNDS.minX)
     const z = GUAN_HARBOR_BOUNDS.minZ + rng() * (GUAN_HARBOR_BOUNDS.maxZ - GUAN_HARBOR_BOUNDS.minZ)
@@ -1690,7 +1713,7 @@ function stoneRingPond(rng: () => number, x: number, z: number, radius: number):
   }
 
   // Dense overlapping grass carpet around the pond (Habitat fuzzy turf — light count)
-  const carpet = 12 + Math.floor(rng() * 6)
+  const carpet = 6 + Math.floor(rng() * 4)
   for (let i = 0; i < carpet; i++) {
     const a = rng() * Math.PI * 2
     const d = radius * (1.15 + rng() * 1.4)
@@ -1922,14 +1945,14 @@ export function buildGuanHarborScene(): THREE.Group {
     root.add(hut)
   }
 
-  scatterJungle(root, rng, GUAN_LANDMARKS.volcano.x, GUAN_LANDMARKS.volcano.z - 4.5, 5.5, 16)
-  scatterJungle(root, rng, GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z, 7, 28, true)
-  scatterJungle(root, rng, GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z + 4, 5.5, 20, true)
-  scatterJungle(root, rng, -8, 4, 4.5, 14)
-  scatterJungle(root, rng, 6, 10, 4, 12)
-  scatterJungle(root, rng, 3, -8, 5, 16, true)
-  scatterJungle(root, rng, -6, -6, 4.5, 12, true)
-  scatterGrassTufts(root, rng, 90)
+  scatterJungle(root, rng, GUAN_LANDMARKS.volcano.x, GUAN_LANDMARKS.volcano.z - 4.5, 5.5, guanScatterCount(16))
+  scatterJungle(root, rng, GUAN_LANDMARKS.taiBwoWannai.x, GUAN_LANDMARKS.taiBwoWannai.z, 7, guanScatterCount(28), true)
+  scatterJungle(root, rng, GUAN_LANDMARKS.shilo.x, GUAN_LANDMARKS.shilo.z + 4, 5.5, guanScatterCount(20), true)
+  scatterJungle(root, rng, -8, 4, 4.5, guanScatterCount(14))
+  scatterJungle(root, rng, 6, 10, 4, guanScatterCount(12))
+  scatterJungle(root, rng, 3, -8, 5, guanScatterCount(16), true)
+  scatterJungle(root, rng, -6, -6, 4.5, guanScatterCount(12), true)
+  scatterGrassTufts(root, rng, guanScatterCount(72))
   scatterHabitatGround(root, rng)
 
   for (let i = 0; i < 8; i++) {
@@ -2006,6 +2029,7 @@ export function buildGuanHarborScene(): THREE.Group {
 
   // Fishing lodge, shore spots, Pearl Cay / Mist Atoll / Jade Skerry / Ember Shoal
   stampGuanFishingRealm(root)
+  tagGuanDrawNodes(root)
 
   return root
 }

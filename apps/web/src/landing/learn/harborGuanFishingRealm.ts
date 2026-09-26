@@ -202,6 +202,11 @@ function stampSatelliteIsland(
   island: (typeof GUAN_SATELLITE_ISLANDS)[number],
   rng: () => number,
 ): void {
+  const isle = new THREE.Group()
+  isle.name = `guan-sat-${island.id}`
+  isle.userData.harborCull = 'satellite'
+  isle.userData.cullX = island.x
+  isle.userData.cullZ = island.z
   const baseColor =
     island.biome === 'coral'
       ? 0xd8b878
@@ -217,7 +222,7 @@ function stampSatelliteIsland(
   const disk = islandDisk(island.r, baseColor, island.biome === 'ember' ? 0.28 : 0.2)
   disk.position.set(island.x, 0, island.z)
   disk.name = `guan-sat-${island.id}`
-  root.add(disk)
+  isle.add(disk)
 
   const grass = islandDisk(
     island.r * 0.78,
@@ -231,7 +236,7 @@ function stampSatelliteIsland(
     0.42,
   )
   grass.position.set(island.x, 0, island.z)
-  root.add(grass)
+  isle.add(grass)
 
   // Unique flora / fauna per biome
   if (island.biome === 'coral') {
@@ -246,11 +251,11 @@ function stampSatelliteIsland(
         0.55,
         island.z + Math.sin(a) * (island.r * 0.55),
       )
-      root.add(coral)
+      isle.add(coral)
     }
     const crab = faunaCrab(0xd05040)
     crab.position.set(island.x + 0.8, 0.5, island.z - 0.4)
-    root.add(crab)
+    isle.add(crab)
   } else if (island.biome === 'mist') {
     for (let i = 0; i < 6; i++) {
       const palm = floraPalm(rng, 0x4a6a58)
@@ -261,18 +266,18 @@ function stampSatelliteIsland(
         island.z + Math.sin(a) * (island.r * 0.45),
       )
       palm.scale.setScalar(0.85 + rng() * 0.3)
-      root.add(palm)
+      isle.add(palm)
     }
     const heron = faunaHeron()
     heron.position.set(island.x - 0.6, 0.45, island.z + 0.7)
-    root.add(heron)
+    isle.add(heron)
     const mist = new THREE.Mesh(
       new THREE.SphereGeometry(island.r * 0.9, 8, 6),
       new THREE.MeshBasicMaterial({ color: 0xc8d8e0, transparent: true, opacity: 0.12 }),
     )
     mist.position.set(island.x, 1.2, island.z)
     mist.userData.mistPulse = true
-    root.add(mist)
+    isle.add(mist)
   } else if (island.biome === 'jade') {
     for (let i = 0; i < 10; i++) {
       const reed = new THREE.Mesh(
@@ -282,13 +287,13 @@ function stampSatelliteIsland(
       const a = rng() * Math.PI * 2
       const d = rng() * island.r * 0.7
       reed.position.set(island.x + Math.cos(a) * d, 0.7, island.z + Math.sin(a) * d)
-      root.add(reed)
+      isle.add(reed)
     }
     const koi = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 5), hqMatSmooth(0xe07050))
     koi.rotation.z = Math.PI / 2
     koi.position.set(island.x + 1.2, 0.15, island.z)
     koi.userData.fish = true
-    root.add(koi)
+    isle.add(koi)
   } else if (island.biome === 'reed') {
     for (let i = 0; i < 14; i++) {
       const reed = new THREE.Mesh(
@@ -299,23 +304,23 @@ function stampSatelliteIsland(
       const d = rng() * island.r * 0.75
       reed.position.set(island.x + Math.cos(a) * d, 0.75, island.z + Math.sin(a) * d)
       reed.rotation.z = (rng() - 0.5) * 0.2
-      root.add(reed)
+      isle.add(reed)
     }
     const duck = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4), hqMatSmooth(0xe8c040))
     duck.scale.set(1.2, 0.7, 0.9)
     duck.position.set(island.x - 0.9, 0.48, island.z + 0.5)
     duck.userData.fauna = 'duck'
-    root.add(duck)
+    isle.add(duck)
   } else if (island.biome === 'wreck') {
     const hull = hqBox(1.8, 0.45, 0.7, 0x4a4038)
     hull.position.set(island.x + 0.3, 0.55, island.z)
     hull.rotation.y = 0.4
     hull.rotation.z = 0.15
-    root.add(hull)
+    isle.add(hull)
     const mast = hqPost(0.07, 0.09, 1.4, 0x6a5a48)
     mast.position.set(island.x + 0.2, 1.1, island.z)
     mast.rotation.z = 0.35
-    root.add(mast)
+    isle.add(mast)
     for (let i = 0; i < 4; i++) {
       const barnacle = new THREE.Mesh(
         new THREE.SphereGeometry(0.08 + rng() * 0.04, 5, 4),
@@ -327,11 +332,11 @@ function stampSatelliteIsland(
         0.48,
         island.z + Math.sin(a) * (island.r * 0.5),
       )
-      root.add(barnacle)
+      isle.add(barnacle)
     }
     const crab = faunaCrab(0x608070)
     crab.position.set(island.x - 0.7, 0.5, island.z - 0.5)
-    root.add(crab)
+    isle.add(crab)
   } else {
     // ember
     for (let i = 0; i < 5; i++) {
@@ -343,17 +348,17 @@ function stampSatelliteIsland(
         island.z + Math.sin(a) * (island.r * 0.5),
       )
       rock.scale.setScalar(0.6 + rng() * 0.4)
-      root.add(rock)
+      isle.add(rock)
     }
     const fern = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.5, 5), hqMat(0x3a5028))
     fern.position.set(island.x, 0.55, island.z)
-    root.add(fern)
+    isle.add(fern)
     if (!isHarborConstrainedGpu()) {
       const ember = new THREE.PointLight(0xff8040, 0.55, 6)
       ember.position.set(island.x, 1.2, island.z)
       ember.userData.specialHostGlow = true
       ember.userData.glowBaseIntensity = 0.55
-      root.add(ember)
+      isle.add(ember)
     }
   }
 
@@ -361,8 +366,9 @@ function stampSatelliteIsland(
     const label = buildNametagSprite(`${island.name.en}`)
     label.position.set(island.x, 2.2, island.z)
     label.userData.billboard = true
-    root.add(label)
+    isle.add(label)
   }
+  root.add(isle)
 }
 
 /** Stamp fishing lodge, spots, and four satellite islands onto Guan root. */
