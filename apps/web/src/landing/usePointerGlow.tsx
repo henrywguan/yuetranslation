@@ -7,8 +7,8 @@ const GLOW_SEL = '.ln-pointer-glow'
  * Tracks the pointer across a scope and lights the nearest `.ln-pointer-glow` card.
  * Fine pointers only — touch leaves cards static so iPhone scroll stays clean.
  */
-export function usePointerGlowScope() {
-  const ref = useRef<HTMLElement>(null)
+export function usePointerGlowScope<T extends HTMLElement = HTMLElement>() {
+  const ref = useRef<T | null>(null)
   const lastRef = useRef<HTMLElement | null>(null)
 
   const clear = () => {

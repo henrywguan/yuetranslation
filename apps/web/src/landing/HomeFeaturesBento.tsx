@@ -253,7 +253,7 @@ function BentoCardBody({ card }: { card: BentoCard }) {
 
 /** Mobile bento feature grid — visual cards, minimal copy. */
 export function HomeFeaturesBento() {
-  const glow = usePointerGlowScope()
+  const glow = usePointerGlowScope<HTMLDivElement>()
   return (
     <div
       ref={glow.ref}

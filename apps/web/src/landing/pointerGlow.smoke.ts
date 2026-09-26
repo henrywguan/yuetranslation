@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const hook = readFileSync(join(here, 'usePointerGlow.ts'), 'utf8')
+const hook = readFileSync(join(here, 'usePointerGlow.tsx'), 'utf8')
 const css = readFileSync(join(here, 'pointerGlow.css'), 'utf8')
 const bento = readFileSync(join(here, 'HomeFeaturesBento.tsx'), 'utf8')
 const duo = readFileSync(join(here, 'HomePricingDuo.tsx'), 'utf8')

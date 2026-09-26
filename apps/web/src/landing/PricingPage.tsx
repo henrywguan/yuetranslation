@@ -90,7 +90,7 @@ async function onPlanCta(plan: MarketingPlan, billing: Billing) {
 
 export function PricingPage() {
   const [billing, setBilling] = useState<Billing>('monthly')
-  const glow = usePointerGlowScope()
+  const glow = usePointerGlowScope<HTMLElement>()
   useDocumentMeta({
     title: 'Pricing — JyutTranslate',
     description:

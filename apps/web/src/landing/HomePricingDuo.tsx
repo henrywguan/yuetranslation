@@ -9,7 +9,7 @@ import { PointerGlowLayers, usePointerGlowScope } from './usePointerGlow'
 
 /** Compact Free / Family duo with micro-demos — studio teaser, not a full table. */
 export function HomePricingDuo() {
-  const glow = usePointerGlowScope()
+  const glow = usePointerGlowScope<HTMLElement>()
   return (
     <section
       ref={glow.ref}
