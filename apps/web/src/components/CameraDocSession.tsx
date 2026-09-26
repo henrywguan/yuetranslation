@@ -1,6 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { BiText } from './BiText'
+import { CamTargetPicker } from './CamTargetPicker'
 import { GlowRotateButton } from './GlowRotateButton'
 import { TranslateThinking } from './TranslateThinking'
 import {
@@ -9,6 +10,7 @@ import {
   translateDocumentFile,
   type DocLang,
 } from '../lib/docsApi'
+import type { CameraTarget } from '../lib/camera/types'
 import { translatePdfHybrid, getPdfPageCount } from '../lib/pdfDocTranslate'
 import type { Entitlement } from '../lib/types'
 import { biPlain, docThinkingCopy, ui, type Bi } from '../lib/uiCopy'
@@ -148,8 +150,14 @@ export function CameraDocSession({
   return (
     <div className="cam-session cam-session--docs">
       <div className="cam-docs-bar">
-        <button type="button" className="cam-back" onClick={onBack} disabled={busy}>
-          <BiText copy={ui.camBack} size="sm" />
+        <button
+          type="button"
+          className="cam-back cam-back--icon"
+          onClick={onBack}
+          disabled={busy}
+          aria-label={biPlain(ui.camBack)}
+        >
+          <BackArrowIcon />
         </button>
         <h2 className="cam-docs-title">
           <BiText copy={ui.camChoiceDocs} size="md" />
@@ -163,46 +171,47 @@ export function CameraDocSession({
       {remainingHint ? <p className="cam-docs-meter">{remainingHint}</p> : null}
 
       <div className="cam-docs-dir" role="group" aria-label={biPlain(ui.direction)}>
-        <label>
+        <div className="cam-docs-dir-field">
           <span className="cam-docs-dir-label">
             <BiText copy={ui.camDocFrom} size="sm" />
           </span>
-          <select
-            value={from}
+          <CamTargetPicker
+            value={from as CameraTarget}
+            onChange={(next) => {
+              if (next === 'auto') return
+              setFrom(next)
+            }}
+            tone="panel"
+            includeAuto={false}
+            labels="plain"
             disabled={busy || !canDocs}
-            onChange={(e) => setFrom(e.target.value as DocLang)}
-          >
-            <option value="en">English</option>
-            <option value="yue">粵語</option>
-            <option value="cmn">普通話</option>
-            <option value="wuu">上海話</option>
-            <option value="sichuan">四川話</option>
-          </select>
-        </label>
+          />
+        </div>
         <button
           type="button"
           className="cam-docs-swap"
           onClick={swap}
           disabled={busy || !canDocs}
+          aria-label="Swap languages"
         >
           ↔
         </button>
-        <label>
+        <div className="cam-docs-dir-field">
           <span className="cam-docs-dir-label">
             <BiText copy={ui.camDocTo} size="sm" />
           </span>
-          <select
-            value={to}
+          <CamTargetPicker
+            value={to as CameraTarget}
+            onChange={(next) => {
+              if (next === 'auto') return
+              setTo(next)
+            }}
+            tone="panel"
+            includeAuto={false}
+            labels="plain"
             disabled={busy || !canDocs}
-            onChange={(e) => setTo(e.target.value as DocLang)}
-          >
-            <option value="yue">粵語</option>
-            <option value="cmn">普通話</option>
-            <option value="wuu">上海話</option>
-            <option value="sichuan">四川話</option>
-            <option value="en">English</option>
-          </select>
-        </label>
+          />
+        </div>
       </div>
 
       <label className={`cam-docs-drop${busy ? ' is-busy' : ''}${!canDocs ? ' is-disabled' : ''}`}>
@@ -258,5 +267,19 @@ export function CameraDocSession({
         <BiText copy={ui.camDocPrivacy} size="sm" />
       </p>
     </div>
+  )
+}
+
+function BackArrowIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+      <path
+        d="M15.5 5.5 9 12l6.5 6.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }

@@ -337,6 +337,13 @@ export const ui = {
   translating: { en: 'Translating', zh: '翻譯緊', jp: 'faan1 jik6 gan2' },
 
   direction: { en: 'Direction', zh: '方向', jp: 'fong1 hoeng3' },
+  langPickerTitle: {
+    en: 'Choose a language',
+    zh: '選擇語言',
+    jp: 'syun2 zaak6 jyu5 jin4',
+  },
+  langPickerVoice: { en: 'Voice', zh: '語音', jp: 'jyu5 jam1' },
+  langPickerType: { en: 'Type only', zh: '只打字', jp: 'zi2 daa2 zi6' },
   dirEnglish: { en: 'English', zh: '英文', jp: 'jing1 man2' },
   dirJyutjyu: { en: 'Cantonese', zh: '粵語', jp: 'jyut6 jyu5' },
   dirMandarin: { en: 'Mandarin', zh: '普通話', jp: 'pou2 tung1 waa2' },

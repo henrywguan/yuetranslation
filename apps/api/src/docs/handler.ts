@@ -13,7 +13,22 @@ import { translateTxtFile } from './txtEngine.js'
 import { translateDocx, translatePptx, translateXlsx } from './ooxmlEngine.js'
 import { estimateDocPages } from './pages.js'
 
-const Lang = z.enum(['en', 'yue', 'cmn'])
+const Lang = z.enum([
+  'en',
+  'yue',
+  'cmn',
+  'wuu',
+  'sichuan',
+  'tl',
+  'es',
+  'eses',
+  'vi',
+  'th',
+  'lo',
+  'ceb',
+  'ilo',
+  'bcl',
+])
 
 const FileBody = z.object({
   filename: z.string().min(1).max(240),
