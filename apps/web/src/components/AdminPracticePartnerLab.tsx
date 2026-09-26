@@ -419,7 +419,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const flashDrillZh = useCallback((event: { stopPropagation: () => void }) => {
     event.stopPropagation()
     setZhFlash((n) => n + 1)
-  }, [])
+    replayPartnerVoice()
+  }, [replayPartnerVoice])
 
   const startDrill = useCallback(async () => {
     if (turnLockRef.current || activeDrillRef.current) return
@@ -1181,7 +1182,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 type="button"
                 className={`partner-lab-drill-zh${zhFlash ? ' is-jade-flash' : ''}`}
                 lang="zh-HK"
-                aria-label="Highlight phrase"
+                aria-label={
+                  mood === 'speaking' || listening ? 'Highlight phrase' : 'Replay phrase'
+                }
                 onClick={flashDrillZh}
               >
                 {[...activeDrill.zh].map((ch, i) => (
