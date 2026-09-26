@@ -6,11 +6,15 @@ import {
 } from './ui/orbital-sphere'
 import {
   DEFAULT_PRACTICE_PARTNER_CATEGORY,
+  DEFAULT_PRACTICE_PARTNER_DIFFICULTY,
   PRACTICE_PARTNER_CATEGORIES,
+  PRACTICE_PARTNER_DIFFICULTIES,
   postPracticePartnerChat,
   resolvePracticePartnerCategory,
+  resolvePracticePartnerDifficulty,
   type PracticePartnerCategory,
   type PracticePartnerChatMessage,
+  type PracticePartnerDifficulty,
   type PracticePartnerDrill,
   type PracticePartnerDrillTarget,
 } from '../lib/adminApi'
@@ -43,6 +47,7 @@ import './AdminPracticePartnerLab.css'
 
 const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
 const PARTNER_CATEGORY_KEY = 'yue-practice-partner-category'
+const PARTNER_DIFFICULTY_KEY = 'yue-practice-partner-difficulty'
 
 function readPartnerCategory(): PracticePartnerCategory {
   if (typeof window === 'undefined') return DEFAULT_PRACTICE_PARTNER_CATEGORY
@@ -56,6 +61,23 @@ function readPartnerCategory(): PracticePartnerCategory {
 function writePartnerCategory(id: PracticePartnerCategory) {
   try {
     localStorage.setItem(PARTNER_CATEGORY_KEY, resolvePracticePartnerCategory(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+function readPartnerDifficulty(): PracticePartnerDifficulty {
+  if (typeof window === 'undefined') return DEFAULT_PRACTICE_PARTNER_DIFFICULTY
+  try {
+    return resolvePracticePartnerDifficulty(localStorage.getItem(PARTNER_DIFFICULTY_KEY))
+  } catch {
+    return DEFAULT_PRACTICE_PARTNER_DIFFICULTY
+  }
+}
+
+function writePartnerDifficulty(id: PracticePartnerDifficulty) {
+  try {
+    localStorage.setItem(PARTNER_DIFFICULTY_KEY, resolvePracticePartnerDifficulty(id))
   } catch {
     /* ignore */
   }
@@ -199,6 +221,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
   const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
   const [category, setCategory] = useState<PracticePartnerCategory>(() => readPartnerCategory())
+  const [difficulty, setDifficulty] = useState<PracticePartnerDifficulty>(() =>
+    readPartnerDifficulty(),
+  )
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
@@ -211,6 +236,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const messagesRef = useRef<PracticePartnerChatMessage[]>([])
   const activeDrillRef = useRef<PracticePartnerDrillTarget | null>(null)
   const categoryRef = useRef<PracticePartnerCategory>(category)
+  const difficultyRef = useRef<PracticePartnerDifficulty>(difficulty)
   const turnLockRef = useRef(false)
   const finishRef = useRef<() => void>(() => {})
   const verdictTimerRef = useRef(0)
@@ -227,6 +253,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   useEffect(() => {
     categoryRef.current = category
   }, [category])
+
+  useEffect(() => {
+    difficultyRef.current = difficulty
+  }, [difficulty])
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -374,6 +404,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         messagesRef.current,
         null,
         categoryRef.current,
+        difficultyRef.current,
       )
       void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
       const withReply: PracticePartnerChatMessage[] = [
@@ -422,6 +453,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           nextMessages,
           target,
           categoryRef.current,
+          difficultyRef.current,
         )
         void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
         const withReply: PracticePartnerChatMessage[] = [
@@ -593,6 +625,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setCategory(id)
       writePartnerCategory(id)
       categoryRef.current = id
+      const level = resolvePracticePartnerDifficulty(difficultyRef.current)
+      setDifficulty(level)
+      writePartnerDifficulty(level)
+      difficultyRef.current = level
       clearDrillSession()
       setTopicReady(true)
       setFullscreen(false)
@@ -610,6 +646,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const onCategoryChange = (next: PracticePartnerCategory) => {
     pickTopic(next)
+  }
+
+  const onDifficultyPick = (next: PracticePartnerDifficulty) => {
+    const id = resolvePracticePartnerDifficulty(next)
+    setDifficulty(id)
+    writePartnerDifficulty(id)
+    difficultyRef.current = id
   }
 
   useEffect(() => {
@@ -703,6 +746,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const categoryMeta =
     PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
+  const difficultyMeta =
+    PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
+    PRACTICE_PARTNER_DIFFICULTIES[1]
 
   const drillKicker = verdictFlash === 'fail'
     ? 'Try again'
@@ -731,9 +777,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             <p className="partner-lab-kicker">
               {entry === 'hub' ? 'Beta' : 'Internal · not in app'}
             </p>
-            <h2 className="partner-lab-title">Choose topic</h2>
+            <h2 className="partner-lab-title">Choose difficulty & topic</h2>
             <p className="partner-lab-lede">
-              Follow along! The practice partner will start off and repeat.
+              Difficulty sets how much English 港灣 uses. Then pick a deck and begin.
             </p>
           </div>
           <div className="partner-lab-scores-wrap">
@@ -799,22 +845,62 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </div>
         </header>
 
-        <ul className="partner-lab-topic-list" role="list">
-          {PRACTICE_PARTNER_CATEGORIES.map((c) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                className={`partner-lab-topic-item${category === c.id ? ' is-current' : ''}`}
-                onClick={() => onCategoryChange(c.id)}
-              >
-                <span className="partner-lab-topic-en">{c.labelEn}</span>
-                <span className="partner-lab-topic-zh" lang="zh-HK">
-                  {c.labelZh}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="partner-lab-chooser-block">
+          <p className="partner-lab-chooser-label" id="partner-lab-diff-label">
+            Difficulty
+          </p>
+          <ul
+            className="partner-lab-diff-list"
+            role="listbox"
+            aria-labelledby="partner-lab-diff-label"
+          >
+            {PRACTICE_PARTNER_DIFFICULTIES.map((d) => (
+              <li key={d.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={difficulty === d.id}
+                  className={`partner-lab-diff-item partner-lab-diff-item--${d.id}${
+                    difficulty === d.id ? ' is-current' : ''
+                  }`}
+                  onClick={() => onDifficultyPick(d.id)}
+                >
+                  <span className="partner-lab-diff-en">{d.labelEn}</span>
+                  <span className="partner-lab-diff-zh" lang="zh-HK">
+                    {d.labelZh}
+                  </span>
+                  <span className="partner-lab-diff-hint">{d.hint}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="partner-lab-chooser-block">
+          <p className="partner-lab-chooser-label" id="partner-lab-topic-label">
+            Topic
+          </p>
+          <ul
+            className="partner-lab-topic-list"
+            role="list"
+            aria-labelledby="partner-lab-topic-label"
+          >
+            {PRACTICE_PARTNER_CATEGORIES.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={`partner-lab-topic-item${category === c.id ? ' is-current' : ''}`}
+                  onClick={() => onCategoryChange(c.id)}
+                >
+                  <span className="partner-lab-topic-en">{c.labelEn}</span>
+                  <span className="partner-lab-topic-zh" lang="zh-HK">
+                    {c.labelZh}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
     )
   }
@@ -974,6 +1060,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 {' '}
                 · {categoryMeta.labelZh}
               </span>
+              <span className="partner-lab-drill-diff">
+                {' '}
+                · {difficultyMeta.labelEn}
+              </span>
             </span>
             {hits + misses > 0 || scoreboard.bestStreak > 0 ? (
               <span className="partner-lab-drill-streak">
@@ -994,7 +1084,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </>
           ) : (
             <p className="partner-lab-drill-empty">
-              {categoryMeta.labelEn} · {categoryMeta.labelZh}
+              {difficultyMeta.labelEn} · {categoryMeta.labelEn} · {categoryMeta.labelZh}
             </p>
           )}
         </div>

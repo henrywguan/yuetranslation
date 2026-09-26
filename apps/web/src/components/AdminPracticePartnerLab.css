@@ -109,15 +109,106 @@
   max-width: 28rem;
 }
 
-.partner-lab-topic-list {
-  list-style: none;
-  margin: 0.35rem 0 0;
-  padding: 0;
+.partner-lab-chooser-block {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.45rem;
   width: min(100%, 26rem);
   justify-self: center;
   margin-inline: auto;
+  margin-top: 0.55rem;
+}
+
+.partner-lab-chooser-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--jade) 55%, var(--muted));
+}
+
+.partner-lab-diff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.partner-lab-diff-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-strong) 90%, var(--jade) 10%),
+      color-mix(in srgb, #041018 84%, transparent)
+    );
+  color: var(--ink-bright);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.partner-lab-diff-item:hover,
+.partner-lab-diff-item:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 55%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--jade) 14%, transparent);
+  outline: none;
+}
+
+.partner-lab-diff-item.is-current {
+  border-color: color-mix(in srgb, var(--jade) 72%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--jade) 30%, transparent);
+}
+
+.partner-lab-diff-item--mainlander.is-current {
+  border-color: color-mix(in srgb, #c45a3a 55%, var(--jade));
+}
+
+.partner-lab-diff-en {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.partner-lab-diff-zh {
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--jade) 65%, var(--muted));
+}
+
+.partner-lab-diff-hint {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.partner-lab-topic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.partner-lab-drill-diff {
+  font-weight: 500;
+  opacity: 0.85;
 }
 
 .partner-lab-topic-item {

@@ -82,6 +82,64 @@ export function categoryLockLine(category: PracticePartnerCategory): string {
   ].join(' ')
 }
 
+/** How much English 港灣 uses in `speak`. Does not change the drill card (still en + zh + jyutping). */
+export const PRACTICE_PARTNER_DIFFICULTY_IDS = [
+  'new_learner',
+  'abc',
+  'mainlander',
+] as const
+
+export type PracticePartnerDifficulty = (typeof PRACTICE_PARTNER_DIFFICULTY_IDS)[number]
+
+export const DEFAULT_PRACTICE_PARTNER_DIFFICULTY: PracticePartnerDifficulty = 'abc'
+
+export const PracticePartnerDifficultySchema = z.enum(PRACTICE_PARTNER_DIFFICULTY_IDS)
+
+export const PRACTICE_PARTNER_DIFFICULTY_META: Record<
+  PracticePartnerDifficulty,
+  { labelEn: string; labelZh: string; brief: string; speakMix: string }
+> = {
+  new_learner: {
+    labelEn: 'New Learner',
+    labelZh: '初學者',
+    brief: 'Mixed English and Cantonese — English majority in every speak line.',
+    speakMix:
+      'speak language: ENGLISH MAJORITY. Mostly English coaching and judgment; sprinkle short Cantonese (漢字) for the target phrase, interjections (喂, 哼), and model lines. Keep English as the main scaffolding so a beginner can follow.',
+  },
+  abc: {
+    labelEn: 'ABC',
+    labelZh: 'ABC',
+    brief: 'Mixed English and Cantonese — Cantonese majority in every speak line.',
+    speakMix:
+      'speak language: CANTONESE MAJORITY mix. Lead with 漢字 and Hong Kong Cantonese energy; use English only for short bridges, emphasis, or when a learner needs a quick gloss. Still mix — never English-only.',
+  },
+  mainlander: {
+    labelEn: 'Mainlander',
+    labelZh: '大陸仔',
+    brief:
+      'All Cantonese. Very stern, mocking, joking personality — no English in speak.',
+    speakMix:
+      'speak language: ALL CANTONESE (漢字 only). Zero English words in speak — not even “WRONG”, “Pass”, or “Fine”. Personality dial: very stern, mocking, joking, and theatrical; roast in 粵語口語. PASS/FAIL openers must be Cantonese inventions (do not paste English bank lines). Drill card fields en/zh/jyutping still required as usual.',
+  },
+}
+
+export function resolvePracticePartnerDifficulty(raw: unknown): PracticePartnerDifficulty {
+  const id = String(raw || '').trim()
+  return (PRACTICE_PARTNER_DIFFICULTY_IDS as readonly string[]).includes(id)
+    ? (id as PracticePartnerDifficulty)
+    : DEFAULT_PRACTICE_PARTNER_DIFFICULTY
+}
+
+export function difficultyLockLine(difficulty: PracticePartnerDifficulty): string {
+  const meta = PRACTICE_PARTNER_DIFFICULTY_META[difficulty]
+  return [
+    `[DIFFICULTY] ${difficulty} (${meta.labelZh} / ${meta.labelEn}).`,
+    meta.brief,
+    meta.speakMix,
+    'Difficulty only controls speak language mix and tone — CATEGORY still locks the phrase deck.',
+  ].join(' ')
+}
+
 export const PracticePartnerChatBodySchema = z.object({
   /** Empty on kickoff — first DEMAND needs no learner line. */
   messages: z.array(PracticePartnerMessageSchema).max(24),
@@ -89,6 +147,8 @@ export const PracticePartnerChatBodySchema = z.object({
   activeDrill: PracticePartnerDrillTargetSchema.optional().nullable(),
   /** Deck lock. Defaults to common phrases. */
   category: PracticePartnerCategorySchema.optional().nullable(),
+  /** English mix in speak. Defaults to ABC. */
+  difficulty: PracticePartnerDifficultySchema.optional().nullable(),
 })
 
 export type PracticePartnerMessage = z.infer<typeof PracticePartnerMessageSchema>
@@ -217,20 +277,22 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'You are 港灣 (Harbor), JyutTranslate’s intense, aggressively strict, unhinged Cantonese drill sergeant — a warm harbor name on maximum-anger Duolingo.',
   'Mission: intimidate, interrogate, and fiercely push the learner to perfect Cantonese pronunciation and vocabulary. No trophies for participation.',
   'CORE PERSONALITY: Speak with monotone, robotic, deeply threatening intensity. Be impatient, demanding, and overly dramatic about correct Cantonese tones.',
-  'Mix English and Hong Kong Cantonese natively. Use conversational interjections (Aa3, Wo3, Ge3, 喂, 哼) with an intimidating edge.',
+  'Default voice mixes English and Hong Kong Cantonese — but [DIFFICULTY] on each turn OVERRIDES the English mix (and Mainlander personality). Obey [DIFFICULTY] for every speak line.',
+  'Use conversational interjections (喂, 哼, 吖, 喎) with an intimidating edge when the difficulty allows Cantonese.',
   'Call out mistakes immediately.',
   'GAMEPLAY LOOP — Duolingo say-this. Strictly alternate DEMAND and JUDGMENT.',
-  'THE DEMAND: Give one target in the locked CATEGORY. Always include English, 漢字, and Jyutping with tone numbers. Command them to say it or translate it out loud into Cantonese right now. Example energy: Tell me “I am sorry I forgot my homework” or face the consequences.',
+  'THE DEMAND: Give one target in the locked CATEGORY. Always fill en, zh, and jyutping with tone numbers on the JSON card. Command them to say it or translate it out loud into Cantonese right now.',
   'THE JUDGMENT: Analyze their transcribed speech. If correct/good: reluctant, passive-aggressive validation, then immediately THE DEMAND for a NEW phrase in the SAME category (advance).',
-  'PASS VARIETY: The first clause of speak MUST be a fresh PASS OPENER. Rotate every pass. Never default to 哼。啱喇, 算你過關, or Fine. Correct. Never repeat the previous pass opener or a close paraphrase. Bank: ' +
+  'PASS VARIETY: The first clause of speak MUST be a fresh PASS OPENER. Rotate every pass. Never default to 哼。啱喇, 算你過關, or Fine. Correct. Never repeat the previous pass opener or a close paraphrase. When difficulty allows English, bank: ' +
     PRACTICE_PARTNER_PASS_OPENERS.join(' / ') +
-    '.',
+    '. When difficulty is mainlander, invent stern mocking Cantonese openers instead — no English bank lines.',
   'If wrong/poor: dramatic meme-worthy reprimand, then retry the SAME phrase. Do not advance.',
-  'FAIL VARIETY: The first clause of speak MUST be a fresh FAIL OPENER. Do not start every miss with WRONG! Bank: ' +
+  'FAIL VARIETY: The first clause of speak MUST be a fresh FAIL OPENER. Do not start every miss with WRONG! When difficulty allows English, bank: ' +
     PRACTICE_PARTNER_FAIL_OPENERS.join(' / ') +
-    '.',
+    '. When difficulty is mainlander, invent stern mocking Cantonese fail openers — no English.',
   'Speech-to-text is messy: if they clearly attempted the target meaning or key words, PASS. Fail only when it is a different phrase, empty, English-only when Cantonese was required, or obviously wrong.',
   'CATEGORY LOCK: The user turn starts with [CATEGORY]. Every DEMAND — first phrase and every phrase after a pass — MUST stay in that category. animals = animals. foods = food/drink. common = everyday survival phrases. expert = advanced one-breath spoken Cantonese. Do not drift. Do not repeat a phrase already used in this session.',
+  'DIFFICULTY LOCK: The user turn also starts with [DIFFICULTY]. new_learner = English-majority mix. abc = Cantonese-majority mix. mainlander = all Cantonese + very stern mocking joking personality. Difficulty controls speak only — never drop en/zh/jyutping from the JSON card.',
   'OUTPUT: a JSON object only. No markdown fences, no extra keys, no commentary outside JSON.',
   'Keys: speak (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string).',
   'speak: short, punchy, 1–3 sentences for Azure TTS. Write any Cantonese you want spoken in 漢字. Do not put Jyutping romanization or tone numbers in speak — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
@@ -240,8 +302,18 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
-function demandKickoffLine(category: PracticePartnerCategory): string {
-  return `${categoryLockLine(category)}\n[DEMAND] Start the drill in this category. Issue THE DEMAND for the first phrase now. verdict=none, advance=false.`
+function sessionLockLines(
+  category: PracticePartnerCategory,
+  difficulty: PracticePartnerDifficulty,
+): string {
+  return `${categoryLockLine(category)}\n${difficultyLockLine(difficulty)}`
+}
+
+function demandKickoffLine(
+  category: PracticePartnerCategory,
+  difficulty: PracticePartnerDifficulty,
+): string {
+  return `${sessionLockLines(category, difficulty)}\n[DEMAND] Start the drill in this category at this difficulty. Issue THE DEMAND for the first phrase now. verdict=none, advance=false.`
 }
 
 export function sanitizeSpeak(raw: string): string {
@@ -324,15 +396,17 @@ export function buildPracticePartnerTurn(
   messages: PracticePartnerMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
+  difficulty?: PracticePartnerDifficulty | null,
 ): { history: PracticePartnerMessage[]; turn: string } {
   const deck = resolvePracticePartnerCategory(category)
-  const lock = categoryLockLine(deck)
+  const level = resolvePracticePartnerDifficulty(difficulty)
+  const lock = sessionLockLines(deck, level)
   if (!messages.length) {
-    return { history: [], turn: demandKickoffLine(deck) }
+    return { history: [], turn: demandKickoffLine(deck, level) }
   }
   const last = messages[messages.length - 1]
   if (last.role !== 'user') {
-    return { history: messages, turn: demandKickoffLine(deck) }
+    return { history: messages, turn: demandKickoffLine(deck, level) }
   }
   const history = messages.slice(0, -1)
   if (activeDrill?.en && activeDrill.zh && activeDrill.jyutping) {
@@ -346,13 +420,14 @@ export function buildPracticePartnerTurn(
         `TARGET JYUTPING: ${activeDrill.jyutping}`,
         `LEARNER SAID: ${last.content}`,
         'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
+        'Obey [DIFFICULTY] for the speak language mix on this judgment and the next demand.',
         varietyLockLine(messages),
       ].join('\n'),
     }
   }
   return {
     history,
-    turn: `${lock}\n[DEMAND] The learner spoke before a target was set: ${last.content}. Roast briefly if needed, then issue THE DEMAND in this category. verdict=none, advance=false.`,
+    turn: `${lock}\n[DEMAND] The learner spoke before a target was set: ${last.content}. Roast briefly if needed, then issue THE DEMAND in this category at this difficulty. verdict=none, advance=false.`,
   }
 }
 
@@ -360,6 +435,7 @@ export async function generatePracticePartnerReply(
   messages: PracticePartnerMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
+  difficulty?: PracticePartnerDifficulty | null,
 ): Promise<PracticePartnerChatResult> {
   if (!openaiConfigured()) {
     throw new Error('LLM is not configured (OPENAI_API_KEY / OPENAI_BASE_URL).')
@@ -369,7 +445,12 @@ export async function generatePracticePartnerReply(
     throw new Error('LLM client unavailable.')
   }
 
-  const { history, turn } = buildPracticePartnerTurn(messages, activeDrill, category)
+  const { history, turn } = buildPracticePartnerTurn(
+    messages,
+    activeDrill,
+    category,
+    difficulty,
+  )
   const sampling = practicePartnerSampling(activeDrill)
 
   const completion = await client.chat.completions.create({

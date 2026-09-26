@@ -231,7 +231,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates (minimizable), compose, preview, contacts / custom / full audience send |
 | Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
-| Practice Partner | Live lab: Harbor orb + captions. Opens on a **Choose topic** list (Animals / Foods / Common / Expert), then the drill. **Change topic** returns to that list. Pass chime + jade check + gold crown **High scores** log (`localStorage` `yue-practice-partner-scores-v1`). Mic → Web Speech STT → DeepSeek → Azure TTS. Account Hub opens `#/practice`. Meters `practice_partner_count` (view-only). |
+| Practice Partner | Live lab: Harbor orb + captions. Opens on **Choose difficulty & topic** (New Learner / ABC / Mainlander × Animals / Foods / Common / Expert), then the drill. Difficulty controls how much English 港灣 uses in `speak` (New Learner = English majority; ABC = Cantonese majority mix; Mainlander = all Cantonese, stern/mocking). **Change topic** returns to that list. Pass chime + jade check + gold crown **High scores** log (`localStorage` `yue-practice-partner-scores-v1`). Mic → Web Speech STT → DeepSeek → Azure TTS. Account Hub opens `#/practice`. Meters `practice_partner_count` (view-only). |
 | CSV export | Current filters + month (includes camera, docs, Harbor, Partner fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |
@@ -243,7 +243,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 All routes require Bearer JWT + allowlisted email:
 
-- `POST /api/admin/practice-partner/chat` — admin Practice Partner say-this drill (DeepSeek); body `{ messages, activeDrill?, category? }` (`animals` / `foods` / `common` / `expert`); returns `{ reply, drill }` (TTS line + verdict / next phrase); meters `practice_partner_count` (view-only)
+- `POST /api/admin/practice-partner/chat` — admin Practice Partner say-this drill (DeepSeek); body `{ messages, activeDrill?, category?, difficulty? }` (`animals` / `foods` / `common` / `expert`; `new_learner` / `abc` / `mainlander`); returns `{ reply, drill }` (TTS line + verdict / next phrase); meters `practice_partner_count` (view-only)
 - `GET /api/admin/me`
 - `GET /api/admin/users` — query `from` / `to` (`YYYY-MM-DD`, default start of current month → today UTC). Usage columns sum **whole calendar months** overlapping the range. Legacy `month=YYYY_MM` still works.
 - `GET /api/admin/users.csv`
