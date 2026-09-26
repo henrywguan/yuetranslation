@@ -8,7 +8,7 @@ import { UsageMeters } from './UsageMeters'
 import './RoleBadge.css'
 import { IosHomescreenGuideDialog, IosHomescreenHubButton } from './IosHomescreenGuide'
 import { AccountHubHousehold } from './AccountHubHousehold'
-import { HarborQuestAccountLaunch } from './HarborQuestAccountLaunch'
+import { AccountHubLearnCarousel } from './AccountHubLearnCarousel'
 import { AccountHubPrimarySelect } from './AccountHubPrimarySelect'
 import { AccountHubVoice } from './AccountHubVoice'
 import {
@@ -564,7 +564,7 @@ export function PlanChip() {
                   {email ? <p className="account-hub-email">{email}</p> : null}
                 </div>
                 {entitlement.loggedIn ? (
-                  <HarborQuestAccountLaunch onNavigate={() => setOpen(false)} />
+                  <AccountHubLearnCarousel onNavigate={() => setOpen(false)} />
                 ) : null}
               </div>
             </>

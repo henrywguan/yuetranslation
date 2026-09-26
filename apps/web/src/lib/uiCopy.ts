@@ -580,6 +580,19 @@ export const ui = {
   },
   harborQuestShort: { en: 'Harbor Quest', zh: '港灣任務', jp: 'gong2 waan1 jam6 mou6' },
   harborQuestBeta: { en: 'Beta', zh: '測試版', jp: 'Beta' },
+  practicePartnerLaunch: {
+    en: 'Open Practice Partner',
+    zh: '開啟練習夥伴',
+    jp: 'hoi1 hoi2 lin6 zaap6 bun6 leoi5',
+  },
+  practicePartnerShort: { en: 'Practice Partner', zh: '練習夥伴', jp: 'lin6 zaap6 bun6 leoi5' },
+  accountLearnCarousel: {
+    en: 'Harbor Quest or Practice Partner',
+    zh: '港灣任務或練習夥伴',
+    jp: 'gong2 waan1 jam6 mou6 waak6 ze2 lin6 zaap6 bun6 leoi5',
+  },
+  accountLearnPrev: { en: 'Previous', zh: '上一個', jp: 'soeng6 jat1 go3' },
+  accountLearnNext: { en: 'Next', zh: '下一個', jp: 'haa6 jat1 go3' },
 
 
   accountUsage: { en: 'This month', zh: '今個月', jp: 'gam1 go3 jyut6' },

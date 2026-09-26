@@ -1,0 +1,103 @@
+.account-hub-learn-carousel {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.04rem;
+  min-width: 0;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.account-hub-learn-viewport {
+  position: relative;
+  width: 5.85rem;
+  min-height: 4.55rem;
+  overflow: hidden;
+}
+
+.account-hub-learn-slide {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.account-hub-learn-arrow {
+  flex: none;
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 2.1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--jade, #2a9d8f) 12%, transparent);
+  color: color-mix(in srgb, var(--ink) 78%, var(--jade, #2a9d8f));
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.account-hub-learn-arrow:hover,
+.account-hub-learn-arrow:focus-visible {
+  background: color-mix(in srgb, var(--jade, #2a9d8f) 26%, transparent);
+  color: var(--ink-bright, var(--ink));
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.account-hub-learn-arrow:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--jade, #2a9d8f) 50%, transparent);
+}
+
+.account-hub-learn-arrow:active {
+  transform: translateY(0);
+}
+
+.pp-account-launch-orb {
+  transform-origin: 20px 19px;
+  animation: pp-launch-breathe 2.6s ease-in-out infinite;
+}
+
+.pp-account-launch-orbit {
+  transform-origin: 20px 20px;
+  animation: pp-launch-orbit 4.4s linear infinite;
+}
+
+.pp-account-launch-spark {
+  animation: hq-launch-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes pp-launch-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes pp-launch-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-account-launch-orb,
+  .pp-account-launch-orbit,
+  .pp-account-launch-spark {
+    animation: none;
+  }
+
+  .account-hub-learn-arrow:hover,
+  .account-hub-learn-arrow:focus-visible {
+    transform: none;
+  }
+}

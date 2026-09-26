@@ -138,7 +138,7 @@ const EMPTY_CAPTION =
  * Mic → Web Speech STT → DeepSeek (mean-tutor + history) → Azure TTS.
  * Harbor orb + captions. No Voice Live / Foundry.
  */
-export function AdminPracticePartnerLab() {
+export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' | 'hub' }) {
   const [mood, setMood] = useState<PartnerMood>('idle')
   const [amp, setAmp] = useState(0)
   const [caption, setCaption] = useState<SubtitleLine>({
@@ -701,12 +701,14 @@ export function AdminPracticePartnerLab() {
     <section className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Practice Partner lab">
       <header className="partner-lab-head">
         <div>
-          <p className="partner-lab-kicker">Internal · not in app</p>
+          <p className="partner-lab-kicker">
+            {entry === 'hub' ? 'Beta' : 'Internal · not in app'}
+          </p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Say-this drill (admin only): pick a deck — animals, foods, common phrases, or expert —
-            then 港灣 demands a line in that category. You speak it; the model judges and advances.
-            Mic → Web Speech → DeepSeek → Azure TTS. Tap the orb for fullscreen.
+            {entry === 'hub'
+              ? 'Say-this drill: pick a deck — animals, foods, common phrases, or expert — then 港灣 demands a line. You speak it; the model judges and advances. Tap the orb for fullscreen.'
+              : 'Say-this drill (admin only): pick a deck — animals, foods, common phrases, or expert — then 港灣 demands a line in that category. You speak it; the model judges and advances. Mic → Web Speech → DeepSeek → Azure TTS. Tap the orb for fullscreen.'}
           </p>
         </div>
       </header>
