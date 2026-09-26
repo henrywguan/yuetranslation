@@ -237,9 +237,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
   const [youLive, setYouLive] = useState<{ text: string; interim: boolean } | null>(null)
+  /** Bumps to replay the jade sweep on the drill 漢字. */
+  const [zhFlash, setZhFlash] = useState(0)
 
   const draftInputRef = useRef<HTMLInputElement | null>(null)
   const sessionRef = useRef<LiveSession | null>(null)
+  const ttsLiveRef = useRef(false)
+  const ttsGenRef = useRef(0)
   /** True while getUserMedia / recognition.start handshake is in flight. */
   const startingMicRef = useRef(false)
   const finalsRef = useRef('')
@@ -322,6 +326,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setYouLive(null)
     setFsTypeOpen(false)
     setVoiceMenuOpen(false)
+    ttsGenRef.current += 1
+    ttsLiveRef.current = false
     setMood('idle')
     setCaption({ role: 'system', text: EMPTY_CAPTION })
   }, [stopMic])
@@ -363,6 +369,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const playPartnerReply = useCallback(
     async (reply: string) => {
+      if (ttsLiveRef.current) return
+      const gen = (ttsGenRef.current += 1)
+      ttsLiveRef.current = true
       setMood('speaking')
       setPartnerHold(reply)
       setYouLive(null)
@@ -392,11 +401,26 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           ttsErr instanceof Error ? ttsErr.message : 'Voice playback failed.'
         setError(ttsMsg)
       }
+      if (ttsGenRef.current !== gen) return
+      ttsLiveRef.current = false
       setMood('idle')
       setCaption({ role: 'partner', text: reply })
     },
     [partnerVoice],
   )
+
+  const replayPartnerVoice = useCallback(() => {
+    const line = partnerHold
+    if (!line || ttsLiveRef.current || mood === 'speaking' || listening) return
+    unlockTtsPlayback({ force: true })
+    void playPartnerReply(line)
+  }, [listening, mood, partnerHold, playPartnerReply])
+
+  const flashDrillZh = useCallback((event: { stopPropagation: () => void }) => {
+    event.stopPropagation()
+    setZhFlash((n) => n + 1)
+    replayPartnerVoice()
+  }, [replayPartnerVoice])
 
   const startDrill = useCallback(async () => {
     if (turnLockRef.current || activeDrillRef.current) return
@@ -1060,6 +1084,33 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         <div className="partner-lab-glow" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
 
+        {fullscreen && partnerHold ? (
+          <button
+            type="button"
+            className={`partner-lab-replay${mood === 'speaking' ? ' is-speaking' : ''}`}
+            disabled={mood === 'speaking' || listening}
+            aria-label={mood === 'speaking' ? 'Partner is speaking' : 'Replay partner'}
+            onClick={(event) => {
+              event.stopPropagation()
+              replayPartnerVoice()
+            }}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-replay-icon">
+              <path
+                fill="currentColor"
+                d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"
+              />
+            </svg>
+            <span className="partner-lab-replay-eq" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+          </button>
+        ) : null}
+
         {verdictFlash === 'pass' ? (
           <div className="partner-lab-pass-burst" aria-hidden="true">
             <span className="partner-lab-pass-halo" />
@@ -1127,9 +1178,25 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </p>
           {activeDrill ? (
             <>
-              <p className="partner-lab-drill-zh" lang="zh-HK">
-                {activeDrill.zh}
-              </p>
+              <button
+                type="button"
+                className={`partner-lab-drill-zh${zhFlash ? ' is-jade-flash' : ''}`}
+                lang="zh-HK"
+                aria-label={
+                  mood === 'speaking' || listening ? 'Highlight phrase' : 'Replay phrase'
+                }
+                onClick={flashDrillZh}
+              >
+                {[...activeDrill.zh].map((ch, i) => (
+                  <span
+                    key={`${zhFlash}-${i}`}
+                    className={zhFlash ? 'is-jade' : undefined}
+                    style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
+                  >
+                    {ch}
+                  </span>
+                ))}
+              </button>
               <p className="partner-lab-drill-en">{activeDrill.en}</p>
               <p className="partner-lab-drill-jp">{activeDrill.jyutping}</p>
             </>
