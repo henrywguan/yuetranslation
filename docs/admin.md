@@ -231,7 +231,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates (minimizable), compose, preview, contacts / custom / full audience send |
 | Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
-| Practice Partner | Live admin lab: Harbor orb + captions. Mic → Web Speech STT → DeepSeek (persona + chat history) → existing Azure TTS. No Voice Live / Foundry. Not in the consumer app. Chat turns meter `practice_partner_count` (admin view-only). |
+| Practice Partner | Live admin lab: Harbor orb + captions. Duolingo-style say-this — pick a deck (**Animals / Foods / Common phrases / Expert phrases**), 港灣 demands a line in that category (English + 漢字 + Jyutping), you speak, the model judges, then advances or retries. Mic → Web Speech STT → DeepSeek → existing Azure TTS. No Voice Live / Foundry. Not in the consumer app. Chat turns meter `practice_partner_count` (admin view-only). |
 | CSV export | Current filters + month (includes camera, docs, Harbor, Partner fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |
@@ -243,7 +243,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 All routes require Bearer JWT + allowlisted email:
 
-- `POST /api/admin/practice-partner/chat` — admin Practice Partner lab (DeepSeek); meters `practice_partner_count` (view-only)
+- `POST /api/admin/practice-partner/chat` — admin Practice Partner say-this drill (DeepSeek); body `{ messages, activeDrill?, category? }` (`animals` / `foods` / `common` / `expert`); returns `{ reply, drill }` (TTS line + verdict / next phrase); meters `practice_partner_count` (view-only)
 - `GET /api/admin/me`
 - `GET /api/admin/users` — query `from` / `to` (`YYYY-MM-DD`, default start of current month → today UTC). Usage columns sum **whole calendar months** overlapping the range. Legacy `month=YYYY_MM` still works.
 - `GET /api/admin/users.csv`

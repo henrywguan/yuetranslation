@@ -682,13 +682,67 @@ export type PracticePartnerChatMessage = {
   content: string
 }
 
-/** Admin Practice Partner turn — DeepSeek/OpenAI reply for Azure TTS + captions. */
+export const PRACTICE_PARTNER_CATEGORIES = [
+  { id: 'animals', labelEn: 'Animals', labelZh: '動物' },
+  { id: 'foods', labelEn: 'Foods', labelZh: '食物' },
+  { id: 'common', labelEn: 'Common phrases', labelZh: '常用' },
+  { id: 'expert', labelEn: 'Expert phrases', labelZh: '進階' },
+] as const
+
+export type PracticePartnerCategory = (typeof PRACTICE_PARTNER_CATEGORIES)[number]['id']
+
+export const DEFAULT_PRACTICE_PARTNER_CATEGORY: PracticePartnerCategory = 'common'
+
+export function resolvePracticePartnerCategory(raw: unknown): PracticePartnerCategory {
+  const id = String(raw || '').trim()
+  return PRACTICE_PARTNER_CATEGORIES.some((c) => c.id === id)
+    ? (id as PracticePartnerCategory)
+    : DEFAULT_PRACTICE_PARTNER_CATEGORY
+}
+
+export type PracticePartnerDrillTarget = {
+  en: string
+  zh: string
+  jyutping: string
+}
+
+export type PracticePartnerDrill = PracticePartnerDrillTarget & {
+  verdict: 'none' | 'pass' | 'fail'
+  advance: boolean
+}
+
+function asDrill(raw: unknown): PracticePartnerDrill | null {
+  if (!raw || typeof raw !== 'object') return null
+  const d = raw as Record<string, unknown>
+  const en = typeof d.en === 'string' ? d.en.trim() : ''
+  const zh = typeof d.zh === 'string' ? d.zh.trim() : ''
+  const jyutping = typeof d.jyutping === 'string' ? d.jyutping.trim() : ''
+  if (!en || !zh || !jyutping) return null
+  const verdictRaw = String(d.verdict || 'none').toLowerCase()
+  const verdict =
+    verdictRaw === 'pass' || verdictRaw === 'fail' ? verdictRaw : 'none'
+  return {
+    en,
+    zh,
+    jyutping,
+    verdict,
+    advance: verdict === 'pass',
+  }
+}
+
+/** Admin Practice Partner turn — DeepSeek/OpenAI reply for Azure TTS + say-this card. */
 export async function postPracticePartnerChat(
   messages: PracticePartnerChatMessage[],
-): Promise<{ ok: boolean; reply: string }> {
+  activeDrill?: PracticePartnerDrillTarget | null,
+  category?: PracticePartnerCategory | null,
+): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null }> {
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({
+      messages,
+      activeDrill: activeDrill ?? null,
+      category: resolvePracticePartnerCategory(category),
+    }),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
@@ -696,5 +750,5 @@ export async function postPracticePartnerChat(
   }
   const reply = typeof (data as { reply?: unknown }).reply === 'string' ? (data as { reply: string }).reply : ''
   if (!reply.trim()) throw new Error('Practice partner returned an empty reply')
-  return { ok: true, reply }
+  return { ok: true, reply, drill: asDrill((data as { drill?: unknown }).drill) }
 }
