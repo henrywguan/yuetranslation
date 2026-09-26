@@ -1,0 +1,80 @@
+/* Aceternity Glare Card + Glowing Effect — Harbor/Jade, no Tailwind. */
+.ln-pointer-glow {
+  --glow-x: 50%;
+  --glow-y: 28%;
+  position: relative;
+  isolation: isolate;
+}
+
+.ln-pointer-glow-shine,
+.ln-pointer-glow-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.ln-pointer-glow-shine {
+  z-index: 0;
+  background: radial-gradient(
+    200px circle at var(--glow-x) var(--glow-y),
+    color-mix(in srgb, var(--jade, #2a9d8f) 22%, #fff 10%),
+    transparent 58%
+  );
+}
+
+.ln-pointer-glow-edge {
+  z-index: 4;
+  padding: 1px;
+  background: radial-gradient(
+    150px circle at var(--glow-x) var(--glow-y),
+    color-mix(in srgb, var(--jade-bright, #3dcfb6) 80%, #fff),
+    transparent 58%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.ln-pointer-glow.is-glowing .ln-pointer-glow-shine,
+.ln-pointer-glow.is-glowing .ln-pointer-glow-edge,
+.ln-pointer-glow:focus-visible .ln-pointer-glow-shine,
+.ln-pointer-glow:focus-visible .ln-pointer-glow-edge {
+  opacity: 1;
+}
+
+/* Focus Cards — dim siblings while one bento tile is lit (mouse only). */
+@media (hover: hover) and (pointer: fine) {
+  .ln-feat-bento:has(.ln-pointer-glow.is-glowing) .ln-feat-card {
+    opacity: 0.68;
+    filter: saturate(0.86);
+    transition:
+      opacity 0.24s ease,
+      filter 0.24s ease;
+  }
+
+  .ln-feat-bento .ln-feat-card.is-glowing,
+  .ln-feat-bento .ln-feat-card:focus-visible {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-pointer-glow-shine,
+  .ln-pointer-glow-edge {
+    transition: none;
+  }
+
+  .ln-feat-bento:has(.ln-pointer-glow.is-glowing) .ln-feat-card {
+    opacity: 1;
+    filter: none;
+  }
+}

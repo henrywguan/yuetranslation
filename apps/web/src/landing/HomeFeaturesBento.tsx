@@ -4,6 +4,7 @@ import { setTtsPlaybackRate, speakTextSequence, stopSpeaking, unlockTtsPlayback 
 import { ui, type Bi } from '../lib/uiCopy'
 import { FeatureInfoPanel } from './FeatureInfoPanel'
 import { TONES } from './tones/tonesData'
+import { PointerGlowLayers, usePointerGlowScope } from './usePointerGlow'
 
 const HK_COLLOQUIAL: { han: string; jp: string; gloss: Bi }[] = [
   { han: '係', jp: 'hai6', gloss: ui.featHkExHai },
@@ -163,11 +164,12 @@ function JyutpingBentoCard({ card }: { card: BentoCard }) {
   return (
     <button
       type="button"
-      className={`ln-feat-card ln-feat-card--link ln-feat-card--tones${playing ? ' is-speaking' : ''}${spanClass}`}
+      className={`ln-feat-card ln-feat-card--link ln-feat-card--tones ln-pointer-glow${playing ? ' is-speaking' : ''}${spanClass}`}
       onClick={() => void playAllTones()}
       aria-label={`${ui.featJpTitle.en} — play si in six tones`}
       aria-busy={playing}
     >
+      <PointerGlowLayers />
       <FeatureVisual kind="jyutping" activeTone={activeTone} />
       <div className="ln-feat-card-copy">
         <h3>
@@ -187,11 +189,12 @@ function HkBentoCard({ card }: { card: BentoCard }) {
     <>
       <button
         type="button"
-        className={`ln-feat-card ln-feat-card--link ln-feat-card--hk${spanClass}`}
+        className={`ln-feat-card ln-feat-card--link ln-feat-card--hk ln-pointer-glow${spanClass}`}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
+        <PointerGlowLayers />
         <FeatureVisual kind="hk" />
         <div className="ln-feat-card-copy">
           <h3>
@@ -235,7 +238,8 @@ function BentoCardBody({ card }: { card: BentoCard }) {
 
   const spanClass = card.span ? ` ln-feat-card--${card.span}` : ''
   return (
-    <article className={`ln-feat-card${spanClass}`}>
+    <article className={`ln-feat-card ln-pointer-glow${spanClass}`}>
+      <PointerGlowLayers />
       <FeatureVisual kind={card.visual} />
       <div className="ln-feat-card-copy">
         <h3>
@@ -249,8 +253,15 @@ function BentoCardBody({ card }: { card: BentoCard }) {
 
 /** Mobile bento feature grid — visual cards, minimal copy. */
 export function HomeFeaturesBento() {
+  const glow = usePointerGlowScope()
   return (
-    <div className="ln-feat-bento" aria-label={ui.modesKicker.en}>
+    <div
+      ref={glow.ref}
+      className="ln-feat-bento"
+      aria-label={ui.modesKicker.en}
+      onPointerMove={glow.onPointerMove}
+      onPointerLeave={glow.onPointerLeave}
+    >
       {CARDS.map((card) => (
         <BentoCardBody key={card.title.en} card={card} />
       ))}

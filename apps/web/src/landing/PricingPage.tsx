@@ -13,6 +13,7 @@ import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import { inkEase } from '../lib/motion'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { PointerGlowLayers, usePointerGlowScope } from './usePointerGlow'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
@@ -89,6 +90,7 @@ async function onPlanCta(plan: MarketingPlan, billing: Billing) {
 
 export function PricingPage() {
   const [billing, setBilling] = useState<Billing>('monthly')
+  const glow = usePointerGlowScope()
   useDocumentMeta({
     title: 'Pricing — JyutTranslate',
     description:
@@ -135,13 +137,21 @@ export function PricingPage() {
         </motion.div>
       </header>
 
-      <section className="ln-section pp-plans-section">
+      <section
+        ref={glow.ref}
+        className="ln-section pp-plans-section"
+        onPointerMove={glow.onPointerMove}
+        onPointerLeave={glow.onPointerLeave}
+      >
         <Reveal className="pp-plans" stagger={0.1} y={32}>
           {MARKETING_PLANS.map((plan) => (
             <article
               key={plan.id}
-              className={['ln-price-card', plan.featured ? 'featured' : ''].filter(Boolean).join(' ')}
+              className={['ln-price-card', 'ln-pointer-glow', plan.featured ? 'featured' : '']
+                .filter(Boolean)
+                .join(' ')}
             >
+              <PointerGlowLayers />
               {plan.featured ? (
                 <span className="ln-price-badge">
                   <BiText copy={ui.mostPopular} size="sm" />

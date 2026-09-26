@@ -5,11 +5,19 @@ import { LANDING_PLANS } from './landingPlans'
 import { MagneticButton } from './MagneticButton'
 import { PriceDemo, PriceFeatIcon } from './PriceDemos'
 import { Reveal } from './Reveal'
+import { PointerGlowLayers, usePointerGlowScope } from './usePointerGlow'
 
 /** Compact Free / Family duo with micro-demos — studio teaser, not a full table. */
 export function HomePricingDuo() {
+  const glow = usePointerGlowScope()
   return (
-    <section className="ln-section ln-pricing" id="pricing">
+    <section
+      ref={glow.ref}
+      className="ln-section ln-pricing"
+      id="pricing"
+      onPointerMove={glow.onPointerMove}
+      onPointerLeave={glow.onPointerLeave}
+    >
       <Reveal className="ln-section-head ln-section-head--tight">
         <span className="ln-kicker">
           <BiText copy={ui.pricingKicker} size="sm" />
@@ -23,8 +31,9 @@ export function HomePricingDuo() {
         {LANDING_PLANS.map((plan) => (
           <article
             key={plan.id}
-            className={`ln-price-card ln-price-card--spotlight${plan.featured ? ' featured' : ''}`}
+            className={`ln-price-card ln-price-card--spotlight ln-pointer-glow${plan.featured ? ' featured' : ''}`}
           >
+            <PointerGlowLayers />
             {plan.featured ? (
               <span className="ln-price-badge">
                 <BiText copy={ui.mostPopular} size="sm" />
