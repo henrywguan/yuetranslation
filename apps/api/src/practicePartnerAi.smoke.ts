@@ -16,6 +16,7 @@ import {
   buildPracticePartnerTurn,
   categoryLockLine,
   difficultyLockLine,
+  moveLockLine,
   toneLockLine,
   normalizeVerdict,
   parsePracticePartnerReply,
@@ -30,6 +31,8 @@ import {
 assert.match(PRACTICE_PARTNER_SYSTEM, /港灣/, 'persona stays 港灣')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Hello! Today we are doing/, 'warm opening')
 assert.match(PRACTICE_PARTNER_SYSTEM, /TONE LADDER/, 'streak warmth and miss heat')
+assert.match(PRACTICE_PARTNER_SYSTEM, /EXERCISE LADDER/)
+assert.match(PRACTICE_PARTNER_SYSTEM, /repeat → listen → translate → finish/)
 assert.match(PRACTICE_PARTNER_SYSTEM, /does not make a miss gentle|does NOT soften/i)
 assert.match(PRACTICE_PARTNER_SYSTEM, /THE DEMAND/, 'demand phase')
 assert.match(PRACTICE_PARTNER_SYSTEM, /THE JUDGMENT/, 'judgment phase')
@@ -230,6 +233,29 @@ assert.match(judge.turn, /Banned defaults/)
 assert.match(judge.turn, /哼。勉強過關/)
 assert.match(judge.turn, /有冇搞錯/)
 assert.match(judge.turn, /playful and meme/)
+
+const climbed = buildPracticePartnerTurn(
+  [
+    { role: 'assistant', content: 'Repeat after me. 狗' },
+    { role: 'user', content: '狗' },
+  ],
+  { en: 'dog', zh: '狗', jyutping: 'gau2' },
+  'animals',
+  'abc',
+  {
+    streak: 1,
+    missStreak: 0,
+    move: 'listen',
+    nextMove: 'translate',
+    review: { en: 'cat', zh: '貓', jyutping: 'maau1' },
+  },
+)
+assert.match(climbed.turn, /\[MOVE\]/)
+assert.match(climbed.turn, /attempting listen/)
+assert.match(climbed.turn, /next demand is translate/)
+assert.match(climbed.turn, /\[REVIEW\].*貓/)
+assert.match(climbed.turn, /Drop to REPEAT/)
+assert.match(moveLockLine('finish', 'finish', null), /Contrast/)
 assert.match(judge.turn, /inspiration|ENERGY|vibe samples/i)
 
 const premature = buildPracticePartnerTurn([{ role: 'user', content: 'hello' }], null)

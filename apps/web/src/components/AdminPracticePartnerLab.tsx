@@ -47,11 +47,27 @@ import {
 import { playPracticePartnerPassSfx } from '../lib/practicePartnerPassSfx'
 import { playPracticePartnerFailSfx } from '../lib/practicePartnerFailSfx'
 import {
+  adoptPracticePartnerCloudScore,
   formatPracticePartnerScoreAt,
   readPracticePartnerScores,
   recordPracticePartnerPass,
   type PracticePartnerScores,
 } from '../lib/practicePartnerScores'
+import {
+  fetchPracticePartnerLeaderboard,
+  putPracticePartnerLeaderboard,
+  type PracticePartnerLeaderboardPayload,
+} from '../lib/api'
+import { getSession } from '../lib/auth'
+import { PracticePartnerPodium } from './PracticePartnerPodium'
+import {
+  PRACTICE_PARTNER_MOVE_LABEL,
+  finishLineCloze,
+  planPracticePartnerAdvance,
+  practicePartnerCardShows,
+  practicePartnerXpForPass,
+  type PracticePartnerMove,
+} from '../lib/practicePartnerLadder'
 import './AdminPracticePartnerLab.css'
 
 const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
@@ -215,10 +231,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [streak, setStreak] = useState(0)
   const [hits, setHits] = useState(0)
   const [misses, setMisses] = useState(0)
+  const [move, setMove] = useState<PracticePartnerMove>('repeat')
+  const [xp, setXp] = useState(0)
   const [verdictFlash, setVerdictFlash] = useState<'pass' | 'fail' | null>(null)
   const [scoreboard, setScoreboard] = useState<PracticePartnerScores>(() =>
     readPracticePartnerScores(),
   )
+  const [board, setBoard] = useState<PracticePartnerLeaderboardPayload | null>(null)
+  const [boardLoading, setBoardLoading] = useState(true)
+  const [boardError, setBoardError] = useState('')
+  const [boardSignedIn, setBoardSignedIn] = useState(false)
   const [scoresOpen, setScoresOpen] = useState(false)
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false)
   const [topicReady, setTopicReady] = useState(false)
@@ -258,6 +280,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const verdictTimerRef = useRef(0)
   const streakRef = useRef(0)
   const missStreakRef = useRef(0)
+  const hitsRef = useRef(0)
+  const moveRef = useRef<PracticePartnerMove>('repeat')
+  const passedRef = useRef<PracticePartnerDrillTarget[]>([])
+  const cardIsReviewRef = useRef(false)
+  const pendingNextMoveRef = useRef<PracticePartnerMove>('repeat')
+  const pendingReviewRef = useRef<PracticePartnerDrillTarget | null>(null)
+  const pendingActiveMoveRef = useRef<PracticePartnerMove>('repeat')
+  const incomingReviewRef = useRef(false)
+  const publishScoreRef = useRef<(scores: PracticePartnerScores) => void>(() => {})
 
   useEffect(() => {
     messagesRef.current = messages
@@ -274,6 +305,70 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   useEffect(() => {
     difficultyRef.current = difficulty
   }, [difficulty])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      setBoardLoading(true)
+      try {
+        const session = await getSession()
+        if (cancelled) return
+        setBoardSignedIn(Boolean(session))
+        const data = await fetchPracticePartnerLeaderboard(25)
+        if (cancelled) return
+        setBoard(data)
+        setBoardError('')
+        if (data.me) {
+          setScoreboard((local) => adoptPracticePartnerCloudScore(local, data.me!))
+        }
+        if (session) {
+          const local = readPracticePartnerScores()
+          const xp = Math.max(local.xp, data.me?.xp ?? 0)
+          const bestStreak = Math.max(local.bestStreak, data.me?.bestStreak ?? 0)
+          const totalPasses = Math.max(local.totalPasses, data.me?.totalPasses ?? 0)
+          if (xp > 0 || bestStreak > 0 || totalPasses > 0) {
+            await putPracticePartnerLeaderboard({ xp, bestStreak, totalPasses })
+            const again = await fetchPracticePartnerLeaderboard(25)
+            if (cancelled) return
+            setBoard(again)
+            if (again.me) {
+              setScoreboard((prev) => adoptPracticePartnerCloudScore(prev, again.me!))
+            }
+          }
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setBoardError(e instanceof Error ? e.message : 'Leaderboard unavailable')
+        }
+      } finally {
+        if (!cancelled) setBoardLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  publishScoreRef.current = (scores) => {
+    if (!boardSignedIn) return
+    void (async () => {
+      try {
+        await putPracticePartnerLeaderboard({
+          xp: scores.xp,
+          bestStreak: scores.bestStreak,
+          totalPasses: scores.totalPasses,
+        })
+        const data = await fetchPracticePartnerLeaderboard(25)
+        setBoard(data)
+        setBoardError('')
+        if (data.me) {
+          setScoreboard((local) => adoptPracticePartnerCloudScore(local, data.me!))
+        }
+      } catch {
+        /* Local high-score log still stands when the board is offline. */
+      }
+    })()
+  }
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -320,6 +415,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setActiveDrill(null)
     streakRef.current = 0
     missStreakRef.current = 0
+    hitsRef.current = 0
+    moveRef.current = 'repeat'
+    passedRef.current = []
+    cardIsReviewRef.current = false
+    pendingNextMoveRef.current = 'repeat'
+    pendingReviewRef.current = null
+    pendingActiveMoveRef.current = 'repeat'
+    incomingReviewRef.current = false
+    setMove('repeat')
+    setXp(0)
     setStreak(0)
     setHits(0)
     setMisses(0)
@@ -344,17 +449,33 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       const nextStreak = streakRef.current + 1
       streakRef.current = nextStreak
       missStreakRef.current = 0
+      hitsRef.current += 1
+      const passedAReview = cardIsReviewRef.current
+      if (justPassed?.zh) {
+        if (passedAReview) {
+          passedRef.current = passedRef.current.filter((row) => row.zh !== justPassed.zh)
+        } else if (!passedRef.current.some((row) => row.zh === justPassed.zh)) {
+          passedRef.current = [...passedRef.current, justPassed].slice(-8)
+        }
+      }
+      const gained = practicePartnerXpForPass(pendingActiveMoveRef.current, passedAReview)
+      setXp((n) => n + gained)
+      moveRef.current = pendingNextMoveRef.current
+      setMove(moveRef.current)
+      cardIsReviewRef.current = incomingReviewRef.current
+      incomingReviewRef.current = false
       setStreak(nextStreak)
-      setHits((n) => n + 1)
+      setHits(hitsRef.current)
       if (justPassed?.zh || justPassed?.en) {
-        setScoreboard(
-          recordPracticePartnerPass({
-            streak: nextStreak,
-            category: categoryRef.current,
-            zh: justPassed.zh || '',
-            en: justPassed.en || '',
-          }),
-        )
+        const nextScores = recordPracticePartnerPass({
+          streak: nextStreak,
+          category: categoryRef.current,
+          zh: justPassed.zh || '',
+          en: justPassed.en || '',
+          xpGain: gained,
+        })
+        setScoreboard(nextScores)
+        publishScoreRef.current(nextScores)
       }
       playPracticePartnerPassSfx()
       setVerdictFlash('pass')
@@ -362,6 +483,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     } else if (drill.verdict === 'fail') {
       streakRef.current = 0
       missStreakRef.current += 1
+      moveRef.current = 'repeat'
+      setMove('repeat')
       setStreak(0)
       setMisses((n) => n + 1)
       playPracticePartnerFailSfx()
@@ -448,7 +571,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         null,
         categoryRef.current,
         difficultyRef.current,
-        { streak: 0, missStreak: 0 },
+        { streak: 0, missStreak: 0, move: 'repeat', nextMove: 'repeat' },
       )
       void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
       const withReply: PracticePartnerChatMessage[] = [
@@ -492,14 +615,40 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       ]
       setMessages(nextMessages)
 
+      const plan = planPracticePartnerAdvance(hitsRef.current, passedRef.current)
+      pendingActiveMoveRef.current = moveRef.current
+      pendingNextMoveRef.current = plan.nextMove
+      pendingReviewRef.current = plan.review
+
       try {
-        const { reply, drill } = await postPracticePartnerChat(
+        const { reply, drill: rawDrill } = await postPracticePartnerChat(
           nextMessages,
           target,
           categoryRef.current,
           difficultyRef.current,
-          { streak: streakRef.current, missStreak: missStreakRef.current },
+          {
+            streak: streakRef.current,
+            missStreak: missStreakRef.current,
+            move: moveRef.current,
+            nextMove: plan.nextMove,
+            review: plan.review,
+          },
         )
+        incomingReviewRef.current = false
+        const drill =
+          rawDrill?.verdict === 'fail'
+            ? {
+                ...rawDrill,
+                en: target.en,
+                zh: target.zh,
+                jyutping: target.jyutping,
+                verdict: 'fail' as const,
+                advance: false,
+              }
+            : rawDrill?.verdict === 'pass' && plan.review
+              ? { ...rawDrill, ...plan.review, verdict: 'pass' as const, advance: true }
+              : rawDrill
+        if (drill?.verdict === 'pass' && plan.review) incomingReviewRef.current = true
         void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
         const withReply: PracticePartnerChatMessage[] = [
           ...nextMessages,
@@ -836,12 +985,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
     PRACTICE_PARTNER_DIFFICULTIES[1]
 
+  const drillCloze = activeDrill ? finishLineCloze(activeDrill.zh) : null
+  const cardFace = practicePartnerCardShows(move, difficulty, Boolean(drillCloze))
   const drillKicker = verdictFlash === 'fail'
     ? 'Try again'
     : verdictFlash === 'pass'
       ? 'Next phrase'
       : activeDrill
-        ? 'Say this'
+        ? PRACTICE_PARTNER_MOVE_LABEL[move]
         : categoryMeta.labelEn
 
   const partnerSpeaker = voiceSpeakerName(partnerVoice)
@@ -891,6 +1042,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               >
                 <p className="partner-lab-scores-summary">
                   <span>
+                    <strong>{scoreboard.xp}</strong> XP
+                  </span>
+                  <span>
                     <strong>{scoreboard.bestStreak}</strong> best streak
                   </span>
                   <span>
@@ -930,6 +1084,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             ) : null}
           </div>
         </header>
+
+        <PracticePartnerPodium
+          entries={board?.entries ?? []}
+          me={board?.me}
+          loading={boardLoading}
+          error={boardError}
+          signedIn={boardSignedIn}
+        />
 
         <div className="partner-lab-chooser-block">
           <p className="partner-lab-chooser-label" id="partner-lab-diff-label">
@@ -1029,7 +1191,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               role="region"
               aria-label="Practice Partner high scores"
             >
+              <PracticePartnerPodium
+                compact
+                entries={board?.entries ?? []}
+                me={board?.me}
+                loading={boardLoading}
+                error={boardError}
+                signedIn={boardSignedIn}
+              />
               <p className="partner-lab-scores-summary">
+                <span>
+                  <strong>{scoreboard.xp}</strong> XP
+                </span>
                 <span>
                   <strong>{scoreboard.bestStreak}</strong> best streak
                 </span>
@@ -1157,35 +1330,44 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 {scoreboard.bestStreak ? ` · best ${scoreboard.bestStreak}` : ''}
                 {hits ? ` · ${hits} hit${hits === 1 ? '' : 's'}` : ''}
                 {misses ? ` · ${misses} miss` : ''}
+                {xp ? ` · ${xp} XP` : ''}
               </span>
             ) : null}
           </p>
           {activeDrill ? (
             <>
-              <button
-                type="button"
-                className={`partner-lab-drill-zh${zhFlash ? ' is-jade-flash' : ''}`}
-                lang="zh-HK"
-                aria-label={
-                  mood === 'speaking' || listening ? 'Highlight phrase' : 'Replay phrase'
-                }
-                onClick={flashDrillZh}
-              >
-                <span className="partner-lab-drill-zh-chars">
-                  {[...activeDrill.zh].map((ch, i) => (
-                    <span
-                      key={`${zhFlash}-${i}`}
-                      className={zhFlash ? 'is-jade' : undefined}
-                      style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
-                    >
-                      {ch}
-                    </span>
-                  ))}
-                </span>
-                {zhFlash ? <span className="partner-lab-drill-zh-line" aria-hidden="true" /> : null}
-              </button>
-              <p className="partner-lab-drill-en">{activeDrill.en}</p>
-              <p className="partner-lab-drill-jp">{activeDrill.jyutping}</p>
+              {cardFace.zh === 'hidden' ? (
+                <p className="partner-lab-drill-prompt">
+                  {move === 'listen' ? 'Listen, then say it back.' : 'Say it in Cantonese.'}
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  className={`partner-lab-drill-zh${zhFlash ? ' is-jade-flash' : ''}`}
+                  lang="zh-HK"
+                  aria-label={
+                    mood === 'speaking' || listening ? 'Highlight phrase' : 'Replay phrase'
+                  }
+                  onClick={flashDrillZh}
+                >
+                  <span className="partner-lab-drill-zh-chars">
+                    {[...(cardFace.zh === 'cloze' && drillCloze ? drillCloze : activeDrill.zh)].map(
+                      (ch, i) => (
+                        <span
+                          key={`${zhFlash}-${i}`}
+                          className={zhFlash ? 'is-jade' : undefined}
+                          style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
+                        >
+                          {ch}
+                        </span>
+                      ),
+                    )}
+                  </span>
+                  {zhFlash ? <span className="partner-lab-drill-zh-line" aria-hidden="true" /> : null}
+                </button>
+              )}
+              {cardFace.en ? <p className="partner-lab-drill-en">{activeDrill.en}</p> : null}
+              {cardFace.jp ? <p className="partner-lab-drill-jp">{activeDrill.jyutping}</p> : null}
             </>
           ) : (
             <p className="partner-lab-drill-empty">

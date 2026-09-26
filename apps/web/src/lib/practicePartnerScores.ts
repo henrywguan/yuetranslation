@@ -27,13 +27,15 @@ export type PracticePartnerScoreEntry = {
 }
 
 export type PracticePartnerScores = {
+  /** Lifetime XP. Session XP on the drill card is separate. */
+  xp: number
   bestStreak: number
   totalPasses: number
   recent: PracticePartnerScoreEntry[]
 }
 
 export function emptyPracticePartnerScores(): PracticePartnerScores {
-  return { bestStreak: 0, totalPasses: 0, recent: [] }
+  return { xp: 0, bestStreak: 0, totalPasses: 0, recent: [] }
 }
 
 function asInt(raw: unknown, fallback = 0): number {
@@ -74,6 +76,7 @@ export function sanitizePracticePartnerScores(raw: unknown): PracticePartnerScor
     : []
   const bestFromLog = recent.reduce((m, e) => Math.max(m, e.streak), 0)
   return {
+    xp: asInt(row.xp),
     bestStreak: Math.max(asInt(row.bestStreak), bestFromLog),
     totalPasses: Math.max(asInt(row.totalPasses), recent.length),
     recent,
@@ -82,7 +85,7 @@ export function sanitizePracticePartnerScores(raw: unknown): PracticePartnerScor
 
 export function applyPracticePartnerPass(
   current: PracticePartnerScores,
-  entry: Omit<PracticePartnerScoreEntry, 'at'> & { at?: number },
+  entry: Omit<PracticePartnerScoreEntry, 'at'> & { at?: number; xpGain?: number },
 ): PracticePartnerScores {
   const clean = sanitizePracticePartnerScoreEntry({
     ...entry,
@@ -91,10 +94,28 @@ export function applyPracticePartnerPass(
   if (!clean) return current
   const recent = [clean, ...current.recent].slice(0, PRACTICE_PARTNER_SCORES_MAX)
   return {
+    xp: current.xp + asInt(entry.xpGain),
     bestStreak: Math.max(current.bestStreak, clean.streak),
     totalPasses: current.totalPasses + 1,
     recent,
   }
+}
+
+/** Keep the higher lifetime totals when the cloud board is ahead of this browser. */
+export function adoptPracticePartnerCloudScore(
+  local: PracticePartnerScores,
+  cloud: { xp: number; bestStreak: number; totalPasses: number },
+): PracticePartnerScores {
+  const next: PracticePartnerScores = {
+    ...local,
+    xp: Math.max(local.xp, asInt(cloud.xp)),
+    bestStreak: Math.max(local.bestStreak, asInt(cloud.bestStreak)),
+    totalPasses: Math.max(local.totalPasses, asInt(cloud.totalPasses)),
+  }
+  if (next.xp !== local.xp || next.bestStreak !== local.bestStreak || next.totalPasses !== local.totalPasses) {
+    writePracticePartnerScores(next)
+  }
+  return next
 }
 
 export function readPracticePartnerScores(): PracticePartnerScores {

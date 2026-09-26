@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import {
   PRACTICE_PARTNER_SCORES_KEY,
   PRACTICE_PARTNER_SCORES_MAX,
+  adoptPracticePartnerCloudScore,
   applyPracticePartnerPass,
   emptyPracticePartnerScores,
   sanitizePracticePartnerScores,
@@ -14,7 +15,7 @@ assert.equal(PRACTICE_PARTNER_SCORES_KEY, 'yue-practice-partner-scores-v1')
 assert.equal(PRACTICE_PARTNER_SCORES_MAX, 40)
 
 const empty = emptyPracticePartnerScores()
-assert.deepEqual(empty, { bestStreak: 0, totalPasses: 0, recent: [] })
+assert.deepEqual(empty, { xp: 0, bestStreak: 0, totalPasses: 0, recent: [] })
 
 const first = applyPracticePartnerPass(empty, {
   at: 1_700_000_000_000,
@@ -25,6 +26,7 @@ const first = applyPracticePartnerPass(empty, {
 })
 assert.equal(first.totalPasses, 1)
 assert.equal(first.bestStreak, 1)
+assert.equal(first.xp, 0)
 assert.equal(first.recent[0]?.zh, '狗')
 assert.equal(first.recent[0]?.category, 'animals')
 
@@ -34,9 +36,11 @@ const second = applyPracticePartnerPass(first, {
   category: 'foods',
   zh: '叉燒飯',
   en: 'char siu rice',
+  xpGain: 15,
 })
 assert.equal(second.totalPasses, 2)
 assert.equal(second.bestStreak, 2)
+assert.equal(second.xp, 15)
 assert.equal(second.recent[0]?.zh, '叉燒飯', 'newest pass is first')
 assert.equal(second.recent[1]?.zh, '狗')
 
@@ -55,6 +59,11 @@ const junk = sanitizePracticePartnerScores({
   recent: [{ zh: '', en: '' }, { zh: '貓', category: 'sports', streak: 3 }],
 })
 assert.equal(junk.bestStreak, 3, 'best streak recovered from the log')
+assert.equal(junk.xp, 0)
+const cloud = adoptPracticePartnerCloudScore(junk, { xp: 80, bestStreak: 1, totalPasses: 2 })
+assert.equal(cloud.xp, 80)
+assert.equal(cloud.bestStreak, 3, 'local best streak stays if it is higher')
+assert.equal(cloud.totalPasses, 2)
 assert.equal(junk.recent[0]?.category, 'common', 'unknown decks fall back to common')
 assert.equal(junk.recent.length, 1, 'empty rows dropped')
 
