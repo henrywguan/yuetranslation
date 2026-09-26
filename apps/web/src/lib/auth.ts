@@ -4,6 +4,24 @@ import { hashPath, navigate } from './useHashRoute'
 let supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() || ''
 let supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() || ''
 let client: SupabaseClient | null = null
+/** Last access token from getSession / auth events. Health must not wait on a second session read. */
+let cachedAccessToken: string | null = null
+let sessionRefresh: Promise<void> | null = null
+
+function rememberSession(session: Session | null) {
+  cachedAccessToken = session?.access_token ?? null
+}
+
+function refreshCachedSession(sb: SupabaseClient) {
+  if (sessionRefresh) return
+  sessionRefresh = sb.auth
+    .getSession()
+    .then(({ data }) => rememberSession(data.session))
+    .catch(() => {})
+    .finally(() => {
+      sessionRefresh = null
+    })
+}
 let authPanelOpen = false
 let configLoad: Promise<void> | null = null
 
@@ -60,6 +78,9 @@ export function getSupabaseClient(): SupabaseClient | null {
         flowType: 'pkce',
       },
     })
+    client.auth.onAuthStateChange((_event, session) => {
+      rememberSession(session)
+    })
   }
   return client
 }
@@ -115,14 +136,22 @@ export function consumeAuthScreenDeepLink(): boolean {
 export async function getAccessToken(): Promise<string | null> {
   const sb = getSupabaseClient()
   if (!sb) return null
+  // Boot already read the session. A second getSession() can stall (refresh /
+  // lock) and leave the plan chip on Connecting before /api/health is even sent.
+  if (cachedAccessToken) {
+    refreshCachedSession(sb)
+    return cachedAccessToken
+  }
   const { data } = await sb.auth.getSession()
-  return data.session?.access_token ?? null
+  rememberSession(data.session)
+  return cachedAccessToken
 }
 
 export async function getSession(): Promise<Session | null> {
   const sb = getSupabaseClient()
   if (!sb) return null
   const { data } = await sb.auth.getSession()
+  rememberSession(data.session)
   return data.session
 }
 
@@ -223,6 +252,7 @@ export async function signUp(email: string, password: string) {
 }
 
 export async function signOut() {
+  cachedAccessToken = null
   const sb = getSupabaseClient()
   if (!sb) return
   await sb.auth.signOut()

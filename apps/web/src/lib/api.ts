@@ -61,7 +61,12 @@ export async function fetchHealth(): Promise<{
   entitlement: Entitlement
   incidentBanner?: IncidentBannerSettings | null
 }> {
-  const res = await apiFetch('/health')
+  // A hung health read used to leave PlanChip on Connecting with no second try.
+  const signal =
+    typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+      ? AbortSignal.timeout(12_000)
+      : undefined
+  const res = await apiFetch('/health', signal ? { signal } : {})
   if (!res.ok) throw new Error('health failed')
   return res.json()
 }
