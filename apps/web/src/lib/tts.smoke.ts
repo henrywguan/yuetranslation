@@ -117,6 +117,7 @@ export function readLocalWuuVoice() { return null }
 export function readLocalEnVoice() { return null }
 export function readLocalTlVoice() { return null }
 export function readLocalEsVoice() { return null }
+export function readLocalEsesVoice() { return null }
 export function readLocalViVoice() { return null }
 export function readLocalYueVoice() { return null }
 `,
@@ -136,6 +137,12 @@ const tts = await import(pathToFileURL(join(dir, 'tts.ts')).href)
 tts.unlockTtsPlayback()
 await new Promise((r) => setTimeout(r, 20))
 assert.equal(tts.isTtsPlaybackUnlocked(), true)
+const playAfterFirst = instances[0]?.playCount ?? 0
+tts.unlockTtsPlayback()
+assert.equal(instances[0]?.playCount, playAfterFirst, 'second unlock is a no-op')
+tts.unlockTtsPlayback({ force: true })
+assert.ok((instances[0]?.playCount ?? 0) > playAfterFirst, 'force unlock after mic must replay silent WAV')
+assert.equal(instances[0]?.volume, 1, 'force unlock uses speaker volume')
 
 const speakPromise = tts.speakText('hello', 'en') as Promise<void>
 await new Promise((r) => setTimeout(r, 20))
@@ -143,9 +150,11 @@ assert.equal(tts.isTtsPlaying(), true, 'speakText should be playing while waitin
 
 const srcWhilePlaying = instances[0]?.src
 const resumeBefore = synthResume
+const playWhileSpeaking = instances[0]?.playCount ?? 0
 tts.unlockTtsPlayback()
 assert.equal(instances[0]?.src, srcWhilePlaying, 'unlock during TTS must not replace the clip with silent WAV')
 assert.equal(synthResume, resumeBefore, 'unlock during TTS must not resume speechSynthesis')
+assert.equal(instances[0]?.playCount, playWhileSpeaking, 'unlock during TTS must not replay silent WAV')
 
 const loadBeforeDuck = instances[0]?.loadCount ?? 0
 tts.duckTtsForMicBargeIn()

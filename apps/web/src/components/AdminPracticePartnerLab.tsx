@@ -16,7 +16,7 @@ import {
 } from '../lib/adminApi'
 import { createWebSpeechSession } from '../lib/webSpeech'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
-import { isTtsPlaying, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
+import { isTtsPlaying, loadTtsAudio, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
 import type { LiveSession, SpeechEventHandlers } from '../lib/types'
 import {
   YUE_VOICES,
@@ -158,6 +158,7 @@ export function AdminPracticePartnerLab() {
   const [draft, setDraft] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
+  const [fsCatsOpen, setFsCatsOpen] = useState(false)
   const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
   const [category, setCategory] = useState<PracticePartnerCategory>(() => readPartnerCategory())
   /** Last partner line — stays on screen until the user starts speaking. */
@@ -292,6 +293,7 @@ export function AdminPracticePartnerLab() {
     setError('')
     setYouLive(null)
     setFsTypeOpen(false)
+    setFsCatsOpen(false)
     setMood('thinking')
     const deck = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === categoryRef.current)
     setCaption({
@@ -304,6 +306,7 @@ export function AdminPracticePartnerLab() {
         null,
         categoryRef.current,
       )
+      void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
       const withReply: PracticePartnerChatMessage[] = [
         ...messagesRef.current,
         { role: 'assistant', content: reply },
@@ -320,7 +323,7 @@ export function AdminPracticePartnerLab() {
       setBusy(false)
       turnLockRef.current = false
     }
-  }, [applyDrill, playPartnerReply])
+  }, [applyDrill, playPartnerReply, partnerVoice])
 
   const runPartnerTurn = useCallback(
     async (userText: string) => {
@@ -352,6 +355,7 @@ export function AdminPracticePartnerLab() {
           target,
           categoryRef.current,
         )
+        void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
         const withReply: PracticePartnerChatMessage[] = [
           ...nextMessages,
           { role: 'assistant', content: reply },
@@ -369,15 +373,18 @@ export function AdminPracticePartnerLab() {
         turnLockRef.current = false
       }
     },
-    [applyDrill, playPartnerReply, pushReel, startDrill],
+    [applyDrill, playPartnerReply, partnerVoice, pushReel, startDrill],
   )
 
   const finishUtterance = useCallback(async () => {
     window.clearTimeout(silenceTimerRef.current)
     const spoken = finalsRef.current.trim()
     finalsRef.current = ''
-    await stopMic()
+    // Do not wait for recognition.stop() before judging — iOS teardown is slow
+    // and sat in front of DeepSeek + Azure, which felt like a long TTS delay.
+    const stopping = stopMic()
     if (!spoken) {
+      await stopping
       setMood('idle')
       setYouLive(null)
       setCaption(
@@ -390,7 +397,7 @@ export function AdminPracticePartnerLab() {
       )
       return
     }
-    await runPartnerTurn(spoken)
+    await Promise.all([stopping, runPartnerTurn(spoken)])
   }, [partnerHold, runPartnerTurn, stopMic])
 
   useEffect(() => {
@@ -405,6 +412,7 @@ export function AdminPracticePartnerLab() {
     if ((busy || turnLockRef.current) && !canBargeIn) return
     setError('')
     finalsRef.current = ''
+    setFsCatsOpen(false)
     // Must run in the Talk gesture so later Azure/browser TTS after DeepSeek is allowed.
     unlockTtsPlayback()
 
@@ -472,24 +480,30 @@ export function AdminPracticePartnerLab() {
 
   const toggleTalk = useCallback(() => {
     if (listening) {
-      // Fresh gesture unlock right before the DeepSeek → TTS path.
-      unlockTtsPlayback()
+      // Flip iOS out of the mic session in this gesture, then judge.
+      // A plain unlock is a no-op after the first tap — that left later
+      // Azure clips late and quiet (voice-chat / receiver route).
+      void stopMic()
+      unlockTtsPlayback({ force: true })
       void finishUtterance()
       return
     }
-    unlockTtsPlayback()
     if (!activeDrill) {
+      unlockTtsPlayback({ force: true })
       void startDrill()
       return
     }
+    // Do not force-unlock immediately before recognition.start() — silent
+    // WAV / speechSynthesis.cancel aborts iPhone capture.
+    unlockTtsPlayback()
     void startListening()
-  }, [activeDrill, listening, finishUtterance, startDrill, startListening])
+  }, [activeDrill, listening, finishUtterance, startDrill, startListening, stopMic])
 
   const sendDraft = useCallback(() => {
     const text = draft.trim()
     if (!text || busy || !activeDrill) return
     // Same gesture unlock as Talk — typed turns also auto-speak after the LLM.
-    unlockTtsPlayback()
+    unlockTtsPlayback({ force: true })
     setDraft('')
     setFsTypeOpen(false)
     void runPartnerTurn(text)
@@ -525,6 +539,7 @@ export function AdminPracticePartnerLab() {
     if (busy || listening) return
     setCategory(id)
     writePartnerCategory(id)
+    setFsCatsOpen(false)
     const meta = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === id)
     if (activeDrill || messages.length) {
       void stopMic()
@@ -563,6 +578,7 @@ export function AdminPracticePartnerLab() {
   useEffect(() => {
     if (!fullscreen) {
       setFsTypeOpen(false)
+      setFsCatsOpen(false)
       return undefined
     }
     const previousOverflow = document.body.style.overflow
@@ -573,6 +589,10 @@ export function AdminPracticePartnerLab() {
           setFsTypeOpen(false)
           return
         }
+        if (fsCatsOpen) {
+          setFsCatsOpen(false)
+          return
+        }
         setFullscreen(false)
       }
     }
@@ -581,7 +601,7 @@ export function AdminPracticePartnerLab() {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKey)
     }
-  }, [fullscreen, fsTypeOpen])
+  }, [fullscreen, fsTypeOpen, fsCatsOpen])
 
   useEffect(() => {
     if (!fullscreen || !fsTypeOpen) return
@@ -614,6 +634,7 @@ export function AdminPracticePartnerLab() {
 
   const openFsKeyboard = () => {
     if (busy || listening || !activeDrill) return
+    setFsCatsOpen(false)
     setFsTypeOpen(true)
   }
 
@@ -767,6 +788,17 @@ export function AdminPracticePartnerLab() {
           )}
         </div>
 
+        {fullscreen && fsCatsOpen ? (
+          <div
+            className="partner-lab-fs-cats-pop"
+            role="dialog"
+            aria-label="Drill category"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {categoryPicker}
+          </div>
+        ) : null}
+
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
         <div
@@ -802,8 +834,25 @@ export function AdminPracticePartnerLab() {
       >
         {fullscreen ? (
           <>
-            {categoryPicker}
             <div className="partner-lab-fs-dock">
+              <button
+                type="button"
+                className={`partner-lab-fs-cats-toggle${fsCatsOpen ? ' is-open' : ''}`}
+                aria-label={fsCatsOpen ? 'Hide categories' : 'Show categories'}
+                aria-expanded={fsCatsOpen}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setFsTypeOpen(false)
+                  setFsCatsOpen((open) => !open)
+                }}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-fs-cats-icon">
+                  <path
+                    fill="currentColor"
+                    d="M7.4 15.4 6 14l6-6 6 6-1.4 1.4L12 10.8z"
+                  />
+                </svg>
+              </button>
               <button
                 type="button"
                 className={`partner-lab-fs-mic${listening ? ' is-live' : ''}`}

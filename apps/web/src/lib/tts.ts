@@ -108,8 +108,13 @@ export function isTtsPlaybackUnlocked() {
  * Call synchronously inside a user gesture (mic pointerdown / startHold)
  * so later async auto-speak `audio.play()` is allowed on iOS Safari/PWA.
  * Reuses one shared HTMLAudioElement for all TTS playback.
+ *
+ * `force` — play the silent tick even after the first unlock. Needed after
+ * Web Speech / mic stop: iOS stays in a record / voice-chat session, so the
+ * next Azure clip is late and quiet (earpiece-ish) unless we flip back to
+ * playback in this gesture. Do not force immediately before `recognition.start()`.
  */
-export function unlockTtsPlayback(): void {
+export function unlockTtsPlayback(opts?: { force?: boolean }): void {
   if (typeof window === 'undefined') return
   // Auto-speak barge-in: do not steal the shared element or resume/cancel
   // speechSynthesis — that aborts the Web Speech capture we are about to start.
@@ -124,12 +129,16 @@ export function unlockTtsPlayback(): void {
   // Resume shared AudioContext in-gesture so later TTS is not stuck suspended
   // after an async LLM gap (Practice Partner on iPhone).
   try {
-    ensureSharedAudioContext()
+    const ctx = ensureSharedAudioContext()
+    if (ctx.state === 'suspended') void ctx.resume()
   } catch {
     /* ignore */
   }
-  // Already unlocked / unlock in progress — keep the shared element warm.
-  if (unlocked || unlockInFlight) return
+  const force = Boolean(opts?.force)
+  // Already unlocked / unlock in progress — keep the shared element warm
+  // unless we must flip iOS out of the mic session.
+  if (!force && (unlocked || unlockInFlight)) return
+  if (force && unlockInFlight) return
   unlockInFlight = true
   try {
     el.pause()
@@ -137,7 +146,9 @@ export function unlockTtsPlayback(): void {
     /* ignore */
   }
   el.src = SILENT_WAV
-  el.volume = 0.01
+  // First unlock stays near-silent. After mic, play at full volume so iOS
+  // routes the shared element back to the speaker, not the receiver.
+  el.volume = force ? 1 : 0.01
   el.muted = false
   const playResult = el.play()
   if (playResult && typeof playResult.then === 'function') {
@@ -400,6 +411,12 @@ async function playAzureBlob(
   el.volume = 1
   el.muted = false
   setTtsPlaybackGain(Boolean(opts?.loud))
+  // After Web Speech, iOS can leave volume ducked even when we set 1 above.
+  try {
+    el.volume = 1
+  } catch {
+    /* ignore */
+  }
   return await new Promise<'played' | 'failed' | 'aborted'>((resolve) => {
     let settled = false
     const finish = (result: 'played' | 'failed' | 'aborted') => {
