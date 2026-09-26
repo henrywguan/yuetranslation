@@ -139,7 +139,7 @@ export function writePracticePartnerScores(scores: PracticePartnerScores): void 
 }
 
 export function recordPracticePartnerPass(
-  entry: Omit<PracticePartnerScoreEntry, 'at'> & { at?: number },
+  entry: Omit<PracticePartnerScoreEntry, 'at'> & { at?: number; xpGain?: number },
 ): PracticePartnerScores {
   const next = applyPracticePartnerPass(readPracticePartnerScores(), entry)
   writePracticePartnerScores(next)
