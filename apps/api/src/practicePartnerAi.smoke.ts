@@ -38,8 +38,30 @@ assert.match(PRACTICE_PARTNER_SYSTEM, /DIFFICULTY LOCK/, 'difficulty lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Do not put Jyutping romanization/, 'speak stays 漢字 + English')
 assert.match(PRACTICE_PARTNER_SYSTEM, /PASS VARIETY/, 'pass-line bank in the system prompt')
 assert.match(PRACTICE_PARTNER_SYSTEM, /FAIL VARIETY/, 'fail-line bank in the system prompt')
-assert.ok(PRACTICE_PARTNER_PASS_OPENERS.length >= 24, 'enough pass openers to rotate')
-assert.ok(PRACTICE_PARTNER_FAIL_OPENERS.length >= 12, 'enough fail openers to rotate')
+assert.match(PRACTICE_PARTNER_SYSTEM, /ROAST RULES/, 'witty roast personality')
+assert.match(PRACTICE_PARTNER_SYSTEM, /CONTEXTUAL WIT/, 'contextual improvisation')
+assert.match(PRACTICE_PARTNER_SYSTEM, /inspiration only|handmade for THIS turn|REAL witty person/i)
+assert.match(PRACTICE_PARTNER_SYSTEM, /有冇搞錯/, 'fail roast includes 有冇搞錯')
+assert.match(PRACTICE_PARTNER_SYSTEM, /蠢笨蛋/, 'fail roast includes 蠢笨蛋')
+assert.ok(PRACTICE_PARTNER_PASS_OPENERS.length >= 40, 'enough pass openers to rotate')
+assert.ok(PRACTICE_PARTNER_FAIL_OPENERS.length >= 30, 'enough fail openers to rotate')
+assert.ok(
+  PRACTICE_PARTNER_FAIL_OPENERS.some((s) => s.includes('有冇搞錯')),
+  'fail bank includes 有冇搞錯',
+)
+assert.ok(
+  PRACTICE_PARTNER_FAIL_OPENERS.some((s) => s.includes('蠢笨蛋')),
+  'fail bank includes 蠢笨蛋',
+)
+assert.ok(
+  PRACTICE_PARTNER_PASS_OPENERS.some((s) => /算你叻|clown|Lucky|temporary genius/i.test(s)),
+  'pass bank includes joking jabs',
+)
+assert.equal(practicePartnerSampling(null).temperature, 0.75)
+assert.ok(
+  practicePartnerSampling({ en: 'dog', zh: '狗', jyutping: 'gau2' }).temperature >= 0.9,
+  'judge turns sample hotter for improvisational wit',
+)
 assert.ok(
   PRACTICE_PARTNER_BANNED_PASS_DEFAULTS.some((s) => s.includes('啱喇')),
   'bans the looping 哼。啱喇 default',
@@ -58,11 +80,6 @@ assert.deepEqual(
     { role: 'user', content: '貓' },
   ]),
   [speakOpeningKey('哼。勉強過關。 Next 狗'), speakOpeningKey('Acceptable. Barely. Next 貓')],
-)
-assert.equal(practicePartnerSampling(null).temperature, 0.7)
-assert.ok(
-  practicePartnerSampling({ en: 'dog', zh: '狗', jyutping: 'gau2' }).temperature > 0.8,
-  'judge turns sample hotter for variety',
 )
 
 assert.deepEqual([...PRACTICE_PARTNER_CATEGORY_IDS], ['animals', 'foods', 'common', 'expert'])
@@ -181,9 +198,13 @@ assert.match(judge.turn, /TARGET ZH: 對唔住/)
 assert.match(judge.turn, /LEARNER SAID: 對唔住，我唔記得帶功課/)
 assert.match(judge.turn, /MUST stay in this \[CATEGORY\]/)
 assert.match(judge.turn, /Obey \[DIFFICULTY\]/)
-assert.match(judge.turn, /\[VARIETY\]/)
+assert.match(judge.turn, /React like a witty human/)
+assert.match(judge.turn, /\[CONTEXTUAL WIT\]/)
 assert.match(judge.turn, /Banned defaults/)
 assert.match(judge.turn, /哼。勉強過關/)
+assert.match(judge.turn, /有冇搞錯/)
+assert.match(judge.turn, /playful and meme/)
+assert.match(judge.turn, /inspiration|ENERGY|vibe samples/i)
 
 const premature = buildPracticePartnerTurn([{ role: 'user', content: 'hello' }], null)
 assert.match(premature.turn, /\[DEMAND\]/)
