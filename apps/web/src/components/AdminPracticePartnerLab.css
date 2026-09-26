@@ -550,15 +550,13 @@
 }
 
 .partner-lab-replay {
-  position: absolute;
-  top: 46%;
-  left: 50%;
+  position: relative;
   z-index: 6;
   display: grid;
   place-items: center;
-  width: 3.75rem;
-  height: 3.75rem;
-  margin: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0 auto 0.4rem;
   padding: 0;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #fff 32%, transparent);
@@ -566,7 +564,6 @@
   color: color-mix(in srgb, #fff 72%, transparent);
   box-shadow: 0 8px 28px color-mix(in srgb, #041018 35%, transparent);
   backdrop-filter: blur(10px);
-  transform: translate(-50%, -50%);
   cursor: pointer;
   pointer-events: auto;
 }
@@ -1030,7 +1027,10 @@
 .partner-lab-drill-zh {
   appearance: none;
   position: relative;
-  display: inline;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.16rem;
   margin: 0;
   padding: 0;
   border: 0;
@@ -1045,17 +1045,17 @@
   text-align: center;
 }
 
+.partner-lab-drill-zh-chars {
+  display: inline;
+}
+
 .partner-lab-drill-zh span.is-jade {
-  display: inline-block;
   animation: partner-lab-jade-char 0.62s ease both;
 }
 
-.partner-lab-drill-zh.is-jade-flash::after {
-  content: '';
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: -0.18rem;
+.partner-lab-drill-zh-line {
+  display: block;
+  width: 100%;
   height: 2px;
   border-radius: 999px;
   background: linear-gradient(
@@ -1076,19 +1076,16 @@
   0% {
     color: var(--ink-bright);
     text-shadow: none;
-    transform: translateY(0);
   }
   42% {
     color: #f4fff9;
     text-shadow:
       0 0 12px color-mix(in srgb, var(--jade) 95%, #fff),
       0 0 22px color-mix(in srgb, var(--jade) 70%, transparent);
-    transform: translateY(-1px);
   }
   100% {
     color: var(--ink-bright);
     text-shadow: none;
-    transform: translateY(0);
   }
 }
 
@@ -1242,7 +1239,7 @@
   .partner-lab.is-fail-flash::after,
   .partner-lab-stage.is-verdict-fail,
   .partner-lab-drill-zh span.is-jade,
-  .partner-lab-drill-zh.is-jade-flash::after,
+  .partner-lab-drill-zh-line,
   .partner-lab-replay.is-speaking .partner-lab-replay-eq i {
     animation: none;
   }

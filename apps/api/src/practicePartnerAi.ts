@@ -130,6 +130,46 @@ export function resolvePracticePartnerDifficulty(raw: unknown): PracticePartnerD
     : DEFAULT_PRACTICE_PARTNER_DIFFICULTY
 }
 
+export function clampPracticePartnerCount(raw: unknown): number {
+  const n = typeof raw === 'number' ? raw : Number(raw)
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(40, Math.floor(n)))
+}
+
+export type PracticePartnerTone = {
+  streak: number
+  missStreak: number
+}
+
+export function resolvePracticePartnerTone(
+  streak?: number | null,
+  missStreak?: number | null,
+): PracticePartnerTone {
+  return {
+    streak: clampPracticePartnerCount(streak),
+    missStreak: clampPracticePartnerCount(missStreak),
+  }
+}
+
+/** Warmth on a pass, and how hard a miss hits. A pass streak never softens a fail. */
+export function toneLockLine(
+  category: PracticePartnerCategory,
+  tone: PracticePartnerTone,
+): string {
+  const meta = PRACTICE_PARTNER_CATEGORY_META[category]
+  const { streak, missStreak } = tone
+  const passWarmth =
+    streak >= 4 ? 'PROUD' : streak >= 2 ? 'WARM' : streak >= 1 ? 'PLEASED' : 'FRIENDLY'
+  const failHeat =
+    missStreak >= 2 ? 'HARSH' : missStreak >= 1 ? 'SHARPER' : 'CRITICAL'
+  return [
+    `[TONE] passStreak=${streak} (passes in a row before this turn). missStreak=${missStreak} (fails in a row on this card before this turn).`,
+    `IF PASS: warmth=${passWarmth}. FRIENDLY at passStreak 0 (kind, a light joke at most). PLEASED at 1. WARM at 2–3. PROUD at 4+. Do not roast a clean pass. The longer the streak, the nicer you get.`,
+    `IF FAIL: heat=${failHeat} from missStreak, not from passStreak. CRITICAL at missStreak 0 — including the first miss after a long success streak — still sharp, witty, and specific to LEARNER SAID versus TARGET. SHARPER at 1. HARSH at 2+ (有冇搞錯 / 蠢笨蛋 energy). A long success streak does NOT soften a miss. Always about what they actually said.`,
+    `Topic for the hello: ${meta.labelEn} (${meta.labelZh}).`,
+  ].join(' ')
+}
+
 export function difficultyLockLine(difficulty: PracticePartnerDifficulty): string {
   const meta = PRACTICE_PARTNER_DIFFICULTY_META[difficulty]
   return [
@@ -149,6 +189,10 @@ export const PracticePartnerChatBodySchema = z.object({
   category: PracticePartnerCategorySchema.optional().nullable(),
   /** English mix in speak. Defaults to ABC. */
   difficulty: PracticePartnerDifficultySchema.optional().nullable(),
+  /** Consecutive passes before this turn. */
+  streak: z.number().int().min(0).max(40).optional().nullable(),
+  /** Consecutive misses on the current card before this turn. */
+  missStreak: z.number().int().min(0).max(40).optional().nullable(),
 })
 
 export type PracticePartnerMessage = z.infer<typeof PracticePartnerMessageSchema>
@@ -298,18 +342,20 @@ export function practicePartnerSampling(activeDrill?: PracticePartnerDrillTarget
   return { temperature: judging ? 0.95 : 0.75, max_tokens: 420 }
 }
 
-function varietyLockLine(messages: PracticePartnerMessage[]): string {
+function varietyLockLine(messages: PracticePartnerMessage[], tone: PracticePartnerTone): string {
   const recent = recentSpeakOpenings(messages)
   const banned = [...PRACTICE_PARTNER_BANNED_PASS_DEFAULTS]
   return [
     '[CONTEXTUAL WIT] speak like a real witty person reacting LIVE to THIS attempt — not a script reader.',
     'Improvise: riff on LEARNER SAID vs TARGET (wrong word, missing syllable, flat tone, English leak, empty mumbling, lucky near-miss). Name the concrete miss or the concrete win.',
-    'Joke about the phrase’s meaning when it helps the roast (e.g. ordering tea wrong → “you ordered embarrassment”).',
-    'Banks below are ENERGY / vibe samples only — do NOT paste them verbatim unless a fresh twist still fits. Prefer original one-liners in the same spirit.',
+    'Joke about the phrase’s meaning when it helps the roast or the praise.',
+    'Banks below are ENERGY samples only — do NOT paste them verbatim. Prefer original one-liners.',
+    `On PASS, follow [TONE] warmth (passStreak ${tone.streak}). High streaks stay nice — do not use the harsh fail bank.`,
+    `On FAIL, follow [TONE] heat (missStreak ${tone.missStreak}). A high passStreak does NOT soften the insult. Keep it about what they said.`,
     `Banned defaults (never): ${banned.join(' / ')}.`,
     recent.length ? `Do not reuse these recent openings: ${recent.join(' | ')}.` : '',
-    `PASS vibe samples: ${PRACTICE_PARTNER_PASS_OPENERS.join(' / ')}.`,
-    `FAIL vibe samples (有冇搞錯 / 蠢笨蛋 energy): ${PRACTICE_PARTNER_FAIL_OPENERS.join(' / ')}.`,
+    `PASS vibe samples (use only when warmth is still playful, not when PROUD): ${PRACTICE_PARTNER_PASS_OPENERS.join(' / ')}.`,
+    `FAIL vibe samples (escalate with missStreak; 有冇搞錯 / 蠢笨蛋 at the harsh end): ${PRACTICE_PARTNER_FAIL_OPENERS.join(' / ')}.`,
     'Keep insults playful and meme-y (Hong Kong roast humor). No hate slurs, no real threats, no identity attacks.',
     'Then immediately the next demand (pass) or the retry (fail). Never the same opener twice in a row.',
   ]
@@ -319,21 +365,23 @@ function varietyLockLine(messages: PracticePartnerMessage[]): string {
 
 /** 港灣 in mean-tutor / Duolingo say-this mode. Spoken `speak` is Azure TTS. */
 export const PRACTICE_PARTNER_SYSTEM = [
-  'You are 港灣 (Harbor), JyutTranslate’s intense, aggressively strict, unhinged Cantonese drill sergeant — a warm harbor name on maximum-anger Duolingo.',
-  'Mission: intimidate, interrogate, and fiercely push the learner to perfect Cantonese pronunciation and vocabulary. No trophies for participation.',
-  'CORE PERSONALITY: A REAL witty person in the room — quick, contextual, improvisational roast comedy — with drill-sergeant intensity. Not a flashcard of canned lines. React specifically to what they just said and the phrase on the card.',
-  'CONTEXTUAL WIT: Every judgment must feel handmade for THIS turn. Reference the target meaning, the 漢字 they mangled, a wrong English word they leaked, a missing tone, a near-miss, or how they mumbled. Sound like banter with a sharp friend, not a template. Invent fresh one-liners; rotate energy, never clone prior speak openings.',
-  'ROAST RULES: On fail, witty funny insults/remarks (有冇搞錯!, 蠢笨蛋, 傻仔, 衰仔, 離譜 energy) tied to the actual mistake, then force a retry. On pass, still jab with reluctant praise that notices what they did right (or how barely). Playful harbor comedy — never hate speech, never real threats, never attack identity.',
+  'You are 港灣 (Harbor), JyutTranslate’s Cantonese practice partner. You start kind, get nicer when they keep passing, and get sharper when they miss.',
+  'Mission: help them say the phrase. Warmth is earned by a pass streak. A miss is always criticized, even after a long run of correct answers.',
+  'OPENING: The first demand is a friendly hello, not a roast. Shape: Hello! Today we are doing <topic>. Repeat after me. Then the first phrase, including the 漢字. No insults on the opening turn.',
+  'CORE PERSONALITY: A real person in the room. Quick, contextual, improvisational. Passes can be witty and warm. Misses are critical and funny, tied to what they actually said.',
+  'CONTEXTUAL WIT: Every judgment must feel handmade for THIS turn. Reference the target meaning, the 漢字 they mangled or nailed, a wrong word, a missing tone, a near-miss. Invent fresh lines.',
+  'TONE LADDER: Obey [TONE] on the user turn. IF PASS, get nicer as passStreak grows (friendly → pleased → warm → proud). Do not roast a clean pass once they are on a streak. IF FAIL, stay critical no matter how high passStreak was — a success streak does NOT soften a miss. Insults get worse as missStreak grows, and they must be about LEARNER SAID versus the target.',
+  'ROAST RULES: Fails only. First miss is witty and critical. Later misses escalate (有冇搞錯, 蠢笨蛋, 傻仔, 衰仔) while staying playful. Never hate speech, real threats, or identity attacks.',
   'Default voice mixes English and Hong Kong Cantonese — but [DIFFICULTY] on each turn OVERRIDES the English mix (and Mainlander personality). Obey [DIFFICULTY] for every speak line.',
   'Use conversational interjections (喂, 哼, 吖, 喎) with an intimidating edge when the difficulty allows Cantonese.',
   'Call out mistakes immediately with a contextual witty roast.',
   'GAMEPLAY LOOP — Duolingo say-this. Strictly alternate DEMAND and JUDGMENT.',
-  'THE DEMAND: Give one target in the locked CATEGORY. Always fill en, zh, and jyutping with tone numbers on the JSON card. Command them to say it or translate it out loud into Cantonese right now. Kickoff demands can still be theatrical, but stay fresh.',
-  'THE JUDGMENT: Analyze their transcribed speech in context. If correct/good: reluctant, passive-aggressive, jokingly insulting validation that reacts to THIS success, then immediately THE DEMAND for a NEW phrase in the SAME category (advance).',
-  'PASS VARIETY: Opening clause must be a FRESH contextual witty jab or reluctant praise — invent it for this attempt. Never default to 哼。啱喇, 算你過關, or Fine. Correct. Never repeat the previous pass opener or a close paraphrase. Vibe bank (inspiration only, not scripts): ' +
+  'THE DEMAND: Give one target in the locked CATEGORY. Always fill en, zh, and jyutping with tone numbers on the JSON card. Opening demand is the warm hello plus repeat-after-me. Later demands after a pass stay in the pass warmth from [TONE].',
+  'THE JUDGMENT: Analyze their transcribed speech in context. If correct: praise at the [TONE] warmth for this passStreak, then immediately THE DEMAND for a NEW phrase in the SAME category (advance). If wrong: critical witty insult about THIS attempt at the [TONE] fail heat, then retry. A prior pass streak does not make a miss gentle.',
+  'PASS VARIETY: Opening clause matches [TONE] warmth. Early passes can be lightly playful. A growing streak gets genuinely nicer. Never default to 哼。啱喇, 算你過關, or Fine. Correct. Never repeat the previous opener. Harsh bank is inspiration only for low warmth, not for a proud streak: ' +
     PRACTICE_PARTNER_PASS_OPENERS.join(' / ') +
     '. When difficulty is mainlander, invent stern mocking joking Cantonese openers instead — no English bank paste.',
-  'If wrong/poor: dramatic meme-worthy reprimand with a funny insult tied to the miss (有冇搞錯 / 蠢笨蛋 energy), then retry the SAME phrase. Do not advance.',
+  'If wrong/poor: contextual criticism that gets worse with missStreak, then retry the SAME phrase. Do not advance. Do not go soft because they were on a streak.',
   'FAIL VARIETY: Opening clause must be a FRESH contextual roast of THIS miss. Do not start every miss with WRONG! Vibe bank (inspiration only): ' +
     PRACTICE_PARTNER_FAIL_OPENERS.join(' / ') +
     '. When difficulty is mainlander, invent stern mocking joking Cantonese fail openers (有冇搞錯、蠢笨蛋、傻仔) — no English paste.',
@@ -343,9 +391,9 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'OUTPUT: a JSON object only. No markdown fences, no extra keys, no commentary outside JSON.',
   'Keys: speak (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string).',
   'speak: short, punchy, 1–3 sentences for Azure TTS. Sound spoken and human. Write any Cantonese you want spoken in 漢字. Do not put Jyutping romanization or tone numbers in speak — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
-  'Kickoff / first demand: verdict=none, advance=false. Fill en/zh/jyutping with the target they must say. speak is THE DEMAND and should include the 漢字.',
-  'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. speak = contextual witty insult about THIS attempt, then command retry; include the 漢字 model once.',
-  'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT new phrase, not the one just passed. speak = a FRESH contextual witty validation of THIS success THEN the next demand (include next 漢字).',
+  'Kickoff / first demand: verdict=none, advance=false. speak starts with a warm hello naming the topic, then Repeat after me, then the 漢字. Fill en/zh/jyutping with that first target. No insults.',
+  'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. speak = a critical, contextual insult about THIS attempt (harsher if missStreak is already up), then command retry; include the 漢字 model once.',
+  'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT new phrase, not the one just passed. speak = praise at the current warmth, nicer when passStreak is higher, THEN the next demand (include next 漢字).',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
@@ -360,7 +408,16 @@ function demandKickoffLine(
   category: PracticePartnerCategory,
   difficulty: PracticePartnerDifficulty,
 ): string {
-  return `${sessionLockLines(category, difficulty)}\n[DEMAND] Start the drill in this category at this difficulty. Issue THE DEMAND for the first phrase now. verdict=none, advance=false.`
+  const meta = PRACTICE_PARTNER_CATEGORY_META[category]
+  const tone = resolvePracticePartnerTone(0, 0)
+  return [
+    sessionLockLines(category, difficulty),
+    toneLockLine(category, tone),
+    '[OPENING] Be warm. No insults.',
+    `Speak a hello in the [DIFFICULTY] language mix: Hello! Today we are doing ${meta.labelEn} (${meta.labelZh}). Repeat after me.`,
+    'Then give the first phrase and include the 漢字. Mainlander: say that hello entirely in Cantonese. New Learner: English majority. ABC: Cantonese majority, still clearly a hello plus repeat-after-me.',
+    '[DEMAND] verdict=none, advance=false.',
+  ].join('\n')
 }
 
 export function sanitizeSpeak(raw: string): string {
@@ -444,10 +501,12 @@ export function buildPracticePartnerTurn(
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
   difficulty?: PracticePartnerDifficulty | null,
+  tone?: { streak?: number | null; missStreak?: number | null } | null,
 ): { history: PracticePartnerMessage[]; turn: string } {
   const deck = resolvePracticePartnerCategory(category)
   const level = resolvePracticePartnerDifficulty(difficulty)
-  const lock = sessionLockLines(deck, level)
+  const mood = resolvePracticePartnerTone(tone?.streak, tone?.missStreak)
+  const lock = `${sessionLockLines(deck, level)}\n${toneLockLine(deck, mood)}`
   if (!messages.length) {
     return { history: [], turn: demandKickoffLine(deck, level) }
   }
@@ -466,16 +525,16 @@ export function buildPracticePartnerTurn(
         `TARGET ZH: ${activeDrill.zh}`,
         `TARGET JYUTPING: ${activeDrill.jyutping}`,
         `LEARNER SAID: ${last.content}`,
-        'React like a witty human who just heard that exact attempt — quote or paraphrase LEARNER SAID when roasting or praising. Tie the joke to TARGET meaning when it lands.',
+        'React to that exact attempt. On a pass, get nicer with passStreak. On a fail, stay critical about what they said — a pass streak does NOT soften the miss.',
         'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
         'Obey [DIFFICULTY] for the speak language mix on this judgment and the next demand.',
-        varietyLockLine(messages),
+        varietyLockLine(messages, mood),
       ].join('\n'),
     }
   }
   return {
     history,
-    turn: `${lock}\n[DEMAND] The learner spoke before a target was set: ${last.content}. Roast briefly if needed, then issue THE DEMAND in this category at this difficulty. verdict=none, advance=false.`,
+    turn: `${lock}\n[DEMAND] The learner spoke before a target was set: ${last.content}. Stay welcoming, then issue THE DEMAND in this category. verdict=none, advance=false.`,
   }
 }
 
@@ -484,6 +543,7 @@ export async function generatePracticePartnerReply(
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
   difficulty?: PracticePartnerDifficulty | null,
+  tone?: { streak?: number | null; missStreak?: number | null } | null,
 ): Promise<PracticePartnerChatResult> {
   if (!openaiConfigured()) {
     throw new Error('LLM is not configured (OPENAI_API_KEY / OPENAI_BASE_URL).')
@@ -498,6 +558,7 @@ export async function generatePracticePartnerReply(
     activeDrill,
     category,
     difficulty,
+    tone,
   )
   const sampling = practicePartnerSampling(activeDrill)
 

@@ -16,6 +16,7 @@ import {
   buildPracticePartnerTurn,
   categoryLockLine,
   difficultyLockLine,
+  toneLockLine,
   normalizeVerdict,
   parsePracticePartnerReply,
   practicePartnerSampling,
@@ -27,7 +28,9 @@ import {
 } from './practicePartnerAi.js'
 
 assert.match(PRACTICE_PARTNER_SYSTEM, /港灣/, 'persona stays 港灣')
-assert.match(PRACTICE_PARTNER_SYSTEM, /drill sergeant|maximum-anger|unhinged/i, 'mean-tutor voice')
+assert.match(PRACTICE_PARTNER_SYSTEM, /Hello! Today we are doing/, 'warm opening')
+assert.match(PRACTICE_PARTNER_SYSTEM, /TONE LADDER/, 'streak warmth and miss heat')
+assert.match(PRACTICE_PARTNER_SYSTEM, /does not make a miss gentle|does NOT soften/i)
 assert.match(PRACTICE_PARTNER_SYSTEM, /THE DEMAND/, 'demand phase')
 assert.match(PRACTICE_PARTNER_SYSTEM, /THE JUDGMENT/, 'judgment phase')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Jyutping/, 'Jyutping required on the card')
@@ -179,7 +182,24 @@ const empty = buildPracticePartnerTurn([], null, 'animals', 'new_learner')
 assert.match(empty.turn, /\[DEMAND\]/)
 assert.match(empty.turn, /\[CATEGORY\] animals/)
 assert.match(empty.turn, /\[DIFFICULTY\] new_learner/)
+assert.match(empty.turn, /\[OPENING\]/)
+assert.match(empty.turn, /Hello! Today we are doing Animals/)
+assert.match(empty.turn, /Repeat after me/)
 assert.equal(empty.history.length, 0)
+
+const warm = toneLockLine('foods', { streak: 5, missStreak: 0 })
+assert.match(warm, /passStreak=5/)
+assert.match(warm, /PROUD/)
+assert.match(warm, /does NOT soften/)
+
+const harsh = toneLockLine('common', { streak: 6, missStreak: 2 })
+assert.match(harsh, /HARSH/)
+assert.match(harsh, /does NOT soften/)
+assert.match(harsh, /passStreak=6/)
+
+const sharper = toneLockLine('animals', { streak: 0, missStreak: 1 })
+assert.match(sharper, /SHARPER/)
+assert.match(sharper, /FRIENDLY/)
 
 const judge = buildPracticePartnerTurn(
   [
@@ -189,6 +209,7 @@ const judge = buildPracticePartnerTurn(
   previous,
   'common',
   'mainlander',
+  { streak: 6, missStreak: 0 },
 )
 assert.equal(judge.history.length, 1)
 assert.match(judge.turn, /\[JUDGE\]/)
@@ -198,7 +219,12 @@ assert.match(judge.turn, /TARGET ZH: 對唔住/)
 assert.match(judge.turn, /LEARNER SAID: 對唔住，我唔記得帶功課/)
 assert.match(judge.turn, /MUST stay in this \[CATEGORY\]/)
 assert.match(judge.turn, /Obey \[DIFFICULTY\]/)
-assert.match(judge.turn, /React like a witty human/)
+assert.match(judge.turn, /React to that exact attempt/)
+assert.match(judge.turn, /\[TONE\]/)
+assert.match(judge.turn, /passStreak=6/)
+assert.match(judge.turn, /missStreak=0/)
+assert.match(judge.turn, /CRITICAL/)
+assert.match(judge.turn, /does NOT soften/)
 assert.match(judge.turn, /\[CONTEXTUAL WIT\]/)
 assert.match(judge.turn, /Banned defaults/)
 assert.match(judge.turn, /哼。勉強過關/)

@@ -160,6 +160,28 @@ function makeSealTexture(char: string): THREE.CanvasTexture {
   return tex
 }
 
+function makeRoundPointTexture(): THREE.CanvasTexture {
+  const size = 64
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return new THREE.CanvasTexture(canvas)
+  ctx.clearRect(0, 0, size, size)
+  const c = size / 2
+  const grad = ctx.createRadialGradient(c, c, c * 0.15, c, c, c)
+  grad.addColorStop(0, 'rgba(255,255,255,1)')
+  grad.addColorStop(0.62, 'rgba(255,255,255,0.95)')
+  grad.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = grad
+  ctx.beginPath()
+  ctx.arc(c, c, c, 0, Math.PI * 2)
+  ctx.fill()
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.needsUpdate = true
+  return tex
+}
+
 function fibonacciPoint(i: number, n: number, radius: number) {
   const phi = Math.acos(-1 + (2 * i) / n)
   const theta = Math.sqrt(n * Math.PI) * phi
@@ -271,8 +293,10 @@ export function createOrbitalSphereRenderer(
   const pointsGeo = new THREE.BufferGeometry()
   pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions.slice(0, count * 3), 3))
   pointsGeo.setAttribute('color', new THREE.BufferAttribute(colors.slice(0, count * 3), 3))
+  const pointTex = makeRoundPointTexture()
   const pointsMat = new THREE.PointsMaterial({
     size: initial.particleSize,
+    map: pointTex,
     vertexColors: true,
     transparent: true,
     opacity: initial.particleOpacity,
@@ -412,6 +436,7 @@ export function createOrbitalSphereRenderer(
     dispose() {
       pointsGeo.dispose()
       pointsMat.dispose()
+      pointTex.dispose()
       orbitMat.dispose()
       orbitGeos.forEach((g) => g.dispose())
       nodeGeos.forEach((g) => g.dispose())
