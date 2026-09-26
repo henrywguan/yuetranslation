@@ -28,6 +28,7 @@ import {
   supportsTts,
 } from './langCapabilities'
 import { humanizeThrownError } from './apiError'
+import { bootstrapRetryDelayMs } from './bootstrapRetry'
 import { prefetchSpeechToken } from './speechToken'
 import type { DetailLayer } from './detailTypes'
 import type {
@@ -259,6 +260,26 @@ let appleMicTurns = 0
 let pendingStickyTap = false
 /** Coalesce overlapping App + TranslatorApp boots (and visibility blips). */
 let bootstrapInflight: Promise<void> | null = null
+let bootstrapRetryTimer: ReturnType<typeof setTimeout> | null = null
+let bootstrapRetryAttempt = 0
+
+function clearBootstrapRetry() {
+  if (bootstrapRetryTimer) {
+    clearTimeout(bootstrapRetryTimer)
+    bootstrapRetryTimer = null
+  }
+  bootstrapRetryAttempt = 0
+}
+
+/** Plan chip stays on Connecting until a health snapshot lands. Keep trying. */
+function scheduleBootstrapRetry(load: () => Promise<void>) {
+  if (bootstrapRetryTimer) return
+  bootstrapRetryAttempt += 1
+  bootstrapRetryTimer = setTimeout(() => {
+    bootstrapRetryTimer = null
+    void load()
+  }, bootstrapRetryDelayMs(bootstrapRetryAttempt))
+}
 
 /** DEV/test: inject a live session (skip Azure / Web Speech). */
 let liveSessionFactory:
@@ -946,6 +967,7 @@ export const useYueStore = create<State>((set, get) => {
       const layout = layoutForPrimary(nextPrimary)
       // Unblock PlanChip "Connecting…" as soon as health returns — do not wait
       // on history hydrate (extra round-trip / local work after sign-in).
+      clearBootstrapRetry()
       set({
         entitlement: ent,
         demoMode: Boolean(data.engines?.demo),
@@ -954,6 +976,15 @@ export const useYueStore = create<State>((set, get) => {
         primaryLanguage: nextPrimary,
         ...(primaryChanged ? layout : {}),
       })
+    } catch {
+      // A failed refresh must not snap a loaded plan back to Connecting.
+      // While the chip is still waiting, try again — a deploy blip used to latch forever.
+      if (!get().entitlement) scheduleBootstrapRetry(() => get().loadBootstrap())
+      return
+    }
+    const ent = get().entitlement
+    if (!ent) return
+    try {
       const { hydrateHistory } = await import('./historySync')
       const history = await hydrateHistory(Boolean(ent.loggedIn))
       set({ history })
@@ -987,11 +1018,7 @@ export const useYueStore = create<State>((set, get) => {
       }
       prefetchSpeechToken()
     } catch {
-      set({
-        entitlement: null,
-        demoMode: false,
-        incidentBanner: null,
-      })
+      /* history / voice cache must not put the plan chip back on Connecting */
     }
     })().finally(() => {
       bootstrapInflight = null

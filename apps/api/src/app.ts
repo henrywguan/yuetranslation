@@ -153,35 +153,42 @@ function guestTrialMessage(kind: 'live' | 'camera') {
 }
 
 app.get('/api/health', async (req: AuthedRequest, res) => {
-  const openai = openaiStatus()
-  // Public readiness only — keep entitlement + demo flag for SPA bootstrap.
-  // Omit model names, lexicon dumps, notify config, and other targeting aids.
-  // Parallelize banner + entitlement (both may hit Supabase).
-  const [incidentBanner, entitlement] = await Promise.all([
-    getIncidentBanner(),
-    entitlementFor(req),
-  ])
-  res.json({
-    ok: true,
-    product: 'jyut',
-    service: 'jyut-api',
-    mode: env.openMode ? 'open' : 'cloud',
-    cloudReady: cloudReady(),
-    engines: {
-      azureSpeech: Boolean(env.azureSpeechKey),
-      azureVision: visionConfigured(),
-      visionLlm: visionLlmConfigured(),
-      openai: openai.configured,
-      demo: !openai.configured,
-      dictionary: true,
-      lexicon: true,
-    },
-    push: {
-      configured: pushConfigured(),
-    },
-    incidentBanner,
-    entitlement,
-  })
+  try {
+    const openai = openaiStatus()
+    // Public readiness only — keep entitlement + demo flag for SPA bootstrap.
+    // Omit model names, lexicon dumps, notify config, and other targeting aids.
+    // Parallelize banner + entitlement (both may hit Supabase).
+    const [incidentBanner, entitlement] = await Promise.all([
+      getIncidentBanner(),
+      entitlementFor(req),
+    ])
+    res.json({
+      ok: true,
+      product: 'jyut',
+      service: 'jyut-api',
+      mode: env.openMode ? 'open' : 'cloud',
+      cloudReady: cloudReady(),
+      engines: {
+        azureSpeech: Boolean(env.azureSpeechKey),
+        azureVision: visionConfigured(),
+        visionLlm: visionLlmConfigured(),
+        openai: openai.configured,
+        demo: !openai.configured,
+        dictionary: true,
+        lexicon: true,
+      },
+      push: {
+        configured: pushConfigured(),
+      },
+      incidentBanner,
+      entitlement,
+    })
+  } catch (err) {
+    // Express 4 does not answer a rejected async route — the browser then sits
+    // on PlanChip "Connecting…" until the socket times out.
+    console.error('[health]', err)
+    if (!res.headersSent) res.status(503).json({ ok: false, message: 'health failed' })
+  }
 })
 
 app.get('/api/entitlement', async (req: AuthedRequest, res) => {
