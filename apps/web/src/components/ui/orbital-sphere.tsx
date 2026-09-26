@@ -46,6 +46,7 @@ export function OrbitalSphereBackground({
     let resizeObserver: ResizeObserver | null = null
     let intersection: IntersectionObserver | null = null
     let renderer: ReturnType<typeof createOrbitalSphereRenderer> | null = null
+    let onVisibility: (() => void) | null = null
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -61,17 +62,32 @@ export function OrbitalSphereBackground({
         renderer.render()
       }
 
+      const schedule = () => {
+        if (cancelled || !renderer || reduceMotion || !visible || document.hidden || frame) return
+        frame = requestAnimationFrame(tick)
+      }
+
       const tick = () => {
-        if (!renderer) return
-        if (!reduceMotion) renderer.render()
-        frame = visible && !document.hidden && !reduceMotion ? requestAnimationFrame(tick) : 0
+        frame = 0
+        if (!renderer || cancelled) return
+        renderer.render()
+        schedule()
+      }
+
+      onVisibility = () => {
+        if (document.hidden) {
+          if (frame) cancelAnimationFrame(frame)
+          frame = 0
+          return
+        }
+        schedule()
       }
 
       resizeObserver = new ResizeObserver(resize)
       intersection = new IntersectionObserver(([entry]) => {
         visible = entry?.isIntersecting ?? true
-        if (visible && !frame && !reduceMotion) frame = requestAnimationFrame(tick)
-        if ((!visible || reduceMotion) && frame) {
+        if (visible) schedule()
+        else if (frame) {
           cancelAnimationFrame(frame)
           frame = 0
         }
@@ -79,8 +95,9 @@ export function OrbitalSphereBackground({
 
       resizeObserver.observe(host)
       intersection.observe(host)
+      document.addEventListener('visibilitychange', onVisibility)
       resize()
-      if (!reduceMotion) frame = requestAnimationFrame(tick)
+      if (!reduceMotion) schedule()
       else renderer.render()
     }
 
@@ -96,6 +113,7 @@ export function OrbitalSphereBackground({
       if (frame) cancelAnimationFrame(frame)
       resizeObserver?.disconnect()
       intersection?.disconnect()
+      if (onVisibility) document.removeEventListener('visibilitychange', onVisibility)
       renderer?.dispose()
     }
   }, [variant])
