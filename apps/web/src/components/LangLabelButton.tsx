@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { inkEase } from '../lib/motion'
@@ -7,7 +7,9 @@ import { isConversationLang, isTextOnlyLang } from '../lib/langCapabilities'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import type { Lang } from '../lib/types'
 
-const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
+type LangOption = { id: Lang; copy: Bi; mark: string }
+
+const OPTIONS: LangOption[] = [
   { id: 'en', copy: ui.english, mark: 'En' },
   { id: 'yue', copy: ui.cantonese, mark: '粵' },
   { id: 'cmn', copy: ui.dirMandarin, mark: '普' },
@@ -26,10 +28,27 @@ const OPTIONS: { id: Lang; copy: Bi; mark: string }[] = [
 
 type MenuPlacement = 'top' | 'bottom'
 
+const gridContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.028, delayChildren: 0.06 },
+  },
+}
+
+const gridItem = {
+  hidden: { opacity: 0, y: 10, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.28, ease: inkEase },
+  },
+}
+
 /**
  * Pane language control.
- * - `dropdown` (Solo + Conversation): pill trigger + anchored glass menu in harbor/jade.
- * - `drawer`: full-sheet picker (fallback when a sheet is preferred).
+ * - `dropdown` (Solo + Conversation): pill trigger → centered animated modal.
+ * - `drawer`: edge sheet picker (legacy fallback).
  * - `scope: 'conversation'` hides text-only langs (Cebuano / Ilocano / Bikol).
  */
 export function LangLabelButton({
@@ -45,26 +64,17 @@ export function LangLabelButton({
   active: boolean
   onSelect: (lang: Lang) => void
   only?: 'en' | 'zh'
-  /** Upper Solo / open-down → `top`; lower Solo / Conversation partner → `bottom` (opens up). */
+  /** Upper Solo / open-down → `top`; lower Solo / Conversation partner → `bottom` (drawer only). */
   drawer?: MenuPlacement
-  /** Solo + Conversation use `dropdown`; `drawer` remains available for sheet pickers. */
+  /** Solo + Conversation use `dropdown` (modal); `drawer` remains for sheet pickers. */
   variant?: 'drawer' | 'dropdown'
   /** Conversation panes exclude text-only languages. */
   scope?: 'solo' | 'conversation'
 }) {
   const [open, setOpen] = useState(false)
-  const [menuPos, setMenuPos] = useState<{
-    left: number
-    width: number
-    opensDown: boolean
-    /** Distance from viewport top (down menus) or unused when opening up. */
-    top?: number
-    /** Distance from viewport bottom (up menus). */
-    bottom?: number
-    maxHeight: number
-  } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const selectedRef = useRef<HTMLButtonElement>(null)
   const menuId = useId()
   const titleId = useId()
   const scoped =
@@ -83,48 +93,15 @@ export function LangLabelButton({
               o.id === 'es' ||
               o.id === 'eses' ||
               o.id === 'vi' ||
+              o.id === 'th' ||
+              o.id === 'lo' ||
               isTextOnlyLang(o.id),
           )
         : scoped
+  const voiceOpts = visible.filter((o) => !isTextOnlyLang(o.id))
+  const typeOpts = visible.filter((o) => isTextOnlyLang(o.id))
   const current = visible.find((o) => o.id === lang) ?? visible[0]!
   const canPick = visible.length > 1
-  const preferDown = drawer === 'top'
-
-  useLayoutEffect(() => {
-    if (!open || variant !== 'dropdown') return
-    const placeMenu = () => {
-      const el = triggerRef.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const width = Math.max(r.width, 196)
-      const left = Math.min(Math.max(10, r.left), window.innerWidth - width - 10)
-      const gap = 8
-      const edge = 12
-      const spaceBelow = Math.max(0, window.innerHeight - r.bottom - gap - edge)
-      const spaceAbove = Math.max(0, r.top - gap - edge)
-      // Prefer the drawer hint, but flip when that side is too short for the list.
-      const minComfort = 200
-      let opensDown = preferDown
-      if (preferDown && spaceBelow < minComfort && spaceAbove > spaceBelow) opensDown = false
-      if (!preferDown && spaceAbove < minComfort && spaceBelow > spaceAbove) opensDown = true
-      const maxHeight = Math.max(140, opensDown ? spaceBelow : spaceAbove)
-      setMenuPos({
-        left,
-        width,
-        opensDown,
-        top: opensDown ? r.bottom + gap : undefined,
-        bottom: opensDown ? undefined : window.innerHeight - r.top + gap,
-        maxHeight,
-      })
-    }
-    placeMenu()
-    window.addEventListener('resize', placeMenu)
-    window.addEventListener('scroll', placeMenu, true)
-    return () => {
-      window.removeEventListener('resize', placeMenu)
-      window.removeEventListener('scroll', placeMenu, true)
-    }
-  }, [open, variant, preferDown, lang, visible.length])
 
   useEffect(() => {
     if (!open) return
@@ -134,21 +111,13 @@ export function LangLabelButton({
         setOpen(false)
       }
     }
-    const onPointerDown = (e: PointerEvent) => {
-      if (variant !== 'dropdown') return
-      const t = e.target as Node
-      if (rootRef.current?.contains(t)) return
-      const menu = document.getElementById(menuId)
-      if (menu?.contains(t)) return
-      setOpen(false)
-    }
     window.addEventListener('keydown', onKey, true)
-    window.addEventListener('pointerdown', onPointerDown, true)
+    const t = window.setTimeout(() => selectedRef.current?.focus(), 40)
     return () => {
       window.removeEventListener('keydown', onKey, true)
-      window.removeEventListener('pointerdown', onPointerDown, true)
+      window.clearTimeout(t)
     }
-  }, [open, variant, menuId])
+  }, [open])
 
   const labelOnly =
     only === 'en'
@@ -168,12 +137,17 @@ export function LangLabelButton({
           ? 'zh'
           : undefined
 
+  const pick = (id: Lang) => {
+    onSelect(id)
+    setOpen(false)
+  }
+
   const trigger = (
     <button
       ref={triggerRef}
       type="button"
       className={variant === 'dropdown' ? 'lang-dd-trigger' : 'lang-label-btn'}
-      aria-haspopup={canPick ? (variant === 'dropdown' ? 'listbox' : 'dialog') : undefined}
+      aria-haspopup={canPick ? 'dialog' : undefined}
       aria-expanded={canPick ? open : undefined}
       aria-controls={canPick ? menuId : undefined}
       aria-label={biPlain(current.copy)}
@@ -207,6 +181,38 @@ export function LangLabelButton({
       )}
     </button>
   )
+
+  const renderTile = (opt: LangOption) => {
+    const selected = opt.id === lang
+    const typeOnly = isTextOnlyLang(opt.id)
+    return (
+      <motion.li key={opt.id} role="option" aria-selected={selected} variants={gridItem}>
+        <button
+          ref={selected ? selectedRef : undefined}
+          type="button"
+          className={`lang-modal-tile${selected ? ' is-selected' : ''}${typeOnly ? ' is-type' : ''}`}
+          onClick={() => pick(opt.id)}
+        >
+          <span className="lang-modal-tile-mark" aria-hidden="true">
+            {opt.mark}
+          </span>
+          <span className="lang-modal-tile-copy">
+            <BiText copy={opt.copy} size="sm" hideJp />
+          </span>
+          {typeOnly ? (
+            <span className="lang-modal-tile-kind">
+              <BiText copy={ui.langPickerType} size="sm" hideJp only="en" />
+            </span>
+          ) : null}
+          {selected ? (
+            <span className="lang-modal-tile-check" aria-hidden="true">
+              <CheckIcon />
+            </span>
+          ) : null}
+        </button>
+      </motion.li>
+    )
+  }
 
   const drawerSheet =
     variant === 'drawer' && typeof document !== 'undefined'
@@ -263,10 +269,7 @@ export function LangLabelButton({
                         <button
                           type="button"
                           className={`lang-drawer-option${opt.id === lang ? ' is-selected' : ''}`}
-                          onClick={() => {
-                            onSelect(opt.id)
-                            setOpen(false)
-                          }}
+                          onClick={() => pick(opt.id)}
                         >
                           <BiText copy={opt.copy} size="md" hideJp />
                         </button>
@@ -281,69 +284,94 @@ export function LangLabelButton({
         )
       : null
 
-  const dropdownMenu =
+  const langModal =
     variant === 'dropdown' && typeof document !== 'undefined'
       ? createPortal(
           <AnimatePresence>
-            {open && menuPos ? (
+            {open ? (
               <motion.div
-                className="lang-dd-layer"
+                className="lang-modal-layer"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.16, ease: [...inkEase] }}
+                transition={{ duration: 0.2, ease: [...inkEase] }}
               >
                 <button
                   type="button"
-                  className="lang-dd-scrim"
+                  className="lang-modal-scrim"
                   aria-label={biPlain(ui.close)}
                   onClick={() => setOpen(false)}
                 />
-                <motion.ul
+                <motion.div
                   id={menuId}
-                  className={`lang-dd-menu lang-dd-menu--${menuPos.opensDown ? 'down' : 'up'}`}
-                  role="listbox"
-                  aria-label={biPlain(ui.direction)}
-                  style={{
-                    top: menuPos.opensDown ? menuPos.top : undefined,
-                    bottom: menuPos.opensDown ? undefined : menuPos.bottom,
-                    left: menuPos.left,
-                    minWidth: menuPos.width,
-                    maxHeight: menuPos.maxHeight,
-                  }}
-                  initial={{ opacity: 0, y: menuPos.opensDown ? -6 : 6, scale: 0.98 }}
+                  className="lang-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby={titleId}
+                  initial={{ opacity: 0, y: 18, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: menuPos.opensDown ? -4 : 4, scale: 0.98 }}
-                  transition={{ duration: 0.18, ease: [...inkEase] }}
+                  exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.82 }}
                 >
-                  {visible.map((opt) => {
-                    const selected = opt.id === lang
-                    return (
-                      <li key={opt.id} role="option" aria-selected={selected}>
-                        <button
-                          type="button"
-                          className={`lang-dd-option${selected ? ' is-selected' : ''}`}
-                          onClick={() => {
-                            onSelect(opt.id)
-                            setOpen(false)
-                          }}
+                  <header className="lang-modal-head">
+                    <div className="lang-modal-titles">
+                      <p className="lang-modal-kicker">
+                        <BiText copy={ui.direction} size="sm" hideJp />
+                      </p>
+                      <h3 id={titleId} className="lang-modal-title">
+                        <BiText copy={ui.langPickerTitle} size="md" hideJp />
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      className="lang-modal-close"
+                      aria-label={biPlain(ui.close)}
+                      onClick={() => setOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </header>
+
+                  <div className="lang-modal-body">
+                    {voiceOpts.length ? (
+                      <section className="lang-modal-section" aria-label={biPlain(ui.langPickerVoice)}>
+                        {typeOpts.length ? (
+                          <h4 className="lang-modal-section-label">
+                            <BiText copy={ui.langPickerVoice} size="sm" hideJp />
+                          </h4>
+                        ) : null}
+                        <motion.ul
+                          className="lang-modal-grid"
+                          role="listbox"
+                          aria-label={biPlain(ui.langPickerVoice)}
+                          variants={gridContainer}
+                          initial="hidden"
+                          animate="show"
                         >
-                          <span className="lang-dd-mark" aria-hidden="true">
-                            {opt.mark}
-                          </span>
-                          <span className="lang-dd-option-copy">
-                            <BiText copy={opt.copy} size="sm" hideJp />
-                          </span>
-                          {selected ? (
-                            <span className="lang-dd-check" aria-hidden="true">
-                              <CheckIcon />
-                            </span>
-                          ) : null}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </motion.ul>
+                          {voiceOpts.map(renderTile)}
+                        </motion.ul>
+                      </section>
+                    ) : null}
+
+                    {typeOpts.length ? (
+                      <section className="lang-modal-section" aria-label={biPlain(ui.langPickerType)}>
+                        <h4 className="lang-modal-section-label">
+                          <BiText copy={ui.langPickerType} size="sm" hideJp />
+                        </h4>
+                        <motion.ul
+                          className="lang-modal-grid"
+                          role="listbox"
+                          aria-label={biPlain(ui.langPickerType)}
+                          variants={gridContainer}
+                          initial="hidden"
+                          animate="show"
+                        >
+                          {typeOpts.map(renderTile)}
+                        </motion.ul>
+                      </section>
+                    ) : null}
+                  </div>
+                </motion.div>
               </motion.div>
             ) : null}
           </AnimatePresence>,
@@ -360,7 +388,7 @@ export function LangLabelButton({
     >
       {trigger}
       {drawerSheet}
-      {dropdownMenu}
+      {langModal}
     </div>
   )
 }

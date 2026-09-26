@@ -1,12 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BiText } from './BiText'
 import { inkEase } from '../lib/motion'
+import { isTextOnlyLang } from '../lib/langCapabilities'
 import type { CameraTarget } from '../lib/camera/types'
 import { biPlain, ui, type Bi } from '../lib/uiCopy'
 
-const OPTIONS: { id: CameraTarget; copy: Bi; mark: string }[] = [
+type CamOption = { id: CameraTarget; copy: Bi; mark: string }
+
+const ALL_OPTIONS: CamOption[] = [
   { id: 'auto', copy: ui.camTargetAuto, mark: 'A' },
   { id: 'en', copy: ui.camTargetEn, mark: 'En' },
   { id: 'yue', copy: ui.camTargetYue, mark: '粵' },
@@ -29,38 +32,49 @@ type Props = {
   onChange: (next: CameraTarget) => void
   /** Dark glass for AR overlay; panel matches in-app Cam chrome. */
   tone?: 'ar' | 'panel'
+  /** Documents from/to omit Auto detect. */
+  includeAuto?: boolean
+  disabled?: boolean
+}
+
+const gridContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.028, delayChildren: 0.06 },
+  },
+}
+
+const gridItem = {
+  hidden: { opacity: 0, y: 10, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.28, ease: inkEase },
+  },
 }
 
 /**
- * Single Cam translate-target pill + chevron menu.
- * Replaces the always-visible stack of language pills on AR / Upload.
+ * Cam translate-target pill → centered Harbor modal (same pattern as Solo / Conversation).
+ * Anchored dropdowns clipped off-screen on AR; the modal stays in viewport.
  */
-export function CamTargetPicker({ value, onChange, tone = 'ar' }: Props) {
+export function CamTargetPicker({
+  value,
+  onChange,
+  tone = 'ar',
+  includeAuto = true,
+  disabled = false,
+}: Props) {
   const [open, setOpen] = useState(false)
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const selectedRef = useRef<HTMLButtonElement>(null)
   const menuId = useId()
-  const current = OPTIONS.find((o) => o.id === value) ?? OPTIONS[0]!
-
-  useLayoutEffect(() => {
-    if (!open) return
-    const place = () => {
-      const el = triggerRef.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      const width = Math.max(r.width, 220)
-      const left = Math.min(Math.max(12, r.left + r.width / 2 - width / 2), window.innerWidth - width - 12)
-      setMenuPos({ top: r.bottom + 8, left, width })
-    }
-    place()
-    window.addEventListener('resize', place)
-    window.addEventListener('scroll', place, true)
-    return () => {
-      window.removeEventListener('resize', place)
-      window.removeEventListener('scroll', place, true)
-    }
-  }, [open, value])
+  const titleId = useId()
+  const options = includeAuto ? ALL_OPTIONS : ALL_OPTIONS.filter((o) => o.id !== 'auto')
+  const current = options.find((o) => o.id === value) ?? options[0]!
+  const voiceOpts = options.filter((o) => o.id === 'auto' || !isTextOnlyLang(o.id))
+  const typeOpts = options.filter((o) => o.id !== 'auto' && isTextOnlyLang(o.id))
 
   useEffect(() => {
     if (!open) return
@@ -70,82 +84,139 @@ export function CamTargetPicker({ value, onChange, tone = 'ar' }: Props) {
         setOpen(false)
       }
     }
-    const onPointerDown = (e: PointerEvent) => {
-      const t = e.target as Node
-      if (rootRef.current?.contains(t)) return
-      const menu = document.getElementById(menuId)
-      if (menu?.contains(t)) return
-      setOpen(false)
-    }
     window.addEventListener('keydown', onKey, true)
-    window.addEventListener('pointerdown', onPointerDown, true)
+    const t = window.setTimeout(() => selectedRef.current?.focus(), 40)
     return () => {
       window.removeEventListener('keydown', onKey, true)
-      window.removeEventListener('pointerdown', onPointerDown, true)
+      window.clearTimeout(t)
     }
-  }, [open, menuId])
+  }, [open])
 
-  const menu =
+  const pick = (id: CameraTarget) => {
+    onChange(id)
+    setOpen(false)
+  }
+
+  const renderTile = (opt: CamOption) => {
+    const selected = opt.id === value
+    const typeOnly = opt.id !== 'auto' && isTextOnlyLang(opt.id)
+    return (
+      <motion.li key={opt.id} role="option" aria-selected={selected} variants={gridItem}>
+        <button
+          ref={selected ? selectedRef : undefined}
+          type="button"
+          className={`lang-modal-tile${selected ? ' is-selected' : ''}${typeOnly ? ' is-type' : ''}`}
+          onClick={() => pick(opt.id)}
+        >
+          <span className="lang-modal-tile-mark" aria-hidden="true">
+            {opt.mark}
+          </span>
+          <span className="lang-modal-tile-copy">
+            <BiText copy={opt.copy} size="sm" hideJp />
+          </span>
+          {typeOnly ? (
+            <span className="lang-modal-tile-kind">
+              <BiText copy={ui.langPickerType} size="sm" hideJp only="en" />
+            </span>
+          ) : null}
+          {selected ? (
+            <span className="lang-modal-tile-check" aria-hidden="true">
+              <CheckIcon />
+            </span>
+          ) : null}
+        </button>
+      </motion.li>
+    )
+  }
+
+  const modal =
     typeof document !== 'undefined'
       ? createPortal(
           <AnimatePresence>
-            {open && menuPos ? (
+            {open ? (
               <motion.div
-                className={`cam-target-dd-layer cam-target-dd-layer--${tone}`}
+                className={`lang-modal-layer lang-modal-layer--cam lang-modal-layer--${tone}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.16, ease: [...inkEase] }}
+                transition={{ duration: 0.2, ease: inkEase }}
               >
                 <button
                   type="button"
-                  className="cam-target-dd-scrim"
+                  className="lang-modal-scrim"
                   aria-label={biPlain(ui.close)}
                   onClick={() => setOpen(false)}
                 />
-                <motion.ul
+                <motion.div
                   id={menuId}
-                  className="cam-target-dd-menu"
-                  role="listbox"
-                  aria-label="Translate target"
-                  style={{
-                    top: menuPos.top,
-                    left: menuPos.left,
-                    minWidth: menuPos.width,
-                  }}
-                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  className="lang-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby={titleId}
+                  initial={{ opacity: 0, y: 18, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                  transition={{ duration: 0.18, ease: [...inkEase] }}
+                  exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.82 }}
                 >
-                  {OPTIONS.map((opt) => {
-                    const selected = opt.id === value
-                    return (
-                      <li key={opt.id} role="option" aria-selected={selected}>
-                        <button
-                          type="button"
-                          className={`cam-target-dd-option${selected ? ' is-selected' : ''}`}
-                          onClick={() => {
-                            onChange(opt.id)
-                            setOpen(false)
-                          }}
+                  <header className="lang-modal-head">
+                    <div className="lang-modal-titles">
+                      <p className="lang-modal-kicker">
+                        <BiText copy={ui.direction} size="sm" hideJp />
+                      </p>
+                      <h3 id={titleId} className="lang-modal-title">
+                        <BiText copy={ui.langPickerTitle} size="md" hideJp />
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      className="lang-modal-close"
+                      aria-label={biPlain(ui.close)}
+                      onClick={() => setOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </header>
+
+                  <div className="lang-modal-body">
+                    {voiceOpts.length ? (
+                      <section className="lang-modal-section" aria-label={biPlain(ui.langPickerVoice)}>
+                        {typeOpts.length ? (
+                          <h4 className="lang-modal-section-label">
+                            <BiText copy={ui.langPickerVoice} size="sm" hideJp />
+                          </h4>
+                        ) : null}
+                        <motion.ul
+                          className="lang-modal-grid"
+                          role="listbox"
+                          aria-label={biPlain(ui.langPickerVoice)}
+                          variants={gridContainer}
+                          initial="hidden"
+                          animate="show"
                         >
-                          <span className="cam-target-dd-mark" aria-hidden="true">
-                            {opt.mark}
-                          </span>
-                          <span className="cam-target-dd-copy">
-                            <BiText copy={opt.copy} size="sm" hideJp />
-                          </span>
-                          {selected ? (
-                            <span className="cam-target-dd-check" aria-hidden="true">
-                              <CheckIcon />
-                            </span>
-                          ) : null}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </motion.ul>
+                          {voiceOpts.map(renderTile)}
+                        </motion.ul>
+                      </section>
+                    ) : null}
+
+                    {typeOpts.length ? (
+                      <section className="lang-modal-section" aria-label={biPlain(ui.langPickerType)}>
+                        <h4 className="lang-modal-section-label">
+                          <BiText copy={ui.langPickerType} size="sm" hideJp />
+                        </h4>
+                        <motion.ul
+                          className="lang-modal-grid"
+                          role="listbox"
+                          aria-label={biPlain(ui.langPickerType)}
+                          variants={gridContainer}
+                          initial="hidden"
+                          animate="show"
+                        >
+                          {typeOpts.map(renderTile)}
+                        </motion.ul>
+                      </section>
+                    ) : null}
+                  </div>
+                </motion.div>
               </motion.div>
             ) : null}
           </AnimatePresence>,
@@ -162,11 +233,15 @@ export function CamTargetPicker({ value, onChange, tone = 'ar' }: Props) {
         ref={triggerRef}
         type="button"
         className="cam-target-dd-trigger"
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={menuId}
         aria-label={biPlain(current.copy)}
-        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return
+          setOpen((v) => !v)
+        }}
       >
         <span className="cam-target-dd-mark" aria-hidden="true">
           {current.mark}
@@ -176,7 +251,7 @@ export function CamTargetPicker({ value, onChange, tone = 'ar' }: Props) {
           <ChevronIcon />
         </span>
       </button>
-      {menu}
+      {modal}
     </div>
   )
 }
