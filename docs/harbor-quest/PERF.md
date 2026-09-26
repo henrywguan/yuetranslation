@@ -43,9 +43,21 @@
 | Rain budget `400` | Was `700`; frustum cull on |
 | Far anim skip | Fauna / petals beyond ~48 units from camera idle |
 
+## Draw budget (Guan + voyage)
+
+| Lever | Detail |
+|---|---|
+| Guan dressing cull | Flora ~16m, villages/huts ~28m, satellite cays ~26m (tighter on iPhone). Customs, loom, trimmer, docks, volcano, paths stay. |
+| Instanced Guan tufts | Three `InstancedMesh` tints; only blades inside the flora ring get a matrix. |
+| Cheaper palms | 4 fronds + 1 trunk band. Jungle scatter ~62% then iPhone `harborPlaceCount`. |
+| Guan ocean | 16² desktop / 10² iPhone vertex grid (was 32²). Plane bob unchanged. |
+| Voyage prop cull | Desktop 42m props / 64m docks / 72m landmarks. iPhone keeps the Jetsam bubble. `harborLodKeep` ground and roads always draw. |
+
+Smoke: `npx tsx apps/web/src/landing/learn/harborDrawBudget.smoke.ts`
+
 ## Next candidates (not yet)
 
-1. **`InstancedMesh` grass banks** — biggest draw-call win; needs instance matrices + ground Y
+1. **`InstancedMesh` river-bank grass** — Guan tufts are instanced; voyage `hqGrassTuft` groups are distance-culled only
 2. **LOD remotes** — billboard / simplified Scout past N players
 3. **Stagger V2 mounts** — avoid chunk-stream spikes when many willows resolve together
 4. **DEV FPS overlay** — optional; do not ship in production chrome

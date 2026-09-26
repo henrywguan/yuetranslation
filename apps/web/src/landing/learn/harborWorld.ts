@@ -73,6 +73,7 @@ import {
   isHarborConstrainedGpu,
 } from './harborIosGpu'
 import { auditHarborObject } from './harborMeshAudit'
+import { guanOceanSegments, harborVoyageCullRadii, tickGuanDrawBudget } from './harborDrawBudget'
 import {
   buildGuanHarborScene,
   clampGuanBoatTarget,
@@ -4583,9 +4584,8 @@ export function createHarborWorld(
           ? 0.9
           : 0.88,
   })
-  // Guan: denser ocean grid for a gentle vertex-wave (local Z → world Y after rot).
-  // 32 segments keeps the ripple without the prior 48² vertex tax.
-  const waterSeg = isGuan ? 32 : 1
+  // Guan: vertex ripple. 16² desktop / 10² iPhone — the old 32² grid was fill-rate, not the look.
+  const waterSeg = isGuan ? guanOceanSegments() : 1
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(
       isGuan ? GUAN_WATER_PLANE.size : RIVER * 2.4,
@@ -5692,11 +5692,14 @@ export function createHarborWorld(
     ensureChunks(voyageZ)
     if (fxIndexDirty) rebuildFxIndex()
 
-    // iPhone: hide chunk props outside a sailor-centered bubble so an orbit
-    // pan cannot first-draw a whole river of meshes (shader compile + Jetsam).
-    if (constrainedGpu) {
-      const lodR = harborIosDrawRadius(distance)
-      const lodR2 = lodR * lodR
+    // Hide props outside a sailor-centered bubble. Ground / roads stay
+    // (harborLodKeep) — their origin is the chunk center and must not vanish.
+    // Desktop uses a wider ring than iPhone so the next pier is already drawn.
+    {
+      const radii = harborVoyageCullRadii(distance)
+      const propR2 = radii.prop * radii.prop
+      const dockR2 = radii.dock * radii.dock
+      const visitR2 = radii.visit * radii.visit
       const lodX = travelMode === 'foot' ? footX : boatX
       const lodZ = travelMode === 'foot' ? footZ : voyageZ
       for (const g of chunkGroups.values()) {
@@ -5705,16 +5708,18 @@ export function createHarborWorld(
             child.visible = true
             continue
           }
+          const r2 = child.userData.dockSlot != null ? dockR2 : propR2
           const dx = child.position.x - lodX
           const dz = child.position.z - lodZ
-          child.visible = dx * dx + dz * dz <= lodR2
+          child.visible = dx * dx + dz * dz <= r2
         }
       }
       for (const child of visitablesRoot.children) {
         const dx = child.position.x - lodX
         const dz = child.position.z - lodZ
-        child.visible = dx * dx + dz * dz <= lodR2
+        child.visible = dx * dx + dz * dz <= visitR2
       }
+      if (guanScene) tickGuanDrawBudget(guanScene, lodX, lodZ)
     }
 
     if (!reduced) {
