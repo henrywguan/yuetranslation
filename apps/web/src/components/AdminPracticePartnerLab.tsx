@@ -787,6 +787,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     const breathe = mood === 'speaking' || mood === 'listening' ? amp * 0.12 : 0
     return {
       ...base,
+      placement: 'stage',
       scale: (base.scale ?? 1) * (1 + breathe),
       speed: (base.speed ?? 1) * (1 + amp * 0.35),
       particleOpacity: Math.min(1, (base.particleOpacity ?? 0.72) + amp * 0.12),

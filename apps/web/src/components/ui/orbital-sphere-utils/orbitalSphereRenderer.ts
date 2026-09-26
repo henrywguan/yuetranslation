@@ -2,6 +2,8 @@ import * as THREE from 'three'
 
 export type OrbitalSphereVariant = 'harbor' | 'creators'
 
+export type OrbitalSpherePlacement = 'page' | 'stage'
+
 export type OrbitalSphereOptions = {
   speed: number
   particleSize: number
@@ -16,6 +18,11 @@ export type OrbitalSphereOptions = {
    * `creators` — ink/celadon, slower, Chao tone-letter glyphs + seal nodes.
    */
   variant: OrbitalSphereVariant
+  /**
+   * `page` — marketing hero: wide viewports park the globe on the right.
+   * `stage` — Practice Partner: always centered in the host, including desktop.
+   */
+  placement: OrbitalSpherePlacement
 }
 
 /** Defaults tuned for JyutTranslate harbor/jade (not the stock violet ThreeUI look). */
@@ -28,6 +35,7 @@ export const ORBITAL_SPHERE_DEFAULTS: OrbitalSphereOptions = {
   haloOpacity: 0.22,
   hue: 0,
   variant: 'harbor',
+  placement: 'page',
 }
 
 /** Creators-page preset — contemplative, type-forward, less neon. */
@@ -40,6 +48,7 @@ export const ORBITAL_SPHERE_CREATORS: OrbitalSphereOptions = {
   haloOpacity: 0.14,
   hue: -10,
   variant: 'creators',
+  placement: 'page',
 }
 
 const HARBOR = {
@@ -161,6 +170,59 @@ function fibonacciPoint(i: number, n: number, radius: number) {
   }
 }
 
+const SPHERE_RADIUS = 2.2
+const CAMERA_FOV = 45
+
+export type OrbitalSphereLayout = {
+  x: number
+  y: number
+  z: number
+  scale: number
+  cameraZ: number
+}
+
+/**
+ * Wide marketing pages park the globe on the right (`width >= 1024`).
+ * Practice Partner uses `stage` so the same globe stays centered and large
+ * enough to read as spinning on a desktop card or fullscreen window.
+ */
+export function resolveOrbitalSphereLayout(
+  width: number,
+  height: number,
+  variant: OrbitalSphereVariant,
+  placement: OrbitalSpherePlacement = 'page',
+): OrbitalSphereLayout {
+  const isCreators = variant === 'creators'
+  const pageWide = placement !== 'stage' && width >= 1024
+  if (pageWide) {
+    return {
+      x: isCreators ? 2.2 : 2.5,
+      y: isCreators ? 0.15 : 0,
+      z: -2,
+      scale: isCreators ? 1.12 : 1.15,
+      cameraZ: 5.5,
+    }
+  }
+  // Portrait (phone) keeps the close crop that already fills the stage.
+  if (placement !== 'stage' || height >= width) {
+    return {
+      x: 0,
+      y: isCreators ? -0.45 : -0.6,
+      z: -3,
+      scale: isCreators ? 0.9 : 0.92,
+      cameraZ: 6.5,
+    }
+  }
+  // Landscape / desktop stage: center, and size the sphere to most of the height
+  // so particles sweep the frame instead of sitting as a small orb off to the side.
+  const cameraZ = 5.2
+  const z = -1.6
+  const depth = cameraZ - z
+  const halfH = depth * Math.tan((CAMERA_FOV * Math.PI) / 360)
+  const worldR = 0.78 * 2 * halfH
+  return { x: 0, y: 0, z, scale: worldR / SPHERE_RADIUS, cameraZ }
+}
+
 export function createOrbitalSphereRenderer(
   canvas: HTMLCanvasElement,
   getOptions: () => OrbitalSphereOptions,
@@ -177,7 +239,7 @@ export function createOrbitalSphereRenderer(
   const root = new THREE.Group()
   scene.add(root)
 
-  const radius = 2.2
+  const radius = SPHERE_RADIUS
   const maxParticles = isCreators ? 8_500 : 12_000
   const positions = new Float32Array(maxParticles * 3)
   const colors = new Float32Array(maxParticles * 3)
@@ -325,15 +387,10 @@ export function createOrbitalSphereRenderer(
       camera.updateProjectionMatrix()
       renderer.setSize(width, height, false)
       const opts = getOptions()
-      if (width >= 1024) {
-        root.position.set(isCreators ? 2.2 : 2.5, isCreators ? 0.15 : 0, -2)
-        layoutScale = isCreators ? 1.12 : 1.15
-        camera.position.z = 5.5
-      } else {
-        root.position.set(0, isCreators ? -0.45 : -0.6, -3)
-        layoutScale = isCreators ? 0.9 : 0.92
-        camera.position.z = 6.5
-      }
+      const layout = resolveOrbitalSphereLayout(width, height, opts.variant, opts.placement)
+      root.position.set(layout.x, layout.y, layout.z)
+      layoutScale = layout.scale
+      camera.position.z = layout.cameraZ
       root.scale.setScalar(layoutScale * opts.scale)
     },
     render() {
