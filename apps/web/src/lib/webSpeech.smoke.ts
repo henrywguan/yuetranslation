@@ -199,6 +199,39 @@ export type SpeechEventHandlers = {
       await sticky!.stop()
     }
   }
+
+  // Practice Partner bilingual: empty restarts must alternate Yue ↔ English.
+  {
+    const bilingual = createWebSpeechSession(
+      {
+        onInterim: () => {},
+        onFinal: () => {},
+        onError: () => {},
+        onStatus: () => {},
+      },
+      'yue',
+      { bilingualYueEn: true },
+    )
+    await bilingual!.start()
+    assert.equal(instances[instances.length - 1]?.lang, 'zh-HK', 'bilingual starts on Yue')
+    const first = instances[instances.length - 1]
+    first!.ended = true
+    first!.onend?.()
+    assert.equal(
+      instances[instances.length - 1]?.lang,
+      'en-US',
+      'bilingual empty restart flips to English',
+    )
+    const second = instances[instances.length - 1]
+    second!.ended = true
+    second!.onend?.()
+    assert.equal(
+      instances[instances.length - 1]?.lang,
+      'zh-HK',
+      'bilingual empty restart flips back to Yue',
+    )
+    await bilingual!.stop()
+  }
   rmSync(dir, { recursive: true, force: true })
 }
 

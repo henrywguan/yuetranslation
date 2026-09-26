@@ -6,9 +6,19 @@ import type { Lang, LiveSession, SpeechEventHandlers } from './types'
 /** After this many silent no-speech ends on desktop, stop instead of restarting forever. */
 const MAX_EMPTY_RESTARTS = 2
 
+export type WebSpeechSessionOptions = {
+  /**
+   * Practice Partner: accept Cantonese *or* English in one mic turn.
+   * Starts on zh-HK; empty Safari restarts alternate to en-US (and back)
+   * until speech is heard, then stays on that locale for the turn.
+   */
+  bilingualYueEn?: boolean
+}
+
 export function createWebSpeechSession(
   handlers: SpeechEventHandlers,
   lockLang?: Lang,
+  opts?: WebSpeechSessionOptions,
 ): LiveSession | null {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SR) return null
@@ -27,6 +37,7 @@ export function createWebSpeechSession(
   let viLocaleIndex = 0
   let thLocaleIndex = 0
   let loLocaleIndex = 0
+  const bilingualYueEn = Boolean(opts?.bilingualYueEn)
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
   // zh-HK is primary; rotate fallbacks when the browser rejects Cantonese.
@@ -52,6 +63,22 @@ export function createWebSpeechSession(
   const viLocale = () => viLocales[viLocaleIndex % viLocales.length]
   const thLocale = () => thLocales[thLocaleIndex % thLocales.length]
   const loLocale = () => loLocales[loLocaleIndex % loLocales.length]
+
+  const resolveRecLang = (): string => {
+    if (bilingualYueEn && activeLang === 'en') return 'en-US'
+    if (activeLang === 'yue') return yueLocale()
+    if (activeLang === 'cmn') return cmnLocale()
+    if (activeLang === 'wuu') return wuuLocale()
+    if (activeLang === 'sichuan') return sichuanLocale()
+    if (activeLang === 'tl') return tlLocale()
+    if (activeLang === 'es') return esLocale()
+    if (activeLang === 'eses') return esesLocale()
+    if (activeLang === 'vi') return viLocale()
+    if (activeLang === 'th') return thLocale()
+    if (activeLang === 'lo') return loLocale()
+    return 'en-US'
+  }
+
   const startOne = () => {
     if (stopped) return
     const rec = new SR()
@@ -59,28 +86,7 @@ export function createWebSpeechSession(
     rec.continuous = true
     rec.interimResults = true
     rec.maxAlternatives = 1
-    rec.lang =
-      activeLang === 'yue'
-        ? yueLocale()
-        : activeLang === 'cmn'
-          ? cmnLocale()
-          : activeLang === 'wuu'
-            ? wuuLocale()
-            : activeLang === 'sichuan'
-              ? sichuanLocale()
-              : activeLang === 'tl'
-                ? tlLocale()
-                : activeLang === 'es'
-                  ? esLocale()
-                  : activeLang === 'eses'
-                    ? esesLocale()
-                    : activeLang === 'vi'
-                      ? viLocale()
-                      : activeLang === 'th'
-                        ? thLocale()
-                        : activeLang === 'lo'
-                          ? loLocale()
-                          : 'en-US'
+    rec.lang = resolveRecLang()
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -99,7 +105,8 @@ export function createWebSpeechSession(
       if (finalText.trim()) {
         handlers.onFinal(activeLang, finalText.trim())
         // Don't flip languages mid-turn on mobile — it drops the next utterance.
-        if (!lockLang && !apple) activeLang = activeLang === 'en' ? 'yue' : 'en'
+        // Bilingual Practice Partner also stays put once speech was heard.
+        if (!lockLang && !apple && !bilingualYueEn) activeLang = activeLang === 'en' ? 'yue' : 'en'
       }
     }
     rec.onerror = (e) => {
@@ -112,6 +119,11 @@ export function createWebSpeechSession(
       // for locales it cannot recognize (e.g. fil-PH Tagalog).
       const localeRejected =
         e.error === 'language-not-supported' || e.error === 'service-not-allowed'
+      if (localeRejected && bilingualYueEn && !heardSpeech) {
+        activeLang = activeLang === 'en' ? 'yue' : 'en'
+        queueMicrotask(() => startOne())
+        return
+      }
       if (localeRejected && activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {
         yueLocaleIndex += 1
         queueMicrotask(() => startOne())
@@ -193,7 +205,10 @@ export function createWebSpeechSession(
       // “hold or tap” while the orange Safari mic stayed on).
       if (!heardSpeech) {
         emptyRestarts += 1
-        if (activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {
+        if (bilingualYueEn) {
+          // Alternate Yue ↔ English so English answers still get interim STT.
+          activeLang = activeLang === 'en' ? 'yue' : 'en'
+        } else if (activeLang === 'yue' && yueLocaleIndex < yueLocales.length - 1) {
           yueLocaleIndex += 1
         }
         if (activeLang === 'cmn' && cmnLocaleIndex < cmnLocales.length - 1) {
@@ -236,6 +251,7 @@ export function createWebSpeechSession(
       stopped = false
       emptyRestarts = 0
       heardSpeech = false
+      activeLang = lockLang || (bilingualYueEn ? 'yue' : 'en')
       yueLocaleIndex = 0
       cmnLocaleIndex = 0
       wuuLocaleIndex = 0

@@ -1,8 +1,25 @@
 .partner-lab {
+  position: relative;
   display: grid;
   gap: 0.75rem;
   max-width: 52rem;
   align-content: start;
+}
+
+.partner-lab.is-fail-flash::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 4px color-mix(in srgb, #ff4d4d 80%, transparent),
+    inset 0 0 72px color-mix(in srgb, #ff4d4d 42%, transparent);
+  animation: partner-lab-fail-edge-flash 0.9s ease-out both;
+}
+
+.partner-lab.is-fullscreen.is-fail-flash::after {
+  position: absolute;
 }
 
 /* Fit inside Admin shell without forcing page zoom */
@@ -379,10 +396,11 @@
 }
 
 .partner-lab-stage.is-verdict-fail {
-  border-color: color-mix(in srgb, #ff4d4d 55%, var(--glass-border));
+  border-color: color-mix(in srgb, #ff4d4d 70%, var(--glass-border));
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, #ff4d4d 22%, transparent),
-    0 0 40px color-mix(in srgb, #ff4d4d 22%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, #ff4d4d 28%, transparent),
+    0 0 56px color-mix(in srgb, #ff4d4d 36%, transparent);
+  animation: partner-lab-fail-edge-flash 0.55s ease-out;
 }
 
 .partner-lab-glow {
@@ -518,6 +536,114 @@
 }
 
 @keyframes partner-lab-pass-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.partner-lab-fail-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.partner-lab-fail-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 3px color-mix(in srgb, #ff4d4d 75%, transparent),
+    inset 0 0 48px color-mix(in srgb, #ff4d4d 45%, transparent),
+    0 0 64px color-mix(in srgb, #ff4d4d 50%, transparent);
+  animation: partner-lab-fail-edge-flash 0.85s ease-out both;
+}
+
+.partner-lab-fail-halo {
+  position: absolute;
+  width: min(52vw, 12.5rem);
+  height: min(52vw, 12.5rem);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, #ff4d4d 48%, transparent),
+    transparent 68%
+  );
+  animation: partner-lab-fail-halo 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.partner-lab-fail-mark {
+  position: relative;
+  width: min(40vw, 9.5rem);
+  height: min(40vw, 9.5rem);
+  filter: drop-shadow(0 0 18px color-mix(in srgb, #ff4d4d 60%, transparent));
+}
+
+.partner-lab-fail-ring {
+  fill: none;
+  stroke: #ff5a5a;
+  stroke-width: 3.1;
+  stroke-linecap: round;
+  transform-origin: 40px 40px;
+  animation: partner-lab-fail-ring 0.65s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+.partner-lab-fail-x {
+  fill: none;
+  stroke: #ff6b6b;
+  stroke-width: 5.2;
+  stroke-linecap: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: partner-lab-fail-x 0.5s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes partner-lab-fail-edge-flash {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes partner-lab-fail-halo {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes partner-lab-fail-ring {
+  from {
+    transform: scale(0.4) rotate(-12deg);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.95;
+  }
+}
+
+@keyframes partner-lab-fail-x {
   to {
     stroke-dashoffset: 0;
   }
@@ -847,7 +973,13 @@
   .partner-lab-talk.is-live,
   .partner-lab-talk.is-pulse .partner-lab-talk-label,
   .partner-lab-talk.is-live .partner-lab-talk-label,
-  .partner-lab-scores-spark {
+  .partner-lab-scores-spark,
+  .partner-lab-fail-edge,
+  .partner-lab-fail-halo,
+  .partner-lab-fail-ring,
+  .partner-lab-fail-x,
+  .partner-lab.is-fail-flash::after,
+  .partner-lab-stage.is-verdict-fail {
     animation: none;
   }
 

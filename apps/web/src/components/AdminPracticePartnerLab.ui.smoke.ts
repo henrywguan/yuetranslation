@@ -28,6 +28,13 @@ assert.match(
   /const speakerName\s*=\s*\n?\s*displayPrimary\.role === 'you' \? 'You' : partnerSpeaker/,
 )
 
+assert.match(tsx, /bilingualYueEn:\s*true/)
+assert.match(tsx, /playPracticePartnerFailSfx/)
+assert.match(tsx, /partner-lab-fail-burst/)
+assert.match(tsx, /prepareLoudTtsPlayback/)
+assert.match(css, /partner-lab-fail-x/)
+assert.match(css, /partner-lab-fail-edge-flash/)
+assert.match(css, /is-fail-flash/)
 assert.match(css, /partner-lab-talk-pulse/)
 assert.match(css, /partner-lab-crown-spark/)
 assert.match(css, /partner-lab-topic-list/)

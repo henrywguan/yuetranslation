@@ -20,6 +20,7 @@ import {
   hushTtsSpeakerForMic,
   isTtsPlaying,
   loadTtsAudio,
+  prepareLoudTtsPlayback,
   speakText,
   stopSpeaking,
   unlockTtsPlayback,
@@ -31,6 +32,7 @@ import {
   type YueVoiceId,
 } from '../lib/ttsVoices'
 import { playPracticePartnerPassSfx } from '../lib/practicePartnerPassSfx'
+import { playPracticePartnerFailSfx } from '../lib/practicePartnerFailSfx'
 import {
   formatPracticePartnerScoreAt,
   readPracticePartnerScores,
@@ -309,8 +311,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       streakRef.current = 0
       setStreak(0)
       setMisses((n) => n + 1)
+      playPracticePartnerFailSfx()
       setVerdictFlash('fail')
-      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1600)
+      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else {
       setVerdictFlash(null)
     }
@@ -328,6 +331,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       // Release busy/turn lock before TTS so a second mic tap can barge in.
       setBusy(false)
       turnLockRef.current = false
+      // Silence-auto finish and long LLM waits can leave the iPhone context
+      // soft — re-arm speaker keep-alive before the loud BufferSource.
+      prepareLoudTtsPlayback()
       try {
         await Promise.race([
           speakText(reply, 'yue', partnerVoice, { loud: true }),
@@ -445,6 +451,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     // Do not wait for recognition.stop() before judging — iOS teardown is slow
     // and sat in front of DeepSeek + Azure, which felt like a long TTS delay.
     const stopping = stopMic()
+    // Silence-auto stop is outside Stop & judge — still flip iOS back to the
+    // speaker route so the next loud reply is not soft.
+    unlockTtsPlayback({ force: true })
+    prepareLoudTtsPlayback()
     if (!spoken) {
       await stopping
       setMood('idle')
@@ -509,7 +519,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       },
     }
 
-    const session = createWebSpeechSession(handlers, 'yue')
+    const session = createWebSpeechSession(handlers, 'yue', { bilingualYueEn: true })
     if (!session) {
       setError('Web Speech is not available in this browser. Type a line instead.')
       return
@@ -810,7 +820,12 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }
 
   return (
-    <section className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Practice Partner lab">
+    <section
+      className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}${
+        verdictFlash === 'fail' ? ' is-fail-flash' : ''
+      }`}
+      aria-label="Practice Partner lab"
+    >
       <header className="partner-lab-head">
         <div>
           <p className="partner-lab-kicker">
@@ -914,6 +929,17 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             <svg className="partner-lab-pass-mark" viewBox="0 0 80 80">
               <circle className="partner-lab-pass-ring" cx="40" cy="40" r="28" />
               <path className="partner-lab-pass-check" d="M24 42 L35.5 53 L57 28" />
+            </svg>
+          </div>
+        ) : null}
+
+        {verdictFlash === 'fail' ? (
+          <div className="partner-lab-fail-burst" aria-hidden="true">
+            <span className="partner-lab-fail-edge" />
+            <span className="partner-lab-fail-halo" />
+            <svg className="partner-lab-fail-mark" viewBox="0 0 80 80">
+              <circle className="partner-lab-fail-ring" cx="40" cy="40" r="28" />
+              <path className="partner-lab-fail-x" d="M28 28 L52 52 M52 28 L28 52" />
             </svg>
           </div>
         ) : null}
