@@ -52,6 +52,8 @@ export type ProfileRow = {
   tts_voice_es: string | null
   tts_voice_eses: string | null
   tts_voice_vi: string | null
+  tts_voice_th: string | null
+  tts_voice_lo: string | null
   /** Cross-device Auto-speak preference. */
   auto_speak: boolean
   /** Primary non-English language (Solo lower / Conversation partner / Cam / brand). */
@@ -80,6 +82,8 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_es?: string | null
     tts_voice_eses?: string | null
     tts_voice_vi?: string | null
+    tts_voice_th?: string | null
+    tts_voice_lo?: string | null
     auto_speak?: boolean | null
     primary_lang?: string | null
     username?: string | null
@@ -112,6 +116,8 @@ function normalizeProfile(data: unknown): ProfileRow {
     tts_voice_es: typeof row.tts_voice_es === 'string' ? row.tts_voice_es : null,
     tts_voice_eses: typeof row.tts_voice_eses === 'string' ? row.tts_voice_eses : null,
     tts_voice_vi: typeof row.tts_voice_vi === 'string' ? row.tts_voice_vi : null,
+    tts_voice_th: typeof row.tts_voice_th === 'string' ? row.tts_voice_th : null,
+    tts_voice_lo: typeof row.tts_voice_lo === 'string' ? row.tts_voice_lo : null,
     auto_speak: Boolean(row.auto_speak),
     primary_lang: primary,
   }
@@ -142,6 +148,8 @@ export async function upsertProfilePlan(
       | 'tts_voice_es'
       | 'tts_voice_eses'
       | 'tts_voice_vi'
+      | 'tts_voice_th'
+      | 'tts_voice_lo'
       | 'auto_speak'
       | 'primary_lang'
       | 'username'

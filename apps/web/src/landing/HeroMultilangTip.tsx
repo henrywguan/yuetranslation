@@ -20,6 +20,8 @@ const SUPPORTED_LANGS: SupportedLang[] = [
   { flag: '🇲🇽', name: 'Spanish(MX)', native: 'Español (MX)' },
   { flag: '🇪🇸', name: 'Spanish(ES)', native: 'Español (España)' },
   { flag: '🇻🇳', name: 'Vietnamese', native: 'Tiếng Việt' },
+  { flag: '🇹🇭', name: 'Thai', native: 'ไทย' },
+  { flag: '🇱🇦', name: 'Lao', native: 'ລາວ' },
   { flag: '🇨🇳', name: 'Shanghainese', native: '上海話 / 沪语' },
 ]
 

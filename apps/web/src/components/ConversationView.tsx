@@ -8,6 +8,8 @@ import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
+import { ThaiText } from './ThaiText'
+import { LaoText } from './LaoText'
 import { InkSettle } from './InkSettle'
 import { LangLabelButton } from './LangLabelButton'
 import { LiveHoldButton } from './LiveHoldButton'
@@ -24,6 +26,8 @@ function langPlaceholder(lang: Lang): string {
   if (lang === 'es') return ui.dirMexicanSpanish.en
   if (lang === 'eses') return ui.dirPeninsularSpanish.en
   if (lang === 'vi') return ui.dirVietnamese.en
+  if (lang === 'th') return ui.dirThai.en
+  if (lang === 'lo') return ui.dirLao.en
   if (lang === 'cmn') return ui.dirMandarin.zh
   if (lang === 'wuu') return ui.dirShanghainese.zh
   if (lang === 'sichuan') return ui.dirSichuanese.zh
@@ -158,6 +162,12 @@ export function ConversationView() {
           onActivate={onActivate}
         />
       )
+    }
+    if (lang === 'th') {
+      return <ThaiText text={text} className={className} onActivate={onActivate} />
+    }
+    if (lang === 'lo') {
+      return <LaoText text={text} className={className} onActivate={onActivate} />
     }
     if (lang === 'cmn') {
       return (

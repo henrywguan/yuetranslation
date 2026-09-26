@@ -126,6 +126,30 @@ export const CONVERSATION_PANE_UI: Record<ConversationLang, ConversationPaneUi> 
     friendLooksHere: 'Bạn nhìn về phía này',
     holdFacingYou: 'Hướng điện thoại về phía bạn',
   },
+  th: {
+    htmlLang: 'th',
+    mic: {
+      holdOrTapToSpeak: 'กดค้างหรือแตะเพื่อพูด',
+      releaseWhenDone: 'กำลังฟัง — ปล่อยเมื่อพูดจบ',
+      tapListening: 'กำลังฟัง — หยุดหรือแตะเพื่อหยุด',
+      speaking: 'กำลังพูด…',
+      translating: 'กำลังแปล',
+    },
+    friendLooksHere: 'เพื่อนมองทางนี้',
+    holdFacingYou: 'หันโทรศัพท์เข้าหาตัวเอง',
+  },
+  lo: {
+    htmlLang: 'lo',
+    mic: {
+      holdOrTapToSpeak: 'ກົດຄ້າງ ຫຼື ແຕະເພື່ອເວົ້າ',
+      releaseWhenDone: 'ກຳລັງຟັງ — ປ່ອຍເມື່ອເວົ້າຈົບ',
+      tapListening: 'ກຳລັງຟັງ — ຫຍຸດ ຫຼື ແຕະເພື່ອຫຍຸດ',
+      speaking: 'ກຳລັງເວົ້າ…',
+      translating: 'ກຳລັງແປ',
+    },
+    friendLooksHere: 'ເພື່ອນມອງທາງນີ້',
+    holdFacingYou: 'ຫັນໂທລະສັບເຂົ້າຫາຕົວເອງ',
+  },
 }
 
 

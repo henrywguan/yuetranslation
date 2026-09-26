@@ -8,6 +8,8 @@ import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { PeninsularSpanishRegisterPanel } from './PeninsularSpanishRegisterPanel'
 import { MexicanSpanishRegisterPanel } from './MexicanSpanishRegisterPanel'
 import { VietnameseText } from './VietnameseText'
+import { ThaiText } from './ThaiText'
+import { LaoText } from './LaoText'
 import { BiText } from './BiText'
 import type { ConversationTurn, Lang } from '../lib/types'
 import { biPlain, ui } from '../lib/uiCopy'
@@ -21,6 +23,8 @@ function langShort(lang: Lang): string {
   if (lang === 'es') return 'Mx'
   if (lang === 'eses') return 'Es'
   if (lang === 'vi') return 'Vi'
+  if (lang === 'th') return 'Th'
+  if (lang === 'lo') return 'Lo'
   if (lang === 'ceb') return 'Cb'
   if (lang === 'ilo') return 'Il'
   if (lang === 'bcl') return 'Bc'
@@ -128,6 +132,12 @@ function LangLine({
       />
     )
   }
+  if (lang === 'th') {
+    return <ThaiText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
+  if (lang === 'lo') {
+    return <LaoText text={text} className="history-card-line" onActivate={onBreakdown} />
+  }
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     if (onBreakdown) {
       return (
@@ -172,6 +182,8 @@ function langLabel(lang: Lang) {
   if (lang === 'es') return <BiText copy={ui.dirMexicanSpanish} size="sm" />
   if (lang === 'eses') return <BiText copy={ui.dirPeninsularSpanish} size="sm" />
   if (lang === 'vi') return <BiText copy={ui.dirVietnamese} size="sm" />
+  if (lang === 'th') return <BiText copy={ui.dirThai} size="sm" />
+  if (lang === 'lo') return <BiText copy={ui.dirLao} size="sm" />
   if (lang === 'ceb') return <BiText copy={ui.dirCebuano} size="sm" />
   if (lang === 'ilo') return <BiText copy={ui.dirIlocano} size="sm" />
   if (lang === 'bcl') return <BiText copy={ui.dirBikol} size="sm" />
@@ -199,7 +211,9 @@ export function HistoryCard({
     turn.to === 'tl' ||
     turn.to === 'es' ||
     turn.to === 'eses' ||
-    turn.to === 'vi'
+    turn.to === 'vi' ||
+    turn.to === 'th' ||
+    turn.to === 'lo'
       ? turn.translation
       : turn.from === 'yue' ||
           turn.from === 'cmn' ||
@@ -208,7 +222,9 @@ export function HistoryCard({
           turn.from === 'tl' ||
           turn.from === 'es' ||
           turn.from === 'eses' ||
-          turn.from === 'vi'
+          turn.from === 'vi' ||
+          turn.from === 'th' ||
+          turn.from === 'lo'
         ? turn.source
         : ''
   const yueDefs = (turn.definitions || []).map((d) => d.trim()).filter(Boolean)
@@ -396,6 +412,10 @@ export function HistoryCard({
                         className="history-card-line"
                         onActivate={onBreakdown}
                       />
+                    ) : turn.to === 'th' ? (
+                      <ThaiText text={alt} className="history-card-line" onActivate={onBreakdown} />
+                    ) : turn.to === 'lo' ? (
+                      <LaoText text={alt} className="history-card-line" onActivate={onBreakdown} />
                     ) : (
                       alt
                     )}

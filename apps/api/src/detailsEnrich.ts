@@ -18,6 +18,8 @@ export const DetailLangSchema = z.enum([
   'es',
   'eses',
   'vi',
+  'th',
+  'lo',
   'ceb',
   'ilo',
   'bcl',
@@ -120,6 +122,16 @@ const ENRICH_META: Record<
     label: 'Vietnamese',
     glossLangHint: 'Vietnamese',
     exampleIn: 'natural Vietnamese',
+  },
+  th: {
+    label: 'Central Thai (ภาษาไทย)',
+    glossLangHint: 'Central Thai (ภาษาไทย) — native Thai script only, never RTGS',
+    exampleIn: 'natural Central Thai (Thai script)',
+  },
+  lo: {
+    label: 'Vientiane Lao (ພາສາລາວ)',
+    glossLangHint: 'Vientiane Lao (ພາສາລາວ) — native Lao script only',
+    exampleIn: 'natural Vientiane Lao (Lao script)',
   },
   ceb: {
     label: 'Cebuano / Bisaya',

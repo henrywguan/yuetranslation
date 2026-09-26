@@ -4,7 +4,7 @@ import { hasHan } from './canto/han.js'
 import { scrubYueToCmn } from './canto/scrubCmn.js'
 
 /** Camera / docs target languages. Prefer yue|cmn|wuu|tl; legacy `zh` maps to yue. */
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
 const CACHE_MAX = 256
 const cache = new Map<string, string>()
 
@@ -117,6 +117,14 @@ function isPeninsularTarget(to: CameraLang): boolean {
 
 function isVietnameseTarget(to: CameraLang): boolean {
   return to === 'vi'
+}
+
+function isThaiTarget(to: CameraLang): boolean {
+  return to === 'th'
+}
+
+function isLaoTarget(to: CameraLang): boolean {
+  return to === 'lo'
 }
 
 function isCebuanoTarget(to: CameraLang): boolean {
@@ -284,6 +292,46 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
       .filter(Boolean)
       .join('\n')
   }
+  if (to === 'th') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Central Thai (ภาษาไทย).',
+      'Write for Thai travelers/readers: everyday spoken Bangkok Thai, not stiff formal writing.',
+      'Use native Thai script (Unicode Thai block) only. Never use RTGS romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → เช็คอิน; Luggage → กระเป๋าเดินทาง.',
+      '- Safety: Wet floor → พื้นลื่น ระวัง; Caution → ระวัง.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Thai output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Thai>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (to === 'lo') {
+    return [
+      'You translate signs, menus, forms, and short labels into natural colloquial Vientiane Lao (ພາສາລາວ).',
+      'Write for Lao travelers/readers: everyday spoken Vientiane Lao, not stiff formal writing.',
+      'Use native Lao script (Unicode Lao block) only. Never use a toneless romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+      docHint,
+      'Disambiguate by likely setting:',
+      '- Hotel: Check-in → ເຊັກອິນ; Luggage →ກະເປົາເດີນທາງ.',
+      '- Safety: Wet floor → ພື້ນລື່ນ ລະວັງ; Caution → ລະວັງ.',
+      '- Food/menus: keep dish names natural; translate descriptive phrases.',
+      'Keep brand names, place names, and codes when appropriate.',
+      'Never leave the translation empty. Never copy Chinese characters into the Lao output.',
+      docBatch
+        ? 'Return ONLY valid JSON: {"translations":["line1","line2",...]} — same count and order as input. Do NOT put "1." / "2." indices inside the strings.'
+        : 'Return ONLY valid JSON: {"translation":"<Lao>"}',
+      'No markdown, no explanation.',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   if (to === 'ceb') {
     return [
       'You translate signs, menus, forms, and short labels into natural colloquial Cebuano (Binisaya / Sugbuanon).',
@@ -349,8 +397,8 @@ function cameraSystemPrompt(to: CameraLang, docBatch = false): string {
   }
   return [
     'You translate signs, menus, forms, and short labels into clear traveler English.',
-    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, Vietnamese, Cebuano, Ilocano, or Central Bikol (Latin script).',
-    'When the source is Tagalog/Filipino, Mexican Spanish, Vietnamese, Cebuano, Ilocano, or Central Bikol Latin text, translate it into concise English (Latin → English).',
+    'Source may be Traditional or Simplified Chinese (Cantonese or Mandarin writing), Tagalog / Filipino, Mexican Spanish, Vietnamese, Thai, Lao, Cebuano, Ilocano, or Central Bikol (Latin script).',
+    'When the source is Tagalog/Filipino, Mexican Spanish, Vietnamese, Thai, Lao, Cebuano, Ilocano, or Central Bikol text, translate it into concise English.',
     docHint,
     "Use concise sign English: 不准進入 → No entry; 今日特餐 → Today's special; 乾炒牛河 → Dry-fried beef chow fun.",
     'Dim sum: 蝦餃 → har gow / shrimp dumplings; 燒賣 → siu mai; 叉燒包 → BBQ pork bun; 流沙包 → lava custard bun.',
@@ -391,6 +439,12 @@ function demoTranslation(source: string, to: CameraLang): string {
   }
   if (isVietnameseTarget(to)) {
     return hasHan(source) ? `(demo VI) ${source}` : `(demo) ${source}`
+  }
+  if (isThaiTarget(to)) {
+    return hasHan(source) ? `(demo TH) ${source}` : `(demo) ${source}`
+  }
+  if (isLaoTarget(to)) {
+    return hasHan(source) ? `(demo LO) ${source}` : `(demo) ${source}`
   }
   if (isCebuanoTarget(to)) {
     return hasHan(source) ? `(demo CEB) ${source}` : `(demo) ${source}`
@@ -461,7 +515,11 @@ export async function translateCameraText(
           ? `(tr ES) ${source}`
           : isVietnameseTarget(to)
           ? `(tr VI) ${source}`
-          : isCebuanoTarget(to)
+          : isThaiTarget(to)
+            ? `(tr TH) ${source}`
+            : isLaoTarget(to)
+              ? `(tr LO) ${source}`
+              : isCebuanoTarget(to)
             ? `(tr CEB) ${source}`
             : isIlocanoTarget(to)
               ? `(tr ILO) ${source}`
@@ -488,6 +546,8 @@ function langLabel(lang: CameraLang): string {
   if (lang === 'es') return 'Mexican Spanish (Latin script, es-MX)'
   if (lang === 'eses') return 'Peninsular Spanish (Latin script, es-ES)'
   if (lang === 'vi') return 'Vietnamese (Latin script / Quốc ngữ, vi-VN)'
+  if (lang === 'th') return 'Central Thai (Thai script, th-TH)'
+  if (lang === 'lo') return 'Vientiane Lao (Lao script, lo-LA)'
   if (lang === 'ceb') return 'Cebuano / Binisaya (Latin script)'
   if (lang === 'ilo') return 'Ilocano / Ilokano (Latin script)'
   if (lang === 'bcl') return 'Central Bikol / Bikol Naga (Latin script)'
@@ -543,7 +603,11 @@ export async function translateCameraBatch(
               ? `(tr ES) ${s}`
               : isVietnameseTarget(to)
               ? `(tr VI) ${s}`
-              : isCebuanoTarget(to)
+              : isThaiTarget(to)
+                ? `(tr TH) ${s}`
+                : isLaoTarget(to)
+                  ? `(tr LO) ${s}`
+                  : isCebuanoTarget(to)
                 ? `(tr CEB) ${s}`
                 : isIlocanoTarget(to)
                   ? `(tr ILO) ${s}`
@@ -561,6 +625,8 @@ export async function translateCameraBatch(
       else if (isMexicanTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isPeninsularTarget(to) && t && hasHan(t)) out[start + i] = src
       else if (isVietnameseTarget(to) && t && hasHan(t)) out[start + i] = src
+      else if (isThaiTarget(to) && t && (hasHan(t) || !/[\u0E00-\u0E7F]/.test(t))) out[start + i] = src
+      else if (isLaoTarget(to) && t && (hasHan(t) || !/[\u0E80-\u0EFF]/.test(t))) out[start + i] = src
       else if (isLatinPhilippineRegionalTarget(to) && t && hasHan(t)) out[start + i] = src
       else {
         if (to === 'cmn' && t) t = scrubYueToCmn(t).text
@@ -584,6 +650,8 @@ export function normalizeCameraLang(lang: string | undefined): CameraLang | unde
   if (lang === 'eses' || lang === 'es-ES' || lang === 'es-es') return 'eses'
   if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx' || lang === 'es-US' || lang === 'es-us') return 'es'
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
+  if (lang === 'th' || lang === 'th-TH' || lang === 'th-th') return 'th'
+  if (lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la') return 'lo'
   if (lang === 'ceb' || lang === 'ceb-PH' || lang === 'ceb-ph') return 'ceb'
   if (lang === 'ilo' || lang === 'ilo-PH' || lang === 'ilo-ph') return 'ilo'
   if (lang === 'bcl' || lang === 'bcl-PH' || lang === 'bcl-ph') return 'bcl'

@@ -16,6 +16,8 @@ import {
   DEFAULT_ESES_VOICE,
   DEFAULT_TL_VOICE,
   DEFAULT_VI_VOICE,
+  DEFAULT_TH_VOICE,
+  DEFAULT_LO_VOICE,
   DEFAULT_YUE_VOICE,
   resolveCmnVoice,
   resolveEnVoice,
@@ -23,6 +25,8 @@ import {
   resolveEsesVoice,
   resolveTlVoice,
   resolveViVoice,
+  resolveThVoice,
+  resolveLoVoice,
   resolveYueVoice,
 } from './ttsVoices.js'
 
@@ -145,6 +149,8 @@ export type Entitlement = {
     ttsVoiceEs: string
     ttsVoiceEses: string
     ttsVoiceVi: string
+    ttsVoiceTh: string
+    ttsVoiceLo: string
     /** Cross-device Auto-speak preference (playback still gated by plan). */
     autoSpeak: boolean
     /** Primary non-English language for Solo / Conversation / Cam / brand. */
@@ -302,6 +308,8 @@ function buildSnapshot(
     ttsVoiceEs?: string | null
     ttsVoiceEses?: string | null
     ttsVoiceVi?: string | null
+    ttsVoiceTh?: string | null
+    ttsVoiceLo?: string | null
     autoSpeak?: boolean | null
     primaryLang?: string | null
     household?: HouseholdSummary | null
@@ -323,6 +331,8 @@ function buildSnapshot(
     ttsVoiceEs: resolveEsVoice(opts.ttsVoiceEs),
     ttsVoiceEses: resolveEsesVoice(opts.ttsVoiceEses),
     ttsVoiceVi: resolveViVoice(opts.ttsVoiceVi),
+    ttsVoiceTh: resolveThVoice(opts.ttsVoiceTh),
+    ttsVoiceLo: resolveLoVoice(opts.ttsVoiceLo),
     autoSpeak: Boolean(opts.autoSpeak),
     primaryLang: normalizePrimaryLang(opts.primaryLang),
     username: opts.username?.trim() || null,
@@ -436,6 +446,8 @@ function buildSnapshot(
         ttsVoiceEs: DEFAULT_ES_VOICE,
         ttsVoiceEses: DEFAULT_ESES_VOICE,
         ttsVoiceVi: DEFAULT_VI_VOICE,
+        ttsVoiceTh: DEFAULT_TH_VOICE,
+        ttsVoiceLo: DEFAULT_LO_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -575,6 +587,8 @@ function localEntitlement(): Entitlement {
         ttsVoiceEs: DEFAULT_ES_VOICE,
         ttsVoiceEses: DEFAULT_ESES_VOICE,
         ttsVoiceVi: DEFAULT_VI_VOICE,
+        ttsVoiceTh: DEFAULT_TH_VOICE,
+        ttsVoiceLo: DEFAULT_LO_VOICE,
         autoSpeak: false,
         primaryLang: 'yue',
         username: null,
@@ -656,6 +670,8 @@ export async function resolveEntitlement(
     ttsVoiceEs: profile?.tts_voice_es,
     ttsVoiceEses: profile?.tts_voice_eses,
     ttsVoiceVi: profile?.tts_voice_vi,
+    ttsVoiceTh: profile?.tts_voice_th,
+    ttsVoiceLo: profile?.tts_voice_lo,
     autoSpeak: profile?.auto_speak,
     primaryLang: profile?.primary_lang,
     household,

@@ -10,7 +10,7 @@ import { isGenericCharGloss } from '@jyut/shared/charGloss'
 const Body = z.object({
   text: z.string().min(1).max(500),
   /** Optional focus language; auto-detected from script when omitted. */
-  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'ceb', 'ilo', 'bcl']).optional(),
+  lang: z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ceb', 'ilo', 'bcl']).optional(),
 })
 
 export type BreakdownChar = {
@@ -202,8 +202,8 @@ const SKIP_EN_BREAKDOWN = new Set([
 
 function detectBreakdownLang(
   text: string,
-  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl',
-): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl' {
+  explicit?: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl',
+): 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl' {
   if (explicit) return explicit
   return hasHan(text) ? 'yue' : 'en'
 }
@@ -891,6 +891,196 @@ function localViBreakdown(text: string): BreakdownChar[] {
   })
 }
 
+/** Thai words use native Thai script (Unicode Thai block, U+0E00–U+0E7F). */
+function tokenizeThai(text: string): string[] {
+  const matches = text.match(/[\u0E00-\u0E7F]+|[0-9]+|[^\s\u0E00-\u0E7F0-9]+/g)
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localThBreakdown(text: string): BreakdownChar[] {
+  return tokenizeThai(text).map((tok) => {
+    if (/^[^\u0E00-\u0E7F0-9]+$/.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return {
+      char: tok,
+      jyutping: null,
+      meaning: '',
+    }
+  })
+}
+
+async function thBreakdown(text: string) {
+  const fallback = localThBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'th' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Central Thai word-by-word for English-speaking learners.',
+    'Given a Thai phrase, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented is always null — the client derives a tone reading from the Thai script itself.',
+    '- Do NOT use Chinese characters, RTGS romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words / particles, still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) {
+        const byText = fallback.find((f) => f.char === row.char)
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'th' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'th' as const }
+  }
+}
+
+/** Lao words use native Lao script (Unicode Lao block, U+0E80–U+0EFF). */
+function tokenizeLao(text: string): string[] {
+  const matches = text.match(/[\u0E80-\u0EFF]+|[0-9]+|[^\s\u0E80-\u0EFF0-9]+/g)
+  return (matches || []).filter((t) => t.trim())
+}
+
+function localLoBreakdown(text: string): BreakdownChar[] {
+  return tokenizeLao(text).map((tok) => {
+    if (/^[^\u0E80-\u0EFF0-9]+$/.test(tok)) {
+      return {
+        char: tok,
+        jyutping: null,
+        meaning:
+          tok === '?' || tok === '？'
+            ? 'question mark'
+            : tok === '!' || tok === '！'
+              ? 'exclamation mark'
+              : tok === '.' || tok === '。'
+                ? 'full stop'
+                : tok === ',' || tok === '，'
+                  ? 'comma'
+                  : 'punctuation',
+        glossSource: 'seed',
+      }
+    }
+    return {
+      char: tok,
+      jyutping: null,
+      meaning: '',
+    }
+  })
+}
+
+async function loBreakdown(text: string) {
+  const fallback = localLoBreakdown(text)
+  if (!env.openaiApiKey) {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'lo' as const }
+  }
+
+  const client = openaiClientWithKey()
+  const system = [
+    'You explain Vientiane Lao word-by-word for English-speaking learners.',
+    'Given a Lao phrase, return ONLY valid JSON:',
+    '{"words":[{"word":"<token>","accented":null,"meaning":"<short English gloss in this phrase>"}]}',
+    'Rules:',
+    '- Include every token in order (words and punctuation; skip spaces).',
+    '- accented is always null — the client derives a tone reading from the Lao script itself.',
+    '- Do NOT use Chinese characters, a toneless romanization, Chao tone letters, IPA, or invented ASCII tone digits.',
+    '- Meanings must be concise English that fit THIS phrase.',
+    '- For function words / particles, still give a brief gloss.',
+    '- No markdown.',
+  ].join('\n')
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.2,
+      max_tokens: 700,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const merged = parseTlBreakdownPayload(raw, fallback).map((row, i) => {
+      const fb = fallback[i]
+      if (!fb || fb.char !== row.char) {
+        const byText = fallback.find((f) => f.char === row.char)
+        return {
+          ...row,
+          meaning: pickMeaning(row.meaning, byText?.meaning),
+          glossSource:
+            row.meaning && !isGenericCharGloss(row.meaning)
+              ? row.glossSource || 'model'
+              : byText?.glossSource,
+        }
+      }
+      return {
+        ...row,
+        jyutping: null,
+        meaning: pickMeaning(row.meaning, fb.meaning),
+        glossSource:
+          row.meaning && !isGenericCharGloss(row.meaning)
+            ? row.glossSource || 'model'
+            : fb.glossSource,
+      }
+    })
+    return { characters: merged, engine: 'openai' as const, lang: 'lo' as const }
+  } catch {
+    return { characters: fallback, engine: 'dictionary' as const, lang: 'lo' as const }
+  }
+}
+
 async function cmnBreakdown(text: string) {
   // Preserve Mandarin — never scrub into Cantonese. Client supplies pinyin locally;
   // API returns gloss rows with jyutping left null for client merge.
@@ -1115,6 +1305,8 @@ export async function breakdown(input: unknown) {
   if (lang === 'es') return esBreakdown(text)
   if (lang === 'eses') return esesBreakdown(text)
   if (lang === 'vi') return viBreakdown(text)
+  if (lang === 'th') return thBreakdown(text)
+  if (lang === 'lo') return loBreakdown(text)
   // Soft: Cebuano / Ilocano / Central Bikol — English glosses (not Cantonese englishBreakdown).
   if (lang === 'ceb' || lang === 'ilo' || lang === 'bcl') {
     return philippineRegionalBreakdown(text, lang)

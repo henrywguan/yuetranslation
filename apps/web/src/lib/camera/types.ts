@@ -5,7 +5,7 @@ import type { Lang } from '../types'
 
 export type CamPath = 'choice' | 'ar' | 'upload' | 'docs'
 
-export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+export type CameraLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
 
 export type EditableBox = {
   id: string
@@ -21,7 +21,7 @@ export type EditableBox = {
   fg?: Rgb
 }
 
-export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+export type CameraTarget = 'auto' | 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
 
 /** Map API/legacy region langs (`zh`) onto CameraLang. */
 export function normalizeRegionLang(lang: string | undefined): CameraLang {
@@ -36,6 +36,8 @@ export function normalizeRegionLang(lang: string | undefined): CameraLang {
   if (lang === 'eses' || lang === 'es-ES' || lang === 'es-es') return 'eses'
   if (lang === 'es' || lang === 'es-MX' || lang === 'es-mx') return 'es'
   if (lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn') return 'vi'
+  if (lang === 'th' || lang === 'th-TH' || lang === 'th-th') return 'th'
+  if (lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la') return 'lo'
   // Legacy `zh` and explicit yue → Cantonese
   return 'yue'
 }
@@ -91,10 +93,18 @@ function isLatinDetailCam(lang: CameraLang): lang is LatinDetailCamLang {
   return (LATIN_DETAIL_CAM_LANGS as readonly string[]).includes(lang)
 }
 
+/** Thai / Lao Cam targets: own script (not Latin, not Han) — same detail dispatch shape. */
+const SCRIPT_DETAIL_CAM_LANGS = ['th', 'lo'] as const
+type ScriptDetailCamLang = (typeof SCRIPT_DETAIL_CAM_LANGS)[number]
+
+function isScriptDetailCam(lang: CameraLang): lang is ScriptDetailCamLang {
+  return (SCRIPT_DETAIL_CAM_LANGS as readonly string[]).includes(lang)
+}
+
 function latinDetailArgs(
   box: EditableBox,
-  target: LatinDetailCamLang,
-): { phrase: string; translation?: string; lang: LatinDetailCamLang } {
+  target: LatinDetailCamLang | ScriptDetailCamLang,
+): { phrase: string; translation?: string; lang: LatinDetailCamLang | ScriptDetailCamLang } {
   const targetByDir = box.to === target ? box.translated : box.from === target ? box.text : ''
   const enByDir = box.to === 'en' ? box.translated : box.from === 'en' ? box.text : ''
   const targetText =
@@ -119,6 +129,8 @@ export function boxDetailArgs(box: EditableBox): {
   const latinTarget =
     (isLatinDetailCam(box.to) && box.to) ||
     (isLatinDetailCam(box.from) && box.from) ||
+    (isScriptDetailCam(box.to) && box.to) ||
+    (isScriptDetailCam(box.from) && box.from) ||
     null
   if (latinTarget) return latinDetailArgs(box, latinTarget)
 
@@ -157,6 +169,8 @@ export function speakLangForBox(box: EditableBox): Lang {
   if (box.to === 'es') return 'es'
   if (box.to === 'eses') return 'eses'
   if (box.to === 'vi') return 'vi'
+  if (box.to === 'th') return 'th'
+  if (box.to === 'lo') return 'lo'
   if (box.to === 'ceb') return 'ceb'
   if (box.to === 'ilo') return 'ilo'
   if (box.to === 'bcl') return 'bcl'

@@ -6,6 +6,8 @@ import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
+import { ThaiText } from './ThaiText'
+import { LaoText } from './LaoText'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
 import { BiText } from './BiText'
@@ -96,6 +98,18 @@ export function TranslationAlternatives({
                 />
               ) : lang === 'vi' ? (
                 <VietnameseText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'th' ? (
+                <ThaiText
+                  text={alt}
+                  onActivate={onSelect}
+                  activateLabel={`Use variation ${alt} and open details`}
+                />
+              ) : lang === 'lo' ? (
+                <LaoText
                   text={alt}
                   onActivate={onSelect}
                   activateLabel={`Use variation ${alt} and open details`}
