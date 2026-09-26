@@ -33,7 +33,7 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'eses') return 'Escribe en español de España…'
   if (lang === 'vi') return 'Nhập tiếng Việt…'
   if (lang === 'th') return 'พิมพ์หรือพูดภาษาไทย'
-  if (lang === 'lo') return 'ພິມພ໌ ຫຼື ເວົ້າພາສາລາວ'
+  if (lang === 'lo') return 'ພິມ ຫຼື ເວົ້າພາສາລາວ'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
