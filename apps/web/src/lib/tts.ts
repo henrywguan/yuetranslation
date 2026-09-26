@@ -8,6 +8,97 @@ import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalE
 const LOUD_PLAYBACK_GAIN = 2.75
 let ttsMediaSource: MediaElementAudioSourceNode | null = null
 let ttsGainNode: GainNode | null = null
+/** iPhone loud TTS — BufferSource, not HTMLAudio (receiver / voice-chat route). */
+let ttsBufferSource: AudioBufferSourceNode | null = null
+let ttsBufferGain: GainNode | null = null
+/** Keeps AudioContext running across the Practice Partner LLM gap. */
+let ttsKeepAliveOsc: OscillatorNode | null = null
+/** Optional near-silent tap to destination — speaker route after mic. */
+let ttsKeepAliveGain: GainNode | null = null
+
+function stopTtsBufferSource() {
+  try {
+    ttsBufferSource?.stop()
+  } catch {
+    /* already stopped */
+  }
+  try {
+    ttsBufferSource?.disconnect()
+  } catch {
+    /* ignore */
+  }
+  try {
+    ttsBufferGain?.disconnect()
+  } catch {
+    /* ignore */
+  }
+  ttsBufferSource = null
+  ttsBufferGain = null
+}
+
+function armTtsContextKeepAlive(opts?: { speaker?: boolean }) {
+  try {
+    const ctx = ensureSharedAudioContext()
+    if (ctx.state === 'suspended') void ctx.resume()
+    if (!ttsKeepAliveOsc) {
+      ttsKeepAliveOsc = ctx.createOscillator()
+      ttsKeepAliveOsc.frequency.value = 20
+      ttsKeepAliveOsc.start()
+    }
+    if (opts?.speaker && !ttsKeepAliveGain) {
+      ttsKeepAliveGain = ctx.createGain()
+      ttsKeepAliveGain.gain.value = 0.0001
+      ttsKeepAliveOsc.connect(ttsKeepAliveGain)
+      ttsKeepAliveGain.connect(ctx.destination)
+    }
+  } catch {
+    /* Web Audio may be unavailable */
+  }
+}
+
+function stopTtsContextKeepAlive() {
+  try {
+    ttsKeepAliveOsc?.stop()
+  } catch {
+    /* ignore */
+  }
+  try {
+    ttsKeepAliveOsc?.disconnect()
+  } catch {
+    /* ignore */
+  }
+  try {
+    ttsKeepAliveGain?.disconnect()
+  } catch {
+    /* ignore */
+  }
+  ttsKeepAliveOsc = null
+  ttsKeepAliveGain = null
+}
+
+/**
+ * Drop the near-silent speaker tap before Web Speech starts.
+ * Leaves the unconnected keep-alive oscillator so later loud TTS can still
+ * use a running AudioContext (including the 2s-silence auto-stop path).
+ */
+export function hushTtsSpeakerForMic() {
+  try {
+    ttsKeepAliveGain?.disconnect()
+  } catch {
+    /* ignore */
+  }
+  ttsKeepAliveGain = null
+  try {
+    ttsKeepAliveOsc?.disconnect()
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Test/dev: keep-alive oscillator is running. */
+export function ttsKeepAliveArmedForTests() {
+  return Boolean(ttsKeepAliveOsc)
+}
 
 function setTtsPlaybackGain(loud: boolean) {
   try {
@@ -86,6 +177,8 @@ function resolvePlaybackWaiter() {
 export function duckTtsForMicBargeIn() {
   playing = false
   echoTailUntil = 0
+  stopTtsBufferSource()
+  hushTtsSpeakerForMic()
   if (audio) {
     try {
       audio.volume = 0
@@ -135,6 +228,11 @@ export function unlockTtsPlayback(opts?: { force?: boolean }): void {
     /* ignore */
   }
   const force = Boolean(opts?.force)
+  // iPhone: arm a running AudioContext in this gesture so later loud TTS
+  // can play through the speaker after the async LLM wait.
+  if (isAppleTouchDevice()) {
+    armTtsContextKeepAlive({ speaker: force })
+  }
   // Already unlocked / unlock in progress — keep the shared element warm
   // unless we must flip iOS out of the mic session.
   if (!force && (unlocked || unlockInFlight)) return
@@ -193,6 +291,10 @@ export function stopSpeaking(opts?: { preserveSession?: boolean }) {
   gen += 1
   playing = false
   echoTailUntil = 0
+  stopTtsBufferSource()
+  if (!opts?.preserveSession) {
+    stopTtsContextKeepAlive()
+  }
   if (audio) {
     audio.onended = null
     audio.onerror = null
@@ -397,11 +499,68 @@ export function prefetchTts(text: string, lang: Lang, voice?: string | null) {
   void loadTtsAudio(trimmed, lang, voice).catch(() => undefined)
 }
 
+async function playAzureBlobViaWebAudio(
+  blob: Blob,
+  g: number,
+  loud: boolean,
+): Promise<'played' | 'failed' | 'aborted'> {
+  try {
+    const ctx = ensureSharedAudioContext()
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
+    if (ctx.state !== 'running' || g !== gen) return 'failed'
+    const raw = await blob.arrayBuffer()
+    if (g !== gen) return 'aborted'
+    const audioBuf = await ctx.decodeAudioData(raw.slice(0))
+    if (g !== gen) return 'aborted'
+    stopTtsBufferSource()
+    const src = ctx.createBufferSource()
+    const gain = ctx.createGain()
+    gain.gain.value = loud ? LOUD_PLAYBACK_GAIN : 1
+    src.buffer = audioBuf
+    src.playbackRate.value = playbackRate
+    src.connect(gain)
+    gain.connect(ctx.destination)
+    ttsBufferSource = src
+    ttsBufferGain = gain
+    return await new Promise<'played' | 'failed' | 'aborted'>((resolve) => {
+      let settled = false
+      const finish = (result: 'played' | 'failed' | 'aborted') => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(watchdog)
+        if (ttsBufferSource === src) stopTtsBufferSource()
+        if (g === gen) playing = false
+        resolve(result)
+      }
+      playbackWaiter = () => finish('aborted')
+      src.onended = () => finish(g === gen ? 'played' : 'aborted')
+      const watchdog = window.setTimeout(() => finish('failed'), Math.min(90_000, Math.max(12_000, blob.size / 6)))
+      try {
+        src.start()
+      } catch {
+        finish('failed')
+      }
+    })
+  } catch {
+    return 'failed'
+  }
+}
+
 async function playAzureBlob(
   blob: Blob,
   g: number,
   opts?: { loud?: boolean },
 ): Promise<'played' | 'failed' | 'aborted'> {
+  const loud = Boolean(opts?.loud)
+  // After Web Speech, HTMLAudio stays on iPhone's voice-chat / receiver route
+  // even at volume=1 + Azure x-loud. Play loud clips through Web Audio so
+  // they come out the speaker. Fall back to HTMLAudio if decode fails.
+  if (isAppleTouchDevice() && loud) {
+    const via = await playAzureBlobViaWebAudio(blob, g, loud)
+    if (via === 'played' || via === 'aborted' || g !== gen) return via
+  }
   const objectUrl = URL.createObjectURL(blob)
   url = objectUrl
   // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
