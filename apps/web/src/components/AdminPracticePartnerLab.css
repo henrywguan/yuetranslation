@@ -67,6 +67,120 @@
   color: var(--muted);
 }
 
+.partner-lab-scores-wrap {
+  display: grid;
+  gap: 0.45rem;
+  min-width: min(100%, 16.5rem);
+  justify-items: stretch;
+}
+
+.partner-lab:not(.is-fullscreen) .partner-lab-scores-wrap {
+  width: 100%;
+}
+
+.partner-lab-scores-toggle {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--jade) 32%, var(--glass-border));
+  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  color: var(--ink-bright);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.partner-lab-scores-toggle:hover,
+.partner-lab-scores-toggle:focus-visible {
+  border-color: color-mix(in srgb, var(--jade) 60%, transparent);
+  outline: none;
+}
+
+.partner-lab-scores-toggle.is-open {
+  border-color: color-mix(in srgb, var(--jade) 55%, var(--glass-border));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--jade) 16%, transparent);
+}
+
+.partner-lab-scores-toggle-meta {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+}
+
+.partner-lab-scores {
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--jade) 22%, var(--glass-border));
+  background: color-mix(in srgb, #041018 78%, transparent);
+  max-height: min(40vh, 22rem);
+  overflow: auto;
+}
+
+.partner-lab-scores-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.1rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.partner-lab-scores-summary strong {
+  color: var(--ink-bright);
+  font-weight: 700;
+}
+
+.partner-lab-scores-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.partner-lab-scores-list li {
+  display: grid;
+  gap: 0.08rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+}
+
+.partner-lab-scores-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.partner-lab-scores-when {
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.partner-lab-scores-zh {
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.partner-lab-scores-en,
+.partner-lab-scores-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 .partner-lab-demo {
   display: inline-flex;
   align-items: center;
@@ -191,6 +305,89 @@
 .partner-lab-orb canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+.partner-lab-pass-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.partner-lab-pass-halo {
+  position: absolute;
+  width: min(46vw, 11.5rem);
+  height: min(46vw, 11.5rem);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--jade) 42%, transparent),
+    transparent 68%
+  );
+  animation: partner-lab-pass-halo 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.partner-lab-pass-mark {
+  position: relative;
+  width: min(36vw, 8.75rem);
+  height: min(36vw, 8.75rem);
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--jade) 55%, transparent));
+}
+
+.partner-lab-pass-ring {
+  fill: none;
+  stroke: var(--jade);
+  stroke-width: 3.1;
+  stroke-linecap: round;
+  transform-origin: 40px 40px;
+  animation: partner-lab-pass-ring 0.7s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+.partner-lab-pass-check {
+  fill: none;
+  stroke: var(--jade);
+  stroke-width: 4.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 58;
+  stroke-dashoffset: 58;
+  animation: partner-lab-pass-check 0.55s 0.16s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes partner-lab-pass-halo {
+  from {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.95;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes partner-lab-pass-ring {
+  from {
+    transform: scale(0.42);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0.94;
+  }
+}
+
+@keyframes partner-lab-pass-check {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .partner-lab-subtitles {

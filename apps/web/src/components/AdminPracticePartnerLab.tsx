@@ -30,6 +30,13 @@ import {
   resolveYueVoice,
   type YueVoiceId,
 } from '../lib/ttsVoices'
+import { playPracticePartnerPassSfx } from '../lib/practicePartnerPassSfx'
+import {
+  formatPracticePartnerScoreAt,
+  readPracticePartnerScores,
+  recordPracticePartnerPass,
+  type PracticePartnerScores,
+} from '../lib/practicePartnerScores'
 import './AdminPracticePartnerLab.css'
 
 const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
@@ -159,6 +166,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [hits, setHits] = useState(0)
   const [misses, setMisses] = useState(0)
   const [verdictFlash, setVerdictFlash] = useState<'pass' | 'fail' | null>(null)
+  const [scoreboard, setScoreboard] = useState<PracticePartnerScores>(() =>
+    readPracticePartnerScores(),
+  )
+  const [scoresOpen, setScoresOpen] = useState(false)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -183,6 +194,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const turnLockRef = useRef(false)
   const finishRef = useRef<() => void>(() => {})
   const verdictTimerRef = useRef(0)
+  const streakRef = useRef(0)
 
   useEffect(() => {
     messagesRef.current = messages
@@ -241,14 +253,29 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const applyDrill = useCallback((drill: PracticePartnerDrill | null) => {
     if (!drill) return
+    const justPassed = activeDrillRef.current
     setActiveDrill({ en: drill.en, zh: drill.zh, jyutping: drill.jyutping })
     window.clearTimeout(verdictTimerRef.current)
     if (drill.verdict === 'pass') {
-      setStreak((n) => n + 1)
+      const nextStreak = streakRef.current + 1
+      streakRef.current = nextStreak
+      setStreak(nextStreak)
       setHits((n) => n + 1)
+      if (justPassed?.zh || justPassed?.en) {
+        setScoreboard(
+          recordPracticePartnerPass({
+            streak: nextStreak,
+            category: categoryRef.current,
+            zh: justPassed.zh || '',
+            en: justPassed.en || '',
+          }),
+        )
+      }
+      playPracticePartnerPassSfx()
       setVerdictFlash('pass')
-      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1600)
+      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else if (drill.verdict === 'fail') {
+      streakRef.current = 0
       setStreak(0)
       setMisses((n) => n + 1)
       setVerdictFlash('fail')
@@ -528,6 +555,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setMessages([])
     setReel([])
     setActiveDrill(null)
+    streakRef.current = 0
     setStreak(0)
     setHits(0)
     setMisses(0)
@@ -721,6 +749,69 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               : 'Say-this drill (admin only): pick a deck — animals, foods, common phrases, or expert — then 港灣 demands a line in that category. You speak it; the model judges and advances. Mic → Web Speech → DeepSeek → Azure TTS. Tap the orb for fullscreen.'}
           </p>
         </div>
+        <div className="partner-lab-scores-wrap">
+          <button
+            type="button"
+            className={`partner-lab-scores-toggle${scoresOpen ? ' is-open' : ''}`}
+            aria-expanded={scoresOpen}
+            aria-controls="partner-lab-high-scores"
+            onClick={() => setScoresOpen((open) => !open)}
+          >
+            High scores
+            {scoreboard.bestStreak || scoreboard.totalPasses ? (
+              <span className="partner-lab-scores-toggle-meta">
+                best {scoreboard.bestStreak} · {scoreboard.totalPasses} pass
+                {scoreboard.totalPasses === 1 ? '' : 'es'}
+              </span>
+            ) : null}
+          </button>
+          {scoresOpen ? (
+            <div
+              id="partner-lab-high-scores"
+              className="partner-lab-scores"
+              role="region"
+              aria-label="Practice Partner high scores"
+            >
+              <p className="partner-lab-scores-summary">
+                <span>
+                  <strong>{scoreboard.bestStreak}</strong> best streak
+                </span>
+                <span>
+                  <strong>{scoreboard.totalPasses}</strong> passes logged
+                </span>
+              </p>
+              {scoreboard.recent.length ? (
+                <ol className="partner-lab-scores-list">
+                  {scoreboard.recent.map((row, i) => {
+                    const deck =
+                      PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === row.category) ||
+                      PRACTICE_PARTNER_CATEGORIES[2]
+                    return (
+                      <li key={`${row.at}-${row.zh}-${i}`}>
+                        <span className="partner-lab-scores-when">
+                          {formatPracticePartnerScoreAt(row.at)}
+                          {row.streak ? ` · streak ${row.streak}` : ''}
+                          {' · '}
+                          {deck.labelEn}
+                        </span>
+                        <span className="partner-lab-scores-zh" lang="zh-HK">
+                          {row.zh || row.en}
+                        </span>
+                        {row.zh && row.en ? (
+                          <span className="partner-lab-scores-en">{row.en}</span>
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ol>
+              ) : (
+                <p className="partner-lab-scores-empty">
+                  No passes yet. Clear a phrase to start the log.
+                </p>
+              )}
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <div
@@ -746,6 +837,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       >
         <div className="partner-lab-glow" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
+
+        {verdictFlash === 'pass' ? (
+          <div className="partner-lab-pass-burst" aria-hidden="true">
+            <span className="partner-lab-pass-halo" />
+            <svg className="partner-lab-pass-mark" viewBox="0 0 80 80">
+              <circle className="partner-lab-pass-ring" cx="40" cy="40" r="28" />
+              <path className="partner-lab-pass-check" d="M24 42 L35.5 53 L57 28" />
+            </svg>
+          </div>
+        ) : null}
 
         {!fullscreen ? (
           <p className="partner-lab-fs-hint" aria-hidden="true">
@@ -778,9 +879,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 · {categoryMeta.labelZh}
               </span>
             </span>
-            {hits + misses > 0 ? (
+            {hits + misses > 0 || scoreboard.bestStreak > 0 ? (
               <span className="partner-lab-drill-streak">
-                {streak} streak · {hits} hit{hits === 1 ? '' : 's'}
+                {streak} streak
+                {scoreboard.bestStreak ? ` · best ${scoreboard.bestStreak}` : ''}
+                {hits ? ` · ${hits} hit${hits === 1 ? '' : 's'}` : ''}
                 {misses ? ` · ${misses} miss` : ''}
               </span>
             ) : null}
@@ -1035,6 +1138,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             <li>
               <strong>Memory:</strong> this session’s lines plus the active English / 漢字 / Jyutping
               target
+            </li>
+            <li>
+              <strong>Pass:</strong> jade check + chime; each hit appends to High scores (this
+              browser)
             </li>
             <li>
               <strong>Voice:</strong> same Azure TTS path as the translator (`yue` / zh-HK)
