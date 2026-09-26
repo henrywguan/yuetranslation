@@ -6,11 +6,15 @@ import {
 } from './ui/orbital-sphere'
 import {
   DEFAULT_PRACTICE_PARTNER_CATEGORY,
+  DEFAULT_PRACTICE_PARTNER_DIFFICULTY,
   PRACTICE_PARTNER_CATEGORIES,
+  PRACTICE_PARTNER_DIFFICULTIES,
   postPracticePartnerChat,
   resolvePracticePartnerCategory,
+  resolvePracticePartnerDifficulty,
   type PracticePartnerCategory,
   type PracticePartnerChatMessage,
+  type PracticePartnerDifficulty,
   type PracticePartnerDrill,
   type PracticePartnerDrillTarget,
 } from '../lib/adminApi'
@@ -20,6 +24,7 @@ import {
   hushTtsSpeakerForMic,
   isTtsPlaying,
   loadTtsAudio,
+  prepareLoudTtsPlayback,
   speakText,
   stopSpeaking,
   unlockTtsPlayback,
@@ -31,6 +36,7 @@ import {
   type YueVoiceId,
 } from '../lib/ttsVoices'
 import { playPracticePartnerPassSfx } from '../lib/practicePartnerPassSfx'
+import { playPracticePartnerFailSfx } from '../lib/practicePartnerFailSfx'
 import {
   formatPracticePartnerScoreAt,
   readPracticePartnerScores,
@@ -41,6 +47,7 @@ import './AdminPracticePartnerLab.css'
 
 const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
 const PARTNER_CATEGORY_KEY = 'yue-practice-partner-category'
+const PARTNER_DIFFICULTY_KEY = 'yue-practice-partner-difficulty'
 
 function readPartnerCategory(): PracticePartnerCategory {
   if (typeof window === 'undefined') return DEFAULT_PRACTICE_PARTNER_CATEGORY
@@ -54,6 +61,23 @@ function readPartnerCategory(): PracticePartnerCategory {
 function writePartnerCategory(id: PracticePartnerCategory) {
   try {
     localStorage.setItem(PARTNER_CATEGORY_KEY, resolvePracticePartnerCategory(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+function readPartnerDifficulty(): PracticePartnerDifficulty {
+  if (typeof window === 'undefined') return DEFAULT_PRACTICE_PARTNER_DIFFICULTY
+  try {
+    return resolvePracticePartnerDifficulty(localStorage.getItem(PARTNER_DIFFICULTY_KEY))
+  } catch {
+    return DEFAULT_PRACTICE_PARTNER_DIFFICULTY
+  }
+}
+
+function writePartnerDifficulty(id: PracticePartnerDifficulty) {
+  try {
+    localStorage.setItem(PARTNER_DIFFICULTY_KEY, resolvePracticePartnerDifficulty(id))
   } catch {
     /* ignore */
   }
@@ -135,16 +159,34 @@ const MOOD_ORBIT: Record<PartnerMood, Partial<OrbitalSphereOptions>> = {
   },
 }
 
-const ROLE_LABEL: Record<SubtitleRole, string> = {
-  you: 'You',
-  partner: 'Partner',
-  system: 'Lab',
-}
-
 const SILENCE_MS = 1600
 
 const EMPTY_CAPTION =
-  'Tap Begin drill. 港灣 demands a phrase. You say it. The model judges — then advances, or makes you try again.'
+  'Begin drill! Follow along with the practice partner and advance!'
+
+const PARTNER_MIC_ICON = (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M9 4C9 2.34315 10.3431 1 12 1C13.6569 1 15 2.34315 15 4V12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12V4ZM13 4V12C13 12.5523 12.5523 13 12 13C11.4477 13 11 12.5523 11 12V4C11 3.44772 11.4477 3 12 3C12.5523 3 13 3.44772 13 4Z"
+      fill="currentColor"
+    />
+    <path
+      d="M18 12C18 14.973 15.8377 17.441 13 17.917V21H17V23H7V21H11V17.917C8.16229 17.441 6 14.973 6 12V9H8V12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12V9H18V12Z"
+      fill="currentColor"
+    />
+  </svg>
+)
+
+const CROWN_ICON = (
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" className="partner-lab-scores-crown">
+    <path
+      fill="currentColor"
+      d="M3.5 17.5 5 8l4.2 4.6L12 5.5l2.8 7.1L19 8l1.5 9.5H3.5Zm0 1.5h17V21H3.5v-2Z"
+    />
+  </svg>
+)
 
 /**
  * Admin-only Practice Partner.
@@ -159,7 +201,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     role: 'system',
     text: EMPTY_CAPTION,
   })
-  const [reel, setReel] = useState<SubtitleLine[]>([])
   const [messages, setMessages] = useState<PracticePartnerChatMessage[]>([])
   const [activeDrill, setActiveDrill] = useState<PracticePartnerDrillTarget | null>(null)
   const [streak, setStreak] = useState(0)
@@ -170,15 +211,19 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     readPracticePartnerScores(),
   )
   const [scoresOpen, setScoresOpen] = useState(false)
+  const [voiceMenuOpen, setVoiceMenuOpen] = useState(false)
+  const [topicReady, setTopicReady] = useState(false)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [draft, setDraft] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
-  const [fsCatsOpen, setFsCatsOpen] = useState(false)
   const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
   const [category, setCategory] = useState<PracticePartnerCategory>(() => readPartnerCategory())
+  const [difficulty, setDifficulty] = useState<PracticePartnerDifficulty>(() =>
+    readPartnerDifficulty(),
+  )
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
@@ -191,6 +236,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const messagesRef = useRef<PracticePartnerChatMessage[]>([])
   const activeDrillRef = useRef<PracticePartnerDrillTarget | null>(null)
   const categoryRef = useRef<PracticePartnerCategory>(category)
+  const difficultyRef = useRef<PracticePartnerDifficulty>(difficulty)
   const turnLockRef = useRef(false)
   const finishRef = useRef<() => void>(() => {})
   const verdictTimerRef = useRef(0)
@@ -207,6 +253,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   useEffect(() => {
     categoryRef.current = category
   }, [category])
+
+  useEffect(() => {
+    difficultyRef.current = difficulty
+  }, [difficulty])
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -228,15 +278,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     return () => cancelAnimationFrame(frame)
   }, [mood])
 
-  const pushReel = useCallback((line: SubtitleLine) => {
-    if (line.role === 'system') return
-    setReel((prev) => {
-      const last = prev[prev.length - 1]
-      if (last && last.role === line.role && last.text === line.text) return prev
-      return [...prev.slice(-8), { ...line, interim: false }]
-    })
-  }, [])
-
   const stopMic = useCallback(async () => {
     window.clearTimeout(silenceTimerRef.current)
     const session = sessionRef.current
@@ -250,6 +291,28 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       }
     }
   }, [])
+
+  const clearDrillSession = useCallback(() => {
+    void stopMic()
+    stopSpeaking()
+    turnLockRef.current = false
+    window.clearTimeout(verdictTimerRef.current)
+    setBusy(false)
+    setMessages([])
+    setActiveDrill(null)
+    streakRef.current = 0
+    setStreak(0)
+    setHits(0)
+    setMisses(0)
+    setVerdictFlash(null)
+    setError('')
+    setPartnerHold(null)
+    setYouLive(null)
+    setFsTypeOpen(false)
+    setVoiceMenuOpen(false)
+    setMood('idle')
+    setCaption({ role: 'system', text: EMPTY_CAPTION })
+  }, [stopMic])
 
   const applyDrill = useCallback((drill: PracticePartnerDrill | null) => {
     if (!drill) return
@@ -278,8 +341,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       streakRef.current = 0
       setStreak(0)
       setMisses((n) => n + 1)
+      playPracticePartnerFailSfx()
       setVerdictFlash('fail')
-      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1600)
+      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else {
       setVerdictFlash(null)
     }
@@ -291,13 +355,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setPartnerHold(reply)
       setYouLive(null)
       setCaption({ role: 'partner', text: reply })
-      pushReel({ role: 'partner', text: reply })
       // After the LLM round-trip we are outside the user gesture. Unlock must
       // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
       // cannot leave the lab stuck on Speaking forever.
       // Release busy/turn lock before TTS so a second mic tap can barge in.
       setBusy(false)
       turnLockRef.current = false
+      // Silence-auto finish and long LLM waits can leave the iPhone context
+      // soft — re-arm speaker keep-alive before the loud BufferSource.
+      prepareLoudTtsPlayback()
       try {
         await Promise.race([
           speakText(reply, 'yue', partnerVoice, { loud: true }),
@@ -317,7 +383,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setMood('idle')
       setCaption({ role: 'partner', text: reply })
     },
-    [partnerVoice, pushReel],
+    [partnerVoice],
   )
 
   const startDrill = useCallback(async () => {
@@ -327,7 +393,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setError('')
     setYouLive(null)
     setFsTypeOpen(false)
-    setFsCatsOpen(false)
     setMood('thinking')
     const deck = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === categoryRef.current)
     setCaption({
@@ -339,6 +404,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         messagesRef.current,
         null,
         categoryRef.current,
+        difficultyRef.current,
       )
       void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
       const withReply: PracticePartnerChatMessage[] = [
@@ -381,13 +447,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         { role: 'user', content: text },
       ]
       setMessages(nextMessages)
-      pushReel({ role: 'you', text })
 
       try {
         const { reply, drill } = await postPracticePartnerChat(
           nextMessages,
           target,
           categoryRef.current,
+          difficultyRef.current,
         )
         void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
         const withReply: PracticePartnerChatMessage[] = [
@@ -407,7 +473,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         turnLockRef.current = false
       }
     },
-    [applyDrill, playPartnerReply, partnerVoice, pushReel, startDrill],
+    [applyDrill, playPartnerReply, partnerVoice, startDrill],
   )
 
   const finishUtterance = useCallback(async () => {
@@ -417,6 +483,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     // Do not wait for recognition.stop() before judging — iOS teardown is slow
     // and sat in front of DeepSeek + Azure, which felt like a long TTS delay.
     const stopping = stopMic()
+    // Silence-auto stop is outside Stop & judge — still flip iOS back to the
+    // speaker route so the next loud reply is not soft.
+    unlockTtsPlayback({ force: true })
+    prepareLoudTtsPlayback()
     if (!spoken) {
       await stopping
       setMood('idle')
@@ -446,7 +516,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     if ((busy || turnLockRef.current) && !canBargeIn) return
     setError('')
     finalsRef.current = ''
-    setFsCatsOpen(false)
     // Must run in the Talk gesture so later Azure/browser TTS after DeepSeek is allowed.
     unlockTtsPlayback()
 
@@ -482,7 +551,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       },
     }
 
-    const session = createWebSpeechSession(handlers, 'yue')
+    const session = createWebSpeechSession(handlers, 'yue', { bilingualYueEn: true })
     if (!session) {
       setError('Web Speech is not available in this browser. Type a line instead.')
       return
@@ -547,54 +616,43 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }, [activeDrill, draft, busy, runPartnerTurn])
 
   const resetChat = useCallback(() => {
-    void stopMic()
-    stopSpeaking()
-    turnLockRef.current = false
-    window.clearTimeout(verdictTimerRef.current)
-    setBusy(false)
-    setMessages([])
-    setReel([])
-    setActiveDrill(null)
-    streakRef.current = 0
-    setStreak(0)
-    setHits(0)
-    setMisses(0)
-    setVerdictFlash(null)
-    setError('')
-    setPartnerHold(null)
-    setYouLive(null)
-    setFsTypeOpen(false)
-    setMood('idle')
-    setCaption({
-      role: 'system',
-      text: 'Drill cleared. Tap Begin drill when you are ready to be yelled at.',
-    })
-  }, [stopMic])
+    clearDrillSession()
+  }, [clearDrillSession])
+
+  const pickTopic = useCallback(
+    (next: PracticePartnerCategory) => {
+      const id = resolvePracticePartnerCategory(next)
+      setCategory(id)
+      writePartnerCategory(id)
+      categoryRef.current = id
+      const level = resolvePracticePartnerDifficulty(difficultyRef.current)
+      setDifficulty(level)
+      writePartnerDifficulty(level)
+      difficultyRef.current = level
+      clearDrillSession()
+      setTopicReady(true)
+      setFullscreen(false)
+    },
+    [clearDrillSession],
+  )
+
+  const changeTopic = useCallback(() => {
+    if (busy || listening) return
+    clearDrillSession()
+    setFullscreen(false)
+    setScoresOpen(false)
+    setTopicReady(false)
+  }, [busy, clearDrillSession, listening])
 
   const onCategoryChange = (next: PracticePartnerCategory) => {
-    const id = resolvePracticePartnerCategory(next)
-    if (id === category) return
-    if (busy || listening) return
-    setCategory(id)
-    writePartnerCategory(id)
-    setFsCatsOpen(false)
-    const meta = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === id)
-    if (activeDrill || messages.length) {
-      void stopMic()
-      stopSpeaking()
-      turnLockRef.current = false
-      setMessages([])
-      setReel([])
-      setActiveDrill(null)
-      setPartnerHold(null)
-      setYouLive(null)
-      setVerdictFlash(null)
-      setMood('idle')
-      setCaption({
-        role: 'system',
-        text: `Switched to ${meta?.labelEn || id} · ${meta?.labelZh || ''}. Tap Begin drill.`,
-      })
-    }
+    pickTopic(next)
+  }
+
+  const onDifficultyPick = (next: PracticePartnerDifficulty) => {
+    const id = resolvePracticePartnerDifficulty(next)
+    setDifficulty(id)
+    writePartnerDifficulty(id)
+    difficultyRef.current = id
   }
 
   useEffect(() => {
@@ -616,7 +674,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   useEffect(() => {
     if (!fullscreen) {
       setFsTypeOpen(false)
-      setFsCatsOpen(false)
+      setVoiceMenuOpen(false)
       return undefined
     }
     const previousOverflow = document.body.style.overflow
@@ -627,8 +685,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           setFsTypeOpen(false)
           return
         }
-        if (fsCatsOpen) {
-          setFsCatsOpen(false)
+        if (voiceMenuOpen) {
+          setVoiceMenuOpen(false)
           return
         }
         setFullscreen(false)
@@ -639,7 +697,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKey)
     }
-  }, [fullscreen, fsTypeOpen, fsCatsOpen])
+  }, [fullscreen, fsTypeOpen, voiceMenuOpen])
 
   useEffect(() => {
     if (!fullscreen || !fsTypeOpen) return
@@ -672,7 +730,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const openFsKeyboard = () => {
     if (busy || listening || !activeDrill) return
-    setFsCatsOpen(false)
+    setVoiceMenuOpen(false)
     setFsTypeOpen(true)
   }
 
@@ -688,6 +746,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const categoryMeta =
     PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
+  const difficultyMeta =
+    PRACTICE_PARTNER_DIFFICULTIES.find((d) => d.id === difficulty) ||
+    PRACTICE_PARTNER_DIFFICULTIES[1]
 
   const drillKicker = verdictFlash === 'fail'
     ? 'Try again'
@@ -697,46 +758,160 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         ? 'Say this'
         : categoryMeta.labelEn
 
-  const categoryPicker = (
-    <div className="partner-lab-categories" role="radiogroup" aria-label="Drill category">
-      {PRACTICE_PARTNER_CATEGORIES.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          role="radio"
-          aria-checked={category === c.id}
-          className={`partner-lab-category${category === c.id ? ' is-active' : ''}`}
-          disabled={busy || listening}
-          onClick={(event) => {
-            event.stopPropagation()
-            onCategoryChange(c.id)
-          }}
-        >
-          <span className="partner-lab-category-en">{c.labelEn}</span>
-          <span className="partner-lab-category-zh" lang="zh-HK">
-            {c.labelZh}
-          </span>
-        </button>
-      ))}
-    </div>
-  )
-
   const partnerSpeaker = voiceSpeakerName(partnerVoice)
   const speakerName =
-    displayPrimary.role === 'partner'
-      ? partnerSpeaker
-      : displayPrimary.role === 'you'
-        ? 'You'
-        : 'Lab'
+    displayPrimary.role === 'you' ? 'You' : partnerSpeaker
 
   const onPartnerVoiceChange = (next: string) => {
     const id = resolveYueVoice(next)
     setPartnerVoice(id)
     writePartnerVoice(id)
+    setVoiceMenuOpen(false)
+  }
+
+  if (!topicReady) {
+    return (
+      <section className="partner-lab partner-lab--topic" aria-label="Choose Practice Partner topic">
+        <header className="partner-lab-head partner-lab-head--topic">
+          <div>
+            <p className="partner-lab-kicker">
+              {entry === 'hub' ? 'Beta' : 'Internal · not in app'}
+            </p>
+            <h2 className="partner-lab-title">Choose difficulty & topic</h2>
+            <p className="partner-lab-lede">
+              Difficulty sets how much English 港灣 uses. Then pick a deck and begin.
+            </p>
+          </div>
+          <div className="partner-lab-scores-wrap">
+            <button
+              type="button"
+              className={`partner-lab-scores-toggle${scoresOpen ? ' is-open' : ''}`}
+              aria-expanded={scoresOpen}
+              aria-controls="partner-lab-high-scores"
+              aria-label="High scores"
+              onClick={() => setScoresOpen((open) => !open)}
+            >
+              {CROWN_ICON}
+              <span className="partner-lab-scores-spark" aria-hidden="true" />
+              <span className="partner-lab-scores-spark is-b" aria-hidden="true" />
+              <span className="partner-lab-scores-spark is-c" aria-hidden="true" />
+            </button>
+            {scoresOpen ? (
+              <div
+                id="partner-lab-high-scores"
+                className="partner-lab-scores"
+                role="region"
+                aria-label="Practice Partner high scores"
+              >
+                <p className="partner-lab-scores-summary">
+                  <span>
+                    <strong>{scoreboard.bestStreak}</strong> best streak
+                  </span>
+                  <span>
+                    <strong>{scoreboard.totalPasses}</strong> passes logged
+                  </span>
+                </p>
+                {scoreboard.recent.length ? (
+                  <ol className="partner-lab-scores-list">
+                    {scoreboard.recent.map((row, i) => {
+                      const deck =
+                        PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === row.category) ||
+                        PRACTICE_PARTNER_CATEGORIES[2]
+                      return (
+                        <li key={`${row.at}-${row.zh}-${i}`}>
+                          <span className="partner-lab-scores-when">
+                            {formatPracticePartnerScoreAt(row.at)}
+                            {row.streak ? ` · streak ${row.streak}` : ''}
+                            {' · '}
+                            {deck.labelEn}
+                          </span>
+                          <span className="partner-lab-scores-zh" lang="zh-HK">
+                            {row.zh || row.en}
+                          </span>
+                          {row.zh && row.en ? (
+                            <span className="partner-lab-scores-en">{row.en}</span>
+                          ) : null}
+                        </li>
+                      )
+                    })}
+                  </ol>
+                ) : (
+                  <p className="partner-lab-scores-empty">
+                    No passes yet. Clear a phrase to start the log.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </header>
+
+        <div className="partner-lab-chooser-block">
+          <p className="partner-lab-chooser-label" id="partner-lab-diff-label">
+            Difficulty
+          </p>
+          <ul
+            className="partner-lab-diff-list"
+            role="listbox"
+            aria-labelledby="partner-lab-diff-label"
+          >
+            {PRACTICE_PARTNER_DIFFICULTIES.map((d) => (
+              <li key={d.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={difficulty === d.id}
+                  className={`partner-lab-diff-item partner-lab-diff-item--${d.id}${
+                    difficulty === d.id ? ' is-current' : ''
+                  }`}
+                  onClick={() => onDifficultyPick(d.id)}
+                >
+                  <span className="partner-lab-diff-en">{d.labelEn}</span>
+                  <span className="partner-lab-diff-zh" lang="zh-HK">
+                    {d.labelZh}
+                  </span>
+                  <span className="partner-lab-diff-hint">{d.hint}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="partner-lab-chooser-block">
+          <p className="partner-lab-chooser-label" id="partner-lab-topic-label">
+            Topic
+          </p>
+          <ul
+            className="partner-lab-topic-list"
+            role="list"
+            aria-labelledby="partner-lab-topic-label"
+          >
+            {PRACTICE_PARTNER_CATEGORIES.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={`partner-lab-topic-item${category === c.id ? ' is-current' : ''}`}
+                  onClick={() => onCategoryChange(c.id)}
+                >
+                  <span className="partner-lab-topic-en">{c.labelEn}</span>
+                  <span className="partner-lab-topic-zh" lang="zh-HK">
+                    {c.labelZh}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
   }
 
   return (
-    <section className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Practice Partner lab">
+    <section
+      className={`partner-lab${fullscreen ? ' is-fullscreen' : ''}${
+        verdictFlash === 'fail' ? ' is-fail-flash' : ''
+      }`}
+      aria-label="Practice Partner lab"
+    >
       <header className="partner-lab-head">
         <div>
           <p className="partner-lab-kicker">
@@ -744,9 +919,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            {entry === 'hub'
-              ? 'Say-this drill: pick a deck — animals, foods, common phrases, or expert — then 港灣 demands a line. You speak it; the model judges and advances. Tap the orb for fullscreen.'
-              : 'Say-this drill (admin only): pick a deck — animals, foods, common phrases, or expert — then 港灣 demands a line in that category. You speak it; the model judges and advances. Mic → Web Speech → DeepSeek → Azure TTS. Tap the orb for fullscreen.'}
+            Follow along! The practice partner will start off and repeat.
           </p>
         </div>
         <div className="partner-lab-scores-wrap">
@@ -755,15 +928,13 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             className={`partner-lab-scores-toggle${scoresOpen ? ' is-open' : ''}`}
             aria-expanded={scoresOpen}
             aria-controls="partner-lab-high-scores"
+            aria-label="High scores"
             onClick={() => setScoresOpen((open) => !open)}
           >
-            High scores
-            {scoreboard.bestStreak || scoreboard.totalPasses ? (
-              <span className="partner-lab-scores-toggle-meta">
-                best {scoreboard.bestStreak} · {scoreboard.totalPasses} pass
-                {scoreboard.totalPasses === 1 ? '' : 'es'}
-              </span>
-            ) : null}
+            {CROWN_ICON}
+            <span className="partner-lab-scores-spark" aria-hidden="true" />
+            <span className="partner-lab-scores-spark is-b" aria-hidden="true" />
+            <span className="partner-lab-scores-spark is-c" aria-hidden="true" />
           </button>
           {scoresOpen ? (
             <div
@@ -848,6 +1019,17 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </div>
         ) : null}
 
+        {verdictFlash === 'fail' ? (
+          <div className="partner-lab-fail-burst" aria-hidden="true">
+            <span className="partner-lab-fail-edge" />
+            <span className="partner-lab-fail-halo" />
+            <svg className="partner-lab-fail-mark" viewBox="0 0 80 80">
+              <circle className="partner-lab-fail-ring" cx="40" cy="40" r="28" />
+              <path className="partner-lab-fail-x" d="M28 28 L52 52 M52 28 L28 52" />
+            </svg>
+          </div>
+        ) : null}
+
         {!fullscreen ? (
           <p className="partner-lab-fs-hint" aria-hidden="true">
             Tap for fullscreen
@@ -872,11 +1054,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           aria-live="polite"
         >
           <p className="partner-lab-drill-kicker">
-            <span>
+            <span className="partner-lab-drill-kicker-main">
               {drillKicker}
               <span className="partner-lab-drill-cat" lang="zh-HK">
                 {' '}
                 · {categoryMeta.labelZh}
+              </span>
+              <span className="partner-lab-drill-diff">
+                {' '}
+                · {difficultyMeta.labelEn}
               </span>
             </span>
             {hits + misses > 0 || scoreboard.bestStreak > 0 ? (
@@ -898,21 +1084,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </>
           ) : (
             <p className="partner-lab-drill-empty">
-              {categoryMeta.labelEn} · {categoryMeta.labelZh}. Tap Begin drill. No trophies.
+              {difficultyMeta.labelEn} · {categoryMeta.labelEn} · {categoryMeta.labelZh}
             </p>
           )}
         </div>
-
-        {fullscreen && fsCatsOpen ? (
-          <div
-            className="partner-lab-fs-cats-pop"
-            role="dialog"
-            aria-label="Drill category"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {categoryPicker}
-          </div>
-        ) : null}
 
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
@@ -952,21 +1127,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             <div className="partner-lab-fs-dock">
               <button
                 type="button"
-                className={`partner-lab-fs-cats-toggle${fsCatsOpen ? ' is-open' : ''}`}
-                aria-label={fsCatsOpen ? 'Hide categories' : 'Show categories'}
-                aria-expanded={fsCatsOpen}
+                className="partner-lab-fs-change-topic"
+                aria-label="Change topic"
+                disabled={busy || listening}
                 onClick={(event) => {
                   event.stopPropagation()
-                  setFsTypeOpen(false)
-                  setFsCatsOpen((open) => !open)
+                  changeTopic()
                 }}
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-fs-cats-icon">
-                  <path
-                    fill="currentColor"
-                    d="M7.4 15.4 6 14l6-6 6 6-1.4 1.4L12 10.8z"
-                  />
-                </svg>
+                Topic
               </button>
               <button
                 type="button"
@@ -1040,53 +1209,57 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </>
         ) : (
           <>
-            {categoryPicker}
-            <label className="partner-lab-voice">
-              <span className="partner-lab-voice-label">Partner voice</span>
-              <select
-                value={partnerVoice}
+            <div className={`partner-lab-voice popup${voiceMenuOpen ? ' is-open' : ''}`}>
+              <input
+                type="checkbox"
+                id="partner-lab-voice-toggle"
+                checked={voiceMenuOpen}
                 disabled={busy || listening}
-                aria-label="Practice Partner Azure voice"
-                onChange={(e) => onPartnerVoiceChange(e.target.value)}
+                onChange={(e) => setVoiceMenuOpen(e.target.checked)}
+                aria-label="Partner voice menu"
+              />
+              <label
+                className="burger"
+                htmlFor="partner-lab-voice-toggle"
+                title="Partner voice"
               >
-                {YUE_VOICES.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.labelEn}
-                  </option>
-                ))}
-              </select>
-            </label>
+                {PARTNER_MIC_ICON}
+              </label>
+              <nav className="popup-window" aria-label="Partner voice">
+                <legend>Partner voice</legend>
+                <ul>
+                  {YUE_VOICES.map((v) => (
+                    <li key={v.id}>
+                      <button
+                        type="button"
+                        className={partnerVoice === v.id ? 'is-active' : undefined}
+                        disabled={busy || listening}
+                        onClick={() => onPartnerVoiceChange(v.id)}
+                      >
+                        {PARTNER_MIC_ICON}
+                        <span>{v.labelEn.split('·')[0]?.trim() || v.labelEn}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
             <button
               type="button"
-              className={`partner-lab-talk${listening ? ' is-live' : ''}`}
+              className={`partner-lab-talk${listening ? ' is-live' : ''}${busy && !listening ? '' : ' is-pulse'}`}
               disabled={busy && !listening}
               onClick={toggleTalk}
             >
-              {talkLabel}
+              <span className="partner-lab-talk-label">{talkLabel}</span>
             </button>
-            <div className="partner-lab-compose">
-              <input
-                type="text"
-                value={draft}
-                disabled={busy || listening || !activeDrill}
-                placeholder="Or type your attempt…"
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    sendDraft()
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="partner-lab-send"
-                disabled={busy || listening || !activeDrill || !draft.trim()}
-                onClick={sendDraft}
-              >
-                Send
-              </button>
-            </div>
+            <button
+              type="button"
+              className="partner-lab-change-topic"
+              disabled={busy || listening}
+              onClick={changeTopic}
+            >
+              Change topic
+            </button>
             <button
               type="button"
               className="partner-lab-reset"
@@ -1100,59 +1273,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       </div>
 
       {error ? <p className="partner-lab-error">{error}</p> : null}
-
-      <div className="partner-lab-bottom">
-        <aside className="partner-lab-transcript" aria-label="Caption history">
-          <h3>Caption reel</h3>
-          {reel.length ? (
-            <ul>
-              {reel.map((line, i) => (
-                <li key={`${line.role}-${i}-${line.text.slice(0, 12)}`}>
-                  <span className={`partner-lab-transcript-role is-${line.role}`}>
-                    {ROLE_LABEL[line.role]}
-                  </span>
-                  <span className="partner-lab-transcript-text">{line.text}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="partner-lab-transcript-empty">
-              Turns appear here as you talk — You from STT, 港灣 from the drill.
-            </p>
-          )}
-        </aside>
-
-        <aside className="partner-lab-notes">
-          <h3>How the drill works</h3>
-          <ul>
-            <li>
-              <strong>Persona:</strong> 港灣 — intense, impatient drill sergeant (mean-tutor mode)
-            </li>
-            <li>
-              <strong>Decks:</strong> Animals 動物 · Foods 食物 · Common 常用 · Expert 進階 — lock
-              stays on after a pass
-            </li>
-            <li>
-              <strong>Loop:</strong> DEMAND (say this) → you speak → JUDGMENT → next phrase or retry
-            </li>
-            <li>
-              <strong>Memory:</strong> this session’s lines plus the active English / 漢字 / Jyutping
-              target
-            </li>
-            <li>
-              <strong>Pass:</strong> jade check + chime; each hit appends to High scores (this
-              browser)
-            </li>
-            <li>
-              <strong>Voice:</strong> same Azure TTS path as the translator (`yue` / zh-HK)
-            </li>
-            <li>
-              <strong>Not used:</strong> Azure Voice Live or Foundry Agent
-            </li>
-          </ul>
-          <p>Admin-only until entitlement + mic polish are ready for the consumer app.</p>
-        </aside>
-      </div>
     </section>
   )
 }

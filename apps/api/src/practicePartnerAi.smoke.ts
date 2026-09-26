@@ -7,17 +7,21 @@ import {
   PRACTICE_PARTNER_BANNED_PASS_DEFAULTS,
   PRACTICE_PARTNER_CATEGORY_IDS,
   PRACTICE_PARTNER_CATEGORY_META,
+  PRACTICE_PARTNER_DIFFICULTY_IDS,
+  PRACTICE_PARTNER_DIFFICULTY_META,
   PRACTICE_PARTNER_FAIL_OPENERS,
   PRACTICE_PARTNER_PASS_OPENERS,
   PRACTICE_PARTNER_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
   categoryLockLine,
+  difficultyLockLine,
   normalizeVerdict,
   parsePracticePartnerReply,
   practicePartnerSampling,
   recentSpeakOpenings,
   resolvePracticePartnerCategory,
+  resolvePracticePartnerDifficulty,
   sanitizeSpeak,
   speakOpeningKey,
 } from './practicePartnerAi.js'
@@ -30,6 +34,7 @@ assert.match(PRACTICE_PARTNER_SYSTEM, /Jyutping/, 'Jyutping required on the card
 assert.match(PRACTICE_PARTNER_SYSTEM, /json object/i, 'structured JSON for the UI loop')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Azure TTS/, 'TTS-safe speak line')
 assert.match(PRACTICE_PARTNER_SYSTEM, /CATEGORY LOCK/, 'deck lock')
+assert.match(PRACTICE_PARTNER_SYSTEM, /DIFFICULTY LOCK/, 'difficulty lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Do not put Jyutping romanization/, 'speak stays 漢字 + English')
 assert.match(PRACTICE_PARTNER_SYSTEM, /PASS VARIETY/, 'pass-line bank in the system prompt')
 assert.match(PRACTICE_PARTNER_SYSTEM, /FAIL VARIETY/, 'fail-line bank in the system prompt')
@@ -65,6 +70,19 @@ assert.equal(resolvePracticePartnerCategory('foods'), 'foods')
 assert.equal(resolvePracticePartnerCategory('nope'), 'common')
 assert.match(categoryLockLine('animals'), /\[CATEGORY\] animals/)
 assert.match(PRACTICE_PARTNER_CATEGORY_META.expert.examples, /語氣|尷尬|亂噏/)
+
+assert.deepEqual(
+  [...PRACTICE_PARTNER_DIFFICULTY_IDS],
+  ['new_learner', 'abc', 'mainlander'],
+)
+assert.equal(resolvePracticePartnerDifficulty('mainlander'), 'mainlander')
+assert.equal(resolvePracticePartnerDifficulty('nope'), 'abc')
+assert.match(difficultyLockLine('new_learner'), /\[DIFFICULTY\] new_learner/)
+assert.match(difficultyLockLine('new_learner'), /ENGLISH MAJORITY/)
+assert.match(difficultyLockLine('abc'), /CANTONESE MAJORITY/)
+assert.match(difficultyLockLine('mainlander'), /ALL CANTONESE/)
+assert.match(difficultyLockLine('mainlander'), /stern|mocking/i)
+assert.match(PRACTICE_PARTNER_DIFFICULTY_META.mainlander.labelZh, /大陸/)
 
 assert.equal(normalizeVerdict('PASS'), 'pass')
 assert.equal(normalizeVerdict('correct'), 'pass')
@@ -140,9 +158,10 @@ assert.throws(
   /missing drill phrase/,
 )
 
-const empty = buildPracticePartnerTurn([], null, 'animals')
+const empty = buildPracticePartnerTurn([], null, 'animals', 'new_learner')
 assert.match(empty.turn, /\[DEMAND\]/)
 assert.match(empty.turn, /\[CATEGORY\] animals/)
+assert.match(empty.turn, /\[DIFFICULTY\] new_learner/)
 assert.equal(empty.history.length, 0)
 
 const judge = buildPracticePartnerTurn(
@@ -152,13 +171,16 @@ const judge = buildPracticePartnerTurn(
   ],
   previous,
   'common',
+  'mainlander',
 )
 assert.equal(judge.history.length, 1)
 assert.match(judge.turn, /\[JUDGE\]/)
 assert.match(judge.turn, /\[CATEGORY\] common/)
+assert.match(judge.turn, /\[DIFFICULTY\] mainlander/)
 assert.match(judge.turn, /TARGET ZH: 對唔住/)
 assert.match(judge.turn, /LEARNER SAID: 對唔住，我唔記得帶功課/)
 assert.match(judge.turn, /MUST stay in this \[CATEGORY\]/)
+assert.match(judge.turn, /Obey \[DIFFICULTY\]/)
 assert.match(judge.turn, /\[VARIETY\]/)
 assert.match(judge.turn, /Banned defaults/)
 assert.match(judge.turn, /哼。勉強過關/)
@@ -166,6 +188,7 @@ assert.match(judge.turn, /哼。勉強過關/)
 const premature = buildPracticePartnerTurn([{ role: 'user', content: 'hello' }], null)
 assert.match(premature.turn, /\[DEMAND\]/)
 assert.match(premature.turn, /hello/)
+assert.match(premature.turn, /\[DIFFICULTY\] abc/, 'defaults to ABC')
 
 const kickoffBody = PracticePartnerChatBodySchema.safeParse({ messages: [] })
 assert.ok(kickoffBody.success, 'empty messages allowed for Begin drill')
@@ -174,6 +197,7 @@ const attemptBody = PracticePartnerChatBodySchema.safeParse({
   messages: [{ role: 'user', content: '對唔住' }],
   activeDrill: previous,
   category: 'expert',
+  difficulty: 'mainlander',
 })
 assert.ok(attemptBody.success)
 
@@ -182,6 +206,12 @@ const badCategory = PracticePartnerChatBodySchema.safeParse({
   category: 'sports',
 })
 assert.ok(!badCategory.success, 'unknown decks are rejected')
+
+const badDifficulty = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  difficulty: 'hard',
+})
+assert.ok(!badDifficulty.success, 'unknown difficulties are rejected')
 
 const badBody = PracticePartnerChatBodySchema.safeParse({
   messages: [{ role: 'user', content: '' }],

@@ -700,6 +700,38 @@ export function resolvePracticePartnerCategory(raw: unknown): PracticePartnerCat
     : DEFAULT_PRACTICE_PARTNER_CATEGORY
 }
 
+export const PRACTICE_PARTNER_DIFFICULTIES = [
+  {
+    id: 'new_learner',
+    labelEn: 'New Learner',
+    labelZh: '初學者',
+    hint: 'English majority · some Cantonese',
+  },
+  {
+    id: 'abc',
+    labelEn: 'ABC',
+    labelZh: 'ABC',
+    hint: 'Cantonese majority · mixed English',
+  },
+  {
+    id: 'mainlander',
+    labelEn: 'Mainlander',
+    labelZh: '大陸仔',
+    hint: 'All Cantonese · stern & mocking',
+  },
+] as const
+
+export type PracticePartnerDifficulty = (typeof PRACTICE_PARTNER_DIFFICULTIES)[number]['id']
+
+export const DEFAULT_PRACTICE_PARTNER_DIFFICULTY: PracticePartnerDifficulty = 'abc'
+
+export function resolvePracticePartnerDifficulty(raw: unknown): PracticePartnerDifficulty {
+  const id = String(raw || '').trim()
+  return PRACTICE_PARTNER_DIFFICULTIES.some((d) => d.id === id)
+    ? (id as PracticePartnerDifficulty)
+    : DEFAULT_PRACTICE_PARTNER_DIFFICULTY
+}
+
 export type PracticePartnerDrillTarget = {
   en: string
   zh: string
@@ -735,6 +767,7 @@ export async function postPracticePartnerChat(
   messages: PracticePartnerChatMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
+  difficulty?: PracticePartnerDifficulty | null,
 ): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null }> {
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
@@ -742,6 +775,7 @@ export async function postPracticePartnerChat(
       messages,
       activeDrill: activeDrill ?? null,
       category: resolvePracticePartnerCategory(category),
+      difficulty: resolvePracticePartnerDifficulty(difficulty),
     }),
   })
   const data = await res.json().catch(() => ({}))

@@ -5,7 +5,7 @@ import type { Lang } from './types'
 import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
-const LOUD_PLAYBACK_GAIN = 2.75
+const LOUD_PLAYBACK_GAIN = 1.85
 let ttsMediaSource: MediaElementAudioSourceNode | null = null
 let ttsGainNode: GainNode | null = null
 /** iPhone loud TTS — BufferSource, not HTMLAudio (receiver / voice-chat route). */
@@ -15,6 +15,8 @@ let ttsBufferGain: GainNode | null = null
 let ttsKeepAliveOsc: OscillatorNode | null = null
 /** Optional near-silent tap to destination — speaker route after mic. */
 let ttsKeepAliveGain: GainNode | null = null
+/** Silent sink so the keep-alive osc stays in the graph without speaker bleed. */
+let ttsKeepAliveSink: GainNode | null = null
 
 function stopTtsBufferSource() {
   try {
@@ -45,6 +47,14 @@ function armTtsContextKeepAlive(opts?: { speaker?: boolean }) {
       ttsKeepAliveOsc.frequency.value = 20
       ttsKeepAliveOsc.start()
     }
+    // Always park the osc on a muted sink so Safari does not suspend the
+    // context after hushTtsSpeakerForMic() drops the speaker tap.
+    if (!ttsKeepAliveSink) {
+      ttsKeepAliveSink = ctx.createGain()
+      ttsKeepAliveSink.gain.value = 0
+      ttsKeepAliveOsc.connect(ttsKeepAliveSink)
+      ttsKeepAliveSink.connect(ctx.destination)
+    }
     if (opts?.speaker && !ttsKeepAliveGain) {
       ttsKeepAliveGain = ctx.createGain()
       ttsKeepAliveGain.gain.value = 0.0001
@@ -72,14 +82,20 @@ function stopTtsContextKeepAlive() {
   } catch {
     /* ignore */
   }
+  try {
+    ttsKeepAliveSink?.disconnect()
+  } catch {
+    /* ignore */
+  }
   ttsKeepAliveOsc = null
   ttsKeepAliveGain = null
+  ttsKeepAliveSink = null
 }
 
 /**
  * Drop the near-silent speaker tap before Web Speech starts.
- * Leaves the unconnected keep-alive oscillator so later loud TTS can still
- * use a running AudioContext (including the 2s-silence auto-stop path).
+ * Keeps the muted sink + oscillator so later loud TTS still has a running
+ * AudioContext (including the 2s-silence auto-stop path).
  */
 export function hushTtsSpeakerForMic() {
   try {
@@ -88,11 +104,23 @@ export function hushTtsSpeakerForMic() {
     /* ignore */
   }
   ttsKeepAliveGain = null
+}
+
+/**
+ * After mic stop (Stop & judge / silence), re-arm speaker keep-alive and
+ * resume the shared AudioContext so the next loud BufferSource is not soft.
+ * Safe outside a gesture once unlock already ran in the Talk tap.
+ */
+export function prepareLoudTtsPlayback() {
+  if (typeof window === 'undefined') return
+  if (!isAppleTouchDevice()) return
   try {
-    ttsKeepAliveOsc?.disconnect()
+    const ctx = ensureSharedAudioContext()
+    if (ctx.state === 'suspended') void ctx.resume()
   } catch {
     /* ignore */
   }
+  armTtsContextKeepAlive({ speaker: true })
 }
 
 /** Test/dev: keep-alive oscillator is running. */
@@ -513,6 +541,8 @@ async function playAzureBlobViaWebAudio(
     if (ctx.state === 'suspended') {
       await ctx.resume()
     }
+    // Re-arm keep-alive before decode — LLM awaits can leave the context idle.
+    if (loud) armTtsContextKeepAlive({ speaker: true })
     if (ctx.state !== 'running' || g !== gen) return 'failed'
     const raw = await blob.arrayBuffer()
     if (g !== gen) return 'aborted'
