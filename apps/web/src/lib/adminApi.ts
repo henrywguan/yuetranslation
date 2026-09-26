@@ -768,6 +768,7 @@ export async function postPracticePartnerChat(
   activeDrill?: PracticePartnerDrillTarget | null,
   category?: PracticePartnerCategory | null,
   difficulty?: PracticePartnerDifficulty | null,
+  tone?: { streak?: number; missStreak?: number } | null,
 ): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null }> {
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
@@ -776,6 +777,8 @@ export async function postPracticePartnerChat(
       activeDrill: activeDrill ?? null,
       category: resolvePracticePartnerCategory(category),
       difficulty: resolvePracticePartnerDifficulty(difficulty),
+      streak: Math.max(0, Math.min(40, Math.floor(tone?.streak ?? 0))),
+      missStreak: Math.max(0, Math.min(40, Math.floor(tone?.missStreak ?? 0))),
     }),
   })
   const data = await res.json().catch(() => ({}))

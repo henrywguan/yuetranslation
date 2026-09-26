@@ -256,6 +256,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const finishRef = useRef<() => void>(() => {})
   const verdictTimerRef = useRef(0)
   const streakRef = useRef(0)
+  const missStreakRef = useRef(0)
 
   useEffect(() => {
     messagesRef.current = messages
@@ -317,6 +318,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setMessages([])
     setActiveDrill(null)
     streakRef.current = 0
+    missStreakRef.current = 0
     setStreak(0)
     setHits(0)
     setMisses(0)
@@ -340,6 +342,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     if (drill.verdict === 'pass') {
       const nextStreak = streakRef.current + 1
       streakRef.current = nextStreak
+      missStreakRef.current = 0
       setStreak(nextStreak)
       setHits((n) => n + 1)
       if (justPassed?.zh || justPassed?.en) {
@@ -357,6 +360,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1800)
     } else if (drill.verdict === 'fail') {
       streakRef.current = 0
+      missStreakRef.current += 1
       setStreak(0)
       setMisses((n) => n + 1)
       playPracticePartnerFailSfx()
@@ -441,6 +445,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         null,
         categoryRef.current,
         difficultyRef.current,
+        { streak: 0, missStreak: 0 },
       )
       void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
       const withReply: PracticePartnerChatMessage[] = [
@@ -490,6 +495,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           target,
           categoryRef.current,
           difficultyRef.current,
+          { streak: streakRef.current, missStreak: missStreakRef.current },
         )
         void loadTtsAudio(reply, 'yue', partnerVoice, { loud: true }).catch(() => undefined)
         const withReply: PracticePartnerChatMessage[] = [
