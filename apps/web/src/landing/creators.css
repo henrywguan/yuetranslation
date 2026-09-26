@@ -282,6 +282,101 @@
   color: var(--ink);
 }
 
+/* Aceternity Tracing Beam — jade rail on Creators copy steps. */
+.creators-trace {
+  position: relative;
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0 0 0 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.creators-trace-rail {
+  position: absolute;
+  left: 1.15rem;
+  top: 1.15rem;
+  bottom: 1.15rem;
+  width: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--jade) 18%, var(--glass-border));
+  pointer-events: none;
+}
+
+.creators-trace-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--jade-bright, var(--jade)), var(--jade));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--jade) 50%, transparent);
+  transition: height 0.2s ease;
+}
+
+.creators-trace-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px 14px 8px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--panel, var(--surface)) 80%, transparent);
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.creators-trace-step.is-lit {
+  border-color: color-mix(in srgb, var(--jade) 28%, var(--glass-border));
+}
+
+.creators-trace-step.is-active {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 32%, transparent);
+}
+
+.creators-trace-node {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 750;
+  font-family: var(--font-display);
+  background: color-mix(in srgb, var(--jade) 18%, transparent);
+  color: var(--muted);
+  z-index: 1;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.creators-trace-step.is-lit .creators-trace-node {
+  background: color-mix(in srgb, var(--jade) 32%, transparent);
+  color: var(--ink-bright, var(--ink));
+}
+
+.creators-trace-step.is-active .creators-trace-node {
+  background: var(--jade);
+  color: var(--on-jade, #062018);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--jade) 55%, transparent);
+}
+
+.creators-trace-body p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creators-trace-fill {
+    transition: none;
+  }
+}
+
 .creators-demo-label {
   margin: 0 0 10px;
   font-weight: 650;
@@ -337,7 +432,8 @@
     width: min(100%, calc(100% - 2rem));
   }
 
-  .creators-step {
+  .creators-step,
+  .creators-trace-step {
     gap: 10px;
     padding: 12px;
   }

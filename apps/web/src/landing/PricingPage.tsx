@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Reveal } from './Reveal'
-import { MagneticButton } from './MagneticButton'
+import { StatefulButton, type ButtonPhase } from '../components/StatefulButton'
 import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
@@ -13,6 +13,7 @@ import { biPlain, ui, type Bi } from '../lib/uiCopy'
 import { MARKETING_PLANS, type MarketingPlan } from './plans'
 import { inkEase } from '../lib/motion'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { PointerGlowLayers, usePointerGlowScope } from './usePointerGlow'
 import './landing.css'
 
 type Billing = 'monthly' | 'annual'
@@ -66,29 +67,38 @@ function annualTotalLabel(plan: MarketingPlan): string {
   return Number.isInteger(total) ? String(total) : total.toFixed(2)
 }
 
-async function onPlanCta(plan: MarketingPlan, billing: Billing) {
-  if (plan.ctaOpens === 'app') {
-    openApp()
-    return
-  }
-  if (!supabaseEnabled()) {
-    openPricing()
-    return
-  }
-  const token = await getAccessToken()
-  if (!token) {
-    openAuthScreen()
-    return
-  }
-  if (plan.id === 'family' || plan.id === 'business') {
-    await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
-    return
-  }
-  openPricing()
-}
-
 export function PricingPage() {
   const [billing, setBilling] = useState<Billing>('monthly')
+  const [ctaPhase, setCtaPhase] = useState<Partial<Record<MarketingPlan['id'], ButtonPhase>>>({})
+
+  const runPlanCta = async (plan: MarketingPlan) => {
+    if (plan.ctaOpens === 'app') {
+      setCtaPhase((p) => ({ ...p, [plan.id]: 'success' }))
+      openApp()
+      return
+    }
+    if (!supabaseEnabled()) {
+      openPricing()
+      return
+    }
+    const token = await getAccessToken()
+    if (!token) {
+      openAuthScreen()
+      return
+    }
+    if (plan.id === 'family' || plan.id === 'business') {
+      setCtaPhase((p) => ({ ...p, [plan.id]: 'loading' }))
+      try {
+        await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
+        setCtaPhase((p) => ({ ...p, [plan.id]: 'success' }))
+      } catch {
+        setCtaPhase((p) => ({ ...p, [plan.id]: 'idle' }))
+      }
+      return
+    }
+    openPricing()
+  }
+  const glow = usePointerGlowScope<HTMLElement>()
   useDocumentMeta({
     title: 'Pricing — JyutTranslate',
     description:
@@ -135,13 +145,21 @@ export function PricingPage() {
         </motion.div>
       </header>
 
-      <section className="ln-section pp-plans-section">
+      <section
+        ref={glow.ref}
+        className="ln-section pp-plans-section"
+        onPointerMove={glow.onPointerMove}
+        onPointerLeave={glow.onPointerLeave}
+      >
         <Reveal className="pp-plans" stagger={0.1} y={32}>
           {MARKETING_PLANS.map((plan) => (
             <article
               key={plan.id}
-              className={['ln-price-card', plan.featured ? 'featured' : ''].filter(Boolean).join(' ')}
+              className={['ln-price-card', 'ln-pointer-glow', plan.featured ? 'featured' : '']
+                .filter(Boolean)
+                .join(' ')}
             >
+              <PointerGlowLayers />
               {plan.featured ? (
                 <span className="ln-price-badge">
                   <BiText copy={ui.mostPopular} size="sm" />
@@ -171,12 +189,15 @@ export function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <MagneticButton
+              <StatefulButton
+                magnetic
                 className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                onClick={() => void onPlanCta(plan, billing)}
+                phase={ctaPhase[plan.id] || 'idle'}
+                loadingLabel={<BiText copy={ui.checkoutOpening} size="sm" />}
+                onClick={() => void runPlanCta(plan)}
               >
                 <BiText copy={plan.cta} size="sm" />
-              </MagneticButton>
+              </StatefulButton>
             </article>
           ))}
         </Reveal>

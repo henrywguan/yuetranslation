@@ -1,0 +1,50 @@
+/* Aceternity Stateful Button — Harbor/Jade, no Tailwind. */
+.stateful-btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.stateful-btn-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.stateful-btn-spin {
+  width: 0.85em;
+  height: 0.85em;
+  flex: 0 0 auto;
+  border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: stateful-btn-spin 0.65s linear infinite;
+}
+
+.stateful-btn-check {
+  width: 0.72em;
+  height: 0.4em;
+  flex: 0 0 auto;
+  margin-bottom: 0.12em;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.stateful-btn-inner.is-success {
+  color: var(--jade-bright, var(--jade));
+}
+
+@keyframes stateful-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stateful-btn-spin {
+    animation: none;
+    border-top-color: transparent;
+    border-color: currentColor;
+  }
+}
