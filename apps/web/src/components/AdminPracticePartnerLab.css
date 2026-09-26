@@ -596,6 +596,10 @@
 }
 
 @media (max-width: 720px) {
+  .partner-lab-categories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .partner-lab-controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -626,6 +630,73 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
+}
+
+.partner-lab-categories {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  width: 100%;
+  flex: 1 1 100%;
+}
+
+.partner-lab-category {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.08rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+.partner-lab-category:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--jade) 40%, var(--glass-border));
+  transform: translateY(-1px);
+}
+
+.partner-lab-category.is-active {
+  border-color: color-mix(in srgb, var(--jade) 55%, transparent);
+  background: color-mix(in srgb, var(--jade) 16%, var(--surface-strong));
+}
+
+.partner-lab-category:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.partner-lab-category-en {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.partner-lab-category-zh {
+  font-family: 'Noto Sans HK', 'Noto Sans', var(--font-body);
+  font-size: 0.68rem;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.partner-lab-category.is-active .partner-lab-category-zh {
+  color: color-mix(in srgb, var(--jade) 70%, var(--muted));
+}
+
+.partner-lab-drill-cat {
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--ink-bright) 70%, transparent);
 }
 
 .partner-lab-voice {
@@ -889,6 +960,24 @@
 
 .partner-lab.is-fullscreen .partner-lab-live > * {
   pointer-events: auto;
+}
+
+.partner-lab.is-fullscreen .partner-lab-categories {
+  width: min(92vw, 28rem);
+  padding: 0.35rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 70%, transparent);
+  background: color-mix(in srgb, #041018 78%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.partner-lab.is-fullscreen .partner-lab-category {
+  background: color-mix(in srgb, #041018 40%, transparent);
+  color: var(--ink-bright);
+}
+
+.partner-lab.is-fullscreen .partner-lab-category.is-active {
+  background: color-mix(in srgb, var(--jade) 22%, #041018);
 }
 
 .partner-lab-fs-dock {

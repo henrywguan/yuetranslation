@@ -1186,6 +1186,7 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
     const result = await generatePracticePartnerReply(
       parsed.data.messages,
       parsed.data.activeDrill,
+      parsed.data.category,
     )
     const { addPracticePartnerCount } = await import('./usage.js')
     try {
@@ -1203,6 +1204,7 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         replyChars: result.reply.length,
         verdict: result.drill.verdict,
         advance: result.drill.advance,
+        category: parsed.data.category || 'common',
       },
     })
     // Model id stays in audit only — omit from client response.

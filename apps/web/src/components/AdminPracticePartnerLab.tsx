@@ -5,7 +5,11 @@ import {
   type OrbitalSphereOptions,
 } from './ui/orbital-sphere'
 import {
+  DEFAULT_PRACTICE_PARTNER_CATEGORY,
+  PRACTICE_PARTNER_CATEGORIES,
   postPracticePartnerChat,
+  resolvePracticePartnerCategory,
+  type PracticePartnerCategory,
   type PracticePartnerChatMessage,
   type PracticePartnerDrill,
   type PracticePartnerDrillTarget,
@@ -22,6 +26,24 @@ import {
 import './AdminPracticePartnerLab.css'
 
 const PARTNER_VOICE_KEY = 'yue-practice-partner-voice'
+const PARTNER_CATEGORY_KEY = 'yue-practice-partner-category'
+
+function readPartnerCategory(): PracticePartnerCategory {
+  if (typeof window === 'undefined') return DEFAULT_PRACTICE_PARTNER_CATEGORY
+  try {
+    return resolvePracticePartnerCategory(localStorage.getItem(PARTNER_CATEGORY_KEY))
+  } catch {
+    return DEFAULT_PRACTICE_PARTNER_CATEGORY
+  }
+}
+
+function writePartnerCategory(id: PracticePartnerCategory) {
+  try {
+    localStorage.setItem(PARTNER_CATEGORY_KEY, resolvePracticePartnerCategory(id))
+  } catch {
+    /* ignore */
+  }
+}
 
 function readPartnerVoice(): YueVoiceId {
   if (typeof window === 'undefined') return resolveYueVoice(null)
@@ -137,6 +159,7 @@ export function AdminPracticePartnerLab() {
   const [fullscreen, setFullscreen] = useState(false)
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
   const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
+  const [category, setCategory] = useState<PracticePartnerCategory>(() => readPartnerCategory())
   /** Last partner line — stays on screen until the user starts speaking. */
   const [partnerHold, setPartnerHold] = useState<string | null>(null)
   /** Live STT (interim + accumulating finals) while the mic is open. */
@@ -148,6 +171,7 @@ export function AdminPracticePartnerLab() {
   const silenceTimerRef = useRef(0)
   const messagesRef = useRef<PracticePartnerChatMessage[]>([])
   const activeDrillRef = useRef<PracticePartnerDrillTarget | null>(null)
+  const categoryRef = useRef<PracticePartnerCategory>(category)
   const turnLockRef = useRef(false)
   const finishRef = useRef<() => void>(() => {})
   const verdictTimerRef = useRef(0)
@@ -159,6 +183,10 @@ export function AdminPracticePartnerLab() {
   useEffect(() => {
     activeDrillRef.current = activeDrill
   }, [activeDrill])
+
+  useEffect(() => {
+    categoryRef.current = category
+  }, [category])
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -265,9 +293,17 @@ export function AdminPracticePartnerLab() {
     setYouLive(null)
     setFsTypeOpen(false)
     setMood('thinking')
-    setCaption({ role: 'system', text: '港灣 is choosing your first phrase…' })
+    const deck = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === categoryRef.current)
+    setCaption({
+      role: 'system',
+      text: `港灣 is picking a ${deck?.labelEn.toLowerCase() || 'common'} line…`,
+    })
     try {
-      const { reply, drill } = await postPracticePartnerChat(messagesRef.current, null)
+      const { reply, drill } = await postPracticePartnerChat(
+        messagesRef.current,
+        null,
+        categoryRef.current,
+      )
       const withReply: PracticePartnerChatMessage[] = [
         ...messagesRef.current,
         { role: 'assistant', content: reply },
@@ -311,7 +347,11 @@ export function AdminPracticePartnerLab() {
       pushReel({ role: 'you', text })
 
       try {
-        const { reply, drill } = await postPracticePartnerChat(nextMessages, target)
+        const { reply, drill } = await postPracticePartnerChat(
+          nextMessages,
+          target,
+          categoryRef.current,
+        )
         const withReply: PracticePartnerChatMessage[] = [
           ...nextMessages,
           { role: 'assistant', content: reply },
@@ -479,6 +519,31 @@ export function AdminPracticePartnerLab() {
     })
   }, [stopMic])
 
+  const onCategoryChange = (next: PracticePartnerCategory) => {
+    const id = resolvePracticePartnerCategory(next)
+    if (id === category) return
+    if (busy || listening) return
+    setCategory(id)
+    writePartnerCategory(id)
+    const meta = PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === id)
+    if (activeDrill || messages.length) {
+      void stopMic()
+      stopSpeaking()
+      turnLockRef.current = false
+      setMessages([])
+      setReel([])
+      setActiveDrill(null)
+      setPartnerHold(null)
+      setYouLive(null)
+      setVerdictFlash(null)
+      setMood('idle')
+      setCaption({
+        role: 'system',
+        text: `Switched to ${meta?.labelEn || id} · ${meta?.labelZh || ''}. Tap Begin drill.`,
+      })
+    }
+  }
+
   useEffect(() => {
     const onHide = () => {
       if (document.visibilityState === 'hidden') {
@@ -562,13 +627,40 @@ export function AdminPracticePartnerLab() {
         ? 'Working…'
         : 'Say it'
 
+  const categoryMeta =
+    PRACTICE_PARTNER_CATEGORIES.find((c) => c.id === category) || PRACTICE_PARTNER_CATEGORIES[2]
+
   const drillKicker = verdictFlash === 'fail'
     ? 'Try again'
     : verdictFlash === 'pass'
       ? 'Next phrase'
       : activeDrill
         ? 'Say this'
-        : 'Waiting'
+        : categoryMeta.labelEn
+
+  const categoryPicker = (
+    <div className="partner-lab-categories" role="radiogroup" aria-label="Drill category">
+      {PRACTICE_PARTNER_CATEGORIES.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          role="radio"
+          aria-checked={category === c.id}
+          className={`partner-lab-category${category === c.id ? ' is-active' : ''}`}
+          disabled={busy || listening}
+          onClick={(event) => {
+            event.stopPropagation()
+            onCategoryChange(c.id)
+          }}
+        >
+          <span className="partner-lab-category-en">{c.labelEn}</span>
+          <span className="partner-lab-category-zh" lang="zh-HK">
+            {c.labelZh}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
 
   const partnerSpeaker = voiceSpeakerName(partnerVoice)
   const speakerName =
@@ -591,9 +683,9 @@ export function AdminPracticePartnerLab() {
           <p className="partner-lab-kicker">Internal · not in app</p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Say-this drill (admin only): 港灣 demands a phrase (English + 漢字 + Jyutping), you
-            speak it, the model judges, then advances — mean-tutor mode. Mic → Web Speech →
-            DeepSeek → Azure TTS. Tap the orb for fullscreen. No Voice Live / Foundry.
+            Say-this drill (admin only): pick a deck — animals, foods, common phrases, or expert —
+            then 港灣 demands a line in that category. You speak it; the model judges and advances.
+            Mic → Web Speech → DeepSeek → Azure TTS. Tap the orb for fullscreen.
           </p>
         </div>
       </header>
@@ -646,7 +738,13 @@ export function AdminPracticePartnerLab() {
           aria-live="polite"
         >
           <p className="partner-lab-drill-kicker">
-            <span>{drillKicker}</span>
+            <span>
+              {drillKicker}
+              <span className="partner-lab-drill-cat" lang="zh-HK">
+                {' '}
+                · {categoryMeta.labelZh}
+              </span>
+            </span>
             {hits + misses > 0 ? (
               <span className="partner-lab-drill-streak">
                 {streak} streak · {hits} hit{hits === 1 ? '' : 's'}
@@ -664,7 +762,7 @@ export function AdminPracticePartnerLab() {
             </>
           ) : (
             <p className="partner-lab-drill-empty">
-              Tap Begin drill. 港灣 demands. You speak. No trophies.
+              {categoryMeta.labelEn} · {categoryMeta.labelZh}. Tap Begin drill. No trophies.
             </p>
           )}
         </div>
@@ -704,6 +802,7 @@ export function AdminPracticePartnerLab() {
       >
         {fullscreen ? (
           <>
+            {categoryPicker}
             <div className="partner-lab-fs-dock">
               <button
                 type="button"
@@ -777,6 +876,7 @@ export function AdminPracticePartnerLab() {
           </>
         ) : (
           <>
+            {categoryPicker}
             <label className="partner-lab-voice">
               <span className="partner-lab-voice-label">Partner voice</span>
               <select
@@ -863,6 +963,10 @@ export function AdminPracticePartnerLab() {
           <ul>
             <li>
               <strong>Persona:</strong> 港灣 — intense, impatient drill sergeant (mean-tutor mode)
+            </li>
+            <li>
+              <strong>Decks:</strong> Animals 動物 · Foods 食物 · Common 常用 · Expert 進階 — lock
+              stays on after a pass
             </li>
             <li>
               <strong>Loop:</strong> DEMAND (say this) → you speak → JUDGMENT → next phrase or retry

@@ -4,11 +4,15 @@
  */
 import assert from 'node:assert/strict'
 import {
+  PRACTICE_PARTNER_CATEGORY_IDS,
+  PRACTICE_PARTNER_CATEGORY_META,
   PRACTICE_PARTNER_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
+  categoryLockLine,
   normalizeVerdict,
   parsePracticePartnerReply,
+  resolvePracticePartnerCategory,
   sanitizeSpeak,
 } from './practicePartnerAi.js'
 
@@ -19,7 +23,15 @@ assert.match(PRACTICE_PARTNER_SYSTEM, /THE JUDGMENT/, 'judgment phase')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Jyutping/, 'Jyutping required on the card')
 assert.match(PRACTICE_PARTNER_SYSTEM, /json object/i, 'structured JSON for the UI loop')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Azure TTS/, 'TTS-safe speak line')
+assert.match(PRACTICE_PARTNER_SYSTEM, /CATEGORY LOCK/, 'deck lock')
+assert.match(PRACTICE_PARTNER_SYSTEM, /Do not put Jyutping romanization/, 'speak stays 漢字 + English')
 assert.doesNotMatch(PRACTICE_PARTNER_SYSTEM, /warm Cantonese practice partner/, 'old soft persona retired')
+
+assert.deepEqual([...PRACTICE_PARTNER_CATEGORY_IDS], ['animals', 'foods', 'common', 'expert'])
+assert.equal(resolvePracticePartnerCategory('foods'), 'foods')
+assert.equal(resolvePracticePartnerCategory('nope'), 'common')
+assert.match(categoryLockLine('animals'), /\[CATEGORY\] animals/)
+assert.match(PRACTICE_PARTNER_CATEGORY_META.expert.examples, /語氣|尷尬|亂噏/)
 
 assert.equal(normalizeVerdict('PASS'), 'pass')
 assert.equal(normalizeVerdict('correct'), 'pass')
@@ -95,8 +107,9 @@ assert.throws(
   /missing drill phrase/,
 )
 
-const empty = buildPracticePartnerTurn([])
+const empty = buildPracticePartnerTurn([], null, 'animals')
 assert.match(empty.turn, /\[DEMAND\]/)
+assert.match(empty.turn, /\[CATEGORY\] animals/)
 assert.equal(empty.history.length, 0)
 
 const judge = buildPracticePartnerTurn(
@@ -105,11 +118,14 @@ const judge = buildPracticePartnerTurn(
     { role: 'user', content: '對唔住，我唔記得帶功課' },
   ],
   previous,
+  'common',
 )
 assert.equal(judge.history.length, 1)
 assert.match(judge.turn, /\[JUDGE\]/)
+assert.match(judge.turn, /\[CATEGORY\] common/)
 assert.match(judge.turn, /TARGET ZH: 對唔住/)
 assert.match(judge.turn, /LEARNER SAID: 對唔住，我唔記得帶功課/)
+assert.match(judge.turn, /MUST stay in this \[CATEGORY\]/)
 
 const premature = buildPracticePartnerTurn([{ role: 'user', content: 'hello' }], null)
 assert.match(premature.turn, /\[DEMAND\]/)
@@ -121,8 +137,15 @@ assert.ok(kickoffBody.success, 'empty messages allowed for Begin drill')
 const attemptBody = PracticePartnerChatBodySchema.safeParse({
   messages: [{ role: 'user', content: '對唔住' }],
   activeDrill: previous,
+  category: 'expert',
 })
 assert.ok(attemptBody.success)
+
+const badCategory = PracticePartnerChatBodySchema.safeParse({
+  messages: [],
+  category: 'sports',
+})
+assert.ok(!badCategory.success, 'unknown decks are rejected')
 
 const badBody = PracticePartnerChatBodySchema.safeParse({
   messages: [{ role: 'user', content: '' }],

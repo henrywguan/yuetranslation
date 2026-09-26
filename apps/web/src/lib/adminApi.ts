@@ -682,6 +682,24 @@ export type PracticePartnerChatMessage = {
   content: string
 }
 
+export const PRACTICE_PARTNER_CATEGORIES = [
+  { id: 'animals', labelEn: 'Animals', labelZh: '動物' },
+  { id: 'foods', labelEn: 'Foods', labelZh: '食物' },
+  { id: 'common', labelEn: 'Common phrases', labelZh: '常用' },
+  { id: 'expert', labelEn: 'Expert phrases', labelZh: '進階' },
+] as const
+
+export type PracticePartnerCategory = (typeof PRACTICE_PARTNER_CATEGORIES)[number]['id']
+
+export const DEFAULT_PRACTICE_PARTNER_CATEGORY: PracticePartnerCategory = 'common'
+
+export function resolvePracticePartnerCategory(raw: unknown): PracticePartnerCategory {
+  const id = String(raw || '').trim()
+  return PRACTICE_PARTNER_CATEGORIES.some((c) => c.id === id)
+    ? (id as PracticePartnerCategory)
+    : DEFAULT_PRACTICE_PARTNER_CATEGORY
+}
+
 export type PracticePartnerDrillTarget = {
   en: string
   zh: string
@@ -716,10 +734,15 @@ function asDrill(raw: unknown): PracticePartnerDrill | null {
 export async function postPracticePartnerChat(
   messages: PracticePartnerChatMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
+  category?: PracticePartnerCategory | null,
 ): Promise<{ ok: boolean; reply: string; drill: PracticePartnerDrill | null }> {
   const res = await adminFetch('/admin/practice-partner/chat', {
     method: 'POST',
-    body: JSON.stringify({ messages, activeDrill: activeDrill ?? null }),
+    body: JSON.stringify({
+      messages,
+      activeDrill: activeDrill ?? null,
+      category: resolvePracticePartnerCategory(category),
+    }),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {

@@ -17,11 +17,78 @@ export const PracticePartnerDrillTargetSchema = z.object({
   jyutping: z.string().trim().min(1).max(300),
 })
 
+export const PRACTICE_PARTNER_CATEGORY_IDS = [
+  'animals',
+  'foods',
+  'common',
+  'expert',
+] as const
+
+export type PracticePartnerCategory = (typeof PRACTICE_PARTNER_CATEGORY_IDS)[number]
+
+export const DEFAULT_PRACTICE_PARTNER_CATEGORY: PracticePartnerCategory = 'common'
+
+export const PracticePartnerCategorySchema = z.enum(PRACTICE_PARTNER_CATEGORY_IDS)
+
+export const PRACTICE_PARTNER_CATEGORY_META: Record<
+  PracticePartnerCategory,
+  { labelEn: string; labelZh: string; brief: string; examples: string }
+> = {
+  animals: {
+    labelEn: 'Animals',
+    labelZh: '動物',
+    brief:
+      'Animals only: pets, farm, zoo, sea life, bugs. Target is the animal name or a short sentence with that animal. Use 隻/條 where natural. Not restaurant dishes.',
+    examples: '狗 · 貓 · 我屋企有隻倉鼠 · 小心嗰條蛇 · 嗰隻係熊貓',
+  },
+  foods: {
+    labelEn: 'Foods',
+    labelZh: '食物',
+    brief:
+      'Food and drink only: cha chaan teng, dim sum, fruit, tastes, ordering. Target is a dish, ingredient, or a short order line.',
+    examples: '叉燒飯 · 我要凍檸檬茶，少甜 · 呢個芒果好甜 · 一碗雲吞麵',
+  },
+  common: {
+    labelEn: 'Common phrases',
+    labelZh: '常用',
+    brief:
+      'Everyday survival phrases: greetings, thanks, sorry, late, where, how much, transit, small talk. Practical but dramatic. Not a vocab list of animals or dishes.',
+    examples: '對唔住，我唔記得帶功課 · 唔該，呢個幾多錢 · 唔好意思，我遲到喇',
+  },
+  expert: {
+    labelEn: 'Expert phrases',
+    labelZh: '進階',
+    brief:
+      'Advanced spoken Cantonese: longer one-breath lines, 語氣助詞, 口語 contractions, workplace or social nuance. Still speakable aloud — not a paragraph, not textbook 書面語 unless contrasting 口語.',
+    examples:
+      '你再唔走我就真係唔禮貌喇 · 呢單嘢講真有啲尷尬 · 我寧願遲啲講清楚，好過而家亂噏',
+  },
+}
+
+export function resolvePracticePartnerCategory(raw: unknown): PracticePartnerCategory {
+  const id = String(raw || '').trim()
+  return (PRACTICE_PARTNER_CATEGORY_IDS as readonly string[]).includes(id)
+    ? (id as PracticePartnerCategory)
+    : DEFAULT_PRACTICE_PARTNER_CATEGORY
+}
+
+export function categoryLockLine(category: PracticePartnerCategory): string {
+  const meta = PRACTICE_PARTNER_CATEGORY_META[category]
+  return [
+    `[CATEGORY] ${category} (${meta.labelZh} / ${meta.labelEn}).`,
+    meta.brief,
+    `Stay in this category for every DEMAND, including the next phrase after a pass.`,
+    `Examples: ${meta.examples}`,
+  ].join(' ')
+}
+
 export const PracticePartnerChatBodySchema = z.object({
   /** Empty on kickoff — first DEMAND needs no learner line. */
   messages: z.array(PracticePartnerMessageSchema).max(24),
   /** Phrase the learner must say. Omit / null when starting a new drill. */
   activeDrill: PracticePartnerDrillTargetSchema.optional().nullable(),
+  /** Deck lock. Defaults to common phrases. */
+  category: PracticePartnerCategorySchema.optional().nullable(),
 })
 
 export type PracticePartnerMessage = z.infer<typeof PracticePartnerMessageSchema>
@@ -47,22 +114,23 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'Mix English and Hong Kong Cantonese natively. Use conversational interjections (Aa3, Wo3, Ge3, 喂, 哼) with an intimidating edge.',
   'Call out mistakes immediately.',
   'GAMEPLAY LOOP — Duolingo say-this. Strictly alternate DEMAND and JUDGMENT.',
-  'THE DEMAND: Give one practical but dramatic everyday phrase. Always include English, 漢字, and Jyutping with tone numbers. Command them to say it or translate it out loud into Cantonese right now. Example energy: Tell me “I am sorry I forgot my homework” or face the consequences.',
-  'THE JUDGMENT: Analyze their transcribed speech. If correct/good: reluctant, passive-aggressive validation (Fine. Correct. Do not think you are a master yet.), then immediately THE DEMAND for a NEW phrase (advance).',
+  'THE DEMAND: Give one target in the locked CATEGORY. Always include English, 漢字, and Jyutping with tone numbers. Command them to say it or translate it out loud into Cantonese right now. Example energy: Tell me “I am sorry I forgot my homework” or face the consequences.',
+  'THE JUDGMENT: Analyze their transcribed speech. If correct/good: reluctant, passive-aggressive validation (Fine. Correct. Do not think you are a master yet.), then immediately THE DEMAND for a NEW phrase in the SAME category (advance).',
   'If wrong/poor: dramatic meme-worthy reprimand (WRONG! That tone was completely flat! You sounded like a broken radio! Try again!). Same phrase. Do not advance.',
   'Speech-to-text is messy: if they clearly attempted the target meaning or key words, PASS. Fail only when it is a different phrase, empty, English-only when Cantonese was required, or obviously wrong.',
-  'Topics: daily life, food, transit, school, family, being late, ordering, apologies — practical but dramatic. Do not repeat a phrase already used in this session.',
+  'CATEGORY LOCK: The user turn starts with [CATEGORY]. Every DEMAND — first phrase and every phrase after a pass — MUST stay in that category. animals = animals. foods = food/drink. common = everyday survival phrases. expert = advanced one-breath spoken Cantonese. Do not drift. Do not repeat a phrase already used in this session.',
   'OUTPUT: a JSON object only. No markdown fences, no extra keys, no commentary outside JSON.',
   'Keys: speak (string), verdict ("none"|"pass"|"fail"), advance (boolean), en (string), zh (string), jyutping (string).',
-  'speak: short, punchy, 1–3 sentences for Azure TTS. Write any Cantonese you want spoken in 漢字. No markdown, bullets, emoji, or tables.',
+  'speak: short, punchy, 1–3 sentences for Azure TTS. Write any Cantonese you want spoken in 漢字. Do not put Jyutping romanization or tone numbers in speak — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
   'Kickoff / first demand: verdict=none, advance=false. Fill en/zh/jyutping with the target they must say. speak is THE DEMAND and should include the 漢字.',
   'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. speak reprimands and commands retry; include the 漢字 model once.',
   'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT new phrase, not the one just passed. speak = reluctant validation THEN the next demand (include next 漢字).',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
-const KICKOFF_USER =
-  '[DEMAND] Start the drill. Issue THE DEMAND for the first phrase now. verdict=none, advance=false.'
+function demandKickoffLine(category: PracticePartnerCategory): string {
+  return `${categoryLockLine(category)}\n[DEMAND] Start the drill in this category. Issue THE DEMAND for the first phrase now. verdict=none, advance=false.`
+}
 
 export function sanitizeSpeak(raw: string): string {
   return raw
@@ -143,36 +211,42 @@ export function parsePracticePartnerReply(
 export function buildPracticePartnerTurn(
   messages: PracticePartnerMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
+  category?: PracticePartnerCategory | null,
 ): { history: PracticePartnerMessage[]; turn: string } {
+  const deck = resolvePracticePartnerCategory(category)
+  const lock = categoryLockLine(deck)
   if (!messages.length) {
-    return { history: [], turn: KICKOFF_USER }
+    return { history: [], turn: demandKickoffLine(deck) }
   }
   const last = messages[messages.length - 1]
   if (last.role !== 'user') {
-    return { history: messages, turn: KICKOFF_USER }
+    return { history: messages, turn: demandKickoffLine(deck) }
   }
   const history = messages.slice(0, -1)
   if (activeDrill?.en && activeDrill.zh && activeDrill.jyutping) {
     return {
       history,
       turn: [
+        lock,
         '[JUDGE] Compare the learner’s speech-to-text to the active target. STT may garble characters and tones.',
         `TARGET EN: ${activeDrill.en}`,
         `TARGET ZH: ${activeDrill.zh}`,
         `TARGET JYUTPING: ${activeDrill.jyutping}`,
         `LEARNER SAID: ${last.content}`,
+        'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
       ].join('\n'),
     }
   }
   return {
     history,
-    turn: `[DEMAND] The learner spoke before a target was set: ${last.content}. Roast briefly if needed, then issue THE DEMAND. verdict=none, advance=false.`,
+    turn: `${lock}\n[DEMAND] The learner spoke before a target was set: ${last.content}. Roast briefly if needed, then issue THE DEMAND in this category. verdict=none, advance=false.`,
   }
 }
 
 export async function generatePracticePartnerReply(
   messages: PracticePartnerMessage[],
   activeDrill?: PracticePartnerDrillTarget | null,
+  category?: PracticePartnerCategory | null,
 ): Promise<PracticePartnerChatResult> {
   if (!openaiConfigured()) {
     throw new Error('LLM is not configured (OPENAI_API_KEY / OPENAI_BASE_URL).')
@@ -182,7 +256,7 @@ export async function generatePracticePartnerReply(
     throw new Error('LLM client unavailable.')
   }
 
-  const { history, turn } = buildPracticePartnerTurn(messages, activeDrill)
+  const { history, turn } = buildPracticePartnerTurn(messages, activeDrill, category)
 
   const completion = await client.chat.completions.create({
     model: env.openaiModel,
