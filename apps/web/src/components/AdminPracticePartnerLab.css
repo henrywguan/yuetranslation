@@ -1122,6 +1122,15 @@
   color: var(--muted);
 }
 
+.partner-lab-drill-prompt {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 3.4vw, 1.55rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--ink-bright) 86%, var(--jade));
+}
+
 @keyframes partner-lab-drill-shake {
   0%,
   100% {
