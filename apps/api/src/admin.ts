@@ -1188,6 +1188,7 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
       parsed.data.activeDrill,
       parsed.data.category,
       parsed.data.difficulty,
+      { streak: parsed.data.streak, missStreak: parsed.data.missStreak },
     )
     const { addPracticePartnerCount } = await import('./usage.js')
     try {
@@ -1207,6 +1208,8 @@ export async function adminPracticePartnerChat(req: AuthedRequest, res: Response
         advance: result.drill.advance,
         category: parsed.data.category || 'common',
         difficulty: parsed.data.difficulty || 'abc',
+        streak: parsed.data.streak ?? 0,
+        missStreak: parsed.data.missStreak ?? 0,
       },
     })
     // Model id stays in audit only — omit from client response.

@@ -243,7 +243,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 
 All routes require Bearer JWT + allowlisted email:
 
-- `POST /api/admin/practice-partner/chat` — admin Practice Partner say-this drill (DeepSeek); body `{ messages, activeDrill?, category?, difficulty? }` (`animals` / `foods` / `common` / `expert`; `new_learner` / `abc` / `mainlander`); returns `{ reply, drill }` (TTS line + verdict / next phrase); meters `practice_partner_count` (view-only)
+- `POST /api/admin/practice-partner/chat` — admin Practice Partner say-this drill (DeepSeek); body `{ messages, activeDrill?, category?, difficulty?, streak?, missStreak? }` (`animals` / `foods` / `common` / `expert`; `new_learner` / `abc` / `mainlander`). Opening is a warm “today we are doing &lt;topic&gt;, repeat after me.” Passes get nicer as `streak` grows; misses get harsher as `missStreak` grows and stay critical even after a pass streak. Returns `{ reply, drill }`; meters `practice_partner_count` (view-only)
 - `GET /api/admin/me`
 - `GET /api/admin/users` — query `from` / `to` (`YYYY-MM-DD`, default start of current month → today UTC). Usage columns sum **whole calendar months** overlapping the range. Legacy `month=YYYY_MM` still works.
 - `GET /api/admin/users.csv`
