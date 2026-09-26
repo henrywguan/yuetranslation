@@ -15,6 +15,7 @@ import { ui, type Bi } from '../lib/uiCopy'
 import { BrandScramble } from './BrandScramble'
 import { HeroEyebrow } from './HeroEyebrow'
 import { HeroMultilangTip } from './HeroMultilangTip'
+import { LangMarquee } from './LangMarquee'
 import { inkEase } from '../lib/motion'
 import { useDocumentMeta, documentMetaDefaults } from '../lib/useDocumentMeta'
 import './landing.css'
@@ -119,6 +120,8 @@ export function Landing() {
           <span />
         </div>
       </header>
+
+      <LangMarquee />
 
       <section className="ln-section" id="features">
         <Reveal className="ln-section-head">

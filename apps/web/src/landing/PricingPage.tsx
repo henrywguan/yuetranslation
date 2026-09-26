@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Reveal } from './Reveal'
-import { MagneticButton } from './MagneticButton'
+import { StatefulButton, type ButtonPhase } from '../components/StatefulButton'
 import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
@@ -67,29 +67,37 @@ function annualTotalLabel(plan: MarketingPlan): string {
   return Number.isInteger(total) ? String(total) : total.toFixed(2)
 }
 
-async function onPlanCta(plan: MarketingPlan, billing: Billing) {
-  if (plan.ctaOpens === 'app') {
-    openApp()
-    return
-  }
-  if (!supabaseEnabled()) {
-    openPricing()
-    return
-  }
-  const token = await getAccessToken()
-  if (!token) {
-    openAuthScreen()
-    return
-  }
-  if (plan.id === 'family' || plan.id === 'business') {
-    await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
-    return
-  }
-  openPricing()
-}
-
 export function PricingPage() {
   const [billing, setBilling] = useState<Billing>('monthly')
+  const [ctaPhase, setCtaPhase] = useState<Partial<Record<MarketingPlan['id'], ButtonPhase>>>({})
+
+  const runPlanCta = async (plan: MarketingPlan) => {
+    if (plan.ctaOpens === 'app') {
+      setCtaPhase((p) => ({ ...p, [plan.id]: 'success' }))
+      openApp()
+      return
+    }
+    if (!supabaseEnabled()) {
+      openPricing()
+      return
+    }
+    const token = await getAccessToken()
+    if (!token) {
+      openAuthScreen()
+      return
+    }
+    if (plan.id === 'family' || plan.id === 'business') {
+      setCtaPhase((p) => ({ ...p, [plan.id]: 'loading' }))
+      try {
+        await startCheckout(plan.id, billing === 'annual' ? 'year' : 'month')
+        setCtaPhase((p) => ({ ...p, [plan.id]: 'success' }))
+      } catch {
+        setCtaPhase((p) => ({ ...p, [plan.id]: 'idle' }))
+      }
+      return
+    }
+    openPricing()
+  }
   const glow = usePointerGlowScope<HTMLElement>()
   useDocumentMeta({
     title: 'Pricing — JyutTranslate',
@@ -181,12 +189,15 @@ export function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <MagneticButton
+              <StatefulButton
+                magnetic
                 className={`${plan.featured ? 'btn-primary' : 'btn-ghost'} full`}
-                onClick={() => void onPlanCta(plan, billing)}
+                phase={ctaPhase[plan.id] || 'idle'}
+                loadingLabel={<BiText copy={ui.checkoutOpening} size="sm" />}
+                onClick={() => void runPlanCta(plan)}
               >
                 <BiText copy={plan.cta} size="sm" />
-              </MagneticButton>
+              </StatefulButton>
             </article>
           ))}
         </Reveal>

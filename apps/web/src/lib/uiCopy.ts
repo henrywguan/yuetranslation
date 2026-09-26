@@ -569,6 +569,8 @@ export const ui = {
     jp: '3–24 zi6 · jing1 sou3 . _ - · mui5 siu2 si4 ho2 goi2 jat1 ci3',
   },
   accountUsernameSave: { en: 'Save', zh: '儲存', jp: 'cou5 cyun4' },
+  accountUsernameSaving: { en: 'Saving…', zh: '儲存緊…', jp: 'cou5 cyun4 gan2…' },
+  accountUsernameSaved: { en: 'Saved', zh: '已儲存', jp: 'ji5 cou5 cyun4' },
   accountUsernameEdit: { en: 'Edit username', zh: '更改用戶名稱', jp: 'gong2 goi2 jung6 wu6 ming4 cing1' },
   accountUsernameCancel: { en: 'Cancel', zh: '取消', jp: 'heoi2 siu1' },
   accountPlan: { en: 'Plan', zh: '計劃', jp: 'gai3 waak6' },
@@ -1266,6 +1268,17 @@ export const ui = {
     en: 'help@jyuttranslate.com',
     zh: 'help@jyuttranslate.com',
     jp: 'help@jyuttranslate.com',
+  },
+  langMarqueeLabel: {
+    en: 'Supported languages',
+    zh: '支援語言',
+    jp: 'zi1 wun6 jyu5 jin4',
+  },
+  langMarqueeType: { en: 'Type', zh: '打字', jp: 'daa2 zi6' },
+  checkoutOpening: {
+    en: 'Opening checkout…',
+    zh: '開啟結帳…',
+    jp: 'hoi1 hei2 git3 zoeng3…',
   },
   heroTitle: {
     en: 'JyutTranslate',

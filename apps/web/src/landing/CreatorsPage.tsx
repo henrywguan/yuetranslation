@@ -9,6 +9,7 @@ import { MarketingCtaBand } from './MarketingCtaBand'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingPageShell } from './MarketingPageShell'
 import { Reveal } from './Reveal'
+import { CreatorsTraceTimeline } from './CreatorsTraceTimeline'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import './landing.css'
 import './creators.css'
@@ -191,23 +192,7 @@ export function CreatorsPage() {
             <BiText copy={ui.creatorsCopyLead} size="md" hideJp />
           </p>
 
-          <ol className="creators-steps">
-            {copySteps.map((step, i) => (
-              <li key={step.title.en} className="creators-step">
-                <span className="creators-step-num" aria-hidden="true">
-                  {i + 1}
-                </span>
-                <div className="creators-step-body">
-                  <h3 className="creators-h3">
-                    <BiText copy={step.title} size="md" />
-                  </h3>
-                  <p>
-                    <BiText copy={step.body} size="sm" hideJp />
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <CreatorsTraceTimeline steps={copySteps} />
 
           <div className="creators-demo">
             <p className="creators-demo-label">
