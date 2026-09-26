@@ -16,7 +16,14 @@ import {
 } from '../lib/adminApi'
 import { createWebSpeechSession } from '../lib/webSpeech'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
-import { isTtsPlaying, loadTtsAudio, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
+import {
+  hushTtsSpeakerForMic,
+  isTtsPlaying,
+  loadTtsAudio,
+  speakText,
+  stopSpeaking,
+  unlockTtsPlayback,
+} from '../lib/tts'
 import type { LiveSession, SpeechEventHandlers } from '../lib/types'
 import {
   YUE_VOICES,
@@ -465,6 +472,9 @@ export function AdminPracticePartnerLab() {
     }
     setListening(true)
     try {
+      // Drop the near-silent speaker tap so Web Speech echo-cancel stays clean.
+      // Do this before start() — it is not cancel()/load()/silent-WAV.
+      hushTtsSpeakerForMic()
       // Live-mic invariant: start STT before pausing TTS on Apple barge-in.
       await session.start()
       if (isTtsPlaying()) {
