@@ -25,7 +25,14 @@ assert.match(convo, /scope="conversation"/, 'Conversation still hides text-only 
 const cam = readFileSync(join(here, 'CamTargetPicker.tsx'), 'utf8')
 const docs = readFileSync(join(here, 'CameraDocSession.tsx'), 'utf8')
 assert.match(cam, /lang-modal-layer/, 'AR Cam target opens the same centered modal')
+assert.match(cam, /lang-modal-layer--\$\{tone\}/, 'AR tone gets the viewport-safe modal class')
 assert.doesNotMatch(cam, /cam-target-dd-menu/, 'AR no longer uses anchored off-screen menu')
+assert.doesNotMatch(cam, /menuPos|getBoundingClientRect/, 'AR modal is not positioned from the trigger')
+assert.match(
+  readFileSync(join(here, '../App.css'), 'utf8'),
+  /\.lang-modal-layer--ar/,
+  'AR modal CSS caps height inside the camera viewport',
+)
 assert.match(docs, /CamTargetPicker/, 'Documents use modal language pickers')
 assert.match(docs, /includeAuto=\{false\}/, 'Documents omit Auto detect')
 assert.match(docs, /cam-back--icon/, 'Documents back is an arrow icon')
