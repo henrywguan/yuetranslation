@@ -145,7 +145,7 @@ Signed-in `prefs.autoSpeak` syncs across devices via `PATCH /api/prefs/auto-spea
 | Meter | What increments | Hard cap |
 | --- | --- | --- |
 | `harbor_quest_count` / `harborQuestCount` | Harbor Quest **correct answers** (delta on `PUT /api/harbor-quest`) | None — admin Users table + usage detail only |
-| `practice_partner_count` / `practicePartnerCount` | Each Practice Partner LLM chat turn (`POST /api/admin/practice-partner/chat`) | None — admin Users table + usage detail only |
+| `practice_partner_count` / `practicePartnerCount` | Each Practice Partner LLM drill turn (`POST /api/admin/practice-partner/chat`) | None — admin Users table + usage detail only |
 
 TTS from Harbor Speak buttons and Practice Partner playback still counts toward the normal `tts_chars` meter. Migration: `034_harbor_practice_usage.sql` (apply in Supabase SQL editor if not yet pushed).
 

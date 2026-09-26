@@ -21,7 +21,8 @@
     "smoke:history": "tsx src/history.smoke.ts",
     "smoke:admin-usage-range": "tsx src/adminUsageRange.smoke.ts",
     "smoke:harbor-quest": "tsx src/harborQuest.smoke.ts",
-    "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:admin-usage-range && npm run smoke:guest-rl && npm run smoke:guest-identity && npm run smoke:history && npm run smoke:canto && npm run smoke:details-enrich && npm run smoke:translate-camera && npm run smoke:harbor-quest",
+    "smoke:practice-partner": "tsx src/practicePartnerAi.smoke.ts",
+    "smoke:all": "npm run smoke:entitlements && npm run smoke:usage && npm run smoke:household-usage && npm run smoke:admin-usage-range && npm run smoke:guest-rl && npm run smoke:guest-identity && npm run smoke:history && npm run smoke:canto && npm run smoke:details-enrich && npm run smoke:translate-camera && npm run smoke:harbor-quest && npm run smoke:practice-partner",
     "import:cc-canto": "tsx scripts/import-cc-canto.ts",
     "import:wordshk": "tsx scripts/import-wordshk.ts"
   },

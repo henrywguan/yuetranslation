@@ -4,7 +4,12 @@ import {
   ORBITAL_SPHERE_DEFAULTS,
   type OrbitalSphereOptions,
 } from './ui/orbital-sphere'
-import { postPracticePartnerChat, type PracticePartnerChatMessage } from '../lib/adminApi'
+import {
+  postPracticePartnerChat,
+  type PracticePartnerChatMessage,
+  type PracticePartnerDrill,
+  type PracticePartnerDrillTarget,
+} from '../lib/adminApi'
 import { createWebSpeechSession } from '../lib/webSpeech'
 import { isAppleTouchDevice } from '../lib/mediaAccess'
 import { isTtsPlaying, speakText, stopSpeaking, unlockTtsPlayback } from '../lib/tts'
@@ -102,20 +107,29 @@ const ROLE_LABEL: Record<SubtitleRole, string> = {
 
 const SILENCE_MS = 1600
 
+const EMPTY_CAPTION =
+  'Tap Begin drill. 港灣 demands a phrase. You say it. The model judges — then advances, or makes you try again.'
+
 /**
  * Admin-only Practice Partner.
- * Mic → Web Speech STT → DeepSeek (persona + history) → Azure TTS,
- * with Harbor orb + captions. No Voice Live / Foundry.
+ * Begin drill → DEMAND card → mic / type → JUDGMENT → next phrase.
+ * Mic → Web Speech STT → DeepSeek (mean-tutor + history) → Azure TTS.
+ * Harbor orb + captions. No Voice Live / Foundry.
  */
 export function AdminPracticePartnerLab() {
   const [mood, setMood] = useState<PartnerMood>('idle')
   const [amp, setAmp] = useState(0)
   const [caption, setCaption] = useState<SubtitleLine>({
     role: 'system',
-    text: 'Tap Talk to speak, or type a line. 港灣 replies from a fixed persona + chat history, then Azure TTS speaks.',
+    text: EMPTY_CAPTION,
   })
   const [reel, setReel] = useState<SubtitleLine[]>([])
   const [messages, setMessages] = useState<PracticePartnerChatMessage[]>([])
+  const [activeDrill, setActiveDrill] = useState<PracticePartnerDrillTarget | null>(null)
+  const [streak, setStreak] = useState(0)
+  const [hits, setHits] = useState(0)
+  const [misses, setMisses] = useState(0)
+  const [verdictFlash, setVerdictFlash] = useState<'pass' | 'fail' | null>(null)
   const [listening, setListening] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -133,12 +147,18 @@ export function AdminPracticePartnerLab() {
   const finalsRef = useRef('')
   const silenceTimerRef = useRef(0)
   const messagesRef = useRef<PracticePartnerChatMessage[]>([])
+  const activeDrillRef = useRef<PracticePartnerDrillTarget | null>(null)
   const turnLockRef = useRef(false)
   const finishRef = useRef<() => void>(() => {})
+  const verdictTimerRef = useRef(0)
 
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  useEffect(() => {
+    activeDrillRef.current = activeDrill
+  }, [activeDrill])
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -183,17 +203,105 @@ export function AdminPracticePartnerLab() {
     }
   }, [])
 
+  const applyDrill = useCallback((drill: PracticePartnerDrill | null) => {
+    if (!drill) return
+    setActiveDrill({ en: drill.en, zh: drill.zh, jyutping: drill.jyutping })
+    window.clearTimeout(verdictTimerRef.current)
+    if (drill.verdict === 'pass') {
+      setStreak((n) => n + 1)
+      setHits((n) => n + 1)
+      setVerdictFlash('pass')
+      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1600)
+    } else if (drill.verdict === 'fail') {
+      setStreak(0)
+      setMisses((n) => n + 1)
+      setVerdictFlash('fail')
+      verdictTimerRef.current = window.setTimeout(() => setVerdictFlash(null), 1600)
+    } else {
+      setVerdictFlash(null)
+    }
+  }, [])
+
+  const playPartnerReply = useCallback(
+    async (reply: string) => {
+      setMood('speaking')
+      setPartnerHold(reply)
+      setYouLive(null)
+      setCaption({ role: 'partner', text: reply })
+      pushReel({ role: 'partner', text: reply })
+      // After the LLM round-trip we are outside the user gesture. Unlock must
+      // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
+      // cannot leave the lab stuck on Speaking forever.
+      // Release busy/turn lock before TTS so a second mic tap can barge in.
+      setBusy(false)
+      turnLockRef.current = false
+      try {
+        await Promise.race([
+          speakText(reply, 'yue', partnerVoice, { loud: true }),
+          new Promise<never>((_, reject) => {
+            window.setTimeout(
+              () => reject(new Error('Voice playback timed out — tap Say it again.')),
+              25_000,
+            )
+          }),
+        ])
+      } catch (ttsErr) {
+        stopSpeaking()
+        const ttsMsg =
+          ttsErr instanceof Error ? ttsErr.message : 'Voice playback failed.'
+        setError(ttsMsg)
+      }
+      setMood('idle')
+      setCaption({ role: 'partner', text: reply })
+    },
+    [partnerVoice, pushReel],
+  )
+
+  const startDrill = useCallback(async () => {
+    if (turnLockRef.current || activeDrillRef.current) return
+    turnLockRef.current = true
+    setBusy(true)
+    setError('')
+    setYouLive(null)
+    setFsTypeOpen(false)
+    setMood('thinking')
+    setCaption({ role: 'system', text: '港灣 is choosing your first phrase…' })
+    try {
+      const { reply, drill } = await postPracticePartnerChat(messagesRef.current, null)
+      const withReply: PracticePartnerChatMessage[] = [
+        ...messagesRef.current,
+        { role: 'assistant', content: reply },
+      ]
+      setMessages(withReply)
+      applyDrill(drill)
+      await playPartnerReply(reply)
+    } catch (e) {
+      setMood('idle')
+      const msg = e instanceof Error ? e.message : 'Could not start drill'
+      setError(msg)
+      setCaption({ role: 'system', text: msg })
+    } finally {
+      setBusy(false)
+      turnLockRef.current = false
+    }
+  }, [applyDrill, playPartnerReply])
+
   const runPartnerTurn = useCallback(
     async (userText: string) => {
       const text = userText.trim()
       if (!text || turnLockRef.current) return
+      const target = activeDrillRef.current
+      if (!target) {
+        await startDrill()
+        return
+      }
       turnLockRef.current = true
       setBusy(true)
       setError('')
       setYouLive(null)
       setFsTypeOpen(false)
       setMood('thinking')
-      setCaption({ role: 'system', text: '港灣 is thinking…' })
+      setCaption({ role: 'system', text: '港灣 is judging…' })
 
       const nextMessages: PracticePartnerChatMessage[] = [
         ...messagesRef.current,
@@ -203,44 +311,14 @@ export function AdminPracticePartnerLab() {
       pushReel({ role: 'you', text })
 
       try {
-        const { reply } = await postPracticePartnerChat(nextMessages)
+        const { reply, drill } = await postPracticePartnerChat(nextMessages, target)
         const withReply: PracticePartnerChatMessage[] = [
           ...nextMessages,
           { role: 'assistant', content: reply },
         ]
         setMessages(withReply)
-        setMood('speaking')
-        setPartnerHold(reply)
-        setYouLive(null)
-        setCaption({ role: 'partner', text: reply })
-        pushReel({ role: 'partner', text: reply })
-        // After the LLM round-trip we are outside the user gesture. Unlock must
-        // have run on Talk/Send; still bound speak so a stalled play()/speechSynthesis
-        // cannot leave the lab stuck on Speaking forever.
-        // Release busy/turn lock before TTS so a second mic tap can barge in.
-        // Silent/stuck loud TTS previously left busy=true and swallowed the next Talk.
-        setBusy(false)
-        turnLockRef.current = false
-        try {
-          await Promise.race([
-            speakText(reply, 'yue', partnerVoice, { loud: true }),
-            new Promise<never>((_, reject) => {
-              window.setTimeout(
-                () => reject(new Error('Voice playback timed out — tap Talk again.')),
-                25_000,
-              )
-            }),
-          ])
-        } catch (ttsErr) {
-          stopSpeaking()
-          const ttsMsg =
-            ttsErr instanceof Error ? ttsErr.message : 'Voice playback failed.'
-          setError(ttsMsg)
-          // Caption already shows the partner line; keep chatting even if TTS failed.
-        }
-        setMood('idle')
-        // Keep the partner line on screen until the user starts speaking again.
-        setCaption({ role: 'partner', text: reply })
+        applyDrill(drill)
+        await playPartnerReply(reply)
       } catch (e) {
         setMood('idle')
         const msg = e instanceof Error ? e.message : 'Partner turn failed'
@@ -251,7 +329,7 @@ export function AdminPracticePartnerLab() {
         turnLockRef.current = false
       }
     },
-    [partnerVoice, pushReel],
+    [applyDrill, playPartnerReply, pushReel, startDrill],
   )
 
   const finishUtterance = useCallback(async () => {
@@ -359,26 +437,37 @@ export function AdminPracticePartnerLab() {
       void finishUtterance()
       return
     }
+    unlockTtsPlayback()
+    if (!activeDrill) {
+      void startDrill()
+      return
+    }
     void startListening()
-  }, [listening, finishUtterance, startListening])
+  }, [activeDrill, listening, finishUtterance, startDrill, startListening])
 
   const sendDraft = useCallback(() => {
     const text = draft.trim()
-    if (!text || busy) return
+    if (!text || busy || !activeDrill) return
     // Same gesture unlock as Talk — typed turns also auto-speak after the LLM.
     unlockTtsPlayback()
     setDraft('')
     setFsTypeOpen(false)
     void runPartnerTurn(text)
-  }, [draft, busy, runPartnerTurn])
+  }, [activeDrill, draft, busy, runPartnerTurn])
 
   const resetChat = useCallback(() => {
     void stopMic()
     stopSpeaking()
     turnLockRef.current = false
+    window.clearTimeout(verdictTimerRef.current)
     setBusy(false)
     setMessages([])
     setReel([])
+    setActiveDrill(null)
+    setStreak(0)
+    setHits(0)
+    setMisses(0)
+    setVerdictFlash(null)
     setError('')
     setPartnerHold(null)
     setYouLive(null)
@@ -386,7 +475,7 @@ export function AdminPracticePartnerLab() {
     setMood('idle')
     setCaption({
       role: 'system',
-      text: 'Chat cleared. Tap Talk or type to start again.',
+      text: 'Drill cleared. Tap Begin drill when you are ready to be yelled at.',
     })
   }, [stopMic])
 
@@ -400,6 +489,7 @@ export function AdminPracticePartnerLab() {
     return () => {
       document.removeEventListener('visibilitychange', onHide)
       window.clearTimeout(silenceTimerRef.current)
+      window.clearTimeout(verdictTimerRef.current)
       void stopMic()
       stopSpeaking()
     }
@@ -458,9 +548,27 @@ export function AdminPracticePartnerLab() {
     youLive && partnerHold ? { role: 'partner' as const, text: partnerHold } : null
 
   const openFsKeyboard = () => {
-    if (busy || listening) return
+    if (busy || listening || !activeDrill) return
     setFsTypeOpen(true)
   }
+
+  const talkLabel = listening
+    ? 'Stop & judge'
+    : !activeDrill
+      ? busy
+        ? 'Working…'
+        : 'Begin drill'
+      : busy
+        ? 'Working…'
+        : 'Say it'
+
+  const drillKicker = verdictFlash === 'fail'
+    ? 'Try again'
+    : verdictFlash === 'pass'
+      ? 'Next phrase'
+      : activeDrill
+        ? 'Say this'
+        : 'Waiting'
 
   const partnerSpeaker = voiceSpeakerName(partnerVoice)
   const speakerName =
@@ -483,16 +591,19 @@ export function AdminPracticePartnerLab() {
           <p className="partner-lab-kicker">Internal · not in app</p>
           <h2 className="partner-lab-title">Practice Partner</h2>
           <p className="partner-lab-lede">
-            Live loop (admin only): mic → Web Speech STT → DeepSeek (persona + history) → your
-            existing Azure TTS. Tap the orb for fullscreen — captions sit in the lower half like TV
-            subtitles. No Voice Live / Foundry.
+            Say-this drill (admin only): 港灣 demands a phrase (English + 漢字 + Jyutping), you
+            speak it, the model judges, then advances — mean-tutor mode. Mic → Web Speech →
+            DeepSeek → Azure TTS. Tap the orb for fullscreen. No Voice Live / Foundry.
           </p>
         </div>
       </header>
 
       <div
-        className={`partner-lab-stage partner-lab-stage--${mood}${fullscreen ? ' is-fullscreen' : ''}`}
+        className={`partner-lab-stage partner-lab-stage--${mood}${
+          fullscreen ? ' is-fullscreen' : ''
+        }${verdictFlash ? ` is-verdict-${verdictFlash}` : ''}`}
         data-mood={mood}
+        data-verdict={verdictFlash || 'none'}
         data-fullscreen={fullscreen ? 'true' : 'false'}
         role={fullscreen ? undefined : 'button'}
         tabIndex={fullscreen ? undefined : 0}
@@ -527,6 +638,36 @@ export function AdminPracticePartnerLab() {
             Exit fullscreen
           </button>
         )}
+
+        <div
+          className={`partner-lab-drill${activeDrill ? '' : ' is-empty'}${
+            verdictFlash ? ` is-${verdictFlash}` : ''
+          }`}
+          aria-live="polite"
+        >
+          <p className="partner-lab-drill-kicker">
+            <span>{drillKicker}</span>
+            {hits + misses > 0 ? (
+              <span className="partner-lab-drill-streak">
+                {streak} streak · {hits} hit{hits === 1 ? '' : 's'}
+                {misses ? ` · ${misses} miss` : ''}
+              </span>
+            ) : null}
+          </p>
+          {activeDrill ? (
+            <>
+              <p className="partner-lab-drill-zh" lang="zh-HK">
+                {activeDrill.zh}
+              </p>
+              <p className="partner-lab-drill-en">{activeDrill.en}</p>
+              <p className="partner-lab-drill-jp">{activeDrill.jyutping}</p>
+            </>
+          ) : (
+            <p className="partner-lab-drill-empty">
+              Tap Begin drill. 港灣 demands. You speak. No trophies.
+            </p>
+          )}
+        </div>
 
         <div className="partner-lab-subtitle-band" aria-hidden="true" />
 
@@ -568,7 +709,7 @@ export function AdminPracticePartnerLab() {
                 type="button"
                 className={`partner-lab-fs-mic${listening ? ' is-live' : ''}`}
                 disabled={busy && !listening}
-                aria-label={listening ? 'Stop listening and reply' : 'Talk'}
+                aria-label={talkLabel}
                 onClick={toggleTalk}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-fs-mic-icon">
@@ -581,7 +722,7 @@ export function AdminPracticePartnerLab() {
               <button
                 type="button"
                 className={`partner-lab-fs-keyboard${fsTypeOpen ? ' is-open' : ''}`}
-                disabled={busy || listening}
+                disabled={busy || listening || !activeDrill}
                 aria-label="Type instead"
                 aria-expanded={fsTypeOpen}
                 onClick={openFsKeyboard}
@@ -602,8 +743,8 @@ export function AdminPracticePartnerLab() {
                   inputMode="text"
                   enterKeyHint="send"
                   value={draft}
-                  disabled={busy || listening}
-                  placeholder="Type Cantonese / English…"
+                  disabled={busy || listening || !activeDrill}
+                  placeholder="Type your attempt…"
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -616,7 +757,7 @@ export function AdminPracticePartnerLab() {
                 <button
                   type="button"
                   className="partner-lab-send"
-                  disabled={busy || listening || !draft.trim()}
+                  disabled={busy || listening || !activeDrill || !draft.trim()}
                   onClick={() => {
                     sendDraft()
                     setFsTypeOpen(false)
@@ -657,14 +798,14 @@ export function AdminPracticePartnerLab() {
               disabled={busy && !listening}
               onClick={toggleTalk}
             >
-              {listening ? 'Stop & reply' : busy ? 'Working…' : 'Talk'}
+              {talkLabel}
             </button>
             <div className="partner-lab-compose">
               <input
                 type="text"
                 value={draft}
-                disabled={busy || listening}
-                placeholder="Or type Cantonese / English…"
+                disabled={busy || listening || !activeDrill}
+                placeholder="Or type your attempt…"
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -676,7 +817,7 @@ export function AdminPracticePartnerLab() {
               <button
                 type="button"
                 className="partner-lab-send"
-                disabled={busy || listening || !draft.trim()}
+                disabled={busy || listening || !activeDrill || !draft.trim()}
                 onClick={sendDraft}
               >
                 Send
@@ -688,7 +829,7 @@ export function AdminPracticePartnerLab() {
               disabled={busy || listening}
               onClick={resetChat}
             >
-              Clear chat
+              New drill
             </button>
           </>
         )}
@@ -712,19 +853,23 @@ export function AdminPracticePartnerLab() {
             </ul>
           ) : (
             <p className="partner-lab-transcript-empty">
-              Turns appear here as you talk — You from STT, Partner from the LLM.
+              Turns appear here as you talk — You from STT, 港灣 from the drill.
             </p>
           )}
         </aside>
 
         <aside className="partner-lab-notes">
-          <h3>How it knows what to reply</h3>
+          <h3>How the drill works</h3>
           <ul>
             <li>
-              <strong>Persona:</strong> fixed system prompt — “港灣”, a Cantonese practice partner
+              <strong>Persona:</strong> 港灣 — intense, impatient drill sergeant (mean-tutor mode)
             </li>
             <li>
-              <strong>Memory:</strong> this session’s chat history (your lines + its replies)
+              <strong>Loop:</strong> DEMAND (say this) → you speak → JUDGMENT → next phrase or retry
+            </li>
+            <li>
+              <strong>Memory:</strong> this session’s lines plus the active English / 漢字 / Jyutping
+              target
             </li>
             <li>
               <strong>Voice:</strong> same Azure TTS path as the translator (`yue` / zh-HK)
