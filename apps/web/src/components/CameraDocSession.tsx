@@ -183,6 +183,7 @@ export function CameraDocSession({
             }}
             tone="panel"
             includeAuto={false}
+            labels="plain"
             disabled={busy || !canDocs}
           />
         </div>
@@ -207,6 +208,7 @@ export function CameraDocSession({
             }}
             tone="panel"
             includeAuto={false}
+            labels="plain"
             disabled={busy || !canDocs}
           />
         </div>

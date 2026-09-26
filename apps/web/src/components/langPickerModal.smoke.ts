@@ -35,11 +35,20 @@ assert.match(
 )
 assert.match(docs, /CamTargetPicker/, 'Documents use modal language pickers')
 assert.match(docs, /includeAuto=\{false\}/, 'Documents omit Auto detect')
+assert.match(docs, /labels="plain"/, 'Documents use plain language names (not To …)')
 assert.match(docs, /cam-back--icon/, 'Documents back is an arrow icon')
+assert.match(docs, /BackArrowIcon/, 'Documents back renders an SVG arrow')
+assert.doesNotMatch(docs, /<select/, 'Documents no longer use a native language <select>')
+assert.match(cam, /PLAIN_OPTIONS/, 'Cam picker has plain-name catalog for Documents')
 assert.match(
   readFileSync(join(here, '../lib/docsApi.ts'), 'utf8'),
   /'th'[\s\S]*'lo'[\s\S]*'ceb'/,
   'DocLang includes Thai / Lao / text-only langs',
+)
+assert.match(
+  readFileSync(join(here, '../../../api/src/docs/handler.ts'), 'utf8'),
+  /'tl'[\s\S]*'es'[\s\S]*'vi'[\s\S]*'ceb'/,
+  'API DocLang Zod accepts the full Cam language set',
 )
 
 console.log('langPickerModal.smoke: ok')

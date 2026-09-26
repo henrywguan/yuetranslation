@@ -9,7 +9,8 @@ import { biPlain, ui, type Bi } from '../lib/uiCopy'
 
 type CamOption = { id: CameraTarget; copy: Bi; mark: string }
 
-const ALL_OPTIONS: CamOption[] = [
+/** AR / Cam translate-target copy (“To Cantonese”). */
+const TARGET_OPTIONS: CamOption[] = [
   { id: 'auto', copy: ui.camTargetAuto, mark: 'A' },
   { id: 'en', copy: ui.camTargetEn, mark: 'En' },
   { id: 'yue', copy: ui.camTargetYue, mark: '粵' },
@@ -27,6 +28,24 @@ const ALL_OPTIONS: CamOption[] = [
   { id: 'bcl', copy: ui.camTargetBcl, mark: 'Bc' },
 ]
 
+/** Documents From/To — plain names (From/To labels already sit above). */
+const PLAIN_OPTIONS: CamOption[] = [
+  { id: 'en', copy: ui.english, mark: 'En' },
+  { id: 'yue', copy: ui.cantonese, mark: '粵' },
+  { id: 'cmn', copy: ui.dirMandarin, mark: '普' },
+  { id: 'wuu', copy: ui.dirShanghainese, mark: '沪' },
+  { id: 'sichuan', copy: ui.dirSichuanese, mark: '川' },
+  { id: 'tl', copy: ui.dirTagalog, mark: 'Tl' },
+  { id: 'es', copy: ui.dirMexicanSpanish, mark: 'Mx' },
+  { id: 'eses', copy: ui.dirPeninsularSpanish, mark: 'Es' },
+  { id: 'vi', copy: ui.dirVietnamese, mark: 'Vi' },
+  { id: 'th', copy: ui.dirThai, mark: 'Th' },
+  { id: 'lo', copy: ui.dirLao, mark: 'Lo' },
+  { id: 'ceb', copy: ui.dirCebuano, mark: 'Cb' },
+  { id: 'ilo', copy: ui.dirIlocano, mark: 'Il' },
+  { id: 'bcl', copy: ui.dirBikol, mark: 'Bc' },
+]
+
 type Props = {
   value: CameraTarget
   onChange: (next: CameraTarget) => void
@@ -34,6 +53,8 @@ type Props = {
   tone?: 'ar' | 'panel'
   /** Documents from/to omit Auto detect. */
   includeAuto?: boolean
+  /** `plain` = language names (Documents); `target` = “To …” (AR/Cam). */
+  labels?: 'target' | 'plain'
   disabled?: boolean
 }
 
@@ -63,6 +84,7 @@ export function CamTargetPicker({
   onChange,
   tone = 'ar',
   includeAuto = true,
+  labels = 'target',
   disabled = false,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -71,7 +93,8 @@ export function CamTargetPicker({
   const selectedRef = useRef<HTMLButtonElement>(null)
   const menuId = useId()
   const titleId = useId()
-  const options = includeAuto ? ALL_OPTIONS : ALL_OPTIONS.filter((o) => o.id !== 'auto')
+  const catalog = labels === 'plain' ? PLAIN_OPTIONS : TARGET_OPTIONS
+  const options = includeAuto ? catalog : catalog.filter((o) => o.id !== 'auto')
   const current = options.find((o) => o.id === value) ?? options[0]!
   const voiceOpts = options.filter((o) => o.id === 'auto' || !isTextOnlyLang(o.id))
   const typeOpts = options.filter((o) => o.id !== 'auto' && isTextOnlyLang(o.id))
