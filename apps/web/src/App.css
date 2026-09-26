@@ -2433,8 +2433,11 @@
 .solo-input {
   display: block;
   width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
   box-sizing: border-box;
   resize: none;
+  field-sizing: content;
   border: 0;
   outline: none;
   background: transparent;
@@ -2443,6 +2446,8 @@
   font: inherit;
   line-height: 1.35;
   min-height: 2.8em;
+  height: auto;
+  overflow: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -2507,6 +2512,8 @@
 }
 
 .solo-translation {
+  flex: 1 1 auto;
+  width: 100%;
   font-family: var(--font-body);
   font-size: clamp(1.2rem, 5.2vw, 2.15rem);
   line-height: 1.35;
@@ -2517,6 +2524,12 @@
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.solo-translation--en {
+  font-family: var(--font-english);
+  font-size: clamp(1.15rem, 4.6vw, 1.85rem);
+  font-weight: 500;
 }
 
 .solo-divider {
@@ -3298,13 +3311,13 @@
 .pane-hero {
   margin: 0;
   width: 100%;
-  max-width: 22rem;
+  max-width: 100%;
   font-family: var(--font-body);
   font-size: clamp(1.45rem, 6.2vw, 2.45rem);
   font-weight: 650;
   line-height: 1.35;
   color: var(--ink-bright, var(--ink));
-  text-wrap: balance;
+  text-wrap: pretty;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -3964,27 +3977,40 @@
 }
 
 .solo-translation .result-with-def {
-  justify-content: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
 }
 
 .solo-translation .result-with-def-main {
-  flex: 0 1 auto;
-  width: auto;
+  flex: 1 1 auto;
+  width: 100%;
   max-width: 100%;
 }
 
 .solo-translation .result-with-def-line {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .solo-translation .cantonese-activate {
-  width: fit-content;
+  flex: 1 1 auto;
+  min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
   padding: 8px 12px 8px 5px;
   text-align: left;
+}
+
+.solo-translation .solo-tr-text,
+.solo-translation button.solo-tr-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 

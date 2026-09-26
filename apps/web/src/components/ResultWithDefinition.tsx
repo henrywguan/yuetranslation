@@ -155,8 +155,19 @@ export function ResultWithDefinition({
                 onActivate={onActivate}
               />
             )
+          ) : onActivate ? (
+            <button
+              type="button"
+              className={`${textClassName || 'result-text'} spoken-line-text--action`}
+              lang="en"
+              onClick={() => onActivate(trimmed)}
+            >
+              {normalizeEnglishApostrophes(trimmed)}
+            </button>
           ) : (
-            <p className={textClassName || 'result-text'}>{normalizeEnglishApostrophes(trimmed)}</p>
+            <p className={textClassName || 'result-text'} lang="en">
+              {normalizeEnglishApostrophes(trimmed)}
+            </p>
           )}
           {speakLang && trimmed ? (
             speakLang === 'yue' ||
