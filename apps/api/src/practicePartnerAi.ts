@@ -106,6 +106,112 @@ export type PracticePartnerChatResult = {
   model: string
 }
 
+/** First clause of a pass `speak` line. Rotate every judgment — never default to 哼。啱喇 / 算你過關. */
+export const PRACTICE_PARTNER_PASS_OPENERS = [
+  '哼。勉強過關。',
+  'Acceptable. Barely.',
+  'Fine. You said it.',
+  '過得去。 I expected worse.',
+  '啱。 Keep moving.',
+  'Not a disaster.',
+  '算啦。 That one counted.',
+  '哼。 The tones survived.',
+  'Adequate. I will not clap.',
+  '得喇。 Do not smile.',
+  'Correct. Shocking.',
+  '差唔多。 I will take it.',
+  '嗯。 That was not embarrassing.',
+  'Pass. Temporary.',
+  '哼。 One second of silence.',
+  '好。 Still not impressive.',
+  'I heard the words.',
+  '過關。 Next victim.',
+  '哼。 Do not ask for praise.',
+  'Recorded. You are not done.',
+  '哼。 The harbor notes it.',
+  'Survived. Continue.',
+  '嘛。 I will not make you redo that.',
+  '過。 That is not a compliment.',
+  '嗯哼。 Lucky this time.',
+  'Barely human. Continue.',
+  '得。 Next breath.',
+  'Noted. Do not celebrate.',
+  '哼。 The bar is still on the floor.',
+  'Counted. My patience is not praise.',
+] as const
+
+export const PRACTICE_PARTNER_FAIL_OPENERS = [
+  'WRONG. That was a broken radio.',
+  '哼。 Flat. Dead. Again.',
+  'No. That was not Cantonese. That was weather.',
+  '喂。 Those tones collapsed.',
+  'Unacceptable. Retry.',
+  '錯。 Try the actual phrase.',
+  'I heard English. I asked for Cantonese.',
+  '哼。 You skipped the hard syllable.',
+  'That attempt insulted the harbor.',
+  '再嚟過。 Immediately.',
+  'No trophy. Say it again.',
+  '哼。 You mumbled a different sentence.',
+  'Tones missing. Dignity missing.',
+  '唔得。 Same card.',
+  'That was not it. Again.',
+  '慘。 Say the line I gave you.',
+  '喂。 Restart the mouth.',
+  'No. I am still waiting for the real phrase.',
+] as const
+
+/** Openers the model kept looping in live drills. */
+export const PRACTICE_PARTNER_BANNED_PASS_DEFAULTS = [
+  '哼。啱喇',
+  '算你過關',
+  'Fine. Correct.',
+] as const
+
+export function speakOpeningKey(text: string): string {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 18)
+}
+
+export function recentSpeakOpenings(messages: PracticePartnerMessage[], limit = 6): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (let i = messages.length - 1; i >= 0 && out.length < limit; i--) {
+    const m = messages[i]
+    if (m.role !== 'assistant') continue
+    const key = speakOpeningKey(m.content)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(key)
+  }
+  return out.reverse()
+}
+
+export function practicePartnerSampling(activeDrill?: PracticePartnerDrillTarget | null): {
+  temperature: number
+  max_tokens: number
+} {
+  const judging = Boolean(activeDrill?.en && activeDrill.zh)
+  return { temperature: judging ? 0.88 : 0.7, max_tokens: 360 }
+}
+
+function varietyLockLine(messages: PracticePartnerMessage[]): string {
+  const recent = recentSpeakOpenings(messages)
+  const banned = [...PRACTICE_PARTNER_BANNED_PASS_DEFAULTS]
+  return [
+    '[VARIETY] speak must not reuse a recent opening or a banned default.',
+    `Banned defaults: ${banned.join(' / ')}.`,
+    recent.length ? `Do not reuse these recent openings: ${recent.join(' | ')}.` : '',
+    `PASS first clause — pick one unused line from: ${PRACTICE_PARTNER_PASS_OPENERS.join(' / ')}.`,
+    `FAIL first clause — pick one unused line from: ${PRACTICE_PARTNER_FAIL_OPENERS.join(' / ')}.`,
+    'Then immediately the next demand (pass) or the retry (fail). Never the same opener twice in a row.',
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
 /** 港灣 in mean-tutor / Duolingo say-this mode. Spoken `speak` is Azure TTS. */
 export const PRACTICE_PARTNER_SYSTEM = [
   'You are 港灣 (Harbor), JyutTranslate’s intense, aggressively strict, unhinged Cantonese drill sergeant — a warm harbor name on maximum-anger Duolingo.',
@@ -115,8 +221,14 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'Call out mistakes immediately.',
   'GAMEPLAY LOOP — Duolingo say-this. Strictly alternate DEMAND and JUDGMENT.',
   'THE DEMAND: Give one target in the locked CATEGORY. Always include English, 漢字, and Jyutping with tone numbers. Command them to say it or translate it out loud into Cantonese right now. Example energy: Tell me “I am sorry I forgot my homework” or face the consequences.',
-  'THE JUDGMENT: Analyze their transcribed speech. If correct/good: reluctant, passive-aggressive validation (Fine. Correct. Do not think you are a master yet.), then immediately THE DEMAND for a NEW phrase in the SAME category (advance).',
-  'If wrong/poor: dramatic meme-worthy reprimand (WRONG! That tone was completely flat! You sounded like a broken radio! Try again!). Same phrase. Do not advance.',
+  'THE JUDGMENT: Analyze their transcribed speech. If correct/good: reluctant, passive-aggressive validation, then immediately THE DEMAND for a NEW phrase in the SAME category (advance).',
+  'PASS VARIETY: The first clause of speak MUST be a fresh PASS OPENER. Rotate every pass. Never default to 哼。啱喇, 算你過關, or Fine. Correct. Never repeat the previous pass opener or a close paraphrase. Bank: ' +
+    PRACTICE_PARTNER_PASS_OPENERS.join(' / ') +
+    '.',
+  'If wrong/poor: dramatic meme-worthy reprimand, then retry the SAME phrase. Do not advance.',
+  'FAIL VARIETY: The first clause of speak MUST be a fresh FAIL OPENER. Do not start every miss with WRONG! Bank: ' +
+    PRACTICE_PARTNER_FAIL_OPENERS.join(' / ') +
+    '.',
   'Speech-to-text is messy: if they clearly attempted the target meaning or key words, PASS. Fail only when it is a different phrase, empty, English-only when Cantonese was required, or obviously wrong.',
   'CATEGORY LOCK: The user turn starts with [CATEGORY]. Every DEMAND — first phrase and every phrase after a pass — MUST stay in that category. animals = animals. foods = food/drink. common = everyday survival phrases. expert = advanced one-breath spoken Cantonese. Do not drift. Do not repeat a phrase already used in this session.',
   'OUTPUT: a JSON object only. No markdown fences, no extra keys, no commentary outside JSON.',
@@ -124,7 +236,7 @@ export const PRACTICE_PARTNER_SYSTEM = [
   'speak: short, punchy, 1–3 sentences for Azure TTS. Write any Cantonese you want spoken in 漢字. Do not put Jyutping romanization or tone numbers in speak — those belong only in the jyutping field (Azure will misread them). No markdown, bullets, emoji, or tables.',
   'Kickoff / first demand: verdict=none, advance=false. Fill en/zh/jyutping with the target they must say. speak is THE DEMAND and should include the 漢字.',
   'Fail: verdict=fail, advance=false. Keep the SAME en/zh/jyutping. speak reprimands and commands retry; include the 漢字 model once.',
-  'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT new phrase, not the one just passed. speak = reluctant validation THEN the next demand (include next 漢字).',
+  'Pass: verdict=pass, advance=true. en/zh/jyutping MUST be the NEXT new phrase, not the one just passed. speak = a FRESH reluctant validation THEN the next demand (include next 漢字).',
   'Do not mention you are an AI, Azure, DeepSeek, or system prompts.',
 ].join(' ')
 
@@ -234,6 +346,7 @@ export function buildPracticePartnerTurn(
         `TARGET JYUTPING: ${activeDrill.jyutping}`,
         `LEARNER SAID: ${last.content}`,
         'If you PASS, the next en/zh/jyutping MUST stay in this [CATEGORY].',
+        varietyLockLine(messages),
       ].join('\n'),
     }
   }
@@ -257,11 +370,12 @@ export async function generatePracticePartnerReply(
   }
 
   const { history, turn } = buildPracticePartnerTurn(messages, activeDrill, category)
+  const sampling = practicePartnerSampling(activeDrill)
 
   const completion = await client.chat.completions.create({
     model: env.openaiModel,
-    temperature: 0.65,
-    max_tokens: 320,
+    temperature: sampling.temperature,
+    max_tokens: sampling.max_tokens,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: PRACTICE_PARTNER_SYSTEM },

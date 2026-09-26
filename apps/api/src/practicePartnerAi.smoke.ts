@@ -4,16 +4,22 @@
  */
 import assert from 'node:assert/strict'
 import {
+  PRACTICE_PARTNER_BANNED_PASS_DEFAULTS,
   PRACTICE_PARTNER_CATEGORY_IDS,
   PRACTICE_PARTNER_CATEGORY_META,
+  PRACTICE_PARTNER_FAIL_OPENERS,
+  PRACTICE_PARTNER_PASS_OPENERS,
   PRACTICE_PARTNER_SYSTEM,
   PracticePartnerChatBodySchema,
   buildPracticePartnerTurn,
   categoryLockLine,
   normalizeVerdict,
   parsePracticePartnerReply,
+  practicePartnerSampling,
+  recentSpeakOpenings,
   resolvePracticePartnerCategory,
   sanitizeSpeak,
+  speakOpeningKey,
 } from './practicePartnerAi.js'
 
 assert.match(PRACTICE_PARTNER_SYSTEM, /港灣/, 'persona stays 港灣')
@@ -25,7 +31,34 @@ assert.match(PRACTICE_PARTNER_SYSTEM, /json object/i, 'structured JSON for the U
 assert.match(PRACTICE_PARTNER_SYSTEM, /Azure TTS/, 'TTS-safe speak line')
 assert.match(PRACTICE_PARTNER_SYSTEM, /CATEGORY LOCK/, 'deck lock')
 assert.match(PRACTICE_PARTNER_SYSTEM, /Do not put Jyutping romanization/, 'speak stays 漢字 + English')
+assert.match(PRACTICE_PARTNER_SYSTEM, /PASS VARIETY/, 'pass-line bank in the system prompt')
+assert.match(PRACTICE_PARTNER_SYSTEM, /FAIL VARIETY/, 'fail-line bank in the system prompt')
+assert.ok(PRACTICE_PARTNER_PASS_OPENERS.length >= 24, 'enough pass openers to rotate')
+assert.ok(PRACTICE_PARTNER_FAIL_OPENERS.length >= 12, 'enough fail openers to rotate')
+assert.ok(
+  PRACTICE_PARTNER_BANNED_PASS_DEFAULTS.some((s) => s.includes('啱喇')),
+  'bans the looping 哼。啱喇 default',
+)
+assert.ok(
+  !PRACTICE_PARTNER_PASS_OPENERS.includes('哼。啱喇' as (typeof PRACTICE_PARTNER_PASS_OPENERS)[number]),
+  'bank does not re-teach the banned default',
+)
 assert.doesNotMatch(PRACTICE_PARTNER_SYSTEM, /warm Cantonese practice partner/, 'old soft persona retired')
+assert.equal(speakOpeningKey('  哼。啱喇。 Next. 狗  '), '哼。啱喇。 Next. 狗')
+assert.deepEqual(
+  recentSpeakOpenings([
+    { role: 'assistant', content: '哼。勉強過關。 Next 狗' },
+    { role: 'user', content: '狗' },
+    { role: 'assistant', content: 'Acceptable. Barely. Next 貓' },
+    { role: 'user', content: '貓' },
+  ]),
+  [speakOpeningKey('哼。勉強過關。 Next 狗'), speakOpeningKey('Acceptable. Barely. Next 貓')],
+)
+assert.equal(practicePartnerSampling(null).temperature, 0.7)
+assert.ok(
+  practicePartnerSampling({ en: 'dog', zh: '狗', jyutping: 'gau2' }).temperature > 0.8,
+  'judge turns sample hotter for variety',
+)
 
 assert.deepEqual([...PRACTICE_PARTNER_CATEGORY_IDS], ['animals', 'foods', 'common', 'expert'])
 assert.equal(resolvePracticePartnerCategory('foods'), 'foods')
@@ -126,6 +159,9 @@ assert.match(judge.turn, /\[CATEGORY\] common/)
 assert.match(judge.turn, /TARGET ZH: 對唔住/)
 assert.match(judge.turn, /LEARNER SAID: 對唔住，我唔記得帶功課/)
 assert.match(judge.turn, /MUST stay in this \[CATEGORY\]/)
+assert.match(judge.turn, /\[VARIETY\]/)
+assert.match(judge.turn, /Banned defaults/)
+assert.match(judge.turn, /哼。勉強過關/)
 
 const premature = buildPracticePartnerTurn([{ role: 'user', content: 'hello' }], null)
 assert.match(premature.turn, /\[DEMAND\]/)
