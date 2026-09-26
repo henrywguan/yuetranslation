@@ -122,6 +122,11 @@ export function openLearn(levelId?: string) {
   navigate('learn')
 }
 
+/** Open Practice Partner (`#/practice`) from Account Hub. */
+export function openPracticePartner() {
+  navigate('practice')
+}
+
 /** Open the creator kit (`#/creators`) — Jyutping+Chao copy + Noto fonts. */
 export function openCreators() {
   navigate('creators')

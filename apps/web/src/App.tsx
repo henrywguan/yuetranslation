@@ -32,6 +32,9 @@ const TranslatorApp = lazy(() =>
   import('./TranslatorApp').then((m) => ({ default: m.TranslatorApp })),
 )
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
+const PracticePage = lazy(() =>
+  import('./pages/PracticePage').then((m) => ({ default: m.PracticePage })),
+)
 const LegalPage = lazy(() => import('./landing/LegalPage').then((m) => ({ default: m.LegalPage })))
 const NotFoundPage = lazy(() =>
   import('./landing/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
@@ -115,6 +118,7 @@ export default function App() {
   else if (route === 'pricing') page = <PricingPage />
   else if (route === 'tones') page = <TonesPage />
   else if (route === 'learn') page = <LearnPage />
+  else if (route === 'practice') page = <PracticePage />
   else if (route === 'creators') page = <CreatorsPage />
   else if (route === 'admin') page = <AdminPage />
   else if (route === 'privacy') page = <LegalPage doc="privacy" />
