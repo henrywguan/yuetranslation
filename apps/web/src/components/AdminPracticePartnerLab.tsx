@@ -15,7 +15,16 @@ import {
   type PracticePartnerDrillTarget,
 } from '../lib/adminApi'
 import { createWebSpeechSession } from '../lib/webSpeech'
-import { isAppleTouchDevice } from '../lib/mediaAccess'
+import {
+  isAppleTouchDevice,
+  micBlockedMessage,
+  stopMediaStream,
+  unlockMicrophone,
+} from '../lib/mediaAccess'
+import {
+  bindMicBackgroundRelease,
+  shouldForceReleaseMicOnBackground,
+} from '../lib/micPrivacy'
 import {
   hushTtsSpeakerForMic,
   isTtsPlaying,
@@ -186,6 +195,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const draftInputRef = useRef<HTMLInputElement | null>(null)
   const sessionRef = useRef<LiveSession | null>(null)
+  /** True while getUserMedia / recognition.start handshake is in flight. */
+  const startingMicRef = useRef(false)
   const finalsRef = useRef('')
   const silenceTimerRef = useRef(0)
   const messagesRef = useRef<PracticePartnerChatMessage[]>([])
@@ -239,6 +250,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
   const stopMic = useCallback(async () => {
     window.clearTimeout(silenceTimerRef.current)
+    startingMicRef.current = false
     const session = sessionRef.current
     sessionRef.current = null
     setListening(false)
@@ -441,7 +453,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }, [finishUtterance])
 
   const startListening = useCallback(async () => {
-    if (listening) return
+    if (listening || startingMicRef.current) return
     const canBargeIn = mood === 'speaking' || isTtsPlaying()
     if ((busy || turnLockRef.current) && !canBargeIn) return
     setError('')
@@ -449,6 +461,31 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     setFsCatsOpen(false)
     // Must run in the Talk gesture so later Azure/browser TTS after DeepSeek is allowed.
     unlockTtsPlayback()
+
+    const apple = isAppleTouchDevice()
+    startingMicRef.current = true
+
+    // Desktop: prime getUserMedia in this gesture so Chrome shows the site mic
+    // prompt (Solo/Conversation path). Release tracks before Web Speech — an
+    // exclusive gUM lock blocks SpeechRecognition from hearing.
+    // Apple: skip gUM before recognition.start() — it cancels barge-in capture.
+    if (!apple) {
+      const blocked = micBlockedMessage()
+      if (blocked) {
+        startingMicRef.current = false
+        setError(blocked)
+        setMood('idle')
+        return
+      }
+      const primed = await unlockMicrophone()
+      if (!primed) {
+        startingMicRef.current = false
+        setError('Microphone permission denied. Allow mic access for this site and try again.')
+        setMood('idle')
+        return
+      }
+      stopMediaStream(primed)
+    }
 
     const handlers: SpeechEventHandlers = {
       onInterim: (_lang, text) => {
@@ -484,7 +521,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
     const session = createWebSpeechSession(handlers, 'yue')
     if (!session) {
+      startingMicRef.current = false
       setError('Web Speech is not available in this browser. Type a line instead.')
+      setMood('idle')
       return
     }
 
@@ -504,10 +543,12 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       hushTtsSpeakerForMic()
       // Live-mic invariant: start STT before pausing TTS on Apple barge-in.
       await session.start()
+      startingMicRef.current = false
       if (isTtsPlaying()) {
-        stopSpeaking({ preserveSession: isAppleTouchDevice() })
+        stopSpeaking({ preserveSession: apple })
       }
     } catch (e) {
+      startingMicRef.current = false
       sessionRef.current = null
       setListening(false)
       setMood('idle')
@@ -598,14 +639,24 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   }
 
   useEffect(() => {
-    const onHide = () => {
-      if (document.visibilityState === 'hidden') {
-        void stopMic()
+    return bindMicBackgroundRelease(() => {
+      // Desktop mic-permission UI briefly marks the document hidden. Do not
+      // abort during the getUserMedia / recognition.start handshake (Solo #605).
+      if (
+        !shouldForceReleaseMicOnBackground({
+          apple: isAppleTouchDevice(),
+          live: listening && !startingMicRef.current,
+          hasSession: Boolean(sessionRef.current) && !startingMicRef.current,
+        })
+      ) {
+        return
       }
-    }
-    document.addEventListener('visibilitychange', onHide)
+      void stopMic()
+    })
+  }, [listening, stopMic])
+
+  useEffect(() => {
     return () => {
-      document.removeEventListener('visibilitychange', onHide)
       window.clearTimeout(silenceTimerRef.current)
       window.clearTimeout(verdictTimerRef.current)
       void stopMic()
