@@ -1231,7 +1231,8 @@ function scenicPavilion(rng: () => number) {
     bench.rotation.z = Math.PI / 2
     bench.position.set(0, 0.32, 0.42)
     bench.userData.harborChair = true
-    bench.userData.seatY = 0.32
+    // seatY is offset from mesh origin (cylinder center) up to the cushion top.
+    bench.userData.seatY = 0.14
     paintHarborV2Map(bench, 'dirt', 1.8)
     g.add(bench)
     return g
@@ -1262,7 +1263,8 @@ function scenicPavilion(rng: () => number) {
   bench.rotation.z = Math.PI / 2
   bench.position.set(0, 0.32, 0.35)
   bench.userData.harborChair = true
-  bench.userData.seatY = 0.32
+  // seatY is offset from mesh origin (cylinder center) up to the cushion top.
+  bench.userData.seatY = 0.14
   g.add(bench)
   // Jade / gold rail accents
   for (const sx of [-0.55, 0.55] as const) {
@@ -4773,6 +4775,8 @@ export function createHarborWorld(
   let sitting = false
   /** Walk-to-then-sit target (OSRS chair click). */
   let sitTarget: THREE.Object3D | null = null
+  /** Chair currently occupied — refresh world Y each frame so we stay on the seat. */
+  let sitChair: THREE.Object3D | null = null
   const chairWorldPos = new THREE.Vector3()
   const chairWorldQuat = new THREE.Quaternion()
   const chairEuler = new THREE.Euler()
@@ -4992,6 +4996,7 @@ export function createHarborWorld(
   const exitSit = () => {
     if (!sitting) return
     sitting = false
+    sitChair = null
     if (scoutSit) scoutSit.visible = false
     if (travelMode === 'foot') {
       scoutWalk.visible = true
@@ -5008,6 +5013,7 @@ export function createHarborWorld(
     footX = chairWorldPos.x
     footZ = chairWorldPos.z
     sitting = true
+    sitChair = chair
     sitTarget = null
     playerDirected = false
     destMarker.visible = false
@@ -5015,7 +5021,7 @@ export function createHarborWorld(
     scoutWalk.visible = false
     const sit = ensureScoutSit()
     sit.visible = true
-    // Seat top in world — GLB chair plant drops hips onto this, not through it.
+    // Seat cushion in world — chair plant parks hips on this, not under it.
     sit.position.set(chairWorldPos.x, chairWorldPos.y + seatY, chairWorldPos.z)
     sit.rotation.set(0, chairEuler.y, 0)
     try {
@@ -5431,8 +5437,17 @@ export function createHarborWorld(
       const gy = groundYAt(footX, footZ)
       if (sitting) {
         if (scoutSit) {
-          scoutSit.position.x = footX
-          scoutSit.position.z = footZ
+          if (sitChair) {
+            sitChair.getWorldPosition(chairWorldPos)
+            const seatY =
+              typeof sitChair.userData.seatY === 'number' ? sitChair.userData.seatY : 0.42
+            footX = chairWorldPos.x
+            footZ = chairWorldPos.z
+            scoutSit.position.set(chairWorldPos.x, chairWorldPos.y + seatY, chairWorldPos.z)
+          } else {
+            scoutSit.position.x = footX
+            scoutSit.position.z = footZ
+          }
           if (fishAnim.phase === 'idle') {
             scoutAnim = tickHarborProtagonistAnim(scoutSit, { ...scoutAnim, mode: 'sit' }, dt, {
               reduced,
