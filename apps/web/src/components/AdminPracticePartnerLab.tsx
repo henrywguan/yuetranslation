@@ -244,6 +244,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const sessionRef = useRef<LiveSession | null>(null)
   const ttsLiveRef = useRef(false)
   const ttsGenRef = useRef(0)
+  const zhFlashTimerRef = useRef(0)
   /** True while getUserMedia / recognition.start handshake is in flight. */
   const startingMicRef = useRef(false)
   const finalsRef = useRef('')
@@ -423,6 +424,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const flashDrillZh = useCallback((event: { stopPropagation: () => void }) => {
     event.stopPropagation()
     setZhFlash((n) => n + 1)
+    window.clearTimeout(zhFlashTimerRef.current)
+    zhFlashTimerRef.current = window.setTimeout(() => setZhFlash(0), 980)
     replayPartnerVoice()
   }, [replayPartnerVoice])
 
@@ -747,6 +750,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     return () => {
       window.clearTimeout(silenceTimerRef.current)
       window.clearTimeout(verdictTimerRef.current)
+      window.clearTimeout(zhFlashTimerRef.current)
       void stopMic()
       stopSpeaking()
     }
@@ -1090,33 +1094,6 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         <div className="partner-lab-glow" aria-hidden="true" />
         <OrbitalSphereBackground className="partner-lab-orb" {...orbitProps} />
 
-        {fullscreen && partnerHold ? (
-          <button
-            type="button"
-            className={`partner-lab-replay${mood === 'speaking' ? ' is-speaking' : ''}`}
-            disabled={mood === 'speaking' || listening}
-            aria-label={mood === 'speaking' ? 'Partner is speaking' : 'Replay partner'}
-            onClick={(event) => {
-              event.stopPropagation()
-              replayPartnerVoice()
-            }}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-replay-icon">
-              <path
-                fill="currentColor"
-                d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"
-              />
-            </svg>
-            <span className="partner-lab-replay-eq" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-          </button>
-        ) : null}
-
         {verdictFlash === 'pass' ? (
           <div className="partner-lab-pass-burst" aria-hidden="true">
             <span className="partner-lab-pass-halo" />
@@ -1193,15 +1170,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 }
                 onClick={flashDrillZh}
               >
-                {[...activeDrill.zh].map((ch, i) => (
-                  <span
-                    key={`${zhFlash}-${i}`}
-                    className={zhFlash ? 'is-jade' : undefined}
-                    style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
-                  >
-                    {ch}
-                  </span>
-                ))}
+                <span className="partner-lab-drill-zh-chars">
+                  {[...activeDrill.zh].map((ch, i) => (
+                    <span
+                      key={`${zhFlash}-${i}`}
+                      className={zhFlash ? 'is-jade' : undefined}
+                      style={zhFlash ? { animationDelay: `${i * 32}ms` } : undefined}
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </span>
+                {zhFlash ? <span className="partner-lab-drill-zh-line" aria-hidden="true" /> : null}
               </button>
               <p className="partner-lab-drill-en">{activeDrill.en}</p>
               <p className="partner-lab-drill-jp">{activeDrill.jyutping}</p>
@@ -1227,6 +1207,32 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               <span className="partner-lab-subtitles-speaker">{partnerSpeaker}</span>
               <span className="partner-lab-subtitles-secondary-text">{displaySecondary.text}</span>
             </p>
+          ) : null}
+          {fullscreen && partnerHold ? (
+            <button
+              type="button"
+              className={`partner-lab-replay${mood === 'speaking' ? ' is-speaking' : ''}`}
+              disabled={mood === 'speaking' || listening}
+              aria-label={mood === 'speaking' ? 'Partner is speaking' : 'Replay partner'}
+              onClick={(event) => {
+                event.stopPropagation()
+                replayPartnerVoice()
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="partner-lab-replay-icon">
+                <path
+                  fill="currentColor"
+                  d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"
+                />
+              </svg>
+              <span className="partner-lab-replay-eq" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+            </button>
           ) : null}
           <p className="partner-lab-subtitles-speaker">{speakerName}</p>
           <p className="partner-lab-subtitles-text">{displayPrimary.text}</p>
