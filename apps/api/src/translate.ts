@@ -17,6 +17,8 @@ import { inferTagalogRegister } from './tagalogRegister.js'
 import { inferMexicanSpanishRegister } from './mexicanSpanishRegister.js'
 import { inferPeninsularSpanishRegister } from './peninsularSpanishRegister.js'
 import { inferVietnameseRegister } from './vietnameseRegister.js'
+import { inferThaiRegister } from './thaiRegister.js'
+import { inferLaoRegister } from './laoRegister.js'
 import { translateCebuano, translateIlocano, translateBikol } from './translatePhilippineRegional.js'
 
 /** Scrub residual Cantonese colloquialisms from Mandarin output (to === cmn only). */
@@ -39,7 +41,7 @@ function applyCmnScrub(
   }
 }
 
-const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'ceb', 'ilo', 'bcl'])
+const LangZ = z.enum(['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi', 'th', 'lo', 'ceb', 'ilo', 'bcl'])
 
 const Body = z.object({
   text: z.string().min(1).max(2000),
@@ -79,7 +81,7 @@ function mergeDefinitions(...parts: Array<string | string[] | undefined | null>)
   return out
 }
 
-type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'ceb' | 'ilo' | 'bcl'
+type TranslateLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo' | 'ceb' | 'ilo' | 'bcl'
 
 type TranslateResult = {
   text: string
@@ -2231,6 +2233,446 @@ async function translateVietnamese(opts: {
   )
 }
 
+/**
+ * EN↔Thai — colloquial Central Thai (Bangkok), native Thai script only.
+ * Never Chinese characters, never RTGS, never invented tone digits — the
+ * client derives tone readings from the script (`thaiTones.ts`).
+ */
+async function translateThai(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'th' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'th-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'th' ? `(demo TH) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'th' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'th-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toTh = to === 'th'
+  const register = toTh ? inferThaiRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'th-formal' : 'th-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toTh) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Central Thai interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Central Thai (complete sentences, respectful particles).',
+            'Avoid slang; keep wording clear and respectful.',
+            'Write ONLY in native Thai script (Unicode Thai block). Never Chinese characters, never RTGS romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Thai>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Central Thai interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Central Thai (everyday Bangkok-natural conversational particles like ครับ/ค่ะ/นะ are fine).',
+            'Do NOT use stiff textbook / formal written Thai.',
+            'Write ONLY in native Thai script (Unicode Thai block). Never Chinese characters, never RTGS romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Thai>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedTh = parseYuePayload(raw, text, false)
+    primary = parsedTh.text
+    alternatives = parsedTh.alternatives
+    if (parsedTh.definition) definition = parsedTh.definition
+  } else if (wantAlts && !toTh) {
+    const system = [
+      'You are a Central Thai interpreter helping Thai speakers learn English.',
+      'Translate colloquial Thai into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Thai gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toTh
+      ? register === 'formal'
+        ? [
+            'You are a Central Thai interpreter for formal situations.',
+            'Translate into POLITE formal Central Thai (complete sentences, respectful particles).',
+            'Write ONLY in native Thai script. Never Chinese characters, never RTGS romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Thai>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Central Thai interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Central Thai (everyday Bangkok-natural, particles OK).',
+            'Write ONLY in native Thai script. Never Chinese characters, never RTGS romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Thai>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Central Thai interpreter.',
+          'Translate colloquial Thai into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toTh && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toTh ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toTh ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toTh) {
+    const hasThaiScript = /[\u0E00-\u0E7F]/.test(primary)
+    const outText = primary && !hasHan(primary) && hasThaiScript ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-th-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['th-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
+/**
+ * EN↔Lao — colloquial Vientiane Lao, native Lao script only.
+ * Never Chinese characters, never a toneless romanization, never invented
+ * tone digits — the client derives tone readings from the script (`laoTones.ts`).
+ */
+async function translateLao(opts: {
+  from: TranslateLang
+  to: TranslateLang
+  text: string
+  stage: TranslateStage
+  wantAlts: boolean
+  fallbackDefinition: string
+}): Promise<TranslateResult> {
+  const { from, to, text, stage, wantAlts, fallbackDefinition } = opts
+
+  const dictHit = dictionaryTranslate({
+    sourceLang: from,
+    targetLang: to,
+    source: text,
+    wantAlternatives: wantAlts,
+  })
+  if (dictHit) {
+    return withLearnerDefinitions(
+      {
+        text: dictHit.text,
+        definition: to === 'lo' ? fallbackDefinition : '',
+        alternatives: wantAlts ? dictHit.alternatives : [],
+        engine: 'dictionary',
+        from,
+        to,
+        stage,
+        meta: {
+          dictionaryHit: true,
+          scrubbed: false,
+          colloquialScore: 8,
+          rewritten: false,
+          notes: [`dict:${dictHit.entry.id}`, 'lo-colloquial'],
+        },
+      },
+      text,
+    )
+  }
+
+  const client = openaiClient()
+  if (!client) {
+    const demoPrimary = to === 'lo' ? `(demo LO) ${text}` : `(demo) ${text}`
+    return withLearnerDefinitions(
+      {
+        text: demoPrimary,
+        definition: to === 'lo' ? fallbackDefinition : '',
+        alternatives: [],
+        engine: 'demo',
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['demo', 'lo-colloquial']),
+      },
+      text,
+    )
+  }
+
+  const engine = env.openaiBaseUrl ? 'openai-compatible' : 'openai'
+  const toLo = to === 'lo'
+  const register = toLo ? inferLaoRegister(text) : 'colloquial'
+  const registerNote = register === 'formal' ? 'lo-formal' : 'lo-colloquial'
+  let primary = text
+  let alternatives: string[] = []
+  let definition = fallbackDefinition
+
+  if (wantAlts && toLo) {
+    const system =
+      register === 'formal'
+        ? [
+            'You are a Vientiane Lao interpreter for formal written and spoken situations.',
+            'Translate English into POLITE formal Vientiane Lao (complete sentences, respectful particles).',
+            'Avoid slang; keep wording clear and respectful.',
+            'Write ONLY in native Lao script (Unicode Lao block). Never Chinese characters, never a toneless romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best formal Lao>","alternatives":["<other polite variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural formal variants. No markdown.',
+          ].join('\n')
+        : [
+            'You are a Vientiane Lao interpreter for face-to-face conversation.',
+            'Translate English into COLLOQUIAL spoken Vientiane Lao (everyday conversational particles are fine).',
+            'Do NOT use stiff textbook / formal written Lao.',
+            'Write ONLY in native Lao script (Unicode Lao block). Never Chinese characters, never a toneless romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"primary":"<best colloquial Lao>","alternatives":["<other natural variant>", "..."],"definition":"<short English gloss>"}',
+            'Prefer 2–3 natural spoken variants. No markdown.',
+          ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: register === 'formal' ? 0.3 : 0.4,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedLo = parseYuePayload(raw, text, false)
+    primary = parsedLo.text
+    alternatives = parsedLo.alternatives
+    if (parsedLo.definition) definition = parsedLo.definition
+  } else if (wantAlts && !toLo) {
+    const system = [
+      'You are a Vientiane Lao interpreter helping Lao speakers learn English.',
+      'Translate colloquial Lao into natural conversational English.',
+      'Return ONLY valid JSON:',
+      '{"primary":"<best English>","alternatives":["<other natural English phrasing>", "..."],"definition":"<short Lao gloss of what the English means>"}',
+      'Prefer 2–3 natural English variants. No markdown.',
+    ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: 0.35,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      response_format: { type: 'json_object' },
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const parsedEn = parseYuePayload(raw, '', false)
+    primary = parsedEn.text
+    alternatives = parsedEn.alternatives.filter((a) => a && !hasHan(a))
+    if (parsedEn.definition) definition = parsedEn.definition
+  } else {
+    const system = toLo
+      ? register === 'formal'
+        ? [
+            'You are a Vientiane Lao interpreter for formal situations.',
+            'Translate into POLITE formal Vientiane Lao (complete sentences, respectful particles).',
+            'Write ONLY in native Lao script. Never Chinese characters, never a toneless romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<formal Lao>","definition":"<short English gloss>"}',
+          ].join('\n')
+        : [
+            'You are a Vientiane Lao interpreter for face-to-face conversation.',
+            'Translate into COLLOQUIAL spoken Vientiane Lao (everyday conversational, particles OK).',
+            'Write ONLY in native Lao script. Never Chinese characters, never a toneless romanization, never invented ASCII tone digits.',
+            'Return ONLY valid JSON:',
+            '{"translation":"<colloquial Lao>","definition":"<short English gloss>"}',
+          ].join('\n')
+      : [
+          'You are a Vientiane Lao interpreter.',
+          'Translate colloquial Lao into natural English for conversation.',
+          'Return ONLY valid JSON:',
+          '{"translation":"<English>","definition":"<optional short sense note, or empty string>"}',
+        ].join('\n')
+    const completion = await client.chat.completions.create({
+      model: env.openaiModel,
+      temperature: toLo && register === 'formal' ? 0.2 : 0.25,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: text },
+      ],
+      ...llmChatExtras(),
+    })
+    const raw = completion.choices[0]?.message?.content?.trim() || ''
+    const payload = parsePayload(raw, toLo ? text : '', fallbackDefinition, false)
+    primary = payload.text
+    definition = toLo ? payload.definition || fallbackDefinition : payload.definition
+  }
+
+  if (toLo) {
+    const hasLaoScript = /[\u0E80-\u0EFF]/.test(primary)
+    const outText = primary && !hasHan(primary) && hasLaoScript ? primary.trim() : ''
+    return withLearnerDefinitions(
+      {
+        text: outText,
+        definition,
+        alternatives: wantAlts
+          ? alternatives.filter((a) => a && !hasHan(a) && a !== outText)
+          : [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(outText ? [registerNote] : [registerNote, 'no-lo-output']),
+      },
+      text,
+    )
+  }
+
+  if (looksLikeGlossDump(primary) || hasHan(primary)) {
+    return withLearnerDefinitions(
+      {
+        text: '',
+        definition: '',
+        alternatives: [],
+        engine,
+        from,
+        to,
+        stage,
+        meta: emptyMeta(['lo-echo-blocked']),
+      },
+      text,
+    )
+  }
+
+  return withLearnerDefinitions(
+    {
+      text: primary,
+      definition,
+      alternatives: wantAlts ? alternatives.filter((a) => a && !hasHan(a) && a !== primary) : [],
+      engine,
+      from,
+      to,
+      stage,
+      meta: emptyMeta([registerNote]),
+    },
+    text,
+  )
+}
+
 export async function translate(input: unknown) {
   const parsed = Body.parse(input)
   const from = parsed.from
@@ -2315,6 +2757,14 @@ export async function translate(input: unknown) {
 
   if (to === 'vi' || (from === 'vi' && to === 'en')) {
     return translateVietnamese({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'th' || (from === 'th' && to === 'en')) {
+    return translateThai({ from, to, text, stage, wantAlts, fallbackDefinition })
+  }
+
+  if (to === 'lo' || (from === 'lo' && to === 'en')) {
+    return translateLao({ from, to, text, stage, wantAlts, fallbackDefinition })
   }
 
   if (to === 'ceb' || (from === 'ceb' && to === 'en')) {

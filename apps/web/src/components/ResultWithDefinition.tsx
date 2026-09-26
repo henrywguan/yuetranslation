@@ -6,6 +6,8 @@ import { TagalogText } from './TagalogText'
 import { MexicanSpanishText } from './MexicanSpanishText'
 import { PeninsularSpanishText } from './PeninsularSpanishText'
 import { VietnameseText } from './VietnameseText'
+import { ThaiText } from './ThaiText'
+import { LaoText } from './LaoText'
 import { ResultActions } from './ResultActions'
 import { CopyButton } from './CopyButton'
 import { SpeakButton } from './SpeakButton'
@@ -62,6 +64,10 @@ export function ResultWithDefinition({
                 ? 'eses'
               : chineseLang === 'vi'
                 ? 'vi'
+              : chineseLang === 'th'
+                ? 'th'
+              : chineseLang === 'lo'
+                ? 'lo'
                 : chineseLang === 'ceb'
                   ? 'ceb'
                   : chineseLang === 'ilo'
@@ -106,6 +112,18 @@ export function ResultWithDefinition({
                 text={trimmed}
                 definition={def}
                 definitions={definitions}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'th' ? (
+              <ThaiText
+                text={trimmed}
+                className={textClassName || 'result-text'}
+                onActivate={onActivate}
+              />
+            ) : chineseLang === 'lo' ? (
+              <LaoText
+                text={trimmed}
                 className={textClassName || 'result-text'}
                 onActivate={onActivate}
               />

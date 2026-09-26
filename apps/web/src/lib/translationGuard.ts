@@ -65,6 +65,24 @@ export function sanitizeViTranslation(text: string | null | undefined): string |
   return t
 }
 
+/** Reject EN→Thai payloads that are empty, glossy, Han, or missing Thai script. */
+export function sanitizeThTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0E00-\u0E7F]/.test(t)) return null
+  return t
+}
+
+/** Reject EN→Lao payloads that are empty, glossy, Han, or missing Lao script. */
+export function sanitizeLoTranslation(text: string | null | undefined): string | null {
+  const t = sanitizeTranslationText(text)
+  if (!t) return null
+  if (hasHan(t)) return null
+  if (!/[\u0E80-\u0EFF]/.test(t)) return null
+  return t
+}
+
 /** Reject EN→Cebuano / Ilocano / Central Bikol Latin payloads that are empty, glossy, or still Chinese. */
 export function sanitizeCebTranslation(text: string | null | undefined): string | null {
   return sanitizeViTranslation(text)

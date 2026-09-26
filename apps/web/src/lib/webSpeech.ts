@@ -25,6 +25,8 @@ export function createWebSpeechSession(
   let esLocaleIndex = 0
   let esesLocaleIndex = 0
   let viLocaleIndex = 0
+  let thLocaleIndex = 0
+  let loLocaleIndex = 0
   const echo = createEchoGuard()
   const apple = isAppleTouchDevice()
   // zh-HK is primary; rotate fallbacks when the browser rejects Cantonese.
@@ -37,6 +39,8 @@ export function createWebSpeechSession(
   /** Peninsular Spanish (Spain) — Web Speech like es/vi, never Azure fixed-locale. */
   const esesLocales = ['es-ES', 'es']
   const viLocales = ['vi-VN', 'vi']
+  const thLocales = ['th-TH', 'th']
+  const loLocales = ['lo-LA', 'lo']
 
   const yueLocale = () => yueLocales[yueLocaleIndex % yueLocales.length]
   const cmnLocale = () => cmnLocales[cmnLocaleIndex % cmnLocales.length]
@@ -46,6 +50,8 @@ export function createWebSpeechSession(
   const esLocale = () => esLocales[esLocaleIndex % esLocales.length]
   const esesLocale = () => esesLocales[esesLocaleIndex % esesLocales.length]
   const viLocale = () => viLocales[viLocaleIndex % viLocales.length]
+  const thLocale = () => thLocales[thLocaleIndex % thLocales.length]
+  const loLocale = () => loLocales[loLocaleIndex % loLocales.length]
   const startOne = () => {
     if (stopped) return
     const rec = new SR()
@@ -70,7 +76,11 @@ export function createWebSpeechSession(
                     ? esesLocale()
                     : activeLang === 'vi'
                       ? viLocale()
-                      : 'en-US'
+                      : activeLang === 'th'
+                        ? thLocale()
+                        : activeLang === 'lo'
+                          ? loLocale()
+                          : 'en-US'
     rec.onresult = (event) => {
       let interim = ''
       let finalText = ''
@@ -143,6 +153,16 @@ export function createWebSpeechSession(
       }
       if (localeRejected && activeLang === 'vi' && viLocaleIndex < viLocales.length - 1) {
         viLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'th' && thLocaleIndex < thLocales.length - 1) {
+        thLocaleIndex += 1
+        queueMicrotask(() => startOne())
+        return
+      }
+      if (localeRejected && activeLang === 'lo' && loLocaleIndex < loLocales.length - 1) {
+        loLocaleIndex += 1
         queueMicrotask(() => startOne())
         return
       }
@@ -224,6 +244,8 @@ export function createWebSpeechSession(
       esLocaleIndex = 0
       esesLocaleIndex = 0
       viLocaleIndex = 0
+      thLocaleIndex = 0
+      loLocaleIndex = 0
       startOne()
     },
     async stop() {

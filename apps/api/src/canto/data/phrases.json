@@ -7170,6 +7170,582 @@
         "courtesy",
         "vietnamese"
       ]
+    },
+    {
+      "id": "en-hello-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "hello",
+      "text": "สวัสดี",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-สวัสดี-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "สวัสดี",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-thank-you-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "thank you",
+      "text": "ขอบคุณ",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ขอบคุณ-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ขอบคุณ",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-yes-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "yes",
+      "text": "ใช่",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ใช่-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ใช่",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-no-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "no",
+      "text": "ไม่",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ไม่-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ไม่",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-water-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "water",
+      "text": "น้ำ",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-น้ำ-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "น้ำ",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-delicious-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "delicious",
+      "text": "อร่อย",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-อร่อย-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "อร่อย",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-excuse-me-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "excuse me",
+      "text": "ขอโทษ",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ขอโทษ-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ขอโทษ",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-goodbye-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "goodbye",
+      "text": "ลาก่อน",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ลาก่อน-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ลาก่อน",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-how-much-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "how much",
+      "text": "เท่าไหร่",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-เท่าไหร่-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "เท่าไหร่",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-help-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "help",
+      "text": "ช่วยด้วย",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ช่วยด้วย-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ช่วยด้วย",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "where is the bathroom",
+      "text": "ห้องน้ำอยู่ที่ไหน",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ห้องน้ำอยู่ที่ไหน-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ห้องน้ำอยู่ที่ไหน",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-th",
+      "sourceLang": "en",
+      "targetLang": "th",
+      "source": "nice to meet you",
+      "text": "ยินดีที่ได้รู้จัก",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "thai"
+      ]
+    },
+    {
+      "id": "th-ยินดีที่ได้รู้จัก-en",
+      "sourceLang": "th",
+      "targetLang": "en",
+      "source": "ยินดีที่ได้รู้จัก",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "thai"
+      ]
+    },
+    {
+      "id": "en-hello-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "hello",
+      "text": "ສະບາຍດີ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ສະບາຍດີ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ສະບາຍດີ",
+      "text": "Hello",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-thank-you-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "thank you",
+      "text": "ຂອບໃຈ",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ຂອບໃຈ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ຂອບໃຈ",
+      "text": "Thank you",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-yes-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "yes",
+      "text": "ແມ່ນ",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ແມ່ນ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ແມ່ນ",
+      "text": "Yes",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-no-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "no",
+      "text": "ບໍ່",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ບໍ່-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ບໍ່",
+      "text": "No",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-water-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "water",
+      "text": "ນ້ຳ",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ນ້ຳ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ນ້ຳ",
+      "text": "Water",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-delicious-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "delicious",
+      "text": "ແຊບ",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ແຊບ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ແຊບ",
+      "text": "Delicious",
+      "register": "colloquial",
+      "tags": [
+        "food",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-excuse-me-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "excuse me",
+      "text": "ຂໍໂທດ",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ຂໍໂທດ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ຂໍໂທດ",
+      "text": "Excuse me",
+      "register": "colloquial",
+      "tags": [
+        "courtesy",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-goodbye-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "goodbye",
+      "text": "ລາກ່ອນ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ລາກ່ອນ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ລາກ່ອນ",
+      "text": "Goodbye",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-how-much-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "how much",
+      "text": "ເທົ່າໃດ",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ເທົ່າໃດ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ເທົ່າໃດ",
+      "text": "How much",
+      "register": "colloquial",
+      "tags": [
+        "shopping",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-help-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "help",
+      "text": "ຊ່ວຍແດ່",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ຊ່ວຍແດ່-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ຊ່ວຍແດ່",
+      "text": "Help",
+      "register": "colloquial",
+      "tags": [
+        "basic",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-where-is-the-bathroom-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "where is the bathroom",
+      "text": "ຫ້ອງນ້ຳຢູ່ໃສ",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ຫ້ອງນ້ຳຢູ່ໃສ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ຫ້ອງນ້ຳຢູ່ໃສ",
+      "text": "Where is the bathroom",
+      "register": "colloquial",
+      "tags": [
+        "travel",
+        "lao"
+      ]
+    },
+    {
+      "id": "en-nice-to-meet-you-lo",
+      "sourceLang": "en",
+      "targetLang": "lo",
+      "source": "nice to meet you",
+      "text": "ດີໃຈທີ່ໄດ້ຮູ້ຈັກ",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "lao"
+      ]
+    },
+    {
+      "id": "lo-ດີໃຈທີ່ໄດ້ຮູ້ຈັກ-en",
+      "sourceLang": "lo",
+      "targetLang": "en",
+      "source": "ດີໃຈທີ່ໄດ້ຮູ້ຈັກ",
+      "text": "Nice to meet you",
+      "register": "colloquial",
+      "tags": [
+        "greeting",
+        "lao"
+      ]
     }
   ]
 }

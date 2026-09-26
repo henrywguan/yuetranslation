@@ -2,7 +2,7 @@ import { fetchTtsAudio } from './api'
 import { ensureSharedAudioContext } from './audioReactive'
 import { isAppleTouchDevice } from './mediaAccess'
 import type { Lang } from './types'
-import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalYueVoice } from './ttsVoices'
+import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalEnVoice, readLocalTlVoice, readLocalEsVoice, readLocalEsesVoice, readLocalViVoice, readLocalThVoice, readLocalLoVoice, readLocalYueVoice } from './ttsVoices'
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 2.75
@@ -343,6 +343,8 @@ function browserLangTag(lang: Lang): string {
   if (lang === 'es') return 'es-MX'
   if (lang === 'eses') return 'es-ES'
   if (lang === 'vi') return 'vi-VN'
+  if (lang === 'th') return 'th-TH'
+  if (lang === 'lo') return 'lo-LA'
   return 'en-US'
 }
 
@@ -426,6 +428,8 @@ function preferredVoiceFor(lang: Lang, override?: string | null): string | null 
   if (lang === 'es') return readLocalEsVoice()
   if (lang === 'eses') return readLocalEsesVoice()
   if (lang === 'vi') return readLocalViVoice()
+  if (lang === 'th') return readLocalThVoice()
+  if (lang === 'lo') return readLocalLoVoice()
   return readLocalYueVoice()
 }
 

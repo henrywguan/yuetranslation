@@ -1,4 +1,4 @@
-export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi'
+export type VoiceLang = 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi' | 'th' | 'lo'
 /** Solo + Cam text translate only — no STT/TTS (Azure has no locales). */
 export type TextOnlyLang = 'ceb' | 'ilo' | 'bcl'
 export type Lang = VoiceLang | TextOnlyLang
@@ -106,6 +106,8 @@ export type Entitlement = {
     ttsVoiceEs?: string
     ttsVoiceEses?: string
     ttsVoiceVi?: string
+    ttsVoiceTh?: string
+    ttsVoiceLo?: string
     /** Cross-device Auto-speak preference. */
     autoSpeak?: boolean
     /** Primary non-English language (Solo / Conversation / Cam / brand). */

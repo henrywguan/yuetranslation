@@ -102,6 +102,8 @@ function localeToLang(locale: string): Lang {
   if (l.startsWith('es-es')) return 'eses'
   if (l.startsWith('es')) return 'es'
   if (l.startsWith('vi')) return 'vi'
+  if (l.startsWith('th')) return 'th'
+  if (l.startsWith('lo')) return 'lo'
   // Generic zh without region — prefer Cantonese for HK product default.
   if (l.startsWith('zh')) return 'yue'
   return 'en'
@@ -116,6 +118,8 @@ function langToLocale(lang: Lang): string {
   if (lang === 'es') return 'es-MX'
   if (lang === 'eses') return 'es-ES'
   if (lang === 'vi') return 'vi-VN'
+  if (lang === 'th') return 'th-TH'
+  if (lang === 'lo') return 'lo-LA'
   return 'en-US'
 }
 

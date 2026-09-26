@@ -574,3 +574,55 @@ button.sichuanese-activate {
   text-align: inherit;
   cursor: pointer;
 }
+
+/* Thai / Lao — script plus tone-marked reading (class rules, not the raw mark). */
+.thai-lao-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15em;
+}
+.thai-lao-reading-row,
+.thai-lao-tone-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.thai-lao-reading {
+  font-size: 0.72em;
+  line-height: 1.2;
+  opacity: 0.78;
+  font-weight: 500;
+}
+.thai-lao-reading-label,
+.thai-lao-tone-scheme {
+  font-size: 0.48em;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.42;
+  font-weight: 600;
+}
+.thai-lao-tone-chip {
+  font-size: 0.62em;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+.thai-lao-honesty {
+  font-size: 0.62em;
+  line-height: 1.35;
+  opacity: 0.62;
+  max-width: 28em;
+}
+button.thai-lao-activate {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}

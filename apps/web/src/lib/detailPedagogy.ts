@@ -104,6 +104,22 @@ export const DETAIL_PEDAGOGY: Record<Lang, DetailPedagogy> = {
     localOffline: true,
     extraPanels: [],
   },
+  th: {
+    htmlLang: 'th',
+    pronField: 'accented',
+    defaultGlossLang: 'th',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
+  lo: {
+    htmlLang: 'lo',
+    pronField: 'accented',
+    defaultGlossLang: 'lo',
+    rubyTitle: false,
+    localOffline: true,
+    extraPanels: [],
+  },
   ceb: {
     htmlLang: 'ceb',
     pronField: 'accented',

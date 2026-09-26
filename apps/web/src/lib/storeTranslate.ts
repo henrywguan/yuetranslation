@@ -4,7 +4,7 @@ import { translateText } from './api'
 import { humanizeThrownError } from './apiError'
 import { expireHistoryTurns, MAX_TURNS } from './historyMerge'
 import { newId } from './id'
-import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
+import { sanitizeYueTranslation, sanitizeEnTranslation, sanitizeTlTranslation, sanitizeEsTranslation, sanitizeViTranslation, sanitizeThTranslation, sanitizeLoTranslation, sanitizeCebTranslation, sanitizeIloTranslation, sanitizeBclTranslation } from './translationGuard'
 import type { DetailLayer } from './detailTypes'
 import type { ConversationLang, ConversationTurn, Entitlement, Lang, LiveSession, Mode } from './types'
 
@@ -120,6 +120,8 @@ function sanitizeTranslation(to: Lang, text: string, source?: string): string | 
   if (to === 'tl') return sanitizeTlTranslation(text)
   if (to === 'es') return sanitizeEsTranslation(text)
   if (to === 'vi') return sanitizeViTranslation(text)
+  if (to === 'th') return sanitizeThTranslation(text)
+  if (to === 'lo') return sanitizeLoTranslation(text)
   if (to === 'ceb') return sanitizeCebTranslation(text)
   if (to === 'ilo') return sanitizeIloTranslation(text)
   if (to === 'bcl') return sanitizeBclTranslation(text)
@@ -290,7 +292,11 @@ export async function runTranslation(
             ? 'Could not produce Spanish(MX) for this phrase. Try again or rephrase.'
             : to === 'vi'
               ? 'Could not produce Vietnamese for this phrase. Try again or rephrase.'
-              : to === 'ceb'
+              : to === 'th'
+                ? 'Could not produce Thai for this phrase. Try again or rephrase.'
+                : to === 'lo'
+                  ? 'Could not produce Lao for this phrase. Try again or rephrase.'
+                  : to === 'ceb'
                 ? 'Could not produce Cebuano for this phrase. Try again or rephrase.'
                 : to === 'ilo'
                   ? 'Could not produce Ilocano for this phrase. Try again or rephrase.'

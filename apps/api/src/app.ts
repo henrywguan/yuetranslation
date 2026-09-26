@@ -60,6 +60,8 @@ import {
   isEsesVoice,
   isTlVoice,
   isViVoice,
+  isThVoice,
+  isLoVoice,
   isYueVoice,
 } from './ttsVoices.js'
 import {
@@ -390,7 +392,11 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
                     ? 'es-MX'
                     : lang === 'vi' || lang === 'vi-VN' || lang === 'vi-vn'
                       ? 'vi-VN'
-                      : 'zh-HK'
+                      : lang === 'th' || lang === 'th-TH' || lang === 'th-th'
+                        ? 'th-TH'
+                        : lang === 'lo' || lang === 'lo-LA' || lang === 'lo-la'
+                          ? 'lo-LA'
+                          : 'zh-HK'
     const audio = await synthesize(text, azureLang, {
       voice: voiceOverride,
       preferredYue: ent.prefs?.ttsVoiceYue,
@@ -402,6 +408,8 @@ app.post('/api/tts', async (req: AuthedRequest, res) => {
       preferredEs: ent.prefs?.ttsVoiceEs,
       preferredEses: ent.prefs?.ttsVoiceEses,
       preferredVi: ent.prefs?.ttsVoiceVi,
+      preferredTh: ent.prefs?.ttsVoiceTh,
+      preferredLo: ent.prefs?.ttsVoiceLo,
       loud,
     })
     // Meter Free (hard cap), Family/Business (unlimited), and guest trial (unlimited).
@@ -430,6 +438,8 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     tts_voice_es?: string
     tts_voice_eses?: string
     tts_voice_vi?: string
+    tts_voice_th?: string
+    tts_voice_lo?: string
   } = {}
   if (body.ttsVoiceYue != null) {
     const v = String(body.ttsVoiceYue).trim()
@@ -487,6 +497,22 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
     }
     patch.tts_voice_vi = v
   }
+  if (body.ttsVoiceTh != null) {
+    const v = String(body.ttsVoiceTh).trim()
+    if (!isThVoice(v)) {
+      res.status(400).json({ message: 'Invalid Thai voice.' })
+      return
+    }
+    patch.tts_voice_th = v
+  }
+  if (body.ttsVoiceLo != null) {
+    const v = String(body.ttsVoiceLo).trim()
+    if (!isLoVoice(v)) {
+      res.status(400).json({ message: 'Invalid Lao voice.' })
+      return
+    }
+    patch.tts_voice_lo = v
+  }
   if (!Object.keys(patch).length) {
     res.status(400).json({ message: 'No voice preferences provided.' })
     return
@@ -507,6 +533,8 @@ app.patch('/api/prefs/tts-voices', async (req: AuthedRequest, res) => {
         ttsVoiceEs: patch.tts_voice_es || ent.prefs.ttsVoiceEs,
         ttsVoiceEses: patch.tts_voice_eses || ent.prefs.ttsVoiceEses,
         ttsVoiceVi: patch.tts_voice_vi || ent.prefs.ttsVoiceVi,
+        ttsVoiceTh: patch.tts_voice_th || ent.prefs.ttsVoiceTh,
+        ttsVoiceLo: patch.tts_voice_lo || ent.prefs.ttsVoiceLo,
         autoSpeak: ent.prefs.autoSpeak,
         primaryLang: ent.prefs.primaryLang,
         username: ent.prefs.username,

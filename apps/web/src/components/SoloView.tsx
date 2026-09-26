@@ -32,6 +32,8 @@ function placeholderFor(lang: Lang): string {
   if (lang === 'es') return 'Escribe en español mexicano…'
   if (lang === 'eses') return 'Escribe en español de España…'
   if (lang === 'vi') return 'Nhập tiếng Việt…'
+  if (lang === 'th') return 'พิมพ์หรือพูดภาษาไทย'
+  if (lang === 'lo') return 'ພິມ ຫຼື ເວົ້າພາສາລາວ'
   if (lang === 'ceb') return 'I-type ang Cebuano…'
   if (lang === 'ilo') return 'I-type ti Ilocano…'
   if (lang === 'bcl') return 'I-type nin Bikol…'
@@ -49,6 +51,8 @@ function isRubyDisplayLang(lang: Lang): boolean {
     lang === 'es' ||
     lang === 'eses' ||
     lang === 'vi' ||
+    lang === 'th' ||
+    lang === 'lo' ||
     lang === 'ceb' ||
     lang === 'ilo' ||
     lang === 'bcl'
@@ -71,6 +75,8 @@ function ariaForPane(lang: Lang): string {
   if (lang === 'es') return 'Speak Spanish(MX) with the mic'
   if (lang === 'eses') return 'Speak Spanish(ES) with the mic'
   if (lang === 'vi') return 'Speak Vietnamese with the mic'
+  if (lang === 'th') return 'Speak Thai with the mic'
+  if (lang === 'lo') return 'Speak Lao with the mic'
   if (lang === 'cmn') return 'Speak Mandarin with the mic'
   if (lang === 'wuu') return 'Speak Shanghainese with the mic'
   if (lang === 'sichuan') return 'Speak Sichuanese with the mic'
@@ -390,7 +396,7 @@ export function SoloView() {
     const t = (raw || '').trim()
     if (!t) return undefined
     const han = /[\u3400-\u9fff]/u.test(t)
-    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'eses' || paneLang === 'vi' || paneLang === 'ceb' || paneLang === 'ilo' || paneLang === 'bcl') {
+    if (paneLang === 'en' || paneLang === 'tl' || paneLang === 'es' || paneLang === 'eses' || paneLang === 'vi' || paneLang === 'th' || paneLang === 'lo' || paneLang === 'ceb' || paneLang === 'ilo' || paneLang === 'bcl') {
       // Latin panels: drop pure-Han paired glosses.
       if (han && !/[A-Za-z]/.test(t)) return undefined
       return t
@@ -727,7 +733,9 @@ export function SoloView() {
             soloLowerLang === 'sichuan' ||
             soloLowerLang === 'tl' ||
             soloLowerLang === 'es' || soloLowerLang === 'eses' ||
-            soloLowerLang === 'vi') ? (
+            soloLowerLang === 'vi' ||
+            soloLowerLang === 'th' ||
+            soloLowerLang === 'lo') ? (
             <TranslationAlternatives
               alternatives={alts}
               alternativeRomanizations={

@@ -20,6 +20,8 @@ import {
 import { buildLocalPinyinBreakdown, type PinyinSeg } from '../lib/pinyin'
 import { vietnameseToneClass, vietnameseToneChipShort, vietnameseToneLabel } from '../lib/vietnameseTones'
 import { VietnameseText } from './VietnameseText'
+import { ThaiText } from './ThaiText'
+import { LaoText } from './LaoText'
 import { JyutRuby, JyutSyllable } from './JyutRuby'
 import { PinyinRuby, PinyinSyllable } from './PinyinRuby'
 import { JpPop } from './JpPop'
@@ -92,6 +94,8 @@ function speakLangFor(text: string, detailLang?: Lang): Lang {
   if (detailLang === 'es') return 'es'
   if (detailLang === 'eses') return 'eses'
   if (detailLang === 'vi') return 'vi'
+  if (detailLang === 'th') return 'th'
+  if (detailLang === 'lo') return 'lo'
   if (detailLang === 'ceb') return 'ceb'
   if (detailLang === 'ilo') return 'ilo'
   if (detailLang === 'bcl') return 'bcl'
@@ -409,6 +413,8 @@ export function CharacterBreakdownHost() {
   const isEsDetail = detailLang === 'es'
   const isEsesDetail = detailLang === 'eses'
   const isViDetail = detailLang === 'vi'
+  const isThDetail = detailLang === 'th'
+  const isLoDetail = detailLang === 'lo'
   const isPhilippineRegionalDetail =
     detailLang === 'ceb' || detailLang === 'ilo' || detailLang === 'bcl'
   const isLatinDetail =
@@ -474,9 +480,11 @@ export function CharacterBreakdownHost() {
       if (paired && t.toLowerCase() === paired) return
       if (t.toLowerCase() === topLabel.toLowerCase()) return
       const han = hasHan(t)
+      const isScriptDetail = isThDetail || isLoDetail
       // Drop cross-script learner defs (e.g. English source on a Sichuanese pane).
       if ((isEnglishDetail || isLatinDetail) && han && !/[A-Za-z]/.test(t)) return
-      if (!(isEnglishDetail || isLatinDetail) && !han) return
+      if (isScriptDetail && han) return
+      if (!(isEnglishDetail || isLatinDetail || isScriptDetail) && !han) return
       const key = t.toLowerCase()
       if (seen.has(key)) return
       seen.add(key)
@@ -497,7 +505,7 @@ export function CharacterBreakdownHost() {
     )
   const contentRows = rows.filter((r) => /[\p{L}\p{N}]/u.test(r.char))
   const redundantSingleLatin =
-    (isEnglishDetail || isLatinDetail) &&
+    (isEnglishDetail || isLatinDetail || isThDetail || isLoDetail) &&
     contentRows.length === 1 &&
     contentRows[0]!.char.toLowerCase() === topLabel.toLowerCase() &&
     Boolean(
@@ -527,11 +535,15 @@ export function CharacterBreakdownHost() {
                   ? 'tl'
                   : isEsDetail
                     ? 'es-MX'
-                    : isEsesDetail
-                      ? 'es-ES'
-                      : isViDetail
-                      ? 'vi'
-                      : top.kind === 'char' || showRubyTitle || showWuuTitle || showSichuanTitle
+                      : isEsesDetail
+                        ? 'es-ES'
+                        : isViDetail
+                        ? 'vi'
+                        : isThDetail
+                        ? 'th'
+                        : isLoDetail
+                        ? 'lo'
+                        : top.kind === 'char' || showRubyTitle || showWuuTitle || showSichuanTitle
                       ? isWuuDetail
                         ? 'wuu-CN'
                         : isSichuanDetail
@@ -610,6 +622,10 @@ export function CharacterBreakdownHost() {
             </p>
           ) : isViDetail ? (
             <VietnameseText text={topLabel} showTones />
+          ) : isThDetail ? (
+            <ThaiText text={topLabel} showDetail />
+          ) : isLoDetail ? (
+            <LaoText text={topLabel} showDetail />
           ) : ipa && isTlDetail ? (
             <p className="detail-panel-ipa-line detail-panel-tl-pron" lang="tl">
               <span title="Accented / stress form">{ipa}</span>
@@ -772,6 +788,10 @@ export function CharacterBreakdownHost() {
                               ? 'eses'
                               : isViDetail
                               ? 'vi'
+                              : isThDetail
+                              ? 'th'
+                              : isLoDetail
+                              ? 'lo'
                                 : isCmnDetail
                                 ? 'cmn'
                                 : isWuuDetail
@@ -836,7 +856,7 @@ export function CharacterBreakdownHost() {
                   const meaning = pickCharGloss(row.meaning)
                   const canDrill = Boolean(meaning || glossForChar(row.char) || row.jyutping)
                   const canSpeak =
-                    isEnglishDetail || isLatinDetail || isHanChar(row.char)
+                    isEnglishDetail || isLatinDetail || isThDetail || isLoDetail || isHanChar(row.char)
                   const rowSpeakLang: Lang = isEnglishDetail
                     ? 'en'
                     : isTlDetail
@@ -847,6 +867,10 @@ export function CharacterBreakdownHost() {
                           ? 'eses'
                           : isViDetail
                           ? 'vi'
+                          : isThDetail
+                          ? 'th'
+                          : isLoDetail
+                          ? 'lo'
                             : isCmnDetail
                             ? 'cmn'
                             : isWuuDetail
@@ -878,6 +902,10 @@ export function CharacterBreakdownHost() {
                                   ? 'es-ES'
                                   : isViDetail
                                   ? 'vi'
+                                  : isThDetail
+                                  ? 'th'
+                                  : isLoDetail
+                                  ? 'lo'
                                   : isWuuDetail
                                     ? 'wuu-CN'
                                     : isSichuanDetail
@@ -1033,7 +1061,11 @@ export function CharacterBreakdownHost() {
             <DetailDictionaryPanel entry={dictEntry} loading={dictLoading} glossLang={primaryLanguage} />
             {top.sense ? (
               <section>
-                <h3>{isEnglishDetail || isLatinDetail ? 'This word' : 'This character'}</h3>
+                <h3>
+                  {isEnglishDetail || isLatinDetail || isThDetail || isLoDetail
+                    ? 'This word'
+                    : 'This character'}
+                </h3>
                 <p>{top.sense}</p>
               </section>
             ) : (

@@ -12,6 +12,8 @@ export {
   DEFAULT_ES_VOICE,
   DEFAULT_ESES_VOICE,
   DEFAULT_VI_VOICE,
+  DEFAULT_TH_VOICE,
+  DEFAULT_LO_VOICE,
   YUE_VOICES,
   EN_VOICES,
   CMN_VOICES,
@@ -21,6 +23,8 @@ export {
   ES_VOICES,
   ES_ES_VOICES,
   VI_VOICES,
+  TH_VOICES,
+  LO_VOICES,
   PREVIEW_YUE,
   PREVIEW_EN,
   PREVIEW_CMN,
@@ -30,6 +34,8 @@ export {
   PREVIEW_ES,
   PREVIEW_ESES,
   PREVIEW_VI,
+  PREVIEW_TH,
+  PREVIEW_LO,
   resolveYueVoice,
   resolveEnVoice,
   resolveCmnVoice,
@@ -39,6 +45,8 @@ export {
   resolveEsVoice,
   resolveEsesVoice,
   resolveViVoice,
+  resolveThVoice,
+  resolveLoVoice,
   isYueVoice,
   isEnVoice,
   isCmnVoice,
@@ -48,6 +56,8 @@ export {
   isEsVoice,
   isEsesVoice,
   isViVoice,
+  isThVoice,
+  isLoVoice,
   voiceMeta,
   type YueVoiceId,
   type EnVoiceId,
@@ -58,6 +68,8 @@ export {
   type EsVoiceId,
   type EsesVoiceId,
   type ViVoiceId,
+  type ThVoiceId,
+  type LoVoiceId,
   type TtsVoiceId,
   type TtsVoiceOption,
 } from '@jyut/shared/ttsVoices'
@@ -68,6 +80,8 @@ import {
   DEFAULT_ES_VOICE,
   DEFAULT_ESES_VOICE,
   DEFAULT_VI_VOICE,
+  DEFAULT_TH_VOICE,
+  DEFAULT_LO_VOICE,
   DEFAULT_EN_VOICE,
   DEFAULT_YUE_VOICE,
   DEFAULT_WUU_VOICE,
@@ -77,6 +91,8 @@ import {
   resolveEsVoice,
   resolveEsesVoice,
   resolveViVoice,
+  resolveThVoice,
+  resolveLoVoice,
   resolveEnVoice,
   resolveYueVoice,
   resolveWuuVoice,
@@ -87,6 +103,8 @@ import {
   type EsVoiceId,
   type EsesVoiceId,
   type ViVoiceId,
+  type ThVoiceId,
+  type LoVoiceId,
   type EnVoiceId,
   type YueVoiceId,
   type WuuVoiceId,
@@ -102,6 +120,8 @@ const STORAGE_TL = 'yue-tts-voice-tl'
 const STORAGE_ES = 'yue-tts-voice-es'
 const STORAGE_ESES = 'yue-tts-voice-eses'
 const STORAGE_VI = 'yue-tts-voice-vi'
+const STORAGE_TH = 'yue-tts-voice-th'
+const STORAGE_LO = 'yue-tts-voice-lo'
 
 export function readLocalYueVoice(): YueVoiceId {
   if (typeof window === 'undefined') return DEFAULT_YUE_VOICE
@@ -220,6 +240,40 @@ export function readLocalViVoice(): ViVoiceId {
 export function writeLocalViVoice(id: ViVoiceId) {
   try {
     localStorage.setItem(STORAGE_VI, resolveViVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalThVoice(): ThVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_TH_VOICE
+  try {
+    return resolveThVoice(localStorage.getItem(STORAGE_TH))
+  } catch {
+    return DEFAULT_TH_VOICE
+  }
+}
+
+export function writeLocalThVoice(id: ThVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_TH, resolveThVoice(id))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readLocalLoVoice(): LoVoiceId {
+  if (typeof window === 'undefined') return DEFAULT_LO_VOICE
+  try {
+    return resolveLoVoice(localStorage.getItem(STORAGE_LO))
+  } catch {
+    return DEFAULT_LO_VOICE
+  }
+}
+
+export function writeLocalLoVoice(id: LoVoiceId) {
+  try {
+    localStorage.setItem(STORAGE_LO, resolveLoVoice(id))
   } catch {
     /* ignore */
   }
