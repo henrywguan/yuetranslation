@@ -186,6 +186,7 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 30. `supabase/migrations/032_tts_voice_eses.sql` — Peninsular Spanish TTS voice pref
 31. `supabase/migrations/033_primary_lang_eses.sql` — Peninsular Spanish primary lang
 32. `supabase/migrations/034_harbor_practice_usage.sql` — `harbor_quest_count` + `practice_partner_count` (admin view-only meters)
+33. `supabase/migrations/037_practice_partner_leaderboard.sql` — global Practice Partner ranks (XP, best streak, passes). Apply in the Supabase SQL editor if it is not on the project yet.
 
 **If you see** `Could not find the table 'public.households' in the schema cache` — migrations `011`–`015` are not applied. Paste and run the one-shot file `supabase/migrations/apply_011_through_015_household.sql` in **Supabase → SQL Editor** (creates `households` / members / invites / pooled usage, renames plans, backfills legacy meters, then reloads the PostgREST schema cache).
 
@@ -231,7 +232,7 @@ Users must be logged in to submit reports. Guests see no footer link; the API re
 | Bug reports | Tab with triage + multi-select bulk status |
 | Email | Campaign hub: templates (minimizable), compose, preview, contacts / custom / full audience send |
 | Push | PWA Web Push hub: compose full notification payload, target audience, dry-run, history |
-| Practice Partner | Live lab: Harbor orb + captions. Opens on **Choose difficulty & topic** (New Learner / ABC / Mainlander × Animals / Foods / Common / Expert), then the drill. Difficulty controls how much English 港灣 uses in `speak` (New Learner = English majority; ABC = Cantonese majority mix; Mainlander = all Cantonese, stern/mocking). **Change topic** returns to that list. Pass chime + jade check + gold crown **High scores** log (`localStorage` `yue-practice-partner-scores-v1`). Mic → Web Speech STT → DeepSeek → Azure TTS. Account Hub opens `#/practice`. Meters `practice_partner_count` (view-only). |
+| Practice Partner | Live lab: Harbor orb + captions. Opens on **Choose difficulty & topic** (New Learner / ABC / Mainlander × Animals / Foods / Common / Expert), then the drill. Difficulty controls how much English 港灣 uses in `speak` (New Learner = English majority; ABC = Cantonese majority mix; Mainlander = all Cantonese, stern/mocking). **Change topic** returns to that list. Pass chime + jade check + gold crown **High scores** log (`localStorage` `yue-practice-partner-scores-v1`, including lifetime XP). Topic screen shows the global podium: animated gold / silver / bronze medals with names. Mic → Web Speech STT → DeepSeek → Azure TTS. Account Hub opens `#/practice`. Meters `practice_partner_count` (view-only). |
 | CSV export | Current filters + month (includes camera, docs, Harbor, Partner fields) |
 | Translate metering | `POST /api/translate` increments `usage_months.translate_count` when metered |
 | Cam metering | Hard: `POST /api/camera/scan` → +1 `camera_translate_count` (scan credits). Logging: `POST /api/usage/camera-heartbeat` → `camera_seconds` (does not gate) |
@@ -271,6 +272,8 @@ All routes require Bearer JWT + allowlisted email:
 
 Public (optional Bearer JWT):
 
+- `GET /api/practice-partner/leaderboard` — global Practice Partner ranks (`entries`, `me`, `limit`). Ranked by XP, then best streak, then passes. Signed-in callers get `isYou` / `me`. Migration `037_practice_partner_leaderboard.sql`.
+- `PUT /api/practice-partner/leaderboard` — signed-in only. Body `{ xp, bestStreak, totalPasses }`. Server keeps the higher totals and sets `display_name` from the Account Hub username. A zero score does not create a row.
 - `GET /api/push/config` — `{ configured, publicKey, subject }`
 - `POST /api/push/subscribe` — browser `PushSubscription` JSON
 - `POST /api/push/unsubscribe` — `{ endpoint, deleteRow? }`

@@ -47,11 +47,19 @@ import {
 import { playPracticePartnerPassSfx } from '../lib/practicePartnerPassSfx'
 import { playPracticePartnerFailSfx } from '../lib/practicePartnerFailSfx'
 import {
+  adoptPracticePartnerCloudScore,
   formatPracticePartnerScoreAt,
   readPracticePartnerScores,
   recordPracticePartnerPass,
   type PracticePartnerScores,
 } from '../lib/practicePartnerScores'
+import {
+  fetchPracticePartnerLeaderboard,
+  putPracticePartnerLeaderboard,
+  type PracticePartnerLeaderboardPayload,
+} from '../lib/api'
+import { getSession } from '../lib/auth'
+import { PracticePartnerPodium } from './PracticePartnerPodium'
 import {
   PRACTICE_PARTNER_MOVE_LABEL,
   finishLineCloze,
@@ -229,6 +237,10 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [scoreboard, setScoreboard] = useState<PracticePartnerScores>(() =>
     readPracticePartnerScores(),
   )
+  const [board, setBoard] = useState<PracticePartnerLeaderboardPayload | null>(null)
+  const [boardLoading, setBoardLoading] = useState(true)
+  const [boardError, setBoardError] = useState('')
+  const [boardSignedIn, setBoardSignedIn] = useState(false)
   const [scoresOpen, setScoresOpen] = useState(false)
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false)
   const [topicReady, setTopicReady] = useState(false)
@@ -276,6 +288,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const pendingReviewRef = useRef<PracticePartnerDrillTarget | null>(null)
   const pendingActiveMoveRef = useRef<PracticePartnerMove>('repeat')
   const incomingReviewRef = useRef(false)
+  const publishScoreRef = useRef<(scores: PracticePartnerScores) => void>(() => {})
 
   useEffect(() => {
     messagesRef.current = messages
@@ -292,6 +305,70 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   useEffect(() => {
     difficultyRef.current = difficulty
   }, [difficulty])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      setBoardLoading(true)
+      try {
+        const session = await getSession()
+        if (cancelled) return
+        setBoardSignedIn(Boolean(session))
+        const data = await fetchPracticePartnerLeaderboard(25)
+        if (cancelled) return
+        setBoard(data)
+        setBoardError('')
+        if (data.me) {
+          setScoreboard((local) => adoptPracticePartnerCloudScore(local, data.me!))
+        }
+        if (session) {
+          const local = readPracticePartnerScores()
+          const xp = Math.max(local.xp, data.me?.xp ?? 0)
+          const bestStreak = Math.max(local.bestStreak, data.me?.bestStreak ?? 0)
+          const totalPasses = Math.max(local.totalPasses, data.me?.totalPasses ?? 0)
+          if (xp > 0 || bestStreak > 0 || totalPasses > 0) {
+            await putPracticePartnerLeaderboard({ xp, bestStreak, totalPasses })
+            const again = await fetchPracticePartnerLeaderboard(25)
+            if (cancelled) return
+            setBoard(again)
+            if (again.me) {
+              setScoreboard((prev) => adoptPracticePartnerCloudScore(prev, again.me!))
+            }
+          }
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setBoardError(e instanceof Error ? e.message : 'Leaderboard unavailable')
+        }
+      } finally {
+        if (!cancelled) setBoardLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  publishScoreRef.current = (scores) => {
+    if (!boardSignedIn) return
+    void (async () => {
+      try {
+        await putPracticePartnerLeaderboard({
+          xp: scores.xp,
+          bestStreak: scores.bestStreak,
+          totalPasses: scores.totalPasses,
+        })
+        const data = await fetchPracticePartnerLeaderboard(25)
+        setBoard(data)
+        setBoardError('')
+        if (data.me) {
+          setScoreboard((local) => adoptPracticePartnerCloudScore(local, data.me!))
+        }
+      } catch {
+        /* Local high-score log still stands when the board is offline. */
+      }
+    })()
+  }
 
   useEffect(() => {
     if (mood !== 'speaking' && mood !== 'listening') {
@@ -390,14 +467,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
       setStreak(nextStreak)
       setHits(hitsRef.current)
       if (justPassed?.zh || justPassed?.en) {
-        setScoreboard(
-          recordPracticePartnerPass({
-            streak: nextStreak,
-            category: categoryRef.current,
-            zh: justPassed.zh || '',
-            en: justPassed.en || '',
-          }),
-        )
+        const nextScores = recordPracticePartnerPass({
+          streak: nextStreak,
+          category: categoryRef.current,
+          zh: justPassed.zh || '',
+          en: justPassed.en || '',
+          xpGain: gained,
+        })
+        setScoreboard(nextScores)
+        publishScoreRef.current(nextScores)
       }
       playPracticePartnerPassSfx()
       setVerdictFlash('pass')
@@ -964,6 +1042,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               >
                 <p className="partner-lab-scores-summary">
                   <span>
+                    <strong>{scoreboard.xp}</strong> XP
+                  </span>
+                  <span>
                     <strong>{scoreboard.bestStreak}</strong> best streak
                   </span>
                   <span>
@@ -1003,6 +1084,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             ) : null}
           </div>
         </header>
+
+        <PracticePartnerPodium
+          entries={board?.entries ?? []}
+          me={board?.me}
+          loading={boardLoading}
+          error={boardError}
+          signedIn={boardSignedIn}
+        />
 
         <div className="partner-lab-chooser-block">
           <p className="partner-lab-chooser-label" id="partner-lab-diff-label">
@@ -1102,7 +1191,18 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               role="region"
               aria-label="Practice Partner high scores"
             >
+              <PracticePartnerPodium
+                compact
+                entries={board?.entries ?? []}
+                me={board?.me}
+                loading={boardLoading}
+                error={boardError}
+                signedIn={boardSignedIn}
+              />
               <p className="partner-lab-scores-summary">
+                <span>
+                  <strong>{scoreboard.xp}</strong> XP
+                </span>
                 <span>
                   <strong>{scoreboard.bestStreak}</strong> best streak
                 </span>

@@ -46,6 +46,10 @@ import {
   postHarborQuestGift,
   putHarborQuest,
 } from './harborQuest.js'
+import {
+  getPracticePartnerLeaderboard,
+  putPracticePartnerLeaderboard,
+} from './practicePartnerLeaderboard.js'
 import { peekDocPages, translateDocumentFile, translateDocSegments } from './docs/handler.js'
 import {
   upsertProfilePlan,
@@ -977,6 +981,8 @@ app.post('/api/billing/portal', startPortal)
 app.get('/api/history', getHistory)
 app.put('/api/history', putHistory)
 app.get('/api/harbor-quest/leaderboard', getHarborQuestLeaderboard)
+app.get('/api/practice-partner/leaderboard', getPracticePartnerLeaderboard)
+app.put('/api/practice-partner/leaderboard', putPracticePartnerLeaderboard)
 app.get('/api/harbor-quest', getHarborQuest)
 app.put('/api/harbor-quest', putHarborQuest)
 app.post('/api/harbor-quest/gift', postHarborQuestGift)

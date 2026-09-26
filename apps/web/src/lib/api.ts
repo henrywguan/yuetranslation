@@ -599,3 +599,56 @@ export async function fetchHarborQuestLeaderboard(
     typeof data.limit === 'number' && Number.isFinite(data.limit) ? Math.floor(data.limit) : limit
   return { entries, me, limit: lim }
 }
+
+export type PracticePartnerLeaderboardEntry = {
+  rank: number
+  userId: string
+  displayName: string
+  xp: number
+  bestStreak: number
+  totalPasses: number
+  isYou?: boolean
+}
+
+export type PracticePartnerLeaderboardPayload = {
+  entries: PracticePartnerLeaderboardEntry[]
+  me: PracticePartnerLeaderboardEntry | null
+  limit: number
+}
+
+/** Global Practice Partner ranks (public; signed-in callers get `me` / `isYou`). */
+export async function fetchPracticePartnerLeaderboard(
+  limit = 25,
+): Promise<PracticePartnerLeaderboardPayload> {
+  const res = await apiFetch(
+    `/practice-partner/leaderboard?limit=${Math.min(50, Math.max(1, limit))}`,
+  )
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to load Practice Partner leaderboard')
+  }
+  const entries = Array.isArray(data.entries)
+    ? (data.entries as PracticePartnerLeaderboardEntry[])
+    : []
+  const me =
+    data.me && typeof data.me === 'object' ? (data.me as PracticePartnerLeaderboardEntry) : null
+  const lim =
+    typeof data.limit === 'number' && Number.isFinite(data.limit) ? Math.floor(data.limit) : limit
+  return { entries, me, limit: lim }
+}
+
+/** Push this browser's lifetime totals. The server keeps the higher numbers. */
+export async function putPracticePartnerLeaderboard(score: {
+  xp: number
+  bestStreak: number
+  totalPasses: number
+}): Promise<void> {
+  const res = await apiFetch('/practice-partner/leaderboard', {
+    method: 'PUT',
+    body: JSON.stringify(score),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.message || 'Could not sync Practice Partner score')
+  }
+}
