@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { emptyPracticePartnerPath } from './practicePartnerPath.ts'
 import {
   PARTNER_MAP_HEIGHT,
+  PARTNER_MAP_VIEWBOX,
   partnerMapLayerSize,
   practicePartnerChapterReveal,
   practicePartnerChapterTale,
@@ -77,23 +78,35 @@ opened.units.common = [4, 4, 4]
 assert.equal(practicePartnerChapterReveal(opened, 'common'), 1)
 assert.match(practicePartnerChapterTale(opened, 'common'), /gate is open/)
 
+const aspect = PARTNER_MAP_VIEWBOX.h / PARTNER_MAP_VIEWBOX.w
 const phone = partnerMapLayerSize(390, 700)
-assert.equal(phone.w, 390)
+assert.ok(phone.w >= 390)
 assert.ok(phone.h >= 700 * PARTNER_MAP_HEIGHT - 0.5)
+assert.ok(Math.abs(phone.h / phone.w - aspect) < 0.001)
 const desk = partnerMapLayerSize(900, 640)
 assert.equal(desk.w, 900)
 assert.ok(desk.h > 640)
+assert.ok(Math.abs(desk.h / desk.w - aspect) < 0.001)
 
 const here = dirname(fileURLToPath(import.meta.url))
 const layoutSrc = readFileSync(join(here, 'practicePartnerMapLayout.ts'), 'utf8')
 const mapSrc = readFileSync(join(here, '../components/PracticePartnerPathMap.tsx'), 'utf8')
 const artSrc = readFileSync(join(here, '../components/WuxiaJourneyArt.tsx'), 'utf8')
-for (const src of [layoutSrc, mapSrc, artSrc]) {
+const depthSrc = readFileSync(join(here, '../components/WuxiaDepth.tsx'), 'utf8')
+for (const src of [layoutSrc, mapSrc, artSrc, depthSrc]) {
   assert.doesNotMatch(src, /harbor-quest|harbor-continent|Guan harbor|voyage chart/i)
+  assert.doesNotMatch(src, /feTurbulence|feGaussianBlur/)
 }
 assert.match(artSrc, /f3e2c4/)
-assert.doesNotMatch(artSrc, /feTurbulence/)
+assert.doesNotMatch(artSrc, /paperFiber/)
+assert.match(artSrc, /preserveAspectRatio="none"/)
+assert.match(artSrc, /PARTNER_MAP_VIEWBOX/)
+assert.match(depthSrc, /WuxiaFarPeaks/)
+assert.match(depthSrc, /WuxiaMistVeil/)
+assert.match(mapSrc, /WuxiaFarPeaks/)
 assert.match(mapSrc, /WuxiaCloudFrame/)
+assert.match(mapSrc, /0\.38/)
+assert.match(mapSrc, /1\.18/)
 assert.match(mapSrc, /box\.cw \* pan\.scale/)
 assert.doesNotMatch(mapSrc, /scale\(\$\{pan\.scale\}\)/)
 

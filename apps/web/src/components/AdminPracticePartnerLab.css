@@ -516,12 +516,26 @@
   min-height: 0;
 }
 
+.partner-map-depth {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform-origin: top center;
+}
+
+.partner-map-depth.is-mist {
+  z-index: 2;
+}
+
 .partner-map-layer {
   position: absolute;
   left: 50%;
   top: 0;
+  z-index: 1;
   transform-origin: top center;
-  background: #f3e2c4;
+  background: transparent;
 }
 
 .partner-wuxia,
@@ -549,8 +563,99 @@
 }
 
 .wuxia-beacon ellipse,
-.wuxia-steam {
+.wuxia-lantern,
+.wuxia-moon,
+.wuxia-gild {
   animation: wuxia-glow 3.4s ease-in-out infinite;
+}
+
+.wuxia-moon {
+  animation-duration: 7s;
+}
+
+.wuxia-steam {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: wuxia-steam 3.6s ease-in-out infinite;
+}
+
+.wuxia-river {
+  stroke-dasharray: 12 18;
+  animation: wuxia-current 14s linear infinite;
+}
+
+.wuxia-sway,
+.wuxia-wing,
+.wuxia-bird,
+.wuxia-koi,
+.wuxia-petal,
+.wuxia-mist-drift {
+  transform-box: fill-box;
+}
+
+.wuxia-sway {
+  transform-origin: center bottom;
+  animation: wuxia-sway 6.5s ease-in-out infinite alternate;
+}
+
+.wuxia-sway.is-soft {
+  transform-origin: center top;
+  animation-duration: 5.2s;
+  animation-name: wuxia-sway-soft;
+}
+
+.wuxia-sway.is-alt {
+  animation-duration: 8s;
+  animation-delay: -2s;
+}
+
+.wuxia-wing {
+  transform-origin: 0% 60%;
+  animation: wuxia-wing 2.6s ease-in-out infinite;
+}
+
+.wuxia-bird {
+  animation: wuxia-bird 16s ease-in-out infinite alternate;
+}
+
+.wuxia-koi {
+  animation: wuxia-koi 8s ease-in-out infinite alternate;
+}
+
+.wuxia-petal {
+  animation: wuxia-petal 18s linear infinite;
+}
+
+.wuxia-petal.is-b {
+  animation-duration: 24s;
+  animation-delay: -8s;
+}
+
+.wuxia-petal.is-c {
+  animation-duration: 15s;
+  animation-delay: -4s;
+}
+
+.wuxia-mist-drift {
+  animation: wuxia-mist-drift 28s ease-in-out infinite alternate;
+}
+
+.wuxia-mist-drift.is-slow {
+  animation-duration: 40s;
+  animation-delay: -6s;
+}
+
+.wuxia-chapter.is-ink .wuxia-lantern,
+.wuxia-chapter.is-ink .wuxia-steam,
+.wuxia-chapter.is-ink .wuxia-river,
+.wuxia-chapter.is-ink .wuxia-sway,
+.wuxia-chapter.is-ink .wuxia-bird,
+.wuxia-chapter.is-ink .wuxia-wing,
+.wuxia-chapter.is-ink .wuxia-koi,
+.wuxia-chapter.is-ink .wuxia-moon,
+.wuxia-chapter.is-ink .wuxia-gild,
+.wuxia-chapter.is-ink .wuxia-mist-drift {
+  animation: none;
 }
 
 @keyframes wuxia-glow {
@@ -560,6 +665,95 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+@keyframes wuxia-steam {
+  0% {
+    opacity: 0.15;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.05;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes wuxia-current {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@keyframes wuxia-sway {
+  from {
+    transform: rotate(-1.4deg);
+  }
+  to {
+    transform: rotate(1.6deg);
+  }
+}
+
+@keyframes wuxia-sway-soft {
+  from {
+    transform: rotate(-0.7deg);
+  }
+  to {
+    transform: rotate(0.9deg);
+  }
+}
+
+@keyframes wuxia-wing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-16deg);
+  }
+}
+
+@keyframes wuxia-bird {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(16px, -10px);
+  }
+}
+
+@keyframes wuxia-koi {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(18px, -3px);
+  }
+}
+
+@keyframes wuxia-petal {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.15;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate3d(14px, 28px, 0);
+    opacity: 0.05;
+  }
+}
+
+@keyframes wuxia-mist-drift {
+  from {
+    transform: translate3d(-10px, 0, 0);
+  }
+  to {
+    transform: translate3d(14px, -8px, 0);
   }
 }
 
@@ -671,6 +865,13 @@
   stroke-linejoin: round;
   stroke-dasharray: 1.4 8;
   opacity: 0.7;
+}
+
+.partner-map-road polyline.is-bed {
+  stroke: #c4a574;
+  stroke-width: 7;
+  stroke-dasharray: none;
+  opacity: 0.85;
 }
 
 .partner-map-layer .partner-map-scroll {
@@ -2191,6 +2392,16 @@
   .partner-map-scroll.is-fresh,
   .wuxia-beacon,
   .wuxia-steam,
+  .wuxia-lantern,
+  .wuxia-river,
+  .wuxia-sway,
+  .wuxia-wing,
+  .wuxia-bird,
+  .wuxia-koi,
+  .wuxia-petal,
+  .wuxia-moon,
+  .wuxia-gild,
+  .wuxia-mist-drift,
   .partner-map-you,
   .wuxia-chapter,
   .wuxia-mist,

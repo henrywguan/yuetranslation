@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import {
@@ -14,6 +15,7 @@ import {
   practicePartnerMapScrolls,
 } from '../lib/practicePartnerMapLayout'
 import { WuxiaCloudFrame } from './WuxiaClouds'
+import { WuxiaFarPeaks, WuxiaMistVeil } from './WuxiaDepth'
 import { WuxiaJourneyArt } from './WuxiaJourneyArt'
 import {
   pathFocusSection,
@@ -24,6 +26,8 @@ import {
 
 const ZOOM_MIN = 1
 const ZOOM_MAX = 3.2
+const FAR_PARALLAX = 0.38
+const MIST_PARALLAX = 1.18
 
 type Pan = { scale: number; x: number; y: number }
 
@@ -32,6 +36,23 @@ function clamp(n: number, lo: number, hi: number) {
 }
 
 type Box = { w: number; h: number; cw: number; ch: number }
+
+function layerStyle(box: Box, pan: Pan, factor: number): CSSProperties {
+  const x = pan.x * factor
+  const y = pan.y * factor
+  if (box.cw > 0) {
+    return {
+      width: box.cw * pan.scale,
+      height: box.ch * pan.scale,
+      transform: `translate(calc(-50% + ${x}px), ${y}px)`,
+    }
+  }
+  return {
+    width: `${100 * pan.scale}%`,
+    height: `${PARTNER_MAP_HEIGHT * 100 * pan.scale}%`,
+    transform: `translate(calc(-50% + ${x}px), ${y}px)`,
+  }
+}
 
 function clampPan(pan: Pan, box: Box): Pan {
   const scale = clamp(pan.scale, ZOOM_MIN, ZOOM_MAX)
@@ -268,34 +289,24 @@ export function PracticePartnerPathMap({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div
-          className="partner-map-layer"
-          style={
-            box.cw > 0
-              ? {
-                  width: box.cw * pan.scale,
-                  height: box.ch * pan.scale,
-                  transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px)`,
-                }
-              : {
-                  width: `${100 * pan.scale}%`,
-                  height: `${PARTNER_MAP_HEIGHT * 100 * pan.scale}%`,
-                  transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px)`,
-                }
-          }
-        >
+        <div className="partner-map-depth is-far" style={layerStyle(box, pan, FAR_PARALLAX)}>
+          <WuxiaFarPeaks />
+        </div>
+        <div className="partner-map-layer" style={layerStyle(box, pan, 1)}>
           <WuxiaJourneyArt progress={progress} mastery={progress.mastery} />
           <svg className="partner-map-road" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            {regions.map((region) => (
-              <polyline
-                key={region.id}
-                points={scrolls
-                  .filter((row) => row.category === region.id)
-                  .map((row) => `${row.x * 100},${row.y * 100}`)
-                  .join(' ')}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
+            {regions.map((region) => {
+              const points = scrolls
+                .filter((row) => row.category === region.id)
+                .map((row) => `${row.x * 100},${row.y * 100}`)
+                .join(' ')
+              return (
+                <g key={region.id}>
+                  <polyline className="is-bed" points={points} vectorEffect="non-scaling-stroke" />
+                  <polyline points={points} vectorEffect="non-scaling-stroke" />
+                </g>
+              )
+            })}
           </svg>
           <div className="partner-map-wash" />
           <ul className={listClassName || 'partner-map-scrolls'} aria-label="Practice path">
@@ -361,6 +372,9 @@ export function PracticePartnerPathMap({
               </li>
             ))}
           </ul>
+        </div>
+        <div className="partner-map-depth is-mist" style={layerStyle(box, pan, MIST_PARALLAX)}>
+          <WuxiaMistVeil />
         </div>
         <WuxiaCloudFrame pan={pan} />
         <div className="partner-map-zoom partner-map-chrome" role="group" aria-label="Map zoom">
