@@ -75,5 +75,7 @@ const artSrc = readFileSync(join(here, '../components/WuxiaJourneyArt.tsx'), 'ut
 for (const src of [layoutSrc, mapSrc, artSrc]) {
   assert.doesNotMatch(src, /harbor-quest|harbor-continent|Guan harbor|voyage chart/i)
 }
+assert.match(artSrc, /f3e2c4/)
+assert.match(mapSrc, /WuxiaCloudFrame/)
 
 console.log('practicePartnerMapLayout.smoke: ok')

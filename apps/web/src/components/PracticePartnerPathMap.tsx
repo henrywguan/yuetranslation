@@ -13,6 +13,7 @@ import {
   practicePartnerMapRegions,
   practicePartnerMapScrolls,
 } from '../lib/practicePartnerMapLayout'
+import { WuxiaCloudFrame } from './WuxiaClouds'
 import { WuxiaJourneyArt } from './WuxiaJourneyArt'
 import {
   pathFocusSection,
@@ -349,6 +350,7 @@ export function PracticePartnerPathMap({
             ))}
           </ul>
         </div>
+        <WuxiaCloudFrame pan={pan} />
         <div className="partner-map-zoom partner-map-chrome" role="group" aria-label="Map zoom">
           <button type="button" aria-label="Zoom in" onClick={() => bump(1)}>
             +
