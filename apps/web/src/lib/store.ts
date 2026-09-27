@@ -49,10 +49,13 @@ import {
 import { startHeartbeat, stopHeartbeat } from './storeLiveMeter'
 import { readLocalAutoSpeak, writeLocalAutoSpeak } from './autoSpeakPref'
 import {
+  layoutForPrimary,
   normalizePrimaryLang,
   readLocalPrimaryLang,
+  readSyncedPrimaryLang,
+  resolvePrimaryLangOnBootstrap,
   writeLocalPrimaryLang,
-  layoutForPrimary,
+  writeSyncedPrimaryLang,
   type PrimaryLang,
 } from './primaryLanguagePref'
 
@@ -876,6 +879,7 @@ export const useYueStore = create<State>((set, get) => {
   setPrimaryLanguage: (lang) => {
     const primary = normalizePrimaryLang(lang)
     writeLocalPrimaryLang(primary)
+    // Do not stamp synced yet — only after a successful profile PATCH (or guest).
 
     // Primary fills Solo upper + Conversation you (facing the phone user).
     // English primary pairs with Cantonese on the partner / lower side;
@@ -886,13 +890,17 @@ export const useYueStore = create<State>((set, get) => {
     })
 
     const loggedIn = Boolean(get().entitlement?.loggedIn)
-    if (!loggedIn) return
+    if (!loggedIn) {
+      writeSyncedPrimaryLang(primary)
+      return
+    }
     void savePrimaryLangPref(primary)
       .then((data) => {
+        writeSyncedPrimaryLang(primary)
         if (data.entitlement) set({ entitlement: data.entitlement })
       })
       .catch(() => {
-        /* Keep local preference; next bootstrap will reconcile if save failed. */
+        /* Keep local preference; bootstrap will retry push while unsynced. */
       })
   },
 
@@ -951,12 +959,22 @@ export const useYueStore = create<State>((set, get) => {
       if (ent.loggedIn && typeof ent.prefs?.autoSpeak === 'boolean') {
         writeLocalAutoSpeak(ent.prefs.autoSpeak)
       }
-      const nextPrimary =
-        ent.loggedIn && ent.prefs?.primaryLang
-          ? normalizePrimaryLang(ent.prefs.primaryLang)
-          : get().primaryLanguage
-      if (ent.loggedIn && ent.prefs?.primaryLang) {
+      // Don't let a stale profile (default yue) clobber a local pick when the
+      // PATCH was killed by backgrounding or failed (e.g. missing DB `en` check).
+      const localPrimary = readLocalPrimaryLang()
+      const primaryResolve = resolvePrimaryLangOnBootstrap({
+        loggedIn: Boolean(ent.loggedIn),
+        serverPrimary: ent.prefs?.primaryLang,
+        localPrimary,
+        syncedPrimary: readSyncedPrimaryLang(),
+      })
+      const nextPrimary = primaryResolve.primary
+      if (primaryResolve.adoptServer) {
         writeLocalPrimaryLang(nextPrimary)
+        writeSyncedPrimaryLang(nextPrimary)
+      } else if (localPrimary === nextPrimary && !primaryResolve.needsServerPush) {
+        // Local matches server (or guest) — mark synced so future boots are clean.
+        writeSyncedPrimaryLang(nextPrimary)
       }
       // Only reset Solo/Conversation pane layout when primary actually changes.
       // Re-applying on every health refresh (visibility, mic overlays, concurrent
@@ -976,6 +994,16 @@ export const useYueStore = create<State>((set, get) => {
         primaryLanguage: nextPrimary,
         ...(primaryChanged ? layout : {}),
       })
+      if (ent.loggedIn && primaryResolve.needsServerPush) {
+        void savePrimaryLangPref(nextPrimary)
+          .then((saved) => {
+            writeSyncedPrimaryLang(nextPrimary)
+            if (saved.entitlement) set({ entitlement: saved.entitlement })
+          })
+          .catch(() => {
+            /* Stay unsynced so the next visible bootstrap retries. */
+          })
+      }
     } catch {
       // A failed refresh must not snap a loaded plan back to Connecting.
       // While the chip is still waiting, try again — a deploy blip used to latch forever.
