@@ -5,13 +5,12 @@ import {
   PRACTICE_PARTNER_PATH_SECTIONS,
   bandForHarborScore,
   harborScore,
-  pathFocusSection,
-  pathSectionComplete,
   type PathCreditNote,
   type PathFresh,
   type PathUnitId,
   type PracticePartnerPathState,
 } from '../lib/practicePartnerPath'
+import { PracticePartnerPathMap } from './PracticePartnerPathMap'
 
 function noteText(note: PathCreditNote | null): string {
   if (!note) return ''
@@ -20,23 +19,36 @@ function noteText(note: PathCreditNote | null): string {
   return `Advanced · ${note.score}`
 }
 
-function UnitDots({
+function MiniScrolls({
   filled,
   freshIndex,
+  mark,
 }: {
   filled: number
   freshIndex: number | null
+  mark: string
 }) {
   return (
-    <span className="partner-path-unit">
+    <span className="partner-path-scrolls">
       {Array.from({ length: PATH_LESSONS_PER_UNIT }, (_, index) => {
-        const on = index < filled
-        const pop = on && freshIndex === index
+        const colored = index < filled
+        const fresh = colored && freshIndex === index
         return (
           <span
             key={index}
-            className={`partner-path-dot${on ? ' is-filled' : ''}${pop ? ' is-pop' : ''}`}
-          />
+            className={`partner-map-scroll is-mini${colored ? ' is-colored' : ' is-sealed'}${
+              fresh ? ' is-fresh' : ''
+            }`}
+            aria-hidden
+          >
+            <span className="partner-map-scroll-roller" />
+            <span className="partner-map-scroll-sheet">
+              <span className="partner-map-scroll-mark" lang="zh-HK">
+                {mark}
+              </span>
+            </span>
+            <span className="partner-map-scroll-roller is-foot" />
+          </span>
         )
       })}
     </span>
@@ -44,7 +56,7 @@ function UnitDots({
 }
 
 /**
- * Harbor Score plus the four-section path.
+ * Harbor Score plus the voyage map.
  * Full mode is the topic picker. Compact mode sits on the drill card.
  */
 export function PracticePartnerPath({
@@ -68,11 +80,7 @@ export function PracticePartnerPath({
 }) {
   const score = harborScore(progress)
   const band = bandForHarborScore(score)
-  const focus = pathFocusSection(progress)
   const active = PRACTICE_PARTNER_PATH_SECTIONS.find((row) => row.id === activeId)
-  const shown = compact
-    ? PRACTICE_PARTNER_PATH_SECTIONS.filter((row) => row.id === activeId)
-    : PRACTICE_PARTNER_PATH_SECTIONS
 
   return (
     <div className={`partner-path${compact ? ' is-compact' : ''}`}>
@@ -95,76 +103,32 @@ export function PracticePartnerPath({
           <p className="partner-path-disclaimer">Practice bands paced like A1–B2. Not a formal exam.</p>
         </div>
       )}
-      <ul className={listClassName || undefined} aria-label={compact ? undefined : 'Practice path'}>
-        {shown.map((section) => {
-          const units = progress.units[section.id]
-          const clear = pathSectionComplete(progress, section.id)
-          const here = section.id === focus && !clear
-          const current = section.id === activeId
-          const dots = (
-            <span className="partner-path-units" aria-hidden="true">
-              {PATH_UNIT_LABELS.map((label, unit) => (
-                <span
-                  className={`partner-path-unit-wrap${activeUnit === unit ? ' is-active' : ''}`}
-                  key={label}
-                >
-                  {compact ? null : <span className="partner-path-unit-label">{label}</span>}
-                  <UnitDots
-                    filled={units[unit] ?? 0}
-                    freshIndex={
-                      fresh && fresh.category === section.id && fresh.unit === unit
-                        ? fresh.index
-                        : null
-                    }
-                  />
-                </span>
-              ))}
-            </span>
-          )
-          const body = (
-            <>
-              <span className="partner-path-row-top">
-                <span className="partner-path-cefr">{section.cefr}</span>
-                <span className="partner-path-name">{section.labelEn}</span>
-                <span className="partner-path-zh" lang="zh-HK">
-                  {section.labelZh}
-                </span>
-                {clear ? <span className="partner-path-clear">Clear</span> : null}
-                {here && !compact ? <span className="partner-path-here">Next</span> : null}
-              </span>
-              {dots}
-            </>
-          )
-          return (
-            <li key={section.id}>
-              {onPick ? (
-                <button
-                  type="button"
-                  className={`partner-lab-topic-item partner-path-section${current ? ' is-current' : ''}${
-                    clear ? ' is-clear' : ''
-                  }${here ? ' is-here' : ''}`}
-                  aria-current={current ? 'true' : undefined}
-                  onClick={() => onPick(section.id)}
-                >
-                  {body}
-                </button>
-              ) : (
-                <div
-                  className={`partner-path-section${clear ? ' is-clear' : ''}${here ? ' is-here' : ''}`}
-                >
-                  {compact ? null : body}
-                  {compact ? dots : null}
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
       {compact && active ? (
-        <p className="partner-path-compact-unit">
-          {PATH_UNIT_LABELS[0]} · {PATH_UNIT_LABELS[1]} · {PATH_UNIT_LABELS[2]}
-        </p>
-      ) : null}
+        <div className="partner-path-units" aria-hidden="true">
+          {PATH_UNIT_LABELS.map((label, unit) => (
+            <span
+              className={`partner-path-unit-wrap${activeUnit === unit ? ' is-active' : ''}`}
+              key={label}
+            >
+              <MiniScrolls
+                filled={progress.units[active.id][unit as PathUnitId] ?? 0}
+                freshIndex={
+                  fresh && fresh.category === active.id && fresh.unit === unit ? fresh.index : null
+                }
+                mark={active.labelZh.slice(0, 1)}
+              />
+            </span>
+          ))}
+        </div>
+      ) : (
+        <PracticePartnerPathMap
+          progress={progress}
+          activeId={activeId}
+          onPick={onPick}
+          fresh={fresh}
+          listClassName={listClassName}
+        />
+      )}
     </div>
   )
 }
