@@ -56,7 +56,7 @@ function MiniScrolls({
 }
 
 /**
- * Harbor Score plus the voyage map.
+ * Harbor Score plus the Ink Road.
  * Full mode is the topic picker. Compact mode sits on the drill card.
  */
 export function PracticePartnerPath({

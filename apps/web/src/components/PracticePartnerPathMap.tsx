@@ -6,14 +6,14 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import {
-  PARTNER_MAP_GUAN_ART,
   PARTNER_MAP_HEIGHT,
-  PARTNER_MAP_VOYAGE_ART,
   partnerMapLayerSize,
+  practicePartnerChapterTale,
   practicePartnerMapFocusY,
   practicePartnerMapRegions,
   practicePartnerMapScrolls,
 } from '../lib/practicePartnerMapLayout'
+import { WuxiaJourneyArt } from './WuxiaJourneyArt'
 import {
   pathFocusSection,
   type PathCategory,
@@ -44,7 +44,7 @@ function clampPan(pan: Pan, box: Box): Pan {
 }
 
 /**
- * Tall Guan + voyage chart. Drag travels the path. Pinch and wheel zoom.
+ * The Ink Road. Drag travels the scroll. Pinch and wheel zoom.
  */
 export function PracticePartnerPathMap({
   progress,
@@ -76,6 +76,8 @@ export function PracticePartnerPathMap({
   const currentId =
     scrolls.find((row) => row.category === activeId && !row.colored)?.id ??
     [...scrolls].reverse().find((row) => row.category === activeId)?.id
+  const currentScroll = scrolls.find((row) => row.id === currentId)
+  const tale = practicePartnerChapterTale(progress, activeId)
 
   const apply = (next: Pan) => {
     const sized = boxRef.current
@@ -245,7 +247,10 @@ export function PracticePartnerPathMap({
   return (
     <div className={`partner-map${full ? ' is-fullscreen' : ''}`}>
       <div className="partner-map-hud partner-map-chrome">
-        <p className="partner-map-hint">Drag to travel the harbor. Scroll or pinch to zoom.</p>
+        <div className="partner-map-copy">
+          <p className="partner-map-tale">{tale}</p>
+          <p className="partner-map-hint">Drag the Ink Road. Scroll or pinch to look closer.</p>
+        </div>
         <button
           type="button"
           className="partner-map-full"
@@ -278,34 +283,8 @@ export function PracticePartnerPathMap({
                 }
           }
         >
-          <img
-            className="partner-map-art partner-map-art--voyage"
-            src={PARTNER_MAP_VOYAGE_ART}
-            alt=""
-            draggable={false}
-          />
-          <img
-            className="partner-map-art partner-map-art--guan"
-            src={PARTNER_MAP_GUAN_ART}
-            alt=""
-            draggable={false}
-          />
+          <WuxiaJourneyArt progress={progress} mastery={progress.mastery} />
           <div className="partner-map-wash" />
-          <svg className="partner-map-paths" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            {scrolls.slice(0, -1).map((row, i) => {
-              const next = scrolls[i + 1]!
-              return (
-                <line
-                  key={`${row.id}-path`}
-                  x1={row.x * 100}
-                  y1={row.y * 100}
-                  x2={next.x * 100}
-                  y2={next.y * 100}
-                  className="partner-map-path"
-                />
-              )
-            })}
-          </svg>
           <ul className={listClassName || 'partner-map-scrolls'} aria-label="Practice path">
             {regions.map((region) => (
               <li
@@ -322,11 +301,23 @@ export function PracticePartnerPathMap({
                   }}
                 >
                   <span className="partner-map-region-cefr">{region.cefr}</span>
-                  <span>{region.labelEn}</span>
-                  <span lang="zh-HK">{region.labelZh}</span>
+                  <span className="partner-map-region-place" lang="zh-HK">
+                    {region.placeZh}
+                  </span>
+                  <span>{region.placeEn}</span>
+                  <span className="partner-map-region-topic">{region.labelEn}</span>
                 </button>
               </li>
             ))}
+            {currentScroll ? (
+              <li
+                aria-hidden="true"
+                className="partner-map-you-wrap"
+                style={{ left: `${currentScroll.x * 100}%`, top: `${currentScroll.y * 100}%` }}
+              >
+                <span className="partner-map-you" />
+              </li>
+            ) : null}
             {scrolls.map((row) => (
               <li
                 key={row.id}
