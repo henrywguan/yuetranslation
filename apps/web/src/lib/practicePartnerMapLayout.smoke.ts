@@ -54,6 +54,22 @@ assert.equal(scrolls.find((row) => row.category === 'common')?.mark, '山')
 assert.equal(scrolls.find((row) => row.category === 'expert')?.mark, '雲')
 assert.ok(practicePartnerMapFocusY('expert') > practicePartnerMapFocusY('common'))
 
+function nearestStopPx(frameW: number, frameH: number) {
+  const size = partnerMapLayerSize(frameW, frameH)
+  let min = Infinity
+  for (let i = 1; i < scrolls.length; i += 1) {
+    const prev = scrolls[i - 1]
+    const row = scrolls[i]
+    if (!prev || !row || prev.category !== row.category) continue
+    const dx = (row.x - prev.x) * size.w
+    const dy = (row.y - prev.y) * size.h
+    min = Math.min(min, Math.hypot(dx, dy))
+  }
+  return min
+}
+assert.ok(nearestStopPx(390, 640) >= 90, `phone gap ${nearestStopPx(390, 640)}`)
+assert.ok(nearestStopPx(360, 520) >= 80, `short gap ${nearestStopPx(360, 520)}`)
+
 assert.equal(practicePartnerChapterReveal(empty, 'foods'), 0)
 assert.match(practicePartnerChapterTale(empty, 'common'), /stone gate/)
 const opened = emptyPracticePartnerPath()

@@ -641,11 +641,49 @@
   display: block;
   width: 0.55rem;
   height: 0.55rem;
-  margin-top: 1.7rem;
+  margin-top: 1.15rem;
   border-radius: 50%;
   border: 1.5px solid #3dcfb6;
   box-shadow: 0 0 10px color-mix(in srgb, #3dcfb6 70%, transparent);
   animation: wuxia-glow 2.4s ease-in-out infinite;
+}
+
+.partner-map-road {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.partner-map-road polyline {
+  fill: none;
+  stroke: #6b5a40;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1.4 8;
+  opacity: 0.7;
+}
+
+.partner-map-layer .partner-map-scroll {
+  width: 1.7rem;
+}
+
+.partner-map-layer .partner-map-scroll-sheet {
+  min-height: 1.65rem;
+}
+
+.partner-map-layer .partner-map-scroll-cefr {
+  font-size: 0.42rem;
+}
+
+.partner-map-layer .partner-map-scroll-mark {
+  font-size: 0.72rem;
+}
+
+.partner-map-layer .partner-map-scroll-roller {
+  height: 0.28rem;
 }
 
 .partner-map-scroll {

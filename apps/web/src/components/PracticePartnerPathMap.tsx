@@ -285,6 +285,18 @@ export function PracticePartnerPathMap({
           }
         >
           <WuxiaJourneyArt progress={progress} mastery={progress.mastery} />
+          <svg className="partner-map-road" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            {regions.map((region) => (
+              <polyline
+                key={region.id}
+                points={scrolls
+                  .filter((row) => row.category === region.id)
+                  .map((row) => `${row.x * 100},${row.y * 100}`)
+                  .join(' ')}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </svg>
           <div className="partner-map-wash" />
           <ul className={listClassName || 'partner-map-scrolls'} aria-label="Practice path">
             {regions.map((region) => (
