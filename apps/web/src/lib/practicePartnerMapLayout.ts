@@ -12,8 +12,8 @@ import {
   type PracticePartnerPathState,
 } from './practicePartnerPath'
 
-/** Layer height relative to the viewport frame. Tall enough to drag like a phone. */
-export const PARTNER_MAP_HEIGHT = 2.9
+/** Layer height relative to the viewport frame. Long enough that lesson stops have room between them. */
+export const PARTNER_MAP_HEIGHT = 6.2
 
 const LESSONS_PER_CHAPTER = PATH_LESSONS_PER_UNIT * 3
 
@@ -110,12 +110,15 @@ export type PartnerMapRegion = {
   y: number
 }
 
-/** Four chapters down the scroll. Scrolls sit on the road; plaques sit to the side. */
-const BANDS: { y0: number; y1: number; xMid: [number, number, number] }[] = [
-  { y0: 0.08, y1: 0.22, xMid: [0.46, 0.5, 0.44] },
-  { y0: 0.32, y1: 0.46, xMid: [0.58, 0.5, 0.42] },
-  { y0: 0.56, y1: 0.7, xMid: [0.54, 0.4, 0.48] },
-  { y0: 0.78, y1: 0.92, xMid: [0.5, 0.46, 0.5] },
+/**
+ * One stop per lesson, alternating sides of the road.
+ * Left-hand chapters keep the plaque on the left, so the path runs to the right, and the reverse.
+ */
+const BANDS: { y0: number; y1: number; xA: number; xB: number }[] = [
+  { y0: 0.045, y1: 0.255, xA: 0.46, xB: 0.74 },
+  { y0: 0.295, y1: 0.505, xA: 0.26, xB: 0.54 },
+  { y0: 0.545, y1: 0.755, xA: 0.46, xB: 0.74 },
+  { y0: 0.79, y1: 0.968, xA: 0.26, xB: 0.54 },
 ]
 
 function clamp01(n: number, lo: number, hi: number) {
@@ -148,34 +151,29 @@ export function practicePartnerMapScrolls(
     const band = BANDS[sectionIndex] ?? BANDS[0]!
     const units = state.units[section.id]
     const chapter = WUXIA_CHAPTERS[sectionIndex] ?? WUXIA_CHAPTERS[0]
-    for (let unit = 0; unit < 3; unit += 1) {
-      const unitId = unit as PathUnitId
-      const ut = unit / 2
-      const y = band.y0 + (band.y1 - band.y0) * (0.28 + ut * 0.64)
-      const xMid = band.xMid[unit] ?? 0.5
-      const filled = units[unitId] ?? 0
-      for (let index = 0; index < PATH_LESSONS_PER_UNIT; index += 1) {
-        const x = clamp01(xMid + (index - 1.5) * 0.062, 0.28, 0.72)
-        const yk = clamp01(y + (index % 2 === 0 ? -0.006 : 0.006), 0.05, 0.96)
-        out.push({
-          id: `${section.id}-${unit}-${index}`,
-          category: section.id,
-          unit: unitId,
-          index,
-          x,
-          y: yk,
-          colored: index < filled,
-          fresh: Boolean(
-            fresh &&
-              fresh.category === section.id &&
-              fresh.unit === unitId &&
-              fresh.index === index,
-          ),
-          cefr: section.cefr,
-          mark: chapter.placeZh.slice(0, 1),
-          title: `${chapter.placeEn} · ${section.labelEn} · ${PATH_UNIT_LABELS[unitId]} · ${index + 1} of ${PATH_LESSONS_PER_UNIT}`,
-        })
-      }
+    const lessonCount = PATH_LESSONS_PER_UNIT * 3
+    for (let lesson = 0; lesson < lessonCount; lesson += 1) {
+      const unit = Math.floor(lesson / PATH_LESSONS_PER_UNIT) as PathUnitId
+      const index = lesson % PATH_LESSONS_PER_UNIT
+      const t = lesson / (lessonCount - 1)
+      const y = clamp01(band.y0 + (band.y1 - band.y0) * (0.08 + t * 0.86), 0.04, 0.97)
+      const x = clamp01(lesson % 2 === 0 ? band.xA : band.xB, 0.18, 0.82)
+      const filled = units[unit] ?? 0
+      out.push({
+        id: `${section.id}-${unit}-${index}`,
+        category: section.id,
+        unit,
+        index,
+        x,
+        y,
+        colored: index < filled,
+        fresh: Boolean(
+          fresh && fresh.category === section.id && fresh.unit === unit && fresh.index === index,
+        ),
+        cefr: section.cefr,
+        mark: chapter.placeZh.slice(0, 1),
+        title: `${chapter.placeEn} · ${section.labelEn} · ${PATH_UNIT_LABELS[unit]} · ${index + 1} of ${PATH_LESSONS_PER_UNIT}`,
+      })
     }
   })
   return out
