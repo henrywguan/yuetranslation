@@ -1437,6 +1437,15 @@
   color: color-mix(in srgb, var(--jade) 55%, var(--muted));
 }
 
+.partner-lab-drill-jp .jyut-syl-ui {
+  color: inherit;
+}
+
+.partner-lab-drill-jp .chao-face {
+  margin-left: 0.02em;
+  color: color-mix(in srgb, var(--jade-bright, var(--jade)) 80%, var(--ink-bright));
+}
+
 .partner-lab-drill-empty {
   color: var(--muted);
 }

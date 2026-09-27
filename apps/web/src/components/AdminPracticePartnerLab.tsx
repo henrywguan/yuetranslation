@@ -60,6 +60,7 @@ import {
 } from '../lib/api'
 import { getSession } from '../lib/auth'
 import { PracticePartnerPodium } from './PracticePartnerPodium'
+import { JyutpingChaoText } from '../landing/learn/JyutpingChaoText'
 import {
   PRACTICE_PARTNER_MOVE_LABEL,
   finishLineCloze,
@@ -1367,7 +1368,11 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
                 </button>
               )}
               {cardFace.en ? <p className="partner-lab-drill-en">{activeDrill.en}</p> : null}
-              {cardFace.jp ? <p className="partner-lab-drill-jp">{activeDrill.jyutping}</p> : null}
+              {cardFace.jp ? (
+                <p className="partner-lab-drill-jp">
+                  <JyutpingChaoText text={activeDrill.jyutping} />
+                </p>
+              ) : null}
             </>
           ) : (
             <p className="partner-lab-drill-empty">
