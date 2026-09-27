@@ -251,24 +251,6 @@ export function hqWoodTexture(): THREE.DataTexture {
   })
 }
 
-/** Thatch speck — diagonal straw strokes. */
-export function hqThatchTexture(): THREE.DataTexture {
-  return make128DataTex('thatch', (data) => {
-    for (let y = 0; y < 128; y++) {
-      for (let x = 0; x < 128; x++) setPx(data, x, y, 0xc4, 0xa8, 0x60)
-    }
-    for (let i = 0; i < 90; i++) {
-      const x0 = (i * 13) % 128
-      const y0 = (i * 29) % 128
-      const lite = i % 3 !== 0
-      for (let t = 0; t < 12; t++) {
-        if (lite) setPx(data, x0 + t, y0 + t, 0xd8, 0xc0, 0x78)
-        else setPx(data, x0 + t, y0 + t, 0x9a, 0x78, 0x40)
-      }
-    }
-  })
-}
-
 /** Lava blotches for crater / forge accents. */
 export function hqLavaTexture(): THREE.DataTexture {
   return make128DataTex('lava', (data) => {
@@ -566,12 +548,6 @@ export function hqSoftThatchTexture(): THREE.DataTexture {
     }
   })
 }
-
-/** @deprecated Prefer hqSoft* — kept for call sites mid-rename. */
-export const hqGuanSandTexture = hqSoftSandTexture
-export const hqGuanGrassTexture = hqSoftGrassTexture
-export const hqGuanDirtTexture = hqSoftDirtTexture
-export const hqGuanThatchTexture = hqSoftThatchTexture
 
 /** Flat material with optional 128px albedo (tint via color) + Harbor cel. */
 export function hqMatTex(

@@ -20,7 +20,6 @@ import {
   harborFishSpotById,
   harborFishSpotDescription,
   mergeHarborFishingBag,
-  nearestGuanFishSpot,
   nearestHarborFishSpot,
   nearestRiverFishSpot,
   sanitizeHarborFishingBag,
@@ -71,7 +70,7 @@ const baitMulti = buyHarborFishBait(bag0, 'bait-feather', 1000, 5)
 assert.equal(baitMulti.ok, true)
 if (baitMulti.ok) assert.equal(baitMulti.packsBought, 5)
 
-const near = nearestGuanFishSpot(GUAN_FISH_SPOTS[0]!.x, GUAN_FISH_SPOTS[0]!.z, 3)
+const near = nearestHarborFishSpot(GUAN_FISH_SPOTS[0]!.x, GUAN_FISH_SPOTS[0]!.z, 3, GUAN_FISH_SPOTS)
 assert.ok(near)
 
 const merged = mergeHarborFishingBag(bag0, sanitizeHarborFishingBag(catchOk.ok ? catchOk.bag : bag0))

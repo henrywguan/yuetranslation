@@ -88,8 +88,9 @@ import {
 } from './harborGuanRealm'
 import {
   GUAN_FISHING_HUT,
+  GUAN_FISH_SPOTS,
   RIVER_FISH_SPOTS,
-  nearestGuanFishSpot,
+  nearestHarborFishSpot,
   nearestRiverFishSpot,
 } from './harborFishing'
 import { fishingSpotBuoy } from './harborGuanFishingRealm'
@@ -4432,7 +4433,7 @@ function nearestVisitable(
     if (dLoom < GUAN_CAPE_LOOM.radius) return GUAN_CAPE_LOOM.id
     const dHut = Math.hypot(GUAN_FISHING_HUT.x - x, GUAN_FISHING_HUT.z - z)
     if (dHut < GUAN_FISHING_HUT.radius) return GUAN_FISHING_HUT.id
-    const spot = nearestGuanFishSpot(x, z, 1.8)
+    const spot = nearestHarborFishSpot(x, z, 1.8, GUAN_FISH_SPOTS)
     if (spot) return 'fishing-spot'
     return null
   }

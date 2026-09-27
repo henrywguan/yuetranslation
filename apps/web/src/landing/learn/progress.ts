@@ -400,10 +400,6 @@ export function markLevelCleared(levelId: string, baseXp = 0): MissionClearResul
   }
 }
 
-export function resetHarborProgress() {
-  return commit(emptyHarborProgress())
-}
-
 /**
  * Load local + account progress after Learn open / sign-in.
  * Always writes the merged result locally; pushes cloud when local was ahead.
@@ -432,18 +428,6 @@ export function completeHarborCharacter(input: {
     localUsername: username,
     ownedTitles: titles,
     titleId: p.titleId ?? 'title-river-scout',
-    lastSavedAt: Date.now(),
-  })
-  flushHarborProgressCloud(next)
-  return next
-}
-
-/** Save a guest display name without re-running full character create. */
-export function setHarborLocalUsername(username: string): HarborProgress {
-  const p = read()
-  const next = commit({
-    ...p,
-    localUsername: username.trim().slice(0, 24) || null,
     lastSavedAt: Date.now(),
   })
   flushHarborProgressCloud(next)

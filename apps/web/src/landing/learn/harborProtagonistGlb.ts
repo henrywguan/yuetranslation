@@ -27,11 +27,6 @@ export const HARBOR_CANOE_HIP_ABOVE_SEAT = 0.12
  */
 export const HARBOR_CHAIR_HIP_ABOVE_SEAT = 0.1
 
-/** @deprecated Prefer hip-align plant — kept for smoke / call-site grep. */
-export const HARBOR_CANOE_GLB_SINK_Y = 0.08
-/** @deprecated Prefer hip-align plant — kept for smoke / call-site grep. */
-export const HARBOR_CHAIR_GLB_SINK_Y = -0.18
-
 export type HarborScoutGlbMode = 'standing' | 'canoe' | 'chair'
 
 export const HARBOR_SCOUT_GLB_SRC = {
@@ -194,10 +189,6 @@ export function preloadHarborScoutGlbs(): void {
   if (typeof window === 'undefined') return
   void fetchScoutGlb('female')
   void fetchScoutGlb('male')
-}
-
-export function isHarborScoutGlbCached(gender: HarborGender): boolean {
-  return cache.has(gender)
 }
 
 /**
