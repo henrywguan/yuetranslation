@@ -264,14 +264,17 @@ export function createVHS(
   const { source, content, output, paintFrame } = elements
   const useManual = typeof paintFrame === 'function'
 
-  const gl = output.getContext('webgl2', {
+  const glContext = output.getContext('webgl2', {
     alpha: true,
     depth: false,
     stencil: false,
     antialias: false,
     premultipliedAlpha: false,
   })
-  if (!gl || gl.isContextLost()) return null
+  if (!glContext || glContext.isContextLost()) return null
+  // Nested draw helpers close over this. A narrowed `const` stays nullable
+  // inside those functions under `tsc -b`, which is what Vercel runs.
+  const gl: WebGL2RenderingContext = glContext
 
   const sourceCtx = source.getContext('2d') as ElementImageContext | null
   const paintable = source as PaintableCanvas
