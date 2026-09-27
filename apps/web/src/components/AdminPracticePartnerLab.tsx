@@ -61,6 +61,8 @@ import {
 import { getSession } from '../lib/auth'
 import { PracticePartnerPodium } from './PracticePartnerPodium'
 import { JyutpingChaoText } from '../landing/learn/JyutpingChaoText'
+import { PartnerVhsTransition } from './vhs/PartnerVhsTransition'
+import { prefersReducedMotion } from './vhs/vhsEase'
 import {
   PRACTICE_PARTNER_MOVE_LABEL,
   finishLineCloze,
@@ -250,6 +252,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [error, setError] = useState('')
   const [draft, setDraft] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
+  const [vhsCue, setVhsCue] = useState(0)
   const [fsTypeOpen, setFsTypeOpen] = useState(false)
   const [partnerVoice, setPartnerVoice] = useState<YueVoiceId>(() => readPartnerVoice())
   const [category, setCategory] = useState<PracticePartnerCategory>(() => readPartnerCategory())
@@ -439,6 +442,7 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     ttsLiveRef.current = false
     setMood('idle')
     setCaption({ role: 'system', text: EMPTY_CAPTION })
+    setVhsCue(0)
   }, [stopMic])
 
   const applyDrill = useCallback((drill: PracticePartnerDrill | null) => {
@@ -820,6 +824,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
     }
     if (!activeDrill) {
       unlockTtsPlayback({ force: true })
+      setFullscreen(true)
+      if (!prefersReducedMotion()) setVhsCue((n) => n + 1)
       void startDrill()
       return
     }
@@ -1589,6 +1595,15 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
           </>
         )}
       </div>
+
+      {vhsCue > 0 ? (
+        <PartnerVhsTransition
+          key={vhsCue}
+          title={categoryMeta.labelEn}
+          subtitle={categoryMeta.labelZh}
+          onDone={() => setVhsCue(0)}
+        />
+      ) : null}
 
       {error ? <p className="partner-lab-error">{error}</p> : null}
     </section>
