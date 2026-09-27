@@ -60,6 +60,15 @@ import {
 } from '../lib/api'
 import { getSession } from '../lib/auth'
 import { PracticePartnerPodium } from './PracticePartnerPodium'
+import { PracticePartnerPath } from './PracticePartnerPath'
+import {
+  creditPracticePartnerPath,
+  practicePartnerUnitForMove,
+  readPracticePartnerPath,
+  writePracticePartnerPath,
+  type PathCreditNote,
+  type PathFresh,
+} from '../lib/practicePartnerPath'
 import { JyutpingChaoText } from '../landing/learn/JyutpingChaoText'
 import { PartnerVhsTransition } from './vhs/PartnerVhsTransition'
 import { prefersReducedMotion } from './vhs/vhsEase'
@@ -240,6 +249,9 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const [scoreboard, setScoreboard] = useState<PracticePartnerScores>(() =>
     readPracticePartnerScores(),
   )
+  const [path, setPath] = useState(() => readPracticePartnerPath())
+  const [pathNote, setPathNote] = useState<PathCreditNote | null>(null)
+  const [pathFresh, setPathFresh] = useState<PathFresh | null>(null)
   const [board, setBoard] = useState<PracticePartnerLeaderboardPayload | null>(null)
   const [boardLoading, setBoardLoading] = useState(true)
   const [boardError, setBoardError] = useState('')
@@ -293,10 +305,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
   const pendingActiveMoveRef = useRef<PracticePartnerMove>('repeat')
   const incomingReviewRef = useRef(false)
   const publishScoreRef = useRef<(scores: PracticePartnerScores) => void>(() => {})
+  const pathRef = useRef(path)
+  const pathNoteTimerRef = useRef(0)
 
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  useEffect(() => () => window.clearTimeout(pathNoteTimerRef.current), [])
 
   useEffect(() => {
     activeDrillRef.current = activeDrill
@@ -481,6 +497,20 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
         })
         setScoreboard(nextScores)
         publishScoreRef.current(nextScores)
+      }
+      const credited = creditPracticePartnerPath(
+        pathRef.current,
+        categoryRef.current,
+        pendingActiveMoveRef.current,
+      )
+      pathRef.current = credited.next
+      writePracticePartnerPath(credited.next)
+      setPath(credited.next)
+      setPathFresh(credited.fresh)
+      if (credited.note) {
+        setPathNote(credited.note)
+        window.clearTimeout(pathNoteTimerRef.current)
+        pathNoteTimerRef.current = window.setTimeout(() => setPathNote(null), 2600)
       }
       playPracticePartnerPassSfx()
       setVerdictFlash('pass')
@@ -1023,7 +1053,8 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
             </p>
             <h2 className="partner-lab-title">Choose difficulty & topic</h2>
             <p className="partner-lab-lede">
-              Difficulty sets how much English 港灣 uses. Then pick a deck and begin.
+              Difficulty sets how much English 港灣 uses. The path is the course — sections,
+              then short units you can finish.
             </p>
           </div>
           <div className="partner-lab-scores-wrap">
@@ -1133,28 +1164,16 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
 
         <div className="partner-lab-chooser-block">
           <p className="partner-lab-chooser-label" id="partner-lab-topic-label">
-            Topic
+            Path
           </p>
-          <ul
-            className="partner-lab-topic-list"
-            role="list"
-            aria-labelledby="partner-lab-topic-label"
-          >
-            {PRACTICE_PARTNER_CATEGORIES.map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  className={`partner-lab-topic-item${category === c.id ? ' is-current' : ''}`}
-                  onClick={() => onCategoryChange(c.id)}
-                >
-                  <span className="partner-lab-topic-en">{c.labelEn}</span>
-                  <span className="partner-lab-topic-zh" lang="zh-HK">
-                    {c.labelZh}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <PracticePartnerPath
+            progress={path}
+            activeId={category}
+            onPick={onCategoryChange}
+            fresh={pathFresh}
+            note={pathNote}
+            listClassName="partner-lab-topic-list"
+          />
         </div>
       </section>
     )
@@ -1341,6 +1360,14 @@ export function AdminPracticePartnerLab({ entry = 'admin' }: { entry?: 'admin' |
               </span>
             ) : null}
           </p>
+          <PracticePartnerPath
+            compact
+            progress={path}
+            activeId={category}
+            activeUnit={practicePartnerUnitForMove(move)}
+            fresh={pathFresh}
+            note={pathNote}
+          />
           {activeDrill ? (
             <>
               {cardFace.zh === 'hidden' ? (
