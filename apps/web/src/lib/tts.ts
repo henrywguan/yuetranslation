@@ -6,6 +6,16 @@ import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalE
 
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 1.85
+/**
+ * First loud clip after the mic is the route change out of voice-chat.
+ * iOS spikes that handoff, so this one plays at unity. Later clips keep the boost.
+ */
+const LOUD_PLAYBACK_GAIN_AFTER_MIC_HANDOFF = 1
+/** Mic has started and the next loud clip is still that first handoff. */
+let micHandoffPending = false
+let micHandoffSoftened = false
+/** First MediaElementSource play double-routes on desktop. Burn it on silence. */
+let ttsMediaGraphSettled = false
 let ttsMediaSource: MediaElementAudioSourceNode | null = null
 let ttsGainNode: GainNode | null = null
 /** iPhone loud TTS — BufferSource, not HTMLAudio (receiver / voice-chat route). */
@@ -104,6 +114,17 @@ export function hushTtsSpeakerForMic() {
     /* ignore */
   }
   ttsKeepAliveGain = null
+  if (!micHandoffSoftened) micHandoffPending = true
+}
+
+/** Unity on the first post-mic loud clip; full boost after the route has settled. */
+function loudPlaybackGain(): number {
+  if (micHandoffPending && !micHandoffSoftened) {
+    micHandoffSoftened = true
+    micHandoffPending = false
+    return LOUD_PLAYBACK_GAIN_AFTER_MIC_HANDOFF
+  }
+  return LOUD_PLAYBACK_GAIN
 }
 
 /**
@@ -551,7 +572,7 @@ async function playAzureBlobViaWebAudio(
     stopTtsBufferSource()
     const src = ctx.createBufferSource()
     const gain = ctx.createGain()
-    gain.gain.value = loud ? LOUD_PLAYBACK_GAIN : 1
+    gain.gain.value = loud ? loudPlaybackGain() : 1
     src.buffer = audioBuf
     src.playbackRate.value = playbackRate
     src.connect(gain)
@@ -582,6 +603,41 @@ async function playAzureBlobViaWebAudio(
   }
 }
 
+/**
+ * Desktop: the first `play()` after `createMediaElementSource` also hits the
+ * element output, so that one clip is much louder. Play silence through the
+ * new graph first. Opening stays on the element when the context is not running.
+ */
+async function settleTtsMediaGraph(el: HTMLAudioElement) {
+  if (isAppleTouchDevice() || ttsMediaGraphSettled) return
+  try {
+    const ctx = ensureSharedAudioContext()
+    if (ctx.state === 'suspended') await ctx.resume()
+    if (ctx.state !== 'running') return
+    if (!ttsMediaSource) {
+      ttsMediaSource = ctx.createMediaElementSource(el)
+      ttsGainNode = ctx.createGain()
+      ttsGainNode.gain.value = 1
+      ttsMediaSource.connect(ttsGainNode)
+      ttsGainNode.connect(ctx.destination)
+    }
+    el.pause()
+    el.src = SILENT_WAV
+    el.volume = 1
+    el.muted = false
+    await el.play().catch(() => undefined)
+    el.pause()
+    try {
+      el.currentTime = 0
+    } catch {
+      /* ignore */
+    }
+    ttsMediaGraphSettled = true
+  } catch {
+    /* Stay on the element output. */
+  }
+}
+
 async function playAzureBlob(
   blob: Blob,
   g: number,
@@ -595,6 +651,10 @@ async function playAzureBlob(
     const via = await playAzureBlobViaWebAudio(blob, g, loud)
     if (via === 'played' || via === 'aborted' || g !== gen) return via
   }
+  if (g !== gen) return 'aborted'
+  const elForSettle = ensureSharedAudio()
+  await settleTtsMediaGraph(elForSettle)
+  if (g !== gen) return 'aborted'
   const objectUrl = URL.createObjectURL(blob)
   url = objectUrl
   // Reuse the gesture-unlocked element — `new Audio()` would be blocked on iOS.
