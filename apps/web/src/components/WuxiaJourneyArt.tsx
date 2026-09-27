@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 import type { PathCategory, PracticePartnerPathState } from '../lib/practicePartnerPath'
-import { practicePartnerChapterReveal } from '../lib/practicePartnerMapLayout'
+import { PARTNER_MAP_VIEWBOX, practicePartnerChapterReveal } from '../lib/practicePartnerMapLayout'
+
+const VB = `0 0 ${PARTNER_MAP_VIEWBOX.w} ${PARTNER_MAP_VIEWBOX.h}`
 
 type Reveals = Record<PathCategory, number>
 
@@ -23,72 +25,309 @@ function Chapter({
   children: ReactNode
 }) {
   return (
-    <g className="wuxia-chapter" style={{ filter: veilFilter(reveal) }}>
+    <g className={`wuxia-chapter${reveal < 0.02 ? ' is-ink' : ''}`} style={{ filter: veilFilter(reveal) }}>
       {children}
       <rect
         className="wuxia-mist"
         x="0"
         y={y}
-        width="400"
+        width={PARTNER_MAP_VIEWBOX.w}
         height={height}
-        fill="url(#wuxiaVeil)"
-        opacity={(1 - reveal) * 0.62}
+        fill="url(#inkVeil)"
+        opacity={(1 - reveal) * 0.28}
       />
     </g>
   )
 }
 
-function Peak({ x, y, w, h, snow = true }: { x: number; y: number; w: number; h: number; snow?: boolean }) {
-  const mid = x + w / 2
+function Pines({ points }: { points: Array<[number, number, number]> }) {
   return (
     <g>
-      <polygon points={`${x},${y + h} ${mid},${y} ${x + w},${y + h}`} fill="#7d8a6e" stroke="#4e4638" strokeWidth="0.8" />
-      <polygon points={`${x + w * 0.18},${y + h} ${mid},${y + h * 0.42} ${x + w * 0.55},${y + h}`} fill="#5f6b52" opacity="0.55" />
-      {snow ? (
-        <polygon points={`${mid - w * 0.12},${y + h * 0.22} ${mid},${y} ${mid + w * 0.12},${y + h * 0.22}`} fill="#f7f3ea" />
+      {points.map(([x, base, s], i) => (
+        <use key={`${x}-${base}-${i}`} href="#inkPine" x={x - 16 * s} y={base - 58 * s} width={32 * s} height={58 * s} />
+      ))}
+    </g>
+  )
+}
+
+function Grove({
+  points,
+  className,
+}: {
+  points: Array<[number, number, number]>
+  className: string
+}) {
+  return (
+    <g className={className}>
+      {points.map(([x, base, s], i) => (
+        <use
+          key={`${x}-${base}-${i}`}
+          href="#inkBamboo"
+          x={x - 18 * s}
+          y={base - 100 * s}
+          width={36 * s}
+          height={100 * s}
+        />
+      ))}
+    </g>
+  )
+}
+
+function Hatch({ x, y, n = 6, step = 16 }: { x: number; y: number; n?: number; step?: number }) {
+  return (
+    <g fill="none" stroke="#2c241c" strokeWidth="1.05" opacity="0.32" strokeLinecap="round">
+      {Array.from({ length: n }, (_, i) => (
+        <path key={i} d={`M${x + i * step} ${y + (i % 2) * 7} l12 -18`} />
+      ))}
+    </g>
+  )
+}
+
+function TileRoof({
+  x,
+  y,
+  w,
+  h,
+  fill,
+}: {
+  x: number
+  y: number
+  w: number
+  h: number
+  fill: string
+}) {
+  const mid = x + w / 2
+  const eave = y + h * 0.62
+  const tiles = Math.max(7, Math.round(w / 11))
+  return (
+    <g>
+      <path
+        d={`M${x} ${eave - h * 0.05} Q${x + w * 0.06} ${eave - h * 0.32} ${x + w * 0.16} ${eave} Q${mid} ${y} ${x + w * 0.84} ${eave} Q${x + w * 0.94} ${eave - h * 0.32} ${x + w} ${eave - h * 0.05} L${x + w * 0.9} ${eave + h * 0.16} Q${mid} ${y + h * 0.36} ${x + w * 0.1} ${eave + h * 0.16} Z`}
+        fill={fill}
+        stroke="#3a2418"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
+      />
+      <path
+        d={`M${x + w * 0.12} ${eave + h * 0.12} Q${mid} ${y + h * 0.34} ${x + w * 0.88} ${eave + h * 0.12} L${x + w * 0.82} ${eave + h * 0.3} Q${mid} ${y + h * 0.48} ${x + w * 0.18} ${eave + h * 0.3} Z`}
+        fill="#cbb892"
+        stroke="#6b5a40"
+        strokeWidth="0.8"
+      />
+      {Array.from({ length: tiles }, (_, i) => {
+        const tx = x + (w * (i + 0.5)) / tiles
+        return (
+          <path
+            key={i}
+            d={`M${tx} ${y + h * 0.4} L${tx + 1.4} ${eave + h * 0.02}`}
+            stroke="#f4e2c4"
+            strokeWidth="0.9"
+            opacity="0.7"
+          />
+        )
+      })}
+      <path
+        d={`M${mid - w * 0.06} ${y + h * 0.18} H${mid + w * 0.06}`}
+        stroke="#e8c56b"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx={mid - w * 0.08} cy={y + h * 0.2} r="2.1" fill="#e8c56b" stroke="#6b5a40" strokeWidth="0.5" />
+      <circle cx={mid + w * 0.08} cy={y + h * 0.2} r="2.1" fill="#e8c56b" stroke="#6b5a40" strokeWidth="0.5" />
+    </g>
+  )
+}
+
+function Pillar({ x, y, h }: { x: number; y: number; h: number }) {
+  return (
+    <g>
+      <path d={`M${x - 1} ${y + 6} H${x + 17} L${x + 15} ${y} H${x + 1} Z`} fill="#8d7b64" stroke="#4e4638" strokeWidth="0.7" />
+      <path d={`M${x} ${y + 4} H${x + 16} L${x + 14} ${y + h} H${x + 2} Z`} fill="#e7dcc4" stroke="#5c4e3c" strokeWidth="1" />
+      <path
+        d={`M${x + 2} ${y + h * 0.22} H${x + 14} M${x + 2} ${y + h * 0.42} H${x + 14} M${x + 2} ${y + h * 0.62} H${x + 14} M${x + 2} ${y + h * 0.82} H${x + 14}`}
+        stroke="#8a7358"
+        strokeWidth="1"
+      />
+    </g>
+  )
+}
+
+function Lantern({ x, y, s = 1, hue = '#c23a2e' }: { x: number; y: number; s?: number; hue?: string }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      <path d="M0 -16 V-8" stroke="#5c4030" strokeWidth="1.1" />
+      <path d="M-6.5 -8 H6.5" stroke="#e8c56b" strokeWidth="1.5" />
+      <path d="M-5.5 -6 Q0 -12 5.5 -6 L4.6 7 Q0 12 -4.6 7 Z" fill={hue} stroke="#4a1218" strokeWidth="0.8" />
+      <path d="M-3.4 -1.5 Q0 -5 3.4 -1.5 L2.8 5.2 Q0 8 -2.8 5.2 Z" fill="#e8c56b" className="wuxia-lantern" />
+      <path d="M-5.5 7 H5.5" stroke="#e8c56b" strokeWidth="1.3" />
+      <path d="M0 9 V16 M-2.6 12.5 H2.6" stroke={hue} strokeWidth="1" />
+    </g>
+  )
+}
+
+function Stall({ x, y, awning, sign }: { x: number; y: number; awning: string; sign?: string }) {
+  return (
+    <g>
+      <TileRoof x={x} y={y} w={64} h={30} fill={awning} />
+      <path d={`M${x + 10} ${y + 40} H${x + 54} V${y + 68} H${x + 10} Z`} fill="#f4ead4" stroke="#5c4a32" strokeWidth="1" />
+      <path d={`M${x + 14} ${y + 46} H${x + 30} V${y + 56} H${x + 14} Z`} fill="#e7c98a" stroke="#8a6230" strokeWidth="0.7" />
+      <circle cx={x + 19} cy={y + 51} r="2.1" fill="#f7f1df" />
+      <circle cx={x + 25} cy={y + 51} r="2.1" fill="#f7f1df" />
+      <ellipse cx={x + 42} cy={y + 52} rx="6.5" ry="3.2" fill="#f7f1df" stroke="#8b1e2d" strokeWidth="0.8" />
+      <path
+        d={`M${x + 24} ${y + 36} C${x + 20} ${y + 16} ${x + 34} ${y + 12} ${x + 28} ${y - 2}`}
+        fill="none"
+        stroke="#f7f3ea"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        className="wuxia-steam"
+      />
+      {sign ? (
+        <g>
+          <rect x={x + 48} y={y + 18} width="14" height="22" rx="1" fill="#8b1e2d" stroke="#3a2418" strokeWidth="0.7" />
+          <text
+            x={x + 55}
+            y={y + 34}
+            textAnchor="middle"
+            fill="#f7f1df"
+            fontSize="11"
+            fontFamily="Noto Sans HK, Noto Sans TC, sans-serif"
+          >
+            {sign}
+          </text>
+        </g>
       ) : null}
     </g>
   )
 }
 
-function Pines({ points }: { points: Array<[number, number, number?]> }) {
+function Willow({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
   return (
-    <g>
-      {points.map(([x, y, s = 1], i) => (
-        <g key={`${x}-${y}-${i}`} transform={`translate(${x} ${y}) scale(${s})`}>
-          <polygon points="0,-16 7,2 -7,2" fill="#2d6a3c" />
-          <polygon points="0,-9 6,6 -6,6" fill="#3f8c4e" />
-          <rect x="-1.1" y="6" width="2.2" height="5" fill="#5a4030" />
-        </g>
-      ))}
+    <g transform={`translate(${x} ${y}) scale(${s})`} fill="none" strokeLinecap="round">
+      <path d="M0 0 C2 -40 6 -90 0 -130" stroke="#5a4030" strokeWidth="2.4" />
+      <path d="M0 -78 C22 -66 34 -20 18 18" stroke="#246b3c" strokeWidth="1.6" />
+      <path d="M0 -96 C-24 -80 -36 -24 -16 16" stroke="#1e5a34" strokeWidth="1.5" />
+      <path d="M-1 -110 C14 -100 28 -60 12 -8" stroke="#3d8f56" strokeWidth="1.35" />
+      <path d="M1 -60 C-10 -40 -8 8 0 16" stroke="#145233" strokeWidth="1.2" />
+      <path d="M0 -88 C8 -70 16 -40 6 4" stroke="#2f7a48" strokeWidth="1.15" />
     </g>
   )
 }
 
-function Roofs({ x, y, colors }: { x: number; y: number; colors: string[] }) {
+function Blossom({ x, y, fill = '#e7b3b8' }: { x: number; y: number; fill?: string }) {
   return (
     <g transform={`translate(${x} ${y})`}>
-      {colors.map((fill, i) => (
-        <g key={i} transform={`translate(${i * 18} ${i % 2 === 0 ? 0 : 4})`}>
-          <rect x="3" y="9" width="12" height="8" fill="#f4ead4" stroke="#5c4a32" strokeWidth="0.6" />
-          <path d="M0 9 L9 0 L18 9 Z" fill={fill} stroke="#4a3828" strokeWidth="0.55" />
-        </g>
-      ))}
+      <circle cx="0" cy="-3.2" r="2.3" fill={fill} />
+      <circle cx="3.1" cy="0.4" r="2.3" fill={fill} />
+      <circle cx="-3.1" cy="0.4" r="2.3" fill={fill} />
+      <circle cx="0" cy="3.4" r="2.3" fill={fill} />
+      <circle r="1.35" fill="#e8c56b" />
     </g>
   )
 }
 
-function Dots({ d }: { d: string }) {
+function Rocks({ x, y }: { x: number; y: number }) {
   return (
-    <path d={d} fill="none" stroke="#5c4a32" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="0.4 4.2" />
+    <g transform={`translate(${x} ${y})`}>
+      <path d="M0 18 C4 6 18 2 24 14 C30 4 46 8 40 20 Z" fill="#8a7d6b" stroke="#3e3428" strokeWidth="1" />
+      <path d="M8 16 C14 8 28 8 32 16" fill="#d9c7a2" />
+      <path d="M6 12 H16 M24 11 H34" stroke="#5c5146" strokeWidth="0.9" />
+    </g>
   )
 }
 
+function ArchBridge({ x, y }: { x: number; y: number }) {
+  const w = 86
+  return (
+    <g>
+      <path
+        d={`M${x} ${y} Q${x + w / 2} ${y - 38} ${x + w} ${y} L${x + w - 2} ${y + 12} Q${x + w / 2} ${y - 18} ${x + 2} ${y + 12} Z`}
+        fill="#d9c7a2"
+        stroke="#5c4e3c"
+        strokeWidth="1.3"
+      />
+      <path
+        d={`M${x + 12} ${y + 4} Q${x + w / 2} ${y - 20} ${x + w - 12} ${y + 4}`}
+        fill="#7ea4b8"
+        opacity="0.35"
+      />
+      {Array.from({ length: 7 }, (_, i) => {
+        const px = x + 8 + i * 12
+        const lift = Math.sin(((i + 0.5) / 7) * Math.PI) * 20
+        return (
+          <path key={i} d={`M${px} ${y - lift} v-12`} stroke="#4e4638" strokeWidth="1.7" strokeLinecap="round" />
+        )
+      })}
+      <path
+        d={`M${x + 2} ${y - 6} Q${x + w / 2} ${y - 46} ${x + w - 2} ${y - 6}`}
+        fill="none"
+        stroke="#4e4638"
+        strokeWidth="1.6"
+      />
+    </g>
+  )
+}
+
+const GATE_PINES: Array<[number, number, number]> = [
+  [18, 560, 0.85],
+  [36, 600, 1.15],
+  [54, 530, 0.7],
+  [72, 640, 1],
+  [96, 580, 0.8],
+  [20, 720, 0.95],
+  [44, 760, 1.2],
+  [148, 500, 0.62],
+  [332, 540, 0.78],
+  [350, 590, 1.05],
+  [368, 520, 0.7],
+  [386, 610, 0.88],
+  [340, 680, 0.75],
+  [372, 720, 0.95],
+]
+
+const MARKET_PINES: Array<[number, number, number]> = [
+  [16, 1280, 0.7],
+  [36, 1340, 0.85],
+  [360, 1240, 0.65],
+  [382, 1300, 0.8],
+]
+
+const BAMBOO_A: Array<[number, number, number]> = [
+  [24, 1980, 0.92],
+  [52, 1960, 1.05],
+  [88, 1990, 0.8],
+  [24, 2080, 1],
+  [46, 2140, 0.86],
+  [64, 2060, 1.08],
+  [84, 2160, 0.78],
+  [104, 2090, 0.94],
+  [28, 2240, 0.9],
+  [52, 2280, 1.12],
+  [78, 2220, 0.84],
+  [108, 2260, 0.96],
+  [130, 2180, 0.72],
+]
+
+const BAMBOO_B: Array<[number, number, number]> = [
+  [36, 2120, 0.92],
+  [70, 2200, 1.05],
+  [96, 2130, 0.8],
+  [18, 2300, 0.88],
+  [60, 2320, 1],
+  [92, 2290, 0.76],
+  [124, 2240, 0.9],
+  [344, 2140, 0.7],
+  [366, 2200, 0.82],
+  [384, 2160, 0.66],
+]
+
 /**
- * Original practice atlas on parchment.
- * Unfinished chapters stay ink-grey. Cleared lessons bring the watercolor back.
+ * Original practice atlas. Each band is its own wuxia country:
+ * stone gate, night market, bamboo wilds, cloud terrace.
+ * Unfinished bands stay ink-grey. Cleared lessons bring the color back.
+ * The viewBox matches the scroll aspect, so zoom stays a sharp vector.
  */
-export function WuxiaJourneyArt({
+export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
   progress,
   mastery,
 }: {
@@ -104,190 +343,388 @@ export function WuxiaJourneyArt({
   const gild = mastery / 31
 
   return (
-    <svg className="partner-wuxia" viewBox="0 0 400 1000" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+    <svg className="partner-wuxia" viewBox={VB} preserveAspectRatio="none" aria-hidden="true">
       <defs>
-        <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f7edd6" />
-          <stop offset="0.45" stopColor="#f3e2c4" />
-          <stop offset="1" stopColor="#e4cfa6" />
-        </linearGradient>
-        <linearGradient id="roller" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="inkRoller" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#6a3a1c" />
           <stop offset="0.45" stopColor="#d4a06a" />
           <stop offset="1" stopColor="#4a2814" />
         </linearGradient>
-        <linearGradient id="wuxiaVeil" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#e7dcc4" stopOpacity="0.05" />
-          <stop offset="0.5" stopColor="#d5cbb6" stopOpacity="0.72" />
-          <stop offset="1" stopColor="#e7dcc4" stopOpacity="0.08" />
+        <linearGradient id="inkVeil" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#e7dcc4" stopOpacity="0.02" />
+          <stop offset="0.45" stopColor="#d5cbb6" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#e7dcc4" stopOpacity="0.04" />
         </linearGradient>
-        <pattern id="paperFiber" width="3" height="3" patternUnits="userSpaceOnUse">
-          <path d="M0 1.6 H3" stroke="#b08958" strokeWidth="0.08" />
-          <path d="M1.2 0 V3" stroke="#8d6a3e" strokeWidth="0.06" opacity="0.7" />
-        </pattern>
+        <symbol id="inkPine" viewBox="0 0 32 58">
+          <path d="M14.5 56 C15 44 17 42 16.2 58 H13.2 Z" fill="#5a4030" />
+          <path d="M16 3 L27 22 L22 22 L30 35 L20 35 L26 50 L6 50 L12 35 L2 35 L10 22 L5 22 Z" fill="#1b5230" stroke="#102e1c" strokeWidth="0.8" />
+          <path d="M16 10 L24 24 L8 24 Z" fill="#246b3c" />
+          <path d="M16 20 L26 38 L6 38 Z" fill="#2f7a48" />
+          <path d="M16 32 L22 48 L10 48 Z" fill="#3d8f56" />
+          <path d="M8 26 L3 18 M24 26 L29 18 M7 40 L3 34 M25 40 L29 34 M11 50 L7 56 M21 50 L25 56" stroke="#143c22" strokeWidth="1" fill="none" />
+        </symbol>
+        <symbol id="inkBamboo" viewBox="0 0 36 100">
+          <path d="M14 98 L12 6" stroke="#145233" strokeWidth="5" strokeLinecap="round" />
+          <path d="M22 94 L24 16" stroke="#1a5c38" strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M8 78 H20 M9 58 H19 M10 38 H18 M11 18 H17" stroke="#0c3020" strokeWidth="1.5" />
+          <path d="M14 28 C28 12 42 20 36 36 C24 30 16 32 14 28Z" fill="#2f8a52" />
+          <path d="M13 46 C0 30 -10 40 -4 56 C8 50 12 50 13 46Z" fill="#1f6b42" />
+          <path d="M23 38 C36 24 48 34 40 50 C28 44 22 44 23 38Z" fill="#3dba74" />
+          <path d="M12 14 C24 0 36 8 30 22 C18 14 12 16 12 14Z" fill="#3d8f56" />
+          <path d="M22 64 C34 52 44 62 36 74 C26 66 22 68 22 64Z" fill="#246b3c" />
+        </symbol>
+        <symbol id="inkTuft" viewBox="0 0 18 14">
+          <path d="M2 14 C2 6 5 2 3 0 M9 14 C9 4 7 1 9 0 M15 14 C14 6 17 2 16 0" fill="none" stroke="#2f6b3a" strokeWidth="1.3" strokeLinecap="round" />
+        </symbol>
+        <symbol id="inkRipple" viewBox="0 0 28 10">
+          <path d="M1 7 Q8 1 14 7 Q20 1 27 7" fill="none" stroke="#f7f3ea" strokeWidth="1.3" />
+        </symbol>
       </defs>
 
-      <rect width="400" height="1000" fill="url(#paper)" />
-      <rect width="400" height="1000" fill="url(#paperFiber)" opacity="0.55" />
-      <rect x="10" y="28" width="380" height="944" fill="none" stroke="#c4a574" strokeWidth="1.2" opacity="0.7" />
+      <rect x="16" y="40" width="368" height="3120" fill="none" stroke="#c4a574" strokeWidth="2" />
+      <rect x="22" y="46" width="356" height="3108" fill="none" stroke="#6b5a40" strokeWidth="0.9" opacity="0.55" />
 
-      <path d="M0 250C90 230 180 280 400 248L400 330C220 350 90 300 0 320Z" fill="#d5e3d6" opacity="0.72" />
-      <path d="M0 500C120 470 240 530 400 490L400 560C250 590 120 530 0 560Z" fill="#d7e4ea" opacity="0.55" />
-      <path d="M0 760C100 730 260 800 400 740L400 820C240 850 80 790 0 820Z" fill="#e7e0cf" opacity="0.8" />
-
-      <Chapter reveal={reveal.common} y={40} height={230}>
+      <Chapter reveal={reveal.common} y={430} height={550}>
         <path
-          d="M48 230C70 168 108 150 150 162C168 112 214 96 250 140C286 92 340 124 352 196C330 236 120 252 48 230Z"
-          fill="#e4d2a4"
-          stroke="#6b5a40"
-          strokeWidth="1.3"
+          d="M-10 620 C40 470 100 420 170 510 C210 450 260 440 320 520 C360 460 400 490 420 550 L420 700 L-10 710 Z"
+          fill="#9aab8c"
+          stroke="#3e4a38"
+          strokeWidth="1.4"
         />
-        <Peak x={70} y={78} w={54} h={70} />
-        <Peak x={118} y={62} w={70} h={86} />
-        <Peak x={176} y={70} w={48} h={64} />
-        <Peak x={250} y={88} w={62} h={72} snow={false} />
+        <path
+          d="M-10 700 C50 560 120 520 180 600 C230 540 280 550 340 620 C380 560 410 590 420 640 L420 780 L-10 790 Z"
+          fill="#6e8f62"
+          stroke="#2c4030"
+          strokeWidth="1.4"
+        />
+        <path d="M50 360 C100 310 140 330 180 290" fill="none" stroke="#2c4030" strokeWidth="1.3" opacity="0.7" />
+        <path d="M200 340 C250 280 290 310 350 270" fill="none" stroke="#243628" strokeWidth="1.2" opacity="0.6" />
+        <path d="M40 480 C110 430 160 450 220 400" fill="none" stroke="#1e3224" strokeWidth="1.15" opacity="0.45" />
+        <Hatch x={48} y={400} n={7} />
+        <Hatch x={220} y={360} n={6} />
+        <path
+          d="M-10 900 L-10 640 C30 580 90 560 150 630 C200 570 260 590 330 640 C370 590 400 610 420 660 L420 900 Z"
+          fill="#f3e2c4"
+          stroke="#6b5a40"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M-10 900 L-10 760 C40 700 110 730 180 800 C250 740 320 760 420 700 L420 900 Z"
+          fill="#7ea86a"
+          opacity="0.55"
+        />
+        <Pines points={GATE_PINES} />
+        <g className="wuxia-sway is-soft">
+          <path d="M36 468 Q100 450 168 472" fill="none" stroke="#5c4030" strokeWidth="1.2" />
+          <Lantern x={48} y={478} s={0.95} />
+          <Lantern x={78} y={470} s={1.05} />
+          <Lantern x={108} y={466} />
+          <Lantern x={138} y={474} s={0.9} hue="#a12838" />
+          <Lantern x={164} y={482} s={0.85} />
+        </g>
+        <TileRoof x={34} y={500} w={150} h={52} fill="#8b1e2d" />
+        <Pillar x={62} y={575} h={108} />
+        <Pillar x={126} y={575} h={108} />
+        <path d="M58 612 H146 V668 Q102 628 58 668 Z" fill="#1a120c" opacity="0.72" />
+        <path d="M70 650 Q102 612 134 650" fill="none" stroke="#e8c56b" strokeWidth="1.2" />
+        <rect x="86" y="548" width="46" height="18" rx="1" fill="#6b1a24" stroke="#e8c56b" strokeWidth="0.8" />
+        <text x="109" y="561" textAnchor="middle" fill="#f7f1df" fontSize="11" fontFamily="Noto Sans HK, Noto Sans TC, sans-serif">
+          山門
+        </text>
+        {Array.from({ length: 7 }, (_, i) => {
+          const inset = i * 4
+          const sy = 690 + i * 16
+          return (
+            <path
+              key={i}
+              d={`M${52 + inset} ${sy} H${164 - inset} L${158 - inset} ${sy + 11} H${58 + inset} Z`}
+              fill={i % 2 ? '#e7dcc4' : '#d2c09a'}
+              stroke="#6b5a40"
+              strokeWidth="0.8"
+            />
+          )
+        })}
+        <Rocks x={18} y={800} />
+        <Rocks x={150} y={830} />
+        <Blossom x={28} y={690} />
+        <Blossom x={176} y={640} fill="#f3c6d0" />
+        <Blossom x={360} y={650} />
+        <use href="#inkTuft" x={188} y={760} width="18" height="14" />
+        <use href="#inkTuft" x={250} y={700} width="16" height="12" />
+        <use href="#inkTuft" x={300} y={820} width="18" height="14" />
+        <path
+          d="M86 800 C80 860 92 920 84 980"
+          fill="none"
+          stroke="#9ec4d4"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M86 800 C80 860 92 920 84 980"
+          fill="none"
+          stroke="#f7f3ea"
+          strokeWidth="2.4"
+          className="wuxia-river"
+        />
+        <Lantern x={70} y={760} s={0.7} />
+        <Lantern x={118} y={790} s={0.66} hue="#1d3d6e" />
+      </Chapter>
+
+      <Chapter reveal={reveal.foods} y={1220} height={480}>
+        <path
+          d="M-10 1680 L-10 1280 C50 1200 110 1188 170 1260 C220 1190 280 1200 340 1280 C380 1220 410 1240 420 1300 L420 1680 Z"
+          fill="#f3e2c4"
+          stroke="#6b5a40"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M-10 1680 L-10 1460 C60 1400 120 1480 190 1420 C260 1360 320 1440 420 1380 L420 1680 Z"
+          fill="#e7c98a"
+          opacity="0.45"
+        />
+        <path
+          d="M-16 1505 C70 1460 130 1540 210 1488 C280 1440 340 1510 420 1468 L420 1565 C330 1605 250 1520 170 1588 C90 1640 20 1560 -16 1600 Z"
+          fill="#6e9aaf"
+          stroke="#3d6274"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M-10 1524 C80 1488 140 1548 220 1504 C290 1468 350 1520 420 1484"
+          fill="none"
+          stroke="#d5ebf2"
+          strokeWidth="3"
+          className="wuxia-river"
+        />
+        <use href="#inkRipple" x={40} y={1536} width="28" height="10" />
+        <use href="#inkRipple" x={150} y={1508} width="26" height="9" />
+        <use href="#inkRipple" x={260} y={1544} width="30" height="10" />
+        <use href="#inkRipple" x={330} y={1496} width="24" height="8" />
+        <g transform="translate(300 1510)">
+          <g className="wuxia-koi">
+            <ellipse cx="0" cy="0" rx="7" ry="3.2" fill="#e07a3d" />
+            <path d="M7 0 L13 -3 L13 3 Z" fill="#c4513a" />
+            <circle cx="-3" cy="-0.6" r="0.7" fill="#1a120c" />
+          </g>
+        </g>
+        <g transform="translate(250 1546)">
+          <path d="M-18 2 Q0 12 20 2 L15 7 Q0 16 -14 7 Z" fill="#6b5344" stroke="#3e3428" strokeWidth="0.7" />
+          <path d="M2 2 V-18" stroke="#5c4030" strokeWidth="1.3" />
+          <path d="M2 -16 L16 -4" stroke="#f4ead4" strokeWidth="1.2" />
+        </g>
+        <ArchBridge x={124} y={1492} />
+        <Pines points={MARKET_PINES} />
+        <Willow x={28} y={1360} s={0.85} />
+        <Willow x={372} y={1320} s={0.72} />
+        <TileRoof x={236} y={1160} w={120} h={40} fill="#1d3d6e" />
+        <path d="M258 1224 H338 V1288 H258 Z" fill="#f4ead4" stroke="#5c4a32" strokeWidth="1" />
+        <path d="M268 1236 H292 V1264 H268 Z" fill="#1a120c" opacity="0.35" />
+        <path d="M280 1236 V1264 M268 1250 H292" stroke="#e8c56b" strokeWidth="0.8" />
+        <path d="M306 1236 H328 V1264 H306 Z" fill="#1a120c" opacity="0.35" />
+        <path d="M317 1236 V1264 M306 1250 H328" stroke="#e8c56b" strokeWidth="0.8" />
+        <Stall x={248} y={1268} awning="#8b1e2d" sign="茶" />
+        <Stall x={318} y={1244} awning="#1d3d6e" sign="麵" />
+        <Stall x={20} y={1220} awning="#a12838" />
+        <g className="wuxia-sway is-soft">
+          <path d="M230 1188 Q300 1168 380 1196" fill="none" stroke="#5c4030" strokeWidth="1.15" />
+          <Lantern x={248} y={1198} s={0.8} />
+          <Lantern x={286} y={1186} s={0.95} hue="#e8c56b" />
+          <Lantern x={324} y={1192} s={0.85} />
+          <Lantern x={360} y={1204} s={0.75} hue="#a12838" />
+        </g>
+        <Blossom x={200} y={1360} />
+        <Blossom x={40} y={1400} fill="#f3c6d0" />
+        <Rocks x={200} y={1580} />
+        <use href="#inkTuft" x={96} y={1360} width="16" height="12" />
+        <use href="#inkTuft" x={210} y={1320} width="16" height="12" />
+        <path
+          d="M-10 1640 C70 1700 140 1660 210 1740 C280 1800 340 1740 420 1820 L420 1680 L-10 1680 Z"
+          fill="#e4cfa6"
+          stroke="#6b5a40"
+          strokeWidth="1"
+        />
         <Pines
           points={[
-            [86, 168, 0.85],
-            [104, 176, 1],
-            [230, 160, 0.9],
-            [248, 172, 0.75],
-            [300, 168, 0.8],
+            [24, 1760, 0.72],
+            [48, 1820, 0.84],
+            [352, 1750, 0.66],
+            [374, 1810, 0.78],
           ]}
         />
-        <path d="M132 148L168 118L204 148L196 154L168 132L140 154Z" fill="#8b1e2d" stroke="#4a3828" strokeWidth="0.6" />
-        <rect x="156" y="148" width="8" height="28" fill="#efe6d2" stroke="#5c4a32" strokeWidth="0.5" />
-        <rect x="176" y="148" width="8" height="28" fill="#efe6d2" stroke="#5c4a32" strokeWidth="0.5" />
-        <path d="M150 196L190 196L204 220L136 220Z" fill="#cbb892" stroke="#6b5a40" strokeWidth="0.6" />
-        <Dots d="M170 220C168 236 176 244 184 250" />
+        <Willow x={300} y={1780} s={0.55} />
+        <Rocks x={160} y={1720} />
+        <use href="#inkTuft" x={120} y={1660} width="16" height="12" />
+        <use href="#inkTuft" x={230} y={1704} width="16" height="12" />
       </Chapter>
 
-      <Chapter reveal={reveal.foods} y={280} height={230}>
+      <Chapter reveal={reveal.animals} y={2020} height={460}>
         <path
-          d="M36 470C60 360 120 340 180 356C210 328 260 332 300 360C340 330 380 360 392 430C360 490 80 500 36 470Z"
-          fill="#e7c98a"
-          stroke="#6b5a40"
-          strokeWidth="1.3"
-        />
-        <path d="M70 400C120 390 160 420 210 404C250 392 300 410 340 398" fill="none" stroke="#7ea4b8" strokeWidth="7" strokeLinecap="round" />
-        <path d="M70 400C120 390 160 420 210 404C250 392 300 410 340 398" fill="none" stroke="#d5ebf2" strokeWidth="3" strokeLinecap="round" />
-        <path d="M186 386L186 418" stroke="#5c4030" strokeWidth="3" />
-        <path d="M176 392L196 392L196 400L176 400Z" fill="#8b3a2a" />
-        <Roofs x={78} y={368} colors={['#8b1e2d', '#1d3d6e', '#8b1e2d']} />
-        <Roofs x={248} y={360} colors={['#1d3d6e', '#a12838']} />
-        <path d="M96 392C100 376 112 372 108 358" fill="none" stroke="#efe6d6" strokeWidth="1.4" className="wuxia-steam" />
-        <path d="M132 388C128 370 142 366 136 352" fill="none" stroke="#efe6d6" strokeWidth="1.4" className="wuxia-steam" />
-        <Pines points={[[300, 430, 0.7], [318, 436, 0.65], [60, 430, 0.7]]} />
-        <Dots d="M184 250C170 300 200 330 186 360" />
-      </Chapter>
-
-      <Chapter reveal={reveal.animals} y={520} height={250}>
-        <path
-          d="M28 740C50 560 110 540 170 566C200 530 250 528 290 560C340 524 390 560 398 680C360 760 70 770 28 740Z"
-          fill="#7ea86a"
+          d="M-10 2460 L-10 2080 C50 2000 120 1988 180 2080 C230 2010 290 2020 350 2100 C380 2040 410 2070 420 2120 L420 2460 Z"
+          fill="#f3e2c4"
           stroke="#3d5a34"
           strokeWidth="1.3"
         />
         <path
-          d="M40 700C90 660 140 710 200 676C250 650 310 700 370 668"
-          fill="none"
-          stroke="#2f6b3a"
-          strokeWidth="10"
-          strokeLinecap="round"
-          opacity="0.45"
+          d="M-10 2460 L-10 2140 C50 2060 120 2120 190 2060 C250 2000 320 2080 420 2020 L420 2460 Z"
+          fill="#5f9a62"
+          opacity="0.38"
         />
-        <Peak x={150} y={548} w={46} h={48} snow={false} />
-        <Peak x={188} y={536} w={36} h={42} snow={false} />
-        {Array.from({ length: 7 }, (_, i) => {
-          const x = 64 + i * 42
+        <path
+          d="M8 2040 C40 2100 30 2180 70 2240 C110 2300 90 2360 130 2420"
+          fill="none"
+          stroke="#7ea4b8"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+        <path
+          d="M8 2040 C40 2100 30 2180 70 2240 C110 2300 90 2360 130 2420"
+          fill="none"
+          stroke="#e7f4f8"
+          strokeWidth="2.2"
+          className="wuxia-river"
+        />
+        <use href="#inkRipple" x={24} y={2120} width="22" height="8" />
+        <use href="#inkRipple" x={48} y={2248} width="22" height="8" />
+        <use href="#inkRipple" x={78} y={2340} width="22" height="8" />
+        <Grove points={BAMBOO_A} className="wuxia-sway" />
+        <Grove points={BAMBOO_B} className="wuxia-sway is-alt" />
+        <g className="wuxia-mist-drift" fill="#f7f1df">
+          <ellipse cx="80" cy="2160" rx="70" ry="16" opacity="0.28" />
+          <ellipse cx="120" cy="2300" rx="60" ry="12" opacity="0.22" />
+        </g>
+        <g transform="translate(40 2288)">
+          <TileRoof x={0} y={0} w={52} h={22} fill="#6b3a2a" />
+          <Pillar x={8} y={28} h={36} />
+          <Pillar x={30} y={28} h={36} />
+          <path d="M4 66 H50 L54 74 H0 Z" fill="#8a7d6b" stroke="#4e4638" strokeWidth="0.7" />
+          <path
+            d="M26 20 C24 6 32 2 28 -8"
+            fill="none"
+            stroke="#f7f3ea"
+            strokeWidth="1.4"
+            className="wuxia-steam"
+          />
+        </g>
+        <g transform="translate(96 2140)">
+          <g className="wuxia-bird">
+            <ellipse cx="0" cy="4" rx="18" ry="6" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.7" />
+            <path d="M12 2 C22 -14 28 -26 24 -36" fill="none" stroke="#f7f3ea" strokeWidth="2.4" />
+            <circle cx="24" cy="-38" r="3.4" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.6" />
+            <path d="M26 -37 L33 -35.5" stroke="#c4513a" strokeWidth="1.2" />
+            <path d="M20 -40 L16 -48 L23 -39" fill="#f7f3ea" stroke="#5c4e3c" strokeWidth="0.5" />
+            <path d="M-2 0 C2 -16 16 -18 18 -6 C8 -8 2 -4 -2 0Z" fill="#efe6d4" stroke="#5c4e3c" strokeWidth="0.55" className="wuxia-wing" />
+            <path d="M-16 4 C-32 0 -42 -12 -38 -20" fill="none" stroke="#f7f3ea" strokeWidth="1.7" />
+            <path d="M-14 7 C-30 10 -40 2 -36 -8" fill="none" stroke="#e7e0d4" strokeWidth="1.2" />
+            <path d="M-2 10 L0 22 M6 10 L9 22" stroke="#c4513a" strokeWidth="0.9" />
+          </g>
+        </g>
+        <Rocks x={150} y={2360} />
+        <Blossom x={160} y={2080} fill="#f7f1df" />
+        <use href="#inkTuft" x={168} y={2300} width="16" height="12" />
+        <use href="#inkTuft" x={210} y={2140} width="16" height="12" />
+        <circle cx="70" cy="2088" r="1.3" fill="#e8c56b" className="wuxia-lantern" />
+        <circle cx="140" cy="2204" r="1.1" fill="#f0e2b8" className="wuxia-lantern" />
+        <circle cx="48" cy="2210" r="1.2" fill="#e8c56b" className="wuxia-lantern" />
+      </Chapter>
+
+      <Chapter reveal={reveal.expert} y={2720} height={440}>
+        <path
+          d="M200 3120 L210 2860 C230 2760 260 2700 300 2760 C340 2680 380 2720 420 2800 L420 3160 L200 3160 Z"
+          fill="#d9cbb0"
+          stroke="#5c5144"
+          strokeWidth="1.4"
+        />
+        <path d="M230 2920 C280 2890 330 2940 400 2890" fill="none" stroke="#6e6254" strokeWidth="1.35" />
+        <path d="M220 3000 C280 2970 340 3020 410 2975" fill="none" stroke="#5c5144" strokeWidth="1.2" />
+        <path d="M236 2820 C290 2790 340 2830 390 2788" fill="none" stroke="#7a6e60" strokeWidth="1.1" opacity="0.8" />
+        <Hatch x={250} y={2860} n={5} step={18} />
+        <path
+          d="M-10 3140 L-10 2860 C50 2760 130 2740 200 2840 C250 2760 310 2780 420 2860 L420 3140 Z"
+          fill="#f3e2c4"
+          stroke="#5c6848"
+          strokeWidth="1.2"
+        />
+        <g fill="#f7f1e4" stroke="#8a7b68" strokeWidth="1.15">
+          <path d="M20 2920 C20 2896 48 2884 70 2898 C80 2876 112 2878 118 2904 C140 2892 156 2914 140 2932 C156 2944 146 2968 122 2964 C118 2986 84 2990 74 2970 C48 2982 24 2964 34 2942 C16 2934 14 2908 20 2920Z" />
+          <path d="M120 3040 C120 3020 146 3010 166 3022 C176 3004 206 3006 210 3028 C230 3018 244 3036 230 3052 C244 3062 236 3082 214 3078 C210 3096 180 3100 172 3084 C148 3094 126 3078 136 3060 C120 3052 118 3030 120 3040Z" />
+          <path d="M250 3088 C250 3070 274 3060 294 3072 C304 3056 332 3058 336 3078 C354 3068 366 3084 354 3098 C366 3108 358 3126 338 3122 C334 3138 306 3142 298 3128 C276 3136 256 3122 266 3106 C250 3098 248 3078 250 3088Z" />
+        </g>
+        <g className="wuxia-mist-drift" fill="#fbf6ea" opacity="0.85">
+          <ellipse cx="80" cy="2860" rx="54" ry="14" />
+          <ellipse cx="160" cy="3004" rx="48" ry="12" />
+          <ellipse cx="300" cy="2948" rx="60" ry="14" />
+        </g>
+        <Pines
+          points={[
+            [236, 2780, 0.55],
+            [252, 2810, 0.48],
+            [360, 2760, 0.5],
+            [18, 2860, 0.6],
+            [40, 2920, 0.5],
+          ]}
+        />
+        <TileRoof x={248} y={2688} w={124} h={44} fill="#8b1e2d" />
+        <TileRoof x={264} y={2752} w={92} h={30} fill="#a12838" />
+        <Pillar x={276} y={2796} h={70} />
+        <Pillar x={336} y={2796} h={70} />
+        <path d="M268 2848 H356" stroke="#5c4e3c" strokeWidth="1.6" />
+        <path d="M274 2848 V2868 M310 2848 V2868 M346 2848 V2868" stroke="#5c4e3c" strokeWidth="1.2" />
+        <rect x="292" y="2810" width="18" height="24" fill="#1a120c" opacity="0.4" />
+        <path d="M301 2810 V2834 M292 2822 H310" stroke="#e8c56b" strokeWidth="0.8" />
+        <rect x="286" y="2724" width="40" height="14" fill="#6b1a24" stroke="#e8c56b" strokeWidth="0.7" />
+        <text x="306" y="2735" textAnchor="middle" fill="#f7f1df" fontSize="9" fontFamily="Noto Sans HK, Noto Sans TC, sans-serif">
+          雲臺
+        </text>
+        <Lantern x={270} y={2770} s={0.7} />
+        <Lantern x={352} y={2770} s={0.7} hue="#e8c56b" />
+        {Array.from({ length: 8 }, (_, i) => {
+          const inset = i * 3
+          const sy = 2920 + i * 14
           return (
-            <g key={x}>
-              <rect x={x} y={600 + (i % 3) * 8} width="5" height="78" rx="2" fill={i % 2 ? '#1f6b42' : '#145233'} />
-              <ellipse cx={x + 2} cy={608 + (i % 3) * 8} rx="12" ry="4" fill="#3dba74" />
-            </g>
+            <path
+              key={i}
+              d={`M${300 + inset} ${sy} H${392 - inset} L${386 - inset} ${sy + 10} H${306 + inset} Z`}
+              fill={i % 2 ? '#e7dcc4' : '#cfc3a4'}
+              stroke="#6b5a40"
+              strokeWidth="0.75"
+            />
           )
         })}
-        <path d="M90 690C140 676 180 710 240 692C280 678 320 700 350 688" fill="none" stroke="#d5ebf2" strokeWidth="4" strokeLinecap="round" />
-        <g transform="translate(300 640)">
-          <path d="M0 0C12 -16 28 -22 42 -12" stroke="#f7f3ea" strokeWidth="1.8" fill="none" />
-          <circle cx="44" cy="-14" r="2.6" fill="#f7f3ea" />
-          <path d="M42 -11L48 -9" stroke="#c4513a" strokeWidth="1.2" />
-          <ellipse cx="8" cy="6" rx="12" ry="5" fill="#f7f3ea" />
-          <path d="M-4 4Q-20 8 -26 -6" stroke="#f7f3ea" strokeWidth="2" fill="none" />
+        <g
+          opacity={0.18 + gild * 0.82}
+          className={gild > 0.02 ? 'wuxia-gild' : undefined}
+          style={{ filter: gild > 0.02 ? undefined : 'grayscale(1)' }}
+        >
+          {Array.from({ length: 8 }, (_, i) => {
+            const inset = i * 3
+            const sy = 2920 + i * 14
+            return (
+              <path
+                key={i}
+                d={`M${300 + inset} ${sy} H${392 - inset} L${386 - inset} ${sy + 10} H${306 + inset} Z`}
+                fill={i % 2 ? '#f0e2b8' : '#e8c56b'}
+              />
+            )
+          })}
         </g>
-        <Dots d="M186 470C160 520 210 540 176 590" />
       </Chapter>
 
-      <Chapter reveal={reveal.expert} y={760} height={210}>
-        <path
-          d="M50 940C80 820 130 800 190 824C214 786 260 778 300 820C340 790 380 820 386 900C350 960 90 970 50 940Z"
-          fill="#c9d3b4"
-          stroke="#5c6848"
-          strokeWidth="1.3"
-        />
-        <Peak x={120} y={790} w={58} h={78} />
-        <Peak x={168} y={772} w={74} h={96} />
-        <Peak x={236} y={786} w={52} h={74} />
-        <ellipse cx="150" cy="900" rx="46" ry="10" fill="#f7f1e4" opacity="0.9" />
-        <ellipse cx="230" cy="912" rx="58" ry="12" fill="#f4efe4" />
-        <ellipse cx="300" cy="896" rx="36" ry="9" fill="#e7e0cf" />
-        <path d="M168 848L210 820L252 848L240 856L210 834L180 856Z" fill="#8b1e2d" stroke="#4a3828" strokeWidth="0.6" />
-        <rect x="190" y="856" width="7" height="28" fill="#efe6d2" stroke="#5c4a32" strokeWidth="0.5" />
-        <rect x="222" y="856" width="7" height="28" fill="#efe6d2" stroke="#5c4a32" strokeWidth="0.5" />
-        <path d="M176 884L244 884L252 896L168 896Z" fill="#6b5344" />
-        <Pines points={[[96, 888, 0.7], [112, 894, 0.6], [300, 880, 0.65]]} />
-        <Dots d="M176 700C160 760 200 790 210 820" />
-      </Chapter>
-
-      <path
-        d="M184 248C170 300 200 340 186 400C168 470 210 520 176 600C150 690 200 760 210 830C214 880 200 930 196 960"
-        fill="none"
-        stroke="#6b5a40"
-        strokeWidth="5"
-        strokeLinecap="round"
-        opacity="0.35"
-      />
-      {(
-        [
-          ['M184 248C170 300 186 360', reveal.common],
-          ['M186 360C186 400 168 450 176 500', reveal.foods],
-          ['M176 500C210 540 160 640 176 710', reveal.animals],
-          ['M176 710C200 780 210 860 196 960', reveal.expert],
-        ] as const
-      ).map(([d, amount]) => (
-        <path
-          key={d}
-          d={d}
-          fill="none"
-          stroke="#8b1e2d"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeDasharray="1.2 5"
-          opacity={0.15 + amount * 0.85}
-        />
-      ))}
-
-      <g opacity={0.25 + gild * 0.75} style={{ filter: gild > 0 ? undefined : 'grayscale(1)' }}>
-        <path d="M176 968L214 968L220 984L170 984Z" fill="#e8c56b" />
-        <path d="M166 984L224 984L232 998L158 998Z" fill="#f0e2b8" />
-      </g>
-
-      <rect x="14" y="8" width="372" height="16" rx="8" fill="url(#roller)" />
-      <rect x="14" y="976" width="372" height="16" rx="8" fill="url(#roller)" />
-      <circle cx="22" cy="16" r="7" fill="#4a2814" />
-      <circle cx="378" cy="16" r="7" fill="#4a2814" />
-      <circle cx="22" cy="984" r="7" fill="#4a2814" />
-      <circle cx="378" cy="984" r="7" fill="#4a2814" />
+      <rect x="18" y="14" width="364" height="22" rx="11" fill="url(#inkRoller)" />
+      <rect x="18" y="3164" width="364" height="22" rx="11" fill="url(#inkRoller)" />
+      <circle cx="28" cy="25" r="9" fill="#4a2814" />
+      <circle cx="372" cy="25" r="9" fill="#4a2814" />
+      <circle cx="28" cy="3175" r="9" fill="#4a2814" />
+      <circle cx="372" cy="3175" r="9" fill="#4a2814" />
 
       <g>
-        <rect x="148" y="36" width="104" height="34" rx="2" fill="#f7edd6" stroke="#6b5a40" strokeWidth="1" />
-        <text x="200" y="52" textAnchor="middle" fill="#3a2418" fontSize="13" fontFamily="Noto Sans HK, Noto Sans TC, sans-serif">
+        <rect x="146" y="58" width="108" height="40" rx="2" fill="#f7edd6" stroke="#6b5a40" strokeWidth="1.2" />
+        <path d="M152 64 H248 M152 92 H248" stroke="#c4a574" strokeWidth="0.7" />
+        <text x="200" y="78" textAnchor="middle" fill="#3a2418" fontSize="14" fontFamily="Noto Sans HK, Noto Sans TC, sans-serif">
           墨途
         </text>
-        <text x="200" y="64" textAnchor="middle" fill="#6b5a40" fontSize="6.5" letterSpacing="1.4" fontFamily="sans-serif">
+        <text x="200" y="90" textAnchor="middle" fill="#6b5a40" fontSize="6.5" letterSpacing="1.6" fontFamily="sans-serif">
           THE INK ROAD
         </text>
       </g>
     </svg>
   )
-}
+})

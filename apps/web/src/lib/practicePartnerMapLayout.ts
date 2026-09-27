@@ -15,14 +15,25 @@ import {
 /** Layer height relative to the viewport frame. Long enough that lesson stops have room between them. */
 export const PARTNER_MAP_HEIGHT = 6.2
 
+/**
+ * Painting coordinate space. The scroll layer keeps this aspect so roofs,
+ * pines, and ridges are not stretched when the frame is tall or wide.
+ */
+export const PARTNER_MAP_VIEWBOX = { w: 400, h: 3200 } as const
+
 const LESSONS_PER_CHAPTER = PATH_LESSONS_PER_UNIT * 3
 
 /**
- * Hanging-scroll size. The painting fills the frame width and runs
- * PARTNER_MAP_HEIGHT screens so the road can be dragged top to bottom.
+ * Hanging-scroll size. At least PARTNER_MAP_HEIGHT screens tall, and the same
+ * aspect as the painting. On a narrow phone that makes the scroll a little
+ * wider than the frame, so the extra ink can be dragged sideways.
  */
 export function partnerMapLayerSize(frameW: number, frameH: number): { w: number; h: number } {
-  return { w: frameW, h: frameH * PARTNER_MAP_HEIGHT }
+  const aspect = PARTNER_MAP_VIEWBOX.h / PARTNER_MAP_VIEWBOX.w
+  const minH = frameH * PARTNER_MAP_HEIGHT
+  const naturalH = frameW * aspect
+  if (naturalH >= minH) return { w: frameW, h: naturalH }
+  return { w: minH / aspect, h: minH }
 }
 
 export const WUXIA_CHAPTERS = [
