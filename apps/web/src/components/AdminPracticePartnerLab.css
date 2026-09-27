@@ -524,6 +524,13 @@
   background: #f3e2c4;
 }
 
+.partner-wuxia,
+.partner-map-cloud-svg,
+.partner-map-road {
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+}
+
 .partner-wuxia {
   position: absolute;
   inset: 0;

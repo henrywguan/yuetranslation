@@ -273,14 +273,14 @@ export function PracticePartnerPathMap({
           style={
             box.cw > 0
               ? {
-                  width: box.cw,
-                  height: box.ch,
-                  transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px) scale(${pan.scale})`,
+                  width: box.cw * pan.scale,
+                  height: box.ch * pan.scale,
+                  transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px)`,
                 }
               : {
-                  width: '100%',
-                  height: `${PARTNER_MAP_HEIGHT * 100}%`,
-                  transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px) scale(${pan.scale})`,
+                  width: `${100 * pan.scale}%`,
+                  height: `${PARTNER_MAP_HEIGHT * 100 * pan.scale}%`,
+                  transform: `translate(calc(-50% + ${pan.x}px), ${pan.y}px)`,
                 }
           }
         >

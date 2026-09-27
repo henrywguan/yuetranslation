@@ -92,6 +92,9 @@ for (const src of [layoutSrc, mapSrc, artSrc]) {
   assert.doesNotMatch(src, /harbor-quest|harbor-continent|Guan harbor|voyage chart/i)
 }
 assert.match(artSrc, /f3e2c4/)
+assert.doesNotMatch(artSrc, /feTurbulence/)
 assert.match(mapSrc, /WuxiaCloudFrame/)
+assert.match(mapSrc, /box\.cw \* pan\.scale/)
+assert.doesNotMatch(mapSrc, /scale\(\$\{pan\.scale\}\)/)
 
 console.log('practicePartnerMapLayout.smoke: ok')

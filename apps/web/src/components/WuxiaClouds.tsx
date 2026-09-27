@@ -114,19 +114,26 @@ function CloudSheet({ variant }: { variant: 'far' | 'mid' | 'near' }) {
 export function WuxiaCloudFrame({ pan }: { pan: Pan }) {
   return (
     <div className="partner-map-clouds" aria-hidden="true">
-      {CLOUD_LAYERS.map((layer) => (
+      {CLOUD_LAYERS.map((layer) => {
+        const grow = 1 + (pan.scale - 1) * layer.depth
+        return (
         <div
           key={layer.id}
           className={`partner-map-cloud is-${layer.id}`}
           style={{
-            transform: `translate(${pan.x * layer.factor}px, ${pan.y * layer.factor}px) scale(${1 + (pan.scale - 1) * layer.depth})`,
+            width: `${128 * grow}%`,
+            height: `${128 * grow}%`,
+            left: `${-14 - (128 * (grow - 1)) / 2}%`,
+            top: `${-14 - (128 * (grow - 1)) / 2}%`,
+            transform: `translate(${pan.x * layer.factor}px, ${pan.y * layer.factor}px)`,
           }}
         >
           <div className={`partner-map-cloud-drift is-${layer.id}`}>
             <CloudSheet variant={layer.id} />
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

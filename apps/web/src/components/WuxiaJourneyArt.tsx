@@ -5,6 +5,7 @@ import { practicePartnerChapterReveal } from '../lib/practicePartnerMapLayout'
 type Reveals = Record<PathCategory, number>
 
 function veilFilter(reveal: number) {
+  if (reveal >= 0.995) return undefined
   const grey = 1 - reveal
   const bright = 0.78 + reveal * 0.22
   return `grayscale(${grey}) brightness(${bright})`
@@ -120,14 +121,14 @@ export function WuxiaJourneyArt({
           <stop offset="0.5" stopColor="#d5cbb6" stopOpacity="0.72" />
           <stop offset="1" stopColor="#e7dcc4" stopOpacity="0.08" />
         </linearGradient>
-        <filter id="paperGrain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" />
-          <feColorMatrix type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.32  0 0 0 0 0.18  0 0 0 0.18 0" />
-        </filter>
+        <pattern id="paperFiber" width="3" height="3" patternUnits="userSpaceOnUse">
+          <path d="M0 1.6 H3" stroke="#b08958" strokeWidth="0.08" />
+          <path d="M1.2 0 V3" stroke="#8d6a3e" strokeWidth="0.06" opacity="0.7" />
+        </pattern>
       </defs>
 
       <rect width="400" height="1000" fill="url(#paper)" />
-      <rect width="400" height="1000" filter="url(#paperGrain)" />
+      <rect width="400" height="1000" fill="url(#paperFiber)" opacity="0.55" />
       <rect x="10" y="28" width="380" height="944" fill="none" stroke="#c4a574" strokeWidth="1.2" opacity="0.7" />
 
       <path d="M0 250C90 230 180 280 400 248L400 330C220 350 90 300 0 320Z" fill="#d5e3d6" opacity="0.72" />
