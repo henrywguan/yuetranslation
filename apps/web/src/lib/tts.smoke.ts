@@ -211,6 +211,7 @@ const appleCtx = {
   decodeCalls: 0,
   bufferStarts: 0,
   oscStarts: 0,
+  gainSets: [] as number[],
   async decodeAudioData(_buf: ArrayBuffer) {
     appleCtx.decodeCalls += 1
     return { duration: 0.4, sampleRate: 16000, numberOfChannels: 1, length: 64 }
@@ -227,7 +228,16 @@ const appleCtx = {
     }
   },
   createGain() {
-    return { gain: { value: 1 }, connect() {}, disconnect() {} }
+    let value = 1
+    const gain = {}
+    Object.defineProperty(gain, 'value', {
+      get: () => value,
+      set: (n: number) => {
+        value = n
+        appleCtx.gainSets.push(n)
+      },
+    })
+    return { gain, connect() {}, disconnect() {} }
   },
   createBufferSource() {
     return {
@@ -265,9 +275,21 @@ assert.ok(appleTts.ttsKeepAliveArmedForTests(), 'force unlock arms iPhone keep-a
 assert.ok(appleCtx.oscStarts >= 1, 'keep-alive oscillator starts in the gesture')
 
 appleTts.resetTtsAudioCacheForTests()
+appleCtx.gainSets.length = 0
 await appleTts.speakText('louder please', 'yue', null, { loud: true })
 assert.ok(appleCtx.decodeCalls >= 1, 'loud iPhone TTS decodes through Web Audio')
 assert.ok(appleCtx.bufferStarts >= 1, 'loud iPhone TTS starts a BufferSource')
+assert.ok(appleCtx.gainSets.includes(1.85), 'opening loud clip keeps the boost')
+
+appleCtx.gainSets.length = 0
+appleTts.hushTtsSpeakerForMic()
+await appleTts.speakText('second line', 'yue', null, { loud: true })
+assert.ok(appleCtx.gainSets.includes(1), 'first clip after the mic plays at unity')
+assert.equal(appleCtx.gainSets.includes(1.85), false, 'mic handoff must not stack the boost')
+
+appleCtx.gainSets.length = 0
+await appleTts.speakText('third line', 'yue', null, { loud: true })
+assert.ok(appleCtx.gainSets.includes(1.85), 'later loud clips keep the boost')
 
 rmSync(appleDir, { recursive: true, force: true })
 console.log('tts.smoke: ok (barge-in preserveSession + clip cache + iPhone loud Web Audio)')
