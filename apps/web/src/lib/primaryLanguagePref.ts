@@ -1,6 +1,8 @@
 import type { ConversationLang, Lang, SpeakDirection } from './types'
 
 const STORAGE_KEY = 'yue-primary-lang'
+/** Last value confirmed saved to the signed-in profile (or hydrated from it). */
+const SYNCED_KEY = 'yue-primary-lang-synced'
 
 /** Languages that can be the app “primary” (your side of Solo / Conversation). */
 export const PRIMARY_LANGS = ['en', 'yue', 'cmn', 'wuu', 'sichuan', 'tl', 'es', 'eses', 'vi'] as const
@@ -30,6 +32,71 @@ export function writeLocalPrimaryLang(lang: PrimaryLang) {
     localStorage.setItem(STORAGE_KEY, lang)
   } catch {
     /* ignore quota / private mode */
+  }
+}
+
+export function readSyncedPrimaryLang(): PrimaryLang | null {
+  if (typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(SYNCED_KEY)
+    return isPrimaryLang(raw) ? raw : null
+  } catch {
+    return null
+  }
+}
+
+export function writeSyncedPrimaryLang(lang: PrimaryLang) {
+  if (typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(SYNCED_KEY, lang)
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/**
+ * Resolve primary language on health/bootstrap.
+ * - Unsynced local change (leave before PATCH finishes, or save failed) → keep local + retry.
+ * - Local matches last sync → trust server (cross-device).
+ * - No sync stamp yet: non-default local beats stale server `yue`; default local adopts server.
+ * - Guest / no server pref → local.
+ */
+export function resolvePrimaryLangOnBootstrap(opts: {
+  loggedIn: boolean
+  serverPrimary: unknown
+  localPrimary: PrimaryLang
+  syncedPrimary: PrimaryLang | null
+}): { primary: PrimaryLang; needsServerPush: boolean; adoptServer: boolean } {
+  const local = normalizePrimaryLang(opts.localPrimary)
+  if (!opts.loggedIn || opts.serverPrimary == null || opts.serverPrimary === '') {
+    return { primary: local, needsServerPush: false, adoptServer: false }
+  }
+  const server = normalizePrimaryLang(opts.serverPrimary)
+  const synced = opts.syncedPrimary != null ? normalizePrimaryLang(opts.syncedPrimary) : null
+
+  if (local === server) {
+    return { primary: local, needsServerPush: false, adoptServer: false }
+  }
+
+  // Explicit pending write on this device — never clobber with a stale profile.
+  if (synced != null && local !== synced) {
+    return { primary: local, needsServerPush: true, adoptServer: false }
+  }
+
+  // First boot after this fix (no sync stamp): a non-default local pick is almost
+  // certainly an unsaved change; default `yue` should adopt the profile (cross-device).
+  if (synced == null) {
+    if (local !== 'yue') {
+      return { primary: local, needsServerPush: true, adoptServer: false }
+    }
+    return { primary: server, needsServerPush: false, adoptServer: true }
+  }
+
+  // Local matches last successful sync — server is newer (other device).
+  return {
+    primary: server,
+    needsServerPush: false,
+    adoptServer: true,
   }
 }
 

@@ -343,9 +343,11 @@ export async function saveAutoSpeakPref(
 export async function savePrimaryLangPref(
   primaryLang: 'en' | 'yue' | 'cmn' | 'wuu' | 'sichuan' | 'tl' | 'es' | 'eses' | 'vi',
 ): Promise<{ prefs: Entitlement['prefs']; entitlement?: Entitlement }> {
+  // keepalive so a quick app switch / kill mid-translate still finishes the PATCH.
   const res = await apiFetch('/prefs/primary-lang', {
     method: 'PATCH',
     body: JSON.stringify({ primaryLang }),
+    keepalive: true,
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {

@@ -187,6 +187,7 @@ Run these in the Supabase SQL editor (or `supabase db push`), in order:
 31. `supabase/migrations/033_primary_lang_eses.sql` — Peninsular Spanish primary lang
 32. `supabase/migrations/034_harbor_practice_usage.sql` — `harbor_quest_count` + `practice_partner_count` (admin view-only meters)
 33. `supabase/migrations/037_practice_partner_leaderboard.sql` — global Practice Partner ranks (XP, best streak, passes). Apply in the Supabase SQL editor if it is not on the project yet.
+34. `supabase/migrations/038_primary_lang_en.sql` — English (`en`) as Account Hub primary lang (UI already offered it; without this check the profile upsert failed and bootstrap snapped back to Cantonese). Apply in the Supabase SQL editor if it is not on the project yet.
 
 **If you see** `Could not find the table 'public.households' in the schema cache` — migrations `011`–`015` are not applied. Paste and run the one-shot file `supabase/migrations/apply_011_through_015_household.sql` in **Supabase → SQL Editor** (creates `households` / members / invites / pooled usage, renames plans, backfills legacy meters, then reloads the PostgREST schema cache).
 
