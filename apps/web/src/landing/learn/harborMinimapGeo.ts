@@ -12,7 +12,6 @@ import {
 } from './harborGuanRealm'
 import {
   HARBOR_RPG_BOUNDS,
-  HARBOR_RPG_DUMMY,
   HARBOR_RPG_META,
   HARBOR_RPG_RETURN,
   HARBOR_RPG_SHRINE,
@@ -135,7 +134,6 @@ export function resolveHarborMinimapPlace(
   if (realm === 'rpg') {
     const spots = [
       { en: 'XP Shrine', zh: '經驗神龕', x: HARBOR_RPG_SHRINE.x, z: HARBOR_RPG_SHRINE.z, r: 3 },
-      { en: 'Training Dummy', zh: '訓練木人', x: HARBOR_RPG_DUMMY.x, z: HARBOR_RPG_DUMMY.z, r: 2.5 },
       { en: 'Return Portal', zh: '回程門', x: HARBOR_RPG_RETURN.x, z: HARBOR_RPG_RETURN.z, r: 3 },
     ]
     let best: { en: string; zh: string; d: number } | null = null

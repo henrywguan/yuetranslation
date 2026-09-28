@@ -5,6 +5,8 @@ import { useReducedMotion } from '../../lib/useReducedMotion'
 import type { HarborLook } from './harborGear'
 import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
+import type { HarborRpgZoneId } from './harborRpgData'
+import type { HarborRpgBag } from './harborRpgProgress'
 import { HarborWorldCanvas } from './HarborWorldCanvas'
 import type { HarborDialogueTap, HarborVisitableId, HarborWorldHandle } from './harborWorld'
 import { HARBOR_MAX_QUEST_SLOTS } from './harborWorld'
@@ -27,8 +29,11 @@ type HarborStageProps = {
   appearance?: HarborAppearance
   /** Pause the WebGL voyage (chart overlay, inventory, etc.). */
   paused?: boolean
-  /** Free-sail paradise pocket (Save Shack teleport) — overrides campaign realm. */
+  /** Free-sail paradise / HarborRPG pocket — overrides campaign realm. */
   realmOverride?: HarborRealmId | null
+  rpgZone?: HarborRpgZoneId
+  rpgBag?: HarborRpgBag
+  onRpgBagChange?: (bag: HarborRpgBag) => void
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a nearby talkable NPC / speech bubble. */
@@ -55,6 +60,9 @@ export function HarborStage({
   appearance,
   paused = false,
   realmOverride = null,
+  rpgZone = 'meadow',
+  rpgBag,
+  onRpgBagChange,
   onVisitable,
   onDialogueNpc,
   remotePlayers,
@@ -66,6 +74,7 @@ export function HarborStage({
   const reduce = useReducedMotion()
   // One pier slot per quest gate — not stepIndex/stepCount along a 240u void.
   const progress = Math.min(stepIndex / HARBOR_MAX_QUEST_SLOTS, 1)
+  const inRpg = realmOverride === 'rpg'
 
   return (
     <div
@@ -81,6 +90,9 @@ export function HarborStage({
         gender={gender}
         appearance={appearance}
         realm={realmOverride ?? levelRealm(level)}
+        rpgZone={rpgZone}
+        rpgBag={rpgBag}
+        onRpgBagChange={onRpgBagChange}
         paused={paused}
         onVisitable={onVisitable}
         onDialogueNpc={onDialogueNpc}
@@ -91,7 +103,7 @@ export function HarborStage({
         worldApiRef={worldApiRef}
       />
 
-      {spotlight ? (
+      {spotlight && !inRpg ? (
         <motion.div
           key={spotlight}
           className="hq-stage-spotlight"
@@ -103,14 +115,18 @@ export function HarborStage({
         </motion.div>
       ) : null}
 
-      <div className="hq-stage-meter" role="presentation">
-        <div className="hq-stage-meter-fill" style={{ width: `${progress * 100}%` }} />
-      </div>
-      <p className="hq-stage-caption">
-        {level.title.en}
-        <span aria-hidden="true"> · </span>
-        {stepIndex + 1}/{stepCount}
-      </p>
+      {!inRpg ? (
+        <>
+          <div className="hq-stage-meter" role="presentation">
+            <div className="hq-stage-meter-fill" style={{ width: `${progress * 100}%` }} />
+          </div>
+          <p className="hq-stage-caption">
+            {level.title.en}
+            <span aria-hidden="true"> · </span>
+            {stepIndex + 1}/{stepCount}
+          </p>
+        </>
+      ) : null}
     </div>
   )
 }

@@ -89,6 +89,14 @@ export type HarborQuestProgress = {
     boosts: { xpMultUntil: number; creditMultUntil: number }
     shrineClaims: number
     dummyKills: number
+    zone?: string
+    inventory?: { id: string; qty: number }[]
+    equippedWeapon?: string | null
+    equippedArmor?: string | null
+    quests?: { id: string; progress: number; complete: boolean; claimed: boolean }[]
+    kills?: Record<string, number>
+    companionUntil?: number
+    companionName?: string | null
   }
 }
 
@@ -320,6 +328,13 @@ const HARBOR_RPG_COSMETICS = new Set([
   'rpg-helm-bronze',
   'rpg-cape-ember',
 ])
+const HARBOR_RPG_ITEMS = new Set([
+  'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide',
+  'rpg-weapon-stick','rpg-weapon-blade','rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail',
+])
+const HARBOR_RPG_ZONES = new Set(['meadow','pinewood','ruins','town'])
+const HARBOR_RPG_QUEST_IDS = new Set(['quest-slime-hunt','quest-wolf-pelts','quest-ruin-shards'])
+const HARBOR_RPG_MONSTERS = new Set(['slime','wolf','bandit','golem'])
 
 function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
   const empty = {
@@ -332,6 +347,14 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     boosts: { xpMultUntil: 0, creditMultUntil: 0 },
     shrineClaims: 0,
     dummyKills: 0,
+    zone: 'meadow',
+    inventory: [] as { id: string; qty: number }[],
+    equippedWeapon: null as string | null,
+    equippedArmor: null as string | null,
+    quests: [] as { id: string; progress: number; complete: boolean; claimed: boolean }[],
+    kills: {} as Record<string, number>,
+    companionUntil: 0,
+    companionName: null as string | null,
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
@@ -424,6 +447,54 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     typeof o.dummyKills === 'number' && Number.isFinite(o.dummyKills) && o.dummyKills >= 0
       ? Math.min(Math.floor(o.dummyKills), 1_000_000)
       : 0
+  const zone = typeof o.zone === 'string' && HARBOR_RPG_ZONES.has(o.zone) ? o.zone : 'meadow'
+  const inventory: { id: string; qty: number }[] = []
+  if (Array.isArray(o.inventory)) {
+    for (const row of o.inventory) {
+      if (inventory.length >= 24) break
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      if (typeof r.id !== 'string' || !HARBOR_RPG_ITEMS.has(r.id)) continue
+      const qty = typeof r.qty === 'number' && Number.isFinite(r.qty) && r.qty > 0 ? Math.min(Math.floor(r.qty), 999) : 0
+      if (qty <= 0) continue
+      inventory.push({ id: r.id, qty })
+    }
+  }
+  const equippedWeapon =
+    typeof o.equippedWeapon === 'string' && HARBOR_RPG_ITEMS.has(o.equippedWeapon) && inventory.some((s) => s.id === o.equippedWeapon)
+      ? o.equippedWeapon
+      : null
+  const equippedArmor =
+    typeof o.equippedArmor === 'string' && HARBOR_RPG_ITEMS.has(o.equippedArmor) && inventory.some((s) => s.id === o.equippedArmor)
+      ? o.equippedArmor
+      : null
+  const quests: { id: string; progress: number; complete: boolean; claimed: boolean }[] = []
+  if (Array.isArray(o.quests)) {
+    for (const row of o.quests) {
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      if (typeof r.id !== 'string' || !HARBOR_RPG_QUEST_IDS.has(r.id)) continue
+      if (quests.some((q) => q.id === r.id)) continue
+      const progress = typeof r.progress === 'number' && Number.isFinite(r.progress) && r.progress >= 0 ? Math.min(Math.floor(r.progress), 100) : 0
+      quests.push({ id: r.id, progress, complete: r.complete === true, claimed: r.claimed === true })
+    }
+  }
+  const kills: Record<string, number> = {}
+  if (o.kills && typeof o.kills === 'object' && !Array.isArray(o.kills)) {
+    for (const [k, v] of Object.entries(o.kills as Record<string, unknown>)) {
+      if (!HARBOR_RPG_MONSTERS.has(k)) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      kills[k] = Math.min(Math.floor(v), 1_000_000)
+    }
+  }
+  const companionUntil =
+    typeof o.companionUntil === 'number' && Number.isFinite(o.companionUntil)
+      ? Math.max(0, Math.floor(o.companionUntil))
+      : 0
+  const companionName =
+    typeof o.companionName === 'string' && o.companionName.trim()
+      ? o.companionName.trim().slice(0, 20)
+      : null
   return {
     characters,
     activeCharacterId,
@@ -434,6 +505,14 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     boosts,
     shrineClaims,
     dummyKills,
+    zone,
+    inventory,
+    equippedWeapon,
+    equippedArmor,
+    quests,
+    kills,
+    companionUntil,
+    companionName,
   }
 }
 

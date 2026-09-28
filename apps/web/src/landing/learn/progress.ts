@@ -20,11 +20,23 @@ import {
   HARBOR_RPG_DUMMY_GOLD,
   HARBOR_RPG_MAX_CHARS,
   HARBOR_RPG_SHRINE_XP,
+  addRpgInventoryItem,
+  countRpgItem,
+  removeRpgInventoryItem,
   rpgCreditMultiplier,
   rpgXpMultiplier,
   sanitizeHarborRpgBag,
   type HarborRpgBag,
 } from './harborRpgProgress'
+import {
+  HARBOR_RPG_ITEM_DEFS,
+  harborRpgQuestById,
+  isHarborRpgZoneId,
+  type HarborRpgItemId,
+  type HarborRpgQuestId,
+  type HarborRpgZoneId,
+} from './harborRpgData'
+import { hireRpgCompanion } from './harborRpgSocial'
 import { HARBOR_LEVELS } from './curriculum'
 import {
   HARBOR_DEFAULT_LOOK,
@@ -251,6 +263,104 @@ export function setHarborRpgActiveCharacter(id: string): HarborProgress | null {
   if (!bag.characters.some((c) => c.id === id)) return null
   bag.activeCharacterId = id
   return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function setHarborRpgZone(zone: HarborRpgZoneId): HarborProgress {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  if (!isHarborRpgZoneId(zone)) return p
+  bag.zone = zone
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function equipHarborRpgItem(itemId: HarborRpgItemId): HarborProgress | null {
+  const p = read()
+  let bag = sanitizeHarborRpgBag(p.rpg)
+  const def = HARBOR_RPG_ITEM_DEFS[itemId]
+  if (!def || countRpgItem(bag, itemId) < 1) return null
+  if (def.kind === 'weapon') bag = { ...bag, equippedWeapon: itemId }
+  else if (def.kind === 'armor') bag = { ...bag, equippedArmor: itemId }
+  else return null
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function buyHarborRpgVendorItem(itemId: HarborRpgItemId): HarborProgress | null {
+  const p = read()
+  let bag = sanitizeHarborRpgBag(p.rpg)
+  const def = HARBOR_RPG_ITEM_DEFS[itemId]
+  if (!def || def.kind === 'loot') return null
+  if (bag.gold < def.value) return null
+  bag = {
+    ...addRpgInventoryItem(bag, itemId, 1),
+    gold: bag.gold - def.value,
+  }
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(bag), lastSavedAt: Date.now() })
+}
+
+export function sellHarborRpgItem(itemId: HarborRpgItemId, qty = 1): HarborProgress | null {
+  const p = read()
+  let bag = sanitizeHarborRpgBag(p.rpg)
+  const def = HARBOR_RPG_ITEM_DEFS[itemId]
+  if (!def) return null
+  const next = removeRpgInventoryItem(bag, itemId, qty)
+  if (!next) return null
+  bag = {
+    ...next,
+    gold: Math.min(10_000_000, next.gold + def.value * Math.max(1, Math.floor(qty))),
+  }
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function acceptHarborRpgQuest(questId: HarborRpgQuestId): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const def = harborRpgQuestById(questId)
+  if (!def) return null
+  if (bag.quests.some((q) => q.id === questId)) return null
+  bag.quests = [
+    ...bag.quests,
+    { id: questId, progress: 0, complete: false, claimed: false },
+  ]
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function claimHarborRpgQuest(questId: HarborRpgQuestId): HarborProgress | null {
+  const p = read()
+  let bag = sanitizeHarborRpgBag(p.rpg)
+  const def = harborRpgQuestById(questId)
+  if (!def) return null
+  const q = bag.quests.find((row) => row.id === questId)
+  if (!q || q.claimed) return null
+  if (def.kind === 'gather') {
+    const have = countRpgItem(bag, def.targetItem)
+    if (have < def.need) return null
+    const removed = removeRpgInventoryItem(bag, def.targetItem, def.need)
+    if (!removed) return null
+    bag = removed
+  } else if (!q.complete && q.progress < def.need) {
+    return null
+  }
+  const multXp = rpgXpMultiplier(bag)
+  const multGold = rpgCreditMultiplier(bag)
+  bag = {
+    ...bag,
+    xp: Math.min(50_000_000, bag.xp + def.xp * multXp),
+    gold: Math.min(10_000_000, bag.gold + def.gold * multGold),
+    quests: bag.quests.map((row) =>
+      row.id === questId
+        ? { ...row, progress: def.need, complete: true, claimed: true }
+        : row,
+    ),
+  }
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function hireHarborRpgCompanion(): HarborProgress | { error: string } {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const res = hireRpgCompanion(bag)
+  if (!res.ok) return { error: res.reason }
+  return commit({ ...p, rpg: res.bag, lastSavedAt: Date.now() })
 }
 
 export function markGoldEarned(amount: number) {

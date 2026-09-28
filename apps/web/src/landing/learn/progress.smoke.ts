@@ -149,7 +149,7 @@ const withRpg = sanitizeHarborProgress({
   rpg: {
     characters: [{ id: 'rpg-alpha', name: 'Voyager', createdAt: 1 }],
     xp: 40,
-    gold: 7,
+    gold: 70,
   },
 })
 assert.equal(withRpg.rpg.xp, 40)
@@ -157,6 +157,6 @@ assert.equal(withRpg.rpg.characters.length, 1)
 assert.equal(withRpg.xp, 0)
 const mergedRpg = mergeHarborProgress(emptyHarborProgress(), withRpg)
 assert.equal(mergedRpg.rpg.xp, 40)
-assert.equal(mergedRpg.rpg.gold, 7)
+assert.equal(mergedRpg.rpg.gold, 70)
 
 console.log('harborProgress.smoke: ok')

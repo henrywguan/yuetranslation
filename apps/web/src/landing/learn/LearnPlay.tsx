@@ -59,12 +59,14 @@ import { HARBOR_FISH_CATCH_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAni
 import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
 import {
   HARBOR_RPG_META,
-  type HarborRpgInteractId,
 } from './harborRpgRealm'
 import {
-  harborRpgLevelFromXp,
-  HARBOR_RPG_MAX_CHARS,
-} from './harborRpgProgress'
+  HARBOR_RPG_PORTALS,
+  HARBOR_RPG_ZONE_META,
+  type HarborRpgQuestId,
+  type HarborRpgZoneId,
+} from './harborRpgData'
+import { HarborRpgPanel } from './HarborRpgPanel'
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
   emptyHarborFishingBag,
@@ -139,10 +141,17 @@ import {
   visitSaveShack,
   withdrawHarborGear,
   updateHarborFishing,
+  updateHarborRpg,
   claimHarborRpgShrine,
-  hitHarborRpgDummy,
   createHarborRpgCharacterSlot,
   setHarborRpgActiveCharacter,
+  setHarborRpgZone,
+  equipHarborRpgItem,
+  buyHarborRpgVendorItem,
+  sellHarborRpgItem,
+  acceptHarborRpgQuest,
+  claimHarborRpgQuest,
+  hireHarborRpgCompanion,
   purchaseHarborBeautySku,
   purchaseHarborBeautyForAppearance,
   equipHarborShowoff,
@@ -197,11 +206,19 @@ export function LearnSession({
   const [teleportOpen, setTeleportOpen] = useState(false)
   /** Free-sail paradise / HarborRPG pocket — overrides campaign realm until cast off / chapter teleport. */
   const [realmOverride, setRealmOverride] = useState<HarborRealmId | null>(null)
+  /** HarborRPG zone within the separate adventure game. */
+  const [rpgZone, setRpgZone] = useState<HarborRpgZoneId>('meadow')
   /** Nearest HarborRPG interact (polled while in rpg). */
-  const [rpgInteract, setRpgInteract] = useState<HarborRpgInteractId | null>(null)
-  /** Lightweight RPG character create prompt. */
-  const [rpgCreateOpen, setRpgCreateOpen] = useState(false)
-  const [rpgCreateName, setRpgCreateName] = useState('')
+  const [rpgInteract, setRpgInteract] = useState<string | null>(null)
+  const [rpgCombatHud, setRpgCombatHud] = useState<{
+    hp: number
+    maxHp: number
+    zone: HarborRpgZoneId
+    targetName: string | null
+    targetHp: number
+    targetMaxHp: number
+  } | null>(null)
+  const [rpgToast, setRpgToast] = useState<string | null>(null)
   /** Fullscreen wuxia world map (minimap globe). */
   const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
@@ -455,15 +472,17 @@ export function LearnSession({
     requestAnimationFrame(() => requestAnimationFrame(snap))
   }, [realmOverride])
 
-  /** Poll HarborRPG interact target while in the adventure meadow. */
+  /** Poll HarborRPG interact + combat HUD while in the adventure game. */
   useEffect(() => {
     if (realmOverride !== 'rpg') {
       setRpgInteract(null)
+      setRpgCombatHud(null)
       return
     }
     let raf = 0
     const tick = () => {
       setRpgInteract(worldApiRef.current?.getRpgInteract() ?? null)
+      setRpgCombatHud(worldApiRef.current?.getRpgCombatHud() ?? null)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -474,8 +493,23 @@ export function LearnSession({
     (next: HarborProgress) => {
       setProgressSnap(next)
       onProgress(next)
+      worldApiRef.current?.setRpgBag(next.rpg)
     },
     [onProgress],
+  )
+
+  const flashRpgToast = useCallback((msg: string) => {
+    setRpgToast(msg)
+    window.setTimeout(() => setRpgToast(null), 2200)
+  }, [])
+
+  const enterRpgZone = useCallback(
+    (zone: HarborRpgZoneId) => {
+      setRpgZone(zone)
+      pushRpgProgress(setHarborRpgZone(zone))
+      flashRpgToast(`Entered ${HARBOR_RPG_ZONE_META[zone].en}`)
+    },
+    [pushRpgProgress, flashRpgToast],
   )
 
   const onRpgInteract = useCallback(() => {
@@ -492,12 +526,34 @@ export function LearnSession({
     }
     if (id === 'rpg-shrine') {
       pushRpgProgress(claimHarborRpgShrine())
+      flashRpgToast('Shrine soft XP claimed')
       return
     }
-    if (id === 'rpg-dummy') {
-      pushRpgProgress(hitHarborRpgDummy())
+    const portal = HARBOR_RPG_PORTALS.find((p) => p.id === id)
+    if (portal) {
+      playHarborTeleport()
+      enterRpgZone(portal.to)
+      return
     }
-  }, [rpgInteract, pushRpgProgress])
+    if (id === 'rpg-vendor' || id === 'rpg-quest-board' || id === 'rpg-finder') {
+      flashRpgToast(
+        id === 'rpg-vendor'
+          ? 'Outfitter — open Bag tab'
+          : id === 'rpg-quest-board'
+            ? 'Quest board — open Quests tab'
+            : 'Party finder — open Party tab',
+      )
+    }
+  }, [rpgInteract, pushRpgProgress, flashRpgToast, enterRpgZone])
+
+  const onRpgBagChange = useCallback(
+    (bag: import('./harborRpgProgress').HarborRpgBag) => {
+      const next = updateHarborRpg(bag)
+      setProgressSnap(next)
+      onProgress(next)
+    },
+    [onProgress],
+  )
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -1104,7 +1160,7 @@ export function LearnSession({
   return (
     <div
       ref={playRootRef}
-      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}${invOpen ? ' is-bag-open' : ''}`}
+      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}${invOpen ? ' is-bag-open' : ''}${realmOverride === 'rpg' ? ' is-rpg' : ''}`}
       data-flash={flash ?? undefined}
     >
       <div className="hq-play-stage">
@@ -1119,6 +1175,9 @@ export function LearnSession({
           gender={progressSnap.gender}
           appearance={progressSnap.appearance}
           realmOverride={realmOverride}
+          rpgZone={rpgZone}
+          rpgBag={progressSnap.rpg}
+          onRpgBagChange={onRpgBagChange}
           paused={
             worldPaused ||
             invOpen ||
@@ -1213,102 +1272,101 @@ export function LearnSession({
 
       <header className="hq-play-hud-top">
         <button type="button" className="hq-btn hq-btn--ghost hq-btn--hud" onClick={onExit}>
-          Chart
-        </button>
-        <button
-          type="button"
-          className="hq-play-bar-title hq-play-bar-title--tap"
-          onClick={openChapterScroll}
-          aria-haspopup="dialog"
-          aria-expanded={scrollOpen}
-          aria-label={`Chapter scroll: ${level.title.en}`}
-          title="Open chapter scroll"
-        >
-          <span className="hq-play-title-en">
-            <span className="hq-play-ch">Ch. {level.chapter}</span>
-            <span className="hq-play-name">{level.title.en}</span>
-          </span>
-          <span className="hq-play-name-zh" lang="zh-HK">
-            {level.title.zh}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="hq-xp-chip"
-          title="Sailor experience"
-          aria-label={`Experience ${progressSnap.xp ?? 0}, level ${sailorLevelFromXp(progressSnap.xp ?? 0)}`}
-          aria-live="polite"
-        >
-          <span className="hq-xp-chip-icon" aria-hidden="true">
-            XP
-          </span>
-          <span className="hq-xp-chip-val">{progressSnap.xp ?? 0}</span>
-          <span className="hq-xp-chip-lv">Lv {sailorLevelFromXp(progressSnap.xp ?? 0)}</span>
+          {realmOverride === 'rpg' ? 'Leave' : 'Chart'}
         </button>
         {realmOverride === 'rpg' ? (
+          <div className="hq-play-bar-title">
+            <span className="hq-play-title-en">
+              <span className="hq-play-ch">HarborRPG</span>
+              <span className="hq-play-name">{HARBOR_RPG_ZONE_META[rpgZone].en}</span>
+            </span>
+            <span className="hq-play-name-zh" lang="zh-HK">
+              {HARBOR_RPG_ZONE_META[rpgZone].zh}
+            </span>
+          </div>
+        ) : (
           <button
             type="button"
-            className="hq-xp-chip hq-xp-chip--rpg"
-            title="HarborRPG soft experience (separate from sailor XP)"
-            aria-label={`HarborRPG experience ${progressSnap.rpg?.xp ?? 0}, level ${harborRpgLevelFromXp(progressSnap.rpg?.xp ?? 0)}`}
-            aria-live="polite"
+            className="hq-play-bar-title hq-play-bar-title--tap"
+            onClick={openChapterScroll}
+            aria-haspopup="dialog"
+            aria-expanded={scrollOpen}
+            aria-label={`Chapter scroll: ${level.title.en}`}
+            title="Open chapter scroll"
           >
-            <span className="hq-xp-chip-icon" aria-hidden="true">
-              RPG
+            <span className="hq-play-title-en">
+              <span className="hq-play-ch">Ch. {level.chapter}</span>
+              <span className="hq-play-name">{level.title.en}</span>
             </span>
-            <span className="hq-xp-chip-val">{progressSnap.rpg?.xp ?? 0}</span>
-            <span className="hq-xp-chip-lv">
-              Lv {harborRpgLevelFromXp(progressSnap.rpg?.xp ?? 0)}
+            <span className="hq-play-name-zh" lang="zh-HK">
+              {level.title.zh}
             </span>
           </button>
+        )}
+        {realmOverride !== 'rpg' ? (
+          <>
+            <button
+              type="button"
+              className="hq-xp-chip"
+              title="Sailor experience"
+              aria-label={`Experience ${progressSnap.xp ?? 0}, level ${sailorLevelFromXp(progressSnap.xp ?? 0)}`}
+              aria-live="polite"
+            >
+              <span className="hq-xp-chip-icon" aria-hidden="true">
+                XP
+              </span>
+              <span className="hq-xp-chip-val">{progressSnap.xp ?? 0}</span>
+              <span className="hq-xp-chip-lv">Lv {sailorLevelFromXp(progressSnap.xp ?? 0)}</span>
+            </button>
+            <button
+              type="button"
+              className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}${invOpen ? ' is-open' : ''}`}
+              title={invOpen ? 'Close inventory' : 'Open inventory'}
+              aria-label={`Ferry coins ${progressSnap.coins}. ${invOpen ? 'Close' : 'Open'} inventory`}
+              aria-pressed={invOpen}
+              aria-live="polite"
+              onClick={() => {
+                setInvOpen((v) => {
+                  if (v) playHarborBagClose()
+                  else playHarborBagOpen()
+                  return !v
+                })
+                setVisitable(null)
+                setCodexOpen(false)
+                setShopMsg(null)
+                setBankMsg(null)
+              }}
+            >
+              <span className="hq-coin-chip-icon" aria-hidden="true">
+                ◌
+              </span>
+              <span className="hq-coin-chip-val">{progressSnap.coins}</span>
+              {coinPops.map((pop) => (
+                <span key={pop.id} className="hq-coin-pop" aria-hidden="true">
+                  +{pop.amount}
+                </span>
+              ))}
+            </button>
+            <button
+              type="button"
+              className="hq-gold-chip"
+              title="Chinese arena gold — paddle to the 擂台 portal"
+              aria-label={`Arena gold ${progressSnap.gold ?? 0}. Open Match the Definition`}
+              onClick={() => {
+                playHarborArenaOpen()
+                setArenaOpen(true)
+                setVisitable(null)
+                setInvOpen(false)
+                setCodexOpen(false)
+              }}
+            >
+              <span className="hq-gold-chip-icon" aria-hidden="true">
+                金
+              </span>
+              <span className="hq-gold-chip-val">{progressSnap.gold ?? 0}</span>
+            </button>
+          </>
         ) : null}
-        <button
-          type="button"
-          className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}${invOpen ? ' is-open' : ''}`}
-          title={invOpen ? 'Close inventory' : 'Open inventory'}
-          aria-label={`Ferry coins ${progressSnap.coins}. ${invOpen ? 'Close' : 'Open'} inventory`}
-          aria-pressed={invOpen}
-          aria-live="polite"
-          onClick={() => {
-            setInvOpen((v) => {
-              if (v) playHarborBagClose()
-              else playHarborBagOpen()
-              return !v
-            })
-            setVisitable(null)
-            setCodexOpen(false)
-            setShopMsg(null)
-            setBankMsg(null)
-          }}
-        >
-          <span className="hq-coin-chip-icon" aria-hidden="true">
-            ◌
-          </span>
-          <span className="hq-coin-chip-val">{progressSnap.coins}</span>
-          {coinPops.map((pop) => (
-            <span key={pop.id} className="hq-coin-pop" aria-hidden="true">
-              +{pop.amount}
-            </span>
-          ))}
-        </button>
-        <button
-          type="button"
-          className="hq-gold-chip"
-          title="Chinese arena gold — paddle to the 擂台 portal"
-          aria-label={`Arena gold ${progressSnap.gold ?? 0}. Open Match the Definition`}
-          onClick={() => {
-            playHarborArenaOpen()
-            setArenaOpen(true)
-            setVisitable(null)
-            setInvOpen(false)
-            setCodexOpen(false)
-          }}
-        >
-          <span className="hq-gold-chip-icon" aria-hidden="true">
-            金
-          </span>
-          <span className="hq-gold-chip-val">{progressSnap.gold ?? 0}</span>
-        </button>
       </header>
 
       {scrollOpen ? (
@@ -1531,11 +1589,11 @@ export function LearnSession({
                 disabled={realmOverride === 'rpg'}
                 onClick={() => {
                   playHarborTeleport()
+                  setRpgZone(progressSnap.rpg?.zone ?? 'meadow')
                   setRealmOverride('rpg')
                   startHarborBgm('river')
                   setTeleportOpen(false)
                   setVisitable(null)
-                  setRpgCreateOpen(false)
                 }}
               >
                 <span className="hq-teleport-ch">Adventure · 冒險</span>
@@ -1768,129 +1826,74 @@ export function LearnSession({
       ) : null}
 
       {realmOverride === 'rpg' ? (
-        <aside className="hq-visit-panel hq-visit-panel--rpg" role="complementary" aria-label="HarborRPG">
-          <p className="hq-visit-kicker">
-            {HARBOR_RPG_META.en} · <span lang="zh-HK">{HARBOR_RPG_META.zh}</span>
-          </p>
-          <h2 className="hq-visit-title">Adventure meadow</h2>
-          <p className="hq-visit-body">
-            Soft XP shrine · training dummy · return portal. Soft gold{' '}
-            <strong>{progressSnap.rpg?.gold ?? 0}</strong>
-            {(progressSnap.rpg?.characters?.length ?? 0) > 0
-              ? ` · ${progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)?.name ?? 'Adventurer'}`
-              : ' · create a character (max 2)'}
-          </p>
-          <ul className="hq-rpg-chars" aria-label="HarborRPG characters">
-            {(progressSnap.rpg?.characters ?? []).map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  className={`hq-rpg-char${progressSnap.rpg?.activeCharacterId === c.id ? ' is-on' : ''}`}
-                  disabled={progressSnap.rpg?.activeCharacterId === c.id}
-                  onClick={() => {
-                    playHarborUiClick()
-                    const next = setHarborRpgActiveCharacter(c.id)
-                    if (next) pushRpgProgress(next)
-                  }}
-                >
-                  {c.name}
-                </button>
-              </li>
-            ))}
-            {(progressSnap.rpg?.characters?.length ?? 0) < HARBOR_RPG_MAX_CHARS ? (
-              <li>
-                <button
-                  type="button"
-                  className="hq-rpg-char hq-rpg-char--new"
-                  onClick={() => {
-                    playHarborUiClick()
-                    setRpgCreateName('')
-                    setRpgCreateOpen(true)
-                  }}
-                >
-                  + New
-                </button>
-              </li>
-            ) : null}
-          </ul>
-          {rpgCreateOpen ? (
-            <form
-              className="hq-rpg-create"
-              onSubmit={(e) => {
-                e.preventDefault()
-                const next = createHarborRpgCharacterSlot({ name: rpgCreateName || 'Adventurer' })
-                if (next) {
-                  pushRpgProgress(next)
-                  setRpgCreateOpen(false)
-                  setRpgCreateName('')
-                }
-              }}
-            >
-              <label className="hq-rpg-create-label">
-                Name
-                <input
-                  className="hq-rpg-create-input"
-                  value={rpgCreateName}
-                  maxLength={20}
-                  placeholder="Adventurer"
-                  onChange={(e) => setRpgCreateName(e.target.value)}
-                  autoFocus
-                />
-              </label>
-              <div className="hq-rpg-create-actions">
-                <button type="submit" className="hq-btn hq-btn--primary hq-btn--tiny">
-                  Create
-                </button>
-                <button
-                  type="button"
-                  className="hq-btn hq-btn--ghost hq-btn--tiny"
-                  onClick={() => setRpgCreateOpen(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : null}
-          <p className="hq-visit-body hq-rpg-hint">
-            {rpgInteract === 'rpg-shrine'
-              ? 'Near shrine — claim soft XP'
-              : rpgInteract === 'rpg-dummy'
-                ? 'Near dummy — strike for soft gold'
-                : rpgInteract === 'rpg-return'
-                  ? 'Near return portal — cast back to river'
-                  : 'Walk to the shrine, dummy, or blue return portal'}
-          </p>
-          <div className="hq-visit-actions">
-            <button
-              type="button"
-              className="hq-btn hq-btn--primary"
-              disabled={!rpgInteract}
-              onClick={onRpgInteract}
-            >
-              {rpgInteract === 'rpg-shrine'
-                ? 'Claim shrine'
-                : rpgInteract === 'rpg-dummy'
-                  ? 'Hit dummy'
-                  : rpgInteract === 'rpg-return'
-                    ? 'Return to river'
-                    : 'Interact'}
-            </button>
-            <button
-              type="button"
-              className="hq-btn hq-btn--ghost"
-              onClick={() => {
-                playHarborCastOff()
-                setRealmOverride(null)
-                startHarborBgm('river')
-                setRpgInteract(null)
-                setRpgCreateOpen(false)
-                setVisitable(null)
-              }}
-            >
-              Cast off
-            </button>
-          </div>
-        </aside>
+        <HarborRpgPanel
+          bag={progressSnap.rpg}
+          combat={rpgCombatHud}
+          interactId={rpgInteract}
+          toast={rpgToast}
+          onInteract={onRpgInteract}
+          onCreateChar={(name) => {
+            const next = createHarborRpgCharacterSlot({ name })
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast(`Created ${name}`)
+            }
+          }}
+          onSelectChar={(id) => {
+            const next = setHarborRpgActiveCharacter(id)
+            if (next) pushRpgProgress(next)
+          }}
+          onEquip={(id) => {
+            const next = equipHarborRpgItem(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Equipped')
+            }
+          }}
+          onBuy={(id) => {
+            const next = buyHarborRpgVendorItem(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Purchased')
+            } else flashRpgToast('Not enough gold')
+          }}
+          onSell={(id) => {
+            const next = sellHarborRpgItem(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Sold')
+            }
+          }}
+          onAcceptQuest={(id) => {
+            const next = acceptHarborRpgQuest(id as HarborRpgQuestId)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Quest accepted')
+            }
+          }}
+          onClaimQuest={(id) => {
+            const next = claimHarborRpgQuest(id as HarborRpgQuestId)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Quest claimed')
+            } else flashRpgToast('Not ready to turn in')
+          }}
+          onHireCompanion={() => {
+            const next = hireHarborRpgCompanion()
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(`Hired ${next.rpg.companionName}`)
+            }
+          }}
+          onExitGame={() => {
+            playHarborCastOff()
+            setRealmOverride(null)
+            startHarborBgm('river')
+            setRpgInteract(null)
+            setVisitable(null)
+          }}
+        />
       ) : null}
 
       {/* OSRS-style compass / boat — free-look on water; return to canoe on land */}
@@ -1921,6 +1924,7 @@ export function LearnSession({
       <button
         type="button"
         className={`hq-delve-fab${remotePlayers.length === 0 ? ' is-alone' : ''}${delveOpen ? ' is-on' : ''}`}
+        hidden={realmOverride === 'rpg'}
         aria-label="Practice with 港灣 companion"
         title={
           remotePlayers.length === 0

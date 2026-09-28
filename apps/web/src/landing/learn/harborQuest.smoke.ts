@@ -598,7 +598,7 @@ function main() {
   )
   const canvasSrc = readFileSync(new URL('./HarborWorldCanvas.tsx', import.meta.url), 'utf8')
   assert.match(canvasSrc, /realm\?: HarborRealmId/, 'HarborWorldCanvas accepts realm prop')
-  assert.match(canvasSrc, /\[realm\]/, 'canvas recreates world when realm changes')
+  assert.match(canvasSrc, /\[realm,\s*rpgZone\]/, 'canvas recreates world when realm or RPG zone changes')
   assert.match(
     canvasSrc,
     /setLocalUsername\(name(?:,\s*frame)?\)|setLocalUsername\(localUsernameRef/,
