@@ -109,6 +109,12 @@ export type HarborQuestProgress = {
       price: number
       createdAt: number
     }[]
+    classId?: string | null
+    classXp?: number
+    prestige?: number
+    skillXp?: Record<string, number>
+    talents?: Record<string, number>
+    skillBar?: string[]
   }
 }
 
@@ -356,6 +362,11 @@ const HARBOR_RPG_QUEST_IDS = new Set([
 const HARBOR_RPG_MONSTERS = new Set(['slime','wolf','bandit','golem','toad','wraith','crypt-boss'])
 const HARBOR_RPG_GEAR_SLOTS = ['weapon','offhand','head','chest','legs','feet','ring','trinket'] as const
 const HARBOR_RPG_PROFESSIONS = ['herbalism','mining','alchemy','smithing'] as const
+const HARBOR_RPG_CLASS_IDS = new Set([
+  'tideblade','reedshadow','lanternmancer','jadeheart','ashbound','starferry',
+])
+const HARBOR_RPG_SKILL_PREFIX = /^(tb|rs|lm|jh|ab|sf)-[a-z0-9-]+$/i
+const HARBOR_RPG_TALENT_PREFIX = /^(tb|rs|lm|jh|ab|sf)-(o|w|v)\d$/i
 
 function sanitizeRpgInv(raw: unknown, max: number): { id: string; qty: number }[] {
   const inventory: { id: string; qty: number }[] = []
@@ -404,6 +415,12 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     companionName: null as string | null,
     professions: { herbalism: 0, mining: 0, alchemy: 0, smithing: 0 } as Record<string, number>,
     market: [] as NonNullable<NonNullable<HarborQuestProgress['rpg']>['market']>,
+    classId: null as string | null,
+    classXp: 0,
+    prestige: 0,
+    skillXp: {} as Record<string, number>,
+    talents: {} as Record<string, number>,
+    skillBar: [] as string[],
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
@@ -587,6 +604,41 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
       })
     }
   }
+  const classId =
+    typeof o.classId === 'string' && HARBOR_RPG_CLASS_IDS.has(o.classId) ? o.classId : null
+  const classXp =
+    typeof o.classXp === 'number' && Number.isFinite(o.classXp) && o.classXp >= 0
+      ? Math.min(Math.floor(o.classXp), 50_000_000)
+      : 0
+  const prestige =
+    typeof o.prestige === 'number' && Number.isFinite(o.prestige) && o.prestige >= 0
+      ? Math.min(Math.floor(o.prestige), 5)
+      : 0
+  const skillXp: Record<string, number> = {}
+  if (o.skillXp && typeof o.skillXp === 'object' && !Array.isArray(o.skillXp)) {
+    for (const [k, v] of Object.entries(o.skillXp as Record<string, unknown>)) {
+      if (!HARBOR_RPG_SKILL_PREFIX.test(k)) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      skillXp[k] = Math.min(Math.floor(v), 500_000)
+    }
+  }
+  const talents: Record<string, number> = {}
+  if (o.talents && typeof o.talents === 'object' && !Array.isArray(o.talents)) {
+    for (const [k, v] of Object.entries(o.talents as Record<string, unknown>)) {
+      if (!HARBOR_RPG_TALENT_PREFIX.test(k)) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      talents[k] = Math.min(Math.floor(v), 5)
+    }
+  }
+  const skillBar: string[] = []
+  if (Array.isArray(o.skillBar)) {
+    for (const id of o.skillBar) {
+      if (typeof id !== 'string' || !HARBOR_RPG_SKILL_PREFIX.test(id)) continue
+      if (skillBar.includes(id)) continue
+      skillBar.push(id)
+      if (skillBar.length >= 5) break
+    }
+  }
   return {
     characters,
     activeCharacterId,
@@ -609,6 +661,12 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     companionName,
     professions,
     market,
+    classId,
+    classXp,
+    prestige,
+    skillXp,
+    talents,
+    skillBar,
   }
 }
 

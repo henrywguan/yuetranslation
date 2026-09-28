@@ -28,6 +28,9 @@ import {
   rpgCreditMultiplier,
   rpgXpMultiplier,
   sanitizeHarborRpgBag,
+  selectHarborRpgClass,
+  spendHarborRpgTalent,
+  prestigeHarborRpgClass,
   withdrawRpgBank,
   type HarborRpgBag,
 } from './harborRpgProgress'
@@ -39,6 +42,7 @@ import {
   type HarborRpgQuestId,
   type HarborRpgZoneId,
 } from './harborRpgData'
+import type { HarborRpgClassId } from './harborRpgClasses'
 import { hireRpgCompanion } from './harborRpgSocial'
 import {
   buyRpgMarketListing,
@@ -428,6 +432,32 @@ export function withdrawHarborRpgBank(
   const p = read()
   const bag = sanitizeHarborRpgBag(p.rpg)
   const next = withdrawRpgBank(bag, itemId, qty)
+  if (!next) return null
+  return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
+}
+
+export function selectHarborRpgClassPick(classId: HarborRpgClassId): HarborProgress {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  return commit({
+    ...p,
+    rpg: sanitizeHarborRpgBag(selectHarborRpgClass(bag, classId)),
+    lastSavedAt: Date.now(),
+  })
+}
+
+export function spendHarborRpgTalentPoint(talentId: string): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = spendHarborRpgTalent(bag, talentId)
+  if (!next) return null
+  return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
+}
+
+export function prestigeHarborRpgClassPick(): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = prestigeHarborRpgClass(bag)
   if (!next) return null
   return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
 }

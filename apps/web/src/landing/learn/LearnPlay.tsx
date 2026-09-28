@@ -160,6 +160,9 @@ import {
   buyHarborRpgMarketListing,
   depositHarborRpgBank,
   withdrawHarborRpgBank,
+  selectHarborRpgClassPick,
+  spendHarborRpgTalentPoint,
+  prestigeHarborRpgClassPick,
   purchaseHarborBeautySku,
   purchaseHarborBeautyForAppearance,
   equipHarborShowoff,
@@ -2000,6 +2003,24 @@ export function LearnSession({
               flashRpgToast('Passed on loot')
             }
             setRpgLootPrompt(null)
+          }}
+          onSelectClass={(id) => {
+            pushRpgProgress(selectHarborRpgClassPick(id))
+            flashRpgToast(`Class: ${id}`)
+          }}
+          onSpendTalent={(id) => {
+            const next = spendHarborRpgTalentPoint(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Talent spent')
+            } else flashRpgToast('No talent points')
+          }}
+          onPrestige={() => {
+            const next = prestigeHarborRpgClassPick()
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Prestiged!')
+            } else flashRpgToast('Need class level 50')
           }}
           onExitGame={() => {
             playHarborCastOff()

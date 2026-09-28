@@ -281,11 +281,11 @@ export type HarborWorldHandle = {
     targetHp: number
     targetMaxHp: number
     gcd: number
-    abilityCds: Partial<Record<import('./harborRpgData').HarborRpgAbilityId, number>>
+    abilityCds: Record<string, number>
     guardBuffSec: number
   } | null
-  /** Queue a combat ability for the next tick. */
-  queueRpgAbility: (id: import('./harborRpgData').HarborRpgAbilityId) => void
+  /** Queue a combat ability / class skill for the next tick. */
+  queueRpgAbility: (id: string) => void
   /** Update soft party size (contested loot). */
   setRpgPartySize: (n: number) => void
   /** Push latest RPG bag into the combat sim (equip / shop). */
@@ -4552,10 +4552,10 @@ export function createHarborWorld(
   let rpgPlayerHp = harborRpgMaxHp(rpgBagLive)
   let rpgMonsters: HarborRpgMonsterRuntime[] = []
   let rpgGuardBuffSec = 0
-  let rpgQueuedAbility: import('./harborRpgData').HarborRpgAbilityId | null = null
+  let rpgQueuedAbility: string | null = null
   let rpgCombatCds: {
     gcd: number
-    cds: Partial<Record<import('./harborRpgData').HarborRpgAbilityId, number>>
+    cds: Record<string, number>
   } = { gcd: 0, cds: {} }
   const rpgMonsterMeshes = new Map<string, THREE.Group>()
   // Guan Harbor / HarborRPG always force sunny daylight.

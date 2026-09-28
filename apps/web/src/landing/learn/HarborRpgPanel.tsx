@@ -12,13 +12,23 @@ import {
   HARBOR_RPG_QUESTS,
   HARBOR_RPG_VENDOR,
   HARBOR_RPG_ZONE_META,
-  type HarborRpgAbilityId,
   type HarborRpgItemId,
   type HarborRpgZoneId,
 } from './harborRpgData'
+import {
+  HARBOR_RPG_CLASSES,
+  HARBOR_RPG_CLASS_DEFS,
+  HARBOR_RPG_CLASS_LEVEL_CAP,
+  harborRpgClassLevelFromXp,
+  harborRpgSkillById,
+  harborRpgUnlockedSkills,
+  type HarborRpgClassId,
+} from './harborRpgClasses'
 import { HARBOR_RPG_META } from './harborRpgRealm'
 import {
+  harborRpgActiveSkillRank,
   harborRpgLevelFromXp,
+  harborRpgTalentPointsLeft,
   HARBOR_RPG_MAX_CHARS,
   rpgHasCompanion,
   type HarborRpgBag,
@@ -61,7 +71,7 @@ type Props = {
   onAcceptQuest: (id: string) => void
   onClaimQuest: (id: string) => void
   onHireCompanion: () => void
-  onCastAbility: (id: HarborRpgAbilityId) => void
+  onCastAbility: (id: string) => void
   onCraft: (recipeId: string) => void
   onListMarket: (itemId: HarborRpgItemId, price: number) => void
   onBuyMarket: (listingId: string) => void
@@ -69,6 +79,9 @@ type Props = {
   onWithdrawBank: (id: HarborRpgItemId) => void
   onPartySizeChange: (n: number) => void
   onLootVote: (vote: 'need' | 'greed' | 'pass') => void
+  onSelectClass: (id: HarborRpgClassId) => void
+  onSpendTalent: (id: string) => void
+  onPrestige: () => void
   onExitGame: () => void
 }
 
@@ -95,10 +108,13 @@ export function HarborRpgPanel({
   onWithdrawBank,
   onPartySizeChange,
   onLootVote,
+  onSelectClass,
+  onSpendTalent,
+  onPrestige,
   onExitGame,
 }: Props) {
   const [tab, setTab] = useState<
-    'field' | 'bag' | 'quests' | 'party' | 'craft' | 'market'
+    'field' | 'bag' | 'quests' | 'party' | 'craft' | 'market' | 'class'
   >('field')
   const [createName, setCreateName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -111,6 +127,14 @@ export function HarborRpgPanel({
   const zoneMeta = HARBOR_RPG_ZONE_META[bag.zone]
   const lv = harborRpgLevelFromXp(bag.xp)
   const companionOn = rpgHasCompanion(bag)
+  const classDef = bag.classId ? HARBOR_RPG_CLASS_DEFS[bag.classId] : null
+  const classLevel = harborRpgClassLevelFromXp(bag.classXp)
+  const talentLeft = harborRpgTalentPointsLeft(bag)
+  const barSkills = bag.classId
+    ? bag.skillBar
+        .map((id) => harborRpgSkillById(id))
+        .filter((s): s is NonNullable<typeof s> => Boolean(s))
+    : null
 
   useEffect(() => {
     const name =
@@ -181,6 +205,12 @@ export function HarborRpgPanel({
           <div className="hq-rpg-chips">
             <span className="hq-rpg-chip">XP {bag.xp}</span>
             <span className="hq-rpg-chip">Gold {bag.gold}</span>
+            {classDef ? (
+              <span className="hq-rpg-chip">
+                {classDef.name.en} {classLevel}
+                {bag.prestige > 0 ? ` ★${bag.prestige}` : ''}
+              </span>
+            ) : null}
             {companionOn ? (
               <span className="hq-rpg-chip hq-rpg-chip--ally">{bag.companionName}</span>
             ) : null}
@@ -197,6 +227,7 @@ export function HarborRpgPanel({
         {(
           [
             ['field', 'Field'],
+            ['class', 'Class'],
             ['bag', 'Bag'],
             ['quests', 'Quests'],
             ['craft', 'Craft'],
@@ -278,7 +309,22 @@ export function HarborRpgPanel({
               </form>
             ) : null}
             <div className="hq-rpg-ability-bar" role="toolbar" aria-label="Abilities">
-              {HARBOR_RPG_ABILITIES.map((ab) => {
+              {(barSkills
+                ? barSkills.map((ab) => ({
+                    id: ab.id,
+                    name: ab.name,
+                    gcd: ab.gcd,
+                    cd: ab.cd,
+                    rank: harborRpgActiveSkillRank(bag, ab.id),
+                  }))
+                : HARBOR_RPG_ABILITIES.map((a) => ({
+                    id: a.id,
+                    name: a.name,
+                    gcd: a.gcd,
+                    cd: a.cd,
+                    rank: 1,
+                  }))
+              ).map((ab) => {
                 const cd = combat?.abilityCds?.[ab.id] ?? 0
                 const gcd = combat?.gcd ?? 0
                 const locked = cd > 0.05 || gcd > 0.05
@@ -288,15 +334,19 @@ export function HarborRpgPanel({
                     type="button"
                     className="hq-rpg-ability"
                     disabled={locked}
-                    title={`${ab.name.en} · GCD ${ab.gcd}s`}
+                    title={`${ab.name.en} · R${ab.rank} · GCD ${ab.gcd}s`}
                     onClick={() => onCastAbility(ab.id)}
                   >
                     <span>{ab.name.en}</span>
+                    <small>R{ab.rank}</small>
                     {cd > 0.05 ? <em>{cd.toFixed(1)}s</em> : null}
                   </button>
                 )
               })}
             </div>
+            {!bag.classId ? (
+              <p className="hq-rpg-hint">Pick a class in the Class tab for a full skill kit.</p>
+            ) : null}
             <button
               type="button"
               className="hq-btn hq-btn--solid"
@@ -418,6 +468,90 @@ export function HarborRpgPanel({
               )
             })}
           </ul>
+        ) : null}
+
+        {tab === 'class' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Six Harbor classes · skill ranks · talent trees · prestige ★
+            </p>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_CLASSES.map((id) => {
+                const def = HARBOR_RPG_CLASS_DEFS[id]
+                const on = bag.classId === id
+                return (
+                  <li key={id} className="hq-rpg-inv-row">
+                    <span>
+                      <strong>{def.name.en}</strong>{' '}
+                      <span lang="zh-HK">{def.name.zh}</span> · {def.role}
+                      <br />
+                      <small>{def.pitch.en}</small>
+                    </span>
+                    <button type="button" onClick={() => onSelectClass(id)}>
+                      {on ? 'Active' : 'Choose'}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+            {classDef ? (
+              <>
+                <p className="hq-rpg-hint">
+                  {classDef.name.en} Lv {classLevel}/{HARBOR_RPG_CLASS_LEVEL_CAP} · class XP{' '}
+                  {bag.classXp} · talent pts {talentLeft}
+                  {bag.prestige > 0 ? ` · prestige ★${bag.prestige}` : ''}
+                </p>
+                <p className="hq-rpg-hint">Skills</p>
+                <ul className="hq-rpg-inv">
+                  {harborRpgUnlockedSkills(bag.classId!, classLevel).map((s) => (
+                    <li key={s.id} className="hq-rpg-inv-row">
+                      <span>
+                        {s.name.en} · R{harborRpgActiveSkillRank(bag, s.id)} · unlock {s.unlockLevel}
+                        <br />
+                        <small>{s.blurb.en}</small>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="hq-rpg-hint">Talents</p>
+                <ul className="hq-rpg-inv">
+                  {classDef.talents.map((t) => (
+                    <li key={t.id} className="hq-rpg-inv-row">
+                      <span>
+                        [{t.tree}] {t.name.en} ({bag.talents[t.id] ?? 0}/{t.max})
+                      </span>
+                      <button
+                        type="button"
+                        disabled={talentLeft <= 0 || (bag.talents[t.id] ?? 0) >= t.max}
+                        onClick={() => onSpendTalent(t.id)}
+                      >
+                        +
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="hq-rpg-hint">Passives</p>
+                <ul className="hq-rpg-inv">
+                  {classDef.passives.map((p) => (
+                    <li key={p.level} className="hq-rpg-inv-row">
+                      <span>
+                        Lv {p.level}: {p.name.en}
+                        {classLevel >= p.level ? ' ✓' : ''} — {p.blurb.en}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="hq-btn hq-btn--ghost"
+                  disabled={classLevel < HARBOR_RPG_CLASS_LEVEL_CAP}
+                  onClick={onPrestige}
+                >
+                  Prestige (reset class XP, keep skill ranks)
+                </button>
+              </>
+            ) : null}
+          </>
         ) : null}
 
         {tab === 'craft' ? (

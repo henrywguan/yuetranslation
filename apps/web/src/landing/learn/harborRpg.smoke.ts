@@ -184,6 +184,53 @@ assert.ok(merged.gear)
 
 assert.equal(HARBOR_RPG_PRESENCE_CHANNEL, 'harbor-rpg-realm')
 
+// Classes · skills · talents · prestige
+import {
+  HARBOR_RPG_CLASSES,
+  HARBOR_RPG_CLASS_DEFS,
+  HARBOR_RPG_CLASS_LEVEL_CAP,
+  harborRpgClassLevelFromXp,
+  harborRpgSkillRankFromXp,
+  harborRpgTalentPointsEarned,
+  harborRpgUnlockedSkills,
+} from './harborRpgClasses.ts'
+import {
+  selectHarborRpgClass,
+  spendHarborRpgTalent,
+  prestigeHarborRpgClass,
+  awardHarborRpgClassKillXp,
+  harborRpgTalentPointsLeft,
+} from './harborRpgProgress.ts'
+
+assert.equal(HARBOR_RPG_CLASSES.length, 6)
+for (const id of HARBOR_RPG_CLASSES) {
+  const def = HARBOR_RPG_CLASS_DEFS[id]
+  assert.ok(def.skills.length >= 5, `${id} skills`)
+  assert.ok(def.talents.length >= 6, `${id} talents`)
+  assert.ok(def.passives.length >= 3, `${id} passives`)
+}
+assert.equal(harborRpgClassLevelFromXp(0), 1)
+assert.ok(harborRpgClassLevelFromXp(10_000) >= 10)
+assert.equal(harborRpgSkillRankFromXp(0), 1)
+assert.equal(harborRpgSkillRankFromXp(18 * 81), 10)
+assert.ok(harborRpgTalentPointsEarned(1, 0) >= 1)
+assert.ok(harborRpgTalentPointsEarned(HARBOR_RPG_CLASS_LEVEL_CAP, 1) > harborRpgTalentPointsEarned(1, 0))
+
+let classBag = selectHarborRpgClass(emptyHarborRpgBag(), 'tideblade')
+assert.equal(classBag.classId, 'tideblade')
+assert.ok(classBag.skillBar.includes('tb-riptide'))
+classBag = { ...classBag, classXp: 500 }
+classBag = awardHarborRpgClassKillXp(classBag, 'tb-riptide', 20)
+assert.ok(classBag.classXp >= 500)
+assert.ok((classBag.skillXp['tb-riptide'] ?? 0) > 0)
+const spent = spendHarborRpgTalent(classBag, 'tb-o1')
+assert.ok(spent)
+assert.equal(spent!.talents['tb-o1'], 1)
+assert.ok(harborRpgTalentPointsLeft(spent!) < harborRpgTalentPointsLeft(classBag))
+assert.equal(prestigeHarborRpgClass({ ...classBag, classXp: 0 }), null)
+const unlocked = harborRpgUnlockedSkills('jadeheart', 30)
+assert.ok(unlocked.some((s) => s.id === 'jh-lotus'))
+
 const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
 assert.match(worldSrc, /tickRpgCombat/, 'world ticks soft combat')
 assert.match(worldSrc, /queueRpgAbility/, 'ability queue on world handle')
@@ -201,6 +248,6 @@ assert.match(presenceSrc, /HARBOR_RPG_PARTY_EVENT/)
 
 const docs = readFileSync(new URL('../../../../../docs/harbor-quest/HARBORRPG.md', import.meta.url), 'utf8')
 assert.match(docs, /soft Realtime|no dedicated anti-cheat/i)
-assert.match(docs, /Ash Crypt|combat depth|World Market/i)
+assert.match(docs, /Ash Crypt|combat depth|World Market|Tideblade|prestige/i)
 
 console.log('harborRpg.smoke: ok')

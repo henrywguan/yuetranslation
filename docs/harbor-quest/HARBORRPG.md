@@ -33,17 +33,19 @@ A dedicated game host remains optional later for fairness; it is **not** a ship 
 
 1. **Zones:** Meadow · Pinewood · Ruins · Marsh · Crossroads Town + **Ash Crypt** instance
 2. **Combat depth:** auto-swing + ability bar (GCD), threat table, party threat share
-3. **Itemization:** rarities, multi-slot gear (weapon/offhand/head/chest/legs/feet/ring/trinket), bank
-4. **Content volume:** more monster kinds, denser spawn packs, more quests
-5. **Instances:** Ash Crypt (boss + adds), enter from Ruins
-6. **Professions + market:** herbalism / mining gather · alchemy / smithing craft · town World Market listings
-7. **Realtime social:** `harbor-rpg-realm` presence · real party invite · contested need/greed loot
-8. **Isolated HUD:** voyage chrome hidden while `realm === 'rpg'`
+3. **Classes & skills (v2.1):** six Harbor-original kits — Tideblade · Reedshadow · Lanternmancer · Jadeheart · Ashbound · Starferry — with skill ranks 1–10, three talent trees (Offense / Ward / Voyage), passives, prestige ★ after level 50
+4. **Itemization:** rarities, multi-slot gear (weapon/offhand/head/chest/legs/feet/ring/trinket), bank
+5. **Content volume:** more monster kinds, denser spawn packs, more quests
+6. **Instances:** Ash Crypt (boss + adds), enter from Ruins
+7. **Professions + market:** herbalism / mining gather · alchemy / smithing craft · town World Market listings
+8. **Realtime social:** `harbor-rpg-realm` presence · real party invite · contested need/greed loot
+9. **Isolated HUD:** voyage chrome hidden while `realm === 'rpg'`
 
 ## Explicitly deferred
 
 - Dedicated authoritative sim / anti-cheat server
-- Full 9-class talent trees / ranked PvP ladders
+- Full WoW-style 9-class + 27-spec parity (Harbor ships 6 original classes)
+- Ranked PvP ladders
 - KayKit mesh preload on mount
 - ClaudeCraft guilds / deeds (Harbor Quest social packet, not this game)
 
