@@ -16,6 +16,7 @@ import {
   practicePartnerMapRegions,
   practicePartnerMapScrolls,
 } from './practicePartnerMapLayout.ts'
+import { LESSON_TALES, practicePartnerLessonCard, practicePartnerRegionCard } from './practicePartnerMapStory.ts'
 
 const empty = emptyPracticePartnerPath()
 const scrolls = practicePartnerMapScrolls(empty)
@@ -77,6 +78,19 @@ const opened = emptyPracticePartnerPath()
 opened.units.common = [4, 4, 4]
 assert.equal(practicePartnerChapterReveal(opened, 'common'), 1)
 assert.match(practicePartnerChapterTale(opened, 'common'), /gate is open/)
+
+const tales = scrolls.map((row) => practicePartnerLessonCard(row).tale)
+assert.equal(tales.length, 48)
+assert.equal(new Set(tales).size, 48)
+for (const beats of Object.values(LESSON_TALES)) assert.equal(beats.length, 12)
+const sealedCard = practicePartnerLessonCard(scrolls[0]!)
+assert.equal(sealedCard.kicker.includes('Still ink'), true)
+assert.match(sealedCard.before, /The drill has not started/)
+assert.match(sealedCard.how, /港灣/)
+const litScroll = colored.find((row) => row.colored)
+assert.ok(litScroll)
+assert.match(practicePartnerLessonCard(litScroll!).kicker, /Lit/)
+assert.match(practicePartnerRegionCard(regions[0]!, empty).tale, /stone gate/)
 
 const aspect = PARTNER_MAP_VIEWBOX.h / PARTNER_MAP_VIEWBOX.w
 const phone = partnerMapLayerSize(390, 700)

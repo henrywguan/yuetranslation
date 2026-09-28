@@ -14,6 +14,11 @@ import {
   practicePartnerMapRegions,
   practicePartnerMapScrolls,
 } from '../lib/practicePartnerMapLayout'
+import {
+  practicePartnerLessonCard,
+  practicePartnerRegionCard,
+  type MapStoryCardModel,
+} from '../lib/practicePartnerMapStory'
 import { WuxiaCloudFrame } from './WuxiaClouds'
 import { WuxiaFarPeaks, WuxiaMistVeil } from './WuxiaDepth'
 import { WuxiaJourneyArt } from './WuxiaJourneyArt'
@@ -100,6 +105,24 @@ export function PracticePartnerPathMap({
     [...scrolls].reverse().find((row) => row.category === activeId)?.id
   const currentScroll = scrolls.find((row) => row.id === currentId)
   const tale = practicePartnerChapterTale(progress, activeId)
+  const [hoverId, setHoverId] = useState<string | null>(null)
+  const [pinnedId, setPinnedId] = useState<string | null>(null)
+  const [place, setPlace] = useState<{ left: number; top: number; width: number; below: boolean } | null>(
+    null,
+  )
+  const stopRefs = useRef(new Map<string, HTMLElement>())
+  const hoverTimer = useRef<number | null>(null)
+  const shownId = hoverId ?? pinnedId
+  const shownCard: MapStoryCardModel | null = (() => {
+    if (!shownId) return null
+    if (shownId.startsWith('region:')) {
+      const region = regions.find((row) => `region:${row.id}` === shownId)
+      return region ? practicePartnerRegionCard(region, progress) : null
+    }
+    const scroll = scrolls.find((row) => row.id === shownId)
+    return scroll ? practicePartnerLessonCard(scroll) : null
+  })()
+  const cardPinned = shownCard != null && shownId === pinnedId
 
   const apply = (next: Pan) => {
     const sized = boxRef.current
@@ -179,19 +202,87 @@ export function PracticePartnerPathMap({
     }
   }, [full])
 
+  useLayoutEffect(() => {
+    const id = hoverId ?? pinnedId
+    const frame = frameRef.current
+    const el = id ? stopRefs.current.get(id) : undefined
+    if (!frame || !el) {
+      setPlace(null)
+      return
+    }
+    const fr = frame.getBoundingClientRect()
+    const er = el.getBoundingClientRect()
+    const width = Math.min(288, Math.max(160, fr.width - 16))
+    const markerTop = er.top - fr.top
+    const markerBottom = er.bottom - fr.top
+    const below = fr.height - markerBottom > markerTop
+    const left = clamp(er.left - fr.left + er.width / 2 - width / 2, 8, Math.max(8, fr.width - width - 8))
+    const top = below ? markerBottom + 10 : markerTop - 8
+    setPlace((prev) =>
+      prev && prev.left === left && prev.top === top && prev.width === width && prev.below === below
+        ? prev
+        : { left, top, width, below },
+    )
+  }, [hoverId, pinnedId, pan, box, full])
+
   useEffect(() => {
-    if (!full) return
+    if (!full && !pinnedId) return
     const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    if (full) document.body.style.overflow = 'hidden'
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setFull(false)
+      if (event.key !== 'Escape') return
+      if (pinnedId) {
+        setPinnedId(null)
+        return
+      }
+      if (full) setFull(false)
     }
     window.addEventListener('keydown', onKey)
     return () => {
-      document.body.style.overflow = prev
+      if (full) document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
     }
-  }, [full])
+  }, [full, pinnedId])
+
+  const cancelHoverClear = () => {
+    if (hoverTimer.current == null) return
+    window.clearTimeout(hoverTimer.current)
+    hoverTimer.current = null
+  }
+
+  useEffect(() => () => cancelHoverClear(), [])
+
+  const previewStop = (id: string) => {
+    if (drag.current && drag.current.moved > 6) return
+    cancelHoverClear()
+    setHoverId(id)
+  }
+
+  const clearPreview = (id: string) => {
+    cancelHoverClear()
+    hoverTimer.current = window.setTimeout(() => {
+      hoverTimer.current = null
+      setHoverId((cur) => (cur === id ? null : cur))
+    }, 160)
+  }
+
+  const pinStop = (id: string) => {
+    if (blockClick.current) return
+    setPinnedId((cur) => (cur === id ? null : id))
+  }
+
+  const bindStop = (id: string) => ({
+    ref: (el: HTMLButtonElement | null) => {
+      if (el) stopRefs.current.set(id, el)
+      else stopRefs.current.delete(id)
+    },
+    onPointerEnter: () => previewStop(id),
+    onPointerLeave: () => clearPreview(id),
+    onFocus: () => previewStop(id),
+    onBlur: () => clearPreview(id),
+    onClick: () => pinStop(id),
+    'aria-expanded': pinnedId === id,
+  })
 
   const onPointerDown = (event: ReactPointerEvent) => {
     const target = event.target as HTMLElement
@@ -248,6 +339,14 @@ export function PracticePartnerPathMap({
     pointers.current.delete(event.pointerId)
     if (pointers.current.size < 2) pinch.current = null
     if (pointers.current.size === 0) drag.current = null
+    const target = event.target as HTMLElement
+    if (
+      moved < 6 &&
+      !pinched &&
+      !target.closest('.partner-map-scroll, .partner-map-region-btn, .partner-map-card')
+    ) {
+      setPinnedId(null)
+    }
     if (moved > 6 || pinched) {
       blockClick.current = true
       window.setTimeout(() => {
@@ -271,7 +370,9 @@ export function PracticePartnerPathMap({
       <div className="partner-map-hud partner-map-chrome">
         <div className="partner-map-copy">
           <p className="partner-map-tale">{tale}</p>
-          <p className="partner-map-hint">Drag the Ink Road. Scroll or pinch to look closer.</p>
+          <p className="partner-map-hint">
+            Drag the Ink Road. Hover or tap a stop to read the lesson before it starts.
+          </p>
         </div>
         <button
           type="button"
@@ -313,16 +414,13 @@ export function PracticePartnerPathMap({
             {regions.map((region) => (
               <li
                 key={region.id}
-                className="partner-map-region"
+                className={`partner-map-region${shownId === `region:${region.id}` ? ' is-reading' : ''}`}
                 style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%` }}
               >
                 <button
                   type="button"
                   className={`partner-map-region-btn${activeId === region.id ? ' is-current' : ''}`}
-                  onClick={() => {
-                    if (blockClick.current) return
-                    onPick?.(region.id)
-                  }}
+                  {...bindStop(`region:${region.id}`)}
                 >
                   <span className="partner-map-region-cefr">{region.cefr}</span>
                   <span className="partner-map-region-place" lang="zh-HK">
@@ -345,7 +443,7 @@ export function PracticePartnerPathMap({
             {scrolls.map((row) => (
               <li
                 key={row.id}
-                className="partner-map-scroll-wrap"
+                className={`partner-map-scroll-wrap${shownId === row.id ? ' is-reading' : ''}`}
                 style={{ left: `${row.x * 100}%`, top: `${row.y * 100}%` }}
               >
                 <button
@@ -355,10 +453,7 @@ export function PracticePartnerPathMap({
                   }${row.id === currentId ? ' is-current' : ''}`}
                   aria-label={row.title}
                   aria-pressed={row.colored}
-                  onClick={() => {
-                    if (blockClick.current) return
-                    onPick?.(row.category)
-                  }}
+                  {...bindStop(row.id)}
                 >
                   <span className="partner-map-scroll-roller" />
                   <span className="partner-map-scroll-sheet">
@@ -377,6 +472,57 @@ export function PracticePartnerPathMap({
           <WuxiaMistVeil />
         </div>
         <WuxiaCloudFrame pan={pan} />
+        {shownCard && place ? (
+          <aside
+            className={`partner-map-card partner-map-chrome${cardPinned ? ' is-pinned' : ' is-preview'}`}
+            style={{
+              left: place.left,
+              top: place.top,
+              width: place.width,
+              transform: place.below ? undefined : 'translateY(-100%)',
+            }}
+            role={cardPinned ? 'dialog' : 'tooltip'}
+            aria-live="polite"
+            aria-label={`${shownCard.placeZh} ${shownCard.placeEn}`}
+            onPointerEnter={() => previewStop(shownId!)}
+            onPointerLeave={() => clearPreview(shownId!)}
+            onClick={(event) => {
+              const target = event.target as HTMLElement
+              if (cardPinned || target.closest('.partner-map-card-go, .partner-map-card-close')) return
+              pinStop(shownId!)
+            }}
+          >
+            <p className="partner-map-card-kicker">{shownCard.kicker}</p>
+            <p className="partner-map-card-place" lang="zh-HK">
+              {shownCard.placeZh}
+              <span lang="en">{shownCard.placeEn}</span>
+            </p>
+            <p className="partner-map-card-line">{shownCard.line}</p>
+            <p className="partner-map-card-tale">{shownCard.tale}</p>
+            <div className="partner-map-card-more">
+              <p className="partner-map-card-how">{shownCard.how}</p>
+              <p className="partner-map-card-before">{shownCard.before}</p>
+              <div className="partner-map-card-actions">
+                {onPick ? (
+                  <button
+                    type="button"
+                    className="partner-map-card-go"
+                    onClick={() => {
+                      setPinnedId(null)
+                      setHoverId(null)
+                      onPick(shownCard.category)
+                    }}
+                  >
+                    Practice {shownCard.placeEn}
+                  </button>
+                ) : null}
+                <button type="button" className="partner-map-card-close" onClick={() => setPinnedId(null)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </aside>
+        ) : null}
         <div className="partner-map-zoom partner-map-chrome" role="group" aria-label="Map zoom">
           <button type="button" aria-label="Zoom in" onClick={() => bump(1)}>
             +
