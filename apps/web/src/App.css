@@ -118,31 +118,6 @@
   color: color-mix(in srgb, var(--muted) 92%, var(--ink));
 }
 
-/* Legacy pair layout kept for any residual markup. */
-.brand-pair {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  column-gap: 0.38em;
-  row-gap: 0.1rem;
-  align-items: baseline;
-  width: max-content;
-  max-width: 100%;
-}
-
-.bp-side {
-  min-width: 0;
-}
-
-.bp-end {
-  text-align: end;
-}
-
-.bp-arrow {
-  text-align: center;
-  color: color-mix(in srgb, var(--jade) 78%, var(--muted));
-  font-weight: 650;
-}
-
 .plan-chip-wrap {
   position: relative;
   z-index: 70;
@@ -501,10 +476,6 @@
 
 .account-hub-role-slot {
   align-self: flex-start;
-}
-
-.account-hub-role-slot .role-badge-wrap {
-  align-items: flex-start;
 }
 
 .account-hub-role-empty {
@@ -1118,10 +1089,6 @@
   gap: 6px;
 }
 
-.account-hub-seg--wrap {
-  margin-top: 0.45rem;
-}
-
 .account-hub-seg-opt {
   position: relative;
   display: inline-flex;
@@ -1157,20 +1124,6 @@
 .account-hub-seg-opt:hover,
 .account-hub-seg-opt:focus-within {
   border-color: color-mix(in srgb, var(--jade) 40%, transparent);
-}
-
-.account-hub-voice-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: end;
-}
-
-.account-hub-voice-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
 }
 
 .account-hub-voice-lang {
@@ -1765,10 +1718,6 @@
   .account-hub-invite-btn {
     width: auto;
     min-width: 7.5rem;
-  }
-
-  .account-hub-voice-row {
-    gap: 12px;
   }
 
   .account-hub-select {
@@ -2497,18 +2446,6 @@
 .solo-edit-link:hover,
 .solo-edit-link:focus-visible {
   color: var(--ink-bright);
-}
-
-.solo-source {
-  margin: 0;
-  font-size: clamp(1.15rem, 4.6vw, 1.85rem);
-  line-height: 1.35;
-  font-weight: 500;
-  min-height: 2.4em;
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .solo-translation {
@@ -3259,10 +3196,6 @@
   font-weight: 700;
 }
 
-.opt-row--face {
-  grid-template-columns: 1fr 1fr;
-}
-
 .pane header h2 {
   margin: 0;
   font-family: var(--font-display);
@@ -3635,266 +3568,9 @@
   }
 }
 
-.opt-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: stretch;
-  gap: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--jade) 28%, var(--glass-border));
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.opt-row--compact {
-  grid-template-columns: 1fr 1fr;
-}
-
-.opt-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 0;
-  padding: 7px 8px 8px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.72rem;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-}
-
-.opt-cell + .opt-cell {
-  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--jade) 18%, var(--glass-border));
-}
-
-.opt-dir:hover,
-.opt-speak:hover {
-  background: color-mix(in srgb, var(--jade) 6%, transparent);
-}
-
 /* Direction radio — adapted from Uiverse.io by Yaya12085 (MIT)
    https://uiverse.io/Yaya12085/rude-mouse-79 */
-.dir-switch {
-  position: relative;
-  display: flex;
-  flex-wrap: nowrap;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 11.5rem;
-  padding: 0.18rem;
-  border-radius: 0.55rem;
-  background: color-mix(in srgb, var(--harbor-mid) 72%, var(--surface));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--jade) 22%, var(--glass-border));
-  font-size: 0.72rem;
-}
-
-.dir-switch-opt {
-  flex: 1 1 0;
-  text-align: center;
-  min-width: 0;
-}
-
-.dir-switch-opt.is-pending,
-.dir-switch-opt[hidden] {
-  display: none;
-}
-
-.dir-switch-opt input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.dir-switch-name {
-  display: flex;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.45rem;
-  border: 0;
-  padding: 0.32rem 0.15rem;
-  color: var(--muted);
-  transition:
-    background 0.15s ease-in-out,
-    color 0.15s ease-in-out;
-}
-
-.dir-switch-name .bi {
-  align-items: center;
-  gap: 0.02rem;
-}
-
-.dir-switch-name .bi-en {
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-}
-
-.dir-switch-name .bi-zh {
-  font-size: 0.72em;
-}
-
-.dir-switch-opt input:checked + .dir-switch-name {
-  background: color-mix(in srgb, var(--jade) 22%, var(--surface-strong));
-  color: var(--ink-bright, var(--ink));
-  font-weight: 600;
-  box-shadow: 0 1px 6px color-mix(in srgb, var(--jade) 18%, transparent);
-}
-
-.dir-switch-opt input:focus-visible + .dir-switch-name {
-  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
-  outline-offset: 1px;
-}
-
-[data-theme='light'] .dir-switch {
-  background: color-mix(in srgb, var(--harbor-mid) 55%, #fff);
-}
-
-[data-theme='light'] .dir-switch-opt input:checked + .dir-switch-name {
-  background: color-mix(in srgb, var(--jade) 28%, #fff);
-}
-
-.opt-kicker {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.opt-kicker .bi,
-.opt-clear .bi {
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  text-align: center;
-  gap: 0.08rem;
-}
-
-.opt-kicker .bi-en,
-.opt-clear .bi-en {
-  display: block;
-  width: 100%;
-  text-align: center;
-}
-
-.opt-kicker .bi-zh-wrap,
-.opt-clear .bi-zh-wrap {
-  display: inline-flex;
-  justify-content: center;
-  margin-inline: auto;
-  max-width: 100%;
-}
-
-.opt-kicker .bi-zh,
-.opt-clear .bi-zh {
-  text-align: center;
-  font-size: 0.88em;
-}
-
-.opt-cell.disabled {
-  opacity: 0.55;
-}
-
-.speak-switch {
-  position: relative;
-  width: 42px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.speak-switch input {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.speak-switch input:disabled {
-  cursor: not-allowed;
-}
-
-.speak-switch-ui {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, #000 12%, transparent), transparent 46%),
-    var(--surface-strong);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    inset 0 2px 6px rgba(7, 19, 31, 0.18),
-    inset 0 1px 0 var(--glass-shine);
-  transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.speak-switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95), transparent 42%),
-    linear-gradient(145deg, #f4fffc, var(--mint));
-  box-shadow: 0 4px 10px rgba(7, 19, 31, 0.28);
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.speak-switch.is-on .speak-switch-ui {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, #fff 18%, transparent), transparent 42%),
-    linear-gradient(135deg, var(--jade-bright), var(--jade-mid));
-  border-color: color-mix(in srgb, var(--jade-bright) 50%, transparent);
-  box-shadow:
-    0 0 18px color-mix(in srgb, var(--jade) 40%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 35%, transparent);
-}
-
-.speak-switch.is-on .speak-switch-thumb {
-  transform: translateX(20px);
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55), transparent 46%),
-    var(--on-jade);
-  box-shadow: 0 4px 12px rgba(61, 207, 182, 0.4);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .speak-switch-ui,
-  .speak-switch-thumb {
-    transition: none;
-  }
-}
-
-.speak-switch input:focus-visible + .speak-switch-ui {
-  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
-  outline-offset: 3px;
-}
-
-.opt-clear {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-}
-
-.opt-clear:hover,
-.opt-clear:focus-visible {
-  color: var(--ink-bright);
-  background: color-mix(in srgb, var(--danger) 8%, transparent);
-}
-
-.opt-clear:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--jade) 55%, transparent);
-  outline-offset: -2px;
 }
 
 .banner {
@@ -4448,13 +4124,6 @@
     font-size: 1rem;
   }
 
-  .opt-cell {
-    padding: 6px 6px 7px;
-  }
-
-  .dir-switch {
-    max-width: 100%;
-  }
 }
 
 @media (min-width: 720px) {

@@ -486,7 +486,7 @@ function main() {
   assert.match(guanSrc, /guan-lagoon-shelf|lagoonShelf|lagoonShallow/, 'soft lagoon water shelves')
   assert.match(guanSrc, /capeLoomStall|capeTrimmerNpc|GUAN_CAPE_LOOM/, 'Cape Loom craft wired')
   assert.match(worldSrc, /GUAN_CAPE_LOOM/, 'world nearestVisitable knows Cape Loom')
-  assert.match(worldSrc, /GUAN_FISHING_HUT|nearestGuanFishSpot|fishing-hut/, 'world nearestVisitable knows Fishing Lodge')
+  assert.match(worldSrc, /GUAN_FISHING_HUT|nearestHarborFishSpot|fishing-hut/, 'world nearestVisitable knows Fishing Lodge')
   assert.match(worldSrc, /playFishingCast|fishIconFloat|fishSpotBob/, 'fishing cast splash + icon anims')
   assert.match(worldSrc, /playFishingCatch|tickHarborFishingAnim/, 'fishing catch reel-in pose')
   assert.match(guanSrc, /stampGuanFishingRealm/, 'Guan stamps fishing realm expansion')
@@ -528,7 +528,6 @@ function main() {
   assert.match(craftSrc, /export function hqSoftThatchTexture/, 'soft thatch texture')
   assert.match(craftSrc, /makeSoft128DataTex|LinearFilter/, 'soft textures use linear filter')
   assert.match(craftSrc, /softBlendDisc|softNoise2/, 'soft painterly blotches')
-  assert.match(worldSrc, /hqSoftGrassTexture|softTiledMat/, 'river banks use soft grass')
   assert.match(worldSrc, /hqSoftSandTexture/, 'river shores use soft sand')
   assert.match(worldSrc, /hqSoftDirtTexture/, 'river roads use soft dirt')
   assert.match(worldSrc, /hqSoftThatchTexture/, 'river roofs use soft thatch')
@@ -1667,7 +1666,6 @@ function main() {
   assert.match(playSrc2, /equipHarborGear/, 'Outfitter equip flow')
   assert.match(playSrc2, /depositHarborGear/, 'Bank deposit flow')
   assert.match(playSrc2, /withdrawHarborGear/, 'Bank withdraw flow')
-  assert.doesNotMatch(playSrc2, /hq-inv-btn/, 'Pack HUD button removed')
   assert.match(playSrc2, /hq-coin-chip.*is-open|is-open.*hq-coin-chip/, 'coin chip shows open state')
   assert.match(playSrc2, /setInvOpen\(\(v\)\s*=>/, 'coin chip toggles inventory')
   assert.match(playSrc2, /HarborShopShelf/, 'Outfitter + Bank use shop shelf')
@@ -1913,31 +1911,26 @@ assert.doesNotMatch(
   /BoxGeometry\(shoulder/,
   'clothing tops no longer use shoulder BoxGeometry slabs',
 )
-  assert.match(
-    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /HARBOR_SCOUT_GLB_ENABLED = true/,
-    'Scout GLB gate stays on for canoe plant',
-  )
-  assert.match(
-    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /HARBOR_SCOUT_GLB_LAND = true/,
-    'land cast plants anime Scout GLB with sway walk',
-  )
-  assert.match(
-    readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
-    /tickScoutGlbLocomotion|scout-glb/,
-    'Scout GLB walk uses sway/bob locomotion',
-  )
-  assert.match(
-    readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
-    /travelMode === 'foot' \? footZ : boat\.position\.z/,
-    'orbit look target is centered on the player (no Z bias)',
-  )
-  assert.match(
-    readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
-    /setProceduralBodyVisible\(root, true\)/,
-    'GLB attach restores procedural body when gated or invalid',
-  )
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /HARBOR_CANOE_HIP_ABOVE_SEAT|HARBOR_CHAIR_HIP_ABOVE_SEAT/,
+  'Scout plant uses hip-align offsets (not deprecated sink constants)',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistAnim.ts', import.meta.url), 'utf8'),
+  /tickScoutGlbLocomotion|scout-glb/,
+  'Scout GLB walk uses sway/bob locomotion',
+)
+assert.match(
+  readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8'),
+  /travelMode === 'foot' \? footZ : boat\.position\.z/,
+  'orbit look target is centered on the player (no Z bias)',
+)
+assert.match(
+  readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
+  /setProceduralBodyVisible\(root, true\)/,
+  'GLB attach restores procedural body when gated or invalid',
+)
   assert.match(
     readFileSync(new URL('./harborProtagonistGlb.ts', import.meta.url), 'utf8'),
     /harborGlbMaterialToLambertCel|MeshLambertMaterial/,

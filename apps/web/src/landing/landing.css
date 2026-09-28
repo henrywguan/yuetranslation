@@ -371,22 +371,6 @@
 }
 
 /* three.js harbor cloth sits behind the hero text */
-.hero-object {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent);
-  mask-image: linear-gradient(to bottom, #000 58%, transparent);
-}
-
-.hero-object canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 .ln-brand-btn {
   border: 0;
   background: transparent;
@@ -408,14 +392,6 @@
   backdrop-filter: blur(10px);
   max-width: 100%;
   box-sizing: border-box;
-}
-
-.ln-eyebrow-row {
-  display: inline-flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: 0.42em;
-  max-width: 100%;
 }
 
 .ln-eyebrow-stack,
@@ -2427,13 +2403,6 @@
   color: var(--muted);
 }
 
-.demo-input-row {
-  display: flex;
-  gap: 8px;
-  min-width: 0;
-  max-width: 100%;
-}
-
 .demo-input {
   flex: 1 1 auto;
   min-width: 0;
@@ -2448,23 +2417,6 @@
 
 .demo-input:focus {
   border-color: color-mix(in srgb, var(--jade) 55%, transparent);
-}
-
-.demo-go {
-  flex: none;
-  border: 0;
-  border-radius: 12px;
-  padding: 0 18px;
-  font-weight: 700;
-  color: var(--on-jade);
-  background: linear-gradient(135deg, var(--jade), var(--jade-mid));
-  cursor: pointer;
-  max-width: 100%;
-}
-
-.demo-go:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 .demo-samples {
@@ -2748,10 +2700,6 @@
   z-index: 1;
   padding-top: clamp(56px, 9vw, 96px);
   padding-bottom: clamp(36px, 6vw, 64px);
-}
-
-.ln-section-head--airy {
-  margin-bottom: 64px;
 }
 
 .ln-section-head--tight {
@@ -3107,49 +3055,6 @@
 .ln-price-card.is-unavailable .magnetic:disabled {
   cursor: not-allowed;
   opacity: 0.72;
-}
-
-.ln-price-card__tip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 12px);
-  transform: translateX(-50%) translateY(6px);
-  z-index: 6;
-  width: max-content;
-  max-width: min(18rem, calc(100vw - 48px));
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 0.82rem;
-  line-height: 1.45;
-  text-align: center;
-  color: var(--ink-bright);
-  background: color-mix(in srgb, var(--harbor-deep) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--jade) 28%, var(--glass-border));
-  box-shadow: 0 12px 32px rgba(7, 19, 31, 0.42);
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease,
-    visibility 0.18s ease;
-}
-
-.ln-price-card__tip::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-top-color: color-mix(in srgb, var(--harbor-deep) 92%, transparent);
-}
-
-.ln-price-card.is-unavailable:hover .ln-price-card__tip,
-.ln-price-card.is-unavailable:focus-within .ln-price-card__tip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
 }
 
 .ln-price-badge {
@@ -3980,10 +3885,6 @@
     font-size: 0.8rem;
   }
 
-  .ln-eyebrow-row {
-    gap: 0.28em;
-  }
-
   .ln-title {
     /* Keep below the brand lockup width on ~320–390px (Syne 800 + tracking). */
     font-size: clamp(1.55rem, 8.2vw, 2.35rem);
@@ -4062,18 +3963,6 @@
   .demo-card {
     padding: 16px;
     border-radius: 22px;
-  }
-
-  .demo-input-row {
-    flex-direction: column;
-  }
-
-  .demo-go {
-    width: 100%;
-    padding: 12px 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .demo-result-row.result-with-def {

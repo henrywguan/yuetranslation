@@ -25,13 +25,6 @@ const PASS_XP: Record<PracticePartnerMove, number> = {
   finish: 25,
 }
 
-export function resolvePracticePartnerMove(raw: unknown): PracticePartnerMove {
-  const id = String(raw || '').trim()
-  return (PRACTICE_PARTNER_MOVES as readonly string[]).includes(id)
-    ? (id as PracticePartnerMove)
-    : 'repeat'
-}
-
 /** Rung from session passes so far (before this card). 0 is the hello. */
 export function practicePartnerMoveForPasses(passes: number): PracticePartnerMove {
   if (passes <= 0) return 'repeat'

@@ -730,11 +730,6 @@ export function nearestHarborFishSpot(
   return best
 }
 
-/** @deprecated Prefer nearestHarborFishSpot — Guan ocean only. */
-export function nearestGuanFishSpot(x: number, z: number, maxDist = 2.2): HarborFishSpotDef | null {
-  return nearestHarborFishSpot(x, z, maxDist, GUAN_FISH_SPOTS)
-}
-
 export function nearestRiverFishSpot(x: number, z: number, maxDist = 2.2): HarborFishSpotDef | null {
   return nearestHarborFishSpot(x, z, maxDist, RIVER_FISH_SPOTS)
 }

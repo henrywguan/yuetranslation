@@ -62,20 +62,6 @@ function sanitizeClone(cloned: Node) {
     el.style.setProperty('padding', '0', 'important')
     el.style.setProperty('pointer-events', 'none', 'important')
   }
-
-  if (el.classList?.contains('dir-switch')) {
-    el.style.setProperty('position', 'relative', 'important')
-    el.style.setProperty('transform', 'none', 'important')
-    el.style.setProperty('display', 'flex', 'important')
-  }
-
-  if (el.classList?.contains('opt-cell') || el.classList?.contains('opt-dir')) {
-    el.style.setProperty('display', 'flex', 'important')
-    el.style.setProperty('flex-direction', 'column', 'important')
-    el.style.setProperty('align-items', 'center', 'important')
-    el.style.setProperty('gap', '4px', 'important')
-    el.style.setProperty('transform', 'none', 'important')
-  }
 }
 
 function shouldIncludeNode(node: Node): boolean {

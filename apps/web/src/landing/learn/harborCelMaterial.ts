@@ -165,16 +165,6 @@ export function createHarborCelMaterial(opts: HarborCelMaterialOpts = {}): THREE
   return mat
 }
 
-/** Flat architecture variant — harder bands, weaker rim. */
-export function createHarborCelMatFlat(color: number): THREE.MeshToonMaterial {
-  return createHarborCelMaterial({
-    color,
-    flatShading: true,
-    rampSteps: 3,
-    rimStrength: 0.22,
-  })
-}
-
 /** Smooth organic variant — heads, cloth, imported anime meshes. */
 export function createHarborCelMatSmooth(color: number): THREE.MeshToonMaterial {
   return createHarborCelMaterial({

@@ -151,7 +151,7 @@ export function emptyPracticePartnerPath(): PracticePartnerPathState {
   }
 }
 
-export function isPathCategory(raw: unknown): raw is PathCategory {
+function isPathCategory(raw: unknown): raw is PathCategory {
   return (PATH_CATEGORIES as readonly string[]).includes(String(raw || ''))
 }
 
@@ -161,12 +161,12 @@ export function practicePartnerUnitForMove(move: PracticePartnerMove): PathUnitI
   return 1
 }
 
-export function pathLessonsInSection(state: PracticePartnerPathState, id: PathCategory): number {
+function pathLessonsInSection(state: PracticePartnerPathState, id: PathCategory): number {
   const units = state.units[id]
   return units[0] + units[1] + units[2]
 }
 
-export function pathSectionLessonCount(): number {
+function pathSectionLessonCount(): number {
   return PATH_LESSONS_PER_UNIT * 3
 }
 
