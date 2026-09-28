@@ -31,6 +31,8 @@ import {
   selectHarborRpgClass,
   selectHarborRpgSpec,
   setHarborRpgDifficulty,
+  setRpgActiveMount,
+  buyRpgMount,
   spendHarborRpgTalent,
   prestigeHarborRpgClass,
   withdrawRpgBank,
@@ -45,6 +47,7 @@ import {
   type HarborRpgQuestId,
   type HarborRpgZoneId,
 } from './harborRpgData'
+import type { HarborRpgMountId } from './harborRpgMounts'
 import type { HarborRpgClassId } from './harborRpgClasses'
 import { hireRpgCompanion } from './harborRpgSocial'
 import {
@@ -295,6 +298,24 @@ export function setHarborRpgInstanceDifficulty(
   const p = read()
   const bag = setHarborRpgDifficulty(sanitizeHarborRpgBag(p.rpg), difficulty)
   return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+export function buyHarborRpgMount(mountId: HarborRpgMountId): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = buyRpgMount(bag, mountId)
+  if (!next) return null
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(next), lastSavedAt: Date.now() })
+}
+
+export function setHarborRpgActiveMount(
+  mountId: HarborRpgMountId | null,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = setRpgActiveMount(bag, mountId)
+  if (!next) return null
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(next), lastSavedAt: Date.now() })
 }
 
 export function equipHarborRpgItem(itemId: HarborRpgItemId): HarborProgress | null {

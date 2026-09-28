@@ -113,6 +113,13 @@ import {
   type HarborRpgBag,
 } from './harborRpgProgress'
 import {
+  disposeHarborRpgMount,
+  loadHarborRpgMount,
+  tickHarborRpgMount,
+  type HarborRpgMountInstance,
+} from './harborRpgMountRuntime'
+import { harborRpgMountById, type HarborRpgMountId } from './harborRpgMounts'
+import {
   applyRpgWorldSnapshot as applyRpgWorldSnapToMonsters,
   electRpgZoneHost,
   HARBOR_RPG_WORLD_TICK_MS,
@@ -688,10 +695,11 @@ export const HARBOR_REBOARD_RADIUS = 1.75
 export function harborWalkStep(
   dist: number,
   dt: number,
-  opts: { reduced?: boolean } = {},
+  opts: { reduced?: boolean; speedMult?: number } = {},
 ): number {
   if (dist <= 0 || dt <= 0) return 0
-  const base = opts.reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED
+  const mult = opts.speedMult && opts.speedMult > 0 ? opts.speedMult : 1
+  const base = (opts.reduced ? HARBOR_WALK_SPEED * 0.5 : HARBOR_WALK_SPEED) * mult
   const slow = Math.min(1, dist / HARBOR_WALK_ARRIVE_SLOW)
   const speed = base * (0.4 + 0.6 * slow)
   return Math.min(dist, speed * dt)
@@ -4593,6 +4601,9 @@ export function createHarborWorld(
   let rpgLastWorldBroadcast = 0
   let rpgLastHostSnapT = 0
   const rpgMonsterMeshes = new Map<string, THREE.Group>()
+  let rpgMountLive: HarborRpgMountInstance | null = null
+  let rpgMountWantId: HarborRpgMountId | null = null
+  let rpgMountLoadingId: HarborRpgMountId | null = null
   // Guan Harbor / HarborRPG always force sunny daylight.
   const weather: HarborWeather = isPocket ? 'sunny' : (options.weather ?? pickHarborWeather())
   const baseLook = HARBOR_WEATHER_LOOK[weather]
@@ -4916,12 +4927,11 @@ export function createHarborWorld(
   applyLookToProtagonist(scoutWalk, currentLook)
   ensureHarborProtagonistLimbs(scoutWalk)
   attachHarborContactShadow(scoutWalk, { radius: 0.38, opacity: 0.32 })
-  // HarborRPG: foot-first meadow — hide canoe, plant Scout at spawn.
+  // HarborRPG: foot-first meadow — hide canoe; plant Scout after footX is seeded below.
   if (isRpg) {
     boat.visible = false
     if (scout) scout.visible = false
     scoutWalk.visible = true
-    scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
   }
   let scoutAnim: HarborProtagonistAnimState = { mode: 'idle', t: 0 }
   /** Seated land mesh — shown when the sailor sits on a chair / stool. */
@@ -5135,6 +5145,9 @@ export function createHarborWorld(
   let footZ = voyageZ
   let wantBoard = false
   const scoutSeat = { x: 0, y: HARBOR_CANOE_SCOUT_SEAT_Y, z: -0.05 }
+  if (isRpg) {
+    scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
+  }
 
   const destMarker = clickMarker()
   scene.add(destMarker)
@@ -5171,8 +5184,74 @@ export function createHarborWorld(
     }
   }
 
+  const clearRpgMount = () => {
+    if (rpgMountLive) {
+      scene.remove(rpgMountLive.root)
+      disposeHarborRpgMount(rpgMountLive)
+      rpgMountLive = null
+    }
+    rpgMountWantId = null
+    rpgMountLoadingId = null
+  }
+
+  const syncRpgMountFromBag = () => {
+    if (!isRpg) {
+      clearRpgMount()
+      return
+    }
+    const want = rpgBagLive.activeMountId
+    rpgMountWantId = want
+    if (!want) {
+      clearRpgMount()
+      if (travelMode === 'foot' && !sitting) {
+        scoutWalk.visible = true
+        if (scoutSit) scoutSit.visible = false
+      }
+      return
+    }
+    if (rpgMountLive?.id === want) return
+    if (rpgMountLoadingId === want) return
+    const def = harborRpgMountById(want)
+    if (!def) {
+      clearRpgMount()
+      return
+    }
+    rpgMountLoadingId = want
+    void loadHarborRpgMount(want).then((inst) => {
+      if (disposed || rpgMountWantId !== want) {
+        if (inst) disposeHarborRpgMount(inst)
+        return
+      }
+      if (rpgMountLive) {
+        scene.remove(rpgMountLive.root)
+        disposeHarborRpgMount(rpgMountLive)
+      }
+      rpgMountLive = inst
+      rpgMountLoadingId = null
+      if (!inst) {
+        scoutWalk.visible = true
+        if (scoutSit) scoutSit.visible = false
+        return
+      }
+      scene.add(inst.root)
+      exitSit()
+      scoutWalk.visible = false
+      const sit = ensureScoutSit()
+      sit.visible = true
+    })
+  }
+
   const enterSit = (chair: THREE.Object3D) => {
     if (travelMode !== 'foot') return
+    if (rpgMountLive || rpgBagLive.activeMountId) {
+      // Dismount before chair sit
+      if (rpgBagLive.activeMountId) {
+        rpgBagLive = { ...rpgBagLive, activeMountId: null }
+        options.onRpgBagChange?.(rpgBagLive)
+        clearRpgMount()
+        scoutWalk.visible = true
+      }
+    }
     chair.getWorldPosition(chairWorldPos)
     chair.getWorldQuaternion(chairWorldQuat)
     chairEuler.setFromQuaternion(chairWorldQuat, 'YXZ')
@@ -5197,6 +5276,8 @@ export function createHarborWorld(
       /* SFX must never block sit */
     }
   }
+
+  if (isRpg) syncRpgMountFromBag()
 
   const chairFromObject = (obj: THREE.Object3D | null): THREE.Object3D | null => {
     let o: THREE.Object3D | null = obj
@@ -5640,26 +5721,69 @@ export function createHarborWorld(
         const dz = moveTarget.z - footZ
         const dist = Math.hypot(dx, dz)
         const arrived = dist < HARBOR_TAP_ARRIVE
+        const mounted = Boolean(rpgMountLive && rpgBagLive.activeMountId)
+        const mountMult = mounted ? rpgMountLive!.def.speedMult : 1
         if (!arrived) {
-          const step = harborWalkStep(dist, dt, { reduced })
+          const step = harborWalkStep(dist, dt, { reduced, speedMult: mountMult })
           footX += (dx / dist) * step
           footZ += (dz / dist) * step
           const face = Math.atan2(dx, dz)
-          if (fishAnim.phase === 'idle') {
-            scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 10)
-            scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, { reduced })
+          if (mounted && rpgMountLive) {
+            rpgMountLive.root.position.set(footX, groundYAt(footX, footZ), footZ)
+            rpgMountLive.root.rotation.y +=
+              (face - rpgMountLive.root.rotation.y) * Math.min(1, dt * 10)
+            tickHarborRpgMount(rpgMountLive, dt, true, dist > 4.5)
+            const sit = ensureScoutSit()
+            sit.visible = true
+            scoutWalk.visible = false
+            sit.position.set(
+              footX,
+              groundYAt(footX, footZ) + rpgMountLive.def.saddleY,
+              footZ,
+            )
+            sit.rotation.y = rpgMountLive.root.rotation.y
+            if (fishAnim.phase === 'idle') {
+              scoutAnim = tickHarborProtagonistAnim(sit, { ...scoutAnim, mode: 'sit' }, dt, {
+                reduced,
+              })
+            }
+          } else {
+            if (fishAnim.phase === 'idle') {
+              scoutWalk.rotation.y += (face - scoutWalk.rotation.y) * Math.min(1, dt * 10)
+              scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: 'walk' }, dt, {
+                reduced,
+              })
+            }
+            // Plant feet on ground — no vertical root bounce (standard MMO locomotion).
+            scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
           }
-          // Plant feet on ground — no vertical root bounce (standard MMO locomotion).
-          scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
           // Don't open landmarks mid-walk either
           if (!playerDirected) emitVisitable(null)
         } else {
-          if (fishAnim.phase === 'idle') {
-            scoutAnim = tickHarborProtagonistAnim(scoutWalk, { ...scoutAnim, mode: sitting ? 'sit' : 'idle' }, dt, {
-              reduced,
-            })
+          if (mounted && rpgMountLive) {
+            rpgMountLive.root.position.set(footX, gy, footZ)
+            tickHarborRpgMount(rpgMountLive, dt, false, false)
+            const sit = ensureScoutSit()
+            sit.visible = true
+            scoutWalk.visible = false
+            sit.position.set(footX, gy + rpgMountLive.def.saddleY, footZ)
+            sit.rotation.y = rpgMountLive.root.rotation.y
+            if (fishAnim.phase === 'idle') {
+              scoutAnim = tickHarborProtagonistAnim(sit, { ...scoutAnim, mode: 'sit' }, dt, {
+                reduced,
+              })
+            }
+          } else {
+            if (fishAnim.phase === 'idle') {
+              scoutAnim = tickHarborProtagonistAnim(
+                scoutWalk,
+                { ...scoutAnim, mode: sitting ? 'sit' : 'idle' },
+                dt,
+                { reduced },
+              )
+            }
+            scoutWalk.position.set(footX, gy, footZ)
           }
-          scoutWalk.position.set(footX, gy, footZ)
           if (playerDirected) destMarker.visible = false
           if (sitTarget) {
             enterSit(sitTarget)
@@ -6407,6 +6531,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       if (rpgPlayerHp > max) rpgPlayerHp = max
       const maxMp = harborRpgMaxMp(rpgBagLive)
       if (rpgPlayerMp > maxMp) rpgPlayerMp = maxMp
+      syncRpgMountFromBag()
     },
     applyRpgWorldSnapshot(packet) {
       if (!isRpg || disposed) return
@@ -6447,6 +6572,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
     resize,
     dispose() {
       disposed = true
+      clearRpgMount()
       fishAnim = { phase: 'idle', t: 0, faceYaw: 0 }
       fishSplash.visible = false
       scene.remove(fishSplash)

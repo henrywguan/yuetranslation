@@ -177,6 +177,8 @@ import {
   setHarborRpgActiveCharacter,
   setHarborRpgZone,
   setHarborRpgInstanceDifficulty,
+  buyHarborRpgMount,
+  setHarborRpgActiveMount,
   equipHarborRpgItem,
   buyHarborRpgVendorItem,
   sellHarborRpgItem,
@@ -804,6 +806,10 @@ export function LearnSession({
     }
     if (id === 'rpg-bank') {
       flashRpgToast('River Bank — open Bag · Bank')
+      return
+    }
+    if (id === 'rpg-stable') {
+      flashRpgToast('Ferry Stable — open Stable tab')
       return
     }
     if (id.startsWith('node-')) {
@@ -2278,6 +2284,22 @@ export function LearnSession({
             else {
               pushRpgProgress(next)
               flashRpgToast(`Companion fills ${role}`)
+            }
+          }}
+          onBuyMount={(id) => {
+            const next = buyHarborRpgMount(id)
+            if (!next) flashRpgToast('Not enough gold')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Mount unlocked')
+            }
+          }}
+          onSummonMount={(id) => {
+            const next = setHarborRpgActiveMount(id)
+            if (!next) flashRpgToast('Mount not owned')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(id ? 'Mount summoned' : 'Dismounted')
             }
           }}
           onInviteParty={(peerId) => {

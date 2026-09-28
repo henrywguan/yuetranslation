@@ -117,6 +117,8 @@ export type HarborQuestProgress = {
     talents?: Record<string, number>
     skillBar?: string[]
     difficulty?: string
+    ownedMounts?: string[]
+    activeMountId?: string | null
   }
 }
 
@@ -379,6 +381,11 @@ const HARBOR_RPG_MONSTERS = new Set([
   'raid-herald','raid-depth','raid-sovereign',
 ])
 const HARBOR_RPG_DIFFICULTIES = new Set(['normal', 'heroic'])
+const HARBOR_RPG_MOUNTS = new Set([
+  'horse','horse-white','deer','donkey','stag','fox','husky','shiba','wolf','alpaca','bull','cow',
+  'farm-horse','farm-dog','farm-pig','farm-sheep','farm-wolf','farm-cat','farm-chicken','farm-raccoon',
+  'corgi','goat','boar','rhino','hippo','platypus','red-panda','duck','owl','seal',
+])
 const HARBOR_RPG_GEAR_SLOTS = ['weapon','offhand','head','chest','legs','feet','ring','trinket'] as const
 const HARBOR_RPG_PROFESSIONS = ['herbalism','mining','alchemy','smithing'] as const
 const HARBOR_RPG_CLASS_IDS = new Set([
@@ -669,6 +676,18 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
       if (skillBar.length >= 5) break
     }
   }
+  const ownedMounts = new Set<string>(['horse'])
+  if (Array.isArray(o.ownedMounts)) {
+    for (const id of o.ownedMounts) {
+      if (typeof id === 'string' && HARBOR_RPG_MOUNTS.has(id)) ownedMounts.add(id)
+    }
+  }
+  const activeMountId =
+    typeof o.activeMountId === 'string' &&
+    HARBOR_RPG_MOUNTS.has(o.activeMountId) &&
+    ownedMounts.has(o.activeMountId)
+      ? o.activeMountId
+      : null
   return {
     characters,
     activeCharacterId,
@@ -702,6 +721,8 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
       typeof o.difficulty === 'string' && HARBOR_RPG_DIFFICULTIES.has(o.difficulty)
         ? o.difficulty
         : 'normal',
+    ownedMounts: [...ownedMounts],
+    activeMountId,
   }
 }
 

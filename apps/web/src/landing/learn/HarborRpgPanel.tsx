@@ -45,6 +45,11 @@ import {
 } from './harborRpgSpecs'
 import { HARBOR_RPG_META } from './harborRpgRealm'
 import {
+  HARBOR_RPG_MOUNT_DEFS,
+  HARBOR_RPG_MOUNT_IDS,
+  type HarborRpgMountId,
+} from './harborRpgMounts'
+import {
   harborRpgActiveSkillRank,
   harborRpgLevelFromXp,
   harborRpgTalentPointsLeft,
@@ -131,6 +136,8 @@ type Props = {
   onSetDifficulty: (d: HarborRpgDifficulty) => void
   onFinderQueueChange: (party: HarborRpgPartyState) => void
   onFillCompanionRole: (role: HarborRpgFinderRole) => void
+  onBuyMount: (id: HarborRpgMountId) => void
+  onSummonMount: (id: HarborRpgMountId | null) => void
   onExitGame: () => void
 }
 
@@ -177,10 +184,21 @@ export function HarborRpgPanel({
   onSetDifficulty,
   onFinderQueueChange,
   onFillCompanionRole,
+  onBuyMount,
+  onSummonMount,
   onExitGame,
 }: Props) {
   const [tab, setTab] = useState<
-    'field' | 'bag' | 'quests' | 'party' | 'craft' | 'market' | 'class' | 'spellbook' | 'trade'
+    | 'field'
+    | 'bag'
+    | 'quests'
+    | 'party'
+    | 'craft'
+    | 'market'
+    | 'class'
+    | 'spellbook'
+    | 'trade'
+    | 'stable'
   >('field')
   const [createName, setCreateName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -223,6 +241,10 @@ export function HarborRpgPanel({
   }, [partyLive])
 
   useEffect(() => {
+    if (interactId === 'rpg-stable') setTab('stable')
+  }, [interactId])
+
+  useEffect(() => {
     onPartySizeChange(Math.max(1, party.members.length))
   }, [party.members.length, onPartySizeChange])
 
@@ -243,11 +265,13 @@ export function HarborRpgPanel({
                   ? 'Open craft bench'
                   : interactId === 'rpg-bank'
                     ? 'Open bank'
-                    : interactId?.startsWith('node-')
-                      ? 'Gather node'
-                      : interactId?.startsWith('portal-')
-                        ? 'Enter portal'
-                        : 'Interact'
+                    : interactId === 'rpg-stable'
+                      ? 'Open Ferry Stable'
+                      : interactId?.startsWith('node-')
+                        ? 'Gather node'
+                        : interactId?.startsWith('portal-')
+                          ? 'Enter portal'
+                          : 'Interact'
 
   return (
     <div className="hq-rpg-shell" role="region" aria-label="HarborRPG">
@@ -328,6 +352,7 @@ export function HarborRpgPanel({
             ['class', 'Class'],
             ['spellbook', 'Spells'],
             ['bag', 'Bag'],
+            ['stable', 'Stable'],
             ['quests', 'Quests'],
             ['craft', 'Craft'],
             ['market', 'Market'],
@@ -543,6 +568,55 @@ export function HarborRpgPanel({
                     <button type="button" onClick={() => onBuy(id)}>
                       Buy
                     </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        ) : null}
+
+        {tab === 'stable' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Ferry Stable · Tide Horse is free. Summon to ride · Dismount clears the saddle.
+              {bag.activeMountId
+                ? ` Riding ${HARBOR_RPG_MOUNT_DEFS[bag.activeMountId].name.en}.`
+                : ' On foot.'}
+            </p>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_MOUNT_IDS.map((id) => {
+                const def = HARBOR_RPG_MOUNT_DEFS[id]
+                const owned = bag.ownedMounts.includes(id)
+                const active = bag.activeMountId === id
+                return (
+                  <li key={id} className="hq-rpg-inv-row">
+                    <span>
+                      {def.name.en}{' '}
+                      <small>
+                        {def.pack} · ×{def.speedMult.toFixed(2)} · {def.cost === 0 ? 'free' : `${def.cost}g`}
+                      </small>
+                      <br />
+                      <small>{def.blurb.en}</small>
+                    </span>
+                    <span className="hq-rpg-inv-act">
+                      {!owned ? (
+                        <button
+                          type="button"
+                          disabled={bag.gold < def.cost}
+                          onClick={() => onBuyMount(id)}
+                        >
+                          Buy
+                        </button>
+                      ) : active ? (
+                        <button type="button" onClick={() => onSummonMount(null)}>
+                          Dismount
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onSummonMount(id)}>
+                          Summon
+                        </button>
+                      )}
+                    </span>
                   </li>
                 )
               })}

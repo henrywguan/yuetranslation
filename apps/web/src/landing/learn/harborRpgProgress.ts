@@ -35,6 +35,12 @@ import {
   type HarborRpgMarketListing,
 } from './harborRpgProfessions'
 import {
+  HARBOR_RPG_MOUNT_DEFS,
+  HARBOR_RPG_MOUNT_IDS,
+  isHarborRpgMountId,
+  type HarborRpgMountId,
+} from './harborRpgMounts'
+import {
   HARBOR_RPG_CLASS_DEFS,
   HARBOR_RPG_CLASS_LEVEL_CAP,
   HARBOR_RPG_PRESTIGE_CAP,
@@ -141,6 +147,10 @@ export type HarborRpgBag = {
   skillBar: string[]
   /** Soft dungeon difficulty for instances. */
   difficulty: HarborRpgDifficulty
+  /** Owned rideable mount ids (Ferry Stable). */
+  ownedMounts: HarborRpgMountId[]
+  /** Currently summoned mount (null = on foot). */
+  activeMountId: HarborRpgMountId | null
 }
 
 const COSMETIC_SET = new Set<string>(HARBOR_RPG_COSMETICS)
@@ -198,6 +208,8 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     talents: {},
     skillBar: [],
     difficulty: 'normal',
+    ownedMounts: ['horse'],
+    activeMountId: null,
   }
 }
 
@@ -561,7 +573,26 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
       (HARBOR_RPG_DIFFICULTIES as readonly string[]).includes(o.difficulty)
         ? (o.difficulty as HarborRpgDifficulty)
         : 'normal',
+    ...sanitizeMountProgress(o),
   }
+}
+
+function sanitizeMountProgress(o: Record<string, unknown>): {
+  ownedMounts: HarborRpgMountId[]
+  activeMountId: HarborRpgMountId | null
+} {
+  const owned = new Set<HarborRpgMountId>(['horse'])
+  if (Array.isArray(o.ownedMounts)) {
+    for (const id of o.ownedMounts) {
+      if (isHarborRpgMountId(id)) owned.add(id)
+    }
+  }
+  const ownedMounts = HARBOR_RPG_MOUNT_IDS.filter((id) => owned.has(id))
+  let activeMountId: HarborRpgMountId | null = null
+  if (isHarborRpgMountId(o.activeMountId) && owned.has(o.activeMountId)) {
+    activeMountId = o.activeMountId
+  }
+  return { ownedMounts, activeMountId }
 }
 
 const SKILL_ID_SET = new Set(harborRpgAllSkillIds())
@@ -751,7 +782,44 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
     })(),
     skillBar: b.skillBar.length ? b.skillBar : a.skillBar,
     difficulty: b.difficulty,
+    ownedMounts: (() => {
+      const owned = new Set<HarborRpgMountId>([...a.ownedMounts, ...b.ownedMounts, 'horse'])
+      return HARBOR_RPG_MOUNT_IDS.filter((id) => owned.has(id))
+    })(),
+    activeMountId: (() => {
+      const pick = b.activeMountId ?? a.activeMountId
+      const owned = new Set([...a.ownedMounts, ...b.ownedMounts, 'horse'])
+      return pick && owned.has(pick) ? pick : null
+    })(),
   }
+}
+
+/** Buy a mount at the Ferry Stable (soft gold). Starter horse is free. */
+export function buyRpgMount(
+  bag: HarborRpgBag,
+  mountId: HarborRpgMountId,
+): HarborRpgBag | null {
+  if (!isHarborRpgMountId(mountId)) return null
+  if (bag.ownedMounts.includes(mountId)) return bag
+  const def = HARBOR_RPG_MOUNT_DEFS[mountId]
+  if (bag.gold < def.cost) return null
+  return {
+    ...bag,
+    gold: bag.gold - def.cost,
+    ownedMounts: HARBOR_RPG_MOUNT_IDS.filter(
+      (id) => id === mountId || bag.ownedMounts.includes(id),
+    ),
+  }
+}
+
+/** Summon (or clear) the active mount. Must be owned. */
+export function setRpgActiveMount(
+  bag: HarborRpgBag,
+  mountId: HarborRpgMountId | null,
+): HarborRpgBag | null {
+  if (mountId == null) return { ...bag, activeMountId: null }
+  if (!bag.ownedMounts.includes(mountId)) return null
+  return { ...bag, activeMountId: mountId }
 }
 
 export function createHarborRpgCharacter(input: {

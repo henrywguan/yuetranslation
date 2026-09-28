@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v5 — quest density · Heroic · Tide raid · finder roles  
+**Status:** v6 — free mounts (Quaternius / farm / Gobkit) · Ferry Stable  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -49,6 +49,18 @@ Bag `difficulty: 'normal' | 'heroic'`. Heroic instances scale HP/ATK/XP/gold and
 
 Party tab: pick **tank / heal / dps** + dungeon → Looking. Presence carries LFG role/dungeon. Soft match invites complementary remotes; missing roles can be filled by companion hire.
 
+## Mounts (v6)
+
+Town **Ferry Stable** (`rpg-stable`) sells / summons CC0 rideables:
+
+| Pack | Examples | Licence |
+|---|---|---|
+| Quaternius Ultimate Animated Animals | Tide Horse (starter), Pearl Horse, Deer, Wolf, … | CC0 |
+| Farm (godotcraft / Quaternius lineage) | Farm Horse, Dog, Pig, Chicken, … | CC0 |
+| Gobkit Free Animal Pack | Corgi, Goat, Rhino, Duck, … | CC0 |
+
+Bag fields: `ownedMounts` (starter includes `horse`), `activeMountId`. Summon boards a GLB + Idle/Walk/Gallop mixer; walk speed uses `speedMult`. Dismount from Stable tab. Credits: `apps/web/public/assets/harbor-quest/mounts/CREDITS.md`. OGA `.blend` sources kept under `oga-source/` (not rideable until GLB export).
+
 ## Shared world tick
 
 Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`).
@@ -59,13 +71,14 @@ Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`
 - Party invites end-to-end on Party tab (invite remotes → accept/decline dialog → broadcast party state).
 - Trade windows + contested loot remain soft-trust.
 
-## v5 surface
+## v6 surface
 
 1. **10 zones** (5 overworld + Town + 4 story instances + Tide Remembers raid)
 2. **Combat:** GCD · MP · hit/miss/crit · threat · **boss phases** · Heroic scale
 3. **9×3 classes/specs** · spellbook · trade · market · bank · professions
 4. **Quest density** · finder roles · companion fill
-5. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
+5. **Mounts:** 30+ CC0 animals · Ferry Stable · board/ride/dismount
+6. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
 
 ## Feel bar
 

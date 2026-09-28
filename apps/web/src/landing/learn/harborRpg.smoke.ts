@@ -454,4 +454,65 @@ assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-tide'))
 assert.ok(HARBOR_RPG_ITEMS.includes('rpg-item-tide-coin'))
 assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-sovereign'))
 
+import {
+  HARBOR_RPG_MOUNT_DEFS,
+  HARBOR_RPG_MOUNT_IDS,
+  HARBOR_RPG_STABLE,
+} from './harborRpgMounts.ts'
+import { buyRpgMount, setRpgActiveMount } from './harborRpgProgress.ts'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+
+{
+  assert.ok(HARBOR_RPG_MOUNT_IDS.length >= 30, `mounts ${HARBOR_RPG_MOUNT_IDS.length}`)
+  assert.equal(HARBOR_RPG_STABLE.id, 'rpg-stable')
+  const empty = emptyHarborRpgBag()
+  assert.ok(empty.ownedMounts.includes('horse'), 'starter horse owned')
+  assert.equal(empty.activeMountId, null)
+  const bought = buyRpgMount({ ...empty, gold: 500 }, 'corgi')
+  assert.ok(bought)
+  assert.ok(bought!.ownedMounts.includes('corgi'))
+  assert.ok(bought!.gold < 500)
+  const summoned = setRpgActiveMount(bought!, 'corgi')
+  assert.equal(summoned?.activeMountId, 'corgi')
+  const cleared = setRpgActiveMount(summoned!, null)
+  assert.equal(cleared?.activeMountId, null)
+  const poor = buyRpgMount({ ...empty, gold: 0 }, 'rhino')
+  assert.equal(poor, null)
+  const sanitized = sanitizeHarborRpgBag({
+    ...empty,
+    ownedMounts: ['horse', 'corgi', 'not-a-mount'],
+    activeMountId: 'corgi',
+  })
+  assert.ok(sanitized.ownedMounts.includes('corgi'))
+  assert.ok(!sanitized.ownedMounts.includes('not-a-mount' as never))
+  assert.equal(sanitized.activeMountId, 'corgi')
+  for (const id of HARBOR_RPG_MOUNT_IDS) {
+    const def = HARBOR_RPG_MOUNT_DEFS[id]
+    const fromPublic = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../../public',
+      def.src.replace(/^\//, ''),
+    )
+    assert.ok(existsSync(fromPublic), `missing mount glb ${def.src}`)
+  }
+  assert.ok(
+    existsSync(
+      join(
+        dirname(fileURLToPath(import.meta.url)),
+        '../../../public/assets/harbor-quest/mounts/CREDITS.md',
+      ),
+    ),
+  )
+}
+
+assert.match(worldSrc, /loadHarborRpgMount|tickHarborRpgMount|syncRpgMountFromBag/, 'mount runtime wired')
+assert.match(worldSrc, /speedMult/, 'mount speed mult on walk')
+assert.match(playSrc, /buyHarborRpgMount|setHarborRpgActiveMount|onBuyMount|onSummonMount/, 'mount UI wired')
+assert.match(panelSrc, /stable|Ferry Stable|onBuyMount/, 'stable tab')
+const realmSrc = readFileSync(new URL('./harborRpgRealm.ts', import.meta.url), 'utf8')
+assert.match(realmSrc, /HARBOR_RPG_STABLE/, 'stable stall + interact')
+assert.match(docs, /mount|Ferry Stable|Quaternius|Gobkit/i)
+
 console.log('harborRpg.smoke: ok')

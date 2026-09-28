@@ -22,6 +22,7 @@ import {
   type HarborRpgZoneId,
   type HarborRpgZoneLook,
 } from './harborRpgData'
+import { HARBOR_RPG_STABLE } from './harborRpgMounts'
 import type { HarborRpgMonsterRuntime } from './harborRpgCombat'
 
 export const HARBOR_RPG_META = { en: 'HarborRPG', zh: '冒險洲' } as const
@@ -454,6 +455,7 @@ function stampTown(root: THREE.Group, look: HarborRpgZoneLook) {
   root.add(npcStall(HARBOR_RPG_MARKET.x, HARBOR_RPG_MARKET.z, HARBOR_RPG_MARKET.id, 0xd0a040))
   root.add(npcStall(HARBOR_RPG_CRAFT_BENCH.x, HARBOR_RPG_CRAFT_BENCH.z, HARBOR_RPG_CRAFT_BENCH.id, 0x8090a0))
   root.add(npcStall(HARBOR_RPG_BANK.x, HARBOR_RPG_BANK.z, HARBOR_RPG_BANK.id, 0xc0c0d0))
+  root.add(npcStall(HARBOR_RPG_STABLE.x, HARBOR_RPG_STABLE.z, HARBOR_RPG_STABLE.id, 0xa08050))
 }
 
 function stampCrypt(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
@@ -706,6 +708,7 @@ export function nearestRpgInteract(
     targets.push(HARBOR_RPG_MARKET)
     targets.push(HARBOR_RPG_CRAFT_BENCH)
     targets.push(HARBOR_RPG_BANK)
+    targets.push(HARBOR_RPG_STABLE)
   }
   for (const n of HARBOR_RPG_GATHER_NODES) {
     if (n.zone === zone) targets.push({ id: n.id, x: n.x, z: n.z, radius: n.radius })
