@@ -18,6 +18,7 @@ export type HarborRpgWorldMobSnap = {
   hp: number
   maxHp: number
   alive: boolean
+  phase?: number
 }
 
 export type HarborRpgWorldPacket = {
@@ -48,6 +49,7 @@ export function snapshotRpgMonsters(
     hp: Math.max(0, Math.floor(m.hp)),
     maxHp: Math.max(1, Math.floor(m.maxHp)),
     alive: m.alive,
+    phase: m.phase,
   }))
 }
 
@@ -73,6 +75,10 @@ export function sanitizeRpgWorldPacket(raw: unknown): HarborRpgWorldPacket | nul
           ? Math.max(1, Math.floor(m.maxHp))
           : 1,
       alive: m.alive !== false,
+      phase:
+        typeof m.phase === 'number' && Number.isFinite(m.phase)
+          ? Math.max(0, Math.floor(m.phase))
+          : undefined,
     })
     if (mobs.length >= 64) break
   }
@@ -102,6 +108,7 @@ export function applyRpgWorldSnapshot(
       hp: snap.hp,
       maxHp: snap.maxHp,
       alive: snap.alive,
+      phase: snap.phase ?? m.phase,
       respawnAt: snap.alive ? m.respawnAt : Math.max(m.respawnAt, now + 1),
     }
   })

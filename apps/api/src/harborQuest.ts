@@ -357,11 +357,17 @@ const HARBOR_RPG_ITEMS = new Set([
   'rpg-head-hood','rpg-head-helm','rpg-legs-wraps','rpg-legs-greaves','rpg-feet-sandals','rpg-feet-boots',
   'rpg-ring-jade','rpg-ring-tide','rpg-trinket-lantern','rpg-trinket-compass',
 ])
-const HARBOR_RPG_ZONES = new Set(['meadow','pinewood','ruins','marsh','town','crypt'])
-const HARBOR_RPG_QUEST_IDS = new Set([
-  'quest-slime-hunt','quest-wolf-pelts','quest-ruin-shards','quest-marsh-toads','quest-crypt-warden','quest-first-craft',
+const HARBOR_RPG_ZONES = new Set([
+  'meadow','pinewood','ruins','marsh','town','crypt','tidehollow','chronicle','echoisle',
 ])
-const HARBOR_RPG_MONSTERS = new Set(['slime','wolf','bandit','golem','toad','wraith','crypt-boss'])
+const HARBOR_RPG_QUEST_IDS = new Set([
+  'quest-slime-hunt','quest-wolf-pelts','quest-ruin-shards','quest-marsh-toads',
+  'quest-crypt-warden','quest-tide-pearl','quest-chronicle-ink','quest-echo-mirror','quest-first-craft',
+])
+const HARBOR_RPG_MONSTERS = new Set([
+  'slime','wolf','bandit','golem','toad','wraith','crypt-boss',
+  'tide-thrall','tide-boss','ink-shade','chronicle-boss','echo-twin','echo-boss',
+])
 const HARBOR_RPG_GEAR_SLOTS = ['weapon','offhand','head','chest','legs','feet','ring','trinket'] as const
 const HARBOR_RPG_PROFESSIONS = ['herbalism','mining','alchemy','smithing'] as const
 const HARBOR_RPG_CLASS_IDS = new Set([

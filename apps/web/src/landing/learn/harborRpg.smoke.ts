@@ -10,6 +10,7 @@ import {
   HARBOR_RPG_GEAR_SLOTS,
   HARBOR_RPG_ITEMS,
   HARBOR_RPG_MONSTER_KINDS,
+  HARBOR_RPG_MONSTER_DEFS,
   HARBOR_RPG_PORTALS,
   HARBOR_RPG_PROFESSIONS,
   HARBOR_RPG_QUESTS,
@@ -47,17 +48,26 @@ import {
 } from './harborRpgProgress.ts'
 import { buildRpgZoneScene } from './harborRpgRealm.ts'
 
-assert.equal(HARBOR_RPG_ZONES.length, 6)
+assert.equal(HARBOR_RPG_ZONES.length, 9)
 assert.ok(HARBOR_RPG_ZONE_META.crypt.instance, 'crypt is instanced')
+assert.ok(HARBOR_RPG_ZONE_META.tidehollow.instance)
+assert.ok(HARBOR_RPG_ZONE_META.chronicle.instance)
+assert.ok(HARBOR_RPG_ZONE_META.echoisle.instance)
 assert.ok(HARBOR_RPG_ABILITIES.length >= 4)
 assert.ok(HARBOR_RPG_GEAR_SLOTS.length === 8)
 assert.ok(HARBOR_RPG_ITEMS.length >= 20)
 assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('crypt-boss'))
-assert.ok(HARBOR_RPG_QUESTS.length >= 6)
+assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('tide-boss'))
+assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('chronicle-boss'))
+assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('echo-boss'))
+assert.ok(HARBOR_RPG_QUESTS.length >= 9)
 assert.ok(HARBOR_RPG_PROFESSIONS.length === 4)
 assert.ok(HARBOR_RPG_CRAFT_RECIPES.length >= 4)
 assert.ok(HARBOR_RPG_GATHER_NODES.length >= 4)
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'crypt'))
+assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'tidehollow'))
+assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'chronicle'))
+assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'echoisle'))
 
 for (const zone of HARBOR_RPG_ZONES) {
   const scene = buildRpgZoneScene(zone)
@@ -315,17 +325,55 @@ assert.ok(traded)
 assert.equal(traded!.gold, 17)
 assert.ok(traded!.inventory.some((s) => s.id === 'rpg-item-ore'))
 
+assert.ok(HARBOR_RPG_MONSTER_DEFS['tide-boss'].phases!.length >= 3)
+assert.ok(HARBOR_RPG_MONSTER_DEFS['chronicle-boss'].phases!.length >= 3)
+assert.ok(HARBOR_RPG_MONSTER_DEFS['echo-boss'].phases!.length >= 3)
+
+resetRpgCombatSessionCd()
+{
+  const boss = spawnRpgMonsters('tidehollow', 9).find((m) => m.kind === 'tide-boss')!
+  boss.hp = Math.floor(boss.maxHp * 0.3)
+  const phased = tickRpgCombat({
+    bag: emptyHarborRpgBag(),
+    monsters: [boss],
+    playerX: boss.x,
+    playerZ: boss.z,
+    playerHp: 80,
+    playerMp: 100,
+    userId: 'u1',
+    partySize: 1,
+    abilityId: 'bash',
+    attacking: false,
+    dt: 0.2,
+    now: Date.now(),
+    zone: 'tidehollow',
+    guardBuffSec: 0,
+    rng: () => 0.01,
+  })
+  assert.ok(
+    phased.events.some((e) => e.type === 'boss-phase') || (phased.monsters[0]!.phase ?? 0) >= 1,
+    'boss phase advances',
+  )
+}
+
+import { HARBOR_RPG_CHAPTERS, HARBOR_RPG_CAMPAIGN } from './harborRpgLore.ts'
+assert.match(HARBOR_RPG_CAMPAIGN.title.en, /Tide/)
+assert.equal(HARBOR_RPG_CHAPTERS.length, 4)
+
 const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
 assert.match(worldSrc, /tickRpgCombat/, 'world ticks soft combat')
 assert.match(worldSrc, /queueRpgAbility/, 'ability queue on world handle')
 assert.match(worldSrc, /onRpgContestedLoot/, 'contested loot callback')
 assert.match(worldSrc, /onRpgWorldTick|applyRpgWorldSnapshot/, 'shared world tick')
+assert.match(worldSrc, /onRpgBossPhase|boss-phase/, 'boss phase callback')
 
 const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
 assert.match(playSrc, /HarborRpgPanel/, 'isolated RPG panel')
 assert.match(playSrc, /craftHarborRpgRecipe|gatherHarborRpgNode/, 'professions wired')
 assert.match(playSrc, /is-rpg/, 'HUD isolation class')
 assert.match(playSrc, /onStartTrade|rpgTrade/, 'trade windows wired')
+assert.match(playSrc, /inviteToRpgParty|onInviteParty/, 'party invites E2E')
+assert.match(playSrc, /setRemotePlayers|rpgRemotes/, 'rpg remotes in world')
 
 const presenceSrc = readFileSync(new URL('./harborRpgPresence.ts', import.meta.url), 'utf8')
 assert.match(presenceSrc, /harbor-rpg-realm/)
@@ -337,10 +385,11 @@ assert.match(presenceSrc, /HARBOR_RPG_TRADE_EVENT/)
 const panelSrc = readFileSync(new URL('./HarborRpgPanel.tsx', import.meta.url), 'utf8')
 assert.match(panelSrc, /spellbook|Spells/, 'spellbook UI')
 assert.match(panelSrc, /Trade/, 'trade tab')
+assert.match(panelSrc, /HARBOR_RPG_CHAPTERS|Tide That Remembers/, 'campaign chapters')
 
 const docs = readFileSync(new URL('../../../../../docs/harbor-quest/HARBORRPG.md', import.meta.url), 'utf8')
 assert.match(docs, /soft Realtime|no dedicated anti-cheat/i)
-assert.match(docs, /Ash Crypt|combat depth|World Market|Tideblade|prestige|9 classes|trade/i)
+assert.match(docs, /Ash Crypt|combat depth|World Market|Tideblade|prestige|9 classes|trade|Tide That Remembers|boss phase/i)
 
 assert.ok(HARBOR_RPG_ITEMS.length >= 30, 'expanded itemization')
 assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-tide'))

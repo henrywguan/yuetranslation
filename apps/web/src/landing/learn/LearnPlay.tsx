@@ -76,6 +76,18 @@ import {
   type HarborRpgRemotePlayer,
 } from './harborRpgPresence'
 import {
+  playHarborRpgBossPhase,
+  playHarborRpgDungeonEnter,
+  playHarborRpgPartyInvite,
+} from './harborRpgSfx'
+import { HARBOR_DEFAULT_APPEARANCE } from './harborAppearance'
+import { HARBOR_RPG_CAMPAIGN } from './harborRpgLore'
+import type {
+  HarborRpgPartyInvite,
+  HarborRpgPartyState,
+} from './harborRpgSocial'
+import { acceptRpgPartyInvite, createRpgParty, inviteToRpgParty } from './harborRpgSocial'
+import {
   applyRpgTradeComplete,
   canPutInTrade,
   createRpgTradeId,
@@ -102,6 +114,7 @@ import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSf
 import { playHarborScrollClose, playHarborScrollOpen, stopHarborScrollSfx } from './harborScrollSfx'
 import {
   harborGearById,
+  HARBOR_DEFAULT_LOOK,
   type HarborGearId,
   type HarborGearSlot,
 } from './harborGear'
@@ -259,6 +272,8 @@ export function LearnSession({
   const [rpgRemotes, setRpgRemotes] = useState<HarborRpgRemotePlayer[]>([])
   const [rpgZonePeers, setRpgZonePeers] = useState<string[]>([])
   const [rpgTrade, setRpgTrade] = useState<HarborRpgTradeSession | null>(null)
+  const [rpgPartyLive, setRpgPartyLive] = useState<HarborRpgPartyState | null>(null)
+  const [rpgPartyInvite, setRpgPartyInvite] = useState<HarborRpgPartyInvite | null>(null)
   const rpgPresenceRef = useRef<HarborRpgPresenceSession | null>(null)
   const handleRpgTradeOfferRef = useRef<((offer: HarborRpgTradeOffer) => void) | null>(null)
   /** Fullscreen wuxia world map (minimap globe). */
@@ -460,9 +475,49 @@ export function LearnSession({
           const peers = rpgZonePeerIds(userId, remotes, zone)
           setRpgZonePeers(peers)
           worldApiRef.current?.setRpgZonePeerIds(peers)
+          // Render remotes in the RPG pocket as foot sailors
+          const asWorld = remotes
+            .filter((r) => r.zone === zone)
+            .map((r) => ({
+              userId: r.userId,
+              username: r.username,
+              x: r.x,
+              z: r.z,
+              yaw: r.yaw,
+              mode: 'foot' as const,
+              look: HARBOR_DEFAULT_LOOK,
+              gender: 'male' as const,
+              appearance: HARBOR_DEFAULT_APPEARANCE,
+              nametagFrame: 'tag-plain',
+              updatedAt: r.updatedAt,
+            }))
+          worldApiRef.current?.setRemotePlayers(asWorld)
+        },
+        onPose: (pose) => {
+          worldApiRef.current?.applyRemotePose({
+            userId: pose.userId,
+            x: pose.x,
+            z: pose.z,
+            yaw: pose.yaw,
+            mode: 'foot',
+            t: pose.t,
+          })
         },
         onWorld: (packet) => {
           worldApiRef.current?.applyRpgWorldSnapshot(packet)
+        },
+        onParty: (msg) => {
+          if ('type' in msg && msg.type === 'invite') {
+            if (msg.toId === userId) {
+              setRpgPartyInvite(msg)
+              playHarborRpgPartyInvite()
+              flashRpgToast(`${msg.fromName} invited you to party ${msg.code}`)
+            }
+            return
+          }
+          setRpgPartyLive(msg)
+          setRpgPartySize(Math.max(1, msg.members.length))
+          worldApiRef.current?.setRpgPartySize(Math.max(1, msg.members.length))
         },
         onTrade: (offer) => {
           handleRpgTradeOfferRef.current?.(offer)
@@ -692,7 +747,9 @@ export function LearnSession({
     (zone: HarborRpgZoneId) => {
       setRpgZone(zone)
       pushRpgProgress(setHarborRpgZone(zone))
-      flashRpgToast(`Entered ${HARBOR_RPG_ZONE_META[zone].en}`)
+      const meta = HARBOR_RPG_ZONE_META[zone]
+      flashRpgToast(`Entered ${meta.en}`)
+      if (meta.instance) playHarborRpgDungeonEnter()
     },
     [pushRpgProgress, flashRpgToast],
   )
@@ -1394,6 +1451,10 @@ export function LearnSession({
             rpgPresenceRef.current?.broadcastWorld(packet)
           }}
           rpgZonePeerIds={rpgZonePeers}
+          onRpgBossPhase={(ev) => {
+            playHarborRpgBossPhase()
+            flashRpgToast(ev.toast?.en ?? `${ev.name.en} (phase ${ev.phase + 1})`)
+          }}
           paused={
             worldPaused ||
             invOpen ||
@@ -1407,7 +1468,25 @@ export function LearnSession({
           }
           onVisitable={onVisitable}
           onDialogueNpc={onDialogueNpc}
-          remotePlayers={remotePlayers}
+          remotePlayers={
+            realmOverride === 'rpg'
+              ? rpgRemotes
+                  .filter((r) => r.zone === rpgZone)
+                  .map((r) => ({
+                    userId: r.userId,
+                    username: r.username,
+                    x: r.x,
+                    z: r.z,
+                    yaw: r.yaw,
+                    mode: 'foot' as const,
+                    look: HARBOR_DEFAULT_LOOK,
+                    gender: 'male' as const,
+                    appearance: HARBOR_DEFAULT_APPEARANCE,
+                    nametagFrame: 'tag-plain',
+                    updatedAt: r.updatedAt,
+                  }))
+              : remotePlayers
+          }
           localUsername={localUsername}
           nametagFrame={progressSnap.showoff?.look.nametag ?? 'tag-plain'}
           onRemotePlayerSelect={setProfileUserId}
@@ -2162,6 +2241,50 @@ export function LearnSession({
           lootPrompt={rpgLootPrompt}
           trade={rpgTrade}
           remotes={rpgRemotes.map((r) => ({ userId: r.userId, username: r.username }))}
+          partyLive={rpgPartyLive}
+          partyInvite={rpgPartyInvite}
+          onInviteParty={(peerId) => {
+            const selfId = localUserIdRef.current ?? 'local'
+            const name =
+              progressSnap.rpg?.characters.find(
+                (c) => c.id === progressSnap.rpg?.activeCharacterId,
+              )?.name ?? 'Adventurer'
+            const base = rpgPartyLive ?? createRpgParty(selfId, name)
+            const invite = inviteToRpgParty(base, name, peerId)
+            setRpgPartyLive(base)
+            rpgPresenceRef.current?.broadcastParty(invite)
+            playHarborRpgPartyInvite()
+            flashRpgToast(`Invited ${peerId.slice(0, 6)}…`)
+          }}
+          onAcceptPartyInvite={() => {
+            if (!rpgPartyInvite) return
+            const selfId = localUserIdRef.current ?? 'local'
+            const name =
+              progressSnap.rpg?.characters.find(
+                (c) => c.id === progressSnap.rpg?.activeCharacterId,
+              )?.name ?? 'Adventurer'
+            const joined = acceptRpgPartyInvite(
+              rpgPartyLive ?? {
+                id: rpgPartyInvite.partyId,
+                leaderId: rpgPartyInvite.fromId,
+                members: [{ userId: rpgPartyInvite.fromId, name: rpgPartyInvite.fromName }],
+                looking: false,
+                code: rpgPartyInvite.code,
+              },
+              rpgPartyInvite,
+              selfId,
+              name,
+            )
+            if (joined) {
+              setRpgPartyLive(joined)
+              setRpgPartySize(joined.members.length)
+              worldApiRef.current?.setRpgPartySize(joined.members.length)
+              rpgPresenceRef.current?.broadcastParty(joined)
+              flashRpgToast(`Joined party ${joined.code}`)
+            }
+            setRpgPartyInvite(null)
+          }}
+          onDeclinePartyInvite={() => setRpgPartyInvite(null)}
           onLootVote={(vote) => {
             if (!rpgLootPrompt) return
             if (vote === 'need' || vote === 'greed') {

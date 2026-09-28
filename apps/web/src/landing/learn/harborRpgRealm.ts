@@ -283,24 +283,61 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), hqMat(P.skin))
     head.position.y = 1.15
     g.add(head)
-  } else if (kind === 'wraith') {
+  } else if (kind === 'crypt-boss' || kind === 'tide-boss' || kind === 'chronicle-boss' || kind === 'echo-boss') {
+    const body = hqBox(
+      kind === 'tide-boss' ? 1.35 : 1.2,
+      kind === 'chronicle-boss' ? 2.0 : 1.8,
+      0.9,
+      def.color,
+      0,
+      1.0,
+      0,
+    )
+    g.add(body)
+    const head = hqBox(0.7, 0.55, 0.6, def.color, 0, 2.15, 0)
+    g.add(head)
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 10, 8),
+      hqMatSmooth(
+        kind === 'tide-boss'
+          ? 0x60e0ff
+          : kind === 'chronicle-boss'
+            ? 0xffe080
+            : kind === 'echo-boss'
+              ? 0xfff0a0
+              : 0xffc060,
+      ),
+    )
+    glow.position.set(0, 2.55, 0.35)
+    glow.name = 'rpg-boss-glow'
+    g.add(glow)
+    if (kind === 'echo-boss') {
+      const mirror = hqBox(0.15, 1.6, 0.9, 0xa0c8e0, -0.7, 1.0, 0)
+      mirror.name = 'rpg-boss-mirror'
+      g.add(mirror)
+    }
+    if (kind === 'tide-boss') {
+      const pearl = new THREE.Mesh(
+        new THREE.SphereGeometry(0.35, 12, 10),
+        hqMatSmooth(0xd0f0ff),
+      )
+      pearl.position.set(0, 1.2, 0.55)
+      pearl.name = 'rpg-boss-pearl'
+      g.add(pearl)
+    }
+  } else if (kind === 'wraith' || kind === 'ink-shade') {
     const body = new THREE.Mesh(
       new THREE.ConeGeometry(0.45, 1.4, 8),
       hqMatSmooth(def.color),
     )
     body.position.y = 0.9
     g.add(body)
-  } else if (kind === 'crypt-boss') {
-    const body = hqBox(1.2, 1.8, 0.9, def.color, 0, 1.0, 0)
+  } else if (kind === 'tide-thrall' || kind === 'echo-twin') {
+    const body = hqBox(0.42, 0.9, 0.32, def.color, 0, 0.55, 0)
     g.add(body)
-    const head = hqBox(0.7, 0.55, 0.6, def.color, 0, 2.15, 0)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), hqMat(P.skin))
+    head.position.y = 1.15
     g.add(head)
-    const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 10, 8),
-      hqMatSmooth(0xffc060),
-    )
-    glow.position.set(0, 2.5, 0.35)
-    g.add(glow)
   } else {
     const body = hqBox(0.9, 1.2, 0.7, def.color, 0, 0.7, 0)
     g.add(body)
@@ -414,6 +451,81 @@ function stampCrypt(root: THREE.Group, look: HarborRpgZoneLook, rng: () => numbe
   root.add(dais)
 }
 
+function stampTideHollow(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
+  for (let i = 0; i < 12; i++) {
+    const pillar = hqBox(0.7, 2.4 + rng(), 0.7, look.stone)
+    const ang = (i / 12) * Math.PI * 2
+    pillar.position.set(Math.cos(ang) * 12, 1.3, Math.sin(ang) * 12)
+    pillar.name = 'rpg-tide-pillar'
+    root.add(pillar)
+  }
+  const pool = new THREE.Mesh(
+    new THREE.CircleGeometry(5.5, 24),
+    hqMatSmooth(0x204858),
+  )
+  pool.rotation.x = -Math.PI / 2
+  pool.position.set(0, 0.04, -4)
+  pool.name = 'rpg-tide-pool'
+  root.add(pool)
+  const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 12), hqMatSmooth(0xa8e8ff))
+  pearl.position.set(0, 0.7, -4)
+  pearl.name = 'rpg-tide-pearl'
+  root.add(pearl)
+}
+
+function stampChronicle(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
+  for (let i = 0; i < 8; i++) {
+    const shelf = hqBox(2.2, 2.6, 0.4, look.stone)
+    const ang = (i / 8) * Math.PI * 2
+    shelf.position.set(Math.cos(ang) * 10, 1.4, Math.sin(ang) * 10)
+    shelf.rotation.y = ang
+    shelf.name = 'rpg-chronicle-shelf'
+    root.add(shelf)
+  }
+  const desk = hqBox(3.2, 0.55, 1.6, look.accent, 0, 0.35, -3)
+  desk.name = 'rpg-chronicle-desk'
+  root.add(desk)
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), hqMatSmooth(0xffe090))
+  lamp.position.set(0, 1.1, -3)
+  lamp.name = 'rpg-chronicle-lamp'
+  root.add(lamp)
+  for (let i = 0; i < 6; i++) {
+    const scroll = hqBox(0.15 + rng() * 0.1, 0.08, 0.5, 0xd8c890)
+    scroll.position.set((rng() - 0.5) * 2.4, 0.7, -3 + (rng() - 0.5) * 0.6)
+    scroll.name = 'rpg-chronicle-scroll'
+    root.add(scroll)
+  }
+}
+
+function stampEchoIsle(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
+  const pier = hqBox(3.5, 0.25, 14, look.dirt, 0, 0.15, 2)
+  pier.name = 'rpg-echo-pier'
+  root.add(pier)
+  for (let i = 0; i < 6; i++) {
+    const post = hqPost(0.12, 0.12, 1.4, look.stone)
+    post.position.set(i % 2 === 0 ? -1.6 : 1.6, 0.7, -4 + i * 2.2)
+    post.name = 'rpg-echo-post'
+    root.add(post)
+  }
+  const mirror = hqBox(0.2, 3.2, 4.5, 0x90c0e0, 0, 1.7, -8)
+  mirror.name = 'rpg-echo-mirror'
+  root.add(mirror)
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(2.2, 20), hqMatSmooth(0xe8d080))
+  glow.rotation.x = -Math.PI / 2
+  glow.position.set(0, 0.06, -8)
+  glow.name = 'rpg-echo-glow'
+  root.add(glow)
+  for (let i = 0; i < 10; i++) {
+    const reed = new THREE.Mesh(
+      new THREE.ConeGeometry(0.12, 0.9 + rng() * 0.4, 5),
+      hqMat(look.accent),
+    )
+    reed.position.set((rng() - 0.5) * 20, 0.45, 8 + (rng() - 0.5) * 8)
+    reed.name = 'rpg-echo-reed'
+    root.add(reed)
+  }
+}
+
 function stampGatherNodes(root: THREE.Group, zone: HarborRpgZoneId) {
   for (const n of HARBOR_RPG_GATHER_NODES) {
     if (n.zone !== zone) continue
@@ -473,6 +585,9 @@ export function buildRpgZoneScene(zone: HarborRpgZoneId = 'meadow'): THREE.Group
   if (zone === 'town') stampTown(root, look)
   if (zone === 'ruins') stampRuins(root, look, rng)
   if (zone === 'crypt') stampCrypt(root, look, rng)
+  if (zone === 'tidehollow') stampTideHollow(root, look, rng)
+  if (zone === 'chronicle') stampChronicle(root, look, rng)
+  if (zone === 'echoisle') stampEchoIsle(root, look, rng)
   if (zone === 'marsh') {
     for (let i = 0; i < 8; i++) {
       const pool = new THREE.Mesh(

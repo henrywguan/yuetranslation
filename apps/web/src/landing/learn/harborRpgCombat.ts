@@ -54,6 +54,8 @@ export type HarborRpgMonsterRuntime = {
   /** Soft DoT ticks remaining. */
   dotTicks?: number
   dotDmg?: number
+  /** Boss phase index (0-based). */
+  phase?: number
 }
 
 export type HarborRpgLootDrop = { id: HarborRpgItemId; qty: number }
@@ -81,6 +83,14 @@ export type HarborRpgCombatEvent =
   | { type: 'player-down' }
   | { type: 'ability-gcd'; abilityId: string }
   | { type: 'resource'; mp: number; maxMp: number }
+  | {
+      type: 'boss-phase'
+      monsterId: string
+      kind: HarborRpgMonsterKind
+      phase: number
+      name: { en: string; zh: string }
+      toast?: { en: string; zh: string }
+    }
 
 function mulberry32(seed: number) {
   return () => {
@@ -103,9 +113,10 @@ export function spawnRpgMonsters(
     const def = HARBOR_RPG_MONSTER_DEFS[pack.kind]
     for (let n = 0; n < pack.count; n++) {
       const ang = rng() * Math.PI * 2
-      const rad = pack.kind === 'crypt-boss' ? 2 + rng() * 3 : 6 + rng() * 18
+      const rad =
+        HARBOR_RPG_MONSTER_DEFS[pack.kind].boss ? 2 + rng() * 3 : 6 + rng() * 18
       const x = Math.cos(ang) * rad
-      const z = Math.sin(ang) * rad - (pack.kind === 'crypt-boss' ? 4 : 2)
+      const z = Math.sin(ang) * rad - (HARBOR_RPG_MONSTER_DEFS[pack.kind].boss ? 4 : 2)
       out.push({
         id: `mob-${zone}-${i++}`,
         kind: pack.kind,
@@ -120,6 +131,7 @@ export function spawnRpgMonsters(
         alive: true,
         respawnAt: 0,
         threat: [],
+        phase: def.boss ? 0 : undefined,
       })
     }
   }
@@ -151,6 +163,45 @@ function topThreatUserId(m: HarborRpgMonsterRuntime, fallback: string): string {
     if (t.threat > best.threat) best = t
   }
   return best.userId
+}
+
+/** Advance boss phases when HP crosses thresholds; returns events. */
+function maybeAdvanceBossPhase(
+  m: HarborRpgMonsterRuntime,
+  events: HarborRpgCombatEvent[],
+): void {
+  const def = HARBOR_RPG_MONSTER_DEFS[m.kind]
+  if (!def.boss || !def.phases || def.phases.length === 0) return
+  const ratio = m.hp / Math.max(1, m.maxHp)
+  let next = m.phase ?? 0
+  for (let i = 0; i < def.phases.length; i++) {
+    if (ratio <= def.phases[i]!.atHpPct) next = i
+  }
+  if (next !== (m.phase ?? 0)) {
+    m.phase = next
+    const row = def.phases[next]!
+    m.hitFlash = 0.45
+    events.push({
+      type: 'boss-phase',
+      monsterId: m.id,
+      kind: m.kind,
+      phase: next,
+      name: row.name,
+      toast: row.toast,
+    })
+  }
+}
+
+function bossAtkMult(m: HarborRpgMonsterRuntime): number {
+  const def = HARBOR_RPG_MONSTER_DEFS[m.kind]
+  if (!def.phases || m.phase == null) return 1
+  return def.phases[m.phase]?.atkMult ?? 1
+}
+
+function bossSpeedMult(m: HarborRpgMonsterRuntime): number {
+  const def = HARBOR_RPG_MONSTER_DEFS[m.kind]
+  if (!def.phases || m.phase == null) return 1
+  return def.phases[m.phase]?.speedMult ?? 1
 }
 
 export type HarborRpgCombatTickInput = {
@@ -466,6 +517,7 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
           m.hitFlash = 0.2
           addThreat(m, input.userId, dmg)
           events.push({ type: 'player-hit', damage: dmg, monsterId: m.id, abilityId: cast.id })
+          maybeAdvanceBossPhase(m, events)
         }
       }
     } else {
@@ -513,6 +565,7 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
           abilityId: cast.id,
           crit,
         })
+        maybeAdvanceBossPhase(m, events)
         if (m.hp <= 0) {
           m.alive = false
           m.respawnAt =
@@ -566,14 +619,17 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
 
     if (dist < defM.aggro && playerHp > 0 && chasingLocal) {
       if (dist > MONSTER_ATTACK_RANGE * 0.85) {
-        const step = defM.speed * input.dt
+        const step = defM.speed * bossSpeedMult(m) * input.dt
         m.x += (dx / dist) * step
         m.z += (dz / dist) * step
       } else if (m.attackCd <= 0) {
-        const raw = Math.max(1, defM.atk - Math.floor(def * 0.6))
+        const raw = Math.max(
+          1,
+          Math.floor(defM.atk * bossAtkMult(m)) - Math.floor(def * 0.6),
+        )
         const damage = companion ? Math.max(1, Math.floor(raw * 0.7)) : raw
         playerHp = Math.max(0, playerHp - damage)
-        m.attackCd = MONSTER_ATTACK_CD
+        m.attackCd = MONSTER_ATTACK_CD / Math.max(0.5, bossSpeedMult(m))
         events.push({ type: 'monster-hit', damage, monsterId: m.id })
         if (playerHp <= 0) events.push({ type: 'player-down' })
       }

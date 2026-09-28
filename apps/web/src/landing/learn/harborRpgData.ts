@@ -10,6 +10,9 @@ export const HARBOR_RPG_ZONES = [
   'marsh',
   'town',
   'crypt',
+  'tidehollow',
+  'chronicle',
+  'echoisle',
 ] as const
 export type HarborRpgZoneId = (typeof HARBOR_RPG_ZONES)[number]
 
@@ -119,6 +122,51 @@ export const HARBOR_RPG_ZONE_META: Record<
       accent: 0xa07040,
     },
   },
+  tidehollow: {
+    en: 'Black Tide Hollow',
+    zh: '黑潮窟',
+    seed: 0x54494445,
+    instance: true,
+    look: {
+      sky: 0x1a2838,
+      fog: 0x2a4050,
+      fogDensity: 0.032,
+      grass: 0x2a3840,
+      dirt: 0x1a2830,
+      stone: 0x3a5060,
+      accent: 0x3080a8,
+    },
+  },
+  chronicle: {
+    en: 'Chronicle Vault',
+    zh: '紀年庫',
+    seed: 0x4348524e,
+    instance: true,
+    look: {
+      sky: 0x2a2038,
+      fog: 0x3a3050,
+      fogDensity: 0.03,
+      grass: 0x2a2840,
+      dirt: 0x221828,
+      stone: 0x5a5070,
+      accent: 0xc0a060,
+    },
+  },
+  echoisle: {
+    en: 'Echo Isle',
+    zh: '回音島',
+    seed: 0x4543484f,
+    instance: true,
+    look: {
+      sky: 0x6a90c8,
+      fog: 0xb0d0e8,
+      fogDensity: 0.018,
+      grass: 0x48a868,
+      dirt: 0x7a9070,
+      stone: 0x90a8b8,
+      accent: 0xe8c070,
+    },
+  },
 }
 
 /** Zone AABB in local space (each zone remounts at origin). */
@@ -136,6 +184,9 @@ export const HARBOR_RPG_ZONE_SPAWN: Record<HarborRpgZoneId, { x: number; z: numb
   marsh: { x: 0, z: 10 },
   town: { x: 0, z: 8 },
   crypt: { x: 0, z: 14 },
+  tidehollow: { x: 0, z: 14 },
+  chronicle: { x: 0, z: 14 },
+  echoisle: { x: 0, z: 12 },
 }
 
 export type HarborRpgPortalDef = {
@@ -238,6 +289,60 @@ export const HARBOR_RPG_PORTALS: readonly HarborRpgPortalDef[] = [
     z: 24,
     radius: 2.6,
     label: { en: 'Leave Crypt', zh: '離開地牢' },
+  },
+  {
+    id: 'portal-marsh-tide',
+    from: 'marsh',
+    to: 'tidehollow',
+    x: 0,
+    z: -20,
+    radius: 2.6,
+    label: { en: 'Enter Black Tide Hollow', zh: '進入黑潮窟' },
+  },
+  {
+    id: 'portal-tide-marsh',
+    from: 'tidehollow',
+    to: 'marsh',
+    x: 0,
+    z: 24,
+    radius: 2.6,
+    label: { en: 'Leave Hollow', zh: '離開黑潮窟' },
+  },
+  {
+    id: 'portal-town-chronicle',
+    from: 'town',
+    to: 'chronicle',
+    x: -12,
+    z: 10,
+    radius: 2.6,
+    label: { en: 'Enter Chronicle Vault', zh: '進入紀年庫' },
+  },
+  {
+    id: 'portal-chronicle-town',
+    from: 'chronicle',
+    to: 'town',
+    x: 0,
+    z: 24,
+    radius: 2.6,
+    label: { en: 'Leave Vault', zh: '離開紀年庫' },
+  },
+  {
+    id: 'portal-pine-echo',
+    from: 'pinewood',
+    to: 'echoisle',
+    x: -18,
+    z: -8,
+    radius: 2.6,
+    label: { en: 'Enter Echo Isle', zh: '進入回音島' },
+  },
+  {
+    id: 'portal-echo-pine',
+    from: 'echoisle',
+    to: 'pinewood',
+    x: 0,
+    z: 24,
+    radius: 2.6,
+    label: { en: 'Leave Isle', zh: '離開回音島' },
   },
 ]
 
@@ -641,8 +746,25 @@ export const HARBOR_RPG_MONSTER_KINDS = [
   'toad',
   'wraith',
   'crypt-boss',
+  'tide-thrall',
+  'tide-boss',
+  'ink-shade',
+  'chronicle-boss',
+  'echo-twin',
+  'echo-boss',
 ] as const
 export type HarborRpgMonsterKind = (typeof HARBOR_RPG_MONSTER_KINDS)[number]
+
+export type HarborRpgBossPhase = {
+  /** Enter this phase when HP ratio drops to ≤ this value (1 = start). */
+  atHpPct: number
+  name: { en: string; zh: string }
+  atkMult: number
+  /** Soft attack cadence multiplier (higher = faster swings). */
+  speedMult: number
+  /** Optional toast when entering. */
+  toast?: { en: string; zh: string }
+}
 
 export type HarborRpgMonsterDef = {
   kind: HarborRpgMonsterKind
@@ -655,6 +777,7 @@ export type HarborRpgMonsterDef = {
   speed: number
   color: number
   boss?: boolean
+  phases?: HarborRpgBossPhase[]
   loot: { item: HarborRpgItemId; chance: number; qty: number }[]
 }
 
@@ -763,6 +886,28 @@ export const HARBOR_RPG_MONSTER_DEFS: Record<HarborRpgMonsterKind, HarborRpgMons
     speed: 2.1,
     color: 0xc07040,
     boss: true,
+    phases: [
+      {
+        atHpPct: 1,
+        name: { en: 'Ember Vigil', zh: '餘燼守夜' },
+        atkMult: 1,
+        speedMult: 1,
+      },
+      {
+        atHpPct: 0.55,
+        name: { en: 'Ash Rise', zh: '灰再起' },
+        atkMult: 1.25,
+        speedMult: 1.2,
+        toast: { en: 'Ash Warden — Ash Rise!', zh: '灰燼守衛——灰再起！' },
+      },
+      {
+        atHpPct: 0.2,
+        name: { en: 'Cinder Last Stand', zh: '燼末' },
+        atkMult: 1.55,
+        speedMult: 1.45,
+        toast: { en: 'Ash Warden — Last Stand!', zh: '灰燼守衛——燼末！' },
+      },
+    ],
     loot: [
       { item: 'rpg-item-ash-core', chance: 1, qty: 1 },
       { item: 'rpg-weapon-ash', chance: 0.35, qty: 1 },
@@ -772,6 +917,174 @@ export const HARBOR_RPG_MONSTER_DEFS: Record<HarborRpgMonsterKind, HarborRpgMons
       { item: 'rpg-armor-mail', chance: 0.2, qty: 1 },
       { item: 'rpg-armor-jade', chance: 0.06, qty: 1 },
       { item: 'rpg-item-tide-coin', chance: 0.5, qty: 2 },
+    ],
+  },
+  'tide-thrall': {
+    kind: 'tide-thrall',
+    name: { en: 'Tide Thrall', zh: '潮奴' },
+    hp: 32,
+    atk: 5,
+    xp: 16,
+    gold: 3,
+    aggro: 8,
+    speed: 2.7,
+    color: 0x2a7088,
+    loot: [
+      { item: 'rpg-item-pearl', chance: 0.35, qty: 1 },
+      { item: 'rpg-item-reed', chance: 0.4, qty: 1 },
+    ],
+  },
+  'tide-boss': {
+    kind: 'tide-boss',
+    name: { en: 'Pearl Host', zh: '珠宿主' },
+    hp: 240,
+    atk: 13,
+    xp: 160,
+    gold: 55,
+    aggro: 15,
+    speed: 2.0,
+    color: 0x40a0c8,
+    boss: true,
+    phases: [
+      {
+        atHpPct: 1,
+        name: { en: 'Still Water', zh: '靜水' },
+        atkMult: 1,
+        speedMult: 1,
+      },
+      {
+        atHpPct: 0.66,
+        name: { en: 'Name Hunger', zh: '名之飢' },
+        atkMult: 1.3,
+        speedMult: 1.15,
+        toast: { en: 'Pearl Host hungers for names!', zh: '珠宿主渴求名字！' },
+      },
+      {
+        atHpPct: 0.33,
+        name: { en: 'Black Tide', zh: '黑潮' },
+        atkMult: 1.6,
+        speedMult: 1.4,
+        toast: { en: 'Black Tide crashes in!', zh: '黑潮湧至！' },
+      },
+    ],
+    loot: [
+      { item: 'rpg-item-pearl', chance: 1, qty: 3 },
+      { item: 'rpg-item-tide-coin', chance: 0.8, qty: 3 },
+      { item: 'rpg-weapon-tide', chance: 0.28, qty: 1 },
+      { item: 'rpg-ring-tide', chance: 0.22, qty: 1 },
+      { item: 'rpg-offhand-lantern', chance: 0.18, qty: 1 },
+    ],
+  },
+  'ink-shade': {
+    kind: 'ink-shade',
+    name: { en: 'Ink Shade', zh: '墨影' },
+    hp: 36,
+    atk: 6,
+    xp: 18,
+    gold: 4,
+    aggro: 9,
+    speed: 2.5,
+    color: 0x504070,
+    loot: [
+      { item: 'rpg-item-silk', chance: 0.4, qty: 1 },
+      { item: 'rpg-item-shard', chance: 0.35, qty: 1 },
+    ],
+  },
+  'chronicle-boss': {
+    kind: 'chronicle-boss',
+    name: { en: 'Ink Archivist', zh: '墨典吏' },
+    hp: 260,
+    atk: 12,
+    xp: 180,
+    gold: 60,
+    aggro: 14,
+    speed: 1.9,
+    color: 0xc0a050,
+    boss: true,
+    phases: [
+      {
+        atHpPct: 1,
+        name: { en: 'Ledger Open', zh: '開冊' },
+        atkMult: 1,
+        speedMult: 1,
+      },
+      {
+        atHpPct: 0.6,
+        name: { en: 'Self-Writing', zh: '自書' },
+        atkMult: 1.2,
+        speedMult: 1.25,
+        toast: { en: 'Ink writes itself — Archivist accelerates!', zh: '墨水自書——典吏加速！' },
+      },
+      {
+        atHpPct: 0.25,
+        name: { en: 'Other-Side Reader', zh: '彼岸讀者' },
+        atkMult: 1.7,
+        speedMult: 1.5,
+        toast: { en: 'Something reads from the other side!', zh: '彼岸有物在讀！' },
+      },
+    ],
+    loot: [
+      { item: 'rpg-item-silk', chance: 1, qty: 2 },
+      { item: 'rpg-offhand-tome', chance: 0.4, qty: 1 },
+      { item: 'rpg-trinket-compass', chance: 0.3, qty: 1 },
+      { item: 'rpg-armor-jade', chance: 0.12, qty: 1 },
+      { item: 'rpg-item-tide-coin', chance: 0.55, qty: 2 },
+    ],
+  },
+  'echo-twin': {
+    kind: 'echo-twin',
+    name: { en: 'Echo Twin', zh: '回音分身' },
+    hp: 40,
+    atk: 6,
+    xp: 20,
+    gold: 4,
+    aggro: 8,
+    speed: 2.8,
+    color: 0x70c090,
+    loot: [
+      { item: 'rpg-item-herb', chance: 0.4, qty: 1 },
+      { item: 'rpg-item-pearl', chance: 0.2, qty: 1 },
+    ],
+  },
+  'echo-boss': {
+    kind: 'echo-boss',
+    name: { en: 'Mirror Ferry', zh: '鏡渡' },
+    hp: 220,
+    atk: 12,
+    xp: 170,
+    gold: 58,
+    aggro: 13,
+    speed: 2.2,
+    color: 0xe8c070,
+    boss: true,
+    phases: [
+      {
+        atHpPct: 1,
+        name: { en: 'Kinder Twin', zh: '溫柔分身' },
+        atkMult: 0.95,
+        speedMult: 1,
+      },
+      {
+        atHpPct: 0.5,
+        name: { en: 'Who Keeps the Voyage', zh: '誰留航程' },
+        atkMult: 1.35,
+        speedMult: 1.3,
+        toast: { en: 'Your twin claims the voyage!', zh: '分身要奪航程！' },
+      },
+      {
+        atHpPct: 0.18,
+        name: { en: 'One Name Left', zh: '只餘一名' },
+        atkMult: 1.75,
+        speedMult: 1.55,
+        toast: { en: 'Only one name leaves Echo Isle!', zh: '回音島只許一名離去！' },
+      },
+    ],
+    loot: [
+      { item: 'rpg-item-pearl', chance: 0.7, qty: 2 },
+      { item: 'rpg-ring-jade', chance: 0.25, qty: 1 },
+      { item: 'rpg-trinket-lantern', chance: 0.28, qty: 1 },
+      { item: 'rpg-weapon-blade', chance: 0.2, qty: 1 },
+      { item: 'rpg-item-tide-coin', chance: 0.6, qty: 2 },
     ],
   },
 }
@@ -801,6 +1114,21 @@ export const HARBOR_RPG_ZONE_SPAWNS: Record<
     { kind: 'wraith', count: 8 },
     { kind: 'bandit', count: 3 },
     { kind: 'crypt-boss', count: 1 },
+  ],
+  tidehollow: [
+    { kind: 'tide-thrall', count: 10 },
+    { kind: 'toad', count: 3 },
+    { kind: 'tide-boss', count: 1 },
+  ],
+  chronicle: [
+    { kind: 'ink-shade', count: 10 },
+    { kind: 'wraith', count: 3 },
+    { kind: 'chronicle-boss', count: 1 },
+  ],
+  echoisle: [
+    { kind: 'echo-twin', count: 8 },
+    { kind: 'slime', count: 4 },
+    { kind: 'echo-boss', count: 1 },
   ],
 }
 
@@ -1022,14 +1350,59 @@ export const HARBOR_RPG_QUESTS = [
   },
   {
     id: 'quest-crypt-warden',
-    name: { en: 'Ash Warden', zh: '灰燼守衛' },
+    name: { en: 'Ash Remembers', zh: '灰燼記得' },
     zone: 'crypt' as HarborRpgZoneId,
     kind: 'kill' as const,
     target: 'crypt-boss' as HarborRpgMonsterKind,
     need: 1,
     xp: 200,
     gold: 80,
-    blurb: { en: 'Slay the Ash Warden in the Crypt.', zh: '在地牢打倒灰燼守衛。' },
+    blurb: {
+      en: 'Chapter I — Slay the Ash Warden. Embers that refuse to cool still patrol a war with no victors.',
+      zh: '第一章——打倒灰燼守衛。不肯冷下的餘燼，仍在巡邏一場沒有勝者的舊戰。',
+    },
+  },
+  {
+    id: 'quest-tide-pearl',
+    name: { en: 'Name Hunger', zh: '名之飢' },
+    zone: 'tidehollow' as HarborRpgZoneId,
+    kind: 'kill' as const,
+    target: 'tide-boss' as HarborRpgMonsterKind,
+    need: 1,
+    xp: 240,
+    gold: 95,
+    blurb: {
+      en: 'Chapter II — Enter Black Tide Hollow via the Marsh. The Pearl Host hungers for names — keep yours.',
+      zh: '第二章——由澤地進入黑潮窟。珠宿主渴求名字——守住你的。',
+    },
+  },
+  {
+    id: 'quest-chronicle-ink',
+    name: { en: 'Self-Writing', zh: '自書' },
+    zone: 'chronicle' as HarborRpgZoneId,
+    kind: 'kill' as const,
+    target: 'chronicle-boss' as HarborRpgMonsterKind,
+    need: 1,
+    xp: 260,
+    gold: 100,
+    blurb: {
+      en: 'Chapter III — From Town, open the Chronicle Vault. Stop the Ink Archivist before the Other-side finishes reading.',
+      zh: '第三章——自小鎮開啟紀年庫。在彼岸讀完之前制止墨典吏。',
+    },
+  },
+  {
+    id: 'quest-echo-mirror',
+    name: { en: 'Who Keeps the Voyage', zh: '誰留航程' },
+    zone: 'echoisle' as HarborRpgZoneId,
+    kind: 'kill' as const,
+    target: 'echo-boss' as HarborRpgMonsterKind,
+    need: 1,
+    xp: 250,
+    gold: 98,
+    blurb: {
+      en: 'Chapter IV — From Pinewood, sail to Echo Isle. Face the Mirror Ferry — only one name leaves.',
+      zh: '第四章——自松林前往回音島。面對鏡渡——只許一名離去。',
+    },
   },
   {
     id: 'quest-first-craft',

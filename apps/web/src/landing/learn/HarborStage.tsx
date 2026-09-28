@@ -42,6 +42,13 @@ type HarborStageProps = {
   }) => void
   onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
   rpgZonePeerIds?: string[]
+  onRpgBossPhase?: (ev: {
+    monsterId: string
+    kind: string
+    phase: number
+    name: { en: string; zh: string }
+    toast?: { en: string; zh: string }
+  }) => void
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a nearby talkable NPC / speech bubble. */
@@ -76,6 +83,7 @@ export function HarborStage({
   onRpgContestedLoot,
   onRpgWorldTick,
   rpgZonePeerIds,
+  onRpgBossPhase,
   onVisitable,
   onDialogueNpc,
   remotePlayers,
@@ -111,6 +119,7 @@ export function HarborStage({
         onRpgContestedLoot={onRpgContestedLoot}
         onRpgWorldTick={onRpgWorldTick}
         rpgZonePeerIds={rpgZonePeerIds}
+        onRpgBossPhase={onRpgBossPhase}
         paused={paused}
         onVisitable={onVisitable}
         onDialogueNpc={onDialogueNpc}

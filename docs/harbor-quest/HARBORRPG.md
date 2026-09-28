@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v3 systems — shared world tick · 9×3 specs · trade windows  
+**Status:** v4 — story dungeons · boss phases · live remotes/party  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -22,38 +22,41 @@ Persistence may nest under `harbor_quest_progress.progress.rpg` for storage only
 
 Henry accepted **no dedicated anti-cheat**. HarborRPG may use:
 
-1. Client-authoritative combat, loot rolls, professions, market posts, trades.
-2. **Supabase Realtime** for shared presence, parties, contested need/greed, market, **world tick**, **trade windows**.
-3. API sanitize soft-caps bag fields (chars, gold, XP, inventory, bank, listings, class/spec).
+1. Client-authoritative combat, loot rolls, professions, market posts, trades, boss phases.
+2. **Supabase Realtime** for presence, parties, contested loot, market, world tick, trade.
+3. API sanitize soft-caps bag fields.
 4. No DeepSeek / Azure required.
 
-A dedicated game host remains optional later for fairness; it is **not** a ship gate.
+## Campaign · The Tide That Remembers
+
+Original Harbor/Jade story (tone inspiration only: BDO · ESO · MapleStory). Full brief: [`HARBORRPG-LORE.md`](./HARBORRPG-LORE.md).
+
+| Chapter | Dungeon | Boss (phased) |
+|---|---|---|
+| I Ash Remembers | `crypt` | Ash Warden |
+| II Name Hunger | `tidehollow` (via Marsh) | Pearl Host |
+| III Self-Writing | `chronicle` (via Town) | Ink Archivist |
+| IV Who Keeps the Voyage | `echoisle` (via Pinewood) | Mirror Ferry |
+
+Bosses advance phases on HP thresholds (toast + SFX + glow).
 
 ## Shared world tick
 
-- Zone **host** = lexicographically lowest `userId` present in the zone.
-- Host broadcasts monster snapshots at ~5 Hz (`harbor-rpg-world`).
-- Non-hosts apply host snaps for position/HP so everyone sees the same pack.
+Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`).
 
-## v3 shipping now
+## Realtime presence (wired)
 
-1. **Zones:** Meadow · Pinewood · Ruins · Marsh · Crossroads Town + **Ash Crypt** instance
-2. **Combat depth:** GCD kit · threat · **MP / resource** · **hit / miss / crit** · DoTs · party contested loot
-3. **Classes & specs (v3):** **9 classes × 3 specs = 27** — Tideblade · Reedshadow · Lanternmancer · Jadeheart · Ashbound · Starferry · **Ironoar** · **Mistweaver** · **Chopwright** — skill ranks 1–10, spec-gated talent trees, spellbook UI with tooltips + cast pulse, prestige ★ after level 50
-4. **Itemization / economy:** rarities through **legendary**, denser vendor/boss loot (Tidebrand, Jade Plate, Tide Coin, Mist Flask…), bank, World Market
-5. **Trading:** 6-slot trade windows over Realtime (`harbor-rpg-trade`) — offer / lock / accept / cancel
-6. **Instances:** Ash Crypt (boss + adds), enter from Ruins
-7. **Professions + market:** herbalism / mining · alchemy / smithing · town World Market
-8. **Realtime social:** presence · party · contested need/greed · world tick · trade
-9. **Isolated HUD:** voyage chrome hidden while `realm === 'rpg'`
+- Remotes in RPG zones render as foot sailors; pose broadcast applies live.
+- Party invites end-to-end on Party tab (invite remotes → accept/decline dialog → broadcast party state).
+- Trade windows + contested loot remain soft-trust.
 
-## Explicitly deferred
+## v4 surface
 
-- Dedicated authoritative sim / anti-cheat server
-- Ranked PvP ladders
-- KayKit mesh preload on mount
-- ClaudeCraft guilds / deeds (Harbor Quest social packet, not this game)
+1. **9 overworld/town zones + 4 instances** (Ash Crypt · Black Tide Hollow · Chronicle Vault · Echo Isle)
+2. **Combat:** GCD · MP · hit/miss/crit · threat · **boss phases**
+3. **9×3 classes/specs** · spellbook · trade · market · bank · professions
+4. **Art/SFX:** curated dungeon props + boss meshes; soft WebAudio dungeon/phase/party stings
 
 ## Feel bar
 
-Ability casts, spellbook tooltips, loot rolls, party invites, zone/instance portals, market posts, and trade locks must feel immediate. Flag Henry before any lean-pipeline cut that hurts polish (`AGENTS.md`).
+Boss phase transitions and dungeon enters must feel immediate. Flag Henry before cutting phase FX.

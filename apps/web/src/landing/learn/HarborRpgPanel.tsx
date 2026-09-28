@@ -46,6 +46,7 @@ import {
   toggleRpgFinderLooking,
   type HarborRpgPartyState,
 } from './harborRpgSocial'
+import { HARBOR_RPG_CAMPAIGN, HARBOR_RPG_CHAPTERS } from './harborRpgLore'
 import {
   HARBOR_RPG_TRADE_SLOTS,
   type HarborRpgTradeSession,
@@ -76,6 +77,8 @@ type Props = {
   } | null
   trade: HarborRpgTradeSession | null
   remotes: { userId: string; username: string }[]
+  partyLive: HarborRpgPartyState | null
+  partyInvite: import('./harborRpgSocial').HarborRpgPartyInvite | null
   onInteract: () => void
   onCreateChar: (name: string) => void
   onSelectChar: (id: string) => void
@@ -103,6 +106,9 @@ type Props = {
   onTradeLock: () => void
   onTradeCancel: () => void
   onTradeAccept: () => void
+  onInviteParty: (peerId: string) => void
+  onAcceptPartyInvite: () => void
+  onDeclinePartyInvite: () => void
   onExitGame: () => void
 }
 
@@ -114,6 +120,8 @@ export function HarborRpgPanel({
   lootPrompt,
   trade,
   remotes,
+  partyLive,
+  partyInvite,
   onInteract,
   onCreateChar,
   onSelectChar,
@@ -141,6 +149,9 @@ export function HarborRpgPanel({
   onTradeLock,
   onTradeCancel,
   onTradeAccept,
+  onInviteParty,
+  onAcceptPartyInvite,
+  onDeclinePartyInvite,
   onExitGame,
 }: Props) {
   const [tab, setTab] = useState<
@@ -177,6 +188,10 @@ export function HarborRpgPanel({
       members: [{ userId: p.leaderId, name }, ...p.members.slice(1)],
     }))
   }, [bag.activeCharacterId, bag.characters])
+
+  useEffect(() => {
+    if (partyLive) setParty(partyLive)
+  }, [partyLive])
 
   useEffect(() => {
     onPartySizeChange(Math.max(1, party.members.length))
@@ -507,6 +522,24 @@ export function HarborRpgPanel({
         ) : null}
 
         {tab === 'quests' ? (
+          <>
+            <p className="hq-rpg-hint">
+              {HARBOR_RPG_CAMPAIGN.title.en} — {HARBOR_RPG_CAMPAIGN.tagline.en}
+            </p>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_CHAPTERS.map((ch) => (
+                <li key={ch.id} className="hq-rpg-inv-row">
+                  <span>
+                    <strong>
+                      Ch.{ch.order} {ch.name.en}
+                    </strong>{' '}
+                    <span lang="zh-HK">{ch.name.zh}</span>
+                    <br />
+                    <small>{ch.blurb.en}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
           <ul className="hq-rpg-quest-list">
             {HARBOR_RPG_QUESTS.map((q) => {
               const prog = bag.quests.find((row) => row.id === q.id)
@@ -537,6 +570,7 @@ export function HarborRpgPanel({
               )
             })}
           </ul>
+          </>
         ) : null}
 
         {tab === 'class' ? (
@@ -843,35 +877,58 @@ export function HarborRpgPanel({
         {tab === 'party' ? (
           <>
             <p className="hq-rpg-hint">
-              Party {party.code} · {party.members.length}/5 · Realtime soft invite
+              Party {party.code} · {party.members.length}/5 · Realtime invites
             </p>
+            {partyInvite ? (
+              <div className="hq-rpg-loot-roll" role="dialog" aria-label="Party invite">
+                <p>
+                  Invite from {partyInvite.fromName} · code {partyInvite.code}
+                </p>
+                <div className="hq-rpg-create-actions">
+                  <button
+                    type="button"
+                    className="hq-btn hq-btn--solid"
+                    onClick={onAcceptPartyInvite}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    className="hq-btn hq-btn--ghost"
+                    onClick={onDeclinePartyInvite}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ) : null}
             <ul className="hq-rpg-inv">
               {party.members.map((m) => (
                 <li key={m.userId}>{m.name}</li>
+              ))}
+            </ul>
+            <p className="hq-rpg-hint">Invite nearby remotes</p>
+            <ul className="hq-rpg-inv">
+              {remotes.length === 0 ? (
+                <li className="hq-rpg-hint">No remotes in channel yet</li>
+              ) : null}
+              {remotes.map((r) => (
+                <li key={r.userId} className="hq-rpg-inv-row">
+                  <span>{r.username}</span>
+                  <button type="button" onClick={() => onInviteParty(r.userId)}>
+                    Invite
+                  </button>
+                </li>
               ))}
             </ul>
             <button
               type="button"
               className="hq-btn hq-btn--ghost"
               onClick={() => {
-                setParty((p) => {
-                  const next = toggleRpgFinderLooking(p)
-                  // Soft simulate a second member when looking (demo / offline).
-                  if (next.looking && next.members.length < 2) {
-                    const withAlly = {
-                      ...next,
-                      members: [
-                        ...next.members,
-                        { userId: `ally-${Date.now().toString(36)}`, name: 'Reed Ally' },
-                      ],
-                    }
-                    return withAlly
-                  }
-                  return next
-                })
+                setParty((p) => toggleRpgFinderLooking(p))
               }}
             >
-              {party.looking ? 'Stop looking' : 'Find party (soft)'}
+              {party.looking ? 'Stop looking' : 'Looking for party'}
             </button>
             <button type="button" className="hq-btn hq-btn--solid" onClick={onHireCompanion}>
               Hire companion ({HARBOR_RPG_COMPANION_COST}g)

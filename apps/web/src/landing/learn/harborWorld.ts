@@ -226,6 +226,14 @@ export type HarborWorldOptions = {
   onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
   /** Peer userIds in the current RPG zone (for host election). */
   rpgZonePeerIds?: string[]
+  /** Boss phase transition (toast / SFX). */
+  onRpgBossPhase?: (ev: {
+    monsterId: string
+    kind: string
+    phase: number
+    name: { en: string; zh: string }
+    toast?: { en: string; zh: string }
+  }) => void
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a talkable NPC / speech bubble while in range. */
@@ -5946,6 +5954,21 @@ export function createHarborWorld(
         if (ev.type === 'player-hit' && ev.crit) {
           flash = 'ok'
           flashUntil = Math.max(flashUntil, now + 220)
+        }
+        if (ev.type === 'boss-phase') {
+          flash = 'ok'
+          flashUntil = now + 900
+          options.onRpgBossPhase?.(ev)
+          for (const m of rpgMonsters) {
+            if (m.id !== ev.monsterId) continue
+            const mesh = rpgMonsterMeshes.get(m.id)
+            if (!mesh) continue
+            mesh.traverse((o) => {
+              if (o.name === 'rpg-boss-glow' && o instanceof THREE.Mesh) {
+                o.scale.setScalar(1.35 + ev.phase * 0.2)
+              }
+            })
+          }
         }
       }
     }

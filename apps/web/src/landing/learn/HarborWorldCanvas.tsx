@@ -33,6 +33,13 @@ type Props = {
   }) => void
   onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
   rpgZonePeerIds?: string[]
+  onRpgBossPhase?: (ev: {
+    monsterId: string
+    kind: string
+    phase: number
+    name: { en: string; zh: string }
+    toast?: { en: string; zh: string }
+  }) => void
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
@@ -69,6 +76,7 @@ export function HarborWorldCanvas({
   onRpgContestedLoot,
   onRpgWorldTick,
   rpgZonePeerIds,
+  onRpgBossPhase,
   paused = false,
   onVisitable,
   onDialogueNpc,
@@ -93,6 +101,8 @@ export function HarborWorldCanvas({
   onRpgContestedLootRef.current = onRpgContestedLoot
   const onRpgWorldTickRef = useRef(onRpgWorldTick)
   onRpgWorldTickRef.current = onRpgWorldTick
+  const onRpgBossPhaseRef = useRef(onRpgBossPhase)
+  onRpgBossPhaseRef.current = onRpgBossPhase
   const localUserIdRef = useRef(localUserId)
   localUserIdRef.current = localUserId
   const rpgPartySizeRef = useRef(rpgPartySize)
@@ -136,6 +146,7 @@ export function HarborWorldCanvas({
         onRpgContestedLoot: (drop) => onRpgContestedLootRef.current?.(drop),
         onRpgWorldTick: (packet) => onRpgWorldTickRef.current?.(packet),
         rpgZonePeerIds: rpgZonePeerIdsRef.current,
+        onRpgBossPhase: (ev) => onRpgBossPhaseRef.current?.(ev),
       })
     } catch (err) {
       console.error('[harbor] WebGL boot failed', err)
