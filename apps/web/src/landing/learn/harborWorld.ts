@@ -134,6 +134,7 @@ import {
   isHarborRpgCosmeticId,
   type HarborRpgCosmeticId,
 } from './harborRpgCosmetics'
+import { harborRpgWeatherForZone } from './harborRpgMedium'
 import {
   applyRpgWorldSnapshot as applyRpgWorldSnapToMonsters,
   electRpgZoneHost,
@@ -4678,7 +4679,11 @@ export function createHarborWorld(
     }
   }
   // Guan Harbor / HarborRPG always force sunny daylight.
-  const weather: HarborWeather = isPocket ? 'sunny' : (options.weather ?? pickHarborWeather())
+  const weather: HarborWeather = isGuan
+    ? 'sunny'
+    : isRpg
+      ? harborRpgWeatherForZone(rpgZone)
+      : (options.weather ?? pickHarborWeather())
   const baseLook = HARBOR_WEATHER_LOOK[weather]
   const rpgLook = isRpg ? rpgZoneLookFor(rpgZone) : null
   const look = isGuan

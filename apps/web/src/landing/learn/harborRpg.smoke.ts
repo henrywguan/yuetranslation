@@ -47,8 +47,9 @@ import {
   sanitizeHarborRpgBag,
 } from './harborRpgProgress.ts'
 import { buildRpgZoneScene } from './harborRpgRealm.ts'
+import { applyRpgMedium, harborRpgWeatherForZone, sanitizeRpgMedium } from './harborRpgMedium.ts'
 
-assert.equal(HARBOR_RPG_ZONES.length, 10)
+assert.equal(HARBOR_RPG_ZONES.length, 14)
 assert.ok(HARBOR_RPG_ZONE_META.crypt.instance, 'crypt is instanced')
 assert.ok(HARBOR_RPG_ZONE_META.tidehollow.instance)
 assert.ok(HARBOR_RPG_ZONE_META.chronicle.instance)
@@ -704,5 +705,46 @@ assert.match(playSrc, /buyHarborRpgCosmetic|setHarborRpgEquippedCosmetic|onBuyCo
 assert.match(panelSrc, /wardrobe|Wardrobe|onBuyCosmetic/, 'wardrobe tab')
 assert.match(presenceSrc, /equippedCosmetic/, 'cosmetic on presence')
 assert.match(docs, /Wardrobe|Modular Outfits|cosmetics\/CREDITS/i)
+
+{
+  const fresh = emptyHarborRpgBag()
+  const friended = applyRpgMedium(fresh, { type: 'add-friend', name: 'Jade' })
+  assert.ok(friended?.bag.friends.includes('Jade'))
+  const fleet = applyRpgMedium(friended!.bag, { type: 'fleet', name: 'Ferry', motto: 'soft' })
+  assert.equal(fleet?.bag.fleetName, 'Ferry')
+  const mailed = applyRpgMedium({ ...fresh, gold: 10 }, {
+    type: 'mail',
+    to: 'Jade',
+    subject: 'Hi',
+    body: 'Tide',
+    gold: 3,
+  })
+  assert.equal(mailed?.bag.gold, 7)
+  assert.equal(mailed?.bag.inbox.length, 1)
+  const delve = applyRpgMedium(fresh, { type: 'enter-delve', floor: 3 })
+  assert.equal(delve?.zone, 'delve')
+  assert.equal(delve?.bag.delveFloor, 3)
+  const rift = applyRpgMedium(fresh, { type: 'enter-rift' })
+  assert.equal(rift?.zone, 'rift')
+  const raced = applyRpgMedium(fresh, { type: 'race', elapsedMs: 12000, mounted: true })
+  assert.equal(raced?.bag.raceRuns, 1)
+  assert.ok((raced?.bag.gold ?? 0) > fresh.gold)
+  const unmounted = applyRpgMedium(fresh, { type: 'race', elapsedMs: 12000, mounted: false })
+  assert.equal(unmounted, null)
+  const cleaned = sanitizeRpgMedium({ friends: ['Jade', 'nope\n', 'Jade'], afk: true, fleetName: 'Ferry' })
+  assert.deepEqual(cleaned.friends, ['Jade', 'nope'])
+  assert.equal(cleaned.fleetName, 'Ferry')
+  assert.ok(['sunny', 'cloudy', 'rainy', 'night'].includes(harborRpgWeatherForZone('ashreach')))
+  assert.ok(HARBOR_RPG_ZONES.includes('ashreach'))
+  assert.ok(HARBOR_RPG_ZONES.includes('moonpier'))
+  assert.ok(HARBOR_RPG_ZONES.includes('rift'))
+  assert.ok(HARBOR_RPG_ZONES.includes('delve'))
+  assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('world-colossus'))
+}
+
+assert.match(panelSrc, /social|Ravenpost|onMedium/, 'social tab')
+assert.match(panelSrc, /frontiers|Reliquary|delve/, 'frontiers tab')
+assert.match(worldSrc, /harborRpgWeatherForZone/, 'rpg weather')
+assert.match(docs, /v6\.4|Ravenpost|Ash Reach/)
 
 console.log('harborRpg.smoke: ok')

@@ -69,7 +69,8 @@ import {
 import { HarborRpgPanel } from './HarborRpgPanel'
 import { HarborRpgWiki } from './HarborRpgWiki'
 import { awardRpgContestedLoot } from './harborRpgCombat'
-import { emptyHarborRpgBag } from './harborRpgProgress'
+import { emptyHarborRpgBag, sanitizeHarborRpgBag } from './harborRpgProgress'
+import { applyRpgMedium } from './harborRpgMedium'
 import {
   rpgZonePeerIds,
   startHarborRpgPresence,
@@ -574,6 +575,8 @@ export function LearnSession({
           lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
           equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
+          afk: progressSnap.rpg?.afk === true,
+          fleetName: progressSnap.rpg?.fleetName ?? null,
         })
         sessionPresence.broadcastPose({
           x: pose.x,
@@ -2357,6 +2360,15 @@ export function LearnSession({
             else {
               pushRpgProgress(next)
               flashRpgToast(id ? 'Look equipped' : 'Look cleared')
+            }
+          }}
+          onMedium={(action) => {
+            const bag = sanitizeHarborRpgBag(progressSnap.rpg)
+            const result = applyRpgMedium(bag, action)
+            if (!result) flashRpgToast('Cannot do that yet')
+            else {
+              pushRpgProgress(updateHarborRpg(result.bag))
+              flashRpgToast(result.toast)
             }
           }}
           onSetTitle={(id) => {

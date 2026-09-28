@@ -47,6 +47,8 @@ export type HarborRpgPresenceState = {
   activeMountId: string | null
   /** Equipped wardrobe cosmetic id (null = River Scout look). */
   equippedCosmetic: string | null
+  afk: boolean
+  fleetName: string | null
   updatedAt: number
 }
 
@@ -106,6 +108,11 @@ function sanitizePresence(raw: unknown, key: string): HarborRpgPresenceState | n
     equippedCosmetic:
       typeof o.equippedCosmetic === 'string' && o.equippedCosmetic.length < 40
         ? o.equippedCosmetic
+        : null,
+    afk: o.afk === true,
+    fleetName:
+      typeof o.fleetName === 'string' && o.fleetName.trim()
+        ? o.fleetName.trim().slice(0, 24)
         : null,
     updatedAt:
       typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
@@ -187,6 +194,8 @@ export type HarborRpgPresenceSession = {
     lookingDungeon?: HarborRpgPresenceState['lookingDungeon']
     activeMountId?: string | null
     equippedCosmetic?: string | null
+    afk?: boolean
+    fleetName?: string | null
   }) => Promise<void>
   broadcastPose: (pose: {
     x: number
@@ -287,6 +296,8 @@ export function startHarborRpgPresence(opts: {
         lookingDungeon: pose.lookingDungeon ?? null,
         activeMountId: pose.activeMountId ?? null,
         equippedCosmetic: pose.equippedCosmetic ?? null,
+        afk: pose.afk === true,
+        fleetName: pose.fleetName ?? null,
         updatedAt: Date.now(),
       }
       await channel.track(payload)

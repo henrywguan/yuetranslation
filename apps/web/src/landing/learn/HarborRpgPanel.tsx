@@ -1,7 +1,7 @@
 /**
  * HarborRPG HUD — completely separate from Harbor Quest pedagogy chrome.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   HARBOR_RPG_ABILITIES,
   HARBOR_RPG_CRAFT_RECIPES,
@@ -61,6 +61,10 @@ import {
   HARBOR_RPG_COSMETIC_IDS,
   type HarborRpgCosmeticId,
 } from './harborRpgCosmetics'
+import {
+  HARBOR_RPG_EMOTES,
+  harborRpgWeatherForZone,
+} from './harborRpgMedium'
 import {
   harborRpgActiveSkillRank,
   harborRpgLevelFromXp,
@@ -152,6 +156,7 @@ type Props = {
   onSummonMount: (id: HarborRpgMountId | null) => void
   onBuyCosmetic: (id: HarborRpgCosmeticId) => void
   onEquipCosmetic: (id: HarborRpgCosmeticId | null) => void
+  onMedium: (action: import('./harborRpgMedium').HarborRpgMediumAction) => void
   onSetTitle: (id: string | null) => void
   onOpenWiki: (page?: import('./harborRpgWiki').HarborRpgWikiPage) => void
   onExitGame: () => void
@@ -204,6 +209,7 @@ export function HarborRpgPanel({
   onSummonMount,
   onBuyCosmetic,
   onEquipCosmetic,
+  onMedium,
   onSetTitle,
   onOpenWiki,
   onExitGame,
@@ -220,6 +226,8 @@ export function HarborRpgPanel({
     | 'trade'
     | 'stable'
     | 'wardrobe'
+    | 'social'
+    | 'frontiers'
     | 'achievements'
   >('field')
   const [createName, setCreateName] = useState('')
@@ -230,6 +238,12 @@ export function HarborRpgPanel({
     finderRoleFromClassId(bag.classId),
   )
   const [finderDungeon, setFinderDungeon] = useState<HarborRpgFinderDungeon>('crypt')
+  const [friendName, setFriendName] = useState('')
+  const [mailTo, setMailTo] = useState('')
+  const [mailBody, setMailBody] = useState('')
+  const [fleetDraft, setFleetDraft] = useState('')
+  const [delveFloor, setDelveFloor] = useState(1)
+  const raceT = useRef(0)
   const [party, setParty] = useState<HarborRpgPartyState>(() =>
     createRpgParty(
       'local',
@@ -265,7 +279,15 @@ export function HarborRpgPanel({
   useEffect(() => {
     if (interactId === 'rpg-stable') setTab('stable')
     if (interactId === 'rpg-vendor') setTab('wardrobe')
-  }, [interactId])
+    if (interactId === 'rpg-ravenpost') setTab('social')
+    if (interactId === 'rpg-reliquary') setTab('frontiers')
+    if (interactId === 'rpg-race-start') raceT.current = performance.now()
+    if (interactId === 'rpg-race-finish' && raceT.current) {
+      const elapsed = performance.now() - raceT.current
+      raceT.current = 0
+      onMedium({ type: 'race', elapsedMs: elapsed, mounted: Boolean(bag.activeMountId) })
+    }
+  }, [interactId, bag.activeMountId, onMedium])
 
   useEffect(() => {
     onPartySizeChange(Math.max(1, party.members.length))
@@ -290,6 +312,14 @@ export function HarborRpgPanel({
                     ? 'Open bank'
                     : interactId === 'rpg-stable'
                       ? 'Open Ferry Stable'
+                      : interactId === 'rpg-ravenpost'
+                        ? 'Open Ravenpost'
+                        : interactId === 'rpg-reliquary'
+                          ? 'Open Reliquary'
+                          : interactId === 'rpg-race-start'
+                            ? 'Start mount race'
+                            : interactId === 'rpg-race-finish'
+                              ? 'Finish mount race'
                       : interactId?.startsWith('node-')
                         ? 'Gather node'
                         : interactId?.startsWith('portal-')
@@ -381,6 +411,8 @@ export function HarborRpgPanel({
             ['spellbook', 'Spells'],
             ['bag', 'Bag'],
             ['wardrobe', 'Wardrobe'],
+            ['social', 'Social'],
+            ['frontiers', 'Frontiers'],
             ['stable', 'Stable'],
             ['achievements', 'Deeds'],
             ['quests', 'Quests'],
@@ -741,6 +773,178 @@ export function HarborRpgPanel({
                   </li>
                 )
               })}
+            </ul>
+          </>
+        ) : null}
+
+        {tab === 'social' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Friends, fleet, Ravenpost, emotes, and a soft duel vs the training post.
+              {bag.afk ? ` AFK${bag.afkNote ? ` · ${bag.afkNote}` : ''}.` : ''}
+              {bag.fleetName ? ` Fleet: ${bag.fleetName}.` : ''}
+            </p>
+            <form
+              className="hq-rpg-inv-act"
+              onSubmit={(e) => {
+                e.preventDefault()
+                onMedium({ type: 'add-friend', name: friendName })
+                setFriendName('')
+              }}
+            >
+              <input
+                value={friendName}
+                onChange={(e) => setFriendName(e.target.value)}
+                placeholder="Friend name"
+                maxLength={24}
+              />
+              <button type="submit">Add</button>
+              <button type="button" onClick={() => onMedium({ type: 'afk', on: !bag.afk, note: bag.afkNote })}>
+                {bag.afk ? 'Back' : 'AFK'}
+              </button>
+            </form>
+            <ul className="hq-rpg-inv">
+              {bag.friends.map((name) => (
+                <li key={name} className="hq-rpg-inv-row">
+                  <span>{name}</span>
+                  <span className="hq-rpg-inv-act">
+                    <button type="button" onClick={() => onMedium({ type: 'duel', foe: name })}>
+                      Duel
+                    </button>
+                    <button type="button" onClick={() => onMedium({ type: 'remove-friend', name })}>
+                      Remove
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="hq-rpg-hint">Emotes</p>
+            <div className="hq-rpg-inv-act">
+              {HARBOR_RPG_EMOTES.map((em) => (
+                <button key={em.id} type="button" onClick={() => onMedium({ type: 'emote', id: em.id })}>
+                  {em.en}
+                </button>
+              ))}
+              <button type="button" onClick={() => onMedium({ type: 'duel', foe: 'training-post' })}>
+                Duel post
+              </button>
+            </div>
+            <form
+              className="hq-rpg-inv-act"
+              style={{ marginTop: 8 }}
+              onSubmit={(e) => {
+                e.preventDefault()
+                onMedium({ type: 'fleet', name: fleetDraft, motto: 'Soft fleet' })
+                setFleetDraft('')
+              }}
+            >
+              <input
+                value={fleetDraft}
+                onChange={(e) => setFleetDraft(e.target.value)}
+                placeholder="Fleet name"
+                maxLength={24}
+              />
+              <button type="submit">Found fleet</button>
+              <button type="button" onClick={() => onMedium({ type: 'fleet', name: null, motto: '' })}>
+                Leave
+              </button>
+            </form>
+            <form
+              className="hq-rpg-inv-act"
+              style={{ marginTop: 8 }}
+              onSubmit={(e) => {
+                e.preventDefault()
+                onMedium({ type: 'mail', to: mailTo, subject: 'Raven', body: mailBody, gold: 0 })
+                setMailBody('')
+              }}
+            >
+              <input value={mailTo} onChange={(e) => setMailTo(e.target.value)} placeholder="To" maxLength={24} />
+              <input
+                value={mailBody}
+                onChange={(e) => setMailBody(e.target.value)}
+                placeholder="Ravenpost letter"
+                maxLength={180}
+              />
+              <button type="submit">Send</button>
+            </form>
+            <ul className="hq-rpg-inv">
+              {bag.inbox.map((m) => (
+                <li key={m.id} className="hq-rpg-inv-row">
+                  <span>
+                    {m.read ? '' : '• '}
+                    {m.from}: {m.subject}
+                    <br />
+                    <small>{m.body}</small>
+                  </span>
+                  <button type="button" onClick={() => onMedium({ type: 'read-mail', id: m.id })}>
+                    Read
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+
+        {tab === 'frontiers' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Second-act frontiers, rift, delve, mount race, and Reliquary shelves. Weather here is{' '}
+              {harborRpgWeatherForZone(bag.zone)} (render only).
+            </p>
+            <div className="hq-rpg-inv-act" style={{ marginBottom: 8 }}>
+              <button type="button" onClick={() => onMedium({ type: 'zone', zone: 'ashreach' })}>
+                Ash Reach
+              </button>
+              <button type="button" onClick={() => onMedium({ type: 'zone', zone: 'moonpier' })}>
+                Moon Pier
+              </button>
+              <button type="button" onClick={() => onMedium({ type: 'zone', zone: 'town' })}>
+                Town
+              </button>
+              <button type="button" onClick={() => onMedium({ type: 'enter-rift' })}>
+                Open rift
+              </button>
+              <button type="button" onClick={() => onMedium({ type: 'claim-rift', roll: Math.random() })}>
+                Rift chest
+              </button>
+            </div>
+            <div className="hq-rpg-inv-act" style={{ marginBottom: 8 }}>
+              <button type="button" onClick={() => setDelveFloor((n) => Math.max(1, n - 1))}>
+                −
+              </button>
+              <span>Delve {delveFloor}</span>
+              <button type="button" onClick={() => setDelveFloor((n) => Math.min(8, n + 1))}>
+                +
+              </button>
+              <button type="button" onClick={() => onMedium({ type: 'enter-delve', floor: delveFloor })}>
+                Enter delve
+              </button>
+              <button type="button" onClick={() => onMedium({ type: 'claim-delve', roll: Math.random() })}>
+                Lockpick chest
+              </button>
+            </div>
+            <p className="hq-rpg-hint">
+              Mount race: summon a mount, tap the town start gate, ride to the finish gate. Under 45s pays 20g.
+              {bag.raceBestMs ? ` Best ${(bag.raceBestMs / 1000).toFixed(1)}s.` : ''} Runs {bag.raceRuns}. Rifts{' '}
+              {bag.riftClears}. Delve best {bag.delveBest}.
+            </p>
+            <p className="hq-rpg-hint">Reliquary — claim a finished deed once for gold.</p>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_ACHIEVEMENT_IDS.filter((id) => harborRpgAchievementDone(bag, id)).map((id) => (
+                <li key={id} className="hq-rpg-inv-row">
+                  <span>
+                    {HARBOR_RPG_ACHIEVEMENTS[id].name.en}
+                    {bag.claimedDeeds.includes(id) ? ' · shelved' : ''}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={bag.claimedDeeds.includes(id)}
+                    onClick={() => onMedium({ type: 'claim-deed', id })}
+                  >
+                    Claim
+                  </button>
+                </li>
+              ))}
             </ul>
           </>
         ) : null}

@@ -23,6 +23,12 @@ import {
   type HarborRpgZoneLook,
 } from './harborRpgData'
 import { HARBOR_RPG_STABLE } from './harborRpgMounts'
+import {
+  HARBOR_RPG_RACE_FINISH,
+  HARBOR_RPG_RACE_START,
+  HARBOR_RPG_RAVENPOST,
+  HARBOR_RPG_RELIQUARY,
+} from './harborRpgMedium'
 import type { HarborRpgMonsterRuntime } from './harborRpgCombat'
 
 export const HARBOR_RPG_META = { en: 'HarborRPG', zh: '冒險洲' } as const
@@ -291,7 +297,8 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
     kind === 'echo-boss' ||
     kind === 'raid-herald' ||
     kind === 'raid-depth' ||
-    kind === 'raid-sovereign'
+    kind === 'raid-sovereign' ||
+    kind === 'world-colossus'
   ) {
     const body = hqBox(
       kind === 'tide-boss' || kind === 'raid-sovereign' ? 1.35 : 1.2,
@@ -456,6 +463,10 @@ function stampTown(root: THREE.Group, look: HarborRpgZoneLook) {
   root.add(npcStall(HARBOR_RPG_CRAFT_BENCH.x, HARBOR_RPG_CRAFT_BENCH.z, HARBOR_RPG_CRAFT_BENCH.id, 0x8090a0))
   root.add(npcStall(HARBOR_RPG_BANK.x, HARBOR_RPG_BANK.z, HARBOR_RPG_BANK.id, 0xc0c0d0))
   root.add(npcStall(HARBOR_RPG_STABLE.x, HARBOR_RPG_STABLE.z, HARBOR_RPG_STABLE.id, 0xa08050))
+  root.add(npcStall(HARBOR_RPG_RAVENPOST.x, HARBOR_RPG_RAVENPOST.z, HARBOR_RPG_RAVENPOST.id, 0x406080))
+  root.add(npcStall(HARBOR_RPG_RELIQUARY.x, HARBOR_RPG_RELIQUARY.z, HARBOR_RPG_RELIQUARY.id, 0xc0a060))
+  root.add(npcStall(HARBOR_RPG_RACE_START.x, HARBOR_RPG_RACE_START.z, HARBOR_RPG_RACE_START.id, 0x70a050))
+  root.add(npcStall(HARBOR_RPG_RACE_FINISH.x, HARBOR_RPG_RACE_FINISH.z, HARBOR_RPG_RACE_FINISH.id, 0xa05050))
 }
 
 function stampCrypt(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
@@ -709,6 +720,10 @@ export function nearestRpgInteract(
     targets.push(HARBOR_RPG_CRAFT_BENCH)
     targets.push(HARBOR_RPG_BANK)
     targets.push(HARBOR_RPG_STABLE)
+    targets.push(HARBOR_RPG_RAVENPOST)
+    targets.push(HARBOR_RPG_RELIQUARY)
+    targets.push(HARBOR_RPG_RACE_START)
+    targets.push(HARBOR_RPG_RACE_FINISH)
   }
   for (const n of HARBOR_RPG_GATHER_NODES) {
     if (n.zone === zone) targets.push({ id: n.id, x: n.x, z: n.z, radius: n.radius })

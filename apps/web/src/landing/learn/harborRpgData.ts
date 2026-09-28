@@ -14,6 +14,10 @@ export const HARBOR_RPG_ZONES = [
   'chronicle',
   'echoisle',
   'tideraid',
+  'ashreach',
+  'moonpier',
+  'rift',
+  'delve',
 ] as const
 export type HarborRpgZoneId = (typeof HARBOR_RPG_ZONES)[number]
 
@@ -193,6 +197,64 @@ export const HARBOR_RPG_ZONE_META: Record<
       accent: 0x40c0e8,
     },
   },
+  ashreach: {
+    en: 'Ash Reach',
+    zh: '灰燼邊境',
+    seed: 0x41534852,
+    look: {
+      sky: 0x8a7868,
+      fog: 0xc0b0a0,
+      fogDensity: 0.015,
+      grass: 0x6a5840,
+      dirt: 0x5a4030,
+      stone: 0x8a8070,
+      accent: 0xc06030,
+    },
+  },
+  moonpier: {
+    en: 'Moon Pier',
+    zh: '月碼頭',
+    seed: 0x4d4f4f4e,
+    look: {
+      sky: 0x304868,
+      fog: 0x607898,
+      fogDensity: 0.018,
+      grass: 0x2a4860,
+      dirt: 0x3a4050,
+      stone: 0x8090a0,
+      accent: 0xc0d0f0,
+    },
+  },
+  rift: {
+    en: 'Tide Rift',
+    zh: '潮裂隙',
+    seed: 0x52494654,
+    instance: true,
+    look: {
+      sky: 0x201830,
+      fog: 0x402050,
+      fogDensity: 0.03,
+      grass: 0x302040,
+      dirt: 0x281828,
+      stone: 0x604070,
+      accent: 0xe070c0,
+    },
+  },
+  delve: {
+    en: 'Lock Delve',
+    zh: '鎖穴深潛',
+    seed: 0x44454c56,
+    instance: true,
+    look: {
+      sky: 0x242018,
+      fog: 0x403828,
+      fogDensity: 0.026,
+      grass: 0x3a3428,
+      dirt: 0x2a2418,
+      stone: 0x6a6050,
+      accent: 0xd0a040,
+    },
+  },
 }
 
 /** Zone AABB in local space (each zone remounts at origin). */
@@ -214,6 +276,10 @@ export const HARBOR_RPG_ZONE_SPAWN: Record<HarborRpgZoneId, { x: number; z: numb
   chronicle: { x: 0, z: 14 },
   echoisle: { x: 0, z: 12 },
   tideraid: { x: 0, z: 16 },
+  ashreach: { x: 0, z: 12 },
+  moonpier: { x: 0, z: 12 },
+  rift: { x: 0, z: 12 },
+  delve: { x: 0, z: 12 },
 }
 
 export type HarborRpgPortalDef = {
@@ -388,6 +454,60 @@ export const HARBOR_RPG_PORTALS: readonly HarborRpgPortalDef[] = [
     z: 24,
     radius: 2.6,
     label: { en: 'Leave Raid', zh: '離開團本' },
+  },
+  {
+    id: 'portal-town-ash',
+    from: 'town',
+    to: 'ashreach',
+    x: 22,
+    z: 0,
+    radius: 2.4,
+    label: { en: 'To Ash Reach', zh: '往灰燼邊境' },
+  },
+  {
+    id: 'portal-ash-town',
+    from: 'ashreach',
+    to: 'town',
+    x: 0,
+    z: 22,
+    radius: 2.4,
+    label: { en: 'Back to Town', zh: '回鎮' },
+  },
+  {
+    id: 'portal-town-moon',
+    from: 'town',
+    to: 'moonpier',
+    x: -22,
+    z: 0,
+    radius: 2.4,
+    label: { en: 'To Moon Pier', zh: '往月碼頭' },
+  },
+  {
+    id: 'portal-moon-town',
+    from: 'moonpier',
+    to: 'town',
+    x: 0,
+    z: 22,
+    radius: 2.4,
+    label: { en: 'Back to Town', zh: '回鎮' },
+  },
+  {
+    id: 'portal-rift-town',
+    from: 'rift',
+    to: 'town',
+    x: 0,
+    z: 22,
+    radius: 2.4,
+    label: { en: 'Close rift', zh: '關閉裂隙' },
+  },
+  {
+    id: 'portal-delve-town',
+    from: 'delve',
+    to: 'town',
+    x: 0,
+    z: 22,
+    radius: 2.4,
+    label: { en: 'Climb out', zh: '爬出深潛' },
   },
 ]
 
@@ -847,6 +967,7 @@ export const HARBOR_RPG_MONSTER_KINDS = [
   'raid-herald',
   'raid-depth',
   'raid-sovereign',
+  'world-colossus',
 ] as const
 export type HarborRpgMonsterKind = (typeof HARBOR_RPG_MONSTER_KINDS)[number]
 
@@ -1307,6 +1428,38 @@ export const HARBOR_RPG_MONSTER_DEFS: Record<HarborRpgMonsterKind, HarborRpgMons
       { item: 'rpg-ring-tide', chance: 0.3, qty: 1 },
     ],
   },
+  'world-colossus': {
+    kind: 'world-colossus',
+    name: { en: 'Ash Colossus', zh: '灰燼巨像' },
+    hp: 520,
+    atk: 16,
+    xp: 280,
+    gold: 90,
+    aggro: 20,
+    speed: 1.6,
+    color: 0xc06030,
+    boss: true,
+    phases: [
+      {
+        atHpPct: 1,
+        name: { en: 'Still Ash', zh: '靜灰' },
+        atkMult: 1,
+        speedMult: 1,
+      },
+      {
+        atHpPct: 0.5,
+        name: { en: 'Reach Awake', zh: '邊境醒' },
+        atkMult: 1.4,
+        speedMult: 1.25,
+        toast: { en: 'Ash Colossus wakes across the Reach!', zh: '灰燼巨像在邊境醒來！' },
+      },
+    ],
+    loot: [
+      { item: 'rpg-item-ash-core', chance: 1, qty: 2 },
+      { item: 'rpg-item-tide-coin', chance: 0.8, qty: 3 },
+      { item: 'rpg-armor-jade', chance: 0.12, qty: 1 },
+    ],
+  },
 }
 
 export const HARBOR_RPG_ZONE_SPAWNS: Record<
@@ -1356,6 +1509,23 @@ export const HARBOR_RPG_ZONE_SPAWNS: Record<
     { kind: 'raid-herald', count: 1 },
     { kind: 'raid-depth', count: 1 },
     { kind: 'raid-sovereign', count: 1 },
+  ],
+  ashreach: [
+    { kind: 'wolf', count: 6 },
+    { kind: 'bandit', count: 4 },
+    { kind: 'world-colossus', count: 1 },
+  ],
+  moonpier: [
+    { kind: 'toad', count: 6 },
+    { kind: 'tide-thrall', count: 4 },
+  ],
+  rift: [
+    { kind: 'wraith', count: 6 },
+    { kind: 'golem', count: 2 },
+  ],
+  delve: [
+    { kind: 'bandit', count: 4 },
+    { kind: 'golem', count: 2 },
   ],
 }
 

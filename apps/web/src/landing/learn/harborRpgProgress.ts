@@ -40,6 +40,7 @@ import {
   isHarborRpgMountId,
   type HarborRpgMountId,
 } from './harborRpgMounts'
+import { mergeRpgMedium, sanitizeRpgMedium } from './harborRpgMedium'
 import {
   HARBOR_RPG_CLASS_DEFS,
   HARBOR_RPG_CLASS_LEVEL_CAP,
@@ -160,6 +161,22 @@ export type HarborRpgBag = {
   unlockedTitles: string[]
   /** Equipped achievement title shown on Field (null = none). */
   activeTitleId: string | null
+  /** Soft friend list (usernames). */
+  friends: string[]
+  afk: boolean
+  afkNote: string
+  fleetName: string | null
+  fleetMotto: string
+  inbox: import('./harborRpgMedium').HarborRpgMail[]
+  /** Deed ids whose Reliquary reward was claimed. */
+  claimedDeeds: string[]
+  delveFloor: number
+  delveBest: number
+  delveMark: number
+  riftClears: number
+  riftMark: number
+  raceBestMs: number | null
+  raceRuns: number
 }
 
 const COSMETIC_SET = new Set<string>(HARBOR_RPG_COSMETICS)
@@ -221,6 +238,20 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     activeMountId: null,
     unlockedTitles: [],
     activeTitleId: null,
+    friends: [],
+    afk: false,
+    afkNote: '',
+    fleetName: null,
+    fleetMotto: '',
+    inbox: [],
+    claimedDeeds: [],
+    delveFloor: 1,
+    delveBest: 0,
+    delveMark: 0,
+    riftClears: 0,
+    riftMark: 0,
+    raceBestMs: null,
+    raceRuns: 0,
   }
 }
 
@@ -590,6 +621,7 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
         : 'normal',
     ...sanitizeMountProgress(o),
     ...sanitizeTitleProgress(o),
+    ...sanitizeRpgMedium(o),
   }
 }
 
@@ -845,6 +877,7 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
       const pick = b.activeTitleId ?? a.activeTitleId
       return pick && titles.has(pick) ? pick : null
     })(),
+    ...mergeRpgMedium(a, b),
   }
 }
 

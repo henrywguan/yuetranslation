@@ -121,6 +121,20 @@ export type HarborQuestProgress = {
     activeMountId?: string | null
     unlockedTitles?: string[]
     activeTitleId?: string | null
+    friends?: string[]
+    afk?: boolean
+    afkNote?: string
+    fleetName?: string | null
+    fleetMotto?: string
+    inbox?: { id: string; from: string; subject: string; body: string; gold: number; read: boolean; t: number }[]
+    claimedDeeds?: string[]
+    delveFloor?: number
+    delveBest?: number
+    delveMark?: number
+    riftClears?: number
+    riftMark?: number
+    raceBestMs?: number | null
+    raceRuns?: number
   }
 }
 
@@ -373,6 +387,7 @@ const HARBOR_RPG_ITEMS = new Set([
 ])
 const HARBOR_RPG_ZONES = new Set([
   'meadow','pinewood','ruins','marsh','town','crypt','tidehollow','chronicle','echoisle','tideraid',
+  'ashreach','moonpier','rift','delve',
 ])
 const HARBOR_RPG_QUEST_IDS = new Set([
   'quest-slime-hunt','quest-meadow-bones','quest-meadow-herbs','quest-meadow-wolves',
@@ -389,7 +404,7 @@ const HARBOR_RPG_QUEST_IDS = new Set([
 const HARBOR_RPG_MONSTERS = new Set([
   'slime','wolf','bandit','golem','toad','wraith','crypt-boss',
   'tide-thrall','tide-boss','ink-shade','chronicle-boss','echo-twin','echo-boss',
-  'raid-herald','raid-depth','raid-sovereign',
+  'raid-herald','raid-depth','raid-sovereign','world-colossus',
 ])
 const HARBOR_RPG_DIFFICULTIES = new Set(['normal', 'heroic'])
 const HARBOR_RPG_MOUNTS = new Set([
@@ -470,6 +485,20 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     activeMountId: null as string | null,
     unlockedTitles: [] as string[],
     activeTitleId: null as string | null,
+    friends: [] as string[],
+    afk: false,
+    afkNote: '',
+    fleetName: null as string | null,
+    fleetMotto: '',
+    inbox: [] as { id: string; from: string; subject: string; body: string; gold: number; read: boolean; t: number }[],
+    claimedDeeds: [] as string[],
+    delveFloor: 1,
+    delveBest: 0,
+    delveMark: 0,
+    riftClears: 0,
+    riftMark: 0,
+    raceBestMs: null as number | null,
+    raceRuns: 0,
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
@@ -761,7 +790,87 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     activeMountId,
     unlockedTitles,
     activeTitleId,
+    friends: sanitizeRpgFriends(o.friends),
+    afk: o.afk === true,
+    afkNote: typeof o.afkNote === 'string' ? o.afkNote.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 80) : '',
+    fleetName:
+      typeof o.fleetName === 'string' && o.fleetName.trim()
+        ? o.fleetName.trim().slice(0, 24)
+        : null,
+    fleetMotto: typeof o.fleetMotto === 'string' ? o.fleetMotto.trim().slice(0, 80) : '',
+    inbox: sanitizeRpgInbox(o.inbox),
+    claimedDeeds: sanitizeRpgDeedClaims(o.claimedDeeds),
+    delveFloor:
+      typeof o.delveFloor === 'number' && Number.isFinite(o.delveFloor)
+        ? Math.min(8, Math.max(1, Math.floor(o.delveFloor)))
+        : 1,
+    delveBest: rpgSoftCount(o.delveBest, 8),
+    delveMark: rpgSoftCount(o.delveMark, 1_000_000),
+    riftClears: rpgSoftCount(o.riftClears, 1_000_000),
+    riftMark: rpgSoftCount(o.riftMark, 1_000_000),
+    raceBestMs:
+      typeof o.raceBestMs === 'number' && Number.isFinite(o.raceBestMs) && o.raceBestMs > 0
+        ? Math.min(600_000, Math.floor(o.raceBestMs))
+        : null,
+    raceRuns: rpgSoftCount(o.raceRuns, 1_000_000),
   }
+}
+
+function rpgSoftCount(raw: unknown, max: number): number {
+  return typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 ? Math.min(max, Math.floor(raw)) : 0
+}
+
+const HARBOR_RPG_DEED_IDS = new Set([
+  'ach-first-char','ach-first-class','ach-slime-5','ach-slime-25','ach-boss-ash','ach-boss-pearl',
+  'ach-boss-ink','ach-boss-mirror','ach-boss-sovereign','ach-heroic-seal','ach-quest-5','ach-quest-20',
+  'ach-quest-all','ach-mount-starter','ach-mount-5','ach-mount-15','ach-mount-all','ach-gold-100',
+  'ach-gold-1000','ach-craft-first','ach-companion','ach-prestige','ach-zone-crypt','ach-zone-raid',
+  'ach-finder-ready',
+])
+
+function sanitizeRpgFriends(raw: unknown): string[] {
+  const out: string[] = []
+  if (!Array.isArray(raw)) return out
+  for (const name of raw) {
+    if (typeof name !== 'string') continue
+    const n = name.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 24)
+    if (!n || out.includes(n)) continue
+    out.push(n)
+    if (out.length >= 16) break
+  }
+  return out
+}
+
+function sanitizeRpgDeedClaims(raw: unknown): string[] {
+  const out: string[] = []
+  if (!Array.isArray(raw)) return out
+  for (const id of raw) {
+    if (typeof id === 'string' && HARBOR_RPG_DEED_IDS.has(id) && !out.includes(id)) out.push(id)
+  }
+  return out
+}
+
+function sanitizeRpgInbox(raw: unknown): { id: string; from: string; subject: string; body: string; gold: number; read: boolean; t: number }[] {
+  const out: { id: string; from: string; subject: string; body: string; gold: number; read: boolean; t: number }[] = []
+  if (!Array.isArray(raw)) return out
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue
+    const r = row as Record<string, unknown>
+    const id = typeof r.id === 'string' ? r.id.slice(0, 40) : ''
+    const from = typeof r.from === 'string' ? r.from.trim().slice(0, 24) : ''
+    if (!id || !from) continue
+    out.push({
+      id,
+      from,
+      subject: typeof r.subject === 'string' ? r.subject.trim().slice(0, 40) : 'Letter',
+      body: typeof r.body === 'string' ? r.body.replace(/[\u0000-\u001f]/g, '').slice(0, 180) : '',
+      gold: typeof r.gold === 'number' && r.gold > 0 ? Math.min(5000, Math.floor(r.gold)) : 0,
+      read: r.read === true,
+      t: typeof r.t === 'number' && Number.isFinite(r.t) ? Math.floor(r.t) : 0,
+    })
+    if (out.length >= 20) break
+  }
+  return out
 }
 
 const LEADERBOARD_DEFAULT_LIMIT = 25

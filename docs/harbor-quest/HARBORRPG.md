@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v6.3 — Quaternius wardrobe cosmetics · death UX · remote mounts · companion · deeds · crafts  
+**Status:** v6.4 — medium social + frontiers · Quaternius wardrobe · soft polish v6.2  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -71,6 +71,19 @@ Town outfitter (`rpg-vendor`) + **Wardrobe** tab sell / equip CC0 looks:
 | Quaternius Modular Outfits Fantasy | Ranger / Peasant kits (M/F), Ranger hood, pauldrons | `outfit` replaces Scout · `attach` layers on Scout |
 
 Bag: `ownedCosmetics`, `equippedCosmetic` (one look at a time). Presence / pose carry `equippedCosmetic` so remotes see the same GLB. Credits: `apps/web/public/assets/harbor-quest/cosmetics/CREDITS.md`. Research backlog: [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md).
+
+## Medium systems (v6.4)
+
+Soft client slices for the ClaudeCraft-style gaps that had no HarborRPG code. Still no anti-cheat.
+
+| System | Where |
+|---|---|
+| Friends, AFK, emotes, fleet, Ravenpost, duel challenge | Social tab + town Ravenpost |
+| Reliquary deed gold | Frontiers tab + town Reliquary (claim once per finished deed) |
+| Ash Reach world boss + Moon Pier | Overworld portals from Town |
+| Tide Rift + Lock Delve (floor 1–8, lockpick chest) | Frontiers tab |
+| Mount race | Town start/finish gates; under 45s while mounted pays 20g |
+| Weather | Render-only, stable per zone (`harborRpgWeatherForZone`) |
 
 ## Wiki (v6.1)
 
