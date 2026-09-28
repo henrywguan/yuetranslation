@@ -16,6 +16,7 @@ import {
   practicePartnerMapRegions,
   practicePartnerMapScrolls,
 } from './practicePartnerMapLayout.ts'
+import { LESSON_TALES, practicePartnerLessonCard, practicePartnerRegionCard } from './practicePartnerMapStory.ts'
 
 const empty = emptyPracticePartnerPath()
 const scrolls = practicePartnerMapScrolls(empty)
@@ -78,6 +79,19 @@ opened.units.common = [4, 4, 4]
 assert.equal(practicePartnerChapterReveal(opened, 'common'), 1)
 assert.match(practicePartnerChapterTale(opened, 'common'), /gate is open/)
 
+const tales = scrolls.map((row) => practicePartnerLessonCard(row).tale)
+assert.equal(tales.length, 48)
+assert.equal(new Set(tales).size, 48)
+for (const beats of Object.values(LESSON_TALES)) assert.equal(beats.length, 12)
+const sealedCard = practicePartnerLessonCard(scrolls[0]!)
+assert.equal(sealedCard.kicker.includes('Still ink'), true)
+assert.match(sealedCard.before, /The drill has not started/)
+assert.match(sealedCard.how, /港灣/)
+const litScroll = colored.find((row) => row.colored)
+assert.ok(litScroll)
+assert.match(practicePartnerLessonCard(litScroll!).kicker, /Lit/)
+assert.match(practicePartnerRegionCard(regions[0]!, empty).tale, /stone gate/)
+
 const aspect = PARTNER_MAP_VIEWBOX.h / PARTNER_MAP_VIEWBOX.w
 const phone = partnerMapLayerSize(390, 700)
 assert.ok(phone.w >= 390)
@@ -103,6 +117,17 @@ assert.match(artSrc, /preserveAspectRatio="none"/)
 assert.match(artSrc, /PARTNER_MAP_VIEWBOX/)
 assert.match(depthSrc, /WuxiaFarPeaks/)
 assert.match(depthSrc, /WuxiaMistVeil/)
+assert.match(depthSrc, /skyGate/)
+assert.match(depthSrc, /skyMarket/)
+assert.match(depthSrc, /skyBamboo/)
+assert.match(depthSrc, /skyTerrace/)
+assert.match(depthSrc, /wuxia-wukong/)
+assert.match(depthSrc, /wuxia-rain/)
+assert.match(depthSrc, /wuxia-veil/)
+assert.match(mapSrc, /WuxiaSectionSky/)
+assert.match(mapSrc, /WuxiaNearWeather/)
+assert.match(mapSrc, /0\.9/)
+assert.match(mapSrc, /1\.06/)
 assert.match(mapSrc, /WuxiaFarPeaks/)
 assert.match(mapSrc, /WuxiaCloudFrame/)
 assert.match(mapSrc, /0\.38/)
