@@ -12,9 +12,23 @@ import {
   HARBOR_RPG_QUESTS,
   HARBOR_RPG_VENDOR,
   HARBOR_RPG_ZONE_META,
+  type HarborRpgDifficulty,
   type HarborRpgItemId,
   type HarborRpgZoneId,
 } from './harborRpgData'
+import {
+  HARBOR_RPG_FINDER_DUNGEONS,
+  HARBOR_RPG_FINDER_ROLES,
+  companionNameForRole,
+  finderDungeonLabel,
+  finderRoleFromClassId,
+  matchRpgFinderListings,
+  missingFinderRoles,
+  type HarborRpgFinderDungeon,
+  type HarborRpgFinderListing,
+  type HarborRpgFinderRole,
+} from './harborRpgFinder'
+import { harborRpgQuestUnlocked } from './harborRpgQuests'
 import {
   HARBOR_RPG_CLASSES,
   HARBOR_RPG_CLASS_DEFS,
@@ -43,7 +57,7 @@ import { professionLevelFromXp } from './harborRpgProfessions'
 import {
   createRpgParty,
   HARBOR_RPG_COMPANION_COST,
-  toggleRpgFinderLooking,
+  setRpgFinderQueue,
   type HarborRpgPartyState,
 } from './harborRpgSocial'
 import { HARBOR_RPG_CAMPAIGN, HARBOR_RPG_CHAPTERS } from './harborRpgLore'
@@ -76,7 +90,12 @@ type Props = {
     loot: { id: HarborRpgItemId; qty: number }[]
   } | null
   trade: HarborRpgTradeSession | null
-  remotes: { userId: string; username: string }[]
+  remotes: {
+    userId: string
+    username: string
+    lookingRole?: HarborRpgFinderRole | null
+    lookingDungeon?: HarborRpgFinderDungeon | null
+  }[]
   partyLive: HarborRpgPartyState | null
   partyInvite: import('./harborRpgSocial').HarborRpgPartyInvite | null
   onInteract: () => void
@@ -109,6 +128,9 @@ type Props = {
   onInviteParty: (peerId: string) => void
   onAcceptPartyInvite: () => void
   onDeclinePartyInvite: () => void
+  onSetDifficulty: (d: HarborRpgDifficulty) => void
+  onFinderQueueChange: (party: HarborRpgPartyState) => void
+  onFillCompanionRole: (role: HarborRpgFinderRole) => void
   onExitGame: () => void
 }
 
@@ -152,6 +174,9 @@ export function HarborRpgPanel({
   onInviteParty,
   onAcceptPartyInvite,
   onDeclinePartyInvite,
+  onSetDifficulty,
+  onFinderQueueChange,
+  onFillCompanionRole,
   onExitGame,
 }: Props) {
   const [tab, setTab] = useState<
@@ -161,6 +186,10 @@ export function HarborRpgPanel({
   const [creating, setCreating] = useState(false)
   const [spellTip, setSpellTip] = useState<string | null>(null)
   const [castFlash, setCastFlash] = useState<string | null>(null)
+  const [finderRole, setFinderRole] = useState<HarborRpgFinderRole>(() =>
+    finderRoleFromClassId(bag.classId),
+  )
+  const [finderDungeon, setFinderDungeon] = useState<HarborRpgFinderDungeon>('crypt')
   const [party, setParty] = useState<HarborRpgPartyState>(() =>
     createRpgParty(
       'local',
@@ -526,6 +555,24 @@ export function HarborRpgPanel({
             <p className="hq-rpg-hint">
               {HARBOR_RPG_CAMPAIGN.title.en} — {HARBOR_RPG_CAMPAIGN.tagline.en}
             </p>
+            <p className="hq-rpg-hint">
+              Instance difficulty:{' '}
+              <button
+                type="button"
+                className={`hq-btn ${bag.difficulty === 'normal' ? 'hq-btn--solid' : 'hq-btn--ghost'}`}
+                onClick={() => onSetDifficulty('normal')}
+              >
+                Normal
+              </button>{' '}
+              <button
+                type="button"
+                className={`hq-btn ${bag.difficulty === 'heroic' ? 'hq-btn--solid' : 'hq-btn--ghost'}`}
+                onClick={() => onSetDifficulty('heroic')}
+              >
+                Heroic
+              </button>
+              {bag.difficulty === 'heroic' ? ' · +HP/ATK/loot in instances' : ''}
+            </p>
             <ul className="hq-rpg-inv">
               {HARBOR_RPG_CHAPTERS.map((ch) => (
                 <li key={ch.id} className="hq-rpg-inv-row">
@@ -540,36 +587,39 @@ export function HarborRpgPanel({
                 </li>
               ))}
             </ul>
-          <ul className="hq-rpg-quest-list">
-            {HARBOR_RPG_QUESTS.map((q) => {
-              const prog = bag.quests.find((row) => row.id === q.id)
-              return (
-                <li key={q.id} className="hq-rpg-quest">
-                  <strong>{q.name.en}</strong>
-                  <p>{q.blurb.en}</p>
-                  {prog?.claimed ? (
-                    <span className="hq-rpg-hint">Claimed</span>
-                  ) : prog ? (
-                    <button
-                      type="button"
-                      className="hq-btn hq-btn--solid"
-                      onClick={() => onClaimQuest(q.id)}
-                    >
-                      Turn in ({prog.progress}/{q.need})
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="hq-btn hq-btn--ghost"
-                      onClick={() => onAcceptQuest(q.id)}
-                    >
-                      Accept
-                    </button>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
+            <ul className="hq-rpg-quest-list">
+              {HARBOR_RPG_QUESTS.map((q) => {
+                const prog = bag.quests.find((row) => row.id === q.id)
+                const unlocked = harborRpgQuestUnlocked(bag, q.id)
+                return (
+                  <li key={q.id} className="hq-rpg-quest">
+                    <strong>{q.name.en}</strong>
+                    <p>{q.blurb.en}</p>
+                    {!unlocked && !prog ? (
+                      <span className="hq-rpg-hint">Locked — finish prior quests</span>
+                    ) : prog?.claimed ? (
+                      <span className="hq-rpg-hint">Claimed</span>
+                    ) : prog ? (
+                      <button
+                        type="button"
+                        className="hq-btn hq-btn--solid"
+                        onClick={() => onClaimQuest(q.id)}
+                      >
+                        Turn in ({prog.progress}/{q.need})
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="hq-btn hq-btn--ghost"
+                        onClick={() => onAcceptQuest(q.id)}
+                      >
+                        Accept
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
           </>
         ) : null}
 
@@ -877,7 +927,7 @@ export function HarborRpgPanel({
         {tab === 'party' ? (
           <>
             <p className="hq-rpg-hint">
-              Party {party.code} · {party.members.length}/5 · Realtime invites
+              Party {party.code} · {party.members.length}/5 · Dungeon Finder roles
             </p>
             {partyInvite ? (
               <div className="hq-rpg-loot-roll" role="dialog" aria-label="Party invite">
@@ -904,9 +954,115 @@ export function HarborRpgPanel({
             ) : null}
             <ul className="hq-rpg-inv">
               {party.members.map((m) => (
-                <li key={m.userId}>{m.name}</li>
+                <li key={m.userId}>
+                  {m.name}
+                  {m.role ? ` · ${m.role}` : ''}
+                </li>
               ))}
             </ul>
+            <p className="hq-rpg-hint">Your role</p>
+            <div className="hq-rpg-create-actions">
+              {HARBOR_RPG_FINDER_ROLES.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`hq-btn ${finderRole === r ? 'hq-btn--solid' : 'hq-btn--ghost'}`}
+                  onClick={() => setFinderRole(r)}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <p className="hq-rpg-hint">Dungeon</p>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_FINDER_DUNGEONS.map((d) => {
+                const label = finderDungeonLabel(d)
+                return (
+                  <li key={d} className="hq-rpg-inv-row">
+                    <span>
+                      {label.en} <span lang="zh-HK">{label.zh}</span>
+                    </span>
+                    <button type="button" onClick={() => setFinderDungeon(d)}>
+                      {finderDungeon === d ? 'Selected' : 'Select'}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+            <button
+              type="button"
+              className="hq-btn hq-btn--solid"
+              onClick={() => {
+                const next = setRpgFinderQueue(party, {
+                  looking: !party.looking,
+                  role: finderRole,
+                  dungeon: finderDungeon,
+                })
+                setParty(next)
+                onFinderQueueChange(next)
+                onPartySizeChange(Math.max(1, next.members.length))
+              }}
+            >
+              {party.looking
+                ? `Stop looking (${party.lookingRole ?? finderRole} · ${party.lookingDungeon ?? finderDungeon})`
+                : `Looking as ${finderRole} · ${finderDungeonLabel(finderDungeon).en}`}
+            </button>
+            {(() => {
+              const listings: HarborRpgFinderListing[] = remotes
+                .filter((r) => r.lookingRole && r.lookingDungeon)
+                .map((r) => ({
+                  userId: r.userId,
+                  username: r.username,
+                  role: r.lookingRole!,
+                  dungeon: r.lookingDungeon!,
+                  t: Date.now(),
+                }))
+              const matches = party.looking
+                ? matchRpgFinderListings({
+                    selfRole: party.lookingRole ?? finderRole,
+                    dungeon: party.lookingDungeon ?? finderDungeon,
+                    listings,
+                    selfUserId: party.leaderId,
+                  })
+                : []
+              const missing = missingFinderRoles([
+                party.lookingRole ?? finderRole,
+                ...matches.map((m) => m.role),
+                ...party.members.map((m) => m.role).filter(Boolean) as HarborRpgFinderRole[],
+              ])
+              return (
+                <>
+                  <p className="hq-rpg-hint">
+                    Matches · need {missing.length ? missing.join(', ') : 'full soft comp'}
+                  </p>
+                  <ul className="hq-rpg-inv">
+                    {matches.length === 0 ? (
+                      <li className="hq-rpg-hint">No complementary remotes yet</li>
+                    ) : null}
+                    {matches.map((m) => (
+                      <li key={m.userId} className="hq-rpg-inv-row">
+                        <span>
+                          {m.username} · {m.role}
+                        </span>
+                        <button type="button" onClick={() => onInviteParty(m.userId)}>
+                          Invite
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {missing[0] ? (
+                    <button
+                      type="button"
+                      className="hq-btn hq-btn--ghost"
+                      onClick={() => onFillCompanionRole(missing[0]!)}
+                    >
+                      Fill {missing[0]} with {companionNameForRole(missing[0]!)} (
+                      {HARBOR_RPG_COMPANION_COST}g)
+                    </button>
+                  ) : null}
+                </>
+              )
+            })()}
             <p className="hq-rpg-hint">Invite nearby remotes</p>
             <ul className="hq-rpg-inv">
               {remotes.length === 0 ? (
@@ -914,22 +1070,16 @@ export function HarborRpgPanel({
               ) : null}
               {remotes.map((r) => (
                 <li key={r.userId} className="hq-rpg-inv-row">
-                  <span>{r.username}</span>
+                  <span>
+                    {r.username}
+                    {r.lookingRole ? ` · LFG ${r.lookingRole}` : ''}
+                  </span>
                   <button type="button" onClick={() => onInviteParty(r.userId)}>
                     Invite
                   </button>
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
-              className="hq-btn hq-btn--ghost"
-              onClick={() => {
-                setParty((p) => toggleRpgFinderLooking(p))
-              }}
-            >
-              {party.looking ? 'Stop looking' : 'Looking for party'}
-            </button>
             <button type="button" className="hq-btn hq-btn--solid" onClick={onHireCompanion}>
               Hire companion ({HARBOR_RPG_COMPANION_COST}g)
             </button>

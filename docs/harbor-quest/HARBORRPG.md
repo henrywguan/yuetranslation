@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v4 — story dungeons · boss phases · live remotes/party  
+**Status:** v5 — quest density · Heroic · Tide raid · finder roles  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -37,8 +37,17 @@ Original Harbor/Jade story (tone inspiration only: BDO · ESO · MapleStory). Fu
 | II Name Hunger | `tidehollow` (via Marsh) | Pearl Host |
 | III Self-Writing | `chronicle` (via Town) | Ink Archivist |
 | IV Who Keeps the Voyage | `echoisle` (via Pinewood) | Mirror Ferry |
+| V Tide Remembers (raid) | `tideraid` (via Town) | Herald → Depth → Sovereign |
 
-Bosses advance phases on HP thresholds (toast + SFX + glow).
+~40 hub + story quests with **chapter gating** (`requires`). Bosses advance phases on HP thresholds (toast + SFX + glow).
+
+## Heroic
+
+Bag `difficulty: 'normal' | 'heroic'`. Heroic instances scale HP/ATK/XP/gold and bonus loot (+ Heroic Ferry Seals on bosses). Toggle on Quests tab; remount the instance to apply.
+
+## Dungeon Finder roles
+
+Party tab: pick **tank / heal / dps** + dungeon → Looking. Presence carries LFG role/dungeon. Soft match invites complementary remotes; missing roles can be filled by companion hire.
 
 ## Shared world tick
 
@@ -50,12 +59,13 @@ Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`
 - Party invites end-to-end on Party tab (invite remotes → accept/decline dialog → broadcast party state).
 - Trade windows + contested loot remain soft-trust.
 
-## v4 surface
+## v5 surface
 
-1. **9 overworld/town zones + 4 instances** (Ash Crypt · Black Tide Hollow · Chronicle Vault · Echo Isle)
-2. **Combat:** GCD · MP · hit/miss/crit · threat · **boss phases**
+1. **10 zones** (5 overworld + Town + 4 story instances + Tide Remembers raid)
+2. **Combat:** GCD · MP · hit/miss/crit · threat · **boss phases** · Heroic scale
 3. **9×3 classes/specs** · spellbook · trade · market · bank · professions
-4. **Art/SFX:** curated dungeon props + boss meshes; soft WebAudio dungeon/phase/party stings
+4. **Quest density** · finder roles · companion fill
+5. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
 
 ## Feel bar
 

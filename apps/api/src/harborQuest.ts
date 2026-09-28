@@ -116,6 +116,7 @@ export type HarborQuestProgress = {
     skillXp?: Record<string, number>
     talents?: Record<string, number>
     skillBar?: string[]
+    difficulty?: string
   }
 }
 
@@ -349,25 +350,35 @@ const HARBOR_RPG_COSMETICS = new Set([
 ])
 const HARBOR_RPG_ITEMS = new Set([
   'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide','rpg-item-ore','rpg-item-reed','rpg-item-ash-core',
-  'rpg-item-pearl','rpg-item-silk','rpg-item-tide-coin',
+  'rpg-item-pearl','rpg-item-silk','rpg-item-tide-coin','rpg-item-heroic-seal',
   'rpg-potion-heal','rpg-potion-might','rpg-potion-mana',
-  'rpg-weapon-stick','rpg-weapon-blade','rpg-weapon-ash','rpg-weapon-tide',
+  'rpg-weapon-stick','rpg-weapon-blade','rpg-weapon-ash','rpg-weapon-tide','rpg-weapon-sovereign',
   'rpg-offhand-buckler','rpg-offhand-tome','rpg-offhand-lantern',
-  'rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail','rpg-armor-jade',
+  'rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail','rpg-armor-jade','rpg-armor-sovereign',
   'rpg-head-hood','rpg-head-helm','rpg-legs-wraps','rpg-legs-greaves','rpg-feet-sandals','rpg-feet-boots',
-  'rpg-ring-jade','rpg-ring-tide','rpg-trinket-lantern','rpg-trinket-compass',
+  'rpg-ring-jade','rpg-ring-tide','rpg-trinket-lantern','rpg-trinket-compass','rpg-trinket-chronometer',
 ])
 const HARBOR_RPG_ZONES = new Set([
-  'meadow','pinewood','ruins','marsh','town','crypt','tidehollow','chronicle','echoisle',
+  'meadow','pinewood','ruins','marsh','town','crypt','tidehollow','chronicle','echoisle','tideraid',
 ])
 const HARBOR_RPG_QUEST_IDS = new Set([
-  'quest-slime-hunt','quest-wolf-pelts','quest-ruin-shards','quest-marsh-toads',
-  'quest-crypt-warden','quest-tide-pearl','quest-chronicle-ink','quest-echo-mirror','quest-first-craft',
+  'quest-slime-hunt','quest-meadow-bones','quest-meadow-herbs','quest-meadow-wolves',
+  'quest-wolf-pelts','quest-pine-hide','quest-pine-ore','quest-pine-slimes','quest-pine-pack',
+  'quest-ruin-shards','quest-ruin-bandits','quest-ruin-golem','quest-ruin-ore','quest-ruin-patrol',
+  'quest-marsh-toads','quest-marsh-reeds','quest-marsh-slimes','quest-marsh-herbs','quest-marsh-gate',
+  'quest-first-craft','quest-town-mana','quest-town-smith','quest-town-mail','quest-town-coins',
+  'quest-crypt-warden','quest-crypt-wraiths','quest-crypt-core',
+  'quest-tide-pearl','quest-tide-thralls','quest-tide-pearls',
+  'quest-chronicle-ink','quest-chronicle-shades','quest-chronicle-silk',
+  'quest-echo-mirror','quest-echo-twins','quest-echo-pearl',
+  'quest-raid-herald','quest-raid-depth','quest-raid-sovereign','quest-raid-seal',
 ])
 const HARBOR_RPG_MONSTERS = new Set([
   'slime','wolf','bandit','golem','toad','wraith','crypt-boss',
   'tide-thrall','tide-boss','ink-shade','chronicle-boss','echo-twin','echo-boss',
+  'raid-herald','raid-depth','raid-sovereign',
 ])
+const HARBOR_RPG_DIFFICULTIES = new Set(['normal', 'heroic'])
 const HARBOR_RPG_GEAR_SLOTS = ['weapon','offhand','head','chest','legs','feet','ring','trinket'] as const
 const HARBOR_RPG_PROFESSIONS = ['herbalism','mining','alchemy','smithing'] as const
 const HARBOR_RPG_CLASS_IDS = new Set([
@@ -687,6 +698,10 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     skillXp,
     talents,
     skillBar,
+    difficulty:
+      typeof o.difficulty === 'string' && HARBOR_RPG_DIFFICULTIES.has(o.difficulty)
+        ? o.difficulty
+        : 'normal',
   }
 }
 

@@ -53,6 +53,16 @@ export const HARBOR_RPG_CHAPTERS = [
       zh: '鏡中碼頭：每位水手遇見更溫柔的自己——直到分身決定誰留下航程。',
     },
   },
+  {
+    id: 'ch-raid',
+    order: 5,
+    dungeon: 'tideraid' as const,
+    name: { en: 'Tide Remembers', zh: '潮之記得' },
+    blurb: {
+      en: 'Three wings under one cracked chronometer: Herald, Depth Archivist, and the Tide Sovereign who would rewrite every dock’s hour.',
+      zh: '裂時計下三翼：使者、深淵典吏、與要改寫每個碼頭時刻的主潮。',
+    },
+  },
 ] as const
 
 export type HarborRpgChapterId = (typeof HARBOR_RPG_CHAPTERS)[number]['id']

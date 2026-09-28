@@ -41,6 +41,8 @@ export type HarborRpgPresenceState = {
   zone: HarborRpgZoneId
   level: number
   partyId: string | null
+  lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
+  lookingDungeon: import('./harborRpgFinder').HarborRpgFinderDungeon | null
   updatedAt: number
 }
 
@@ -83,6 +85,14 @@ function sanitizePresence(raw: unknown, key: string): HarborRpgPresenceState | n
         ? Math.max(1, Math.floor(o.level))
         : 1,
     partyId: typeof o.partyId === 'string' ? o.partyId.slice(0, 40) : null,
+    lookingRole:
+      o.lookingRole === 'tank' || o.lookingRole === 'heal' || o.lookingRole === 'dps'
+        ? o.lookingRole
+        : null,
+    lookingDungeon:
+      typeof o.lookingDungeon === 'string' && o.lookingDungeon.length < 24
+        ? (o.lookingDungeon as HarborRpgPresenceState['lookingDungeon'])
+        : null,
     updatedAt:
       typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
         ? o.updatedAt
@@ -147,6 +157,8 @@ export type HarborRpgPresenceSession = {
     level: number
     partyId: string | null
     username?: string
+    lookingRole?: HarborRpgPresenceState['lookingRole']
+    lookingDungeon?: HarborRpgPresenceState['lookingDungeon']
   }) => Promise<void>
   broadcastPose: (pose: {
     x: number
@@ -241,6 +253,8 @@ export function startHarborRpgPresence(opts: {
         zone: pose.zone,
         level: pose.level,
         partyId: pose.partyId,
+        lookingRole: pose.lookingRole ?? null,
+        lookingDungeon: pose.lookingDungeon ?? null,
         updatedAt: Date.now(),
       }
       await channel.track(payload)

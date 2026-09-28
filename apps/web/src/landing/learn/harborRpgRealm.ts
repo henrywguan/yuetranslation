@@ -283,10 +283,18 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), hqMat(P.skin))
     head.position.y = 1.15
     g.add(head)
-  } else if (kind === 'crypt-boss' || kind === 'tide-boss' || kind === 'chronicle-boss' || kind === 'echo-boss') {
+  } else if (
+    kind === 'crypt-boss' ||
+    kind === 'tide-boss' ||
+    kind === 'chronicle-boss' ||
+    kind === 'echo-boss' ||
+    kind === 'raid-herald' ||
+    kind === 'raid-depth' ||
+    kind === 'raid-sovereign'
+  ) {
     const body = hqBox(
-      kind === 'tide-boss' ? 1.35 : 1.2,
-      kind === 'chronicle-boss' ? 2.0 : 1.8,
+      kind === 'tide-boss' || kind === 'raid-sovereign' ? 1.35 : 1.2,
+      kind === 'chronicle-boss' || kind === 'raid-depth' ? 2.0 : 1.8,
       0.9,
       def.color,
       0,
@@ -299,13 +307,15 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
     const glow = new THREE.Mesh(
       new THREE.SphereGeometry(0.28, 10, 8),
       hqMatSmooth(
-        kind === 'tide-boss'
+        kind === 'tide-boss' || kind === 'raid-sovereign'
           ? 0x60e0ff
-          : kind === 'chronicle-boss'
+          : kind === 'chronicle-boss' || kind === 'raid-depth'
             ? 0xffe080
             : kind === 'echo-boss'
               ? 0xfff0a0
-              : 0xffc060,
+              : kind === 'raid-herald'
+                ? 0x80d0ff
+                : 0xffc060,
       ),
     )
     glow.position.set(0, 2.55, 0.35)
@@ -316,7 +326,7 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
       mirror.name = 'rpg-boss-mirror'
       g.add(mirror)
     }
-    if (kind === 'tide-boss') {
+    if (kind === 'tide-boss' || kind === 'raid-sovereign') {
       const pearl = new THREE.Mesh(
         new THREE.SphereGeometry(0.35, 12, 10),
         hqMatSmooth(0xd0f0ff),
@@ -324,6 +334,15 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
       pearl.position.set(0, 1.2, 0.55)
       pearl.name = 'rpg-boss-pearl'
       g.add(pearl)
+    }
+    if (kind === 'raid-herald') {
+      const bell = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.35, 0.5, 10),
+        hqMatSmooth(0xc0e8ff),
+      )
+      bell.position.set(0.55, 1.4, 0.2)
+      bell.name = 'rpg-boss-bell'
+      g.add(bell)
     }
   } else if (kind === 'wraith' || kind === 'ink-shade') {
     const body = new THREE.Mesh(
@@ -526,6 +545,35 @@ function stampEchoIsle(root: THREE.Group, look: HarborRpgZoneLook, rng: () => nu
   }
 }
 
+function stampTideRaid(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
+  const floor = hqBox(28, 0.2, 40, look.stone, 0, 0.08, -8)
+  floor.name = 'rpg-raid-floor'
+  root.add(floor)
+  for (let wing = 0; wing < 3; wing++) {
+    const z = -4 - wing * 7
+    const dais = hqBox(6, 0.4, 6, look.accent, wing === 1 ? -8 : wing === 2 ? 8 : 0, 0.25, z)
+    dais.name = `rpg-raid-dais-${wing}`
+    root.add(dais)
+    const pillar = hqPost(0.5, 0.5, 3.2, look.stone)
+    pillar.position.set(wing === 1 ? -8 : wing === 2 ? 8 : 0, 1.8, z - 2.5)
+    pillar.name = `rpg-raid-pillar-${wing}`
+    root.add(pillar)
+  }
+  const chron = new THREE.Mesh(
+    new THREE.TorusGeometry(1.4, 0.12, 8, 24),
+    hqMatSmooth(0x60e0ff),
+  )
+  chron.position.set(0, 3.2, -18)
+  chron.rotation.x = Math.PI / 2
+  chron.name = 'rpg-raid-chrono'
+  root.add(chron)
+  for (let i = 0; i < 12; i++) {
+    const shard = hqBox(0.3, 0.8 + rng() * 0.6, 0.3, look.accent, (rng() - 0.5) * 22, 0.5, (rng() - 0.5) * 28)
+    shard.name = 'rpg-raid-shard'
+    root.add(shard)
+  }
+}
+
 function stampGatherNodes(root: THREE.Group, zone: HarborRpgZoneId) {
   for (const n of HARBOR_RPG_GATHER_NODES) {
     if (n.zone !== zone) continue
@@ -588,6 +636,7 @@ export function buildRpgZoneScene(zone: HarborRpgZoneId = 'meadow'): THREE.Group
   if (zone === 'tidehollow') stampTideHollow(root, look, rng)
   if (zone === 'chronicle') stampChronicle(root, look, rng)
   if (zone === 'echoisle') stampEchoIsle(root, look, rng)
+  if (zone === 'tideraid') stampTideRaid(root, look, rng)
   if (zone === 'marsh') {
     for (let i = 0; i < 8; i++) {
       const pool = new THREE.Mesh(

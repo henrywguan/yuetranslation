@@ -4776,7 +4776,11 @@ export function createHarborWorld(
     world.add(rpgScene)
     fxIndexDirty = true
     resetRpgCombatSessionCd()
-    rpgMonsters = spawnRpgMonsters(rpgZone, HARBOR_RPG_ZONE_META[rpgZone].seed)
+    rpgMonsters = spawnRpgMonsters(
+      rpgZone,
+      HARBOR_RPG_ZONE_META[rpgZone].seed,
+      rpgBagLive.difficulty ?? 'normal',
+    )
     for (const m of rpgMonsters) {
       const mesh = buildRpgMonsterObject(m)
       rpgMonsterMeshes.set(m.id, mesh)

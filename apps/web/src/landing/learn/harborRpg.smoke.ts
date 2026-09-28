@@ -48,11 +48,12 @@ import {
 } from './harborRpgProgress.ts'
 import { buildRpgZoneScene } from './harborRpgRealm.ts'
 
-assert.equal(HARBOR_RPG_ZONES.length, 9)
+assert.equal(HARBOR_RPG_ZONES.length, 10)
 assert.ok(HARBOR_RPG_ZONE_META.crypt.instance, 'crypt is instanced')
 assert.ok(HARBOR_RPG_ZONE_META.tidehollow.instance)
 assert.ok(HARBOR_RPG_ZONE_META.chronicle.instance)
 assert.ok(HARBOR_RPG_ZONE_META.echoisle.instance)
+assert.ok(HARBOR_RPG_ZONE_META.tideraid.instance)
 assert.ok(HARBOR_RPG_ABILITIES.length >= 4)
 assert.ok(HARBOR_RPG_GEAR_SLOTS.length === 8)
 assert.ok(HARBOR_RPG_ITEMS.length >= 20)
@@ -60,7 +61,8 @@ assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('crypt-boss'))
 assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('tide-boss'))
 assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('chronicle-boss'))
 assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('echo-boss'))
-assert.ok(HARBOR_RPG_QUESTS.length >= 9)
+assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('raid-sovereign'))
+assert.ok(HARBOR_RPG_QUESTS.length >= 35, `quests ${HARBOR_RPG_QUESTS.length}`)
 assert.ok(HARBOR_RPG_PROFESSIONS.length === 4)
 assert.ok(HARBOR_RPG_CRAFT_RECIPES.length >= 4)
 assert.ok(HARBOR_RPG_GATHER_NODES.length >= 4)
@@ -68,6 +70,7 @@ assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'crypt'))
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'tidehollow'))
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'chronicle'))
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'echoisle'))
+assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'tideraid'))
 
 for (const zone of HARBOR_RPG_ZONES) {
   const scene = buildRpgZoneScene(zone)
@@ -358,7 +361,58 @@ resetRpgCombatSessionCd()
 
 import { HARBOR_RPG_CHAPTERS, HARBOR_RPG_CAMPAIGN } from './harborRpgLore.ts'
 assert.match(HARBOR_RPG_CAMPAIGN.title.en, /Tide/)
-assert.equal(HARBOR_RPG_CHAPTERS.length, 4)
+assert.equal(HARBOR_RPG_CHAPTERS.length, 5)
+
+import {
+  classRoleToFinderRole,
+  matchRpgFinderListings,
+  missingFinderRoles,
+} from './harborRpgFinder.ts'
+assert.equal(classRoleToFinderRole('tank'), 'tank')
+assert.equal(classRoleToFinderRole('healer'), 'heal')
+assert.equal(classRoleToFinderRole('melee'), 'dps')
+assert.deepEqual(missingFinderRoles(['dps']), ['tank', 'heal', 'dps', 'dps'])
+{
+  const matches = matchRpgFinderListings({
+    selfRole: 'dps',
+    dungeon: 'crypt',
+    selfUserId: 'me',
+    listings: [
+      { userId: 't1', username: 'T', role: 'tank', dungeon: 'crypt', t: Date.now() },
+      { userId: 'h1', username: 'H', role: 'heal', dungeon: 'crypt', t: Date.now() },
+      { userId: 'd2', username: 'D', role: 'dps', dungeon: 'tidehollow', t: Date.now() },
+    ],
+  })
+  assert.equal(matches.length, 2)
+  assert.ok(matches.some((m) => m.role === 'tank'))
+  assert.ok(matches.some((m) => m.role === 'heal'))
+}
+
+import { harborRpgQuestUnlocked } from './harborRpgQuests.ts'
+{
+  const empty = emptyHarborRpgBag()
+  assert.equal(harborRpgQuestUnlocked(empty, 'quest-slime-hunt'), true)
+  assert.equal(harborRpgQuestUnlocked(empty, 'quest-crypt-warden'), false)
+  const gated = {
+    ...empty,
+    quests: [
+      { id: 'quest-ruin-patrol' as const, progress: 4, complete: true, claimed: true },
+    ],
+  }
+  assert.equal(harborRpgQuestUnlocked(gated, 'quest-crypt-warden'), true)
+}
+
+{
+  const normal = spawnRpgMonsters('crypt', 1, 'normal')
+  const heroic = spawnRpgMonsters('crypt', 1, 'heroic')
+  const nb = normal.find((m) => m.kind === 'crypt-boss')!
+  const hb = heroic.find((m) => m.kind === 'crypt-boss')!
+  assert.ok(hb.maxHp > nb.maxHp, 'heroic boss HP scales')
+  const raid = spawnRpgMonsters('tideraid', 2, 'heroic')
+  assert.ok(raid.some((m) => m.kind === 'raid-herald'))
+  assert.ok(raid.some((m) => m.kind === 'raid-depth'))
+  assert.ok(raid.some((m) => m.kind === 'raid-sovereign'))
+}
 
 const worldSrc = readFileSync(new URL('./harborWorld.ts', import.meta.url), 'utf8')
 assert.match(worldSrc, /tickRpgCombat/, 'world ticks soft combat')
@@ -366,6 +420,7 @@ assert.match(worldSrc, /queueRpgAbility/, 'ability queue on world handle')
 assert.match(worldSrc, /onRpgContestedLoot/, 'contested loot callback')
 assert.match(worldSrc, /onRpgWorldTick|applyRpgWorldSnapshot/, 'shared world tick')
 assert.match(worldSrc, /onRpgBossPhase|boss-phase/, 'boss phase callback')
+assert.match(worldSrc, /difficulty/, 'heroic spawn wired')
 
 const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
 assert.match(playSrc, /HarborRpgPanel/, 'isolated RPG panel')
@@ -374,6 +429,7 @@ assert.match(playSrc, /is-rpg/, 'HUD isolation class')
 assert.match(playSrc, /onStartTrade|rpgTrade/, 'trade windows wired')
 assert.match(playSrc, /inviteToRpgParty|onInviteParty/, 'party invites E2E')
 assert.match(playSrc, /setRemotePlayers|rpgRemotes/, 'rpg remotes in world')
+assert.match(playSrc, /onSetDifficulty|onFinderQueueChange/, 'heroic + finder wired')
 
 const presenceSrc = readFileSync(new URL('./harborRpgPresence.ts', import.meta.url), 'utf8')
 assert.match(presenceSrc, /harbor-rpg-realm/)
@@ -381,18 +437,21 @@ assert.match(presenceSrc, /HARBOR_RPG_LOOT_EVENT/)
 assert.match(presenceSrc, /HARBOR_RPG_PARTY_EVENT/)
 assert.match(presenceSrc, /HARBOR_RPG_WORLD_EVENT/)
 assert.match(presenceSrc, /HARBOR_RPG_TRADE_EVENT/)
+assert.match(presenceSrc, /lookingRole/)
 
 const panelSrc = readFileSync(new URL('./HarborRpgPanel.tsx', import.meta.url), 'utf8')
 assert.match(panelSrc, /spellbook|Spells/, 'spellbook UI')
 assert.match(panelSrc, /Trade/, 'trade tab')
 assert.match(panelSrc, /HARBOR_RPG_CHAPTERS|Tide That Remembers/, 'campaign chapters')
+assert.match(panelSrc, /Heroic|finderRole|Looking as/, 'heroic + finder UI')
 
 const docs = readFileSync(new URL('../../../../../docs/harbor-quest/HARBORRPG.md', import.meta.url), 'utf8')
 assert.match(docs, /soft Realtime|no dedicated anti-cheat/i)
-assert.match(docs, /Ash Crypt|combat depth|World Market|Tideblade|prestige|9 classes|trade|Tide That Remembers|boss phase/i)
+assert.match(docs, /Ash Crypt|Heroic|Tide Remembers|finder|quest density|9 classes/i)
 
 assert.ok(HARBOR_RPG_ITEMS.length >= 30, 'expanded itemization')
 assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-tide'))
 assert.ok(HARBOR_RPG_ITEMS.includes('rpg-item-tide-coin'))
+assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-sovereign'))
 
 console.log('harborRpg.smoke: ok')

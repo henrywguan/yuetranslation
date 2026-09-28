@@ -30,6 +30,7 @@ import {
   sanitizeHarborRpgBag,
   selectHarborRpgClass,
   selectHarborRpgSpec,
+  setHarborRpgDifficulty,
   spendHarborRpgTalent,
   prestigeHarborRpgClass,
   withdrawRpgBank,
@@ -39,6 +40,7 @@ import {
   HARBOR_RPG_ITEM_DEFS,
   harborRpgQuestById,
   isHarborRpgZoneId,
+  type HarborRpgDifficulty,
   type HarborRpgItemId,
   type HarborRpgQuestId,
   type HarborRpgZoneId,
@@ -287,6 +289,14 @@ export function setHarborRpgZone(zone: HarborRpgZoneId): HarborProgress {
   return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
 }
 
+export function setHarborRpgInstanceDifficulty(
+  difficulty: HarborRpgDifficulty,
+): HarborProgress {
+  const p = read()
+  const bag = setHarborRpgDifficulty(sanitizeHarborRpgBag(p.rpg), difficulty)
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
 export function equipHarborRpgItem(itemId: HarborRpgItemId): HarborProgress | null {
   const p = read()
   const bag = sanitizeHarborRpgBag(p.rpg)
@@ -328,6 +338,12 @@ export function acceptHarborRpgQuest(questId: HarborRpgQuestId): HarborProgress 
   const def = harborRpgQuestById(questId)
   if (!def) return null
   if (bag.quests.some((q) => q.id === questId)) return null
+  const req = 'requires' in def ? def.requires : undefined
+  if (req && req.length > 0) {
+    for (const id of req) {
+      if (!bag.quests.some((q) => q.id === id && q.claimed)) return null
+    }
+  }
   bag.quests = [
     ...bag.quests,
     { id: questId, progress: 0, complete: false, claimed: false },

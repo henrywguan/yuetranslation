@@ -27,10 +27,11 @@ Ash Crypt (already shipped) is the prologue dungeon: embers of a war with no vic
 2. **Black Tide Hollow** (`tidehollow`) — Pearl Host. Calamity pearl hungers for **names**; phases strip buffs / raise threat / summon tide thralls.
 3. **Chronicle Vault** (`chronicle`) — Ink Archivist. Ledgers rewrite mid-fight; phases open rift adds and silence windows.
 4. **Echo Isle** (`echoisle`) — Mirror Ferry. Meet your twin; final phase forces a choice beat (soft: twin enrages if you hesitate / heal selfishly).
+5. **Tide Remembers** (`tideraid`) — three-wing raid: Tide Herald → Depth Archivist → Tide Sovereign. Heroic recommended.
 
 ## Party & Realtime
 
-Story assumes soft multiplayer: remotes visible in-zone, party invites on the Town finder, contested loot after boss kills. No anti-cheat host.
+Story assumes soft multiplayer: remotes visible in-zone, party invites on the Town finder (tank/heal/dps roles), contested loot after boss kills. No anti-cheat host.
 
 ## Feel bar
 

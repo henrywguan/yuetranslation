@@ -3,12 +3,18 @@
  * Client-authoritative; party/loot hooks for Realtime contested rolls.
  */
 import {
+  HARBOR_RPG_HEROIC_ATK_MULT,
+  HARBOR_RPG_HEROIC_GOLD_MULT,
+  HARBOR_RPG_HEROIC_HP_MULT,
+  HARBOR_RPG_HEROIC_LOOT_BONUS,
+  HARBOR_RPG_HEROIC_XP_MULT,
   HARBOR_RPG_MONSTER_DEFS,
   HARBOR_RPG_ZONE_META,
   HARBOR_RPG_ZONE_SPAWNS,
   harborRpgAbilityById,
   harborRpgQuestById,
   type HarborRpgAbilityId,
+  type HarborRpgDifficulty,
   type HarborRpgItemId,
   type HarborRpgMonsterKind,
   type HarborRpgZoneId,
@@ -104,9 +110,12 @@ function mulberry32(seed: number) {
 export function spawnRpgMonsters(
   zone: HarborRpgZoneId,
   seed: number,
+  difficulty: HarborRpgDifficulty = 'normal',
 ): HarborRpgMonsterRuntime[] {
   const packs = HARBOR_RPG_ZONE_SPAWNS[zone]
   const rng = mulberry32(seed ^ 0x4d4f4e53)
+  const heroic = difficulty === 'heroic' && Boolean(HARBOR_RPG_ZONE_META[zone].instance)
+  const hpMult = heroic ? HARBOR_RPG_HEROIC_HP_MULT : 1
   const out: HarborRpgMonsterRuntime[] = []
   let i = 0
   for (const pack of packs) {
@@ -115,15 +124,29 @@ export function spawnRpgMonsters(
       const ang = rng() * Math.PI * 2
       const rad =
         HARBOR_RPG_MONSTER_DEFS[pack.kind].boss ? 2 + rng() * 3 : 6 + rng() * 18
-      const x = Math.cos(ang) * rad
-      const z = Math.sin(ang) * rad - (HARBOR_RPG_MONSTER_DEFS[pack.kind].boss ? 4 : 2)
+      // Spread raid bosses along Z so the three-phase climb reads as wings
+      let x = Math.cos(ang) * rad
+      let z = Math.sin(ang) * rad - (HARBOR_RPG_MONSTER_DEFS[pack.kind].boss ? 4 : 2)
+      if (zone === 'tideraid' && def.boss) {
+        if (pack.kind === 'raid-herald') {
+          x = 0
+          z = -4
+        } else if (pack.kind === 'raid-depth') {
+          x = -8
+          z = -12
+        } else if (pack.kind === 'raid-sovereign') {
+          x = 8
+          z = -18
+        }
+      }
+      const hp = Math.max(1, Math.floor(def.hp * hpMult))
       out.push({
         id: `mob-${zone}-${i++}`,
         kind: pack.kind,
         x,
         z,
-        hp: def.hp,
-        maxHp: def.hp,
+        hp,
+        maxHp: hp,
         homeX: x,
         homeZ: z,
         attackCd: 0,
@@ -141,11 +164,16 @@ export function spawnRpgMonsters(
 function rollLoot(
   kind: HarborRpgMonsterKind,
   rng: () => number,
+  difficulty: HarborRpgDifficulty = 'normal',
 ): HarborRpgLootDrop[] {
   const def = HARBOR_RPG_MONSTER_DEFS[kind]
   const loot: HarborRpgLootDrop[] = []
+  const bonus = difficulty === 'heroic' ? HARBOR_RPG_HEROIC_LOOT_BONUS : 0
   for (const row of def.loot) {
-    if (rng() <= row.chance) loot.push({ id: row.item, qty: row.qty })
+    if (rng() <= Math.min(1, row.chance + bonus)) loot.push({ id: row.item, qty: row.qty })
+  }
+  if (difficulty === 'heroic' && def.boss && rng() < 0.55) {
+    loot.push({ id: 'rpg-item-heroic-seal', qty: 1 })
   }
   return loot
 }
@@ -274,10 +302,15 @@ function applyKillRewards(
   contested: boolean,
   now: number,
   skillId: string | null,
+  zone: HarborRpgZoneId,
 ): { bag: HarborRpgBag; xp: number; gold: number } {
   const defM = HARBOR_RPG_MONSTER_DEFS[kind]
-  const xpGain = defM.xp * rpgXpMultiplier(bag, now)
-  const goldGain = defM.gold * rpgCreditMultiplier(bag, now)
+  const heroic =
+    bag.difficulty === 'heroic' && Boolean(HARBOR_RPG_ZONE_META[zone].instance)
+  const xpMult = heroic ? HARBOR_RPG_HEROIC_XP_MULT : 1
+  const goldMult = heroic ? HARBOR_RPG_HEROIC_GOLD_MULT : 1
+  const xpGain = Math.floor(defM.xp * xpMult * rpgXpMultiplier(bag, now))
+  const goldGain = Math.floor(defM.gold * goldMult * rpgCreditMultiplier(bag, now))
   let next = {
     ...bag,
     xp: Math.min(50_000_000, bag.xp + xpGain),
@@ -457,8 +490,16 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
         m.alive = false
         m.respawnAt =
           instance && INSTANCE_NO_RESPAWN ? Number.POSITIVE_INFINITY : input.now + RESPAWN_MS
-        const loot = rollLoot(m.kind, rng)
-        const rewarded = applyKillRewards(bag, m.kind, loot, contested, input.now, null)
+        const loot = rollLoot(m.kind, rng, bag.difficulty)
+        const rewarded = applyKillRewards(
+          bag,
+          m.kind,
+          loot,
+          contested,
+          input.now,
+          null,
+          input.zone,
+        )
         bag = rewarded.bag
         events.push({
           type: 'kill',
@@ -572,8 +613,16 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
             instance && INSTANCE_NO_RESPAWN
               ? Number.POSITIVE_INFINITY
               : input.now + RESPAWN_MS
-          const loot = rollLoot(m.kind, rng)
-          const rewarded = applyKillRewards(bag, m.kind, loot, contested, input.now, cast.id)
+          const loot = rollLoot(m.kind, rng, bag.difficulty)
+          const rewarded = applyKillRewards(
+            bag,
+            m.kind,
+            loot,
+            contested,
+            input.now,
+            cast.id,
+            input.zone,
+          )
           bag = rewarded.bag
           events.push({
             type: 'kill',
@@ -623,9 +672,11 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
         m.x += (dx / dist) * step
         m.z += (dz / dist) * step
       } else if (m.attackCd <= 0) {
+        const heroicAtk =
+          bag.difficulty === 'heroic' && instance ? HARBOR_RPG_HEROIC_ATK_MULT : 1
         const raw = Math.max(
           1,
-          Math.floor(defM.atk * bossAtkMult(m)) - Math.floor(def * 0.6),
+          Math.floor(defM.atk * bossAtkMult(m) * heroicAtk) - Math.floor(def * 0.6),
         )
         const damage = companion ? Math.max(1, Math.floor(raw * 0.7)) : raw
         playerHp = Math.max(0, playerHp - damage)

@@ -10,6 +10,7 @@ import {
   type HarborGender,
 } from './harborAppearance'
 import {
+  HARBOR_RPG_DIFFICULTIES,
   HARBOR_RPG_GEAR_SLOTS,
   HARBOR_RPG_ITEMS,
   HARBOR_RPG_ITEM_DEFS,
@@ -19,6 +20,7 @@ import {
   harborRpgItemSlot,
   harborRpgQuestById,
   isHarborRpgZoneId,
+  type HarborRpgDifficulty,
   type HarborRpgGearSlot,
   type HarborRpgItemId,
   type HarborRpgMonsterKind,
@@ -137,6 +139,8 @@ export type HarborRpgBag = {
   talents: Record<string, number>
   /** Equipped skill bar (up to 5 skill ids). */
   skillBar: string[]
+  /** Soft dungeon difficulty for instances. */
+  difficulty: HarborRpgDifficulty
 }
 
 const COSMETIC_SET = new Set<string>(HARBOR_RPG_COSMETICS)
@@ -193,6 +197,7 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     skillXp: {},
     talents: {},
     skillBar: [],
+    difficulty: 'normal',
   }
 }
 
@@ -551,6 +556,11 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
     professions: sanitizeRpgProfessions(o.professions),
     market: sanitizeRpgMarketListings(o.market),
     ...sanitizeClassProgress(o),
+    difficulty:
+      typeof o.difficulty === 'string' &&
+      (HARBOR_RPG_DIFFICULTIES as readonly string[]).includes(o.difficulty)
+        ? (o.difficulty as HarborRpgDifficulty)
+        : 'normal',
   }
 }
 
@@ -740,6 +750,7 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
       return out
     })(),
     skillBar: b.skillBar.length ? b.skillBar : a.skillBar,
+    difficulty: b.difficulty,
   }
 }
 
@@ -993,6 +1004,13 @@ export function harborRpgTalentPointsLeft(bag: HarborRpgBag): number {
 
 export function harborRpgActiveSkillRank(bag: HarborRpgBag, skillId: string): number {
   return harborRpgSkillRankFromXp(bag.skillXp[skillId] ?? 0)
+}
+
+export function setHarborRpgDifficulty(
+  bag: HarborRpgBag,
+  difficulty: HarborRpgDifficulty,
+): HarborRpgBag {
+  return { ...bag, difficulty }
 }
 
 export type { HarborRpgClassId }

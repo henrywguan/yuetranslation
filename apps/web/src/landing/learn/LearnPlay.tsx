@@ -176,6 +176,7 @@ import {
   createHarborRpgCharacterSlot,
   setHarborRpgActiveCharacter,
   setHarborRpgZone,
+  setHarborRpgInstanceDifficulty,
   equipHarborRpgItem,
   buyHarborRpgVendorItem,
   sellHarborRpgItem,
@@ -274,6 +275,10 @@ export function LearnSession({
   const [rpgTrade, setRpgTrade] = useState<HarborRpgTradeSession | null>(null)
   const [rpgPartyLive, setRpgPartyLive] = useState<HarborRpgPartyState | null>(null)
   const [rpgPartyInvite, setRpgPartyInvite] = useState<HarborRpgPartyInvite | null>(null)
+  const rpgFinderLookingRef = useRef<{
+    lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
+    lookingDungeon: import('./harborRpgFinder').HarborRpgFinderDungeon | null
+  }>({ lookingRole: null, lookingDungeon: null })
   const rpgPresenceRef = useRef<HarborRpgPresenceSession | null>(null)
   const handleRpgTradeOfferRef = useRef<((offer: HarborRpgTradeOffer) => void) | null>(null)
   /** Fullscreen wuxia world map (minimap globe). */
@@ -544,8 +549,10 @@ export function LearnSession({
           yaw: pose.yaw,
           zone,
           level: lv,
-          partyId: null,
+          partyId: rpgPartyLive?.id ?? null,
           username,
+          lookingRole: rpgFinderLookingRef.current.lookingRole,
+          lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
         })
         sessionPresence.broadcastPose({
           x: pose.x,
@@ -2240,9 +2247,39 @@ export function LearnSession({
           }}
           lootPrompt={rpgLootPrompt}
           trade={rpgTrade}
-          remotes={rpgRemotes.map((r) => ({ userId: r.userId, username: r.username }))}
+          remotes={rpgRemotes.map((r) => ({
+            userId: r.userId,
+            username: r.username,
+            lookingRole: r.lookingRole,
+            lookingDungeon: r.lookingDungeon,
+          }))}
           partyLive={rpgPartyLive}
           partyInvite={rpgPartyInvite}
+          onSetDifficulty={(d) => {
+            pushRpgProgress(setHarborRpgInstanceDifficulty(d))
+            flashRpgToast(d === 'heroic' ? 'Heroic — remount instance to scale' : 'Normal difficulty')
+          }}
+          onFinderQueueChange={(party) => {
+            setRpgPartyLive(party)
+            rpgFinderLookingRef.current = {
+              lookingRole: party.looking ? party.lookingRole : null,
+              lookingDungeon: party.looking ? party.lookingDungeon : null,
+            }
+            rpgPresenceRef.current?.broadcastParty(party)
+            flashRpgToast(
+              party.looking
+                ? `LFG ${party.lookingRole} · ${party.lookingDungeon}`
+                : 'Stopped looking',
+            )
+          }}
+          onFillCompanionRole={(role) => {
+            const next = hireHarborRpgCompanion()
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(`Companion fills ${role}`)
+            }
+          }}
           onInviteParty={(peerId) => {
             const selfId = localUserIdRef.current ?? 'local'
             const name =
@@ -2270,6 +2307,8 @@ export function LearnSession({
                 members: [{ userId: rpgPartyInvite.fromId, name: rpgPartyInvite.fromName }],
                 looking: false,
                 code: rpgPartyInvite.code,
+                lookingRole: null,
+                lookingDungeon: null,
               },
               rpgPartyInvite,
               selfId,

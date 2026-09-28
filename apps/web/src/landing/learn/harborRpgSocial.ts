@@ -4,12 +4,19 @@
 import { isHarborRpgItemId, type HarborRpgItemId } from './harborRpgData'
 import type { HarborRpgLootDrop } from './harborRpgCombat'
 import { hireRpgCompanion as hireCompanionCore, HARBOR_RPG_COMPANION_COST, HARBOR_RPG_COMPANION_MS } from './harborRpgSocialLegacy'
+import {
+  isHarborRpgFinderDungeon,
+  isHarborRpgFinderRole,
+  type HarborRpgFinderDungeon,
+  type HarborRpgFinderRole,
+} from './harborRpgFinder'
 
 export { HARBOR_RPG_COMPANION_COST, HARBOR_RPG_COMPANION_MS }
 
 export type HarborRpgPartyMember = {
   userId: string
   name: string
+  role?: HarborRpgFinderRole
 }
 
 export type HarborRpgPartyState = {
@@ -18,6 +25,8 @@ export type HarborRpgPartyState = {
   members: HarborRpgPartyMember[]
   looking: boolean
   code: string
+  lookingRole: HarborRpgFinderRole | null
+  lookingDungeon: HarborRpgFinderDungeon | null
 }
 
 export type HarborRpgPartyInvite = {
@@ -52,6 +61,8 @@ export function createRpgParty(leaderId: string, leaderName: string): HarborRpgP
     members: [{ userId: leaderId, name: leaderName || 'Adventurer' }],
     looking: false,
     code,
+    lookingRole: null,
+    lookingDungeon: null,
   }
 }
 
@@ -62,6 +73,22 @@ export function emptyRpgParty(leaderName: string): HarborRpgPartyState {
 
 export function toggleRpgFinderLooking(party: HarborRpgPartyState): HarborRpgPartyState {
   return { ...party, looking: !party.looking }
+}
+
+export function setRpgFinderQueue(
+  party: HarborRpgPartyState,
+  opts: {
+    looking: boolean
+    role: HarborRpgFinderRole | null
+    dungeon: HarborRpgFinderDungeon | null
+  },
+): HarborRpgPartyState {
+  return {
+    ...party,
+    looking: opts.looking,
+    lookingRole: opts.role,
+    lookingDungeon: opts.dungeon,
+  }
 }
 
 export function inviteToRpgParty(
@@ -97,6 +124,8 @@ export function acceptRpgPartyInvite(
       ],
       looking: false,
       code: invite.code,
+      lookingRole: null,
+      lookingDungeon: null,
     }
   }
   if (party.members.some((m) => m.userId === userId)) return party
@@ -199,6 +228,7 @@ export function sanitizeRpgPartyState(raw: unknown): HarborRpgPartyState | null 
         typeof m.name === 'string' && m.name.trim()
           ? m.name.trim().slice(0, 20)
           : 'Adventurer',
+      role: isHarborRpgFinderRole(m.role) ? m.role : undefined,
     })
     if (members.length >= 5) break
   }
@@ -212,6 +242,8 @@ export function sanitizeRpgPartyState(raw: unknown): HarborRpgPartyState | null 
       typeof o.code === 'string' && o.code.trim()
         ? o.code.trim().slice(0, 12)
         : 'H-????',
+    lookingRole: isHarborRpgFinderRole(o.lookingRole) ? o.lookingRole : null,
+    lookingDungeon: isHarborRpgFinderDungeon(o.lookingDungeon) ? o.lookingDungeon : null,
   }
 }
 
