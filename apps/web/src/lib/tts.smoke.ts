@@ -280,16 +280,25 @@ await appleTts.speakText('louder please', 'yue', null, { loud: true })
 assert.ok(appleCtx.decodeCalls >= 1, 'loud iPhone TTS decodes through Web Audio')
 assert.ok(appleCtx.bufferStarts >= 1, 'loud iPhone TTS starts a BufferSource')
 assert.ok(appleCtx.gainSets.includes(1.85), 'opening loud clip keeps the boost')
+assert.equal(appleTts.loudPlaybackGainForTests(), 1.85, 'loud gain constant exported')
 
-appleCtx.gainSets.length = 0
-appleTts.hushTtsSpeakerForMic()
-await appleTts.speakText('second line', 'yue', null, { loud: true })
-assert.ok(appleCtx.gainSets.includes(1), 'first clip after the mic plays at unity')
-assert.equal(appleCtx.gainSets.includes(1.85), false, 'mic handoff must not stack the boost')
-
-appleCtx.gainSets.length = 0
-await appleTts.speakText('third line', 'yue', null, { loud: true })
-assert.ok(appleCtx.gainSets.includes(1.85), 'later loud clips keep the boost')
+// Practice Partner: four mic → reply cycles must stay at the same boost
+// (3rd/4th turns used to go soft after the post-mic unity handoff).
+for (let turn = 1; turn <= 4; turn++) {
+  appleCtx.gainSets.length = 0
+  appleTts.hushTtsSpeakerForMic()
+  appleTts.prepareLoudTtsPlayback()
+  await appleTts.speakText(`partner turn ${turn}`, 'yue', null, { loud: true })
+  assert.ok(
+    appleCtx.gainSets.includes(1.85),
+    `Practice Partner turn ${turn} must play at the same loud gain`,
+  )
+  assert.equal(
+    appleCtx.gainSets.includes(1),
+    false,
+    `Practice Partner turn ${turn} must not fall back to unity gain`,
+  )
+}
 
 rmSync(appleDir, { recursive: true, force: true })
 console.log('tts.smoke: ok (barge-in preserveSession + clip cache + iPhone loud Web Audio)')

@@ -37,6 +37,12 @@ assert.match(tsx, /bilingualYueEn:\s*true/)
 assert.match(tsx, /playPracticePartnerFailSfx/)
 assert.match(tsx, /partner-lab-fail-burst/)
 assert.match(tsx, /prepareLoudTtsPlayback/)
+assert.match(tsx, /speakText\([^)]*loud:\s*true/, 'Partner replies always request loud TTS')
+assert.match(
+  readFileSync(new URL('../lib/tts.ts', import.meta.url), 'utf8'),
+  /Same boost for every loud clip/,
+  'loud TTS no longer softens post-mic turns',
+)
 assert.match(css, /partner-lab-fail-x/)
 assert.match(css, /partner-lab-fail-edge-flash/)
 assert.match(css, /is-fail-flash/)
