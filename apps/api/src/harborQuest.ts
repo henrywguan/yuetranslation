@@ -119,6 +119,8 @@ export type HarborQuestProgress = {
     difficulty?: string
     ownedMounts?: string[]
     activeMountId?: string | null
+    unlockedTitles?: string[]
+    activeTitleId?: string | null
   }
 }
 
@@ -688,6 +690,22 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     ownedMounts.has(o.activeMountId)
       ? o.activeMountId
       : null
+  const unlockedTitles: string[] = []
+  const titleSeen = new Set<string>()
+  if (Array.isArray(o.unlockedTitles)) {
+    for (const id of o.unlockedTitles) {
+      if (typeof id !== 'string') continue
+      const clean = id.trim().slice(0, 40)
+      if (!clean || titleSeen.has(clean)) continue
+      titleSeen.add(clean)
+      unlockedTitles.push(clean)
+      if (unlockedTitles.length >= 64) break
+    }
+  }
+  const activeTitleId =
+    typeof o.activeTitleId === 'string' && titleSeen.has(o.activeTitleId.trim())
+      ? o.activeTitleId.trim().slice(0, 40)
+      : null
   return {
     characters,
     activeCharacterId,
@@ -723,6 +741,8 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
         : 'normal',
     ownedMounts: [...ownedMounts],
     activeMountId,
+    unlockedTitles,
+    activeTitleId,
   }
 }
 

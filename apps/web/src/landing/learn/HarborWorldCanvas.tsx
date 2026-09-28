@@ -40,6 +40,7 @@ type Props = {
     name: { en: string; zh: string }
     toast?: { en: string; zh: string }
   }) => void
+  onRpgPlayerDown?: (ev: { zone: HarborRpgZoneId; instance: boolean }) => void
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
@@ -77,6 +78,7 @@ export function HarborWorldCanvas({
   onRpgWorldTick,
   rpgZonePeerIds,
   onRpgBossPhase,
+  onRpgPlayerDown,
   paused = false,
   onVisitable,
   onDialogueNpc,
@@ -103,6 +105,8 @@ export function HarborWorldCanvas({
   onRpgWorldTickRef.current = onRpgWorldTick
   const onRpgBossPhaseRef = useRef(onRpgBossPhase)
   onRpgBossPhaseRef.current = onRpgBossPhase
+  const onRpgPlayerDownRef = useRef(onRpgPlayerDown)
+  onRpgPlayerDownRef.current = onRpgPlayerDown
   const localUserIdRef = useRef(localUserId)
   localUserIdRef.current = localUserId
   const rpgPartySizeRef = useRef(rpgPartySize)
@@ -147,6 +151,7 @@ export function HarborWorldCanvas({
         onRpgWorldTick: (packet) => onRpgWorldTickRef.current?.(packet),
         rpgZonePeerIds: rpgZonePeerIdsRef.current,
         onRpgBossPhase: (ev) => onRpgBossPhaseRef.current?.(ev),
+        onRpgPlayerDown: (ev) => onRpgPlayerDownRef.current?.(ev),
       })
     } catch (err) {
       console.error('[harbor] WebGL boot failed', err)

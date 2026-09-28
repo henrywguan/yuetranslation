@@ -35,6 +35,8 @@ export type HarborPresenceState = {
   /** Showoff nametag frame id. */
   nametagFrame: string
   updatedAt: number
+  /** HarborRPG only — active mount id when riding (optional). */
+  rpgMountId?: string | null
 }
 
 export type HarborRemotePlayer = HarborPresenceState
@@ -47,6 +49,8 @@ export type HarborPosePacket = {
   yaw: number
   mode: HarborTravelMode
   t: number
+  /** HarborRPG only — active mount id when riding (optional). */
+  rpgMountId?: string | null
 }
 
 export type HarborChatPacket = {

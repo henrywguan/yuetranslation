@@ -151,6 +151,10 @@ export type HarborRpgBag = {
   ownedMounts: HarborRpgMountId[]
   /** Currently summoned mount (null = on foot). */
   activeMountId: HarborRpgMountId | null
+  /** Soft achievement title ids unlocked (cosmetic only). */
+  unlockedTitles: string[]
+  /** Equipped achievement title shown on Field (null = none). */
+  activeTitleId: string | null
 }
 
 const COSMETIC_SET = new Set<string>(HARBOR_RPG_COSMETICS)
@@ -210,6 +214,8 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     difficulty: 'normal',
     ownedMounts: ['horse'],
     activeMountId: null,
+    unlockedTitles: [],
+    activeTitleId: null,
   }
 }
 
@@ -574,6 +580,7 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
         ? (o.difficulty as HarborRpgDifficulty)
         : 'normal',
     ...sanitizeMountProgress(o),
+    ...sanitizeTitleProgress(o),
   }
 }
 
@@ -593,6 +600,29 @@ function sanitizeMountProgress(o: Record<string, unknown>): {
     activeMountId = o.activeMountId
   }
   return { ownedMounts, activeMountId }
+}
+
+function sanitizeTitleProgress(o: Record<string, unknown>): {
+  unlockedTitles: string[]
+  activeTitleId: string | null
+} {
+  const unlocked: string[] = []
+  const seen = new Set<string>()
+  if (Array.isArray(o.unlockedTitles)) {
+    for (const id of o.unlockedTitles) {
+      if (typeof id !== 'string') continue
+      const clean = id.trim().slice(0, 40)
+      if (!clean || seen.has(clean)) continue
+      seen.add(clean)
+      unlocked.push(clean)
+      if (unlocked.length >= 64) break
+    }
+  }
+  const activeTitleId =
+    typeof o.activeTitleId === 'string' && seen.has(o.activeTitleId.trim())
+      ? o.activeTitleId.trim().slice(0, 40)
+      : null
+  return { unlockedTitles: unlocked, activeTitleId }
 }
 
 const SKILL_ID_SET = new Set(harborRpgAllSkillIds())
@@ -790,6 +820,21 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
       const pick = b.activeMountId ?? a.activeMountId
       const owned = new Set([...a.ownedMounts, ...b.ownedMounts, 'horse'])
       return pick && owned.has(pick) ? pick : null
+    })(),
+    unlockedTitles: (() => {
+      const seen = new Set<string>()
+      const out: string[] = []
+      for (const id of [...a.unlockedTitles, ...b.unlockedTitles]) {
+        if (seen.has(id)) continue
+        seen.add(id)
+        out.push(id)
+      }
+      return out.slice(0, 64)
+    })(),
+    activeTitleId: (() => {
+      const titles = new Set([...a.unlockedTitles, ...b.unlockedTitles])
+      const pick = b.activeTitleId ?? a.activeTitleId
+      return pick && titles.has(pick) ? pick : null
     })(),
   }
 }

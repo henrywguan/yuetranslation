@@ -30,6 +30,13 @@ import {
 } from './harborRpgFinder'
 import { harborRpgQuestUnlocked } from './harborRpgQuests'
 import {
+  HARBOR_RPG_ACHIEVEMENT_IDS,
+  HARBOR_RPG_ACHIEVEMENTS,
+  harborRpgAchievementDone,
+  harborRpgAchievementProgress,
+  harborRpgTitleLabel,
+} from './harborRpgAchievements'
+import {
   HARBOR_RPG_CLASSES,
   HARBOR_RPG_CLASS_DEFS,
   HARBOR_RPG_CLASS_LEVEL_CAP,
@@ -138,6 +145,7 @@ type Props = {
   onFillCompanionRole: (role: HarborRpgFinderRole) => void
   onBuyMount: (id: HarborRpgMountId) => void
   onSummonMount: (id: HarborRpgMountId | null) => void
+  onSetTitle: (id: string | null) => void
   onOpenWiki: (page?: import('./harborRpgWiki').HarborRpgWikiPage) => void
   onExitGame: () => void
 }
@@ -187,6 +195,7 @@ export function HarborRpgPanel({
   onFillCompanionRole,
   onBuyMount,
   onSummonMount,
+  onSetTitle,
   onOpenWiki,
   onExitGame,
 }: Props) {
@@ -201,6 +210,7 @@ export function HarborRpgPanel({
     | 'spellbook'
     | 'trade'
     | 'stable'
+    | 'achievements'
   >('field')
   const [createName, setCreateName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -338,6 +348,11 @@ export function HarborRpgPanel({
             {companionOn ? (
               <span className="hq-rpg-chip hq-rpg-chip--ally">{bag.companionName}</span>
             ) : null}
+            {bag.activeTitleId && harborRpgTitleLabel(bag.activeTitleId) ? (
+              <span className="hq-rpg-chip hq-rpg-chip--title">
+                «{harborRpgTitleLabel(bag.activeTitleId)!.en}»
+              </span>
+            ) : null}
           </div>
         </div>
         {combat?.targetName ? (
@@ -355,6 +370,7 @@ export function HarborRpgPanel({
             ['spellbook', 'Spells'],
             ['bag', 'Bag'],
             ['stable', 'Stable'],
+            ['achievements', 'Deeds'],
             ['quests', 'Quests'],
             ['craft', 'Craft'],
             ['market', 'Market'],
@@ -507,7 +523,7 @@ export function HarborRpgPanel({
             <button
               type="button"
               className="hq-btn hq-btn--ghost"
-              onClick={() => onOpenWiki({ section: 'achievements', id: 'ach-first-char' })}
+              onClick={() => setTab('achievements')}
             >
               Achievements
             </button>
@@ -648,6 +664,76 @@ export function HarborRpgPanel({
                           Summon
                         </button>
                       )}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        ) : null}
+
+        {tab === 'achievements' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Book of Deeds · soft progress from your bag · unlock titles to pin on Field.
+              {bag.activeTitleId && harborRpgTitleLabel(bag.activeTitleId)
+                ? ` Active: «${harborRpgTitleLabel(bag.activeTitleId)!.en}».`
+                : ' No title equipped.'}
+            </p>
+            <div className="hq-rpg-inv-act" style={{ marginBottom: 8 }}>
+              <button type="button" className="hq-btn hq-btn--ghost" onClick={() => onSetTitle(null)}>
+                Clear title
+              </button>
+              <button
+                type="button"
+                className="hq-btn hq-btn--ghost"
+                onClick={() => onOpenWiki({ section: 'achievements', id: 'ach-first-char' })}
+              >
+                Open wiki
+              </button>
+            </div>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_ACHIEVEMENT_IDS.map((id) => {
+                const def = HARBOR_RPG_ACHIEVEMENTS[id]
+                const progress = harborRpgAchievementProgress(bag, id)
+                const done = harborRpgAchievementDone(bag, id)
+                const unlocked = bag.unlockedTitles.includes(id)
+                const active = bag.activeTitleId === id
+                const pct = Math.min(100, Math.round((progress / Math.max(1, def.target)) * 100))
+                return (
+                  <li key={id} className="hq-rpg-inv-row">
+                    <span>
+                      {done ? '✓ ' : ''}
+                      {def.name.en}{' '}
+                      <small>
+                        {def.category} · {progress}/{def.target}
+                      </small>
+                      <br />
+                      <small>{def.how.en}</small>
+                      <span
+                        className="hq-rpg-hp-track"
+                        style={{ display: 'block', marginTop: 4, height: 6 }}
+                        aria-hidden
+                      >
+                        <span className="hq-rpg-hp-fill" style={{ width: `${pct}%` }} />
+                      </span>
+                    </span>
+                    <span className="hq-rpg-inv-act">
+                      <button
+                        type="button"
+                        onClick={() => onOpenWiki({ section: 'achievements', id })}
+                      >
+                        Wiki
+                      </button>
+                      {unlocked || done ? (
+                        <button
+                          type="button"
+                          disabled={active}
+                          onClick={() => onSetTitle(id)}
+                        >
+                          {active ? 'Pinned' : 'Pin title'}
+                        </button>
+                      ) : null}
                     </span>
                   </li>
                 )

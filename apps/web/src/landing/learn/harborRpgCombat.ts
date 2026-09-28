@@ -86,7 +86,17 @@ export type HarborRpgCombatEvent =
       loot: HarborRpgLootDrop[]
       contested: boolean
     }
-  | { type: 'player-down' }
+  | {
+      type: 'player-down'
+      /** Instance wipe — remount pack / soft overworld respawn. */
+      instance: boolean
+      zone: HarborRpgZoneId
+    }
+  | {
+      type: 'companion-hit'
+      damage: number
+      monsterId: string
+    }
   | { type: 'ability-gcd'; abilityId: string }
   | { type: 'resource'; mp: number; maxMp: number }
   | {
@@ -274,8 +284,11 @@ const MONSTER_ATTACK_RANGE = 1.6
 const MONSTER_ATTACK_CD = 1.05
 const RESPAWN_MS = 12_000
 const INSTANCE_NO_RESPAWN = true
+const COMPANION_ATTACK_CD = 1.35
+const COMPANION_RANGE = 2.8
 
 let playerGcd = 0
+let companionAttackCd = 0
 const abilityCds: Record<string, number> = {
   strike: 0,
   cleave: 0,
@@ -285,6 +298,7 @@ const abilityCds: Record<string, number> = {
 
 export function resetRpgCombatSessionCd() {
   playerGcd = 0
+  companionAttackCd = 0
   for (const k of Object.keys(abilityCds)) abilityCds[k] = 0
 }
 
@@ -469,6 +483,7 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
   const hitChance = Math.min(0.99, HARBOR_RPG_BASE_HIT + harborRpgHitBonus(bag))
 
   playerGcd = Math.max(0, playerGcd - input.dt)
+  companionAttackCd = Math.max(0, companionAttackCd - input.dt)
   for (const id of Object.keys(abilityCds)) {
     abilityCds[id] = Math.max(0, (abilityCds[id] ?? 0) - input.dt)
   }
@@ -477,6 +492,45 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
     ...m,
     threat: m.threat.map((t) => ({ ...t })),
   }))
+
+  // Soft companion auto-swing (nearest foe) — separate from player GCD.
+  if (companion && playerHp > 0 && companionAttackCd <= 0) {
+    const foe = nearestAliveMonster(monsters, input.playerX, input.playerZ, COMPANION_RANGE)
+    if (foe) {
+      companionAttackCd = COMPANION_ATTACK_CD
+      const dmg = Math.max(1, Math.floor(atk * 0.45) + Math.floor(rng() * 2))
+      foe.hp = Math.max(0, foe.hp - dmg)
+      foe.hitFlash = 0.2
+      addThreat(foe, input.userId, dmg * 0.6)
+      events.push({ type: 'companion-hit', damage: dmg, monsterId: foe.id })
+      maybeAdvanceBossPhase(foe, events)
+      if (foe.hp <= 0) {
+        foe.alive = false
+        foe.respawnAt =
+          instance && INSTANCE_NO_RESPAWN ? Number.POSITIVE_INFINITY : input.now + RESPAWN_MS
+        const loot = rollLoot(foe.kind, rng, bag.difficulty)
+        const rewarded = applyKillRewards(
+          bag,
+          foe.kind,
+          loot,
+          contested,
+          input.now,
+          null,
+          input.zone,
+        )
+        bag = rewarded.bag
+        events.push({
+          type: 'kill',
+          monsterId: foe.id,
+          kind: foe.kind,
+          xp: rewarded.xp,
+          gold: rewarded.gold,
+          loot,
+          contested,
+        })
+      }
+    }
+  }
 
   // Tick DoTs
   for (const m of monsters) {
@@ -682,7 +736,9 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
         playerHp = Math.max(0, playerHp - damage)
         m.attackCd = MONSTER_ATTACK_CD / Math.max(0.5, bossSpeedMult(m))
         events.push({ type: 'monster-hit', damage, monsterId: m.id })
-        if (playerHp <= 0) events.push({ type: 'player-down' })
+        if (playerHp <= 0) {
+          events.push({ type: 'player-down', instance, zone: input.zone })
+        }
       }
     } else if (!chasingLocal || dist >= defM.aggro) {
       const hx = m.homeX - m.x

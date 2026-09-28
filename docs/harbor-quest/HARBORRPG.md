@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v6.1 — wiki · loot sources · achievements · free mounts  
+**Status:** v6.2 — death UX · remote mounts · companion ally · deeds HUD · deeper crafts/skills  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -70,6 +70,17 @@ In-game **HarborRPG Wiki** (Field → HarborRPG Wiki):
 - Mounts list Ferry Stable gold cost / free unlock
 - Achievements show how-to-obtain copy + soft progress from the bag
 - Greaves / Trail Boots now have craft recipes + ruin drops so every item has a source
+
+## Soft polish (v6.2)
+
+1. **Player-down** — toast + SFX; overworld soft shrine respawn; **instance wipe** reseeds packs
+2. **Remote mounts** — presence / pose carry `activeMountId`; remotes render the same GLB ride
+3. **Companion ally** — hired companion auto-swings nearby foes + follows as a soft fox mesh
+4. **Deeds HUD** — Achievements tab with progress bars; unlock titles → pin on Field
+5. **Professions** — 15 craft recipes · 11 gather nodes (mana / cloth / hood / wraps / sandals / tome / lantern)
+6. **Ability depth** — 7 skills per class (mid + late unlocks); bar still caps at 5
+
+Free animated cosmetics scout (Henry import): [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md). OGA mount `.blend` export stays Henry-owned.
 
 ## Shared world tick
 

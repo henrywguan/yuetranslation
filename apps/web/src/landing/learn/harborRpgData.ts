@@ -645,6 +645,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'uncommon',
     value: 28,
     power: 3,
+    craft: 'alchemy',
   },
   'rpg-offhand-lantern': {
     id: 'rpg-offhand-lantern',
@@ -654,6 +655,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'rare',
     value: 48,
     power: 5,
+    craft: 'smithing',
   },
   'rpg-armor-cloth': {
     id: 'rpg-armor-cloth',
@@ -663,6 +665,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'common',
     value: 10,
     power: 1,
+    craft: 'smithing',
   },
   'rpg-armor-leather': {
     id: 'rpg-armor-leather',
@@ -701,6 +704,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'common',
     value: 12,
     power: 1,
+    craft: 'smithing',
   },
   'rpg-head-helm': {
     id: 'rpg-head-helm',
@@ -720,6 +724,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'common',
     value: 10,
     power: 1,
+    craft: 'smithing',
   },
   'rpg-legs-greaves': {
     id: 'rpg-legs-greaves',
@@ -739,6 +744,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'common',
     value: 8,
     power: 1,
+    craft: 'smithing',
   },
   'rpg-feet-boots': {
     id: 'rpg-feet-boots',
@@ -1455,6 +1461,18 @@ export const HARBOR_RPG_CRAFT_RECIPES: readonly HarborRpgCraftRecipe[] = [
     skillNeed: 5,
   },
   {
+    id: 'craft-mana',
+    profession: 'alchemy',
+    output: 'rpg-potion-mana',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-herb', qty: 2 },
+      { id: 'rpg-item-pearl', qty: 1 },
+    ],
+    xp: 18,
+    skillNeed: 4,
+  },
+  {
     id: 'craft-blade',
     profession: 'smithing',
     output: 'rpg-weapon-blade',
@@ -1491,6 +1509,30 @@ export const HARBOR_RPG_CRAFT_RECIPES: readonly HarborRpgCraftRecipe[] = [
     skillNeed: 2,
   },
   {
+    id: 'craft-cloth',
+    profession: 'smithing',
+    output: 'rpg-armor-cloth',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-silk', qty: 3 },
+      { id: 'rpg-item-reed', qty: 2 },
+    ],
+    xp: 16,
+    skillNeed: 1,
+  },
+  {
+    id: 'craft-hood',
+    profession: 'smithing',
+    output: 'rpg-head-hood',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-silk', qty: 2 },
+      { id: 'rpg-item-hide', qty: 1 },
+    ],
+    xp: 14,
+    skillNeed: 2,
+  },
+  {
     id: 'craft-helm',
     profession: 'smithing',
     output: 'rpg-head-helm',
@@ -1501,6 +1543,18 @@ export const HARBOR_RPG_CRAFT_RECIPES: readonly HarborRpgCraftRecipe[] = [
     ],
     xp: 24,
     skillNeed: 4,
+  },
+  {
+    id: 'craft-wraps',
+    profession: 'smithing',
+    output: 'rpg-legs-wraps',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-hide', qty: 2 },
+      { id: 'rpg-item-reed', qty: 2 },
+    ],
+    xp: 15,
+    skillNeed: 1,
   },
   {
     id: 'craft-greaves',
@@ -1515,6 +1569,18 @@ export const HARBOR_RPG_CRAFT_RECIPES: readonly HarborRpgCraftRecipe[] = [
     skillNeed: 5,
   },
   {
+    id: 'craft-sandals',
+    profession: 'smithing',
+    output: 'rpg-feet-sandals',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-hide', qty: 2 },
+      { id: 'rpg-item-reed', qty: 1 },
+    ],
+    xp: 12,
+    skillNeed: 1,
+  },
+  {
     id: 'craft-boots',
     profession: 'smithing',
     output: 'rpg-feet-boots',
@@ -1525,6 +1591,30 @@ export const HARBOR_RPG_CRAFT_RECIPES: readonly HarborRpgCraftRecipe[] = [
     ],
     xp: 20,
     skillNeed: 3,
+  },
+  {
+    id: 'craft-tome',
+    profession: 'alchemy',
+    output: 'rpg-offhand-tome',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-silk', qty: 2 },
+      { id: 'rpg-item-ash-core', qty: 1 },
+    ],
+    xp: 30,
+    skillNeed: 6,
+  },
+  {
+    id: 'craft-lantern',
+    profession: 'smithing',
+    output: 'rpg-offhand-lantern',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-ore', qty: 2 },
+      { id: 'rpg-item-shard', qty: 2 },
+    ],
+    xp: 26,
+    skillNeed: 5,
   },
 ]
 
@@ -1542,10 +1632,15 @@ export type HarborRpgGatherNode = {
 export const HARBOR_RPG_GATHER_NODES: readonly HarborRpgGatherNode[] = [
   { id: 'node-herb-1', zone: 'meadow', profession: 'herbalism', x: 8, z: 4, radius: 1.8, item: 'rpg-item-herb', xp: 6 },
   { id: 'node-herb-2', zone: 'meadow', profession: 'herbalism', x: -10, z: 2, radius: 1.8, item: 'rpg-item-herb', xp: 6 },
+  { id: 'node-herb-3', zone: 'pinewood', profession: 'herbalism', x: -6, z: 8, radius: 1.8, item: 'rpg-item-herb', xp: 7 },
+  { id: 'node-herb-4', zone: 'town', profession: 'herbalism', x: 4, z: -5, radius: 1.6, item: 'rpg-item-herb', xp: 5 },
   { id: 'node-ore-1', zone: 'pinewood', profession: 'mining', x: 12, z: -6, radius: 1.8, item: 'rpg-item-ore', xp: 8 },
   { id: 'node-ore-2', zone: 'ruins', profession: 'mining', x: -8, z: -4, radius: 1.8, item: 'rpg-item-ore', xp: 8 },
+  { id: 'node-ore-3', zone: 'meadow', profession: 'mining', x: -12, z: -8, radius: 1.8, item: 'rpg-item-ore', xp: 7 },
+  { id: 'node-ore-4', zone: 'town', profession: 'mining', x: -5, z: 6, radius: 1.6, item: 'rpg-item-ore', xp: 6 },
   { id: 'node-reed-1', zone: 'marsh', profession: 'herbalism', x: 6, z: -2, radius: 1.8, item: 'rpg-item-reed', xp: 7 },
   { id: 'node-reed-2', zone: 'marsh', profession: 'herbalism', x: -8, z: 6, radius: 1.8, item: 'rpg-item-reed', xp: 7 },
+  { id: 'node-reed-3', zone: 'marsh', profession: 'herbalism', x: 10, z: 4, radius: 1.8, item: 'rpg-item-reed', xp: 8 },
 ]
 
 export const HARBOR_RPG_QUESTS = [

@@ -109,6 +109,7 @@ import {
 import {
   harborRpgMaxHp,
   harborRpgMaxMp,
+  rpgHasCompanion,
   sanitizeHarborRpgBag,
   type HarborRpgBag,
 } from './harborRpgProgress'
@@ -118,7 +119,11 @@ import {
   tickHarborRpgMount,
   type HarborRpgMountInstance,
 } from './harborRpgMountRuntime'
-import { harborRpgMountById, type HarborRpgMountId } from './harborRpgMounts'
+import {
+  harborRpgMountById,
+  isHarborRpgMountId,
+  type HarborRpgMountId,
+} from './harborRpgMounts'
 import {
   applyRpgWorldSnapshot as applyRpgWorldSnapToMonsters,
   electRpgZoneHost,
@@ -241,6 +246,8 @@ export type HarborWorldOptions = {
     name: { en: string; zh: string }
     toast?: { en: string; zh: string }
   }) => void
+  /** Player defeated — soft overworld respawn or instance wipe. */
+  onRpgPlayerDown?: (ev: { zone: HarborRpgZoneId; instance: boolean }) => void
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a talkable NPC / speech bubble while in range. */
@@ -4604,6 +4611,57 @@ export function createHarborWorld(
   let rpgMountLive: HarborRpgMountInstance | null = null
   let rpgMountWantId: HarborRpgMountId | null = null
   let rpgMountLoadingId: HarborRpgMountId | null = null
+  let rpgCompanionMesh: THREE.Group | null = null
+  const remoteRpgMounts = new Map<string, HarborRpgMountInstance>()
+  const remoteRpgMountLoading = new Map<string, string>()
+
+  const buildRpgCompanionMesh = (name: string) => {
+    const g = new THREE.Group()
+    g.name = 'rpg-companion'
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 10, 8),
+      new THREE.MeshLambertMaterial({ color: 0xc4783a }),
+    )
+    body.position.y = 0.32
+    body.scale.set(1, 0.85, 1.15)
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 8, 6),
+      new THREE.MeshLambertMaterial({ color: 0xd4924a }),
+    )
+    head.position.set(0, 0.52, 0.16)
+    const earL = new THREE.Mesh(
+      new THREE.ConeGeometry(0.07, 0.16, 5),
+      new THREE.MeshLambertMaterial({ color: 0xa85e2a }),
+    )
+    earL.position.set(-0.1, 0.68, 0.1)
+    const earR = earL.clone()
+    earR.position.x = 0.1
+    g.add(body, head, earL, earR)
+    g.userData.companionName = name
+    return g
+  }
+
+  const syncRpgCompanion = () => {
+    if (!isRpg || !rpgScene) {
+      if (rpgCompanionMesh) {
+        rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
+        rpgCompanionMesh = null
+      }
+      return
+    }
+    const on = rpgHasCompanion(rpgBagLive)
+    if (!on) {
+      if (rpgCompanionMesh) {
+        rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
+        rpgCompanionMesh = null
+      }
+      return
+    }
+    if (!rpgCompanionMesh) {
+      rpgCompanionMesh = buildRpgCompanionMesh(rpgBagLive.companionName ?? 'Ally')
+      rpgScene.add(rpgCompanionMesh)
+    }
+  }
   // Guan Harbor / HarborRPG always force sunny daylight.
   const weather: HarborWeather = isPocket ? 'sunny' : (options.weather ?? pickHarborWeather())
   const baseLook = HARBOR_WEATHER_LOOK[weather]
@@ -5056,6 +5114,13 @@ export function createHarborWorld(
       remotesRoot.remove(root)
       disposeRemoteSailor(root)
       remoteById.delete(id)
+      const mount = remoteRpgMounts.get(id)
+      if (mount) {
+        mount.root.parent?.remove(mount.root)
+        disposeHarborRpgMount(mount)
+        remoteRpgMounts.delete(id)
+      }
+      remoteRpgMountLoading.delete(id)
     }
     for (const player of players) {
       const existing = remoteById.get(player.userId)
@@ -5067,7 +5132,49 @@ export function createHarborWorld(
         remotesRoot.add(root)
         remoteById.set(player.userId, root)
       }
+      const root = remoteById.get(player.userId)
+      if (root) root.userData.rpgMountId = player.rpgMountId ?? null
+      syncRemoteRpgMount(player.userId, player.rpgMountId ?? null)
     }
+  }
+
+  const syncRemoteRpgMount = (userId: string, mountId: string | null) => {
+    const want =
+      mountId && isHarborRpgMountId(mountId) ? (mountId as HarborRpgMountId) : null
+    const live = remoteRpgMounts.get(userId)
+    if (!want) {
+      if (live) {
+        live.root.parent?.remove(live.root)
+        disposeHarborRpgMount(live)
+        remoteRpgMounts.delete(userId)
+      }
+      remoteRpgMountLoading.delete(userId)
+      const root = remoteById.get(userId)
+      if (root) {
+        const body = root.children.find((c) => c.name === 'remote-body' || c.type === 'Group')
+        if (root.userData.remoteMode === 'foot') root.visible = true
+        void body
+      }
+      return
+    }
+    if (live?.id === want) return
+    if (remoteRpgMountLoading.get(userId) === want) return
+    remoteRpgMountLoading.set(userId, want)
+    void loadHarborRpgMount(want).then((inst) => {
+      if (disposed || remoteRpgMountLoading.get(userId) !== want) {
+        if (inst) disposeHarborRpgMount(inst)
+        return
+      }
+      const prev = remoteRpgMounts.get(userId)
+      if (prev) {
+        prev.root.parent?.remove(prev.root)
+        disposeHarborRpgMount(prev)
+      }
+      remoteRpgMountLoading.delete(userId)
+      if (!inst) return
+      scene.add(inst.root)
+      remoteRpgMounts.set(userId, inst)
+    })
   }
 
   const applyPoseToRemote = (pose: HarborPosePacket) => {
@@ -5079,6 +5186,10 @@ export function createHarborWorld(
       yaw: pose.yaw,
       mode: pose.mode,
     })
+    if (pose.rpgMountId !== undefined) {
+      root.userData.rpgMountId = pose.rpgMountId
+      syncRemoteRpgMount(pose.userId, pose.rpgMountId ?? null)
+    }
   }
 
 
@@ -5277,7 +5388,10 @@ export function createHarborWorld(
     }
   }
 
-  if (isRpg) syncRpgMountFromBag()
+  if (isRpg) {
+    syncRpgMountFromBag()
+    syncRpgCompanion()
+  }
 
   const chairFromObject = (obj: THREE.Object3D | null): THREE.Object3D | null => {
     let o: THREE.Object3D | null = obj
@@ -5979,6 +6093,42 @@ export function createHarborWorld(
       } else {
         root.position.y = 0
       }
+      // HarborRPG: keep remote mounts under remotes (sit height via saddleY)
+      if (isRpg) {
+        const mid = root.userData.rpgMountId as string | null | undefined
+        const mount = remoteRpgMounts.get(String(root.userData.remoteUserId ?? ''))
+        if (mount && mid) {
+          const moving =
+            Math.hypot(
+              (root.userData.poseTargetX ?? root.position.x) - root.position.x,
+              (root.userData.poseTargetZ ?? root.position.z) - root.position.z,
+            ) > 0.08
+          mount.root.position.set(root.position.x, root.position.y, root.position.z)
+          mount.root.rotation.y = root.rotation.y
+          tickHarborRpgMount(mount, dt, moving, false)
+          // Lift remote sailor onto saddle
+          root.position.y = mount.def.saddleY
+        }
+      }
+    }
+
+    // Soft companion follower beside the local scout
+    if (isRpg) {
+      syncRpgCompanion()
+      if (rpgCompanionMesh) {
+        const ang = (scoutWalk.visible ? scoutWalk.rotation.y : 0) + Math.PI * 0.55
+        const tx = footX + Math.sin(ang) * 0.85
+        const tz = footZ + Math.cos(ang) * 0.85
+        rpgCompanionMesh.position.x += (tx - rpgCompanionMesh.position.x) * Math.min(1, dt * 4)
+        rpgCompanionMesh.position.z += (tz - rpgCompanionMesh.position.z) * Math.min(1, dt * 4)
+        rpgCompanionMesh.position.y = groundYAt(
+          rpgCompanionMesh.position.x,
+          rpgCompanionMesh.position.z,
+        )
+        rpgCompanionMesh.rotation.y = Math.atan2(footX - rpgCompanionMesh.position.x, footZ - rpgCompanionMesh.position.z)
+        const bounce = Math.sin(now * 0.01) * 0.04
+        rpgCompanionMesh.position.y += bounce
+      }
     }
 
     // Guan armored patrol brothers — roam + limb walk cycle
@@ -6064,7 +6214,7 @@ export function createHarborWorld(
           })
         }
         if (ev.type === 'player-down') {
-          // Soft respawn at zone spawn
+          // Soft respawn at zone spawn (+ instance wipe reseeds packs)
           const spawn = HARBOR_RPG_ZONE_SPAWN[rpgZone]
           footX = spawn.x
           footZ = spawn.z
@@ -6074,6 +6224,35 @@ export function createHarborWorld(
           rpgPlayerMp = harborRpgMaxMp(rpgBagLive)
           flash = 'no'
           flashUntil = now + 700
+          if (ev.instance) {
+            resetRpgCombatSessionCd()
+            rpgMonsters = spawnRpgMonsters(
+              rpgZone,
+              Math.floor(now) ^ 0x57495045,
+              rpgBagLive.difficulty ?? 'normal',
+            )
+            for (const [, mesh] of rpgMonsterMeshes) {
+              mesh.parent?.remove(mesh)
+              mesh.traverse((o) => {
+                const m = o as THREE.Mesh
+                if (m.isMesh) {
+                  m.geometry?.dispose()
+                  const mat = m.material
+                  if (Array.isArray(mat)) mat.forEach((x) => x.dispose())
+                  else mat?.dispose?.()
+                }
+              })
+            }
+            rpgMonsterMeshes.clear()
+            if (rpgScene) {
+              for (const m of rpgMonsters) {
+                const mesh = buildRpgMonsterObject(m)
+                rpgMonsterMeshes.set(m.id, mesh)
+                rpgScene.add(mesh)
+              }
+            }
+          }
+          options.onRpgPlayerDown?.({ zone: ev.zone, instance: ev.instance })
         }
         if (ev.type === 'kill') {
           flash = 'ok'
@@ -6532,6 +6711,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       const maxMp = harborRpgMaxMp(rpgBagLive)
       if (rpgPlayerMp > maxMp) rpgPlayerMp = maxMp
       syncRpgMountFromBag()
+      syncRpgCompanion()
     },
     applyRpgWorldSnapshot(packet) {
       if (!isRpg || disposed) return
@@ -6573,6 +6753,16 @@ if (o.userData.cigaretteSmoke && !reduced) {
     dispose() {
       disposed = true
       clearRpgMount()
+      if (rpgCompanionMesh) {
+        rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
+        rpgCompanionMesh = null
+      }
+      for (const [, mount] of remoteRpgMounts) {
+        mount.root.parent?.remove(mount.root)
+        disposeHarborRpgMount(mount)
+      }
+      remoteRpgMounts.clear()
+      remoteRpgMountLoading.clear()
       fishAnim = { phase: 'idle', t: 0, faceYaw: 0 }
       fishSplash.visible = false
       scene.remove(fishSplash)

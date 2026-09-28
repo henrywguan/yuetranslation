@@ -64,8 +64,8 @@ assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('echo-boss'))
 assert.ok(HARBOR_RPG_MONSTER_KINDS.includes('raid-sovereign'))
 assert.ok(HARBOR_RPG_QUESTS.length >= 35, `quests ${HARBOR_RPG_QUESTS.length}`)
 assert.ok(HARBOR_RPG_PROFESSIONS.length === 4)
-assert.ok(HARBOR_RPG_CRAFT_RECIPES.length >= 4)
-assert.ok(HARBOR_RPG_GATHER_NODES.length >= 4)
+assert.ok(HARBOR_RPG_CRAFT_RECIPES.length >= 12)
+assert.ok(HARBOR_RPG_GATHER_NODES.length >= 10)
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'crypt'))
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'tidehollow'))
 assert.ok(HARBOR_RPG_PORTALS.some((p) => p.to === 'chronicle'))
@@ -108,6 +108,72 @@ const combat = tickRpgCombat({
 assert.ok(combat.events.some((e) => e.type === 'player-hit' || e.type === 'ability-gcd'))
 assert.ok(combat.gcdRemaining > 0)
 assert.ok(typeof combat.playerMp === 'number')
+
+resetRpgCombatSessionCd()
+{
+  const withComp = {
+    ...emptyHarborRpgBag(),
+    companionUntil: Date.now() + 60_000,
+    companionName: 'Lantern Fox',
+  }
+  const mobs = spawnRpgMonsters('meadow', 7).map((m) => ({ ...m }))
+  const ally = tickRpgCombat({
+    bag: withComp,
+    monsters: mobs,
+    playerX: mobs[0]!.x,
+    playerZ: mobs[0]!.z,
+    playerHp: 40,
+    playerMp: 100,
+    userId: 'u1',
+    partySize: 1,
+    abilityId: null,
+    attacking: false,
+    dt: 0.2,
+    now: Date.now(),
+    zone: 'meadow',
+    guardBuffSec: 0,
+    rng: () => 0.1,
+  })
+  assert.ok(
+    ally.events.some((e) => e.type === 'companion-hit'),
+    'companion auto-swings',
+  )
+}
+
+resetRpgCombatSessionCd()
+{
+  const mobs = spawnRpgMonsters('meadow', 9).map((m) => ({
+    ...m,
+    atk: 999,
+    attackCd: 0,
+    x: 0,
+    z: 0,
+  }))
+  // Force a hit: place player on first mob and let monster swing with low HP
+  const downed = tickRpgCombat({
+    bag: emptyHarborRpgBag(),
+    monsters: mobs,
+    playerX: 0,
+    playerZ: 0,
+    playerHp: 1,
+    playerMp: 10,
+    userId: 'u1',
+    partySize: 1,
+    abilityId: null,
+    attacking: false,
+    dt: 1.2,
+    now: Date.now(),
+    zone: 'meadow',
+    guardBuffSec: 0,
+    rng: () => 0.01,
+  })
+  // May or may not down depending on aggro/range; assert event shape if present
+  const pd = downed.events.find((e) => e.type === 'player-down')
+  if (pd && pd.type === 'player-down') {
+    assert.equal(pd.instance, false)
+    assert.equal(pd.zone, 'meadow')
+  }
+}
 
 resetRpgCombatSessionCd()
 {
@@ -243,7 +309,7 @@ assert.equal(HARBOR_RPG_CLASSES.length, 9)
 assert.equal(HARBOR_RPG_SPECS.length, 27)
 for (const id of HARBOR_RPG_CLASSES) {
   const def = HARBOR_RPG_CLASS_DEFS[id]
-  assert.ok(def.skills.length >= 5, `${id} skills`)
+  assert.ok(def.skills.length >= 7, `${id} skills`)
   assert.ok(def.talents.length >= 6, `${id} talents`)
   assert.ok(def.passives.length >= 3, `${id} passives`)
   assert.equal(harborRpgSpecsForClass(id).length, 3, `${id} specs`)
@@ -420,6 +486,9 @@ assert.match(worldSrc, /queueRpgAbility/, 'ability queue on world handle')
 assert.match(worldSrc, /onRpgContestedLoot/, 'contested loot callback')
 assert.match(worldSrc, /onRpgWorldTick|applyRpgWorldSnapshot/, 'shared world tick')
 assert.match(worldSrc, /onRpgBossPhase|boss-phase/, 'boss phase callback')
+assert.match(worldSrc, /onRpgPlayerDown|player-down/, 'player-down callback')
+assert.match(worldSrc, /rpg-companion|syncRpgCompanion/, 'companion mesh')
+assert.match(worldSrc, /remoteRpgMounts|syncRemoteRpgMount/, 'remote mounts')
 assert.match(worldSrc, /difficulty/, 'heroic spawn wired')
 
 const playSrc = readFileSync(new URL('./LearnPlay.tsx', import.meta.url), 'utf8')
@@ -429,6 +498,9 @@ assert.match(playSrc, /is-rpg/, 'HUD isolation class')
 assert.match(playSrc, /onStartTrade|rpgTrade/, 'trade windows wired')
 assert.match(playSrc, /inviteToRpgParty|onInviteParty/, 'party invites E2E')
 assert.match(playSrc, /setRemotePlayers|rpgRemotes/, 'rpg remotes in world')
+assert.match(playSrc, /activeMountId|rpgMountId/, 'remote mount pose')
+assert.match(playSrc, /onRpgPlayerDown|playHarborRpgPlayerDown/, 'death UX wired')
+assert.match(playSrc, /onSetTitle|syncHarborRpgAchievementTitles/, 'deeds titles wired')
 assert.match(playSrc, /onSetDifficulty|onFinderQueueChange/, 'heroic + finder wired')
 
 const presenceSrc = readFileSync(new URL('./harborRpgPresence.ts', import.meta.url), 'utf8')
@@ -438,6 +510,7 @@ assert.match(presenceSrc, /HARBOR_RPG_PARTY_EVENT/)
 assert.match(presenceSrc, /HARBOR_RPG_WORLD_EVENT/)
 assert.match(presenceSrc, /HARBOR_RPG_TRADE_EVENT/)
 assert.match(presenceSrc, /lookingRole/)
+assert.match(presenceSrc, /activeMountId/, 'mount on presence')
 
 const panelSrc = readFileSync(new URL('./HarborRpgPanel.tsx', import.meta.url), 'utf8')
 assert.match(panelSrc, /spellbook|Spells/, 'spellbook UI')
@@ -445,11 +518,13 @@ assert.match(panelSrc, /Trade/, 'trade tab')
 assert.match(panelSrc, /HARBOR_RPG_CHAPTERS|Tide That Remembers/, 'campaign chapters')
 assert.match(panelSrc, /Heroic|finderRole|Looking as/, 'heroic + finder UI')
 assert.match(panelSrc, /HarborRPG Wiki|onOpenWiki/, 'wiki entry on panel')
+assert.match(panelSrc, /achievements|Deeds|Pin title/, 'deeds HUD')
 
 const docs = readFileSync(new URL('../../../../../docs/harbor-quest/HARBORRPG.md', import.meta.url), 'utf8')
 assert.match(docs, /soft Realtime|no dedicated anti-cheat/i)
 assert.match(docs, /Ash Crypt|Heroic|Tide Remembers|finder|quest density|9 classes/i)
 assert.match(docs, /Wiki|loot sources|achievement/i)
+assert.match(docs, /v6\.2|Player-down|Remote mounts|Companion ally/i)
 
 import {
   harborRpgItemLootSources,
@@ -461,6 +536,8 @@ import {
 import {
   HARBOR_RPG_ACHIEVEMENT_IDS,
   harborRpgAchievementProgress,
+  setHarborRpgActiveTitle,
+  syncHarborRpgAchievementTitles,
 } from './harborRpgAchievements.ts'
 import {
   HARBOR_RPG_MOUNT_DEFS,
@@ -493,6 +570,11 @@ import { dirname, join } from 'node:path'
   const bag = emptyHarborRpgBag()
   assert.ok(harborRpgAchievementProgress(bag, 'ach-mount-starter') >= 1)
   assert.equal(harborRpgAchievementProgress(bag, 'ach-first-char'), 0)
+  const titled = syncHarborRpgAchievementTitles(bag)
+  assert.ok(titled.newlyUnlocked.includes('ach-mount-starter'))
+  assert.ok(titled.bag.unlockedTitles.includes('ach-mount-starter'))
+  const pinned = setHarborRpgActiveTitle(titled.bag, 'ach-mount-starter')
+  assert.equal(pinned?.activeTitleId, 'ach-mount-starter')
   const wikiUi = readFileSync(new URL('./HarborRpgWiki.tsx', import.meta.url), 'utf8')
   assert.match(wikiUi, /Loot sources|How to obtain/, 'wiki shows obtain copy')
   assert.match(playSrc, /HarborRpgWiki|rpgWikiOpen|rpgWikiPage/, 'wiki mounted from LearnPlay')

@@ -43,6 +43,8 @@ export type HarborRpgPresenceState = {
   partyId: string | null
   lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
   lookingDungeon: import('./harborRpgFinder').HarborRpgFinderDungeon | null
+  /** Active mount id when riding (null/undefined = on foot). */
+  activeMountId: string | null
   updatedAt: number
 }
 
@@ -53,6 +55,7 @@ export type HarborRpgPosePacket = {
   yaw: number
   zone: HarborRpgZoneId
   t: number
+  activeMountId?: string | null
 }
 
 export type HarborRpgRemotePlayer = HarborRpgPresenceState
@@ -93,6 +96,10 @@ function sanitizePresence(raw: unknown, key: string): HarborRpgPresenceState | n
       typeof o.lookingDungeon === 'string' && o.lookingDungeon.length < 24
         ? (o.lookingDungeon as HarborRpgPresenceState['lookingDungeon'])
         : null,
+    activeMountId:
+      typeof o.activeMountId === 'string' && o.activeMountId.length < 32
+        ? o.activeMountId
+        : null,
     updatedAt:
       typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
         ? o.updatedAt
@@ -114,6 +121,12 @@ function sanitizePose(raw: unknown): HarborRpgPosePacket | null {
         ? (o.zone as HarborRpgZoneId)
         : 'meadow',
     t: typeof o.t === 'number' && Number.isFinite(o.t) ? o.t : Date.now(),
+    activeMountId:
+      typeof o.activeMountId === 'string' && o.activeMountId.length < 32
+        ? o.activeMountId
+        : o.activeMountId === null
+          ? null
+          : undefined,
   }
 }
 
@@ -159,12 +172,14 @@ export type HarborRpgPresenceSession = {
     username?: string
     lookingRole?: HarborRpgPresenceState['lookingRole']
     lookingDungeon?: HarborRpgPresenceState['lookingDungeon']
+    activeMountId?: string | null
   }) => Promise<void>
   broadcastPose: (pose: {
     x: number
     z: number
     yaw: number
     zone: HarborRpgZoneId
+    activeMountId?: string | null
   }) => void
   broadcastParty: (party: HarborRpgPartyState | HarborRpgPartyInvite) => void
   broadcastLootRoll: (roll: HarborRpgLootRoll) => void
@@ -255,6 +270,7 @@ export function startHarborRpgPresence(opts: {
         partyId: pose.partyId,
         lookingRole: pose.lookingRole ?? null,
         lookingDungeon: pose.lookingDungeon ?? null,
+        activeMountId: pose.activeMountId ?? null,
         updatedAt: Date.now(),
       }
       await channel.track(payload)
@@ -267,6 +283,7 @@ export function startHarborRpgPresence(opts: {
         yaw: pose.yaw,
         zone: pose.zone,
         t: Date.now(),
+        activeMountId: pose.activeMountId ?? null,
       }
       void channel.send({
         type: 'broadcast',

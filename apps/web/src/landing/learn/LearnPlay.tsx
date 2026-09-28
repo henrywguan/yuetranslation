@@ -80,7 +80,13 @@ import {
   playHarborRpgBossPhase,
   playHarborRpgDungeonEnter,
   playHarborRpgPartyInvite,
+  playHarborRpgPlayerDown,
 } from './harborRpgSfx'
+import {
+  harborRpgTitleLabel,
+  setHarborRpgActiveTitle,
+  syncHarborRpgAchievementTitles,
+} from './harborRpgAchievements'
 import { HARBOR_DEFAULT_APPEARANCE } from './harborAppearance'
 import { HARBOR_RPG_CAMPAIGN } from './harborRpgLore'
 import type {
@@ -502,6 +508,7 @@ export function LearnSession({
               appearance: HARBOR_DEFAULT_APPEARANCE,
               nametagFrame: 'tag-plain',
               updatedAt: r.updatedAt,
+              rpgMountId: r.activeMountId,
             }))
           worldApiRef.current?.setRemotePlayers(asWorld)
         },
@@ -513,6 +520,7 @@ export function LearnSession({
             yaw: pose.yaw,
             mode: 'foot',
             t: pose.t,
+            rpgMountId: pose.activeMountId ?? null,
           })
         },
         onWorld: (packet) => {
@@ -560,12 +568,14 @@ export function LearnSession({
           username,
           lookingRole: rpgFinderLookingRef.current.lookingRole,
           lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
+          activeMountId: progressSnap.rpg?.activeMountId ?? null,
         })
         sessionPresence.broadcastPose({
           x: pose.x,
           z: pose.z,
           yaw: pose.yaw,
           zone,
+          activeMountId: progressSnap.rpg?.activeMountId ?? null,
         })
       }
       push()
@@ -690,19 +700,31 @@ export function LearnSession({
     return () => cancelAnimationFrame(raf)
   }, [realmOverride])
 
-  const pushRpgProgress = useCallback(
-    (next: HarborProgress) => {
-      setProgressSnap(next)
-      onProgress(next)
-      worldApiRef.current?.setRpgBag(next.rpg)
-    },
-    [onProgress],
-  )
-
   const flashRpgToast = useCallback((msg: string) => {
     setRpgToast(msg)
     window.setTimeout(() => setRpgToast(null), 2200)
   }, [])
+
+  const pushRpgProgress = useCallback(
+    (next: HarborProgress) => {
+      let bag = next.rpg
+      if (bag) {
+        const synced = syncHarborRpgAchievementTitles(bag)
+        if (synced.newlyUnlocked.length > 0) {
+          bag = synced.bag
+          next = updateHarborRpg(bag)
+          const labels = synced.newlyUnlocked
+            .map((id) => harborRpgTitleLabel(id)?.en ?? id)
+            .join(' · ')
+          flashRpgToast(`Deed unlocked: ${labels}`)
+        }
+      }
+      setProgressSnap(next)
+      onProgress(next)
+      if (bag) worldApiRef.current?.setRpgBag(bag)
+    },
+    [onProgress, flashRpgToast],
+  )
 
   const handleRpgTradeOffer = useCallback(
     (offer: HarborRpgTradeOffer) => {
@@ -829,11 +851,9 @@ export function LearnSession({
 
   const onRpgBagChange = useCallback(
     (bag: import('./harborRpgProgress').HarborRpgBag) => {
-      const next = updateHarborRpg(bag)
-      setProgressSnap(next)
-      onProgress(next)
+      pushRpgProgress(updateHarborRpg(bag))
     },
-    [onProgress],
+    [pushRpgProgress],
   )
 
   useEffect(() => {
@@ -1473,6 +1493,14 @@ export function LearnSession({
             playHarborRpgBossPhase()
             flashRpgToast(ev.toast?.en ?? `${ev.name.en} (phase ${ev.phase + 1})`)
           }}
+          onRpgPlayerDown={(ev) => {
+            playHarborRpgPlayerDown()
+            flashRpgToast(
+              ev.instance
+                ? 'Defeated — instance wipe · packs reset'
+                : 'Defeated — soft respawn at zone shrine',
+            )
+          }}
           paused={
             worldPaused ||
             invOpen ||
@@ -1502,6 +1530,7 @@ export function LearnSession({
                     appearance: HARBOR_DEFAULT_APPEARANCE,
                     nametagFrame: 'tag-plain',
                     updatedAt: r.updatedAt,
+                    rpgMountId: r.activeMountId,
                   }))
               : remotePlayers
           }
@@ -2305,6 +2334,17 @@ export function LearnSession({
             else {
               pushRpgProgress(next)
               flashRpgToast(id ? 'Mount summoned' : 'Dismounted')
+            }
+          }}
+          onSetTitle={(id) => {
+            const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+            // Ensure completed deeds are claimable as titles before pin
+            const synced = syncHarborRpgAchievementTitles(bag)
+            const nextBag = setHarborRpgActiveTitle(synced.bag, id)
+            if (!nextBag) flashRpgToast('Title not unlocked yet')
+            else {
+              pushRpgProgress(updateHarborRpg(nextBag))
+              flashRpgToast(id ? 'Title pinned' : 'Title cleared')
             }
           }}
           onOpenWiki={(page) => {

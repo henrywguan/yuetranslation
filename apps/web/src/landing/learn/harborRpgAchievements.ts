@@ -353,3 +353,42 @@ export function harborRpgAchievementDone(bag: HarborRpgBag, id: HarborRpgAchieve
   const def = HARBOR_RPG_ACHIEVEMENTS[id]
   return harborRpgAchievementProgress(bag, id) >= def.target
 }
+
+/** Soft title unlock when achievements complete — returns bag + newly unlocked titles. */
+export function syncHarborRpgAchievementTitles(bag: HarborRpgBag): {
+  bag: HarborRpgBag
+  newlyUnlocked: HarborRpgAchievementId[]
+} {
+  const owned = new Set(bag.unlockedTitles)
+  const newlyUnlocked: HarborRpgAchievementId[] = []
+  for (const id of HARBOR_RPG_ACHIEVEMENT_IDS) {
+    if (owned.has(id)) continue
+    if (!harborRpgAchievementDone(bag, id)) continue
+    owned.add(id)
+    newlyUnlocked.push(id)
+  }
+  if (newlyUnlocked.length === 0) return { bag, newlyUnlocked }
+  const unlockedTitles = HARBOR_RPG_ACHIEVEMENT_IDS.filter((id) => owned.has(id))
+  return {
+    bag: {
+      ...bag,
+      unlockedTitles,
+      activeTitleId: bag.activeTitleId ?? newlyUnlocked[0] ?? null,
+    },
+    newlyUnlocked,
+  }
+}
+
+export function setHarborRpgActiveTitle(
+  bag: HarborRpgBag,
+  titleId: string | null,
+): HarborRpgBag | null {
+  if (titleId == null) return { ...bag, activeTitleId: null }
+  if (!bag.unlockedTitles.includes(titleId)) return null
+  return { ...bag, activeTitleId: titleId }
+}
+
+export function harborRpgTitleLabel(id: string): { en: string; zh: string } | null {
+  if (!(HARBOR_RPG_ACHIEVEMENT_IDS as readonly string[]).includes(id)) return null
+  return HARBOR_RPG_ACHIEVEMENTS[id as HarborRpgAchievementId].name
+}

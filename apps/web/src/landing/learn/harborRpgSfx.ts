@@ -53,3 +53,9 @@ export function playHarborRpgPartyInvite(): void {
   beep({ freq: 520, dur: 0.12, gain: 0.06, type: 'sine' })
   window.setTimeout(() => beep({ freq: 660, dur: 0.14, gain: 0.05, type: 'sine' }), 80)
 }
+
+/** Player defeated — descending sting (overworld soft respawn / instance wipe). */
+export function playHarborRpgPlayerDown(): void {
+  beep({ freq: 280, dur: 0.22, gain: 0.09, type: 'sawtooth', slide: 0.45 })
+  window.setTimeout(() => beep({ freq: 140, dur: 0.28, gain: 0.07, type: 'triangle', slide: 0.6 }), 100)
+}
