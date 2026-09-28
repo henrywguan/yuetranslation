@@ -5,7 +5,11 @@
 import * as THREE from 'three'
 import { HARBOR_CRAFT_PALETTE as P, hqBox, hqMat, hqMatSmooth, hqPost } from './harborCraft'
 import {
+  HARBOR_RPG_BANK,
+  HARBOR_RPG_CRAFT_BENCH,
   HARBOR_RPG_FINDER,
+  HARBOR_RPG_GATHER_NODES,
+  HARBOR_RPG_MARKET,
   HARBOR_RPG_MONSTER_DEFS,
   HARBOR_RPG_PORTALS,
   HARBOR_RPG_QUEST_BOARD,
@@ -260,13 +264,13 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
   const def = HARBOR_RPG_MONSTER_DEFS[kind]
   const g = new THREE.Group()
   g.name = `rpg-monster-${kind}`
-  if (kind === 'slime') {
+  if (kind === 'slime' || kind === 'toad') {
     const body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.45, 10, 8),
+      new THREE.SphereGeometry(kind === 'toad' ? 0.5 : 0.45, 10, 8),
       hqMatSmooth(def.color),
     )
     body.position.y = 0.4
-    body.scale.set(1, 0.75, 1)
+    body.scale.set(1, kind === 'toad' ? 0.55 : 0.75, 1.1)
     g.add(body)
   } else if (kind === 'wolf') {
     const body = hqBox(0.45, 0.4, 0.9, def.color, 0, 0.45, 0)
@@ -279,6 +283,24 @@ function buildMonsterMesh(kind: keyof typeof HARBOR_RPG_MONSTER_DEFS): THREE.Gro
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), hqMat(P.skin))
     head.position.y = 1.15
     g.add(head)
+  } else if (kind === 'wraith') {
+    const body = new THREE.Mesh(
+      new THREE.ConeGeometry(0.45, 1.4, 8),
+      hqMatSmooth(def.color),
+    )
+    body.position.y = 0.9
+    g.add(body)
+  } else if (kind === 'crypt-boss') {
+    const body = hqBox(1.2, 1.8, 0.9, def.color, 0, 1.0, 0)
+    g.add(body)
+    const head = hqBox(0.7, 0.55, 0.6, def.color, 0, 2.15, 0)
+    g.add(head)
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 10, 8),
+      hqMatSmooth(0xffc060),
+    )
+    glow.position.set(0, 2.5, 0.35)
+    g.add(glow)
   } else {
     const body = hqBox(0.9, 1.2, 0.7, def.color, 0, 0.7, 0)
     g.add(body)
@@ -357,6 +379,9 @@ function stampTown(root: THREE.Group, look: HarborRpgZoneLook) {
   const shed = building(2.4, 2.0, 1.6, look, 0x5a4030)
   shed.position.set(11, 0, 3)
   root.add(shed)
+  const marketHall = building(3.6, 2.4, 2.2, look, 0x907040)
+  marketHall.position.set(10, 0, 10)
+  root.add(marketHall)
   const path = hqBox(3.2, 0.06, 28, look.dirt, 0, 0.03, 0)
   path.name = 'rpg-town-path'
   root.add(path)
@@ -370,6 +395,43 @@ function stampTown(root: THREE.Group, look: HarborRpgZoneLook) {
     ),
   )
   root.add(npcStall(HARBOR_RPG_FINDER.x, HARBOR_RPG_FINDER.z, HARBOR_RPG_FINDER.id, 0x70a070))
+  root.add(npcStall(HARBOR_RPG_MARKET.x, HARBOR_RPG_MARKET.z, HARBOR_RPG_MARKET.id, 0xd0a040))
+  root.add(npcStall(HARBOR_RPG_CRAFT_BENCH.x, HARBOR_RPG_CRAFT_BENCH.z, HARBOR_RPG_CRAFT_BENCH.id, 0x8090a0))
+  root.add(npcStall(HARBOR_RPG_BANK.x, HARBOR_RPG_BANK.z, HARBOR_RPG_BANK.id, 0xc0c0d0))
+}
+
+function stampCrypt(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
+  for (let i = 0; i < 10; i++) {
+    const wall = hqBox(1.2 + rng() * 1.4, 2.2 + rng(), 0.45, look.stone)
+    const ang = (i / 10) * Math.PI * 2
+    wall.position.set(Math.cos(ang) * 11, 1.2, Math.sin(ang) * 11)
+    wall.rotation.y = ang
+    wall.name = 'rpg-crypt-wall'
+    root.add(wall)
+  }
+  const dais = hqBox(4.5, 0.4, 4.5, look.accent, 0, 0.2, -4)
+  dais.name = 'rpg-crypt-dais'
+  root.add(dais)
+}
+
+function stampGatherNodes(root: THREE.Group, zone: HarborRpgZoneId) {
+  for (const n of HARBOR_RPG_GATHER_NODES) {
+    if (n.zone !== zone) continue
+    const g = new THREE.Group()
+    g.name = `rpg-node-${n.id}`
+    g.position.set(n.x, 0, n.z)
+    const color = n.profession === 'mining' ? 0x8a8680 : 0x4a9a50
+    const mesh = new THREE.Mesh(
+      n.profession === 'mining'
+        ? new THREE.DodecahedronGeometry(0.45, 0)
+        : new THREE.ConeGeometry(0.35, 0.7, 6),
+      hqMat(color),
+    )
+    mesh.position.y = n.profession === 'mining' ? 0.35 : 0.4
+    g.add(mesh)
+    g.userData.rpgInteract = n.id
+    root.add(g)
+  }
 }
 
 function stampRuins(root: THREE.Group, look: HarborRpgZoneLook, rng: () => number) {
@@ -395,6 +457,7 @@ export function buildRpgZoneScene(zone: HarborRpgZoneId = 'meadow'): THREE.Group
   root.userData.rpgZone = zone
   root.add(grassPlane(look))
   scatterNature(root, rng, look, zone)
+  stampGatherNodes(root, zone)
 
   if (zone === 'meadow') {
     root.add(shrine())
@@ -409,8 +472,20 @@ export function buildRpgZoneScene(zone: HarborRpgZoneId = 'meadow'): THREE.Group
   }
   if (zone === 'town') stampTown(root, look)
   if (zone === 'ruins') stampRuins(root, look, rng)
+  if (zone === 'crypt') stampCrypt(root, look, rng)
+  if (zone === 'marsh') {
+    for (let i = 0; i < 8; i++) {
+      const pool = new THREE.Mesh(
+        new THREE.CircleGeometry(1.2 + rng() * 1.4, 12),
+        hqMatSmooth(0x3a6070),
+      )
+      pool.rotation.x = -Math.PI / 2
+      pool.position.set((rng() - 0.5) * 24, 0.04, (rng() - 0.5) * 24)
+      pool.name = 'rpg-marsh-pool'
+      root.add(pool)
+    }
+  }
   if (zone === 'pinewood') {
-    // Dense path ring
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(5, 6.2, 28),
       hqMat(look.dirt),
@@ -464,6 +539,12 @@ export function nearestRpgInteract(
     targets.push(HARBOR_RPG_VENDOR)
     targets.push(HARBOR_RPG_QUEST_BOARD)
     targets.push(HARBOR_RPG_FINDER)
+    targets.push(HARBOR_RPG_MARKET)
+    targets.push(HARBOR_RPG_CRAFT_BENCH)
+    targets.push(HARBOR_RPG_BANK)
+  }
+  for (const n of HARBOR_RPG_GATHER_NODES) {
+    if (n.zone === zone) targets.push({ id: n.id, x: n.x, z: n.z, radius: n.radius })
   }
   let best: string | null = null
   let bestD = Infinity

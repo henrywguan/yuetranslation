@@ -91,12 +91,24 @@ export type HarborQuestProgress = {
     dummyKills: number
     zone?: string
     inventory?: { id: string; qty: number }[]
+    bank?: { id: string; qty: number }[]
+    gear?: Record<string, string | null>
     equippedWeapon?: string | null
     equippedArmor?: string | null
     quests?: { id: string; progress: number; complete: boolean; claimed: boolean }[]
     kills?: Record<string, number>
     companionUntil?: number
     companionName?: string | null
+    professions?: Record<string, number>
+    market?: {
+      id: string
+      sellerId: string
+      sellerName: string
+      itemId: string
+      qty: number
+      price: number
+      createdAt: number
+    }[]
   }
 }
 
@@ -329,12 +341,36 @@ const HARBOR_RPG_COSMETICS = new Set([
   'rpg-cape-ember',
 ])
 const HARBOR_RPG_ITEMS = new Set([
-  'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide',
-  'rpg-weapon-stick','rpg-weapon-blade','rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail',
+  'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide','rpg-item-ore','rpg-item-reed','rpg-item-ash-core',
+  'rpg-potion-heal','rpg-potion-might',
+  'rpg-weapon-stick','rpg-weapon-blade','rpg-weapon-ash',
+  'rpg-offhand-buckler','rpg-offhand-tome',
+  'rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail',
+  'rpg-head-hood','rpg-head-helm','rpg-legs-wraps','rpg-legs-greaves','rpg-feet-sandals','rpg-feet-boots',
+  'rpg-ring-jade','rpg-trinket-lantern',
 ])
-const HARBOR_RPG_ZONES = new Set(['meadow','pinewood','ruins','town'])
-const HARBOR_RPG_QUEST_IDS = new Set(['quest-slime-hunt','quest-wolf-pelts','quest-ruin-shards'])
-const HARBOR_RPG_MONSTERS = new Set(['slime','wolf','bandit','golem'])
+const HARBOR_RPG_ZONES = new Set(['meadow','pinewood','ruins','marsh','town','crypt'])
+const HARBOR_RPG_QUEST_IDS = new Set([
+  'quest-slime-hunt','quest-wolf-pelts','quest-ruin-shards','quest-marsh-toads','quest-crypt-warden','quest-first-craft',
+])
+const HARBOR_RPG_MONSTERS = new Set(['slime','wolf','bandit','golem','toad','wraith','crypt-boss'])
+const HARBOR_RPG_GEAR_SLOTS = ['weapon','offhand','head','chest','legs','feet','ring','trinket'] as const
+const HARBOR_RPG_PROFESSIONS = ['herbalism','mining','alchemy','smithing'] as const
+
+function sanitizeRpgInv(raw: unknown, max: number): { id: string; qty: number }[] {
+  const inventory: { id: string; qty: number }[] = []
+  if (!Array.isArray(raw)) return inventory
+  for (const row of raw) {
+    if (inventory.length >= max) break
+    if (!row || typeof row !== 'object') continue
+    const r = row as Record<string, unknown>
+    if (typeof r.id !== 'string' || !HARBOR_RPG_ITEMS.has(r.id)) continue
+    const qty = typeof r.qty === 'number' && Number.isFinite(r.qty) && r.qty > 0 ? Math.min(Math.floor(r.qty), 999) : 0
+    if (qty <= 0) continue
+    inventory.push({ id: r.id, qty })
+  }
+  return inventory
+}
 
 function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
   const empty = {
@@ -349,12 +385,25 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     dummyKills: 0,
     zone: 'meadow',
     inventory: [] as { id: string; qty: number }[],
+    bank: [] as { id: string; qty: number }[],
+    gear: {
+      weapon: null,
+      offhand: null,
+      head: null,
+      chest: null,
+      legs: null,
+      feet: null,
+      ring: null,
+      trinket: null,
+    } as Record<string, string | null>,
     equippedWeapon: null as string | null,
     equippedArmor: null as string | null,
     quests: [] as { id: string; progress: number; complete: boolean; claimed: boolean }[],
     kills: {} as Record<string, number>,
     companionUntil: 0,
     companionName: null as string | null,
+    professions: { herbalism: 0, mining: 0, alchemy: 0, smithing: 0 } as Record<string, number>,
+    market: [] as NonNullable<NonNullable<HarborQuestProgress['rpg']>['market']>,
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
@@ -448,26 +497,37 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
       ? Math.min(Math.floor(o.dummyKills), 1_000_000)
       : 0
   const zone = typeof o.zone === 'string' && HARBOR_RPG_ZONES.has(o.zone) ? o.zone : 'meadow'
-  const inventory: { id: string; qty: number }[] = []
-  if (Array.isArray(o.inventory)) {
-    for (const row of o.inventory) {
-      if (inventory.length >= 24) break
-      if (!row || typeof row !== 'object') continue
-      const r = row as Record<string, unknown>
-      if (typeof r.id !== 'string' || !HARBOR_RPG_ITEMS.has(r.id)) continue
-      const qty = typeof r.qty === 'number' && Number.isFinite(r.qty) && r.qty > 0 ? Math.min(Math.floor(r.qty), 999) : 0
-      if (qty <= 0) continue
-      inventory.push({ id: r.id, qty })
+  const inventory = sanitizeRpgInv(o.inventory, 32)
+  const bank = sanitizeRpgInv(o.bank, 40)
+  const gear: Record<string, string | null> = {
+    weapon: null,
+    offhand: null,
+    head: null,
+    chest: null,
+    legs: null,
+    feet: null,
+    ring: null,
+    trinket: null,
+  }
+  if (o.gear && typeof o.gear === 'object') {
+    const g = o.gear as Record<string, unknown>
+    for (const slot of HARBOR_RPG_GEAR_SLOTS) {
+      const v = g[slot]
+      if (typeof v === 'string' && HARBOR_RPG_ITEMS.has(v) && inventory.some((s) => s.id === v)) {
+        gear[slot] = v
+      }
     }
   }
   const equippedWeapon =
     typeof o.equippedWeapon === 'string' && HARBOR_RPG_ITEMS.has(o.equippedWeapon) && inventory.some((s) => s.id === o.equippedWeapon)
       ? o.equippedWeapon
-      : null
+      : gear.weapon
   const equippedArmor =
     typeof o.equippedArmor === 'string' && HARBOR_RPG_ITEMS.has(o.equippedArmor) && inventory.some((s) => s.id === o.equippedArmor)
       ? o.equippedArmor
-      : null
+      : gear.chest
+  if (!gear.weapon && equippedWeapon) gear.weapon = equippedWeapon
+  if (!gear.chest && equippedArmor) gear.chest = equippedArmor
   const quests: { id: string; progress: number; complete: boolean; claimed: boolean }[] = []
   if (Array.isArray(o.quests)) {
     for (const row of o.quests) {
@@ -495,6 +555,38 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     typeof o.companionName === 'string' && o.companionName.trim()
       ? o.companionName.trim().slice(0, 20)
       : null
+  const professions: Record<string, number> = { herbalism: 0, mining: 0, alchemy: 0, smithing: 0 }
+  if (o.professions && typeof o.professions === 'object') {
+    const p = o.professions as Record<string, unknown>
+    for (const id of HARBOR_RPG_PROFESSIONS) {
+      const v = p[id]
+      if (typeof v === 'number' && Number.isFinite(v) && v >= 0) {
+        professions[id] = Math.min(Math.floor(v), 500_000)
+      }
+    }
+  }
+  const market: NonNullable<NonNullable<HarborQuestProgress['rpg']>['market']> = []
+  if (Array.isArray(o.market)) {
+    for (const row of o.market) {
+      if (market.length >= 12) break
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      if (typeof r.id !== 'string' || typeof r.sellerId !== 'string') continue
+      if (typeof r.itemId !== 'string' || !HARBOR_RPG_ITEMS.has(r.itemId)) continue
+      const qty = typeof r.qty === 'number' && Number.isFinite(r.qty) && r.qty > 0 ? Math.min(Math.floor(r.qty), 99) : 0
+      const price = typeof r.price === 'number' && Number.isFinite(r.price) && r.price > 0 ? Math.min(Math.floor(r.price), 1_000_000) : 0
+      if (qty <= 0 || price <= 0) continue
+      market.push({
+        id: r.id.trim().slice(0, 40),
+        sellerId: r.sellerId.trim().slice(0, 64),
+        sellerName: typeof r.sellerName === 'string' && r.sellerName.trim() ? r.sellerName.trim().slice(0, 20) : 'Trader',
+        itemId: r.itemId,
+        qty,
+        price,
+        createdAt: typeof r.createdAt === 'number' && Number.isFinite(r.createdAt) ? Math.floor(r.createdAt) : Date.now(),
+      })
+    }
+  }
   return {
     characters,
     activeCharacterId,
@@ -507,12 +599,16 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     dummyKills,
     zone,
     inventory,
+    bank,
+    gear,
     equippedWeapon,
     equippedArmor,
     quests,
     kills,
     companionUntil,
     companionName,
+    professions,
+    market,
   }
 }
 

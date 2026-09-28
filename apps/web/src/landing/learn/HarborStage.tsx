@@ -34,6 +34,12 @@ type HarborStageProps = {
   rpgZone?: HarborRpgZoneId
   rpgBag?: HarborRpgBag
   onRpgBagChange?: (bag: HarborRpgBag) => void
+  localUserId?: string
+  rpgPartySize?: number
+  onRpgContestedLoot?: (drop: {
+    monsterId: string
+    loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
+  }) => void
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a nearby talkable NPC / speech bubble. */
@@ -63,6 +69,9 @@ export function HarborStage({
   rpgZone = 'meadow',
   rpgBag,
   onRpgBagChange,
+  localUserId,
+  rpgPartySize,
+  onRpgContestedLoot,
   onVisitable,
   onDialogueNpc,
   remotePlayers,
@@ -93,6 +102,9 @@ export function HarborStage({
         rpgZone={rpgZone}
         rpgBag={rpgBag}
         onRpgBagChange={onRpgBagChange}
+        localUserId={localUserId}
+        rpgPartySize={rpgPartySize}
+        onRpgContestedLoot={onRpgContestedLoot}
         paused={paused}
         onVisitable={onVisitable}
         onDialogueNpc={onDialogueNpc}

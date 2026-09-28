@@ -67,6 +67,8 @@ import {
   type HarborRpgZoneId,
 } from './harborRpgData'
 import { HarborRpgPanel } from './HarborRpgPanel'
+import { awardRpgContestedLoot } from './harborRpgCombat'
+import { emptyHarborRpgBag } from './harborRpgProgress'
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
   emptyHarborFishingBag,
@@ -152,6 +154,12 @@ import {
   acceptHarborRpgQuest,
   claimHarborRpgQuest,
   hireHarborRpgCompanion,
+  gatherHarborRpgNode,
+  craftHarborRpgRecipe,
+  listHarborRpgMarketItem,
+  buyHarborRpgMarketListing,
+  depositHarborRpgBank,
+  withdrawHarborRpgBank,
   purchaseHarborBeautySku,
   purchaseHarborBeautyForAppearance,
   equipHarborShowoff,
@@ -217,8 +225,16 @@ export function LearnSession({
     targetName: string | null
     targetHp: number
     targetMaxHp: number
+    gcd?: number
+    abilityCds?: Partial<Record<string, number>>
+    guardBuffSec?: number
   } | null>(null)
   const [rpgToast, setRpgToast] = useState<string | null>(null)
+  const [rpgPartySize, setRpgPartySize] = useState(1)
+  const [rpgLootPrompt, setRpgLootPrompt] = useState<{
+    monsterId: string
+    loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
+  } | null>(null)
   /** Fullscreen wuxia world map (minimap globe). */
   const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
@@ -543,6 +559,27 @@ export function LearnSession({
             ? 'Quest board — open Quests tab'
             : 'Party finder — open Party tab',
       )
+      return
+    }
+    if (id === 'rpg-market') {
+      flashRpgToast('World Market — open Market tab')
+      return
+    }
+    if (id === 'rpg-craft') {
+      flashRpgToast('Craft Bench — open Craft tab')
+      return
+    }
+    if (id === 'rpg-bank') {
+      flashRpgToast('River Bank — open Bag · Bank')
+      return
+    }
+    if (id.startsWith('node-')) {
+      const next = gatherHarborRpgNode(id)
+      if ('error' in next) flashRpgToast(next.error)
+      else {
+        pushRpgProgress(next)
+        flashRpgToast('Gathered node')
+      }
     }
   }, [rpgInteract, pushRpgProgress, flashRpgToast, enterRpgZone])
 
@@ -1178,6 +1215,12 @@ export function LearnSession({
           rpgZone={rpgZone}
           rpgBag={progressSnap.rpg}
           onRpgBagChange={onRpgBagChange}
+          localUserId={localUserIdRef.current ?? undefined}
+          rpgPartySize={rpgPartySize}
+          onRpgContestedLoot={(drop) => {
+            setRpgLootPrompt(drop)
+            flashRpgToast('Contested loot — Need / Greed')
+          }}
           paused={
             worldPaused ||
             invOpen ||
@@ -1885,6 +1928,78 @@ export function LearnSession({
               pushRpgProgress(next)
               flashRpgToast(`Hired ${next.rpg.companionName}`)
             }
+          }}
+          onCastAbility={(id) => {
+            worldApiRef.current?.queueRpgAbility(id)
+          }}
+          onCraft={(recipeId) => {
+            const next = craftHarborRpgRecipe(recipeId)
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Crafted')
+            }
+          }}
+          onListMarket={(itemId, price) => {
+            const next = listHarborRpgMarketItem({
+              sellerId: localUserIdRef.current ?? 'local',
+              sellerName:
+                progressSnap.rpg?.characters.find(
+                  (c) => c.id === progressSnap.rpg?.activeCharacterId,
+                )?.name ?? 'Adventurer',
+              itemId,
+              qty: 1,
+              price,
+            })
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Listed on market')
+            }
+          }}
+          onBuyMarket={(listingId) => {
+            const next = buyHarborRpgMarketListing(
+              listingId,
+              localUserIdRef.current ?? 'local',
+            )
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Bought from market')
+            }
+          }}
+          onDepositBank={(id) => {
+            const next = depositHarborRpgBank(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Banked')
+            }
+          }}
+          onWithdrawBank={(id) => {
+            const next = withdrawHarborRpgBank(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Withdrawn')
+            }
+          }}
+          onPartySizeChange={(n) => {
+            setRpgPartySize(n)
+            worldApiRef.current?.setRpgPartySize(n)
+          }}
+          lootPrompt={rpgLootPrompt}
+          onLootVote={(vote) => {
+            if (!rpgLootPrompt) return
+            if (vote === 'need' || vote === 'greed') {
+              const next = awardRpgContestedLoot(
+                progressSnap.rpg ?? emptyHarborRpgBag(),
+                rpgLootPrompt.loot,
+              )
+              pushRpgProgress(updateHarborRpg(next))
+              flashRpgToast(vote === 'need' ? 'Need won — loot taken' : 'Greed — loot taken')
+            } else {
+              flashRpgToast('Passed on loot')
+            }
+            setRpgLootPrompt(null)
           }}
           onExitGame={() => {
             playHarborCastOff()

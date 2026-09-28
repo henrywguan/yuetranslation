@@ -204,6 +204,15 @@ export type HarborWorldOptions = {
   rpgBag?: HarborRpgBag
   /** Persist RPG bag mutations from soft combat. */
   onRpgBagChange?: (bag: HarborRpgBag) => void
+  /** Local user id for RPG threat / contested loot. */
+  localUserId?: string
+  /** Party size including self (contested loot when > 1). */
+  rpgPartySize?: number
+  /** Contested loot dropped while in a party. */
+  onRpgContestedLoot?: (drop: {
+    monsterId: string
+    loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
+  }) => void
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a talkable NPC / speech bubble while in range. */
@@ -271,7 +280,14 @@ export type HarborWorldHandle = {
     targetName: string | null
     targetHp: number
     targetMaxHp: number
+    gcd: number
+    abilityCds: Partial<Record<import('./harborRpgData').HarborRpgAbilityId, number>>
+    guardBuffSec: number
   } | null
+  /** Queue a combat ability for the next tick. */
+  queueRpgAbility: (id: import('./harborRpgData').HarborRpgAbilityId) => void
+  /** Update soft party size (contested loot). */
+  setRpgPartySize: (n: number) => void
   /** Push latest RPG bag into the combat sim (equip / shop). */
   setRpgBag: (bag: HarborRpgBag) => void
   /**
@@ -4535,6 +4551,12 @@ export function createHarborWorld(
   let rpgBagLive: HarborRpgBag = sanitizeHarborRpgBag(options.rpgBag)
   let rpgPlayerHp = harborRpgMaxHp(rpgBagLive)
   let rpgMonsters: HarborRpgMonsterRuntime[] = []
+  let rpgGuardBuffSec = 0
+  let rpgQueuedAbility: import('./harborRpgData').HarborRpgAbilityId | null = null
+  let rpgCombatCds: {
+    gcd: number
+    cds: Partial<Record<import('./harborRpgData').HarborRpgAbilityId, number>>
+  } = { gcd: 0, cds: {} }
   const rpgMonsterMeshes = new Map<string, THREE.Group>()
   // Guan Harbor / HarborRPG always force sunny daylight.
   const weather: HarborWeather = isPocket ? 'sunny' : (options.weather ?? pickHarborWeather())
@@ -5831,12 +5853,20 @@ export function createHarborWorld(
         playerX: footX,
         playerZ: footZ,
         playerHp: rpgPlayerHp,
+        userId: options.localUserId ?? 'local',
+        partySize: Math.max(1, options.rpgPartySize ?? 1),
+        abilityId: rpgQueuedAbility,
         attacking: true,
         dt,
         now,
+        zone: rpgZone,
+        guardBuffSec: rpgGuardBuffSec,
       })
+      rpgQueuedAbility = null
       rpgMonsters = combat.monsters
       rpgPlayerHp = combat.playerHp
+      rpgGuardBuffSec = combat.guardBuffSec
+      rpgCombatCds = { gcd: combat.gcdRemaining, cds: combat.abilityCds }
       if (combat.bag !== rpgBagLive) {
         rpgBagLive = combat.bag
         options.onRpgBagChange?.(rpgBagLive)
@@ -5850,6 +5880,12 @@ export function createHarborWorld(
         else mesh.scale.setScalar(1)
       }
       for (const ev of combat.events) {
+        if (ev.type === 'kill' && ev.contested) {
+          options.onRpgContestedLoot?.({
+            monsterId: ev.monsterId,
+            loot: ev.loot,
+          })
+        }
         if (ev.type === 'player-down') {
           // Soft respawn at zone spawn
           const spawn = HARBOR_RPG_ZONE_SPAWN[rpgZone]
@@ -6278,7 +6314,17 @@ if (o.userData.cigaretteSmoke && !reduced) {
         targetName,
         targetHp,
         targetMaxHp,
+        gcd: rpgCombatCds.gcd,
+        abilityCds: rpgCombatCds.cds,
+        guardBuffSec: rpgGuardBuffSec,
       }
+    },
+    queueRpgAbility(id) {
+      if (!isRpg || disposed) return
+      rpgQueuedAbility = id
+    },
+    setRpgPartySize(n) {
+      options.rpgPartySize = Math.max(1, Math.floor(n))
     },
     setRpgBag(bag) {
       rpgBagLive = sanitizeHarborRpgBag(bag)

@@ -25,6 +25,12 @@ type Props = {
   rpgZone?: HarborRpgZoneId
   rpgBag?: HarborRpgBag
   onRpgBagChange?: (bag: HarborRpgBag) => void
+  localUserId?: string
+  rpgPartySize?: number
+  onRpgContestedLoot?: (drop: {
+    monsterId: string
+    loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
+  }) => void
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
@@ -56,6 +62,9 @@ export function HarborWorldCanvas({
   rpgZone = 'meadow',
   rpgBag,
   onRpgBagChange,
+  localUserId,
+  rpgPartySize,
+  onRpgContestedLoot,
   paused = false,
   onVisitable,
   onDialogueNpc,
@@ -76,6 +85,12 @@ export function HarborWorldCanvas({
   onRemoteSelectRef.current = onRemotePlayerSelect
   const onRpgBagChangeRef = useRef(onRpgBagChange)
   onRpgBagChangeRef.current = onRpgBagChange
+  const onRpgContestedLootRef = useRef(onRpgContestedLoot)
+  onRpgContestedLootRef.current = onRpgContestedLoot
+  const localUserIdRef = useRef(localUserId)
+  localUserIdRef.current = localUserId
+  const rpgPartySizeRef = useRef(rpgPartySize)
+  rpgPartySizeRef.current = rpgPartySize
   const localUsernameRef = useRef(localUsername)
   localUsernameRef.current = localUsername
   const nametagFrameRef = useRef(nametagFrame)
@@ -108,6 +123,9 @@ export function HarborWorldCanvas({
         onDialogueNpc: (tap) => onDialogueNpcRef.current?.(tap),
         onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
         onRpgBagChange: (bag) => onRpgBagChangeRef.current?.(bag),
+        localUserId: localUserIdRef.current,
+        rpgPartySize: rpgPartySizeRef.current ?? 1,
+        onRpgContestedLoot: (drop) => onRpgContestedLootRef.current?.(drop),
       })
     } catch (err) {
       console.error('[harbor] WebGL boot failed', err)

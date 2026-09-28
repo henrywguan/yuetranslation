@@ -22,10 +22,13 @@ import {
   HARBOR_RPG_SHRINE_XP,
   addRpgInventoryItem,
   countRpgItem,
+  depositRpgBank,
+  equipRpgGearSlot,
   removeRpgInventoryItem,
   rpgCreditMultiplier,
   rpgXpMultiplier,
   sanitizeHarborRpgBag,
+  withdrawRpgBank,
   type HarborRpgBag,
 } from './harborRpgProgress'
 import {
@@ -37,6 +40,12 @@ import {
   type HarborRpgZoneId,
 } from './harborRpgData'
 import { hireRpgCompanion } from './harborRpgSocial'
+import {
+  buyRpgMarketListing,
+  craftRpgRecipe,
+  gatherRpgNode,
+  listRpgMarketItem,
+} from './harborRpgProfessions'
 import { HARBOR_LEVELS } from './curriculum'
 import {
   HARBOR_DEFAULT_LOOK,
@@ -275,20 +284,17 @@ export function setHarborRpgZone(zone: HarborRpgZoneId): HarborProgress {
 
 export function equipHarborRpgItem(itemId: HarborRpgItemId): HarborProgress | null {
   const p = read()
-  let bag = sanitizeHarborRpgBag(p.rpg)
-  const def = HARBOR_RPG_ITEM_DEFS[itemId]
-  if (!def || countRpgItem(bag, itemId) < 1) return null
-  if (def.kind === 'weapon') bag = { ...bag, equippedWeapon: itemId }
-  else if (def.kind === 'armor') bag = { ...bag, equippedArmor: itemId }
-  else return null
-  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = equipRpgGearSlot(bag, itemId)
+  if (!next) return null
+  return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
 }
 
 export function buyHarborRpgVendorItem(itemId: HarborRpgItemId): HarborProgress | null {
   const p = read()
   let bag = sanitizeHarborRpgBag(p.rpg)
   const def = HARBOR_RPG_ITEM_DEFS[itemId]
-  if (!def || def.kind === 'loot') return null
+  if (!def || def.kind === 'loot' || def.kind === 'reagent') return null
   if (bag.gold < def.value) return null
   bag = {
     ...addRpgInventoryItem(bag, itemId, 1),
@@ -361,6 +367,69 @@ export function hireHarborRpgCompanion(): HarborProgress | { error: string } {
   const res = hireRpgCompanion(bag)
   if (!res.ok) return { error: res.reason }
   return commit({ ...p, rpg: res.bag, lastSavedAt: Date.now() })
+}
+
+export function gatherHarborRpgNode(nodeId: string): HarborProgress | { error: string } {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const res = gatherRpgNode(bag, nodeId)
+  if (!res.ok) return { error: res.reason }
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(res.bag), lastSavedAt: Date.now() })
+}
+
+export function craftHarborRpgRecipe(recipeId: string): HarborProgress | { error: string } {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const res = craftRpgRecipe(bag, recipeId)
+  if (!res.ok) return { error: res.reason }
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(res.bag), lastSavedAt: Date.now() })
+}
+
+export function listHarborRpgMarketItem(opts: {
+  sellerId: string
+  sellerName: string
+  itemId: HarborRpgItemId
+  qty: number
+  price: number
+}): HarborProgress | { error: string } {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const res = listRpgMarketItem(bag, opts)
+  if (!res.ok) return { error: res.reason }
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(res.bag), lastSavedAt: Date.now() })
+}
+
+export function buyHarborRpgMarketListing(
+  listingId: string,
+  buyerId: string,
+): HarborProgress | { error: string } {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const res = buyRpgMarketListing(bag, listingId, buyerId)
+  if (!res.ok) return { error: res.reason }
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(res.bag), lastSavedAt: Date.now() })
+}
+
+export function depositHarborRpgBank(
+  itemId: HarborRpgItemId,
+  qty = 1,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = depositRpgBank(bag, itemId, qty)
+  if (!next) return null
+  return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
+}
+
+export function withdrawHarborRpgBank(
+  itemId: HarborRpgItemId,
+  qty = 1,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = withdrawRpgBank(bag, itemId, qty)
+  if (!next) return null
+  return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
 }
 
 export function markGoldEarned(amount: number) {

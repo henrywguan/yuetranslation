@@ -10,27 +10,37 @@ import {
   type HarborGender,
 } from './harborAppearance'
 import {
+  HARBOR_RPG_GEAR_SLOTS,
   HARBOR_RPG_ITEMS,
   HARBOR_RPG_ITEM_DEFS,
   HARBOR_RPG_MONSTER_KINDS,
   HARBOR_RPG_QUESTS,
   HARBOR_RPG_ZONES,
+  harborRpgItemSlot,
   harborRpgQuestById,
   isHarborRpgZoneId,
+  type HarborRpgGearSlot,
   type HarborRpgItemId,
   type HarborRpgMonsterKind,
+  type HarborRpgProfessionId,
   type HarborRpgQuestId,
   type HarborRpgZoneId,
 } from './harborRpgData'
+import {
+  emptyRpgProfessions,
+  sanitizeRpgMarketListings,
+  sanitizeRpgProfessions,
+  type HarborRpgMarketListing,
+} from './harborRpgProfessions'
 
 export const HARBOR_RPG_MAX_CHARS = 2
-export const HARBOR_RPG_MAX_INV_STACKS = 24
+export const HARBOR_RPG_MAX_INV_STACKS = 32
+export const HARBOR_RPG_MAX_BANK_STACKS = 40
 export const HARBOR_RPG_SHRINE_XP = 25
 export const HARBOR_RPG_DUMMY_GOLD = 3
 export const HARBOR_RPG_BASE_HP = 40
 export const HARBOR_RPG_HP_PER_LEVEL = 8
 
-/** Starter cosmetic ids (procedural / kit placeholders). */
 export const HARBOR_RPG_COSMETICS = [
   'rpg-cloak-traveler',
   'rpg-cloak-jade',
@@ -65,6 +75,8 @@ export type HarborRpgQuestProgress = {
 
 export type HarborRpgKillCounts = Partial<Record<HarborRpgMonsterKind, number>>
 
+export type HarborRpgGear = Record<HarborRpgGearSlot, HarborRpgItemId | null>
+
 export type HarborRpgBag = {
   characters: HarborRpgCharacter[]
   activeCharacterId: string | null
@@ -75,16 +87,20 @@ export type HarborRpgBag = {
   boosts: HarborRpgBoosts
   shrineClaims: number
   dummyKills: number
-  /** Last zone visited (soft). */
   zone: HarborRpgZoneId
   inventory: HarborRpgInvStack[]
+  bank: HarborRpgInvStack[]
+  gear: HarborRpgGear
+  /** @deprecated mirrors gear.weapon */
   equippedWeapon: HarborRpgItemId | null
+  /** @deprecated mirrors gear.chest */
   equippedArmor: HarborRpgItemId | null
   quests: HarborRpgQuestProgress[]
   kills: HarborRpgKillCounts
-  /** Soft companion hire until timestamp. */
   companionUntil: number
   companionName: string | null
+  professions: Record<HarborRpgProfessionId, number>
+  market: HarborRpgMarketListing[]
 }
 
 const COSMETIC_SET = new Set<string>(HARBOR_RPG_COSMETICS)
@@ -92,7 +108,23 @@ const ITEM_SET = new Set<string>(HARBOR_RPG_ITEMS)
 const QUEST_SET = new Set<string>(HARBOR_RPG_QUESTS.map((q) => q.id))
 const MONSTER_SET = new Set<string>(HARBOR_RPG_MONSTER_KINDS)
 
+export function emptyRpgGear(): HarborRpgGear {
+  return {
+    weapon: null,
+    offhand: null,
+    head: null,
+    chest: null,
+    legs: null,
+    feet: null,
+    ring: null,
+    trinket: null,
+  }
+}
+
 export function emptyHarborRpgBag(): HarborRpgBag {
+  const gear = emptyRpgGear()
+  gear.weapon = 'rpg-weapon-stick'
+  gear.chest = 'rpg-armor-cloth'
   return {
     characters: [],
     activeCharacterId: null,
@@ -108,12 +140,16 @@ export function emptyHarborRpgBag(): HarborRpgBag {
       { id: 'rpg-weapon-stick', qty: 1 },
       { id: 'rpg-armor-cloth', qty: 1 },
     ],
+    bank: [],
+    gear,
     equippedWeapon: 'rpg-weapon-stick',
     equippedArmor: 'rpg-armor-cloth',
     quests: [],
     kills: {},
     companionUntil: 0,
     companionName: null,
+    professions: emptyRpgProfessions(),
+    market: [],
   }
 }
 
@@ -122,30 +158,29 @@ export function harborRpgLevelFromXp(xp: number): number {
   return 1 + Math.floor(Math.sqrt(n / 25))
 }
 
+function gearPower(bag: HarborRpgBag, slots: HarborRpgGearSlot[]): number {
+  let n = 0
+  for (const slot of slots) {
+    const id = bag.gear[slot]
+    if (id && HARBOR_RPG_ITEM_DEFS[id]) n += HARBOR_RPG_ITEM_DEFS[id].power
+  }
+  return n
+}
+
 export function harborRpgMaxHp(bag: HarborRpgBag): number {
   const lv = harborRpgLevelFromXp(bag.xp)
-  const armor =
-    bag.equippedArmor && HARBOR_RPG_ITEM_DEFS[bag.equippedArmor]
-      ? HARBOR_RPG_ITEM_DEFS[bag.equippedArmor].power
-      : 0
-  return HARBOR_RPG_BASE_HP + (lv - 1) * HARBOR_RPG_HP_PER_LEVEL + armor * 4
+  const armor = gearPower(bag, ['chest', 'head', 'legs', 'feet', 'offhand'])
+  return HARBOR_RPG_BASE_HP + (lv - 1) * HARBOR_RPG_HP_PER_LEVEL + armor * 3
 }
 
 export function harborRpgAttackPower(bag: HarborRpgBag): number {
   const lv = harborRpgLevelFromXp(bag.xp)
-  const weapon =
-    bag.equippedWeapon && HARBOR_RPG_ITEM_DEFS[bag.equippedWeapon]
-      ? HARBOR_RPG_ITEM_DEFS[bag.equippedWeapon].power
-      : 0
+  const weapon = gearPower(bag, ['weapon', 'ring', 'trinket'])
   return 3 + Math.floor(lv * 0.8) + weapon
 }
 
 export function harborRpgDefense(bag: HarborRpgBag): number {
-  const armor =
-    bag.equippedArmor && HARBOR_RPG_ITEM_DEFS[bag.equippedArmor]
-      ? HARBOR_RPG_ITEM_DEFS[bag.equippedArmor].power
-      : 0
-  return armor
+  return gearPower(bag, ['chest', 'head', 'legs', 'feet', 'offhand'])
 }
 
 function sanitizeName(raw: unknown): string {
@@ -179,11 +214,14 @@ function sanitizeCharacter(raw: unknown): HarborRpgCharacter | null {
   }
 }
 
-function sanitizeInventory(raw: unknown): HarborRpgInvStack[] {
+function sanitizeInventory(
+  raw: unknown,
+  max = HARBOR_RPG_MAX_INV_STACKS,
+): HarborRpgInvStack[] {
   const out: HarborRpgInvStack[] = []
   if (!Array.isArray(raw)) return out
   for (const row of raw) {
-    if (out.length >= HARBOR_RPG_MAX_INV_STACKS) break
+    if (out.length >= max) break
     if (!row || typeof row !== 'object') continue
     const o = row as Record<string, unknown>
     if (typeof o.id !== 'string' || !ITEM_SET.has(o.id)) continue
@@ -239,16 +277,45 @@ function sanitizeKills(raw: unknown): HarborRpgKillCounts {
   return out
 }
 
-function sanitizeEquip(
+function syncLegacyEquip(gear: HarborRpgGear): {
+  equippedWeapon: HarborRpgItemId | null
+  equippedArmor: HarborRpgItemId | null
+} {
+  return {
+    equippedWeapon: gear.weapon,
+    equippedArmor: gear.chest,
+  }
+}
+
+function sanitizeGear(
   raw: unknown,
   inventory: HarborRpgInvStack[],
-  kind: 'weapon' | 'armor',
-): HarborRpgItemId | null {
-  if (typeof raw !== 'string' || !ITEM_SET.has(raw)) return null
-  const id = raw as HarborRpgItemId
-  if (HARBOR_RPG_ITEM_DEFS[id].kind !== kind) return null
-  if (!inventory.some((s) => s.id === id)) return null
-  return id
+  legacyWeapon: unknown,
+  legacyArmor: unknown,
+): HarborRpgGear {
+  const gear = emptyRpgGear()
+  const owned = (id: HarborRpgItemId) => inventory.some((s) => s.id === id)
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>
+    for (const slot of HARBOR_RPG_GEAR_SLOTS) {
+      const v = o[slot]
+      if (typeof v !== 'string' || !ITEM_SET.has(v)) continue
+      const id = v as HarborRpgItemId
+      if (harborRpgItemSlot(id) !== slot) continue
+      if (!owned(id)) continue
+      gear[slot] = id
+    }
+  }
+  // Legacy fields
+  if (!gear.weapon && typeof legacyWeapon === 'string' && ITEM_SET.has(legacyWeapon)) {
+    const id = legacyWeapon as HarborRpgItemId
+    if (harborRpgItemSlot(id) === 'weapon' && owned(id)) gear.weapon = id
+  }
+  if (!gear.chest && typeof legacyArmor === 'string' && ITEM_SET.has(legacyArmor)) {
+    const id = legacyArmor as HarborRpgItemId
+    if (harborRpgItemSlot(id) === 'chest' && owned(id)) gear.chest = id
+  }
+  return gear
 }
 
 export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
@@ -287,7 +354,7 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
       if (typeof id === 'string' && COSMETIC_SET.has(id)) owned.add(id)
     }
   }
-  let equippedCosmetic: string | null =
+  const equippedCosmetic: string | null =
     typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
       ? o.equippedCosmetic
       : 'rpg-cloak-traveler'
@@ -315,17 +382,12 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
       : 0
 
   let inventory = sanitizeInventory(o.inventory)
-  // Legacy / empty bag — grant starter kit once inventory missing.
   if (!Array.isArray(o.inventory)) {
     inventory = empty.inventory.map((s) => ({ ...s }))
   }
-
-  const equippedWeapon =
-    sanitizeEquip(o.equippedWeapon, inventory, 'weapon') ??
-    (inventory.some((s) => s.id === 'rpg-weapon-stick') ? 'rpg-weapon-stick' : null)
-  const equippedArmor =
-    sanitizeEquip(o.equippedArmor, inventory, 'armor') ??
-    (inventory.some((s) => s.id === 'rpg-armor-cloth') ? 'rpg-armor-cloth' : null)
+  const bank = sanitizeInventory(o.bank, HARBOR_RPG_MAX_BANK_STACKS)
+  const gear = sanitizeGear(o.gear, inventory, o.equippedWeapon, o.equippedArmor)
+  const legacy = syncLegacyEquip(gear)
 
   const zone = isHarborRpgZoneId(o.zone) ? o.zone : 'meadow'
   const companionUntil =
@@ -350,23 +412,31 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
     dummyKills,
     zone,
     inventory,
-    equippedWeapon,
-    equippedArmor,
+    bank,
+    gear,
+    equippedWeapon: legacy.equippedWeapon,
+    equippedArmor: legacy.equippedArmor,
     quests: sanitizeQuests(o.quests),
     kills: sanitizeKills(o.kills),
     companionUntil,
     companionName: companionUntil > Date.now() ? companionName : null,
+    professions: sanitizeRpgProfessions(o.professions),
+    market: sanitizeRpgMarketListings(o.market),
   }
 }
 
-function mergeInv(a: HarborRpgInvStack[], b: HarborRpgInvStack[]): HarborRpgInvStack[] {
+function mergeInv(
+  a: HarborRpgInvStack[],
+  b: HarborRpgInvStack[],
+  max: number,
+): HarborRpgInvStack[] {
   const map = new Map<HarborRpgItemId, number>()
   for (const s of [...a, ...b]) {
     map.set(s.id, Math.min(999, (map.get(s.id) ?? 0) + s.qty))
   }
   const out: HarborRpgInvStack[] = []
   for (const [id, qty] of map) {
-    if (out.length >= HARBOR_RPG_MAX_INV_STACKS) break
+    if (out.length >= max) break
     out.push({ id, qty: HARBOR_RPG_ITEM_DEFS[id].stackable ? qty : 1 })
   }
   return out
@@ -399,7 +469,8 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
     (b.equippedCosmetic && owned.has(b.equippedCosmetic) && b.equippedCosmetic) ||
     (a.equippedCosmetic && owned.has(a.equippedCosmetic) && a.equippedCosmetic) ||
     'rpg-cloak-traveler'
-  const inventory = mergeInv(a.inventory, b.inventory)
+  const inventory = mergeInv(a.inventory, b.inventory, HARBOR_RPG_MAX_INV_STACKS)
+  const bank = mergeInv(a.bank, b.bank, HARBOR_RPG_MAX_BANK_STACKS)
   const kills: HarborRpgKillCounts = { ...a.kills }
   for (const kind of HARBOR_RPG_MONSTER_KINDS) {
     kills[kind] = Math.max(a.kills[kind] ?? 0, b.kills[kind] ?? 0)
@@ -418,6 +489,20 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
   }
   const fresherZone = b.zone && HARBOR_RPG_ZONES.includes(b.zone) ? b.zone : a.zone
   const companionUntil = Math.max(a.companionUntil, b.companionUntil)
+  const gear = emptyRpgGear()
+  for (const slot of HARBOR_RPG_GEAR_SLOTS) {
+    const pick = b.gear[slot] || a.gear[slot]
+    if (pick && inventory.some((s) => s.id === pick) && harborRpgItemSlot(pick) === slot) {
+      gear[slot] = pick
+    }
+  }
+  const legacy = syncLegacyEquip(gear)
+  const professions = emptyRpgProfessions()
+  for (const id of Object.keys(professions) as HarborRpgProfessionId[]) {
+    professions[id] = Math.max(a.professions[id] ?? 0, b.professions[id] ?? 0)
+  }
+  const marketMap = new Map<string, HarborRpgMarketListing>()
+  for (const l of [...a.market, ...b.market]) marketMap.set(l.id, l)
   return {
     characters,
     activeCharacterId: active,
@@ -433,19 +518,17 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
     dummyKills: Math.max(a.dummyKills, b.dummyKills),
     zone: fresherZone,
     inventory,
-    equippedWeapon:
-      sanitizeEquip(b.equippedWeapon, inventory, 'weapon') ??
-      sanitizeEquip(a.equippedWeapon, inventory, 'weapon'),
-    equippedArmor:
-      sanitizeEquip(b.equippedArmor, inventory, 'armor') ??
-      sanitizeEquip(a.equippedArmor, inventory, 'armor'),
+    bank,
+    gear,
+    equippedWeapon: legacy.equippedWeapon,
+    equippedArmor: legacy.equippedArmor,
     quests: [...questMap.values()],
     kills,
     companionUntil,
     companionName:
-      companionUntil > Date.now()
-        ? b.companionName || a.companionName
-        : null,
+      companionUntil > Date.now() ? b.companionName || a.companionName : null,
+    professions,
+    market: [...marketMap.values()].slice(0, 12),
   }
 }
 
@@ -506,17 +589,60 @@ export function removeRpgInventoryItem(
   if (inventory[idx]!.qty < n) return null
   inventory[idx]!.qty -= n
   if (inventory[idx]!.qty <= 0) inventory.splice(idx, 1)
-  let equippedWeapon = bag.equippedWeapon
-  let equippedArmor = bag.equippedArmor
-  if (equippedWeapon === itemId && !inventory.some((s) => s.id === itemId)) {
-    equippedWeapon = null
+  const gear = { ...bag.gear }
+  for (const slot of HARBOR_RPG_GEAR_SLOTS) {
+    if (gear[slot] === itemId && !inventory.some((s) => s.id === itemId)) {
+      gear[slot] = null
+    }
   }
-  if (equippedArmor === itemId && !inventory.some((s) => s.id === itemId)) {
-    equippedArmor = null
-  }
-  return { ...bag, inventory, equippedWeapon, equippedArmor }
+  const legacy = syncLegacyEquip(gear)
+  return { ...bag, inventory, gear, ...legacy }
 }
 
 export function countRpgItem(bag: HarborRpgBag, itemId: HarborRpgItemId): number {
   return bag.inventory.find((s) => s.id === itemId)?.qty ?? 0
+}
+
+export function equipRpgGearSlot(
+  bag: HarborRpgBag,
+  itemId: HarborRpgItemId,
+): HarborRpgBag | null {
+  if (countRpgItem(bag, itemId) < 1) return null
+  const slot = harborRpgItemSlot(itemId)
+  if (!slot) return null
+  const gear = { ...bag.gear, [slot]: itemId }
+  const legacy = syncLegacyEquip(gear)
+  return { ...bag, gear, ...legacy }
+}
+
+export function depositRpgBank(
+  bag: HarborRpgBag,
+  itemId: HarborRpgItemId,
+  qty = 1,
+): HarborRpgBag | null {
+  const removed = removeRpgInventoryItem(bag, itemId, qty)
+  if (!removed) return null
+  const bank = removed.bank.map((s) => ({ ...s }))
+  const def = HARBOR_RPG_ITEM_DEFS[itemId]
+  const existing = bank.find((s) => s.id === itemId)
+  if (existing && def.stackable) {
+    existing.qty = Math.min(999, existing.qty + qty)
+  } else if (!existing) {
+    if (bank.length >= HARBOR_RPG_MAX_BANK_STACKS) return null
+    bank.push({ id: itemId, qty: def.stackable ? qty : 1 })
+  }
+  return { ...removed, bank }
+}
+
+export function withdrawRpgBank(
+  bag: HarborRpgBag,
+  itemId: HarborRpgItemId,
+  qty = 1,
+): HarborRpgBag | null {
+  const bank = bag.bank.map((s) => ({ ...s }))
+  const idx = bank.findIndex((s) => s.id === itemId)
+  if (idx < 0 || bank[idx]!.qty < qty) return null
+  bank[idx]!.qty -= qty
+  if (bank[idx]!.qty <= 0) bank.splice(idx, 1)
+  return addRpgInventoryItem({ ...bag, bank }, itemId, qty)
 }
