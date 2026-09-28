@@ -11,3 +11,6 @@ apps/api/.env
 
 .agents/
 skills-lock.json
+
+# HarborRPG free kit unpacked locally
+docs/harbor-quest/harborrpg-assets/unpacked/
