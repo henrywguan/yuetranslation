@@ -255,6 +255,9 @@ export function LearnSession({
   /** Nearest HarborRPG interact (polled while in rpg). */
   const [rpgInteract, setRpgInteract] = useState<string | null>(null)
   const [rpgWikiOpen, setRpgWikiOpen] = useState(false)
+  const [rpgWikiPage, setRpgWikiPage] = useState<
+    import('./harborRpgWiki').HarborRpgWikiPage | undefined
+  >(undefined)
   const [rpgCombatHud, setRpgCombatHud] = useState<{
     hp: number
     maxHp: number
@@ -2304,7 +2307,10 @@ export function LearnSession({
               flashRpgToast(id ? 'Mount summoned' : 'Dismounted')
             }
           }}
-          onOpenWiki={() => setRpgWikiOpen(true)}
+          onOpenWiki={(page) => {
+            setRpgWikiPage(page)
+            setRpgWikiOpen(true)
+          }}
           onInviteParty={(peerId) => {
             const selfId = localUserIdRef.current ?? 'local'
             const name =
@@ -2515,8 +2521,17 @@ export function LearnSession({
 
       {realmOverride === 'rpg' && rpgWikiOpen ? (
         <HarborRpgWiki
+          key={
+            rpgWikiPage
+              ? `${rpgWikiPage.section}:${rpgWikiPage.id}`
+              : 'wiki-home'
+          }
           bag={progressSnap.rpg ?? emptyHarborRpgBag()}
-          onClose={() => setRpgWikiOpen(false)}
+          initial={rpgWikiPage}
+          onClose={() => {
+            setRpgWikiOpen(false)
+            setRpgWikiPage(undefined)
+          }}
         />
       ) : null}
 

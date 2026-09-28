@@ -495,7 +495,16 @@ import { dirname, join } from 'node:path'
   assert.equal(harborRpgAchievementProgress(bag, 'ach-first-char'), 0)
   const wikiUi = readFileSync(new URL('./HarborRpgWiki.tsx', import.meta.url), 'utf8')
   assert.match(wikiUi, /Loot sources|How to obtain/, 'wiki shows obtain copy')
-  assert.match(playSrc, /HarborRpgWiki|rpgWikiOpen/, 'wiki mounted from LearnPlay')
+  assert.match(playSrc, /HarborRpgWiki|rpgWikiOpen|rpgWikiPage/, 'wiki mounted from LearnPlay')
+  assert.match(panelSrc, /onOpenWiki\(\{ section: 'items'/, 'bag/vendor wiki deep-links')
+  assert.match(panelSrc, /onOpenWiki\(\{ section: 'mounts'/, 'stable wiki deep-links')
+  assert.match(panelSrc, /section: 'achievements'/, 'achievements wiki entry')
+  const greaves = harborRpgItemLootSources('rpg-legs-greaves')
+  const boots = harborRpgItemLootSources('rpg-feet-boots')
+  assert.ok(greaves.some((s) => s.kind === 'craft'), 'greaves craft source')
+  assert.ok(greaves.some((s) => s.kind === 'drop'), 'greaves drop source')
+  assert.ok(boots.some((s) => s.kind === 'craft'), 'boots craft source')
+  assert.ok(boots.some((s) => s.kind === 'drop'), 'boots drop source')
 }
 
 assert.ok(HARBOR_RPG_ITEMS.length >= 30, 'expanded itemization')

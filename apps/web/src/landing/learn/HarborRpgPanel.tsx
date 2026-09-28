@@ -138,7 +138,7 @@ type Props = {
   onFillCompanionRole: (role: HarborRpgFinderRole) => void
   onBuyMount: (id: HarborRpgMountId) => void
   onSummonMount: (id: HarborRpgMountId | null) => void
-  onOpenWiki: () => void
+  onOpenWiki: (page?: import('./harborRpgWiki').HarborRpgWikiPage) => void
   onExitGame: () => void
 }
 
@@ -501,8 +501,15 @@ export function HarborRpgPanel({
                 .map((p) => p.label.en)
                 .join(' · ') || '—'}
             </p>
-            <button type="button" className="hq-btn hq-btn--ghost" onClick={onOpenWiki}>
+            <button type="button" className="hq-btn hq-btn--ghost" onClick={() => onOpenWiki()}>
               HarborRPG Wiki
+            </button>
+            <button
+              type="button"
+              className="hq-btn hq-btn--ghost"
+              onClick={() => onOpenWiki({ section: 'achievements', id: 'ach-first-char' })}
+            >
+              Achievements
             </button>
             <button type="button" className="hq-btn hq-btn--ghost" onClick={onExitGame}>
               Leave HarborRPG
@@ -529,6 +536,12 @@ export function HarborRpgPanel({
                       <small>{def.rarity}</small>
                     </span>
                     <span className="hq-rpg-inv-act">
+                      <button
+                        type="button"
+                        onClick={() => onOpenWiki({ section: 'items', id: s.id })}
+                      >
+                        Wiki
+                      </button>
                       {(
                         ['weapon', 'offhand', 'head', 'chest', 'legs', 'feet', 'ring', 'trinket'] as const
                       ).includes(def.kind as never) ? (
@@ -570,9 +583,17 @@ export function HarborRpgPanel({
                     <span>
                       {def.name.en} · {def.value}g
                     </span>
-                    <button type="button" onClick={() => onBuy(id)}>
-                      Buy
-                    </button>
+                    <span className="hq-rpg-inv-act">
+                      <button
+                        type="button"
+                        onClick={() => onOpenWiki({ section: 'items', id })}
+                      >
+                        Wiki
+                      </button>
+                      <button type="button" onClick={() => onBuy(id)}>
+                        Buy
+                      </button>
+                    </span>
                   </li>
                 )
               })}
@@ -604,6 +625,12 @@ export function HarborRpgPanel({
                       <small>{def.blurb.en}</small>
                     </span>
                     <span className="hq-rpg-inv-act">
+                      <button
+                        type="button"
+                        onClick={() => onOpenWiki({ section: 'mounts', id })}
+                      >
+                        Wiki
+                      </button>
                       {!owned ? (
                         <button
                           type="button"
@@ -955,9 +982,17 @@ export function HarborRpgPanel({
                     {HARBOR_RPG_ITEM_DEFS[r.output].name.en} ←{' '}
                     {r.inputs.map((i) => `${i.qty} ${HARBOR_RPG_ITEM_DEFS[i.id].name.en}`).join(', ')}
                   </span>
-                  <button type="button" onClick={() => onCraft(r.id)}>
-                    Craft
-                  </button>
+                  <span className="hq-rpg-inv-act">
+                    <button
+                      type="button"
+                      onClick={() => onOpenWiki({ section: 'items', id: r.output })}
+                    >
+                      Wiki
+                    </button>
+                    <button type="button" onClick={() => onCraft(r.id)}>
+                      Craft
+                    </button>
+                  </span>
                 </li>
               ))}
             </ul>
