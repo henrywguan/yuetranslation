@@ -7,17 +7,17 @@ import { readLocalCmnVoice, readLocalWuuVoice, readLocalSichuanVoice, readLocalE
 /** Practice Partner / fill-the-room — HTML volume caps at 1; Web Audio can go higher. */
 const LOUD_PLAYBACK_GAIN = 1.85
 /**
- * First loud clip after the mic is the route change out of voice-chat.
- * iOS spikes that handoff, so this one plays at unity. Later clips keep the boost.
+ * After Web Speech, iOS may still be leaving the voice-chat route. We used to
+ * play the first post-mic clip at unity so a route spike did not stack on the
+ * boost — that made later Practice Partner replies feel softer than the open.
+ * Keep every loud clip at the same gain; force-unlock + keep-alive handle route.
  */
-const LOUD_PLAYBACK_GAIN_AFTER_MIC_HANDOFF = 1
-/** Mic has started and the next loud clip is still that first handoff. */
+/** Mic just started — next loud clip should re-arm speaker keep-alive hard. */
 let micHandoffPending = false
-let micHandoffSoftened = false
-/** First MediaElementSource play double-routes on desktop. Burn it on silence. */
-let ttsMediaGraphSettled = false
 let ttsMediaSource: MediaElementAudioSourceNode | null = null
 let ttsGainNode: GainNode | null = null
+/** First MediaElementSource play double-routes on desktop. Burn it on silence. */
+let ttsMediaGraphSettled = false
 /** iPhone loud TTS — BufferSource, not HTMLAudio (receiver / voice-chat route). */
 let ttsBufferSource: AudioBufferSourceNode | null = null
 let ttsBufferGain: GainNode | null = null
@@ -114,16 +114,19 @@ export function hushTtsSpeakerForMic() {
     /* ignore */
   }
   ttsKeepAliveGain = null
-  if (!micHandoffSoftened) micHandoffPending = true
+  // Every mic session can leave iOS on the voice-chat route — mark so the
+  // next loud play re-arms the speaker keep-alive before BufferSource start.
+  micHandoffPending = true
 }
 
-/** Unity on the first post-mic loud clip; full boost after the route has settled. */
+/** Same boost for every loud clip (opening, post-mic, 3rd/4th Practice Partner turns). */
 function loudPlaybackGain(): number {
-  if (micHandoffPending && !micHandoffSoftened) {
-    micHandoffSoftened = true
-    micHandoffPending = false
-    return LOUD_PLAYBACK_GAIN_AFTER_MIC_HANDOFF
-  }
+  if (micHandoffPending) micHandoffPending = false
+  return LOUD_PLAYBACK_GAIN
+}
+
+/** Test/dev: last loud gain that would be applied (always LOUD_PLAYBACK_GAIN). */
+export function loudPlaybackGainForTests() {
   return LOUD_PLAYBACK_GAIN
 }
 
@@ -134,14 +137,16 @@ function loudPlaybackGain(): number {
  */
 export function prepareLoudTtsPlayback() {
   if (typeof window === 'undefined') return
-  if (!isAppleTouchDevice()) return
   try {
     const ctx = ensureSharedAudioContext()
     if (ctx.state === 'suspended') void ctx.resume()
   } catch {
     /* ignore */
   }
+  // Desktop + iPhone: keep the shared context warm across the LLM gap so
+  // Practice Partner turns 3–4 stay on the loud Web Audio path.
   armTtsContextKeepAlive({ speaker: true })
+  micHandoffPending = false
 }
 
 /** Test/dev: keep-alive oscillator is running. */
@@ -563,7 +568,12 @@ async function playAzureBlobViaWebAudio(
       await ctx.resume()
     }
     // Re-arm keep-alive before decode — LLM awaits can leave the context idle.
+    // After hushTtsSpeakerForMic the speaker tap is gone; always restore it for
+    // loud Practice Partner clips so turns 3–4 are not stuck on a soft route.
     if (loud) armTtsContextKeepAlive({ speaker: true })
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
     if (ctx.state !== 'running' || g !== gen) return 'failed'
     const raw = await blob.arrayBuffer()
     if (g !== gen) return 'aborted'
