@@ -155,6 +155,7 @@ function Pillar({ x, y, h }: { x: number; y: number; h: number }) {
 function Lantern({ x, y, s = 1, hue = '#c23a2e' }: { x: number; y: number; s?: number; hue?: string }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
+      <circle cy="0" r="13" fill={hue} opacity="0.22" className="wuxia-lantern" />
       <path d="M0 -16 V-8" stroke="#5c4030" strokeWidth="1.1" />
       <path d="M-6.5 -8 H6.5" stroke="#e8c56b" strokeWidth="1.5" />
       <path d="M-5.5 -6 Q0 -12 5.5 -6 L4.6 7 Q0 12 -4.6 7 Z" fill={hue} stroke="#4a1218" strokeWidth="0.8" />
@@ -387,14 +388,14 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
       <Chapter reveal={reveal.common} y={430} height={550}>
         <path
           d="M-10 620 C40 470 100 420 170 510 C210 450 260 440 320 520 C360 460 400 490 420 550 L420 700 L-10 710 Z"
-          fill="#9aab8c"
-          stroke="#3e4a38"
+          fill="#2a1018"
+          stroke="#14080c"
           strokeWidth="1.4"
         />
         <path
           d="M-10 700 C50 560 120 520 180 600 C230 540 280 550 340 620 C380 560 410 590 420 640 L420 780 L-10 790 Z"
-          fill="#6e8f62"
-          stroke="#2c4030"
+          fill="#14080e"
+          stroke="#2a1014"
           strokeWidth="1.4"
         />
         <path d="M50 360 C100 310 140 330 180 290" fill="none" stroke="#2c4030" strokeWidth="1.3" opacity="0.7" />
@@ -404,28 +405,39 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         <Hatch x={220} y={360} n={6} />
         <path
           d="M-10 900 L-10 640 C30 580 90 560 150 630 C200 570 260 590 330 640 C370 590 400 610 420 660 L420 900 Z"
-          fill="#f3e2c4"
-          stroke="#6b5a40"
+          fill="#1a0c10"
+          stroke="#3a1820"
           strokeWidth="1.2"
         />
         <path
           d="M-10 900 L-10 760 C40 700 110 730 180 800 C250 740 320 760 420 700 L420 900 Z"
-          fill="#7ea86a"
+          fill="#4a1020"
           opacity="0.55"
         />
-        <Pines points={GATE_PINES} />
+        <g style={{ filter: 'brightness(0.45) saturate(0.55)' }}>
+          <Pines points={GATE_PINES} />
+        </g>
         <g className="wuxia-sway is-soft">
           <path d="M36 468 Q100 450 168 472" fill="none" stroke="#5c4030" strokeWidth="1.2" />
-          <Lantern x={48} y={478} s={0.95} />
-          <Lantern x={78} y={470} s={1.05} />
-          <Lantern x={108} y={466} />
-          <Lantern x={138} y={474} s={0.9} hue="#a12838" />
-          <Lantern x={164} y={482} s={0.85} />
+          <Lantern x={48} y={478} s={0.95} hue="#e1062a" />
+          <Lantern x={78} y={470} s={1.05} hue="#ff2a3a" />
+          <Lantern x={108} y={466} hue="#c41e3a" />
+          <Lantern x={138} y={474} s={0.9} hue="#9b1230" />
+          <Lantern x={164} y={482} s={0.85} hue="#e1062a" />
+        </g>
+        <g className="wuxia-veil" fill="#9b1c38">
+          <path d="M48 520 C70 560 40 640 62 700 C48 640 78 580 58 520 Z" opacity="0.42" />
+          <path d="M150 530 C176 580 148 660 172 720 C156 650 184 590 162 530 Z" opacity="0.36" />
         </g>
         <TileRoof x={34} y={500} w={150} h={52} fill="#8b1e2d" />
         <Pillar x={62} y={575} h={108} />
         <Pillar x={126} y={575} h={108} />
         <path d="M58 612 H146 V668 Q102 628 58 668 Z" fill="#1a120c" opacity="0.72" />
+        <g transform="translate(102 624)" className="wuxia-veil">
+          <path d="M0 10 C-8 28 -6 52 0 58 C6 52 8 28 0 10 Z" fill="#4a0814" />
+          <path d="M-14 2 Q0 -16 14 2 Q10 36 0 48 Q-10 36 -14 2 Z" fill="#8b1e2d" opacity="0.9" />
+          <path d="M-16 0 Q0 22 16 0" fill="none" stroke="#e1062a" strokeWidth="1.3" opacity="0.75" />
+        </g>
         <path d="M70 650 Q102 612 134 650" fill="none" stroke="#e8c56b" strokeWidth="1.2" />
         <rect x="86" y="548" width="46" height="18" rx="1" fill="#6b1a24" stroke="#e8c56b" strokeWidth="0.8" />
         <text x="109" y="561" textAnchor="middle" fill="#f7f1df" fontSize="11" fontFamily="Noto Sans HK, Noto Sans TC, sans-serif">
@@ -473,14 +485,14 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
       <Chapter reveal={reveal.foods} y={1220} height={480}>
         <path
           d="M-10 1680 L-10 1280 C50 1200 110 1188 170 1260 C220 1190 280 1200 340 1280 C380 1220 410 1240 420 1300 L420 1680 Z"
-          fill="#f3e2c4"
-          stroke="#6b5a40"
+          fill="#16110e"
+          stroke="#3a2a1c"
           strokeWidth="1.2"
         />
         <path
           d="M-10 1680 L-10 1460 C60 1400 120 1480 190 1420 C260 1360 320 1440 420 1380 L420 1680 Z"
-          fill="#e7c98a"
-          opacity="0.45"
+          fill="#3a2412"
+          opacity="0.55"
         />
         <path
           d="M-16 1505 C70 1460 130 1540 210 1488 C280 1440 340 1510 420 1468 L420 1565 C330 1605 250 1520 170 1588 C90 1640 20 1560 -16 1600 Z"
@@ -538,8 +550,8 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         <use href="#inkTuft" x={210} y={1320} width="16" height="12" />
         <path
           d="M-10 1640 C70 1700 140 1660 210 1740 C280 1800 340 1740 420 1820 L420 1680 L-10 1680 Z"
-          fill="#e4cfa6"
-          stroke="#6b5a40"
+          fill="#2a1c12"
+          stroke="#4a3018"
           strokeWidth="1"
         />
         <Pines
@@ -560,8 +572,13 @@ export const WuxiaJourneyArt = memo(function WuxiaJourneyArt({
         <path
           d="M-10 2460 L-10 2080 C50 2000 120 1988 180 2080 C230 2010 290 2020 350 2100 C380 2040 410 2070 420 2120 L420 2460 Z"
           fill="#f3e2c4"
-          stroke="#3d5a34"
+          stroke="#6a8a48"
           strokeWidth="1.3"
+        />
+        <path
+          d="M-10 2140 C80 2060 160 2120 240 2060 C320 2000 380 2080 430 2020 L430 2200 C340 2260 240 2160 140 2240 C60 2300 -10 2220 -10 2140 Z"
+          fill="#ffe08a"
+          opacity="0.35"
         />
         <path
           d="M-10 2460 L-10 2140 C50 2060 120 2120 190 2060 C250 2000 320 2080 420 2020 L420 2460 Z"

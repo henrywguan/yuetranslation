@@ -525,7 +525,8 @@
   transform-origin: top center;
 }
 
-.partner-map-depth.is-mist {
+.partner-map-depth.is-mist,
+.partner-map-depth.is-near {
   z-index: 2;
 }
 
@@ -645,6 +646,48 @@
   animation-delay: -6s;
 }
 
+.wuxia-veil,
+.wuxia-rain,
+.wuxia-wukong,
+.wuxia-wukong-cloud,
+.wuxia-haze,
+.wuxia-sun {
+  transform-box: fill-box;
+}
+
+.wuxia-veil {
+  transform-origin: center top;
+  animation: wuxia-veil 8s ease-in-out infinite alternate;
+}
+
+.wuxia-rain {
+  animation: wuxia-rain 1.15s linear infinite;
+}
+
+.wuxia-rain.is-b {
+  animation-duration: 1.45s;
+  animation-delay: -0.5s;
+}
+
+.wuxia-haze {
+  animation: wuxia-haze 9s ease-in-out infinite alternate;
+}
+
+.wuxia-sun {
+  transform-origin: center;
+  animation: wuxia-sun 6.5s ease-in-out infinite;
+}
+
+.wuxia-wukong {
+  opacity: 0;
+  animation: wuxia-wukong 14s linear infinite;
+}
+
+.wuxia-wukong-cloud {
+  transform-origin: center;
+  animation: wuxia-sway-soft 1.3s ease-in-out infinite alternate;
+}
+
 .wuxia-chapter.is-ink .wuxia-lantern,
 .wuxia-chapter.is-ink .wuxia-steam,
 .wuxia-chapter.is-ink .wuxia-river,
@@ -654,8 +697,18 @@
 .wuxia-chapter.is-ink .wuxia-koi,
 .wuxia-chapter.is-ink .wuxia-moon,
 .wuxia-chapter.is-ink .wuxia-gild,
-.wuxia-chapter.is-ink .wuxia-mist-drift {
+.wuxia-chapter.is-ink .wuxia-mist-drift,
+.wuxia-chapter.is-ink .wuxia-veil,
+.wuxia-chapter.is-ink .wuxia-rain,
+.wuxia-chapter.is-ink .wuxia-haze,
+.wuxia-chapter.is-ink .wuxia-sun,
+.wuxia-chapter.is-ink .wuxia-wukong,
+.wuxia-chapter.is-ink .wuxia-wukong-cloud {
   animation: none;
+}
+
+.wuxia-chapter.is-ink .wuxia-wukong {
+  opacity: 0;
 }
 
 @keyframes wuxia-glow {
@@ -754,6 +807,65 @@
   }
   to {
     transform: translate3d(14px, -8px, 0);
+  }
+}
+
+@keyframes wuxia-veil {
+  from {
+    transform: translate3d(0, 0, 0) rotate(-1.4deg);
+  }
+  to {
+    transform: translate3d(8px, 6px, 0) rotate(1.6deg);
+  }
+}
+
+@keyframes wuxia-rain {
+  from {
+    transform: translate3d(0, -28px, 0);
+  }
+  to {
+    transform: translate3d(-10px, 42px, 0);
+  }
+}
+
+@keyframes wuxia-haze {
+  from {
+    opacity: 0.12;
+  }
+  to {
+    opacity: 0.32;
+  }
+}
+
+@keyframes wuxia-sun {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes wuxia-wukong {
+  0% {
+    transform: translate3d(-90px, 12px, 0);
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  30% {
+    transform: translate3d(440px, -42px, 0);
+    opacity: 1;
+  }
+  36% {
+    transform: translate3d(480px, -48px, 0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(480px, -48px, 0);
+    opacity: 0;
   }
 }
 
@@ -2513,6 +2625,12 @@
   .wuxia-moon,
   .wuxia-gild,
   .wuxia-mist-drift,
+  .wuxia-veil,
+  .wuxia-rain,
+  .wuxia-haze,
+  .wuxia-sun,
+  .wuxia-wukong,
+  .wuxia-wukong-cloud,
   .partner-map-you,
   .wuxia-chapter,
   .wuxia-mist,

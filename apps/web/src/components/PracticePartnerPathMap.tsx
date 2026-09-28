@@ -20,7 +20,7 @@ import {
   type MapStoryCardModel,
 } from '../lib/practicePartnerMapStory'
 import { WuxiaCloudFrame } from './WuxiaClouds'
-import { WuxiaFarPeaks, WuxiaMistVeil } from './WuxiaDepth'
+import { WuxiaFarPeaks, WuxiaMistVeil, WuxiaNearWeather, WuxiaSectionMid, WuxiaSectionSky } from './WuxiaDepth'
 import { WuxiaJourneyArt } from './WuxiaJourneyArt'
 import {
   pathFocusSection,
@@ -32,6 +32,9 @@ import {
 const ZOOM_MIN = 1
 const ZOOM_MAX = 3.2
 const FAR_PARALLAX = 0.38
+const SKY_PARALLAX = 0.9
+const MID_PARALLAX = 0.96
+const NEAR_PARALLAX = 1.06
 const MIST_PARALLAX = 1.18
 
 type Pan = { scale: number; x: number; y: number }
@@ -393,6 +396,12 @@ export function PracticePartnerPathMap({
         <div className="partner-map-depth is-far" style={layerStyle(box, pan, FAR_PARALLAX)}>
           <WuxiaFarPeaks />
         </div>
+        <div className="partner-map-depth is-sky" style={layerStyle(box, pan, SKY_PARALLAX)}>
+          <WuxiaSectionSky />
+        </div>
+        <div className="partner-map-depth is-mid" style={layerStyle(box, pan, MID_PARALLAX)}>
+          <WuxiaSectionMid />
+        </div>
         <div className="partner-map-layer" style={layerStyle(box, pan, 1)}>
           <WuxiaJourneyArt progress={progress} mastery={progress.mastery} />
           <svg className="partner-map-road" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -470,6 +479,9 @@ export function PracticePartnerPathMap({
         </div>
         <div className="partner-map-depth is-mist" style={layerStyle(box, pan, MIST_PARALLAX)}>
           <WuxiaMistVeil />
+        </div>
+        <div className="partner-map-depth is-near" style={layerStyle(box, pan, NEAR_PARALLAX)}>
+          <WuxiaNearWeather />
         </div>
         <WuxiaCloudFrame pan={pan} />
         {shownCard && place ? (
