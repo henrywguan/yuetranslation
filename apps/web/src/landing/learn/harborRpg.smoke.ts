@@ -444,16 +444,24 @@ assert.match(panelSrc, /spellbook|Spells/, 'spellbook UI')
 assert.match(panelSrc, /Trade/, 'trade tab')
 assert.match(panelSrc, /HARBOR_RPG_CHAPTERS|Tide That Remembers/, 'campaign chapters')
 assert.match(panelSrc, /Heroic|finderRole|Looking as/, 'heroic + finder UI')
+assert.match(panelSrc, /HarborRPG Wiki|onOpenWiki/, 'wiki entry on panel')
 
 const docs = readFileSync(new URL('../../../../../docs/harbor-quest/HARBORRPG.md', import.meta.url), 'utf8')
 assert.match(docs, /soft Realtime|no dedicated anti-cheat/i)
 assert.match(docs, /Ash Crypt|Heroic|Tide Remembers|finder|quest density|9 classes/i)
+assert.match(docs, /Wiki|loot sources|achievement/i)
 
-assert.ok(HARBOR_RPG_ITEMS.length >= 30, 'expanded itemization')
-assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-tide'))
-assert.ok(HARBOR_RPG_ITEMS.includes('rpg-item-tide-coin'))
-assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-sovereign'))
-
+import {
+  harborRpgItemLootSources,
+  harborRpgItemsMissingSources,
+  harborRpgMountObtainSources,
+  harborRpgWikiList,
+  harborRpgWikiStats,
+} from './harborRpgWiki.ts'
+import {
+  HARBOR_RPG_ACHIEVEMENT_IDS,
+  harborRpgAchievementProgress,
+} from './harborRpgAchievements.ts'
 import {
   HARBOR_RPG_MOUNT_DEFS,
   HARBOR_RPG_MOUNT_IDS,
@@ -463,6 +471,37 @@ import { buyRpgMount, setRpgActiveMount } from './harborRpgProgress.ts'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+
+{
+  const missing = harborRpgItemsMissingSources()
+  assert.equal(missing.length, 0, `items missing loot sources: ${missing.join(',')}`)
+  for (const id of HARBOR_RPG_ITEMS) {
+    assert.ok(harborRpgItemLootSources(id).length > 0, `sources for ${id}`)
+  }
+  for (const id of HARBOR_RPG_MOUNT_IDS) {
+    const src = harborRpgMountObtainSources(id)
+    assert.equal(src.length, 1)
+    assert.equal(src[0]!.kind, 'stable')
+  }
+  const stats = harborRpgWikiStats()
+  assert.ok(stats.items >= 30)
+  assert.ok(stats.mounts >= 30)
+  assert.ok(stats.achievements >= 20)
+  assert.equal(stats.missingItemSources, 0)
+  assert.ok(harborRpgWikiList('items').length === stats.items)
+  assert.ok(harborRpgWikiList('achievements').length === HARBOR_RPG_ACHIEVEMENT_IDS.length)
+  const bag = emptyHarborRpgBag()
+  assert.ok(harborRpgAchievementProgress(bag, 'ach-mount-starter') >= 1)
+  assert.equal(harborRpgAchievementProgress(bag, 'ach-first-char'), 0)
+  const wikiUi = readFileSync(new URL('./HarborRpgWiki.tsx', import.meta.url), 'utf8')
+  assert.match(wikiUi, /Loot sources|How to obtain/, 'wiki shows obtain copy')
+  assert.match(playSrc, /HarborRpgWiki|rpgWikiOpen/, 'wiki mounted from LearnPlay')
+}
+
+assert.ok(HARBOR_RPG_ITEMS.length >= 30, 'expanded itemization')
+assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-tide'))
+assert.ok(HARBOR_RPG_ITEMS.includes('rpg-item-tide-coin'))
+assert.ok(HARBOR_RPG_ITEMS.includes('rpg-weapon-sovereign'))
 
 {
   assert.ok(HARBOR_RPG_MOUNT_IDS.length >= 30, `mounts ${HARBOR_RPG_MOUNT_IDS.length}`)

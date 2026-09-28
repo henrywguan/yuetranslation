@@ -138,6 +138,7 @@ type Props = {
   onFillCompanionRole: (role: HarborRpgFinderRole) => void
   onBuyMount: (id: HarborRpgMountId) => void
   onSummonMount: (id: HarborRpgMountId | null) => void
+  onOpenWiki: () => void
   onExitGame: () => void
 }
 
@@ -186,6 +187,7 @@ export function HarborRpgPanel({
   onFillCompanionRole,
   onBuyMount,
   onSummonMount,
+  onOpenWiki,
   onExitGame,
 }: Props) {
   const [tab, setTab] = useState<
@@ -499,6 +501,9 @@ export function HarborRpgPanel({
                 .map((p) => p.label.en)
                 .join(' · ') || '—'}
             </p>
+            <button type="button" className="hq-btn hq-btn--ghost" onClick={onOpenWiki}>
+              HarborRPG Wiki
+            </button>
             <button type="button" className="hq-btn hq-btn--ghost" onClick={onExitGame}>
               Leave HarborRPG
             </button>

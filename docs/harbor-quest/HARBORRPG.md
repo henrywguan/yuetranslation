@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v6 — free mounts (Quaternius / farm / Gobkit) · Ferry Stable  
+**Status:** v6.1 — wiki · loot sources · achievements · free mounts  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -61,6 +61,16 @@ Town **Ferry Stable** (`rpg-stable`) sells / summons CC0 rideables:
 
 Bag fields: `ownedMounts` (starter includes `horse`), `activeMountId`. Summon boards a GLB + Idle/Walk/Gallop mixer; walk speed uses `speedMult`. Dismount from Stable tab. Credits: `apps/web/public/assets/harbor-quest/mounts/CREDITS.md`. OGA `.blend` sources kept under `oga-source/` (not rideable until GLB export).
 
+## Wiki (v6.1)
+
+In-game **HarborRPG Wiki** (Field → HarborRPG Wiki):
+
+- Pages for **every** item, mount, monster, zone, quest, class, profession, and achievement
+- Items always list **loot sources** (monster drop % + zones, vendor, craft inputs, gather nodes, starter, Heroic bonus)
+- Mounts list Ferry Stable gold cost / free unlock
+- Achievements show how-to-obtain copy + soft progress from the bag
+- Greaves / Trail Boots now have craft recipes + ruin drops so every item has a source
+
 ## Shared world tick
 
 Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`).
@@ -78,7 +88,8 @@ Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`
 3. **9×3 classes/specs** · spellbook · trade · market · bank · professions
 4. **Quest density** · finder roles · companion fill
 5. **Mounts:** 30+ CC0 animals · Ferry Stable · board/ride/dismount
-6. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
+6. **Wiki:** every entity page · loot sources · mount/achievement obtain
+7. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
 
 ## Feel bar
 

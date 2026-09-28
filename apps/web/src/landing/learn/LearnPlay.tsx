@@ -67,6 +67,7 @@ import {
   type HarborRpgZoneId,
 } from './harborRpgData'
 import { HarborRpgPanel } from './HarborRpgPanel'
+import { HarborRpgWiki } from './HarborRpgWiki'
 import { awardRpgContestedLoot } from './harborRpgCombat'
 import { emptyHarborRpgBag } from './harborRpgProgress'
 import {
@@ -253,6 +254,7 @@ export function LearnSession({
   const [rpgZone, setRpgZone] = useState<HarborRpgZoneId>('meadow')
   /** Nearest HarborRPG interact (polled while in rpg). */
   const [rpgInteract, setRpgInteract] = useState<string | null>(null)
+  const [rpgWikiOpen, setRpgWikiOpen] = useState(false)
   const [rpgCombatHud, setRpgCombatHud] = useState<{
     hp: number
     maxHp: number
@@ -2302,6 +2304,7 @@ export function LearnSession({
               flashRpgToast(id ? 'Mount summoned' : 'Dismounted')
             }
           }}
+          onOpenWiki={() => setRpgWikiOpen(true)}
           onInviteParty={(peerId) => {
             const selfId = localUserIdRef.current ?? 'local'
             const name =
@@ -2504,8 +2507,16 @@ export function LearnSession({
             setRealmOverride(null)
             startHarborBgm('river')
             setRpgInteract(null)
+            setRpgWikiOpen(false)
             setVisitable(null)
           }}
+        />
+      ) : null}
+
+      {realmOverride === 'rpg' && rpgWikiOpen ? (
+        <HarborRpgWiki
+          bag={progressSnap.rpg ?? emptyHarborRpgBag()}
+          onClose={() => setRpgWikiOpen(false)}
         />
       ) : null}
 

@@ -9157,3 +9157,226 @@
   color: #ffe9a0;
   font: 600 0.78rem/1.3 Syne, system-ui, sans-serif;
 }
+
+/* HarborRPG Wiki — fullscreen encyclopaedia */
+.hq-rpg-wiki-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 54;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  padding:
+    max(0.55rem, env(safe-area-inset-top, 0px))
+    max(0.7rem, env(safe-area-inset-right, 0px))
+    max(0.7rem, env(safe-area-inset-bottom, 0px))
+    max(0.7rem, env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(ellipse 80% 50% at 12% 0%, color-mix(in srgb, #e8a85a 28%, transparent), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 8%, color-mix(in srgb, #6a90b0 18%, transparent), transparent 50%),
+    linear-gradient(165deg, #12100e 0%, #1a1612 55%, #0e0c0a 100%);
+  color: #f6e8d0;
+  overflow: hidden;
+}
+.hq-rpg-wiki-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-width: 52rem;
+  width: 100%;
+  margin: 0 auto;
+  gap: 0.5rem;
+}
+.hq-rpg-wiki-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.hq-rpg-wiki-header-copy {
+  flex: 1;
+  min-width: 12rem;
+}
+.hq-rpg-wiki-stats {
+  margin: 0.25rem 0 0;
+  font: 500 0.72rem/1.35 Syne, system-ui, sans-serif;
+  opacity: 0.78;
+}
+.hq-rpg-wiki-close {
+  flex-shrink: 0;
+}
+.hq-rpg-wiki-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.hq-rpg-wiki-nav-btn {
+  border: 1px solid color-mix(in srgb, #e8a85a 30%, transparent);
+  background: color-mix(in srgb, #1a1814 90%, #e8a85a);
+  color: #f6e8d0;
+  border-radius: 0.3rem;
+  padding: 0.28rem 0.5rem;
+  font: 600 0.68rem/1 Syne, system-ui, sans-serif;
+  cursor: pointer;
+}
+.hq-rpg-wiki-nav-btn.is-on {
+  border-color: #e8a85a;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #e8a85a 35%, transparent);
+}
+.hq-rpg-wiki-search {
+  display: grid;
+  gap: 0.2rem;
+  font: 600 0.68rem/1 Syne, system-ui, sans-serif;
+  color: color-mix(in srgb, #f6e8d0 75%, transparent);
+}
+.hq-rpg-wiki-search input {
+  border: 1px solid color-mix(in srgb, #e8a85a 35%, transparent);
+  background: #14120f;
+  color: #f6e8d0;
+  border-radius: 0.3rem;
+  padding: 0.4rem 0.55rem;
+  font: 600 0.85rem/1.2 Syne, system-ui, sans-serif;
+}
+.hq-rpg-wiki-body {
+  display: grid;
+  grid-template-columns: minmax(9rem, 13rem) minmax(0, 1fr);
+  gap: 0.65rem;
+  flex: 1;
+  min-height: 0;
+}
+@media (max-width: 640px) {
+  .hq-rpg-wiki-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(7rem, 28vh) minmax(0, 1fr);
+  }
+}
+.hq-rpg-wiki-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.2rem;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid color-mix(in srgb, #e8a85a 22%, transparent);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, #0e0c0a 70%, transparent);
+}
+.hq-rpg-wiki-list-btn {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: 0.1rem;
+  border: 0;
+  background: transparent;
+  color: #f6e8d0;
+  padding: 0.4rem 0.45rem;
+  border-radius: 0.28rem;
+  cursor: pointer;
+  font: 600 0.78rem/1.2 Syne, system-ui, sans-serif;
+}
+.hq-rpg-wiki-list-btn small {
+  font: 500 0.68rem/1.2 "Noto Sans HK", "Noto Sans", sans-serif;
+  opacity: 0.72;
+}
+.hq-rpg-wiki-list-btn.is-on,
+.hq-rpg-wiki-list-btn:hover {
+  background: color-mix(in srgb, #e8a85a 18%, transparent);
+}
+.hq-rpg-wiki-article {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.55rem 0.7rem 1rem;
+  border: 1px solid color-mix(in srgb, #e8a85a 22%, transparent);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, #14120f 88%, #e8a85a);
+}
+.hq-rpg-wiki-article h3 {
+  margin: 0.85rem 0 0.35rem;
+  font: 700 0.85rem/1.2 Syne, system-ui, sans-serif;
+  color: #ffe9a0;
+}
+.hq-rpg-wiki-meta {
+  margin: 0 0 0.5rem;
+  font: 600 0.75rem/1.35 Syne, system-ui, sans-serif;
+  opacity: 0.88;
+}
+.hq-rpg-wiki-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.hq-rpg-wiki-source {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.3rem;
+  border: 1px solid color-mix(in srgb, #e8a85a 20%, transparent);
+  background: color-mix(in srgb, #0e0c0a 55%, transparent);
+  font: 600 0.78rem/1.3 Syne, system-ui, sans-serif;
+}
+.hq-rpg-wiki-source small {
+  font: 500 0.68rem/1.25 "Noto Sans HK", "Noto Sans", sans-serif;
+  opacity: 0.75;
+}
+.hq-rpg-wiki-source em {
+  font: 500 0.7rem/1.25 Syne, system-ui, sans-serif;
+  opacity: 0.8;
+  font-style: normal;
+}
+.hq-rpg-wiki-link {
+  border: 0;
+  background: none;
+  color: #ffe9a0;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+  text-align: left;
+}
+.hq-rpg-wiki-home-grid {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.45rem;
+}
+.hq-rpg-wiki-home-card {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid color-mix(in srgb, #e8a85a 30%, transparent);
+  background: color-mix(in srgb, #1a1814 85%, #e8a85a);
+  color: #f6e8d0;
+  border-radius: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  cursor: pointer;
+  font: 700 0.82rem/1.2 Syne, system-ui, sans-serif;
+}
+.hq-rpg-wiki-home-card span {
+  font: 500 0.7rem/1.2 "Noto Sans HK", "Noto Sans", sans-serif;
+  opacity: 0.8;
+}
+.hq-rpg-wiki-home-card em {
+  font: 500 0.68rem/1.2 Syne, system-ui, sans-serif;
+  opacity: 0.7;
+  font-style: normal;
+}
+.hq-rpg-wiki-progress {
+  margin-top: 0.65rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #0e0c0a 70%, transparent);
+  overflow: hidden;
+}
+.hq-rpg-wiki-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c08040, #e8a85a);
+}

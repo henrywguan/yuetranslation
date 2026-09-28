@@ -748,6 +748,7 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'uncommon',
     value: 22,
     power: 2,
+    craft: 'smithing',
   },
   'rpg-ring-jade': {
     id: 'rpg-ring-jade',
@@ -915,6 +916,7 @@ export const HARBOR_RPG_MONSTER_DEFS: Record<HarborRpgMonsterKind, HarborRpgMons
       { item: 'rpg-item-shard', chance: 0.5, qty: 1 },
       { item: 'rpg-weapon-stick', chance: 0.08, qty: 1 },
       { item: 'rpg-head-hood', chance: 0.05, qty: 1 },
+      { item: 'rpg-feet-boots', chance: 0.06, qty: 1 },
     ],
   },
   golem: {
@@ -931,6 +933,7 @@ export const HARBOR_RPG_MONSTER_DEFS: Record<HarborRpgMonsterKind, HarborRpgMons
       { item: 'rpg-item-shard', chance: 0.7, qty: 2 },
       { item: 'rpg-armor-leather', chance: 0.06, qty: 1 },
       { item: 'rpg-item-ore', chance: 0.35, qty: 2 },
+      { item: 'rpg-legs-greaves', chance: 0.05, qty: 1 },
     ],
   },
   toad: {
@@ -1498,6 +1501,30 @@ export const HARBOR_RPG_CRAFT_RECIPES: readonly HarborRpgCraftRecipe[] = [
     ],
     xp: 24,
     skillNeed: 4,
+  },
+  {
+    id: 'craft-greaves',
+    profession: 'smithing',
+    output: 'rpg-legs-greaves',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-ore', qty: 4 },
+      { id: 'rpg-item-hide', qty: 2 },
+    ],
+    xp: 26,
+    skillNeed: 5,
+  },
+  {
+    id: 'craft-boots',
+    profession: 'smithing',
+    output: 'rpg-feet-boots',
+    qty: 1,
+    inputs: [
+      { id: 'rpg-item-hide', qty: 3 },
+      { id: 'rpg-item-reed', qty: 2 },
+    ],
+    xp: 20,
+    skillNeed: 3,
   },
 ]
 
