@@ -261,7 +261,7 @@ export const HARBOR_RPG_GEAR_SLOTS = [
 ] as const
 export type HarborRpgGearSlot = (typeof HARBOR_RPG_GEAR_SLOTS)[number]
 
-export const HARBOR_RPG_RARITIES = ['common', 'uncommon', 'rare', 'epic'] as const
+export const HARBOR_RPG_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const
 export type HarborRpgRarity = (typeof HARBOR_RPG_RARITIES)[number]
 
 export const HARBOR_RPG_ITEMS = [
@@ -272,16 +272,23 @@ export const HARBOR_RPG_ITEMS = [
   'rpg-item-ore',
   'rpg-item-reed',
   'rpg-item-ash-core',
+  'rpg-item-pearl',
+  'rpg-item-silk',
+  'rpg-item-tide-coin',
   'rpg-potion-heal',
   'rpg-potion-might',
+  'rpg-potion-mana',
   'rpg-weapon-stick',
   'rpg-weapon-blade',
   'rpg-weapon-ash',
+  'rpg-weapon-tide',
   'rpg-offhand-buckler',
   'rpg-offhand-tome',
+  'rpg-offhand-lantern',
   'rpg-armor-cloth',
   'rpg-armor-leather',
   'rpg-armor-mail',
+  'rpg-armor-jade',
   'rpg-head-hood',
   'rpg-head-helm',
   'rpg-legs-wraps',
@@ -289,7 +296,9 @@ export const HARBOR_RPG_ITEMS = [
   'rpg-feet-sandals',
   'rpg-feet-boots',
   'rpg-ring-jade',
+  'rpg-ring-tide',
   'rpg-trinket-lantern',
+  'rpg-trinket-compass',
 ] as const
 export type HarborRpgItemId = (typeof HARBOR_RPG_ITEMS)[number]
 
@@ -370,6 +379,33 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     value: 18,
     power: 0,
   },
+  'rpg-item-pearl': {
+    id: 'rpg-item-pearl',
+    name: { en: 'River Pearl', zh: '河珍珠' },
+    kind: 'loot',
+    stackable: true,
+    rarity: 'uncommon',
+    value: 12,
+    power: 0,
+  },
+  'rpg-item-silk': {
+    id: 'rpg-item-silk',
+    name: { en: 'Mist Silk', zh: '霧絲' },
+    kind: 'reagent',
+    stackable: true,
+    rarity: 'uncommon',
+    value: 9,
+    power: 0,
+  },
+  'rpg-item-tide-coin': {
+    id: 'rpg-item-tide-coin',
+    name: { en: 'Tide Coin', zh: '潮幣' },
+    kind: 'loot',
+    stackable: true,
+    rarity: 'rare',
+    value: 25,
+    power: 0,
+  },
   'rpg-potion-heal': {
     id: 'rpg-potion-heal',
     name: { en: 'Reed Salve', zh: '蘆葦藥膏' },
@@ -387,6 +423,16 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     stackable: true,
     rarity: 'uncommon',
     value: 14,
+    power: 0,
+    craft: 'alchemy',
+  },
+  'rpg-potion-mana': {
+    id: 'rpg-potion-mana',
+    name: { en: 'Mist Flask', zh: '霧瓶' },
+    kind: 'consumable',
+    stackable: true,
+    rarity: 'uncommon',
+    value: 12,
     power: 0,
     craft: 'alchemy',
   },
@@ -418,6 +464,15 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     value: 120,
     power: 12,
   },
+  'rpg-weapon-tide': {
+    id: 'rpg-weapon-tide',
+    name: { en: 'Tidebrand', zh: '潮刃' },
+    kind: 'weapon',
+    stackable: false,
+    rarity: 'legendary',
+    value: 220,
+    power: 16,
+  },
   'rpg-offhand-buckler': {
     id: 'rpg-offhand-buckler',
     name: { en: 'Reed Buckler', zh: '蘆盾' },
@@ -436,6 +491,15 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'uncommon',
     value: 28,
     power: 3,
+  },
+  'rpg-offhand-lantern': {
+    id: 'rpg-offhand-lantern',
+    name: { en: 'Pilot Lantern', zh: '領航燈' },
+    kind: 'offhand',
+    stackable: false,
+    rarity: 'rare',
+    value: 48,
+    power: 5,
   },
   'rpg-armor-cloth': {
     id: 'rpg-armor-cloth',
@@ -465,6 +529,15 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     value: 55,
     power: 5,
     craft: 'smithing',
+  },
+  'rpg-armor-jade': {
+    id: 'rpg-armor-jade',
+    name: { en: 'Jade Plate', zh: '玉甲' },
+    kind: 'chest',
+    stackable: false,
+    rarity: 'legendary',
+    value: 180,
+    power: 10,
   },
   'rpg-head-hood': {
     id: 'rpg-head-hood',
@@ -531,6 +604,15 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     value: 45,
     power: 3,
   },
+  'rpg-ring-tide': {
+    id: 'rpg-ring-tide',
+    name: { en: 'Tide Signet', zh: '潮印' },
+    kind: 'ring',
+    stackable: false,
+    rarity: 'epic',
+    value: 90,
+    power: 5,
+  },
   'rpg-trinket-lantern': {
     id: 'rpg-trinket-lantern',
     name: { en: 'Ferry Charm', zh: '渡船符' },
@@ -539,6 +621,15 @@ export const HARBOR_RPG_ITEM_DEFS: Record<HarborRpgItemId, HarborRpgItemDef> = {
     rarity: 'rare',
     value: 50,
     power: 3,
+  },
+  'rpg-trinket-compass': {
+    id: 'rpg-trinket-compass',
+    name: { en: 'Star Compass', zh: '星羅盤' },
+    kind: 'trinket',
+    stackable: false,
+    rarity: 'epic',
+    value: 95,
+    power: 5,
   },
 }
 
@@ -675,8 +766,12 @@ export const HARBOR_RPG_MONSTER_DEFS: Record<HarborRpgMonsterKind, HarborRpgMons
     loot: [
       { item: 'rpg-item-ash-core', chance: 1, qty: 1 },
       { item: 'rpg-weapon-ash', chance: 0.35, qty: 1 },
+      { item: 'rpg-weapon-tide', chance: 0.08, qty: 1 },
       { item: 'rpg-trinket-lantern', chance: 0.25, qty: 1 },
+      { item: 'rpg-trinket-compass', chance: 0.12, qty: 1 },
       { item: 'rpg-armor-mail', chance: 0.2, qty: 1 },
+      { item: 'rpg-armor-jade', chance: 0.06, qty: 1 },
+      { item: 'rpg-item-tide-coin', chance: 0.5, qty: 2 },
     ],
   },
 }
@@ -962,6 +1057,7 @@ export const HARBOR_RPG_VENDOR = {
     'rpg-weapon-stick',
     'rpg-weapon-blade',
     'rpg-offhand-buckler',
+    'rpg-offhand-lantern',
     'rpg-armor-cloth',
     'rpg-armor-leather',
     'rpg-armor-mail',
@@ -969,6 +1065,8 @@ export const HARBOR_RPG_VENDOR = {
     'rpg-legs-wraps',
     'rpg-feet-sandals',
     'rpg-potion-heal',
+    'rpg-potion-mana',
+    'rpg-ring-tide',
   ] as HarborRpgItemId[],
 }
 

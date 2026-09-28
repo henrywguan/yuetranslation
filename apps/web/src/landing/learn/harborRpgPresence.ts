@@ -1,6 +1,6 @@
 /**
  * HarborRPG Realtime presence — separate channel from Harbor Quest river.
- * Soft trust: presence + party + loot rolls + market broadcast (no anti-cheat).
+ * Soft trust: presence + party + loot rolls + market + world tick + trade (no anti-cheat).
  */
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import type { HarborRpgZoneId } from './harborRpgData'
@@ -15,6 +15,16 @@ import {
   type HarborRpgPartyInvite,
   type HarborRpgPartyState,
 } from './harborRpgSocial'
+import {
+  HARBOR_RPG_WORLD_EVENT,
+  sanitizeRpgWorldPacket,
+  type HarborRpgWorldPacket,
+} from './harborRpgWorldSync'
+import {
+  HARBOR_RPG_TRADE_EVENT,
+  sanitizeRpgTradeOffer,
+  type HarborRpgTradeOffer,
+} from './harborRpgTrade'
 
 export const HARBOR_RPG_PRESENCE_CHANNEL = 'harbor-rpg-realm' as const
 export const HARBOR_RPG_POSE_EVENT = 'harbor-rpg-pose' as const
@@ -114,6 +124,19 @@ export function remotesFromRpgPresence(
   return out
 }
 
+/** Zone peer ids for host election (self + remotes in same zone). */
+export function rpgZonePeerIds(
+  selfId: string,
+  remotes: HarborRpgRemotePlayer[],
+  zone: HarborRpgZoneId,
+): string[] {
+  const ids = [selfId]
+  for (const r of remotes) {
+    if (r.zone === zone) ids.push(r.userId)
+  }
+  return ids
+}
+
 export type HarborRpgPresenceSession = {
   channel: RealtimeChannel
   track: (pose: {
@@ -134,6 +157,8 @@ export type HarborRpgPresenceSession = {
   broadcastParty: (party: HarborRpgPartyState | HarborRpgPartyInvite) => void
   broadcastLootRoll: (roll: HarborRpgLootRoll) => void
   broadcastMarket: (listings: HarborRpgMarketListing[]) => void
+  broadcastWorld: (packet: HarborRpgWorldPacket) => void
+  broadcastTrade: (offer: HarborRpgTradeOffer) => void
   stop: () => Promise<void>
 }
 
@@ -146,6 +171,8 @@ export function startHarborRpgPresence(opts: {
   onParty?: (msg: HarborRpgPartyState | HarborRpgPartyInvite) => void
   onLootRoll?: (roll: HarborRpgLootRoll) => void
   onMarket?: (listings: HarborRpgMarketListing[]) => void
+  onWorld?: (packet: HarborRpgWorldPacket) => void
+  onTrade?: (offer: HarborRpgTradeOffer) => void
 }): HarborRpgPresenceSession {
   const { supabase, userId, username } = opts
   const channel = supabase.channel(HARBOR_RPG_PRESENCE_CHANNEL, {
@@ -187,6 +214,17 @@ export function startHarborRpgPresence(opts: {
       const listings = (payload as { listings?: unknown }).listings
       if (!Array.isArray(listings)) return
       opts.onMarket?.(listings as HarborRpgMarketListing[])
+    })
+    .on('broadcast', { event: HARBOR_RPG_WORLD_EVENT }, ({ payload }) => {
+      const packet = sanitizeRpgWorldPacket(payload)
+      if (!packet || packet.hostId === userId) return
+      opts.onWorld?.(packet)
+    })
+    .on('broadcast', { event: HARBOR_RPG_TRADE_EVENT }, ({ payload }) => {
+      const offer = sanitizeRpgTradeOffer(payload)
+      if (!offer || offer.fromId === userId) return
+      if (offer.toId !== userId && offer.type !== 'cancel') return
+      opts.onTrade?.(offer)
     })
 
   void channel.subscribe()
@@ -243,6 +281,20 @@ export function startHarborRpgPresence(opts: {
         payload: { listings },
       })
     },
+    broadcastWorld(packet) {
+      void channel.send({
+        type: 'broadcast',
+        event: HARBOR_RPG_WORLD_EVENT,
+        payload: packet,
+      })
+    },
+    broadcastTrade(offer) {
+      void channel.send({
+        type: 'broadcast',
+        event: HARBOR_RPG_TRADE_EVENT,
+        payload: offer,
+      })
+    },
     async stop() {
       await supabase.removeChannel(channel)
     },
@@ -252,3 +304,5 @@ export function startHarborRpgPresence(opts: {
 export function bootstrapLocalParty(leaderId: string, leaderName: string): HarborRpgPartyState {
   return createRpgParty(leaderId, leaderName)
 }
+
+export type { HarborRpgLootDrop }

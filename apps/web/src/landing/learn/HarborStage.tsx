@@ -40,6 +40,8 @@ type HarborStageProps = {
     monsterId: string
     loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
   }) => void
+  onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
+  rpgZonePeerIds?: string[]
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a nearby talkable NPC / speech bubble. */
@@ -72,6 +74,8 @@ export function HarborStage({
   localUserId,
   rpgPartySize,
   onRpgContestedLoot,
+  onRpgWorldTick,
+  rpgZonePeerIds,
   onVisitable,
   onDialogueNpc,
   remotePlayers,
@@ -105,6 +109,8 @@ export function HarborStage({
         localUserId={localUserId}
         rpgPartySize={rpgPartySize}
         onRpgContestedLoot={onRpgContestedLoot}
+        onRpgWorldTick={onRpgWorldTick}
+        rpgZonePeerIds={rpgZonePeerIds}
         paused={paused}
         onVisitable={onVisitable}
         onDialogueNpc={onDialogueNpc}

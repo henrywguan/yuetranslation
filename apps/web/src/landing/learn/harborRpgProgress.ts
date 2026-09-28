@@ -47,6 +47,13 @@ import {
   isHarborRpgClassId,
   type HarborRpgClassId,
 } from './harborRpgClasses'
+import {
+  harborRpgDefaultSpec,
+  harborRpgMaxResource,
+  harborRpgSpecById,
+  isHarborRpgSpecId,
+  type HarborRpgSpecId,
+} from './harborRpgSpecs'
 
 export const HARBOR_RPG_MAX_CHARS = 2
 export const HARBOR_RPG_MAX_INV_STACKS = 32
@@ -118,6 +125,8 @@ export type HarborRpgBag = {
   market: HarborRpgMarketListing[]
   /** Active adventuring class (null until chosen). */
   classId: HarborRpgClassId | null
+  /** Active spec within the class (9×3). */
+  specId: HarborRpgSpecId | null
   /** XP toward class level (separate from soft adventure XP). */
   classXp: number
   /** Prestige stars after hitting level cap. */
@@ -178,6 +187,7 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     professions: emptyRpgProfessions(),
     market: [],
     classId: null,
+    specId: null,
     classXp: 0,
     prestige: 0,
     skillXp: {},
@@ -209,6 +219,39 @@ export function harborRpgMaxHp(bag: HarborRpgBag): number {
   return Math.floor(
     (HARBOR_RPG_BASE_HP + (lv - 1) * HARBOR_RPG_HP_PER_LEVEL + armor * 3 + talentHp) * bias,
   )
+}
+
+export function harborRpgMaxMp(bag: HarborRpgBag): number {
+  const classLv = harborRpgClassLevelFromXp(bag.classXp)
+  const spec = bag.specId ? harborRpgSpecById(bag.specId) : null
+  const resource = spec?.resource ?? 'focus'
+  let max = harborRpgMaxResource(classLv, resource)
+  if (bag.classId === 'mistweaver' && classLv >= 10) max = Math.floor(max * 1.12)
+  return max
+}
+
+/** Soft crit chance bonus from offense talents + prestige. */
+export function harborRpgCritBonus(bag: HarborRpgBag): number {
+  if (!bag.classId) return 0
+  let n = bag.prestige * 0.01
+  for (const node of HARBOR_RPG_CLASS_DEFS[bag.classId].talents) {
+    if (node.tree !== 'offense') continue
+    const pts = bag.talents[node.id] ?? 0
+    if (pts > 0) n += 0.008 * pts
+  }
+  return n
+}
+
+/** Soft hit chance bonus from voyage talents. */
+export function harborRpgHitBonus(bag: HarborRpgBag): number {
+  if (!bag.classId) return 0
+  let n = 0
+  for (const node of HARBOR_RPG_CLASS_DEFS[bag.classId].talents) {
+    if (node.tree !== 'voyage') continue
+    const pts = bag.talents[node.id] ?? 0
+    if (pts > 0) n += 0.005 * pts
+  }
+  return n
 }
 
 export function harborRpgAttackPower(bag: HarborRpgBag): number {
@@ -516,6 +559,7 @@ const TALENT_ID_SET = new Set(harborRpgAllTalentIds())
 
 function sanitizeClassProgress(o: Record<string, unknown>): {
   classId: HarborRpgClassId | null
+  specId: HarborRpgSpecId | null
   classXp: number
   prestige: number
   skillXp: Record<string, number>
@@ -523,6 +567,12 @@ function sanitizeClassProgress(o: Record<string, unknown>): {
   skillBar: string[]
 } {
   const classId = isHarborRpgClassId(o.classId) ? o.classId : null
+  let specId: HarborRpgSpecId | null = null
+  if (isHarborRpgSpecId(o.specId)) {
+    const spec = harborRpgSpecById(o.specId)
+    if (spec && (!classId || spec.classId === classId)) specId = o.specId
+  }
+  if (classId && !specId) specId = harborRpgDefaultSpec(classId)
   const classXp =
     typeof o.classXp === 'number' && Number.isFinite(o.classXp) && o.classXp >= 0
       ? Math.min(Math.floor(o.classXp), 50_000_000)
@@ -564,7 +614,7 @@ function sanitizeClassProgress(o: Record<string, unknown>): {
       if (skillBar.length >= 5) break
     }
   }
-  return { classId, classXp, prestige, skillXp, talents, skillBar }
+  return { classId, specId, classXp, prestige, skillXp, talents, skillBar }
 }
 
 function mergeInv(
@@ -672,6 +722,7 @@ export function mergeHarborRpgBag(a: HarborRpgBag, b: HarborRpgBag): HarborRpgBa
     professions,
     market: [...marketMap.values()].slice(0, 12),
     classId: b.classId ?? a.classId,
+    specId: b.specId ?? a.specId,
     classXp: Math.max(a.classXp, b.classXp),
     prestige: Math.max(a.prestige, b.prestige),
     skillXp: (() => {
@@ -816,14 +867,26 @@ export function selectHarborRpgClass(
   if (!def) return bag
   const classLevel = Math.max(1, harborRpgClassLevelFromXp(bag.classId === classId ? bag.classXp : 0))
   const unlocked = harborRpgUnlockedSkills(classId, classLevel).slice(0, 5)
+  const same = bag.classId === classId
   return {
     ...bag,
     classId,
-    classXp: bag.classId === classId ? bag.classXp : 0,
-    prestige: bag.classId === classId ? bag.prestige : 0,
-    talents: bag.classId === classId ? bag.talents : {},
+    specId: same && bag.specId ? bag.specId : harborRpgDefaultSpec(classId),
+    classXp: same ? bag.classXp : 0,
+    prestige: same ? bag.prestige : 0,
+    talents: same ? bag.talents : {},
     skillBar: unlocked.map((s) => s.id),
   }
+}
+
+export function selectHarborRpgSpec(
+  bag: HarborRpgBag,
+  specId: HarborRpgSpecId,
+): HarborRpgBag | null {
+  if (!bag.classId) return null
+  const spec = harborRpgSpecById(specId)
+  if (!spec || spec.classId !== bag.classId) return null
+  return { ...bag, specId }
 }
 
 export function setHarborRpgSkillBar(

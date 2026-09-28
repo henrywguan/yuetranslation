@@ -31,6 +31,8 @@ type Props = {
     monsterId: string
     loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
   }) => void
+  onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
+  rpgZonePeerIds?: string[]
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
@@ -65,6 +67,8 @@ export function HarborWorldCanvas({
   localUserId,
   rpgPartySize,
   onRpgContestedLoot,
+  onRpgWorldTick,
+  rpgZonePeerIds,
   paused = false,
   onVisitable,
   onDialogueNpc,
@@ -87,10 +91,14 @@ export function HarborWorldCanvas({
   onRpgBagChangeRef.current = onRpgBagChange
   const onRpgContestedLootRef = useRef(onRpgContestedLoot)
   onRpgContestedLootRef.current = onRpgContestedLoot
+  const onRpgWorldTickRef = useRef(onRpgWorldTick)
+  onRpgWorldTickRef.current = onRpgWorldTick
   const localUserIdRef = useRef(localUserId)
   localUserIdRef.current = localUserId
   const rpgPartySizeRef = useRef(rpgPartySize)
   rpgPartySizeRef.current = rpgPartySize
+  const rpgZonePeerIdsRef = useRef(rpgZonePeerIds)
+  rpgZonePeerIdsRef.current = rpgZonePeerIds
   const localUsernameRef = useRef(localUsername)
   localUsernameRef.current = localUsername
   const nametagFrameRef = useRef(nametagFrame)
@@ -126,6 +134,8 @@ export function HarborWorldCanvas({
         localUserId: localUserIdRef.current,
         rpgPartySize: rpgPartySizeRef.current ?? 1,
         onRpgContestedLoot: (drop) => onRpgContestedLootRef.current?.(drop),
+        onRpgWorldTick: (packet) => onRpgWorldTickRef.current?.(packet),
+        rpgZonePeerIds: rpgZonePeerIdsRef.current,
       })
     } catch (err) {
       console.error('[harbor] WebGL boot failed', err)
@@ -174,6 +184,10 @@ export function HarborWorldCanvas({
   useEffect(() => {
     if (rpgBag) worldRef.current?.setRpgBag(rpgBag)
   }, [rpgBag])
+
+  useEffect(() => {
+    if (rpgZonePeerIds) worldRef.current?.setRpgZonePeerIds(rpgZonePeerIds)
+  }, [rpgZonePeerIds])
 
   useEffect(() => {
     worldRef.current?.setProgress(progress)

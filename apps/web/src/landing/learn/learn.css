@@ -9060,6 +9060,91 @@
   color: #ffe08a;
   font-size: 0.65rem;
 }
+.hq-rpg-mp .hq-rpg-mp-fill {
+  background: linear-gradient(90deg, #3a7ab8, #6ec8ff);
+}
+.hq-rpg-spell-tip {
+  margin: 0.35rem 0 0;
+  color: #c8e0f0;
+  font: 500 0.72rem/1.35 'Noto Sans', system-ui, sans-serif;
+}
+.hq-rpg-ability.is-cast,
+.hq-rpg-spell.is-cast .hq-rpg-spell-btn {
+  animation: hq-rpg-cast-pulse 0.32s ease-out;
+}
+@keyframes hq-rpg-cast-pulse {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  40% {
+    transform: scale(1.08);
+    filter: brightness(1.35);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+.hq-rpg-ability--slash {
+  border-color: color-mix(in srgb, #c07050 50%, transparent);
+}
+.hq-rpg-ability--bolt {
+  border-color: color-mix(in srgb, #60a0e0 55%, transparent);
+}
+.hq-rpg-ability--heal {
+  border-color: color-mix(in srgb, #50c878 55%, transparent);
+}
+.hq-rpg-ability--guard {
+  border-color: color-mix(in srgb, #a0a8b8 55%, transparent);
+}
+.hq-rpg-ability--nova {
+  border-color: color-mix(in srgb, #e0c060 60%, transparent);
+}
+.hq-rpg-ability--dot {
+  border-color: color-mix(in srgb, #9060b0 55%, transparent);
+}
+.hq-rpg-spellbook {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.45rem;
+}
+.hq-rpg-spell {
+  margin: 0;
+}
+.hq-rpg-spell.is-spec .hq-rpg-spell-btn {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #7ec8ff 55%, transparent);
+}
+.hq-rpg-spell-btn {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, #6a8098 40%, transparent);
+  background: color-mix(in srgb, #142028 92%, transparent);
+  color: #e8f0f8;
+  cursor: pointer;
+  font: 600 0.78rem/1.2 Syne, system-ui, sans-serif;
+}
+.hq-rpg-spell-btn small {
+  color: #9ab0c0;
+  font: 500 0.65rem/1.2 'Noto Sans', system-ui, sans-serif;
+}
+.hq-rpg-spell-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.hq-rpg-trade {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
 .hq-rpg-loot-roll {
   margin-top: 0.6rem;
   padding: 0.65rem 0.75rem;

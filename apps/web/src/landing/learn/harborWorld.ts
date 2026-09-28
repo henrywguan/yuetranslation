@@ -108,9 +108,18 @@ import {
 } from './harborRpgCombat'
 import {
   harborRpgMaxHp,
+  harborRpgMaxMp,
   sanitizeHarborRpgBag,
   type HarborRpgBag,
 } from './harborRpgProgress'
+import {
+  applyRpgWorldSnapshot as applyRpgWorldSnapToMonsters,
+  electRpgZoneHost,
+  HARBOR_RPG_WORLD_TICK_MS,
+  isRpgZoneHost,
+  snapshotRpgMonsters,
+  type HarborRpgWorldPacket,
+} from './harborRpgWorldSync'
 import {
   GUAN_FISHING_HUT,
   GUAN_FISH_SPOTS,
@@ -213,6 +222,10 @@ export type HarborWorldOptions = {
     monsterId: string
     loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
   }) => void
+  /** Soft world-tick host broadcast (~5 Hz). */
+  onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
+  /** Peer userIds in the current RPG zone (for host election). */
+  rpgZonePeerIds?: string[]
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a talkable NPC / speech bubble while in range. */
@@ -276,6 +289,8 @@ export type HarborWorldHandle = {
   getRpgCombatHud: () => {
     hp: number
     maxHp: number
+    mp: number
+    maxMp: number
     zone: HarborRpgZoneId
     targetName: string | null
     targetHp: number
@@ -290,6 +305,12 @@ export type HarborWorldHandle = {
   setRpgPartySize: (n: number) => void
   /** Push latest RPG bag into the combat sim (equip / shop). */
   setRpgBag: (bag: HarborRpgBag) => void
+  /** Soft Realtime: apply host monster snapshot (non-host clients). */
+  applyRpgWorldSnapshot: (
+    packet: import('./harborRpgWorldSync').HarborRpgWorldPacket,
+  ) => void
+  /** Soft Realtime: peer ids in zone for host election. */
+  setRpgZonePeerIds: (ids: string[]) => void
   /**
    * OSRS minimap / UI navigate — sail or walk toward a world (x,z).
    * Same rules as tapping the ground (disembark on land, reboard near canoe).
@@ -4550,6 +4571,7 @@ export function createHarborWorld(
   let paused = false
   let rpgBagLive: HarborRpgBag = sanitizeHarborRpgBag(options.rpgBag)
   let rpgPlayerHp = harborRpgMaxHp(rpgBagLive)
+  let rpgPlayerMp = harborRpgMaxMp(rpgBagLive)
   let rpgMonsters: HarborRpgMonsterRuntime[] = []
   let rpgGuardBuffSec = 0
   let rpgQueuedAbility: string | null = null
@@ -4557,6 +4579,11 @@ export function createHarborWorld(
     gcd: number
     cds: Record<string, number>
   } = { gcd: 0, cds: {} }
+  let rpgZonePeerIdsLive: string[] = options.rpgZonePeerIds?.slice() ?? [
+    options.localUserId ?? 'local',
+  ]
+  let rpgLastWorldBroadcast = 0
+  let rpgLastHostSnapT = 0
   const rpgMonsterMeshes = new Map<string, THREE.Group>()
   // Guan Harbor / HarborRPG always force sunny daylight.
   const weather: HarborWeather = isPocket ? 'sunny' : (options.weather ?? pickHarborWeather())
@@ -5847,13 +5874,16 @@ export function createHarborWorld(
     }
 
     if (isRpg && rpgScene && !paused) {
+      const selfId = options.localUserId ?? 'local'
+      const host = isRpgZoneHost(selfId, rpgZonePeerIdsLive)
       const combat = tickRpgCombat({
         bag: rpgBagLive,
         monsters: rpgMonsters,
         playerX: footX,
         playerZ: footZ,
         playerHp: rpgPlayerHp,
-        userId: options.localUserId ?? 'local',
+        playerMp: rpgPlayerMp,
+        userId: selfId,
         partySize: Math.max(1, options.rpgPartySize ?? 1),
         abilityId: rpgQueuedAbility,
         attacking: true,
@@ -5865,11 +5895,22 @@ export function createHarborWorld(
       rpgQueuedAbility = null
       rpgMonsters = combat.monsters
       rpgPlayerHp = combat.playerHp
+      rpgPlayerMp = combat.playerMp
       rpgGuardBuffSec = combat.guardBuffSec
       rpgCombatCds = { gcd: combat.gcdRemaining, cds: combat.abilityCds }
       if (combat.bag !== rpgBagLive) {
         rpgBagLive = combat.bag
         options.onRpgBagChange?.(rpgBagLive)
+      }
+      if (host && now - rpgLastWorldBroadcast >= HARBOR_RPG_WORLD_TICK_MS) {
+        rpgLastWorldBroadcast = now
+        const packet: HarborRpgWorldPacket = {
+          hostId: selfId,
+          zone: rpgZone,
+          t: now,
+          mobs: snapshotRpgMonsters(rpgMonsters),
+        }
+        options.onRpgWorldTick?.(packet)
       }
       for (const m of rpgMonsters) {
         const mesh = rpgMonsterMeshes.get(m.id)
@@ -5894,12 +5935,17 @@ export function createHarborWorld(
           moveTarget = { x: spawn.x, z: spawn.z }
           scoutWalk.position.set(footX, 0, footZ)
           rpgPlayerHp = harborRpgMaxHp(rpgBagLive)
+          rpgPlayerMp = harborRpgMaxMp(rpgBagLive)
           flash = 'no'
           flashUntil = now + 700
         }
         if (ev.type === 'kill') {
           flash = 'ok'
           flashUntil = now + 450
+        }
+        if (ev.type === 'player-hit' && ev.crit) {
+          flash = 'ok'
+          flashUntil = Math.max(flashUntil, now + 220)
         }
       }
     }
@@ -6310,6 +6356,8 @@ if (o.userData.cigaretteSmoke && !reduced) {
       return {
         hp: rpgPlayerHp,
         maxHp: harborRpgMaxHp(rpgBagLive),
+        mp: rpgPlayerMp,
+        maxMp: harborRpgMaxMp(rpgBagLive),
         zone: rpgZone,
         targetName,
         targetHp,
@@ -6330,6 +6378,23 @@ if (o.userData.cigaretteSmoke && !reduced) {
       rpgBagLive = sanitizeHarborRpgBag(bag)
       const max = harborRpgMaxHp(rpgBagLive)
       if (rpgPlayerHp > max) rpgPlayerHp = max
+      const maxMp = harborRpgMaxMp(rpgBagLive)
+      if (rpgPlayerMp > maxMp) rpgPlayerMp = maxMp
+    },
+    applyRpgWorldSnapshot(packet) {
+      if (!isRpg || disposed) return
+      if (packet.zone !== rpgZone) return
+      const selfId = options.localUserId ?? 'local'
+      if (isRpgZoneHost(selfId, rpgZonePeerIdsLive)) return
+      if (packet.t < rpgLastHostSnapT) return
+      rpgLastHostSnapT = packet.t
+      rpgMonsters = applyRpgWorldSnapToMonsters(rpgMonsters, packet, performance.now())
+    },
+    setRpgZonePeerIds(ids) {
+      const cleaned = ids.filter((id) => typeof id === 'string' && id.length > 0)
+      rpgZonePeerIdsLive =
+        cleaned.length > 0 ? cleaned : [options.localUserId ?? 'local']
+      void electRpgZoneHost(rpgZonePeerIdsLive)
     },
     moveToWorld(x, z) {
       commandMoveTo(x, z)

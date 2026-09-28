@@ -24,8 +24,11 @@ import {
   harborRpgActiveSkillRank,
   harborRpgAttackPower,
   harborRpgCdMultiplier,
+  harborRpgCritBonus,
   harborRpgDefense,
+  harborRpgHitBonus,
   harborRpgMaxHp,
+  harborRpgMaxMp,
   rpgCreditMultiplier,
   rpgHasCompanion,
   rpgXpMultiplier,
@@ -56,7 +59,14 @@ export type HarborRpgMonsterRuntime = {
 export type HarborRpgLootDrop = { id: HarborRpgItemId; qty: number }
 
 export type HarborRpgCombatEvent =
-  | { type: 'player-hit'; damage: number; monsterId: string; abilityId: string }
+  | {
+      type: 'player-hit'
+      damage: number
+      monsterId: string
+      abilityId: string
+      crit?: boolean
+    }
+  | { type: 'player-miss'; monsterId: string; abilityId: string }
   | { type: 'monster-hit'; damage: number; monsterId: string }
   | { type: 'heal'; amount: number }
   | {
@@ -70,6 +80,7 @@ export type HarborRpgCombatEvent =
     }
   | { type: 'player-down' }
   | { type: 'ability-gcd'; abilityId: string }
+  | { type: 'resource'; mp: number; maxMp: number }
 
 function mulberry32(seed: number) {
   return () => {
@@ -148,6 +159,8 @@ export type HarborRpgCombatTickInput = {
   playerX: number
   playerZ: number
   playerHp: number
+  /** Soft class resource (MP / focus / energy / fury / spirit). */
+  playerMp: number
   userId: string
   partySize: number
   /** Class skill id or legacy ability id. */
@@ -163,12 +176,19 @@ export type HarborRpgCombatTickInput = {
 export type HarborRpgCombatTickResult = {
   monsters: HarborRpgMonsterRuntime[]
   playerHp: number
+  playerMp: number
   bag: HarborRpgBag
   events: HarborRpgCombatEvent[]
   guardBuffSec: number
   gcdRemaining: number
   abilityCds: Record<string, number>
 }
+
+/** Soft hit / crit tables (client-authoritative). */
+export const HARBOR_RPG_BASE_HIT = 0.94
+export const HARBOR_RPG_BASE_CRIT = 0.08
+export const HARBOR_RPG_CRIT_MULT = 1.75
+export const HARBOR_RPG_MP_REGEN_PER_SEC = 4
 
 const PLAYER_ATTACK_RANGE = 2.2
 const MONSTER_ATTACK_RANGE = 1.6
@@ -235,21 +255,22 @@ function applyKillRewards(
   return { bag: next, xp: xpGain, gold: goldGain }
 }
 
-type ResolvedCast =
-  | {
-      id: string
-      gcd: number
-      cd: number
-      range: number
-      aoe?: number
-      powerMult: number
-      threatMult: number
-      kind: 'damage' | 'burst' | 'guard' | 'heal' | 'dot'
-      defBonus?: number
-      seconds?: number
-      healMult?: number
-      dotTicks?: number
-    }
+type ResolvedCast = {
+  id: string
+  gcd: number
+  cd: number
+  range: number
+  aoe?: number
+  powerMult: number
+  threatMult: number
+  kind: 'damage' | 'burst' | 'guard' | 'heal' | 'dot'
+  defBonus?: number
+  seconds?: number
+  healMult?: number
+  dotTicks?: number
+  mpCost: number
+  anim?: string
+}
 
 function resolveCast(bag: HarborRpgBag, rawId: string | null): ResolvedCast | null {
   if (!rawId) return null
@@ -273,11 +294,15 @@ function resolveCast(bag: HarborRpgBag, rawId: string | null): ResolvedCast | nu
     kind: legacy.id === 'guard' ? 'guard' : 'damage',
     defBonus: 'buffDefSec' in legacy ? 4 : undefined,
     seconds: 'buffDefSec' in legacy ? legacy.buffDefSec : undefined,
+    mpCost: 0,
+    anim: legacy.id === 'guard' ? 'guard' : 'slash',
   }
 }
 
 function skillToCast(skill: HarborRpgSkillDef, rankMult: number): ResolvedCast {
   const e = skill.effect
+  const mpCost = Math.max(0, Math.floor(skill.mpCost ?? 0))
+  const anim = skill.anim
   if (e.kind === 'guard') {
     return {
       id: skill.id,
@@ -289,6 +314,8 @@ function skillToCast(skill: HarborRpgSkillDef, rankMult: number): ResolvedCast {
       kind: 'guard',
       defBonus: e.defBonus,
       seconds: e.seconds,
+      mpCost,
+      anim: anim ?? 'guard',
     }
   }
   if (e.kind === 'heal') {
@@ -301,6 +328,8 @@ function skillToCast(skill: HarborRpgSkillDef, rankMult: number): ResolvedCast {
       threatMult: 0,
       kind: 'heal',
       healMult: e.mult * rankMult,
+      mpCost,
+      anim: anim ?? 'heal',
     }
   }
   if (e.kind === 'dot') {
@@ -313,6 +342,8 @@ function skillToCast(skill: HarborRpgSkillDef, rankMult: number): ResolvedCast {
       threatMult: 0.8,
       kind: 'dot',
       dotTicks: e.ticks,
+      mpCost,
+      anim: anim ?? 'dot',
     }
   }
   return {
@@ -324,6 +355,8 @@ function skillToCast(skill: HarborRpgSkillDef, rankMult: number): ResolvedCast {
     powerMult: e.mult * rankMult,
     threatMult: (e.kind === 'damage' || e.kind === 'burst' ? e.threatMult : 1) ?? 1,
     kind: e.kind === 'burst' ? 'burst' : 'damage',
+    mpCost,
+    anim: anim ?? (e.kind === 'burst' ? 'nova' : 'slash'),
   }
 }
 
@@ -337,6 +370,10 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
   const events: HarborRpgCombatEvent[] = []
   let bag = input.bag
   let playerHp = input.playerHp
+  const maxMp = harborRpgMaxMp(bag)
+  let playerMp = Math.min(maxMp, Math.max(0, input.playerMp))
+  // Soft out-of-combat + in-combat regen
+  playerMp = Math.min(maxMp, playerMp + HARBOR_RPG_MP_REGEN_PER_SEC * input.dt)
   let guardBuffSec = Math.max(0, input.guardBuffSec - input.dt)
   const atk = harborRpgAttackPower(bag)
   const def = harborRpgDefense(bag) + (guardBuffSec > 0 ? 4 : 0)
@@ -344,6 +381,8 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
   const contested = input.partySize > 1
   const instance = Boolean(HARBOR_RPG_ZONE_META[input.zone].instance)
   const cdMult = harborRpgCdMultiplier(bag)
+  const critChance = Math.min(0.35, HARBOR_RPG_BASE_CRIT + harborRpgCritBonus(bag))
+  const hitChance = Math.min(0.99, HARBOR_RPG_BASE_HIT + harborRpgHitBonus(bag))
 
   playerGcd = Math.max(0, playerGcd - input.dt)
   for (const id of Object.keys(abilityCds)) {
@@ -358,7 +397,6 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
   // Tick DoTs
   for (const m of monsters) {
     if (!m.alive || !m.dotTicks || m.dotTicks <= 0 || !m.dotDmg) continue
-    // Soft: apply one tick per ~0.8s via fractional — here once per cast window approx using dt accum not tracked; apply on fractional chance
     if (rng() < input.dt / 0.85) {
       m.hp = Math.max(0, m.hp - m.dotDmg)
       m.dotTicks -= 1
@@ -388,16 +426,25 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
   if (playerHp > 0 && playerGcd <= 0) {
     if (input.abilityId) {
       const resolved = resolveCast(bag, input.abilityId)
-      if (resolved && (abilityCds[resolved.id] ?? 0) <= 0) cast = resolved
+      if (
+        resolved &&
+        (abilityCds[resolved.id] ?? 0) <= 0 &&
+        playerMp >= resolved.mpCost
+      ) {
+        cast = resolved
+      }
     } else if (input.attacking) {
-      cast = resolveCast(bag, defaultAutoId(bag))
+      const auto = resolveCast(bag, defaultAutoId(bag))
+      if (auto && playerMp >= auto.mpCost) cast = auto
     }
   }
 
   if (cast) {
     playerGcd = cast.gcd * cdMult
     abilityCds[cast.id] = cast.cd * cdMult
+    if (cast.mpCost > 0) playerMp = Math.max(0, playerMp - cast.mpCost)
     events.push({ type: 'ability-gcd', abilityId: cast.id })
+    events.push({ type: 'resource', mp: Math.floor(playerMp), maxMp })
 
     if (cast.kind === 'guard') {
       guardBuffSec = Math.max(guardBuffSec, cast.seconds ?? 4)
@@ -405,13 +452,16 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
       const amount = Math.max(1, Math.floor(atk * (cast.healMult ?? 0.5) + 8))
       playerHp = Math.min(harborRpgMaxHp(bag), playerHp + amount)
       events.push({ type: 'heal', amount })
-      if (bag.classId === 'jadeheart' && cast.id === 'jh-lotus') {
+      if (
+        (bag.classId === 'jadeheart' && cast.id === 'jh-lotus') ||
+        (bag.classId === 'mistweaver' && cast.id === 'mw-monsoon')
+      ) {
         const near = monsters.filter((m) => {
           if (!m.alive) return false
           return Math.hypot(m.x - input.playerX, m.z - input.playerZ) <= 4
         })
         for (const m of near) {
-          const dmg = Math.max(1, Math.floor(atk * 0.6))
+          const dmg = Math.max(1, Math.floor(atk * 0.55))
           m.hp = Math.max(0, m.hp - dmg)
           m.hitFlash = 0.2
           addThreat(m, input.userId, dmg)
@@ -436,6 +486,10 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
         ]
       }
       for (const m of hitList) {
+        if (rng() > hitChance) {
+          events.push({ type: 'player-miss', monsterId: m.id, abilityId: cast.id })
+          continue
+        }
         if (cast.kind === 'dot') {
           const tick = Math.max(1, Math.floor(atk * cast.powerMult))
           m.dotDmg = tick
@@ -447,10 +501,18 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
         }
         let dmg = Math.max(1, Math.floor(atk * cast.powerMult) + Math.floor(rng() * 3))
         if (companion) dmg += Math.max(1, Math.floor(atk * 0.35))
+        const crit = rng() < critChance
+        if (crit) dmg = Math.max(1, Math.floor(dmg * HARBOR_RPG_CRIT_MULT))
         m.hp = Math.max(0, m.hp - dmg)
-        m.hitFlash = 0.25
+        m.hitFlash = crit ? 0.35 : 0.25
         addThreat(m, input.userId, dmg * cast.threatMult)
-        events.push({ type: 'player-hit', damage: dmg, monsterId: m.id, abilityId: cast.id })
+        events.push({
+          type: 'player-hit',
+          damage: dmg,
+          monsterId: m.id,
+          abilityId: cast.id,
+          crit,
+        })
         if (m.hp <= 0) {
           m.alive = false
           m.respawnAt =
@@ -527,17 +589,10 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
     }
   }
 
-  // Soft heal clamp: if heal events, bump HP using max from bag
-  for (const ev of events) {
-    if (ev.type === 'heal') {
-      // World clamps with harborRpgMaxHp; here allow temporary overshoot
-      playerHp += 0
-    }
-  }
-
   return {
     monsters,
     playerHp,
+    playerMp: Math.floor(playerMp),
     bag,
     events,
     guardBuffSec,

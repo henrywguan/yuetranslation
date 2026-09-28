@@ -110,6 +110,7 @@ export type HarborQuestProgress = {
       createdAt: number
     }[]
     classId?: string | null
+    specId?: string | null
     classXp?: number
     prestige?: number
     skillXp?: Record<string, number>
@@ -348,12 +349,13 @@ const HARBOR_RPG_COSMETICS = new Set([
 ])
 const HARBOR_RPG_ITEMS = new Set([
   'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide','rpg-item-ore','rpg-item-reed','rpg-item-ash-core',
-  'rpg-potion-heal','rpg-potion-might',
-  'rpg-weapon-stick','rpg-weapon-blade','rpg-weapon-ash',
-  'rpg-offhand-buckler','rpg-offhand-tome',
-  'rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail',
+  'rpg-item-pearl','rpg-item-silk','rpg-item-tide-coin',
+  'rpg-potion-heal','rpg-potion-might','rpg-potion-mana',
+  'rpg-weapon-stick','rpg-weapon-blade','rpg-weapon-ash','rpg-weapon-tide',
+  'rpg-offhand-buckler','rpg-offhand-tome','rpg-offhand-lantern',
+  'rpg-armor-cloth','rpg-armor-leather','rpg-armor-mail','rpg-armor-jade',
   'rpg-head-hood','rpg-head-helm','rpg-legs-wraps','rpg-legs-greaves','rpg-feet-sandals','rpg-feet-boots',
-  'rpg-ring-jade','rpg-trinket-lantern',
+  'rpg-ring-jade','rpg-ring-tide','rpg-trinket-lantern','rpg-trinket-compass',
 ])
 const HARBOR_RPG_ZONES = new Set(['meadow','pinewood','ruins','marsh','town','crypt'])
 const HARBOR_RPG_QUEST_IDS = new Set([
@@ -364,9 +366,15 @@ const HARBOR_RPG_GEAR_SLOTS = ['weapon','offhand','head','chest','legs','feet','
 const HARBOR_RPG_PROFESSIONS = ['herbalism','mining','alchemy','smithing'] as const
 const HARBOR_RPG_CLASS_IDS = new Set([
   'tideblade','reedshadow','lanternmancer','jadeheart','ashbound','starferry',
+  'ironoar','mistweaver','chopwright',
 ])
-const HARBOR_RPG_SKILL_PREFIX = /^(tb|rs|lm|jh|ab|sf)-[a-z0-9-]+$/i
-const HARBOR_RPG_TALENT_PREFIX = /^(tb|rs|lm|jh|ab|sf)-(o|w|v)\d$/i
+const HARBOR_RPG_SPEC_IDS = new Set([
+  ...['tideblade','reedshadow','lanternmancer','jadeheart','ashbound','starferry','ironoar','mistweaver','chopwright'].flatMap(
+    (c) => [`${c}-offense`, `${c}-ward`, `${c}-voyage`],
+  ),
+])
+const HARBOR_RPG_SKILL_PREFIX = /^(tb|rs|lm|jh|ab|sf|io|mw|cw)-[a-z0-9-]+$/i
+const HARBOR_RPG_TALENT_PREFIX = /^(tb|rs|lm|jh|ab|sf|io|mw|cw)-(o|w|v)\d$/i
 
 function sanitizeRpgInv(raw: unknown, max: number): { id: string; qty: number }[] {
   const inventory: { id: string; qty: number }[] = []
@@ -416,6 +424,7 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     professions: { herbalism: 0, mining: 0, alchemy: 0, smithing: 0 } as Record<string, number>,
     market: [] as NonNullable<NonNullable<HarborQuestProgress['rpg']>['market']>,
     classId: null as string | null,
+    specId: null as string | null,
     classXp: 0,
     prestige: 0,
     skillXp: {} as Record<string, number>,
@@ -606,6 +615,10 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
   }
   const classId =
     typeof o.classId === 'string' && HARBOR_RPG_CLASS_IDS.has(o.classId) ? o.classId : null
+  let specId: string | null =
+    typeof o.specId === 'string' && HARBOR_RPG_SPEC_IDS.has(o.specId) ? o.specId : null
+  if (classId && !specId) specId = `${classId}-offense`
+  if (specId && classId && !specId.startsWith(`${classId}-`)) specId = `${classId}-offense`
   const classXp =
     typeof o.classXp === 'number' && Number.isFinite(o.classXp) && o.classXp >= 0
       ? Math.min(Math.floor(o.classXp), 50_000_000)
@@ -662,6 +675,7 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     professions,
     market,
     classId,
+    specId,
     classXp,
     prestige,
     skillXp,

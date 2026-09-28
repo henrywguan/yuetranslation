@@ -29,6 +29,7 @@ import {
   rpgXpMultiplier,
   sanitizeHarborRpgBag,
   selectHarborRpgClass,
+  selectHarborRpgSpec,
   spendHarborRpgTalent,
   prestigeHarborRpgClass,
   withdrawRpgBank,
@@ -444,6 +445,16 @@ export function selectHarborRpgClassPick(classId: HarborRpgClassId): HarborProgr
     rpg: sanitizeHarborRpgBag(selectHarborRpgClass(bag, classId)),
     lastSavedAt: Date.now(),
   })
+}
+
+export function selectHarborRpgSpecPick(
+  specId: import('./harborRpgSpecs').HarborRpgSpecId,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = selectHarborRpgSpec(bag, specId)
+  if (!next) return null
+  return commit({ ...p, rpg: next, lastSavedAt: Date.now() })
 }
 
 export function spendHarborRpgTalentPoint(talentId: string): HarborProgress | null {

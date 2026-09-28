@@ -69,6 +69,21 @@ import {
 import { HarborRpgPanel } from './HarborRpgPanel'
 import { awardRpgContestedLoot } from './harborRpgCombat'
 import { emptyHarborRpgBag } from './harborRpgProgress'
+import {
+  rpgZonePeerIds,
+  startHarborRpgPresence,
+  type HarborRpgPresenceSession,
+  type HarborRpgRemotePlayer,
+} from './harborRpgPresence'
+import {
+  applyRpgTradeComplete,
+  canPutInTrade,
+  createRpgTradeId,
+  emptyRpgTradeSession,
+  HARBOR_RPG_TRADE_SLOTS,
+  type HarborRpgTradeOffer,
+  type HarborRpgTradeSession,
+} from './harborRpgTrade'
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
   emptyHarborFishingBag,
@@ -161,6 +176,7 @@ import {
   depositHarborRpgBank,
   withdrawHarborRpgBank,
   selectHarborRpgClassPick,
+  selectHarborRpgSpecPick,
   spendHarborRpgTalentPoint,
   prestigeHarborRpgClassPick,
   purchaseHarborBeautySku,
@@ -224,6 +240,8 @@ export function LearnSession({
   const [rpgCombatHud, setRpgCombatHud] = useState<{
     hp: number
     maxHp: number
+    mp?: number
+    maxMp?: number
     zone: HarborRpgZoneId
     targetName: string | null
     targetHp: number
@@ -238,6 +256,11 @@ export function LearnSession({
     monsterId: string
     loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
   } | null>(null)
+  const [rpgRemotes, setRpgRemotes] = useState<HarborRpgRemotePlayer[]>([])
+  const [rpgZonePeers, setRpgZonePeers] = useState<string[]>([])
+  const [rpgTrade, setRpgTrade] = useState<HarborRpgTradeSession | null>(null)
+  const rpgPresenceRef = useRef<HarborRpgPresenceSession | null>(null)
+  const handleRpgTradeOfferRef = useRef<((offer: HarborRpgTradeOffer) => void) | null>(null)
   /** Fullscreen wuxia world map (minimap globe). */
   const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
@@ -402,6 +425,96 @@ export function LearnSession({
     }
   }, [entitlement?.prefs?.username, entitlement?.loggedIn])
 
+  // HarborRPG Realtime — shared world tick + trade (separate channel)
+  useEffect(() => {
+    if (realmOverride !== 'rpg' || !entitlement?.loggedIn) {
+      const s = rpgPresenceRef.current
+      rpgPresenceRef.current = null
+      void s?.stop()
+      setRpgRemotes([])
+      setRpgZonePeers([localUserIdRef.current ?? 'local'])
+      return
+    }
+    let cancelled = false
+    let poseTimer: number | undefined
+    let trackTimer: number | undefined
+    const boot = async () => {
+      const session = await getSession()
+      if (!session?.user?.id || cancelled) return
+      const supabase = getSupabaseClient()
+      if (!supabase || cancelled) return
+      const userId = session.user.id
+      localUserIdRef.current = userId
+      const username =
+        harborDisplayUsername(entitlement?.prefs?.username) ||
+        progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)
+          ?.name ||
+        'Adventurer'
+      const sessionPresence = startHarborRpgPresence({
+        supabase,
+        userId,
+        username,
+        onRemotes: (remotes) => {
+          setRpgRemotes(remotes)
+          const zone = progressSnap.rpg?.zone ?? rpgZone
+          const peers = rpgZonePeerIds(userId, remotes, zone)
+          setRpgZonePeers(peers)
+          worldApiRef.current?.setRpgZonePeerIds(peers)
+        },
+        onWorld: (packet) => {
+          worldApiRef.current?.applyRpgWorldSnapshot(packet)
+        },
+        onTrade: (offer) => {
+          handleRpgTradeOfferRef.current?.(offer)
+        },
+        onMarket: (listings) => {
+          const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+          pushRpgProgress(updateHarborRpg({ ...bag, market: listings }))
+        },
+      })
+      if (cancelled) {
+        void sessionPresence.stop()
+        return
+      }
+      rpgPresenceRef.current = sessionPresence
+
+      const push = () => {
+        const pose = worldApiRef.current?.getLocalPose()
+        if (!pose) return
+        const zone = progressSnap.rpg?.zone ?? rpgZone
+        const lv = Math.max(1, Math.floor(Math.sqrt((progressSnap.rpg?.xp ?? 0) / 25)) + 1)
+        void sessionPresence.track({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          zone,
+          level: lv,
+          partyId: null,
+          username,
+        })
+        sessionPresence.broadcastPose({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          zone,
+        })
+      }
+      push()
+      poseTimer = window.setInterval(push, 200)
+      trackTimer = window.setInterval(push, 2000)
+    }
+    void boot()
+    return () => {
+      cancelled = true
+      if (poseTimer) window.clearInterval(poseTimer)
+      if (trackTimer) window.clearInterval(trackTimer)
+      const s = rpgPresenceRef.current
+      rpgPresenceRef.current = null
+      void s?.stop()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realmOverride, entitlement?.loggedIn, entitlement?.prefs?.username, rpgZone])
+
   // Top-left minimap — poll local pose without re-rendering the WebGL tree
   useEffect(() => {
     let raf = 0
@@ -521,6 +634,59 @@ export function LearnSession({
     setRpgToast(msg)
     window.setTimeout(() => setRpgToast(null), 2200)
   }, [])
+
+  const handleRpgTradeOffer = useCallback(
+    (offer: HarborRpgTradeOffer) => {
+      const selfId = localUserIdRef.current ?? 'local'
+      if (offer.toId !== selfId && offer.fromId !== selfId) return
+      if (offer.type === 'cancel') {
+        setRpgTrade((t) => (t && t.tradeId === offer.tradeId ? null : t))
+        flashRpgToast('Trade cancelled')
+        return
+      }
+      if (offer.type === 'offer') {
+        setRpgTrade((prev) => {
+          if (prev && prev.tradeId === offer.tradeId) {
+            return {
+              ...prev,
+              peerGold: offer.gold,
+              peerItems: offer.items,
+              peerLocked: offer.locked,
+              peerName: offer.fromName,
+            }
+          }
+          if (offer.fromId === selfId) return prev
+          return {
+            ...emptyRpgTradeSession(offer.fromId, offer.fromName, offer.tradeId),
+            peerGold: offer.gold,
+            peerItems: offer.items,
+            peerLocked: offer.locked,
+          }
+        })
+        return
+      }
+      if (offer.type === 'accept' || offer.type === 'complete') {
+        setRpgTrade((prev) => {
+          if (!prev || prev.tradeId !== offer.tradeId) return prev
+          const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+          const next = applyRpgTradeComplete(
+            bag,
+            prev.selfGold,
+            prev.selfItems,
+            prev.peerGold,
+            prev.peerItems,
+          )
+          if (next) {
+            pushRpgProgress(updateHarborRpg(next))
+            flashRpgToast('Trade complete')
+          } else flashRpgToast('Trade failed — check bag')
+          return null
+        })
+      }
+    },
+    [flashRpgToast, progressSnap.rpg, pushRpgProgress],
+  )
+  handleRpgTradeOfferRef.current = handleRpgTradeOffer
 
   const enterRpgZone = useCallback(
     (zone: HarborRpgZoneId) => {
@@ -1224,6 +1390,10 @@ export function LearnSession({
             setRpgLootPrompt(drop)
             flashRpgToast('Contested loot — Need / Greed')
           }}
+          onRpgWorldTick={(packet) => {
+            rpgPresenceRef.current?.broadcastWorld(packet)
+          }}
+          rpgZonePeerIds={rpgZonePeers}
           paused={
             worldPaused ||
             invOpen ||
@@ -1990,6 +2160,8 @@ export function LearnSession({
             worldApiRef.current?.setRpgPartySize(n)
           }}
           lootPrompt={rpgLootPrompt}
+          trade={rpgTrade}
+          remotes={rpgRemotes.map((r) => ({ userId: r.userId, username: r.username }))}
           onLootVote={(vote) => {
             if (!rpgLootPrompt) return
             if (vote === 'need' || vote === 'greed') {
@@ -2008,6 +2180,13 @@ export function LearnSession({
             pushRpgProgress(selectHarborRpgClassPick(id))
             flashRpgToast(`Class: ${id}`)
           }}
+          onSelectSpec={(id) => {
+            const next = selectHarborRpgSpecPick(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast(`Spec: ${id}`)
+            }
+          }}
           onSpendTalent={(id) => {
             const next = spendHarborRpgTalentPoint(id)
             if (next) {
@@ -2021,6 +2200,120 @@ export function LearnSession({
               pushRpgProgress(next)
               flashRpgToast('Prestiged!')
             } else flashRpgToast('Need class level 50')
+          }}
+          onStartTrade={(peerId, peerName) => {
+            const selfId = localUserIdRef.current ?? 'local'
+            const tradeId = createRpgTradeId(selfId, peerId)
+            const session = emptyRpgTradeSession(peerId, peerName, tradeId)
+            setRpgTrade(session)
+            const offer: HarborRpgTradeOffer = {
+              type: 'offer',
+              tradeId,
+              fromId: selfId,
+              fromName:
+                progressSnap.rpg?.characters.find(
+                  (c) => c.id === progressSnap.rpg?.activeCharacterId,
+                )?.name ?? 'Adventurer',
+              toId: peerId,
+              gold: 0,
+              items: [],
+              locked: false,
+              t: Date.now(),
+            }
+            rpgPresenceRef.current?.broadcastTrade(offer)
+            flashRpgToast(`Trade opened with ${peerName}`)
+          }}
+          onTradeSetGold={(gold) => {
+            setRpgTrade((t) => (t && !t.selfLocked ? { ...t, selfGold: gold } : t))
+          }}
+          onTradeAddItem={(itemId) => {
+            setRpgTrade((t) => {
+              if (!t || t.selfLocked) return t
+              const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+              if (!canPutInTrade(bag, itemId, 1, t.selfItems)) return t
+              if (t.selfItems.length >= HARBOR_RPG_TRADE_SLOTS) return t
+              const existing = t.selfItems.find((s) => s.id === itemId)
+              const items = existing
+                ? t.selfItems.map((s) =>
+                    s.id === itemId ? { ...s, qty: s.qty + 1 } : s,
+                  )
+                : [...t.selfItems, { id: itemId, qty: 1 }]
+              return { ...t, selfItems: items }
+            })
+          }}
+          onTradeLock={() => {
+            setRpgTrade((t) => {
+              if (!t) return t
+              const selfId = localUserIdRef.current ?? 'local'
+              const next = { ...t, selfLocked: true }
+              rpgPresenceRef.current?.broadcastTrade({
+                type: 'offer',
+                tradeId: t.tradeId,
+                fromId: selfId,
+                fromName:
+                  progressSnap.rpg?.characters.find(
+                    (c) => c.id === progressSnap.rpg?.activeCharacterId,
+                  )?.name ?? 'Adventurer',
+                toId: t.peerId,
+                gold: t.selfGold,
+                items: t.selfItems,
+                locked: true,
+                t: Date.now(),
+              })
+              return next
+            })
+          }}
+          onTradeCancel={() => {
+            setRpgTrade((t) => {
+              if (t) {
+                const selfId = localUserIdRef.current ?? 'local'
+                rpgPresenceRef.current?.broadcastTrade({
+                  type: 'cancel',
+                  tradeId: t.tradeId,
+                  fromId: selfId,
+                  fromName: 'Adventurer',
+                  toId: t.peerId,
+                  gold: 0,
+                  items: [],
+                  locked: false,
+                  t: Date.now(),
+                })
+              }
+              return null
+            })
+            flashRpgToast('Trade cancelled')
+          }}
+          onTradeAccept={() => {
+            setRpgTrade((t) => {
+              if (!t || !t.selfLocked || !t.peerLocked) return t
+              const selfId = localUserIdRef.current ?? 'local'
+              const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+              const next = applyRpgTradeComplete(
+                bag,
+                t.selfGold,
+                t.selfItems,
+                t.peerGold,
+                t.peerItems,
+              )
+              if (!next) {
+                flashRpgToast('Trade failed — check bag')
+                return t
+              }
+              pushRpgProgress(updateHarborRpg(next))
+              rpgPresenceRef.current?.broadcastTrade({
+                type: 'complete',
+                tradeId: t.tradeId,
+                fromId: selfId,
+                fromName: 'Adventurer',
+                toId: t.peerId,
+                gold: t.selfGold,
+                items: t.selfItems,
+                locked: true,
+                t: Date.now(),
+              })
+              flashRpgToast('Trade complete')
+              return null
+            })
           }}
           onExitGame={() => {
             playHarborCastOff()

@@ -24,6 +24,11 @@ import {
   harborRpgUnlockedSkills,
   type HarborRpgClassId,
 } from './harborRpgClasses'
+import {
+  harborRpgSpecById,
+  harborRpgSpecsForClass,
+  type HarborRpgSpecId,
+} from './harborRpgSpecs'
 import { HARBOR_RPG_META } from './harborRpgRealm'
 import {
   harborRpgActiveSkillRank,
@@ -32,6 +37,7 @@ import {
   HARBOR_RPG_MAX_CHARS,
   rpgHasCompanion,
   type HarborRpgBag,
+  type HarborRpgInvStack,
 } from './harborRpgProgress'
 import { professionLevelFromXp } from './harborRpgProfessions'
 import {
@@ -40,10 +46,16 @@ import {
   toggleRpgFinderLooking,
   type HarborRpgPartyState,
 } from './harborRpgSocial'
+import {
+  HARBOR_RPG_TRADE_SLOTS,
+  type HarborRpgTradeSession,
+} from './harborRpgTrade'
 
 type CombatHud = {
   hp: number
   maxHp: number
+  mp?: number
+  maxMp?: number
   zone: HarborRpgZoneId
   targetName: string | null
   targetHp: number
@@ -62,6 +74,8 @@ type Props = {
     monsterId: string
     loot: { id: HarborRpgItemId; qty: number }[]
   } | null
+  trade: HarborRpgTradeSession | null
+  remotes: { userId: string; username: string }[]
   onInteract: () => void
   onCreateChar: (name: string) => void
   onSelectChar: (id: string) => void
@@ -80,8 +94,15 @@ type Props = {
   onPartySizeChange: (n: number) => void
   onLootVote: (vote: 'need' | 'greed' | 'pass') => void
   onSelectClass: (id: HarborRpgClassId) => void
+  onSelectSpec: (id: HarborRpgSpecId) => void
   onSpendTalent: (id: string) => void
   onPrestige: () => void
+  onStartTrade: (peerId: string, peerName: string) => void
+  onTradeSetGold: (gold: number) => void
+  onTradeAddItem: (id: HarborRpgItemId) => void
+  onTradeLock: () => void
+  onTradeCancel: () => void
+  onTradeAccept: () => void
   onExitGame: () => void
 }
 
@@ -91,6 +112,8 @@ export function HarborRpgPanel({
   interactId,
   toast,
   lootPrompt,
+  trade,
+  remotes,
   onInteract,
   onCreateChar,
   onSelectChar,
@@ -109,15 +132,24 @@ export function HarborRpgPanel({
   onPartySizeChange,
   onLootVote,
   onSelectClass,
+  onSelectSpec,
   onSpendTalent,
   onPrestige,
+  onStartTrade,
+  onTradeSetGold,
+  onTradeAddItem,
+  onTradeLock,
+  onTradeCancel,
+  onTradeAccept,
   onExitGame,
 }: Props) {
   const [tab, setTab] = useState<
-    'field' | 'bag' | 'quests' | 'party' | 'craft' | 'market' | 'class'
+    'field' | 'bag' | 'quests' | 'party' | 'craft' | 'market' | 'class' | 'spellbook' | 'trade'
   >('field')
   const [createName, setCreateName] = useState('')
   const [creating, setCreating] = useState(false)
+  const [spellTip, setSpellTip] = useState<string | null>(null)
+  const [castFlash, setCastFlash] = useState<string | null>(null)
   const [party, setParty] = useState<HarborRpgPartyState>(() =>
     createRpgParty(
       'local',
@@ -130,6 +162,7 @@ export function HarborRpgPanel({
   const classDef = bag.classId ? HARBOR_RPG_CLASS_DEFS[bag.classId] : null
   const classLevel = harborRpgClassLevelFromXp(bag.classXp)
   const talentLeft = harborRpgTalentPointsLeft(bag)
+  const activeSpec = bag.specId ? harborRpgSpecById(bag.specId) : null
   const barSkills = bag.classId
     ? bag.skillBar
         .map((id) => harborRpgSkillById(id))
@@ -202,12 +235,33 @@ export function HarborRpgPanel({
               {combat?.hp ?? 0}/{combat?.maxHp ?? 0}
             </span>
           </div>
+          <div
+            className="hq-rpg-hp hq-rpg-mp"
+            aria-label={`MP ${combat?.mp ?? 0} of ${combat?.maxMp ?? 0}`}
+          >
+            <span className="hq-rpg-hp-label">MP</span>
+            <span className="hq-rpg-hp-track">
+              <span
+                className="hq-rpg-hp-fill hq-rpg-mp-fill"
+                style={{
+                  width: `${Math.max(
+                    0,
+                    Math.min(100, ((combat?.mp ?? 0) / Math.max(1, combat?.maxMp ?? 1)) * 100),
+                  )}%`,
+                }}
+              />
+            </span>
+            <span className="hq-rpg-hp-val">
+              {combat?.mp ?? 0}/{combat?.maxMp ?? 0}
+            </span>
+          </div>
           <div className="hq-rpg-chips">
             <span className="hq-rpg-chip">XP {bag.xp}</span>
             <span className="hq-rpg-chip">Gold {bag.gold}</span>
             {classDef ? (
               <span className="hq-rpg-chip">
-                {classDef.name.en} {classLevel}
+                {classDef.name.en}
+                {activeSpec ? ` · ${activeSpec.name.en}` : ''} {classLevel}
                 {bag.prestige > 0 ? ` ★${bag.prestige}` : ''}
               </span>
             ) : null}
@@ -228,10 +282,12 @@ export function HarborRpgPanel({
           [
             ['field', 'Field'],
             ['class', 'Class'],
+            ['spellbook', 'Spells'],
             ['bag', 'Bag'],
             ['quests', 'Quests'],
             ['craft', 'Craft'],
             ['market', 'Market'],
+            ['trade', 'Trade'],
             ['party', 'Party'],
           ] as const
         ).map(([id, label]) => (
@@ -313,15 +369,21 @@ export function HarborRpgPanel({
                 ? barSkills.map((ab) => ({
                     id: ab.id,
                     name: ab.name,
+                    blurb: ab.blurb,
                     gcd: ab.gcd,
                     cd: ab.cd,
+                    mpCost: ab.mpCost ?? 0,
+                    anim: ab.anim,
                     rank: harborRpgActiveSkillRank(bag, ab.id),
                   }))
                 : HARBOR_RPG_ABILITIES.map((a) => ({
                     id: a.id,
                     name: a.name,
+                    blurb: { en: a.name.en, zh: a.name.zh },
                     gcd: a.gcd,
                     cd: a.cd,
+                    mpCost: 0,
+                    anim: undefined as undefined | string,
                     rank: 1,
                   }))
               ).map((ab) => {
@@ -332,10 +394,16 @@ export function HarborRpgPanel({
                   <button
                     key={ab.id}
                     type="button"
-                    className="hq-rpg-ability"
+                    className={`hq-rpg-ability${castFlash === ab.id ? ' is-cast' : ''}${ab.anim ? ` hq-rpg-ability--${ab.anim}` : ''}`}
                     disabled={locked}
-                    title={`${ab.name.en} · R${ab.rank} · GCD ${ab.gcd}s`}
-                    onClick={() => onCastAbility(ab.id)}
+                    title={`${ab.name.en} · R${ab.rank} · GCD ${ab.gcd}s${ab.mpCost ? ` · ${ab.mpCost} MP` : ''}\n${ab.blurb.en}`}
+                    onMouseEnter={() => setSpellTip(`${ab.name.en}: ${ab.blurb.en}`)}
+                    onMouseLeave={() => setSpellTip(null)}
+                    onClick={() => {
+                      setCastFlash(ab.id)
+                      window.setTimeout(() => setCastFlash(null), 280)
+                      onCastAbility(ab.id)
+                    }}
                   >
                     <span>{ab.name.en}</span>
                     <small>R{ab.rank}</small>
@@ -344,6 +412,7 @@ export function HarborRpgPanel({
                 )
               })}
             </div>
+            {spellTip ? <p className="hq-rpg-spell-tip">{spellTip}</p> : null}
             {!bag.classId ? (
               <p className="hq-rpg-hint">Pick a class in the Class tab for a full skill kit.</p>
             ) : null}
@@ -473,7 +542,7 @@ export function HarborRpgPanel({
         {tab === 'class' ? (
           <>
             <p className="hq-rpg-hint">
-              Six Harbor classes · skill ranks · talent trees · prestige ★
+              Nine Harbor classes · 3 specs each (27) · skill ranks · spellbook · prestige ★
             </p>
             <ul className="hq-rpg-inv">
               {HARBOR_RPG_CLASSES.map((id) => {
@@ -494,41 +563,47 @@ export function HarborRpgPanel({
                 )
               })}
             </ul>
-            {classDef ? (
+            {classDef && bag.classId ? (
               <>
                 <p className="hq-rpg-hint">
                   {classDef.name.en} Lv {classLevel}/{HARBOR_RPG_CLASS_LEVEL_CAP} · class XP{' '}
                   {bag.classXp} · talent pts {talentLeft}
                   {bag.prestige > 0 ? ` · prestige ★${bag.prestige}` : ''}
                 </p>
-                <p className="hq-rpg-hint">Skills</p>
+                <p className="hq-rpg-hint">Specs</p>
                 <ul className="hq-rpg-inv">
-                  {harborRpgUnlockedSkills(bag.classId!, classLevel).map((s) => (
-                    <li key={s.id} className="hq-rpg-inv-row">
+                  {harborRpgSpecsForClass(bag.classId).map((sp) => (
+                    <li key={sp.id} className="hq-rpg-inv-row">
                       <span>
-                        {s.name.en} · R{harborRpgActiveSkillRank(bag, s.id)} · unlock {s.unlockLevel}
+                        <strong>{sp.name.en}</strong> <span lang="zh-HK">{sp.name.zh}</span> ·{' '}
+                        {sp.role} · {sp.resource}
                         <br />
-                        <small>{s.blurb.en}</small>
+                        <small>{sp.pitch.en}</small>
                       </span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="hq-rpg-hint">Talents</p>
-                <ul className="hq-rpg-inv">
-                  {classDef.talents.map((t) => (
-                    <li key={t.id} className="hq-rpg-inv-row">
-                      <span>
-                        [{t.tree}] {t.name.en} ({bag.talents[t.id] ?? 0}/{t.max})
-                      </span>
-                      <button
-                        type="button"
-                        disabled={talentLeft <= 0 || (bag.talents[t.id] ?? 0) >= t.max}
-                        onClick={() => onSpendTalent(t.id)}
-                      >
-                        +
+                      <button type="button" onClick={() => onSelectSpec(sp.id)}>
+                        {bag.specId === sp.id ? 'Active' : 'Spec'}
                       </button>
                     </li>
                   ))}
+                </ul>
+                <p className="hq-rpg-hint">Talents{activeSpec ? ` · ${activeSpec.name.en}` : ''}</p>
+                <ul className="hq-rpg-inv">
+                  {classDef.talents
+                    .filter((t) => !activeSpec || t.tree === activeSpec.tree)
+                    .map((t) => (
+                      <li key={t.id} className="hq-rpg-inv-row">
+                        <span>
+                          [{t.tree}] {t.name.en} ({bag.talents[t.id] ?? 0}/{t.max})
+                        </span>
+                        <button
+                          type="button"
+                          disabled={talentLeft <= 0 || (bag.talents[t.id] ?? 0) >= t.max}
+                          onClick={() => onSpendTalent(t.id)}
+                        >
+                          +
+                        </button>
+                      </li>
+                    ))}
                 </ul>
                 <p className="hq-rpg-hint">Passives</p>
                 <ul className="hq-rpg-inv">
@@ -551,6 +626,154 @@ export function HarborRpgPanel({
                 </button>
               </>
             ) : null}
+          </>
+        ) : null}
+
+        {tab === 'spellbook' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Full spellbook · hover for tooltips · tap to cast · ranks power skills
+            </p>
+            {!bag.classId ? (
+              <p className="hq-rpg-hint">Choose a class first.</p>
+            ) : (
+              <ul className="hq-rpg-spellbook">
+                {harborRpgUnlockedSkills(bag.classId, classLevel).map((s) => {
+                  const rank = harborRpgActiveSkillRank(bag, s.id)
+                  const specMatch = activeSpec && s.specTree === activeSpec.tree
+                  const locked = (combat?.abilityCds?.[s.id] ?? 0) > 0.05
+                  return (
+                    <li
+                      key={s.id}
+                      className={`hq-rpg-spell${specMatch ? ' is-spec' : ''}${castFlash === s.id ? ' is-cast' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className={`hq-rpg-spell-btn hq-rpg-ability--${s.anim ?? 'slash'}`}
+                        disabled={locked}
+                        title={`${s.name.en}\n${s.blurb.en}\nRank ${rank} · GCD ${s.gcd}s · CD ${s.cd}s${s.mpCost ? ` · ${s.mpCost} MP` : ''}`}
+                        onMouseEnter={() =>
+                          setSpellTip(
+                            `${s.name.en} (R${rank}): ${s.blurb.en} · ${s.mpCost ?? 0} MP · range ${s.range}`,
+                          )
+                        }
+                        onMouseLeave={() => setSpellTip(null)}
+                        onClick={() => {
+                          setCastFlash(s.id)
+                          window.setTimeout(() => setCastFlash(null), 320)
+                          onCastAbility(s.id)
+                        }}
+                      >
+                        <strong>{s.name.en}</strong>
+                        <span lang="zh-HK">{s.name.zh}</span>
+                        <small>
+                          R{rank} · unlock {s.unlockLevel}
+                          {s.specTree ? ` · ${s.specTree}` : ''}
+                        </small>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+            {spellTip ? <p className="hq-rpg-spell-tip">{spellTip}</p> : null}
+          </>
+        ) : null}
+
+        {tab === 'trade' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Soft trade windows · {HARBOR_RPG_TRADE_SLOTS} slots · both lock then accept
+            </p>
+            {!trade ? (
+              <>
+                <p className="hq-rpg-hint">Nearby adventurers</p>
+                <ul className="hq-rpg-inv">
+                  {remotes.length === 0 ? (
+                    <li className="hq-rpg-hint">No remotes — invite a peer or wait for presence</li>
+                  ) : null}
+                  {remotes.map((r) => (
+                    <li key={r.userId} className="hq-rpg-inv-row">
+                      <span>{r.username}</span>
+                      <button type="button" onClick={() => onStartTrade(r.userId, r.username)}>
+                        Trade
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <div className="hq-rpg-trade">
+                <p className="hq-rpg-hint">
+                  Trading with {trade.peerName}
+                  {trade.selfLocked ? ' · you locked' : ''}
+                  {trade.peerLocked ? ' · peer locked' : ''}
+                </p>
+                <label className="hq-rpg-create-label">
+                  Offer gold
+                  <input
+                    className="hq-rpg-create-input"
+                    type="number"
+                    min={0}
+                    max={bag.gold}
+                    value={trade.selfGold}
+                    disabled={trade.selfLocked}
+                    onChange={(e) => onTradeSetGold(Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </label>
+                <p className="hq-rpg-hint">Your offer</p>
+                <ul className="hq-rpg-inv">
+                  {trade.selfItems.map((s: HarborRpgInvStack) => (
+                    <li key={`self-${s.id}`}>
+                      {HARBOR_RPG_ITEM_DEFS[s.id].name.en} ×{s.qty}
+                    </li>
+                  ))}
+                </ul>
+                {!trade.selfLocked ? (
+                  <ul className="hq-rpg-inv">
+                    {bag.inventory.slice(0, 8).map((s) => (
+                      <li key={`add-${s.id}`} className="hq-rpg-inv-row">
+                        <span>
+                          {HARBOR_RPG_ITEM_DEFS[s.id].name.en} ×{s.qty}
+                        </span>
+                        <button type="button" onClick={() => onTradeAddItem(s.id)}>
+                          Add
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="hq-rpg-hint">
+                  Their offer · {trade.peerGold}g
+                </p>
+                <ul className="hq-rpg-inv">
+                  {trade.peerItems.map((s) => (
+                    <li key={`peer-${s.id}`}>
+                      {HARBOR_RPG_ITEM_DEFS[s.id].name.en} ×{s.qty}
+                    </li>
+                  ))}
+                </ul>
+                <div className="hq-rpg-create-actions">
+                  {!trade.selfLocked ? (
+                    <button type="button" className="hq-btn hq-btn--solid" onClick={onTradeLock}>
+                      Lock
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="hq-btn hq-btn--solid"
+                      disabled={!trade.peerLocked}
+                      onClick={onTradeAccept}
+                    >
+                      Accept trade
+                    </button>
+                  )}
+                  <button type="button" className="hq-btn hq-btn--ghost" onClick={onTradeCancel}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : null}
 
