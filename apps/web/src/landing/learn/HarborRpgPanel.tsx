@@ -57,6 +57,11 @@ import {
   type HarborRpgMountId,
 } from './harborRpgMounts'
 import {
+  HARBOR_RPG_COSMETIC_DEFS,
+  HARBOR_RPG_COSMETIC_IDS,
+  type HarborRpgCosmeticId,
+} from './harborRpgCosmetics'
+import {
   harborRpgActiveSkillRank,
   harborRpgLevelFromXp,
   harborRpgTalentPointsLeft,
@@ -145,6 +150,8 @@ type Props = {
   onFillCompanionRole: (role: HarborRpgFinderRole) => void
   onBuyMount: (id: HarborRpgMountId) => void
   onSummonMount: (id: HarborRpgMountId | null) => void
+  onBuyCosmetic: (id: HarborRpgCosmeticId) => void
+  onEquipCosmetic: (id: HarborRpgCosmeticId | null) => void
   onSetTitle: (id: string | null) => void
   onOpenWiki: (page?: import('./harborRpgWiki').HarborRpgWikiPage) => void
   onExitGame: () => void
@@ -195,6 +202,8 @@ export function HarborRpgPanel({
   onFillCompanionRole,
   onBuyMount,
   onSummonMount,
+  onBuyCosmetic,
+  onEquipCosmetic,
   onSetTitle,
   onOpenWiki,
   onExitGame,
@@ -210,6 +219,7 @@ export function HarborRpgPanel({
     | 'spellbook'
     | 'trade'
     | 'stable'
+    | 'wardrobe'
     | 'achievements'
   >('field')
   const [createName, setCreateName] = useState('')
@@ -254,6 +264,7 @@ export function HarborRpgPanel({
 
   useEffect(() => {
     if (interactId === 'rpg-stable') setTab('stable')
+    if (interactId === 'rpg-vendor') setTab('wardrobe')
   }, [interactId])
 
   useEffect(() => {
@@ -369,6 +380,7 @@ export function HarborRpgPanel({
             ['class', 'Class'],
             ['spellbook', 'Spells'],
             ['bag', 'Bag'],
+            ['wardrobe', 'Wardrobe'],
             ['stable', 'Stable'],
             ['achievements', 'Deeds'],
             ['quests', 'Quests'],
@@ -662,6 +674,67 @@ export function HarborRpgPanel({
                       ) : (
                         <button type="button" onClick={() => onSummonMount(id)}>
                           Summon
+                        </button>
+                      )}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        ) : null}
+
+        {tab === 'wardrobe' ? (
+          <>
+            <p className="hq-rpg-hint">
+              Wardrobe · Quaternius Modular Outfits (CC0) + soft placeholders. Equip one look at a
+              time · outfits replace Scout · hoods/pauldrons layer on.
+              {bag.equippedCosmetic && HARBOR_RPG_COSMETIC_DEFS[bag.equippedCosmetic as HarborRpgCosmeticId]
+                ? ` Wearing ${HARBOR_RPG_COSMETIC_DEFS[bag.equippedCosmetic as HarborRpgCosmeticId].name.en}.`
+                : ' Nothing equipped.'}
+            </p>
+            <div className="hq-rpg-inv-act" style={{ marginBottom: 8 }}>
+              <button
+                type="button"
+                className="hq-btn hq-btn--ghost"
+                onClick={() => onEquipCosmetic(null)}
+              >
+                Clear look
+              </button>
+            </div>
+            <ul className="hq-rpg-inv">
+              {HARBOR_RPG_COSMETIC_IDS.map((id) => {
+                const def = HARBOR_RPG_COSMETIC_DEFS[id]
+                const owned = bag.ownedCosmetics.includes(id)
+                const active = bag.equippedCosmetic === id
+                return (
+                  <li key={id} className="hq-rpg-inv-row">
+                    <span>
+                      {def.name.en}{' '}
+                      <small>
+                        {def.pack} · {def.kind} · {def.slot}
+                        {def.cost === 0 ? ' · free' : ` · ${def.cost}g`}
+                        {def.src ? '' : ' · soft'}
+                      </small>
+                      <br />
+                      <small>{def.blurb.en}</small>
+                    </span>
+                    <span className="hq-rpg-inv-act">
+                      {!owned ? (
+                        <button
+                          type="button"
+                          disabled={bag.gold < def.cost}
+                          onClick={() => onBuyCosmetic(id)}
+                        >
+                          Buy
+                        </button>
+                      ) : active ? (
+                        <button type="button" onClick={() => onEquipCosmetic(null)}>
+                          Unequip
+                        </button>
+                      ) : (
+                        <button type="button" onClick={() => onEquipCosmetic(id)}>
+                          Equip
                         </button>
                       )}
                     </span>

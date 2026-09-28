@@ -125,6 +125,16 @@ import {
   type HarborRpgMountId,
 } from './harborRpgMounts'
 import {
+  disposeHarborRpgCosmetic,
+  loadHarborRpgCosmetic,
+  type HarborRpgCosmeticInstance,
+} from './harborRpgCosmeticRuntime'
+import {
+  harborRpgCosmeticById,
+  isHarborRpgCosmeticId,
+  type HarborRpgCosmeticId,
+} from './harborRpgCosmetics'
+import {
   applyRpgWorldSnapshot as applyRpgWorldSnapToMonsters,
   electRpgZoneHost,
   HARBOR_RPG_WORLD_TICK_MS,
@@ -4612,8 +4622,13 @@ export function createHarborWorld(
   let rpgMountWantId: HarborRpgMountId | null = null
   let rpgMountLoadingId: HarborRpgMountId | null = null
   let rpgCompanionMesh: THREE.Group | null = null
+  let rpgCosmeticLive: HarborRpgCosmeticInstance | null = null
+  let rpgCosmeticWantId: HarborRpgCosmeticId | null = null
+  let rpgCosmeticLoadingId: HarborRpgCosmeticId | null = null
   const remoteRpgMounts = new Map<string, HarborRpgMountInstance>()
   const remoteRpgMountLoading = new Map<string, string>()
+  const remoteRpgCosmetics = new Map<string, HarborRpgCosmeticInstance>()
+  const remoteRpgCosmeticLoading = new Map<string, string>()
 
   const buildRpgCompanionMesh = (name: string) => {
     const g = new THREE.Group()
@@ -5121,6 +5136,13 @@ export function createHarborWorld(
         remoteRpgMounts.delete(id)
       }
       remoteRpgMountLoading.delete(id)
+      const cos = remoteRpgCosmetics.get(id)
+      if (cos) {
+        cos.root.parent?.remove(cos.root)
+        disposeHarborRpgCosmetic(cos)
+        remoteRpgCosmetics.delete(id)
+      }
+      remoteRpgCosmeticLoading.delete(id)
     }
     for (const player of players) {
       const existing = remoteById.get(player.userId)
@@ -5133,8 +5155,12 @@ export function createHarborWorld(
         remoteById.set(player.userId, root)
       }
       const root = remoteById.get(player.userId)
-      if (root) root.userData.rpgMountId = player.rpgMountId ?? null
+      if (root) {
+        root.userData.rpgMountId = player.rpgMountId ?? null
+        root.userData.rpgCosmeticId = player.rpgCosmeticId ?? null
+      }
       syncRemoteRpgMount(player.userId, player.rpgMountId ?? null)
+      syncRemoteRpgCosmetic(player.userId, player.rpgCosmeticId ?? null)
     }
   }
 
@@ -5177,6 +5203,52 @@ export function createHarborWorld(
     })
   }
 
+  const syncRemoteRpgCosmetic = (userId: string, cosmeticId: string | null) => {
+    const want =
+      cosmeticId && isHarborRpgCosmeticId(cosmeticId) && harborRpgCosmeticById(cosmeticId)?.src
+        ? (cosmeticId as HarborRpgCosmeticId)
+        : null
+    const live = remoteRpgCosmetics.get(userId)
+    if (!want) {
+      if (live) {
+        live.root.parent?.remove(live.root)
+        disposeHarborRpgCosmetic(live)
+        remoteRpgCosmetics.delete(userId)
+      }
+      remoteRpgCosmeticLoading.delete(userId)
+      const root = remoteById.get(userId)
+      if (root && root.userData.remoteMode === 'foot') root.visible = true
+      return
+    }
+    if (live?.id === want) return
+    if (remoteRpgCosmeticLoading.get(userId) === want) return
+    remoteRpgCosmeticLoading.set(userId, want)
+    void loadHarborRpgCosmetic(want).then((inst) => {
+      if (disposed || remoteRpgCosmeticLoading.get(userId) !== want) {
+        if (inst) disposeHarborRpgCosmetic(inst)
+        return
+      }
+      const prev = remoteRpgCosmetics.get(userId)
+      if (prev) {
+        prev.root.parent?.remove(prev.root)
+        disposeHarborRpgCosmetic(prev)
+      }
+      remoteRpgCosmeticLoading.delete(userId)
+      if (!inst) return
+      const root = remoteById.get(userId)
+      if (inst.def.kind === 'outfit') {
+        scene.add(inst.root)
+        if (root && !root.userData.rpgMountId) root.visible = false
+      } else if (root) {
+        root.add(inst.root)
+        root.visible = true
+      } else {
+        scene.add(inst.root)
+      }
+      remoteRpgCosmetics.set(userId, inst)
+    })
+  }
+
   const applyPoseToRemote = (pose: HarborPosePacket) => {
     const root = remoteById.get(pose.userId)
     if (!root) return
@@ -5189,6 +5261,10 @@ export function createHarborWorld(
     if (pose.rpgMountId !== undefined) {
       root.userData.rpgMountId = pose.rpgMountId
       syncRemoteRpgMount(pose.userId, pose.rpgMountId ?? null)
+    }
+    if (pose.rpgCosmeticId !== undefined) {
+      root.userData.rpgCosmeticId = pose.rpgCosmeticId
+      syncRemoteRpgCosmetic(pose.userId, pose.rpgCosmeticId ?? null)
     }
   }
 
@@ -5305,6 +5381,71 @@ export function createHarborWorld(
     rpgMountLoadingId = null
   }
 
+  const clearRpgCosmetic = () => {
+    if (rpgCosmeticLive) {
+      rpgCosmeticLive.root.parent?.remove(rpgCosmeticLive.root)
+      disposeHarborRpgCosmetic(rpgCosmeticLive)
+      rpgCosmeticLive = null
+    }
+    rpgCosmeticWantId = null
+    rpgCosmeticLoadingId = null
+    // Restore scout when outfit cleared (unless mounted / sitting)
+    if (travelMode === 'foot' && !sitting && !rpgMountLive) {
+      scoutWalk.visible = true
+    }
+  }
+
+  const syncRpgCosmeticFromBag = () => {
+    if (!isRpg) {
+      clearRpgCosmetic()
+      return
+    }
+    const raw = rpgBagLive.equippedCosmetic
+    const want =
+      raw && isHarborRpgCosmeticId(raw) && harborRpgCosmeticById(raw)?.src
+        ? (raw as HarborRpgCosmeticId)
+        : null
+    rpgCosmeticWantId = want
+    if (!want) {
+      clearRpgCosmetic()
+      return
+    }
+    if (rpgCosmeticLive?.id === want) return
+    if (rpgCosmeticLoadingId === want) return
+    const def = harborRpgCosmeticById(want)
+    if (!def?.src) {
+      clearRpgCosmetic()
+      return
+    }
+    rpgCosmeticLoadingId = want
+    void loadHarborRpgCosmetic(want).then((inst) => {
+      if (disposed || rpgCosmeticWantId !== want) {
+        if (inst) disposeHarborRpgCosmetic(inst)
+        return
+      }
+      if (rpgCosmeticLive) {
+        rpgCosmeticLive.root.parent?.remove(rpgCosmeticLive.root)
+        disposeHarborRpgCosmetic(rpgCosmeticLive)
+      }
+      rpgCosmeticLive = inst
+      rpgCosmeticLoadingId = null
+      if (!inst) return
+      if (inst.def.kind === 'outfit') {
+        scene.add(inst.root)
+        // Outfit replaces scout body while on foot (mount / sit still win)
+        if (travelMode === 'foot' && !sitting && !rpgMountLive) {
+          scoutWalk.visible = false
+        }
+      } else {
+        // Attach layers on scout — keep scout visible
+        scoutWalk.add(inst.root)
+        if (travelMode === 'foot' && !sitting && !rpgMountLive) {
+          scoutWalk.visible = true
+        }
+      }
+    })
+  }
+
   const syncRpgMountFromBag = () => {
     if (!isRpg) {
       clearRpgMount()
@@ -5390,6 +5531,7 @@ export function createHarborWorld(
 
   if (isRpg) {
     syncRpgMountFromBag()
+    syncRpgCosmeticFromBag()
     syncRpgCompanion()
   }
 
@@ -5914,6 +6056,26 @@ export function createHarborWorld(
         }
       }
 
+      // HarborRPG wardrobe — outfit follows feet; attach is parented to scoutWalk
+      if (isRpg && rpgCosmeticLive) {
+        const cos = rpgCosmeticLive
+        const mountedNow = Boolean(rpgMountLive && rpgBagLive.activeMountId)
+        if (cos.def.kind === 'outfit') {
+          if (sitting || mountedNow) {
+            cos.root.visible = false
+          } else {
+            cos.root.visible = true
+            scoutWalk.visible = false
+            const gyCos = groundYAt(footX, footZ)
+            cos.root.position.set(footX, gyCos, footZ)
+            cos.root.rotation.y = scoutWalk.rotation.y
+          }
+        } else {
+          // Attach stays on scoutWalk; hide with scout when mounted/sitting
+          cos.root.visible = scoutWalk.visible
+        }
+      }
+
       // Moored canoe bobbing at the bank
       waterPhase += dt * (reduced ? 0.4 : 1.0)
       const bob = reduced ? 0 : Math.sin(waterPhase * 2.2) * 0.03
@@ -6108,6 +6270,23 @@ export function createHarborWorld(
           tickHarborRpgMount(mount, dt, moving, false)
           // Lift remote sailor onto saddle
           root.position.y = mount.def.saddleY
+        }
+        const uid = String(root.userData.remoteUserId ?? '')
+        const cos = remoteRpgCosmetics.get(uid)
+        if (cos) {
+          if (cos.def.kind === 'outfit') {
+            if (mid) {
+              cos.root.visible = false
+              root.visible = true
+            } else {
+              cos.root.visible = true
+              root.visible = false
+              cos.root.position.set(root.position.x, root.position.y, root.position.z)
+              cos.root.rotation.y = root.rotation.y
+            }
+          } else {
+            cos.root.visible = root.visible
+          }
         }
       }
     }
@@ -6711,6 +6890,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
       const maxMp = harborRpgMaxMp(rpgBagLive)
       if (rpgPlayerMp > maxMp) rpgPlayerMp = maxMp
       syncRpgMountFromBag()
+      syncRpgCosmeticFromBag()
       syncRpgCompanion()
     },
     applyRpgWorldSnapshot(packet) {
@@ -6753,6 +6933,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
     dispose() {
       disposed = true
       clearRpgMount()
+      clearRpgCosmetic()
       if (rpgCompanionMesh) {
         rpgCompanionMesh.parent?.remove(rpgCompanionMesh)
         rpgCompanionMesh = null
@@ -6763,6 +6944,12 @@ if (o.userData.cigaretteSmoke && !reduced) {
       }
       remoteRpgMounts.clear()
       remoteRpgMountLoading.clear()
+      for (const [, cos] of remoteRpgCosmetics) {
+        cos.root.parent?.remove(cos.root)
+        disposeHarborRpgCosmetic(cos)
+      }
+      remoteRpgCosmetics.clear()
+      remoteRpgCosmeticLoading.clear()
       fishAnim = { phase: 'idle', t: 0, faceYaw: 0 }
       fishSplash.visible = false
       scene.remove(fishSplash)

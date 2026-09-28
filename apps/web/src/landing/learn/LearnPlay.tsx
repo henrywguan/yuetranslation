@@ -186,6 +186,8 @@ import {
   setHarborRpgInstanceDifficulty,
   buyHarborRpgMount,
   setHarborRpgActiveMount,
+  buyHarborRpgCosmetic,
+  setHarborRpgEquippedCosmetic,
   equipHarborRpgItem,
   buyHarborRpgVendorItem,
   sellHarborRpgItem,
@@ -509,6 +511,7 @@ export function LearnSession({
               nametagFrame: 'tag-plain',
               updatedAt: r.updatedAt,
               rpgMountId: r.activeMountId,
+              rpgCosmeticId: r.equippedCosmetic,
             }))
           worldApiRef.current?.setRemotePlayers(asWorld)
         },
@@ -521,6 +524,7 @@ export function LearnSession({
             mode: 'foot',
             t: pose.t,
             rpgMountId: pose.activeMountId ?? null,
+            rpgCosmeticId: pose.equippedCosmetic ?? null,
           })
         },
         onWorld: (packet) => {
@@ -569,6 +573,7 @@ export function LearnSession({
           lookingRole: rpgFinderLookingRef.current.lookingRole,
           lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
+          equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
         })
         sessionPresence.broadcastPose({
           x: pose.x,
@@ -576,6 +581,7 @@ export function LearnSession({
           yaw: pose.yaw,
           zone,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
+          equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
         })
       }
       push()
@@ -1531,6 +1537,7 @@ export function LearnSession({
                     nametagFrame: 'tag-plain',
                     updatedAt: r.updatedAt,
                     rpgMountId: r.activeMountId,
+                    rpgCosmeticId: r.equippedCosmetic,
                   }))
               : remotePlayers
           }
@@ -2334,6 +2341,22 @@ export function LearnSession({
             else {
               pushRpgProgress(next)
               flashRpgToast(id ? 'Mount summoned' : 'Dismounted')
+            }
+          }}
+          onBuyCosmetic={(id) => {
+            const next = buyHarborRpgCosmetic(id)
+            if (!next) flashRpgToast('Not enough gold')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Cosmetic unlocked')
+            }
+          }}
+          onEquipCosmetic={(id) => {
+            const next = setHarborRpgEquippedCosmetic(id)
+            if (!next) flashRpgToast('Cosmetic not owned')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(id ? 'Look equipped' : 'Look cleared')
             }
           }}
           onSetTitle={(id) => {

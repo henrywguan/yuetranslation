@@ -351,6 +351,15 @@ const HARBOR_RPG_COSMETICS = new Set([
   'rpg-helm-leather',
   'rpg-helm-bronze',
   'rpg-cape-ember',
+  // Quaternius Modular Outfits Fantasy (CC0)
+  'rpg-outfit-ranger-m',
+  'rpg-outfit-ranger-f',
+  'rpg-outfit-peasant-m',
+  'rpg-outfit-peasant-f',
+  'rpg-hood-ranger-m',
+  'rpg-hood-ranger-f',
+  'rpg-pauldron-ranger-m',
+  'rpg-pauldrons-ranger-f',
 ])
 const HARBOR_RPG_ITEMS = new Set([
   'rpg-item-herb','rpg-item-bone','rpg-item-shard','rpg-item-hide','rpg-item-ore','rpg-item-reed','rpg-item-ash-core',
@@ -456,6 +465,11 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     skillXp: {} as Record<string, number>,
     talents: {} as Record<string, number>,
     skillBar: [] as string[],
+    difficulty: 'normal' as 'normal' | 'heroic',
+    ownedMounts: ['horse'] as string[],
+    activeMountId: null as string | null,
+    unlockedTitles: [] as string[],
+    activeTitleId: null as string | null,
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
@@ -525,9 +539,13 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     }
   }
   let equippedCosmetic: string | null =
-    typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
-      ? o.equippedCosmetic
-      : 'rpg-cloak-traveler'
+    o.equippedCosmetic === null
+      ? null
+      : typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
+        ? o.equippedCosmetic
+        : owned.has('rpg-cloak-traveler')
+          ? 'rpg-cloak-traveler'
+          : null
   const boostsRaw =
     o.boosts && typeof o.boosts === 'object' ? (o.boosts as Record<string, unknown>) : {}
   const boosts = {

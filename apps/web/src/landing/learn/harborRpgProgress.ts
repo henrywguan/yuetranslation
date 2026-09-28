@@ -71,15 +71,20 @@ export const HARBOR_RPG_DUMMY_GOLD = 3
 export const HARBOR_RPG_BASE_HP = 40
 export const HARBOR_RPG_HP_PER_LEVEL = 8
 
-export const HARBOR_RPG_COSMETICS = [
-  'rpg-cloak-traveler',
-  'rpg-cloak-jade',
-  'rpg-helm-leather',
-  'rpg-helm-bronze',
-  'rpg-cape-ember',
-] as const
+import {
+  HARBOR_RPG_COSMETIC_IDS as HARBOR_RPG_COSMETICS,
+  HARBOR_RPG_COSMETIC_DEFS,
+  isHarborRpgCosmeticId,
+  type HarborRpgCosmeticId,
+} from './harborRpgCosmetics'
 
-export type HarborRpgCosmeticId = (typeof HARBOR_RPG_COSMETICS)[number]
+export {
+  HARBOR_RPG_COSMETICS,
+  HARBOR_RPG_COSMETIC_DEFS,
+  isHarborRpgCosmeticId,
+  type HarborRpgCosmeticId,
+}
+export { harborRpgCosmeticById } from './harborRpgCosmetics'
 
 export type HarborRpgCharacter = {
   id: string
@@ -506,9 +511,13 @@ export function sanitizeHarborRpgBag(raw: unknown): HarborRpgBag {
     }
   }
   const equippedCosmetic: string | null =
-    typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
-      ? o.equippedCosmetic
-      : 'rpg-cloak-traveler'
+    o.equippedCosmetic === null
+      ? null
+      : typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
+        ? o.equippedCosmetic
+        : owned.has('rpg-cloak-traveler')
+          ? 'rpg-cloak-traveler'
+          : null
 
   const boostsRaw =
     o.boosts && typeof o.boosts === 'object' ? (o.boosts as Record<string, unknown>) : {}
@@ -865,6 +874,33 @@ export function setRpgActiveMount(
   if (mountId == null) return { ...bag, activeMountId: null }
   if (!bag.ownedMounts.includes(mountId)) return null
   return { ...bag, activeMountId: mountId }
+}
+
+/** Buy a wardrobe cosmetic (soft gold). Traveler cloak is free. */
+export function buyRpgCosmetic(
+  bag: HarborRpgBag,
+  cosmeticId: HarborRpgCosmeticId,
+): HarborRpgBag | null {
+  if (!isHarborRpgCosmeticId(cosmeticId)) return null
+  if (bag.ownedCosmetics.includes(cosmeticId)) return bag
+  const def = HARBOR_RPG_COSMETIC_DEFS[cosmeticId]
+  if (bag.gold < def.cost) return null
+  const owned = new Set([...bag.ownedCosmetics, cosmeticId, 'rpg-cloak-traveler'])
+  return {
+    ...bag,
+    gold: bag.gold - def.cost,
+    ownedCosmetics: HARBOR_RPG_COSMETICS.filter((id) => owned.has(id)),
+  }
+}
+
+/** Equip (or clear) a wardrobe cosmetic. Must be owned. */
+export function setRpgEquippedCosmetic(
+  bag: HarborRpgBag,
+  cosmeticId: HarborRpgCosmeticId | null,
+): HarborRpgBag | null {
+  if (cosmeticId == null) return { ...bag, equippedCosmetic: null }
+  if (!bag.ownedCosmetics.includes(cosmeticId)) return null
+  return { ...bag, equippedCosmetic: cosmeticId }
 }
 
 export function createHarborRpgCharacter(input: {

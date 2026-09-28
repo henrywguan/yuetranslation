@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v6.2 — death UX · remote mounts · companion ally · deeds HUD · deeper crafts/skills  
+**Status:** v6.3 — Quaternius wardrobe cosmetics · death UX · remote mounts · companion · deeds · crafts  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -61,6 +61,17 @@ Town **Ferry Stable** (`rpg-stable`) sells / summons CC0 rideables:
 
 Bag fields: `ownedMounts` (starter includes `horse`), `activeMountId`. Summon boards a GLB + Idle/Walk/Gallop mixer; walk speed uses `speedMult`. Dismount from Stable tab. Credits: `apps/web/public/assets/harbor-quest/mounts/CREDITS.md`. OGA `.blend` sources kept under `oga-source/` (not rideable until GLB export).
 
+## Wardrobe cosmetics (v6.3)
+
+Town outfitter (`rpg-vendor`) + **Wardrobe** tab sell / equip CC0 looks:
+
+| Pack | Examples | Kind |
+|---|---|---|
+| Soft placeholders | Traveler Cloak (starter), Jade Cloak, helms, Ember Cape | Bag-only (no mesh yet) |
+| Quaternius Modular Outfits Fantasy | Ranger / Peasant kits (M/F), Ranger hood, pauldrons | `outfit` replaces Scout · `attach` layers on Scout |
+
+Bag: `ownedCosmetics`, `equippedCosmetic` (one look at a time). Presence / pose carry `equippedCosmetic` so remotes see the same GLB. Credits: `apps/web/public/assets/harbor-quest/cosmetics/CREDITS.md`. Research backlog: [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md).
+
 ## Wiki (v6.1)
 
 In-game **HarborRPG Wiki** (Field → HarborRPG Wiki):
@@ -80,7 +91,7 @@ In-game **HarborRPG Wiki** (Field → HarborRPG Wiki):
 5. **Professions** — 15 craft recipes · 11 gather nodes (mana / cloth / hood / wraps / sandals / tome / lantern)
 6. **Ability depth** — 7 skills per class (mid + late unlocks); bar still caps at 5
 
-Free animated cosmetics scout (Henry import): [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md). OGA mount `.blend` export stays Henry-owned.
+Free animated cosmetics scout (Henry import): [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md). OGA mount `.blend` export stays Henry-owned. **Quaternius Modular Outfits first ship is live** (v6.3 Wardrobe).
 
 ## Shared world tick
 
@@ -100,6 +111,7 @@ Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`
 4. **Quest density** · finder roles · companion fill
 5. **Mounts:** 30+ CC0 animals · Ferry Stable · board/ride/dismount
 6. **Wiki:** every entity page · loot sources · mount/achievement obtain
+7. **Wardrobe:** Quaternius Ranger/Peasant outfits + hood/pauldron attaches · soft placeholders
 7. **Art/SFX:** curated dungeon/raid props + boss meshes; soft WebAudio stings
 
 ## Feel bar

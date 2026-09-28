@@ -45,6 +45,8 @@ export type HarborRpgPresenceState = {
   lookingDungeon: import('./harborRpgFinder').HarborRpgFinderDungeon | null
   /** Active mount id when riding (null/undefined = on foot). */
   activeMountId: string | null
+  /** Equipped wardrobe cosmetic id (null = River Scout look). */
+  equippedCosmetic: string | null
   updatedAt: number
 }
 
@@ -56,6 +58,7 @@ export type HarborRpgPosePacket = {
   zone: HarborRpgZoneId
   t: number
   activeMountId?: string | null
+  equippedCosmetic?: string | null
 }
 
 export type HarborRpgRemotePlayer = HarborRpgPresenceState
@@ -100,6 +103,10 @@ function sanitizePresence(raw: unknown, key: string): HarborRpgPresenceState | n
       typeof o.activeMountId === 'string' && o.activeMountId.length < 32
         ? o.activeMountId
         : null,
+    equippedCosmetic:
+      typeof o.equippedCosmetic === 'string' && o.equippedCosmetic.length < 40
+        ? o.equippedCosmetic
+        : null,
     updatedAt:
       typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
         ? o.updatedAt
@@ -125,6 +132,12 @@ function sanitizePose(raw: unknown): HarborRpgPosePacket | null {
       typeof o.activeMountId === 'string' && o.activeMountId.length < 32
         ? o.activeMountId
         : o.activeMountId === null
+          ? null
+          : undefined,
+    equippedCosmetic:
+      typeof o.equippedCosmetic === 'string' && o.equippedCosmetic.length < 40
+        ? o.equippedCosmetic
+        : o.equippedCosmetic === null
           ? null
           : undefined,
   }
@@ -173,6 +186,7 @@ export type HarborRpgPresenceSession = {
     lookingRole?: HarborRpgPresenceState['lookingRole']
     lookingDungeon?: HarborRpgPresenceState['lookingDungeon']
     activeMountId?: string | null
+    equippedCosmetic?: string | null
   }) => Promise<void>
   broadcastPose: (pose: {
     x: number
@@ -180,6 +194,7 @@ export type HarborRpgPresenceSession = {
     yaw: number
     zone: HarborRpgZoneId
     activeMountId?: string | null
+    equippedCosmetic?: string | null
   }) => void
   broadcastParty: (party: HarborRpgPartyState | HarborRpgPartyInvite) => void
   broadcastLootRoll: (roll: HarborRpgLootRoll) => void
@@ -271,6 +286,7 @@ export function startHarborRpgPresence(opts: {
         lookingRole: pose.lookingRole ?? null,
         lookingDungeon: pose.lookingDungeon ?? null,
         activeMountId: pose.activeMountId ?? null,
+        equippedCosmetic: pose.equippedCosmetic ?? null,
         updatedAt: Date.now(),
       }
       await channel.track(payload)
@@ -284,6 +300,7 @@ export function startHarborRpgPresence(opts: {
         zone: pose.zone,
         t: Date.now(),
         activeMountId: pose.activeMountId ?? null,
+        equippedCosmetic: pose.equippedCosmetic ?? null,
       }
       void channel.send({
         type: 'broadcast',

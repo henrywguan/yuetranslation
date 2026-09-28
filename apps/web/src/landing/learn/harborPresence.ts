@@ -37,6 +37,8 @@ export type HarborPresenceState = {
   updatedAt: number
   /** HarborRPG only — active mount id when riding (optional). */
   rpgMountId?: string | null
+  /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
+  rpgCosmeticId?: string | null
 }
 
 export type HarborRemotePlayer = HarborPresenceState
@@ -51,6 +53,8 @@ export type HarborPosePacket = {
   t: number
   /** HarborRPG only — active mount id when riding (optional). */
   rpgMountId?: string | null
+  /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
+  rpgCosmeticId?: string | null
 }
 
 export type HarborChatPacket = {

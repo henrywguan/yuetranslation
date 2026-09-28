@@ -33,6 +33,8 @@ import {
   setHarborRpgDifficulty,
   setRpgActiveMount,
   buyRpgMount,
+  buyRpgCosmetic,
+  setRpgEquippedCosmetic,
   spendHarborRpgTalent,
   prestigeHarborRpgClass,
   withdrawRpgBank,
@@ -314,6 +316,26 @@ export function setHarborRpgActiveMount(
   const p = read()
   const bag = sanitizeHarborRpgBag(p.rpg)
   const next = setRpgActiveMount(bag, mountId)
+  if (!next) return null
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(next), lastSavedAt: Date.now() })
+}
+
+export function buyHarborRpgCosmetic(
+  cosmeticId: import('./harborRpgCosmetics').HarborRpgCosmeticId,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = buyRpgCosmetic(bag, cosmeticId)
+  if (!next) return null
+  return commit({ ...p, rpg: sanitizeHarborRpgBag(next), lastSavedAt: Date.now() })
+}
+
+export function setHarborRpgEquippedCosmetic(
+  cosmeticId: import('./harborRpgCosmetics').HarborRpgCosmeticId | null,
+): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const next = setRpgEquippedCosmetic(bag, cosmeticId)
   if (!next) return null
   return commit({ ...p, rpg: sanitizeHarborRpgBag(next), lastSavedAt: Date.now() })
 }

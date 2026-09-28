@@ -1,8 +1,19 @@
 # HarborRPG · Free cosmetic / animated asset scout
 
-**Status:** research pack for Henry (OGA mounts remain Henry-owned)  
+**Status:** first ship live (Quaternius Modular Outfits Fantasy → Wardrobe)  
 **Date:** 2026-09-28  
 **Goal:** CC0 / free-for-commercial models with **motion or animation-friendly rigs** that can become HarborRPG show / cloak / hat / companion flair — **not** ClaudeCraft IP, not Jagex art.
+
+## Shipped (v6.3)
+
+| Asset | Path | Notes |
+|---|---|---|
+| Male/Female Ranger + Peasant outfits | `apps/web/public/assets/harbor-quest/cosmetics/quaternius/` | Full body swap (`kind: outfit`) |
+| Ranger hood M/F · pauldron(s) | same folder | Layer on Scout (`kind: attach`) |
+| CREDITS | `cosmetics/CREDITS.md` | Quaternius CC0 |
+| Catalogue / runtime | `harborRpgCosmetics.ts` · `harborRpgCosmeticRuntime.ts` | Wardrobe tab + `rpg-vendor` |
+
+Still soft placeholders (no mesh): `rpg-cloak-traveler` (starter), jade cloak, leather/bronze helm, ember cape.
 
 ## Best fits (animated or retarget-ready)
 
@@ -38,11 +49,12 @@
 3. Keep soft bag ids in `HARBOR_RPG_COSMETICS` / future wardrobe UI; do not mix into Harbor Quest showoff VIP gear.
 4. Drop CREDITS under `apps/web/public/assets/harbor-quest/cosmetics/CREDITS.md` when you land packs (same pattern as mounts).
 
-## Suggested first import set
+## Suggested next imports
 
-1. Quaternius Modular Outfits Fantasy (cloak + hood + helm parts)  
-2. Universal Animation Library (death / wave / bow for deeds / titles)  
-3. Gobkit Free Minions (animated companion skins to replace the soft fox primitive)  
-4. Optional: Kenney Animated Characters skins for town NPCs  
+1. ~~Quaternius Modular Outfits Fantasy (cloak + hood + helm parts)~~ **shipped v6.3**
+2. Universal Animation Library (death / wave / bow for deeds / titles)
+3. Gobkit Free Minions (animated companion skins to replace the soft fox primitive)
+4. Optional: Kenney Animated Characters skins for town NPCs
+5. More Quaternius modular outfits (Knight / Mage / etc.) when Henry wants catalogue growth
 
 Henry owns OGA mount `.blend` export; this list is for **cosmetics / companions / flair**, not mount packs.

@@ -645,4 +645,64 @@ const realmSrc = readFileSync(new URL('./harborRpgRealm.ts', import.meta.url), '
 assert.match(realmSrc, /HARBOR_RPG_STABLE/, 'stable stall + interact')
 assert.match(docs, /mount|Ferry Stable|Quaternius|Gobkit/i)
 
+import {
+  buyRpgCosmetic,
+  setRpgEquippedCosmetic,
+} from './harborRpgProgress.ts'
+import {
+  HARBOR_RPG_COSMETIC_IDS,
+  HARBOR_RPG_COSMETIC_DEFS,
+  harborRpgCosmeticHasMesh,
+} from './harborRpgCosmetics.ts'
+
+{
+  assert.ok(HARBOR_RPG_COSMETIC_IDS.length >= 13, `cosmetics ${HARBOR_RPG_COSMETIC_IDS.length}`)
+  assert.ok(HARBOR_RPG_COSMETIC_IDS.includes('rpg-outfit-ranger-m'))
+  assert.ok(HARBOR_RPG_COSMETIC_IDS.includes('rpg-hood-ranger-f'))
+  const emptyCos = emptyHarborRpgBag()
+  assert.ok(emptyCos.ownedCosmetics.includes('rpg-cloak-traveler'))
+  const boughtCos = buyRpgCosmetic({ ...emptyCos, gold: 500 }, 'rpg-outfit-ranger-m')
+  assert.ok(boughtCos)
+  assert.ok(boughtCos!.ownedCosmetics.includes('rpg-outfit-ranger-m'))
+  assert.ok(boughtCos!.gold < 500)
+  const equipped = setRpgEquippedCosmetic(boughtCos!, 'rpg-outfit-ranger-m')
+  assert.equal(equipped?.equippedCosmetic, 'rpg-outfit-ranger-m')
+  const clearedCos = setRpgEquippedCosmetic(equipped!, null)
+  assert.equal(clearedCos?.equippedCosmetic, null)
+  const poorCos = buyRpgCosmetic({ ...emptyCos, gold: 0 }, 'rpg-outfit-ranger-m')
+  assert.equal(poorCos, null)
+  const sanitizedCos = sanitizeHarborRpgBag({
+    ...emptyCos,
+    ownedCosmetics: ['rpg-cloak-traveler', 'rpg-outfit-peasant-f', 'hack-fit'],
+    equippedCosmetic: 'rpg-outfit-peasant-f',
+  })
+  assert.ok(sanitizedCos.ownedCosmetics.includes('rpg-outfit-peasant-f'))
+  assert.ok(!sanitizedCos.ownedCosmetics.includes('hack-fit'))
+  assert.equal(sanitizedCos.equippedCosmetic, 'rpg-outfit-peasant-f')
+  for (const id of HARBOR_RPG_COSMETIC_IDS) {
+    const def = HARBOR_RPG_COSMETIC_DEFS[id]
+    if (!harborRpgCosmeticHasMesh(id) || !def.src) continue
+    const fromPublic = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../../public',
+      def.src.replace(/^\//, ''),
+    )
+    assert.ok(existsSync(fromPublic), `missing cosmetic glb ${def.src}`)
+  }
+  assert.ok(
+    existsSync(
+      join(
+        dirname(fileURLToPath(import.meta.url)),
+        '../../../public/assets/harbor-quest/cosmetics/CREDITS.md',
+      ),
+    ),
+  )
+}
+
+assert.match(worldSrc, /loadHarborRpgCosmetic|syncRpgCosmeticFromBag/, 'cosmetic runtime wired')
+assert.match(playSrc, /buyHarborRpgCosmetic|setHarborRpgEquippedCosmetic|onBuyCosmetic|onEquipCosmetic/, 'cosmetic UI wired')
+assert.match(panelSrc, /wardrobe|Wardrobe|onBuyCosmetic/, 'wardrobe tab')
+assert.match(presenceSrc, /equippedCosmetic/, 'cosmetic on presence')
+assert.match(docs, /Wardrobe|Modular Outfits|cosmetics\/CREDITS/i)
+
 console.log('harborRpg.smoke: ok')
