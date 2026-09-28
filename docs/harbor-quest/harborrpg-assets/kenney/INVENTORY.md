@@ -1,0 +1,39 @@
+# kenney free pack zips (CC0)
+
+| Zip | Size |
+|---|---:|
+| `emotes-pack.zip` | 0.4 MB |
+| `game-icons.zip` | 1.0 MB |
+| `input-prompts.zip` | 5.1 MB |
+| `kenney_animated-characters-protagonists.zip` | 0.6 MB |
+| `kenney_animated-characters-retro.zip` | 0.7 MB |
+| `kenney_animated-characters-survivors.zip` | 0.7 MB |
+| `kenney_blocky-characters_20.zip` | 2.1 MB |
+| `kenney_brick-kit.zip` | 4.7 MB |
+| `kenney_building-kit.zip` | 1.6 MB |
+| `kenney_castle-kit.zip` | 2.2 MB |
+| `kenney_city-kit-commercial_2.1.zip` | 4.1 MB |
+| `kenney_city-kit-industrial_2.0.zip` | 5.0 MB |
+| `kenney_city-kit-roads.zip` | 2.8 MB |
+| `kenney_city-kit-suburban_20.zip` | 3.0 MB |
+| `kenney_fantasy-town-kit_2.0.zip` | 3.9 MB |
+| `kenney_food-kit.zip` | 4.6 MB |
+| `kenney_furniture-kit.zip` | 5.1 MB |
+| `kenney_graveyard-kit_5.0.zip` | 3.6 MB |
+| `kenney_mini-characters.zip` | 2.4 MB |
+| `kenney_mini-dungeon.zip` | 1.8 MB |
+| `kenney_mini-forest_1.0.zip` | 1.1 MB |
+| `kenney_modular-buildings.zip` | 1.8 MB |
+| `kenney_modular-cave-kit_1.0.zip` | 7.0 MB |
+| `kenney_modular-dungeon-kit_1.0.zip` | 6.9 MB |
+| `kenney_nature-kit.zip` | 10.5 MB |
+| `kenney_pirate-kit.zip` | 3.2 MB |
+| `kenney_prototype-kit.zip` | 3.0 MB |
+| `kenney_retro-fantasy-kit.zip` | 2.0 MB |
+| `kenney_survival-kit.zip` | 1.9 MB |
+| `kenney_ui-pack.zip` | 1.2 MB |
+| `kenney_watercraft-pack.zip` | 1.9 MB |
+| `platformer-kit.zip` | 4.6 MB |
+| `tower-defense-kit.zip` | 5.4 MB |
+| `ui-pack-adventure.zip` | 0.6 MB |
+| `ui-pack-rpg-expansion.zip` | 0.2 MB |
