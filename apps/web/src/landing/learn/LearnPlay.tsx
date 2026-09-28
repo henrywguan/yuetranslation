@@ -57,6 +57,14 @@ import { preloadHarborV2Assets } from './harborV2Assets'
 import { preloadHarborFishSfx } from './harborFishingSfx'
 import { HARBOR_FISH_CATCH_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAnim'
 import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
+import {
+  HARBOR_RPG_META,
+  type HarborRpgInteractId,
+} from './harborRpgRealm'
+import {
+  harborRpgLevelFromXp,
+  HARBOR_RPG_MAX_CHARS,
+} from './harborRpgProgress'
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
   emptyHarborFishingBag,
@@ -131,6 +139,10 @@ import {
   visitSaveShack,
   withdrawHarborGear,
   updateHarborFishing,
+  claimHarborRpgShrine,
+  hitHarborRpgDummy,
+  createHarborRpgCharacterSlot,
+  setHarborRpgActiveCharacter,
   purchaseHarborBeautySku,
   purchaseHarborBeautyForAppearance,
   equipHarborShowoff,
@@ -183,8 +195,13 @@ export function LearnSession({
   const [invOpen, setInvOpen] = useState(false)
   const [codexOpen, setCodexOpen] = useState(false)
   const [teleportOpen, setTeleportOpen] = useState(false)
-  /** Free-sail paradise pocket — overrides campaign realm until cast off / chapter teleport. */
+  /** Free-sail paradise / HarborRPG pocket — overrides campaign realm until cast off / chapter teleport. */
   const [realmOverride, setRealmOverride] = useState<HarborRealmId | null>(null)
+  /** Nearest HarborRPG interact (polled while in rpg). */
+  const [rpgInteract, setRpgInteract] = useState<HarborRpgInteractId | null>(null)
+  /** Lightweight RPG character create prompt. */
+  const [rpgCreateOpen, setRpgCreateOpen] = useState(false)
+  const [rpgCreateName, setRpgCreateName] = useState('')
   /** Fullscreen wuxia world map (minimap globe). */
   const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
@@ -437,6 +454,50 @@ export function LearnSession({
     const snap = () => worldApiRef.current?.snapToGuan(p.x, p.z)
     requestAnimationFrame(() => requestAnimationFrame(snap))
   }, [realmOverride])
+
+  /** Poll HarborRPG interact target while in the adventure meadow. */
+  useEffect(() => {
+    if (realmOverride !== 'rpg') {
+      setRpgInteract(null)
+      return
+    }
+    let raf = 0
+    const tick = () => {
+      setRpgInteract(worldApiRef.current?.getRpgInteract() ?? null)
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [realmOverride])
+
+  const pushRpgProgress = useCallback(
+    (next: HarborProgress) => {
+      setProgressSnap(next)
+      onProgress(next)
+    },
+    [onProgress],
+  )
+
+  const onRpgInteract = useCallback(() => {
+    const id = worldApiRef.current?.getRpgInteract() ?? rpgInteract
+    if (!id) return
+    playHarborUiClick()
+    if (id === 'rpg-return') {
+      playHarborCastOff()
+      setRealmOverride(null)
+      startHarborBgm('river')
+      setRpgInteract(null)
+      setVisitable(null)
+      return
+    }
+    if (id === 'rpg-shrine') {
+      pushRpgProgress(claimHarborRpgShrine())
+      return
+    }
+    if (id === 'rpg-dummy') {
+      pushRpgProgress(hitHarborRpgDummy())
+    }
+  }, [rpgInteract, pushRpgProgress])
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -1184,6 +1245,23 @@ export function LearnSession({
           <span className="hq-xp-chip-val">{progressSnap.xp ?? 0}</span>
           <span className="hq-xp-chip-lv">Lv {sailorLevelFromXp(progressSnap.xp ?? 0)}</span>
         </button>
+        {realmOverride === 'rpg' ? (
+          <button
+            type="button"
+            className="hq-xp-chip hq-xp-chip--rpg"
+            title="HarborRPG soft experience (separate from sailor XP)"
+            aria-label={`HarborRPG experience ${progressSnap.rpg?.xp ?? 0}, level ${harborRpgLevelFromXp(progressSnap.rpg?.xp ?? 0)}`}
+            aria-live="polite"
+          >
+            <span className="hq-xp-chip-icon" aria-hidden="true">
+              RPG
+            </span>
+            <span className="hq-xp-chip-val">{progressSnap.rpg?.xp ?? 0}</span>
+            <span className="hq-xp-chip-lv">
+              Lv {harborRpgLevelFromXp(progressSnap.rpg?.xp ?? 0)}
+            </span>
+          </button>
+        ) : null}
         <button
           type="button"
           className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}${invOpen ? ' is-open' : ''}`}
@@ -1420,7 +1498,7 @@ export function LearnSession({
             </button>
           </div>
           <h2 className="hq-visit-title">Teleport to pier</h2>
-          <p className="hq-visit-body">Jump to Guan Harbor or any unlocked campaign pier.</p>
+          <p className="hq-visit-body">Jump to Guan Harbor, HarborRPG, or any unlocked campaign pier.</p>
           <ul className="hq-teleport-list" aria-label="Campaign piers">
             <li>
               <button
@@ -1443,6 +1521,31 @@ export function LearnSession({
                 </span>
                 <span className="hq-teleport-status">
                   {realmOverride === 'guan' ? 'Here' : 'Teleport'}
+                </span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={`hq-teleport-btn hq-teleport-btn--rpg${realmOverride === 'rpg' ? ' is-here' : ''}`}
+                disabled={realmOverride === 'rpg'}
+                onClick={() => {
+                  playHarborTeleport()
+                  setRealmOverride('rpg')
+                  startHarborBgm('river')
+                  setTeleportOpen(false)
+                  setVisitable(null)
+                  setRpgCreateOpen(false)
+                }}
+              >
+                <span className="hq-teleport-ch">Adventure · 冒險</span>
+                <span className="hq-teleport-title">
+                  {HARBOR_RPG_META.en}
+                  <span aria-hidden="true"> · </span>
+                  <span lang="zh-HK">{HARBOR_RPG_META.zh}</span>
+                </span>
+                <span className="hq-teleport-status">
+                  {realmOverride === 'rpg' ? 'Here' : 'Teleport'}
                 </span>
               </button>
             </li>
@@ -1664,12 +1767,139 @@ export function LearnSession({
         </div>
       ) : null}
 
+      {realmOverride === 'rpg' ? (
+        <aside className="hq-visit-panel hq-visit-panel--rpg" role="complementary" aria-label="HarborRPG">
+          <p className="hq-visit-kicker">
+            {HARBOR_RPG_META.en} · <span lang="zh-HK">{HARBOR_RPG_META.zh}</span>
+          </p>
+          <h2 className="hq-visit-title">Adventure meadow</h2>
+          <p className="hq-visit-body">
+            Soft XP shrine · training dummy · return portal. Soft gold{' '}
+            <strong>{progressSnap.rpg?.gold ?? 0}</strong>
+            {(progressSnap.rpg?.characters?.length ?? 0) > 0
+              ? ` · ${progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)?.name ?? 'Adventurer'}`
+              : ' · create a character (max 2)'}
+          </p>
+          <ul className="hq-rpg-chars" aria-label="HarborRPG characters">
+            {(progressSnap.rpg?.characters ?? []).map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={`hq-rpg-char${progressSnap.rpg?.activeCharacterId === c.id ? ' is-on' : ''}`}
+                  disabled={progressSnap.rpg?.activeCharacterId === c.id}
+                  onClick={() => {
+                    playHarborUiClick()
+                    const next = setHarborRpgActiveCharacter(c.id)
+                    if (next) pushRpgProgress(next)
+                  }}
+                >
+                  {c.name}
+                </button>
+              </li>
+            ))}
+            {(progressSnap.rpg?.characters?.length ?? 0) < HARBOR_RPG_MAX_CHARS ? (
+              <li>
+                <button
+                  type="button"
+                  className="hq-rpg-char hq-rpg-char--new"
+                  onClick={() => {
+                    playHarborUiClick()
+                    setRpgCreateName('')
+                    setRpgCreateOpen(true)
+                  }}
+                >
+                  + New
+                </button>
+              </li>
+            ) : null}
+          </ul>
+          {rpgCreateOpen ? (
+            <form
+              className="hq-rpg-create"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const next = createHarborRpgCharacterSlot({ name: rpgCreateName || 'Adventurer' })
+                if (next) {
+                  pushRpgProgress(next)
+                  setRpgCreateOpen(false)
+                  setRpgCreateName('')
+                }
+              }}
+            >
+              <label className="hq-rpg-create-label">
+                Name
+                <input
+                  className="hq-rpg-create-input"
+                  value={rpgCreateName}
+                  maxLength={20}
+                  placeholder="Adventurer"
+                  onChange={(e) => setRpgCreateName(e.target.value)}
+                  autoFocus
+                />
+              </label>
+              <div className="hq-rpg-create-actions">
+                <button type="submit" className="hq-btn hq-btn--primary hq-btn--tiny">
+                  Create
+                </button>
+                <button
+                  type="button"
+                  className="hq-btn hq-btn--ghost hq-btn--tiny"
+                  onClick={() => setRpgCreateOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : null}
+          <p className="hq-visit-body hq-rpg-hint">
+            {rpgInteract === 'rpg-shrine'
+              ? 'Near shrine — claim soft XP'
+              : rpgInteract === 'rpg-dummy'
+                ? 'Near dummy — strike for soft gold'
+                : rpgInteract === 'rpg-return'
+                  ? 'Near return portal — cast back to river'
+                  : 'Walk to the shrine, dummy, or blue return portal'}
+          </p>
+          <div className="hq-visit-actions">
+            <button
+              type="button"
+              className="hq-btn hq-btn--primary"
+              disabled={!rpgInteract}
+              onClick={onRpgInteract}
+            >
+              {rpgInteract === 'rpg-shrine'
+                ? 'Claim shrine'
+                : rpgInteract === 'rpg-dummy'
+                  ? 'Hit dummy'
+                  : rpgInteract === 'rpg-return'
+                    ? 'Return to river'
+                    : 'Interact'}
+            </button>
+            <button
+              type="button"
+              className="hq-btn hq-btn--ghost"
+              onClick={() => {
+                playHarborCastOff()
+                setRealmOverride(null)
+                startHarborBgm('river')
+                setRpgInteract(null)
+                setRpgCreateOpen(false)
+                setVisitable(null)
+              }}
+            >
+              Cast off
+            </button>
+          </div>
+        </aside>
+      ) : null}
+
       {/* OSRS-style compass / boat — free-look on water; return to canoe on land */}
       <button
         type="button"
-        className={`hq-explore-fab${travelMode === 'foot' ? ' is-boat' : ''}${!talking ? ' is-on' : ''}`}
+        className={`hq-explore-fab${travelMode === 'foot' ? ' is-boat' : ''}${!talking ? ' is-on' : ''}${realmOverride === 'rpg' ? ' is-hidden' : ''}`}
         aria-label={travelMode === 'foot' ? 'Return to boat' : 'Open world exploration'}
         aria-pressed={!talking}
+        hidden={realmOverride === 'rpg'}
         title={travelMode === 'foot' ? 'Return to boat' : 'Open world exploration'}
         onClick={() => {
           playHarborExplore()

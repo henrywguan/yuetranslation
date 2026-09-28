@@ -10,6 +10,14 @@ import {
   GUAN_RETURN_PORTAL,
   isGuanLand,
 } from './harborGuanRealm'
+import {
+  HARBOR_RPG_BOUNDS,
+  HARBOR_RPG_DUMMY,
+  HARBOR_RPG_META,
+  HARBOR_RPG_RETURN,
+  HARBOR_RPG_SHRINE,
+  isRpgLand,
+} from './harborRpgRealm'
 import { GUAN_FISH_SPOTS, GUAN_FISHING_HUT, GUAN_SATELLITE_ISLANDS } from './harborFishing'
 import {
   HARBOR_DOCK_SPACING,
@@ -124,6 +132,23 @@ export function resolveHarborMinimapPlace(
     return { en: 'Open Sea', zh: '外海', kind: 'sea' }
   }
 
+  if (realm === 'rpg') {
+    const spots = [
+      { en: 'XP Shrine', zh: '經驗神龕', x: HARBOR_RPG_SHRINE.x, z: HARBOR_RPG_SHRINE.z, r: 3 },
+      { en: 'Training Dummy', zh: '訓練木人', x: HARBOR_RPG_DUMMY.x, z: HARBOR_RPG_DUMMY.z, r: 2.5 },
+      { en: 'Return Portal', zh: '回程門', x: HARBOR_RPG_RETURN.x, z: HARBOR_RPG_RETURN.z, r: 3 },
+    ]
+    let best: { en: string; zh: string; d: number } | null = null
+    for (const p of spots) {
+      const d = Math.hypot(x - p.x, z - p.z)
+      if (d > p.r) continue
+      if (!best || d < best.d) best = { en: p.en, zh: p.zh, d }
+    }
+    if (best) return { en: best.en, zh: best.zh, kind: 'land' }
+    if (isRpgLand(x, z)) return { en: HARBOR_RPG_META.en, zh: HARBOR_RPG_META.zh, kind: 'land' }
+    return { en: HARBOR_RPG_META.en, zh: HARBOR_RPG_META.zh, kind: 'land' }
+  }
+
   if (realm === 'bamboo') {
     return { en: 'Bamboo Academy', zh: '竹院', kind: 'land' }
   }
@@ -153,6 +178,34 @@ export function buildMinimapGeoFeatures(
   realm: HarborRealmId | null | undefined,
   poseZ: number,
 ): MinimapGeoFeature[] {
+  if (realm === 'rpg') {
+    const b = HARBOR_RPG_BOUNDS
+    return [
+      {
+        id: 'rpg-meadow',
+        kind: 'land',
+        closed: true,
+        points: [
+          { x: b.minX, z: b.minZ },
+          { x: b.maxX, z: b.minZ },
+          { x: b.maxX, z: b.maxZ },
+          { x: b.minX, z: b.maxZ },
+        ],
+      },
+      {
+        id: 'rpg-shrine',
+        kind: 'ridge',
+        closed: true,
+        points: circlePoints(HARBOR_RPG_SHRINE.x, HARBOR_RPG_SHRINE.z, 1.2, 8),
+      },
+      {
+        id: 'rpg-return',
+        kind: 'water',
+        closed: true,
+        points: circlePoints(HARBOR_RPG_RETURN.x, HARBOR_RPG_RETURN.z, 1.4, 8),
+      },
+    ]
+  }
   if (realm === 'guan') {
     const features: MinimapGeoFeature[] = [
       {

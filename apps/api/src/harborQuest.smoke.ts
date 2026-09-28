@@ -93,4 +93,28 @@ assert.equal(beautyShow.showoff?.look.nametag, 'tag-jade')
 assert.ok(beautyShow.showoff?.claimedEvents.includes('event-lantern-fest'))
 assert.ok(!beautyShow.showoff?.claimedEvents.includes('event-bogus'))
 
+const rpgBag = sanitizeHarborProgress({
+  rpg: {
+    characters: [
+      { id: 'rpg-one', name: 'Jade', gender: 'female', createdAt: 1 },
+      { id: 'rpg-two', name: 'Ink', createdAt: 2 },
+      { id: 'rpg-three', name: 'Extra', createdAt: 3 },
+      { id: 'bad', name: 'Nope', createdAt: 4 },
+    ],
+    xp: 120.4,
+    gold: 9.9,
+    ownedCosmetics: ['rpg-cloak-jade', 'hack'],
+    equippedCosmetic: 'hack',
+    shrineClaims: 3.2,
+  },
+})
+assert.equal(rpgBag.rpg?.characters.length, 2, 'API caps RPG chars at 2')
+assert.equal(rpgBag.rpg?.xp, 120)
+assert.equal(rpgBag.rpg?.gold, 9)
+assert.ok(rpgBag.rpg?.ownedCosmetics.includes('rpg-cloak-jade'))
+assert.ok(!rpgBag.rpg?.ownedCosmetics.includes('hack'))
+assert.equal(rpgBag.rpg?.equippedCosmetic, 'rpg-cloak-traveler')
+assert.equal(rpgBag.rpg?.shrineClaims, 3)
+assert.equal(rpgBag.xp, 0, 'rpg soft xp must not become pedagogy xp')
+
 console.log('harborQuest.smoke: ok')

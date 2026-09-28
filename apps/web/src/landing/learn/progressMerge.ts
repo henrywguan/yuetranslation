@@ -22,6 +22,12 @@ import {
   type HarborShowoffBag,
 } from './harborShowoff'
 import { sanitizeOwnedTitles, sanitizeTitleId } from './harborTitles'
+import {
+  emptyHarborRpgBag,
+  mergeHarborRpgBag,
+  sanitizeHarborRpgBag,
+  type HarborRpgBag,
+} from './harborRpgProgress'
 
 export type HarborProgress = {
   /** Level ids cleared (last step completed). */
@@ -67,6 +73,11 @@ export type HarborProgress = {
   beautyOwned: string[]
   /** Showoff cosmetics — nametag, bubble, chair, pet, emotes + event claims. */
   showoff: HarborShowoffBag
+  /**
+   * HarborRPG continent bag — max 2 chars, soft XP/gold/cosmetics.
+   * Does **not** feed pedagogy leaderboard XP.
+   */
+  rpg: HarborRpgBag
 }
 
 export function emptyHarborProgress(): HarborProgress {
@@ -108,6 +119,7 @@ export function emptyHarborProgress(): HarborProgress {
     fishing: emptyHarborFishingBag(),
     beautyOwned: harborBeautyStarterOwned(),
     showoff: emptyHarborShowoffBag(),
+    rpg: emptyHarborRpgBag(),
   }
 }
 
@@ -193,6 +205,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
   const fishing = sanitizeHarborFishingBag(o.fishing)
   const beautyOwned = sanitizeHarborBeautyOwned(o.beautyOwned)
   const showoff = sanitizeHarborShowoffBag(o.showoff)
+  const rpg = sanitizeHarborRpgBag(o.rpg)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -214,6 +227,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborProgress {
     fishing,
     beautyOwned,
     showoff,
+    rpg,
   }
 }
 
@@ -340,6 +354,7 @@ export function mergeHarborProgress(a: unknown, b: unknown): HarborProgress {
       A.showoff ?? emptyHarborShowoffBag(),
       B.showoff ?? emptyHarborShowoffBag(),
     ),
+    rpg: mergeHarborRpgBag(A.rpg ?? emptyHarborRpgBag(), B.rpg ?? emptyHarborRpgBag()),
   }
 }
 
@@ -394,6 +409,10 @@ export function harborProgressEqual(a: HarborProgress, b: HarborProgress): boole
   if (aS.length !== bS.length) return false
   for (let i = 0; i < aS.length; i++) if (aS[i] !== bS[i]) return false
   if ((a.showoff?.look.nametag ?? '') !== (b.showoff?.look.nametag ?? '')) return false
+  if ((a.rpg?.xp ?? 0) !== (b.rpg?.xp ?? 0)) return false
+  if ((a.rpg?.gold ?? 0) !== (b.rpg?.gold ?? 0)) return false
+  if ((a.rpg?.activeCharacterId ?? null) !== (b.rpg?.activeCharacterId ?? null)) return false
+  if ((a.rpg?.characters?.length ?? 0) !== (b.rpg?.characters?.length ?? 0)) return false
   return true
 }
 

@@ -15,6 +15,16 @@ import {
   type HarborProgress,
 } from './progressMerge'
 import { sanitizeHarborFishingBag, type HarborFishingBag } from './harborFishing'
+import {
+  createHarborRpgCharacter,
+  HARBOR_RPG_DUMMY_GOLD,
+  HARBOR_RPG_MAX_CHARS,
+  HARBOR_RPG_SHRINE_XP,
+  rpgCreditMultiplier,
+  rpgXpMultiplier,
+  sanitizeHarborRpgBag,
+  type HarborRpgBag,
+} from './harborRpgProgress'
 import { HARBOR_LEVELS } from './curriculum'
 import {
   HARBOR_DEFAULT_LOOK,
@@ -187,6 +197,60 @@ export function updateHarborFishing(fishing: HarborFishingBag, coinsDelta = 0): 
     coins,
     lastSavedAt: Date.now(),
   })
+}
+
+/** Replace HarborRPG soft bag (2 chars, XP, gold, cosmetics). */
+export function updateHarborRpg(rpg: HarborRpgBag): HarborProgress {
+  const p = read()
+  return commit({
+    ...p,
+    rpg: sanitizeHarborRpgBag(rpg),
+    lastSavedAt: Date.now(),
+  })
+}
+
+/** Soft shrine claim — client XP only (does not touch pedagogy XP). */
+export function claimHarborRpgShrine(): HarborProgress {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const mult = rpgXpMultiplier(bag)
+  bag.xp = Math.min(50_000_000, bag.xp + HARBOR_RPG_SHRINE_XP * mult)
+  bag.shrineClaims += 1
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+/** Soft training-dummy hit — client gold only. */
+export function hitHarborRpgDummy(): HarborProgress {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  const mult = rpgCreditMultiplier(bag)
+  bag.gold = Math.min(10_000_000, bag.gold + HARBOR_RPG_DUMMY_GOLD * mult)
+  bag.dummyKills += 1
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+/** Create an RPG character slot (max 2). */
+export function createHarborRpgCharacterSlot(input: {
+  name: string
+  gender?: HarborGender
+  appearance?: HarborAppearance
+}): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  if (bag.characters.length >= HARBOR_RPG_MAX_CHARS) return null
+  const c = createHarborRpgCharacter(input)
+  bag.characters = [...bag.characters, c]
+  bag.activeCharacterId = c.id
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
+}
+
+/** Switch active RPG character. */
+export function setHarborRpgActiveCharacter(id: string): HarborProgress | null {
+  const p = read()
+  const bag = sanitizeHarborRpgBag(p.rpg)
+  if (!bag.characters.some((c) => c.id === id)) return null
+  bag.activeCharacterId = id
+  return commit({ ...p, rpg: bag, lastSavedAt: Date.now() })
 }
 
 export function markGoldEarned(amount: number) {

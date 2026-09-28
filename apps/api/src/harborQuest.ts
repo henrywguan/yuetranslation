@@ -69,6 +69,27 @@ export type HarborQuestProgress = {
     }
     claimedEvents: string[]
   }
+  /**
+   * HarborRPG soft bag — max 2 chars, soft XP/gold/cosmetics.
+   * Does not inflate pedagogy leaderboard XP.
+   */
+  rpg?: {
+    characters: {
+      id: string
+      name: string
+      gender: 'male' | 'female'
+      appearance: { skinTone: number; hairStyle: string; hairColor: number }
+      createdAt: number
+    }[]
+    activeCharacterId: string | null
+    xp: number
+    gold: number
+    ownedCosmetics: string[]
+    equippedCosmetic: string | null
+    boosts: { xpMultUntil: number; creditMultUntil: number }
+    shrineClaims: number
+    dummyKills: number
+  }
 }
 
 export type HarborLeaderboardEntry = {
@@ -291,6 +312,131 @@ function sanitizeShowoff(raw: unknown): NonNullable<HarborQuestProgress['showoff
   return { owned: [...owned], look, claimedEvents }
 }
 
+const HARBOR_RPG_MAX_CHARS = 2
+const HARBOR_RPG_COSMETICS = new Set([
+  'rpg-cloak-traveler',
+  'rpg-cloak-jade',
+  'rpg-helm-leather',
+  'rpg-helm-bronze',
+  'rpg-cape-ember',
+])
+
+function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
+  const empty = {
+    characters: [] as NonNullable<HarborQuestProgress['rpg']>['characters'],
+    activeCharacterId: null as string | null,
+    xp: 0,
+    gold: 0,
+    ownedCosmetics: ['rpg-cloak-traveler'],
+    equippedCosmetic: 'rpg-cloak-traveler' as string | null,
+    boosts: { xpMultUntil: 0, creditMultUntil: 0 },
+    shrineClaims: 0,
+    dummyKills: 0,
+  }
+  if (!raw || typeof raw !== 'object') return empty
+  const o = raw as Record<string, unknown>
+  const characters: NonNullable<HarborQuestProgress['rpg']>['characters'] = []
+  const seen = new Set<string>()
+  if (Array.isArray(o.characters)) {
+    for (const row of o.characters) {
+      if (characters.length >= HARBOR_RPG_MAX_CHARS) break
+      if (!row || typeof row !== 'object') continue
+      const c = row as Record<string, unknown>
+      if (typeof c.id !== 'string' || !/^rpg-[a-z0-9-]+$/i.test(c.id.trim().slice(0, 40))) continue
+      const id = c.id.trim().slice(0, 40)
+      if (seen.has(id)) continue
+      seen.add(id)
+      const name =
+        typeof c.name === 'string' && c.name.trim() ? c.name.trim().slice(0, 20) : 'Adventurer'
+      const gender = c.gender === 'female' ? 'female' : 'male'
+      const app =
+        c.appearance && typeof c.appearance === 'object'
+          ? (c.appearance as Record<string, unknown>)
+          : {}
+      const skinTone =
+        typeof app.skinTone === 'number' && Number.isFinite(app.skinTone)
+          ? Math.min(Math.max(Math.floor(app.skinTone), 0), 7)
+          : 2
+      const hairStyle =
+        typeof app.hairStyle === 'string' && app.hairStyle.length < 40
+          ? app.hairStyle
+          : 'short'
+      const hairColor =
+        typeof app.hairColor === 'number' && Number.isFinite(app.hairColor)
+          ? Math.floor(app.hairColor)
+          : 0x3a2a1a
+      const createdAt =
+        typeof c.createdAt === 'number' && Number.isFinite(c.createdAt) && c.createdAt >= 0
+          ? Math.floor(c.createdAt)
+          : Date.now()
+      characters.push({
+        id,
+        name,
+        gender,
+        appearance: { skinTone, hairStyle, hairColor },
+        createdAt,
+      })
+    }
+  }
+  let activeCharacterId: string | null =
+    typeof o.activeCharacterId === 'string' && /^rpg-[a-z0-9-]+$/i.test(o.activeCharacterId)
+      ? o.activeCharacterId.trim().slice(0, 40)
+      : null
+  if (activeCharacterId && !characters.some((c) => c.id === activeCharacterId)) {
+    activeCharacterId = null
+  }
+  if (!activeCharacterId && characters[0]) activeCharacterId = characters[0].id
+  const xp =
+    typeof o.xp === 'number' && Number.isFinite(o.xp) && o.xp >= 0
+      ? Math.min(Math.floor(o.xp), 50_000_000)
+      : 0
+  const gold =
+    typeof o.gold === 'number' && Number.isFinite(o.gold) && o.gold >= 0
+      ? Math.min(Math.floor(o.gold), 10_000_000)
+      : 0
+  const owned = new Set<string>(['rpg-cloak-traveler'])
+  if (Array.isArray(o.ownedCosmetics)) {
+    for (const id of o.ownedCosmetics) {
+      if (typeof id === 'string' && HARBOR_RPG_COSMETICS.has(id)) owned.add(id)
+    }
+  }
+  let equippedCosmetic: string | null =
+    typeof o.equippedCosmetic === 'string' && owned.has(o.equippedCosmetic)
+      ? o.equippedCosmetic
+      : 'rpg-cloak-traveler'
+  const boostsRaw =
+    o.boosts && typeof o.boosts === 'object' ? (o.boosts as Record<string, unknown>) : {}
+  const boosts = {
+    xpMultUntil:
+      typeof boostsRaw.xpMultUntil === 'number' && Number.isFinite(boostsRaw.xpMultUntil)
+        ? Math.max(0, Math.floor(boostsRaw.xpMultUntil))
+        : 0,
+    creditMultUntil:
+      typeof boostsRaw.creditMultUntil === 'number' && Number.isFinite(boostsRaw.creditMultUntil)
+        ? Math.max(0, Math.floor(boostsRaw.creditMultUntil))
+        : 0,
+  }
+  const shrineClaims =
+    typeof o.shrineClaims === 'number' && Number.isFinite(o.shrineClaims) && o.shrineClaims >= 0
+      ? Math.min(Math.floor(o.shrineClaims), 1_000_000)
+      : 0
+  const dummyKills =
+    typeof o.dummyKills === 'number' && Number.isFinite(o.dummyKills) && o.dummyKills >= 0
+      ? Math.min(Math.floor(o.dummyKills), 1_000_000)
+      : 0
+  return {
+    characters,
+    activeCharacterId,
+    xp,
+    gold,
+    ownedCosmetics: [...owned],
+    equippedCosmetic,
+    boosts,
+    shrineClaims,
+    dummyKills,
+  }
+}
+
 const LEADERBOARD_DEFAULT_LIMIT = 25
 const LEADERBOARD_MAX_LIMIT = 50
 
@@ -394,6 +540,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
   const fishing = sanitizeFishing(o.fishing)
   const beautyOwned = sanitizeBeautyOwned(o.beautyOwned)
   const showoff = sanitizeShowoff(o.showoff)
+  const rpg = sanitizeRpg(o.rpg)
   return {
     cleared: clearedUnique,
     stepCursor,
@@ -411,6 +558,7 @@ export function sanitizeHarborProgress(raw: unknown): HarborQuestProgress {
     fishing,
     beautyOwned,
     showoff,
+    rpg,
   }
 }
 

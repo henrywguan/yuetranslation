@@ -87,6 +87,15 @@ import {
   GUAN_WATER_PLANE,
 } from './harborGuanRealm'
 import {
+  buildRpgContinentScene,
+  clampRpgFootTarget,
+  isRpgLand,
+  nearestRpgInteract,
+  HARBOR_RPG_LOOK,
+  HARBOR_RPG_SPAWN,
+  type HarborRpgInteractId,
+} from './harborRpgRealm'
+import {
   GUAN_FISHING_HUT,
   GUAN_FISH_SPOTS,
   RIVER_FISH_SPOTS,
@@ -151,8 +160,8 @@ import type { HarborPosePacket } from './harborPresence'
 
 export type HarborHue = 'jade' | 'harbor' | 'ink' | 'gold'
 
-/** Voyage dressing — river harbor, Lingnan bamboo academy, or Guan tropical paradise. */
-export type HarborRealmId = 'river' | 'bamboo' | 'guan'
+/** Voyage dressing — river harbor, Lingnan bamboo academy, Guan paradise, or HarborRPG. */
+export type HarborRealmId = 'river' | 'bamboo' | 'guan' | 'rpg'
 
 export type HarborWeather = 'sunny' | 'cloudy' | 'rainy' | 'night'
 
@@ -230,6 +239,8 @@ export type HarborWorldHandle = {
    * No-op outside Guan — caller must set realmOverride to guan first.
    */
   snapToGuan: (x: number, z: number) => void
+  /** Nearest HarborRPG interactable within radius (null outside rpg / out of range). */
+  getRpgInteract: () => HarborRpgInteractId | null
   /**
    * OSRS minimap / UI navigate — sail or walk toward a world (x,z).
    * Same rules as tapping the ground (disembark on land, reboard near canoe).
@@ -4437,6 +4448,8 @@ function nearestVisitable(
     if (spot) return 'fishing-spot'
     return null
   }
+  // HarborRPG uses its own interact FAB (shrine / dummy / return) — no river visitables.
+  if (realm === 'rpg') return null
   const riverSpot = nearestRiverFishSpot(x, z, 2.0)
   if (riverSpot) return 'fishing-spot'
   let best: HarborVisitableId | null = null
@@ -4476,14 +4489,17 @@ export function createHarborWorld(
   let progress = Math.min(1, Math.max(0, options.progress ?? 0))
   const realm: HarborRealmId = options.realm ?? 'river'
   const isGuan = realm === 'guan'
-  /** Terrace / bank height under walking scouts (0 on flat river banks). */
+  const isRpg = realm === 'rpg'
+  /** Pocket continents skip river chunks / auto-dock (Guan + HarborRPG). */
+  const isPocket = isGuan || isRpg
+  /** Terrace / bank height under walking scouts (0 on flat river banks / RPG meadow). */
   const groundYAt = (x: number, z: number) => (isGuan ? guanGroundY(x, z) : 0)
   let flash: 'ok' | 'no' | null = null
   let flashUntil = 0
   let disposed = false
   let paused = false
-  // Guan Harbor always forces sunny tropical daylight.
-  const weather: HarborWeather = isGuan ? 'sunny' : (options.weather ?? pickHarborWeather())
+  // Guan Harbor / HarborRPG always force sunny daylight.
+  const weather: HarborWeather = isPocket ? 'sunny' : (options.weather ?? pickHarborWeather())
   const baseLook = HARBOR_WEATHER_LOOK[weather]
   const look = isGuan
     ? {
@@ -4501,7 +4517,23 @@ export function createHarborWorld(
         rain: false,
         stars: false,
       }
-    : baseLook
+    : isRpg
+      ? {
+          ...baseLook,
+          sky: HARBOR_RPG_LOOK.sky,
+          fog: HARBOR_RPG_LOOK.fog,
+          fogDensity: HARBOR_RPG_LOOK.fogDensity,
+          amb: HARBOR_RPG_LOOK.amb,
+          ambI: HARBOR_RPG_LOOK.ambI,
+          sun: HARBOR_RPG_LOOK.sun,
+          sunI: HARBOR_RPG_LOOK.sunI,
+          hemiSky: HARBOR_RPG_LOOK.hemiSky,
+          hemiGround: HARBOR_RPG_LOOK.hemiGround,
+          hemiI: HARBOR_RPG_LOOK.hemiI,
+          rain: false,
+          stars: false,
+        }
+      : baseLook
 
   const constrainedGpu = isHarborConstrainedGpu()
   const renderer = new THREE.WebGLRenderer({
@@ -4598,6 +4630,7 @@ export function createHarborWorld(
   )
   water.rotation.x = -Math.PI / 2
   water.position.set(isGuan ? GUAN_WATER_PLANE.x : 0, 0.02, isGuan ? GUAN_WATER_PLANE.z : 80)
+  if (isRpg) water.visible = false
   scene.add(water)
   /** Base local-Z (height) for Guan ocean vertex waves — null on river strip. */
   let oceanBaseZ: Float32Array | null = null
@@ -4637,14 +4670,19 @@ export function createHarborWorld(
   }
 
   let guanScene: THREE.Group | null = null
+  let rpgScene: THREE.Group | null = null
   if (isGuan) {
     guanScene = buildGuanHarborScene()
     world.add(guanScene)
     fxIndexDirty = true
+  } else if (isRpg) {
+    rpgScene = buildRpgContinentScene()
+    world.add(rpgScene)
+    fxIndexDirty = true
   }
 
   const ensureChunks = (centerZ: number) => {
-    if (isGuan) return
+    if (isPocket) return
     const center = Math.floor(centerZ / CHUNK)
     const need = new Set<number>()
     for (let i = center - LOOK_BEHIND; i <= center + ACTIVE; i++) need.add(i)
@@ -4682,10 +4720,10 @@ export function createHarborWorld(
   scene.add(boat)
 
   // Fixed visitables — Save Shack + Outfitter + Bank + Arena (always on the chart).
-  // Guan paradise skips river landmarks; return portal is baked into the guan scene.
+  // Guan / HarborRPG pockets skip river landmarks; return portals are baked into those scenes.
   const visitablesRoot = new THREE.Group()
   visitablesRoot.name = 'harbor-visitables'
-  if (!isGuan) {
+  if (!isPocket) {
     for (const v of HARBOR_VISITABLES) {
       const building =
         v.id === 'save-shack'
@@ -4751,6 +4789,7 @@ export function createHarborWorld(
     }
     for (const g of chunkGroups.values()) indexRoot(g)
     if (guanScene) indexRoot(guanScene)
+    if (rpgScene) indexRoot(rpgScene)
     indexRoot(visitablesRoot)
     indexRoot(boat)
     indexRoot(scoutWalk)
@@ -4770,6 +4809,13 @@ export function createHarborWorld(
   applyLookToProtagonist(scoutWalk, currentLook)
   ensureHarborProtagonistLimbs(scoutWalk)
   attachHarborContactShadow(scoutWalk, { radius: 0.38, opacity: 0.32 })
+  // HarborRPG: foot-first meadow — hide canoe, plant Scout at spawn.
+  if (isRpg) {
+    boat.visible = false
+    if (scout) scout.visible = false
+    scoutWalk.visible = true
+    scoutWalk.position.set(footX, groundYAt(footX, footZ), footZ)
+  }
   let scoutAnim: HarborProtagonistAnimState = { mode: 'idle', t: 0 }
   /** Seated land mesh — shown when the sailor sits on a chair / stool. */
   let scoutSit: THREE.Object3D | null = null
@@ -4927,8 +4973,8 @@ export function createHarborWorld(
   }
 
 
-  // Distant Wulingyuan-style karst pillars (parallax backdrop) — skip in Guan lagoon
-  const mountains = isGuan ? null : wulingyuanRange(42, look.fog)
+  // Distant Wulingyuan-style karst pillars (parallax backdrop) — skip in pocket continents
+  const mountains = isPocket ? null : wulingyuanRange(42, look.fog)
   if (mountains) scene.add(mountains)
 
   // 祥云 — density/tone follow the weather look
@@ -4946,25 +4992,37 @@ export function createHarborWorld(
   for (let i = 0; i < 5; i++) {
     const w = new THREE.Mesh(new THREE.CircleGeometry(0.15 + i * 0.05, 6), wakeMat)
     w.rotation.x = -Math.PI / 2
+    if (isRpg) w.visible = false
     scene.add(w)
     wakes.push(w)
   }
 
   const startDock = dockPoseForProgress(progress)
-  let voyageZ = isGuan ? GUAN_BOAT_START.z : startDock.z
-  let boatX = isGuan ? GUAN_BOAT_START.x : startDock.side * HARBOR_DOCK_X * 0.35
+  let voyageZ = isGuan
+    ? GUAN_BOAT_START.z
+    : isRpg
+      ? HARBOR_RPG_SPAWN.z
+      : startDock.z
+  let boatX = isGuan
+    ? GUAN_BOAT_START.x
+    : isRpg
+      ? HARBOR_RPG_SPAWN.x
+      : startDock.side * HARBOR_DOCK_X * 0.35
   let waterPhase = 0
   let raf = 0
   let last = performance.now()
 
   // OSRS tap-to-move: destination on the ground plane (quest docks seed the first target).
   // Guan Harbor is always free-sail — no auto dock retargeting.
+  // HarborRPG starts on foot in the meadow.
   let moveTarget = isGuan
     ? { x: GUAN_BOAT_START.x, z: GUAN_BOAT_START.z }
-    : { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
-  let playerDirected = isGuan
+    : isRpg
+      ? { x: HARBOR_RPG_SPAWN.x, z: HARBOR_RPG_SPAWN.z }
+      : { x: startDock.side * HARBOR_DOCK_X, z: startDock.z }
+  let playerDirected = isPocket
   /** Crew the canoe (`boat`) or walk the Scout on land (`foot`). */
-  let travelMode: 'boat' | 'foot' = 'boat'
+  let travelMode: 'boat' | 'foot' = isRpg ? 'foot' : 'boat'
   let footX = boatX
   let footZ = voyageZ
   let wantBoard = false
@@ -5049,7 +5107,9 @@ export function createHarborWorld(
           : clampHarborBoatTarget(x, z)
         : isGuan
           ? clampGuanFootTarget(x, z)
-          : clampHarborMoveTarget(x, z)
+          : isRpg
+            ? clampRpgFootTarget(x, z)
+            : clampHarborMoveTarget(x, z)
     moveTarget = clamped
     playerDirected = fromPlayer
     destMarker.position.set(clamped.x, groundYAt(clamped.x, clamped.z) + 0.06, clamped.z)
@@ -5119,7 +5179,7 @@ export function createHarborWorld(
         chair.getWorldPosition(chairWorldPos)
         const cx = chairWorldPos.x
         const cz = chairWorldPos.z
-        const onLand = isGuan ? isGuanLand(cx, cz) : isHarborLand(cx)
+        const onLand = isGuan ? isGuanLand(cx, cz) : isRpg ? isRpgLand(cx, cz) : isHarborLand(cx)
         if (!onLand) break
         if (travelMode === 'boat') {
           disembark(cx, cz)
@@ -5145,6 +5205,7 @@ export function createHarborWorld(
       const pickRoots: THREE.Object3D[] = [visitablesRoot]
       for (const g of chunkGroups.values()) pickRoots.push(g)
       if (guanScene) pickRoots.push(guanScene)
+      if (rpgScene) pickRoots.push(rpgScene)
       const npcHits = raycaster.intersectObjects(pickRoots, true)
       for (const hit of npcHits) {
         const tap = dialogueTapFromObject(hit.object)
@@ -5179,6 +5240,15 @@ export function createHarborWorld(
   /** Shared by ground tap + minimap tap (OSRS-style click-to-walk). */
   const commandMoveTo = (tx: number, tz: number) => {
     if (disposed) return
+    if (isRpg) {
+      // Meadow-only pocket — always on foot, no canoe reboard.
+      exitSit()
+      sitTarget = null
+      wantBoard = false
+      const c = isRpgLand(tx, tz) ? { x: tx, z: tz } : clampRpgFootTarget(tx, tz)
+      setMoveTarget(c.x, c.z, true)
+      return
+    }
     if (travelMode === 'boat') {
       if (isGuan && isGuanLand(tx, tz)) {
         disembark(tx, tz)
@@ -5199,7 +5269,7 @@ export function createHarborWorld(
     if (!onLand || distBoat <= HARBOR_REBOARD_RADIUS * 0.7) {
       wantBoard = true
       const side = Math.sign(footX || boatX) || 1
-      setMoveTarget(boatX + side * 0.2, voyageZ, true)
+      setMoveTarget(boatX + (isGuan ? 0 : side * 0.2), voyageZ, true)
     } else {
       wantBoard = false
       setMoveTarget(tx, tz, true)
@@ -5386,8 +5456,8 @@ export function createHarborWorld(
     last = now
 
     // OSRS tap-to-move: paddle on water or walk on land (quest docks when crewing).
-    // Guan Harbor disables auto-quest dock retargeting — always free sail.
-    if (!isGuan && !playerDirected && travelMode === 'boat') {
+    // Pocket continents disable auto-quest dock retargeting — always free roam.
+    if (!isPocket && !playerDirected && travelMode === 'boat') {
       const dock = dockPoseForProgress(progress)
       moveTarget = { x: dock.side * HARBOR_DOCK_X, z: dock.z }
     }
@@ -5429,7 +5499,8 @@ export function createHarborWorld(
       // Guan: return portal still uses the same arrival gate.
       if (playerDirected && arrived) {
         // Guan Customs opens via officer tap — not by sailing near the pier
-        emitVisitable(isGuan ? null : nearestVisitable(boatX, voyageZ, realm))
+        // HarborRPG uses interact FAB instead of visitables
+        emitVisitable(isPocket ? null : nearestVisitable(boatX, voyageZ, realm))
       } else if (!playerDirected) {
         emitVisitable(null)
       }
@@ -5681,6 +5752,20 @@ export function createHarborWorld(
     // Guan armored patrol brothers — roam + limb walk cycle
     if (isGuan && guanScene) {
       tickGuanArmoredPatrol(guanScene, dt, reduced)
+    }
+
+    // HarborRPG: soft pulse on shrine glow + return portal veil
+    if (isRpg && rpgScene && !reduced) {
+      const pulse = 0.55 + Math.sin(now * 0.003) * 0.25
+      rpgScene.traverse((o) => {
+        if (o.name === 'rpg-shrine-glow' && o instanceof THREE.Mesh) {
+          o.scale.setScalar(0.9 + pulse * 0.25)
+        }
+        if (o.name === 'rpg-portal-veil' && o instanceof THREE.Mesh) {
+          const m = o.material as THREE.MeshBasicMaterial
+          if (m && 'opacity' in m) m.opacity = 0.22 + pulse * 0.2
+        }
+      })
     }
 
     // Cloned Scout NPCs share the player armature (idle breath / walk when roaming).
@@ -6027,8 +6112,8 @@ if (o.userData.cigaretteSmoke && !reduced) {
     },
     showSpeechBubble,
     snapToQuestDock(stepIndex?: number) {
-      // Lesson Talk / Next gate — only on the river voyage (Guan stays free-sail).
-      if (isGuan || disposed) return
+      // Lesson Talk / Next gate — only on the river voyage (pockets stay free-roam).
+      if (isPocket || disposed) return
       if (typeof stepIndex === 'number' && Number.isFinite(stepIndex)) {
         progress = Math.min(Math.max(0, stepIndex) / HARBOR_MAX_QUEST_SLOTS, 1)
       }
@@ -6066,11 +6151,15 @@ if (o.userData.cigaretteSmoke && !reduced) {
       destMarker.visible = false
       emitVisitable(nearestVisitable(c.x, c.z, 'guan'))
     },
+    getRpgInteract() {
+      if (!isRpg || disposed) return null
+      return nearestRpgInteract(footX, footZ)
+    },
     moveToWorld(x, z) {
       commandMoveTo(x, z)
     },
     returnToBoat() {
-      if (disposed || travelMode !== 'foot') return
+      if (disposed || travelMode !== 'foot' || isRpg) return
       exitSit()
       sitTarget = null
       wantBoard = true

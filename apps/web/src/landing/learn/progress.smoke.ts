@@ -144,4 +144,19 @@ const mergedLooks = mergeHarborProgress(emptyHarborProgress(), withLooks)
 assert.ok(mergedLooks.beautyOwned.includes('beauty-hair-twin'))
 assert.equal(mergedLooks.showoff.look.nametag, 'tag-jade')
 
+const withRpg = sanitizeHarborProgress({
+  ...emptyHarborProgress(),
+  rpg: {
+    characters: [{ id: 'rpg-alpha', name: 'Voyager', createdAt: 1 }],
+    xp: 40,
+    gold: 7,
+  },
+})
+assert.equal(withRpg.rpg.xp, 40)
+assert.equal(withRpg.rpg.characters.length, 1)
+assert.equal(withRpg.xp, 0)
+const mergedRpg = mergeHarborProgress(emptyHarborProgress(), withRpg)
+assert.equal(mergedRpg.rpg.xp, 40)
+assert.equal(mergedRpg.rpg.gold, 7)
+
 console.log('harborProgress.smoke: ok')
