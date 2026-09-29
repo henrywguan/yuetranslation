@@ -23,7 +23,7 @@ export function harborRpgQuestUnlocked(
   const def = harborRpgQuestById(questId)
   if (!def) return false
   const req = 'requires' in def ? def.requires : undefined
-  if (!req || req.length === 0) return true
+  if (!req) return true
   return req.every((id) => harborRpgQuestClaimed(bag, id as HarborRpgQuestId))
 }
 

@@ -49,7 +49,11 @@ type HarborStageProps = {
     name: { en: string; zh: string }
     toast?: { en: string; zh: string }
   }) => void
-  onRpgPlayerDown?: (ev: { zone: HarborRpgZoneId; instance: boolean }) => void
+  onRpgPlayerDown?: (ev: {
+    zone: HarborRpgZoneId
+    instance: boolean
+    recap?: { monsterId: string; damage: number }[]
+  }) => void
   onRpgPartyHeal?: (ev: { amount: number; zone: HarborRpgZoneId }) => void
   /** Landmark visit (Save Shack / Outfitter / Bank). */
   onVisitable?: (id: HarborVisitableId | null) => void

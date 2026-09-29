@@ -92,7 +92,6 @@ import {
   syncHarborRpgAchievementTitles,
 } from './harborRpgAchievements'
 import { HARBOR_DEFAULT_APPEARANCE } from './harborAppearance'
-import { HARBOR_RPG_CAMPAIGN } from './harborRpgLore'
 import type {
   HarborRpgPartyInvite,
   HarborRpgPartyState,
@@ -497,7 +496,7 @@ export function LearnSession({
       const userId = session.user.id
       localUserIdRef.current = userId
       const username =
-        harborDisplayUsername(entitlement?.prefs?.username) ||
+        harborDisplayUsername(entitlement?.prefs?.username, userId) ||
         progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)
           ?.name ||
         'Adventurer'
@@ -550,17 +549,17 @@ export function LearnSession({
           worldApiRef.current?.applyRpgWorldSnapshot(packet)
         },
         onParty: (msg) => {
-          if ('type' in msg && msg.type === 'invite') {
-            if (msg.toId === userId) {
-              setRpgPartyInvite(msg)
-              playHarborRpgPartyInvite()
-              flashRpgToast(`${msg.fromName} invited you to party ${msg.code}`)
-            }
+          if ('members' in msg) {
+            setRpgPartyLive(msg)
+            setRpgPartySize(Math.max(1, msg.members.length))
+            worldApiRef.current?.setRpgPartySize(Math.max(1, msg.members.length))
             return
           }
-          setRpgPartyLive(msg)
-          setRpgPartySize(Math.max(1, msg.members.length))
-          worldApiRef.current?.setRpgPartySize(Math.max(1, msg.members.length))
+          if (msg.toId === userId) {
+            setRpgPartyInvite(msg)
+            playHarborRpgPartyInvite()
+            flashRpgToast(`${msg.fromName} invited you to party ${msg.code}`)
+          }
         },
         onTrade: (offer) => {
           handleRpgTradeOfferRef.current?.(offer)
