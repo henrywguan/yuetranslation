@@ -252,6 +252,7 @@ export function HarborRpgPanel({
     | 'frontiers'
     | 'achievements'
   >('field')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [createName, setCreateName] = useState('')
   const [creating, setCreating] = useState(false)
   const [spellTip, setSpellTip] = useState<string | null>(null)
@@ -307,10 +308,22 @@ export function HarborRpgPanel({
 
   const lastRaceInteract = useRef<string | null>(null)
   useEffect(() => {
-    if (interactId === 'rpg-stable') setTab('stable')
-    if (interactId === 'rpg-vendor') setTab('wardrobe')
-    if (interactId === 'rpg-ravenpost') setTab('social')
-    if (interactId === 'rpg-reliquary') setTab('frontiers')
+    if (interactId === 'rpg-stable') {
+      setTab('stable')
+      setMenuOpen(true)
+    }
+    if (interactId === 'rpg-vendor') {
+      setTab('wardrobe')
+      setMenuOpen(true)
+    }
+    if (interactId === 'rpg-ravenpost') {
+      setTab('social')
+      setMenuOpen(true)
+    }
+    if (interactId === 'rpg-reliquary') {
+      setTab('frontiers')
+      setMenuOpen(true)
+    }
     if (interactId === lastRaceInteract.current) return
     lastRaceInteract.current = interactId
     if (interactId === 'rpg-race-start') {
@@ -337,6 +350,20 @@ export function HarborRpgPanel({
   useEffect(() => {
     onPartySizeChange(Math.max(1, party.members.length))
   }, [party.members.length, onPartySizeChange])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const openMenu = (next: typeof tab) => {
+    setTab(next)
+    setMenuOpen(true)
+  }
 
   const interactLabel =
     interactId === 'rpg-shrine'
@@ -374,8 +401,8 @@ export function HarborRpgPanel({
                           : 'Interact'
 
   return (
-    <div className="hq-rpg-shell" role="region" aria-label="HarborRPG">
-      <div className="hq-rpg-top">
+    <div className={`hq-rpg-hud${menuOpen ? ' is-menu' : ''}`} role="region" aria-label="HarborRPG">
+      <header className="hq-rpg-unit">
         <div>
           <p className="hq-rpg-kicker">
             {HARBOR_RPG_META.en} · <span lang="zh-HK">{HARBOR_RPG_META.zh}</span>
@@ -384,6 +411,15 @@ export function HarborRpgPanel({
             {zoneMeta.en}
             {zoneMeta.instance ? ' · Instance' : ''} · Lv {lv}
           </p>
+          {classDef ? (
+            <p className="hq-rpg-classline">
+              {classDef.name.en}
+              {activeSpec ? ` · ${activeSpec.name.en}` : ''} {classLevel}
+              {bag.prestige > 0 ? ` ★${bag.prestige}` : ''}
+            </p>
+          ) : (
+            <p className="hq-rpg-classline">Open Menu to choose a class</p>
+          )}
         </div>
         <div className="hq-rpg-vitals">
           <div className="hq-rpg-hp" aria-label={`HP ${combat?.hp ?? 0} of ${combat?.maxHp ?? 0}`}>
@@ -426,13 +462,6 @@ export function HarborRpgPanel({
           <div className="hq-rpg-chips">
             <span className="hq-rpg-chip">XP {bag.xp}</span>
             <span className="hq-rpg-chip">Gold {bag.gold}</span>
-            {classDef ? (
-              <span className="hq-rpg-chip">
-                {classDef.name.en}
-                {activeSpec ? ` · ${activeSpec.name.en}` : ''} {classLevel}
-                {bag.prestige > 0 ? ` ★${bag.prestige}` : ''}
-              </span>
-            ) : null}
             {companionOn ? (
               <span className="hq-rpg-chip hq-rpg-chip--ally">{bag.companionName}</span>
             ) : null}
@@ -452,13 +481,113 @@ export function HarborRpgPanel({
             </button>
           </div>
         </div>
-        {combat?.targetName ? (
-          <p className="hq-rpg-target">
-            Target: {combat.targetName} ({combat.targetHp}/{combat.targetMaxHp})
-          </p>
+      </header>
+
+      {combat?.targetName ? (
+        <div
+          className="hq-rpg-target-frame"
+          aria-label={`Target ${combat.targetName}`}
+        >
+          <p className="hq-rpg-target-name">{combat.targetName}</p>
+          <span className="hq-rpg-hp-track">
+            <span
+              className="hq-rpg-hp-fill"
+              style={{
+                width: `${Math.max(
+                  0,
+                  Math.min(100, (combat.targetHp / Math.max(1, combat.targetMaxHp)) * 100),
+                )}%`,
+              }}
+            />
+          </span>
+          <span className="hq-rpg-hp-val">
+            {combat.targetHp}/{combat.targetMaxHp}
+          </span>
+        </div>
+      ) : null}
+
+      <FieldTracker bag={bag} onOpen={() => openMenu('quests')} />
+
+      <div className="hq-rpg-hotbar">
+        {interactId ? (
+          <button type="button" className="hq-rpg-interact" onClick={onInteract}>
+            {interactLabel}
+          </button>
         ) : null}
+        <div className="hq-rpg-ability-bar" role="toolbar" aria-label="Abilities">
+          {(barSkills
+            ? barSkills.map((ab) => ({
+                id: ab.id,
+                name: ab.name,
+                blurb: ab.blurb,
+                gcd: ab.gcd,
+                cd: ab.cd,
+                mpCost: ab.mpCost ?? 0,
+                anim: ab.anim,
+                rank: harborRpgActiveSkillRank(bag, ab.id),
+              }))
+            : HARBOR_RPG_ABILITIES.map((a) => ({
+                id: a.id,
+                name: a.name,
+                blurb: { en: a.name.en, zh: a.name.zh },
+                gcd: a.gcd,
+                cd: a.cd,
+                mpCost: 0,
+                anim: undefined as undefined | string,
+                rank: 1,
+              }))
+          ).map((ab) => {
+            const cd = combat?.abilityCds?.[ab.id] ?? 0
+            const gcd = combat?.gcd ?? 0
+            const locked = cd > 0.05 || gcd > 0.05
+            return (
+              <button
+                key={ab.id}
+                type="button"
+                className={`hq-rpg-ability${castFlash === ab.id ? ' is-cast' : ''}${ab.anim ? ` hq-rpg-ability--${ab.anim}` : ''}`}
+                disabled={locked}
+                title={`${ab.name.en} · R${ab.rank} · GCD ${ab.gcd}s${ab.mpCost ? ` · ${ab.mpCost} MP` : ''}\n${ab.blurb.en}`}
+                onMouseEnter={() => setSpellTip(`${ab.name.en}: ${ab.blurb.en}`)}
+                onMouseLeave={() => setSpellTip(null)}
+                onClick={() => {
+                  setCastFlash(ab.id)
+                  window.setTimeout(() => setCastFlash(null), 280)
+                  onCastAbility(ab.id)
+                }}
+              >
+                <span>{ab.name.en}</span>
+                <small>R{ab.rank}</small>
+                {cd > 0.05 ? <em>{cd.toFixed(1)}s</em> : null}
+              </button>
+            )
+          })}
+        </div>
+        {spellTip ? <p className="hq-rpg-spell-tip">{spellTip}</p> : null}
+        <button
+          type="button"
+          className={`hq-rpg-menu-btn${menuOpen ? ' is-on' : ''}`}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          Menu
+        </button>
       </div>
 
+      {menuOpen ? (
+        <>
+          <button
+            type="button"
+            className="hq-rpg-menu-backdrop"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="hq-rpg-shell hq-rpg-menu" role="dialog" aria-modal="true" aria-label="HarborRPG menu">
+            <div className="hq-rpg-menu-head">
+              <p className="hq-rpg-kicker">Harbor menu</p>
+              <button type="button" className="hq-rpg-menu-close" onClick={() => setMenuOpen(false)}>
+                Close
+              </button>
+            </div>
       <div className="hq-rpg-tabs" role="tablist">
         {(
           [
@@ -494,7 +623,6 @@ export function HarborRpgPanel({
       <div className="hq-rpg-panel-body">
         {tab === 'field' ? (
           <>
-            <FieldTracker bag={bag} />
             <div className="hq-rpg-chars">
               {bag.characters.map((c) => (
                 <button
@@ -552,66 +680,6 @@ export function HarborRpgPanel({
                 </div>
               </form>
             ) : null}
-            <div className="hq-rpg-ability-bar" role="toolbar" aria-label="Abilities">
-              {(barSkills
-                ? barSkills.map((ab) => ({
-                    id: ab.id,
-                    name: ab.name,
-                    blurb: ab.blurb,
-                    gcd: ab.gcd,
-                    cd: ab.cd,
-                    mpCost: ab.mpCost ?? 0,
-                    anim: ab.anim,
-                    rank: harborRpgActiveSkillRank(bag, ab.id),
-                  }))
-                : HARBOR_RPG_ABILITIES.map((a) => ({
-                    id: a.id,
-                    name: a.name,
-                    blurb: { en: a.name.en, zh: a.name.zh },
-                    gcd: a.gcd,
-                    cd: a.cd,
-                    mpCost: 0,
-                    anim: undefined as undefined | string,
-                    rank: 1,
-                  }))
-              ).map((ab) => {
-                const cd = combat?.abilityCds?.[ab.id] ?? 0
-                const gcd = combat?.gcd ?? 0
-                const locked = cd > 0.05 || gcd > 0.05
-                return (
-                  <button
-                    key={ab.id}
-                    type="button"
-                    className={`hq-rpg-ability${castFlash === ab.id ? ' is-cast' : ''}${ab.anim ? ` hq-rpg-ability--${ab.anim}` : ''}`}
-                    disabled={locked}
-                    title={`${ab.name.en} · R${ab.rank} · GCD ${ab.gcd}s${ab.mpCost ? ` · ${ab.mpCost} MP` : ''}\n${ab.blurb.en}`}
-                    onMouseEnter={() => setSpellTip(`${ab.name.en}: ${ab.blurb.en}`)}
-                    onMouseLeave={() => setSpellTip(null)}
-                    onClick={() => {
-                      setCastFlash(ab.id)
-                      window.setTimeout(() => setCastFlash(null), 280)
-                      onCastAbility(ab.id)
-                    }}
-                  >
-                    <span>{ab.name.en}</span>
-                    <small>R{ab.rank}</small>
-                    {cd > 0.05 ? <em>{cd.toFixed(1)}s</em> : null}
-                  </button>
-                )
-              })}
-            </div>
-            {spellTip ? <p className="hq-rpg-spell-tip">{spellTip}</p> : null}
-            {!bag.classId ? (
-              <p className="hq-rpg-hint">Pick a class in the Class tab for a full skill kit.</p>
-            ) : null}
-            <button
-              type="button"
-              className="hq-btn hq-btn--solid"
-              disabled={!interactId}
-              onClick={onInteract}
-            >
-              {interactLabel}
-            </button>
             <p className="hq-rpg-hint">
               Zone portals:{' '}
               {HARBOR_RPG_PORTALS.filter((p) => p.from === bag.zone)
@@ -1871,6 +1939,9 @@ export function HarborRpgPanel({
           </>
         ) : null}
       </div>
+          </div>
+        </>
+      ) : null}
 
       {lootPrompt ? (
         <div className="hq-rpg-loot-roll" role="dialog" aria-label="Contested loot">
@@ -1897,7 +1968,7 @@ export function HarborRpgPanel({
   )
 }
 
-function FieldTracker({ bag }: { bag: HarborRpgBag }) {
+function FieldTracker({ bag, onOpen }: { bag: HarborRpgBag; onOpen: () => void }) {
   const chapter = bag.quests
     .filter((q) => !q.claimed)
     .slice(0, 2)
@@ -1920,11 +1991,11 @@ function FieldTracker({ bag }: { bag: HarborRpgBag }) {
   const lines = [...chapter, ...world].slice(0, 2)
   if (lines.length === 0) return null
   return (
-    <div className="hq-rpg-hint" aria-label="Active objectives">
+    <button type="button" className="hq-rpg-tracker" onClick={onOpen} aria-label="Active objectives">
       {lines.map((line) => (
-        <div key={line}>{line}</div>
+        <span key={line}>{line}</span>
       ))}
-    </div>
+    </button>
   )
 }
 
