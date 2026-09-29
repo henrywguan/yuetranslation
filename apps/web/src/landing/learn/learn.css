@@ -2558,6 +2558,11 @@
   flex: 1;
   min-height: 16rem;
   touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.hq-rpg-join-preview:active {
+  cursor: grabbing;
 }
 .hq-rpg-join-preview canvas {
   width: 100%;

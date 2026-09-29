@@ -626,44 +626,72 @@ function RpgLookPreview({
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 90)
     const look = new THREE.Vector3(0, 1.05, -0.35)
     const dolly = new THREE.Vector3(0.28, 0.7, 4.45)
+    const spun = new THREE.Vector3()
+    const yAxis = new THREE.Vector3(0, 1, 0)
     let zoom = 1
-    const applyZoom = () => {
-      camera.position.copy(look).addScaledVector(dolly, zoom)
+    let yaw = 0
+    let yawVel = 0
+    let holding = false
+    let lastDragAt = 0
+    const applyView = () => {
+      spun.copy(dolly).applyAxisAngle(yAxis, yaw)
+      camera.position.copy(look).addScaledVector(spun, zoom)
       camera.lookAt(look)
     }
-    applyZoom()
+    applyView()
     const nudgeZoom = (dir: -1 | 1) => {
       zoom = THREE.MathUtils.clamp(zoom * (dir > 0 ? 1.14 : 0.88), 0.42, 2.35)
-      applyZoom()
+      applyView()
     }
     zoomRef.current = nudgeZoom
     const onWheel = (ev: WheelEvent) => {
       ev.preventDefault()
       const delta = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY
       zoom = THREE.MathUtils.clamp(zoom * Math.exp(delta * 0.0011), 0.42, 2.35)
-      applyZoom()
+      applyView()
     }
     const pointers = new Map<number, { x: number; y: number }>()
     let pinchDist: number | null = null
     const onPointerDown = (ev: PointerEvent) => {
       if ((ev.target as HTMLElement).closest?.('button')) return
       pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+      holding = true
+      yawVel = 0
+      lastDragAt = performance.now()
+      try {
+        host.setPointerCapture(ev.pointerId)
+      } catch {
+        /* the canvas may already own the hit */
+      }
     }
     const onPointerMove = (ev: PointerEvent) => {
-      if (!pointers.has(ev.pointerId)) return
+      const prev = pointers.get(ev.pointerId)
+      if (!prev) return
+      const dx = ev.clientX - prev.x
       pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
-      if (pointers.size !== 2) return
-      const [a, b] = [...pointers.values()]
-      const dist = Math.hypot(a!.x - b!.x, a!.y - b!.y)
-      if (pinchDist != null && pinchDist > 0) {
-        zoom = THREE.MathUtils.clamp(zoom * (pinchDist / dist), 0.42, 2.35)
-        applyZoom()
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()]
+        const dist = Math.hypot(a!.x - b!.x, a!.y - b!.y)
+        if (pinchDist != null && pinchDist > 0) {
+          zoom = THREE.MathUtils.clamp(zoom * (pinchDist / dist), 0.42, 2.35)
+          applyView()
+        }
+        pinchDist = dist
+        return
       }
-      pinchDist = dist
+      if (pointers.size !== 1 || dx === 0) return
+      const step = -dx * 0.006
+      yaw += step
+      const now = performance.now()
+      const dt = Math.max(0.008, (now - lastDragAt) / 1000)
+      yawVel = THREE.MathUtils.clamp(step / dt, -2.2, 2.2)
+      lastDragAt = now
+      applyView()
     }
     const onPointerUp = (ev: PointerEvent) => {
       pointers.delete(ev.pointerId)
       if (pointers.size < 2) pinchDist = null
+      holding = pointers.size > 0
     }
     host.addEventListener('wheel', onWheel, { passive: false })
     host.addEventListener('pointerdown', onPointerDown)
@@ -708,7 +736,12 @@ function RpgLookPreview({
       const leader = insts[0]
       if (leader) {
         leader.mixer?.update(dt)
-        leader.root.rotation.y += dt * 0.35
+        if (!holding) leader.root.rotation.y += dt * 0.35
+      }
+      if (!holding && Math.abs(yawVel) > 0.0008) {
+        yaw += yawVel * dt
+        yawVel *= Math.exp(-3.4 * dt)
+        applyView()
       }
       for (const inst of insts.slice(1)) {
         if (leader) {

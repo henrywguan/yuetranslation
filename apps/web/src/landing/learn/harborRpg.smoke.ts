@@ -784,6 +784,7 @@ assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8
 assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /rpg-join-moon/, 'join backdrop has a moon')
 assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /rpg-join-shrine/, 'join backdrop has a spirit shrine')
 assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /Zoom in/, 'join preview can zoom')
+assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /yawVel/, 'join preview drags left and right')
 assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /hq-rpg-join-classes is-fit/, 'class list fits without a scrollbar')
 assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /mountClassGear/, 'class choice dresses the sailor')
 assert.match(readFileSync(new URL('./HarborRpgJoin.tsx', import.meta.url), 'utf8'), /hand_r/, 'class weapon attaches to the hand')
