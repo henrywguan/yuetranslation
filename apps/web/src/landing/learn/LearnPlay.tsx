@@ -69,6 +69,7 @@ import {
 import { HarborRpgPanel } from './HarborRpgPanel'
 import { HarborRpgWiki } from './HarborRpgWiki'
 import { awardRpgContestedLoot } from './harborRpgCombat'
+import { HarborRpgJoin } from './HarborRpgJoin'
 import { harborRpgVisualBodyId } from './harborRpgLooks'
 import { emptyHarborRpgBag, sanitizeHarborRpgBag } from './harborRpgProgress'
 import { harborRpgEmoteClip } from './harborRpgAnims'
@@ -292,13 +293,16 @@ export function LearnSession({
   const [rpgZonePeers, setRpgZonePeers] = useState<string[]>([])
   const [rpgTrade, setRpgTrade] = useState<HarborRpgTradeSession | null>(null)
   const [rpgPartyLive, setRpgPartyLive] = useState<HarborRpgPartyState | null>(null)
+  const [rpgEntered, setRpgEntered] = useState(false)
   const rpgPartyLiveRef = useRef(rpgPartyLive)
   rpgPartyLiveRef.current = rpgPartyLive
   const rpgVisualBodyRef = useRef('rpg-outfit-peasant-m')
-  rpgVisualBodyRef.current = harborRpgVisualBodyId(
-    progressSnap.rpg?.equippedLooks,
-    progressSnap.gender === 'female' ? 'female' : 'male',
+  const rpgActiveChar = progressSnap.rpg?.characters.find(
+    (c) => c.id === progressSnap.rpg?.activeCharacterId,
   )
+  const rpgBodyGender =
+    rpgActiveChar?.gender ?? (progressSnap.gender === 'female' ? 'female' : 'male')
+  rpgVisualBodyRef.current = harborRpgVisualBodyId(progressSnap.rpg?.equippedLooks, rpgBodyGender)
   const [rpgPartyInvite, setRpgPartyInvite] = useState<HarborRpgPartyInvite | null>(null)
   const rpgFinderLookingRef = useRef<{
     lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
@@ -472,7 +476,7 @@ export function LearnSession({
 
   // HarborRPG Realtime — shared world tick + trade (separate channel)
   useEffect(() => {
-    if (realmOverride !== 'rpg' || !entitlement?.loggedIn) {
+    if (realmOverride !== 'rpg' || !rpgEntered || !entitlement?.loggedIn) {
       const s = rpgPresenceRef.current
       rpgPresenceRef.current = null
       void s?.stop()
@@ -698,7 +702,19 @@ export function LearnSession({
       void s?.stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realmOverride, entitlement?.loggedIn, entitlement?.prefs?.username, rpgZone])
+  }, [realmOverride, rpgEntered, entitlement?.loggedIn, entitlement?.prefs?.username, rpgZone])
+
+  useEffect(() => {
+    if (realmOverride !== 'rpg') setRpgEntered(false)
+  }, [realmOverride])
+
+  useEffect(() => {
+    if (realmOverride !== 'rpg' || !rpgEntered) return
+    const bag = progressSnap.rpg
+    const char = bag?.characters.find((c) => c.id === bag.activeCharacterId)
+    if (!char) return
+    worldApiRef.current?.setCharacter({ gender: char.gender, appearance: char.appearance })
+  }, [realmOverride, rpgEntered, progressSnap.rpg])
 
   // Top-left minimap — poll local pose without re-rendering the WebGL tree
   useEffect(() => {
@@ -1636,7 +1652,8 @@ export function LearnSession({
             barberOpen ||
             teleportOpen ||
             worldMapOpen ||
-            visitable !== null
+            visitable !== null ||
+            (realmOverride === 'rpg' && !rpgEntered)
           }
           onVisitable={onVisitable}
           onDialogueNpc={onDialogueNpc}
@@ -2294,7 +2311,33 @@ export function LearnSession({
         </div>
       ) : null}
 
-      {realmOverride === 'rpg' ? (
+      {realmOverride === 'rpg' && !rpgEntered ? (
+        <HarborRpgJoin
+          bag={progressSnap.rpg ?? emptyHarborRpgBag()}
+          onBack={() => {
+            setRealmOverride(null)
+            startHarborBgm('river')
+          }}
+          onCreate={({ name, gender, classId }) => {
+            const hadClass = Boolean(progressSnap.rpg?.classId)
+            const created = createHarborRpgCharacterSlot({ name, gender })
+            if (!created) return
+            const next = hadClass ? created : selectHarborRpgClassPick(classId)
+            pushRpgProgress(next)
+            setRpgEntered(true)
+          }}
+          onEnter={({ characterId, classId }) => {
+            const selected = setHarborRpgActiveCharacter(characterId)
+            if (selected) pushRpgProgress(selected)
+            if (classId && progressSnap.rpg?.classId !== classId) {
+              pushRpgProgress(selectHarborRpgClassPick(classId))
+            }
+            setRpgEntered(true)
+          }}
+        />
+      ) : null}
+
+      {realmOverride === 'rpg' && rpgEntered ? (
         <HarborRpgPanel
           bag={progressSnap.rpg}
           combat={rpgCombatHud}

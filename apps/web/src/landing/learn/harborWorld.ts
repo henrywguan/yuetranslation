@@ -141,7 +141,7 @@ import {
   tickHarborRpgCompanion,
   type HarborRpgCompanionInstance,
 } from './harborRpgCompanionRuntime'
-import { HARBOR_RPG_TOWN_FOLK, harborRpgFallbackBodyId } from './harborRpgLooks'
+import { HARBOR_RPG_TOWN_FOLK, harborRpgFallbackBodyId, harborRpgVisualBodyId } from './harborRpgLooks'
 import { harborRpgAnimLoops, isHarborRpgAnimClip } from './harborRpgAnims'
 import {
   harborRpgCosmeticById,
@@ -5489,12 +5489,10 @@ export function createHarborWorld(
       return
     }
     const looks = rpgBagLive.equippedLooks
-    const bodyPick = looks?.body
-    const bodyDef = bodyPick ? harborRpgCosmeticById(bodyPick) : null
-    const actorId =
-      bodyDef?.kind === 'outfit' && bodyDef.src
-        ? bodyPick
-        : harborRpgFallbackBodyId(currentGender === 'female' ? 'female' : 'male')
+    const actorId = harborRpgVisualBodyId(
+      looks,
+      currentGender === 'female' ? 'female' : 'male',
+    )
     const layerIds = (['head', 'shoulder', 'back'] as const)
       .map((slot) => looks?.[slot])
       .filter((id): id is string => {
@@ -6927,7 +6925,7 @@ if (o.userData.cigaretteSmoke && !reduced) {
     }) {
       if (next.gender) currentGender = next.gender
       if (next.appearance) currentAppearance = { ...next.appearance }
-      // Soft rebuild markers — next land/boat swap regenerates meshes with new silhouette.
+      if (isRpg) syncRpgCosmeticFromBag()
     },
     setLook(look) {
       currentLook = { ...look }

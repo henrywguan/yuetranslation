@@ -769,6 +769,15 @@ assert.match(worldSrc, /tickHarborRpgCosmetic|playRpgPerform|Death01/, 'UAL outf
   const minionNames = glbNames('assets/harbor-quest/companions/gobkit/minion-a01.glb')
   assert.ok(minionNames.has('idle') && minionNames.has('attack'), 'minion clips')
 }
+assert.match(worldSrc, /setCharacter[\s\S]{0,280}syncRpgCosmeticFromBag/, 'join body swaps the rigged kit')
+assert.match(playSrc, /HarborRpgJoin/, 'rpg lobby gates teleport')
+assert.match(playSrc, /realmOverride !== 'rpg' \|\| !rpgEntered/, 'presence waits for enter')
+assert.match(playSrc, /realmOverride === 'rpg' && !rpgEntered/, 'world stays paused until enter')
+{
+  const { harborRpgJoinPhase } = await import('./harborRpgJoin.ts')
+  assert.equal(harborRpgJoinPhase(0), 'create')
+  assert.equal(harborRpgJoinPhase(2), 'select')
+}
 assert.match(worldSrc, /harborRpgFallbackBodyId/, 'UAL fallback body')
 assert.match(worldSrc, /loadHarborRpgCompanion|HARBOR_RPG_COMPANION_SRC/, 'companion mesh')
 assert.match(worldSrc, /onRpgPartyHeal/, 'party heal callback')

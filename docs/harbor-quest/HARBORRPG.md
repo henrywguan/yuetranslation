@@ -18,6 +18,10 @@ HarborRPG is a **completely different game** entered from Harbor Quest (Chart te
 
 Persistence may nest under `harbor_quest_progress.progress.rpg` for storage only — not shared meters.
 
+## Character join
+
+Teleporting into HarborRPG opens a lobby. With no sailor, creation is name → rigged male/female kit (live preview) → class → **Enter the harbor**. With a sailor already made, the lobby is character select, then the same enter. The world stays paused until that confirm. The kit is the peasant body on the animation library. Wardrobe outfits stay gold purchases after entry. The adventure has one class; specs stay on the Class tab.
+
 ## Soft trust (Henry 2026-09-28)
 
 Henry accepted **no dedicated anti-cheat**. HarborRPG may use:
