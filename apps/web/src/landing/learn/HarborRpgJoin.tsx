@@ -14,6 +14,7 @@ import {
   loadHarborRpgCosmetic,
   type HarborRpgCosmeticInstance,
 } from './harborRpgCosmeticRuntime'
+import { loadHarborGlb } from './harborGlbAssets'
 import {
   harborRpgComposeStarterLook,
   harborRpgDefaultStarterPick,
@@ -42,8 +43,130 @@ type Props = {
   onBack: () => void
 }
 
+/** Night alley behind the rotating sailor. Procedural lanterns stay if a GLB is missing. */
+function paperLantern(): THREE.Group {
+  const g = new THREE.Group()
+  g.name = 'rpg-join-lantern'
+  g.userData.joinLantern = true
+  const paper = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.11, 0.13, 0.28, 12),
+    new THREE.MeshLambertMaterial({ color: 0xc4202a, emissive: 0xff2a32, emissiveIntensity: 0.95 }),
+  )
+  const capMat = new THREE.MeshLambertMaterial({ color: 0x2a1214 })
+  const capTop = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.035, 10), capMat)
+  capTop.position.y = 0.15
+  const capBot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.03, 10), capMat)
+  capBot.position.y = -0.15
+  const tassel = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.02, 0.12, 6),
+    new THREE.MeshLambertMaterial({ color: 0x6a1018 }),
+  )
+  tassel.position.y = -0.24
+  const light = new THREE.PointLight(0xff3038, 1.55, 3.6, 2)
+  g.add(paper, capTop, capBot, tassel, light)
+  return g
+}
+
+function hangLantern(parent: THREE.Object3D, x: number, y: number, z: number): THREE.Group {
+  const cord = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.42, 4),
+    new THREE.MeshLambertMaterial({ color: 0x1a1012 }),
+  )
+  cord.position.set(x, y + 0.2, z)
+  const lantern = paperLantern()
+  lantern.position.set(x, y, z)
+  parent.add(cord, lantern)
+  return lantern
+}
+
+function windowGlow(x: number, y: number, z: number): THREE.Mesh {
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.26, 0.36),
+    new THREE.MeshBasicMaterial({ color: 0xff4030, transparent: true, opacity: 0.82 }),
+  )
+  glow.position.set(x, y, z)
+  return glow
+}
+
+async function placeJoinBuilding(
+  scene: THREE.Scene,
+  file: string,
+  x: number,
+  z: number,
+  height: number,
+  rot: number,
+  alive: () => boolean,
+): Promise<void> {
+  const g = await loadHarborGlb(file, { targetHeight: height, name: 'rpg-join-building' })
+  if (!g || !alive()) return
+  g.position.set(x, 0, z)
+  g.rotation.y = rot
+  scene.add(g)
+}
+
+function dressJoinStreet(scene: THREE.Scene, alive: () => boolean): THREE.Group[] {
+  const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(9, 28),
+    new THREE.MeshLambertMaterial({ color: 0x161014 }),
+  )
+  ground.rotation.x = -Math.PI / 2
+  const path = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 8),
+    new THREE.MeshLambertMaterial({ color: 0x24161c }),
+  )
+  path.rotation.x = -Math.PI / 2
+  path.position.y = 0.012
+  const wire = new THREE.Mesh(
+    new THREE.BoxGeometry(5.4, 0.02, 0.02),
+    new THREE.MeshLambertMaterial({ color: 0x140c0e }),
+  )
+  wire.position.set(0, 2.62, -0.35)
+  scene.add(ground, path, wire)
+  const lanterns = [
+    hangLantern(scene, -1.35, 2.15, 0.55),
+    hangLantern(scene, 1.2, 2.28, 0.15),
+    hangLantern(scene, -0.15, 2.42, -1.15),
+    hangLantern(scene, -2.05, 2.2, -1.55),
+    hangLantern(scene, 2.15, 2.12, -1.35),
+    hangLantern(scene, 0.35, 2.55, -2.7),
+  ]
+  scene.add(
+    windowGlow(-2.35, 1.35, -1.15),
+    windowGlow(2.25, 1.5, -1.25),
+    windowGlow(-0.35, 1.7, -3.35),
+    windowGlow(1.15, 1.45, -3.2),
+  )
+  const buildings: Array<[string, number, number, number, number]> = [
+    ['v2/house-village.glb', -2.55, -2.15, 2.55, 0.45],
+    ['v2/house-village.glb', 2.6, -2.35, 2.7, -0.4],
+    ['v2/outfitter.glb', 0.15, -4.15, 3.15, 0.05],
+    ['v2/stall-market.glb', -1.85, -3.15, 1.55, 0.3],
+    ['v2/save-shack.glb', 2.15, -3.7, 2.45, -0.2],
+  ]
+  for (const [file, x, z, height, rot] of buildings) {
+    void placeJoinBuilding(scene, file, x, z, height, rot, alive)
+  }
+  return lanterns
+}
+
+function disposeJoinProps(scene: THREE.Scene) {
+  const geos = new Set<THREE.BufferGeometry>()
+  const mats = new Set<THREE.Material>()
+  scene.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh || mesh.userData.harborGlbMesh) return
+    if (mesh.geometry) geos.add(mesh.geometry)
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const mat of list) if (mat) mats.add(mat)
+  })
+  for (const geo of geos) geo.dispose()
+  for (const mat of mats) mat.dispose()
+}
+
 function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
   const hostRef = useRef<HTMLDivElement>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const sailorsRef = useRef<HarborRpgCosmeticInstance[]>([])
   const pieceKey = [looks.body, ...harborRpgWornLayerIds(looks)].join('|')
 
   useEffect(() => {
@@ -51,20 +174,25 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
     if (!host) return
     let disposed = false
     let raf = 0
-    const insts: HarborRpgCosmeticInstance[] = []
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x12100e)
-    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 20)
-    camera.position.set(1.15, 1.15, 2.45)
-    camera.lookAt(0, 0.85, 0)
+    scene.background = new THREE.Color(0x0c0608)
+    scene.fog = new THREE.FogExp2(0x10060a, 0.065)
+    sceneRef.current = scene
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 40)
+    camera.position.set(0.9, 1.38, 3.55)
+    camera.lookAt(0, 0.95, -0.6)
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
     host.appendChild(renderer.domElement)
-    scene.add(new THREE.AmbientLight(0xfff4e4, 0.85))
-    const sun = new THREE.DirectionalLight(0xffe2b0, 1.15)
-    sun.position.set(2, 4, 3)
-    scene.add(sun)
+    scene.add(new THREE.AmbientLight(0x4a2024, 0.55))
+    const key = new THREE.DirectionalLight(0xffe6d4, 1.05)
+    key.position.set(1.6, 3.2, 2.6)
+    scene.add(key)
+    const redFill = new THREE.DirectionalLight(0xff2230, 0.38)
+    redFill.position.set(-2.2, 1.6, -1.2)
+    scene.add(redFill)
+    const lanterns = dressJoinStreet(scene, () => !disposed && sceneRef.current === scene)
     const size = () => {
       const w = Math.max(1, host.clientWidth)
       const h = Math.max(1, host.clientHeight)
@@ -76,11 +204,12 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null
     ro?.observe(host)
     const clock = new THREE.Clock()
-    const ids = pieceKey.split('|').filter((id): id is HarborRpgCosmeticId => Boolean(id))
     const loop = () => {
       if (disposed) return
       raf = requestAnimationFrame(loop)
       const dt = clock.getDelta()
+      const t = clock.elapsedTime
+      const insts = sailorsRef.current
       const leader = insts[0]
       if (leader) {
         leader.mixer?.update(dt)
@@ -93,30 +222,56 @@ function RpgLookPreview({ looks }: { looks: HarborRpgEquippedLooks }) {
         }
         inst.mixer?.update(0)
       }
+      for (const lantern of lanterns) {
+        const sway = Math.sin(t * 0.85 + lantern.position.x * 2.2) * 0.07
+        lantern.rotation.z = sway
+        const bulb = lantern.children.find((c) => (c as THREE.PointLight).isPointLight) as THREE.PointLight | undefined
+        if (bulb) bulb.intensity = 1.35 + Math.sin(t * 1.7 + lantern.position.x * 3) * 0.4
+      }
       renderer.render(scene, camera)
     }
-    void Promise.all(ids.map((id) => loadHarborRpgCosmetic(id))).then((loaded) => {
-      if (disposed) {
-        for (const inst of loaded) if (inst) disposeHarborRpgCosmetic(inst)
-        return
-      }
-      for (const inst of loaded) {
-        if (!inst) continue
-        insts.push(inst)
-        scene.add(inst.root)
-      }
-    })
     loop()
     return () => {
       disposed = true
       cancelAnimationFrame(raf)
       ro?.disconnect()
-      for (const inst of insts) {
+      disposeJoinProps(scene)
+      renderer.dispose()
+      sceneRef.current = null
+      if (renderer.domElement.parentElement === host) host.removeChild(renderer.domElement)
+    }
+  }, [])
+
+  useEffect(() => {
+    const scene = sceneRef.current
+    if (!scene) return
+    let cancelled = false
+    const ids = pieceKey.split('|').filter((id): id is HarborRpgCosmeticId => Boolean(id))
+    void Promise.all(ids.map((id) => loadHarborRpgCosmetic(id))).then((loaded) => {
+      if (cancelled || sceneRef.current !== scene) {
+        for (const inst of loaded) if (inst) disposeHarborRpgCosmetic(inst)
+        return
+      }
+      for (const old of sailorsRef.current) {
+        old.root.parent?.remove(old.root)
+        disposeHarborRpgCosmetic(old)
+      }
+      const next: HarborRpgCosmeticInstance[] = []
+      for (const inst of loaded) {
+        if (!inst) continue
+        inst.root.userData.joinSailor = true
+        scene.add(inst.root)
+        next.push(inst)
+      }
+      sailorsRef.current = next
+    })
+    return () => {
+      cancelled = true
+      for (const inst of sailorsRef.current) {
         inst.root.parent?.remove(inst.root)
         disposeHarborRpgCosmetic(inst)
       }
-      renderer.dispose()
-      if (renderer.domElement.parentElement === host) host.removeChild(renderer.domElement)
+      sailorsRef.current = []
     }
   }, [pieceKey])
 
