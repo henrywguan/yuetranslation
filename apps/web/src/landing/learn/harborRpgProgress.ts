@@ -45,6 +45,7 @@ import {
   HARBOR_RPG_CLASS_DEFS,
   HARBOR_RPG_CLASS_LEVEL_CAP,
   HARBOR_RPG_PRESTIGE_CAP,
+  HARBOR_RPG_SKILL_BAR_CAP,
   harborRpgAllSkillIds,
   harborRpgAllTalentIds,
   harborRpgClassById,
@@ -161,7 +162,7 @@ export type HarborRpgBag = {
   skillXp: Record<string, number>
   /** Talent node id → points spent. */
   talents: Record<string, number>
-  /** Equipped skill bar (up to 5 skill ids). */
+  /** Equipped skill bar (up to HARBOR_RPG_SKILL_BAR_CAP skill ids). */
   skillBar: string[]
   /** Soft dungeon difficulty for instances. */
   difficulty: HarborRpgDifficulty
@@ -767,7 +768,7 @@ function sanitizeClassProgress(o: Record<string, unknown>): {
       }
       if (skillBar.includes(id)) continue
       skillBar.push(id)
-      if (skillBar.length >= 5) break
+      if (skillBar.length >= HARBOR_RPG_SKILL_BAR_CAP) break
     }
   }
   return { classId, specId, classXp, prestige, skillXp, talents, skillBar }
@@ -1187,7 +1188,7 @@ export function selectHarborRpgClass(
   const def = harborRpgClassById(classId)
   if (!def) return bag
   const classLevel = Math.max(1, harborRpgClassLevelFromXp(bag.classId === classId ? bag.classXp : 0))
-  const unlocked = harborRpgUnlockedSkills(classId, classLevel).slice(0, 5)
+  const unlocked = harborRpgUnlockedSkills(classId, classLevel).slice(0, HARBOR_RPG_SKILL_BAR_CAP)
   const same = bag.classId === classId
   return {
     ...bag,
@@ -1222,7 +1223,7 @@ export function setHarborRpgSkillBar(
     if (!unlocked.has(id)) continue
     if (bar.includes(id)) continue
     bar.push(id)
-    if (bar.length >= 5) break
+    if (bar.length >= HARBOR_RPG_SKILL_BAR_CAP) break
   }
   return { ...bag, skillBar: bar }
 }
@@ -1255,7 +1256,7 @@ export function prestigeHarborRpgClass(bag: HarborRpgBag): HarborRpgBag | null {
   const classLevel = harborRpgClassLevelFromXp(bag.classXp)
   if (classLevel < HARBOR_RPG_CLASS_LEVEL_CAP) return null
   if (bag.prestige >= HARBOR_RPG_PRESTIGE_CAP) return null
-  const unlocked = harborRpgUnlockedSkills(bag.classId, 1).slice(0, 5)
+  const unlocked = harborRpgUnlockedSkills(bag.classId, 1).slice(0, HARBOR_RPG_SKILL_BAR_CAP)
   return {
     ...bag,
     classXp: 0,
@@ -1289,12 +1290,12 @@ export function awardHarborRpgClassKillXp(
   // Auto-expand skill bar when new skills unlock
   const classLevel = harborRpgClassLevelFromXp(next.classXp)
   const unlocked = harborRpgUnlockedSkills(bag.classId, classLevel)
-  if (next.skillBar.length < 5) {
+  if (next.skillBar.length < HARBOR_RPG_SKILL_BAR_CAP) {
     const bar = [...next.skillBar]
     for (const s of unlocked) {
       if (bar.includes(s.id)) continue
       bar.push(s.id)
-      if (bar.length >= 5) break
+      if (bar.length >= HARBOR_RPG_SKILL_BAR_CAP) break
     }
     next = { ...next, skillBar: bar }
   }

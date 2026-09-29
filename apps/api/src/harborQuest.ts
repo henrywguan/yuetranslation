@@ -494,6 +494,8 @@ const HARBOR_RPG_SPEC_IDS = new Set([
   ),
 ])
 const HARBOR_RPG_SKILL_PREFIX = /^(tb|rs|lm|jh|ab|sf|io|mw|cw)-[a-z0-9-]+$/i
+/** Keep in step with web `HARBOR_RPG_SKILL_BAR_CAP` (one slot per authored class skill). */
+const HARBOR_RPG_SKILL_BAR_CAP = 7
 const HARBOR_RPG_TALENT_PREFIX = /^(tb|rs|lm|jh|ab|sf|io|mw|cw)-(o|w|v)\d$/i
 
 function sanitizeRpgInv(raw: unknown, max: number): { id: string; qty: number }[] {
@@ -886,7 +888,7 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
       if (typeof id !== 'string' || !HARBOR_RPG_SKILL_PREFIX.test(id)) continue
       if (skillBar.includes(id)) continue
       skillBar.push(id)
-      if (skillBar.length >= 5) break
+      if (skillBar.length >= HARBOR_RPG_SKILL_BAR_CAP) break
     }
   }
   const ownedMounts = new Set<string>(['horse'])
@@ -1101,7 +1103,7 @@ function sanitizeRpgDepth(o: Record<string, unknown>): {
       for (const id of l.skillBar) {
         if (typeof id !== 'string' || !HARBOR_RPG_SKILL_PREFIX.test(id) || skillBar.includes(id)) continue
         skillBar.push(id)
-        if (skillBar.length >= 5) break
+        if (skillBar.length >= HARBOR_RPG_SKILL_BAR_CAP) break
       }
     }
     loadoutB = {

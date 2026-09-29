@@ -36,6 +36,7 @@ import {
 } from './harborRpgDepth'
 import { isHarborRpgPerformClip } from './harborRpgAnims'
 import { isHarborRpgSpecId } from './harborRpgSpecs'
+import { HARBOR_RPG_SKILL_BAR_CAP } from './harborRpgClasses'
 import type { HarborRpgBag } from './harborRpgProgress'
 
 export const HARBOR_RPG_EMOTES = [
@@ -250,7 +251,7 @@ function sanitizeLoadout(raw: unknown): HarborRpgLoadout | null {
     for (const id of r.skillBar) {
       if (typeof id !== 'string' || !/^[a-z0-9-]{1,40}$/i.test(id) || skillBar.includes(id)) continue
       skillBar.push(id)
-      if (skillBar.length >= 5) break
+      if (skillBar.length >= HARBOR_RPG_SKILL_BAR_CAP) break
     }
   }
   return { specId, talents, skillBar }

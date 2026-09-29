@@ -127,5 +127,18 @@ assert.equal(dusk.rpg?.equippedCosmetic, 'rpg-outfit-ranger-m-3')
 assert.equal(dusk.rpg?.equippedLooks?.body, 'rpg-outfit-ranger-m-3')
 assert.equal(rpgBag.rpg?.shrineClaims, 3)
 assert.equal(rpgBag.xp, 0, 'rpg soft xp must not become pedagogy xp')
+const skillBar = sanitizeHarborProgress({
+  rpg: {
+    skillBar: ['tb-1', 'tb-2', 'tb-3', 'tb-4', 'tb-5', 'tb-6', 'tb-7', 'tb-8'],
+    loadoutB: {
+      specId: null,
+      talents: {},
+      skillBar: ['rs-a', 'rs-b', 'rs-c', 'rs-d', 'rs-e', 'rs-f', 'rs-g', 'rs-h'],
+    },
+  },
+})
+assert.equal(skillBar.rpg?.skillBar.length, 7, 'API keeps a full 7-slot skill bar')
+assert.equal(skillBar.rpg?.loadoutB?.skillBar.length, 7, 'API keeps a full 7-slot loadout bar')
+assert.equal(skillBar.rpg?.skillBar[6], 'tb-7')
 
 console.log('harborQuest.smoke: ok')
