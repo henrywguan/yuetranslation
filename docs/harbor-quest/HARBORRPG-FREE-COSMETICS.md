@@ -1,7 +1,7 @@
 # HarborRPG · Free cosmetic / animated asset scout
 
-**Status:** first ship live (Quaternius Modular Outfits Fantasy → Wardrobe)  
-**Date:** 2026-09-28  
+**Status:** v6.6 live — free Standard kits (Ranger, Peasant, two dyes) + UAL1/UAL2 on full outfits  
+**Date:** 2026-09-29  
 **Goal:** CC0 / free-for-commercial models with **motion or animation-friendly rigs** that can become HarborRPG show / cloak / hat / companion flair — **not** ClaudeCraft IP, not Jagex art.
 
 ## Shipped (v6.3)
@@ -52,9 +52,9 @@ Still soft placeholders (no mesh): `rpg-cloak-traveler` (starter), jade cloak, l
 ## Suggested next imports
 
 1. ~~Quaternius Modular Outfits Fantasy (cloak + hood + helm parts)~~ **shipped v6.3**
-2. Universal Animation Library (death / wave / bow for deeds / titles)
+2. ~~Universal Animation Library (death / wave / bow for deeds / titles)~~ **shipped v6.6** (UAL1 + UAL2, in-place)
 3. Gobkit Free Minions (animated companion skins to replace the soft fox primitive)
 4. Optional: Kenney Animated Characters skins for town NPCs
-5. More Quaternius modular outfits (Knight / Mage / etc.) when Henry wants catalogue growth
+5. More Quaternius modular outfits — free Standard (verified 29 Jan 2026) still has only Ranger + Peasant. Knight / Mage / Noble / Wizard are outside that zip.
 
 Henry owns OGA mount `.blend` export; this list is for **cosmetics / companions / flair**, not mount packs.

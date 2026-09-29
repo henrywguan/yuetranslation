@@ -34,6 +34,7 @@ import {
   type HarborRpgTideChart,
   type HarborRpgWhisper,
 } from './harborRpgDepth'
+import { isHarborRpgPerformClip } from './harborRpgAnims'
 import { isHarborRpgSpecId } from './harborRpgSpecs'
 import type { HarborRpgBag } from './harborRpgProgress'
 
@@ -549,6 +550,7 @@ export type HarborRpgMediumAction =
   | { type: 'race'; elapsedMs: number; mounted: boolean; checkpoint?: boolean }
   | { type: 'race-mark'; gate: 'start' | 'mid' }
   | { type: 'emote'; id: string }
+  | { type: 'perform'; clip: string }
   | { type: 'duel'; foe: string }
   | { type: 'duel-accept' }
   | { type: 'duel-hit' }
@@ -740,6 +742,10 @@ export function applyRpgMedium(
       if (!isHarborRpgEmoteId(action.id)) return null
       const em = HARBOR_RPG_EMOTES.find((e) => e.id === action.id)
       return { bag, toast: em ? em.en : 'Emote' }
+    }
+    case 'perform': {
+      if (!isHarborRpgPerformClip(action.clip)) return null
+      return { bag, toast: action.clip.replace(/_/g, ' ') }
     }
     case 'duel': {
       const foe = clipName(action.foe)

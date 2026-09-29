@@ -62,6 +62,10 @@ import {
   type HarborRpgCosmeticId,
 } from './harborRpgCosmetics'
 import {
+  HARBOR_RPG_PERFORM_GROUPS,
+  HARBOR_RPG_PERFORMS,
+} from './harborRpgAnims'
+import {
   HARBOR_RPG_EMOTES,
   harborRpgWeatherForZone,
   type HarborRpgMediumAction,
@@ -263,6 +267,7 @@ export function HarborRpgPanel({
   const [mailGold, setMailGold] = useState(0)
   const [whisperTo, setWhisperTo] = useState('')
   const [whisperBody, setWhisperBody] = useState('')
+  const [performClip, setPerformClip] = useState(HARBOR_RPG_PERFORMS[0]?.clip ?? 'Yes')
   const [pledgeText, setPledgeText] = useState('')
   const [inspectId, setInspectId] = useState<string | null>(null)
   const [pins, setPins] = useState<[number, number, number]>([1, 1, 1])
@@ -910,6 +915,27 @@ export function HarborRpgPanel({
                   {em.en}
                 </button>
               ))}
+              <label className="hq-rpg-inv-act">
+                <span className="hq-rpg-hint">Perform</span>
+                <select
+                  value={performClip}
+                  onChange={(e) => setPerformClip(e.target.value)}
+                  aria-label="Perform clip"
+                >
+                  {HARBOR_RPG_PERFORM_GROUPS.map((g) => (
+                    <optgroup key={g.id} label={g.en}>
+                      {HARBOR_RPG_PERFORMS.filter((p) => p.group === g.id).map((p) => (
+                        <option key={p.clip} value={p.clip}>
+                          {p.en}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <button type="button" onClick={() => onMedium({ type: 'perform', clip: performClip })}>
+                  Play
+                </button>
+              </label>
               <button type="button" onClick={() => onMedium({ type: 'duel', foe: 'training-post' })}>
                 Duel post
               </button>

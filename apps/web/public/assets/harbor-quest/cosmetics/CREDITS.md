@@ -6,7 +6,8 @@ All GLBs under `apps/web/public/assets/harbor-quest/cosmetics/` are **CC0 / publ
 
 | Folder | Source | Licence | Notes |
 |---|---|---|---|
-| `quaternius/` | [Quaternius Modular Character Outfits — Fantasy](https://quaternius.com/packs/modularcharacteroutfitsfantasy.html) (itch Standard glTF) | CC0 | Curated first ship: Male/Female Ranger + Peasant full outfits · Ranger hood (M/F) · Ranger pauldron(s) (M/F). Textures resized to 512 via glTF-Transform. |
+| `quaternius/` | [Quaternius Modular Character Outfits — Fantasy](https://quaternius.com/packs/modularcharacteroutfitsfantasy.html) (itch Standard glTF, file dated 29 Jan 2026) | CC0 | Free Standard contains Ranger + Peasant only. Shipped: full outfits (M/F), dusk dye `T_Ranger_3`, field dye `T_Peasant_2`, Ranger hood (M/F), Ranger pauldron(s). Textures resized to 512 via glTF-Transform. Knight / Mage / Noble / Wizard are not in the free zip. |
+| `quaternius/ual1.glb` · `ual2.glb` | [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) + [Library 2](https://quaternius.com/packs/universalanimationlibrary2.html) Standard (in-place, not root-motion) | CC0 | Meshes stripped. Clips play on full outfit skeletons. Perform omits pistol, zombie, swim, driving, and phone. |
 
 ## Soft placeholders (no mesh)
 

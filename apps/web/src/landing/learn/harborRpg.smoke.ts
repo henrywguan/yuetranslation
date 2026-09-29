@@ -658,9 +658,11 @@ import {
 } from './harborRpgCosmetics.ts'
 
 {
-  assert.ok(HARBOR_RPG_COSMETIC_IDS.length >= 13, `cosmetics ${HARBOR_RPG_COSMETIC_IDS.length}`)
+  assert.ok(HARBOR_RPG_COSMETIC_IDS.length >= 17, `cosmetics ${HARBOR_RPG_COSMETIC_IDS.length}`)
   assert.ok(HARBOR_RPG_COSMETIC_IDS.includes('rpg-outfit-ranger-m'))
   assert.ok(HARBOR_RPG_COSMETIC_IDS.includes('rpg-hood-ranger-f'))
+  assert.ok(HARBOR_RPG_COSMETIC_IDS.includes('rpg-outfit-ranger-m-3'))
+  assert.ok(HARBOR_RPG_COSMETIC_IDS.includes('rpg-outfit-peasant-f-2'))
   const emptyCos = emptyHarborRpgBag()
   assert.ok(emptyCos.ownedCosmetics.includes('rpg-cloak-traveler'))
   const boughtCos = buyRpgCosmetic({ ...emptyCos, gold: 500 }, 'rpg-outfit-ranger-m')
@@ -702,6 +704,42 @@ import {
 }
 
 assert.match(worldSrc, /loadHarborRpgCosmetic|syncRpgCosmeticFromBag/, 'cosmetic runtime wired')
+assert.match(worldSrc, /tickHarborRpgCosmetic|playRpgPerform|Death01/, 'UAL outfit mixer wired')
+{
+  const runtimeSrc = readFileSync(new URL('./harborRpgCosmeticRuntime.ts', import.meta.url), 'utf8')
+  assert.match(runtimeSrc, /AnimationMixer|SkeletonUtils|ual1\.glb|ual2\.glb/)
+  const animSrc = readFileSync(new URL('./harborRpgAnims.ts', import.meta.url), 'utf8')
+  assert.match(animSrc, /Pistol|Zombie|Swim|Driving/)
+  const publicDir = join(dirname(fileURLToPath(import.meta.url)), '../../../public')
+  const glbNames = (rel: string) => {
+    const buf = readFileSync(join(publicDir, rel))
+    const jsonLen = buf.readUInt32LE(12)
+    const doc = JSON.parse(buf.subarray(20, 20 + jsonLen).toString('utf8')) as {
+      animations?: { name?: string }[]
+    }
+    return new Set((doc.animations ?? []).map((a) => a.name ?? ''))
+  }
+  const ual1 = glbNames('assets/harbor-quest/cosmetics/quaternius/ual1.glb')
+  const ual2 = glbNames('assets/harbor-quest/cosmetics/quaternius/ual2.glb')
+  for (const name of ['Idle_Loop', 'Walk_Loop', 'Sprint_Loop', 'Sword_Attack', 'Death01', 'Interact']) {
+    assert.ok(ual1.has(name), `ual1 missing ${name}`)
+  }
+  assert.ok(ual2.has('Yes'), 'ual2 missing Yes')
+  const { HARBOR_RPG_PERFORMS, harborRpgEmoteClip, isHarborRpgPerformClip } = await import(
+    './harborRpgAnims.ts'
+  )
+  for (const row of HARBOR_RPG_PERFORMS) {
+    assert.ok(ual1.has(row.clip) || ual2.has(row.clip), `perform clip missing ${row.clip}`)
+  }
+  assert.equal(harborRpgEmoteClip('wave'), 'Yes')
+  assert.equal(harborRpgEmoteClip('bow'), 'Interact')
+  assert.equal(isHarborRpgPerformClip('Pistol_Shoot'), false)
+  const waved = applyRpgMedium(emptyHarborRpgBag(), { type: 'emote', id: 'wave' })
+  assert.equal(waved?.toast, 'Wave')
+  const played = applyRpgMedium(emptyHarborRpgBag(), { type: 'perform', clip: 'Yes' })
+  assert.ok(played)
+  assert.equal(applyRpgMedium(emptyHarborRpgBag(), { type: 'perform', clip: 'Pistol_Shoot' }), null)
+}
 assert.match(playSrc, /buyHarborRpgCosmetic|setHarborRpgEquippedCosmetic|onBuyCosmetic|onEquipCosmetic/, 'cosmetic UI wired')
 assert.match(panelSrc, /wardrobe|Wardrobe|onBuyCosmetic/, 'wardrobe tab')
 assert.match(presenceSrc, /equippedCosmetic/, 'cosmetic on presence')

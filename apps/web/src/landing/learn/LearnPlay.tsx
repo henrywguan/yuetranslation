@@ -70,6 +70,7 @@ import { HarborRpgPanel } from './HarborRpgPanel'
 import { HarborRpgWiki } from './HarborRpgWiki'
 import { awardRpgContestedLoot } from './harborRpgCombat'
 import { emptyHarborRpgBag, sanitizeHarborRpgBag } from './harborRpgProgress'
+import { harborRpgEmoteClip } from './harborRpgAnims'
 import { applyRpgMedium } from './harborRpgMedium'
 import {
   rpgZonePeerIds,
@@ -526,6 +527,7 @@ export function LearnSession({
             t: pose.t,
             rpgMountId: pose.activeMountId ?? null,
             rpgCosmeticId: pose.equippedCosmetic ?? null,
+            rpgEmote: pose.emote ?? null,
           })
         },
         onWorld: (packet) => {
@@ -660,6 +662,7 @@ export function LearnSession({
           zone,
           activeMountId: progressSnap.rpg?.activeMountId ?? null,
           equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
+          emote: worldApiRef.current?.getRpgPerformClip() ?? null,
         })
       }
       push()
@@ -2464,6 +2467,12 @@ export function LearnSession({
               if (next.type !== 'sync-world') flashRpgToast('Cannot do that yet')
             }
             else {
+              if (next.type === 'emote') {
+                const clip = harborRpgEmoteClip(next.id)
+                if (clip) worldApiRef.current?.playRpgPerform(clip)
+              } else if (next.type === 'perform') {
+                worldApiRef.current?.playRpgPerform(next.clip)
+              }
               pushRpgProgress(updateHarborRpg(result.bag))
               if (result.toast) flashRpgToast(result.toast)
               if (result.social) {

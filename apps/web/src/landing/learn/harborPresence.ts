@@ -55,6 +55,8 @@ export type HarborPosePacket = {
   rpgMountId?: string | null
   /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
   rpgCosmeticId?: string | null
+  /** HarborRPG only — UAL clip name while an outfit is performing. */
+  rpgEmote?: string | null
 }
 
 export type HarborChatPacket = {

@@ -3,6 +3,7 @@
  * Soft trust: presence + party + loot rolls + market + world tick + trade (no anti-cheat).
  */
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
+import { isHarborRpgAnimClip } from './harborRpgAnims'
 import type { HarborRpgZoneId } from './harborRpgData'
 import type { HarborRpgLootDrop } from './harborRpgCombat'
 import type { HarborRpgMarketListing } from './harborRpgProfessions'
@@ -77,6 +78,8 @@ export type HarborRpgPosePacket = {
   t: number
   activeMountId?: string | null
   equippedCosmetic?: string | null
+  /** UAL clip while a full outfit is performing (null = locomotion). */
+  emote?: string | null
 }
 
 export type HarborRpgRemotePlayer = HarborRpgPresenceState
@@ -169,6 +172,12 @@ function sanitizePose(raw: unknown): HarborRpgPosePacket | null {
         : o.equippedCosmetic === null
           ? null
           : undefined,
+    emote:
+      typeof o.emote === 'string' && isHarborRpgAnimClip(o.emote)
+        ? o.emote
+        : o.emote === null
+          ? null
+          : undefined,
   }
 }
 
@@ -228,6 +237,7 @@ export type HarborRpgPresenceSession = {
     zone: HarborRpgZoneId
     activeMountId?: string | null
     equippedCosmetic?: string | null
+    emote?: string | null
   }) => void
   broadcastParty: (party: HarborRpgPartyState | HarborRpgPartyInvite) => void
   broadcastLootRoll: (roll: HarborRpgLootRoll) => void
@@ -390,6 +400,8 @@ export function startHarborRpgPresence(opts: {
         t: Date.now(),
         activeMountId: pose.activeMountId ?? null,
         equippedCosmetic: pose.equippedCosmetic ?? null,
+        emote:
+          typeof pose.emote === 'string' && isHarborRpgAnimClip(pose.emote) ? pose.emote : null,
       }
       void channel.send({
         type: 'broadcast',

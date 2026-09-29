@@ -126,10 +126,15 @@ import {
   type HarborRpgMountId,
 } from './harborRpgMounts'
 import {
+  cancelHarborRpgCosmeticPerform,
   disposeHarborRpgCosmetic,
+  harborRpgCosmeticPerforming,
   loadHarborRpgCosmetic,
+  playHarborRpgCosmeticClip,
+  tickHarborRpgCosmetic,
   type HarborRpgCosmeticInstance,
 } from './harborRpgCosmeticRuntime'
+import { harborRpgAnimLoops, isHarborRpgAnimClip } from './harborRpgAnims'
 import {
   harborRpgCosmeticById,
   isHarborRpgCosmeticId,
@@ -343,6 +348,10 @@ export type HarborWorldHandle = {
   setRpgPartySize: (n: number) => void
   /** Push latest RPG bag into the combat sim (equip / shop). */
   setRpgBag: (bag: HarborRpgBag) => void
+  /** Play a UAL clip on the equipped full outfit (emote / perform / combat). */
+  playRpgPerform: (clip: string, force?: boolean) => void
+  /** Clip currently broadcasting to remotes, or null. */
+  getRpgPerformClip: () => string | null
   /** Soft Realtime: apply host monster snapshot (non-host clients). */
   applyRpgWorldSnapshot: (
     packet: import('./harborRpgWorldSync').HarborRpgWorldPacket,
@@ -4658,6 +4667,7 @@ export function createHarborWorld(
   let rpgCosmeticLive: HarborRpgCosmeticInstance | null = null
   let rpgCosmeticWantId: HarborRpgCosmeticId | null = null
   let rpgCosmeticLoadingId: HarborRpgCosmeticId | null = null
+  let rpgPerformClip: string | null = null
   const remoteRpgMounts = new Map<string, HarborRpgMountInstance>()
   const remoteRpgMountLoading = new Map<string, string>()
   const remoteRpgCosmetics = new Map<string, HarborRpgCosmeticInstance>()
@@ -5304,6 +5314,9 @@ export function createHarborWorld(
       root.userData.rpgCosmeticId = pose.rpgCosmeticId
       syncRemoteRpgCosmetic(pose.userId, pose.rpgCosmeticId ?? null)
     }
+    if (pose.rpgEmote !== undefined) {
+      root.userData.rpgEmote = pose.rpgEmote
+    }
   }
 
 
@@ -5474,6 +5487,14 @@ export function createHarborWorld(
         if (travelMode === 'foot' && !sitting && !rpgMountLive) {
           scoutWalk.visible = false
         }
+        if (rpgPerformClip) {
+          playHarborRpgCosmeticClip(
+            inst,
+            rpgPerformClip,
+            harborRpgAnimLoops(rpgPerformClip),
+            rpgPerformClip === 'Death01',
+          )
+        }
       } else {
         // Attach layers on scout — keep scout visible
         scoutWalk.add(inst.root)
@@ -5482,6 +5503,16 @@ export function createHarborWorld(
         }
       }
     })
+  }
+
+  const startRpgPerform = (clip: string, force = false) => {
+    if (!isHarborRpgAnimClip(clip)) return
+    const loop = harborRpgAnimLoops(clip)
+    if (rpgCosmeticLive?.mixer) {
+      const ok = playHarborRpgCosmeticClip(rpgCosmeticLive, clip, loop, force || clip === 'Death01')
+      if (!ok) return
+    }
+    rpgPerformClip = clip
   }
 
   const syncRpgMountFromBag = () => {
@@ -6108,6 +6139,10 @@ export function createHarborWorld(
             cos.root.position.set(footX, gyCos, footZ)
             cos.root.rotation.y = scoutWalk.rotation.y
           }
+          const distCos = Math.hypot(moveTarget.x - footX, moveTarget.z - footZ)
+          const movingCos = !sitting && !mountedNow && distCos >= HARBOR_TAP_ARRIVE
+          tickHarborRpgCosmetic(cos, dt, movingCos, movingCos && distCos > 4.5)
+          if (rpgPerformClip && !harborRpgCosmeticPerforming(cos)) rpgPerformClip = null
         } else {
           // Attach stays on scoutWalk; hide with scout when mounted/sitting
           cos.root.visible = scoutWalk.visible
@@ -6296,13 +6331,13 @@ export function createHarborWorld(
       // HarborRPG: keep remote mounts under remotes (sit height via saddleY)
       if (isRpg) {
         const mid = root.userData.rpgMountId as string | null | undefined
+        const moving =
+          Math.hypot(
+            (root.userData.poseTargetX ?? root.position.x) - root.position.x,
+            (root.userData.poseTargetZ ?? root.position.z) - root.position.z,
+          ) > 0.08
         const mount = remoteRpgMounts.get(String(root.userData.remoteUserId ?? ''))
         if (mount && mid) {
-          const moving =
-            Math.hypot(
-              (root.userData.poseTargetX ?? root.position.x) - root.position.x,
-              (root.userData.poseTargetZ ?? root.position.z) - root.position.z,
-            ) > 0.08
           mount.root.position.set(root.position.x, root.position.y, root.position.z)
           mount.root.rotation.y = root.rotation.y
           tickHarborRpgMount(mount, dt, moving, false)
@@ -6321,6 +6356,20 @@ export function createHarborWorld(
               root.visible = false
               cos.root.position.set(root.position.x, root.position.y, root.position.z)
               cos.root.rotation.y = root.rotation.y
+            }
+            if (cos.mixer) {
+              const emote =
+                typeof root.userData.rpgEmote === 'string' ? root.userData.rpgEmote : null
+              const emoteLoop = emote ? harborRpgAnimLoops(emote) : false
+              if (emote && isHarborRpgAnimClip(emote) && (!moving || !emoteLoop)) {
+                playHarborRpgCosmeticClip(cos, emote, emoteLoop, emote === 'Death01')
+              } else if (
+                cos.mode === 'perform' &&
+                (cos.performLoop || cos.performClip === 'Death01' || !emote)
+              ) {
+                cancelHarborRpgCosmeticPerform(cos)
+              }
+              tickHarborRpgCosmetic(cos, dt, moving, false)
             }
           } else {
             cos.root.visible = root.visible
@@ -6485,12 +6534,15 @@ export function createHarborWorld(
             }
           }
           options.onRpgPlayerDown?.({ zone: ev.zone, instance: ev.instance, recap: ev.recap })
+          // Death plays at the shrine after the snap — it does not delay respawn.
+          startRpgPerform('Death01', true)
         }
         if (ev.type === 'kill') {
           flash = 'ok'
           flashUntil = now + 450
         }
         if (ev.type === 'player-hit') {
+          startRpgPerform('Sword_Attack')
           const mob = rpgMonsters.find((m) => m.id === ev.monsterId)
           if (mob) {
             spawnRpgFloat(String(ev.damage), ev.crit ? '#ffe08a' : '#f4f7fb', mob.x, 1.6, mob.z, now)
@@ -6501,6 +6553,7 @@ export function createHarborWorld(
           }
         }
         if (ev.type === 'monster-hit') {
+          startRpgPerform('Hit_Chest')
           spawnRpgFloat(String(ev.damage), '#ff8a7a', footX, 1.5, footZ, now)
         }
         if (ev.type === 'heal') {
@@ -6947,6 +7000,13 @@ if (o.userData.cigaretteSmoke && !reduced) {
     },
     setRpgPartySize(n) {
       options.rpgPartySize = Math.max(1, Math.floor(n))
+    },
+    playRpgPerform(clip, force) {
+      if (!isRpg || disposed) return
+      startRpgPerform(clip, Boolean(force))
+    },
+    getRpgPerformClip() {
+      return rpgPerformClip
     },
     setRpgBag(bag) {
       rpgBagLive = sanitizeHarborRpgBag(bag)
