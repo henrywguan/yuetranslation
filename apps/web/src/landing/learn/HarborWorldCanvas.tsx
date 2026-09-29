@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import type { HarborLook } from './harborGear'
 import type { HarborAppearance, HarborGender } from './harborAppearance'
 import type { HarborRemotePlayer } from './harborPresence'
+import type { HarborRpgZoneId } from './harborRpgData'
+import type { HarborRpgBag } from './harborRpgProgress'
 import {
   createHarborWorld,
   type HarborDialogueTap,
@@ -20,6 +22,30 @@ type Props = {
   gender?: HarborGender
   appearance?: HarborAppearance
   realm?: HarborRealmId
+  rpgZone?: HarborRpgZoneId
+  rpgBag?: HarborRpgBag
+  onRpgBagChange?: (bag: HarborRpgBag) => void
+  localUserId?: string
+  rpgPartySize?: number
+  onRpgContestedLoot?: (drop: {
+    monsterId: string
+    loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
+  }) => void
+  onRpgWorldTick?: (packet: import('./harborRpgWorldSync').HarborRpgWorldPacket) => void
+  rpgZonePeerIds?: string[]
+  onRpgBossPhase?: (ev: {
+    monsterId: string
+    kind: string
+    phase: number
+    name: { en: string; zh: string }
+    toast?: { en: string; zh: string }
+  }) => void
+  onRpgPlayerDown?: (ev: {
+    zone: HarborRpgZoneId
+    instance: boolean
+    recap?: { monsterId: string; damage: number }[]
+  }) => void
+  onRpgPartyHeal?: (ev: { amount: number; zone: HarborRpgZoneId }) => void
   /** Pause simulation (chart / heavy overlays) — raf stays alive for a cheap resume. */
   paused?: boolean
   onVisitable?: (id: HarborVisitableId | null) => void
@@ -48,6 +74,17 @@ export function HarborWorldCanvas({
   gender,
   appearance,
   realm = 'river',
+  rpgZone = 'meadow',
+  rpgBag,
+  onRpgBagChange,
+  localUserId,
+  rpgPartySize,
+  onRpgContestedLoot,
+  onRpgWorldTick,
+  rpgZonePeerIds,
+  onRpgBossPhase,
+  onRpgPlayerDown,
+  onRpgPartyHeal,
   paused = false,
   onVisitable,
   onDialogueNpc,
@@ -66,7 +103,24 @@ export function HarborWorldCanvas({
   onDialogueNpcRef.current = onDialogueNpc
   const onRemoteSelectRef = useRef(onRemotePlayerSelect)
   onRemoteSelectRef.current = onRemotePlayerSelect
-  // Kept fresh so realm remount (river ↔ guan) can re-apply nametag / remotes / progress.
+  const onRpgBagChangeRef = useRef(onRpgBagChange)
+  onRpgBagChangeRef.current = onRpgBagChange
+  const onRpgContestedLootRef = useRef(onRpgContestedLoot)
+  onRpgContestedLootRef.current = onRpgContestedLoot
+  const onRpgWorldTickRef = useRef(onRpgWorldTick)
+  onRpgWorldTickRef.current = onRpgWorldTick
+  const onRpgBossPhaseRef = useRef(onRpgBossPhase)
+  onRpgBossPhaseRef.current = onRpgBossPhase
+  const onRpgPlayerDownRef = useRef(onRpgPlayerDown)
+  onRpgPlayerDownRef.current = onRpgPlayerDown
+  const onRpgPartyHealRef = useRef(onRpgPartyHeal)
+  onRpgPartyHealRef.current = onRpgPartyHeal
+  const localUserIdRef = useRef(localUserId)
+  localUserIdRef.current = localUserId
+  const rpgPartySizeRef = useRef(rpgPartySize)
+  rpgPartySizeRef.current = rpgPartySize
+  const rpgZonePeerIdsRef = useRef(rpgZonePeerIds)
+  rpgZonePeerIdsRef.current = rpgZonePeerIds
   const localUsernameRef = useRef(localUsername)
   localUsernameRef.current = localUsername
   const nametagFrameRef = useRef(nametagFrame)
@@ -77,6 +131,8 @@ export function HarborWorldCanvas({
   progressRef.current = progress
   const pausedRef = useRef(paused)
   pausedRef.current = paused
+  const rpgBagRef = useRef(rpgBag)
+  rpgBagRef.current = rpgBag
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -90,13 +146,23 @@ export function HarborWorldCanvas({
         gender,
         appearance,
         realm,
+        rpgZone,
+        rpgBag: rpgBagRef.current,
         nametagFrame: nametagFrameRef.current,
         onVisitable: (id) => onVisitableRef.current?.(id),
         onDialogueNpc: (tap) => onDialogueNpcRef.current?.(tap),
         onRemotePlayerSelect: (userId) => onRemoteSelectRef.current?.(userId),
+        onRpgBagChange: (bag) => onRpgBagChangeRef.current?.(bag),
+        localUserId: localUserIdRef.current,
+        rpgPartySize: rpgPartySizeRef.current ?? 1,
+        onRpgContestedLoot: (drop) => onRpgContestedLootRef.current?.(drop),
+        onRpgWorldTick: (packet) => onRpgWorldTickRef.current?.(packet),
+        rpgZonePeerIds: rpgZonePeerIdsRef.current,
+        onRpgBossPhase: (ev) => onRpgBossPhaseRef.current?.(ev),
+        onRpgPlayerDown: (ev) => onRpgPlayerDownRef.current?.(ev),
+        onRpgPartyHeal: (ev) => onRpgPartyHealRef.current?.(ev),
       })
     } catch (err) {
-      // Uncaught boot used to unmount the immersive page to a black void.
       console.error('[harbor] WebGL boot failed', err)
       canvas.dataset.harborBootFailed = '1'
       return
@@ -104,7 +170,6 @@ export function HarborWorldCanvas({
     worldRef.current = world
     if (worldApiRef) worldApiRef.current = world
 
-    // Realm remount must restore identity — otherwise nametag falls back to "sailor".
     const name = localUsernameRef.current?.trim()
     const frame = nametagFrameRef.current
     if (name) world.setLocalUsername(name, frame)
@@ -122,14 +187,12 @@ export function HarborWorldCanvas({
       })
     }
     window.addEventListener('resize', scheduleResize)
-    // Stage height changes when the OSRS chat strip docks — observe the parent box.
     const box = canvas.parentElement
     const ro =
       typeof ResizeObserver !== 'undefined' && box
         ? new ResizeObserver(scheduleResize)
         : null
     ro?.observe(box ?? canvas)
-    // Layout may settle after mount (fullscreen HUD / strip toggle).
     requestAnimationFrame(() => world.resize())
 
     return () => {
@@ -140,10 +203,16 @@ export function HarborWorldCanvas({
       worldRef.current = null
       if (worldApiRef) worldApiRef.current = null
     }
-    // Recreate when realm changes (river / bamboo / Guan Harbor).
-    // Hue / motion / flash / look still sync via setters between recreations.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realm])
+  }, [realm, rpgZone])
+
+  useEffect(() => {
+    if (rpgBag) worldRef.current?.setRpgBag(rpgBag)
+  }, [rpgBag])
+
+  useEffect(() => {
+    if (rpgZonePeerIds) worldRef.current?.setRpgZonePeerIds(rpgZonePeerIds)
+  }, [rpgZonePeerIds])
 
   useEffect(() => {
     worldRef.current?.setProgress(progress)
@@ -178,11 +247,9 @@ export function HarborWorldCanvas({
   }, [remotePlayers])
 
   useEffect(() => {
-    if (localUsername) {
-      worldRef.current?.setLocalUsername(localUsername, nametagFrame)
-    } else if (nametagFrame) {
-      worldRef.current?.setNametagFrame(nametagFrame)
-    }
+    const name = localUsername?.trim()
+    if (name) worldRef.current?.setLocalUsername(name, nametagFrame)
+    else if (nametagFrame) worldRef.current?.setNametagFrame(nametagFrame)
   }, [localUsername, nametagFrame])
 
   return (

@@ -69,8 +69,8 @@ export type HarborCampaignId =
   | 'life10'
   | 'life11'
 
-/** World dressing — river harbor, Lingnan bamboo academy, or Guan tropical paradise. */
-export type HarborRealmId = 'river' | 'bamboo' | 'guan'
+/** World dressing — river harbor, Lingnan bamboo academy, Guan paradise, or HarborRPG. */
+export type HarborRealmId = 'river' | 'bamboo' | 'guan' | 'rpg'
 
 export type HarborLevel = {
   id: string

@@ -57,6 +57,55 @@ import { preloadHarborV2Assets } from './harborV2Assets'
 import { preloadHarborFishSfx } from './harborFishingSfx'
 import { HARBOR_FISH_CATCH_MS, HARBOR_FISH_RESOLVE_MS } from './harborFishingAnim'
 import { GUAN_CAPE_LOOM, GUAN_CAPE_TRIMMER_NAME, GUAN_HARBOR_META } from './harborGuanRealm'
+import {
+  HARBOR_RPG_META,
+} from './harborRpgRealm'
+import {
+  HARBOR_RPG_PORTALS,
+  HARBOR_RPG_ZONE_META,
+  type HarborRpgQuestId,
+  type HarborRpgZoneId,
+} from './harborRpgData'
+import { HarborRpgPanel } from './HarborRpgPanel'
+import { HarborRpgWiki } from './HarborRpgWiki'
+import { awardRpgContestedLoot } from './harborRpgCombat'
+import { HarborRpgJoin } from './HarborRpgJoin'
+import { harborRpgVisualBodyId, harborRpgWornLayerIds } from './harborRpgLooks'
+import { emptyHarborRpgBag, sanitizeHarborRpgBag } from './harborRpgProgress'
+import { harborRpgEmoteClip } from './harborRpgAnims'
+import { applyRpgMedium } from './harborRpgMedium'
+import {
+  rpgZonePeerIds,
+  startHarborRpgPresence,
+  type HarborRpgPresenceSession,
+  type HarborRpgRemotePlayer,
+} from './harborRpgPresence'
+import {
+  playHarborRpgBossPhase,
+  playHarborRpgDungeonEnter,
+  playHarborRpgPartyInvite,
+  playHarborRpgPlayerDown,
+} from './harborRpgSfx'
+import {
+  harborRpgTitleLabel,
+  setHarborRpgActiveTitle,
+  syncHarborRpgAchievementTitles,
+} from './harborRpgAchievements'
+import { HARBOR_DEFAULT_APPEARANCE } from './harborAppearance'
+import type {
+  HarborRpgPartyInvite,
+  HarborRpgPartyState,
+} from './harborRpgSocial'
+import { acceptRpgPartyInvite, createRpgParty, inviteToRpgParty } from './harborRpgSocial'
+import {
+  applyRpgTradeComplete,
+  canPutInTrade,
+  createRpgTradeId,
+  emptyRpgTradeSession,
+  HARBOR_RPG_TRADE_SLOTS,
+  type HarborRpgTradeOffer,
+  type HarborRpgTradeSession,
+} from './harborRpgTrade'
 import { HarborFishingPanel } from './HarborFishingPanel'
 import {
   emptyHarborFishingBag,
@@ -75,6 +124,7 @@ import { playHarborMiss, preloadHarborMissSfx, stopHarborMiss } from './harborSf
 import { playHarborScrollClose, playHarborScrollOpen, stopHarborScrollSfx } from './harborScrollSfx'
 import {
   harborGearById,
+  HARBOR_DEFAULT_LOOK,
   type HarborGearId,
   type HarborGearSlot,
 } from './harborGear'
@@ -131,6 +181,32 @@ import {
   visitSaveShack,
   withdrawHarborGear,
   updateHarborFishing,
+  updateHarborRpg,
+  claimHarborRpgShrine,
+  createHarborRpgCharacterSlot,
+  setHarborRpgActiveCharacter,
+  setHarborRpgZone,
+  setHarborRpgInstanceDifficulty,
+  buyHarborRpgMount,
+  setHarborRpgActiveMount,
+  buyHarborRpgCosmetic,
+  setHarborRpgEquippedCosmetic,
+  equipHarborRpgItem,
+  buyHarborRpgVendorItem,
+  sellHarborRpgItem,
+  acceptHarborRpgQuest,
+  claimHarborRpgQuest,
+  hireHarborRpgCompanion,
+  gatherHarborRpgNode,
+  craftHarborRpgRecipe,
+  listHarborRpgMarketItem,
+  buyHarborRpgMarketListing,
+  depositHarborRpgBank,
+  withdrawHarborRpgBank,
+  selectHarborRpgClassPick,
+  selectHarborRpgSpecPick,
+  spendHarborRpgTalentPoint,
+  prestigeHarborRpgClassPick,
   purchaseHarborBeautySku,
   purchaseHarborBeautyForAppearance,
   equipHarborShowoff,
@@ -183,8 +259,58 @@ export function LearnSession({
   const [invOpen, setInvOpen] = useState(false)
   const [codexOpen, setCodexOpen] = useState(false)
   const [teleportOpen, setTeleportOpen] = useState(false)
-  /** Free-sail paradise pocket — overrides campaign realm until cast off / chapter teleport. */
+  /** Free-sail paradise / HarborRPG pocket — overrides campaign realm until cast off / chapter teleport. */
   const [realmOverride, setRealmOverride] = useState<HarborRealmId | null>(null)
+  /** HarborRPG zone within the separate adventure game. */
+  const [rpgZone, setRpgZone] = useState<HarborRpgZoneId>('meadow')
+  /** Nearest HarborRPG interact (polled while in rpg). */
+  const [rpgInteract, setRpgInteract] = useState<string | null>(null)
+  const [rpgWikiOpen, setRpgWikiOpen] = useState(false)
+  const [rpgWikiPage, setRpgWikiPage] = useState<
+    import('./harborRpgWiki').HarborRpgWikiPage | undefined
+  >(undefined)
+  const [rpgCombatHud, setRpgCombatHud] = useState<{
+    hp: number
+    maxHp: number
+    mp?: number
+    maxMp?: number
+    zone: HarborRpgZoneId
+    targetName: string | null
+    targetHp: number
+    targetMaxHp: number
+    gcd?: number
+    abilityCds?: Partial<Record<string, number>>
+    guardBuffSec?: number
+  } | null>(null)
+  const [rpgToast, setRpgToast] = useState<string | null>(null)
+  const [rpgPartySize, setRpgPartySize] = useState(1)
+  const [rpgLootPrompt, setRpgLootPrompt] = useState<{
+    monsterId: string
+    loot: { id: import('./harborRpgData').HarborRpgItemId; qty: number }[]
+  } | null>(null)
+  const [rpgRemotes, setRpgRemotes] = useState<HarborRpgRemotePlayer[]>([])
+  const [rpgZonePeers, setRpgZonePeers] = useState<string[]>([])
+  const [rpgTrade, setRpgTrade] = useState<HarborRpgTradeSession | null>(null)
+  const [rpgPartyLive, setRpgPartyLive] = useState<HarborRpgPartyState | null>(null)
+  const [rpgEntered, setRpgEntered] = useState(false)
+  const rpgPartyLiveRef = useRef(rpgPartyLive)
+  rpgPartyLiveRef.current = rpgPartyLive
+  const rpgVisualBodyRef = useRef('rpg-outfit-peasant-m')
+  const rpgLayerRef = useRef<string[]>([])
+  const rpgActiveChar = progressSnap.rpg?.characters.find(
+    (c) => c.id === progressSnap.rpg?.activeCharacterId,
+  )
+  const rpgBodyGender =
+    rpgActiveChar?.gender ?? (progressSnap.gender === 'female' ? 'female' : 'male')
+  rpgVisualBodyRef.current = harborRpgVisualBodyId(progressSnap.rpg?.equippedLooks, rpgBodyGender)
+  rpgLayerRef.current = harborRpgWornLayerIds(progressSnap.rpg?.equippedLooks)
+  const [rpgPartyInvite, setRpgPartyInvite] = useState<HarborRpgPartyInvite | null>(null)
+  const rpgFinderLookingRef = useRef<{
+    lookingRole: import('./harborRpgFinder').HarborRpgFinderRole | null
+    lookingDungeon: import('./harborRpgFinder').HarborRpgFinderDungeon | null
+  }>({ lookingRole: null, lookingDungeon: null })
+  const rpgPresenceRef = useRef<HarborRpgPresenceSession | null>(null)
+  const handleRpgTradeOfferRef = useRef<((offer: HarborRpgTradeOffer) => void) | null>(null)
   /** Fullscreen wuxia world map (minimap globe). */
   const [worldMapOpen, setWorldMapOpen] = useState(false)
   const [bankMsg, setBankMsg] = useState<string | null>(null)
@@ -349,6 +475,252 @@ export function LearnSession({
     }
   }, [entitlement?.prefs?.username, entitlement?.loggedIn])
 
+  // HarborRPG Realtime — shared world tick + trade (separate channel)
+  useEffect(() => {
+    if (realmOverride !== 'rpg' || !rpgEntered || !entitlement?.loggedIn) {
+      const s = rpgPresenceRef.current
+      rpgPresenceRef.current = null
+      void s?.stop()
+      setRpgRemotes([])
+      setRpgZonePeers([localUserIdRef.current ?? 'local'])
+      return
+    }
+    let cancelled = false
+    let poseTimer: number | undefined
+    let trackTimer: number | undefined
+    const boot = async () => {
+      const session = await getSession()
+      if (!session?.user?.id || cancelled) return
+      const supabase = getSupabaseClient()
+      if (!supabase || cancelled) return
+      const userId = session.user.id
+      localUserIdRef.current = userId
+      const username =
+        harborDisplayUsername(entitlement?.prefs?.username, userId) ||
+        progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)
+          ?.name ||
+        'Adventurer'
+      const sessionPresence = startHarborRpgPresence({
+        supabase,
+        userId,
+        username,
+        onRemotes: (remotes) => {
+          setRpgRemotes(remotes)
+          const zone = progressSnap.rpg?.zone ?? rpgZone
+          const peers = rpgZonePeerIds(userId, remotes, zone)
+          setRpgZonePeers(peers)
+          worldApiRef.current?.setRpgZonePeerIds(peers)
+          // Render remotes in the RPG pocket as foot sailors
+          const asWorld = remotes
+            .filter((r) => r.zone === zone)
+            .map((r) => ({
+              userId: r.userId,
+              username: r.username,
+              x: r.x,
+              z: r.z,
+              yaw: r.yaw,
+              mode: 'foot' as const,
+              look: HARBOR_DEFAULT_LOOK,
+              gender: 'male' as const,
+              appearance: HARBOR_DEFAULT_APPEARANCE,
+              nametagFrame: 'tag-plain',
+              updatedAt: r.updatedAt,
+              rpgMountId: r.activeMountId,
+              rpgCosmeticId: r.equippedCosmetic,
+              rpgCosmeticLayers: r.layers,
+            }))
+          worldApiRef.current?.setRemotePlayers(asWorld)
+        },
+        onPose: (pose) => {
+          worldApiRef.current?.applyRemotePose({
+            userId: pose.userId,
+            x: pose.x,
+            z: pose.z,
+            yaw: pose.yaw,
+            mode: 'foot',
+            t: pose.t,
+            rpgMountId: pose.activeMountId ?? null,
+            rpgCosmeticId: pose.equippedCosmetic ?? null,
+            rpgCosmeticLayers: pose.layers,
+            rpgEmote: pose.emote ?? null,
+          })
+        },
+        onWorld: (packet) => {
+          worldApiRef.current?.applyRpgWorldSnapshot(packet)
+        },
+        onParty: (msg) => {
+          if ('members' in msg) {
+            setRpgPartyLive(msg)
+            setRpgPartySize(Math.max(1, msg.members.length))
+            worldApiRef.current?.setRpgPartySize(Math.max(1, msg.members.length))
+            return
+          }
+          if (msg.toId === userId) {
+            setRpgPartyInvite(msg)
+            playHarborRpgPartyInvite()
+            flashRpgToast(`${msg.fromName} invited you to party ${msg.code}`)
+          }
+        },
+        onTrade: (offer) => {
+          handleRpgTradeOfferRef.current?.(offer)
+        },
+        onSocial: (packet) => {
+          if (packet.kind === 'party-heal') {
+            const selfId = localUserIdRef.current ?? 'local'
+            const party = rpgPartyLiveRef.current
+            const zone = progressSnap.rpg?.zone ?? rpgZone
+            if (packet.fromId === selfId) return
+            if (!party || packet.zone !== zone) return
+            if (!party.members.some((m) => m.userId === packet.fromId)) return
+            if (!party.members.some((m) => m.userId === selfId)) return
+            worldApiRef.current?.applyRpgHeal(packet.damage ?? 1)
+            return
+          }
+          const bag = sanitizeHarborRpgBag(progressSnap.rpg)
+          const charName =
+            bag.characters.find((c) => c.id === bag.activeCharacterId)?.name ?? ''
+          const names = new Set([username, charName].filter(Boolean))
+          if (packet.kind === 'pledge') {
+            if (!bag.fleetName || bag.fleetName !== packet.to) return
+            const result = applyRpgMedium(bag, {
+              type: 'receive-pledge',
+              fleet: packet.to,
+              pledge: {
+                id: packet.id || `pl-${Date.now().toString(36)}`,
+                text: packet.text || packet.body || 'Pledge',
+                by: packet.from,
+                t: Date.now(),
+              },
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (!names.has(packet.to)) return
+          if (packet.kind === 'mail' && packet.mail) {
+            const result = applyRpgMedium(bag, {
+              type: 'receive-mail',
+              mail: { ...packet.mail, from: packet.from || packet.mail.from },
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'whisper' && packet.body) {
+            const result = applyRpgMedium(bag, {
+              type: 'receive-whisper',
+              whisper: {
+                id: packet.id || `wh-${Date.now().toString(36)}`,
+                from: packet.from,
+                body: packet.body,
+                t: Date.now(),
+                read: false,
+              },
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'duel-challenge') {
+            const result = applyRpgMedium(bag, { type: 'receive-duel', from: packet.from })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'duel-accept') {
+            const result = applyRpgMedium(bag, { type: 'receive-duel-accept', from: packet.from })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'duel-hit') {
+            const result = applyRpgMedium(bag, {
+              type: 'receive-duel-hit',
+              damage: packet.damage ?? 8,
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+          }
+        },
+        onMarket: (listings) => {
+          const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+          pushRpgProgress(updateHarborRpg({ ...bag, market: listings }))
+        },
+      })
+      if (cancelled) {
+        void sessionPresence.stop()
+        return
+      }
+      rpgPresenceRef.current = sessionPresence
+
+      const push = () => {
+        const pose = worldApiRef.current?.getLocalPose()
+        if (!pose) return
+        const zone = progressSnap.rpg?.zone ?? rpgZone
+        const lv = Math.max(1, Math.floor(Math.sqrt((progressSnap.rpg?.xp ?? 0) / 25)) + 1)
+        void sessionPresence.track({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          zone,
+          level: lv,
+          partyId: rpgPartyLive?.id ?? null,
+          username,
+          lookingRole: rpgFinderLookingRef.current.lookingRole,
+          lookingDungeon: rpgFinderLookingRef.current.lookingDungeon,
+          activeMountId: progressSnap.rpg?.activeMountId ?? null,
+          equippedCosmetic: rpgVisualBodyRef.current,
+          layers: rpgLayerRef.current,
+          afk: progressSnap.rpg?.afk === true,
+          fleetName: progressSnap.rpg?.fleetName ?? null,
+          activeTitleId: progressSnap.rpg?.activeTitleId ?? null,
+          weaponId: progressSnap.rpg?.gear.weapon ?? null,
+        })
+        sessionPresence.broadcastPose({
+          x: pose.x,
+          z: pose.z,
+          yaw: pose.yaw,
+          zone,
+          activeMountId: progressSnap.rpg?.activeMountId ?? null,
+          equippedCosmetic: rpgVisualBodyRef.current,
+          layers: rpgLayerRef.current,
+          emote: worldApiRef.current?.getRpgPerformClip() ?? null,
+        })
+      }
+      push()
+      poseTimer = window.setInterval(push, 200)
+      trackTimer = window.setInterval(push, 2000)
+    }
+    void boot()
+    return () => {
+      cancelled = true
+      if (poseTimer) window.clearInterval(poseTimer)
+      if (trackTimer) window.clearInterval(trackTimer)
+      const s = rpgPresenceRef.current
+      rpgPresenceRef.current = null
+      void s?.stop()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realmOverride, rpgEntered, entitlement?.loggedIn, entitlement?.prefs?.username, rpgZone])
+
+  useEffect(() => {
+    if (realmOverride !== 'rpg') setRpgEntered(false)
+  }, [realmOverride])
+
+  useEffect(() => {
+    if (realmOverride !== 'rpg' || !rpgEntered) return
+    const bag = progressSnap.rpg
+    const char = bag?.characters.find((c) => c.id === bag.activeCharacterId)
+    if (!char) return
+    worldApiRef.current?.setCharacter({ gender: char.gender, appearance: char.appearance })
+  }, [realmOverride, rpgEntered, progressSnap.rpg])
+
   // Top-left minimap — poll local pose without re-rendering the WebGL tree
   useEffect(() => {
     let raf = 0
@@ -437,6 +809,179 @@ export function LearnSession({
     const snap = () => worldApiRef.current?.snapToGuan(p.x, p.z)
     requestAnimationFrame(() => requestAnimationFrame(snap))
   }, [realmOverride])
+
+  /** Poll HarborRPG interact + combat HUD while in the adventure game. */
+  useEffect(() => {
+    if (realmOverride !== 'rpg') {
+      setRpgInteract(null)
+      setRpgCombatHud(null)
+      return
+    }
+    let raf = 0
+    const tick = () => {
+      setRpgInteract(worldApiRef.current?.getRpgInteract() ?? null)
+      setRpgCombatHud(worldApiRef.current?.getRpgCombatHud() ?? null)
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [realmOverride])
+
+  const flashRpgToast = useCallback((msg: string) => {
+    setRpgToast(msg)
+    window.setTimeout(() => setRpgToast(null), 2200)
+  }, [])
+
+  const pushRpgProgress = useCallback(
+    (next: HarborProgress) => {
+      let bag = next.rpg
+      if (bag) {
+        const synced = syncHarborRpgAchievementTitles(bag)
+        if (synced.newlyUnlocked.length > 0) {
+          bag = synced.bag
+          next = updateHarborRpg(bag)
+          const labels = synced.newlyUnlocked
+            .map((id) => harborRpgTitleLabel(id)?.en ?? id)
+            .join(' · ')
+          flashRpgToast(`Deed unlocked: ${labels}`)
+        }
+      }
+      setProgressSnap(next)
+      onProgress(next)
+      if (bag) worldApiRef.current?.setRpgBag(bag)
+    },
+    [onProgress, flashRpgToast],
+  )
+
+  const handleRpgTradeOffer = useCallback(
+    (offer: HarborRpgTradeOffer) => {
+      const selfId = localUserIdRef.current ?? 'local'
+      if (offer.toId !== selfId && offer.fromId !== selfId) return
+      if (offer.type === 'cancel') {
+        setRpgTrade((t) => (t && t.tradeId === offer.tradeId ? null : t))
+        flashRpgToast('Trade cancelled')
+        return
+      }
+      if (offer.type === 'offer') {
+        setRpgTrade((prev) => {
+          if (prev && prev.tradeId === offer.tradeId) {
+            return {
+              ...prev,
+              peerGold: offer.gold,
+              peerItems: offer.items,
+              peerLocked: offer.locked,
+              peerName: offer.fromName,
+            }
+          }
+          if (offer.fromId === selfId) return prev
+          return {
+            ...emptyRpgTradeSession(offer.fromId, offer.fromName, offer.tradeId),
+            peerGold: offer.gold,
+            peerItems: offer.items,
+            peerLocked: offer.locked,
+          }
+        })
+        return
+      }
+      if (offer.type === 'accept' || offer.type === 'complete') {
+        setRpgTrade((prev) => {
+          if (!prev || prev.tradeId !== offer.tradeId) return prev
+          const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+          const next = applyRpgTradeComplete(
+            bag,
+            prev.selfGold,
+            prev.selfItems,
+            prev.peerGold,
+            prev.peerItems,
+          )
+          if (next) {
+            pushRpgProgress(updateHarborRpg(next))
+            flashRpgToast('Trade complete')
+          } else flashRpgToast('Trade failed — check bag')
+          return null
+        })
+      }
+    },
+    [flashRpgToast, progressSnap.rpg, pushRpgProgress],
+  )
+  handleRpgTradeOfferRef.current = handleRpgTradeOffer
+
+  const enterRpgZone = useCallback(
+    (zone: HarborRpgZoneId) => {
+      setRpgZone(zone)
+      pushRpgProgress(setHarborRpgZone(zone))
+      const meta = HARBOR_RPG_ZONE_META[zone]
+      flashRpgToast(`Entered ${meta.en}`)
+      if (meta.instance) playHarborRpgDungeonEnter()
+    },
+    [pushRpgProgress, flashRpgToast],
+  )
+
+  const onRpgInteract = useCallback(() => {
+    const id = worldApiRef.current?.getRpgInteract() ?? rpgInteract
+    if (!id) return
+    playHarborUiClick()
+    if (id === 'rpg-return') {
+      playHarborCastOff()
+      setRealmOverride(null)
+      startHarborBgm('river')
+      setRpgInteract(null)
+      setVisitable(null)
+      return
+    }
+    if (id === 'rpg-shrine') {
+      pushRpgProgress(claimHarborRpgShrine())
+      flashRpgToast('Shrine soft XP claimed')
+      return
+    }
+    const portal = HARBOR_RPG_PORTALS.find((p) => p.id === id)
+    if (portal) {
+      playHarborTeleport()
+      enterRpgZone(portal.to)
+      return
+    }
+    if (id === 'rpg-vendor' || id === 'rpg-quest-board' || id === 'rpg-finder') {
+      flashRpgToast(
+        id === 'rpg-vendor'
+          ? 'Outfitter — open Bag tab'
+          : id === 'rpg-quest-board'
+            ? 'Quest board — open Quests tab'
+            : 'Party finder — open Party tab',
+      )
+      return
+    }
+    if (id === 'rpg-market') {
+      flashRpgToast('World Market — open Market tab')
+      return
+    }
+    if (id === 'rpg-craft') {
+      flashRpgToast('Craft Bench — open Craft tab')
+      return
+    }
+    if (id === 'rpg-bank') {
+      flashRpgToast('River Bank — open Bag · Bank')
+      return
+    }
+    if (id === 'rpg-stable') {
+      flashRpgToast('Ferry Stable — open Stable tab')
+      return
+    }
+    if (id.startsWith('node-')) {
+      const next = gatherHarborRpgNode(id)
+      if ('error' in next) flashRpgToast(next.error)
+      else {
+        pushRpgProgress(next)
+        flashRpgToast('Gathered node')
+      }
+    }
+  }, [rpgInteract, pushRpgProgress, flashRpgToast, enterRpgZone])
+
+  const onRpgBagChange = useCallback(
+    (bag: import('./harborRpgProgress').HarborRpgBag) => {
+      pushRpgProgress(updateHarborRpg(bag))
+    },
+    [pushRpgProgress],
+  )
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -1043,7 +1588,7 @@ export function LearnSession({
   return (
     <div
       ref={playRootRef}
-      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}${invOpen ? ' is-bag-open' : ''}`}
+      className={`hq-play hq-play--immersive${talking ? ' is-talking' : ' is-exploring'}${invOpen ? ' is-bag-open' : ''}${realmOverride === 'rpg' ? ' is-rpg' : ''}`}
       data-flash={flash ?? undefined}
     >
       <div className="hq-play-stage">
@@ -1058,6 +1603,51 @@ export function LearnSession({
           gender={progressSnap.gender}
           appearance={progressSnap.appearance}
           realmOverride={realmOverride}
+          rpgZone={rpgZone}
+          rpgBag={progressSnap.rpg}
+          onRpgBagChange={onRpgBagChange}
+          localUserId={localUserIdRef.current ?? undefined}
+          rpgPartySize={rpgPartySize}
+          onRpgContestedLoot={(drop) => {
+            setRpgLootPrompt(drop)
+            flashRpgToast('Contested loot — Need / Greed')
+          }}
+          onRpgWorldTick={(packet) => {
+            rpgPresenceRef.current?.broadcastWorld(packet)
+          }}
+          rpgZonePeerIds={rpgZonePeers}
+          onRpgBossPhase={(ev) => {
+            playHarborRpgBossPhase()
+            flashRpgToast(ev.toast?.en ?? `${ev.name.en} (phase ${ev.phase + 1})`)
+          }}
+          onRpgPartyHeal={(ev) => {
+            const party = rpgPartyLive
+            const selfId = localUserIdRef.current ?? 'local'
+            if (!party || party.members.length < 2) return
+            if (!party.members.some((m) => m.userId === selfId)) return
+            const from =
+              progressSnap.rpg?.characters.find((c) => c.id === progressSnap.rpg?.activeCharacterId)
+                ?.name || 'Adventurer'
+            rpgPresenceRef.current?.broadcastSocial({
+              kind: 'party-heal',
+              to: 'party',
+              from,
+              fromId: selfId,
+              damage: ev.amount,
+              zone: ev.zone,
+            })
+          }}
+          onRpgPlayerDown={(ev) => {
+            playHarborRpgPlayerDown()
+            const recap = ev.recap?.length
+              ? ` · ${ev.recap.map((h) => h.damage).join(', ')}`
+              : ''
+            flashRpgToast(
+              ev.instance
+                ? `Defeated — instance wipe · packs reset${recap}`
+                : `Defeated — soft respawn at zone shrine${recap}`,
+            )
+          }}
           paused={
             worldPaused ||
             invOpen ||
@@ -1067,11 +1657,33 @@ export function LearnSession({
             barberOpen ||
             teleportOpen ||
             worldMapOpen ||
-            visitable !== null
+            visitable !== null ||
+            (realmOverride === 'rpg' && !rpgEntered)
           }
           onVisitable={onVisitable}
           onDialogueNpc={onDialogueNpc}
-          remotePlayers={remotePlayers}
+          remotePlayers={
+            realmOverride === 'rpg'
+              ? rpgRemotes
+                  .filter((r) => r.zone === rpgZone)
+                  .map((r) => ({
+                    userId: r.userId,
+                    username: r.username,
+                    x: r.x,
+                    z: r.z,
+                    yaw: r.yaw,
+                    mode: 'foot' as const,
+                    look: HARBOR_DEFAULT_LOOK,
+                    gender: 'male' as const,
+                    appearance: HARBOR_DEFAULT_APPEARANCE,
+                    nametagFrame: 'tag-plain',
+                    updatedAt: r.updatedAt,
+                    rpgMountId: r.activeMountId,
+                    rpgCosmeticId: r.equippedCosmetic,
+                    rpgCosmeticLayers: r.layers,
+                  }))
+              : remotePlayers
+          }
           localUsername={localUsername}
           nametagFrame={progressSnap.showoff?.look.nametag ?? 'tag-plain'}
           onRemotePlayerSelect={setProfileUserId}
@@ -1152,85 +1764,101 @@ export function LearnSession({
 
       <header className="hq-play-hud-top">
         <button type="button" className="hq-btn hq-btn--ghost hq-btn--hud" onClick={onExit}>
-          Chart
+          {realmOverride === 'rpg' ? 'Leave' : 'Chart'}
         </button>
-        <button
-          type="button"
-          className="hq-play-bar-title hq-play-bar-title--tap"
-          onClick={openChapterScroll}
-          aria-haspopup="dialog"
-          aria-expanded={scrollOpen}
-          aria-label={`Chapter scroll: ${level.title.en}`}
-          title="Open chapter scroll"
-        >
-          <span className="hq-play-title-en">
-            <span className="hq-play-ch">Ch. {level.chapter}</span>
-            <span className="hq-play-name">{level.title.en}</span>
-          </span>
-          <span className="hq-play-name-zh" lang="zh-HK">
-            {level.title.zh}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="hq-xp-chip"
-          title="Sailor experience"
-          aria-label={`Experience ${progressSnap.xp ?? 0}, level ${sailorLevelFromXp(progressSnap.xp ?? 0)}`}
-          aria-live="polite"
-        >
-          <span className="hq-xp-chip-icon" aria-hidden="true">
-            XP
-          </span>
-          <span className="hq-xp-chip-val">{progressSnap.xp ?? 0}</span>
-          <span className="hq-xp-chip-lv">Lv {sailorLevelFromXp(progressSnap.xp ?? 0)}</span>
-        </button>
-        <button
-          type="button"
-          className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}${invOpen ? ' is-open' : ''}`}
-          title={invOpen ? 'Close inventory' : 'Open inventory'}
-          aria-label={`Ferry coins ${progressSnap.coins}. ${invOpen ? 'Close' : 'Open'} inventory`}
-          aria-pressed={invOpen}
-          aria-live="polite"
-          onClick={() => {
-            setInvOpen((v) => {
-              if (v) playHarborBagClose()
-              else playHarborBagOpen()
-              return !v
-            })
-            setVisitable(null)
-            setCodexOpen(false)
-            setShopMsg(null)
-            setBankMsg(null)
-          }}
-        >
-          <span className="hq-coin-chip-icon" aria-hidden="true">
-            ◌
-          </span>
-          <span className="hq-coin-chip-val">{progressSnap.coins}</span>
-          {coinPops.map((pop) => (
-            <span key={pop.id} className="hq-coin-pop" aria-hidden="true">
-              +{pop.amount}
+        {realmOverride === 'rpg' ? (
+          <div className="hq-play-bar-title">
+            <span className="hq-play-title-en">
+              <span className="hq-play-ch">HarborRPG</span>
+              <span className="hq-play-name">{HARBOR_RPG_ZONE_META[rpgZone].en}</span>
             </span>
-          ))}
-        </button>
-        <button
-          type="button"
-          className="hq-gold-chip"
-          title="Chinese arena gold — paddle to the 擂台 portal"
-          aria-label={`Arena gold ${progressSnap.gold ?? 0}. Open Match the Definition`}
-          onClick={() => {
-            playHarborArenaOpen()
-            setArenaOpen(true)
-            setVisitable(null)
-            setInvOpen(false)
-            setCodexOpen(false)
-          }}
-        >
-          <span className="hq-gold-chip-icon" aria-hidden="true">
-            金
-          </span>
-          <span className="hq-gold-chip-val">{progressSnap.gold ?? 0}</span>
-        </button>
+            <span className="hq-play-name-zh" lang="zh-HK">
+              {HARBOR_RPG_ZONE_META[rpgZone].zh}
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="hq-play-bar-title hq-play-bar-title--tap"
+            onClick={openChapterScroll}
+            aria-haspopup="dialog"
+            aria-expanded={scrollOpen}
+            aria-label={`Chapter scroll: ${level.title.en}`}
+            title="Open chapter scroll"
+          >
+            <span className="hq-play-title-en">
+              <span className="hq-play-ch">Ch. {level.chapter}</span>
+              <span className="hq-play-name">{level.title.en}</span>
+            </span>
+            <span className="hq-play-name-zh" lang="zh-HK">
+              {level.title.zh}
+            </span>
+          </button>
+        )}
+        {realmOverride !== 'rpg' ? (
+          <>
+            <button
+              type="button"
+              className="hq-xp-chip"
+              title="Sailor experience"
+              aria-label={`Experience ${progressSnap.xp ?? 0}, level ${sailorLevelFromXp(progressSnap.xp ?? 0)}`}
+              aria-live="polite"
+            >
+              <span className="hq-xp-chip-icon" aria-hidden="true">
+                XP
+              </span>
+              <span className="hq-xp-chip-val">{progressSnap.xp ?? 0}</span>
+              <span className="hq-xp-chip-lv">Lv {sailorLevelFromXp(progressSnap.xp ?? 0)}</span>
+            </button>
+            <button
+              type="button"
+              className={`hq-coin-chip${coinPops.length ? ' is-earning' : ''}${invOpen ? ' is-open' : ''}`}
+              title={invOpen ? 'Close inventory' : 'Open inventory'}
+              aria-label={`Ferry coins ${progressSnap.coins}. ${invOpen ? 'Close' : 'Open'} inventory`}
+              aria-pressed={invOpen}
+              aria-live="polite"
+              onClick={() => {
+                setInvOpen((v) => {
+                  if (v) playHarborBagClose()
+                  else playHarborBagOpen()
+                  return !v
+                })
+                setVisitable(null)
+                setCodexOpen(false)
+                setShopMsg(null)
+                setBankMsg(null)
+              }}
+            >
+              <span className="hq-coin-chip-icon" aria-hidden="true">
+                ◌
+              </span>
+              <span className="hq-coin-chip-val">{progressSnap.coins}</span>
+              {coinPops.map((pop) => (
+                <span key={pop.id} className="hq-coin-pop" aria-hidden="true">
+                  +{pop.amount}
+                </span>
+              ))}
+            </button>
+            <button
+              type="button"
+              className="hq-gold-chip"
+              title="Chinese arena gold — paddle to the 擂台 portal"
+              aria-label={`Arena gold ${progressSnap.gold ?? 0}. Open Match the Definition`}
+              onClick={() => {
+                playHarborArenaOpen()
+                setArenaOpen(true)
+                setVisitable(null)
+                setInvOpen(false)
+                setCodexOpen(false)
+              }}
+            >
+              <span className="hq-gold-chip-icon" aria-hidden="true">
+                金
+              </span>
+              <span className="hq-gold-chip-val">{progressSnap.gold ?? 0}</span>
+            </button>
+          </>
+        ) : null}
       </header>
 
       {scrollOpen ? (
@@ -1420,7 +2048,7 @@ export function LearnSession({
             </button>
           </div>
           <h2 className="hq-visit-title">Teleport to pier</h2>
-          <p className="hq-visit-body">Jump to Guan Harbor or any unlocked campaign pier.</p>
+          <p className="hq-visit-body">Jump to Guan Harbor, HarborRPG, or any unlocked campaign pier.</p>
           <ul className="hq-teleport-list" aria-label="Campaign piers">
             <li>
               <button
@@ -1443,6 +2071,31 @@ export function LearnSession({
                 </span>
                 <span className="hq-teleport-status">
                   {realmOverride === 'guan' ? 'Here' : 'Teleport'}
+                </span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={`hq-teleport-btn hq-teleport-btn--rpg${realmOverride === 'rpg' ? ' is-here' : ''}`}
+                disabled={realmOverride === 'rpg'}
+                onClick={() => {
+                  playHarborTeleport()
+                  setRpgZone(progressSnap.rpg?.zone ?? 'meadow')
+                  setRealmOverride('rpg')
+                  startHarborBgm('river')
+                  setTeleportOpen(false)
+                  setVisitable(null)
+                }}
+              >
+                <span className="hq-teleport-ch">Adventure · 冒險</span>
+                <span className="hq-teleport-title">
+                  {HARBOR_RPG_META.en}
+                  <span aria-hidden="true"> · </span>
+                  <span lang="zh-HK">{HARBOR_RPG_META.zh}</span>
+                </span>
+                <span className="hq-teleport-status">
+                  {realmOverride === 'rpg' ? 'Here' : 'Teleport'}
                 </span>
               </button>
             </li>
@@ -1664,12 +2317,514 @@ export function LearnSession({
         </div>
       ) : null}
 
+      {realmOverride === 'rpg' && !rpgEntered ? (
+        <HarborRpgJoin
+          bag={progressSnap.rpg ?? emptyHarborRpgBag()}
+          onBack={() => {
+            setRealmOverride(null)
+            startHarborBgm('river')
+          }}
+          onCreate={({ name, gender, classId, looks }) => {
+            const hadClass = Boolean(progressSnap.rpg?.classId)
+            const created = createHarborRpgCharacterSlot({ name, gender, looks })
+            if (!created) return
+            const next = hadClass ? created : selectHarborRpgClassPick(classId)
+            pushRpgProgress(next)
+            setRpgEntered(true)
+          }}
+          onEnter={({ characterId, classId }) => {
+            const selected = setHarborRpgActiveCharacter(characterId)
+            if (selected) pushRpgProgress(selected)
+            if (classId && progressSnap.rpg?.classId !== classId) {
+              pushRpgProgress(selectHarborRpgClassPick(classId))
+            }
+            setRpgEntered(true)
+          }}
+        />
+      ) : null}
+
+      {realmOverride === 'rpg' && rpgEntered ? (
+        <HarborRpgPanel
+          bag={progressSnap.rpg}
+          combat={rpgCombatHud}
+          interactId={rpgInteract}
+          toast={rpgToast}
+          onInteract={onRpgInteract}
+          onCreateChar={(name) => {
+            const next = createHarborRpgCharacterSlot({ name })
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast(`Created ${name}`)
+            }
+          }}
+          onSelectChar={(id) => {
+            const next = setHarborRpgActiveCharacter(id)
+            if (next) pushRpgProgress(next)
+          }}
+          onEquip={(id) => {
+            const next = equipHarborRpgItem(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Equipped')
+            }
+          }}
+          onBuy={(id) => {
+            const next = buyHarborRpgVendorItem(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Purchased')
+            } else flashRpgToast('Not enough gold')
+          }}
+          onSell={(id) => {
+            const next = sellHarborRpgItem(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Sold')
+            }
+          }}
+          onAcceptQuest={(id) => {
+            const next = acceptHarborRpgQuest(id as HarborRpgQuestId)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Quest accepted')
+            }
+          }}
+          onClaimQuest={(id) => {
+            const next = claimHarborRpgQuest(id as HarborRpgQuestId)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Quest claimed')
+            } else flashRpgToast('Not ready to turn in')
+          }}
+          onHireCompanion={() => {
+            const next = hireHarborRpgCompanion()
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(`Hired ${next.rpg.companionName}`)
+            }
+          }}
+          onCastAbility={(id) => {
+            worldApiRef.current?.queueRpgAbility(id)
+          }}
+          onCraft={(recipeId) => {
+            const next = craftHarborRpgRecipe(recipeId)
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Crafted')
+            }
+          }}
+          onListMarket={(itemId, price) => {
+            const next = listHarborRpgMarketItem({
+              sellerId: localUserIdRef.current ?? 'local',
+              sellerName:
+                progressSnap.rpg?.characters.find(
+                  (c) => c.id === progressSnap.rpg?.activeCharacterId,
+                )?.name ?? 'Adventurer',
+              itemId,
+              qty: 1,
+              price,
+            })
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Listed on market')
+            }
+          }}
+          onBuyMarket={(listingId) => {
+            const next = buyHarborRpgMarketListing(
+              listingId,
+              localUserIdRef.current ?? 'local',
+            )
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Bought from market')
+            }
+          }}
+          onDepositBank={(id) => {
+            const next = depositHarborRpgBank(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Banked')
+            }
+          }}
+          onWithdrawBank={(id) => {
+            const next = withdrawHarborRpgBank(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Withdrawn')
+            }
+          }}
+          onPartySizeChange={(n) => {
+            setRpgPartySize(n)
+            worldApiRef.current?.setRpgPartySize(n)
+          }}
+          lootPrompt={rpgLootPrompt}
+          trade={rpgTrade}
+          selfUserId={localUserIdRef.current ?? 'local'}
+          remotes={rpgRemotes.map((r) => ({
+            userId: r.userId,
+            username: r.username,
+            lookingRole: r.lookingRole,
+            lookingDungeon: r.lookingDungeon,
+            afk: r.afk,
+            fleetName: r.fleetName,
+            activeTitleId: r.activeTitleId,
+            weaponId: r.weaponId,
+            level: r.level,
+          }))}
+          partyLive={rpgPartyLive}
+          partyInvite={rpgPartyInvite}
+          onSetDifficulty={(d) => {
+            pushRpgProgress(setHarborRpgInstanceDifficulty(d))
+            flashRpgToast(d === 'heroic' ? 'Heroic — remount instance to scale' : 'Normal difficulty')
+          }}
+          onBroadcastParty={(party) => {
+            setRpgPartyLive(party)
+            rpgPresenceRef.current?.broadcastParty(party)
+            const ready = party.members.filter((m) => m.ready).length
+            flashRpgToast(`Ready ${ready}/${party.members.length}`)
+          }}
+          onFinderQueueChange={(party) => {
+            setRpgPartyLive(party)
+            rpgFinderLookingRef.current = {
+              lookingRole: party.looking ? party.lookingRole : null,
+              lookingDungeon: party.looking ? party.lookingDungeon : null,
+            }
+            rpgPresenceRef.current?.broadcastParty(party)
+            flashRpgToast(
+              party.looking
+                ? `LFG ${party.lookingRole} · ${party.lookingDungeon}`
+                : 'Stopped looking',
+            )
+          }}
+          onFillCompanionRole={(role) => {
+            const next = hireHarborRpgCompanion()
+            if ('error' in next) flashRpgToast(next.error)
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(`Companion fills ${role}`)
+            }
+          }}
+          onBuyMount={(id) => {
+            const next = buyHarborRpgMount(id)
+            if (!next) flashRpgToast('Not enough gold')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Mount unlocked')
+            }
+          }}
+          onSummonMount={(id) => {
+            const next = setHarborRpgActiveMount(id)
+            if (!next) flashRpgToast('Mount not owned')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(id ? 'Mount summoned' : 'Dismounted')
+            }
+          }}
+          onBuyCosmetic={(id) => {
+            const next = buyHarborRpgCosmetic(id)
+            if (!next) flashRpgToast('Not enough gold')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast('Cosmetic unlocked')
+            }
+          }}
+          onEquipCosmetic={(id) => {
+            const next = setHarborRpgEquippedCosmetic(id)
+            if (!next) flashRpgToast('Cosmetic not owned')
+            else {
+              pushRpgProgress(next)
+              flashRpgToast(id ? 'Look equipped' : 'Look cleared')
+            }
+          }}
+          onMedium={(action) => {
+            const bag = sanitizeHarborRpgBag(progressSnap.rpg)
+            let next = action
+            if (action.type === 'dig-chart') {
+              const pose = worldApiRef.current?.getLocalPose()
+              next = { ...action, x: pose?.x ?? action.x, z: pose?.z ?? action.z }
+            }
+            const result = applyRpgMedium(bag, next)
+            if (!result) {
+              if (next.type !== 'sync-world') flashRpgToast('Cannot do that yet')
+            }
+            else {
+              if (next.type === 'emote') {
+                const clip = harborRpgEmoteClip(next.id)
+                if (clip) worldApiRef.current?.playRpgPerform(clip)
+              } else if (next.type === 'perform') {
+                worldApiRef.current?.playRpgPerform(next.clip)
+              }
+              pushRpgProgress(updateHarborRpg(result.bag))
+              if (result.toast) flashRpgToast(result.toast)
+              if (result.social) {
+                const from =
+                  bag.characters.find((c) => c.id === bag.activeCharacterId)?.name ||
+                  'Adventurer'
+                rpgPresenceRef.current?.broadcastSocial({
+                  kind: result.social.kind,
+                  to: result.social.to,
+                  from,
+                  fromId: localUserIdRef.current ?? 'local',
+                  mail: result.social.mail ? { ...result.social.mail, from } : undefined,
+                  body: result.social.body,
+                  damage: result.social.damage,
+                  text: result.social.text,
+                  id: result.social.id,
+                  fleet: result.social.kind === 'pledge' ? result.social.to : bag.fleetName ?? undefined,
+                })
+              }
+            }
+          }}
+          onSetTitle={(id) => {
+            const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+            // Ensure completed deeds are claimable as titles before pin
+            const synced = syncHarborRpgAchievementTitles(bag)
+            const nextBag = setHarborRpgActiveTitle(synced.bag, id)
+            if (!nextBag) flashRpgToast('Title not unlocked yet')
+            else {
+              pushRpgProgress(updateHarborRpg(nextBag))
+              flashRpgToast(id ? 'Title pinned' : 'Title cleared')
+            }
+          }}
+          onOpenWiki={(page) => {
+            setRpgWikiPage(page)
+            setRpgWikiOpen(true)
+          }}
+          onInviteParty={(peerId) => {
+            const selfId = localUserIdRef.current ?? 'local'
+            const name =
+              progressSnap.rpg?.characters.find(
+                (c) => c.id === progressSnap.rpg?.activeCharacterId,
+              )?.name ?? 'Adventurer'
+            const base = rpgPartyLive ?? createRpgParty(selfId, name)
+            const invite = inviteToRpgParty(base, name, peerId)
+            setRpgPartyLive(base)
+            rpgPresenceRef.current?.broadcastParty(invite)
+            playHarborRpgPartyInvite()
+            flashRpgToast(`Invited ${peerId.slice(0, 6)}…`)
+          }}
+          onAcceptPartyInvite={() => {
+            if (!rpgPartyInvite) return
+            const selfId = localUserIdRef.current ?? 'local'
+            const name =
+              progressSnap.rpg?.characters.find(
+                (c) => c.id === progressSnap.rpg?.activeCharacterId,
+              )?.name ?? 'Adventurer'
+            const joined = acceptRpgPartyInvite(
+              rpgPartyLive ?? {
+                id: rpgPartyInvite.partyId,
+                leaderId: rpgPartyInvite.fromId,
+                members: [{ userId: rpgPartyInvite.fromId, name: rpgPartyInvite.fromName }],
+                looking: false,
+                code: rpgPartyInvite.code,
+                lookingRole: null,
+                lookingDungeon: null,
+              },
+              rpgPartyInvite,
+              selfId,
+              name,
+            )
+            if (joined) {
+              setRpgPartyLive(joined)
+              setRpgPartySize(joined.members.length)
+              worldApiRef.current?.setRpgPartySize(joined.members.length)
+              rpgPresenceRef.current?.broadcastParty(joined)
+              flashRpgToast(`Joined party ${joined.code}`)
+            }
+            setRpgPartyInvite(null)
+          }}
+          onDeclinePartyInvite={() => setRpgPartyInvite(null)}
+          onLootVote={(vote) => {
+            if (!rpgLootPrompt) return
+            if (vote === 'need' || vote === 'greed') {
+              const next = awardRpgContestedLoot(
+                progressSnap.rpg ?? emptyHarborRpgBag(),
+                rpgLootPrompt.loot,
+              )
+              pushRpgProgress(updateHarborRpg(next))
+              flashRpgToast(vote === 'need' ? 'Need won — loot taken' : 'Greed — loot taken')
+            } else {
+              flashRpgToast('Passed on loot')
+            }
+            setRpgLootPrompt(null)
+          }}
+          onSelectClass={(id) => {
+            pushRpgProgress(selectHarborRpgClassPick(id))
+            flashRpgToast(`Class: ${id}`)
+          }}
+          onSelectSpec={(id) => {
+            const next = selectHarborRpgSpecPick(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast(`Spec: ${id}`)
+            }
+          }}
+          onSpendTalent={(id) => {
+            const next = spendHarborRpgTalentPoint(id)
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Talent spent')
+            } else flashRpgToast('No talent points')
+          }}
+          onPrestige={() => {
+            const next = prestigeHarborRpgClassPick()
+            if (next) {
+              pushRpgProgress(next)
+              flashRpgToast('Prestiged!')
+            } else flashRpgToast('Need class level 50')
+          }}
+          onStartTrade={(peerId, peerName) => {
+            const selfId = localUserIdRef.current ?? 'local'
+            const tradeId = createRpgTradeId(selfId, peerId)
+            const session = emptyRpgTradeSession(peerId, peerName, tradeId)
+            setRpgTrade(session)
+            const offer: HarborRpgTradeOffer = {
+              type: 'offer',
+              tradeId,
+              fromId: selfId,
+              fromName:
+                progressSnap.rpg?.characters.find(
+                  (c) => c.id === progressSnap.rpg?.activeCharacterId,
+                )?.name ?? 'Adventurer',
+              toId: peerId,
+              gold: 0,
+              items: [],
+              locked: false,
+              t: Date.now(),
+            }
+            rpgPresenceRef.current?.broadcastTrade(offer)
+            flashRpgToast(`Trade opened with ${peerName}`)
+          }}
+          onTradeSetGold={(gold) => {
+            setRpgTrade((t) => (t && !t.selfLocked ? { ...t, selfGold: gold } : t))
+          }}
+          onTradeAddItem={(itemId) => {
+            setRpgTrade((t) => {
+              if (!t || t.selfLocked) return t
+              const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+              if (!canPutInTrade(bag, itemId, 1, t.selfItems)) return t
+              if (t.selfItems.length >= HARBOR_RPG_TRADE_SLOTS) return t
+              const existing = t.selfItems.find((s) => s.id === itemId)
+              const items = existing
+                ? t.selfItems.map((s) =>
+                    s.id === itemId ? { ...s, qty: s.qty + 1 } : s,
+                  )
+                : [...t.selfItems, { id: itemId, qty: 1 }]
+              return { ...t, selfItems: items }
+            })
+          }}
+          onTradeLock={() => {
+            setRpgTrade((t) => {
+              if (!t) return t
+              const selfId = localUserIdRef.current ?? 'local'
+              const next = { ...t, selfLocked: true }
+              rpgPresenceRef.current?.broadcastTrade({
+                type: 'offer',
+                tradeId: t.tradeId,
+                fromId: selfId,
+                fromName:
+                  progressSnap.rpg?.characters.find(
+                    (c) => c.id === progressSnap.rpg?.activeCharacterId,
+                  )?.name ?? 'Adventurer',
+                toId: t.peerId,
+                gold: t.selfGold,
+                items: t.selfItems,
+                locked: true,
+                t: Date.now(),
+              })
+              return next
+            })
+          }}
+          onTradeCancel={() => {
+            setRpgTrade((t) => {
+              if (t) {
+                const selfId = localUserIdRef.current ?? 'local'
+                rpgPresenceRef.current?.broadcastTrade({
+                  type: 'cancel',
+                  tradeId: t.tradeId,
+                  fromId: selfId,
+                  fromName: 'Adventurer',
+                  toId: t.peerId,
+                  gold: 0,
+                  items: [],
+                  locked: false,
+                  t: Date.now(),
+                })
+              }
+              return null
+            })
+            flashRpgToast('Trade cancelled')
+          }}
+          onTradeAccept={() => {
+            setRpgTrade((t) => {
+              if (!t || !t.selfLocked || !t.peerLocked) return t
+              const selfId = localUserIdRef.current ?? 'local'
+              const bag = progressSnap.rpg ?? emptyHarborRpgBag()
+              const next = applyRpgTradeComplete(
+                bag,
+                t.selfGold,
+                t.selfItems,
+                t.peerGold,
+                t.peerItems,
+              )
+              if (!next) {
+                flashRpgToast('Trade failed — check bag')
+                return t
+              }
+              pushRpgProgress(updateHarborRpg(next))
+              rpgPresenceRef.current?.broadcastTrade({
+                type: 'complete',
+                tradeId: t.tradeId,
+                fromId: selfId,
+                fromName: 'Adventurer',
+                toId: t.peerId,
+                gold: t.selfGold,
+                items: t.selfItems,
+                locked: true,
+                t: Date.now(),
+              })
+              flashRpgToast('Trade complete')
+              return null
+            })
+          }}
+          onExitGame={() => {
+            playHarborCastOff()
+            setRealmOverride(null)
+            startHarborBgm('river')
+            setRpgInteract(null)
+            setRpgWikiOpen(false)
+            setVisitable(null)
+          }}
+        />
+      ) : null}
+
+      {realmOverride === 'rpg' && rpgWikiOpen ? (
+        <HarborRpgWiki
+          key={
+            rpgWikiPage
+              ? `${rpgWikiPage.section}:${rpgWikiPage.id}`
+              : 'wiki-home'
+          }
+          bag={progressSnap.rpg ?? emptyHarborRpgBag()}
+          initial={rpgWikiPage}
+          onClose={() => {
+            setRpgWikiOpen(false)
+            setRpgWikiPage(undefined)
+          }}
+        />
+      ) : null}
+
       {/* OSRS-style compass / boat — free-look on water; return to canoe on land */}
       <button
         type="button"
-        className={`hq-explore-fab${travelMode === 'foot' ? ' is-boat' : ''}${!talking ? ' is-on' : ''}`}
+        className={`hq-explore-fab${travelMode === 'foot' ? ' is-boat' : ''}${!talking ? ' is-on' : ''}${realmOverride === 'rpg' ? ' is-hidden' : ''}`}
         aria-label={travelMode === 'foot' ? 'Return to boat' : 'Open world exploration'}
         aria-pressed={!talking}
+        hidden={realmOverride === 'rpg'}
         title={travelMode === 'foot' ? 'Return to boat' : 'Open world exploration'}
         onClick={() => {
           playHarborExplore()
@@ -1691,6 +2846,7 @@ export function LearnSession({
       <button
         type="button"
         className={`hq-delve-fab${remotePlayers.length === 0 ? ' is-alone' : ''}${delveOpen ? ' is-on' : ''}`}
+        hidden={realmOverride === 'rpg'}
         aria-label="Practice with 港灣 companion"
         title={
           remotePlayers.length === 0

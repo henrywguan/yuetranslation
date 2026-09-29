@@ -35,6 +35,12 @@ export type HarborPresenceState = {
   /** Showoff nametag frame id. */
   nametagFrame: string
   updatedAt: number
+  /** HarborRPG only — active mount id when riding (optional). */
+  rpgMountId?: string | null
+  /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
+  rpgCosmeticId?: string | null
+  /** HarborRPG only — hair, sleeves, top, bottom, feet worn with the body. */
+  rpgCosmeticLayers?: string[]
 }
 
 export type HarborRemotePlayer = HarborPresenceState
@@ -47,6 +53,14 @@ export type HarborPosePacket = {
   yaw: number
   mode: HarborTravelMode
   t: number
+  /** HarborRPG only — active mount id when riding (optional). */
+  rpgMountId?: string | null
+  /** HarborRPG only — equipped wardrobe cosmetic id (optional). */
+  rpgCosmeticId?: string | null
+  /** HarborRPG only — layered starter pieces worn with the body. */
+  rpgCosmeticLayers?: string[]
+  /** HarborRPG only — UAL clip name while an outfit is performing. */
+  rpgEmote?: string | null
 }
 
 export type HarborChatPacket = {
