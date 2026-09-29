@@ -135,6 +135,22 @@ export type HarborQuestProgress = {
     riftMark?: number
     raceBestMs?: number | null
     raceRuns?: number
+    raceStep?: number
+    fleetRank?: string
+    fleetBank?: { id: string; qty: number }[]
+    fleetPledges?: { id: string; text: string; by: string; t: number }[]
+    whispers?: { id: string; from: string; body: string; t: number; read: boolean }[]
+    duel?: { foe: string; phase: string; selfHp: number; foeHp: number } | null
+    riftSeed?: number
+    worldDay?: string
+    worldWeek?: string
+    worldKillMark?: Record<string, number>
+    worldClaims?: string[]
+    worldVisits?: string[]
+    tideChart?: { zone: string; x: number; z: number; dug: boolean } | null
+    loadoutB?: { specId: string | null; talents: Record<string, number>; skillBar: string[] } | null
+    activeLoadout?: string
+    buffs?: { id: string; until: number }[]
   }
 }
 
@@ -499,6 +515,22 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
     riftMark: 0,
     raceBestMs: null as number | null,
     raceRuns: 0,
+    raceStep: 0,
+    fleetRank: 'member',
+    fleetBank: [] as { id: string; qty: number }[],
+    fleetPledges: [] as { id: string; text: string; by: string; t: number }[],
+    whispers: [] as { id: string; from: string; body: string; t: number; read: boolean }[],
+    duel: null as { foe: string; phase: string; selfHp: number; foeHp: number } | null,
+    riftSeed: 1,
+    worldDay: '',
+    worldWeek: '',
+    worldKillMark: {} as Record<string, number>,
+    worldClaims: [] as string[],
+    worldVisits: [] as string[],
+    tideChart: null as { zone: string; x: number; z: number; dug: boolean } | null,
+    loadoutB: null as { specId: string | null; talents: Record<string, number>; skillBar: string[] } | null,
+    activeLoadout: 'a',
+    buffs: [] as { id: string; until: number }[],
   }
   if (!raw || typeof raw !== 'object') return empty
   const o = raw as Record<string, unknown>
@@ -813,11 +845,166 @@ function sanitizeRpg(raw: unknown): NonNullable<HarborQuestProgress['rpg']> {
         ? Math.min(600_000, Math.floor(o.raceBestMs))
         : null,
     raceRuns: rpgSoftCount(o.raceRuns, 1_000_000),
+    ...sanitizeRpgDepth(o),
   }
 }
 
 function rpgSoftCount(raw: unknown, max: number): number {
   return typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 ? Math.min(max, Math.floor(raw)) : 0
+}
+
+const HARBOR_RPG_WORLD_IDS = new Set([
+  'daily-slime', 'daily-wolf', 'daily-bandit', 'daily-town', 'daily-marsh', 'daily-ash',
+  'week-golem', 'week-wraith', 'week-colossus', 'week-moon',
+])
+
+function sanitizeRpgDepth(o: Record<string, unknown>): {
+  raceStep: number
+  fleetRank: string
+  fleetBank: { id: string; qty: number }[]
+  fleetPledges: { id: string; text: string; by: string; t: number }[]
+  whispers: { id: string; from: string; body: string; t: number; read: boolean }[]
+  duel: { foe: string; phase: string; selfHp: number; foeHp: number } | null
+  riftSeed: number
+  worldDay: string
+  worldWeek: string
+  worldKillMark: Record<string, number>
+  worldClaims: string[]
+  worldVisits: string[]
+  tideChart: { zone: string; x: number; z: number; dug: boolean } | null
+  loadoutB: { specId: string | null; talents: Record<string, number>; skillBar: string[] } | null
+  activeLoadout: string
+  buffs: { id: string; until: number }[]
+} {
+  const dayOk = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '')
+  const fleetBank = sanitizeRpgInv(o.fleetBank, 24)
+  const fleetPledges: { id: string; text: string; by: string; t: number }[] = []
+  if (Array.isArray(o.fleetPledges)) {
+    for (const row of o.fleetPledges) {
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      if (typeof r.id !== 'string' || typeof r.text !== 'string') continue
+      const text = r.text.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 80)
+      if (!text) continue
+      fleetPledges.push({
+        id: r.id.slice(0, 40),
+        text,
+        by: typeof r.by === 'string' ? r.by.trim().slice(0, 24) : 'sailor',
+        t: typeof r.t === 'number' && Number.isFinite(r.t) ? Math.floor(r.t) : 0,
+      })
+      if (fleetPledges.length >= 12) break
+    }
+  }
+  const whispers: { id: string; from: string; body: string; t: number; read: boolean }[] = []
+  if (Array.isArray(o.whispers)) {
+    for (const row of o.whispers) {
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      if (typeof r.id !== 'string' || typeof r.from !== 'string' || typeof r.body !== 'string') continue
+      const body = r.body.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 140)
+      const from = r.from.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 24)
+      if (!body || !from) continue
+      whispers.push({
+        id: r.id.slice(0, 40),
+        from,
+        body,
+        t: typeof r.t === 'number' && Number.isFinite(r.t) ? Math.floor(r.t) : 0,
+        read: r.read === true,
+      })
+      if (whispers.length >= 20) break
+    }
+  }
+  let duel: { foe: string; phase: string; selfHp: number; foeHp: number } | null = null
+  if (o.duel && typeof o.duel === 'object') {
+    const d = o.duel as Record<string, unknown>
+    const foe = typeof d.foe === 'string' ? d.foe.trim().slice(0, 24) : ''
+    if (foe && (d.phase === 'challenge' || d.phase === 'active')) {
+      const hp = (n: unknown) =>
+        typeof n === 'number' && Number.isFinite(n) ? Math.min(500, Math.max(0, Math.floor(n))) : 0
+      duel = { foe, phase: d.phase, selfHp: hp(d.selfHp), foeHp: hp(d.foeHp) }
+    }
+  }
+  const worldKillMark: Record<string, number> = {}
+  if (o.worldKillMark && typeof o.worldKillMark === 'object' && !Array.isArray(o.worldKillMark)) {
+    for (const [k, v] of Object.entries(o.worldKillMark as Record<string, unknown>)) {
+      if (!HARBOR_RPG_MONSTERS.has(k)) continue
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+      worldKillMark[k] = Math.min(1_000_000, Math.floor(v))
+    }
+  }
+  const worldClaims: string[] = []
+  if (Array.isArray(o.worldClaims)) {
+    for (const id of o.worldClaims) {
+      if (typeof id === 'string' && HARBOR_RPG_WORLD_IDS.has(id) && !worldClaims.includes(id)) worldClaims.push(id)
+    }
+  }
+  const worldVisits: string[] = []
+  if (Array.isArray(o.worldVisits)) {
+    for (const z of o.worldVisits) {
+      if (typeof z === 'string' && HARBOR_RPG_ZONES.has(z) && !worldVisits.includes(z)) worldVisits.push(z)
+    }
+  }
+  let tideChart: { zone: string; x: number; z: number; dug: boolean } | null = null
+  if (o.tideChart && typeof o.tideChart === 'object') {
+    const t = o.tideChart as Record<string, unknown>
+    if (typeof t.zone === 'string' && HARBOR_RPG_ZONES.has(t.zone)) {
+      const axis = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? Math.max(-40, Math.min(40, n)) : 0)
+      tideChart = { zone: t.zone, x: axis(t.x), z: axis(t.z), dug: t.dug === true }
+    }
+  }
+  let loadoutB: { specId: string | null; talents: Record<string, number>; skillBar: string[] } | null = null
+  if (o.loadoutB && typeof o.loadoutB === 'object') {
+    const l = o.loadoutB as Record<string, unknown>
+    const talents: Record<string, number> = {}
+    if (l.talents && typeof l.talents === 'object' && !Array.isArray(l.talents)) {
+      for (const [k, v] of Object.entries(l.talents as Record<string, unknown>)) {
+        if (!HARBOR_RPG_TALENT_PREFIX.test(k)) continue
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) continue
+        talents[k] = Math.min(5, Math.floor(v))
+      }
+    }
+    const skillBar: string[] = []
+    if (Array.isArray(l.skillBar)) {
+      for (const id of l.skillBar) {
+        if (typeof id !== 'string' || !HARBOR_RPG_SKILL_PREFIX.test(id) || skillBar.includes(id)) continue
+        skillBar.push(id)
+        if (skillBar.length >= 5) break
+      }
+    }
+    loadoutB = {
+      specId: typeof l.specId === 'string' && HARBOR_RPG_SPEC_IDS.has(l.specId) ? l.specId : null,
+      talents,
+      skillBar,
+    }
+  }
+  const buffs: { id: string; until: number }[] = []
+  if (Array.isArray(o.buffs)) {
+    for (const row of o.buffs) {
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      if (r.id !== 'might' || typeof r.until !== 'number' || !Number.isFinite(r.until)) continue
+      buffs.push({ id: 'might', until: Math.floor(r.until) })
+    }
+  }
+  const fleetRank = o.fleetRank === 'leader' || o.fleetRank === 'officer' ? o.fleetRank : 'member'
+  return {
+    raceStep: o.raceStep === 1 || o.raceStep === 2 ? o.raceStep : 0,
+    fleetRank,
+    fleetBank,
+    fleetPledges,
+    whispers,
+    duel,
+    riftSeed: Math.max(1, rpgSoftCount(o.riftSeed, 100_000)),
+    worldDay: dayOk(o.worldDay),
+    worldWeek: dayOk(o.worldWeek),
+    worldKillMark,
+    worldClaims,
+    worldVisits,
+    tideChart,
+    loadoutB,
+    activeLoadout: o.activeLoadout === 'b' ? 'b' : 'a',
+    buffs: buffs.slice(0, 4),
+  }
 }
 
 const HARBOR_RPG_DEED_IDS = new Set([

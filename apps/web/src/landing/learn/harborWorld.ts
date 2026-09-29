@@ -106,6 +106,7 @@ import {
   tickRpgCombat,
   type HarborRpgMonsterRuntime,
 } from './harborRpgCombat'
+import { harborRpgSpawnPacks } from './harborRpgDepth'
 import {
   harborRpgMaxHp,
   harborRpgMaxMp,
@@ -258,7 +259,11 @@ export type HarborWorldOptions = {
     toast?: { en: string; zh: string }
   }) => void
   /** Player defeated — soft overworld respawn or instance wipe. */
-  onRpgPlayerDown?: (ev: { zone: HarborRpgZoneId; instance: boolean }) => void
+  onRpgPlayerDown?: (ev: {
+    zone: HarborRpgZoneId
+    instance: boolean
+    recap?: { monsterId: string; damage: number }[]
+  }) => void
   /** Fires when the canoe enters / leaves a visitable landmark. */
   onVisitable?: (id: HarborVisitableId | null) => void
   /** Tap a talkable NPC / speech bubble while in range. */
@@ -4619,6 +4624,33 @@ export function createHarborWorld(
   let rpgLastWorldBroadcast = 0
   let rpgLastHostSnapT = 0
   const rpgMonsterMeshes = new Map<string, THREE.Group>()
+  const rpgFloats: { sprite: THREE.Sprite; born: number }[] = []
+  const spawnRpgFloat = (
+    text: string,
+    color: string,
+    x: number,
+    y: number,
+    z: number,
+    born: number,
+  ) => {
+    if (!rpgScene) return
+    const canvas = document.createElement('canvas')
+    canvas.width = 128
+    canvas.height = 64
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.font = 'bold 36px sans-serif'
+    ctx.fillStyle = color
+    ctx.textAlign = 'center'
+    ctx.fillText(text, 64, 46)
+    const tex = new THREE.CanvasTexture(canvas)
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })
+    const sprite = new THREE.Sprite(mat)
+    sprite.position.set(x, y, z)
+    sprite.scale.set(0.9, 0.45, 1)
+    rpgScene.add(sprite)
+    rpgFloats.push({ sprite, born })
+  }
   let rpgMountLive: HarborRpgMountInstance | null = null
   let rpgMountWantId: HarborRpgMountId | null = null
   let rpgMountLoadingId: HarborRpgMountId | null = null
@@ -4869,6 +4901,7 @@ export function createHarborWorld(
       rpgZone,
       HARBOR_RPG_ZONE_META[rpgZone].seed,
       rpgBagLive.difficulty ?? 'normal',
+      harborRpgSpawnPacks(rpgZone, rpgBagLive.delveFloor, rpgBagLive.riftSeed),
     )
     for (const m of rpgMonsters) {
       const mesh = buildRpgMonsterObject(m)
@@ -6344,6 +6377,20 @@ export function createHarborWorld(
     }
 
     if (isRpg && rpgScene && !paused) {
+      for (let i = rpgFloats.length - 1; i >= 0; i--) {
+        const f = rpgFloats[i]!
+        const age = now - f.born
+        if (age > 900) {
+          f.sprite.parent?.remove(f.sprite)
+          const mat = f.sprite.material as THREE.SpriteMaterial
+          mat.map?.dispose()
+          mat.dispose()
+          rpgFloats.splice(i, 1)
+          continue
+        }
+        f.sprite.position.y += dt * 0.55
+        ;(f.sprite.material as THREE.SpriteMaterial).opacity = 1 - age / 900
+      }
       const selfId = options.localUserId ?? 'local'
       const host = isRpgZoneHost(selfId, rpgZonePeerIdsLive)
       const combat = tickRpgCombat({
@@ -6414,6 +6461,7 @@ export function createHarborWorld(
               rpgZone,
               Math.floor(now) ^ 0x57495045,
               rpgBagLive.difficulty ?? 'normal',
+              harborRpgSpawnPacks(rpgZone, rpgBagLive.delveFloor, rpgBagLive.riftSeed),
             )
             for (const [, mesh] of rpgMonsterMeshes) {
               mesh.parent?.remove(mesh)
@@ -6436,15 +6484,27 @@ export function createHarborWorld(
               }
             }
           }
-          options.onRpgPlayerDown?.({ zone: ev.zone, instance: ev.instance })
+          options.onRpgPlayerDown?.({ zone: ev.zone, instance: ev.instance, recap: ev.recap })
         }
         if (ev.type === 'kill') {
           flash = 'ok'
           flashUntil = now + 450
         }
-        if (ev.type === 'player-hit' && ev.crit) {
-          flash = 'ok'
-          flashUntil = Math.max(flashUntil, now + 220)
+        if (ev.type === 'player-hit') {
+          const mob = rpgMonsters.find((m) => m.id === ev.monsterId)
+          if (mob) {
+            spawnRpgFloat(String(ev.damage), ev.crit ? '#ffe08a' : '#f4f7fb', mob.x, 1.6, mob.z, now)
+          }
+          if (ev.crit) {
+            flash = 'ok'
+            flashUntil = Math.max(flashUntil, now + 220)
+          }
+        }
+        if (ev.type === 'monster-hit') {
+          spawnRpgFloat(String(ev.damage), '#ff8a7a', footX, 1.5, footZ, now)
+        }
+        if (ev.type === 'heal') {
+          spawnRpgFloat(`+${ev.amount}`, '#9dffb0', footX, 1.8, footZ, now)
         }
         if (ev.type === 'boss-phase') {
           flash = 'ok'

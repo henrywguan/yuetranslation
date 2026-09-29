@@ -19,6 +19,7 @@ import {
   type HarborRpgMonsterKind,
   type HarborRpgZoneId,
 } from './harborRpgData'
+import { harborRpgMightBonus } from './harborRpgDepth'
 import {
   harborRpgSkillById,
   harborRpgSkillPowerMult,
@@ -91,6 +92,8 @@ export type HarborRpgCombatEvent =
       /** Instance wipe — remount pack / soft overworld respawn. */
       instance: boolean
       zone: HarborRpgZoneId
+      /** Last monster hits that dropped the sailor. */
+      recap?: { monsterId: string; damage: number }[]
     }
   | {
       type: 'companion-hit'
@@ -117,12 +120,15 @@ function mulberry32(seed: number) {
   }
 }
 
+const recentMonsterHits: { monsterId: string; damage: number }[] = []
+
 export function spawnRpgMonsters(
   zone: HarborRpgZoneId,
   seed: number,
   difficulty: HarborRpgDifficulty = 'normal',
+  packsOverride?: { kind: HarborRpgMonsterKind; count: number }[],
 ): HarborRpgMonsterRuntime[] {
-  const packs = HARBOR_RPG_ZONE_SPAWNS[zone]
+  const packs = packsOverride ?? HARBOR_RPG_ZONE_SPAWNS[zone]
   const rng = mulberry32(seed ^ 0x4d4f4e53)
   const heroic = difficulty === 'heroic' && Boolean(HARBOR_RPG_ZONE_META[zone].instance)
   const hpMult = heroic ? HARBOR_RPG_HEROIC_HP_MULT : 1
@@ -473,7 +479,7 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
   // Soft out-of-combat + in-combat regen
   playerMp = Math.min(maxMp, playerMp + HARBOR_RPG_MP_REGEN_PER_SEC * input.dt)
   let guardBuffSec = Math.max(0, input.guardBuffSec - input.dt)
-  const atk = harborRpgAttackPower(bag)
+  const atk = harborRpgAttackPower(bag) + harborRpgMightBonus(bag.buffs, input.now)
   const def = harborRpgDefense(bag) + (guardBuffSec > 0 ? 4 : 0)
   const companion = rpgHasCompanion(bag, input.now)
   const contested = input.partySize > 1
@@ -736,8 +742,16 @@ export function tickRpgCombat(input: HarborRpgCombatTickInput): HarborRpgCombatT
         playerHp = Math.max(0, playerHp - damage)
         m.attackCd = MONSTER_ATTACK_CD / Math.max(0.5, bossSpeedMult(m))
         events.push({ type: 'monster-hit', damage, monsterId: m.id })
+        recentMonsterHits.push({ monsterId: m.id, damage })
+        if (recentMonsterHits.length > 4) recentMonsterHits.shift()
         if (playerHp <= 0) {
-          events.push({ type: 'player-down', instance, zone: input.zone })
+          events.push({
+            type: 'player-down',
+            instance,
+            zone: input.zone,
+            recap: recentMonsterHits.slice(),
+          })
+          recentMonsterHits.length = 0
         }
       }
     } else if (!chasingLocal || dist >= defM.aggro) {

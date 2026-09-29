@@ -48,6 +48,7 @@ import {
 } from './harborRpgProgress.ts'
 import { buildRpgZoneScene } from './harborRpgRealm.ts'
 import { applyRpgMedium, harborRpgWeatherForZone, sanitizeRpgMedium } from './harborRpgMedium.ts'
+import { delvePack, harborRpgWorldBoard, lockpickMatches, lockpickPattern, riftPack } from './harborRpgDepth.ts'
 
 assert.equal(HARBOR_RPG_ZONES.length, 14)
 assert.ok(HARBOR_RPG_ZONE_META.crypt.instance, 'crypt is instanced')
@@ -745,6 +746,71 @@ assert.match(docs, /Wardrobe|Modular Outfits|cosmetics\/CREDITS/i)
 assert.match(panelSrc, /social|Ravenpost|onMedium/, 'social tab')
 assert.match(panelSrc, /frontiers|Reliquary|delve/, 'frontiers tab')
 assert.match(worldSrc, /harborRpgWeatherForZone/, 'rpg weather')
-assert.match(docs, /v6\.4|Ravenpost|Ash Reach/)
+assert.match(docs, /v6\.5|Ravenpost|Ash Reach/)
+
+{
+  const pack = delvePack(3)
+  assert.equal(pack[0]?.kind, 'bandit')
+  assert.equal(pack[0]?.count, 5)
+  assert.notDeepEqual(riftPack(1), riftPack(2))
+  assert.equal(lockpickMatches(4, lockpickPattern(4)), true)
+  assert.equal(lockpickMatches(4, [0, 0, 0]), false)
+  const fresh = emptyHarborRpgBag()
+  const post = applyRpgMedium(fresh, { type: 'duel', foe: 'training-post' })
+  assert.equal(post?.bag.duel?.phase, 'active')
+  const strike = applyRpgMedium(post!.bag, { type: 'duel-hit' })
+  assert.ok((strike?.bag.duel?.foeHp ?? 40) < 40)
+  assert.equal(strike?.bag.gold, fresh.gold)
+  const mailed = applyRpgMedium({ ...fresh, gold: 10 }, {
+    type: 'mail',
+    to: 'Jade',
+    subject: 'Hi',
+    body: 'Tide',
+    gold: 3,
+  })
+  assert.equal(mailed?.social?.kind, 'mail')
+  assert.equal(mailed?.social?.to, 'Jade')
+  const gated = applyRpgMedium(fresh, { type: 'race', elapsedMs: 12000, mounted: true, checkpoint: true })
+  assert.equal(gated, null)
+  const marked = applyRpgMedium(fresh, { type: 'race-mark', gate: 'start' })
+  const mid = applyRpgMedium(marked!.bag, { type: 'race-mark', gate: 'mid' })
+  assert.equal(mid?.bag.raceStep, 2)
+  const chart = applyRpgMedium(fresh, { type: 'draw-chart' }, Date.UTC(2026, 0, 15))
+  assert.ok(chart?.bag.tideChart)
+  const dug = applyRpgMedium(
+    { ...chart!.bag, zone: chart!.bag.tideChart!.zone },
+    { type: 'dig-chart', x: chart!.bag.tideChart!.x, z: chart!.bag.tideChart!.z },
+  )
+  assert.equal(dug?.bag.gold, fresh.gold + 12)
+  const saved = applyRpgMedium({ ...fresh, skillBar: ['tb-strike'] }, { type: 'save-loadout' })
+  assert.deepEqual(saved?.bag.loadoutB?.skillBar, ['tb-strike'])
+  const day = Date.UTC(2026, 0, 15)
+  const board = harborRpgWorldBoard(day)
+  assert.equal(board.length, 4)
+  const quest = board.find((q) => q.kind === 'kill' && q.monster) ?? board[0]!
+  const synced = applyRpgMedium(fresh, { type: 'sync-world' }, day)
+  assert.ok(synced)
+  let progressed = synced!.bag
+  if (quest.kind === 'kill' && quest.monster) {
+    progressed = {
+      ...progressed,
+      kills: { ...progressed.kills, [quest.monster]: (progressed.worldKillMark[quest.monster] ?? 0) + quest.need },
+    }
+  } else if (quest.zone) {
+    progressed = applyRpgMedium(progressed, { type: 'zone', zone: quest.zone }, day)!.bag
+  }
+  const claimed = applyRpgMedium(progressed, { type: 'claim-world', id: quest.id }, day)
+  assert.ok((claimed?.bag.gold ?? 0) >= fresh.gold + quest.gold)
+  const delveMobs = spawnRpgMonsters('delve', 1, 'normal', delvePack(3))
+  assert.equal(delveMobs.length, 5)
+  assert.equal(
+    spawnRpgMonsters('meadow', 1).length,
+    HARBOR_RPG_ZONE_SPAWNS.meadow.reduce((n, p) => n + p.count, 0),
+  )
+}
+
+assert.match(panelSrc, /Whisper|Ready check|Lock pattern|Draw tide chart|Save as B|FieldTracker|WorldBoard/)
+assert.match(worldSrc, /spawnRpgFloat/)
+assert.match(docs, /14 zones/)
 
 console.log('harborRpg.smoke: ok')

@@ -17,6 +17,7 @@ export type HarborRpgPartyMember = {
   userId: string
   name: string
   role?: HarborRpgFinderRole
+  ready?: boolean
 }
 
 export type HarborRpgPartyState = {
@@ -73,6 +74,18 @@ export function emptyRpgParty(leaderName: string): HarborRpgPartyState {
 
 export function toggleRpgFinderLooking(party: HarborRpgPartyState): HarborRpgPartyState {
   return { ...party, looking: !party.looking }
+}
+
+/** Soft ready check — one sailor flips their own flag and the party broadcasts. */
+export function setRpgMemberReady(
+  party: HarborRpgPartyState,
+  userId: string,
+  ready: boolean,
+): HarborRpgPartyState {
+  return {
+    ...party,
+    members: party.members.map((m) => (m.userId === userId ? { ...m, ready } : m)),
+  }
 }
 
 export function setRpgFinderQueue(
@@ -229,6 +242,7 @@ export function sanitizeRpgPartyState(raw: unknown): HarborRpgPartyState | null 
           ? m.name.trim().slice(0, 20)
           : 'Adventurer',
       role: isHarborRpgFinderRole(m.role) ? m.role : undefined,
+      ready: m.ready === true,
     })
     if (members.length >= 5) break
   }

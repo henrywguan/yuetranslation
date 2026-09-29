@@ -547,6 +547,79 @@ export function LearnSession({
         onTrade: (offer) => {
           handleRpgTradeOfferRef.current?.(offer)
         },
+        onSocial: (packet) => {
+          const bag = sanitizeHarborRpgBag(progressSnap.rpg)
+          const charName =
+            bag.characters.find((c) => c.id === bag.activeCharacterId)?.name ?? ''
+          const names = new Set([username, charName].filter(Boolean))
+          if (packet.kind === 'pledge') {
+            if (!bag.fleetName || bag.fleetName !== packet.to) return
+            const result = applyRpgMedium(bag, {
+              type: 'receive-pledge',
+              fleet: packet.to,
+              pledge: {
+                id: packet.id || `pl-${Date.now().toString(36)}`,
+                text: packet.text || packet.body || 'Pledge',
+                by: packet.from,
+                t: Date.now(),
+              },
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (!names.has(packet.to)) return
+          if (packet.kind === 'mail' && packet.mail) {
+            const result = applyRpgMedium(bag, {
+              type: 'receive-mail',
+              mail: { ...packet.mail, from: packet.from || packet.mail.from },
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'whisper' && packet.body) {
+            const result = applyRpgMedium(bag, {
+              type: 'receive-whisper',
+              whisper: {
+                id: packet.id || `wh-${Date.now().toString(36)}`,
+                from: packet.from,
+                body: packet.body,
+                t: Date.now(),
+                read: false,
+              },
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'duel-challenge') {
+            const result = applyRpgMedium(bag, { type: 'receive-duel', from: packet.from })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'duel-accept') {
+            const result = applyRpgMedium(bag, { type: 'receive-duel-accept', from: packet.from })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+            return
+          }
+          if (packet.kind === 'duel-hit') {
+            const result = applyRpgMedium(bag, {
+              type: 'receive-duel-hit',
+              damage: packet.damage ?? 8,
+            })
+            if (!result) return
+            pushRpgProgress(updateHarborRpg(result.bag))
+            if (result.toast) flashRpgToast(result.toast)
+          }
+        },
         onMarket: (listings) => {
           const bag = progressSnap.rpg ?? emptyHarborRpgBag()
           pushRpgProgress(updateHarborRpg({ ...bag, market: listings }))
@@ -577,6 +650,8 @@ export function LearnSession({
           equippedCosmetic: progressSnap.rpg?.equippedCosmetic ?? null,
           afk: progressSnap.rpg?.afk === true,
           fleetName: progressSnap.rpg?.fleetName ?? null,
+          activeTitleId: progressSnap.rpg?.activeTitleId ?? null,
+          weaponId: progressSnap.rpg?.gear.weapon ?? null,
         })
         sessionPresence.broadcastPose({
           x: pose.x,
@@ -1504,10 +1579,13 @@ export function LearnSession({
           }}
           onRpgPlayerDown={(ev) => {
             playHarborRpgPlayerDown()
+            const recap = ev.recap?.length
+              ? ` · ${ev.recap.map((h) => h.damage).join(', ')}`
+              : ''
             flashRpgToast(
               ev.instance
-                ? 'Defeated — instance wipe · packs reset'
-                : 'Defeated — soft respawn at zone shrine',
+                ? `Defeated — instance wipe · packs reset${recap}`
+                : `Defeated — soft respawn at zone shrine${recap}`,
             )
           }}
           paused={
@@ -2297,17 +2375,29 @@ export function LearnSession({
           }}
           lootPrompt={rpgLootPrompt}
           trade={rpgTrade}
+          selfUserId={localUserIdRef.current ?? 'local'}
           remotes={rpgRemotes.map((r) => ({
             userId: r.userId,
             username: r.username,
             lookingRole: r.lookingRole,
             lookingDungeon: r.lookingDungeon,
+            afk: r.afk,
+            fleetName: r.fleetName,
+            activeTitleId: r.activeTitleId,
+            weaponId: r.weaponId,
+            level: r.level,
           }))}
           partyLive={rpgPartyLive}
           partyInvite={rpgPartyInvite}
           onSetDifficulty={(d) => {
             pushRpgProgress(setHarborRpgInstanceDifficulty(d))
             flashRpgToast(d === 'heroic' ? 'Heroic — remount instance to scale' : 'Normal difficulty')
+          }}
+          onBroadcastParty={(party) => {
+            setRpgPartyLive(party)
+            rpgPresenceRef.current?.broadcastParty(party)
+            const ready = party.members.filter((m) => m.ready).length
+            flashRpgToast(`Ready ${ready}/${party.members.length}`)
           }}
           onFinderQueueChange={(party) => {
             setRpgPartyLive(party)
@@ -2364,11 +2454,35 @@ export function LearnSession({
           }}
           onMedium={(action) => {
             const bag = sanitizeHarborRpgBag(progressSnap.rpg)
-            const result = applyRpgMedium(bag, action)
-            if (!result) flashRpgToast('Cannot do that yet')
+            let next = action
+            if (action.type === 'dig-chart') {
+              const pose = worldApiRef.current?.getLocalPose()
+              next = { ...action, x: pose?.x ?? action.x, z: pose?.z ?? action.z }
+            }
+            const result = applyRpgMedium(bag, next)
+            if (!result) {
+              if (next.type !== 'sync-world') flashRpgToast('Cannot do that yet')
+            }
             else {
               pushRpgProgress(updateHarborRpg(result.bag))
-              flashRpgToast(result.toast)
+              if (result.toast) flashRpgToast(result.toast)
+              if (result.social) {
+                const from =
+                  bag.characters.find((c) => c.id === bag.activeCharacterId)?.name ||
+                  'Adventurer'
+                rpgPresenceRef.current?.broadcastSocial({
+                  kind: result.social.kind,
+                  to: result.social.to,
+                  from,
+                  fromId: localUserIdRef.current ?? 'local',
+                  mail: result.social.mail ? { ...result.social.mail, from } : undefined,
+                  body: result.social.body,
+                  damage: result.social.damage,
+                  text: result.social.text,
+                  id: result.social.id,
+                  fleet: result.social.kind === 'pledge' ? result.social.to : bag.fleetName ?? undefined,
+                })
+              }
             }
           }}
           onSetTitle={(id) => {

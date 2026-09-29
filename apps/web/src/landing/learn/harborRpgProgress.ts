@@ -177,6 +177,22 @@ export type HarborRpgBag = {
   riftMark: number
   raceBestMs: number | null
   raceRuns: number
+  raceStep: 0 | 1 | 2
+  fleetRank: import('./harborRpgDepth').HarborRpgFleetRank
+  fleetBank: import('./harborRpgDepth').HarborRpgFleetStack[]
+  fleetPledges: import('./harborRpgDepth').HarborRpgPledge[]
+  whispers: import('./harborRpgDepth').HarborRpgWhisper[]
+  duel: import('./harborRpgDepth').HarborRpgDuel | null
+  riftSeed: number
+  worldDay: string
+  worldWeek: string
+  worldKillMark: Record<string, number>
+  worldClaims: string[]
+  worldVisits: string[]
+  tideChart: import('./harborRpgDepth').HarborRpgTideChart | null
+  loadoutB: import('./harborRpgDepth').HarborRpgLoadout | null
+  activeLoadout: 'a' | 'b'
+  buffs: import('./harborRpgDepth').HarborRpgBuff[]
 }
 
 const COSMETIC_SET = new Set<string>(HARBOR_RPG_COSMETICS)
@@ -252,6 +268,22 @@ export function emptyHarborRpgBag(): HarborRpgBag {
     riftMark: 0,
     raceBestMs: null,
     raceRuns: 0,
+    raceStep: 0,
+    fleetRank: 'member',
+    fleetBank: [],
+    fleetPledges: [],
+    whispers: [],
+    duel: null,
+    riftSeed: 1,
+    worldDay: '',
+    worldWeek: '',
+    worldKillMark: {},
+    worldClaims: [],
+    worldVisits: [],
+    tideChart: null,
+    loadoutB: null,
+    activeLoadout: 'a',
+    buffs: [],
   }
 }
 

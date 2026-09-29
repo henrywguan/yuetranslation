@@ -25,6 +25,7 @@ import {
 import { HARBOR_RPG_STABLE } from './harborRpgMounts'
 import {
   HARBOR_RPG_RACE_FINISH,
+  HARBOR_RPG_RACE_MID,
   HARBOR_RPG_RACE_START,
   HARBOR_RPG_RAVENPOST,
   HARBOR_RPG_RELIQUARY,
@@ -466,6 +467,7 @@ function stampTown(root: THREE.Group, look: HarborRpgZoneLook) {
   root.add(npcStall(HARBOR_RPG_RAVENPOST.x, HARBOR_RPG_RAVENPOST.z, HARBOR_RPG_RAVENPOST.id, 0x406080))
   root.add(npcStall(HARBOR_RPG_RELIQUARY.x, HARBOR_RPG_RELIQUARY.z, HARBOR_RPG_RELIQUARY.id, 0xc0a060))
   root.add(npcStall(HARBOR_RPG_RACE_START.x, HARBOR_RPG_RACE_START.z, HARBOR_RPG_RACE_START.id, 0x70a050))
+  root.add(npcStall(HARBOR_RPG_RACE_MID.x, HARBOR_RPG_RACE_MID.z, HARBOR_RPG_RACE_MID.id, 0xc0a040))
   root.add(npcStall(HARBOR_RPG_RACE_FINISH.x, HARBOR_RPG_RACE_FINISH.z, HARBOR_RPG_RACE_FINISH.id, 0xa05050))
 }
 
@@ -723,6 +725,7 @@ export function nearestRpgInteract(
     targets.push(HARBOR_RPG_RAVENPOST)
     targets.push(HARBOR_RPG_RELIQUARY)
     targets.push(HARBOR_RPG_RACE_START)
+    targets.push(HARBOR_RPG_RACE_MID)
     targets.push(HARBOR_RPG_RACE_FINISH)
   }
   for (const n of HARBOR_RPG_GATHER_NODES) {

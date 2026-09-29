@@ -1,6 +1,6 @@
 # HarborRPG · Separate adventure game (soft Realtime multiplayer)
 
-**Status:** v6.4 — medium social + frontiers · Quaternius wardrobe · soft polish v6.2  
+**Status:** v6.5 — deepened medium loops · world board, tide charts, inspect · Quaternius wardrobe · soft polish v6.2  
 **Branch:** `cursor/harborrpg-safe-impl-d66b`  
 **Audience:** Henry + engineering agents  
 
@@ -72,17 +72,28 @@ Town outfitter (`rpg-vendor`) + **Wardrobe** tab sell / equip CC0 looks:
 
 Bag: `ownedCosmetics`, `equippedCosmetic` (one look at a time). Presence / pose carry `equippedCosmetic` so remotes see the same GLB. Credits: `apps/web/public/assets/harbor-quest/cosmetics/CREDITS.md`. Research backlog: [`HARBORRPG-FREE-COSMETICS.md`](./HARBORRPG-FREE-COSMETICS.md).
 
-## Medium systems (v6.4)
+## Medium systems (v6.5)
 
-Soft client slices for the ClaudeCraft-style gaps that had no HarborRPG code. Still no anti-cheat.
+Soft client slices. Still no anti-cheat. v6.5 deepens the v6.4 stubs and adds the loops that were still missing.
 
 | System | Where |
 |---|---|
-| Friends, AFK, emotes, fleet, Ravenpost, duel challenge | Social tab + town Ravenpost |
-| Reliquary deed gold | Frontiers tab + town Reliquary (claim once per finished deed) |
+| Friends online / AFK, whispers | Social tab · presence |
+| Ravenpost delivery, including attached gold | Social tab · `harbor-rpg-social` broadcast |
+| Fleet roster, ranks, shared bank, pledge board | Social tab |
+| Duel (training post or another sailor, first to 0, no loot) | Social tab |
+| Inspect a remote sailor (gear, title, fleet) | Social tab |
+| Reliquary shelves | Frontiers tab · claim once, then the deed stays on the shelf |
+| Tide Rift | Seeded pack each open · Frontiers tab |
+| Lock Delve | Floor changes the pack · three-pin lock, not a coin flip |
+| Mount race | Town start → mid → finish; under 45s while mounted pays 20g |
+| World board | Three dailies + one weekly on the Quests tab · two-line tracker on Field |
+| Tide charts | Draw a chart, dig the site, +12g |
+| Buff strip | Might draught and Guard on the vitals row |
+| Floating hits + death recap | Combat numbers in the world · last hits on the defeat toast |
+| Second talent loadout | Class tab · save B / swap |
+| Party ready check | Party tab |
 | Ash Reach world boss + Moon Pier | Overworld portals from Town |
-| Tide Rift + Lock Delve (floor 1–8, lockpick chest) | Frontiers tab |
-| Mount race | Town start/finish gates; under 45s while mounted pays 20g |
 | Weather | Render-only, stable per zone (`harborRpgWeatherForZone`) |
 
 ## Wiki (v6.1)
@@ -118,7 +129,7 @@ Zone **host** = lowest `userId` in zone; ~5 Hz monster snaps (`harbor-rpg-world`
 
 ## v6 surface
 
-1. **10 zones** (5 overworld + Town + 4 story instances + Tide Remembers raid)
+1. **14 zones** (7 overworld including Town, Ash Reach, and Moon Pier + 5 story instances including Tide Remembers + Tide Rift + Lock Delve)
 2. **Combat:** GCD · MP · hit/miss/crit · threat · **boss phases** · Heroic scale
 3. **9×3 classes/specs** · spellbook · trade · market · bank · professions
 4. **Quest density** · finder roles · companion fill

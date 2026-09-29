@@ -31,6 +31,20 @@ export const HARBOR_RPG_POSE_EVENT = 'harbor-rpg-pose' as const
 export const HARBOR_RPG_PARTY_EVENT = 'harbor-rpg-party' as const
 export const HARBOR_RPG_LOOT_EVENT = 'harbor-rpg-loot' as const
 export const HARBOR_RPG_MARKET_EVENT = 'harbor-rpg-market' as const
+export const HARBOR_RPG_SOCIAL_EVENT = 'harbor-rpg-social' as const
+
+export type HarborRpgSocialPacket = {
+  kind: 'mail' | 'whisper' | 'duel-challenge' | 'duel-accept' | 'duel-hit' | 'pledge'
+  to: string
+  from: string
+  fromId: string
+  mail?: import('./harborRpgMedium').HarborRpgMail
+  body?: string
+  damage?: number
+  text?: string
+  id?: string
+  fleet?: string
+}
 
 export type HarborRpgPresenceState = {
   userId: string
@@ -49,6 +63,8 @@ export type HarborRpgPresenceState = {
   equippedCosmetic: string | null
   afk: boolean
   fleetName: string | null
+  activeTitleId: string | null
+  weaponId: string | null
   updatedAt: number
 }
 
@@ -114,6 +130,12 @@ function sanitizePresence(raw: unknown, key: string): HarborRpgPresenceState | n
       typeof o.fleetName === 'string' && o.fleetName.trim()
         ? o.fleetName.trim().slice(0, 24)
         : null,
+    activeTitleId:
+      typeof o.activeTitleId === 'string' && o.activeTitleId.trim()
+        ? o.activeTitleId.trim().slice(0, 40)
+        : null,
+    weaponId:
+      typeof o.weaponId === 'string' && o.weaponId.length < 40 ? o.weaponId : null,
     updatedAt:
       typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt)
         ? o.updatedAt
@@ -196,6 +218,8 @@ export type HarborRpgPresenceSession = {
     equippedCosmetic?: string | null
     afk?: boolean
     fleetName?: string | null
+    activeTitleId?: string | null
+    weaponId?: string | null
   }) => Promise<void>
   broadcastPose: (pose: {
     x: number
@@ -210,7 +234,53 @@ export type HarborRpgPresenceSession = {
   broadcastMarket: (listings: HarborRpgMarketListing[]) => void
   broadcastWorld: (packet: HarborRpgWorldPacket) => void
   broadcastTrade: (offer: HarborRpgTradeOffer) => void
+  broadcastSocial: (packet: HarborRpgSocialPacket) => void
   stop: () => Promise<void>
+}
+
+function sanitizeSocial(raw: unknown): HarborRpgSocialPacket | null {
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  const kind = o.kind
+  if (
+    kind !== 'mail' &&
+    kind !== 'whisper' &&
+    kind !== 'duel-challenge' &&
+    kind !== 'duel-accept' &&
+    kind !== 'duel-hit' &&
+    kind !== 'pledge'
+  ) {
+    return null
+  }
+  if (typeof o.to !== 'string' || typeof o.from !== 'string' || typeof o.fromId !== 'string') return null
+  const packet: HarborRpgSocialPacket = {
+    kind,
+    to: o.to.slice(0, 40),
+    from: o.from.slice(0, 24),
+    fromId: o.fromId.slice(0, 64),
+  }
+  if (typeof o.body === 'string') packet.body = o.body.slice(0, 180)
+  if (typeof o.text === 'string') packet.text = o.text.slice(0, 80)
+  if (typeof o.id === 'string') packet.id = o.id.slice(0, 40)
+  if (typeof o.fleet === 'string') packet.fleet = o.fleet.slice(0, 24)
+  if (typeof o.damage === 'number' && Number.isFinite(o.damage)) {
+    packet.damage = Math.max(1, Math.min(80, Math.floor(o.damage)))
+  }
+  if (o.mail && typeof o.mail === 'object') {
+    const m = o.mail as Record<string, unknown>
+    if (typeof m.id === 'string' && typeof m.subject === 'string') {
+      packet.mail = {
+        id: m.id.slice(0, 40),
+        from: typeof m.from === 'string' ? m.from.slice(0, 24) : packet.from,
+        subject: m.subject.slice(0, 40),
+        body: typeof m.body === 'string' ? m.body.slice(0, 180) : '',
+        gold: typeof m.gold === 'number' && Number.isFinite(m.gold) ? Math.max(0, Math.min(5000, Math.floor(m.gold))) : 0,
+        read: false,
+        t: typeof m.t === 'number' && Number.isFinite(m.t) ? Math.floor(m.t) : Date.now(),
+      }
+    }
+  }
+  return packet
 }
 
 export function startHarborRpgPresence(opts: {
@@ -224,6 +294,7 @@ export function startHarborRpgPresence(opts: {
   onMarket?: (listings: HarborRpgMarketListing[]) => void
   onWorld?: (packet: HarborRpgWorldPacket) => void
   onTrade?: (offer: HarborRpgTradeOffer) => void
+  onSocial?: (packet: HarborRpgSocialPacket) => void
 }): HarborRpgPresenceSession {
   const { supabase, userId, username } = opts
   const channel = supabase.channel(HARBOR_RPG_PRESENCE_CHANNEL, {
@@ -271,6 +342,11 @@ export function startHarborRpgPresence(opts: {
       if (!packet || packet.hostId === userId) return
       opts.onWorld?.(packet)
     })
+    .on('broadcast', { event: HARBOR_RPG_SOCIAL_EVENT }, ({ payload }) => {
+      const packet = sanitizeSocial(payload)
+      if (!packet || packet.fromId === userId) return
+      opts.onSocial?.(packet)
+    })
     .on('broadcast', { event: HARBOR_RPG_TRADE_EVENT }, ({ payload }) => {
       const offer = sanitizeRpgTradeOffer(payload)
       if (!offer || offer.fromId === userId) return
@@ -298,6 +374,8 @@ export function startHarborRpgPresence(opts: {
         equippedCosmetic: pose.equippedCosmetic ?? null,
         afk: pose.afk === true,
         fleetName: pose.fleetName ?? null,
+        activeTitleId: pose.activeTitleId ?? null,
+        weaponId: pose.weaponId ?? null,
         updatedAt: Date.now(),
       }
       await channel.track(payload)
@@ -352,6 +430,13 @@ export function startHarborRpgPresence(opts: {
         type: 'broadcast',
         event: HARBOR_RPG_TRADE_EVENT,
         payload: offer,
+      })
+    },
+    broadcastSocial(packet) {
+      void channel.send({
+        type: 'broadcast',
+        event: HARBOR_RPG_SOCIAL_EVENT,
+        payload: packet,
       })
     },
     async stop() {
